@@ -485,12 +485,6 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
     });
 }
 
-function guardarBorrador(tipoFormulario) {
-    // Esta función será implementada por cada script específico
-    // ya que los datos a recopilar varían entre primera visita y seguimiento
-    console.log(`Guardar borrador para ${tipoFormulario} - función a implementar en script específico`);
-}
-
 // =====================================
 // CRITERIOS DIAGNÓSTICOS (PRIMERA VISITA)
 // =====================================
@@ -935,20 +929,6 @@ function prefillSeguimientoForm(visitData) {
 }
 
 /**
- * Función auxiliar para setear el valor de un biomarcador
- * @param {string} className - Clase del grupo de botones ('hla-btn', 'fr-btn', 'apcc-btn')
- * @param {string} value - Valor a activar ('positivo', 'negativo', 'no-analizado')
- */
-function setBiomarkerValue(className, value) {
-    document.querySelectorAll(`.${className}`).forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.value === value) {
-            btn.classList.add('active');
-        }
-    });
-}
-
-/**
  * Puebla un select con opciones desde la base de datos de fármacos
  * @param {string} selectId - ID del elemento select
  * @param {string} tipo - Tipo de fármaco ('Sistemicos', 'FAMEs', 'Biologicos')
@@ -1080,7 +1060,6 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.mostrarContinuar = mostrarContinuar;
     HubTools.form.mostrarCambio = mostrarCambio;
     HubTools.form.mostrarModalTexto = mostrarModalTexto;
-    HubTools.form.guardarBorrador = guardarBorrador;
     HubTools.form.recopilarDatosFormulario = recopilarDatosFormulario;
     HubTools.form.recopilarDatosFormularioSeguimiento = recopilarDatosFormularioSeguimiento;
     HubTools.form.prefillSeguimientoForm = prefillSeguimientoForm;

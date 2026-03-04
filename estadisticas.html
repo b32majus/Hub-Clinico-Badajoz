@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,8 +10,10 @@
     <link rel="stylesheet" href="style_estadisticas.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 </head>
+
 <body>
     <div class="hub-shell">
         <aside class="sidebar">
@@ -22,12 +25,14 @@
             <div class="user-block">
                 <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
                 <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
-                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
+                <button type="button" class="change-professional-btn" id="changeProfessionalBtn"
+                    aria-label="Cambiar profesional">
                     <i class="fas fa-exchange-alt"></i>
                 </button>
             </div>
 
-            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
+            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false"
+                aria-labelledby="professionalSelectorLabel">
                 <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
                 <select id="professionalSelect"></select>
                 <div class="selector-actions">
@@ -37,7 +42,8 @@
             </div>
 
             <div class="search-container">
-                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." list="patientIds" autocomplete="off">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..."
+                    list="patientIds" autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
                 <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times-circle"></i>
@@ -49,17 +55,22 @@
                 <h3 class="nav-title">Consulta</h3>
                 <ul class="nav-list">
                     <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
-                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Nueva Visita</a></li>
-                    <li><a href="seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
+                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i
+                                class="fas fa-plus-circle"></i>Nueva Visita</a></li>
+                    <li><a href="seguimiento.html" class="nav-link" data-nav-link><i
+                                class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
                 </ul>
             </div>
 
             <div class="nav-section">
                 <h3 class="nav-title">Gestión</h3>
                 <ul class="nav-list">
-                    <li><a href="estadisticas.html" class="nav-link active" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
-                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
-                    <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+                    <li><a href="estadisticas.html" class="nav-link active" data-nav-link><i
+                                class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i
+                                class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i
+                                class="fas fa-users"></i>Profesionales</a></li>
                 </ul>
             </div>
 
@@ -132,8 +143,10 @@
                                     <input type="date" id="filterDateTo" class="input-field">
                                 </div>
                                 <div class="date-presets">
-                                    <button type="button" class="date-preset-btn" data-preset="month">Último mes</button>
-                                    <button type="button" class="date-preset-btn" data-preset="quarter">Último trimestre</button>
+                                    <button type="button" class="date-preset-btn" data-preset="month">Último
+                                        mes</button>
+                                    <button type="button" class="date-preset-btn" data-preset="quarter">Último
+                                        trimestre</button>
                                     <button type="button" class="date-preset-btn" data-preset="year">Último año</button>
                                     <button type="button" class="date-preset-btn" data-preset="all">Todo</button>
                                 </div>
@@ -167,11 +180,13 @@
                                 </div>
                                 <div class="filter-group">
                                     <label for="filterAgeFrom">Edad desde:</label>
-                                    <input type="number" id="filterAgeFrom" class="input-field" placeholder="Ej: 18" min="0" max="120">
+                                    <input type="number" id="filterAgeFrom" class="input-field" placeholder="Ej: 18"
+                                        min="0" max="120">
                                 </div>
                                 <div class="filter-group">
                                     <label for="filterAgeTo">Edad hasta:</label>
-                                    <input type="number" id="filterAgeTo" class="input-field" placeholder="Ej: 80" min="0" max="120">
+                                    <input type="number" id="filterAgeTo" class="input-field" placeholder="Ej: 80"
+                                        min="0" max="120">
                                 </div>
                             </div>
                         </div>
@@ -225,14 +240,16 @@
                                         EVA Dolor (máximo):
                                         <span class="range-slider-value" id="evaDolorValue">10</span>
                                     </label>
-                                    <input type="range" id="filterEVADolor" class="range-slider" min="0" max="10" value="10">
+                                    <input type="range" id="filterEVADolor" class="range-slider" min="0" max="10"
+                                        value="10">
                                 </div>
                                 <div class="filter-group range-slider-group">
                                     <label for="filterEVAGlobal">
                                         EVA Global (máximo):
                                         <span class="range-slider-value" id="evaGlobalValue">10</span>
                                     </label>
-                                    <input type="range" id="filterEVAGlobal" class="range-slider" min="0" max="10" value="10">
+                                    <input type="range" id="filterEVAGlobal" class="range-slider" min="0" max="10"
+                                        value="10">
                                 </div>
                             </div>
                         </div>
@@ -411,7 +428,8 @@
                     <div class="table-controls">
                         <div class="table-search">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="tableSearchInput" class="input-field" placeholder="Buscar en la tabla...">
+                            <input type="text" id="tableSearchInput" class="input-field"
+                                placeholder="Buscar en la tabla...">
                         </div>
                         <button id="exportCohortBtn" class="button primary-button">
                             <i class="fas fa-file-csv"></i> Exportar CSV
@@ -457,11 +475,11 @@
     <script src="modules/homunculus.js"></script>
     <script src="modules/exportManager.js"></script>
     <script src="modules/formController.js"></script>
-    <script src="modules/mockDashboardData.js"></script>
     <script src="modules/dataManager.js"></script>
 
     <!-- Scripts globales y coordinadores -->
     <script src="script.js"></script>
     <script src="scripts/script_estadisticas.js"></script>
 </body>
+
 </html>

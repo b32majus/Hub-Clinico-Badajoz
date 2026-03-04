@@ -114,7 +114,7 @@ function ensureQuickViewElements() {
             searchResultsTitle,
             searchResultsSubtitle,
             overlay: document.getElementById('quickViewOverlay'),
-            close: () => {}
+            close: () => { }
         };
     }
 
@@ -472,12 +472,6 @@ window.addEventListener('beforeunload', event => {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Iniciando Hub Clínico...');
 
-    // Verificar que dataManager está disponible
-    console.log('Verificando dataManager:');
-    console.log('- window.loadDatabase:', typeof window.loadDatabase);
-    console.log('- window.getProfesionales:', typeof window.getProfesionales);
-    console.log('- loadDatabase (global):', typeof loadDatabase);
-    console.log('- getProfesionales (global):', typeof getProfesionales);
 
     // --- DOM Elements ---
     const csvBtn = document.getElementById('csvBtn');
@@ -606,8 +600,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateCurrentProfessional(name) {
-        if(currentProfessionalLabel) currentProfessionalLabel.textContent = name;
-        if(professionalInput) professionalInput.value = name;
+        if (currentProfessionalLabel) currentProfessionalLabel.textContent = name;
+        if (professionalInput) professionalInput.value = name;
         localStorage.setItem('hubSelectedProfessional', name);
     }
 
@@ -683,9 +677,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listen for the global event to populate professionals if data is loaded on another page
     document.addEventListener('databaseLoaded', () => {
-        console.log('DEBUG: databaseLoaded event fired.');
-        console.log('DEBUG: appState.isLoaded:', appState.isLoaded);
-        console.log('DEBUG: appState.db.Fármacos:', appState.db.Fármacos);
         if (typeof HubTools !== 'undefined' && typeof HubTools.data !== 'undefined' && typeof HubTools.data.getProfesionales !== 'undefined') {
             const professionals = HubTools.data.getProfesionales();
             populateProfessionalSelect(professionals);

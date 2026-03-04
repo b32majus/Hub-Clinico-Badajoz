@@ -175,7 +175,7 @@ const logger = {
      * Log de debug - Solo se muestra si DEBUG_MODE está activado
      * Útil para depuración durante desarrollo
      */
-    debug: DEBUG_MODE ? console.log.bind(console, '[DEBUG]') : () => {},
+    debug: DEBUG_MODE ? console.log.bind(console, '[DEBUG]') : () => { },
 
     /**
      * Log informativo - Siempre se muestra
@@ -247,73 +247,10 @@ function setBiomarkerValue(className, value) {
 /**
  * Obtiene los valores de todos los biomarcadores de una vez
  * @param {Object} defaults - Valores por defecto opcionales { hla: '...', fr: '...', apcc: '...' }
- * @returns {Object} { hlaB27, fr, apcc }
- *
- * @example
- * const biomarkers = getAllBiomarkers();
- * // Retorna: { hlaB27: 'positivo', fr: 'negativo', apcc: 'no-analizado' }
- */
-function getAllBiomarkers(defaults = {}) {
-    return {
-        hlaB27: getBiomarkerValue('hla-btn', defaults.hla || 'no-analizado'),
-        fr: getBiomarkerValue('fr-btn', defaults.fr || 'no-analizado'),
-        apcc: getBiomarkerValue('apcc-btn', defaults.apcc || 'no-analizado')
-    };
-}
-
 // =====================================
 // UTILIDADES DE TOGGLE BUTTONS
 // =====================================
 
-/**
- * Obtiene el estado de múltiples toggle buttons de una vez
- * @param {string[]} values - Array de valores data-value a buscar
- * @param {string} prefix - Prefijo opcional para la clase (ej: 'extra-articular-toggle')
- * @returns {Object} Objeto con claves = values, valores = 'SI' | 'NO'
- *
- * @example
- * const comorbilidades = getToggleButtonsState(['hta', 'dm', 'dlp']);
- * // Retorna: { hta: 'SI', dm: 'NO', dlp: 'SI' }
- *
- * @example
- * const extraArticular = getToggleButtonsState(['uveitis', 'psoriasis'], 'extra-articular');
- * // Busca botones con clase .extra-articular-toggle
- */
-function getToggleButtonsState(values, prefix = '') {
-    const state = {};
-    values.forEach(val => {
-        const selector = prefix
-            ? `.toggle-btn.${prefix}[data-value="${val}"].active`
-            : `.toggle-btn[data-value="${val}"].active`;
-        state[val] = document.querySelector(selector) ? 'SI' : 'NO';
-    });
-    return state;
-}
-
-/**
- * Establece el estado de múltiples toggle buttons a la vez
- * @param {Object} states - Objeto con { valor: 'SI'|'NO' }
- * @param {string} prefix - Prefijo opcional para la clase
- *
- * @example
- * setToggleButtonsState({ hta: 'SI', dm: 'NO', dlp: 'SI' });
- * // Activa HTA y DLP, desactiva DM
- */
-function setToggleButtonsState(states, prefix = '') {
-    Object.entries(states).forEach(([val, estado]) => {
-        const selector = prefix
-            ? `.toggle-btn.${prefix}[data-value="${val}"]`
-            : `.toggle-btn[data-value="${val}"]`;
-        const btn = document.querySelector(selector);
-        if (btn) {
-            if (estado === 'SI') {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        }
-    });
-}
 
 // =====================================
 // VALIDACIÓN DE FORMULARIOS
@@ -400,28 +337,6 @@ function validarRangosNumericos() {
     return errores;
 }
 
-/**
- * Limpia estilos de validación de todos los campos
- */
-function limpiarEstilosValidacion() {
-    // Limpiar campos requeridos
-    Object.values(REQUIRED_FIELDS).flat().forEach(id => {
-        const elem = document.getElementById(id);
-        if (elem) {
-            elem.style.borderColor = '';
-            elem.style.borderWidth = '';
-        }
-    });
-
-    // Limpiar campos numéricos
-    Object.keys(NUMERIC_RANGES).forEach(id => {
-        const elem = document.getElementById(id);
-        if (elem) {
-            elem.style.borderColor = '';
-            elem.style.borderWidth = '';
-        }
-    });
-}
 
 // =====================================
 // UTILIDADES DEL HOMÚNCULO
@@ -479,16 +394,10 @@ if (typeof HubTools !== 'undefined') {
     // Utilidades de biomarcadores
     HubTools.utils.getBiomarkerValue = getBiomarkerValue;
     HubTools.utils.setBiomarkerValue = setBiomarkerValue;
-    HubTools.utils.getAllBiomarkers = getAllBiomarkers;
-
-    // Utilidades de toggle buttons
-    HubTools.utils.getToggleButtonsState = getToggleButtonsState;
-    HubTools.utils.setToggleButtonsState = setToggleButtonsState;
 
     // Validación de formularios
     HubTools.utils.validarCamposRequeridos = validarCamposRequeridos;
     HubTools.utils.validarRangosNumericos = validarRangosNumericos;
-    HubTools.utils.limpiarEstilosValidacion = limpiarEstilosValidacion;
     HubTools.utils.REQUIRED_FIELDS = REQUIRED_FIELDS;
     HubTools.utils.NUMERIC_RANGES = NUMERIC_RANGES;
 
