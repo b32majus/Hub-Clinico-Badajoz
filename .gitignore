@@ -1,0 +1,37 @@
+# Claude Code local settings
+.claude/
+.claude/settings.local.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Archivos temporales
+nul
+*.tmp
+*.log
+
+# NO ignorar archivos de datos críticos
+!Hub_Clinico_Maestro.xlsx
+!create_excel.py
+!generate_mock_data.py

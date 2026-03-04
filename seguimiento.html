@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visita de Seguimiento - Hub Clínico Reumatológico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style_seguimiento.css">
+</head>
+<body>
+
+    <div class="hub-shell">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle"><span class="logo-text">HC</span></div>
+                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
+            </div>
+
+            <div class="user-block">
+                <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
+                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+
+            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
+                <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
+                <select id="professionalSelect"></select>
+                <div class="selector-actions">
+                    <button type="button" id="confirmProfessionalBtn" class="selector-btn primary">Aplicar</button>
+                    <button type="button" id="cancelProfessionalBtn" class="selector-btn">Cancelar</button>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar Paciente por ID..." list="patientIds" autocomplete="off">
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <datalist id="patientIds"></datalist>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Consulta</h3>
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Nueva Visita</a></li>
+                    <li><a href="seguimiento.html" class="nav-link active" data-nav-link><i class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Gestión</h3>
+                <ul class="nav-list">
+                    <li><a href="estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">v. 1.0.0</div>
+        </aside>
+
+        <main class="main-content">
+            <div class="form-container">
+        <header class="form-header">
+            <h1>HUB CLÍNICO - VISITA DE SEGUIMIENTO <span class="highlight" id="patologiaHighlight">Reumatología</span></h1>
+            <p class="subtitle" id="patologiaSubtitle">Seleccione diagnóstico para adaptar el formulario</p>
+        </header>
+
+        <section class="patient-info-section">
+            <h2 class="section-title"><i class="fas fa-user-check"></i> Datos del Paciente</h2>
+            <div class="patient-fields">
+                <div class="form-group">
+                    <label for="idPaciente">ID Paciente:</label>
+                    <input type="text" id="idPaciente" placeholder="Ingrese ID del paciente">
+                    <small class="field-hint" id="idPacienteHint">Campo editable para nuevos pacientes</small>
+                </div>
+                <div class="form-group">
+                    <label for="nombrePaciente">Nombre y Apellidos:</label>
+                    <input type="text" id="nombrePaciente" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="fechaVisita">Fecha de la Visita:</label>
+                    <input type="date" id="fechaVisita">
+                </div>
+                <div class="form-group">
+                    <label for="fechaInicioTratamiento">Fecha de Inicio de Tratamiento:</label>
+                    <input type="date" id="fechaInicioTratamiento" readonly>
+                </div>
+                <div class="form-group form-group-full-width">
+                    <label for="tratamientoActual">Tratamiento Actual:</label>
+                    <input type="text" id="tratamientoActual" readonly>
+                </div>
+            </div>
+
+            <div class="diagnostic-section">
+                <h3 class="diagnostic-title"><i class="fas fa-notes-medical"></i> Diagnóstico</h3>
+                <div class="diagnostic-fields">
+                    <div class="form-group">
+                        <label for="diagnosticoPrimario">Diagnóstico Primario:</label>
+                        <select id="diagnosticoPrimario">
+                            <option value="">Seleccionar patología...</option>
+                            <option value="espa">Espondiloartritis Axial (EspA)</option>
+                            <option value="aps">Artritis Psoriásica (APs)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="diagnosticoSecundario">Diagnóstico Secundario:</label>
+                        <input type="text" id="diagnosticoSecundario" placeholder="Opcional - Especificar otros diagnósticos">
+                    </div>
+                </div>
+
+                <!-- BIOMARCADORES ADAPTATIVOS -->
+                <div class="biomarkers-section">
+                    <span class="biomarkers-label">Biomarcadores:</span>
+                    <div class="biomarkers-grid">
+                        <!-- HLA-B27: Visible para EspA y APs -->
+                        <div class="biomarker-card" id="hlaB27Container" style="display: none;">
+                            <span class="biomarker-name">HLA-B27</span>
+                            <div class="biomarker-badges">
+                                <button type="button" class="biomarker-badge hla-btn badge-positive" data-value="positivo" title="Positivo">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button type="button" class="biomarker-badge hla-btn badge-negative" data-value="negativo" title="Negativo">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="biomarker-badge hla-btn badge-unknown active" data-value="no-analizado" title="No Analizado">
+                                    <i class="fas fa-question"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- FR (Factor Reumatoide): Visible para APs -->
+                        <div class="biomarker-card" id="frContainer" style="display: none;">
+                            <span class="biomarker-name">Factor Reumatoide (FR)</span>
+                            <div class="biomarker-badges">
+                                <button type="button" class="biomarker-badge badge-positive fr-btn" data-value="positivo" title="Positivo">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button type="button" class="biomarker-badge badge-negative fr-btn" data-value="negativo" title="Negativo">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="biomarker-badge badge-unknown active fr-btn" data-value="no-analizado" title="No Analizado">
+                                    <i class="fas fa-question"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- aPCC (anti-péptido citrulinado cíclico): Visible para APs -->
+                        <div class="biomarker-card" id="apccContainer" style="display: none;">
+                            <span class="biomarker-name">Anti-CCP</span>
+                            <div class="biomarker-badges">
+                                <button type="button" class="biomarker-badge badge-positive apcc-btn" data-value="positivo" title="Positivo">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button type="button" class="biomarker-badge badge-negative apcc-btn" data-value="negativo" title="Negativo">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <button type="button" class="biomarker-badge badge-unknown active apcc-btn" data-value="no-analizado" title="No Analizado">
+                                    <i class="fas fa-question"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="collapsible-section">
+            <button class="collapsible-header">
+                <span class="header-icon-text"><i class="fas fa-notes-medical"></i> Síntomas y Medidas del Paciente</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div class="collapsible-content">
+                <h3>Constantes Vitales</h3>
+                <div class="form-group-grid constantes-grid">
+                    <div class="form-group">
+                        <label for="peso">Peso (kg):</label>
+                        <input type="number" id="peso" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="talla">Talla (cm):</label>
+                        <input type="number" id="talla" min="0" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label for="imc">IMC:</label>
+                        <input type="text" id="imc" readonly class="readonly-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="ta">Tensión Arterial (mmHg):</label>
+                        <input type="text" id="ta" placeholder="Sistólica/Diastólica">
+                    </div>
+                </div>
+
+                <h3>Síntomas Reportados</h3>
+                <div class="form-group-grid sintomas-grid">
+                    <div class="form-group">
+                        <label for="rigidezMatutinaMin">Rigidez Matutina (min):</label>
+                        <input type="number" id="rigidezMatutinaMin" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="evaFatiga">EVA Fatiga (0-10):</label>
+                        <input type="number" id="evaFatiga" min="0" max="10" step="0.1">
+                    </div>
+                </div>
+                <div class="manifestaciones-comorbilidades-container">
+                    <div class="form-group-toggle-buttons half-width">
+                        <label class="group-label">Manifestaciones Extrarticulares:</label>
+                        <div class="toggle-button-group">
+                            <button type="button" class="toggle-btn" data-value="uveitis">Uveítis</button>
+                            <button type="button" class="toggle-btn" data-value="psoriasis">Psoriasis</button>
+                            <button type="button" class="toggle-btn" data-value="digestiva">EII</button>
+                        </div>
+                        <div class="form-group-checkbox" style="margin-top: 10px;">
+                            <label><input type="checkbox" id="sinCambiosManifestaciones"> Sin cambios</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group-toggle-buttons half-width">
+                        <label class="group-label">Comorbilidades:</label>
+                        <div class="toggle-button-group" id="comorbilidadesGroup">
+                            <button type="button" class="toggle-btn" data-value="hta">HTA</button>
+                            <button type="button" class="toggle-btn" data-value="dm">Diabetes</button>
+                            <button type="button" class="toggle-btn" data-value="dlp">Dislipidemia</button>
+                            <button type="button" class="toggle-btn" data-value="ecv">Evento Cardiovascular</button>
+                            <button type="button" class="toggle-btn" data-value="gastritis">Gastritis/Úlcera</button>
+                            <button type="button" class="toggle-btn" data-value="obesidad">Obesidad</button>
+                            <button type="button" class="toggle-btn" data-value="osteoporosis">Osteoporosis</button>
+                        </div>
+                        <div class="form-group-checkbox" style="margin-top: 10px;">
+                            <label><input type="checkbox" id="sinCambiosComorbilidades"> Sin cambios</label>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Exploración Articular y Axial</h3>
+                <div class="exploration-section">
+                    <div class="homunculus-container">
+                        <h4>Homúnculo Interactivo</h4>
+                        <div class="homunculus-scores">
+                            <span class="score-label score-nad"><i class="fas fa-hand-paper"></i> NAD: <span id="nadScore">0</span></span>
+                            <span class="score-label score-nat"><i class="fas fa-fire-alt"></i> NAT: <span id="natScore">0</span></span>
+                            <span class="score-label score-dactilitis"><i class="fas fa-fingerprint"></i> Dactilitis: <span id="dactilitisScore">0</span></span>
+                        </div>
+                        <div class="homunculus-double-mark-box" id="doubleMarkInfo" style="display: none;">
+                            <svg width="24" height="24" style="vertical-align: middle; margin-right: 8px;">
+                                <defs>
+                                    <pattern id="legendDoublePattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                                        <rect x="0" y="0" width="4" height="8" fill="#ffc107" />
+                                        <rect x="4" y="0" width="4" height="8" fill="#dc3545" />
+                                    </pattern>
+                                </defs>
+                                <circle cx="12" cy="12" r="10" fill="url(#legendDoublePattern)" stroke="#b8860b" stroke-width="2.5"/>
+                            </svg>
+                            <span id="doubleMarkCount">0</span> articulación(es) con dolor E inflamación
+                        </div>
+                        <div class="homunculus-controls">
+                            <button type="button" class="homunculus-mode-btn mode-nad" data-mode="nad">Dolor (NAD)</button>
+                            <button type="button" class="homunculus-mode-btn mode-nat" data-mode="nat">Inflamación (NAT)</button>
+                            <button type="button" class="homunculus-mode-btn mode-dactilitis" data-mode="dactilitis">Dactilitis</button>
+                        </div>
+                        <div class="homunculus-svg-wrapper">
+                            <svg id="humanBodySvg" viewBox="0 0 600 480" preserveAspectRatio="xMidYMid meet">
+                                <!-- Definiciones: Patrón para doble marcado (NAD + NAT) -->
+                                <defs>
+                                    <pattern id="doubleMarkPattern" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+                                        <rect x="0" y="0" width="4" height="8" fill="#ffc107" />
+                                        <rect x="4" y="0" width="4" height="8" fill="#dc3545" />
+                                    </pattern>
+                                </defs>
+
+                                <!-- Cuerpo Base (Trazado Anatómico) -->
+                                <g id="bodyOutline" stroke="#999" stroke-width="1.5" fill="none">
+                                    <!-- Cabeza -->
+                                    <circle cx="300" cy="40" r="25" />
+                                    <!-- Cuello -->
+                                    <line x1="300" y1="65" x2="300" y2="90" />
+                                    <!-- Hombros -->
+                                    <line x1="250" y1="90" x2="350" y2="90" />
+                                    <!-- Brazos derecho -->
+                                    <line x1="250" y1="90" x2="245" y2="145" />
+                                    <line x1="245" y1="145" x2="240" y2="200" />
+                                    <!-- Brazos izquierdo -->
+                                    <line x1="350" y1="90" x2="355" y2="145" />
+                                    <line x1="355" y1="145" x2="360" y2="200" />
+                                    <!-- Torso -->
+                                    <path d="M270,90 L270,250 L330,250 L330,90" />
+                                    <!-- Pelvis -->
+                                    <ellipse cx="300" cy="260" rx="40" ry="15" />
+                                    <!-- Piernas derecha -->
+                                    <line x1="275" y1="270" x2="270" y2="370" />
+                                    <line x1="270" y1="370" x2="265" y2="470" />
+                                    <!-- Piernas izquierda -->
+                                    <line x1="325" y1="270" x2="330" y2="370" />
+                                    <line x1="330" y1="370" x2="335" y2="470" />
+                                    <!-- Pies derecho -->
+                                    <rect x="250" y="470" width="30" height="20" rx="5" />
+                                    <!-- Pies izquierdo -->
+                                    <rect x="320" y="470" width="30" height="20" rx="5" />
+                                </g>
+
+                                <!-- ARTICULACIONES DAS28 -->
+                                <!-- Hombros (DAS28) -->
+                                <circle cx="250" cy="90" r="14" class="body-region" data-region-id="hombro-derecho" data-type="articulation" />
+                                <circle cx="350" cy="90" r="14" class="body-region" data-region-id="hombro-izquierdo" data-type="articulation" />
+
+                                <!-- Codos (DAS28) -->
+                                <circle cx="245" cy="145" r="12" class="body-region" data-region-id="codo-derecho" data-type="articulation" />
+                                <circle cx="355" cy="145" r="12" class="body-region" data-region-id="codo-izquierdo" data-type="articulation" />
+
+                                <!-- Muñecas (DAS28) -->
+                                <circle cx="240" cy="200" r="11" class="body-region" data-region-id="muneca-derecha" data-type="articulation" />
+                                <circle cx="360" cy="200" r="11" class="body-region" data-region-id="muneca-izquierda" data-type="articulation" />
+
+                                <!-- Rodillas (DAS28) -->
+                                <circle cx="270" cy="370" r="13" class="body-region" data-region-id="rodilla-derecha" data-type="articulation" />
+                                <circle cx="330" cy="370" r="13" class="body-region" data-region-id="rodilla-izquierda" data-type="articulation" />
+
+                                <!-- MANOS AMPLIADAS - Mano Derecha -->
+                                <g id="mano-derecha">
+                                    <!-- Contorno de la mano -->
+                                    <rect x="20" y="120" width="120" height="180" rx="10" stroke="#aaa" stroke-width="1" fill="#f9f9f9" opacity="0.5" />
+                                    <text x="80" y="110" text-anchor="middle" font-size="12" fill="#555" font-weight="bold">Mano Derecha</text>
+
+                                    <!-- MCF (Metacarpofalángicas) Derecha - Fila superior -->
+                                    <circle cx="40" cy="150" r="8" class="body-region" data-region-id="mcf1-derecha" data-type="articulation" />
+                                    <circle cx="65" cy="150" r="8" class="body-region" data-region-id="mcf2-derecha" data-type="articulation" />
+                                    <circle cx="90" cy="150" r="8" class="body-region" data-region-id="mcf3-derecha" data-type="articulation" />
+                                    <circle cx="115" cy="150" r="8" class="body-region" data-region-id="mcf4-derecha" data-type="articulation" />
+                                    <circle cx="130" cy="155" r="7" class="body-region" data-region-id="mcf5-derecha" data-type="articulation" />
+
+                                    <!-- Etiqueta MCF -->
+                                    <text x="80" y="140" text-anchor="middle" font-size="9" fill="#666">MCF</text>
+
+                                    <!-- IFP (Interfalángicas Proximales) Derecha - Fila media -->
+                                    <circle cx="40" cy="190" r="7" class="body-region" data-region-id="ifp1-derecha" data-type="articulation" />
+                                    <circle cx="65" cy="190" r="7" class="body-region" data-region-id="ifp2-derecha" data-type="articulation" />
+                                    <circle cx="90" cy="190" r="7" class="body-region" data-region-id="ifp3-derecha" data-type="articulation" />
+                                    <circle cx="115" cy="190" r="7" class="body-region" data-region-id="ifp4-derecha" data-type="articulation" />
+                                    <circle cx="130" cy="195" r="6" class="body-region" data-region-id="ifp5-derecha" data-type="articulation" />
+
+                                    <!-- Etiqueta IFP -->
+                                    <text x="80" y="180" text-anchor="middle" font-size="9" fill="#666">IFP</text>
+
+                                    <!-- Líneas de dedos -->
+                                    <line x1="40" y1="158" x2="40" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="65" y1="158" x2="65" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="90" y1="158" x2="90" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="115" y1="158" x2="115" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="130" y1="162" x2="130" y2="189" stroke="#ccc" stroke-width="1" />
+
+                                    <!-- Números de dedos -->
+                                    <text x="40" y="215" text-anchor="middle" font-size="10" fill="#888">5</text>
+                                    <text x="65" y="215" text-anchor="middle" font-size="10" fill="#888">4</text>
+                                    <text x="90" y="215" text-anchor="middle" font-size="10" fill="#888">3</text>
+                                    <text x="115" y="215" text-anchor="middle" font-size="10" fill="#888">2</text>
+                                    <text x="130" y="215" text-anchor="middle" font-size="12" fill="#d9534f" font-weight="bold">P</text>
+
+                                    <!-- Dactilitis - Dedos Mano Derecha -->
+                                    <rect class="body-region" data-region-id="dactilitis-dedo1-mano-derecha" data-type="dactylitis" x="36" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo2-mano-derecha" data-type="dactylitis" x="61" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo3-mano-derecha" data-type="dactylitis" x="86" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo4-mano-derecha" data-type="dactylitis" x="111" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo5-mano-derecha" data-type="dactylitis" x="126" y="225" width="8" height="35" rx="3" />
+
+                                    <!-- Etiqueta Dactilitis -->
+                                    <text x="80" y="280" text-anchor="middle" font-size="9" fill="#666">Dactilitis</text>
+                                </g>
+
+                                <!-- MANOS AMPLIADAS - Mano Izquierda -->
+                                <g id="mano-izquierda">
+                                    <!-- Contorno de la mano -->
+                                    <rect x="460" y="120" width="120" height="180" rx="10" stroke="#aaa" stroke-width="1" fill="#f9f9f9" opacity="0.5" />
+                                    <text x="520" y="110" text-anchor="middle" font-size="12" fill="#555" font-weight="bold">Mano Izquierda</text>
+
+                                    <!-- MCF Izquierda -->
+                                    <circle cx="470" cy="155" r="7" class="body-region" data-region-id="mcf5-izquierda" data-type="articulation" />
+                                    <circle cx="485" cy="150" r="8" class="body-region" data-region-id="mcf4-izquierda" data-type="articulation" />
+                                    <circle cx="510" cy="150" r="8" class="body-region" data-region-id="mcf3-izquierda" data-type="articulation" />
+                                    <circle cx="535" cy="150" r="8" class="body-region" data-region-id="mcf2-izquierda" data-type="articulation" />
+                                    <circle cx="560" cy="150" r="8" class="body-region" data-region-id="mcf1-izquierda" data-type="articulation" />
+
+                                    <!-- Etiqueta MCF -->
+                                    <text x="520" y="140" text-anchor="middle" font-size="9" fill="#666">MCF</text>
+
+                                    <!-- IFP Izquierda -->
+                                    <circle cx="470" cy="195" r="6" class="body-region" data-region-id="ifp5-izquierda" data-type="articulation" />
+                                    <circle cx="485" cy="190" r="7" class="body-region" data-region-id="ifp4-izquierda" data-type="articulation" />
+                                    <circle cx="510" cy="190" r="7" class="body-region" data-region-id="ifp3-izquierda" data-type="articulation" />
+                                    <circle cx="535" cy="190" r="7" class="body-region" data-region-id="ifp2-izquierda" data-type="articulation" />
+                                    <circle cx="560" cy="190" r="7" class="body-region" data-region-id="ifp1-izquierda" data-type="articulation" />
+
+                                    <!-- Etiqueta IFP -->
+                                    <text x="520" y="180" text-anchor="middle" font-size="9" fill="#666">IFP</text>
+
+                                    <!-- Líneas de dedos -->
+                                    <line x1="470" y1="162" x2="470" y2="189" stroke="#ccc" stroke-width="1" />
+                                    <line x1="485" y1="158" x2="485" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="510" y1="158" x2="510" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="535" y1="158" x2="535" y2="183" stroke="#ccc" stroke-width="1" />
+                                    <line x1="560" y1="158" x2="560" y2="183" stroke="#ccc" stroke-width="1" />
+
+                                    <!-- Números de dedos -->
+                                    <text x="470" y="215" text-anchor="middle" font-size="12" fill="#d9534f" font-weight="bold">P</text>
+                                    <text x="485" y="215" text-anchor="middle" font-size="10" fill="#888">2</text>
+                                    <text x="510" y="215" text-anchor="middle" font-size="10" fill="#888">3</text>
+                                    <text x="535" y="215" text-anchor="middle" font-size="10" fill="#888">4</text>
+                                    <text x="560" y="215" text-anchor="middle" font-size="10" fill="#888">5</text>
+
+                                    <!-- Dactilitis - Dedos Mano Izquierda -->
+                                    <rect class="body-region" data-region-id="dactilitis-dedo5-mano-izquierda" data-type="dactylitis" x="466" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo4-mano-izquierda" data-type="dactylitis" x="481" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo3-mano-izquierda" data-type="dactylitis" x="506" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo2-mano-izquierda" data-type="dactylitis" x="531" y="225" width="8" height="35" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo1-mano-izquierda" data-type="dactylitis" x="556" y="225" width="8" height="35" rx="3" />
+
+                                    <!-- Etiqueta Dactilitis -->
+                                    <text x="520" y="280" text-anchor="middle" font-size="9" fill="#666">Dactilitis</text>
+                                </g>
+
+                                <!-- PIES AMPLIADOS - Pie Derecho -->
+                                <g id="pie-derecho">
+                                    <!-- Contorno del pie -->
+                                    <rect x="20" y="340" width="120" height="130" rx="10" stroke="#aaa" stroke-width="1" fill="#f9f9f9" opacity="0.5" />
+                                    <text x="80" y="330" text-anchor="middle" font-size="12" fill="#555" font-weight="bold">Pie Derecho</text>
+
+                                    <!-- Etiqueta Dactilitis de dedos -->
+                                    <text x="80" y="355" text-anchor="middle" font-size="9" fill="#666">Dactilitis de Dedos</text>
+
+                                    <!-- Dactilitis - Dedos Pie Derecho -->
+                                    <rect class="body-region" data-region-id="dactilitis-dedo1-pie-derecho" data-type="dactylitis" x="36" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo2-pie-derecho" data-type="dactylitis" x="56" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo3-pie-derecho" data-type="dactylitis" x="76" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo4-pie-derecho" data-type="dactylitis" x="96" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo5-pie-derecho" data-type="dactylitis" x="116" y="365" width="10" height="40" rx="3" />
+
+                                    <!-- Números de dedos -->
+                                    <text x="41" y="420" text-anchor="middle" font-size="10" fill="#888">5</text>
+                                    <text x="61" y="420" text-anchor="middle" font-size="10" fill="#888">4</text>
+                                    <text x="81" y="420" text-anchor="middle" font-size="10" fill="#888">3</text>
+                                    <text x="101" y="420" text-anchor="middle" font-size="10" fill="#888">2</text>
+                                    <text x="121" y="420" text-anchor="middle" font-size="12" fill="#d9534f" font-weight="bold">P</text>
+
+                                    <!-- Visualización simplificada del pie -->
+                                    <ellipse cx="80" cy="445" rx="35" ry="15" stroke="#bbb" stroke-width="1" fill="none" />
+                                    <text x="80" y="450" text-anchor="middle" font-size="8" fill="#999">Metatarso</text>
+                                </g>
+
+                                <!-- PIES AMPLIADOS - Pie Izquierdo -->
+                                <g id="pie-izquierdo">
+                                    <!-- Contorno del pie -->
+                                    <rect x="460" y="340" width="120" height="130" rx="10" stroke="#aaa" stroke-width="1" fill="#f9f9f9" opacity="0.5" />
+                                    <text x="520" y="330" text-anchor="middle" font-size="12" fill="#555" font-weight="bold">Pie Izquierdo</text>
+
+                                    <!-- Etiqueta Dactilitis de dedos -->
+                                    <text x="520" y="355" text-anchor="middle" font-size="9" fill="#666">Dactilitis de Dedos</text>
+
+                                    <!-- Dactilitis - Dedos Pie Izquierdo -->
+                                    <rect class="body-region" data-region-id="dactilitis-dedo5-pie-izquierdo" data-type="dactylitis" x="474" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo4-pie-izquierdo" data-type="dactylitis" x="494" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo3-pie-izquierdo" data-type="dactylitis" x="514" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo2-pie-izquierdo" data-type="dactylitis" x="534" y="365" width="10" height="40" rx="3" />
+                                    <rect class="body-region" data-region-id="dactilitis-dedo1-pie-izquierdo" data-type="dactylitis" x="554" y="365" width="10" height="40" rx="3" />
+
+                                    <!-- Números de dedos -->
+                                    <text x="479" y="420" text-anchor="middle" font-size="12" fill="#d9534f" font-weight="bold">P</text>
+                                    <text x="499" y="420" text-anchor="middle" font-size="10" fill="#888">2</text>
+                                    <text x="519" y="420" text-anchor="middle" font-size="10" fill="#888">3</text>
+                                    <text x="539" y="420" text-anchor="middle" font-size="10" fill="#888">4</text>
+                                    <text x="559" y="420" text-anchor="middle" font-size="10" fill="#888">5</text>
+
+                                    <!-- Visualización simplificada del pie -->
+                                    <ellipse cx="520" cy="445" rx="35" ry="15" stroke="#bbb" stroke-width="1" fill="none" />
+                                    <text x="520" y="450" text-anchor="middle" font-size="8" fill="#999">Metatarso</text>
+                                </g>
+                            </svg>
+                        </div>
+                        <button id="clearHomunculusBtn" class="add-btn clear-btn"><i class="fas fa-eraser"></i> Borrar Marcas</button>
+
+                        <div class="form-group dolor-periferico-description">
+                            <label for="descripcionDolorPeriferico">Descripción del Dolor Articular Periférico:</label>
+                            <textarea id="descripcionDolorPeriferico" rows="3" placeholder="Describir características del dolor (ritmo: inflamatorio/mecánico/mixto, intensidad, factores agravantes/atenuantes, etc.)"></textarea>
+                        </div>
+
+                        <!-- Leyenda de Numeración de Dedos -->
+                        <div class="digit-numbering-legend">
+                            <div class="legend-title"><i class="fas fa-info-circle"></i> Numeración de Dedos (Manos y Pies)</div>
+                            <div class="legend-content">
+                                <div class="legend-item">
+                                    <span class="legend-number legend-p">P</span> = <strong>Pulgar</strong>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-number">5</span> = <strong>Meñique</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metrologia-container espa-aps-only" id="metrologiaSection" style="display: none;">
+                        <h4>Metrología</h4>
+                        <p class="info-note metrologia-note aps-only" id="metrologiaNote" style="display: none;"><i class="fas fa-info-circle"></i> Solo si presenta clínica axial</p>
+                        <h5 class="metrologia-subtitle">Columna Lumbar</h5>
+                        <div class="form-group">
+                            <label for="schober">Schöber (cm):</label>
+                            <input type="number" id="schober" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="distanciaIntermaleolar">Distancia Intermaleolar (cm):</label>
+                            <input type="number" id="distanciaIntermaleolar" step="0.1">
+                        </div>
+
+                        <h5 class="metrologia-subtitle">Columna Cervical</h5>
+                        <div class="form-group">
+                            <label for="rotacionCervical">Rotación Cervical Activa (º):</label>
+                            <input type="number" id="rotacionCervical">
+                        </div>
+                        <div class="form-group">
+                            <label for="flexionCervical">Flexión Cervical (Mentón-Esternón, cm):</label>
+                            <input type="number" id="flexionCervical" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="distanciaOP">Distancia Occipucio-Pared (cm):</label>
+                            <input type="number" id="distanciaOP" step="0.1">
+                        </div>
+
+                        <h5 class="metrologia-subtitle">Columna Dorsal</h5>
+                        <div class="form-group">
+                            <label for="distanciaTP">Distancia Trago-Pared (cm):</label>
+                            <input type="number" id="distanciaTP" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="expansionToracica">Expansión Torácica (cm):</label>
+                            <input type="number" id="expansionToracica" step="0.1">
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="post-homunculus-stack">
+                    <h3 class="entesitis-title espa-only" id="entesitisTitle" style="display: none;">Entesitis</h3>
+                    <div class="entesitis-section espa-only" id="entesitisSection" style="display: none;">
+                        <div class="entesitis-grid">
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="aquiles-der"> Aquiles Derecho</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="aquiles-izq"> Aquiles Izquierdo</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="fascia-der"> Fascia Plantar Derecha</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="fascia-izq"> Fascia Plantar Izquierda</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="epicondilo-lat-der"> Epicondilo Lateral Derecho</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="epicondilo-lat-izq"> Epicondilo Lateral Izquierdo</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="epicondilo-med-der"> Epicondilo Medial Derecho</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="epicondilo-med-izq"> Epicondilo Medial Izquierdo</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="trocanter-der"> Trocanter Mayor Derecho</label>
+                            </div>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" name="entesitis" value="trocanter-izq"> Trocanter Mayor Izquierdo</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="otrasEntesitis">Otras Localizaciones de Entesitis:</label>
+                            <textarea id="otrasEntesitis" rows="2" placeholder="Especificar otras localizaciones de entesitis..."></textarea>
+                        </div>
+                    </div>
+
+                        <!-- LEI (Leeds Enthesitis Index) - SOLO APs -->
+                        <div class="lei-section aps-only" id="leiSection" style="display: none;">
+                            <h4><i class="fas fa-hand-point-right"></i> Leeds Enthesitis Index (LEI)</h4>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Marcar cada sitio con sensibilidad a la palpación. Score 0-6.</p>
+
+                            <div class="lei-grid">
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="lei-point" data-site="epicondilo-lat-der"> Epicondilo Lateral Derecho</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="lei-point" data-site="epicondilo-lat-izq"> Epicondilo Lateral Izquierdo</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="lei-point" data-site="condilo-med-der"> Condilo Femoral Medial Derecho</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="lei-point" data-site="condilo-med-izq"> Condilo Femoral Medial Izquierdo</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="lei-point" data-site="aquiles-der"> Inserción Tendón Aquiles Derecho</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="lei-point" data-site="aquiles-izq"> Inserción Tendón Aquiles Izquierdo</label>
+                                </div>
+                            </div>
+
+                            <div class="lei-resultado-box">
+                                <span class="lei-resultado-label">LEI Total:</span>
+                                <span class="lei-resultado-score" id="leiTotal">0</span>
+                                <span class="lei-resultado-max">/ 6</span>
+                            </div>
+                        </div>
+
+                        <!-- Evaluación de Psoriasis - SOLO APs -->
+                        <div class="psoriasis-assessment-section aps-only" id="psoriasisSection" style="display: none;">
+                            <h4><i class="fas fa-notes-medical"></i> Evaluación Cutánea de Psoriasis</h4>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Para MDA se requiere PASI ≤ 1 o BSA ≤ 3%</p>
+
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="pasiValue">PASI Score (0-72):</label>
+                                    <input type="number" id="pasiValue" min="0" max="72" step="0.1" placeholder="Opcional">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bsaValue">BSA - Body Surface Area (%):</label>
+                                    <input type="number" id="bsaValue" min="0" max="100" step="1" placeholder="Opcional">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="descripcionPsoriasis">Descripción de Afectación Cutánea:</label>
+                                <textarea id="descripcionPsoriasis" rows="3" placeholder="Describir localización, tipo de lesiones, y severidad..."></textarea>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-section">
+            <button class="collapsible-header">
+                <span class="header-icon-text"><i class="fas fa-vials"></i> Pruebas Complementarias</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div class="collapsible-content">
+                <div class="pruebas-apartado">
+                    <h5><i class="fas fa-flask"></i> Analítica Sanguínea</h5>
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="pcrValue">PCR (mg/L):</label>
+                            <input type="number" id="pcrValue" min="0" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="vsgValue">VSG (mm/h):</label>
+                            <input type="number" id="vsgValue" min="0" step="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="otrosHallazgosAnalitica">Otros Hallazgos (Analítica):</label>
+                        <textarea id="otrosHallazgosAnalitica" rows="3" placeholder="Describir otros hallazgos relevantes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pruebas-apartado">
+                    <h5><i class="fas fa-x-ray"></i> Radiografía</h5>
+                    <div class="form-group">
+                        <label for="hallazgosRadiografia">Hallazgos Radiográficos:</label>
+                        <textarea id="hallazgosRadiografia" rows="4" placeholder="Describir hallazgos radiográficos..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pruebas-apartado">
+                    <h5><i class="fas fa-magnet"></i> RMN (Resonancia Magnética Nuclear)</h5>
+                    <div class="form-group">
+                        <label for="hallazgosRMN">Hallazgos RMN:</label>
+                        <textarea id="hallazgosRMN" rows="4" placeholder="Describir hallazgos en RMN..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-section">
+            <button class="collapsible-header">
+                <span class="header-icon-text"><i class="fas fa-chart-line"></i> Índices de Actividad de la Enfermedad</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div class="collapsible-content">
+                <!-- EVAs y Dolor Nocturno (usados por múltiples índices) -->
+                <div class="indices-apartado">
+                    <h5><i class="fas fa-tachometer-alt"></i> Escalas Visuales Análogas (EVA)</h5>
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="evaGlobal">EVA Global del Paciente (0-10):</label>
+                            <input type="number" id="evaGlobal" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaDolor">EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolor" min="0" max="10" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-group-checkbox">
+                        <label><input type="checkbox" id="dolorNocturno"> Dolor Nocturno</label>
+                    </div>
+                </div>
+
+                <div class="indices-apartado espa-only" id="basdaiSection" style="display: none;">
+                    <h5><i class="fas fa-calculator"></i> BASDAI (Bath Ankylosing Spondylitis Disease Activity Index)</h5>
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="basdaiP1">P1: Fatiga (0-10):</label>
+                            <input type="number" id="basdaiP1" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="basdaiP2">P2: Dolor Axial (0-10):</label>
+                            <input type="number" id="basdaiP2" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="basdaiP3">P3: Dolor Articular Periférico (0-10):</label>
+                            <input type="number" id="basdaiP3" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="basdaiP4">P4: Dolor Entesítico (0-10):</label>
+                            <input type="number" id="basdaiP4" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="basdaiP5">P5: Rigidez Matutina - Nivel (0-10):</label>
+                            <input type="number" id="basdaiP5" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="basdaiP6">P6: Rigidez Matutina - Duración (horas):</label>
+                            <input type="number" id="basdaiP6" min="0" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="basdaiResult">Resultado BASDAI:</label>
+                        <input type="text" id="basdaiResult" readonly class="indice-resultado">
+                    </div>
+                </div>
+
+                <div class="indices-apartado espa-aps-only" id="asdasSection" style="display: none;">
+                    <h5><i class="fas fa-heartbeat"></i> ASDAS-CRP (Ankylosing Spondylitis Disease Activity Score)</h5>
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="asdasDolorEspalda">Dolor de Espalda (EVA 0-10):</label>
+                            <input type="number" id="asdasDolorEspalda" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="asdasDuracionRigidez">Duración Rigidez Matutina (EVA 0-10):</label>
+                            <input type="number" id="asdasDuracionRigidez" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="asdasEvaGlobal">EVA Global del Paciente (0-10):</label>
+                            <input type="number" id="asdasEvaGlobal" min="0" max="10" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="asdasNAD">NAD (Articulaciones Dolorosas):</label>
+                            <input type="number" id="asdasNAD" readonly class="asdas-readonly-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="asdasNAT">NAT (Articulaciones Tumefactas):</label>
+                            <input type="number" id="asdasNAT" readonly class="asdas-readonly-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="asdasPCR">PCR (mg/L):</label>
+                            <input type="number" id="asdasPCR" readonly class="asdas-readonly-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="asdasCrpResult">Resultado ASDAS-CRP:</label>
+                        <input type="text" id="asdasCrpResult" readonly class="indice-resultado">
+                    </div>
+                </div>
+
+                <div class="indices-apartado">
+                    <h5><i class="fas fa-heartbeat"></i> ASDAS-ESR (con VSG)</h5>
+                    <p class="info-note"><i class="fas fa-info-circle"></i> Utiliza los mismos parámetros que ASDAS-CRP, pero con VSG en lugar de PCR.</p>
+                    <div class="form-group-grid">
+                        <div class="form-group">
+                            <label for="asdasVSG">VSG (mm/h):</label>
+                            <input type="number" id="asdasVSG" readonly class="asdas-readonly-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="asdasEsrResult">Resultado ASDAS-ESR:</label>
+                        <input type="text" id="asdasEsrResult" readonly class="indice-resultado">
+                    </div>
+                </div>
+
+        <div class="collapsible-section aps-only" id="haqSection" style="display: none;">
+            <button class="collapsible-header">
+                <span class="header-icon-text"><i class="fas fa-tasks"></i> HAQ-DI (Health Assessment Questionnaire)</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div class="collapsible-content">
+                <p class="info-note"><i class="fas fa-info-circle"></i> Seleccione el nivel de dificultad para cada actividad. Score 0-3 (0=sin dificultad, 3=incapaz)</p>
+
+                <div class="haq-categories">
+                    <!-- Categoría 1: Vestirse y Arreglarse -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">1. Vestirse y Arreglarse</label>
+                        <select class="haq-score" data-category="1">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="1"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 2: Levantarse -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">2. Levantarse</label>
+                        <select class="haq-score" data-category="2">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="2"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 3: Comer -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">3. Comer</label>
+                        <select class="haq-score" data-category="3">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="3"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 4: Caminar -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">4. Caminar</label>
+                        <select class="haq-score" data-category="4">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="4"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 5: Higiene -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">5. Higiene Personal</label>
+                        <select class="haq-score" data-category="5">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="5"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 6: Alcanzar -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">6. Alcanzar Objetos</label>
+                        <select class="haq-score" data-category="6">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="6"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 7: Agarrar -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">7. Agarrar y Abrir Objetos</label>
+                        <select class="haq-score" data-category="7">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="7"> Usa ayudas o asistencia</label>
+                    </div>
+
+                    <!-- Categoría 8: Actividades -->
+                    <div class="haq-category">
+                        <label class="haq-category-title">8. Actividades Cotidianas</label>
+                        <select class="haq-score" data-category="8">
+                            <option value="0">Sin dificultad (0)</option>
+                            <option value="1">Con alguna dificultad (1)</option>
+                            <option value="2">Con mucha dificultad (2)</option>
+                            <option value="3">Incapaz de hacer (3)</option>
+                        </select>
+                        <label class="haq-aids"><input type="checkbox" class="haq-aid" data-category="8"> Usa ayudas o asistencia</label>
+                    </div>
+                </div>
+
+                <div class="haq-resultado-box">
+                    <span class="haq-resultado-label">HAQ-DI Total:</span>
+                    <span class="haq-resultado-score" id="haqTotal">0.00</span>
+                    <span class="haq-resultado-interpretacion">(0-1: Leve | 1-2: Moderado | 2-3: Severo)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- MDA (MINIMAL DISEASE ACTIVITY) - SOLO APs -->
+                <div class="indices-apartado aps-only" id="mdaSection" style="display: none;">
+                    <h5><i class="fas fa-bullseye"></i> MDA (Minimal Disease Activity)</h5>
+                    <p class="info-note"><i class="fas fa-info-circle"></i> El paciente alcanza MDA al cumplir ≥5 de los 7 criterios siguientes:</p>
+
+                    <div class="mda-criterios-grid">
+                        <div class="mda-criterio" id="mdaCriterio1">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">NAT ≤ 1:</span>
+                            <span class="mda-criterio-valor" id="mdaNAT">0</span>
+                            <span class="mda-criterio-status" id="mdaStatus1">✗</span>
+                        </div>
+
+                        <div class="mda-criterio" id="mdaCriterio2">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">NAD ≤ 1:</span>
+                            <span class="mda-criterio-valor" id="mdaNAD">0</span>
+                            <span class="mda-criterio-status" id="mdaStatus2">✗</span>
+                        </div>
+
+                        <div class="mda-criterio" id="mdaCriterio3">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">PASI ≤ 1 o BSA ≤ 3%:</span>
+                            <span class="mda-criterio-valor" id="mdaPsoriasis">-</span>
+                            <span class="mda-criterio-status" id="mdaStatus3">✗</span>
+                        </div>
+
+                        <div class="mda-criterio" id="mdaCriterio4">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">LEI ≤ 1:</span>
+                            <span class="mda-criterio-valor" id="mdaLEI">0</span>
+                            <span class="mda-criterio-status" id="mdaStatus4">✗</span>
+                        </div>
+
+                        <div class="mda-criterio" id="mdaCriterio5">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">EVA Dolor ≤ 15mm:</span>
+                            <span class="mda-criterio-valor" id="mdaEvaDolor">0</span>
+                            <span class="mda-criterio-status" id="mdaStatus5">✗</span>
+                        </div>
+
+                        <div class="mda-criterio" id="mdaCriterio6">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">EVA Global ≤ 20mm:</span>
+                            <span class="mda-criterio-valor" id="mdaEvaGlobal">0</span>
+                            <span class="mda-criterio-status" id="mdaStatus6">✗</span>
+                        </div>
+
+                        <div class="mda-criterio" id="mdaCriterio7">
+                            <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
+                            <span class="mda-criterio-text">HAQ ≤ 0.5:</span>
+                            <span class="mda-criterio-valor" id="mdaHAQ">0.00</span>
+                            <span class="mda-criterio-status" id="mdaStatus7">✗</span>
+                        </div>
+                    </div>
+
+                    <div class="mda-resultado-box">
+                        <div class="mda-resultado-content">
+                            <span class="mda-resultado-label">Criterios Cumplidos:</span>
+                            <span class="mda-resultado-score"><span id="mdaCumplidos">0</span> / 7</span>
+                        </div>
+                        <div class="mda-resultado-status" id="mdaResultadoFinal">
+                            MDA NO ALCANZADO
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAPID3 - SOLO APs -->
+                <div class="indices-apartado aps-only" id="rapid3Section" style="display: none;">
+                    <h5><i class="fas fa-tachometer-alt"></i> RAPID3 (Routine Assessment of Patient Index Data 3)</h5>
+                    <p class="info-note"><i class="fas fa-info-circle"></i> Score 0-30: Función física + EVA Dolor + EVA Global (auto-calculado)</p>
+
+                    <div class="rapid3-components">
+                        <div class="rapid3-component">
+                            <span class="rapid3-component-label">Función Física (HAQ adaptado 0-10):</span>
+                            <span class="rapid3-component-valor" id="rapid3Funcion">0.0</span>
+                        </div>
+                        <div class="rapid3-component">
+                            <span class="rapid3-component-label">EVA Dolor (0-10):</span>
+                            <span class="rapid3-component-valor" id="rapid3Dolor">0.0</span>
+                        </div>
+                        <div class="rapid3-component">
+                            <span class="rapid3-component-label">EVA Global Paciente (0-10):</span>
+                            <span class="rapid3-component-valor" id="rapid3Global">0.0</span>
+                        </div>
+                    </div>
+
+                    <div class="rapid3-resultado-box">
+                        <div class="rapid3-resultado-content">
+                            <span class="rapid3-resultado-label">RAPID3 Total:</span>
+                            <span class="rapid3-resultado-score" id="rapid3Total">0.0</span>
+                        </div>
+                        <div class="rapid3-resultado-categoria" id="rapid3Categoria">
+                            Remisión (≤3)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HAQ-DI COMPLETO (8 CATEGORÍAS) - SOLO APs -->
+        <div class="collapsible-section">
+            <button class="collapsible-header">
+                <span class="header-icon-text"><i class="fas fa-pills"></i> Tratamiento y Plan</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div class="collapsible-content">
+                <!-- Switch Continuar/Cambiar Tratamiento -->
+                <div class="treatment-switch-container">
+                    <label class="group-label">Decisión Terapéutica:</label>
+                    <div class="switch-buttons-group">
+                        <button type="button" class="switch-btn active" id="btnContinuarTratamiento" data-option="continuar">
+                            <i class="fas fa-check-circle"></i> Continuar Tratamiento
+                        </button>
+                        <button type="button" class="switch-btn" id="btnCambiarTratamiento" data-option="cambiar">
+                            <i class="fas fa-exchange-alt"></i> Cambiar Tratamiento
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contenido para CONTINUAR TRATAMIENTO (visible por defecto) -->
+                <div id="continuarTratamientoContent" class="treatment-content-section">
+                    <div class="form-group">
+                        <label for="adherencia">Adherencia:</label>
+                        <select id="adherencia">
+                            <option value="">Seleccionar</option>
+                            <option value="buena">Buena</option>
+                            <option value="regular">Regular</option>
+                            <option value="mala">Mala</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ajusteTerapeutico">Ajuste Terapéutico:</label>
+                        <textarea id="ajusteTerapeutico" rows="4" placeholder="Describir ajustes en dosis, frecuencia u otros aspectos del tratamiento actual..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Contenido para CAMBIAR TRATAMIENTO (oculto por defecto) -->
+                <div id="cambioTratamientoContent" class="treatment-content-section conditional-field-hidden">
+                    <div class="form-group">
+                        <label for="motivoCambio">Motivo del Cambio:</label>
+                        <textarea id="motivoCambio" rows="3" placeholder="Describir el motivo del cambio de tratamiento..."></textarea>
+                    </div>
+
+                    <div class="form-group-checkbox">
+                        <label><input type="checkbox" id="efectosAdversos"> Efectos Adversos</label>
+                    </div>
+                    <div id="descripcionEfectosContainer" class="conditional-field-hidden">
+                        <div class="form-group">
+                            <label for="descripcionEfectos">Descripción de Efectos Adversos:</label>
+                            <textarea id="descripcionEfectos" rows="3" placeholder="Describir los efectos adversos..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="treatment-panel" id="cambioTratamientoPanel">
+                        <div class="treatment-grid">
+                            <div class="treatment-line">
+                                <div class="treatment-label">Tratamientos sistémicos</div>
+                                <div class="treatment-controls">
+                                    <select id="cambioSistemicoSelect" class="treatment-select">
+                                        <!-- Poblado dinámicamente desde la base de datos -->
+                                    </select>
+                                    <input type="text" id="cambioSistemicoDose" class="treatment-dose-input" placeholder="Dosis / frecuencia" disabled>
+                                </div>
+                            </div>
+                            <div class="treatment-line">
+                                <div class="treatment-label">FAMEs</div>
+                                <div class="treatment-controls">
+                                    <select id="cambioFameSelect" class="treatment-select">
+                                        <!-- Poblado dinámicamente desde la base de datos -->
+                                    </select>
+                                    <input type="text" id="cambioFameDose" class="treatment-dose-input" placeholder="Dosis / frecuencia" disabled>
+                                </div>
+                            </div>
+                            <div class="treatment-line">
+                                <div class="treatment-label">Biológicos</div>
+                                <div class="treatment-controls">
+                                    <select id="cambioBiologicoSelect" class="treatment-select">
+                                        <!-- Poblado dinámicamente desde la base de datos -->
+                                    </select>
+                                    <input type="text" id="cambioBiologicoDose" class="treatment-dose-input" placeholder="Dosis / frecuencia" disabled>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos comunes a ambas opciones -->
+                <div class="plan-next-review-card">
+                    <label for="fechaProximaRevision">Fecha próxima revisión</label>
+                    <input type="date" id="fechaProximaRevision" class="plan-date-input">
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-section">
+            <button class="collapsible-header">
+                <span class="header-icon-text"><i class="fas fa-comment-medical"></i> Comentarios Adicionales</span>
+                <i class="fas fa-chevron-down arrow"></i>
+            </button>
+            <div class="collapsible-content">
+                <div class="form-group">
+                    <label for="comentariosAdicionales">Observaciones y Comentarios:</label>
+                    <textarea id="comentariosAdicionales" rows="6" placeholder="Espacio para anotaciones clínicas adicionales, observaciones relevantes, evolución del paciente, o cualquier información complementaria..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button id="btnExportarTXT" class="action-btn primary-btn"><i class="fas fa-file-alt"></i> Convertir TXT (Historia Clínica)</button>
+            <button id="btnEstructurarCSV" class="action-btn success-btn"><i class="fas fa-file-csv"></i> Estructurar CSV (Excel)</button>
+            <button class="action-btn warning-btn" onclick="window.location.href='index.html'"><i class="fas fa-user-plus"></i> Nuevo Paciente</button>
+        </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Cargar SheetJS para manejo de Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- MÓDULOS HUBTOOLS - ORDEN CRÍTICO: hubTools.js PRIMERO -->
+    <script src="modules/hubTools.js"></script>
+    <script src="modules/utils.js"></script>
+    <script src="modules/mockPatients.js"></script>
+    <script src="modules/scoreCalculators.js"></script>
+    <script src="modules/homunculus.js"></script>
+    <script src="modules/dataManager.js"></script>
+    <script src="modules/exportManager.js"></script>
+    <script src="modules/formController.js"></script>
+
+    <!-- Scripts globales y coordinadores -->
+    <script src="script.js"></script>
+    <script src="scripts/script_seguimiento.js"></script>
+</body>
+</html>

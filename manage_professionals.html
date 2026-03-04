@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico - Gestionar Profesionales</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="modules/hubTools.js"></script>
+    <script src="modules/utils.js"></script>
+    <script src="modules/mockPatients.js"></script>
+    <script src="modules/dataManager.js"></script>
+    <script src="modules/exportManager.js"></script>
+    <script src="script.js"></script>
+    <script src="scripts/script_manage_professionals.js"></script>
+</head>
+<body>
+    <div class="hub-shell">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle"><span class="logo-text">HC</span></div>
+                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
+            </div>
+
+            <div class="user-block">
+                <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
+                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+
+            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
+                <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
+                <select id="professionalSelect"></select>
+                <div class="selector-actions">
+                    <button type="button" id="confirmProfessionalBtn" class="selector-btn primary">Aplicar</button>
+                    <button type="button" id="cancelProfessionalBtn" class="selector-btn">Cancelar</button>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." list="patientIds" autocomplete="off">
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <datalist id="patientIds"></datalist>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Consulta</h3>
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Nueva Visita</a></li>
+                    <li><a href="seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Gestión</h3>
+                <ul class="nav-list">
+                    <li><a href="estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="manage_professionals.html" class="nav-link active" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">v. 1.0.0</div>
+        </aside>
+        <main class="main-content">
+            <section class="dashboard-card">
+                <h2>Gestionar Profesionales</h2>
+                <form id="addForm">
+                    <input type="text" id="professionalName" placeholder="Nombre del profesional" required>
+                    <input type="text" id="professionalRole" placeholder="Cargo" required>
+                    <button type="submit">Añadir</button>
+                </form>
+                <table id="listTable">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Cargo</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listBody">
+                    </tbody>
+                </table>
+                <button id="copyToClipboardBtn" class="button primary-button">Copiar Lista al Portapapeles</button>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

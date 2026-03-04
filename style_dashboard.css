@@ -1,0 +1,1083 @@
+/* ============================================
+   DASHBOARD DE PACIENTE INDIVIDUAL - PREMIUM
+   Hub Clínico Reumatología v2.0
+   ============================================ */
+
+/* === VARIABLES CSS - SISTEMA DE COLORES === */
+:root {
+    /* Colores de Estado Clínico (semánticos) */
+    --color-remission: #10B981;
+    --color-remission-light: #D1FAE5;
+    --color-remission-dark: #059669;
+
+    --color-low-activity: #3B82F6;
+    --color-low-activity-light: #DBEAFE;
+    --color-low-activity-dark: #2563EB;
+
+    --color-moderate: #F59E0B;
+    --color-moderate-light: #FEF3C7;
+    --color-moderate-dark: #D97706;
+
+    --color-high-activity: #EF4444;
+    --color-high-activity-light: #FEE2E2;
+    --color-high-activity-dark: #DC2626;
+
+    /* Colores de Tratamiento */
+    --color-biologic: #8B5CF6;
+    --color-biologic-light: #EDE9FE;
+    --color-fame: #06B6D4;
+    --color-fame-light: #CFFAFE;
+    --color-systemic: #EC4899;
+    --color-systemic-light: #FCE7F3;
+    --color-other-treatment: #6B7280;
+    --color-other-treatment-light: #F3F4F6;
+
+    /* Colores de UI */
+    --color-primary: #2563EB;
+    --color-primary-hover: #1D4ED8;
+    --color-primary-light: #EFF6FF;
+    --color-secondary: #64748B;
+    --color-secondary-hover: #475569;
+    --color-secondary-light: #F1F5F9;
+
+    /* Fondos y Superficies */
+    --color-background: #F8FAFC;
+    --color-card: #FFFFFF;
+    --color-card-hover: #FAFBFC;
+    --color-border: #E2E8F0;
+    --color-border-light: #F1F5F9;
+
+    /* Texto */
+    --color-text: #1E293B;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94A3B8;
+
+    /* Estados */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-error: #EF4444;
+    --color-info: #3B82F6;
+
+    /* Sombras */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+    /* Transiciones */
+    --transition-fast: 150ms ease;
+    --transition-normal: 250ms ease;
+    --transition-slow: 350ms ease;
+
+    /* Bordes */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+
+    /* Espaciado */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-2xl: 48px;
+}
+
+/* === LAYOUT PRINCIPAL === */
+.main-content.dashboard-paciente {
+    padding: var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    background-color: var(--color-background);
+    min-height: 100vh;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+}
+
+/* === HEADER PREMIUM DEL PACIENTE === */
+.patient-header-card {
+    background: linear-gradient(135deg, var(--color-card) 0%, var(--color-background) 100%);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border-light);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
+}
+
+.patient-header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.patient-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-md);
+}
+
+.patient-avatar i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.patient-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.patient-id-badge {
+    display: inline-block;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: 0.5px;
+}
+
+.patient-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0 0 var(--spacing-sm) 0;
+    line-height: 1.2;
+}
+
+.patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+}
+
+.patient-meta span {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.patient-meta i {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.patient-status-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 10px 20px;
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--color-remission-light);
+    color: var(--color-remission-dark);
+    box-shadow: var(--shadow-sm);
+}
+
+.patient-status-badge .status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: var(--color-remission);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.patient-status-badge--active {
+    background: var(--color-high-activity-light);
+    color: var(--color-high-activity-dark);
+}
+
+.patient-status-badge--active .status-dot {
+    background: var(--color-high-activity);
+}
+
+.patient-status-badge--moderate {
+    background: var(--color-moderate-light);
+    color: var(--color-moderate-dark);
+}
+
+.patient-status-badge--moderate .status-dot {
+    background: var(--color-moderate);
+}
+
+.patient-status-badge--low {
+    background: var(--color-low-activity-light);
+    color: var(--color-low-activity-dark);
+}
+
+.patient-status-badge--low .status-dot {
+    background: var(--color-low-activity);
+}
+
+.patient-header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--color-border-light);
+    flex-wrap: wrap;
+}
+
+/* === BOTONES === */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.btn-secondary {
+    background: var(--color-secondary-light);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover {
+    background: var(--color-border);
+    border-color: var(--color-secondary);
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+}
+
+/* === KPIs DEL PACIENTE === */
+.patient-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.kpi-card {
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-lg);
+    text-align: center;
+    border: 1px solid var(--color-border-light);
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-secondary);
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.kpi-card--success::before { background: var(--color-remission); }
+.kpi-card--warning::before { background: var(--color-moderate); }
+.kpi-card--danger::before { background: var(--color-high-activity); }
+.kpi-card--info::before { background: var(--color-low-activity); }
+.kpi-card--biologic::before { background: var(--color-biologic); }
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto var(--spacing-sm);
+    background: var(--color-secondary-light);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--color-secondary);
+}
+
+.kpi-card--success .kpi-icon {
+    background: var(--color-remission-light);
+    color: var(--color-remission);
+}
+
+.kpi-card--warning .kpi-icon {
+    background: var(--color-moderate-light);
+    color: var(--color-moderate);
+}
+
+.kpi-card--danger .kpi-icon {
+    background: var(--color-high-activity-light);
+    color: var(--color-high-activity);
+}
+
+.kpi-card--info .kpi-icon {
+    background: var(--color-low-activity-light);
+    color: var(--color-low-activity);
+}
+
+.kpi-card--biologic .kpi-icon {
+    background: var(--color-biologic-light);
+    color: var(--color-biologic);
+}
+
+.kpi-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.kpi-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-top: var(--spacing-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kpi-status {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    margin-top: var(--spacing-sm);
+    background: var(--color-secondary-light);
+    color: var(--color-secondary);
+}
+
+.kpi-card--success .kpi-status {
+    background: var(--color-remission-light);
+    color: var(--color-remission-dark);
+}
+
+.kpi-card--warning .kpi-status {
+    background: var(--color-moderate-light);
+    color: var(--color-moderate-dark);
+}
+
+.kpi-card--danger .kpi-status {
+    background: var(--color-high-activity-light);
+    color: var(--color-high-activity-dark);
+}
+
+/* === GRID DE TARJETAS === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+/* === TARJETAS PREMIUM === */
+.dashboard-card {
+    background-color: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border-light);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--color-primary);
+}
+
+.dashboard-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+/* Variantes de tarjetas */
+.dashboard-card--clinical::before { background: var(--color-remission); }
+.dashboard-card--biomarkers::before { background: var(--color-info); }
+.dashboard-card--summary::before { background: var(--color-moderate); }
+.dashboard-card--treatment::before { background: var(--color-biologic); }
+.dashboard-card--history::before { background: var(--color-fame); }
+.dashboard-card--events::before { background: var(--color-high-activity); }
+.dashboard-card--chart::before { background: var(--color-primary); }
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.card-title i {
+    width: 32px;
+    height: 32px;
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.dashboard-card--clinical .card-title i {
+    background: var(--color-remission-light);
+    color: var(--color-remission);
+}
+
+.dashboard-card--biomarkers .card-title i {
+    background: var(--color-low-activity-light);
+    color: var(--color-low-activity);
+}
+
+.dashboard-card--summary .card-title i {
+    background: var(--color-moderate-light);
+    color: var(--color-moderate);
+}
+
+.dashboard-card--treatment .card-title i {
+    background: var(--color-biologic-light);
+    color: var(--color-biologic);
+}
+
+.dashboard-card--history .card-title i {
+    background: var(--color-fame-light);
+    color: var(--color-fame);
+}
+
+.dashboard-card--events .card-title i {
+    background: var(--color-high-activity-light);
+    color: var(--color-high-activity);
+}
+
+.card-content {
+    flex-grow: 1;
+}
+
+.card-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.card-content ul li {
+    padding: 8px 0;
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.card-content ul li:last-child {
+    border-bottom: none;
+}
+
+.card-content ul li strong {
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+/* === BIOMARCADORES === */
+.biomarker-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0 !important;
+    font-size: 0.95rem;
+}
+
+.biomarker-item i {
+    width: 28px;
+    height: 28px;
+    background: var(--color-secondary-light);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--spacing-sm);
+    font-size: 0.85rem;
+    color: var(--color-secondary);
+}
+
+.biomarker-item .positive {
+    color: var(--color-remission);
+    font-weight: 600;
+}
+
+.biomarker-item .positive ~ i,
+.biomarker-item:has(.positive) i {
+    background: var(--color-remission-light);
+    color: var(--color-remission);
+}
+
+.biomarker-item .negative {
+    color: var(--color-high-activity);
+    font-weight: 600;
+}
+
+.biomarker-item:has(.negative) i {
+    background: var(--color-high-activity-light);
+    color: var(--color-high-activity);
+}
+
+.biomarker-item .unknown {
+    color: var(--color-moderate);
+    font-weight: 500;
+}
+
+.biomarker-item:has(.unknown) i {
+    background: var(--color-moderate-light);
+    color: var(--color-moderate);
+}
+
+/* === TIMELINE === */
+.timeline {
+    position: relative;
+    margin: var(--spacing-md) 0;
+    padding-left: var(--spacing-lg);
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(180deg, var(--color-border) 0%, transparent 100%);
+    top: 0;
+    bottom: 0;
+    left: 6px;
+}
+
+.timeline-item {
+    margin-bottom: var(--spacing-lg);
+    position: relative;
+    padding-left: var(--spacing-lg);
+}
+
+.timeline-marker {
+    position: absolute;
+    top: 2px;
+    left: -18px;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+    border: 3px solid var(--color-card);
+    box-shadow: var(--shadow-sm);
+    z-index: 1;
+}
+
+.timeline-item.event-type-flare .timeline-marker {
+    background: var(--color-high-activity);
+}
+
+.timeline-item.event-type-remission .timeline-marker {
+    background: var(--color-remission);
+}
+
+.timeline-item.event-type-treatment .timeline-marker {
+    background: var(--color-biologic);
+}
+
+.timeline-item.event-type-adverse .timeline-marker {
+    background: var(--color-moderate);
+}
+
+.timeline-date {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin-bottom: 2px;
+    font-weight: 500;
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 2px;
+    font-size: 0.95rem;
+}
+
+.timeline-description {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+.empty-message {
+    color: var(--color-text-muted);
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-lg);
+}
+
+/* === CONTROLES DE GRÁFICOS === */
+.chart-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+    padding: var(--spacing-md);
+    background: var(--color-background);
+    border-radius: var(--radius-md);
+}
+
+.chart-controls label {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+}
+
+.chart-controls select {
+    padding: 8px 32px 8px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background-color: var(--color-card);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: all var(--transition-fast);
+}
+
+.chart-controls select:hover {
+    border-color: var(--color-primary);
+}
+
+.chart-controls select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.chart-controls input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+/* Tarjetas de gráficos */
+.dashboard-card:has(canvas) {
+    grid-column: span 2;
+    min-height: 480px;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-card:has(canvas) .card-title {
+    flex-shrink: 0;
+}
+
+.dashboard-card:has(canvas) .chart-controls {
+    flex-shrink: 0;
+}
+
+/* Contenedor del canvas - importante para Chart.js */
+.chart-container {
+    position: relative;
+    flex: 1;
+    min-height: 320px;
+    width: 100%;
+}
+
+.dashboard-card canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.empty-chart-message {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--spacing-2xl);
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.empty-chart-message::before {
+    content: '\f201';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 3rem;
+    color: var(--color-border);
+}
+
+/* === TABLA DE VISITAS === */
+.visits-table-card {
+    grid-column: 1 / -1;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.table-header .card-title {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.table-container {
+    overflow-x: auto;
+    margin: 0 calc(-1 * var(--spacing-lg));
+    padding: 0 var(--spacing-lg);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.data-table th {
+    background: var(--color-background);
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.data-table th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition-fast);
+}
+
+.data-table th[data-sort]:hover {
+    background: var(--color-border-light);
+}
+
+.data-table th i {
+    margin-left: var(--spacing-xs);
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+}
+
+.data-table th.sort-asc i::before { content: '\f0de'; }
+.data-table th.sort-desc i::before { content: '\f0dd'; }
+
+.data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border-light);
+    color: var(--color-text);
+}
+
+.data-table tbody tr {
+    transition: background var(--transition-fast);
+}
+
+.data-table tbody tr:hover {
+    background: var(--color-primary-light);
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: var(--color-background);
+}
+
+.data-table tbody tr:nth-child(even):hover {
+    background: var(--color-primary-light);
+}
+
+/* Paginación */
+.table-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) 0 0;
+    margin-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border-light);
+}
+
+.pagination-info {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.pagination-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.pagination-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.pagination-btn.active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+.pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* === ESTADOS === */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--color-text-muted);
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--color-border);
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-state h2 {
+    color: var(--color-text);
+    margin: 0 0 var(--spacing-sm);
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* Loading */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    z-index: 10;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: var(--radius-full);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Skeleton */
+.skeleton {
+    background: linear-gradient(90deg,
+        var(--color-border-light) 25%,
+        var(--color-background) 50%,
+        var(--color-border-light) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-sm);
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+    height: 16px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 60%;
+    margin-bottom: var(--spacing-md);
+}
+
+.skeleton-card {
+    height: 200px;
+}
+
+/* === UTILIDADES === */
+.hidden {
+    display: none !important;
+}
+
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+.text-info { color: var(--color-info); }
+
+/* === RESPONSIVE === */
+@media (max-width: 1024px) {
+    .dashboard-card:has(canvas) {
+        grid-column: span 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content.dashboard-paciente {
+        padding: var(--spacing-md);
+    }
+
+    .patient-header-card {
+        padding: var(--spacing-lg);
+    }
+
+    .patient-header-main {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .patient-avatar {
+        width: 64px;
+        height: 64px;
+    }
+
+    .patient-avatar i {
+        font-size: 2rem;
+    }
+
+    .patient-name {
+        font-size: 1.5rem;
+    }
+
+    .patient-meta {
+        justify-content: center;
+    }
+
+    .patient-header-actions {
+        justify-content: center;
+    }
+
+    .patient-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .chart-controls input[type="checkbox"] {
+        margin-top: var(--spacing-sm);
+    }
+
+    .table-pagination {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .visits-table-card {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .patient-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .kpi-card {
+        padding: var(--spacing-md);
+    }
+
+    .kpi-value {
+        font-size: 1.5rem;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

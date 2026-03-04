@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hub Clínico — Excel persistente</title>
+  <style>
+    :root { font-family: system-ui, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 24px; background:#f7f9fb; color:#101828; }
+    .wrap { max-width: 900px; margin:auto; }
+    h1 { margin:0 0 8px; font-size: 22px; }
+    .muted { color:#667085; margin:0 0 16px; }
+    .bar { display:flex; gap:12px; align-items: center; margin: 16px 0 12px; }
+    button {
+      padding:10px 14px; border:1px solid #d0d5dd; background:#fff; border-radius:10px; cursor:pointer;
+    }
+    button:hover { background:#f2f4f7; }
+    #status { font-size:14px; }
+    .ok { color:#0a7a28; }
+    .warn { color:#b54708; }
+    .err { color:#b42318; }
+    table { width:100%; border-collapse: collapse; background:#fff; border-radius:12px; overflow: hidden; }
+    th, td { border:1px solid #eceff3; padding:8px 10px; font-size:14px; }
+    th { background:#f8fafc; text-align:left; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; }
+    .hint { font-size:12px; color:#475467; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Hub Clínico — Vincular Excel una sola vez</h1>
+    <p class="muted">El archivo Excel queda “recordado” entre refrescos (F5). Solo se vuelve a pedir si cambias de archivo, se movió/renombró o caducó el permiso.</p>
+
+    <div class="card">
+      <div class="bar">
+        <button id="pickBtn">📂 Elegir Excel</button>
+        <button id="reloadBtn" title="Forzar relectura desde el handle guardado">🔄 Releer</button>
+        <span id="status" class="muted">Listo.</span>
+      </div>
+      <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" style="display:none" />
+      <div class="hint" id="compatHint"></div>
+    </div>
+
+    <h2>Vista previa (primeras filas de la primera hoja)</h2>
+    <div id="preview" class="card">
+      <div class="muted">Aún no hay datos cargados.</div>
+    </div>
+  </div>
+
+  <!-- SheetJS: expone window.XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- Lógica principal (módulo) -->
+  <script type="module">
+    // IndexedDB helper
+    import { set as idbSet, get as idbGet, del as idbDel } from 'https://cdn.skypack.dev/idb-keyval';
+
+    const KEY = 'excelFileHandle';
+    const pickBtn = document.getElementById('pickBtn');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const statusEl = document.getElementById('status');
+    const previewEl = document.getElementById('preview');
+    const compatHint = document.getElementById('compatHint');
+
+    // ---- Utilidades de UI ----
+    function setStatus(msg, cls='') {
+      statusEl.className = cls || 'muted';
+      statusEl.textContent = msg;
+    }
+
+    function renderPreview(rows) {
+      if (!rows || !rows.length) {
+        previewEl.innerHTML = '<div class="muted">El archivo no tiene filas o no se pudo leer la primera hoja.</div>';
+        return;
+      }
+      const cols = Object.keys(rows[0]);
+      const maxRows = Math.min(rows.length, 20); // preview acotada
+      let html = '<table><thead><tr>';
+      cols.forEach(c => html += `<th>${escapeHtml(c)}</th>`);
+      html += '</tr></thead><tbody>';
+      for (let i=0; i<maxRows; i++) {
+        html += '<tr>';
+        cols.forEach(c => html += `<td>${escapeHtml(String(rows[i][c] ?? ''))}</td>`);
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      previewEl.innerHTML = html;
+    }
+
+    function escapeHtml(s) { return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+    // ---- Persistencia recomendada ----
+    (async () => {
+      if (navigator.storage?.persist) {
+        try { await navigator.storage.persist(); } catch {}
+      }
+    })();
+
+    // ---- Carga desde handle (reutilizable tras F5) ----
+    async function loadFromHandle(handle) {
+      try {
+        // Verificación de permiso
+        const q = await handle.queryPermission?.({ mode: 'read' });
+        if (q === 'denied') {
+          const r = await handle.requestPermission?.({ mode: 'read' });
+          if (r !== 'granted') {
+            setStatus('Permiso denegado. Selecciona de nuevo el archivo.', 'warn');
+            return;
+          }
+        }
+        // Leer archivo
+        const file = await handle.getFile();
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const firstSheet = wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { defval: '' });
+        renderPreview(rows);
+        setStatus(`Archivo cargado: ${file.name} ✅ (${rows.length} filas)`, 'ok');
+      } catch (err) {
+        console.error(err);
+        // Si el handle es inválido (archivo movido/renombrado), borrar handle guardado
+        await idbDel(KEY);
+        setStatus('No se pudo abrir el archivo guardado. Puede que se haya movido o renombrado. Vuelve a seleccionarlo.', 'err');
+      }
+    }
+
+    // ---- Selección inicial con File System Access API ----
+    async function pickExcelFS() {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false,
+          types: [{
+            description: 'Excel/CSV',
+            accept: {
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+              'application/vnd.ms-excel': ['.xls'],
+              'text/csv': ['.csv']
+            }
+          }]
+        });
+        await idbSet(KEY, handle);
+        await handle.requestPermission?.({ mode: 'read' });
+        await loadFromHandle(handle);
+      } catch (err) {
+        if (err?.name !== 'AbortError') {
+          console.error(err);
+          setStatus('Error al seleccionar el archivo.', 'err');
+        }
+      }
+    }
+
+    // ---- Fallback: input file (sin persistencia de handle) ----
+    async function pickExcelInput(evt) {
+      const file = evt.target.files?.[0];
+      if (!file) return;
+      try {
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const firstSheet = wb.SheetNames[0];
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[firstSheet], { defval: '' });
+        renderPreview(rows);
+        setStatus(`Archivo cargado (fallback): ${file.name} ✅ (${rows.length} filas)`, 'ok');
+      } catch (err) {
+        console.error(err);
+        setStatus('Error al leer el archivo (fallback).', 'err');
+      } finally {
+        // Limpiar para permitir volver a elegir el mismo archivo si hace falta
+        evt.target.value = '';
+      }
+    }
+
+    // ---- Boot: reabrir automáticamente tras F5 ----
+    async function boot() {
+      const hasFS = 'showOpenFilePicker' in window;
+      if (!hasFS) {
+        compatHint.innerHTML = 'Tu navegador no soporta File System Access API. Se usará <code>input[type=file]</code> y tendrás que seleccionar el archivo cuando abras la app.';
+      } else {
+        compatHint.textContent = 'Consejo: si instalas esto como PWA, la experiencia será más estable.';
+      }
+
+      // Intento de reabrir con handle guardado
+      if (hasFS) {
+        const saved = await idbGet(KEY);
+        if (saved) {
+          setStatus('Reabriendo el Excel guardado…');
+          await loadFromHandle(saved);
+        } else {
+          setStatus('No hay archivo vinculado. Pulsa “Elegir Excel”.', 'warn');
+        }
+      } else {
+        setStatus('Pulsa “Elegir Excel” (fallback) para cargar el archivo.', 'warn');
+      }
+    }
+
+    // ---- Eventos ----
+    pickBtn.addEventListener('click', async () => {
+      if ('showOpenFilePicker' in window) {
+        await pickExcelFS();
+      } else {
+        fileInput.click(); // fallback
+      }
+    });
+
+    reloadBtn.addEventListener('click', async () => {
+      const saved = await idbGet(KEY);
+      if (saved) {
+        setStatus('Releyendo archivo vinculado…');
+        await loadFromHandle(saved);
+      } else {
+        setStatus('No hay archivo guardado. Pulsa “Elegir Excel”.', 'warn');
+      }
+    });
+
+    fileInput.addEventListener('change', pickExcelInput);
+
+    // Lanzar
+    boot();
+  </script>
+</body>
+</html>

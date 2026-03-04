@@ -1,0 +1,1559 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* ========================================
+   ARCHIVO CSS CONSOLIDADO PARA PRIMERA VISITA
+   Combina: style_form_espa.css + elementos relevantes de style_premium.css + optimizaciones profesionales
+   ======================================== */
+
+:root {
+    --primary-blue: #3498db;
+    --success-green: #2ecc71;
+    --warning-yellow: #f1c40f;
+    --danger-red: #dc3545;
+    --text-muted: #7f8c8d;
+    --text-dark: #2c3e50;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Layout con sidebar */
+body:has(.hub-shell) {
+    display: block;
+    padding: 0;
+}
+
+.form-container {
+    width: 100%;
+    max-width: 1400px;
+    background-color: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    padding: 30px 45px;
+    margin: 0 auto;
+}
+
+/* Cuando está dentro de main-content (con sidebar) */
+.main-content .form-container {
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: transparent;
+    padding: 25px 30px;
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    padding-top: 10px;
+}
+
+.form-header h1 {
+    font-size: 2.2em;
+    color: #2c3e50;
+    margin: 0;
+    font-weight: 700;
+}
+
+.form-header h1 .highlight {
+    color: #3498db;
+}
+
+.form-header .subtitle {
+    font-size: 1.05em;
+    color: #7f8c8d;
+    margin-top: 8px;
+}
+
+/* Botón de volver al hub */
+.back-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Sección de Datos del Paciente */
+.patient-info-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 1.3em;
+    color: #34495e;
+    margin: 0 0 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.patient-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+/* Sección de diagnóstico */
+.diagnostic-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid #e8f4f8;
+}
+
+.diagnostic-title {
+    font-size: 1.15em;
+    color: #2c5aa0;
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.diagnostic-title i {
+    color: #3498db;
+    font-size: 1.1em;
+}
+
+.diagnostic-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Biomarcadores adaptativos */
+.biomarkers-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e8f4f8;
+}
+
+.biomarkers-label {
+    font-weight: 700;
+    color: #2c5aa0;
+    font-size: 1.05em;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.biomarkers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+.biomarker-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 18px;
+    background: #ffffff;
+    border: 2px solid #d9e7f5;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(44, 90, 160, 0.08);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.biomarker-card:hover {
+    border-color: #2c5aa0;
+    box-shadow: 0 10px 26px rgba(44, 90, 160, 0.15);
+    transform: translateY(-3px);
+}
+
+.biomarker-name {
+    font-weight: 600;
+    color: #1f3d63;
+    font-size: 0.95em;
+    letter-spacing: 0.02em;
+}
+
+.biomarker-badges {
+    display: flex;
+    gap: 10px;
+}
+
+.biomarker-badge {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 2px solid #d4e1f3;
+    background: #f4f8ff;
+    color: #51617a;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05em;
+    padding: 0;
+}
+
+.biomarker-badge:hover:not(.active) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
+.biomarker-badge.active {
+    border-width: 3px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.badge-positive.active {
+    background: #dc3545;
+    border-color: #dc3545;
+    color: #ffffff;
+}
+
+.badge-negative.active {
+    background: #28a745;
+    border-color: #28a745;
+    color: #ffffff;
+}
+
+.badge-unknown.active {
+    background: #fd7e14;
+    border-color: #fd7e14;
+    color: #ffffff;
+}
+
+/* Secciones Colapsables */
+.collapsible-section {
+    margin-bottom: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.collapsible-header {
+    background-color: #f7f7f7;
+    color: #34495e;
+    padding: 10px 18px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.05em;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.3s ease;
+}
+
+.collapsible-header:hover {
+    background-color: #e9e9e9;
+}
+
+.collapsible-header .arrow {
+    transition: transform 0.3s ease;
+}
+
+.collapsible-header.active .arrow {
+    transform: rotate(180deg);
+}
+
+.header-icon-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.collapsible-content {
+    padding: 0 25px;
+    background-color: #ffffff;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, padding 0.4s ease-out;
+    border-top: 1px solid #f0f0f0;
+}
+
+.collapsible-header.active + .collapsible-content {
+    padding: 15px 25px;
+}
+
+.collapsible-content h3 {
+    font-size: 1.15em;
+    color: #34495e;
+    margin: 20px 0 10px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* Grupos de Formulario y Campos */
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-family: 'Roboto', sans-serif;
+    color: #495057;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.form-group select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23495057%22%20d%3D%22M287%2C114.7L159.2%2C242.5c-4.1%2C4.1-9.3%2C6.1-14.5%2C6.1c-5.2%2C0-10.4-2-14.5-6.1L5.4%2C114.7C1.3%2C110.6-0.7%2C105.4-0.7%2C100.2c0-5.2%2C2-10.4%2C6.1-14.5c8.2-8.2%2C22-8.2%2C30.2%2C0L144.7%2C188l108.8-108.8c8.2-8.2%2C22-8.2%2C30.2%2C0c4.1%2C4.1%2C6.1%2C9.3%2C6.1%2C14.5C293.1%2C105.4%2C291%2C110.6%2C287%2C114.7z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 35px;
+}
+
+.readonly-input {
+    background-color: #f8fafb;
+    cursor: not-allowed;
+}
+
+/* Campos condicionales */
+.conditional-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.conditional-field-hidden {
+    display: none !important;
+}
+
+.inline-label {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.small-input {
+    width: 80px;
+    padding: 6px 8px;
+    flex-grow: 0;
+}
+
+/* Custom Checkbox Styles */
+.form-group-checkbox {
+    margin-bottom: 15px;
+}
+
+.form-group-checkbox label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 400;
+    margin-bottom: 0;
+    font-size: 1em;
+    user-select: none;
+}
+
+.form-group-checkbox input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    margin: 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.4em;
+    height: 1.4em;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    transform: translateY(-0.075em);
+    display: grid;
+    place-content: center;
+    margin-right: 0.8em;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.form-group-checkbox input[type="checkbox"]:hover {
+    border-color: #3498db;
+}
+
+.form-group-checkbox input[type="checkbox"]::before {
+    content: "";
+    width: 0.7em;
+    height: 0.7em;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em #3498db;
+    background-color: #3498db;
+    border-radius: 1px;
+}
+
+.form-group-checkbox input[type="checkbox"]:checked {
+    border-color: #3498db;
+    background-color: #e9f5f9;
+}
+
+.form-group-checkbox input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+/* Toggle Buttons */
+.form-group-toggle-buttons {
+    margin-bottom: 30px;
+}
+
+.group-label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 500;
+    color: #495057;
+    font-size: 1.05em;
+}
+
+.toggle-button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.toggle-btn {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 7px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    user-select: none;
+}
+
+.toggle-btn:hover {
+    background-color: #e2e6ea;
+    border-color: #a7b7c5;
+}
+
+.toggle-btn.active {
+    background-color: #3498db;
+    color: white;
+    border-color: #3498db;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+/* Tóxicos */
+.block-label {
+    margin-bottom: 15px;
+}
+
+.toxic-item-wrapper {
+    display: grid;
+    gap: 20px;
+}
+
+.toxic-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.toxic-item:last-child {
+    border-bottom: none;
+}
+
+.toxic-description {
+    flex-grow: 1;
+    margin-top: 0;
+    margin-left: 0;
+}
+
+.toxic-description input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.9em;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+}
+
+.toxic-description input[type="text"]:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+/* Tratamientos */
+.treatments-section {
+    margin-top: 30px;
+}
+
+#tratamientosPreviosContainer {
+    margin-top: 15px;
+}
+
+.treatment-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 6px 0;
+}
+
+.treatment-item input {
+    margin-bottom: 0;
+    color: #495057;
+    font-family: 'Roboto', sans-serif;
+}
+
+.treatment-item .remove-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    font-size: 1.2em;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    flex-shrink: 0;
+}
+
+.treatment-item .remove-btn:hover {
+    background-color: #c82333;
+    transform: scale(1.05);
+}
+
+.add-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    margin-top: 20px;
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.add-btn:hover {
+    background-color: #218838;
+}
+
+/* Constantes Vitales - Grid */
+.form-group-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.form-group-grid .form-group {
+    margin-bottom: 0;
+}
+
+/* Anamnesis Group Container - Para campos agrupados */
+.anamnesis-group-container {
+    background: rgba(247, 249, 252, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 25px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.anamnesis-group-container .form-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .anamnesis-group-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 15px;
+    }
+}
+
+/* Form group full width */
+.form-group-full-width {
+    margin-bottom: 25px;
+    grid-column: 1 / -1;
+}
+
+.form-group-full-width input[type="text"],
+.form-group-full-width input[type="date"],
+.form-group-full-width input[type="number"],
+.form-group-full-width textarea,
+.form-group-full-width select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-family: 'Roboto', sans-serif;
+    color: #495057;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+}
+
+/* Exploración Física */
+.exploration-section {
+    display: flex;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.homunculus-container {
+    flex: 2 1 500px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.homunculus-container h4 {
+    margin-top: 0;
+    font-size: 1.2em;
+    color: #34495e;
+    margin-bottom: 15px;
+}
+
+.homunculus-scores {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 15px;
+    font-size: 0.85em;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.score-label {
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 25px;
+    background-color: rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+
+.score-label.score-nad {
+    color: #d68000;
+    background-color: #fff3cd;
+}
+
+.score-label.score-nat {
+    color: #c82333;
+    background-color: #f8d7da;
+}
+
+.score-label.score-dactilitis {
+    color: #1e7e34;
+    background-color: #d4edda;
+}
+
+.homunculus-controls {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.homunculus-mode-btn {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 7px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.homunculus-mode-btn.active {
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.homunculus-mode-btn.mode-nad.active,
+.homunculus-mode-btn.mode-nad:hover {
+    background-color: #ffc107;
+    color: #333;
+    border-color: #ffc107;
+}
+
+.homunculus-mode-btn.mode-nat.active,
+.homunculus-mode-btn.mode-nat:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: white;
+}
+
+.homunculus-mode-btn.mode-dactilitis.active,
+.homunculus-mode-btn.mode-dactilitis:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+/* SVG Homúnculo */
+.homunculus-svg-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 80%;
+    height: 0;
+    overflow: visible;
+    margin-bottom: 25px;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#humanBodySvg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.body-region {
+    fill: rgba(108, 117, 125, 0.15);
+    stroke: #6c757d;
+    stroke-width: 1.5;
+    cursor: pointer;
+    transition: fill 0.25s ease, stroke 0.25s ease, opacity 0.25s ease;
+    transform-origin: center;
+}
+
+.body-region:hover {
+    fill: rgba(52, 152, 219, 0.4);
+    stroke: #3498db;
+    stroke-width: 2;
+}
+
+.body-region.marked-nad {
+    fill: #ffc107;
+    stroke: #e0a800;
+    stroke-width: 2.5;
+}
+
+.body-region.marked-nat {
+    fill: #dc3545;
+    stroke: #bd2130;
+    stroke-width: 2.5;
+}
+
+.body-region.marked-dactilitis {
+    fill: #28a745;
+    stroke: #1e7e34;
+    stroke-width: 2.5;
+}
+
+.body-region.double-marked-nad-nat {
+    fill: url(#doubleMarkPattern) !important;
+    stroke: #b8860b;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 3px rgba(220, 53, 69, 0.5));
+}
+
+.clear-btn {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.clear-btn:hover {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+/* Leyenda de numeración de dedos */
+.digit-numbering-legend {
+    background-color: #e8f4f8;
+    border: 2px solid #17a2b8;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.15);
+}
+
+.digit-numbering-legend .legend-title {
+    font-size: 0.9em;
+    font-weight: 700;
+    color: #0c5460;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.digit-numbering-legend .legend-item {
+    font-size: 0.8em;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.digit-numbering-legend .legend-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #d9534f;
+    color: white;
+    font-weight: bold;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.9em;
+}
+
+/* Metrología */
+.metrologia-container {
+    flex: 1 1 350px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 14px;
+}
+
+.entesitis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+}
+
+.metrologia-subtitle {
+    color: #5a6268;
+    font-size: 0.95em;
+    margin: 14px 0 10px 0;
+    font-weight: 600;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 6px;
+}
+
+/* Otros Hallazgos */
+.other-findings-title {
+    margin-top: 50px;
+    margin-bottom: 20px;
+    padding-top: 20px;
+    padding-bottom: 12px;
+}
+
+.other-findings-group-container {
+    margin-bottom: 20px;
+}
+
+/* CRITERIOS DIAGNÓSTICOS - ASAS (EspA) */
+.asas-criterios-box {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+    overflow: visible;
+}
+
+.asas-criterios-box .first-asas-checkbox {
+    margin-bottom: 25px;
+}
+
+.asas-criterios-box .asas-criterio-item {
+    margin-bottom: 15px;
+    padding-left: 10px;
+}
+
+.criterios-detail {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.4s ease-out;
+}
+
+.criterios-detail.expanded {
+    max-height: 500px; /* A large enough value */
+    opacity: 1;
+}
+
+.criterios-detail[style*="opacity: 1"] {
+    padding-bottom: 15px;
+}
+
+.asas-result-box {
+    background-color: #eaf7f2;
+    border: 1px solid #2ecc71;
+    border-radius: 10px;
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 1em;
+    font-weight: 600;
+    color: #27ae60;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.result-text {
+    margin-left: 12px;
+}
+
+.result-text.high {
+    color: #27ae60;
+}
+
+.result-text.low {
+    color: #e67e22;
+}
+
+/* CRITERIOS CASPAR (APs) */
+.caspar-info-box {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%);
+    border-left: 4px solid #2196f3;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.caspar-info-box p {
+    margin: 8px 0;
+    font-size: 0.95em;
+    color: #1565c0;
+}
+
+.caspar-criterios-box {
+    background: #fafafa;
+    padding: 16px;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+}
+
+.caspar-criterio-item {
+    margin: 12px 0;
+    padding: 10px;
+    background: white;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.caspar-criterio-item:hover {
+    background: #e3f2fd;
+    transform: translateX(5px);
+}
+
+.caspar-result-box {
+    margin-top: 20px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-radius: 10px;
+    border: 2px solid #ff9800;
+    font-weight: 700;
+    font-size: 1em;
+    color: #e65100;
+    text-align: center;
+}
+
+/* Tratamientos estructurados */
+.treatment-panel {
+    background: rgba(247, 249, 252, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    box-shadow: 0 10px 25px rgba(148, 163, 184, 0.15);
+}
+
+.treatment-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.treatment-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.treatment-label {
+    flex: 0 0 190px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #334155;
+}
+
+.treatment-controls {
+    flex: 1;
+    display: flex;
+    gap: 10px;
+    min-width: 220px;
+    align-items: center;
+}
+
+.add-treatment-line-btn,
+.remove-treatment-line-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.add-treatment-line-btn {
+    color: #059669;
+}
+
+.add-treatment-line-btn:hover {
+    color: #047857;
+    transform: scale(1.1);
+}
+
+.remove-treatment-line-btn {
+    color: #dc2626;
+}
+
+.remove-treatment-line-btn:hover {
+    color: #b91c1c;
+    transform: scale(1.1);
+}
+
+.treatment-extra {
+    margin-left: 0;
+    padding-left: 0;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 8px;
+}
+
+.treatment-select {
+    flex: 1 1 220px;
+    min-width: 180px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.treatment-dose-input {
+    flex: 1 1 160px;
+    min-width: 150px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.treatment-dose-input:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+/* Plan de revisión */
+.plan-next-review-card {
+    margin-top: 18px;
+    background: rgba(247, 249, 252, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 320px;
+    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.12);
+}
+
+.plan-next-review-card label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.92rem;
+}
+
+.plan-date-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.95rem;
+    color: #0f172a;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.plan-date-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Comentarios adicionales */
+.form-group textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* Botones de Acción Final */
+.form-actions {
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid #e0e0e0;
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+.action-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.action-btn i {
+    font-size: 1.2em;
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    opacity: 0.9;
+}
+
+.primary-btn {
+    background-color: #3498db;
+    color: white;
+}
+
+.primary-btn:hover {
+    background-color: #2980b9;
+}
+
+.success-btn {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.success-btn:hover {
+    background-color: #27ad60;
+}
+
+.warning-btn {
+    background-color: #f1c40f;
+    color: #333;
+}
+
+.warning-btn:hover {
+    background-color: #e6b90e;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .form-container {
+        padding: 25px 30px;
+    }
+
+    .patient-fields {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    .diagnostic-fields {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .exploration-section {
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .homunculus-container,
+    .metrologia-container {
+        flex: 1 1 100%;
+    }
+
+    .homunculus-scores {
+        grid-template-columns: 1fr;
+    }
+
+    .collapsible-content {
+        padding: 15px;
+    }
+
+    .treatment-label {
+        flex: 1 1 100%;
+    }
+
+    .treatment-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .back-btn {
+        position: static;
+        margin-bottom: 15px;
+        width: fit-content;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        padding: 15px 10px;
+    }
+
+    .form-container {
+        padding: 20px;
+    }
+
+    .form-header h1 {
+        font-size: 1.8em;
+    }
+
+    .collapsible-header {
+        font-size: 1.1em;
+        padding: 12px 18px;
+    }
+
+    .collapsible-content {
+        padding: 0 20px;
+    }
+
+    .collapsible-header.active + .collapsible-content {
+        padding: 18px 20px;
+    }
+
+    .action-btn {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 1em;
+    }
+
+    .form-group-toggle-buttons .toggle-button-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .toxic-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .treatment-item {
+        grid-template-columns: 1fr auto;
+    }
+
+    .digit-numbering-legend {
+        padding: 12px 15px;
+    }
+}
+
+/* Plan Terapéutico Mejorado */
+.treatment-panel-improved {
+    background: rgba(247, 249, 252, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-top: 20px;
+    box-shadow: 0 10px 25px rgba(148, 163, 184, 0.15);
+}
+
+.treatment-grid-improved {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.treatment-line-improved {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.treatment-line-improved:last-child {
+    border-bottom: none;
+}
+
+.treatment-line-improved.treatment-extra {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.treatment-label-improved {
+    flex: 0 0 180px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #374151;
+    text-align: left;
+}
+
+.treatment-controls-improved {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    min-width: 300px;
+}
+
+.treatment-select-improved {
+    flex: 1 1 200px;
+    min-width: 160px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.9rem;
+    color: #1e293b;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.treatment-select-improved:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.treatment-dose-input-improved {
+    flex: 1 1 180px;
+    min-width: 160px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #f8fafc;
+    font-size: 0.9rem;
+    color: #64748b;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.treatment-dose-input-improved:not(:disabled):hover {
+    border-color: rgba(148, 163, 184, 0.5);
+}
+
+.treatment-dose-input-improved:not(:disabled):focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: #fff;
+    color: #1e293b;
+}
+
+.treatment-dose-input-improved:enabled {
+    background: #fff;
+    color: #1e293b;
+    cursor: text;
+}
+
+.plan-next-review-card-improved {
+    background: rgba(247, 249, 252, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 350px;
+    box-shadow: 0 10px 22px rgba(148, 163, 184, 0.12);
+    margin-top: 20px;
+}
+
+.plan-next-review-card-improved label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.plan-date-input-improved {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: #fff;
+    font-size: 0.95rem;
+    color: #1e293b;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.plan-date-input-improved:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Responsive para el nuevo diseño */
+@media (max-width: 768px) {
+    .treatment-line-improved {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .treatment-label-improved {
+        flex: none;
+        width: 100%;
+        text-align: left;
+    }
+
+    .treatment-controls-improved {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .treatment-select-improved,
+    .treatment-dose-input-improved {
+        flex: 1 1 100%;
+        min-width: auto;
+    }
+
+    .plan-next-review-card-improved {
+        max-width: 100%;
+    }
+}
+
+/* Animaciones */
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estadísticas del Servicio - Hub Clínico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style_estadisticas.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+</head>
+<body>
+    <div class="hub-shell">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle"><span class="logo-text">HC</span></div>
+                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
+            </div>
+
+            <div class="user-block">
+                <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
+                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+
+            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
+                <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
+                <select id="professionalSelect"></select>
+                <div class="selector-actions">
+                    <button type="button" id="confirmProfessionalBtn" class="selector-btn primary">Aplicar</button>
+                    <button type="button" id="cancelProfessionalBtn" class="selector-btn">Cancelar</button>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." list="patientIds" autocomplete="off">
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <datalist id="patientIds"></datalist>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Consulta</h3>
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Nueva Visita</a></li>
+                    <li><a href="seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Gestión</h3>
+                <ul class="nav-list">
+                    <li><a href="estadisticas.html" class="nav-link active" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">v. 2.0.0</div>
+        </aside>
+
+        <main class="main-content dashboard-poblacional">
+            <h1 class="page-title"><i class="fas fa-chart-line"></i> Estadísticas del Servicio</h1>
+
+            <!-- Panel de Filtros Rediseñado -->
+            <section class="filters-panel collapsible-section">
+                <div class="collapsible-header" id="filtersHeader">
+                    <h2 class="card-title">
+                        <i class="fas fa-filter"></i>
+                        Filtros de Cohorte
+                        <span class="filters-count-badge" id="filtersCountBadge" style="display: none;">0</span>
+                    </h2>
+                    <button class="toggle-filters-btn" aria-label="Expandir/Colapsar filtros"></button>
+                </div>
+
+                <div class="collapsible-content">
+                    <!-- Barra de Filtros Activos -->
+                    <div class="active-filters-bar" id="activeFiltersBar" style="display: none;">
+                        <span class="active-filters-label">Filtros activos:</span>
+                        <div id="activeFiltersChips"></div>
+                        <button class="clear-all-filters-btn" id="clearAllFiltersBtn">
+                            <i class="fas fa-times"></i> Limpiar todo
+                        </button>
+                    </div>
+                    <!-- Tabs de Navegación -->
+                    <div class="filter-tabs" role="tablist">
+                        <button class="filter-tab active" data-tab="periodo" role="tab" aria-selected="true">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Periodo</span>
+                            <span class="filter-tab-badge" id="badge-periodo" style="display: none;">0</span>
+                        </button>
+                        <button class="filter-tab" data-tab="demograficos" role="tab" aria-selected="false">
+                            <i class="fas fa-users"></i>
+                            <span>Demografía</span>
+                            <span class="filter-tab-badge" id="badge-demograficos" style="display: none;">0</span>
+                        </button>
+                        <button class="filter-tab" data-tab="clinicos" role="tab" aria-selected="false">
+                            <i class="fas fa-heartbeat"></i>
+                            <span>Clínicos</span>
+                            <span class="filter-tab-badge" id="badge-clinicos" style="display: none;">0</span>
+                        </button>
+                        <button class="filter-tab" data-tab="terapeuticos" role="tab" aria-selected="false">
+                            <i class="fas fa-pills"></i>
+                            <span>Terapéuticos</span>
+                            <span class="filter-tab-badge" id="badge-terapeuticos" style="display: none;">0</span>
+                        </button>
+                        <button class="filter-tab" data-tab="historicos" role="tab" aria-selected="false">
+                            <i class="fas fa-history"></i>
+                            <span>Históricos</span>
+                            <span class="filter-tab-badge" id="badge-historicos" style="display: none;">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Contenido Tab: Periodo -->
+                    <div class="filter-tab-content active" id="tab-periodo" role="tabpanel">
+                        <div class="filters-grid">
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-calendar-day"></i> Rango de Fechas</h3>
+                                <div class="filter-group">
+                                    <label for="filterDateFrom">Desde:</label>
+                                    <input type="date" id="filterDateFrom" class="input-field">
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filterDateTo">Hasta:</label>
+                                    <input type="date" id="filterDateTo" class="input-field">
+                                </div>
+                                <div class="date-presets">
+                                    <button type="button" class="date-preset-btn" data-preset="month">Último mes</button>
+                                    <button type="button" class="date-preset-btn" data-preset="quarter">Último trimestre</button>
+                                    <button type="button" class="date-preset-btn" data-preset="year">Último año</button>
+                                    <button type="button" class="date-preset-btn" data-preset="all">Todo</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contenido Tab: Demografía -->
+                    <div class="filter-tab-content" id="tab-demograficos" role="tabpanel">
+                        <div class="filters-grid">
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-disease"></i> Patología</h3>
+                                <div class="filter-group">
+                                    <label for="filterPathology">Tipo de Patología:</label>
+                                    <select id="filterPathology" class="select-field">
+                                        <option value="Todos">Todas las patologías</option>
+                                        <option value="ESPA">Espondiloartritis Axial (ESPA)</option>
+                                        <option value="APS">Artritis Psoriásica (APS)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-user"></i> Datos del Paciente</h3>
+                                <div class="filter-group">
+                                    <label for="filterSex">Sexo:</label>
+                                    <select id="filterSex" class="select-field">
+                                        <option value="Todos">Todos</option>
+                                        <option value="Hombre">Hombre</option>
+                                        <option value="Mujer">Mujer</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filterAgeFrom">Edad desde:</label>
+                                    <input type="number" id="filterAgeFrom" class="input-field" placeholder="Ej: 18" min="0" max="120">
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filterAgeTo">Edad hasta:</label>
+                                    <input type="number" id="filterAgeTo" class="input-field" placeholder="Ej: 80" min="0" max="120">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contenido Tab: Clínicos -->
+                    <div class="filter-tab-content" id="tab-clinicos" role="tabpanel">
+                        <div class="filters-grid">
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-vial"></i> Biomarcadores</h3>
+                                <div class="filter-group">
+                                    <label for="filterBiomarker">Estado del Biomarcador:</label>
+                                    <select id="filterBiomarker" class="select-field">
+                                        <option value="Todos">Todos los estados</option>
+                                        <option value="HLA-B27_Positive">HLA-B27 Positivo</option>
+                                        <option value="HLA-B27_Negative">HLA-B27 Negativo</option>
+                                        <option value="FR_Positive">Factor Reumatoide Positivo</option>
+                                        <option value="FR_Negative">Factor Reumatoide Negativo</option>
+                                        <option value="aPCC_Positive">Anti-CCP Positivo</option>
+                                        <option value="aPCC_Negative">Anti-CCP Negativo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-chart-bar"></i> Índices de Actividad</h3>
+                                <div class="filter-group">
+                                    <label for="filterActivityIndex">Índice a evaluar:</label>
+                                    <select id="filterActivityIndex" class="select-field">
+                                        <option value="BASDAI">BASDAI</option>
+                                        <option value="ASDAS">ASDAS</option>
+                                        <option value="HAQ">HAQ-DI</option>
+                                        <option value="PCR">PCR</option>
+                                        <option value="VSG">VSG</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="filterActivityState">Estado de Actividad:</label>
+                                    <select id="filterActivityState" class="select-field">
+                                        <option value="Todos">Todos los estados</option>
+                                        <option value="Remision">Remisión</option>
+                                        <option value="Baja Actividad">Baja Actividad</option>
+                                        <option value="Moderada Actividad">Actividad Moderada</option>
+                                        <option value="Alta Actividad">Alta Actividad</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-thermometer-half"></i> Escalas EVA</h3>
+                                <div class="filter-group range-slider-group">
+                                    <label for="filterEVADolor">
+                                        EVA Dolor (máximo):
+                                        <span class="range-slider-value" id="evaDolorValue">10</span>
+                                    </label>
+                                    <input type="range" id="filterEVADolor" class="range-slider" min="0" max="10" value="10">
+                                </div>
+                                <div class="filter-group range-slider-group">
+                                    <label for="filterEVAGlobal">
+                                        EVA Global (máximo):
+                                        <span class="range-slider-value" id="evaGlobalValue">10</span>
+                                    </label>
+                                    <input type="range" id="filterEVAGlobal" class="range-slider" min="0" max="10" value="10">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contenido Tab: Terapéuticos -->
+                    <div class="filter-tab-content" id="tab-terapeuticos" role="tabpanel">
+                        <div class="filters-grid">
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-syringe"></i> Tipo de Tratamiento</h3>
+                                <div class="filter-group">
+                                    <label for="filterTtoType">Categoría:</label>
+                                    <select id="filterTtoType" class="select-field">
+                                        <option value="Todos">Todos los tratamientos</option>
+                                        <option value="FAMEs">FAMEs convencionales</option>
+                                        <option value="Biológicos">Biológicos / Diana</option>
+                                        <option value="Sistémicos">Sistémicos</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-prescription-bottle-alt"></i> Fármaco Específico</h3>
+                                <div class="filter-group">
+                                    <label for="filterTtoSpecific">Medicamento:</label>
+                                    <select id="filterTtoSpecific" class="select-field">
+                                        <option value="Todos">Todos los fármacos</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contenido Tab: Históricos -->
+                    <div class="filter-tab-content" id="tab-historicos" role="tabpanel">
+                        <div class="filters-grid">
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-notes-medical"></i> Comorbilidades</h3>
+                                <div class="filter-group">
+                                    <label for="filterComorbidity">Condición asociada:</label>
+                                    <select id="filterComorbidity" class="select-field">
+                                        <option value="Todos">Todas las comorbilidades</option>
+                                        <option value="HTA">Hipertensión Arterial</option>
+                                        <option value="DM">Diabetes Mellitus</option>
+                                        <option value="DLP">Dislipidemia</option>
+                                        <option value="ECV">Enfermedad Cardiovascular</option>
+                                        <option value="Gastritis">Gastritis/Úlcera</option>
+                                        <option value="Obesidad">Obesidad</option>
+                                        <option value="Osteoporosis">Osteoporosis</option>
+                                        <option value="Gota">Gota</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-eye"></i> Manifestaciones Extra-articulares</h3>
+                                <div class="filter-group">
+                                    <label for="filterExtraArticular">Manifestación:</label>
+                                    <select id="filterExtraArticular" class="select-field">
+                                        <option value="Todos">Todas las manifestaciones</option>
+                                        <option value="Digestiva">Afectación Digestiva (EII)</option>
+                                        <option value="Uveitis">Uveítis</option>
+                                        <option value="Psoriasis">Psoriasis</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="filter-group-category">
+                                <h3><i class="fas fa-exclamation-triangle"></i> Eventos Adversos</h3>
+                                <div class="filter-group checkbox-group">
+                                    <input type="checkbox" id="filterAdverseEffect">
+                                    <label for="filterAdverseEffect">Solo pacientes con efecto adverso reportado</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones de Filtro -->
+                    <div class="filter-actions">
+                        <button id="clearFiltersBtn" class="button secondary-button">
+                            <i class="fas fa-eraser"></i> Limpiar Filtros
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel de KPIs Mejorado -->
+            <section class="dashboard-kpis-panel" id="kpisPanel">
+                <div class="kpi-card kpi-card--info">
+                    <div class="kpi-icon"><i class="fas fa-users"></i></div>
+                    <span class="kpi-label">Total Pacientes</span>
+                    <span id="kpiTotalPatients" class="kpi-value">0</span>
+                    <span class="kpi-trend kpi-trend--neutral" id="kpiTotalTrend">
+                        <i class="fas fa-minus"></i> Sin cambios
+                    </span>
+                </div>
+                <div class="kpi-card kpi-card--success">
+                    <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
+                    <span class="kpi-label" id="kpiRemissionLabel">En Remisión</span>
+                    <span id="kpiRemissionPercent" class="kpi-value">0%</span>
+                    <span class="kpi-trend kpi-trend--up" id="kpiRemissionTrend">
+                        <i class="fas fa-arrow-up"></i> +0%
+                    </span>
+                </div>
+                <div class="kpi-card kpi-card--danger">
+                    <div class="kpi-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <span class="kpi-label" id="kpiHighActivityLabel">Alta Actividad</span>
+                    <span id="kpiHighActivityPercent" class="kpi-value">0%</span>
+                    <span class="kpi-trend kpi-trend--down" id="kpiHighActivityTrend">
+                        <i class="fas fa-arrow-down"></i> -0%
+                    </span>
+                </div>
+                <div class="kpi-card kpi-card--purple">
+                    <div class="kpi-icon"><i class="fas fa-syringe"></i></div>
+                    <span class="kpi-label">Tto. Biológico</span>
+                    <span id="kpiBiologicPercent" class="kpi-value">0%</span>
+                    <span class="kpi-trend kpi-trend--neutral" id="kpiBiologicTrend">
+                        <i class="fas fa-minus"></i> Estable
+                    </span>
+                </div>
+                <div class="kpi-card kpi-card--warning">
+                    <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+                    <span class="kpi-label" id="kpiActivityLabel">BASDAI Medio</span>
+                    <span id="kpiAvgActivity" class="kpi-value">0.0</span>
+                    <span class="kpi-trend kpi-trend--down" id="kpiActivityTrend">
+                        <i class="fas fa-arrow-down"></i> -0.0
+                    </span>
+                </div>
+                <div class="kpi-card kpi-card--info" id="kpiAsdasCard" style="display: none;">
+                    <div class="kpi-icon"><i class="fas fa-wave-square"></i></div>
+                    <span class="kpi-label">ASDAS Medio</span>
+                    <span id="kpiAvgAsdas" class="kpi-value">-</span>
+                    <span class="kpi-trend kpi-trend--neutral" id="kpiAsdasTrend">
+                        <i class="fas fa-minus"></i> Sin datos
+                    </span>
+                </div>
+                <!-- Métricas adicionales por patología -->
+                <div class="additional-metrics-container" id="additionalMetrics"></div>
+            </section>
+
+            <!-- Panel de Visualizaciones -->
+            <section class="dashboard-visuals-panel" id="chartsPanel">
+                <div class="dashboard-card chart-card">
+                    <h2 class="card-title"><i class="fas fa-chart-pie"></i> Estado de Actividad de la Cohorte</h2>
+                    <div class="chart-container">
+                        <canvas id="activityDonutChart"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card chart-card">
+                    <h2 class="card-title"><i class="fas fa-pills"></i> Distribución de Tratamientos</h2>
+                    <div class="chart-container">
+                        <canvas id="treatmentDistChart"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card chart-card">
+                    <h2 class="card-title"><i class="fas fa-heartbeat"></i> Top 10 Comorbilidades</h2>
+                    <div class="chart-container">
+                        <canvas id="comorbidityChart"></canvas>
+                    </div>
+                </div>
+                <div class="dashboard-card chart-card">
+                    <h2 class="card-title"><i class="fas fa-project-diagram"></i> Correlación de Índices</h2>
+                    <div class="correlation-controls">
+                        <label for="scatterX">Eje X:</label>
+                        <select id="scatterX" class="select-field"></select>
+                        <label for="scatterY">Eje Y:</label>
+                        <select id="scatterY" class="select-field"></select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="correlationScatterChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabla de Pacientes Mejorada -->
+            <section class="dashboard-card export-table-panel">
+                <div class="table-header">
+                    <h2 class="card-title"><i class="fas fa-table"></i> Pacientes de la Cohorte</h2>
+                    <div class="table-controls">
+                        <div class="table-search">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="tableSearchInput" class="input-field" placeholder="Buscar en la tabla...">
+                        </div>
+                        <button id="exportCohortBtn" class="button primary-button">
+                            <i class="fas fa-file-csv"></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+                <div id="exportTableContainer" class="responsive-table-container">
+                    <table class="data-table" id="cohortTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="ID_Paciente">ID <i class="fas fa-sort"></i></th>
+                                <th data-sort="Nombre">Nombre <i class="fas fa-sort"></i></th>
+                                <th data-sort="pathology">Patología <i class="fas fa-sort"></i></th>
+                                <th data-sort="Fecha_Visita">Última Visita <i class="fas fa-sort"></i></th>
+                                <th data-sort="BASDAI">BASDAI <i class="fas fa-sort"></i></th>
+                                <th data-sort="Tratamiento_Actual">Tratamiento <i class="fas fa-sort"></i></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cohortTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-pagination" id="tablePagination">
+                    <span class="pagination-info" id="paginationInfo">Mostrando 0-0 de 0 pacientes</span>
+                    <div class="pagination-controls" id="paginationControls">
+                        <button class="pagination-btn" id="prevPageBtn" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span id="pageNumbers"></span>
+                        <button class="pagination-btn" id="nextPageBtn" disabled>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="modules/hubTools.js"></script>
+    <script src="modules/utils.js"></script>
+    <script src="modules/mockPatients.js"></script>
+    <script src="modules/scoreCalculators.js"></script>
+    <script src="modules/homunculus.js"></script>
+    <script src="modules/exportManager.js"></script>
+    <script src="modules/formController.js"></script>
+    <script src="modules/mockDashboardData.js"></script>
+    <script src="modules/dataManager.js"></script>
+
+    <!-- Scripts globales y coordinadores -->
+    <script src="script.js"></script>
+    <script src="scripts/script_estadisticas.js"></script>
+</body>
+</html>

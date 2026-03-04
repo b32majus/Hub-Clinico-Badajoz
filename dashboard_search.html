@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Búsqueda de Paciente - Hub Clínico</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="hub-shell">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-circle"><span class="logo-text">HC</span></div>
+                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
+            </div>
+
+            <div class="user-block">
+                <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
+                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
+                    <i class="fas fa-exchange-alt"></i>
+                </button>
+            </div>
+
+            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
+                <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
+                <select id="professionalSelect"></select>
+                <div class="selector-actions">
+                    <button type="button" id="confirmProfessionalBtn" class="selector-btn primary">Aplicar</button>
+                    <button type="button" id="cancelProfessionalBtn" class="selector-btn">Cancelar</button>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar Paciente por ID..." list="patientIds" autocomplete="off">
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+                <datalist id="patientIds"></datalist>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Consulta</h3>
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Nueva Visita</a></li>
+                    <li><a href="seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3 class="nav-title">Gestión</h3>
+                <ul class="nav-list">
+                    <li><a href="estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-footer">v. 1.0.0</div>
+        </aside>
+
+        <main class="main-content">
+            <section class="dashboard-search">
+                <div class="dashboard-search__card">
+                    <h2>Cuadro de Mando de Paciente</h2>
+                    <p>Introduce el identificador del paciente para abrir su dashboard individual.</p>
+
+                    <div class="dashboard-search__form">
+                        <label for="dashboardSearchInput">ID del Paciente</label>
+                        <input type="text" id="dashboardSearchInput" placeholder="Ej: ESP-2024-007" autocomplete="off">
+                        <button id="dashboardSearchButton" type="button" class="primary-btn">
+                            <i class="fas fa-chart-line" aria-hidden="true"></i>
+                            Ver Dashboard
+                        </button>
+                    </div>
+
+                    <p id="searchErrorMsg" class="form-error" role="alert" aria-live="polite"></p>
+
+                    <a href="index.html" class="link-back">
+                        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                        Volver al Hub Clínico
+                    </a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="modules/hubTools.js"></script>
+    <script src="modules/utils.js"></script>
+    <script src="modules/mockPatients.js"></script>
+    <script src="modules/dataManager.js"></script>
+    <script src="script.js"></script>
+    <script src="scripts/script_dashboard_search.js"></script>
+</body>
+</html>
