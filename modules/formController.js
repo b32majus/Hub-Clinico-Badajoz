@@ -84,7 +84,7 @@ function adaptarFormulario(diagnostico) {
     const patologiaHighlight = document.getElementById('patologiaHighlight');
     const patologiaSubtitle = document.getElementById('patologiaSubtitle');
 
-    switch(diagnostico) {
+    switch (diagnostico) {
         case 'espa':
             patologiaHighlight.textContent = 'EspA';
             patologiaSubtitle.textContent = 'Espondiloartritis Axial';
@@ -197,7 +197,7 @@ function inicializarCollapsibles() {
             continue;
         }
 
-        header.addEventListener("click", function(e) {
+        header.addEventListener("click", function (e) {
             e.preventDefault();
             e.stopPropagation();
 
@@ -358,12 +358,12 @@ function createTreatmentLine(type, options, improved = false) {
     removeBtn.innerHTML = '<i class="fas fa-minus-circle"></i>';
     removeBtn.title = 'Eliminar';
 
-    select.addEventListener('change', function() {
+    select.addEventListener('change', function () {
         input.disabled = (this.value === 'No');
         if (this.value === 'No') input.value = '';
     });
 
-    removeBtn.addEventListener('click', function() {
+    removeBtn.addEventListener('click', function () {
         line.remove();
     });
 
@@ -557,7 +557,7 @@ function initializeASAS() {
         }
     }
 
-    lumbalgia3mesesCheckbox.addEventListener('change', function() {
+    lumbalgia3mesesCheckbox.addEventListener('change', function () {
         updateASASLogic();
         setTimeout(() => {
             const parentSection = criteriosASASDetail.closest('.collapsible-content');
@@ -622,209 +622,209 @@ function initializeCASPAR() {
 }
 
 function recopilarDatosFormulario() {
-        // 1. Leer todos los campos simples del formulario
-        const idPaciente = document.getElementById('idPaciente').value;
-        const nombrePaciente = document.getElementById('nombrePaciente').value;
-        const fechaVisita = document.getElementById('fechaVisita').value;
-        const sexoPaciente = document.getElementById('sexoPaciente').value;
-        const tipoVisita = document.body.dataset.formType || '';
+    // 1. Leer todos los campos simples del formulario
+    const idPaciente = document.getElementById('idPaciente').value;
+    const nombrePaciente = document.getElementById('nombrePaciente').value;
+    const fechaVisita = document.getElementById('fechaVisita').value;
+    const sexoPaciente = document.getElementById('sexoPaciente').value;
+    const tipoVisita = document.body.dataset.formType || '';
 
-        const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
+    const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
 
-        const diagnosticoPrimario = document.getElementById('diagnosticoPrimario').value;
-        const diagnosticoSecundario = document.getElementById('diagnosticoSecundario').value;
+    const diagnosticoPrimario = document.getElementById('diagnosticoPrimario').value;
+    const diagnosticoSecundario = document.getElementById('diagnosticoSecundario').value;
 
-        const hlaB27Btn = document.querySelector('.hla-btn.active:not(.fr-btn):not(.apcc-btn)');
-        const hlaB27 = hlaB27Btn ? hlaB27Btn.dataset.value : 'no-analizado';
+    const hlaB27Btn = document.querySelector('.hla-btn.active:not(.fr-btn):not(.apcc-btn)');
+    const hlaB27 = hlaB27Btn ? hlaB27Btn.dataset.value : 'no-analizado';
 
-        const frBtn = document.querySelector('.fr-btn.active');
-        const fr = frBtn ? frBtn.dataset.value : 'no-analizado';
+    const frBtn = document.querySelector('.fr-btn.active');
+    const fr = frBtn ? frBtn.dataset.value : 'no-analizado';
 
-        const apccBtn = document.querySelector('.apcc-btn.active');
-        const apcc = apccBtn ? apccBtn.dataset.value : 'no-analizado';
+    const apccBtn = document.querySelector('.apcc-btn.active');
+    const apcc = apccBtn ? apccBtn.dataset.value : 'no-analizado';
 
-        const inicioSintomas = document.getElementById('inicioSintomas').value;
-        const inicioPsoriasis = document.getElementById('inicioPsoriasis') ? document.getElementById('inicioPsoriasis').value : '';
-        const dolorAxial = document.getElementById('dolorAxial').value;
-        const rigidezMatutina = document.getElementById('rigidezMatutina').value;
-        const duracionRigidez = document.getElementById('duracionRigidez').value;
-        const irradiacionNalgas = document.getElementById('irradiacionNalgas').value;
-        const clinicaAxialPresente = document.getElementById('clinicaAxialPresente') ? document.getElementById('clinicaAxialPresente').value : '';
+    const inicioSintomas = document.getElementById('inicioSintomas').value;
+    const inicioPsoriasis = document.getElementById('inicioPsoriasis') ? document.getElementById('inicioPsoriasis').value : '';
+    const dolorAxial = document.getElementById('dolorAxial').value;
+    const rigidezMatutina = document.getElementById('rigidezMatutina').value;
+    const duracionRigidez = document.getElementById('duracionRigidez').value;
+    const irradiacionNalgas = document.getElementById('irradiacionNalgas').value;
+    const clinicaAxialPresente = document.getElementById('clinicaAxialPresente') ? document.getElementById('clinicaAxialPresente').value : '';
 
-        const peso = document.getElementById('peso').value;
-        const talla = document.getElementById('talla').value;
-        const imc = document.getElementById('imc').value;
-        const ta = document.getElementById('ta').value;
+    const peso = document.getElementById('peso').value;
+    const talla = document.getElementById('talla').value;
+    const imc = document.getElementById('imc').value;
+    const ta = document.getElementById('ta').value;
 
-        const sistemicoSelect = document.getElementById('sistemicoSelect')?.value || 'No';
-        const sistemicoDose = document.getElementById('sistemicoDose')?.value || '';
-        const fameSelect = document.getElementById('fameSelect')?.value || 'No';
-        const fameDose = document.getElementById('fameDose')?.value || '';
-        const biologicoSelect = document.getElementById('biologicoSelect')?.value || 'No';
-        const biologicoDose = document.getElementById('biologicoDose')?.value || '';
-        const fechaProximaRevision = document.getElementById('fechaProximaRevision')?.value || '';
+    const sistemicoSelect = document.getElementById('sistemicoSelect')?.value || 'No';
+    const sistemicoDose = document.getElementById('sistemicoDose')?.value || '';
+    const fameSelect = document.getElementById('fameSelect')?.value || 'No';
+    const fameDose = document.getElementById('fameDose')?.value || '';
+    const biologicoSelect = document.getElementById('biologicoSelect')?.value || 'No';
+    const biologicoDose = document.getElementById('biologicoDose')?.value || '';
+    const fechaProximaRevision = document.getElementById('fechaProximaRevision')?.value || '';
 
-        const comentariosAdicionales = document.getElementById('comentariosAdicionales')?.value || '';
+    const comentariosAdicionales = document.getElementById('comentariosAdicionales')?.value || '';
 
-        const homunculusData = HubTools.homunculus.getHomunculusData();
-        const nad = homunculusData.nad;
-        const nat = homunculusData.nat;
-        const dactilitis = homunculusData.dactilitis;
-        const homunculusNadMap = createHomunculusMap(HOMUNCULUS_ARTICULATIONS, nad);
-        const homunculusNatMap = createHomunculusMap(HOMUNCULUS_ARTICULATIONS, nat);
-        const dactilitisMap = createHomunculusMap(HOMUNCULUS_DACTILITIS, dactilitis);
+    const homunculusData = HubTools.homunculus.getHomunculusData();
+    const nad = homunculusData.nad;
+    const nat = homunculusData.nat;
+    const dactilitis = homunculusData.dactilitis;
+    const homunculusNadMap = createHomunculusMap(HOMUNCULUS_ARTICULATIONS, nad);
+    const homunculusNatMap = createHomunculusMap(HOMUNCULUS_ARTICULATIONS, nat);
+    const dactilitisMap = createHomunculusMap(HOMUNCULUS_DACTILITIS, dactilitis);
 
-        const tratamientoActualEditable = document.getElementById('tratamientoActualEditable')?.value || '';
-        const tratamientoActualReadonly = document.getElementById('tratamientoActual')?.value || '';
-        const tratamientoActual = tratamientoActualEditable || tratamientoActualReadonly || '';
-        const fechaInicioTratamiento = document.getElementById('fechaInicioTratamiento')?.value || '';
+    const tratamientoActualEditable = document.getElementById('tratamientoActualEditable')?.value || '';
+    const tratamientoActualReadonly = document.getElementById('tratamientoActual')?.value || '';
+    const tratamientoActual = tratamientoActualEditable || tratamientoActualReadonly || '';
+    const fechaInicioTratamiento = document.getElementById('fechaInicioTratamiento')?.value || '';
 
-        const evaGlobal = document.getElementById('evaGlobal')?.value || '';
-        const evaDolor = document.getElementById('evaDolor')?.value || '';
-        const evaFatiga = document.getElementById('evaFatiga')?.value || '';
-        const rigidezMatutinaMin = document.getElementById('rigidezMatutinaMin')?.value || '';
-        const dolorNocturno = document.getElementById('dolorNocturno')?.checked ? 'SI' : 'NO';
+    const evaGlobal = document.getElementById('evaGlobal')?.value || '';
+    const evaDolor = document.getElementById('evaDolor')?.value || '';
+    const evaFatiga = document.getElementById('evaFatiga')?.value || '';
+    const rigidezMatutinaMin = document.getElementById('rigidezMatutinaMin')?.value || '';
+    const dolorNocturno = document.getElementById('dolorNocturno')?.checked ? 'SI' : 'NO';
 
-        const pcr = document.getElementById('pcr')?.value || '';
-        const vsg = document.getElementById('vsg')?.value || '';
-        const otrosHallazgosAnalitica = document.getElementById('otrosHallazgosAnalitica')?.value || '';
-        const hallazgosRadiografia = document.getElementById('hallazgosRadiografia')?.value || '';
-        const hallazgosRMN = document.getElementById('hallazgosRMN')?.value || '';
+    const pcr = document.getElementById('pcr')?.value || '';
+    const vsg = document.getElementById('vsg')?.value || '';
+    const otrosHallazgosAnalitica = document.getElementById('otrosHallazgosAnalitica')?.value || '';
+    const hallazgosRadiografia = document.getElementById('hallazgosRadiografia')?.value || '';
+    const hallazgosRMN = document.getElementById('hallazgosRMN')?.value || '';
 
-        const basdaiP1 = document.getElementById('basdaiP1')?.value || '';
-        const basdaiP2 = document.getElementById('basdaiP2')?.value || '';
-        const basdaiP3 = document.getElementById('basdaiP3')?.value || '';
-        const basdaiP4 = document.getElementById('basdaiP4')?.value || '';
-        const basdaiP5 = document.getElementById('basdaiP5')?.value || '';
-        const basdaiP6 = document.getElementById('basdaiP6')?.value || '';
-        const basdaiResult = document.getElementById('basdaiResult')?.value || '';
+    const basdaiP1 = document.getElementById('basdaiP1')?.value || '';
+    const basdaiP2 = document.getElementById('basdaiP2')?.value || '';
+    const basdaiP3 = document.getElementById('basdaiP3')?.value || '';
+    const basdaiP4 = document.getElementById('basdaiP4')?.value || '';
+    const basdaiP5 = document.getElementById('basdaiP5')?.value || '';
+    const basdaiP6 = document.getElementById('basdaiP6')?.value || '';
+    const basdaiResult = document.getElementById('basdaiResult')?.value || '';
 
-        const asdasDolorEspalda = document.getElementById('asdasDolorEspalda')?.value || '';
-        const asdasDuracionRigidez = document.getElementById('asdasDuracionRigidez')?.value || '';
-        const asdasEvaGlobal = document.getElementById('asdasEvaGlobal')?.value || '';
-        const asdasCrpResult = document.getElementById('asdasCrpResult')?.value || '';
-        const asdasEsrResult = document.getElementById('asdasEsrResult')?.value || '';
+    const asdasDolorEspalda = document.getElementById('asdasDolorEspalda')?.value || '';
+    const asdasDuracionRigidez = document.getElementById('asdasDuracionRigidez')?.value || '';
+    const asdasEvaGlobal = document.getElementById('asdasEvaGlobal')?.value || '';
+    const asdasCrpResult = document.getElementById('asdasCrpResult')?.value || '';
+    const asdasEsrResult = document.getElementById('asdasEsrResult')?.value || '';
 
-        const schober = document.getElementById('schober')?.value || '';
-        const rotacionCervical = document.getElementById('rotacionCervical')?.value || '';
-        const distanciaOP = document.getElementById('distanciaOP')?.value || '';
-        const distanciaTP = document.getElementById('distanciaTP')?.value || '';
-        const expansionToracica = document.getElementById('expansionToracica')?.value || '';
-        const distanciaIntermaleolar = document.getElementById('distanciaIntermaleolar')?.value || '';
+    const schober = document.getElementById('schober')?.value || '';
+    const rotacionCervical = document.getElementById('rotacionCervical')?.value || '';
+    const distanciaOP = document.getElementById('distanciaOP')?.value || '';
+    const distanciaTP = document.getElementById('distanciaTP')?.value || '';
+    const expansionToracica = document.getElementById('expansionToracica')?.value || '';
+    const distanciaIntermaleolar = document.getElementById('distanciaIntermaleolar')?.value || '';
 
-        const continuarBtn = document.getElementById('btnContinuarTratamiento');
-        const cambiarBtn = document.getElementById('btnCambiarTratamiento');
-        let decisionTerapeutica = 'continuar';
-        if (continuarBtn || cambiarBtn) {
-            const continuarActivo = continuarBtn?.classList.contains('active');
-            const cambiarActivo = cambiarBtn?.classList.contains('active');
-            if (cambiarActivo && !continuarActivo) {
-                decisionTerapeutica = 'cambiar';
+    const continuarBtn = document.getElementById('btnContinuarTratamiento');
+    const cambiarBtn = document.getElementById('btnCambiarTratamiento');
+    let decisionTerapeutica = 'continuar';
+    if (continuarBtn || cambiarBtn) {
+        const continuarActivo = continuarBtn?.classList.contains('active');
+        const cambiarActivo = cambiarBtn?.classList.contains('active');
+        if (cambiarActivo && !continuarActivo) {
+            decisionTerapeutica = 'cambiar';
+        }
+    }
+    const tratamientoData = {
+        continuar: {
+            adherencia: document.getElementById('adherencia')?.value || '',
+            ajusteTerapeutico: document.getElementById('ajusteTerapeutico')?.value || ''
+        },
+        cambio: {
+            motivoCambio: document.getElementById('motivoCambio')?.value || '',
+            efectosAdversos: document.getElementById('efectosAdversos')?.checked || false,
+            descripcionEfectos: document.getElementById('descripcionEfectos')?.value || '',
+            sistemicos: {
+                farmaco: document.getElementById('cambioSistemicoSelect')?.value || '',
+                dosis: document.getElementById('cambioSistemicoDose')?.value || ''
+            },
+            fames: {
+                farmaco: document.getElementById('cambioFameSelect')?.value || '',
+                dosis: document.getElementById('cambioFameDose')?.value || ''
+            },
+            biologicos: {
+                farmaco: document.getElementById('cambioBiologicoSelect')?.value || '',
+                dosis: document.getElementById('cambioBiologicoDose')?.value || ''
             }
         }
-        const tratamientoData = {
-            continuar: {
-                adherencia: document.getElementById('adherencia')?.value || '',
-                ajusteTerapeutico: document.getElementById('ajusteTerapeutico')?.value || ''
-            },
-            cambio: {
-                motivoCambio: document.getElementById('motivoCambio')?.value || '',
-                efectosAdversos: document.getElementById('efectosAdversos')?.checked || false,
-                descripcionEfectos: document.getElementById('descripcionEfectos')?.value || '',
-                sistemicos: {
-                    farmaco: document.getElementById('cambioSistemicoSelect')?.value || '',
-                    dosis: document.getElementById('cambioSistemicoDose')?.value || ''
-                },
-                fames: {
-                    farmaco: document.getElementById('cambioFameSelect')?.value || '',
-                    dosis: document.getElementById('cambioFameDose')?.value || ''
-                },
-                biologicos: {
-                    farmaco: document.getElementById('cambioBiologicoSelect')?.value || '',
-                    dosis: document.getElementById('cambioBiologicoDose')?.value || ''
-                }
-            }
-        };
+    };
 
-        const afectacionPsoriasis = {
-            'cuero-cabelludo': document.querySelector('.toggle-btn[data-value="cuero-cabelludo"].active') ? 'SI' : 'NO',
-            'ungueal': document.querySelector('.toggle-btn[data-value="ungueal"].active') ? 'SI' : 'NO',
-            'extensora': document.querySelector('.toggle-btn[data-value="extensora"].active') ? 'SI' : 'NO',
-            'pliegues': document.querySelector('.toggle-btn[data-value="pliegues"].active') ? 'SI' : 'NO',
-            'palmoplantar': document.querySelector('.toggle-btn[data-value="palmoplantar"].active') ? 'SI' : 'NO'
-        };
+    const afectacionPsoriasis = {
+        'cuero-cabelludo': document.querySelector('.toggle-btn[data-value="cuero-cabelludo"].active') ? 'SI' : 'NO',
+        'ungueal': document.querySelector('.toggle-btn[data-value="ungueal"].active') ? 'SI' : 'NO',
+        'extensora': document.querySelector('.toggle-btn[data-value="extensora"].active') ? 'SI' : 'NO',
+        'pliegues': document.querySelector('.toggle-btn[data-value="pliegues"].active') ? 'SI' : 'NO',
+        'palmoplantar': document.querySelector('.toggle-btn[data-value="palmoplantar"].active') ? 'SI' : 'NO'
+    };
 
-        const extraArticular = {
-            'digestiva': document.querySelector('.toggle-btn[data-value="digestiva"].active') ? 'SI' : 'NO',
-            'uveitis': document.querySelector('.toggle-btn[data-value="uveitis"].active') ? 'SI' : 'NO',
-            'psoriasis': document.querySelector('.toggle-btn[data-value="psoriasis"].active') ? 'SI' : 'NO'
-        };
+    const extraArticular = {
+        'digestiva': document.querySelector('.toggle-btn[data-value="digestiva"].active') ? 'SI' : 'NO',
+        'uveitis': document.querySelector('.toggle-btn[data-value="uveitis"].active') ? 'SI' : 'NO',
+        'psoriasis': document.querySelector('.toggle-btn[data-value="psoriasis"].active') ? 'SI' : 'NO'
+    };
 
-        const comorbilidad = {
-            'hta': document.querySelector('.toggle-btn[data-value="hta"].active') ? 'SI' : 'NO',
-            'dm': document.querySelector('.toggle-btn[data-value="dm"].active') ? 'SI' : 'NO',
-            'dlp': document.querySelector('.toggle-btn[data-value="dlp"].active') ? 'SI' : 'NO',
-            'ecv': document.querySelector('.toggle-btn[data-value="ecv"].active') ? 'SI' : 'NO',
-            'gastritis': document.querySelector('.toggle-btn[data-value="gastritis"].active') ? 'SI' : 'NO',
-            'obesidad': document.querySelector('.toggle-btn[data-value="obesidad"].active') ? 'SI' : 'NO',
-            'osteoporosis': document.querySelector('.toggle-btn[data-value="osteoporosis"].active') ? 'SI' : 'NO',
-            'gota': document.querySelector('.toggle-btn[data-value="gota"].active') ? 'SI' : 'NO'
-        };
+    const comorbilidad = {
+        'hta': document.querySelector('.toggle-btn[data-value="hta"].active') ? 'SI' : 'NO',
+        'dm': document.querySelector('.toggle-btn[data-value="dm"].active') ? 'SI' : 'NO',
+        'dlp': document.querySelector('.toggle-btn[data-value="dlp"].active') ? 'SI' : 'NO',
+        'ecv': document.querySelector('.toggle-btn[data-value="ecv"].active') ? 'SI' : 'NO',
+        'gastritis': document.querySelector('.toggle-btn[data-value="gastritis"].active') ? 'SI' : 'NO',
+        'obesidad': document.querySelector('.toggle-btn[data-value="obesidad"].active') ? 'SI' : 'NO',
+        'osteoporosis': document.querySelector('.toggle-btn[data-value="osteoporosis"].active') ? 'SI' : 'NO',
+        'gota': document.querySelector('.toggle-btn[data-value="gota"].active') ? 'SI' : 'NO'
+    };
 
-        const antecedentesFamiliares = {
-            'psoriasis': document.querySelector('.toggle-btn[data-value="psoriasis"].active') ? 'SI' : 'NO',
-            'artritis': document.querySelector('.toggle-btn[data-value="artritis"].active') ? 'SI' : 'NO',
-            'eii': document.querySelector('.toggle-btn[data-value="eii"].active') ? 'SI' : 'NO',
-            'uveitis': document.querySelector('.toggle-btn[data-value="uveitis"].active') ? 'SI' : 'NO'
-        };
+    const antecedentesFamiliares = {
+        'psoriasis': document.querySelector('.toggle-btn[data-value="psoriasis"].active') ? 'SI' : 'NO',
+        'artritis': document.querySelector('.toggle-btn[data-value="artritis"].active') ? 'SI' : 'NO',
+        'eii': document.querySelector('.toggle-btn[data-value="eii"].active') ? 'SI' : 'NO',
+        'uveitis': document.querySelector('.toggle-btn[data-value="uveitis"].active') ? 'SI' : 'NO'
+    };
 
-        const tabacoCheckbox = document.querySelector('input[name="toxico"][value="tabaco"]');
-        const tabacoDesc = document.getElementById('tabacoDesc')?.value || '';
-        const alcoholCheckbox = document.querySelector('input[name="toxico"][value="alcohol"]');
-        const alcoholDesc = document.getElementById('alcoholDesc')?.value || '';
-        const drogasCheckbox = document.querySelector('input[name="toxico"][value="drogas"]');
-        const drogasDesc = document.getElementById('drogasDesc')?.value || '';
+    const tabacoCheckbox = document.querySelector('input[name="toxico"][value="tabaco"]');
+    const tabacoDesc = document.getElementById('tabacoDesc')?.value || '';
+    const alcoholCheckbox = document.querySelector('input[name="toxico"][value="alcohol"]');
+    const alcoholDesc = document.getElementById('alcoholDesc')?.value || '';
+    const drogasCheckbox = document.querySelector('input[name="toxico"][value="drogas"]');
+    const drogasDesc = document.getElementById('drogasDesc')?.value || '';
 
-        const toxicos = {
-            'tabaco': tabacoCheckbox?.checked ? 'SI' : 'NO',
-            'tabaco_desc': tabacoDesc,
-            'alcohol': alcoholCheckbox?.checked ? 'SI' : 'NO',
-            'alcohol_desc': alcoholDesc,
-            'drogas': drogasCheckbox?.checked ? 'SI' : 'NO',
-            'drogas_desc': drogasDesc
-        };
+    const toxicos = {
+        'tabaco': tabacoCheckbox?.checked ? 'SI' : 'NO',
+        'tabaco_desc': tabacoDesc,
+        'alcohol': alcoholCheckbox?.checked ? 'SI' : 'NO',
+        'alcohol_desc': alcoholDesc,
+        'drogas': drogasCheckbox?.checked ? 'SI' : 'NO',
+        'drogas_desc': drogasDesc
+    };
 
-        const entesitisOptions = [
-            'aquiles-der', 'fascia-der', 'epicondilo-lat-der', 'epicondilo-med-der', 'trocanter-der',
-            'aquiles-izq', 'fascia-izq', 'epicondilo-lat-izq', 'epicondilo-med-izq', 'trocanter-izq'
-        ];
-        const entesitis = {};
-        entesitisOptions.forEach(opcion => {
-            entesitis[opcion] = document.querySelector(`input[name="entesitis"][value="${opcion}"]`)?.checked ? 'SI' : 'NO';
-        });
-        const otrasEntesitis = document.getElementById('otrasEntesitis')?.value || '';
+    const entesitisOptions = [
+        'aquiles-der', 'fascia-der', 'epicondilo-lat-der', 'epicondilo-med-der', 'trocanter-der',
+        'aquiles-izq', 'fascia-izq', 'epicondilo-lat-izq', 'epicondilo-med-izq', 'trocanter-izq'
+    ];
+    const entesitis = {};
+    entesitisOptions.forEach(opcion => {
+        entesitis[opcion] = document.querySelector(`input[name="entesitis"][value="${opcion}"]`)?.checked ? 'SI' : 'NO';
+    });
+    const otrasEntesitis = document.getElementById('otrasEntesitis')?.value || '';
 
-        const datosCompletos = {
-            idPaciente, nombrePaciente, fechaVisita, sexoPaciente, tipoVisita, profesional,
-            diagnosticoPrimario, diagnosticoSecundario,
-            hlaB27, fr, apcc,
-            inicioSintomas, inicioPsoriasis, dolorAxial, rigidezMatutina, duracionRigidez, irradiacionNalgas, clinicaAxialPresente,
-            nad, nat, dactilitis, homunculusNadMap, homunculusNatMap, dactilitisMap,
-            peso, talla, imc, ta,
-            sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
-            tratamientoActual, fechaInicioTratamiento, fechaProximaRevision,
-            evaGlobal, evaDolor, evaFatiga, rigidezMatutinaMin, dolorNocturno,
-            pcr, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
-            basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
-            asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
-            schober, rotacionCervical, distanciaOP, distanciaTP, expansionToracica, distanciaIntermaleolar,
-            decisionTerapeutica, tratamientoData,
-            afectacionPsoriasis, extraArticular, comorbilidad, antecedentesFamiliares, toxicos, entesitis, otrasEntesitis,
-            comentariosAdicionales
-        };
+    const datosCompletos = {
+        idPaciente, nombrePaciente, fechaVisita, sexoPaciente, tipoVisita, profesional,
+        diagnosticoPrimario, diagnosticoSecundario,
+        hlaB27, fr, apcc,
+        inicioSintomas, inicioPsoriasis, dolorAxial, rigidezMatutina, duracionRigidez, irradiacionNalgas, clinicaAxialPresente,
+        nad, nat, dactilitis, homunculusNadMap, homunculusNatMap, dactilitisMap,
+        peso, talla, imc, ta,
+        sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
+        tratamientoActual, fechaInicioTratamiento, fechaProximaRevision,
+        evaGlobal, evaDolor, evaFatiga, rigidezMatutinaMin, dolorNocturno,
+        pcr, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
+        basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
+        asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
+        schober, rotacionCervical, distanciaOP, distanciaTP, expansionToracica, distanciaIntermaleolar,
+        decisionTerapeutica, tratamientoData,
+        afectacionPsoriasis, extraArticular, comorbilidad, antecedentesFamiliares, toxicos, entesitis, otrasEntesitis,
+        comentariosAdicionales
+    };
 
-        return datosCompletos;
-    }
+    return datosCompletos;
+}
 
 // =====================================
 // FUNCIÓN: prefillSeguimientoForm
@@ -940,16 +940,16 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
         console.error(`❌ Select #${selectId} no encontrado`);
         return;
     }
-    
+
     // Verificar que HubTools está disponible
     if (typeof HubTools === 'undefined' || !HubTools.data || !HubTools.data.getFarmacosPorTipo) {
         console.error('❌ HubTools.data.getFarmacosPorTipo no disponible');
         return;
     }
-    
+
     // Limpiar opciones existentes
     selectElement.innerHTML = '';
-    
+
     // Agregar opción "No" si se requiere
     if (includeNo) {
         const optionNo = document.createElement('option');
@@ -957,13 +957,13 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
         optionNo.textContent = 'No';
         selectElement.appendChild(optionNo);
     }
-    
+
     // Obtener fármacos de la base de datos
     const farmacos = HubTools.data.getFarmacosPorTipo(tipo);
-    
+
     if (!farmacos || farmacos.length === 0) {
         console.warn(`⚠ No se encontraron fármacos del tipo "${tipo}"`);
-        
+
         // Agregar opción indicativa
         const optionEmpty = document.createElement('option');
         optionEmpty.value = '';
@@ -972,7 +972,7 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
         selectElement.appendChild(optionEmpty);
         return;
     }
-    
+
     // Agregar cada fármaco como opción
     farmacos.forEach(farmaco => {
         if (farmaco && farmaco.trim() !== '') {
@@ -982,7 +982,7 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
             selectElement.appendChild(option);
         }
     });
-    
+
     console.log(`✓ Select #${selectId} poblado con ${farmacos.length} opciones de tipo "${tipo}"`);
 }
 
@@ -991,7 +991,7 @@ function recopilarDatosFormularioSeguimiento() {
     const idPaciente = document.getElementById('idPaciente').value;
     const nombrePaciente = document.getElementById('nombrePaciente').value;
     const fechaVisita = document.getElementById('fechaVisita').value;
-    
+
     // Capturar nombre del profesional desde el DOM
     const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
 
@@ -1046,6 +1046,301 @@ function recopilarDatosFormularioSeguimiento() {
     return datosCompletos;
 }
 
+// ============================================
+// WIRING DE AUTO-CÁLCULO DE SCORES
+// ============================================
+
+/**
+ * Inicializa todos los event listeners para auto-calcular scores.
+ * Debe llamarse desde script_seguimiento.js y script_primera_visita.js
+ * después de que el DOM esté listo.
+ *
+ * Wiring implementado:
+ * 1. PCR/VSG (Pruebas Complementarias) → campos readonly en ASDAS
+ * 2. BASDAI P1-P6 → basdaiResult
+ * 3. ASDAS inputs → asdasCrpResult / asdasEsrResult
+ * 4. HAQ selects + aids → haqTotal
+ * 5. LEI checkboxes → leiTotal (si se añade en futuro)
+ * 6. MDA (auto desde NAD/NAT/EVA/HAQ/PASI/BSA/LEI)
+ * 7. RAPID3 (auto desde HAQ + EVA)
+ */
+function initScoreWiring() {
+    console.log('🔧 Inicializando wiring de scores...');
+
+    // --- 1. SYNC PCR / VSG → ASDAS readonly ---
+    const pcrInput = document.getElementById('pcrValue');
+    const vsgInput = document.getElementById('vsgValue');
+    const asdasPCRField = document.getElementById('asdasPCR');
+    const asdasVSGField = document.getElementById('asdasVSG');
+
+    if (pcrInput && asdasPCRField) {
+        pcrInput.addEventListener('input', function () {
+            asdasPCRField.value = this.value;
+            recalcularASDAS();
+            recalcularMDA();
+        });
+        console.log('  ✓ PCR → asdasPCR sync');
+    }
+    if (vsgInput && asdasVSGField) {
+        vsgInput.addEventListener('input', function () {
+            asdasVSGField.value = this.value;
+            recalcularASDAS();
+        });
+        console.log('  ✓ VSG → asdasVSG sync');
+    }
+
+    // --- 2. AUTO-CÁLCULO BASDAI ---
+    const basdaiFields = ['basdaiP1', 'basdaiP2', 'basdaiP3', 'basdaiP4', 'basdaiP5', 'basdaiP6'];
+    const basdaiResult = document.getElementById('basdaiResult');
+
+    basdaiFields.forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', recalcularBASDAI);
+        }
+    });
+
+    function recalcularBASDAI() {
+        if (!basdaiResult || typeof HubTools.scores.calcularBASDAI !== 'function') return;
+        var datos = {};
+        basdaiFields.forEach(function (id) {
+            datos[id] = document.getElementById(id)?.value || '0';
+        });
+        var resultado = HubTools.scores.calcularBASDAI(datos);
+        basdaiResult.value = resultado;
+        // Categorizar
+        var cat = HubTools.scores.categorizeScore(parseFloat(resultado), 'basdai');
+        basdaiResult.style.backgroundColor = cat.backgroundColor;
+        basdaiResult.style.color = cat.color;
+        basdaiResult.title = cat.label;
+        console.log('  📊 BASDAI recalculado:', resultado, cat.label);
+    }
+    if (basdaiResult) console.log('  ✓ BASDAI wiring');
+
+    // --- 3. AUTO-CÁLCULO ASDAS ---
+    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasEvaGlobal', 'asdasNAD'];
+    asdasInputIds.forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', recalcularASDAS);
+        }
+    });
+    // asdasPCR y asdasVSG son readonly, se actualizan desde el sync de arriba
+
+    function recalcularASDAS() {
+        if (typeof HubTools.scores.calcularASDAS !== 'function') return;
+        var datos = {
+            asdasDolorEspalda: document.getElementById('asdasDolorEspalda')?.value || '0',
+            asdasDuracionRigidez: document.getElementById('asdasDuracionRigidez')?.value || '0',
+            asdasEvaGlobal: document.getElementById('asdasEvaGlobal')?.value || '0',
+            asdasNAD: document.getElementById('asdasNAD')?.value || '0',
+            asdasPCR: document.getElementById('asdasPCR')?.value || '0',
+            asdasVSG: document.getElementById('asdasVSG')?.value || '0'
+        };
+        var result = HubTools.scores.calcularASDAS(datos);
+
+        var crpField = document.getElementById('asdasCrpResult');
+        var esrField = document.getElementById('asdasEsrResult');
+
+        if (crpField) {
+            crpField.value = result.asdasCRP;
+            var catCRP = HubTools.scores.categorizeScore(parseFloat(result.asdasCRP), 'asdas');
+            crpField.style.backgroundColor = catCRP.backgroundColor;
+            crpField.style.color = catCRP.color;
+            crpField.title = catCRP.label;
+        }
+        if (esrField) {
+            esrField.value = result.asdasESR;
+            var catESR = HubTools.scores.categorizeScore(parseFloat(result.asdasESR), 'asdas');
+            esrField.style.backgroundColor = catESR.backgroundColor;
+            esrField.style.color = catESR.color;
+            esrField.title = catESR.label;
+        }
+        console.log('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
+    }
+
+    // Exponer para homunculus.js
+    window.calcularASDASLocal = recalcularASDAS;
+    console.log('  ✓ ASDAS wiring + calcularASDASLocal');
+
+    // --- 4. AUTO-CÁLCULO HAQ-DI ---
+    var haqScoreSelects = document.querySelectorAll('.haq-score');
+    var haqAidCheckboxes = document.querySelectorAll('.haq-aid');
+    var haqTotalEl = document.getElementById('haqTotal');
+
+    function recalcularHAQ() {
+        if (!haqTotalEl || typeof HubTools.scores.calcularHAQ !== 'function') return;
+        var datos = {};
+        for (var i = 1; i <= 8; i++) {
+            var sel = document.querySelector('.haq-score[data-category="' + i + '"]');
+            var aid = document.querySelector('.haq-aid[data-category="' + i + '"]');
+            datos['haqCategoria' + i] = sel ? sel.value : '0';
+            datos['haqAyuda' + i] = aid ? aid.checked : false;
+        }
+        var haqValue = HubTools.scores.calcularHAQ(datos);
+        haqTotalEl.textContent = haqValue.toFixed(2);
+        // Categorizar
+        var cat = HubTools.scores.categorizeScore(haqValue, 'haq');
+        haqTotalEl.style.color = cat.color;
+
+        // Cascada: HAQ afecta RAPID3 y MDA
+        recalcularRAPID3();
+        recalcularMDA();
+        console.log('  📊 HAQ-DI recalculado:', haqValue.toFixed(2), cat.label);
+    }
+
+    haqScoreSelects.forEach(function (sel) {
+        sel.addEventListener('change', recalcularHAQ);
+    });
+    haqAidCheckboxes.forEach(function (cb) {
+        cb.addEventListener('change', recalcularHAQ);
+    });
+    if (haqTotalEl) console.log('  ✓ HAQ-DI wiring');
+
+    // --- 5. AUTO-CÁLCULO LEI ---
+    var leiCheckboxes = document.querySelectorAll('.lei-point');
+
+    function recalcularLEI() {
+        var count = 0;
+        leiCheckboxes.forEach(function (cb) {
+            if (cb.checked) count++;
+        });
+        var leiTotalEl = document.getElementById('leiTotal');
+        if (leiTotalEl) leiTotalEl.textContent = count;
+        // Cascada: LEI afecta MDA
+        recalcularMDA();
+        return count;
+    }
+
+    leiCheckboxes.forEach(function (cb) {
+        cb.addEventListener('change', recalcularLEI);
+    });
+    if (leiCheckboxes.length > 0) console.log('  ✓ LEI wiring');
+
+    // --- 6. EVA inputs → cascada a MDA y RAPID3 ---
+    var evaGlobalInput = document.getElementById('evaGlobal');
+    var evaDolorInput = document.getElementById('evaDolor');
+
+    if (evaGlobalInput) {
+        evaGlobalInput.addEventListener('input', function () {
+            recalcularMDA();
+            recalcularRAPID3();
+        });
+    }
+    if (evaDolorInput) {
+        evaDolorInput.addEventListener('input', function () {
+            recalcularMDA();
+            recalcularRAPID3();
+        });
+    }
+    if (evaGlobalInput || evaDolorInput) console.log('  ✓ EVA → MDA/RAPID3 wiring');
+
+    // --- 7. AUTO-CÁLCULO MDA ---
+    function recalcularMDA() {
+        if (typeof HubTools.scores.calcularMDA !== 'function') return;
+
+        var haqVal = parseFloat(document.getElementById('haqTotal')?.textContent) || 0;
+        var leiCheckboxesNow = document.querySelectorAll('.lei-point:checked');
+        var leiVal = leiCheckboxesNow.length;
+
+        var datos = {
+            nat: parseInt(document.getElementById('asdasNAT')?.value) || 0,
+            nad: parseInt(document.getElementById('asdasNAD')?.value) || 0,
+            pasiValue: document.getElementById('pasiValue')?.value || '0',
+            bsaValue: document.getElementById('bsaValue')?.value || '0',
+            lei: leiVal,
+            evaDolor: document.getElementById('evaDolor')?.value || '0',
+            evaGlobal: document.getElementById('evaGlobal')?.value || '0',
+            haq: haqVal
+        };
+
+        var result = HubTools.scores.calcularMDA(datos);
+
+        // Actualizar UI del MDA
+        var mdaNATEl = document.getElementById('mdaNAT');
+        var mdaNADEl = document.getElementById('mdaNAD');
+        var mdaEvaDEl = document.getElementById('mdaEvaDolor');
+        var mdaEvaGEl = document.getElementById('mdaEvaGlobal');
+        var mdaHAQEl = document.getElementById('mdaHAQ');
+        var mdaLEIEl = document.getElementById('mdaLEI');
+        var mdaPsoriasisEl = document.getElementById('mdaPsoriasis');
+        var mdaCumplidosEl = document.getElementById('mdaCumplidos');
+        var mdaResultEl = document.getElementById('mdaResultadoFinal');
+
+        if (mdaNATEl) mdaNATEl.textContent = result.nat;
+        if (mdaNADEl) mdaNADEl.textContent = result.nad;
+        if (mdaEvaDEl) mdaEvaDEl.textContent = result.evaDolor;
+        if (mdaEvaGEl) mdaEvaGEl.textContent = result.evaGlobal;
+        if (mdaHAQEl) mdaHAQEl.textContent = result.haq;
+        if (mdaLEIEl) mdaLEIEl.textContent = result.lei;
+        if (mdaPsoriasisEl) mdaPsoriasisEl.textContent = result.psoriasis;
+        if (mdaCumplidosEl) mdaCumplidosEl.textContent = result.cumplidos;
+
+        // Actualizar status de cada criterio
+        for (var ci = 0; ci < result.criterios.length; ci++) {
+            var statusEl = document.getElementById('mdaStatus' + (ci + 1));
+            var criterioEl = document.getElementById('mdaCriterio' + (ci + 1));
+            if (statusEl) {
+                statusEl.textContent = result.criterios[ci] ? '✓' : '✗';
+                statusEl.style.color = result.criterios[ci] ? '#28a745' : '#dc3545';
+            }
+            if (criterioEl) {
+                criterioEl.style.backgroundColor = result.criterios[ci] ? '#28a74522' : '';
+            }
+        }
+
+        if (mdaResultEl) {
+            if (result.mdaAlcanzado) {
+                mdaResultEl.textContent = 'MDA ALCANZADO ✓';
+                mdaResultEl.style.color = '#28a745';
+                mdaResultEl.style.fontWeight = 'bold';
+            } else {
+                mdaResultEl.textContent = 'MDA NO ALCANZADO';
+                mdaResultEl.style.color = '#dc3545';
+                mdaResultEl.style.fontWeight = 'normal';
+            }
+        }
+    }
+
+    // Exponer para homunculus.js
+    window.calcularMDALocal = recalcularMDA;
+    console.log('  ✓ MDA wiring + calcularMDALocal');
+
+    // --- 8. AUTO-CÁLCULO RAPID3 ---
+    function recalcularRAPID3() {
+        if (typeof HubTools.scores.calcularRAPID3 !== 'function') return;
+
+        var haqVal = parseFloat(document.getElementById('haqTotal')?.textContent) || 0;
+
+        var datos = {
+            haq: haqVal,
+            evaDolor: document.getElementById('evaDolor')?.value || '0',
+            evaGlobal: document.getElementById('evaGlobal')?.value || '0'
+        };
+
+        var result = HubTools.scores.calcularRAPID3(datos);
+
+        var funcionEl = document.getElementById('rapid3Funcion');
+        var dolorEl = document.getElementById('rapid3Dolor');
+        var globalEl = document.getElementById('rapid3Global');
+        var totalEl = document.getElementById('rapid3Total');
+        var catEl = document.getElementById('rapid3Categoria');
+
+        if (funcionEl) funcionEl.textContent = result.funcion;
+        if (dolorEl) dolorEl.textContent = result.dolor;
+        if (globalEl) globalEl.textContent = result.global;
+        if (totalEl) totalEl.textContent = result.total;
+        if (catEl) catEl.textContent = result.categoria;
+
+        // Colorear
+        var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'rapid3');
+        if (totalEl) totalEl.style.color = cat.color;
+    }
+    console.log('  ✓ RAPID3 wiring');
+
+    console.log('✅ Score wiring completado');
+}
+
 // Verificar que HubTools existe antes de asignar funciones
 if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.showElement = showElement;
@@ -1064,6 +1359,7 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.recopilarDatosFormularioSeguimiento = recopilarDatosFormularioSeguimiento;
     HubTools.form.prefillSeguimientoForm = prefillSeguimientoForm;
     HubTools.form.populateSelectFromDatabase = populateSelectFromDatabase;
+    HubTools.form.initScoreWiring = initScoreWiring;
 
     console.log('✅ Módulo formController cargado');
 } else {

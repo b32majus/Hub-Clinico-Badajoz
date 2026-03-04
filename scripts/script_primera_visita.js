@@ -17,17 +17,18 @@ document.addEventListener('DOMContentLoaded', () => {
     HubTools.data.initDatabaseFromStorage();
     HubTools.homunculus.initHomunculus();
     HubTools.form.inicializarCollapsibles();
+    HubTools.form.initScoreWiring();
 
     // --- POBLAR SELECTS DE FÁRMACOS DESDE LA BASE DE DATOS ---
     // Función para poblar selects (se ejecuta cuando BD está lista)
     function populateDrugSelects() {
         console.log('🔄 Iniciando población de selects de fármacos...');
         console.log('📊 Estado de la base de datos:', window.appState);
-        
+
         // Verificar disponibilidad de funciones
         console.log('🔍 Disponibilidad de HubTools.data.getFarmacosPorTipo:', typeof HubTools?.data?.getFarmacosPorTipo);
         console.log('🔍 Disponibilidad de HubTools.form.populateSelectFromDatabase:', typeof HubTools?.form?.populateSelectFromDatabase);
-        
+
         // Tratamientos previos
         HubTools.form.populateSelectFromDatabase('previoSistemicoSelect', 'Sistemicos');
         HubTools.form.populateSelectFromDatabase('previoFameSelect', 'FAMEs');
@@ -70,10 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENTO: Botones de Biomarcadores (HLA-B27, FR, Anti-CCP) ---
     document.querySelectorAll('.biomarker-badge').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             // Obtener el grupo de botones (hla-btn, fr-btn, apcc-btn)
             const group = this.classList.contains('hla-btn') ? '.hla-btn' :
-                          this.classList.contains('fr-btn') ? '.fr-btn' : '.apcc-btn';
+                this.classList.contains('fr-btn') ? '.fr-btn' : '.apcc-btn';
             // Remover active de todos los botones del grupo
             document.querySelectorAll(group).forEach(b => b.classList.remove('active'));
             // Añadir active al botón clickeado
@@ -83,14 +84,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENTO: Botones Toggle (Afectación Psoriasis, Extra-articular, Comorbilidades, etc.) ---
     document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             this.classList.toggle('active');
         });
     });
 
     // --- EVENTO: Checkboxes de Tóxicos ---
     document.querySelectorAll('.toxic-item input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
+        checkbox.addEventListener('change', function () {
             const detailsInput = this.closest('.toxic-item').querySelector('.toxic-details');
             if (detailsInput) {
                 detailsInput.disabled = !this.checked;
@@ -121,116 +122,116 @@ document.addEventListener('DOMContentLoaded', () => {
         tallaInput.addEventListener('input', calcularIMC);
     }
 
-        // --- EVENTO: Botón Exportar TXT ---
+    // --- EVENTO: Botón Exportar TXT ---
 
-        const btnExportTxt = document.getElementById('btnExportarTXT');
+    const btnExportTxt = document.getElementById('btnExportarTXT');
 
-        if (btnExportTxt) {
+    if (btnExportTxt) {
 
-            btnExportTxt.addEventListener('click', () => {
-                console.log('🔄 === INICIANDO EXPORTACIÓN TXT ===');
-                console.log('📊 Estado de HubTools:', {
-                    disponible: typeof HubTools !== 'undefined',
-                    form: typeof HubTools?.form !== 'undefined',
-                    export: typeof HubTools?.export !== 'undefined',
-                    utils: typeof HubTools?.utils !== 'undefined'
-                });
-                
-                try {
-                    const errores = HubTools.form.validarFormulario();
-                    console.log('📋 Resultado validación:', errores);
-                    
-                    if (errores.length === 0) {
-                        console.log('✓ Formulario válido, recopilando datos...');
-                        
-                        // Verificar disponibilidad de funciones críticas
-                        if (typeof HubTools?.form?.recopilarDatosFormulario !== 'function') {
-                            console.error('❌ HubTools.form.recopilarDatosFormulario no disponible');
-                            HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
-                            return;
-                        }
-                        
-                        if (typeof HubTools?.export?.exportarTXT !== 'function') {
-                            console.error('❌ HubTools.export.exportarTXT no disponible');
-                            HubTools.utils?.mostrarNotificacion?.('Error: función de exportación no disponible', 'error');
-                            return;
-                        }
-                        
-                        const datos = HubTools.form.recopilarDatosFormulario();
-                        console.log('📊 Datos recopilados:', datos);
-                        
-                        console.log('📤 Iniciando exportación TXT...');
-                        HubTools.export.exportarTXT(datos);
-                    } else {
-                        console.warn('⚠ Errores de validación:', errores);
-                        HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
-                    }
-                } catch (error) {
-                    console.error('❌ Error capturado en exportación TXT:', error);
-                    console.error('Stack trace:', error.stack);
-                    HubTools.utils?.mostrarNotificacion?.(`Error al exportar: ${error.message}`, 'error');
-                }
+        btnExportTxt.addEventListener('click', () => {
+            console.log('🔄 === INICIANDO EXPORTACIÓN TXT ===');
+            console.log('📊 Estado de HubTools:', {
+                disponible: typeof HubTools !== 'undefined',
+                form: typeof HubTools?.form !== 'undefined',
+                export: typeof HubTools?.export !== 'undefined',
+                utils: typeof HubTools?.utils !== 'undefined'
             });
 
-        }
+            try {
+                const errores = HubTools.form.validarFormulario();
+                console.log('📋 Resultado validación:', errores);
 
-    
+                if (errores.length === 0) {
+                    console.log('✓ Formulario válido, recopilando datos...');
 
-        // --- EVENTO: Botón Estructurar CSV ---
-
-        const btnExportCsv = document.getElementById('btnEstructurarCSV');
-
-        if (btnExportCsv) {
-
-            btnExportCsv.addEventListener('click', () => {
-                console.log('🔄 === INICIANDO EXPORTACIÓN CSV ===');
-                console.log('📊 Estado de HubTools:', {
-                    disponible: typeof HubTools !== 'undefined',
-                    form: typeof HubTools?.form !== 'undefined',
-                    export: typeof HubTools?.export !== 'undefined',
-                    utils: typeof HubTools?.utils !== 'undefined'
-                });
-                
-                try {
-                    const errores = HubTools.form.validarFormulario();
-                    console.log('📋 Resultado validación:', errores);
-                    
-                    if (errores.length === 0) {
-                        console.log('✓ Formulario válido, recopilando datos...');
-                        
-                        // Verificar disponibilidad de funciones críticas
-                        if (typeof HubTools?.form?.recopilarDatosFormulario !== 'function') {
-                            console.error('❌ HubTools.form.recopilarDatosFormulario no disponible');
-                            HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
-                            return;
-                        }
-                        
-                        if (typeof HubTools?.export?.exportarYCopiarCSV !== 'function') {
-                            console.error('❌ HubTools.export.exportarYCopiarCSV no disponible');
-                            HubTools.utils?.mostrarNotificacion?.('Error: función de exportación CSV no disponible', 'error');
-                            return;
-                        }
-                        
-                        const datos = HubTools.form.recopilarDatosFormulario();
-                        console.log('📊 Datos recopilados:', datos);
-                        
-                        const diagnostico = document.getElementById('diagnosticoPrimario').value;
-                        console.log('🔍 Diagnóstico seleccionado:', diagnostico);
-                        
-                        console.log('📤 Iniciando exportación CSV...');
-                        HubTools.export.exportarYCopiarCSV(datos, 'primera', diagnostico);
-                    } else {
-                        console.warn('⚠ Errores de validación encontrados');
-                        HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
+                    // Verificar disponibilidad de funciones críticas
+                    if (typeof HubTools?.form?.recopilarDatosFormulario !== 'function') {
+                        console.error('❌ HubTools.form.recopilarDatosFormulario no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
+                        return;
                     }
-                } catch (error) {
-                    console.error('❌ Error capturado en exportación CSV:', error);
-                    console.error('Stack trace:', error.stack);
-                    HubTools.utils?.mostrarNotificacion?.(`Error al exportar CSV: ${error.message}`, 'error');
+
+                    if (typeof HubTools?.export?.exportarTXT !== 'function') {
+                        console.error('❌ HubTools.export.exportarTXT no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: función de exportación no disponible', 'error');
+                        return;
+                    }
+
+                    const datos = HubTools.form.recopilarDatosFormulario();
+                    console.log('📊 Datos recopilados:', datos);
+
+                    console.log('📤 Iniciando exportación TXT...');
+                    HubTools.export.exportarTXT(datos);
+                } else {
+                    console.warn('⚠ Errores de validación:', errores);
+                    HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
                 }
+            } catch (error) {
+                console.error('❌ Error capturado en exportación TXT:', error);
+                console.error('Stack trace:', error.stack);
+                HubTools.utils?.mostrarNotificacion?.(`Error al exportar: ${error.message}`, 'error');
+            }
+        });
+
+    }
+
+
+
+    // --- EVENTO: Botón Estructurar CSV ---
+
+    const btnExportCsv = document.getElementById('btnEstructurarCSV');
+
+    if (btnExportCsv) {
+
+        btnExportCsv.addEventListener('click', () => {
+            console.log('🔄 === INICIANDO EXPORTACIÓN CSV ===');
+            console.log('📊 Estado de HubTools:', {
+                disponible: typeof HubTools !== 'undefined',
+                form: typeof HubTools?.form !== 'undefined',
+                export: typeof HubTools?.export !== 'undefined',
+                utils: typeof HubTools?.utils !== 'undefined'
             });
 
-        }
+            try {
+                const errores = HubTools.form.validarFormulario();
+                console.log('📋 Resultado validación:', errores);
+
+                if (errores.length === 0) {
+                    console.log('✓ Formulario válido, recopilando datos...');
+
+                    // Verificar disponibilidad de funciones críticas
+                    if (typeof HubTools?.form?.recopilarDatosFormulario !== 'function') {
+                        console.error('❌ HubTools.form.recopilarDatosFormulario no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
+                        return;
+                    }
+
+                    if (typeof HubTools?.export?.exportarYCopiarCSV !== 'function') {
+                        console.error('❌ HubTools.export.exportarYCopiarCSV no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: función de exportación CSV no disponible', 'error');
+                        return;
+                    }
+
+                    const datos = HubTools.form.recopilarDatosFormulario();
+                    console.log('📊 Datos recopilados:', datos);
+
+                    const diagnostico = document.getElementById('diagnosticoPrimario').value;
+                    console.log('🔍 Diagnóstico seleccionado:', diagnostico);
+
+                    console.log('📤 Iniciando exportación CSV...');
+                    HubTools.export.exportarYCopiarCSV(datos, 'primera', diagnostico);
+                } else {
+                    console.warn('⚠ Errores de validación encontrados');
+                    HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error capturado en exportación CSV:', error);
+                console.error('Stack trace:', error.stack);
+                HubTools.utils?.mostrarNotificacion?.(`Error al exportar CSV: ${error.message}`, 'error');
+            }
+        });
+
+    }
 
     // --- EVENTO: Botón Nuevo Paciente ---
     const btnNuevoPaciente = document.getElementById('btnNuevoPaciente');
@@ -241,5 +242,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-console.log('✅ Primera Visita inicializada correctamente');
+    console.log('✅ Primera Visita inicializada correctamente');
 });

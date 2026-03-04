@@ -1557,3 +1557,641 @@ body:has(.hub-shell) {
         opacity: 0;
     }
 }
+
+/* ========================================
+   ESTILOS COMPARTIDOS: ÍNDICES DE ACTIVIDAD
+   Usados por primera_visita.html Y seguimiento.html
+   ======================================== */
+
+/* Apartados dentro de Pruebas Complementarias */
+.pruebas-apartado {
+    background-color: #f8f9fa;
+    border-left: 4px solid #17a2b8;
+    padding: 16px 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.pruebas-apartado h5 {
+    color: #0c5460;
+    font-size: 1em;
+    margin-top: 0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.pruebas-apartado h5 i {
+    color: #17a2b8;
+}
+
+/* Apartados de Índices */
+.indices-apartado {
+    background-color: #f8f9fa;
+    border-left: 4px solid #6f42c1;
+    padding: 16px 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.indices-apartado h5 {
+    color: #4a148c;
+    font-size: 1em;
+    margin-top: 0;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+
+.indices-apartado h5 i {
+    color: #6f42c1;
+}
+
+/* Nota informativa */
+.info-note {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 15px;
+    font-size: 0.85em;
+    color: #0c5460;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-note i {
+    color: #17a2b8;
+}
+
+/* Campos readonly de ASDAS */
+.asdas-readonly-input {
+    background-color: #fff3cd !important;
+    border-color: #ffc107 !important;
+    font-weight: 600;
+    color: #856404 !important;
+    cursor: not-allowed;
+    text-align: center;
+}
+
+/* Resultados de índices destacados */
+.indice-resultado {
+    background-color: #d4edda !important;
+    border: 2px solid #28a745 !important;
+    font-size: 1em !important;
+    font-weight: bold !important;
+    color: #155724 !important;
+    text-align: center;
+    padding: 8px !important;
+    border-radius: 8px;
+    cursor: not-allowed;
+}
+
+/* Clases de visibilidad condicional por patología */
+.espa-only {
+    display: none;
+}
+
+.espa-only.show {
+    display: block;
+}
+
+.aps-only {
+    display: none;
+}
+
+.aps-only.show {
+    display: block;
+}
+
+/* ========================================
+   MDA (MINIMAL DISEASE ACTIVITY)
+   ======================================== */
+
+.mda-criterios-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.mda-criterio {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+}
+
+.mda-criterio:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.mda-criterio-cumplido {
+    background: #d4edda !important;
+    border-color: #28a745 !important;
+}
+
+.mda-criterio-icon {
+    font-size: 1.2em;
+    color: #6c757d;
+}
+
+.mda-criterio-cumplido .mda-criterio-icon {
+    color: #28a745;
+}
+
+.mda-criterio-text {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+.mda-criterio-valor {
+    background: #f8f9fa;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #2c5aa0;
+    font-size: 0.95em;
+    min-width: 45px;
+    text-align: center;
+}
+
+.mda-criterio-cumplido .mda-criterio-valor {
+    background: #28a745;
+    color: white;
+}
+
+.mda-criterio-status {
+    font-size: 1.4em;
+    font-weight: 700;
+}
+
+.mda-resultado-box {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 3px solid #e9ecef;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 15px;
+}
+
+.mda-resultado-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.mda-resultado-label {
+    font-size: 1em;
+    font-weight: 600;
+    color: #495057;
+}
+
+.mda-resultado-score {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: #2c5aa0;
+}
+
+.mda-resultado-status {
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%);
+    box-shadow: 0 4px 15px rgba(251, 140, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* ========================================
+   RAPID3
+   ======================================== */
+
+.rapid3-components {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.rapid3-component {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.rapid3-component:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    border-color: #6f42c1;
+}
+
+.rapid3-component-label {
+    display: block;
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.rapid3-component-valor {
+    font-size: 1.6em;
+    font-weight: 700;
+    color: #6f42c1;
+    display: block;
+}
+
+.rapid3-resultado-box {
+    background: linear-gradient(135deg, #f3e5f5 0%, #f8f5ff 100%);
+    border: 3px solid #6f42c1;
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 20px;
+}
+
+.rapid3-resultado-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.rapid3-resultado-label {
+    font-size: 1em;
+    font-weight: 600;
+    color: #4a148c;
+}
+
+.rapid3-resultado-score {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #6f42c1;
+}
+
+.rapid3-resultado-categoria {
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.95em;
+    font-weight: 700;
+    background: linear-gradient(135deg, #d1c4e9 0%, #ede7f6 100%);
+    color: #4a148c;
+    box-shadow: 0 3px 10px rgba(111, 66, 193, 0.2);
+}
+
+/* ========================================
+   HAQ-DI (HEALTH ASSESSMENT QUESTIONNAIRE)
+   ======================================== */
+
+.haq-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.haq-category {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 14px;
+    transition: all 0.3s ease;
+}
+
+.haq-category:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #17a2b8;
+}
+
+.haq-category-title {
+    display: block;
+    font-weight: 700;
+    color: #2c5aa0;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+.haq-score {
+    width: 100%;
+    padding: 8px 10px;
+    border: 2px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #495057;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.haq-score:hover {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+}
+
+.haq-score:focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.15);
+    outline: none;
+}
+
+.haq-aids {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #6c757d;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+}
+
+.haq-aid {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.haq-resultado-box {
+    background: linear-gradient(135deg, #d1ecf1 0%, #e8f7fa 100%);
+    border: 3px solid #17a2b8;
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.haq-resultado-label {
+    font-size: 1.05em;
+    font-weight: 600;
+    color: #0c5460;
+}
+
+.haq-resultado-score {
+    font-size: 2em;
+    font-weight: 700;
+    color: #17a2b8;
+}
+
+.haq-resultado-interpretacion {
+    font-size: 0.85em;
+    color: #0c5460;
+    margin-left: 20px;
+    font-weight: 600;
+}
+
+/* ========================================
+   LEI (LEEDS ENTHESITIS INDEX)
+   ======================================== */
+
+.lei-section {
+    background: #f8fbff;
+    border: 2px solid #d6e9f8;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 20px;
+}
+
+.lei-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px 30px;
+    margin-bottom: 15px;
+}
+
+.lei-point-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    background: white;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.lei-point-item:hover {
+    background: #e3f2fd;
+    transform: translateX(5px);
+}
+
+.lei-point {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.lei-point-label {
+    font-size: 0.9em;
+    color: #495057;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+}
+
+.lei-resultado-box {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border: 3px solid #ff9800;
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lei-resultado-label {
+    font-size: 1em;
+    font-weight: 600;
+    color: #e65100;
+}
+
+.lei-resultado-score {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #ff9800;
+}
+
+/* ========================================
+   PSORIASIS ASSESSMENT (PASI/BSA)
+   ======================================== */
+
+.psoriasis-assessment-section {
+    background: #fff9e6;
+    border: 2px solid #ffe8a1;
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 20px;
+}
+
+.psoriasis-assessment-section h6 {
+    color: #8a6d3b;
+    font-size: 0.95em;
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.psoriasis-assessment-section h6 i {
+    color: #f0ad4e;
+}
+
+.psoriasis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.psoriasis-grid .form-group label {
+    color: #8a6d3b;
+    font-weight: 600;
+}
+
+.psoriasis-grid input {
+    border-color: #ffe8a1;
+}
+
+.psoriasis-grid input:focus {
+    border-color: #f0ad4e;
+    box-shadow: 0 0 0 3px rgba(240, 173, 78, 0.1);
+}
+
+/* ========================================
+   RESPONSIVE: ÍNDICES DE ACTIVIDAD
+   ======================================== */
+
+@media (max-width: 992px) {
+    .pruebas-apartado,
+    .indices-apartado {
+        padding: 16px 20px;
+    }
+
+    .mda-criterios-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .rapid3-components {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .lei-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .psoriasis-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .pruebas-apartado h5,
+    .indices-apartado h5 {
+        font-size: 1.1em;
+    }
+
+    .indice-resultado {
+        font-size: 1.1em !important;
+    }
+
+    .mda-criterio {
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+    }
+
+    .mda-criterio-valor {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .mda-criterio-status {
+        grid-column: 2;
+        grid-row: 2;
+        justify-self: end;
+    }
+
+    .mda-resultado-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .rapid3-component-valor {
+        font-size: 1.6em;
+    }
+
+    .rapid3-resultado-score {
+        font-size: 1.8em;
+    }
+
+    .haq-resultado-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .haq-resultado-interpretacion {
+        margin-left: 0;
+    }
+
+    .lei-resultado-box {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .mda-criterios-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+    }
+
+    .rapid3-components {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 25px;
+    }
+
+    .lei-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px 35px;
+    }
+
+    .psoriasis-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+    }
+
+    .haq-categories {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px 30px;
+    }
+}
