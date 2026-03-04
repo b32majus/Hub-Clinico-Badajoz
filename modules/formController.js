@@ -1210,6 +1210,12 @@ function initScoreWiring() {
         basdaiResult.style.backgroundColor = cat.backgroundColor;
         basdaiResult.style.color = cat.color;
         basdaiResult.title = cat.label;
+        var basdaiCatEl = document.getElementById('basdaiCategoria');
+        if (basdaiCatEl) {
+            basdaiCatEl.textContent = cat.label;
+            basdaiCatEl.style.color = cat.color;
+            basdaiCatEl.style.fontWeight = '700';
+        }
         console.log('  📊 BASDAI recalculado:', resultado, cat.label);
     }
     if (basdaiResult) console.log('  ✓ BASDAI wiring');
@@ -1245,6 +1251,12 @@ function initScoreWiring() {
             crpField.style.backgroundColor = catCRP.backgroundColor;
             crpField.style.color = catCRP.color;
             crpField.title = catCRP.label;
+            var crpCatEl = document.getElementById('asdasCrpCategoria');
+            if (crpCatEl) {
+                crpCatEl.textContent = catCRP.label;
+                crpCatEl.style.color = catCRP.color;
+                crpCatEl.style.fontWeight = '700';
+            }
         }
         if (esrField) {
             esrField.value = result.asdasESR;
@@ -1252,6 +1264,12 @@ function initScoreWiring() {
             esrField.style.backgroundColor = catESR.backgroundColor;
             esrField.style.color = catESR.color;
             esrField.title = catESR.label;
+            var esrCatEl = document.getElementById('asdasEsrCategoria');
+            if (esrCatEl) {
+                esrCatEl.textContent = catESR.label;
+                esrCatEl.style.color = catESR.color;
+                esrCatEl.style.fontWeight = '700';
+            }
         }
         console.log('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
     }
@@ -1279,6 +1297,12 @@ function initScoreWiring() {
         // Categorizar
         var cat = HubTools.scores.categorizeScore(haqValue, 'haq');
         haqTotalEl.style.color = cat.color;
+        var haqCatEl = document.getElementById('haqCategoria');
+        if (haqCatEl) {
+            haqCatEl.textContent = cat.label;
+            haqCatEl.style.color = cat.color;
+            haqCatEl.style.fontWeight = '700';
+        }
 
         // Cascada: HAQ afecta RAPID3 y MDA
         recalcularRAPID3();
