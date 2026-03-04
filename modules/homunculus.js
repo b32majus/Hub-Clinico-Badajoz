@@ -52,6 +52,22 @@ const HOMUNCULUS_DACTILITIS = [
     // Añadir más dactilitis según el SVG (mantener lista actualizada)
 ];
 
+/**
+ * Subconjunto de 28 articulaciones para el DAS28 (AR).
+ * Excluye caderas y tobillos del recuento general.
+ * Hombros(2) + Codos(2) + Muñecas(2) + MCF1-5(10) + IFP1-5(10) + Rodillas(2) = 28
+ */
+const DAS28_ARTICULATIONS = [
+    'hombro-derecho', 'hombro-izquierdo',
+    'codo-derecho', 'codo-izquierdo',
+    'muneca-derecha', 'muneca-izquierda',
+    'rodilla-derecha', 'rodilla-izquierda',
+    'mcf1-derecha', 'mcf2-derecha', 'mcf3-derecha', 'mcf4-derecha', 'mcf5-derecha',
+    'mcf1-izquierda', 'mcf2-izquierda', 'mcf3-izquierda', 'mcf4-izquierda', 'mcf5-izquierda',
+    'ifp1-derecha', 'ifp2-derecha', 'ifp3-derecha', 'ifp4-derecha', 'ifp5-derecha',
+    'ifp1-izquierda', 'ifp2-izquierda', 'ifp3-izquierda', 'ifp4-izquierda', 'ifp5-izquierda',
+];
+
 // =====================================
 // VARIABLES GLOBALES DEL HOMÚNCULO
 // =====================================
@@ -96,22 +112,25 @@ function updateScores() {
         }, 10);
     }
 
-    // ACTUALIZAR VALORES EN ASDAS (solo en seguimiento)
+    // ACTUALIZAR VALORES EN ASDAS (EspA/APs)
     updateASDASFromHomunculus();
 
-    // ACTUALIZAR MDA si estamos en modo APs (solo en seguimiento)
+    // ACTUALIZAR MDA si estamos en modo APs
     updateMDAFromHomunculus();
+
+    // ACTUALIZAR DAS28 si estamos en modo AR
+    updateDAS28FromHomunculus();
 }
 
 // Función para actualizar ASDAS desde el homúnculo (solo en seguimiento)
 function updateASDASFromHomunculus() {
     const asdasNAD = document.getElementById('asdasNAD');
     const asdasNAT = document.getElementById('asdasNAT');
-    
+
     if (asdasNAD && asdasNAT) {
         asdasNAD.value = markedRegions.nad.size;
         asdasNAT.value = markedRegions.nat.size;
-        
+
         // Intentar llamar a calcularASDAS si existe (solo en seguimiento)
         if (typeof window.calcularASDASLocal === 'function') {
             window.calcularASDASLocal();
@@ -119,11 +138,37 @@ function updateASDASFromHomunculus() {
     }
 }
 
-// Función para actualizar MDA desde el homúnculo (solo en seguimiento)
+// Función para actualizar MDA desde el homúnculo
 function updateMDAFromHomunculus() {
-    // Intentar llamar a calcularMDA si existe (solo en seguimiento)
     if (typeof window.calcularMDALocal === 'function') {
         window.calcularMDALocal();
+    }
+}
+
+/**
+ * Devuelve recuentos NAD y NAT filtrados a las 28 articulaciones DAS28.
+ * Excluye caderas y tobillos.
+ */
+function getDAS28JointCounts() {
+    const nad28 = [...markedRegions.nad].filter(id => DAS28_ARTICULATIONS.includes(id)).length;
+    const nat28 = [...markedRegions.nat].filter(id => DAS28_ARTICULATIONS.includes(id)).length;
+    return { nad28, nat28 };
+}
+
+// Función para actualizar DAS28 desde el homúnculo (solo AR)
+function updateDAS28FromHomunculus() {
+    const das28NAD = document.getElementById('das28NAD');
+    const das28NAT = document.getElementById('das28NAT');
+
+    if (das28NAD && das28NAT) {
+        const { nad28, nat28 } = getDAS28JointCounts();
+        das28NAD.value = nad28;
+        das28NAT.value = nat28;
+
+        // Recalcular DAS28/CDAI/SDAI si existe la función
+        if (typeof window.calcularDAS28Local === 'function') {
+            window.calcularDAS28Local();
+        }
     }
 }
 
@@ -188,14 +233,14 @@ function clearHomunculusInternal() {
 function setupEventListeners() {
     // Event listeners para los botones de modo
     homunculusModeBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             setActiveMode(this.dataset.mode);
         });
     });
 
     // Event listeners para las regiones del cuerpo
     bodyRegions.forEach(region => {
-        region.addEventListener('click', function() {
+        region.addEventListener('click', function () {
             const regionId = this.dataset.regionId;
             const regionType = this.dataset.type;
 
@@ -288,6 +333,8 @@ if (typeof HubTools !== 'undefined') {
     // Exponer constantes críticas para validación y uso externo
     HubTools.homunculus.ARTICULATIONS = HOMUNCULUS_ARTICULATIONS;
     HubTools.homunculus.DACTILITIS = HOMUNCULUS_DACTILITIS;
+    HubTools.homunculus.DAS28_ARTICULATIONS = DAS28_ARTICULATIONS;
+    HubTools.homunculus.getDAS28JointCounts = getDAS28JointCounts;
 
     console.log('✅ Módulo homunculus cargado (bug línea 203 corregido)');
 } else {

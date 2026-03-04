@@ -69,14 +69,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- EVENTO: Botones de Biomarcadores (HLA-B27, FR, Anti-CCP) ---
+    // --- EVENTO: Botones de Biomarcadores (HLA-B27, FR, Anti-CCP, ANA) ---
     document.querySelectorAll('.biomarker-badge').forEach(btn => {
         btn.addEventListener('click', function () {
-            // Obtener el grupo de botones (hla-btn, fr-btn, apcc-btn)
-            const group = this.classList.contains('hla-btn') ? '.hla-btn' :
-                this.classList.contains('fr-btn') ? '.fr-btn' : '.apcc-btn';
-            // Remover active de todos los botones del grupo
-            document.querySelectorAll(group).forEach(b => b.classList.remove('active'));
+            // Obtener el grupo de botones según su clase específica
+            let group;
+            if (this.classList.contains('hla-btn')) group = '.hla-btn';
+            else if (this.classList.contains('fr-btn')) group = '.fr-btn';
+            else if (this.classList.contains('apcc-btn')) group = '.apcc-btn';
+            else if (this.classList.contains('ana-btn')) group = '.ana-btn';
+            else return; // Grupo desconocido, no hacer nada
+
+            // Remover active solo del mismo grupo de botones
+            this.closest('.biomarker-card').querySelectorAll(group).forEach(b => b.classList.remove('active'));
             // Añadir active al botón clickeado
             this.classList.add('active');
         });

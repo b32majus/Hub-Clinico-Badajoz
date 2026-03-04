@@ -304,7 +304,7 @@ body:has(.hub-shell) {
     border-top: 1px solid #f0f0f0;
 }
 
-.collapsible-header.active + .collapsible-content {
+.collapsible-header.active+.collapsible-content {
     padding: 15px 25px;
 }
 
@@ -703,7 +703,7 @@ body:has(.hub-shell) {
     font-weight: bold;
     padding: 5px 10px;
     border-radius: 25px;
-    background-color: rgba(0,0,0,0.05);
+    background-color: rgba(0, 0, 0, 0.05);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -953,7 +953,8 @@ body:has(.hub-shell) {
 }
 
 .criterios-detail.expanded {
-    max-height: 500px; /* A large enough value */
+    max-height: 500px;
+    /* A large enough value */
     opacity: 1;
 }
 
@@ -971,7 +972,7 @@ body:has(.hub-shell) {
     font-weight: 600;
     color: #27ae60;
     margin-bottom: 25px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .result-text {
@@ -1312,7 +1313,7 @@ body:has(.hub-shell) {
         padding: 0 20px;
     }
 
-    .collapsible-header.active + .collapsible-content {
+    .collapsible-header.active+.collapsible-content {
         padding: 18px 20px;
     }
 
@@ -1519,6 +1520,7 @@ body:has(.hub-shell) {
         transform: translateX(400px);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -1530,6 +1532,7 @@ body:has(.hub-shell) {
         transform: translateX(0);
         opacity: 1;
     }
+
     to {
         transform: translateX(400px);
         opacity: 0;
@@ -1541,6 +1544,7 @@ body:has(.hub-shell) {
         transform: translateY(100%);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;
@@ -1552,6 +1556,7 @@ body:has(.hub-shell) {
         transform: translateY(0);
         opacity: 1;
     }
+
     to {
         transform: translateY(100%);
         opacity: 0;
@@ -1669,6 +1674,134 @@ body:has(.hub-shell) {
 
 .aps-only.show {
     display: block;
+}
+
+.ar-only {
+    display: none;
+}
+
+.ar-only.show {
+    display: block;
+}
+
+.espa-aps-only {
+    display: none;
+}
+
+.espa-aps-only.show {
+    display: block;
+}
+
+/* Categoría de actividad del índice (texto coloreado junto al resultado) */
+.indice-categoria {
+    font-size: 1.05em;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 4px;
+    transition: all 0.3s ease;
+}
+
+/* ========================================
+   ACR/EULAR Criteria Groups
+   ======================================== */
+
+.acr-criterio-group {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 3px solid #2c9faf;
+}
+
+.acr-criterio-label {
+    display: block;
+    font-size: 1.05em;
+    font-weight: 700;
+    color: #2c5aa0;
+    margin-bottom: 8px;
+}
+
+.acr-criterio-label i {
+    color: #2c9faf;
+    margin-right: 6px;
+    font-size: 1.1em;
+}
+
+.criterio-acr-select {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    font-size: 0.95em;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.criterio-acr-select:focus {
+    border-color: #2c5aa0;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.15);
+}
+
+/* ========================================
+   MDHAQ (RAPID3 Función Física)
+   ======================================== */
+
+.mdhaq-questions {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mdhaq-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 10px;
+    background: #fff;
+    gap: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.mdhaq-item:last-child {
+    border-bottom: none;
+}
+
+.mdhaq-item:nth-child(even) {
+    background: #f8fafc;
+}
+
+.mdhaq-item label {
+    flex: 1;
+    font-size: 0.85em;
+    color: #444;
+    line-height: 1.25;
+    margin: 0;
+}
+
+.mdhaq-select {
+    width: 48px;
+    min-width: 48px;
+    padding: 3px 4px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-align: center;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.mdhaq-select:focus {
+    border-color: #2c5aa0;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.12);
 }
 
 /* ========================================
@@ -2085,6 +2218,7 @@ body:has(.hub-shell) {
    ======================================== */
 
 @media (max-width: 992px) {
+
     .pruebas-apartado,
     .indices-apartado {
         padding: 16px 20px;
@@ -2112,6 +2246,7 @@ body:has(.hub-shell) {
 }
 
 @media (max-width: 576px) {
+
     .pruebas-apartado h5,
     .indices-apartado h5 {
         font-size: 1.1em;

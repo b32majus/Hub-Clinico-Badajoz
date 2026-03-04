@@ -95,6 +95,11 @@ function adaptarFormulario(diagnostico) {
             patologiaSubtitle.textContent = 'Artritis Psoriásica';
             mostrarElementosAPs();
             break;
+        case 'ar':
+            patologiaHighlight.textContent = 'AR';
+            patologiaSubtitle.textContent = 'Artritis Reumatoide';
+            mostrarElementosAR();
+            break;
         default:
             patologiaHighlight.textContent = 'Reumatología';
             patologiaSubtitle.textContent = 'Seleccione sospecha diagnóstica para adaptar el formulario';
@@ -109,16 +114,17 @@ function ocultarTodosElementosEspecificos() {
     console.log('🔄 Ocultando todos los elementos específicos de patología');
 
     // Ocultar todos los elementos con clases específicas de patología
-    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only'];
+    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only'];
     selectors.forEach(selector => hideElementsBySelector(selector));
 
     // Ocultar biomarcadores
-    const biomarkers = ['hlaB27Container', 'frContainer', 'apccContainer'];
+    const biomarkers = ['hlaB27Container', 'frContainer', 'apccContainer', 'anaContainer'];
     biomarkers.forEach(id => hideElement(id));
 
     // Resetear banderas de inicialización de criterios
     asasInitialized = false;
     casparInitialized = false;
+    acrEularInitialized = false;
 
     console.log('✅ Todos los elementos específicos ocultados');
 }
@@ -179,6 +185,92 @@ function mostrarElementosAPs() {
     console.log('✅ Elementos APs mostrados correctamente');
 }
 
+var acrEularInitialized = false;
+
+function mostrarElementosAR() {
+    console.log('📋 Mostrando elementos específicos de AR');
+
+    // Biomarcadores: FR + Anti-CCP + ANA
+    const containers = ['frContainer', 'apccContainer', 'anaContainer'];
+    containers.forEach(id => showElement(id, 'block'));
+
+    // Secciones específicas de AR
+    showElementsBySelector('.ar-only', 'block');
+
+    // Mostrar secciones específicas
+    const elementosAR = [
+        'criteriosACREULARSection', 'seccionesClinicasARSection',
+        'das28CrpSection', 'das28EsrSection', 'evaMedicoSection',
+        'cdaiSection', 'sdaiSection',
+        'entesitisTitle', 'entesitisSection',
+        'haqSection', 'rapid3Section'
+    ];
+    elementosAR.forEach(id => showElement(id, 'block'));
+
+    // Ocultar botón dactilitis del homúnculo (AR no usa dactilitis)
+    const dactilitisBtn = document.querySelector('[data-mode="dactilitis"]');
+    if (dactilitisBtn) dactilitisBtn.style.display = 'none';
+
+    // Inicializar funcionalidad ACR/EULAR
+    setTimeout(() => initializeACREULAR(), 100);
+
+    // Toggle nódulos / erosiones
+    const nodulosCheck = document.getElementById('nodulosReumatoideos');
+    if (nodulosCheck) {
+        nodulosCheck.addEventListener('change', function () {
+            document.getElementById('nodulosLocalizacion').style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    const erosionesCheck = document.getElementById('erosionesRadiologicas');
+    if (erosionesCheck) {
+        erosionesCheck.addEventListener('change', function () {
+            document.getElementById('erosionesDescripcion').style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
+    console.log('✅ Elementos AR mostrados correctamente');
+}
+
+function initializeACREULAR() {
+    if (acrEularInitialized) return;
+    acrEularInitialized = true;
+
+    const selects = ['acrArticulaciones', 'acrSerologia', 'acrReactantes', 'acrDuracion'];
+    selects.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', recalcularACREULAR);
+        }
+    });
+    recalcularACREULAR();
+    console.log('✅ ACR/EULAR 2010 inicializado');
+}
+
+function recalcularACREULAR() {
+    const a = parseInt(document.getElementById('acrArticulaciones')?.value) || 0;
+    const b = parseInt(document.getElementById('acrSerologia')?.value) || 0;
+    const c = parseInt(document.getElementById('acrReactantes')?.value) || 0;
+    const d = parseInt(document.getElementById('acrDuracion')?.value) || 0;
+    const total = a + b + c + d;
+
+    const scoreEl = document.getElementById('puntuacionACREULAR');
+    const resultEl = document.getElementById('resultadoACREULAR');
+    const boxEl = document.getElementById('acrResultBox');
+
+    if (scoreEl) scoreEl.textContent = total;
+    if (resultEl) {
+        if (total >= 6) {
+            resultEl.textContent = 'Clasifica como AR definida (≥6)';
+            resultEl.style.color = '#dc3545';
+            if (boxEl) boxEl.style.borderColor = '#dc3545';
+        } else {
+            resultEl.textContent = 'No clasifica como AR (<6)';
+            resultEl.style.color = '#28a745';
+            if (boxEl) boxEl.style.borderColor = '#28a745';
+        }
+    }
+}
+
 
 // =====================================
 // SECCIONES COLAPSABLES - CORREGIDO
@@ -231,11 +323,16 @@ function inicializarCollapsibles() {
                 content.style.opacity = "1";
                 content.style.padding = "15px 25px";
 
+                // Scroll the header into view so content expands downward visually
+                setTimeout(() => {
+                    this.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 50);
+
                 // Recalcular altura después de la expansión
                 setTimeout(() => {
                     content.style.maxHeight = content.scrollHeight + "px";
                     refreshCollapsibleHeights();
-                }, 50);
+                }, 100);
             }
         });
 
@@ -1306,37 +1403,205 @@ function initScoreWiring() {
     window.calcularMDALocal = recalcularMDA;
     console.log('  ✓ MDA wiring + calcularMDALocal');
 
-    // --- 8. AUTO-CÁLCULO RAPID3 ---
+    // --- 8. AUTO-CÁLCULO RAPID3 (MDHAQ 10 preguntas) ---
     function recalcularRAPID3() {
         if (typeof HubTools.scores.calcularRAPID3 !== 'function') return;
 
-        var haqVal = parseFloat(document.getElementById('haqTotal')?.textContent) || 0;
+        // Suma de las 10 preguntas MDHAQ (a-j)
+        const mdhaqIds = ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'];
+        let fnRaw = 0;
+        mdhaqIds.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) fnRaw += parseInt(el.value) || 0;
+        });
 
         var datos = {
-            haq: haqVal,
+            fnRaw: fnRaw,
             evaDolor: document.getElementById('evaDolor')?.value || '0',
             evaGlobal: document.getElementById('evaGlobal')?.value || '0'
         };
 
         var result = HubTools.scores.calcularRAPID3(datos);
 
+        // Actualizar UI
+        var fnRawEl = document.getElementById('rapid3FnRaw');
         var funcionEl = document.getElementById('rapid3Funcion');
         var dolorEl = document.getElementById('rapid3Dolor');
         var globalEl = document.getElementById('rapid3Global');
         var totalEl = document.getElementById('rapid3Total');
         var catEl = document.getElementById('rapid3Categoria');
 
+        if (fnRawEl) fnRawEl.textContent = result.fnRaw;
         if (funcionEl) funcionEl.textContent = result.funcion;
         if (dolorEl) dolorEl.textContent = result.dolor;
         if (globalEl) globalEl.textContent = result.global;
         if (totalEl) totalEl.textContent = result.total;
         if (catEl) catEl.textContent = result.categoria;
 
-        // Colorear
+        // Colorear según categoría
         var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'rapid3');
         if (totalEl) totalEl.style.color = cat.color;
+        if (catEl) { catEl.style.color = cat.color; catEl.style.fontWeight = 'bold'; }
     }
-    console.log('  ✓ RAPID3 wiring');
+
+    // Event listeners para las 10 preguntas MDHAQ
+    ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', recalcularRAPID3);
+    });
+
+    console.log('  ✓ RAPID3 wiring (MDHAQ)');
+
+    // --- 9. AUTO-CÁLCULO DAS28 (AR) ---
+    function recalcularDAS28() {
+        if (typeof HubTools.scores.calcularDAS28 !== 'function') return;
+
+        var datos = {
+            nad28: document.getElementById('das28NAD')?.value || '0',
+            nat28: document.getElementById('das28NAT')?.value || '0',
+            pcr: document.getElementById('das28PCR')?.value || '0',
+            vsg: document.getElementById('das28VSG')?.value || '0',
+            evaGlobal: document.getElementById('das28EVA')?.value || '0'
+        };
+        var result = HubTools.scores.calcularDAS28(datos);
+
+        var crpField = document.getElementById('das28CrpResult');
+        var esrField = document.getElementById('das28EsrResult');
+        var crpCatEl = document.getElementById('das28CrpCategoria');
+        var esrCatEl = document.getElementById('das28EsrCategoria');
+
+        if (crpField) {
+            crpField.value = result.das28CRP;
+            var catCRP = HubTools.scores.categorizeScore(parseFloat(result.das28CRP), 'das28');
+            crpField.style.backgroundColor = catCRP.backgroundColor;
+            crpField.style.color = catCRP.color;
+            crpField.title = catCRP.label;
+            if (crpCatEl) {
+                crpCatEl.textContent = catCRP.label;
+                crpCatEl.style.color = catCRP.color;
+                crpCatEl.style.fontWeight = '700';
+            }
+        }
+        if (esrField) {
+            esrField.value = result.das28ESR;
+            var catESR = HubTools.scores.categorizeScore(parseFloat(result.das28ESR), 'das28');
+            esrField.style.backgroundColor = catESR.backgroundColor;
+            esrField.style.color = catESR.color;
+            esrField.title = catESR.label;
+            if (esrCatEl) {
+                esrCatEl.textContent = catESR.label;
+                esrCatEl.style.color = catESR.color;
+                esrCatEl.style.fontWeight = '700';
+            }
+        }
+        // También recalcular CDAI y SDAI ya que comparten NAD28/NAT28
+        recalcularCDAI();
+        recalcularSDAI();
+
+        console.log('  📊 DAS28 recalculado: CRP=' + result.das28CRP + ', ESR=' + result.das28ESR);
+    }
+
+    // Exponer para homunculus.js
+    window.calcularDAS28Local = recalcularDAS28;
+    console.log('  ✓ DAS28 wiring + calcularDAS28Local');
+
+    // --- 10. AUTO-CÁLCULO CDAI (AR) ---
+    var evaMedicoInput = document.getElementById('evaMedico');
+    if (evaMedicoInput) {
+        evaMedicoInput.addEventListener('input', function () {
+            recalcularCDAI();
+            recalcularSDAI();
+        });
+    }
+
+    function recalcularCDAI() {
+        if (typeof HubTools.scores.calcularCDAI !== 'function') return;
+        var datos = {
+            nad28: document.getElementById('das28NAD')?.value || '0',
+            nat28: document.getElementById('das28NAT')?.value || '0',
+            evaPaciente: document.getElementById('evaGlobal')?.value || '0',
+            evaMedico: document.getElementById('evaMedico')?.value || '0'
+        };
+        var result = HubTools.scores.calcularCDAI(datos);
+        var cdaiField = document.getElementById('cdaiResult');
+        var cdaiCatEl = document.getElementById('cdaiCategoria');
+
+        if (cdaiField) {
+            cdaiField.value = result.total + ' - ' + result.categoria;
+            var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'cdai');
+            cdaiField.style.backgroundColor = cat.backgroundColor;
+            cdaiField.style.color = cat.color;
+            if (cdaiCatEl) {
+                cdaiCatEl.textContent = cat.label;
+                cdaiCatEl.style.color = cat.color;
+                cdaiCatEl.style.fontWeight = '700';
+            }
+        }
+    }
+    console.log('  ✓ CDAI wiring');
+
+    // --- 11. AUTO-CÁLCULO SDAI (AR) ---
+    function recalcularSDAI() {
+        if (typeof HubTools.scores.calcularSDAI !== 'function') return;
+        var datos = {
+            nad28: document.getElementById('das28NAD')?.value || '0',
+            nat28: document.getElementById('das28NAT')?.value || '0',
+            evaPaciente: document.getElementById('evaGlobal')?.value || '0',
+            evaMedico: document.getElementById('evaMedico')?.value || '0',
+            pcr: document.getElementById('das28PCR')?.value || '0'
+        };
+        var result = HubTools.scores.calcularSDAI(datos);
+        var sdaiField = document.getElementById('sdaiResult');
+        var sdaiCatEl = document.getElementById('sdaiCategoria');
+
+        if (sdaiField) {
+            sdaiField.value = result.total + ' - ' + result.categoria;
+            var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'sdai');
+            sdaiField.style.backgroundColor = cat.backgroundColor;
+            sdaiField.style.color = cat.color;
+            if (sdaiCatEl) {
+                sdaiCatEl.textContent = cat.label;
+                sdaiCatEl.style.color = cat.color;
+                sdaiCatEl.style.fontWeight = '700';
+            }
+        }
+    }
+    console.log('  ✓ SDAI wiring');
+
+    // --- 12. SYNC PCR/VSG/EVA → DAS28 (AR) ---
+    if (pcrInput) {
+        pcrInput.addEventListener('input', function () {
+            var das28PCRField = document.getElementById('das28PCR');
+            if (das28PCRField) {
+                das28PCRField.value = this.value;
+                recalcularDAS28();
+            }
+        });
+    }
+    if (vsgInput) {
+        vsgInput.addEventListener('input', function () {
+            var das28VSGField = document.getElementById('das28VSG');
+            if (das28VSGField) {
+                das28VSGField.value = this.value;
+                recalcularDAS28();
+            }
+        });
+    }
+    // EVA Global → DAS28 + CDAI
+    var evaGlobalInput = document.getElementById('evaGlobal');
+    if (evaGlobalInput) {
+        evaGlobalInput.addEventListener('input', function () {
+            var das28EVAField = document.getElementById('das28EVA');
+            if (das28EVAField) {
+                das28EVAField.value = this.value;
+                recalcularDAS28();
+            }
+            recalcularCDAI();
+            recalcularSDAI();
+            recalcularRAPID3();
+        });
+    }
+    console.log('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
 
     console.log('✅ Score wiring completado');
 }

@@ -201,10 +201,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.querySelectorAll('.biomarker-badge').forEach(btn => {
         btn.addEventListener('click', function () {
-            const group = this.classList.contains('hla-btn') ? '.hla-btn'
-                : this.classList.contains('fr-btn') ? '.fr-btn'
-                    : '.apcc-btn';
-            document.querySelectorAll(group).forEach(b => b.classList.remove('active'));
+            let group;
+            if (this.classList.contains('hla-btn')) group = '.hla-btn';
+            else if (this.classList.contains('fr-btn')) group = '.fr-btn';
+            else if (this.classList.contains('apcc-btn')) group = '.apcc-btn';
+            else if (this.classList.contains('ana-btn')) group = '.ana-btn';
+            else return;
+
+            this.closest('.biomarker-card').querySelectorAll(group).forEach(b => b.classList.remove('active'));
             this.classList.add('active');
         });
     });

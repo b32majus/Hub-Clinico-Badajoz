@@ -118,6 +118,7 @@
                                     <option value="">Seleccionar patología...</option>
                                     <option value="espa">Espondiloartritis Axial (EspA)</option>
                                     <option value="aps">Artritis Psoriásica (APs)</option>
+                                    <option value="ar">Artritis Reumatoide (AR)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -184,6 +185,26 @@
                                         </button>
                                         <button type="button"
                                             class="biomarker-badge hla-btn badge-unknown active apcc-btn"
+                                            data-value="no-analizado" title="No Analizado">
+                                            <i class="fas fa-question"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- ANA (Anticuerpos Antinucleares): Visible para AR -->
+                                <div class="biomarker-card" id="anaContainer" style="display: none;">
+                                    <span class="biomarker-name">ANA</span>
+                                    <div class="biomarker-badges">
+                                        <button type="button" class="biomarker-badge hla-btn badge-positive ana-btn"
+                                            data-value="positivo" title="Positivo">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                        <button type="button" class="biomarker-badge hla-btn badge-negative ana-btn"
+                                            data-value="negativo" title="Negativo">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button type="button"
+                                            class="biomarker-badge hla-btn badge-unknown active ana-btn"
                                             data-value="no-analizado" title="No Analizado">
                                             <i class="fas fa-question"></i>
                                         </button>
@@ -1069,6 +1090,197 @@
                     </div>
                 </div>
 
+                <!-- CRITERIOS ACR/EULAR 2010 (AR) -->
+                <div class="collapsible-section ar-only" id="criteriosACREULARSection" style="display: none;">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-flask"></i> Criterios ACR/EULAR
+                            2010</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="caspar-info-box">
+                            <p><strong>Criterios de Clasificación ACR/EULAR 2010 para Artritis Reumatoide</strong></p>
+                            <p>Score ≥6/10 puntos = clasificación como AR definida. Solo aplicable a pacientes con al
+                                menos 1 articulación con sinovitis clínica no explicada por otra enfermedad.</p>
+                        </div>
+
+                        <div class="caspar-criterios-box">
+                            <!-- A. Afectación articular (0-5) -->
+                            <div class="acr-criterio-group">
+                                <label class="acr-criterio-label"><i class="fas fa-hand-paper"></i> A. Afectación
+                                    articular</label>
+                                <select id="acrArticulaciones" class="criterio-acr-select">
+                                    <option value="0">1 articulación grande (0 puntos)</option>
+                                    <option value="1">2-10 articulaciones grandes (1 punto)</option>
+                                    <option value="2">1-3 articulaciones pequeñas ± grandes (2 puntos)</option>
+                                    <option value="3">4-10 articulaciones pequeñas ± grandes (3 puntos)</option>
+                                    <option value="5">>10 articulaciones (al menos 1 pequeña) (5 puntos)</option>
+                                </select>
+                            </div>
+
+                            <!-- B. Serología (0-3) -->
+                            <div class="acr-criterio-group">
+                                <label class="acr-criterio-label"><i class="fas fa-vial"></i> B. Serología</label>
+                                <select id="acrSerologia" class="criterio-acr-select">
+                                    <option value="0">FR negativo Y Anti-CCP negativo (0 puntos)</option>
+                                    <option value="2">FR positivo bajo O Anti-CCP positivo bajo (2 puntos)</option>
+                                    <option value="3">FR positivo alto O Anti-CCP positivo alto (3 puntos)</option>
+                                </select>
+                            </div>
+
+                            <!-- C. Reactantes de fase aguda (0-1) -->
+                            <div class="acr-criterio-group">
+                                <label class="acr-criterio-label"><i class="fas fa-tint"></i> C. Reactantes de fase
+                                    aguda</label>
+                                <select id="acrReactantes" class="criterio-acr-select">
+                                    <option value="0">PCR normal Y VSG normal (0 puntos)</option>
+                                    <option value="1">PCR anormal O VSG anormal (1 punto)</option>
+                                </select>
+                            </div>
+
+                            <!-- D. Duración de síntomas (0-1) -->
+                            <div class="acr-criterio-group">
+                                <label class="acr-criterio-label"><i class="fas fa-clock"></i> D. Duración de los
+                                    síntomas</label>
+                                <select id="acrDuracion" class="criterio-acr-select">
+                                    <option value="0">
+                                        <6 semanas (0 puntos)</option>
+                                    <option value="1">≥6 semanas (1 punto)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="caspar-result-box" id="acrResultBox">
+                            Puntuación ACR/EULAR: <span id="puntuacionACREULAR">0</span>/10 puntos. <span
+                                id="resultadoACREULAR" class="result-text"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIONES CLÍNICAS ESPECÍFICAS AR -->
+                <div class="collapsible-section ar-only" id="seccionesClinicasARSection" style="display: none;">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-notes-medical"></i> Valoración Clínica AR</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <!-- Rigidez matutina -->
+                        <div class="pruebas-apartado">
+                            <h5><i class="fas fa-sun"></i> Rigidez Matutina</h5>
+                            <div class="form-group">
+                                <label for="rigidezMatutinaAR">Duración de la rigidez matutina (minutos):</label>
+                                <input type="number" id="rigidezMatutinaAR" min="0" max="1440"
+                                    placeholder="Minutos de rigidez">
+                            </div>
+                        </div>
+
+                        <!-- Nódulos reumatoideos -->
+                        <div class="pruebas-apartado">
+                            <h5><i class="fas fa-circle"></i> Nódulos Reumatoideos</h5>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" id="nodulosReumatoideos"> Presencia de nódulos
+                                    reumatoideos</label>
+                            </div>
+                            <div class="form-group" id="nodulosLocalizacion" style="display:none;margin-top:10px;">
+                                <label for="nodulosLocalizacionTexto">Localización:</label>
+                                <input type="text" id="nodulosLocalizacionTexto"
+                                    placeholder="Codos, manos, tendón de Aquiles...">
+                            </div>
+                        </div>
+
+                        <!-- Erosiones radiológicas -->
+                        <div class="pruebas-apartado">
+                            <h5><i class="fas fa-x-ray"></i> Erosiones Radiológicas</h5>
+                            <div class="form-group-checkbox">
+                                <label><input type="checkbox" id="erosionesRadiologicas"> Presencia de erosiones
+                                    radiológicas</label>
+                            </div>
+                            <div class="form-group" id="erosionesDescripcion" style="display:none;margin-top:10px;">
+                                <label for="erosionesDescripcionTexto">Descripción:</label>
+                                <textarea id="erosionesDescripcionTexto" rows="2"
+                                    placeholder="Localización y grado de erosiones..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Manifestaciones Extraarticulares -->
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-lungs"></i> Manifestaciones Extraarticulares</h5>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="pulmonar-niu">
+                                        Enf. Pulmonar Intersticial (NIU)</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="pulmonar-nine">
+                                        Enf. Pulmonar (NINE)</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar"
+                                            data-tipo="nodulos-pulmonares"> Nódulos pulmonares</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="derrame-pleural">
+                                        Derrame pleural</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="epiescleritis">
+                                        Epiescleritis</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="escleritis">
+                                        Escleritis</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="queratitis">
+                                        Queratitis</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="vasculitis">
+                                        Vasculitis reumatoide</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="anemia"> Anemia
+                                        de enf. crónica</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="felty"> Síndrome
+                                        de Felty</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="neuropatia">
+                                        Neuropatía periférica</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar"
+                                            data-tipo="mielopatia-cervical"> Mielopatía cervical</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="pericarditis">
+                                        Pericarditis</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" class="extraarticular-ar" data-tipo="amiloidosis">
+                                        Amiloidosis</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Síndrome de Sjögren secundario -->
+                        <div class="pruebas-apartado">
+                            <h5><i class="fas fa-tint-slash"></i> Síndrome de Sjögren Secundario</h5>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" id="sequedadOcular"> Sequedad ocular
+                                        (xeroftalmia)</label>
+                                </div>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" id="sequedadOral"> Sequedad oral (xerostomía)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- PRUEBAS COMPLEMENTARIAS -->
                 <div class="collapsible-section">
                     <button class="collapsible-header">
@@ -1227,7 +1439,103 @@
                             </div>
                         </div>
 
-                        <div class="collapsible-section aps-only" id="haqSection" style="display: none;">
+                        <!-- DAS28-CRP (AR) -->
+                        <div class="indices-apartado ar-only" id="das28CrpSection" style="display: none;">
+                            <h5><i class="fas fa-calculator"></i> DAS28-CRP (con PCR)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> 0.56×√TJC28 + 0.28×√SJC28 +
+                                0.36×ln(CRP+1) + 0.014×VAS + 0.96. Umbrales: Remisión <2.6 | Baja <3.2 | Moderada <5.1 |
+                                    Alta ≥5.1</p>
+                                    <div class="form-group-grid">
+                                        <div class="form-group">
+                                            <label for="das28NAD">NAD28 (desde homúnculo):</label>
+                                            <input type="number" id="das28NAD" readonly class="asdas-readonly-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="das28NAT">NAT28 (desde homúnculo):</label>
+                                            <input type="number" id="das28NAT" readonly class="asdas-readonly-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="das28PCR">PCR (mg/L):</label>
+                                            <input type="number" id="das28PCR" readonly class="asdas-readonly-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="das28EVA">EVA Global Paciente:</label>
+                                            <input type="number" id="das28EVA" readonly class="asdas-readonly-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="das28CrpResult">Resultado DAS28-CRP:</label>
+                                        <input type="text" id="das28CrpResult" readonly class="indice-resultado">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Categoría de actividad:</label>
+                                        <span id="das28CrpCategoria" class="indice-categoria"></span>
+                                    </div>
+                        </div>
+
+                        <!-- DAS28-ESR (AR) -->
+                        <div class="indices-apartado ar-only" id="das28EsrSection" style="display: none;">
+                            <h5><i class="fas fa-calculator"></i> DAS28-ESR (con VSG)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Utiliza los mismos parámetros que
+                                DAS28-CRP, pero con VSG en lugar de PCR.</p>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="das28VSG">VSG (mm/h):</label>
+                                    <input type="number" id="das28VSG" readonly class="asdas-readonly-input">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="das28EsrResult">Resultado DAS28-ESR:</label>
+                                <input type="text" id="das28EsrResult" readonly class="indice-resultado">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoría de actividad:</label>
+                                <span id="das28EsrCategoria" class="indice-categoria"></span>
+                            </div>
+                        </div>
+
+                        <!-- EVA Médico (AR - necesario para CDAI/SDAI) -->
+                        <div class="indices-apartado ar-only" id="evaMedicoSection" style="display: none;">
+                            <h5><i class="fas fa-user-md"></i> EVA Médico (Evaluación Global del Médico)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Valoración global de la actividad de
+                                la enfermedad por el médico (0-10 cm).</p>
+                            <div class="form-group">
+                                <label for="evaMedico">EVA Médico (0-10):</label>
+                                <input type="number" id="evaMedico" min="0" max="10" step="0.1" placeholder="0-10">
+                            </div>
+                        </div>
+
+                        <!-- CDAI (AR) -->
+                        <div class="indices-apartado ar-only" id="cdaiSection" style="display: none;">
+                            <h5><i class="fas fa-chart-bar"></i> CDAI (Clinical Disease Activity Index)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> TJC28 + SJC28 + EVA Paciente + EVA
+                                Médico. Umbrales: Remisión ≤2.8 | Baja ≤10 | Moderada ≤22 | Alta >22</p>
+                            <div class="form-group">
+                                <label for="cdaiResult">Resultado CDAI:</label>
+                                <input type="text" id="cdaiResult" readonly class="indice-resultado">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoría de actividad:</label>
+                                <span id="cdaiCategoria" class="indice-categoria"></span>
+                            </div>
+                        </div>
+
+                        <!-- SDAI (AR) -->
+                        <div class="indices-apartado ar-only" id="sdaiSection" style="display: none;">
+                            <h5><i class="fas fa-chart-bar"></i> SDAI (Simplified Disease Activity Index)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> TJC28 + SJC28 + EVA Paciente + EVA
+                                Médico + PCR(mg/dL). Umbrales: Remisión ≤3.3 | Baja ≤11 | Moderada ≤26 | Alta >26</p>
+                            <div class="form-group">
+                                <label for="sdaiResult">Resultado SDAI:</label>
+                                <input type="text" id="sdaiResult" readonly class="indice-resultado">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoría de actividad:</label>
+                                <span id="sdaiCategoria" class="indice-categoria"></span>
+                            </div>
+                        </div>
+
+                        <div class="collapsible-section aps-only ar-only" id="haqSection" style="display: none;">
                             <button class="collapsible-header">
                                 <span class="header-icon-text"><i class="fas fa-tasks"></i> HAQ-DI (Health Assessment
                                     Questionnaire)</span>
@@ -1420,18 +1728,121 @@
                             </div>
                         </div>
 
-                        <!-- RAPID3 - SOLO APs -->
-                        <div class="indices-apartado aps-only" id="rapid3Section" style="display: none;">
+                        <!-- RAPID3 - APs y AR -->
+                        <div class="indices-apartado aps-only ar-only" id="rapid3Section" style="display: none;">
                             <h5><i class="fas fa-tachometer-alt"></i> RAPID3 (Routine Assessment of Patient Index Data
                                 3)</h5>
-                            <p class="info-note"><i class="fas fa-info-circle"></i> Score 0-30: Función física + EVA
-                                Dolor + EVA Global (auto-calculado)</p>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Score 0-30: Función Física MDHAQ
+                                (0-10) + EVA Dolor (0-10) + EVA Global (0-10). Remisión ≤3 | Baja 3.1-6 | Moderada
+                                6.1-12 | Alta >12</p>
 
-                            <div class="rapid3-components">
-                                <div class="rapid3-component">
-                                    <span class="rapid3-component-label">Función Física (HAQ adaptado 0-10):</span>
-                                    <span class="rapid3-component-valor" id="rapid3Funcion">0.0</span>
+                            <!-- Sección 1: Función Física MDHAQ (10 preguntas) -->
+                            <h6 style="color:#2c5aa0;font-weight:600;margin:8px 0 4px;font-size:0.95em;"><i
+                                    class="fas fa-walking"></i> Función Física (últimos 7 días)</h6>
+                            <p class="info-note" style="font-size:0.82em;margin-bottom:6px;">0 = Sin dificultad | 1 =
+                                Con alguna dificultad | 2 = Con mucha dificultad | 3 = Incapaz</p>
+                            <div class="mdhaq-questions">
+                                <div class="mdhaq-item">
+                                    <label>a. ¿Vestirse solo/a, incluyendo abrocharse botones y atarse los
+                                        zapatos?</label>
+                                    <select class="mdhaq-select" id="mdhaqA">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
                                 </div>
+                                <div class="mdhaq-item">
+                                    <label>b. ¿Acostarse y levantarse de la cama?</label>
+                                    <select class="mdhaq-select" id="mdhaqB">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>c. ¿Levantar un vaso o taza llena hasta la boca?</label>
+                                    <select class="mdhaq-select" id="mdhaqC">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>d. ¿Caminar en terreno llano en exteriores?</label>
+                                    <select class="mdhaq-select" id="mdhaqD">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>e. ¿Lavarse y secarse todo el cuerpo?</label>
+                                    <select class="mdhaq-select" id="mdhaqE">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>f. ¿Agacharse a recoger ropa del suelo?</label>
+                                    <select class="mdhaq-select" id="mdhaqF">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>g. ¿Abrir y cerrar grifos?</label>
+                                    <select class="mdhaq-select" id="mdhaqG">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>h. ¿Entrar y salir de un coche, autobús, tren o avión?</label>
+                                    <select class="mdhaq-select" id="mdhaqH">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>i. ¿Caminar 3 km si lo desea?</label>
+                                    <select class="mdhaq-select" id="mdhaqI">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                                <div class="mdhaq-item">
+                                    <label>j. ¿Participar en deportes y juegos como desee?</label>
+                                    <select class="mdhaq-select" id="mdhaqJ">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="rapid3-fn-result"
+                                style="margin-top:6px;padding:6px 10px;background:#f0f4f8;border-radius:6px;font-size:0.9em;">
+                                <span>FN Raw: <strong id="rapid3FnRaw">0</strong>/30</span> →
+                                <span>FN Ponderada: <strong id="rapid3Funcion">0.0</strong>/10</span>
+                            </div>
+
+
+                            <!-- Sección 2 y 3: EVAs (auto desde PROs) -->
+                            <div class="rapid3-components" style="margin-top:15px;">
                                 <div class="rapid3-component">
                                     <span class="rapid3-component-label">EVA Dolor (0-10):</span>
                                     <span class="rapid3-component-valor" id="rapid3Dolor">0.0</span>
@@ -1446,9 +1857,10 @@
                                 <div class="rapid3-resultado-content">
                                     <span class="rapid3-resultado-label">RAPID3 Total:</span>
                                     <span class="rapid3-resultado-score" id="rapid3Total">0.0</span>
+                                    <span>/30</span>
                                 </div>
                                 <div class="rapid3-resultado-categoria" id="rapid3Categoria">
-                                    Remisión (≤3)
+                                    Casi Remisión (≤3)
                                 </div>
                             </div>
                         </div>

@@ -40,17 +40,17 @@ function calcularASDAS(datos) {
 
     // ASDAS-CRP: 0.121×dolor + 0.058×rigidez + 0.110×EVA + 0.073×NAD + 0.579×ln(PCR+1)
     const asdasCRP = (0.121 * dolorEspalda) +
-                     (0.058 * duracionRigidez) +
-                     (0.110 * evaGlobal) +
-                     (0.073 * nad) +
-                     (0.579 * Math.log(pcr + 1));
+        (0.058 * duracionRigidez) +
+        (0.110 * evaGlobal) +
+        (0.073 * nad) +
+        (0.579 * Math.log(pcr + 1));
 
     // ASDAS-ESR: 0.08×dolor + 0.07×rigidez + 0.11×EVA + 0.09×NAD + 0.29×√VSG
     const asdasESR = (0.08 * dolorEspalda) +
-                     (0.07 * duracionRigidez) +
-                     (0.11 * evaGlobal) +
-                     (0.09 * nad) +
-                     (0.29 * Math.sqrt(vsg));
+        (0.07 * duracionRigidez) +
+        (0.11 * evaGlobal) +
+        (0.09 * nad) +
+        (0.29 * Math.sqrt(vsg));
 
     return {
         asdasCRP: asdasCRP.toFixed(2),
@@ -96,9 +96,16 @@ function calcularLEI(datos) {
 // ============================================
 
 function calcularRAPID3(datos) {
-    // Función física: HAQ 0-3 convertido a escala 0-10
-    const haq = datos.haq || 0;
-    const funcion = haq * 3.33; // HAQ 0-3 → 0-10 aprox
+    // Tabla de conversión MDHAQ: raw sum (0-30) → FN ponderada (0-10)
+    const MDHAQ_CONVERSION = [
+        0, 0.3, 0.7, 1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3,
+        3.7, 4.0, 4.3, 4.7, 5.0, 5.3, 5.7, 6.0, 6.3, 6.7,
+        7.0, 7.3, 7.7, 8.0, 8.3, 8.7, 9.0, 9.3, 9.7, 10.0
+    ];
+
+    // Función Física: suma raw MDHAQ (0-30) → conversión ponderada (0-10)
+    const fnRaw = Math.min(30, Math.max(0, parseInt(datos.fnRaw) || 0));
+    const funcion = MDHAQ_CONVERSION[fnRaw];
 
     // EVA Dolor y Global (ya están en escala 0-10)
     const dolor = parseFloat(datos.evaDolor) || 0;
@@ -106,14 +113,15 @@ function calcularRAPID3(datos) {
 
     const rapid3 = funcion + dolor + global;
 
-    // Categorización: >12=alto, 6-12=moderado, 3-6=bajo, ≤3=remisión
+    // Categorización según RAPID3 oficial
     let categoria = '';
     if (rapid3 > 12) categoria = 'Actividad Alta (>12)';
-    else if (rapid3 > 6) categoria = 'Actividad Moderada (6-12)';
-    else if (rapid3 > 3) categoria = 'Actividad Baja (3-6)';
-    else categoria = 'Remisión (≤3)';
+    else if (rapid3 > 6) categoria = 'Actividad Moderada (6.1-12)';
+    else if (rapid3 > 3) categoria = 'Actividad Baja (3.1-6)';
+    else categoria = 'Casi Remisión (≤3)';
 
     return {
+        fnRaw: fnRaw,
         funcion: funcion.toFixed(1),
         dolor: dolor.toFixed(1),
         global: global.toFixed(1),
@@ -170,6 +178,120 @@ function calcularMDA(datos) {
         criterios: criteriosArray,
         cumplidos,
         mdaAlcanzado
+    };
+}
+
+// ============================================
+// DAS28 - Disease Activity Score 28 (AR)
+// ============================================
+
+/**
+ * Calcula DAS28-CRP y DAS28-ESR
+ * @param {Object} datos - { nad28, nat28, pcr, vsg, evaGlobal }
+ *   nad28: Tender Joint Count sobre 28 articulaciones (0-28)
+ *   nat28: Swollen Joint Count sobre 28 articulaciones (0-28)
+ *   pcr: PCR en mg/L
+ *   vsg: VSG en mm/h
+ *   evaGlobal: EVA global paciente (0-100 mm o 0-10 cm)
+ * @returns {Object} { das28CRP, das28ESR }
+ *
+ * Umbrales: Remisión <2.6 | Baja <3.2 | Moderada <5.1 | Alta ≥5.1
+ */
+function calcularDAS28(datos) {
+    const nad28 = parseFloat(datos.nad28) || 0;
+    const nat28 = parseFloat(datos.nat28) || 0;
+    const pcr = parseFloat(datos.pcr) || 0;
+    const vsg = parseFloat(datos.vsg) || 1; // mínimo 1 para evitar ln(0)
+    // EVA: si viene en escala 0-10, convertir a 0-100
+    let eva = parseFloat(datos.evaGlobal) || 0;
+    if (eva <= 10) eva = eva * 10; // convertir cm a mm
+
+    // DAS28-CRP: 0.56×√TJC28 + 0.28×√SJC28 + 0.36×ln(CRP+1) + 0.014×VAS + 0.96
+    const das28CRP = (0.56 * Math.sqrt(nad28)) +
+        (0.28 * Math.sqrt(nat28)) +
+        (0.36 * Math.log(pcr + 1)) +
+        (0.014 * eva) +
+        0.96;
+
+    // DAS28-ESR: 0.56×√TJC28 + 0.28×√SJC28 + 0.70×ln(ESR) + 0.014×VAS
+    const das28ESR = (0.56 * Math.sqrt(nad28)) +
+        (0.28 * Math.sqrt(nat28)) +
+        (0.70 * Math.log(Math.max(vsg, 1))) +
+        (0.014 * eva);
+
+    return {
+        das28CRP: das28CRP.toFixed(2),
+        das28ESR: das28ESR.toFixed(2)
+    };
+}
+
+// ============================================
+// CDAI - Clinical Disease Activity Index (AR)
+// ============================================
+
+/**
+ * Calcula el CDAI
+ * @param {Object} datos - { nad28, nat28, evaPaciente, evaMedico }
+ *   Todos en rangos: NAD28/NAT28 (0-28), EVAs (0-10 cm)
+ * @returns {Object} { total, categoria }
+ *
+ * Umbrales: Remisión ≤2.8 | Baja ≤10 | Moderada ≤22 | Alta >22
+ */
+function calcularCDAI(datos) {
+    const nad28 = parseFloat(datos.nad28) || 0;
+    const nat28 = parseFloat(datos.nat28) || 0;
+    const evaPaciente = parseFloat(datos.evaPaciente) || 0;
+    const evaMedico = parseFloat(datos.evaMedico) || 0;
+
+    // CDAI = TJC28 + SJC28 + PGA + EGA (escalas cm)
+    const cdai = nad28 + nat28 + evaPaciente + evaMedico;
+
+    let categoria = '';
+    if (cdai <= 2.8) categoria = 'Remisión (≤2.8)';
+    else if (cdai <= 10) categoria = 'Actividad Baja (2.8-10)';
+    else if (cdai <= 22) categoria = 'Actividad Moderada (10-22)';
+    else categoria = 'Actividad Alta (>22)';
+
+    return {
+        total: cdai.toFixed(1),
+        categoria: categoria
+    };
+}
+
+// ============================================
+// SDAI - Simplified Disease Activity Index (AR)
+// ============================================
+
+/**
+ * Calcula el SDAI
+ * @param {Object} datos - { nad28, nat28, evaPaciente, evaMedico, pcr }
+ *   NAD28/NAT28 (0-28), EVAs (0-10 cm), PCR en mg/dL (no mg/L)
+ * @returns {Object} { total, categoria }
+ *
+ * Umbrales: Remisión ≤3.3 | Baja ≤11 | Moderada ≤26 | Alta >26
+ */
+function calcularSDAI(datos) {
+    const nad28 = parseFloat(datos.nad28) || 0;
+    const nat28 = parseFloat(datos.nat28) || 0;
+    const evaPaciente = parseFloat(datos.evaPaciente) || 0;
+    const evaMedico = parseFloat(datos.evaMedico) || 0;
+    // PCR en mg/dL (máx 10 para el cálculo)
+    let pcr = parseFloat(datos.pcr) || 0;
+    // Si PCR viene en mg/L (>10), convertir a mg/dL
+    if (pcr > 10) pcr = pcr / 10;
+
+    // SDAI = TJC28 + SJC28 + PGA + EGA + CRP(mg/dL)
+    const sdai = nad28 + nat28 + evaPaciente + evaMedico + pcr;
+
+    let categoria = '';
+    if (sdai <= 3.3) categoria = 'Remisión (≤3.3)';
+    else if (sdai <= 11) categoria = 'Actividad Baja (3.3-11)';
+    else if (sdai <= 26) categoria = 'Actividad Moderada (11-26)';
+    else categoria = 'Actividad Alta (>26)';
+
+    return {
+        total: sdai.toFixed(1),
+        categoria: categoria
     };
 }
 
@@ -290,6 +412,28 @@ function categorizeScore(valor, scoreType) {
             }
             break;
 
+        case 'das28':
+        case 'cdai':
+        case 'sdai':
+            if (valor < cutoffs.remission) {
+                categoria = 'remission';
+                color = '#28a745';
+                label = 'Remisión';
+            } else if (valor < cutoffs.lowActivity) {
+                categoria = 'low';
+                color = '#90ee90';
+                label = 'Baja Actividad';
+            } else if (valor < cutoffs.moderate) {
+                categoria = 'moderate';
+                color = '#ffc107';
+                label = 'Actividad Moderada';
+            } else {
+                categoria = 'high';
+                color = '#dc3545';
+                label = 'Actividad Alta';
+            }
+            break;
+
         case 'evaGlobal':
         case 'evaDolor':
             if (valor < cutoffs.remission) {
@@ -337,6 +481,9 @@ if (typeof HubTools !== 'undefined') {
     HubTools.scores.calcularLEI = calcularLEI;
     HubTools.scores.calcularRAPID3 = calcularRAPID3;
     HubTools.scores.calcularMDA = calcularMDA;
+    HubTools.scores.calcularDAS28 = calcularDAS28;
+    HubTools.scores.calcularCDAI = calcularCDAI;
+    HubTools.scores.calcularSDAI = calcularSDAI;
     HubTools.scores.categorizeScore = categorizeScore;
 
     console.log('✅ Módulo scoreCalculators cargado');

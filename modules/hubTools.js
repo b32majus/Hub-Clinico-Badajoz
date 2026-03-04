@@ -76,7 +76,30 @@ window.HubTools = {
                 label: 'RAPID3'
             },
 
-            // Escala Visual Analógica (ambas patologías)
+            // AR - Artritis Reumatoide
+            das28: {
+                remission: 2.6,      // < 2.6 = remisión
+                lowActivity: 3.2,    // 2.6-3.2 = baja actividad
+                moderate: 5.1,       // 3.2-5.1 = actividad moderada
+                high: 5.1,           // > 5.1 = actividad alta
+                label: 'DAS28'
+            },
+            cdai: {
+                remission: 2.8,      // ≤ 2.8 = remisión
+                lowActivity: 10,     // 2.8-10 = baja actividad
+                moderate: 22,        // 10-22 = actividad moderada
+                high: 22,            // > 22 = actividad alta
+                label: 'CDAI'
+            },
+            sdai: {
+                remission: 3.3,      // ≤ 3.3 = remisión
+                lowActivity: 11,     // 3.3-11 = baja actividad
+                moderate: 26,        // 11-26 = actividad moderada
+                high: 26,            // > 26 = actividad alta
+                label: 'SDAI'
+            },
+
+            // Escala Visual Analógica (todas las patologías)
             evaGlobal: {
                 remission: 2,        // < 2 = sin síntomas
                 mild: 4,             // 2-4 = leve
