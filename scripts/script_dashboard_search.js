@@ -1,7 +1,7 @@
-﻿(function () {
+(function () {
     'use strict';
 
-    const PATIENT_ID_REGEX = /^(ESP|APS)-\d{4}-\d{3}$/i;
+    const PATIENT_ID_REGEX = /^(ESP|APS|AR)-\d{4}-\d{3}$/i;
     const searchIndex = [];
 
     function normalize(str) {
@@ -52,7 +52,7 @@
 
     function hydrateIndexFromHubTools() {
         try {
-            if (typeof HubTools?.data?.getAllPatients === 'function' && HubTools.data.getAllPatients().length) {
+            if (typeof HubTools.data.getAllPatients === 'function' && HubTools.data.getAllPatients().length) {
                 const patients = HubTools.data.getAllPatients();
                 patients.forEach(p => {
                     const id = p.ID_Paciente || p.idPaciente || p.ID || p.id;
@@ -69,7 +69,7 @@
     }
 
     function hydrateIndexFromMocks() {
-        if (typeof window.MockPatients?.list === 'function') {
+        if (typeof window.MockPatients.list === 'function') {
             const mockSummaries = window.MockPatients.list();
             mockSummaries.forEach(summary => {
                 addPatientToIndex({
@@ -122,7 +122,7 @@
             return { error: `No se encontró el paciente ${term}. Verifica el ID.` };
         }
 
-        return { error: 'No hay coincidencias. Usa el formato ESP-AAAA-### o el nombre completo.' };
+        return { error: 'No hay coincidencias. Usa el formato ESP/APS/AR-AAAA-### o el nombre completo.' };
     }
 
     function navigateToDashboard(patient) {
@@ -130,7 +130,7 @@
         if (patient.patologia) {
             params.set('patologia', patient.patologia);
         }
-        window.location.href = `dashboard_paciente.html?${params.toString()}`;
+        window.location.href = `dashboard_paciente.html${params.toString()}`;
     }
 
     function handleSearch() {
@@ -180,3 +180,6 @@
         input.focus();
     });
 })();
+
+
+

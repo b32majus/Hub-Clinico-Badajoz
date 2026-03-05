@@ -1048,6 +1048,18 @@
     gap: var(--spacing-xs);
 }
 
+
+#pageNumbers {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    flex-wrap: nowrap;
+}
+
+.pagination-controls {
+    flex-wrap: nowrap;
+}
+
 .pagination-btn {
     display: flex;
     align-items: center;

@@ -2,7 +2,7 @@
 
 // ============================================
 // DASHBOARD DE PACIENTE INDIVIDUAL - PREMIUM
-// Hub Clínico Reumatología v2.0
+// Hub Cl?nico Reumatolog?a v2.0
 // ============================================
 
 window.patientHistory = null;
@@ -20,7 +20,7 @@ let visitsTableState = {
     data: []
 };
 
-// Colores consistentes con el sistema de diseño
+// Colores consistentes con el sistema de diseo
 const COLORS = {
     remission: '#10B981',
     lowActivity: '#3B82F6',
@@ -31,9 +31,61 @@ const COLORS = {
     secondary: '#64748B'
 };
 
+function isARPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'ar';
+}
+
+function getARPrimaryMetric(visit) {
+    const toNumber = (value) => {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const das28Crp = toNumber(getVisitMetric(visit, 'das28Crp'));
+    if (das28Crp !== null) return das28Crp;
+
+    const das28Esr = toNumber(getVisitMetric(visit, 'das28Esr'));
+    if (das28Esr !== null) return das28Esr;
+
+    const cdai = toNumber(getVisitMetric(visit, 'cdai'));
+    if (cdai !== null) return cdai;
+
+    return null;
+}
+
+function getARSecondaryMetric(visit) {
+    const toNumber = (value) => {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const cdai = toNumber(getVisitMetric(visit, 'cdai'));
+    if (cdai !== null) return cdai;
+
+    const sdai = toNumber(getVisitMetric(visit, 'sdai'));
+    if (sdai !== null) return sdai;
+
+    return null;
+}
+
+function configureDashboardMetricLabels() {
+    const primaryKpiLabel = document.getElementById('kpiPrimaryMetricLabel');
+    const secondaryKpiLabel = document.getElementById('kpiSecondaryMetricLabel');
+    const primaryTableHeader = document.getElementById('visitsTablePrimaryHeader');
+    const secondaryTableHeader = document.getElementById('visitsTableSecondaryHeader');
+
+    const isAR = isARPathology();
+    const primaryLabel = isAR ? 'DAS28' : 'BASDAI';
+    const secondaryLabel = isAR ? 'CDAI' : 'ASDAS';
+
+    if (primaryKpiLabel) primaryKpiLabel.textContent = primaryLabel;
+    if (secondaryKpiLabel) secondaryKpiLabel.textContent = secondaryLabel;
+    if (primaryTableHeader) primaryTableHeader.innerHTML = `${primaryLabel} <i class="fas fa-sort"></i>`;
+    if (secondaryTableHeader) secondaryTableHeader.innerHTML = `${secondaryLabel} <i class="fas fa-sort"></i>`;
+}
 document.addEventListener('DOMContentLoaded', () => {
     const patientId = getPatientIdFromURL();
-    console.log('📊 Iniciando dashboard premium del paciente', patientId);
+    console.log('Ã°ÂÂÂ Iniciando dashboard premium del paciente', patientId);
 
     if (!patientId) {
         showEmptyState('Busca un paciente para cargar su cuadro de mando.');
@@ -42,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const bundle = loadPatientBundle(patientId);
     if (!bundle) {
-        showEmptyState(`No se encontró información para el ID ${patientId}.`);
+        showEmptyState(`No se encontr? informaci?n para el ID ${patientId}.`);
         return;
     }
 
@@ -55,14 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function attachDashboardActions(patientId) {
-    // Botón de registrar seguimiento
+    // Bot?n de registrar seguimiento
     const btnSeguimiento = document.getElementById('btnSeguimiento');
     if (btnSeguimiento) {
         const pathology = window.currentPathology || 'espa';
-        btnSeguimiento.href = `seguimiento.html?id=${patientId}&patologia=${pathology}`;
+        btnSeguimiento.href = `seguimiento.htmlid=${patientId}&patologia=${pathology}`;
     }
 
-    // Botón de exportar visitas
+    // Bot?n de exportar visitas
     const exportBtn = document.getElementById('exportVisitsBtn');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportVisitsToCSV);
@@ -81,23 +133,23 @@ function loadPatientBundle(patientId) {
     // Prioritize HubTools data if available and meaningful
     const hubBundle = loadFromHub(patientId);
     if (hubBundle && hubBundle.history.allVisits.length > 0) {
-        console.log('✅ Datos obtenidos desde HubTools / Excel');
+        console.log('Ã¢ÂÂ Datos obtenidos desde HubTools / Excel');
         return hubBundle;
     }
 
     // Fallback to MockPatients
     const mockBundle = loadFromMock(patientId);
     if (mockBundle) {
-        console.log('✅ Datos obtenidos desde MockPatients');
+        console.log('Ã¢ÂÂ Datos obtenidos desde MockPatients');
         return mockBundle;
     }
 
-    console.warn('⚠️ No se encontraron datos ni en HubTools ni en MockPatients');
+    console.warn('Ã¢ÂÂ Ã¯Â¸Â No se encontraron datos ni en HubTools ni en MockPatients');
     return null;
 }
 
 function loadFromHub(patientId) {
-    if (typeof HubTools?.data?.findPatientById !== 'function') {
+    if (typeof HubTools.data.findPatientById !== 'function') {
         return null;
     }
 
@@ -139,7 +191,7 @@ function loadFromHub(patientId) {
 }
 
 function loadFromMock(patientId) {
-    if (typeof window.MockPatients?.getById !== 'function') {
+    if (typeof window.MockPatients.getById !== 'function') {
         return null;
     }
 
@@ -170,7 +222,7 @@ function loadFromMock(patientId) {
 
 function populateDashboard() {
     if (!window.patientHistory || !window.patientSummary) {
-        showEmptyState('No hay información disponible para este paciente.');
+        showEmptyState('No hay informaci?n disponible para este paciente.');
         return;
     }
 
@@ -179,9 +231,11 @@ function populateDashboard() {
     const firstVisit = window.patientHistory.firstVisit || latest;
     const allVisits = window.patientHistory.allVisits || [];
 
-    // Mostrar contenido, ocultar estado vacío
-    document.getElementById('emptyState')?.classList.add('hidden');
-    document.getElementById('dashboardContent')?.classList.remove('hidden');
+    configureDashboardMetricLabels();
+
+    // Mostrar contenido, ocultar estado vac?o
+    document.getElementById('emptyState').classList.add('hidden');
+    document.getElementById('dashboardContent').classList.remove('hidden');
 
     // ============================================
     // HEADER PREMIUM
@@ -194,7 +248,7 @@ function populateDashboard() {
     populatePatientKPIs(latest, summary, allVisits);
 
     // ============================================
-    // TARJETAS DE INFORMACIÓN
+    // TARJETAS DE INFORMACIN
     // ============================================
 
     // Tarjeta 1: Datos Generales
@@ -204,14 +258,14 @@ function populateDashboard() {
     document.getElementById('patientGeneralGender').textContent = summary.sexoPaciente || latest.sexoPaciente || latest.Sexo || '---';
     document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} años` : '---';
     document.getElementById('patientGeneralDiagnosis').textContent = getPathologyLabel(window.currentPathology);
-    document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' años';
+    document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' a?os';
 
     // Tarjeta 2: Biomarcadores Clave
     applyBiomarkerStatus('biomarkerHlaB27', pickValue(latest, ['hlaB27', 'HLA_B27', 'hla']));
     applyBiomarkerStatus('biomarkerFr', pickValue(latest, ['fr', 'FR']));
     applyBiomarkerStatus('biomarkerApcc', pickValue(latest, ['apcc', 'APCC']));
 
-    // Tarjeta 3: Resumen Clínico
+    // Tarjeta 3: Resumen Cl?nico
     const comorbidities = (latest.comorbilidades || '').split(',').filter(Boolean).map(s => `<li>${s.trim()}</li>`).join('') || '<li>Sin comorbilidades registradas</li>';
     document.getElementById('comorbiditiesList').innerHTML = comorbidities;
 
@@ -231,11 +285,11 @@ function populateDashboard() {
     // Tarjeta 5: Historial de Tratamientos
     populateTreatmentHistory();
 
-    // Tarjeta 6: Eventos Clínicos Clave
+    // Tarjeta 6: Eventos Cl?nicos Clave
     populateKeyEvents();
 
     // ============================================
-    // GRÁFICOS
+    // GRFICOS
     // ============================================
     populateChartSelectors();
     initActivityChart();
@@ -246,21 +300,21 @@ function populateDashboard() {
     // ============================================
     initVisitsTable(allVisits);
 
-    console.log('✅ Dashboard premium poblado correctamente');
+    console.log('Ã¢ÂÂ Dashboard premium poblado correctamente');
 }
 
 function populatePatientHeader(summary, latest, firstVisit) {
-    // ID Badge - buscar en múltiples fuentes
-    const patientId = summary.idPaciente || summary.ID_Paciente || latest.idPaciente || latest.ID_Paciente || firstVisit?.idPaciente || getPatientIdFromURL() || '---';
+    // ID Badge - buscar en mltiples fuentes
+    const patientId = summary.idPaciente || summary.ID_Paciente || latest.idPaciente || latest.ID_Paciente || firstVisit.idPaciente || getPatientIdFromURL() || '---';
     document.getElementById('patientIdBadge').textContent = patientId;
 
     // Nombre
     document.getElementById('patientName').textContent = summary.nombre || 'Paciente';
 
-    // Diagnóstico
+    // Diagn?stico
     document.getElementById('patientDiagnosis').textContent = getPathologyLabel(window.currentPathology);
 
-    // Última visita
+    // ltima visita
     document.getElementById('patientLastVisit').textContent = formatDate(summary.ultimaVisita || getVisitDate(latest)) || '---';
 
     // Edad
@@ -270,7 +324,7 @@ function populatePatientHeader(summary, latest, firstVisit) {
     // Sexo
     document.getElementById('patientGender').textContent = summary.sexoPaciente || latest.sexoPaciente || latest.Sexo || '---';
 
-    // Estado clínico (badge)
+    // Estado cl?nico (badge)
     const clinicalStatus = calculateClinicalStatus(latest);
     updateStatusBadge(clinicalStatus);
 }
@@ -278,10 +332,27 @@ function populatePatientHeader(summary, latest, firstVisit) {
 function calculateClinicalStatus(visit) {
     if (!visit) return { status: 'unknown', text: 'Sin datos', class: '' };
 
+    if (isARPathology()) {
+        const das28 = getARPrimaryMetric(visit);
+        if (das28 !== null && !isNaN(das28)) {
+            if (das28 < 2.6) return { status: 'remission', text: 'RemisiÃ³n', class: '' };
+            if (das28 < 3.2) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (das28 <= 5.1) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+
+        const cdai = getARSecondaryMetric(visit);
+        if (cdai !== null && !isNaN(cdai)) {
+            if (cdai <= 2.8) return { status: 'remission', text: 'RemisiÃ³n', class: '' };
+            if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+    }
+
     const basdai = getVisitMetric(visit, 'basdai');
     const asdas = getVisitMetric(visit, 'asdas');
 
-    // Priorizar ASDAS si está disponible
     if (asdas !== null && !isNaN(asdas)) {
         if (asdas < 1.3) return { status: 'remission', text: 'Enfermedad Inactiva', class: '' };
         if (asdas < 2.1) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
@@ -289,9 +360,8 @@ function calculateClinicalStatus(visit) {
         return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
     }
 
-    // Usar BASDAI como alternativa
     if (basdai !== null && !isNaN(basdai)) {
-        if (basdai < 4) return { status: 'remission', text: 'Remisión', class: '' };
+        if (basdai < 4) return { status: 'remission', text: 'RemisiÃ³n', class: '' };
         if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
         return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
     }
@@ -315,23 +385,24 @@ function updateStatusBadge(clinicalStatus) {
 }
 
 function populatePatientKPIs(latest, summary, allVisits) {
-    // KPI 1: BASDAI
-    const basdai = getVisitMetric(latest, 'basdai');
-    const basdaiValue = basdai !== null ? Number(basdai).toFixed(1) : '---';
-    const basdaiStatus = getKPIStatus('basdai', basdai);
-    document.getElementById('kpiBASDAIValue').textContent = basdaiValue;
-    document.getElementById('kpiBASDAIStatus').textContent = basdaiStatus.text;
-    updateKPICardClass('kpiBASDAI', basdaiStatus.class);
+    const isAR = isARPathology();
 
-    // KPI 2: ASDAS
-    const asdas = getVisitMetric(latest, 'asdas');
-    const asdasValue = asdas !== null ? Number(asdas).toFixed(1) : '---';
-    const asdasStatus = getKPIStatus('asdas', asdas);
-    document.getElementById('kpiASDASValue').textContent = asdasValue;
-    document.getElementById('kpiASDASStatus').textContent = asdasStatus.text;
-    updateKPICardClass('kpiASDAS', asdasStatus.class);
+    const primaryMetric = isAR ? getARPrimaryMetric(latest) : getVisitMetric(latest, 'basdai');
+    const primaryMetricKey = isAR ? 'das28' : 'basdai';
+    const primaryMetricValue = primaryMetric !== null ? Number(primaryMetric).toFixed(1) : '---';
+    const primaryStatus = getKPIStatus(primaryMetricKey, primaryMetric);
+    document.getElementById('kpiBASDAIValue').textContent = primaryMetricValue;
+    document.getElementById('kpiBASDAIStatus').textContent = primaryStatus.text;
+    updateKPICardClass('kpiBASDAI', primaryStatus.class);
 
-    // KPI 3: PCR
+    const secondaryMetric = isAR ? getARSecondaryMetric(latest) : getVisitMetric(latest, 'asdas');
+    const secondaryMetricKey = isAR ? 'cdai' : 'asdas';
+    const secondaryMetricValue = secondaryMetric !== null ? Number(secondaryMetric).toFixed(1) : '---';
+    const secondaryStatus = getKPIStatus(secondaryMetricKey, secondaryMetric);
+    document.getElementById('kpiASDASValue').textContent = secondaryMetricValue;
+    document.getElementById('kpiASDASStatus').textContent = secondaryStatus.text;
+    updateKPICardClass('kpiASDAS', secondaryStatus.class);
+
     const pcr = getVisitMetric(latest, 'pcr');
     const pcrValue = pcr !== null ? Number(pcr).toFixed(1) : '---';
     const pcrStatus = getKPIStatus('pcr', pcr);
@@ -339,14 +410,12 @@ function populatePatientKPIs(latest, summary, allVisits) {
     document.getElementById('kpiPCRStatus').textContent = pcrStatus.text;
     updateKPICardClass('kpiPCR', pcrStatus.class);
 
-    // KPI 4: Tratamiento
     const activeTreatment = getLastItem(window.patientHistory.treatmentHistory) || {};
     const treatmentName = summary.tratamientoActual || activeTreatment.name || '---';
-    const shortTreatmentName = treatmentName.split(' ')[0]; // Solo el nombre del fármaco
+    const shortTreatmentName = treatmentName.split(' ')[0];
     document.getElementById('kpiTratamientoValue').textContent = shortTreatmentName;
     document.getElementById('kpiTratamientoStatus').textContent = activeTreatment.startDate ? `Desde ${formatDate(activeTreatment.startDate).substring(3)}` : 'Activo';
 
-    // KPI 5: Visitas
     const visitCount = allVisits.length;
     document.getElementById('kpiVisitasValue').textContent = visitCount;
     document.getElementById('kpiVisitasStatus').textContent = visitCount === 1 ? 'visita' : 'visitas';
@@ -362,7 +431,7 @@ function getKPIStatus(metric, value) {
 
     switch (metric) {
         case 'basdai':
-            if (numValue < 4) return { text: 'Remisión', class: 'kpi-card--success' };
+            if (numValue < 4) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
             if (numValue < 6) return { text: 'Moderado', class: 'kpi-card--warning' };
             return { text: 'Alto', class: 'kpi-card--danger' };
 
@@ -371,6 +440,24 @@ function getKPIStatus(metric, value) {
             if (numValue < 2.1) return { text: 'Bajo', class: 'kpi-card--info' };
             if (numValue <= 3.5) return { text: 'Moderado', class: 'kpi-card--warning' };
             return { text: 'Alto', class: 'kpi-card--danger' };
+
+        case 'das28':
+            if (numValue < 2.6) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue < 3.2) return { text: 'Baja', class: 'kpi-card--info' };
+            if (numValue <= 5.1) return { text: 'Moderada', class: 'kpi-card--warning' };
+            return { text: 'Alta', class: 'kpi-card--danger' };
+
+        case 'cdai':
+            if (numValue <= 2.8) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue <= 10) return { text: 'Baja', class: 'kpi-card--info' };
+            if (numValue <= 22) return { text: 'Moderada', class: 'kpi-card--warning' };
+            return { text: 'Alta', class: 'kpi-card--danger' };
+
+        case 'sdai':
+            if (numValue <= 3.3) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue <= 11) return { text: 'Baja', class: 'kpi-card--info' };
+            if (numValue <= 26) return { text: 'Moderada', class: 'kpi-card--warning' };
+            return { text: 'Alta', class: 'kpi-card--danger' };
 
         case 'pcr':
             if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success' };
@@ -389,7 +476,7 @@ function updateKPICardClass(cardId, newClass) {
     // Remover clases anteriores
     card.classList.remove('kpi-card--success', 'kpi-card--warning', 'kpi-card--danger', 'kpi-card--info', 'kpi-card--biologic');
 
-    // Añadir nueva clase si existe
+    // Aadir nueva clase si existe
     if (newClass) {
         card.classList.add(newClass);
     }
@@ -405,14 +492,14 @@ function calculateTreatmentDuration(startDate) {
     const diffMs = now - start;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays < 30) return `${diffDays} días`;
+    if (diffDays < 30) return `${diffDays} das`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} meses`;
 
     const years = Math.floor(diffDays / 365);
     const months = Math.floor((diffDays % 365) / 30);
 
-    if (months === 0) return `${years} año${years > 1 ? 's' : ''}`;
-    return `${years} año${years > 1 ? 's' : ''} y ${months} mes${months > 1 ? 'es' : ''}`;
+    if (months === 0) return `${years} ao${years > 1 ? 's' : ''}`;
+    return `${years} ao${years > 1 ? 's' : ''} y ${months} mes${months > 1 ? 'es' : ''}`;
 }
 
 // ============================================
@@ -420,16 +507,16 @@ function calculateTreatmentDuration(startDate) {
 // ============================================
 
 function initVisitsTable(visits) {
+    const isAR = isARPathology();
     visitsTableState.data = visits.map(visit => ({
         fecha: getVisitDate(visit),
-        basdai: getVisitMetric(visit, 'basdai'),
-        asdas: getVisitMetric(visit, 'asdas'),
+        basdai: isAR ? getARPrimaryMetric(visit) : getVisitMetric(visit, 'basdai'),
+        asdas: isAR ? getARSecondaryMetric(visit) : getVisitMetric(visit, 'asdas'),
         evaDolor: getVisitMetric(visit, 'evaDolor'),
         pcr: getVisitMetric(visit, 'pcr'),
         tratamiento: visit.tratamientoActual || visit.Tratamiento_Actual || '---'
     }));
 
-    // Ordenar por fecha descendente por defecto
     sortVisitsData('fecha', 'desc');
     renderVisitsTable();
 }
@@ -513,21 +600,21 @@ function renderVisitsTable() {
         </tr>
     `).join('');
 
-    // Actualizar info de paginación
+    // Actualizar info de paginacin
     if (paginationInfo) {
         paginationInfo.textContent = `Mostrando ${startIndex + 1}-${endIndex} de ${totalItems} visitas`;
     }
 
-    // Renderizar controles de paginación
+    // Renderizar controles de paginacin
     if (paginationControls) {
         let controlsHTML = '';
 
-        // Botón anterior
+        // Bot?n anterior
         controlsHTML += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">
             <i class="fas fa-chevron-left"></i>
         </button>`;
 
-        // Páginas
+        // Pginas
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                 controlsHTML += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
@@ -536,7 +623,7 @@ function renderVisitsTable() {
             }
         }
 
-        // Botón siguiente
+        // Bot?n siguiente
         controlsHTML += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">
             <i class="fas fa-chevron-right"></i>
         </button>`;
@@ -560,7 +647,8 @@ function exportVisitsToCSV() {
         return;
     }
 
-    const headers = ['Fecha', 'BASDAI', 'ASDAS', 'EVA Dolor', 'PCR', 'Tratamiento'];
+    const isAR = isARPathology();
+    const headers = ['Fecha', isAR ? 'DAS28' : 'BASDAI', isAR ? 'CDAI' : 'ASDAS', 'EVA Dolor', 'PCR', 'Tratamiento'];
     const rows = data.map(visit => [
         formatDate(visit.fecha),
         visit.basdai !== null ? Number(visit.basdai).toFixed(1) : '',
@@ -574,7 +662,7 @@ function exportVisitsToCSV() {
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `historial_visitas_${window.patientSummary?.idPaciente || 'paciente'}.csv`;
+    link.download = 'historial_visitas_' + (window.patientSummary.idPaciente || 'paciente') + '.csv';
     link.click();
 }
 
@@ -583,16 +671,29 @@ function exportVisitsToCSV() {
 // ============================================
 
 function populateChartSelectors() {
-    const activityMetrics = [
-        { value: 'basdai', text: 'BASDAI' },
-        { value: 'asdas', text: 'ASDAS' },
-        { value: 'basfi', text: 'BASFI' },
-        { value: 'haq', text: 'HAQ' },
-        { value: 'lei', text: 'LEI' },
-        { value: 'rapid3', text: 'RAPID3' },
-        { value: 'pcr', text: 'PCR' },
-        { value: 'vsg', text: 'VSG' }
-    ];
+    const isAR = isARPathology();
+    const activityMetrics = isAR
+        ? [
+            { value: 'das28Crp', text: 'DAS28-CRP' },
+            { value: 'das28Esr', text: 'DAS28-ESR' },
+            { value: 'cdai', text: 'CDAI' },
+            { value: 'sdai', text: 'SDAI' },
+            { value: 'rapid3', text: 'RAPID3' },
+            { value: 'haq', text: 'HAQ' },
+            { value: 'pcr', text: 'PCR' },
+            { value: 'vsg', text: 'VSG' }
+        ]
+        : [
+            { value: 'basdai', text: 'BASDAI' },
+            { value: 'asdas', text: 'ASDAS' },
+            { value: 'basfi', text: 'BASFI' },
+            { value: 'haq', text: 'HAQ' },
+            { value: 'lei', text: 'LEI' },
+            { value: 'rapid3', text: 'RAPID3' },
+            { value: 'pcr', text: 'PCR' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+
     const proMetrics = [
         { value: 'evaDolor', text: 'EVA Dolor' },
         { value: 'evaGlobal', text: 'EVA Global' }
@@ -625,8 +726,14 @@ function populateChartSelectors() {
         });
     });
 
-    if (selectActivityIndex) selectActivityIndex.value = 'basdai';
+    if (selectActivityIndex) {
+        selectActivityIndex.value = isAR ? 'das28Crp' : 'basdai';
+    }
+    if (compareActivityIndexSelect) {
+        compareActivityIndexSelect.value = isAR ? 'cdai' : 'asdas';
+    }
     if (selectPRO) selectPRO.value = 'evaDolor';
+    if (comparePROSelect) comparePROSelect.value = 'evaGlobal';
 }
 
 function applyBiomarkerStatus(elementId, value) {
@@ -655,7 +762,7 @@ function collectManifestations(visit) {
     }
 
     const map = visit.manifestacionesExtraarticulares || visit.manifestacionesExtraArticulares || {};
-    if ((map.uveitis || '').toUpperCase() === 'SI') labels.add('Uveítis');
+    if ((map.uveitis || '').toUpperCase() === 'SI') labels.add('Uvetis');
     if ((map.psoriasis || '').toUpperCase() === 'SI') labels.add('Psoriasis');
     if ((map.digestiva || '').toUpperCase() === 'SI') labels.add('EII');
 
@@ -690,7 +797,7 @@ function populateKeyEvents() {
 
     const events = window.patientHistory.keyEvents || [];
     if (!events.length) {
-        container.innerHTML = '<p class="empty-message">No hay eventos clínicos registrados.</p>';
+        container.innerHTML = '<p class="empty-message">No hay eventos cl?nicos registrados.</p>';
         return;
     }
 
@@ -707,7 +814,7 @@ function populateKeyEvents() {
 }
 
 // ============================================
-// GRÁFICOS
+// GRFICOS
 // ============================================
 
 function initActivityChart() {
@@ -720,18 +827,18 @@ function initActivityChart() {
     if (!canvas || !selector) return;
 
     const primaryMetric = selector.value || 'basdai';
-    const secondaryMetric = compareCheckbox?.checked ? compareSelector?.value : null;
+    const secondaryMetric = compareCheckbox.checked ? compareSelector.value : null;
 
     const chartData = prepareChartData(primaryMetric, secondaryMetric);
 
     if (chartData.datasets[0].data.length < 2) {
-        emptyChartMessage?.classList.remove('hidden');
+        emptyChartMessage.classList.remove('hidden');
         canvas.classList.add('hidden');
         if (window.activityChartInstance) window.activityChartInstance.destroy();
         return;
     }
 
-    emptyChartMessage?.classList.add('hidden');
+    emptyChartMessage.classList.add('hidden');
     canvas.classList.remove('hidden');
 
     const ctx = canvas.getContext('2d');
@@ -806,11 +913,11 @@ function initActivityChart() {
     });
 
     selector.addEventListener('change', updateActivityChart);
-    compareCheckbox?.addEventListener('change', () => {
-        compareSelector?.classList.toggle('hidden', !compareCheckbox.checked);
+    compareCheckbox.addEventListener('change', () => {
+        compareSelector.classList.toggle('hidden', !compareCheckbox.checked);
         updateActivityChart();
     });
-    compareSelector?.addEventListener('change', updateActivityChart);
+    compareSelector.addEventListener('change', updateActivityChart);
 }
 
 function updateActivityChart() {
@@ -818,20 +925,20 @@ function updateActivityChart() {
     const compareCheckbox = document.getElementById('compareActivityCheckbox');
     const compareSelector = document.getElementById('compareActivityIndexSelect');
 
-    const primaryMetric = selector?.value || 'basdai';
-    const secondaryMetric = compareCheckbox?.checked ? compareSelector?.value : null;
+    const primaryMetric = selector.value || 'basdai';
+    const secondaryMetric = compareCheckbox.checked ? compareSelector.value : null;
 
     const chartData = prepareChartData(primaryMetric, secondaryMetric);
 
     if (chartData.datasets[0].data.length < 2) {
-        document.getElementById('emptyActivityChart')?.classList.remove('hidden');
-        document.getElementById('activityChart')?.classList.add('hidden');
+        document.getElementById('emptyActivityChart').classList.remove('hidden');
+        document.getElementById('activityChart').classList.add('hidden');
         if (window.activityChartInstance) window.activityChartInstance.destroy();
         return;
     }
 
-    document.getElementById('emptyActivityChart')?.classList.add('hidden');
-    document.getElementById('activityChart')?.classList.remove('hidden');
+    document.getElementById('emptyActivityChart').classList.add('hidden');
+    document.getElementById('activityChart').classList.remove('hidden');
 
     if (window.activityChartInstance) {
         window.activityChartInstance.data = chartData;
@@ -865,18 +972,18 @@ function initPROChart() {
     if (!canvas || !selector) return;
 
     const primaryMetric = selector.value || 'evaDolor';
-    const secondaryMetric = compareCheckbox?.checked ? compareSelector?.value : null;
+    const secondaryMetric = compareCheckbox.checked ? compareSelector.value : null;
 
     const chartData = prepareChartData(primaryMetric, secondaryMetric);
 
     if (chartData.datasets[0].data.length < 2) {
-        emptyChartMessage?.classList.remove('hidden');
+        emptyChartMessage.classList.remove('hidden');
         canvas.classList.add('hidden');
         if (window.proChartInstance) window.proChartInstance.destroy();
         return;
     }
 
-    emptyChartMessage?.classList.add('hidden');
+    emptyChartMessage.classList.add('hidden');
     canvas.classList.remove('hidden');
 
     const ctx = canvas.getContext('2d');
@@ -949,11 +1056,11 @@ function initPROChart() {
     });
 
     selector.addEventListener('change', updatePROChart);
-    compareCheckbox?.addEventListener('change', () => {
-        compareSelector?.classList.toggle('hidden', !compareCheckbox.checked);
+    compareCheckbox.addEventListener('change', () => {
+        compareSelector.classList.toggle('hidden', !compareCheckbox.checked);
         updatePROChart();
     });
-    compareSelector?.addEventListener('change', updatePROChart);
+    compareSelector.addEventListener('change', updatePROChart);
 }
 
 function updatePROChart() {
@@ -963,20 +1070,20 @@ function updatePROChart() {
     const compareSelector = document.getElementById('comparePROSelect');
     const emptyChartMessage = document.getElementById('emptyPROChart');
 
-    const primaryMetric = selector?.value || 'evaDolor';
-    const secondaryMetric = compareCheckbox?.checked ? compareSelector?.value : null;
+    const primaryMetric = selector.value || 'evaDolor';
+    const secondaryMetric = compareCheckbox.checked ? compareSelector.value : null;
 
     const chartData = prepareChartData(primaryMetric, secondaryMetric);
 
     if (chartData.datasets[0].data.length < 2) {
-        emptyChartMessage?.classList.remove('hidden');
-        canvas?.classList.add('hidden');
+        emptyChartMessage.classList.remove('hidden');
+        canvas.classList.add('hidden');
         if (window.proChartInstance) window.proChartInstance.destroy();
         return;
     }
 
-    emptyChartMessage?.classList.add('hidden');
-    canvas?.classList.remove('hidden');
+    emptyChartMessage.classList.add('hidden');
+    canvas.classList.remove('hidden');
 
     if (window.proChartInstance) {
         window.proChartInstance.data = chartData;
@@ -1007,7 +1114,11 @@ function getVisitMetric(visit, metric) {
         'basfi': ['basfiResult', 'BASFI', 'basfi'],
         'haq': ['haqResult', 'HAQ', 'haq'],
         'lei': ['leiResult', 'LEI', 'lei'],
-        'rapid3': ['rapid3Result', 'RAPID3', 'rapid3'],
+        'rapid3': ['rapid3Result', 'RAPID3', 'RAPID3_Score', 'rapid3Total', 'rapid3'],
+        'das28Crp': ['das28CrpResult', 'DAS28_CRP_Result', 'DAS28_CRP', 'das28Crp', 'DAS28-CRP'],
+        'das28Esr': ['das28EsrResult', 'DAS28_ESR_Result', 'DAS28_ESR', 'das28Esr', 'DAS28-ESR'],
+        'cdai': ['cdaiResult', 'CDAI_Result', 'CDAI', 'cdai'],
+        'sdai': ['sdaiResult', 'SDAI_Result', 'SDAI', 'sdai'],
         'pcr': ['pcrResult', 'PCR', 'pcr'],
         'vsg': ['vsgResult', 'VSG', 'vsg'],
         'evaDolor': ['evaDolor', 'EVA_Dolor', 'eva_dolor'],
@@ -1026,7 +1137,7 @@ function getVisitMetric(visit, metric) {
 }
 
 function prepareChartData(primaryMetric, secondaryMetric = null) {
-    const visits = Array.isArray(window.patientHistory?.allVisits) ? [...window.patientHistory.allVisits] : [];
+    const visits = Array.isArray(window.patientHistory.allVisits) ? [...window.patientHistory.allVisits] : [];
     visits.sort((a, b) => new Date(getVisitDate(a)) - new Date(getVisitDate(b)));
 
     const labels = [];
@@ -1039,7 +1150,7 @@ function prepareChartData(primaryMetric, secondaryMetric = null) {
             // Usar formato ISO para que Chart.js pueda parsear correctamente con escala de tiempo
             const visitDate = getVisitDate(visit);
             const dateObj = new Date(visitDate);
-            // Si la fecha es válida, usar formato ISO; si no, usar la fecha original
+            // Si la fecha es vlida, usar formato ISO; si no, usar la fecha original
             const isoDate = !isNaN(dateObj.getTime()) ? dateObj.toISOString().split('T')[0] : visitDate;
             labels.push(isoDate);
             primaryValues.push(Number(primaryValue));
@@ -1096,6 +1207,10 @@ function getMetricLabel(metric) {
         haq: 'HAQ',
         lei: 'LEI',
         rapid3: 'RAPID3',
+        das28Crp: 'DAS28-CRP',
+        das28Esr: 'DAS28-ESR',
+        cdai: 'CDAI',
+        sdai: 'SDAI',
         pcr: 'PCR',
         vsg: 'VSG',
         evaDolor: 'EVA Dolor',
@@ -1106,7 +1221,7 @@ function getMetricLabel(metric) {
 
 function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
     const annotations = {};
-    const cutoffs = HubTools?.dashboard?.activityCutoffs || {};
+    const cutoffs = HubTools.dashboard.activityCutoffs || {};
 
     const addCutoffLine = (metric, axisID, color, value, label) => {
         if (value !== undefined) {
@@ -1130,9 +1245,10 @@ function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
     };
 
     const processMetricCutoffs = (metricKey, scaleID) => {
-        const metricCutoffs = cutoffs[metricKey];
+        const cutoffKeyMap = { das28Crp: 'das28', das28Esr: 'das28', cdai: 'cdai', sdai: 'sdai', rapid3: 'rapid3', basdai: 'basdai', asdas: 'asdas', haq: 'haq' };
+        const metricCutoffs = cutoffs[cutoffKeyMap[metricKey] || metricKey];
         if (metricCutoffs) {
-            if (metricCutoffs.remission !== undefined) addCutoffLine(metricKey, scaleID, COLORS.remission, metricCutoffs.remission, 'Remisión');
+            if (metricCutoffs.remission !== undefined) addCutoffLine(metricKey, scaleID, COLORS.remission, metricCutoffs.remission, 'Remisin');
             if (metricCutoffs.lowActivity !== undefined) addCutoffLine(metricKey, scaleID, COLORS.lowActivity, metricCutoffs.lowActivity, 'Baja Actividad');
             if (metricCutoffs.moderate !== undefined) addCutoffLine(metricKey, scaleID, COLORS.moderate, metricCutoffs.moderate, 'Actividad Moderada');
             if (metricCutoffs.high !== undefined) addCutoffLine(metricKey, scaleID, COLORS.highActivity, metricCutoffs.high, 'Alta Actividad');
@@ -1194,8 +1310,8 @@ function showEmptyState(message = 'Busca un paciente para ver su dashboard.') {
     const emptyState = document.getElementById('emptyState');
     const dashboardContent = document.getElementById('dashboardContent');
 
-    emptyState?.classList.remove('hidden');
-    dashboardContent?.classList.add('hidden');
+    emptyState.classList.remove('hidden');
+    dashboardContent.classList.add('hidden');
 
     const titleEl = document.getElementById('emptyStateTitle');
     const messageEl = document.getElementById('emptyStateSubtitle');
@@ -1204,8 +1320,8 @@ function showEmptyState(message = 'Busca un paciente para ver su dashboard.') {
 }
 
 function getPathologyLabel(code) {
-    if (!code) return 'Sin diagnóstico';
-    const map = { espa: 'Espondiloartritis Axial', aps: 'Artritis Psoriásica' };
+    if (!code) return 'Sin diagnstico';
+    const map = { espa: 'Espondiloartritis Axial', aps: 'Artritis Psorisica', ar: 'Artritis Reumatoide' };
     return map[code.toLowerCase()] || code.toUpperCase();
 }
 
@@ -1241,15 +1357,15 @@ function formatDate(dateStr) {
 
 function calculateAge(birthDate) {
     const date = new Date(birthDate);
-    if (Number.isNaN(date.getTime())) return '—';
+    if (Number.isNaN(date.getTime())) return 'Ã¢ÂÂ';
     const diff = Date.now() - date.getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 }
 
 function calculateDiseaseYears(firstVisitDate) {
-    if (!firstVisitDate) return '—';
+    if (!firstVisitDate) return 'Ã¢ÂÂ';
     const start = new Date(firstVisitDate);
-    if (Number.isNaN(start.getTime())) return '—';
+    if (Number.isNaN(start.getTime())) return 'Ã¢ÂÂ';
     const diff = Date.now() - start.getTime();
     return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24 * 365.25)));
 }
@@ -1288,3 +1404,19 @@ window.getChartAnnotations = getChartAnnotations;
 window.getCutoffAnnotations = getCutoffAnnotations;
 window.getVisitMetric = getVisitMetric;
 window.exportVisitsToCSV = exportVisitsToCSV;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

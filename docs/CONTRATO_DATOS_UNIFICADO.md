@@ -156,3 +156,24 @@ Diez columnas (`SI`/`NO`) por extremidad y dedo:
 - Las funciones `HubTools.data.*` utilizarán `Tipo_Visita` para ordenar correctamente el historial.
 - El homúnculo se almacena de forma granular gracias a la exposición de `HubTools.homunculus.getHomunculusData()`.
 
+
+---
+
+## 8. Actualización AR + multitratamiento (Badajoz, 2026-03-05)
+
+- Cada hoja por patología (`ESPA`, `APS`, `AR`) integra en la misma tabla `primera` y `seguimiento` mediante `Tipo_Visita`.
+- La exportación se alinea a una estructura extendida para no perder información clínica ni de prescripción múltiple por visita.
+- Se añaden bloques de columnas para:
+  - fármacos repetidos por tipo (`Trat_*_2/_3` y `Cambio_*_2/_3`),
+  - antecedentes terapéuticos (`Previo_*`),
+  - tratamiento sistémico de psoriasis (`Psoriasis_Sistemico_*`),
+  - variables específicas de AR (ANA, NAD28/NAT28, DAS28, CDAI/SDAI, EVA médico, ACR/EULAR, extraarticular AR, Sjögren, MDHAQ, RAPID3 categoría).
+- Referencia detallada de cabeceras AR y reglas de codificación: `docs/template_ar_excel.md`.
+
+### Reglas de codificación de valores
+
+- `SI`: presente / positivo.
+- `NO`: ausente / negativo.
+- `ND`: no determinado / no interrogado / no analizado.
+- `NA`: no aplica por patología o tipo de visita.
+- `""` (vacío): texto libre sin dato.

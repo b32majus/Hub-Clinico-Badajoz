@@ -405,8 +405,142 @@ function validarFormulario() {
         errores.push('Diagnóstico Primario');
     }
 
+    const diagnostico = (document.getElementById('diagnosticoPrimario')?.value || '').toLowerCase();
+    if (diagnostico === 'ar') {
+        errores.push(...validarCamposAR(false));
+    }
+
     return errores;
 }
+
+function validarFormularioSeguimiento() {
+    const errores = [];
+
+    if (!document.getElementById('idPaciente')?.value?.trim()) {
+        errores.push('ID del Paciente');
+    }
+    if (!document.getElementById('fechaVisita')?.value) {
+        errores.push('Fecha de la Visita');
+    }
+    if (!document.getElementById('diagnosticoPrimario')?.value) {
+        errores.push('Diagnóstico Primario');
+    }
+
+    const diagnostico = (document.getElementById('diagnosticoPrimario')?.value || '').toLowerCase();
+    if (diagnostico === 'ar') {
+        errores.push(...validarCamposAR(true));
+    }
+
+    return errores;
+}
+
+function validarCamposAR(esSeguimiento) {
+    const errores = [];
+    const suffix = esSeguimiento ? 'Seg' : '';
+
+    const evaMedico = document.getElementById('evaMedico')?.value;
+    if (evaMedico === undefined || evaMedico === null || evaMedico === '') {
+        errores.push('EVA Médico (AR)');
+    }
+
+    const requiredScoreIds = ['das28CrpResult', 'das28EsrResult', 'cdaiResult', 'sdaiResult', 'das28NAD', 'das28NAT'];
+    requiredScoreIds.forEach(id => {
+        const value = document.getElementById(id)?.value;
+        if (value === undefined || value === null || value === '') {
+            errores.push(`${id} (AR)`);
+        }
+    });
+
+    const rigidezAR = document.getElementById(`rigidezMatutinaAR${suffix}`)?.value;
+    if (rigidezAR === undefined || rigidezAR === null || rigidezAR === '') {
+        errores.push(`Rigidez Matutina AR${esSeguimiento ? ' (seguimiento)' : ''}`);
+    }
+
+    const anaBtn = document.querySelector('.ana-btn.active');
+    const ana = (anaBtn?.dataset?.value || 'no-analizado').toLowerCase();
+    if (ana === 'no-analizado' || ana === 'nd' || ana === '') {
+        errores.push('ANA');
+    }
+
+    return errores;
+}
+
+function normalizarEstado(value, fallback = 'ND') {
+    if (value === true) return 'SI';
+    if (value === false) return 'NO';
+    if (value === undefined || value === null) return fallback;
+
+    const normalized = String(value).trim().toUpperCase();
+    if (!normalized) return fallback;
+    if (normalized === 'SI' || normalized === 'NO' || normalized === 'ND' || normalized === 'NA') {
+        return normalized;
+    }
+    if (normalized === 'NO-ANALIZADO' || normalized === 'NO ANALIZADO') return 'ND';
+    return normalized;
+}
+
+function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId) {
+    const entries = [];
+
+    const addEntry = (farmaco, dosis) => {
+        const drug = (farmaco || '').trim();
+        if (!drug || drug.toLowerCase() === 'no') return;
+        entries.push({
+            farmaco: drug,
+            dosis: (dosis || '').trim()
+        });
+    };
+
+    const primarySelect = document.getElementById(primarySelectId);
+    const primaryDose = document.getElementById(primaryDoseId);
+    addEntry(primarySelect?.value, primaryDose?.value);
+
+    const container = extrasContainerId ? document.getElementById(extrasContainerId) : null;
+    if (container) {
+        container.querySelectorAll('.treatment-extra').forEach(line => {
+            const select = line.querySelector('select');
+            const dose = line.querySelector('input[type="text"]');
+            addEntry(select?.value, dose?.value);
+        });
+    }
+
+    return entries;
+}
+
+function getTreatmentSlot(entries, index) {
+    const item = Array.isArray(entries) ? entries[index] : null;
+    return item || { farmaco: '', dosis: '' };
+}
+
+const HOMUNCULUS_ARTICULATIONS = [
+    'hombro-derecho', 'hombro-izquierdo', 'codo-derecho', 'codo-izquierdo',
+    'muneca-derecha', 'muneca-izquierda', 'rodilla-derecha', 'rodilla-izquierda',
+    'mcf1-derecha', 'mcf2-derecha', 'mcf3-derecha', 'mcf4-derecha', 'mcf5-derecha',
+    'mcf1-izquierda', 'mcf2-izquierda', 'mcf3-izquierda', 'mcf4-izquierda', 'mcf5-izquierda',
+    'ifp1-derecha', 'ifp2-derecha', 'ifp3-derecha', 'ifp4-derecha', 'ifp5-derecha',
+    'ifp1-izquierda', 'ifp2-izquierda', 'ifp3-izquierda', 'ifp4-izquierda', 'ifp5-izquierda'
+];
+
+const HOMUNCULUS_DACTILITIS = [
+    'dactilitis-dedo1-mano-derecha', 'dactilitis-dedo2-mano-derecha', 'dactilitis-dedo3-mano-derecha',
+    'dactilitis-dedo4-mano-derecha', 'dactilitis-dedo5-mano-derecha',
+    'dactilitis-dedo1-mano-izquierda', 'dactilitis-dedo2-mano-izquierda', 'dactilitis-dedo3-mano-izquierda',
+    'dactilitis-dedo4-mano-izquierda', 'dactilitis-dedo5-mano-izquierda',
+    'dactilitis-dedo1-pie-derecho', 'dactilitis-dedo2-pie-derecho', 'dactilitis-dedo3-pie-derecho',
+    'dactilitis-dedo4-pie-derecho', 'dactilitis-dedo5-pie-derecho',
+    'dactilitis-dedo1-pie-izquierdo', 'dactilitis-dedo2-pie-izquierdo', 'dactilitis-dedo3-pie-izquierdo',
+    'dactilitis-dedo4-pie-izquierdo', 'dactilitis-dedo5-pie-izquierdo'
+];
+
+function createHomunculusMap(regions, selectedRegions) {
+    const active = new Set(Array.isArray(selectedRegions) ? selectedRegions : []);
+    const map = {};
+    regions.forEach(region => {
+        map[region] = active.has(region) ? 'SI' : 'NO';
+    });
+    return map;
+}
+
 
 // =====================================
 // TRATAMIENTOS PREVIOS Y PLAN TERAPÉUTICO
@@ -888,12 +1022,26 @@ function recopilarDatosFormulario() {
     const imc = document.getElementById('imc').value;
     const ta = document.getElementById('ta').value;
 
-    const sistemicoSelect = document.getElementById('sistemicoSelect')?.value || 'No';
-    const sistemicoDose = document.getElementById('sistemicoDose')?.value || '';
-    const fameSelect = document.getElementById('fameSelect')?.value || 'No';
-    const fameDose = document.getElementById('fameDose')?.value || '';
-    const biologicoSelect = document.getElementById('biologicoSelect')?.value || 'No';
-    const biologicoDose = document.getElementById('biologicoDose')?.value || '';
+    const planSistemicosEntries = collectTreatmentEntries('sistemicoSelect', 'sistemicoDose', 'planSistemicosExtras');
+    const planFamesEntries = collectTreatmentEntries('fameSelect', 'fameDose', 'planFamesExtras');
+    const planBiologicosEntries = collectTreatmentEntries('biologicoSelect', 'biologicoDose', 'planBiologicosExtras');
+
+    const previoSistemicosEntries = collectTreatmentEntries('previoSistemicoSelect', 'previoSistemicoDose', 'sistemicosExtras');
+    const previoFamesEntries = collectTreatmentEntries('previoFameSelect', 'previoFameDose', 'famesExtras');
+    const previoBiologicosEntries = collectTreatmentEntries('previoBiologicoSelect', 'previoBiologicoDose', 'biologicosExtras');
+
+    const psoriasisSistemicosEntries = collectTreatmentEntries('psoriasisSistemicoSelect', 'psoriasisSistemicoDose', null);
+
+    const sistemicoSlot1 = getTreatmentSlot(planSistemicosEntries, 0);
+    const fameSlot1 = getTreatmentSlot(planFamesEntries, 0);
+    const biologicoSlot1 = getTreatmentSlot(planBiologicosEntries, 0);
+
+    const sistemicoSelect = sistemicoSlot1.farmaco || 'No';
+    const sistemicoDose = sistemicoSlot1.dosis || '';
+    const fameSelect = fameSlot1.farmaco || 'No';
+    const fameDose = fameSlot1.dosis || '';
+    const biologicoSelect = biologicoSlot1.farmaco || 'No';
+    const biologicoDose = biologicoSlot1.dosis || '';
     const fechaProximaRevision = document.getElementById('fechaProximaRevision')?.value || '';
 
     const comentariosAdicionales = document.getElementById('comentariosAdicionales')?.value || '';
@@ -917,8 +1065,8 @@ function recopilarDatosFormulario() {
     const rigidezMatutinaMin = document.getElementById('rigidezMatutinaMin')?.value || '';
     const dolorNocturno = document.getElementById('dolorNocturno')?.checked ? 'SI' : 'NO';
 
-    const pcr = document.getElementById('pcr')?.value || '';
-    const vsg = document.getElementById('vsg')?.value || '';
+    const pcr = document.getElementById('pcrValue')?.value || '';
+    const vsg = document.getElementById('vsgValue')?.value || '';
     const otrosHallazgosAnalitica = document.getElementById('otrosHallazgosAnalitica')?.value || '';
     const hallazgosRadiografia = document.getElementById('hallazgosRadiografia')?.value || '';
     const hallazgosRMN = document.getElementById('hallazgosRMN')?.value || '';
@@ -1076,10 +1224,63 @@ function recopilarDatosFormulario() {
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
 
+    const das28NAD = document.getElementById('das28NAD')?.value || '';
+    const das28NAT = document.getElementById('das28NAT')?.value || '';
+
+    const pasiScore = document.getElementById('pasiValue')?.value || '';
+    const bsaPercentage = document.getElementById('bsaValue')?.value || '';
+    const psoriasisDescripcion = document.getElementById('psoriasisDescripcion')?.value || '';
+
+    const haqVestirse = document.querySelector('.haq-score[data-category="1"]')?.value || '';
+    const haqLevantarse = document.querySelector('.haq-score[data-category="2"]')?.value || '';
+    const haqComer = document.querySelector('.haq-score[data-category="3"]')?.value || '';
+    const haqCaminar = document.querySelector('.haq-score[data-category="4"]')?.value || '';
+    const haqHigiene = document.querySelector('.haq-score[data-category="5"]')?.value || '';
+    const haqAlcanzar = document.querySelector('.haq-score[data-category="6"]')?.value || '';
+    const haqAgarrar = document.querySelector('.haq-score[data-category="7"]')?.value || '';
+    const haqActividades = document.querySelector('.haq-score[data-category="8"]')?.value || '';
+    const haqTotal = document.getElementById('haqTotal')?.textContent || '';
+
+    const leiBySite = {};
+    document.querySelectorAll('.lei-point').forEach(cb => {
+        const key = cb.dataset.site || cb.value || '';
+        if (key) {
+            leiBySite[key] = cb.checked ? 'SI' : 'NO';
+        }
+    });
+    const leiEpicondiloLatDer = normalizarEstado(leiBySite['epicondilo-lat-der'], 'NO');
+    const leiEpicondiloLatIzq = normalizarEstado(leiBySite['epicondilo-lat-izq'], 'NO');
+    const leiEpicondiloMedDer = normalizarEstado(leiBySite['condilo-med-der'], 'NO');
+    const leiEpicondiloMedIzq = normalizarEstado(leiBySite['condilo-med-izq'], 'NO');
+    const leiAquilesDer = normalizarEstado(leiBySite['aquiles-der'], 'NO');
+    const leiAquilesIzq = normalizarEstado(leiBySite['aquiles-izq'], 'NO');
+    const leiScore = document.getElementById('leiTotal')?.textContent || '';
+
+    const mdaNAT = document.getElementById('mdaNAT')?.textContent || '';
+    const mdaNAD = document.getElementById('mdaNAD')?.textContent || '';
+    const mdaPASI = document.getElementById('mdaPsoriasis')?.textContent || '';
+    const mdaDolor = document.getElementById('mdaEvaDolor')?.textContent || '';
+    const mdaGlobal = document.getElementById('mdaEvaGlobal')?.textContent || '';
+    const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
+    const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
+    const mdaCumple = (document.getElementById('mdaResultadoFinal')?.textContent || '').toUpperCase().includes('ALCANZADO');
+
+    const maniobrasSacroiliacas = document.getElementById('maniobrasSacroiliacas')?.value || '';
+    const comentariosSacroiliacas = document.getElementById('comentariosSacroiliacas')?.value || '';
+    const asasLumbalgia3Meses = document.getElementById('lumbalgia3meses')?.checked ? 'SI' : 'NO';
+    const asasCriteriosCumplidos = document.getElementById('numCriteriosASAS')?.textContent || '';
+    const asasResultado = document.getElementById('resultadoASAS')?.textContent || '';
+    const casparPuntuacion = document.getElementById('puntuacionCASPAR')?.textContent || '';
+    const casparResultado = document.getElementById('resultadoCASPAR')?.textContent || '';
+    const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
+
     const datosCompletos = {
         idPaciente, nombrePaciente, fechaVisita, sexoPaciente, tipoVisita, profesional,
         diagnosticoPrimario, diagnosticoSecundario,
-        hlaB27, fr, apcc, ana,
+        hlaB27: normalizarEstado(hlaB27),
+        fr: normalizarEstado(fr),
+        apcc: normalizarEstado(apcc),
+        ana: normalizarEstado(ana),
         inicioSintomas, inicioPsoriasis, dolorAxial, rigidezMatutina, duracionRigidez, irradiacionNalgas, clinicaAxialPresente,
         nad, nat, dactilitis, homunculusNadMap, homunculusNatMap, dactilitisMap,
         peso, talla, imc, ta,
@@ -1089,8 +1290,8 @@ function recopilarDatosFormulario() {
         pcr, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
         basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
         asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
-        das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
-        acrArticulaciones, acrSerologia, acrReactantes, acrDuracion, acrTotalResult,
+        das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
+        acrArticulaciones, acrSerologia, acrReactantes, acrDuracion, acrTotalResult, acrResultadoTexto,
         rigidezMatutinaAR, nodulosReumatoideos, nodulosLocalizacionTexto,
         erosionesRadiologicas, erosionesDescripcionTexto,
         sequedadOcular, sequedadOral, extraArticularAR,
@@ -1098,6 +1299,16 @@ function recopilarDatosFormulario() {
         schober, rotacionCervical, distanciaOP, distanciaTP, expansionToracica, distanciaIntermaleolar,
         decisionTerapeutica, tratamientoData,
         afectacionPsoriasis, extraArticular, comorbilidad, antecedentesFamiliares, toxicos, entesitis, otrasEntesitis,
+        pasiScore, bsaPercentage, psoriasisDescripcion,
+        haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
+        leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
+        mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        planSistemicosEntries, planFamesEntries, planBiologicosEntries,
+        previoSistemicosEntries, previoFamesEntries, previoBiologicosEntries,
+        psoriasisSistemicosEntries,
+        maniobrasSacroiliacas, comentariosSacroiliacas,
+        asasLumbalgia3Meses, asasCriteriosCumplidos, asasResultado,
+        casparPuntuacion, casparResultado,
         comentariosAdicionales
     };
 
@@ -1265,119 +1476,176 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
 }
 
 function recopilarDatosFormularioSeguimiento() {
-    // 1. Leer todos los campos simples del formulario de seguimiento
-    const idPaciente = document.getElementById('idPaciente').value;
-    const nombrePaciente = document.getElementById('nombrePaciente').value;
-    const fechaVisita = document.getElementById('fechaVisita').value;
+    const getValue = (id) => document.getElementById(id)?.value || '';
+    const isChecked = (id) => !!document.getElementById(id)?.checked;
 
-    // Capturar nombre del profesional desde el DOM
+    const idPaciente = getValue('idPaciente');
+    const nombrePaciente = getValue('nombrePaciente');
+    const fechaVisita = getValue('fechaVisita');
     const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
 
-    const diagnosticoPrimario = document.getElementById('diagnosticoPrimario').value;
-    const diagnosticoSecundario = document.getElementById('diagnosticoSecundario').value;
+    const diagnosticoPrimario = getValue('diagnosticoPrimario');
+    const diagnosticoSecundario = getValue('diagnosticoSecundario');
 
-    // Biomarcadores
-    const hlaB27Btn = document.querySelector('.hla-btn.active:not(.fr-btn):not(.apcc-btn)');
-    const hlaB27 = hlaB27Btn ? hlaB27Btn.dataset.value : 'no-analizado';
+    const hlaB27 = normalizarEstado(document.querySelector('.hla-btn.active:not(.fr-btn):not(.apcc-btn)')?.dataset?.value || 'no-analizado');
+    const fr = normalizarEstado(document.querySelector('.fr-btn.active')?.dataset?.value || 'no-analizado');
+    const apcc = normalizarEstado(document.querySelector('.apcc-btn.active')?.dataset?.value || 'no-analizado');
+    const ana = normalizarEstado(document.querySelector('.ana-btn.active')?.dataset?.value || 'no-analizado');
 
-    const frBtn = document.querySelector('.fr-btn.active');
-    const fr = frBtn ? frBtn.dataset.value : 'no-analizado';
+    const peso = getValue('peso');
+    const talla = getValue('talla');
+    const imc = getValue('imc');
+    const ta = getValue('ta');
 
-    const apccBtn = document.querySelector('.apcc-btn.active');
-    const apcc = apccBtn ? apccBtn.dataset.value : 'no-analizado';
-
-    // Signos vitales
-    const peso = document.getElementById('peso').value;
-    const talla = document.getElementById('talla').value;
-    const imc = document.getElementById('imc').value;
-    const ta = document.getElementById('ta').value;
-
-    // Plan terapéutico
-    const sistemicoSelect = document.getElementById('cambioSistemicoSelect')?.value || 'No';
-    const sistemicoDose = document.getElementById('cambioSistemicoDose')?.value || '';
-    const fameSelect = document.getElementById('cambioFameSelect')?.value || 'No';
-    const fameDose = document.getElementById('cambioFameDose')?.value || '';
-    const biologicoSelect = document.getElementById('cambioBiologicoSelect')?.value || 'No';
-    const biologicoDose = document.getElementById('cambioBiologicoDose')?.value || '';
-    const fechaProximaRevision = document.getElementById('fechaProximaRevision')?.value || '';
-
-    // Comentarios
-    const comentariosAdicionales = document.getElementById('comentariosAdicionales')?.value || '';
-
-    // 2. Llamar a HubTools.homunculus.getHomunculusData() y procesar su resultado para generar las columnas SI/NO
     const homunculusData = HubTools.homunculus.getHomunculusData();
-    const nad = homunculusData.nad;
-    const nat = homunculusData.nat;
-    const dactilitis = homunculusData.dactilitis;
+    const nad = homunculusData?.nad || [];
+    const nat = homunculusData?.nat || [];
+    const dactilitis = homunculusData?.dactilitis || [];
 
-    // EVAs y scores compartidos
-    const evaGlobal = document.getElementById('evaGlobal')?.value || '';
-    const evaDolor = document.getElementById('evaDolor')?.value || '';
-    const pcr = document.getElementById('pcrValue')?.value || '';
-    const vsg = document.getElementById('vsgValue')?.value || '';
+    const cambioSistemicosEntries = collectTreatmentEntries('cambioSistemicoSelect', 'cambioSistemicoDose', 'cambioSistemicosExtras');
+    const cambioFamesEntries = collectTreatmentEntries('cambioFameSelect', 'cambioFameDose', 'cambioFamesExtras');
+    const cambioBiologicosEntries = collectTreatmentEntries('cambioBiologicoSelect', 'cambioBiologicoDose', 'cambioBiologicosExtras');
 
-    // BASDAI
-    const basdaiResult = document.getElementById('basdaiResult')?.value || '';
+    const sistemicoSlot1 = getTreatmentSlot(cambioSistemicosEntries, 0);
+    const fameSlot1 = getTreatmentSlot(cambioFamesEntries, 0);
+    const biologicoSlot1 = getTreatmentSlot(cambioBiologicosEntries, 0);
 
-    // ASDAS
-    const asdasCrpResult = document.getElementById('asdasCrpResult')?.value || '';
-    const asdasEsrResult = document.getElementById('asdasEsrResult')?.value || '';
+    const sistemicoSelect = sistemicoSlot1.farmaco || 'No';
+    const sistemicoDose = sistemicoSlot1.dosis || '';
+    const fameSelect = fameSlot1.farmaco || 'No';
+    const fameDose = fameSlot1.dosis || '';
+    const biologicoSelect = biologicoSlot1.farmaco || 'No';
+    const biologicoDose = biologicoSlot1.dosis || '';
 
-    // HAQ
-    const haqTotal = document.getElementById('haqTotal')?.value || '';
+    const fechaProximaRevision = getValue('fechaProximaRevision');
+    const comentariosAdicionales = getValue('comentariosAdicionales');
 
-    // --- AR-specific data ---
-    const anaBtn = document.querySelector('.ana-btn.active');
-    const ana = anaBtn ? anaBtn.dataset.value : 'no-analizado';
+    const evaGlobal = getValue('evaGlobal');
+    const evaDolor = getValue('evaDolor');
+    const pcr = getValue('pcrValue');
+    const vsg = getValue('vsgValue');
 
-    const das28CrpResult = document.getElementById('das28CrpResult')?.value || '';
-    const das28EsrResult = document.getElementById('das28EsrResult')?.value || '';
-    const cdaiResult = document.getElementById('cdaiResult')?.value || '';
-    const sdaiResult = document.getElementById('sdaiResult')?.value || '';
-    const evaMedico = document.getElementById('evaMedico')?.value || '';
+    const basdaiP1 = getValue('basdaiP1');
+    const basdaiP2 = getValue('basdaiP2');
+    const basdaiP3 = getValue('basdaiP3');
+    const basdaiP4 = getValue('basdaiP4');
+    const basdaiP5 = getValue('basdaiP5');
+    const basdaiP6 = getValue('basdaiP6');
+    const basdaiResult = getValue('basdaiResult');
 
-    // AR clinical sections (Seg suffix for seguimiento IDs)
-    const rigidezMatutinaAR = document.getElementById('rigidezMatutinaARSeg')?.value || '';
-    const nodulosReumatoideos = document.getElementById('nodulosReumatoideosSeg')?.checked ? 'SI' : 'NO';
-    const nodulosLocalizacionTexto = document.getElementById('nodulosLocalizacionTextoSeg')?.value || '';
-    const erosionesRadiologicas = document.getElementById('erosionesRadiologicasSeg')?.checked ? 'SI' : 'NO';
-    const erosionesDescripcionTexto = document.getElementById('erosionesDescripcionTextoSeg')?.value || '';
-    const sequedadOcular = document.getElementById('sequedadOcularSeg')?.checked ? 'SI' : 'NO';
-    const sequedadOral = document.getElementById('sequedadOralSeg')?.checked ? 'SI' : 'NO';
+    const asdasDolorEspalda = getValue('asdasDolorEspalda');
+    const asdasDuracionRigidez = getValue('asdasDuracionRigidez');
+    const asdasEvaGlobal = getValue('asdasEvaGlobal');
+    const asdasCrpResult = getValue('asdasCrpResult');
+    const asdasEsrResult = getValue('asdasEsrResult');
 
-    // Manifestaciones extraarticulares AR (seguimiento)
+    const pasiScore = getValue('pasiValue');
+    const bsaPercentage = getValue('bsaValue');
+    const psoriasisDescripcion = getValue('psoriasisDescripcion');
+
+    const haqVestirse = document.querySelector('.haq-score[data-category="1"]')?.value || '';
+    const haqLevantarse = document.querySelector('.haq-score[data-category="2"]')?.value || '';
+    const haqComer = document.querySelector('.haq-score[data-category="3"]')?.value || '';
+    const haqCaminar = document.querySelector('.haq-score[data-category="4"]')?.value || '';
+    const haqHigiene = document.querySelector('.haq-score[data-category="5"]')?.value || '';
+    const haqAlcanzar = document.querySelector('.haq-score[data-category="6"]')?.value || '';
+    const haqAgarrar = document.querySelector('.haq-score[data-category="7"]')?.value || '';
+    const haqActividades = document.querySelector('.haq-score[data-category="8"]')?.value || '';
+    const haqTotal = document.getElementById('haqTotal')?.textContent || '';
+
+    const leiBySite = {};
+    document.querySelectorAll('.lei-point').forEach(cb => {
+        const key = cb.dataset.site || cb.value || '';
+        if (key) leiBySite[key] = cb.checked ? 'SI' : 'NO';
+    });
+    const leiEpicondiloLatDer = normalizarEstado(leiBySite['epicondilo-lat-der'], 'NO');
+    const leiEpicondiloLatIzq = normalizarEstado(leiBySite['epicondilo-lat-izq'], 'NO');
+    const leiEpicondiloMedDer = normalizarEstado(leiBySite['condilo-med-der'], 'NO');
+    const leiEpicondiloMedIzq = normalizarEstado(leiBySite['condilo-med-izq'], 'NO');
+    const leiAquilesDer = normalizarEstado(leiBySite['aquiles-der'], 'NO');
+    const leiAquilesIzq = normalizarEstado(leiBySite['aquiles-izq'], 'NO');
+    const leiScore = document.getElementById('leiTotal')?.textContent || '';
+
+    const mdaNAT = document.getElementById('mdaNAT')?.textContent || '';
+    const mdaNAD = document.getElementById('mdaNAD')?.textContent || '';
+    const mdaPASI = document.getElementById('mdaPsoriasis')?.textContent || '';
+    const mdaDolor = document.getElementById('mdaEvaDolor')?.textContent || '';
+    const mdaGlobal = document.getElementById('mdaEvaGlobal')?.textContent || '';
+    const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
+    const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
+    const mdaCumple = (document.getElementById('mdaResultadoFinal')?.textContent || '').toUpperCase().includes('ALCANZADO');
+
+    const das28NAD = getValue('das28NAD');
+    const das28NAT = getValue('das28NAT');
+    const das28CrpResult = getValue('das28CrpResult');
+    const das28EsrResult = getValue('das28EsrResult');
+    const cdaiResult = getValue('cdaiResult');
+    const sdaiResult = getValue('sdaiResult');
+    const evaMedico = getValue('evaMedico');
+
+    const rigidezMatutinaAR = getValue('rigidezMatutinaARSeg');
+    const nodulosReumatoideos = isChecked('nodulosReumatoideosSeg') ? 'SI' : 'NO';
+    const nodulosLocalizacionTexto = getValue('nodulosLocalizacionTextoSeg');
+    const erosionesRadiologicas = isChecked('erosionesRadiologicasSeg') ? 'SI' : 'NO';
+    const erosionesDescripcionTexto = getValue('erosionesDescripcionTextoSeg');
+    const sequedadOcular = isChecked('sequedadOcularSeg') ? 'SI' : 'NO';
+    const sequedadOral = isChecked('sequedadOralSeg') ? 'SI' : 'NO';
+
     const extraArticularAR = {};
     document.querySelectorAll('.extraarticular-ar-seg').forEach(cb => {
         extraArticularAR[cb.dataset.tipo] = cb.checked ? 'SI' : 'NO';
     });
 
-    // MDHAQ (RAPID3)
     const mdhaqData = {};
     ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
-        mdhaqData[id] = document.getElementById(id)?.value || '0';
+        mdhaqData[id] = getValue(id) || '0';
     });
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
 
-    // Construir el objeto datosCompletos
-    const datosCompletos = {
+    let decisionTerapeutica = 'continuar';
+    if (document.getElementById('btnCambiarTratamiento')?.classList.contains('active')) {
+        decisionTerapeutica = 'cambiar';
+    }
+
+    const tratamientoData = {
+        continuar: {
+            adherencia: getValue('adherencia'),
+            ajusteTerapeutico: getValue('ajusteTerapeutico')
+        },
+        cambio: {
+            motivoCambio: getValue('motivoCambio'),
+            efectosAdversos: isChecked('efectosAdversos'),
+            descripcionEfectos: getValue('descripcionEfectos'),
+            sistemicos: { farmaco: sistemicoSelect, dosis: sistemicoDose },
+            fames: { farmaco: fameSelect, dosis: fameDose },
+            biologicos: { farmaco: biologicoSelect, dosis: biologicoDose }
+        }
+    };
+
+    return {
         idPaciente, nombrePaciente, fechaVisita, profesional,
         diagnosticoPrimario, diagnosticoSecundario,
         hlaB27, fr, apcc, ana,
-        nad, nat, dactilitis,
         peso, talla, imc, ta,
+        nad, nat, dactilitis,
         evaGlobal, evaDolor, pcr, vsg,
-        basdaiResult, asdasCrpResult, asdasEsrResult, haqTotal,
-        das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
+        basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
+        asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
+        pasiScore, bsaPercentage, psoriasisDescripcion,
+        haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
+        leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
+        mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
         rigidezMatutinaAR, nodulosReumatoideos, nodulosLocalizacionTexto,
         erosionesRadiologicas, erosionesDescripcionTexto,
         sequedadOcular, sequedadOral, extraArticularAR,
         mdhaqData, rapid3Total, rapid3Categoria,
-        sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose, fechaProximaRevision,
-        comentariosAdicionales
+        sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
+        cambioSistemicosEntries, cambioFamesEntries, cambioBiologicosEntries,
+        tratamientoData, decisionTerapeutica,
+        fechaProximaRevision, comentariosAdicionales
     };
-
-    return datosCompletos;
 }
 
 // ============================================
@@ -1876,6 +2144,7 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.adaptarFormulario = adaptarFormulario;
     HubTools.form.inicializarCollapsibles = inicializarCollapsibles;
     HubTools.form.validarFormulario = validarFormulario;
+    HubTools.form.validarFormularioSeguimiento = validarFormularioSeguimiento;
     HubTools.form.setupTreatmentControls = setupTreatmentControls;
     HubTools.form.createTreatmentLine = createTreatmentLine;
     HubTools.form.inicializarEventosTratamientos = inicializarEventosTratamientos;
@@ -1892,4 +2161,10 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
 } else {
     console.error('❌ Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 }
+
+
+
+
+
+
 

@@ -31,6 +31,392 @@ function expandirDactilitis(array) {
     return DACTILITIS.map(dedo => (array || []).includes(dedo) ? 'SI' : 'NO');
 }
 
+
+const EXTRA_EXPORT_HEADERS = [
+    'Trat_Sistemico_2', 'Trat_Sistemico_Dosis_2', 'Trat_Sistemico_3', 'Trat_Sistemico_Dosis_3',
+    'Trat_FAME_2', 'Trat_FAME_Dosis_2', 'Trat_FAME_3', 'Trat_FAME_Dosis_3',
+    'Trat_Biologico_2', 'Trat_Biologico_Dosis_2', 'Trat_Biologico_3', 'Trat_Biologico_Dosis_3',
+    'Cambio_Sistemico_Farmaco_2', 'Cambio_Sistemico_Dosis_2', 'Cambio_Sistemico_Farmaco_3', 'Cambio_Sistemico_Dosis_3',
+    'Cambio_FAME_Farmaco_2', 'Cambio_FAME_Dosis_2', 'Cambio_FAME_Farmaco_3', 'Cambio_FAME_Dosis_3',
+    'Cambio_Biologico_Farmaco_2', 'Cambio_Biologico_Dosis_2', 'Cambio_Biologico_Farmaco_3', 'Cambio_Biologico_Dosis_3',
+    'Previo_Sistemico_1', 'Previo_Sistemico_Dosis_1', 'Previo_Sistemico_2', 'Previo_Sistemico_Dosis_2', 'Previo_Sistemico_3', 'Previo_Sistemico_Dosis_3',
+    'Previo_FAME_1', 'Previo_FAME_Dosis_1', 'Previo_FAME_2', 'Previo_FAME_Dosis_2', 'Previo_FAME_3', 'Previo_FAME_Dosis_3',
+    'Previo_Biologico_1', 'Previo_Biologico_Dosis_1', 'Previo_Biologico_2', 'Previo_Biologico_Dosis_2', 'Previo_Biologico_3', 'Previo_Biologico_Dosis_3',
+    'Psoriasis_Sistemico_1', 'Psoriasis_Sistemico_Dosis_1', 'Psoriasis_Sistemico_2', 'Psoriasis_Sistemico_Dosis_2', 'Psoriasis_Sistemico_3', 'Psoriasis_Sistemico_Dosis_3',
+    'ANA', 'NAD28', 'NAT28', 'DAS28_CRP_Result', 'DAS28_ESR_Result', 'CDAI_Result', 'SDAI_Result', 'EVA_Medico',
+    'ACR_Articulaciones', 'ACR_Serologia', 'ACR_Reactantes', 'ACR_Duracion', 'ACR_Total', 'ACR_Resultado_Texto',
+    'Rigidez_Matutina_AR', 'Nodulos_Reumatoideos', 'Nodulos_Localizacion', 'Erosiones_Radiologicas', 'Erosiones_Descripcion',
+    'ExtraAR_Pulmonar_NIU', 'ExtraAR_Pulmonar_NINE', 'ExtraAR_Nodulos_Pulmonares', 'ExtraAR_Derrame_Pleural',
+    'ExtraAR_Epiescleritis', 'ExtraAR_Escleritis', 'ExtraAR_Queratitis', 'ExtraAR_Vasculitis', 'ExtraAR_Anemia', 'ExtraAR_Felty',
+    'ExtraAR_Neuropatia', 'ExtraAR_Compresion_Medular', 'ExtraAR_Pericarditis', 'ExtraAR_Amiloidosis',
+    'Sjogren_Ocular', 'Sjogren_Oral',
+    'MDHAQ_A', 'MDHAQ_B', 'MDHAQ_C', 'MDHAQ_D', 'MDHAQ_E', 'MDHAQ_F', 'MDHAQ_G', 'MDHAQ_H', 'MDHAQ_I', 'MDHAQ_J',
+    'RAPID3_Categoria',
+    'Maniobras_Sacroiliacas', 'Comentarios_Sacroiliacas', 'ASAS_Lumbalgia_3m', 'ASAS_Criterios_Cumplidos', 'ASAS_Resultado',
+    'CASPAR_Puntuacion', 'CASPAR_Resultado'
+];
+
+function normalizarEstadoExport(value, fallback = 'ND') {
+    if (value === true) return 'SI';
+    if (value === false) return 'NO';
+    if (value === undefined || value === null) return fallback;
+    const normalized = String(value).trim().toUpperCase();
+    if (!normalized) return fallback;
+    if (normalized === 'SI' || normalized === 'NO' || normalized === 'ND' || normalized === 'NA') return normalized;
+    if (normalized === 'NO-ANALIZADO' || normalized === 'NO ANALIZADO') return 'ND';
+    return normalized;
+}
+
+function getTreatmentEntriesExport(entries, fallbackFarmaco, fallbackDosis) {
+    const output = Array.isArray(entries) ? entries.slice() : [];
+    const fallbackDrug = (fallbackFarmaco || '').toString().trim();
+    if (output.length === 0 && fallbackDrug && fallbackDrug.toLowerCase() !== 'no') {
+        output.push({ farmaco: fallbackDrug, dosis: (fallbackDosis || '').toString().trim() });
+    }
+    return output;
+}
+
+function getTreatmentSlotExport(entries, index) {
+    const item = Array.isArray(entries) ? entries[index] : null;
+    return item || { farmaco: '', dosis: '' };
+}
+
+function buildExtendedColumns(datos, pathology) {
+    const planSistemicos = getTreatmentEntriesExport(datos.planSistemicosEntries, datos.sistemicoSelect, datos.sistemicoDose);
+    const planFames = getTreatmentEntriesExport(datos.planFamesEntries, datos.fameSelect, datos.fameDose);
+    const planBiologicos = getTreatmentEntriesExport(datos.planBiologicosEntries, datos.biologicoSelect, datos.biologicoDose);
+
+    const cambioSistemicos = getTreatmentEntriesExport(
+        datos.cambioSistemicosEntries,
+        datos.tratamientoData?.cambio?.sistemicos?.farmaco,
+        datos.tratamientoData?.cambio?.sistemicos?.dosis
+    );
+    const cambioFames = getTreatmentEntriesExport(
+        datos.cambioFamesEntries,
+        datos.tratamientoData?.cambio?.fames?.farmaco,
+        datos.tratamientoData?.cambio?.fames?.dosis
+    );
+    const cambioBiologicos = getTreatmentEntriesExport(
+        datos.cambioBiologicosEntries,
+        datos.tratamientoData?.cambio?.biologicos?.farmaco,
+        datos.tratamientoData?.cambio?.biologicos?.dosis
+    );
+
+    const previoSistemicos = getTreatmentEntriesExport(datos.previoSistemicosEntries);
+    const previoFames = getTreatmentEntriesExport(datos.previoFamesEntries);
+    const previoBiologicos = getTreatmentEntriesExport(datos.previoBiologicosEntries);
+    const psoriasisSistemicos = getTreatmentEntriesExport(datos.psoriasisSistemicosEntries);
+
+    const extra = [];
+
+    [planSistemicos, planFames, planBiologicos].forEach(group => {
+        [1, 2].forEach(slot => {
+            const item = getTreatmentSlotExport(group, slot);
+            extra.push(item.farmaco || '', item.dosis || '');
+        });
+    });
+
+    [cambioSistemicos, cambioFames, cambioBiologicos].forEach(group => {
+        [1, 2].forEach(slot => {
+            const item = getTreatmentSlotExport(group, slot);
+            extra.push(item.farmaco || '', item.dosis || '');
+        });
+    });
+
+    [previoSistemicos, previoFames, previoBiologicos].forEach(group => {
+        [0, 1, 2].forEach(slot => {
+            const item = getTreatmentSlotExport(group, slot);
+            extra.push(item.farmaco || '', item.dosis || '');
+        });
+    });
+
+    [0, 1, 2].forEach(slot => {
+        const item = getTreatmentSlotExport(psoriasisSistemicos, slot);
+        extra.push(item.farmaco || '', item.dosis || '');
+    });
+
+    const isAR = pathology === 'ar';
+    const extraArticularAR = datos.extraArticularAR || {};
+    const mdhaq = datos.mdhaqData || {};
+
+    const arValues = isAR ? [
+        normalizarEstadoExport(datos.ana),
+        datos.das28NAD || '',
+        datos.das28NAT || '',
+        datos.das28CrpResult || '',
+        datos.das28EsrResult || '',
+        datos.cdaiResult || '',
+        datos.sdaiResult || '',
+        datos.evaMedico || '',
+        datos.acrArticulaciones || '',
+        datos.acrSerologia || '',
+        datos.acrReactantes || '',
+        datos.acrDuracion || '',
+        datos.acrTotalResult || '',
+        datos.acrResultadoTexto || '',
+        datos.rigidezMatutinaAR || '',
+        normalizarEstadoExport(datos.nodulosReumatoideos, 'ND'),
+        datos.nodulosLocalizacionTexto || '',
+        normalizarEstadoExport(datos.erosionesRadiologicas, 'ND'),
+        datos.erosionesDescripcionTexto || '',
+        normalizarEstadoExport(extraArticularAR['pulmonar-niu'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['pulmonar-nine'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['nodulos-pulmonares'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['derrame-pleural'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['epiescleritis'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['escleritis'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['queratitis'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['vasculitis'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['anemia'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['felty'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['neuropatia'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['compresion-medular'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['pericarditis'], 'NO'),
+        normalizarEstadoExport(extraArticularAR['amiloidosis'], 'NO'),
+        normalizarEstadoExport(datos.sequedadOcular, 'ND'),
+        normalizarEstadoExport(datos.sequedadOral, 'ND'),
+        mdhaq.mdhaqA || '', mdhaq.mdhaqB || '', mdhaq.mdhaqC || '', mdhaq.mdhaqD || '', mdhaq.mdhaqE || '',
+        mdhaq.mdhaqF || '', mdhaq.mdhaqG || '', mdhaq.mdhaqH || '', mdhaq.mdhaqI || '', mdhaq.mdhaqJ || '',
+        datos.rapid3Categoria || '',
+        datos.maniobrasSacroiliacas || '',
+        datos.comentariosSacroiliacas || '',
+        normalizarEstadoExport(datos.asasLumbalgia3Meses, 'ND'),
+        datos.asasCriteriosCumplidos || '',
+        datos.asasResultado || '',
+        datos.casparPuntuacion || '',
+        datos.casparResultado || ''
+    ] : Array(53).fill('NA');
+
+    extra.push(...arValues);
+    return extra;
+}
+
+function finalizeExportRow(valores, datos, tipoVisita, pathology) {
+    const row = Array.isArray(valores) ? valores.slice() : [];
+
+    // Compatibilidad: filas antiguas tienen 219 columnas y faltaba Decision_Terapeutica_SEG (columna 212)
+    if (row.length === 219) {
+        row.splice(211, 0, '');
+    }
+
+    while (row.length < 220) {
+        row.push('');
+    }
+
+    const extended = buildExtendedColumns(datos || {}, pathology);
+    row.push(...extended);
+
+    return row.join('	');
+}
+
+function setLegacyColumn(row, columnIndex, value) {
+    row[columnIndex - 1] = value === undefined || value === null ? '' : value;
+}
+
+function generarFilaCSV_AR_Base(datos, tipoVisita) {
+    const row = Array(220).fill('');
+
+    const extraArt = datos.extraArticular || {};
+    const comorb = datos.comorbilidad || {};
+    const af = datos.antecedentesFamiliares || {};
+    const tox = datos.toxicos || {};
+    const ent = datos.entesitis || {};
+
+    setLegacyColumn(row, 1, datos.idPaciente || '');
+    setLegacyColumn(row, 2, datos.nombrePaciente || '');
+    setLegacyColumn(row, 3, datos.sexoPaciente || '');
+    setLegacyColumn(row, 4, datos.fechaVisita || '');
+    setLegacyColumn(row, 5, tipoVisita === 'primera' ? 'Primera Visita' : 'Seguimiento');
+    setLegacyColumn(row, 6, datos.profesional || '');
+    setLegacyColumn(row, 7, datos.diagnosticoPrimario || 'ar');
+    setLegacyColumn(row, 8, datos.diagnosticoSecundario || '');
+    setLegacyColumn(row, 9, normalizarEstadoExport(datos.hlaB27));
+    setLegacyColumn(row, 10, normalizarEstadoExport(datos.fr));
+    setLegacyColumn(row, 11, normalizarEstadoExport(datos.apcc));
+
+    setLegacyColumn(row, 12, datos.inicioSintomas || '');
+    setLegacyColumn(row, 13, datos.inicioPsoriasis || '');
+    setLegacyColumn(row, 14, datos.dolorAxial || '');
+    setLegacyColumn(row, 15, datos.rigidezMatutina || '');
+    setLegacyColumn(row, 16, datos.duracionRigidez || '');
+    setLegacyColumn(row, 17, datos.irradiacionNalgas || '');
+    setLegacyColumn(row, 18, datos.clinicaAxialPresente || '');
+
+    const nadCols = expandirArticulaciones(datos.nad);
+    const natCols = expandirArticulaciones(datos.nat);
+    const dactCols = expandirDactilitis(datos.dactilitis);
+    nadCols.forEach((v, i) => setLegacyColumn(row, 19 + i, v));
+    natCols.forEach((v, i) => setLegacyColumn(row, 47 + i, v));
+    dactCols.forEach((v, i) => setLegacyColumn(row, 75 + i, v));
+
+    setLegacyColumn(row, 95, (datos.nad || []).length || 0);
+    setLegacyColumn(row, 96, (datos.nat || []).length || 0);
+    setLegacyColumn(row, 97, (datos.dactilitis || []).length || 0);
+
+    setLegacyColumn(row, 98, datos.peso || '');
+    setLegacyColumn(row, 99, datos.talla || '');
+    setLegacyColumn(row, 100, datos.imc || '');
+    setLegacyColumn(row, 101, datos.ta || '');
+
+    setLegacyColumn(row, 102, datos.evaGlobal || '');
+    setLegacyColumn(row, 103, datos.evaDolor || '');
+    setLegacyColumn(row, 104, datos.evaFatiga || '');
+    setLegacyColumn(row, 105, datos.rigidezMatutinaMin || '');
+    setLegacyColumn(row, 106, normalizarEstadoExport(datos.dolorNocturno, 'NO'));
+
+    setLegacyColumn(row, 107, normalizarEstadoExport(datos.afectacionPsoriasis?.['cuero-cabelludo'], 'NA'));
+    setLegacyColumn(row, 108, normalizarEstadoExport(datos.afectacionPsoriasis?.['ungueal'], 'NA'));
+    setLegacyColumn(row, 109, normalizarEstadoExport(datos.afectacionPsoriasis?.['extensora'], 'NA'));
+    setLegacyColumn(row, 110, normalizarEstadoExport(datos.afectacionPsoriasis?.['pliegues'], 'NA'));
+    setLegacyColumn(row, 111, normalizarEstadoExport(datos.afectacionPsoriasis?.['palmoplantar'], 'NA'));
+
+    setLegacyColumn(row, 112, normalizarEstadoExport(extraArt['digestiva'], 'ND'));
+    setLegacyColumn(row, 113, normalizarEstadoExport(extraArt['uveitis'], 'ND'));
+    setLegacyColumn(row, 114, normalizarEstadoExport(extraArt['psoriasis'], 'ND'));
+
+    setLegacyColumn(row, 115, normalizarEstadoExport(comorb['hta'], 'ND'));
+    setLegacyColumn(row, 116, normalizarEstadoExport(comorb['dm'], 'ND'));
+    setLegacyColumn(row, 117, normalizarEstadoExport(comorb['dlp'], 'ND'));
+    setLegacyColumn(row, 118, normalizarEstadoExport(comorb['ecv'], 'ND'));
+    setLegacyColumn(row, 119, normalizarEstadoExport(comorb['gastritis'], 'ND'));
+    setLegacyColumn(row, 120, normalizarEstadoExport(comorb['obesidad'], 'ND'));
+    setLegacyColumn(row, 121, normalizarEstadoExport(comorb['osteoporosis'], 'ND'));
+    setLegacyColumn(row, 122, normalizarEstadoExport(comorb['gota'], 'ND'));
+
+    setLegacyColumn(row, 123, normalizarEstadoExport(af['psoriasis'], 'ND'));
+    setLegacyColumn(row, 124, normalizarEstadoExport(af['artritis'], 'ND'));
+    setLegacyColumn(row, 125, normalizarEstadoExport(af['eii'], 'ND'));
+    setLegacyColumn(row, 126, normalizarEstadoExport(af['uveitis'], 'ND'));
+
+    setLegacyColumn(row, 127, normalizarEstadoExport(tox['tabaco'], 'ND'));
+    setLegacyColumn(row, 128, tox['tabaco_desc'] || '');
+    setLegacyColumn(row, 129, normalizarEstadoExport(tox['alcohol'], 'ND'));
+    setLegacyColumn(row, 130, tox['alcohol_desc'] || '');
+    setLegacyColumn(row, 131, normalizarEstadoExport(tox['drogas'], 'ND'));
+    setLegacyColumn(row, 132, tox['drogas_desc'] || '');
+
+    setLegacyColumn(row, 133, normalizarEstadoExport(ent['aquiles-der'], 'ND'));
+    setLegacyColumn(row, 134, normalizarEstadoExport(ent['fascia-der'], 'ND'));
+    setLegacyColumn(row, 135, normalizarEstadoExport(ent['epicondilo-lat-der'], 'ND'));
+    setLegacyColumn(row, 136, normalizarEstadoExport(ent['epicondilo-med-der'], 'ND'));
+    setLegacyColumn(row, 137, normalizarEstadoExport(ent['trocanter-der'], 'ND'));
+    setLegacyColumn(row, 138, normalizarEstadoExport(ent['aquiles-izq'], 'ND'));
+    setLegacyColumn(row, 139, normalizarEstadoExport(ent['fascia-izq'], 'ND'));
+    setLegacyColumn(row, 140, normalizarEstadoExport(ent['epicondilo-lat-izq'], 'ND'));
+    setLegacyColumn(row, 141, normalizarEstadoExport(ent['epicondilo-med-izq'], 'ND'));
+    setLegacyColumn(row, 142, normalizarEstadoExport(ent['trocanter-izq'], 'ND'));
+    setLegacyColumn(row, 143, datos.otrasEntesitis || '');
+
+    setLegacyColumn(row, 144, datos.pcr || '');
+    setLegacyColumn(row, 145, datos.vsg || '');
+    setLegacyColumn(row, 146, datos.otrosHallazgosAnalitica || '');
+    setLegacyColumn(row, 147, datos.hallazgosRadiografia || '');
+    setLegacyColumn(row, 148, datos.hallazgosRMN || '');
+
+    setLegacyColumn(row, 149, datos.basdaiP1 || '');
+    setLegacyColumn(row, 150, datos.basdaiP2 || '');
+    setLegacyColumn(row, 151, datos.basdaiP3 || '');
+    setLegacyColumn(row, 152, datos.basdaiP4 || '');
+    setLegacyColumn(row, 153, datos.basdaiP5 || '');
+    setLegacyColumn(row, 154, datos.basdaiP6 || '');
+    setLegacyColumn(row, 155, datos.basdaiResult || '');
+
+    setLegacyColumn(row, 156, datos.asdasDolorEspalda || '');
+    setLegacyColumn(row, 157, datos.asdasDuracionRigidez || '');
+    setLegacyColumn(row, 158, datos.asdasEvaGlobal || '');
+    setLegacyColumn(row, 159, datos.asdasCrpResult || '');
+    setLegacyColumn(row, 160, datos.asdasEsrResult || '');
+
+    setLegacyColumn(row, 161, datos.schober || '');
+    setLegacyColumn(row, 162, datos.rotacionCervical || '');
+    setLegacyColumn(row, 163, datos.distanciaOP || '');
+    setLegacyColumn(row, 164, datos.distanciaTP || '');
+    setLegacyColumn(row, 165, datos.expansionToracica || '');
+    setLegacyColumn(row, 166, datos.distanciaIntermaleolar || '');
+
+    setLegacyColumn(row, 167, datos.pasiScore || '');
+    setLegacyColumn(row, 168, datos.bsaPercentage || '');
+    setLegacyColumn(row, 169, datos.psoriasisDescripcion || '');
+
+    setLegacyColumn(row, 170, datos.haqVestirse || '');
+    setLegacyColumn(row, 171, datos.haqLevantarse || '');
+    setLegacyColumn(row, 172, datos.haqComer || '');
+    setLegacyColumn(row, 173, datos.haqCaminar || '');
+    setLegacyColumn(row, 174, datos.haqHigiene || '');
+    setLegacyColumn(row, 175, datos.haqAlcanzar || '');
+    setLegacyColumn(row, 176, datos.haqAgarrar || '');
+    setLegacyColumn(row, 177, datos.haqActividades || '');
+    setLegacyColumn(row, 178, datos.haqTotal || '');
+
+    setLegacyColumn(row, 179, datos.leiEpicondiloLatIzq || '');
+    setLegacyColumn(row, 180, datos.leiEpicondiloLatDer || '');
+    setLegacyColumn(row, 181, datos.leiEpicondiloMedIzq || '');
+    setLegacyColumn(row, 182, datos.leiEpicondiloMedDer || '');
+    setLegacyColumn(row, 183, datos.leiAquilesIzq || '');
+    setLegacyColumn(row, 184, datos.leiAquilesDer || '');
+    setLegacyColumn(row, 185, datos.leiScore || '');
+
+    setLegacyColumn(row, 186, datos.mdaNAT || '');
+    setLegacyColumn(row, 187, datos.mdaNAD || '');
+    setLegacyColumn(row, 188, datos.mdaPASI || '');
+    setLegacyColumn(row, 189, datos.mdaDolor || '');
+    setLegacyColumn(row, 190, datos.mdaGlobal || '');
+    setLegacyColumn(row, 191, datos.mdaHAQ || '');
+    setLegacyColumn(row, 192, datos.mdaEntesitis || '');
+    setLegacyColumn(row, 193, datos.mdaCumple ? 'SI' : 'NO');
+
+    setLegacyColumn(row, 194, datos.rapid3Funcion || '');
+    setLegacyColumn(row, 195, datos.rapid3Dolor || '');
+    setLegacyColumn(row, 196, datos.rapid3Global || '');
+    setLegacyColumn(row, 197, datos.rapid3Total || datos.rapid3Score || '');
+
+    const txS = getTreatmentSlotExport(getTreatmentEntriesExport(datos.planSistemicosEntries, datos.sistemicoSelect, datos.sistemicoDose), 0);
+    const txF = getTreatmentSlotExport(getTreatmentEntriesExport(datos.planFamesEntries, datos.fameSelect, datos.fameDose), 0);
+    const txB = getTreatmentSlotExport(getTreatmentEntriesExport(datos.planBiologicosEntries, datos.biologicoSelect, datos.biologicoDose), 0);
+
+    const cambio = datos.tratamientoData?.cambio || {};
+    const continuar = datos.tratamientoData?.continuar || {};
+    const cambioS = cambio.sistemicos || {};
+    const cambioF = cambio.fames || {};
+    const cambioB = cambio.biologicos || {};
+
+    setLegacyColumn(row, 198, datos.tratamientoActual || '');
+    setLegacyColumn(row, 199, datos.fechaInicioTratamiento || '');
+    setLegacyColumn(row, 200, tipoVisita === 'primera' ? (datos.decisionTerapeutica || '') : '');
+    setLegacyColumn(row, 201, continuar.adherencia || '');
+    setLegacyColumn(row, 202, continuar.ajusteTerapeutico || '');
+    setLegacyColumn(row, 203, cambio.motivoCambio || '');
+    setLegacyColumn(row, 204, cambio.efectosAdversos ? 'SI' : 'NO');
+    setLegacyColumn(row, 205, cambio.descripcionEfectos || '');
+    setLegacyColumn(row, 206, cambioS.farmaco || '');
+    setLegacyColumn(row, 207, cambioS.dosis || '');
+    setLegacyColumn(row, 208, cambioF.farmaco || '');
+    setLegacyColumn(row, 209, cambioF.dosis || '');
+    setLegacyColumn(row, 210, cambioB.farmaco || '');
+    setLegacyColumn(row, 211, cambioB.dosis || '');
+    setLegacyColumn(row, 212, tipoVisita === 'seguimiento' ? (datos.decisionTerapeutica || '') : '');
+    setLegacyColumn(row, 213, txS.farmaco || '');
+    setLegacyColumn(row, 214, txS.dosis || '');
+    setLegacyColumn(row, 215, txF.farmaco || '');
+    setLegacyColumn(row, 216, txF.dosis || '');
+    setLegacyColumn(row, 217, txB.farmaco || '');
+    setLegacyColumn(row, 218, txB.dosis || '');
+    setLegacyColumn(row, 219, datos.fechaProximaRevision || '');
+    setLegacyColumn(row, 220, datos.comentariosAdicionales || '');
+
+    return row;
+}
+
+function generarFilaCSV_AR_PrimeraVisita(datos) {
+    const valores = generarFilaCSV_AR_Base(datos, 'primera');
+    return finalizeExportRow(valores, datos, 'primera', 'ar');
+}
+
+function generarFilaCSV_AR_Seguimiento(datos) {
+    const valores = generarFilaCSV_AR_Base(datos, 'seguimiento');
+    return finalizeExportRow(valores, datos, 'seguimiento', 'ar');
+}
+
 function generarFilaCSV_EspA_PrimeraVisita(datos) {
     // Contrato de Datos Definitivo - Cada opción múltiple en su propia columna
     const valores = [
@@ -144,7 +530,7 @@ function generarFilaCSV_EspA_PrimeraVisita(datos) {
         datos.comentariosAdicionales || ''
     ];
 
-    return valores.join('\t');
+    return finalizeExportRow(valores, datos, 'primera', 'espa');
 }
 
 /**
@@ -267,7 +653,7 @@ function generarFilaCSV_APs_PrimeraVisita(datos) {
         datos.comentariosAdicionales || ''
     ];
 
-    return valores.join('\t');
+    return finalizeExportRow(valores, datos, 'primera', 'aps');
 }
 
 /**
@@ -391,7 +777,7 @@ function generarFilaCSV_EspA_Seguimiento(datos) {
         datos.comentariosAdicionales || ''
     ];
 
-    return valores.join('\t');
+    return finalizeExportRow(valores, datos, 'seguimiento', 'espa');
 }
 
 /**
@@ -530,7 +916,7 @@ function generarFilaCSV_APs_Seguimiento(datos) {
         datos.comentariosAdicionales || ''
     ];
 
-    return valores.join('\t');
+    return finalizeExportRow(valores, datos, 'seguimiento', 'aps');
 }
 
 /**
@@ -566,6 +952,10 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
                     csvData = generarFilaCSV_APs_PrimeraVisita(datos);
                     hojaExcel = 'APS';
                     break;
+                case 'ar':
+                    csvData = generarFilaCSV_AR_PrimeraVisita(datos);
+                    hojaExcel = 'AR';
+                    break;
                 default:
                     throw new Error(`Diagnóstico no reconocido para primera visita: ${diagnostico}`);
             }
@@ -578,6 +968,10 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
                 case 'aps':
                     csvData = generarFilaCSV_APs_Seguimiento(datos);
                     hojaExcel = 'APS';
+                    break;
+                case 'ar':
+                    csvData = generarFilaCSV_AR_Seguimiento(datos);
+                    hojaExcel = 'AR';
                     break;
                 default:
                     throw new Error(`Diagnóstico no reconocido para seguimiento: ${diagnostico}`);
@@ -877,6 +1271,10 @@ if (typeof HubTools !== 'undefined') {
 
     HubTools.export.generarFilaCSV_APs_Seguimiento = generarFilaCSV_APs_Seguimiento;
 
+    HubTools.export.generarFilaCSV_AR_PrimeraVisita = generarFilaCSV_AR_PrimeraVisita;
+
+    HubTools.export.generarFilaCSV_AR_Seguimiento = generarFilaCSV_AR_Seguimiento;
+
     HubTools.export.exportarYCopiarCSV = exportarYCopiarCSV;
 
     HubTools.export.exportarTXT = exportarTXT;
@@ -884,6 +1282,8 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.generarNotaClinica = generarNotaClinica;
 
     HubTools.export.exportCohortToCSV = exportCohortToCSV;
+
+    HubTools.export.EXTRA_EXPORT_HEADERS = EXTRA_EXPORT_HEADERS;
 
     HubTools.export.copyDrugsListToClipboard = function(drugsData) {
         const headers = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
@@ -936,3 +1336,4 @@ if (typeof HubTools !== 'undefined') {
     console.error('❌ Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 
 }
+

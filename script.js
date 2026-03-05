@@ -195,12 +195,12 @@ function mapRecordToPatientSummary(record, history) {
         evaDolor: coalesce(record.evaDolor, latestVisit?.evaDolor, latestVisit?.EVA_Dolor),
         basdai: coalesce(record.basdai, latestVisit?.basdaiResult, latestVisit?.basdai),
         asdasCrp: coalesce(record.asdasCrp, latestVisit?.asdasCrpResult, latestVisit?.asdasCrp, latestVisit?.ASDAS_CRP),
-        das28Crp: coalesce(record.das28Crp, latestVisit?.das28CrpResult, latestVisit?.das28Crp),
-        das28Esr: coalesce(record.das28Esr, latestVisit?.das28EsrResult, latestVisit?.das28Esr),
-        cdai: coalesce(record.cdai, latestVisit?.cdaiResult, latestVisit?.cdai),
-        sdai: coalesce(record.sdai, latestVisit?.sdaiResult, latestVisit?.sdai),
+        das28Crp: coalesce(record.das28Crp, record.DAS28_CRP_Result, record.DAS28_CRP, latestVisit?.das28CrpResult, latestVisit?.DAS28_CRP_Result, latestVisit?.das28Crp, latestVisit?.DAS28_CRP),
+        das28Esr: coalesce(record.das28Esr, record.DAS28_ESR_Result, record.DAS28_ESR, latestVisit?.das28EsrResult, latestVisit?.DAS28_ESR_Result, latestVisit?.das28Esr, latestVisit?.DAS28_ESR),
+        cdai: coalesce(record.cdai, record.CDAI_Result, record.CDAI, latestVisit?.cdaiResult, latestVisit?.CDAI_Result, latestVisit?.cdai, latestVisit?.CDAI),
+        sdai: coalesce(record.sdai, record.SDAI_Result, record.SDAI, latestVisit?.sdaiResult, latestVisit?.SDAI_Result, latestVisit?.sdai, latestVisit?.SDAI),
         haq: coalesce(record.haq, latestVisit?.haqTotal, latestVisit?.haq),
-        rapid3: coalesce(record.rapid3, latestVisit?.rapid3Total, latestVisit?.rapid3)
+        rapid3: coalesce(record.rapid3, record.RAPID3_Score, record.RAPID3, latestVisit?.rapid3Result, latestVisit?.RAPID3_Score, latestVisit?.rapid3Total, latestVisit?.rapid3, latestVisit?.RAPID3)
     };
 }
 
@@ -799,3 +799,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('✅ Hub Clínico inicializado correctamente');
 });
+

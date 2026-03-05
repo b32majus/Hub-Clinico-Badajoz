@@ -109,13 +109,13 @@
                     <div class="kpi-card" id="kpiBASDAI">
                         <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
                         <span class="kpi-value" id="kpiBASDAIValue">---</span>
-                        <span class="kpi-label">BASDAI</span>
+                        <span class="kpi-label" id="kpiPrimaryMetricLabel">BASDAI</span>
                         <span class="kpi-status" id="kpiBASDAIStatus">---</span>
                     </div>
                     <div class="kpi-card" id="kpiASDAS">
                         <div class="kpi-icon"><i class="fas fa-fire"></i></div>
                         <span class="kpi-value" id="kpiASDASValue">---</span>
-                        <span class="kpi-label">ASDAS</span>
+                        <span class="kpi-label" id="kpiSecondaryMetricLabel">ASDAS</span>
                         <span class="kpi-status" id="kpiASDASStatus">---</span>
                     </div>
                     <div class="kpi-card" id="kpiPCR">
@@ -279,8 +279,8 @@
                                 <thead>
                                     <tr>
                                         <th data-sort="fecha">Fecha <i class="fas fa-sort"></i></th>
-                                        <th data-sort="basdai">BASDAI <i class="fas fa-sort"></i></th>
-                                        <th data-sort="asdas">ASDAS <i class="fas fa-sort"></i></th>
+                                        <th data-sort="basdai" id="visitsTablePrimaryHeader">BASDAI <i class="fas fa-sort"></i></th>
+                                        <th data-sort="asdas" id="visitsTableSecondaryHeader">ASDAS <i class="fas fa-sort"></i></th>
                                         <th data-sort="evaDolor">EVA Dolor <i class="fas fa-sort"></i></th>
                                         <th data-sort="pcr">PCR <i class="fas fa-sort"></i></th>
                                         <th>Tratamiento</th>
@@ -322,3 +322,4 @@
     <script src="scripts/script_dashboard.js"></script>
 </body>
 </html>
+

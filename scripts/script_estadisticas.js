@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (HubTools && HubTools.form && HubTools.form.inicializarCollapsibles) {
         HubTools.form.inicializarCollapsibles();
     }
+    initializeFiltersCollapsible();
 
     initializeFilters();
     initializeFilterTabs();
@@ -69,6 +70,35 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboard();
         syncFiltersPanelHeight();
     });
+
+function initializeFiltersCollapsible() {
+    const header = document.getElementById('filtersHeader');
+    const content = document.querySelector('.filters-panel .collapsible-content');
+    const toggleBtn = header?.querySelector('.toggle-filters-btn');
+    if (!header || !content) return;
+
+    const toggle = () => {
+        header.classList.toggle('active');
+        syncFiltersPanelHeight();
+    };
+
+    header.addEventListener('click', (event) => {
+        if (event.target.closest('.toggle-filters-btn') || event.currentTarget === header || event.target.closest('.card-title')) {
+            toggle();
+        }
+    });
+
+    toggleBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggle();
+    });
+
+    // Mantener cerrado por defecto
+    header.classList.remove('active');
+    content.style.maxHeight = '0px';
+}
+
 });
 
 // === CONFIGURACIÓN GLOBAL DE CHART.JS ===
@@ -238,7 +268,7 @@ function initializeFilters() {
     // Poblar selectores de correlación
     const scatterX = document.getElementById('scatterX');
     const scatterY = document.getElementById('scatterY');
-    const options = ['BASDAI', 'ASDAS', 'HAQ', 'DAS28_CRP', 'CDAI', 'SDAI', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+    const options = ['BASDAI', 'ASDAS', 'HAQ', 'DAS28_CRP', 'DAS28_ESR', 'CDAI', 'SDAI', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
 
     options.forEach((option, index) => {
         const optX = document.createElement('option');
@@ -286,14 +316,24 @@ function syncActivityIndexForPathology() {
     if (!activityIndex) return;
 
     const current = activityIndex.value;
-    if (pathology === 'APS' && current === 'BASDAI') {
-        activityIndex.value = 'HAQ';
+    if (pathology === 'ESPA') {
+        const espaIndices = ['BASDAI', 'ASDAS', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+        if (!espaIndices.includes(current)) {
+            activityIndex.value = 'BASDAI';
+        }
+        return;
     }
-    if (pathology === 'ESPA' && current === 'HAQ') {
-        activityIndex.value = 'BASDAI';
+
+    if (pathology === 'APS') {
+        const apsIndices = ['HAQ', 'ASDAS', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+        if (!apsIndices.includes(current)) {
+            activityIndex.value = 'HAQ';
+        }
+        return;
     }
+
     if (pathology === 'AR') {
-        const arIndices = ['DAS28_CRP', 'DAS28_ESR', 'CDAI', 'SDAI', 'RAPID3'];
+        const arIndices = ['DAS28_CRP', 'DAS28_ESR', 'CDAI', 'SDAI', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
         if (!arIndices.includes(current)) {
             activityIndex.value = 'DAS28_CRP';
         }
@@ -1008,7 +1048,10 @@ function syncFiltersPanelHeight() {
     const header = document.getElementById('filtersHeader');
     const content = document.querySelector('.filters-panel .collapsible-content');
     if (!header || !content) return;
-    if (!header.classList.contains('active')) return;
+    if (!header.classList.contains('active')) {
+        content.style.maxHeight = '0px';
+        return;
+    }
 
     requestAnimationFrame(() => {
         content.style.maxHeight = `${content.scrollHeight}px`;
@@ -1025,3 +1068,5 @@ function bindFiltersPanelResize() {
 
     window.addEventListener('resize', debounce(syncFiltersPanelHeight, 150));
 }
+
+
