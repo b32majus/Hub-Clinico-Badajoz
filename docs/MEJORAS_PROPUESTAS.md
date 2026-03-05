@@ -72,16 +72,35 @@ function validarInput(value, min, max) {
   - Verificar que `HubTools.*` está disponible antes de cada llamada.
   - Añadir try/catch global alrededor del bloque de inicialización.
 
+**9. schemaVersion + validación de columnas al cargar Excel**
+- Añadir campo `schemaVersion` en una celda reservada o en los metadatos del Excel.
+- Al cargar con `loadDatabase()`, verificar que las cabeceras de cada hoja coinciden con el contrato de datos esperado.
+- Si faltan columnas o están desordenadas: aviso claro al usuario ("El Excel no coincide con la versión esperada. Columnas faltantes: X, Y").
+- Previene fallos silenciosos cuando alguien edita manualmente el Excel y mueve/elimina columnas.
+
+**10. Buffer de "filas pendientes" (safety net para exportación)**
+- Tras exportar CSV, guardar la fila en `localStorage` con clave `pendingRows` + timestamp.
+- Mostrar badge en sidebar: "1 fila pendiente de pegar en Excel".
+- El usuario puede marcar como "pegada" o recuperar la fila si la perdió del portapapeles.
+- Auto-limpiar filas pendientes con más de 24h.
+- Red de seguridad contra pérdida de datos por olvido de pegar en Excel.
+
+**11. Normalizador central de campos**
+- Crear módulo `fieldNormalizer.js` con mapa canónico de nombres de columna.
+- Mapear variantes (`DAS28_CRP_Result`, `das28Crp`, `DAS28-CRP`, `DAS28 CRP`) a una clave canónica (`DAS28_CRP`).
+- Usar en `dataManager.js` al leer Excel y en `exportManager.js` al escribir CSV.
+- Elimina la lógica duplicada de normalización repartida entre módulos.
+
 ---
 
 ### Deuda técnica del TODO.md a resolver
 
-**9. Eliminar doble exposición namespace — `modules/dataManager.js` (líneas finales)**
+**12. Eliminar doble exposición namespace — `modules/dataManager.js` (líneas finales)**
 - Identificar todas las llamadas a funciones sin prefijo `HubTools.data.xxx`
 - Actualizarlas al namespace
 - Eliminar el bloque `window.xxx = xxx` redundante
 
-**10. Refactorizar inline styles → clases CSS**
+**13. Refactorizar inline styles → clases CSS**
 - `script.js`: templates HTML de quick-view del paciente (~100 líneas)
 - `modules/formController.js`: función `mostrarModalTexto()`
 - Mover todos los `style="..."` embebidos en JS a `style.css`
@@ -90,9 +109,10 @@ function validarInput(value, min, max) {
 
 ### Archivos afectados
 - `modules/scoreCalculators.js` (bugs críticos)
-- `modules/dataManager.js` (robustez, deuda técnica)
+- `modules/dataManager.js` (robustez, deuda técnica, schemaVersion)
 - `modules/formController.js` (variable duplicada, robustez)
-- `modules/exportManager.js` (UTF-8, clipboard fallback)
+- `modules/exportManager.js` (UTF-8, clipboard fallback, buffer filas pendientes)
+- `modules/fieldNormalizer.js` (nuevo — normalizador central de campos)
 - `scripts/script_primera_visita.js` (inicialización)
 - `scripts/script_seguimiento.js` (inicialización)
 - `script.js` (inline styles)
@@ -192,15 +212,50 @@ Paso 4/4: Revisión y exportación
 - Rojo: "BD no cargada"
 - Click en el badge → acción directa de recarga
 
+**9. Precarga visible y confirmable en seguimiento**
+
+*Problema:* Los datos precargados de la visita anterior (comorbilidades, biomarcadores, tratamiento) aparecen como campos readonly sin contexto. El usuario no puede distinguir qué viene heredado y qué debe rellenar.
+
+*Propuesta:* Panel "Datos heredados de visita previa" con cada campo mostrando:
+- Valor actual precargado con badge "Última visita: DD/MM/YYYY"
+- Botón "Mantener" (default) / "Modificar" por campo
+- Si elige "Modificar", el campo se desbloquea para edición
+- Visual claro: fondo diferenciado para datos heredados vs datos nuevos de esta visita
+
+**10. Validación por sección con "ir al campo"**
+
+*Problema:* Los errores de validación se muestran como lista plana al final. En un formulario largo, el usuario no sabe dónde está el campo que falta.
+
+*Propuesta:*
+- Errores agrupados por sección (Datos básicos, Anamnesis, Exploración, etc.)
+- Cada error incluye link "Ir al campo" que hace scroll + focus al input correspondiente
+- Sección con errores muestra badge rojo con conteo
+- En modo wizard: impedir avanzar al siguiente paso si la sección actual tiene errores
+
+**11. Comparativa rápida vs visita previa (mini-delta)**
+
+*Problema:* En seguimiento, el reumatólogo no ve de un vistazo cómo han cambiado los scores respecto a la última visita. Debe recordar los valores anteriores o buscarlos en el dashboard.
+
+*Propuesta:* Tras calcular los scores de la visita actual, mostrar mini-panel de comparativa:
+```
+Índice        Anterior    Actual     Delta
+BASDAI        5.2         3.8        ▼ 1.4 (mejora)
+ASDAS-CRP     2.9         2.1        ▼ 0.8 (mejora)
+PCR           45          12         ▼ 33  (mejora)
+EVA Dolor     65          40         ▼ 25  (mejora)
+```
+- Colores semánticos: verde si mejora, rojo si empeora, gris si sin cambio
+- Visible antes de exportar para facilitar decisión clínica
+
 ---
 
 ### Archivos afectados
 - `index.html` + `script.js` (flujo de entrada)
-- `primera_visita.html` + `scripts/script_primera_visita.js` (wizard)
-- `seguimiento.html` + `scripts/script_seguimiento.js` (paso 0 búsqueda)
-- `modules/formController.js` (campos redundantes, homúnculo)
+- `primera_visita.html` + `scripts/script_primera_visita.js` (wizard, validación por sección)
+- `seguimiento.html` + `scripts/script_seguimiento.js` (paso 0 búsqueda, precarga confirmable, mini-delta)
+- `modules/formController.js` (campos redundantes, homúnculo, validación con "ir al campo")
 - `dashboard_paciente.html` + `scripts/script_dashboard.js` (KPIs)
-- `style.css`, `style_primera_visita.css` (estilos de wizard, badges)
+- `style.css`, `style_primera_visita.css` (estilos de wizard, badges, panel heredados, mini-delta)
 
 ---
 
@@ -401,16 +456,22 @@ Para enriquecer los datos disponibles sin complicar demasiado los formularios ex
 |---|-----|--------|----------|---------|
 | 1 | Técnico | Corregir bugs críticos en scoreCalculators.js | Muy bajo | Crítico |
 | 2 | Técnico | Robustez localStorage + validación Excel | Bajo | Alto |
-| 3 | UX | Indicador de estado de BD en sidebar | Bajo | Alto |
-| 4 | UX | Confirmación post-exportación con checklist | Bajo | Alto |
-| 5 | Visual | Unificar tipografía (Inter) | Bajo | Medio |
-| 6 | Visual | Paleta SES-inspired (actualizar variables CSS) | Medio | Alto |
-| 7 | UX | Paso 0 en seguimiento (búsqueda sin ?id=) | Medio | Alto |
-| 8 | UX | KPIs con contexto clínico en dashboard paciente | Medio | Alto |
-| 9 | Farmacia | Vista de solo lectura farmacéutica (Opción A) | Medio | Alto |
-| 10 | Técnico | Deuda técnica (inline styles, namespace) | Medio | Bajo |
-| 11 | UX | Wizard en primera visita (pasos) | Alto | Muy alto |
-| 12 | Farmacia | Campos farmacéuticos adicionales en formularios | Alto | Medio |
+| 3 | Técnico | schemaVersion + validación de columnas al cargar Excel | Bajo | Alto |
+| 4 | UX | Indicador de estado de BD en sidebar | Bajo | Alto |
+| 5 | UX | Confirmación post-exportación con checklist | Bajo | Alto |
+| 6 | Técnico | Buffer de "filas pendientes" (safety net exportación) | Bajo | Alto |
+| 7 | Visual | Unificar tipografía (Inter) | Bajo | Medio |
+| 8 | Visual | Paleta SES-inspired (actualizar variables CSS) | Medio | Alto |
+| 9 | UX | Paso 0 en seguimiento (búsqueda sin ?id=) | Medio | Alto |
+| 10 | UX | Validación por sección con "ir al campo" | Medio | Alto |
+| 11 | UX | KPIs con contexto clínico en dashboard paciente | Medio | Alto |
+| 12 | UX | Precarga visible y confirmable en seguimiento | Medio | Alto |
+| 13 | Farmacia | Vista de solo lectura farmacéutica (Opción A) | Medio | Alto |
+| 14 | Técnico | Normalizador central de campos | Medio | Medio |
+| 15 | Técnico | Deuda técnica (inline styles, namespace) | Medio | Bajo |
+| 16 | UX | Comparativa rápida vs visita previa (mini-delta) | Medio | Alto |
+| 17 | UX | Wizard en primera visita (pasos) | Alto | Muy alto |
+| 18 | Farmacia | Campos farmacéuticos adicionales en formularios | Alto | Medio |
 
 ---
 

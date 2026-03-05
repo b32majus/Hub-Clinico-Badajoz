@@ -69,6 +69,7 @@ function hideElementsBySelector(selector) {
 let currentPathology = ''; // Patología activa actual
 let asasInitialized = false; // Control de inicialización ASAS
 let casparInitialized = false; // Control de inicialización CASPAR
+let acrEularInitialized = false; // Control de inicialización ACR/EULAR
 
 // =====================================
 // FUNCIÓN DE ADAPTACIÓN DEL FORMULARIO (CORREGIDA)
@@ -184,8 +185,6 @@ function mostrarElementosAPs() {
 
     console.log('✅ Elementos APs mostrados correctamente');
 }
-
-var acrEularInitialized = false;
 
 function mostrarElementosAR() {
     console.log('📋 Mostrando elementos específicos de AR');
