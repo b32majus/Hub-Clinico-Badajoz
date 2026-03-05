@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 let quickViewMount = null;
 
@@ -79,6 +79,18 @@ function updatePendingRowsIndicator() {
     indicator.classList.toggle('hidden', rows.length === 0);
 }
 
+
+function renderQuickViewMetric(label, value) {
+    return '<div class="quick-view-metric-card"><div class="quick-view-metric-card__label">' + label + '</div><div class="quick-view-metric-card__value">' + value + '</div></div>';
+}
+
+function renderQuickViewEmptyState(id) {
+    return '<div class="quick-view-empty-card"><i class="fas fa-search quick-view-empty-card__icon" aria-hidden="true"></i><p class="quick-view-empty-card__text">No se encontraron resultados para el ID proporcionado (' + id + ').</p><p class="quick-view-empty-card__subtext">¿Desea crear una nueva historia clínica para este paciente?</p><a href="primera_visita.html?id=' + id + '" class="action-btn primary-btn quick-view-link-btn"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Nueva Historia Clínica</a></div>';
+}
+
+function renderQuickViewNewPatient(id) {
+    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content"><div class="quick-view-patient-chip__label">ID del Paciente</div><div class="quick-view-patient-chip__value">' + id + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html?id=' + id + '" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
+}
 
 function createQuickViewOverlay() {
     const overlay = document.createElement('div');
@@ -284,6 +296,65 @@ function showPatientResults(id) {
         searchResults.classList.remove('hidden');
     };
 
+    const renderQuickViewLayout = ({ patientName, id, pathologyLabel, lastVisit, treatment, treatmentStart, pathologyCode, evaGlobal, basdai, das28Crp, scoresHTML }) => {
+        return `
+            <div class="quick-view-stack">
+                <div class="patient-summary-card quick-view-summary-card">
+                    <div class="quick-view-summary-card__body">
+                        <div class="quick-view-eyebrow">Paciente</div>
+                        <div class="quick-view-patient-name">${patientName}</div>
+                        <div class="quick-view-meta">
+                            <span><strong>ID:</strong> ${id}</span>
+                            <span><strong>Diagnóstico:</strong> ${pathologyLabel}</span>
+                            <span><strong>Última visita:</strong> ${lastVisit}</span>
+                        </div>
+                    </div>
+                    <button id="btnVerDashboardCompleto" class="action-btn purple-btn quick-view-dashboard-btn">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i>
+                        Ver Dashboard Completo
+                    </button>
+                </div>
+
+                <div class="quick-view-two-col">
+                    <div class="patient-info-card quick-view-panel-card">
+                        <h3 class="quick-view-panel-card__title">Resumen Clínico</h3>
+                        <div class="quick-view-clinical-list">
+                            <div><strong>Tratamiento activo:</strong> ${treatment}</div>
+                            <div><strong>Inicio tratamiento:</strong> ${treatmentStart}</div>
+                            <div><strong>Evaluación global:</strong> ${formatDisplayValue(evaGlobal)}</div>
+                            <div><strong>${pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(pathologyCode === 'ar' ? das28Crp : basdai)}</div>
+                        </div>
+                    </div>
+
+                    <div class="patient-scores-card quick-view-panel-card">
+                        <h3 class="quick-view-panel-card__title">Índices Clínicos</h3>
+                        <div class="quick-view-metrics-grid">
+                            ${scoresHTML || '<p class="quick-view-empty-metrics">Sin datos registrados.</p>'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-view-two-col">
+                    <div class="patient-actions-card quick-view-panel-card">
+                        <h3 class="quick-view-panel-card__title">Acciones rápidas</h3>
+                        <div class="quick-view-actions">
+                            <a href="seguimiento.html?id=${id}&patologia=${pathologyCode}" class="action-btn green-btn quick-view-action-link">
+                                <i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar Seguimiento
+                            </a>
+                            <a href="primera_visita.html?id=${id}" class="action-btn turquoise-btn quick-view-action-link">
+                                <i class="fas fa-file-alt" aria-hidden="true"></i> Revisar Primera Visita
+                            </a>
+                        </div>
+                    </div>
+                    <div class="patient-treatment-card quick-view-panel-card">
+                        <h3 class="quick-view-panel-card__title">Notas adicionales</h3>
+                        <p class="quick-view-note">Consulta el dashboard completo para revisar eventos clínicos, evolución de índices y periodos terapéuticos.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    };
+
     let patient = null;
     let historyData = null;
     let hasHistory = false;
@@ -328,17 +399,7 @@ function showPatientResults(id) {
     if (!patient) {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente No Encontrado';
         if (searchResultsSubtitle) searchResultsSubtitle.textContent = '';
-        resultsContent.innerHTML = `
-            <div style="text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <i class="fas fa-search" style="font-size: 3rem; color: #d1d5db; margin-bottom: 1rem; display: block;"></i>
-                <p style="color: #6b7280; margin-bottom: 1.5rem;">No se encontraron resultados para el ID proporcionado (${id}).</p>
-                <p style="color: #9ca3af; font-size: 0.875rem; margin-bottom: 1.5rem;">¿Desea crear una nueva historia clínica para este paciente?</p>
-                <a href="primera_visita.html?id=${id}" class="action-btn primary-btn" style="display: inline-block; padding: 1rem 2rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">
-                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i>
-                    Crear Nueva Historia Clínica
-                </a>
-            </div>
-        `;
+        resultsContent.innerHTML = renderQuickViewEmptyState(id);
         revealQuickView();
         return;
     }
@@ -354,78 +415,26 @@ function showPatientResults(id) {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Nuevo - Iniciar Primera Visita';
         if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Paciente con ID ${id} no tiene visitas registradas. Cree una nueva historia clínica.`;
 
-        resultsContent.innerHTML = `
-            <div style="text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                <div style="margin-bottom: 2rem;">
-                    <i class="fas fa-user-plus" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem; display: block;"></i>
-                    <h3 style="margin: 0 0 1rem 0; font-size: 1.5rem; font-weight: 600; color: #111827;">Nuevo Paciente</h3>
-                    <p style="margin: 0 0 0.5rem 0; color: #6b7280;">Se procederá a crear una nueva historia clínica</p>
-                </div>
-
-                <div style="background: #f3f4f6; padding: 1.5rem; border-radius: 6px; margin-bottom: 2rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; justify-content: center; margin-bottom: 1rem;">
-                        <i class="fas fa-id-card" style="color: #3b82f6; font-size: 1.5rem;"></i>
-                        <div style="text-align: left;">
-                            <div style="font-size: 0.875rem; color: #6b7280;">ID del Paciente</div>
-                            <div style="font-weight: 600; font-size: 1.125rem;">${id}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <a href="primera_visita.html?id=${id}" class="action-btn primary-btn" style="display: inline-block; padding: 1rem 2rem; background: #3b82f6; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin-right: 1rem;">
-                    <i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i>
-                    Crear Primera Visita
-                </a>
-                <button onclick="document.getElementById('patientSearch').value = ''; document.getElementById('patientId').value = '';" style="padding: 1rem 2rem; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; font-weight: 500; cursor: pointer;">
-                    <i class="fas fa-times-circle" style="margin-right: 0.5rem;"></i>
-                    Cancelar
-                </button>
-            </div>
-        `;
+        resultsContent.innerHTML = renderQuickViewNewPatient(id);
+        document.getElementById('quickViewCancelNewPatient')?.addEventListener('click', () => {
+            const sidebarSearch = document.getElementById('patientSearch');
+            const centralSearch = document.getElementById('patientId');
+            if (sidebarSearch) sidebarSearch.value = '';
+            if (centralSearch) centralSearch.value = '';
+        });
     } else {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Encontrado - Opciones Disponibles';
         if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Mostrando datos de ${patientName} (ID: ${id})`;
 
         let scoresHTML = '';
+        const addMetric = (label, value) => {
+            scoresHTML += renderQuickViewMetric(label, value);
+        };
+
         const evaGlobal = patient.evaGlobal;
         const evaDolor = patient.evaDolor;
         const basdai = patient.basdai;
         const asdasCrp = patient.asdasCrp;
-
-        if (evaGlobal !== null && evaGlobal !== undefined && evaGlobal !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">EVA GLOBAL</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${evaGlobal}</div>
-                </div>
-            `;
-        }
-        if (evaDolor !== null && evaDolor !== undefined && evaDolor !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">EVA DOLOR</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${evaDolor}</div>
-                </div>
-            `;
-        }
-        if (basdai !== null && basdai !== undefined && basdai !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">BASDAI</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${basdai}</div>
-                </div>
-            `;
-        }
-        if (asdasCrp !== null && asdasCrp !== undefined && asdasCrp !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">ASDAS-CRP</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${asdasCrp}</div>
-                </div>
-            `;
-        }
-
-        // AR-specific scores
         const das28Crp = patient.das28Crp;
         const das28Esr = patient.das28Esr;
         const cdai = patient.cdai;
@@ -433,114 +442,36 @@ function showPatientResults(id) {
         const haq = patient.haq;
         const rapid3 = patient.rapid3;
 
-        if (das28Crp !== null && das28Crp !== undefined && das28Crp !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">DAS28-CRP</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${das28Crp}</div>
-                </div>
-            `;
-        }
-        if (das28Esr !== null && das28Esr !== undefined && das28Esr !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">DAS28-ESR</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${das28Esr}</div>
-                </div>
-            `;
-        }
-        if (cdai !== null && cdai !== undefined && cdai !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">CDAI</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${cdai}</div>
-                </div>
-            `;
-        }
-        if (sdai !== null && sdai !== undefined && sdai !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">SDAI</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${sdai}</div>
-                </div>
-            `;
-        }
-        if (haq !== null && haq !== undefined && haq !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">HAQ-DI</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${haq}</div>
-                </div>
-            `;
-        }
-        if (rapid3 !== null && rapid3 !== undefined && rapid3 !== '') {
-            scoresHTML += `
-                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">RAPID3</div>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${rapid3}</div>
-                </div>
-            `;
-        }
+        [
+            ['EVA GLOBAL', evaGlobal],
+            ['EVA DOLOR', evaDolor],
+            ['BASDAI', basdai],
+            ['ASDAS-CRP', asdasCrp],
+            ['DAS28-CRP', das28Crp],
+            ['DAS28-ESR', das28Esr],
+            ['CDAI', cdai],
+            ['SDAI', sdai],
+            ['HAQ-DI', haq],
+            ['RAPID3', rapid3]
+        ].forEach(([label, value]) => {
+            if (value !== null && value !== undefined && value !== '') {
+                addMetric(label, value);
+            }
+        });
 
-        const dashboardUrlPathology = pathologyCode ? `&patologia=${encodeURIComponent(pathologyCode)}` : '';
-        const dashboardUrl = `dashboard_paciente.html?id=${encodeURIComponent(id)}${dashboardUrlPathology}`;
-
-        resultsContent.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 2rem;">
-                <div class="patient-summary-card" style="background: white; padding: 1.75rem; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center;">
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <div style="font-size: 0.85rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em;">Paciente</div>
-                        <div style="font-size: 1.4rem; font-weight: 600; color: #1f2937;">${patientName}</div>
-                        <div style="display: flex; flex-wrap: wrap; gap: 1rem; color: #4b5563; font-size: 0.95rem;">
-                            <span><strong>ID:</strong> ${id}</span>
-                            <span><strong>Diagnóstico:</strong> ${pathologyLabel}</span>
-                            <span><strong>Última visita:</strong> ${lastVisit}</span>
-                        </div>
-                    </div>
-                    <button id="btnVerDashboardCompleto" class="action-btn purple-btn" style="display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.9rem 1.6rem;">
-                        <i class="fas fa-chart-line" aria-hidden="true"></i>
-                        Ver Dashboard Completo
-                    </button>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem;">
-                    <div class="patient-info-card" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 1.5rem 0; font-size: 1.1rem; font-weight: 600;">Resumen Clínico</h3>
-                        <div style="display: flex; flex-direction: column; gap: 0.8rem; color: #374151;">
-                            <div><strong>Tratamiento activo:</strong> ${treatment}</div>
-                            <div><strong>Inicio tratamiento:</strong> ${treatmentStart}</div>
-                            <div><strong>Evaluación global:</strong> ${formatDisplayValue(evaGlobal)}</div>
-                            <div><strong>${pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(pathologyCode === 'ar' ? das28Crp : basdai)}</div>
-                        </div>
-                    </div>
-
-                    <div class="patient-scores-card" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 1.5rem 0; font-size: 1.1rem; font-weight: 600;">Índices Clínicos</h3>
-                        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
-                            ${scoresHTML || '<p style="grid-column: span 2; color: #6b7280;">Sin datos registrados.</p>'}
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem;">
-                    <div class="patient-actions-card" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 1.5rem 0; font-size: 1.1rem; font-weight: 600;">Acciones rápidas</h3>
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <a href="seguimiento.html?id=${id}&patologia=${pathologyCode}" class="action-btn green-btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none;">
-                                <i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar Seguimiento
-                            </a>
-                            <a href="primera_visita.html?id=${id}" class="action-btn turquoise-btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none;">
-                                <i class="fas fa-file-alt" aria-hidden="true"></i> Revisar Primera Visita
-                            </a>
-                        </div>
-                    </div>
-                    <div class="patient-treatment-card" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 1.5rem 0; font-size: 1.1rem; font-weight: 600;">Notas adicionales</h3>
-                        <p style="margin: 0; color: #4b5563;">Consulta el dashboard completo para revisar eventos clínicos, evolución de índices y periodos terapéuticos.</p>
-                    </div>
-                </div>
-            </div>
-        `;
+        resultsContent.innerHTML = renderQuickViewLayout({
+            patientName,
+            id,
+            pathologyLabel,
+            lastVisit,
+            treatment,
+            treatmentStart,
+            pathologyCode,
+            evaGlobal,
+            basdai,
+            das28Crp,
+            scoresHTML
+        });
 
         const dashboardBtn = document.getElementById('btnVerDashboardCompleto');
         if (dashboardBtn) {

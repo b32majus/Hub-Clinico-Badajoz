@@ -1193,3 +1193,278 @@ body {
     color: #0f172a;
     background: #f8fafc;
 }
+
+
+.quick-view-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.quick-view-two-col {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+}
+
+.quick-view-empty-card {
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+    padding: 2rem;
+    text-align: center;
+    display: grid;
+    gap: 1rem;
+}
+
+.quick-view-empty-card__hero {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.quick-view-empty-card__icon {
+    display: block;
+    font-size: 3rem;
+    color: #d1d5db;
+    margin: 0 auto;
+}
+
+.quick-view-empty-card__icon--primary {
+    color: #3b82f6;
+}
+
+.quick-view-empty-card__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.quick-view-empty-card__text {
+    margin: 0;
+    color: #6b7280;
+}
+
+.quick-view-empty-card__text--tight {
+    margin-bottom: 0;
+}
+
+.quick-view-empty-card__subtext {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.quick-view-empty-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.quick-view-link-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    text-decoration: none;
+}
+
+.quick-view-link-btn--spaced {
+    margin-right: 0;
+}
+
+.quick-view-secondary-btn {
+    padding: 1rem 2rem;
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quick-view-inline-icon {
+    margin-right: 0.15rem;
+}
+
+.quick-view-patient-chip {
+    background: #f3f4f6;
+    padding: 1.5rem;
+    border-radius: 10px;
+}
+
+.quick-view-patient-chip__row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.quick-view-patient-chip__icon {
+    color: #3b82f6;
+    font-size: 1.5rem;
+}
+
+.quick-view-patient-chip__content {
+    text-align: left;
+}
+
+.quick-view-patient-chip__label {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.quick-view-patient-chip__value {
+    font-weight: 600;
+    font-size: 1.125rem;
+    color: #111827;
+}
+
+.quick-view-summary-card {
+    background: #ffffff;
+    padding: 1.75rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.quick-view-summary-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quick-view-eyebrow {
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.quick-view-patient-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.quick-view-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    color: #4b5563;
+    font-size: 0.95rem;
+}
+
+.quick-view-dashboard-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.6rem;
+}
+
+.quick-view-panel-card {
+    background: #ffffff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.quick-view-panel-card__title {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.quick-view-clinical-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    color: #374151;
+}
+
+.quick-view-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.quick-view-metric-card {
+    background: #f3f4f6;
+    padding: 1rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.quick-view-metric-card__label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.quick-view-metric-card__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.quick-view-empty-metrics {
+    grid-column: span 2;
+    color: #6b7280;
+    margin: 0;
+}
+
+.quick-view-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.quick-view-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.quick-view-note {
+    margin: 0;
+    color: #4b5563;
+}
+
+@media (max-width: 900px) {
+    .quick-view-two-col {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .quick-view-summary-card {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-view-dashboard-btn,
+    .quick-view-link-btn,
+    .quick-view-secondary-btn,
+    .quick-view-action-link {
+        width: 100%;
+    }
+
+    .quick-view-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-view-empty-metrics {
+        grid-column: span 1;
+    }
+}
