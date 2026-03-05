@@ -1,38 +1,29 @@
 ﻿# Hub Clínico Reumatología - Badajoz
 
-Aplicación web `local-first` para captura estructurada de datos clínicos en Reumatología, sin instalación y sin backend remoto.
+Aplicación web local-first para captura estructurada de datos clínicos en Reumatología, sin instalación y sin backend remoto.
 
-## Estado del proyecto
-- Entorno: adaptación operativa para Hospital de Badajoz.
+## Estado actual
+- Entorno objetivo: Hospital de Badajoz (restricciones STIC).
 - Patologías activas: `ESPA`, `APS`, `AR`.
 - Base de datos local compartida: `Hub_Clinico_Maestro.xlsx`.
+- Flujo de persistencia: exportar CSV (1 fila) y pegar manualmente en Excel.
 
-## Objetivo
-Estandarizar primera visita y seguimiento en una estructura única por patología, exportando filas CSV para análisis clínico y explotación en dashboards.
-
-## Arquitectura funcional
-- La app funciona en navegador (HTML/CSS/JS).
-- No envía datos a servidores externos.
-- El “backend” es un Excel maestro compartido en red del servicio.
-- Cada visita genera una fila CSV para pegar en la hoja de la patología correspondiente.
-
-## Flujo de trabajo real
-1. Abrir la app (`index.html` o despliegue interno).
-2. Cargar `Hub_Clinico_Maestro.xlsx` desde el botón de carga de BD.
-3. Completar formulario (primera visita o seguimiento).
-4. Exportar:
+## Qué hace actualmente
+1. Registro de primera visita y seguimiento.
+2. Cálculo automático de índices clínicos (incluyendo AR: DAS28/CDAI/SDAI/RAPID3).
+3. Búsqueda de pacientes con vista rápida (quick view) y navegación al dashboard de paciente.
+4. Dashboard de paciente con métricas por patología y evolución longitudinal.
+5. Dashboard de estadísticas poblacionales con filtros por cohorte.
+6. Exportación dual:
    - `TXT` para historia clínica.
-   - `CSV` (1 fila) para base de datos.
-5. Pegar la fila CSV en la última fila libre de la hoja correcta (`ESPA`, `APS`, `AR`).
-6. Guardar Excel.
+   - `CSV` estructurado para base de datos (Excel).
 
-## Importante: actualización de datos en sesión
-La app carga una copia de la BD al inicio de sesión y trabaja con esa copia en memoria/cache local.
+## Reglas críticas de operación
+- Primera visita y seguimiento de una misma patología se guardan en la misma hoja (`ESPA`, `APS`, `AR`) para permitir evolución.
+- La app no sincroniza automáticamente con el Excel compartido en tiempo real.
+- Para ver nuevas filas añadidas por otros usuarios, hay que recargar la base de datos en la app.
 
-- Si otro profesional pega nuevas filas en el Excel compartido, tu sesión no lo verá automáticamente.
-- Para ver datos actualizados en buscador, dashboard paciente y estadísticas, hay que volver a cargar el Excel en la app.
-
-## Estructura de base de datos
+## Estructura de datos (alto nivel)
 Archivo maestro:
 - `Hub_Clinico_Maestro.xlsx`
 
@@ -45,32 +36,23 @@ Hojas de soporte:
 - `Fármacos`
 - `Profesionales`
 
-## Módulos principales
-- `modules/dataManager.js`: carga Excel, estado de datos, consultas de pacientes/cohorte.
-- `modules/formController.js`: validación y recopilación de formularios.
-- `modules/exportManager.js`: generación de TXT/CSV.
-- `scripts/script_dashboard.js`: dashboard de paciente (extendido).
-- `scripts/script_estadisticas.js`: estadísticas poblacionales.
-
-## Documentación funcional
-- Contrato de datos unificado: `docs/CONTRATO_DATOS_UNIFICADO.md`
-- Plantilla AR (cabeceras): `docs/template_ar_excel.md`
-- Manual de usuario (clnico, DOCX): `docs/Manual_Usuario_Hub_Clinico_Badajoz.docx`
-- Manual tcnico/rpido (Markdown): `docs/manual_usuario.md`
-
-## Recomendaciones operativas para el servicio
-- Definir responsable por turno para consolidación del Excel.
-- Evitar edición simultánea de la misma fila en Excel.
-- Realizar copias de seguridad periódicas del archivo maestro.
-- Homogeneizar nomenclatura de profesionales y tratamientos para mejorar análisis.
+## Documentación de referencia
+- Arquitectura e implementación: `ARCHITECTURE.md`
+- Contrato de datos: `docs/CONTRATO_DATOS_UNIFICADO.md`
+- Plantilla operativa AR: `docs/template_ar_excel.md`
+- Estado funcional implementado: `docs/ESTADO_IMPLEMENTACION.md`
+- Manual usuario (clínico): `docs/Manual_Usuario_Hub_Clinico_Badajoz.docx`
+- Manual usuario (PDF): `docs/Manual_Usuario_Hub_Clinico_Badajoz.pdf`
+- Manual rápido técnico: `docs/manual_usuario.md`
 
 ## Limitaciones conocidas (diseño intencional)
-- Sin sincronización automática en tiempo real con el Excel compartido.
-- Requiere recarga manual de BD para reflejar cambios externos.
-- Escritura en BD mediante pegado de filas CSV.
+- Sin backend remoto ni auto-sync por restricciones del entorno.
+- Escritura en BD por pegado manual de CSV.
+- Dependencia de disciplina operativa para recarga de BD y calidad de nomenclatura.
 
-## Soporte interno
-Para cambios de formulario, columnas o reglas clínicas, actualizar siempre:
-1. Código de captura/validación/exportación.
+## Mantenimiento
+Cuando se cambie formulario, exportación o lectura de BD, actualizar siempre:
+1. Código (`formController`, `exportManager`, `dataManager`, scripts de página).
 2. Contrato de datos (`docs/CONTRATO_DATOS_UNIFICADO.md`).
-3. Plantillas de hoja en Excel.
+3. Plantillas/cabeceras Excel.
+4. Estado funcional (`docs/ESTADO_IMPLEMENTACION.md`).
