@@ -85,7 +85,7 @@ function configureDashboardMetricLabels() {
 }
 document.addEventListener('DOMContentLoaded', () => {
     const patientId = getPatientIdFromURL();
-    console.log('Ã°ÂÂÂ Iniciando dashboard premium del paciente', patientId);
+    console.log(' Iniciando dashboard premium del paciente', patientId);
 
     if (!patientId) {
         showEmptyState('Busca un paciente para cargar su cuadro de mando.');
@@ -133,18 +133,18 @@ function loadPatientBundle(patientId) {
     // Prioritize HubTools data if available and meaningful
     const hubBundle = loadFromHub(patientId);
     if (hubBundle && hubBundle.history.allVisits.length > 0) {
-        console.log('Ã¢ÂÂ Datos obtenidos desde HubTools / Excel');
+        console.log(' Datos obtenidos desde HubTools / Excel');
         return hubBundle;
     }
 
     // Fallback to MockPatients
     const mockBundle = loadFromMock(patientId);
     if (mockBundle) {
-        console.log('Ã¢ÂÂ Datos obtenidos desde MockPatients');
+        console.log(' Datos obtenidos desde MockPatients');
         return mockBundle;
     }
 
-    console.warn('Ã¢ÂÂ Ã¯Â¸Â No se encontraron datos ni en HubTools ni en MockPatients');
+    console.warn(' No se encontraron datos ni en HubTools ni en MockPatients');
     return null;
 }
 
@@ -256,7 +256,7 @@ function populateDashboard() {
     document.getElementById('patientGeneralId').textContent = summary.idPaciente || '---';
     document.getElementById('patientGeneralName').textContent = summary.nombre || '---';
     document.getElementById('patientGeneralGender').textContent = summary.sexoPaciente || latest.sexoPaciente || latest.Sexo || '---';
-    document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} años` : '---';
+    document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} aos` : '---';
     document.getElementById('patientGeneralDiagnosis').textContent = getPathologyLabel(window.currentPathology);
     document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' a?os';
 
@@ -300,7 +300,7 @@ function populateDashboard() {
     // ============================================
     initVisitsTable(allVisits);
 
-    console.log('Ã¢ÂÂ Dashboard premium poblado correctamente');
+    console.log(' Dashboard premium poblado correctamente');
 }
 
 function populatePatientHeader(summary, latest, firstVisit) {
@@ -335,7 +335,7 @@ function calculateClinicalStatus(visit) {
     if (isARPathology()) {
         const das28 = getARPrimaryMetric(visit);
         if (das28 !== null && !isNaN(das28)) {
-            if (das28 < 2.6) return { status: 'remission', text: 'RemisiÃ³n', class: '' };
+            if (das28 < 2.6) return { status: 'remission', text: 'Remisin', class: '' };
             if (das28 < 3.2) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
             if (das28 <= 5.1) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
@@ -343,7 +343,7 @@ function calculateClinicalStatus(visit) {
 
         const cdai = getARSecondaryMetric(visit);
         if (cdai !== null && !isNaN(cdai)) {
-            if (cdai <= 2.8) return { status: 'remission', text: 'RemisiÃ³n', class: '' };
+            if (cdai <= 2.8) return { status: 'remission', text: 'Remisin', class: '' };
             if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
             if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
@@ -361,7 +361,7 @@ function calculateClinicalStatus(visit) {
     }
 
     if (basdai !== null && !isNaN(basdai)) {
-        if (basdai < 4) return { status: 'remission', text: 'RemisiÃ³n', class: '' };
+        if (basdai < 4) return { status: 'remission', text: 'Remisin', class: '' };
         if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
         return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
     }
@@ -431,7 +431,7 @@ function getKPIStatus(metric, value) {
 
     switch (metric) {
         case 'basdai':
-            if (numValue < 4) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue < 4) return { text: 'Remisin', class: 'kpi-card--success' };
             if (numValue < 6) return { text: 'Moderado', class: 'kpi-card--warning' };
             return { text: 'Alto', class: 'kpi-card--danger' };
 
@@ -442,19 +442,19 @@ function getKPIStatus(metric, value) {
             return { text: 'Alto', class: 'kpi-card--danger' };
 
         case 'das28':
-            if (numValue < 2.6) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue < 2.6) return { text: 'Remisin', class: 'kpi-card--success' };
             if (numValue < 3.2) return { text: 'Baja', class: 'kpi-card--info' };
             if (numValue <= 5.1) return { text: 'Moderada', class: 'kpi-card--warning' };
             return { text: 'Alta', class: 'kpi-card--danger' };
 
         case 'cdai':
-            if (numValue <= 2.8) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue <= 2.8) return { text: 'Remisin', class: 'kpi-card--success' };
             if (numValue <= 10) return { text: 'Baja', class: 'kpi-card--info' };
             if (numValue <= 22) return { text: 'Moderada', class: 'kpi-card--warning' };
             return { text: 'Alta', class: 'kpi-card--danger' };
 
         case 'sdai':
-            if (numValue <= 3.3) return { text: 'RemisiÃ³n', class: 'kpi-card--success' };
+            if (numValue <= 3.3) return { text: 'Remisin', class: 'kpi-card--success' };
             if (numValue <= 11) return { text: 'Baja', class: 'kpi-card--info' };
             if (numValue <= 26) return { text: 'Moderada', class: 'kpi-card--warning' };
             return { text: 'Alta', class: 'kpi-card--danger' };
@@ -1357,15 +1357,15 @@ function formatDate(dateStr) {
 
 function calculateAge(birthDate) {
     const date = new Date(birthDate);
-    if (Number.isNaN(date.getTime())) return 'Ã¢ÂÂ';
+    if (Number.isNaN(date.getTime())) return '';
     const diff = Date.now() - date.getTime();
     return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
 }
 
 function calculateDiseaseYears(firstVisitDate) {
-    if (!firstVisitDate) return 'Ã¢ÂÂ';
+    if (!firstVisitDate) return '';
     const start = new Date(firstVisitDate);
-    if (Number.isNaN(start.getTime())) return 'Ã¢ÂÂ';
+    if (Number.isNaN(start.getTime())) return '';
     const diff = Date.now() - start.getTime();
     return Math.max(0, Math.round(diff / (1000 * 60 * 60 * 24 * 365.25)));
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard del Paciente - Hub ClÃ­nico ReumatolÃ³gico</title>
+    <title>Dashboard del Paciente - Hub Clínico Reumatológico</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style_dashboard.css">
@@ -15,12 +15,12 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-circle"><span class="logo-text">HC</span></div>
-                <h1 class="sidebar-title">Hub ClÃ­nico<br>ReumatologÃ­a</h1>
+                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
             </div>
 
             <div class="user-block">
                 <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-                <span class="user-name" id="currentProfessional">Dr. Silvia GarcÃ­a</span>
+                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
                 <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
                     <i class="fas fa-exchange-alt"></i>
                 </button>
@@ -38,7 +38,7 @@
             <div class="search-container">
                 <input type="text" id="patientSearch" class="search-input" placeholder="Buscar Paciente por ID..." list="patientIds" autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
-                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar bÃºsqueda">
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times-circle"></i>
                 </button>
                 <datalist id="patientIds"></datalist>
@@ -54,10 +54,10 @@
             </div>
 
             <div class="nav-section">
-                <h3 class="nav-title">GestiÃ³n</h3>
+                <h3 class="nav-title">Gestión</h3>
                 <ul class="nav-list">
-                    <li><a href="estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>EstadÃ­sticas</a></li>
-                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>FÃ¡rmacos</a></li>
+                    <li><a href="estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
                     <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
                 </ul>
             </div>
@@ -87,8 +87,8 @@
                             <h1 class="patient-name" id="patientName">Nombre del Paciente</h1>
                             <div class="patient-meta">
                                 <span><i class="fas fa-stethoscope"></i> <span id="patientDiagnosis">---</span></span>
-                                <span><i class="fas fa-calendar-alt"></i> Ãšltima visita: <span id="patientLastVisit">---</span></span>
-                                <span><i class="fas fa-birthday-cake"></i> <span id="patientAge">---</span> aÃ±os</span>
+                                <span><i class="fas fa-calendar-alt"></i> Última visita: <span id="patientLastVisit">---</span></span>
+                                <span><i class="fas fa-birthday-cake"></i> <span id="patientAge">---</span> años</span>
                                 <span><i class="fas fa-venus-mars"></i> <span id="patientGender">---</span></span>
                             </div>
                         </div>
@@ -149,8 +149,8 @@
                                 <li><strong>Nombre:</strong> <span id="patientGeneralName">---</span></li>
                                 <li><strong>Sexo:</strong> <span id="patientGeneralGender">---</span></li>
                                 <li><strong>Edad:</strong> <span id="patientGeneralAge">---</span></li>
-                                <li><strong>DiagnÃ³stico:</strong> <span id="patientGeneralDiagnosis">---</span></li>
-                                <li><strong>AÃ±os de enfermedad:</strong> <span id="patientDiseaseYears">---</span></li>
+                                <li><strong>Diagnóstico:</strong> <span id="patientGeneralDiagnosis">---</span></li>
+                                <li><strong>Años de enfermedad:</strong> <span id="patientDiseaseYears">---</span></li>
                             </ul>
                         </div>
                     </div>
@@ -167,9 +167,9 @@
                         </div>
                     </div>
 
-                    <!-- Tarjeta 3: Resumen ClÃ­nico RÃ¡pido -->
+                    <!-- Tarjeta 3: Resumen Clínico Rápido -->
                     <div class="dashboard-card dashboard-card--summary">
-                        <h2 class="card-title"><i class="fas fa-notes-medical"></i> Resumen ClÃ­nico</h2>
+                        <h2 class="card-title"><i class="fas fa-notes-medical"></i> Resumen Clínico</h2>
                         <div class="card-content">
                             <p><strong>Comorbilidades:</strong></p>
                             <ul id="comorbiditiesList">
@@ -187,9 +187,9 @@
                         <h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento Activo</h2>
                         <div class="card-content">
                             <ul>
-                                <li><strong>FÃ¡rmaco:</strong> <span id="activeTreatmentName">---</span></li>
+                                <li><strong>Fármaco:</strong> <span id="activeTreatmentName">---</span></li>
                                 <li><strong>Fecha Inicio:</strong> <span id="activeTreatmentStartDate">---</span></li>
-                                <li><strong>DuraciÃ³n:</strong> <span id="activeTreatmentDuration">---</span></li>
+                                <li><strong>Duración:</strong> <span id="activeTreatmentDuration">---</span></li>
                             </ul>
                         </div>
                     </div>
@@ -202,19 +202,19 @@
                         </div>
                     </div>
 
-                    <!-- Tarjeta 6: Eventos ClÃ­nicos Clave -->
+                    <!-- Tarjeta 6: Eventos Clínicos Clave -->
                     <div class="dashboard-card dashboard-card--events">
-                        <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Eventos ClÃ­nicos</h2>
+                        <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Eventos Clínicos</h2>
                         <div class="card-content timeline" id="keyEventsTimeline">
-                            <p class="empty-message">No hay eventos clÃ­nicos registrados.</p>
+                            <p class="empty-message">No hay eventos clínicos registrados.</p>
                         </div>
                     </div>
 
-                    <!-- Tarjeta 7: EvoluciÃ³n de Ãndices de Actividad -->
+                    <!-- Tarjeta 7: Evolución de ndices de Actividad -->
                     <div class="dashboard-card dashboard-card--chart">
-                        <h2 class="card-title"><i class="fas fa-chart-area"></i> EvoluciÃ³n de Ãndices de Actividad</h2>
+                        <h2 class="card-title"><i class="fas fa-chart-area"></i> Evolución de ndices de Actividad</h2>
                         <div class="chart-controls">
-                            <label for="selectActivityIndex">Ãndice:</label>
+                            <label for="selectActivityIndex">ndice:</label>
                             <select id="selectActivityIndex">
                                 <option value="basdai">BASDAI</option>
                                 <option value="asdas">ASDAS</option>
@@ -241,12 +241,12 @@
                         <div class="chart-container">
                             <canvas id="activityChart"></canvas>
                         </div>
-                        <p class="empty-chart-message hidden" id="emptyActivityChart">Se necesitan al menos 2 visitas para mostrar la evoluciÃ³n.</p>
+                        <p class="empty-chart-message hidden" id="emptyActivityChart">Se necesitan al menos 2 visitas para mostrar la evolución.</p>
                     </div>
 
-                    <!-- Tarjeta 8: EvoluciÃ³n Reporte Paciente (PROs) -->
+                    <!-- Tarjeta 8: Evolución Reporte Paciente (PROs) -->
                     <div class="dashboard-card dashboard-card--chart">
-                        <h2 class="card-title"><i class="fas fa-user-edit"></i> EvoluciÃ³n PROs (Reportes del Paciente)</h2>
+                        <h2 class="card-title"><i class="fas fa-user-edit"></i> Evolución PROs (Reportes del Paciente)</h2>
                         <div class="chart-controls">
                             <label for="selectPRO">PRO:</label>
                             <select id="selectPRO">
@@ -263,7 +263,7 @@
                         <div class="chart-container">
                             <canvas id="proChart"></canvas>
                         </div>
-                        <p class="empty-chart-message hidden" id="emptyPROChart">Se necesitan al menos 2 visitas para mostrar la evoluciÃ³n.</p>
+                        <p class="empty-chart-message hidden" id="emptyPROChart">Se necesitan al menos 2 visitas para mostrar la evolución.</p>
                     </div>
 
                     <!-- Tarjeta 9: Historial de Visitas (Tabla) -->

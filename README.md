@@ -41,6 +41,7 @@ Hojas de soporte:
 - Contrato de datos: `docs/CONTRATO_DATOS_UNIFICADO.md`
 - Plantilla operativa AR: `docs/template_ar_excel.md`
 - Estado funcional implementado: `docs/ESTADO_IMPLEMENTACION.md`
+- Histórico de cambios: `docs/CHANGELOG.md`
 - Manual usuario (clínico): `docs/Manual_Usuario_Hub_Clinico_Badajoz.docx`
 - Manual usuario (PDF): `docs/Manual_Usuario_Hub_Clinico_Badajoz.pdf`
 - Manual rápido técnico: `docs/manual_usuario.md`

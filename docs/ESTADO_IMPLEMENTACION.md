@@ -1,4 +1,4 @@
-﻿# Estado de Implementación - Hub Clínico Badajoz
+# Estado de Implementación - Hub Clínico Badajoz
 
 Este archivo resume el estado funcional real de la aplicación para onboarding rápido de cualquier persona del equipo técnico/funcional.
 
@@ -29,6 +29,7 @@ Este archivo resume el estado funcional real de la aplicación para onboarding r
 - CSV de una fila para BD.
 - Enrutado por patología a hoja correcta (`ESPA`, `APS`, `AR`).
 - Primera visita y seguimiento comparten estructura por hoja.
+- Buffer local de filas pendientes para recuperar exportaciones CSV no pegadas todavía en Excel.
 
 ### Dashboards
 - Dashboard principal con tarjetas y métricas por patología.
@@ -61,5 +62,15 @@ Este archivo resume el estado funcional real de la aplicación para onboarding r
 - Aviso persistente de “BD potencialmente desactualizada” por tiempo de sesión.
 - Checklist técnico pre-release (UTF-8 + sintaxis JS + flujo exportación).
 - Mejoras de usabilidad por rol (incluyendo futura vista farmacéutica).
+
+## 8. Modificaciones posteriores al documento original
+Añadido posteriormente a la versión original del estado para reflejar hallazgos detectados durante la implementación de mejoras de robustez.
+
+- Se detectó deuda de codificación heredada (`UTF-8`/mojibake) en distintos archivos del repositorio.
+- Se recomienda una normalización global de codificación y una política fija de finales de línea mediante `.gitattributes`.
+- Se implementó buffer local de `filas pendientes` para exportación CSV, pero queda recomendada una validación funcional completa en navegador real.
+- Se introdujo `fieldNormalizer.js` como base de normalización canónica; conviene extenderlo progresivamente al resto de consumidores.
+- Persiste deuda técnica no bloqueante en `quick view` por estilos inline y acoplamiento de renderizado en `script.js`.
+- Se recomienda formalizar una batería E2E por patología y tipo de visita antes de futuras entregas.
 
 Última actualización: 2026-03-05.

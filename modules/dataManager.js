@@ -1,15 +1,15 @@
 ﻿// /modules/dataManager.js
-// ACTUALIZACIï¿½N: Patrï¿½n clï¿½sico (sin import/export) + funciones adicionales para Fase 2
+// ACTUALIZACIN: Patrn clsico (sin import/export) + funciones adicionales para Fase 2
 let appState = { isLoaded: false, db: null };
 
 /**
- * Guarda la base de datos en localStorage con manejo inteligente de tamaï¿½o
- * Si la BD es demasiado grande, guarda solo una versiï¿½n limitada
+ * Guarda la base de datos en localStorage con manejo inteligente de tamao
+ * Si la BD es demasiado grande, guarda solo una versin limitada
  */
 function saveToSessionStorage() {
     /**
-     * Intenta guardar con un lÃ­mite de visitas dado.
-     * Retorna true si tuvo Ã©xito, false si QuotaExceededError.
+     * Intenta guardar con un lmite de visitas dado.
+     * Retorna true si tuvo xito, false si QuotaExceededError.
      */
     function tryStore(visitLimit) {
         const dbToStore = visitLimit
@@ -40,18 +40,18 @@ function saveToSessionStorage() {
             return;
         }
 
-        // Fallback en cascada: 100 â†’ 30 visitas
-        console.warn(`Base de datos grande (${sizeMB.toFixed(2)}MB). Intentando versiÃ³n limitada.`);
+        // Fallback en cascada: 100  30 visitas
+        console.warn(`Base de datos grande (${sizeMB.toFixed(2)}MB). Intentando versin limitada.`);
 
         var stored = false;
         var limits = [100, 30];
         for (var i = 0; i < limits.length; i++) {
             try {
                 tryStore(limits[i]);
-                console.log('Base de datos limitada guardada (' + limits[i] + ' visitas/patologÃ­a).');
+                console.log('Base de datos limitada guardada (' + limits[i] + ' visitas/patologa).');
                 if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion(
-                        'BD grande. CachÃ© limitado a Ãºltimas ' + limits[i] + ' visitas por patologÃ­a.',
+                        'BD grande. Cach limitado a ltimas ' + limits[i] + ' visitas por patologa.',
                         'warning'
                     );
                 }
@@ -59,7 +59,7 @@ function saveToSessionStorage() {
                 break;
             } catch (innerErr) {
                 if (innerErr.name === 'QuotaExceededError' || innerErr.code === 22) {
-                    console.warn('Fallback a ' + limits[i] + ' visitas fallÃ³. Intentando menos...');
+                    console.warn('Fallback a ' + limits[i] + ' visitas fall. Intentando menos...');
                     continue;
                 }
                 throw innerErr; // Error no relacionado con cuota
@@ -67,7 +67,7 @@ function saveToSessionStorage() {
         }
 
         if (!stored) {
-            throw new Error('No se pudo guardar ni con 30 visitas por patologÃ­a.');
+            throw new Error('No se pudo guardar ni con 30 visitas por patologa.');
         }
 
     } catch (e) {
@@ -78,7 +78,7 @@ function saveToSessionStorage() {
 
         if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
             HubTools.utils.mostrarNotificacion(
-                'Error: No se pudo guardar la BD en cachÃ©. Funcionalidad limitada entre pÃ¡ginas.',
+                'Error: No se pudo guardar la BD en cach. Funcionalidad limitada entre pginas.',
                 'error'
             );
         }
@@ -86,9 +86,9 @@ function saveToSessionStorage() {
 }
 
 /**
- * Cabeceras crÃ­ticas esperadas por hoja clÃ­nica.
+ * Cabeceras crticas esperadas por hoja clnica.
  * No se validan TODAS las columnas (188 en ESPA/APS, 321 en AR),
- * solo las que el cÃ³digo JS lee activamente para cÃ¡lculos, dashboards y exportaciÃ³n.
+ * solo las que el cdigo JS lee activamente para clculos, dashboards y exportacin.
  * Si falta alguna de estas, la app puede fallar silenciosamente.
  */
 var CRITICAL_HEADERS = {
@@ -126,10 +126,10 @@ var CRITICAL_HEADERS = {
 };
 
 /**
- * Valida las cabeceras de una hoja clÃ­nica contra las cabeceras crÃ­ticas esperadas.
+ * Valida las cabeceras de una hoja clnica contra las cabeceras crticas esperadas.
  * @param {string} sheetName - Nombre de la hoja (ESPA, APS, AR).
  * @param {Array} sheetData - Datos parseados por SheetJS (array de objetos).
- * @returns {Array} - Lista de cabeceras crÃ­ticas faltantes (vacÃ­a si todo OK).
+ * @returns {Array} - Lista de cabeceras crticas faltantes (vaca si todo OK).
  */
 function validateSheetHeaders(sheetName, sheetData) {
     var expected = CRITICAL_HEADERS[sheetName];
@@ -144,20 +144,20 @@ function validateSheetHeaders(sheetName, sheetData) {
     if (missing.length > 0) {
         console.warn(
             'Hoja ' + sheetName + ': faltan ' + missing.length +
-            ' columnas crÃ­ticas: ' + missing.join(', ')
+            ' columnas crticas: ' + missing.join(', ')
         );
     } else {
-        console.log('Hoja ' + sheetName + ': todas las cabeceras crÃ­ticas presentes.');
+        console.log('Hoja ' + sheetName + ': todas las cabeceras crticas presentes.');
     }
 
     return missing;
 }
 
 /**
- * Carga un archivo .xlsx, lo procesa con SheetJS y lo guarda en el estado de la aplicaciï¿½n.
- * Es el corazï¿½n del dataManager y la ï¿½nica funciï¿½n que interactï¿½a directamente con el archivo.
+ * Carga un archivo .xlsx, lo procesa con SheetJS y lo guarda en el estado de la aplicacin.
+ * Es el corazn del dataManager y la nica funcin que interacta directamente con el archivo.
  * @param {File} file - El objeto File seleccionado por el usuario desde un <input type="file">.
- * @returns {Promise<boolean>} - Devuelve 'true' si la carga fue exitosa, 'false' si fallï¿½.
+ * @returns {Promise<boolean>} - Devuelve 'true' si la carga fue exitosa, 'false' si fall.
  */
 async function loadDatabase(file) {
     try {
@@ -166,14 +166,14 @@ async function loadDatabase(file) {
 
         const dbData = {};
 
-        // Verificar que las hojas clÃ­nicas esperadas existen
+        // Verificar que las hojas clnicas esperadas existen
         var requiredSheets = ['ESPA', 'APS', 'AR'];
         var missingSheets = requiredSheets.filter(function(s) { return !workbook.Sheets[s]; });
         if (missingSheets.length > 0) {
             console.warn('Hojas faltantes en el Excel: ' + missingSheets.join(', '));
             if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion(
-                    'Aviso: El Excel no contiene las hojas: ' + missingSheets.join(', ') + '. Algunos datos no estarÃ¡n disponibles.',
+                    'Aviso: El Excel no contiene las hojas: ' + missingSheets.join(', ') + '. Algunos datos no estarn disponibles.',
                     'warning'
                 );
             }
@@ -221,7 +221,7 @@ async function loadDatabase(file) {
             }
         });
 
-        // 3b. Validar cabeceras crÃ­ticas de las hojas clÃ­nicas
+        // 3b. Validar cabeceras crticas de las hojas clnicas
         var allMissing = {};
         ['ESPA', 'APS', 'AR'].forEach(function(sheet) {
             if (dbData[sheet] && dbData[sheet].length > 0) {
@@ -236,7 +236,7 @@ async function loadDatabase(file) {
             var warningLines = Object.keys(allMissing).map(function(sheet) {
                 return sheet + ': ' + allMissing[sheet].join(', ');
             });
-            console.warn('Cabeceras crÃ­ticas faltantes:\n' + warningLines.join('\n'));
+            console.warn('Cabeceras crticas faltantes:\n' + warningLines.join('\n'));
 
             if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion(
@@ -247,12 +247,12 @@ async function loadDatabase(file) {
             }
         }
 
-        // 4. Procesa la hoja 'FÃ¡rmacos' para crear un objeto anidado.
-        // Estructura vacÃ­a por defecto (fallback si la hoja no existe o estÃ¡ vacÃ­a)
-        dbData['FÃ¡rmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
+        // 4. Procesa la hoja 'Frmacos' para crear un objeto anidado.
+        // Estructura vaca por defecto (fallback si la hoja no existe o est vaca)
+        dbData['Frmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
 
         const farmacosSheetKey = Object.keys(workbook.Sheets).find(function(k) {
-            return k.toLowerCase().replace(/Ã¡/g, 'a') === 'farmacos';
+            return k.toLowerCase().replace(//g, 'a') === 'farmacos';
         });
 
         if (farmacosSheetKey && workbook.Sheets[farmacosSheetKey]) {
@@ -263,45 +263,45 @@ async function loadDatabase(file) {
                 for (let i = 1; i < farmacosJSON.length; i++) {
                     const row = farmacosJSON[i];
                     if (row[0]) { // Columna 0: Sistemicos
-                        dbData['Fï¿½rmacos'].Sistemicos.push(row[0]);
+                        dbData['Frmacos'].Sistemicos.push(row[0]);
                     }
                     if (row[1]) { // Columna 1: FAMEs
-                        dbData['Fï¿½rmacos'].FAMEs.push(row[1]);
+                        dbData['Frmacos'].FAMEs.push(row[1]);
                     }
                     if (row[2]) { // Columna 2: Biologicos
-                        dbData['Fï¿½rmacos'].Biologicos.push(row[2]);
+                        dbData['Frmacos'].Biologicos.push(row[2]);
                     }
                 }
             }
         } else {
-            console.warn('Hoja de FÃ¡rmacos no encontrada en el Excel. Se usarÃ¡ catÃ¡logo vacÃ­o.');
+            console.warn('Hoja de Frmacos no encontrada en el Excel. Se usar catlogo vaco.');
         }
 
-        // 5. Actualiza el estado global de la aplicaciÃ³n.
+        // 5. Actualiza el estado global de la aplicacin.
         appState.db = dbData;
         appState.isLoaded = true;
 
-        console.log("Base de datos cargada y procesada con ï¿½xito:", appState.db);
+        console.log("Base de datos cargada y procesada con xito:", appState.db);
 
-        // Disparar evento personalizado para notificar que la BD estï¿½ cargada
+        // Disparar evento personalizado para notificar que la BD est cargada
         window.dispatchEvent(new CustomEvent('databaseLoaded', { detail: appState.db }));
         console.log('? Evento databaseLoaded disparado');
 
-        // Guardar en localStorage para persistencia entre pï¿½ginas
+        // Guardar en localStorage para persistencia entre pginas
         saveToSessionStorage();
 
-        // 6. Devuelve 'true' para indicar que la operaciï¿½n fue exitosa.
+        // 6. Devuelve 'true' para indicar que la operacin fue exitosa.
         return true;
 
     } catch (error) {
-        // Si algo falla en cualquier punto, lo capturamos aquï¿½.
-        console.error("Error crï¿½tico al cargar o procesar la base de datos:", error);
+        // Si algo falla en cualquier punto, lo capturamos aqu.
+        console.error("Error crtico al cargar o procesar la base de datos:", error);
 
-        // Reseteamos el estado para evitar que la aplicaciï¿½n trabaje con datos corruptos.
+        // Reseteamos el estado para evitar que la aplicacin trabaje con datos corruptos.
         appState.isLoaded = false;
         appState.db = null;
 
-        // 7. Devuelve 'false' para indicar que la operaciï¿½n fallï¿½.
+        // 7. Devuelve 'false' para indicar que la operacin fall.
         return false;
     }
 }
@@ -316,14 +316,14 @@ function getProfesionales() {
 }
 
 /**
- * Devuelve la lista de fï¿½rmacos para un tipo especï¿½fico.
- * @param {string} tipo - El tipo de fï¿½rmaco (e.g., 'Tratamientos_Sistemicos', 'FAMEs', 'Biologicos').
- * @returns {Array} Array de strings con los nombres de los fï¿½rmacos.
+ * Devuelve la lista de frmacos para un tipo especfico.
+ * @param {string} tipo - El tipo de frmaco (e.g., 'Tratamientos_Sistemicos', 'FAMEs', 'Biologicos').
+ * @returns {Array} Array de strings con los nombres de los frmacos.
  */
 function getFarmacosPorTipo(tipo) {
     console.log('DEBUG: getFarmacosPorTipo called with tipo:', tipo);
     if (!appState.isLoaded) {
-        console.warn('? Base de datos no cargada. No se pueden obtener fï¿½rmacos.');
+        console.warn('? Base de datos no cargada. No se pueden obtener frmacos.');
         return [];
     }
 
@@ -334,17 +334,17 @@ function getFarmacosPorTipo(tipo) {
         'Biologicos': ['Biologicos', 'biologicos']
     };
 
-    // Intentar encontrar el tipo solicitado en mï¿½ltiples posibles claves
+    // Intentar encontrar el tipo solicitado en mltiples posibles claves
     const possibleKeys = tipoMapping[tipo] || [tipo];
 
     for (const key of possibleKeys) {
-        if (appState.db?.['Fï¿½rmacos']?.[key] && Array.isArray(appState.db['Fï¿½rmacos'][key])) {
-            console.log(`? Encontrados ${appState.db['Fï¿½rmacos'][key].length} fï¿½rmacos del tipo "${tipo}" (clave: ${key})`);
-            console.log('DEBUG: Returning fï¿½rmacos:', appState.db['Fï¿½rmacos'][key]);
-            return appState.db['Fï¿½rmacos'][key];
+        if (appState.db?.['Frmacos']?.[key] && Array.isArray(appState.db['Frmacos'][key])) {
+            console.log(`? Encontrados ${appState.db['Frmacos'][key].length} frmacos del tipo "${tipo}" (clave: ${key})`);
+            console.log('DEBUG: Returning frmacos:', appState.db['Frmacos'][key]);
+            return appState.db['Frmacos'][key];
         }
     }
-    console.warn(`? No se encontraron fï¿½rmacos para el tipo: ${tipo} con las claves posibles: ${possibleKeys.join(', ')}`);
+    console.warn(`? No se encontraron frmacos para el tipo: ${tipo} con las claves posibles: ${possibleKeys.join(', ')}`);
     return [];
 }
 
@@ -502,7 +502,7 @@ function getPatientHistory(patientId) {
 }
 
 /**
- * Parsea una fecha de mï¿½ltiples formatos posibles
+ * Parsea una fecha de mltiples formatos posibles
  * @param {string|Date} dateStr - Fecha en formato DD/MM/YYYY, YYYY-MM-DD, o ya Date
  * @returns {Date} - Objeto Date
  */
@@ -524,13 +524,13 @@ function parseVisitDate(dateStr) {
     if (!isNaN(fallback.getTime())) return fallback;
 
     // Si nada funciona, retornar fecha actual con warning
-    console.warn('parseVisitDate: fecha no vÃ¡lida "' + dateStr + '", usando fecha actual.');
+    console.warn('parseVisitDate: fecha no vlida "' + dateStr + '", usando fecha actual.');
     return new Date();
 }
 
 /**
  * Extrae el historial de cambios de tratamiento a partir de las visitas
- * @param {Array} visits - Array de visitas ordenadas cronolï¿½gicamente (reciente primero)
+ * @param {Array} visits - Array de visitas ordenadas cronolgicamente (reciente primero)
  * @returns {Array} - Array de { date, name, reason }
  */
 function extractTreatmentHistory(visits) {
@@ -539,7 +539,7 @@ function extractTreatmentHistory(visits) {
     const treatments = [];
     const seenTreatments = new Set();
 
-    // Recorrer visitas en orden cronolï¿½gico inverso (antiguo a reciente)
+    // Recorrer visitas en orden cronolgico inverso (antiguo a reciente)
     for (let i = visits.length - 1; i >= 0; i--) {
         const visit = visits[i];
 
@@ -548,7 +548,7 @@ function extractTreatmentHistory(visits) {
         const normalizedVisit = typeof normalizeRecord === 'function' ? normalizeRecord(visit) : visit;
         let currentTreatment = normalizedVisit.tratamientoActual ||
             normalizedVisit.biologicoSelect || normalizedVisit.fameSelect || normalizedVisit.sistemicoSelect ||
-            visit.Biologico || visit.FAME || visit['Sistï¿½mico'] || null;
+            visit.Biologico || visit.FAME || visit['Sistmico'] || null;
 
         // Si encontramos un tratamiento nuevo (diferente al anterior), registrarlo
         if (currentTreatment && !seenTreatments.has(currentTreatment)) {
@@ -565,9 +565,9 @@ function extractTreatmentHistory(visits) {
 }
 
 /**
- * Extrae eventos clï¿½nicos clave a partir de las visitas mediante comparaciï¿½n de valores
- * @param {Array} visits - Array de visitas ordenadas cronolï¿½gicamente (reciente primero)
- * @param {string} pathology - Tipo de patologï¿½a ('espa' o 'aps')
+ * Extrae eventos clnicos clave a partir de las visitas mediante comparacin de valores
+ * @param {Array} visits - Array de visitas ordenadas cronolgicamente (reciente primero)
+ * @param {string} pathology - Tipo de patologa ('espa' o 'aps')
  * @returns {Array} - Array de { date, type, description }
  */
 function extractKeyEvents(visits, pathology) {
@@ -576,20 +576,20 @@ function extractKeyEvents(visits, pathology) {
     const events = [];
     const cutoffs = HubTools?.dashboard?.activityCutoffs || {};
 
-    // Procesar visitas en orden cronolï¿½gico (antiguo a reciente)
+    // Procesar visitas en orden cronolgico (antiguo a reciente)
     for (let i = visits.length - 1; i >= 0; i--) {
         const currentVisit = visits[i];
         const previousVisit = i > 0 ? visits[i + 1] : null;
         const visitDate = currentVisit.Fecha_Visita || currentVisit.fechaVisita;
 
-        // 1. Registrar cambios explï¿½citos de tratamiento
+        // 1. Registrar cambios explcitos de tratamiento
         if (previousVisit) {
             const currentTx = currentVisit.biologicoSelect || currentVisit.fameSelect ||
                 currentVisit.sistemicoSelect || currentVisit.Biologico ||
-                currentVisit.FAME || currentVisit['Sistï¿½mico'];
+                currentVisit.FAME || currentVisit['Sistmico'];
             const previousTx = previousVisit.biologicoSelect || previousVisit.fameSelect ||
                 previousVisit.sistemicoSelect || previousVisit.Biologico ||
-                previousVisit.FAME || previousVisit['Sistï¿½mico'];
+                previousVisit.FAME || previousVisit['Sistmico'];
 
             if (currentTx && previousTx && currentTx !== previousTx) {
                 events.push({
@@ -600,7 +600,7 @@ function extractKeyEvents(visits, pathology) {
             }
         }
 
-        // 2. Detectar eventos adversos si estï¿½n registrados
+        // 2. Detectar eventos adversos si estn registrados
         if (currentVisit.efectosAdversos || currentVisit.adverseEvents) {
             events.push({
                 date: visitDate,
@@ -660,12 +660,12 @@ function extractKeyEvents(visits, pathology) {
                 events.push({
                     date: visitDate,
                     type: 'flare',
-                    description: `Brote clï¿½nico detectado: ${flareReason}`
+                    description: `Brote clnico detectado: ${flareReason}`
                 });
             }
         }
 
-        // 4. Detectar remisiï¿½n cuando se alcanzan umbrales bajos
+        // 4. Detectar remisin cuando se alcanzan umbrales bajos
         let isRemission = false;
         let remissionReason = '';
 
@@ -679,12 +679,12 @@ function extractKeyEvents(visits, pathology) {
             const haq = parseFloat(currentVisit.haqResult || currentVisit.HAQ);
             if (!isNaN(haq) && haq < (cutoffs.haq?.remission || 0.5)) {
                 isRemission = true;
-                remissionReason = `HAQ en remisiï¿½n (${haq.toFixed(2)})`;
+                remissionReason = `HAQ en remisin (${haq.toFixed(2)})`;
             }
         }
 
         if (isRemission && previousVisit) {
-            // Solo registrar si la visita anterior NO estaba en remisiï¿½n
+            // Solo registrar si la visita anterior NO estaba en remisin
             const prevBASDAI = parseFloat(previousVisit.basdaiResult || previousVisit.BASDAI);
             const prevHAQ = parseFloat(previousVisit.haqResult || previousVisit.HAQ);
 
@@ -696,7 +696,7 @@ function extractKeyEvents(visits, pathology) {
                 events.push({
                     date: visitDate,
                     type: 'remission',
-                    description: `Remisiï¿½n clï¿½nica alcanzada: ${remissionReason}`
+                    description: `Remisin clnica alcanzada: ${remissionReason}`
                 });
             }
         }
@@ -713,7 +713,7 @@ function extractKeyEvents(visits, pathology) {
 }
 
 /**
- * Intenta inicializar la base de datos desde localStorage al cargar la pï¿½gina.
+ * Intenta inicializar la base de datos desde localStorage al cargar la pgina.
  * @returns {boolean} - Devuelve 'true' si la carga fue exitosa, 'false' si no.
  */
 function initDatabaseFromStorage() {
@@ -730,8 +730,8 @@ function initDatabaseFromStorage() {
             appState.isLoaded = true;
             console.log('? Base de datos cargada desde localStorage.');
 
-            // Disparar evento para que otros scripts sepan que los datos estï¿½n listos.
-            // Usamos un pequeï¿½o timeout para asegurar que los listeners de otros scripts ya estï¿½n registrados.
+            // Disparar evento para que otros scripts sepan que los datos estn listos.
+            // Usamos un pequeo timeout para asegurar que los listeners de otros scripts ya estn registrados.
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('databaseLoaded', { detail: appState.db }));
                 console.log('? Evento databaseLoaded disparado desde localStorage.');
@@ -1077,11 +1077,11 @@ function applyFiltersToPatients(patients, filters) {
 }
 
 /**
- * Calcula KPIs segï¿½n la patologï¿½a seleccionada
- * - ESPA: usa BASDAI como mï¿½trica principal (remisiï¿½n < 2, alta >= 4)
- * - APS: usa HAQ como mï¿½trica principal (remisiï¿½n < 0.5, alta >= 2)
+ * Calcula KPIs segn la patologa seleccionada
+ * - ESPA: usa BASDAI como mtrica principal (remisin < 2, alta >= 4)
+ * - APS: usa HAQ como mtrica principal (remisin < 0.5, alta >= 2)
  * @param {Array} patients - Array de pacientes filtrados
- * @param {string} pathologyFilter - Patologï¿½a seleccionada ('ESPA', 'APS', 'Todos')
+ * @param {string} pathologyFilter - Patologa seleccionada ('ESPA', 'APS', 'Todos')
  */
 function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
     const total = patients.length;
@@ -1239,7 +1239,7 @@ function generateRealChartData(patients, filters = {}) {
     // Debug: mostrar columnas disponibles en primer paciente
     if (patients.length > 0) {
         console.log('?? Columnas del primer paciente:', Object.keys(patients[0]).slice(0, 20));
-        console.log('?? Valores de mï¿½tricas del primer paciente:', {
+        console.log('?? Valores de mtricas del primer paciente:', {
             BASDAI_Result: patients[0].BASDAI_Result,
             HAQ_Total: patients[0].HAQ_Total,
             ASDAS_CRP_Result: patients[0].ASDAS_CRP_Result,
@@ -1248,7 +1248,7 @@ function generateRealChartData(patients, filters = {}) {
     }
 
     // =====================
-    // GRï¿½FICO DE ACTIVIDAD (Donut)
+    // GRFICO DE ACTIVIDAD (Donut)
     // =====================
     const activityCounts = { remission: 0, low: 0, moderate: 0, high: 0 };
     let activityLabel = 'BASDAI';
@@ -1257,14 +1257,14 @@ function generateRealChartData(patients, filters = {}) {
         const patientPathology = p.pathology || '';
         let activityValue = null;
 
-        // Usar la mï¿½trica correcta segï¿½n patologï¿½a
+        // Usar la mtrica correcta segn patologa
         if (patientPathology === 'ESPA' || pathologyFilter === 'ESPA') {
             // ESPA: usar BASDAI_Result
             activityValue = parseFloat(p.BASDAI_Result);
             activityLabel = 'BASDAI';
 
             if (!isNaN(activityValue) && activityValue >= 0) {
-                // Umbrales BASDAI: remisiï¿½n < 2, baja < 4, moderada < 6, alta >= 6
+                // Umbrales BASDAI: remisin < 2, baja < 4, moderada < 6, alta >= 6
                 if (activityValue < 2) activityCounts.remission++;
                 else if (activityValue < 4) activityCounts.low++;
                 else if (activityValue < 6) activityCounts.moderate++;
@@ -1276,7 +1276,7 @@ function generateRealChartData(patients, filters = {}) {
             activityLabel = 'HAQ';
 
             if (!isNaN(activityValue) && activityValue >= 0) {
-                // Umbrales HAQ: remisiï¿½n < 0.5, baja < 1.5, moderada < 2, alta >= 2
+                // Umbrales HAQ: remisin < 0.5, baja < 1.5, moderada < 2, alta >= 2
                 if (activityValue < 0.5) activityCounts.remission++;
                 else if (activityValue < 1.5) activityCounts.low++;
                 else if (activityValue < 2) activityCounts.moderate++;
@@ -1346,7 +1346,7 @@ function generateRealChartData(patients, filters = {}) {
     console.log('?? Activity counts (donut):', activityCounts, 'usando', activityLabel);
 
     // =====================
-    // GRï¿½FICO DE TRATAMIENTOS (Barras)
+    // GRFICO DE TRATAMIENTOS (Barras)
     // =====================
     const treatmentCounts = {};
     patients.forEach(p => {
@@ -1375,11 +1375,11 @@ function generateRealChartData(patients, filters = {}) {
     console.log('?? Treatment counts (barras):', treatmentLabels.length, 'tratamientos');
 
     // =====================
-    // GRï¿½FICO DE COMORBILIDADES (Barras)
+    // GRFICO DE COMORBILIDADES (Barras)
     // =====================
     const comorbidityCounts = {};
     const comorbidityLabelsMap = {
-        HTA: 'Hipertensiï¿½n',
+        HTA: 'Hipertensin',
         DM: 'Diabetes',
         DLP: 'Dislipidemia',
         ECV: 'Enf. Cardiovascular',
@@ -1421,7 +1421,7 @@ function generateRealChartData(patients, filters = {}) {
     console.log('?? Comorbidity counts:', comorbidityLabels.length, 'comorbilidades');
 
     // =====================
-    // GRï¿½FICO DE CORRELACIï¿½N (Scatter)
+    // GRFICO DE CORRELACIN (Scatter)
     // =====================
     const scatterX = filters.scatterX || 'BASDAI';
     const scatterY = filters.scatterY || 'ASDAS';
@@ -1463,14 +1463,14 @@ function generateRealChartData(patients, filters = {}) {
 
     console.log('?? Correlation data:', correlationData.length, 'puntos para', scatterX, 'vs', scatterY);
 
-    // Si no hay datos, aï¿½adir punto placeholder
+    // Si no hay datos, aadir punto placeholder
     if (correlationData.length === 0) {
         correlationData.push({ x: 0, y: 0 });
     }
 
     return {
         activity: {
-            labels: ['Remisiï¿½n', 'Baja', 'Moderada', 'Alta'],
+            labels: ['Remisin', 'Baja', 'Moderada', 'Alta'],
             datasets: [{
                 data: [activityCounts.remission, activityCounts.low, activityCounts.moderate, activityCounts.high],
                 backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
@@ -1504,18 +1504,18 @@ function generateRealChartData(patients, filters = {}) {
 
 /**
  * Obtiene datos poblacionales reales del Excel
- * Normaliza las columnas y calcula KPIs segï¿½n la patologï¿½a seleccionada
+ * Normaliza las columnas y calcula KPIs segn la patologa seleccionada
  */
 function getRealPoblationalData(filters = {}) {
     if (!appState.isLoaded || !appState.db) {
-        console.warn('?? Base de datos no cargada para estadï¿½sticas poblacionales');
+        console.warn('?? Base de datos no cargada para estadsticas poblacionales');
         return { filteredCohort: [], kpis: null, chartData: null };
     }
 
     const pathologyFilter = filters.pathology || 'Todos';
-    console.log('?? getRealPoblationalData - Filtro patologï¿½a:', pathologyFilter);
+    console.log('?? getRealPoblationalData - Filtro patologa:', pathologyFilter);
 
-    // 1. Obtener pacientes segï¿½n filtro de patologï¿½a
+    // 1. Obtener pacientes segn filtro de patologa
     let allPatients = [];
     const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
         ? ['ESPA', 'APS', 'AR']
@@ -1526,11 +1526,11 @@ function getRealPoblationalData(filters = {}) {
             console.log(`?? Procesando hoja ${sheetName}: ${appState.db[sheetName].length} registros`);
 
             appState.db[sheetName].forEach(visit => {
-                // Mantener TODAS las columnas originales del Excel + aï¿½adir normalizaciï¿½n
+                // Mantener TODAS las columnas originales del Excel + aadir normalizacin
                 const normalizedVisit = {
                     ...visit,  // Mantener todas las columnas originales
                     pathology: sheetName,
-                    // Normalizar solo para la tabla de pacientes (campos de visualizaciï¿½n)
+                    // Normalizar solo para la tabla de pacientes (campos de visualizacin)
                     _id: visit.ID_Paciente || '',
                     _nombre: visit.Nombre_Paciente || '',
                     _sexo: visit.Sexo || '',
@@ -1548,7 +1548,7 @@ function getRealPoblationalData(filters = {}) {
     if (allPatients.length > 0) {
         const firstPatient = allPatients[0];
         console.log('?? Columnas disponibles:', Object.keys(firstPatient).slice(0, 15));
-        console.log('?? Valores de mï¿½tricas (primer paciente):', {
+        console.log('?? Valores de mtricas (primer paciente):', {
             BASDAI_Result: firstPatient.BASDAI_Result,
             ASDAS_CRP_Result: firstPatient.ASDAS_CRP_Result,
             HAQ_Total: firstPatient.HAQ_Total,
@@ -1560,12 +1560,12 @@ function getRealPoblationalData(filters = {}) {
 
     // 2. Aplicar filtros
     let filteredCohort = applyFiltersToPatients(allPatients, filters);
-    console.log(`?? Despuï¿½s de filtros: ${filteredCohort.length} pacientes`);
+    console.log(`?? Despus de filtros: ${filteredCohort.length} pacientes`);
 
-    // 3. Calcular KPIs pasando el filtro de patologï¿½a
+    // 3. Calcular KPIs pasando el filtro de patologa
     const kpis = calculateRealKPIs(filteredCohort, pathologyFilter);
 
-    // 4. Generar datos para grï¿½ficos
+    // 4. Generar datos para grficos
     const chartData = generateRealChartData(filteredCohort, filters);
 
     // Debug: verificar datos para tabla
@@ -1591,11 +1591,11 @@ function getPoblationalData(filters = {}) {
         console.log('?? Base de datos cargada, obteniendo datos reales...');
         const realData = getRealPoblationalData(filters);
         console.log('?? Datos reales obtenidos:', realData.filteredCohort.length, 'registros');
-        // Siempre devolver datos reales si la base estï¿½ cargada (incluso si filteredCohort estï¿½ vacï¿½o)
+        // Siempre devolver datos reales si la base est cargada (incluso si filteredCohort est vaco)
         return realData;
     }
 
-    // FALLBACK: Usar mock si estï¿½ habilitado y la base de datos no estï¿½ cargada
+    // FALLBACK: Usar mock si est habilitado y la base de datos no est cargada
     if (typeof getMockPoblationalData === 'function') {
         console.log('?? Base de datos no cargada, intentando mock...');
         const mockData = getMockPoblationalData(filters);
@@ -1604,8 +1604,8 @@ function getPoblationalData(filters = {}) {
         }
     }
 
-    // Estructura vacï¿½a como ï¿½ltimo recurso
-    console.warn('?? No hay datos disponibles para el dashboard de estadï¿½sticas');
+    // Estructura vaca como ltimo recurso
+    console.warn('?? No hay datos disponibles para el dashboard de estadsticas');
     return {
         filteredCohort: [],
         kpis: {
@@ -1616,7 +1616,7 @@ function getPoblationalData(filters = {}) {
             avgBasdai: 0
         },
         chartData: {
-            activity: { labels: ['Remisiï¿½n', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
+            activity: { labels: ['Remisin', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
             treatment: { labels: [], datasets: [{ data: [], backgroundColor: '#6366f1' }] },
             comorbidity: { labels: [], datasets: [{ data: [] }] },
             correlation: { datasets: [] }
@@ -1629,22 +1629,22 @@ function getPoblationalData(filters = {}) {
 
 
 function getFarmsDataFromState() {
-    if (!appState.isLoaded || !appState.db['Fï¿½rmacos']) {
+    if (!appState.isLoaded || !appState.db['Frmacos']) {
         return { Tratamientos_Sistemicos: [], FAMEs: [], Biologicos: [] };
     }
 
-    // La estructura de Fï¿½rmacos ya es { Sistemicos: [...], FAMEs: [...], Biologicos: [...] }
+    // La estructura de Frmacos ya es { Sistemicos: [...], FAMEs: [...], Biologicos: [...] }
     // Solo necesitamos mapear los nombres correctamente
     return {
-        Tratamientos_Sistemicos: appState.db['Fï¿½rmacos'].Sistemicos || [],
-        FAMEs: appState.db['Fï¿½rmacos'].FAMEs || [],
-        Biologicos: appState.db['Fï¿½rmacos'].Biologicos || []
+        Tratamientos_Sistemicos: appState.db['Frmacos'].Sistemicos || [],
+        FAMEs: appState.db['Frmacos'].FAMEs || [],
+        Biologicos: appState.db['Frmacos'].Biologicos || []
     };
 }
 
 // =====================================
 
-// EXPOSICIï¿½N AL NAMESPACE HUBTOOLS
+// EXPOSICIN AL NAMESPACE HUBTOOLS
 
 // =====================================
 
@@ -1672,10 +1672,10 @@ if (typeof HubTools !== 'undefined') {
     HubTools.data.getFarmsDataFromState = getFarmsDataFromState;
 
     HubTools.data.loadDrugsData = function () {
-        if (!appState.isLoaded || !appState.db['Fï¿½rmacos']) {
+        if (!appState.isLoaded || !appState.db['Frmacos']) {
             return { FAMEs: [], Biologicos: [], Sistemicos: [] };
         }
-        return appState.db['Fï¿½rmacos'];
+        return appState.db['Frmacos'];
     };
 
     HubTools.data.loadProfessionalsData = function () {
@@ -1685,11 +1685,11 @@ if (typeof HubTools !== 'undefined') {
         return appState.db.Profesionales;
     };
 
-    console.log('? Mï¿½dulo dataManager cargado');
+    console.log('? Mdulo dataManager cargado');
 
 } else {
 
-    console.error('? Error: HubTools namespace no encontrado. Asegï¿½rate de cargar hubTools.js primero.');
+    console.error('? Error: HubTools namespace no encontrado. Asegrate de cargar hubTools.js primero.');
 
 }
 
