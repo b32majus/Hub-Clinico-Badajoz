@@ -441,6 +441,85 @@ function setupTreatmentControls(selectId, doseId) {
     handler(); // Ejecutar al cargar
 }
 
+function inicializarEventosTratamientos() {
+    // 1. Activar/Desactivar inputs de dosis según el select
+    const treatmentSelects = document.querySelectorAll('.treatment-select, .tratamiento-dropdown');
+    treatmentSelects.forEach(select => {
+        const container = select.closest('.treatment-controls, .treatment-controls-improved, .treatment-line, .treatment-group');
+        if (!container) return;
+
+        const doseInput = container.querySelector('.treatment-dose-input, .treatment-dose-input-improved, .dosis-input');
+        if (!doseInput) return;
+
+        const handler = () => {
+            const value = (select.value || '').toLowerCase();
+            const inactive = !select.value || value === 'no';
+
+            if (inactive) {
+                doseInput.value = '';
+                doseInput.disabled = true;
+                doseInput.style.background = '#f8fafc';
+                doseInput.style.color = '#64748b';
+            } else {
+                doseInput.disabled = false;
+                doseInput.style.background = '#fff';
+                doseInput.style.color = '#1e293b';
+            }
+        };
+
+        select.removeEventListener('change', handler);
+        select.addEventListener('change', handler);
+        handler();
+    });
+
+    // 2. Botones de agregar línea de tratamiento (+)
+    const addButtons = document.querySelectorAll('.add-treatment-line-btn');
+    addButtons.forEach(btn => {
+        if (btn.dataset.listenerAttached) return;
+        btn.dataset.listenerAttached = 'true';
+
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+            let containerId = '';
+            let options = ['No'];
+
+            if (type === 'sistemico') containerId = 'sistemicosExtras';
+            else if (type === 'fame') containerId = 'famesExtras';
+            else if (type === 'biologico') containerId = 'biologicosExtras';
+            else if (type === 'plan-sistemico') containerId = 'planSistemicosExtras';
+            else if (type === 'plan-fame') containerId = 'planFamesExtras';
+            else if (type === 'plan-biologico') containerId = 'planBiologicosExtras';
+            else if (type === 'cambio-sistemico') containerId = 'cambioSistemicosExtras';
+            else if (type === 'cambio-fame') containerId = 'cambioFamesExtras';
+            else if (type === 'cambio-biologico') containerId = 'cambioBiologicosExtras';
+
+            let originalSelectId = '';
+            if (type === 'sistemico') originalSelectId = 'previoSistemicoSelect';
+            else if (type === 'fame') originalSelectId = 'previoFameSelect';
+            else if (type === 'biologico') originalSelectId = 'previoBiologicoSelect';
+            else if (type === 'plan-sistemico') originalSelectId = 'sistemicoSelect';
+            else if (type === 'plan-fame') originalSelectId = 'fameSelect';
+            else if (type === 'plan-biologico') originalSelectId = 'biologicoSelect';
+            else if (type === 'cambio-sistemico') originalSelectId = 'cambioSistemicoSelect';
+            else if (type === 'cambio-fame') originalSelectId = 'cambioFameSelect';
+            else if (type === 'cambio-biologico') originalSelectId = 'cambioBiologicoSelect';
+
+            const originalSelect = document.getElementById(originalSelectId);
+            if (originalSelect) {
+                options = Array.from(originalSelect.options).map(o => o.value);
+            }
+
+            const container = document.getElementById(containerId);
+            if (container) {
+                const newLine = HubTools.form.createTreatmentLine(type, options);
+                container.appendChild(newLine);
+                inicializarEventosTratamientos();
+            }
+        });
+    });
+}
+
+
 function createTreatmentLine(type, options, improved = false) {
     const line = document.createElement('div');
     line.classList.add(improved ? 'treatment-line-improved' : 'treatment-line', 'treatment-extra');
@@ -486,6 +565,48 @@ function createTreatmentLine(type, options, improved = false) {
 
     line.appendChild(controls);
     return line;
+}
+
+function mostrarModalTexto(texto, titulo, mensaje) {
+    const modalHtml = `
+    <div id="textoModalContainer" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:9999;">
+        <div style="background:white; padding:20px; border-radius:8px; width:80%; max-width:600px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="margin-top:0; color:#1e293b; font-size:18px;">${titulo || 'Texto Estructurado'}</h3>
+            <p style="color:#475569; font-size:14px; margin-bottom:15px;">${mensaje || 'Copia el texto manualmente:'}</p>
+            <textarea id="textoModalTextarea" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:monospace; font-size:12px; resize:vertical;">${texto}</textarea>
+            <div style="margin-top:15px; display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" id="btnCopiarTextoModal" style="background:#0ea5e9; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Copiar y Cerrar</button>
+                <button type="button" id="btnCerrarTextoModal" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px 16px; border-radius:4px; cursor:pointer;">Cerrar</button>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const container = document.getElementById('textoModalContainer');
+    const textarea = document.getElementById('textoModalTextarea');
+    const btnCopiar = document.getElementById('btnCopiarTextoModal');
+    const btnCerrar = document.getElementById('btnCerrarTextoModal');
+
+    textarea.focus();
+    textarea.select();
+
+    btnCopiar.addEventListener('click', () => {
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            if (typeof HubTools !== 'undefined' && HubTools.utils && HubTools.utils.mostrarNotificacion) {
+                HubTools.utils.mostrarNotificacion('Texto copiado al portapapeles', 'success');
+            } else {
+                alert('Texto copiado al portapapeles');
+            }
+        } catch (err) {
+            console.error('Error al copiar el texto manualmente:', err);
+        }
+        container.remove();
+    });
+
+    btnCerrar.addEventListener('click', () => container.remove());
 }
 
 function mostrarContinuar() {
@@ -915,10 +1036,50 @@ function recopilarDatosFormulario() {
     });
     const otrasEntesitis = document.getElementById('otrasEntesitis')?.value || '';
 
+    // --- AR-specific data ---
+    const anaBtn = document.querySelector('.ana-btn.active');
+    const ana = anaBtn ? anaBtn.dataset.value : 'no-analizado';
+
+    const das28CrpResult = document.getElementById('das28CrpResult')?.value || '';
+    const das28EsrResult = document.getElementById('das28EsrResult')?.value || '';
+    const cdaiResult = document.getElementById('cdaiResult')?.value || '';
+    const sdaiResult = document.getElementById('sdaiResult')?.value || '';
+    const evaMedico = document.getElementById('evaMedico')?.value || '';
+
+    // ACR/EULAR criteria
+    const acrArticulaciones = document.getElementById('acrArticulaciones')?.value || '';
+    const acrSerologia = document.getElementById('acrSerologia')?.value || '';
+    const acrReactantes = document.getElementById('acrReactantes')?.value || '';
+    const acrDuracion = document.getElementById('acrDuracion')?.value || '';
+    const acrTotalResult = document.getElementById('acrTotalResult')?.value || '';
+
+    // AR clinical sections
+    const rigidezMatutinaAR = document.getElementById('rigidezMatutinaAR')?.value || '';
+    const nodulosReumatoideos = document.getElementById('nodulosReumatoideos')?.checked ? 'SI' : 'NO';
+    const nodulosLocalizacionTexto = document.getElementById('nodulosLocalizacionTexto')?.value || '';
+    const erosionesRadiologicas = document.getElementById('erosionesRadiologicas')?.checked ? 'SI' : 'NO';
+    const erosionesDescripcionTexto = document.getElementById('erosionesDescripcionTexto')?.value || '';
+    const sequedadOcular = document.getElementById('sequedadOcular')?.checked ? 'SI' : 'NO';
+    const sequedadOral = document.getElementById('sequedadOral')?.checked ? 'SI' : 'NO';
+
+    // Manifestaciones extraarticulares AR
+    const extraArticularAR = {};
+    document.querySelectorAll('.extraarticular-ar').forEach(cb => {
+        extraArticularAR[cb.dataset.tipo] = cb.checked ? 'SI' : 'NO';
+    });
+
+    // MDHAQ (RAPID3)
+    const mdhaqData = {};
+    ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
+        mdhaqData[id] = document.getElementById(id)?.value || '0';
+    });
+    const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
+    const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
+
     const datosCompletos = {
         idPaciente, nombrePaciente, fechaVisita, sexoPaciente, tipoVisita, profesional,
         diagnosticoPrimario, diagnosticoSecundario,
-        hlaB27, fr, apcc,
+        hlaB27, fr, apcc, ana,
         inicioSintomas, inicioPsoriasis, dolorAxial, rigidezMatutina, duracionRigidez, irradiacionNalgas, clinicaAxialPresente,
         nad, nat, dactilitis, homunculusNadMap, homunculusNatMap, dactilitisMap,
         peso, talla, imc, ta,
@@ -928,6 +1089,12 @@ function recopilarDatosFormulario() {
         pcr, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
         basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
         asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
+        das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
+        acrArticulaciones, acrSerologia, acrReactantes, acrDuracion, acrTotalResult,
+        rigidezMatutinaAR, nodulosReumatoideos, nodulosLocalizacionTexto,
+        erosionesRadiologicas, erosionesDescripcionTexto,
+        sequedadOcular, sequedadOral, extraArticularAR,
+        mdhaqData, rapid3Total, rapid3Categoria,
         schober, rotacionCervical, distanciaOP, distanciaTP, expansionToracica, distanciaIntermaleolar,
         decisionTerapeutica, tratamientoData,
         afectacionPsoriasis, extraArticular, comorbilidad, antecedentesFamiliares, toxicos, entesitis, otrasEntesitis,
@@ -1143,13 +1310,69 @@ function recopilarDatosFormularioSeguimiento() {
     const nat = homunculusData.nat;
     const dactilitis = homunculusData.dactilitis;
 
+    // EVAs y scores compartidos
+    const evaGlobal = document.getElementById('evaGlobal')?.value || '';
+    const evaDolor = document.getElementById('evaDolor')?.value || '';
+    const pcr = document.getElementById('pcrValue')?.value || '';
+    const vsg = document.getElementById('vsgValue')?.value || '';
+
+    // BASDAI
+    const basdaiResult = document.getElementById('basdaiResult')?.value || '';
+
+    // ASDAS
+    const asdasCrpResult = document.getElementById('asdasCrpResult')?.value || '';
+    const asdasEsrResult = document.getElementById('asdasEsrResult')?.value || '';
+
+    // HAQ
+    const haqTotal = document.getElementById('haqTotal')?.value || '';
+
+    // --- AR-specific data ---
+    const anaBtn = document.querySelector('.ana-btn.active');
+    const ana = anaBtn ? anaBtn.dataset.value : 'no-analizado';
+
+    const das28CrpResult = document.getElementById('das28CrpResult')?.value || '';
+    const das28EsrResult = document.getElementById('das28EsrResult')?.value || '';
+    const cdaiResult = document.getElementById('cdaiResult')?.value || '';
+    const sdaiResult = document.getElementById('sdaiResult')?.value || '';
+    const evaMedico = document.getElementById('evaMedico')?.value || '';
+
+    // AR clinical sections (Seg suffix for seguimiento IDs)
+    const rigidezMatutinaAR = document.getElementById('rigidezMatutinaARSeg')?.value || '';
+    const nodulosReumatoideos = document.getElementById('nodulosReumatoideosSeg')?.checked ? 'SI' : 'NO';
+    const nodulosLocalizacionTexto = document.getElementById('nodulosLocalizacionTextoSeg')?.value || '';
+    const erosionesRadiologicas = document.getElementById('erosionesRadiologicasSeg')?.checked ? 'SI' : 'NO';
+    const erosionesDescripcionTexto = document.getElementById('erosionesDescripcionTextoSeg')?.value || '';
+    const sequedadOcular = document.getElementById('sequedadOcularSeg')?.checked ? 'SI' : 'NO';
+    const sequedadOral = document.getElementById('sequedadOralSeg')?.checked ? 'SI' : 'NO';
+
+    // Manifestaciones extraarticulares AR (seguimiento)
+    const extraArticularAR = {};
+    document.querySelectorAll('.extraarticular-ar-seg').forEach(cb => {
+        extraArticularAR[cb.dataset.tipo] = cb.checked ? 'SI' : 'NO';
+    });
+
+    // MDHAQ (RAPID3)
+    const mdhaqData = {};
+    ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
+        mdhaqData[id] = document.getElementById(id)?.value || '0';
+    });
+    const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
+    const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
+
     // Construir el objeto datosCompletos
     const datosCompletos = {
         idPaciente, nombrePaciente, fechaVisita, profesional,
         diagnosticoPrimario, diagnosticoSecundario,
-        hlaB27, fr, apcc,
+        hlaB27, fr, apcc, ana,
         nad, nat, dactilitis,
         peso, talla, imc, ta,
+        evaGlobal, evaDolor, pcr, vsg,
+        basdaiResult, asdasCrpResult, asdasEsrResult, haqTotal,
+        das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
+        rigidezMatutinaAR, nodulosReumatoideos, nodulosLocalizacionTexto,
+        erosionesRadiologicas, erosionesDescripcionTexto,
+        sequedadOcular, sequedadOral, extraArticularAR,
+        mdhaqData, rapid3Total, rapid3Categoria,
         sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose, fechaProximaRevision,
         comentariosAdicionales
     };
@@ -1655,6 +1878,7 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.validarFormulario = validarFormulario;
     HubTools.form.setupTreatmentControls = setupTreatmentControls;
     HubTools.form.createTreatmentLine = createTreatmentLine;
+    HubTools.form.inicializarEventosTratamientos = inicializarEventosTratamientos;
     HubTools.form.mostrarContinuar = mostrarContinuar;
     HubTools.form.mostrarCambio = mostrarCambio;
     HubTools.form.mostrarModalTexto = mostrarModalTexto;

@@ -46,6 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Fármacos Sistemicos:', HubTools.data.getFarmacosPorTipo('Sistemicos'));
         console.log('Fármacos FAMEs:', HubTools.data.getFarmacosPorTipo('FAMEs'));
         console.log('Fármacos Biologicos:', HubTools.data.getFarmacosPorTipo('Biologicos'));
+
+        // Configurar los eventos dinámicos de tratamientos de inmediato
+        if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.inicializarEventosTratamientos === 'function') {
+            HubTools.form.inicializarEventosTratamientos();
+            console.log('✅ Eventos de tratamientos (activación/añadir) inicializados');
+        }
     }
 
     // Poblar inmediatamente si la BD ya está cargada

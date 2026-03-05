@@ -4,7 +4,8 @@ let quickViewMount = null;
 
 const PATHOLOGY_LABELS = {
     espa: 'Espondiloartritis axial',
-    aps: 'Artritis psoriásica'
+    aps: 'Artritis psoriásica',
+    ar: 'Artritis Reumatoide'
 };
 
 function labelForPathology(code) {
@@ -193,7 +194,11 @@ function mapRecordToPatientSummary(record, history) {
         evaGlobal: coalesce(record.evaGlobal, latestVisit?.evaGlobal, latestVisit?.EVA_Global),
         evaDolor: coalesce(record.evaDolor, latestVisit?.evaDolor, latestVisit?.EVA_Dolor),
         basdai: coalesce(record.basdai, latestVisit?.basdaiResult, latestVisit?.basdai),
-        asdasCrp: coalesce(record.asdasCrp, latestVisit?.asdasCrpResult, latestVisit?.asdasCrp, latestVisit?.ASDAS_CRP)
+        asdasCrp: coalesce(record.asdasCrp, latestVisit?.asdasCrpResult, latestVisit?.asdasCrp, latestVisit?.ASDAS_CRP),
+        das28Crp: coalesce(record.das28Crp, latestVisit?.das28CrpResult, latestVisit?.das28Crp),
+        cdai: coalesce(record.cdai, latestVisit?.cdaiResult, latestVisit?.cdai),
+        haq: coalesce(record.haq, latestVisit?.haqTotal, latestVisit?.haq),
+        rapid3: coalesce(record.rapid3, latestVisit?.rapid3Total, latestVisit?.rapid3)
     };
 }
 
@@ -379,6 +384,45 @@ function showPatientResults(id) {
             `;
         }
 
+        // AR-specific scores
+        const das28Crp = patient.das28Crp;
+        const cdai = patient.cdai;
+        const haq = patient.haq;
+        const rapid3 = patient.rapid3;
+
+        if (das28Crp !== null && das28Crp !== undefined && das28Crp !== '') {
+            scoresHTML += `
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">DAS28-CRP</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${das28Crp}</div>
+                </div>
+            `;
+        }
+        if (cdai !== null && cdai !== undefined && cdai !== '') {
+            scoresHTML += `
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">CDAI</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${cdai}</div>
+                </div>
+            `;
+        }
+        if (haq !== null && haq !== undefined && haq !== '') {
+            scoresHTML += `
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">HAQ-DI</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${haq}</div>
+                </div>
+            `;
+        }
+        if (rapid3 !== null && rapid3 !== undefined && rapid3 !== '') {
+            scoresHTML += `
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #6b7280; font-weight: 500; margin-bottom: 0.5rem;">RAPID3</div>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #111827;">${rapid3}</div>
+                </div>
+            `;
+        }
+
         const dashboardUrlPathology = pathologyCode ? `&patologia=${encodeURIComponent(pathologyCode)}` : '';
         const dashboardUrl = `dashboard_paciente.html?id=${encodeURIComponent(id)}${dashboardUrlPathology}`;
 
@@ -407,7 +451,7 @@ function showPatientResults(id) {
                             <div><strong>Tratamiento activo:</strong> ${treatment}</div>
                             <div><strong>Inicio tratamiento:</strong> ${treatmentStart}</div>
                             <div><strong>Evaluación global:</strong> ${formatDisplayValue(evaGlobal)}</div>
-                            <div><strong>BASDAI:</strong> ${formatDisplayValue(basdai)}</div>
+                            <div><strong>${pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(pathologyCode === 'ar' ? das28Crp : basdai)}</div>
                         </div>
                     </div>
 
