@@ -38,6 +38,13 @@ Este archivo resume el estado funcional real de la aplicación para onboarding r
 - Estadísticas poblacionales con filtros AR y paginación.
 
 ## 3. Base de datos Excel
+### Validaci?n de base de datos
+- Validaci?n de cabeceras cr?ticas al cargar el Excel.
+- La comprobaci?n se hace contra la fila de cabeceras real, evitando falsos positivos cuando la primera fila de datos tiene celdas vac?as.
+- Alineaci?n con esquema real de `ESPA` y `APS` mediante aliases compatibles para biomarcadores y decisiones terap?uticas.
+- `AR` validado contra esquema actual sin faltantes en hoja maestra.
+- Avisos `warning` m?s legibles, persistentes durante m?s tiempo y cerrables con clic.
+
 - Hojas clínicas activas: `ESPA`, `APS`, `AR`.
 - Hojas soporte: `Fármacos`, `Profesionales`.
 - Criterio longitudinal: misma hoja por patología para primera + seguimiento.

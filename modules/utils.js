@@ -123,28 +123,40 @@ function calcularIMC() {
 // =====================================
 
 function mostrarNotificacion(mensaje, tipo = 'success') {
+    const isWarning = tipo === 'warning';
+    const background = tipo === 'success' ? '#28a745' : isWarning ? '#ffc107' : '#dc3545';
+    const foreground = isWarning ? '#1f2937' : '#ffffff';
+    const durationMs = isWarning ? 10000 : tipo === 'error' ? 6000 : 3000;
     const notif = document.createElement('div');
     notif.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${tipo === 'success'  '#28a745' : tipo === 'error'  '#dc3545' : '#ffc107'};
-        color: white;
+        background: ${background};
+        color: ${foreground};
         padding: 15px 25px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         z-index: 10000;
         font-size: 14px;
         font-weight: 600;
+        line-height: 1.45;
+        max-width: 540px;
         animation: slideIn 0.3s ease;
+        cursor: pointer;
     `;
-    notif.innerHTML = `<i class="fas fa-${tipo === 'success'  'check-circle' : tipo === 'error'  'exclamation-circle' : 'info-circle'}"></i> ${mensaje}`;
+    notif.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${mensaje}`;
+    notif.setAttribute('role', tipo === 'error' ? 'alert' : 'status');
+    notif.setAttribute('title', 'Clic para cerrar');
     document.body.appendChild(notif);
 
-    setTimeout(() => {
+    const dismiss = () => {
         notif.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notif.remove(), 300);
-    }, 3000);
+    };
+
+    notif.addEventListener('click', dismiss);
+    setTimeout(dismiss, durationMs);
 }
 
 // =====================================
@@ -175,7 +187,7 @@ const logger = {
      * Log de debug - Solo se muestra si DEBUG_MODE está activado
      * Útil para depuración durante desarrollo
      */
-    debug: DEBUG_MODE  console.log.bind(console, '[DEBUG]') : () => { },
+    debug: DEBUG_MODE ? console.log.bind(console, '[DEBUG]') : () => { },
 
     /**
      * Log informativo - Siempre se muestra
@@ -202,7 +214,7 @@ const logger = {
  */
 function setDebugMode(enabled) {
     localStorage.setItem('hubClinico_debugMode', enabled.toString());
-    console.log(`🔧 Modo debug ${enabled  'ACTIVADO' : 'DESACTIVADO'}. Recarga la página para aplicar cambios.`);
+    console.log(`🔧 Modo debug ${enabled ? 'ACTIVADO' : 'DESACTIVADO'}. Recarga la página para aplicar cambios.`);
 }
 
 // =====================================
@@ -223,7 +235,7 @@ function getBiomarkerValue(className, defaultValue = 'no-analizado') {
     // Buscar botón activo de esta clase, excluyendo otros biomarcadores
     const selector = `.${className}.active:not(.hla-btn):not(.fr-btn):not(.apcc-btn), .${className}.active`;
     const activeBtn = document.querySelector(selector);
-    return activeBtn  activeBtn.dataset.value : defaultValue;
+    return activeBtn ? activeBtn.dataset.value : defaultValue;
 }
 
 /**

@@ -1,4 +1,4 @@
-﻿// /modules/dataManager.js
+// /modules/dataManager.js
 // ACTUALIZACIN: Patrn clsico (sin import/export) + funciones adicionales para Fase 2
 let appState = { isLoaded: false, db: null };
 
@@ -86,68 +86,142 @@ function saveToSessionStorage() {
 }
 
 /**
- * Cabeceras crticas esperadas por hoja clnica.
- * No se validan TODAS las columnas (188 en ESPA/APS, 321 en AR),
- * solo las que el cdigo JS lee activamente para clculos, dashboards y exportacin.
- * Si falta alguna de estas, la app puede fallar silenciosamente.
+ * Cabeceras cr?ticas esperadas por hoja cl?nica.
+ * No se validan TODAS las columnas, solo las que el c?digo JS lee activamente.
+ * La validaci?n acepta aliases heredados cuando el Excel hist?rico y el contrato
+ * actual usan nombres distintos para el mismo dato.
  */
+function createHeaderRule(label, aliases) {
+    return {
+        label: label,
+        aliases: Array.isArray(aliases) && aliases.length ? aliases : [label]
+    };
+}
+
 var CRITICAL_HEADERS = {
     ESPA: [
-        'ID_Paciente', 'Nombre_Paciente', 'Sexo', 'Fecha_Visita', 'Tipo_Visita',
-        'Diagnostico_Primario', 'HLA-B27', 'FR', 'aPCC',
-        'NAD_Total', 'NAT_Total', 'Dactilitis_Total',
-        'Peso', 'Talla', 'IMC',
-        'EVA_Global', 'EVA_Dolor', 'PCR', 'VSG',
-        'BASDAI_Result', 'ASDAS_CRP_Result', 'ASDAS_ESR_Result',
-        'Tratamiento_Actual', 'Decision_Terapeutica',
-        'Fecha_Inicio_Tratamiento', 'Fecha_Proxima_Revision'
+        createHeaderRule('ID_Paciente'),
+        createHeaderRule('Nombre_Paciente'),
+        createHeaderRule('Sexo'),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario'),
+        createHeaderRule('HLA_B27', ['HLA_B27', 'HLA-B27']),
+        createHeaderRule('FR'),
+        createHeaderRule('APCC', ['APCC', 'aPCC']),
+        createHeaderRule('NAD_Total'),
+        createHeaderRule('NAT_Total'),
+        createHeaderRule('Dactilitis_Total'),
+        createHeaderRule('Peso'),
+        createHeaderRule('Talla'),
+        createHeaderRule('IMC'),
+        createHeaderRule('EVA_Global'),
+        createHeaderRule('EVA_Dolor'),
+        createHeaderRule('PCR'),
+        createHeaderRule('VSG'),
+        createHeaderRule('BASDAI_Result'),
+        createHeaderRule('ASDAS_CRP_Result'),
+        createHeaderRule('ASDAS_ESR_Result'),
+        createHeaderRule('Tratamiento_Actual'),
+        createHeaderRule('Decision_Terapeutica_PV', ['Decision_Terapeutica_PV', 'Decision_Terapeutica']),
+        createHeaderRule('Decision_Terapeutica_SEG', ['Decision_Terapeutica_SEG', 'Decision_Terapeutica']),
+        createHeaderRule('Fecha_Inicio_Tratamiento'),
+        createHeaderRule('Fecha_Proxima_Revision')
     ],
     APS: [
-        'ID_Paciente', 'Nombre_Paciente', 'Sexo', 'Fecha_Visita', 'Tipo_Visita',
-        'Diagnostico_Primario', 'HLA-B27', 'FR', 'aPCC',
-        'NAD_Total', 'NAT_Total', 'Dactilitis_Total',
-        'Peso', 'Talla', 'IMC',
-        'EVA_Global', 'EVA_Dolor', 'PCR', 'VSG',
-        'BASDAI_Result', 'ASDAS_CRP_Result', 'ASDAS_ESR_Result',
-        'Tratamiento_Actual', 'Decision_Terapeutica',
-        'Fecha_Inicio_Tratamiento', 'Fecha_Proxima_Revision'
+        createHeaderRule('ID_Paciente'),
+        createHeaderRule('Nombre_Paciente'),
+        createHeaderRule('Sexo'),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario'),
+        createHeaderRule('HLA_B27', ['HLA_B27', 'HLA-B27']),
+        createHeaderRule('FR'),
+        createHeaderRule('APCC', ['APCC', 'aPCC']),
+        createHeaderRule('NAD_Total'),
+        createHeaderRule('NAT_Total'),
+        createHeaderRule('Dactilitis_Total'),
+        createHeaderRule('Peso'),
+        createHeaderRule('Talla'),
+        createHeaderRule('IMC'),
+        createHeaderRule('EVA_Global'),
+        createHeaderRule('EVA_Dolor'),
+        createHeaderRule('PCR'),
+        createHeaderRule('VSG'),
+        createHeaderRule('BASDAI_Result'),
+        createHeaderRule('ASDAS_CRP_Result'),
+        createHeaderRule('ASDAS_ESR_Result'),
+        createHeaderRule('Tratamiento_Actual'),
+        createHeaderRule('Decision_Terapeutica_PV', ['Decision_Terapeutica_PV', 'Decision_Terapeutica']),
+        createHeaderRule('Decision_Terapeutica_SEG', ['Decision_Terapeutica_SEG', 'Decision_Terapeutica']),
+        createHeaderRule('Fecha_Inicio_Tratamiento'),
+        createHeaderRule('Fecha_Proxima_Revision')
     ],
     AR: [
-        'ID_Paciente', 'Nombre_Paciente', 'Sexo', 'Fecha_Visita', 'Tipo_Visita',
-        'Diagnostico_Primario', 'HLA_B27', 'FR', 'APCC', 'ANA',
-        'NAD_Total', 'NAT_Total', 'NAD28', 'NAT28',
-        'Peso', 'Talla', 'IMC',
-        'EVA_Global', 'EVA_Dolor', 'EVA_Medico', 'PCR', 'VSG',
-        'DAS28_CRP_Result', 'DAS28_ESR_Result', 'CDAI_Result', 'SDAI_Result',
-        'BASDAI_Result', 'HAQ_Total', 'RAPID3_Score',
-        'Tratamiento_Actual', 'Decision_Terapeutica_PV', 'Decision_Terapeutica_SEG',
-        'Fecha_Inicio_Tratamiento', 'Fecha_Proxima_Revision'
+        createHeaderRule('ID_Paciente'),
+        createHeaderRule('Nombre_Paciente'),
+        createHeaderRule('Sexo'),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario'),
+        createHeaderRule('HLA_B27', ['HLA_B27', 'HLA-B27']),
+        createHeaderRule('FR'),
+        createHeaderRule('APCC', ['APCC', 'aPCC']),
+        createHeaderRule('ANA'),
+        createHeaderRule('NAD_Total'),
+        createHeaderRule('NAT_Total'),
+        createHeaderRule('NAD28'),
+        createHeaderRule('NAT28'),
+        createHeaderRule('Peso'),
+        createHeaderRule('Talla'),
+        createHeaderRule('IMC'),
+        createHeaderRule('EVA_Global'),
+        createHeaderRule('EVA_Dolor'),
+        createHeaderRule('EVA_Medico'),
+        createHeaderRule('PCR'),
+        createHeaderRule('VSG'),
+        createHeaderRule('DAS28_CRP_Result'),
+        createHeaderRule('DAS28_ESR_Result'),
+        createHeaderRule('CDAI_Result'),
+        createHeaderRule('SDAI_Result'),
+        createHeaderRule('BASDAI_Result'),
+        createHeaderRule('HAQ_Total'),
+        createHeaderRule('RAPID3_Score'),
+        createHeaderRule('Tratamiento_Actual'),
+        createHeaderRule('Decision_Terapeutica_PV', ['Decision_Terapeutica_PV', 'Decision_Terapeutica']),
+        createHeaderRule('Decision_Terapeutica_SEG', ['Decision_Terapeutica_SEG', 'Decision_Terapeutica']),
+        createHeaderRule('Fecha_Inicio_Tratamiento'),
+        createHeaderRule('Fecha_Proxima_Revision')
     ]
 };
 
 /**
- * Valida las cabeceras de una hoja clnica contra las cabeceras crticas esperadas.
+ * Valida las cabeceras de una hoja cl?nica contra las cabeceras cr?ticas esperadas.
  * @param {string} sheetName - Nombre de la hoja (ESPA, APS, AR).
- * @param {Array} sheetData - Datos parseados por SheetJS (array de objetos).
- * @returns {Array} - Lista de cabeceras crticas faltantes (vaca si todo OK).
+ * @param {Array} actualHeaders - Cabeceras reales le?das de la fila 1 del worksheet.
+ * @returns {Array} - Lista de cabeceras cr?ticas faltantes (vac?a si todo OK).
  */
-function validateSheetHeaders(sheetName, sheetData) {
+function validateSheetHeaders(sheetName, actualHeaders) {
     var expected = CRITICAL_HEADERS[sheetName];
-    if (!expected || !sheetData || sheetData.length === 0) return [];
+    if (!expected || !actualHeaders || actualHeaders.length === 0) return [];
 
-    // SheetJS usa las cabeceras como keys del primer objeto
-    var actualHeaders = Object.keys(sheetData[0]);
-    var missing = expected.filter(function(h) {
-        return actualHeaders.indexOf(h) === -1;
-    });
+    var missing = expected
+        .filter(function(rule) {
+            return !rule.aliases.some(function(alias) {
+                return actualHeaders.indexOf(alias) !== -1;
+            });
+        })
+        .map(function(rule) {
+            return rule.label;
+        });
 
     if (missing.length > 0) {
         console.warn(
             'Hoja ' + sheetName + ': faltan ' + missing.length +
-            ' columnas crticas: ' + missing.join(', ')
+            ' columnas cr?ticas: ' + missing.join(', ')
         );
     } else {
-        console.log('Hoja ' + sheetName + ': todas las cabeceras crticas presentes.');
+        console.log('Hoja ' + sheetName + ': todas las cabeceras cr?ticas presentes.');
     }
 
     return missing;
@@ -224,8 +298,12 @@ async function loadDatabase(file) {
         // 3b. Validar cabeceras crticas de las hojas clnicas
         var allMissing = {};
         ['ESPA', 'APS', 'AR'].forEach(function(sheet) {
-            if (dbData[sheet] && dbData[sheet].length > 0) {
-                var missing = validateSheetHeaders(sheet, dbData[sheet]);
+            if (workbook.Sheets[sheet]) {
+                var headerMatrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1, range: 0, blankrows: false });
+                var actualHeaders = Array.isArray(headerMatrix[0]) ? headerMatrix[0].filter(function(value) {
+                    return value !== undefined && value !== null && value !== '';
+                }) : [];
+                var missing = validateSheetHeaders(sheet, actualHeaders);
                 if (missing.length > 0) {
                     allMissing[sheet] = missing;
                 }
@@ -252,7 +330,7 @@ async function loadDatabase(file) {
         dbData['Frmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
 
         const farmacosSheetKey = Object.keys(workbook.Sheets).find(function(k) {
-            return k.toLowerCase().replace(//g, 'a') === 'farmacos';
+            return k.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '') === 'farmacos';
         });
 
         if (farmacosSheetKey && workbook.Sheets[farmacosSheetKey]) {
@@ -696,7 +774,7 @@ function extractKeyEvents(visits, pathology) {
                 events.push({
                     date: visitDate,
                     type: 'remission',
-                    description: `Remisin clnica alcanzada: ${remissionReason}`
+                    description: `Remisi\u00f3n cl\u00ednica alcanzada: ${remissionReason}`
                 });
             }
         }
@@ -887,7 +965,7 @@ function getActivityBucket(metricLabel, value) {
     const thresholds = ACTIVITY_THRESHOLDS[metricKey];
     if (!thresholds) return null;
 
-    if (value < thresholds.remission) return 'Remision';
+    if (value < thresholds.remission) return 'Remisi\u00f3n';
     if (value < thresholds.low) return 'Baja Actividad';
     if (value < thresholds.moderate) return 'Moderada Actividad';
     return 'Alta Actividad';
@@ -1207,7 +1285,7 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
                 if (haq !== null && haq >= 2) highActivity += 1;
             } else if (effectivePathology === 'AR') {
                 const bucket = getActivityBucket(activityLabel, activityValue);
-                if (bucket === 'Remision') remission += 1;
+                if (bucket === 'Remisi\u00f3n') remission += 1;
                 if (bucket === 'Alta Actividad') highActivity += 1;
             }
         }
@@ -1309,7 +1387,7 @@ function generateRealChartData(patients, filters = {}) {
 
             if (activityValue !== null && !Number.isNaN(activityValue) && activityValue >= 0) {
                 const bucket = getActivityBucket(activityLabel, activityValue);
-                if (bucket === 'Remision') activityCounts.remission++;
+                if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
                 else if (bucket === 'Baja Actividad') activityCounts.low++;
                 else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
                 else if (bucket === 'Alta Actividad') activityCounts.high++;
@@ -1470,7 +1548,7 @@ function generateRealChartData(patients, filters = {}) {
 
     return {
         activity: {
-            labels: ['Remisin', 'Baja', 'Moderada', 'Alta'],
+            labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'],
             datasets: [{
                 data: [activityCounts.remission, activityCounts.low, activityCounts.moderate, activityCounts.high],
                 backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
@@ -1616,7 +1694,7 @@ function getPoblationalData(filters = {}) {
             avgBasdai: 0
         },
         chartData: {
-            activity: { labels: ['Remisin', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
+            activity: { labels: ['Remisi\u00f3n', 'Baja', 'Moderada', 'Alta'], datasets: [{ data: [0, 0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
             treatment: { labels: [], datasets: [{ data: [], backgroundColor: '#6366f1' }] },
             comorbidity: { labels: [], datasets: [{ data: [] }] },
             correlation: { datasets: [] }

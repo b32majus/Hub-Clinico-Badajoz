@@ -111,7 +111,7 @@ function attachDashboardActions(patientId) {
     const btnSeguimiento = document.getElementById('btnSeguimiento');
     if (btnSeguimiento) {
         const pathology = window.currentPathology || 'espa';
-        btnSeguimiento.href = `seguimiento.htmlid=${patientId}&patologia=${pathology}`;
+        btnSeguimiento.href = `seguimiento.html?id=${encodeURIComponent(patientId)}&patologia=${encodeURIComponent(pathology)}`;
     }
 
     // Bot?n de exportar visitas
@@ -335,7 +335,7 @@ function calculateClinicalStatus(visit) {
     if (isARPathology()) {
         const das28 = getARPrimaryMetric(visit);
         if (das28 !== null && !isNaN(das28)) {
-            if (das28 < 2.6) return { status: 'remission', text: 'Remisin', class: '' };
+            if (das28 < 2.6) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
             if (das28 < 3.2) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
             if (das28 <= 5.1) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
@@ -343,7 +343,7 @@ function calculateClinicalStatus(visit) {
 
         const cdai = getARSecondaryMetric(visit);
         if (cdai !== null && !isNaN(cdai)) {
-            if (cdai <= 2.8) return { status: 'remission', text: 'Remisin', class: '' };
+            if (cdai <= 2.8) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
             if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
             if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
@@ -361,7 +361,7 @@ function calculateClinicalStatus(visit) {
     }
 
     if (basdai !== null && !isNaN(basdai)) {
-        if (basdai < 4) return { status: 'remission', text: 'Remisin', class: '' };
+        if (basdai < 4) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
         if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
         return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
     }
@@ -431,7 +431,7 @@ function getKPIStatus(metric, value) {
 
     switch (metric) {
         case 'basdai':
-            if (numValue < 4) return { text: 'Remisin', class: 'kpi-card--success' };
+            if (numValue < 4) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
             if (numValue < 6) return { text: 'Moderado', class: 'kpi-card--warning' };
             return { text: 'Alto', class: 'kpi-card--danger' };
 
@@ -442,19 +442,19 @@ function getKPIStatus(metric, value) {
             return { text: 'Alto', class: 'kpi-card--danger' };
 
         case 'das28':
-            if (numValue < 2.6) return { text: 'Remisin', class: 'kpi-card--success' };
+            if (numValue < 2.6) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
             if (numValue < 3.2) return { text: 'Baja', class: 'kpi-card--info' };
             if (numValue <= 5.1) return { text: 'Moderada', class: 'kpi-card--warning' };
             return { text: 'Alta', class: 'kpi-card--danger' };
 
         case 'cdai':
-            if (numValue <= 2.8) return { text: 'Remisin', class: 'kpi-card--success' };
+            if (numValue <= 2.8) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
             if (numValue <= 10) return { text: 'Baja', class: 'kpi-card--info' };
             if (numValue <= 22) return { text: 'Moderada', class: 'kpi-card--warning' };
             return { text: 'Alta', class: 'kpi-card--danger' };
 
         case 'sdai':
-            if (numValue <= 3.3) return { text: 'Remisin', class: 'kpi-card--success' };
+            if (numValue <= 3.3) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
             if (numValue <= 11) return { text: 'Baja', class: 'kpi-card--info' };
             if (numValue <= 26) return { text: 'Moderada', class: 'kpi-card--warning' };
             return { text: 'Alta', class: 'kpi-card--danger' };
@@ -1248,7 +1248,7 @@ function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
         const cutoffKeyMap = { das28Crp: 'das28', das28Esr: 'das28', cdai: 'cdai', sdai: 'sdai', rapid3: 'rapid3', basdai: 'basdai', asdas: 'asdas', haq: 'haq' };
         const metricCutoffs = cutoffs[cutoffKeyMap[metricKey] || metricKey];
         if (metricCutoffs) {
-            if (metricCutoffs.remission !== undefined) addCutoffLine(metricKey, scaleID, COLORS.remission, metricCutoffs.remission, 'Remisin');
+            if (metricCutoffs.remission !== undefined) addCutoffLine(metricKey, scaleID, COLORS.remission, metricCutoffs.remission, 'Remisi\u00f3n');
             if (metricCutoffs.lowActivity !== undefined) addCutoffLine(metricKey, scaleID, COLORS.lowActivity, metricCutoffs.lowActivity, 'Baja Actividad');
             if (metricCutoffs.moderate !== undefined) addCutoffLine(metricKey, scaleID, COLORS.moderate, metricCutoffs.moderate, 'Actividad Moderada');
             if (metricCutoffs.high !== undefined) addCutoffLine(metricKey, scaleID, COLORS.highActivity, metricCutoffs.high, 'Alta Actividad');

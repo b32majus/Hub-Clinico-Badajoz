@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     'use strict';
 
     // Flag de configuración: desactivar para producción
@@ -574,7 +574,7 @@
         },
         getById(id) {
             const patient = PATIENTS[id];
-            return patient  clone(patient) : null;
+            return patient ? clone(patient) : null;
         },
         search(term) {
             const query = normalize(term);

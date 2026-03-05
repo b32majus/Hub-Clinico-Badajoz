@@ -511,25 +511,13 @@ function getTreatmentSlot(entries, index) {
     return item || { farmaco: '', dosis: '' };
 }
 
-const HOMUNCULUS_ARTICULATIONS = [
-    'hombro-derecho', 'hombro-izquierdo', 'codo-derecho', 'codo-izquierdo',
-    'muneca-derecha', 'muneca-izquierda', 'rodilla-derecha', 'rodilla-izquierda',
-    'mcf1-derecha', 'mcf2-derecha', 'mcf3-derecha', 'mcf4-derecha', 'mcf5-derecha',
-    'mcf1-izquierda', 'mcf2-izquierda', 'mcf3-izquierda', 'mcf4-izquierda', 'mcf5-izquierda',
-    'ifp1-derecha', 'ifp2-derecha', 'ifp3-derecha', 'ifp4-derecha', 'ifp5-derecha',
-    'ifp1-izquierda', 'ifp2-izquierda', 'ifp3-izquierda', 'ifp4-izquierda', 'ifp5-izquierda'
-];
+function getHomunculusRegions() {
+    return HubTools?.homunculus?.ARTICULATIONS || [];
+}
 
-const HOMUNCULUS_DACTILITIS = [
-    'dactilitis-dedo1-mano-derecha', 'dactilitis-dedo2-mano-derecha', 'dactilitis-dedo3-mano-derecha',
-    'dactilitis-dedo4-mano-derecha', 'dactilitis-dedo5-mano-derecha',
-    'dactilitis-dedo1-mano-izquierda', 'dactilitis-dedo2-mano-izquierda', 'dactilitis-dedo3-mano-izquierda',
-    'dactilitis-dedo4-mano-izquierda', 'dactilitis-dedo5-mano-izquierda',
-    'dactilitis-dedo1-pie-derecho', 'dactilitis-dedo2-pie-derecho', 'dactilitis-dedo3-pie-derecho',
-    'dactilitis-dedo4-pie-derecho', 'dactilitis-dedo5-pie-derecho',
-    'dactilitis-dedo1-pie-izquierdo', 'dactilitis-dedo2-pie-izquierdo', 'dactilitis-dedo3-pie-izquierdo',
-    'dactilitis-dedo4-pie-izquierdo', 'dactilitis-dedo5-pie-izquierdo'
-];
+function getHomunculusDactylitisRegions() {
+    return HubTools?.homunculus?.DACTILITIS || [];
+}
 
 function createHomunculusMap(regions, selectedRegions) {
     const active = new Set(Array.isArray(selectedRegions) ? selectedRegions : []);
@@ -1003,9 +991,9 @@ function recopilarDatosFormulario() {
     const nad = homunculusData.nad;
     const nat = homunculusData.nat;
     const dactilitis = homunculusData.dactilitis;
-    const homunculusNadMap = createHomunculusMap(HOMUNCULUS_ARTICULATIONS, nad);
-    const homunculusNatMap = createHomunculusMap(HOMUNCULUS_ARTICULATIONS, nat);
-    const dactilitisMap = createHomunculusMap(HOMUNCULUS_DACTILITIS, dactilitis);
+    const homunculusNadMap = createHomunculusMap(getHomunculusRegions(), nad);
+    const homunculusNatMap = createHomunculusMap(getHomunculusRegions(), nat);
+    const dactilitisMap = createHomunculusMap(getHomunculusDactylitisRegions(), dactilitis);
 
     const tratamientoActualEditable = document.getElementById('tratamientoActualEditable')?.value || '';
     const tratamientoActualReadonly = document.getElementById('tratamientoActual')?.value || '';

@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-03-06
+
+### Implementado
+- Correcci?n de bloqueo funcional en formularios por conflicto entre `formController` y `homunculus`.
+- Correcci?n del enlace `Registrar Seguimiento` en dashboard extendido del paciente.
+- Alineaci?n de validaci?n de cabeceras cr?ticas con el Excel maestro real para `ESPA` y `APS`.
+- Correcci?n de falso positivo en validaci?n: ya no usa `Object.keys` de la primera fila de datos, sino la fila real de cabeceras del worksheet.
+- Avisos `warning` m?s legibles, visibles durante m?s tiempo y cerrables con clic.
+- Incremento de versi?n de recursos est?ticos (`cache-busting`) para forzar recarga de m?dulos corregidos.
+
+### Documentado
+- Se deja registrado que el aviso amarillo de carga de BD indica desalineaci?n real de cabeceras o compatibilidad heredada, no fallo de lectura del archivo por s? mismo.
+
 ## 2026-03-05
 
 ### Modificación posterior al archivo original
