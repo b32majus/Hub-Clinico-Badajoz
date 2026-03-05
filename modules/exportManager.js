@@ -919,6 +919,114 @@ function generarFilaCSV_APs_Seguimiento(datos) {
     return finalizeExportRow(valores, datos, 'seguimiento', 'aps');
 }
 
+const PENDING_ROWS_KEY = 'hubPendingRows';
+const PENDING_ROWS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const PENDING_ROWS_LIMIT = 20;
+
+function readPendingRows() {
+    try {
+        const raw = localStorage.getItem(PENDING_ROWS_KEY);
+        const rows = raw ? JSON.parse(raw) : [];
+        return Array.isArray(rows) ? rows : [];
+    } catch (error) {
+        console.warn('No se pudieron leer las filas pendientes:', error);
+        return [];
+    }
+}
+
+function persistPendingRows(rows) {
+    try {
+        localStorage.setItem(PENDING_ROWS_KEY, JSON.stringify(rows));
+    } catch (error) {
+        console.warn('No se pudieron guardar las filas pendientes:', error);
+    }
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('pendingRowsUpdated', { detail: rows }));
+    }
+}
+
+function prunePendingRows(rows) {
+    const now = Date.now();
+    return (Array.isArray(rows) ? rows : []).filter(item => item && item.createdAt && (now - item.createdAt) <= PENDING_ROWS_MAX_AGE_MS).slice(0, PENDING_ROWS_LIMIT);
+}
+
+function getPendingRows() {
+    const pruned = prunePendingRows(readPendingRows());
+    persistPendingRows(pruned);
+    return pruned;
+}
+
+function addPendingRow(payload) {
+    const next = prunePendingRows([payload, ...readPendingRows()]);
+    persistPendingRows(next);
+    return payload;
+}
+
+function resolvePendingRow(rowId) {
+    const rows = prunePendingRows(readPendingRows());
+    const next = rowId ? rows.filter(item => item.id !== rowId) : rows.slice(1);
+    persistPendingRows(next);
+    return next;
+}
+
+function getLatestPendingRow() {
+    const rows = getPendingRows();
+    return rows.length ? rows[0] : null;
+}
+
+function openManualCopyModal(texto, titulo, mensaje) {
+    if (typeof HubTools?.form?.mostrarModalTexto === 'function') {
+        HubTools.form.mostrarModalTexto(texto, titulo, mensaje);
+        return true;
+    }
+    return false;
+}
+
+function copyTextWithFallback(textToCopy, options) {
+    const config = options || {};
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+        return Promise.reject(new Error('API de portapapeles no disponible'));
+    }
+    return navigator.clipboard.writeText(textToCopy).catch(error => {
+        const manualOpened = openManualCopyModal(config.manualText || textToCopy, config.modalTitle, config.modalMessage);
+        if (!manualOpened) {
+            throw error;
+        }
+        if (typeof HubTools?.utils?.mostrarNotificacion === 'function' && config.manualNotification) {
+            HubTools.utils.mostrarNotificacion(config.manualNotification, 'info');
+        }
+        return false;
+    });
+}
+
+function retryPendingRowCopy(rowId) {
+    const row = rowId ? getPendingRows().find(item => item.id === rowId) : getLatestPendingRow();
+    if (!row) {
+        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+            HubTools.utils.mostrarNotificacion('No hay filas pendientes para recuperar.', 'info');
+        }
+        return Promise.resolve(false);
+    }
+
+    const clipboardText = row.includeBom ? ('\uFEFF' + row.content) : row.content;
+    return copyTextWithFallback(clipboardText, {
+        manualText: row.content,
+        modalTitle: 'Fila CSV pendiente - copia manual',
+        modalMessage: `No se pudo copiar automáticamente. Pegue esta fila en la hoja ${row.sheet}.`,
+        manualNotification: 'No se pudo copiar automáticamente. La fila pendiente queda disponible para copia manual.'
+    }).then(result => {
+        if (result !== false && typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+            HubTools.utils.mostrarNotificacion(`Fila pendiente copiada. Pegue en la hoja: ${row.sheet}`, 'success');
+        }
+        return true;
+    }).catch(error => {
+        console.error('Error al recuperar la fila pendiente:', error);
+        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+            HubTools.utils.mostrarNotificacion('No se pudo recuperar la fila pendiente.', 'error');
+        }
+        return false;
+    });
+}
 /**
  * Función orquestadora para exportar y copiar datos CSV al portapapeles
  * @param {Object} datos - Datos del formulario
@@ -1284,6 +1392,10 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.exportCohortToCSV = exportCohortToCSV;
 
     HubTools.export.EXTRA_EXPORT_HEADERS = EXTRA_EXPORT_HEADERS;
+    HubTools.export.getPendingRows = getPendingRows;
+    HubTools.export.getLatestPendingRow = getLatestPendingRow;
+    HubTools.export.resolvePendingRow = resolvePendingRow;
+    HubTools.export.retryPendingRowCopy = retryPendingRowCopy;
 
     HubTools.export.copyDrugsListToClipboard = function(drugsData) {
         const headers = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
@@ -1336,4 +1448,3 @@ if (typeof HubTools !== 'undefined') {
     console.error('❌ Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 
 }
-

@@ -4,20 +4,37 @@
 // Este coordinador inicializa módulos y configura eventos para la página de primera visita.
 // NOTA: Este archivo NO usa import/export. Las funciones se acceden vía HubTools namespace.
 
+function getHubModule(path, required = true) {
+    const value = path.split('.').reduce((acc, key) => acc && acc[key], typeof HubTools !== 'undefined' ? HubTools : undefined);
+    if (!value && required) {
+        const message = 'Módulo no disponible: ' + path + '. Recargue la página.';
+        console.error(message);
+        HubTools?.utils?.mostrarNotificacion?.(message, 'error');
+    }
+    return value;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Verificar que HubTools está disponible
     if (typeof HubTools === 'undefined') {
         console.error('❌ HubTools no disponible. Asegúrate de cargar hubTools.js primero.');
         return;
     }
+    try {
+        console.log('🚀 Iniciando script de Primera Visita (Coordinador)...');
 
-    console.log('🚀 Iniciando script de Primera Visita (Coordinador)...');
+        // --- INICIALIZACIÓN ---
+        const dataModule = getHubModule('data');
+        const homunculusModule = getHubModule('homunculus');
+        const formModule = getHubModule('form');
+        if (!dataModule || !homunculusModule || !formModule) {
+            return;
+        }
 
-    // --- INICIALIZACIÓN ---
-    HubTools.data.initDatabaseFromStorage();
-    HubTools.homunculus.initHomunculus();
-    HubTools.form.inicializarCollapsibles();
-    HubTools.form.initScoreWiring();
+        dataModule.initDatabaseFromStorage?.();
+        homunculusModule.initHomunculus?.();
+        formModule.inicializarCollapsibles?.();
+        formModule.initScoreWiring?.();
 
     // --- POBLAR SELECTS DE FÁRMACOS DESDE LA BASE DE DATOS ---
     // Función para poblar selects (se ejecuta cuando BD está lista)
@@ -254,4 +271,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     console.log('✅ Primera Visita inicializada correctamente');
+    } catch (error) {
+        console.error('❌ Error durante la inicialización de la página:', error);
+        HubTools?.utils?.mostrarNotificacion?.('Error de inicialización. Recargue la página.', 'error');
+    }
 });

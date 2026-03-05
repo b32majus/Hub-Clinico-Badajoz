@@ -700,48 +700,6 @@ function createTreatmentLine(type, options, improved = false) {
     return line;
 }
 
-function mostrarModalTexto(texto, titulo, mensaje) {
-    const modalHtml = `
-    <div id="textoModalContainer" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:9999;">
-        <div style="background:white; padding:20px; border-radius:8px; width:80%; max-width:600px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-            <h3 style="margin-top:0; color:#1e293b; font-size:18px;">${titulo || 'Texto Estructurado'}</h3>
-            <p style="color:#475569; font-size:14px; margin-bottom:15px;">${mensaje || 'Copia el texto manualmente:'}</p>
-            <textarea id="textoModalTextarea" style="width:100%; height:300px; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:monospace; font-size:12px; resize:vertical;">${texto}</textarea>
-            <div style="margin-top:15px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" id="btnCopiarTextoModal" style="background:#0ea5e9; color:white; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Copiar y Cerrar</button>
-                <button type="button" id="btnCerrarTextoModal" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px 16px; border-radius:4px; cursor:pointer;">Cerrar</button>
-            </div>
-        </div>
-    </div>`;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-    const container = document.getElementById('textoModalContainer');
-    const textarea = document.getElementById('textoModalTextarea');
-    const btnCopiar = document.getElementById('btnCopiarTextoModal');
-    const btnCerrar = document.getElementById('btnCerrarTextoModal');
-
-    textarea.focus();
-    textarea.select();
-
-    btnCopiar.addEventListener('click', () => {
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            if (typeof HubTools !== 'undefined' && HubTools.utils && HubTools.utils.mostrarNotificacion) {
-                HubTools.utils.mostrarNotificacion('Texto copiado al portapapeles', 'success');
-            } else {
-                alert('Texto copiado al portapapeles');
-            }
-        } catch (err) {
-            console.error('Error al copiar el texto manualmente:', err);
-        }
-        container.remove();
-    });
-
-    btnCerrar.addEventListener('click', () => container.remove());
-}
-
 function mostrarContinuar() {
     const btnContinuarTratamiento = document.getElementById('btnContinuarTratamiento');
     const btnCambiarTratamiento = document.getElementById('btnCambiarTratamiento');
@@ -787,64 +745,60 @@ function mostrarCambio() {
 // =====================================
 
 function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
-    // Crear modal
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        border-top: 3px solid #2c5aa0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-        z-index: 10000;
-        max-height: 50vh;
-        animation: slideUp 0.4s ease;
-        display: flex;
-        flex-direction: column;
-    `;
+    const existing = document.getElementById('textoModalContainer');
+    if (existing) {
+        existing.remove();
+    }
 
-    modal.innerHTML = `
-        <div style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0; color: #2c5aa0;"><i class="fas fa-file-alt"></i> ${titulo}</h3>
-            <div>
-                <button id="copyToClipboardModalBtn" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-right: 10px;">
-                    <i class="fas fa-copy"></i> Copiar al Portapapeles
-                </button>
-                <button id="closeModalBtn" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">
-                    <i class="fas fa-times"></i> Cerrar
-                </button>
-            </div>
-        </div>
-        <div style="padding: 20px; overflow-y: auto; flex: 1;">
-            ${mensaje ? `<p style="margin-bottom: 15px; color: #555;">${mensaje}</p>` : ''}
-            <pre id="modalTextContent" style="background: #f8f9fa; padding: 20px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${texto}</pre>
-        </div>
-    `;
+    const modal = document.createElement('div');
+    modal.id = 'textoModalContainer';
+    modal.className = 'texto-modal';
+    modal.innerHTML =         '<div class="texto-modal__backdrop" data-texto-modal-close></div>' +
+        '<div class="texto-modal__panel" role="dialog" aria-modal="true" aria-label="' + titulo + '">' +
+            '<div class="texto-modal__header">' +
+                '<h3 class="texto-modal__title"><i class="fas fa-file-alt"></i> ' + titulo + '</h3>' +
+                '<div class="texto-modal__actions">' +
+                    '<button id="copyToClipboardModalBtn" type="button" class="texto-modal__btn texto-modal__btn--primary"><i class="fas fa-copy"></i> Copiar</button>' +
+                    '<button id="closeModalBtn" type="button" class="texto-modal__btn texto-modal__btn--secondary">Cerrar</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="texto-modal__body">' +
+                (mensaje ? '<p class="texto-modal__message">' + mensaje + '</p>' : '') +
+                '<textarea id="textoModalTextarea" class="texto-modal__textarea" readonly></textarea>' +
+            '</div>' +
+        '</div>';
 
     document.body.appendChild(modal);
+    const textarea = document.getElementById('textoModalTextarea');
+    textarea.value = texto || '';
+    textarea.focus();
+    textarea.select();
 
-    // Cerrar modal
-    document.getElementById('closeModalBtn').addEventListener('click', () => {
-        modal.style.animation = 'slideDown 0.4s ease';
-        setTimeout(() => modal.remove(), 400);
-    });
+    const closeModal = () => modal.remove();
+    modal.querySelector('[data-texto-modal-close]')?.addEventListener('click', closeModal);
+    document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
 
-    // Copiar al portapapeles desde el modal
-    document.getElementById('copyToClipboardModalBtn').addEventListener('click', () => {
-        const textToCopy = document.getElementById('modalTextContent').textContent;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+    document.getElementById('copyToClipboardModalBtn')?.addEventListener('click', () => {
+        const textToCopy = textarea.value;
+        const fallbackCopy = () => {
+            textarea.focus();
+            textarea.select();
+            document.execCommand('copy');
+        };
+
+        const copyPromise = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
+            ? navigator.clipboard.writeText(textToCopy).catch(() => fallbackCopy())
+            : Promise.resolve().then(fallbackCopy);
+
+        Promise.resolve(copyPromise).then(() => {
+            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion('Contenido copiado al portapapeles.', 'success');
-            } else {
-                alert('Contenido copiado al portapapeles.');
             }
-        }).catch(err => {
-            console.error('Error al copiar desde el modal:', err);
-            if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+            closeModal();
+        }).catch(error => {
+            console.error('Error al copiar desde el modal:', error);
+            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion('Error al copiar desde el modal.', 'error');
-            } else {
-                alert('Error al copiar desde el modal.');
             }
         });
     });

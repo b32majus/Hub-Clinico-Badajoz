@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estadísticas del Servicio - Hub Clínico</title>
+    <title>EstadÃ­sticas del Servicio - Hub ClÃ­nico</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style_estadisticas.css">
@@ -19,12 +19,12 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-circle"><span class="logo-text">HC</span></div>
-                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
+                <h1 class="sidebar-title">Hub ClÃ­nico<br>ReumatologÃ­a</h1>
             </div>
 
             <div class="user-block">
                 <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
+                <span class="user-name" id="currentProfessional">Dr. Silvia GarcÃ­a</span>
                 <button type="button" class="change-professional-btn" id="changeProfessionalBtn"
                     aria-label="Cambiar profesional">
                     <i class="fas fa-exchange-alt"></i>
@@ -45,7 +45,7 @@
                 <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..."
                     list="patientIds" autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
-                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar bÃºsqueda">
                     <i class="fas fa-times-circle"></i>
                 </button>
                 <datalist id="patientIds"></datalist>
@@ -63,12 +63,12 @@
             </div>
 
             <div class="nav-section">
-                <h3 class="nav-title">Gestión</h3>
+                <h3 class="nav-title">GestiÃ³n</h3>
                 <ul class="nav-list">
                     <li><a href="estadisticas.html" class="nav-link active" data-nav-link><i
-                                class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                                class="fas fa-chart-bar"></i>EstadÃ­sticas</a></li>
                     <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i
-                                class="fas fa-pills"></i>Fármacos</a></li>
+                                class="fas fa-pills"></i>FÃ¡rmacos</a></li>
                     <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i
                                 class="fas fa-users"></i>Profesionales</a></li>
                 </ul>
@@ -78,9 +78,9 @@
         </aside>
 
         <main class="main-content dashboard-poblacional">
-            <h1 class="page-title"><i class="fas fa-chart-line"></i> Estadísticas del Servicio</h1>
+            <h1 class="page-title"><i class="fas fa-chart-line"></i> EstadÃ­sticas del Servicio</h1>
 
-            <!-- Panel de Filtros Rediseñado -->
+            <!-- Panel de Filtros RediseÃ±ado -->
             <section class="filters-panel collapsible-section">
                 <div class="collapsible-header" id="filtersHeader">
                     <h2 class="card-title">
@@ -100,7 +100,7 @@
                             <i class="fas fa-times"></i> Limpiar todo
                         </button>
                     </div>
-                    <!-- Tabs de Navegación -->
+                    <!-- Tabs de NavegaciÃ³n -->
                     <div class="filter-tabs" role="tablist">
                         <button class="filter-tab active" data-tab="periodo" role="tab" aria-selected="true">
                             <i class="fas fa-calendar-alt"></i>
@@ -109,22 +109,22 @@
                         </button>
                         <button class="filter-tab" data-tab="demograficos" role="tab" aria-selected="false">
                             <i class="fas fa-users"></i>
-                            <span>Demografía</span>
+                            <span>DemografÃ­a</span>
                             <span class="filter-tab-badge" id="badge-demograficos" style="display: none;">0</span>
                         </button>
                         <button class="filter-tab" data-tab="clinicos" role="tab" aria-selected="false">
                             <i class="fas fa-heartbeat"></i>
-                            <span>Clínicos</span>
+                            <span>ClÃ­nicos</span>
                             <span class="filter-tab-badge" id="badge-clinicos" style="display: none;">0</span>
                         </button>
                         <button class="filter-tab" data-tab="terapeuticos" role="tab" aria-selected="false">
                             <i class="fas fa-pills"></i>
-                            <span>Terapéuticos</span>
+                            <span>TerapÃ©uticos</span>
                             <span class="filter-tab-badge" id="badge-terapeuticos" style="display: none;">0</span>
                         </button>
                         <button class="filter-tab" data-tab="historicos" role="tab" aria-selected="false">
                             <i class="fas fa-history"></i>
-                            <span>Históricos</span>
+                            <span>HistÃ³ricos</span>
                             <span class="filter-tab-badge" id="badge-historicos" style="display: none;">0</span>
                         </button>
                     </div>
@@ -143,29 +143,29 @@
                                     <input type="date" id="filterDateTo" class="input-field">
                                 </div>
                                 <div class="date-presets">
-                                    <button type="button" class="date-preset-btn" data-preset="month">Último
+                                    <button type="button" class="date-preset-btn" data-preset="month">Ãšltimo
                                         mes</button>
-                                    <button type="button" class="date-preset-btn" data-preset="quarter">Último
+                                    <button type="button" class="date-preset-btn" data-preset="quarter">Ãšltimo
                                         trimestre</button>
-                                    <button type="button" class="date-preset-btn" data-preset="year">Último año</button>
+                                    <button type="button" class="date-preset-btn" data-preset="year">Ãšltimo aÃ±o</button>
                                     <button type="button" class="date-preset-btn" data-preset="all">Todo</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Contenido Tab: Demografía -->
+                    <!-- Contenido Tab: DemografÃ­a -->
                     <div class="filter-tab-content" id="tab-demograficos" role="tabpanel">
                         <div class="filters-grid">
                             <div class="filter-group-category">
-                                <h3><i class="fas fa-disease"></i> Patología</h3>
+                                <h3><i class="fas fa-disease"></i> PatologÃ­a</h3>
                                 <div class="filter-group">
-                                    <label for="filterPathology">Tipo de Patología:</label>
+                                    <label for="filterPathology">Tipo de PatologÃ­a:</label>
                                     <select id="filterPathology" class="select-field">
-                                        <option value="Todos">Todas las patologías</option>
+                                        <option value="Todos">Todas las patologÃ­as</option>
                                         <option value="AR">Artritis Reumatoide (AR)</option>
                                         <option value="ESPA">Espondiloartritis Axial (ESPA)</option>
-                                        <option value="APS">Artritis Psoriásica (APS)</option>
+                                        <option value="APS">Artritis PsoriÃ¡sica (APS)</option>
                                     </select>
                                 </div>
                             </div>
@@ -193,7 +193,7 @@
                         </div>
                     </div>
 
-                    <!-- Contenido Tab: Clínicos -->
+                    <!-- Contenido Tab: ClÃ­nicos -->
                     <div class="filter-tab-content" id="tab-clinicos" role="tabpanel">
                         <div class="filters-grid">
                             <div class="filter-group-category">
@@ -212,9 +212,9 @@
                                 </div>
                             </div>
                             <div class="filter-group-category">
-                                <h3><i class="fas fa-chart-bar"></i> Índices de Actividad</h3>
+                                <h3><i class="fas fa-chart-bar"></i> Ãndices de Actividad</h3>
                                 <div class="filter-group">
-                                    <label for="filterActivityIndex">Índice a evaluar:</label>
+                                    <label for="filterActivityIndex">Ãndice a evaluar:</label>
                                     <select id="filterActivityIndex" class="select-field">
                                         <option value="BASDAI">BASDAI</option>
                                         <option value="ASDAS">ASDAS</option>
@@ -232,7 +232,7 @@
                                     <label for="filterActivityState">Estado de Actividad:</label>
                                     <select id="filterActivityState" class="select-field">
                                         <option value="Todos">Todos los estados</option>
-                                        <option value="Remision">Remisión</option>
+                                        <option value="Remision">RemisiÃ³n</option>
                                         <option value="Baja Actividad">Baja Actividad</option>
                                         <option value="Moderada Actividad">Actividad Moderada</option>
                                         <option value="Alta Actividad">Alta Actividad</option>
@@ -243,7 +243,7 @@
                                 <h3><i class="fas fa-thermometer-half"></i> Escalas EVA</h3>
                                 <div class="filter-group range-slider-group">
                                     <label for="filterEVADolor">
-                                        EVA Dolor (máximo):
+                                        EVA Dolor (mÃ¡ximo):
                                         <span class="range-slider-value" id="evaDolorValue">10</span>
                                     </label>
                                     <input type="range" id="filterEVADolor" class="range-slider" min="0" max="10"
@@ -251,7 +251,7 @@
                                 </div>
                                 <div class="filter-group range-slider-group">
                                     <label for="filterEVAGlobal">
-                                        EVA Global (máximo):
+                                        EVA Global (mÃ¡ximo):
                                         <span class="range-slider-value" id="evaGlobalValue">10</span>
                                     </label>
                                     <input type="range" id="filterEVAGlobal" class="range-slider" min="0" max="10"
@@ -261,47 +261,47 @@
                         </div>
                     </div>
 
-                    <!-- Contenido Tab: Terapéuticos -->
+                    <!-- Contenido Tab: TerapÃ©uticos -->
                     <div class="filter-tab-content" id="tab-terapeuticos" role="tabpanel">
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-syringe"></i> Tipo de Tratamiento</h3>
                                 <div class="filter-group">
-                                    <label for="filterTtoType">Categoría:</label>
+                                    <label for="filterTtoType">CategorÃ­a:</label>
                                     <select id="filterTtoType" class="select-field">
                                         <option value="Todos">Todos los tratamientos</option>
                                         <option value="FAMEs">FAMEs convencionales</option>
-                                        <option value="Biológicos">Biológicos / Diana</option>
-                                        <option value="Sistémicos">Sistémicos</option>
+                                        <option value="BiolÃ³gicos">BiolÃ³gicos / Diana</option>
+                                        <option value="SistÃ©micos">SistÃ©micos</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="filter-group-category">
-                                <h3><i class="fas fa-prescription-bottle-alt"></i> Fármaco Específico</h3>
+                                <h3><i class="fas fa-prescription-bottle-alt"></i> FÃ¡rmaco EspecÃ­fico</h3>
                                 <div class="filter-group">
                                     <label for="filterTtoSpecific">Medicamento:</label>
                                     <select id="filterTtoSpecific" class="select-field">
-                                        <option value="Todos">Todos los fármacos</option>
+                                        <option value="Todos">Todos los fÃ¡rmacos</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Contenido Tab: Históricos -->
+                    <!-- Contenido Tab: HistÃ³ricos -->
                     <div class="filter-tab-content" id="tab-historicos" role="tabpanel">
                         <div class="filters-grid">
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-notes-medical"></i> Comorbilidades</h3>
                                 <div class="filter-group">
-                                    <label for="filterComorbidity">Condición asociada:</label>
+                                    <label for="filterComorbidity">CondiciÃ³n asociada:</label>
                                     <select id="filterComorbidity" class="select-field">
                                         <option value="Todos">Todas las comorbilidades</option>
-                                        <option value="HTA">Hipertensión Arterial</option>
+                                        <option value="HTA">HipertensiÃ³n Arterial</option>
                                         <option value="DM">Diabetes Mellitus</option>
                                         <option value="DLP">Dislipidemia</option>
                                         <option value="ECV">Enfermedad Cardiovascular</option>
-                                        <option value="Gastritis">Gastritis/Úlcera</option>
+                                        <option value="Gastritis">Gastritis/Ãšlcera</option>
                                         <option value="Obesidad">Obesidad</option>
                                         <option value="Osteoporosis">Osteoporosis</option>
                                         <option value="Gota">Gota</option>
@@ -311,11 +311,11 @@
                             <div class="filter-group-category">
                                 <h3><i class="fas fa-eye"></i> Manifestaciones Extra-articulares</h3>
                                 <div class="filter-group">
-                                    <label for="filterExtraArticular">Manifestación:</label>
+                                    <label for="filterExtraArticular">ManifestaciÃ³n:</label>
                                     <select id="filterExtraArticular" class="select-field">
                                         <option value="Todos">Todas las manifestaciones</option>
-                                        <option value="Digestiva">Afectación Digestiva (EII)</option>
-                                        <option value="Uveitis">Uveítis</option>
+                                        <option value="Digestiva">AfectaciÃ³n Digestiva (EII)</option>
+                                        <option value="Uveitis">UveÃ­tis</option>
                                         <option value="Psoriasis">Psoriasis</option>
                                     </select>
                                 </div>
@@ -351,7 +351,7 @@
                 </div>
                 <div class="kpi-card kpi-card--success">
                     <div class="kpi-icon"><i class="fas fa-check-circle"></i></div>
-                    <span class="kpi-label" id="kpiRemissionLabel">En Remisión</span>
+                    <span class="kpi-label" id="kpiRemissionLabel">En RemisiÃ³n</span>
                     <span id="kpiRemissionPercent" class="kpi-value">0%</span>
                     <span class="kpi-trend kpi-trend--up" id="kpiRemissionTrend">
                         <i class="fas fa-arrow-up"></i> +0%
@@ -367,7 +367,7 @@
                 </div>
                 <div class="kpi-card kpi-card--purple">
                     <div class="kpi-icon"><i class="fas fa-syringe"></i></div>
-                    <span class="kpi-label">Tto. Biológico</span>
+                    <span class="kpi-label">Tto. BiolÃ³gico</span>
                     <span id="kpiBiologicPercent" class="kpi-value">0%</span>
                     <span class="kpi-trend kpi-trend--neutral" id="kpiBiologicTrend">
                         <i class="fas fa-minus"></i> Estable
@@ -389,7 +389,7 @@
                         <i class="fas fa-minus"></i> Sin datos
                     </span>
                 </div>
-                <!-- Métricas adicionales por patología -->
+                <!-- MÃ©tricas adicionales por patologÃ­a -->
                 <div class="additional-metrics-container" id="additionalMetrics"></div>
             </section>
 
@@ -402,7 +402,7 @@
                     </div>
                 </div>
                 <div class="dashboard-card chart-card">
-                    <h2 class="card-title"><i class="fas fa-pills"></i> Distribución de Tratamientos</h2>
+                    <h2 class="card-title"><i class="fas fa-pills"></i> DistribuciÃ³n de Tratamientos</h2>
                     <div class="chart-container">
                         <canvas id="treatmentDistChart"></canvas>
                     </div>
@@ -414,7 +414,7 @@
                     </div>
                 </div>
                 <div class="dashboard-card chart-card">
-                    <h2 class="card-title"><i class="fas fa-project-diagram"></i> Correlación de Índices</h2>
+                    <h2 class="card-title"><i class="fas fa-project-diagram"></i> CorrelaciÃ³n de Ãndices</h2>
                     <div class="correlation-controls">
                         <label for="scatterX">Eje X:</label>
                         <select id="scatterX" class="select-field"></select>
@@ -448,8 +448,8 @@
                             <tr>
                                 <th data-sort="ID_Paciente">ID <i class="fas fa-sort"></i></th>
                                 <th data-sort="Nombre">Nombre <i class="fas fa-sort"></i></th>
-                                <th data-sort="pathology">Patología <i class="fas fa-sort"></i></th>
-                                <th data-sort="Fecha_Visita">Última Visita <i class="fas fa-sort"></i></th>
+                                <th data-sort="pathology">PatologÃ­a <i class="fas fa-sort"></i></th>
+                                <th data-sort="Fecha_Visita">Ãšltima Visita <i class="fas fa-sort"></i></th>
                                 <th data-sort="BASDAI">BASDAI <i class="fas fa-sort"></i></th>
                                 <th data-sort="Tratamiento_Actual">Tratamiento <i class="fas fa-sort"></i></th>
                             </tr>
@@ -476,6 +476,7 @@
 
     <script src="modules/hubTools.js"></script>
     <script src="modules/utils.js"></script>
+    <script src="modules/fieldNormalizer.js"></script>
     <script src="modules/mockPatients.js"></script>
     <script src="modules/scoreCalculators.js"></script>
     <script src="modules/homunculus.js"></script>

@@ -42,6 +42,44 @@ function formatDisplayDate(value) {
     return value;
 }
 
+function normalizeRecord(record, extra) {
+    if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
+        return HubTools.normalizer.normalizeRecord(record, extra);
+    }
+    return { ...(record || {}), ...(extra || {}) };
+}
+
+function getPendingRowsSafe() {
+    if (typeof HubTools?.export?.getPendingRows === 'function') {
+        return HubTools.export.getPendingRows();
+    }
+    return [];
+}
+
+function createPendingRowsIndicator() {
+    const existing = document.getElementById('pendingRowsIndicator');
+    if (existing) return existing;
+    const indicator = document.createElement('aside');
+    indicator.id = 'pendingRowsIndicator';
+    indicator.className = 'pending-rows-indicator hidden';
+    indicator.innerHTML = '<div class="pending-rows-indicator__summary"><div><div class="pending-rows-indicator__label">Filas pendientes</div><div class="pending-rows-indicator__count" id="pendingRowsCount">0</div></div><div class="pending-rows-indicator__hint" id="pendingRowsHint">Sin pendientes</div></div><div class="pending-rows-indicator__actions"><button type="button" id="pendingRowsCopyBtn" class="pending-rows-btn">Recuperar última</button><button type="button" id="pendingRowsResolveBtn" class="pending-rows-btn pending-rows-btn--secondary">Marcar resuelta</button></div>';
+    document.body.appendChild(indicator);
+    indicator.querySelector('#pendingRowsCopyBtn')?.addEventListener('click', () => HubTools?.export?.retryPendingRowCopy?.());
+    indicator.querySelector('#pendingRowsResolveBtn')?.addEventListener('click', () => HubTools?.export?.resolvePendingRow?.());
+    return indicator;
+}
+
+function updatePendingRowsIndicator() {
+    const indicator = createPendingRowsIndicator();
+    const rows = getPendingRowsSafe();
+    const countEl = indicator.querySelector('#pendingRowsCount');
+    const hintEl = indicator.querySelector('#pendingRowsHint');
+    if (countEl) countEl.textContent = String(rows.length);
+    if (hintEl) hintEl.textContent = rows.length ? ('Última: ' + rows[0].sheet + ' · ' + ((rows[0].pathology || '').toUpperCase())) : 'Sin pendientes';
+    indicator.classList.toggle('hidden', rows.length === 0);
+}
+
+
 function createQuickViewOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'quickViewOverlay';
@@ -174,33 +212,34 @@ function getMockPatientBundle(id) {
 
 function mapRecordToPatientSummary(record, history) {
     if (!record) return null;
-    const id = record.ID_Paciente || record.idPaciente || record.id || record.Id;
-    const nombre = record.Nombre_Paciente || record.nombrePaciente || record.Nombre || record.nombre || 'Paciente sin nombre';
+    const normalizedRecord = normalizeRecord(record);
+    const id = normalizedRecord.idPaciente;
+    const nombre = normalizedRecord.nombrePaciente || 'Paciente sin nombre';
     const historyData = history && Array.isArray(history.allVisits) && history.allVisits.length > 0 ? history : null;
-    const latestVisit = historyData ? historyData.latestVisit : null;
+    const latestVisit = historyData ? normalizeRecord(historyData.latestVisit) : null;
     const treatmentHistory = historyData?.treatmentHistory || [];
     const activeTreatment = treatmentHistory.length ? treatmentHistory[treatmentHistory.length - 1] : null;
-    const pathologyCode = (record.pathology || record.diagnosticoPrimario || historyData?.pathology || '').toLowerCase();
+    const pathologyCode = (normalizedRecord.pathology || normalizedRecord.diagnosticoPrimario || historyData?.pathology || '').toLowerCase();
 
     return {
         idPaciente: id,
         id,
         nombre,
         diagnostico: record.Diagnostico_Principal || record.diagnostico || labelForPathology(pathologyCode),
-        diagnosticoPrimario: pathologyCode || (record.diagnosticoPrimario ? record.diagnosticoPrimario.toLowerCase() : ''),
-        tratamientoActual: coalesce(record.tratamientoActual, record.Tratamiento_Actual, activeTreatment?.name),
-        fechaInicioTratamiento: coalesce(record.fechaInicioTratamiento, record.Fecha_Inicio_Tratamiento, activeTreatment?.startDate),
-        ultimaVisita: coalesce(record.ultimaVisita, record.Fecha_Visita, latestVisit?.Fecha_Visita, latestVisit?.fechaVisita),
-        evaGlobal: coalesce(record.evaGlobal, latestVisit?.evaGlobal, latestVisit?.EVA_Global),
-        evaDolor: coalesce(record.evaDolor, latestVisit?.evaDolor, latestVisit?.EVA_Dolor),
-        basdai: coalesce(record.basdai, latestVisit?.basdaiResult, latestVisit?.basdai),
-        asdasCrp: coalesce(record.asdasCrp, latestVisit?.asdasCrpResult, latestVisit?.asdasCrp, latestVisit?.ASDAS_CRP),
-        das28Crp: coalesce(record.das28Crp, record.DAS28_CRP_Result, record.DAS28_CRP, latestVisit?.das28CrpResult, latestVisit?.DAS28_CRP_Result, latestVisit?.das28Crp, latestVisit?.DAS28_CRP),
-        das28Esr: coalesce(record.das28Esr, record.DAS28_ESR_Result, record.DAS28_ESR, latestVisit?.das28EsrResult, latestVisit?.DAS28_ESR_Result, latestVisit?.das28Esr, latestVisit?.DAS28_ESR),
-        cdai: coalesce(record.cdai, record.CDAI_Result, record.CDAI, latestVisit?.cdaiResult, latestVisit?.CDAI_Result, latestVisit?.cdai, latestVisit?.CDAI),
-        sdai: coalesce(record.sdai, record.SDAI_Result, record.SDAI, latestVisit?.sdaiResult, latestVisit?.SDAI_Result, latestVisit?.sdai, latestVisit?.SDAI),
-        haq: coalesce(record.haq, latestVisit?.haqTotal, latestVisit?.haq),
-        rapid3: coalesce(record.rapid3, record.RAPID3_Score, record.RAPID3, latestVisit?.rapid3Result, latestVisit?.RAPID3_Score, latestVisit?.rapid3Total, latestVisit?.rapid3, latestVisit?.RAPID3)
+        diagnosticoPrimario: pathologyCode || normalizedRecord.diagnosticoPrimario,
+        tratamientoActual: coalesce(normalizedRecord.tratamientoActual, activeTreatment?.name),
+        fechaInicioTratamiento: coalesce(normalizedRecord.fechaInicioTratamiento, activeTreatment?.startDate),
+        ultimaVisita: coalesce(normalizedRecord.fechaVisita, latestVisit?.fechaVisita),
+        evaGlobal: coalesce(normalizedRecord.evaGlobal, latestVisit?.evaGlobal),
+        evaDolor: coalesce(normalizedRecord.evaDolor, latestVisit?.evaDolor),
+        basdai: coalesce(normalizedRecord.basdaiResult, latestVisit?.basdaiResult),
+        asdasCrp: coalesce(normalizedRecord.asdasCrpResult, latestVisit?.asdasCrpResult),
+        das28Crp: coalesce(normalizedRecord.das28CrpResult, latestVisit?.das28CrpResult),
+        das28Esr: coalesce(normalizedRecord.das28EsrResult, latestVisit?.das28EsrResult),
+        cdai: coalesce(normalizedRecord.cdaiResult, latestVisit?.cdaiResult),
+        sdai: coalesce(normalizedRecord.sdaiResult, latestVisit?.sdaiResult),
+        haq: coalesce(normalizedRecord.haqResult, latestVisit?.haqResult),
+        rapid3: coalesce(normalizedRecord.rapid3Result, latestVisit?.rapid3Result)
     };
 }
 
@@ -788,6 +827,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Populate patient datalist with hardcoded test patients
     populatePatientDatalist();
+
+    updatePendingRowsIndicator();
+    window.addEventListener('pendingRowsUpdated', updatePendingRowsIndicator);
 
     // On initial load, try to populate from already loaded data (if user reloads hub page)
     if (typeof HubTools !== 'undefined' && typeof HubTools.data !== 'undefined' && typeof HubTools.data.getProfesionales !== 'undefined') {

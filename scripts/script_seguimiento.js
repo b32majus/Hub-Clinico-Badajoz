@@ -121,18 +121,36 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
     };
 }
 
+function getHubModule(path, required = true) {
+    const value = path.split('.').reduce((acc, key) => acc && acc[key], typeof HubTools !== 'undefined' ? HubTools : undefined);
+    if (!value && required) {
+        const message = 'Módulo no disponible: ' + path + '. Recargue la página.';
+        console.error(message);
+        HubTools?.utils?.mostrarNotificacion?.(message, 'error');
+    }
+    return value;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof HubTools === 'undefined') {
         console.error('❌ HubTools no disponible. Asegúrate de cargar hubTools.js primero.');
         return;
     }
 
-    console.log('✅ Iniciando script de Seguimiento (coordinador)...');
+    try {
 
-    HubTools.data.initDatabaseFromStorage();
-    HubTools.homunculus.initHomunculus();
-    HubTools.form.inicializarCollapsibles();
-    HubTools.form.initScoreWiring();
+    console.log('✅ Iniciando script de Seguimiento (coordinador)...');
+    const dataModule = getHubModule('data');
+    const homunculusModule = getHubModule('homunculus');
+    const formModule = getHubModule('form');
+    if (!dataModule || !homunculusModule || !formModule) {
+        return;
+    }
+
+    dataModule.initDatabaseFromStorage?.();
+    homunculusModule.initHomunculus?.();
+    formModule.inicializarCollapsibles?.();
+    formModule.initScoreWiring?.();
 
     // --- POBLAR SELECTS DE FÁRMACOS DESDE LA BASE DE DATOS ---
     // Función para poblar selects (se ejecuta cuando BD está lista)
@@ -520,5 +538,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     }
+
     console.log('✅ Seguimiento inicializado correctamente');
+    } catch (error) {
+        console.error('❌ Error durante la inicialización de la página:', error);
+        HubTools?.utils?.mostrarNotificacion?.('Error de inicialización. Recargue la página.', 'error');
+    }
 });

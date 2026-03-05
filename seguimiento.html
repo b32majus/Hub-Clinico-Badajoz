@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visita de Seguimiento - Hub Clínico Reumatológico</title>
+    <title>Visita de Seguimiento - Hub ClÃ­nico ReumatolÃ³gico</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="style_seguimiento.css">
@@ -16,12 +16,12 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-circle"><span class="logo-text">HC</span></div>
-                <h1 class="sidebar-title">Hub Clínico<br>Reumatología</h1>
+                <h1 class="sidebar-title">Hub ClÃ­nico<br>ReumatologÃ­a</h1>
             </div>
 
             <div class="user-block">
                 <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
+                <span class="user-name" id="currentProfessional">Dr. Silvia GarcÃ­a</span>
                 <button type="button" class="change-professional-btn" id="changeProfessionalBtn"
                     aria-label="Cambiar profesional">
                     <i class="fas fa-exchange-alt"></i>
@@ -42,7 +42,7 @@
                 <input type="text" id="patientSearch" class="search-input" placeholder="Buscar Paciente por ID..."
                     list="patientIds" autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
-                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+                <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar bÃºsqueda">
                     <i class="fas fa-times-circle"></i>
                 </button>
                 <datalist id="patientIds"></datalist>
@@ -60,12 +60,12 @@
             </div>
 
             <div class="nav-section">
-                <h3 class="nav-title">Gestión</h3>
+                <h3 class="nav-title">GestiÃ³n</h3>
                 <ul class="nav-list">
                     <li><a href="estadisticas.html" class="nav-link" data-nav-link><i
-                                class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                                class="fas fa-chart-bar"></i>EstadÃ­sticas</a></li>
                     <li><a href="manage_drugs.html" class="nav-link" data-nav-link><i
-                                class="fas fa-pills"></i>Fármacos</a></li>
+                                class="fas fa-pills"></i>FÃ¡rmacos</a></li>
                     <li><a href="manage_professionals.html" class="nav-link" data-nav-link><i
                                 class="fas fa-users"></i>Profesionales</a></li>
                 </ul>
@@ -77,9 +77,9 @@
         <main class="main-content">
             <div class="form-container">
                 <header class="form-header">
-                    <h1>HUB CLÍNICO - VISITA DE SEGUIMIENTO <span class="highlight"
-                            id="patologiaHighlight">Reumatología</span></h1>
-                    <p class="subtitle" id="patologiaSubtitle">Seleccione diagnóstico para adaptar el formulario</p>
+                    <h1>HUB CLÃNICO - VISITA DE SEGUIMIENTO <span class="highlight"
+                            id="patologiaHighlight">ReumatologÃ­a</span></h1>
+                    <p class="subtitle" id="patologiaSubtitle">Seleccione diagnÃ³stico para adaptar el formulario</p>
                 </header>
 
                 <section class="patient-info-section">
@@ -109,21 +109,21 @@
                     </div>
 
                     <div class="diagnostic-section">
-                        <h3 class="diagnostic-title"><i class="fas fa-notes-medical"></i> Diagnóstico</h3>
+                        <h3 class="diagnostic-title"><i class="fas fa-notes-medical"></i> DiagnÃ³stico</h3>
                         <div class="diagnostic-fields">
                             <div class="form-group">
-                                <label for="diagnosticoPrimario">Diagnóstico Primario:</label>
+                                <label for="diagnosticoPrimario">DiagnÃ³stico Primario:</label>
                                 <select id="diagnosticoPrimario">
-                                    <option value="">Seleccionar patología...</option>
+                                    <option value="">Seleccionar patologÃ­a...</option>
                                     <option value="espa">Espondiloartritis Axial (EspA)</option>
-                                    <option value="aps">Artritis Psoriásica (APs)</option>
+                                    <option value="aps">Artritis PsoriÃ¡sica (APs)</option>
                                     <option value="ar">Artritis Reumatoide (AR)</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="diagnosticoSecundario">Diagnóstico Secundario:</label>
+                                <label for="diagnosticoSecundario">DiagnÃ³stico Secundario:</label>
                                 <input type="text" id="diagnosticoSecundario"
-                                    placeholder="Opcional - Especificar otros diagnósticos">
+                                    placeholder="Opcional - Especificar otros diagnÃ³sticos">
                             </div>
                         </div>
 
@@ -169,7 +169,7 @@
                                     </div>
                                 </div>
 
-                                <!-- aPCC (anti-péptido citrulinado cíclico): Visible para APs -->
+                                <!-- aPCC (anti-pÃ©ptido citrulinado cÃ­clico): Visible para APs -->
                                 <div class="biomarker-card" id="apccContainer" style="display: none;">
                                     <span class="biomarker-name">Anti-CCP</span>
                                     <div class="biomarker-badges">
@@ -214,7 +214,7 @@
 
                 <div class="collapsible-section">
                     <button class="collapsible-header">
-                        <span class="header-icon-text"><i class="fas fa-notes-medical"></i> Síntomas y Medidas del
+                        <span class="header-icon-text"><i class="fas fa-notes-medical"></i> SÃ­ntomas y Medidas del
                             Paciente</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
@@ -234,12 +234,12 @@
                                 <input type="text" id="imc" readonly class="readonly-input">
                             </div>
                             <div class="form-group">
-                                <label for="ta">Tensión Arterial (mmHg):</label>
-                                <input type="text" id="ta" placeholder="Sistólica/Diastólica">
+                                <label for="ta">TensiÃ³n Arterial (mmHg):</label>
+                                <input type="text" id="ta" placeholder="SistÃ³lica/DiastÃ³lica">
                             </div>
                         </div>
 
-                        <h3>Síntomas Reportados</h3>
+                        <h3>SÃ­ntomas Reportados</h3>
                         <div class="form-group-grid sintomas-grid">
                             <div class="form-group">
                                 <label for="rigidezMatutinaMin">Rigidez Matutina (min):</label>
@@ -254,7 +254,7 @@
                             <div class="form-group-toggle-buttons half-width">
                                 <label class="group-label">Manifestaciones Extrarticulares:</label>
                                 <div class="toggle-button-group">
-                                    <button type="button" class="toggle-btn" data-value="uveitis">Uveítis</button>
+                                    <button type="button" class="toggle-btn" data-value="uveitis">UveÃ­tis</button>
                                     <button type="button" class="toggle-btn" data-value="psoriasis">Psoriasis</button>
                                     <button type="button" class="toggle-btn" data-value="digestiva">EII</button>
                                 </div>
@@ -272,7 +272,7 @@
                                     <button type="button" class="toggle-btn" data-value="ecv">Evento
                                         Cardiovascular</button>
                                     <button type="button" class="toggle-btn"
-                                        data-value="gastritis">Gastritis/Úlcera</button>
+                                        data-value="gastritis">Gastritis/Ãšlcera</button>
                                     <button type="button" class="toggle-btn" data-value="obesidad">Obesidad</button>
                                     <button type="button" class="toggle-btn"
                                         data-value="osteoporosis">Osteoporosis</button>
@@ -283,10 +283,10 @@
                             </div>
                         </div>
 
-                        <h3>Exploración Articular y Axial</h3>
+                        <h3>ExploraciÃ³n Articular y Axial</h3>
                         <div class="exploration-section">
                             <div class="homunculus-container">
-                                <h4>Homúnculo Interactivo</h4>
+                                <h4>HomÃºnculo Interactivo</h4>
                                 <div class="homunculus-scores">
                                     <span class="score-label score-nad"><i class="fas fa-hand-paper"></i> NAD: <span
                                             id="nadScore">0</span></span>
@@ -307,19 +307,19 @@
                                         <circle cx="12" cy="12" r="10" fill="url(#legendDoublePattern)" stroke="#b8860b"
                                             stroke-width="2.5" />
                                     </svg>
-                                    <span id="doubleMarkCount">0</span> articulación(es) con dolor E inflamación
+                                    <span id="doubleMarkCount">0</span> articulaciÃ³n(es) con dolor E inflamaciÃ³n
                                 </div>
                                 <div class="homunculus-controls">
                                     <button type="button" class="homunculus-mode-btn mode-nad" data-mode="nad">Dolor
                                         (NAD)</button>
                                     <button type="button" class="homunculus-mode-btn mode-nat"
-                                        data-mode="nat">Inflamación (NAT)</button>
+                                        data-mode="nat">InflamaciÃ³n (NAT)</button>
                                     <button type="button" class="homunculus-mode-btn mode-dactilitis"
                                         data-mode="dactilitis">Dactilitis</button>
                                 </div>
                                 <div class="homunculus-svg-wrapper">
                                     <svg id="humanBodySvg" viewBox="0 0 600 480" preserveAspectRatio="xMidYMid meet">
-                                        <!-- Definiciones: Patrón para doble marcado (NAD + NAT) -->
+                                        <!-- Definiciones: PatrÃ³n para doble marcado (NAD + NAT) -->
                                         <defs>
                                             <pattern id="doubleMarkPattern" patternUnits="userSpaceOnUse" width="8"
                                                 height="8" patternTransform="rotate(45)">
@@ -328,7 +328,7 @@
                                             </pattern>
                                         </defs>
 
-                                        <!-- Cuerpo Base (Trazado Anatómico) -->
+                                        <!-- Cuerpo Base (Trazado AnatÃ³mico) -->
                                         <g id="bodyOutline" stroke="#999" stroke-width="1.5" fill="none">
                                             <!-- Cabeza -->
                                             <circle cx="300" cy="40" r="25" />
@@ -371,7 +371,7 @@
                                         <circle cx="355" cy="145" r="12" class="body-region"
                                             data-region-id="codo-izquierdo" data-type="articulation" />
 
-                                        <!-- Muñecas (DAS28) -->
+                                        <!-- MuÃ±ecas (DAS28) -->
                                         <circle cx="240" cy="200" r="11" class="body-region"
                                             data-region-id="muneca-derecha" data-type="articulation" />
                                         <circle cx="360" cy="200" r="11" class="body-region"
@@ -391,7 +391,7 @@
                                             <text x="80" y="110" text-anchor="middle" font-size="12" fill="#555"
                                                 font-weight="bold">Mano Derecha</text>
 
-                                            <!-- MCF (Metacarpofalángicas) Derecha - Fila superior -->
+                                            <!-- MCF (MetacarpofalÃ¡ngicas) Derecha - Fila superior -->
                                             <circle cx="40" cy="150" r="8" class="body-region"
                                                 data-region-id="mcf1-derecha" data-type="articulation" />
                                             <circle cx="65" cy="150" r="8" class="body-region"
@@ -407,7 +407,7 @@
                                             <text x="80" y="140" text-anchor="middle" font-size="9"
                                                 fill="#666">MCF</text>
 
-                                            <!-- IFP (Interfalángicas Proximales) Derecha - Fila media -->
+                                            <!-- IFP (InterfalÃ¡ngicas Proximales) Derecha - Fila media -->
                                             <circle cx="40" cy="190" r="7" class="body-region"
                                                 data-region-id="ifp1-derecha" data-type="articulation" />
                                             <circle cx="65" cy="190" r="7" class="body-region"
@@ -423,14 +423,14 @@
                                             <text x="80" y="180" text-anchor="middle" font-size="9"
                                                 fill="#666">IFP</text>
 
-                                            <!-- Líneas de dedos -->
+                                            <!-- LÃ­neas de dedos -->
                                             <line x1="40" y1="158" x2="40" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="65" y1="158" x2="65" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="90" y1="158" x2="90" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="115" y1="158" x2="115" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="130" y1="162" x2="130" y2="189" stroke="#ccc" stroke-width="1" />
 
-                                            <!-- Números de dedos -->
+                                            <!-- NÃºmeros de dedos -->
                                             <text x="40" y="215" text-anchor="middle" font-size="10"
                                                 fill="#888">5</text>
                                             <text x="65" y="215" text-anchor="middle" font-size="10"
@@ -499,14 +499,14 @@
                                             <text x="520" y="180" text-anchor="middle" font-size="9"
                                                 fill="#666">IFP</text>
 
-                                            <!-- Líneas de dedos -->
+                                            <!-- LÃ­neas de dedos -->
                                             <line x1="470" y1="162" x2="470" y2="189" stroke="#ccc" stroke-width="1" />
                                             <line x1="485" y1="158" x2="485" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="510" y1="158" x2="510" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="535" y1="158" x2="535" y2="183" stroke="#ccc" stroke-width="1" />
                                             <line x1="560" y1="158" x2="560" y2="183" stroke="#ccc" stroke-width="1" />
 
-                                            <!-- Números de dedos -->
+                                            <!-- NÃºmeros de dedos -->
                                             <text x="470" y="215" text-anchor="middle" font-size="12" fill="#d9534f"
                                                 font-weight="bold">P</text>
                                             <text x="485" y="215" text-anchor="middle" font-size="10"
@@ -559,7 +559,7 @@
                                             <rect class="body-region" data-region-id="dactilitis-dedo5-pie-derecho"
                                                 data-type="dactylitis" x="116" y="365" width="10" height="40" rx="3" />
 
-                                            <!-- Números de dedos -->
+                                            <!-- NÃºmeros de dedos -->
                                             <text x="41" y="420" text-anchor="middle" font-size="10"
                                                 fill="#888">5</text>
                                             <text x="61" y="420" text-anchor="middle" font-size="10"
@@ -571,7 +571,7 @@
                                             <text x="121" y="420" text-anchor="middle" font-size="12" fill="#d9534f"
                                                 font-weight="bold">P</text>
 
-                                            <!-- Visualización simplificada del pie -->
+                                            <!-- VisualizaciÃ³n simplificada del pie -->
                                             <ellipse cx="80" cy="445" rx="35" ry="15" stroke="#bbb" stroke-width="1"
                                                 fill="none" />
                                             <text x="80" y="450" text-anchor="middle" font-size="8"
@@ -602,7 +602,7 @@
                                             <rect class="body-region" data-region-id="dactilitis-dedo1-pie-izquierdo"
                                                 data-type="dactylitis" x="554" y="365" width="10" height="40" rx="3" />
 
-                                            <!-- Números de dedos -->
+                                            <!-- NÃºmeros de dedos -->
                                             <text x="479" y="420" text-anchor="middle" font-size="12" fill="#d9534f"
                                                 font-weight="bold">P</text>
                                             <text x="499" y="420" text-anchor="middle" font-size="10"
@@ -614,7 +614,7 @@
                                             <text x="559" y="420" text-anchor="middle" font-size="10"
                                                 fill="#888">5</text>
 
-                                            <!-- Visualización simplificada del pie -->
+                                            <!-- VisualizaciÃ³n simplificada del pie -->
                                             <ellipse cx="520" cy="445" rx="35" ry="15" stroke="#bbb" stroke-width="1"
                                                 fill="none" />
                                             <text x="520" y="450" text-anchor="middle" font-size="8"
@@ -626,22 +626,22 @@
                                     Borrar Marcas</button>
 
                                 <div class="form-group dolor-periferico-description">
-                                    <label for="descripcionDolorPeriferico">Descripción del Dolor Articular
-                                        Periférico:</label>
+                                    <label for="descripcionDolorPeriferico">DescripciÃ³n del Dolor Articular
+                                        PerifÃ©rico:</label>
                                     <textarea id="descripcionDolorPeriferico" rows="3"
-                                        placeholder="Describir características del dolor (ritmo: inflamatorio/mecánico/mixto, intensidad, factores agravantes/atenuantes, etc.)"></textarea>
+                                        placeholder="Describir caracterÃ­sticas del dolor (ritmo: inflamatorio/mecÃ¡nico/mixto, intensidad, factores agravantes/atenuantes, etc.)"></textarea>
                                 </div>
 
-                                <!-- Leyenda de Numeración de Dedos -->
+                                <!-- Leyenda de NumeraciÃ³n de Dedos -->
                                 <div class="digit-numbering-legend">
-                                    <div class="legend-title"><i class="fas fa-info-circle"></i> Numeración de Dedos
+                                    <div class="legend-title"><i class="fas fa-info-circle"></i> NumeraciÃ³n de Dedos
                                         (Manos y Pies)</div>
                                     <div class="legend-content">
                                         <div class="legend-item">
                                             <span class="legend-number legend-p">P</span> = <strong>Pulgar</strong>
                                         </div>
                                         <div class="legend-item">
-                                            <span class="legend-number">5</span> = <strong>Meñique</strong>
+                                            <span class="legend-number">5</span> = <strong>MeÃ±ique</strong>
                                         </div>
                                     </div>
                                 </div>
@@ -649,13 +649,13 @@
 
                             <div class="metrologia-container espa-aps-only" id="metrologiaSection"
                                 style="display: none;">
-                                <h4>Metrología</h4>
+                                <h4>MetrologÃ­a</h4>
                                 <p class="info-note metrologia-note aps-only" id="metrologiaNote"
-                                    style="display: none;"><i class="fas fa-info-circle"></i> Solo si presenta clínica
+                                    style="display: none;"><i class="fas fa-info-circle"></i> Solo si presenta clÃ­nica
                                     axial</p>
                                 <h5 class="metrologia-subtitle">Columna Lumbar</h5>
                                 <div class="form-group">
-                                    <label for="schober">Schöber (cm):</label>
+                                    <label for="schober">SchÃ¶ber (cm):</label>
                                     <input type="number" id="schober" step="0.1">
                                 </div>
                                 <div class="form-group">
@@ -665,11 +665,11 @@
 
                                 <h5 class="metrologia-subtitle">Columna Cervical</h5>
                                 <div class="form-group">
-                                    <label for="rotacionCervical">Rotación Cervical Activa (º):</label>
+                                    <label for="rotacionCervical">RotaciÃ³n Cervical Activa (Âº):</label>
                                     <input type="number" id="rotacionCervical">
                                 </div>
                                 <div class="form-group">
-                                    <label for="flexionCervical">Flexión Cervical (Mentón-Esternón, cm):</label>
+                                    <label for="flexionCervical">FlexiÃ³n Cervical (MentÃ³n-EsternÃ³n, cm):</label>
                                     <input type="number" id="flexionCervical" step="0.1">
                                 </div>
                                 <div class="form-group">
@@ -683,7 +683,7 @@
                                     <input type="number" id="distanciaTP" step="0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label for="expansionToracica">Expansión Torácica (cm):</label>
+                                    <label for="expansionToracica">ExpansiÃ³n TorÃ¡cica (cm):</label>
                                     <input type="number" id="expansionToracica" step="0.1">
                                 </div>
                             </div>
@@ -748,7 +748,7 @@
                             <div class="lei-section aps-only" id="leiSection" style="display: none;">
                                 <h4><i class="fas fa-hand-point-right"></i> Leeds Enthesitis Index (LEI)</h4>
                                 <p class="info-note"><i class="fas fa-info-circle"></i> Marcar cada sitio con
-                                    sensibilidad a la palpación. Score 0-6.</p>
+                                    sensibilidad a la palpaciÃ³n. Score 0-6.</p>
 
                                 <div class="lei-grid">
                                     <div class="form-group-checkbox">
@@ -769,11 +769,11 @@
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="lei-point" data-site="aquiles-der">
-                                            Inserción Tendón Aquiles Derecho</label>
+                                            InserciÃ³n TendÃ³n Aquiles Derecho</label>
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="lei-point" data-site="aquiles-izq">
-                                            Inserción Tendón Aquiles Izquierdo</label>
+                                            InserciÃ³n TendÃ³n Aquiles Izquierdo</label>
                                     </div>
                                 </div>
 
@@ -784,12 +784,12 @@
                                 </div>
                             </div>
 
-                            <!-- Evaluación de Psoriasis - SOLO APs -->
+                            <!-- EvaluaciÃ³n de Psoriasis - SOLO APs -->
                             <div class="psoriasis-assessment-section aps-only" id="psoriasisSection"
                                 style="display: none;">
-                                <h4><i class="fas fa-notes-medical"></i> Evaluación Cutánea de Psoriasis</h4>
-                                <p class="info-note"><i class="fas fa-info-circle"></i> Para MDA se requiere PASI ≤ 1 o
-                                    BSA ≤ 3%</p>
+                                <h4><i class="fas fa-notes-medical"></i> EvaluaciÃ³n CutÃ¡nea de Psoriasis</h4>
+                                <p class="info-note"><i class="fas fa-info-circle"></i> Para MDA se requiere PASI â‰¤ 1 o
+                                    BSA â‰¤ 3%</p>
 
                                 <div class="form-group-grid">
                                     <div class="form-group">
@@ -805,9 +805,9 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="descripcionPsoriasis">Descripción de Afectación Cutánea:</label>
+                                    <label for="descripcionPsoriasis">DescripciÃ³n de AfectaciÃ³n CutÃ¡nea:</label>
                                     <textarea id="descripcionPsoriasis" rows="3"
-                                        placeholder="Describir localización, tipo de lesiones, y severidad..."></textarea>
+                                        placeholder="Describir localizaciÃ³n, tipo de lesiones, y severidad..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -821,7 +821,7 @@
                     </button>
                     <div class="collapsible-content">
                         <div class="pruebas-apartado">
-                            <h5><i class="fas fa-flask"></i> Analítica Sanguínea</h5>
+                            <h5><i class="fas fa-flask"></i> AnalÃ­tica SanguÃ­nea</h5>
                             <div class="form-group-grid">
                                 <div class="form-group">
                                     <label for="pcrValue">PCR (mg/L):</label>
@@ -833,23 +833,23 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="otrosHallazgosAnalitica">Otros Hallazgos (Analítica):</label>
+                                <label for="otrosHallazgosAnalitica">Otros Hallazgos (AnalÃ­tica):</label>
                                 <textarea id="otrosHallazgosAnalitica" rows="3"
                                     placeholder="Describir otros hallazgos relevantes..."></textarea>
                             </div>
                         </div>
 
                         <div class="pruebas-apartado">
-                            <h5><i class="fas fa-x-ray"></i> Radiografía</h5>
+                            <h5><i class="fas fa-x-ray"></i> RadiografÃ­a</h5>
                             <div class="form-group">
-                                <label for="hallazgosRadiografia">Hallazgos Radiográficos:</label>
+                                <label for="hallazgosRadiografia">Hallazgos RadiogrÃ¡ficos:</label>
                                 <textarea id="hallazgosRadiografia" rows="4"
-                                    placeholder="Describir hallazgos radiográficos..."></textarea>
+                                    placeholder="Describir hallazgos radiogrÃ¡ficos..."></textarea>
                             </div>
                         </div>
 
                         <div class="pruebas-apartado">
-                            <h5><i class="fas fa-magnet"></i> RMN (Resonancia Magnética Nuclear)</h5>
+                            <h5><i class="fas fa-magnet"></i> RMN (Resonancia MagnÃ©tica Nuclear)</h5>
                             <div class="form-group">
                                 <label for="hallazgosRMN">Hallazgos RMN:</label>
                                 <textarea id="hallazgosRMN" rows="4"
@@ -861,14 +861,14 @@
 
                 <div class="collapsible-section">
                     <button class="collapsible-header">
-                        <span class="header-icon-text"><i class="fas fa-chart-line"></i> Índices de Actividad de la
+                        <span class="header-icon-text"><i class="fas fa-chart-line"></i> Ãndices de Actividad de la
                             Enfermedad</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
-                        <!-- EVAs y Dolor Nocturno (usados por múltiples índices) -->
+                        <!-- EVAs y Dolor Nocturno (usados por mÃºltiples Ã­ndices) -->
                         <div class="indices-apartado">
-                            <h5><i class="fas fa-tachometer-alt"></i> Escalas Visuales Análogas (EVA)</h5>
+                            <h5><i class="fas fa-tachometer-alt"></i> Escalas Visuales AnÃ¡logas (EVA)</h5>
                             <div class="form-group-grid">
                                 <div class="form-group">
                                     <label for="evaGlobal">EVA Global del Paciente (0-10):</label>
@@ -897,11 +897,11 @@
                                     <input type="number" id="basdaiP2" min="0" max="10" step="0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label for="basdaiP3">P3: Dolor Articular Periférico (0-10):</label>
+                                    <label for="basdaiP3">P3: Dolor Articular PerifÃ©rico (0-10):</label>
                                     <input type="number" id="basdaiP3" min="0" max="10" step="0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label for="basdaiP4">P4: Dolor Entesítico (0-10):</label>
+                                    <label for="basdaiP4">P4: Dolor EntesÃ­tico (0-10):</label>
                                     <input type="number" id="basdaiP4" min="0" max="10" step="0.1">
                                 </div>
                                 <div class="form-group">
@@ -909,7 +909,7 @@
                                     <input type="number" id="basdaiP5" min="0" max="10" step="0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label for="basdaiP6">P6: Rigidez Matutina - Duración (horas):</label>
+                                    <label for="basdaiP6">P6: Rigidez Matutina - DuraciÃ³n (horas):</label>
                                     <input type="number" id="basdaiP6" min="0" step="0.1">
                                 </div>
                             </div>
@@ -929,7 +929,7 @@
                                     <input type="number" id="asdasDolorEspalda" min="0" max="10" step="0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label for="asdasDuracionRigidez">Duración Rigidez Matutina (EVA 0-10):</label>
+                                    <label for="asdasDuracionRigidez">DuraciÃ³n Rigidez Matutina (EVA 0-10):</label>
                                     <input type="number" id="asdasDuracionRigidez" min="0" max="10" step="0.1">
                                 </div>
                                 <div class="form-group">
@@ -958,7 +958,7 @@
 
                         <div class="indices-apartado">
                             <h5><i class="fas fa-heartbeat"></i> ASDAS-ESR (con VSG)</h5>
-                            <p class="info-note"><i class="fas fa-info-circle"></i> Utiliza los mismos parámetros que
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Utiliza los mismos parÃ¡metros que
                                 ASDAS-CRP, pero con VSG en lugar de PCR.</p>
                             <div class="form-group-grid">
                                 <div class="form-group">
@@ -973,48 +973,48 @@
                             </div>
                         </div>
 
-                        <!-- VALORACIÓN CLÍNICA AR (Seguimiento) -->
+                        <!-- VALORACIÃ“N CLÃNICA AR (Seguimiento) -->
                         <div class="indices-apartado ar-only" id="seccionesClinicasARSegSection" style="display: none;">
-                            <h5><i class="fas fa-notes-medical"></i> Valoración Clínica AR</h5>
+                            <h5><i class="fas fa-notes-medical"></i> ValoraciÃ³n ClÃ­nica AR</h5>
 
                             <!-- Rigidez Matutina -->
                             <div class="pruebas-apartado">
                                 <h6><i class="fas fa-sun"></i> Rigidez Matutina</h6>
                                 <div class="form-group">
-                                    <label for="rigidezMatutinaARSeg">Duración de la rigidez matutina
+                                    <label for="rigidezMatutinaARSeg">DuraciÃ³n de la rigidez matutina
                                         (minutos):</label>
                                     <input type="number" id="rigidezMatutinaARSeg" min="0" max="1440"
                                         placeholder="Minutos de rigidez">
                                 </div>
                             </div>
 
-                            <!-- Nódulos reumatoideos -->
+                            <!-- NÃ³dulos reumatoideos -->
                             <div class="pruebas-apartado">
-                                <h6><i class="fas fa-circle"></i> Nódulos Reumatoideos</h6>
+                                <h6><i class="fas fa-circle"></i> NÃ³dulos Reumatoideos</h6>
                                 <div class="form-group-checkbox">
-                                    <label><input type="checkbox" id="nodulosReumatoideosSeg"> Presencia de nódulos
+                                    <label><input type="checkbox" id="nodulosReumatoideosSeg"> Presencia de nÃ³dulos
                                         reumatoideos</label>
                                 </div>
                                 <div class="form-group" id="nodulosLocalizacionSeg"
                                     style="display:none;margin-top:10px;">
-                                    <label for="nodulosLocalizacionTextoSeg">Localización:</label>
+                                    <label for="nodulosLocalizacionTextoSeg">LocalizaciÃ³n:</label>
                                     <input type="text" id="nodulosLocalizacionTextoSeg"
-                                        placeholder="Codos, manos, tendón de Aquiles...">
+                                        placeholder="Codos, manos, tendÃ³n de Aquiles...">
                                 </div>
                             </div>
 
-                            <!-- Erosiones radiológicas -->
+                            <!-- Erosiones radiolÃ³gicas -->
                             <div class="pruebas-apartado">
-                                <h6><i class="fas fa-x-ray"></i> Erosiones Radiológicas</h6>
+                                <h6><i class="fas fa-x-ray"></i> Erosiones RadiolÃ³gicas</h6>
                                 <div class="form-group-checkbox">
                                     <label><input type="checkbox" id="erosionesRadiologicasSeg"> Presencia de erosiones
-                                        radiológicas</label>
+                                        radiolÃ³gicas</label>
                                 </div>
                                 <div class="form-group" id="erosionesDescripcionSeg"
                                     style="display:none;margin-top:10px;">
-                                    <label for="erosionesDescripcionTextoSeg">Descripción:</label>
+                                    <label for="erosionesDescripcionTextoSeg">DescripciÃ³n:</label>
                                     <textarea id="erosionesDescripcionTextoSeg" rows="2"
-                                        placeholder="Localización y grado de erosiones..."></textarea>
+                                        placeholder="LocalizaciÃ³n y grado de erosiones..."></textarea>
                                 </div>
                             </div>
 
@@ -1032,7 +1032,7 @@
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg"
-                                                data-tipo="nodulos-pulmonares"> Nódulos pulmonares</label>
+                                                data-tipo="nodulos-pulmonares"> NÃ³dulos pulmonares</label>
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg"
@@ -1056,19 +1056,19 @@
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="anemia">
-                                            Anemia de enf. crónica</label>
+                                            Anemia de enf. crÃ³nica</label>
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="felty">
-                                            Síndrome de Felty</label>
+                                            SÃ­ndrome de Felty</label>
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg"
-                                                data-tipo="neuropatia"> Neuropatía periférica</label>
+                                                data-tipo="neuropatia"> NeuropatÃ­a perifÃ©rica</label>
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg"
-                                                data-tipo="mielopatia-cervical"> Mielopatía cervical</label>
+                                                data-tipo="mielopatia-cervical"> MielopatÃ­a cervical</label>
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" class="extraarticular-ar-seg"
@@ -1081,9 +1081,9 @@
                                 </div>
                             </div>
 
-                            <!-- Síndrome de Sjögren Secundario -->
+                            <!-- SÃ­ndrome de SjÃ¶gren Secundario -->
                             <div class="pruebas-apartado">
-                                <h6><i class="fas fa-tint-slash"></i> Síndrome de Sjögren Secundario</h6>
+                                <h6><i class="fas fa-tint-slash"></i> SÃ­ndrome de SjÃ¶gren Secundario</h6>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" id="sequedadOcularSeg"> Sequedad ocular
@@ -1091,7 +1091,7 @@
                                     </div>
                                     <div class="form-group-checkbox">
                                         <label><input type="checkbox" id="sequedadOralSeg"> Sequedad oral
-                                            (xerostomía)</label>
+                                            (xerostomÃ­a)</label>
                                     </div>
                                 </div>
                             </div>
@@ -1100,8 +1100,8 @@
                         <!-- DAS28-CRP (AR) -->
                         <div class="indices-apartado ar-only" id="das28CrpSection" style="display: none;">
                             <h5><i class="fas fa-calculator"></i> DAS28-CRP (con PCR)</h5>
-                            <p class="info-note"><i class="fas fa-info-circle"></i> 0.56×√TJC28 + 0.28×√SJC28 +
-                                0.36×ln(CRP+1) + 0.014×VAS + 0.96</p>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> 0.56Ã—âˆšTJC28 + 0.28Ã—âˆšSJC28 +
+                                0.36Ã—ln(CRP+1) + 0.014Ã—VAS + 0.96</p>
                             <div class="form-group-grid">
                                 <div class="form-group">
                                     <label for="das28NAD">NAD28:</label>
@@ -1125,7 +1125,7 @@
                                 <input type="text" id="das28CrpResult" readonly class="indice-resultado">
                             </div>
                             <div class="form-group">
-                                <label>Categoría:</label>
+                                <label>CategorÃ­a:</label>
                                 <span id="das28CrpCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1144,16 +1144,16 @@
                                 <input type="text" id="das28EsrResult" readonly class="indice-resultado">
                             </div>
                             <div class="form-group">
-                                <label>Categoría:</label>
+                                <label>CategorÃ­a:</label>
                                 <span id="das28EsrCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
 
-                        <!-- EVA Médico (AR) -->
+                        <!-- EVA MÃ©dico (AR) -->
                         <div class="indices-apartado ar-only" id="evaMedicoSection" style="display: none;">
-                            <h5><i class="fas fa-user-md"></i> EVA Médico</h5>
+                            <h5><i class="fas fa-user-md"></i> EVA MÃ©dico</h5>
                             <div class="form-group">
-                                <label for="evaMedico">EVA Médico (0-10):</label>
+                                <label for="evaMedico">EVA MÃ©dico (0-10):</label>
                                 <input type="number" id="evaMedico" min="0" max="10" step="0.1" placeholder="0-10">
                             </div>
                         </div>
@@ -1166,7 +1166,7 @@
                                 <input type="text" id="cdaiResult" readonly class="indice-resultado">
                             </div>
                             <div class="form-group">
-                                <label>Categoría:</label>
+                                <label>CategorÃ­a:</label>
                                 <span id="cdaiCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1179,7 +1179,7 @@
                                 <input type="text" id="sdaiResult" readonly class="indice-resultado">
                             </div>
                             <div class="form-group">
-                                <label>Categoría:</label>
+                                <label>CategorÃ­a:</label>
                                 <span id="sdaiCategoria" class="indice-categoria"></span>
                             </div>
                         </div>
@@ -1195,7 +1195,7 @@
                                     dificultad para cada actividad. Score 0-3 (0=sin dificultad, 3=incapaz)</p>
 
                                 <div class="haq-categories">
-                                    <!-- Categoría 1: Vestirse y Arreglarse -->
+                                    <!-- CategorÃ­a 1: Vestirse y Arreglarse -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">1. Vestirse y Arreglarse</label>
                                         <select class="haq-score" data-category="1">
@@ -1208,7 +1208,7 @@
                                                 data-category="1"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 2: Levantarse -->
+                                    <!-- CategorÃ­a 2: Levantarse -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">2. Levantarse</label>
                                         <select class="haq-score" data-category="2">
@@ -1221,7 +1221,7 @@
                                                 data-category="2"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 3: Comer -->
+                                    <!-- CategorÃ­a 3: Comer -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">3. Comer</label>
                                         <select class="haq-score" data-category="3">
@@ -1234,7 +1234,7 @@
                                                 data-category="3"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 4: Caminar -->
+                                    <!-- CategorÃ­a 4: Caminar -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">4. Caminar</label>
                                         <select class="haq-score" data-category="4">
@@ -1247,7 +1247,7 @@
                                                 data-category="4"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 5: Higiene -->
+                                    <!-- CategorÃ­a 5: Higiene -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">5. Higiene Personal</label>
                                         <select class="haq-score" data-category="5">
@@ -1260,7 +1260,7 @@
                                                 data-category="5"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 6: Alcanzar -->
+                                    <!-- CategorÃ­a 6: Alcanzar -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">6. Alcanzar Objetos</label>
                                         <select class="haq-score" data-category="6">
@@ -1273,7 +1273,7 @@
                                                 data-category="6"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 7: Agarrar -->
+                                    <!-- CategorÃ­a 7: Agarrar -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">7. Agarrar y Abrir Objetos</label>
                                         <select class="haq-score" data-category="7">
@@ -1286,7 +1286,7 @@
                                                 data-category="7"> Usa ayudas o asistencia</label>
                                     </div>
 
-                                    <!-- Categoría 8: Actividades -->
+                                    <!-- CategorÃ­a 8: Actividades -->
                                     <div class="haq-category">
                                         <label class="haq-category-title">8. Actividades Cotidianas</label>
                                         <select class="haq-score" data-category="8">
@@ -1314,56 +1314,56 @@
                         <div class="indices-apartado aps-only" id="mdaSection" style="display: none;">
                             <h5><i class="fas fa-bullseye"></i> MDA (Minimal Disease Activity)</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> El paciente alcanza MDA al cumplir
-                                ≥5 de los 7 criterios siguientes:</p>
+                                â‰¥5 de los 7 criterios siguientes:</p>
 
                             <div class="mda-criterios-grid">
                                 <div class="mda-criterio" id="mdaCriterio1">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">NAT ≤ 1:</span>
+                                    <span class="mda-criterio-text">NAT â‰¤ 1:</span>
                                     <span class="mda-criterio-valor" id="mdaNAT">0</span>
-                                    <span class="mda-criterio-status" id="mdaStatus1">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus1">âœ—</span>
                                 </div>
 
                                 <div class="mda-criterio" id="mdaCriterio2">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">NAD ≤ 1:</span>
+                                    <span class="mda-criterio-text">NAD â‰¤ 1:</span>
                                     <span class="mda-criterio-valor" id="mdaNAD">0</span>
-                                    <span class="mda-criterio-status" id="mdaStatus2">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus2">âœ—</span>
                                 </div>
 
                                 <div class="mda-criterio" id="mdaCriterio3">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">PASI ≤ 1 o BSA ≤ 3%:</span>
+                                    <span class="mda-criterio-text">PASI â‰¤ 1 o BSA â‰¤ 3%:</span>
                                     <span class="mda-criterio-valor" id="mdaPsoriasis">-</span>
-                                    <span class="mda-criterio-status" id="mdaStatus3">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus3">âœ—</span>
                                 </div>
 
                                 <div class="mda-criterio" id="mdaCriterio4">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">LEI ≤ 1:</span>
+                                    <span class="mda-criterio-text">LEI â‰¤ 1:</span>
                                     <span class="mda-criterio-valor" id="mdaLEI">0</span>
-                                    <span class="mda-criterio-status" id="mdaStatus4">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus4">âœ—</span>
                                 </div>
 
                                 <div class="mda-criterio" id="mdaCriterio5">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">EVA Dolor ≤ 15mm:</span>
+                                    <span class="mda-criterio-text">EVA Dolor â‰¤ 15mm:</span>
                                     <span class="mda-criterio-valor" id="mdaEvaDolor">0</span>
-                                    <span class="mda-criterio-status" id="mdaStatus5">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus5">âœ—</span>
                                 </div>
 
                                 <div class="mda-criterio" id="mdaCriterio6">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">EVA Global ≤ 20mm:</span>
+                                    <span class="mda-criterio-text">EVA Global â‰¤ 20mm:</span>
                                     <span class="mda-criterio-valor" id="mdaEvaGlobal">0</span>
-                                    <span class="mda-criterio-status" id="mdaStatus6">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus6">âœ—</span>
                                 </div>
 
                                 <div class="mda-criterio" id="mdaCriterio7">
                                     <span class="mda-criterio-icon"><i class="fas fa-circle"></i></span>
-                                    <span class="mda-criterio-text">HAQ ≤ 0.5:</span>
+                                    <span class="mda-criterio-text">HAQ â‰¤ 0.5:</span>
                                     <span class="mda-criterio-valor" id="mdaHAQ">0.00</span>
-                                    <span class="mda-criterio-status" id="mdaStatus7">✗</span>
+                                    <span class="mda-criterio-status" id="mdaStatus7">âœ—</span>
                                 </div>
                             </div>
 
@@ -1382,18 +1382,18 @@
                         <div class="indices-apartado aps-only ar-only" id="rapid3Section" style="display: none;">
                             <h5><i class="fas fa-tachometer-alt"></i> RAPID3 (Routine Assessment of Patient Index Data
                                 3)</h5>
-                            <p class="info-note"><i class="fas fa-info-circle"></i> Score 0-30: Función Física MDHAQ
-                                (0-10) + EVA Dolor (0-10) + EVA Global (0-10). Remisión ≤3 | Baja 3.1-6 | Moderada
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Score 0-30: FunciÃ³n FÃ­sica MDHAQ
+                                (0-10) + EVA Dolor (0-10) + EVA Global (0-10). RemisiÃ³n â‰¤3 | Baja 3.1-6 | Moderada
                                 6.1-12 | Alta >12</p>
 
-                            <!-- Sección 1: Función Física MDHAQ (10 preguntas) -->
+                            <!-- SecciÃ³n 1: FunciÃ³n FÃ­sica MDHAQ (10 preguntas) -->
                             <h6 style="color:#2c5aa0;font-weight:600;margin:8px 0 4px;font-size:0.95em;"><i
-                                    class="fas fa-walking"></i> Función Física (últimos 7 días)</h6>
+                                    class="fas fa-walking"></i> FunciÃ³n FÃ­sica (Ãºltimos 7 dÃ­as)</h6>
                             <p class="info-note" style="font-size:0.82em;margin-bottom:6px;">0 = Sin dificultad | 1 =
                                 Con alguna dificultad | 2 = Con mucha dificultad | 3 = Incapaz</p>
                             <div class="mdhaq-questions">
                                 <div class="mdhaq-item">
-                                    <label>a. ¿Vestirse solo/a, incluyendo abrocharse botones y atarse los
+                                    <label>a. Â¿Vestirse solo/a, incluyendo abrocharse botones y atarse los
                                         zapatos</label>
                                     <select class="mdhaq-select" id="mdhaqA">
                                         <option value="0">0</option>
@@ -1403,7 +1403,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>b. ¿Acostarse y levantarse de la cama</label>
+                                    <label>b. Â¿Acostarse y levantarse de la cama</label>
                                     <select class="mdhaq-select" id="mdhaqB">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1412,7 +1412,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>c. ¿Levantar un vaso o taza llena hasta la boca</label>
+                                    <label>c. Â¿Levantar un vaso o taza llena hasta la boca</label>
                                     <select class="mdhaq-select" id="mdhaqC">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1421,7 +1421,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>d. ¿Caminar en terreno llano en exteriores</label>
+                                    <label>d. Â¿Caminar en terreno llano en exteriores</label>
                                     <select class="mdhaq-select" id="mdhaqD">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1430,7 +1430,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>e. ¿Lavarse y secarse todo el cuerpo</label>
+                                    <label>e. Â¿Lavarse y secarse todo el cuerpo</label>
                                     <select class="mdhaq-select" id="mdhaqE">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1439,7 +1439,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>f. ¿Agacharse a recoger ropa del suelo</label>
+                                    <label>f. Â¿Agacharse a recoger ropa del suelo</label>
                                     <select class="mdhaq-select" id="mdhaqF">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1448,7 +1448,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>g. ¿Abrir y cerrar grifos</label>
+                                    <label>g. Â¿Abrir y cerrar grifos</label>
                                     <select class="mdhaq-select" id="mdhaqG">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1457,7 +1457,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>h. ¿Entrar y salir de un coche, autobús, tren o avión</label>
+                                    <label>h. Â¿Entrar y salir de un coche, autobÃºs, tren o aviÃ³n</label>
                                     <select class="mdhaq-select" id="mdhaqH">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1466,7 +1466,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>i. ¿Caminar 3 km si lo desea</label>
+                                    <label>i. Â¿Caminar 3 km si lo desea</label>
                                     <select class="mdhaq-select" id="mdhaqI">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1475,7 +1475,7 @@
                                     </select>
                                 </div>
                                 <div class="mdhaq-item">
-                                    <label>j. ¿Participar en deportes y juegos como desee</label>
+                                    <label>j. Â¿Participar en deportes y juegos como desee</label>
                                     <select class="mdhaq-select" id="mdhaqJ">
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -1486,11 +1486,11 @@
                             </div>
                             <div class="rapid3-fn-result"
                                 style="margin-top:6px;padding:6px 10px;background:#f0f4f8;border-radius:6px;font-size:0.9em;">
-                                <span>FN Raw: <strong id="rapid3FnRaw">0</strong>/30</span> →
+                                <span>FN Raw: <strong id="rapid3FnRaw">0</strong>/30</span> â†’
                                 <span>FN Ponderada: <strong id="rapid3Funcion">0.0</strong>/10</span>
                             </div>
 
-                            <!-- Sección 2 y 3: EVAs (auto desde PROs) -->
+                            <!-- SecciÃ³n 2 y 3: EVAs (auto desde PROs) -->
                             <div class="rapid3-components" style="margin-top:15px;">
                                 <div class="rapid3-component">
                                     <span class="rapid3-component-label">EVA Dolor (0-10):</span>
@@ -1509,14 +1509,14 @@
                                     <span>/30</span>
                                 </div>
                                 <div class="rapid3-resultado-categoria" id="rapid3Categoria">
-                                    Casi Remisión (≤3)
+                                    Casi RemisiÃ³n (â‰¤3)
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- HAQ-DI COMPLETO (8 CATEGORÍAS) - SOLO APs -->
+                <!-- HAQ-DI COMPLETO (8 CATEGORÃAS) - SOLO APs -->
                 <div class="collapsible-section">
                     <button class="collapsible-header">
                         <span class="header-icon-text"><i class="fas fa-pills"></i> Tratamiento y Plan</span>
@@ -1525,7 +1525,7 @@
                     <div class="collapsible-content">
                         <!-- Switch Continuar/Cambiar Tratamiento -->
                         <div class="treatment-switch-container">
-                            <label class="group-label">Decisión Terapéutica:</label>
+                            <label class="group-label">DecisiÃ³n TerapÃ©utica:</label>
                             <div class="switch-buttons-group">
                                 <button type="button" class="switch-btn active" id="btnContinuarTratamiento"
                                     data-option="continuar">
@@ -1551,7 +1551,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="ajusteTerapeutico">Ajuste Terapéutico:</label>
+                                <label for="ajusteTerapeutico">Ajuste TerapÃ©utico:</label>
                                 <textarea id="ajusteTerapeutico" rows="4"
                                     placeholder="Describir ajustes en dosis, frecuencia u otros aspectos del tratamiento actual..."></textarea>
                             </div>
@@ -1570,7 +1570,7 @@
                             </div>
                             <div id="descripcionEfectosContainer" class="conditional-field-hidden">
                                 <div class="form-group">
-                                    <label for="descripcionEfectos">Descripción de Efectos Adversos:</label>
+                                    <label for="descripcionEfectos">DescripciÃ³n de Efectos Adversos:</label>
                                     <textarea id="descripcionEfectos" rows="3"
                                         placeholder="Describir los efectos adversos..."></textarea>
                                 </div>
@@ -1579,15 +1579,15 @@
                             <div class="treatment-panel" id="cambioTratamientoPanel">
                                 <div class="treatment-grid">
                                     <div class="treatment-line">
-                                        <div class="treatment-label">Tratamientos sistémicos</div>
+                                        <div class="treatment-label">Tratamientos sistÃ©micos</div>
                                         <div class="treatment-controls">
                                             <select id="cambioSistemicoSelect" class="treatment-select">
-                                                <!-- Poblado dinámicamente desde la base de datos -->
+                                                <!-- Poblado dinÃ¡micamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioSistemicoDose" class="treatment-dose-input"
                                                 placeholder="Dosis / frecuencia" disabled>
                                             <button type="button" class="add-treatment-line-btn"
-                                                data-type="cambio-sistemico" title="Añadir otro"><i
+                                                data-type="cambio-sistemico" title="AÃ±adir otro"><i
                                                     class="fas fa-plus-circle"></i></button>
                                         </div>
                                     </div>
@@ -1597,26 +1597,26 @@
                                         <div class="treatment-label">FAMEs</div>
                                         <div class="treatment-controls">
                                             <select id="cambioFameSelect" class="treatment-select">
-                                                <!-- Poblado dinámicamente desde la base de datos -->
+                                                <!-- Poblado dinÃ¡micamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioFameDose" class="treatment-dose-input"
                                                 placeholder="Dosis / frecuencia" disabled>
                                             <button type="button" class="add-treatment-line-btn" data-type="cambio-fame"
-                                                title="Añadir otro"><i class="fas fa-plus-circle"></i></button>
+                                                title="AÃ±adir otro"><i class="fas fa-plus-circle"></i></button>
                                         </div>
                                     </div>
                                     <div id="cambioFamesExtras"></div>
 
                                     <div class="treatment-line">
-                                        <div class="treatment-label">Biológicos</div>
+                                        <div class="treatment-label">BiolÃ³gicos</div>
                                         <div class="treatment-controls">
                                             <select id="cambioBiologicoSelect" class="treatment-select">
-                                                <!-- Poblado dinámicamente desde la base de datos -->
+                                                <!-- Poblado dinÃ¡micamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioBiologicoDose" class="treatment-dose-input"
                                                 placeholder="Dosis / frecuencia" disabled>
                                             <button type="button" class="add-treatment-line-btn"
-                                                data-type="cambio-biologico" title="Añadir otro"><i
+                                                data-type="cambio-biologico" title="AÃ±adir otro"><i
                                                     class="fas fa-plus-circle"></i></button>
                                         </div>
                                     </div>
@@ -1627,7 +1627,7 @@
 
                         <!-- Campos comunes a ambas opciones -->
                         <div class="plan-next-review-card">
-                            <label for="fechaProximaRevision">Fecha próxima revisión</label>
+                            <label for="fechaProximaRevision">Fecha prÃ³xima revisiÃ³n</label>
                             <input type="date" id="fechaProximaRevision" class="plan-date-input">
                         </div>
                     </div>
@@ -1643,14 +1643,14 @@
                         <div class="form-group">
                             <label for="comentariosAdicionales">Observaciones y Comentarios:</label>
                             <textarea id="comentariosAdicionales" rows="6"
-                                placeholder="Espacio para anotaciones clínicas adicionales, observaciones relevantes, evolución del paciente, o cualquier información complementaria..."></textarea>
+                                placeholder="Espacio para anotaciones clÃ­nicas adicionales, observaciones relevantes, evoluciÃ³n del paciente, o cualquier informaciÃ³n complementaria..."></textarea>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-actions">
                     <button id="btnExportarTXT" class="action-btn primary-btn"><i class="fas fa-file-alt"></i> Convertir
-                        TXT (Historia Clínica)</button>
+                        TXT (Historia ClÃ­nica)</button>
                     <button id="btnEstructurarCSV" class="action-btn success-btn"><i class="fas fa-file-csv"></i>
                         Estructurar CSV (Excel)</button>
                     <button class="action-btn warning-btn" onclick="window.location.href='index.html'"><i
@@ -1663,9 +1663,10 @@
     <!-- Cargar SheetJS para manejo de Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <!-- MÓDULOS HUBTOOLS - ORDEN CRÍTICO: hubTools.js PRIMERO -->
+    <!-- MÃ“DULOS HUBTOOLS - ORDEN CRÃTICO: hubTools.js PRIMERO -->
     <script src="modules/hubTools.js"></script>
     <script src="modules/utils.js"></script>
+    <script src="modules/fieldNormalizer.js"></script>
     <script src="modules/mockPatients.js"></script>
     <script src="modules/scoreCalculators.js"></script>
     <script src="modules/homunculus.js"></script>
