@@ -228,6 +228,20 @@ function mostrarElementosAR() {
         });
     }
 
+    // Seguimiento variants (Seg suffix IDs)
+    const nodulosCheckSeg = document.getElementById('nodulosReumatoideosSeg');
+    if (nodulosCheckSeg) {
+        nodulosCheckSeg.addEventListener('change', function () {
+            document.getElementById('nodulosLocalizacionSeg').style.display = this.checked ? 'block' : 'none';
+        });
+    }
+    const erosionesCheckSeg = document.getElementById('erosionesRadiologicasSeg');
+    if (erosionesCheckSeg) {
+        erosionesCheckSeg.addEventListener('change', function () {
+            document.getElementById('erosionesDescripcionSeg').style.display = this.checked ? 'block' : 'none';
+        });
+    }
+
     console.log('✅ Elementos AR mostrados correctamente');
 }
 

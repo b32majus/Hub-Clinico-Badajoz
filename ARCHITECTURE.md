@@ -4,7 +4,7 @@
 
 ## Visión General
 
-Aplicación clínica web **offline-first** para gestión de pacientes reumatológicos (EspA y APs). Se ejecuta como archivos estáticos (sin servidor, sin build, sin npm). No usa ES6 modules — todo funciona via `<script>` tags y el namespace global `HubTools`.
+Aplicación clínica web **offline-first** para gestión de pacientes reumatológicos (EspA, APs y AR). Se ejecuta como archivos estáticos (sin servidor, sin build, sin npm). No usa ES6 modules — todo funciona via `<script>` tags y el namespace global `HubTools`.
 
 **Restricción clave**: No puede usar import/export ni frameworks. La app debe funcionar abriendo el HTML directamente sin instalación, para cumplir restricciones STIC hospitalarias.
 
@@ -27,7 +27,7 @@ Aplicación clínica web **offline-first** para gestión de pacientes reumatoló
 ├── modules/                      # Módulos funcionales (namespace HubTools)
 │   ├── hubTools.js               # ★ ENTRY POINT - Define namespace HubTools y sub-namespaces
 │   ├── formController.js         # Formularios: validación, collapsibles, adaptación por patología, score wiring
-│   ├── scoreCalculators.js       # Cálculos puros: BASDAI, ASDAS, HAQ, MDA, RAPID3, LEI
+│   ├── scoreCalculators.js       # Cálculos puros: BASDAI, ASDAS, HAQ, MDA, RAPID3, LEI, DAS28, CDAI, SDAI
 │   ├── homunculus.js             # Homúnculo SVG interactivo (NAD/NAT/Dactilitis)
 │   ├── dataManager.js            # Gestión de datos, localStorage, búsqueda pacientes
 │   ├── exportManager.js          # Exportación TXT y CSV
@@ -127,6 +127,19 @@ EVA Global/Dolor ──input──→ recalcularMDA() + recalcularRAPID3()
 ### Funciones expuestas a window (para homunculus.js):
 - `window.calcularASDASLocal` → referencia a `recalcularASDAS()`
 - `window.calcularMDALocal` → referencia a `recalcularMDA()`
+- `window.calcularDAS28Local` → referencia a `recalcularDAS28()` (AR)
+
+### Flujo AR:
+
+```
+Homúnculo ──→ getDAS28JointCounts() ──→ das28NAD/das28NAT (28 joints only)
+  └──→ calcularDAS28Local() ──cascada──→ recalcularCDAI() + recalcularSDAI()
+
+PCR/VSG ──sync──→ das28PCR/das28VSG → recalcularDAS28()
+EVA Global ──→ recalcularDAS28() + recalcularCDAI() + recalcularSDAI()
+EVA Médico ──→ recalcularCDAI() + recalcularSDAI()
+MDHAQ (a-j) ──change──→ recalcularRAPID3() (FN conversion table + EVAs)
+```
 
 ---
 
@@ -134,16 +147,25 @@ EVA Global/Dolor ──input──→ recalcularMDA() + recalcularRAPID3()
 
 `HubTools.form.adaptarFormulario(patologia)` muestra/oculta secciones según la patología:
 
-| Sección | EspA | APs |
-|---|---|---|
-| BASDAI | ✅ `.espa-only` | ❌ |
-| ASDAS | ✅ `.espa-aps-only` | ✅ |
-| HAQ-DI | ❌ | ✅ `.aps-only` |
-| MDA | ❌ | ✅ `.aps-only` |
-| RAPID3 | ❌ | ✅ `.aps-only` |
-| LEI | ❌ | ✅ `.aps-only` |
-| CASPAR | ❌ | ✅ `.aps-only` |
-| Criterios ASAS | ✅ `.espa-only` | ❌ |
+| Sección | EspA | APs | AR |
+|---|---|---|---|
+| BASDAI | ✅ `.espa-only` | ❌ | ❌ |
+| ASDAS | ✅ `.espa-aps-only` | ✅ | ❌ |
+| HAQ-DI | ❌ | ✅ `.aps-only` | ✅ `.ar-only` |
+| MDA | ❌ | ✅ `.aps-only` | ❌ |
+| RAPID3 | ❌ | ✅ `.aps-only` | ✅ `.ar-only` |
+| LEI | ❌ | ✅ `.aps-only` | ❌ |
+| CASPAR | ❌ | ✅ `.aps-only` | ❌ |
+| Criterios ASAS | ✅ `.espa-only` | ❌ | ❌ |
+| Criterios ACR/EULAR | ❌ | ❌ | ✅ `.ar-only` |
+| DAS28-CRP/ESR | ❌ | ❌ | ✅ `.ar-only` |
+| CDAI | ❌ | ❌ | ✅ `.ar-only` |
+| SDAI | ❌ | ❌ | ✅ `.ar-only` |
+| EVA Médico | ❌ | ❌ | ✅ `.ar-only` |
+| Valoración Clínica AR | ❌ | ❌ | ✅ `.ar-only` |
+| FR + Anti-CCP | ✅ | ✅ | ✅ |
+| ANA | ❌ | ❌ | ✅ |
+| HLA-B27 | ✅ | ✅ | ❌ |
 
 ---
 
@@ -168,7 +190,10 @@ EVA Global/Dolor ──input──→ recalcularMDA() + recalcularRAPID3()
 | `calcularASDAS(datos)` | {dolorEspalda, rigidez, evaGlobal, NAD, PCR, VSG} → {asdasCRP, asdasESR} |
 | `calcularHAQ(datos)` | 8 categorías + ayudas → score 0-3 |
 | `calcularMDA(datos)` | {NAT,NAD,PASI,BSA,LEI,EVA,HAQ} → {criterios[], cumplidos, mdaAlcanzado} |
-| `calcularRAPID3(datos)` | {HAQ, EVA dolor, EVA global} → {total, categoria} |
+| `calcularRAPID3(datos)` | MDHAQ(a-j) + EVA dolor + EVA global → {fnRaw, funcion, total, categoria} |
+| `calcularDAS28(datos)` | {nad28, nat28, pcr, vsg, evaGlobal} → {das28CRP, das28ESR} |
+| `calcularCDAI(datos)` | {nad28, nat28, evaPaciente, evaMedico} → {total, categoria} |
+| `calcularSDAI(datos)` | {nad28, nat28, evaPaciente, evaMedico, pcr} → {total, categoria} |
 | `categorizeScore(value, type)` | Score → {label, color, backgroundColor} |
 
 ### homunculus.js
@@ -176,6 +201,8 @@ EVA Global/Dolor ──input──→ recalcularMDA() + recalcularRAPID3()
 |---|---|
 | `initHomunculus()` | Inicializa SVG interactivo |
 | `updateASDASFromHomunculus()` | Actualiza NAD/NAT en campos ASDAS + llama calcularASDASLocal/MDALocal |
+| `getDAS28JointCounts()` | Devuelve {nad28, nat28} filtrando solo 28 articulaciones DAS28 |
+| `updateDAS28FromHomunculus()` | Actualiza NAD28/NAT28 en campos DAS28 + llama calcularDAS28Local |
 
 ---
 
@@ -193,10 +220,19 @@ HAQ:         .haq-score[data-category="1..8"], .haq-aid[data-category="1..8"], h
 LEI:         .lei-point (checkboxes), leiTotal
 MDA:         mdaNAT, mdaNAD, mdaPsoriasis, mdaLEI, mdaEvaDolor, mdaEvaGlobal,
              mdaHAQ, mdaCumplidos, mdaResultadoFinal, mdaStatus1..7, mdaCriterio1..7
-RAPID3:      rapid3Funcion, rapid3Dolor, rapid3Global, rapid3Total, rapid3Categoria
+RAPID3:      mdhaqA..mdhaqJ, rapid3FnRaw, rapid3Funcion, rapid3Dolor, rapid3Global,
+             rapid3Total, rapid3Categoria
+DAS28:       das28NAD (readonly), das28NAT (readonly), das28PCR (readonly),
+             das28VSG (readonly), das28EVA, das28CrpResult, das28EsrResult,
+             das28CrpCategoria, das28EsrCategoria
+CDAI:        cdaiResult, cdaiCategoria
+SDAI:        sdaiResult, sdaiCategoria
+ACR/EULAR:   acrArticulaciones, acrSerologia, acrReactantes, acrDuracion, acrTotalResult
+AR Clínica:  rigidezMatutinaAR, nodulosReumatoideos, erosionesRadiologicas,
+             .extraarticular-ar (checkboxes), sequedadOcular, sequedadOral
 Psoriasis:   pasiValue, bsaValue
 ```
 
 ---
 
-*Última actualización: 2026-03-04*
+*Última actualización: 2026-03-05*

@@ -973,6 +973,130 @@
                             </div>
                         </div>
 
+                        <!-- VALORACIÓN CLÍNICA AR (Seguimiento) -->
+                        <div class="indices-apartado ar-only" id="seccionesClinicasARSegSection" style="display: none;">
+                            <h5><i class="fas fa-notes-medical"></i> Valoración Clínica AR</h5>
+
+                            <!-- Rigidez Matutina -->
+                            <div class="pruebas-apartado">
+                                <h6><i class="fas fa-sun"></i> Rigidez Matutina</h6>
+                                <div class="form-group">
+                                    <label for="rigidezMatutinaARSeg">Duración de la rigidez matutina
+                                        (minutos):</label>
+                                    <input type="number" id="rigidezMatutinaARSeg" min="0" max="1440"
+                                        placeholder="Minutos de rigidez">
+                                </div>
+                            </div>
+
+                            <!-- Nódulos reumatoideos -->
+                            <div class="pruebas-apartado">
+                                <h6><i class="fas fa-circle"></i> Nódulos Reumatoideos</h6>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" id="nodulosReumatoideosSeg"> Presencia de nódulos
+                                        reumatoideos</label>
+                                </div>
+                                <div class="form-group" id="nodulosLocalizacionSeg"
+                                    style="display:none;margin-top:10px;">
+                                    <label for="nodulosLocalizacionTextoSeg">Localización:</label>
+                                    <input type="text" id="nodulosLocalizacionTextoSeg"
+                                        placeholder="Codos, manos, tendón de Aquiles...">
+                                </div>
+                            </div>
+
+                            <!-- Erosiones radiológicas -->
+                            <div class="pruebas-apartado">
+                                <h6><i class="fas fa-x-ray"></i> Erosiones Radiológicas</h6>
+                                <div class="form-group-checkbox">
+                                    <label><input type="checkbox" id="erosionesRadiologicasSeg"> Presencia de erosiones
+                                        radiológicas</label>
+                                </div>
+                                <div class="form-group" id="erosionesDescripcionSeg"
+                                    style="display:none;margin-top:10px;">
+                                    <label for="erosionesDescripcionTextoSeg">Descripción:</label>
+                                    <textarea id="erosionesDescripcionTextoSeg" rows="2"
+                                        placeholder="Localización y grado de erosiones..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Manifestaciones Extraarticulares -->
+                            <div class="pruebas-apartado">
+                                <h6><i class="fas fa-lungs"></i> Manifestaciones Extraarticulares</h6>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="pulmonar-niu"> Enf. Pulmonar Intersticial (NIU)</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="pulmonar-nine"> Enf. Pulmonar (NINE)</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="nodulos-pulmonares"> Nódulos pulmonares</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="derrame-pleural"> Derrame pleural</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="epiescleritis"> Epiescleritis</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="escleritis"> Escleritis</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="queratitis"> Queratitis</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="vasculitis"> Vasculitis reumatoide</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="anemia">
+                                            Anemia de enf. crónica</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg" data-tipo="felty">
+                                            Síndrome de Felty</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="neuropatia"> Neuropatía periférica</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="mielopatia-cervical"> Mielopatía cervical</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="pericarditis"> Pericarditis</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" class="extraarticular-ar-seg"
+                                                data-tipo="amiloidosis"> Amiloidosis</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Síndrome de Sjögren Secundario -->
+                            <div class="pruebas-apartado">
+                                <h6><i class="fas fa-tint-slash"></i> Síndrome de Sjögren Secundario</h6>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" id="sequedadOcularSeg"> Sequedad ocular
+                                            (xeroftalmia)</label>
+                                    </div>
+                                    <div class="form-group-checkbox">
+                                        <label><input type="checkbox" id="sequedadOralSeg"> Sequedad oral
+                                            (xerostomía)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- DAS28-CRP (AR) -->
                         <div class="indices-apartado ar-only" id="das28CrpSection" style="display: none;">
                             <h5><i class="fas fa-calculator"></i> DAS28-CRP (con PCR)</h5>
