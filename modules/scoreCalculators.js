@@ -170,7 +170,7 @@ function calcularMDA(datos) {
     return {
         nat,
         nad,
-        psoriasis: pasi > 0 ? `PASI: ${pasi.toFixed(1)}` : bsa > 0 ? `BSA: ${bsa}%` : '-',
+        psoriasis: pasi > 0  `PASI: ${pasi.toFixed(1)}` : bsa > 0  `BSA: ${bsa}%` : '-',
         lei,
         evaDolor: evaDolorMM.toFixed(0),
         evaGlobal: evaGlobalMM.toFixed(0),
@@ -310,7 +310,7 @@ function calcularSDAI(datos) {
  * // Retorna: { categoria: 'high', color: '#dc3545', label: 'Actividad Alta', backgroundColor: '#dc354522' }
  */
 function categorizeScore(valor, scoreType) {
-    const cutoffs = HubTools?.dashboard?.activityCutoffs?.[scoreType];
+    const cutoffs = HubTools.dashboard.activityCutoffs.[scoreType];
     if (!cutoffs) return { categoria: 'unknown', color: '#6c757d', label: 'N/A', backgroundColor: '#6c757d22' };
 
     let categoria, color, label;

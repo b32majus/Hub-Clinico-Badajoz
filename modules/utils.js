@@ -128,7 +128,7 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${tipo === 'success' ? '#28a745' : tipo === 'error' ? '#dc3545' : '#ffc107'};
+        background: ${tipo === 'success'  '#28a745' : tipo === 'error'  '#dc3545' : '#ffc107'};
         color: white;
         padding: 15px 25px;
         border-radius: 8px;
@@ -138,7 +138,7 @@ function mostrarNotificacion(mensaje, tipo = 'success') {
         font-weight: 600;
         animation: slideIn 0.3s ease;
     `;
-    notif.innerHTML = `<i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> ${mensaje}`;
+    notif.innerHTML = `<i class="fas fa-${tipo === 'success'  'check-circle' : tipo === 'error'  'exclamation-circle' : 'info-circle'}"></i> ${mensaje}`;
     document.body.appendChild(notif);
 
     setTimeout(() => {
@@ -175,7 +175,7 @@ const logger = {
      * Log de debug - Solo se muestra si DEBUG_MODE está activado
      * Útil para depuración durante desarrollo
      */
-    debug: DEBUG_MODE ? console.log.bind(console, '[DEBUG]') : () => { },
+    debug: DEBUG_MODE  console.log.bind(console, '[DEBUG]') : () => { },
 
     /**
      * Log informativo - Siempre se muestra
@@ -202,7 +202,7 @@ const logger = {
  */
 function setDebugMode(enabled) {
     localStorage.setItem('hubClinico_debugMode', enabled.toString());
-    console.log(`🔧 Modo debug ${enabled ? 'ACTIVADO' : 'DESACTIVADO'}. Recarga la página para aplicar cambios.`);
+    console.log(`🔧 Modo debug ${enabled  'ACTIVADO' : 'DESACTIVADO'}. Recarga la página para aplicar cambios.`);
 }
 
 // =====================================
@@ -223,7 +223,7 @@ function getBiomarkerValue(className, defaultValue = 'no-analizado') {
     // Buscar botón activo de esta clase, excluyendo otros biomarcadores
     const selector = `.${className}.active:not(.hla-btn):not(.fr-btn):not(.apcc-btn), .${className}.active`;
     const activeBtn = document.querySelector(selector);
-    return activeBtn ? activeBtn.dataset.value : defaultValue;
+    return activeBtn  activeBtn.dataset.value : defaultValue;
 }
 
 /**
@@ -297,7 +297,7 @@ function validarCamposRequeridos(tipoFormulario) {
 
     requeridos.forEach(id => {
         const elem = document.getElementById(id);
-        if (!elem || !elem.value?.trim()) {
+        if (!elem || !elem.value.trim()) {
             errores.push(id);
             if (elem) {
                 elem.style.borderColor = '#dc3545';

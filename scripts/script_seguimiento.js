@@ -20,7 +20,13 @@ function extractManifestations(visit) {
             }
         });
     }
-    return output;
+    const digestiva = visit.ExtraArticular_Digestiva ?? visit.extraArticularDigestiva;
+    const uveitis = visit.ExtraArticular_Uveitis ?? visit.extraArticularUveitis;
+    const psoriasis = visit.ExtraArticular_Psoriasis ?? visit.extraArticularPsoriasis;
+    if ((digestiva || '').toString().toUpperCase() === 'SI') output.push('digestiva');
+    if ((uveitis || '').toString().toUpperCase() === 'SI') output.push('uveitis');
+    if ((psoriasis || '').toString().toUpperCase() === 'SI') output.push('psoriasis');
+    return [...new Set(output)];
 }
 
 function extractComorbidities(visit) {
@@ -33,7 +39,25 @@ function extractComorbidities(visit) {
             return (visit.comorbilidades[key] || '').toString().toUpperCase() === 'SI';
         });
     }
-    return [];
+
+    const mapped = [];
+    const map = [
+        ['hta', visit.Comorbilidad_HTA ?? visit.comorbilidadHTA],
+        ['dm', visit.Comorbilidad_DM ?? visit.comorbilidadDM],
+        ['dlp', visit.Comorbilidad_DLP ?? visit.comorbilidadDLP],
+        ['ecv', visit.Comorbilidad_ECV ?? visit.comorbilidadECV],
+        ['gastritis', visit.Comorbilidad_Gastritis ?? visit.comorbilidadGastritis],
+        ['obesidad', visit.Comorbilidad_Obesidad ?? visit.comorbilidadObesidad],
+        ['osteoporosis', visit.Comorbilidad_Osteoporosis ?? visit.comorbilidadOsteoporosis],
+        ['gota', visit.Comorbilidad_Gota ?? visit.comorbilidadGota]
+    ];
+    map.forEach(([key, value]) => {
+        if ((value || '').toString().toUpperCase() === 'SI') {
+            mapped.push(key);
+        }
+    });
+
+    return mapped;
 }
 
 function getMockSeguimientoBundle(patientId) {
@@ -57,7 +81,9 @@ function getMockSeguimientoBundle(patientId) {
             fechaInicioTratamiento: getLast(mock.treatmentHistory)?.startDate || '',
             hlaB27: getLast(visits)?.hlaB27 || 'no-analizado',
             fr: getLast(visits)?.fr || 'no-analizado',
-            apcc: getLast(visits)?.apcc || 'no-analizado'
+            apcc: getLast(visits)?.apcc || 'no-analizado',
+            ana: getLast(visits)?.ana || 'no-analizado',
+            imc: getLast(visits)?.imc || ''
         },
         history: {
             allVisits: visits,
@@ -79,15 +105,19 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         nombrePaciente: latestVisit?.nombrePaciente || baseRecord?.Nombre_Paciente || baseRecord?.nombrePaciente || baseRecord?.nombre || '',
         diagnosticoPrimario: pathology,
         diagnosticoSecundario: baseRecord?.diagnosticoSecundario || baseRecord?.Diagnostico_Secundario || '',
-        hlaB27: latestVisit?.hlaB27 || baseRecord?.hlaB27 || 'no-analizado',
-        fr: latestVisit?.fr || baseRecord?.fr || 'no-analizado',
-        apcc: latestVisit?.apcc || baseRecord?.apcc || 'no-analizado',
-        tratamientoActual: baseRecord?.tratamientoActual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
-        fechaInicioTratamiento: baseRecord?.fechaInicioTratamiento || activeTreatment?.startDate || '',
+        hlaB27: latestVisit?.hlaB27 || latestVisit?.HLA_B27 || baseRecord?.hlaB27 || baseRecord?.HLA_B27 || 'no-analizado',
+        fr: latestVisit?.fr || latestVisit?.FR || baseRecord?.fr || baseRecord?.FR || 'no-analizado',
+        apcc: latestVisit?.apcc || latestVisit?.APCC || latestVisit?.aPCC || baseRecord?.apcc || baseRecord?.APCC || 'no-analizado',
+        ana: latestVisit?.ana || latestVisit?.ANA || baseRecord?.ana || baseRecord?.ANA || 'no-analizado',
+        tratamientoActual: baseRecord?.tratamientoActual || baseRecord?.Tratamiento_Actual || latestVisit?.tratamientoActual || latestVisit?.Tratamiento_Actual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
+        fechaInicioTratamiento: baseRecord?.fechaInicioTratamiento || baseRecord?.Fecha_Inicio_Tratamiento || activeTreatment?.startDate || '',
         comorbilidades: extractComorbidities(latestVisit),
         manifestacionesExtra: extractManifestations(latestVisit),
-        sexoPaciente: latestVisit?.sexoPaciente || baseRecord?.Sexo || baseRecord?.sexo || baseRecord?.sexoPaciente || '',
-        fechaNacimiento: latestVisit?.fechaNacimiento || baseRecord?.Fecha_Nacimiento || baseRecord?.fechaNacimiento || ''
+        peso: latestVisit?.peso || latestVisit?.Peso || baseRecord?.peso || baseRecord?.Peso || '',
+        talla: latestVisit?.talla || latestVisit?.Talla || baseRecord?.talla || baseRecord?.Talla || '',
+        imc: latestVisit?.imc || latestVisit?.IMC || baseRecord?.imc || baseRecord?.IMC || '',
+        sexoPaciente: latestVisit?.sexoPaciente || latestVisit?.Sexo || baseRecord?.Sexo || baseRecord?.sexo || baseRecord?.sexoPaciente || '',
+        fechaNacimiento: latestVisit?.fechaNacimiento || latestVisit?.Fecha_Nacimiento || baseRecord?.Fecha_Nacimiento || baseRecord?.fechaNacimiento || ''
     };
 }
 

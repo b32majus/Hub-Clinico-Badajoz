@@ -1373,7 +1373,7 @@ function prefillSeguimientoForm(visitData) {
         if (diagSecInput) diagSecInput.value = visitData.diagnosticoSecundario;
     }
 
-    // 3. BIOMARCADORES (HLA-B27, FR, Anti-CCP)
+    // 3. BIOMARCADORES (HLA-B27, FR, Anti-CCP, ANA)
     if (visitData.hlaB27) {
         setBiomarkerValue('hla-btn', visitData.hlaB27);
     }
@@ -1382,6 +1382,9 @@ function prefillSeguimientoForm(visitData) {
     }
     if (visitData.apcc) {
         setBiomarkerValue('apcc-btn', visitData.apcc);
+    }
+    if (visitData.ana) {
+        setBiomarkerValue('ana-btn', visitData.ana);
     }
 
     // 4. COMORBILIDADES (toggle buttons)
@@ -1414,7 +1417,28 @@ function prefillSeguimientoForm(visitData) {
         if (fechaInput) fechaInput.value = visitData.fechaInicioTratamiento;
     }
 
-    console.log('✅ Formulario de seguimiento pre-llenado correctamente');
+    // 7. DATOS ESTABLES ADICIONALES (peso/talla/IMC/sexo)
+    if (visitData.peso !== undefined && visitData.peso !== null && visitData.peso !== '') {
+        const pesoInput = document.getElementById('peso');
+        if (pesoInput) pesoInput.value = visitData.peso;
+    }
+
+    if (visitData.talla !== undefined && visitData.talla !== null && visitData.talla !== '') {
+        const tallaInput = document.getElementById('talla');
+        if (tallaInput) tallaInput.value = visitData.talla;
+    }
+
+    if (visitData.imc !== undefined && visitData.imc !== null && visitData.imc !== '') {
+        const imcInput = document.getElementById('imc');
+        if (imcInput) imcInput.value = visitData.imc;
+    }
+
+    if (visitData.sexoPaciente) {
+        const sexoInput = document.getElementById('sexoPaciente') || document.getElementById('sexo');
+        if (sexoInput) sexoInput.value = visitData.sexoPaciente;
+    }
+
+    console.log('? Formulario de seguimiento pre-llenado correctamente');
 }
 
 /**

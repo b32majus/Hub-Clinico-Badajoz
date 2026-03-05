@@ -1,0 +1,224 @@
+%PDF-1.4
+%âãÏÓ
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 5 0 R >>
+endobj
+5 0 obj
+<< /Length 2267 >>
+stream
+BT
+/F1 11 Tf
+50 792 Td
+(?# Manual de Usuario - Hub Clínico Reumatología \(Badajoz\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(1. ¿QUÉ ES ESTA HERRAMIENTA) Tj
+0 -14 Td
+(Es una aplicación local para registrar visitas de Reumatología y generar:) Tj
+0 -14 Td
+(? Texto clínico \(`TXT`\) para historia.) Tj
+0 -14 Td
+(? Fila estructurada \(`CSV`\) para pegar en el Excel maestro del servicio.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(No necesita instalación ni servidor externo.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(2. ANTES DE EMPEZAR) Tj
+0 -14 Td
+(Necesitas:) Tj
+0 -14 Td
+(? Acceso al archivo compartido `Hub_Clinico_Maestro.xlsx`.) Tj
+0 -14 Td
+(? Navegador actualizado \(Edge/Chrome recomendado\).) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(3. INICIO DE SESIÓN DE TRABAJO) Tj
+0 -14 Td
+(1. Abrir la app.) Tj
+0 -14 Td
+(2. Pulsar **Cargar Base de Datos**.) Tj
+0 -14 Td
+(3. Seleccionar `Hub_Clinico_Maestro.xlsx`.) Tj
+0 -14 Td
+(4. Confirmar que la carga fue correcta.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(4. REGISTRAR UNA PRIMERA VISITA) Tj
+0 -14 Td
+(1. Ir a **Nueva Visita**.) Tj
+0 -14 Td
+(2. Completar datos obligatorios.) Tj
+0 -14 Td
+(3. Revisar índices calculados automáticamente.) Tj
+0 -14 Td
+(4. Exportar:) Tj
+0 -14 Td
+(? **TXT** para historia clínica.) Tj
+0 -14 Td
+(? **CSV** para base de datos.) Tj
+0 -14 Td
+(5. Abrir Excel y pegar la fila en la hoja correcta \(`ESPA`, `APS` o `AR`\).) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(5. REGISTRAR UN SEGUIMIENTO) Tj
+0 -14 Td
+(1. Buscar paciente \(buscador/quick view/dashboard\).) Tj
+0 -14 Td
+(2. Entrar a **Visita de Seguimiento**.) Tj
+0 -14 Td
+(3. Completar cambios clínicos y terapéuticos.) Tj
+0 -14 Td
+(4. Exportar CSV y pegar en la misma hoja de patología del paciente.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Importante:) Tj
+0 -14 Td
+(? Primera visita y seguimiento van en la misma hoja por patología.) Tj
+0 -14 Td
+(? Esto permite ver evolución longitudinal en dashboards.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(6. DASHBOARDS) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(6.1 Dashboard rápido \(buscador\)) Tj
+0 -14 Td
+(Muestra resumen inicial y acceso al dashboard extendido.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(6.2 Dashboard de paciente) Tj
+0 -14 Td
+(Muestra evolución temporal de índices y tratamiento del paciente.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 1757 >>
+stream
+BT
+/F1 11 Tf
+50 792 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(6.3 Estadísticas del servicio) Tj
+0 -14 Td
+(Permite filtrar cohorte y analizar actividad, biomarcadores y tratamientos.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(7. REGLA CRÍTICA DE ACTUALIZACIÓN DE DATOS) Tj
+0 -14 Td
+(La app NO se sincroniza sola con el Excel compartido.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Esto significa:) Tj
+0 -14 Td
+(? Si alguien añade filas nuevas en Excel, tu sesión no las ve automáticamente.) Tj
+0 -14 Td
+(? Debes **recargar la base de datos** en la app para ver información actualizada.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Recomendación práctica:) Tj
+0 -14 Td
+(? Recargar BD periódicamente \(por ejemplo cada 15-30 minutos\) o antes de revisar dashboards.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(8. BUENAS PRÁCTICAS DE CALIDAD DE DATOS) Tj
+0 -14 Td
+(? Pegar cada fila en la hoja correcta \(`ESPA`, `APS`, `AR`\).) Tj
+0 -14 Td
+(? No modificar el orden de columnas del Excel maestro.) Tj
+0 -14 Td
+(? Usar nomenclatura consistente en fármacos y profesionales.) Tj
+0 -14 Td
+(? Diferenciar `NO` de `ND` \(No Determinado\) según protocolo del servicio.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(9. ERRORES FRECUENTES) Tj
+0 -14 Td
+(? ?No encuentro un paciente?: recargar BD y repetir búsqueda.) Tj
+0 -14 Td
+(? ?No salen cambios en estadísticas?: probablemente la sesión no tiene la última versión del) Tj
+0 -14 Td
+(Excel.) Tj
+0 -14 Td
+(? ?Fila mal pegada?: revisar que se pegó en la hoja correcta y en una fila nueva.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(10. ARCHIVOS DE REFERENCIA) Tj
+0 -14 Td
+(? Contrato de datos: `docs/CONTRATO_DATOS_UNIFICADO.md`) Tj
+0 -14 Td
+(? Plantilla AR: `docs/template_ar_excel.md`) Tj
+0 -14 Td
+(? Base de datos maestra: `Hub_Clinico_Maestro.xlsx`) Tj
+ET
+endstream
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000323 00000 n 
+0000002642 00000 n 
+0000002768 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+4577
+%%EOF
