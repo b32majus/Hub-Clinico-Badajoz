@@ -70,10 +70,10 @@ async function loadDatabase(file) {
     try {
         // 1. Lee el archivo como un ArrayBuffer, que es el formato que SheetJS necesita.
         const data = await file.arrayBuffer();
-        
+
         // 2. SheetJS lee los datos binarios y crea un objeto "workbook" (libro de trabajo).
         const workbook = XLSX.read(data);
-        
+
         const dbData = {};
 
         // 3. Itera sobre las hojas de datos de pacientes y profesionales, que tienen una estructura estándar.
@@ -99,8 +99,8 @@ async function loadDatabase(file) {
                         const nombreKey = Object.keys(row).find(key => {
                             const keyLower = key.toLowerCase();
                             return keyLower.includes('nombre') ||
-                                   keyLower === 'name' ||
-                                   keyLower === 'profesional';
+                                keyLower === 'name' ||
+                                keyLower === 'profesional';
                         });
 
                         if (nombreKey && row[nombreKey] !== undefined && !row.Nombre_Completo) {
@@ -117,14 +117,14 @@ async function loadDatabase(file) {
                 dbData[sheetName] = sheetData;
             }
         });
-        
+
         // 4. Procesa de forma ESPECIAL la hoja 'Fármacos' para crear un objeto anidado.
         if (workbook.Sheets['Fármacos']) {
             const farmacosSheet = workbook.Sheets['Fármacos'];
             // Leemos la hoja como un array de arrays (filas y columnas) para tener control total.
             const farmacosJSON = XLSX.utils.sheet_to_json(farmacosSheet, { header: 1 });
             console.log('DEBUG: farmacosJSON (Fármacos sheet raw data):', farmacosJSON);
-            
+
             // Inicializamos el objeto que contendrá las listas de fármacos.
             dbData['Fármacos'] = {
                 Sistemicos: [],
@@ -170,11 +170,11 @@ async function loadDatabase(file) {
     } catch (error) {
         // Si algo falla en cualquier punto, lo capturamos aquí.
         console.error("Error crítico al cargar o procesar la base de datos:", error);
-        
+
         // Reseteamos el estado para evitar que la aplicación trabaje con datos corruptos.
         appState.isLoaded = false;
         appState.db = null;
-        
+
         // 7. Devuelve 'false' para indicar que la operación falló.
         return false;
     }
@@ -200,17 +200,17 @@ function getFarmacosPorTipo(tipo) {
         console.warn('⚠ Base de datos no cargada. No se pueden obtener fármacos.');
         return [];
     }
-    
+
     // Mapeo para mayor flexibilidad y compatibilidad
     const tipoMapping = {
         'Sistemicos': ['Sistemicos', 'Tratamientos_Sistemicos', 'sistemicos'],
         'FAMEs': ['FAMEs', 'fames'],
         'Biologicos': ['Biologicos', 'biologicos']
     };
-    
+
     // Intentar encontrar el tipo solicitado en múltiples posibles claves
     const possibleKeys = tipoMapping[tipo] || [tipo];
-    
+
     for (const key of possibleKeys) {
         if (appState.db?.Fármacos?.[key] && Array.isArray(appState.db.Fármacos[key])) {
             console.log(`✓ Encontrados ${appState.db.Fármacos[key].length} fármacos del tipo "${tipo}" (clave: ${key})`);
@@ -351,7 +351,7 @@ function getPatientHistory(patientId) {
         if (mockPatient) {
             console.log(`getPatientHistory: Paciente ${patientId} encontrado en MockPatients.`);
             // The mock data is already sorted chronologically
-            const sortedVisits = [...mockPatient.visits].sort((a,b) => new Date(b.fechaVisita) - new Date(a.fechaVisita));
+            const sortedVisits = [...mockPatient.visits].sort((a, b) => new Date(b.fechaVisita) - new Date(a.fechaVisita));
             return {
                 allVisits: sortedVisits,
                 latestVisit: sortedVisits[0],
@@ -403,8 +403,8 @@ function extractTreatmentHistory(visits) {
 
         // Extraer tratamiento actual - usar nombres normalizados y del Excel
         let currentTreatment = visit.tratamientoActual || visit.Tratamiento_Actual ||
-                               visit.biologicoSelect || visit.fameSelect || visit.sistemicoSelect ||
-                               visit.Biologico || visit.FAME || visit.Sistémico || null;
+            visit.biologicoSelect || visit.fameSelect || visit.sistemicoSelect ||
+            visit.Biologico || visit.FAME || visit.Sistémico || null;
 
         // Si encontramos un tratamiento nuevo (diferente al anterior), registrarlo
         if (currentTreatment && !seenTreatments.has(currentTreatment)) {
@@ -441,11 +441,11 @@ function extractKeyEvents(visits, pathology) {
         // 1. Registrar cambios explícitos de tratamiento
         if (previousVisit) {
             const currentTx = currentVisit.biologicoSelect || currentVisit.fameSelect ||
-                             currentVisit.sistemicoSelect || currentVisit.Biologico ||
-                             currentVisit.FAME || currentVisit.Sistémico;
+                currentVisit.sistemicoSelect || currentVisit.Biologico ||
+                currentVisit.FAME || currentVisit.Sistémico;
             const previousTx = previousVisit.biologicoSelect || previousVisit.fameSelect ||
-                              previousVisit.sistemicoSelect || previousVisit.Biologico ||
-                              previousVisit.FAME || previousVisit.Sistémico;
+                previousVisit.sistemicoSelect || previousVisit.Biologico ||
+                previousVisit.FAME || previousVisit.Sistémico;
 
             if (currentTx && previousTx && currentTx !== previousTx) {
                 events.push({
@@ -585,7 +585,7 @@ function initDatabaseFromStorage() {
             appState.db = dbData;
             appState.isLoaded = true;
             console.log('✓ Base de datos cargada desde localStorage.');
-            
+
             // Disparar evento para que otros scripts sepan que los datos están listos.
             // Usamos un pequeño timeout para asegurar que los listeners de otros scripts ya estén registrados.
             setTimeout(() => {
@@ -687,6 +687,11 @@ function getAgeValue(record) {
 const METRIC_FIELDS = {
     BASDAI: ['BASDAI_Result', 'BASDAI', 'basdaiResult', 'basdai'],
     ASDAS: ['ASDAS_CRP_Result', 'ASDAS', 'asdasCrpResult', 'asdas'],
+    DAS28_CRP: ['DAS28_CRP', 'das28Crp'],
+    DAS28_ESR: ['DAS28_ESR', 'das28Esr'],
+    CDAI: ['CDAI', 'cdai'],
+    SDAI: ['SDAI', 'sdai'],
+    RAPID3: ['RAPID3_Score', 'RAPID3', 'rapid3Total', 'rapid3'],
     HAQ: ['HAQ_Total', 'HAQ', 'haqResult', 'haq'],
     PCR: ['PCR', 'pcrResult', 'pcr'],
     VSG: ['VSG', 'vsgResult', 'vsg'],
@@ -698,6 +703,12 @@ function resolveMetricKey(metricLabel) {
     const normalized = normalizeString(metricLabel).replace(/\s+/g, '');
     if (normalized === 'basdai') return 'BASDAI';
     if (normalized === 'asdas') return 'ASDAS';
+    if (normalized.includes('das28') && normalized.includes('crp')) return 'DAS28_CRP';
+    if (normalized.includes('das28') && (normalized.includes('esr') || normalized.includes('vsg'))) return 'DAS28_ESR';
+    if (normalized.startsWith('das28')) return 'DAS28_CRP';
+    if (normalized === 'cdai') return 'CDAI';
+    if (normalized === 'sdai') return 'SDAI';
+    if (normalized === 'rapid3') return 'RAPID3';
     if (normalized === 'haq') return 'HAQ';
     if (normalized === 'pcr') return 'PCR';
     if (normalized === 'vsg') return 'VSG';
@@ -715,6 +726,11 @@ function getMetricValue(record, metricLabel) {
 const ACTIVITY_THRESHOLDS = {
     BASDAI: { remission: 2, low: 4, moderate: 6 },
     ASDAS: { remission: 1.3, low: 2.1, moderate: 3.5 },
+    DAS28_CRP: { remission: 2.6, low: 3.2, moderate: 5.1 },
+    DAS28_ESR: { remission: 2.6, low: 3.2, moderate: 5.1 },
+    CDAI: { remission: 2.8, low: 10, moderate: 22 },
+    SDAI: { remission: 3.3, low: 11, moderate: 26 },
+    RAPID3: { remission: 3, low: 6, moderate: 12 },
     HAQ: { remission: 0.5, low: 1.5, moderate: 2 },
     PCR: { remission: 5, low: 10, moderate: 20 },
     VSG: { remission: 20, low: 40, moderate: 60 }
@@ -959,11 +975,14 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
     patients.forEach(p => {
         const patientPathology = p.pathology || '';
 
-        // Extraer métricas usando nombres EXACTOS del Excel
         const basdai = parseFloat(p.BASDAI_Result) || null;
         const asdas = parseFloat(p.ASDAS_CRP_Result) || null;
         const haq = parseFloat(p.HAQ_Total) || null;
-        const rapid3 = parseFloat(p.RAPID3_Score) || null;
+        const rapid3 = parseFloat(p.RAPID3_Score) || parseFloat(p.RAPID3) || null;
+        const das28Crp = parseFloat(p.DAS28_CRP) || parseFloat(p.das28Crp) || null;
+        const das28Esr = parseFloat(p.DAS28_ESR) || parseFloat(p.das28Esr) || null;
+        const cdai = parseFloat(p.CDAI) || parseFloat(p.cdai) || null;
+        const sdai = parseFloat(p.SDAI) || parseFloat(p.sdai) || null;
         const evaDolor = parseFloat(p.EVA_Dolor) || null;
         const evaGlobal = parseFloat(p.EVA_Global) || null;
         const pcr = parseFloat(p.PCR) || null;
@@ -991,6 +1010,9 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
         } else if (patientPathology === 'APS') {
             activityValue = haq;
             activityLabel = 'HAQ';
+        } else if (patientPathology === 'AR') {
+            activityValue = das28Crp !== null ? das28Crp : (das28Esr !== null ? das28Esr : (cdai !== null ? cdai : rapid3));
+            activityLabel = das28Crp !== null ? 'DAS28-CRP' : (das28Esr !== null ? 'DAS28-ESR' : (cdai !== null ? 'CDAI' : 'RAPID3'));
         }
 
         // Si el filtro es específico, usar la métrica correspondiente
@@ -1000,6 +1022,9 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
         } else if (pathologyFilter === 'APS') {
             activityValue = haq;
             activityLabel = 'HAQ';
+        } else if (pathologyFilter === 'AR') {
+            activityValue = das28Crp !== null ? das28Crp : (das28Esr !== null ? das28Esr : (cdai !== null ? cdai : rapid3));
+            activityLabel = das28Crp !== null ? 'DAS28-CRP' : (das28Esr !== null ? 'DAS28-ESR' : (cdai !== null ? 'CDAI' : 'RAPID3'));
         }
 
         if (activityValue !== null && !isNaN(activityValue)) {
@@ -1015,6 +1040,10 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
                 // HAQ: remisión < 0.5, alta >= 2
                 if (haq !== null && haq < 0.5) remission++;
                 if (haq !== null && haq >= 2) highActivity++;
+            } else if (patientPathology === 'AR') {
+                const bucket = getActivityBucket(activityLabel, activityValue);
+                if (bucket === 'Remision') remission++;
+                if (bucket === 'Alta Actividad') highActivity++;
             }
         }
 
@@ -1107,8 +1136,32 @@ function generateRealChartData(patients, filters = {}) {
                 else if (activityValue < 2) activityCounts.moderate++;
                 else activityCounts.high++;
             }
+        } else if (patientPathology === 'AR' || pathologyFilter === 'AR') {
+            // AR: intentar DAS28-CRP -> DAS28-ESR -> CDAI -> RAPID3
+            activityValue = parseFloat(p.DAS28_CRP) || parseFloat(p.das28Crp);
+            activityLabel = 'DAS28-CRP';
+            if (isNaN(activityValue)) {
+                activityValue = parseFloat(p.DAS28_ESR) || parseFloat(p.das28Esr);
+                activityLabel = 'DAS28-ESR';
+            }
+            if (isNaN(activityValue)) {
+                activityValue = parseFloat(p.CDAI) || parseFloat(p.cdai);
+                activityLabel = 'CDAI';
+            }
+            if (isNaN(activityValue)) {
+                activityValue = parseFloat(p.RAPID3_Score) || parseFloat(p.RAPID3);
+                activityLabel = 'RAPID3';
+            }
+
+            if (!isNaN(activityValue) && activityValue >= 0) {
+                const bucket = getActivityBucket(activityLabel, activityValue);
+                if (bucket === 'Remision') activityCounts.remission++;
+                else if (bucket === 'Baja Actividad') activityCounts.low++;
+                else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                else if (bucket === 'Alta Actividad') activityCounts.high++;
+            }
         } else {
-            // Mixto: intentar BASDAI primero, luego HAQ
+            // Mixto: intentar BASDAI primero, luego HAQ, luego DAS28
             activityValue = parseFloat(p.BASDAI_Result);
             if (!isNaN(activityValue) && activityValue >= 0) {
                 if (activityValue < 2) activityCounts.remission++;
@@ -1122,6 +1175,15 @@ function generateRealChartData(patients, filters = {}) {
                     else if (activityValue < 1.5) activityCounts.low++;
                     else if (activityValue < 2) activityCounts.moderate++;
                     else activityCounts.high++;
+                } else {
+                    activityValue = parseFloat(p.DAS28_CRP);
+                    if (!isNaN(activityValue) && activityValue >= 0) {
+                        const thresholds = ACTIVITY_THRESHOLDS['DAS28_CRP'];
+                        if (activityValue < thresholds.remission) activityCounts.remission++;
+                        else if (activityValue < thresholds.low) activityCounts.low++;
+                        else if (activityValue < thresholds.moderate) activityCounts.moderate++;
+                        else activityCounts.high++;
+                    }
                 }
             }
         }
@@ -1297,7 +1359,7 @@ function getRealPoblationalData(filters = {}) {
     // 1. Obtener pacientes según filtro de patología
     let allPatients = [];
     const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
-        ? ['ESPA', 'APS']
+        ? ['ESPA', 'APS', 'AR']
         : [pathologyFilter];
 
     sheetsToProcess.forEach(sheetName => {
@@ -1450,14 +1512,14 @@ if (typeof HubTools !== 'undefined') {
 
     HubTools.data.getFarmsDataFromState = getFarmsDataFromState;
 
-    HubTools.data.loadDrugsData = function() {
+    HubTools.data.loadDrugsData = function () {
         if (!appState.isLoaded || !appState.db.Fármacos) {
             return { FAMEs: [], Biologicos: [], Sistemicos: [] };
         }
         return appState.db.Fármacos;
     };
 
-    HubTools.data.loadProfessionalsData = function() {
+    HubTools.data.loadProfessionalsData = function () {
         if (!appState.isLoaded || !appState.db.Profesionales) {
             return [];
         }

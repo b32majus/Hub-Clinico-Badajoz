@@ -135,7 +135,7 @@ function initializeDatePresets() {
             presetBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            switch(preset) {
+            switch (preset) {
                 case 'month':
                     fromDate.setMonth(today.getMonth() - 1);
                     break;
@@ -238,7 +238,7 @@ function initializeFilters() {
     // Poblar selectores de correlación
     const scatterX = document.getElementById('scatterX');
     const scatterY = document.getElementById('scatterY');
-    const options = ['BASDAI', 'ASDAS', 'HAQ', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+    const options = ['BASDAI', 'ASDAS', 'HAQ', 'DAS28_CRP', 'CDAI', 'SDAI', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
 
     options.forEach((option, index) => {
         const optX = document.createElement('option');
@@ -291,6 +291,12 @@ function syncActivityIndexForPathology() {
     }
     if (pathology === 'ESPA' && current === 'HAQ') {
         activityIndex.value = 'BASDAI';
+    }
+    if (pathology === 'AR') {
+        const arIndices = ['DAS28_CRP', 'DAS28_ESR', 'CDAI', 'SDAI', 'RAPID3'];
+        if (!arIndices.includes(current)) {
+            activityIndex.value = 'DAS28_CRP';
+        }
     }
 }
 
@@ -550,11 +556,24 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'PASI', label: 'PASI', unit: '' },
             { key: 'LEI', label: 'LEI', unit: '' }
         ];
+    } else if (pathologyType && (pathologyType.includes('DAS28') || pathologyType === 'CDAI' || pathologyType === 'SDAI' || pathologyType === 'RAPID3')) {
+        // AR: metrics
+        metricsToShow = [
+            { key: 'DAS28_CRP', label: 'DAS28-CRP', unit: '' },
+            { key: 'DAS28_ESR', label: 'DAS28-ESR', unit: '' },
+            { key: 'CDAI', label: 'CDAI', unit: '' },
+            { key: 'SDAI', label: 'SDAI', unit: '' },
+            { key: 'RAPID3', label: 'RAPID3', unit: '' },
+            { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
+            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'VSG', label: 'VSG', unit: ' mm/h' }
+        ];
     } else {
         // Mixto: mostrar las principales
         metricsToShow = [
             { key: 'BASDAI', label: 'BASDAI', unit: '' },
             { key: 'HAQ', label: 'HAQ', unit: '' },
+            { key: 'DAS28_CRP', label: 'DAS28-CRP', unit: '' },
             { key: 'ASDAS', label: 'ASDAS', unit: '' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' }
         ];
@@ -628,7 +647,7 @@ function renderActivityDonutChart(canvasId, data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                             const percentage = ((context.raw / total) * 100).toFixed(1);
                             return `${context.label}: ${context.raw} (${percentage}%)`;
@@ -780,7 +799,7 @@ function renderCorrelationScatterChart(canvasId, chartConfig) {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return `${scatterX}: ${context.parsed.x.toFixed(1)}, ${scatterY}: ${context.parsed.y.toFixed(1)}`;
                         }
                     }
