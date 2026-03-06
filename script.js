@@ -185,6 +185,9 @@ function initSessionGate() {
         return;
     }
 
+    // Mostrar el overlay (arranca oculto por defecto en el HTML)
+    gate.classList.remove('hidden');
+
     var stepLoad   = document.getElementById('gateStepLoad');
     var stepSelect = document.getElementById('gateStepSelect');
     var gateLoadBtn    = document.getElementById('gateLoadBtn');
