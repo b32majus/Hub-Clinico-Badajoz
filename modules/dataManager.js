@@ -606,6 +606,60 @@ function parseVisitDate(dateStr) {
     return new Date();
 }
 
+function getPatientIdentityKey(record, fallbackPathology) {
+    var pathology = normalizeString(
+        (record && (record.pathology || record.Diagnostico_Primario || record.diagnosticoPrimario)) ||
+        fallbackPathology ||
+        ''
+    );
+    var patientId = normalizeString((record && (record.ID_Paciente || record.idPaciente || record._id)) || '');
+    if (patientId) return pathology + '::' + patientId;
+
+    var patientName = normalizeString((record && (record.Nombre_Paciente || record.nombrePaciente || record._nombre)) || '');
+    if (patientName) return pathology + '::name::' + patientName;
+
+    return pathology + '::row';
+}
+
+function selectLatestVisitPerPatient(records) {
+    if (!Array.isArray(records) || records.length === 0) return [];
+
+    var latestByPatient = new Map();
+
+    records.forEach(function(record, index) {
+        var key = getPatientIdentityKey(record, record && record.pathology);
+        var candidateDate = parseVisitDate((record && (record.Fecha_Visita || record.fechaVisita || record._fecha)) || '');
+        var existing = latestByPatient.get(key);
+
+        if (!existing) {
+            latestByPatient.set(key, {
+                record: record,
+                visitDate: candidateDate,
+                sourceIndex: index
+            });
+            return;
+        }
+
+        var candidateTime = candidateDate.getTime();
+        var existingTime = existing.visitDate.getTime();
+        if (candidateTime > existingTime || (candidateTime === existingTime && index > existing.sourceIndex)) {
+            latestByPatient.set(key, {
+                record: record,
+                visitDate: candidateDate,
+                sourceIndex: index
+            });
+        }
+    });
+
+    return Array.from(latestByPatient.values())
+        .sort(function(a, b) {
+            return b.visitDate.getTime() - a.visitDate.getTime();
+        })
+        .map(function(entry) {
+            return entry.record;
+        });
+}
+
 /**
  * Extrae el historial de cambios de tratamiento a partir de las visitas
  * @param {Array} visits - Array de visitas ordenadas cronolgicamente (reciente primero)
@@ -1582,7 +1636,8 @@ function generateRealChartData(patients, filters = {}) {
 
 /**
  * Obtiene datos poblacionales reales del Excel
- * Normaliza las columnas y calcula KPIs segn la patologa seleccionada
+ * Para estadsticas poblacionales se usa una nica fila por paciente:
+ * siempre la ltima visita registrada, para reflejar el estado actual.
  */
 function getRealPoblationalData(filters = {}) {
     if (!appState.isLoaded || !appState.db) {
@@ -1593,8 +1648,7 @@ function getRealPoblationalData(filters = {}) {
     const pathologyFilter = filters.pathology || 'Todos';
     console.log('?? getRealPoblationalData - Filtro patologa:', pathologyFilter);
 
-    // 1. Obtener pacientes segn filtro de patologa
-    let allPatients = [];
+    let allVisits = [];
     const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
         ? ['ESPA', 'APS', 'AR']
         : [pathologyFilter];
@@ -1604,29 +1658,32 @@ function getRealPoblationalData(filters = {}) {
             console.log(`?? Procesando hoja ${sheetName}: ${appState.db[sheetName].length} registros`);
 
             appState.db[sheetName].forEach(visit => {
-                // Mantener TODAS las columnas originales del Excel + aadir normalizacin
                 const normalizedVisit = {
-                    ...visit,  // Mantener todas las columnas originales
+                    ...visit,
                     pathology: sheetName,
-                    // Normalizar solo para la tabla de pacientes (campos de visualizacin)
                     _id: visit.ID_Paciente || '',
                     _nombre: visit.Nombre_Paciente || '',
                     _sexo: visit.Sexo || '',
                     _fecha: visit.Fecha_Visita || '',
                     _tratamiento: visit.Tratamiento_Actual || 'Sin tratamiento'
                 };
-                allPatients.push(normalizedVisit);
+                allVisits.push(normalizedVisit);
             });
         }
     });
 
-    console.log(`?? Total pacientes cargados: ${allPatients.length}`);
+    const latestPatients = selectLatestVisitPerPatient(allVisits);
 
-    // Debug: mostrar columnas del primer paciente
-    if (allPatients.length > 0) {
-        const firstPatient = allPatients[0];
+    console.log('?? Cohorte estadstica consolidada:', {
+        totalVisitas: allVisits.length,
+        totalPacientesUnicos: latestPatients.length,
+        pathologyFilter: pathologyFilter
+    });
+
+    if (latestPatients.length > 0) {
+        const firstPatient = latestPatients[0];
         console.log('?? Columnas disponibles:', Object.keys(firstPatient).slice(0, 15));
-        console.log('?? Valores de mtricas (primer paciente):', {
+        console.log('?? Valores de mtricas (primer paciente nico):', {
             BASDAI_Result: firstPatient.BASDAI_Result,
             ASDAS_CRP_Result: firstPatient.ASDAS_CRP_Result,
             HAQ_Total: firstPatient.HAQ_Total,
@@ -1636,17 +1693,12 @@ function getRealPoblationalData(filters = {}) {
         });
     }
 
-    // 2. Aplicar filtros
-    let filteredCohort = applyFiltersToPatients(allPatients, filters);
-    console.log(`?? Despus de filtros: ${filteredCohort.length} pacientes`);
+    let filteredCohort = applyFiltersToPatients(latestPatients, filters);
+    console.log(`?? Despus de filtros: ${filteredCohort.length} pacientes nicos`);
 
-    // 3. Calcular KPIs pasando el filtro de patologa
     const kpis = calculateRealKPIs(filteredCohort, pathologyFilter);
-
-    // 4. Generar datos para grficos
     const chartData = generateRealChartData(filteredCohort, filters);
 
-    // Debug: verificar datos para tabla
     console.log('?? Datos para tabla:', {
         total: filteredCohort.length,
         primero: filteredCohort[0] ? {
@@ -1660,7 +1712,6 @@ function getRealPoblationalData(filters = {}) {
 
     return { filteredCohort, kpis, chartData };
 }
-
 function getPoblationalData(filters = {}) {
     console.log('?? getPoblationalData llamado con filtros:', JSON.stringify(filters));
 
