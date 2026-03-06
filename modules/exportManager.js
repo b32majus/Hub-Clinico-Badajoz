@@ -1094,22 +1094,29 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
         
         console.log(`📋 CSV generado para hoja: ${hojaExcel}`);
         
-        // Copiar al portapapeles con manejo de errores mejorado
-        if (!navigator.clipboard || !navigator.clipboard.writeText) {
-            throw new Error('API de portapapeles no disponible en este navegador');
-        }
-        
-        navigator.clipboard.writeText(csvData).then(() => {
-            console.log('✓ Datos copiados al portapapeles');
-            
-            // Mostrar notificación dinámica de éxito
+        // Guardar como fila pendiente por si falla el portapapeles
+        addPendingRow({
+            content: csvData,
+            sheet: hojaExcel,
+            pathology: diagnostico,
+            type: tipoVisita,
+            includeBom: false
+        });
+
+        // Copiar al portapapeles con fallback a modal de copia manual
+        copyTextWithFallback(csvData, {
+            manualText: csvData,
+            modalTitle: 'Copia manual de CSV',
+            modalMessage: 'No se pudo copiar autom\u00e1ticamente. Copie el texto y p\u00e9guelo en la hoja ' + hojaExcel + '.',
+            manualNotification: 'No se pudo copiar autom\u00e1ticamente. Use la ventana de copia manual.'
+        }).then(function(result) {
+            console.log('\u2713 Datos copiados al portapapeles');
             if (typeof HubTools !== 'undefined' && HubTools.utils && HubTools.utils.mostrarNotificacion) {
-                HubTools.utils.mostrarNotificacion(`Datos copiados al portapapeles. Pega en la hoja: ${hojaExcel}`, 'success');
-            } else {
-                alert(`Datos copiados al portapapeles. Pega en la hoja: ${hojaExcel}`);
+                HubTools.utils.mostrarNotificacion('Datos copiados al portapapeles. Pega en la hoja: ' + hojaExcel, 'success');
             }
-        }).catch(err => {
-            console.error('❌ Error al copiar al portapapeles:', err);
+            mostrarChecklistPostExport(hojaExcel);
+        }).catch(function(err) {
+            console.error('\u274c Error al copiar al portapapeles:', err);
             if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion('Error al copiar los datos al portapapeles.', 'error');
             } else {
@@ -1367,6 +1374,38 @@ function exportCohortToCSV(cohortData) {
 
 
 
+/**
+ * Muestra checklist de pasos post-exportación tras copiar CSV al portapapeles
+ */
+function mostrarChecklistPostExport(hojaExcel) {
+    var prev = document.getElementById('postExportChecklist');
+    if (prev) prev.remove();
+    var el = document.createElement('div');
+    el.id = 'postExportChecklist';
+    el.className = 'post-export-checklist';
+    el.setAttribute('role', 'status');
+    el.innerHTML =
+        '<div class="post-export-checklist__header">' +
+            '<i class="fas fa-check-circle"></i> CSV copiado al portapapeles' +
+        '</div>' +
+        '<div class="post-export-checklist__body">' +
+            '<p class="post-export-checklist__subtitle">Pasos siguientes:</p>' +
+            '<ol class="post-export-checklist__steps">' +
+                '<li>Pega en la hoja <strong>' + hojaExcel + '</strong> del Excel</li>' +
+                '<li>Guarda el archivo Excel</li>' +
+                '<li>Recarga la BD en la app si otros profesionales han a\u00f1adido datos</li>' +
+            '</ol>' +
+        '</div>' +
+        '<button type="button" class="post-export-checklist__dismiss">Entendido <i class="fas fa-check"></i></button>';
+    document.body.appendChild(el);
+    var dismiss = function() {
+        el.style.animation = 'slideOut 0.3s ease';
+        setTimeout(function() { el.remove(); }, 300);
+    };
+    el.querySelector('.post-export-checklist__dismiss').addEventListener('click', dismiss);
+    setTimeout(dismiss, 15000);
+}
+
 // Exponer funciones al namespace global HubTools
 
 if (typeof HubTools !== 'undefined') {
@@ -1384,6 +1423,8 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.generarFilaCSV_AR_Seguimiento = generarFilaCSV_AR_Seguimiento;
 
     HubTools.export.exportarYCopiarCSV = exportarYCopiarCSV;
+
+    HubTools.export.mostrarChecklistPostExport = mostrarChecklistPostExport;
 
     HubTools.export.exportarTXT = exportarTXT;
 

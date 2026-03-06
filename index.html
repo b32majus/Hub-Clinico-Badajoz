@@ -1,26 +1,26 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub Clínico - Reumatología</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20260306b">
+    <link rel="stylesheet" href="style.css?v=20260306l">
     <!-- Cargar SheetJS para manejo de Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <!-- MÓDULOS HUBTOOLS - ORDEN CRÍTICO: hubTools.js PRIMERO -->
-    <script src="modules/hubTools.js?v=20260306b"></script>
-    <script src="modules/utils.js?v=20260306b"></script>
-    <script src="modules/fieldNormalizer.js?v=20260306b"></script>
-    <script src="modules/mockPatients.js?v=20260306b"></script>
-    <script src="modules/scoreCalculators.js?v=20260306b"></script>
-    <script src="modules/homunculus.js?v=20260306b"></script>
-    <script src="modules/dataManager.js?v=20260306b"></script>
-    <script src="modules/exportManager.js?v=20260306b"></script>
+    <script src="modules/hubTools.js?v=20260306l"></script>
+    <script src="modules/utils.js?v=20260306l"></script>
+    <script src="modules/fieldNormalizer.js?v=20260306l"></script>
+    <script src="modules/mockPatients.js?v=20260306l"></script>
+    <script src="modules/scoreCalculators.js?v=20260306l"></script>
+    <script src="modules/homunculus.js?v=20260306l"></script>
+    <script src="modules/dataManager.js?v=20260306l"></script>
+    <script src="modules/exportManager.js?v=20260306l"></script>
 
     <!-- Scripts globales -->
-    <script src="script.js?v=20260306b"></script>
+    <script src="script.js?v=20260306l"></script>
 </head>
 <body>
 
@@ -75,6 +75,13 @@
                 </ul>
             </div>
 
+            <div class="db-status-indicator db-status-indicator--empty" id="dbStatusIndicator" role="status" title="Clic para cargar/recargar BD">
+                <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+                <div class="db-status-indicator__text">
+                    <span class="db-status-indicator__label" id="dbStatusLabel">BD no cargada</span>
+                    <span class="db-status-indicator__time" id="dbStatusTime"></span>
+                </div>
+            </div>
             <div class="sidebar-footer">v. 1.0.0</div>
         </aside>
 
@@ -88,7 +95,7 @@
             </header>
 
             <div class="csv-section">
-                <input type="file" id="csvFileInput" accept=".xlsx" hidden>
+                <input type="file" id="excelFileInput" accept=".xlsx" hidden>
                 <button id="csvBtn" class="csv-button" type="button">
                     <i class="fas fa-database" aria-hidden="true"></i>
                     Cargar Base de Datos (.xlsx)

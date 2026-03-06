@@ -42,6 +42,14 @@ function formatDisplayDate(value) {
     return value;
 }
 
+function inferPathologyFromPatientId(id) {
+    var normalized = (id || '').toString().trim().toLowerCase();
+    if (normalized.startsWith('esp')) return 'espa';
+    if (normalized.startsWith('aps')) return 'aps';
+    if (normalized.startsWith('ar')) return 'ar';
+    return '';
+}
+
 function normalizeRecord(record, extra) {
     if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
         return HubTools.normalizer.normalizeRecord(record, extra);
@@ -77,6 +85,87 @@ function updatePendingRowsIndicator() {
     if (countEl) countEl.textContent = String(rows.length);
     if (hintEl) hintEl.textContent = rows.length ? ('Última: ' + rows[0].sheet + ' · ' + ((rows[0].pathology || '').toUpperCase())) : 'Sin pendientes';
     indicator.classList.toggle('hidden', rows.length === 0);
+}
+
+// === Indicador de estado de BD en sidebar ===
+
+function ensureExcelFileInput() {
+    var input = document.getElementById('excelFileInput') || document.getElementById('csvFileInput');
+    if (input && input.id !== 'excelFileInput') {
+        input.id = 'excelFileInput';
+    }
+    if (!input) {
+        input = document.createElement('input');
+        input.type = 'file';
+        input.id = 'excelFileInput';
+        input.accept = '.xlsx';
+        input.hidden = true;
+        document.body.appendChild(input);
+    }
+    return input;
+}
+
+function formatRelativeTime(timestamp) {
+    var parsed = parseInt(timestamp, 10);
+    if (!parsed) return '';
+    var diffMs = Math.max(0, Date.now() - parsed);
+    var diffMinutes = Math.floor(diffMs / 60000);
+    if (diffMinutes < 60) return 'hace ' + diffMinutes + ' min';
+    var diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return 'hace ' + diffHours + 'h';
+    var diffDays = Math.floor(diffHours / 24);
+    return 'hace ' + diffDays + ' días';
+}
+
+function updateDbStatus() {
+    var indicator = document.getElementById('dbStatusIndicator');
+    var icon = document.getElementById('dbStatusIcon');
+    var label = document.getElementById('dbStatusLabel');
+    var time = document.getElementById('dbStatusTime');
+    if (!indicator || !icon || !label || !time) return;
+
+    var hasDb = !!localStorage.getItem('hubClinicoDB');
+    var timestamp = parseInt(localStorage.getItem('hubClinicoDB_loadTime') || '', 10);
+    var isLoaded = hasDb && !!timestamp;
+
+    indicator.classList.remove('db-status-indicator--loaded', 'db-status-indicator--stale', 'db-status-indicator--empty');
+
+    if (!isLoaded) {
+        indicator.classList.add('db-status-indicator--empty');
+        icon.className = 'fas fa-database db-status-indicator__icon';
+        label.textContent = 'BD no cargada';
+        time.textContent = '';
+        return;
+    }
+
+    var elapsedMinutes = Math.floor((Date.now() - timestamp) / 60000);
+    var isStale = elapsedMinutes >= 30;
+    indicator.classList.add(isStale ? 'db-status-indicator--stale' : 'db-status-indicator--loaded');
+    icon.className = 'fas ' + (isStale ? 'fa-exclamation-triangle' : 'fa-check-circle') + ' db-status-indicator__icon';
+    label.textContent = 'BD cargada';
+    time.textContent = '· ' + formatRelativeTime(timestamp);
+}
+
+function initDbStatusIndicator() {
+    var indicator = document.getElementById('dbStatusIndicator');
+    if (!indicator) return;
+
+    if (!indicator.dataset.bound) {
+        indicator.addEventListener('click', function() {
+            ensureExcelFileInput().click();
+        });
+        indicator.dataset.bound = 'true';
+    }
+
+    if (!window.__hubDbStatusListenersBound) {
+        window.addEventListener('databaseLoaded', updateDbStatus);
+        document.addEventListener('databaseLoaded', updateDbStatus);
+        window.__hubDbStatusListenersBound = true;
+    }
+
+    if (window.__hubDbStatusInterval) clearInterval(window.__hubDbStatusInterval);
+    window.__hubDbStatusInterval = setInterval(updateDbStatus, 60000);
+    updateDbStatus();
 }
 
 
@@ -509,7 +598,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- DOM Elements ---
     const csvBtn = document.getElementById('csvBtn');
-    const csvFileInput = document.getElementById('csvFileInput');
+    const csvFileInput = ensureExcelFileInput();
     const csvMessage = document.getElementById('csvMessage');
     const csvError = document.getElementById('csvError');
     const professionalSelect = document.getElementById('professionalSelect');
@@ -717,6 +806,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Also refresh patient datalist with database patients
         populatePatientDatalist();
+        // Actualizar indicador de estado de BD
+        updateDbStatus();
     });
 
     // --- Event Listeners: Navigation Buttons ---
@@ -761,6 +852,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updatePendingRowsIndicator();
     window.addEventListener('pendingRowsUpdated', updatePendingRowsIndicator);
+
+    // Inicializar indicador de estado de BD en sidebar
+    initDbStatusIndicator();
 
     // On initial load, try to populate from already loaded data (if user reloads hub page)
     if (typeof HubTools !== 'undefined' && typeof HubTools.data !== 'undefined' && typeof HubTools.data.getProfesionales !== 'undefined') {

@@ -1,6 +1,6 @@
 // /modules/dataManager.js
 // ACTUALIZACIN: Patrn clsico (sin import/export) + funciones adicionales para Fase 2
-let appState = { isLoaded: false, db: null };
+let appState = { isLoaded: false, db: null, lastLoadedTime: null };
 
 /**
  * Guarda la base de datos en localStorage con manejo inteligente de tamao
@@ -358,6 +358,8 @@ async function loadDatabase(file) {
         // 5. Actualiza el estado global de la aplicacin.
         appState.db = dbData;
         appState.isLoaded = true;
+        appState.lastLoadedTime = Date.now();
+        localStorage.setItem('hubClinicoDB_loadTime', String(appState.lastLoadedTime));
 
         console.log("Base de datos cargada y procesada con xito:", appState.db);
 
@@ -860,6 +862,7 @@ function initDatabaseFromStorage() {
             const dbData = JSON.parse(storedDb);
             appState.db = dbData;
             appState.isLoaded = true;
+            appState.lastLoadedTime = parseInt(localStorage.getItem('hubClinicoDB_loadTime') || '', 10) || null;
             console.log('? Base de datos cargada desde localStorage.');
 
             // Disparar evento para que otros scripts sepan que los datos estn listos.
