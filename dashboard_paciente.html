@@ -20,28 +20,18 @@
 
             <div class="user-block">
                 <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
-                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
-                    <i class="fas fa-exchange-alt"></i>
+                <span class="user-name" id="currentProfessional"></span>
+                <button type="button" class="logout-btn" id="logoutBtn" aria-label="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
 
-            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
-                <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
-                <select id="professionalSelect"></select>
-                <div class="selector-actions">
-                    <button type="button" id="confirmProfessionalBtn" class="selector-btn primary">Aplicar</button>
-                    <button type="button" id="cancelProfessionalBtn" class="selector-btn">Cancelar</button>
-                </div>
-            </div>
-
             <div class="search-container">
-                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar Paciente por ID..." list="patientIds" autocomplete="off">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
                 <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times-circle"></i>
                 </button>
-                <datalist id="patientIds"></datalist>
             </div>
 
             <div class="nav-section">

@@ -146,6 +146,124 @@ function updateDbStatus() {
     time.textContent = '· ' + formatRelativeTime(timestamp);
 }
 
+// === Sidebar unificado ===
+
+function initSidebar() {
+    // Detectar p\u00e1gina actual y marcar nav-link activo
+    var currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    document.querySelectorAll('.nav-link').forEach(function(link) {
+        var href = (link.getAttribute('href') || '').toLowerCase();
+        link.classList.toggle('active', href === currentPage);
+    });
+
+    // Cargar profesional desde localStorage
+    var stored = localStorage.getItem('hubSelectedProfessional');
+    var label = document.getElementById('currentProfessional');
+    if (label && stored) label.textContent = stored;
+
+    // Inicializar indicador de BD
+    initDbStatusIndicator();
+}
+
+// === Sesi\u00f3n de profesional ===
+
+function checkProfessionalSession() {
+    var currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    if (currentPage === 'index.html') return;
+    if (!localStorage.getItem('hubSelectedProfessional')) {
+        window.location.href = 'index.html';
+    }
+}
+
+function initSessionGate() {
+    var gate = document.getElementById('sessionGate');
+    if (!gate) return;
+
+    // Si ya hay profesional, ocultar overlay y continuar
+    if (localStorage.getItem('hubSelectedProfessional')) {
+        gate.classList.add('hidden');
+        return;
+    }
+
+    var stepLoad   = document.getElementById('gateStepLoad');
+    var stepSelect = document.getElementById('gateStepSelect');
+    var gateLoadBtn    = document.getElementById('gateLoadBtn');
+    var gateExcelInput = document.getElementById('gateExcelInput');
+    var gateError      = document.getElementById('gateLoadError');
+    var gateProfSelect = document.getElementById('gateProfessionalSelect');
+    var gateConfirmBtn = document.getElementById('gateConfirmBtn');
+
+    function populateGateSelect() {
+        if (!gateProfSelect || typeof HubTools === 'undefined') return;
+        var pros = HubTools.data.getProfesionales() || [];
+        gateProfSelect.innerHTML = '<option value="" disabled selected>Seleccionar profesional...</option>';
+        pros.forEach(function(p) {
+            var opt = document.createElement('option');
+            opt.value = p.Nombre_Completo;
+            opt.textContent = p.Nombre_Completo;
+            gateProfSelect.appendChild(opt);
+        });
+    }
+
+    function showSelectStep() {
+        if (stepLoad) stepLoad.classList.add('hidden');
+        if (stepSelect) stepSelect.classList.remove('hidden');
+        populateGateSelect();
+    }
+
+    // Si la BD ya est\u00e1 en cach\u00e9, ir directamente al paso de selecci\u00f3n
+    if (localStorage.getItem('hubClinicoDB')) {
+        showSelectStep();
+    }
+
+    if (gateLoadBtn && gateExcelInput) {
+        gateLoadBtn.addEventListener('click', function() { gateExcelInput.click(); });
+        gateExcelInput.addEventListener('change', function() {
+            var file = gateExcelInput.files && gateExcelInput.files[0];
+            if (!file) return;
+            if (gateError) gateError.classList.add('hidden');
+            HubTools.data.loadDatabase(file).then(function(ok) {
+                if (ok) {
+                    document.dispatchEvent(new CustomEvent('databaseLoaded'));
+                    showSelectStep();
+                } else {
+                    if (gateError) { gateError.textContent = 'Error al cargar. Verifique el archivo.'; gateError.classList.remove('hidden'); }
+                }
+            }).catch(function() {
+                if (gateError) { gateError.textContent = 'Error cr\u00edtico al procesar el archivo.'; gateError.classList.remove('hidden'); }
+            });
+        });
+    }
+
+    if (gateProfSelect) {
+        gateProfSelect.addEventListener('change', function() {
+            if (gateConfirmBtn) gateConfirmBtn.disabled = !gateProfSelect.value;
+        });
+    }
+
+    if (gateConfirmBtn) {
+        gateConfirmBtn.addEventListener('click', function() {
+            var sel = gateProfSelect ? gateProfSelect.value : '';
+            if (!sel) return;
+            localStorage.setItem('hubSelectedProfessional', sel);
+            var label = document.getElementById('currentProfessional');
+            if (label) label.textContent = sel;
+            gate.classList.add('hidden');
+        });
+    }
+}
+
+// === Cierre de sesi\u00f3n ===
+
+function initLogoutBtn() {
+    var btn = document.getElementById('logoutBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+        localStorage.removeItem('hubSelectedProfessional');
+        window.location.href = 'index.html';
+    });
+}
+
 function initDbStatusIndicator() {
     var indicator = document.getElementById('dbStatusIndicator');
     if (!indicator) return;
@@ -591,279 +709,257 @@ window.addEventListener('beforeunload', event => {
     }
 });
 
-// --- Initialization on DOM Ready ---
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Iniciando Hub Clínico...');
+// === Autocomplete de pacientes ===
 
+function PatientAutocomplete(inputEl, opts) {
+    var self = this;
+    var options = opts || {};
+    var onSelect = options.onSelect || function() {};
+    var isMain = !!options.mainTheme;
+    var MAX = 8;
+    var MIN_CHARS = 2;
+    var debounceTimer = null;
+    var highlighted = -1;
+    var currentResults = [];
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'patient-autocomplete' + (isMain ? ' patient-autocomplete--main' : '');
+    dropdown.setAttribute('role', 'listbox');
+    inputEl.parentElement.style.position = inputEl.parentElement.style.position || 'relative';
+    inputEl.parentElement.appendChild(dropdown);
+
+    function norm(str) {
+        return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\- ]/g, '');
+    }
+
+    function badgeInfo(path) {
+        var p = (path || '').toLowerCase();
+        if (p === 'espa') return { label: 'EspA', cls: 'espa' };
+        if (p === 'aps')  return { label: 'APs',  cls: 'aps' };
+        if (p === 'ar')   return { label: 'AR',   cls: 'ar' };
+        return { label: '', cls: 'unknown' };
+    }
+
+    function gatherAll() {
+        var list = []; var seen = {};
+        if (typeof HubTools !== 'undefined' && typeof HubTools.data !== 'undefined' && typeof HubTools.data.getAllPatients === 'function') {
+            HubTools.data.getAllPatients().forEach(function(p) {
+                var id = p.ID_Paciente || p.idPaciente || p.ID;
+                if (!id || seen[id]) return;
+                seen[id] = true;
+                list.push({ id: id, name: p.Nombre_Paciente || p.nombrePaciente || p.Nombre || '', pathology: (p.pathology || p.diagnosticoPrimario || p.Diagnostico_Principal || '').toLowerCase() });
+            });
+        }
+        if (typeof window.MockPatients !== 'undefined' && typeof window.MockPatients.list === 'function') {
+            window.MockPatients.list().forEach(function(m) {
+                if (!m.idPaciente || seen[m.idPaciente]) return;
+                seen[m.idPaciente] = true;
+                list.push({ id: m.idPaciente, name: m.nombre || '', pathology: (m.pathology || m.diagnosticoPrimario || '').toLowerCase() });
+            });
+        }
+        return list;
+    }
+
+    function search(term) {
+        var t = norm(term);
+        if (!t || t.length < MIN_CHARS) return [];
+        return gatherAll().filter(function(p) {
+            return norm(p.id).indexOf(t) === 0 || norm(p.name).indexOf(t) !== -1;
+        });
+    }
+
+    function escHtml(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s)); return d.innerHTML; }
+
+    function render(matches, total) {
+        dropdown.innerHTML = '';
+        highlighted = -1;
+        currentResults = matches;
+        if (!matches.length) { dropdown.classList.remove('open'); return; }
+        matches.forEach(function(p, i) {
+            var b = badgeInfo(p.pathology);
+            var item = document.createElement('div');
+            item.className = 'patient-autocomplete__item';
+            item.setAttribute('role', 'option');
+            item.innerHTML =
+                '<span class="patient-autocomplete__id">' + escHtml(p.id) + '</span>' +
+                '<span class="patient-autocomplete__name">' + escHtml(p.name) + '</span>' +
+                (b.label ? '<span class="patient-autocomplete__badge patient-autocomplete__badge--' + b.cls + '">' + b.label + '</span>' : '');
+            item.addEventListener('click', (function(pat) { return function() { select(pat); }; })(p));
+            dropdown.appendChild(item);
+        });
+        if (total > MAX) {
+            var more = document.createElement('div');
+            more.className = 'patient-autocomplete__more';
+            more.textContent = '... y ' + (total - MAX) + ' resultados m\u00e1s';
+            dropdown.appendChild(more);
+        }
+        dropdown.classList.add('open');
+    }
+
+    function select(patient) {
+        inputEl.value = patient.id;
+        close();
+        onSelect(patient.id);
+    }
+
+    function close() {
+        dropdown.classList.remove('open');
+        dropdown.innerHTML = '';
+        currentResults = [];
+        highlighted = -1;
+    }
+
+    function updateHighlight() {
+        var items = dropdown.querySelectorAll('.patient-autocomplete__item');
+        items.forEach(function(el, i) { el.classList.toggle('highlighted', i === highlighted); });
+        if (highlighted >= 0 && items[highlighted]) items[highlighted].scrollIntoView({ block: 'nearest' });
+    }
+
+    inputEl.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function() {
+            var term = inputEl.value.trim();
+            if (term.length < MIN_CHARS) { close(); return; }
+            var all = search(term);
+            render(all.slice(0, MAX), all.length);
+        }, 200);
+    });
+
+    inputEl.addEventListener('keydown', function(e) {
+        if (!dropdown.classList.contains('open')) {
+            if (e.key === 'Enter') { e.preventDefault(); var v = inputEl.value.trim(); if (v) onSelect(v); }
+            return;
+        }
+        if (e.key === 'ArrowDown') { e.preventDefault(); highlighted = Math.min(highlighted + 1, currentResults.length - 1); updateHighlight(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); highlighted = Math.max(highlighted - 1, 0); updateHighlight(); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (highlighted >= 0 && currentResults[highlighted]) select(currentResults[highlighted]); else { var v = inputEl.value.trim(); if (v) { close(); onSelect(v); } } }
+        else if (e.key === 'Escape') close();
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!inputEl.contains(e.target) && !dropdown.contains(e.target)) close();
+    });
+
+    self.close = close;
+}
+
+// --- Initialization on DOM Ready ---
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('\uD83D\uDE80 Iniciando Hub Cl\u00ednico...');
+
+    // Guardia de sesi\u00f3n: redirige a index.html si no hay profesional seleccionado
+    checkProfessionalSession();
+
+    // Inicializar sidebar (active link + profesional + BD status)
+    initSidebar();
+
+    // Inicializar logout
+    initLogoutBtn();
+
+    // Session gate (solo en index.html)
+    initSessionGate();
 
     // --- DOM Elements ---
-    const csvBtn = document.getElementById('csvBtn');
-    const csvFileInput = ensureExcelFileInput();
-    const csvMessage = document.getElementById('csvMessage');
-    const csvError = document.getElementById('csvError');
-    const professionalSelect = document.getElementById('professionalSelect');
-    const currentProfessionalLabel = document.getElementById('currentProfessional');
-    const professionalInput = document.getElementById('professional');
-    const changeProfessionalBtn = document.getElementById('changeProfessionalBtn');
-    const professionalSelector = document.getElementById('professionalSelector');
-    const confirmProfessionalBtn = document.getElementById('confirmProfessionalBtn');
-    const cancelProfessionalBtn = document.getElementById('cancelProfessionalBtn');
-    const patientSearchInput = document.getElementById('patientSearch');
-    const patientIdInput = document.getElementById('patientId');
+    var csvBtn = document.getElementById('csvBtn');
+    var csvFileInput = ensureExcelFileInput();
+    var csvMessage = document.getElementById('csvMessage');
+    var csvError = document.getElementById('csvError');
 
     // --- UI Feedback ---
     function clearMessages() {
-        csvMessage?.classList.add('hidden');
-        if (csvMessage) csvMessage.textContent = '';
-        csvError?.classList.add('hidden');
-        if (csvError) csvError.textContent = '';
+        if (csvMessage) { csvMessage.classList.add('hidden'); csvMessage.textContent = ''; }
+        if (csvError) { csvError.classList.add('hidden'); csvError.textContent = ''; }
     }
 
     function showCsvError(message) {
         if (!csvError) return;
         csvError.textContent = message;
         csvError.classList.remove('hidden');
-        csvMessage?.classList.add('hidden');
+        if (csvMessage) csvMessage.classList.add('hidden');
     }
 
-    function showCsvSuccess(patientCount, professionalCount) {
+    function showCsvSuccess(professionalCount) {
         if (!csvMessage) return;
-        const timestamp = new Date();
-        const formatted = timestamp.toLocaleString('es-ES', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        });
-        csvMessage.innerHTML = `
-            <i class="fas fa-check-circle" aria-hidden="true"></i>
-            <span>Base de datos cargada (${professionalCount} profesionales)</span>
-            <time datetime="${timestamp.toISOString()}">Última carga: ${formatted}</time>
-        `;
+        var ts = new Date();
+        var formatted = ts.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        csvMessage.innerHTML =
+            '<i class="fas fa-check-circle" aria-hidden="true"></i>' +
+            '<span>Base de datos cargada (' + professionalCount + ' profesionales)</span>' +
+            '<time datetime="' + ts.toISOString() + '">\u00daltima carga: ' + formatted + '</time>';
         csvMessage.classList.remove('hidden');
-        csvError?.classList.add('hidden');
+        if (csvError) csvError.classList.add('hidden');
     }
 
     // --- Database Loading ---
     async function handleFileSelection(file) {
         if (!file) return;
-
-        // Verificar que loadDatabase esté disponible
-        if (typeof HubTools === 'undefined' || typeof HubTools.data === 'undefined' || typeof HubTools.data.loadDatabase === 'undefined') {
-            showCsvError('Error: módulo dataManager no cargado. Recargue la página.');
-            console.error('HubTools.data.loadDatabase no está definida. Asegúrese de que dataManager.js se cargó correctamente.');
-            console.error('typeof HubTools:', typeof HubTools);
-            console.error('typeof HubTools.data:', typeof HubTools !== 'undefined' ? typeof HubTools.data : 'N/A');
+        if (typeof HubTools === 'undefined' || !HubTools.data || !HubTools.data.loadDatabase) {
+            showCsvError('Error: m\u00f3dulo dataManager no cargado. Recargue la p\u00e1gina.');
             return;
         }
-
         try {
             clearMessages();
-            const success = await HubTools.data.loadDatabase(file);
+            var success = await HubTools.data.loadDatabase(file);
             if (success) {
                 document.dispatchEvent(new CustomEvent('databaseLoaded'));
-                alert('Base de datos cargada y lista para usar en toda la aplicación.');
-                const professionals = HubTools.data.getProfesionales();
-                populateProfessionalSelect(professionals);
-                showCsvSuccess(0, professionals.length); // Patient count needs implementation
+                var professionals = HubTools.data.getProfesionales();
+                showCsvSuccess(professionals.length);
+                updateDbStatus();
             } else {
                 showCsvError('Error al cargar el archivo Excel. Verifique el formato y la consola.');
             }
         } catch (error) {
-            console.error("Error crítico al procesar el archivo:", error);
-            showCsvError('Error crítico al procesar el archivo.');
+            console.error('Error cr\u00edtico al procesar el archivo:', error);
+            showCsvError('Error cr\u00edtico al procesar el archivo.');
         }
-    }
-
-    // --- Professional Selection ---
-    function populateProfessionalSelect(professionals) {
-        if (!professionalSelect) return;
-        professionalSelect.innerHTML = '<option value="" disabled selected>Seleccionar...</option>';
-        professionals.forEach(prof => {
-            const option = document.createElement('option');
-            option.value = prof.Nombre_Completo;
-            option.textContent = prof.Nombre_Completo;
-            professionalSelect.appendChild(option);
-        });
-    }
-
-    // --- Patient Search Datalist Population ---
-    function populatePatientDatalist() {
-        const datalist = document.getElementById('patientIds');
-        if (!datalist) return;
-
-        datalist.innerHTML = '';
-        const seenIds = new Set();
-
-        const appendOption = (id, label) => {
-            if (!id || seenIds.has(id)) return;
-            const option = document.createElement('option');
-            option.value = id;
-            if (label) {
-                option.label = label;
-            }
-            datalist.appendChild(option);
-            seenIds.add(id);
-        };
-
-        if (typeof window.MockPatients?.list === 'function') {
-            window.MockPatients.list().forEach(summary => {
-                appendOption(summary.idPaciente, `${summary.idPaciente} · ${summary.nombre}`);
-            });
-        }
-
-        if (typeof HubTools?.data?.getAllPatients === 'function') {
-            const dbPatients = HubTools.data.getAllPatients();
-            dbPatients.forEach(patient => {
-                const patientId = patient.ID_Paciente || patient.ID || patient.id || patient.Id;
-                const name = patient.Nombre_Paciente || patient.nombrePaciente || patient.Nombre || patient.nombre;
-                appendOption(patientId, name ? `${patientId} · ${name}` : null);
-            });
-        }
-
-        console.log(`✅ Datalist poblado con ${datalist.children.length} pacientes`);
-    }
-
-    function updateCurrentProfessional(name) {
-        if (currentProfessionalLabel) currentProfessionalLabel.textContent = name;
-        if (professionalInput) professionalInput.value = name;
-        localStorage.setItem('hubSelectedProfessional', name);
-    }
-
-    function loadProfessionalFromStorage() {
-        const stored = localStorage.getItem('hubSelectedProfessional');
-        if (stored) {
-            updateCurrentProfessional(stored);
-        }
-    }
-
-    function toggleProfessionalSelector(shouldShow) {
-        professionalSelector?.classList.toggle('hidden', !shouldShow);
     }
 
     // --- Event Listeners: Navigation Links ---
-    document.querySelectorAll('[data-nav-link]').forEach(link => {
-        link.addEventListener('click', event => {
+    document.querySelectorAll('[data-nav-link]').forEach(function(link) {
+        link.addEventListener('click', function(event) {
             event.preventDefault();
             attemptNavigation(link.getAttribute('href'));
         });
     });
 
-    // --- Event Listeners: CSV/Database Loading ---
+    // --- Event Listeners: CSV/Database Loading (bot\u00f3n de carga manual en index.html) ---
     if (csvBtn && csvFileInput) {
-        csvBtn.addEventListener('click', () => csvFileInput.click());
-        csvFileInput.addEventListener('change', () => {
-            const file = csvFileInput.files && csvFileInput.files[0];
+        csvBtn.addEventListener('click', function() { csvFileInput.click(); });
+        csvFileInput.addEventListener('change', function() {
+            var file = csvFileInput.files && csvFileInput.files[0];
             handleFileSelection(file);
         });
     }
 
-    // --- Event Listeners: Professional Selection ---
-    // Función helper para abrir el selector
-    function openProfessionalSelector() {
-        if (typeof HubTools === 'undefined' || typeof HubTools.data === 'undefined' || typeof HubTools.data.getProfesionales === 'undefined') {
-            showCsvError('Cargue la base de datos primero.');
-            return;
-        }
-        const professionals = HubTools.data.getProfesionales();
-        if (!professionals || professionals.length === 0) {
-            showCsvError('Cargue la base de datos para seleccionar un profesional.');
-            return;
-        }
-        toggleProfessionalSelector(true);
-    }
-
-    // Click en botón del sidebar
-    changeProfessionalBtn?.addEventListener('click', openProfessionalSelector);
-
-    // Click en el input central de profesional
-    professionalInput?.addEventListener('click', openProfessionalSelector);
-
-    // Click en el wrapper del input central (incluyendo el ícono)
-    const professionalInputWrapper = professionalInput?.parentElement;
-    professionalInputWrapper?.addEventListener('click', (e) => {
-        // Prevenir que se dispare dos veces si se hace click directamente en el input
-        if (e.target !== professionalInput) {
-            openProfessionalSelector();
-        }
-    });
-
-    confirmProfessionalBtn?.addEventListener('click', () => {
-        const selected = professionalSelect?.value;
-        if (selected) {
-            updateCurrentProfessional(selected);
-            toggleProfessionalSelector(false);
-        }
-    });
-
-    cancelProfessionalBtn?.addEventListener('click', () => {
-        toggleProfessionalSelector(false);
-    });
-
-    // Listen for the global event to populate professionals if data is loaded on another page
-    document.addEventListener('databaseLoaded', () => {
-        if (typeof HubTools !== 'undefined' && typeof HubTools.data !== 'undefined' && typeof HubTools.data.getProfesionales !== 'undefined') {
-            const professionals = HubTools.data.getProfesionales();
-            populateProfessionalSelect(professionals);
-        }
-        // Also refresh patient datalist with database patients
-        populatePatientDatalist();
-        // Actualizar indicador de estado de BD
+    // --- databaseLoaded: actualizar BD status ---
+    document.addEventListener('databaseLoaded', function() {
         updateDbStatus();
     });
 
     // --- Event Listeners: Navigation Buttons ---
-    document.getElementById('btnNuevaVisita')?.addEventListener('click', () => attemptNavigation('primera_visita.html'));
-    document.getElementById('btnSeguimiento')?.addEventListener('click', () => attemptNavigation('seguimiento.html'));
-    document.getElementById('btnDashboardPaciente')?.addEventListener('click', () => attemptNavigation('dashboard_search.html'));
-    document.getElementById('btnDashboardServicio')?.addEventListener('click', () => attemptNavigation('estadisticas.html'));
+    var btnNueva = document.getElementById('btnNuevaVisita');
+    var btnSeg   = document.getElementById('btnSeguimiento');
+    var btnDash  = document.getElementById('btnDashboardPaciente');
+    var btnStats = document.getElementById('btnDashboardServicio');
+    if (btnNueva) btnNueva.addEventListener('click', function() { attemptNavigation('primera_visita.html'); });
+    if (btnSeg)   btnSeg.addEventListener('click', function() { attemptNavigation('seguimiento.html'); });
+    if (btnDash)  btnDash.addEventListener('click', function() { attemptNavigation('dashboard_search.html'); });
+    if (btnStats) btnStats.addEventListener('click', function() { attemptNavigation('estadisticas.html'); });
 
-    // --- Event Listeners: Patient Search ---
-    // Sidebar search input
-    if (patientSearchInput) {
-        patientSearchInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const patientId = patientSearchInput.value.trim();
-                if (patientId) {
-                    showPatientResults(patientId);
-                }
-            }
-        });
+    // --- Autocomplete: b\u00fasqueda de pacientes ---
+    var sidebarSearch = document.getElementById('patientSearch');
+    if (sidebarSearch) {
+        new PatientAutocomplete(sidebarSearch, { onSelect: function(id) { showPatientResults(id); } });
+    }
+    var centralSearch = document.getElementById('patientId');
+    if (centralSearch) {
+        new PatientAutocomplete(centralSearch, { mainTheme: true, onSelect: function(id) { showPatientResults(id); } });
     }
 
-    // Central search input
-    if (patientIdInput) {
-        patientIdInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                const patientId = patientIdInput.value.trim();
-                if (patientId) {
-                    showPatientResults(patientId);
-                }
-            }
-        });
-    }
-
-    // --- Initial Load ---
-    clearMessages();
-    loadProfessionalFromStorage();
-
-    // Populate patient datalist with hardcoded test patients
-    populatePatientDatalist();
-
+    // --- Pending rows indicator ---
     updatePendingRowsIndicator();
     window.addEventListener('pendingRowsUpdated', updatePendingRowsIndicator);
 
-    // Inicializar indicador de estado de BD en sidebar
-    initDbStatusIndicator();
-
-    // On initial load, try to populate from already loaded data (if user reloads hub page)
-    if (typeof HubTools !== 'undefined' && typeof HubTools.data !== 'undefined' && typeof HubTools.data.getProfesionales !== 'undefined') {
-        const professionals = HubTools.data.getProfesionales();
-        if (professionals && professionals.length > 0) {
-            populateProfessionalSelect(professionals);
-        }
-    }
-
-    console.log('✅ Hub Clínico inicializado correctamente');
+    console.log('\u2705 Hub Cl\u00ednico inicializado correctamente');
 });
 

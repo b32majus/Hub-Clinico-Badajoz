@@ -24,6 +24,38 @@
 </head>
 <body>
 
+    <!-- Session Gate: selección de profesional al inicio de sesión -->
+    <div class="session-gate hidden" id="sessionGate">
+        <div class="session-gate__card">
+            <div class="session-gate__brand">
+                <div class="logo-circle logo-circle--large"><span class="logo-text">HC</span></div>
+                <h1 class="session-gate__title">Hub Clínico<br>Reumatología</h1>
+                <p class="session-gate__hospital">Hospital Universitario de Badajoz</p>
+            </div>
+
+            <div class="session-gate__step" id="gateStepLoad">
+                <p class="session-gate__instruction">Cargue la base de datos para comenzar</p>
+                <input type="file" id="gateExcelInput" accept=".xlsx" hidden>
+                <button type="button" class="session-gate__btn session-gate__btn--primary" id="gateLoadBtn">
+                    <i class="fas fa-database" aria-hidden="true"></i>
+                    Cargar Base de Datos (.xlsx)
+                </button>
+                <div id="gateLoadError" class="session-gate__error hidden"></div>
+            </div>
+
+            <div class="session-gate__step hidden" id="gateStepSelect">
+                <label class="session-gate__label" for="gateProfessionalSelect">Seleccione su perfil profesional</label>
+                <select id="gateProfessionalSelect" class="session-gate__select">
+                    <option value="" disabled selected>Seleccionar profesional...</option>
+                </select>
+                <button type="button" class="session-gate__btn session-gate__btn--confirm" id="gateConfirmBtn" disabled>
+                    <i class="fas fa-check" aria-hidden="true"></i>
+                    Acceder al Hub
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="hub-shell">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -33,34 +65,24 @@
 
             <div class="user-block">
                 <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-                <span class="user-name" id="currentProfessional">Dr. Silvia García</span>
-                <button type="button" class="change-professional-btn" id="changeProfessionalBtn" aria-label="Cambiar profesional">
-                    <i class="fas fa-exchange-alt"></i>
+                <span class="user-name" id="currentProfessional"></span>
+                <button type="button" class="logout-btn" id="logoutBtn" aria-label="Cerrar sesión">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
 
-            <div class="professional-selector hidden" id="professionalSelector" role="dialog" aria-modal="false" aria-labelledby="professionalSelectorLabel">
-                <label id="professionalSelectorLabel" for="professionalSelect">Seleccionar profesional sanitario</label>
-                <select id="professionalSelect"></select>
-                <div class="selector-actions">
-                    <button type="button" id="confirmProfessionalBtn" class="selector-btn primary">Aplicar</button>
-                    <button type="button" id="cancelProfessionalBtn" class="selector-btn">Cancelar</button>
-                </div>
-            </div>
-
             <div class="search-container">
-                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar Paciente por ID..." list="patientIds" autocomplete="off">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
                 <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times-circle"></i>
                 </button>
-                <datalist id="patientIds"></datalist>
             </div>
 
             <div class="nav-section">
                 <h3 class="nav-title">Consulta</h3>
                 <ul class="nav-list">
-                    <li><a href="index.html" class="nav-link active" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
+                    <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-home"></i>Inicio</a></li>
                     <li><a href="primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Nueva Visita</a></li>
                     <li><a href="seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Visita de Seguimiento</a></li>
                 </ul>
@@ -108,15 +130,8 @@
                 <div class="input-group">
                     <label class="input-label" for="patientId">ID del Paciente</label>
                     <div class="input-wrapper">
-                        <input type="text" id="patientId" class="horizontal-input" placeholder="Buscar por ID..." list="patientIds" autocomplete="off">
+                        <input type="text" id="patientId" class="horizontal-input" placeholder="Buscar por ID..." autocomplete="off">
                         <i class="fas fa-search input-icon" aria-hidden="true"></i>
-                    </div>
-                </div>
-                <div class="input-group">
-                    <label class="input-label" for="professional">Profesional Sanitario</label>
-                    <div class="input-wrapper" style="cursor: pointer;">
-                        <input type="text" id="professional" class="horizontal-input" value="Dr. Silvia García" readonly style="cursor: pointer;">
-                        <i class="fas fa-chevron-down input-icon" aria-hidden="true" style="cursor: pointer;"></i>
                     </div>
                 </div>
             </div>
