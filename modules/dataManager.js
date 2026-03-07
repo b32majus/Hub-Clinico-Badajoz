@@ -1,5 +1,5 @@
 // /modules/dataManager.js
-// ACTUALIZACIN: Patrn clsico (sin import/export) + funciones adicionales para Fase 2
+// ACTUALIZACION: Patron clasico (sin import/export) + funciones adicionales para Fase 2
 let appState = { isLoaded: false, db: null, lastLoadedTime: null };
 
 function normalizeSheetKey(value) {
@@ -12,13 +12,13 @@ function normalizeSheetKey(value) {
 }
 
 /**
- * Guarda la base de datos en localStorage con manejo inteligente de tamao
- * Si la BD es demasiado grande, guarda solo una versin limitada
+ * Guarda la base de datos en localStorage con manejo inteligente de tamaño
+ * Si la BD es demasiado grande, guarda solo una versión limitada
  */
 function saveToSessionStorage() {
     /**
-     * Intenta guardar con un lmite de visitas dado.
-     * Retorna true si tuvo xito, false si QuotaExceededError.
+     * Intenta guardar con un límite de visitas dado.
+     * Retorna true si tuvo éxito, false si QuotaExceededError.
      */
     function tryStore(visitLimit) {
         const dbToStore = visitLimit
@@ -49,18 +49,18 @@ function saveToSessionStorage() {
             return;
         }
 
-        // Fallback en cascada: 100  30 visitas
-        console.warn(`Base de datos grande (${sizeMB.toFixed(2)}MB). Intentando versin limitada.`);
+        // Fallback en cascada: 100 -> 30 visitas
+        console.warn(`Base de datos grande (${sizeMB.toFixed(2)}MB). Intentando versión limitada.`);
 
         var stored = false;
         var limits = [100, 30];
         for (var i = 0; i < limits.length; i++) {
             try {
                 tryStore(limits[i]);
-                console.log('Base de datos limitada guardada (' + limits[i] + ' visitas/patologa).');
+                console.log('Base de datos limitada guardada (' + limits[i] + ' visitas/patología).');
                 if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion(
-                        'BD grande. Cach limitado a ltimas ' + limits[i] + ' visitas por patologa.',
+                        'BD grande. Caché limitada a últimas ' + limits[i] + ' visitas por patología.',
                         'warning'
                     );
                 }
@@ -68,7 +68,7 @@ function saveToSessionStorage() {
                 break;
             } catch (innerErr) {
                 if (innerErr.name === 'QuotaExceededError' || innerErr.code === 22) {
-                    console.warn('Fallback a ' + limits[i] + ' visitas fall. Intentando menos...');
+                    console.warn('Fallback a ' + limits[i] + ' visitas falló. Intentando menos...');
                     continue;
                 }
                 throw innerErr; // Error no relacionado con cuota
@@ -76,7 +76,7 @@ function saveToSessionStorage() {
         }
 
         if (!stored) {
-            throw new Error('No se pudo guardar ni con 30 visitas por patologa.');
+            throw new Error('No se pudo guardar ni con 30 visitas por patología.');
         }
 
     } catch (e) {
@@ -87,7 +87,7 @@ function saveToSessionStorage() {
 
         if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
             HubTools.utils.mostrarNotificacion(
-                'Error: No se pudo guardar la BD en cach. Funcionalidad limitada entre pginas.',
+                'Error: No se pudo guardar la BD en caché. Funcionalidad limitada entre páginas.',
                 'error'
             );
         }
@@ -95,9 +95,9 @@ function saveToSessionStorage() {
 }
 
 /**
- * Cabeceras cr?ticas esperadas por hoja cl?nica.
- * No se validan TODAS las columnas, solo las que el c?digo JS lee activamente.
- * La validaci?n acepta aliases heredados cuando el Excel hist?rico y el contrato
+ * Cabeceras críticas esperadas por hoja clínica.
+ * No se validan TODAS las columnas, solo las que el código JS lee activamente.
+ * La validación acepta aliases heredados cuando el Excel histórico y el contrato
  * actual usan nombres distintos para el mismo dato.
  */
 function createHeaderRule(label, aliases) {
@@ -205,10 +205,10 @@ var CRITICAL_HEADERS = {
 };
 
 /**
- * Valida las cabeceras de una hoja cl?nica contra las cabeceras cr?ticas esperadas.
+ * Valida las cabeceras de una hoja clínica contra las cabeceras críticas esperadas.
  * @param {string} sheetName - Nombre de la hoja (ESPA, APS, AR).
- * @param {Array} actualHeaders - Cabeceras reales le?das de la fila 1 del worksheet.
- * @returns {Array} - Lista de cabeceras cr?ticas faltantes (vac?a si todo OK).
+ * @param {Array} actualHeaders - Cabeceras reales leídas de la fila 1 del worksheet.
+ * @returns {Array} - Lista de cabeceras críticas faltantes (vacía si todo OK).
  */
 function validateSheetHeaders(sheetName, actualHeaders) {
     var expected = CRITICAL_HEADERS[sheetName];
@@ -227,20 +227,20 @@ function validateSheetHeaders(sheetName, actualHeaders) {
     if (missing.length > 0) {
         console.warn(
             'Hoja ' + sheetName + ': faltan ' + missing.length +
-            ' columnas cr?ticas: ' + missing.join(', ')
+            ' columnas críticas: ' + missing.join(', ')
         );
     } else {
-        console.log('Hoja ' + sheetName + ': todas las cabeceras cr?ticas presentes.');
+        console.log('Hoja ' + sheetName + ': todas las cabeceras críticas presentes.');
     }
 
     return missing;
 }
 
 /**
- * Carga un archivo .xlsx, lo procesa con SheetJS y lo guarda en el estado de la aplicacin.
- * Es el corazn del dataManager y la nica funcin que interacta directamente con el archivo.
+ * Carga un archivo .xlsx, lo procesa con SheetJS y lo guarda en el estado de la aplicación.
+ * Es el corazón del dataManager y la única función que interactúa directamente con el archivo.
  * @param {File} file - El objeto File seleccionado por el usuario desde un <input type="file">.
- * @returns {Promise<boolean>} - Devuelve 'true' si la carga fue exitosa, 'false' si fall.
+ * @returns {Promise<boolean>} - Devuelve 'true' si la carga fue exitosa, 'false' si falló.
  */
 async function loadDatabase(file) {
     try {
@@ -249,14 +249,14 @@ async function loadDatabase(file) {
 
         const dbData = {};
 
-        // Verificar que las hojas clnicas esperadas existen
+        // Verificar que las hojas clínicas esperadas existen
         var requiredSheets = ['ESPA', 'APS', 'AR'];
         var missingSheets = requiredSheets.filter(function(s) { return !workbook.Sheets[s]; });
         if (missingSheets.length > 0) {
             console.warn('Hojas faltantes en el Excel: ' + missingSheets.join(', '));
             if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion(
-                    'Aviso: El Excel no contiene las hojas: ' + missingSheets.join(', ') + '. Algunos datos no estarn disponibles.',
+                    'Aviso: El Excel no contiene las hojas: ' + missingSheets.join(', ') + '. Algunos datos no estarán disponibles.',
                     'warning'
                 );
             }
@@ -304,7 +304,7 @@ async function loadDatabase(file) {
             }
         });
 
-        // 3b. Validar cabeceras crticas de las hojas clnicas
+        // 3b. Validar cabeceras críticas de las hojas clínicas
         var allMissing = {};
         ['ESPA', 'APS', 'AR'].forEach(function(sheet) {
             if (workbook.Sheets[sheet]) {
@@ -323,7 +323,7 @@ async function loadDatabase(file) {
             var warningLines = Object.keys(allMissing).map(function(sheet) {
                 return sheet + ': ' + allMissing[sheet].join(', ');
             });
-            console.warn('Cabeceras crticas faltantes:\n' + warningLines.join('\n'));
+            console.warn('Cabeceras críticas faltantes:\n' + warningLines.join('\n'));
 
             if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion(
@@ -335,7 +335,7 @@ async function loadDatabase(file) {
         }
 
         // 4. Procesa la hoja 'Frmacos' para crear un objeto anidado.
-        // Estructura vaca por defecto (fallback si la hoja no existe o est vaca)
+        // Estructura vacía por defecto (fallback si la hoja no existe o está vacía)
         dbData['Frmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
 
         const farmacosSheetKey = Object.keys(workbook.Sheets).find(function(k) {
@@ -362,36 +362,36 @@ async function loadDatabase(file) {
                 }
             }
         } else {
-            console.warn('Hoja de Frmacos no encontrada en el Excel. Se usar catlogo vaco.');
+            console.warn('Hoja de Frmacos no encontrada en el Excel. Se usará catálogo vacío.');
         }
 
-        // 5. Actualiza el estado global de la aplicacin.
+        // 5. Actualiza el estado global de la aplicación.
         appState.db = dbData;
         appState.isLoaded = true;
         appState.lastLoadedTime = Date.now();
         localStorage.setItem('hubClinicoDB_loadTime', String(appState.lastLoadedTime));
 
-        console.log("Base de datos cargada y procesada con xito:", appState.db);
+        console.log('Base de datos cargada y procesada con éxito:', appState.db);
 
-        // Disparar evento personalizado para notificar que la BD est cargada
-        window.dispatchEvent(new CustomEvent('databaseLoaded', { detail: appState.db }));
-        console.log('? Evento databaseLoaded disparado');
-
-        // Guardar en localStorage para persistencia entre pginas
+        // Guardar en localStorage antes de notificar para que el shell lea un estado consistente
         saveToSessionStorage();
 
-        // 6. Devuelve 'true' para indicar que la operacin fue exitosa.
+        // Disparar evento personalizado para notificar que la BD está cargada
+        window.dispatchEvent(new CustomEvent('databaseLoaded', { detail: appState.db }));
+        console.log('Evento databaseLoaded disparado.');
+
+        // 6. Devuelve 'true' para indicar que la operación fue exitosa.
         return true;
 
     } catch (error) {
         // Si algo falla en cualquier punto, lo capturamos aqu.
-        console.error("Error crtico al cargar o procesar la base de datos:", error);
+        console.error('Error crítico al cargar o procesar la base de datos:', error);
 
-        // Reseteamos el estado para evitar que la aplicacin trabaje con datos corruptos.
+        // Reseteamos el estado para evitar que la aplicación trabaje con datos corruptos.
         appState.isLoaded = false;
         appState.db = null;
 
-        // 7. Devuelve 'false' para indicar que la operacin fall.
+        // 7. Devuelve 'false' para indicar que la operación falló.
         return false;
     }
 }
@@ -406,14 +406,14 @@ function getProfesionales() {
 }
 
 /**
- * Devuelve la lista de frmacos para un tipo especfico.
- * @param {string} tipo - El tipo de frmaco (e.g., 'Tratamientos_Sistemicos', 'FAMEs', 'Biologicos').
+ * Devuelve la lista de fármacos para un tipo específico.
+ * @param {string} tipo - El tipo de fármaco (e.g., 'Tratamientos_Sistemicos', 'FAMEs', 'Biologicos').
  * @returns {Array} Array de strings con los nombres de los frmacos.
  */
 function getFarmacosPorTipo(tipo) {
     console.log('DEBUG: getFarmacosPorTipo called with tipo:', tipo);
     if (!appState.isLoaded) {
-        console.warn('? Base de datos no cargada. No se pueden obtener frmacos.');
+        console.warn('Base de datos no cargada. No se pueden obtener fármacos.');
         return [];
     }
 
@@ -424,17 +424,17 @@ function getFarmacosPorTipo(tipo) {
         'Biologicos': ['Biologicos', 'biologicos']
     };
 
-    // Intentar encontrar el tipo solicitado en mltiples posibles claves
+    // Intentar encontrar el tipo solicitado en múltiples posibles claves
     const possibleKeys = tipoMapping[tipo] || [tipo];
 
     for (const key of possibleKeys) {
         if (appState.db?.['Frmacos']?.[key] && Array.isArray(appState.db['Frmacos'][key])) {
-            console.log(`? Encontrados ${appState.db['Frmacos'][key].length} frmacos del tipo "${tipo}" (clave: ${key})`);
-            console.log('DEBUG: Returning frmacos:', appState.db['Frmacos'][key]);
+            console.log(`Encontrados ${appState.db['Frmacos'][key].length} fármacos del tipo "${tipo}" (clave: ${key})`);
+            console.log('DEBUG: Returning farmacos:', appState.db['Frmacos'][key]);
             return appState.db['Frmacos'][key];
         }
     }
-    console.warn(`? No se encontraron frmacos para el tipo: ${tipo} con las claves posibles: ${possibleKeys.join(', ')}`);
+    console.warn(`No se encontraron fármacos para el tipo: ${tipo} con las claves posibles: ${possibleKeys.join(', ')}`);
     return [];
 }
 
@@ -857,7 +857,7 @@ function extractKeyEvents(visits, pathology) {
 }
 
 /**
- * Intenta inicializar la base de datos desde localStorage al cargar la pgina.
+ * Intenta inicializar la base de datos desde localStorage al cargar la página.
  * @returns {boolean} - Devuelve 'true' si la carga fue exitosa, 'false' si no.
  */
 function initDatabaseFromStorage() {
@@ -873,20 +873,22 @@ function initDatabaseFromStorage() {
             appState.db = dbData;
             appState.isLoaded = true;
             appState.lastLoadedTime = parseInt(localStorage.getItem('hubClinicoDB_loadTime') || '', 10) || null;
-            console.log('? Base de datos cargada desde localStorage.');
+            console.log('Base de datos cargada desde localStorage.');
 
-            // Disparar evento para que otros scripts sepan que los datos estn listos.
-            // Usamos un pequeo timeout para asegurar que los listeners de otros scripts ya estn registrados.
+            // Disparar evento para que otros scripts sepan que los datos están listos.
+            // Usamos un pequeño timeout para asegurar que los listeners de otros scripts ya están registrados.
             setTimeout(() => {
                 window.dispatchEvent(new CustomEvent('databaseLoaded', { detail: appState.db }));
-                console.log('? Evento databaseLoaded disparado desde localStorage.');
+                console.log('Evento databaseLoaded disparado desde localStorage.');
             }, 100);
 
             return true;
         }
     } catch (e) {
-        console.error('? Error al cargar la base de datos desde localStorage:', e);
+        console.error('Error al cargar la base de datos desde localStorage:', e);
         localStorage.removeItem('hubClinicoDB'); // Limpiar datos corruptos
+        localStorage.removeItem('hubClinicoDB_loadTime');
+        localStorage.removeItem('hubClinicoDB_limited');
     }
 
     return false;
@@ -1648,18 +1650,18 @@ function generateRealChartData(patients, filters = {}) {
 }
 
 /**
- * Obtiene datos poblacionales reales del Excel
- * Para estadsticas poblacionales se usa una nica fila por paciente:
- * siempre la ltima visita registrada, para reflejar el estado actual.
+ * Obtiene datos poblacionales reales del Excel.
+ * Para estadísticas poblacionales se usa una única fila por paciente:
+ * siempre la última visita registrada, para reflejar el estado actual.
  */
 function getRealPoblationalData(filters = {}) {
     if (!appState.isLoaded || !appState.db) {
-        console.warn('?? Base de datos no cargada para estadsticas poblacionales');
+        console.warn('Base de datos no cargada para estadísticas poblacionales.');
         return { filteredCohort: [], kpis: null, chartData: null };
     }
 
     const pathologyFilter = filters.pathology || 'Todos';
-    console.log('?? getRealPoblationalData - Filtro patologa:', pathologyFilter);
+    console.log('getRealPoblationalData - Filtro patología:', pathologyFilter);
 
     let allVisits = [];
     const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
@@ -1668,17 +1670,22 @@ function getRealPoblationalData(filters = {}) {
 
     sheetsToProcess.forEach(sheetName => {
         if (appState.db?.[sheetName]) {
-            console.log(`?? Procesando hoja ${sheetName}: ${appState.db[sheetName].length} registros`);
+            console.log(`Procesando hoja ${sheetName}: ${appState.db[sheetName].length} registros`);
 
             appState.db[sheetName].forEach(visit => {
+                const normalizeRecord = HubTools?.normalizer?.normalizeRecord;
+                const canonicalVisit = typeof normalizeRecord === 'function'
+                    ? normalizeRecord(visit, { pathology: sheetName, diagnosticoPrimario: sheetName.toLowerCase() })
+                    : visit;
                 const normalizedVisit = {
                     ...visit,
+                    ...canonicalVisit,
                     pathology: sheetName,
-                    _id: visit.ID_Paciente || '',
-                    _nombre: visit.Nombre_Paciente || '',
-                    _sexo: visit.Sexo || '',
-                    _fecha: visit.Fecha_Visita || '',
-                    _tratamiento: visit.Tratamiento_Actual || 'Sin tratamiento'
+                    _id: canonicalVisit?.idPaciente || visit.ID_Paciente || '',
+                    _nombre: canonicalVisit?.nombrePaciente || visit.Nombre_Paciente || '',
+                    _sexo: canonicalVisit?.sexoPaciente || visit.Sexo || '',
+                    _fecha: canonicalVisit?.fechaVisita || visit.Fecha_Visita || '',
+                    _tratamiento: canonicalVisit?.tratamientoActual || visit.Tratamiento_Actual || 'Sin tratamiento'
                 };
                 allVisits.push(normalizedVisit);
             });
@@ -1687,7 +1694,7 @@ function getRealPoblationalData(filters = {}) {
 
     const latestPatients = selectLatestVisitPerPatient(allVisits);
 
-    console.log('?? Cohorte estadstica consolidada:', {
+    console.log('Cohorte estadística consolidada:', {
         totalVisitas: allVisits.length,
         totalPacientesUnicos: latestPatients.length,
         pathologyFilter: pathologyFilter
@@ -1695,8 +1702,8 @@ function getRealPoblationalData(filters = {}) {
 
     if (latestPatients.length > 0) {
         const firstPatient = latestPatients[0];
-        console.log('?? Columnas disponibles:', Object.keys(firstPatient).slice(0, 15));
-        console.log('?? Valores de mtricas (primer paciente nico):', {
+        console.log('Columnas disponibles:', Object.keys(firstPatient).slice(0, 15));
+        console.log('Valores de métricas (primer paciente único):', {
             BASDAI_Result: firstPatient.BASDAI_Result,
             ASDAS_CRP_Result: firstPatient.ASDAS_CRP_Result,
             HAQ_Total: firstPatient.HAQ_Total,
@@ -1707,12 +1714,12 @@ function getRealPoblationalData(filters = {}) {
     }
 
     let filteredCohort = applyFiltersToPatients(latestPatients, filters);
-    console.log(`?? Despus de filtros: ${filteredCohort.length} pacientes nicos`);
+    console.log(`Después de filtros: ${filteredCohort.length} pacientes únicos`);
 
     const kpis = calculateRealKPIs(filteredCohort, pathologyFilter);
     const chartData = generateRealChartData(filteredCohort, filters);
 
-    console.log('?? Datos para tabla:', {
+    console.log('Datos para tabla:', {
         total: filteredCohort.length,
         primero: filteredCohort[0] ? {
             ID_Paciente: filteredCohort[0].ID_Paciente || filteredCohort[0]._id,
@@ -1726,28 +1733,28 @@ function getRealPoblationalData(filters = {}) {
     return { filteredCohort, kpis, chartData };
 }
 function getPoblationalData(filters = {}) {
-    console.log('?? getPoblationalData llamado con filtros:', JSON.stringify(filters));
+    console.log('getPoblationalData llamado con filtros:', JSON.stringify(filters));
 
-    // PRIMERO: Intentar usar datos reales del Excel cargado
+    // PRIMERO: intentar usar datos reales del Excel cargado
     if (appState.isLoaded && appState.db) {
-        console.log('?? Base de datos cargada, obteniendo datos reales...');
+        console.log('Base de datos cargada, obteniendo datos reales...');
         const realData = getRealPoblationalData(filters);
-        console.log('?? Datos reales obtenidos:', realData.filteredCohort.length, 'registros');
-        // Siempre devolver datos reales si la base est cargada (incluso si filteredCohort est vaco)
+        console.log('Datos reales obtenidos:', realData.filteredCohort.length, 'registros');
+        // Siempre devolver datos reales si la base está cargada (incluso si filteredCohort está vacío)
         return realData;
     }
 
-    // FALLBACK: Usar mock si est habilitado y la base de datos no est cargada
+    // FALLBACK: usar mock si está habilitado y la base de datos no está cargada
     if (typeof getMockPoblationalData === 'function') {
-        console.log('?? Base de datos no cargada, intentando mock...');
+        console.log('Base de datos no cargada, intentando mock...');
         const mockData = getMockPoblationalData(filters);
         if (mockData && mockData.filteredCohort && mockData.filteredCohort.length > 0) {
             return mockData;
         }
     }
 
-    // Estructura vaca como ltimo recurso
-    console.warn('?? No hay datos disponibles para el dashboard de estadsticas');
+    // Estructura vacía como último recurso
+    console.warn('No hay datos disponibles para el dashboard de estadísticas.');
     return {
         filteredCohort: [],
         kpis: {
@@ -1786,7 +1793,7 @@ function getFarmsDataFromState() {
 
 // =====================================
 
-// EXPOSICIN AL NAMESPACE HUBTOOLS
+// EXPOSICION AL NAMESPACE HUBTOOLS
 
 // =====================================
 
@@ -1827,15 +1834,15 @@ if (typeof HubTools !== 'undefined') {
         return appState.db.Profesionales;
     };
 
-    console.log('? Mdulo dataManager cargado');
+    console.log('Módulo dataManager cargado.');
 
 } else {
 
-    console.error('? Error: HubTools namespace no encontrado. Asegrate de cargar hubTools.js primero.');
+    console.error('Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 
 }
 
-// Mantener compatibilidad minima con scripts clasicos que leen estado global
+// Mantener compatibilidad mínima con scripts clásicos que leen estado global
 if (typeof window !== 'undefined') {
     window.appState = appState;
 }

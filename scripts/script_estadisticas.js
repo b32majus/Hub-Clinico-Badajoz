@@ -38,6 +38,74 @@ const applyFiltersAndRefresh = () => {
 
 const debouncedApplyFilters = debounce(applyFiltersAndRefresh, 250);
 
+function normalizePathology(value) {
+    if (typeof HubTools?.normalizer?.normalizePathology === 'function') {
+        return HubTools.normalizer.normalizePathology(value);
+    }
+    return (value || '').toString().trim().toLowerCase();
+}
+
+function normalizeRecord(record, extra) {
+    if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
+        return HubTools.normalizer.normalizeRecord(record, extra);
+    }
+    return { ...(record || {}), ...(extra || {}) };
+}
+
+function getDisplayMetricForPatient(patient, pathology) {
+    if (pathology === 'ESPA') {
+        const basdai = parseFloat(patient.BASDAI_Result);
+        return {
+            label: 'BASDAI',
+            value: !isNaN(basdai) ? basdai.toFixed(1) : 'N/A'
+        };
+    }
+
+    if (pathology === 'APS') {
+        const haq = parseFloat(patient.HAQ_Total);
+        return {
+            label: 'HAQ',
+            value: !isNaN(haq) ? haq.toFixed(2) : 'N/A'
+        };
+    }
+
+    if (pathology === 'AR') {
+        // Nombres exactos del contrato AR (template_ar_excel.md)
+        const metricCandidates = [
+            ['DAS28-CRP', parseFloat(patient.DAS28_CRP_Result), 1],
+            ['DAS28-ESR', parseFloat(patient.DAS28_ESR_Result), 1],
+            ['CDAI', parseFloat(patient.CDAI_Result), 1],
+            ['SDAI', parseFloat(patient.SDAI_Result), 1]
+        ];
+
+        for (const [label, value, decimals] of metricCandidates) {
+            if (!isNaN(value)) {
+                return { label, value: value.toFixed(decimals) };
+            }
+        }
+    }
+
+    return { label: 'BASDAI', value: 'N/A' };
+}
+
+function getCohortPatientView(patient) {
+    const normalized = normalizeRecord(patient);
+    const pathology = (patient.pathology || normalized.diagnosticoPrimario || '')
+        ? normalizePathology(patient.pathology || normalized.diagnosticoPrimario).toUpperCase()
+        : '-';
+    const metric = getDisplayMetricForPatient(patient, pathology);
+
+    return {
+        id: normalized.idPaciente || patient._id || patient.ID_Paciente || '-',
+        nombre: normalized.nombrePaciente || patient._nombre || patient.Nombre || patient.Nombre_Paciente || '-',
+        pathology,
+        fecha: normalized.fechaVisita || patient._fecha || patient.Fecha_Visita || '',
+        tratamiento: normalized.tratamientoActual || patient._tratamiento || patient.Tratamiento_Actual || 'Sin tratamiento',
+        metricValue: metric.value,
+        metricLabel: metric.label
+    };
+}
+
 // === INICIALIZACIÓN ===
 document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Iniciando Dashboard de Estadísticas v2.0...');
@@ -886,34 +954,16 @@ function renderTablePage() {
         `;
     } else {
         pageData.forEach(patient => {
-            // Usar nombres EXACTOS del Excel con fallback a campos normalizados
-            const id = patient.ID_Paciente || patient._id || '-';
-            const nombre = patient.Nombre_Paciente || patient._nombre || '-';
-            const pathology = patient.pathology || '-';
-            const fecha = patient.Fecha_Visita || patient._fecha || '';
-            const tratamiento = patient.Tratamiento_Actual || patient._tratamiento || 'Sin tratamiento';
-
-            // Mostrar métrica según patología
-            let metricValue = 'N/A';
-            let metricLabel = 'BASDAI';
-            if (pathology === 'ESPA') {
-                const basdai = parseFloat(patient.BASDAI_Result);
-                metricValue = !isNaN(basdai) ? basdai.toFixed(1) : 'N/A';
-                metricLabel = 'BASDAI';
-            } else if (pathology === 'APS') {
-                const haq = parseFloat(patient.HAQ_Total);
-                metricValue = !isNaN(haq) ? haq.toFixed(2) : 'N/A';
-                metricLabel = 'HAQ';
-            }
+            const rowData = getCohortPatientView(patient);
 
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><strong>${id}</strong></td>
-                <td>${nombre}</td>
-                <td><span class="pathology-badge pathology-${pathology.toLowerCase()}">${pathology}</span></td>
-                <td>${formatDate(fecha)}</td>
-                <td title="${metricLabel}">${metricValue}</td>
-                <td>${tratamiento}</td>
+                <td><strong>${rowData.id}</strong></td>
+                <td>${rowData.nombre}</td>
+                <td><span class="pathology-badge pathology-${rowData.pathology.toLowerCase()}">${rowData.pathology}</span></td>
+                <td>${formatDate(rowData.fecha)}</td>
+                <td title="${rowData.metricLabel}">${rowData.metricValue}</td>
+                <td>${rowData.tratamiento}</td>
             `;
             tbody.appendChild(row);
         });
@@ -978,12 +1028,28 @@ function handleSort(column, header) {
 
     // Ordenar datos
     filteredCohort.sort((a, b) => {
-        let valA = a[column];
-        let valB = b[column];
+        const rowA = getCohortPatientView(a);
+        const rowB = getCohortPatientView(b);
+        const columnMap = {
+            ID_Paciente: row => row.id,
+            Nombre: row => row.nombre,
+            pathology: row => row.pathology,
+            Fecha_Visita: row => row.fecha,
+            BASDAI: row => row.metricValue === 'N/A' ? null : parseFloat(row.metricValue),
+            Tratamiento_Actual: row => row.tratamiento
+        };
+
+        let valA = columnMap[column] ? columnMap[column](rowA) : a[column];
+        let valB = columnMap[column] ? columnMap[column](rowB) : b[column];
 
         // Manejar valores nulos
         if (valA == null) return 1;
         if (valB == null) return -1;
+
+        if (column === 'Fecha_Visita') {
+            valA = new Date(valA).getTime();
+            valB = new Date(valB).getTime();
+        }
 
         // Comparar según tipo
         if (typeof valA === 'string') {
@@ -1007,11 +1073,11 @@ function filterTableBySearch(searchTerm) {
         filteredCohort = [...currentCohort];
     } else {
         filteredCohort = currentCohort.filter(patient => {
-            // Usar nombres EXACTOS del Excel con fallbacks
-            const id = (patient.ID_Paciente || patient._id || '').toLowerCase();
-            const nombre = (patient.Nombre_Paciente || patient._nombre || '').toLowerCase();
-            const pathology = (patient.pathology || '').toLowerCase();
-            const tratamiento = (patient.Tratamiento_Actual || patient._tratamiento || '').toLowerCase();
+            const rowData = getCohortPatientView(patient);
+            const id = (rowData.id || '').toLowerCase();
+            const nombre = (rowData.nombre || '').toLowerCase();
+            const pathology = (rowData.pathology || '').toLowerCase();
+            const tratamiento = (rowData.tratamiento || '').toLowerCase();
 
             return (
                 id.includes(term) ||

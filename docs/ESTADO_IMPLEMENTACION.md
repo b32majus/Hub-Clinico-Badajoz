@@ -35,15 +35,16 @@ Este archivo resume el estado funcional real de la aplicación para onboarding r
 - Dashboard principal con tarjetas y métricas por patología.
 - Quick view desde buscador + navegación a dashboard paciente.
 - Dashboard paciente con evolución y métricas AR integradas.
+- KPIs del dashboard paciente enriquecidos con línea de umbrales clínicos para BASDAI, ASDAS/DAS28/CDAI y PCR.
 - Estadísticas poblacionales con filtros AR y paginación.
 
 ## 3. Base de datos Excel
-### Validaci?n de base de datos
-- Validaci?n de cabeceras cr?ticas al cargar el Excel.
-- La comprobaci?n se hace contra la fila de cabeceras real, evitando falsos positivos cuando la primera fila de datos tiene celdas vac?as.
-- Alineaci?n con esquema real de `ESPA` y `APS` mediante aliases compatibles para biomarcadores y decisiones terap?uticas.
+### Validación de base de datos
+- Validación de cabeceras críticas al cargar el Excel.
+- La comprobación se hace contra la fila de cabeceras real, evitando falsos positivos cuando la primera fila de datos tiene celdas vacías.
+- Alineación con esquema real de `ESPA` y `APS` mediante aliases compatibles para biomarcadores y decisiones terapéuticas.
 - `AR` validado contra esquema actual sin faltantes en hoja maestra.
-- Avisos `warning` m?s legibles, persistentes durante m?s tiempo y cerrables con clic.
+- Avisos `warning` más legibles, persistentes durante más tiempo y cerrables con clic.
 
 - Hojas clínicas activas: `ESPA`, `APS`, `AR`.
 - Hojas soporte: `Fármacos`, `Profesionales`.
@@ -66,10 +67,9 @@ Este archivo resume el estado funcional real de la aplicación para onboarding r
 - Arquitectura: `ARCHITECTURE.md`
 
 ## 7. Pendientes recomendados (no bloqueantes)
-- Aviso persistente de “BD potencialmente desactualizada” por tiempo de sesión.
-- Checklist técnico pre-release (UTF-8 + sintaxis JS + flujo exportación).
 - Mejoras de usabilidad por rol (incluyendo futura vista farmacéutica).
-- Extender la normalización canónica a consumidores restantes, especialmente estadísticas.
+- Ampliar ejecución documentada del checklist E2E a más casos por patología y buffer de pendientes.
+- Corregir el error residual de Chart.js `Invalid scale configuration for scale: y1` detectado en consola al abrir `dashboard_paciente.html`.
 
 ## 8. Modificaciones posteriores al documento original
 Añadido posteriormente a la versión original del estado para reflejar hallazgos detectados durante la implementación de mejoras de robustez.
@@ -79,7 +79,11 @@ Añadido posteriormente a la versión original del estado para reflejar hallazgo
 - Se implementó buffer local de `filas pendientes` para exportación CSV, pero queda recomendada una validación funcional completa en navegador real.
 - Se introdujo `fieldNormalizer.js` como base de normalización canónica; conviene extenderlo progresivamente al resto de consumidores.
 - Se extendió el uso del normalizador al dashboard de paciente, la búsqueda de dashboard y el flujo de seguimiento.
-- Persiste deuda técnica no bloqueante en `quick view` por acoplamiento de renderizado en `script.js`.
-- Se recomienda formalizar una batería E2E por patología y tipo de visita antes de futuras entregas.
+- El sidebar ya muestra un indicador persistente de estado de BD con aviso de sesión envejecida o caché limitada.
+- Existe un chequeo técnico base en `scripts/check_pre_release.js` para sintaxis JS, mojibake y finales de línea.
+- Persiste deuda técnica no bloqueante en `quick view`, aunque ya se ha separado parte de la resolución de datos y composición del modelo en `script.js`.
+- Ya existe una base de validación manual repetible en `docs/CHECKLIST_E2E_CLINICO.md`.
+- Ya existe validación funcional real con Playwright en WSL para carga del Excel maestro, sesión profesional y smoke AR sobre primera visita y seguimiento.
+- El `favicon` de la app queda servido mediante `favicon.svg`, evitando el `404` implícito del navegador en las pantallas principales.
 
 Última actualización: 2026-03-07.

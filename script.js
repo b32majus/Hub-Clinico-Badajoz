@@ -117,6 +117,75 @@ function formatRelativeTime(timestamp) {
     return 'hace ' + diffDays + ' días';
 }
 
+var HUB_DB_STALE_AFTER_MINUTES = 30;
+var HUB_DB_LONG_SESSION_AFTER_MINUTES = 180;
+
+function getDbStatusSnapshot() {
+    var hasDb = !!localStorage.getItem('hubClinicoDB');
+    var timestamp = parseInt(localStorage.getItem('hubClinicoDB_loadTime') || '', 10);
+    var hasTimestamp = !isNaN(timestamp) && timestamp > 0;
+    var isLimited = localStorage.getItem('hubClinicoDB_limited') === 'true';
+
+    if (!hasDb) {
+        return {
+            state: 'empty',
+            modifier: 'db-status-indicator--empty',
+            icon: 'fa-database',
+            label: 'BD no cargada',
+            time: '',
+            title: 'No hay base de datos cargada en esta sesión. Clic para cargar o recargar el Excel.'
+        };
+    }
+
+    if (!hasTimestamp) {
+        return {
+            state: 'stale',
+            modifier: 'db-status-indicator--stale',
+            icon: 'fa-exclamation-triangle',
+            label: 'BD en caché sin fecha',
+            time: '· recargue la BD',
+            title: 'Hay datos en caché, pero falta la hora de carga. Recargue el Excel para sincronizar la sesión.'
+        };
+    }
+
+    var elapsedMinutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    var ageText = formatRelativeTime(timestamp);
+    var reasons = [];
+
+    if (isLimited) {
+        reasons.push('caché limitada');
+    }
+
+    if (elapsedMinutes >= HUB_DB_LONG_SESSION_AFTER_MINUTES) {
+        reasons.push('sesión larga');
+    }
+
+    if (elapsedMinutes >= HUB_DB_STALE_AFTER_MINUTES || isLimited) {
+        var staleTimeParts = [];
+        if (ageText) staleTimeParts.push(ageText);
+        staleTimeParts.push.apply(staleTimeParts, reasons);
+
+        return {
+            state: 'stale',
+            modifier: 'db-status-indicator--stale',
+            icon: 'fa-exclamation-triangle',
+            label: 'BD potencialmente desactualizada',
+            time: staleTimeParts.length ? '· ' + staleTimeParts.join(' · ') : '',
+            title: 'La base de datos fue cargada ' + (ageText || 'en una sesión anterior') + '. Recárguela si el Excel cambió fuera de esta sesión.'
+                + (isLimited ? ' La caché actual es limitada y puede no incluir todo el histórico.' : '')
+        };
+    }
+
+    return {
+        state: 'loaded',
+        modifier: 'db-status-indicator--loaded',
+        icon: 'fa-check-circle',
+        label: 'BD cargada',
+        time: ageText ? '· ' + ageText : '',
+        title: 'Base de datos cargada ' + (ageText || 'en esta sesión') + '. Clic para recargar si hubo cambios externos en el Excel.'
+    };
+}
+
 function updateDbStatus() {
     var indicator = document.getElementById('dbStatusIndicator');
     var icon = document.getElementById('dbStatusIcon');
@@ -124,26 +193,16 @@ function updateDbStatus() {
     var time = document.getElementById('dbStatusTime');
     if (!indicator || !icon || !label || !time) return;
 
-    var hasDb = !!localStorage.getItem('hubClinicoDB');
-    var timestamp = parseInt(localStorage.getItem('hubClinicoDB_loadTime') || '', 10);
-    var isLoaded = hasDb && !!timestamp;
+    var snapshot = getDbStatusSnapshot();
 
     indicator.classList.remove('db-status-indicator--loaded', 'db-status-indicator--stale', 'db-status-indicator--empty');
-
-    if (!isLoaded) {
-        indicator.classList.add('db-status-indicator--empty');
-        icon.className = 'fas fa-database db-status-indicator__icon';
-        label.textContent = 'BD no cargada';
-        time.textContent = '';
-        return;
-    }
-
-    var elapsedMinutes = Math.floor((Date.now() - timestamp) / 60000);
-    var isStale = elapsedMinutes >= 30;
-    indicator.classList.add(isStale ? 'db-status-indicator--stale' : 'db-status-indicator--loaded');
-    icon.className = 'fas ' + (isStale ? 'fa-exclamation-triangle' : 'fa-check-circle') + ' db-status-indicator__icon';
-    label.textContent = 'BD cargada';
-    time.textContent = '· ' + formatRelativeTime(timestamp);
+    indicator.classList.add(snapshot.modifier);
+    indicator.dataset.dbState = snapshot.state;
+    indicator.title = snapshot.title;
+    indicator.setAttribute('aria-label', snapshot.label + (snapshot.time ? '. ' + snapshot.time.replace(/^·\s*/, '') : ''));
+    icon.className = 'fas ' + snapshot.icon + ' db-status-indicator__icon';
+    label.textContent = snapshot.label;
+    time.textContent = snapshot.time;
 }
 
 // === Sidebar unificado ===
@@ -281,6 +340,17 @@ function initDbStatusIndicator() {
     if (!window.__hubDbStatusListenersBound) {
         window.addEventListener('databaseLoaded', updateDbStatus);
         document.addEventListener('databaseLoaded', updateDbStatus);
+        window.addEventListener('storage', function(event) {
+            if (!event.key || event.key.indexOf('hubClinicoDB') === 0) {
+                updateDbStatus();
+            }
+        });
+        window.addEventListener('focus', updateDbStatus);
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                updateDbStatus();
+            }
+        });
         window.__hubDbStatusListenersBound = true;
     }
 
@@ -485,86 +555,66 @@ function navigateToDashboard(patientId, pathology) {
     window.location.href = `dashboard_paciente.html?${params.toString()}`;
 }
 
-function showPatientResults(id) {
-    const quickView = ensureQuickViewElements();
-    if (!quickView) {
-        console.warn('showPatientResults: elementos de resultados no disponibles');
-        return;
-    }
-
-    const { resultsContent, searchResults, searchResultsTitle, searchResultsSubtitle, overlay } = quickView;
-    const dashboardContent = document.getElementById('dashboardContent');
-
-    const revealQuickView = () => {
-        if (dashboardContent) {
-            dashboardContent.classList.add('hidden');
-        }
-        if (overlay) {
-            overlay.classList.remove('hidden');
-            document.body.classList.add('quick-view-open');
-        }
-        searchResults.classList.remove('hidden');
-    };
-
-    const renderQuickViewLayout = ({ patientName, id, pathologyLabel, lastVisit, treatment, treatmentStart, pathologyCode, evaGlobal, basdai, das28Crp, scoresHTML }) => {
-        return `
-            <div class="quick-view-stack">
-                <div class="patient-summary-card quick-view-summary-card">
-                    <div class="quick-view-summary-card__body">
-                        <div class="quick-view-eyebrow">Paciente</div>
-                        <div class="quick-view-patient-name">${patientName}</div>
-                        <div class="quick-view-meta">
-                            <span><strong>ID:</strong> ${id}</span>
-                            <span><strong>Diagnóstico:</strong> ${pathologyLabel}</span>
-                            <span><strong>Última visita:</strong> ${lastVisit}</span>
-                        </div>
+function renderQuickViewLayout(viewModel) {
+    return `
+        <div class="quick-view-stack">
+            <div class="patient-summary-card quick-view-summary-card">
+                <div class="quick-view-summary-card__body">
+                    <div class="quick-view-eyebrow">Paciente</div>
+                    <div class="quick-view-patient-name">${viewModel.patientName}</div>
+                    <div class="quick-view-meta">
+                        <span><strong>ID:</strong> ${viewModel.id}</span>
+                        <span><strong>Diagnóstico:</strong> ${viewModel.pathologyLabel}</span>
+                        <span><strong>Última visita:</strong> ${viewModel.lastVisit}</span>
                     </div>
-                    <button id="btnVerDashboardCompleto" class="action-btn purple-btn quick-view-dashboard-btn">
-                        <i class="fas fa-chart-line" aria-hidden="true"></i>
-                        Ver Dashboard Completo
-                    </button>
                 </div>
+                <button id="btnVerDashboardCompleto" class="action-btn purple-btn quick-view-dashboard-btn">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
+                    Ver Dashboard Completo
+                </button>
+            </div>
 
-                <div class="quick-view-two-col">
-                    <div class="patient-info-card quick-view-panel-card">
-                        <h3 class="quick-view-panel-card__title">Resumen Clínico</h3>
-                        <div class="quick-view-clinical-list">
-                            <div><strong>Tratamiento activo:</strong> ${treatment}</div>
-                            <div><strong>Inicio tratamiento:</strong> ${treatmentStart}</div>
-                            <div><strong>Evaluación global:</strong> ${formatDisplayValue(evaGlobal)}</div>
-                            <div><strong>${pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(pathologyCode === 'ar' ? das28Crp : basdai)}</div>
-                        </div>
-                    </div>
-
-                    <div class="patient-scores-card quick-view-panel-card">
-                        <h3 class="quick-view-panel-card__title">Índices Clínicos</h3>
-                        <div class="quick-view-metrics-grid">
-                            ${scoresHTML || '<p class="quick-view-empty-metrics">Sin datos registrados.</p>'}
-                        </div>
+            <div class="quick-view-two-col">
+                <div class="patient-info-card quick-view-panel-card">
+                    <h3 class="quick-view-panel-card__title">Resumen Clínico</h3>
+                    <div class="quick-view-clinical-list">
+                        <div><strong>Tratamiento activo:</strong> ${viewModel.treatment}</div>
+                        <div><strong>Inicio tratamiento:</strong> ${viewModel.treatmentStart}</div>
+                        <div><strong>Evaluación global:</strong> ${formatDisplayValue(viewModel.evaGlobal)}</div>
+                        <div><strong>${viewModel.pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(viewModel.pathologyCode === 'ar' ? viewModel.das28Crp : viewModel.basdai)}</div>
                     </div>
                 </div>
 
-                <div class="quick-view-two-col">
-                    <div class="patient-actions-card quick-view-panel-card">
-                        <h3 class="quick-view-panel-card__title">Acciones rápidas</h3>
-                        <div class="quick-view-actions">
-                            <a href="seguimiento.html?id=${id}&patologia=${pathologyCode}" class="action-btn green-btn quick-view-action-link">
-                                <i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar Seguimiento
-                            </a>
-                            <a href="primera_visita.html?id=${id}" class="action-btn turquoise-btn quick-view-action-link">
-                                <i class="fas fa-file-alt" aria-hidden="true"></i> Revisar Primera Visita
-                            </a>
-                        </div>
-                    </div>
-                    <div class="patient-treatment-card quick-view-panel-card">
-                        <h3 class="quick-view-panel-card__title">Notas adicionales</h3>
-                        <p class="quick-view-note">Consulta el dashboard completo para revisar eventos clínicos, evolución de índices y periodos terapéuticos.</p>
+                <div class="patient-scores-card quick-view-panel-card">
+                    <h3 class="quick-view-panel-card__title">Índices Clínicos</h3>
+                    <div class="quick-view-metrics-grid">
+                        ${viewModel.scoresHTML || '<p class="quick-view-empty-metrics">Sin datos registrados.</p>'}
                     </div>
                 </div>
             </div>
-        `;
-    };
 
+            <div class="quick-view-two-col">
+                <div class="patient-actions-card quick-view-panel-card">
+                    <h3 class="quick-view-panel-card__title">Acciones rápidas</h3>
+                    <div class="quick-view-actions">
+                        <a href="seguimiento.html?id=${viewModel.id}&patologia=${viewModel.pathologyCode}" class="action-btn green-btn quick-view-action-link">
+                            <i class="fas fa-clipboard-list" aria-hidden="true"></i> Registrar Seguimiento
+                        </a>
+                        <a href="primera_visita.html?id=${viewModel.id}" class="action-btn turquoise-btn quick-view-action-link">
+                            <i class="fas fa-file-alt" aria-hidden="true"></i> Revisar Primera Visita
+                        </a>
+                    </div>
+                </div>
+                <div class="patient-treatment-card quick-view-panel-card">
+                    <h3 class="quick-view-panel-card__title">Notas adicionales</h3>
+                    <p class="quick-view-note">Consulta el dashboard completo para revisar eventos clínicos, evolución de índices y periodos terapéuticos.</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function resolveQuickViewPatient(id) {
     let patient = null;
     let historyData = null;
     let hasHistory = false;
@@ -588,7 +638,6 @@ function showPatientResults(id) {
                     hasHistory = history.length > 0;
                 } else {
                     historyData = history;
-                    hasHistory = false;
                 }
             }
             patient = mapRecordToPatientSummary(record, historyData);
@@ -606,6 +655,74 @@ function showPatientResults(id) {
         }
     }
 
+    return { patient, historyData, hasHistory, isNewPatient };
+}
+
+function buildQuickViewScores(patient) {
+    return [
+        ['EVA GLOBAL', patient.evaGlobal],
+        ['EVA DOLOR', patient.evaDolor],
+        ['BASDAI', patient.basdai],
+        ['ASDAS-CRP', patient.asdasCrp],
+        ['DAS28-CRP', patient.das28Crp],
+        ['DAS28-ESR', patient.das28Esr],
+        ['CDAI', patient.cdai],
+        ['SDAI', patient.sdai],
+        ['HAQ-DI', patient.haq],
+        ['RAPID3', patient.rapid3]
+    ]
+        .filter(function(metric) {
+            return metric[1] !== null && metric[1] !== undefined && metric[1] !== '';
+        })
+        .map(function(metric) {
+            return renderQuickViewMetric(metric[0], metric[1]);
+        })
+        .join('');
+}
+
+function buildQuickViewModel(id, patient, historyData) {
+    const pathologyCode = patient.diagnosticoPrimario || historyData?.pathology || '';
+
+    return {
+        patientName: patient.nombre || 'Paciente sin nombre',
+        id: id,
+        pathologyCode: pathologyCode,
+        pathologyLabel: labelForPathology(pathologyCode),
+        lastVisit: formatDisplayDate(patient.ultimaVisita) || 'Sin registros',
+        treatment: formatDisplayValue(patient.tratamientoActual || historyData?.treatmentHistory?.slice(-1)[0]?.name),
+        treatmentStart: formatDisplayDate(patient.fechaInicioTratamiento || historyData?.treatmentHistory?.slice(-1)[0]?.startDate) || 'Sin registrar',
+        evaGlobal: patient.evaGlobal,
+        basdai: patient.basdai,
+        das28Crp: patient.das28Crp,
+        scoresHTML: buildQuickViewScores(patient)
+    };
+}
+
+function showPatientResults(id) {
+    const quickView = ensureQuickViewElements();
+    if (!quickView) {
+        console.warn('showPatientResults: elementos de resultados no disponibles');
+        return;
+    }
+
+    const { resultsContent, searchResults, searchResultsTitle, searchResultsSubtitle, overlay } = quickView;
+    const dashboardContent = document.getElementById('dashboardContent');
+
+    const revealQuickView = () => {
+        if (dashboardContent) {
+            dashboardContent.classList.add('hidden');
+        }
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            document.body.classList.add('quick-view-open');
+        }
+        searchResults.classList.remove('hidden');
+    };
+    const resolvedPatient = resolveQuickViewPatient(id);
+    let patient = resolvedPatient.patient;
+    let historyData = resolvedPatient.historyData;
+    let isNewPatient = resolvedPatient.isNewPatient;
+
     if (!patient) {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente No Encontrado';
         if (searchResultsSubtitle) searchResultsSubtitle.textContent = '';
@@ -616,10 +733,6 @@ function showPatientResults(id) {
 
     const patientName = patient.nombre || 'Paciente sin nombre';
     const pathologyCode = patient.diagnosticoPrimario || historyData?.pathology || '';
-    const pathologyLabel = labelForPathology(pathologyCode);
-    const lastVisit = formatDisplayDate(patient.ultimaVisita) || 'Sin registros';
-    const treatment = formatDisplayValue(patient.tratamientoActual || historyData?.treatmentHistory?.slice(-1)[0]?.name);
-    const treatmentStart = formatDisplayDate(patient.fechaInicioTratamiento || historyData?.treatmentHistory?.slice(-1)[0]?.startDate) || 'Sin registrar';
 
     if (isNewPatient) {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Nuevo - Iniciar Primera Visita';
@@ -635,53 +748,7 @@ function showPatientResults(id) {
     } else {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Encontrado - Opciones Disponibles';
         if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Mostrando datos de ${patientName} (ID: ${id})`;
-
-        let scoresHTML = '';
-        const addMetric = (label, value) => {
-            scoresHTML += renderQuickViewMetric(label, value);
-        };
-
-        const evaGlobal = patient.evaGlobal;
-        const evaDolor = patient.evaDolor;
-        const basdai = patient.basdai;
-        const asdasCrp = patient.asdasCrp;
-        const das28Crp = patient.das28Crp;
-        const das28Esr = patient.das28Esr;
-        const cdai = patient.cdai;
-        const sdai = patient.sdai;
-        const haq = patient.haq;
-        const rapid3 = patient.rapid3;
-
-        [
-            ['EVA GLOBAL', evaGlobal],
-            ['EVA DOLOR', evaDolor],
-            ['BASDAI', basdai],
-            ['ASDAS-CRP', asdasCrp],
-            ['DAS28-CRP', das28Crp],
-            ['DAS28-ESR', das28Esr],
-            ['CDAI', cdai],
-            ['SDAI', sdai],
-            ['HAQ-DI', haq],
-            ['RAPID3', rapid3]
-        ].forEach(([label, value]) => {
-            if (value !== null && value !== undefined && value !== '') {
-                addMetric(label, value);
-            }
-        });
-
-        resultsContent.innerHTML = renderQuickViewLayout({
-            patientName,
-            id,
-            pathologyLabel,
-            lastVisit,
-            treatment,
-            treatmentStart,
-            pathologyCode,
-            evaGlobal,
-            basdai,
-            das28Crp,
-            scoresHTML
-        });
+        resultsContent.innerHTML = renderQuickViewLayout(buildQuickViewModel(id, patient, historyData));
 
         const dashboardBtn = document.getElementById('btnVerDashboardCompleto');
         if (dashboardBtn) {
