@@ -113,38 +113,64 @@
 
         <main class="main-content">
             <section id="dashboardContent" class="dashboard-content">
-                <header class="main-header">
-                <div class="welcome-section">
-                    <h2 class="main-title">Bienvenido al <span class="highlight">Hub Clínico de Reumatología</span></h2>
-                    <p class="hospital-name">Hospital Universitario de Badajoz</p>
-                </div>
-            </header>
-
-            <div class="csv-section">
-                <input type="file" id="excelFileInput" accept=".xlsx" hidden>
-                <button id="csvBtn" class="csv-button" type="button">
-                    <i class="fas fa-database" aria-hidden="true"></i>
-                    Cargar Base de Datos (.xlsx)
-                </button>
-                <div id="csvMessage" class="csv-message" role="status"></div>
-                <div id="csvError" class="csv-error" role="alert"></div>
-            </div>
-
-            <div class="inputs-section">
-                <div class="input-group">
-                    <label class="input-label" for="patientId">ID del Paciente</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="patientId" class="horizontal-input" placeholder="Buscar por ID..." autocomplete="off">
-                        <i class="fas fa-search input-icon" aria-hidden="true"></i>
+                <header class="home-hero">
+                    <div class="home-hero__content">
+                        <p class="home-hero__eyebrow">Centro de control clínico</p>
+                        <p class="home-hero__hospital">Hospital Universitario de Badajoz</p>
+                        <h2 class="main-title">Hub Clínico de <span class="highlight">Reumatología</span></h2>
                     </div>
-                </div>
-            </div>
+                </header>
 
-            <div class="action-buttons">
-                <button class="action-btn turquoise-btn" id="btnNuevaVisita" data-nav-target="primera_visita.html"><i class="fas fa-plus" aria-hidden="true"></i><span>Nueva Visita</span></button>
-                <button class="action-btn green-btn" id="btnSeguimiento" data-nav-target="seguimiento.html"><i class="fas fa-clipboard-list" aria-hidden="true"></i><span>Visita de Seguimiento</span></button>
-                <button class="action-btn purple-btn" id="btnDashboardServicio" data-nav-target="estadisticas.html"><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Cuadro de Mando Servicio</span></button>
-            </div>
+                <div class="home-info-banner" role="note">
+                    <i class="fas fa-circle-info home-info-banner__icon" aria-hidden="true"></i>
+                    <p class="home-info-banner__text">Carga la base de datos, localiza al paciente y entra en la consulta con el flujo que corresponda: primera visita, seguimiento o revisión global del servicio.</p>
+                </div>
+
+                <div class="home-grid">
+                    <article class="home-card home-card--workspace">
+                        <div class="home-card__header">
+                            <div>
+                                <p class="home-card__eyebrow">Espacio de trabajo</p>
+                                <h3 class="home-card__title"><i class="fas fa-database"></i> Carga y búsqueda clínica</h3>
+                            </div>
+                        </div>
+
+                        <div class="csv-section">
+                            <input type="file" id="excelFileInput" accept=".xlsx" hidden>
+                            <button id="csvBtn" class="csv-button" type="button">
+                                <i class="fas fa-database" aria-hidden="true"></i>
+                                Cargar Base de Datos (.xlsx)
+                            </button>
+                            <div id="csvMessage" class="csv-message" role="status"></div>
+                            <div id="csvError" class="csv-error" role="alert"></div>
+                        </div>
+
+                        <div class="inputs-section">
+                            <div class="input-group">
+                                <label class="input-label" for="patientId">ID del Paciente</label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="patientId" class="horizontal-input" placeholder="Buscar por ID..." autocomplete="off">
+                                    <i class="fas fa-search input-icon" aria-hidden="true"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="home-card home-card--actions">
+                        <div class="home-card__header">
+                            <div>
+                                <p class="home-card__eyebrow">Acceso rápido</p>
+                                <h3 class="home-card__title"><i class="fas fa-compass"></i> Rutas principales</h3>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn turquoise-btn" id="btnNuevaVisita" data-nav-target="primera_visita.html"><i class="fas fa-plus" aria-hidden="true"></i><span>Nueva Visita</span></button>
+                            <button class="action-btn green-btn" id="btnSeguimiento" data-nav-target="seguimiento.html"><i class="fas fa-clipboard-list" aria-hidden="true"></i><span>Visita de Seguimiento</span></button>
+                            <button class="action-btn purple-btn" id="btnDashboardServicio" data-nav-target="estadisticas.html"><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Cuadro de Mando Servicio</span></button>
+                        </div>
+                    </article>
+                </div>
         
             </section>
             <section id="searchResults" class="search-results hidden" aria-live="polite">
