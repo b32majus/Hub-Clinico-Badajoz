@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-03-07
+
+### Implementado
+- Extensión del uso de `fieldNormalizer` a `script_dashboard.js`, `script_dashboard_search.js` y `script_seguimiento.js`.
+- Corrección de navegación en búsqueda de dashboard para construir correctamente la query string hacia `dashboard_paciente.html`.
+- Sincronización de la memoria operativa (`TODO.md` y estado de implementación) con la deuda técnica real restante.
+
 ## 2026-03-06
 
 ### Implementado

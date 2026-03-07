@@ -82,6 +82,41 @@
     color: #008777;
 }
 
+.info-note--sm {
+    font-size: 0.82em;
+    margin-bottom: 6px;
+}
+
+.two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.inline-icon {
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.haq-section-title {
+    color: #1E293B;
+    font-weight: 600;
+    margin: 8px 0 4px;
+    font-size: 0.95em;
+}
+
+.scale-hint {
+    margin-top: 6px;
+    padding: 6px 10px;
+    background: #E6F4F1;
+    border-radius: 6px;
+    font-size: 0.9em;
+}
+
+.form-group-checkbox--top-spaced {
+    margin-top: 10px;
+}
+
 /* Campos readonly de ASDAS (auto-calculados desde homúnculo y analítica) */
 .asdas-readonly-input {
     background-color: #fff3cd !important;
@@ -355,6 +390,10 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     margin-bottom: 25px;
+}
+
+.rapid3-components--spaced {
+    margin-top: 15px;
 }
 
 .rapid3-component {

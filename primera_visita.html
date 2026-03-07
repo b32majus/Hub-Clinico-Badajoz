@@ -509,7 +509,7 @@
                                         Dactilitis: <span id="dactilitisScore">0</span></span>
                                 </div>
                                 <div class="homunculus-double-mark-box" id="doubleMarkInfo" style="display: none;">
-                                    <svg width="24" height="24" style="vertical-align: middle; margin-right: 8px;">
+                                    <svg width="24" height="24" class="inline-icon">
                                         <defs>
                                             <pattern id="legendDoublePattern" patternUnits="userSpaceOnUse" width="8"
                                                 height="8" patternTransform="rotate(45)">
@@ -1201,7 +1201,7 @@
                         <!-- Manifestaciones Extraarticulares -->
                         <div class="indices-apartado">
                             <h5><i class="fas fa-lungs"></i> Manifestaciones Extraarticulares</h5>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="two-col-grid">
                                 <div class="form-group-checkbox">
                                     <label><input type="checkbox" class="extraarticular-ar" data-tipo="pulmonar-niu">
                                         Enf. Pulmonar Intersticial (NIU)</label>
@@ -1264,7 +1264,7 @@
                         <!-- Síndrome de Sjögren secundario -->
                         <div class="pruebas-apartado">
                             <h5><i class="fas fa-tint-slash"></i> Síndrome de Sjögren Secundario</h5>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="two-col-grid">
                                 <div class="form-group-checkbox">
                                     <label><input type="checkbox" id="sequedadOcular"> Sequedad ocular
                                         (xeroftalmia)</label>
@@ -1737,9 +1737,9 @@
                                 6.1-12 | Alta >12</p>
 
                             <!-- Sección 1: Función Física MDHAQ (10 preguntas) -->
-                            <h6 style="color:#2c5aa0;font-weight:600;margin:8px 0 4px;font-size:0.95em;"><i
+                            <h6 class="haq-section-title"><i
                                     class="fas fa-walking"></i> Función Física (últimos 7 días)</h6>
-                            <p class="info-note" style="font-size:0.82em;margin-bottom:6px;">0 = Sin dificultad | 1 =
+                            <p class="info-note info-note--sm">0 = Sin dificultad | 1 =
                                 Con alguna dificultad | 2 = Con mucha dificultad | 3 = Incapaz</p>
                             <div class="mdhaq-questions">
                                 <div class="mdhaq-item">
@@ -1834,15 +1834,14 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="rapid3-fn-result"
-                                style="margin-top:6px;padding:6px 10px;background:#f0f4f8;border-radius:6px;font-size:0.9em;">
+                            <div class="rapid3-fn-result scale-hint">
                                 <span>FN Raw: <strong id="rapid3FnRaw">0</strong>/30</span> →
                                 <span>FN Ponderada: <strong id="rapid3Funcion">0.0</strong>/10</span>
                             </div>
 
 
                             <!-- Sección 2 y 3: EVAs (auto desde PROs) -->
-                            <div class="rapid3-components" style="margin-top:15px;">
+                            <div class="rapid3-components rapid3-components--spaced">
                                 <div class="rapid3-component">
                                     <span class="rapid3-component-label">EVA Dolor (0-10):</span>
                                     <span class="rapid3-component-valor" id="rapid3Dolor">0.0</span>

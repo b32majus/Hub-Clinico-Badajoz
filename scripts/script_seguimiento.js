@@ -7,6 +7,20 @@ function getLast(items) {
     return Array.isArray(items) && items.length ? items[items.length - 1] : null;
 }
 
+function normalizePathology(value) {
+    if (typeof HubTools?.normalizer?.normalizePathology === 'function') {
+        return HubTools.normalizer.normalizePathology(value);
+    }
+    return (value || '').toString().trim().toLowerCase();
+}
+
+function normalizeRecord(record, extra) {
+    if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
+        return HubTools.normalizer.normalizeRecord(record, extra);
+    }
+    return { ...(record || {}), ...(extra || {}) };
+}
+
 function extractManifestations(visit) {
     if (!visit) return [];
     const output = [];
@@ -70,54 +84,61 @@ function getMockSeguimientoBundle(patientId) {
     }
 
     const visits = Array.isArray(mock.visits) ? [...mock.visits] : [];
-    visits.sort((a, b) => new Date(b.fechaVisita) - new Date(a.fechaVisita));
+    const normalizedVisits = visits
+        .map(visit => normalizeRecord(visit))
+        .sort((a, b) => new Date(b.fechaVisita) - new Date(a.fechaVisita));
+    const latestVisit = normalizedVisits[0] || null;
 
     return {
         summary: {
+            ...normalizeRecord(mock.summary, {
+                diagnosticoPrimario: mock.summary.pathology || mock.summary.diagnosticoPrimario || ''
+            }),
             idPaciente: mock.summary.idPaciente,
             nombrePaciente: mock.summary.nombre,
-            diagnosticoPrimario: (mock.summary.pathology || mock.summary.diagnosticoPrimario || '').toLowerCase(),
-            tratamientoActual: mock.summary.tratamientoActual || '',
+            diagnosticoPrimario: normalizePathology(mock.summary.pathology || mock.summary.diagnosticoPrimario || ''),
+            tratamientoActual: mock.summary.tratamientoActual || latestVisit?.tratamientoActual || '',
             fechaInicioTratamiento: getLast(mock.treatmentHistory)?.startDate || '',
-            hlaB27: getLast(visits)?.hlaB27 || 'no-analizado',
-            fr: getLast(visits)?.fr || 'no-analizado',
-            apcc: getLast(visits)?.apcc || 'no-analizado',
-            ana: getLast(visits)?.ana || 'no-analizado',
-            imc: getLast(visits)?.imc || ''
+            hlaB27: latestVisit?.hlaB27 || 'no-analizado',
+            fr: latestVisit?.fr || 'no-analizado',
+            apcc: latestVisit?.apcc || 'no-analizado',
+            ana: latestVisit?.ana || 'no-analizado',
+            imc: latestVisit?.imc || ''
         },
         history: {
-            allVisits: visits,
-            latestVisit: visits[0] || null,
-            firstVisit: visits[visits.length - 1] || null,
-            pathology: (mock.pathology || mock.summary.pathology || mock.summary.diagnosticoPrimario || '').toLowerCase(),
+            allVisits: normalizedVisits,
+            latestVisit: latestVisit,
+            firstVisit: normalizedVisits[normalizedVisits.length - 1] || null,
+            pathology: normalizePathology(mock.pathology || mock.summary.pathology || mock.summary.diagnosticoPrimario || ''),
             treatmentHistory: Array.isArray(mock.treatmentHistory) ? mock.treatmentHistory.slice() : []
         }
     };
 }
 
 function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam }) {
-    const latestVisit = history?.latestVisit || getLast(history?.allVisits);
+    const normalizedBaseRecord = normalizeRecord(baseRecord);
+    const latestVisit = normalizeRecord(history?.latestVisit || getLast(history?.allVisits));
     const activeTreatment = getLast(history?.treatmentHistory);
-    const pathology = (patologiaParam || history?.pathology || baseRecord?.diagnosticoPrimario || baseRecord?.pathology || '').toLowerCase();
+    const pathology = normalizePathology(patologiaParam || history?.pathology || normalizedBaseRecord.diagnosticoPrimario || normalizedBaseRecord.pathology);
 
     return {
         idPaciente: patientId,
-        nombrePaciente: latestVisit?.nombrePaciente || baseRecord?.Nombre_Paciente || baseRecord?.nombrePaciente || baseRecord?.nombre || '',
+        nombrePaciente: latestVisit?.nombrePaciente || normalizedBaseRecord.nombrePaciente || normalizedBaseRecord.nombre || '',
         diagnosticoPrimario: pathology,
-        diagnosticoSecundario: baseRecord?.diagnosticoSecundario || baseRecord?.Diagnostico_Secundario || '',
-        hlaB27: latestVisit?.hlaB27 || latestVisit?.HLA_B27 || baseRecord?.hlaB27 || baseRecord?.HLA_B27 || 'no-analizado',
-        fr: latestVisit?.fr || latestVisit?.FR || baseRecord?.fr || baseRecord?.FR || 'no-analizado',
-        apcc: latestVisit?.apcc || latestVisit?.APCC || latestVisit?.aPCC || baseRecord?.apcc || baseRecord?.APCC || 'no-analizado',
-        ana: latestVisit?.ana || latestVisit?.ANA || baseRecord?.ana || baseRecord?.ANA || 'no-analizado',
-        tratamientoActual: baseRecord?.tratamientoActual || baseRecord?.Tratamiento_Actual || latestVisit?.tratamientoActual || latestVisit?.Tratamiento_Actual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
-        fechaInicioTratamiento: baseRecord?.fechaInicioTratamiento || baseRecord?.Fecha_Inicio_Tratamiento || activeTreatment?.startDate || '',
+        diagnosticoSecundario: normalizedBaseRecord.diagnosticoSecundario || '',
+        hlaB27: latestVisit?.hlaB27 || normalizedBaseRecord.hlaB27 || 'no-analizado',
+        fr: latestVisit?.fr || normalizedBaseRecord.fr || 'no-analizado',
+        apcc: latestVisit?.apcc || normalizedBaseRecord.apcc || 'no-analizado',
+        ana: latestVisit?.ana || normalizedBaseRecord.ana || 'no-analizado',
+        tratamientoActual: normalizedBaseRecord.tratamientoActual || latestVisit?.tratamientoActual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
+        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || activeTreatment?.startDate || '',
         comorbilidades: extractComorbidities(latestVisit),
         manifestacionesExtra: extractManifestations(latestVisit),
-        peso: latestVisit?.peso || latestVisit?.Peso || baseRecord?.peso || baseRecord?.Peso || '',
-        talla: latestVisit?.talla || latestVisit?.Talla || baseRecord?.talla || baseRecord?.Talla || '',
-        imc: latestVisit?.imc || latestVisit?.IMC || baseRecord?.imc || baseRecord?.IMC || '',
-        sexoPaciente: latestVisit?.sexoPaciente || latestVisit?.Sexo || baseRecord?.Sexo || baseRecord?.sexo || baseRecord?.sexoPaciente || '',
-        fechaNacimiento: latestVisit?.fechaNacimiento || latestVisit?.Fecha_Nacimiento || baseRecord?.Fecha_Nacimiento || baseRecord?.fechaNacimiento || ''
+        peso: latestVisit?.peso || normalizedBaseRecord.peso || '',
+        talla: latestVisit?.talla || normalizedBaseRecord.talla || '',
+        imc: latestVisit?.imc || normalizedBaseRecord.imc || '',
+        sexoPaciente: latestVisit?.sexoPaciente || normalizedBaseRecord.sexoPaciente || '',
+        fechaNacimiento: latestVisit?.fechaNacimiento || normalizedBaseRecord.fechaNacimiento || ''
     };
 }
 

@@ -1,33 +1,47 @@
 # TODO — Hub Clínico Badajoz
 
-## Pendientes para cuando el desarrollo esté más avanzado
+## Deuda técnica vigente
 
-### 1. Refactorizar inline styles → clases CSS
-- **Dónde**: `script.js` (templates HTML de quick-view del paciente, ~100 líneas) y `formController.js` (`mostrarModalTexto`)
-- **Qué hacer**: Extraer todos los `style="..."` de los templates HTML generados por JavaScript y moverlos a clases CSS en `style.css`
-- **Por qué**: Mejora la mantenibilidad. Actualmente si quieres cambiar un color o un padding tienes que buscarlo dentro del JS en vez de en la hoja de estilos
-- **Riesgo**: Medio. Hay que verificar visualmente que el layout no se rompa tras el cambio
+### 1. Normalización global de codificación y finales de línea
+- **Dónde**: Repositorio completo (`.js`, `.html`, `.css`, `.md`)
+- **Qué hacer**: Limpiar strings con mojibake heredado, unificar guardado en UTF-8 y revisar archivos aún corruptos.
+- **Estado**: `.gitattributes` ya existe, pero siguen quedando textos dañados en documentación y algunos módulos.
+- **Prioridad**: Alta.
 
-### 2. Eliminar doble exposición namespace + window en `dataManager.js`
-- **Dónde**: `modules/dataManager.js` (líneas finales, bloque `window.xxx = xxx`)
-- **Qué hacer**: Buscar todos los sitios que llaman funciones como `loadDatabase()` sin prefijo `HubTools.data.`, actualizarlos al namespace, y luego eliminar el bloque `window.xxx`
-- **Por qué**: La doble exposición es un "puente" de compatibilidad temporal. Cuando todo use `HubTools.data.xxx`, el puente sobra
-- **Riesgo**: Bajo-medio. Hay que buscar bien en todos los HTML y JS para no dejar ninguna llamada sin prefijo
+### 2. Validación funcional real del buffer de filas pendientes
+- **Dónde**: Flujo CSV → clipboard → Excel real.
+- **Qué hacer**: Probar exportación, fallo de clipboard, recuperación, resolución manual y persistencia tras recarga.
+- **Estado**: La lógica está implementada; falta validación operativa end-to-end.
+- **Prioridad**: Alta.
 
-### 3. Crear hoja AR en Excel base de datos
-- **Dónde**: Archivo Excel que funciona como base de datos del proyecto
-- **Qué hacer**: Crear una nueva hoja para pacientes AR con los campos necesarios (DAS28, CDAI, SDAI, HAQ, RAPID3, nódulos, erosiones, extraarticulares, etc.)
-- **Por qué**: Actualmente la exportación Excel solo contempla EspA y APs. AR necesita su propia hoja
-- **Riesgo**: Bajo. Es una adición, no modifica datos existentes
+### 3. Extender `fieldNormalizer` al resto de consumidores
+- **Dónde**: Especialmente `scripts/script_estadisticas.js` y cualquier lectura con aliases dispersos.
+- **Qué hacer**: Sustituir fallbacks manuales por acceso canónico progresivo.
+- **Estado**: Ya integrado en `dataManager`, `script.js`, `script_dashboard.js`, `script_dashboard_search.js` y `script_seguimiento.js`.
+- **Prioridad**: Media.
 
-### 4. Integración Dashboard AR
-- **Dónde**: `index.html`, `script.js`, `estadisticas.html`
-- **Qué hacer**: Añadir tarjeta resumen AR en vista rápida, filtro AR en dashboard, y sección estadísticas poblacionales AR (distribución DAS28, tasas remisión)
-- **Por qué**: Completar la funcionalidad AR con análisis de datos y seguimiento poblacional
-- **Riesgo**: Medio. Requiere adaptación del modelo de datos y gráficos
+### 4. Reducir acoplamiento residual del quick view
+- **Dónde**: `script.js`
+- **Qué hacer**: Separar más claramente renderizado, composición de datos y navegación; reducir HTML generado si complica mantenimiento.
+- **Estado**: Los estilos inline críticos ya están extraídos a CSS. La deuda restante es de estructura, no de estilos.
+- **Prioridad**: Media.
 
-### 5. Recopilación y validación datos AR en formController
-- **Dónde**: `modules/formController.js`
-- **Qué hacer**: Implementar `recopilarDatosFormularioAR()` y `validarFormularioAR()` con campos específicos AR
-- **Por qué**: Necesario para guardar/exportar datos AR correctamente
-- **Riesgo**: Bajo-medio
+### 5. Batería funcional repetible por patología
+- **Dónde**: Primera visita, seguimiento, quick view, dashboard paciente, estadísticas y exportaciones.
+- **Qué hacer**: Definir una batería mínima E2E/manual repetible para `ESPA`, `APS` y `AR`.
+- **Estado**: Hay pruebas parciales y validación sintáctica, pero no una cobertura sistemática.
+- **Prioridad**: Media-alta.
+
+## Mejoras funcionales pendientes
+
+### 6. Indicador persistente de BD potencialmente desactualizada
+- **Dónde**: Shell principal / sidebar.
+- **Qué hacer**: Hacer más visible el estado temporal de carga y el aviso de sesión larga.
+- **Prioridad**: Media.
+
+### 7. Checklist técnico pre-release
+- **Dónde**: Documentación operativa o script de verificación.
+- **Qué hacer**: Consolidar verificación de UTF-8, sintaxis JS y flujo de exportación antes de entrega.
+- **Prioridad**: Media.
+
+Última revisión: 2026-03-07.

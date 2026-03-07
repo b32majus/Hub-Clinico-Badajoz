@@ -4,6 +4,20 @@
     const PATIENT_ID_REGEX = /^(ESP|APS|AR)-\d{4}-\d{3}$/i;
     const searchIndex = [];
 
+    function normalizePathology(value) {
+        if (typeof HubTools?.normalizer?.normalizePathology === 'function') {
+            return HubTools.normalizer.normalizePathology(value);
+        }
+        return (value || '').toString().trim().toLowerCase();
+    }
+
+    function normalizeRecord(record, extra) {
+        if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
+            return HubTools.normalizer.normalizeRecord(record, extra);
+        }
+        return { ...(record || {}), ...(extra || {}) };
+    }
+
     function normalize(str) {
         return (str || '')
             .toLowerCase()
@@ -46,7 +60,7 @@
         searchIndex.push({
             id: candidate.id,
             nombre: candidate.nombre || 'Paciente sin nombre',
-            patologia: (candidate.patologia || candidate.diagnostico || '').toLowerCase() || null
+            patologia: normalizePathology(candidate.patologia || candidate.diagnostico) || null
         });
     }
 
@@ -55,9 +69,10 @@
             if (typeof HubTools.data.getAllPatients === 'function' && HubTools.data.getAllPatients().length) {
                 const patients = HubTools.data.getAllPatients();
                 patients.forEach(p => {
-                    const id = p.ID_Paciente || p.idPaciente || p.ID || p.id;
-                    const nombre = p.Nombre_Paciente || p.nombrePaciente || p.Nombre || p.nombre;
-                    const diagnostico = p.Diagnostico_Principal || p.diagnosticoPrimario || p.Diagnostico || p.pathology;
+                    const normalized = normalizeRecord(p);
+                    const id = normalized.idPaciente || p.ID || p.id;
+                    const nombre = normalized.nombrePaciente || p.Nombre || p.nombre;
+                    const diagnostico = normalized.diagnosticoPrimario || p.Diagnostico;
                     if (id && nombre) {
                         addPatientToIndex({ id, nombre, patologia: diagnostico });
                     }
@@ -72,10 +87,13 @@
         if (typeof window.MockPatients.list === 'function') {
             const mockSummaries = window.MockPatients.list();
             mockSummaries.forEach(summary => {
+                const normalized = normalizeRecord(summary, {
+                    diagnosticoPrimario: summary.pathology || summary.diagnosticoPrimario || ''
+                });
                 addPatientToIndex({
-                    id: summary.idPaciente,
-                    nombre: summary.nombre,
-                    patologia: summary.pathology || summary.diagnosticoPrimario
+                    id: normalized.idPaciente,
+                    nombre: normalized.nombrePaciente || summary.nombre,
+                    patologia: normalized.diagnosticoPrimario
                 });
             });
         }
@@ -130,7 +148,7 @@
         if (patient.patologia) {
             params.set('patologia', patient.patologia);
         }
-        window.location.href = `dashboard_paciente.html${params.toString()}`;
+        window.location.href = `dashboard_paciente.html?${params.toString()}`;
     }
 
     function handleSearch() {
@@ -180,6 +198,5 @@
         input.focus();
     });
 })();
-
 
 

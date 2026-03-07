@@ -31,6 +31,20 @@ const COLORS = {
     secondary: '#64748B'
 };
 
+function normalizePathology(value) {
+    if (typeof HubTools?.normalizer?.normalizePathology === 'function') {
+        return HubTools.normalizer.normalizePathology(value);
+    }
+    return (value || '').toString().trim().toLowerCase();
+}
+
+function normalizeRecord(record, extra) {
+    if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
+        return HubTools.normalizer.normalizeRecord(record, extra);
+    }
+    return { ...(record || {}), ...(extra || {}) };
+}
+
 function isARPathology() {
     return (window.currentPathology || '').toLowerCase() === 'ar';
 }
@@ -157,6 +171,7 @@ function loadFromHub(patientId) {
     if (!record) {
         return null;
     }
+    const normalizedRecord = normalizeRecord(record);
 
     let history = null;
     if (typeof HubTools.data.getPatientHistory === 'function') {
@@ -174,18 +189,30 @@ function loadFromHub(patientId) {
         return null;
     }
 
+    const normalizedVisits = history.allVisits.map(visit => normalizeRecord(visit));
+    const latestVisit = history.latestVisit ? normalizeRecord(history.latestVisit) : (normalizedVisits[0] || null);
+    const firstVisit = history.firstVisit ? normalizeRecord(history.firstVisit) : (normalizedVisits[normalizedVisits.length - 1] || null);
+    const pathology = normalizePathology(history.pathology || normalizedRecord.diagnosticoPrimario);
+
     const summary = {
-        idPaciente: record.ID_Paciente || record.id || '',
-        nombre: record.Nombre_Paciente || record.nombre || 'Paciente',
-        diagnosticoPrimario: (history.pathology || record.diagnosticoPrimario || '').toLowerCase(),
-        diagnostico: record.Diagnostico_Principal || record.diagnostico || '',
-        tratamientoActual: record.tratamientoActual || record.Tratamiento_Actual || '',
-        fechaInicioTratamiento: record.fechaInicioTratamiento || record.Fecha_Inicio_Tratamiento || '',
-        ultimaVisita: getVisitDate(history.latestVisit),
-        fechaNacimiento: record.fechaNacimiento || record.Fecha_Nacimiento || ''
+        idPaciente: normalizedRecord.idPaciente || patientId,
+        nombre: normalizedRecord.nombrePaciente || record.Nombre || record.nombre || 'Paciente',
+        sexoPaciente: normalizedRecord.sexoPaciente || latestVisit?.sexoPaciente || '',
+        diagnosticoPrimario: pathology,
+        diagnostico: record.Diagnostico_Principal || record.diagnostico || getPathologyLabel(pathology),
+        tratamientoActual: normalizedRecord.tratamientoActual || latestVisit?.tratamientoActual || '',
+        fechaInicioTratamiento: normalizedRecord.fechaInicioTratamiento || '',
+        ultimaVisita: getVisitDate(latestVisit || history.latestVisit),
+        fechaNacimiento: normalizedRecord.fechaNacimiento || latestVisit?.fechaNacimiento || ''
     };
 
-    history.pathology = history.pathology || summary.diagnosticoPrimario;
+    history = {
+        ...history,
+        allVisits: normalizedVisits,
+        latestVisit: latestVisit || history.latestVisit,
+        firstVisit: firstVisit || history.firstVisit,
+        pathology: pathology || history.pathology || ''
+    };
 
     return { summary, history };
 }
@@ -200,20 +227,25 @@ function loadFromMock(patientId) {
         return null;
     }
 
-    const sortedVisits = [...(bundle.visits || [])].sort((a, b) => new Date(getVisitDate(a)) - new Date(getVisitDate(b)));
+    const sortedVisits = [...(bundle.visits || [])]
+        .map(visit => normalizeRecord(visit))
+        .sort((a, b) => new Date(getVisitDate(a)) - new Date(getVisitDate(b)));
 
     const history = {
         allVisits: sortedVisits,
         latestVisit: sortedVisits[sortedVisits.length - 1] || null,
         firstVisit: sortedVisits[0] || null,
-        pathology: bundle.pathology || null,
+        pathology: normalizePathology(bundle.pathology || bundle.summary.diagnosticoPrimario),
         treatmentHistory: bundle.treatmentHistory || [],
         keyEvents: bundle.keyEvents || []
     };
 
     const summary = {
-        ...bundle.summary,
-        diagnosticoPrimario: (bundle.pathology || bundle.summary.diagnosticoPrimario || history.pathology || '').toLowerCase(),
+        ...normalizeRecord(bundle.summary, {
+            diagnosticoPrimario: bundle.pathology || bundle.summary.diagnosticoPrimario || history.pathology || ''
+        }),
+        nombre: bundle.summary.nombre || bundle.summary.nombrePaciente,
+        diagnosticoPrimario: normalizePathology(bundle.pathology || bundle.summary.diagnosticoPrimario || history.pathology || ''),
         diagnostico: bundle.summary.diagnostico || getPathologyLabel(history.pathology)
     };
 
@@ -305,7 +337,7 @@ function populateDashboard() {
 
 function populatePatientHeader(summary, latest, firstVisit) {
     // ID Badge - buscar en mltiples fuentes
-    const patientId = summary.idPaciente || summary.ID_Paciente || latest.idPaciente || latest.ID_Paciente || firstVisit.idPaciente || getPatientIdFromURL() || '---';
+    const patientId = summary.idPaciente || latest.idPaciente || firstVisit.idPaciente || getPatientIdFromURL() || '---';
     document.getElementById('patientIdBadge').textContent = patientId;
 
     // Nombre
@@ -322,7 +354,7 @@ function populatePatientHeader(summary, latest, firstVisit) {
     document.getElementById('patientAge').textContent = age;
 
     // Sexo
-    document.getElementById('patientGender').textContent = summary.sexoPaciente || latest.sexoPaciente || latest.Sexo || '---';
+    document.getElementById('patientGender').textContent = summary.sexoPaciente || latest.sexoPaciente || '---';
 
     // Estado cl?nico (badge)
     const clinicalStatus = calculateClinicalStatus(latest);
