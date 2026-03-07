@@ -105,6 +105,32 @@ function ensureExcelFileInput() {
     return input;
 }
 
+async function loadDatabaseFromFile(file, hooks) {
+    if (!file) return false;
+    if (typeof HubTools === 'undefined' || !HubTools.data || !HubTools.data.loadDatabase) {
+        hooks?.onError?.('Error: módulo dataManager no cargado. Recargue la página.');
+        return false;
+    }
+
+    try {
+        hooks?.onStart?.();
+        var success = await HubTools.data.loadDatabase(file);
+        if (!success) {
+            hooks?.onError?.('Error al cargar el archivo Excel. Verifique el formato y la consola.');
+            return false;
+        }
+
+        document.dispatchEvent(new CustomEvent('databaseLoaded'));
+        hooks?.onSuccess?.(HubTools.data.getProfesionales().length);
+        updateDbStatus();
+        return true;
+    } catch (error) {
+        console.error('Error crítico al procesar el archivo:', error);
+        hooks?.onError?.('Error crítico al procesar el archivo.');
+        return false;
+    }
+}
+
 function formatRelativeTime(timestamp) {
     var parsed = parseInt(timestamp, 10);
     if (!parsed) return '';
@@ -121,10 +147,10 @@ var HUB_DB_STALE_AFTER_MINUTES = 30;
 var HUB_DB_LONG_SESSION_AFTER_MINUTES = 180;
 
 function getDbStatusSnapshot() {
-    var hasDb = !!localStorage.getItem('hubClinicoDB');
-    var timestamp = parseInt(localStorage.getItem('hubClinicoDB_loadTime') || '', 10);
+    var hasDb = !!sessionStorage.getItem('hubClinicoDB');
+    var timestamp = parseInt(sessionStorage.getItem('hubClinicoDB_loadTime') || '', 10);
     var hasTimestamp = !isNaN(timestamp) && timestamp > 0;
-    var isLimited = localStorage.getItem('hubClinicoDB_limited') === 'true';
+    var isLimited = sessionStorage.getItem('hubClinicoDB_limited') === 'true';
 
     if (!hasDb) {
         return {
@@ -273,27 +299,31 @@ function initSessionGate() {
         populateGateSelect();
     }
 
-    // Si la BD ya est\u00e1 en cach\u00e9, ir directamente al paso de selecci\u00f3n
-    if (localStorage.getItem('hubClinicoDB')) {
+    // Si la BD ya está en caché de esta pestaña, ir directamente al paso de selección
+    if (sessionStorage.getItem('hubClinicoDB')) {
         showSelectStep();
     }
 
     if (gateLoadBtn && gateExcelInput) {
-        gateLoadBtn.addEventListener('click', function() { gateExcelInput.click(); });
+        gateLoadBtn.addEventListener('click', function() {
+            gateExcelInput.value = '';
+            gateExcelInput.click();
+        });
         gateExcelInput.addEventListener('change', function() {
             var file = gateExcelInput.files && gateExcelInput.files[0];
             if (!file) return;
-            if (gateError) gateError.classList.add('hidden');
-            HubTools.data.loadDatabase(file).then(function(ok) {
-                if (ok) {
-                    document.dispatchEvent(new CustomEvent('databaseLoaded'));
+            loadDatabaseFromFile(file, {
+                onStart: function() {
+                    if (gateError) gateError.classList.add('hidden');
+                },
+                onSuccess: function() {
                     showSelectStep();
-                } else {
-                    if (gateError) { gateError.textContent = 'Error al cargar. Verifique el archivo.'; gateError.classList.remove('hidden'); }
+                },
+                onError: function(message) {
+                    if (gateError) { gateError.textContent = message; gateError.classList.remove('hidden'); }
                 }
-            }).catch(function() {
-                if (gateError) { gateError.textContent = 'Error cr\u00edtico al procesar el archivo.'; gateError.classList.remove('hidden'); }
             });
+            gateExcelInput.value = '';
         });
     }
 
@@ -332,19 +362,41 @@ function initDbStatusIndicator() {
 
     if (!indicator.dataset.bound) {
         indicator.addEventListener('click', function() {
-            ensureExcelFileInput().click();
+            var input = ensureExcelFileInput();
+            input.value = '';
+            input.click();
         });
         indicator.dataset.bound = 'true';
+    }
+
+    var input = ensureExcelFileInput();
+    if (!input.dataset.boundDbLoader) {
+        input.addEventListener('change', function() {
+            var file = input.files && input.files[0];
+            if (!file) return;
+            loadDatabaseFromFile(file, {
+                onSuccess: function(professionalCount) {
+                    if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                        HubTools.utils.mostrarNotificacion(
+                            'Base de datos cargada (' + professionalCount + ' profesionales).',
+                            'success'
+                        );
+                    }
+                },
+                onError: function(message) {
+                    if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                        HubTools.utils.mostrarNotificacion(message, 'error');
+                    }
+                }
+            });
+            input.value = '';
+        });
+        input.dataset.boundDbLoader = 'true';
     }
 
     if (!window.__hubDbStatusListenersBound) {
         window.addEventListener('databaseLoaded', updateDbStatus);
         document.addEventListener('databaseLoaded', updateDbStatus);
-        window.addEventListener('storage', function(event) {
-            if (!event.key || event.key.indexOf('hubClinicoDB') === 0) {
-                updateDbStatus();
-            }
-        });
         window.addEventListener('focus', updateDbStatus);
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
@@ -962,26 +1014,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Database Loading ---
     async function handleFileSelection(file) {
-        if (!file) return;
-        if (typeof HubTools === 'undefined' || !HubTools.data || !HubTools.data.loadDatabase) {
-            showCsvError('Error: m\u00f3dulo dataManager no cargado. Recargue la p\u00e1gina.');
-            return;
-        }
-        try {
-            clearMessages();
-            var success = await HubTools.data.loadDatabase(file);
-            if (success) {
-                document.dispatchEvent(new CustomEvent('databaseLoaded'));
-                var professionals = HubTools.data.getProfesionales();
-                showCsvSuccess(professionals.length);
-                updateDbStatus();
-            } else {
-                showCsvError('Error al cargar el archivo Excel. Verifique el formato y la consola.');
-            }
-        } catch (error) {
-            console.error('Error cr\u00edtico al procesar el archivo:', error);
-            showCsvError('Error cr\u00edtico al procesar el archivo.');
-        }
+        await loadDatabaseFromFile(file, {
+            onStart: clearMessages,
+            onSuccess: showCsvSuccess,
+            onError: showCsvError
+        });
     }
 
     // --- Event Listeners: Navigation Links ---
@@ -994,10 +1031,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Event Listeners: CSV/Database Loading (bot\u00f3n de carga manual en index.html) ---
     if (csvBtn && csvFileInput) {
-        csvBtn.addEventListener('click', function() { csvFileInput.click(); });
+        csvBtn.addEventListener('click', function() {
+            csvFileInput.value = '';
+            csvFileInput.click();
+        });
         csvFileInput.addEventListener('change', function() {
             var file = csvFileInput.files && csvFileInput.files[0];
             handleFileSelection(file);
+            csvFileInput.value = '';
         });
     }
 
