@@ -933,7 +933,7 @@ function recopilarDatosFormulario() {
     const idPaciente = document.getElementById('idPaciente').value;
     const nombrePaciente = document.getElementById('nombrePaciente').value;
     const fechaVisita = document.getElementById('fechaVisita').value;
-    const sexoPaciente = document.getElementById('sexoPaciente').value;
+    const sexoPaciente = normalizeSexoPacienteValue(document.getElementById('sexoPaciente').value);
     const tipoVisita = document.body.dataset.formType || '';
 
     const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
@@ -1256,6 +1256,15 @@ function recopilarDatosFormulario() {
     return datosCompletos;
 }
 
+function normalizeSexoPacienteValue(value) {
+    const normalized = (value || '').toString().trim().toLowerCase();
+    if (!normalized) return '';
+    if (normalized === 'hombre' || normalized === 'masculino') return 'Hombre';
+    if (normalized === 'mujer' || normalized === 'femenino') return 'Mujer';
+    if (normalized === 'otro') return 'Otro';
+    return value;
+}
+
 // =====================================
 // FUNCIÓN: prefillSeguimientoForm
 // =====================================
@@ -1376,7 +1385,7 @@ function prefillSeguimientoForm(visitData) {
 
     if (visitData.sexoPaciente) {
         const sexoInput = document.getElementById('sexoPaciente') || document.getElementById('sexo');
-        if (sexoInput) sexoInput.value = visitData.sexoPaciente;
+        if (sexoInput) sexoInput.value = normalizeSexoPacienteValue(visitData.sexoPaciente);
     }
 
     console.log('? Formulario de seguimiento pre-llenado correctamente');
@@ -1449,6 +1458,7 @@ function recopilarDatosFormularioSeguimiento() {
     const idPaciente = getValue('idPaciente');
     const nombrePaciente = getValue('nombrePaciente');
     const fechaVisita = getValue('fechaVisita');
+    const sexoPaciente = normalizeSexoPacienteValue(getValue('sexoPaciente'));
     const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
 
     const diagnosticoPrimario = getValue('diagnosticoPrimario');
@@ -1591,7 +1601,7 @@ function recopilarDatosFormularioSeguimiento() {
     };
 
     return {
-        idPaciente, nombrePaciente, fechaVisita, profesional,
+        idPaciente, nombrePaciente, fechaVisita, sexoPaciente, profesional,
         diagnosticoPrimario, diagnosticoSecundario,
         hlaB27, fr, apcc, ana,
         peso, talla, imc, ta,
