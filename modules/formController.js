@@ -1421,7 +1421,9 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
         // Agregar opción indicativa
         const optionEmpty = document.createElement('option');
         optionEmpty.value = '';
-        optionEmpty.textContent = '-- Cargue la base de datos primero --';
+        optionEmpty.textContent = window.appState?.isLoaded
+            ? '-- No hay fármacos disponibles --'
+            : '-- Cargue la base de datos primero --';
         optionEmpty.disabled = true;
         selectElement.appendChild(optionEmpty);
         return;
@@ -2126,7 +2128,6 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
 } else {
     console.error('❌ Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 }
-
 
 
 

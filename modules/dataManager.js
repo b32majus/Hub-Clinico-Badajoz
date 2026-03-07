@@ -2,6 +2,15 @@
 // ACTUALIZACIN: Patrn clsico (sin import/export) + funciones adicionales para Fase 2
 let appState = { isLoaded: false, db: null, lastLoadedTime: null };
 
+function normalizeSheetKey(value) {
+    return (value || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
 /**
  * Guarda la base de datos en localStorage con manejo inteligente de tamao
  * Si la BD es demasiado grande, guarda solo una versin limitada
@@ -330,7 +339,8 @@ async function loadDatabase(file) {
         dbData['Frmacos'] = { Sistemicos: [], FAMEs: [], Biologicos: [] };
 
         const farmacosSheetKey = Object.keys(workbook.Sheets).find(function(k) {
-            return k.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '') === 'farmacos';
+            var normalizedKey = normalizeSheetKey(k);
+            return normalizedKey === 'farmacos' || normalizedKey === 'frmacos';
         });
 
         if (farmacosSheetKey && workbook.Sheets[farmacosSheetKey]) {
