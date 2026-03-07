@@ -1,12 +1,10 @@
-﻿@import url('https://fonts.googleapis.com/css2family=Roboto:wght@400;500;700&display=swap');
-
 /* ========================================
    ARCHIVO CSS CONSOLIDADO PARA PRIMERA VISITA
    Combina: style_form_espa.css + elementos relevantes de style_premium.css + optimizaciones profesionales
    ======================================== */
 
 :root {
-    --primary-blue: #3498db;
+    --primary-blue: #008777;
     --success-green: #2ecc71;
     --warning-yellow: #f1c40f;
     --danger-red: #dc3545;
@@ -19,7 +17,7 @@
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', sans-serif;
     background-color: #f0f2f5;
     color: #333;
     margin: 0;
@@ -67,7 +65,7 @@ body:has(.hub-shell) {
 }
 
 .form-header h1 .highlight {
-    color: #3498db;
+    color: #008777;
 }
 
 .form-header .subtitle {
@@ -81,7 +79,7 @@ body:has(.hub-shell) {
     position: fixed;
     top: 20px;
     left: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #008777 0%, #006B5E 100%);
     color: white;
     border: none;
     padding: 8px 16px;
@@ -100,7 +98,7 @@ body:has(.hub-shell) {
 .back-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    background: linear-gradient(135deg, #006B5E 0%, #008777 100%);
 }
 
 /* Sección de Datos del Paciente */
@@ -114,7 +112,7 @@ body:has(.hub-shell) {
 
 .section-title {
     font-size: 1.3em;
-    color: #34495e;
+    color: #1E293B;
     margin: 0 0 12px 0;
     display: flex;
     align-items: center;
@@ -145,7 +143,7 @@ body:has(.hub-shell) {
 }
 
 .diagnostic-title i {
-    color: #3498db;
+    color: #008777;
     font-size: 1.1em;
 }
 
@@ -262,7 +260,7 @@ body:has(.hub-shell) {
 
 .collapsible-header {
     background-color: #f7f7f7;
-    color: #34495e;
+    color: #1E293B;
     padding: 10px 18px;
     width: 100%;
     border: none;
@@ -310,7 +308,7 @@ body:has(.hub-shell) {
 
 .collapsible-content h3 {
     font-size: 1.15em;
-    color: #34495e;
+    color: #1E293B;
     margin: 20px 0 10px 0;
     padding-bottom: 12px;
     border-bottom: 1px solid #f0f0f0;
@@ -339,7 +337,7 @@ body:has(.hub-shell) {
     border: 1px solid #ced4da;
     border-radius: 8px;
     font-size: 0.9em;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', sans-serif;
     color: #495057;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -349,7 +347,7 @@ body:has(.hub-shell) {
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-    border-color: #3498db;
+    border-color: #008777;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     outline: none;
 }
@@ -427,7 +425,7 @@ body:has(.hub-shell) {
 }
 
 .form-group-checkbox input[type="checkbox"]:hover {
-    border-color: #3498db;
+    border-color: #008777;
 }
 
 .form-group-checkbox input[type="checkbox"]::before {
@@ -437,13 +435,13 @@ body:has(.hub-shell) {
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
     transform: scale(0);
     transition: 120ms transform ease-in-out;
-    box-shadow: inset 1em 1em #3498db;
-    background-color: #3498db;
+    box-shadow: inset 1em 1em #008777;
+    background-color: #008777;
     border-radius: 1px;
 }
 
 .form-group-checkbox input[type="checkbox"]:checked {
-    border-color: #3498db;
+    border-color: #008777;
     background-color: #e9f5f9;
 }
 
@@ -489,9 +487,9 @@ body:has(.hub-shell) {
 }
 
 .toggle-btn.active {
-    background-color: #3498db;
+    background-color: #008777;
     color: white;
-    border-color: #3498db;
+    border-color: #008777;
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
 }
 
@@ -535,7 +533,7 @@ body:has(.hub-shell) {
 }
 
 .toxic-description input[type="text"]:focus {
-    border-color: #3498db;
+    border-color: #008777;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     outline: none;
 }
@@ -561,7 +559,7 @@ body:has(.hub-shell) {
 .treatment-item input {
     margin-bottom: 0;
     color: #495057;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', sans-serif;
 }
 
 .treatment-item .remove-btn {
@@ -657,7 +655,7 @@ body:has(.hub-shell) {
     border: 1px solid #ced4da;
     border-radius: 8px;
     font-size: 0.9em;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', sans-serif;
     color: #495057;
     box-sizing: border-box;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -682,7 +680,7 @@ body:has(.hub-shell) {
 .homunculus-container h4 {
     margin-top: 0;
     font-size: 1.2em;
-    color: #34495e;
+    color: #1E293B;
     margin-bottom: 15px;
 }
 
@@ -807,7 +805,7 @@ body:has(.hub-shell) {
 
 .body-region:hover {
     fill: rgba(52, 152, 219, 0.4);
-    stroke: #3498db;
+    stroke: #008777;
     stroke-width: 2;
 }
 
@@ -852,7 +850,7 @@ body:has(.hub-shell) {
 /* Leyenda de numeración de dedos */
 .digit-numbering-legend {
     background-color: #e8f4f8;
-    border: 2px solid #17a2b8;
+    border: 2px solid #008777;
     border-radius: 10px;
     padding: 10px 14px;
     margin-top: 12px;
@@ -862,7 +860,7 @@ body:has(.hub-shell) {
 .digit-numbering-legend .legend-title {
     font-size: 0.9em;
     font-weight: 700;
-    color: #0c5460;
+    color: #004D44;
     margin-bottom: 6px;
     display: flex;
     align-items: center;
@@ -990,10 +988,9 @@ body:has(.hub-shell) {
 /* CRITERIOS CASPAR (APs) */
 .caspar-info-box {
     background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%);
-    border-left: 4px solid #2196f3;
     padding: 15px 20px;
     margin-bottom: 20px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 .caspar-info-box p {
@@ -1170,8 +1167,8 @@ body:has(.hub-shell) {
 
 .plan-date-input:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: #008777;
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
 }
 
 /* Comentarios adicionales */
@@ -1215,7 +1212,7 @@ body:has(.hub-shell) {
 }
 
 .primary-btn {
-    background-color: #3498db;
+    background-color: #008777;
     color: white;
 }
 
@@ -1410,8 +1407,8 @@ body:has(.hub-shell) {
 
 .treatment-select-improved:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: #008777;
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
 }
 
 .treatment-dose-input-improved {
@@ -1433,8 +1430,8 @@ body:has(.hub-shell) {
 
 .treatment-dose-input-improved:not(:disabled):focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: #008777;
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
     background: #fff;
     color: #1e293b;
 }
@@ -1480,8 +1477,8 @@ body:has(.hub-shell) {
 
 .plan-date-input-improved:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: #008777;
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.15);
 }
 
 /* Responsive para el nuevo diseño */
@@ -1571,15 +1568,13 @@ body:has(.hub-shell) {
 /* Apartados dentro de Pruebas Complementarias */
 .pruebas-apartado {
     background-color: #f8f9fa;
-    border-left: 4px solid #17a2b8;
     padding: 16px 20px;
     margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
 }
 
 .pruebas-apartado h5 {
-    color: #0c5460;
+    color: #1E293B;
     font-size: 1em;
     margin-top: 0;
     margin-bottom: 10px;
@@ -1590,21 +1585,19 @@ body:has(.hub-shell) {
 }
 
 .pruebas-apartado h5 i {
-    color: #17a2b8;
+    color: #008777;
 }
 
 /* Apartados de Índices */
 .indices-apartado {
     background-color: #f8f9fa;
-    border-left: 4px solid #6f42c1;
     padding: 16px 20px;
     margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
 }
 
 .indices-apartado h5 {
-    color: #4a148c;
+    color: #1E293B;
     font-size: 1em;
     margin-top: 0;
     margin-bottom: 10px;
@@ -1615,25 +1608,25 @@ body:has(.hub-shell) {
 }
 
 .indices-apartado h5 i {
-    color: #6f42c1;
+    color: #006B5E;
 }
 
 /* Nota informativa */
 .info-note {
-    background-color: #d1ecf1;
-    border: 1px solid #bee5eb;
+    background-color: #E6F4F1;
+    border: 1px solid #B2DFDB;
     border-radius: 6px;
     padding: 8px 12px;
     margin-bottom: 15px;
     font-size: 0.85em;
-    color: #0c5460;
+    color: #004D44;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .info-note i {
-    color: #17a2b8;
+    color: #008777;
 }
 
 /* Campos readonly de ASDAS */
@@ -1712,7 +1705,6 @@ body:has(.hub-shell) {
     padding: 10px 12px;
     background: #f8fafc;
     border-radius: 8px;
-    border-left: 3px solid #2c9faf;
 }
 
 .acr-criterio-label {
@@ -2013,7 +2005,7 @@ body:has(.hub-shell) {
 
 .haq-category:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: #17a2b8;
+    border-color: #008777;
 }
 
 .haq-category-title {
@@ -2038,12 +2030,12 @@ body:has(.hub-shell) {
 }
 
 .haq-score:hover {
-    border-color: #17a2b8;
+    border-color: #008777;
     box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
 }
 
 .haq-score:focus {
-    border-color: #17a2b8;
+    border-color: #008777;
     box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.15);
     outline: none;
 }
@@ -2068,7 +2060,7 @@ body:has(.hub-shell) {
 
 .haq-resultado-box {
     background: linear-gradient(135deg, #d1ecf1 0%, #e8f7fa 100%);
-    border: 3px solid #17a2b8;
+    border: 3px solid #008777;
     border-radius: 12px;
     padding: 14px;
     display: flex;
@@ -2080,18 +2072,18 @@ body:has(.hub-shell) {
 .haq-resultado-label {
     font-size: 1.05em;
     font-weight: 600;
-    color: #0c5460;
+    color: #004D44;
 }
 
 .haq-resultado-score {
     font-size: 2em;
     font-weight: 700;
-    color: #17a2b8;
+    color: #008777;
 }
 
 .haq-resultado-interpretacion {
     font-size: 0.85em;
-    color: #0c5460;
+    color: #004D44;
     margin-left: 20px;
     font-weight: 600;
 }

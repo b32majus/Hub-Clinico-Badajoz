@@ -46,10 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
     configureChartDefaults();
 
     // Inicializar collapsibles usando HubTools
+    // initializeFiltersCollapsible() must run first so it marks filtersHeader
+    // with data-collapsible-initialized before inicializarCollapsibles() skips it
+    initializeFiltersCollapsible();
     if (HubTools && HubTools.form && HubTools.form.inicializarCollapsibles) {
         HubTools.form.inicializarCollapsibles();
     }
-    initializeFiltersCollapsible();
 
     initializeFilters();
     initializeFilterTabs();
@@ -76,6 +78,9 @@ function initializeFiltersCollapsible() {
     const content = document.querySelector('.filters-panel .collapsible-content');
     const toggleBtn = header?.querySelector('.toggle-filters-btn');
     if (!header || !content) return;
+
+    // Mark as initialized so inicializarCollapsibles() skips this header
+    header.setAttribute('data-collapsible-initialized', 'true');
 
     const toggle = () => {
         header.classList.toggle('active');
@@ -227,7 +232,7 @@ function initializeTableControls() {
 // === EVENT LISTENERS ===
 function addEventListeners() {
     // Limpiar filtros
-    document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+    document.getElementById('clearFiltersBtn')?.addEventListener('click', clearAllFilters);
     document.getElementById('clearAllFiltersBtn')?.addEventListener('click', clearAllFilters);
 
     // Exportar CSV

@@ -38,6 +38,7 @@
                 </button>
             </div>
 
+            <div class="sidebar-nav-area">
             <div class="nav-section">
                 <h3 class="nav-title">Consulta</h3>
                 <ul class="nav-list">
@@ -61,6 +62,7 @@
                 </ul>
             </div>
 
+            </div>
             <div class="db-status-indicator db-status-indicator--empty" id="dbStatusIndicator" role="status" title="Clic para cargar/recargar BD">
                 <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
                 <div class="db-status-indicator__text">
@@ -86,14 +88,6 @@
                 </div>
 
                 <div class="collapsible-content">
-                    <!-- Barra de Filtros Activos -->
-                    <div class="active-filters-bar" id="activeFiltersBar" style="display: none;">
-                        <span class="active-filters-label">Filtros activos:</span>
-                        <div id="activeFiltersChips"></div>
-                        <button class="clear-all-filters-btn" id="clearAllFiltersBtn">
-                            <i class="fas fa-times"></i> Limpiar todo
-                        </button>
-                    </div>
                     <!-- Tabs de Navegación -->
                     <div class="filter-tabs" role="tablist">
                         <button class="filter-tab active" data-tab="periodo" role="tab" aria-selected="true">
@@ -324,10 +318,16 @@
 
                     <!-- Acciones de Filtro -->
                     <div class="filter-actions">
-                        <button id="clearFiltersBtn" class="button secondary-button">
-                            <i class="fas fa-eraser"></i> Limpiar Filtros
-                        </button>
                     </div>
+                </div>
+
+                <!-- Barra de Filtros Activos (fuera del collapsible para que sea visible aunque el panel esté cerrado) -->
+                <div class="active-filters-bar" id="activeFiltersBar" style="display: none;">
+                    <span class="active-filters-label">Filtros activos:</span>
+                    <div id="activeFiltersChips"></div>
+                    <button class="clear-all-filters-btn" id="clearAllFiltersBtn">
+                        <i class="fas fa-times"></i> Limpiar todo
+                    </button>
                 </div>
             </section>
 
