@@ -143,8 +143,8 @@ function formatRelativeTime(timestamp) {
     return 'hace ' + diffDays + ' días';
 }
 
-var HUB_DB_STALE_AFTER_MINUTES = 30;
-var HUB_DB_LONG_SESSION_AFTER_MINUTES = 180;
+var HUB_DB_STALE_AFTER_MINUTES = 180;
+var HUB_DB_LONG_SESSION_AFTER_MINUTES = 360;
 
 function getDbStatusSnapshot() {
     var hasDb = !!sessionStorage.getItem('hubClinicoDB');
