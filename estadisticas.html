@@ -7,7 +7,7 @@
     <title>Estadísticas del Servicio - Hub Clínico</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20260307r">
+    <link rel="stylesheet" href="style.css?v=20260307t">
     <link rel="stylesheet" href="style_estadisticas.css?v=20260306l">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -148,7 +148,7 @@
                                 <h3><i class="fas fa-disease"></i> Patología</h3>
                                 <div class="filter-group">
                                     <label for="filterPathology">Tipo de Patología:</label>
-                                    <select id="filterPathology" class="select-field">
+                                    <select id="filterPathology" class="select-field select-modern">
                                         <option value="Todos">Todas las patologías</option>
                                         <option value="AR">Artritis Reumatoide (AR)</option>
                                         <option value="ESPA">Espondiloartritis Axial (ESPA)</option>
@@ -160,7 +160,7 @@
                                 <h3><i class="fas fa-user"></i> Datos del Paciente</h3>
                                 <div class="filter-group">
                                     <label for="filterSex">Sexo:</label>
-                                    <select id="filterSex" class="select-field">
+                                    <select id="filterSex" class="select-field select-modern">
                                         <option value="Todos">Todos</option>
                                         <option value="Hombre">Hombre</option>
                                         <option value="Mujer">Mujer</option>
@@ -187,7 +187,7 @@
                                 <h3><i class="fas fa-vial"></i> Biomarcadores</h3>
                                 <div class="filter-group">
                                     <label for="filterBiomarker">Estado del Biomarcador:</label>
-                                    <select id="filterBiomarker" class="select-field">
+                                    <select id="filterBiomarker" class="select-field select-modern">
                                         <option value="Todos">Todos los estados</option>
                                         <option value="HLA-B27_Positive">HLA-B27 Positivo</option>
                                         <option value="HLA-B27_Negative">HLA-B27 Negativo</option>
@@ -202,7 +202,7 @@
                                 <h3><i class="fas fa-chart-bar"></i> Índices de Actividad</h3>
                                 <div class="filter-group">
                                     <label for="filterActivityIndex">Índice a evaluar:</label>
-                                    <select id="filterActivityIndex" class="select-field">
+                                    <select id="filterActivityIndex" class="select-field select-modern">
                                         <option value="BASDAI">BASDAI</option>
                                         <option value="ASDAS">ASDAS</option>
                                         <option value="HAQ">HAQ-DI</option>
@@ -217,7 +217,7 @@
                                 </div>
                                 <div class="filter-group">
                                     <label for="filterActivityState">Estado de Actividad:</label>
-                                    <select id="filterActivityState" class="select-field">
+                                    <select id="filterActivityState" class="select-field select-modern">
                                         <option value="Todos">Todos los estados</option>
                                         <option value="Remision">Remisión</option>
                                         <option value="Baja Actividad">Baja Actividad</option>
@@ -255,7 +255,7 @@
                                 <h3><i class="fas fa-syringe"></i> Tipo de Tratamiento</h3>
                                 <div class="filter-group">
                                     <label for="filterTtoType">Categoría:</label>
-                                    <select id="filterTtoType" class="select-field">
+                                    <select id="filterTtoType" class="select-field select-modern">
                                         <option value="Todos">Todos los tratamientos</option>
                                         <option value="FAMEs">FAMEs convencionales</option>
                                         <option value="Biológicos">Biológicos / Diana</option>
@@ -267,7 +267,7 @@
                                 <h3><i class="fas fa-prescription-bottle-alt"></i> Fármaco Específico</h3>
                                 <div class="filter-group">
                                     <label for="filterTtoSpecific">Medicamento:</label>
-                                    <select id="filterTtoSpecific" class="select-field">
+                                    <select id="filterTtoSpecific" class="select-field select-modern">
                                         <option value="Todos">Todos los fármacos</option>
                                     </select>
                                 </div>
@@ -282,7 +282,7 @@
                                 <h3><i class="fas fa-notes-medical"></i> Comorbilidades</h3>
                                 <div class="filter-group">
                                     <label for="filterComorbidity">Condición asociada:</label>
-                                    <select id="filterComorbidity" class="select-field">
+                                    <select id="filterComorbidity" class="select-field select-modern">
                                         <option value="Todos">Todas las comorbilidades</option>
                                         <option value="HTA">Hipertensión Arterial</option>
                                         <option value="DM">Diabetes Mellitus</option>
@@ -299,7 +299,7 @@
                                 <h3><i class="fas fa-eye"></i> Manifestaciones Extra-articulares</h3>
                                 <div class="filter-group">
                                     <label for="filterExtraArticular">Manifestación:</label>
-                                    <select id="filterExtraArticular" class="select-field">
+                                    <select id="filterExtraArticular" class="select-field select-modern">
                                         <option value="Todos">Todas las manifestaciones</option>
                                         <option value="Digestiva">Afectación Digestiva (EII)</option>
                                         <option value="Uveitis">Uveítis</option>
@@ -410,9 +410,9 @@
                     <h2 class="card-title"><i class="fas fa-project-diagram"></i> Correlación de Índices</h2>
                     <div class="correlation-controls">
                         <label for="scatterX">Eje X:</label>
-                        <select id="scatterX" class="select-field"></select>
+                        <select id="scatterX" class="select-field select-modern"></select>
                         <label for="scatterY">Eje Y:</label>
-                        <select id="scatterY" class="select-field"></select>
+                        <select id="scatterY" class="select-field select-modern"></select>
                     </div>
                     <div class="chart-container">
                         <canvas id="correlationScatterChart"></canvas>
@@ -469,6 +469,7 @@
 
     <script src="modules/hubTools.js?v=20260306l"></script>
     <script src="modules/utils.js?v=20260306l"></script>
+    <script src="modules/customSelect.js?v=20260307a"></script>
     <script src="modules/fieldNormalizer.js?v=20260306l"></script>
     <script src="modules/mockPatients.js?v=20260306l"></script>
     <script src="modules/scoreCalculators.js?v=20260306l"></script>

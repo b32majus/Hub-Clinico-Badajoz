@@ -6,16 +6,18 @@
     <title>Hub Clínico - Gestionar Fármacos</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20260307r">
+    <link rel="stylesheet" href="style.css?v=20260307t">
+    <link rel="stylesheet" href="style_manage.css?v=20260307a">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="modules/hubTools.js?v=20260306l"></script>
     <script src="modules/utils.js?v=20260306l"></script>
+    <script src="modules/customSelect.js?v=20260307a"></script>
     <script src="modules/fieldNormalizer.js?v=20260306l"></script>
     <script src="modules/mockPatients.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307r"></script>
     <script src="modules/exportManager.js?v=20260306l"></script>
     <script src="script.js?v=20260307r"></script>
-    <script src="scripts/script_manage_drugs.js?v=20260306l"></script>
+    <script src="scripts/script_manage_drugs.js?v=20260307a"></script>
 </head>
 <body>
     <div class="hub-shell">
@@ -70,30 +72,87 @@
             </div>
             <div class="sidebar-footer">v. 1.0.0</div>
         </aside>
-        <main class="main-content">
-            <section class="dashboard-card">
-                <h2>Gestionar Fármacos</h2>
-                <form id="addForm">
-                    <input type="text" id="drugName" placeholder="Nombre del fármaco" required>
-                    <select id="drugCategory" required>
-                        <option value="FAME">FAME</option>
-                        <option value="Biológico">Biológico</option>
-                        <option value="Sistémico">Sistémico</option>
-                    </select>
-                    <button type="submit">Añadir</button>
-                </form>
-                <table id="listTable">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Categoría</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listBody">
-                    </tbody>
-                </table>
-                <button id="copyToClipboardBtn" class="button primary-button">Copiar Lista al Portapapeles</button>
+        <main class="main-content management-page">
+            <section class="management-hero">
+                <div>
+                    <p class="management-hero__eyebrow">Gestión de catálogos</p>
+                    <h1 class="management-hero__title">Fármacos</h1>
+                    <p class="management-hero__description">Mantén actualizado el catálogo terapéutico que alimenta los formularios y desplegables clínicos de la aplicación.</p>
+                </div>
+                <div class="management-hero__badge" aria-hidden="true">
+                    <span class="management-hero__badge-icon"><i class="fas fa-pills"></i></span>
+                    <div>
+                        <span class="management-hero__badge-label">Registros activos</span>
+                        <span class="management-hero__badge-value" id="recordsCount">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="management-grid">
+                <article class="management-card">
+                    <div class="management-card__header">
+                        <div>
+                            <h2 class="management-card__title"><i class="fas fa-plus-circle"></i> Añadir fármaco</h2>
+                            <p class="management-card__subtitle">Introduce un nombre y clasifícalo para que esté disponible en primera visita, seguimiento y cuadros de mando.</p>
+                        </div>
+                    </div>
+                    <div class="management-card__body">
+                        <form id="addForm" class="management-form">
+                            <div class="management-form__group">
+                                <label class="management-form__label" for="drugName">Nombre del fármaco</label>
+                                <input type="text" id="drugName" class="input-modern" placeholder="Ej: Metotrexato" required>
+                            </div>
+                            <div class="management-form__group">
+                                <label class="management-form__label" for="drugCategory">Categoría</label>
+                                <select id="drugCategory" class="select-modern" required>
+                                    <option value="FAME">FAME</option>
+                                    <option value="Biológico">Biológico</option>
+                                    <option value="Sistémico">Sistémico</option>
+                                </select>
+                                <p class="management-form__help">La categoría determina en qué bloque del tratamiento aparecerá el fármaco.</p>
+                            </div>
+                            <div class="management-form__actions">
+                                <button type="submit" class="management-btn management-btn--primary management-btn--full">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir al catálogo
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </article>
+
+                <article class="management-card">
+                    <div class="management-card__header">
+                        <div>
+                            <h2 class="management-card__title"><i class="fas fa-table-list"></i> Catálogo actual</h2>
+                            <p class="management-card__subtitle">Revisa, depura y copia el listado completo para sincronizarlo con la hoja maestra.</p>
+                        </div>
+                        <span class="management-card__count" id="tableCount">0</span>
+                    </div>
+                    <div class="management-card__body">
+                        <div class="management-table-shell">
+                            <div class="management-table-toolbar">
+                                <span class="management-table-meta" id="tableSummary">Sin registros cargados.</span>
+                                <button id="copyToClipboardBtn" class="management-btn management-btn--secondary" type="button">
+                                    <i class="fas fa-copy"></i>
+                                    Copiar lista al portapapeles
+                                </button>
+                            </div>
+                            <div class="management-table-wrap">
+                                <table id="listTable" class="management-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Categoría</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="listBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </article>
             </section>
         </main>
     </div>

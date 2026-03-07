@@ -6,16 +6,18 @@
     <title>Hub Clínico - Gestionar Profesionales</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20260307r">
+    <link rel="stylesheet" href="style.css?v=20260307t">
+    <link rel="stylesheet" href="style_manage.css?v=20260307a">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="modules/hubTools.js?v=20260306l"></script>
     <script src="modules/utils.js?v=20260306l"></script>
+    <script src="modules/customSelect.js?v=20260307a"></script>
     <script src="modules/fieldNormalizer.js?v=20260306l"></script>
     <script src="modules/mockPatients.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307r"></script>
     <script src="modules/exportManager.js?v=20260306l"></script>
     <script src="script.js?v=20260307r"></script>
-    <script src="scripts/script_manage_professionals.js?v=20260306l"></script>
+    <script src="scripts/script_manage_professionals.js?v=20260307a"></script>
 </head>
 <body>
     <div class="hub-shell">
@@ -70,26 +72,83 @@
             </div>
             <div class="sidebar-footer">v. 1.0.0</div>
         </aside>
-        <main class="main-content">
-            <section class="dashboard-card">
-                <h2>Gestionar Profesionales</h2>
-                <form id="addForm">
-                    <input type="text" id="professionalName" placeholder="Nombre del profesional" required>
-                    <input type="text" id="professionalRole" placeholder="Cargo" required>
-                    <button type="submit">Añadir</button>
-                </form>
-                <table id="listTable">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Cargo</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listBody">
-                    </tbody>
-                </table>
-                <button id="copyToClipboardBtn" class="button primary-button">Copiar Lista al Portapapeles</button>
+        <main class="main-content management-page">
+            <section class="management-hero">
+                <div>
+                    <p class="management-hero__eyebrow">Gestión de acceso</p>
+                    <h1 class="management-hero__title">Profesionales</h1>
+                    <p class="management-hero__description">Administra el listado de profesionales que pueden iniciar sesión y firmar registros clínicos dentro del Hub.</p>
+                </div>
+                <div class="management-hero__badge" aria-hidden="true">
+                    <span class="management-hero__badge-icon"><i class="fas fa-user-doctor"></i></span>
+                    <div>
+                        <span class="management-hero__badge-label">Perfiles activos</span>
+                        <span class="management-hero__badge-value" id="recordsCount">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="management-grid">
+                <article class="management-card">
+                    <div class="management-card__header">
+                        <div>
+                            <h2 class="management-card__title"><i class="fas fa-user-plus"></i> Añadir profesional</h2>
+                            <p class="management-card__subtitle">Añade nombre completo y rol para que el perfil quede disponible en la selección de sesión y en la trazabilidad de visitas.</p>
+                        </div>
+                    </div>
+                    <div class="management-card__body">
+                        <form id="addForm" class="management-form">
+                            <div class="management-form__group">
+                                <label class="management-form__label" for="professionalName">Nombre del profesional</label>
+                                <input type="text" id="professionalName" class="input-modern" placeholder="Ej: Eugenio Chamizo" required>
+                            </div>
+                            <div class="management-form__group">
+                                <label class="management-form__label" for="professionalRole">Cargo o rol</label>
+                                <input type="text" id="professionalRole" class="input-modern" placeholder="Ej: Reumatólogo/a" required>
+                                <p class="management-form__help">Se mostrará en la tabla de gestión y en la lista exportable.</p>
+                            </div>
+                            <div class="management-form__actions">
+                                <button type="submit" class="management-btn management-btn--primary management-btn--full">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir profesional
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </article>
+
+                <article class="management-card">
+                    <div class="management-card__header">
+                        <div>
+                            <h2 class="management-card__title"><i class="fas fa-id-badge"></i> Directorio actual</h2>
+                            <p class="management-card__subtitle">Consulta el listado disponible, elimina duplicados o perfiles obsoletos y copia la relación completa.</p>
+                        </div>
+                        <span class="management-card__count" id="tableCount">0</span>
+                    </div>
+                    <div class="management-card__body">
+                        <div class="management-table-shell">
+                            <div class="management-table-toolbar">
+                                <span class="management-table-meta" id="tableSummary">Sin profesionales cargados.</span>
+                                <button id="copyToClipboardBtn" class="management-btn management-btn--secondary" type="button">
+                                    <i class="fas fa-copy"></i>
+                                    Copiar lista al portapapeles
+                                </button>
+                            </div>
+                            <div class="management-table-wrap">
+                                <table id="listTable" class="management-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th>Cargo</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="listBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </article>
             </section>
         </main>
     </div>

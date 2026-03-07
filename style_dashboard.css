@@ -447,6 +447,10 @@
     transition: all var(--transition-normal);
 }
 
+.dashboard-card:has(.custom-select) {
+    overflow: visible;
+}
+
 .dashboard-card::before {
     content: '';
     position: absolute;
@@ -691,6 +695,8 @@
     padding: var(--spacing-md);
     background: var(--color-background);
     border-radius: var(--radius-md);
+    position: relative;
+    overflow: visible;
 }
 
 .chart-controls label {
