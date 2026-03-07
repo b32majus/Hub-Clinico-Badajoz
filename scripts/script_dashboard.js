@@ -425,6 +425,8 @@ function populatePatientKPIs(latest, summary, allVisits) {
     const primaryStatus = getKPIStatus(primaryMetricKey, primaryMetric);
     document.getElementById('kpiBASDAIValue').textContent = primaryMetricValue;
     document.getElementById('kpiBASDAIStatus').textContent = primaryStatus.text;
+    const kpiBASDAIThreshold = document.getElementById('kpiBASDAIThreshold');
+    if (kpiBASDAIThreshold) kpiBASDAIThreshold.textContent = primaryStatus.threshold || '';
     updateKPICardClass('kpiBASDAI', primaryStatus.class);
 
     const secondaryMetric = isAR ? getARSecondaryMetric(latest) : getVisitMetric(latest, 'asdas');
@@ -433,6 +435,8 @@ function populatePatientKPIs(latest, summary, allVisits) {
     const secondaryStatus = getKPIStatus(secondaryMetricKey, secondaryMetric);
     document.getElementById('kpiASDASValue').textContent = secondaryMetricValue;
     document.getElementById('kpiASDASStatus').textContent = secondaryStatus.text;
+    const kpiASDASThreshold = document.getElementById('kpiASDASThreshold');
+    if (kpiASDASThreshold) kpiASDASThreshold.textContent = secondaryStatus.threshold || '';
     updateKPICardClass('kpiASDAS', secondaryStatus.class);
 
     const pcr = getVisitMetric(latest, 'pcr');
@@ -440,6 +444,8 @@ function populatePatientKPIs(latest, summary, allVisits) {
     const pcrStatus = getKPIStatus('pcr', pcr);
     document.getElementById('kpiPCRValue').textContent = pcrValue;
     document.getElementById('kpiPCRStatus').textContent = pcrStatus.text;
+    const kpiPCRThreshold = document.getElementById('kpiPCRThreshold');
+    if (kpiPCRThreshold) kpiPCRThreshold.textContent = pcrStatus.threshold || '';
     updateKPICardClass('kpiPCR', pcrStatus.class);
 
     const activeTreatment = getLastItem(window.patientHistory.treatmentHistory) || {};
@@ -456,48 +462,48 @@ function populatePatientKPIs(latest, summary, allVisits) {
 
 function getKPIStatus(metric, value) {
     if (value === null || value === undefined || isNaN(value)) {
-        return { text: 'Sin datos', class: '' };
+        return { text: 'Sin datos', class: '', threshold: '' };
     }
 
     const numValue = Number(value);
 
     switch (metric) {
         case 'basdai':
-            if (numValue < 4) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
-            if (numValue < 6) return { text: 'Moderado', class: 'kpi-card--warning' };
-            return { text: 'Alto', class: 'kpi-card--danger' };
+            if (numValue < 4) return { text: 'Remisi\u00f3n', class: 'kpi-card--success', threshold: '\u003c4 remisi\u00f3n | \u22654 activo | \u22656 muy activo' };
+            if (numValue < 6) return { text: 'Moderado', class: 'kpi-card--warning', threshold: '\u003c4 remisi\u00f3n | \u22654 activo | \u22656 muy activo' };
+            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c4 remisi\u00f3n | \u22654 activo | \u22656 muy activo' };
 
         case 'asdas':
-            if (numValue < 1.3) return { text: 'Inactivo', class: 'kpi-card--success' };
-            if (numValue < 2.1) return { text: 'Bajo', class: 'kpi-card--info' };
-            if (numValue <= 3.5) return { text: 'Moderado', class: 'kpi-card--warning' };
-            return { text: 'Alto', class: 'kpi-card--danger' };
+            if (numValue < 1.3) return { text: 'Inactivo', class: 'kpi-card--success', threshold: '\u003c1.3 inactiva | 1.3\u20132.1 baja | 2.1\u20133.5 moderada | \u003e3.5 alta' };
+            if (numValue < 2.1) return { text: 'Bajo', class: 'kpi-card--info', threshold: '\u003c1.3 inactiva | 1.3\u20132.1 baja | 2.1\u20133.5 moderada | \u003e3.5 alta' };
+            if (numValue <= 3.5) return { text: 'Moderado', class: 'kpi-card--warning', threshold: '\u003c1.3 inactiva | 1.3\u20132.1 baja | 2.1\u20133.5 moderada | \u003e3.5 alta' };
+            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c1.3 inactiva | 1.3\u20132.1 baja | 2.1\u20133.5 moderada | \u003e3.5 alta' };
 
         case 'das28':
-            if (numValue < 2.6) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
-            if (numValue < 3.2) return { text: 'Baja', class: 'kpi-card--info' };
-            if (numValue <= 5.1) return { text: 'Moderada', class: 'kpi-card--warning' };
-            return { text: 'Alta', class: 'kpi-card--danger' };
+            if (numValue < 2.6) return { text: 'Remisi\u00f3n', class: 'kpi-card--success', threshold: '\u003c2.6 remisi\u00f3n | 2.6\u20133.2 baja | 3.2\u20135.1 moderada | \u003e5.1 alta' };
+            if (numValue < 3.2) return { text: 'Baja', class: 'kpi-card--info', threshold: '\u003c2.6 remisi\u00f3n | 2.6\u20133.2 baja | 3.2\u20135.1 moderada | \u003e5.1 alta' };
+            if (numValue <= 5.1) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '\u003c2.6 remisi\u00f3n | 2.6\u20133.2 baja | 3.2\u20135.1 moderada | \u003e5.1 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u003c2.6 remisi\u00f3n | 2.6\u20133.2 baja | 3.2\u20135.1 moderada | \u003e5.1 alta' };
 
         case 'cdai':
-            if (numValue <= 2.8) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
-            if (numValue <= 10) return { text: 'Baja', class: 'kpi-card--info' };
-            if (numValue <= 22) return { text: 'Moderada', class: 'kpi-card--warning' };
-            return { text: 'Alta', class: 'kpi-card--danger' };
+            if (numValue <= 2.8) return { text: 'Remisi\u00f3n', class: 'kpi-card--success', threshold: '\u22642.8 remisi\u00f3n | \u226410 baja | \u226422 moderada | \u003e22 alta' };
+            if (numValue <= 10) return { text: 'Baja', class: 'kpi-card--info', threshold: '\u22642.8 remisi\u00f3n | \u226410 baja | \u226422 moderada | \u003e22 alta' };
+            if (numValue <= 22) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '\u22642.8 remisi\u00f3n | \u226410 baja | \u226422 moderada | \u003e22 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u22642.8 remisi\u00f3n | \u226410 baja | \u226422 moderada | \u003e22 alta' };
 
         case 'sdai':
-            if (numValue <= 3.3) return { text: 'Remisi\u00f3n', class: 'kpi-card--success' };
-            if (numValue <= 11) return { text: 'Baja', class: 'kpi-card--info' };
-            if (numValue <= 26) return { text: 'Moderada', class: 'kpi-card--warning' };
-            return { text: 'Alta', class: 'kpi-card--danger' };
+            if (numValue <= 3.3) return { text: 'Remisi\u00f3n', class: 'kpi-card--success', threshold: '\u22643.3 remisi\u00f3n | \u226411 baja | \u226426 moderada | \u003e26 alta' };
+            if (numValue <= 11) return { text: 'Baja', class: 'kpi-card--info', threshold: '\u22643.3 remisi\u00f3n | \u226411 baja | \u226426 moderada | \u003e26 alta' };
+            if (numValue <= 26) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '\u22643.3 remisi\u00f3n | \u226411 baja | \u226426 moderada | \u003e26 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u22643.3 remisi\u00f3n | \u226411 baja | \u226426 moderada | \u003e26 alta' };
 
         case 'pcr':
-            if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success' };
-            if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning' };
-            return { text: 'Alto', class: 'kpi-card--danger' };
+            if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
+            if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
+            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
 
         default:
-            return { text: '', class: '' };
+            return { text: '', class: '', threshold: '' };
     }
 }
 
@@ -930,12 +936,12 @@ function initActivityChart() {
                     title: { display: true, text: primaryMetric.toUpperCase() },
                     grid: { color: '#E2E8F0' }
                 },
-                y1: secondaryMetric ? {
+                ...(secondaryMetric ? { y1: {
                     position: 'right',
                     beginAtZero: true,
                     title: { display: true, text: secondaryMetric.toUpperCase() },
                     grid: { display: false }
-                } : undefined
+                } } : {})
             },
             animation: {
                 duration: 750,
@@ -1072,13 +1078,13 @@ function initPROChart() {
                     title: { display: true, text: primaryMetric === 'evaDolor' ? 'EVA Dolor' : 'EVA Global' },
                     grid: { color: '#E2E8F0' }
                 },
-                y1: secondaryMetric ? {
+                ...(secondaryMetric ? { y1: {
                     position: 'right',
                     beginAtZero: true,
                     max: 10,
                     title: { display: true, text: secondaryMetric === 'evaDolor' ? 'EVA Dolor' : 'EVA Global' },
                     grid: { display: false }
-                } : undefined
+                } } : {})
             },
             animation: {
                 duration: 750,
