@@ -7,6 +7,7 @@ Aplicación web local-first para captura estructurada de datos clínicos en Reum
 - Patologías activas: `ESPA`, `APS`, `AR`.
 - Base de datos local compartida: `Hub_Clinico_Maestro.xlsx`.
 - Flujo de persistencia: exportar CSV (1 fila) y pegar manualmente en Excel.
+- Caché operativa de la BD: por sesión de navegador (`sessionStorage`), no persistente al cerrar la ventana.
 
 ## Qué hace actualmente
 1. Registro de primera visita y seguimiento.
@@ -17,11 +18,14 @@ Aplicación web local-first para captura estructurada de datos clínicos en Reum
 6. Exportación dual:
    - `TXT` para historia clínica.
    - `CSV` estructurado para base de datos (Excel).
+7. Recarga de la BD desde cualquier pantalla mediante el badge lateral de estado.
+8. Gestión visual unificada de catálogos de `Fármacos` y `Profesionales`.
 
 ## Reglas críticas de operación
 - Primera visita y seguimiento de una misma patología se guardan en la misma hoja (`ESPA`, `APS`, `AR`) para permitir evolución.
 - La app no sincroniza automáticamente con el Excel compartido en tiempo real.
 - Para ver nuevas filas añadidas por otros usuarios, hay que recargar la base de datos en la app.
+- Si se cierra el navegador o la pestaña de trabajo, hay que volver a cargar `Hub_Clinico_Maestro.xlsx` al abrir una nueva sesión.
 
 ## Estructura de datos (alto nivel)
 Archivo maestro:
