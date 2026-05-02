@@ -321,11 +321,12 @@ function generarFilaCSV_AR_Base(datos, tipoVisita) {
     setLegacyColumn(row, 154, datos.basdaiP6 || '');
     setLegacyColumn(row, 155, datos.basdaiResult || '');
 
-    setLegacyColumn(row, 156, datos.asdasDolorEspalda || '');
-    setLegacyColumn(row, 157, datos.asdasDuracionRigidez || '');
-    setLegacyColumn(row, 158, datos.asdasEvaGlobal || '');
-    setLegacyColumn(row, 159, datos.asdasCrpResult || '');
-    setLegacyColumn(row, 160, datos.asdasEsrResult || '');
+    const isAR = (datos.diagnosticoPrimario || '').toLowerCase() === 'ar';
+    setLegacyColumn(row, 156, isAR ? 'NA' : (datos.asdasDolorEspalda || ''));
+    setLegacyColumn(row, 157, isAR ? 'NA' : (datos.asdasDuracionRigidez || ''));
+    setLegacyColumn(row, 158, isAR ? 'NA' : (datos.asdasEvaGlobal || ''));
+    setLegacyColumn(row, 159, isAR ? 'NA' : (datos.asdasCrpResult || ''));
+    setLegacyColumn(row, 160, isAR ? 'NA' : (datos.asdasEsrResult || ''));
 
     setLegacyColumn(row, 161, datos.schober || '');
     setLegacyColumn(row, 162, datos.rotacionCervical || '');
@@ -1163,12 +1164,13 @@ function generarNotaClinica(datos) {
     texto += '\n';
 
     // EVALUACIÓN DE ACTIVIDAD (si existe)
-    if (datos.evaGlobal || datos.evaDolor || datos.basdai || datos.asdasCrp) {
+    const isARTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'ar';
+    if (datos.evaGlobal || datos.evaDolor || datos.basdai || (!isARTXT && datos.asdasCrp)) {
         texto += '▓▓▓ EVALUACIÓN DE ACTIVIDAD ▓▓▓\n';
         if (datos.evaGlobal) texto += `EVA Global: ${datos.evaGlobal}\n`;
         if (datos.evaDolor) texto += `EVA Dolor: ${datos.evaDolor}\n`;
         if (datos.basdai) texto += `BASDAI: ${datos.basdai}\n`;
-        if (datos.asdasCrp) texto += `ASDAS-CRP: ${datos.asdasCrp}\n`;
+        if (!isARTXT && datos.asdasCrp) texto += `ASDAS-CRP: ${datos.asdasCrp}\n`;
         texto += '\n';
     }
 

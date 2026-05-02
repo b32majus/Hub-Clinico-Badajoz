@@ -196,6 +196,10 @@ function mostrarElementosAR() {
     // Secciones específicas de AR
     showElementsBySelector('.ar-only', 'block');
 
+    // Ocultar secciones ASDAS (no aplican en AR)
+    hideElement('asdasEsrSection');
+    hideElement('asdasSection');
+
     // Mostrar secciones específicas
     const elementosAR = [
         'criteriosACREULARSection', 'seccionesClinicasARSection',

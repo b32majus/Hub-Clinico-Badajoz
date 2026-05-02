@@ -711,6 +711,7 @@ function resolveQuickViewPatient(id) {
 }
 
 function buildQuickViewScores(patient) {
+    const isAR = normalizePathology(patient.diagnosticoPrimario || patient.pathologyCode) === 'ar';
     return [
         ['EVA GLOBAL', patient.evaGlobal],
         ['EVA DOLOR', patient.evaDolor],
@@ -724,6 +725,7 @@ function buildQuickViewScores(patient) {
         ['RAPID3', patient.rapid3]
     ]
         .filter(function(metric) {
+            if (isAR && metric[0] === 'ASDAS-CRP') return false;
             return metric[1] !== null && metric[1] !== undefined && metric[1] !== '';
         })
         .map(function(metric) {

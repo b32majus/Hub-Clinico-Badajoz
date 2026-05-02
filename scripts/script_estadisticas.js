@@ -369,6 +369,7 @@ function bindAutoApplyFilters() {
         const handler = () => {
             if (input.id === 'filterPathology') {
                 syncActivityIndexForPathology();
+                updateStatisticsOptionsByPathology();
             }
             applyFiltersAndRefresh();
         };
@@ -410,6 +411,30 @@ function syncActivityIndexForPathology() {
         if (!arIndices.includes(current)) {
             activityIndex.value = 'DAS28_CRP';
         }
+    }
+}
+
+/**
+ * Oculta/muestra opciones ASDAS y KPI card según patología.
+ * En AR: oculta option ASDAS y kpiAsdasCard.
+ * En EspA/APs: los restaura.
+ */
+function updateStatisticsOptionsByPathology() {
+    const pathology = document.getElementById('filterPathology')?.value || '';
+    const normalized = HubTools?.normalizer?.normalizePathology?.(pathology) || (pathology || '').toLowerCase();
+    const asdasOption = document.querySelector('option[value="ASDAS"]');
+    const asdasCard = document.getElementById('kpiAsdasCard');
+
+    if (normalized === 'ar') {
+        if (asdasOption) asdasOption.hidden = true;
+        if (asdasOption && asdasOption.selected) {
+            const das28Option = document.querySelector('option[value="DAS28_CRP"]') || document.querySelector('option[value="DAS28_ESR"]');
+            if (das28Option) das28Option.selected = true;
+        }
+        if (asdasCard) asdasCard.style.display = 'none';
+    } else {
+        if (asdasOption) asdasOption.hidden = false;
+        if (asdasCard) asdasCard.style.display = '';
     }
 }
 

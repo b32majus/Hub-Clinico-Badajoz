@@ -90,7 +90,7 @@ function configureDashboardMetricLabels() {
 
     const isAR = isARPathology();
     const primaryLabel = isAR ? 'DAS28' : 'BASDAI';
-    const secondaryLabel = isAR ? 'CDAI' : 'ASDAS';
+    const secondaryLabel = isAR ? 'CDAI/SDAI' : 'ASDAS';
 
     if (primaryKpiLabel) primaryKpiLabel.textContent = primaryLabel;
     if (secondaryKpiLabel) secondaryKpiLabel.textContent = secondaryLabel;

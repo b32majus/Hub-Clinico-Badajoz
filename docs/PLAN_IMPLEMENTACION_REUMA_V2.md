@@ -2061,3 +2061,48 @@ Fecha: 2026-05-03.
 - El badge prebiológico aún no existe (Fase 6).
 - La Solicitud FH aún no existe (Fase 7).
 - `dataManager.js` `saveToSessionStorage` aún solo hace slice de ESPA/APS/AR; se extenderá cuando LES/SJOGREN/Prebiologico tengan datos reales.
+
+---
+
+## Fase 2 ejecutada — Retirada de ASDAS en AR
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `primera_visita.html` | Línea 1425: Añadidas clases `espa-aps-only`, `id="asdasEsrSection"`, `style="display: none;"` al bloque ASDAS-ESR. |
+| `seguimiento.html` | Línea 964: Idéntico cambio. |
+| `modules/formController.js` | `mostrarElementosAR()`: Añadidos `hideElement('asdasEsrSection')` y `hideElement('asdasSection')` (líneas 199-201). |
+| `modules/exportManager.js` | `generarFilaCSV_AR_Base()`: Columnas ASDAS (156-160) condicionadas con `isAR ? 'NA' : valor` (líneas 324-329). `generarNotaClinica()`: ASDAS-CRP condicionado a `!isARTXT` en bloque EVALUACIÓN DE ACTIVIDAD (líneas 1167-1174). |
+| `scripts/script_dashboard.js` | `configureDashboardMetricLabels()`: Label secundario AR cambiado de `'CDAI'` a `'CDAI/SDAI'` (línea 93). |
+| `scripts/script_estadisticas.js` | Nueva función `updateStatisticsOptionsByPathology()` (líneas 422-438): oculta opción ASDAS del select y KPI card `#kpiAsdasCard` cuando AR. Llamada desde `bindAutoApplyFilters()` (línea 373). |
+| `script.js` | `buildQuickViewScores()`: Filtra ASDAS-CRP cuando `normalizePathology(patient.diagnosticoPrimario) === 'ar'` (líneas 714, 728). |
+
+### Cambios realizados
+
+1. **HTML**: Ambos bloques ASDAS-ESR ahora tienen clase `espa-aps-only` con `display: none` inline, igual que el bloque ASDAS-CRP. El `id="asdasEsrSection"` permite ocultación explícita desde JS.
+2. **formController.js**: `mostrarElementosAR()` oculta explícitamente `asdasEsrSection` + `asdasSection`. EspA/APs los muestran vía `showElementsBySelector('.espa-aps-only')`.
+3. **exportManager.js**: CSV escribe `'NA'` en columnas ASDAS 156-160 cuando `diagnosticoPrimario === 'ar'`. TXT omite `ASDAS-CRP` del bloque EVALUACIÓN DE ACTIVIDAD en AR.
+4. **Dashboard**: KPI secundario se etiqueta `CDAI/SDAI` en AR (antes solo `CDAI`). El valor lo obtiene `getARSecondaryMetric()` que ya devuelve CDAI/SDAI — sin cambios necesarios allí.
+5. **Estadísticas**: `updateStatisticsOptionsByPathology()` se dispara al cambiar filtro de patología: oculta `<option value="ASDAS">` y `#kpiAsdasCard` en AR, los restaura en otras patologías.
+6. **Quick view**: `buildQuickViewScores()` excluye `['ASDAS-CRP', ...]` cuando el paciente es AR.
+
+### Notas sobre funciones no modificadas
+
+- `recopilarDatosFormulario()` (línea ~1023-1027) y `recopilarDatosFormularioSeguimiento()` (línea ~1513-1517): usan `?.value || ''` — seguro con campos ocultos. No requieren cambio.
+- `validarFormulario()` (línea ~394): solo valida campos AR (vía `validarCamposAR()`), no valida ASDAS. No requiere cambio.
+- `initScoreWiring()` (línea ~1705): registra event listeners ASDAS. No rompe en AR (elementos hidden/inexistentes). No se modifica para mantener compatibilidad EspA/APs.
+- `calcularASDAS()` en `modules/scoreCalculators.js`: **NO eliminada**. Se conserva para EspA/APs.
+- Columnas ASDAS del CSV: **NO eliminadas**. Se escriben como `'NA'` en AR.
+
+### Pruebas manuales
+
+- [ ] Primera visita AR: no se ve ASDAS
+- [ ] Seguimiento AR: no se ve ASDAS
+- [ ] Primera visita EspA: ASDAS sigue visible
+- [ ] Seguimiento EspA: ASDAS sigue visible
+- [ ] CSV AR: columnas ASDAS = NA
+- [ ] Dashboard AR: label secundario = CDAI/SDAI, no muestra ASDAS
+- [ ] Estadísticas AR: no muestra ASDAS en select ni KPI
+- [ ] Quick view AR: no muestra ASDAS-CRP
+- [ ] TXT AR: no incluye ASDAS-CRP en bloque de actividad
