@@ -1,7 +1,7 @@
 ﻿// Módulo Field Normalizer - Normalización canónica de campos
 
 const FIELD_ALIASES = {
-    idPaciente: ['ID_Paciente', 'idPaciente', 'ID', 'id', 'Id'],
+    idPaciente: ['CIP', 'ID_Paciente', 'idPaciente', 'ID', 'id', 'Id', 'NHC', 'NHC_Paciente', 'NHS'],
     nombrePaciente: ['Nombre_Paciente', 'nombrePaciente', 'Nombre', 'nombre'],
     sexoPaciente: ['Sexo', 'sexoPaciente', 'sexo'],
     fechaNacimiento: ['Fecha_Nacimiento', 'fechaNacimiento'],
@@ -51,12 +51,28 @@ function normalizePathology(value) {
     if (normalized === 'espa' || normalized === 'espa axial') return 'espa';
     if (normalized === 'aps' || normalized === 'apsoriatica' || normalized === 'artritis psoriasica') return 'aps';
     if (normalized === 'ar' || normalized === 'artritis reumatoide') return 'ar';
+    if (normalized === 'les' || normalized === 'lupus' || normalized === 'lupus eritematoso sistemico' || normalized === 'lupus eritematoso sistémico' || normalized === 'lupus eritematoso sistémico (les)') return 'les';
+    if (normalized === 'sjogren' || normalized === 'sjögren' || normalized === 'sindrome de sjogren' || normalized === 'síndrome de sjögren' || normalized === 'síndrome de sjogren' || normalized === 'ss') return 'sjogren';
     return normalized;
+}
+
+function getPatientCIP(record) {
+    if (!record) return '';
+    return (
+        record.CIP ||
+        record.ID_Paciente ||
+        record.idPaciente ||
+        record.NHC ||
+        record.NHC_Paciente ||
+        record.NHS ||
+        ''
+    ).toString().trim();
 }
 
 function normalizeRecord(record, extra) {
     const normalized = {
         ...record,
+        cip: getPatientCIP(record),
         idPaciente: getCanonicalField(record, 'idPaciente', ''),
         nombrePaciente: getCanonicalField(record, 'nombrePaciente', ''),
         sexoPaciente: getCanonicalField(record, 'sexoPaciente', ''),
@@ -97,4 +113,5 @@ if (typeof HubTools !== 'undefined') {
     HubTools.normalizer.getCanonicalField = getCanonicalField;
     HubTools.normalizer.normalizePathology = normalizePathology;
     HubTools.normalizer.normalizeRecord = normalizeRecord;
+    HubTools.normalizer.getPatientCIP = getPatientCIP;
 }

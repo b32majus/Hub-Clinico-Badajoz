@@ -31,6 +31,15 @@ window.HubTools = {
     // Control de formularios
     form: {},
 
+    // Módulo prebiológico (v2)
+    prebiologic: {},
+
+    // Solicitudes a Farmacia Hospitalaria (v2)
+    pharmacy: {},
+
+    // Eventos terapéuticos y clínicos (v2)
+    events: {},
+
     // Dashboard y visualización de pacientes
     dashboard: {
         // Umbrales de interpretación clínica para índices de actividad

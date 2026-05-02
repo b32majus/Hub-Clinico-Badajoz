@@ -395,7 +395,7 @@ function validarFormulario() {
     const errores = [];
 
     if (!document.getElementById('idPaciente').value.trim()) {
-        errores.push('ID del Paciente');
+        errores.push('CIP');
     }
     if (!document.getElementById('fechaVisita').value) {
         errores.push('Fecha de la Visita');
@@ -416,7 +416,7 @@ function validarFormularioSeguimiento() {
     const errores = [];
 
     if (!document.getElementById('idPaciente')?.value?.trim()) {
-        errores.push('ID del Paciente');
+        errores.push('CIP');
     }
     if (!document.getElementById('fechaVisita')?.value) {
         errores.push('Fecha de la Visita');

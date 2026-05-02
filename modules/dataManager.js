@@ -1822,6 +1822,13 @@ if (typeof HubTools !== 'undefined') {
 
     HubTools.data.getPatientHistory = getPatientHistory;
 
+    HubTools.data.getPatientCIP = function(record) {
+        if (HubTools.normalizer && HubTools.normalizer.getPatientCIP) {
+            return HubTools.normalizer.getPatientCIP(record);
+        }
+        return (record?.CIP || record?.ID_Paciente || record?.idPaciente || '').toString().trim();
+    };
+
     HubTools.data.getPoblationalData = getPoblationalData;
 
     HubTools.data.getFarmsDataFromState = getFarmsDataFromState;

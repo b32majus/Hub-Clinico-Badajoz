@@ -421,7 +421,7 @@ function renderQuickViewEmptyState(id) {
 }
 
 function renderQuickViewNewPatient(id) {
-    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content"><div class="quick-view-patient-chip__label">ID del Paciente</div><div class="quick-view-patient-chip__value">' + id + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html?id=' + id + '" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
+    return '<div class="quick-view-empty-card"><div class="quick-view-empty-card__hero"><i class="fas fa-user-plus quick-view-empty-card__icon quick-view-empty-card__icon--primary" aria-hidden="true"></i><h3 class="quick-view-empty-card__title">Nuevo Paciente</h3><p class="quick-view-empty-card__text quick-view-empty-card__text--tight">Se procederá a crear una nueva historia clínica</p></div><div class="quick-view-patient-chip"><div class="quick-view-patient-chip__row"><i class="fas fa-id-card quick-view-patient-chip__icon" aria-hidden="true"></i><div class="quick-view-patient-chip__content">                    <div class="quick-view-patient-chip__label">CIP</div><div class="quick-view-patient-chip__value">' + id + '</div></div></div></div><div class="quick-view-empty-card__actions"><a href="primera_visita.html?id=' + id + '" class="action-btn primary-btn quick-view-link-btn quick-view-link-btn--spaced"><i class="fas fa-plus-circle quick-view-inline-icon" aria-hidden="true"></i>Crear Primera Visita</a><button type="button" class="quick-view-secondary-btn" id="quickViewCancelNewPatient"><i class="fas fa-times-circle quick-view-inline-icon" aria-hidden="true"></i>Cancelar</button></div></div>';
 }
 
 function createQuickViewOverlay() {
@@ -615,7 +615,7 @@ function renderQuickViewLayout(viewModel) {
                     <div class="quick-view-eyebrow">Paciente</div>
                     <div class="quick-view-patient-name">${viewModel.patientName}</div>
                     <div class="quick-view-meta">
-                        <span><strong>ID:</strong> ${viewModel.id}</span>
+                        <span><strong>CIP:</strong> ${viewModel.id}</span>
                         <span><strong>Diagnóstico:</strong> ${viewModel.pathologyLabel}</span>
                         <span><strong>Última visita:</strong> ${viewModel.lastVisit}</span>
                     </div>
@@ -788,7 +788,7 @@ function showPatientResults(id) {
 
     if (isNewPatient) {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Nuevo - Iniciar Primera Visita';
-        if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Paciente con ID ${id} no tiene visitas registradas. Cree una nueva historia clínica.`;
+        if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Paciente con CIP ${id} no tiene visitas registradas. Cree una nueva historia clínica.`;
 
         resultsContent.innerHTML = renderQuickViewNewPatient(id);
         document.getElementById('quickViewCancelNewPatient')?.addEventListener('click', () => {
@@ -799,7 +799,7 @@ function showPatientResults(id) {
         });
     } else {
         if (searchResultsTitle) searchResultsTitle.textContent = 'Paciente Encontrado - Opciones Disponibles';
-        if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Mostrando datos de ${patientName} (ID: ${id})`;
+        if (searchResultsSubtitle) searchResultsSubtitle.textContent = `Mostrando datos de ${patientName} (CIP: ${id})`;
         resultsContent.innerHTML = renderQuickViewLayout(buildQuickViewModel(id, patient, historyData));
 
         const dashboardBtn = document.getElementById('btnVerDashboardCompleto');
