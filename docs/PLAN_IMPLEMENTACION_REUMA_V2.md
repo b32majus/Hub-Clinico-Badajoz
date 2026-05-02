@@ -2106,3 +2106,27 @@ Fecha: 2026-05-03.
 - [ ] Estadísticas AR: no muestra ASDAS en select ni KPI
 - [ ] Quick view AR: no muestra ASDAS-CRP
 - [ ] TXT AR: no incluye ASDAS-CRP en bloque de actividad
+
+---
+
+## Fase 3 ejecutada — Contrato Excel maestro v2
+
+### Archivos creados
+
+| Archivo | Descripción |
+|---|---|
+| `docs/CONTRATO_DATOS_REUMA_V2.md` | Contrato unificado v2: hojas, columnas comunes, reglas de codificación, regla de longitudinalidad |
+| `docs/template_les_excel.md` | Columnas específicas de LES (índices, manifestaciones por órgano, inmunología, PROs, tratamiento) |
+| `docs/template_sjogren_excel.md` | Columnas específicas de Sjögren (ESSPRI, ESSDAI, EVAs, manifestaciones, pruebas funcionales, tratamiento) |
+| `docs/template_prebiologico_excel.md` | Columnas del módulo prebiológico transversal (laboratorio, screening, vacunación, estados APTO/EN_CURSO/NO_APTO/NO_EVALUADO) |
+| `docs/template_solicitud_fh.md` | Estructura de la Solicitud FH: 6 secciones (cabecera, antropométricos, tratamiento, prebiológico, bloque patología, tratamiento solicitado) |
+
+### Decisiones documentadas
+
+- `CIP` como identificador canónico visible en todas las hojas nuevas; `ID_Paciente` se mantiene como alias de lectura en hojas históricas.
+- Columnas transversales añadidas a hojas clínicas: `Estado_Prebiologico_Ultimo`, `Fecha_Validacion_Prebiologico_Ultima`.
+- ASDAS en AR: columnas conservadas, codificadas como `NA` (sin cambios en estructura de columnas).
+- Nuevas hojas: `LES`, `SJOGREN`, `Prebiologico`, `Solicitud_FH_Log` (opcional).
+- Regla de longitudinalidad: `Tipo_Visita = primera | seguimiento` en la misma hoja por patología.
+- Estados prebiológicos: `APTO`, `EN_CURSO`, `NO_APTO`, `NO_EVALUADO`. Decisión manual del clínico.
+- Solicitud FH: texto plano para copiar/pegar en orden clínica; bloque específico por patología + bloque prebiológico/vacunación.
