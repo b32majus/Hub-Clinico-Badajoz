@@ -252,10 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (prefillPayload && prefillPayload.idPaciente) {
             HubTools.form.prefillSeguimientoForm(prefillPayload);
-            const pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
+            var pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
             if (pathologyForForm) {
                 HubTools.form.adaptarFormulario(pathologyForForm);
             }
+            renderPrebiologicBadge(prefillPayload.idPaciente);
         } else {
             console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
             const idInput = document.getElementById('idPaciente');
@@ -566,3 +567,27 @@ document.addEventListener('DOMContentLoaded', () => {
         HubTools?.utils?.mostrarNotificacion?.('Error de inicialización. Recargue la página.', 'error');
     }
 });
+
+function renderPrebiologicBadge(cip) {
+    var container = document.getElementById('prebiologicBadgeContainer');
+    if (!container) return;
+
+    if (!cip) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    var badgeHTML = '';
+    if (typeof HubTools.prebiologic.getBadgeHTML === 'function') {
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip);
+    }
+
+    if (badgeHTML) {
+        container.innerHTML = badgeHTML;
+        container.style.display = '';
+    } else {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }
+}

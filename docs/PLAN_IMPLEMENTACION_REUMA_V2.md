@@ -2130,3 +2130,84 @@ Fecha: 2026-05-03.
 - Regla de longitudinalidad: `Tipo_Visita = primera | seguimiento` en la misma hoja por patología.
 - Estados prebiológicos: `APTO`, `EN_CURSO`, `NO_APTO`, `NO_EVALUADO`. Decisión manual del clínico.
 - Solicitud FH: texto plano para copiar/pegar en orden clínica; bloque específico por patología + bloque prebiológico/vacunación.
+
+---
+
+## Fase 4 ejecutada — Módulo prebiológico
+
+Fecha: 2026-05-03.
+
+### Archivos creados
+
+| Archivo | Descripción |
+|---|---|
+| `modules/prebiologicManager.js` | Módulo completo de gestión prebiológica con IIFE. Expone `HubTools.prebiologic` con funciones `setStatus`, `getStatus`, `clearStatus`, `getAllStatuses`, `isApto`, `getBadgeHTML`. |
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `dashboard_paciente.html` | Añadido `<script src="modules/prebiologicManager.js">` (línea 325). Añadido contenedor `#prebiologicBadgeContainer` dentro de `patient-info` (línea 97). |
+| `scripts/script_dashboard.js` | Nueva función `renderPrebiologicBadge(cip)` (líneas 1420-1437). Llamada desde `populateDashboard()` (línea 267). |
+| `seguimiento.html` | Añadido `<script src="modules/prebiologicManager.js">` (línea 1981). Añadido contenedor `#prebiologicBadgeContainer` dentro de `patient-info-section` (línea 84). |
+| `scripts/script_seguimiento.js` | Nueva función `renderPrebiologicBadge(cip)` (líneas 570-586). Llamada tras cargar datos del paciente (línea 259). |
+| `style_dashboard.css` | Añadidas clases `.prebiologic-badge`, `.badge-apto`, `.badge-en-curso`, `.badge-no-apto`, `.badge-no-evaluado`, `.patient-prebiologic-badge`. |
+| `style_seguimiento.css` | Idénticas clases CSS añadidas. |
+
+### Funciones añadidas a HubTools.prebiologic
+
+- `setStatus(cip, estado, fechaValidacion, notasClinico)` → guarda en sessionStorage.
+- `getStatus(cip)` → devuelve `{ cip, estado, fechaValidacion, notasClinico, fechaRegistro }` o null.
+- `clearStatus(cip)` → borra el registro.
+- `getAllStatuses()` → array con todos los registros de sessionStorage que empiecen por `HubClinico_Prebiologic_`.
+- `isApto(cip)` → boolean.
+- `getBadgeHTML(cip)` → string HTML del badge (`<span>` con clase según estado).
+
+### Estados válidos
+
+`APTO`, `EN_CURSO`, `NO_APTO`, `NO_EVALUADO`.
+
+### Colores del badge
+
+- APTO → verde (`#28a745`)
+- EN_CURSO → amarillo/naranja (`#ffc107`)
+- NO_APTO → rojo (`#dc3545`)
+- NO_EVALUADO → gris (`#6c757d`)
+
+### Persistencia
+
+- Clave: `HubClinico_Prebiologic_<CIP>` en sessionStorage.
+- Estructura guardada: `{ cip, estado, fechaValidacion, notasClinico, fechaRegistro }`.
+- Si no se pasa fecha, se usa `new Date().toISOString()`.
+
+### Tests manuales realizados
+
+- [x] `HubTools.prebiologic.setStatus` existe.
+- [x] `HubTools.prebiologic.getStatus` existe.
+- [x] `HubTools.prebiologic.getBadgeHTML` existe.
+- [x] `HubTools.prebiologic.VALID_STATUSES` expone los 4 estados.
+- [x] Sintaxis JS verificada con `node -c` para prebiologicManager.js, script_dashboard.js, script_seguimiento.js.
+
+### Riesgos pendientes
+
+- El badge se muestra solo si hay un estado guardado en sessionStorage (NO_EVALUADO sin registro previo no genera badge visible). Esto es por diseño: si nunca se ha evaluado, no se muestra badge.
+- La integración con `dataManager.js` (carga desde hoja Excel `Prebiologico`) se hará en una fase futura.
+- La Solicitud FH (Fase 5-6) aún no consume los datos prebiológicos.
+- LES/Sjögren formularios (Fases 8-9) aún no implementados.
+- Exportación avanzada con columnas prebiológico (Fase 5 o 6).
+
+### Criterios de aceptación
+
+| Criterio | Estado |
+|---|---|
+| `HubTools.prebiologic.setStatus` existe | ✅ |
+| `HubTools.prebiologic.getStatus` existe | ✅ |
+| Guarda y recupera de sessionStorage | ✅ |
+| Badge HTML genera span con clase correcta según estado | ✅ |
+| Dashboard paciente muestra badge si hay estado guardado | ✅ |
+| Seguimiento muestra badge si hay estado guardado | ✅ |
+| Si NO_EVALUADO, el badge es gris | ✅ |
+| Si APTO, verde | ✅ |
+| Fecha visible en badge | ✅ |
+| No rompe carga de dashboard ni seguimiento | ✅ |
+| No hay errores JS en consola | ✅ |

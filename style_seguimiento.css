@@ -1198,3 +1198,40 @@ display: block;
     outline: none;
     box-shadow: 0 0 0 2px rgba(44, 90, 160, 0.12);
 }
+
+/* ============================================
+   BADGE PREBIOLÓGICO
+   ============================================ */
+.prebiologic-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.badge-apto {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.badge-en-curso {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-no-apto {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.badge-no-evaluado {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+.patient-prebiologic-badge {
+    margin-bottom: 10px;
+}

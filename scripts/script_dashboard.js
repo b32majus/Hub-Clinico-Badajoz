@@ -264,6 +264,7 @@ function populateDashboard() {
     const allVisits = window.patientHistory.allVisits || [];
 
     configureDashboardMetricLabels();
+    renderPrebiologicBadge(summary.idPaciente || getPatientIdFromURL());
 
     // Mostrar contenido, ocultar estado vac?o
     document.getElementById('emptyState').classList.add('hidden');
@@ -1416,6 +1417,30 @@ function capitalizeFirst(text) {
 function getLastItem(list) {
     if (!Array.isArray(list) || !list.length) return null;
     return list[list.length - 1];
+}
+
+function renderPrebiologicBadge(cip) {
+    var container = document.getElementById('prebiologicBadgeContainer');
+    if (!container) return;
+
+    if (!cip) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    var badgeHTML = '';
+    if (typeof HubTools.prebiologic.getBadgeHTML === 'function') {
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip);
+    }
+
+    if (badgeHTML) {
+        container.innerHTML = badgeHTML;
+        container.style.display = '';
+    } else {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }
 }
 
 // ============================================
