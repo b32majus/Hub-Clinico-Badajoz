@@ -2211,3 +2211,75 @@ Fecha: 2026-05-03.
 | Fecha visible en badge | ✅ |
 | No rompe carga de dashboard ni seguimiento | ✅ |
 | No hay errores JS en consola | ✅ |
+
+---
+
+## Fase 6 ejecutada — Solicitud FH (Farmacia Hospitalaria)
+
+Fecha: 2026-05-03.
+
+### Archivos creados
+
+| Archivo | Descripción |
+|---|---|
+| `modules/pharmacyRequest.js` | Módulo completo de generación de texto de Solicitud a Farmacia Hospitalaria con IIFE. Expone `HubTools.pharmacy` con funciones `generateRequestText`, `copyRequestToClipboard`, `renderRequestModal`. |
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `dashboard_paciente.html` | Añadido `<script src="modules/pharmacyRequest.js">` (línea 327). Añadido botón `#btnSolicitudFH` en `patient-header-actions` con clase `btn btn-secondary`. |
+| `scripts/script_dashboard.js` | Handler para `#btnSolicitudFH` en `attachDashboardActions()`. Construye objeto `datos` combinando `window.patientSummary` y `window.patientHistory.latestVisit` y llama a `HubTools.pharmacy.copyRequestToClipboard(datos)`. |
+| `seguimiento.html` | Añadido `<script src="modules/pharmacyRequest.js">` (línea 1682). Añadido botón `#btnSolicitudFH` en `form-actions` con clase `action-btn primary-btn`. |
+| `scripts/script_seguimiento.js` | Handler para `#btnSolicitudFH` tras validación. Usa `HubTools.form.recopilarDatosFormularioSeguimiento()` y llama a `HubTools.pharmacy.copyRequestToClipboard(datos)`. |
+
+### Funciones añadidas a HubTools.pharmacy
+
+- `generateRequestText(datos)` → string con el texto completo de la solicitud FH.
+- `copyRequestToClipboard(datos)` → Promise que copia al portapapeles con fallback a modal/descarga.
+- `renderRequestModal(datos)` → muestra modal con el texto para copia manual, o descarga .txt si no hay modal.
+
+### Bloques del texto generado
+
+1. **Cabecera**: Fecha, profesional, CIP, nombre del paciente.
+2. **Diagnóstico**: Primario y secundario con fallback "Ninguno".
+3. **Evaluación de actividad** por patología:
+   - **AR**: DAS28-CRP, DAS28-VSG, CDAI, SDAI, RAPID3, PCR, VSG, EVA Médico.
+   - **EspA**: BASDAI, ASDAS-CRP, ASDAS-VSG, EVA Global, EVA Dolor, PCR, VSG.
+   - **APs**: Texto genérico con criterios CASPAR, PCR, VSG.
+   - **LES**: Placeholder "SLEDAI/SLEDAI-2K pendiente de implementación formulario".
+   - **Sjögren**: Placeholder "ESSPRI/ESSDAI pendiente de implementación formulario".
+   - **Otra**: Texto genérico con PCR/VSG y EVA si disponibles.
+4. **Tratamiento actual**: Lista fármacos de `planSistemicosEntries`, `planFamesEntries`, `planBiologicosEntries` con fallback a campos individuales y `tratamientoData.cambio.*`.
+5. **Decisión terapéutica**: Si existe `decisionTerapeutica` (mantener/cambiar/suspender/iniciar) con detalles del cambio.
+6. **Prebiológico / Vacunación**: Estado desde `HubTools.prebiologic.getStatus(cip)` + placeholders de vacunación.
+7. **Pie**: Firma "Solicitud generada desde Hub Clínico Reumatología v2".
+
+### Clipboard / Fallback
+
+- Intenta `navigator.clipboard.writeText()`.
+- Si falla, abre modal con `HubTools.form.mostrarModalTexto()`.
+- Si el modal no está disponible, descarga archivo `.txt`.
+
+### Tests manuales realizados
+
+- [x] `HubTools.pharmacy.generateRequestText` existe y devuelve string.
+- [x] El texto incluye CIP, nombre, diagnóstico.
+- [x] Bloque AR incluye DAS28, CDAI, SDAI, RAPID3, PCR, VSG.
+- [x] Bloque EspA incluye BASDAI, ASDAS, PCR, VSG.
+- [x] Bloque LES/Sjögren tiene placeholder claro.
+- [x] Bloque tratamiento lista fármacos activos con dosis.
+- [x] Bloque prebiológico muestra estado desde sessionStorage.
+- [x] Botón en dashboard genera y copia texto.
+- [x] Botón en seguimiento genera y copia texto.
+- [x] Fallback a modal si clipboard falla.
+- [x] No rompe dashboard ni seguimiento.
+- [x] No hay errores JS en consola.
+- [x] Sintaxis JS verificada con `node -c` para pharmacyRequest.js, script_dashboard.js, script_seguimiento.js.
+
+### Riesgos pendientes
+
+- Los datos de vacunación son placeholders (no hay campos en la app todavía).
+- LES/Sjögren: bloques de actividad con placeholders, se completarán en Fases 8-9.
+- El botón del dashboard extrae datos de `window.patientSummary` y `window.patientHistory.latestVisit`. Si `latestVisit` no tiene scores detallados (solo los tiene el CSV original de exportación), algunos campos aparecerán vacíos.
+- No se modifica `exportManager.js` (los patrones de clipboard/fallback están duplicados en `pharmacyRequest.js` por diseño, para mantener independencia de módulos).

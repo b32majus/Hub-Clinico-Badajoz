@@ -134,6 +134,63 @@ function attachDashboardActions(patientId) {
         exportBtn.addEventListener('click', exportVisitsToCSV);
     }
 
+    // Bot?n de Solicitud FH
+    const btnSolicitudFH = document.getElementById('btnSolicitudFH');
+    if (btnSolicitudFH) {
+        btnSolicitudFH.addEventListener('click', function() {
+            var summary = window.patientSummary || {};
+            var latestVisit = (window.patientHistory && window.patientHistory.latestVisit) ? normalizeRecord(window.patientHistory.latestVisit) : {};
+
+            // Construir objeto datos combinando summary y latestVisit
+            var datos = {
+                cip: summary.cip || summary.idPaciente || '',
+                idPaciente: summary.idPaciente || '',
+                nombrePaciente: summary.nombre || summary.nombrePaciente || '',
+                fechaVisita: latestVisit.fechaVisita || summary.fechaVisita || '',
+                profesional: latestVisit.profesional || summary.profesional || '',
+                diagnosticoPrimario: summary.diagnosticoPrimario || window.currentPathology || '',
+                diagnosticoSecundario: summary.diagnosticoSecundario || latestVisit.diagnosticoSecundario || '',
+                tratamientoActual: summary.tratamientoActual || latestVisit.tratamientoActual || '',
+                // Scores de actividad desde latestVisit
+                evaGlobal: latestVisit.evaGlobal || '',
+                evaDolor: latestVisit.evaDolor || '',
+                evaMedico: latestVisit.evaMedico || '',
+                basdaiResult: latestVisit.basdaiResult || '',
+                asdasCrpResult: latestVisit.asdasCrpResult || '',
+                asdasEsrResult: latestVisit.asdasEsrResult || '',
+                das28CrpResult: latestVisit.das28CrpResult || '',
+                das28EsrResult: latestVisit.das28EsrResult || '',
+                cdaiResult: latestVisit.cdaiResult || '',
+                sdaiResult: latestVisit.sdaiResult || '',
+                rapid3Total: latestVisit.rapid3Total || latestVisit.rapid3Result || '',
+                rapid3Categoria: latestVisit.rapid3Categoria || '',
+                pcr: latestVisit.pcr || '',
+                vsg: latestVisit.vsg || '',
+                // Tratamientos (fallback a campos individuales)
+                sistemicoSelect: latestVisit.sistemicoSelect || '',
+                sistemicoDose: latestVisit.sistemicoDose || '',
+                fameSelect: latestVisit.fameSelect || '',
+                fameDose: latestVisit.fameDose || '',
+                biologicoSelect: latestVisit.biologicoSelect || '',
+                biologicoDose: latestVisit.biologicoDose || '',
+                planSistemicosEntries: latestVisit.planSistemicosEntries || latestVisit.cambioSistemicosEntries || [],
+                planFamesEntries: latestVisit.planFamesEntries || latestVisit.cambioFamesEntries || [],
+                planBiologicosEntries: latestVisit.planBiologicosEntries || latestVisit.cambioBiologicosEntries || [],
+                decisionTerapeutica: latestVisit.decisionTerapeutica || '',
+                tratamientoData: latestVisit.tratamientoData || {}
+            };
+
+            if (typeof HubTools !== 'undefined' && HubTools.pharmacy && typeof HubTools.pharmacy.copyRequestToClipboard === 'function') {
+                HubTools.pharmacy.copyRequestToClipboard(datos);
+            } else {
+                console.error('[Dashboard] HubTools.pharmacy.copyRequestToClipboard no disponible');
+                if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                    HubTools.utils.mostrarNotificacion('M?dulo de solicitud FH no disponible.', 'error');
+                }
+            }
+        });
+    }
+
     // Ordenamiento de tabla
     initTableSorting();
 }
