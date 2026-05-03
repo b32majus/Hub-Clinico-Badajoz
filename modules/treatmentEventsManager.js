@@ -668,7 +668,7 @@
                 borderWidth: 2,
                 borderDash: [6, 4],
                 label: {
-                    enabled: true,
+                    display: true,
                     content: shortLabel,
                     position: 'start',
                     color: '#fff',
@@ -1045,6 +1045,92 @@
         };
     }
 
+    // ── Anotaciones de fármacos (9B.9-pre) ─────────────────────────────
+
+    /**
+     * Construye anotaciones de fármacos/tratamientos para gráficos Chart.js
+     * al estilo HS Canarias: marcadores "Tx:", "Bio:", "Susp:" sobre el gráfico.
+     * @param {Array} treatmentHistory - Array de {startDate, name, type, status, dose, reason}
+     * @param {string[]} chartLabels - Labels del eje X
+     * @param {Object} options - { maxVisible: number }
+     * @returns {Object} Objeto de anotaciones para chartjs-plugin-annotation
+     */
+    function buildTreatmentDrugAnnotations(treatmentHistory, chartLabels, options) {
+        options = options || {};
+        var maxVisible = options.maxVisible || 8;
+
+        if (!treatmentHistory || !chartLabels || chartLabels.length === 0) return {};
+
+        var annotations = {};
+        var count = 0;
+
+        treatmentHistory.forEach(function(treatment, index) {
+            if (count >= maxVisible) return;
+            if (!treatment.startDate) return;
+
+            var startDate = toISODate(treatment.startDate);
+            var labelIndex = -1;
+
+            // Buscar fecha exacta
+            for (var i = 0; i < chartLabels.length; i++) {
+                if (toISODate(chartLabels[i]) === startDate) {
+                    labelIndex = i;
+                    break;
+                }
+            }
+
+            // Fallback a fecha más cercana
+            if (labelIndex === -1) {
+                var startTs = new Date(startDate).getTime();
+                if (isNaN(startTs)) return;
+                var minDiff = Infinity;
+                for (var j = 0; j < chartLabels.length; j++) {
+                    var labelTs = new Date(toISODate(chartLabels[j])).getTime();
+                    if (isNaN(labelTs)) continue;
+                    var diff = Math.abs(labelTs - startTs);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        labelIndex = j;
+                    }
+                }
+            }
+
+            if (labelIndex === -1) return;
+
+            var xValue = chartLabels[labelIndex];
+            var drugName = (treatment.name || 'Tratamiento').substring(0, 20);
+            var prefix = 'Tx:';
+            if (treatment.type === 'biologico' || treatment.type === 'biologic') prefix = 'Bio:';
+            if (treatment.status === 'suspendido' || treatment.status === 'suspended') prefix = 'Susp:';
+
+            var labelText = prefix + ' ' + drugName;
+            var safeName = (treatment.name || 'tx').replace(/[^a-zA-Z0-9]/g, '_');
+            var annotationId = 'treatment_' + index + '_' + safeName;
+
+            annotations[annotationId] = {
+                type: 'line',
+                xMin: xValue,
+                xMax: xValue,
+                borderColor: treatment.type === 'biologico' || treatment.type === 'biologic' ? '#8B5CF6' : '#3B82F6',
+                borderWidth: 2,
+                borderDash: [6, 4],
+                label: {
+                    display: true,
+                    content: labelText,
+                    position: 'start',
+                    color: '#fff',
+                    backgroundColor: treatment.type === 'biologico' || treatment.type === 'biologic' ? '#8B5CF6' : '#3B82F6',
+                    font: { size: 9 },
+                    padding: 3
+                }
+            };
+
+            count++;
+        });
+
+        return annotations;
+    }
+
     // ── Exposición pública ────────────────────────────────────────────
 
     var api = {
@@ -1064,8 +1150,9 @@
         detectPrebiologicEvent: detectPrebiologicEvent,
         detectFlareRemission: detectFlareRemission,
 
-        // Renderizado y anotaciones (9B.5 + 9B.6)
+        // Renderizado y anotaciones (9B.5 + 9B.6 + 9B.9-pre)
         buildChartAnnotationsFromEvents: buildChartAnnotationsFromEvents,
+        buildTreatmentDrugAnnotations: buildTreatmentDrugAnnotations,
         renderTreatmentTimeline: renderTreatmentTimeline,
 
         // Helpers exportados para testing

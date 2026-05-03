@@ -2,7 +2,7 @@
 
 // ============================================
 // DASHBOARD DE PACIENTE INDIVIDUAL - PREMIUM
-// Hub Cl?nico Reumatolog?a v2.0
+// Hub Clínico Reumatología v2.0
 // ============================================
 
 window.patientHistory = null;
@@ -20,7 +20,7 @@ let visitsTableState = {
     data: []
 };
 
-// Colores consistentes con el sistema de diseo
+// Colores consistentes con el sistema de diseño
 const COLORS = {
     remission: '#10B981',
     lowActivity: '#3B82F6',
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const bundle = loadPatientBundle(patientId);
     if (!bundle) {
-        showEmptyState(`No se encontr? informaci?n para el ID ${patientId}.`);
+        showEmptyState(`No se encontró información para el ID ${patientId}.`);
         return;
     }
 
@@ -135,20 +135,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function attachDashboardActions(patientId) {
-    // Bot?n de registrar seguimiento
+    // Botón de registrar seguimiento
     const btnSeguimiento = document.getElementById('btnSeguimiento');
     if (btnSeguimiento) {
         const pathology = window.currentPathology || 'espa';
         btnSeguimiento.href = `seguimiento.html?id=${encodeURIComponent(patientId)}&patologia=${encodeURIComponent(pathology)}`;
     }
 
-    // Bot?n de exportar visitas
+    // Botón de exportar visitas
     const exportBtn = document.getElementById('exportVisitsBtn');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportVisitsToCSV);
     }
 
-    // Bot?n de Solicitud FH
+    // Botón de Solicitud FH
     const btnSolicitudFH = document.getElementById('btnSolicitudFH');
     if (btnSolicitudFH) {
         btnSolicitudFH.addEventListener('click', function() {
@@ -199,7 +199,7 @@ function attachDashboardActions(patientId) {
             } else {
                 console.error('[Dashboard] HubTools.pharmacy.copyRequestToClipboard no disponible');
                 if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
-                    HubTools.utils.mostrarNotificacion('M?dulo de solicitud FH no disponible.', 'error');
+                    HubTools.utils.mostrarNotificacion('Módulo de solicitud FH no disponible.', 'error');
                 }
             }
         });
@@ -325,7 +325,7 @@ function loadFromMock(patientId) {
 
 function populateDashboard() {
     if (!window.patientHistory || !window.patientSummary) {
-        showEmptyState('No hay informaci?n disponible para este paciente.');
+        showEmptyState('No hay información disponible para este paciente.');
         return;
     }
 
@@ -337,7 +337,7 @@ function populateDashboard() {
     configureDashboardMetricLabels();
     renderPrebiologicBadge(summary.idPaciente || getPatientIdFromURL());
 
-    // Mostrar contenido, ocultar estado vac?o
+    // Mostrar contenido, ocultar estado vacío
     document.getElementById('emptyState').classList.add('hidden');
     document.getElementById('dashboardContent').classList.remove('hidden');
 
@@ -360,16 +360,16 @@ function populateDashboard() {
     document.getElementById('patientGeneralId').textContent = summary.idPaciente || '---';
     document.getElementById('patientGeneralName').textContent = summary.nombre || '---';
     document.getElementById('patientGeneralGender').textContent = summary.sexoPaciente || latest.sexoPaciente || latest.Sexo || '---';
-    document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} aos` : '---';
+    document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} años` : '---';
     document.getElementById('patientGeneralDiagnosis').textContent = getPathologyLabel(window.currentPathology);
-    document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' a?os';
+    document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' años';
 
     // Tarjeta 2: Biomarcadores Clave
     applyBiomarkerStatus('biomarkerHlaB27', pickValue(latest, ['hlaB27', 'HLA_B27', 'hla']));
     applyBiomarkerStatus('biomarkerFr', pickValue(latest, ['fr', 'FR']));
     applyBiomarkerStatus('biomarkerApcc', pickValue(latest, ['apcc', 'APCC']));
 
-    // Tarjeta 3: Resumen Cl?nico
+    // Tarjeta 3: Resumen Clínico
     const comorbidities = (latest.comorbilidades || '').split(',').filter(Boolean).map(s => `<li>${s.trim()}</li>`).join('') || '<li>Sin comorbilidades registradas</li>';
     document.getElementById('comorbiditiesList').innerHTML = comorbidities;
 
@@ -389,11 +389,11 @@ function populateDashboard() {
     // Tarjeta 5: Historial de Tratamientos
     populateTreatmentHistory();
 
-    // Tarjeta 6: Eventos Cl?nicos Clave
+    // Tarjeta 6: Eventos Clínicos Clave
     populateKeyEvents();
 
     // ============================================
-    // GRFICOS
+    // GRÁFICOS
     // ============================================
     populateChartSelectors();
     filterMetricSelectorsByPathology(window.currentPathology);
@@ -416,7 +416,7 @@ function populatePatientHeader(summary, latest, firstVisit) {
     // Nombre
     document.getElementById('patientName').textContent = summary.nombre || 'Paciente';
 
-    // Diagn?stico
+    // Diagnóstico
     document.getElementById('patientDiagnosis').textContent = getPathologyLabel(window.currentPathology);
 
     // ltima visita
@@ -429,7 +429,7 @@ function populatePatientHeader(summary, latest, firstVisit) {
     // Sexo
     document.getElementById('patientGender').textContent = summary.sexoPaciente || latest.sexoPaciente || '---';
 
-    // Estado cl?nico (badge)
+    // Estado clínico (badge)
     const clinicalStatus = calculateClinicalStatus(latest);
     updateStatusBadge(clinicalStatus);
 }
@@ -649,8 +649,8 @@ function calculateTreatmentDuration(startDate) {
     const years = Math.floor(diffDays / 365);
     const months = Math.floor((diffDays % 365) / 30);
 
-    if (months === 0) return `${years} ao${years > 1 ? 's' : ''}`;
-    return `${years} ao${years > 1 ? 's' : ''} y ${months} mes${months > 1 ? 'es' : ''}`;
+    if (months === 0) return `${years} año${years > 1 ? 's' : ''}`;
+    return `${years} año${years > 1 ? 's' : ''} y ${months} mes${months > 1 ? 'es' : ''}`;
 }
 
 // ============================================
@@ -761,7 +761,7 @@ function renderVisitsTable() {
     if (paginationControls) {
         let controlsHTML = '';
 
-        // Bot?n anterior
+        // Botón anterior
         controlsHTML += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">
             <i class="fas fa-chevron-left"></i>
         </button>`;
@@ -775,7 +775,7 @@ function renderVisitsTable() {
             }
         }
 
-        // Bot?n siguiente
+        // Botón siguiente
         controlsHTML += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">
             <i class="fas fa-chevron-right"></i>
         </button>`;
@@ -991,25 +991,64 @@ function collectManifestations(visit) {
 }
 
 function populateTreatmentHistory() {
-    const container = document.getElementById('treatmentHistory');
+    var container = document.getElementById('treatmentHistory');
     if (!container) return;
 
-    const treatments = window.patientHistory.treatmentHistory || [];
+    var treatments = window.patientHistory.treatmentHistory || [];
     if (!treatments.length) {
         container.innerHTML = '<p class="empty-message">No hay historial de tratamientos previos.</p>';
         return;
     }
 
-    container.innerHTML = treatments.map(treatment => `
-        <div class="timeline-item event-type-treatment">
-            <div class="timeline-marker"></div>
-            <div class="timeline-date">${formatDate(treatment.startDate)}</div>
-            <div class="timeline-content">
-                <div class="timeline-title">${treatment.name}</div>
-                <div class="timeline-description">${treatment.reason || 'Tratamiento en seguimiento'}</div>
-            </div>
-        </div>
-    `).join('');
+    // Ordenar por fecha descendente
+    var sorted = treatments.slice().sort(function(a, b) {
+        return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+    });
+
+    var html = '<div class="treatment-timeline">';
+
+    sorted.forEach(function(treatment) {
+        var dateStr = formatDate(treatment.startDate);
+        var name = treatment.name || 'Tratamiento no especificado';
+        var type = treatment.type || 'otro';
+        var typeLabel = {
+            'biologico': 'Biológico',
+            'biologic': 'Biológico',
+            'fame': 'FAME',
+            'sistemico': 'Sistémico',
+            'sistemic': 'Sistémico',
+            'corticoide': 'Corticoide',
+            'otro': 'Otro'
+        }[type] || type;
+
+        var dose = treatment.dose || '';
+        var reason = treatment.reason || '';
+        var status = treatment.status || 'activo';
+        var statusClass = status === 'suspendido' || status === 'suspended' ? 'status-suspended' : 'status-active';
+        var statusLabel = status === 'suspendido' || status === 'suspended' ? 'Suspendido' : 'Activo';
+
+        html += '<div class="treatment-item ' + statusClass + '" style="padding: 10px 0; border-bottom: 1px solid #eee;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: flex-start;">';
+        html += '<div>';
+        html += '<div style="font-weight: 600; font-size: 14px; color: #2c3e50;">' + escapeHtml(name) + '</div>';
+        html += '<div style="font-size: 12px; color: #7f8c8d; margin-top: 3px;">';
+        html += '<span class="treatment-type-badge" style="background: #ecf0f1; padding: 2px 6px; border-radius: 3px; font-size: 11px;">' + typeLabel + '</span>';
+        if (dose) html += ' · ' + escapeHtml(dose);
+        html += '</div>';
+        if (reason) {
+            html += '<div style="font-size: 11px; color: #95a5a6; margin-top: 3px; font-style: italic;">' + escapeHtml(reason) + '</div>';
+        }
+        html += '</div>';
+        html += '<div style="text-align: right;">';
+        html += '<div style="font-size: 12px; color: #7f8c8d;">' + dateStr + '</div>';
+        html += '<div style="font-size: 11px; margin-top: 2px;" class="' + statusClass + '">' + statusLabel + '</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function populateKeyEvents() {
@@ -1030,13 +1069,30 @@ function populateKeyEvents() {
                 prebiologicStatus = HubTools.prebiologic.getStatus(patientId);
             }
 
-            var events = HubTools.events.extractTreatmentEvents(window.patientHistory, prebiologicStatus);
+            var allEvents = HubTools.events.extractTreatmentEvents(window.patientHistory, prebiologicStatus);
+
+            // FILTRAR: solo eventos clínicos no puramente farmacológicos
+            var clinicalEvents = allEvents.filter(function(e) {
+                if (!e) return false;
+                // Excluir eventos de tratamiento puro (ya están en Historial de Tratamientos)
+                if (e.type === 'treatment_start' || e.type === 'treatment_change' || e.type === 'treatment_suspend') {
+                    // PERO mantener si tiene efecto adverso asociado
+                    if (e.metadata && e.metadata.hasAdverseEvent) return true;
+                    return false;
+                }
+                // Excluir biológicos puros (ya están en Historial)
+                if (e.type === 'biologic_start' || e.type === 'biologic_change') {
+                    return false;
+                }
+                // Mantener: flare, remission, adverse_event, prebiologic_apto
+                return true;
+            });
 
             // Guardar en variable global para que los gráficos puedan acceder sin recalcular
-            window.currentEvents = events;
+            window.currentEvents = clinicalEvents;
 
             // Renderizar timeline
-            HubTools.events.renderTreatmentTimeline(events, 'keyEventsTimeline');
+            HubTools.events.renderTreatmentTimeline(clinicalEvents, 'keyEventsTimeline');
             return;
         } catch (e) {
             console.warn('[Dashboard] Error en pipeline de eventos terapéuticos:', e);
@@ -1104,7 +1160,7 @@ function getEventAnnotations(chartLabels) {
 }
 
 // ============================================
-// GRFICOS
+// GRÁFICOS
 // ============================================
 
 function initActivityChart() {
@@ -1136,7 +1192,9 @@ function initActivityChart() {
         window.activityChartInstance.destroy();
     }
 
-    const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+    const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+        ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 8 })
+        : {};
     const eventAnnotations = getEventAnnotations(chartData.labels);
     const cutoffAnnotations = getCutoffAnnotations(primaryMetric, secondaryMetric, window.currentPathology);
 
@@ -1162,9 +1220,9 @@ function initActivityChart() {
                 },
                 annotation: {
                     annotations: {
-                        ...annotations,
-                        ...eventAnnotations,
-                        ...cutoffAnnotations
+                        ...cutoffAnnotations,
+                        ...treatmentAnnotations,
+                        ...eventAnnotations
                     }
                 }
             },
@@ -1245,10 +1303,12 @@ function updateActivityChart() {
         } else if (window.activityChartInstance.options.scales.y1) {
             delete window.activityChartInstance.options.scales.y1;
         }
-        const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+        const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+            ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 8 })
+            : {};
         const eventAnnotations = getEventAnnotations(chartData.labels);
         const cutoffAnnotations = getCutoffAnnotations(primaryMetric, secondaryMetric, window.currentPathology);
-        window.activityChartInstance.options.plugins.annotation.annotations = { ...annotations, ...eventAnnotations, ...cutoffAnnotations };
+        window.activityChartInstance.options.plugins.annotation.annotations = { ...cutoffAnnotations, ...treatmentAnnotations, ...eventAnnotations };
         window.activityChartInstance.update();
     } else {
         initActivityChart();
@@ -1284,7 +1344,9 @@ function initPROChart() {
         window.proChartInstance.destroy();
     }
 
-    const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+    const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+        ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 6 })
+        : {};
     const eventAnnotations = getEventAnnotations(chartData.labels);
 
     window.proChartInstance = new Chart(ctx, {
@@ -1309,7 +1371,7 @@ function initPROChart() {
                 },
                 annotation: {
                     annotations: {
-                        ...annotations,
+                        ...treatmentAnnotations,
                         ...eventAnnotations
                     }
                 }
@@ -1396,9 +1458,11 @@ function updatePROChart() {
         } else if (window.proChartInstance.options.scales.y1) {
             delete window.proChartInstance.options.scales.y1;
         }
-        const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+        const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+            ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 6 })
+            : {};
         const eventAnnotations = getEventAnnotations(chartData.labels);
-        window.proChartInstance.options.plugins.annotation.annotations = { ...annotations, ...eventAnnotations };
+        window.proChartInstance.options.plugins.annotation.annotations = { ...treatmentAnnotations, ...eventAnnotations };
         window.proChartInstance.update();
     } else {
         initPROChart();
@@ -1548,7 +1612,7 @@ function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
                 borderDash: [5, 5],
                 label: {
                     content: label,
-                    enabled: true,
+                    display: true,
                     position: 'start',
                     color: color,
                     font: { size: 10 }
@@ -1608,7 +1672,7 @@ function getChartAnnotations(treatmentHistory, chartLabels, pathology) {
                 borderWidth: 1,
                 label: {
                     content: treatment.name,
-                    enabled: true,
+                    display: true,
                     position: 'start',
                     color: COLORS.biologic,
                     font: { size: 10 }
@@ -1634,10 +1698,10 @@ function showEmptyState(message = 'Busca un paciente para ver su dashboard.') {
 }
 
 function getPathologyLabel(code) {
-    if (!code) return 'Sin diagnstico';
+    if (!code) return 'Sin diagnóstico';
     const map = { 
         espa: 'Espondiloartritis Axial', 
-        aps: 'Artritis Psorisica', 
+        aps: 'Artritis Psoriásica', 
         ar: 'Artritis Reumatoide',
         les: 'Lupus eritematoso sistémico',
         sjogren: 'Síndrome de Sjögren' 
@@ -1673,6 +1737,11 @@ function formatDate(dateStr) {
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return dateStr;
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
 function calculateAge(birthDate) {
@@ -1736,6 +1805,7 @@ window.populateKeyEvents = populateKeyEvents;
 window.showEmptyState = showEmptyState;
 window.formatBiomarker = formatBiomarker;
 window.formatDate = formatDate;
+window.escapeHtml = escapeHtml;
 window.calculateAge = calculateAge;
 window.calculateDiseaseYears = calculateDiseaseYears;
 window.capitalizeFirst = capitalizeFirst;

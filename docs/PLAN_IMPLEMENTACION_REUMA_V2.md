@@ -2770,3 +2770,64 @@ HubTools.events.renderTreatmentTimeline(events, containerId)
 - `dashboard_paciente.html`
 - `docs/CONTRATO_DATOS_REUMA_V2.md`
 - `docs/PLAN_IMPLEMENTACION_REUMA_V2.md`
+
+---
+
+## Fase 9B.9-pre ejecutada — Alineación dashboard con HS Canarias y limpieza encoding
+
+**Fecha:** 2026-05-03
+
+### Auditoría HS Canarias
+
+Se obtuvo `modules/dashboardHS.js` del repositorio `b32majus/Hub-Clinico-HS-Canarias`. Hallazgos trasladados a implementación:
+
+| Aspecto | HS Canarias | Aplicado al Hub Badajoz |
+|---|---|---|
+| Tratamientos en gráfico | `'line'` annotation + `label.display: true` + `'Tx: fármaco'` | `buildTreatmentDrugAnnotations()` con `display: true` |
+| Sintaxis | `label: { display: true }` | Corregido `enabled` → `display` en todo el código |
+| Timeline de tratamiento | `renderTreatmentTimeline()` separada de eventos clínicos | Nueva `populateTreatmentHistory()` completa |
+| Separación | Eventos clínicos NO incluyen cambios de fármaco | `populateKeyEvents()` filtra `treatment_*` y `biologic_*` |
+| treatmentHistory | Array `{startDate, name, reason}` | Estructura existente ampliada con `type`, `status`, `dose` |
+
+### Cambios en tarjetas del dashboard
+
+1. **Evolución de Índices de Actividad**
+   - Marcadores de tratamiento/fármaco sobre el gráfico: `"Tx:"`, `"Bio:"`, `"Susp:"`
+   - Prioridad de anotaciones: cutoffs > tratamientos > eventos generales
+   - Máximo 8 tratamientos visibles
+   - Etiquetas truncadas a 20 caracteres
+   - `getChartAnnotations()` (box annotations) retirada de Activity y PROs para evitar duplicación visual
+
+2. **Evolución PROs**
+   - Marcadores terapéuticos integrados (máximo 6, para no saturar)
+   - No se rompe comparación de PROs (EVA Dolor, EVA Global)
+
+3. **Historial de Tratamientos**
+   - Timeline específico de tratamientos con: fecha, fármaco, tipo (Biológico/FAME/Sistémico/Corticoide), dosis, motivo, estado (Activo/Suspendido)
+   - Ordenado por fecha descendente
+   - Separado de eventos clínicos sin duplicaciones
+   - Helper `escapeHtml()` añadido para seguridad XSS
+
+4. **Eventos Clínicos**
+   - Filtrado: solo flare, remission, adverse_event, prebiologic_apto
+   - No duplica cambios de tratamiento ni inicios/cambios de biológicos
+   - Efectos adversos asociados a tratamientos se mantienen
+
+### Correcciones técnicas
+- **Chart.js annotation**: `label.enabled` → `label.display` (3 ocurrencias corregidas)
+- Sintaxis validada para `chartjs-plugin-annotation` v3
+- Nueva función `HubTools.events.buildTreatmentDrugAnnotations()` registrada en namespace
+
+### Limpieza de encoding (mojibake)
+Correcciones aplicadas en `scripts/script_dashboard.js`:
+- `Cl?nico` → `Clínico`, `Reumatolog?a` → `Reumatología`, `diseo` → `diseño`
+- `Bot?n` → `Botón` (4 ocurrencias), `informaci?n` → `información` (2 ocurrencias)
+- `Diagn?stico` → `Diagnóstico`, `vac?o` → `vacío`, `a?os` → `años`
+- `GRFICOS` → `GRÁFICOS` (2 ocurrencias)
+- `diagnstico` → `diagnóstico`, `Psorisica` → `Psoriásica`
+- `dashboard_paciente.html` y `style_dashboard.css` verificados — sin mojibake (ya estaban correctos)
+
+### Archivos modificados en esta fase
+- `modules/treatmentEventsManager.js` — +86 líneas (función nueva + registro API + correcciones)
+- `scripts/script_dashboard.js` — ~120 líneas modificadas (4 tarjetas + mojibake + escapeHtml)
+- `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` — esta sección
