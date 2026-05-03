@@ -2396,22 +2396,115 @@ function initScoreWiring() {
     }
     console.log('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
 
+    // --- 13. LES / SJÖGREN SCORE WIRING ---
+    (function () {
+        // SLEDAI-2K checkboxes
+        var sledaiCheckboxes = document.querySelectorAll('.sledai-item');
+        sledaiCheckboxes.forEach(function (cb) {
+            cb.addEventListener('change', updateLesSjogrenScores);
+        });
+
+        // SLICC domain inputs
+        var sliccInputs = document.querySelectorAll('.slicc-domain');
+        sliccInputs.forEach(function (el) {
+            el.addEventListener('input', updateLesSjogrenScores);
+        });
+
+        // ESSPRI inputs
+        ['esspriSequedad', 'esspriFatiga', 'esspriDolor'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateLesSjogrenScores);
+        });
+
+        // ESSDAI selector domains
+        var essdaiSelectors = document.querySelectorAll('.essdai-domain');
+        essdaiSelectors.forEach(function (sel) {
+            sel.addEventListener('change', updateLesSjogrenScores);
+        });
+
+        if (sledaiCheckboxes.length > 0 || essdaiSelectors.length > 0) {
+            console.log('  ✓ LES/Sjögren wiring (SLEDAI-2K, SLICC, ESSPRI, ESSDAI)');
+        }
+    })();
+
     console.log('✅ Score wiring completado');
 }
 
 /**
- * Calcula automáticamente el ESSPRI (EULAR Sjögren's Syndrome Patient Reported Index)
- * como la media de las puntuaciones de sequedad, fatiga y dolor (0-10).
- * Se dispara desde los inputs oninput en primera_visita.html y seguimiento.html.
+ * Recopila datos LES/Sjögren y recalcula SLEDAI-2K, SLICC/ACR SDI, ESSPRI, ESSDAI.
+ * Se dispara desde el wiring de initScoreWiring.
  */
-function calculateESSPRI() {
-    const sequedad = parseFloat(document.getElementById('esspriSequedad')?.value);
-    const fatiga = parseFloat(document.getElementById('esspriFatiga')?.value);
-    const dolor = parseFloat(document.getElementById('esspriDolor')?.value);
-    if ([sequedad, fatiga, dolor].some(v => Number.isNaN(v))) return;
-    const result = ((sequedad + fatiga + dolor) / 3).toFixed(2);
-    const el = document.getElementById('esspriResult');
-    if (el) el.value = result;
+function updateLesSjogrenScores() {
+    // --- SLEDAI-2K ---
+    var sledaiResultEl = document.getElementById('sledai2kResult');
+    if (sledaiResultEl && typeof HubTools.scores.calcularSLEDAI2K === 'function') {
+        var sledaiData = {};
+        var allSledaiIds = [
+            'sledaiSeizure', 'sledaiPsychosis', 'sledaiOrganicBrainSyndrome',
+            'sledaiVisualDisturbance', 'sledaiCranialNerveDisorder', 'sledaiLupusHeadache',
+            'sledaiCVA', 'sledaiVasculitis',
+            'sledaiArthritis', 'sledaiMyositis', 'sledaiUrinaryCasts',
+            'sledaiHematuria', 'sledaiProteinuria', 'sledaiPyuria',
+            'sledaiRash', 'sledaiAlopecia', 'sledaiMucosalUlcers',
+            'sledaiPleurisy', 'sledaiPericarditis', 'sledaiLowComplement',
+            'sledaiIncreasedDNABinding',
+            'sledaiFever', 'sledaiThrombocytopenia', 'sledaiLeukopenia'
+        ];
+        allSledaiIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            sledaiData[id] = el && el.checked;
+        });
+        var sledaiVal = HubTools.scores.calcularSLEDAI2K(sledaiData);
+        sledaiResultEl.value = sledaiVal;
+    }
+
+    // --- SLICC/ACR SDI ---
+    var sliccResultEl = document.getElementById('sliccAcrSdi');
+    if (sliccResultEl && typeof HubTools.scores.calcularSLICCSDI === 'function') {
+        var sliccData = {};
+        var sliccIds = [
+            'sliccOcular', 'sliccNeuropsychiatric', 'sliccRenal', 'sliccPulmonary',
+            'sliccCardiovascular', 'sliccPeripheralVascular', 'sliccGastrointestinal',
+            'sliccMusculoskeletal', 'sliccSkin', 'sliccEndocrineDiabetes',
+            'sliccGonadal', 'sliccMalignancy'
+        ];
+        sliccIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            sliccData[id] = el ? el.value : '';
+        });
+        var sliccVal = HubTools.scores.calcularSLICCSDI(sliccData);
+        sliccResultEl.value = sliccVal;
+    }
+
+    // --- ESSPRI ---
+    var esspriResultEl = document.getElementById('esspriResult');
+    if (esspriResultEl && typeof HubTools.scores.calcularESSPRI === 'function') {
+        var esspriData = {};
+        ['esspriSequedad', 'esspriFatiga', 'esspriDolor'].forEach(function(id) {
+            var el = document.getElementById(id);
+            esspriData[id] = el ? el.value : '';
+        });
+        var esspriVal = HubTools.scores.calcularESSPRI(esspriData);
+        esspriResultEl.value = esspriVal;
+    }
+
+    // --- ESSDAI ---
+    var essdaiResultEl = document.getElementById('essdaiResult');
+    if (essdaiResultEl && typeof HubTools.scores.calcularESSDAI === 'function') {
+        var essdaiData = {};
+        var essdaiIds = [
+            'essdaiConstitutional', 'essdaiLymphadenopathy', 'essdaiGlandular',
+            'essdaiArticular', 'essdaiCutaneous', 'essdaiPulmonary', 'essdaiRenal',
+            'essdaiMuscular', 'essdaiPeripheralNervousSystem', 'essdaiCentralNervousSystem',
+            'essdaiHematological', 'essdaiBiological'
+        ];
+        essdaiIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            essdaiData[id] = el ? el.value : '';
+        });
+        var essdaiVal = HubTools.scores.calcularESSDAI(essdaiData);
+        essdaiResultEl.value = essdaiVal;
+    }
 }
 
 // Verificar que HubTools existe antes de asignar funciones
