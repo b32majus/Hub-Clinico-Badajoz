@@ -130,9 +130,9 @@ commit 4: docs: add reuma v2 data contracts
 commit 5: feat(prebiologic): load and expose prebiologic validation records
 commit 6: feat(prebiologic): add persistent badge with manual validation date
 commit 7: feat(pharmacy): add Solicitud FH text export
-commit 8: feat(dashboard): add therapeutic events and treatment annotations
-commit 9: feat(les): add LES pathology forms export and dashboard support
-commit 10: feat(sjogren): add Sjögren pathology forms export and dashboard support
+commit 8: feat(les): add LES pathology forms export and dashboard support
+commit 9: feat(sjogren): add Sjögren pathology forms export and dashboard support
+commit 10: feat(dashboard): add therapeutic events and treatment annotations
 commit 11: feat(stats): add v2 pathology-aware statistics
 commit 12: docs: add E2E v2 checklist and clinical validation guide
 ```
@@ -1110,7 +1110,7 @@ OBSERVACIONES
 
 ---
 
-# FASE 6. Dashboard con eventos terapéuticos
+# FASE 8. Dashboard con eventos terapéuticos
 
 ## Objetivo
 
@@ -1249,7 +1249,7 @@ Modificar `scripts/script_dashboard.js`:
 
 ---
 
-# FASE 7. LES como patología completa
+# FASE 6. LES como patología completa
 
 ## Objetivo
 
@@ -1436,7 +1436,7 @@ Decisión terapéutica
 
 ---
 
-# FASE 8. Síndrome de Sjögren como patología completa
+# FASE 7. Síndrome de Sjögren como patología completa
 
 ## Objetivo
 
@@ -1847,9 +1847,9 @@ Orden de implementación:
 5. Módulo prebiológico.
 6. Badge prebiológico.
 7. Solicitud FH.
-8. Eventos terapéuticos en dashboard.
-9. LES completo.
-10. Sjögren completo.
+8. LES completo.
+9. Sjögren completo.
+10. Eventos terapéuticos en dashboard.
 11. Estadísticas v2.
 12. Checklist E2E v2.
 13. Documentación final.
@@ -2056,10 +2056,10 @@ Fecha: 2026-05-03.
 
 ### Riesgos pendientes
 
-- `exportManager.js` aún no muestra "CIP" en exports TXT/CSV visibles (se hará en Fase 4).
-- Los formularios de LES/Sjögren aún no se han implementado (Fases 9-10).
-- El badge prebiológico aún no existe (Fase 6).
-- La Solicitud FH aún no existe (Fase 7).
+- `exportManager.js` aún no muestra "CIP" en exports TXT/CSV visibles (se hará en Fase 8-9).
+- Los formularios de LES/Sjögren aún no se han implementado (Fases 6-7).
+- El badge prebiológico existe desde Fase 4.
+- La Solicitud FH existe desde Fase 5-6.
 - `dataManager.js` `saveToSessionStorage` aún solo hace slice de ESPA/APS/AR; se extenderá cuando LES/SJOGREN/Prebiologico tengan datos reales.
 
 ---
