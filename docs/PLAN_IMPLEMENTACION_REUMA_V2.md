@@ -2529,3 +2529,217 @@ Fecha: 2026-05-03.
 - CSS residual limpiado (regla huérfana eliminada, reglas les/sjogren-only añadidas)
 - Todos los `input-group` / `form-control` reemplazados por `form-group` nativo del hub
 - Wiring centralizado en `updateLesSjogrenScores()` dentro de `initScoreWiring()`
+
+---
+
+## Fase 9 — Eventos terapéuticos en dashboard
+
+### 1. Objetivo
+
+Añadir al dashboard de paciente una capa longitudinal de eventos terapéuticos que permita visualizar, junto a la evolución clínica (scores por patología), los momentos clave del tratamiento: inicios, cambios, suspensiones, efectos adversos relevantes, validaciones prebiológicas y solicitudes a Farmacia Hospitalaria.
+
+Principio rector: **derivar eventos desde el historial de visitas existente**, sin crear un modelo de datos paralelo ni obligar al clínico a registrar eventos explícitos. Solo si un evento no puede derivarse de los campos actuales se propondrá columna v2 nueva (documentar, no implementar aún).
+
+### 2. Eventos a detectar
+
+| Tipo | Definición | Fuente principal |
+|---|---|---|
+| `treatment_start` | Primera visita con `Tratamiento_Actual` no vacío y sin visita previa con tratamiento. | `Tratamiento_Actual`, `Fecha_Inicio_Tratamiento` |
+| `treatment_change` | Cambio de `Tratamiento_Actual` entre visita `n-1` y `n`, o `Decision_Terapeutica` = "cambiar". | `Tratamiento_Actual`, `Decision_Terapeutica`, `tratamientoData.cambio.motivoCambio` |
+| `treatment_suspend` | `Tratamiento_Actual` vacío o `Decision_Terapeutica` = "suspender" tras haber tenido tratamiento. | `Tratamiento_Actual`, `Decision_Terapeutica` |
+| `biologic_start` | Primera aparición de un fármaco en `planBiologicoEntries` o `biologicoSelect` que no existía en visita previa. | `planBiologicoEntries`, `biologicoSelect` |
+| `biologic_change` | Cambio de fármaco biológico entre visitas, o cambio de dosis significativa. | `planBiologicoEntries`, `previoBiologicoEntries` |
+| `adverse_event` | `tratamientoData.cambio.efectosAdversos` = true o `Cambio_Efectos_Adversos` = "Sí" con descripción. | `tratamientoData.cambio.efectosAdversos`, `Cambio_Descripcion_Efectos` |
+| `flare` | Aumento significativo del score principal de actividad respecto a visita previa (umbral por patología). | Scores por patología |
+| `remission` | Disminución significativa del score principal por debajo de umbral de remisión (por patología). | Scores por patología |
+| `prebiologic_apto` | Estado prebiológico `APTO` registrado en `sessionStorage` con fecha de validación. | `HubTools.prebiologic.getStatus(cip)` |
+| `fh_request` | Solicitud FH generada desde el hub (no trazable en visitas actualmente; documentar como pendiente). | No trazable en visita actual |
+
+**Nota sobre flare/remission:**
+- `espa`: BASDAI/ASDAS (ya implementado parcialmente en `extractKeyEvents`).
+- `aps`: DAPSA (ya implementado parcialmente).
+- `ar`: DAS28 > 5.1 = flare, < 2.6 = remisión.
+- `les`: SLEDAI-2K > 6 = flare, ≤ 2 = remisión.
+- `sjogren`: ESSDAI > 13 = flare, < 5 = remisión.
+
+### 3. Campos fuente existentes
+
+**Desde formularios (visita):**
+- `Tratamiento_Actual` (string, texto libre)
+- `Fecha_Inicio_Tratamiento` (string fecha)
+- `Decision_Terapeutica` (string: "continuar" / "cambiar" / "suspender" / "iniciar")
+- `tratamientoData.cambio.motivoCambio`
+- `tratamientoData.cambio.efectosAdversos` (boolean)
+- `tratamientoData.cambio.descripcionEfectos`
+- `planSistemicoEntries`, `previoSistemicoEntries`
+- `planFameEntries`, `previoFameEntries`
+- `planBiologicoEntries`, `previoBiologicoEntries`
+- `biologicoSelect`, `fameSelect`, `sistemicoSelect`
+- Scores por patología: DAS28, CDAI, SDAI, RAPID3, BASDAI, ASDAS-CRP, SLEDAI-2K, SLICC/ACR SDI, ESSPRI, ESSDAI
+
+**Desde dataManager.js:**
+- `extractTreatmentHistory(visits)` → array de `{ fecha, tratamiento, cambios }`
+- `extractKeyEvents(visits, pathology)` → array de eventos (solo implementado para espa/aps)
+- `getPatientHistory(patientId)` → objeto completo con `allVisits`, `treatmentHistory`, `keyEvents`
+
+**Desprebiológico (sessionStorage):**
+- `HubTools.prebiologic.getStatus(cip)` → `{ estado, fechaValidacion, fechaRegistro }`
+
+### 4. Modelo de datos interno
+
+Un evento terapéutico derivado es un objeto inmutable generado por `treatmentEventsManager.js`:
+
+```javascript
+{
+  id: string,              // hash simple: `${type}_${date}_${index}`
+  date: string,            // ISO date de la visita o evento
+  type: string,            // uno de los tipos definidos arriba
+  description: string,     // texto humano del evento
+  source: string,          // 'visit', 'prebiologic', 'manual'
+  visitIndex: number|null, // índice en allVisits, null si no viene de visita
+  metadata: {
+    previousValue?: any,   // valor anterior (ej. tratamiento previo)
+    currentValue?: any,    // valor nuevo
+    severity?: string,     // para adverse_event: 'leve', 'moderado', 'grave'
+    scoreDelta?: number,   // para flare/remission
+    notes?: string         // notas adicionales
+  }
+}
+```
+
+**Funciones propuestas para `modules/treatmentEventsManager.js`:**
+
+```javascript
+HubTools.events.extractTreatmentEvents(patientHistory, prebiologicStatus)
+HubTools.events.detectTreatmentStart(currentVisit, previousVisit)
+HubTools.events.detectTreatmentChange(currentVisit, previousVisit)
+HubTools.events.detectBiologicEvent(currentVisit, previousVisit)
+HubTools.events.detectAdverseEvent(currentVisit)
+HubTools.events.detectPrebiologicEvent(cip, prebiologicStatus)
+HubTools.events.detectFlareRemission(currentVisit, previousVisit, pathology)
+HubTools.events.buildChartAnnotationsFromEvents(events, chartLabels)
+HubTools.events.renderTreatmentTimeline(events, containerId)
+```
+
+### 5. Archivos a modificar (Fase 9B)
+
+| Archivo | Rol | Cambio |
+|---|---|---|
+| `modules/treatmentEventsManager.js` | Nuevo | IIFE con namespace `HubTools.events`. Contiene toda la lógica de derivación de eventos y renderizado de timeline. |
+| `dashboard_paciente.html` | Vista | Añadir `<script>` del nuevo módulo. Ajustar selectores de métricas para incluir DAS28/CDAI/SDAI/SLEDAI-2K/ESSPRI/ESSDAI. Revisar/activar tarjetas `#keyEventsTimeline` y `#treatmentHistory`. |
+| `scripts/script_dashboard.js` | Coordinador | Integrar llamada a `HubTools.events.extractTreatmentEvents()` en `populateDashboard()`. Pasar anotaciones a Chart.js. Renderizar timeline en `#keyEventsTimeline`. |
+| `modules/dataManager.js` | Datos | Extender `extractKeyEvents()` para soportar flare/remission en `ar`, `les`, `sjogren` con umbrales definidos. No romper lógica existente de espa/aps. |
+| `modules/exportManager.js` | Export | Opcional: incluir columna `Eventos_Terapeuticos_Resumen` en CSV/TXT si se decide persistir eventos derivados. |
+| `docs/CONTRATO_DATOS_REUMA_V2.md` | Documentación | Añadir columnas propuestas: `Evento_Terapeutico_Tipo`, `Evento_Terapeutico_Descripcion`, `Evento_Terapeutico_Fecha`, `Biologico_Actual`, `Biologico_Fecha_Inicio`. |
+
+### 6. Estrategia de visualización
+
+**A. Anotaciones en gráfico principal (Chart.js + annotation plugin)**
+- Usar el plugin `chartjs-plugin-annotation` ya cargado en dashboard.
+- Dibujar líneas verticales punteadas en fechas de eventos.
+- Color por tipo: verde (inicio/remisión), ámbar (cambio/apto), rojo (suspensión/flare/efecto adverso), gris (prebiológico).
+- Si hay más de 5 eventos visibles, mostrar solo los de tipo "cambio de tratamiento", "flare" y "efecto adverso"; el resto en tooltip o timeline lateral.
+- Evitar saturación: no superponer >3 anotaciones en el mismo punto del eje X.
+
+**B. Timeline lateral/inferior (`#keyEventsTimeline`)**
+- Lista cronológica de eventos con icono, fecha y descripción breve.
+- Colapsable si hay >8 eventos (mostrar los 5 más recientes + "Ver X eventos anteriores").
+- Click en evento → resaltar punto en gráfico y filtrar tabla de visitas a esa fecha.
+- Usar estética nativa: `info-note`, `form-group`, sin cards de colores nuevos.
+
+**C. Tabla de historial de tratamiento (`#treatmentHistory`)**
+- Reutilizar `extractTreatmentHistory()` existente.
+- Añadir columna "Eventos asociados" si un cambio de tratamiento coincide con adverse_event o flare.
+
+**D. Por patología en gráfico**
+- El gráfico principal del dashboard sigue mostrando la métrica principal de la patología:
+  - AR: DAS28 (o CDAI/SDAI si no hay DAS28)
+  - EspA: BASDAI / ASDAS-CRP
+  - APs: métricas existentes
+  - LES: SLEDAI-2K
+  - Sjögren: ESSPRI / ESSDAI
+- El eje Y es score. El eje X es fecha de visita.
+- Las anotaciones se superponen sobre este gráfico, independientemente de la métrica.
+
+### 7. Riesgos
+
+| Riesgo | Severidad | Mitigación |
+|---|---|---|
+| `Tratamiento_Actual` es texto libre; comparación por string frágil | Alto | Normalizar antes de comparar (trim, lowercase, quitar espacios dobles). Usar `tratamientoData` estructurado como fuente principal cuando exista. |
+| Múltiples fuentes de tratamiento desincronizadas (`biologicoSelect`, `planBiologicoEntries`, `Tratamiento_Actual`) | Alto | Priorizar `planBiologicoEntries` y `planSistemicoEntries` sobre `Tratamiento_Actual`. Documentar en contrato que `Tratamiento_Actual` es fallback. |
+| Saturación visual del gráfico con muchas anotaciones | Medio | Límite de 5 anotaciones visibles por defecto. Priorizar cambios de tratamiento, flares y efectos adversos. Resto en timeline lateral. |
+| Datos prebiológicos en sessionStorage se pierden al limpiar caché | Medio | Documentar que prebiológico es estado transversal, no vinculado a visita. El evento `prebiologic_apto` se regenera desde sessionStorage al cargar dashboard. |
+| No hay trazabilidad de "Solicitud FH generada" en visitas | Medio | Documentar como mejora futura. No bloquear Fase 9B por esto. |
+| Falta implementación flare/remission para AR/LES/Sjögren en `extractKeyEvents` | Medio | Extender `extractKeyEvents` con umbrales definidos. Reutilizar mismos scores que ya se calculan. |
+| Cambios en dataManager pueden afectar carga de pacientes existentes | Alto | No modificar firma de `getPatientHistory()`. Solo añadir campos al objeto retornado, nunca eliminar. |
+| Performance con muchas visitas (>50) | Bajo | Los eventos se calculan una sola vez por carga de dashboard, no en tiempo real. O(n) sobre visitas. |
+
+### 8. Criterios de aceptación
+
+**Funcionales:**
+- [ ] Dashboard AR muestra anotaciones en gráfico para inicio/cambio/suspensión de tratamiento.
+- [ ] Dashboard EspA mantiene flare/remission existentes + añade eventos terapéuticos.
+- [ ] Dashboard LES/Sjögren detecta flare/remission por umbrales definidos.
+- [ ] Timeline `#keyEventsTimeline` muestra eventos cronológicos con fecha y descripción.
+- [ ] Click en evento del timeline resalta punto en gráfico.
+- [ ] Badge prebiológico APTO genera evento visible en timeline.
+- [ ] No se rompen gráficos actuales (Chart.js sigue renderizando scores).
+- [ ] No se rompen métricas por patología.
+- [ ] No se rompe carga de pacientes históricos.
+
+**Técnicos:**
+- [ ] `HubTools.events.extractTreatmentEvents` existe y devuelve array ordenado por fecha.
+- [ ] `node -c` OK en `treatmentEventsManager.js`.
+- [ ] No hay errores JS en consola al cargar dashboard.
+- [ ] No se añaden dependencias externas.
+- [ ] No se modifica `ID_Paciente` ni estructura base de sessionStorage.
+
+### 9. Plan de implementación en subtareas (Fase 9B)
+
+**Subtarea 9B.1 — Esqueleto del módulo**
+- Crear `modules/treatmentEventsManager.js` con IIFE, namespace `HubTools.events`, funciones vacías/esqueleto.
+- Añadir `<script>` en `dashboard_paciente.html`.
+- Commit: `feat(events): add treatmentEventsManager skeleton`
+
+**Subtarea 9B.2 — Derivación básica de eventos**
+- Implementar `detectTreatmentStart`, `detectTreatmentChange`, `detectTreatmentSuspend`.
+- Implementar `detectBiologicEvent` usando `planBiologicoEntries`.
+- Implementar `detectAdverseEvent`.
+- Commit: `feat(events): add treatment and adverse event detection`
+
+**Subtarea 9B.3 — Flare/remission multipatología**
+- Extender `dataManager.js` → `extractKeyEvents` para `ar`, `les`, `sjogren` con umbrales.
+- Commit: `feat(events): extend keyEvents to AR, LES, Sjogren`
+
+**Subtarea 9B.4 — Integración prebiológico y FH**
+- Implementar `detectPrebiologicEvent` desde sessionStorage.
+- Documentar `fh_request` como no trazable aún (placeholder).
+- Commit: `feat(events): add prebiologic and FH placeholder events`
+
+**Subtarea 9B.5 — Renderizado de timeline**
+- Implementar `renderTreatmentTimeline` en `#keyEventsTimeline`.
+- Estética nativa del hub, sin cards nuevas.
+- Commit: `feat(events): render treatment timeline in dashboard`
+
+**Subtarea 9B.6 — Anotaciones en gráfico Chart.js**
+- Implementar `buildChartAnnotationsFromEvents`.
+- Integrar en `scripts/script_dashboard.js` al construir/actualizar gráfico.
+- Límite de 5 anotaciones visibles por defecto.
+- Commit: `feat(events): add chart annotations for treatment events`
+
+**Subtarea 9B.7 — Selectores de métricas y ajustes finales**
+- Añadir DAS28/CDAI/SDAI/SLEDAI-2K/ESSPRI/ESSDAI a selectores de métrica del dashboard si faltan.
+- Ajustar `#treatmentHistory` para mostrar eventos asociados.
+- Commit: `feat(dashboard): extend metric selectors and treatment history`
+
+**Subtarea 9B.8 — Documentación y contrato**
+- Actualizar `CONTRATO_DATOS_REUMA_V2.md` con columnas propuestas.
+- Actualizar `PLAN_IMPLEMENTACION_REUMA_V2.md` marcando Fase 9 como ejecutada.
+- Commit: `docs: update data contract and plan for treatment events`
+
+**Subtarea 9B.9 — Validación manual**
+- Checklist completo de criterios de aceptación.
+- Pruebas con datos mock de múltiples patologías.
+- Commit final: `fix(events): manual validation fixes`
+
+**No continuar a Fase 10 hasta que Fase 9B esté completamente validada.**
