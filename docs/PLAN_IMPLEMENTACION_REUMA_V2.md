@@ -2433,3 +2433,99 @@ Fecha: 2026-05-03.
 - [x] dataManager reconoce hoja 'SJOGREN'.
 - [x] No se rompen AR/EspA/APs/LES.
 - [x] Consola sin errores de sintaxis (node -c todos los archivos OK).
+
+## Fase 8B — Hallazgos de auditoría visual
+
+### Archivos auditados
+- `primera_visita.html`
+- `seguimiento.html`
+- `style_primera_visita.css`
+- `style_seguimiento.css`
+- `modules/formController.js`
+- `modules/scoreCalculators.js`
+
+### Hallazgos
+
+| # | Problema | Ubicación | Gravedad |
+|---|----------|-----------|----------|
+| 1 | `style_seguimiento.css` línea 1003: `display: block;` sin selector (huérfano) | style_seguimiento.css | Alta |
+| 2 | Clases `input-group` / `form-control` usadas en HTML pero NO definidas en CSS del proyecto | primera_visita.html, seguimiento.html | Alta |
+| 3 | SLEDAI/SLEDAI-2K/SLICC como inputs numéricos crudos, sin checklist ni cálculo | Ambos HTML | Alta |
+| 4 | ESSDAI como input numérico único sin estructura de dominios | Ambos HTML | Alta |
+| 5 | ESSPRI con cálculo inline `oninput="calculateESSPRI()"` en lugar de wiring centralizado | Ambos HTML | Media |
+| 6 | Valoración Clínica AR en seguimiento anidada dentro de `indicesActividadSection` en lugar de tener sección colapsable propia | seguimiento.html | Media |
+| 7 | Sin wiring LES/Sjögren en `initScoreWiring()` | formController.js | Alta |
+| 8 | Sin calculadoras SLEDAI-2K, SLICC, ESSDAI en `scoreCalculators.js` | scoreCalculators.js | Alta |
+| 9 | Sin reglas `.les-only`/`.sjogren-only` en CSS (solo existía `.ar-only`) | style_seguimiento.css | Media |
+
+## Fase 8B ejecutada — Saneamiento visual, restauración AR e índices LES/Sjögren
+
+**Fecha**: 2026-05-03
+**Branch**: feature/reuma-v2-prebiologico-fh-les-sjogren
+
+### Commits
+
+| # | Hash | Mensaje |
+|---|------|---------|
+| 1 | `c3f103f` | fix(css): fix orphaned CSS rule, add les/sjogren visibility rules, add SLEDAI/SLICC/ESSPRI/ESSDAI calculators |
+| 2 | `563e18d` | fix(ui): extract AR Valoracion Clinica as separate collapsible-section, normalize LES/Sjogren to form-group, add SLEDAI-2K checklist, SLICC domains, ESSDAI 12-domain calculator |
+| 3 | `829703a` | fix(ui): normalize primera_visita.html LES/Sjogren to form-group, add ESSDAI 12-domain calculator, wire LES/Sjogren scoring |
+| 4 | `fa5926c` | docs: update LES/Sjogren data contracts with SLEDAI-2K checklist, SLICC domains, ESSDAI 12 domains, ESSPRI aliases |
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `style_seguimiento.css` | Eliminada regla huérfana `display: block;`. Añadidas reglas de visibilidad `.les-only`/`.sjogren-only` |
+| `modules/scoreCalculators.js` | Añadidas `calcularSLEDAI2K` (24 ítems), `calcularSLICCSDI` (12 dominios), `calcularESSPRI` (PROM 3-dim), `calcularESSDAI` (12 dominios ponderados). Registradas en `HubTools.scores.*` |
+| `seguimiento.html` | Extraída Valoración Clínica AR como sección colapsable propia. SLEDAI-2K como checklist 24 ítems. SLICC/ACR SDI con 12 dominios numéricos. ESSDAI con 12 selectores 0-3. `input-group` → `form-group`, `form-control` eliminado. `oninput` eliminado de ESSPRI |
+| `primera_visita.html` | `input-group` → `form-group` global. `form-control` eliminado global. `oninput` eliminado de ESSPRI. ESSDAI reemplazado por 12 selectores 0-3 con cálculo automático |
+| `modules/formController.js` | Añadida `updateLesSjogrenScores()`. Wiring en `initScoreWiring()` para SLEDAI-2K checkboxes, SLICC domains, ESSPRI inputs, ESSDAI selectors. `alculateESSPRI()` reemplazada por `updateLesSjogrenScores()` |
+| `docs/template_les_excel.md` | Añadidos 24 ítems SLEDAI-2K + 12 dominios SLICC como columnas numeradas. Reenumeración completa |
+| `docs/template_sjogren_excel.md` | Añadidos 12 dominios ESSDAI + aliases ESSPRI. Reenumeración completa. Reglas actualizadas |
+| `docs/template_solicitud_fh.md` | Sección LES: eliminado SLEDAI_Result deprecado, añadida lista de ítems SLEDAI-2K activos. Sección Sjögren: añadidas dimensiones ESSPRI |
+| `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | Añadidas secciones Fase 8B (auditoría y ejecución) |
+
+### Checklist de validación
+
+#### AR / estructura
+- [x] En seguimiento, Valoración Clínica AR tiene sección colapsable propia (`id="valoracionClinicaARSegSection"`)
+- [x] Índices de actividad está separado (`id="indicesActividadSection"`)
+- [x] DAS28/CDAI/SDAI/RAPID3 siguen funcionando (IDs conservados, wiring intacto)
+- [x] RAPID3 sigue legible
+
+#### LES
+- [x] LES se ve integrado con estética del hub (usa `form-group`, `indices-apartado`, `collapsible-section`)
+- [x] SLEDAI-2K tiene checklist de 24 ítems en 4 grupos de peso (8/4/2/1)
+- [x] SLEDAI-2K calcula correctamente suma ponderada (`calcularSLEDAI2K`)
+- [x] SLICC/ACR SDI se calcula desde 12 dominios/subtotales con rangos min/max
+- [x] Campos LES exportan TXT/CSV (ya existía, conservado)
+- [x] Solicitud FH incluye valores LES
+
+#### Sjögren
+- [x] Sjögren se ve integrado con estética del hub
+- [x] ESSPRI se calcula desde sequedad/dolor/fatiga (media de 3 dimensiones, `calcularESSPRI`)
+- [x] ESSDAI tiene 12 dominios ponderados con selectores 0-3
+- [x] ESSDAI calcula resultado (`calcularESSDAI`)
+- [x] Campos Sjögren exportan TXT/CSV (ya existía, conservado)
+- [x] Solicitud FH incluye valores Sjögren
+
+#### Global
+- [x] Primera visita sin errores JS (`node -c` OK en formController.js y scoreCalculators.js)
+- [x] Seguimiento sin errores JS
+- [x] Dashboard sin errores JS
+- [x] No se rompe prebiológico
+- [x] No se rompe Solicitud FH
+- [ ] Working tree limpio (pendiente commit final de este documento)
+
+### Resultado
+
+- LES/Sjögren alineados visualmente con el hub (usan `form-group`, `indices-apartado`, `collapsible-section`, `form-group-grid`, `indice-resultado`, `info-note`)
+- Valoración Clínica AR recuperó sección colapsable propia en seguimiento
+- SLEDAI-2K implementado como checklist calculado con 24 ítems ponderados
+- SLICC/ACR SDI implementado como entrada estructurada por 12 dominios/subtotales
+- ESSPRI implementado como PROM calculado (media aritmética de 3 dimensiones)
+- ESSDAI implementado como calculadora por 12 dominios ponderados con selectores 0-3
+- CSS residual limpiado (regla huérfana eliminada, reglas les/sjogren-only añadidas)
+- Todos los `input-group` / `form-control` reemplazados por `form-group` nativo del hub
+- Wiring centralizado en `updateLesSjogrenScores()` dentro de `initScoreWiring()`
