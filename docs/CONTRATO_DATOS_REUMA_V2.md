@@ -97,3 +97,53 @@ Cada patología mantiene primera visita y seguimiento en la misma hoja mediante 
 - Añadidas columnas transversales `Estado_Prebiologico_Ultimo` y `Fecha_Validacion_Prebiologico_Ultima` a todas las hojas clínicas.
 - Nuevas hojas: `LES`, `SJOGREN`, `Prebiologico`, `Solicitud_FH_Log`.
 - ASDAS en AR: columnas conservadas pero codificadas como `NA` (ver Fase 2 del plan).
+
+---
+
+## 7. Columnas propuestas para eventos terapéuticos (futuro v2+)
+
+Estas columnas **no existen actualmente** en las hojas clínicas. Se documentan como propuesta para una futura versión en la que los eventos terapéuticos se persistan explícitamente en lugar de derivarse desde visitas.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `Evento_Terapeutico_Tipo` | string | Tipo de evento detectado (`treatment_start`, `treatment_change`, `treatment_suspend`, `biologic_start`, `biologic_change`, `adverse_event`, `flare`, `remission`, `prebiologic_apto`, `fh_request`) |
+| `Evento_Terapeutico_Descripcion` | string | Descripción textual del evento legible para el clínico |
+| `Evento_Terapeutico_Fecha` | date | Fecha del evento (fecha de visita asociada) |
+| `Biologico_Actual` | string | Fármaco biológico en curso en el momento del evento |
+| `Biologico_Fecha_Inicio` | date | Fecha de inicio del biológico actual |
+
+### 7.1. Estado actual (v2)
+
+En la versión actual del sistema, los eventos terapéuticos **se derivan** desde el historial de visitas mediante `modules/treatmentEventsManager.js` y no se persisten como tabla propia. El módulo genera objetos inmutables de evento a partir de los campos de visita existentes (`Tratamiento_Actual`, `Decision_Terapeutica`, `planBiologicoEntries`, `Cambio_Efectos_Adversos`, scores de actividad, estado prebiológico en sessionStorage).
+
+**Campos fuente utilizados:**
+- `Tratamiento_Actual` — tratamiento activo en la visita
+- `Fecha_Inicio_Tratamiento` — fecha de inicio del tratamiento actual
+- `Decision_Terapeutica` — decisión clínica (`continuar`, `cambiar`, `suspender`, `iniciar`)
+- `Cambio_Efectos_Adversos` — boolean que indica efectos adversos reportados
+- `Cambio_Descripcion_Efectos` — descripción de los efectos adversos
+- `planBiologicoEntries`, `previoBiologicoEntries` — fármacos biológicos planificados/previos
+- `biologicoSelect`, `fameSelect`, `sistemicoSelect` — selectores de tratamiento
+- Scores de actividad por patología: DAS28, CDAI, SDAI, BASDAI, ASDAS, SLEDAI-2K, ESSDAI, ESSPRI
+- `Estado_Prebiologico_Ultimo` y `Fecha_Validacion_Prebiologico_Ultima` — estado prebiológico
+
+**Formato de evento derivado** (inmutable, en memoria):
+```javascript
+{
+  id: string,              // hash: `${type}_${date}_${index}`
+  date: string,            // ISO date de la visita
+  type: string,            // tipo de evento (ver columna arriba)
+  description: string,     // texto humano
+  source: string,          // 'visit', 'prebiologic', 'manual'
+  visitIndex: number|null, // índice en allVisits
+  metadata: {
+    previousValue?: any,
+    currentValue?: any,
+    severity?: string,     // 'leve', 'moderado', 'grave'
+    scoreDelta?: number,
+    notes?: string
+  }
+}
+```
+
+Si en el futuro se decide persistir eventos explícitos, se crearán las columnas listadas arriba en una hoja `Eventos_Terapeuticos` o como columnas adicionales en las hojas de visita.

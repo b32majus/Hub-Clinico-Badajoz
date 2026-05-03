@@ -2743,3 +2743,30 @@ HubTools.events.renderTreatmentTimeline(events, containerId)
 - Commit final: `fix(events): manual validation fixes`
 
 **No continuar a Fase 10 hasta que Fase 9B esté completamente validada.**
+
+---
+
+## Fase 9B ejecutada — Eventos terapéuticos en dashboard
+
+### Subtareas completadas
+- **9B.1:** Esqueleto de `modules/treatmentEventsManager.js` con namespace `HubTools.events`
+- **9B.2:** Detección de `treatment_start`, `treatment_change`, `treatment_suspend`, `biologic_start`, `biologic_change`, `adverse_event`
+- **9B.3:** Detección de flare/remission para AR (DAS28), EspA (BASDAI), APS (DAPSA), LES (SLEDAI-2K), Sjögren (ESSDAI)
+- **9B.4:** Integración de eventos prebiológicos (APTO/EN_CURSO/NO_APTO) y placeholder FH
+- **9B.5:** Timeline renderizado en `#keyEventsTimeline` con lista expandible (máx 5 visibles + "ver más")
+- **9B.6:** Anotaciones Chart.js con líneas verticales punteadas, máximo 5, priorizadas por severidad
+- **9B.7:** Selectores de métricas ampliados para DAS28/CDAI/SDAI/SLEDAI-2K/ESSPRI/ESSDAI, filtrados por patología
+- **9B.8:** Documentación de contrato y estado de implementación
+
+### Pendientes explícitos documentados
+- `highlightChartEvent()` sigue como placeholder (resaltado visual real pendiente)
+- `fh_request` no es trazable hasta que exista log de Solicitud FH en visitas
+- Posible ajuste de sintaxis `label.enabled` vs `label.display` en anotaciones Chart.js si las etiquetas no se visualizan en navegador
+- Timeline usa estilos inline; si canta visualmente, mover a `style_dashboard.css` en 9B.9
+
+### Archivos modificados
+- `modules/treatmentEventsManager.js` (nuevo)
+- `scripts/script_dashboard.js`
+- `dashboard_paciente.html`
+- `docs/CONTRATO_DATOS_REUMA_V2.md`
+- `docs/PLAN_IMPLEMENTACION_REUMA_V2.md`
