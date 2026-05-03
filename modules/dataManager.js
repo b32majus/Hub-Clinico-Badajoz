@@ -1074,6 +1074,18 @@ function getActivityBucket(metricLabel, value) {
     const thresholds = ACTIVITY_THRESHOLDS[metricKey];
     if (!thresholds) return null;
 
+    if (metricKey === 'BASDAI') {
+        if (value < 4) return 'Baja Actividad';
+        if (value < 6) return 'Moderada Actividad';
+        return 'Alta Actividad';
+    }
+
+    if (metricKey === 'ESSDAI') {
+        if (value < 5) return 'Baja Actividad';
+        if (value < 14) return 'Moderada Actividad';
+        return 'Alta Actividad';
+    }
+
     if (value < thresholds.remission) return 'Remisi\u00f3n';
     if (value < thresholds.low) return 'Baja Actividad';
     if (value < thresholds.moderate) return 'Moderada Actividad';

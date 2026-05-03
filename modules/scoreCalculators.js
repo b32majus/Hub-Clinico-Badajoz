@@ -10,8 +10,9 @@ function parseNumberInRange(value, min, max, options) {
         return fallback;
     }
 
-    const parsed = integer ? parseInt(value, 10) : parseFloat(value);
-    if (!Number.isFinite(parsed)) {
+    const raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || (integer && !Number.isInteger(parsed))) {
         return fallback;
     }
     if (min !== undefined && parsed < min) {
@@ -45,6 +46,10 @@ function calculateMean(values) {
     return sum / values.length;
 }
 
+function allFinite(values) {
+    return Array.isArray(values) && values.every(Number.isFinite);
+}
+
 function calcularBASDAI(datos) {
     const rawValues = [datos?.basdaiP1, datos?.basdaiP2, datos?.basdaiP3, datos?.basdaiP4, datos?.basdaiP5, datos?.basdaiP6];
     if (!hasAllValues(rawValues)) return '';
@@ -55,6 +60,7 @@ function calcularBASDAI(datos) {
     const p4 = parseNumberInRange(datos.basdaiP4, 0, 10);
     const p5 = parseNumberInRange(datos.basdaiP5, 0, 10);
     const p6 = parseNumberInRange(datos.basdaiP6, 0, 24, { integer: true });
+    if (!allFinite([p1, p2, p3, p4, p5, p6])) return '';
 
     const p6Scaled = Math.min((p6 / 2) * 10, 10);
     const basdai = calculateMean([p1, p2, p3, p4, (p5 + p6Scaled) / 2]);
@@ -71,24 +77,31 @@ function calcularASDAS(datos) {
     const duracionRigidez = parseNumberInRange(datos.asdasDuracionRigidez, 0, 10);
     const evaGlobal = parseNumberInRange(datos.asdasEvaGlobal, 0, 10);
     const nad = parseNumberInRange(datos.asdasNAD, 0, 28, { integer: true });
+    if (!allFinite([dolorEspalda, duracionRigidez, evaGlobal, nad])) {
+        return { asdasCRP: '', asdasESR: '' };
+    }
 
     let asdasCRP = '';
     let asdasESR = '';
 
     if (datos?.asdasPCR !== undefined && datos?.asdasPCR !== null && datos?.asdasPCR !== '') {
         const pcr = parseNumberInRange(datos.asdasPCR, 0, 500);
-        asdasCRP = formatFixed(
-            (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * nad) + (0.579 * Math.log(pcr + 1)),
-            2
-        );
+        if (Number.isFinite(pcr)) {
+            asdasCRP = formatFixed(
+                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * nad) + (0.579 * Math.log(pcr + 1)),
+                2
+            );
+        }
     }
 
     if (datos?.asdasVSG !== undefined && datos?.asdasVSG !== null && datos?.asdasVSG !== '') {
         const vsg = parseNumberInRange(datos.asdasVSG, 0, 200);
-        asdasESR = formatFixed(
-            (0.08 * dolorEspalda) + (0.07 * duracionRigidez) + (0.11 * evaGlobal) + (0.09 * nad) + (0.29 * Math.sqrt(vsg)),
-            2
-        );
+        if (Number.isFinite(vsg)) {
+            asdasESR = formatFixed(
+                (0.08 * dolorEspalda) + (0.07 * duracionRigidez) + (0.11 * evaGlobal) + (0.09 * nad) + (0.29 * Math.sqrt(vsg)),
+                2
+            );
+        }
     }
 
     return { asdasCRP, asdasESR };
@@ -102,16 +115,19 @@ function calcularHAQ(datos) {
     if (countPresentValues(categorias) < 6) return '';
 
     let suma = 0;
+    let contestadas = 0;
     for (let i = 1; i <= 8; i++) {
-        let score = parseNumberInRange(datos[`haqCategoria${i}`], 0, 3, { fallback: 0, integer: true });
+        let score = parseNumberInRange(datos[`haqCategoria${i}`], 0, 3, { fallback: null, integer: true });
+        if (!Number.isFinite(score)) continue;
         const usaAyuda = Boolean(datos[`haqAyuda${i}`]);
         if (usaAyuda && score <= 1) {
             score = 2;
         }
         suma += score;
+        contestadas += 1;
     }
 
-    return suma / 8;
+    return contestadas >= 6 ? suma / contestadas : '';
 }
 
 function calcularLEI(datos) {
@@ -129,6 +145,9 @@ function calcularRAPID3(datos) {
     const fnRaw = parseNumberInRange(datos.fnRaw, 0, 30, { integer: true });
     const dolor = parseNumberInRange(datos.evaDolor, 0, 10);
     const global = parseNumberInRange(datos.evaGlobal, 0, 10);
+    if (!allFinite([fnRaw, dolor, global])) {
+        return { fnRaw: '', funcion: '', dolor: '', global: '', total: '', categoria: 'Incompleto' };
+    }
     const funcion = MDHAQ_CONVERSION[fnRaw] ?? 0;
     const rapid3 = funcion + dolor + global;
 
@@ -196,6 +215,9 @@ function calcularDAS28(datos) {
     const nad28 = parseNumberInRange(datos.nad28, 0, 28, { integer: true });
     const nat28 = parseNumberInRange(datos.nat28, 0, 28, { integer: true });
     let eva = parseNumberInRange(datos.evaGlobal, 0, 100);
+    if (!allFinite([nad28, nat28, eva])) {
+        return { das28CRP: '', das28ESR: '' };
+    }
     if (eva > 0 && eva <= 10) eva = eva * 10;
 
     let das28CRP = '';
@@ -203,18 +225,22 @@ function calcularDAS28(datos) {
 
     if (datos?.pcr !== undefined && datos?.pcr !== null && datos?.pcr !== '') {
         const pcr = parseNumberInRange(datos.pcr, 0, 500);
-        das28CRP = formatFixed(
-            (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.36 * Math.log(pcr + 1)) + (0.014 * eva) + 0.96,
-            2
-        );
+        if (Number.isFinite(pcr)) {
+            das28CRP = formatFixed(
+                (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.36 * Math.log(pcr + 1)) + (0.014 * eva) + 0.96,
+                2
+            );
+        }
     }
 
     if (datos?.vsg !== undefined && datos?.vsg !== null && datos?.vsg !== '') {
         const vsg = parseNumberInRange(datos.vsg, 0, 200);
-        das28ESR = formatFixed(
-            (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.70 * Math.log(Math.max(vsg, 1))) + (0.014 * eva),
-            2
-        );
+        if (Number.isFinite(vsg)) {
+            das28ESR = formatFixed(
+                (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.70 * Math.log(Math.max(vsg, 1))) + (0.014 * eva),
+                2
+            );
+        }
     }
 
     return { das28CRP, das28ESR };
@@ -230,6 +256,9 @@ function calcularCDAI(datos) {
     const nat28 = parseNumberInRange(datos.nat28, 0, 28, { integer: true });
     const evaPaciente = parseNumberInRange(datos.evaPaciente, 0, 10);
     const evaMedico = parseNumberInRange(datos.evaMedico, 0, 10);
+    if (!allFinite([nad28, nat28, evaPaciente, evaMedico])) {
+        return { total: '', categoria: 'Incompleto' };
+    }
     const cdai = nad28 + nat28 + evaPaciente + evaMedico;
 
     let categoria = 'Remision (<=2.8)';
@@ -251,6 +280,9 @@ function calcularSDAI(datos) {
     const evaPaciente = parseNumberInRange(datos.evaPaciente, 0, 10);
     const evaMedico = parseNumberInRange(datos.evaMedico, 0, 10);
     let pcr = parseNumberInRange(datos.pcr, 0, 500);
+    if (!allFinite([nad28, nat28, evaPaciente, evaMedico, pcr])) {
+        return { total: '', categoria: 'Incompleto' };
+    }
     if (pcr > 10) pcr = pcr / 10;
     const sdai = nad28 + nat28 + evaPaciente + evaMedico + pcr;
 
@@ -433,6 +465,7 @@ function calcularESSPRI(datos) {
     const sequedad = parseNumberInRange(datos.esspriSequedad, 0, 10);
     const dolor = parseNumberInRange(datos.esspriDolor, 0, 10);
     const fatiga = parseNumberInRange(datos.esspriFatiga, 0, 10);
+    if (!allFinite([sequedad, dolor, fatiga])) return '';
 
     return formatFixed(calculateMean([sequedad, dolor, fatiga]), 2);
 }
