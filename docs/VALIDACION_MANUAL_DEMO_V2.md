@@ -1,69 +1,75 @@
-# Validacion Manual - Base Demo v2
+# Validación Manual Demo v2 (Esquema Canónico 491)
 
-## Cargar la base
+## Archivo a cargar
 1. Abrir `index.html` en navegador.
-2. Usar "Cargar base de datos".
+2. Pulsar `Cargar base de datos`.
 3. Seleccionar `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`.
 
-## Pacientes disponibles
-- DEMO-AR-001 (Artritis Reumatoide)
-- DEMO-ESPA-001 (Espondiloartritis Axial)
-- DEMO-APS-001 (Artritis Psoriasica)
-- DEMO-LES-001 (Lupus Eritematoso Sistemico)
-- DEMO-SJOGREN-001 (Sindrome de Sjogren)
+## Estructura esperada del archivo
+- Hojas clínicas: `AR`, `ESPA`, `APS`, `LES`, `SJOGREN`.
+- Hojas auxiliares: `Profesionales`, `Fármacos`.
+- Sin hoja `Solicitud_FH`.
+- Sin hoja `Prebiologico` obligatoria.
+- Cada hoja clínica con `491` columnas.
 
-## Checklist de validacion por paciente
+## CIPs demo
+- `DEMO-AR-001`
+- `DEMO-ESPA-001`
+- `DEMO-APS-001`
+- `DEMO-LES-001`
+- `DEMO-SJOGREN-001`
+
+## Checklist funcional por paciente
 
 ### DEMO-AR-001
-- [ ] Dashboard carga sin errores
-- [ ] Grafico de actividad muestra DAS28/CDAI/SDAI/RAPID3
-- [ ] Marcadores Tx: Metotrexato en visita 1
-- [ ] Marcadores Bio: Adalimumab en visita 2
-- [ ] Marcadores Bio: Baricitinib en visita 3
-- [ ] Evento clinico: efecto adverso visible (reaccion local anti-TNF)
-- [ ] Evento clinico: remision (DAS28=2.1 en visita 4)
-- [ ] Historial de Tratamientos muestra 3 farmacos con fechas
-- [ ] Badge prebiologico: APTO (verde)
-- [ ] Solicitud FH incluye comorbilidades (HTA, Dislipemia, Obesidad)
+- [ ] Dashboard abre sin errores JS.
+- [ ] Evolutivo principal con descenso de DAS28 (6.2 -> 4.8 -> 3.2 -> 2.1).
+- [ ] KPI secundarios con tendencia a mejoría (CDAI/SDAI y RAPID3).
+- [ ] Eventos/timeline con cambio terapéutico y efecto adverso.
+- [ ] Marcadores de tratamiento sobre gráfico (`Tx/Bio/Susp`) visibles.
+- [ ] Badge prebiológico final: `APTO`.
+- [ ] Solicitud FH incluye bloque prebiológico (estado, validación, analíticas, vacunación).
 
 ### DEMO-ESPA-001
-- [ ] Grafico muestra BASDAI/ASDAS
-- [ ] Marcador Bio: Secukinumab
-- [ ] Timeline de tratamientos correcto
-- [ ] Badge prebiologico: EN_CURSO (naranja)
-- [ ] Remision clinica: BASDAI 1.8 en visita 4
+- [ ] BASDAI/ASDAS longitudinal con mejoría (BASDAI 7.2 -> 1.9).
+- [ ] Inicio de biológico y continuidad reflejados en timeline/marcadores.
+- [ ] Badge prebiológico final: `EN_CURSO`.
+- [ ] Solicitud FH muestra datos prebiológicos/vacunales desde última visita.
 
 ### DEMO-APS-001
-- [ ] Grafico muestra DAS28/RAPID3
-- [ ] Marcador Bio: Adalimumab en visita 2
-- [ ] HAQ mejora 1.8 -> 0.3
-- [ ] Badge prebiologico: APTO (verde)
-- [ ] Reduccion Metotrexato 15mg -> 10mg en visita 4
+- [ ] Evolución HAQ/RAPID3/LEI con tendencia descendente.
+- [ ] PASI/BSA con descenso en visitas sucesivas.
+- [ ] Cambio FAME/biológico visible en historial/timeline.
+- [ ] Badge prebiológico final: `APTO`.
+- [ ] Solicitud FH incluye motivo de cambio y comorbilidades activas.
 
 ### DEMO-LES-001
-- [ ] Grafico muestra SLEDAI-2K
-- [ ] Marcadores de tratamiento sobre grafico
-- [ ] Badge prebiologico: NO_APTO (rojo)
-- [ ] Eventos clinicos: brote moderado (SLEDAI-2K=16) y remision (SLEDAI-2K=1)
-- [ ] Tratamiento: HCQ + Prednisona -> + Micofenolato en visita 2
-- [ ] Dosis prednisona decrece: 30mg -> 20mg -> 10mg -> 5mg
+- [ ] Evolutivo LES con tendencia de actividad descendente (`SLEDAI_2K` de 16 a 1 en datos fuente).
+- [ ] `SLICC_SDI` y dosis de prednisona presentes en datos de visitas.
+- [ ] Línea terapéutica con HCQ + prednisona + inmunosupresor reflejada en historial.
+- [ ] Badge prebiológico final (última visita): `APTO`.
+- [ ] Solicitud FH incluye estado prebiológico, analíticas y observaciones relevantes.
 
 ### DEMO-SJOGREN-001
-- [ ] Grafico muestra ESSPRI/ESSDAI
-- [ ] Marcadores de tratamiento sobre grafico
-- [ ] PROs: EVA sequedad oral/ocular/fatiga/dolor
-- [ ] Badge prebiologico: NO_EVALUADO (gris o sin badge)
-- [ ] Tratamiento: Pilocarpina -> + HCQ -> + Rituximab
-- [ ] ESSDAI mejora 18 -> 4
+- [ ] Evolutivo ESSPRI/ESSDAI descendente (ESSDAI 18 -> 4).
+- [ ] EVAs de sequedad oral/ocular/fatiga/dolor con mejoría progresiva.
+- [ ] Tratamiento sintomático + inmunomodulador visible en historial/timeline.
+- [ ] Badge prebiológico final: `EN_CURSO`.
+- [ ] Solicitud FH incluye bloque prebiológico completo desde última visita.
 
-## Incidencias conocidas
-- `highlightChartEvent()` es placeholder (sin resaltado visual real en grafico).
-- `fh_request` no es trazable (no aparece en eventos clinicos del timeline).
-- El loader no carga la hoja `Prebiologico`; los badges dependen de sessionStorage.
-- La hoja `Farmacos` usa formato 3-columnas legacy (Sistemicos | FAMEs | Biologicos) para compatibilidad con el loader actual.
+## Verificación técnica en consola
+- [ ] No errores críticos al cargar Excel.
+- [ ] `dataManager` reconoce las 5 hojas clínicas.
+- [ ] Sin warnings de cabeceras críticas faltantes.
+- [ ] Dashboard renderiza gráficas y timeline para los 5 pacientes demo.
 
-## Regenerar la base
+## Notas de revisión
+- Solicitud FH es salida derivada (`TXT`) y no debe persistirse como columna/hoja en Excel.
+- El estado prebiológico visible en dashboard/FH debe priorizar la última visita clínica persistida.
+
+## Regeneración reproducible
 ```bash
 python scripts/generate_demo_db.py
 ```
-El script es idempotente: sobrescribe `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`.
+- El script sobrescribe `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`.
+- El script regenera `docs/REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md`.

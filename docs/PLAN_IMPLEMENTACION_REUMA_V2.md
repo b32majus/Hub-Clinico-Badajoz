@@ -3088,3 +3088,51 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 ### Estado resultante
 - Fuente persistente primaria para badge y `Solicitud FH`: última visita clínica.
 - `sessionStorage`: fallback temporal de compatibilidad.
+
+---
+
+## Fase D ejecutada — Demo v2 generada desde esquema canónico
+
+**Fecha:** 2026-05-03
+
+### Entregables
+- `scripts/generate_demo_db.py` (script reproducible)
+- `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`
+- `docs/REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md`
+- `docs/VALIDACION_MANUAL_DEMO_V2.md`
+
+### Criterio canónico aplicado
+- Columnas `1-321`: copiadas del Excel maestro original (`Hub_Clinico_Maestro.xlsx`, hoja AR) y validadas como idénticas en AR/ESPA/APS.
+- Columnas `322-491`: extraídas de `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` (170 columnas v2).
+- Total final por hoja clínica: `491` columnas.
+
+### Hojas incluidas
+- Clínicas: `AR`, `ESPA`, `APS`, `LES`, `SJOGREN`.
+- Auxiliares: `Profesionales`, `Fármacos`.
+- No se crea hoja `Solicitud_FH`.
+- No se crea hoja `Prebiologico` obligatoria.
+
+### Cohorte demo (ficticia)
+- `DEMO-AR-001` (4 visitas)
+- `DEMO-ESPA-001` (4 visitas)
+- `DEMO-APS-001` (4 visitas)
+- `DEMO-LES-001` (4 visitas)
+- `DEMO-SJOGREN-001` (4 visitas)
+
+### Validaciones automáticas ejecutadas (script)
+- `AR/ESPA/APS/LES/SJOGREN = 491 columnas`
+- Primeras `321` columnas de `AR/ESPA/APS` coinciden con maestro
+- Sin cabeceras vacías
+- Sin cabeceras duplicadas
+- Múltiples visitas por paciente
+- `Fecha_Visita` ordenable
+- `Tipo_Visita` poblado
+- `Tratamiento_Actual` y `Fecha_Inicio_Tratamiento` poblados
+- Bloque prebiológico/vacunal poblado en casos demo
+- Scores longitudinales poblados
+- Campos suficientes para eventos terapéuticos/timeline/marcadores
+
+### Notas de alcance
+- Se generan únicamente datos ficticios.
+- No se modifica el Excel maestro original.
+- Solicitud FH permanece como salida derivada, no como persistencia en Excel.
