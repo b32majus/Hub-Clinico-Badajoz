@@ -396,6 +396,7 @@ function populateDashboard() {
     // GRFICOS
     // ============================================
     populateChartSelectors();
+    filterMetricSelectorsByPathology(window.currentPathology);
     initActivityChart();
     initPROChart();
 
@@ -823,8 +824,27 @@ function exportVisitsToCSV() {
 
 function populateChartSelectors() {
     const isAR = isARPathology();
-    const activityMetrics = isAR
-        ? [
+    const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
+
+    let activityMetrics;
+    if (isLES) {
+        activityMetrics = [
+            { value: 'sledai2k', text: 'SLEDAI-2K' },
+            { value: 'slicc', text: 'SLICC/ACR SDI' },
+            { value: 'prednisona', text: 'Prednisona' },
+            { value: 'pcr', text: 'PCR' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isSJOGREN) {
+        activityMetrics = [
+            { value: 'esspri', text: 'ESSPRI' },
+            { value: 'essdai', text: 'ESSDAI' },
+            { value: 'pcr', text: 'PCR' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isAR) {
+        activityMetrics = [
             { value: 'das28Crp', text: 'DAS28-CRP' },
             { value: 'das28Esr', text: 'DAS28-ESR' },
             { value: 'cdai', text: 'CDAI' },
@@ -833,8 +853,9 @@ function populateChartSelectors() {
             { value: 'haq', text: 'HAQ' },
             { value: 'pcr', text: 'PCR' },
             { value: 'vsg', text: 'VSG' }
-        ]
-        : [
+        ];
+    } else {
+        activityMetrics = [
             { value: 'basdai', text: 'BASDAI' },
             { value: 'asdas', text: 'ASDAS' },
             { value: 'basfi', text: 'BASFI' },
@@ -844,11 +865,23 @@ function populateChartSelectors() {
             { value: 'pcr', text: 'PCR' },
             { value: 'vsg', text: 'VSG' }
         ];
+    }
 
-    const proMetrics = [
-        { value: 'evaDolor', text: 'EVA Dolor' },
-        { value: 'evaGlobal', text: 'EVA Global' }
-    ];
+    let proMetrics;
+    if (isSJOGREN) {
+        proMetrics = [
+            { value: 'evaSequedadOral', text: 'EVA Sequedad Oral' },
+            { value: 'evaSequedadOcular', text: 'EVA Sequedad Ocular' },
+            { value: 'evaFatiga', text: 'EVA Fatiga' },
+            { value: 'evaDolor', text: 'EVA Dolor' },
+            { value: 'evaGlobal', text: 'EVA Global' }
+        ];
+    } else {
+        proMetrics = [
+            { value: 'evaDolor', text: 'EVA Dolor' },
+            { value: 'evaGlobal', text: 'EVA Global' }
+        ];
+    }
 
     const selectActivityIndex = document.getElementById('selectActivityIndex');
     const compareActivityIndexSelect = document.getElementById('compareActivityIndexSelect');
@@ -878,13 +911,50 @@ function populateChartSelectors() {
     });
 
     if (selectActivityIndex) {
-        selectActivityIndex.value = isAR ? 'das28Crp' : 'basdai';
+        selectActivityIndex.value = isLES ? 'sledai2k' : (isSJOGREN ? 'esspri' : (isAR ? 'das28Crp' : 'basdai'));
     }
     if (compareActivityIndexSelect) {
-        compareActivityIndexSelect.value = isAR ? 'cdai' : 'asdas';
+        compareActivityIndexSelect.value = isLES ? 'slicc' : (isSJOGREN ? 'essdai' : (isAR ? 'cdai' : 'asdas'));
     }
-    if (selectPRO) selectPRO.value = 'evaDolor';
-    if (comparePROSelect) comparePROSelect.value = 'evaGlobal';
+    if (selectPRO) selectPRO.value = isSJOGREN ? 'evaSequedadOral' : 'evaDolor';
+    if (comparePROSelect) comparePROSelect.value = isSJOGREN ? 'evaFatiga' : 'evaGlobal';
+}
+
+/**
+ * Filtra las opciones de los selectores de métrica según la patología activa.
+ * Oculta métricas irrelevantes y ajusta la selección actual si es necesario.
+ * @param {string} pathology - Código de patología normalizado (ar, espa, aps, les, sjogren)
+ */
+function filterMetricSelectorsByPathology(pathology) {
+    const normalized = normalizePathology(pathology);
+
+    const metricsByPathology = {
+        ar: ['das28Crp', 'das28Esr', 'cdai', 'sdai', 'rapid3', 'haq', 'pcr', 'vsg'],
+        espa: ['basdai', 'asdas', 'basfi', 'haq', 'pcr', 'vsg'],
+        aps: ['haq', 'lei', 'rapid3', 'pcr', 'vsg'],
+        les: ['sledai2k', 'slicc', 'prednisona', 'pcr', 'vsg'],
+        sjogren: ['esspri', 'essdai', 'evaSequedadOral', 'evaSequedadOcular', 'evaFatiga', 'evaDolor']
+    };
+
+    const allowed = metricsByPathology[normalized] || [];
+
+    const selectors = ['selectActivityIndex', 'compareActivityIndexSelect', 'selectPRO', 'comparePROSelect'];
+    selectors.forEach(function(id) {
+        const select = document.getElementById(id);
+        if (!select) return;
+
+        Array.from(select.options).forEach(function(option) {
+            const value = option.value;
+            const isCommonPRO = ['evaDolor', 'evaGlobal'].includes(value);
+            const isAllowed = allowed.includes(value) || isCommonPRO;
+            option.hidden = !isAllowed;
+        });
+
+        if (select.selectedOptions[0] && select.selectedOptions[0].hidden) {
+            const firstVisible = Array.from(select.options).find(function(o) { return !o.hidden; });
+            if (firstVisible) select.value = firstVisible.value;
+        }
+    });
 }
 
 function applyBiomarkerStatus(elementId, value) {
@@ -1350,7 +1420,15 @@ function getVisitMetric(visit, metric) {
         'pcr': ['pcrResult', 'PCR', 'pcr'],
         'vsg': ['vsgResult', 'VSG', 'vsg'],
         'evaDolor': ['evaDolor', 'EVA_Dolor', 'eva_dolor'],
-        'evaGlobal': ['evaGlobal', 'EVA_Global', 'eva_global']
+        'evaGlobal': ['evaGlobal', 'EVA_Global', 'eva_global'],
+        'sledai2k': ['sledai2kResult', 'SLEDAI_2K_Result', 'sledai2k', 'SLEDAI_Result', 'sledai'],
+        'esspri': ['esspriResult', 'ESSPRI_Result', 'esspri', 'ESSPRI'],
+        'essdai': ['essdaiResult', 'ESSDAI_Result', 'essdai', 'ESSDAI'],
+        'slicc': ['sliccAcrSdi', 'SLICC_ACR_SDI', 'slicc', 'SLICC', 'SLICC_SDI'],
+        'prednisona': ['dosisPrednisona', 'Dosis_Prednisona_Mg_Dia', 'prednisona', 'Prednisona'],
+        'evaSequedadOral': ['evaSequedadOral', 'EVA_Sequedad_Oral', 'eva_sequedad_oral'],
+        'evaSequedadOcular': ['evaSequedadOcular', 'EVA_Sequedad_Ocular', 'eva_sequedad_ocular'],
+        'evaFatiga': ['evaFatiga', 'EVA_Fatiga', 'eva_fatiga']
     };
 
     const possibleFields = fieldMap[metric] || [metric];
@@ -1442,7 +1520,15 @@ function getMetricLabel(metric) {
         pcr: 'PCR',
         vsg: 'VSG',
         evaDolor: 'EVA Dolor',
-        evaGlobal: 'EVA Global'
+        evaGlobal: 'EVA Global',
+        sledai2k: 'SLEDAI-2K',
+        esspri: 'ESSPRI',
+        essdai: 'ESSDAI',
+        slicc: 'SLICC/ACR SDI',
+        prednisona: 'Prednisona (mg/día)',
+        evaSequedadOral: 'EVA Sequedad Oral',
+        evaSequedadOcular: 'EVA Sequedad Ocular',
+        evaFatiga: 'EVA Fatiga'
     };
     return labels[metric] || metric.toUpperCase();
 }
@@ -1473,7 +1559,7 @@ function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
     };
 
     const processMetricCutoffs = (metricKey, scaleID) => {
-        const cutoffKeyMap = { das28Crp: 'das28', das28Esr: 'das28', cdai: 'cdai', sdai: 'sdai', rapid3: 'rapid3', basdai: 'basdai', asdas: 'asdas', haq: 'haq' };
+        const cutoffKeyMap = { das28Crp: 'das28', das28Esr: 'das28', cdai: 'cdai', sdai: 'sdai', rapid3: 'rapid3', basdai: 'basdai', asdas: 'asdas', haq: 'haq', sledai2k: 'sledai2k', esspri: 'esspri', essdai: 'essdai' };
         const metricCutoffs = cutoffs[cutoffKeyMap[metricKey] || metricKey];
         if (metricCutoffs) {
             if (metricCutoffs.remission !== undefined) addCutoffLine(metricKey, scaleID, COLORS.remission, metricCutoffs.remission, 'Remisi\u00f3n');
@@ -1549,7 +1635,13 @@ function showEmptyState(message = 'Busca un paciente para ver su dashboard.') {
 
 function getPathologyLabel(code) {
     if (!code) return 'Sin diagnstico';
-    const map = { espa: 'Espondiloartritis Axial', aps: 'Artritis Psorisica', ar: 'Artritis Reumatoide' };
+    const map = { 
+        espa: 'Espondiloartritis Axial', 
+        aps: 'Artritis Psorisica', 
+        ar: 'Artritis Reumatoide',
+        les: 'Lupus eritematoso sistémico',
+        sjogren: 'Síndrome de Sjögren' 
+    };
     return map[code.toLowerCase()] || code.toUpperCase();
 }
 
