@@ -386,6 +386,123 @@
     }
 
     /**
+     * Genera el bloque de comorbilidades activas / factores relevantes.
+     * Detecta comorbilidades desde múltiples nombres de campo posibles.
+     */
+    function getComorbiditiesBlock(datos) {
+        var ACTIVE_VALUES = ['si', 'sí', 'true', '1', 'activa'];
+        var COMORBIDITY_MAP = {
+            hta: 'HTA',
+            dm: 'Diabetes Mellitus',
+            dlp: 'Dislipidemia',
+            ecv: 'Enfermedad cardiovascular',
+            gastritis: 'Gastritis/úlcera péptica',
+            obesidad: 'Obesidad',
+            osteoporosis: 'Osteoporosis',
+            gota: 'Gota/hiperuricemia'
+        };
+
+        var active = [];
+
+        /**
+         * Comprueba si un valor indica comorbilidad activa.
+         */
+        function isActive(val) {
+            if (val === undefined || val === null || val === '') return false;
+            if (val === true) return true;
+            var s = val.toString().trim().toLowerCase();
+            return ACTIVE_VALUES.indexOf(s) !== -1;
+        }
+
+        /**
+         * Intenta extraer comorbilidades de un array o string.
+         */
+        function collectFromSource(source) {
+            if (!source) return;
+
+            // Si es un string, intentar split por coma o ;
+            if (typeof source === 'string') {
+                var parts = source.split(/[,;]+/);
+                parts.forEach(function(p) {
+                    var key = p.trim().toLowerCase();
+                    if (key === 'activa') return; // descartar palabra suelta
+                    if (COMORBIDITY_MAP[key]) {
+                        active.push(key);
+                    }
+                });
+                return;
+            }
+
+            // Si es array de strings
+            if (Array.isArray(source)) {
+                source.forEach(function(item) {
+                    if (typeof item === 'string') {
+                        var key = item.trim().toLowerCase();
+                        if (key === 'activa') return;
+                        if (COMORBIDITY_MAP[key]) {
+                            active.push(key);
+                        }
+                    } else if (typeof item === 'object' && item !== null) {
+                        // Array de objetos: {nombre: 'HTA', activa: true}
+                        var name = (item.nombre || item.name || item.comorbilidad || '').toString().trim().toLowerCase();
+                        if (name === 'activa') return;
+                        if (COMORBIDITY_MAP[name]) {
+                            if (isActive(item.activa || item.activo || item.valor || true)) {
+                                active.push(name);
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+        }
+
+        // 1. Intentar fuentes agregadas: comorbilidades, comorbilidadesActivas, Comorbilidades
+        collectFromSource(datos.comorbilidades);
+        collectFromSource(datos.comorbilidadesActivas);
+        collectFromSource(datos.Comorbilidades);
+
+        // 2. Intentar campos booleanos/string individuales
+        Object.keys(COMORBIDITY_MAP).forEach(function(key) {
+            // Probar múltiples variantes de nombre: Comorbilidad_HTA, comorbilidadHTA, hta, etc.
+            var variants = [
+                'Comorbilidad_' + key.toUpperCase(),
+                'comorbilidad' + key.charAt(0).toUpperCase() + key.slice(1),
+                key
+            ];
+
+            for (var i = 0; i < variants.length; i++) {
+                if (isActive(datos[variants[i]])) {
+                    if (active.indexOf(key) === -1) {
+                        active.push(key);
+                    }
+                    break;
+                }
+            }
+        });
+
+        // Construir texto
+        var text = '▓▓▓ COMORBILIDADES ACTIVAS / FACTORES RELEVANTES ▓▓▓\n';
+        if (active.length === 0) {
+            text += '- Sin comorbilidades activas registradas\n';
+        } else {
+            // Desduplicar manteniendo orden
+            var seen = {};
+            var unique = [];
+            active.forEach(function(k) {
+                if (!seen[k]) {
+                    seen[k] = true;
+                    unique.push(k);
+                }
+            });
+            unique.forEach(function(k) {
+                text += '- ' + (COMORBIDITY_MAP[k] || k) + '\n';
+            });
+        }
+        return text + '\n';
+    }
+
+    /**
      * Genera el pie de la solicitud.
      */
     function getFooterBlock() {
@@ -412,6 +529,7 @@
         text += getHeaderBlock(datos);
         text += getDiagnosisBlock(datos);
         text += getActivityBlock(datos);
+        text += getComorbiditiesBlock(datos);
         text += getTreatmentBlock(datos);
         text += getDecisionBlock(datos);
         text += getPrebiologicBlock(datos);

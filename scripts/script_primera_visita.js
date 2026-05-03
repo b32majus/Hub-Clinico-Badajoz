@@ -270,6 +270,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- EVENTO: Botón Solicitud FH ---
+    const btnSolicitudFH = document.getElementById('btnSolicitudFH');
+    if (btnSolicitudFH) {
+        btnSolicitudFH.addEventListener('click', function() {
+            console.log('🔄 === GENERANDO SOLICITUD FH (PRIMERA VISITA) ===');
+
+            try {
+                const errores = HubTools.form.validarFormulario();
+
+                if (errores.length === 0) {
+                    if (typeof HubTools?.form?.recopilarDatosFormulario !== 'function') {
+                        console.error('❌ HubTools.form.recopilarDatosFormulario no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
+                        return;
+                    }
+
+                    const datos = HubTools.form.recopilarDatosFormulario();
+                    console.log('📊 Datos recopilados para FH:', datos);
+
+                    if (typeof HubTools?.pharmacy?.copyRequestToClipboard === 'function') {
+                        HubTools.pharmacy.copyRequestToClipboard(datos);
+                    } else {
+                        console.error('❌ HubTools.pharmacy.copyRequestToClipboard no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Módulo de solicitud FH no disponible.', 'error');
+                    }
+                } else {
+                    console.warn('⚠ Errores de validación:', errores);
+                    HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error al generar solicitud FH:', error);
+                HubTools.utils?.mostrarNotificacion?.(`Error al generar solicitud FH: ${error.message}`, 'error');
+            }
+        });
+    }
+
     console.log('✅ Primera Visita inicializada correctamente');
     } catch (error) {
         console.error('❌ Error durante la inicialización de la página:', error);

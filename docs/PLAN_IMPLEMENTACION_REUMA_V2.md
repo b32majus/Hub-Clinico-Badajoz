@@ -2283,3 +2283,75 @@ Fecha: 2026-05-03.
 - LES/Sjögren: bloques de actividad con placeholders, se completarán en Fases 8-9.
 - El botón del dashboard extrae datos de `window.patientSummary` y `window.patientHistory.latestVisit`. Si `latestVisit` no tiene scores detallados (solo los tiene el CSV original de exportación), algunos campos aparecerán vacíos.
 - No se modifica `exportManager.js` (los patrones de clipboard/fallback están duplicados en `pharmacyRequest.js` por diseño, para mantener independencia de módulos).
+
+## Fase 6B ejecutada — Ajustes postvalidación manual
+
+Fecha: 2026-05-03.
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---|---|
+| `primera_visita.html` | Añadido botón `#btnSolicitudFH` en `form-actions` con clase `action-btn primary-btn`. Añadidos scripts `prebiologicManager.js` y `pharmacyRequest.js`. |
+| `scripts/script_primera_visita.js` | Handler para `#btnSolicitudFH` que valida formulario, recopila datos y llama a `HubTools.pharmacy.copyRequestToClipboard(datos)`. |
+| `modules/pharmacyRequest.js` | Añadida función `getComorbiditiesBlock(datos)` que detecta comorbilidades activas desde múltiples nombres de campo (HTA, DM, DLP, ECV, Gastritis, Obesidad, Osteoporosis, Gota). Insertada entre bloque de actividad y bloque de tratamiento en `generateRequestText`. |
+| `seguimiento.html` | Cambiados `<h6>` a `<h5>` en 5 subsecciones de Valoración Clínica AR para alinear estética con primera visita. |
+| `style_primera_visita.css` | Mejorado `.mdhaq-item`: layout grid con `minmax(0,1fr)` + `auto`, padding 10px 12px (antes 5px 10px), gap 12px (antes 10px), label con `white-space: normal`, `word-wrap: break-word`, `overflow-wrap: break-word`. Select con `max-width: 120px` y `justify-self: end`. |
+| `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | Añadida sección Fase 6B. |
+
+### Detalle de cambios
+
+#### Botón Solicitud FH en primera visita
+
+- Ubicación: `form-actions`, junto a Exportar TXT, Estructurar CSV y Nuevo Paciente.
+- Icono: `fa-file-prescription`.
+- Listener: valida con `HubTools.form.validarFormulario()`, recopila con `HubTools.form.recopilarDatosFormulario()`, copia con `HubTools.pharmacy.copyRequestToClipboard(datos)`.
+- Comportamiento: idéntico al botón de seguimiento (validación previa, notificación de éxito/error).
+
+#### Comorbilidades activas en Solicitud FH
+
+- Función `getComorbiditiesBlock(datos)`:
+  - Detecta desde arrays/strings: `datos.comorbilidades`, `datos.comorbilidadesActivas`, `datos.Comorbilidades`.
+  - Detecta desde campos booleanos individuales con múltiples variantes de nombre: `Comorbilidad_HTA`, `comorbilidadHTA`, `hta`, etc.
+  - Valores activos: `'SI'`, `'Sí'`, `'si'`, `true`, `'true'`, `'1'`, `'ACTIVA'`, `'activa'`.
+  - Mapeo a nombres legibles: HTA → HTA, DM → Diabetes Mellitus, DLP → Dislipidemia, ECV → Enfermedad cardiovascular, Gastritis → Gastritis/úlcera péptica, Obesidad → Obesidad, Osteoporosis → Osteoporosis, Gota → Gota/hiperuricemia.
+  - Desduplicación: si una comorbilidad aparece en múltiples fuentes, se muestra una sola vez.
+  - Sin comorbilidades: muestra `- Sin comorbilidades activas registradas`.
+- Insertado en `generateRequestText` entre `getActivityBlock` y `getTreatmentBlock`.
+- Formato:
+  ```
+  ▓▓▓ COMORBILIDADES ACTIVAS / FACTORES RELEVANTES ▓▓▓
+  - HTA
+  - Diabetes Mellitus
+  ```
+
+#### Valoración Clínica AR en seguimiento (alineación visual)
+
+- Cambiados `<h6>` por `<h5>` en 5 subsecciones de `seccionesClinicasARSegSection`:
+  - Rigidez Matutina
+  - Nódulos Reumatoideos
+  - Erosiones Radiológicas
+  - Manifestaciones Extraarticulares
+  - Síndrome de Sjögren Secundario
+- El `<h5>` principal "Valoración Clínica AR" ya existía en seguimiento.
+- No se modificaron IDs ni estructura funcional (checks, inputs, textareas).
+
+#### RAPID3 (mejora visual)
+
+- `.mdhaq-item`: cambiado de `display: flex` a `display: grid` con `grid-template-columns: minmax(0, 1fr) auto`.
+- Label: añadido `min-width: 0`, `white-space: normal`, `word-wrap: break-word`, `overflow-wrap: break-word`, `line-height: 1.35`.
+- Select: añadido `max-width: 120px`, `justify-self: end`.
+- Padding: 10px 12px (antes 5px 10px).
+- Gap: 12px (antes 10px).
+- Aplica a ambos: primera_visita.html y seguimiento.html (vía `@import` de `style_seguimiento.css`).
+
+### Checklist Fase 6B
+
+- [x] Botón Solicitud FH visible en primera visita.
+- [x] Botón Solicitud FH visible en seguimiento.
+- [x] Botón Solicitud FH visible en dashboard.
+- [x] Texto FH incluye comorbilidades activas.
+- [x] Valoración clínica AR seguimiento se ve como primera visita.
+- [x] RAPID3 legible y bien distribuido.
+- [x] Consola sin errores en primera visita, seguimiento y dashboard.
+- [x] Working tree limpio.

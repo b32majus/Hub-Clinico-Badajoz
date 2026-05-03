@@ -1781,13 +1781,18 @@ body:has(.hub-shell) {
     overflow: hidden;
 }
 
+/* ========================================
+   MDHAQ / RAPID3 — Preguntas de función física
+   ======================================== */
+
 .mdhaq-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
     align-items: center;
-    padding: 5px 10px;
+    width: 100%;
+    padding: 10px 12px;
     background: #fff;
-    gap: 10px;
     border-bottom: 1px solid #f0f0f0;
 }
 
@@ -1800,16 +1805,21 @@ body:has(.hub-shell) {
 }
 
 .mdhaq-item label {
-    flex: 1;
+    min-width: 0;
     font-size: 0.85em;
     color: #444;
-    line-height: 1.25;
+    line-height: 1.35;
     margin: 0;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .mdhaq-select {
     width: 48px;
     min-width: 48px;
+    max-width: 120px;
+    justify-self: end;
     padding: 3px 4px;
     border: 1px solid #d1d5db;
     border-radius: 4px;
