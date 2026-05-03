@@ -3443,6 +3443,23 @@ MDA solo se considera evaluable cuando existen datos válidos en todos los bloqu
 
 ---
 
+## DEBT-3 ejecutado — Reducción de logging ruidoso en formController
+
+### Cambios aplicados
+- Añadido `FORM_DEBUG = false` en `modules/formController.js`.
+- Añadidos helpers `debugLog()` y `debugWarn()`.
+- Logs informativos de show/hide, visibilidad por patología, colapsables, prefill, select de fármacos y wiring/recalculo de scores pasan a `debugLog()` o `debugWarn()`.
+
+### Logs mantenidos
+- `console.error` se mantiene para errores reales.
+- `console.warn` funcional se mantiene cuando indica ausencia de datos de prefill o fármacos no encontrados.
+- Los avisos genéricos de elementos no encontrados en show/hide quedan detrás de `FORM_DEBUG` porque son esperables según patología/formulario.
+
+### Deuda pendiente
+- Si se necesita depuración clínica puntual, activar temporalmente `FORM_DEBUG = true` durante la sesión de desarrollo y volver a `false` antes de validar.
+
+---
+
 *Plan de implementación Reuma v2 — HARDENING EN CURSO*
 *Total de fases ejecutadas: 12 + HARDENING-1/2A/2C*
 *Rama: feature/reuma-v2-prebiologico-fh-les-sjogren*

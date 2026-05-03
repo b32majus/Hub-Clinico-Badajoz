@@ -20,14 +20,24 @@
 // FUNCIONES UTILITARIAS PARA GESTIÓN CSS
 // =====================================
 
+const FORM_DEBUG = false;
+
+function debugLog(...args) {
+    if (FORM_DEBUG) console.log(...args);
+}
+
+function debugWarn(...args) {
+    if (FORM_DEBUG) console.warn(...args);
+}
+
 // Función utilitaria para mostrar elementos con diferentes tipos de display
 function showElement(elementId, displayType = 'block') {
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = displayType;
-        console.log(`✅ Elemento ${elementId} mostrado con display: ${displayType}`);
+        debugLog(`✅ Elemento ${elementId} mostrado con display: ${displayType}`);
     } else {
-        console.warn(`⚠️ Elemento ${elementId} no encontrado`);
+        debugWarn(`⚠️ Elemento ${elementId} no encontrado`);
     }
 }
 
@@ -36,9 +46,9 @@ function hideElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = 'none';
-        console.log(`✅ Elemento ${elementId} ocultado`);
+        debugLog(`✅ Elemento ${elementId} ocultado`);
     } else {
-        console.warn(`⚠️ Elemento ${elementId} no encontrado`);
+        debugWarn(`⚠️ Elemento ${elementId} no encontrado`);
     }
 }
 
@@ -51,7 +61,7 @@ function showElementsBySelector(selector, displayType = 'block') {
             el.style.display = displayType;
         }
     });
-    console.log(`✅ Elementos con selector "${selector}" mostrados`);
+    debugLog(`✅ Elementos con selector "${selector}" mostrados`);
 }
 
 // Función utilitaria para ocultar elementos por selector CSS
@@ -59,7 +69,7 @@ function hideElementsBySelector(selector) {
     document.querySelectorAll(selector).forEach(el => {
         el.style.display = 'none';
     });
-    console.log(`✅ Elementos con selector "${selector}" ocultados`);
+    debugLog(`✅ Elementos con selector "${selector}" ocultados`);
 }
 
 // =====================================
@@ -122,7 +132,7 @@ function adaptarFormulario(diagnostico) {
 }
 
 function ocultarTodosElementosEspecificos() {
-    console.log('🔄 Ocultando todos los elementos específicos de patología');
+    debugLog('🔄 Ocultando todos los elementos específicos de patología');
 
     // Ocultar todos los elementos con clases específicas de patología
     const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only', '.les-only', '.sjogren-only'];
@@ -137,11 +147,11 @@ function ocultarTodosElementosEspecificos() {
     casparInitialized = false;
     acrEularInitialized = false;
 
-    console.log('✅ Todos los elementos específicos ocultados');
+    debugLog('✅ Todos los elementos específicos ocultados');
 }
 
 function mostrarElementosEspA() {
-    console.log('📋 Mostrando elementos específicos de EspA');
+    debugLog('📋 Mostrando elementos específicos de EspA');
 
     // Biomarcadores: Solo HLA-B27
     showElement('hlaB27Container', 'block');
@@ -164,11 +174,11 @@ function mostrarElementosEspA() {
     // Inicializar funcionalidad ASAS
     setTimeout(() => initializeASAS(), 100);
 
-    console.log('✅ Elementos EspA mostrados correctamente');
+    debugLog('✅ Elementos EspA mostrados correctamente');
 }
 
 function mostrarElementosAPs() {
-    console.log('📋 Mostrando elementos específicos de APs');
+    debugLog('📋 Mostrando elementos específicos de APs');
 
     // Biomarcadores: HLA-B27 + FR + aPCC (clínica mixta)
     const containers = ['hlaB27Container', 'frContainer', 'apccContainer'];
@@ -193,11 +203,11 @@ function mostrarElementosAPs() {
     // Inicializar funcionalidad CASPAR
     setTimeout(() => initializeCASPAR(), 100);
 
-    console.log('✅ Elementos APs mostrados correctamente');
+    debugLog('✅ Elementos APs mostrados correctamente');
 }
 
 function mostrarElementosAR() {
-    console.log('📋 Mostrando elementos específicos de AR');
+    debugLog('📋 Mostrando elementos específicos de AR');
 
     // Biomarcadores: FR + Anti-CCP + ANA
     const containers = ['frContainer', 'apccContainer', 'anaContainer'];
@@ -256,11 +266,11 @@ function mostrarElementosAR() {
         });
     }
 
-    console.log('✅ Elementos AR mostrados correctamente');
+    debugLog('✅ Elementos AR mostrados correctamente');
 }
 
 function mostrarElementosLES() {
-    console.log('📋 Mostrando elementos específicos de LES');
+    debugLog('📋 Mostrando elementos específicos de LES');
 
     // Biomarcadores: ANA
     showElement('anaContainer', 'block');
@@ -286,11 +296,11 @@ function mostrarElementosLES() {
         });
     }
 
-    console.log('✅ Elementos LES mostrados correctamente');
+    debugLog('✅ Elementos LES mostrados correctamente');
 }
 
 function mostrarElementosSjogren() {
-    console.log('📋 Mostrando elementos específicos de Sjögren');
+    debugLog('📋 Mostrando elementos específicos de Sjögren');
 
     // Biomarcadores: ANA, FR
     showElement('anaContainer', 'block');
@@ -311,7 +321,7 @@ function mostrarElementosSjogren() {
         calculateESSPRI();
     }
 
-    console.log('✅ Elementos Sjögren mostrados correctamente');
+    debugLog('✅ Elementos Sjögren mostrados correctamente');
 }
 
 function initializeACREULAR() {
@@ -326,7 +336,7 @@ function initializeACREULAR() {
         }
     });
     recalcularACREULAR();
-    console.log('✅ ACR/EULAR 2010 inicializado');
+    debugLog('✅ ACR/EULAR 2010 inicializado');
 }
 
 function recalcularACREULAR() {
@@ -360,7 +370,7 @@ function recalcularACREULAR() {
 // =====================================
 
 function inicializarCollapsibles() {
-    console.log('🔄 Inicializando secciones colapsables...');
+    debugLog('🔄 Inicializando secciones colapsables...');
 
     const collapsibleHeaders = document.getElementsByClassName("collapsible-header");
 
@@ -422,7 +432,7 @@ function inicializarCollapsibles() {
         header.setAttribute('data-collapsible-initialized', 'true');
     }
 
-    console.log(`✅ Secciones colapsables inicializadas: ${collapsibleHeaders.length}`);
+    debugLog(`✅ Secciones colapsables inicializadas: ${collapsibleHeaders.length}`);
 }
 
 // Función mejorada para refrescar alturas de secciones colapsables
@@ -453,7 +463,7 @@ function refreshOpenCollapsibles() {
                 content.style.maxHeight = content.scrollHeight + 'px';
             }
         });
-        console.log('Alturas de colapsables abiertos, recalibradas.');
+        debugLog('Alturas de colapsables abiertos, recalibradas.');
     }, 150); // Delay para esperar el repintado del DOM
 }
 
@@ -1599,7 +1609,7 @@ function prefillSeguimientoForm(visitData) {
         return;
     }
 
-    console.log('🔄 Pre-llenando formulario de seguimiento con datos:', visitData);
+    debugLog('🔄 Pre-llenando formulario de seguimiento con datos:', visitData);
 
     // 1. IDENTIFICACIÓN DEL PACIENTE (campos readonly)
     if (visitData.idPaciente) {
@@ -1698,7 +1708,7 @@ function prefillSeguimientoForm(visitData) {
         if (sexoInput) sexoInput.value = normalizeSexoPacienteValue(visitData.sexoPaciente);
     }
 
-    console.log('? Formulario de seguimiento pre-llenado correctamente');
+    debugLog('? Formulario de seguimiento pre-llenado correctamente');
 }
 
 /**
@@ -1758,7 +1768,7 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
         }
     });
 
-    console.log(`✓ Select #${selectId} poblado con ${farmacos.length} opciones de tipo "${tipo}"`);
+    debugLog(`✓ Select #${selectId} poblado con ${farmacos.length} opciones de tipo "${tipo}"`);
 }
 
 function recopilarDatosFormularioSeguimiento() {
@@ -2065,7 +2075,7 @@ function recopilarDatosFormularioSeguimiento() {
  * 7. RAPID3 (auto desde HAQ + EVA)
  */
 function initScoreWiring() {
-    console.log('🔧 Inicializando wiring de scores...');
+    debugLog('🔧 Inicializando wiring de scores...');
 
     // --- 1. SYNC PCR / VSG → ASDAS readonly ---
     const pcrInput = document.getElementById('pcrValue');
@@ -2079,14 +2089,14 @@ function initScoreWiring() {
             recalcularASDAS();
             recalcularMDA();
         });
-        console.log('  ✓ PCR → asdasPCR sync');
+        debugLog('  ✓ PCR → asdasPCR sync');
     }
     if (vsgInput && asdasVSGField) {
         vsgInput.addEventListener('input', function () {
             asdasVSGField.value = this.value;
             recalcularASDAS();
         });
-        console.log('  ✓ VSG → asdasVSG sync');
+        debugLog('  ✓ VSG → asdasVSG sync');
     }
 
     // --- 2. AUTO-CÁLCULO BASDAI ---
@@ -2119,9 +2129,9 @@ function initScoreWiring() {
             basdaiCatEl.style.color = cat.color;
             basdaiCatEl.style.fontWeight = '700';
         }
-        console.log('  📊 BASDAI recalculado:', resultado, cat.label);
+        debugLog('  📊 BASDAI recalculado:', resultado, cat.label);
     }
-    if (basdaiResult) console.log('  ✓ BASDAI wiring');
+    if (basdaiResult) debugLog('  ✓ BASDAI wiring');
 
     // --- 3. AUTO-CÁLCULO ASDAS ---
     var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasEvaGlobal', 'asdasNAD'];
@@ -2174,12 +2184,12 @@ function initScoreWiring() {
                 esrCatEl.style.fontWeight = '700';
             }
         }
-        console.log('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
+        debugLog('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
     }
 
     // Exponer para homunculus.js
     window.calcularASDASLocal = recalcularASDAS;
-    console.log('  ✓ ASDAS wiring + calcularASDASLocal');
+    debugLog('  ✓ ASDAS wiring + calcularASDASLocal');
 
     // --- 4. AUTO-CÁLCULO HAQ-DI ---
     var haqScoreSelects = document.querySelectorAll('.haq-score');
@@ -2210,7 +2220,7 @@ function initScoreWiring() {
         // Cascada: HAQ afecta RAPID3 y MDA
         recalcularRAPID3();
         recalcularMDA();
-        console.log('  📊 HAQ-DI recalculado:', haqValue.toFixed(2), cat.label);
+        debugLog('  📊 HAQ-DI recalculado:', haqValue.toFixed(2), cat.label);
     }
 
     haqScoreSelects.forEach(function (sel) {
@@ -2219,7 +2229,7 @@ function initScoreWiring() {
     haqAidCheckboxes.forEach(function (cb) {
         cb.addEventListener('change', recalcularHAQ);
     });
-    if (haqTotalEl) console.log('  ✓ HAQ-DI wiring');
+    if (haqTotalEl) debugLog('  ✓ HAQ-DI wiring');
 
     // --- 5. AUTO-CÁLCULO LEI ---
     var leiCheckboxes = document.querySelectorAll('.lei-point');
@@ -2239,7 +2249,7 @@ function initScoreWiring() {
     leiCheckboxes.forEach(function (cb) {
         cb.addEventListener('change', recalcularLEI);
     });
-    if (leiCheckboxes.length > 0) console.log('  ✓ LEI wiring');
+    if (leiCheckboxes.length > 0) debugLog('  ✓ LEI wiring');
 
     // --- 6. EVA inputs → cascada a MDA y RAPID3 ---
     var evaGlobalInput = document.getElementById('evaGlobal');
@@ -2257,7 +2267,7 @@ function initScoreWiring() {
             recalcularRAPID3();
         });
     }
-    if (evaGlobalInput || evaDolorInput) console.log('  ✓ EVA → MDA/RAPID3 wiring');
+    if (evaGlobalInput || evaDolorInput) debugLog('  ✓ EVA → MDA/RAPID3 wiring');
 
     // --- 7. AUTO-CÁLCULO MDA ---
     function recalcularMDA() {
@@ -2328,7 +2338,7 @@ function initScoreWiring() {
 
     // Exponer para homunculus.js
     window.calcularMDALocal = recalcularMDA;
-    console.log('  ✓ MDA wiring + calcularMDALocal');
+    debugLog('  ✓ MDA wiring + calcularMDALocal');
 
     // --- 8. AUTO-CÁLCULO RAPID3 (MDHAQ 10 preguntas) ---
     function recalcularRAPID3() {
@@ -2377,7 +2387,7 @@ function initScoreWiring() {
         if (el) el.addEventListener('change', recalcularRAPID3);
     });
 
-    console.log('  ✓ RAPID3 wiring (MDHAQ)');
+    debugLog('  ✓ RAPID3 wiring (MDHAQ)');
 
     // --- 9. AUTO-CÁLCULO DAS28 (AR) ---
     function recalcularDAS28() {
@@ -2425,12 +2435,12 @@ function initScoreWiring() {
         recalcularCDAI();
         recalcularSDAI();
 
-        console.log('  📊 DAS28 recalculado: CRP=' + result.das28CRP + ', ESR=' + result.das28ESR);
+        debugLog('  📊 DAS28 recalculado: CRP=' + result.das28CRP + ', ESR=' + result.das28ESR);
     }
 
     // Exponer para homunculus.js
     window.calcularDAS28Local = recalcularDAS28;
-    console.log('  ✓ DAS28 wiring + calcularDAS28Local');
+    debugLog('  ✓ DAS28 wiring + calcularDAS28Local');
 
     // --- 10. AUTO-CÁLCULO CDAI (AR) ---
     var evaMedicoInput = document.getElementById('evaMedico');
@@ -2465,7 +2475,7 @@ function initScoreWiring() {
             }
         }
     }
-    console.log('  ✓ CDAI wiring');
+    debugLog('  ✓ CDAI wiring');
 
     // --- 11. AUTO-CÁLCULO SDAI (AR) ---
     function recalcularSDAI() {
@@ -2493,7 +2503,7 @@ function initScoreWiring() {
             }
         }
     }
-    console.log('  ✓ SDAI wiring');
+    debugLog('  ✓ SDAI wiring');
 
     // --- 12. SYNC PCR/VSG/EVA → DAS28 (AR) ---
     if (pcrInput) {
@@ -2528,7 +2538,7 @@ function initScoreWiring() {
             recalcularRAPID3();
         });
     }
-    console.log('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
+    debugLog('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
 
     // --- 13. LES / SJÖGREN SCORE WIRING ---
     (function () {
@@ -2557,11 +2567,11 @@ function initScoreWiring() {
         });
 
         if (sledaiCheckboxes.length > 0 || essdaiSelectors.length > 0) {
-            console.log('  ✓ LES/Sjögren wiring (SLEDAI-2K, SLICC, ESSPRI, ESSDAI)');
+            debugLog('  ✓ LES/Sjögren wiring (SLEDAI-2K, SLICC, ESSPRI, ESSDAI)');
         }
     })();
 
-    console.log('✅ Score wiring completado');
+    debugLog('✅ Score wiring completado');
 }
 
 /**
@@ -2663,7 +2673,7 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.populateSelectFromDatabase = populateSelectFromDatabase;
     HubTools.form.initScoreWiring = initScoreWiring;
 
-    console.log('✅ Módulo formController cargado');
+    debugLog('✅ Módulo formController cargado');
 } else {
     console.error('❌ Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 }
