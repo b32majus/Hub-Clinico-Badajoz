@@ -3202,7 +3202,51 @@ node --check modules/treatmentEventsManager.js  # OK
 ```
 
 ### Próximo paso
-- Fase 10: Estadísticas v2 (tras confirmación de usuario).
+- Fase 12: Producción y cierre (tras confirmación de usuario).
+
+---
+
+## Fase 10 ejecutada — Estadísticas multipatología v2 (LES, Sjögren, APS mejorado)
+
+**Fecha:** 2026-05-03
+
+### Alcance
+Soporte completo en estadísticas poblacionales para las 5 patologías: AR, ESPA, APS, LES y SJOGREN.
+
+### Métricas nuevas añadidas
+- LES: SLEDAI-2K, SLICC/ACR SDI, Dosis Prednisona
+- Sjögren: ESSDAI, ESSPRI, EVA Sequedad Oral, EVA Sequedad Ocular, EVA Fatiga, EVA Dolor
+- APS: DAPSA, PASI, LEI, BSA
+
+### Umbrales de actividad nuevos
+- SLEDAI-2K: Remisión≤2, Baja≤6, Moderada≤12, Alta>12
+- ESSDAI: Remisión≤5, Baja≤14, Moderada≤20, Alta>20
+- ESSPRI: Remisión≤3, Baja≤5, Moderada≤7, Alta>7
+- DAPSA: Remisión≤4, Baja≤14, Moderada≤28, Alta>28
+- PASI: Remisión≤3, Baja≤10, Moderada≤20, Alta>20
+- Prednisona: Remisión≤5, Baja≤10, Moderada≤20, Alta>20
+
+### KPIs y gráficos
+- Donut de actividad: ramas específicas para LES (SLEDAI-2K), SJOGREN (ESSDAI), APS (DAPSA)
+- Scatter: nuevas métricas en selectores X/Y
+- Tabla de métricas: columnas específicas por patología
+- Métrica principal por paciente: adaptativa por patología
+
+### Archivos modificados
+| Archivo | Cambios |
+|---|---|
+| `modules/dataManager.js` | +225 líneas: METRIC_FIELDS, resolveMetricKey, ACTIVITY_THRESHOLDS, calculateRealKPIs, generateRealChartData, metricColumnMap |
+| `scripts/script_estadisticas.js` | +101 líneas: initializeFilters, syncActivityIndexForPathology, updateStatisticsOptionsByPathology, getDisplayMetricForPatient, updateMetricsDisplay |
+| `estadisticas.html` | +7 líneas: nuevas opciones en filterActivityIndex |
+| `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | esta sección |
+
+### Sintaxis validada
+```bash
+node --check modules/dataManager.js      # OK
+node --check scripts/script_estadisticas.js  # OK
+node --check scripts/script_dashboard.js # OK
+node --check modules/treatmentEventsManager.js  # OK
+```
 
 ---
 

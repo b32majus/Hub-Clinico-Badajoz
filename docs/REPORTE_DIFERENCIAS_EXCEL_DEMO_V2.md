@@ -1,6 +1,6 @@
 # Reporte Diferencias Excel Demo v2
 
-_Generado automáticamente: 2026-05-03 18:23_
+_Generado automáticamente: 2026-05-03 19:41_
 
 ## Fuente canónica
 1. Excel maestro original (`Hub_Clinico_Maestro.xlsx`) para columnas 1-321.
