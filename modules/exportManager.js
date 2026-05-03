@@ -31,8 +31,11 @@ function expandirDactilitis(array) {
     return DACTILITIS.map(dedo => (array || []).includes(dedo) ? 'SI' : 'NO');
 }
 
+const LEGACY_BASE_COLUMN_COUNT = 220;
+const HISTORICAL_EXPORT_COLUMN_COUNT = 321;
+const FINAL_V2_EXPORT_COLUMN_COUNT = 491;
 
-const EXTRA_EXPORT_HEADERS = [
+const LEGACY_EXTENSION_HEADERS_221_321 = [
     'Trat_Sistemico_2', 'Trat_Sistemico_Dosis_2', 'Trat_Sistemico_3', 'Trat_Sistemico_Dosis_3',
     'Trat_FAME_2', 'Trat_FAME_Dosis_2', 'Trat_FAME_3', 'Trat_FAME_Dosis_3',
     'Trat_Biologico_2', 'Trat_Biologico_Dosis_2', 'Trat_Biologico_3', 'Trat_Biologico_Dosis_3',
@@ -53,8 +56,57 @@ const EXTRA_EXPORT_HEADERS = [
     'MDHAQ_A', 'MDHAQ_B', 'MDHAQ_C', 'MDHAQ_D', 'MDHAQ_E', 'MDHAQ_F', 'MDHAQ_G', 'MDHAQ_H', 'MDHAQ_I', 'MDHAQ_J',
     'RAPID3_Categoria',
     'Maniobras_Sacroiliacas', 'Comentarios_Sacroiliacas', 'ASAS_Lumbalgia_3m', 'ASAS_Criterios_Cumplidos', 'ASAS_Resultado',
-    'CASPAR_Puntuacion', 'CASPAR_Resultado',
-    // LES
+    'CASPAR_Puntuacion', 'CASPAR_Resultado'
+];
+
+const COMMON_V2_HEADERS = [
+    'Fecha_Diagnostico',
+    'Estado_Prebiologico_Final',
+    'Fecha_Validacion_Prebiologico',
+    'Profesional_Validador',
+    'Decision_Clinica_Manual',
+    'Hemograma_Solicitado',
+    'Hemograma_Fecha_Solicitud',
+    'Hemograma_Recibido',
+    'Hemograma_Fecha_Recepcion',
+    'Hemograma_Correcto',
+    'Hemograma_Observaciones',
+    'Bioquimica_Solicitada',
+    'Bioquimica_Fecha_Solicitud',
+    'Bioquimica_Recibida',
+    'Bioquimica_Fecha_Recepcion',
+    'Bioquimica_Correcta',
+    'Bioquimica_Observaciones',
+    'Serologias_Solicitadas',
+    'Serologias_Fecha_Solicitud',
+    'Serologias_Recibidas',
+    'Serologias_Fecha_Recepcion',
+    'Serologias_Correctas',
+    'Serologias_Observaciones',
+    'IGRA_Mantoux_Solicitado',
+    'IGRA_Mantoux_Tipo',
+    'IGRA_Mantoux_Fecha_Solicitud',
+    'IGRA_Mantoux_Recibido',
+    'IGRA_Mantoux_Fecha_Recepcion',
+    'IGRA_Mantoux_Resultado',
+    'IGRA_Mantoux_Observaciones',
+    'Rx_Torax_Solicitada',
+    'Rx_Torax_Fecha_Solicitud',
+    'Rx_Torax_Recibida',
+    'Rx_Torax_Fecha_Recepcion',
+    'Rx_Torax_Correcta',
+    'Rx_Torax_Observaciones',
+    'Vacunacion_Revisada',
+    'Vacunacion_OK',
+    'Medicina_Preventiva_Requiere_Derivacion',
+    'Medicina_Preventiva_Derivada',
+    'Medicina_Preventiva_Fecha_Derivacion',
+    'Vacunas_Pendientes',
+    'Vacunacion_Observaciones',
+    'Observaciones_Prebiologico'
+];
+
+const LES_V2_HEADERS = [
     'SLEDAI', 'SLEDAI_2K', 'SLICC_SDI', 'Dosis_Prednisona', 'Brote_Actual', 'Tipo_Brote',
     'Actividad_Global_Medico', 'Actividad_Global_Paciente',
     'LES_Cutaneo', 'LES_Articular', 'LES_Renal', 'LES_Neurologico', 'LES_Hematologico',
@@ -64,7 +116,20 @@ const EXTRA_EXPORT_HEADERS = [
     'C3', 'C4', 'Proteinuria_LES', 'Sedimento_Urinario_LES', 'Creatinina_LES',
     'PCR_LES', 'VSG_LES', 'Hemograma_Alteraciones_LES', 'Otros_Hallazgos_Analitica_LES',
     'EVA_Dolor_LES', 'EVA_Fatiga_LES', 'EVA_Global_LES', 'Calidad_Vida_Comentario_LES',
-    // Sjögren
+    'sledaiSeizure', 'sledaiPsychosis', 'sledaiOrganicBrainSyndrome',
+    'sledaiVisualDisturbance', 'sledaiCranialNerveDisorder', 'sledaiLupusHeadache',
+    'sledaiCVA', 'sledaiVasculitis', 'sledaiArthritis', 'sledaiMyositis',
+    'sledaiUrinaryCasts', 'sledaiHematuria', 'sledaiProteinuria', 'sledaiPyuria',
+    'sledaiRash', 'sledaiAlopecia', 'sledaiMucosalUlcers', 'sledaiPleurisy',
+    'sledaiPericarditis', 'sledaiLowComplement', 'sledaiIncreasedDNABinding',
+    'sledaiFever', 'sledaiThrombocytopenia', 'sledaiLeukopenia',
+    'sliccOcular', 'sliccNeuropsychiatric', 'sliccRenal', 'sliccPulmonary',
+    'sliccCardiovascular', 'sliccPeripheralVascular', 'sliccGastrointestinal',
+    'sliccMusculoskeletal', 'sliccSkin', 'sliccEndocrineDiabetes',
+    'sliccGonadal', 'sliccMalignancy'
+];
+
+const SJOGREN_V2_HEADERS = [
     'ESSPRI_Sequedad', 'ESSPRI_Fatiga', 'ESSPRI_Dolor', 'ESSPRI_Result',
     'ESSDAI_Result',
     'EVA_Sequedad_Oral', 'EVA_Sequedad_Ocular', 'EVA_Fatiga_Sjogren', 'EVA_Dolor_Sjogren', 'EVA_Global_Sjogren',
@@ -77,8 +142,22 @@ const EXTRA_EXPORT_HEADERS = [
     'Biopsia_Glandula_Salival', 'Test_Schirmer', 'Tincion_Ocular', 'Flujo_Salival', 'Ecografia_Glandular',
     'PCR_Sjogren', 'VSG_Sjogren', 'Otros_Hallazgos_Analitica_Sjogren',
     'Trat_Sintomatico_Sequedad', 'Trat_Sintomatico_Sequedad_Dosis',
-    'Trat_Inmunomodulador', 'Trat_Inmunomodulador_Dosis'
+    'Trat_Inmunomodulador', 'Trat_Inmunomodulador_Dosis',
+    'essdaiConstitutional', 'essdaiLymphadenopathy', 'essdaiGlandular',
+    'essdaiArticular', 'essdaiCutaneous', 'essdaiPulmonary', 'essdaiRenal',
+    'essdaiMuscular', 'essdaiPeripheralNervousSystem', 'essdaiCentralNervousSystem',
+    'essdaiHematological', 'essdaiBiological'
 ];
+
+// Cabeceras añadidas a las 220 columnas construidas inline por los generadores legacy.
+const FINAL_V2_EXPORT_HEADERS = [
+    ...LEGACY_EXTENSION_HEADERS_221_321,
+    ...COMMON_V2_HEADERS,
+    ...LES_V2_HEADERS,
+    ...SJOGREN_V2_HEADERS
+];
+
+const EXTRA_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
 
 function normalizarEstadoExport(value, fallback = 'ND') {
     if (value === true) return 'SI';
@@ -89,6 +168,31 @@ function normalizarEstadoExport(value, fallback = 'ND') {
     if (normalized === 'SI' || normalized === 'NO' || normalized === 'ND' || normalized === 'NA') return normalized;
     if (normalized === 'NO-ANALIZADO' || normalized === 'NO ANALIZADO') return 'ND';
     return normalized;
+}
+
+function normalizePathologyExport(pathology, datos) {
+    const raw = pathology || datos?.diagnosticoPrimario || '';
+    return String(raw)
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getExportValue(datos, keys, fallback = '') {
+    const source = datos || {};
+    const keyList = Array.isArray(keys) ? keys : [keys];
+    for (const key of keyList) {
+        const value = source[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+            return value;
+        }
+    }
+    return fallback;
+}
+
+function getExportState(datos, keys, fallback = 'ND') {
+    return normalizarEstadoExport(getExportValue(datos, keys, fallback), fallback);
 }
 
 function getTreatmentEntriesExport(entries, fallbackFarmaco, fallbackDosis) {
@@ -105,7 +209,7 @@ function getTreatmentSlotExport(entries, index) {
     return item || { farmaco: '', dosis: '' };
 }
 
-function buildExtendedColumns(datos, pathology) {
+function buildLegacyExtensionColumns(datos, pathology) {
     const planSistemicos = getTreatmentEntriesExport(datos.planSistemicosEntries, datos.sistemicoSelect, datos.sistemicoDose);
     const planFames = getTreatmentEntriesExport(datos.planFamesEntries, datos.fameSelect, datos.fameDose);
     const planBiologicos = getTreatmentEntriesExport(datos.planBiologicosEntries, datos.biologicoSelect, datos.biologicoDose);
@@ -211,96 +315,243 @@ function buildExtendedColumns(datos, pathology) {
         datos.casparResultado || ''
     ] : Array(53).fill('NA');
 
-    const isLES = pathology === 'les';
-    const lesValues = isLES ? [
-        datos.sledaiResult || '',
-        datos.sledai2kResult || '',
-        datos.sliccAcrSdi || '',
-        datos.dosisPrednisona || '',
-        datos.broteActual || '',
-        datos.tipoBrote || '',
-        datos.actividadGlobalMedico || '',
-        datos.actividadGlobalPaciente || '',
-        normalizarEstadoExport(datos.lesCutaneo, 'NO'),
-        normalizarEstadoExport(datos.lesArticular, 'NO'),
-        normalizarEstadoExport(datos.lesRenal, 'NO'),
-        normalizarEstadoExport(datos.lesNeurologico, 'NO'),
-        normalizarEstadoExport(datos.lesHematologico, 'NO'),
-        normalizarEstadoExport(datos.lesSeroso, 'NO'),
-        normalizarEstadoExport(datos.lesCardiopulmonar, 'NO'),
-        normalizarEstadoExport(datos.lesVascular, 'NO'),
-        normalizarEstadoExport(datos.lesOcular, 'NO'),
-        normalizarEstadoExport(datos.lesOtros, 'NO'),
-        datos.lesManifestacionesDescripcion || '',
-        datos.anaLes || '',
-        datos.antiDnaLes || '',
-        datos.antiSmLes || '',
-        datos.antiRoLes || '',
-        datos.antiLaLes || '',
-        datos.complementoC3 || '',
-        datos.complementoC4 || '',
-        datos.proteinuriaLes || '',
-        datos.sedimentoUrinarioLes || '',
-        datos.creatininaLes || '',
-        datos.pcrLes || '',
-        datos.vsgLes || '',
-        datos.hemogramaAlteracionesLes || '',
-        datos.otrosHallazgosAnaliticaLes || '',
-        datos.evaDolorLes || '',
-        datos.evaFatigaLes || '',
-        datos.evaGlobalLes || '',
-        datos.calidadVidaComentarioLes || ''
-    ] : Array(37).fill('NA');
-
-    const isSjogren = pathology === 'sjogren';
-    const sjogrenValues = isSjogren ? [
-        datos.esspriSequedad || '',
-        datos.esspriFatiga || '',
-        datos.esspriDolor || '',
-        datos.esspriResult || '',
-        datos.essdaiResult || '',
-        datos.evaSequedadOral || '',
-        datos.evaSequedadOcular || '',
-        datos.evaFatigaSjogren || '',
-        datos.evaDolorSjogren || '',
-        datos.evaGlobalSjogren || '',
-        normalizarEstadoExport(datos.sjogrenOcular, 'NO'),
-        normalizarEstadoExport(datos.sjogrenOral, 'NO'),
-        normalizarEstadoExport(datos.sjogrenGlandular, 'NO'),
-        normalizarEstadoExport(datos.sjogrenArticular, 'NO'),
-        normalizarEstadoExport(datos.sjogrenCutaneo, 'NO'),
-        normalizarEstadoExport(datos.sjogrenPulmonar, 'NO'),
-        normalizarEstadoExport(datos.sjogrenRenal, 'NO'),
-        normalizarEstadoExport(datos.sjogrenNeurologico, 'NO'),
-        normalizarEstadoExport(datos.sjogrenHematologico, 'NO'),
-        normalizarEstadoExport(datos.sjogrenLinfomaRiesgo, 'NO'),
-        datos.sjogrenManifestacionesDescripcion || '',
-        datos.anaSjogren || '',
-        datos.frSjogren || '',
-        datos.antiRoSjogren || '',
-        datos.antiLaSjogren || '',
-        datos.complementoC3Sjogren || '',
-        datos.complementoC4Sjogren || '',
-        datos.crioglobulinasSjogren || '',
-        datos.proteinogramaSjogren || '',
-        datos.biopsiaGlandulaSalival || '',
-        datos.testSchirmer || '',
-        datos.tincionOcular || '',
-        datos.flujoSalival || '',
-        datos.ecografiaGlandular || '',
-        datos.pcrSjogren || '',
-        datos.vsgSjogren || '',
-        datos.otrosHallazgosAnaliticaSjogren || '',
-        datos.tratSintomaticoSequedad || '',
-        datos.tratSintomaticoSequedadDosis || '',
-        datos.tratInmunomodulador || '',
-        datos.tratInmunomoduladorDosis || ''
-    ] : Array(41).fill('NA');
-
     extra.push(...arValues);
-    extra.push(...lesValues);
-    extra.push(...sjogrenValues);
     return extra;
+}
+
+function buildCommonV2Columns(datos) {
+    return [
+        getExportValue(datos, ['fechaDiagnostico', 'Fecha_Diagnostico'], 'ND'),
+        getExportState(datos, ['estadoPrebiologicoFinal', 'Estado_Prebiologico_Final'], 'ND'),
+        getExportValue(datos, ['fechaValidacionPrebiologico', 'Fecha_Validacion_Prebiologico'], 'ND'),
+        getExportValue(datos, ['profesionalValidador', 'Profesional_Validador'], ''),
+        getExportState(datos, ['decisionClinicaManual', 'Decision_Clinica_Manual'], 'ND'),
+        getExportState(datos, ['hemogramaSolicitado', 'Hemograma_Solicitado'], 'ND'),
+        getExportValue(datos, ['hemogramaFechaSolicitud', 'Hemograma_Fecha_Solicitud'], 'ND'),
+        getExportState(datos, ['hemogramaRecibido', 'Hemograma_Recibido'], 'ND'),
+        getExportValue(datos, ['hemogramaFechaRecepcion', 'Hemograma_Fecha_Recepcion'], 'ND'),
+        getExportState(datos, ['hemogramaCorrecto', 'Hemograma_Correcto'], 'ND'),
+        getExportValue(datos, ['hemogramaObservaciones', 'Hemograma_Observaciones'], ''),
+        getExportState(datos, ['bioquimicaSolicitada', 'Bioquimica_Solicitada'], 'ND'),
+        getExportValue(datos, ['bioquimicaFechaSolicitud', 'Bioquimica_Fecha_Solicitud'], 'ND'),
+        getExportState(datos, ['bioquimicaRecibida', 'Bioquimica_Recibida'], 'ND'),
+        getExportValue(datos, ['bioquimicaFechaRecepcion', 'Bioquimica_Fecha_Recepcion'], 'ND'),
+        getExportState(datos, ['bioquimicaCorrecta', 'Bioquimica_Correcta'], 'ND'),
+        getExportValue(datos, ['bioquimicaObservaciones', 'Bioquimica_Observaciones'], ''),
+        getExportState(datos, ['serologiasSolicitadas', 'Serologias_Solicitadas'], 'ND'),
+        getExportValue(datos, ['serologiasFechaSolicitud', 'Serologias_Fecha_Solicitud'], 'ND'),
+        getExportState(datos, ['serologiasRecibidas', 'Serologias_Recibidas'], 'ND'),
+        getExportValue(datos, ['serologiasFechaRecepcion', 'Serologias_Fecha_Recepcion'], 'ND'),
+        getExportState(datos, ['serologiasCorrectas', 'Serologias_Correctas'], 'ND'),
+        getExportValue(datos, ['serologiasObservaciones', 'Serologias_Observaciones'], ''),
+        getExportState(datos, ['igraMantouxSolicitado', 'IGRA_Mantoux_Solicitado'], 'ND'),
+        getExportValue(datos, ['igraMantouxTipo', 'IGRA_Mantoux_Tipo'], 'ND'),
+        getExportValue(datos, ['igraMantouxFechaSolicitud', 'IGRA_Mantoux_Fecha_Solicitud'], 'ND'),
+        getExportState(datos, ['igraMantouxRecibido', 'IGRA_Mantoux_Recibido'], 'ND'),
+        getExportValue(datos, ['igraMantouxFechaRecepcion', 'IGRA_Mantoux_Fecha_Recepcion'], 'ND'),
+        getExportValue(datos, ['igraMantouxResultado', 'IGRA_Mantoux_Resultado'], 'ND'),
+        getExportValue(datos, ['igraMantouxObservaciones', 'IGRA_Mantoux_Observaciones'], ''),
+        getExportState(datos, ['rxToraxSolicitada', 'Rx_Torax_Solicitada'], 'ND'),
+        getExportValue(datos, ['rxToraxFechaSolicitud', 'Rx_Torax_Fecha_Solicitud'], 'ND'),
+        getExportState(datos, ['rxToraxRecibida', 'Rx_Torax_Recibida'], 'ND'),
+        getExportValue(datos, ['rxToraxFechaRecepcion', 'Rx_Torax_Fecha_Recepcion'], 'ND'),
+        getExportState(datos, ['rxToraxCorrecta', 'Rx_Torax_Correcta'], 'ND'),
+        getExportValue(datos, ['rxToraxObservaciones', 'Rx_Torax_Observaciones'], ''),
+        getExportState(datos, ['vacunacionRevisada', 'Vacunacion_Revisada'], 'ND'),
+        getExportState(datos, ['vacunacionOk', 'vacunacionOK', 'Vacunacion_OK'], 'ND'),
+        getExportState(datos, ['medicinaPreventivaRequiereDerivacion', 'Medicina_Preventiva_Requiere_Derivacion'], 'ND'),
+        getExportState(datos, ['medicinaPreventivaDerivada', 'Medicina_Preventiva_Derivada'], 'ND'),
+        getExportValue(datos, ['medicinaPreventivaFechaDerivacion', 'Medicina_Preventiva_Fecha_Derivacion'], 'ND'),
+        getExportValue(datos, ['vacunasPendientes', 'Vacunas_Pendientes'], ''),
+        getExportValue(datos, ['vacunacionObservaciones', 'Vacunacion_Observaciones'], ''),
+        getExportValue(datos, ['observacionesPrebiologico', 'Observaciones_Prebiologico'], '')
+    ];
+}
+
+function buildLESV2Columns(datos, pathology) {
+    if (pathology !== 'les') {
+        return Array(LES_V2_HEADERS.length).fill('NA');
+    }
+
+    return [
+        getExportValue(datos, ['sledaiResult', 'SLEDAI'], ''),
+        getExportValue(datos, ['sledai2kResult', 'SLEDAI_2K', 'SLEDAI_2K_Result'], ''),
+        getExportValue(datos, ['sliccAcrSdi', 'SLICC_SDI', 'SLICC_ACR_SDI'], ''),
+        getExportValue(datos, ['dosisPrednisona', 'Dosis_Prednisona', 'Dosis_Prednisona_Mg_Dia'], ''),
+        getExportValue(datos, ['broteActual', 'Brote_Actual'], 'ND'),
+        getExportValue(datos, ['tipoBrote', 'Tipo_Brote'], 'ND'),
+        getExportValue(datos, ['actividadGlobalMedico', 'Actividad_Global_Medico'], ''),
+        getExportValue(datos, ['actividadGlobalPaciente', 'Actividad_Global_Paciente'], ''),
+        getExportState(datos, ['lesCutaneo', 'LES_Cutaneo'], 'NO'),
+        getExportState(datos, ['lesArticular', 'LES_Articular'], 'NO'),
+        getExportState(datos, ['lesRenal', 'LES_Renal'], 'NO'),
+        getExportState(datos, ['lesNeurologico', 'LES_Neurologico'], 'NO'),
+        getExportState(datos, ['lesHematologico', 'LES_Hematologico'], 'NO'),
+        getExportState(datos, ['lesSeroso', 'LES_Seroso'], 'NO'),
+        getExportState(datos, ['lesCardiopulmonar', 'LES_Cardiopulmonar'], 'NO'),
+        getExportState(datos, ['lesVascular', 'LES_Vascular'], 'NO'),
+        getExportState(datos, ['lesOcular', 'LES_Ocular'], 'NO'),
+        getExportState(datos, ['lesOtros', 'LES_Otros'], 'NO'),
+        getExportValue(datos, ['lesManifestacionesDescripcion', 'LES_Manifestaciones_Descripcion'], ''),
+        getExportValue(datos, ['anaLes', 'ANA_LES'], ''),
+        getExportValue(datos, ['antiDnaLes', 'Anti_DNA'], ''),
+        getExportValue(datos, ['antiSmLes', 'Anti_Sm'], ''),
+        getExportValue(datos, ['antiRoLes', 'Anti_Ro'], ''),
+        getExportValue(datos, ['antiLaLes', 'Anti_La'], ''),
+        getExportValue(datos, ['complementoC3', 'C3'], ''),
+        getExportValue(datos, ['complementoC4', 'C4'], ''),
+        getExportValue(datos, ['proteinuriaLes', 'Proteinuria_LES'], ''),
+        getExportValue(datos, ['sedimentoUrinarioLes', 'Sedimento_Urinario_LES'], ''),
+        getExportValue(datos, ['creatininaLes', 'Creatinina_LES'], ''),
+        getExportValue(datos, ['pcrLes', 'PCR_LES'], ''),
+        getExportValue(datos, ['vsgLes', 'VSG_LES'], ''),
+        getExportValue(datos, ['hemogramaAlteracionesLes', 'Hemograma_Alteraciones_LES'], ''),
+        getExportValue(datos, ['otrosHallazgosAnaliticaLes', 'Otros_Hallazgos_Analitica_LES'], ''),
+        getExportValue(datos, ['evaDolorLes', 'EVA_Dolor_LES'], ''),
+        getExportValue(datos, ['evaFatigaLes', 'EVA_Fatiga_LES'], ''),
+        getExportValue(datos, ['evaGlobalLes', 'EVA_Global_LES'], ''),
+        getExportValue(datos, ['calidadVidaComentarioLes', 'Calidad_Vida_Comentario_LES'], ''),
+        getExportState(datos, ['sledaiSeizure'], 'ND'),
+        getExportState(datos, ['sledaiPsychosis'], 'ND'),
+        getExportState(datos, ['sledaiOrganicBrainSyndrome'], 'ND'),
+        getExportState(datos, ['sledaiVisualDisturbance'], 'ND'),
+        getExportState(datos, ['sledaiCranialNerveDisorder'], 'ND'),
+        getExportState(datos, ['sledaiLupusHeadache'], 'ND'),
+        getExportState(datos, ['sledaiCVA'], 'ND'),
+        getExportState(datos, ['sledaiVasculitis'], 'ND'),
+        getExportState(datos, ['sledaiArthritis'], 'ND'),
+        getExportState(datos, ['sledaiMyositis'], 'ND'),
+        getExportState(datos, ['sledaiUrinaryCasts'], 'ND'),
+        getExportState(datos, ['sledaiHematuria'], 'ND'),
+        getExportState(datos, ['sledaiProteinuria'], 'ND'),
+        getExportState(datos, ['sledaiPyuria'], 'ND'),
+        getExportState(datos, ['sledaiRash'], 'ND'),
+        getExportState(datos, ['sledaiAlopecia'], 'ND'),
+        getExportState(datos, ['sledaiMucosalUlcers'], 'ND'),
+        getExportState(datos, ['sledaiPleurisy'], 'ND'),
+        getExportState(datos, ['sledaiPericarditis'], 'ND'),
+        getExportState(datos, ['sledaiLowComplement'], 'ND'),
+        getExportState(datos, ['sledaiIncreasedDNABinding'], 'ND'),
+        getExportState(datos, ['sledaiFever'], 'ND'),
+        getExportState(datos, ['sledaiThrombocytopenia'], 'ND'),
+        getExportState(datos, ['sledaiLeukopenia'], 'ND'),
+        getExportValue(datos, ['sliccOcular'], 'ND'),
+        getExportValue(datos, ['sliccNeuropsychiatric'], 'ND'),
+        getExportValue(datos, ['sliccRenal'], 'ND'),
+        getExportValue(datos, ['sliccPulmonary'], 'ND'),
+        getExportValue(datos, ['sliccCardiovascular'], 'ND'),
+        getExportValue(datos, ['sliccPeripheralVascular'], 'ND'),
+        getExportValue(datos, ['sliccGastrointestinal'], 'ND'),
+        getExportValue(datos, ['sliccMusculoskeletal'], 'ND'),
+        getExportValue(datos, ['sliccSkin'], 'ND'),
+        getExportValue(datos, ['sliccEndocrineDiabetes'], 'ND'),
+        getExportValue(datos, ['sliccGonadal'], 'ND'),
+        getExportValue(datos, ['sliccMalignancy'], 'ND')
+    ];
+}
+
+function buildSjogrenV2Columns(datos, pathology) {
+    if (pathology !== 'sjogren') {
+        return Array(SJOGREN_V2_HEADERS.length).fill('NA');
+    }
+
+    return [
+        getExportValue(datos, ['esspriSequedad', 'ESSPRI_Sequedad'], ''),
+        getExportValue(datos, ['esspriFatiga', 'ESSPRI_Fatiga'], ''),
+        getExportValue(datos, ['esspriDolor', 'ESSPRI_Dolor'], ''),
+        getExportValue(datos, ['esspriResult', 'ESSPRI_Result'], ''),
+        getExportValue(datos, ['essdaiResult', 'ESSDAI_Result'], ''),
+        getExportValue(datos, ['evaSequedadOral', 'EVA_Sequedad_Oral'], ''),
+        getExportValue(datos, ['evaSequedadOcular', 'EVA_Sequedad_Ocular'], ''),
+        getExportValue(datos, ['evaFatigaSjogren', 'EVA_Fatiga_Sjogren'], ''),
+        getExportValue(datos, ['evaDolorSjogren', 'EVA_Dolor_Sjogren'], ''),
+        getExportValue(datos, ['evaGlobalSjogren', 'EVA_Global_Sjogren'], ''),
+        getExportState(datos, ['sjogrenOcular', 'Sjogren_Ocular_Man'], 'NO'),
+        getExportState(datos, ['sjogrenOral', 'Sjogren_Oral_Man'], 'NO'),
+        getExportState(datos, ['sjogrenGlandular', 'Sjogren_Glandular'], 'NO'),
+        getExportState(datos, ['sjogrenArticular', 'Sjogren_Articular_Man'], 'NO'),
+        getExportState(datos, ['sjogrenCutaneo', 'Sjogren_Cutaneo'], 'NO'),
+        getExportState(datos, ['sjogrenPulmonar', 'Sjogren_Pulmonar'], 'NO'),
+        getExportState(datos, ['sjogrenRenal', 'Sjogren_Renal'], 'NO'),
+        getExportState(datos, ['sjogrenNeurologico', 'Sjogren_Neurologico'], 'NO'),
+        getExportState(datos, ['sjogrenHematologico', 'Sjogren_Hematologico'], 'NO'),
+        getExportState(datos, ['sjogrenLinfomaRiesgo', 'Sjogren_Linfoma_Riesgo'], 'NO'),
+        getExportValue(datos, ['sjogrenManifestacionesDescripcion', 'Sjogren_Manifestaciones_Descripcion'], ''),
+        getExportValue(datos, ['anaSjogren', 'ANA_Sjogren'], ''),
+        getExportValue(datos, ['frSjogren', 'FR_Sjogren'], ''),
+        getExportValue(datos, ['antiRoSjogren', 'Anti_Ro_Sjogren'], ''),
+        getExportValue(datos, ['antiLaSjogren', 'Anti_La_Sjogren'], ''),
+        getExportValue(datos, ['complementoC3Sjogren', 'C3_Sjogren'], ''),
+        getExportValue(datos, ['complementoC4Sjogren', 'C4_Sjogren'], ''),
+        getExportValue(datos, ['crioglobulinasSjogren', 'Crioglobulinas'], ''),
+        getExportValue(datos, ['proteinogramaSjogren', 'Proteinograma'], ''),
+        getExportValue(datos, ['biopsiaGlandulaSalival', 'Biopsia_Glandula_Salival'], ''),
+        getExportValue(datos, ['testSchirmer', 'Test_Schirmer'], ''),
+        getExportValue(datos, ['tincionOcular', 'Tincion_Ocular'], ''),
+        getExportValue(datos, ['flujoSalival', 'Flujo_Salival'], ''),
+        getExportValue(datos, ['ecografiaGlandular', 'Ecografia_Glandular'], ''),
+        getExportValue(datos, ['pcrSjogren', 'PCR_Sjogren'], ''),
+        getExportValue(datos, ['vsgSjogren', 'VSG_Sjogren'], ''),
+        getExportValue(datos, ['otrosHallazgosAnaliticaSjogren', 'Otros_Hallazgos_Analitica_Sjogren'], ''),
+        getExportValue(datos, ['tratSintomaticoSequedad', 'Trat_Sintomatico_Sequedad'], ''),
+        getExportValue(datos, ['tratSintomaticoSequedadDosis', 'Trat_Sintomatico_Sequedad_Dosis'], ''),
+        getExportValue(datos, ['tratInmunomodulador', 'Trat_Inmunomodulador'], ''),
+        getExportValue(datos, ['tratInmunomoduladorDosis', 'Trat_Inmunomodulador_Dosis'], ''),
+        getExportValue(datos, ['essdaiConstitutional'], 'ND'),
+        getExportValue(datos, ['essdaiLymphadenopathy'], 'ND'),
+        getExportValue(datos, ['essdaiGlandular'], 'ND'),
+        getExportValue(datos, ['essdaiArticular'], 'ND'),
+        getExportValue(datos, ['essdaiCutaneous'], 'ND'),
+        getExportValue(datos, ['essdaiPulmonary'], 'ND'),
+        getExportValue(datos, ['essdaiRenal'], 'ND'),
+        getExportValue(datos, ['essdaiMuscular'], 'ND'),
+        getExportValue(datos, ['essdaiPeripheralNervousSystem'], 'ND'),
+        getExportValue(datos, ['essdaiCentralNervousSystem'], 'ND'),
+        getExportValue(datos, ['essdaiHematological'], 'ND'),
+        getExportValue(datos, ['essdaiBiological'], 'ND')
+    ];
+}
+
+function validateV2BlockLengths(commonV2, lesV2, sjogrenV2) {
+    if (commonV2.length !== COMMON_V2_HEADERS.length) {
+        console.warn('Export v2 invalido: bloque comun esperaba ' + COMMON_V2_HEADERS.length + ' columnas y genero ' + commonV2.length);
+    }
+    if (lesV2.length !== LES_V2_HEADERS.length) {
+        console.warn('Export v2 invalido: bloque LES esperaba ' + LES_V2_HEADERS.length + ' columnas y genero ' + lesV2.length);
+    }
+    if (sjogrenV2.length !== SJOGREN_V2_HEADERS.length) {
+        console.warn('Export v2 invalido: bloque Sjogren esperaba ' + SJOGREN_V2_HEADERS.length + ' columnas y genero ' + sjogrenV2.length);
+    }
+}
+
+function buildExtendedColumns(datos, pathology) {
+    const normalizedPathology = normalizePathologyExport(pathology, datos);
+    const legacy = buildLegacyExtensionColumns(datos, normalizedPathology);
+    const commonV2 = buildCommonV2Columns(datos);
+    const lesV2 = buildLESV2Columns(datos, normalizedPathology);
+    const sjogrenV2 = buildSjogrenV2Columns(datos, normalizedPathology);
+
+    if (legacy.length !== LEGACY_EXTENSION_HEADERS_221_321.length) {
+        console.warn('Export v2 invalido: bloque historico extendido esperaba ' + LEGACY_EXTENSION_HEADERS_221_321.length + ' columnas y genero ' + legacy.length);
+    }
+    validateV2BlockLengths(commonV2, lesV2, sjogrenV2);
+
+    return [
+        ...legacy,
+        ...commonV2,
+        ...lesV2,
+        ...sjogrenV2
+    ];
+}
+
+function validateExportRowLength(row, pathology, tipoVisita) {
+    if (row.length !== FINAL_V2_EXPORT_COLUMN_COUNT) {
+        console.warn(
+            'Export v2 invalido: se esperaban ' + FINAL_V2_EXPORT_COLUMN_COUNT +
+            ' columnas y se generaron ' + row.length +
+            ' (patologia=' + (pathology || 'ND') + ', tipoVisita=' + (tipoVisita || 'ND') + ')'
+        );
+    }
 }
 
 function finalizeExportRow(valores, datos, tipoVisita, pathology) {
@@ -311,12 +562,13 @@ function finalizeExportRow(valores, datos, tipoVisita, pathology) {
         row.splice(211, 0, '');
     }
 
-    while (row.length < 220) {
+    while (row.length < LEGACY_BASE_COLUMN_COUNT) {
         row.push('');
     }
 
     const extended = buildExtendedColumns(datos || {}, pathology);
     row.push(...extended);
+    validateExportRowLength(row, pathology, tipoVisita);
 
     return row.join('	');
 }
@@ -528,6 +780,30 @@ function generarFilaCSV_AR_PrimeraVisita(datos) {
 function generarFilaCSV_AR_Seguimiento(datos) {
     const valores = generarFilaCSV_AR_Base(datos, 'seguimiento');
     return finalizeExportRow(valores, datos, 'seguimiento', 'ar');
+}
+
+function generarFilaCSV_LES_PrimeraVisita(datos) {
+    const datosLES = { ...(datos || {}), diagnosticoPrimario: datos?.diagnosticoPrimario || 'les' };
+    const valores = generarFilaCSV_AR_Base(datosLES, 'primera');
+    return finalizeExportRow(valores, datosLES, 'primera', 'les');
+}
+
+function generarFilaCSV_LES_Seguimiento(datos) {
+    const datosLES = { ...(datos || {}), diagnosticoPrimario: datos?.diagnosticoPrimario || 'les' };
+    const valores = generarFilaCSV_AR_Base(datosLES, 'seguimiento');
+    return finalizeExportRow(valores, datosLES, 'seguimiento', 'les');
+}
+
+function generarFilaCSV_SJOGREN_PrimeraVisita(datos) {
+    const datosSjogren = { ...(datos || {}), diagnosticoPrimario: datos?.diagnosticoPrimario || 'sjogren' };
+    const valores = generarFilaCSV_AR_Base(datosSjogren, 'primera');
+    return finalizeExportRow(valores, datosSjogren, 'primera', 'sjogren');
+}
+
+function generarFilaCSV_SJOGREN_Seguimiento(datos) {
+    const datosSjogren = { ...(datos || {}), diagnosticoPrimario: datos?.diagnosticoPrimario || 'sjogren' };
+    const valores = generarFilaCSV_AR_Base(datosSjogren, 'seguimiento');
+    return finalizeExportRow(valores, datosSjogren, 'seguimiento', 'sjogren');
 }
 
 function generarFilaCSV_EspA_PrimeraVisita(datos) {
@@ -1161,10 +1437,11 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
         
         let csvData = '';
         let hojaExcel = '';
+        const diagnosticoNormalizado = normalizePathologyExport(diagnostico, datos);
         
         // Determinar qué función especializada usar según el tipo de visita y diagnóstico
         if (tipoVisita === 'primera') {
-            switch (diagnostico) {
+            switch (diagnosticoNormalizado) {
                 case 'espa':
                     csvData = generarFilaCSV_EspA_PrimeraVisita(datos);
                     hojaExcel = 'ESPA';
@@ -1177,11 +1454,19 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
                     csvData = generarFilaCSV_AR_PrimeraVisita(datos);
                     hojaExcel = 'AR';
                     break;
+                case 'les':
+                    csvData = generarFilaCSV_LES_PrimeraVisita(datos);
+                    hojaExcel = 'LES';
+                    break;
+                case 'sjogren':
+                    csvData = generarFilaCSV_SJOGREN_PrimeraVisita(datos);
+                    hojaExcel = 'SJOGREN';
+                    break;
                 default:
                     throw new Error(`Diagnóstico no reconocido para primera visita: ${diagnostico}`);
             }
         } else if (tipoVisita === 'seguimiento') {
-            switch (diagnostico) {
+            switch (diagnosticoNormalizado) {
                 case 'espa':
                     csvData = generarFilaCSV_EspA_Seguimiento(datos);
                     hojaExcel = 'ESPA';
@@ -1193,6 +1478,14 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
                 case 'ar':
                     csvData = generarFilaCSV_AR_Seguimiento(datos);
                     hojaExcel = 'AR';
+                    break;
+                case 'les':
+                    csvData = generarFilaCSV_LES_Seguimiento(datos);
+                    hojaExcel = 'LES';
+                    break;
+                case 'sjogren':
+                    csvData = generarFilaCSV_SJOGREN_Seguimiento(datos);
+                    hojaExcel = 'SJOGREN';
                     break;
                 default:
                     throw new Error(`Diagnóstico no reconocido para seguimiento: ${diagnostico}`);
@@ -1211,7 +1504,7 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
         addPendingRow({
             content: csvData,
             sheet: hojaExcel,
-            pathology: diagnostico,
+            pathology: diagnosticoNormalizado,
             type: tipoVisita,
             includeBom: false
         });
@@ -1669,6 +1962,14 @@ if (typeof HubTools !== 'undefined') {
 
     HubTools.export.generarFilaCSV_AR_Seguimiento = generarFilaCSV_AR_Seguimiento;
 
+    HubTools.export.generarFilaCSV_LES_PrimeraVisita = generarFilaCSV_LES_PrimeraVisita;
+
+    HubTools.export.generarFilaCSV_LES_Seguimiento = generarFilaCSV_LES_Seguimiento;
+
+    HubTools.export.generarFilaCSV_SJOGREN_PrimeraVisita = generarFilaCSV_SJOGREN_PrimeraVisita;
+
+    HubTools.export.generarFilaCSV_SJOGREN_Seguimiento = generarFilaCSV_SJOGREN_Seguimiento;
+
     HubTools.export.exportarYCopiarCSV = exportarYCopiarCSV;
 
     HubTools.export.mostrarChecklistPostExport = mostrarChecklistPostExport;
@@ -1680,6 +1981,13 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.exportCohortToCSV = exportCohortToCSV;
 
     HubTools.export.EXTRA_EXPORT_HEADERS = EXTRA_EXPORT_HEADERS;
+    HubTools.export.LEGACY_EXTENSION_HEADERS_221_321 = LEGACY_EXTENSION_HEADERS_221_321;
+    HubTools.export.COMMON_V2_HEADERS = COMMON_V2_HEADERS;
+    HubTools.export.LES_V2_HEADERS = LES_V2_HEADERS;
+    HubTools.export.SJOGREN_V2_HEADERS = SJOGREN_V2_HEADERS;
+    HubTools.export.FINAL_V2_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
+    HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT = FINAL_V2_EXPORT_COLUMN_COUNT;
+    HubTools.export.validateExportRowLength = validateExportRowLength;
     HubTools.export.getPendingRows = getPendingRows;
     HubTools.export.getLatestPendingRow = getLatestPendingRow;
     HubTools.export.resolvePendingRow = resolvePendingRow;

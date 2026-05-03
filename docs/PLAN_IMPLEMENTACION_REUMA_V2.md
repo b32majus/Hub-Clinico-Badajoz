@@ -2857,3 +2857,60 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 - DEMO-APS-001: APTO
 - DEMO-LES-001: NO_APTO
 - DEMO-SJOGREN-001: NO_EVALUADO
+
+---
+
+## Fase C1 ejecutada — Exportación clínica alineada a 491 columnas
+
+**Fecha:** 2026-05-03
+
+### Alcance
+- `modules/exportManager.js` genera filas clínicas de `491` columnas para `AR`, `ESPA`, `APS`, `LES` y `SJOGREN`.
+- Las columnas `1-321` conservan el bloque histórico ya generado por la exportación previa.
+- Las columnas `322-365` añaden el bloque común v2 con contexto, prebiológico, vacunación y medicina preventiva.
+- Las columnas `366-438` añaden el bloque LES; si la patología no es LES se exporta `NA`.
+- Las columnas `439-491` añaden el bloque Sjögren; si la patología no es Sjögren se exporta `NA`.
+- `Solicitud FH` sigue siendo una salida derivada en TXT y no se añade como columna ni como hoja del Excel.
+
+### Funciones y constantes añadidas
+- `LEGACY_EXTENSION_HEADERS_221_321`
+- `COMMON_V2_HEADERS`
+- `LES_V2_HEADERS`
+- `SJOGREN_V2_HEADERS`
+- `FINAL_V2_EXPORT_HEADERS`
+- `buildCommonV2Columns(datos)`
+- `buildLESV2Columns(datos, pathology)`
+- `buildSjogrenV2Columns(datos, pathology)`
+- `validateExportRowLength(row, pathology, tipoVisita)`
+- `generarFilaCSV_LES_PrimeraVisita(datos)`
+- `generarFilaCSV_LES_Seguimiento(datos)`
+- `generarFilaCSV_SJOGREN_PrimeraVisita(datos)`
+- `generarFilaCSV_SJOGREN_Seguimiento(datos)`
+
+### Validación técnica realizada
+- `node --check modules/exportManager.js`
+- Prueba manual con Node/vm de generación de filas:
+  - `AR`: 491 columnas
+  - `ESPA`: 491 columnas
+  - `APS`: 491 columnas
+  - `LES`: 491 columnas
+  - `SJOGREN`: 491 columnas
+- Validación de tamaños de bloque:
+  - `COMMON_V2_HEADERS`: 44 columnas
+  - `LES_V2_HEADERS`: 73 columnas
+  - `SJOGREN_V2_HEADERS`: 53 columnas
+  - `EXTRA_EXPORT_HEADERS`: 271 columnas añadidas sobre las 220 legacy
+- Validación puntual de posiciones:
+  - Columna 322: `Fecha_Diagnostico`
+  - Columna 323: `Estado_Prebiologico_Final`
+  - Columna 367: `SLEDAI_2K`
+  - Bloque Sjögren en LES: `NA`
+  - Bloques LES/Sjögren en AR: `NA`
+
+### Campos aún sin UI completa
+- El bloque prebiológico/vacunal queda exportado con cabeceras estables, pero muchos campos saldrán como `ND` o vacío hasta implementar el formulario específico.
+- Los ítems SLEDAI-2K, dominios SLICC/ACR SDI y dominios ESSDAI existen en HTML/calculadoras, pero aún no todos se recopilan como campos individuales en `formController`; mientras tanto se exportan como `ND` si no llegan en `datos`.
+- Observaciones y textos libres sin informar salen vacíos.
+
+### Próximo paso
+- Fase C2: implementar recopilación UI/formController del bloque prebiológico/vacunal y de los dominios de trazabilidad que aún no llegan a `exportManager.js`.
