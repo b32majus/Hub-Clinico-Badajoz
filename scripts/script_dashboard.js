@@ -434,9 +434,18 @@ function calculateClinicalStatus(visit) {
 
         const cdai = getARSecondaryMetric(visit);
         if (cdai !== null && !isNaN(cdai)) {
-            if (cdai <= 2.8) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
+            if (cdai <= 2.8) return { status: 'remission', text: 'Remisión', class: '' };
             if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
             if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+
+        // Fallback SDAI
+        const sdai = getVisitMetric(visit, 'sdai');
+        if (sdai !== null && !isNaN(sdai)) {
+            if (sdai <= 3.3) return { status: 'remission', text: 'Remisión', class: '' };
+            if (sdai <= 11) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (sdai <= 26) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
         }
     }
@@ -469,15 +478,14 @@ function calculateClinicalStatus(visit) {
         const rapid3 = getVisitMetric(visit, 'rapid3');
         if (rapid3 !== null && !isNaN(rapid3)) {
             if (rapid3 <= 3) return { status: 'remission', text: 'Remisión', class: '' };
-            if (rapid3 <= 12) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (rapid3 <= 24) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            if (rapid3 <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
         }
         const haq = getVisitMetric(visit, 'haq');
         if (haq !== null && !isNaN(haq)) {
             if (haq <= 0.5) return { status: 'remission', text: 'Remisión', class: '' };
-            if (haq <= 1.0) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
-            if (haq <= 2.0) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            if (haq <= 1.5) return { status: 'low', text: 'Actividad Leve', class: 'patient-status-badge--low' };
+            if (haq <= 2) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
         }
     }
@@ -647,10 +655,10 @@ function getKPIStatus(metric, value) {
             return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
 
         case 'sledai2k':
-            if (numValue <= 4) return { text: 'Inactivo', class: 'kpi-card--success', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
-            if (numValue <= 10) return { text: 'Moderado', class: 'kpi-card--warning', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
-            if (numValue <= 19) return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
-            return { text: 'Muy alto', class: 'kpi-card--danger', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
+            if (numValue <= 2) return { text: 'Remisión', class: 'kpi-card--success', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+            if (numValue <= 6) return { text: 'Baja', class: 'kpi-card--info', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+            if (numValue <= 12) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
 
         case 'slicc':
             if (numValue <= 0) return { text: 'Sin daño', class: 'kpi-card--success', threshold: '0 sin daño | ≥1 daño acumulado' };

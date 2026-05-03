@@ -563,7 +563,7 @@
                 flareThreshold = 4.0; remissionThreshold = 2.0;
                 minDeltaFlare = 1.0; minDeltaRemission = -1.0; break;
             case 'aps':
-                flareThreshold = 14; remissionThreshold = 5;
+                flareThreshold = 14; remissionThreshold = 4;
                 minDeltaFlare = 5; minDeltaRemission = -5; break;
             case 'les':
                 flareThreshold = 6; remissionThreshold = 2;

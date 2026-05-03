@@ -361,4 +361,17 @@ node --check modules/exportManager.js
 
 ---
 
+## Validaciones adicionales de cálculo incompleto (HARDENING-2C)
+
+- [ ] BASDAI parcialmente relleno → no calcula valor artificialmente bajo
+- [ ] DAS28 sin PCR → DAS28-CRP vacío; DAS28-ESR solo si hay VSG
+- [ ] CDAI incompleto → total vacío / incompleto
+- [ ] SDAI incompleto → total vacío / incompleto
+- [ ] DEMO-LES-001: KPI, header y estadísticas interpretan SLEDAI-2K con mismos umbrales
+- [ ] DEMO-SJOGREN-001: KPI, header y estadísticas interpretan ESSDAI con mismos umbrales
+- [ ] DEMO-ESPA: BASDAI se interpreta igual en dashboard y estadísticas
+- [ ] DEMO-AR: DAS28/CDAI/SDAI funcionan cuando están completos
+
+---
+
 *Checklist generado para el Hub Clínico Reuma v2. Última actualización del documento: 2026-05-03.*

@@ -3362,7 +3362,41 @@ git rev-list --left-right --count main...feature/reuma-v2-prebiologico-fh-les-sj
 
 ---
 
-*Plan de implementación Reuma v2 — COMPLETADO*
-*Total de fases ejecutadas: 12*
+## HARDENING-2C ejecutado — Coherencia clínica de umbrales y cálculo incompleto
+
+### Umbrales corregidos
+- SLEDAI-2K: unificado a ≤2 remisión / ≤6 baja / ≤12 moderada / >12 alta
+- ESSDAI: unificado a <5 baja / 5–13 moderada / ≥14 alta
+- DAPSA: eventos APs remissionThreshold 5→4
+- BASDAI: dataManager remission 2→4
+- RAPID3: eliminado corte inexistente en 24
+- HAQ: alineado con criterios dataManager/hubTools
+
+### Calculadoras protegidas frente a datos incompletos
+- BASDAI: requiere 6/6 campos
+- ASDAS: requiere variables comunes + PCR o VSG
+- HAQ: requiere ≥6/8 categorías
+- RAPID3: requiere 3/3 componentes
+- DAS28: requiere NAD+NAT+EVA + (PCR|VSG)
+- CDAI: requiere 4/4 campos
+- SDAI: requiere 5/5 campos
+- ESSPRI: requiere 3/3 campos
+- LEI: devuelve '' si leiPuntos vacío
+
+### Calculadoras no modificadas
+- SLEDAI-2K, SLICC/ACR SDI, ESSDAI: en estas 0 puede representar ausencia de ítem/dominio
+- MDA: demasiado invasivo para esta fase; documentado como pendiente
+
+### Validaciones realizadas
+- `node --check` en 4 archivos modificados
+
+### Pendientes de validación clínica
+- MDA con datos incompletos
+- Validación manual en demo de cada patología
+
+---
+
+*Plan de implementación Reuma v2 — HARDENING EN CURSO*
+*Total de fases ejecutadas: 12 + HARDENING-1/2A/2C*
 *Rama: feature/reuma-v2-prebiologico-fh-les-sjogren*
-*Estado: Listo para PR*
+*Estado: Preparando para revisión externa*

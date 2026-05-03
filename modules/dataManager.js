@@ -1049,7 +1049,7 @@ function getMetricValue(record, metricLabel) {
 }
 
 const ACTIVITY_THRESHOLDS = {
-    BASDAI: { remission: 2, low: 4, moderate: 6 },
+    BASDAI: { remission: 4, low: 4, moderate: 6 },
     ASDAS: { remission: 1.3, low: 2.1, moderate: 3.5 },
     DAS28_CRP: { remission: 2.6, low: 3.2, moderate: 5.1 },
     DAS28_ESR: { remission: 2.6, low: 3.2, moderate: 5.1 },
@@ -1061,7 +1061,7 @@ const ACTIVITY_THRESHOLDS = {
     VSG: { remission: 20, low: 40, moderate: 60 },
     SLEDAI_2K: { remission: 2, low: 6, moderate: 12 },
     ESSPRI: { remission: 3, low: 5, moderate: 7 },
-    ESSDAI: { remission: 5, low: 14, moderate: 20 },
+    ESSDAI: { remission: 5, low: 14, moderate: 14 },
     DAPSA: { remission: 4, low: 14, moderate: 28 },
     PASI: { remission: 3, low: 10, moderate: 20 },
     PREDNISONA: { remission: 5, low: 10, moderate: 20 }
