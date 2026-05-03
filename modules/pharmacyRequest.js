@@ -74,6 +74,13 @@
         return fallback !== undefined ? fallback : '';
     }
 
+    function displayValue(value, fallback) {
+        if (value === undefined || value === null || value === '') {
+            return fallback !== undefined ? fallback : 'ND';
+        }
+        return value;
+    }
+
     // ── Bloques de texto ──────────────────────────────────────────
 
     /**
@@ -404,20 +411,42 @@
      */
     function getPrebiologicBlock(datos) {
         var cip = getCIP(datos);
-        var status = null;
-        var estado = 'NO_EVALUADO';
-        var fechaValidacion = '';
-        var notasClinico = '';
+        var resolved = null;
+        var sessionStatus = null;
 
-        if (typeof HubTools !== 'undefined' && HubTools.prebiologic && typeof HubTools.prebiologic.getStatus === 'function') {
-            status = HubTools.prebiologic.getStatus(cip);
+        if (
+            typeof HubTools !== 'undefined' &&
+            HubTools.prebiologic &&
+            typeof HubTools.prebiologic.resolvePrebiologicStatus === 'function'
+        ) {
+            resolved = HubTools.prebiologic.resolvePrebiologicStatus(cip, datos || {});
         }
 
-        if (status) {
-            estado = status.estado || 'NO_EVALUADO';
-            fechaValidacion = status.fechaValidacion || '';
-            notasClinico = status.notasClinico || '';
+        if (
+            !resolved &&
+            typeof HubTools !== 'undefined' &&
+            HubTools.prebiologic &&
+            typeof HubTools.prebiologic.getStatus === 'function'
+        ) {
+            sessionStatus = HubTools.prebiologic.getStatus(cip);
+            resolved = {
+                status: sessionStatus && sessionStatus.estado ? sessionStatus.estado : 'NO_EVALUADO',
+                validationDate: sessionStatus && sessionStatus.fechaValidacion ? sessionStatus.fechaValidacion : '',
+                source: sessionStatus ? 'sessionStorage' : 'none',
+                details: {}
+            };
         }
+
+        resolved = resolved || {
+            status: 'NO_EVALUADO',
+            validationDate: '',
+            source: 'none',
+            details: {}
+        };
+
+        var estado = resolved.status || 'NO_EVALUADO';
+        var fechaValidacion = resolved.validationDate || '';
+        var notasClinico = sessionStatus && sessionStatus.notasClinico ? sessionStatus.notasClinico : '';
 
         var text = 'ESTADO PREBIOLÓGICO / VACUNACIÓN\n';
         text += '- Estado prebiológico: ' + estado.replace(/_/g, ' ');
@@ -425,15 +454,20 @@
             text += ' (fecha validación: ' + formatDateES(fechaValidacion) + ')';
         }
         text += '\n';
+        text += '- Fuente de datos: ' + (resolved.source || 'none') + '\n';
+        text += '- Hemograma correcto: ' + displayValue(getField(datos, ['Hemograma_Correcto', 'hemogramaCorrecto'], ''), 'ND') + '\n';
+        text += '- Bioquímica correcta: ' + displayValue(getField(datos, ['Bioquimica_Correcta', 'bioquimicaCorrecta'], ''), 'ND') + '\n';
+        text += '- Serologías correctas: ' + displayValue(getField(datos, ['Serologias_Correctas', 'serologiasCorrectas'], ''), 'ND') + '\n';
+        text += '- IGRA/Mantoux resultado: ' + displayValue(getField(datos, ['IGRA_Mantoux_Resultado', 'igraMantouxResultado'], ''), 'ND') + '\n';
+        text += '- Rx tórax correcta: ' + displayValue(getField(datos, ['Rx_Torax_Correcta', 'rxToraxCorrecta'], ''), 'ND') + '\n';
+        text += '- Vacunación revisada: ' + displayValue(getField(datos, ['Vacunacion_Revisada', 'vacunacionRevisada'], ''), 'ND') + '\n';
+        text += '- Vacunación OK: ' + displayValue(getField(datos, ['Vacunacion_OK', 'vacunacionOK'], ''), 'ND') + '\n';
+        text += '- Medicina preventiva derivada: ' + displayValue(getField(datos, ['Medicina_Preventiva_Derivada', 'medicinaPreventivaDerivada'], ''), 'ND') + '\n';
+        text += '- Vacunas pendientes: ' + displayValue(getField(datos, ['Vacunas_Pendientes', 'vacunasPendientes'], ''), 'ND') + '\n';
+        text += '- Observaciones prebiológico: ' + displayValue(getField(datos, ['Observaciones_Prebiologico', 'observacionesPrebiologico'], ''), 'ND') + '\n';
         if (notasClinico) {
             text += '- Notas clínico: ' + notasClinico + '\n';
         }
-
-        // Vacunación (placeholder - no hay datos todavía)
-        text += '- Vacuna gripe: <no registrado>\n';
-        text += '- Vacuna neumococo: <no registrado>\n';
-        text += '- Vacuna COVID: <no registrado>\n';
-        text += '- Vacuna VHB: <no registrado>\n';
 
         return text + '\n';
     }

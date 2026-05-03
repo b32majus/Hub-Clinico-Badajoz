@@ -191,7 +191,19 @@ function attachDashboardActions(patientId) {
                 planFamesEntries: latestVisit.planFamesEntries || latestVisit.cambioFamesEntries || [],
                 planBiologicosEntries: latestVisit.planBiologicosEntries || latestVisit.cambioBiologicosEntries || [],
                 decisionTerapeutica: latestVisit.decisionTerapeutica || '',
-                tratamientoData: latestVisit.tratamientoData || {}
+                tratamientoData: latestVisit.tratamientoData || {},
+                estadoPrebiologicoFinal: latestVisit.estadoPrebiologicoFinal || latestVisit.Estado_Prebiologico_Final || '',
+                fechaValidacionPrebiologico: latestVisit.fechaValidacionPrebiologico || latestVisit.Fecha_Validacion_Prebiologico || '',
+                hemogramaCorrecto: latestVisit.hemogramaCorrecto || latestVisit.Hemograma_Correcto || '',
+                bioquimicaCorrecta: latestVisit.bioquimicaCorrecta || latestVisit.Bioquimica_Correcta || '',
+                serologiasCorrectas: latestVisit.serologiasCorrectas || latestVisit.Serologias_Correctas || '',
+                igraMantouxResultado: latestVisit.igraMantouxResultado || latestVisit.IGRA_Mantoux_Resultado || '',
+                rxToraxCorrecta: latestVisit.rxToraxCorrecta || latestVisit.Rx_Torax_Correcta || '',
+                vacunacionRevisada: latestVisit.vacunacionRevisada || latestVisit.Vacunacion_Revisada || '',
+                vacunacionOK: latestVisit.vacunacionOK || latestVisit.Vacunacion_OK || '',
+                medicinaPreventivaDerivada: latestVisit.medicinaPreventivaDerivada || latestVisit.Medicina_Preventiva_Derivada || '',
+                vacunasPendientes: latestVisit.vacunasPendientes || latestVisit.Vacunas_Pendientes || '',
+                observacionesPrebiologico: latestVisit.observacionesPrebiologico || latestVisit.Observaciones_Prebiologico || ''
             };
 
             if (typeof HubTools !== 'undefined' && HubTools.pharmacy && typeof HubTools.pharmacy.copyRequestToClipboard === 'function') {
@@ -335,7 +347,7 @@ function populateDashboard() {
     const allVisits = window.patientHistory.allVisits || [];
 
     configureDashboardMetricLabels();
-    renderPrebiologicBadge(summary.idPaciente || getPatientIdFromURL());
+    renderPrebiologicBadge(summary.idPaciente || getPatientIdFromURL(), latest);
 
     // Mostrar contenido, ocultar estado vacío
     document.getElementById('emptyState').classList.add('hidden');
@@ -1769,7 +1781,7 @@ function getLastItem(list) {
     return list[list.length - 1];
 }
 
-function renderPrebiologicBadge(cip) {
+function renderPrebiologicBadge(cip, latestVisit) {
     var container = document.getElementById('prebiologicBadgeContainer');
     if (!container) return;
 
@@ -1780,8 +1792,12 @@ function renderPrebiologicBadge(cip) {
     }
 
     var badgeHTML = '';
-    if (typeof HubTools.prebiologic.getBadgeHTML === 'function') {
-        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip);
+    if (
+        typeof HubTools !== 'undefined' &&
+        HubTools.prebiologic &&
+        typeof HubTools.prebiologic.getBadgeHTML === 'function'
+    ) {
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip, latestVisit || {});
     }
 
     if (badgeHTML) {

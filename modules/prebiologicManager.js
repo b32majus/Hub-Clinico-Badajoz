@@ -66,6 +66,50 @@
         }
     }
 
+    function normalizeStatus(rawStatus) {
+        if (rawStatus === undefined || rawStatus === null) return '';
+        var normalized = rawStatus.toString().trim().toUpperCase();
+        if (!normalized || normalized === 'ND' || normalized === 'NA') return '';
+        return isValidStatus(normalized) ? normalized : '';
+    }
+
+    function getVisitField(visit, aliases, fallback) {
+        if (!visit || !aliases || !aliases.length) {
+            return fallback !== undefined ? fallback : '';
+        }
+        for (var i = 0; i < aliases.length; i++) {
+            var value = visit[aliases[i]];
+            if (value !== undefined && value !== null && value !== '') {
+                return value;
+            }
+        }
+        return fallback !== undefined ? fallback : '';
+    }
+
+    function hasClinicalContent(value) {
+        if (value === undefined || value === null) return false;
+        var normalized = value.toString().trim().toUpperCase();
+        if (!normalized) return false;
+        return normalized !== 'ND' && normalized !== 'NA' && normalized !== 'NO_EVALUADO';
+    }
+
+    function inferInProgress(details) {
+        if (!details) return false;
+        var keys = [
+            'hemogramaSolicitado', 'hemogramaRecibido', 'hemogramaCorrecto',
+            'bioquimicaSolicitada', 'bioquimicaRecibida', 'bioquimicaCorrecta',
+            'serologiasSolicitadas', 'serologiasRecibidas', 'serologiasCorrectas',
+            'igraMantouxSolicitado', 'igraMantouxRecibido', 'igraMantouxResultado',
+            'rxToraxSolicitada', 'rxToraxRecibida', 'rxToraxCorrecta',
+            'vacunacionRevisada', 'vacunacionOK',
+            'medicinaPreventivaDerivada'
+        ];
+        for (var i = 0; i < keys.length; i++) {
+            if (hasClinicalContent(details[keys[i]])) return true;
+        }
+        return false;
+    }
+
     // ── API pública ───────────────────────────────────────────────
 
     /**
@@ -159,15 +203,103 @@
     }
 
     /**
+     * Resuelve estado prebiológico desde una visita clínica persistida.
+     * Prioriza la decisión manual y, si no existe, infiere EN_CURSO si hay actividad.
+     *
+     * @param {object} visit - Última visita clínica normalizada.
+     * @returns {{status: string, validationDate: string, vaccinationOk: string, source: string, details: object}}
+     */
+    function getPrebiologicStatusFromVisit(visit) {
+        if (!visit || typeof visit !== 'object') {
+            return {
+                status: VALID_STATUSES.NO_EVALUADO,
+                validationDate: '',
+                vaccinationOk: '',
+                source: 'none',
+                details: {}
+            };
+        }
+
+        var details = {
+            hemogramaCorrecto: getVisitField(visit, ['Hemograma_Correcto', 'hemogramaCorrecto'], ''),
+            bioquimicaCorrecta: getVisitField(visit, ['Bioquimica_Correcta', 'bioquimicaCorrecta'], ''),
+            serologiasCorrectas: getVisitField(visit, ['Serologias_Correctas', 'serologiasCorrectas'], ''),
+            igraMantouxResultado: getVisitField(visit, ['IGRA_Mantoux_Resultado', 'igraMantouxResultado'], ''),
+            rxToraxCorrecta: getVisitField(visit, ['Rx_Torax_Correcta', 'rxToraxCorrecta'], ''),
+            vacunacionRevisada: getVisitField(visit, ['Vacunacion_Revisada', 'vacunacionRevisada'], ''),
+            vacunacionOK: getVisitField(visit, ['Vacunacion_OK', 'vacunacionOK'], ''),
+            medicinaPreventivaDerivada: getVisitField(visit, ['Medicina_Preventiva_Derivada', 'medicinaPreventivaDerivada'], ''),
+            hemogramaSolicitado: getVisitField(visit, ['Hemograma_Solicitado', 'hemogramaSolicitado'], ''),
+            hemogramaRecibido: getVisitField(visit, ['Hemograma_Recibido', 'hemogramaRecibido'], ''),
+            bioquimicaSolicitada: getVisitField(visit, ['Bioquimica_Solicitada', 'bioquimicaSolicitada'], ''),
+            bioquimicaRecibida: getVisitField(visit, ['Bioquimica_Recibida', 'bioquimicaRecibida'], ''),
+            serologiasSolicitadas: getVisitField(visit, ['Serologias_Solicitadas', 'serologiasSolicitadas'], ''),
+            serologiasRecibidas: getVisitField(visit, ['Serologias_Recibidas', 'serologiasRecibidas'], ''),
+            igraMantouxSolicitado: getVisitField(visit, ['IGRA_Mantoux_Solicitado', 'igraMantouxSolicitado'], ''),
+            igraMantouxRecibido: getVisitField(visit, ['IGRA_Mantoux_Recibido', 'igraMantouxRecibido'], ''),
+            rxToraxSolicitada: getVisitField(visit, ['Rx_Torax_Solicitada', 'rxToraxSolicitada'], ''),
+            rxToraxRecibida: getVisitField(visit, ['Rx_Torax_Recibida', 'rxToraxRecibida'], '')
+        };
+
+        var manualStatus = normalizeStatus(getVisitField(visit, ['Estado_Prebiologico_Final', 'estadoPrebiologicoFinal'], ''));
+        var validationDate = getVisitField(visit, ['Fecha_Validacion_Prebiologico', 'fechaValidacionPrebiologico'], '');
+        var status = VALID_STATUSES.NO_EVALUADO;
+
+        if (manualStatus) {
+            status = manualStatus;
+        } else if (inferInProgress(details)) {
+            status = VALID_STATUSES.EN_CURSO;
+        }
+
+        return {
+            status: status,
+            validationDate: validationDate || '',
+            vaccinationOk: details.vacunacionOK || '',
+            source: 'visit',
+            details: details
+        };
+    }
+
+    function resolvePrebiologicStatus(cip, visit) {
+        var visitStatus = getPrebiologicStatusFromVisit(visit);
+        if (visitStatus.source === 'visit' && visitStatus.status !== VALID_STATUSES.NO_EVALUADO) {
+            return visitStatus;
+        }
+
+        var sessionStatus = getStatus(cip);
+        if (sessionStatus && normalizeStatus(sessionStatus.estado)) {
+            return {
+                status: normalizeStatus(sessionStatus.estado),
+                validationDate: sessionStatus.fechaValidacion || '',
+                vaccinationOk: '',
+                source: 'sessionStorage',
+                details: {
+                    notasClinico: sessionStatus.notasClinico || ''
+                }
+            };
+        }
+
+        return visitStatus.source === 'visit'
+            ? visitStatus
+            : {
+                status: VALID_STATUSES.NO_EVALUADO,
+                validationDate: '',
+                vaccinationOk: '',
+                source: 'none',
+                details: {}
+            };
+    }
+
+    /**
      * Genera el HTML del badge prebiológico listo para insertar en la UI.
      *
      * @param {string} cip - Identificador CIP del paciente.
      * @returns {string} - HTML del span con el badge.
      */
-    function getBadgeHTML(cip) {
-        var status = getStatus(cip);
-        var estado = (status && status.estado) ? status.estado : VALID_STATUSES.NO_EVALUADO;
-        var fecha = (status && status.fechaValidacion) ? status.fechaValidacion : null;
+    function getBadgeHTML(cip, visit) {
+        var resolved = resolvePrebiologicStatus(cip, visit);
+        var estado = resolved.status || VALID_STATUSES.NO_EVALUADO;
+        var fecha = resolved.validationDate || null;
         var cssClass = BADGE_CLASSES[estado] || BADGE_CLASSES[VALID_STATUSES.NO_EVALUADO];
 
         var shortDate = formatShortDate(fecha);
@@ -190,6 +322,8 @@
     window.HubTools.prebiologic.getAllStatuses = getAllStatuses;
     window.HubTools.prebiologic.isApto = isApto;
     window.HubTools.prebiologic.getBadgeHTML = getBadgeHTML;
+    window.HubTools.prebiologic.getPrebiologicStatusFromVisit = getPrebiologicStatusFromVisit;
+    window.HubTools.prebiologic.resolvePrebiologicStatus = resolvePrebiologicStatus;
     window.HubTools.prebiologic.VALID_STATUSES = VALID_STATUSES;
     window.HubTools.prebiologic.STORAGE_PREFIX = STORAGE_PREFIX;
 

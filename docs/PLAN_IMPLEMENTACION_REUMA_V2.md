@@ -3045,3 +3045,46 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 - No se crearon columnas FH ni hoja FH.
 - No se generó demo.
 - `vacunasPendientes` se dejó como `textarea` provisional mínima en esta fase.
+
+---
+
+## Fase C2C ejecutada — Prebiológico persistente desde última visita
+
+**Fecha:** 2026-05-03
+
+### Cambios realizados
+- `modules/prebiologicManager.js`
+  - Nuevo helper `getPrebiologicStatusFromVisit(visit)` para leer estado prebiológico desde la última visita clínica.
+  - Nuevo helper `resolvePrebiologicStatus(cip, visit)` con prioridad:
+    1. datos persistidos de visita,
+    2. fallback `sessionStorage`,
+    3. `NO_EVALUADO`.
+  - `getBadgeHTML(cip, visit)` actualizado para usar visita como fuente primaria y mantener compatibilidad hacia atrás.
+- `scripts/script_dashboard.js`
+  - El badge prebiológico ahora se renderiza con `latestVisit` como entrada primaria.
+  - Se mantiene fallback automático a `sessionStorage` cuando no hay datos persistidos.
+  - El payload de `Solicitud FH` incorpora los campos prebiológico/vacunación de la última visita.
+- `modules/pharmacyRequest.js`
+  - El bloque `ESTADO PREBIOLÓGICO / VACUNACIÓN` usa datos de visita clínica cuando existen.
+  - Si faltan, usa fallback de `HubTools.prebiologic` en `sessionStorage`.
+  - Se incluyen en el texto: estado final, fecha validación, hemograma/bioquímica/serologías, IGRA/Mantoux, Rx tórax, vacunación, medicina preventiva, vacunas pendientes y observaciones.
+
+### Regla de decisión aplicada
+- Si `Estado_Prebiologico_Final` existe y es válido (`APTO`, `EN_CURSO`, `NO_APTO`, `NO_EVALUADO`), manda la decisión manual.
+- Si no existe estado manual pero hay actividad en pruebas/vacunación, se infiere `EN_CURSO`.
+- Si no hay contenido clínico prebiológico, se devuelve `NO_EVALUADO`.
+
+### Validación técnica
+- `node --check modules/prebiologicManager.js`
+- `node --check modules/pharmacyRequest.js`
+- `node --check scripts/script_dashboard.js`
+- Snippet Node/vm ejecutado con 5 escenarios:
+  - visita con `estadoPrebiologicoFinal = APTO` → resuelve `APTO`
+  - visita con `Estado_Prebiologico_Final = NO_APTO` → resuelve `NO_APTO`
+  - visita sin estado manual pero con pruebas en curso → resuelve `EN_CURSO`
+  - visita vacía + sessionStorage con `EN_CURSO` → fallback `sessionStorage`
+  - bloque de `Solicitud FH` incluye datos prebiológicos de visita
+
+### Estado resultante
+- Fuente persistente primaria para badge y `Solicitud FH`: última visita clínica.
+- `sessionStorage`: fallback temporal de compatibilidad.
