@@ -2199,6 +2199,233 @@
 
                 <div class="collapsible-section">
                     <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-shield-virus"></i> Evaluación prebiológica y vacunación</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <p class="info-note"><i class="fas fa-info-circle"></i> Registro estructurado prebiológico/vacunal para exportación clínica v2.</p>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-clipboard-check"></i> Estado global</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="fechaDiagnostico">Fecha diagnóstico</label>
+                                    <input type="date" id="fechaDiagnostico">
+                                </div>
+                                <div class="form-group">
+                                    <label for="estadoPrebiologicoFinal">Estado prebiológico final</label>
+                                    <select id="estadoPrebiologicoFinal">
+                                        <option value="NO_EVALUADO">NO_EVALUADO</option>
+                                        <option value="EN_CURSO">EN_CURSO</option>
+                                        <option value="APTO">APTO</option>
+                                        <option value="NO_APTO">NO_APTO</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaValidacionPrebiologico">Fecha validación</label>
+                                    <input type="date" id="fechaValidacionPrebiologico">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profesionalValidador">Profesional validador</label>
+                                    <input type="text" id="profesionalValidador" placeholder="Nombre o identificador">
+                                </div>
+                                <div class="form-group">
+                                    <label for="decisionClinicaManual">Decisión clínica manual</label>
+                                    <select id="decisionClinicaManual">
+                                        <option value="ND">ND</option>
+                                        <option value="SI">SI</option>
+                                        <option value="NO">NO</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-flask"></i> Analítica y cribado</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="hemogramaSolicitado">Hemograma solicitado</label>
+                                    <select id="hemogramaSolicitado"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaFechaSolicitud">Hemograma fecha solicitud</label>
+                                    <input type="date" id="hemogramaFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaRecibido">Hemograma recibido</label>
+                                    <select id="hemogramaRecibido"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaFechaRecepcion">Hemograma fecha recepción</label>
+                                    <input type="date" id="hemogramaFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaCorrecto">Hemograma correcto</label>
+                                    <select id="hemogramaCorrecto"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaObservaciones">Hemograma observaciones</label>
+                                    <textarea id="hemogramaObservaciones" rows="2" placeholder="Observaciones hemograma"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="bioquimicaSolicitada">Bioquímica solicitada</label>
+                                    <select id="bioquimicaSolicitada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaFechaSolicitud">Bioquímica fecha solicitud</label>
+                                    <input type="date" id="bioquimicaFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaRecibida">Bioquímica recibida</label>
+                                    <select id="bioquimicaRecibida"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaFechaRecepcion">Bioquímica fecha recepción</label>
+                                    <input type="date" id="bioquimicaFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaCorrecta">Bioquímica correcta</label>
+                                    <select id="bioquimicaCorrecta"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaObservaciones">Bioquímica observaciones</label>
+                                    <textarea id="bioquimicaObservaciones" rows="2" placeholder="Observaciones bioquímica"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="serologiasSolicitadas">Serologías solicitadas</label>
+                                    <select id="serologiasSolicitadas"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasFechaSolicitud">Serologías fecha solicitud</label>
+                                    <input type="date" id="serologiasFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasRecibidas">Serologías recibidas</label>
+                                    <select id="serologiasRecibidas"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasFechaRecepcion">Serologías fecha recepción</label>
+                                    <input type="date" id="serologiasFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasCorrectas">Serologías correctas</label>
+                                    <select id="serologiasCorrectas"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasObservaciones">Serologías observaciones</label>
+                                    <textarea id="serologiasObservaciones" rows="2" placeholder="Observaciones serologías"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-lungs"></i> Tuberculosis / radiografía de tórax</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="igraMantouxSolicitado">IGRA/Mantoux solicitado</label>
+                                    <select id="igraMantouxSolicitado"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxTipo">Tipo IGRA/Mantoux</label>
+                                    <select id="igraMantouxTipo">
+                                        <option value="ND">ND</option>
+                                        <option value="IGRA">IGRA</option>
+                                        <option value="Quantiferon">Quantiferon</option>
+                                        <option value="Mantoux">Mantoux</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxFechaSolicitud">IGRA/Mantoux fecha solicitud</label>
+                                    <input type="date" id="igraMantouxFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxRecibido">IGRA/Mantoux recibido</label>
+                                    <select id="igraMantouxRecibido"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxFechaRecepcion">IGRA/Mantoux fecha recepción</label>
+                                    <input type="date" id="igraMantouxFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxResultado">IGRA/Mantoux resultado</label>
+                                    <input type="text" id="igraMantouxResultado" placeholder="Resultado">
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxObservaciones">IGRA/Mantoux observaciones</label>
+                                    <textarea id="igraMantouxObservaciones" rows="2" placeholder="Observaciones TB"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="rxToraxSolicitada">Rx tórax solicitada</label>
+                                    <select id="rxToraxSolicitada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxFechaSolicitud">Rx tórax fecha solicitud</label>
+                                    <input type="date" id="rxToraxFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxRecibida">Rx tórax recibida</label>
+                                    <select id="rxToraxRecibida"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxFechaRecepcion">Rx tórax fecha recepción</label>
+                                    <input type="date" id="rxToraxFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxCorrecta">Rx tórax correcta</label>
+                                    <select id="rxToraxCorrecta"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxObservaciones">Rx tórax observaciones</label>
+                                    <textarea id="rxToraxObservaciones" rows="2" placeholder="Observaciones Rx tórax"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-syringe"></i> Vacunación y medicina preventiva</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="vacunacionRevisada">Vacunación revisada</label>
+                                    <select id="vacunacionRevisada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vacunacionOK">Vacunación OK</label>
+                                    <select id="vacunacionOK"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicinaPreventivaRequiereDerivacion">Medicina preventiva requiere derivación</label>
+                                    <select id="medicinaPreventivaRequiereDerivacion"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicinaPreventivaDerivada">Medicina preventiva derivada</label>
+                                    <select id="medicinaPreventivaDerivada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicinaPreventivaFechaDerivacion">Fecha derivación preventiva</label>
+                                    <input type="date" id="medicinaPreventivaFechaDerivacion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="vacunasPendientes">Vacunas pendientes</label>
+                                    <textarea id="vacunasPendientes" rows="2" placeholder="Listado o detalle de vacunas pendientes"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vacunacionObservaciones">Vacunación observaciones</label>
+                                    <textarea id="vacunacionObservaciones" rows="2" placeholder="Observaciones vacunación"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="observacionesPrebiologico">Observaciones prebiológico</label>
+                                    <textarea id="observacionesPrebiologico" rows="3" placeholder="Observaciones globales del bloque prebiológico"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
                         <span class="header-icon-text"><i class="fas fa-comment-medical"></i> Comentarios
                             Adicionales</span>
                         <i class="fas fa-chevron-down arrow"></i>

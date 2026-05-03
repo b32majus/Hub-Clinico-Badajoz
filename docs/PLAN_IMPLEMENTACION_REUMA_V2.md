@@ -2960,3 +2960,88 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 
 ### Próximo paso
 - Fase C2B: añadir UI mínima del bloque prebiológico/vacunal dentro del flujo clínico, sin romper el pegado único por hoja de patología.
+
+---
+
+## Fase C2B ejecutada — UI prebiológico/vacunación
+
+**Fecha:** 2026-05-03
+
+### Cambios realizados
+- Se añadió una nueva sección colapsable `Evaluación prebiológica y vacunación` en:
+  - `primera_visita.html`
+  - `seguimiento.html`
+- Ubicación funcional:
+  - Dentro del flujo clínico principal, antes de `Comentarios Adicionales` y antes de los botones de acción (incluyendo `Solicitud FH`).
+- Estructura interna añadida (mínima y nativa):
+  - `Estado global`
+  - `Analítica y cribado`
+  - `Tuberculosis / radiografía de tórax`
+  - `Vacunación y medicina preventiva`
+- Se usaron clases ya existentes del hub:
+  - `collapsible-section`, `collapsible-header`, `collapsible-content`
+  - `form-group`, `form-group-grid`
+  - `info-note`, `indices-apartado`
+
+### IDs v2 implementados en ambos formularios
+- Bloque completo de 44 IDs prebiológico/vacunal implementado en `primera_visita.html` y `seguimiento.html`:
+  - `fechaDiagnostico`
+  - `estadoPrebiologicoFinal`
+  - `fechaValidacionPrebiologico`
+  - `profesionalValidador`
+  - `decisionClinicaManual`
+  - `hemogramaSolicitado`
+  - `hemogramaFechaSolicitud`
+  - `hemogramaRecibido`
+  - `hemogramaFechaRecepcion`
+  - `hemogramaCorrecto`
+  - `hemogramaObservaciones`
+  - `bioquimicaSolicitada`
+  - `bioquimicaFechaSolicitud`
+  - `bioquimicaRecibida`
+  - `bioquimicaFechaRecepcion`
+  - `bioquimicaCorrecta`
+  - `bioquimicaObservaciones`
+  - `serologiasSolicitadas`
+  - `serologiasFechaSolicitud`
+  - `serologiasRecibidas`
+  - `serologiasFechaRecepcion`
+  - `serologiasCorrectas`
+  - `serologiasObservaciones`
+  - `igraMantouxSolicitado`
+  - `igraMantouxTipo`
+  - `igraMantouxFechaSolicitud`
+  - `igraMantouxRecibido`
+  - `igraMantouxFechaRecepcion`
+  - `igraMantouxResultado`
+  - `igraMantouxObservaciones`
+  - `rxToraxSolicitada`
+  - `rxToraxFechaSolicitud`
+  - `rxToraxRecibida`
+  - `rxToraxFechaRecepcion`
+  - `rxToraxCorrecta`
+  - `rxToraxObservaciones`
+  - `vacunacionRevisada`
+  - `vacunacionOK`
+  - `medicinaPreventivaRequiereDerivacion`
+  - `medicinaPreventivaDerivada`
+  - `medicinaPreventivaFechaDerivacion`
+  - `vacunasPendientes`
+  - `vacunacionObservaciones`
+  - `observacionesPrebiologico`
+
+### Validación técnica
+- Verificación automatizada de IDs:
+  - `primera_visita.html found=44/44 missing=0 duplicates=0`
+  - `seguimiento.html found=44/44 missing=0 duplicates=0`
+- Sintaxis:
+  - `node --check modules/formController.js`
+  - `node --check modules/exportManager.js`
+- Prueba de integración (Node/vm):
+  - Con `estadoPrebiologicoFinal = APTO`, la exportación LES mantiene 491 columnas y coloca `APTO` en columna 323.
+
+### Notas de implementación
+- No se modificó `Solicitud FH` (ni flujo ni estructura).
+- No se crearon columnas FH ni hoja FH.
+- No se generó demo.
+- `vacunasPendientes` se dejó como `textarea` provisional mínima en esta fase.
