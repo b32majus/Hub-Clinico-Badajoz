@@ -548,6 +548,128 @@ function normalizarEstado(value, fallback = 'ND') {
     return normalized;
 }
 
+function getValue(id, fallback = '') {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    if (el.type === 'checkbox') return el.checked ? 'SI' : 'NO';
+    if (el.textContent && (el.tagName === 'SPAN' || el.tagName === 'DIV')) {
+        return el.textContent.trim() || fallback;
+    }
+    return el.value !== undefined && el.value !== null && String(el.value).trim() !== '' ? el.value : fallback;
+}
+
+function getChecked(id) {
+    return !!document.getElementById(id)?.checked;
+}
+
+function getSelectValue(id, fallback = '') {
+    const el = document.getElementById(id);
+    return el && el.value !== undefined && el.value !== null && String(el.value).trim() !== '' ? el.value : fallback;
+}
+
+function getStateValue(id, fallback = 'ND') {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    if (el.type === 'checkbox') return el.checked ? 'SI' : 'NO';
+    if (el.dataset?.value) return normalizarEstado(el.dataset.value, fallback);
+    return normalizarEstado(el.value, fallback);
+}
+
+const SLEDAI_2K_ITEM_IDS = [
+    'sledaiSeizure', 'sledaiPsychosis', 'sledaiOrganicBrainSyndrome',
+    'sledaiVisualDisturbance', 'sledaiCranialNerveDisorder', 'sledaiLupusHeadache',
+    'sledaiCVA', 'sledaiVasculitis', 'sledaiArthritis', 'sledaiMyositis',
+    'sledaiUrinaryCasts', 'sledaiHematuria', 'sledaiProteinuria', 'sledaiPyuria',
+    'sledaiRash', 'sledaiAlopecia', 'sledaiMucosalUlcers', 'sledaiPleurisy',
+    'sledaiPericarditis', 'sledaiLowComplement', 'sledaiIncreasedDNABinding',
+    'sledaiFever', 'sledaiThrombocytopenia', 'sledaiLeukopenia'
+];
+
+const SLICC_DOMAIN_IDS = [
+    'sliccOcular', 'sliccNeuropsychiatric', 'sliccRenal', 'sliccPulmonary',
+    'sliccCardiovascular', 'sliccPeripheralVascular', 'sliccGastrointestinal',
+    'sliccMusculoskeletal', 'sliccSkin', 'sliccEndocrineDiabetes',
+    'sliccGonadal', 'sliccMalignancy'
+];
+
+const ESSDAI_DOMAIN_IDS = [
+    'essdaiConstitutional', 'essdaiLymphadenopathy', 'essdaiGlandular',
+    'essdaiArticular', 'essdaiCutaneous', 'essdaiPulmonary', 'essdaiRenal',
+    'essdaiMuscular', 'essdaiPeripheralNervousSystem', 'essdaiCentralNervousSystem',
+    'essdaiHematological', 'essdaiBiological'
+];
+
+const PREBIOLOGIC_V2_FIELD_IDS = [
+    'fechaDiagnostico',
+    'estadoPrebiologicoFinal',
+    'fechaValidacionPrebiologico',
+    'profesionalValidador',
+    'decisionClinicaManual',
+    'hemogramaSolicitado',
+    'hemogramaFechaSolicitud',
+    'hemogramaRecibido',
+    'hemogramaFechaRecepcion',
+    'hemogramaCorrecto',
+    'hemogramaObservaciones',
+    'bioquimicaSolicitada',
+    'bioquimicaFechaSolicitud',
+    'bioquimicaRecibida',
+    'bioquimicaFechaRecepcion',
+    'bioquimicaCorrecta',
+    'bioquimicaObservaciones',
+    'serologiasSolicitadas',
+    'serologiasFechaSolicitud',
+    'serologiasRecibidas',
+    'serologiasFechaRecepcion',
+    'serologiasCorrectas',
+    'serologiasObservaciones',
+    'igraMantouxSolicitado',
+    'igraMantouxTipo',
+    'igraMantouxFechaSolicitud',
+    'igraMantouxRecibido',
+    'igraMantouxFechaRecepcion',
+    'igraMantouxResultado',
+    'igraMantouxObservaciones',
+    'rxToraxSolicitada',
+    'rxToraxFechaSolicitud',
+    'rxToraxRecibida',
+    'rxToraxFechaRecepcion',
+    'rxToraxCorrecta',
+    'rxToraxObservaciones',
+    'vacunacionRevisada',
+    'vacunacionOK',
+    'medicinaPreventivaRequiereDerivacion',
+    'medicinaPreventivaDerivada',
+    'medicinaPreventivaFechaDerivacion',
+    'vacunasPendientes',
+    'vacunacionObservaciones',
+    'observacionesPrebiologico'
+];
+
+function collectFieldsByIds(ids, reader) {
+    return ids.reduce((acc, id) => {
+        if (document.getElementById(id)) {
+            acc[id] = reader(id);
+        }
+        return acc;
+    }, {});
+}
+
+function collectLesTraceabilityFields() {
+    return {
+        ...collectFieldsByIds(SLEDAI_2K_ITEM_IDS, getChecked),
+        ...collectFieldsByIds(SLICC_DOMAIN_IDS, id => getValue(id))
+    };
+}
+
+function collectSjogrenTraceabilityFields() {
+    return collectFieldsByIds(ESSDAI_DOMAIN_IDS, id => getValue(id));
+}
+
+function collectPrebiologicV2Fields() {
+    return collectFieldsByIds(PREBIOLOGIC_V2_FIELD_IDS, id => getValue(id));
+}
+
 function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId) {
     const entries = [];
 
@@ -1371,6 +1493,9 @@ function recopilarDatosFormulario() {
     const tratSintomaticoSequedadDosis = document.getElementById('tratSintomaticoSequedadDosis')?.value || '';
     const tratInmunomodulador = document.getElementById('tratInmunomodulador')?.value || '';
     const tratInmunomoduladorDosis = document.getElementById('tratInmunomoduladorDosis')?.value || '';
+    const lesTraceabilityFields = collectLesTraceabilityFields();
+    const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
+    const prebiologicV2Fields = collectPrebiologicV2Fields();
 
     const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
 
@@ -1432,6 +1557,9 @@ function recopilarDatosFormulario() {
         pcrSjogren, vsgSjogren, otrosHallazgosAnaliticaSjogren,
         tratSintomaticoSequedad, tratSintomaticoSequedadDosis,
         tratInmunomodulador, tratInmunomoduladorDosis,
+        ...lesTraceabilityFields,
+        ...sjogrenTraceabilityFields,
+        ...prebiologicV2Fields,
         comentariosAdicionales
     };
 
@@ -1848,6 +1976,9 @@ function recopilarDatosFormularioSeguimiento() {
     const tratSintomaticoSequedadDosis = getValue('tratSintomaticoSequedadDosis');
     const tratInmunomodulador = getValue('tratInmunomodulador');
     const tratInmunomoduladorDosis = getValue('tratInmunomoduladorDosis');
+    const lesTraceabilityFields = collectLesTraceabilityFields();
+    const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
+    const prebiologicV2Fields = collectPrebiologicV2Fields();
 
     const tratamientoData = {
         continuar: {
@@ -1908,6 +2039,9 @@ function recopilarDatosFormularioSeguimiento() {
         pcrSjogren, vsgSjogren, otrosHallazgosAnaliticaSjogren,
         tratSintomaticoSequedad, tratSintomaticoSequedadDosis,
         tratInmunomodulador, tratInmunomoduladorDosis,
+        ...lesTraceabilityFields,
+        ...sjogrenTraceabilityFields,
+        ...prebiologicV2Fields,
         fechaProximaRevision, comentariosAdicionales
     };
 }

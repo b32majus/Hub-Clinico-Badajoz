@@ -2914,3 +2914,49 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 
 ### Próximo paso
 - Fase C2: implementar recopilación UI/formController del bloque prebiológico/vacunal y de los dominios de trazabilidad que aún no llegan a `exportManager.js`.
+
+---
+
+## Fase C2A ejecutada — Recopilación formController de campos v2
+
+**Fecha:** 2026-05-03
+
+### Auditoría de IDs existentes
+- `primera_visita.html`: SLEDAI-2K `24/24`, SLICC/ACR SDI `12/12`, ESSDAI `12/12`.
+- `seguimiento.html`: SLEDAI-2K `24/24`, SLICC/ACR SDI `12/12`, ESSDAI `12/12`.
+- Bloque prebiológico/vacunal transversal: `0/44` IDs encontrados en `primera_visita.html` y `seguimiento.html`; queda preparado para lectura segura cuando exista UI.
+
+### Campos LES recogidos
+- Se recogen los 24 items SLEDAI-2K:
+  `sledaiSeizure`, `sledaiPsychosis`, `sledaiOrganicBrainSyndrome`, `sledaiVisualDisturbance`, `sledaiCranialNerveDisorder`, `sledaiLupusHeadache`, `sledaiCVA`, `sledaiVasculitis`, `sledaiArthritis`, `sledaiMyositis`, `sledaiUrinaryCasts`, `sledaiHematuria`, `sledaiProteinuria`, `sledaiPyuria`, `sledaiRash`, `sledaiAlopecia`, `sledaiMucosalUlcers`, `sledaiPleurisy`, `sledaiPericarditis`, `sledaiLowComplement`, `sledaiIncreasedDNABinding`, `sledaiFever`, `sledaiThrombocytopenia`, `sledaiLeukopenia`.
+- Se recogen los 12 dominios SLICC/ACR SDI:
+  `sliccOcular`, `sliccNeuropsychiatric`, `sliccRenal`, `sliccPulmonary`, `sliccCardiovascular`, `sliccPeripheralVascular`, `sliccGastrointestinal`, `sliccMusculoskeletal`, `sliccSkin`, `sliccEndocrineDiabetes`, `sliccGonadal`, `sliccMalignancy`.
+- Se mantienen los resultados agregados ya existentes: `sledaiResult`, `sledai2kResult`, `sliccAcrSdi`.
+
+### Campos Sjögren recogidos
+- Se recogen los 12 dominios ESSDAI:
+  `essdaiConstitutional`, `essdaiLymphadenopathy`, `essdaiGlandular`, `essdaiArticular`, `essdaiCutaneous`, `essdaiPulmonary`, `essdaiRenal`, `essdaiMuscular`, `essdaiPeripheralNervousSystem`, `essdaiCentralNervousSystem`, `essdaiHematological`, `essdaiBiological`.
+- Se mantienen los componentes ESSPRI existentes: `esspriSequedad`, `esspriFatiga`, `esspriDolor`, `esspriResult`.
+- Se mantiene `essdaiResult`.
+
+### Campos prebiológico/vacunal preparados
+- `formController.js` intenta recoger los 44 campos del bloque común v2 si aparecen en el DOM.
+- Como la UI aún no contiene esos IDs en primera visita ni seguimiento, no se inventan valores clínicos.
+- Cuando no hay UI, `exportManager.js` seguirá aplicando sus fallbacks contractuales (`ND` o vacío según campo).
+
+### Validación técnica realizada
+- `node --check modules/formController.js`
+- Snippet Node/vm con DOM simulado y `exportManager.js`:
+  - LES exporta 491 columnas.
+  - `Fecha_Diagnostico` llega a columna 322.
+  - `Estado_Prebiologico_Final` llega a columna 323.
+  - `Hemograma_Solicitado` llega a columna 327.
+  - `sledaiSeizure` llega a columna 403.
+  - `sliccOcular` llega a columna 427.
+  - Sjögren exporta 491 columnas.
+  - `ESSPRI_Result` llega a columna 442.
+  - `essdaiConstitutional` llega a columna 480.
+  - `essdaiBiological` llega a columna 491.
+
+### Próximo paso
+- Fase C2B: añadir UI mínima del bloque prebiológico/vacunal dentro del flujo clínico, sin romper el pegado único por hoja de patología.
