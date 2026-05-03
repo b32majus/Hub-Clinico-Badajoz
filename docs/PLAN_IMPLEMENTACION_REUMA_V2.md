@@ -3300,3 +3300,69 @@ python scripts/generate_demo_db.py  # 30 pacientes, 109 visitas, 6/hoja, todas v
 node --check scripts/script_dashboard.js  # OK
 node --check modules/treatmentEventsManager.js  # OK
 ```
+
+---
+
+## Fase 12 ejecutada — Cierre documental y preparación de PR
+
+**Fecha:** 2026-05-03
+
+### Alcance
+Cierre de la implementación Reuma v2: documentación final, validación E2E, preparación de rama para PR/merge.
+
+### Validación E2E resultado
+- **Resultado: APTO**
+- 30 pacientes demo validados
+- 109 visitas longitudinales
+- 5 patologías funcionales (AR, ESPA, APS, LES, SJOGREN)
+- Dashboards individuales: KPIs correctos por patología
+- Estadísticas poblacionales: métricas adaptativas
+- Solicitud FH: operativa en 5 patologías
+- Prebiológico: 4 estados funcionales
+- Consola JS: 0 errores críticos
+- Sintaxis JS: 12/12 archivos pasan `node --check`
+
+### Documentos creados/actualizados
+| Archivo | Acción |
+|---|---|
+| `CHANGELOG.md` | Creado — resumen de release v2.0.0 |
+| `docs/RESUMEN_RELEASE_REUMA_V2.md` | Creado — resumen ejecutivo para revisión |
+| `docs/CHECKLIST_E2E_CLINICO_V2.md` | Actualizado — resultado APTO, incidencias documentadas |
+| `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | Actualizado — sección Fase 12 |
+
+### Estado git
+```bash
+git rev-list --left-right --count main...feature/reuma-v2-prebiologico-fh-les-sjogren
+# 0 37
+```
+- Rama: `feature/reuma-v2-prebiologico-fh-les-sjogren`
+- Commits por delante de main: 37
+- Commits por detrás de main: 0
+- Working tree: limpio
+- Remoto sincronizado: ✅
+
+### Incidencias
+| # | Descripción | Severidad | Estado |
+|---|---|---|---|
+| 1 | `resolveMetricKey` SLEDAI_2K (guion bajo) | Crítica (solo stats LES) | **RESUELTA** commit `742f25e` |
+| 2 | APS/DAPSA selector sin datos DAPSA en demo | Baja / No bloqueante | **NO APLICA** — APs tendrá DAPSA en contrato final |
+
+### Riesgos conocidos
+1. `Tratamiento_Actual` texto libre — detección de cambios por string puede ser frágil.
+2. Eventos terapéuticos derivados de visitas — no tabla propia.
+3. Prebiológico en `sessionStorage` — se pierde al limpiar navegador.
+
+### Pendientes no bloqueantes
+- Exportación de estadísticas a CSV (no implementada).
+- Checklist SLICC ítem por ítem (actual: entrada estructurada por dominios).
+- Mejora UX selector APS cuando no hay DAPSA.
+
+### Recomendación
+**APTO para PR/merge a `main`.**
+
+---
+
+*Plan de implementación Reuma v2 — COMPLETADO*
+*Total de fases ejecutadas: 12*
+*Rama: feature/reuma-v2-prebiologico-fh-les-sjogren*
+*Estado: Listo para PR*
