@@ -167,22 +167,48 @@ function calcularRAPID3(datos) {
 }
 
 function calcularMDA(datos) {
-    const rawValues = [datos?.nat, datos?.nad, datos?.pasiValue, datos?.bsaValue, datos?.lei, datos?.evaDolor, datos?.evaGlobal, datos?.haq];
-    const nat = parseNumberInRange(datos?.nat, 0, 66, { fallback: 0, integer: true });
-    const nad = parseNumberInRange(datos?.nad, 0, 68, { fallback: 0, integer: true });
-    const pasi = parseNumberInRange(datos?.pasiValue, 0, 72, { fallback: 0 });
-    const bsa = parseNumberInRange(datos?.bsaValue, 0, 100, { fallback: 0 });
-    const lei = parseNumberInRange(datos?.lei, 0, 6, { fallback: 0, integer: true });
-    const evaDolor = parseNumberInRange(datos?.evaDolor, 0, 10, { fallback: 0 });
-    const evaGlobal = parseNumberInRange(datos?.evaGlobal, 0, 10, { fallback: 0 });
-    const haq = parseNumberInRange(datos?.haq, 0, 3, { fallback: 0 });
+    const incompleteResult = {
+        nat: '',
+        nad: '',
+        psoriasis: '',
+        lei: '',
+        evaDolor: '',
+        evaGlobal: '',
+        haq: '',
+        criterios: [],
+        cumplidos: 0,
+        mdaAlcanzado: false,
+        evaluable: false,
+        categoria: 'Incompleto'
+    };
+
+    const nat = parseNumberInRange(datos?.nat, 0, 66, { fallback: null, integer: true });
+    const nad = parseNumberInRange(datos?.nad, 0, 68, { fallback: null, integer: true });
+    const pasi = parseNumberInRange(datos?.pasiValue, 0, 72, { fallback: null });
+    const bsa = parseNumberInRange(datos?.bsaValue, 0, 100, { fallback: null });
+    const lei = parseNumberInRange(datos?.lei, 0, 6, { fallback: null, integer: true });
+    const evaDolor = parseNumberInRange(datos?.evaDolor, 0, 10, { fallback: null });
+    const evaGlobal = parseNumberInRange(datos?.evaGlobal, 0, 10, { fallback: null });
+    const haq = parseNumberInRange(datos?.haq, 0, 3, { fallback: null });
+
+    const hasJointCounts = allFinite([nat, nad]);
+    const hasSkin = Number.isFinite(pasi) || Number.isFinite(bsa);
+    const hasEnthesitis = Number.isFinite(lei);
+    const hasPROs = allFinite([evaDolor, evaGlobal]);
+    const hasFunction = Number.isFinite(haq);
+    const evaluable = hasJointCounts && hasSkin && hasEnthesitis && hasPROs && hasFunction;
+    if (!evaluable) return incompleteResult;
 
     const evaDolorMM = evaDolor * 10;
     const evaGlobalMM = evaGlobal * 10;
+    const psoriasisCriterion = [
+        Number.isFinite(pasi) ? pasi <= 1 : false,
+        Number.isFinite(bsa) ? bsa <= 3 : false
+    ].some(Boolean);
     const criterios = {
         nat: nat <= 1,
         nad: nad <= 1,
-        psoriasis: pasi <= 1 || bsa <= 3,
+        psoriasis: psoriasisCriterion,
         lei: lei <= 1,
         evaDolor: evaDolorMM <= 15,
         evaGlobal: evaGlobalMM <= 20,
@@ -190,19 +216,21 @@ function calcularMDA(datos) {
     };
     const criteriosArray = [criterios.nat, criterios.nad, criterios.psoriasis, criterios.lei, criterios.evaDolor, criterios.evaGlobal, criterios.haq];
     const cumplidos = criteriosArray.filter(Boolean).length;
-    const hasInput = hasAnyValue(rawValues);
+    const mdaAlcanzado = cumplidos >= 5;
 
     return {
-        nat: hasInput ? nat : '',
-        nad: hasInput ? nad : '',
-        psoriasis: hasInput ? (pasi > 0 ? `PASI: ${pasi.toFixed(1)}` : (bsa > 0 ? `BSA: ${bsa}%` : '-')) : '-',
-        lei: hasInput ? lei : '',
-        evaDolor: hasInput ? evaDolorMM.toFixed(0) : '',
-        evaGlobal: hasInput ? evaGlobalMM.toFixed(0) : '',
-        haq: hasInput ? haq.toFixed(2) : '',
-        criterios: hasInput ? criteriosArray : [false, false, false, false, false, false, false],
-        cumplidos: hasInput ? cumplidos : 0,
-        mdaAlcanzado: hasInput ? cumplidos >= 5 : false
+        nat,
+        nad,
+        psoriasis: Number.isFinite(pasi) ? `PASI: ${pasi.toFixed(1)}` : `BSA: ${bsa}%`,
+        lei,
+        evaDolor: evaDolorMM.toFixed(0),
+        evaGlobal: evaGlobalMM.toFixed(0),
+        haq: haq.toFixed(2),
+        criterios: criteriosArray,
+        cumplidos,
+        mdaAlcanzado,
+        evaluable: true,
+        categoria: mdaAlcanzado ? 'MDA alcanzado' : 'MDA no alcanzado'
     };
 }
 

@@ -3396,6 +3396,32 @@ git rev-list --left-right --count main...feature/reuma-v2-prebiologico-fh-les-sj
 
 ---
 
+## DEBT-1 ejecutado — MDA protegido frente a datos incompletos
+
+### Regla de completitud aplicada
+MDA solo se considera evaluable cuando existen datos válidos en todos los bloques clínicos mínimos:
+- Recuento articular: `nat` y `nad`
+- Piel: `pasiValue` o `bsaValue`
+- Entesitis: `lei`
+- PROs: `evaDolor` y `evaGlobal`
+- Función: `haq`
+
+### Comportamiento implementado
+- Si falta algún bloque clave, `calcularMDA()` devuelve `evaluable: false`, `categoria: 'Incompleto'`, `criterios: []`, `cumplidos: 0` y `mdaAlcanzado: false`.
+- Los campos ausentes o inválidos no se convierten a 0.
+- El valor 0 solo cuenta si está explícitamente informado como dato válido.
+- Si los bloques mínimos están presentes, MDA se calcula con los criterios previos y añade `evaluable: true`.
+- La categoría final queda como `MDA alcanzado` si cumple ≥5 criterios o `MDA no alcanzado` si cumple <5.
+
+### Validaciones realizadas
+- `calcularMDA({})` debe devolver `Incompleto`.
+- `calcularMDA()` con solo `nat/nad` debe devolver `Incompleto`.
+- `calcularMDA()` con todos los bloques debe ser evaluable.
+- ≥5 criterios cumplidos debe marcar `MDA alcanzado`.
+- <5 criterios cumplidos debe marcar `MDA no alcanzado`.
+
+---
+
 *Plan de implementación Reuma v2 — HARDENING EN CURSO*
 *Total de fases ejecutadas: 12 + HARDENING-1/2A/2C*
 *Rama: feature/reuma-v2-prebiologico-fh-les-sjogren*
