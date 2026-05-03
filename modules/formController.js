@@ -213,6 +213,7 @@ function mostrarElementosAR() {
     // Mostrar secciones específicas
     const elementosAR = [
         'criteriosACREULARSection', 'seccionesClinicasARSection',
+        'valoracionClinicaARSegSection',
         'das28CrpSection', 'das28EsrSection', 'evaMedicoSection',
         'cdaiSection', 'sdaiSection',
         'entesitisTitle', 'entesitisSection',
