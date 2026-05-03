@@ -998,9 +998,20 @@
 .aps-only.show {
     display: block;
 }
+.les-only {
+    display: none;
+}
 
+.les-only.show {
+    display: block;
+}
 
-display: block;
+.sjogren-only {
+    display: none;
+}
+
+.sjogren-only.show {
+    display: block;
 }
 
 /* ========================================

@@ -305,6 +305,144 @@ function categorizeScore(valor, scoreType) {
     return { categoria, color, label, backgroundColor: color + '22' };
 }
 
+// ============================================================
+// SLEDAI-2K (Systemic Lupus Erythematosus Disease Activity Index 2000)
+// 24 ítems con pesos 8/4/2/1. Suma ponderada.
+// ============================================================
+function calcularSLEDAI2K(datos) {
+    const items = [
+        ['sledaiSeizure', 8],
+        ['sledaiPsychosis', 8],
+        ['sledaiOrganicBrainSyndrome', 8],
+        ['sledaiVisualDisturbance', 8],
+        ['sledaiCranialNerveDisorder', 8],
+        ['sledaiLupusHeadache', 8],
+        ['sledaiCVA', 8],
+        ['sledaiVasculitis', 8],
+        ['sledaiArthritis', 4],
+        ['sledaiMyositis', 4],
+        ['sledaiUrinaryCasts', 4],
+        ['sledaiHematuria', 4],
+        ['sledaiProteinuria', 4],
+        ['sledaiPyuria', 4],
+        ['sledaiRash', 2],
+        ['sledaiAlopecia', 2],
+        ['sledaiMucosalUlcers', 2],
+        ['sledaiPleurisy', 2],
+        ['sledaiPericarditis', 2],
+        ['sledaiLowComplement', 2],
+        ['sledaiIncreasedDNABinding', 2],
+        ['sledaiFever', 1],
+        ['sledaiThrombocytopenia', 1],
+        ['sledaiLeukopenia', 1]
+    ];
+
+    let hasAny = false;
+    const total = items.reduce(function (sum, item) {
+        const key = item[0];
+        const weight = item[1];
+        const active = datos && (
+            datos[key] === true ||
+            datos[key] === 'true' ||
+            datos[key] === 'SI' ||
+            datos[key] === 'Sí' ||
+            datos[key] === 'si' ||
+            datos[key] === '1' ||
+            datos[key] === 1
+        );
+        if (active) hasAny = true;
+        return sum + (active ? weight : 0);
+    }, 0);
+
+    return hasAny ? total : '';
+}
+
+// ============================================================
+// SLICC/ACR SDI (Systemic Lupus International Collaborating Clinics Damage Index)
+// Entrada estructurada por dominios/subtotales (no checklist individual).
+// ============================================================
+function calcularSLICCSDI(datos) {
+    const domains = [
+        ['sliccOcular', 0, 2],
+        ['sliccNeuropsychiatric', 0, 6],
+        ['sliccRenal', 0, 3],
+        ['sliccPulmonary', 0, 5],
+        ['sliccCardiovascular', 0, 6],
+        ['sliccPeripheralVascular', 0, 5],
+        ['sliccGastrointestinal', 0, 6],
+        ['sliccMusculoskeletal', 0, 7],
+        ['sliccSkin', 0, 3],
+        ['sliccEndocrineDiabetes', 0, 1],
+        ['sliccGonadal', 0, 1],
+        ['sliccMalignancy', 0, 2]
+    ];
+
+    let hasAny = false;
+    const total = domains.reduce(function (sum, domain) {
+        const key = domain[0];
+        const min = domain[1];
+        const max = domain[2];
+        const value = parseNumberInRange(datos?.[key], min, max, { fallback: null, integer: true });
+        if (value !== null) hasAny = true;
+        return sum + (value || 0);
+    }, 0);
+
+    return hasAny ? total : '';
+}
+
+// ============================================================
+// ESSPRI (EULAR Sjögren's Syndrome Patient Reported Index)
+// PROM: media de sequedad, dolor y fatiga (0-10).
+// ============================================================
+function calcularESSPRI(datos) {
+    const sequedad = parseNumberInRange(datos?.esspriSequedad, 0, 10, { fallback: null });
+    const dolor = parseNumberInRange(datos?.esspriDolor, 0, 10, { fallback: null });
+    const fatiga = parseNumberInRange(datos?.esspriFatiga, 0, 10, { fallback: null });
+
+    if (sequedad === null && dolor === null && fatiga === null) return '';
+
+    const values = [
+        sequedad === null ? 0 : sequedad,
+        dolor === null ? 0 : dolor,
+        fatiga === null ? 0 : fatiga
+    ];
+
+    return formatFixed(calculateMean(values), 2);
+}
+
+// ============================================================
+// ESSDAI (EULAR Sjögren's Syndrome Disease Activity Index)
+// 12 dominios con niveles 0-3 y pesos específicos.
+// ============================================================
+function calcularESSDAI(datos) {
+    const domains = [
+        ['essdaiConstitutional', 3],
+        ['essdaiLymphadenopathy', 4],
+        ['essdaiGlandular', 2],
+        ['essdaiArticular', 2],
+        ['essdaiCutaneous', 3],
+        ['essdaiPulmonary', 5],
+        ['essdaiRenal', 5],
+        ['essdaiMuscular', 6],
+        ['essdaiPeripheralNervousSystem', 5],
+        ['essdaiCentralNervousSystem', 5],
+        ['essdaiHematological', 2],
+        ['essdaiBiological', 1]
+    ];
+
+    let hasAny = false;
+    const total = domains.reduce(function (sum, domain) {
+        const key = domain[0];
+        const weight = domain[1];
+        const level = parseNumberInRange(datos?.[key], 0, 3, { fallback: null, integer: true });
+
+        if (level !== null) hasAny = true;
+        return sum + ((level || 0) * weight);
+    }, 0);
+
+    return hasAny ? total : '';
+}
+
 if (typeof HubTools !== 'undefined') {
     HubTools.scores.calcularBASDAI = calcularBASDAI;
     HubTools.scores.calcularASDAS = calcularASDAS;
@@ -315,5 +453,9 @@ if (typeof HubTools !== 'undefined') {
     HubTools.scores.calcularDAS28 = calcularDAS28;
     HubTools.scores.calcularCDAI = calcularCDAI;
     HubTools.scores.calcularSDAI = calcularSDAI;
+    HubTools.scores.calcularSLEDAI2K = calcularSLEDAI2K;
+    HubTools.scores.calcularSLICCSDI = calcularSLICCSDI;
+    HubTools.scores.calcularESSPRI = calcularESSPRI;
+    HubTools.scores.calcularESSDAI = calcularESSDAI;
     HubTools.scores.categorizeScore = categorizeScore;
 }
