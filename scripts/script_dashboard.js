@@ -167,69 +167,17 @@ function attachDashboardActions(patientId) {
             var summary = window.patientSummary || {};
             var latestVisit = (window.patientHistory && window.patientHistory.latestVisit) ? normalizeRecord(window.patientHistory.latestVisit) : {};
 
-            // Construir objeto datos combinando summary y latestVisit
+            // Construir objeto datos: spread completo para no perder campos,
+            // luego override con aliases y campos mínimos normalizados.
             var datos = {
-                cip: summary.cip || summary.idPaciente || '',
-                idPaciente: summary.idPaciente || '',
-                nombrePaciente: summary.nombre || summary.nombrePaciente || '',
-                fechaVisita: latestVisit.fechaVisita || summary.fechaVisita || '',
-                profesional: latestVisit.profesional || summary.profesional || '',
-                diagnosticoPrimario: summary.diagnosticoPrimario || window.currentPathology || '',
-                diagnosticoSecundario: summary.diagnosticoSecundario || latestVisit.diagnosticoSecundario || '',
-                tratamientoActual: summary.tratamientoActual || latestVisit.tratamientoActual || '',
-                // Scores de actividad desde latestVisit
-                evaGlobal: latestVisit.evaGlobal || '',
-                evaDolor: latestVisit.evaDolor || '',
-                evaMedico: latestVisit.evaMedico || '',
-                basdaiResult: latestVisit.basdaiResult || '',
-                asdasCrpResult: latestVisit.asdasCrpResult || '',
-                asdasEsrResult: latestVisit.asdasEsrResult || '',
-                das28CrpResult: latestVisit.das28CrpResult || '',
-                das28EsrResult: latestVisit.das28EsrResult || '',
-                cdaiResult: latestVisit.cdaiResult || '',
-                sdaiResult: latestVisit.sdaiResult || '',
-                rapid3Total: latestVisit.rapid3Total || latestVisit.rapid3Result || '',
-                rapid3Categoria: latestVisit.rapid3Categoria || '',
-                // Métricas v2 — LES
-                SLEDAI_2K_Result: latestVisit.SLEDAI_2K_Result || latestVisit.sledai2kResult || '',
-                SLICC_ACR_SDI: latestVisit.SLICC_ACR_SDI || latestVisit.sliccSdi || '',
-                Dosis_Prednisona_Mg_Dia: latestVisit.Dosis_Prednisona_Mg_Dia || latestVisit.dosisPrednisona || '',
-                // Métricas v2 — Sjögren
-                ESSPRI_Result: latestVisit.ESSPRI_Result || latestVisit.esspriResult || '',
-                ESSDAI_Result: latestVisit.ESSDAI_Result || latestVisit.essdaiResult || '',
-                EVA_Sequedad_Oral: latestVisit.EVA_Sequedad_Oral || latestVisit.evaSequedadOral || '',
-                EVA_Sequedad_Ocular: latestVisit.EVA_Sequedad_Ocular || latestVisit.evaSequedadOcular || '',
-                EVA_Fatiga_Sjogren: latestVisit.EVA_Fatiga_Sjogren || latestVisit.evaFatigaSjogren || '',
-                EVA_Dolor_Sjogren: latestVisit.EVA_Dolor_Sjogren || latestVisit.evaDolorSjogren || '',
-                // Métricas v2 — APs
-                DAPSA_Result: latestVisit.DAPSA_Result || latestVisit.dapsaResult || '',
-                PASI: latestVisit.PASI || latestVisit.pasiResult || '',
-                LEI_Score: latestVisit.LEI_Score || latestVisit.leiScore || '',
-                BSA: latestVisit.BSA || latestVisit.bsaResult || '',
-                // Tratamientos (fallback a campos individuales)
-                sistemicoSelect: latestVisit.sistemicoSelect || '',
-                sistemicoDose: latestVisit.sistemicoDose || '',
-                fameSelect: latestVisit.fameSelect || '',
-                fameDose: latestVisit.fameDose || '',
-                biologicoSelect: latestVisit.biologicoSelect || '',
-                biologicoDose: latestVisit.biologicoDose || '',
-                planSistemicosEntries: latestVisit.planSistemicosEntries || latestVisit.cambioSistemicosEntries || [],
-                planFamesEntries: latestVisit.planFamesEntries || latestVisit.cambioFamesEntries || [],
-                planBiologicosEntries: latestVisit.planBiologicosEntries || latestVisit.cambioBiologicosEntries || [],
-                decisionTerapeutica: latestVisit.decisionTerapeutica || '',
-                tratamientoData: latestVisit.tratamientoData || {},
-                estadoPrebiologicoFinal: latestVisit.estadoPrebiologicoFinal || latestVisit.Estado_Prebiologico_Final || '',
-                fechaValidacionPrebiologico: latestVisit.fechaValidacionPrebiologico || latestVisit.Fecha_Validacion_Prebiologico || '',
-                hemogramaCorrecto: latestVisit.hemogramaCorrecto || latestVisit.Hemograma_Correcto || '',
-                bioquimicaCorrecta: latestVisit.bioquimicaCorrecta || latestVisit.Bioquimica_Correcta || '',
-                serologiasCorrectas: latestVisit.serologiasCorrectas || latestVisit.Serologias_Correctas || '',
-                igraMantouxResultado: latestVisit.igraMantouxResultado || latestVisit.IGRA_Mantoux_Resultado || '',
-                rxToraxCorrecta: latestVisit.rxToraxCorrecta || latestVisit.Rx_Torax_Correcta || '',
-                vacunacionRevisada: latestVisit.vacunacionRevisada || latestVisit.Vacunacion_Revisada || '',
-                vacunacionOK: latestVisit.vacunacionOK || latestVisit.Vacunacion_OK || '',
-                medicinaPreventivaDerivada: latestVisit.medicinaPreventivaDerivada || latestVisit.Medicina_Preventiva_Derivada || '',
-                vacunasPendientes: latestVisit.vacunasPendientes || latestVisit.Vacunas_Pendientes || '',
-                observacionesPrebiologico: latestVisit.observacionesPrebiologico || latestVisit.Observaciones_Prebiologico || ''
+                ...latestVisit,
+                ...summary,
+                cip: summary.cip || latestVisit.cip || summary.idPaciente || latestVisit.idPaciente || latestVisit.CIP || '',
+                idPaciente: summary.idPaciente || latestVisit.idPaciente || latestVisit.ID_Paciente || latestVisit.CIP || '',
+                nombrePaciente: summary.nombre || summary.nombrePaciente || latestVisit.nombrePaciente || latestVisit.Nombre_Paciente || '',
+                diagnosticoPrimario: summary.diagnosticoPrimario || latestVisit.diagnosticoPrimario || latestVisit.Diagnostico_Principal || window.currentPathology || '',
+                diagnosticoSecundario: summary.diagnosticoSecundario || latestVisit.diagnosticoSecundario || latestVisit.Diagnostico_Secundario || '',
+                tratamientoActual: summary.tratamientoActual || latestVisit.tratamientoActual || latestVisit.Tratamiento_Actual || ''
             };
 
             if (typeof HubTools !== 'undefined' && HubTools.pharmacy && typeof HubTools.pharmacy.copyRequestToClipboard === 'function') {

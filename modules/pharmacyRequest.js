@@ -19,11 +19,19 @@
 
     /**
      * Obtiene el CIP del paciente desde los datos.
-     * Prefiere datos.cip, luego datos.idPaciente.
+     * Acepta múltiples aliases: cip, CIP, idPaciente, ID_Paciente, NHC, NHS.
      */
     function getCIP(datos) {
         if (!datos) return '';
-        return (datos.cip || datos.idPaciente || '').toString().trim();
+        return (
+            datos.cip ||
+            datos.CIP ||
+            datos.idPaciente ||
+            datos.ID_Paciente ||
+            datos.NHC ||
+            datos.NHS ||
+            ''
+        ).toString().trim();
     }
 
     /**

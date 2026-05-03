@@ -117,7 +117,21 @@ function normalizeRecord(record, extra) {
         sdaiResult: getCanonicalField(record, 'sdaiResult', ''),
         rapid3Result: getCanonicalField(record, 'rapid3Result', ''),
         motivoCambio: getCanonicalField(record, 'motivoCambio', ''),
-        comentariosAdicionales: getCanonicalField(record, 'comentariosAdicionales', '')
+        comentariosAdicionales: getCanonicalField(record, 'comentariosAdicionales', ''),
+        // ── Campos v2 multipatología ──────────────────────────────
+        sledai2kResult: getCanonicalField(record, 'sledai2kResult', ''),
+        sliccSdi: getCanonicalField(record, 'sliccSdi', ''),
+        dosisPrednisona: getCanonicalField(record, 'dosisPrednisona', ''),
+        esspriResult: getCanonicalField(record, 'esspriResult', ''),
+        essdaiResult: getCanonicalField(record, 'essdaiResult', ''),
+        evaSequedadOral: getCanonicalField(record, 'evaSequedadOral', ''),
+        evaSequedadOcular: getCanonicalField(record, 'evaSequedadOcular', ''),
+        evaFatigaSjogren: getCanonicalField(record, 'evaFatigaSjogren', ''),
+        evaDolorSjogren: getCanonicalField(record, 'evaDolorSjogren', ''),
+        dapsaResult: getCanonicalField(record, 'dapsaResult', ''),
+        pasiResult: getCanonicalField(record, 'pasiResult', ''),
+        leiResult: getCanonicalField(record, 'leiResult', ''),
+        bsaResult: getCanonicalField(record, 'bsaResult', '')
     };
     return { ...normalized, ...(extra || {}) };
 }

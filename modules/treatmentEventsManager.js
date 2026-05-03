@@ -117,7 +117,7 @@
      * @returns {string} Fecha ISO
      */
     function getVisitDate(visit) {
-        var d = visit.Fecha || visit.Fecha_Visita || visit.fecha || '';
+        var d = visit.Fecha || visit.Fecha_Visita || visit.fechaVisita || visit.fecha || '';
         return toISODate(d);
     }
 
@@ -128,9 +128,9 @@
      */
     function getTreatmentCurrent(visit) {
         if (!visit) return '';
-        return normalizeTreatmentText(
-            visit.Tratamiento_Actual !== undefined ? visit.Tratamiento_Actual : ''
-        );
+        var raw = visit.Tratamiento_Actual !== undefined ? visit.Tratamiento_Actual :
+                  visit.tratamientoActual !== undefined ? visit.tratamientoActual : '';
+        return normalizeTreatmentText(raw);
     }
 
     /**
@@ -153,23 +153,35 @@
         if (!visit) return [];
         var list = [];
 
-        if (visit.planBiologicoEntries && Array.isArray(visit.planBiologicoEntries)) {
-            for (var i = 0; i < visit.planBiologicoEntries.length; i++) {
-                var entry = visit.planBiologicoEntries[i];
-                if (entry && entry.farmaco) {
-                    list.push(normalizeTreatmentText(entry.farmaco));
+        var entrySources = [
+            visit.planBiologicoEntries,
+            visit.planBiologicosEntries,
+            visit.cambioBiologicoEntries,
+            visit.cambioBiologicosEntries
+        ];
+        for (var s = 0; s < entrySources.length; s++) {
+            var src = entrySources[s];
+            if (src && Array.isArray(src)) {
+                for (var i = 0; i < src.length; i++) {
+                    var entry = src[i];
+                    if (entry && entry.farmaco) {
+                        list.push(normalizeTreatmentText(entry.farmaco));
+                    }
                 }
             }
+            if (list.length > 0) break;
         }
 
-        if (list.length === 0 && visit.biologicoSelect) {
-            var sel = visit.biologicoSelect;
-            if (Array.isArray(sel)) {
-                for (var j = 0; j < sel.length; j++) {
-                    if (sel[j]) list.push(normalizeTreatmentText(String(sel[j])));
+        if (list.length === 0) {
+            var sel = visit.biologicoSelect || visit.Biologico;
+            if (sel) {
+                if (Array.isArray(sel)) {
+                    for (var j = 0; j < sel.length; j++) {
+                        if (sel[j]) list.push(normalizeTreatmentText(String(sel[j])));
+                    }
+                } else if (typeof sel === 'string' && sel.trim() !== '') {
+                    list.push(normalizeTreatmentText(sel));
                 }
-            } else if (typeof sel === 'string' && sel.trim() !== '') {
-                list.push(normalizeTreatmentText(sel));
             }
         }
 
@@ -518,9 +530,9 @@
                 scoreName = 'BASDAI';
                 break;
             case 'aps':
-                currentScore = getNumericScoreFromVisit(currentVisit, ['DAPSA_Result', 'DAPSA', 'dapsa', 'RAPID3_Score', 'RAPID3', 'HAQ_Total', 'HAQ']);
-                previousScore = getNumericScoreFromVisit(previousVisit, ['DAPSA_Result', 'DAPSA', 'dapsa', 'RAPID3_Score', 'RAPID3', 'HAQ_Total', 'HAQ']);
-                scoreName = 'DAPSA/RAPID3/HAQ';
+                currentScore = getNumericScoreFromVisit(currentVisit, ['DAPSA_Result', 'DAPSA', 'dapsa']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['DAPSA_Result', 'DAPSA', 'dapsa']);
+                scoreName = 'DAPSA';
                 break;
             case 'les':
                 currentScore = getNumericScoreFromVisit(currentVisit, ['SLEDAI_2K_Result', 'SLEDAI_2K', 'SLEDAI', 'SLEDAI_Result', 'sledai2k']);
