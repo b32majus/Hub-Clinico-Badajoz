@@ -101,6 +101,11 @@ function adaptarFormulario(diagnostico) {
             patologiaSubtitle.textContent = 'Artritis Reumatoide';
             mostrarElementosAR();
             break;
+        case 'les':
+            patologiaHighlight.textContent = 'LES';
+            patologiaSubtitle.textContent = 'Lupus Eritematoso Sistémico';
+            mostrarElementosLES();
+            break;
         default:
             patologiaHighlight.textContent = 'Reumatología';
             patologiaSubtitle.textContent = 'Seleccione sospecha diagnóstica para adaptar el formulario';
@@ -115,7 +120,7 @@ function ocultarTodosElementosEspecificos() {
     console.log('🔄 Ocultando todos los elementos específicos de patología');
 
     // Ocultar todos los elementos con clases específicas de patología
-    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only'];
+    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only', '.les-only'];
     selectors.forEach(selector => hideElementsBySelector(selector));
 
     // Ocultar biomarcadores
@@ -246,6 +251,36 @@ function mostrarElementosAR() {
     }
 
     console.log('✅ Elementos AR mostrados correctamente');
+}
+
+function mostrarElementosLES() {
+    console.log('📋 Mostrando elementos específicos de LES');
+
+    // Biomarcadores: ANA
+    showElement('anaContainer', 'block');
+
+    // Secciones específicas de LES
+    showElementsBySelector('.les-only', 'block');
+
+    // Ocultar secciones no aplicables a LES
+    hideElementsBySelector('.ar-only');
+    hideElementsBySelector('.espa-only');
+    hideElementsBySelector('.aps-only');
+    hideElementsBySelector('.espa-aps-only');
+
+    // Mostrar secciones compatibles (tratamiento, PROs)
+    // El handler de brote actual (toggle tipo de brote)
+    const broteSelect = document.getElementById('broteActual');
+    if (broteSelect) {
+        broteSelect.addEventListener('change', function () {
+            const tipoGroup = document.getElementById('tipoBroteGroup');
+            if (tipoGroup) {
+                tipoGroup.style.display = (this.value && this.value !== 'No') ? 'block' : 'none';
+            }
+        });
+    }
+
+    console.log('✅ Elementos LES mostrados correctamente');
 }
 
 function initializeACREULAR() {
@@ -1217,6 +1252,49 @@ function recopilarDatosFormulario() {
     const asasResultado = document.getElementById('resultadoASAS')?.textContent || '';
     const casparPuntuacion = document.getElementById('puntuacionCASPAR')?.textContent || '';
     const casparResultado = document.getElementById('resultadoCASPAR')?.textContent || '';
+
+    // === Campos LES ===
+    const sledaiResult = document.getElementById('sledaiResult')?.value || '';
+    const sledai2kResult = document.getElementById('sledai2kResult')?.value || '';
+    const sliccAcrSdi = document.getElementById('sliccAcrSdi')?.value || '';
+    const dosisPrednisona = document.getElementById('dosisPrednisona')?.value || '';
+    const broteActual = document.getElementById('broteActual')?.value || '';
+    const tipoBrote = document.getElementById('tipoBrote')?.value || '';
+    const actividadGlobalMedico = document.getElementById('actividadGlobalMedico')?.value || '';
+    const actividadGlobalPaciente = document.getElementById('actividadGlobalPaciente')?.value || '';
+    // Manifestaciones LES
+    const lesCutaneo = document.getElementById('lesCutaneo')?.checked ? 'SI' : 'NO';
+    const lesArticular = document.getElementById('lesArticular')?.checked ? 'SI' : 'NO';
+    const lesRenal = document.getElementById('lesRenal')?.checked ? 'SI' : 'NO';
+    const lesNeurologico = document.getElementById('lesNeurologico')?.checked ? 'SI' : 'NO';
+    const lesHematologico = document.getElementById('lesHematologico')?.checked ? 'SI' : 'NO';
+    const lesSeroso = document.getElementById('lesSeroso')?.checked ? 'SI' : 'NO';
+    const lesCardiopulmonar = document.getElementById('lesCardiopulmonar')?.checked ? 'SI' : 'NO';
+    const lesVascular = document.getElementById('lesVascular')?.checked ? 'SI' : 'NO';
+    const lesOcular = document.getElementById('lesOcular')?.checked ? 'SI' : 'NO';
+    const lesOtros = document.getElementById('lesOtros')?.checked ? 'SI' : 'NO';
+    const lesManifestacionesDescripcion = document.getElementById('lesManifestacionesDescripcion')?.value || '';
+    // Inmunología LES
+    const anaLes = document.getElementById('anaLes')?.value || '';
+    const antiDnaLes = document.getElementById('antiDnaLes')?.value || '';
+    const antiSmLes = document.getElementById('antiSmLes')?.value || '';
+    const antiRoLes = document.getElementById('antiRoLes')?.value || '';
+    const antiLaLes = document.getElementById('antiLaLes')?.value || '';
+    const complementoC3 = document.getElementById('complementoC3')?.value || '';
+    const complementoC4 = document.getElementById('complementoC4')?.value || '';
+    const proteinuriaLes = document.getElementById('proteinuriaLes')?.value || '';
+    const sedimentoUrinarioLes = document.getElementById('sedimentoUrinarioLes')?.value || '';
+    const creatininaLes = document.getElementById('creatininaLes')?.value || '';
+    const pcrLes = document.getElementById('pcrLes')?.value || '';
+    const vsgLes = document.getElementById('vsgLes')?.value || '';
+    const hemogramaAlteracionesLes = document.getElementById('hemogramaAlteracionesLes')?.value || '';
+    const otrosHallazgosAnaliticaLes = document.getElementById('otrosHallazgosAnaliticaLes')?.value || '';
+    // PROs LES
+    const evaDolorLes = document.getElementById('evaDolorLes')?.value || '';
+    const evaFatigaLes = document.getElementById('evaFatigaLes')?.value || '';
+    const evaGlobalLes = document.getElementById('evaGlobalLes')?.value || '';
+    const calidadVidaComentarioLes = document.getElementById('calidadVidaComentarioLes')?.value || '';
+
     const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
 
     const datosCompletos = {
@@ -1254,6 +1332,15 @@ function recopilarDatosFormulario() {
         maniobrasSacroiliacas, comentariosSacroiliacas,
         asasLumbalgia3Meses, asasCriteriosCumplidos, asasResultado,
         casparPuntuacion, casparResultado,
+        // LES
+        sledaiResult, sledai2kResult, sliccAcrSdi, dosisPrednisona, broteActual, tipoBrote,
+        actividadGlobalMedico, actividadGlobalPaciente,
+        lesCutaneo, lesArticular, lesRenal, lesNeurologico, lesHematologico, lesSeroso,
+        lesCardiopulmonar, lesVascular, lesOcular, lesOtros, lesManifestacionesDescripcion,
+        anaLes, antiDnaLes, antiSmLes, antiRoLes, antiLaLes,
+        complementoC3, complementoC4, proteinuriaLes, sedimentoUrinarioLes,
+        creatininaLes, pcrLes, vsgLes, hemogramaAlteracionesLes, otrosHallazgosAnaliticaLes,
+        evaDolorLes, evaFatigaLes, evaGlobalLes, calidadVidaComentarioLes,
         comentariosAdicionales
     };
 
@@ -1589,6 +1676,45 @@ function recopilarDatosFormularioSeguimiento() {
         decisionTerapeutica = 'cambiar';
     }
 
+    // === Campos LES ===
+    const sledaiResult = getValue('sledaiResult');
+    const sledai2kResult = getValue('sledai2kResult');
+    const sliccAcrSdi = getValue('sliccAcrSdi');
+    const dosisPrednisona = getValue('dosisPrednisona');
+    const broteActual = getValue('broteActual');
+    const tipoBrote = getValue('tipoBrote');
+    const actividadGlobalMedico = getValue('actividadGlobalMedico');
+    const actividadGlobalPaciente = getValue('actividadGlobalPaciente');
+    const lesCutaneo = isChecked('lesCutaneo') ? 'SI' : 'NO';
+    const lesArticular = isChecked('lesArticular') ? 'SI' : 'NO';
+    const lesRenal = isChecked('lesRenal') ? 'SI' : 'NO';
+    const lesNeurologico = isChecked('lesNeurologico') ? 'SI' : 'NO';
+    const lesHematologico = isChecked('lesHematologico') ? 'SI' : 'NO';
+    const lesSeroso = isChecked('lesSeroso') ? 'SI' : 'NO';
+    const lesCardiopulmonar = isChecked('lesCardiopulmonar') ? 'SI' : 'NO';
+    const lesVascular = isChecked('lesVascular') ? 'SI' : 'NO';
+    const lesOcular = isChecked('lesOcular') ? 'SI' : 'NO';
+    const lesOtros = isChecked('lesOtros') ? 'SI' : 'NO';
+    const lesManifestacionesDescripcion = getValue('lesManifestacionesDescripcion');
+    const anaLes = getValue('anaLes');
+    const antiDnaLes = getValue('antiDnaLes');
+    const antiSmLes = getValue('antiSmLes');
+    const antiRoLes = getValue('antiRoLes');
+    const antiLaLes = getValue('antiLaLes');
+    const complementoC3 = getValue('complementoC3');
+    const complementoC4 = getValue('complementoC4');
+    const proteinuriaLes = getValue('proteinuriaLes');
+    const sedimentoUrinarioLes = getValue('sedimentoUrinarioLes');
+    const creatininaLes = getValue('creatininaLes');
+    const pcrLes = getValue('pcrLes');
+    const vsgLes = getValue('vsgLes');
+    const hemogramaAlteracionesLes = getValue('hemogramaAlteracionesLes');
+    const otrosHallazgosAnaliticaLes = getValue('otrosHallazgosAnaliticaLes');
+    const evaDolorLes = getValue('evaDolorLes');
+    const evaFatigaLes = getValue('evaFatigaLes');
+    const evaGlobalLes = getValue('evaGlobalLes');
+    const calidadVidaComentarioLes = getValue('calidadVidaComentarioLes');
+
     const tratamientoData = {
         continuar: {
             adherencia: getValue('adherencia'),
@@ -1625,6 +1751,15 @@ function recopilarDatosFormularioSeguimiento() {
         sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
         cambioSistemicosEntries, cambioFamesEntries, cambioBiologicosEntries,
         tratamientoData, decisionTerapeutica,
+        // LES
+        sledaiResult, sledai2kResult, sliccAcrSdi, dosisPrednisona, broteActual, tipoBrote,
+        actividadGlobalMedico, actividadGlobalPaciente,
+        lesCutaneo, lesArticular, lesRenal, lesNeurologico, lesHematologico, lesSeroso,
+        lesCardiopulmonar, lesVascular, lesOcular, lesOtros, lesManifestacionesDescripcion,
+        anaLes, antiDnaLes, antiSmLes, antiRoLes, antiLaLes,
+        complementoC3, complementoC4, proteinuriaLes, sedimentoUrinarioLes,
+        creatininaLes, pcrLes, vsgLes, hemogramaAlteracionesLes, otrosHallazgosAnaliticaLes,
+        evaDolorLes, evaFatigaLes, evaGlobalLes, calidadVidaComentarioLes,
         fechaProximaRevision, comentariosAdicionales
     };
 }

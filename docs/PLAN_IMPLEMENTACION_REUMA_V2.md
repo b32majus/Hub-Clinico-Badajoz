@@ -2355,3 +2355,46 @@ Fecha: 2026-05-03.
 - [x] RAPID3 legible y bien distribuido.
 - [x] Consola sin errores en primera visita, seguimiento y dashboard.
 - [x] Working tree limpio.
+
+## Fase 7 ejecutada — LES como patología completa
+
+**Fecha**: 2026-05-03
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `primera_visita.html` | Añadido `<option value="les">` al selector `#diagnosticoPrimario`. Añadido bloque HTML LES con 4 collapsible-sections: Actividad LES, Manifestaciones por Órgano, Inmunología/Analítica, PROs/Impacto. |
+| `seguimiento.html` | Añadido `<option value="les">` al selector. Añadido bloque HTML LES (mismo que primera_visita.html). |
+| `estadisticas.html` | Añadido `<option value="LES">` al `#filterPathology`. |
+| `script.js` | Añadido `les: 'Lupus eritematoso sistémico (LES)'` a `PATHOLOGY_LABELS`. |
+| `modules/formController.js` | Añadido `'.les-only'` a ocultarTodosElementosEspecificos. Añadido `case 'les'` en adaptarFormulario. Creada función `mostrarElementosLES()`. Añadidos 37 campos LES a `recopilarDatosFormulario()` y `recopilarDatosFormularioSeguimiento()`. |
+| `modules/exportManager.js` | Añadidas 37 columnas LES a `EXTRA_EXPORT_HEADERS`. Añadido bloque `lesValues` en `buildExtendedColumns`. Añadido bloque LES a `generarNotaClinica` con 4 secciones (Actividad, Manifestaciones, Inmunología, PROs). |
+| `scripts/script_dashboard.js` | Añadido rama LES en `configureDashboardMetricLabels` (SLEDAI-2K / SLICC). Añadido rama LES en `populatePatientKPIs`. Añadidos thresholds `sledai2k` y `slicc` en `getKPIStatus`. |
+| `modules/pharmacyRequest.js` | Reemplazado placeholder LES con datos reales: SLEDAI-2K, SLICC, dosis prednisona, brote actual, manifestaciones activas, analítica relevante. |
+| `modules/dataManager.js` | Añadido 'LES' a 8 arrays de hojas clínicas: saveToSessionStorage, requiredSheets, loadWorkbook, validateHeaders, y 3 funciones más. |
+| `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | Añadida sección Fase 7. |
+
+### Campos LES implementados (37)
+
+**Actividad**: SLEDAI, SLEDAI-2K, SLICC/ACR SDI, Dosis prednisona, Brote actual (No/leve/moderado/grave), Tipo brote, Actividad global médico, Actividad global paciente.
+
+**Manifestaciones**: 10 checkboxes (Cutáneo, Articular, Renal, Neurológico, Hematológico, Seroso, Cardiopulmonar, Vascular, Ocular, Otros) + descripción.
+
+**Inmunología**: ANA, Anti-DNA, Anti-Sm, Anti-Ro, Anti-La, C3, C4, Proteinuria, Sedimento urinario, Creatinina, PCR, VSG, Hemograma alteraciones, Otros hallazgos.
+
+**PROs**: EVA Dolor, EVA Fatiga, EVA Global, Calidad de vida.
+
+### Checklist Fase 7
+
+- [x] LES aparece en selector (primera_visita.html, seguimiento.html, estadisticas.html).
+- [x] Se puede crear primera visita LES con todos los campos.
+- [x] Se puede crear seguimiento LES con todos los campos.
+- [x] TXT LES incluye bloque LES con actividad, manifestaciones, inmunología, PROs.
+- [x] CSV LES conserva columnas históricas + 37 nuevas columnas LES al final.
+- [x] Dashboard LES muestra SLEDAI-2K y SLICC como métricas primaria/secundaria.
+- [x] Dashboard LES muestra KPIs con thresholds de actividad.
+- [x] Solicitud FH incluye datos LES reales (no placeholder).
+- [x] dataManager reconoce hoja 'LES'.
+- [x] No se rompen AR/EspA/APs.
+- [x] Consola sin errores de sintaxis (node -c todos los archivos OK).

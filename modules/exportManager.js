@@ -53,7 +53,17 @@ const EXTRA_EXPORT_HEADERS = [
     'MDHAQ_A', 'MDHAQ_B', 'MDHAQ_C', 'MDHAQ_D', 'MDHAQ_E', 'MDHAQ_F', 'MDHAQ_G', 'MDHAQ_H', 'MDHAQ_I', 'MDHAQ_J',
     'RAPID3_Categoria',
     'Maniobras_Sacroiliacas', 'Comentarios_Sacroiliacas', 'ASAS_Lumbalgia_3m', 'ASAS_Criterios_Cumplidos', 'ASAS_Resultado',
-    'CASPAR_Puntuacion', 'CASPAR_Resultado'
+    'CASPAR_Puntuacion', 'CASPAR_Resultado',
+    // LES
+    'SLEDAI', 'SLEDAI_2K', 'SLICC_SDI', 'Dosis_Prednisona', 'Brote_Actual', 'Tipo_Brote',
+    'Actividad_Global_Medico', 'Actividad_Global_Paciente',
+    'LES_Cutaneo', 'LES_Articular', 'LES_Renal', 'LES_Neurologico', 'LES_Hematologico',
+    'LES_Seroso', 'LES_Cardiopulmonar', 'LES_Vascular', 'LES_Ocular', 'LES_Otros',
+    'LES_Manifestaciones_Descripcion',
+    'ANA_LES', 'Anti_DNA', 'Anti_Sm', 'Anti_Ro', 'Anti_La',
+    'C3', 'C4', 'Proteinuria_LES', 'Sedimento_Urinario_LES', 'Creatinina_LES',
+    'PCR_LES', 'VSG_LES', 'Hemograma_Alteraciones_LES', 'Otros_Hallazgos_Analitica_LES',
+    'EVA_Dolor_LES', 'EVA_Fatiga_LES', 'EVA_Global_LES', 'Calidad_Vida_Comentario_LES'
 ];
 
 function normalizarEstadoExport(value, fallback = 'ND') {
@@ -187,7 +197,49 @@ function buildExtendedColumns(datos, pathology) {
         datos.casparResultado || ''
     ] : Array(53).fill('NA');
 
+    const isLES = pathology === 'les';
+    const lesValues = isLES ? [
+        datos.sledaiResult || '',
+        datos.sledai2kResult || '',
+        datos.sliccAcrSdi || '',
+        datos.dosisPrednisona || '',
+        datos.broteActual || '',
+        datos.tipoBrote || '',
+        datos.actividadGlobalMedico || '',
+        datos.actividadGlobalPaciente || '',
+        normalizarEstadoExport(datos.lesCutaneo, 'NO'),
+        normalizarEstadoExport(datos.lesArticular, 'NO'),
+        normalizarEstadoExport(datos.lesRenal, 'NO'),
+        normalizarEstadoExport(datos.lesNeurologico, 'NO'),
+        normalizarEstadoExport(datos.lesHematologico, 'NO'),
+        normalizarEstadoExport(datos.lesSeroso, 'NO'),
+        normalizarEstadoExport(datos.lesCardiopulmonar, 'NO'),
+        normalizarEstadoExport(datos.lesVascular, 'NO'),
+        normalizarEstadoExport(datos.lesOcular, 'NO'),
+        normalizarEstadoExport(datos.lesOtros, 'NO'),
+        datos.lesManifestacionesDescripcion || '',
+        datos.anaLes || '',
+        datos.antiDnaLes || '',
+        datos.antiSmLes || '',
+        datos.antiRoLes || '',
+        datos.antiLaLes || '',
+        datos.complementoC3 || '',
+        datos.complementoC4 || '',
+        datos.proteinuriaLes || '',
+        datos.sedimentoUrinarioLes || '',
+        datos.creatininaLes || '',
+        datos.pcrLes || '',
+        datos.vsgLes || '',
+        datos.hemogramaAlteracionesLes || '',
+        datos.otrosHallazgosAnaliticaLes || '',
+        datos.evaDolorLes || '',
+        datos.evaFatigaLes || '',
+        datos.evaGlobalLes || '',
+        datos.calidadVidaComentarioLes || ''
+    ] : Array(37).fill('NA');
+
     extra.push(...arValues);
+    extra.push(...lesValues);
     return extra;
 }
 
@@ -1165,6 +1217,7 @@ function generarNotaClinica(datos) {
 
     // EVALUACIÓN DE ACTIVIDAD (si existe)
     const isARTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'ar';
+    const isLESTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'les';
     if (datos.evaGlobal || datos.evaDolor || datos.basdai || (!isARTXT && datos.asdasCrp)) {
         texto += '▓▓▓ EVALUACIÓN DE ACTIVIDAD ▓▓▓\n';
         if (datos.evaGlobal) texto += `EVA Global: ${datos.evaGlobal}\n`;
@@ -1172,6 +1225,74 @@ function generarNotaClinica(datos) {
         if (datos.basdai) texto += `BASDAI: ${datos.basdai}\n`;
         if (!isARTXT && datos.asdasCrp) texto += `ASDAS-CRP: ${datos.asdasCrp}\n`;
         texto += '\n';
+    }
+
+    // BLOQUE LES
+    if (isLESTXT) {
+        texto += '▓▓▓ EVALUACIÓN ACTIVIDAD LES ▓▓▓\n';
+        if (datos.sledaiResult) texto += `SLEDAI: ${datos.sledaiResult}\n`;
+        if (datos.sledai2kResult) texto += `SLEDAI-2K: ${datos.sledai2kResult}\n`;
+        if (datos.sliccAcrSdi) texto += `SLICC/ACR SDI: ${datos.sliccAcrSdi}\n`;
+        if (datos.dosisPrednisona) texto += `Prednisona: ${datos.dosisPrednisona} mg/día\n`;
+        if (datos.broteActual) {
+            texto += `Brote actual: ${datos.broteActual}`;
+            if (datos.tipoBrote) texto += ` (${datos.tipoBrote})`;
+            texto += '\n';
+        }
+        if (datos.actividadGlobalMedico) texto += `Actividad global médico: ${datos.actividadGlobalMedico}\n`;
+        if (datos.actividadGlobalPaciente) texto += `Actividad global paciente: ${datos.actividadGlobalPaciente}\n`;
+        texto += '\n';
+
+        // Manifestaciones LES
+        const manifestaciones = [];
+        if (datos.lesCutaneo === 'SI') manifestaciones.push('Cutáneo');
+        if (datos.lesArticular === 'SI') manifestaciones.push('Articular');
+        if (datos.lesRenal === 'SI') manifestaciones.push('Renal');
+        if (datos.lesNeurologico === 'SI') manifestaciones.push('Neurológico');
+        if (datos.lesHematologico === 'SI') manifestaciones.push('Hematológico');
+        if (datos.lesSeroso === 'SI') manifestaciones.push('Seroso');
+        if (datos.lesCardiopulmonar === 'SI') manifestaciones.push('Cardiopulmonar');
+        if (datos.lesVascular === 'SI') manifestaciones.push('Vascular');
+        if (datos.lesOcular === 'SI') manifestaciones.push('Ocular');
+        if (datos.lesOtros === 'SI') manifestaciones.push('Otros');
+        if (manifestaciones.length > 0) {
+            texto += '▓▓▓ MANIFESTACIONES ▓▓▓\n';
+            texto += manifestaciones.join(', ') + '\n';
+            if (datos.lesManifestacionesDescripcion) texto += `Descripción: ${datos.lesManifestacionesDescripcion}\n`;
+            texto += '\n';
+        }
+
+        // Inmunología LES
+        const inmunoFields = [];
+        if (datos.anaLes) inmunoFields.push(`ANA: ${datos.anaLes}`);
+        if (datos.antiDnaLes) inmunoFields.push(`Anti-DNA: ${datos.antiDnaLes}`);
+        if (datos.antiSmLes) inmunoFields.push(`Anti-Sm: ${datos.antiSmLes}`);
+        if (datos.antiRoLes) inmunoFields.push(`Anti-Ro: ${datos.antiRoLes}`);
+        if (datos.antiLaLes) inmunoFields.push(`Anti-La: ${datos.antiLaLes}`);
+        if (datos.complementoC3) inmunoFields.push(`C3: ${datos.complementoC3}`);
+        if (datos.complementoC4) inmunoFields.push(`C4: ${datos.complementoC4}`);
+        if (datos.proteinuriaLes) inmunoFields.push(`Proteinuria: ${datos.proteinuriaLes}`);
+        if (datos.sedimentoUrinarioLes) inmunoFields.push(`Sedimento urinario: ${datos.sedimentoUrinarioLes}`);
+        if (datos.creatininaLes) inmunoFields.push(`Creatinina: ${datos.creatininaLes}`);
+        if (datos.pcrLes) inmunoFields.push(`PCR: ${datos.pcrLes}`);
+        if (datos.vsgLes) inmunoFields.push(`VSG: ${datos.vsgLes}`);
+        if (datos.hemogramaAlteracionesLes) inmunoFields.push(`Hemograma: ${datos.hemogramaAlteracionesLes}`);
+        if (datos.otrosHallazgosAnaliticaLes) inmunoFields.push(`Otros: ${datos.otrosHallazgosAnaliticaLes}`);
+        if (inmunoFields.length > 0) {
+            texto += '▓▓▓ INMUNOLOGÍA ▓▓▓\n';
+            inmunoFields.forEach(f => { texto += f + '\n'; });
+            texto += '\n';
+        }
+
+        // PROs LES
+        if (datos.evaDolorLes || datos.evaFatigaLes || datos.evaGlobalLes || datos.calidadVidaComentarioLes) {
+            texto += '▓▓▓ PROs / IMPACTO LES ▓▓▓\n';
+            if (datos.evaDolorLes) texto += `EVA Dolor: ${datos.evaDolorLes}\n`;
+            if (datos.evaFatigaLes) texto += `EVA Fatiga: ${datos.evaFatigaLes}\n`;
+            if (datos.evaGlobalLes) texto += `EVA Global: ${datos.evaGlobalLes}\n`;
+            if (datos.calidadVidaComentarioLes) texto += `Calidad de vida: ${datos.calidadVidaComentarioLes}\n`;
+            texto += '\n';
+        }
     }
 
     // TRATAMIENTO (si existe)

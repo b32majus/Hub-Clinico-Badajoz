@@ -89,8 +89,18 @@ function configureDashboardMetricLabels() {
     const secondaryTableHeader = document.getElementById('visitsTableSecondaryHeader');
 
     const isAR = isARPathology();
-    const primaryLabel = isAR ? 'DAS28' : 'BASDAI';
-    const secondaryLabel = isAR ? 'CDAI/SDAI' : 'ASDAS';
+    const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    let primaryLabel, secondaryLabel;
+    if (isLES) {
+        primaryLabel = 'SLEDAI-2K';
+        secondaryLabel = 'SLICC/ACR SDI';
+    } else if (isAR) {
+        primaryLabel = 'DAS28';
+        secondaryLabel = 'CDAI/SDAI';
+    } else {
+        primaryLabel = 'BASDAI';
+        secondaryLabel = 'ASDAS';
+    }
 
     if (primaryKpiLabel) primaryKpiLabel.textContent = primaryLabel;
     if (secondaryKpiLabel) secondaryKpiLabel.textContent = secondaryLabel;
@@ -476,9 +486,26 @@ function updateStatusBadge(clinicalStatus) {
 
 function populatePatientKPIs(latest, summary, allVisits) {
     const isAR = isARPathology();
+    const isLES = (window.currentPathology || '').toLowerCase() === 'les';
 
-    const primaryMetric = isAR ? getARPrimaryMetric(latest) : getVisitMetric(latest, 'basdai');
-    const primaryMetricKey = isAR ? 'das28' : 'basdai';
+    let primaryMetric, primaryMetricKey, secondaryMetric, secondaryMetricKey;
+
+    if (isLES) {
+        primaryMetric = getVisitMetric(latest, 'sledai2kResult');
+        primaryMetricKey = 'sledai2k';
+        secondaryMetric = getVisitMetric(latest, 'sliccAcrSdi');
+        secondaryMetricKey = 'slicc';
+    } else if (isAR) {
+        primaryMetric = getARPrimaryMetric(latest);
+        primaryMetricKey = 'das28';
+        secondaryMetric = getARSecondaryMetric(latest);
+        secondaryMetricKey = 'cdai';
+    } else {
+        primaryMetric = getVisitMetric(latest, 'basdai');
+        primaryMetricKey = 'basdai';
+        secondaryMetric = getVisitMetric(latest, 'asdas');
+        secondaryMetricKey = 'asdas';
+    }
     const primaryMetricValue = primaryMetric !== null ? Number(primaryMetric).toFixed(1) : '---';
     const primaryStatus = getKPIStatus(primaryMetricKey, primaryMetric);
     document.getElementById('kpiBASDAIValue').textContent = primaryMetricValue;
@@ -487,8 +514,6 @@ function populatePatientKPIs(latest, summary, allVisits) {
     if (kpiBASDAIThreshold) kpiBASDAIThreshold.textContent = primaryStatus.threshold || '';
     updateKPICardClass('kpiBASDAI', primaryStatus.class);
 
-    const secondaryMetric = isAR ? getARSecondaryMetric(latest) : getVisitMetric(latest, 'asdas');
-    const secondaryMetricKey = isAR ? 'cdai' : 'asdas';
     const secondaryMetricValue = secondaryMetric !== null ? Number(secondaryMetric).toFixed(1) : '---';
     const secondaryStatus = getKPIStatus(secondaryMetricKey, secondaryMetric);
     document.getElementById('kpiASDASValue').textContent = secondaryMetricValue;
@@ -559,6 +584,16 @@ function getKPIStatus(metric, value) {
             if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
             if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
             return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
+
+        case 'sledai2k':
+            if (numValue <= 4) return { text: 'Inactivo', class: 'kpi-card--success', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
+            if (numValue <= 10) return { text: 'Moderado', class: 'kpi-card--warning', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
+            if (numValue <= 19) return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
+            return { text: 'Muy alto', class: 'kpi-card--danger', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
+
+        case 'slicc':
+            if (numValue <= 0) return { text: 'Sin da\u00f1o', class: 'kpi-card--success', threshold: '0 sin da\u00f1o | \u22651 da\u00f1o acumulado' };
+            return { text: 'Da\u00f1o acumulado', class: 'kpi-card--warning', threshold: '0 sin da\u00f1o | \u22651 da\u00f1o acumulado' };
 
         default:
             return { text: '', class: '', threshold: '' };

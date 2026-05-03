@@ -28,7 +28,8 @@ function saveToSessionStorage() {
                 ...appState.db,
                 ESPA: (appState.db?.ESPA || []).slice(-visitLimit),
                 APS: (appState.db?.APS || []).slice(-visitLimit),
-                AR: (appState.db?.AR || []).slice(-visitLimit)
+                AR: (appState.db?.AR || []).slice(-visitLimit),
+                LES: (appState.db?.LES || []).slice(-visitLimit)
             }
             : appState.db;
 
@@ -252,7 +253,7 @@ async function loadDatabase(file) {
         const dbData = {};
 
         // Verificar que las hojas clínicas esperadas existen
-        var requiredSheets = ['ESPA', 'APS', 'AR'];
+        var requiredSheets = ['ESPA', 'APS', 'AR', 'LES'];
         var missingSheets = requiredSheets.filter(function(s) { return !workbook.Sheets[s]; });
         if (missingSheets.length > 0) {
             console.warn('Hojas faltantes en el Excel: ' + missingSheets.join(', '));
@@ -265,7 +266,7 @@ async function loadDatabase(file) {
         }
 
         // Itera sobre las hojas de datos de pacientes y profesionales
-        ['ESPA', 'APS', 'AR', 'Profesionales'].forEach(sheetName => {
+        ['ESPA', 'APS', 'AR', 'LES', 'Profesionales'].forEach(sheetName => {
             if (workbook.Sheets[sheetName]) {
                 let sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
                 if (sheetName === 'Profesionales') {
@@ -308,7 +309,7 @@ async function loadDatabase(file) {
 
         // 3b. Validar cabeceras críticas de las hojas clínicas
         var allMissing = {};
-        ['ESPA', 'APS', 'AR'].forEach(function(sheet) {
+        ['ESPA', 'APS', 'AR', 'LES'].forEach(function(sheet) {
             if (workbook.Sheets[sheet]) {
                 var headerMatrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1, range: 0, blankrows: false });
                 var actualHeaders = Array.isArray(headerMatrix[0]) ? headerMatrix[0].filter(function(value) {
@@ -447,7 +448,7 @@ function getFarmacosPorTipo(tipo) {
 function getAllPatients() {
     if (!appState.isLoaded) return [];
     const allPatients = [];
-    ['ESPA', 'APS', 'AR'].forEach(sheetName => {
+    ['ESPA', 'APS', 'AR', 'LES'].forEach(sheetName => {
         if (appState.db?.[sheetName]) {
             allPatients.push(...appState.db[sheetName]);
         }
@@ -466,7 +467,7 @@ function findPatientById(patientId) {
     }
 
     if (appState.isLoaded) {
-        const sheets = ['ESPA', 'APS', 'AR'];
+        const sheets = ['ESPA', 'APS', 'AR', 'LES'];
         for (const sheetName of sheets) {
             const patients = appState.db?.[sheetName] || [];
             const patient = patients.find(p => p.ID_Paciente === patientId);
@@ -504,7 +505,7 @@ function getPatientHistory(patientId) {
     const emptyHistory = { allVisits: [], latestVisit: null, firstVisit: null, pathology: null, treatmentHistory: [], keyEvents: [] };
 
     if (appState.isLoaded) {
-        const sheets = ['ESPA', 'APS', 'AR'];
+        const sheets = ['ESPA', 'APS', 'AR', 'LES'];
         const visits = [];
         let pathology = null;
 
@@ -1671,7 +1672,7 @@ function getRealPoblationalData(filters = {}) {
 
     let allVisits = [];
     const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
-        ? ['ESPA', 'APS', 'AR']
+        ? ['ESPA', 'APS', 'AR', 'LES']
         : [pathologyFilter];
 
     sheetsToProcess.forEach(sheetName => {

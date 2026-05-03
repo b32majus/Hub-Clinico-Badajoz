@@ -5,7 +5,8 @@ let quickViewMount = null;
 const PATHOLOGY_LABELS = {
     espa: 'Espondiloartritis axial',
     aps: 'Artritis psoriásica',
-    ar: 'Artritis Reumatoide'
+    ar: 'Artritis Reumatoide',
+    les: 'Lupus eritematoso sistémico (LES)'
 };
 
 function labelForPathology(code) {

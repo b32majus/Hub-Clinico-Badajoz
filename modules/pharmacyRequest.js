@@ -175,12 +175,38 @@
             if (vsg) text += '- VSG: ' + vsg + ' mm/h\n';
 
         } else if (pathology === 'les') {
-            // Lupus Eritematoso Sistémico (placeholder)
+            // Lupus Eritematoso Sistémico
+            var sledai2k = getField(datos, ['sledai2kResult', 'sledai2k'], '');
+            var slicc = getField(datos, ['sliccAcrSdi', 'slicc'], '');
+            var prednisona = getField(datos, ['dosisPrednisona'], '');
+            var brote = getField(datos, ['broteActual'], '');
             var pcr = getField(datos, ['pcr', 'PCR', 'pcrValue'], '');
             var vsg = getField(datos, ['vsg', 'VSG', 'vsgValue'], '');
-            text += '- SLEDAI / SLEDAI-2K: pendiente de implementación formulario\n';
-            text += '- Dosis prednisona: pendiente de implementación\n';
-            text += '- Manifestaciones activas: pendiente de implementación\n';
+            if (sledai2k) text += '- SLEDAI-2K: ' + sledai2k + '\n';
+            if (!sledai2k) {
+                var sledai = getField(datos, ['sledaiResult', 'sledai'], '');
+                if (sledai) text += '- SLEDAI: ' + sledai + '\n';
+            }
+            if (slicc) text += '- SLICC/ACR SDI: ' + slicc + '\n';
+            if (prednisona) text += '- Dosis prednisona: ' + prednisona + ' mg/día\n';
+            if (brote) text += '- Brote actual: ' + brote + '\n';
+            // Manifestaciones activas
+            var manifestaciones = [];
+            var organos = ['Cutáneo', 'Articular', 'Renal', 'Neurológico', 'Hematológico', 'Seroso', 'Cardiopulmonar', 'Vascular', 'Ocular'];
+            var organosIds = ['lesCutaneo', 'lesArticular', 'lesRenal', 'lesNeurologico', 'lesHematologico', 'lesSeroso', 'lesCardiopulmonar', 'lesVascular', 'lesOcular'];
+            for (var i = 0; i < organos.length; i++) {
+                var val = getField(datos, [organosIds[i]], 'NO');
+                if (val.toUpperCase() === 'SI') manifestaciones.push(organos[i]);
+            }
+            if (manifestaciones.length > 0) text += '- Manifestaciones activas: ' + manifestaciones.join(', ') + '\n';
+            // Analítica relevante
+            var ana = getField(datos, ['anaLes', 'ana'], '');
+            var antiDna = getField(datos, ['antiDnaLes'], '');
+            var c3 = getField(datos, ['complementoC3'], '');
+            var c4 = getField(datos, ['complementoC4'], '');
+            if (ana) text += '- ANA: ' + ana + '\n';
+            if (antiDna) text += '- Anti-DNA: ' + antiDna + '\n';
+            if (c3 || c4) text += '- Complemento: C3 ' + (c3 || 'N/D') + ', C4 ' + (c4 || 'N/D') + '\n';
             if (pcr) text += '- PCR: ' + pcr + ' mg/L\n';
             if (vsg) text += '- VSG: ' + vsg + ' mm/h\n';
 

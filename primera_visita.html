@@ -116,6 +116,7 @@
                                     <option value="espa">Espondiloartritis Axial (EspA)</option>
                                     <option value="aps">Artritis Psoriásica (APs)</option>
                                     <option value="ar">Artritis Reumatoide (AR)</option>
+                                    <option value="les">Lupus eritematoso sistémico (LES)</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1863,13 +1864,193 @@
                                     Casi Remisión (≤3)
                                 </div>
                             </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== LES: LUPUS ERITEMATOSO SISTÉMICO ===================== -->
+            <div class="les-only" style="display: none;">
+
+                <!-- Actividad LES -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-chart-line"></i> Actividad LES</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <!-- SLEDAI -->
+                        <div class="input-group">
+                            <label for="sledaiResult"><i class="fas fa-calculator"></i> SLEDAI:</label>
+                            <input type="number" id="sledaiResult" class="form-control" step="0.1" min="0" placeholder="Puntuación SLEDAI">
+                        </div>
+                        <!-- SLEDAI-2K -->
+                        <div class="input-group">
+                            <label for="sledai2kResult"><i class="fas fa-calculator"></i> SLEDAI-2K:</label>
+                            <input type="number" id="sledai2kResult" class="form-control" step="0.1" min="0" placeholder="Puntuación SLEDAI-2K">
+                        </div>
+                        <!-- SLICC/ACR SDI -->
+                        <div class="input-group">
+                            <label for="sliccAcrSdi"><i class="fas fa-clipboard-check"></i> SLICC/ACR Damage Index:</label>
+                            <input type="number" id="sliccAcrSdi" class="form-control" step="0.1" min="0" placeholder="Índice de daño acumulado">
+                        </div>
+                        <!-- Dosis prednisona -->
+                        <div class="input-group">
+                            <label for="dosisPrednisona"><i class="fas fa-capsules"></i> Prednisona (mg/día):</label>
+                            <input type="number" id="dosisPrednisona" class="form-control" step="0.5" min="0" placeholder="Dosis diaria de prednisona">
+                        </div>
+                        <!-- Brote actual -->
+                        <div class="input-group">
+                            <label for="broteActual"><i class="fas fa-exclamation-triangle"></i> Brote actual:</label>
+                            <select id="broteActual" class="form-control">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="No">No</option>
+                                <option value="Sí leve">Sí leve</option>
+                                <option value="Sí moderado">Sí moderado</option>
+                                <option value="Sí grave">Sí grave</option>
+                            </select>
+                        </div>
+                        <!-- Tipo de brote -->
+                        <div class="input-group" id="tipoBroteGroup" style="display: none;">
+                            <label for="tipoBrote"><i class="fas fa-tag"></i> Tipo de brote:</label>
+                            <input type="text" id="tipoBrote" class="form-control" placeholder="Describir tipo de brote">
+                        </div>
+                        <!-- Actividad global médico -->
+                        <div class="input-group">
+                            <label for="actividadGlobalMedico"><i class="fas fa-user-md"></i> Actividad global médico (0-10):</label>
+                            <input type="number" id="actividadGlobalMedico" class="form-control" step="0.1" min="0" max="10" placeholder="Valoración médico">
+                        </div>
+                        <!-- Actividad global paciente -->
+                        <div class="input-group">
+                            <label for="actividadGlobalPaciente"><i class="fas fa-user"></i> Actividad global paciente (0-10):</label>
+                            <input type="number" id="actividadGlobalPaciente" class="form-control" step="0.1" min="0" max="10" placeholder="Valoración paciente">
                         </div>
                     </div>
                 </div>
 
+                <!-- Manifestaciones por órgano -->
                 <div class="collapsible-section">
                     <button class="collapsible-header">
-                        <span class="header-icon-text"><i class="fas fa-pills"></i> Plan Terapéutico</span>
+                        <span class="header-icon-text"><i class="fas fa-stethoscope"></i> Manifestaciones por Órgano</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="manifestations-grid">
+                            <label class="toggle-label"><input type="checkbox" id="lesCutaneo"> Cutáneo</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesArticular"> Articular</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesRenal"> Renal</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesNeurologico"> Neurológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesHematologico"> Hematológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesSeroso"> Seroso</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesCardiopulmonar"> Cardiopulmonar</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesVascular"> Vascular</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesOcular"> Ocular</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesOtros"> Otros</label>
+                        </div>
+                        <div class="input-group">
+                            <label for="lesManifestacionesDescripcion"><i class="fas fa-pen"></i> Descripción:</label>
+                            <textarea id="lesManifestacionesDescripcion" class="form-control" rows="3" placeholder="Describir manifestaciones clínicas"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inmunología / Analítica LES -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-flask"></i> Inmunología / Analítica</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="input-group">
+                            <label for="anaLes"><i class="fas fa-vial"></i> ANA:</label>
+                            <input type="text" id="anaLes" class="form-control" placeholder="Título y patrón ANA">
+                        </div>
+                        <div class="input-group">
+                            <label for="antiDnaLes"><i class="fas fa-dna"></i> Anti-DNA:</label>
+                            <input type="text" id="antiDnaLes" class="form-control" placeholder="Resultado anti-DNA">
+                        </div>
+                        <div class="input-group">
+                            <label for="antiSmLes"><i class="fas fa-dna"></i> Anti-Sm:</label>
+                            <input type="text" id="antiSmLes" class="form-control" placeholder="Resultado anti-Sm">
+                        </div>
+                        <div class="input-group">
+                            <label for="antiRoLes"><i class="fas fa-dna"></i> Anti-Ro:</label>
+                            <input type="text" id="antiRoLes" class="form-control" placeholder="Resultado anti-Ro">
+                        </div>
+                        <div class="input-group">
+                            <label for="antiLaLes"><i class="fas fa-dna"></i> Anti-La:</label>
+                            <input type="text" id="antiLaLes" class="form-control" placeholder="Resultado anti-La">
+                        </div>
+                        <div class="input-group">
+                            <label for="complementoC3"><i class="fas fa-tint"></i> C3:</label>
+                            <input type="number" id="complementoC3" class="form-control" step="0.1" placeholder="Nivel C3">
+                        </div>
+                        <div class="input-group">
+                            <label for="complementoC4"><i class="fas fa-tint"></i> C4:</label>
+                            <input type="number" id="complementoC4" class="form-control" step="0.1" placeholder="Nivel C4">
+                        </div>
+                        <div class="input-group">
+                            <label for="proteinuriaLes"><i class="fas fa-tint"></i> Proteinuria:</label>
+                            <input type="text" id="proteinuriaLes" class="form-control" placeholder="Proteinuria (mg/24h o ratio)">
+                        </div>
+                        <div class="input-group">
+                            <label for="sedimentoUrinarioLes"><i class="fas fa-microscope"></i> Sedimento urinario:</label>
+                            <textarea id="sedimentoUrinarioLes" class="form-control" rows="2" placeholder="Descripción del sedimento urinario"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="creatininaLes"><i class="fas fa-tint"></i> Creatinina:</label>
+                            <input type="number" id="creatininaLes" class="form-control" step="0.01" placeholder="Creatinina mg/dL">
+                        </div>
+                        <div class="input-group">
+                            <label for="pcrLes"><i class="fas fa-flask"></i> PCR:</label>
+                            <input type="number" id="pcrLes" class="form-control" step="0.01" placeholder="PCR mg/L">
+                        </div>
+                        <div class="input-group">
+                            <label for="vsgLes"><i class="fas fa-flask"></i> VSG:</label>
+                            <input type="number" id="vsgLes" class="form-control" step="0.1" placeholder="VSG mm/h">
+                        </div>
+                        <div class="input-group">
+                            <label for="hemogramaAlteracionesLes"><i class="fas fa-flask"></i> Hemograma (alteraciones):</label>
+                            <textarea id="hemogramaAlteracionesLes" class="form-control" rows="2" placeholder="Alteraciones relevantes del hemograma"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="otrosHallazgosAnaliticaLes"><i class="fas fa-flask"></i> Otros hallazgos:</label>
+                            <textarea id="otrosHallazgosAnaliticaLes" class="form-control" rows="2" placeholder="Otros hallazgos analíticos relevantes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROs / Impacto LES -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-heartbeat"></i> PROs / Impacto</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="input-group">
+                            <label for="evaDolorLes"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolorLes" class="form-control" step="0.1" min="0" max="10" placeholder="Dolor">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaFatigaLes"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
+                            <input type="number" id="evaFatigaLes" class="form-control" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaGlobalLes"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
+                            <input type="number" id="evaGlobalLes" class="form-control" step="0.1" min="0" max="10" placeholder="Valoración global">
+                        </div>
+                        <div class="input-group">
+                            <label for="calidadVidaComentarioLes"><i class="fas fa-comment-dots"></i> Calidad de vida / Comentario:</label>
+                            <textarea id="calidadVidaComentarioLes" class="form-control" rows="3" placeholder="Impacto en calidad de vida"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ===================== FIN BLOQUE LES ===================== -->
+
+            <div class="collapsible-section">
+                <button class="collapsible-header">
+                    <span class="header-icon-text"><i class="fas fa-pills"></i> Plan Terapéutico</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
