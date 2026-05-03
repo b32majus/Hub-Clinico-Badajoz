@@ -68,6 +68,15 @@ El Hub Clínico de Badajoz es una app local-first. Debe seguir funcionando como 
 | Exportación Farmacia | Nombre visible: `Solicitud FH` |
 | Excel | Crear versión v2, sin tocar destructivamente el maestro actual |
 
+### Decisiones AUDIT-FIX-1
+
+- Contrato vigente Excel v2: 5 hojas clínicas (`AR`, `ESPA`, `APS`, `LES`, `SJOGREN`) con 491 columnas por hoja.
+- Prebiológico/vacunación se persiste embebido por visita; no existe hoja `Prebiologico` obligatoria.
+- `Solicitud FH` es texto derivado para copiar/pegar; no existe hoja ni columna persistida `Solicitud_FH_Log`, `Solicitud_FH_Texto` o `Informe_FH`.
+- DAPSA APs queda pendiente de decisión contractual: no existe actualmente en las 491 columnas del demo v2. Añadirlo requiere migración explícita del contrato Excel.
+
+> Nota: las secciones históricas previas a AUDIT-FIX-1 que mencionan hoja `Prebiologico`, `Solicitud_FH_Log` o columnas `*_Ultimo` quedan obsoletas y no son contrato vigente.
+
 ---
 
 ## 4. Arquitectura actual que debe respetarse

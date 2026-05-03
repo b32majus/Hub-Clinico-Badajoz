@@ -359,11 +359,11 @@ function categorizeScore(valor, scoreType) {
         case 'dapsa':
         case 'sledai2k':
         case 'esspri':
-            if ((['dapsa', 'sledai2k', 'esspri'].includes(cutoffKey) && valor <= cutoffs.remission) || valor < cutoffs.remission) {
+            if (valor <= cutoffs.remission) {
                 categoria = 'remission'; color = '#28a745'; label = 'Remisión';
-            } else if (valor < cutoffs.lowActivity) {
+            } else if (valor <= cutoffs.lowActivity) {
                 categoria = 'low'; color = '#90ee90'; label = 'Baja Actividad';
-            } else if (valor < cutoffs.moderate) {
+            } else if (valor <= cutoffs.moderate) {
                 categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
             } else {
                 categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';

@@ -1362,7 +1362,7 @@ function recopilarDatosFormulario() {
     // MDHAQ (RAPID3)
     const mdhaqData = {};
     ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
-        mdhaqData[id] = document.getElementById(id)?.value || '0';
+        mdhaqData[id] = document.getElementById(id)?.value || '';
     });
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
@@ -1895,7 +1895,7 @@ function recopilarDatosFormularioSeguimiento() {
 
     const mdhaqData = {};
     ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
-        mdhaqData[id] = getValue(id) || '0';
+        mdhaqData[id] = getValue(id) || '';
     });
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
@@ -2077,6 +2077,34 @@ function recopilarDatosFormularioSeguimiento() {
 function initScoreWiring() {
     debugLog('🔧 Inicializando wiring de scores...');
 
+    function getFormValue(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+
+    function parseStrictNumber(value) {
+        if (value === undefined || value === null || value === '') return null;
+        var raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+        var parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function applyScoreCategory(value, scoreType, fieldEl, categoryEl) {
+        var parsed = parseStrictNumber(value);
+        var cat = HubTools.scores.categorizeScore(parsed, scoreType);
+        if (fieldEl) {
+            fieldEl.style.backgroundColor = cat.backgroundColor;
+            fieldEl.style.color = cat.color;
+            fieldEl.title = cat.label;
+        }
+        if (categoryEl) {
+            categoryEl.textContent = cat.label;
+            categoryEl.style.color = cat.color;
+            categoryEl.style.fontWeight = '700';
+        }
+        return cat;
+    }
+
     // --- 1. SYNC PCR / VSG → ASDAS readonly ---
     const pcrInput = document.getElementById('pcrValue');
     const vsgInput = document.getElementById('vsgValue');
@@ -2114,21 +2142,12 @@ function initScoreWiring() {
         if (!basdaiResult || typeof HubTools.scores.calcularBASDAI !== 'function') return;
         var datos = {};
         basdaiFields.forEach(function (id) {
-            datos[id] = document.getElementById(id)?.value || '0';
+            datos[id] = getFormValue(id);
         });
         var resultado = HubTools.scores.calcularBASDAI(datos);
         basdaiResult.value = resultado;
-        // Categorizar
-        var cat = HubTools.scores.categorizeScore(parseFloat(resultado), 'basdai');
-        basdaiResult.style.backgroundColor = cat.backgroundColor;
-        basdaiResult.style.color = cat.color;
-        basdaiResult.title = cat.label;
         var basdaiCatEl = document.getElementById('basdaiCategoria');
-        if (basdaiCatEl) {
-            basdaiCatEl.textContent = cat.label;
-            basdaiCatEl.style.color = cat.color;
-            basdaiCatEl.style.fontWeight = '700';
-        }
+        var cat = applyScoreCategory(resultado, 'basdai', basdaiResult, basdaiCatEl);
         debugLog('  📊 BASDAI recalculado:', resultado, cat.label);
     }
     if (basdaiResult) debugLog('  ✓ BASDAI wiring');
@@ -2146,12 +2165,12 @@ function initScoreWiring() {
     function recalcularASDAS() {
         if (typeof HubTools.scores.calcularASDAS !== 'function') return;
         var datos = {
-            asdasDolorEspalda: document.getElementById('asdasDolorEspalda')?.value || '0',
-            asdasDuracionRigidez: document.getElementById('asdasDuracionRigidez')?.value || '0',
-            asdasEvaGlobal: document.getElementById('asdasEvaGlobal')?.value || '0',
-            asdasNAD: document.getElementById('asdasNAD')?.value || '0',
-            asdasPCR: document.getElementById('asdasPCR')?.value || '0',
-            asdasVSG: document.getElementById('asdasVSG')?.value || '0'
+            asdasDolorEspalda: getFormValue('asdasDolorEspalda'),
+            asdasDuracionRigidez: getFormValue('asdasDuracionRigidez'),
+            asdasEvaGlobal: getFormValue('asdasEvaGlobal'),
+            asdasNAD: getFormValue('asdasNAD'),
+            asdasPCR: getFormValue('asdasPCR'),
+            asdasVSG: getFormValue('asdasVSG')
         };
         var result = HubTools.scores.calcularASDAS(datos);
 
@@ -2160,29 +2179,11 @@ function initScoreWiring() {
 
         if (crpField) {
             crpField.value = result.asdasCRP;
-            var catCRP = HubTools.scores.categorizeScore(parseFloat(result.asdasCRP), 'asdas');
-            crpField.style.backgroundColor = catCRP.backgroundColor;
-            crpField.style.color = catCRP.color;
-            crpField.title = catCRP.label;
-            var crpCatEl = document.getElementById('asdasCrpCategoria');
-            if (crpCatEl) {
-                crpCatEl.textContent = catCRP.label;
-                crpCatEl.style.color = catCRP.color;
-                crpCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.asdasCRP, 'asdas', crpField, document.getElementById('asdasCrpCategoria'));
         }
         if (esrField) {
             esrField.value = result.asdasESR;
-            var catESR = HubTools.scores.categorizeScore(parseFloat(result.asdasESR), 'asdas');
-            esrField.style.backgroundColor = catESR.backgroundColor;
-            esrField.style.color = catESR.color;
-            esrField.title = catESR.label;
-            var esrCatEl = document.getElementById('asdasEsrCategoria');
-            if (esrCatEl) {
-                esrCatEl.textContent = catESR.label;
-                esrCatEl.style.color = catESR.color;
-                esrCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.asdasESR, 'asdas', esrField, document.getElementById('asdasEsrCategoria'));
         }
         debugLog('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
     }
@@ -2202,13 +2203,13 @@ function initScoreWiring() {
         for (var i = 1; i <= 8; i++) {
             var sel = document.querySelector('.haq-score[data-category="' + i + '"]');
             var aid = document.querySelector('.haq-aid[data-category="' + i + '"]');
-            datos['haqCategoria' + i] = sel ? sel.value : '0';
+            datos['haqCategoria' + i] = sel ? sel.value : '';
             datos['haqAyuda' + i] = aid ? aid.checked : false;
         }
         var haqValue = HubTools.scores.calcularHAQ(datos);
-        haqTotalEl.textContent = haqValue.toFixed(2);
-        // Categorizar
-        var cat = HubTools.scores.categorizeScore(haqValue, 'haq');
+        var haqNumber = parseStrictNumber(haqValue);
+        haqTotalEl.textContent = haqNumber === null ? '' : haqNumber.toFixed(2);
+        var cat = HubTools.scores.categorizeScore(haqNumber, 'haq');
         haqTotalEl.style.color = cat.color;
         var haqCatEl = document.getElementById('haqCategoria');
         if (haqCatEl) {
@@ -2220,7 +2221,7 @@ function initScoreWiring() {
         // Cascada: HAQ afecta RAPID3 y MDA
         recalcularRAPID3();
         recalcularMDA();
-        debugLog('  📊 HAQ-DI recalculado:', haqValue.toFixed(2), cat.label);
+        debugLog('  📊 HAQ-DI recalculado:', haqTotalEl.textContent, cat.label);
     }
 
     haqScoreSelects.forEach(function (sel) {
@@ -2273,19 +2274,20 @@ function initScoreWiring() {
     function recalcularMDA() {
         if (typeof HubTools.scores.calcularMDA !== 'function') return;
 
-        var haqVal = parseFloat(document.getElementById('haqTotal')?.textContent) || 0;
+        var haqVal = parseStrictNumber(document.getElementById('haqTotal')?.textContent);
         var leiCheckboxesNow = document.querySelectorAll('.lei-point:checked');
-        var leiVal = leiCheckboxesNow.length;
+        var hasLeiInputs = document.querySelectorAll('.lei-point').length > 0;
+        var leiVal = hasLeiInputs ? leiCheckboxesNow.length : '';
 
         var datos = {
-            nat: parseInt(document.getElementById('asdasNAT')?.value) || 0,
-            nad: parseInt(document.getElementById('asdasNAD')?.value) || 0,
-            pasiValue: document.getElementById('pasiValue')?.value || '0',
-            bsaValue: document.getElementById('bsaValue')?.value || '0',
+            nat: getFormValue('asdasNAT'),
+            nad: getFormValue('asdasNAD'),
+            pasiValue: getFormValue('pasiValue'),
+            bsaValue: getFormValue('bsaValue'),
             lei: leiVal,
-            evaDolor: document.getElementById('evaDolor')?.value || '0',
-            evaGlobal: document.getElementById('evaGlobal')?.value || '0',
-            haq: haqVal
+            evaDolor: getFormValue('evaDolor'),
+            evaGlobal: getFormValue('evaGlobal'),
+            haq: haqVal === null ? '' : haqVal
         };
 
         var result = HubTools.scores.calcularMDA(datos);
@@ -2324,7 +2326,11 @@ function initScoreWiring() {
         }
 
         if (mdaResultEl) {
-            if (result.mdaAlcanzado) {
+            if (!result.evaluable) {
+                mdaResultEl.textContent = 'MDA INCOMPLETO';
+                mdaResultEl.style.color = '#6c757d';
+                mdaResultEl.style.fontWeight = 'normal';
+            } else if (result.mdaAlcanzado) {
                 mdaResultEl.textContent = 'MDA ALCANZADO ✓';
                 mdaResultEl.style.color = '#28a745';
                 mdaResultEl.style.fontWeight = 'bold';
@@ -2346,16 +2352,30 @@ function initScoreWiring() {
 
         // Suma de las 10 preguntas MDHAQ (a-j)
         const mdhaqIds = ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'];
-        let fnRaw = 0;
+        var mdhaqValues = [];
         mdhaqIds.forEach(function (id) {
             var el = document.getElementById(id);
-            if (el) fnRaw += parseInt(el.value) || 0;
+            if (el) mdhaqValues.push(el.value);
         });
+        var fnRaw = '';
+        if (mdhaqValues.length === mdhaqIds.length && mdhaqValues.every(function(value) { return value !== ''; })) {
+            var fnSum = 0;
+            var allValid = true;
+            mdhaqValues.forEach(function(value) {
+                var parsed = parseStrictNumber(value);
+                if (parsed === null || !Number.isInteger(parsed)) {
+                    allValid = false;
+                } else {
+                    fnSum += parsed;
+                }
+            });
+            if (allValid) fnRaw = fnSum;
+        }
 
         var datos = {
             fnRaw: fnRaw,
-            evaDolor: document.getElementById('evaDolor')?.value || '0',
-            evaGlobal: document.getElementById('evaGlobal')?.value || '0'
+            evaDolor: getFormValue('evaDolor'),
+            evaGlobal: getFormValue('evaGlobal')
         };
 
         var result = HubTools.scores.calcularRAPID3(datos);
@@ -2376,7 +2396,7 @@ function initScoreWiring() {
         if (catEl) catEl.textContent = result.categoria;
 
         // Colorear según categoría
-        var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'rapid3');
+        var cat = HubTools.scores.categorizeScore(parseStrictNumber(result.total), 'rapid3');
         if (totalEl) totalEl.style.color = cat.color;
         if (catEl) { catEl.style.color = cat.color; catEl.style.fontWeight = 'bold'; }
     }
@@ -2394,11 +2414,11 @@ function initScoreWiring() {
         if (typeof HubTools.scores.calcularDAS28 !== 'function') return;
 
         var datos = {
-            nad28: document.getElementById('das28NAD')?.value || '0',
-            nat28: document.getElementById('das28NAT')?.value || '0',
-            pcr: document.getElementById('das28PCR')?.value || '0',
-            vsg: document.getElementById('das28VSG')?.value || '0',
-            evaGlobal: document.getElementById('das28EVA')?.value || '0'
+            nad28: getFormValue('das28NAD'),
+            nat28: getFormValue('das28NAT'),
+            pcr: getFormValue('das28PCR'),
+            vsg: getFormValue('das28VSG'),
+            evaGlobal: getFormValue('das28EVA')
         };
         var result = HubTools.scores.calcularDAS28(datos);
 
@@ -2409,27 +2429,11 @@ function initScoreWiring() {
 
         if (crpField) {
             crpField.value = result.das28CRP;
-            var catCRP = HubTools.scores.categorizeScore(parseFloat(result.das28CRP), 'das28');
-            crpField.style.backgroundColor = catCRP.backgroundColor;
-            crpField.style.color = catCRP.color;
-            crpField.title = catCRP.label;
-            if (crpCatEl) {
-                crpCatEl.textContent = catCRP.label;
-                crpCatEl.style.color = catCRP.color;
-                crpCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.das28CRP, 'das28', crpField, crpCatEl);
         }
         if (esrField) {
             esrField.value = result.das28ESR;
-            var catESR = HubTools.scores.categorizeScore(parseFloat(result.das28ESR), 'das28');
-            esrField.style.backgroundColor = catESR.backgroundColor;
-            esrField.style.color = catESR.color;
-            esrField.title = catESR.label;
-            if (esrCatEl) {
-                esrCatEl.textContent = catESR.label;
-                esrCatEl.style.color = catESR.color;
-                esrCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.das28ESR, 'das28', esrField, esrCatEl);
         }
         // También recalcular CDAI y SDAI ya que comparten NAD28/NAT28
         recalcularCDAI();
@@ -2454,25 +2458,18 @@ function initScoreWiring() {
     function recalcularCDAI() {
         if (typeof HubTools.scores.calcularCDAI !== 'function') return;
         var datos = {
-            nad28: document.getElementById('das28NAD')?.value || '0',
-            nat28: document.getElementById('das28NAT')?.value || '0',
-            evaPaciente: document.getElementById('evaGlobal')?.value || '0',
-            evaMedico: document.getElementById('evaMedico')?.value || '0'
+            nad28: getFormValue('das28NAD'),
+            nat28: getFormValue('das28NAT'),
+            evaPaciente: getFormValue('evaGlobal'),
+            evaMedico: getFormValue('evaMedico')
         };
         var result = HubTools.scores.calcularCDAI(datos);
         var cdaiField = document.getElementById('cdaiResult');
         var cdaiCatEl = document.getElementById('cdaiCategoria');
 
         if (cdaiField) {
-            cdaiField.value = result.total + ' - ' + result.categoria;
-            var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'cdai');
-            cdaiField.style.backgroundColor = cat.backgroundColor;
-            cdaiField.style.color = cat.color;
-            if (cdaiCatEl) {
-                cdaiCatEl.textContent = cat.label;
-                cdaiCatEl.style.color = cat.color;
-                cdaiCatEl.style.fontWeight = '700';
-            }
+            cdaiField.value = result.total ? result.total + ' - ' + result.categoria : result.categoria;
+            applyScoreCategory(result.total, 'cdai', cdaiField, cdaiCatEl);
         }
     }
     debugLog('  ✓ CDAI wiring');
@@ -2481,26 +2478,19 @@ function initScoreWiring() {
     function recalcularSDAI() {
         if (typeof HubTools.scores.calcularSDAI !== 'function') return;
         var datos = {
-            nad28: document.getElementById('das28NAD')?.value || '0',
-            nat28: document.getElementById('das28NAT')?.value || '0',
-            evaPaciente: document.getElementById('evaGlobal')?.value || '0',
-            evaMedico: document.getElementById('evaMedico')?.value || '0',
-            pcr: document.getElementById('das28PCR')?.value || '0'
+            nad28: getFormValue('das28NAD'),
+            nat28: getFormValue('das28NAT'),
+            evaPaciente: getFormValue('evaGlobal'),
+            evaMedico: getFormValue('evaMedico'),
+            pcr: getFormValue('das28PCR')
         };
         var result = HubTools.scores.calcularSDAI(datos);
         var sdaiField = document.getElementById('sdaiResult');
         var sdaiCatEl = document.getElementById('sdaiCategoria');
 
         if (sdaiField) {
-            sdaiField.value = result.total + ' - ' + result.categoria;
-            var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'sdai');
-            sdaiField.style.backgroundColor = cat.backgroundColor;
-            sdaiField.style.color = cat.color;
-            if (sdaiCatEl) {
-                sdaiCatEl.textContent = cat.label;
-                sdaiCatEl.style.color = cat.color;
-                sdaiCatEl.style.fontWeight = '700';
-            }
+            sdaiField.value = result.total ? result.total + ' - ' + result.categoria : result.categoria;
+            applyScoreCategory(result.total, 'sdai', sdaiField, sdaiCatEl);
         }
     }
     debugLog('  ✓ SDAI wiring');

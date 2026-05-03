@@ -38,6 +38,13 @@ function normalizePathology(value) {
     return (value || '').toString().trim().toLowerCase();
 }
 
+function parseStrictNumber(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeRecord(record, extra) {
     if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
         return HubTools.normalizer.normalizeRecord(record, extra);
@@ -62,33 +69,23 @@ function isSjogrenPathology() {
 }
 
 function getARPrimaryMetric(visit) {
-    const toNumber = (value) => {
-        const parsed = parseFloat(value);
-        return Number.isFinite(parsed) ? parsed : null;
-    };
-
-    const das28Crp = toNumber(getVisitMetric(visit, 'das28Crp'));
+    const das28Crp = parseStrictNumber(getVisitMetric(visit, 'das28Crp'));
     if (das28Crp !== null) return das28Crp;
 
-    const das28Esr = toNumber(getVisitMetric(visit, 'das28Esr'));
+    const das28Esr = parseStrictNumber(getVisitMetric(visit, 'das28Esr'));
     if (das28Esr !== null) return das28Esr;
 
-    const cdai = toNumber(getVisitMetric(visit, 'cdai'));
+    const cdai = parseStrictNumber(getVisitMetric(visit, 'cdai'));
     if (cdai !== null) return cdai;
 
     return null;
 }
 
 function getARSecondaryMetric(visit) {
-    const toNumber = (value) => {
-        const parsed = parseFloat(value);
-        return Number.isFinite(parsed) ? parsed : null;
-    };
-
-    const cdai = toNumber(getVisitMetric(visit, 'cdai'));
+    const cdai = parseStrictNumber(getVisitMetric(visit, 'cdai'));
     if (cdai !== null) return cdai;
 
-    const sdai = toNumber(getVisitMetric(visit, 'sdai'));
+    const sdai = parseStrictNumber(getVisitMetric(visit, 'sdai'));
     if (sdai !== null) return sdai;
 
     return null;
@@ -103,6 +100,7 @@ function configureDashboardMetricLabels() {
     const isAR = isARPathology();
     const isLES = (window.currentPathology || '').toLowerCase() === 'les';
     const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
+    const isAPS = (window.currentPathology || '').toLowerCase() === 'aps';
     let primaryLabel, secondaryLabel;
     if (isSJOGREN) {
         primaryLabel = 'ESSPRI';
@@ -113,6 +111,9 @@ function configureDashboardMetricLabels() {
     } else if (isAR) {
         primaryLabel = 'DAS28';
         secondaryLabel = 'CDAI/SDAI';
+    } else if (isAPS) {
+        primaryLabel = 'DAPSA/RAPID3/HAQ';
+        secondaryLabel = 'PASI/LEI/BSA';
     } else {
         primaryLabel = 'BASDAI';
         secondaryLabel = 'ASDAS';
@@ -717,11 +718,26 @@ function calculateTreatmentDuration(startDate) {
 
 function initVisitsTable(visits) {
     const isAR = isARPathology();
+    const isAPS = isAPSPathology();
+    const isLES = isLESPathology();
     const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
     visitsTableState.data = visits.map(visit => ({
+        rawVisit: visit,
         fecha: getVisitDate(visit),
-        basdai: isAR ? getARPrimaryMetric(visit) : (isSJOGREN ? getVisitMetric(visit, 'esspriResult') : getVisitMetric(visit, 'basdai')),
-        asdas: isAR ? getARSecondaryMetric(visit) : (isSJOGREN ? getVisitMetric(visit, 'essdaiResult') : getVisitMetric(visit, 'asdas')),
+        basdai: isAR ? getARPrimaryMetric(visit) : (
+            isLES ? getVisitMetric(visit, 'sledai2k') : (
+                isSJOGREN ? getVisitMetric(visit, 'esspri') : (
+                    isAPS ? (getVisitMetric(visit, 'dapsa') ?? getVisitMetric(visit, 'rapid3') ?? getVisitMetric(visit, 'haq')) : getVisitMetric(visit, 'basdai')
+                )
+            )
+        ),
+        asdas: isAR ? getARSecondaryMetric(visit) : (
+            isLES ? getVisitMetric(visit, 'slicc') : (
+                isSJOGREN ? getVisitMetric(visit, 'essdai') : (
+                    isAPS ? (getVisitMetric(visit, 'pasi') ?? getVisitMetric(visit, 'lei') ?? getVisitMetric(visit, 'bsa')) : getVisitMetric(visit, 'asdas')
+                )
+            )
+        ),
         evaDolor: getVisitMetric(visit, 'evaDolor'),
         pcr: getVisitMetric(visit, 'pcr'),
         tratamiento: visit.tratamientoActual || visit.Tratamiento_Actual || '---'
@@ -766,8 +782,8 @@ function sortVisitsData(column, direction) {
             valA = new Date(valA);
             valB = new Date(valB);
         } else {
-            valA = parseFloat(valA) || 0;
-            valB = parseFloat(valB) || 0;
+            valA = parseStrictNumber(valA) ?? 0;
+            valB = parseStrictNumber(valB) ?? 0;
         }
 
         if (direction === 'asc') {
@@ -850,6 +866,67 @@ function goToPage(page) {
     renderVisitsTable();
 }
 
+function getVisitCSVMetricDefinitions() {
+    const pathology = normalizePathology(window.currentPathology);
+    const definitions = {
+        ar: [
+            ['DAS28-CRP', 'das28Crp'],
+            ['DAS28-VSG', 'das28Esr'],
+            ['CDAI', 'cdai'],
+            ['SDAI', 'sdai'],
+            ['RAPID3', 'rapid3'],
+            ['HAQ', 'haq'],
+            ['PCR', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        espa: [
+            ['BASDAI', 'basdai'],
+            ['ASDAS', 'asdas'],
+            ['BASFI', 'basfi'],
+            ['HAQ', 'haq'],
+            ['PCR', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        aps: [
+            ['DAPSA', 'dapsa'],
+            ['PASI', 'pasi'],
+            ['BSA', 'bsa'],
+            ['LEI', 'lei'],
+            ['HAQ', 'haq'],
+            ['RAPID3', 'rapid3'],
+            ['PCR', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        les: [
+            ['SLEDAI-2K', 'sledai2k'],
+            ['SLICC/ACR SDI', 'slicc'],
+            ['Prednisona', 'prednisona'],
+            ['PCR', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        sjogren: [
+            ['ESSPRI', 'esspri'],
+            ['ESSDAI', 'essdai'],
+            ['EVA Sequedad Oral', 'evaSequedadOral'],
+            ['EVA Sequedad Ocular', 'evaSequedadOcular'],
+            ['EVA Fatiga', 'evaFatiga'],
+            ['PCR', 'pcr'],
+            ['VSG', 'vsg']
+        ]
+    };
+    return definitions[pathology] || definitions.espa;
+}
+
+function formatCSVMetricValue(value) {
+    const num = parseStrictNumber(value);
+    return num === null ? '' : String(num).replace('.', ',');
+}
+
+function escapeCSVCell(value) {
+    const text = value === undefined || value === null ? '' : String(value);
+    return /[;"\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
 function exportVisitsToCSV() {
     const data = visitsTableState.data;
     if (data.length === 0) {
@@ -857,18 +934,18 @@ function exportVisitsToCSV() {
         return;
     }
 
-    const isAR = isARPathology();
-    const headers = ['Fecha', isAR ? 'DAS28' : 'BASDAI', isAR ? 'CDAI' : 'ASDAS', 'EVA Dolor', 'PCR', 'Tratamiento'];
-    const rows = data.map(visit => [
-        formatDate(visit.fecha),
-        visit.basdai !== null ? Number(visit.basdai).toFixed(1) : '',
-        visit.asdas !== null ? Number(visit.asdas).toFixed(1) : '',
-        visit.evaDolor !== null ? Number(visit.evaDolor).toFixed(0) : '',
-        visit.pcr !== null ? Number(visit.pcr).toFixed(1) : '',
-        visit.tratamiento
-    ]);
+    const metricDefinitions = getVisitCSVMetricDefinitions();
+    const headers = ['Fecha', ...metricDefinitions.map(([label]) => label), 'Tratamiento'];
+    const rows = data.map(row => {
+        const visit = row.rawVisit || row;
+        return [
+            formatDate(row.fecha),
+            ...metricDefinitions.map(([, metric]) => formatCSVMetricValue(getVisitMetric(visit, metric))),
+            row.tratamiento
+        ];
+    });
 
-    const csvContent = [headers.join(';'), ...rows.map(row => row.join(';'))].join('\n');
+    const csvContent = [headers, ...rows].map(row => row.map(escapeCSVCell).join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -992,10 +1069,10 @@ function populateChartSelectors() {
     });
 
     if (selectActivityIndex) {
-        selectActivityIndex.value = isLES ? 'sledai2k' : (isSJOGREN ? 'esspri' : (isAR ? 'das28Crp' : 'basdai'));
+        selectActivityIndex.value = isLES ? 'sledai2k' : (isSJOGREN ? 'esspri' : (isAR ? 'das28Crp' : (isAPS ? 'dapsa' : 'basdai')));
     }
     if (compareActivityIndexSelect) {
-        compareActivityIndexSelect.value = isLES ? 'slicc' : (isSJOGREN ? 'essdai' : (isAR ? 'cdai' : 'asdas'));
+        compareActivityIndexSelect.value = isLES ? 'slicc' : (isSJOGREN ? 'essdai' : (isAR ? 'cdai' : (isAPS ? 'rapid3' : 'asdas')));
     }
     if (selectPRO) selectPRO.value = isSJOGREN ? 'evaSequedadOral' : 'evaDolor';
     if (comparePROSelect) comparePROSelect.value = isSJOGREN ? 'evaFatiga' : 'evaGlobal';
@@ -1587,12 +1664,9 @@ function getVisitMetric(visit, metric) {
         if (val === null || val === undefined || val === '') continue;
         const strVal = String(val).trim();
         if (invalidValues.includes(strVal)) continue;
-        // Convertir coma decimal a punto
-        const normalized = strVal.replace(',', '.');
-        const num = parseFloat(normalized);
-        if (!isNaN(num)) return num;
-        // Si no es numérico pero tampoco inválido, devolver el string original
-        return val;
+        const num = parseStrictNumber(strVal);
+        if (num !== null) return num;
+        return null;
     }
 
     return null;

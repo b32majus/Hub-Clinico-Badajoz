@@ -1555,7 +1555,7 @@ function generarNotaClinica(datos) {
 
     // DATOS DEL PACIENTE
     texto += '▓▓▓ DATOS DEL PACIENTE ▓▓▓\n';
-    texto += `ID Paciente: ${datos.idPaciente || 'N/A'}\n`;
+    texto += `CIP: ${datos.cip || datos.idPaciente || 'N/A'}\n`;
     texto += `Nombre: ${datos.nombrePaciente || 'N/A'}\n`;
     texto += `Fecha de Visita: ${datos.fechaVisita || 'N/A'}\n`;
     texto += `Profesional: ${datos.profesional || 'N/A'}\n\n`;

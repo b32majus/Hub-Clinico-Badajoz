@@ -1,6 +1,6 @@
 # Contrato de Datos Reuma v2
 
-> Revisión 2026-05-03. Extensión del contrato unificado ESPA/APS/AR para incluir LES, Sjögren, prebiológico y Solicitud FH. Compatible con el contrato v1 existente; las hojas nuevas se añaden sin modificar las históricas.
+> Revisión 2026-05-03, AUDIT-FIX-1. Contrato vigente Reuma v2: 5 hojas clínicas con 491 columnas cada una. El bloque prebiológico/vacunación va embebido por visita. La Solicitud FH es una salida derivada de texto y no se persiste como hoja ni columna.
 
 ---
 
@@ -13,18 +13,22 @@
 | `AR` | Artritis reumatoide (existente) | Conservada |
 | `LES` | Lupus eritematoso sistémico | **Nueva v2** |
 | `SJOGREN` | Síndrome de Sjögren | **Nueva v2** |
-| `Prebiologico` | Validación prebiológica transversal | **Nueva v2** |
 | `Profesionales` | Catálogo de profesionales | Existente |
 | `Farmacos` | Catálogo de fármacos | Existente |
-| `Solicitud_FH_Log` | Log de solicitudes a Farmacia Hospitalaria | **Nueva v2, opcional** |
+
+No existen hojas clínicas obligatorias separadas para `Prebiologico`, `Solicitud_FH_Log`, `Informe_FH` ni `Solicitud_FH_Texto`.
 
 ---
 
 ## 2. Columnas comunes a todas las hojas clínicas
 
-Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) comparten estas cabeceras base en el mismo orden:
+Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) tienen **491 columnas**. Las primeras 321 columnas preservan el contrato histórico; las columnas v2 añaden bloque prebiológico/vacunación, LES y Sjögren sin crear hojas clínicas adicionales.
 
-1. `CIP`
+El identificador visible canónico es `CIP`, pero el contrato Excel histórico conserva `ID_Paciente` como cabecera física compatible. El loader normaliza ambos.
+
+Cabeceras base históricas de referencia:
+
+1. `ID_Paciente`
 2. `Nombre_Paciente`
 3. `Sexo`
 4. `Fecha_Visita`
@@ -56,8 +60,8 @@ Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) comparten estas cabe
 30. `Cambio_Biologico_Dosis`
 31. `Fecha_Proxima_Revision`
 32. `Comentarios_Adicionales`
-33. `Estado_Prebiologico_Ultimo`
-34. `Fecha_Validacion_Prebiologico_Ultima`
+33. Campos clínicos históricos restantes hasta columna 321.
+34. Bloque v2 común embebido por visita desde columna 322, incluyendo `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico`.
 
 > **Nota de compatibilidad**: Las hojas ESPA/APS/AR existentes usan `ID_Paciente` en lugar de `CIP`. El loader normaliza ambos campos mediante `HubTools.normalizer.getPatientCIP()`.
 
@@ -79,8 +83,8 @@ Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) comparten estas cabe
 
 - Columnas específicas de **LES**: ver `docs/template_les_excel.md`
 - Columnas específicas de **Sjögren**: ver `docs/template_sjogren_excel.md`
-- Columnas de **prebiológico**: ver `docs/template_prebiologico_excel.md`
-- Estructura de **Solicitud FH**: ver `docs/template_solicitud_fh.md`
+- Columnas de **prebiológico**: bloque común embebido por visita; ver `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`.
+- Estructura de **Solicitud FH**: salida derivada de texto; no columna/hoja persistida.
 - Columnas históricas ESPA/APS/AR: ver `docs/CONTRATO_DATOS_UNIFICADO.md`
 
 ---
@@ -94,8 +98,9 @@ Cada patología mantiene primera visita y seguimiento en la misma hoja mediante 
 ## 6. Cambios respecto a v1
 
 - `ID_Paciente` → `CIP` como identificador canónico visible (con alias de lectura para compatibilidad).
-- Añadidas columnas transversales `Estado_Prebiologico_Ultimo` y `Fecha_Validacion_Prebiologico_Ultima` a todas las hojas clínicas.
-- Nuevas hojas: `LES`, `SJOGREN`, `Prebiologico`, `Solicitud_FH_Log`.
+- Añadidas columnas transversales `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico` a todas las hojas clínicas.
+- Nuevas hojas clínicas: `LES`, `SJOGREN`.
+- No se crean hojas `Prebiologico` ni `Solicitud_FH_Log` en el contrato vigente.
 - ASDAS en AR: columnas conservadas pero codificadas como `NA` (ver Fase 2 del plan).
 
 ---
@@ -125,7 +130,7 @@ En la versión actual del sistema, los eventos terapéuticos **se derivan** desd
 - `planBiologicoEntries`, `previoBiologicoEntries` — fármacos biológicos planificados/previos
 - `biologicoSelect`, `fameSelect`, `sistemicoSelect` — selectores de tratamiento
 - Scores de actividad por patología: DAS28, CDAI, SDAI, BASDAI, ASDAS, SLEDAI-2K, ESSDAI, ESSPRI
-- `Estado_Prebiologico_Ultimo` y `Fecha_Validacion_Prebiologico_Ultima` — estado prebiológico
+- `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico` — estado prebiológico persistido por visita
 
 **Formato de evento derivado** (inmutable, en memoria):
 ```javascript

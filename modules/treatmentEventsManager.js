@@ -60,6 +60,13 @@
         return text.trim().toLowerCase().replace(/\s{2,}/g, ' ');
     }
 
+    function parseStrictNumber(value) {
+        if (value === undefined || value === null || value === '') return null;
+        var raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+        var parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
     /**
      * Parseo robusto de fechas del hub (formatos DD/MM/YYYY, YYYY-MM-DD, ISO, etc.).
      * @param {string} dateStr
@@ -499,8 +506,8 @@
             if (val === null || val === undefined) continue;
             var str = String(val).trim().replace(',', '.');
             if (invalid.indexOf(str) !== -1) continue;
-            var num = parseFloat(str);
-            if (!isNaN(num)) return num;
+            var num = parseStrictNumber(str);
+            if (num !== null) return num;
         }
         return null;
     }

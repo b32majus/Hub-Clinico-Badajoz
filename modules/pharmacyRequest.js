@@ -38,7 +38,7 @@
      * Normaliza la patología usando el normalizer si está disponible.
      */
     function normalizePath(datos) {
-        var path = (datos.diagnosticoPrimario || datos.pathology || '').toString().trim();
+        var path = (datos.diagnosticoPrimario || datos.Diagnostico_Primario || datos.Diagnostico_Principal || datos.pathology || '').toString().trim();
         if (typeof HubTools !== 'undefined' && HubTools.normalizer && typeof HubTools.normalizer.normalizePathology === 'function') {
             return HubTools.normalizer.normalizePathology(path);
         }
@@ -183,16 +183,30 @@
 
         } else if (pathology === 'aps') {
             // Artritis Psoriásica
+            var dapsa = getField(datos, ['dapsaResult', 'dapsa', 'DAPSA', 'DAPSA_Result'], '');
+            var pasi = getField(datos, ['pasiResult', 'pasi', 'PASI', 'PASI_Result', 'PASI_Score'], '');
+            var bsa = getField(datos, ['bsaResult', 'bsa', 'BSA', 'BSA_Result', 'BSA_Percentage'], '');
+            var lei = getField(datos, ['leiResult', 'lei', 'LEI', 'LEI_Score'], '');
+            var haq = getField(datos, ['haqResult', 'haq', 'HAQ', 'HAQ_Total'], '');
+            var rapid3Aps = getField(datos, ['rapid3Total', 'rapid3Score', 'rapid3Result', 'RAPID3', 'RAPID3_Score'], '');
             var pcr = getField(datos, ['pcr', 'PCR', 'pcrValue'], '');
             var vsg = getField(datos, ['vsg', 'VSG', 'vsgValue'], '');
-            text += '- Evaluación de actividad según criterios CASPAR y manifestaciones clínicas.\n';
+            if (dapsa) text += '- DAPSA: ' + dapsa + '\n';
+            if (pasi) text += '- PASI: ' + pasi + '\n';
+            if (bsa) text += '- BSA: ' + bsa + '\n';
+            if (lei) text += '- LEI: ' + lei + '\n';
+            if (haq) text += '- HAQ: ' + haq + '\n';
+            if (rapid3Aps) text += '- RAPID3: ' + rapid3Aps + '\n';
             if (pcr) text += '- PCR: ' + pcr + ' mg/L\n';
             if (vsg) text += '- VSG: ' + vsg + ' mm/h\n';
+            if (!dapsa && !pasi && !bsa && !lei && !haq && !rapid3Aps && !pcr && !vsg) {
+                text += '(Sin datos de actividad registrados)\n';
+            }
 
         } else if (pathology === 'les') {
             // Lupus Eritematoso Sistémico
-            var sledai2k = getField(datos, ['sledai2kResult', 'sledai2k'], '');
-            var slicc = getField(datos, ['sliccAcrSdi', 'slicc'], '');
+            var sledai2k = getField(datos, ['SLEDAI_2K', 'SLEDAI_2K_Result', 'sledai2kResult', 'sledai2k'], '');
+            var slicc = getField(datos, ['sliccSdi', 'SLICC_SDI', 'SLICC_ACR_SDI', 'sliccAcrSdi', 'slicc'], '');
             var prednisona = getField(datos, ['dosisPrednisona'], '');
             var brote = getField(datos, ['broteActual'], '');
             var pcr = getField(datos, ['pcr', 'PCR', 'pcrValue'], '');

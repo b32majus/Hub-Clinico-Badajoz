@@ -1,5 +1,9 @@
 # Auditoría Excel Maestro v2
 
+> **Documento histórico. No usar como contrato vigente.**
+> Conservado como evidencia de la auditoría inicial sobre el maestro histórico de 321 columnas.
+> El contrato operativo actual es `docs/CONTRATO_DATOS_REUMA_V2.md` y `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`: 5 hojas clínicas, 491 columnas, prebiológico embebido por visita y Solicitud FH derivada no persistida.
+
 > Fase A. Auditoría sin generación de demo y sin cambios funcionales. Esta auditoría trata el Excel maestro original como fuente principal de verdad contractual; el código se usa solo como contraste secundario.
 
 ## 1. Archivo maestro analizado

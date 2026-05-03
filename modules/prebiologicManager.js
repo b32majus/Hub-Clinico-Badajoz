@@ -92,6 +92,16 @@
         return fallback !== undefined ? fallback : '';
     }
 
+    function hasVisitField(visit, aliases) {
+        if (!visit || !aliases || !aliases.length) return false;
+        for (var i = 0; i < aliases.length; i++) {
+            if (visit[aliases[i]] !== undefined && visit[aliases[i]] !== null && visit[aliases[i]] !== '') {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function hasClinicalContent(value) {
         if (value === undefined || value === null) return false;
         var normalized = value.toString().trim().toUpperCase();
@@ -222,6 +232,8 @@
                 validationDate: '',
                 vaccinationOk: '',
                 source: 'none',
+                hasExplicitStatus: false,
+                hasClinicalActivity: false,
                 details: {}
             };
         }
@@ -247,13 +259,16 @@
             rxToraxRecibida: getVisitField(visit, ['Rx_Torax_Recibida', 'rxToraxRecibida'], '')
         };
 
-        var manualStatus = normalizeStatus(getVisitField(visit, ['Estado_Prebiologico_Final', 'estadoPrebiologicoFinal'], ''));
+        var statusAliases = ['Estado_Prebiologico_Final', 'estadoPrebiologicoFinal'];
+        var hasExplicitStatus = hasVisitField(visit, statusAliases);
+        var manualStatus = normalizeStatus(getVisitField(visit, statusAliases, ''));
         var validationDate = getVisitField(visit, ['Fecha_Validacion_Prebiologico', 'fechaValidacionPrebiologico'], '');
         var status = VALID_STATUSES.NO_EVALUADO;
+        var hasClinicalActivity = inferInProgress(details);
 
         if (manualStatus) {
             status = manualStatus;
-        } else if (inferInProgress(details)) {
+        } else if (hasClinicalActivity) {
             status = VALID_STATUSES.EN_CURSO;
         }
 
@@ -262,13 +277,15 @@
             validationDate: validationDate || '',
             vaccinationOk: details.vacunacionOK || '',
             source: 'visit',
+            hasExplicitStatus: hasExplicitStatus,
+            hasClinicalActivity: hasClinicalActivity,
             details: details
         };
     }
 
     function resolvePrebiologicStatus(cip, visit) {
         var visitStatus = getPrebiologicStatusFromVisit(visit);
-        if (visitStatus.source === 'visit' && visitStatus.status !== VALID_STATUSES.NO_EVALUADO) {
+        if (visitStatus.source === 'visit' && (visitStatus.hasExplicitStatus || visitStatus.hasClinicalActivity)) {
             return visitStatus;
         }
 
@@ -309,7 +326,7 @@
         var cssClass = BADGE_CLASSES[estado] || BADGE_CLASSES[VALID_STATUSES.NO_EVALUADO];
 
         var shortDate = formatShortDate(fecha);
-        var text = 'Prebiólogo: ' + estado.replace(/_/g, ' ');
+        var text = 'Prebiológico: ' + estado.replace(/_/g, ' ');
         if (shortDate) {
             text += ' · ' + shortDate;
         }

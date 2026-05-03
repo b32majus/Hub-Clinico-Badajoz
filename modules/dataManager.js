@@ -205,6 +205,26 @@ var CRITICAL_HEADERS = {
         createHeaderRule('Decision_Terapeutica_SEG', ['Decision_Terapeutica_SEG', 'Decision_Terapeutica']),
         createHeaderRule('Fecha_Inicio_Tratamiento'),
         createHeaderRule('Fecha_Proxima_Revision')
+    ],
+    LES: [
+        createHeaderRule('ID_Paciente', ['ID_Paciente', 'CIP', 'cip', 'idPaciente']),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario', ['Diagnostico_Primario', 'Diagnostico_Principal', 'pathology']),
+        createHeaderRule('SLEDAI_2K', ['SLEDAI_2K', 'SLEDAI_2K_Result', 'SLEDAI', 'sledai2kResult']),
+        createHeaderRule('SLICC_SDI', ['SLICC_SDI', 'SLICC_ACR_SDI', 'sliccAcrSdi', 'sliccSdi']),
+        createHeaderRule('Estado_Prebiologico_Final'),
+        createHeaderRule('Fecha_Validacion_Prebiologico')
+    ],
+    SJOGREN: [
+        createHeaderRule('ID_Paciente', ['ID_Paciente', 'CIP', 'cip', 'idPaciente']),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario', ['Diagnostico_Primario', 'Diagnostico_Principal', 'pathology']),
+        createHeaderRule('ESSPRI_Result', ['ESSPRI_Result', 'ESSPRI', 'esspriResult']),
+        createHeaderRule('ESSDAI_Result', ['ESSDAI_Result', 'ESSDAI', 'essdaiResult']),
+        createHeaderRule('Estado_Prebiologico_Final'),
+        createHeaderRule('Fecha_Validacion_Prebiologico')
     ]
 };
 
@@ -764,40 +784,40 @@ function extractKeyEvents(visits, pathology) {
 
             if (pathology === 'espa' || pathology === 'ESPA') {
                 // Comparar BASDAI
-                const currBASDAI = parseFloat(currentVisit.basdaiResult || currentVisit.BASDAI);
-                const prevBASDAI = parseFloat(previousVisit.basdaiResult || previousVisit.BASDAI);
+                const currBASDAI = parseStrictNumber(currentVisit.basdaiResult || currentVisit.BASDAI);
+                const prevBASDAI = parseStrictNumber(previousVisit.basdaiResult || previousVisit.BASDAI);
 
-                if (!isNaN(currBASDAI) && !isNaN(prevBASDAI) && currBASDAI > prevBASDAI + 2) {
+                if (currBASDAI !== null && prevBASDAI !== null && currBASDAI > prevBASDAI + 2) {
                     isFlare = true;
                     flareReason = `BASDAI ? (${prevBASDAI.toFixed(1)} ? ${currBASDAI.toFixed(1)})`;
                 }
 
                 // Comparar ASDAS-CRP
                 if (!isFlare) {
-                    const currASDAS = parseFloat(currentVisit.asdasCrpResult || currentVisit.ASDAS);
-                    const prevASDAS = parseFloat(previousVisit.asdasCrpResult || previousVisit.ASDAS);
+                    const currASDAS = parseStrictNumber(currentVisit.asdasCrpResult || currentVisit.ASDAS);
+                    const prevASDAS = parseStrictNumber(previousVisit.asdasCrpResult || previousVisit.ASDAS);
 
-                    if (!isNaN(currASDAS) && !isNaN(prevASDAS) && currASDAS > prevASDAS + 0.8) {
+                    if (currASDAS !== null && prevASDAS !== null && currASDAS > prevASDAS + 0.8) {
                         isFlare = true;
                         flareReason = `ASDAS ? (${prevASDAS.toFixed(2)} ? ${currASDAS.toFixed(2)})`;
                     }
                 }
             } else if (pathology === 'aps' || pathology === 'APS') {
                 // Comparar HAQ
-                const currHAQ = parseFloat(currentVisit.haqResult || currentVisit.HAQ);
-                const prevHAQ = parseFloat(previousVisit.haqResult || previousVisit.HAQ);
+                const currHAQ = parseStrictNumber(currentVisit.haqResult || currentVisit.HAQ);
+                const prevHAQ = parseStrictNumber(previousVisit.haqResult || previousVisit.HAQ);
 
-                if (!isNaN(currHAQ) && !isNaN(prevHAQ) && currHAQ > prevHAQ + 0.5) {
+                if (currHAQ !== null && prevHAQ !== null && currHAQ > prevHAQ + 0.5) {
                     isFlare = true;
                     flareReason = `HAQ ? (${prevHAQ.toFixed(2)} ? ${currHAQ.toFixed(2)})`;
                 }
 
                 // Comparar RAPID3
                 if (!isFlare) {
-                    const currRAPID3 = parseFloat(currentVisit.rapid3Result || currentVisit.RAPID3);
-                    const prevRAPID3 = parseFloat(previousVisit.rapid3Result || previousVisit.RAPID3);
+                    const currRAPID3 = parseStrictNumber(currentVisit.rapid3Result || currentVisit.RAPID3);
+                    const prevRAPID3 = parseStrictNumber(previousVisit.rapid3Result || previousVisit.RAPID3);
 
-                    if (!isNaN(currRAPID3) && !isNaN(prevRAPID3) && currRAPID3 > prevRAPID3 + 2) {
+                    if (currRAPID3 !== null && prevRAPID3 !== null && currRAPID3 > prevRAPID3 + 2) {
                         isFlare = true;
                         flareReason = `RAPID3 ? (${prevRAPID3.toFixed(1)} ? ${currRAPID3.toFixed(1)})`;
                     }
@@ -818,14 +838,14 @@ function extractKeyEvents(visits, pathology) {
         let remissionReason = '';
 
         if (pathology === 'espa' || pathology === 'ESPA') {
-            const basdai = parseFloat(currentVisit.basdaiResult || currentVisit.BASDAI);
-            if (!isNaN(basdai) && basdai < (cutoffs.basdai?.remission || 4)) {
+            const basdai = parseStrictNumber(currentVisit.basdaiResult || currentVisit.BASDAI);
+            if (basdai !== null && basdai < (cutoffs.basdai?.remission || 4)) {
                 isRemission = true;
                 remissionReason = `BASDAI baja (${basdai.toFixed(1)})`;
             }
         } else if (pathology === 'aps' || pathology === 'APS') {
-            const haq = parseFloat(currentVisit.haqResult || currentVisit.HAQ);
-            if (!isNaN(haq) && haq < (cutoffs.haq?.remission || 0.5)) {
+            const haq = parseStrictNumber(currentVisit.haqResult || currentVisit.HAQ);
+            if (haq !== null && haq < (cutoffs.haq?.remission || 0.5)) {
                 isRemission = true;
                 remissionReason = `HAQ en remisin (${haq.toFixed(2)})`;
             }
@@ -833,12 +853,12 @@ function extractKeyEvents(visits, pathology) {
 
         if (isRemission && previousVisit) {
             // Solo registrar si la visita anterior NO estaba en remisin
-            const prevBASDAI = parseFloat(previousVisit.basdaiResult || previousVisit.BASDAI);
-            const prevHAQ = parseFloat(previousVisit.haqResult || previousVisit.HAQ);
+            const prevBASDAI = parseStrictNumber(previousVisit.basdaiResult || previousVisit.BASDAI);
+            const prevHAQ = parseStrictNumber(previousVisit.haqResult || previousVisit.HAQ);
 
             let shouldRecord = false;
-            if (pathology === 'espa' && !isNaN(prevBASDAI) && prevBASDAI >= 4) shouldRecord = true;
-            if (pathology === 'aps' && !isNaN(prevHAQ) && prevHAQ >= 0.5) shouldRecord = true;
+            if (pathology === 'espa' && prevBASDAI !== null && prevBASDAI >= 4) shouldRecord = true;
+            if (pathology === 'aps' && prevHAQ !== null && prevHAQ >= 0.5) shouldRecord = true;
 
             if (shouldRecord) {
                 events.push({
@@ -912,6 +932,13 @@ function normalizeString(value) {
     return value.toString().trim().toLowerCase();
 }
 
+function parseStrictNumber(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function getFieldValue(record, keys) {
     for (const key of keys) {
         if (record[key] !== undefined && record[key] !== null && record[key] !== '') {
@@ -924,8 +951,7 @@ function getFieldValue(record, keys) {
 function getNumericFieldValue(record, keys) {
     const value = getFieldValue(record, keys);
     if (value === null) return null;
-    const parsed = parseFloat(value);
-    return Number.isNaN(parsed) ? null : parsed;
+    return parseStrictNumber(value);
 }
 
 function parseFilterDate(value) {
@@ -1086,9 +1112,9 @@ function getActivityBucket(metricLabel, value) {
         return 'Alta Actividad';
     }
 
-    if (value < thresholds.remission) return 'Remisi\u00f3n';
-    if (value < thresholds.low) return 'Baja Actividad';
-    if (value < thresholds.moderate) return 'Moderada Actividad';
+    if (value <= thresholds.remission) return 'Remisi\u00f3n';
+    if (value <= thresholds.low) return 'Baja Actividad';
+    if (value <= thresholds.moderate) return 'Moderada Actividad';
     return 'Alta Actividad';
 }
 
@@ -1166,17 +1192,17 @@ function applyFiltersToPatients(patients, filters) {
     if (dateFrom) dateFrom.setHours(0, 0, 0, 0);
     if (dateTo) dateTo.setHours(23, 59, 59, 999);
 
-    const ageFrom = parseInt(filters.ageFrom, 10);
-    const ageTo = parseInt(filters.ageTo, 10);
-    const applyAgeFrom = !Number.isNaN(ageFrom);
-    const applyAgeTo = !Number.isNaN(ageTo);
+    const ageFrom = parseStrictNumber(filters.ageFrom);
+    const ageTo = parseStrictNumber(filters.ageTo);
+    const applyAgeFrom = ageFrom !== null;
+    const applyAgeTo = ageTo !== null;
 
     const activityState = filters.activityState && filters.activityState !== 'Todos' ? filters.activityState : null;
     const activityIndex = filters.activityIndex || 'BASDAI';
-    const evaDolorLimit = parseFloat(filters.evaDolor);
-    const evaGlobalLimit = parseFloat(filters.evaGlobal);
-    const applyEvaDolor = !Number.isNaN(evaDolorLimit) && evaDolorLimit < 10;
-    const applyEvaGlobal = !Number.isNaN(evaGlobalLimit) && evaGlobalLimit < 10;
+    const evaDolorLimit = parseStrictNumber(filters.evaDolor);
+    const evaGlobalLimit = parseStrictNumber(filters.evaGlobal);
+    const applyEvaDolor = evaDolorLimit !== null && evaDolorLimit < 10;
+    const applyEvaGlobal = evaGlobalLimit !== null && evaGlobalLimit < 10;
 
     const biomarkerFilter = filters.biomarker || '';
     const ttoTypeFilter = normalizeString(filters.ttoType);
@@ -1529,10 +1555,10 @@ function generateRealChartData(patients, filters = {}) {
         // Usar la mtrica correcta segn patologa
         if (patientPathology === 'ESPA' || pathologyFilter === 'ESPA') {
             // ESPA: usar BASDAI_Result
-            activityValue = parseFloat(p.BASDAI_Result);
+            activityValue = parseStrictNumber(p.BASDAI_Result);
             activityLabel = 'BASDAI';
 
-            if (!isNaN(activityValue) && activityValue >= 0) {
+            if (activityValue !== null && activityValue >= 0) {
                 // Umbrales BASDAI: remisin < 2, baja < 4, moderada < 6, alta >= 6
                 if (activityValue < 2) activityCounts.remission++;
                 else if (activityValue < 4) activityCounts.low++;
@@ -1546,7 +1572,7 @@ function generateRealChartData(patients, filters = {}) {
                 activityValue = dapsa;
                 activityLabel = 'DAPSA';
             } else {
-                activityValue = parseFloat(p.HAQ_Total);
+                activityValue = parseStrictNumber(p.HAQ_Total);
                 activityLabel = 'HAQ';
             }
 
@@ -1645,8 +1671,8 @@ function generateRealChartData(patients, filters = {}) {
                     else if (bucket === 'Alta Actividad') activityCounts.high++;
                     activityLabel = 'DAPSA';
                 } else {
-                    activityValue = parseFloat(p.HAQ_Total);
-                    if (!isNaN(activityValue) && activityValue >= 0) {
+                    activityValue = parseStrictNumber(p.HAQ_Total);
+                    if (activityValue !== null && activityValue >= 0) {
                         const bucket = getActivityBucket('HAQ', activityValue);
                         if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
                         else if (bucket === 'Baja Actividad') activityCounts.low++;
@@ -1657,22 +1683,22 @@ function generateRealChartData(patients, filters = {}) {
                 }
             } else {
             // Fallback original: BASDAI -> HAQ -> DAS28
-            activityValue = parseFloat(p.BASDAI_Result);
-            if (!isNaN(activityValue) && activityValue >= 0) {
+            activityValue = parseStrictNumber(p.BASDAI_Result);
+            if (activityValue !== null && activityValue >= 0) {
                 if (activityValue < 2) activityCounts.remission++;
                 else if (activityValue < 4) activityCounts.low++;
                 else if (activityValue < 6) activityCounts.moderate++;
                 else activityCounts.high++;
             } else {
-                activityValue = parseFloat(p.HAQ_Total);
-                if (!isNaN(activityValue) && activityValue >= 0) {
+                activityValue = parseStrictNumber(p.HAQ_Total);
+                if (activityValue !== null && activityValue >= 0) {
                     if (activityValue < 0.5) activityCounts.remission++;
                     else if (activityValue < 1.5) activityCounts.low++;
                     else if (activityValue < 2) activityCounts.moderate++;
                     else activityCounts.high++;
                 } else {
                     activityValue = getMetricValue(p, 'DAS28_CRP');
-                    if (!isNaN(activityValue) && activityValue >= 0) {
+                    if (activityValue !== null && activityValue >= 0) {
                         const thresholds = ACTIVITY_THRESHOLDS['DAS28_CRP'];
                         if (activityValue < thresholds.remission) activityCounts.remission++;
                         else if (activityValue < thresholds.low) activityCounts.low++;
@@ -1806,9 +1832,9 @@ function generateRealChartData(patients, filters = {}) {
 
     const correlationData = patients
         .map(p => {
-            const xValue = parseFloat(p[xColumn]);
-            const yValue = parseFloat(p[yColumn]);
-            if (isNaN(xValue) || isNaN(yValue)) return null;
+            const xValue = parseStrictNumber(p[xColumn]);
+            const yValue = parseStrictNumber(p[yColumn]);
+            if (xValue === null || yValue === null) return null;
             if (xValue === 0 && yValue === 0) return null; // Excluir puntos 0,0
             return { x: xValue, y: yValue };
         })

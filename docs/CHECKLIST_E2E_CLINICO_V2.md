@@ -11,8 +11,10 @@
 - Rama: `feature/reuma-v2-prebiologico-fh-les-sjogren`
 - Demo: 30 pacientes ficticios, 109 visitas, 5 patologías
 - Fecha validación: 2026-05-03
-- Validado por: Kimi K2.6 / OpenCode
-- Resultado: **APTO**
+- Validado por: pendiente tras AUDIT-FIX-1
+- Resultado: **PENDIENTE**
+
+> AUDIT-FIX-1: este checklist debe repetirse tras corregir los hallazgos pre-PR. El contrato vigente no incluye hoja `Prebiologico` separada ni persistencia de `Solicitud_FH_Log`; el prebiológico va embebido por visita y la Solicitud FH es derivada.
 
 ---
 
@@ -21,7 +23,7 @@
 - [ ] Verificar 30 pacientes cargados en consola o UI
 - [ ] Verificar 5 patologías reconocidas: AR, ESPA, APS, LES, SJOGREN
 - [ ] Verificar hojas auxiliares cargadas: Profesionales, Fármacos
-- [ ] Verificar datos prebiológicos disponibles (aunque hoja Prebiologico no se cargue en el loop principal)
+- [ ] Verificar datos prebiológicos embebidos por visita en las hojas clínicas
 - [ ] Sin errores en consola durante carga (F12 → Console)
 - [ ] Sin warnings de cabeceras críticas faltantes
 
@@ -51,7 +53,7 @@
 - [ ] Filtro **ESPA**: 6 pacientes (DEMO-ESPA-001 a 006)
 - [ ] Filtro **ESPA**: métricas BASDAI/ASDAS disponibles
 - [ ] Filtro **APS**: 6 pacientes (DEMO-APS-001 a 006)
-- [ ] Filtro **APS**: métricas DAPSA/HAQ/RAPID3 disponibles
+- [ ] Filtro **APS**: HAQ/RAPID3 disponibles; DAPSA solo si el contrato Excel futuro lo incorpora
 - [ ] Filtro **LES**: 6 pacientes (DEMO-LES-001 a 006)
 - [ ] Filtro **LES**: métricas SLEDAI-2K/SLICC disponibles
 - [ ] Filtro **SJOGREN**: 6 pacientes (DEMO-SJOGREN-001 a 006)
@@ -68,7 +70,7 @@
 - [ ] Scatter permite seleccionar nuevas métricas en X e Y
 - [ ] SLEDAI-2K disponible en selectores X/Y
 - [ ] ESSDAI disponible en selectores X/Y
-- [ ] DAPSA disponible en selectores X/Y
+- [ ] DAPSA disponible en selectores X/Y solo si el Excel cargado incluye columna DAPSA
 - [ ] Tabla de cohortes muestra métrica principal correcta por patología
 - [ ] Sin "N/A" masivos en la tabla
 
