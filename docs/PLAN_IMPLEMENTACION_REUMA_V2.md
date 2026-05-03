@@ -3422,6 +3422,27 @@ MDA solo se considera evaluable cuando existen datos válidos en todos los bloqu
 
 ---
 
+## DEBT-2 ejecutado — activityCutoffs legacy alineado con Reuma v2
+
+### Métricas añadidas/corregidas en `HubTools.dashboard.activityCutoffs`
+- DAPSA: remisión 4, baja actividad 14, moderada 28, alta >=28.
+- SLEDAI-2K: remisión 2, baja actividad 6, moderada 12, alta >=12.
+- ESSDAI: baja <5, moderada 5-13, alta >=14.
+- ESSPRI: remisión 3, baja actividad 5, moderada 7, alta >=7.
+- PASI: remisión 1, baja actividad 3, moderada 10, alta >=10.
+- BSA: remisión 3, moderada 10, alta >=10.
+- LEI: corregido a escala 0-6, con <=1 sin/mínima entesitis, <=3 leve, <=5 moderada y >5 alta.
+
+### Categorización ampliada
+- `categorizeScore()` reconoce DAPSA, SLEDAI-2K, ESSDAI, ESSPRI, PASI y BSA.
+- Se mantienen las fórmulas clínicas existentes sin cambios.
+- Se aceptan alias normalizados para SLEDAI-2K (`sledai2k`, `SLEDAI-2K`, `sledai_2k`).
+
+### Deuda pendiente
+- Centralizar umbrales clínicos en un futuro `clinicalThresholds.js` para evitar duplicidad entre dashboard, estadísticas, eventos y calculadoras.
+
+---
+
 *Plan de implementación Reuma v2 — HARDENING EN CURSO*
 *Total de fases ejecutadas: 12 + HARDENING-1/2A/2C*
 *Rama: feature/reuma-v2-prebiologico-fh-les-sjogren*

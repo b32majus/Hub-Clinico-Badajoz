@@ -327,11 +327,21 @@ function categorizeScore(valor, scoreType) {
         return { categoria: 'unknown', color: '#6c757d', label: 'N/A', backgroundColor: '#6c757d22' };
     }
 
-    const cutoffs = HubTools?.dashboard?.activityCutoffs?.[scoreType];
+    const normalizedScoreType = String(scoreType || '').toLowerCase().replace(/[-_\s]/g, '');
+    const cutoffKeyMap = {
+        sledai2k: 'sledai2k',
+        essdai: 'essdai',
+        esspri: 'esspri',
+        dapsa: 'dapsa',
+        pasi: 'pasi',
+        bsa: 'bsa'
+    };
+    const cutoffKey = HubTools?.dashboard?.activityCutoffs?.[scoreType] ? scoreType : (cutoffKeyMap[normalizedScoreType] || scoreType);
+    const cutoffs = HubTools?.dashboard?.activityCutoffs?.[cutoffKey];
     if (!cutoffs) return { categoria: 'unknown', color: '#6c757d', label: 'N/A', backgroundColor: '#6c757d22' };
 
     let categoria, color, label;
-    switch (scoreType) {
+    switch (cutoffKey) {
         case 'basdai':
             if (valor < cutoffs.remission) {
                 categoria = 'low'; color = '#28a745'; label = 'Baja Actividad';
@@ -346,9 +356,33 @@ function categorizeScore(valor, scoreType) {
         case 'cdai':
         case 'sdai':
         case 'rapid3':
-            if (valor < cutoffs.remission) {
+        case 'dapsa':
+        case 'sledai2k':
+        case 'esspri':
+            if ((['dapsa', 'sledai2k', 'esspri'].includes(cutoffKey) && valor <= cutoffs.remission) || valor < cutoffs.remission) {
                 categoria = 'remission'; color = '#28a745'; label = 'Remisión';
             } else if (valor < cutoffs.lowActivity) {
+                categoria = 'low'; color = '#90ee90'; label = 'Baja Actividad';
+            } else if (valor < cutoffs.moderate) {
+                categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
+            } else {
+                categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';
+            }
+            break;
+        case 'essdai':
+            if (valor < cutoffs.remission) {
+                categoria = 'low'; color = '#28a745'; label = 'Baja Actividad';
+            } else if (valor < cutoffs.moderate) {
+                categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
+            } else {
+                categoria = 'high'; color = '#dc3545'; label = 'Actividad Alta';
+            }
+            break;
+        case 'pasi':
+        case 'bsa':
+            if (valor < cutoffs.remission) {
+                categoria = 'remission'; color = '#28a745'; label = 'Remisión';
+            } else if (cutoffs.lowActivity !== undefined && valor < cutoffs.lowActivity) {
                 categoria = 'low'; color = '#90ee90'; label = 'Baja Actividad';
             } else if (valor < cutoffs.moderate) {
                 categoria = 'moderate'; color = '#ffc107'; label = 'Actividad Moderada';
