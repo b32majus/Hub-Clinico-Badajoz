@@ -29,9 +29,10 @@ Principio rector: guardar datos fuente estructurados, no informes generados.
 Orden de autoridad para construir la demo:
 
 1. Excel maestro original: fuente canonica para las 321 columnas historicas de AR/ESPA/APS.
-2. `docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`: matriz de campos implementados, documentados y pendientes.
-3. `modules/exportManager.js`: verificacion secundaria de lo que hoy se puede pegar desde el Hub.
-4. Contrato y templates v2: intencion funcional para campos aun no implementados.
+2. `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`: contrato de orden exacto para las columnas finales v2.
+3. `docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`: matriz de campos implementados, documentados y pendientes.
+4. `modules/exportManager.js`: verificacion secundaria de lo que hoy se puede pegar desde el Hub.
+5. Contrato y templates v2: intencion funcional para campos aun no implementados.
 
 No se deben inventar cabeceras fuera de estas fuentes. Si aparece un campo nuevo necesario, debe documentarse antes de incorporarse.
 
@@ -104,7 +105,16 @@ Reglas:
 
 ## 6. Bloque v2 transversal prebiologico/vacunal
 
-Este bloque debe anadirse al final de cada hoja clinica, despues del bloque historico y antes o despues de bloques especificos segun se cierre el orden final de generacion. La condicion obligatoria es no insertarlo dentro de las primeras 321 columnas.
+Este bloque debe anadirse al final de cada hoja clinica, despues del bloque historico y antes de los bloques especificos LES/SJOGREN.
+
+Orden cerrado:
+
+- Columna `322`: `Fecha_Diagnostico`.
+- Columnas `323-365`: bloque prebiologico/vacunal transversal.
+- Columnas `366-438`: bloque especifico LES.
+- Columnas `439-491`: bloque especifico SJOGREN.
+
+La referencia exacta de posiciones esta fijada en `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`. La condicion obligatoria es no insertar nada dentro de las primeras 321 columnas.
 
 Columnas minimas:
 
@@ -247,12 +257,13 @@ Decision de trazabilidad:
 Estado actual:
 
 - Exporta 399 columnas.
+- El objetivo v2 cerrado es exportar 491 columnas por hoja clinica siguiendo `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`.
 - No exporta el bloque prebiologico/vacunal detallado.
 - Exporta resultados LES/Sjogren, pero no todos los items/dominios de calculadoras.
 
 Cambios funcionales necesarios en fase posterior:
 
-- Ampliar cabeceras exportadas con el bloque prebiologico/vacunal al final.
+- Ampliar cabeceras exportadas con el bloque prebiologico/vacunal y los campos de trazabilidad LES/SJOGREN hasta 491 columnas.
 - Recopilar esos campos desde formulario cuando existan.
 - Exportar `NA` para campos no aplicables por patologia.
 - Resolver aliases LES/Sjogren entre templates, HTML y exportacion.
@@ -307,7 +318,8 @@ No se debe persistir como:
 
 - Leer las 321 cabeceras historicas desde `Hub_Clinico_Maestro.xlsx`.
 - Usar esas cabeceras como prefijo de todas las hojas clinicas.
-- Anadir bloques v2 al final.
+- Anadir bloques v2 al final con el orden exacto documentado en `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`.
+- Generar 491 columnas por hoja clinica.
 - Crear pacientes ficticios con varias visitas por patologia.
 - Poblar campos minimos necesarios para dashboard, longitudinalidad, tratamientos, eventos, prebiologico y Solicitud FH.
 - Usar `NA` para no aplica, `ND` para no determinado y vacio para texto libre no informado.
@@ -330,7 +342,6 @@ No se debe persistir como:
 Antes de generar la demo:
 
 1. Aprobar esta decision de estructura.
-2. Definir el orden exacto de columnas v2 finales.
-3. Implementar, si procede, formulario/exportacion del bloque prebiologico/vacunal.
-4. Ajustar dashboard/Solicitud FH para leer prebiologico desde la ultima visita.
-5. Generar demo reproducible y validarla contra el maestro.
+2. Implementar formulario/exportacion siguiendo `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`.
+3. Ajustar dashboard/Solicitud FH para leer prebiologico desde la ultima visita.
+4. Generar demo reproducible y validarla contra el maestro.
