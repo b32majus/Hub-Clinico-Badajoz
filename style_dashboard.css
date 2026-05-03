@@ -758,6 +758,7 @@
     position: relative;
     flex: 1;
     min-height: 320px;
+    height: 320px;
     width: 100%;
 }
 

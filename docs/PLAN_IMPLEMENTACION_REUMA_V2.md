@@ -3136,3 +3136,70 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 - Se generan únicamente datos ficticios.
 - No se modifica el Excel maestro original.
 - Solicitud FH permanece como salida derivada, no como persistencia en Excel.
+
+---
+
+## Fase E-fix1 ejecutada — Corrección KPIs, métricas y eventos dashboard demo
+
+**Fecha:** 2026-05-03
+
+### Bugs detectados en validación manual
+1. **KPIs vacíos para LES/Sjögren/APs**: SLEDAI-2K, SLICC, ESSPRI, ESSDAI, BASDAI (en APs) mostraban "---"
+2. **Activity chart de LES**: aparecía con tamaño 300×150 en vez de 624×320
+3. **Eventos flare/remission no detectados en EspA/LES**: solo Sjögren mostraba eventos
+4. **APs mostraba selectores/KPIs de EspA**: BASDAI/ASDAS/BASFI en lugar de DAPSA/PASI/BSA
+
+### Causa raíz y correcciones
+
+#### 1. KPIs vacíos — `scripts/script_dashboard.js`
+- **Causa**: `populatePatientKPIs()` llamaba a `getVisitMetric(latest, 'esspriResult')` en vez de `getVisitMetric(latest, 'esspri')`. La función espera una clave del `fieldMap`, no un nombre de campo directo.
+- **Fix**: Corregidas las claves a `'esspri'`, `'essdai'`, `'sledai2k'`, `'slicc'`.
+- **Fix adicional**: Añadido caso explícito para APs con fallback DAPSA→RAPID3→HAQ y PASI→LEI→BSA.
+
+#### 2. `getVisitMetric()` robustecido
+- **Fix**: Añadidos aliases faltantes (`SLEDAI_2K`, `SLEDAI`, `SLICC_SDI`, `ESSPRI`, `ESSDAI`).
+- **Fix**: Conversión automática de coma decimal a punto.
+- **Fix**: Ignora valores `'NA'`, `'ND'`, `'---'`, `'N/A'`.
+- **Fix**: Devuelve `number` parseado o `null`, nunca string inválido.
+
+#### 3. Selectores de APs — `populateChartSelectors()` y `filterMetricSelectorsByPathology()`
+- **Fix**: Añadido caso `isAPS` explícito con métricas: DAPSA, PASI, BSA, HAQ, LEI, RAPID3, PCR, VSG.
+- **Fix**: Eliminado herencia implícita de selectores EspA para APs.
+
+#### 4. Eventos flare/remission — `modules/treatmentEventsManager.js`
+- **Causa**: `extractTreatmentEvents()` iteraba sobre `allVisits` en el orden almacenado (descendente), por lo que `detectFlareRemission()` comparaba visitas en orden inverso.
+- **Fix**: Ordenar visitas cronológicamente (`slice().sort()`) antes de iterar.
+- **Fix**: `detectFlareRemission()` ahora usa helper `getNumericScoreFromVisit()` con aliases robustos.
+- **Fix**: Condiciones de umbral cambiadas de `<`/`>` a `<=`/`>=` para detectar remisiones con delta exacto al umbral.
+
+#### 5. Chart LES 300×150 — `style_dashboard.css`
+- **Causa**: `.chart-container` tenía solo `min-height: 320px` sin `height` explícita; Chart.js caía en tamaño por defecto cuando el contenedor no tenía altura calculada.
+- **Fix**: Añadido `height: 320px` a `.chart-container`.
+
+#### 6. Labels KPIs dinámicos
+- **Fix**: Añadida actualización de `kpiPrimaryMetricLabel` y `kpiSecondaryMetricLabel` en `populatePatientKPIs()` usando `getMetricLabel()`.
+- **Fix**: Añadidas métricas DAPSA, PASI, BSA a `getMetricLabel()`.
+
+### Validación post-fix por paciente
+
+| Paciente | KPIs | Selectores | Eventos | Chart size |
+|---|---|---|---|---|
+| DEMO-AR-001 | ✅ DAS28=2.1, CDAI=4.0 | ✅ DAS28/CDAI/SDAI | ✅ Adverse event | ✅ 624×322 |
+| DEMO-ESPA-001 | ✅ BASDAI=1.9, ASDAS=1.2 | ✅ BASDAI/ASDAS | ✅ Remisión detectada | ✅ 624×322 |
+| DEMO-APS-001 | ✅ RAPID3=3.0, PASI=1.2 | ✅ DAPSA/PASI/BSA | — | ✅ 624×322 |
+| DEMO-LES-001 | ✅ SLEDAI-2K=1.0, SLICC=2.0 | ✅ SLEDAI-2K/SLICC | ✅ Remisión detectada | ✅ 624×322 |
+| DEMO-SJOGREN-001 | ✅ ESSPRI=2.7, ESSDAI=4.0 | ✅ ESSPRI/ESSDAI | ✅ Remisión detectada | ✅ 624×322 |
+
+### Archivos modificados
+- `scripts/script_dashboard.js`
+- `modules/treatmentEventsManager.js`
+- `style_dashboard.css`
+
+### Sintaxis validada
+```bash
+node --check scripts/script_dashboard.js  # OK
+node --check modules/treatmentEventsManager.js  # OK
+```
+
+### Próximo paso
+- Fase 10: Estadísticas v2 (tras confirmación de usuario).

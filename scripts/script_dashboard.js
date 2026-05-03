@@ -508,27 +508,45 @@ function populatePatientKPIs(latest, summary, allVisits) {
 
     let primaryMetric, primaryMetricKey, secondaryMetric, secondaryMetricKey;
 
+    const isESPA = (window.currentPathology || '').toLowerCase() === 'espa';
+    const isAPS = (window.currentPathology || '').toLowerCase() === 'aps';
+
     if (isSJOGREN) {
-        primaryMetric = getVisitMetric(latest, 'esspriResult');
+        primaryMetric = getVisitMetric(latest, 'esspri');
         primaryMetricKey = 'esspri';
-        secondaryMetric = getVisitMetric(latest, 'essdaiResult');
+        secondaryMetric = getVisitMetric(latest, 'essdai');
         secondaryMetricKey = 'essdai';
     } else if (isLES) {
-        primaryMetric = getVisitMetric(latest, 'sledai2kResult');
+        primaryMetric = getVisitMetric(latest, 'sledai2k');
         primaryMetricKey = 'sledai2k';
-        secondaryMetric = getVisitMetric(latest, 'sliccAcrSdi');
+        secondaryMetric = getVisitMetric(latest, 'slicc');
         secondaryMetricKey = 'slicc';
     } else if (isAR) {
         primaryMetric = getARPrimaryMetric(latest);
         primaryMetricKey = 'das28';
         secondaryMetric = getARSecondaryMetric(latest);
         secondaryMetricKey = 'cdai';
+    } else if (isAPS) {
+        primaryMetric = getVisitMetric(latest, 'dapsa') || getVisitMetric(latest, 'rapid3') || getVisitMetric(latest, 'haq');
+        primaryMetricKey = primaryMetric !== null ? (getVisitMetric(latest, 'dapsa') !== null ? 'dapsa' : (getVisitMetric(latest, 'rapid3') !== null ? 'rapid3' : 'haq')) : 'haq';
+        secondaryMetric = getVisitMetric(latest, 'pasi') || getVisitMetric(latest, 'lei') || getVisitMetric(latest, 'bsa');
+        secondaryMetricKey = secondaryMetric !== null ? (getVisitMetric(latest, 'pasi') !== null ? 'pasi' : (getVisitMetric(latest, 'lei') !== null ? 'lei' : 'bsa')) : 'lei';
+    } else if (isESPA) {
+        primaryMetric = getVisitMetric(latest, 'basdai');
+        primaryMetricKey = 'basdai';
+        secondaryMetric = getVisitMetric(latest, 'asdas');
+        secondaryMetricKey = 'asdas';
     } else {
         primaryMetric = getVisitMetric(latest, 'basdai');
         primaryMetricKey = 'basdai';
         secondaryMetric = getVisitMetric(latest, 'asdas');
         secondaryMetricKey = 'asdas';
     }
+    const primaryLabelEl = document.getElementById('kpiPrimaryMetricLabel');
+    const secondaryLabelEl = document.getElementById('kpiSecondaryMetricLabel');
+    if (primaryLabelEl) primaryLabelEl.textContent = getMetricLabel(primaryMetricKey);
+    if (secondaryLabelEl) secondaryLabelEl.textContent = getMetricLabel(secondaryMetricKey);
+
     const primaryMetricValue = primaryMetric !== null ? Number(primaryMetric).toFixed(1) : '---';
     const primaryStatus = getKPIStatus(primaryMetricKey, primaryMetric);
     document.getElementById('kpiBASDAIValue').textContent = primaryMetricValue;
@@ -839,6 +857,9 @@ function populateChartSelectors() {
     const isLES = (window.currentPathology || '').toLowerCase() === 'les';
     const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
 
+    const isESPA = (window.currentPathology || '').toLowerCase() === 'espa';
+    const isAPS = (window.currentPathology || '').toLowerCase() === 'aps';
+
     let activityMetrics;
     if (isLES) {
         activityMetrics = [
@@ -862,6 +883,26 @@ function populateChartSelectors() {
             { value: 'cdai', text: 'CDAI' },
             { value: 'sdai', text: 'SDAI' },
             { value: 'rapid3', text: 'RAPID3' },
+            { value: 'haq', text: 'HAQ' },
+            { value: 'pcr', text: 'PCR' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isAPS) {
+        activityMetrics = [
+            { value: 'dapsa', text: 'DAPSA' },
+            { value: 'pasi', text: 'PASI' },
+            { value: 'bsa', text: 'BSA' },
+            { value: 'haq', text: 'HAQ' },
+            { value: 'lei', text: 'LEI' },
+            { value: 'rapid3', text: 'RAPID3' },
+            { value: 'pcr', text: 'PCR' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isESPA) {
+        activityMetrics = [
+            { value: 'basdai', text: 'BASDAI' },
+            { value: 'asdas', text: 'ASDAS' },
+            { value: 'basfi', text: 'BASFI' },
             { value: 'haq', text: 'HAQ' },
             { value: 'pcr', text: 'PCR' },
             { value: 'vsg', text: 'VSG' }
@@ -943,7 +984,7 @@ function filterMetricSelectorsByPathology(pathology) {
     const metricsByPathology = {
         ar: ['das28Crp', 'das28Esr', 'cdai', 'sdai', 'rapid3', 'haq', 'pcr', 'vsg'],
         espa: ['basdai', 'asdas', 'basfi', 'haq', 'pcr', 'vsg'],
-        aps: ['haq', 'lei', 'rapid3', 'pcr', 'vsg'],
+        aps: ['dapsa', 'pasi', 'bsa', 'haq', 'lei', 'rapid3', 'pcr', 'vsg'],
         les: ['sledai2k', 'slicc', 'prednisona', 'pcr', 'vsg'],
         sjogren: ['esspri', 'essdai', 'evaSequedadOral', 'evaSequedadOcular', 'evaFatiga', 'evaDolor']
     };
@@ -1486,8 +1527,8 @@ function getVisitMetric(visit, metric) {
         'basdai': ['basdaiResult', 'BASDAI', 'basdai'],
         'asdas': ['asdasCrpResult', 'ASDAS', 'asdas'],
         'basfi': ['basfiResult', 'BASFI', 'basfi'],
-        'haq': ['haqResult', 'HAQ', 'haq'],
-        'lei': ['leiResult', 'LEI', 'lei'],
+        'haq': ['haqResult', 'HAQ_Total', 'HAQ', 'haq'],
+        'lei': ['leiResult', 'LEI_Score', 'LEI', 'lei'],
         'rapid3': ['rapid3Result', 'RAPID3', 'RAPID3_Score', 'rapid3Total', 'rapid3'],
         'das28Crp': ['das28CrpResult', 'DAS28_CRP_Result', 'DAS28_CRP', 'das28Crp', 'DAS28-CRP'],
         'das28Esr': ['das28EsrResult', 'DAS28_ESR_Result', 'DAS28_ESR', 'das28Esr', 'DAS28-ESR'],
@@ -1497,22 +1538,33 @@ function getVisitMetric(visit, metric) {
         'vsg': ['vsgResult', 'VSG', 'vsg'],
         'evaDolor': ['evaDolor', 'EVA_Dolor', 'eva_dolor'],
         'evaGlobal': ['evaGlobal', 'EVA_Global', 'eva_global'],
-        'sledai2k': ['sledai2kResult', 'SLEDAI_2K_Result', 'sledai2k', 'SLEDAI_Result', 'sledai'],
-        'esspri': ['esspriResult', 'ESSPRI_Result', 'esspri', 'ESSPRI'],
-        'essdai': ['essdaiResult', 'ESSDAI_Result', 'essdai', 'ESSDAI'],
-        'slicc': ['sliccAcrSdi', 'SLICC_ACR_SDI', 'slicc', 'SLICC', 'SLICC_SDI'],
+        'sledai2k': ['sledai2kResult', 'SLEDAI_2K_Result', 'SLEDAI_2K', 'SLEDAI', 'sledai2k', 'SLEDAI_Result', 'sledai'],
+        'esspri': ['esspriResult', 'ESSPRI_Result', 'ESSPRI', 'esspri'],
+        'essdai': ['essdaiResult', 'ESSDAI_Result', 'ESSDAI', 'essdai'],
+        'slicc': ['sliccAcrSdi', 'SLICC_ACR_SDI', 'SLICC_SDI', 'SLICC', 'slicc'],
         'prednisona': ['dosisPrednisona', 'Dosis_Prednisona_Mg_Dia', 'prednisona', 'Prednisona'],
         'evaSequedadOral': ['evaSequedadOral', 'EVA_Sequedad_Oral', 'eva_sequedad_oral'],
         'evaSequedadOcular': ['evaSequedadOcular', 'EVA_Sequedad_Ocular', 'eva_sequedad_ocular'],
-        'evaFatiga': ['evaFatiga', 'EVA_Fatiga', 'eva_fatiga']
+        'evaFatiga': ['evaFatiga', 'EVA_Fatiga', 'eva_fatiga'],
+        'dapsa': ['dapsaResult', 'DAPSA_Result', 'DAPSA', 'dapsa'],
+        'pasi': ['pasiResult', 'PASI_Score', 'PASI', 'pasi'],
+        'bsa': ['bsaResult', 'BSA_Percentage', 'BSA', 'bsa']
     };
 
     const possibleFields = fieldMap[metric] || [metric];
+    const invalidValues = ['NA', 'ND', '---', 'N/A', 'n/a', 'na'];
 
     for (const field of possibleFields) {
-        if (visit[field] !== null && visit[field] !== undefined && visit[field] !== '') {
-            return visit[field];
-        }
+        const val = visit[field];
+        if (val === null || val === undefined || val === '') continue;
+        const strVal = String(val).trim();
+        if (invalidValues.includes(strVal)) continue;
+        // Convertir coma decimal a punto
+        const normalized = strVal.replace(',', '.');
+        const num = parseFloat(normalized);
+        if (!isNaN(num)) return num;
+        // Si no es numérico pero tampoco inválido, devolver el string original
+        return val;
     }
 
     return null;
@@ -1604,7 +1656,10 @@ function getMetricLabel(metric) {
         prednisona: 'Prednisona (mg/día)',
         evaSequedadOral: 'EVA Sequedad Oral',
         evaSequedadOcular: 'EVA Sequedad Ocular',
-        evaFatiga: 'EVA Fatiga'
+        evaFatiga: 'EVA Fatiga',
+        dapsa: 'DAPSA',
+        pasi: 'PASI',
+        bsa: 'BSA'
     };
     return labels[metric] || metric.toUpperCase();
 }

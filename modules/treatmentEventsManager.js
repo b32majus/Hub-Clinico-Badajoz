@@ -479,6 +479,20 @@
      * @param {string} pathology - Código de patología normalizado (ar|espa|aps|les|sjogren)
      * @returns {Object|null} Detection result compatible con buildEvent, o null
      */
+    function getNumericScoreFromVisit(visit, aliases) {
+        if (!visit || !aliases) return null;
+        var invalid = ['NA', 'ND', '---', 'N/A', 'n/a', 'na', ''];
+        for (var i = 0; i < aliases.length; i++) {
+            var val = visit[aliases[i]];
+            if (val === null || val === undefined) continue;
+            var str = String(val).trim().replace(',', '.');
+            if (invalid.indexOf(str) !== -1) continue;
+            var num = parseFloat(str);
+            if (!isNaN(num)) return num;
+        }
+        return null;
+    }
+
     function detectFlareRemission(currentVisit, previousVisit, pathology) {
         if (!currentVisit || !previousVisit || !pathology) return null;
 
@@ -494,35 +508,35 @@
 
         switch (normalizedPathology) {
             case 'ar':
-                currentScore = parseFloat(currentVisit.DAS28 || currentVisit.das28);
-                previousScore = parseFloat(previousVisit.DAS28 || previousVisit.das28);
+                currentScore = getNumericScoreFromVisit(currentVisit, ['DAS28_CRP_Result', 'DAS28_ESR_Result', 'DAS28', 'das28', 'DAS28_CRP']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['DAS28_CRP_Result', 'DAS28_ESR_Result', 'DAS28', 'das28', 'DAS28_CRP']);
                 scoreName = 'DAS28';
                 break;
             case 'espa':
-                currentScore = parseFloat(currentVisit.BASDAI || currentVisit.basdai);
-                previousScore = parseFloat(previousVisit.BASDAI || previousVisit.basdai);
+                currentScore = getNumericScoreFromVisit(currentVisit, ['BASDAI_Result', 'BASDAI', 'basdai']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['BASDAI_Result', 'BASDAI', 'basdai']);
                 scoreName = 'BASDAI';
                 break;
             case 'aps':
-                currentScore = parseFloat(currentVisit.DAPSA || currentVisit.dapsa);
-                previousScore = parseFloat(previousVisit.DAPSA || previousVisit.dapsa);
-                scoreName = 'DAPSA';
+                currentScore = getNumericScoreFromVisit(currentVisit, ['DAPSA_Result', 'DAPSA', 'dapsa', 'RAPID3_Score', 'RAPID3', 'HAQ_Total', 'HAQ']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['DAPSA_Result', 'DAPSA', 'dapsa', 'RAPID3_Score', 'RAPID3', 'HAQ_Total', 'HAQ']);
+                scoreName = 'DAPSA/RAPID3/HAQ';
                 break;
             case 'les':
-                currentScore = parseFloat(currentVisit.SLEDAI_2K_Result || currentVisit.sledai2k || currentVisit.SLEDAI_Result);
-                previousScore = parseFloat(previousVisit.SLEDAI_2K_Result || previousVisit.sledai2k || previousVisit.SLEDAI_Result);
+                currentScore = getNumericScoreFromVisit(currentVisit, ['SLEDAI_2K_Result', 'SLEDAI_2K', 'SLEDAI', 'SLEDAI_Result', 'sledai2k']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['SLEDAI_2K_Result', 'SLEDAI_2K', 'SLEDAI', 'SLEDAI_Result', 'sledai2k']);
                 scoreName = 'SLEDAI-2K';
                 break;
             case 'sjogren':
-                currentScore = parseFloat(currentVisit.ESSDAI_Result || currentVisit.essdai);
-                previousScore = parseFloat(previousVisit.ESSDAI_Result || previousVisit.essdai);
+                currentScore = getNumericScoreFromVisit(currentVisit, ['ESSDAI_Result', 'ESSDAI', 'essdai']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['ESSDAI_Result', 'ESSDAI', 'essdai']);
                 scoreName = 'ESSDAI';
                 break;
             default:
                 return null;
         }
 
-        if (isNaN(currentScore) || isNaN(previousScore)) return null;
+        if (currentScore === null || previousScore === null) return null;
 
         var delta = currentScore - previousScore;
 
@@ -552,11 +566,11 @@
         var eventType = null;
         var description = '';
 
-        if (currentScore > flareThreshold && delta > minDeltaFlare) {
+        if (currentScore > flareThreshold && delta >= minDeltaFlare) {
             eventType = EVENT_TYPES.FLARE;
             description = 'Brote de actividad: ' + scoreName + ' ' +
                 previousScore + ' \u2192 ' + currentScore;
-        } else if (currentScore < remissionThreshold && delta < minDeltaRemission) {
+        } else if (currentScore <= remissionThreshold && delta <= minDeltaRemission) {
             eventType = EVENT_TYPES.REMISSION;
             description = 'Remisi\u00f3n: ' + scoreName + ' ' +
                 previousScore + ' \u2192 ' + currentScore;
@@ -917,7 +931,11 @@
             return events;
         }
 
-        var visits = patientHistory.allVisits;
+        var visits = patientHistory.allVisits.slice().sort(function(a, b) {
+            var dateA = new Date(a.Fecha_Visita || a.fechaVisita || a.Fecha || 0);
+            var dateB = new Date(b.Fecha_Visita || b.fechaVisita || b.Fecha || 0);
+            return dateA - dateB;
+        });
 
         // ── Inferir patología ──────────────────────────────────────
         // Fuente 1: patientHistory.pathology (establecido por el dashboard)
