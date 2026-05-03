@@ -3240,6 +3240,15 @@ Soporte completo en estadísticas poblacionales para las 5 patologías: AR, ESPA
 | `estadisticas.html` | +7 líneas: nuevas opciones en filterActivityIndex |
 | `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | esta sección |
 
+### Fixes postvalidación
+**Fix crítico (commit `742f25e`):**
+- `resolveMetricKey` no resolvía `'SLEDAI_2K'` → `'sledai_2k'` (con guión bajo) vs `'sledai2k'` (sin guión).
+- Impacto: LES mostraba SLICC/ACR SDI como métrica de actividad en lugar de SLEDAI-2K; remisión siempre 0%.
+- Solución: añadida condición `normalized === 'sledai_2k'` en `resolveMetricKey`.
+
+### Pendiente menor
+- **APS selector de índice**: si no hay datos DAPSA, el selector `filterActivityIndex` muestra "DAPSA" aunque la métrica efectiva usada sea HAQ. No bloquea validación funcional; queda como mejora UX.
+
 ### Sintaxis validada
 ```bash
 node --check modules/dataManager.js      # OK
