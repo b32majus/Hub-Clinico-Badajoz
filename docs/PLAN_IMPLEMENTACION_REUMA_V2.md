@@ -2831,3 +2831,29 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 - `modules/treatmentEventsManager.js` — +86 líneas (función nueva + registro API + correcciones)
 - `scripts/script_dashboard.js` — ~120 líneas modificadas (4 tarjetas + mojibake + escapeHtml)
 - `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` — esta sección
+
+---
+
+## Fase 9C ejecutada — Base demo v2 para validación
+
+### Archivos creados
+- `scripts/generate_demo_db.py` — script generador reproducible
+- `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` — base ficticia
+- `docs/VALIDACION_MANUAL_DEMO_V2.md` — guía de validación
+
+### Pacientes demo
+- DEMO-AR-001: 4 visitas, DAS28/CDAI/SDAI/RAPID3, Tx->Bio->Bio, efecto adverso, remisión
+- DEMO-ESPA-001: 4 visitas, BASDAI/ASDAS, Bio Secukinumab, mejoría
+- DEMO-APS-001: 4 visitas, HAQ/RAPID3, FAME->Bio, mejoría
+- DEMO-LES-001: 4 visitas, SLEDAI-2K/SLICC/Prednisona, inmunosupresores, remisión
+- DEMO-SJOGREN-001: 4 visitas, ESSPRI/ESSDAI/EVAs, Pilocarpina->HCQ->Rituximab
+
+### Hojas incluidas
+- AR, ESPA, APS, LES, SJOGREN, Prebiologico, Profesionales, Farmacos
+
+### Estados prebiológico
+- DEMO-AR-001: APTO
+- DEMO-ESPA-001: EN_CURSO
+- DEMO-APS-001: APTO
+- DEMO-LES-001: NO_APTO
+- DEMO-SJOGREN-001: NO_EVALUADO
