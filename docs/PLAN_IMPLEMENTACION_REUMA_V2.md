@@ -2398,3 +2398,38 @@ Fecha: 2026-05-03.
 - [x] dataManager reconoce hoja 'LES'.
 - [x] No se rompen AR/EspA/APs.
 - [x] Consola sin errores de sintaxis (node -c todos los archivos OK).
+
+## Fase 8 ejecutada — Síndrome de Sjögren como patología completa
+
+**Fecha**: 2026-05-03
+**Branch**: feature/reuma-v2-prebiologico-fh-les-sjogren
+**Commit previsto**: feat(sjogren): add Sjögren as complete pathology with ESSPRI auto-calc, forms, export and dashboard
+
+### Archivos modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `primera_visita.html` | Opción Sjögren en selector + sección HTML completa (ESSPRI, ESSDAI, EVAs, manifestaciones, pruebas, tratamiento) |
+| `seguimiento.html` | Opción Sjögren en selector + sección HTML completa (idéntica a primera_visita.html) |
+| `estadisticas.html` | Opción SJOGREN en filtro de patología |
+| `modules/formController.js` | `mostrarElementosSjogren()`, `calculateESSPRI()`, visibilidad, recopilación de datos en ambos formularios |
+| `modules/exportManager.js` | Headers CSV Sjögren (41 columnas), valores en `buildExtendedColumns()`, bloque TXT en `generarNotaClinica()` |
+| `scripts/script_dashboard.js` | Labels ESSPRI/ESSDAI, thresholds, KPIs, initVisitsTable adaptado |
+| `modules/pharmacyRequest.js` | Bloque Sjögren completo (ESSPRI/ESSDAI, manifestaciones, pruebas, analítica) |
+| `modules/dataManager.js` | Hoja 'SJOGREN' añadida a saveToSessionStorage, requiredSheets, getAllPatients, findPatientById |
+| `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` | Añadida sección Fase 8 |
+
+### Checklist Fase 8
+
+- [x] Sjögren aparece en selector (primera_visita, seguimiento, estadisticas).
+- [x] Se puede crear primera visita Sjögren con todos los campos.
+- [x] Se puede crear seguimiento Sjögren.
+- [x] ESSPRI calcula automáticamente (media de sequedad + fatiga + dolor).
+- [x] TXT Sjögren incluye bloque Sjögren con actividad, manifestaciones, pruebas, tratamiento.
+- [x] CSV Sjögren conserva columnas históricas + 41 nuevas columnas Sjögren al final.
+- [x] Dashboard Sjögren muestra ESSPRI y ESSDAI como métricas primaria/secundaria.
+- [x] Dashboard Sjögren muestra KPIs con thresholds (ESSPRI <5 aceptable; ESSDAI <5 baja, 5-13 moderada, ≥14 alta).
+- [x] Solicitud FH incluye bloque Sjögren completo (ESSPRI/ESSDAI, EVAs sequedad, manifestaciones, Anti-Ro/La, Schirmer).
+- [x] dataManager reconoce hoja 'SJOGREN'.
+- [x] No se rompen AR/EspA/APs/LES.
+- [x] Consola sin errores de sintaxis (node -c todos los archivos OK).

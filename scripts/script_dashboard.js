@@ -90,8 +90,12 @@ function configureDashboardMetricLabels() {
 
     const isAR = isARPathology();
     const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
     let primaryLabel, secondaryLabel;
-    if (isLES) {
+    if (isSJOGREN) {
+        primaryLabel = 'ESSPRI';
+        secondaryLabel = 'ESSDAI';
+    } else if (isLES) {
         primaryLabel = 'SLEDAI-2K';
         secondaryLabel = 'SLICC/ACR SDI';
     } else if (isAR) {
@@ -487,10 +491,16 @@ function updateStatusBadge(clinicalStatus) {
 function populatePatientKPIs(latest, summary, allVisits) {
     const isAR = isARPathology();
     const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
 
     let primaryMetric, primaryMetricKey, secondaryMetric, secondaryMetricKey;
 
-    if (isLES) {
+    if (isSJOGREN) {
+        primaryMetric = getVisitMetric(latest, 'esspriResult');
+        primaryMetricKey = 'esspri';
+        secondaryMetric = getVisitMetric(latest, 'essdaiResult');
+        secondaryMetricKey = 'essdai';
+    } else if (isLES) {
         primaryMetric = getVisitMetric(latest, 'sledai2kResult');
         primaryMetricKey = 'sledai2k';
         secondaryMetric = getVisitMetric(latest, 'sliccAcrSdi');
@@ -592,8 +602,17 @@ function getKPIStatus(metric, value) {
             return { text: 'Muy alto', class: 'kpi-card--danger', threshold: '\u22644 inactivo | 5\u201310 moderado | 11\u201319 alto | \u226520 muy alto' };
 
         case 'slicc':
-            if (numValue <= 0) return { text: 'Sin da\u00f1o', class: 'kpi-card--success', threshold: '0 sin da\u00f1o | \u22651 da\u00f1o acumulado' };
-            return { text: 'Da\u00f1o acumulado', class: 'kpi-card--warning', threshold: '0 sin da\u00f1o | \u22651 da\u00f1o acumulado' };
+            if (numValue <= 0) return { text: 'Sin daño', class: 'kpi-card--success', threshold: '0 sin daño | ≥1 daño acumulado' };
+            return { text: 'Daño acumulado', class: 'kpi-card--warning', threshold: '0 sin daño | ≥1 daño acumulado' };
+
+        case 'esspri':
+            if (numValue < 5) return { text: 'Aceptable', class: 'kpi-card--success', threshold: '<5 aceptable | ≥5 mal control' };
+            return { text: 'Mal control', class: 'kpi-card--danger', threshold: '<5 aceptable | ≥5 mal control' };
+
+        case 'essdai':
+            if (numValue < 5) return { text: 'Baja actividad', class: 'kpi-card--success', threshold: '<5 baja | 5-13 moderada | ≥14 alta' };
+            if (numValue < 14) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '<5 baja | 5-13 moderada | ≥14 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '<5 baja | 5-13 moderada | ≥14 alta' };
 
         default:
             return { text: '', class: '', threshold: '' };
@@ -639,10 +658,11 @@ function calculateTreatmentDuration(startDate) {
 
 function initVisitsTable(visits) {
     const isAR = isARPathology();
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
     visitsTableState.data = visits.map(visit => ({
         fecha: getVisitDate(visit),
-        basdai: isAR ? getARPrimaryMetric(visit) : getVisitMetric(visit, 'basdai'),
-        asdas: isAR ? getARSecondaryMetric(visit) : getVisitMetric(visit, 'asdas'),
+        basdai: isAR ? getARPrimaryMetric(visit) : (isSJOGREN ? getVisitMetric(visit, 'esspriResult') : getVisitMetric(visit, 'basdai')),
+        asdas: isAR ? getARSecondaryMetric(visit) : (isSJOGREN ? getVisitMetric(visit, 'essdaiResult') : getVisitMetric(visit, 'asdas')),
         evaDolor: getVisitMetric(visit, 'evaDolor'),
         pcr: getVisitMetric(visit, 'pcr'),
         tratamiento: visit.tratamientoActual || visit.Tratamiento_Actual || '---'

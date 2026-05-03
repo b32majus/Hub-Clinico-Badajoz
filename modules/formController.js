@@ -106,6 +106,11 @@ function adaptarFormulario(diagnostico) {
             patologiaSubtitle.textContent = 'Lupus Eritematoso Sistémico';
             mostrarElementosLES();
             break;
+        case 'sjogren':
+            patologiaHighlight.textContent = 'Sjögren';
+            patologiaSubtitle.textContent = 'Síndrome de Sjögren';
+            mostrarElementosSjogren();
+            break;
         default:
             patologiaHighlight.textContent = 'Reumatología';
             patologiaSubtitle.textContent = 'Seleccione sospecha diagnóstica para adaptar el formulario';
@@ -120,7 +125,7 @@ function ocultarTodosElementosEspecificos() {
     console.log('🔄 Ocultando todos los elementos específicos de patología');
 
     // Ocultar todos los elementos con clases específicas de patología
-    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only', '.les-only'];
+    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only', '.les-only', '.sjogren-only'];
     selectors.forEach(selector => hideElementsBySelector(selector));
 
     // Ocultar biomarcadores
@@ -281,6 +286,31 @@ function mostrarElementosLES() {
     }
 
     console.log('✅ Elementos LES mostrados correctamente');
+}
+
+function mostrarElementosSjogren() {
+    console.log('📋 Mostrando elementos específicos de Sjögren');
+
+    // Biomarcadores: ANA, FR
+    showElement('anaContainer', 'block');
+    showElement('frContainer', 'block');
+
+    // Secciones específicas de Sjögren
+    showElementsBySelector('.sjogren-only', 'block');
+
+    // Ocultar secciones no aplicables a Sjögren
+    hideElementsBySelector('.ar-only');
+    hideElementsBySelector('.espa-only');
+    hideElementsBySelector('.aps-only');
+    hideElementsBySelector('.espa-aps-only');
+    hideElementsBySelector('.les-only');
+
+    // Asegurar que el cálculo ESSPRI esté activo
+    if (typeof calculateESSPRI === 'function') {
+        calculateESSPRI();
+    }
+
+    console.log('✅ Elementos Sjögren mostrados correctamente');
 }
 
 function initializeACREULAR() {
@@ -1295,6 +1325,52 @@ function recopilarDatosFormulario() {
     const evaGlobalLes = document.getElementById('evaGlobalLes')?.value || '';
     const calidadVidaComentarioLes = document.getElementById('calidadVidaComentarioLes')?.value || '';
 
+    // === Campos Sjögren ===
+    const esspriSequedad = document.getElementById('esspriSequedad')?.value || '';
+    const esspriFatiga = document.getElementById('esspriFatiga')?.value || '';
+    const esspriDolor = document.getElementById('esspriDolor')?.value || '';
+    const esspriResult = document.getElementById('esspriResult')?.value || '';
+    const essdaiResult = document.getElementById('essdaiResult')?.value || '';
+    const evaSequedadOral = document.getElementById('evaSequedadOral')?.value || '';
+    const evaSequedadOcular = document.getElementById('evaSequedadOcular')?.value || '';
+    const evaFatigaSjogren = document.getElementById('evaFatigaSjogren')?.value || '';
+    const evaDolorSjogren = document.getElementById('evaDolorSjogren')?.value || '';
+    const evaGlobalSjogren = document.getElementById('evaGlobalSjogren')?.value || '';
+    // Manifestaciones Sjögren
+    const sjogrenOcular = document.getElementById('sjogrenOcular')?.checked ? 'SI' : 'NO';
+    const sjogrenOral = document.getElementById('sjogrenOral')?.checked ? 'SI' : 'NO';
+    const sjogrenGlandular = document.getElementById('sjogrenGlandular')?.checked ? 'SI' : 'NO';
+    const sjogrenArticular = document.getElementById('sjogrenArticular')?.checked ? 'SI' : 'NO';
+    const sjogrenCutaneo = document.getElementById('sjogrenCutaneo')?.checked ? 'SI' : 'NO';
+    const sjogrenPulmonar = document.getElementById('sjogrenPulmonar')?.checked ? 'SI' : 'NO';
+    const sjogrenRenal = document.getElementById('sjogrenRenal')?.checked ? 'SI' : 'NO';
+    const sjogrenNeurologico = document.getElementById('sjogrenNeurologico')?.checked ? 'SI' : 'NO';
+    const sjogrenHematologico = document.getElementById('sjogrenHematologico')?.checked ? 'SI' : 'NO';
+    const sjogrenLinfomaRiesgo = document.getElementById('sjogrenLinfomaRiesgo')?.checked ? 'SI' : 'NO';
+    const sjogrenManifestacionesDescripcion = document.getElementById('sjogrenManifestacionesDescripcion')?.value || '';
+    // Pruebas / Inmunología Sjögren
+    const anaSjogren = document.getElementById('anaSjogren')?.value || '';
+    const frSjogren = document.getElementById('frSjogren')?.value || '';
+    const antiRoSjogren = document.getElementById('antiRoSjogren')?.value || '';
+    const antiLaSjogren = document.getElementById('antiLaSjogren')?.value || '';
+    const complementoC3Sjogren = document.getElementById('complementoC3Sjogren')?.value || '';
+    const complementoC4Sjogren = document.getElementById('complementoC4Sjogren')?.value || '';
+    const crioglobulinasSjogren = document.getElementById('crioglobulinasSjogren')?.value || '';
+    const proteinogramaSjogren = document.getElementById('proteinogramaSjogren')?.value || '';
+    const biopsiaGlandulaSalival = document.getElementById('biopsiaGlandulaSalival')?.value || '';
+    const testSchirmer = document.getElementById('testSchirmer')?.value || '';
+    const tincionOcular = document.getElementById('tincionOcular')?.value || '';
+    const flujoSalival = document.getElementById('flujoSalival')?.value || '';
+    const ecografiaGlandular = document.getElementById('ecografiaGlandular')?.value || '';
+    const pcrSjogren = document.getElementById('pcrSjogren')?.value || '';
+    const vsgSjogren = document.getElementById('vsgSjogren')?.value || '';
+    const otrosHallazgosAnaliticaSjogren = document.getElementById('otrosHallazgosAnaliticaSjogren')?.value || '';
+    // Tratamiento Sjögren
+    const tratSintomaticoSequedad = document.getElementById('tratSintomaticoSequedad')?.value || '';
+    const tratSintomaticoSequedadDosis = document.getElementById('tratSintomaticoSequedadDosis')?.value || '';
+    const tratInmunomodulador = document.getElementById('tratInmunomodulador')?.value || '';
+    const tratInmunomoduladorDosis = document.getElementById('tratInmunomoduladorDosis')?.value || '';
+
     const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
 
     const datosCompletos = {
@@ -1341,6 +1417,20 @@ function recopilarDatosFormulario() {
         complementoC3, complementoC4, proteinuriaLes, sedimentoUrinarioLes,
         creatininaLes, pcrLes, vsgLes, hemogramaAlteracionesLes, otrosHallazgosAnaliticaLes,
         evaDolorLes, evaFatigaLes, evaGlobalLes, calidadVidaComentarioLes,
+        // Sjögren
+        esspriSequedad, esspriFatiga, esspriDolor, esspriResult,
+        essdaiResult,
+        evaSequedadOral, evaSequedadOcular, evaFatigaSjogren, evaDolorSjogren, evaGlobalSjogren,
+        sjogrenOcular, sjogrenOral, sjogrenGlandular, sjogrenArticular, sjogrenCutaneo,
+        sjogrenPulmonar, sjogrenRenal, sjogrenNeurologico, sjogrenHematologico, sjogrenLinfomaRiesgo,
+        sjogrenManifestacionesDescripcion,
+        anaSjogren, frSjogren, antiRoSjogren, antiLaSjogren,
+        complementoC3Sjogren, complementoC4Sjogren,
+        crioglobulinasSjogren, proteinogramaSjogren,
+        biopsiaGlandulaSalival, testSchirmer, tincionOcular, flujoSalival, ecografiaGlandular,
+        pcrSjogren, vsgSjogren, otrosHallazgosAnaliticaSjogren,
+        tratSintomaticoSequedad, tratSintomaticoSequedadDosis,
+        tratInmunomodulador, tratInmunomoduladorDosis,
         comentariosAdicionales
     };
 
@@ -1715,6 +1805,49 @@ function recopilarDatosFormularioSeguimiento() {
     const evaGlobalLes = getValue('evaGlobalLes');
     const calidadVidaComentarioLes = getValue('calidadVidaComentarioLes');
 
+    // === Campos Sjögren ===
+    const esspriSequedad = getValue('esspriSequedad');
+    const esspriFatiga = getValue('esspriFatiga');
+    const esspriDolor = getValue('esspriDolor');
+    const esspriResult = getValue('esspriResult');
+    const essdaiResult = getValue('essdaiResult');
+    const evaSequedadOral = getValue('evaSequedadOral');
+    const evaSequedadOcular = getValue('evaSequedadOcular');
+    const evaFatigaSjogren = getValue('evaFatigaSjogren');
+    const evaDolorSjogren = getValue('evaDolorSjogren');
+    const evaGlobalSjogren = getValue('evaGlobalSjogren');
+    const sjogrenOcular = isChecked('sjogrenOcular') ? 'SI' : 'NO';
+    const sjogrenOral = isChecked('sjogrenOral') ? 'SI' : 'NO';
+    const sjogrenGlandular = isChecked('sjogrenGlandular') ? 'SI' : 'NO';
+    const sjogrenArticular = isChecked('sjogrenArticular') ? 'SI' : 'NO';
+    const sjogrenCutaneo = isChecked('sjogrenCutaneo') ? 'SI' : 'NO';
+    const sjogrenPulmonar = isChecked('sjogrenPulmonar') ? 'SI' : 'NO';
+    const sjogrenRenal = isChecked('sjogrenRenal') ? 'SI' : 'NO';
+    const sjogrenNeurologico = isChecked('sjogrenNeurologico') ? 'SI' : 'NO';
+    const sjogrenHematologico = isChecked('sjogrenHematologico') ? 'SI' : 'NO';
+    const sjogrenLinfomaRiesgo = isChecked('sjogrenLinfomaRiesgo') ? 'SI' : 'NO';
+    const sjogrenManifestacionesDescripcion = getValue('sjogrenManifestacionesDescripcion');
+    const anaSjogren = getValue('anaSjogren');
+    const frSjogren = getValue('frSjogren');
+    const antiRoSjogren = getValue('antiRoSjogren');
+    const antiLaSjogren = getValue('antiLaSjogren');
+    const complementoC3Sjogren = getValue('complementoC3Sjogren');
+    const complementoC4Sjogren = getValue('complementoC4Sjogren');
+    const crioglobulinasSjogren = getValue('crioglobulinasSjogren');
+    const proteinogramaSjogren = getValue('proteinogramaSjogren');
+    const biopsiaGlandulaSalival = getValue('biopsiaGlandulaSalival');
+    const testSchirmer = getValue('testSchirmer');
+    const tincionOcular = getValue('tincionOcular');
+    const flujoSalival = getValue('flujoSalival');
+    const ecografiaGlandular = getValue('ecografiaGlandular');
+    const pcrSjogren = getValue('pcrSjogren');
+    const vsgSjogren = getValue('vsgSjogren');
+    const otrosHallazgosAnaliticaSjogren = getValue('otrosHallazgosAnaliticaSjogren');
+    const tratSintomaticoSequedad = getValue('tratSintomaticoSequedad');
+    const tratSintomaticoSequedadDosis = getValue('tratSintomaticoSequedadDosis');
+    const tratInmunomodulador = getValue('tratInmunomodulador');
+    const tratInmunomoduladorDosis = getValue('tratInmunomoduladorDosis');
+
     const tratamientoData = {
         continuar: {
             adherencia: getValue('adherencia'),
@@ -1760,6 +1893,20 @@ function recopilarDatosFormularioSeguimiento() {
         complementoC3, complementoC4, proteinuriaLes, sedimentoUrinarioLes,
         creatininaLes, pcrLes, vsgLes, hemogramaAlteracionesLes, otrosHallazgosAnaliticaLes,
         evaDolorLes, evaFatigaLes, evaGlobalLes, calidadVidaComentarioLes,
+        // Sjögren
+        esspriSequedad, esspriFatiga, esspriDolor, esspriResult,
+        essdaiResult,
+        evaSequedadOral, evaSequedadOcular, evaFatigaSjogren, evaDolorSjogren, evaGlobalSjogren,
+        sjogrenOcular, sjogrenOral, sjogrenGlandular, sjogrenArticular, sjogrenCutaneo,
+        sjogrenPulmonar, sjogrenRenal, sjogrenNeurologico, sjogrenHematologico, sjogrenLinfomaRiesgo,
+        sjogrenManifestacionesDescripcion,
+        anaSjogren, frSjogren, antiRoSjogren, antiLaSjogren,
+        complementoC3Sjogren, complementoC4Sjogren,
+        crioglobulinasSjogren, proteinogramaSjogren,
+        biopsiaGlandulaSalival, testSchirmer, tincionOcular, flujoSalival, ecografiaGlandular,
+        pcrSjogren, vsgSjogren, otrosHallazgosAnaliticaSjogren,
+        tratSintomaticoSequedad, tratSintomaticoSequedadDosis,
+        tratInmunomodulador, tratInmunomoduladorDosis,
         fechaProximaRevision, comentariosAdicionales
     };
 }
@@ -2249,6 +2396,21 @@ function initScoreWiring() {
     console.log('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
 
     console.log('✅ Score wiring completado');
+}
+
+/**
+ * Calcula automáticamente el ESSPRI (EULAR Sjögren's Syndrome Patient Reported Index)
+ * como la media de las puntuaciones de sequedad, fatiga y dolor (0-10).
+ * Se dispara desde los inputs oninput en primera_visita.html y seguimiento.html.
+ */
+function calculateESSPRI() {
+    const sequedad = parseFloat(document.getElementById('esspriSequedad')?.value);
+    const fatiga = parseFloat(document.getElementById('esspriFatiga')?.value);
+    const dolor = parseFloat(document.getElementById('esspriDolor')?.value);
+    if ([sequedad, fatiga, dolor].some(v => Number.isNaN(v))) return;
+    const result = ((sequedad + fatiga + dolor) / 3).toFixed(2);
+    const el = document.getElementById('esspriResult');
+    if (el) el.value = result;
 }
 
 // Verificar que HubTools existe antes de asignar funciones

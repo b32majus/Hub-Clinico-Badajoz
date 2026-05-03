@@ -125,6 +125,7 @@
                                     <option value="aps">Artritis Psoriásica (APs)</option>
                                     <option value="ar">Artritis Reumatoide (AR)</option>
                                     <option value="les">Lupus eritematoso sistémico (LES)</option>
+                                    <option value="sjogren">Síndrome de Sjögren</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1693,6 +1694,199 @@
 
             </div>
             <!-- ===================== FIN BLOQUE LES ===================== -->
+
+            <!-- ===================== SJÖGREN: SÍNDROME DE SJÖGREN ===================== -->
+            <div class="sjogren-only" style="display: none;">
+
+                <!-- Actividad / PROs Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-chart-line"></i> Actividad Sjögren</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="input-group">
+                            <label for="esspriSequedad"><i class="fas fa-tint"></i> ESSPRI — Sequedad (0-10):</label>
+                            <input type="number" id="esspriSequedad" class="form-control" step="0.1" min="0" max="10" placeholder="Sequedad" oninput="calculateESSPRI()">
+                        </div>
+                        <div class="input-group">
+                            <label for="esspriFatiga"><i class="fas fa-battery-quarter"></i> ESSPRI — Fatiga (0-10):</label>
+                            <input type="number" id="esspriFatiga" class="form-control" step="0.1" min="0" max="10" placeholder="Fatiga" oninput="calculateESSPRI()">
+                        </div>
+                        <div class="input-group">
+                            <label for="esspriDolor"><i class="fas fa-hand-holding-heart"></i> ESSPRI — Dolor (0-10):</label>
+                            <input type="number" id="esspriDolor" class="form-control" step="0.1" min="0" max="10" placeholder="Dolor" oninput="calculateESSPRI()">
+                        </div>
+                        <div class="input-group">
+                            <label for="esspriResult"><i class="fas fa-calculator"></i> ESSPRI Result (media):</label>
+                            <input type="text" id="esspriResult" class="form-control" readonly placeholder="Calculado automáticamente">
+                        </div>
+                        <div class="input-group">
+                            <label for="essdaiResult"><i class="fas fa-calculator"></i> ESSDAI:</label>
+                            <input type="number" id="essdaiResult" class="form-control" step="0.1" min="0" placeholder="Puntuación ESSDAI">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaSequedadOral"><i class="fas fa-tint"></i> EVA Sequedad oral (0-10):</label>
+                            <input type="number" id="evaSequedadOral" class="form-control" step="0.1" min="0" max="10" placeholder="Sequedad oral">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaSequedadOcular"><i class="fas fa-eye"></i> EVA Sequedad ocular (0-10):</label>
+                            <input type="number" id="evaSequedadOcular" class="form-control" step="0.1" min="0" max="10" placeholder="Sequedad ocular">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaFatigaSjogren"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
+                            <input type="number" id="evaFatigaSjogren" class="form-control" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaDolorSjogren"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolorSjogren" class="form-control" step="0.1" min="0" max="10" placeholder="Dolor">
+                        </div>
+                        <div class="input-group">
+                            <label for="evaGlobalSjogren"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
+                            <input type="number" id="evaGlobalSjogren" class="form-control" step="0.1" min="0" max="10" placeholder="Valoración global">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manifestaciones Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-stethoscope"></i> Manifestaciones</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="manifestations-grid">
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenOcular"> Ocular</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenOral"> Oral</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenGlandular"> Glandular</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenArticular"> Articular</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenCutaneo"> Cutáneo</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenPulmonar"> Pulmonar</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenRenal"> Renal</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenNeurologico"> Neurológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenHematologico"> Hematológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenLinfomaRiesgo"> Riesgo linfoma</label>
+                        </div>
+                        <div class="input-group">
+                            <label for="sjogrenManifestacionesDescripcion"><i class="fas fa-pen"></i> Descripción:</label>
+                            <textarea id="sjogrenManifestacionesDescripcion" class="form-control" rows="3" placeholder="Describir manifestaciones clínicas"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pruebas / Inmunología Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-flask"></i> Pruebas / Inmunología</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="input-group">
+                            <label for="anaSjogren"><i class="fas fa-vial"></i> ANA:</label>
+                            <input type="text" id="anaSjogren" class="form-control" placeholder="Título y patrón ANA">
+                        </div>
+                        <div class="input-group">
+                            <label for="frSjogren"><i class="fas fa-vial"></i> FR:</label>
+                            <input type="text" id="frSjogren" class="form-control" placeholder="Factor Reumatoide">
+                        </div>
+                        <div class="input-group">
+                            <label for="antiRoSjogren"><i class="fas fa-dna"></i> Anti-Ro:</label>
+                            <input type="text" id="antiRoSjogren" class="form-control" placeholder="Resultado anti-Ro">
+                        </div>
+                        <div class="input-group">
+                            <label for="antiLaSjogren"><i class="fas fa-dna"></i> Anti-La:</label>
+                            <input type="text" id="antiLaSjogren" class="form-control" placeholder="Resultado anti-La">
+                        </div>
+                        <div class="input-group">
+                            <label for="complementoC3Sjogren"><i class="fas fa-tint"></i> C3:</label>
+                            <input type="number" id="complementoC3Sjogren" class="form-control" step="0.1" placeholder="Nivel C3">
+                        </div>
+                        <div class="input-group">
+                            <label for="complementoC4Sjogren"><i class="fas fa-tint"></i> C4:</label>
+                            <input type="number" id="complementoC4Sjogren" class="form-control" step="0.1" placeholder="Nivel C4">
+                        </div>
+                        <div class="input-group">
+                            <label for="crioglobulinasSjogren"><i class="fas fa-vial"></i> Crioglobulinas:</label>
+                            <input type="text" id="crioglobulinasSjogren" class="form-control" placeholder="Resultado crioglobulinas">
+                        </div>
+                        <div class="input-group">
+                            <label for="proteinogramaSjogren"><i class="fas fa-vial"></i> Proteinograma:</label>
+                            <input type="text" id="proteinogramaSjogren" class="form-control" placeholder="Resultado proteinograma">
+                        </div>
+                        <div class="input-group">
+                            <label for="biopsiaGlandulaSalival"><i class="fas fa-microscope"></i> Biopsia glándula salival:</label>
+                            <textarea id="biopsiaGlandulaSalival" class="form-control" rows="2" placeholder="Resultado biopsia glándula salival"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="testSchirmer"><i class="fas fa-eye"></i> Test Schirmer:</label>
+                            <input type="text" id="testSchirmer" class="form-control" placeholder="Resultado test Schirmer">
+                        </div>
+                        <div class="input-group">
+                            <label for="tincionOcular"><i class="fas fa-eye"></i> Tinción ocular:</label>
+                            <input type="text" id="tincionOcular" class="form-control" placeholder="Resultado tinción ocular">
+                        </div>
+                        <div class="input-group">
+                            <label for="flujoSalival"><i class="fas fa-tint"></i> Flujo salival:</label>
+                            <input type="text" id="flujoSalival" class="form-control" placeholder="Resultado flujo salival">
+                        </div>
+                        <div class="input-group">
+                            <label for="ecografiaGlandular"><i class="fas fa-ultrasound"></i> Ecografía glandular:</label>
+                            <textarea id="ecografiaGlandular" class="form-control" rows="2" placeholder="Resultado ecografía glandular"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <label for="pcrSjogren"><i class="fas fa-flask"></i> PCR:</label>
+                            <input type="number" id="pcrSjogren" class="form-control" step="0.01" placeholder="PCR mg/L">
+                        </div>
+                        <div class="input-group">
+                            <label for="vsgSjogren"><i class="fas fa-flask"></i> VSG:</label>
+                            <input type="number" id="vsgSjogren" class="form-control" step="0.1" placeholder="VSG mm/h">
+                        </div>
+                        <div class="input-group">
+                            <label for="otrosHallazgosAnaliticaSjogren"><i class="fas fa-flask"></i> Otros hallazgos:</label>
+                            <textarea id="otrosHallazgosAnaliticaSjogren" class="form-control" rows="2" placeholder="Otros hallazgos analíticos relevantes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tratamiento Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-pills"></i> Tratamiento Sjögren</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="input-group">
+                            <label for="tratSintomaticoSequedad"><i class="fas fa-tint"></i> Tratamiento sintomático sequedad:</label>
+                            <select id="tratSintomaticoSequedad" class="form-control">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="No">No</option>
+                                <option value="Lágrimas artificiales">Lágrimas artificiales</option>
+                                <option value="Saliva artificial">Saliva artificial</option>
+                                <option value="Pilocarpina">Pilocarpina</option>
+                                <option value="Cevimelina">Cevimelina</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <input type="text" id="tratSintomaticoSequedadDosis" class="form-control treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                        </div>
+                        <div class="input-group">
+                            <label for="tratInmunomodulador"><i class="fas fa-shield-virus"></i> Inmunomodulador:</label>
+                            <select id="tratInmunomodulador" class="form-control">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="No">No</option>
+                                <option value="Hidroxicloroquina">Hidroxicloroquina</option>
+                                <option value="Metotrexato">Metotrexato</option>
+                                <option value="Azatioprina">Azatioprina</option>
+                                <option value="Micofenolato">Micofenolato</option>
+                                <option value="Ciclofosfamida">Ciclofosfamida</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <input type="text" id="tratInmunomoduladorDosis" class="form-control treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ===================== FIN BLOQUE SJÖGREN ===================== -->
 
             <!-- HAQ-DI COMPLETO (8 CATEGORAS) - SOLO APs -->
             <div class="collapsible-section">

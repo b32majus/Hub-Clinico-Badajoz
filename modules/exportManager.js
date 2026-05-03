@@ -63,7 +63,21 @@ const EXTRA_EXPORT_HEADERS = [
     'ANA_LES', 'Anti_DNA', 'Anti_Sm', 'Anti_Ro', 'Anti_La',
     'C3', 'C4', 'Proteinuria_LES', 'Sedimento_Urinario_LES', 'Creatinina_LES',
     'PCR_LES', 'VSG_LES', 'Hemograma_Alteraciones_LES', 'Otros_Hallazgos_Analitica_LES',
-    'EVA_Dolor_LES', 'EVA_Fatiga_LES', 'EVA_Global_LES', 'Calidad_Vida_Comentario_LES'
+    'EVA_Dolor_LES', 'EVA_Fatiga_LES', 'EVA_Global_LES', 'Calidad_Vida_Comentario_LES',
+    // Sjögren
+    'ESSPRI_Sequedad', 'ESSPRI_Fatiga', 'ESSPRI_Dolor', 'ESSPRI_Result',
+    'ESSDAI_Result',
+    'EVA_Sequedad_Oral', 'EVA_Sequedad_Ocular', 'EVA_Fatiga_Sjogren', 'EVA_Dolor_Sjogren', 'EVA_Global_Sjogren',
+    'Sjogren_Ocular_Man', 'Sjogren_Oral_Man', 'Sjogren_Glandular', 'Sjogren_Articular_Man', 'Sjogren_Cutaneo',
+    'Sjogren_Pulmonar', 'Sjogren_Renal', 'Sjogren_Neurologico', 'Sjogren_Hematologico', 'Sjogren_Linfoma_Riesgo',
+    'Sjogren_Manifestaciones_Descripcion',
+    'ANA_Sjogren', 'FR_Sjogren', 'Anti_Ro_Sjogren', 'Anti_La_Sjogren',
+    'C3_Sjogren', 'C4_Sjogren',
+    'Crioglobulinas', 'Proteinograma',
+    'Biopsia_Glandula_Salival', 'Test_Schirmer', 'Tincion_Ocular', 'Flujo_Salival', 'Ecografia_Glandular',
+    'PCR_Sjogren', 'VSG_Sjogren', 'Otros_Hallazgos_Analitica_Sjogren',
+    'Trat_Sintomatico_Sequedad', 'Trat_Sintomatico_Sequedad_Dosis',
+    'Trat_Inmunomodulador', 'Trat_Inmunomodulador_Dosis'
 ];
 
 function normalizarEstadoExport(value, fallback = 'ND') {
@@ -238,8 +252,54 @@ function buildExtendedColumns(datos, pathology) {
         datos.calidadVidaComentarioLes || ''
     ] : Array(37).fill('NA');
 
+    const isSjogren = pathology === 'sjogren';
+    const sjogrenValues = isSjogren ? [
+        datos.esspriSequedad || '',
+        datos.esspriFatiga || '',
+        datos.esspriDolor || '',
+        datos.esspriResult || '',
+        datos.essdaiResult || '',
+        datos.evaSequedadOral || '',
+        datos.evaSequedadOcular || '',
+        datos.evaFatigaSjogren || '',
+        datos.evaDolorSjogren || '',
+        datos.evaGlobalSjogren || '',
+        normalizarEstadoExport(datos.sjogrenOcular, 'NO'),
+        normalizarEstadoExport(datos.sjogrenOral, 'NO'),
+        normalizarEstadoExport(datos.sjogrenGlandular, 'NO'),
+        normalizarEstadoExport(datos.sjogrenArticular, 'NO'),
+        normalizarEstadoExport(datos.sjogrenCutaneo, 'NO'),
+        normalizarEstadoExport(datos.sjogrenPulmonar, 'NO'),
+        normalizarEstadoExport(datos.sjogrenRenal, 'NO'),
+        normalizarEstadoExport(datos.sjogrenNeurologico, 'NO'),
+        normalizarEstadoExport(datos.sjogrenHematologico, 'NO'),
+        normalizarEstadoExport(datos.sjogrenLinfomaRiesgo, 'NO'),
+        datos.sjogrenManifestacionesDescripcion || '',
+        datos.anaSjogren || '',
+        datos.frSjogren || '',
+        datos.antiRoSjogren || '',
+        datos.antiLaSjogren || '',
+        datos.complementoC3Sjogren || '',
+        datos.complementoC4Sjogren || '',
+        datos.crioglobulinasSjogren || '',
+        datos.proteinogramaSjogren || '',
+        datos.biopsiaGlandulaSalival || '',
+        datos.testSchirmer || '',
+        datos.tincionOcular || '',
+        datos.flujoSalival || '',
+        datos.ecografiaGlandular || '',
+        datos.pcrSjogren || '',
+        datos.vsgSjogren || '',
+        datos.otrosHallazgosAnaliticaSjogren || '',
+        datos.tratSintomaticoSequedad || '',
+        datos.tratSintomaticoSequedadDosis || '',
+        datos.tratInmunomodulador || '',
+        datos.tratInmunomoduladorDosis || ''
+    ] : Array(41).fill('NA');
+
     extra.push(...arValues);
     extra.push(...lesValues);
+    extra.push(...sjogrenValues);
     return extra;
 }
 
@@ -1291,6 +1351,70 @@ function generarNotaClinica(datos) {
             if (datos.evaFatigaLes) texto += `EVA Fatiga: ${datos.evaFatigaLes}\n`;
             if (datos.evaGlobalLes) texto += `EVA Global: ${datos.evaGlobalLes}\n`;
             if (datos.calidadVidaComentarioLes) texto += `Calidad de vida: ${datos.calidadVidaComentarioLes}\n`;
+            texto += '\n';
+        }
+    }
+    // BLOQUE SJÖGREN
+    const isSJOGRENTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'sjogren';
+    if (isSJOGRENTXT) {
+        texto += '▓▓▓ EVALUACIÓN ACTIVIDAD SJÖGREN ▓▓▓\n';
+        if (datos.esspriResult) texto += `ESSPRI: ${datos.esspriResult} (Sequedad: ${datos.esspriSequedad || '-'}, Fatiga: ${datos.esspriFatiga || '-'}, Dolor: ${datos.esspriDolor || '-'})\n`;
+        if (datos.essdaiResult) texto += `ESSDAI: ${datos.essdaiResult}\n`;
+        texto += `EVA Sequedad oral: ${datos.evaSequedadOral || '-'}\n`;
+        texto += `EVA Sequedad ocular: ${datos.evaSequedadOcular || '-'}\n`;
+        if (datos.evaFatigaSjogren) texto += `EVA Fatiga: ${datos.evaFatigaSjogren}\n`;
+        if (datos.evaDolorSjogren) texto += `EVA Dolor: ${datos.evaDolorSjogren}\n`;
+        if (datos.evaGlobalSjogren) texto += `EVA Global: ${datos.evaGlobalSjogren}\n`;
+        texto += '\n';
+
+        // Manifestaciones Sjögren
+        const manifSjogren = [];
+        if (datos.sjogrenOcular === 'SI') manifSjogren.push('Ocular');
+        if (datos.sjogrenOral === 'SI') manifSjogren.push('Oral');
+        if (datos.sjogrenGlandular === 'SI') manifSjogren.push('Glandular');
+        if (datos.sjogrenArticular === 'SI') manifSjogren.push('Articular');
+        if (datos.sjogrenCutaneo === 'SI') manifSjogren.push('Cutáneo');
+        if (datos.sjogrenPulmonar === 'SI') manifSjogren.push('Pulmonar');
+        if (datos.sjogrenRenal === 'SI') manifSjogren.push('Renal');
+        if (datos.sjogrenNeurologico === 'SI') manifSjogren.push('Neurológico');
+        if (datos.sjogrenHematologico === 'SI') manifSjogren.push('Hematológico');
+        if (datos.sjogrenLinfomaRiesgo === 'SI') manifSjogren.push('Riesgo Linfoma');
+        if (manifSjogren.length > 0) {
+            texto += '▓▓▓ MANIFESTACIONES ▓▓▓\n';
+            texto += manifSjogren.join(', ') + '\n';
+            if (datos.sjogrenManifestacionesDescripcion) texto += `Descripción: ${datos.sjogrenManifestacionesDescripcion}\n`;
+            texto += '\n';
+        }
+
+        // Pruebas / Inmunología Sjögren
+        const inmunoSjogren = [];
+        if (datos.anaSjogren) inmunoSjogren.push(`ANA: ${datos.anaSjogren}`);
+        if (datos.frSjogren) inmunoSjogren.push(`FR: ${datos.frSjogren}`);
+        if (datos.antiRoSjogren) inmunoSjogren.push(`Anti-Ro: ${datos.antiRoSjogren}`);
+        if (datos.antiLaSjogren) inmunoSjogren.push(`Anti-La: ${datos.antiLaSjogren}`);
+        if (datos.complementoC3Sjogren) inmunoSjogren.push(`C3: ${datos.complementoC3Sjogren}`);
+        if (datos.complementoC4Sjogren) inmunoSjogren.push(`C4: ${datos.complementoC4Sjogren}`);
+        if (datos.crioglobulinasSjogren) inmunoSjogren.push(`Crioglobulinas: ${datos.crioglobulinasSjogren}`);
+        if (datos.proteinogramaSjogren) inmunoSjogren.push(`Proteinograma: ${datos.proteinogramaSjogren}`);
+        if (datos.biopsiaGlandulaSalival) inmunoSjogren.push(`Biopsia glándula salival: ${datos.biopsiaGlandulaSalival}`);
+        if (datos.testSchirmer) inmunoSjogren.push(`Test Schirmer: ${datos.testSchirmer}`);
+        if (datos.tincionOcular) inmunoSjogren.push(`Tinción ocular: ${datos.tincionOcular}`);
+        if (datos.flujoSalival) inmunoSjogren.push(`Flujo salival: ${datos.flujoSalival}`);
+        if (datos.ecografiaGlandular) inmunoSjogren.push(`Ecografía glandular: ${datos.ecografiaGlandular}`);
+        if (datos.pcrSjogren) inmunoSjogren.push(`PCR: ${datos.pcrSjogren}`);
+        if (datos.vsgSjogren) inmunoSjogren.push(`VSG: ${datos.vsgSjogren}`);
+        if (datos.otrosHallazgosAnaliticaSjogren) inmunoSjogren.push(`Otros: ${datos.otrosHallazgosAnaliticaSjogren}`);
+        if (inmunoSjogren.length > 0) {
+            texto += '▓▓▓ PRUEBAS / INMUNOLOGÍA ▓▓▓\n';
+            inmunoSjogren.forEach(f => { texto += f + '\n'; });
+            texto += '\n';
+        }
+
+        // Tratamiento Sjögren
+        if (datos.tratSintomaticoSequedad || datos.tratInmunomodulador) {
+            texto += '▓▓▓ TRATAMIENTO SJÖGREN ▓▓▓\n';
+            if (datos.tratSintomaticoSequedad) texto += `Tratamiento sintomático sequedad: ${datos.tratSintomaticoSequedad} ${datos.tratSintomaticoSequedadDosis || ''}\n`;
+            if (datos.tratInmunomodulador) texto += `Inmunomodulador: ${datos.tratInmunomodulador} ${datos.tratInmunomoduladorDosis || ''}\n`;
             texto += '\n';
         }
     }

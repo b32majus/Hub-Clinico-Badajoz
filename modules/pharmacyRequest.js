@@ -211,11 +211,38 @@
             if (vsg) text += '- VSG: ' + vsg + ' mm/h\n';
 
         } else if (pathology === 'sjogren') {
-            // Síndrome de Sjögren (placeholder)
-            var pcr = getField(datos, ['pcr', 'PCR', 'pcrValue'], '');
-            var vsg = getField(datos, ['vsg', 'VSG', 'vsgValue'], '');
-            text += '- ESSPRI / ESSDAI: pendiente de implementación formulario\n';
-            text += '- EVA sequedad: pendiente de implementación\n';
+            // Síndrome de Sjögren
+            var esspri = getField(datos, ['esspriResult'], '');
+            var essdai = getField(datos, ['essdaiResult'], '');
+            var evaSequedadOral = getField(datos, ['evaSequedadOral'], '');
+            var evaSequedadOcular = getField(datos, ['evaSequedadOcular'], '');
+            var pcr = getField(datos, ['pcr', 'PCR', 'pcrValue', 'pcrSjogren'], '');
+            var vsg = getField(datos, ['vsg', 'VSG', 'vsgValue', 'vsgSjogren'], '');
+            if (esspri) text += '- ESSPRI: ' + esspri + '\n';
+            if (essdai) text += '- ESSDAI: ' + essdai + '\n';
+            if (evaSequedadOral) text += '- EVA Sequedad oral: ' + evaSequedadOral + '\n';
+            if (evaSequedadOcular) text += '- EVA Sequedad ocular: ' + evaSequedadOcular + '\n';
+            // Manifestaciones activas
+            var manifSjogren = [];
+            var organosSj = ['Ocular', 'Oral', 'Glandular', 'Articular', 'Cutáneo', 'Pulmonar', 'Renal', 'Neurológico', 'Hematológico'];
+            var organosSjIds = ['sjogrenOcular', 'sjogrenOral', 'sjogrenGlandular', 'sjogrenArticular', 'sjogrenCutaneo', 'sjogrenPulmonar', 'sjogrenRenal', 'sjogrenNeurologico', 'sjogrenHematologico'];
+            for (var s = 0; s < organosSj.length; s++) {
+                var val = getField(datos, [organosSjIds[s]], 'NO');
+                if (val.toUpperCase() === 'SI') manifSjogren.push(organosSj[s]);
+            }
+            if (manifSjogren.length > 0) text += '- Manifestaciones activas: ' + manifSjogren.join(', ') + '\n';
+            // Riesgo linfoma
+            var linfoma = getField(datos, ['sjogrenLinfomaRiesgo'], 'NO');
+            if (linfoma.toUpperCase() === 'SI') text += '- Riesgo linfoma: SÍ\n';
+            // Pruebas relevantes
+            var ana = getField(datos, ['anaSjogren', 'ana'], '');
+            var antiRo = getField(datos, ['antiRoSjogren'], '');
+            var antiLa = getField(datos, ['antiLaSjogren'], '');
+            var schirmer = getField(datos, ['testSchirmer'], '');
+            if (ana) text += '- ANA: ' + ana + '\n';
+            if (antiRo) text += '- Anti-Ro: ' + antiRo + '\n';
+            if (antiLa) text += '- Anti-La: ' + antiLa + '\n';
+            if (schirmer) text += '- Test Schirmer: ' + schirmer + '\n';
             if (pcr) text += '- PCR: ' + pcr + ' mg/L\n';
             if (vsg) text += '- VSG: ' + vsg + ' mm/h\n';
 
