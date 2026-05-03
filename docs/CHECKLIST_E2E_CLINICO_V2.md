@@ -326,10 +326,10 @@ node --check modules/exportManager.js
 ---
 
 ## Incidencias encontradas
-| # | Descripción | Severidad | Archivo | Estado |
-|---|---|-------------|-----------|---------|--------|
+| # | Descripción | Severidad | Estado |
+|---|---|---|---|---|
 | 1 | `resolveMetricKey` no resolvía `SLEDAI_2K` (guion bajo vs sin guion). LES mostraba SLICC en lugar de SLEDAI-2K como métrica principal en estadísticas. | CRÍTICA (solo LES stats) | `modules/dataManager.js` | **RESUELTA** — commit `742f25e` |
-| 2 | Selector APS muestra "DAPSA" aunque no haya datos DAPSA reales en la demo (usa HAQ como fallback). | BAJA / No bloqueante | `scripts/script_estadisticas.js` | **NO APLICA** — En el contrato final, APs tendrá DAPSA poblado. |
+| 2 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún. | BAJA / No bloqueante | `scripts/script_estadisticas.js` | **NO APLICA** — En el contrato final, APs tendrá DAPSA poblado |
 
 *Severidad: CRÍTICA (bloquea funcionalidad) / ALTA (funcionalidad rota) / MEDIA (molestia o dato incorrecto) / BAJA (cosmético)*
 
@@ -350,7 +350,7 @@ node --check modules/exportManager.js
 > - Sin errores JS críticos en consola
 > - 12/13 archivos JS pasan `node --check` (script.js en raíz también OK)
 > 
-> **Conclusión:** Rama lista para PR/merge. Solo pendiente menor no bloqueante (APS/DAPSA selector) que se resuelve con datos reales.
+> **Conclusión:** Rama lista para revisión previa a PR. Solo pendiente menor no bloqueante (APS/DAPSA) que se resuelve con datos reales en contrato final.
 
 ---
 

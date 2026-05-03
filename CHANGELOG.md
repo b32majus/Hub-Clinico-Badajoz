@@ -4,7 +4,7 @@
 
 **Fecha:** 2026-05-03  
 **Rama:** `feature/reuma-v2-prebiologico-fh-les-sjogren`  
-**Commits:** 37 commits por delante de `main`
+**Commits:** 39 commits por delante de `main`
 
 ---
 
@@ -43,7 +43,8 @@
 ### Prebiológico / vacunación
 - Módulo `prebiologicManager.js` con namespace `HubTools.prebiologic`.
 - 4 estados: APTO, EN_CURSO, NO_APTO, NO_EVALUADO.
-- Persistencia en `sessionStorage` por CIP.
+- Persistencia principal: bloque prebiológico/vacunación embebido en cada hoja de patología/visita (exportable/importable desde Excel).
+- `sessionStorage` como fallback temporal y compatibilidad.
 - Badge visual en dashboard y seguimiento con color por estado.
 - Fecha de validación manual visible.
 
@@ -118,11 +119,11 @@
 ---
 
 ### Pendientes no bloqueantes
-- APS/DAPSA: el selector muestra DAPSA aunque la demo no tenga datos DAPSA poblados. Se resuelve con datos reales.
+- APS/DAPSA: decisión de modelo — APs usa DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún.
 - Exportación de estadísticas a CSV: no implementada en esta versión.
 - Checklist SLICC completo: la implementación actual es entrada estructurada por dominios, no checklist ítem por ítem.
 
 ### Riesgos conocidos
 - `Tratamiento_Actual` es texto libre; la detección de cambios de tratamiento depende de comparación por string.
 - Los eventos terapéuticos se derivan de visitas, no se persisten como tabla propia.
-- El prebiológico está en `sessionStorage`, no en el Excel.
+- `sessionStorage` es fallback temporal; el dato persistente es la hoja Excel embebida en la visita.

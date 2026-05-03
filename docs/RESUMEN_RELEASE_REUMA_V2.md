@@ -3,7 +3,7 @@
 **Fecha:** 2026-05-03  
 **Versión:** v2.0.0  
 **Rama:** `feature/reuma-v2-prebiologico-fh-les-sjogren`  
-**Estado:** Listo para PR/merge
+**Estado:** Listo para revisión previa a PR
 
 ---
 
@@ -18,7 +18,7 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 | **CIP como identificador** | Visible en toda la UI, con alias de compatibilidad |
 | **LES completo** | Formularios, exportación, dashboard SLEDAI-2K/SLICC, calculadoras |
 | **Sjögren completo** | Formularios, exportación, dashboard ESSPRI/ESSDAI, calculadoras |
-| **Prebiológico manual** | 4 estados, badge persistente, sessionStorage |
+| **Prebiológico manual** | 4 estados, badge persistente, persistencia principal en Excel embebido + sessionStorage como fallback |
 | **Solicitud FH** | Texto plano por patología, copia a portapapeles |
 | **Eventos terapéuticos** | Timeline + anotaciones Chart.js, derivados de visitas |
 | **Estadísticas v2** | 5 patologías, KPIs adaptativos, scatter ampliado |
@@ -89,8 +89,8 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 
 1. **Tratamiento_Actual como texto libre:** la detección de cambios de tratamiento por string puede ser frágil.
 2. **Eventos terapéuticos derivados:** no se persisten como tabla propia, dependen del historial de visitas.
-3. **Prebiológico en sessionStorage:** se pierde al limpiar navegador.
-4. **APS/DAPSA selector:** muestra DAPSA aunque la demo no tenga datos DAPSA. No bloqueante: se resuelve con datos reales.
+3. **sessionStorage:** fallback temporal; el dato persistente es la hoja Excel embebida en la visita.
+4. **APS/DAPSA:** decisión de modelo — APs usa DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún.
 
 ---
 
@@ -98,7 +98,7 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 
 | # | Pendiente | Severidad | Solución |
 |---|-----------|-----------|----------|
-| 1 | Selector APS muestra DAPSA sin datos DAPSA en demo | Baja | Datos reales |
+| 1 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad | Baja | Datos reales en contrato final |
 | 2 | Exportación estadísticas a CSV | Media | Fase futura |
 | 3 | Checklist SLICC completo | Baja | Fase futura |
 
@@ -120,8 +120,8 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 
 ## Recomendación
 
-**APTO para merge a `main`.**  
-La rama está 37 commits por delante, 0 por detrás. Sin bugs bloqueantes conocidos. Validación E2E completa.
+**Listo para revisión previa a PR/merge a `main`.**  
+La rama está 39 commits por delante, 0 por detrás. Sin bugs bloqueantes conocidos. Validación E2E completa.
 
 ---
 

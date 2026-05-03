@@ -3333,10 +3333,10 @@ Cierre de la implementación Reuma v2: documentación final, validación E2E, pr
 ### Estado git
 ```bash
 git rev-list --left-right --count main...feature/reuma-v2-prebiologico-fh-les-sjogren
-# 0 37
+# 0 39
 ```
 - Rama: `feature/reuma-v2-prebiologico-fh-les-sjogren`
-- Commits por delante de main: 37
+- Commits por delante de main: 39
 - Commits por detrás de main: 0
 - Working tree: limpio
 - Remoto sincronizado: ✅
@@ -3345,7 +3345,7 @@ git rev-list --left-right --count main...feature/reuma-v2-prebiologico-fh-les-sj
 | # | Descripción | Severidad | Estado |
 |---|---|---|---|
 | 1 | `resolveMetricKey` SLEDAI_2K (guion bajo) | Crítica (solo stats LES) | **RESUELTA** commit `742f25e` |
-| 2 | APS/DAPSA selector sin datos DAPSA en demo | Baja / No bloqueante | **NO APLICA** — APs tendrá DAPSA en contrato final |
+| 2 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad | Baja / No bloqueante | **NO APLICA** — En el contrato final, APs tendrá DAPSA poblado |
 
 ### Riesgos conocidos
 1. `Tratamiento_Actual` texto libre — detección de cambios por string puede ser frágil.
