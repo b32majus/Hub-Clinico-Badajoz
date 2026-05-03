@@ -1026,7 +1026,7 @@ function resolveMetricKey(metricLabel) {
     if (normalized === 'vsg') return 'VSG';
     if (normalized === 'evadolor') return 'EVA_DOLOR';
     if (normalized === 'evaglobal') return 'EVA_GLOBAL';
-    if (normalized === 'sledai2k' || normalized === 'sledai') return 'SLEDAI_2K';
+    if (normalized === 'sledai2k' || normalized === 'sledai_2k' || normalized === 'sledai') return 'SLEDAI_2K';
     if (normalized.includes('slicc')) return 'SLICC_SDI';
     if (normalized === 'esspri') return 'ESSPRI';
     if (normalized === 'essdai') return 'ESSDAI';
