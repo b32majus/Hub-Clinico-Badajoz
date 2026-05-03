@@ -575,27 +575,330 @@
     }
 
     /**
-     * Construye anotaciones para Chart.js desde eventos (ESQUELETO — 9B.6).
-     * @param {Object[]} events - Array de eventos
-     * @param {string[]} chartLabels - Labels del eje X del gráfico
-     * @returns {Object[]} Array de objetos de anotación para chartjs-plugin-annotation
+     * Construye anotaciones para Chart.js desde eventos (9B.6).
+     *
+     * Genera objetos de anotación tipo 'line' vertical en las fechas de los eventos,
+     * compatibles con chartjs-plugin-annotation v3. Límite máximo de 5 anotaciones
+     * visibles, priorizando eventos críticos (adverse_event > flare > cambios > resto).
+     *
+     * @param {Object[]} events - Array de eventos (de extractTreatmentEvents)
+     * @param {string[]} chartLabels - Labels del eje X del gráfico (fechas ISO)
+     * @returns {Object} Objeto de anotaciones clave-valor para merge en options.plugins.annotation.annotations
      */
     function buildChartAnnotationsFromEvents(events, chartLabels) {
-        // Implementación pendiente en 9B.6
-        // Debe generar objetos { type: 'line', xMin, xMax, borderColor, borderWidth, ... }
-        // Con límite de 5 anotaciones visibles
-        return [];
+        if (!events || !chartLabels || chartLabels.length === 0) return {};
+
+        // Filtrar eventos anotables (excluir fh_request)
+        var annotableEvents = events.filter(function (e) {
+            return e && e.type !== 'fh_request' && e.date;
+        });
+
+        if (annotableEvents.length === 0) return {};
+
+        // Orden de prioridad: adverse_event > flare > treatment_change > biologic_change
+        // > treatment_start > remission > prebiologic_apto > biologic_start > treatment_suspend
+        var priorityOrder = {
+            'adverse_event': 1,
+            'flare': 2,
+            'treatment_change': 3,
+            'biologic_change': 4,
+            'treatment_start': 5,
+            'remission': 6,
+            'prebiologic_apto': 7,
+            'biologic_start': 8,
+            'treatment_suspend': 9
+        };
+
+        var sortedByPriority = annotableEvents.slice().sort(function (a, b) {
+            var pa = priorityOrder[a.type] || 99;
+            var pb = priorityOrder[b.type] || 99;
+            if (pa !== pb) return pa - pb;
+            // Desempate por fecha (más antiguo primero dentro de misma prioridad)
+            return new Date(a.date) - new Date(b.date);
+        });
+
+        var maxAnnotations = 5;
+        var selectedEvents = sortedByPriority.slice(0, maxAnnotations);
+
+        var annotations = {};
+
+        for (var i = 0; i < selectedEvents.length; i++) {
+            var event = selectedEvents[i];
+            var eventIsoDate = toISODate(event.date);
+
+            // Buscar coincidencia exacta de fecha en chartLabels
+            var labelIndex = -1;
+            for (var j = 0; j < chartLabels.length; j++) {
+                var labelIsoDate = toISODate(chartLabels[j]);
+                if (labelIsoDate === eventIsoDate) {
+                    labelIndex = j;
+                    break;
+                }
+            }
+
+            // Si no hay coincidencia exacta, buscar la fecha más cercana
+            if (labelIndex === -1) {
+                var eventTs = new Date(eventIsoDate).getTime();
+                if (isNaN(eventTs)) continue;
+                var minDiff = Infinity;
+                for (var k = 0; k < chartLabels.length; k++) {
+                    var labelTs = new Date(toISODate(chartLabels[k])).getTime();
+                    if (isNaN(labelTs)) continue;
+                    var diff = Math.abs(labelTs - eventTs);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        labelIndex = k;
+                    }
+                }
+            }
+
+            if (labelIndex === -1) continue;
+
+            // Usar la fecha del label para xMin/xMax (compatible con time scale)
+            var xValue = chartLabels[labelIndex];
+            var color = EVENT_COLORS[event.type] || 'rgba(149,165,166,0.85)';
+            var annotationId = 'event_' + event.id.replace(/[^a-zA-Z0-9_]/g, '_');
+            var shortLabel = translateEventTypeShort(event.type);
+
+            annotations[annotationId] = {
+                type: 'line',
+                xMin: xValue,
+                xMax: xValue,
+                borderColor: color,
+                borderWidth: 2,
+                borderDash: [6, 4],
+                label: {
+                    enabled: true,
+                    content: shortLabel,
+                    position: 'start',
+                    color: '#fff',
+                    backgroundColor: color,
+                    font: { size: 10 },
+                    padding: 4
+                }
+            };
+        }
+
+        return annotations;
+    }
+
+    // ── Helpers de renderizado (9B.5) ─────────────────────────────────
+
+    /**
+     * Obtiene el icono (emoji) para un tipo de evento.
+     * @param {string} type - Tipo de evento
+     * @returns {string} Emoji o carácter representativo
+     */
+    function getEventIcon(type) {
+        var icons = {
+            treatment_start: '\uD83D\uDFE2',       // 🟢
+            treatment_change: '\uD83D\uDFE1',      // 🟡
+            treatment_suspend: '\uD83D\uDD34',     // 🔴
+            biologic_start: '\uD83D\uDC89',        // 💉
+            biologic_change: '\uD83D\uDD04',       // 🔄
+            adverse_event: '\u26A0\uFE0F',         // ⚠️
+            flare: '\uD83D\uDD25',                 // 🔥
+            remission: '\u2705',                   // ✅
+            prebiologic_apto: '\uD83C\uDFE5',      // 🏥
+            fh_request: '\uD83D\uDCCB'             // 📋
+        };
+        return icons[type] || '\u2753';             // ❓ fallback
     }
 
     /**
-     * Renderiza timeline de eventos en contenedor (ESQUELETO — 9B.5).
-     * @param {Object[]} events - Array de eventos
+     * Devuelve clase CSS de color según tipo de evento.
+     * @param {string} type - Tipo de evento
+     * @returns {string} Clase CSS de color semántico
+     */
+    function getEventColorClass(type) {
+        var classMap = {
+            treatment_start: 'event-green',
+            treatment_change: 'event-amber',
+            treatment_suspend: 'event-red',
+            biologic_start: 'event-blue',
+            biologic_change: 'event-amber',
+            adverse_event: 'event-red',
+            flare: 'event-red',
+            remission: 'event-green',
+            prebiologic_apto: 'event-amber',
+            fh_request: 'event-gray'
+        };
+        return classMap[type] || 'event-gray';
+    }
+
+    /**
+     * Traduce tipo de evento a texto legible en español (largo).
+     * @param {string} type - Tipo de evento
+     * @returns {string} Texto en español
+     */
+    function translateEventType(type) {
+        var labels = {
+            treatment_start: 'Inicio de tratamiento',
+            treatment_change: 'Cambio de tratamiento',
+            treatment_suspend: 'Suspensión de tratamiento',
+            biologic_start: 'Inicio de biológico',
+            biologic_change: 'Cambio de biológico',
+            adverse_event: 'Efecto adverso',
+            flare: 'Brote de actividad',
+            remission: 'Remisión',
+            prebiologic_apto: 'Validación prebiológica',
+            fh_request: 'Solicitud FH'
+        };
+        return labels[type] || type;
+    }
+
+    /**
+     * Traduce tipo de evento a abreviatura corta (para anotaciones en gráfico).
+     * @param {string} type - Tipo de evento
+     * @returns {string} Abreviatura en español
+     */
+    function translateEventTypeShort(type) {
+        var shortLabels = {
+            treatment_start: 'Inicio',
+            treatment_change: 'Cambio tx',
+            treatment_suspend: 'Suspensión',
+            biologic_start: 'Biológico',
+            biologic_change: 'Cambio bio',
+            adverse_event: 'Ef. adverso',
+            flare: 'Brote',
+            remission: 'Remisión',
+            prebiologic_apto: 'Prebio',
+            fh_request: 'FH'
+        };
+        return shortLabels[type] || type.substring(0, 8);
+    }
+
+    /**
+     * Formatea fecha a DD/MM/YYYY legible.
+     * @param {string} dateStr - Fecha en cualquier formato parseable
+     * @returns {string} Fecha formateada DD/MM/YYYY
+     */
+    function formatEventDate(dateStr) {
+        if (!dateStr) return 'Sin fecha';
+        var d = parseDate(dateStr);
+        if (!d) return dateStr;
+        var dd = String(d.getDate()).padStart(2, '0');
+        var mm = String(d.getMonth() + 1).padStart(2, '0');
+        var yyyy = d.getFullYear();
+        return dd + '/' + mm + '/' + yyyy;
+    }
+
+    /**
+     * Escapa HTML para prevenir XSS básico.
+     * @param {string} str - Texto a escapar
+     * @returns {string} Texto escapado
+     */
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Renderiza timeline de eventos en contenedor (9B.5).
+     *
+     * Muestra máximo 5 eventos recientes visibles, con botón "Ver más"
+     * para expandir los eventos anteriores. Cada evento es clickable para
+     * resaltar en el gráfico (via window.highlightChartEvent si existe).
+     *
+     * @param {Object[]} events - Array de eventos (de extractTreatmentEvents)
      * @param {string} containerId - ID del elemento DOM contenedor
      */
     function renderTreatmentTimeline(events, containerId) {
-        // Implementación pendiente en 9B.5
-        // Debe renderizar lista cronológica con iconos, fecha y descripción
-        // en el elemento #keyEventsTimeline
+        var container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Filtrar eventos relevantes (excluir fh_request que es placeholder)
+        var relevantEvents = (events || []).filter(function (e) {
+            return e && e.type !== 'fh_request';
+        });
+
+        if (relevantEvents.length === 0) {
+            container.innerHTML = '<p class="info-note">No hay eventos terapéuticos registrados para este paciente.</p>';
+            return;
+        }
+
+        // Ordenar por fecha descendente (más reciente primero)
+        var sorted = relevantEvents.slice().sort(function (a, b) {
+            return new Date(b.date) - new Date(a.date);
+        });
+
+        // Mostrar máximo 5 eventos recientes, con opción de expandir
+        var maxVisible = 5;
+        var visible = sorted.slice(0, maxVisible);
+        var hidden = sorted.slice(maxVisible);
+
+        function buildItemHTML(event) {
+            var icon = getEventIcon(event.type);
+            var colorClass = getEventColorClass(event.type);
+            var dateStr = formatEventDate(event.date);
+            var html = '';
+
+            html += '<div class="timeline-item ' + colorClass + '" data-event-id="' + escapeHtml(event.id) + '" style="padding: 8px 0; border-bottom: 1px solid #eee; cursor: pointer;">';
+            html += '<div style="display: flex; align-items: flex-start; gap: 10px;">';
+            html += '<span class="timeline-icon" style="min-width: 24px; text-align: center; font-size: 16px;">' + icon + '</span>';
+            html += '<div style="flex: 1;">';
+            html += '<div style="font-weight: 600; font-size: 13px; color: #2c3e50;">' + escapeHtml(event.description) + '</div>';
+            html += '<div style="font-size: 11px; color: #7f8c8d; margin-top: 2px;">' + dateStr + ' · ' + translateEventType(event.type) + '</div>';
+            if (event.metadata && event.metadata.scoreDelta) {
+                var sign = event.metadata.scoreDelta > 0 ? '+' : '';
+                html += '<div style="font-size: 11px; color: #e67e22; margin-top: 2px;">Δ ' + escapeHtml(event.metadata.scoreName || 'Score') + ': ' + sign + event.metadata.scoreDelta.toFixed(1) + '</div>';
+            }
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+
+            return html;
+        }
+
+        var html = '<div class="timeline-list">';
+
+        // Eventos visibles
+        for (var i = 0; i < visible.length; i++) {
+            html += buildItemHTML(visible[i]);
+        }
+
+        // Botón "Ver más" si hay eventos ocultos
+        if (hidden.length > 0) {
+            html += '<div class="timeline-more" style="padding: 10px 0; text-align: center;">';
+            html += '<button type="button" class="btn btn-sm btn-link" id="btnShowMoreEvents">Ver ' + hidden.length + ' eventos anteriores</button>';
+            html += '</div>';
+            html += '<div id="timelineHidden" style="display: none;">';
+            for (var j = 0; j < hidden.length; j++) {
+                html += buildItemHTML(hidden[j]);
+            }
+            html += '</div>';
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+
+        // Wiring del botón "ver más"
+        var btnMore = document.getElementById('btnShowMoreEvents');
+        if (btnMore) {
+            btnMore.addEventListener('click', function () {
+                var hiddenDiv = document.getElementById('timelineHidden');
+                if (hiddenDiv) {
+                    hiddenDiv.style.display = 'block';
+                    btnMore.style.display = 'none';
+                }
+            });
+        }
+
+        // Click en evento → resaltar en gráfico (si la función existe)
+        var items = container.querySelectorAll('.timeline-item');
+        for (var k = 0; k < items.length; k++) {
+            items[k].addEventListener('click', function () {
+                var eventId = this.getAttribute('data-event-id');
+                if (window.highlightChartEvent && eventId) {
+                    window.highlightChartEvent(eventId);
+                }
+            });
+        }
     }
 
     // ── Función principal de extracción ───────────────────────────────
@@ -761,7 +1064,7 @@
         detectPrebiologicEvent: detectPrebiologicEvent,
         detectFlareRemission: detectFlareRemission,
 
-        // Renderizado y anotaciones (esqueletos)
+        // Renderizado y anotaciones (9B.5 + 9B.6)
         buildChartAnnotationsFromEvents: buildChartAnnotationsFromEvents,
         renderTreatmentTimeline: renderTreatmentTimeline,
 

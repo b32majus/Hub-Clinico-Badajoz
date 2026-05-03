@@ -943,25 +943,94 @@ function populateTreatmentHistory() {
 }
 
 function populateKeyEvents() {
-    const container = document.getElementById('keyEventsTimeline');
+    var container = document.getElementById('keyEventsTimeline');
     if (!container) return;
 
-    const events = window.patientHistory.keyEvents || [];
+    // Intentar usar el pipeline de eventos del módulo treatmentEventsManager (9B.5)
+    if (typeof HubTools !== 'undefined' && HubTools.events &&
+        typeof HubTools.events.extractTreatmentEvents === 'function' &&
+        typeof HubTools.events.renderTreatmentTimeline === 'function') {
+
+        try {
+            var patientId = (window.patientSummary && window.patientSummary.idPaciente)
+                || getPatientIdFromURL() || '';
+            var prebiologicStatus = null;
+            if (typeof HubTools.prebiologic !== 'undefined' &&
+                typeof HubTools.prebiologic.getStatus === 'function' && patientId) {
+                prebiologicStatus = HubTools.prebiologic.getStatus(patientId);
+            }
+
+            var events = HubTools.events.extractTreatmentEvents(window.patientHistory, prebiologicStatus);
+
+            // Guardar en variable global para que los gráficos puedan acceder sin recalcular
+            window.currentEvents = events;
+
+            // Renderizar timeline
+            HubTools.events.renderTreatmentTimeline(events, 'keyEventsTimeline');
+            return;
+        } catch (e) {
+            console.warn('[Dashboard] Error en pipeline de eventos terapéuticos:', e);
+            // Fallback al comportamiento anterior
+        }
+    }
+
+    // Fallback: comportamiento original con keyEvents del patientHistory
+    var events = window.patientHistory.keyEvents || [];
     if (!events.length) {
-        container.innerHTML = '<p class="empty-message">No hay eventos cl?nicos registrados.</p>';
+        container.innerHTML = '<p class="empty-message">No hay eventos clínicos registrados.</p>';
         return;
     }
 
-    container.innerHTML = events.map(event => `
-        <div class="timeline-item event-type-${event.type}">
-            <div class="timeline-marker"></div>
-            <div class="timeline-date">${formatDate(event.date)}</div>
-            <div class="timeline-content">
-                <div class="timeline-title">${capitalizeFirst(event.type)}</div>
-                <div class="timeline-description">${event.description}</div>
-            </div>
-        </div>
-    `).join('');
+    container.innerHTML = events.map(function (event) {
+        return '<div class="timeline-item event-type-' + event.type + '">' +
+            '<div class="timeline-marker"></div>' +
+            '<div class="timeline-date">' + formatDate(event.date) + '</div>' +
+            '<div class="timeline-content">' +
+            '<div class="timeline-title">' + capitalizeFirst(event.type) + '</div>' +
+            '<div class="timeline-description">' + event.description + '</div>' +
+            '</div></div>';
+    }).join('');
+}
+
+// ============================================
+// EVENTOS TERAPÉUTICOS — Anotaciones en gráficos (9B.6)
+// ============================================
+
+/**
+ * Obtiene anotaciones de eventos terapéuticos para los gráficos Chart.js.
+ * Usa window.currentEvents si ya fue poblado por populateKeyEvents.
+ * @param {string[]} chartLabels - Labels del eje X del gráfico
+ * @returns {Object} Objeto de anotaciones para merge en plugin annotation
+ */
+function getEventAnnotations(chartLabels) {
+    if (typeof HubTools === 'undefined' || !HubTools.events ||
+        typeof HubTools.events.buildChartAnnotationsFromEvents !== 'function') {
+        return {};
+    }
+
+    // Usar eventos cacheados si están disponibles
+    var events = window.currentEvents;
+    if (!events || !events.length) {
+        // Computar eventos si no están cacheados
+        try {
+            var patientId = (window.patientSummary && window.patientSummary.idPaciente)
+                || getPatientIdFromURL() || '';
+            var prebiologicStatus = null;
+            if (typeof HubTools.prebiologic !== 'undefined' &&
+                typeof HubTools.prebiologic.getStatus === 'function' && patientId) {
+                prebiologicStatus = HubTools.prebiologic.getStatus(patientId);
+            }
+            if (typeof HubTools.events.extractTreatmentEvents === 'function') {
+                events = HubTools.events.extractTreatmentEvents(window.patientHistory, prebiologicStatus);
+                window.currentEvents = events;
+            }
+        } catch (e) {
+            console.warn('[Dashboard] Error generando anotaciones de eventos:', e);
+            return {};
+        }
+    }
+
+    return HubTools.events.buildChartAnnotationsFromEvents(events || [], chartLabels);
 }
 
 // ============================================
@@ -998,6 +1067,7 @@ function initActivityChart() {
     }
 
     const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+    const eventAnnotations = getEventAnnotations(chartData.labels);
     const cutoffAnnotations = getCutoffAnnotations(primaryMetric, secondaryMetric, window.currentPathology);
 
     window.activityChartInstance = new Chart(ctx, {
@@ -1023,6 +1093,7 @@ function initActivityChart() {
                 annotation: {
                     annotations: {
                         ...annotations,
+                        ...eventAnnotations,
                         ...cutoffAnnotations
                     }
                 }
@@ -1105,8 +1176,9 @@ function updateActivityChart() {
             delete window.activityChartInstance.options.scales.y1;
         }
         const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+        const eventAnnotations = getEventAnnotations(chartData.labels);
         const cutoffAnnotations = getCutoffAnnotations(primaryMetric, secondaryMetric, window.currentPathology);
-        window.activityChartInstance.options.plugins.annotation.annotations = { ...annotations, ...cutoffAnnotations };
+        window.activityChartInstance.options.plugins.annotation.annotations = { ...annotations, ...eventAnnotations, ...cutoffAnnotations };
         window.activityChartInstance.update();
     } else {
         initActivityChart();
@@ -1143,6 +1215,7 @@ function initPROChart() {
     }
 
     const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+    const eventAnnotations = getEventAnnotations(chartData.labels);
 
     window.proChartInstance = new Chart(ctx, {
         type: 'line',
@@ -1165,7 +1238,10 @@ function initPROChart() {
                     padding: 12
                 },
                 annotation: {
-                    annotations: annotations
+                    annotations: {
+                        ...annotations,
+                        ...eventAnnotations
+                    }
                 }
             },
             scales: {
@@ -1251,7 +1327,8 @@ function updatePROChart() {
             delete window.proChartInstance.options.scales.y1;
         }
         const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
-        window.proChartInstance.options.plugins.annotation.annotations = annotations;
+        const eventAnnotations = getEventAnnotations(chartData.labels);
+        window.proChartInstance.options.plugins.annotation.annotations = { ...annotations, ...eventAnnotations };
         window.proChartInstance.update();
     } else {
         initPROChart();
@@ -1577,8 +1654,19 @@ window.updatePROChart = updatePROChart;
 window.prepareChartData = prepareChartData;
 window.getChartAnnotations = getChartAnnotations;
 window.getCutoffAnnotations = getCutoffAnnotations;
+window.getEventAnnotations = getEventAnnotations;
 window.getVisitMetric = getVisitMetric;
 window.exportVisitsToCSV = exportVisitsToCSV;
+
+/**
+ * Placeholder para resaltar un evento en el gráfico al hacer click en el timeline.
+ * Implementación futura: desplazar chart, aplicar highlight visual al punto correspondiente.
+ * @param {string} eventId - ID del evento a resaltar
+ */
+window.highlightChartEvent = function (eventId) {
+    console.log('[Dashboard] highlightChartEvent llamado con:', eventId);
+    // TODO: Implementar resaltado visual en el gráfico (9B.6 - futuro)
+};
 
 
 
