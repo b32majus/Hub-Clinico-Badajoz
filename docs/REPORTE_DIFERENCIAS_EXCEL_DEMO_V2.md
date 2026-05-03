@@ -1,6 +1,6 @@
 # Reporte Diferencias Excel Demo v2
 
-_Generado automáticamente: 2026-05-03 16:59_
+_Generado automáticamente: 2026-05-03 18:23_
 
 ## Fuente canónica
 1. Excel maestro original (`Hub_Clinico_Maestro.xlsx`) para columnas 1-321.
@@ -20,21 +20,46 @@ _Generado automáticamente: 2026-05-03 16:59_
 
 | Hoja | Columnas | Filas |
 |---|---:|---:|
-| AR | 491 | 4 |
-| ESPA | 491 | 4 |
-| APS | 491 | 4 |
-| LES | 491 | 4 |
-| SJOGREN | 491 | 4 |
+| AR | 491 | 22 |
+| ESPA | 491 | 23 |
+| APS | 491 | 22 |
+| LES | 491 | 21 |
+| SJOGREN | 491 | 21 |
 | Profesionales | (auxiliar) | (auxiliar) |
 | Fármacos | (auxiliar) | (auxiliar) |
 
 ## Pacientes demo longitudinales
 
 - `DEMO-APS-001`: 4 visitas
+- `DEMO-APS-002`: 4 visitas
+- `DEMO-APS-003`: 3 visitas
+- `DEMO-APS-004`: 4 visitas
+- `DEMO-APS-005`: 3 visitas
+- `DEMO-APS-006`: 4 visitas
 - `DEMO-AR-001`: 4 visitas
+- `DEMO-AR-002`: 4 visitas
+- `DEMO-AR-003`: 3 visitas
+- `DEMO-AR-004`: 4 visitas
+- `DEMO-AR-005`: 3 visitas
+- `DEMO-AR-006`: 4 visitas
 - `DEMO-ESPA-001`: 4 visitas
+- `DEMO-ESPA-002`: 3 visitas
+- `DEMO-ESPA-003`: 4 visitas
+- `DEMO-ESPA-004`: 5 visitas
+- `DEMO-ESPA-005`: 3 visitas
+- `DEMO-ESPA-006`: 4 visitas
 - `DEMO-LES-001`: 4 visitas
+- `DEMO-LES-002`: 3 visitas
+- `DEMO-LES-003`: 4 visitas
+- `DEMO-LES-004`: 3 visitas
+- `DEMO-LES-005`: 4 visitas
+- `DEMO-LES-006`: 3 visitas
 - `DEMO-SJOGREN-001`: 4 visitas
+- `DEMO-SJOGREN-002`: 4 visitas
+- `DEMO-SJOGREN-003`: 3 visitas
+- `DEMO-SJOGREN-004`: 4 visitas
+- `DEMO-SJOGREN-005`: 3 visitas
+- `DEMO-SJOGREN-006`: 3 visitas
 
 ## Validaciones automáticas
 
@@ -56,7 +81,8 @@ _Generado automáticamente: 2026-05-03 16:59_
 - [x] LES sin cabeceras duplicadas
 - [x] SJOGREN sin cabeceras vacías
 - [x] SJOGREN sin cabeceras duplicadas
-- [x] cada paciente tiene varias visitas — {'DEMO-AR-001': 4, 'DEMO-ESPA-001': 4, 'DEMO-APS-001': 4, 'DEMO-LES-001': 4, 'DEMO-SJOGREN-001': 4}
+- [x] cada paciente tiene >=3 visitas — 30 pacientes, 109 visitas total
+- [x] >=5 pacientes por hoja — {'AR': 6, 'ESPA': 6, 'APS': 6, 'LES': 6, 'SJOGREN': 6}
 - [x] Fecha_Visita existe y es ordenable
 - [x] Tipo_Visita existe y está poblado
 - [x] Tratamiento_Actual y Fecha_Inicio_Tratamiento poblados

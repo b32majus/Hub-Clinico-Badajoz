@@ -3203,3 +3203,47 @@ node --check modules/treatmentEventsManager.js  # OK
 
 ### Próximo paso
 - Fase 10: Estadísticas v2 (tras confirmación de usuario).
+
+---
+
+## Fase D2 ejecutada — Expansión cohorte demo v2 (30 pacientes)
+
+**Fecha:** 2026-05-03
+
+### Alcance
+Ampliación de `scripts/generate_demo_db.py` para generar 6 pacientes por patología (30 total, 109 visitas). Los pacientes 001 se mantienen como casos longitudinales principales, pacientes 002-006 añaden variabilidad clínica.
+
+### Cohorte generada
+| Patología | Pacientes | Visitas | Variabilidad clínica |
+|---|---|---|---|
+| AR | 6 | 22 | Alta actividad+bio, respuesta parcial+comorbilidades, efecto adverso con switch, persistente, ECV previo |
+| ESPA | 6 | 23 | Baja actividad, brote intercurrente, switch Adalimumab→Ixekizumab, moderada persistente, uveítis extraarticular |
+| APS | 6 | 22 | Psoriasis PASI significativa, entesitis LEI, cambio FAME→bio, baja actividad, persistente con comorbilidades |
+| LES | 6 | 21 | Baja estable, nefritis lúpica clase IV proteinuria 3g, cutáneo-articular, descenso prednisona 30→5mg, SLICC=5 daño crónico |
+| SJOGREN | 6 | 21 | Sistémico alto Rituximab, sequedad predominante Cevimelina, fatiga/dolor dominante, moderado Rituximab, baja actividad |
+
+### Estados prebiológico
+- APTO: 12 pacientes
+- EN_CURSO: 5 pacientes
+- NO_APTO: 5 pacientes
+- NO_EVALUADO: 9 pacientes
+- Cambio intra-paciente: DEMO-LES-003 (NO_APTO→APTO en visita 4)
+
+### Correcciones en validaciones
+- `patient_visits`: ahora agrupa por ID_Paciente real (antes solo capturaba el primer paciente de cada hoja)
+- `Fecha_Visita`: validación de orden cronológico ahora es intra-paciente (antes era inter-paciente y fallaba)
+- Nuevo check: `>=5 pacientes por hoja`
+
+### Archivos modificados
+- `scripts/generate_demo_db.py` — +270 líneas (pacientes 002-006 × 5 patologías + fixes validaciones)
+- `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` — regenerado con 30 pacientes
+- `docs/VALIDACION_MANUAL_DEMO_V2.md` — checklist expandido con 30 pacientes
+- `docs/REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md` — auto-regenerado
+- `docs/PLAN_IMPLEMENTACION_REUMA_V2.md` — esta sección
+
+### Validación posterior
+```bash
+python scripts/generate_demo_db.py  # 30 pacientes, 109 visitas, 6/hoja, todas validaciones OK
+node --check scripts/script_dashboard.js  # OK
+node --check modules/treatmentEventsManager.js  # OK
+```
