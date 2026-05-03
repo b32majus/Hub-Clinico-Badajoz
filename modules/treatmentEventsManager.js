@@ -427,43 +427,151 @@
     }
 
     /**
-     * Detecta evento prebiológico (esqueleto funcional).
+     * Detecta evento prebiológico (9B.4 — completo).
+     *
+     * Tipos de evento según estado:
+     *   APTO       → prebiologic_apto  "Validación prebiológica: APTO"
+     *   EN_CURSO   → prebiologic_apto  "Validación prebiológica: EN CURSO"
+     *   NO_APTO    → prebiologic_apto  "Validación prebiológica: NO APTO"
+     *   NO_EVALUADO → no genera evento (default)
+     *
+     * Fecha del evento: prebiologicStatus.fechaValidacion o fechaRegistro.
+     *
      * @param {string} cip - CIP del paciente
      * @param {Object|null} prebiologicStatus - Estado prebiológico desde sessionStorage
-     * @returns {Object|null} Evento o null
+     * @returns {Object|null} Detection result compatible con buildEvent, o null
      */
     function detectPrebiologicEvent(cip, prebiologicStatus) {
         if (!prebiologicStatus || !prebiologicStatus.estado) return null;
 
-        if (prebiologicStatus.estado === 'APTO') {
-            return {
-                type: EVENT_TYPES.PREBIOLOGIC_APTO,
-                description: 'Validación prebiológica: APTO' +
-                    (prebiologicStatus.fechaValidacion ? ' (' + toISODate(prebiologicStatus.fechaValidacion) + ')' : ''),
-                currentValue: prebiologicStatus.estado,
-                notes: 'CIP: ' + (cip || 'desconocido')
-            };
-        }
+        var estado = prebiologicStatus.estado;
 
-        return null;
+        // NO_EVALUADO es el default — no genera evento
+        if (estado === 'NO_EVALUADO') return null;
+
+        // Estados que generan evento: APTO, EN_CURSO, NO_APTO
+        var esValido = (estado === 'APTO' || estado === 'EN_CURSO' || estado === 'NO_APTO');
+        if (!esValido) return null;
+
+        var fechaStr = toISODate(prebiologicStatus.fechaValidacion || prebiologicStatus.fechaRegistro || '');
+
+        return {
+            type: EVENT_TYPES.PREBIOLOGIC_APTO,
+            description: 'Validaci\u00f3n prebiol\u00f3gica: ' + estado +
+                (fechaStr ? ' (' + fechaStr + ')' : ''),
+            currentValue: estado,
+            notes: 'CIP: ' + (cip || 'desconocido')
+        };
     }
 
     /**
-     * Detecta flare o remisión comparando scores entre visitas (ESQUELETO — 9B.3).
+     * Detecta flare o remisión comparando scores entre visitas (9B.3).
+     *
+     * Umbrales por patología:
+     *   AR:      DAS28      > 5.1 + delta > 1.2 = flare    | < 2.6 + delta < -1.2 = remission
+     *   EspA:    BASDAI     > 4.0 + delta > 1.0 = flare    | < 2.0 + delta < -1.0 = remission
+     *   APS:     DAPSA      > 14  + delta > 5   = flare    | ≤ 5   + delta < -5   = remission
+     *   LES:     SLEDAI-2K  > 6   + delta > 3   = flare    | ≤ 2   + delta < -3   = remission
+     *   Sjögren: ESSDAI     > 13  + delta > 4   = flare    | < 5   + delta < -4   = remission
+     *
      * @param {Object} currentVisit
      * @param {Object|null} previousVisit
-     * @param {string} pathology - Código de patología (ar|espa|aps|les|sjogren)
-     * @returns {Object|null} Evento o null
+     * @param {string} pathology - Código de patología normalizado (ar|espa|aps|les|sjogren)
+     * @returns {Object|null} Detection result compatible con buildEvent, o null
      */
     function detectFlareRemission(currentVisit, previousVisit, pathology) {
-        // Implementación pendiente en 9B.3
-        // Se requiere implementar umbrales por patología:
-        //   ar: DAS28 > 5.1 = flare, < 2.6 = remission
-        //   les: SLEDAI-2K > 6 = flare, ≤ 2 = remission
-        //   sjogren: ESSDAI > 13 = flare, < 5 = remission
-        //   espa: BASDAI/ASDAS (ya parcial en extractKeyEvents)
-        //   aps: DAPSA (ya parcial en extractKeyEvents)
-        return null;
+        if (!currentVisit || !previousVisit || !pathology) return null;
+
+        var normalizedPathology;
+        if (typeof HubTools !== 'undefined' && HubTools.normalizer &&
+            typeof HubTools.normalizer.normalizePathology === 'function') {
+            normalizedPathology = HubTools.normalizer.normalizePathology(pathology);
+        } else {
+            normalizedPathology = (pathology || '').toString().toLowerCase().trim();
+        }
+
+        var currentScore, previousScore, scoreName;
+
+        switch (normalizedPathology) {
+            case 'ar':
+                currentScore = parseFloat(currentVisit.DAS28 || currentVisit.das28);
+                previousScore = parseFloat(previousVisit.DAS28 || previousVisit.das28);
+                scoreName = 'DAS28';
+                break;
+            case 'espa':
+                currentScore = parseFloat(currentVisit.BASDAI || currentVisit.basdai);
+                previousScore = parseFloat(previousVisit.BASDAI || previousVisit.basdai);
+                scoreName = 'BASDAI';
+                break;
+            case 'aps':
+                currentScore = parseFloat(currentVisit.DAPSA || currentVisit.dapsa);
+                previousScore = parseFloat(previousVisit.DAPSA || previousVisit.dapsa);
+                scoreName = 'DAPSA';
+                break;
+            case 'les':
+                currentScore = parseFloat(currentVisit.SLEDAI_2K_Result || currentVisit.sledai2k || currentVisit.SLEDAI_Result);
+                previousScore = parseFloat(previousVisit.SLEDAI_2K_Result || previousVisit.sledai2k || previousVisit.SLEDAI_Result);
+                scoreName = 'SLEDAI-2K';
+                break;
+            case 'sjogren':
+                currentScore = parseFloat(currentVisit.ESSDAI_Result || currentVisit.essdai);
+                previousScore = parseFloat(previousVisit.ESSDAI_Result || previousVisit.essdai);
+                scoreName = 'ESSDAI';
+                break;
+            default:
+                return null;
+        }
+
+        if (isNaN(currentScore) || isNaN(previousScore)) return null;
+
+        var delta = currentScore - previousScore;
+
+        // ── Umbrales por patología ──────────────────────────────────
+        var flareThreshold, remissionThreshold, minDeltaFlare, minDeltaRemission;
+
+        switch (normalizedPathology) {
+            case 'ar':
+                flareThreshold = 5.1; remissionThreshold = 2.6;
+                minDeltaFlare = 1.2; minDeltaRemission = -1.2; break;
+            case 'espa':
+                flareThreshold = 4.0; remissionThreshold = 2.0;
+                minDeltaFlare = 1.0; minDeltaRemission = -1.0; break;
+            case 'aps':
+                flareThreshold = 14; remissionThreshold = 5;
+                minDeltaFlare = 5; minDeltaRemission = -5; break;
+            case 'les':
+                flareThreshold = 6; remissionThreshold = 2;
+                minDeltaFlare = 3; minDeltaRemission = -3; break;
+            case 'sjogren':
+                flareThreshold = 13; remissionThreshold = 5;
+                minDeltaFlare = 4; minDeltaRemission = -4; break;
+            default:
+                return null;
+        }
+
+        var eventType = null;
+        var description = '';
+
+        if (currentScore > flareThreshold && delta > minDeltaFlare) {
+            eventType = EVENT_TYPES.FLARE;
+            description = 'Brote de actividad: ' + scoreName + ' ' +
+                previousScore + ' \u2192 ' + currentScore;
+        } else if (currentScore < remissionThreshold && delta < minDeltaRemission) {
+            eventType = EVENT_TYPES.REMISSION;
+            description = 'Remisi\u00f3n: ' + scoreName + ' ' +
+                previousScore + ' \u2192 ' + currentScore;
+        }
+
+        if (!eventType) return null;
+
+        return {
+            type: eventType,
+            description: description,
+            previousValue: previousScore,
+            currentValue: currentScore,
+            notes: 'scoreName=' + scoreName + ' | delta=' +
+                delta.toFixed(2) + ' | pathology=' + normalizedPathology
+        };
     }
 
     /**
@@ -508,6 +616,20 @@
 
         var visits = patientHistory.allVisits;
 
+        // ── Inferir patología ──────────────────────────────────────
+        // Fuente 1: patientHistory.pathology (establecido por el dashboard)
+        // Fuente 2: primera visita con Diagnostico_Primario / diagnosticoPrimario
+        var pathology = patientHistory.pathology || '';
+        if (!pathology && visits.length > 0) {
+            pathology = visits[0].Diagnostico_Primario || visits[0].diagnosticoPrimario || '';
+        }
+        if (typeof HubTools !== 'undefined' && HubTools.normalizer &&
+            typeof HubTools.normalizer.normalizePathology === 'function') {
+            pathology = HubTools.normalizer.normalizePathology(pathology);
+        } else {
+            pathology = (pathology || '').toString().toLowerCase().trim();
+        }
+
         for (var i = 0; i < visits.length; i++) {
             var currentVisit = visits[i];
             var previousVisit = i > 0 ? visits[i - 1] : null;
@@ -542,13 +664,19 @@
                 events.push(buildEvent(adverseEvt, currentVisit, i));
             }
 
-            // 6. Flare/remission — pendiente 9B.3
-            // var flareEvt = detectFlareRemission(currentVisit, previousVisit, pathology);
-            // if (flareEvt) events.push(buildEvent(flareEvt, currentVisit, i));
+            // 6. Flare/remission — 9B.3: multipatología con umbrales por score
+            if (previousVisit && pathology) {
+                var flareEvt = detectFlareRemission(currentVisit, previousVisit, pathology);
+                if (flareEvt) {
+                    events.push(buildEvent(flareEvt, currentVisit, i));
+                }
+            }
         }
 
-        // 7. Eventos prebiológicos (al final, no vinculados a visita)
-        var cip = patientHistory.cip || patientHistory.ID_Paciente || '';
+        // 7. Eventos prebiológicos — 9B.4: APTO, EN_CURSO, NO_APTO
+        // CIP puede venir de patientHistory o de la primera visita
+        var cip = patientHistory.cip || patientHistory.ID_Paciente ||
+            (visits.length > 0 ? (visits[0].CIP || visits[0].ID_Paciente || visits[0].cip || '') : '');
         var prebioEvt = detectPrebiologicEvent(cip, prebiologicStatus);
         if (prebioEvt) {
             var prebioDate = (prebiologicStatus && prebiologicStatus.fechaValidacion) ?
@@ -566,6 +694,13 @@
                 }
             });
         }
+
+        // 8. Placeholder FH request — 9B.4
+        // fh_request no es trazable desde visitas actualmente.
+        // Requiere campo trazable específico (Solicitud_FH) en futura versión del Excel.
+        // Por ahora no se generan eventos falsos ni vacíos.
+        // Cuando el campo esté disponible, añadir:
+        //   if (visit.Solicitud_FH) events.push(buildEvent({ type: EVENT_TYPES.FH_REQUEST, ... }, visit, i));
 
         // Ordenar por fecha
         events.sort(function (a, b) {
