@@ -49,6 +49,18 @@ function isARPathology() {
     return (window.currentPathology || '').toLowerCase() === 'ar';
 }
 
+function isAPSPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'aps';
+}
+
+function isLESPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'les';
+}
+
+function isSjogrenPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'sjogren';
+}
+
 function getARPrimaryMetric(visit) {
     const toNumber = (value) => {
         const parsed = parseFloat(value);
@@ -178,8 +190,22 @@ function attachDashboardActions(patientId) {
                 sdaiResult: latestVisit.sdaiResult || '',
                 rapid3Total: latestVisit.rapid3Total || latestVisit.rapid3Result || '',
                 rapid3Categoria: latestVisit.rapid3Categoria || '',
-                pcr: latestVisit.pcr || '',
-                vsg: latestVisit.vsg || '',
+                // Métricas v2 — LES
+                SLEDAI_2K_Result: latestVisit.SLEDAI_2K_Result || latestVisit.sledai2kResult || '',
+                SLICC_ACR_SDI: latestVisit.SLICC_ACR_SDI || latestVisit.sliccSdi || '',
+                Dosis_Prednisona_Mg_Dia: latestVisit.Dosis_Prednisona_Mg_Dia || latestVisit.dosisPrednisona || '',
+                // Métricas v2 — Sjögren
+                ESSPRI_Result: latestVisit.ESSPRI_Result || latestVisit.esspriResult || '',
+                ESSDAI_Result: latestVisit.ESSDAI_Result || latestVisit.essdaiResult || '',
+                EVA_Sequedad_Oral: latestVisit.EVA_Sequedad_Oral || latestVisit.evaSequedadOral || '',
+                EVA_Sequedad_Ocular: latestVisit.EVA_Sequedad_Ocular || latestVisit.evaSequedadOcular || '',
+                EVA_Fatiga_Sjogren: latestVisit.EVA_Fatiga_Sjogren || latestVisit.evaFatigaSjogren || '',
+                EVA_Dolor_Sjogren: latestVisit.EVA_Dolor_Sjogren || latestVisit.evaDolorSjogren || '',
+                // Métricas v2 — APs
+                DAPSA_Result: latestVisit.DAPSA_Result || latestVisit.dapsaResult || '',
+                PASI: latestVisit.PASI || latestVisit.pasiResult || '',
+                LEI_Score: latestVisit.LEI_Score || latestVisit.leiScore || '',
+                BSA: latestVisit.BSA || latestVisit.bsaResult || '',
                 // Tratamientos (fallback a campos individuales)
                 sistemicoSelect: latestVisit.sistemicoSelect || '',
                 sistemicoDose: latestVisit.sistemicoDose || '',
@@ -478,9 +504,55 @@ function calculateClinicalStatus(visit) {
     }
 
     if (basdai !== null && !isNaN(basdai)) {
-        if (basdai < 4) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
+        if (basdai < 4) return { status: 'remission', text: 'Remisión', class: '' };
         if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
         return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+    }
+
+    // ── APs: DAPSA > RAPID3 > HAQ ──
+    if (isAPSPathology()) {
+        const dapsa = getVisitMetric(visit, 'dapsa');
+        if (dapsa !== null && !isNaN(dapsa)) {
+            if (dapsa <= 4) return { status: 'remission', text: 'Remisión', class: '' };
+            if (dapsa <= 14) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (dapsa <= 28) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+        const rapid3 = getVisitMetric(visit, 'rapid3');
+        if (rapid3 !== null && !isNaN(rapid3)) {
+            if (rapid3 <= 3) return { status: 'remission', text: 'Remisión', class: '' };
+            if (rapid3 <= 12) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (rapid3 <= 24) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+        const haq = getVisitMetric(visit, 'haq');
+        if (haq !== null && !isNaN(haq)) {
+            if (haq <= 0.5) return { status: 'remission', text: 'Remisión', class: '' };
+            if (haq <= 1.0) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (haq <= 2.0) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+    }
+
+    // ── LES: SLEDAI-2K ──
+    if (isLESPathology()) {
+        const sledai = getVisitMetric(visit, 'sledai2k');
+        if (sledai !== null && !isNaN(sledai)) {
+            if (sledai <= 2) return { status: 'remission', text: 'Remisión', class: '' };
+            if (sledai <= 6) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (sledai <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+    }
+
+    // ── Sjögren: ESSDAI ──
+    if (isSjogrenPathology()) {
+        const essdai = getVisitMetric(visit, 'essdai');
+        if (essdai !== null && !isNaN(essdai)) {
+            if (essdai < 5) return { status: 'remission', text: 'Baja Actividad', class: '' };
+            if (essdai < 14) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
     }
 
     return { status: 'unknown', text: 'Sin datos', class: '' };

@@ -2,10 +2,16 @@
  * prebiologicManager.js - Módulo prebiológico transversal
  *
  * Gestión de estados prebiológicos (APTO, EN_CURSO, NO_APTO, NO_EVALUADO)
- * con persistencia en sessionStorage y badge HTML para vistas de paciente.
+ * con badge HTML para vistas de paciente.
+ *
+ * Fuente primaria de datos: bloque prebiológico/vacunación embebido
+ * en cada hoja de patología/visita del Excel maestro (persistencia real).
+ *
+ * sessionStorage: fallback temporal y compatibilidad para sesiones activas.
+ * Se pierde al limpiar navegador, pero el dato persiste en la hoja Excel.
  *
  * Namespace: HubTools.prebiologic
- * Storage key: HubClinico_Prebiologic_<CIP>
+ * Storage key (fallback): HubClinico_Prebiologic_<CIP>
  *
  * Estados permitidos: APTO | EN_CURSO | NO_APTO | NO_EVALUADO
  * Fecha de validación: manual, decidida por el clínico.

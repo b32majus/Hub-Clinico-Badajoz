@@ -438,7 +438,7 @@
      * Fecha del evento: prebiologicStatus.fechaValidacion o fechaRegistro.
      *
      * @param {string} cip - CIP del paciente
-     * @param {Object|null} prebiologicStatus - Estado prebiológico desde sessionStorage
+     * @param {Object|null} prebiologicStatus - Estado prebiológico desde sessionStorage (fallback temporal). El dato persistente está en la hoja Excel de la visita.
      * @returns {Object|null} Detection result compatible con buildEvent, o null
      */
     function detectPrebiologicEvent(cip, prebiologicStatus) {
@@ -921,7 +921,7 @@
      * Extrae todos los eventos terapéuticos del historial completo del paciente.
      *
      * @param {Object} patientHistory - Objeto con propiedad `allVisits` (array ordenado cronológicamente)
-     * @param {Object|null} prebiologicStatus - Estado prebiológico desde sessionStorage (opcional)
+     * @param {Object|null} prebiologicStatus - Estado prebiológico desde sessionStorage (fallback temporal, opcional). El dato persistente está en la hoja Excel de la visita.
      * @returns {Object[]} Array de eventos ordenados por fecha.
      */
     function extractTreatmentEvents(patientHistory, prebiologicStatus) {

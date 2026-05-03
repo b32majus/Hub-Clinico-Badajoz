@@ -326,7 +326,7 @@ node --check modules/exportManager.js
 ---
 
 ## Incidencias encontradas
-| # | Descripción | Severidad | Estado |
+| # | Descripción | Severidad | Archivo | Estado |
 |---|---|---|---|---|
 | 1 | `resolveMetricKey` no resolvía `SLEDAI_2K` (guion bajo vs sin guion). LES mostraba SLICC en lugar de SLEDAI-2K como métrica principal en estadísticas. | CRÍTICA (solo LES stats) | `modules/dataManager.js` | **RESUELTA** — commit `742f25e` |
 | 2 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún. | BAJA / No bloqueante | `scripts/script_estadisticas.js` | **NO APLICA** — En el contrato final, APs tendrá DAPSA poblado |

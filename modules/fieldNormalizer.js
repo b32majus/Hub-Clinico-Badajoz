@@ -31,7 +31,21 @@ const FIELD_ALIASES = {
     sdaiResult: ['SDAI_Result', 'SDAI', 'sdaiResult', 'sdai'],
     rapid3Result: ['RAPID3_Score', 'RAPID3', 'rapid3Result', 'rapid3Total', 'rapid3'],
     motivoCambio: ['motivoCambio', 'Motivo_Cambio'],
-    comentariosAdicionales: ['comentariosAdicionales', 'Comentarios_Adicionales']
+    comentariosAdicionales: ['comentariosAdicionales', 'Comentarios_Adicionales'],
+    // ── Aliases v2 multipatología ─────────────────────────────────────
+    sledai2kResult: ['SLEDAI_2K_Result', 'sledai2kResult', 'SLEDAI_2K', 'SLEDAI_Result', 'sledaiResult', 'SLEDAI'],
+    sliccSdi: ['SLICC_ACR_SDI', 'sliccSdi', 'SLICC_SDI', 'SLICC'],
+    dosisPrednisona: ['Dosis_Prednisona_Mg_Dia', 'dosisPrednisona', 'Dosis_Prednisona', 'Prednisona'],
+    esspriResult: ['ESSPRI_Result', 'esspriResult', 'ESSPRI'],
+    essdaiResult: ['ESSDAI_Result', 'essdaiResult', 'ESSDAI'],
+    evaSequedadOral: ['EVA_Sequedad_Oral', 'evaSequedadOral'],
+    evaSequedadOcular: ['EVA_Sequedad_Ocular', 'evaSequedadOcular'],
+    evaFatigaSjogren: ['EVA_Fatiga_Sjogren', 'evaFatigaSjogren', 'EVA_Fatiga'],
+    evaDolorSjogren: ['EVA_Dolor_Sjogren', 'evaDolorSjogren', 'EVA_Dolor'],
+    dapsaResult: ['DAPSA_Result', 'dapsaResult', 'DAPSA'],
+    pasiResult: ['PASI_Result', 'pasiResult', 'PASI'],
+    leiResult: ['LEI_Score', 'leiScore', 'LEI'],
+    bsaResult: ['BSA_Result', 'bsaResult', 'BSA']
 };
 
 function getCanonicalField(record, fieldName, fallback = null) {
