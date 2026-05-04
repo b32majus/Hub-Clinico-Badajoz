@@ -285,3 +285,18 @@ La demo v2 no debe generarse hasta que formulario/export/dashboard/FH esten alin
 - Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
 - Impacto: formulario APs, `formController`, `exportManager`, demo, `dataManager`, dashboard, estadísticas, eventos terapéuticos y Solicitud FH quedan alineados con DAPSA.
 - Criterio de unidad: `DAPSA_PCR` se guarda como PCR mg/L; la calculadora convierte a mg/dL dividiendo entre 10 para el total DAPSA.
+
+## AUDIT-FIX-2B ejecutado — Estandarización de PCR (mg/L)
+
+- Unidad canónica del Hub para PCR en UI/Excel/export/import: `mg/L`.
+- `DAPSA_PCR` se mantiene como cabecera estable del contrato y almacena PCR en `mg/L`.
+- Conversión por fórmula:
+  - `DAPSA`: convierte PCR `mg/L -> mg/dL` dividiendo entre `10`.
+  - `SDAI`: convierte PCR `mg/L -> mg/dL` dividiendo entre `10`.
+  - `DAS28-CRP`: usa PCR en `mg/L` sin conversión.
+  - `ASDAS-CRP`: usa PCR en `mg/L` sin conversión.
+  - `CDAI`: no usa PCR.
+- Restricción de seguridad clínica:
+  - No usar `mg/mL`.
+  - No inferir unidad por magnitud del valor.
+  - No usar heurísticas tipo `if (pcr > 10) pcr = pcr / 10`.

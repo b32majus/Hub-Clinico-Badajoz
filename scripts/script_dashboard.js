@@ -651,9 +651,9 @@ function getKPIStatus(metric, value) {
             return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u22643.3 remisi\u00f3n | \u226411 baja | \u226426 moderada | \u003e26 alta' };
 
         case 'pcr':
-            if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
-            if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
-            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
+            if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success', threshold: '\u003c5 mg/L normal | 5\u201310 mg/L elevado | \u003e10 mg/L alto' };
+            if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning', threshold: '\u003c5 mg/L normal | 5\u201310 mg/L elevado | \u003e10 mg/L alto' };
+            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 mg/L normal | 5\u201310 mg/L elevado | \u003e10 mg/L alto' };
 
         case 'sledai2k':
             if (numValue <= 2) return { text: 'Remisión', class: 'kpi-card--success', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
@@ -876,7 +876,7 @@ function getVisitCSVMetricDefinitions() {
             ['SDAI', 'sdai'],
             ['RAPID3', 'rapid3'],
             ['HAQ', 'haq'],
-            ['PCR', 'pcr'],
+            ['PCR (mg/L)', 'pcr'],
             ['VSG', 'vsg']
         ],
         espa: [
@@ -884,7 +884,7 @@ function getVisitCSVMetricDefinitions() {
             ['ASDAS', 'asdas'],
             ['BASFI', 'basfi'],
             ['HAQ', 'haq'],
-            ['PCR', 'pcr'],
+            ['PCR (mg/L)', 'pcr'],
             ['VSG', 'vsg']
         ],
         aps: [
@@ -894,14 +894,14 @@ function getVisitCSVMetricDefinitions() {
             ['LEI', 'lei'],
             ['HAQ', 'haq'],
             ['RAPID3', 'rapid3'],
-            ['PCR', 'pcr'],
+            ['PCR (mg/L)', 'pcr'],
             ['VSG', 'vsg']
         ],
         les: [
             ['SLEDAI-2K', 'sledai2k'],
             ['SLICC/ACR SDI', 'slicc'],
             ['Prednisona', 'prednisona'],
-            ['PCR', 'pcr'],
+            ['PCR (mg/L)', 'pcr'],
             ['VSG', 'vsg']
         ],
         sjogren: [
@@ -910,7 +910,7 @@ function getVisitCSVMetricDefinitions() {
             ['EVA Sequedad Oral', 'evaSequedadOral'],
             ['EVA Sequedad Ocular', 'evaSequedadOcular'],
             ['EVA Fatiga', 'evaFatiga'],
-            ['PCR', 'pcr'],
+            ['PCR (mg/L)', 'pcr'],
             ['VSG', 'vsg']
         ]
     };
@@ -1747,7 +1747,7 @@ function getMetricLabel(metric) {
         das28Esr: 'DAS28-ESR',
         cdai: 'CDAI',
         sdai: 'SDAI',
-        pcr: 'PCR',
+        pcr: 'PCR (mg/L)',
         vsg: 'VSG',
         evaDolor: 'EVA Dolor',
         evaGlobal: 'EVA Global',

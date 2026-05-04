@@ -387,12 +387,12 @@ function initializeFilters() {
     options.forEach((option, index) => {
         const optX = document.createElement('option');
         optX.value = option;
-        optX.textContent = option;
+        optX.textContent = option === 'PCR' ? 'PCR (mg/L)' : option;
         scatterX?.appendChild(optX);
 
         const optY = document.createElement('option');
         optY.value = option;
-        optY.textContent = option;
+        optY.textContent = option === 'PCR' ? 'PCR (mg/L)' : option;
         if (index === 1) optY.selected = true; // ASDAS por defecto en Y
         scatterY?.appendChild(optY);
     });
@@ -738,7 +738,7 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'ASDAS', label: 'ASDAS', unit: '' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
             { key: 'EVA_Global', label: 'EVA Global', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else if (pathologyType === 'HAQ') {
@@ -760,7 +760,7 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'SDAI', label: 'SDAI', unit: '' },
             { key: 'RAPID3', label: 'RAPID3', unit: '' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else if (pathologyType && (pathologyType.includes('SLEDAI') || pathologyType === 'LES')) {
@@ -771,7 +771,7 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'PREDNISONA', label: 'Prednisona', unit: ' mg/día' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
             { key: 'EVA_Global', label: 'EVA Global', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else if (pathologyType && (pathologyType.includes('ESSDAI') || pathologyType.includes('ESSPRI') || pathologyType === 'SJOGREN')) {
@@ -783,7 +783,7 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'EVA_SEQUEDAD_OCULAR', label: 'EVA Seq. Ocular', unit: '' },
             { key: 'EVA_FATIGA_SJOGREN', label: 'EVA Fatiga', unit: '' },
             { key: 'EVA_DOLOR_SJOGREN', label: 'EVA Dolor', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else if (pathologyType === 'DAPSA' || pathologyType === 'APS') {
@@ -795,7 +795,7 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'LEI', label: 'LEI', unit: '' },
             { key: 'BSA', label: 'BSA', unit: '%' },
             { key: 'HAQ', label: 'HAQ', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else {

@@ -165,3 +165,21 @@ Si en el futuro se decide persistir eventos explícitos, se crearán las columna
 - Columnas añadidas al final del contrato: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
 - Impacto: exportación, demo, carga Excel, dashboard, estadísticas, eventos terapéuticos y Solicitud FH consumen DAPSA cuando está disponible.
 - Para no APs estas columnas exportan `NA`; para APs quedan pobladas si existen los componentes.
+
+---
+
+## AUDIT-FIX-2B ejecutado — Estandarización de PCR (mg/L)
+
+- Unidad canónica en el Hub: `PCR = mg/L` (captura, visualización, exportación y persistencia).
+- No usar `mg/mL` en este contexto.
+- No inferir unidad por magnitud (`pcr > 10`) ni aplicar heurísticas implícitas.
+
+Regla por índice:
+
+| Índice | Entrada Hub/UI/Excel | Unidad requerida por fórmula | Conversión interna |
+|---|---|---|---|
+| DAPSA | mg/L | mg/dL | dividir entre 10 |
+| SDAI | mg/L | mg/dL | dividir entre 10 |
+| DAS28-CRP | mg/L | mg/L | ninguna |
+| ASDAS-CRP | mg/L | mg/L | ninguna |
+| CDAI | no usa PCR | no aplica | no aplica |

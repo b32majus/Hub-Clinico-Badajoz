@@ -362,6 +362,16 @@ node --check modules/exportManager.js
 - Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
 - Validación E2E mínima: export APs 497 columnas, demo 30 pacientes/109 visitas, DAPSA poblado en APs, Solicitud FH APs con DAPSA.
 
+## AUDIT-FIX-2B ejecutado — Estandarización PCR (mg/L)
+
+- [ ] Todas las entradas visibles de PCR muestran `PCR (mg/L)`.
+- [ ] No hay referencias activas a `mg/mL`.
+- [ ] `SDAI` convierte siempre `PCR mg/L -> mg/dL` con `/10`.
+- [ ] `DAPSA` convierte siempre `PCR mg/L -> mg/dL` con `/10`.
+- [ ] `DAS28-CRP` usa PCR en `mg/L` sin `/10`.
+- [ ] `ASDAS-CRP` usa PCR en `mg/L` sin `/10`.
+- [ ] No existen heurísticas de unidad por magnitud (`pcr > 10`).
+
 ---
 
 ## Resultado final

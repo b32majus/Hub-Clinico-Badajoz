@@ -85,6 +85,7 @@ function calcularASDAS(datos) {
     let asdasESR = '';
 
     if (datos?.asdasPCR !== undefined && datos?.asdasPCR !== null && datos?.asdasPCR !== '') {
+        // ASDAS-CRP uses CRP/PCR in mg/L. Do not convert to mg/dL.
         const pcr = parseNumberInRange(datos.asdasPCR, 0, 500);
         if (Number.isFinite(pcr)) {
             asdasCRP = formatFixed(
@@ -255,7 +256,7 @@ function calcularDAPSA(datos) {
         return { total: '', categoria: 'Incompleto' };
     }
 
-    // DAPSA suma PCR en mg/dL. El Hub almacena y muestra PCR en mg/L, por eso se divide entre 10.
+    // DAPSA uses CRP/PCR in mg/dL. Hub captures, stores and displays PCR as mg/L, therefore divide by 10.
     const pcrMgDl = pcrMgL / 10;
     const dapsa = nad68 + nat66 + evaDolor + evaGlobal + pcrMgDl;
 
@@ -294,6 +295,7 @@ function calcularDAS28(datos) {
     let das28ESR = '';
 
     if (datos?.pcr !== undefined && datos?.pcr !== null && datos?.pcr !== '') {
+        // DAS28-CRP uses CRP/PCR in mg/L. Do not convert to mg/dL.
         const pcr = parseNumberInRange(datos.pcr, 0, 500);
         if (Number.isFinite(pcr)) {
             das28CRP = formatFixed(
@@ -349,12 +351,13 @@ function calcularSDAI(datos) {
     const nat28 = parseNumberInRange(datos.nat28, 0, 28, { integer: true });
     const evaPaciente = parseNumberInRange(datos.evaPaciente, 0, 10);
     const evaMedico = parseNumberInRange(datos.evaMedico, 0, 10);
-    let pcr = parseNumberInRange(datos.pcr, 0, 500);
-    if (!allFinite([nad28, nat28, evaPaciente, evaMedico, pcr])) {
+    const pcrMgL = parseNumberInRange(datos.pcr, 0, 500);
+    if (!allFinite([nad28, nat28, evaPaciente, evaMedico, pcrMgL])) {
         return { total: '', categoria: 'Incompleto' };
     }
-    if (pcr > 10) pcr = pcr / 10;
-    const sdai = nad28 + nat28 + evaPaciente + evaMedico + pcr;
+    // SDAI uses CRP/PCR in mg/dL. Hub captures, stores and displays PCR as mg/L, therefore divide by 10.
+    const pcrMgDl = pcrMgL / 10;
+    const sdai = nad28 + nat28 + evaPaciente + evaMedico + pcrMgDl;
 
     let categoria = 'Remision (<=3.3)';
     if (sdai > 26) categoria = 'Actividad Alta (>26)';

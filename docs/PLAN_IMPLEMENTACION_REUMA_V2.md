@@ -89,6 +89,14 @@ El Hub Clínico de Badajoz es una app local-first. Debe seguir funcionando como 
 - Impacto: formulario APs, `formController`, `exportManager`, demo Excel, `dataManager`, dashboard, estadísticas, eventos y Solicitud FH.
 - Validaciones previstas/realizadas: export 497 por patología, demo 30 pacientes/109 visitas, DAPSA APs poblado, columnas DAPSA como `NA` en no APs.
 
+## AUDIT-FIX-2B ejecutado — Estandarización PCR (mg/L)
+
+- Seguridad clínica: PCR queda canónica en `mg/L` en todo el Hub (UI/Excel/export/import).
+- Corrección crítica: `SDAI` elimina heurística por magnitud y convierte siempre `mg/L -> mg/dL` con `/10`.
+- `DAPSA` mantiene conversión explícita `mg/L -> mg/dL` con `/10`.
+- `DAS28-CRP` y `ASDAS-CRP` mantienen PCR en `mg/L` sin conversión.
+- Restricción explícita: no usar `mg/mL` ni inferir unidades por valor.
+
 > Nota: las secciones históricas previas a AUDIT-FIX-1 que mencionan hoja `Prebiologico`, `Solicitud_FH_Log` o columnas `*_Ultimo` quedan obsoletas y no son contrato vigente.
 > Nota: las secciones históricas con el total previo quedan superadas por AUDIT-FIX-2; el contrato vigente es 497 columnas.
 
