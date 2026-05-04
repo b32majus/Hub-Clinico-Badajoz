@@ -43,6 +43,11 @@ const FIELD_ALIASES = {
     evaFatigaSjogren: ['EVA_Fatiga_Sjogren', 'evaFatigaSjogren', 'EVA_Fatiga'],
     evaDolorSjogren: ['EVA_Dolor_Sjogren', 'evaDolorSjogren', 'EVA_Dolor'],
     dapsaResult: ['DAPSA_Result', 'dapsaResult', 'DAPSA'],
+    dapsaNAD68: ['DAPSA_NAD68', 'dapsaNAD68'],
+    dapsaNAT66: ['DAPSA_NAT66', 'dapsaNAT66'],
+    dapsaEvaDolorPaciente: ['DAPSA_EVA_Dolor_Paciente', 'dapsaEvaDolorPaciente'],
+    dapsaEvaGlobalPaciente: ['DAPSA_EVA_Global_Paciente', 'dapsaEvaGlobalPaciente'],
+    dapsaPCR: ['DAPSA_PCR', 'dapsaPCR'],
     pasiResult: ['PASI_Result', 'pasiResult', 'PASI'],
     leiResult: ['LEI_Score', 'leiScore', 'LEI'],
     bsaResult: ['BSA_Result', 'bsaResult', 'BSA']
@@ -129,6 +134,11 @@ function normalizeRecord(record, extra) {
         evaFatigaSjogren: getCanonicalField(record, 'evaFatigaSjogren', ''),
         evaDolorSjogren: getCanonicalField(record, 'evaDolorSjogren', ''),
         dapsaResult: getCanonicalField(record, 'dapsaResult', ''),
+        dapsaNAD68: getCanonicalField(record, 'dapsaNAD68', ''),
+        dapsaNAT66: getCanonicalField(record, 'dapsaNAT66', ''),
+        dapsaEvaDolorPaciente: getCanonicalField(record, 'dapsaEvaDolorPaciente', ''),
+        dapsaEvaGlobalPaciente: getCanonicalField(record, 'dapsaEvaGlobalPaciente', ''),
+        dapsaPCR: getCanonicalField(record, 'dapsaPCR', ''),
         pasiResult: getCanonicalField(record, 'pasiResult', ''),
         leiResult: getCanonicalField(record, 'leiResult', ''),
         bsaResult: getCanonicalField(record, 'bsaResult', '')

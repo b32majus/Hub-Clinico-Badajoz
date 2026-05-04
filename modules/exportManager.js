@@ -33,7 +33,7 @@ function expandirDactilitis(array) {
 
 const LEGACY_BASE_COLUMN_COUNT = 220;
 const HISTORICAL_EXPORT_COLUMN_COUNT = 321;
-const FINAL_V2_EXPORT_COLUMN_COUNT = 491;
+const FINAL_V2_EXPORT_COLUMN_COUNT = 497;
 
 const LEGACY_EXTENSION_HEADERS_221_321 = [
     'Trat_Sistemico_2', 'Trat_Sistemico_Dosis_2', 'Trat_Sistemico_3', 'Trat_Sistemico_Dosis_3',
@@ -149,12 +149,22 @@ const SJOGREN_V2_HEADERS = [
     'essdaiHematological', 'essdaiBiological'
 ];
 
+const APS_DAPSA_V2_HEADERS = [
+    'DAPSA_Result',
+    'DAPSA_NAD68',
+    'DAPSA_NAT66',
+    'DAPSA_EVA_Dolor_Paciente',
+    'DAPSA_EVA_Global_Paciente',
+    'DAPSA_PCR'
+];
+
 // Cabeceras añadidas a las 220 columnas construidas inline por los generadores legacy.
 const FINAL_V2_EXPORT_HEADERS = [
     ...LEGACY_EXTENSION_HEADERS_221_321,
     ...COMMON_V2_HEADERS,
     ...LES_V2_HEADERS,
-    ...SJOGREN_V2_HEADERS
+    ...SJOGREN_V2_HEADERS,
+    ...APS_DAPSA_V2_HEADERS
 ];
 
 const EXTRA_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
@@ -512,7 +522,22 @@ function buildSjogrenV2Columns(datos, pathology) {
     ];
 }
 
-function validateV2BlockLengths(commonV2, lesV2, sjogrenV2) {
+function buildAPSDAPSAV2Columns(datos, pathology) {
+    if (pathology !== 'aps') {
+        return Array(APS_DAPSA_V2_HEADERS.length).fill('NA');
+    }
+
+    return [
+        getExportValue(datos, ['dapsaResult', 'DAPSA_Result', 'DAPSA'], ''),
+        getExportValue(datos, ['dapsaNAD68', 'DAPSA_NAD68'], ''),
+        getExportValue(datos, ['dapsaNAT66', 'DAPSA_NAT66'], ''),
+        getExportValue(datos, ['dapsaEvaDolorPaciente', 'DAPSA_EVA_Dolor_Paciente'], ''),
+        getExportValue(datos, ['dapsaEvaGlobalPaciente', 'DAPSA_EVA_Global_Paciente'], ''),
+        getExportValue(datos, ['dapsaPCR', 'DAPSA_PCR'], '')
+    ];
+}
+
+function validateV2BlockLengths(commonV2, lesV2, sjogrenV2, apsDapsaV2) {
     if (commonV2.length !== COMMON_V2_HEADERS.length) {
         console.warn('Export v2 invalido: bloque comun esperaba ' + COMMON_V2_HEADERS.length + ' columnas y genero ' + commonV2.length);
     }
@@ -522,6 +547,9 @@ function validateV2BlockLengths(commonV2, lesV2, sjogrenV2) {
     if (sjogrenV2.length !== SJOGREN_V2_HEADERS.length) {
         console.warn('Export v2 invalido: bloque Sjogren esperaba ' + SJOGREN_V2_HEADERS.length + ' columnas y genero ' + sjogrenV2.length);
     }
+    if (apsDapsaV2.length !== APS_DAPSA_V2_HEADERS.length) {
+        console.warn('Export v2 invalido: bloque APs DAPSA esperaba ' + APS_DAPSA_V2_HEADERS.length + ' columnas y genero ' + apsDapsaV2.length);
+    }
 }
 
 function buildExtendedColumns(datos, pathology) {
@@ -530,17 +558,19 @@ function buildExtendedColumns(datos, pathology) {
     const commonV2 = buildCommonV2Columns(datos);
     const lesV2 = buildLESV2Columns(datos, normalizedPathology);
     const sjogrenV2 = buildSjogrenV2Columns(datos, normalizedPathology);
+    const apsDapsaV2 = buildAPSDAPSAV2Columns(datos, normalizedPathology);
 
     if (legacy.length !== LEGACY_EXTENSION_HEADERS_221_321.length) {
         console.warn('Export v2 invalido: bloque historico extendido esperaba ' + LEGACY_EXTENSION_HEADERS_221_321.length + ' columnas y genero ' + legacy.length);
     }
-    validateV2BlockLengths(commonV2, lesV2, sjogrenV2);
+    validateV2BlockLengths(commonV2, lesV2, sjogrenV2, apsDapsaV2);
 
     return [
         ...legacy,
         ...commonV2,
         ...lesV2,
-        ...sjogrenV2
+        ...sjogrenV2,
+        ...apsDapsaV2
     ];
 }
 
@@ -1985,6 +2015,7 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.COMMON_V2_HEADERS = COMMON_V2_HEADERS;
     HubTools.export.LES_V2_HEADERS = LES_V2_HEADERS;
     HubTools.export.SJOGREN_V2_HEADERS = SJOGREN_V2_HEADERS;
+    HubTools.export.APS_DAPSA_V2_HEADERS = APS_DAPSA_V2_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT = FINAL_V2_EXPORT_COLUMN_COUNT;
     HubTools.export.validateExportRowLength = validateExportRowLength;

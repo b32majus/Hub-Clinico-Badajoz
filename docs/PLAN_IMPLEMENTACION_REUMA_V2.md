@@ -70,12 +70,27 @@ El Hub Clínico de Badajoz es una app local-first. Debe seguir funcionando como 
 
 ### Decisiones AUDIT-FIX-1
 
-- Contrato vigente Excel v2: 5 hojas clínicas (`AR`, `ESPA`, `APS`, `LES`, `SJOGREN`) con 491 columnas por hoja.
+- Contrato AUDIT-FIX-1 superado por AUDIT-FIX-2.
 - Prebiológico/vacunación se persiste embebido por visita; no existe hoja `Prebiologico` obligatoria.
 - `Solicitud FH` es texto derivado para copiar/pegar; no existe hoja ni columna persistida `Solicitud_FH_Log`, `Solicitud_FH_Texto` o `Informe_FH`.
-- DAPSA APs queda pendiente de decisión contractual: no existe actualmente en las 491 columnas del demo v2. Añadirlo requiere migración explícita del contrato Excel.
+- DAPSA APs deja de ser pendiente: se incorpora al contrato Excel v2 en AUDIT-FIX-2.
+
+### Decisiones AUDIT-FIX-2
+
+- Contrato vigente Excel v2: 5 hojas clínicas (`AR`, `ESPA`, `APS`, `LES`, `SJOGREN`) con 497 columnas por hoja.
+- Columnas `492-497`: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Para APs se rellenan con valores longitudinales; para no APs exportan `NA`.
+- `DAPSA_PCR` se guarda como PCR mg/L; el cálculo DAPSA convierte a mg/dL dividiendo entre 10.
+
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+
+- Motivo del cambio: cerrar el fallo contractual de APs detectado por auditoría externa.
+- Contrato: de 491 a 497 columnas por hoja clínica.
+- Impacto: formulario APs, `formController`, `exportManager`, demo Excel, `dataManager`, dashboard, estadísticas, eventos y Solicitud FH.
+- Validaciones previstas/realizadas: export 497 por patología, demo 30 pacientes/109 visitas, DAPSA APs poblado, columnas DAPSA como `NA` en no APs.
 
 > Nota: las secciones históricas previas a AUDIT-FIX-1 que mencionan hoja `Prebiologico`, `Solicitud_FH_Log` o columnas `*_Ultimo` quedan obsoletas y no son contrato vigente.
+> Nota: las secciones históricas con el total previo quedan superadas por AUDIT-FIX-2; el contrato vigente es 497 columnas.
 
 ---
 
@@ -2869,12 +2884,14 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 
 ---
 
-## Fase C1 ejecutada — Exportación clínica alineada a 491 columnas
+## Fase C1 ejecutada — Exportación clínica histórica pre-AUDIT-FIX-2
 
 **Fecha:** 2026-05-03
 
+> Histórico: fase superada por AUDIT-FIX-2. El contrato vigente es 497 columnas.
+
 ### Alcance
-- `modules/exportManager.js` genera filas clínicas de `491` columnas para `AR`, `ESPA`, `APS`, `LES` y `SJOGREN`.
+- `modules/exportManager.js` generaba filas clínicas de `491` columnas para `AR`, `ESPA`, `APS`, `LES` y `SJOGREN`; AUDIT-FIX-2 eleva el contrato vigente a `497`.
 - Las columnas `1-321` conservan el bloque histórico ya generado por la exportación previa.
 - Las columnas `322-365` añaden el bloque común v2 con contexto, prebiológico, vacunación y medicina preventiva.
 - Las columnas `366-438` añaden el bloque LES; si la patología no es LES se exporta `NA`.
@@ -2899,11 +2916,11 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 ### Validación técnica realizada
 - `node --check modules/exportManager.js`
 - Prueba manual con Node/vm de generación de filas:
-  - `AR`: 491 columnas
-  - `ESPA`: 491 columnas
-  - `APS`: 491 columnas
-  - `LES`: 491 columnas
-  - `SJOGREN`: 491 columnas
+  - `AR`: 497 columnas tras AUDIT-FIX-2
+  - `ESPA`: 497 columnas tras AUDIT-FIX-2
+  - `APS`: 497 columnas tras AUDIT-FIX-2
+  - `LES`: 497 columnas tras AUDIT-FIX-2
+  - `SJOGREN`: 497 columnas tras AUDIT-FIX-2
 - Validación de tamaños de bloque:
   - `COMMON_V2_HEADERS`: 44 columnas
   - `LES_V2_HEADERS`: 73 columnas
@@ -2956,13 +2973,13 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 ### Validación técnica realizada
 - `node --check modules/formController.js`
 - Snippet Node/vm con DOM simulado y `exportManager.js`:
-  - LES exporta 491 columnas.
+  - LES exportaba el total histórico pre-AUDIT-FIX-2 en la fase C2A.
   - `Fecha_Diagnostico` llega a columna 322.
   - `Estado_Prebiologico_Final` llega a columna 323.
   - `Hemograma_Solicitado` llega a columna 327.
   - `sledaiSeizure` llega a columna 403.
   - `sliccOcular` llega a columna 427.
-  - Sjögren exporta 491 columnas.
+  - Sjögren exportaba el total histórico pre-AUDIT-FIX-2 en la fase C2A.
   - `ESSPRI_Result` llega a columna 442.
   - `essdaiConstitutional` llega a columna 480.
   - `essdaiBiological` llega a columna 491.
@@ -3047,7 +3064,7 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
   - `node --check modules/formController.js`
   - `node --check modules/exportManager.js`
 - Prueba de integración (Node/vm):
-  - Con `estadoPrebiologicoFinal = APTO`, la exportación LES mantiene 491 columnas y coloca `APTO` en columna 323.
+  - Con `estadoPrebiologicoFinal = APTO`, la exportación LES mantiene el total histórico pre-AUDIT-FIX-2 y coloca `APTO` en columna 323.
 
 ### Notas de implementación
 - No se modificó `Solicitud FH` (ni flujo ni estructura).
@@ -3112,8 +3129,8 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 
 ### Criterio canónico aplicado
 - Columnas `1-321`: copiadas del Excel maestro original (`Hub_Clinico_Maestro.xlsx`, hoja AR) y validadas como idénticas en AR/ESPA/APS.
-- Columnas `322-491`: extraídas de `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` (170 columnas v2).
-- Total final por hoja clínica: `491` columnas.
+- Columnas `322-497`: extraídas de `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` (176 columnas v2).
+- Total final por hoja clínica vigente: `497` columnas.
 
 ### Hojas incluidas
 - Clínicas: `AR`, `ESPA`, `APS`, `LES`, `SJOGREN`.
@@ -3129,7 +3146,7 @@ Correcciones aplicadas en `scripts/script_dashboard.js`:
 - `DEMO-SJOGREN-001` (4 visitas)
 
 ### Validaciones automáticas ejecutadas (script)
-- `AR/ESPA/APS/LES/SJOGREN = 491 columnas`
+- `AR/ESPA/APS/LES/SJOGREN = 497 columnas`
 - Primeras `321` columnas de `AR/ESPA/APS` coinciden con maestro
 - Sin cabeceras vacías
 - Sin cabeceras duplicadas

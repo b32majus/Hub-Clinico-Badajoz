@@ -87,6 +87,7 @@
 - 109 visitas longitudinales.
 - Perfiles clínicos variados: remisión, alta actividad, efectos adversos, comorbilidades.
 - Estados prebiológicos distribuidos.
+- DAPSA poblado longitudinalmente en APs y contrato Excel ampliado a 497 columnas.
 - Validaciones automáticas del script.
 
 ### Documentación y validación E2E
@@ -119,9 +120,15 @@
 ---
 
 ### Pendientes no bloqueantes
-- APS/DAPSA: decisión de modelo — APs usa DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún.
 - Exportación de estadísticas a CSV: no implementada en esta versión.
 - Checklist SLICC completo: la implementación actual es entrada estructurada por dominios, no checklist ítem por ítem.
+
+### AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+- Motivo: APs necesitaba DAPSA como métrica principal persistida en Excel.
+- Contrato v2 actualizado de 491 a 497 columnas por hoja clínica.
+- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Impacto cubierto: formulario, `formController`, `exportManager`, demo, `dataManager`, dashboard, estadísticas, eventos terapéuticos y Solicitud FH.
+- `DAPSA_PCR` se almacena en mg/L; la calculadora convierte a mg/dL para el total.
 
 ### Riesgos conocidos
 - `Tratamiento_Actual` es texto libre; la detección de cambios de tratamiento depende de comparación por string.

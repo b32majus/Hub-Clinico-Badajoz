@@ -1,10 +1,10 @@
 # Reporte Diferencias Excel Demo v2
 
-_Generado automáticamente: 2026-05-03 19:41_
+_Generado automáticamente: 2026-05-04 08:09_
 
 ## Fuente canónica
 1. Excel maestro original (`Hub_Clinico_Maestro.xlsx`) para columnas 1-321.
-2. `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` para columnas 322-491.
+2. `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` para columnas 322-497.
 3. `modules/exportManager.js` como verificación secundaria del orden v2.
 
 ## Archivos
@@ -13,18 +13,24 @@ _Generado automáticamente: 2026-05-03 19:41_
 
 ## Estructura final
 - Columnas históricas intactas: `321`
-- Columnas v2 añadidas: `170`
-- Total por hoja clínica: `491`
+- Columnas v2 añadidas: `176`
+- Total por hoja clínica: `497`
+
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+- Motivo: APs necesitaba DAPSA persistido en el contrato y en la demo.
+- Contrato: de 491 a 497 columnas por hoja clínica.
+- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Demo: DAPSA poblado en APs y `NA` en no APs.
 
 ## Resumen por hoja
 
 | Hoja | Columnas | Filas |
 |---|---:|---:|
-| AR | 491 | 22 |
-| ESPA | 491 | 23 |
-| APS | 491 | 22 |
-| LES | 491 | 21 |
-| SJOGREN | 491 | 21 |
+| AR | 497 | 22 |
+| ESPA | 497 | 23 |
+| APS | 497 | 22 |
+| LES | 497 | 21 |
+| SJOGREN | 497 | 21 |
 | Profesionales | (auxiliar) | (auxiliar) |
 | Fármacos | (auxiliar) | (auxiliar) |
 
@@ -63,11 +69,11 @@ _Generado automáticamente: 2026-05-03 19:41_
 
 ## Validaciones automáticas
 
-- [x] AR = 491 columnas — 491
-- [x] ESPA = 491 columnas — 491
-- [x] APS = 491 columnas — 491
-- [x] LES = 491 columnas — 491
-- [x] SJOGREN = 491 columnas — 491
+- [x] AR = 497 columnas — 497
+- [x] ESPA = 497 columnas — 497
+- [x] APS = 497 columnas — 497
+- [x] LES = 497 columnas — 497
+- [x] SJOGREN = 497 columnas — 497
 - [x] primeras 321 columnas de AR coinciden con maestro — OK
 - [x] primeras 321 columnas de ESPA coinciden con maestro — OK
 - [x] primeras 321 columnas de APS coinciden con maestro — OK
@@ -81,6 +87,8 @@ _Generado automáticamente: 2026-05-03 19:41_
 - [x] LES sin cabeceras duplicadas
 - [x] SJOGREN sin cabeceras vacías
 - [x] SJOGREN sin cabeceras duplicadas
+- [x] APS DAPSA poblado — 22/22 visitas
+- [x] DAPSA = NA en no APs
 - [x] cada paciente tiene >=3 visitas — 30 pacientes, 109 visitas total
 - [x] >=5 pacientes por hoja — {'AR': 6, 'ESPA': 6, 'APS': 6, 'LES': 6, 'SJOGREN': 6}
 - [x] Fecha_Visita existe y es ordenable
@@ -91,13 +99,14 @@ _Generado automáticamente: 2026-05-03 19:41_
 - [x] campos de evento terapéutico suficientes para timeline/marcadores
 
 ## Diferencias conocidas
-- LES/SJOGREN no existen en el maestro original; se construyen con las 321 históricas + 170 v2.
+- LES/SJOGREN no existen en el maestro original; se construyen con las 321 históricas + 176 v2.
+- APs incorpora DAPSA como contrato explícito; en hojas no APs las columnas DAPSA se rellenan como `NA`.
 - No se crea hoja `Prebiologico` obligatoria en esta demo (decisión de pegado único por patología).
 - No se crea ninguna columna/hoja de `Solicitud FH` (salida derivada TXT).
 
-## Columnas v2 añadidas (322-491)
+## Columnas v2 añadidas (322-497)
 
-Total: 170
+Total: 176
 
 ```text
 322 Fecha_Diagnostico
@@ -270,4 +279,10 @@ Total: 170
 489 essdaiCentralNervousSystem
 490 essdaiHematological
 491 essdaiBiological
+492 DAPSA_Result
+493 DAPSA_NAD68
+494 DAPSA_NAT66
+495 DAPSA_EVA_Dolor_Paciente
+496 DAPSA_EVA_Global_Paciente
+497 DAPSA_PCR
 ```

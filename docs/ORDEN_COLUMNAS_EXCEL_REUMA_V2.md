@@ -1,6 +1,6 @@
 # Orden de Columnas Excel Reuma v2
 
-> Fecha: 2026-05-03. Contrato de orden exacto para las columnas v2 finales antes de implementar formulario/exportacion y antes de generar la demo.
+> Fecha: 2026-05-04. Contrato de orden exacto para las columnas v2 finales con AUDIT-FIX-2: DAPSA incorporado a APs.
 
 ## 1. Regla general
 
@@ -16,8 +16,9 @@ El orden final es:
 2. Columnas `322-365`: contexto v2 comun + prebiologico/vacunacion.
 3. Columnas `366-438`: LES, incluyendo trazabilidad de SLEDAI-2K y SLICC/ACR SDI.
 4. Columnas `439-491`: Sjogren, incluyendo trazabilidad de ESSDAI.
+5. Columnas `492-497`: APs/DAPSA explicito. En hojas no APs exporta `NA`.
 
-Total final propuesto: `491` columnas por hoja clinica.
+Total final vigente: `497` columnas por hoja clinica.
 
 ## 2. Columnas 1-321: bloque historico
 
@@ -217,6 +218,17 @@ Las columnas `1-321` se copian exactamente desde `Hub_Clinico_Maestro.xlsx`, hoj
 | 490 | `essdaiHematological` |
 | 491 | `essdaiBiological` |
 
+### 3.4 APs/DAPSA
+
+| Posicion | Columna |
+|---:|---|
+| 492 | `DAPSA_Result` |
+| 493 | `DAPSA_NAD68` |
+| 494 | `DAPSA_NAT66` |
+| 495 | `DAPSA_EVA_Dolor_Paciente` |
+| 496 | `DAPSA_EVA_Global_Paciente` |
+| 497 | `DAPSA_PCR` |
+
 ## 4. Aliases de implementacion
 
 Estos aliases no son cabeceras nuevas; sirven para mapear formulario/codigo a cabecera estable:
@@ -232,6 +244,12 @@ Estos aliases no son cabeceras nuevas; sirven para mapear formulario/codigo a ca
 | `ESSPRI_Sequedad` | `esspriSequedad` |
 | `ESSPRI_Fatiga` | `esspriFatiga` |
 | `ESSPRI_Dolor` | `esspriDolor` |
+| `DAPSA_Result` | `dapsaResult`, `DAPSA`, `dapsa` |
+| `DAPSA_NAD68` | `dapsaNAD68` |
+| `DAPSA_NAT66` | `dapsaNAT66` |
+| `DAPSA_EVA_Dolor_Paciente` | `dapsaEvaDolorPaciente` |
+| `DAPSA_EVA_Global_Paciente` | `dapsaEvaGlobalPaciente` |
+| `DAPSA_PCR` | `dapsaPCR` |
 
 ## 5. Campos descartados como columnas
 
@@ -250,11 +268,20 @@ Solicitud FH se genera desde datos fuente persistidos en la ultima visita clinic
 
 ## 6. Implicacion para la implementacion
 
-El siguiente cambio funcional debe hacer que `exportManager.js` genere exactamente `491` valores por fila clinica, en este orden:
+El siguiente cambio funcional debe hacer que `exportManager.js` genere exactamente `497` valores por fila clinica, en este orden:
 
 - Posiciones `1-321`: sin cambios.
 - Posiciones `322-365`: nuevo bloque comun/prebiologico.
 - Posiciones `366-438`: LES, `NA` si no aplica.
 - Posiciones `439-491`: Sjogren, `NA` si no aplica.
+- Posiciones `492-497`: APs/DAPSA, `NA` si no aplica.
 
 La demo v2 no debe generarse hasta que formulario/export/dashboard/FH esten alineados con este orden.
+
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+
+- Motivo: APs v2 necesitaba DAPSA como métrica clínica principal y no estaba persistida en el contrato Excel.
+- El contrato pasa de `491` a `497` columnas por hoja clínica.
+- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Impacto: formulario APs, `formController`, `exportManager`, demo, `dataManager`, dashboard, estadísticas, eventos terapéuticos y Solicitud FH quedan alineados con DAPSA.
+- Criterio de unidad: `DAPSA_PCR` se guarda como PCR mg/L; la calculadora convierte a mg/dL dividiendo entre 10 para el total DAPSA.

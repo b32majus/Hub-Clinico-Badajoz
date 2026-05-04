@@ -1,6 +1,6 @@
 # Contrato de Datos Reuma v2
 
-> Revisión 2026-05-03, AUDIT-FIX-1. Contrato vigente Reuma v2: 5 hojas clínicas con 491 columnas cada una. El bloque prebiológico/vacunación va embebido por visita. La Solicitud FH es una salida derivada de texto y no se persiste como hoja ni columna.
+> Revisión 2026-05-04, AUDIT-FIX-2. Contrato vigente Reuma v2: 5 hojas clínicas con 497 columnas cada una. El bloque prebiológico/vacunación va embebido por visita. La Solicitud FH es una salida derivada de texto y no se persiste como hoja ni columna.
 
 ---
 
@@ -22,7 +22,7 @@ No existen hojas clínicas obligatorias separadas para `Prebiologico`, `Solicitu
 
 ## 2. Columnas comunes a todas las hojas clínicas
 
-Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) tienen **491 columnas**. Las primeras 321 columnas preservan el contrato histórico; las columnas v2 añaden bloque prebiológico/vacunación, LES y Sjögren sin crear hojas clínicas adicionales.
+Todas las hojas de patología (ESPA, APS, AR, LES, SJOGREN) tienen **497 columnas**. Las primeras 321 columnas preservan el contrato histórico; las columnas v2 añaden bloque prebiológico/vacunación, LES, Sjögren y APs/DAPSA sin crear hojas clínicas adicionales.
 
 El identificador visible canónico es `CIP`, pero el contrato Excel histórico conserva `ID_Paciente` como cabecera física compatible. El loader normaliza ambos.
 
@@ -62,6 +62,7 @@ Cabeceras base históricas de referencia:
 32. `Comentarios_Adicionales`
 33. Campos clínicos históricos restantes hasta columna 321.
 34. Bloque v2 común embebido por visita desde columna 322, incluyendo `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico`.
+35. Bloque APs/DAPSA en columnas 492-497: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`. En hojas no APs exporta `NA`.
 
 > **Nota de compatibilidad**: Las hojas ESPA/APS/AR existentes usan `ID_Paciente` en lugar de `CIP`. El loader normaliza ambos campos mediante `HubTools.normalizer.getPatientCIP()`.
 
@@ -83,6 +84,7 @@ Cabeceras base históricas de referencia:
 
 - Columnas específicas de **LES**: ver `docs/template_les_excel.md`
 - Columnas específicas de **Sjögren**: ver `docs/template_sjogren_excel.md`
+- Columnas específicas de **APs/DAPSA**: ver `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`, posiciones 492-497.
 - Columnas de **prebiológico**: bloque común embebido por visita; ver `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`.
 - Estructura de **Solicitud FH**: salida derivada de texto; no columna/hoja persistida.
 - Columnas históricas ESPA/APS/AR: ver `docs/CONTRATO_DATOS_UNIFICADO.md`
@@ -99,6 +101,7 @@ Cada patología mantiene primera visita y seguimiento en la misma hoja mediante 
 
 - `ID_Paciente` → `CIP` como identificador canónico visible (con alias de lectura para compatibilidad).
 - Añadidas columnas transversales `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico` a todas las hojas clínicas.
+- Añadidas columnas APs/DAPSA al final del contrato v2. `DAPSA_PCR` se guarda como PCR mg/L; el cálculo DAPSA convierte a mg/dL dividiendo entre 10.
 - Nuevas hojas clínicas: `LES`, `SJOGREN`.
 - No se crean hojas `Prebiologico` ni `Solicitud_FH_Log` en el contrato vigente.
 - ASDAS en AR: columnas conservadas pero codificadas como `NA` (ver Fase 2 del plan).
@@ -129,7 +132,7 @@ En la versión actual del sistema, los eventos terapéuticos **se derivan** desd
 - `Cambio_Descripcion_Efectos` — descripción de los efectos adversos
 - `planBiologicoEntries`, `previoBiologicoEntries` — fármacos biológicos planificados/previos
 - `biologicoSelect`, `fameSelect`, `sistemicoSelect` — selectores de tratamiento
-- Scores de actividad por patología: DAS28, CDAI, SDAI, BASDAI, ASDAS, SLEDAI-2K, ESSDAI, ESSPRI
+- Scores de actividad por patología: DAS28, CDAI, SDAI, BASDAI, ASDAS, DAPSA, SLEDAI-2K, ESSDAI, ESSPRI
 - `Estado_Prebiologico_Final` y `Fecha_Validacion_Prebiologico` — estado prebiológico persistido por visita
 
 **Formato de evento derivado** (inmutable, en memoria):
@@ -152,3 +155,13 @@ En la versión actual del sistema, los eventos terapéuticos **se derivan** desd
 ```
 
 Si en el futuro se decide persistir eventos explícitos, se crearán las columnas listadas arriba en una hoja `Eventos_Terapeuticos` o como columnas adicionales en las hojas de visita.
+
+---
+
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+
+- Motivo: APs requería DAPSA como métrica principal persistida y auditable.
+- El contrato vigente pasa de 491 a 497 columnas por hoja clínica.
+- Columnas añadidas al final del contrato: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Impacto: exportación, demo, carga Excel, dashboard, estadísticas, eventos terapéuticos y Solicitud FH consumen DAPSA cuando está disponible.
+- Para no APs estas columnas exportan `NA`; para APs quedan pobladas si existen los componentes.

@@ -234,6 +234,48 @@ function calcularMDA(datos) {
     };
 }
 
+function calcularDAPSA(datos) {
+    const rawValues = [
+        datos?.dapsaNAD68,
+        datos?.dapsaNAT66,
+        datos?.dapsaEvaDolorPaciente,
+        datos?.dapsaEvaGlobalPaciente,
+        datos?.dapsaPCR
+    ];
+    if (!hasAllValues(rawValues)) {
+        return { total: '', categoria: 'Incompleto' };
+    }
+
+    const nad68 = parseNumberInRange(datos.dapsaNAD68, 0, 68, { integer: true });
+    const nat66 = parseNumberInRange(datos.dapsaNAT66, 0, 66, { integer: true });
+    const evaDolor = parseNumberInRange(datos.dapsaEvaDolorPaciente, 0, 10);
+    const evaGlobal = parseNumberInRange(datos.dapsaEvaGlobalPaciente, 0, 10);
+    const pcrMgL = parseNumberInRange(datos.dapsaPCR, 0, 500);
+    if (!allFinite([nad68, nat66, evaDolor, evaGlobal, pcrMgL])) {
+        return { total: '', categoria: 'Incompleto' };
+    }
+
+    // DAPSA suma PCR en mg/dL. El Hub almacena y muestra PCR en mg/L, por eso se divide entre 10.
+    const pcrMgDl = pcrMgL / 10;
+    const dapsa = nad68 + nat66 + evaDolor + evaGlobal + pcrMgDl;
+
+    let categoria = 'Remision (<=4)';
+    if (dapsa > 28) categoria = 'Actividad Alta (>28)';
+    else if (dapsa > 14) categoria = 'Actividad Moderada (14.1-28)';
+    else if (dapsa > 4) categoria = 'Actividad Baja (4.1-14)';
+
+    return {
+        total: formatFixed(dapsa, 1),
+        categoria,
+        nad68,
+        nat66,
+        evaDolor: formatFixed(evaDolor, 1),
+        evaGlobal: formatFixed(evaGlobal, 1),
+        pcr: formatFixed(pcrMgL, 1),
+        pcrMgDl: formatFixed(pcrMgDl, 2)
+    };
+}
+
 function calcularDAS28(datos) {
     const core = [datos?.nad28, datos?.nat28, datos?.evaGlobal];
     if (!hasAllValues(core)) {
@@ -572,6 +614,7 @@ if (typeof HubTools !== 'undefined') {
     HubTools.scores.calcularLEI = calcularLEI;
     HubTools.scores.calcularRAPID3 = calcularRAPID3;
     HubTools.scores.calcularMDA = calcularMDA;
+    HubTools.scores.calcularDAPSA = calcularDAPSA;
     HubTools.scores.calcularDAS28 = calcularDAS28;
     HubTools.scores.calcularCDAI = calcularCDAI;
     HubTools.scores.calcularSDAI = calcularSDAI;

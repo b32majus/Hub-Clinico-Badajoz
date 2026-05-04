@@ -1373,6 +1373,13 @@ function recopilarDatosFormulario() {
     const pasiScore = document.getElementById('pasiValue')?.value || '';
     const bsaPercentage = document.getElementById('bsaValue')?.value || '';
     const psoriasisDescripcion = document.getElementById('psoriasisDescripcion')?.value || '';
+    const dapsaResult = document.getElementById('dapsaResult')?.value || '';
+    const dapsaCategoria = document.getElementById('dapsaCategoria')?.textContent || '';
+    const dapsaNAD68 = document.getElementById('dapsaNAD68')?.value || '';
+    const dapsaNAT66 = document.getElementById('dapsaNAT66')?.value || '';
+    const dapsaEvaDolorPaciente = document.getElementById('dapsaEvaDolorPaciente')?.value || '';
+    const dapsaEvaGlobalPaciente = document.getElementById('dapsaEvaGlobalPaciente')?.value || '';
+    const dapsaPCR = document.getElementById('dapsaPCR')?.value || '';
 
     const haqVestirse = document.querySelector('.haq-score[data-category="1"]')?.value || '';
     const haqLevantarse = document.querySelector('.haq-score[data-category="2"]')?.value || '';
@@ -1538,6 +1545,8 @@ function recopilarDatosFormulario() {
         haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
         leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
         mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        dapsaResult, dapsaCategoria, dapsaNAD68, dapsaNAT66,
+        dapsaEvaDolorPaciente, dapsaEvaGlobalPaciente, dapsaPCR,
         planSistemicosEntries, planFamesEntries, planBiologicosEntries,
         previoSistemicosEntries, previoFamesEntries, previoBiologicosEntries,
         psoriasisSistemicosEntries,
@@ -1899,6 +1908,13 @@ function recopilarDatosFormularioSeguimiento() {
     });
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
+    const dapsaResult = getValue('dapsaResult');
+    const dapsaCategoria = document.getElementById('dapsaCategoria')?.textContent || '';
+    const dapsaNAD68 = getValue('dapsaNAD68');
+    const dapsaNAT66 = getValue('dapsaNAT66');
+    const dapsaEvaDolorPaciente = getValue('dapsaEvaDolorPaciente');
+    const dapsaEvaGlobalPaciente = getValue('dapsaEvaGlobalPaciente');
+    const dapsaPCR = getValue('dapsaPCR');
 
     let decisionTerapeutica = 'continuar';
     if (document.getElementById('btnCambiarTratamiento')?.classList.contains('active')) {
@@ -2018,6 +2034,8 @@ function recopilarDatosFormularioSeguimiento() {
         haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
         leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
         mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        dapsaResult, dapsaCategoria, dapsaNAD68, dapsaNAT66,
+        dapsaEvaDolorPaciente, dapsaEvaGlobalPaciente, dapsaPCR,
         das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
         rigidezMatutinaAR, nodulosReumatoideos, nodulosLocalizacionTexto,
         erosionesRadiologicas, erosionesDescripcionTexto,
@@ -2105,6 +2123,47 @@ function initScoreWiring() {
         return cat;
     }
 
+    function syncDapsaSourceFields() {
+        var mappings = [
+            ['dapsaNAD68', 'asdasNAD'],
+            ['dapsaNAT66', 'asdasNAT'],
+            ['dapsaEvaDolorPaciente', 'evaDolor'],
+            ['dapsaEvaGlobalPaciente', 'evaGlobal'],
+            ['dapsaPCR', 'pcrValue']
+        ];
+        mappings.forEach(function(pair) {
+            var target = document.getElementById(pair[0]);
+            if (target) target.value = getFormValue(pair[1]);
+        });
+    }
+
+    function recalcularDAPSA() {
+        if (typeof HubTools.scores.calcularDAPSA !== 'function') return;
+        syncDapsaSourceFields();
+
+        var datos = {
+            dapsaNAD68: getFormValue('dapsaNAD68'),
+            dapsaNAT66: getFormValue('dapsaNAT66'),
+            dapsaEvaDolorPaciente: getFormValue('dapsaEvaDolorPaciente'),
+            dapsaEvaGlobalPaciente: getFormValue('dapsaEvaGlobalPaciente'),
+            dapsaPCR: getFormValue('dapsaPCR')
+        };
+        var result = HubTools.scores.calcularDAPSA(datos);
+        var dapsaField = document.getElementById('dapsaResult');
+        var dapsaCatEl = document.getElementById('dapsaCategoria');
+
+        if (dapsaField) {
+            dapsaField.value = result.total;
+            applyScoreCategory(result.total, 'dapsa', dapsaField, dapsaCatEl);
+        }
+        if (dapsaCatEl && result.categoria === 'Incompleto') {
+            dapsaCatEl.textContent = 'Incompleto';
+            dapsaCatEl.style.color = '#6c757d';
+            dapsaCatEl.style.fontWeight = '700';
+        }
+        debugLog('  📊 DAPSA recalculado:', result.total || 'Incompleto');
+    }
+
     // --- 1. SYNC PCR / VSG → ASDAS readonly ---
     const pcrInput = document.getElementById('pcrValue');
     const vsgInput = document.getElementById('vsgValue');
@@ -2115,6 +2174,7 @@ function initScoreWiring() {
         pcrInput.addEventListener('input', function () {
             asdasPCRField.value = this.value;
             recalcularASDAS();
+            recalcularDAPSA();
             recalcularMDA();
         });
         debugLog('  ✓ PCR → asdasPCR sync');
@@ -2186,6 +2246,7 @@ function initScoreWiring() {
             applyScoreCategory(result.asdasESR, 'asdas', esrField, document.getElementById('asdasEsrCategoria'));
         }
         debugLog('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
+        recalcularDAPSA();
     }
 
     // Exponer para homunculus.js
@@ -2244,6 +2305,7 @@ function initScoreWiring() {
         if (leiTotalEl) leiTotalEl.textContent = count;
         // Cascada: LEI afecta MDA
         recalcularMDA();
+        recalcularDAPSA();
         return count;
     }
 
@@ -2260,12 +2322,14 @@ function initScoreWiring() {
         evaGlobalInput.addEventListener('input', function () {
             recalcularMDA();
             recalcularRAPID3();
+            recalcularDAPSA();
         });
     }
     if (evaDolorInput) {
         evaDolorInput.addEventListener('input', function () {
             recalcularMDA();
             recalcularRAPID3();
+            recalcularDAPSA();
         });
     }
     if (evaGlobalInput || evaDolorInput) debugLog('  ✓ EVA → MDA/RAPID3 wiring');
@@ -2345,6 +2409,9 @@ function initScoreWiring() {
     // Exponer para homunculus.js
     window.calcularMDALocal = recalcularMDA;
     debugLog('  ✓ MDA wiring + calcularMDALocal');
+
+    window.calcularDAPSALocal = recalcularDAPSA;
+    debugLog('  ✓ DAPSA wiring + calcularDAPSALocal');
 
     // --- 8. AUTO-CÁLCULO RAPID3 (MDHAQ 10 preguntas) ---
     function recalcularRAPID3() {

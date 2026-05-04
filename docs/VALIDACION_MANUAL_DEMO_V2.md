@@ -1,16 +1,24 @@
-# Validación Manual Demo v2 (Esquema Canónico 491)
+# Validación Manual Demo v2 (Esquema Canónico 497)
 
 ## Archivo a cargar
 1. Abrir `index.html` en navegador.
 2. Pulsar `Cargar base de datos`.
 3. Seleccionar `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`.
 
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+
+- Motivo: validar que APs tiene DAPSA persistido y no solo derivado en UI.
+- Contrato Excel v2: `497` columnas por hoja clínica.
+- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Demo: DAPSA poblado en las 22 visitas APs; `NA` en hojas no APs.
+
 ## Estructura esperada del archivo
 - Hojas clínicas: `AR`, `ESPA`, `APS`, `LES`, `SJOGREN`.
 - Hojas auxiliares: `Profesionales`, `Fármacos`.
 - Sin hoja `Solicitud_FH`.
 - Sin hoja `Prebiologico` obligatoria.
-- Cada hoja clínica con `491` columnas.
+- Cada hoja clínica con `497` columnas.
+- Columnas `492-497` DAPSA presentes en todas las hojas; en APs pobladas y en no APs con `NA`.
 
 ## Cohorte completa (30 pacientes, 109 visitas)
 
@@ -35,14 +43,14 @@
 | DEMO-ESPA-006 | 44 | M | 4 | 6.0→2.0 | Uveítis anterior, apto prebio |
 
 ### Artritis Psoriásica (APS) — 6 pacientes
-| CIP | Edad | Sexo | Visitas | RAPID3 rango | Perfil |
+| CIP | Edad | Sexo | Visitas | DAPSA rango | Perfil |
 |---|---|---|---|---|---|
-| DEMO-APS-001 | — | — | 4 | 14→2 | FAME→Bio, mejoría |
-| DEMO-APS-002 | 52 | M | 4 | 14→3 | Psoriasis PASI 18→3, apto prebio |
-| DEMO-APS-003 | 40 | F | 3 | — | Entesitis LEI 8→2, en curso prebio |
-| DEMO-APS-004 | 58 | M | 4 | 18→4 | Cambio FAME→Adalimumab, apto prebio |
-| DEMO-APS-005 | 33 | F | 3 | 5→2 | Baja actividad estable, no evaluado |
-| DEMO-APS-006 | 65 | M | 4 | 20→12 | Persistente con comorbilidades, no apto |
+| DEMO-APS-001 | — | — | 4 | 33.1→5.2 | FAME→Bio, mejoría |
+| DEMO-APS-002 | 52 | M | 4 | 29.2→4.6 | Psoriasis PASI 18→3, apto prebio |
+| DEMO-APS-003 | 40 | F | 3 | 22.0→6.9 | Entesitis LEI 8→2, en curso prebio |
+| DEMO-APS-004 | 58 | M | 4 | 39.2→7.0 | Cambio FAME→Adalimumab, apto prebio |
+| DEMO-APS-005 | 33 | F | 3 | 11.2→3.7 | Baja actividad estable, no evaluado |
+| DEMO-APS-006 | 65 | M | 4 | 45.1→25.0 | Persistente con comorbilidades, no apto |
 
 ### Lupus Eritematoso Sistémico (LES) — 6 pacientes
 | CIP | Edad | Sexo | Visitas | SLEDAI-2K rango | Perfil |

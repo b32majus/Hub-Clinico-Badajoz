@@ -238,12 +238,13 @@
 
 ### 9.2 Exportación CSV (desde dashboard de servicio)
 - [ ] Botón Exportar CSV funciona
-- [ ] Incluye todas las 491 columnas del esquema canónico
+- [ ] Incluye todas las 497 columnas del esquema canónico
 - [ ] Columnas históricas (primeras 321) intactas
-- [ ] Columnas v2 (322-491) añadidas al final
+- [ ] Columnas v2 (322-497) añadidas al final
 - [ ] ASDAS aparece como "NA" en pacientes AR (no vacío)
 - [ ] Columnas LES aparecen como "NA" en no-LES
 - [ ] Columnas Sjögren aparecen como "NA" en no-Sjögren
+- [ ] Columnas DAPSA aparecen pobladas en APs y como "NA" en no-APs
 
 ### 9.3 Regeneración de demo
 ```bash
@@ -331,7 +332,7 @@ node --check modules/exportManager.js
 | # | Descripción | Severidad | Archivo | Estado |
 |---|---|---|---|---|
 | 1 | `resolveMetricKey` no resolvía `SLEDAI_2K` (guion bajo vs sin guion). LES mostraba SLICC en lugar de SLEDAI-2K como métrica principal en estadísticas. | CRÍTICA (solo LES stats) | `modules/dataManager.js` | **RESUELTA** — commit `742f25e` |
-| 2 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún. | BAJA / No bloqueante | `scripts/script_estadisticas.js` | **NO APLICA** — En el contrato final, APs tendrá DAPSA poblado |
+| 2 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún. | BAJA / No bloqueante | `scripts/script_estadisticas.js` | **RESUELTA** — AUDIT-FIX-2 incorpora DAPSA al contrato 497 y a la demo |
 
 *Severidad: CRÍTICA (bloquea funcionalidad) / ALTA (funcionalidad rota) / MEDIA (molestia o dato incorrecto) / BAJA (cosmético)*
 
@@ -352,7 +353,14 @@ node --check modules/exportManager.js
 > - Sin errores JS críticos en consola
 > - 12/13 archivos JS pasan `node --check` (script.js en raíz también OK)
 > 
-> **Conclusión:** Rama lista para revisión previa a PR. Solo pendiente menor no bloqueante (APS/DAPSA) que se resuelve con datos reales en contrato final.
+> **Conclusión:** Rama lista para nueva revisión previa a PR. AUDIT-FIX-2 resuelve el pendiente APS/DAPSA incorporándolo al contrato Excel y a la demo.
+
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+
+- Motivo: APs necesitaba DAPSA persistido para no depender de fallbacks HAQ/RAPID3.
+- Contrato Excel v2: `497` columnas por hoja clínica.
+- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Validación E2E mínima: export APs 497 columnas, demo 30 pacientes/109 visitas, DAPSA poblado en APs, Solicitud FH APs con DAPSA.
 
 ---
 

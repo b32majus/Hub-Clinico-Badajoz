@@ -537,8 +537,8 @@
                 scoreName = 'BASDAI';
                 break;
             case 'aps':
-                currentScore = getNumericScoreFromVisit(currentVisit, ['DAPSA_Result', 'DAPSA', 'dapsa']);
-                previousScore = getNumericScoreFromVisit(previousVisit, ['DAPSA_Result', 'DAPSA', 'dapsa']);
+                currentScore = getNumericScoreFromVisit(currentVisit, ['DAPSA_Result', 'DAPSA', 'dapsaResult', 'dapsa']);
+                previousScore = getNumericScoreFromVisit(previousVisit, ['DAPSA_Result', 'DAPSA', 'dapsaResult', 'dapsa']);
                 scoreName = 'DAPSA';
                 break;
             case 'les':

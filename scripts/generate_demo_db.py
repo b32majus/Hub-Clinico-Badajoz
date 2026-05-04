@@ -2,8 +2,8 @@
 """
 Genera la base demo v2 canónica para Reuma:
 - 321 columnas históricas del maestro (AR) intactas.
-- 170 columnas v2 (322-491) según docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md.
-- 5 hojas clínicas: AR, ESPA, APS, LES, SJOGREN (491 columnas cada una).
+- 176 columnas v2 (322-497) según docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md.
+- 5 hojas clínicas: AR, ESPA, APS, LES, SJOGREN (497 columnas cada una).
 - Hojas auxiliares: Profesionales, Fármacos.
 - Sin hoja Prebiologico obligatoria y sin columnas de Solicitud FH.
 """
@@ -31,10 +31,18 @@ REPORT_MD = PROJECT_DIR / "docs" / "REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md"
 
 CLINICAL_SHEETS = ["AR", "ESPA", "APS", "LES", "SJOGREN"]
 MASTER_BASE_SHEETS = ["AR", "ESPA", "APS"]
-FINAL_COLUMN_COUNT = 491
+FINAL_COLUMN_COUNT = 497
 HISTORICAL_COLUMN_COUNT = 321
 V2_START = 322
-V2_END = 491
+V2_END = 497
+DAPSA_HEADERS = [
+    "DAPSA_Result",
+    "DAPSA_NAD68",
+    "DAPSA_NAT66",
+    "DAPSA_EVA_Dolor_Paciente",
+    "DAPSA_EVA_Global_Paciente",
+    "DAPSA_PCR",
+]
 
 
 @dataclass
@@ -76,8 +84,9 @@ def parse_v2_headers_from_contract(path: Path) -> List[str]:
         raise ValueError(f"Contrato incompleto: faltan posiciones v2 {missing[:5]} ... total {len(missing)}")
 
     v2_headers = [positions[p] for p in expected_positions]
-    if len(v2_headers) != 170:
-        raise ValueError(f"Se esperaban 170 columnas v2 y se obtuvieron {len(v2_headers)}")
+    expected_v2_count = V2_END - V2_START + 1
+    if len(v2_headers) != expected_v2_count:
+        raise ValueError(f"Se esperaban {expected_v2_count} columnas v2 y se obtuvieron {len(v2_headers)}")
 
     return v2_headers
 
@@ -106,6 +115,78 @@ def set_if_exists(row: Dict[str, str], value, *keys: str) -> None:
     for key in keys:
         if key in row:
             row[key] = value
+
+
+def parse_demo_number(value):
+    if value is None or value == "":
+        return None
+    raw = str(value).strip().replace(",", ".")
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def format_demo_number(value, decimals: int = 1) -> str:
+    if value is None:
+        return ""
+    text = f"{value:.{decimals}f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text
+
+
+def normalize_eva_0_10(value):
+    number = parse_demo_number(value)
+    if number is None:
+        return None
+    if number > 10:
+        return number / 10
+    return number
+
+
+def first_number(*values):
+    for value in values:
+        number = parse_demo_number(value)
+        if number is not None:
+            return number
+    return None
+
+
+def finalize_dapsa_contract(row: Dict[str, str]) -> None:
+    if not any(header in row for header in DAPSA_HEADERS):
+        return
+
+    pathology = str(row.get("Diagnostico_Primario") or row.get("Diagnostico_Principal") or "").strip().lower()
+    if pathology != "aps":
+        for header in DAPSA_HEADERS:
+            if header in row:
+                row[header] = "NA"
+        return
+
+    nad68 = first_number(row.get("DAPSA_NAD68"), row.get("NAD_Total"))
+    nat66 = first_number(row.get("DAPSA_NAT66"), row.get("NAT_Total"))
+    eva_dolor = normalize_eva_0_10(row.get("DAPSA_EVA_Dolor_Paciente") or row.get("EVA_Dolor"))
+    eva_global = normalize_eva_0_10(row.get("DAPSA_EVA_Global_Paciente") or row.get("EVA_Global"))
+    pcr_mgl = first_number(row.get("DAPSA_PCR"), row.get("PCR"))
+
+    values = [nad68, nat66, eva_dolor, eva_global, pcr_mgl]
+    if any(value is None for value in values):
+        return
+
+    if "DAPSA_NAD68" in row:
+        row["DAPSA_NAD68"] = format_demo_number(nad68, 0)
+    if "DAPSA_NAT66" in row:
+        row["DAPSA_NAT66"] = format_demo_number(nat66, 0)
+    if "DAPSA_EVA_Dolor_Paciente" in row:
+        row["DAPSA_EVA_Dolor_Paciente"] = format_demo_number(eva_dolor, 1)
+    if "DAPSA_EVA_Global_Paciente" in row:
+        row["DAPSA_EVA_Global_Paciente"] = format_demo_number(eva_global, 1)
+    if "DAPSA_PCR" in row:
+        row["DAPSA_PCR"] = format_demo_number(pcr_mgl, 1)
+    if "DAPSA_Result" in row:
+        dapsa = nad68 + nat66 + eva_dolor + eva_global + (pcr_mgl / 10)
+        row["DAPSA_Result"] = format_demo_number(dapsa, 1)
 
 
 def base_visit_row(headers: List[str], patient_id: str, name: str, sex: str, pathology: str) -> Dict[str, str]:
@@ -138,6 +219,8 @@ def apply_payload_to_row(row: Dict[str, str], payload: Dict[str, str]) -> None:
             row["Decision_Terapeutica_PV"] = decision
         if tipo == "seguimiento" and "Decision_Terapeutica_SEG" in row:
             row["Decision_Terapeutica_SEG"] = decision
+
+    finalize_dapsa_contract(row)
 
 
 def build_clinical_rows(headers: List[str]) -> Dict[str, List[Dict[str, str]]]:
@@ -2506,7 +2589,7 @@ def run_post_generation_validations(
         for _ in ws.iter_rows(min_row=2, values_only=True):
             n_rows += 1
         sheet_shape[sheet] = {"columns": n_cols, "rows": n_rows}
-        checks.append(ValidationCheck(f"{sheet} = 491 columnas", n_cols == FINAL_COLUMN_COUNT, f"{n_cols}"))
+        checks.append(ValidationCheck(f"{sheet} = {FINAL_COLUMN_COUNT} columnas", n_cols == FINAL_COLUMN_COUNT, f"{n_cols}"))
 
     for sheet in MASTER_BASE_SHEETS:
         headers = read_header(wb[sheet])
@@ -2536,6 +2619,27 @@ def run_post_generation_validations(
                 "" if no_dups else ", ".join(dups[:5]),
             )
         )
+
+    if all(header in read_header(wb["APS"]) for header in DAPSA_HEADERS):
+        aps_dapsa_populated = all(str(r.get("DAPSA_Result", "")).strip() not in ("", "NA", "ND") for r in rows_by_sheet.get("APS", []))
+        checks.append(
+            ValidationCheck(
+                "APS DAPSA poblado",
+                aps_dapsa_populated,
+                f"{sum(str(r.get('DAPSA_Result', '')).strip() not in ('', 'NA', 'ND') for r in rows_by_sheet.get('APS', []))}/{len(rows_by_sheet.get('APS', []))} visitas",
+            )
+        )
+        non_aps_na = True
+        for sheet, rows in rows_by_sheet.items():
+            if sheet == "APS":
+                continue
+            for r in rows:
+                if any(str(r.get(header, "")).strip() != "NA" for header in DAPSA_HEADERS):
+                    non_aps_na = False
+                    break
+            if not non_aps_na:
+                break
+        checks.append(ValidationCheck("DAPSA = NA en no APs", non_aps_na))
 
     patient_visits = {}
     patients_per_sheet = {}
@@ -2648,7 +2752,7 @@ def write_diff_report(
     lines.append("")
     lines.append("## Fuente canónica")
     lines.append("1. Excel maestro original (`Hub_Clinico_Maestro.xlsx`) para columnas 1-321.")
-    lines.append("2. `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` para columnas 322-491.")
+    lines.append(f"2. `docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md` para columnas {V2_START}-{V2_END}.")
     lines.append("3. `modules/exportManager.js` como verificación secundaria del orden v2.")
     lines.append("")
     lines.append("## Archivos")
@@ -2659,6 +2763,12 @@ def write_diff_report(
     lines.append(f"- Columnas históricas intactas: `{len(master_headers)}`")
     lines.append(f"- Columnas v2 añadidas: `{len(v2_headers)}`")
     lines.append(f"- Total por hoja clínica: `{len(master_headers) + len(v2_headers)}`")
+    lines.append("")
+    lines.append("## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs")
+    lines.append("- Motivo: APs necesitaba DAPSA persistido en el contrato y en la demo.")
+    lines.append("- Contrato: de 491 a 497 columnas por hoja clínica.")
+    lines.append("- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.")
+    lines.append("- Demo: DAPSA poblado en APs y `NA` en no APs.")
     lines.append("")
     lines.append("## Resumen por hoja")
     lines.append("")
@@ -2683,11 +2793,12 @@ def write_diff_report(
         lines.append(f"- {mark} {check.label}{detail}")
     lines.append("")
     lines.append("## Diferencias conocidas")
-    lines.append("- LES/SJOGREN no existen en el maestro original; se construyen con las 321 históricas + 170 v2.")
+    lines.append(f"- LES/SJOGREN no existen en el maestro original; se construyen con las {HISTORICAL_COLUMN_COUNT} históricas + {len(v2_headers)} v2.")
+    lines.append("- APs incorpora DAPSA como contrato explícito; en hojas no APs las columnas DAPSA se rellenan como `NA`.")
     lines.append("- No se crea hoja `Prebiologico` obligatoria en esta demo (decisión de pegado único por patología).")
     lines.append("- No se crea ninguna columna/hoja de `Solicitud FH` (salida derivada TXT).")
     lines.append("")
-    lines.append("## Columnas v2 añadidas (322-491)")
+    lines.append(f"## Columnas v2 añadidas ({V2_START}-{V2_END})")
     lines.append("")
     lines.append(f"Total: {len(v2_headers)}")
     lines.append("")

@@ -90,7 +90,14 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 1. **Tratamiento_Actual como texto libre:** la detección de cambios de tratamiento por string puede ser frágil.
 2. **Eventos terapéuticos derivados:** no se persisten como tabla propia, dependen del historial de visitas.
 3. **sessionStorage:** fallback temporal; el dato persistente es la hoja Excel embebida en la visita.
-4. **APS/DAPSA:** decisión de modelo — APs usa DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad. La demo no tiene DAPSA poblado aún.
+4. **APS/DAPSA:** resuelto en AUDIT-FIX-2. APs incorpora DAPSA como métrica principal persistida en el contrato Excel v2 y en la demo.
+
+## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
+
+- Contrato Excel v2 actualizado de 491 a 497 columnas por hoja clínica.
+- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
+- Impacto cubierto: export/demo/dashboard/estadísticas/eventos/Solicitud FH.
+- Demo regenerada manteniendo 30 pacientes y 109 visitas.
 
 ---
 
@@ -98,7 +105,7 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 
 | # | Pendiente | Severidad | Solución |
 |---|-----------|-----------|----------|
-| 1 | APS/DAPSA: DAPSA como métrica principal cuando existe; fallback HAQ para compatibilidad | Baja | Datos reales en contrato final |
+| 1 | APS/DAPSA incorporado al contrato Excel v2 | Resuelto | AUDIT-FIX-2: 497 columnas, DAPSA poblado en APs |
 | 2 | Exportación estadísticas a CSV | Media | Fase futura |
 | 3 | Checklist SLICC completo | Baja | Fase futura |
 
