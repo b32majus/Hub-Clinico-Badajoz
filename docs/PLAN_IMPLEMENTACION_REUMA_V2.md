@@ -504,7 +504,7 @@ docs/template_prebiologico_excel.md
 docs/template_solicitud_fh.md
 ```
 
-## Hojas propuestas
+## Hojas propuestas (Histórico, no vigente)
 
 ```text
 ESPA
@@ -517,7 +517,7 @@ Profesionales
 Fármacos
 Farmacos_Reuma        opcional
 Catalogos             opcional
-Solicitud_FH_Log      opcional
+Solicitud_FH_Log      opcional (histórico, descartado en contrato vigente)
 ```
 
 ## Columnas comunes mínimas para hojas clínicas v2
@@ -821,7 +821,7 @@ Profesional validador
 Observaciones globales
 ```
 
-## Exportación fila prebiológica
+## Exportación fila prebiológica (Histórico, no vigente)
 
 Función:
 
@@ -835,7 +835,7 @@ Debe:
 2. Validar `Estado_Prebiologico_Final` si se marca validación.
 3. Generar fila en orden exacto del template.
 4. Copiar al portapapeles.
-5. Mostrar notificación: `Fila prebiológica copiada. Pegar en hoja Prebiologico.`
+5. Mostrar notificación: `Fila prebiológica copiada. Pegar en hoja Prebiologico.` (histórico, no vigente)
 
 ## Badge visible
 
@@ -859,8 +859,8 @@ Prebiológico: NO EVALUADO
 ## Criterio de aceptación
 
 ```text
-[ ] Con Excel sin hoja Prebiologico, la app no se rompe.
-[ ] Con hoja Prebiologico, se carga correctamente.
+[ ] Con Excel sin hoja Prebiologico, la app no se rompe. (histórico, no vigente)
+[ ] Con hoja Prebiologico, se carga correctamente. (histórico, no vigente)
 [ ] Dashboard muestra badge.
 [ ] Badge muestra estado y fecha de validación manual.
 [ ] Click en badge abre detalle o panel.
@@ -1751,7 +1751,7 @@ docs/CHECKLIST_E2E_CLINICO_V2.md
 [ ] Badge muestra color correcto.
 [ ] Badge muestra fecha de validación manual.
 [ ] Click abre detalle.
-[ ] Exporta fila para hoja Prebiologico.
+[ ] Exporta fila para hoja Prebiologico. (histórico, no vigente)
 ```
 
 ### Solicitud FH
@@ -2158,7 +2158,7 @@ Fecha: 2026-05-03.
 - `CIP` como identificador canónico visible en todas las hojas nuevas; `ID_Paciente` se mantiene como alias de lectura en hojas históricas.
 - Columnas transversales añadidas a hojas clínicas: `Estado_Prebiologico_Ultimo`, `Fecha_Validacion_Prebiologico_Ultima`.
 - ASDAS en AR: columnas conservadas, codificadas como `NA` (sin cambios en estructura de columnas).
-- Nuevas hojas: `LES`, `SJOGREN`, `Prebiologico`, `Solicitud_FH_Log` (opcional).
+- Nuevas hojas: `LES`, `SJOGREN`, `Prebiologico`, `Solicitud_FH_Log` (opcional). **Histórico/no vigente**: el contrato actual no crea hoja `Prebiologico` ni `Solicitud_FH_Log`.
 - Regla de longitudinalidad: `Tipo_Visita = primera | seguimiento` en la misma hoja por patología.
 - Estados prebiológicos: `APTO`, `EN_CURSO`, `NO_APTO`, `NO_EVALUADO`. Decisión manual del clínico.
 - Solicitud FH: texto plano para copiar/pegar en orden clínica; bloque específico por patología + bloque prebiológico/vacunación.

@@ -1,6 +1,8 @@
 # Template Excel — Prebiológico
 
 > Hoja: `Prebiologico`. Revisión 2026-05-03.
+>
+> Nota de vigencia: documento histórico/no vigente como contrato operativo. Reuma v2 vigente usa 497 columnas por hoja clínica con bloque prebiológico embebido por visita; no existe hoja `Prebiologico` obligatoria.
 
 ---
 

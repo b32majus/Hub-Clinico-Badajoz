@@ -161,7 +161,7 @@ Si en el futuro se decide persistir eventos explícitos, se crearán las columna
 ## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
 
 - Motivo: APs requería DAPSA como métrica principal persistida y auditable.
-- El contrato vigente pasa de 491 a 497 columnas por hoja clínica.
+- Histórico (pre-AUDIT-FIX-2): el contrato previo era de 491 columnas; el contrato vigente actual es de 497 columnas por hoja clínica.
 - Columnas añadidas al final del contrato: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
 - Impacto: exportación, demo, carga Excel, dashboard, estadísticas, eventos terapéuticos y Solicitud FH consumen DAPSA cuando está disponible.
 - Para no APs estas columnas exportan `NA`; para APs quedan pobladas si existen los componentes.

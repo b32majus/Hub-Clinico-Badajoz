@@ -1,6 +1,8 @@
 # Template — Solicitud FH (Farmacia Hospitalaria)
 
 > Revisión 2026-05-03.
+>
+> Nota de vigencia: `Solicitud FH` es una salida derivada de texto y no se persiste como hoja ni como columnas (`Solicitud_FH_Log`, `Solicitud_FH_Texto`, `Informe_FH` están descartadas en contrato vigente).
 
 ---
 

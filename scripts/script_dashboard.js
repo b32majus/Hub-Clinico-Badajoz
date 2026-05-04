@@ -971,14 +971,14 @@ function populateChartSelectors() {
             { value: 'sledai2k', text: 'SLEDAI-2K' },
             { value: 'slicc', text: 'SLICC/ACR SDI' },
             { value: 'prednisona', text: 'Prednisona' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
     } else if (isSJOGREN) {
         activityMetrics = [
             { value: 'esspri', text: 'ESSPRI' },
             { value: 'essdai', text: 'ESSDAI' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
     } else if (isAR) {
@@ -989,7 +989,7 @@ function populateChartSelectors() {
             { value: 'sdai', text: 'SDAI' },
             { value: 'rapid3', text: 'RAPID3' },
             { value: 'haq', text: 'HAQ' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
     } else if (isAPS) {
@@ -1000,7 +1000,7 @@ function populateChartSelectors() {
             { value: 'haq', text: 'HAQ' },
             { value: 'lei', text: 'LEI' },
             { value: 'rapid3', text: 'RAPID3' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
     } else if (isESPA) {
@@ -1009,7 +1009,7 @@ function populateChartSelectors() {
             { value: 'asdas', text: 'ASDAS' },
             { value: 'basfi', text: 'BASFI' },
             { value: 'haq', text: 'HAQ' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
     } else {
@@ -1020,7 +1020,7 @@ function populateChartSelectors() {
             { value: 'haq', text: 'HAQ' },
             { value: 'lei', text: 'LEI' },
             { value: 'rapid3', text: 'RAPID3' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
     }

@@ -1,6 +1,8 @@
 # Decision de Estructura Excel Demo v2
 
 > Fecha: 2026-05-03. Decision contractual para reconstruir la demo v2 sin romper el Excel maestro historico ni el flujo clinico real.
+>
+> Nota de vigencia: esta sección contiene trazas históricas pre-AUDIT-FIX-2. El contrato vigente usa 497 columnas por hoja clínica, no crea hoja `Prebiologico` obligatoria y mantiene Solicitud FH como salida derivada no persistida.
 
 ## 1. Decision final
 

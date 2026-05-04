@@ -1,6 +1,8 @@
 # Auditoria de Fuentes de Dato Reuma v2
 
 > Fecha: 2026-05-03. Auditoria documental y tecnica para decidir la estructura del Excel demo v2 sin generar aun ningun workbook ni modificar codigo funcional.
+>
+> Nota de vigencia: documento histórico/preparatorio. El contrato vigente Reuma v2 usa 497 columnas por hoja clínica, no crea hoja `Prebiologico` obligatoria y mantiene Solicitud FH como salida derivada no persistida.
 
 ## 1. Objetivo
 
