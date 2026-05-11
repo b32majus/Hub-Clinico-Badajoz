@@ -6,7 +6,8 @@ const PATHOLOGY_LABELS = {
     espa: 'Espondiloartritis axial',
     aps: 'Artritis psoriásica',
     ar: 'Artritis Reumatoide',
-    les: 'Lupus eritematoso sistémico (LES)'
+    les: 'Lupus eritematoso sistémico (LES)',
+    sjogren: 'Síndrome de Sjögren'
 };
 
 function labelForPathology(code) {
@@ -455,6 +456,10 @@ function createQuickViewOverlay() {
         searchResults.classList.add('hidden');
         overlay.classList.add('hidden');
         document.body.classList.remove('quick-view-open');
+        const dashboardContent = document.getElementById('dashboardContent');
+        if (dashboardContent) {
+            dashboardContent.classList.remove('hidden');
+        }
     };
 
     overlay.addEventListener('click', (event) => {
@@ -486,24 +491,36 @@ function createQuickViewOverlay() {
 }
 
 function ensureQuickViewElements() {
-    const resultsContent = document.getElementById('resultsContent');
-    const searchResults = document.getElementById('searchResults');
-    const searchResultsTitle = document.getElementById('searchResultsTitle');
-    const searchResultsSubtitle = document.getElementById('searchResultsSubtitle');
-
-    if (!quickViewMount && resultsContent && searchResults && searchResultsTitle && searchResultsSubtitle) {
-        return {
-            resultsContent,
-            searchResults,
-            searchResultsTitle,
-            searchResultsSubtitle,
-            overlay: document.getElementById('quickViewOverlay'),
-            close: () => { }
-        };
-    }
-
     if (quickViewMount) {
         return quickViewMount;
+    }
+
+    const existingOverlay = document.getElementById('quickViewOverlay');
+    if (existingOverlay) {
+        const resultsContent = existingOverlay.querySelector('#resultsContent');
+        const searchResults = existingOverlay.querySelector('#searchResults');
+        const searchResultsTitle = existingOverlay.querySelector('#searchResultsTitle');
+        const searchResultsSubtitle = existingOverlay.querySelector('#searchResultsSubtitle');
+
+        if (resultsContent && searchResults && searchResultsTitle && searchResultsSubtitle) {
+            quickViewMount = {
+                resultsContent,
+                searchResults,
+                searchResultsTitle,
+                searchResultsSubtitle,
+                overlay: existingOverlay,
+                close: () => {
+                    searchResults.classList.add('hidden');
+                    existingOverlay.classList.add('hidden');
+                    document.body.classList.remove('quick-view-open');
+                    const dashboardContent = document.getElementById('dashboardContent');
+                    if (dashboardContent) {
+                        dashboardContent.classList.remove('hidden');
+                    }
+                }
+            };
+            return quickViewMount;
+        }
     }
 
     return createQuickViewOverlay();
@@ -539,7 +556,9 @@ function getMockPatientBundle(id) {
         evaGlobal: coalesce(latestVisit.evaGlobal, latestVisit.EVA_Global),
         evaDolor: coalesce(latestVisit.evaDolor, latestVisit.EVA_Dolor),
         basdai: coalesce(latestVisit.basdaiResult, latestVisit.basdai),
-        asdasCrp: coalesce(latestVisit.asdasCrpResult, latestVisit.asdasCrp)
+        asdasCrp: coalesce(latestVisit.asdasCrpResult, latestVisit.asdasCrp),
+        estadoPrebiologicoFinal: coalesce(latestVisit.estadoPrebiologicoFinal, latestVisit.Estado_Prebiologico_Final),
+        fechaValidacionPrebiologico: coalesce(latestVisit.fechaValidacionPrebiologico, latestVisit.Fecha_Validacion_Prebiologico)
     };
 
     return {
@@ -584,7 +603,17 @@ function mapRecordToPatientSummary(record, history) {
         cdai: coalesce(normalizedRecord.cdaiResult, latestVisit?.cdaiResult),
         sdai: coalesce(normalizedRecord.sdaiResult, latestVisit?.sdaiResult),
         haq: coalesce(normalizedRecord.haqResult, latestVisit?.haqResult),
-        rapid3: coalesce(normalizedRecord.rapid3Result, latestVisit?.rapid3Result)
+        rapid3: coalesce(normalizedRecord.rapid3Result, latestVisit?.rapid3Result),
+        estadoPrebiologicoFinal: coalesce(
+            normalizedRecord.estadoPrebiologicoFinal,
+            latestVisit?.estadoPrebiologicoFinal,
+            latestVisit?.Estado_Prebiologico_Final
+        ),
+        fechaValidacionPrebiologico: coalesce(
+            normalizedRecord.fechaValidacionPrebiologico,
+            latestVisit?.fechaValidacionPrebiologico,
+            latestVisit?.Fecha_Validacion_Prebiologico
+        )
     };
 }
 
@@ -600,6 +629,10 @@ function navigateToDashboard(patientId, pathology) {
             quickViewMount.searchResults?.classList.add('hidden');
             quickViewMount.overlay?.classList.add('hidden');
             document.body.classList.remove('quick-view-open');
+            const dashboardContent = document.getElementById('dashboardContent');
+            if (dashboardContent) {
+                dashboardContent.classList.remove('hidden');
+            }
         } catch (error) {
             console.warn('navigateToDashboard: error cerrando quick view', error);
         }
@@ -635,6 +668,9 @@ function renderQuickViewLayout(viewModel) {
                         <div><strong>Inicio tratamiento:</strong> ${viewModel.treatmentStart}</div>
                         <div><strong>Evaluación global:</strong> ${formatDisplayValue(viewModel.evaGlobal)}</div>
                         <div><strong>${viewModel.pathologyCode === 'ar' ? 'DAS28-CRP' : 'BASDAI'}:</strong> ${formatDisplayValue(viewModel.pathologyCode === 'ar' ? viewModel.das28Crp : viewModel.basdai)}</div>
+                        <div><strong>Estado prebiológico:</strong> ${formatDisplayValue(viewModel.prebiologicStatus)}</div>
+                        <div><strong>Validación prebiológica:</strong> ${formatDisplayValue(viewModel.prebiologicValidationDate)}</div>
+                        <div><strong>Listo para biológico:</strong> ${formatDisplayValue(viewModel.biologicReadiness)}</div>
                     </div>
                 </div>
 
@@ -735,8 +771,45 @@ function buildQuickViewScores(patient) {
         .join('');
 }
 
+function resolveQuickViewPrebiologic(id, historyData, patient) {
+    const latestVisit = historyData?.latestVisit || {};
+    if (typeof HubTools?.prebiologic?.resolvePrebiologicStatus === 'function') {
+        const resolved = HubTools.prebiologic.resolvePrebiologicStatus(id, latestVisit);
+        if (resolved && resolved.status) {
+            return resolved;
+        }
+    }
+
+    const rawState = coalesce(
+        patient?.estadoPrebiologicoFinal,
+        latestVisit?.estadoPrebiologicoFinal,
+        latestVisit?.Estado_Prebiologico_Final
+    );
+    const rawDate = coalesce(
+        patient?.fechaValidacionPrebiologico,
+        latestVisit?.fechaValidacionPrebiologico,
+        latestVisit?.Fecha_Validacion_Prebiologico
+    );
+
+    return {
+        status: rawState || 'NO_EVALUADO',
+        validationDate: rawDate || '',
+        source: 'visit'
+    };
+}
+
+function toBiologicReadiness(status) {
+    if (status === 'APTO') return 'Sí';
+    if (status === 'NO_APTO') return 'No';
+    if (status === 'EN_CURSO') return 'En curso';
+    return 'No evaluado';
+}
+
 function buildQuickViewModel(id, patient, historyData) {
     const pathologyCode = patient.diagnosticoPrimario || historyData?.pathology || '';
+    const prebio = resolveQuickViewPrebiologic(id, historyData, patient);
+    const prebioStatus = (prebio.status || 'NO_EVALUADO').replace(/_/g, ' ');
+    const prebioDate = prebio.validationDate ? formatDisplayDate(prebio.validationDate) : 'Sin fecha';
 
     return {
         patientName: patient.nombre || 'Paciente sin nombre',
@@ -749,7 +822,10 @@ function buildQuickViewModel(id, patient, historyData) {
         evaGlobal: patient.evaGlobal,
         basdai: patient.basdai,
         das28Crp: patient.das28Crp,
-        scoresHTML: buildQuickViewScores(patient)
+        scoresHTML: buildQuickViewScores(patient),
+        prebiologicStatus: prebioStatus,
+        prebiologicValidationDate: prebioDate,
+        biologicReadiness: toBiologicReadiness(prebio.status || 'NO_EVALUADO')
     };
 }
 
@@ -764,12 +840,14 @@ function showPatientResults(id) {
     const dashboardContent = document.getElementById('dashboardContent');
 
     const revealQuickView = () => {
-        if (dashboardContent) {
-            dashboardContent.classList.add('hidden');
-        }
         if (overlay) {
             overlay.classList.remove('hidden');
             document.body.classList.add('quick-view-open');
+            if (dashboardContent) {
+                dashboardContent.classList.remove('hidden');
+            }
+        } else if (dashboardContent) {
+            dashboardContent.classList.add('hidden');
         }
         searchResults.classList.remove('hidden');
     };

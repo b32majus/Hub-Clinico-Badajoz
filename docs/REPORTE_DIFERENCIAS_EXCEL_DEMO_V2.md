@@ -1,6 +1,6 @@
 # Reporte Diferencias Excel Demo v2
 
-_Generado automáticamente: 2026-05-04 08:09_
+_Generado automáticamente: 2026-05-11 11:48_
 
 ## Fuente canónica
 1. Excel maestro original (`Hub_Clinico_Maestro.xlsx`) para columnas 1-321.
@@ -16,64 +16,93 @@ _Generado automáticamente: 2026-05-04 08:09_
 - Columnas v2 añadidas: `176`
 - Total por hoja clínica: `497`
 
+## Cohorte demo cliente
+- Pacientes totales: `50`
+- Visitas totales: `200`
+- Regla longitudinal: `10 pacientes por patología` y `4 visitas por paciente (1 primera + 3 seguimientos)`
+- Nota: estos conteos describen este dataset demo y no representan un límite funcional de producción.
+
 ## AUDIT-FIX-2 ejecutado — DAPSA incorporado al contrato APs
-- Motivo: APs necesitaba DAPSA persistido en el contrato y en la demo.
-- Contrato: de 491 a 497 columnas por hoja clínica.
-- Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
-- Demo: DAPSA poblado en APs y `NA` en no APs.
+- Contrato: 497 columnas por hoja clínica.
+- DAPSA (492-497) poblado en APs y `NA` en no APs.
 
 ## Resumen por hoja
 
 | Hoja | Columnas | Filas |
 |---|---:|---:|
-| AR | 497 | 22 |
-| ESPA | 497 | 23 |
-| APS | 497 | 22 |
-| LES | 497 | 21 |
-| SJOGREN | 497 | 21 |
-| Profesionales | (auxiliar) | (auxiliar) |
-| Fármacos | (auxiliar) | (auxiliar) |
+| AR | 497 | 40 |
+| ESPA | 497 | 40 |
+| APS | 497 | 40 |
+| LES | 497 | 40 |
+| SJOGREN | 497 | 40 |
+| Profesionales | (auxiliar) | (copiada del maestro + Raúl Veroz) |
+| Fármacos | (auxiliar) | (copiada del maestro) |
 
 ## Pacientes demo longitudinales
 
-- `DEMO-APS-001`: 4 visitas
-- `DEMO-APS-002`: 4 visitas
-- `DEMO-APS-003`: 3 visitas
-- `DEMO-APS-004`: 4 visitas
-- `DEMO-APS-005`: 3 visitas
-- `DEMO-APS-006`: 4 visitas
-- `DEMO-AR-001`: 4 visitas
-- `DEMO-AR-002`: 4 visitas
-- `DEMO-AR-003`: 3 visitas
-- `DEMO-AR-004`: 4 visitas
-- `DEMO-AR-005`: 3 visitas
-- `DEMO-AR-006`: 4 visitas
-- `DEMO-ESPA-001`: 4 visitas
-- `DEMO-ESPA-002`: 3 visitas
-- `DEMO-ESPA-003`: 4 visitas
-- `DEMO-ESPA-004`: 5 visitas
-- `DEMO-ESPA-005`: 3 visitas
-- `DEMO-ESPA-006`: 4 visitas
-- `DEMO-LES-001`: 4 visitas
-- `DEMO-LES-002`: 3 visitas
-- `DEMO-LES-003`: 4 visitas
-- `DEMO-LES-004`: 3 visitas
-- `DEMO-LES-005`: 4 visitas
-- `DEMO-LES-006`: 3 visitas
-- `DEMO-SJOGREN-001`: 4 visitas
-- `DEMO-SJOGREN-002`: 4 visitas
-- `DEMO-SJOGREN-003`: 3 visitas
-- `DEMO-SJOGREN-004`: 4 visitas
-- `DEMO-SJOGREN-005`: 3 visitas
-- `DEMO-SJOGREN-006`: 3 visitas
+- `APS-2024-002`: 4 visitas
+- `APS-2024-004`: 4 visitas
+- `APS-2024-005`: 4 visitas
+- `APS-2024-006`: 4 visitas
+- `APS-2024-008`: 4 visitas
+- `APS-2024-010`: 4 visitas
+- `APS-2024-011`: 4 visitas
+- `APS-2024-013`: 4 visitas
+- `APS-2024-023`: 4 visitas
+- `APS-2024-027`: 4 visitas
+- `AR-2024-001`: 4 visitas
+- `AR-2024-002`: 4 visitas
+- `AR-2024-003`: 4 visitas
+- `AR-2024-004`: 4 visitas
+- `AR-2024-005`: 4 visitas
+- `AR-2024-006`: 4 visitas
+- `AR-2024-007`: 4 visitas
+- `AR-2024-008`: 4 visitas
+- `AR-2025-009`: 4 visitas
+- `AR-2025-010`: 4 visitas
+- `ESP-2024-002`: 4 visitas
+- `ESP-2024-003`: 4 visitas
+- `ESP-2024-004`: 4 visitas
+- `ESP-2024-006`: 4 visitas
+- `ESP-2024-009`: 4 visitas
+- `ESP-2024-010`: 4 visitas
+- `ESP-2024-011`: 4 visitas
+- `ESP-2024-012`: 4 visitas
+- `ESP-2024-016`: 4 visitas
+- `ESP-2024-018`: 4 visitas
+- `LES-2026-001`: 4 visitas
+- `LES-2026-002`: 4 visitas
+- `LES-2026-003`: 4 visitas
+- `LES-2026-004`: 4 visitas
+- `LES-2026-005`: 4 visitas
+- `LES-2026-006`: 4 visitas
+- `LES-2026-007`: 4 visitas
+- `LES-2026-008`: 4 visitas
+- `LES-2026-009`: 4 visitas
+- `LES-2026-010`: 4 visitas
+- `SJOGREN-2026-001`: 4 visitas
+- `SJOGREN-2026-002`: 4 visitas
+- `SJOGREN-2026-003`: 4 visitas
+- `SJOGREN-2026-004`: 4 visitas
+- `SJOGREN-2026-005`: 4 visitas
+- `SJOGREN-2026-006`: 4 visitas
+- `SJOGREN-2026-007`: 4 visitas
+- `SJOGREN-2026-008`: 4 visitas
+- `SJOGREN-2026-009`: 4 visitas
+- `SJOGREN-2026-010`: 4 visitas
 
 ## Validaciones automáticas
 
 - [x] AR = 497 columnas — 497
+- [x] AR = 40 visitas — 40
 - [x] ESPA = 497 columnas — 497
+- [x] ESPA = 40 visitas — 40
 - [x] APS = 497 columnas — 497
+- [x] APS = 40 visitas — 40
 - [x] LES = 497 columnas — 497
+- [x] LES = 40 visitas — 40
 - [x] SJOGREN = 497 columnas — 497
+- [x] SJOGREN = 40 visitas — 40
 - [x] primeras 321 columnas de AR coinciden con maestro — OK
 - [x] primeras 321 columnas de ESPA coinciden con maestro — OK
 - [x] primeras 321 columnas de APS coinciden con maestro — OK
@@ -87,21 +116,17 @@ _Generado automáticamente: 2026-05-04 08:09_
 - [x] LES sin cabeceras duplicadas
 - [x] SJOGREN sin cabeceras vacías
 - [x] SJOGREN sin cabeceras duplicadas
-- [x] APS DAPSA poblado — 22/22 visitas
+- [x] APS DAPSA poblado — 40/40 visitas
 - [x] DAPSA = NA en no APs
-- [x] cada paciente tiene >=3 visitas — 30 pacientes, 109 visitas total
-- [x] >=5 pacientes por hoja — {'AR': 6, 'ESPA': 6, 'APS': 6, 'LES': 6, 'SJOGREN': 6}
-- [x] Fecha_Visita existe y es ordenable
-- [x] Tipo_Visita existe y está poblado
-- [x] Tratamiento_Actual y Fecha_Inicio_Tratamiento poblados
-- [x] prebiológico poblado en casos demo
-- [x] scores longitudinales poblados
-- [x] campos de evento terapéutico suficientes para timeline/marcadores
+- [x] cada paciente tiene 1 primera + 3 seguimientos — 50 pacientes, 200 visitas total
+- [x] 10 pacientes por patología — {'AR': 10, 'ESPA': 10, 'APS': 10, 'LES': 10, 'SJOGREN': 10}
+- [x] cohorte total = 50 pacientes / 200 visitas — 50 / 200
+- [x] sin hoja Prebiologico
+- [x] sin hoja Solicitud_FH
 
 ## Diferencias conocidas
 - LES/SJOGREN no existen en el maestro original; se construyen con las 321 históricas + 176 v2.
-- APs incorpora DAPSA como contrato explícito; en hojas no APs las columnas DAPSA se rellenan como `NA`.
-- No se crea hoja `Prebiologico` obligatoria en esta demo (decisión de pegado único por patología).
+- No se crea hoja `Prebiologico` obligatoria en esta demo (prebiológico embebido por visita).
 - No se crea ninguna columna/hoja de `Solicitud FH` (salida derivada TXT).
 
 ## Columnas v2 añadidas (322-497)

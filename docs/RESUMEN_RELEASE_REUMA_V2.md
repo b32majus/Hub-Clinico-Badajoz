@@ -22,7 +22,7 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 | **Solicitud FH** | Texto plano por patología, copia a portapapeles |
 | **Eventos terapéuticos** | Timeline + anotaciones Chart.js, derivados de visitas |
 | **Estadísticas v2** | 5 patologías, KPIs adaptativos, scatter ampliado |
-| **Demo poblacional** | 30 pacientes, 109 visitas, script reproducible |
+| **Demo poblacional** | 50 pacientes, 200 visitas, script reproducible |
 
 ---
 
@@ -59,14 +59,14 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 
 ### Demo y scripts
 - `scripts/generate_demo_db.py` — Generador de cohorte ficticia
-- `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` — Base demo 30 pacientes
+- `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` — Base demo 50 pacientes
 
 ---
 
 ## Validación realizada
 
 - **Checklist E2E v2:** 110+ checks, resultado **APTO**
-- **Pacientes demo validados:** 30 pacientes, 5 patologías, 109 visitas
+- **Pacientes demo validados:** 50 pacientes, 5 patologías, 200 visitas
 - **Dashboards individuales:** AR, EspA, APs, LES, Sjögren ✅
 - **Estadísticas poblacionales:** 5 patologías ✅
 - **Solicitud FH:** 5 patologías ✅
@@ -97,7 +97,7 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 - Contrato Excel v2 actualizado de 491 a 497 columnas por hoja clínica.
 - Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
 - Impacto cubierto: export/demo/dashboard/estadísticas/eventos/Solicitud FH.
-- Demo regenerada manteniendo 30 pacientes y 109 visitas.
+- Demo regenerada con 50 pacientes y 200 visitas.
 
 ---
 
@@ -117,9 +117,9 @@ Esta release transforma el Hub Clínico de Reumatología desde una herramienta m
 2. Abrir `index.html` en navegador (Chrome/Edge recomendado).
 3. Cargar `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`.
 4. Probar:
-   - Buscar DEMO-AR-001 → dashboard → Solicitud FH
-   - Buscar DEMO-LES-001 → dashboard → SLEDAI-2K/SLICC
-   - Buscar DEMO-SJOGREN-001 → dashboard → ESSPRI/ESSDAI
+   - Buscar AR-2024-001 → dashboard → Solicitud FH
+   - Buscar LES-2026-001 → dashboard → SLEDAI-2K/SLICC
+   - Buscar SJOGREN-2026-001 → dashboard → ESSPRI/ESSDAI
    - Ir a Estadísticas → filtrar por cada patología
 5. Verificar consola (F12) sin errores rojos.
 

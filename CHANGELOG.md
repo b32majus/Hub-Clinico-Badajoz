@@ -83,8 +83,8 @@
 
 ### Demo poblacional
 - Script `generate_demo_db.py` reproducible.
-- 30 pacientes ficticios (6 × 5 patologías).
-- 109 visitas longitudinales.
+- 50 pacientes ficticios (10 × 5 patologías).
+- 200 visitas longitudinales (4 por paciente: 1 primera + 3 seguimientos).
 - Perfiles clínicos variados: remisión, alta actividad, efectos adversos, comorbilidades.
 - Estados prebiológicos distribuidos.
 - DAPSA poblado longitudinalmente en APs y contrato Excel ampliado a 497 columnas.

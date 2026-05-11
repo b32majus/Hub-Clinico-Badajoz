@@ -9,18 +9,20 @@
 ## Información general
 - Versión: v2
 - Rama: `feature/reuma-v2-prebiologico-fh-les-sjogren`
-- Demo: 30 pacientes ficticios, 109 visitas, 5 patologías
+- Demo: 50 pacientes ficticios, 200 visitas, 5 patologías
 - Fecha validación: 2026-05-03
 - Validado por: pendiente tras AUDIT-FIX-1
 - Resultado: **PENDIENTE**
 
 > AUDIT-FIX-1: este checklist debe repetirse tras corregir los hallazgos pre-PR. El contrato vigente no incluye hoja `Prebiologico` separada ni persistencia de `Solicitud_FH_Log`; el prebiológico va embebido por visita y la Solicitud FH es derivada.
+>
+> Nota de vigencia demo: la cohorte actual de demo es 50/200 (10 pacientes por patología, 4 visitas por paciente). Estos conteos son del dataset demo y no limitan producción.
 
 ---
 
 ## 1. Carga de datos
 - [ ] Cargar `data/Hub_Clinico_Maestro_V2_DEMO.xlsx` sin errores
-- [ ] Verificar 30 pacientes cargados en consola o UI
+- [ ] Verificar 50 pacientes cargados en consola o UI
 - [ ] Verificar 5 patologías reconocidas: AR, ESPA, APS, LES, SJOGREN
 - [ ] Verificar hojas auxiliares cargadas: Profesionales, Fármacos
 - [ ] Verificar datos prebiológicos embebidos por visita en las hojas clínicas
@@ -31,7 +33,7 @@
 
 ## 2. Navegación general
 - [ ] `index.html` carga correctamente
-- [ ] Búsqueda de pacientes por CIP funciona (probar DEMO-AR-001)
+- [ ] Búsqueda de pacientes por CIP funciona (probar AR-2024-001)
 - [ ] Búsqueda de pacientes por nombre funciona (probar "Demo")
 - [ ] Filtros por patología funcionan (AR, ESPA, APS, LES, SJOGREN)
 - [ ] Links a dashboard, seguimiento, primera visita funcionan desde la lista de pacientes
@@ -43,20 +45,20 @@
 
 ### 3.1 Carga y totales
 - [ ] `estadisticas.html` carga sin errores JS
-- [ ] Total pacientes = 30
+- [ ] Total pacientes = 50
 - [ ] Filtros de patología funcionan (dropdown)
 
 ### 3.2 Filtros por patología
-- [ ] Filtro **Todos**: 30 pacientes, donut de actividad con datos
-- [ ] Filtro **AR**: 6 pacientes (DEMO-AR-001 a 006)
+- [ ] Filtro **Todos**: 50 pacientes, donut de actividad con datos
+- [ ] Filtro **AR**: 10 pacientes (IDs del maestro AR, primeros 10 ordenados)
 - [ ] Filtro **AR**: métricas DAS28/CDAI/SDAI/RAPID3 disponibles en selectores
-- [ ] Filtro **ESPA**: 6 pacientes (DEMO-ESPA-001 a 006)
+- [ ] Filtro **ESPA**: 10 pacientes (IDs del maestro ESPA, primeros 10 ordenados)
 - [ ] Filtro **ESPA**: métricas BASDAI/ASDAS disponibles
-- [ ] Filtro **APS**: 6 pacientes (DEMO-APS-001 a 006)
+- [ ] Filtro **APS**: 10 pacientes (IDs del maestro APS, primeros 10 ordenados)
 - [ ] Filtro **APS**: HAQ/RAPID3 disponibles; DAPSA solo si el contrato Excel futuro lo incorpora
-- [ ] Filtro **LES**: 6 pacientes (DEMO-LES-001 a 006)
+- [ ] Filtro **LES**: 10 pacientes (LES-2026-001 a LES-2026-010)
 - [ ] Filtro **LES**: métricas SLEDAI-2K/SLICC disponibles
-- [ ] Filtro **SJOGREN**: 6 pacientes (DEMO-SJOGREN-001 a 006)
+- [ ] Filtro **SJOGREN**: 10 pacientes (SJOGREN-2026-001 a SJOGREN-2026-010)
 - [ ] Filtro **SJOGREN**: métricas ESSDAI/ESSPRI disponibles
 
 ### 3.3 Donut de actividad
@@ -130,10 +132,10 @@
 ---
 
 ## 5. Seguimiento
-- [ ] Cargar seguimiento de paciente existente (probar DEMO-AR-001)
+- [ ] Cargar seguimiento de paciente existente (probar AR-2024-001)
 - [ ] Datos previos se precargan correctamente desde última visita
 - [ ] Cálculos de scores se actualizan en tiempo real al modificar datos
-- [ ] Badge prebiológico visible si hay estado guardado (probar DEMO-AR-001 → APTO)
+- [ ] Badge prebiológico visible si hay estado guardado (probar AR-2024-001)
 - [ ] Botón Solicitud FH funciona desde seguimiento
 - [ ] Decisión terapéutica registrable: iniciar, continuar, cambiar, suspender
 - [ ] Motivo de cambio registrable cuando aplica
@@ -163,19 +165,19 @@
 ### 6.3 Timeline de eventos
 - [ ] Timeline de eventos clínicos visible
 - [ ] Cambios terapéuticos listados con fechas
-- [ ] Efectos adversos detectados y visibles (DEMO-AR-001)
-- [ ] Brotes/flares detectados (DEMO-ESPA-003, DEMO-LES-003)
-- [ ] Remisiones detectadas (DEMO-AR-001 visita 4, DEMO-ESPA-001 visita 4)
+- [ ] Efectos adversos detectados y visibles (ejemplo AR-2024-001)
+- [ ] Brotes/flares detectados (ejemplos ESP-2024-002 y LES-2026-001)
+- [ ] Remisiones detectadas en visitas finales de pacientes con evolución favorable
 
 ### 6.4 Historial de tratamientos
 - [ ] Historial de tratamientos muestra fármacos con fechas de inicio
 - [ ] Tratamientos ordenados cronológicamente
 - [ ] Badge prebiológico visible con estado correcto:
-  - DEMO-AR-001 → APTO (verde)
-  - DEMO-ESPA-001 → EN_CURSO (ámbar)
-  - DEMO-LES-001 → NO_APTO (rojo)
-  - DEMO-SJOGREN-001 → EN_CURSO (ámbar)
-  - DEMO-APS-003 → EN_CURSO (ámbar)
+  - AR-2024-001
+  - ESP-2024-002
+  - LES-2026-001
+  - SJOGREN-2026-001
+  - APS-2024-002
 
 ### 6.5 Selector de métricas
 - [ ] AR: opciones DAS28/CDAI/SDAI/RAPID3 disponibles
@@ -253,7 +255,7 @@ python scripts/generate_demo_db.py
 - [ ] Script se ejecuta sin errores
 - [ ] Genera `data/Hub_Clinico_Maestro_V2_DEMO.xlsx`
 - [ ] Regenera `docs/REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md`
-- [ ] Validaciones del script todas OK (30 pacientes, 109 visitas, 6/hoja)
+- [ ] Validaciones del script todas OK (50 pacientes, 200 visitas, 10/hoja)
 
 ---
 
@@ -342,7 +344,7 @@ node --check modules/exportManager.js
 
 ## Notas del validador
 
-> Validación ejecutada en entorno local (http.server port 8080) con la demo de 30 pacientes.
+> Validación ejecutada en entorno local (http.server port 8080) con la demo de 50 pacientes.
 > 
 > **Cobertura validada:**
 > - 5 patologías funcionales en estadísticas (AR, ESPA, APS, LES, SJOGREN)
@@ -360,7 +362,7 @@ node --check modules/exportManager.js
 - Motivo: APs necesitaba DAPSA persistido para no depender de fallbacks HAQ/RAPID3.
 - Contrato Excel v2: `497` columnas por hoja clínica.
 - Columnas añadidas: `DAPSA_Result`, `DAPSA_NAD68`, `DAPSA_NAT66`, `DAPSA_EVA_Dolor_Paciente`, `DAPSA_EVA_Global_Paciente`, `DAPSA_PCR`.
-- Validación E2E mínima: export APs 497 columnas, demo 30 pacientes/109 visitas, DAPSA poblado en APs, Solicitud FH APs con DAPSA.
+- Validación E2E mínima: export APs 497 columnas, demo 50 pacientes/200 visitas, DAPSA poblado en APs, Solicitud FH APs con DAPSA.
 
 ## AUDIT-FIX-2B ejecutado — Estandarización PCR (mg/L)
 
