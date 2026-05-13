@@ -1579,190 +1579,336 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
  * @returns {string} - Nota clínica formateada
  */
 function generarNotaClinica(datos) {
-    let texto = '═══════════════════════════════════════════════════\n';
-    texto += '        HISTORIA CLÍNICA REUMATOLÓGICA\n';
-    texto += '═══════════════════════════════════════════════════\n\n';
-
-    // DATOS DEL PACIENTE
-    texto += '▓▓▓ DATOS DEL PACIENTE ▓▓▓\n';
-    texto += `CIP: ${datos.cip || datos.idPaciente || 'N/A'}\n`;
-    texto += `Nombre: ${datos.nombrePaciente || 'N/A'}\n`;
-    texto += `Fecha de Visita: ${datos.fechaVisita || 'N/A'}\n`;
-    texto += `Profesional: ${datos.profesional || 'N/A'}\n\n`;
-
-    // DIAGNÓSTICO
-    texto += '▓▓▓ DIAGNÓSTICO ▓▓▓\n';
-    texto += `Diagnóstico Primario: ${datos.diagnosticoPrimario || 'N/A'}\n`;
-    if (datos.diagnosticoSecundario) {
-        texto += `Diagnóstico Secundario: ${datos.diagnosticoSecundario}\n`;
-    }
-    texto += '\n';
-
-    // EVALUACIÓN DE ACTIVIDAD (si existe)
-    const isARTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'ar';
-    const isLESTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'les';
-    if (datos.evaGlobal || datos.evaDolor || datos.basdai || (!isARTXT && datos.asdasCrp)) {
-        texto += '▓▓▓ EVALUACIÓN DE ACTIVIDAD ▓▓▓\n';
-        if (datos.evaGlobal) texto += `EVA Global: ${datos.evaGlobal}\n`;
-        if (datos.evaDolor) texto += `EVA Dolor: ${datos.evaDolor}\n`;
-        if (datos.basdai) texto += `BASDAI: ${datos.basdai}\n`;
-        if (!isARTXT && datos.asdasCrp) texto += `ASDAS-CRP: ${datos.asdasCrp}\n`;
-        texto += '\n';
-    }
-
-    // BLOQUE LES
-    if (isLESTXT) {
-        texto += '▓▓▓ EVALUACIÓN ACTIVIDAD LES ▓▓▓\n';
-        if (datos.sledaiResult) texto += `SLEDAI: ${datos.sledaiResult}\n`;
-        if (datos.sledai2kResult) texto += `SLEDAI-2K: ${datos.sledai2kResult}\n`;
-        if (datos.sliccAcrSdi) texto += `SLICC/ACR SDI: ${datos.sliccAcrSdi}\n`;
-        if (datos.dosisPrednisona) texto += `Prednisona: ${datos.dosisPrednisona} mg/día\n`;
-        if (datos.broteActual) {
-            texto += `Brote actual: ${datos.broteActual}`;
-            if (datos.tipoBrote) texto += ` (${datos.tipoBrote})`;
-            texto += '\n';
+    const src = datos || {};
+    const readPath = (obj, path) => {
+        if (!obj || !path) return undefined;
+        if (!path.includes('.')) return obj[path];
+        return path.split('.').reduce((acc, part) => (acc !== undefined && acc !== null ? acc[part] : undefined), obj);
+    };
+    const get = (keys, fallback = '') => {
+        const keyList = Array.isArray(keys) ? keys : [keys];
+        for (const key of keyList) {
+            const value = readPath(src, key);
+            if (value !== undefined && value !== null && String(value).trim() !== '') {
+                return value;
+            }
         }
-        if (datos.actividadGlobalMedico) texto += `Actividad global médico: ${datos.actividadGlobalMedico}\n`;
-        if (datos.actividadGlobalPaciente) texto += `Actividad global paciente: ${datos.actividadGlobalPaciente}\n`;
-        texto += '\n';
+        return fallback;
+    };
+    const norm = (value) => (value === undefined || value === null ? '' : String(value).trim());
+    const has = (value) => {
+        const raw = norm(value);
+        if (!raw) return false;
+        const upper = raw.toUpperCase();
+        return upper !== 'ND' && upper !== 'NA';
+    };
 
-        // Manifestaciones LES
-        const manifestaciones = [];
-        if (datos.lesCutaneo === 'SI') manifestaciones.push('Cutáneo');
-        if (datos.lesArticular === 'SI') manifestaciones.push('Articular');
-        if (datos.lesRenal === 'SI') manifestaciones.push('Renal');
-        if (datos.lesNeurologico === 'SI') manifestaciones.push('Neurológico');
-        if (datos.lesHematologico === 'SI') manifestaciones.push('Hematológico');
-        if (datos.lesSeroso === 'SI') manifestaciones.push('Seroso');
-        if (datos.lesCardiopulmonar === 'SI') manifestaciones.push('Cardiopulmonar');
-        if (datos.lesVascular === 'SI') manifestaciones.push('Vascular');
-        if (datos.lesOcular === 'SI') manifestaciones.push('Ocular');
-        if (datos.lesOtros === 'SI') manifestaciones.push('Otros');
-        if (manifestaciones.length > 0) {
-            texto += '▓▓▓ MANIFESTACIONES ▓▓▓\n';
-            texto += manifestaciones.join(', ') + '\n';
-            if (datos.lesManifestacionesDescripcion) texto += `Descripción: ${datos.lesManifestacionesDescripcion}\n`;
-            texto += '\n';
-        }
+    const lines = [];
+    const add = (line = '') => lines.push(line);
+    const addSection = (title) => {
+        add(`▓▓▓ ${title} ▓▓▓`);
+    };
+    const addLine = (label, keys, suffix = '') => {
+        const value = get(keys, '');
+        if (!has(value)) return false;
+        add(`${label}: ${value}${suffix}`);
+        return true;
+    };
 
-        // Inmunología LES
-        const inmunoFields = [];
-        if (datos.anaLes) inmunoFields.push(`ANA: ${datos.anaLes}`);
-        if (datos.antiDnaLes) inmunoFields.push(`Anti-DNA: ${datos.antiDnaLes}`);
-        if (datos.antiSmLes) inmunoFields.push(`Anti-Sm: ${datos.antiSmLes}`);
-        if (datos.antiRoLes) inmunoFields.push(`Anti-Ro: ${datos.antiRoLes}`);
-        if (datos.antiLaLes) inmunoFields.push(`Anti-La: ${datos.antiLaLes}`);
-        if (datos.complementoC3) inmunoFields.push(`C3: ${datos.complementoC3}`);
-        if (datos.complementoC4) inmunoFields.push(`C4: ${datos.complementoC4}`);
-        if (datos.proteinuriaLes) inmunoFields.push(`Proteinuria: ${datos.proteinuriaLes}`);
-        if (datos.sedimentoUrinarioLes) inmunoFields.push(`Sedimento urinario: ${datos.sedimentoUrinarioLes}`);
-        if (datos.creatininaLes) inmunoFields.push(`Creatinina: ${datos.creatininaLes}`);
-        if (datos.pcrLes) inmunoFields.push(`PCR: ${datos.pcrLes}`);
-        if (datos.vsgLes) inmunoFields.push(`VSG: ${datos.vsgLes}`);
-        if (datos.hemogramaAlteracionesLes) inmunoFields.push(`Hemograma: ${datos.hemogramaAlteracionesLes}`);
-        if (datos.otrosHallazgosAnaliticaLes) inmunoFields.push(`Otros: ${datos.otrosHallazgosAnaliticaLes}`);
-        if (inmunoFields.length > 0) {
-            texto += '▓▓▓ INMUNOLOGÍA ▓▓▓\n';
-            inmunoFields.forEach(f => { texto += f + '\n'; });
-            texto += '\n';
-        }
+    const pathology = normalizePathologyExport(get(['diagnosticoPrimario', 'Diagnostico_Primario'], ''), src);
+    const isAR = pathology === 'ar';
+    const isESPA = pathology === 'espa';
+    const isAPS = pathology === 'aps';
+    const isLES = pathology === 'les';
+    const isSJOGREN = pathology === 'sjogren';
 
-        // PROs LES
-        if (datos.evaDolorLes || datos.evaFatigaLes || datos.evaGlobalLes || datos.calidadVidaComentarioLes) {
-            texto += '▓▓▓ PROs / IMPACTO LES ▓▓▓\n';
-            if (datos.evaDolorLes) texto += `EVA Dolor: ${datos.evaDolorLes}\n`;
-            if (datos.evaFatigaLes) texto += `EVA Fatiga: ${datos.evaFatigaLes}\n`;
-            if (datos.evaGlobalLes) texto += `EVA Global: ${datos.evaGlobalLes}\n`;
-            if (datos.calidadVidaComentarioLes) texto += `Calidad de vida: ${datos.calidadVidaComentarioLes}\n`;
-            texto += '\n';
-        }
-    }
-    // BLOQUE SJÖGREN
-    const isSJOGRENTXT = (datos.diagnosticoPrimario || '').toLowerCase() === 'sjogren';
-    if (isSJOGRENTXT) {
-        texto += '▓▓▓ EVALUACIÓN ACTIVIDAD SJÖGREN ▓▓▓\n';
-        if (datos.esspriResult) texto += `ESSPRI: ${datos.esspriResult} (Sequedad: ${datos.esspriSequedad || '-'}, Fatiga: ${datos.esspriFatiga || '-'}, Dolor: ${datos.esspriDolor || '-'})\n`;
-        if (datos.essdaiResult) texto += `ESSDAI: ${datos.essdaiResult}\n`;
-        texto += `EVA Sequedad oral: ${datos.evaSequedadOral || '-'}\n`;
-        texto += `EVA Sequedad ocular: ${datos.evaSequedadOcular || '-'}\n`;
-        if (datos.evaFatigaSjogren) texto += `EVA Fatiga: ${datos.evaFatigaSjogren}\n`;
-        if (datos.evaDolorSjogren) texto += `EVA Dolor: ${datos.evaDolorSjogren}\n`;
-        if (datos.evaGlobalSjogren) texto += `EVA Global: ${datos.evaGlobalSjogren}\n`;
-        texto += '\n';
+    add('═══════════════════════════════════════════════════');
+    add('        HISTORIA CLÍNICA REUMATOLÓGICA');
+    add('═══════════════════════════════════════════════════');
+    add('');
 
-        // Manifestaciones Sjögren
-        const manifSjogren = [];
-        if (datos.sjogrenOcular === 'SI') manifSjogren.push('Ocular');
-        if (datos.sjogrenOral === 'SI') manifSjogren.push('Oral');
-        if (datos.sjogrenGlandular === 'SI') manifSjogren.push('Glandular');
-        if (datos.sjogrenArticular === 'SI') manifSjogren.push('Articular');
-        if (datos.sjogrenCutaneo === 'SI') manifSjogren.push('Cutáneo');
-        if (datos.sjogrenPulmonar === 'SI') manifSjogren.push('Pulmonar');
-        if (datos.sjogrenRenal === 'SI') manifSjogren.push('Renal');
-        if (datos.sjogrenNeurologico === 'SI') manifSjogren.push('Neurológico');
-        if (datos.sjogrenHematologico === 'SI') manifSjogren.push('Hematológico');
-        if (datos.sjogrenLinfomaRiesgo === 'SI') manifSjogren.push('Riesgo Linfoma');
-        if (manifSjogren.length > 0) {
-            texto += '▓▓▓ MANIFESTACIONES ▓▓▓\n';
-            texto += manifSjogren.join(', ') + '\n';
-            if (datos.sjogrenManifestacionesDescripcion) texto += `Descripción: ${datos.sjogrenManifestacionesDescripcion}\n`;
-            texto += '\n';
-        }
+    addSection('DATOS DEL PACIENTE');
+    add(`CIP: ${get(['cip', 'idPaciente', 'ID_Paciente'], 'N/A')}`);
+    add(`Nombre: ${get(['nombrePaciente', 'Nombre_Paciente'], 'N/A')}`);
+    add(`Sexo: ${get(['sexoPaciente', 'Sexo'], 'N/A')}`);
+    add(`Tipo de visita: ${get(['tipoVisita', 'Tipo_Visita'], 'N/A')}`);
+    add(`Fecha de visita: ${get(['fechaVisita', 'Fecha_Visita'], 'N/A')}`);
+    add(`Profesional: ${get(['profesional', 'Profesional'], 'N/A')}`);
+    add('');
 
-        // Pruebas / Inmunología Sjögren
-        const inmunoSjogren = [];
-        if (datos.anaSjogren) inmunoSjogren.push(`ANA: ${datos.anaSjogren}`);
-        if (datos.frSjogren) inmunoSjogren.push(`FR: ${datos.frSjogren}`);
-        if (datos.antiRoSjogren) inmunoSjogren.push(`Anti-Ro: ${datos.antiRoSjogren}`);
-        if (datos.antiLaSjogren) inmunoSjogren.push(`Anti-La: ${datos.antiLaSjogren}`);
-        if (datos.complementoC3Sjogren) inmunoSjogren.push(`C3: ${datos.complementoC3Sjogren}`);
-        if (datos.complementoC4Sjogren) inmunoSjogren.push(`C4: ${datos.complementoC4Sjogren}`);
-        if (datos.crioglobulinasSjogren) inmunoSjogren.push(`Crioglobulinas: ${datos.crioglobulinasSjogren}`);
-        if (datos.proteinogramaSjogren) inmunoSjogren.push(`Proteinograma: ${datos.proteinogramaSjogren}`);
-        if (datos.biopsiaGlandulaSalival) inmunoSjogren.push(`Biopsia glándula salival: ${datos.biopsiaGlandulaSalival}`);
-        if (datos.testSchirmer) inmunoSjogren.push(`Test Schirmer: ${datos.testSchirmer}`);
-        if (datos.tincionOcular) inmunoSjogren.push(`Tinción ocular: ${datos.tincionOcular}`);
-        if (datos.flujoSalival) inmunoSjogren.push(`Flujo salival: ${datos.flujoSalival}`);
-        if (datos.ecografiaGlandular) inmunoSjogren.push(`Ecografía glandular: ${datos.ecografiaGlandular}`);
-        if (datos.pcrSjogren) inmunoSjogren.push(`PCR: ${datos.pcrSjogren}`);
-        if (datos.vsgSjogren) inmunoSjogren.push(`VSG: ${datos.vsgSjogren}`);
-        if (datos.otrosHallazgosAnaliticaSjogren) inmunoSjogren.push(`Otros: ${datos.otrosHallazgosAnaliticaSjogren}`);
-        if (inmunoSjogren.length > 0) {
-            texto += '▓▓▓ PRUEBAS / INMUNOLOGÍA ▓▓▓\n';
-            inmunoSjogren.forEach(f => { texto += f + '\n'; });
-            texto += '\n';
-        }
+    addSection('DIAGNÓSTICO');
+    add(`Diagnóstico primario: ${get(['diagnosticoPrimario', 'Diagnostico_Primario'], 'N/A')}`);
+    addLine('Diagnóstico secundario', ['diagnosticoSecundario', 'Diagnostico_Secundario']);
+    addLine('Fecha diagnóstico', ['fechaDiagnostico', 'Fecha_Diagnostico']);
+    add('');
 
-        // Tratamiento Sjögren
-        if (datos.tratSintomaticoSequedad || datos.tratInmunomodulador) {
-            texto += '▓▓▓ TRATAMIENTO SJÖGREN ▓▓▓\n';
-            if (datos.tratSintomaticoSequedad) texto += `Tratamiento sintomático sequedad: ${datos.tratSintomaticoSequedad} ${datos.tratSintomaticoSequedadDosis || ''}\n`;
-            if (datos.tratInmunomodulador) texto += `Inmunomodulador: ${datos.tratInmunomodulador} ${datos.tratInmunomoduladorDosis || ''}\n`;
-            texto += '\n';
-        }
+    addSection('EVALUACIÓN CLÍNICA GENERAL');
+    addLine('EVA Global', ['evaGlobal', 'EVA_Global']);
+    addLine('EVA Dolor', ['evaDolor', 'EVA_Dolor']);
+    addLine('NAD (total)', ['nad', 'NAD_Total']);
+    addLine('NAT (total)', ['nat', 'NAT_Total']);
+    addLine('PCR (mg/L)', ['pcr', 'PCR']);
+    addLine('VSG', ['vsg', 'VSG']);
+    add('');
+
+    if (isAR) {
+        addSection('ÍNDICES AR');
+        addLine('DAS28-CRP', ['das28CrpResult', 'DAS28_CRP_Result']);
+        addLine('DAS28-ESR', ['das28EsrResult', 'DAS28_ESR_Result']);
+        addLine('CDAI', ['cdaiResult', 'CDAI_Result']);
+        addLine('SDAI', ['sdaiResult', 'SDAI_Result']);
+        addLine('HAQ', ['haqTotal', 'HAQ_Total']);
+        addLine('RAPID3', ['rapid3Total', 'RAPID3_Score']);
+        addLine('Rigidez matutina AR', ['rigidezMatutinaAR']);
+        add('');
     }
 
-    // TRATAMIENTO (si existe)
-    if (datos.tratamientoActual) {
-        texto += '▓▓▓ TRATAMIENTO ▓▓▓\n';
-        texto += `Tratamiento Actual: ${datos.tratamientoActual}\n`;
-        if (datos.fechaInicioTratamiento) {
-            texto += `Fecha de Inicio: ${datos.fechaInicioTratamiento}\n`;
+    if (isESPA) {
+        addSection('ÍNDICES ESPA');
+        addLine('BASDAI', ['basdaiResult', 'BASDAI_Result']);
+        addLine('ASDAS-CRP', ['asdasCrpResult', 'ASDAS_CRP_Result']);
+        addLine('ASDAS-ESR', ['asdasEsrResult', 'ASDAS_ESR_Result']);
+        add('');
+    }
+
+    if (isAPS) {
+        addSection('ÍNDICES APS');
+        addLine('DAPSA', ['dapsaResult', 'DAPSA_Result']);
+        addLine('DAPSA categoría', ['dapsaCategoria']);
+        addLine('DAPSA NAD68', ['dapsaNAD68', 'DAPSA_NAD68']);
+        addLine('DAPSA NAT66', ['dapsaNAT66', 'DAPSA_NAT66']);
+        addLine('DAPSA EVA Dolor Paciente', ['dapsaEvaDolorPaciente', 'DAPSA_EVA_Dolor_Paciente']);
+        addLine('DAPSA EVA Global Paciente', ['dapsaEvaGlobalPaciente', 'DAPSA_EVA_Global_Paciente']);
+        addLine('DAPSA PCR (mg/L)', ['dapsaPCR', 'DAPSA_PCR']);
+        addLine('PASI', ['pasiScore', 'PASI_Score']);
+        addLine('BSA (%)', ['bsaPercentage', 'BSA_Percentage']);
+        addLine('LEI', ['leiScore', 'LEI_Score']);
+        addLine('HAQ', ['haqTotal', 'HAQ_Total']);
+        addLine('RAPID3', ['rapid3Total', 'RAPID3_Score']);
+        addLine('MDA', ['mdaCumple', 'MDA_Cumple']);
+        add('');
+    }
+
+    if (isLES) {
+        addSection('ÍNDICES LES');
+        addLine('SLEDAI', ['sledaiResult', 'SLEDAI']);
+        addLine('SLEDAI-2K', ['sledai2kResult', 'SLEDAI_2K']);
+        addLine('SLICC/ACR SDI', ['sliccAcrSdi', 'SLICC_SDI']);
+        addLine('Prednisona (mg/día)', ['dosisPrednisona', 'Dosis_Prednisona']);
+        if (has(get(['broteActual']))) {
+            let broteText = `Brote actual: ${get(['broteActual'])}`;
+            if (has(get(['tipoBrote']))) broteText += ` (${get(['tipoBrote'])})`;
+            add(broteText);
         }
-        texto += '\n';
+        addLine('Actividad global médico', ['actividadGlobalMedico']);
+        addLine('Actividad global paciente', ['actividadGlobalPaciente']);
+        add('');
+
+        const sledaiItems = [
+            ['Convulsiones', 'sledaiSeizure'],
+            ['Psicosis', 'sledaiPsychosis'],
+            ['Sd. orgánico cerebral', 'sledaiOrganicBrainSyndrome'],
+            ['Trastorno visual', 'sledaiVisualDisturbance'],
+            ['Afectación pares craneales', 'sledaiCranialNerveDisorder'],
+            ['Cefalea lúpica', 'sledaiLupusHeadache'],
+            ['ACV', 'sledaiCVA'],
+            ['Vasculitis', 'sledaiVasculitis'],
+            ['Artritis', 'sledaiArthritis'],
+            ['Miositis', 'sledaiMyositis'],
+            ['Cilindros urinarios', 'sledaiUrinaryCasts'],
+            ['Hematuria', 'sledaiHematuria'],
+            ['Proteinuria', 'sledaiProteinuria'],
+            ['Piuria', 'sledaiPyuria'],
+            ['Rash', 'sledaiRash'],
+            ['Alopecia', 'sledaiAlopecia'],
+            ['Úlceras mucosas', 'sledaiMucosalUlcers'],
+            ['Pleuritis', 'sledaiPleurisy'],
+            ['Pericarditis', 'sledaiPericarditis'],
+            ['Hipocomplementemia', 'sledaiLowComplement'],
+            ['Anti-DNA elevado', 'sledaiIncreasedDNABinding'],
+            ['Fiebre', 'sledaiFever'],
+            ['Trombocitopenia', 'sledaiThrombocytopenia'],
+            ['Leucopenia', 'sledaiLeukopenia']
+        ];
+        const sledaiActivos = sledaiItems
+            .filter(([_, key]) => {
+                const value = get([key], '');
+                return value === true || String(value).trim().toUpperCase() === 'SI';
+            })
+            .map(([label]) => label);
+        if (sledaiActivos.length > 0) {
+            addSection('TRAZABILIDAD SLEDAI-2K');
+            add(sledaiActivos.join(', '));
+            add('');
+        }
+
+        const manifestacionesLES = [];
+        if (get(['lesCutaneo']) === 'SI') manifestacionesLES.push('Cutáneo');
+        if (get(['lesArticular']) === 'SI') manifestacionesLES.push('Articular');
+        if (get(['lesRenal']) === 'SI') manifestacionesLES.push('Renal');
+        if (get(['lesNeurologico']) === 'SI') manifestacionesLES.push('Neurológico');
+        if (get(['lesHematologico']) === 'SI') manifestacionesLES.push('Hematológico');
+        if (get(['lesSeroso']) === 'SI') manifestacionesLES.push('Seroso');
+        if (get(['lesCardiopulmonar']) === 'SI') manifestacionesLES.push('Cardiopulmonar');
+        if (get(['lesVascular']) === 'SI') manifestacionesLES.push('Vascular');
+        if (get(['lesOcular']) === 'SI') manifestacionesLES.push('Ocular');
+        if (get(['lesOtros']) === 'SI') manifestacionesLES.push('Otros');
+        if (manifestacionesLES.length > 0 || has(get(['lesManifestacionesDescripcion']))) {
+            addSection('MANIFESTACIONES LES');
+            if (manifestacionesLES.length > 0) add(manifestacionesLES.join(', '));
+            addLine('Descripción', ['lesManifestacionesDescripcion']);
+            add('');
+        }
+
+        const lesInmunoPairs = [
+            ['ANA', ['anaLes']],
+            ['Anti-DNA', ['antiDnaLes']],
+            ['Anti-Sm', ['antiSmLes']],
+            ['Anti-Ro', ['antiRoLes']],
+            ['Anti-La', ['antiLaLes']],
+            ['C3', ['complementoC3']],
+            ['C4', ['complementoC4']],
+            ['Proteinuria', ['proteinuriaLes']],
+            ['Sedimento urinario', ['sedimentoUrinarioLes']],
+            ['Creatinina', ['creatininaLes']],
+            ['PCR', ['pcrLes']],
+            ['VSG', ['vsgLes']],
+            ['Hemograma', ['hemogramaAlteracionesLes']],
+            ['Otros hallazgos', ['otrosHallazgosAnaliticaLes']]
+        ];
+        const hasLesInmuno = lesInmunoPairs.some(([_, keys]) => has(get(keys)));
+        if (hasLesInmuno) {
+            addSection('INMUNOLOGÍA LES');
+            lesInmunoPairs.forEach(([label, keys]) => addLine(label, keys));
+            add('');
+        }
     }
 
-    // COMENTARIOS (si existen)
-    if (datos.comentariosAdicionales) {
-        texto += '▓▓▓ COMENTARIOS ADICIONALES ▓▓▓\n';
-        texto += `${datos.comentariosAdicionales}\n\n`;
+    if (isSJOGREN) {
+        addSection('ÍNDICES SJÖGREN');
+        if (has(get(['esspriResult']))) {
+            add(
+                `ESSPRI: ${get(['esspriResult'])} ` +
+                `(Sequedad: ${get(['esspriSequedad'], '-')}, ` +
+                `Fatiga: ${get(['esspriFatiga'], '-')}, ` +
+                `Dolor: ${get(['esspriDolor'], '-')})`
+            );
+        }
+        addLine('ESSDAI', ['essdaiResult', 'ESSDAI_Result']);
+        addLine('EVA Sequedad oral', ['evaSequedadOral']);
+        addLine('EVA Sequedad ocular', ['evaSequedadOcular']);
+        addLine('EVA Fatiga', ['evaFatigaSjogren']);
+        addLine('EVA Dolor', ['evaDolorSjogren']);
+        addLine('EVA Global', ['evaGlobalSjogren']);
+        add('');
+
+        const essdaiDomains = [
+            ['Constitucional', 'essdaiConstitutional'],
+            ['Adenopatías', 'essdaiLymphadenopathy'],
+            ['Glandular', 'essdaiGlandular'],
+            ['Articular', 'essdaiArticular'],
+            ['Cutáneo', 'essdaiCutaneous'],
+            ['Pulmonar', 'essdaiPulmonary'],
+            ['Renal', 'essdaiRenal'],
+            ['Muscular', 'essdaiMuscular'],
+            ['SNP', 'essdaiPeripheralNervousSystem'],
+            ['SNC', 'essdaiCentralNervousSystem'],
+            ['Hematológico', 'essdaiHematological'],
+            ['Biológico', 'essdaiBiological']
+        ];
+        const essdaiDetalle = essdaiDomains
+            .map(([label, key]) => {
+                const value = get([key], '');
+                return has(value) ? `${label}: ${value}` : '';
+            })
+            .filter(Boolean);
+        if (essdaiDetalle.length > 0) {
+            addSection('DOMINIOS ESSDAI');
+            essdaiDetalle.forEach((line) => add(line));
+            add('');
+        }
+
+        const manifestacionesSJ = [];
+        if (get(['sjogrenOcular']) === 'SI') manifestacionesSJ.push('Ocular');
+        if (get(['sjogrenOral']) === 'SI') manifestacionesSJ.push('Oral');
+        if (get(['sjogrenGlandular']) === 'SI') manifestacionesSJ.push('Glandular');
+        if (get(['sjogrenArticular']) === 'SI') manifestacionesSJ.push('Articular');
+        if (get(['sjogrenCutaneo']) === 'SI') manifestacionesSJ.push('Cutáneo');
+        if (get(['sjogrenPulmonar']) === 'SI') manifestacionesSJ.push('Pulmonar');
+        if (get(['sjogrenRenal']) === 'SI') manifestacionesSJ.push('Renal');
+        if (get(['sjogrenNeurologico']) === 'SI') manifestacionesSJ.push('Neurológico');
+        if (get(['sjogrenHematologico']) === 'SI') manifestacionesSJ.push('Hematológico');
+        if (get(['sjogrenLinfomaRiesgo']) === 'SI') manifestacionesSJ.push('Riesgo linfoma');
+        if (manifestacionesSJ.length > 0 || has(get(['sjogrenManifestacionesDescripcion']))) {
+            addSection('MANIFESTACIONES SJÖGREN');
+            if (manifestacionesSJ.length > 0) add(manifestacionesSJ.join(', '));
+            addLine('Descripción', ['sjogrenManifestacionesDescripcion']);
+            add('');
+        }
+
+        const sjInmunoPairs = [
+            ['ANA', ['anaSjogren']],
+            ['FR', ['frSjogren']],
+            ['Anti-Ro', ['antiRoSjogren']],
+            ['Anti-La', ['antiLaSjogren']],
+            ['C3', ['complementoC3Sjogren']],
+            ['C4', ['complementoC4Sjogren']],
+            ['Crioglobulinas', ['crioglobulinasSjogren']],
+            ['Proteinograma', ['proteinogramaSjogren']],
+            ['Biopsia glándula salival', ['biopsiaGlandulaSalival']],
+            ['Test Schirmer', ['testSchirmer']],
+            ['Tinción ocular', ['tincionOcular']],
+            ['Flujo salival', ['flujoSalival']],
+            ['Ecografía glandular', ['ecografiaGlandular']],
+            ['PCR', ['pcrSjogren']],
+            ['VSG', ['vsgSjogren']],
+            ['Otros hallazgos', ['otrosHallazgosAnaliticaSjogren']]
+        ];
+        const hasSjInmuno = sjInmunoPairs.some(([_, keys]) => has(get(keys)));
+        if (hasSjInmuno) {
+            addSection('PRUEBAS / INMUNOLOGÍA SJÖGREN');
+            sjInmunoPairs.forEach(([label, keys]) => addLine(label, keys));
+            add('');
+        }
     }
 
-    texto += '═══════════════════════════════════════════════════\n';
-    texto += `Generado el ${new Date().toLocaleString('es-ES')}\n`;
-    texto += '═══════════════════════════════════════════════════\n';
+    addSection('TRATAMIENTO');
+    addLine('Tratamiento actual', ['tratamientoActual', 'Tratamiento_Actual']);
+    addLine('Fecha inicio tratamiento', ['fechaInicioTratamiento', 'Fecha_Inicio_Tratamiento']);
+    addLine('Decisión terapéutica', ['decisionTerapeutica', 'Decision_Terapeutica']);
+    addLine('Adherencia', ['tratamientoData.continuar.adherencia', 'adherencia']);
+    addLine('Ajuste terapéutico', ['tratamientoData.continuar.ajusteTerapeutico', 'ajusteTerapeutico']);
+    addLine('Motivo de cambio', ['tratamientoData.cambio.motivoCambio', 'motivoCambio']);
+    addLine('Efectos adversos', ['tratamientoData.cambio.descripcionEfectos', 'descripcionEfectos']);
+    add('');
 
-    return texto;
+    addSection('PREBIOLÓGICO / VACUNACIÓN');
+    addLine('Estado prebiológico final', ['estadoPrebiologicoFinal', 'Estado_Prebiologico_Final']);
+    addLine('Fecha validación prebiológico', ['fechaValidacionPrebiologico', 'Fecha_Validacion_Prebiologico']);
+    addLine('Profesional validador', ['profesionalValidador', 'Profesional_Validador']);
+    addLine('Decisión clínica manual', ['decisionClinicaManual', 'Decision_Clinica_Manual']);
+    addLine('Hemograma', ['hemogramaCorrecto', 'Hemograma_Correcto']);
+    addLine('Bioquímica', ['bioquimicaCorrecta', 'Bioquimica_Correcta']);
+    addLine('Serologías', ['serologiasCorrectas', 'Serologias_Correctas']);
+    addLine('IGRA/Mantoux resultado', ['igraMantouxResultado', 'IGRA_Mantoux_Resultado']);
+    addLine('Rx tórax', ['rxToraxCorrecta', 'Rx_Torax_Correcta']);
+    addLine('Vacunación revisada', ['vacunacionRevisada', 'Vacunacion_Revisada']);
+    addLine('Vacunación OK', ['vacunacionOK', 'Vacunacion_OK']);
+    addLine('Vacunas pendientes', ['vacunasPendientes', 'Vacunas_Pendientes']);
+    addLine('Observaciones prebiológico', ['observacionesPrebiologico', 'Observaciones_Prebiologico']);
+    add('');
+
+    if (has(get(['comentariosAdicionales', 'Comentarios_Adicionales']))) {
+        addSection('COMENTARIOS ADICIONALES');
+        add(get(['comentariosAdicionales', 'Comentarios_Adicionales']));
+        add('');
+    }
+
+    add('═══════════════════════════════════════════════════');
+    add(`Generado el ${new Date().toLocaleString('es-ES')}`);
+    add('═══════════════════════════════════════════════════');
+
+    return lines.join('\n');
 }
 
 /**
