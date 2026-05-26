@@ -1341,6 +1341,89 @@ function generarFilaCSV_APs_Seguimiento(datos) {
 const PENDING_ROWS_KEY = 'hubPendingRows';
 const PENDING_ROWS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const PENDING_ROWS_LIMIT = 20;
+const TXT_EXPORT_GATE_PREFIX = 'HubClinico_TxtExportDone_';
+
+function inferVisitTypeFromContext() {
+    if (typeof window === 'undefined' || !window.location || !window.location.pathname) return '';
+    const path = String(window.location.pathname).toLowerCase();
+    if (path.includes('primera_visita')) return 'primera';
+    if (path.includes('seguimiento')) return 'seguimiento';
+    return '';
+}
+
+function normalizeVisitType(value) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (raw === 'primera' || raw === 'seguimiento') return raw;
+    return '';
+}
+
+function normalizeVisitDate(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const parsed = new Date(raw);
+    if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+    }
+    return raw;
+}
+
+function normalizeVisitIdentityValue(value) {
+    return String(value || '')
+        .trim()
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+function buildVisitExportKey(datos, context) {
+    const source = datos || {};
+    const ctx = context || {};
+    const cip = normalizeVisitIdentityValue(
+        ctx.cip || source.cip || source.idPaciente || source.ID_Paciente || source.id
+    );
+    const fechaVisita = normalizeVisitDate(ctx.fechaVisita || source.fechaVisita || source.Fecha_Visita);
+    const tipoVisita = normalizeVisitType(ctx.tipoVisita || source.tipoVisita || source.Tipo_Visita || inferVisitTypeFromContext());
+    const diagnostico = normalizePathologyExport(ctx.diagnostico || source.diagnosticoPrimario || source.Diagnostico_Primario, source);
+
+    if (!cip || !fechaVisita || !tipoVisita || !diagnostico) {
+        return '';
+    }
+
+    return `${cip}__${fechaVisita}__${tipoVisita}__${diagnostico}`;
+}
+
+function buildTxtGateStorageKey(visitKey) {
+    return TXT_EXPORT_GATE_PREFIX + visitKey;
+}
+
+function markTxtExportDone(datos, context) {
+    try {
+        const visitKey = buildVisitExportKey(datos, context);
+        if (!visitKey || typeof sessionStorage === 'undefined') return false;
+        sessionStorage.setItem(buildTxtGateStorageKey(visitKey), JSON.stringify({
+            completedAt: new Date().toISOString(),
+            visitKey: visitKey
+        }));
+        return true;
+    } catch (error) {
+        console.warn('No se pudo registrar el prerrequisito TXT→CSV:', error);
+        return false;
+    }
+}
+
+function hasTxtExportDone(datos, context) {
+    try {
+        const visitKey = buildVisitExportKey(datos, context);
+        if (!visitKey || typeof sessionStorage === 'undefined') return false;
+        const raw = sessionStorage.getItem(buildTxtGateStorageKey(visitKey));
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return !!(parsed && parsed.visitKey === visitKey);
+    } catch (error) {
+        console.warn('No se pudo verificar el prerrequisito TXT→CSV:', error);
+        return false;
+    }
+}
 
 function readPendingRows() {
     try {
@@ -1463,6 +1546,20 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
         
         if (!tipoVisita || !diagnostico) {
             throw new Error('Faltan parámetros requeridos: tipoVisita y diagnostico');
+        }
+
+        const visitContext = {
+            tipoVisita: tipoVisita,
+            diagnostico: diagnostico
+        };
+        if (!hasTxtExportDone(datos, visitContext)) {
+            const legalMessage = 'Debe exportar TXT de esta visita antes de exportar CSV.';
+            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                HubTools.utils.mostrarNotificacion(legalMessage, 'error');
+            } else {
+                alert(legalMessage);
+            }
+            return false;
         }
         
         let csvData = '';
@@ -1935,6 +2032,26 @@ function exportarTXT(datos) {
         if (!texto || texto.trim() === '') {
             throw new Error('No se pudo generar el texto de la historia clínica');
         }
+
+        const notifyTxtGateReady = function(defaultLevel) {
+            const registered = markTxtExportDone(datos);
+            if (registered) {
+                const readyMsg = 'TXT registrado para esta visita; ya puede exportar CSV.';
+                if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                    HubTools.utils.mostrarNotificacion(readyMsg, 'success');
+                } else {
+                    alert(readyMsg);
+                }
+            } else {
+                const level = defaultLevel || 'info';
+                const fallbackMsg = 'No se pudo registrar el estado TXT→CSV para esta visita.';
+                if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                    HubTools.utils.mostrarNotificacion(fallbackMsg, level);
+                } else {
+                    alert(fallbackMsg);
+                }
+            }
+        };
         
         // Intentar copiar al portapapeles automáticamente
         navigator.clipboard.writeText(texto).then(() => {
@@ -1944,6 +2061,7 @@ function exportarTXT(datos) {
             } else {
                 alert('Historia clínica copiada al portapapeles.');
             }
+            notifyTxtGateReady('success');
         }).catch(err => {
             console.error('❌ Error al copiar al portapapeles automáticamente:', err);
             
@@ -1957,6 +2075,7 @@ function exportarTXT(datos) {
                 if (typeof HubTools.utils.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion('No se pudo copiar automáticamente. Puedes copiarla manualmente desde el modal.', 'info');
                 }
+                notifyTxtGateReady('success');
             } else {
                 // Fallback robusto final: descargar como archivo .txt si el modal tampoco está disponible
                 console.warn('⚠ Ni copia automática ni modal disponibles. Usando fallback de descarga...');
@@ -1982,6 +2101,7 @@ function exportarTXT(datos) {
                 document.body.removeChild(link);
                 
                 setTimeout(() => URL.revokeObjectURL(url), 100);
+                notifyTxtGateReady('success');
             }
         });
     } catch (error) {
