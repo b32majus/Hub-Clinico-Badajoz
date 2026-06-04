@@ -1,11 +1,11 @@
 # Dossier de evolución — Hub Clínico Reuma / PROMueve Extremadura
 
 **Fecha:** 2026-06-04  
-**Versión:** 1.1  
+**Versión:** 1.2  
 **Proyecto:** Hub Clínico Reumatología — Badajoz / PROMueve Extremadura  
 **Reunión objetivo:** 2026-07-08  
-**Estado:** Documento vivo de decisiones, arquitectura y hoja de ruta  
-**Ubicación recomendada:** `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`
+**Estado:** Documento vivo de decisiones, arquitectura, roadmap y gobernanza técnica  
+**Ubicación:** `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`
 
 ---
 
@@ -19,7 +19,7 @@ La versión funcional avanzada está en la rama:
 feature/reuma-v2-prebiologico-fh-les-sjogren
 ```
 
-Esa rama incorpora la base real del proyecto actual:
+Esta rama incorpora la base real del proyecto actual:
 
 - Multipatología: AR, EspA, APs, LES y Sjögren.
 - Contrato Excel v2 con 497 columnas por hoja clínica.
@@ -31,40 +31,29 @@ Esa rama incorpora la base real del proyecto actual:
 
 La decisión estratégica principal es:
 
-> **Mantener un MVP local-first funcional para pilotaje inmediato, pero diseñarlo ya como una arquitectura progresiva hacia una plataforma con backend real, roles, trazabilidad, permisos y modelo de datos normalizado.**
+> **Mantener un MVP local-first funcional para pilotaje inmediato, pero diseñarlo ya como arquitectura progresiva hacia una plataforma con backend real, roles, trazabilidad, permisos y modelo de datos normalizado.**
 
-El MVP para la reunión del 8 de julio debe demostrar valor asistencial y viabilidad operativa, sin presentar Excel como arquitectura final.
+El MVP para el 8 de julio debe demostrar valor asistencial y viabilidad operativa, sin presentar Excel como arquitectura final.
 
 ---
 
-## 1. Contexto del proyecto
+## 1. Marco estratégico
 
-El proyecto nació como una aplicación muy simple: una página HTML local con formulario clínico, exportación TXT para historia clínica y CSV para alimentar un Excel maestro.
+El proyecto ya no debe interpretarse como “una app clínica”. Debe formularse como:
 
-La arquitectura inicial respondía a restricciones reales del entorno hospitalario:
+> **Piloto de innovación asistencial para seguimiento estructurado y coordinación interservicios en enfermedades reumatológicas crónicas, apoyado en una herramienta digital modular.**
 
-- sin backend;
-- sin instalación compleja;
-- sin integración con sistemas corporativos;
-- sin depender inicialmente de STIC;
-- procesamiento local en navegador;
-- uso de Excel como backend operativo temporal.
+El soporte digital no es el proyecto en sí. El proyecto es el rediseño del proceso asistencial:
 
-Con el tiempo, el Hub creció:
+- captura estructurada;
+- visión longitudinal;
+- coordinación Reumatología-Enfermería-Farmacia;
+- mejora de seguridad terapéutica;
+- generación de información útil para historia clínica/e-Orden;
+- explotación futura de indicadores;
+- preparación para PROMs y seguimiento remoto.
 
-1. primera patología;
-2. incorporación de más patologías;
-3. separación de HTML/CSS/JS y módulos funcionales;
-4. contrato de datos clínicos;
-5. dashboard longitudinal de paciente;
-6. estadísticas poblacionales;
-7. prebiológico/vacunación;
-8. Solicitud FH;
-9. LES y Sjögren;
-10. eventos terapéuticos;
-11. perfiles funcionales previstos para Reumatología, Enfermería y Farmacia.
-
-Este crecimiento ha generado deuda heredada, especialmente el contrato ancho de 497 columnas por hoja clínica. Esa deuda se acepta temporalmente para no romper la v2 antes del piloto.
+La conversación previa de evolución del Hub ya estableció una idea crítica: **primero piloto sólido, luego expansión**. No se debe intentar construir “el sistema total” antes de validar el flujo profesional básico.
 
 ---
 
@@ -111,17 +100,15 @@ Estado: draft / abierta / no fusionada
 
 ### DEC-001 — Reuma v2 pasa a ser la base real del proyecto
 
-**Decisión:** la rama `feature/reuma-v2-prebiologico-fh-les-sjogren` debe convertirse en la nueva base estable. `main` representa una versión legacy y no debe guiar el desarrollo futuro.
-
-**Razonamiento:** la v2 contiene la funcionalidad real actual: multipatología, prebiológico, Solicitud FH y estructura avanzada.
+La rama `feature/reuma-v2-prebiologico-fh-les-sjogren` debe convertirse en la base estable. `main` representa una versión legacy y no debe guiar el desarrollo futuro.
 
 ---
 
 ### DEC-002 — No eliminar `main` sin trazabilidad
 
-**Decisión:** no se elimina `main`; se etiqueta como legacy y se promueve v2 de forma controlada.
+No se elimina `main`; se etiqueta como legacy y se promueve v2 de forma controlada.
 
-**Acciones recomendadas:**
+Acciones recomendadas:
 
 ```bash
 git checkout main
@@ -129,7 +116,7 @@ git pull
 git tag legacy-v1-main-antes-reuma-v2
 ```
 
-Después, tras revisión:
+Tras revisión:
 
 ```bash
 git checkout feature/reuma-v2-prebiologico-fh-les-sjogren
@@ -148,49 +135,40 @@ git tag v2.0.0-reuma-multipatologia
 
 ### DEC-003 — El MVP local-first se mantiene para el 8 de julio
 
-**Decisión:** no se refactoriza toda la app a React/Node/Electron antes de la reunión.
-
-**Razonamiento:** la v2 ya está probada funcionalmente. Migrar ahora toda la arquitectura puede romper flujos validados y consumir tiempo crítico.
+No se refactoriza toda la app a React/Node/Electron antes de la reunión. La v2 ya está probada funcionalmente y una migración completa ahora puede romper flujos validados.
 
 ---
 
 ### DEC-004 — Perfiles funcionales sí; seguridad real no en MVP
 
-**Decisión:** se incorporarán perfiles funcionales:
+Se incorporarán perfiles funcionales:
 
 - Reumatología.
 - Enfermería.
 - Farmacia Hospitalaria.
 - Admin/Demo.
 
-Estos perfiles controlan interfaz, formularios y dashboards visibles, pero no sustituyen autenticación real.
-
-**Razonamiento:** en local-first no hay backend, permisos reales ni auditoría robusta. El perfilado MVP sirve para experiencia de usuario y separación funcional, no para seguridad clínica completa.
+Estos perfiles controlan interfaz, formularios y dashboards visibles. No sustituyen autenticación real ni permisos robustos.
 
 ---
 
 ### DEC-005 — Una app común, no una app por perfil
 
-**Decisión:** no se crearán tres aplicaciones separadas. Se mantendrá una app común con vistas por rol.
+No se crearán tres aplicaciones separadas. Se mantendrá una app común con módulos/vistas por rol.
 
 ```text
 Una app
-├── Dashboard Reuma
-├── Dashboard Enfermería
-├── Dashboard Farmacia
-├── Formulario Reuma
-├── Formulario Enfermería
-├── Formulario Farmacia
-└── Núcleo común de carga, normalización y exportación
+├── Módulo Reuma
+├── Módulo Enfermería
+├── Módulo Farmacia
+└── Núcleo común de carga, normalización, exportación y visión integrada
 ```
-
-**Razonamiento:** tres apps separadas multiplicarían mantenimiento, bugs, estilos, normalización y deuda técnica.
 
 ---
 
 ### DEC-006 — Escritura separada por rol en MVP
 
-**Decisión:** cada perfil que escriba datos debe hacerlo en su propia fuente.
+Cada perfil que escriba datos debe hacerlo en su propia fuente física.
 
 ```text
 Hub_Clinico_Reuma_V2.xlsx
@@ -203,134 +181,127 @@ Hub_Farmacia_Reuma_V1.xlsx
 └── Escribe Farmacia Hospitalaria
 ```
 
-**Razonamiento:** Excel no soporta bien escritura simultánea multirol. La separación de fuentes reduce riesgo operativo.
+Principio operativo:
 
-**Principio:** lectura cruzada sí; escritura cruzada no.
+> **Lectura cruzada sí; escritura cruzada no.**
 
 ---
 
 ### DEC-007 — Enfermería integrada en visión longitudinal, pero con fuente propia
 
-**Decisión:** Enfermería no debe escribir en la misma hoja clínica de Reumatología. Para MVP, escribirá en Excel propio.
+Enfermería no debe escribir en la misma hoja clínica de Reumatología. Para el MVP escribirá en Excel propio.
 
-**Razonamiento:** Enfermería actúa como nexo asistencial entre Reumatología y Farmacia, pero sus registros no son equivalentes a una visita médica de Reumatología.
-
-**Diseño recomendado:**
-
-```text
-Excel Enfermería
-├── CIP
-├── Fecha_Registro
-├── Patología
-├── Tipo_Registro
-├── Profesional_Enfermería
-├── Educación terapéutica
-├── Adherencia
-├── Efectos adversos referidos
-├── Vacunación / Medicina Preventiva
-├── Incidencias
-├── Requiere valoración médica
-└── Observaciones
-```
+Motivo: Enfermería es nexo asistencial y registra eventos longitudinales relevantes, pero sus registros no son equivalentes a una visita médica de Reumatología.
 
 ---
 
 ### DEC-008 — Farmacia activa con fuente propia
 
-**Decisión:** Farmacia no escribe en el Excel clínico. Tendrá fuente propia.
+Farmacia no escribe en el Excel clínico. Tendrá fuente propia para validación farmacoterapéutica, pauta, adherencia, efectos adversos y observaciones.
 
-**Diseño recomendado:**
-
-```text
-Excel Farmacia
-├── CIP
-├── Fecha_Validación
-├── Farmacéutico/a
-├── Fármaco validado
-├── Dosis
-├── Posología / frecuencia
-├── Vía
-├── Peso usado si aplica
-├── Estado validación
-├── Adherencia si se recoge
-├── Efectos adversos comunicados
-└── Observaciones farmacoterapéuticas
-```
+Conceptualmente, sus datos forman parte del modelo longitudinal. Físicamente, en MVP, se separan para evitar caos operativo.
 
 ---
 
 ### DEC-009 — SharePoint Lists no se adopta como backend del MVP
 
-**Decisión:** SharePoint Lists no se usará como backend directo de la app en el MVP si requiere permisos de tenant, Graph API, registro de app o intervención STIC.
+SharePoint Lists no se usará como backend directo de la app si requiere permisos de tenant, Graph API, registro de app o intervención STIC.
 
-**Razonamiento:** el valor del MVP es avanzar sin bloqueo corporativo. Si SharePoint requiere permisos institucionales, introduce el mismo cuello de botella que se intenta evitar.
-
-**Uso posible futuro:** podrá reconsiderarse si el SES/IT lo habilita sin fricción o como solución institucional intermedia.
+Podrá reconsiderarse como solución institucional intermedia si el SES/IT lo habilita sin fricción.
 
 ---
 
-### DEC-010 — OCI como entorno cloud de pruebas; PostgreSQL/MySQL como base de datos candidata
+### DEC-010 — OCI como entorno cloud de pruebas; PostgreSQL/MySQL como base candidata
 
-**Decisión:** se creará un carril paralelo de prueba con base de datos real dentro de Oracle Cloud Infrastructure (OCI), usando exclusivamente datos sintéticos/artificiales.
+Oracle, en esta decisión, significa **Oracle Cloud Infrastructure (OCI)**, no base de datos Oracle.
 
-**Corrección conceptual:** Oracle, en esta decisión, no significa “base de datos Oracle”. Significa **cuenta/entorno cloud OCI**. Dentro de OCI se valorará preferentemente PostgreSQL, con MySQL como alternativa si resulta más viable por disponibilidad, coste o facilidad de despliegue.
-
-**Regla:** nada de datos reales en OCI, GitHub, GitHub Pages, entornos demo o repositorios.
-
-**Preferencia actual:**
+Dentro de OCI se valorará:
 
 ```text
 Preferida: PostgreSQL en OCI
 Alternativa: MySQL en OCI
-Descartado por ahora: Oracle Database como decisión por defecto
+No decidido por defecto: Oracle Database
 ```
+
+Regla absoluta: solo datos sintéticos/artificiales en OCI, GitHub, GitHub Pages, demos o repositorios.
 
 ---
 
 ### DEC-011 — No limpiar ahora las 497 columnas
 
-**Decisión:** no se normalizará el contrato ancho antes del MVP del 8 de julio.
-
-**Razonamiento:** el contrato v2 está validado y tocarlo ahora puede romper exportación, importación, dashboard y estadísticas.
-
-**Evolución:** la limpieza se traslada a v3 con backend normalizado.
+No se normalizará el contrato ancho antes del MVP. La limpieza se traslada a una fase backend-ready/v3.
 
 ---
 
-### DEC-012 — FHIR/HL7 como horizonte, no como requisito del MVP
+### DEC-012 — FHIR/HL7 como horizonte, no requisito MVP
 
-**Decisión:** no se implementa FHIR en MVP. Se diseñará el modelo v3 para poder mapear a FHIR en el futuro.
-
-**Razonamiento:** FHIR es un estándar de intercambio, no una base de datos interna. Implementarlo bien requiere modelado, perfiles, terminologías y validación institucional. En esta fase basta con preparar un modelo interno coherente.
+No se implementa FHIR en MVP. Se diseñará el modelo para permitir mapeo futuro.
 
 ---
 
 ### DEC-013 — No hacer paso intermedio obligatorio por Vite
 
-**Decisión:** no se hará una fase obligatoria de migración de la app legacy a Vite + TypeScript antes de construir v3.
-
-**Razonamiento:** Vite no es una arquitectura, sino una herramienta de desarrollo/build. Si el destino es una v3 limpia con frontend moderno, API y base de datos real, migrar primero el legacy a Vite vanilla puede duplicar trabajo.
-
-**Uso de Vite:** Vite se usará como herramienta de build del frontend v3 si se adopta React + TypeScript. Solo se valoraría Vite + TypeScript sobre la app actual si la v2 local-first tuviera que mantenerse y evolucionar durante muchos meses como producto propio.
+No se hará una fase obligatoria de migración legacy a Vite + TypeScript antes de v3. Vite será herramienta de build del frontend v3 si se adopta React + TypeScript.
 
 ---
 
 ### DEC-014 — Arquitectura v3 recomendada
 
-**Decisión:** la arquitectura v3 recomendada será:
-
 ```text
 Frontend: React + TypeScript + Vite
 Backend: Node.js, inicialmente Fastify para POC
-Base de datos: PostgreSQL en OCI preferente; MySQL en OCI como alternativa
+Base de datos: PostgreSQL en OCI preferente; MySQL en OCI alternativa
 Modelo: normalizado por dominios clínicos
 Seguridad: roles reales + auditoría
 Interoperabilidad: preparada para futura capa FHIR/HL7
 ```
 
-**Razonamiento:** React + TypeScript encaja con una herramienta con múltiples perfiles, formularios dinámicos, dashboards longitudinales, timeline, validaciones y componentes reutilizables. Node + Fastify permite una API ligera para POC. PostgreSQL ofrece buen equilibrio para modelo relacional clínico, integridad, consultas longitudinales y posible uso de JSON en campos complementarios.
+La tecnología backend podrá cambiar si SES/STIC/instituto tecnológico asume desarrollo. Lo importante es mantener un modelo de dominio limpio y portable.
 
-**Cláusula de flexibilidad:** si el SES, STIC, un instituto tecnológico o un equipo externo asumen el desarrollo, la tecnología backend podrá cambiar a NestJS, .NET, Java u otra pila corporativa. La prioridad no es casarse con un framework, sino mantener un **modelo de dominio limpio y portable**.
+---
+
+### DEC-015 — El Hub debe diseñarse como sistema modular conectable
+
+Reuma, Enfermería y Farmacia deben poder funcionar en tres modos:
+
+1. **Independiente:** cada módulo funciona con su formulario, dashboard y fuente propia.
+2. **Conectado:** un módulo lee información de otro y aporta eventos longitudinales.
+3. **Ecosistema completo:** todos los módulos se integran por CIP/patient_id en una visión paciente.
+
+Esta decisión evita crear una app monolítica rígida y prepara el futuro Hub Clínico Framework.
+
+---
+
+### DEC-016 — La demo sintética se amplía, no se crea desde cero
+
+Existe ya base sintética/demo en GitHub. La tarea no es crearla desde cero, sino ampliarla con registros coherentes de Enfermería y Farmacia.
+
+Objetivo de demo:
+
+```text
+Paciente sintético completo
+├── evento Reuma
+├── evento Enfermería
+├── evento Farmacia
+└── visión longitudinal integrada
+```
+
+---
+
+### DEC-017 — La vista longitudinal se adapta a multiarchivo por CIP
+
+No se parte de cero. La v2 ya piensa longitudinalmente. La tarea es adaptar/perfeccionar la vista para integrar eventos procedentes de varias fuentes:
+
+- Excel Reuma.
+- Excel Enfermería.
+- Excel Farmacia.
+- PROMs en fase futura.
+
+Clave común inicial:
+
+```text
+CIP + fecha_evento + origen_evento + tipo_evento
+```
 
 ---
 
@@ -338,9 +309,7 @@ Interoperabilidad: preparada para futura capa FHIR/HL7
 
 ### v1 — Legacy local Reuma
 
-**Estado:** anterior a la rama v2.  
-**Uso:** referencia histórica.  
-**Acción:** etiquetar, no desarrollar más.
+Versión previa a Reuma v2.
 
 ```text
 tag: legacy-v1-main-antes-reuma-v2
@@ -350,16 +319,7 @@ tag: legacy-v1-main-antes-reuma-v2
 
 ### v2.0 — Reuma multipatología
 
-**Estado:** rama actual avanzada.
-
-**Incluye:**
-
-- AR, EspA, APs, LES, Sjögren.
-- Prebiológico/vacunación.
-- Solicitud FH.
-- Eventos.
-- Dashboard y estadísticas v2.
-- Contrato Excel de 497 columnas por hoja clínica.
+Incluye AR, EspA, APs, LES, Sjögren, prebiológico/vacunación, Solicitud FH, eventos, dashboard y estadísticas v2.
 
 ```text
 tag: v2.0.0-reuma-multipatologia
@@ -369,23 +329,20 @@ tag: v2.0.0-reuma-multipatologia
 
 ### v2.1 — MVP interservicios para Luis Bravo
 
-**Objetivo:** demo funcional del 8 de julio.
+Objetivo: demo funcional del 8 de julio.
 
-**Incluye:**
+Incluye:
 
 - Reuma v2 estable.
-- Perfil funcional Reumatología.
-- Perfil funcional Enfermería.
-- Perfil funcional Farmacia.
-- Dashboard Enfermería básico.
-- Formulario Enfermería básico.
-- Dashboard Farmacia básico.
-- Formulario Farmacia básico.
+- Perfil Reumatología.
+- Perfil Enfermería.
+- Perfil Farmacia.
+- Formularios y dashboards por módulo.
 - Fuentes separadas por rol.
-- Carga batch multiarchivo.
-- Timeline integrado por CIP.
-- Dataset sintético demo.
-- Documento de arquitectura evolutiva.
+- Carga multiarchivo.
+- Visión longitudinal integrada por CIP.
+- Dataset sintético ampliado.
+- Narrativa institucional.
 
 ```text
 release/mvp-luis-bravo-20260708
@@ -393,35 +350,51 @@ release/mvp-luis-bravo-20260708
 
 ---
 
-### v3.0 — Arquitectura con backend real
+### v2.2 — Backend-ready hardening local-first
 
-**Estado:** POC paralela inicialmente.
+Objetivo: mejorar la app actual sin romper el piloto.
 
-**Objetivo:** demostrar evolución desde Excel a base de datos real.
+Incluye:
 
-**Incluye:**
+- diccionario clínico;
+- modelo lógico;
+- repository layer;
+- validación fuerte de plantillas Excel;
+- configuración declarativa;
+- separación exportación/persistencia;
+- auditoría mínima;
+- importador PROMs futuro;
+- separación demo/piloto.
 
-- Modelo de datos normalizado.
-- API.
-- Roles reales.
-- Auditoría.
-- Base de datos PostgreSQL/MySQL en OCI, con PostgreSQL como opción preferente.
-- Datos sintéticos.
-- Importador desde Excel v2.
-- Dashboard paciente desde base de datos.
-- Escritura real por dominio: Reuma, Enfermería, Farmacia.
+Esta fase puede empezar antes del 8 de julio en tareas que no comprometan la demo.
+
+---
+
+### v3.0 — POC con backend real
+
+Objetivo: demostrar evolución desde Excel a base de datos real con datos sintéticos.
+
+```text
+Frontend: React + TypeScript + Vite
+Backend: Node.js + Fastify
+DB: PostgreSQL/MySQL en OCI
+```
+
+---
+
+### v4.0 — Hub Clínico Framework agnóstico
+
+Objetivo: convertir el Hub en motor configurable para distintos servicios/patologías.
+
+No es otra app. Es el motor del que Reuma sería una instancia.
 
 ---
 
 ## 5. Estrategia de ramas y repositorios
 
-### 5.1. Principio
+### 5.1. Repo actual
 
-Mantener el repo actual para la app local-first hasta el MVP del 8 de julio. Crear repo separado solo para la POC backend/base de datos.
-
----
-
-### 5.2. Estructura recomendada en repo actual
+Mantener el repo actual para app local-first y MVP interservicios.
 
 ```text
 main
@@ -431,29 +404,24 @@ release/mvp-luis-bravo-20260708
 └── Rama congelable para demo
 
 feature/mvp-roles-enfermeria-farmacia
-└── Desarrollo de perfiles, formularios y dashboards
+└── Desarrollo perfiles, formularios, dashboards y carga multiarchivo
 
-feature/enfermeria-dashboard-form-v1
-└── Si se quiere aislar trabajo de Enfermería
-
-feature/farmacia-active-form-v1
-└── Si se quiere aislar trabajo de Farmacia
-
-docs/architecture-v3-roadmap
-└── Documentación técnica evolutiva
+feature/backend-ready-hardening-v2
+└── Diccionario, repository layer, validación y configuración declarativa
 ```
 
 ---
 
-### 5.3. Repositorio separado recomendado para POC backend
+### 5.2. Repo separado recomendado para POC backend
 
 ```text
-hub-clinico-reuma-db-poc
+hub-clinico-reuma-v3-poc
 ```
 
-Contenido recomendado:
+Contenido:
 
 ```text
+/frontend
 /backend
 /database
 /scripts
@@ -464,10 +432,9 @@ Contenido recomendado:
 Objetivo:
 
 - no contaminar la app local-first;
-- probar arquitectura v3;
 - trabajar solo con datos sintéticos;
-- documentar modelo normalizado;
-- poder enseñarlo como prueba técnica separada.
+- probar modelo normalizado;
+- poder enseñar dirección técnica futura.
 
 ---
 
@@ -477,78 +444,259 @@ Objetivo:
 
 ```text
 Una app local-first
-Tres perfiles funcionales
+Tres módulos funcionales
 Tres fuentes de escritura separadas
 Una visión integrada por CIP
 ```
+
+---
 
 ### 6.2. Fuentes de datos MVP
 
 | Fuente | Escribe | Lee | Finalidad |
 |---|---|---|---|
-| Excel Reuma v2 | Reumatología | Reuma, Enfermería, Farmacia | Visitas clínicas, patología, scores, tratamientos, prebiológico |
-| Excel Enfermería v1 | Enfermería | Reuma, Enfermería | Seguimiento enfermero, educación, adherencia, incidencias |
-| Excel Farmacia v1 | Farmacia | Farmacia, potencialmente Reuma/Enfermería | Validación FH, posología, EA, adherencia, observaciones |
-| Dataset demo | Equipo proyecto | Todos | Pruebas y reunión |
+| Excel Reuma v2 | Reumatología | Reuma, Enfermería, Farmacia | Visitas clínicas, scores, tratamientos, prebiológico |
+| Excel Enfermería v1 | Enfermería | Enfermería, Reuma | Seguimiento, educación, adherencia, incidencias |
+| Excel Farmacia v1 | Farmacia | Farmacia, Reuma/Enfermería si procede | Validación FH, pauta, EA, adherencia, observaciones |
+| Dataset demo ampliado | Equipo proyecto | Todos | Demo multiperfil |
 
 ---
 
-### 6.3. Módulos nuevos recomendados para MVP
+### 6.3. Contrato común de evento longitudinal
+
+Para conectar módulos sin acoplarlos, cada evento debe poder transformarse a un mínimo común:
 
 ```text
-modules/roleConfig.js
-modules/dataSources/clinicalExcelSource.js
-modules/dataSources/nursingExcelSource.js
-modules/dataSources/pharmacyExcelSource.js
-modules/dataSources/mergedPatientView.js
-modules/nursingManager.js
-modules/pharmacyValidationManager.js
+patient_id_sintetico / CIP
+fecha_evento
+origen_evento: REUMA / ENFERMERIA / FARMACIA / PROM
+modulo
+patologia
+tipo_evento
+profesional_rol
+resumen_evento
+estado
+observaciones
+referencia_origen
 ```
 
-### 6.4. Perfil funcional recomendado
+La app puede mostrar este modelo común en una línea temporal aunque cada módulo guarde datos propios más ricos.
 
-```javascript
-const ROLE_CONFIG = {
-  reuma: {
-    label: "Reumatología",
-    canRead: ["clinical", "nursing_summary", "pharmacy_summary"],
-    canWrite: ["clinical"],
-    dashboards: ["patient", "population", "clinical"],
-    forms: ["primera_visita", "seguimiento_reuma"]
-  },
-  enfermeria: {
-    label: "Enfermería",
-    canRead: ["clinical", "nursing", "pharmacy_summary"],
-    canWrite: ["nursing"],
-    dashboards: ["nursing_followup", "patient_timeline"],
-    forms: ["seguimiento_enfermeria"]
-  },
-  farmacia: {
-    label: "Farmacia Hospitalaria",
-    canRead: ["clinical_summary", "prebiologic", "pharmacy"],
-    canWrite: ["pharmacy"],
-    dashboards: ["pharmacy_validation"],
-    forms: ["validacion_fh"]
-  },
-  demo: {
-    label: "Demo / Admin funcional",
-    canRead: ["clinical", "nursing", "pharmacy"],
-    canWrite: [],
-    dashboards: ["all"],
-    forms: []
-  }
-};
+---
+
+### 6.4. Módulos MVP
+
+```text
+Reuma
+├── formulario clínico actual
+├── Solicitud FH
+├── dashboard paciente
+└── estadísticas
+
+Enfermería
+├── formulario seguimiento
+├── educación terapéutica
+├── adherencia
+├── vacunación / Medicina Preventiva
+├── efectos adversos
+└── dashboard seguimiento
+
+Farmacia
+├── formulario validación
+├── fármaco / pauta / dosis
+├── estado validación
+├── adherencia si procede
+├── efectos adversos si procede
+└── dashboard validación
 ```
 
 ---
 
-## 7. Arquitectura v3 recomendada
+## 7. Mejoras backend-ready que pueden empezar ya
 
-### 7.1. Principio
+Estas tareas pueden avanzar antes del 8 de julio si no bloquean la demo.
 
-La v3 debe dejar de ser una app local-first basada en Excel y convertirse en una plataforma web con backend real.
+### 7.1. Diccionario clínico de variables
 
-### 7.2. Arquitectura objetivo
+Estructura recomendada:
+
+```text
+variable_id
+nombre_columna_excel
+nombre_clinico
+modulo
+patologia
+tipo_registro
+tipo_dato
+unidad
+rango_valido
+obligatorio
+fuente
+quien_recoge
+destino
+descripcion
+notas_migracion
+posible_mapeo_fhir_snomed_loinc
+```
+
+Objetivo: dejar de depender de memoria/código para entender qué significa cada campo.
+
+---
+
+### 7.2. Modelo lógico común
+
+Aunque físicamente sigamos con Exceles, conceptualmente el modelo debe empezar a verse así:
+
+```text
+patients
+clinical_events
+clinical_visits
+nursing_followups
+pharmacy_validations
+treatments
+prebiologic_checks
+vaccination_status
+scores
+proms
+exports
+audit_log
+```
+
+---
+
+### 7.3. Repository layer
+
+La app no debería depender directamente de “leo Excel / escribo Excel”. Debe tender a:
+
+```text
+clinicalRepository.getPatient()
+clinicalRepository.getVisits()
+nursingRepository.saveFollowup()
+pharmacyRepository.saveValidation()
+timelineRepository.getEventsByPatient()
+```
+
+Hoy el repositorio puede usar Excel. Mañana API/base de datos.
+
+---
+
+### 7.4. Separación exportación / persistencia
+
+Regla:
+
+```text
+TXT / JARA / e-Orden = salida clínica documental
+Excel / DB = persistencia y explotación
+Dashboard = visualización
+```
+
+No mezclar responsabilidades. La Solicitud FH debe seguir siendo una salida derivada.
+
+---
+
+### 7.5. Configuración clínica declarativa
+
+Empezar a pasar de lógica quemada en código a configuración:
+
+```text
+pathologies.config.js
+roles.config.js
+forms.config.js
+exports.config.js
+fields.config.js
+```
+
+Esto es la semilla del Hub Clínico Framework.
+
+---
+
+### 7.6. Validación fuerte de plantillas Excel
+
+La app debe poder detectar:
+
+```text
+plantilla correcta
+faltan hojas
+faltan columnas
+sobran columnas críticas
+versión incompatible
+formato de fecha incorrecto
+hoja no encontrada
+```
+
+Esta mejora aporta seguridad inmediata al MVP.
+
+---
+
+## 8. PROMs y capa paciente futura
+
+No se implementa antes del 8 de julio salvo como narrativa o diseño.
+
+Roadmap:
+
+```text
+Fase 1 — Hub clínico profesional
+Fase 2 — PROMs remotos
+Fase 3 — Extensión funcional del paciente
+Fase 4 — Alternativas inclusivas desde Atención Primaria
+```
+
+Principio importante:
+
+> PROMs domiciliarios para quien pueda; PROMs asistidos desde Atención Primaria para quien lo necesite.
+
+Esto reduce sesgo digital y mejora equidad territorial.
+
+---
+
+## 9. Diseño recomendado para PROMs con Forms, si se permite
+
+No hacer un Form por cuestionario salvo necesidad metodológica fuerte.
+
+Preferible:
+
+```text
+PROMs_AR_Seguimiento
+PROMs_ESPA_Seguimiento
+PROMs_APS_Seguimiento
+PROMs_LES_Seguimiento
+PROMs_SJOGREN_Seguimiento
+```
+
+No preferible:
+
+```text
+BASDAI_Form
+ASDAS_Form
+HAQ_Form
+RAPID3_Form
+Fatiga_Form
+CalidadVida_Form
+```
+
+Si Power Automate está permitido:
+
+```text
+Paciente completa Form
+↓
+Trigger respuesta nueva
+↓
+Get response details
+↓
+Añadir fila a PROMs_Master.xlsx
+```
+
+Si no está permitido:
+
+```text
+Forms → Excel propio por Form → exportación manual controlada → importador Hub
+```
+
+---
+
+## 10. Arquitectura v3 recomendada
+
+### 10.1. Arquitectura objetivo
 
 ```text
 Frontend web React + TypeScript + Vite
@@ -567,462 +715,267 @@ audit_log
 users_roles
 ```
 
-### 7.3. Stack recomendado
+---
 
-#### Frontend
+### 10.2. Base de datos
 
-```text
-React + TypeScript + Vite
-```
-
-**Por qué:**
-
-- React encaja con interfaces complejas con múltiples estados, perfiles, dashboards, formularios dinámicos y componentes reutilizables.
-- TypeScript ayuda a controlar contratos de datos y reducir errores silenciosos.
-- Vite aporta build moderno y sirve como herramienta de desarrollo del frontend v3, no como fase intermedia obligatoria.
-
-#### Backend
-
-```text
-Node.js + Fastify
-```
-
-**Por qué:**
-
-- API ligera.
-- Buen encaje con JSON schema.
-- Menor peso conceptual que NestJS.
-- Suficiente para POC y escalable si se estructura bien.
-
-**Alternativa:** NestJS si entra equipo técnico/institucional y se busca arquitectura más opinionada.
-
-#### Base de datos
-
-Opción preferente:
+Preferente:
 
 ```text
 PostgreSQL en OCI
 ```
 
-**Ventajas:**
-
-- excelente para modelo relacional clínico;
-- buen ecosistema;
-- buen soporte de migraciones;
-- adecuado para consultas longitudinales;
-- permite combinar modelo normalizado con JSON cuando convenga;
-- buena portabilidad.
-
-Opción alternativa:
+Alternativa:
 
 ```text
 MySQL en OCI
 ```
 
-**Ventajas:**
-
-- conocido;
-- sencillo de operar;
-- suficiente para POC si PostgreSQL no está disponible o resulta más complejo.
-
-**Decisión práctica actual:** usar OCI como entorno de pruebas y priorizar PostgreSQL. MySQL queda como alternativa pragmática. No se decide Oracle Database como base por defecto.
+La decisión se tomará por viabilidad, coste, facilidad de despliegue y portabilidad. El modelo debe ser independiente del motor elegido.
 
 ---
 
-## 8. Modelo de datos v3 propuesto
+## 11. Modelo v4 agnóstico futuro
+
+El núcleo conceptual del Hub Clínico Framework debería ser:
 
 ```text
-patients
-├── id
-├── cip
-├── nombre
-├── sexo
-├── fecha_nacimiento
-└── estado
+Organization
+└── Hospital / Área
+    └── Service
+        └── Clinical Program
+            └── Pathology / Condition
+                └── Journey
+                    └── Visit Type
+                        └── Form Sections
+                            └── Fields / Scores / PROMs
+```
 
-clinical_visits
-├── id
-├── patient_id
-├── pathology
-├── visit_date
-├── visit_type
-├── clinician_id
-├── treatment_current
-├── treatment_decision
-└── notes
+Ejemplo Reuma:
 
-clinical_scores
-├── id
-├── visit_id
-├── score_type
-├── value
-├── unit
-├── category
-└── raw_components_json
+```text
+Hospital Badajoz
+└── Reumatología
+    └── PROMueve Reuma
+        ├── AR
+        ├── APs
+        ├── EspA
+        ├── LES
+        └── Sjögren
+```
 
-prebiologic_checks
-├── id
-├── patient_id
-├── visit_id
-├── status
-├── validation_date
-├── labs_status
-├── tb_screening
-├── chest_xray
-├── vaccination_status
-├── preventive_medicine_referral
-└── notes
+Ejemplo Urticaria:
 
-nursing_followups
-├── id
-├── patient_id
-├── date
-├── nurse_id
-├── followup_type
-├── education_done
-├── adherence
-├── adverse_events
-├── vaccines_pending
-├── requires_medical_review
-└── notes
+```text
+Hospital X
+└── Dermatología / Alergología
+    └── Hub Urticaria
+        ├── Urticaria crónica espontánea
+        ├── Angioedema
+        └── Urticaria inducible
+```
 
-pharmacy_validations
-├── id
-├── patient_id
-├── date
-├── pharmacist_id
-├── medication
-├── dose
-├── posology
-├── route
-├── validation_status
-├── adherence
-├── adverse_events
-└── notes
+La app debe ocultar la complejidad. El clínico no debe ver `OBSERVATIONS`; debe ver “Seguimiento AR”, “Validación FH” o “Consulta Enfermería”.
 
-treatment_events
-├── id
-├── patient_id
-├── date
-├── event_type
-├── source
-├── description
-└── metadata_json
+---
 
-users
-├── id
-├── name
-├── role
-├── service
-└── active
+## 12. Hoja de ruta operativa — junio 2026
 
-audit_log
-├── id
-├── user_id
-├── action
-├── entity_type
-├── entity_id
-├── timestamp
-├── old_value_json
-└── new_value_json
+### Bloque 0 — Documentación viva y gobierno técnico
+
+1. Actualizar dossier v1.2 con integración histórica y decisiones actuales.
+2. Documentar módulos independientes/conectables.
+3. Documentar que timeline = visión longitudinal por CIP.
+4. Documentar que demo sintética se amplía, no se crea desde cero.
+5. Mantener este documento en GitHub para Codex, Claude Code, KairOS/Hermes y futuros agentes.
+
+---
+
+### Bloque 1 — Ordenar base técnica actual
+
+1. Promover/ordenar rama Reuma v2.
+2. Crear rama MVP interservicios.
+3. Congelar/taggear `main` legacy.
+4. Confirmar dataset sintético actual.
+5. Identificar qué módulos actuales ya sirven para Reuma.
+
+---
+
+### Bloque 2 — Contratos mínimos
+
+Definir:
+
+```text
+Contrato módulo Reuma
+Contrato módulo Enfermería
+Contrato módulo Farmacia
+Contrato común de paciente
+Contrato común de evento longitudinal
 ```
 
 ---
 
-## 9. FHIR/HL7 futuro
+### Bloque 3 — Perfiles y navegación
 
-No se implementa FHIR en MVP. La prioridad es crear un modelo interno consistente que permita mapeo posterior.
-
-Mapeos candidatos futuros:
-
-| Dominio interno | Recurso FHIR posible |
-|---|---|
-| Paciente | Patient |
-| Profesional | Practitioner |
-| Servicio/Centro | Organization |
-| Visita | Encounter |
-| Diagnóstico/patología | Condition |
-| Scores/analíticas | Observation |
-| Cuestionarios PRO/adherencia | QuestionnaireResponse |
-| Medicación | MedicationRequest / MedicationStatement |
-| Vacunación | Immunization |
-| Eventos / workflow | Task / Procedure / CarePlan según caso |
+1. Selector de perfil.
+2. Vista Reumatología.
+3. Vista Enfermería.
+4. Vista Farmacia.
+5. Vista Demo/Admin.
+6. Reglas de lectura/escritura funcionales.
 
 ---
 
-## 10. Cronograma recomendado hasta el 8 de julio
+### Bloque 4 — Formularios y dashboards por módulo
 
-### Semana 0 — 4-6 junio
+1. Mantener Reuma v2.
+2. Crear formulario Enfermería.
+3. Crear dashboard Enfermería.
+4. Crear formulario Farmacia.
+5. Crear dashboard Farmacia.
+6. Mantener Solicitud FH como salida derivada.
 
-**Objetivo:** ordenar base técnica y congelar decisiones.
+---
 
-Tareas:
+### Bloque 5 — Visión longitudinal integrada
 
-- Confirmar PR v2 avanzada.
-- Etiquetar `main` legacy.
-- Revisar PR v2.
-- Promover v2 a base estable o crear rama estable desde ella.
-- Crear documento de decisiones en GitHub.
-- Crear rama de trabajo para MVP interservicios.
+Adaptar/perfeccionar la vista existente para aceptar eventos de varias fuentes, ordenados por fecha y agrupados por CIP.
 
-Entregables:
+---
+
+### Bloque 6 — Demo sintética ampliada
+
+Ampliar la base sintética existente con casos de Enfermería y Farmacia.
+
+Casos demo recomendados:
 
 ```text
-tag legacy-v1-main-antes-reuma-v2
-tag v2.0.0-reuma-multipatologia
-branch feature/mvp-roles-enfermeria-farmacia
-documento de decisiones
+Paciente estable
+Paciente con prebiológico incompleto
+Paciente con vacunación pendiente
+Paciente con EA comunicado a Enfermería
+Paciente con validación FH pendiente
+Paciente con cambio terapéutico
+Paciente con seguimiento longitudinal completo
 ```
 
 ---
 
-### Semana 1 — 7-13 junio
+### Bloque 7 — Mejoras backend-ready en paralelo
 
-**Objetivo:** perfiles funcionales y estructura multi-fuente.
-
-Tareas:
-
-- Crear `roleConfig.js`.
-- Crear selector de perfil.
-- Definir navegación por perfil.
-- Crear abstracción de fuentes clínica, enfermería y farmacia.
-- Diseñar plantillas Excel Enfermería v1 y Farmacia v1.
-- Crear carga batch multiarchivo.
-- Crear merged view por CIP.
-
----
-
-### Semana 2 — 14-20 junio
-
-**Objetivo:** Enfermería funcional.
-
-Tareas:
-
-- Dashboard Enfermería.
-- Formulario seguimiento enfermero.
-- Precarga desde Reuma.
-- Exportación a Excel Enfermería.
-- TXT para historia si procede.
-- Campos de adherencia, educación, EA, vacunación, derivación Medicina Preventiva.
-- Vista longitudinal con registros enfermeros.
-
----
-
-### Semana 3 — 21-27 junio
-
-**Objetivo:** Farmacia activa funcional.
-
-Tareas:
-
-- Dashboard Farmacia.
-- Formulario validación FH.
-- Precarga desde Solicitud FH/Reuma.
-- Exportación a Excel Farmacia.
-- Estado validación: validado, pendiente, requiere aclaración, no validado.
-- Adherencia, EA, observaciones farmacoterapéuticas.
-- Vista integrada desde Farmacia.
-
----
-
-### Semana 4 — 28 junio-3 julio
-
-**Objetivo:** integración, demo y estabilización.
-
-Tareas:
-
-- Timeline integrado paciente.
-- Dataset demo completo.
-- Pruebas por rol.
-- Validación navegación.
-- Validación carga multiarchivo.
-- Corrección bugs críticos.
-- Congelar rama release.
-
----
-
-### Semana 5 — 4-7 julio
-
-**Objetivo:** preparación reunión.
-
-Tareas:
-
-- Guion demo.
-- Presentación.
-- Narrativa técnica.
-- Mapa de evolución.
-- Riesgos y limitaciones.
-- Decisiones que se piden al SES/Luis Bravo.
-- Smoke test final.
-
----
-
-### 8 julio
-
-**Objetivo:** mostrar MVP funcional y presentar hoja de ruta institucional.
-
-Mensaje central:
-
-> Hoy podemos pilotar con una arquitectura local-first segura y controlada. El sistema ya está preparado conceptualmente para evolucionar hacia una plataforma institucional con base de datos real, roles, trazabilidad, auditoría e interoperabilidad futura.
-
----
-
-## 11. Carril paralelo OCI / DB POC
-
-### Objetivo
-
-Validar técnicamente que la app puede evolucionar a backend real sin datos reales.
-
-### Timing recomendado
-
-No bloquear MVP. Ejecutar en paralelo con baja intensidad:
+Empezar sin bloquear demo:
 
 ```text
-Semana 1: crear repo DB POC y modelo ER inicial
-Semana 2: crear tablas y datos sintéticos
-Semana 3: importar datos desde Excel v2 demo
-Semana 4: API mínima y dashboard paciente desde DB
-Semana 5: demo técnica interna si está madura
+diccionario clínico
+modelo lógico
+repository layer
+validación de plantillas
+configuración declarativa
+separación exportación/persistencia
+auditoría mínima
 ```
-
-### Alcance mínimo
-
-```text
-patients
-clinical_visits
-nursing_followups
-pharmacy_validations
-prebiologic_checks
-audit_log
-```
-
-### Fuera de alcance
-
-- Datos reales.
-- Integración SES.
-- Autenticación corporativa.
-- FHIR real.
-- Producción.
 
 ---
 
-## 12. Riesgos y mitigación
+### Bloque 8 — Narrativa institucional
+
+Preparar:
+
+```text
+piloto asistencial
+modularidad
+seguridad operativa
+limitaciones conscientes del MVP
+evolución a backend real
+independencia de Excel como arquitectura final
+```
+
+---
+
+## 13. Antes del 8 de julio
+
+Entregables esperados:
+
+```text
+Demo Reuma v2
+Demo Enfermería
+Demo Farmacia
+Vista longitudinal integrada por CIP
+Dataset sintético ampliado
+Guion demo
+Mapa de evolución
+Riesgos y limitaciones
+Qué se pide a Luis Bravo / SES
+```
+
+---
+
+## 14. Después del 8 de julio
+
+Según respuesta institucional:
+
+```text
+1. Decidir si el piloto sigue local-first o entra en circuito institucional.
+2. Iniciar v2.2 backend-ready hardening.
+3. Crear diccionario clínico completo.
+4. Crear repository layer progresivo.
+5. Separar configuración clínica declarativa.
+6. Empezar POC v3 en OCI/PostgreSQL con datos sintéticos.
+7. Evaluar PROMs y alternativa Atención Primaria.
+```
+
+---
+
+## 15. Riesgos y mitigación
 
 | Riesgo | Impacto | Mitigación |
 |---|---:|---|
 | Mezclar escritura multirol en un Excel | Alto | Fuentes separadas por rol |
 | Migrar a React antes del 8 julio | Alto | Mantener vanilla para MVP |
 | SharePoint Lists bloqueado por tenant/STIC | Alto | No usar como backend MVP |
-| Contrato ancho de 497 columnas | Medio | No tocar antes de MVP; normalizar en v3 |
+| Contrato ancho de 497 columnas | Medio | No tocar antes del MVP; normalizar después |
 | Perfiles funcionales confundidos con seguridad real | Alto | Documentar limitación |
-| POC DB en OCI con datos reales | Crítico | Solo datos sintéticos |
-| Tres apps separadas por rol | Medio-Alto | App común con vistas por perfil |
+| POC DB con datos reales | Crítico | Solo datos sintéticos |
+| Tres apps separadas por rol | Medio-Alto | App común modular |
 | Falta de narrativa institucional | Alto | Dossier + roadmap + demo guiada |
-| Farmacia activa contaminando fuente clínica | Alto | Excel Farmacia propio |
-| Enfermería escribiendo como si fuera Reuma | Alto | Excel Enfermería propio y tipo de registro diferenciado |
+| Farmacia contaminando fuente clínica | Alto | Fuente Farmacia propia |
+| Enfermería escribiendo como Reuma | Alto | Fuente Enfermería propia y tipo de evento diferenciado |
+| Sobreexpandir PROMs/paciente antes del piloto | Alto | Primero profesional; luego paciente |
 
 ---
 
-## 13. Decisiones pendientes
+## 16. Decisiones pendientes
 
 | Decisión | Fecha objetivo | Responsable sugerido |
 |---|---:|---|
 | Promover v2 a main | Semana 0 | Equipo técnico |
-| Nombre final de release MVP | Semana 0 | Sil/Cora |
-| Campos mínimos de Enfermería | Semana 1 | Sil + clínicos |
-| Campos mínimos de Farmacia | Semana 1 | Sil + Luis/Sara/FH |
-| Si la demo usa GitHub Pages o ejecución local | Semana 2 | Sil/técnico |
-| Alcance exacto de POC DB en OCI | Semana 1-2 | Sil/Cora/técnico |
-| Qué se pide explícitamente a Luis Bravo | Semana 4 | Sil/Sara |
-| Nivel de implicación SES/STIC tras reunión | 8 julio | Luis Bravo/SES |
+| Nombre final release MVP | Semana 0 | Sil/Cora |
+| Campos mínimos Enfermería | Semana 1 | Sil + clínicos |
+| Campos mínimos Farmacia | Semana 1 | Sil + Sara/Luis/FH |
+| Alcance de visión longitudinal v2.1 | Semana 1 | Equipo técnico |
+| Alcance de dataset sintético ampliado | Semana 1 | Equipo técnico |
+| Si demo usa GitHub Pages o ejecución local | Semana 2 | Sil/técnico |
+| Alcance exacto POC DB en OCI | Semana 2 | Sil/Cora/técnico |
+| Qué se pide a Luis Bravo | Semana 4 | Sil/Sara |
+| Nivel de implicación SES/STIC | 8 julio | Luis Bravo/SES |
 
 ---
 
-## 14. Arquitectura recomendada: decisión final
+## 17. Referencias internas
 
-### MVP 8 julio
-
-```text
-HTML/CSS/JS vanilla
-Exceles separados por rol
-Perfiles funcionales
-Carga batch multiarchivo
-Integración por CIP
-Datos sintéticos/demo
-```
-
-**Por qué:** minimiza riesgo, aprovecha lo que ya funciona, evita bloqueo STIC y permite mostrar valor asistencial rápido.
-
----
-
-### Transición v2.2 opcional
-
-```text
-Misma app
-Mejor separación interna:
-- roleConfig
-- dataSources
-- mergedPatientView
-- contratos por rol
-```
-
-**Por qué:** prepara el cambio a backend sin reescribir todo si la v2 local-first debe mantenerse durante varios meses.
-
-**Decisión actual:** no es una fase obligatoria. Si el destino v3 se activa pronto, se salta este paso y se crea una POC v3 limpia.
-
----
-
-### v3
-
-```text
-React + TypeScript + Vite
-Node.js + Fastify
-PostgreSQL en OCI preferente
-MySQL en OCI alternativa
-API REST
-Roles reales
-Audit log
-Modelo normalizado
-Capa futura FHIR/HL7
-```
-
-**Por qué:** es la arquitectura más adecuada cuando el producto deje de ser MVP local-first y pase a ser plataforma institucional.
-
----
-
-## 15. Orden recomendado de trabajo
-
-1. No tocar aún la arquitectura base que funciona.
-2. Promover Reuma v2 como base real.
-3. Crear release MVP para Luis Bravo.
-4. Añadir perfiles funcionales.
-5. Separar fuentes de escritura.
-6. Añadir Enfermería y Farmacia activa.
-7. Congelar demo.
-8. Preparar narrativa institucional.
-9. Ejecutar POC DB en OCI en paralelo con datos sintéticos.
-10. Diseñar v3 como producto web con backend real.
-
-La idea clave:
-
-> **No estamos construyendo un Excel bonito. Estamos construyendo un modelo progresivo de coordinación clínica entre Reumatología, Enfermería y Farmacia Hospitalaria. El Excel es solo el andamio del MVP.**
-
----
-
-## 16. Referencias internas del proyecto
-
-### Repositorio
+Repositorio:
 
 ```text
 b32majus/Hub-Clinico-Badajoz
 ```
 
-### Rama avanzada
+Rama avanzada:
 
 ```text
 feature/reuma-v2-prebiologico-fh-les-sjogren
 ```
 
-### Documentos internos relevantes
+Documentos relevantes:
 
 ```text
 docs/RESUMEN_RELEASE_REUMA_V2.md
@@ -1038,12 +991,8 @@ docs/AUDITORIA_EXCEL_MAESTRO_V2.md
 
 ---
 
-## 17. Próxima acción recomendada
+## 18. Principio final
 
-Tomar este documento como base para:
+> **El Hub debe avanzar como piloto asistencial local-first, pero pensar como plataforma clínica interoperable desde el primer día.**
 
-1. planificación técnica;
-2. preparación de prompts para KairOS/Codex/OpenCode/Claude Code;
-3. documento de arquitectura para Luis Bravo;
-4. actualización de Notion;
-5. guion de reunión del 8 de julio.
+> **No estamos construyendo un Excel bonito. Estamos construyendo un modelo progresivo de coordinación clínica entre Reumatología, Enfermería y Farmacia Hospitalaria. El Excel es solo el andamio del MVP.**
