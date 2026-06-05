@@ -270,7 +270,7 @@ Hermes debe detenerse y escalar si aparece:
 
 ### Verde
 
-Documentación, plantillas, contratos, cambios menores, validaciones simples.
+Documentación, plantillas, contratos exploratorios/documentales, cambios menores, validaciones simples.
 
 ### Amarillo
 
@@ -278,7 +278,9 @@ Cambios multiarchivo limitados, selector de perfil, carga multiarchivo, normaliz
 
 ### Rojo
 
-Migración React, backend real, cambios en Excel maestro/contrato de 497 columnas, nuevas dependencias importantes, cambios de arquitectura, ramas protegidas.
+Migración React, backend real, cambios en Excel maestro/contrato de 497 columnas, nuevas dependencias importantes, cambios de arquitectura, ramas protegidas, **contratos clínicos definitivos**.
+
+**Matiz sobre contratos:** Los contratos exploratorios (borradores, maquetas, referencias) pueden clasificarse como verde o amarillo según alcance. Los **contratos clínicos definitivos** (campos, validaciones, reglas de negocio que impactan en la app) son siempre **rojo** y requieren autorización de Sil/Cora antes de tocar.
 
 ---
 

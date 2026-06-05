@@ -145,9 +145,11 @@ Una tarea está completada cuando:
 
 | Nivel | Tipo de cambio | Supervisión |
 |---|---|---|
-| 🟢 Verde | Documentación, plantillas, contratos, validaciones simples | Autonomía con reporte |
+| 🟢 Verde | Documentación, plantillas, **contratos exploratorios/documentales**, validaciones simples | Autonomía con reporte |
 | 🟡 Amarillo | Cambios multiarchivo limitados, funcionalidad acotada | Revisión humana antes de merge |
-| 🔴 Rojo | Migraciones, backend, cambios de arquitectura, ramas protegidas | Autorización explícita de Sil |
+| 🔴 Rojo | Migraciones, backend, cambios de arquitectura, ramas protegidas, **contratos clínicos definitivos** | Autorización explícita de Sil |
+
+**Matiz sobre contratos:** Los contratos exploratorios (borradores, maquetas, referencias) pueden ser verde o amarillo según alcance. Los **contratos clínicos definitivos** (los que definen campos, validaciones, reglas de negocio que impactan en la app) son siempre **rojo** y requieren autorización de Sil/Cora antes de tocar.
 
 ---
 
