@@ -145,13 +145,48 @@ Una tarea está completada cuando:
 
 | Nivel | Tipo de cambio | Supervisión |
 |---|---|---|
-| 🟢 Verde | Documentación, plantillas, contratos, validaciones simples | Autonomía con reporte |
+| 🟢 Verde | Documentación, plantillas, **contratos exploratorios/documentales**, validaciones simples | Autonomía con reporte |
 | 🟡 Amarillo | Cambios multiarchivo limitados, funcionalidad acotada | Revisión humana antes de merge |
-| 🔴 Rojo | Migraciones, backend, cambios de arquitectura, ramas protegidas | Autorización explícita de Sil |
+| 🔴 Rojo | Migraciones, backend, cambios de arquitectura, ramas protegidas, **contratos clínicos definitivos** | Autorización explícita de Sil |
+
+**Matiz sobre contratos:** Los contratos exploratorios (borradores, maquetas, referencias) pueden ser verde o amarillo según alcance. Los **contratos clínicos definitivos** (los que definen campos, validaciones, reglas de negocio que impactan en la app) son siempre **rojo** y requieren autorización de Sil/Cora antes de tocar.
 
 ---
 
-## 10. Ejecución nocturna
+## 10. Política de modelos y delegación
+
+### Modelos y nivel de autonomía
+
+| Modelo | Nivel | Tareas permitidas | Delegación |
+|--------|-------|------------------|------------|
+| **DeepSeek v4 Flash** (Hermes brain) | 🟢 Verde | Documentación, índices, inventarios, checklists, reportes, lectura de código sin modificación, cambios Markdown de bajo riesgo, work orders documentales acotadas | Ejecución directa |
+| **DeepSeek v4 Pro** (OpenCode Builder) | 🟡 Amarillo | Código funcional acotado, refactor localizado, carga multiarchivo, normalización de datos, pruebas automatizadas, cambios multiarchivo limitados | Delegar a OpenCode |
+| **GPT/Codex PM** o **Sil/Cora** | 🔴 Rojo | Arquitectura, backend, migración React, contratos definitivos, decisiones clínicas, seguridad, datos, cambios en ramas protegidas | Escalar siempre |
+
+### Reglas
+
+- DeepSeek v4 Flash **NO debe usarse** para decidir arquitectura, diseñar formularios clínicos, crear contratos definitivos, tocar código funcional complejo, cambiar Excel/contratos o introducir dependencias.
+- DeepSeek v4 Pro / OpenCode Builder debe usarse para tareas amarillas de código que requieran implementación técnica acotada.
+- GPT/Codex PM o Sil/Cora deben intervenir en toda tarea roja.
+- **El buen resultado del lote nocturno documental no autoriza a Flash a ejecutar tareas funcionales o clínicas fuera de alcance.**
+- Hermes puede ejecutar directamente tareas verdes documentales si están perfectamente acotadas; debe delegar o escalar tareas amarillas/rojas.
+- Si hay duda sobre el nivel de riesgo de una tarea, escalar a Sil/Cora antes de ejecutar.
+
+---
+
+## 11. Ejecución nocturna
+
+### Nota operativa: cambios en configuración de Hermes
+
+Los cambios en `~/.hermes/config.yaml` (modelo, provider, delegación) no son efectivos hasta que se reinicia el gateway de Hermes:
+
+```bash
+sudo systemctl restart hermes-gateway.service
+```
+
+Sin reinicio, el gateway en memoria arrastra la configuración anterior. Esto aplica especialmente a `delegation.model` y `delegation.provider`.
+
+---
 
 Permitida solo con work orders cerradas de riesgo verde/amarillo.
 
