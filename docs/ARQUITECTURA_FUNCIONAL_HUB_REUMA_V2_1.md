@@ -103,7 +103,7 @@ El Hub es una aplicación **local-first** (HTML/CSS/JS) que funciona en el naveg
 
 ### 5.3 Perfiles funcionales
 
-Los perfiles
+Los perfiles (Reumatología, Enfermería, Farmacia, Admin/Demo) controlarán interfaz, formularios y dashboards visibles.
 
 ⚠️ **Importante:** Los perfiles funcionales **no equivalen a autenticación real ni autorización**. Son filtros de interfaz. La seguridad real (roles, permisos, trazabilidad, auditoría) llegará en v3.0.
 
