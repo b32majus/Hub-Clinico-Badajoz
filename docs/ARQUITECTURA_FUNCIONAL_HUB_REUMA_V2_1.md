@@ -95,9 +95,15 @@ El Hub es una aplicación **local-first** (HTML/CSS/JS) que funciona en el naveg
 | Visibilidad en timeline | Validaciones y efectos adversos visibles para todos los perfiles |
 | Referencia | `docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md` |
 
+> 📌 **Nota táctica (2026-06-05):** Para la reunión del 2026-06-08 con Farmacia Hospitalaria, se incorpora temporalmente una **capa de entrada multipatología** en el módulo de Farmacia. Permite dos modos:
+> - **HS/Dermatología:** entrada manual/semi-estructurada (servicio sin módulo Hub).
+> - **Reumatología:** entrada estructurada desde el Hub Reuma v2 (flujo end-to-end).
+>
+> Esta capa es táctica para la demo. No cambia el roadmap, no implica construir Dermatología completa y no sustituye los módulos clínicos futuros. Ver `docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`.
+
 ### 5.3 Perfiles funcionales
 
-Los perfiles (Reumatología, Enfermería, Farmacia, Admin/Demo) controlarán interfaz, formularios y dashboards visibles.
+Los perfiles
 
 ⚠️ **Importante:** Los perfiles funcionales **no equivalen a autenticación real ni autorización**. Son filtros de interfaz. La seguridad real (roles, permisos, trazabilidad, auditoría) llegará en v3.0.
 

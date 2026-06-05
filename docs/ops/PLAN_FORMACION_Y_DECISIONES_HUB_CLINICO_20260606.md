@@ -83,6 +83,12 @@ Cada fase sigue este patrón estándar:
 
 **Estado:** ⏸️ Pendiente de completar por Sil/Cora. Canvas creado (WO-010), no validado.
 
+> 📌 **Nota táctica (2026-06-05):** La Fase 1 se aborda tácticamente empezando por **Farmacia** debido a la reunión del 2026-06-08 con el jefe de Servicio de Farmacia de Cáceres. El diseño de Farmacia incorpora dos escenarios de entrada:
+> - **Manual/semi-estructurada** (HS/Dermatología, vía orden clínica/JARA simulada).
+> - **Estructurada** (Reumatología, vía Hub Reuma v2).
+>
+> Este enfoque táctico **no sustituye** el diseño posterior completo de Enfermería ni el diseño completo de Dermatología. Ver `docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md` y DEC-018.
+
 | Elemento | Descripción |
 |----------|-------------|
 | **Objetivo** | Definir qué necesita cada perfil (Enfermería, Farmacia) antes de traducirlo a campos, layouts y contratos. |

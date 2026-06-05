@@ -305,6 +305,32 @@ CIP + fecha_evento + origen_evento + tipo_evento
 
 ---
 
+### DEC-018 — Capa temporal de entrada multipatología en Farmacia
+
+**Fecha:** 2026-06-05
+
+**Decisión:** El módulo de Farmacia incorpora una capa temporal de entrada multipatología para la demo del 2026-06-08.
+
+**Motivo:** La reunión con el jefe de Servicio de Farmacia de Cáceres requiere mostrar el circuito de Farmacia con HS/Dermatología como caso prioritario, pero Dermatología no tiene módulo completo en el Hub. En lugar de construir Dermatología completa de forma precipitada, se crea una capa de entrada que permite dos modos.
+
+**Alcance:**
+- HS/Dermatología: entrada manual/semi-estructurada desde orden clínica/JARA simulada.
+- Reumatología: entrada estructurada desde el Hub Reuma v2 (flujo end-to-end).
+- Farmacia multipatología: capaz de recibir solicitudes con distinto nivel de estructuración.
+
+**Fuera de alcance:**
+- No se construye Dermatología completa.
+- No hay integración real con JARA.
+- No hay cambio en el roadmap general.
+- No hay uso de datos reales.
+- No se duplica el repo.
+
+**Impacto en demo:** Permite mostrar presente (entrada manual) y futuro (entrada estructurada) en una misma demo, validando el módulo de Farmacia sin esperar a que todos los servicios tengan módulo Hub.
+
+**Relación con v2.1:** Es una capa táctica dentro del diseño de Farmacia. No modifica la arquitectura progresiva ni las fases del plan formativo. Ver `docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`.
+
+---
+
 ## 4. Versionado propuesto
 
 ### v1 — Legacy local Reuma

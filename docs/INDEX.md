@@ -104,6 +104,7 @@
 | Mejoras propuestas | [`docs/MEJORAS_PROPUESTAS.md`](/docs/MEJORAS_PROPUESTAS.md) |
 | Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
 | Plan formativo y protocolo de decisiones | [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) |
+| Capa entrada Farmacia multipatología | [`docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`](/docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md) |
 
 ---
 

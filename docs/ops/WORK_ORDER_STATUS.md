@@ -44,6 +44,7 @@
 | **WO-013b** | Corregir criterios de avance en arquitectura funcional | ✅ **Merged** | `work/hermes/wo-013b-fix-advancement-criteria` → `feature/...` | `1ed2e9b` | Fast-forward merge a rama viva. Incluye WO-013 |
 | **WO-014** | Plan formativo y protocolo de decisiones por fase | ✅ **Merged** | `work/hermes/wo-014-learning-decision-protocol` → `feature/...` | `bc68cb4` | Integrado vía WO-014b. Fast-forward en rama viva |
 | **WO-014b** | Corrección editorial de status e índice tras WO-014 | ✅ **Merged** | `work/hermes/wo-014b-fix-status-index-formatting` → `feature/...` | `f843298` | Fast-forward merge a rama viva. Incluye WO-014 |
+| **WO-015** | Documentar capa temporal de entrada multipatología para Farmacia | 📋 Ready for review | `work/hermes/wo-015-documentar-capa-entrada-farmacia` | — | Decisión táctica para reunión Farmacia 2026-06-08 |
 
 ---
 
@@ -52,7 +53,7 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 19 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b) |
-| 📋 Ready for review | 0 |
+| 📋 Ready for review | 1 (WO-015) |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
