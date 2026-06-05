@@ -1,73 +1,90 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub Clínico — Estadísticas Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
 </head>
-<body>
-<div class="hub-shell">
-    <aside class="sidebar">
-        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
-        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
-        <div class="sidebar-nav-area">
-            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
-                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
-                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
-                <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
-                <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
-                <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
-            </ul></div>
-            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
-                <li><a href="farmacia_estadisticas.html" class="nav-link active"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
-                <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
-                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
-            </ul></div>
-            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
-                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
-            </ul></div>
-        </div>
-        <div class="sidebar-footer">v. 0.1 — demo</div>
-    </aside>
-    <main class="fh-main">
-        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
-        <div class="fh-hero">
-            <div class="fh-hero__text">
-                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Indicadores</p>
-                <h1 class="fh-hero__title">Estadísticas de Servicio</h1>
-                <p class="fh-hero__desc">Panel de indicadores del servicio de Farmacia Hospitalaria. <strong>Placeholder — pendiente de desarrollo tras validación de datos reales.</strong></p>
-            </div>
-        </div>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
-            <div class="fh-stat-card" style="background:#e3f2fd;border-radius:8px;padding:20px;text-align:center;">
-                <div style="font-size:2rem;font-weight:700;color:#0056b3;">6</div>
-                <div style="color:#555;font-size:0.9rem;">Pacientes activos</div>
-            </div>
-            <div class="fh-stat-card" style="background:#fff3cd;border-radius:8px;padding:20px;text-align:center;">
-                <div style="font-size:2rem;font-weight:700;color:#856404;">2</div>
-                <div style="color:#555;font-size:0.9rem;">Validaciones pendientes</div>
-            </div>
-            <div class="fh-stat-card" style="background:#d4edda;border-radius:8px;padding:20px;text-align:center;">
-                <div style="font-size:2rem;font-weight:700;color:#155724;">4</div>
-                <div style="color:#555;font-size:0.9rem;">Seguimientos este mes</div>
-            </div>
-            <div class="fh-stat-card" style="background:#f8d7da;border-radius:8px;padding:20px;text-align:center;">
-                <div style="font-size:2rem;font-weight:700;color:#721c24;">1</div>
-                <div style="color:#555;font-size:0.9rem;">Efectos adversos activos</div>
-            </div>
-        </div>
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">Perfil: Farmacia Hospitalaria</span>
+    </div>
 
-        <div class="fh-card" style="text-align:center;padding:40px 20px;">
-            <i class="fas fa-chart-line" style="font-size:3rem;color:#ccc;margin-bottom:16px;"></i>
-            <p style="color:#888;font-size:1.1rem;">Dashboard poblacional completo en desarrollo.</p>
-            <p style="color:#aaa;font-size:0.9rem;">Esta sección se diseñará a partir de datos reales y necesidades del servicio.<br>Los indicadores actuales son valores demo de ejemplo.</p>
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
         </div>
-    </main>
-</div>
-</body>
-</html>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link active" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--estadisticas">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Pharmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-avatar"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+        <div class="patient-info">
+            <div class="patient-id-badge">Farmacia Hospitalaria</div>
+            <p class="hero-eyebrow">Farmacia Hospitalaria · Indicadores</p>
+            <h1 class="patient-name">Estadísticas demo</h1>
+            <p class="hero-description">Placeholder ligero de indicadores de servicio. El dashboard poblacional complejo queda fuera de alcance.</p>
+        </div>
+        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
+    </div>
+</section><section class="action-grid"><div class="dashboard-card"><h2 class="card-title"><i class="fas fa-user-clock"></i> Validaciones pendientes</h2><p class="patient-name">2</p></div><div class="dashboard-card"><h2 class="card-title"><i class="fas fa-pills"></i> Fármacos demo</h2><p class="patient-name">4</p></div><div class="dashboard-card"><h2 class="card-title"><i class="fas fa-notes-medical"></i> Indicaciones</h2><p class="patient-name">HS · AR</p></div></section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+        </body>
+        </html>

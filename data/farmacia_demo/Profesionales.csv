@@ -1,5 +1,5 @@
 ID,Nombre,Rol,Especialidad,Estado
-PRO-001,Dra. Maria Garcia,Farmaceutica Hospitalaria,Reumatologia;Dermatologia,Activo
-PRO-002,Dr. Carlos Lopez,Farmaceutico Hospitalario,Reumatologia;Digestivo,Activo
-PRO-003,Dr. Rafael Mendoza,Residente Farmacia,Rotacion Reumatologia,Activo
-PRO-004,Dr. Ana Beltran,Farmaceutica Hospitalaria,Oncologia;Hematologia,Activo
+PRO-FH-01,Profesional FH-01,Farmaceutico/a Hospitalario/a,Dermatologia;Reumatologia,Activo
+PRO-FH-02,Profesional FH-02,Farmaceutico/a Hospitalario/a,Digestivo;Oncologia,Activo
+PRO-FH-03,Profesional FH-03,Residente Farmacia,Rotacion Farmacia Hospitalaria,Activo
+PRO-FH-04,Profesional FH-04,Farmaceutico/a Hospitalario/a,Hematologia;Soporte demo,Activo

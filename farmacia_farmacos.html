@@ -1,69 +1,90 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hub Clínico — Fármacos</title>
+    <title>Hub Clínico — Fármacos Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
 </head>
-<body>
-<div class="hub-shell">
-    <aside class="sidebar">
-        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
-        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
-        <div class="sidebar-nav-area">
-            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
-                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
-                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
-                <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
-                <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
-                <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
-            </ul></div>
-            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
-                <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
-                <li><a href="farmacia_farmacos.html" class="nav-link active"><i class="fas fa-pills"></i>Fármacos</a></li>
-                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
-            </ul></div>
-            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
-                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
-            </ul></div>
-        </div>
-        <div class="sidebar-footer">v. 0.1 — demo</div>
-    </aside>
-    <main class="fh-main">
-        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
-        <div class="fh-hero">
-            <div class="fh-hero__text">
-                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Catálogo</p>
-                <h1 class="fh-hero__title">Fármacos</h1>
-                <p class="fh-hero__desc">Catálogo terapéutico de Farmacia Hospitalaria. Datos demo sintéticos.</p>
-            </div>
-        </div>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
 
-        <div class="fh-card">
-            <table class="fh-table" style="width:100%;border-collapse:collapse;">
-                <thead><tr style="background:#f5f5f5;text-align:left;">
-                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Principio activo</th>
-                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Nombre comercial</th>
-                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Indicaciones</th>
-                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Dosis frecuente</th>
-                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Estado</th>
-                </tr></thead>
-                <tbody>
-                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Secukinumab</td><td>Cosentyx®</td><td>HS, Psoriasis, EspA</td><td>300 mg SC / 4 sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
-                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Adalimumab</td><td>Humira® / Amgevita®</td><td>AR, EspA, APs, HS, Crohn</td><td>40 mg SC / 2 sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
-                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Ustekinumab</td><td>Stelara®</td><td>Psoriasis, APs, Crohn</td><td>90 mg SC / 12 sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
-                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Rituximab</td><td>MabThera® / Truxima®</td><td>AR, LES, Sjögren</td><td>1000 mg IV / 6 meses</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
-                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Belimumab</td><td>Benlysta®</td><td>LES</td><td>200 mg SC / sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
-                    <tr><td style="padding:10px 12px;">Abatacept</td><td>Orencia®</td><td>AR</td><td>125 mg SC / sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
-                </tbody>
-            </table>
-            <p style="color:#888;font-size:0.85rem;margin-top:12px;">Catálogo demo — 6 fármacos sintéticos representativos. No incluye todos los fármacos de la cartera del servicio.</p>
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">Perfil: Farmacia Hospitalaria</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
         </div>
-    </main>
-</div>
-</body>
-</html>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link active" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--farmacos">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Pharmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-avatar"><i class="fas fa-pills" aria-hidden="true"></i></div>
+        <div class="patient-info">
+            <div class="patient-id-badge">Farmacia Hospitalaria</div>
+            <p class="hero-eyebrow">Farmacia Hospitalaria · Catálogo</p>
+            <h1 class="patient-name">Fármacos</h1>
+            <p class="hero-description">Catálogo sintético para demo; no es cartera terapéutica definitiva.</p>
+        </div>
+        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
+    </div>
+</section><section class="dashboard-card"><h2 class="card-title"><i class="fas fa-table"></i> Fármacos demo</h2><table class="data-table"><thead><tr><th>Principio activo</th><th>Presentación</th><th>Indicaciones demo</th><th>Dosis / pauta frecuente</th><th>Estado</th></tr></thead><tbody><tr><td>Secukinumab</td><td>300 mg SC</td><td>HS; Psoriasis</td><td>Inducción y mantenimiento SC</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>Adalimumab</td><td>40 mg SC</td><td>AR; HS</td><td>Cada 2 semanas / según indicación</td><td><span class="status-badge status-badge--validated">Activo</span></td></tr><tr><td>Upadacitinib</td><td>15 mg oral</td><td>AR; dermatitis atópica</td><td>Una vez al día</td><td><span class="status-badge status-badge--pending">Demo</span></td></tr></tbody></table></section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+        </body>
+        </html>

@@ -1,243 +1,90 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hub Clínico — Dashboard Paciente</title>
+    <title>Hub Clínico — Dashboard Paciente Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
-    <style>
-        .fh-dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-        .fh-dash-card { background:#fff; border:1px solid #ddd; border-radius:8px; padding:16px; }
-        .fh-dash-card h3 { margin:0 0 12px; font-size:1rem; color:#0056b3; border-bottom:2px solid #e9ecef; padding-bottom:8px; }
-        .fh-dash-card ul { list-style:none; padding:0; margin:0; }
-        .fh-dash-card li { padding:4px 0; font-size:0.9rem; display:flex; justify-content:space-between; border-bottom:1px solid #f0f0f0; }
-        .fh-dash-card li:last-child { border-bottom:none; }
-        .fh-dash-label { color:#666; }
-        .fh-dash-value { font-weight:500; }
-        .fh-timeline { position:relative; padding-left:24px; }
-        .fh-timeline::before { content:''; position:absolute; left:8px; top:4px; bottom:4px; width:2px; background:#ddd; }
-        .fh-timeline-item { position:relative; padding:8px 0 8px 16px; }
-        .fh-timeline-item::before { content:''; position:absolute; left:-20px; top:12px; width:10px; height:10px; border-radius:50%; background:#0056b3; border:2px solid #fff; }
-        .fh-timeline-item--ea::before { background:#dc3545; }
-        .fh-timeline-item--opt::before { background:#ffc107; }
-        .fh-timeline-item .tl-date { font-size:0.8rem; color:#888; }
-        .fh-timeline-item .tl-text { font-weight:500; }
-    </style>
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
 </head>
-<body>
-<div class="hub-shell">
-    <aside class="sidebar">
-        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
-        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
-        <div class="sidebar-nav-area">
-            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
-                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
-                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
-                <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
-                <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
-                <li><a href="farmacia_dashboard_paciente.html" class="nav-link active"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
-            </ul></div>
-            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
-                <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
-                <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
-                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
-            </ul></div>
-            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
-                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
-            </ul></div>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">Perfil: Farmacia Hospitalaria</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link active" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
         </div>
-        <div class="sidebar-footer">v. 0.1 — demo</div>
-    </aside>
-    <main class="fh-main">
-        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
-        <div class="fh-hero">
-            <div class="fh-hero__text">
-                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Dashboard</p>
-                <h1 class="fh-hero__title">Dashboard del Paciente</h1>
-                <p class="fh-hero__desc">Visión longitudinal del episodio farmacoterapéutico.</p>
-            </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
         </div>
-
-        <!-- CIP Lookup -->
-        <div class="fh-card">
-            <div class="fh-form-row">
-                <div style="flex:2;"><label class="fh-label">CIP del paciente</label><input type="text" class="fh-input" id="fhDashCip" placeholder="CIP-DEMO-FH-001" style="max-width:300px;"></div>
-                <div style="display:flex;align-items:flex-end;padding-bottom:4px;">
-                    <button type="button" class="fh-btn fh-btn--primary" id="fhDashBuscar"><i class="fas fa-search"></i> Ver dashboard</button>
-                </div>
-            </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
         </div>
+    </div>
 
-        <div id="fhDashContent" class="hidden">
-            <!-- Resumen -->
-            <div class="fh-card">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;">
-                    <div>
-                        <h2 class="fh-section-heading" style="margin:0;" id="fhDashNombre">—</h2>
-                        <p style="color:#666;margin:4px 0 0;"><span id="fhDashCipLabel">CIP: —</span> · <span id="fhDashServicio">—</span> · <span id="fhDashPatologia">—</span></p>
-                    </div>
-                    <span class="fh-status-badge" id="fhDashEstadoBadge"></span>
-                </div>
-            </div>
-
-            <div class="fh-dash-grid">
-                <!-- Tratamiento actual -->
-                <div class="fh-dash-card">
-                    <h3><i class="fas fa-pills"></i> Tratamiento actual</h3>
-                    <ul>
-                        <li><span class="fh-dash-label">Fármaco</span><span class="fh-dash-value" id="ddFarmaco">—</span></li>
-                        <li><span class="fh-dash-label">Dosis</span><span class="fh-dash-value" id="ddDosis">—</span></li>
-                        <li><span class="fh-dash-label">Pauta</span><span class="fh-dash-value" id="ddPauta">—</span></li>
-                        <li><span class="fh-dash-label">Vía</span><span class="fh-dash-value" id="ddVia">—</span></li>
-                    </ul>
-                </div>
-
-                <!-- Estado validación -->
-                <div class="fh-dash-card">
-                    <h3><i class="fas fa-check-double"></i> Validación</h3>
-                    <ul>
-                        <li><span class="fh-dash-label">Estado</span><span class="fh-dash-value" id="ddEstadoVal">—</span></li>
-                        <li><span class="fh-dash-label">Fecha</span><span class="fh-dash-value" id="ddFechaVal">—</span></li>
-                        <li><span class="fh-dash-label">Farmacéutico</span><span class="fh-dash-value" id="ddFarmaVal">—</span></li>
-                    </ul>
-                </div>
-
-                <!-- Adherencia -->
-                <div class="fh-dash-card">
-                    <h3><i class="fas fa-heartbeat"></i> Adherencia</h3>
-                    <ul>
-                        <li><span class="fh-dash-label">Último resultado</span><span class="fh-dash-value" id="ddAdherencia">—</span></li>
-                        <li><span class="fh-dash-label">Estratificación</span><span class="fh-dash-value" id="ddEstratificacion">—</span></li>
-                    </ul>
-                </div>
-
-                <!-- Efectos adversos -->
-                <div class="fh-dash-card">
-                    <h3><i class="fas fa-exclamation-triangle"></i> Efectos adversos</h3>
-                    <ul id="ddEfectosAdversos">
-                        <li><span class="fh-dash-label">Sin registros</span></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Timeline -->
-            <div class="fh-card">
-                <h2 class="fh-section-heading" style="margin-top:0;"><i class="fas fa-clock"></i> Timeline del episodio</h2>
-                <div class="fh-timeline" id="fhDashTimeline">
-                    <p style="color:#888;">Seleccione un paciente para ver su timeline.</p>
-                </div>
-            </div>
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
         </div>
-    </main>
-</div>
-<script>
-(function () {
-    var DEMO = {
-        'CIP-DEMO-FH-001': {
-            nombre: 'Paciente Demo FH-001',
-            cip: 'CIP-DEMO-FH-001',
-            servicio: 'Dermatología',
-            patologia: 'Hidradenitis supurativa',
-            farmaco: 'Secukinumab 300 mg',
-            dosis: '300 mg',
-            pauta: 'SC / 4 semanas (mantenimiento)',
-            via: 'SC',
-            estadoVal: 'Validado',
-            fechaVal: '2026-05-10',
-            farmaVal: 'Dra. María García',
-            adherencia: 'Alta (Morisky-Green: 4/4)',
-            estratif: 'Nivel 2',
-            efectos: [{desc:'Reacción cutánea leve', gravedad:'Leve', fecha:'2026-05-25'}],
-            timeline: [
-                {fecha:'2026-05-05', texto:'Solicitud desde Dermatología (HS)', tipo:'solicitud'},
-                {fecha:'2026-05-10', texto:'Validación farmacoterapéutica — Validado', tipo:'validacion'},
-                {fecha:'2026-05-12', texto:'Primera visita Farmacia — Nivel 2', tipo:'visita'},
-                {fecha:'2026-05-25', texto:'Efecto adverso: reacción cutánea leve', tipo:'ea'},
-                {fecha:'2026-06-01', texto:'Seguimiento: adherencia alta, sin cambios', tipo:'seg'}
-            ]
-        },
-        'CIP-DEMO-FH-003': {
-            nombre: 'Paciente Demo FH-003',
-            cip: 'CIP-DEMO-FH-003',
-            servicio: 'Reumatología',
-            patologia: 'Artritis Reumatoide (AR)',
-            farmaco: 'Adalimumab 40 mg',
-            dosis: '40 mg',
-            pauta: 'SC / 2 semanas',
-            via: 'SC',
-            estadoVal: 'Validado',
-            fechaVal: '2026-04-01',
-            farmaVal: 'Dr. Carlos López',
-            adherencia: 'Alta (Morisky-Green: 4/4)',
-            estratif: 'Nivel 1',
-            efectos: [],
-            timeline: [
-                {fecha:'2026-03-15', texto:'Solicitud desde Reumatología (AR)', tipo:'solicitud'},
-                {fecha:'2026-04-01', texto:'Validación farmacoterapéutica — Validado', tipo:'validacion'},
-                {fecha:'2026-04-05', texto:'Primera visita Farmacia — Nivel 1', tipo:'visita'},
-                {fecha:'2026-05-20', texto:'Seguimiento: adherencia alta, sin cambios', tipo:'seg'}
-            ]
-        }
-    };
-
-    function cargarDashboard(cip) {
-        var p = DEMO[cip];
-        if (!p) { alert('Paciente no encontrado.'); return; }
-
-        document.getElementById('fhDashContent').classList.remove('hidden');
-        document.getElementById('fhDashNombre').textContent = p.nombre;
-        document.getElementById('fhDashCipLabel').textContent = 'CIP: ' + p.cip;
-        document.getElementById('fhDashServicio').textContent = p.servicio;
-        document.getElementById('fhDashPatologia').textContent = p.patologia;
-
-        var badge = document.getElementById('fhDashEstadoBadge');
-        badge.textContent = p.estadoVal;
-        badge.className = 'fh-status-badge fh-status-badge--validated';
-
-        document.getElementById('ddFarmaco').textContent = p.farmaco;
-        document.getElementById('ddDosis').textContent = p.dosis;
-        document.getElementById('ddPauta').textContent = p.pauta;
-        document.getElementById('ddVia').textContent = p.via;
-        document.getElementById('ddEstadoVal').textContent = p.estadoVal;
-        document.getElementById('ddFechaVal').textContent = p.fechaVal;
-        document.getElementById('ddFarmaVal').textContent = p.farmaVal;
-        document.getElementById('ddAdherencia').textContent = p.adherencia;
-        document.getElementById('ddEstratificacion').textContent = p.estratif;
-
-        // Efectos adversos
-        var eaList = document.getElementById('ddEfectosAdversos');
-        if (p.efectos.length === 0) {
-            eaList.innerHTML = '<li><span class="fh-dash-label">Sin registros</span></li>';
-        } else {
-            eaList.innerHTML = p.efectos.map(function (e) {
-                return '<li><span class="fh-dash-label">' + e.fecha + ' — ' + e.desc + '</span><span class="fh-dash-value">' + e.gravedad + '</span></li>';
-            }).join('');
-        }
-
-        // Timeline
-        var tl = document.getElementById('fhDashTimeline');
-        tl.innerHTML = p.timeline.map(function (t) {
-            var cls = '';
-            if (t.tipo === 'ea') cls = 'fh-timeline-item--ea';
-            if (t.tipo === 'validacion') cls = 'fh-timeline-item--opt';
-            return '<div class="fh-timeline-item ' + cls + '"><div class="tl-date">' + t.fecha + '</div><div class="tl-text">' + t.texto + '</div></div>';
-        }).join('');
-    }
-
-    document.getElementById('fhDashBuscar').addEventListener('click', function () {
-        var cip = document.getElementById('fhDashCip').value.trim().toUpperCase();
-        if (cip) cargarDashboard(cip);
-    });
-    document.getElementById('fhDashCip').addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') document.getElementById('fhDashBuscar').click();
-    });
-
-    // Load default
-    setTimeout(function () { document.getElementById('fhDashCip').value = 'CIP-DEMO-FH-001'; cargarDashboard('CIP-DEMO-FH-001'); }, 100);
-})();
-</script>
-</body>
-</html>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--dashboard">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Pharmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card">
+    <div class="patient-header-main">
+        <div class="patient-avatar"><i class="fas fa-user" aria-hidden="true"></i></div>
+        <div class="patient-info"><div class="patient-id-badge" id="patientIdBadge">—</div><h1 class="patient-name" id="patientName">Paciente Demo</h1><div class="patient-meta"><span><i class="fas fa-stethoscope"></i> <span id="patientDiagnosis">—</span></span><span><i class="fas fa-hospital"></i> <span id="patientService">—</span></span><span><i class="fas fa-calendar-alt"></i> Última visita: <span id="patientLastVisit">—</span></span><span><i class="fas fa-birthday-cake"></i> <span id="patientAge">—</span> años</span><span><i class="fas fa-venus-mars"></i> <span id="patientGender">—</span></span></div></div>
+        <span class="status-badge" id="patientStatusBadge">—</span>
+    </div>
+    <div class="patient-header-actions"><a href="farmacia_seguimiento.html" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="btn btn-secondary"><i class="fas fa-check-double"></i> Validación</a></div>
+</section>
+<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Resumen Farmacia</h2><div class="info-grid" id="dashboardSummaryGrid"></div></section>
+<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-timeline"></i> Timeline longitudinal mínima</h2><div class="timeline" id="farmaciaTimeline"></div></section>
+<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-table"></i> Bloques incluidos</h2><div class="info-grid"><div class="info-field"><span class="info-field__label">Validaciones</span><span class="info-field__value">Histórico demo disponible</span></div><div class="info-field"><span class="info-field__label">Primera visita</span><span class="info-field__value">Fecha, inducción, estratificación y PROM basal</span></div><div class="info-field"><span class="info-field__label">Seguimientos</span><span class="info-field__value">Adherencia, PROMs, EA, optimizaciones y suspensiones</span></div><div class="info-field"><span class="info-field__label">Sin dashboard poblacional</span><span class="info-field__value">Fuera de alcance v0.1</span></div></div></section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+    <script src="scripts/farmacia_dashboard_paciente.js?v=20260606b"></script>
+        </body>
+        </html>

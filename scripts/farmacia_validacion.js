@@ -1,0 +1,147 @@
+'use strict';
+
+(function () {
+    const F = window.FarmaciaDemo;
+    let modoActual = null;
+
+    function mostrarFormulario(modo) {
+        modoActual = modo;
+        document.getElementById('formDerma').classList.toggle('hidden', modo !== 'derma');
+        document.getElementById('formReuma').classList.toggle('hidden', modo !== 'reuma');
+        document.getElementById('validationBlock').classList.remove('hidden');
+        document.getElementById('fhModoDerma').className = modo === 'derma' ? 'btn btn-primary' : 'btn btn-secondary';
+        document.getElementById('fhModoReuma').className = modo === 'reuma' ? 'btn btn-primary' : 'btn btn-secondary';
+        if (modo === 'derma' && !document.getElementById('fhDermaFecha').value) {
+            document.getElementById('fhDermaFecha').value = new Date().toISOString().slice(0, 10);
+        }
+    }
+
+    function applyContext() {
+        const context = F.getQueryContext();
+        if (context.cip) F.setValue('fhDermaCip', context.cip);
+        if (context.servicioSlug === 'reumatologia' || context.servicio === 'reumatologia') mostrarFormulario('reuma');
+        else if (context.cip || context.servicio || context.patologia) mostrarFormulario('derma');
+        if (context.patologia) F.setValue('fhDermaPatologia', context.patologia);
+        if (context.patient) {
+            const p = context.patient;
+            F.setValue('fhDermaFarmaco', p.farmaco);
+            F.setValue('fhDermaDosis', p.dosis);
+            F.setValue('fhDermaPauta', p.pauta);
+            F.setValue('fhDermaAnalitica', p.analitica);
+            F.setValue('fhValFarmaco', p.farmaco);
+            F.setValue('fhValDosis', p.dosis);
+            F.setValue('fhValPauta', p.pauta);
+            F.setValue('fhValVia', p.via);
+            F.setValue('fhValIndicacion', p.patologia);
+            if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
+        }
+    }
+
+    function selectedCip() {
+        return modoActual === 'reuma' ? 'CIP-DEMO-FH-003' : (document.getElementById('fhDermaCip').value.trim() || 'CIP-DEMO-FH-XXX');
+    }
+
+    function selectedPatologia() {
+        return modoActual === 'reuma' ? 'Artritis Reumatoide (AR)' : (document.getElementById('fhDermaPatologia').value || '—');
+    }
+
+    function estadoLabel() {
+        const estado = document.getElementById('fhValEstado').value;
+        if (estado === 'validated') return 'Validado';
+        if (estado === 'denied') return 'Denegado';
+        return 'Pendiente';
+    }
+
+    function renderResult(message) {
+        const result = document.getElementById('fhValResultado');
+        result.className = 'result-box result-box--success';
+        F.clearChildren(result);
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-check-circle';
+        icon.setAttribute('aria-hidden', 'true');
+        const text = document.createElement('span');
+        text.textContent = message;
+        const small = document.createElement('small');
+        small.textContent = 'Demo — los datos se almacenan en memoria de sesión.';
+        result.append(icon, text, document.createElement('br'), small);
+        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function buildValidationLines() {
+        const lines = [];
+        lines.push('=== INFORME DE VALIDACIÓN FARMACOTERAPÉUTICA ===');
+        lines.push(`Identificador demo: FH-VAL-${Date.now().toString(36).toUpperCase()}`);
+        lines.push(`Fecha: ${new Date().toLocaleDateString('es-ES')}`);
+        lines.push('');
+        if (modoActual === 'reuma') {
+            lines.push('Servicio origen: Reumatología');
+            lines.push('CIP: CIP-DEMO-FH-003');
+            lines.push('Patología: Artritis Reumatoide (AR)');
+            lines.push('Fármaco solicitado: Adalimumab 40 mg');
+            lines.push('Dosis: 40 mg');
+            lines.push('Pauta: SC / cada 2 semanas');
+        } else {
+            lines.push('Servicio origen: Dermatología');
+            lines.push(`CIP: ${selectedCip()}`);
+            lines.push(`Patología: ${selectedPatologia()}`);
+            lines.push(`Fármaco solicitado: ${document.getElementById('fhDermaFarmaco').value || '—'}`);
+            lines.push(`Dosis: ${document.getElementById('fhDermaDosis').value || '—'}`);
+            lines.push(`Pauta: ${document.getElementById('fhDermaPauta').value || '—'}`);
+        }
+        lines.push('');
+        lines.push(`Estado validación: ${estadoLabel()}`);
+        const motivo = document.getElementById('fhValMotivo').value.trim();
+        if (motivo) lines.push(`Motivo denegación: ${motivo}`);
+        lines.push(`Fármaco validado: ${document.getElementById('fhValFarmaco').value || '—'}`);
+        lines.push(`Dosis validada: ${document.getElementById('fhValDosis').value || '—'}`);
+        lines.push(`Pauta: ${document.getElementById('fhValPauta').value || '—'}`);
+        lines.push(`Vía: ${document.getElementById('fhValVia').value || '—'}`);
+        lines.push(`Profesional: ${document.getElementById('fhValFarmaceutico').value || '—'}`);
+        const obs = document.getElementById('fhValObservaciones').value.trim();
+        if (obs) lines.push(`Observaciones: ${obs}`);
+        lines.push('');
+        lines.push('=== FIN DEL INFORME ===');
+        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.1');
+        lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
+        return lines;
+    }
+
+    function download(name, content, type) {
+        const blob = new Blob([content], { type });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('fhModoDerma').addEventListener('click', () => mostrarFormulario('derma'));
+        document.getElementById('fhModoReuma').addEventListener('click', () => mostrarFormulario('reuma'));
+        document.getElementById('fhValEstado').addEventListener('change', event => {
+            document.getElementById('fhValMotivoRow').classList.toggle('hidden', event.target.value !== 'denied');
+        });
+        document.getElementById('fhValGuardar').addEventListener('click', () => {
+            if (!modoActual) { window.alert('Seleccione tipo de solicitud.'); return; }
+            const estado = document.getElementById('fhValEstado').value;
+            if (!estado) { window.alert('Seleccione un estado de validación.'); return; }
+            if (estado === 'denied' && !document.getElementById('fhValMotivo').value.trim()) {
+                window.alert('El motivo de denegación es obligatorio.');
+                return;
+            }
+            renderResult(`Validación registrada — ${estadoLabel()} | Paciente: ${selectedCip()} | Fecha: ${new Date().toLocaleDateString('es-ES')}`);
+        });
+        document.getElementById('fhValExportTxt').addEventListener('click', () => {
+            download(`validacion_FH_${new Date().toISOString().slice(0, 10)}.txt`, buildValidationLines().join('\n'), 'text/plain;charset=utf-8');
+        });
+        document.getElementById('fhValExportCsv').addEventListener('click', () => {
+            const rows = [
+                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoValidado', 'Profesional'],
+                [`FH-${Date.now().toString(36).toUpperCase()}`, new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), document.getElementById('fhValFarmaco').value || '—', document.getElementById('fhValFarmaceutico').value || '—']
+            ];
+            const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+            download(`validaciones_FH_${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv;charset=utf-8');
+        });
+        applyContext();
+    });
+})();
