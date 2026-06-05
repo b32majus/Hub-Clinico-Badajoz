@@ -29,7 +29,7 @@ Creada desde `feature/reuma-v2-prebiologico-fh-les-sjogren` (actualizada con `gi
 | `6e20a2c` | WO-006 | docs: add repository documentation index |
 | `3f40902` | WO-007 | docs: add branch and decision status snapshot |
 | `6414324` | WO-008 | docs: add Reuma v2 technical risk audit |
-| *(próximo)* | WO-009 | docs: add nightly green batch execution report |
+| `c9a1276` | WO-009 | docs: add nightly green batch execution report |
 
 ## 4. Archivos creados
 
@@ -82,7 +82,7 @@ No fue necesario delegar a OpenCode Builder ya que todas las tareas eran creaci�
 ## 8. Verificaciones realizadas
 
 - ✅ Rama creada desde `feature/reuma-v2-prebiologico-fh-les-sjogren` actualizada
-- ✅ 6 commits, uno por work order
+- ✅ 7 commits, uno por work order
 - ✅ Ningún archivo HTML/CSS/JS/Excel modificado
 - ✅ No se tocó `docs/contratos/*`
 - ✅ No se tocaron ramas protegidas
@@ -90,7 +90,7 @@ No fue necesario delegar a OpenCode Builder ya que todas las tareas eran creaci�
 - ✅ No se hizo merge
 - ✅ No se abrió PR
 - ✅ `git status --short` limpio tras commits
-- ✅ Push pendiente a `origin/work/hermes/nightly-green-docs-20260606`
+- ✅ Push completado a `origin/work/hermes/nightly-green-docs-20260606`
 
 ## 9. Desviaciones del plan
 

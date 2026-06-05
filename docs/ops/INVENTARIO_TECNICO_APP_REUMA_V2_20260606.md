@@ -71,7 +71,7 @@
 
 ## 2. Dependencias y librerías
 
-La app **no tiene dependencias externas** por CDN o npm. Es HTML/CSS/JS vanilla.
+La app **no usa npm, bundlers ni build system**. Es HTML/CSS/JS vanilla cargado directamente desde archivos. Sin embargo, sí depende de tres librerías externas cargadas desde CDN en las cabeceras HTML:
 
 | Recurso | Propósito |
 |---------|-----------|
