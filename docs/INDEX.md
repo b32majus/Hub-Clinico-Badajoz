@@ -100,7 +100,8 @@
 | Contrato de datos unificado | [`docs/CONTRATO_DATOS_UNIFICADO.md`](/docs/CONTRATO_DATOS_UNIFICADO.md) |
 | Decisiones estructura Excel demo v2 | [`docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md`](/docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md) |
 | Mejoras propuestas | [`docs/MEJORAS_PROPUESTAS.md`](/docs/MEJORAS_PROPUESTAS.md) |
-|| Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
+| Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
+| Plan formativo y protocolo de decisiones | [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) |
 
 ---
 
