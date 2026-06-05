@@ -46,6 +46,7 @@
 | **WO-014b** | Corrección editorial de status e índice tras WO-014 | ✅ **Merged** | `work/hermes/wo-014b-fix-status-index-formatting` → `feature/...` | `f843298` | Fast-forward merge a rama viva. Incluye WO-014 |
 | **WO-015** | Documentar capa temporal de entrada multipatología para Farmacia | ✅ **Merged** | `work/hermes/wo-015-documentar-capa-entrada-farmacia` → `feature/...` | `d3f785f` | Mergeado vía WO-015b. Fast-forward en rama viva |
 | **WO-015b** | Corregir frase truncada en arquitectura funcional tras WO-015 | ✅ **Merged** | `work/hermes/wo-015b-fix-arquitectura-frase-perfiles` → `feature/...` | `c3bade0` | Fast-forward merge a rama viva. Incluye WO-015 |
+| **WO-016** | Especificación funcional Farmacia Hospitalaria v0.1 para demo 2026-06-08 | 📋 Ready for review | `work/hermes/wo-016-especificacion-funcional-farmacia-v0-1` | — | Especificación funcional para la demo del lunes. Pendiente revisión Sil/Cora |
 
 ---
 
@@ -54,10 +55,10 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 21 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b) |
-| 📋 Ready for review | 0 |
+| 📋 Ready for review | 1 (WO-016) |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 23 work orders / preflights gestionadas.
+**Total:** 24 work orders / preflights gestionadas.
