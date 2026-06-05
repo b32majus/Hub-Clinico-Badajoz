@@ -1,164 +1,216 @@
-# Nightly Pharmacy Implementation Report
+# Nightly Farmacia Implementation Report — revisión/corrección PM
 
-**Date:** 2026-06-06  
-**Branch:** `work/hermes/nightly-farmacia-v0-1-20260606`  
+Status: pending_review
+
+**Fecha:** 2026-06-06  
+**Rama:** `work/hermes/nightly-farmacia-v0-1-20260606`  
 **Base:** `feature/reuma-v2-prebiologico-fh-les-sjogren`  
-**Objective:** Implement Farmacia Hospitalaria v0.1 demo for 2026-06-08 meeting  
-**Status:** ✅ **Completed** (pending human review)
+**Objetivo:** preparar una demo funcional de Farmacia Hospitalaria v0.1 para revisión humana antes de la reunión del 2026-06-08.  
+**Estado general:** corregido tras auditoría PM; pendiente de revisión de Sil/Cora antes de cualquier merge.
 
----
+## Resumen ejecutivo
 
-## WOs executed
+Se revisaron la macro WO original, la auditoría PM y la especificación funcional. La corrección posterior aborda los issues críticos, medios y de estilo detectados:
 
-| WO | Title | Status | Builder | Model | Commit | Files |
-|----|-------|--------|---------|-------|--------|-------|
-| **WO-017** | Pharmacy module shell | ✅ Completed | PM Codex (GPT-5.5) | GPT-5.5 | `e1892e0` | `farmacia_index.html`, `farmacia_style.css` |
-| **WO-018** | CIP search + Quick View + Guided intake | ✅ Completed | PM Codex (GPT-5.5) | GPT-5.5 | `e1892e0` (bundled) | `farmacia_index.html` (JS inline) |
-| **WO-019** | Pharmacotherapeutic validation | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | `2441929` | `farmacia_validacion.html` |
-| **WO-020** | First pharmacy visit | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | `163e6c4` | `farmacia_primera_visita.html` |
-| **WO-021** | Pharmacy follow-up + Morisky-Green | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | `0f978cc` | `farmacia_seguimiento.html` |
-| **WO-022** | Pharmacy patient dashboard | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | `183d5d6` | `farmacia_dashboard_paciente.html` |
-| **WO-023** | Drug catalog + Professionals + Demo dataset | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | `08a6c53` | 11 files (3 HTML + 8 CSVs) |
-| **WO-024** | JARA TXT + CSV export | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | Bundled in WO-019 | Embedded in `farmacia_validacion.html` + `farmacia_seguimiento.html` |
-| **WO-025** | Smoke test + final report | ✅ Completed | Direct (KairOS) | DeepSeek v4 Flash | *(this commit)* | `docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md` |
+- `CIP-DEMO-FH-002` ya se trata como paciente demo existente en el buscador.
+- Alta guiada y acciones contextuales pasan contexto por URL: `?cip=X&servicio=Y&patologia=Z&entrada=...`.
+- Las páginas destino leen query params y precargan CIP/servicio/patología/datos demo cuando existen.
+- Validación incluye estado `Pendiente` además de `Validado` y `Denegado`.
+- Se elimina el uso de `innerHTML` en los scripts de Farmacia para valores renderizados desde usuario/demo; se usa `textContent` y creación de nodos DOM.
+- Profesionales pasan a nombres claramente demo: `Profesional FH-01`, etc.
+- Se elimina `<main class="fh-main">`; todas las páginas Farmacia usan `<main class="main-content farmacia-paciente ...">`.
+- Se elimina JS inline y estilos inline en páginas Farmacia; la lógica vive en `scripts/farmacia_*.js` y el estilo en `farmacia_style.css`.
+- Se añade entrada visible a Farmacia Hospitalaria en la navegación de páginas Reuma principales.
 
----
+## Commits ejecutados
 
-## Builders used
-
-| Builder | WOs | Reason |
-|---------|-----|--------|
-| **PM Codex (GPT-5.5)** via `delegate_task` | WO-017, WO-018 | Initial delegation (timed out after 10 min, but completed 2 WOs) |
-| **Direct (KairOS / DeepSeek v4 Flash)** | WO-019 to WO-025 | Continued directly after PM timeout, writing HTML/CSS/JS inline |
-
-**Fallbacks activated:** None required. Claude Code CLI and OpenCode CLI were available but not used for the remaining WOs due to delegation timeout constraints.
-
----
-
-## Commits (topological order)
-
-```
-e1892e0 feat(farmacia): add pharmacy module shell                    [PM] WO-017+018
-f029e20 fix(farmacia): update search hint with demo CIPs             [KairOS] WO-017 fix
-2441929 feat(farmacia): add pharmacotherapeutic validation workflow   [KairOS] WO-019
-163e6c4 feat(farmacia): add first pharmacy visit workflow            [KairOS] WO-020
-0f978cc feat(farmacia): add pharmacy follow-up with Morisky-Green    [KairOS] WO-021
-183d5d6 feat(farmacia): add pharmacy patient dashboard with timeline [KairOS] WO-022
-08a6c53 feat(farmacia): add drug catalog, professionals, stats and dataset [KairOS] WO-023+024
-<current> docs: add nightly pharmacy implementation report            [KairOS] WO-025
+```text
+e1892e0 feat(farmacia): add pharmacy module shell
+f029e20 fix(farmacia): update search hint with demo CIPs
+2441929 feat(farmacia): add pharmacotherapeutic validation workflow
+163e6c4 feat(farmacia): add first pharmacy visit workflow
+0f978cc feat(farmacia): add pharmacy follow-up with Morisky-Green
+183d5d6 feat(farmacia): add pharmacy patient dashboard with timeline
+08a6c53 feat(farmacia): add drug catalog, professionals, stats placeholder and demo CSV dataset
+dd0b0fb docs: add nightly pharmacy implementation report
+c63286c fix(farmacia): correct demo workflows and hub styling
+3687577 fix(farmacia): add pharmacy entry to reuma navigation
+<current> docs(farmacia): update implementation report after PM corrections
 ```
 
----
+## WOs revisadas
 
-## Files created (17 total)
+| WO | Título | Estado tras corrección | Evidencia |
+|----|--------|------------------------|-----------|
+| WO-017 | Shell UI Farmacia coherente | completed_pending_review | Sidebar completa, logo FH, perfil demo, main-content, estilo SES |
+| WO-018 | Buscador CIP + Quick View + alta guiada | completed_pending_review | `scripts/farmacia_index.js`, `scripts/farmacia_common.js` |
+| WO-019 | Validación farmacoterapéutica | completed_pending_review | Estado Pendiente, motivo obligatorio si Denegado, TXT/CSV |
+| WO-020 | Primera visita Farmacia | completed_pending_review | Precarga por query params y registro demo |
+| WO-021 | Seguimiento Farmacia | completed_pending_review | Optimización/suspensión/Morisky/PROMs/EA/aviso cambio fármaco |
+| WO-022 | Dashboard paciente | completed_pending_review | Timeline mínima y bloques de validación/visita/seguimiento/PROMs/EA |
+| WO-023 | Dataset demo | completed_pending_review | CSVs sintéticos; profesionales renombrados demo |
+| WO-024 | Export TXT JARA + CSV | completed_pending_review | Export en `scripts/farmacia_validacion.js` |
+| WO-025 | Smoke test + reporte final | completed_pending_review | Verificaciones estáticas ejecutadas y reporte actualizado |
 
-### Pharmacy pages (8 HTML)
-| File | Purpose |
-|------|---------|
-| `farmacia_index.html` | Main shell + CIP search + Quick View + Guided intake (JS inline) |
-| `farmacia_validacion.html` | Pharmacotherapeutic validation (Derma manual + Reuma precargado) |
-| `farmacia_primera_visita.html` | First pharmacy visit registration |
-| `farmacia_seguimiento.html` | Follow-up with Morisky-Green, optimization, suspension, adverse effects |
-| `farmacia_dashboard_paciente.html` | Patient dashboard with timeline, treatment, validation history |
-| `farmacia_estadisticas.html` | Service statistics (placeholder with demo values) |
-| `farmacia_farmacos.html` | Drug catalog (6 demo drugs) |
-| `farmacia_profesionales.html` | Professionals list (4 demo professionals) |
+## Correcciones de auditoría PM
 
-### Styles
-| File | Lines |
-|------|-------|
-| `farmacia_style.css` | 627 lines — pharmacy module styling |
+### Issues críticos
 
-### Demo dataset (8 CSVs)
-| File | Records |
-|------|---------|
-| `data/farmacia_demo/Pacientes.csv` | 3 patients |
-| `data/farmacia_demo/Solicitudes_FH.csv` | 3 requests |
-| `data/farmacia_demo/Validaciones_FH.csv` | 2 validations |
-| `data/farmacia_demo/Primera_Visita_FH.csv` | 2 first visits |
-| `data/farmacia_demo/Seguimientos_FH.csv` | 2 follow-ups |
-| `data/farmacia_demo/Farmacos.csv` | 6 drugs |
-| `data/farmacia_demo/Profesionales.csv` | 4 professionals |
-| `data/farmacia_demo/PROMs.csv` | 2 PROM records |
+1. **CIP-DEMO-FH-002 inconsistente** — corregido.  
+   `CIP-DEMO-FH-002` existe en `Pacientes.csv` y en el objeto demo común `scripts/farmacia_common.js`.
 
----
+2. **Alta guiada no pasaba contexto** — corregido.  
+   `farmacia_index.js` construye URLs con `cip`, `servicio`, `patologia` y `entrada`.
 
-## Functional verification (17-point smoke test)
+3. **Falta estado Pendiente** — corregido.  
+   `farmacia_validacion.html` incluye `value="pending"`.
 
-| # | Check | Status |
-|---|-------|--------|
-| 1 | App loads (no 404s) | ✅ All pages load |
-| 2 | Login resolves as `farmaceutico` profile | ✅ Badge: "Perfil: Farmacia Hospitalaria" |
-| 3 | Reuma not broken | ✅ 0 existing files modified |
-| 4 | Pharmacy visible in navigation | ✅ Full sidebar navigation |
-| 5 | CIP exists → Quick View | ✅ Demo CIP-DEMO-FH-001 |
-| 6 | CIP not exists → Guided intake | ✅ CIP-DEMO-FH-002 triggers alta guiada |
-| 7 | Alta → Dermatología → HS → Validation | ✅ Service selector + pathology + entry point |
-| 8 | Denied validation requires reason | ✅ Motivo de denegación required |
-| 9 | Validation generates JARA TXT | ✅ Downloadable TXT with full info |
-| 10 | First visit saves/views | ✅ Form with stratification levels |
-| 11 | Follow-up saves/views | ✅ Full form with Morisky-Green |
-| 12 | Morisky-Green calculates interpretation | ✅ Auto-calc: Alta / Media / Baja |
-| 13 | Dashboard shows timeline | ✅ Longitudinal timeline with color-coded events |
-| 14 | Pharmacy dataset exists | ✅ 8 CSV files with synthetic data |
-| 15 | No real data | ✅ All CIPs: CIP-DEMO-FH-*; no real names |
-| 16 | `.env` not touched | ✅ Verified |
-| 17 | `docs/contratos/*` not touched | ✅ Verified |
+4. **XSS por innerHTML** — corregido en scripts Farmacia.  
+   Los scripts `scripts/farmacia_*.js` usan `textContent`, `appendChild` y creación explícita de nodos para valores variables.
 
----
+5. **Dataset CSV y datos JS desacoplados** — mitigado para demo.  
+   Sigue existiendo un objeto demo común en JS, pero ahora está centralizado en `scripts/farmacia_common.js`; no hay duplicación por página. La lectura real de CSV queda como mejora futura.
 
-## Functionality completed
+6. **Nombres de profesionales realistas** — corregido.  
+   CSV y selector usan `Profesional FH-01`, `Profesional FH-02`, `Profesional FH-03`, `Profesional FH-04`.
 
-- **Pharmacy module shell** with sidebar navigation consistent with Hub
-- **Hardcoded profile** `farmaceutico` with visible badge
-- **CIP search** with demo patient lookup (inline hardcoded data)
-- **Quick View** with contextual actions based on validation status
-- **Guided intake** for new patients (service → pathology → entry point)
-- **Validation workflow** (Dermatology manual entry + Reumatology precargado)
-- **First visit registration** with stratification (N1/N2/N3)
-- **Follow-up visits** with:
-  - Optimization tracking (dose/interval adjustments)
-  - Suspension tracking with reason
-  - **Morisky-Green** 4-question test with automatic interpretation
-  - **Adverse effects** tracking (detection, severity, action)
-  - Drug change warning (no optimization = new request)
-- **Patient dashboard** with timeline, treatment summary, adherence, AEs
-- **JARA TXT export** from validation and follow-up
-- **CSV export** from validation
-- **Drug catalog** (6 demo drugs)
-- **Professionals list** (4 demo professionals)
-- **Statistics placeholder** with demo indicators
-- **Demo dataset** (8 CSV files)
+### Issues medios
 
-## Partial / not implemented
+7. **Quick View incompleta** — ampliada.  
+   Incluye última solicitud, estado FH, analítica/vacunación, scores, adherencia, EA activos y PROMs.
 
-- **Excel XLSX**: Not created. CSVs used instead (10x simpler, same demo value). Spec allowed this fallback.
-- **Dashboard poblacional**: Statistics page is a placeholder with demo values. Full analytics deferred.
-- **Plantilla solicitud_dermatologia.html**: Was not available in repo. Spec fields used directly in validation form.
+8. **Acciones contextuales no distinguen estado** — corregido.  
+   `pending` ofrece Validación; `validated` ofrece Primera Visita; `followup` ofrece Seguimiento; Dashboard siempre disponible.
 
-## Risks
+9. **Primera visita incompleta** — ampliada.  
+   Incluye fecha solicitud/validación, inducción solicitada y estado analítica/vacunación.
 
-| Risk | Level | Mitigation |
-|------|-------|------------|
-| Inline hardcoded data (JS objects) | 🟡 Medium | Adequate for demo. Must be migrated to proper data layer (CSV/Excel) for production. |
-| No real persistence | 🟡 Medium | Data lives in JS memory. Refreshing the page loses session data. Documented as demo limitation. |
-| Profile hardcoded as `farmaceutico` | 🟡 Medium | Documented as demo-only. Must implement real auth for production. |
-| DeepSeek v4 Flash generated validation/follow-up pages | 🟢 Low | Pages are standard HTML/CSS/JS with no complex business logic. PM audit recommended. |
+10. **Seguimiento incompleto** — ampliado.  
+    Incluye indicación, datos previos, PROMs seguimiento, adherencia y EA.
 
-## Recommendations
+11. **Dashboard incompleto** — ampliado.  
+    Incluye resumen, tratamiento actual, estado validación, timeline, primera visita, seguimientos, PROMs, EA, optimizaciones/suspensiones como bloques demo.
 
-1. **Review order:** browse pages in the sidebar sequence (Buscador → Validación → Primera Visita → Seguimiento → Dashboard)
-2. **Test demo CIPs:** CIP-DEMO-FH-001 (HS/Derma existente), CIP-DEMO-FH-002 (HS/Derma nuevo), CIP-DEMO-FH-003 (AR/Reuma precargado)
-3. **Verify Morisky-Green** in `farmacia_seguimiento.html` — select answers to see auto-interpretation
-4. **Review by Sil/Cora** before any merge to feature branch
-5. **Do not merge** automatically — this branch is PENDING_REVIEW
+12. **Sin entrada desde navegación principal Reuma** — corregido.  
+    Añadida sección Farmacia en `index.html`, `dashboard_paciente.html`, `seguimiento.html`, `primera_visita.html`, `estadisticas.html`, `manage_drugs.html`, `manage_professionals.html`.
 
-## Order suggested for review
+13. **Errores de estilos inline** — corregido en páginas Farmacia.  
+    Verificación: `inline_style=0` en `farmacia_*.html`.
 
-1. `farmacia_index.html` — entry point, search, UX flow
-2. `farmacia_validacion.html` — core clinical workflow
-3. `farmacia_seguimiento.html` — most complex form (Morisky-Green, AEs)
-4. `farmacia_dashboard_paciente.html` — patient overview
-5. `farmacia_style.css` — visual consistency
-6. Remaining pages (fármacos, profesionales, estadísticas)
-7. `data/farmacia_demo/` — dataset verification
+14. **CDN Font Awesome sin SRI** — no corregido.  
+    Se mantiene el mismo patrón que el Hub existente para no introducir divergencia de dependencias antes de la demo. Recomendación futura: resolver globalmente para todo el Hub, no solo Farmacia.
+
+15. **Reporte final contaba 17 vs 18 archivos** — corregido conceptualmente.  
+    El reporte ya no fija un conteo rígido; lista los archivos relevantes y commits posteriores.
+
+### Issues de estilo/maquetación
+
+16. **Paleta incorrecta** — corregido.  
+    `farmacia_style.css` usa `--ses-green`, `--ses-green-dark`, `--ses-green-light`; verificación: `#0056b3` no aparece en CSS Farmacia.
+
+17. **Clases `fh-*` inventadas** — corregido en páginas y CSS reescritos.  
+    Farmacia usa clases del patrón Hub: `patient-header-card`, `patient-header-main`, `patient-avatar`, `patient-info`, `info-grid`, `info-field`, `dashboard-card`, `card-title`, `btn`, `status-badge`.
+
+18. **Layout diferente (`fh-main`)** — corregido.  
+    Todas las páginas Farmacia usan `main-content farmacia-paciente`.
+
+19. **Sidebar incompleta** — corregido.  
+    Incluye `user-block`, `search-container`, `db-status-indicator`, navegación y footer.
+
+20. **JS inline** — corregido.  
+    Nuevos scripts separados:
+    - `scripts/farmacia_common.js`
+    - `scripts/farmacia_index.js`
+    - `scripts/farmacia_validacion.js`
+    - `scripts/farmacia_primera_visita.js`
+    - `scripts/farmacia_seguimiento.js`
+    - `scripts/farmacia_dashboard_paciente.js`
+
+21. **Logo inconsistente** — corregido/ajustado.  
+    Se conserva el mismo estilo visual de `logo-circle` y `logo-text`, con texto `FH` para Farmacia Hospitalaria.
+
+## Archivos principales modificados
+
+### Páginas Farmacia
+
+- `farmacia_index.html`
+- `farmacia_validacion.html`
+- `farmacia_primera_visita.html`
+- `farmacia_seguimiento.html`
+- `farmacia_dashboard_paciente.html`
+- `farmacia_estadisticas.html`
+- `farmacia_farmacos.html`
+- `farmacia_profesionales.html`
+
+### Estilo y lógica
+
+- `farmacia_style.css`
+- `scripts/farmacia_common.js`
+- `scripts/farmacia_index.js`
+- `scripts/farmacia_validacion.js`
+- `scripts/farmacia_primera_visita.js`
+- `scripts/farmacia_seguimiento.js`
+- `scripts/farmacia_dashboard_paciente.js`
+
+### Datos demo
+
+- `data/farmacia_demo/Profesionales.csv`
+
+### Navegación Reuma
+
+- `index.html`
+- `dashboard_paciente.html`
+- `seguimiento.html`
+- `primera_visita.html`
+- `estadisticas.html`
+- `manage_drugs.html`
+- `manage_professionals.html`
+
+## Verificaciones ejecutadas
+
+```text
+node --check scripts/farmacia*.js
+static verification OK
+farmacia nav verification OK
+```
+
+Verificaciones específicas confirmadas:
+
+- `fh-main` ausente en todas las páginas `farmacia_*.html`.
+- `<script>` inline ausente en páginas `farmacia_*.html`.
+- `style=` inline ausente en páginas `farmacia_*.html`.
+- `#0056b3` ausente en `farmacia_style.css`.
+- Select de validación incluye `pending`.
+- `CIP-DEMO-FH-002` incluido en los datos comunes de demo.
+- Scripts Farmacia sin `innerHTML`.
+- Navegación Reuma incluye enlace a `farmacia_index.html` en páginas principales.
+
+## Limitaciones pendientes
+
+- No se implementó lectura real de CSV en navegador; los datos demo se centralizan en `scripts/farmacia_common.js`. Para demo es aceptable; para piloto real debe conectarse a CSV/Excel o backend.
+- No hay persistencia real; guardar validación/visita/seguimiento muestra resultado en memoria de sesión.
+- No se resolvió SRI de Font Awesome porque el patrón CDN sin SRI es global del Hub actual. Requiere decisión de endurecimiento transversal.
+- No se creó XLSX; se mantienen CSVs demo, alternativa permitida por la macro WO.
+
+## No tocado
+
+- No se tocó `.env`.
+- No se tocaron credenciales, tokens, auth, cookies ni secretos.
+- No se tocaron `docs/contratos/*`.
+- No se hizo merge a `feature/reuma-v2-prebiologico-fh-les-sjogren`.
+- No se abrió PR.
+- No se introdujeron datos reales.
+- No hay integración real con JARA/SES/Pharmatool.
+
+## Recomendación PM
+
+**ready_for_human_review**, no merge automático.
+
+Orden recomendado de revisión manual:
+
+1. `farmacia_index.html` — CIP existentes, CIP nuevo, alta guiada y query params.
+2. `farmacia_validacion.html` — Pendiente/Validado/Denegado, motivo obligatorio, TXT/CSV.
+3. `farmacia_primera_visita.html` — precarga desde query params.
+4. `farmacia_seguimiento.html` — Morisky, optimización, suspensión, aviso cambio fármaco.
+5. `farmacia_dashboard_paciente.html` — timeline y bloques mínimos.
+6. Reuma sidebar — comprobar que la nueva entrada Farmacia no rompe navegación existente.
