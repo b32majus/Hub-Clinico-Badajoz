@@ -35,7 +35,9 @@ f029e20 fix(farmacia): update search hint with demo CIPs
 dd0b0fb docs: add nightly pharmacy implementation report
 c63286c fix(farmacia): correct demo workflows and hub styling
 3687577 fix(farmacia): add pharmacy entry to reuma navigation
-<current> docs(farmacia): update implementation report after PM corrections
+62e8c6a docs(farmacia): update implementation report after PM corrections
+ca59e9f fix(farmacia): add sri to pharmacy font awesome links
+<current> docs(farmacia): update report after SRI correction
 ```
 
 ## WOs revisadas
