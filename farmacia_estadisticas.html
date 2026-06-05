@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Estadísticas Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+</head>
+<body>
+<div class="hub-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
+        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
+        <div class="sidebar-nav-area">
+            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link active"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
+                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul></div>
+        </div>
+        <div class="sidebar-footer">v. 0.1 — demo</div>
+    </aside>
+    <main class="fh-main">
+        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
+        <div class="fh-hero">
+            <div class="fh-hero__text">
+                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Indicadores</p>
+                <h1 class="fh-hero__title">Estadísticas de Servicio</h1>
+                <p class="fh-hero__desc">Panel de indicadores del servicio de Farmacia Hospitalaria. <strong>Placeholder — pendiente de desarrollo tras validación de datos reales.</strong></p>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
+            <div class="fh-stat-card" style="background:#e3f2fd;border-radius:8px;padding:20px;text-align:center;">
+                <div style="font-size:2rem;font-weight:700;color:#0056b3;">6</div>
+                <div style="color:#555;font-size:0.9rem;">Pacientes activos</div>
+            </div>
+            <div class="fh-stat-card" style="background:#fff3cd;border-radius:8px;padding:20px;text-align:center;">
+                <div style="font-size:2rem;font-weight:700;color:#856404;">2</div>
+                <div style="color:#555;font-size:0.9rem;">Validaciones pendientes</div>
+            </div>
+            <div class="fh-stat-card" style="background:#d4edda;border-radius:8px;padding:20px;text-align:center;">
+                <div style="font-size:2rem;font-weight:700;color:#155724;">4</div>
+                <div style="color:#555;font-size:0.9rem;">Seguimientos este mes</div>
+            </div>
+            <div class="fh-stat-card" style="background:#f8d7da;border-radius:8px;padding:20px;text-align:center;">
+                <div style="font-size:2rem;font-weight:700;color:#721c24;">1</div>
+                <div style="color:#555;font-size:0.9rem;">Efectos adversos activos</div>
+            </div>
+        </div>
+
+        <div class="fh-card" style="text-align:center;padding:40px 20px;">
+            <i class="fas fa-chart-line" style="font-size:3rem;color:#ccc;margin-bottom:16px;"></i>
+            <p style="color:#888;font-size:1.1rem;">Dashboard poblacional completo en desarrollo.</p>
+            <p style="color:#aaa;font-size:0.9rem;">Esta sección se diseñará a partir de datos reales y necesidades del servicio.<br>Los indicadores actuales son valores demo de ejemplo.</p>
+        </div>
+    </main>
+</div>
+</body>
+</html>

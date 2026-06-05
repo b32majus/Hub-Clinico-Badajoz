@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Fármacos</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+</head>
+<body>
+<div class="hub-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
+        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
+        <div class="sidebar-nav-area">
+            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link active"><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
+                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul></div>
+        </div>
+        <div class="sidebar-footer">v. 0.1 — demo</div>
+    </aside>
+    <main class="fh-main">
+        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
+        <div class="fh-hero">
+            <div class="fh-hero__text">
+                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Catálogo</p>
+                <h1 class="fh-hero__title">Fármacos</h1>
+                <p class="fh-hero__desc">Catálogo terapéutico de Farmacia Hospitalaria. Datos demo sintéticos.</p>
+            </div>
+        </div>
+
+        <div class="fh-card">
+            <table class="fh-table" style="width:100%;border-collapse:collapse;">
+                <thead><tr style="background:#f5f5f5;text-align:left;">
+                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Principio activo</th>
+                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Nombre comercial</th>
+                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Indicaciones</th>
+                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Dosis frecuente</th>
+                    <th style="padding:10px 12px;border-bottom:2px solid #ddd;">Estado</th>
+                </tr></thead>
+                <tbody>
+                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Secukinumab</td><td>Cosentyx®</td><td>HS, Psoriasis, EspA</td><td>300 mg SC / 4 sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
+                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Adalimumab</td><td>Humira® / Amgevita®</td><td>AR, EspA, APs, HS, Crohn</td><td>40 mg SC / 2 sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
+                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Ustekinumab</td><td>Stelara®</td><td>Psoriasis, APs, Crohn</td><td>90 mg SC / 12 sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
+                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Rituximab</td><td>MabThera® / Truxima®</td><td>AR, LES, Sjögren</td><td>1000 mg IV / 6 meses</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
+                    <tr><td style="padding:10px 12px;border-bottom:1px solid #eee;">Belimumab</td><td>Benlysta®</td><td>LES</td><td>200 mg SC / sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
+                    <tr><td style="padding:10px 12px;">Abatacept</td><td>Orencia®</td><td>AR</td><td>125 mg SC / sem</td><td><span class="fh-status-badge fh-status-badge--validated" style="font-size:0.8rem;">Activo</span></td></tr>
+                </tbody>
+            </table>
+            <p style="color:#888;font-size:0.85rem;margin-top:12px;">Catálogo demo — 6 fármacos sintéticos representativos. No incluye todos los fármacos de la cartera del servicio.</p>
+        </div>
+    </main>
+</div>
+</body>
+</html>
