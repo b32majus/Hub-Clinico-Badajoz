@@ -28,30 +28,29 @@
 | **WO-001** | Gobernanza ejecutable (AGENTS.md, templates) | ✅ Merged | `work/hermes/wo-001-agent-governance` → `feature/...` | `f5177f7` → merge `f7e1083` | PR #2 mergeado por Cora |
 | **WO-001b** | Refinar plantilla reporte | ✅ Merged | `work/hermes/wo-001b-report-template-refinement` → `feature/...` | `cf4ed35` | Incluido en PR #2 |
 | **WO-002** | Contratos mínimos documentales | ⏸️ **Pausada** | `work/hermes/wo-002-contratos-minimos` | `fa59106` | **No mergear.** Borrador prematuro. Pendiente de diseñar formularios con Sil/Cora |
-| **WO-003** | Inventario técnico Reuma v2 | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `d4172d0` | Lote nocturno |
-| **WO-004** | Mapa de flujos actuales | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `1f61f9d` | Lote nocturno |
-| **WO-005** | Smoke test checklist | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `352fbe1` | Lote nocturno |
-| **WO-006** | Índice documental | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `6e20a2c` | Lote nocturno |
-| **WO-007** | Estado de ramas y decisiones | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `3f40902` | Lote nocturno |
-| **WO-008** | Auditoría riesgos técnicos | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `6414324` | Lote nocturno |
-| **WO-009** | Reporte lote nocturno | 📋 Ready for review | `work/hermes/nightly-green-docs-20260606` | `c9a1276` | Lote nocturno |
-| **WO-009b** | Corrección editorial lote nocturno | 📋 Ready for review | `work/hermes/wo-009b-correccion-editorial-lote-nocturno` | `16ff810` | |
-| **WO-010** | Canvas diseño formularios Enfermería/Farmacia | 📋 Ready for review | `work/hermes/wo-010-canvas-diseno-formularios` | `2c9d87b` | Pendiente de rellenar por Sil/Cora |
-| **WO-011** | Política de modelos y delegación | 🔄 **Superseded** | `work/hermes/wo-011-model-routing-governance` | `f4a9a33` | **Superseded by WO-012.** Contenido ya integrado en gobernanza principal. No mergear por separado |
-| **WO-012** | Governance hygiene and operations status | 📋 Ready for review | `work/hermes/wo-012-governance-hygiene-status` | `f6a74a0` | |
-| **WO-012b** | Governance hygiene status refinement | 📋 Ready for review | `work/hermes/wo-012b-status-risk-refinement` | `—` | Refina estados WO-011/012 y matiz riesgo contratos |
+| **WO-003** | Inventario técnico Reuma v2 | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `d4172d0` | Fusionado vía WO-009b |
+| **WO-004** | Mapa de flujos actuales | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `1f61f9d` | Fusionado vía WO-009b |
+| **WO-005** | Smoke test checklist | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `352fbe1` | Fusionado vía WO-009b |
+| **WO-006** | Índice documental | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `6e20a2c` | Fusionado vía WO-009b |
+| **WO-007** | Estado de ramas y decisiones | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `3f40902` | Fusionado vía WO-009b |
+| **WO-008** | Auditoría riesgos técnicos | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `6414324` | Fusionado vía WO-009b |
+| **WO-009** | Reporte lote nocturno | ✅ Merged | `work/hermes/nightly-green-docs-20260606` → `feature/...` | `c9a1276` | Fusionado vía WO-009b |
+| **WO-009b** | Corrección editorial lote nocturno | ✅ Merged | `work/hermes/wo-009b-correccion-editorial-lote-nocturno` → `feature/...` | `16ff810` | Fast-forward merge. Incluye WO-003 a WO-009 |
+| **WO-010** | Canvas diseño formularios Enfermería/Farmacia | ✅ Merged | `work/hermes/wo-010-canvas-diseno-formularios` → `feature/...` | `194bef0` | Merge commit |
+| **WO-011** | Política de modelos y delegación | 🔄 **Superseded** | `work/hermes/wo-011-model-routing-governance` | `f4a9a33` | **Superseded by WO-012/012b.** Contenido ya integrado en gobernanza principal. No mergear por separado |
+| **WO-012** | Governance hygiene and operations status | ✅ Merged | `work/hermes/wo-012-governance-hygiene-status` → `feature/...` | — | Fusionado vía WO-012b |
+| **WO-012b** | Governance hygiene status refinement | ✅ Merged | `work/hermes/wo-012b-status-risk-refinement` → `feature/...` | `97f673d` | Merge commit. Incluye WO-012 + refinamiento WO-012b |
 
-|---
+---
 
 ## Resumen
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 4 (Preflight 1, Preflight 2, WO-001, WO-001b) |
-| 📋 Ready for review | 12 (WO-003 a WO-010, WO-012, WO-012b) |
+| ✅ Merged | 15 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b) |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 18 work orders / preflights gestionadas.
+**Total:** 17 work orders / preflights gestionadas.
