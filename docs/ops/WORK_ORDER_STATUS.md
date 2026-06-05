@@ -40,8 +40,8 @@
 | **WO-011** | Política de modelos y delegación | 🔄 **Superseded** | `work/hermes/wo-011-model-routing-governance` | `f4a9a33` | **Superseded by WO-012/012b.** Contenido ya integrado en gobernanza principal. No mergear por separado |
 | **WO-012** | Governance hygiene and operations status | ✅ Merged | `work/hermes/wo-012-governance-hygiene-status` → `feature/...` | — | Fusionado vía WO-012b |
 | **WO-012b** | Governance hygiene status refinement | ✅ Merged | `work/hermes/wo-012b-status-risk-refinement` → `feature/...` | `97f673d` | Merge commit. Incluye WO-012 + refinamiento WO-012b |
-| **WO-013** | Alinear documentación canónica del Hub Clínico Badajoz | 📋 Ready for review | `work/hermes/wo-013-canonical-docs-alignment` | — | README, ARCHITECTURE, ARQUITECTURA_FUNCIONAL, INDEX, WO_STATUS |
-| **WO-013b** | Corregir criterios de avance en arquitectura funcional | 📋 Ready for review | `work/hermes/wo-013b-fix-advancement-criteria` | — | Canvas marcado como pendiente, no completado |
+| **WO-013** | Alinear documentación canónica del Hub Clínico Badajoz | ✅ **Merged** | `work/hermes/wo-013-canonical-docs-alignment` → `feature/...` | `da39ace` | Integrado vía WO-013b. Fast-forward en rama viva |
+| **WO-013b** | Corregir criterios de avance en arquitectura funcional | ✅ **Merged** | `work/hermes/wo-013b-fix-advancement-criteria` → `feature/...` | `1ed2e9b` | Fast-forward merge a rama viva. Incluye WO-013
 
 ---
 
@@ -49,8 +49,8 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 15 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b) |
-| 📋 Ready for review | 2 (WO-013, WO-013b) |
+| ✅ Merged | 17 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b) |
+| 📋 Ready for review | 0 |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
