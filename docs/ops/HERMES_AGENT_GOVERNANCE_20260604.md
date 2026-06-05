@@ -282,7 +282,29 @@ Migración React, backend real, cambios en Excel maestro/contrato de 497 columna
 
 ---
 
-## 14. Siguientes archivos a crear
+## 14. Modelo de routing operativo
+
+Define qué modelo/tool puede ejecutar cada tipo de tarea según su nivel de riesgo.
+
+| Nivel | Tipo de tarea | Modelo permitido | Delegación | Ejemplos | Condición de parada |
+|-------|--------------|-----------------|-----------|----------|-------------------|
+| 🟢 **Verde** | Documentación, índices, inventarios, checklists, reportes, lectura de código, cambios Markdown de bajo riesgo | DeepSeek v4 Flash (Hermes brain) | Ejecución directa por Hermes | WO-003 inventario, WO-004 flujos, WO-005 checklist, WO-006 índice, WO-007 snapshot, WO-008 auditoría, WO-009 reporte, WO-011 gobernanza | Tarea mal acotada, ambigüedad, necesidad de decisión clínica |
+| 🟡 **Amarillo** | Código funcional acotado, refactor localizado, carga multiarchivo, normalización de datos, pruebas automatizadas, cambios multiarchivo limitados | DeepSeek v4 Pro (OpenCode Builder) | Delegar a OpenCode Builder por work order | Implementación de perfiles, carga multiarchivo, normalización longitudinal, tests | Fallo repetido (2 intentos), cambio de alcance, riesgo de tocar datos reales |
+| 🔴 **Rojo** | Arquitectura, backend, migración React, contratos definitivos, decisiones clínicas, seguridad, datos, cambios en ramas protegidas, Excel maestro | GPT/Codex PM o Sil/Cora | Escalar siempre. No ejecutar sin autorización explícita | Migración React, backend real, contrato 497 columnas, nuevas dependencias, cambios arquitectura | Cualquier intento de ejecución sin autorización es condición de parada inmediata |
+
+### Reglas de routing
+
+1. **DeepSeek v4 Flash** puede usarse para tareas verdes documentales perfectamente acotadas. No requiere delegación externa.
+2. **DeepSeek v4 Flash NO debe usarse** para decidir arquitectura, diseñar formularios clínicos, crear contratos definitivos, tocar código funcional complejo, cambiar Excel/contratos o introducir dependencias. Si una tarea documental deriva en necesidad de cambio funcional, debe detenerse y escalar.
+3. **DeepSeek v4 Pro / OpenCode Builder** es el ejecutor de tareas amarillas. Hermes prepara la work order, delega la implementación, audita el resultado y commitea. Hermes no implementa directamente tareas amarillas.
+4. **GPT/Codex PM** es el planificador/auditor de tareas rojas. No ejecuta directamente; delega a OpenCode Builder o espera instrucción de Sil/Cora.
+5. **El buen resultado del lote nocturno documental (2026-06-05) no autoriza a Flash a ejecutar tareas funcionales o clínicas fuera de alcance.** El éxito en documentación verde no es validación para código amarillo/rojo.
+6. **Hermes puede ejecutar directamente tareas verdes documentales si están perfectamente acotadas; debe delegar o escalar tareas amarillas/rojas.**
+7. **Si hay duda sobre el nivel de riesgo de una tarea, escalar a Sil/Cora antes de ejecutar.** El coste de escalar es menor que el coste de una ejecución incorrecta.
+
+---
+
+## 15. Siguientes archivos a crear
 
 Una vez clonado el repo en VPS:
 
@@ -296,7 +318,7 @@ Estos archivos convierten esta gobernanza en instrucciones ejecutables para Herm
 
 ---
 
-## 15. Primeras work orders recomendadas
+## 16. Primeras work orders recomendadas
 
 1. `WO-001`: crear `AGENTS.md` del repo.
 2. `WO-002`: crear plantillas operativas.
@@ -309,7 +331,7 @@ No empezar por código funcional hasta validar esta cadena.
 
 ---
 
-## 16. Primer preflight recomendado
+## 17. Primer preflight recomendado
 
 Antes de crear `AGENTS.md`, lanzar a Hermes una tarea de preflight para comprobar:
 
@@ -322,8 +344,55 @@ Antes de crear `AGENTS.md`, lanzar a Hermes una tarea de preflight para comproba
 
 ---
 
-## 17. Regla final
+## 18. Regla final
 
 > La velocidad vendrá de la gobernanza, no de soltar agentes antes de tiempo.
 
 Primero se valida el taller. Después se lanzan work orders.
+
+---
+
+## 19. Governance hygiene — observaciones abiertas
+
+### 19.1 Pre-commit / CI (prioridad siguiente, no implementar aún)
+
+Se identifica como necesidad crítica a medio plazo la incorporación de:
+
+- **Pre-commit hooks** que validen: ausencia de datos reales (DNI, NHC, teléfonos, emails), cambios en rutas prohibidas, formato Markdown básico
+- **GitHub Actions** para validación en CI: lint básico, smoke test automatizado, validación de estructura
+
+**Esta prioridad está identificada pero no debe implementarse sin diseño previo y work order específica.** No crear `.github/workflows/`, no instalar pre-commit, no modificar scripts.
+
+Motivo: requiere decidir tecnología (husky + lint-staged, pre-commit framework, Action oficial), alcance y criterios de fallo antes de implementar.
+
+### 19.2 CRLF/LF — riesgo menor pendiente de .gitattributes
+
+El repo usa finales de línea CRLF (Windows). Hermes genera archivos con LF (Linux). Cada commit muestra warnings de normalización. No afecta a la funcionalidad pero ensucia diffs y puede causar conflictos en merges con editores mixtos.
+
+Solución pendiente: crear `.gitattributes` con:
+
+```text
+* text=auto
+*.md text
+*.html text
+*.css text
+*.js text
+*.py text
+*.xlsx binary
+```
+
+No implementar sin work order.
+
+### 19.3 WO-002 — contratos mínimos, pausada
+
+WO-002 (`work/hermes/wo-002-contratos-minimos`) contiene borradores de contratos de evento longitudinal, Enfermería y Farmacia. Está **pausada** y no debe mergearse. Los archivos existen en una rama separada para referencia exploratoria, no como contrato definitivo.
+
+Ver `docs/ops/WORK_ORDER_STATUS.md` para estado actualizado.
+
+### 19.4 Tablero de estado
+
+`docs/ops/WORK_ORDER_STATUS.md` contiene el estado de todas las WOs ejecutadas. Debe actualizarse al mergear, pausar o descartar cada WO.
+
+### 19.5 Política de limpieza de ramas
+
+`docs/ops/BRANCH_CLEANUP_POLICY.md` define cuándo y cómo borrar ramas `work/hermes/*` una vez mergeadas.
