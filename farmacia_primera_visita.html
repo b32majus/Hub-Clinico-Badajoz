@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Primera Visita Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+</head>
+<body>
+<div class="hub-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
+        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
+        <div class="sidebar-nav-area">
+            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link active"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
+                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul></div>
+        </div>
+        <div class="sidebar-footer">v. 0.1 — demo</div>
+    </aside>
+    <main class="fh-main">
+        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
+        <div class="fh-hero">
+            <div class="fh-hero__text">
+                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Primera Visita</p>
+                <h1 class="fh-hero__title">Primera Visita / Administración</h1>
+                <p class="fh-hero__desc">Registre el inicio del seguimiento farmacoterapéutico del paciente.</p>
+            </div>
+        </div>
+
+        <!-- CIP Lookup -->
+        <div class="fh-card">
+            <div class="fh-form-row">
+                <div style="flex:2;"><label class="fh-label">CIP del paciente</label><input type="text" class="fh-input" id="fhPvCip" placeholder="CIP-DEMO-FH-001" style="max-width:300px;"></div>
+                <div style="display:flex;align-items:flex-end;padding-bottom:4px;">
+                    <button type="button" class="fh-btn fh-btn--primary" id="fhPvBuscar"><i class="fas fa-search"></i> Buscar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos precargados -->
+        <div class="fh-card hidden" id="fhPvPrecargados">
+            <h2 class="fh-section-heading" style="margin-top:0;">Datos del paciente</h2>
+            <div class="fh-form-row">
+                <div><label class="fh-label">CIP</label><input type="text" class="fh-input" id="fhPvCipMostrar" readonly></div>
+                <div><label class="fh-label">Servicio origen</label><input type="text" class="fh-input" id="fhPvServicio" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Patología</label><input type="text" class="fh-input" id="fhPvPatologia" readonly></div>
+                <div><label class="fh-label">Fármaco activo</label><input type="text" class="fh-input" id="fhPvFarmaco" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Dosis</label><input type="text" class="fh-input" id="fhPvDosis" readonly></div>
+                <div><label class="fh-label">Pauta</label><input type="text" class="fh-input" id="fhPvPauta" readonly></div>
+                <div><label class="fh-label">Vía</label><input type="text" class="fh-input" id="fhPvVia" readonly></div>
+            </div>
+        </div>
+
+        <!-- Formulario primera visita -->
+        <div class="fh-card hidden" id="fhPvFormulario">
+            <h2 class="fh-section-heading" style="margin-top:0;">Registro de Primera Visita</h2>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Fecha primera visita / administración</label><input type="date" class="fh-input" id="fhPvFecha"></div>
+                <div><label class="fh-label">¿Se realiza inducción?</label>
+                    <select class="fh-select" id="fhPvInduccion"><option value="no">No</option><option value="si">Sí</option></select>
+                </div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Nivel de estratificación</label>
+                    <select class="fh-select" id="fhPvEstratificacion">
+                        <option value="">Seleccionar...</option>
+                        <option value="Nivel 1">Nivel 1</option>
+                        <option value="Nivel 2">Nivel 2</option>
+                        <option value="Nivel 3">Nivel 3</option>
+                    </select>
+                    <small style="display:block;color:#666;margin-top:4px;">Basado en estratificación CMO/MAPEX. Selección manual para demo.</small>
+                </div>
+                <div><label class="fh-label">PROMs basales</label>
+                    <select class="fh-select" id="fhPvProms"><option value="no">No</option><option value="si">Sí</option></select>
+                </div>
+            </div>
+            <div class="fh-form-row fh-form-row--full hidden" id="fhPvPromsRow">
+                <div><label class="fh-label">Resultado PROM basal</label><textarea class="fh-textarea" id="fhPvPromsResultado" rows="2" placeholder="Score o resultado del cuestionario basal..."></textarea></div>
+            </div>
+            <div class="fh-form-row fh-form-row--full">
+                <div><label class="fh-label">Notas farmacoterapéuticas</label><textarea class="fh-textarea" id="fhPvNotas" rows="3" placeholder="Observaciones sobre la primera visita..."></textarea></div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="button" class="fh-btn fh-btn--primary" id="fhPvGuardar"><i class="fas fa-save"></i> Guardar primera visita</button>
+            </div>
+            <div id="fhPvResultado" class="fh-result-box hidden" style="margin-top:16px;"></div>
+        </div>
+    </main>
+</div>
+<script>
+(function () {
+    var DEMO_PATIENTS = {
+        'CIP-DEMO-FH-001': { servicio:'Dermatología', patologia:'Hidradenitis supurativa', farmaco:'Secukinumab 300 mg', dosis:'300 mg', pauta:'SC / 4 semanas (mantenimiento)', via:'SC' },
+        'CIP-DEMO-FH-003': { servicio:'Reumatología', patologia:'Artritis Reumatoide (AR)', farmaco:'Adalimumab 40 mg', dosis:'40 mg', pauta:'SC / 2 semanas', via:'SC' }
+    };
+
+    document.getElementById('fhPvBuscar').addEventListener('click', function () {
+        var cip = document.getElementById('fhPvCip').value.trim().toUpperCase();
+        var precarga = document.getElementById('fhPvPrecargados');
+        var form = document.getElementById('fhPvFormulario');
+        precarga.classList.add('hidden');
+        form.classList.add('hidden');
+        if (!cip) { alert('Introduzca un CIP.'); return; }
+        var p = DEMO_PATIENTS[cip];
+        if (!p) { alert('Paciente no encontrado en datos demo. CIPs disponibles: CIP-DEMO-FH-001 (HS/Derma), CIP-DEMO-FH-003 (AR/Reuma).'); return; }
+        document.getElementById('fhPvCipMostrar').value = cip;
+        document.getElementById('fhPvServicio').value = p.servicio;
+        document.getElementById('fhPvPatologia').value = p.patologia;
+        document.getElementById('fhPvFarmaco').value = p.farmaco;
+        document.getElementById('fhPvDosis').value = p.dosis;
+        document.getElementById('fhPvPauta').value = p.pauta;
+        document.getElementById('fhPvVia').value = p.via;
+        precarga.classList.remove('hidden');
+        form.classList.remove('hidden');
+        if (!document.getElementById('fhPvFecha').value) document.getElementById('fhPvFecha').value = new Date().toISOString().slice(0,10);
+    });
+
+    document.getElementById('fhPvProms').addEventListener('change', function () {
+        document.getElementById('fhPvPromsRow').classList.toggle('hidden', this.value !== 'si');
+    });
+
+    document.getElementById('fhPvGuardar').addEventListener('click', function () {
+        if (!document.getElementById('fhPvEstratificacion').value) { alert('Seleccione el nivel de estratificación.'); return; }
+        var r = document.getElementById('fhPvResultado');
+        r.classList.remove('hidden');
+        r.className = 'fh-result-box fh-result-box--success';
+        r.innerHTML = '<i class="fas fa-check-circle"></i> Primera visita registrada — CIP: ' + document.getElementById('fhPvCipMostrar').value +
+            ' | Fecha: ' + document.getElementById('fhPvFecha').value +
+            ' | Estratificación: ' + document.getElementById('fhPvEstratificacion').value +
+            '<br><small style="opacity:0.7;">Demo — datos almacenados en memoria de sesión.</small>';
+        r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+})();
+</script>
+</body>
+</html>
