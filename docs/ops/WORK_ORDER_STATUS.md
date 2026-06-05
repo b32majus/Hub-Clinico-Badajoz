@@ -40,6 +40,7 @@
 | **WO-011** | Política de modelos y delegación | 🔄 **Superseded** | `work/hermes/wo-011-model-routing-governance` | `f4a9a33` | **Superseded by WO-012/012b.** Contenido ya integrado en gobernanza principal. No mergear por separado |
 | **WO-012** | Governance hygiene and operations status | ✅ Merged | `work/hermes/wo-012-governance-hygiene-status` → `feature/...` | — | Fusionado vía WO-012b |
 | **WO-012b** | Governance hygiene status refinement | ✅ Merged | `work/hermes/wo-012b-status-risk-refinement` → `feature/...` | `97f673d` | Merge commit. Incluye WO-012 + refinamiento WO-012b |
+| **WO-013** | Alinear documentación canónica del Hub Clínico Badajoz | 📋 Ready for review | `work/hermes/wo-013-canonical-docs-alignment` | — | README, ARCHITECTURE, ARQUITECTURA_FUNCIONAL, INDEX, WO_STATUS |
 
 ---
 
@@ -48,9 +49,10 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 15 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b) |
+| 📋 Ready for review | 1 (WO-013) |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 17 work orders / preflights gestionadas.
+**Total:** 18 work orders / preflights gestionadas.

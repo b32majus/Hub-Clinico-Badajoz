@@ -21,7 +21,8 @@
 
 | Documento | Ubicación | Propósito |
 |-----------|-----------|-----------|
-| Decisiones de evolución | [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Decisiones cerradas (DEC-001 a DEC-016) que guían el desarrollo |
+| Decisiones de evolución | [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Decisiones cerradas (DEC-001 a DEC-017) que guían el desarrollo |
+| Arquitectura funcional v2.1 | [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Visión funcional del sistema actual y planificado (recomendado como primera lectura) |
 | Plan de implementación Reuma v2 | [`docs/PLAN_IMPLEMENTACION_REUMA_V2.md`](/docs/PLAN_IMPLEMENTACION_REUMA_V2.md) | Plan detallado de implementación v2 (3.500 líneas) |
 
 ---
@@ -99,4 +100,18 @@
 | Contrato de datos unificado | [`docs/CONTRATO_DATOS_UNIFICADO.md`](/docs/CONTRATO_DATOS_UNIFICADO.md) |
 | Decisiones estructura Excel demo v2 | [`docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md`](/docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md) |
 | Mejoras propuestas | [`docs/MEJORAS_PROPUESTAS.md`](/docs/MEJORAS_PROPUESTAS.md) |
-| Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
+|| Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
+
+---
+
+## Orden de lectura recomendado
+
+Para entender el proyecto desde cero:
+
+1. **`README.md`** — visión general del proyecto.
+2. **`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`** — arquitectura funcional: qué hace y hacia dónde va.
+3. **`ARCHITECTURE.md`** — detalle técnico de implementación.
+4. **`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`** — decisiones cerradas y roadmap completo.
+5. **`AGENTS.md`** — reglas operativas para agentes.
+6. **`docs/ops/WORK_ORDER_STATUS.md`** — estado actual de ejecución.
+7. Según interés: `docs/ops/INVENTARIO_TECNICO_*`, `docs/ops/MAPA_FLUJOS_*`, `docs/ops/AUDITORIA_RIESGOS_*`.
