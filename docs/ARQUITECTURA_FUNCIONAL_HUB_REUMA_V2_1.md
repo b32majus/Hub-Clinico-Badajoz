@@ -228,11 +228,13 @@ Ver `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md` para detalle.
 
 Para pasar de la fase actual de diseño funcional a contratos definitivos, deben cumplirse:
 
-1. ✅ **Canvas de diseño completado** por Sil/Cora (WO-010).
-2. ✅ **Decisiones clínicas documentadas**: qué datos necesita cada perfil, qué es obligatorio, qué es calculado.
+1. ⏸️ **Canvas creado (WO-010), pendiente de completar por Sil/Cora.**
+2. ⏸️ **Decisiones clínicas pendientes de documentar**: datos por perfil, obligatoriedad, cálculos, visibilidad, alertas y timeline.
 3. ⏸️ **Validación con el equipo clínico** (Reumatología, Enfermería, Farmacia).
 4. ⏸️ **Definición de contratos de datos** por perfil (basados en el canvas, no en el Excel actual).
 5. ⏸️ **Aprobación de Sil/Cora** para pasar de borrador exploratorio a contrato definitivo.
+
+> ⚠️ **Importante:** WO-010 creó el canvas de trabajo; no equivale a formulario validado ni a contrato funcional. Los contratos definitivos solo pueden derivarse del canvas completado y validado por Sil/Cora.
 
 Mientras estos criterios no se cumplan, los documentos en `docs/contratos/` tienen estado ⏸️ **Pausada/exploratorio** y no deben usarse como base de implementación.
 
