@@ -38,15 +38,17 @@
 
 ---
 
-## 4. Contratos mínimos interservicios (WO-002 — pendiente de merge)
+## 4. Contratos mínimos interservicios (WO-002 — rama pausada, no mergeada)
 
-| Documento | Ubicación | Estado |
+> ⚠️ **Importante:** WO-002 está en pausa. Los contratos listados abajo existen solo en la rama `work/hermes/wo-002-contratos-minimos`, que **NO está mergeada** a la rama viva. No enlazan a archivos disponibles en la rama actual.
+>
+> Pendientes de validación con Sil/Cora. No deben usarse como base para implementación hasta decisión humana.
+
+| Documento | Ubicación (en rama WO-002) | Estado |
 |-----------|-----------|--------|
-| Evento longitudinal común v1 | [`docs/contratos/CONTRATO_EVENTO_LONGITUDINAL_COMUN_V1.md`](/docs/contratos/CONTRATO_EVENTO_LONGITUDINAL_COMUN_V1.md) | 🔴 **Borrador exploratorio — no usar como fuente definitiva** |
-| Enfermería Reuma v1 | [`docs/contratos/CONTRATO_ENFERMERIA_REUMA_V1.md`](/docs/contratos/CONTRATO_ENFERMERIA_REUMA_V1.md) | 🔴 **Borrador exploratorio — no usar como fuente definitiva** |
-| Farmacia Reuma v1 | [`docs/contratos/CONTRATO_FARMACIA_REUMA_V1.md`](/docs/contratos/CONTRATO_FARMACIA_REUMA_V1.md) | 🔴 **Borrador exploratorio — no usar como fuente definitiva** |
-
-> ⚠️ **Importante**: WO-002 está en pausa. Los contratos de `docs/contratos/` están en una rama sin mergear y pendientes de validación con Sil/Cora. No deben usarse como base para implementación hasta decisión humana.
+| Evento longitudinal común v1 | `docs/contratos/CONTRATO_EVENTO_LONGITUDINAL_COMUN_V1.md` | 🔴 **Borrador exploratorio — no usar como fuente definitiva** |
+| Enfermería Reuma v1 | `docs/contratos/CONTRATO_ENFERMERIA_REUMA_V1.md` | 🔴 **Borrador exploratorio — no usar como fuente definitiva** |
+| Farmacia Reuma v1 | `docs/contratos/CONTRATO_FARMACIA_REUMA_V1.md` | 🔴 **Borrador exploratorio — no usar como fuente definitiva** |
 
 ---
 
