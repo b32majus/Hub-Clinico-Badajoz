@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Farmacia Hospitalaria</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+</head>
+<body>
+<div class="hub-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-circle"><span class="logo-text">FH</span></div>
+            <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+        </div>
+
+        <div class="fh-profile-badge">
+            <i class="fas fa-id-badge" aria-hidden="true"></i>
+            <span>Perfil: Farmacia Hospitalaria</span>
+        </div>
+
+        <div class="sidebar-nav-area">
+            <div class="nav-section">
+                <h3 class="nav-title">Farmacia</h3>
+                <ul class="nav-list">
+                    <li><a href="farmacia_index.html" class="nav-link active"><i class="fas fa-search"></i>Buscador CIP</a></li>
+                    <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
+                    <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                    <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                    <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <h3 class="nav-title">Gestión</h3>
+                <ul class="nav-list">
+                    <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <h3 class="nav-title">Módulos</h3>
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-footer">v. 0.1 — demo</div>
+    </aside>
+
+    <main class="fh-main">
+        <!-- Demo banner -->
+        <div class="fh-demo-banner">
+            <i class="fas fa-flask" aria-hidden="true"></i>
+            <span><strong>Demo v0.1 — Datos sintéticos.</strong> Esta versión es un prototipo funcional con pacientes ficticios. No contiene datos reales de pacientes. No hay integración real con JARA ni con sistemas clínicos.</span>
+        </div>
+
+        <!-- Hero -->
+        <div class="fh-hero">
+            <div class="fh-hero__text">
+                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Hub Clínico Badajoz</p>
+                <h1 class="fh-hero__title">Buscador de Pacientes</h1>
+                <p class="fh-hero__desc">Introduzca el CIP del paciente para acceder a su ficha farmacoterapéutica, validar solicitudes o registrar visitas.</p>
+            </div>
+            <div class="fh-hero__badge">
+                <div class="fh-hero__badge-icon">
+                    <i class="fas fa-mortar-pestle" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <span class="fh-hero__badge-label">Módulo</span>
+                    <span class="fh-hero__badge-value">Farmacia<br>Hospitalaria</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CIP Search -->
+        <div class="fh-search-card">
+            <span class="fh-search-label"><i class="fas fa-search" aria-hidden="true"></i> &nbsp;Búsqueda por CIP</span>
+            <div class="fh-search-row">
+                <input type="text" id="fhCipInput" class="fh-search-input" placeholder="Ej. CIP-DEMO-FH-001" maxlength="24" autocomplete="off" spellcheck="false">
+                <button type="button" class="fh-search-btn" id="fhSearchBtn">
+                    <i class="fas fa-search" aria-hidden="true"></i> Buscar paciente
+                </button>
+            </div>
+            <p class="fh-search-hint">Demo: pruebe con CIP <strong>CIP-DEMO-FH-001</strong> (Dermatología / HS) o <strong>CIP-DEMO-FH-003</strong> (Reumatología / AR).</p>
+        </div>
+
+        <!-- Quick view: patient found (hidden by default) -->
+        <div class="fh-quick-view hidden" id="fhQuickView">
+            <div class="fh-qv-header">
+                <div class="fh-qv-id">
+                    <span class="fh-qv-name" id="fhQvName">—</span>
+                    <span class="fh-qv-cip" id="fhQvCip">CIP: —</span>
+                </div>
+                <span class="fh-status-badge" id="fhQvStatusBadge"></span>
+            </div>
+            <div class="fh-qv-grid" id="fhQvGrid"></div>
+            <div class="fh-qv-actions" id="fhQvActions"></div>
+        </div>
+
+        <!-- Alta guiada: patient not found (hidden by default) -->
+        <div class="fh-alta-card hidden" id="fhAltaCard">
+            <h2 class="fh-alta-card__title"><i class="fas fa-user-plus" aria-hidden="true"></i> Paciente no encontrado — Alta guiada</h2>
+            <p class="fh-alta-card__desc">El CIP introducido no aparece en ninguna fuente disponible. Complete los datos para crear un episodio de Farmacia Hospitalaria.</p>
+
+            <div class="fh-form-row">
+                <div>
+                    <label class="fh-label" for="fhAltaServicio">Servicio origen</label>
+                    <select class="fh-select" id="fhAltaServicio">
+                        <option value="">Seleccionar...</option>
+                        <option value="dermatologia">Dermatología</option>
+                        <option value="reumatologia">Reumatología</option>
+                        <option value="digestivo">Digestivo</option>
+                        <option value="oncologia">Oncología</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="fh-label" for="fhAltaPatologia">Patología / indicación</label>
+                    <select class="fh-select" id="fhAltaPatologia" disabled>
+                        <option value="">Seleccionar servicio primero...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="fh-label" for="fhAltaPuntoEntrada">Punto de entrada</label>
+                    <select class="fh-select" id="fhAltaPuntoEntrada">
+                        <option value="">Seleccionar...</option>
+                        <option value="validacion">Validación farmacoterapéutica</option>
+                        <option value="primera_visita">Primera visita Farmacia</option>
+                        <option value="seguimiento">Visita de seguimiento</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <a href="#" class="fh-btn fh-btn--primary" id="fhAltaAcceder">
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i> Iniciar episodio
+                </a>
+                <button type="button" class="fh-btn fh-btn--outline" id="fhAltaCancelar">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick nav cards -->
+        <p class="fh-section-heading">Accesos rápidos</p>
+        <div class="fh-action-grid">
+            <a href="farmacia_validacion.html" class="fh-action-card">
+                <div class="fh-action-card__icon"><i class="fas fa-check-double" aria-hidden="true"></i></div>
+                <div class="fh-action-card__title">Validación</div>
+                <div class="fh-action-card__desc">Revisar y validar solicitudes farmacoterapéuticas pendientes.</div>
+            </a>
+            <a href="farmacia_primera_visita.html" class="fh-action-card">
+                <div class="fh-action-card__icon"><i class="fas fa-plus-circle" aria-hidden="true"></i></div>
+                <div class="fh-action-card__title">Primera Visita</div>
+                <div class="fh-action-card__desc">Registrar el inicio del seguimiento farmacoterapéutico.</div>
+            </a>
+            <a href="farmacia_seguimiento.html" class="fh-action-card">
+                <div class="fh-action-card__icon"><i class="fas fa-clipboard-list" aria-hidden="true"></i></div>
+                <div class="fh-action-card__title">Seguimiento</div>
+                <div class="fh-action-card__desc">Registrar evolución, adherencia y efectos adversos.</div>
+            </a>
+            <a href="farmacia_dashboard_paciente.html" class="fh-action-card">
+                <div class="fh-action-card__icon"><i class="fas fa-user-circle" aria-hidden="true"></i></div>
+                <div class="fh-action-card__title">Dashboard Paciente</div>
+                <div class="fh-action-card__desc">Visión longitudinal del episodio farmacoterapéutico.</div>
+            </a>
+            <a href="farmacia_estadisticas.html" class="fh-action-card">
+                <div class="fh-action-card__icon"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+                <div class="fh-action-card__title">Estadísticas</div>
+                <div class="fh-action-card__desc">Panel de indicadores del servicio de Farmacia.</div>
+            </a>
+            <a href="farmacia_farmacos.html" class="fh-action-card">
+                <div class="fh-action-card__icon"><i class="fas fa-pills" aria-hidden="true"></i></div>
+                <div class="fh-action-card__title">Fármacos</div>
+                <div class="fh-action-card__desc">Catálogo terapéutico de Farmacia Hospitalaria.</div>
+            </a>
+        </div>
+    </main>
+</div>
+
+<script>
+/* farmacia_index — buscador demo (datos sintéticos hardcoded) */
+(function () {
+    var DEMO_PATIENTS = {
+        'CIP-DEMO-FH-001': {
+            nombre: 'Paciente Demo FH-001',
+            cip: 'CIP-DEMO-FH-001',
+            servicio: 'Dermatología',
+            patologia: 'Hidradenitis supurativa',
+            farmaco: 'Secukinumab 300 mg',
+            pauta: 'SC / 4 semanas (mantenimiento)',
+            estado: 'pending',
+            estadoLabel: 'Pendiente validación',
+            ultimaVisita: '—',
+            adherencia: '—'
+        },
+        'CIP-DEMO-FH-003': {
+            nombre: 'Paciente Demo FH-003',
+            cip: 'CIP-DEMO-FH-003',
+            servicio: 'Reumatología',
+            patologia: 'Artritis Reumatoide (AR)',
+            farmaco: 'Adalimumab 40 mg',
+            pauta: 'SC / 2 semanas',
+            estado: 'validated',
+            estadoLabel: 'Validado',
+            ultimaVisita: '2026-05-20',
+            adherencia: 'Alta'
+        }
+    };
+
+    var PATOLOGIAS_POR_SERVICIO = {
+        dermatologia: ['Hidradenitis supurativa', 'Psoriasis', 'Dermatitis atópica', 'Vitíligo', 'Alopecia areata'],
+        reumatologia: ['Artritis Reumatoide (AR)', 'Espondiloartritis (EspA)', 'Artritis Psoriásica (APs)', 'LES', 'Síndrome de Sjögren'],
+        digestivo: ['Enfermedad de Crohn', 'Colitis Ulcerosa', 'Otro'],
+        oncologia: ['Especificar en campo libre'],
+        otro: ['Especificar en campo libre']
+    };
+
+    var STATUS_CLASS = {
+        validated: 'fh-status-badge--validated',
+        pending: 'fh-status-badge--pending',
+        denied: 'fh-status-badge--denied'
+    };
+
+    var QV_ACTIONS = {
+        validated: [
+            { label: 'Primera Visita', icon: 'fa-plus-circle', href: 'farmacia_primera_visita.html', cls: 'fh-btn--primary' },
+            { label: 'Seguimiento', icon: 'fa-clipboard-list', href: 'farmacia_seguimiento.html', cls: 'fh-btn--secondary' },
+            { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', cls: 'fh-btn--outline' }
+        ],
+        pending: [
+            { label: 'Validación', icon: 'fa-check-double', href: 'farmacia_validacion.html', cls: 'fh-btn--primary' },
+            { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', cls: 'fh-btn--outline' }
+        ]
+    };
+
+    function search() {
+        var cip = document.getElementById('fhCipInput').value.trim();
+        var qv = document.getElementById('fhQuickView');
+        var alta = document.getElementById('fhAltaCard');
+
+        qv.classList.add('hidden');
+        alta.classList.add('hidden');
+
+        if (!cip) return;
+
+        var patient = DEMO_PATIENTS[cip];
+        if (patient) {
+            showQuickView(patient);
+        } else {
+            alta.classList.remove('hidden');
+            alta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    function showQuickView(p) {
+        document.getElementById('fhQvName').textContent = p.nombre;
+        document.getElementById('fhQvCip').textContent = 'CIP: ' + p.cip;
+
+        var badge = document.getElementById('fhQvStatusBadge');
+        badge.textContent = p.estadoLabel;
+        badge.className = 'fh-status-badge ' + (STATUS_CLASS[p.estado] || '');
+
+        var fields = [
+            { label: 'Servicio origen', value: p.servicio },
+            { label: 'Patología', value: p.patologia },
+            { label: 'Fármaco activo', value: p.farmaco },
+            { label: 'Pauta', value: p.pauta },
+            { label: 'Última visita FH', value: p.ultimaVisita },
+            { label: 'Adherencia', value: p.adherencia }
+        ];
+        var grid = document.getElementById('fhQvGrid');
+        grid.innerHTML = fields.map(function (f) {
+            return '<div class="fh-qv-field"><span class="fh-qv-field__label">' + f.label + '</span><span class="fh-qv-field__value">' + f.value + '</span></div>';
+        }).join('');
+
+        var actions = QV_ACTIONS[p.estado] || QV_ACTIONS['pending'];
+        var actionsEl = document.getElementById('fhQvActions');
+        actionsEl.innerHTML = actions.map(function (a) {
+            return '<a href="' + a.href + '" class="fh-btn ' + a.cls + '"><i class="fas ' + a.icon + '" aria-hidden="true"></i> ' + a.label + '</a>';
+        }).join('');
+
+        var qv = document.getElementById('fhQuickView');
+        qv.classList.remove('hidden');
+        qv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    document.getElementById('fhSearchBtn').addEventListener('click', search);
+    document.getElementById('fhCipInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') search();
+    });
+
+    document.getElementById('fhAltaCancelar').addEventListener('click', function () {
+        document.getElementById('fhAltaCard').classList.add('hidden');
+    });
+
+    var altaServicio = document.getElementById('fhAltaServicio');
+    var altaPatologia = document.getElementById('fhAltaPatologia');
+    altaServicio.addEventListener('change', function () {
+        var pats = PATOLOGIAS_POR_SERVICIO[altaServicio.value] || [];
+        altaPatologia.innerHTML = '<option value="">Seleccionar...</option>' +
+            pats.map(function (p) { return '<option value="' + p + '">' + p + '</option>'; }).join('');
+        altaPatologia.disabled = pats.length === 0;
+    });
+
+    document.getElementById('fhAltaAcceder').addEventListener('click', function (e) {
+        e.preventDefault();
+        var punto = document.getElementById('fhAltaPuntoEntrada').value;
+        var destinos = {
+            validacion: 'farmacia_validacion.html',
+            primera_visita: 'farmacia_primera_visita.html',
+            seguimiento: 'farmacia_seguimiento.html'
+        };
+        if (destinos[punto]) {
+            window.location.href = destinos[punto];
+        } else {
+            alert('Seleccione un punto de entrada para continuar.');
+        }
+    });
+})();
+</script>
+</body>
+</html>
