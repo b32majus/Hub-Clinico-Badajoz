@@ -282,7 +282,27 @@ Migración React, backend real, cambios en Excel maestro/contrato de 497 columna
 
 ---
 
-## 14. Siguientes archivos a crear
+## 14. Modelo de routing operativo
+
+Define qué modelo/tool puede ejecutar cada tipo de tarea según su nivel de riesgo.
+
+| Nivel | Tipo de tarea | Modelo permitido | Delegación | Ejemplos | Condición de parada |
+|-------|--------------|-----------------|-----------|----------|-------------------|
+| 🟢 **Verde** | Documentación, índices, inventarios, checklists, reportes, lectura de código, cambios Markdown de bajo riesgo | DeepSeek v4 Flash (Hermes brain) | Ejecución directa por Hermes | WO-003 inventario, WO-004 flujos, WO-005 checklist, WO-006 índice, WO-007 snapshot, WO-008 auditoría, WO-009 reporte, WO-011 gobernanza | Tarea mal acotada, ambigüedad, necesidad de decisión clínica |
+| 🟡 **Amarillo** | Código funcional acotado, refactor localizado, carga multiarchivo, normalización de datos, pruebas automatizadas, cambios multiarchivo limitados | DeepSeek v4 Pro (OpenCode Builder) | Delegar a OpenCode Builder por work order | Implementación de perfiles, carga multiarchivo, normalización longitudinal, tests | Fallo repetido (2 intentos), cambio de alcance, riesgo de tocar datos reales |
+| 🔴 **Rojo** | Arquitectura, backend, migración React, contratos definitivos, decisiones clínicas, seguridad, datos, cambios en ramas protegidas, Excel maestro | GPT/Codex PM o Sil/Cora | Escalar siempre. No ejecutar sin autorización explícita | Migración React, backend real, contrato 497 columnas, nuevas dependencias, cambios arquitectura | Cualquier intento de ejecución sin autorización es condición de parada inmediata |
+
+### Reglas de routing
+
+1. **DeepSeek v4 Flash** puede usarse para tareas verdes documentales perfectamente acotadas. No requiere delegación externa.
+2. **DeepSeek v4 Flash NO debe usarse** para decidir arquitectura, diseñar formularios clínicos, crear contratos definitivos, tocar código funcional complejo, cambiar Excel/contratos o introducir dependencias. Si una tarea documental deriva en necesidad de cambio funcional, debe detenerse y escalar.
+3. **DeepSeek v4 Pro / OpenCode Builder** es el ejecutor de tareas amarillas. Hermes prepara la work order, delega la implementación, audita el resultado y commitea. Hermes no implementa directamente tareas amarillas.
+4. **GPT/Codex PM** es el planificador/auditor de tareas rojas. No ejecuta directamente; delega a OpenCode Builder o espera instrucción de Sil/Cora.
+5. **El buen resultado del lote nocturno documental (2026-06-05) no autoriza a Flash a ejecutar tareas funcionales o clínicas fuera de alcance.** El éxito en documentación verde no es validación para código amarillo/rojo.
+6. **Hermes puede ejecutar directamente tareas verdes documentales si están perfectamente acotadas; debe delegar o escalar tareas amarillas/rojas.**
+7. **Si hay duda sobre el nivel de riesgo de una tarea, escalar a Sil/Cora antes de ejecutar.** El coste de escalar es menor que el coste de una ejecución incorrecta.
+
+---
 
 Una vez clonado el repo en VPS:
 

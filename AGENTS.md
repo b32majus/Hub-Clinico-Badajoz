@@ -151,7 +151,28 @@ Una tarea está completada cuando:
 
 ---
 
-## 10. Ejecución nocturna
+## 11. Política de modelos y delegación
+
+### Modelos y nivel de autonomía
+
+| Modelo | Nivel | Tareas permitidas | Delegación |
+|--------|-------|------------------|------------|
+| **DeepSeek v4 Flash** (Hermes brain) | 🟢 Verde | Documentación, índices, inventarios, checklists, reportes, lectura de código sin modificación, cambios Markdown de bajo riesgo, work orders documentales acotadas | Ejecución directa |
+| **DeepSeek v4 Pro** (OpenCode Builder) | 🟡 Amarillo | Código funcional acotado, refactor localizado, carga multiarchivo, normalización de datos, pruebas automatizadas, cambios multiarchivo limitados | Delegar a OpenCode |
+| **GPT/Codex PM** o **Sil/Cora** | 🔴 Rojo | Arquitectura, backend, migración React, contratos definitivos, decisiones clínicas, seguridad, datos, cambios en ramas protegidas | Escalar siempre |
+
+### Reglas
+
+- DeepSeek v4 Flash **NO debe usarse** para decidir arquitectura, diseñar formularios clínicos, crear contratos definitivos, tocar código funcional complejo, cambiar Excel/contratos o introducir dependencias.
+- DeepSeek v4 Pro / OpenCode Builder debe usarse para tareas amarillas de código que requieran implementación técnica acotada.
+- GPT/Codex PM o Sil/Cora deben intervenir en toda tarea roja.
+- **El buen resultado del lote nocturno documental no autoriza a Flash a ejecutar tareas funcionales o clínicas fuera de alcance.**
+- Hermes puede ejecutar directamente tareas verdes documentales si están perfectamente acotadas; debe delegar o escalar tareas amarillas/rojas.
+- Si hay duda sobre el nivel de riesgo de una tarea, escalar a Sil/Cora antes de ejecutar.
+
+---
+
+## 12. Ejecución nocturna
 
 Permitida solo con work orders cerradas de riesgo verde/amarillo.
 
