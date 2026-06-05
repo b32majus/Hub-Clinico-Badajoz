@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Validación Farmacoterapéutica</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+</head>
+<body>
+<div class="hub-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-circle"><span class="logo-text">FH</span></div>
+            <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+        </div>
+        <div class="fh-profile-badge">
+            <i class="fas fa-id-badge" aria-hidden="true"></i>
+            <span>Perfil: Farmacia Hospitalaria</span>
+        </div>
+        <div class="sidebar-nav-area">
+            <div class="nav-section">
+                <h3 class="nav-title">Farmacia</h3>
+                <ul class="nav-list">
+                    <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
+                    <li><a href="farmacia_validacion.html" class="nav-link active"><i class="fas fa-check-double"></i>Validación</a></li>
+                    <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                    <li><a href="farmacia_seguimiento.html" class="nav-link"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                    <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <h3 class="nav-title">Gestión</h3>
+                <ul class="nav-list">
+                    <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                    <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
+                    <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
+                </ul>
+            </div>
+            <div class="nav-section">
+                <h3 class="nav-title">Módulos</h3>
+                <ul class="nav-list">
+                    <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-footer">v. 0.1 — demo</div>
+    </aside>
+
+    <main class="fh-main">
+        <div class="fh-demo-banner">
+            <i class="fas fa-flask" aria-hidden="true"></i>
+            <span><strong>Demo v0.1 — Datos sintéticos.</strong> Esta versión es un prototipo funcional con pacientes ficticios.</span>
+        </div>
+
+        <div class="fh-hero">
+            <div class="fh-hero__text">
+                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Validación</p>
+                <h1 class="fh-hero__title">Validación Farmacoterapéutica</h1>
+                <p class="fh-hero__desc">Revise la solicitud del servicio origen y emita la validación de Farmacia.</p>
+            </div>
+        </div>
+
+        <!-- Modo selector (Dermatología/Reumatología) -->
+        <div class="fh-card" id="fhValModoSelector">
+            <h2 class="fh-section-heading" style="margin-top:0;"><i class="fas fa-list"></i> Tipo de solicitud</h2>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+                <button type="button" class="fh-btn fh-btn--primary" data-modo="derma" id="fhModoDerma">
+                    <i class="fas fa-disease"></i> Dermatología / entrada manual
+                </button>
+                <button type="button" class="fh-btn fh-btn--outline" data-modo="reuma" id="fhModoReuma">
+                    <i class="fas fa-bone"></i> Reumatología (precargado)
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulario Dermatología -->
+        <div class="fh-card hidden" id="fhFormDerma">
+            <h2 class="fh-section-heading" style="margin-top:0;">Datos de solicitud — Dermatología</h2>
+            <div class="fh-form-row">
+                <div><label class="fh-label">CIP</label><input type="text" class="fh-input" id="fhDermaCip" placeholder="CIP-DEMO-FH-..."></div>
+                <div><label class="fh-label">Servicio origen</label><input type="text" class="fh-input" value="Dermatología" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label" for="fhDermaPatologia">Patología</label>
+                    <select class="fh-select" id="fhDermaPatologia">
+                        <option value="">Seleccionar...</option>
+                        <option value="Hidradenitis supurativa">Hidradenitis supurativa</option>
+                        <option value="Psoriasis">Psoriasis</option>
+                        <option value="Dermatitis atópica">Dermatitis atópica</option>
+                        <option value="Vitíligo">Vitíligo</option>
+                        <option value="Alopecia areata">Alopecia areata</option>
+                    </select>
+                </div>
+                <div><label class="fh-label">Fármaco solicitado</label><input type="text" class="fh-input" id="fhDermaFarmaco" placeholder="Ej. Secukinumab 300 mg"></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Dosis solicitada</label><input type="text" class="fh-input" id="fhDermaDosis" placeholder="Ej. 300 mg"></div>
+                <div><label class="fh-label">Pauta / intervalo</label><input type="text" class="fh-input" id="fhDermaPauta" placeholder="Ej. SC / 4 semanas"></div>
+                <div><label class="fh-label">Fecha solicitud</label><input type="date" class="fh-input" id="fhDermaFecha"></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Inducción solicitada</label>
+                    <select class="fh-select" id="fhDermaInduccion">
+                        <option value="no">No</option><option value="si">Sí</option>
+                    </select>
+                </div>
+                <div><label class="fh-label">Peso (si aplica)</label><input type="text" class="fh-input" id="fhDermaPeso" placeholder="Ej. 72 kg"></div>
+            </div>
+            <div class="fh-form-row fh-form-row--full">
+                <div><label class="fh-label">Analítica / vacunación</label><textarea class="fh-textarea" id="fhDermaAnalitica" rows="2" placeholder="Datos relevantes de analítica o estado vacunal..."></textarea></div>
+            </div>
+            <div class="fh-form-row fh-form-row--full">
+                <div><label class="fh-label">Justificación clínica</label><textarea class="fh-textarea" id="fhDermaJustificacion" rows="3" placeholder="Justificación de la solicitud..."></textarea></div>
+            </div>
+            <div class="fh-form-row fh-form-row--full">
+                <div><label class="fh-label">Observaciones del servicio origen</label><textarea class="fh-textarea" id="fhDermaObservaciones" rows="2" placeholder="Observaciones adicionales..."></textarea></div>
+            </div>
+        </div>
+
+        <!-- Formulario Reumatología (precargado demo) -->
+        <div class="fh-card hidden" id="fhFormReuma">
+            <h2 class="fh-section-heading" style="margin-top:0;">Solicitud precargada — Reumatología</h2>
+            <div class="fh-reuma-demo-banner" style="background:#e8f4f8;padding:12px;border-radius:6px;margin-bottom:16px;">
+                <i class="fas fa-info-circle"></i> Datos demo precargados desde Hub Reumatología.
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">CIP</label><input type="text" class="fh-input" value="CIP-DEMO-FH-003" readonly></div>
+                <div><label class="fh-label">Servicio origen</label><input type="text" class="fh-input" value="Reumatología" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Patología</label><input type="text" class="fh-input" value="Artritis Reumatoide (AR)" readonly></div>
+                <div><label class="fh-label">Fármaco solicitado</label><input type="text" class="fh-input" value="Adalimumab 40 mg" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Dosis</label><input type="text" class="fh-input" value="40 mg" readonly></div>
+                <div><label class="fh-label">Pauta</label><input type="text" class="fh-input" value="SC / 2 semanas" readonly></div>
+                <div><label class="fh-label">Fecha solicitud</label><input type="text" class="fh-input" value="2026-05-15" readonly></div>
+            </div>
+            <div class="fh-form-row fh-form-row--full">
+                <div><label class="fh-label">Estado prebiológico</label><textarea class="fh-textarea" rows="2" readonly style="background:#f5f5f5;">Analítica completa: OK. Vacunación: VHB completa, antineumocócica completa. Scores: DAS28=3.2, HAQ=1.1</textarea></div>
+            </div>
+        </div>
+
+        <!-- Bloque común: Estado de validación -->
+        <div class="fh-card hidden" id="fhValBloqueComun">
+            <h2 class="fh-section-heading" style="margin-top:0;">Validación farmacoterapéutica</h2>
+            <div class="fh-form-row">
+                <div><label class="fh-label" for="fhValEstado">Estado</label>
+                    <select class="fh-select" id="fhValEstado">
+                        <option value="">Seleccionar...</option>
+                        <option value="validated">Validado</option>
+                        <option value="denied">Denegado</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fh-form-row fh-form-row--full hidden" id="fhValMotivoRow">
+                <div><label class="fh-label">Motivo de denegación <span class="fh-req">*</span></label>
+                    <textarea class="fh-textarea" id="fhValMotivo" rows="2" placeholder="Indique el motivo de la denegación (obligatorio)..."></textarea>
+                </div>
+            </div>
+
+            <h3 style="margin:20px 0 12px;font-size:1rem;">Tratamiento validado</h3>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Fármaco validado</label><input type="text" class="fh-input" id="fhValFarmaco" placeholder="Mismo que solicitado o alternative"></div>
+                <div><label class="fh-label">Dosis validada</label><input type="text" class="fh-input" id="fhValDosis" placeholder="Ej. 300 mg"></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Pauta / intervalo</label><input type="text" class="fh-input" id="fhValPauta" placeholder="Ej. SC / 4 semanas"></div>
+                <div><label class="fh-label">Vía</label>
+                    <select class="fh-select" id="fhValVia">
+                        <option value="">Seleccionar...</option>
+                        <option>SC</option><option>IV</option><option>IM</option><option>Oral</option><option>Tópica</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Indicación</label><input type="text" class="fh-input" id="fhValIndicacion" placeholder="Indicación del tratamiento"></div>
+                <div><label class="fh-label">Fecha cita Farmacia</label><input type="date" class="fh-input" id="fhValCita"></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Farmacéutico responsable</label>
+                    <select class="fh-select" id="fhValFarmaceutico">
+                        <option value="">Seleccionar...</option>
+                        <option>Dra. María García — Farmacéutica Hospitalaria</option>
+                        <option>Dr. Carlos López — Farmacéutico Hospitalario</option>
+                        <option>Dr. Rafael Mendoza — Residente Farmacia</option>
+                    </select>
+                </div>
+            </div>
+            <div class="fh-form-row fh-form-row--full">
+                <div><label class="fh-label">Observaciones farmacoterapéuticas</label>
+                    <textarea class="fh-textarea" id="fhValObservaciones" rows="3" placeholder="Notas sobre la validación..."></textarea>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+                <button type="button" class="fh-btn fh-btn--primary" id="fhValGuardar">
+                    <i class="fas fa-save"></i> Guardar validación
+                </button>
+                <button type="button" class="fh-btn fh-btn--secondary" id="fhValExportTxt">
+                    <i class="fas fa-file-alt"></i> Exportar TXT JARA
+                </button>
+                <button type="button" class="fh-btn fh-btn--outline" id="fhValExportCsv">
+                    <i class="fas fa-file-csv"></i> Exportar CSV
+                </button>
+            </div>
+            <div id="fhValResultado" class="fh-result-box hidden" style="margin-top:16px;"></div>
+        </div>
+    </main>
+</div>
+
+<script>
+(function () {
+    var modoActual = null;
+
+    function mostrarFormulario(modo) {
+        document.getElementById('fhFormDerma').classList.toggle('hidden', modo !== 'derma');
+        document.getElementById('fhFormReuma').classList.toggle('hidden', modo !== 'reuma');
+        document.getElementById('fhValBloqueComun').classList.remove('hidden');
+        modoActual = modo;
+
+        document.getElementById('fhModoDerma').className = modo === 'derma' ? 'fh-btn fh-btn--primary' : 'fh-btn fh-btn--outline';
+        document.getElementById('fhModoReuma').className = modo === 'reuma' ? 'fh-btn fh-btn--primary' : 'fh-btn fh-btn--outline';
+
+        if (modo === 'derma') {
+            var hoy = new Date().toISOString().slice(0,10);
+            if (!document.getElementById('fhDermaFecha').value) document.getElementById('fhDermaFecha').value = hoy;
+        }
+    }
+
+    document.getElementById('fhModoDerma').addEventListener('click', function () { mostrarFormulario('derma'); });
+    document.getElementById('fhModoReuma').addEventListener('click', function () { mostrarFormulario('reuma'); });
+
+    // Mostrar motivo de denegación
+    document.getElementById('fhValEstado').addEventListener('change', function () {
+        var row = document.getElementById('fhValMotivoRow');
+        row.classList.toggle('hidden', this.value !== 'denied');
+    });
+
+    // Guardar validación
+    document.getElementById('fhValGuardar').addEventListener('click', function () {
+        var estado = document.getElementById('fhValEstado').value;
+        if (!estado) { alert('Seleccione un estado de validación.'); return; }
+        if (estado === 'denied' && !document.getElementById('fhValMotivo').value.trim()) {
+            alert('El motivo de denegación es obligatorio.'); return;
+        }
+
+        var cip = modoActual === 'derma'
+            ? document.getElementById('fhDermaCip').value || 'CIP-DEMO-FH-XXX'
+            : 'CIP-DEMO-FH-003';
+
+        var fecha = new Date().toLocaleDateString('es-ES');
+        var resultado = document.getElementById('fhValResultado');
+        resultado.classList.remove('hidden');
+        resultado.className = 'fh-result-box fh-result-box--success';
+        resultado.innerHTML = '<i class="fas fa-check-circle"></i> Validación registrada — ' +
+            (estado === 'validated' ? 'Validado' : 'Denegado') +
+            ' | Paciente: ' + cip + ' | Fecha: ' + fecha +
+            '<br><small style="opacity:0.7;">Demo — los datos se almacenan en memoria de sesión.</small>';
+        resultado.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // Exportar TXT JARA
+    document.getElementById('fhValExportTxt').addEventListener('click', function () {
+        var lines = [];
+        lines.push('=== INFORME DE VALIDACIÓN FARMACOTERAPÉUTICA ===');
+        lines.push('Identificador demo: FH-VAL-' + Date.now().toString(36).toUpperCase());
+        lines.push('Fecha: ' + new Date().toLocaleDateString('es-ES'));
+        lines.push('');
+
+        if (modoActual === 'derma') {
+            lines.push('Servicio origen: Dermatología');
+            lines.push('CIP: ' + (document.getElementById('fhDermaCip').value || '—'));
+            lines.push('Patología: ' + (document.getElementById('fhDermaPatologia').value || '—'));
+            lines.push('Fármaco solicitado: ' + (document.getElementById('fhDermaFarmaco').value || '—'));
+            lines.push('Dosis: ' + (document.getElementById('fhDermaDosis').value || '—'));
+            lines.push('Pauta: ' + (document.getElementById('fhDermaPauta').value || '—'));
+        } else {
+            lines.push('Servicio origen: Reumatología');
+            lines.push('CIP: CIP-DEMO-FH-003');
+            lines.push('Patología: Artritis Reumatoide (AR)');
+            lines.push('Fármaco solicitado: Adalimumab 40 mg');
+            lines.push('Dosis: 40 mg');
+            lines.push('Pauta: SC / 2 semanas');
+        }
+
+        lines.push('');
+        lines.push('Estado validación: ' + (document.getElementById('fhValEstado').value === 'validated' ? 'VALIDADO' : 'Denegado'));
+        var motivo = document.getElementById('fhValMotivo').value.trim();
+        if (motivo) lines.push('Motivo denegación: ' + motivo);
+        lines.push('Fármaco validado: ' + (document.getElementById('fhValFarmaco').value || '—'));
+        lines.push('Dosis validada: ' + (document.getElementById('fhValDosis').value || '—'));
+        lines.push('Pauta: ' + (document.getElementById('fhValPauta').value || '—'));
+        lines.push('Vía: ' + (document.getElementById('fhValVia').value || '—'));
+        lines.push('Profesional: ' + (document.getElementById('fhValFarmaceutico').value || '—'));
+        var obs = document.getElementById('fhValObservaciones').value.trim();
+        if (obs) lines.push('Observaciones: ' + obs);
+        lines.push('');
+        lines.push('=== FIN DEL INFORME ===');
+        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.1');
+        lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
+
+        var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'validacion_FH_' + new Date().toISOString().slice(0,10) + '.txt';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+
+    // Export CSV básico
+    document.getElementById('fhValExportCsv').addEventListener('click', function () {
+        var rows = [
+            ['ID','Fecha','Servicio','CIP','Patologia','Estado','FarmacoValidado','Profesional']
+        ];
+        rows.push([
+            'FH-' + Date.now().toString(36).toUpperCase(),
+            new Date().toLocaleDateString('es-ES'),
+            modoActual === 'derma' ? 'Dermatología' : 'Reumatología',
+            modoActual === 'derma' ? (document.getElementById('fhDermaCip').value || '—') : 'CIP-DEMO-FH-003',
+            modoActual === 'derma' ? (document.getElementById('fhDermaPatologia').value || '—') : 'Artritis Reumatoide (AR)',
+            document.getElementById('fhValEstado').value === 'validated' ? 'Validado' : 'Denegado',
+            document.getElementById('fhValFarmaco').value || '—',
+            document.getElementById('fhValFarmaceutico').value || '—'
+        ]);
+        var csv = rows.map(function(r) {
+            return r.map(function(c) { return '"' + c.replace(/"/g,'""') + '"'; }).join(',');
+        }).join('\n');
+
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'validaciones_FH_' + new Date().toISOString().slice(0,10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+})();
+</script>
+</body>
+</html>
