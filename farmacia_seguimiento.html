@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Seguimiento Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606a">
+    <style>
+        .fh-mg-question { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #eee; }
+        .fh-mg-question:last-child { border-bottom:none; }
+        .fh-mg-question label { flex:1; font-weight:500; }
+        .fh-mg-question select { width:90px; }
+        .fh-mg-result { padding:12px 16px; border-radius:6px; font-weight:600; text-align:center; margin-top:12px; }
+        .fh-mg-high { background:#d4edda; color:#155724; }
+        .fh-mg-medium { background:#fff3cd; color:#856404; }
+        .fh-mg-low { background:#f8d7da; color:#721c24; }
+    </style>
+</head>
+<body>
+<div class="hub-shell">
+    <aside class="sidebar">
+        <div class="sidebar-header"><div class="logo-circle"><span class="logo-text">FH</span></div><h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1></div>
+        <div class="fh-profile-badge"><i class="fas fa-id-badge"></i><span>Perfil: Farmacia Hospitalaria</span></div>
+        <div class="sidebar-nav-area">
+            <div class="nav-section"><h3 class="nav-title">Farmacia</h3><ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link"><i class="fas fa-search"></i>Buscador CIP</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link"><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link"><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link active"><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link"><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Gestión</h3><ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link"><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link"><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link"><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul></div>
+            <div class="nav-section"><h3 class="nav-title">Módulos</h3><ul class="nav-list">
+                <li><a href="index.html" class="nav-link fh-nav-back"><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul></div>
+        </div>
+        <div class="sidebar-footer">v. 0.1 — demo</div>
+    </aside>
+    <main class="fh-main">
+        <div class="fh-demo-banner"><i class="fas fa-flask"></i><span><strong>Demo v0.1 — Datos sintéticos.</strong></span></div>
+        <div class="fh-hero">
+            <div class="fh-hero__text">
+                <p class="fh-hero__eyebrow">Farmacia Hospitalaria · Seguimiento</p>
+                <h1 class="fh-hero__title">Visita de Seguimiento</h1>
+                <p class="fh-hero__desc">Registre la evolución farmacoterapéutica del paciente.</p>
+            </div>
+        </div>
+
+        <!-- CIP Lookup -->
+        <div class="fh-card">
+            <div class="fh-form-row">
+                <div style="flex:2;"><label class="fh-label">CIP del paciente</label><input type="text" class="fh-input" id="fhSgCip" placeholder="CIP-DEMO-FH-001" style="max-width:300px;"></div>
+                <div style="display:flex;align-items:flex-end;padding-bottom:4px;">
+                    <button type="button" class="fh-btn fh-btn--primary" id="fhSgBuscar"><i class="fas fa-search"></i> Buscar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos precargados -->
+        <div class="fh-card hidden" id="fhSgPrecargados">
+            <h2 class="fh-section-heading" style="margin-top:0;">Tratamiento activo</h2>
+            <div class="fh-form-row">
+                <div><label class="fh-label">CIP</label><input type="text" class="fh-input" id="fhSgCipM" readonly></div>
+                <div><label class="fh-label">Fármaco</label><input type="text" class="fh-input" id="fhSgFarmaco" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Dosis actual</label><input type="text" class="fh-input" id="fhSgDosis" readonly></div>
+                <div><label class="fh-label">Pauta</label><input type="text" class="fh-input" id="fhSgPauta" readonly></div>
+                <div><label class="fh-label">Vía</label><input type="text" class="fh-input" id="fhSgVia" readonly></div>
+            </div>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Inicio / primera visita</label><input type="text" class="fh-input" id="fhSgInicio" readonly></div>
+                <div><label class="fh-label">Estratificación previa</label><input type="text" class="fh-input" id="fhSgEstratif" readonly></div>
+                <div><label class="fh-label">Adherencia previa</label><input type="text" class="fh-input" id="fhSgAdherencia" readonly></div>
+            </div>
+        </div>
+
+        <!-- Formulario seguimiento -->
+        <div class="fh-card hidden" id="fhSgFormulario">
+            <h2 class="fh-section-heading" style="margin-top:0;">Registro de Seguimiento</h2>
+            <div class="fh-form-row">
+                <div><label class="fh-label">Fecha seguimiento</label><input type="date" class="fh-input" id="fhSgFecha"></div>
+                <div><label class="fh-label">¿Cambia nivel estratificación?</label>
+                    <select class="fh-select" id="fhSgCambioEstratif"><option value="no">No</option><option value="si">Sí</option></select>
+                </div>
+            </div>
+            <div class="fh-form-row hidden" id="fhSgNuevoNivelRow">
+                <div><label class="fh-label">Nuevo nivel</label>
+                    <select class="fh-select" id="fhSgNuevoNivel"><option value="">Seleccionar...</option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select>
+                </div>
+            </div>
+
+            <!-- Optimización -->
+            <h3 style="margin:20px 0 12px;font-size:1rem;">Optimización del tratamiento</h3>
+            <div class="fh-form-row">
+                <div><label class="fh-label">¿Requiere optimización?</label>
+                    <select class="fh-select" id="fhSgOptimizacion"><option value="no">No</option><option value="si">Sí</option></select>
+                </div>
+            </div>
+            <div class="fh-card fh-card--warn hidden" id="fhSgCambioFarmacoWarning">
+                <i class="fas fa-exclamation-triangle" style="color:#856404;"></i>
+                <strong>Importante:</strong> El cambio de fármaco requiere una nueva solicitud desde el servicio origen. La optimización solo aplica a dosis, pauta o intervalo del mismo fármaco.
+            </div>
+            <div class="fh-form-row hidden" id="fhSgOptRows">
+                <div><label class="fh-label">Nueva dosis</label><input type="text" class="fh-input" id="fhSgNvaDosis" placeholder="Ej. 150 mg"></div>
+                <div><label class="fh-label">Nueva pauta / intervalo</label><input type="text" class="fh-input" id="fhSgNvaPauta" placeholder="Ej. SC / 8 semanas"></div>
+            </div>
+            <div class="fh-form-row fh-form-row--full hidden" id="fhSgOptMotivoRow">
+                <div><label class="fh-label">Motivo de optimización</label><textarea class="fh-textarea" id="fhSgOptMotivo" rows="2" placeholder="Indique el motivo del ajuste..."></textarea></div>
+            </div>
+
+            <!-- Suspensión -->
+            <h3 style="margin:20px 0 12px;font-size:1rem;">Suspensión</h3>
+            <div class="fh-form-row">
+                <div><label class="fh-label">¿Suspensión?</label>
+                    <select class="fh-select" id="fhSgSuspension"><option value="no">No</option><option value="si">Sí</option></select>
+                </div>
+            </div>
+            <div class="fh-form-row fh-form-row--full hidden" id="fhSgSuspMotivoRow">
+                <div><label class="fh-label">Motivo de suspensión</label><textarea class="fh-textarea" id="fhSgSuspMotivo" rows="2" placeholder="Indique el motivo de la suspensión..."></textarea></div>
+            </div>
+
+            <!-- Morisky-Green -->
+            <h3 style="margin:20px 0 12px;font-size:1rem;">Test de Morisky-Green</h3>
+            <p style="color:#555;font-size:0.9rem;margin:0 0 12px;">Responda Sí o No a cada pregunta sobre la adherencia del paciente.</p>
+            <div id="fhSgMoriskyQuestions">
+                <div class="fh-mg-question"><label>1. ¿Olvida alguna vez tomar el tratamiento?</label><select class="fh-select fh-mg-select"><option value="">—</option><option value="no">No ✅</option><option value="si">Sí ❌</option></select></div>
+                <div class="fh-mg-question"><label>2. ¿Toma la medicación a la hora indicada?</label><select class="fh-select fh-mg-select"><option value="">—</option><option value="si">Sí ✅</option><option value="no">No ❌</option></select></div>
+                <div class="fh-mg-question"><label>3. ¿Deja de tomar la medicación cuando se encuentra bien?</label><select class="fh-select fh-mg-select"><option value="">—</option><option value="no">No ✅</option><option value="si">Sí ❌</option></select></div>
+                <div class="fh-mg-question"><label>4. ¿Deja de tomar la medicación cuando le sienta mal?</label><select class="fh-select fh-mg-select"><option value="">—</option><option value="no">No ✅</option><option value="si">Sí ❌</option></select></div>
+            </div>
+            <div id="fhSgMoriskyResult" class="hidden"></div>
+
+            <!-- Efectos adversos -->
+            <h3 style="margin:20px 0 12px;font-size:1rem;">Efectos adversos</h3>
+            <div class="fh-form-row">
+                <div><label class="fh-label">¿Efecto adverso detectado?</label>
+                    <select class="fh-select" id="fhSgEaDetectado"><option value="no">No</option><option value="si">Sí</option></select>
+                </div>
+            </div>
+            <div class="hidden" id="fhSgEaRows">
+                <div class="fh-form-row fh-form-row--full">
+                    <div><label class="fh-label">Descripción</label><textarea class="fh-textarea" id="fhSgEaDescripcion" rows="2" placeholder="Describa el efecto adverso..."></textarea></div>
+                </div>
+                <div class="fh-form-row">
+                    <div><label class="fh-label">Gravedad</label>
+                        <select class="fh-select" id="fhSgEaGravedad"><option value="">Seleccionar...</option><option>Leve</option><option>Moderado</option><option>Grave</option></select>
+                    </div>
+                    <div><label class="fh-label">Actuación</label>
+                        <select class="fh-select" id="fhSgEaActuacion">
+                            <option value="">Seleccionar...</option>
+                            <option>Sin cambios</option><option>Observación</option><option>Ajuste de pauta</option><option>Suspensión</option>
+                            <option>Contactar / derivar a servicio origen</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fh-form-row fh-form-row--full" style="margin-top:12px;">
+                <div><label class="fh-label">Notas / criterio farmacoterapéutico</label>
+                    <textarea class="fh-textarea" id="fhSgNotas" rows="3" placeholder="Notas adicionales..."></textarea>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button type="button" class="fh-btn fh-btn--primary" id="fhSgGuardar"><i class="fas fa-save"></i> Guardar seguimiento</button>
+                <button type="button" class="fh-btn fh-btn--outline" id="fhSgExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT</button>
+            </div>
+            <div id="fhSgResultado" class="fh-result-box hidden" style="margin-top:16px;"></div>
+        </div>
+    </main>
+</div>
+
+<script>
+(function () {
+    var DEMO_PATIENTS = {
+        'CIP-DEMO-FH-001': { servicio:'Dermatología', patologia:'Hidradenitis supurativa', farmaco:'Secukinumab 300 mg', dosis:'300 mg', pauta:'SC / 4 semanas (mantenimiento)', via:'SC', inicio:'2026-05-10', estratif:'Nivel 2', adherencia:'Alta' },
+        'CIP-DEMO-FH-003': { servicio:'Reumatología', patologia:'Artritis Reumatoide (AR)', farmaco:'Adalimumab 40 mg', dosis:'40 mg', pauta:'SC / 2 semanas', via:'SC', inicio:'2026-04-01', estratif:'Nivel 1', adherencia:'Alta' }
+    };
+
+    document.getElementById('fhSgBuscar').addEventListener('click', function () {
+        var cip = document.getElementById('fhSgCip').value.trim().toUpperCase();
+        var precarga = document.getElementById('fhSgPrecargados');
+        var form = document.getElementById('fhSgFormulario');
+        precarga.classList.add('hidden'); form.classList.add('hidden');
+        if (!cip) { alert('Introduzca un CIP.'); return; }
+        var p = DEMO_PATIENTS[cip];
+        if (!p) { alert('Paciente no encontrado.'); return; }
+        document.getElementById('fhSgCipM').value = cip;
+        document.getElementById('fhSgFarmaco').value = p.farmaco;
+        document.getElementById('fhSgDosis').value = p.dosis;
+        document.getElementById('fhSgPauta').value = p.pauta;
+        document.getElementById('fhSgVia').value = p.via;
+        document.getElementById('fhSgInicio').value = p.inicio;
+        document.getElementById('fhSgEstratif').value = p.estratif;
+        document.getElementById('fhSgAdherencia').value = p.adherencia;
+        precarga.classList.remove('hidden');
+        form.classList.remove('hidden');
+        if (!document.getElementById('fhSgFecha').value) document.getElementById('fhSgFecha').value = new Date().toISOString().slice(0,10);
+        document.getElementById('fhSgMoriskyResult').classList.add('hidden');
+    });
+
+    document.getElementById('fhSgCambioEstratif').addEventListener('change', function () {
+        document.getElementById('fhSgNuevoNivelRow').classList.toggle('hidden', this.value !== 'si');
+    });
+
+    document.getElementById('fhSgOptimizacion').addEventListener('change', function () {
+        var show = this.value === 'si';
+        document.getElementById('fhSgOptRows').classList.toggle('hidden', !show);
+        document.getElementById('fhSgOptMotivoRow').classList.toggle('hidden', !show);
+    });
+
+    document.getElementById('fhSgSuspension').addEventListener('change', function () {
+        document.getElementById('fhSgSuspMotivoRow').classList.toggle('hidden', this.value !== 'si');
+    });
+
+    document.getElementById('fhSgEaDetectado').addEventListener('change', function () {
+        document.getElementById('fhSgEaRows').classList.toggle('hidden', this.value !== 'si');
+    });
+
+    // Morisky-Green auto calculation
+    var mgSelects = document.querySelectorAll('.fh-mg-select');
+    mgSelects.forEach(function (sel) {
+        sel.addEventListener('change', calcMorisky);
+    });
+
+    function calcMorisky() {
+        var vals = [];
+        mgSelects.forEach(function (s) { vals.push(s.value); });
+        var resultDiv = document.getElementById('fhSgMoriskyResult');
+        if (vals.indexOf('') !== -1) { resultDiv.classList.add('hidden'); return; }
+        // P1: no=correct, P2: si=correct, P3: no=correct, P4: no=correct
+        var correctas = 0;
+        if (vals[0] === 'no') correctas++;
+        if (vals[1] === 'si') correctas++;
+        if (vals[2] === 'no') correctas++;
+        if (vals[3] === 'no') correctas++;
+        var label, cls;
+        if (correctas === 4) { label = 'Alta adherencia'; cls = 'fh-mg-high'; }
+        else if (correctas >= 2) { label = 'Adherencia media / parcial'; cls = 'fh-mg-medium'; }
+        else { label = 'Baja adherencia'; cls = 'fh-mg-low'; }
+        resultDiv.className = 'fh-mg-result ' + cls;
+        resultDiv.innerHTML = 'Morisky-Green: ' + correctas + '/4 correctas — <strong>' + label + '</strong>';
+        resultDiv.classList.remove('hidden');
+    }
+
+    // Drug change warning on dosis field
+    document.getElementById('fhSgNvaDosis').addEventListener('focus', function () {
+        document.getElementById('fhSgCambioFarmacoWarning').classList.remove('hidden');
+    });
+
+    document.getElementById('fhSgGuardar').addEventListener('click', function () {
+        var r = document.getElementById('fhSgResultado');
+        r.classList.remove('hidden');
+        r.className = 'fh-result-box fh-result-box--success';
+        r.innerHTML = '<i class="fas fa-check-circle"></i> Seguimiento registrado — CIP: ' + document.getElementById('fhSgCipM').value +
+            ' | Fecha: ' + document.getElementById('fhSgFecha').value +
+            '<br><small style="opacity:0.7;">Demo — datos almacenados en memoria de sesión.</small>';
+        r.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    document.getElementById('fhSgExportTxt').addEventListener('click', function () {
+        var lines = [];
+        lines.push('=== INFORME DE SEGUIMIENTO FARMACOTERAPÉUTICO ===');
+        lines.push('ID: FH-SEG-' + Date.now().toString(36).toUpperCase());
+        lines.push('Fecha: ' + document.getElementById('fhSgFecha').value);
+        lines.push('CIP: ' + document.getElementById('fhSgCipM').value);
+        lines.push('Fármaco: ' + document.getElementById('fhSgFarmaco').value);
+        lines.push('Dosis: ' + document.getElementById('fhSgDosis').value + ' → ' + (document.getElementById('fhSgNvaDosis').value || 'sin cambios'));
+        lines.push('Pauta: ' + document.getElementById('fhSgPauta').value + ' → ' + (document.getElementById('fhSgNvaPauta').value || 'sin cambios'));
+        lines.push('Optimización: ' + (document.getElementById('fhSgOptimizacion').value === 'si' ? 'Sí' : 'No'));
+        lines.push('Suspensión: ' + (document.getElementById('fhSgSuspension').value === 'si' ? 'Sí' : 'No'));
+        lines.push('Notas: ' + (document.getElementById('fhSgNotas').value || '—'));
+        lines.push('');
+        lines.push('=== GENERADO POR: Hub Clínico Badajoz — Demo Farmacia v0.1 ===');
+        lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
+        var blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'seguimiento_FH_' + new Date().toISOString().slice(0,10) + '.txt';
+        a.click(); URL.revokeObjectURL(a.href);
+    });
+})();
+</script>
+</body>
+</html>
