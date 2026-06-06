@@ -1,0 +1,101 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Primera Visita Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
+</head>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">FH</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link active" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--primera">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-avatar"><i class="fas fa-plus-circle" aria-hidden="true"></i></div>
+        <div class="patient-info">
+            <div class="patient-id-badge">Farmacia Hospitalaria</div>
+            <p class="hero-eyebrow">Farmacia Hospitalaria · Primera Visita</p>
+            <h1 class="patient-name">Primera Visita / Administración</h1>
+            <p class="hero-description">Registre el inicio del seguimiento farmacoterapéutico con datos precargados desde validación o alta guiada.</p>
+        </div>
+        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
+    </div>
+</section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-id-card"></i> Datos precargados</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhPvCip">CIP</label><input class="form-control" id="fhPvCip" readonly></div><div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio" readonly></div><div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco" readonly></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis" readonly></div><div class="form-group"><label for="fhPvPauta">Pauta</label><input class="form-control" id="fhPvPauta" readonly></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion" readonly></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada" readonly></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica" readonly></div></div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhPvCuestionario">Cuestionario basal</label><select class="form-select" id="fhPvCuestionario"><option>No aplica</option><option>DLQI</option><option>HAQ</option><option>EVA dolor</option><option>Otro</option></select></div><div class="form-group"><label for="fhPvResultadoBasal">Resultado basal</label><input class="form-control" id="fhPvResultadoBasal"></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="form-textarea" id="fhPvNotas" rows="4"></textarea></div></div>
+    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhPvGuardar"><i class="fas fa-save"></i> Guardar primera visita</button></div><div id="fhPvResultado" class="result-box hidden"></div>
+</section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260606b"></script>
+        </body>
+        </html>

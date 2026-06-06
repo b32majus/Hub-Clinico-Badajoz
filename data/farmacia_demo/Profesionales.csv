@@ -1,0 +1,5 @@
+ID,Nombre,Rol,Especialidad,Estado
+PRO-FH-01,Profesional FH-01,Farmaceutico/a Hospitalario/a,Dermatologia;Reumatologia,Activo
+PRO-FH-02,Profesional FH-02,Farmaceutico/a Hospitalario/a,Digestivo;Oncologia,Activo
+PRO-FH-03,Profesional FH-03,Residente Farmacia,Rotacion Farmacia Hospitalaria,Activo
+PRO-FH-04,Profesional FH-04,Farmaceutico/a Hospitalario/a,Hematologia;Soporte demo,Activo

@@ -1,0 +1,4 @@
+ID,CIP,Servicio_Origen,Patologia,Farmaco_Solicitado,Dosis,Pauta,Fecha_Solicitud,Estado,Induccion
+SOL-FH-001,CIP-DEMO-FH-001,Dermatologia,Hidradenitis supurativa,Secukinumab 300 mg,300 mg,SC / 4 semanas,2026-05-05,En seguimiento,Si
+SOL-FH-002,CIP-DEMO-FH-002,Dermatologia,Hidradenitis supurativa,Adalimumab 200 mg,200 mg,SC / 2 semanas,2026-06-01,Pendiente,No
+SOL-FH-003,CIP-DEMO-FH-003,Reumatologia,Artritis Reumatoide (AR),Adalimumab 40 mg,40 mg,SC / 2 semanas,2026-03-15,Validado,No

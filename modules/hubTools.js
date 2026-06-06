@@ -31,6 +31,15 @@ window.HubTools = {
     // Control de formularios
     form: {},
 
+    // Módulo prebiológico (v2)
+    prebiologic: {},
+
+    // Solicitudes a Farmacia Hospitalaria (v2)
+    pharmacy: {},
+
+    // Eventos terapéuticos y clínicos (v2)
+    events: {},
+
     // Dashboard y visualización de pacientes
     dashboard: {
         // Umbrales de interpretación clínica para índices de actividad
@@ -57,6 +66,13 @@ window.HubTools = {
             },
 
             // APs - Artritis Psoriásica
+            dapsa: {
+                remission: 4,
+                lowActivity: 14,
+                moderate: 28,
+                high: 28,
+                label: 'DAPSA'
+            },
             haq: {
                 remission: 0.5,      // < 0.5 = remisión
                 mild: 1.5,           // 0.5-1.5 = actividad leve
@@ -65,11 +81,24 @@ window.HubTools = {
                 label: 'HAQ'
             },
             lei: {
-                remission: 5,        // < 5 = remisión
-                mild: 10,            // 5-10 = actividad leve
-                moderate: 15,        // 10-15 = actividad moderada
-                high: 44,            // > 15 = actividad alta
+                remission: 1,        // <= 1 = sin/mínima entesitis
+                mild: 3,             // <= 3 = entesitis leve
+                moderate: 5,         // <= 5 = entesitis moderada
+                high: 6,             // > 5 = entesitis alta
                 label: 'LEI'
+            },
+            pasi: {
+                remission: 1,
+                lowActivity: 3,
+                moderate: 10,
+                high: 10,
+                label: 'PASI'
+            },
+            bsa: {
+                remission: 3,
+                moderate: 10,
+                high: 10,
+                label: 'BSA'
             },
             rapid3: {
                 remission: 3,        // < 3 = remisión
@@ -100,6 +129,30 @@ window.HubTools = {
                 moderate: 26,        // 11-26 = actividad moderada
                 high: 26,            // > 26 = actividad alta
                 label: 'SDAI'
+            },
+
+            // LES - Lupus Eritematoso Sistémico
+            sledai2k: {
+                remission: 2,
+                lowActivity: 6,
+                moderate: 12,
+                high: 12,
+                label: 'SLEDAI-2K'
+            },
+
+            // Síndrome de Sjögren
+            essdai: {
+                remission: 5,
+                moderate: 14,
+                high: 14,
+                label: 'ESSDAI'
+            },
+            esspri: {
+                remission: 3,
+                lowActivity: 5,
+                moderate: 7,
+                high: 7,
+                label: 'ESSPRI'
             },
 
             // Escala Visual Analógica (todas las patologías)

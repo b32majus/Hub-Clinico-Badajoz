@@ -1,0 +1,140 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Farmacia Hospitalaria</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
+</head>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">FH</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link active" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--index">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-info">
+            <div class="patient-id-badge">Farmacia Hospitalaria</div>
+            <h1 class="patient-name">Inicio Farmacia</h1>
+            <p class="hero-description">Entrada única por CIP para abrir Quick View o alta guiada de episodio Farmacia.</p>
+        </div>
+        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
+    </div>
+</section><section class="search-card">
+    <span class="search-card__label"><i class="fas fa-search" aria-hidden="true"></i> Búsqueda por CIP</span>
+    <div class="search-card__row">
+        <input type="text" id="fhCipInput" class="search-card__input" placeholder="Ej. CIP-DEMO-FH-001" maxlength="24" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-primary" id="fhSearchBtn"><i class="fas fa-search" aria-hidden="true"></i> Buscar paciente</button>
+    </div>
+    <p class="search-card__hint">Demo: <strong>CIP-DEMO-FH-001</strong> (HS en seguimiento) · <strong>CIP-DEMO-FH-002</strong> (HS pendiente validación) · <strong>CIP-DEMO-FH-003</strong> (Reuma validado). Un CIP nuevo abre alta guiada.</p>
+</section>
+
+
+<section class="guided-intake-card hidden" id="guidedIntakePanel">
+    <h2 class="section-title"><i class="fas fa-user-plus" aria-hidden="true"></i> Paciente no encontrado — Alta guiada</h2>
+    <p class="hero-description">CIP introducido: <strong id="guidedCip">—</strong>. Complete los datos mínimos para abrir la pantalla correspondiente con contexto por URL.</p>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhAltaServicio">Servicio origen</label>
+            <select class="form-select" id="fhAltaServicio">
+                <option value="">Seleccionar...</option>
+                <option value="dermatologia">Dermatología</option>
+                <option value="reumatologia">Reumatología</option>
+                <option value="digestivo">Digestivo</option>
+                <option value="oncologia">Oncología</option>
+                <option value="otro">Otro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="fhAltaPatologia">Patología / indicación</label>
+            <select class="form-select" id="fhAltaPatologia" disabled><option value="">Seleccionar servicio primero...</option></select>
+        </div>
+        <div class="form-group">
+            <label for="fhAltaPuntoEntrada">Circuito de entrada</label>
+            <select class="form-select" id="fhAltaPuntoEntrada">
+                <option value="">Seleccionar...</option>
+                <option value="validacion">Validación farmacoterapéutica</option>
+                <option value="primera_visita">Primera visita Farmacia</option>
+                <option value="seguimiento">Visita de seguimiento</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-actions">
+        <a href="#" class="btn btn-primary" id="fhAltaAcceder"><i class="fas fa-arrow-right" aria-hidden="true"></i> Iniciar episodio</a>
+        <button type="button" class="btn btn-outline" id="fhAltaCancelar">Cancelar</button>
+    </div>
+</section>
+
+<h2 class="section-title">Accesos rápidos</h2>
+<section class="action-grid">
+    <a href="farmacia_validacion.html" class="action-card"><i class="fas fa-check-double action-card__icon"></i><span class="action-card__title">Validación</span><span class="action-card__desc">Evaluar solicitudes farmacoterapéuticas pendientes.</span></a>
+    <a href="farmacia_primera_visita.html" class="action-card"><i class="fas fa-plus-circle action-card__icon"></i><span class="action-card__title">Primera Visita</span><span class="action-card__desc">Registrar inicio del seguimiento farmacoterapéutico.</span></a>
+    <a href="farmacia_seguimiento.html" class="action-card"><i class="fas fa-clipboard-list action-card__icon"></i><span class="action-card__title">Seguimiento</span><span class="action-card__desc">Adherencia, PROMs, optimización, suspensión y efectos adversos.</span></a>
+    <a href="farmacia_dashboard_paciente.html" class="action-card"><i class="fas fa-user-circle action-card__icon"></i><span class="action-card__title">Dashboard Paciente</span><span class="action-card__desc">Visión longitudinal individual del episodio FH.</span></a>
+</section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+    <script src="scripts/farmacia_index.js?v=20260606b"></script>
+        </body>
+        </html>
