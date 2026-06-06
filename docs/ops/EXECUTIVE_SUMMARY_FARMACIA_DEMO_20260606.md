@@ -2,9 +2,10 @@
 
 **Para:** Revisión Sil + Cora  
 **Fecha:** 2026-06-06  
-**Rama:** `work/hermes/nightly-farmacia-v0-1-20260606`  
-**Base:** `feature/reuma-v2-prebiologico-fh-les-sjogren`  
-**Estado:** ✅ ready_for_human_review / ready_for_demo (pendiente validación visual humana)
+|**Rama demo principal:** `work/hermes/farmacia-demo-v0-2-candidate-20260606`  |
+|**Rama fallback:** `work/hermes/nightly-farmacia-v0-1-20260606`  |
+|**Base v0.2:** `work/hermes/nightly-farmacia-v0-1-20260606` (`95003a2`)  |
+|**Estado:** ✅ validated_for_demo — v0.2 candidate validada por Sil como demo principal del lunes|
 
 ---
 
@@ -182,13 +183,52 @@ e1892e0 feat(farmacia): add pharmacy module shell (primera WO)
 
 ---
 
-## 7. Decisión recomendada
+## 7. Anexo — v0.2 Autocomplete farmacológico dual/hospitalario
 
-| Decisión | Recomendación |
-|----------|---------------|
-| Merge a `feature/` | ❌ **No mergear** sin revisión visual de Sil/Cora |
-| Usar rama para demo del lunes | ✅ **Sí**, si la revisión visual humana es satisfactoria |
-| Congelar rama | ✅ Sí — no tocar salvo fix crítico aprobado por Sil |
-| Siguiente paso | Sil + Cora revisan visualmente → si OK, demo → después decidir merge y prioridades post-demo |
+**Añadido:** 2026-06-06  
+**Rama:** `work/hermes/farmacia-demo-v0-2-candidate-20260606`  
+**SHA:** `d631ee70c9f7f6c98929d58596f2c6dcca73051e`  
+**Validación manual:** ✅ Sil — funcionamiento correcto en navegador
 
-**La rama `work/hermes/nightly-farmacia-v0-1-20260606` está lista para revisión humana y demo del lunes 2026-06-08.**
+### Cambios incluidos (7 archivos, +982/−2)
+
+| Archivo | Cambio |
+|---------|--------|
+| `farmacia_validacion.html` | +7/−2 — SheetJS local, botón catálogo, modal |
+| `scripts/farmacia_validacion.js` | +456 — autocomplete, DrugCatalog, snapshot, export |
+| `farmacia_style.css` | +214 — dropdown, modal, etiquetas HOSP/BIO |
+| `vendor/sheetjs/README.md` | Nuevo — atribución Apache 2.0 |
+| `vendor/sheetjs/LICENSE` | Nuevo — licencia completa |
+| `vendor/sheetjs/xlsx.full.min.js` | Nuevo — SheetJS v0.18.5 (862 KB) |
+| `data/catalogos/...HOSPITALARIO_2hojas_20260606.xlsx` | Nuevo — catálogo hospitalario filtrado (554 KB, 4.032 registros) |
+
+### Prerrequisitos de uso
+
+- Abrir `farmacia_validacion.html` servido por HTTP (no file://). El servidor Python del VPS en `:8765` funciona.
+- Hacer clic en **"📂 Cargar catálogo de fármacos"**.
+- La búsqueda se activa desde 2 caracteres.
+- Soporta cargas manuales si el fetch falla (selector de archivos).
+
+### Validaciones
+
+| Check | Resultado |
+|-------|-----------|
+| Smoke check | 33/33 PASSED |
+| Carga | 4.032 registros (CIMA: 4.030 hospitalarios + Locales: 2) |
+| Consola JS | 0 errores |
+| SheetJS | Local, sin CDN |
+| Denegado sin motivo | Preservado |
+| Export TXT con snapshot | Preservado |
+| Auditoría técnica pre-prueba | `pending_attention` — sin P0/P1 |
+
+## 8. Decisión final (post-validación manual)
+
+| Decisión | Resolución |
+|----------|------------|
+| Rama demo principal del lunes | ✅ `work/hermes/farmacia-demo-v0-2-candidate-20260606` |
+| Rama fallback | ✅ `work/hermes/nightly-farmacia-v0-1-20260606` (frozen, intacta) |
+| Merge a `main` o `feature/` | ❌ No — demo sin merge |
+| PR #5 | ❌ No tocar — se queda en draft |
+| PR #3 | ❌ No tocar — sigue abierto |
+| Más cambios de código | ❌ No — solo P0/P1 reales |
+| Siguiente paso | Demo del lunes 2026-06-08 con v0.2 candidate. Post-demo: decidir merge y prioridades. |

@@ -50,11 +50,11 @@
 
 ---
 
-## Bloque Farmacia Hospitalaria v0.1 — rama nocturna congelada
+## Bloque Farmacia Hospitalaria v0.1 — rama frozen (fallback)
 
 > 📌 **Rama:** `work/hermes/nightly-farmacia-v0-1-20260606`
-> **Estado:** `ready_for_demo` / `pending human review`
-> **Merge:** ❌ **No mergeada.** Congelada para demo 2026-06-08.
+> **Estado:** `fallback_ready` — demo principal migrada a v0.2 candidate
+> **Merge:** ❌ No mergeado. Mantener frozen como respaldo operativo.
 > **Base:** `feature/reuma-v2-prebiologico-fh-les-sjogren`
 
 | WO | Título | Estado | Rama | Merge/Commit | Notas |
@@ -80,15 +80,34 @@
 
 ---
 
+## Bloque Farmacia Hospitalaria v0.2 — Autocomplete dual (demo principal)
+
+> 📌 **Rama demo principal:** `work/hermes/farmacia-demo-v0-2-candidate-20260606`
+> **Estado:** ✅ `validated_for_demo` — validada por Sil como demo del lunes 2026-06-08
+> **Commit:** `d631ee70c9f7f6c98929d58596f2c6dcca73051e`
+> **Base:** `work/hermes/nightly-farmacia-v0-1-20260606` (`95003a2`)
+> **Merge:** ❌ No mergeado. Rama candidata para demo. Post-demo decidir merge.
+
+| WO | Título | Estado | Rama | Commit | Notas |
+|----|--------|--------|------|--------|-------|
+| **WO-035** | Catálogo CIMA v0.1 (extracción + Excel dual) | 🔄 Superseded | `work/farmacia-catalogo-cima-v0-1-20260606` | `3047673` | **Superseded by WO-036.** Catálogo completo 16k registros. Reemplazado por hospitalario filtrado. PR #3 draft, sin merge |
+| **WO-036** | Autocomplete farmacológico dual hospitalario v0.2 | 🟢 **Validated** | `work/hermes/farmacia-demo-v0-2-candidate-20260606` | `d631ee7` | **Validado por Sil como demo principal.** 7 archivos, 4.032 registros, SheetJS local, sin CDN |
+| **WO-037** | Rama limpia PR #5 (histórico squash) | 📋 Draft | `work/farmacia-v0-2-autocomplete-dual-clean-20260606` | `b5643fd` | PR #5 draft. Rama limpia desde main (2 commits). No mergear |
+| **WO-038** | Auditoría técnica pre-prueba v0.2 candidate | ✅ Completada | `work/hermes/farmacia-demo-v0-2-candidate-20260606` | — | Auditoría PM Codex. Sin P0/P1, P3 documentales. `pending_attention` |
+
+---
+
 ## Resumen
 
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 22 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia congelada) |
-| 🔄 Superseded | 1 (WO-011) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) |
+| 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
+| 🔄 Superseded | 2 (WO-011, WO-035) |
+| ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 42 work orders / preflights gestionadas.
+**Total:** 46 work orders / preflights gestionadas.
