@@ -556,6 +556,220 @@
     outline-offset: 2px;
 }
 
+/* ============================================================
+   Adiciones WO v0.2 — autocomplete farmacológico dual
+   ============================================================ */
+
+/* --- Catalog loader block --- */
+.catalog-loader-block {
+    margin-bottom: 16px;
+}
+.catalog-loader-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+.catalog-file-input {
+    max-width: 280px;
+}
+.catalog-status {
+    font-size: 0.85rem;
+    color: #64748B;
+}
+.catalog-status--loaded {
+    color: var(--ses-green);
+    font-weight: 600;
+}
+.catalog-status--manual {
+    color: #92400E;
+    font-weight: 600;
+}
+.catalog-counter {
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 135, 119, 0.20);
+}
+
+/* --- Autocomplete --- */
+.autocomplete-wrapper {
+    position: relative;
+    margin-top: 4px;
+}
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    max-height: 360px;
+    overflow-y: auto;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+.autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #F1F5F9;
+    transition: background 0.12s;
+}
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+.autocomplete-item:hover,
+.autocomplete-item--active {
+    background: var(--ses-green-light);
+}
+.autocomplete-item-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+.autocomplete-item-name {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.88rem;
+}
+.autocomplete-item-detail {
+    font-size: 0.78rem;
+    color: #64748B;
+    line-height: 1.4;
+}
+.drug-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.drug-tag--hosp {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+.drug-tag--bio {
+    background: #E0E7FF;
+    color: #3730A3;
+    border: 1px solid #C7D2FE;
+}
+.drug-source-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-left: auto;
+}
+.drug-source-tag--cima {
+    background: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+}
+.drug-source-tag--local {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+/* --- No find drug row --- */
+.no-find-drug-row {
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+/* --- Local drug modal --- */
+.local-drug-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.50);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.local-drug-modal {
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.local-drug-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+.local-drug-modal-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+.local-drug-modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #E2E8F0;
+    color: #475569;
+    border: none;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+    transition: background 0.15s;
+}
+.local-drug-modal-close:hover { background: #CBD5E1; color: #1E293B; }
+.local-drug-modal-body {
+    padding: 16px 24px;
+}
+.local-drug-modal-body .warning-box {
+    margin-bottom: 16px;
+}
+.local-drug-modal-body .form-grid {
+    margin-bottom: 12px;
+}
+.local-drug-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 24px 20px;
+}
+
+/* --- Form group full width (used in modal) --- */
+.form-group--full {
+    grid-column: 1 / -1;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 768px) {
+    .local-drug-modal {
+        max-height: calc(100vh - 48px);
+        border-radius: 14px;
+    }
+    .autocomplete-dropdown {
+        max-height: 260px;
+    }
+}
+
 /* --- Campos readonly: aspecto precargado (ítem 7) --- */
 .form-control[readonly] {
     background: #EFF6F5;

@@ -95,7 +95,9 @@
     <div class="form-grid"><div class="form-group"><label for="fhDermaFecha">Fecha solicitud</label><input type="date" class="form-control" id="fhDermaFecha"></div></div>
 
     <h3 class="card-title card-title--tight"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
-    <div class="form-grid"><div class="form-group"><label for="fhDermaFarmaco">Fármaco solicitado (marca comercial)</label><input type="text" class="form-control" id="fhDermaFarmaco" placeholder="Ej. Cosentyx®, Humira®, Skyrizi®..."></div><div class="form-group"><label for="fhDermaDosis">Dosis solicitada</label><input type="text" class="form-control" id="fhDermaDosis" placeholder="Ej. 300 mg"></div></div>
+    <div class="catalog-loader-block" id="catalogLoaderBlock"><div class="catalog-loader-row"><button type="button" class="btn btn-secondary" id="btnLoadCatalog">📂 Cargar catálogo de fármacos</button><input type="file" id="fileCatalogInput" class="form-control catalog-file-input hidden" accept=".xlsx,.xls"><span class="catalog-status" id="catalogStatus"></span></div><div class="catalog-counter hidden" id="catalogCounter"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaFarmaco">Fármaco solicitado (marca comercial)</label><div class="autocomplete-wrapper" id="autocompleteWrapper"><input type="text" class="form-control" id="fhDermaFarmaco" placeholder="Cargue el catálogo primero..." autocomplete="off" disabled><div class="autocomplete-dropdown hidden" id="autocompleteDropdown"></div></div></div><div class="form-group"><label for="fhDermaDosis">Dosis solicitada</label><input type="text" class="form-control" id="fhDermaDosis" placeholder="Ej. 300 mg"></div></div>
+    <div class="no-find-drug-row hidden" id="noFindDrugRow"><button type="button" class="btn btn-outline" id="btnNoFindDrug">No encuentro el fármaco</button></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaPrincipioActivo">Principio activo / molécula (opcional)</label><input type="text" class="form-control" id="fhDermaPrincipioActivo" placeholder="Ej. Secukinumab, Adalimumab..."></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaVia">Vía de administración</label><select class="form-select" id="fhDermaVia"><option value="">Seleccionar...</option><option>SC</option><option>IV</option><option>Oral</option><option>Otra</option></select></div><div class="form-group"><label for="fhDermaPauta">Intervalo / pauta</label><input type="text" class="form-control" id="fhDermaPauta" placeholder="Ej. cada 4 semanas"></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaInduccion">Inducción solicitada</label><select class="form-select" id="fhDermaInduccion"><option value="no">No</option><option value="si">Sí</option></select></div><div class="form-group"><label for="fhDermaPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhDermaPeso" placeholder="Ej. 72 kg"></div></div>
@@ -166,7 +168,8 @@
 </section>
                 </main>
             </div>
+            <script src="vendor/sheetjs/xlsx.full.min.js"></script>
             <script src="scripts/farmacia_common.js?v=20260606b"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260606c"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260606e"></script>
         </body>
         </html>
