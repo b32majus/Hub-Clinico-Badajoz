@@ -192,3 +192,20 @@ e1892e0 feat(farmacia): add pharmacy module shell (primera WO)
 | Siguiente paso | Sil + Cora revisan visualmente → si OK, demo → después decidir merge y prioridades post-demo |
 
 **La rama `work/hermes/nightly-farmacia-v0-1-20260606` está lista para revisión humana y demo del lunes 2026-06-08.**
+
+---
+
+## 6. Nota sobre evolución prevista
+
+La demo v0.1 mantiene campos de texto/libres para el fármaco solicitado. La evolución prevista para Farmacia v0.2 (post-demo) incluye:
+
+- **Catálogo dual** (CIMA oficial + Local Especial editable por Farmacia)
+- **Autocomplete unificado** con búsqueda en ambas fuentes
+- **Snapshot del tratamiento** para trazabilidad
+- **Alta local especial** para situaciones no cubiertas en CIMA
+
+**No forma parte de la demo del lunes.** El catálogo existe como artefacto revisable (Excel 2 hojas en PR #3 draft, rama separada). La implementación en la app comienza después de la demo, una vez validado con Farmacia.
+
+---
+
+*Sección añadida 2026-06-06 — WO documental catálogo dual Farmacia v0.2*

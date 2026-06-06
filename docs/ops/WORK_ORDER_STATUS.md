@@ -76,7 +76,8 @@
 | **WO-031** | Reducción deuda técnica pre-demo | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `22e7a93` | Centralización common.js. No mergeado |
 | **WO-032-lite** | Limpieza con tokens limitados + smoke check | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `a80b4af` | Smoke check 33/33 OK. No mergeado |
 | **WO-033-lite** | Freeze demo + CI smoke check | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `d0d9739`, `0ac562d` | CI workflow + freeze doc. No mergeado |
-| **WO-034** | Cierre documental global Farmacia v0.1 | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `1fe6f9b` | Cierre documental global; no mergeado; rama congelada para demo |
+|| **WO-034** | Cierre documental global Farmacia v0.1 | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `1fe6f9b` | Cierre documental global; no mergeado; rama congelada para demo |
+|| **WO-035** | Documentación catálogo dual Farmacia v0.2 | 📋 Ready for review | `work/farmacia-catalogo-cima-v0-1-20260606` | `4d9c603` | WO documental. Catálogo CIMA+Local. No mergear. PR #3 draft. |
 
 ---
 
@@ -85,10 +86,10 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 22 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia congelada) |
+| 📋 Ready for review | 19 (WO-017 a WO-035 — rama nocturna Farmacia + catálogo dual) |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 42 work orders / preflights gestionadas.
+**Total:** 43 work orders / preflights gestionadas.

@@ -111,10 +111,38 @@
 |--------|-------------|-----------|
 | **XSS residual** | `createOverlay()` ya migrado a DOM. No quedan `innerHTML` con datos de usuario. | ✅ Eliminado en WO-031 |
 | **Datos hardcoded** | Todos los pacientes en `farmacia_common.js`. Si se añaden/modifican, requiere commit. | Aceptado para demo v0.1 |
-| **Sin autenticación** | La app es totalmente abierta. No debe exponerse públicamente. | GitHub Pages con acceso controlado |
-| **Sin validación servidor** | Toda la validación es client-side. Los datos se pierden al cerrar el navegador. | Explicitado en banner demo |
-| **Font Awesome beta** | 6.0.0-beta3 tiene algunos iconos distintos de la versión final. | Bajo riesgo: iconos usados son estables |
-| **Exportación básica** | TXT/CSV se genera solo en cliente sin firma ni trazabilidad. | Solo para demo visual, no uso clínico |
+| Sin autenticación | La app es totalmente abierta. No debe exponerse públicamente. | GitHub Pages con acceso controlado |
+|| Sin validación servidor | Toda la validación es client-side. Los datos se pierden al cerrar el navegador. | Explicitado en banner demo |
+|| Font Awesome beta | 6.0.0-beta3 tiene algunos iconos distintos de la versión final. | Bajo riesgo: iconos usados son estables |
+|| Exportación básica | TXT/CSV se genera solo en cliente sin firma ni trazabilidad. | Solo para demo visual, no uso clínico |
+|
+|---|
+|
+|## 6. Deuda técnica post-demo — Catálogo farmacológico dual y autocomplete Farmacia v0.2|
+|
+|**Decisión tomada:** El catálogo farmacológico dual (CIMA + Local Especial) se implementará en Farmacia v0.2, después de la demo del lunes. No se toca la demo congelada.|
+|
+|**Artefacto actual:** Excel simplificado de 2 hojas versionado en rama separada (PR #3 draft) para revisión funcional por Farmacia.|
+|
+|### Tareas post-demo|
+|
+|| ID | Tarea | Depende de | Prioridad |
+||----|-------|-----------|----------|
+|| CAT-01 | Revisar Excel con Farmacia: validar columnas CATALOGO_CIMA y LOCA_ESPECIAL | Reunión post-demo | Alta |
+|| CAT-02 | Decidir qué campos del catálogo son visibles para perfil no técnico en el autocomplete | CAT-01 | Alta |
+|| CAT-03 | Diseñar componente de autocomplete unificado (CIMA + Local) | CAT-02 | Alta |
+|| CAT-04 | Decidir formato de datos derivado (JSON para consumo JS desde el Excel) | CAT-03 | Media |
+|| CAT-05 | Implementar snapshot del tratamiento seleccionado al guardar | CAT-03 | Media |
+|| CAT-06 | Definir flujo de alta local especial (formulario + validación FH) | CAT-02 | Media |
+|| CAT-07 | Implementar reconciliación: cuando un fármaco local pasa a existir en CIMA | CAT-06 | Baja |
+|| CAT-08 | Integrar autocomplete en formularios de Validación y Seguimiento | CAT-03, CAT-05 | Alta |
+|
+|### Documentación relacionada|
+|- `docs/DECISIONES_FARMACIA_CATALOGO_FARMACOLOGICO_DUAL_20260606.md` — documento canónico de decisión|
+|- `data/catalogos/farmacia/hub_catalogo_farmacologico_dual_SIMPLE_2hojas_20260606.xlsx` — Excel de 2 hojas|
+|- `tools/catalogos/extract_cima_catalog.py` — script de extracción CIMA|
+|- PR #3 (draft) — rama `work/farmacia-catalogo-cima-v0-1-20260606`|
+|
 
 ---
 
