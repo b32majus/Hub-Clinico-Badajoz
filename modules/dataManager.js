@@ -28,7 +28,9 @@ function saveToSessionStorage() {
                 ...appState.db,
                 ESPA: (appState.db?.ESPA || []).slice(-visitLimit),
                 APS: (appState.db?.APS || []).slice(-visitLimit),
-                AR: (appState.db?.AR || []).slice(-visitLimit)
+                AR: (appState.db?.AR || []).slice(-visitLimit),
+                LES: (appState.db?.LES || []).slice(-visitLimit),
+                SJOGREN: (appState.db?.SJOGREN || []).slice(-visitLimit)
             }
             : appState.db;
 
@@ -159,6 +161,7 @@ var CRITICAL_HEADERS = {
         createHeaderRule('EVA_Dolor'),
         createHeaderRule('PCR'),
         createHeaderRule('VSG'),
+        createHeaderRule('DAPSA_Result', ['DAPSA_Result', 'DAPSA', 'dapsaResult']),
         createHeaderRule('BASDAI_Result'),
         createHeaderRule('ASDAS_CRP_Result'),
         createHeaderRule('ASDAS_ESR_Result'),
@@ -203,6 +206,26 @@ var CRITICAL_HEADERS = {
         createHeaderRule('Decision_Terapeutica_SEG', ['Decision_Terapeutica_SEG', 'Decision_Terapeutica']),
         createHeaderRule('Fecha_Inicio_Tratamiento'),
         createHeaderRule('Fecha_Proxima_Revision')
+    ],
+    LES: [
+        createHeaderRule('ID_Paciente', ['ID_Paciente', 'CIP', 'cip', 'idPaciente']),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario', ['Diagnostico_Primario', 'Diagnostico_Principal', 'pathology']),
+        createHeaderRule('SLEDAI_2K', ['SLEDAI_2K', 'SLEDAI_2K_Result', 'SLEDAI', 'sledai2kResult']),
+        createHeaderRule('SLICC_SDI', ['SLICC_SDI', 'SLICC_ACR_SDI', 'sliccAcrSdi', 'sliccSdi']),
+        createHeaderRule('Estado_Prebiologico_Final'),
+        createHeaderRule('Fecha_Validacion_Prebiologico')
+    ],
+    SJOGREN: [
+        createHeaderRule('ID_Paciente', ['ID_Paciente', 'CIP', 'cip', 'idPaciente']),
+        createHeaderRule('Fecha_Visita'),
+        createHeaderRule('Tipo_Visita'),
+        createHeaderRule('Diagnostico_Primario', ['Diagnostico_Primario', 'Diagnostico_Principal', 'pathology']),
+        createHeaderRule('ESSPRI_Result', ['ESSPRI_Result', 'ESSPRI', 'esspriResult']),
+        createHeaderRule('ESSDAI_Result', ['ESSDAI_Result', 'ESSDAI', 'essdaiResult']),
+        createHeaderRule('Estado_Prebiologico_Final'),
+        createHeaderRule('Fecha_Validacion_Prebiologico')
     ]
 };
 
@@ -252,7 +275,7 @@ async function loadDatabase(file) {
         const dbData = {};
 
         // Verificar que las hojas clínicas esperadas existen
-        var requiredSheets = ['ESPA', 'APS', 'AR'];
+        var requiredSheets = ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN'];
         var missingSheets = requiredSheets.filter(function(s) { return !workbook.Sheets[s]; });
         if (missingSheets.length > 0) {
             console.warn('Hojas faltantes en el Excel: ' + missingSheets.join(', '));
@@ -265,7 +288,7 @@ async function loadDatabase(file) {
         }
 
         // Itera sobre las hojas de datos de pacientes y profesionales
-        ['ESPA', 'APS', 'AR', 'Profesionales'].forEach(sheetName => {
+        ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN', 'Profesionales'].forEach(sheetName => {
             if (workbook.Sheets[sheetName]) {
                 let sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
                 if (sheetName === 'Profesionales') {
@@ -308,7 +331,7 @@ async function loadDatabase(file) {
 
         // 3b. Validar cabeceras críticas de las hojas clínicas
         var allMissing = {};
-        ['ESPA', 'APS', 'AR'].forEach(function(sheet) {
+        ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN'].forEach(function(sheet) {
             if (workbook.Sheets[sheet]) {
                 var headerMatrix = XLSX.utils.sheet_to_json(workbook.Sheets[sheet], { header: 1, range: 0, blankrows: false });
                 var actualHeaders = Array.isArray(headerMatrix[0]) ? headerMatrix[0].filter(function(value) {
@@ -447,7 +470,7 @@ function getFarmacosPorTipo(tipo) {
 function getAllPatients() {
     if (!appState.isLoaded) return [];
     const allPatients = [];
-    ['ESPA', 'APS', 'AR'].forEach(sheetName => {
+    ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN'].forEach(sheetName => {
         if (appState.db?.[sheetName]) {
             allPatients.push(...appState.db[sheetName]);
         }
@@ -466,7 +489,7 @@ function findPatientById(patientId) {
     }
 
     if (appState.isLoaded) {
-        const sheets = ['ESPA', 'APS', 'AR'];
+        const sheets = ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN'];
         for (const sheetName of sheets) {
             const patients = appState.db?.[sheetName] || [];
             const patient = patients.find(p => p.ID_Paciente === patientId);
@@ -504,7 +527,7 @@ function getPatientHistory(patientId) {
     const emptyHistory = { allVisits: [], latestVisit: null, firstVisit: null, pathology: null, treatmentHistory: [], keyEvents: [] };
 
     if (appState.isLoaded) {
-        const sheets = ['ESPA', 'APS', 'AR'];
+        const sheets = ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN'];
         const visits = [];
         let pathology = null;
 
@@ -762,40 +785,40 @@ function extractKeyEvents(visits, pathology) {
 
             if (pathology === 'espa' || pathology === 'ESPA') {
                 // Comparar BASDAI
-                const currBASDAI = parseFloat(currentVisit.basdaiResult || currentVisit.BASDAI);
-                const prevBASDAI = parseFloat(previousVisit.basdaiResult || previousVisit.BASDAI);
+                const currBASDAI = parseStrictNumber(currentVisit.basdaiResult || currentVisit.BASDAI);
+                const prevBASDAI = parseStrictNumber(previousVisit.basdaiResult || previousVisit.BASDAI);
 
-                if (!isNaN(currBASDAI) && !isNaN(prevBASDAI) && currBASDAI > prevBASDAI + 2) {
+                if (currBASDAI !== null && prevBASDAI !== null && currBASDAI > prevBASDAI + 2) {
                     isFlare = true;
                     flareReason = `BASDAI ? (${prevBASDAI.toFixed(1)} ? ${currBASDAI.toFixed(1)})`;
                 }
 
                 // Comparar ASDAS-CRP
                 if (!isFlare) {
-                    const currASDAS = parseFloat(currentVisit.asdasCrpResult || currentVisit.ASDAS);
-                    const prevASDAS = parseFloat(previousVisit.asdasCrpResult || previousVisit.ASDAS);
+                    const currASDAS = parseStrictNumber(currentVisit.asdasCrpResult || currentVisit.ASDAS);
+                    const prevASDAS = parseStrictNumber(previousVisit.asdasCrpResult || previousVisit.ASDAS);
 
-                    if (!isNaN(currASDAS) && !isNaN(prevASDAS) && currASDAS > prevASDAS + 0.8) {
+                    if (currASDAS !== null && prevASDAS !== null && currASDAS > prevASDAS + 0.8) {
                         isFlare = true;
                         flareReason = `ASDAS ? (${prevASDAS.toFixed(2)} ? ${currASDAS.toFixed(2)})`;
                     }
                 }
             } else if (pathology === 'aps' || pathology === 'APS') {
                 // Comparar HAQ
-                const currHAQ = parseFloat(currentVisit.haqResult || currentVisit.HAQ);
-                const prevHAQ = parseFloat(previousVisit.haqResult || previousVisit.HAQ);
+                const currHAQ = parseStrictNumber(currentVisit.haqResult || currentVisit.HAQ);
+                const prevHAQ = parseStrictNumber(previousVisit.haqResult || previousVisit.HAQ);
 
-                if (!isNaN(currHAQ) && !isNaN(prevHAQ) && currHAQ > prevHAQ + 0.5) {
+                if (currHAQ !== null && prevHAQ !== null && currHAQ > prevHAQ + 0.5) {
                     isFlare = true;
                     flareReason = `HAQ ? (${prevHAQ.toFixed(2)} ? ${currHAQ.toFixed(2)})`;
                 }
 
                 // Comparar RAPID3
                 if (!isFlare) {
-                    const currRAPID3 = parseFloat(currentVisit.rapid3Result || currentVisit.RAPID3);
-                    const prevRAPID3 = parseFloat(previousVisit.rapid3Result || previousVisit.RAPID3);
+                    const currRAPID3 = parseStrictNumber(currentVisit.rapid3Result || currentVisit.RAPID3);
+                    const prevRAPID3 = parseStrictNumber(previousVisit.rapid3Result || previousVisit.RAPID3);
 
-                    if (!isNaN(currRAPID3) && !isNaN(prevRAPID3) && currRAPID3 > prevRAPID3 + 2) {
+                    if (currRAPID3 !== null && prevRAPID3 !== null && currRAPID3 > prevRAPID3 + 2) {
                         isFlare = true;
                         flareReason = `RAPID3 ? (${prevRAPID3.toFixed(1)} ? ${currRAPID3.toFixed(1)})`;
                     }
@@ -816,14 +839,14 @@ function extractKeyEvents(visits, pathology) {
         let remissionReason = '';
 
         if (pathology === 'espa' || pathology === 'ESPA') {
-            const basdai = parseFloat(currentVisit.basdaiResult || currentVisit.BASDAI);
-            if (!isNaN(basdai) && basdai < (cutoffs.basdai?.remission || 4)) {
+            const basdai = parseStrictNumber(currentVisit.basdaiResult || currentVisit.BASDAI);
+            if (basdai !== null && basdai < (cutoffs.basdai?.remission || 4)) {
                 isRemission = true;
                 remissionReason = `BASDAI baja (${basdai.toFixed(1)})`;
             }
         } else if (pathology === 'aps' || pathology === 'APS') {
-            const haq = parseFloat(currentVisit.haqResult || currentVisit.HAQ);
-            if (!isNaN(haq) && haq < (cutoffs.haq?.remission || 0.5)) {
+            const haq = parseStrictNumber(currentVisit.haqResult || currentVisit.HAQ);
+            if (haq !== null && haq < (cutoffs.haq?.remission || 0.5)) {
                 isRemission = true;
                 remissionReason = `HAQ en remisin (${haq.toFixed(2)})`;
             }
@@ -831,12 +854,12 @@ function extractKeyEvents(visits, pathology) {
 
         if (isRemission && previousVisit) {
             // Solo registrar si la visita anterior NO estaba en remisin
-            const prevBASDAI = parseFloat(previousVisit.basdaiResult || previousVisit.BASDAI);
-            const prevHAQ = parseFloat(previousVisit.haqResult || previousVisit.HAQ);
+            const prevBASDAI = parseStrictNumber(previousVisit.basdaiResult || previousVisit.BASDAI);
+            const prevHAQ = parseStrictNumber(previousVisit.haqResult || previousVisit.HAQ);
 
             let shouldRecord = false;
-            if (pathology === 'espa' && !isNaN(prevBASDAI) && prevBASDAI >= 4) shouldRecord = true;
-            if (pathology === 'aps' && !isNaN(prevHAQ) && prevHAQ >= 0.5) shouldRecord = true;
+            if (pathology === 'espa' && prevBASDAI !== null && prevBASDAI >= 4) shouldRecord = true;
+            if (pathology === 'aps' && prevHAQ !== null && prevHAQ >= 0.5) shouldRecord = true;
 
             if (shouldRecord) {
                 events.push({
@@ -910,6 +933,13 @@ function normalizeString(value) {
     return value.toString().trim().toLowerCase();
 }
 
+function parseStrictNumber(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function getFieldValue(record, keys) {
     for (const key of keys) {
         if (record[key] !== undefined && record[key] !== null && record[key] !== '') {
@@ -922,8 +952,7 @@ function getFieldValue(record, keys) {
 function getNumericFieldValue(record, keys) {
     const value = getFieldValue(record, keys);
     if (value === null) return null;
-    const parsed = parseFloat(value);
-    return Number.isNaN(parsed) ? null : parsed;
+    return parseStrictNumber(value);
 }
 
 function parseFilterDate(value) {
@@ -993,7 +1022,20 @@ const METRIC_FIELDS = {
     PCR: ['PCR', 'pcrResult', 'pcr'],
     VSG: ['VSG', 'vsgResult', 'vsg'],
     EVA_DOLOR: ['EVA_Dolor', 'evaDolor', 'eva_dolor'],
-    EVA_GLOBAL: ['EVA_Global', 'evaGlobal', 'eva_global']
+    EVA_GLOBAL: ['EVA_Global', 'evaGlobal', 'eva_global'],
+    SLEDAI_2K: ['SLEDAI_2K', 'SLEDAI_2K_Result', 'sledai2kResult', 'SLEDAI', 'SLEDAI_Result'],
+    SLICC_SDI: ['SLICC_SDI', 'SLICC_ACR_SDI', 'sliccAcrSdi', 'sliccSdi'],
+    ESSPRI: ['ESSPRI_Result', 'esspriResult', 'ESSPRI'],
+    ESSDAI: ['ESSDAI_Result', 'essdaiResult', 'ESSDAI'],
+    DAPSA: ['DAPSA_Result', 'DAPSA', 'dapsaResult'],
+    PASI: ['PASI_Score', 'PASI', 'pasiResult'],
+    LEI: ['LEI_Score', 'LEI', 'leiResult'],
+    BSA: ['BSA_Percentage', 'BSA', 'bsaResult'],
+    PREDNISONA: ['Dosis_Prednisona', 'Dosis_Prednisona_Mg_Dia', 'dosisPrednisona'],
+    EVA_SEQUEDAD_ORAL: ['EVA_Sequedad_Oral', 'evaSequedadOral'],
+    EVA_SEQUEDAD_OCULAR: ['EVA_Sequedad_Ocular', 'evaSequedadOcular'],
+    EVA_FATIGA_SJOGREN: ['EVA_Fatiga_Sjogren', 'evaFatigaSjogren', 'EVA_Fatiga'],
+    EVA_DOLOR_SJOGREN: ['EVA_Dolor_Sjogren', 'evaDolorSjogren']
 };
 
 function resolveMetricKey(metricLabel) {
@@ -1011,6 +1053,19 @@ function resolveMetricKey(metricLabel) {
     if (normalized === 'vsg') return 'VSG';
     if (normalized === 'evadolor') return 'EVA_DOLOR';
     if (normalized === 'evaglobal') return 'EVA_GLOBAL';
+    if (normalized === 'sledai2k' || normalized === 'sledai_2k' || normalized === 'sledai') return 'SLEDAI_2K';
+    if (normalized.includes('slicc')) return 'SLICC_SDI';
+    if (normalized === 'esspri') return 'ESSPRI';
+    if (normalized === 'essdai') return 'ESSDAI';
+    if (normalized === 'dapsa') return 'DAPSA';
+    if (normalized === 'pasi') return 'PASI';
+    if (normalized === 'lei') return 'LEI';
+    if (normalized === 'bsa') return 'BSA';
+    if (normalized.includes('prednisona')) return 'PREDNISONA';
+    if (normalized.includes('sequedad') && normalized.includes('oral')) return 'EVA_SEQUEDAD_ORAL';
+    if (normalized.includes('sequedad') && normalized.includes('ocular')) return 'EVA_SEQUEDAD_OCULAR';
+    if (normalized.includes('fatiga') && normalized.includes('sjogren')) return 'EVA_FATIGA_SJOGREN';
+    if (normalized.includes('dolor') && normalized.includes('sjogren')) return 'EVA_DOLOR_SJOGREN';
     return null;
 }
 
@@ -1021,7 +1076,7 @@ function getMetricValue(record, metricLabel) {
 }
 
 const ACTIVITY_THRESHOLDS = {
-    BASDAI: { remission: 2, low: 4, moderate: 6 },
+    BASDAI: { remission: 4, low: 4, moderate: 6 },
     ASDAS: { remission: 1.3, low: 2.1, moderate: 3.5 },
     DAS28_CRP: { remission: 2.6, low: 3.2, moderate: 5.1 },
     DAS28_ESR: { remission: 2.6, low: 3.2, moderate: 5.1 },
@@ -1030,7 +1085,13 @@ const ACTIVITY_THRESHOLDS = {
     RAPID3: { remission: 3, low: 6, moderate: 12 },
     HAQ: { remission: 0.5, low: 1.5, moderate: 2 },
     PCR: { remission: 5, low: 10, moderate: 20 },
-    VSG: { remission: 20, low: 40, moderate: 60 }
+    VSG: { remission: 20, low: 40, moderate: 60 },
+    SLEDAI_2K: { remission: 2, low: 6, moderate: 12 },
+    ESSPRI: { remission: 3, low: 5, moderate: 7 },
+    ESSDAI: { remission: 5, low: 14, moderate: 14 },
+    DAPSA: { remission: 4, low: 14, moderate: 28 },
+    PASI: { remission: 3, low: 10, moderate: 20 },
+    PREDNISONA: { remission: 5, low: 10, moderate: 20 }
 };
 
 function getActivityBucket(metricLabel, value) {
@@ -1040,9 +1101,21 @@ function getActivityBucket(metricLabel, value) {
     const thresholds = ACTIVITY_THRESHOLDS[metricKey];
     if (!thresholds) return null;
 
-    if (value < thresholds.remission) return 'Remisi\u00f3n';
-    if (value < thresholds.low) return 'Baja Actividad';
-    if (value < thresholds.moderate) return 'Moderada Actividad';
+    if (metricKey === 'BASDAI') {
+        if (value < 4) return 'Baja Actividad';
+        if (value < 6) return 'Moderada Actividad';
+        return 'Alta Actividad';
+    }
+
+    if (metricKey === 'ESSDAI') {
+        if (value < 5) return 'Baja Actividad';
+        if (value < 14) return 'Moderada Actividad';
+        return 'Alta Actividad';
+    }
+
+    if (value <= thresholds.remission) return 'Remisi\u00f3n';
+    if (value <= thresholds.low) return 'Baja Actividad';
+    if (value <= thresholds.moderate) return 'Moderada Actividad';
     return 'Alta Actividad';
 }
 
@@ -1120,17 +1193,17 @@ function applyFiltersToPatients(patients, filters) {
     if (dateFrom) dateFrom.setHours(0, 0, 0, 0);
     if (dateTo) dateTo.setHours(23, 59, 59, 999);
 
-    const ageFrom = parseInt(filters.ageFrom, 10);
-    const ageTo = parseInt(filters.ageTo, 10);
-    const applyAgeFrom = !Number.isNaN(ageFrom);
-    const applyAgeTo = !Number.isNaN(ageTo);
+    const ageFrom = parseStrictNumber(filters.ageFrom);
+    const ageTo = parseStrictNumber(filters.ageTo);
+    const applyAgeFrom = ageFrom !== null;
+    const applyAgeTo = ageTo !== null;
 
     const activityState = filters.activityState && filters.activityState !== 'Todos' ? filters.activityState : null;
     const activityIndex = filters.activityIndex || 'BASDAI';
-    const evaDolorLimit = parseFloat(filters.evaDolor);
-    const evaGlobalLimit = parseFloat(filters.evaGlobal);
-    const applyEvaDolor = !Number.isNaN(evaDolorLimit) && evaDolorLimit < 10;
-    const applyEvaGlobal = !Number.isNaN(evaGlobalLimit) && evaGlobalLimit < 10;
+    const evaDolorLimit = parseStrictNumber(filters.evaDolor);
+    const evaGlobalLimit = parseStrictNumber(filters.evaGlobal);
+    const applyEvaDolor = evaDolorLimit !== null && evaDolorLimit < 10;
+    const applyEvaGlobal = evaGlobalLimit !== null && evaGlobalLimit < 10;
 
     const biomarkerFilter = filters.biomarker || '';
     const ttoTypeFilter = normalizeString(filters.ttoType);
@@ -1259,7 +1332,11 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
     let biologicCount = 0;
     let activitySum = 0;
     let activityCount = 0;
-    let activityLabel = selectedPathology === 'APS' ? 'HAQ' : (selectedPathology === 'AR' ? 'DAS28_CRP' : 'BASDAI');
+    let activityLabel = selectedPathology === 'APS' ? 'HAQ'
+        : (selectedPathology === 'AR' ? 'DAS28_CRP'
+        : (selectedPathology === 'LES' ? 'SLEDAI_2K'
+        : (selectedPathology === 'SJOGREN' ? 'ESSDAI'
+        : 'BASDAI')));
 
     const metricsAcc = {
         BASDAI: { sum: 0, count: 0 },
@@ -1276,7 +1353,18 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
         PCR: { sum: 0, count: 0 },
         VSG: { sum: 0, count: 0 },
         PASI: { sum: 0, count: 0 },
-        LEI: { sum: 0, count: 0 }
+        LEI: { sum: 0, count: 0 },
+        SLEDAI_2K: { sum: 0, count: 0 },
+        SLICC_SDI: { sum: 0, count: 0 },
+        ESSPRI: { sum: 0, count: 0 },
+        ESSDAI: { sum: 0, count: 0 },
+        DAPSA: { sum: 0, count: 0 },
+        BSA: { sum: 0, count: 0 },
+        PREDNISONA: { sum: 0, count: 0 },
+        EVA_SEQUEDAD_ORAL: { sum: 0, count: 0 },
+        EVA_SEQUEDAD_OCULAR: { sum: 0, count: 0 },
+        EVA_FATIGA_SJOGREN: { sum: 0, count: 0 },
+        EVA_DOLOR_SJOGREN: { sum: 0, count: 0 }
     };
 
     const pushMetric = (key, value) => {
@@ -1322,13 +1410,42 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
         pushMetric('PASI', pasi);
         pushMetric('LEI', lei);
 
+        const sledai2k = getMetricValue(p, 'SLEDAI_2K');
+        const slicc = getMetricValue(p, 'SLICC_SDI');
+        const esspri = getMetricValue(p, 'ESSPRI');
+        const essdai = getMetricValue(p, 'ESSDAI');
+        const dapsa = getMetricValue(p, 'DAPSA');
+        const prednisona = getMetricValue(p, 'PREDNISONA');
+        const evaSequedadOral = getMetricValue(p, 'EVA_SEQUEDAD_ORAL');
+        const evaSequedadOcular = getMetricValue(p, 'EVA_SEQUEDAD_OCULAR');
+        const evaFatigaSjogren = getMetricValue(p, 'EVA_FATIGA_SJOGREN');
+        const evaDolorSjogren = getMetricValue(p, 'EVA_DOLOR_SJOGREN');
+        const bsa = getMetricValue(p, 'BSA');
+
+        pushMetric('SLEDAI_2K', sledai2k);
+        pushMetric('SLICC_SDI', slicc);
+        pushMetric('ESSPRI', esspri);
+        pushMetric('ESSDAI', essdai);
+        pushMetric('DAPSA', dapsa);
+        pushMetric('PREDNISONA', prednisona);
+        pushMetric('EVA_SEQUEDAD_ORAL', evaSequedadOral);
+        pushMetric('EVA_SEQUEDAD_OCULAR', evaSequedadOcular);
+        pushMetric('EVA_FATIGA_SJOGREN', evaFatigaSjogren);
+        pushMetric('EVA_DOLOR_SJOGREN', evaDolorSjogren);
+        pushMetric('BSA', bsa);
+
         let activityValue = null;
         if (effectivePathology === 'ESPA') {
             activityValue = basdai;
             activityLabel = 'BASDAI';
         } else if (effectivePathology === 'APS') {
-            activityValue = haq;
-            activityLabel = 'HAQ';
+            if (dapsa !== null && !Number.isNaN(dapsa)) {
+                activityValue = dapsa;
+                activityLabel = 'DAPSA';
+            } else {
+                activityValue = haq;
+                activityLabel = 'HAQ';
+            }
         } else if (effectivePathology === 'AR') {
             if (das28Crp !== null && !Number.isNaN(das28Crp)) {
                 activityValue = das28Crp;
@@ -1346,6 +1463,22 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
                 activityValue = rapid3;
                 activityLabel = 'RAPID3';
             }
+        } else if (effectivePathology === 'LES') {
+            if (sledai2k !== null && !Number.isNaN(sledai2k)) {
+                activityValue = sledai2k;
+                activityLabel = 'SLEDAI_2K';
+            } else if (slicc !== null && !Number.isNaN(slicc)) {
+                activityValue = slicc;
+                activityLabel = 'SLICC_SDI';
+            }
+        } else if (effectivePathology === 'SJOGREN') {
+            if (essdai !== null && !Number.isNaN(essdai)) {
+                activityValue = essdai;
+                activityLabel = 'ESSDAI';
+            } else if (esspri !== null && !Number.isNaN(esspri)) {
+                activityValue = esspri;
+                activityLabel = 'ESSPRI';
+            }
         }
 
         if (activityValue !== null && !Number.isNaN(activityValue)) {
@@ -1356,9 +1489,19 @@ function calculateRealKPIs(patients, pathologyFilter = 'Todos') {
                 if (basdai !== null && basdai < 2) remission += 1;
                 if (basdai !== null && basdai >= 4) highActivity += 1;
             } else if (effectivePathology === 'APS') {
-                if (haq !== null && haq < 0.5) remission += 1;
-                if (haq !== null && haq >= 2) highActivity += 1;
+                if (activityLabel === 'DAPSA') {
+                    const bucket = getActivityBucket('DAPSA', activityValue);
+                    if (bucket === 'Remisi\u00f3n') remission += 1;
+                    if (bucket === 'Alta Actividad') highActivity += 1;
+                } else {
+                    if (haq !== null && haq < 0.5) remission += 1;
+                    if (haq !== null && haq >= 2) highActivity += 1;
+                }
             } else if (effectivePathology === 'AR') {
+                const bucket = getActivityBucket(activityLabel, activityValue);
+                if (bucket === 'Remisi\u00f3n') remission += 1;
+                if (bucket === 'Alta Actividad') highActivity += 1;
+            } else if (effectivePathology === 'LES' || effectivePathology === 'SJOGREN') {
                 const bucket = getActivityBucket(activityLabel, activityValue);
                 if (bucket === 'Remisi\u00f3n') remission += 1;
                 if (bucket === 'Alta Actividad') highActivity += 1;
@@ -1413,10 +1556,10 @@ function generateRealChartData(patients, filters = {}) {
         // Usar la mtrica correcta segn patologa
         if (patientPathology === 'ESPA' || pathologyFilter === 'ESPA') {
             // ESPA: usar BASDAI_Result
-            activityValue = parseFloat(p.BASDAI_Result);
+            activityValue = parseStrictNumber(p.BASDAI_Result);
             activityLabel = 'BASDAI';
 
-            if (!isNaN(activityValue) && activityValue >= 0) {
+            if (activityValue !== null && activityValue >= 0) {
                 // Umbrales BASDAI: remisin < 2, baja < 4, moderada < 6, alta >= 6
                 if (activityValue < 2) activityCounts.remission++;
                 else if (activityValue < 4) activityCounts.low++;
@@ -1424,16 +1567,44 @@ function generateRealChartData(patients, filters = {}) {
                 else activityCounts.high++;
             }
         } else if (patientPathology === 'APS' || pathologyFilter === 'APS') {
-            // APS: usar HAQ_Total
-            activityValue = parseFloat(p.HAQ_Total);
-            activityLabel = 'HAQ';
+            // APS: intentar DAPSA primero, fallback a HAQ_Total
+            const dapsa = getMetricValue(p, 'DAPSA');
+            if (dapsa !== null && !Number.isNaN(dapsa)) {
+                activityValue = dapsa;
+                activityLabel = 'DAPSA';
+            } else {
+                activityValue = parseStrictNumber(p.HAQ_Total);
+                activityLabel = 'HAQ';
+            }
 
-            if (!isNaN(activityValue) && activityValue >= 0) {
-                // Umbrales HAQ: remisin < 0.5, baja < 1.5, moderada < 2, alta >= 2
-                if (activityValue < 0.5) activityCounts.remission++;
-                else if (activityValue < 1.5) activityCounts.low++;
-                else if (activityValue < 2) activityCounts.moderate++;
-                else activityCounts.high++;
+            if (activityValue !== null && !Number.isNaN(activityValue) && activityValue >= 0) {
+                const bucket = getActivityBucket(activityLabel, activityValue);
+                if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                else if (bucket === 'Baja Actividad') activityCounts.low++;
+                else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                else if (bucket === 'Alta Actividad') activityCounts.high++;
+            }
+        } else if (patientPathology === 'LES' || pathologyFilter === 'LES') {
+            const sledai2k = getMetricValue(p, 'SLEDAI_2K');
+            activityLabel = 'SLEDAI-2K';
+
+            if (sledai2k !== null && !Number.isNaN(sledai2k) && sledai2k >= 0) {
+                const bucket = getActivityBucket('SLEDAI_2K', sledai2k);
+                if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                else if (bucket === 'Baja Actividad') activityCounts.low++;
+                else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                else if (bucket === 'Alta Actividad') activityCounts.high++;
+            }
+        } else if (patientPathology === 'SJOGREN' || pathologyFilter === 'SJOGREN') {
+            const essdai = getMetricValue(p, 'ESSDAI');
+            activityLabel = 'ESSDAI';
+
+            if (essdai !== null && !Number.isNaN(essdai) && essdai >= 0) {
+                const bucket = getActivityBucket('ESSDAI', essdai);
+                if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                else if (bucket === 'Baja Actividad') activityCounts.low++;
+                else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                else if (bucket === 'Alta Actividad') activityCounts.high++;
             }
         } else if (patientPathology === 'AR' || pathologyFilter === 'AR') {
             // AR: intentar DAS28_CRP -> DAS28_ESR -> CDAI -> SDAI -> RAPID3
@@ -1468,23 +1639,67 @@ function generateRealChartData(patients, filters = {}) {
                 else if (bucket === 'Alta Actividad') activityCounts.high++;
             }
         } else {
-            // Mixto: intentar BASDAI primero, luego HAQ, luego DAS28
-            activityValue = parseFloat(p.BASDAI_Result);
-            if (!isNaN(activityValue) && activityValue >= 0) {
+            // Mixto: intentar métricas por patología del paciente
+            const pp = (p.pathology || p.Diagnostico_Primario || '').toString().toUpperCase();
+
+            if (pp === 'LES') {
+                const sledai2k = getMetricValue(p, 'SLEDAI_2K');
+                if (sledai2k !== null && !Number.isNaN(sledai2k) && sledai2k >= 0) {
+                    const bucket = getActivityBucket('SLEDAI_2K', sledai2k);
+                    if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                    else if (bucket === 'Baja Actividad') activityCounts.low++;
+                    else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                    else if (bucket === 'Alta Actividad') activityCounts.high++;
+                    activityLabel = 'SLEDAI-2K';
+                }
+            } else if (pp === 'SJOGREN') {
+                const essdai = getMetricValue(p, 'ESSDAI');
+                if (essdai !== null && !Number.isNaN(essdai) && essdai >= 0) {
+                    const bucket = getActivityBucket('ESSDAI', essdai);
+                    if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                    else if (bucket === 'Baja Actividad') activityCounts.low++;
+                    else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                    else if (bucket === 'Alta Actividad') activityCounts.high++;
+                    activityLabel = 'ESSDAI';
+                }
+            } else if (pp === 'APS') {
+                const dapsa = getMetricValue(p, 'DAPSA');
+                if (dapsa !== null && !Number.isNaN(dapsa)) {
+                    const bucket = getActivityBucket('DAPSA', dapsa);
+                    if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                    else if (bucket === 'Baja Actividad') activityCounts.low++;
+                    else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                    else if (bucket === 'Alta Actividad') activityCounts.high++;
+                    activityLabel = 'DAPSA';
+                } else {
+                    activityValue = parseStrictNumber(p.HAQ_Total);
+                    if (activityValue !== null && activityValue >= 0) {
+                        const bucket = getActivityBucket('HAQ', activityValue);
+                        if (bucket === 'Remisi\u00f3n') activityCounts.remission++;
+                        else if (bucket === 'Baja Actividad') activityCounts.low++;
+                        else if (bucket === 'Moderada Actividad') activityCounts.moderate++;
+                        else if (bucket === 'Alta Actividad') activityCounts.high++;
+                        activityLabel = 'HAQ';
+                    }
+                }
+            } else {
+            // Fallback original: BASDAI -> HAQ -> DAS28
+            activityValue = parseStrictNumber(p.BASDAI_Result);
+            if (activityValue !== null && activityValue >= 0) {
                 if (activityValue < 2) activityCounts.remission++;
                 else if (activityValue < 4) activityCounts.low++;
                 else if (activityValue < 6) activityCounts.moderate++;
                 else activityCounts.high++;
             } else {
-                activityValue = parseFloat(p.HAQ_Total);
-                if (!isNaN(activityValue) && activityValue >= 0) {
+                activityValue = parseStrictNumber(p.HAQ_Total);
+                if (activityValue !== null && activityValue >= 0) {
                     if (activityValue < 0.5) activityCounts.remission++;
                     else if (activityValue < 1.5) activityCounts.low++;
                     else if (activityValue < 2) activityCounts.moderate++;
                     else activityCounts.high++;
                 } else {
                     activityValue = getMetricValue(p, 'DAS28_CRP');
-                    if (!isNaN(activityValue) && activityValue >= 0) {
+                    if (activityValue !== null && activityValue >= 0) {
                         const thresholds = ACTIVITY_THRESHOLDS['DAS28_CRP'];
                         if (activityValue < thresholds.remission) activityCounts.remission++;
                         else if (activityValue < thresholds.low) activityCounts.low++;
@@ -1492,6 +1707,7 @@ function generateRealChartData(patients, filters = {}) {
                         else activityCounts.high++;
                     }
                 }
+            }
             }
         }
     });
@@ -1597,7 +1813,19 @@ function generateRealChartData(patients, filters = {}) {
         'PCR': 'PCR',
         'VSG': 'VSG',
         'PASI': 'PASI_Score',
-        'LEI': 'LEI_Score'
+        'LEI': 'LEI_Score',
+        'SLEDAI-2K': 'SLEDAI_2K',
+        'SLEDAI_2K': 'SLEDAI_2K',
+        'SLICC/ACR SDI': 'SLICC_SDI',
+        'SLICC_SDI': 'SLICC_SDI',
+        'ESSPRI': 'ESSPRI_Result',
+        'ESSDAI': 'ESSDAI_Result',
+        'DAPSA': 'DAPSA',
+        'Prednisona': 'Dosis_Prednisona',
+        'EVA Sequedad Oral': 'EVA_Sequedad_Oral',
+        'EVA Sequedad Ocular': 'EVA_Sequedad_Ocular',
+        'EVA Fatiga': 'EVA_Fatiga_Sjogren',
+        'EVA Dolor Sjögren': 'EVA_Dolor_Sjogren'
     };
 
     const xColumn = metricColumnMap[scatterX] || scatterX;
@@ -1605,9 +1833,9 @@ function generateRealChartData(patients, filters = {}) {
 
     const correlationData = patients
         .map(p => {
-            const xValue = parseFloat(p[xColumn]);
-            const yValue = parseFloat(p[yColumn]);
-            if (isNaN(xValue) || isNaN(yValue)) return null;
+            const xValue = parseStrictNumber(p[xColumn]);
+            const yValue = parseStrictNumber(p[yColumn]);
+            if (xValue === null || yValue === null) return null;
             if (xValue === 0 && yValue === 0) return null; // Excluir puntos 0,0
             return { x: xValue, y: yValue };
         })
@@ -1671,7 +1899,7 @@ function getRealPoblationalData(filters = {}) {
 
     let allVisits = [];
     const sheetsToProcess = pathologyFilter === 'Todos' || !pathologyFilter
-        ? ['ESPA', 'APS', 'AR']
+        ? ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN']
         : [pathologyFilter];
 
     sheetsToProcess.forEach(sheetName => {
@@ -1821,6 +2049,13 @@ if (typeof HubTools !== 'undefined') {
     HubTools.data.findPatientById = findPatientById;
 
     HubTools.data.getPatientHistory = getPatientHistory;
+
+    HubTools.data.getPatientCIP = function(record) {
+        if (HubTools.normalizer && HubTools.normalizer.getPatientCIP) {
+            return HubTools.normalizer.getPatientCIP(record);
+        }
+        return (record?.CIP || record?.ID_Paciente || record?.idPaciente || '').toString().trim();
+    };
 
     HubTools.data.getPoblationalData = getPoblationalData;
 

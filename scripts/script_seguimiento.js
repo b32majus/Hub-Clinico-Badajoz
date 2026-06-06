@@ -252,10 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (prefillPayload && prefillPayload.idPaciente) {
             HubTools.form.prefillSeguimientoForm(prefillPayload);
-            const pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
+            var pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
             if (pathologyForForm) {
                 HubTools.form.adaptarFormulario(pathologyForForm);
             }
+            renderPrebiologicBadge(prefillPayload.idPaciente);
         } else {
             console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
             const idInput = document.getElementById('idPaciente');
@@ -560,9 +561,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
+    // Botón de Solicitud FH
+    const btnSolicitudFH = document.getElementById('btnSolicitudFH');
+    if (btnSolicitudFH) {
+        btnSolicitudFH.addEventListener('click', function() {
+            console.log('🔄 === GENERANDO SOLICITUD FH (SEGUIMIENTO) ===');
+
+            try {
+                const errores = HubTools.form.validarFormularioSeguimiento();
+
+                if (errores.length === 0) {
+                    if (typeof HubTools?.form?.recopilarDatosFormularioSeguimiento !== 'function') {
+                        console.error('❌ HubTools.form.recopilarDatosFormularioSeguimiento no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
+                        return;
+                    }
+
+                    const datos = HubTools.form.recopilarDatosFormularioSeguimiento();
+                    console.log('📊 Datos recopilados para FH:', datos);
+
+                    if (typeof HubTools?.pharmacy?.copyRequestToClipboard === 'function') {
+                        HubTools.pharmacy.copyRequestToClipboard(datos);
+                    } else {
+                        console.error('❌ HubTools.pharmacy.copyRequestToClipboard no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Módulo de solicitud FH no disponible.', 'error');
+                    }
+                } else {
+                    console.warn('⚠ Errores de validación:', errores);
+                    HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
+                }
+            } catch (error) {
+                console.error('❌ Error al generar solicitud FH:', error);
+                HubTools.utils?.mostrarNotificacion?.(`Error al generar solicitud FH: ${error.message}`, 'error');
+            }
+        });
+    }
+
     console.log('✅ Seguimiento inicializado correctamente');
     } catch (error) {
         console.error('❌ Error durante la inicialización de la página:', error);
         HubTools?.utils?.mostrarNotificacion?.('Error de inicialización. Recargue la página.', 'error');
     }
 });
+
+function renderPrebiologicBadge(cip) {
+    var container = document.getElementById('prebiologicBadgeContainer');
+    if (!container) return;
+
+    if (!cip) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    var badgeHTML = '';
+    if (typeof HubTools.prebiologic.getBadgeHTML === 'function') {
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip);
+    }
+
+    if (badgeHTML) {
+        container.innerHTML = badgeHTML;
+        container.style.display = '';
+    } else {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }
+}

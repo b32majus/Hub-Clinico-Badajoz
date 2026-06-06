@@ -1,0 +1,7 @@
+ID,Principio_Activo,Nombre_Comercial,Indicaciones,Dosis_Frecuente,Estado
+FAR-001,Secukinumab,Cosentyx,HS;Psoriasis;EspA,300 mg SC / 4 sem,Activo
+FAR-002,Adalimumab,Humira;Amgevita,AR;EspA;APs;HS;Crohn,40 mg SC / 2 sem,Activo
+FAR-003,Ustekinumab,Stelara,Psoriasis;APs;Crohn,90 mg SC / 12 sem,Activo
+FAR-004,Rituximab,MabThera;Truxima,AR;LES;Sjogren,1000 mg IV / 6 meses,Activo
+FAR-005,Belimumab,Benlysta,LES,200 mg SC / sem,Activo
+FAR-006,Abatacept,Orencia,AR,125 mg SC / sem,Activo
