@@ -2,10 +2,8 @@
 
 (function () {
     const F = window.FarmaciaDemo;
+    const C = window.FarmaciaCatalog;
     let modoActual = null;
-    var drugCatalog = [];
-    var drugCatalogLoaded = false;
-    var selectedDrugSnapshot = null;
     var autocompleteActiveIndex = -1;
 
     function isHSPathology() {
@@ -201,17 +199,18 @@
             lines.push('Peso: ' + (document.getElementById('fhDermaPeso').value || '—'));
         }
 
-        if (selectedDrugSnapshot) {
+        var snapshot = C.getSnapshot();
+        if (snapshot) {
             lines.push('');
             lines.push('--- Snapshot catálogo farmacológico ---');
-            lines.push('Nombre snapshot: ' + (selectedDrugSnapshot.nombre_snapshot || '—'));
-            lines.push('Principio activo snapshot: ' + (selectedDrugSnapshot.principio_activo_snapshot || '—'));
-            lines.push('Presentación snapshot: ' + (selectedDrugSnapshot.presentacion_snapshot || '—'));
-            lines.push('Vía snapshot: ' + (selectedDrugSnapshot.via_snapshot || '—'));
-            lines.push('Código nacional: ' + (selectedDrugSnapshot.codigo_nacional_snapshot || '—'));
-            lines.push('Nº registro: ' + (selectedDrugSnapshot.nregistro_snapshot || '—'));
-            lines.push('Origen / source type: ' + (selectedDrugSnapshot.source_type || '—'));
-            lines.push('ID seleccionado: ' + (selectedDrugSnapshot.selected_drug_id || '—'));
+            lines.push('Nombre snapshot: ' + (snapshot.nombre_snapshot || '—'));
+            lines.push('Principio activo snapshot: ' + (snapshot.principio_activo_snapshot || '—'));
+            lines.push('Presentación snapshot: ' + (snapshot.presentacion_snapshot || '—'));
+            lines.push('Vía snapshot: ' + (snapshot.via_snapshot || '—'));
+            lines.push('Código nacional: ' + (snapshot.codigo_nacional_snapshot || '—'));
+            lines.push('Nº registro: ' + (snapshot.nregistro_snapshot || '—'));
+            lines.push('Origen / source type: ' + (snapshot.source_type || '—'));
+            lines.push('ID seleccionado: ' + (snapshot.selected_drug_id || '—'));
         }
 
         if (isHSPathology()) {
@@ -299,53 +298,6 @@
         return lines;
     }
 
-    function normalizeCIMA(row) {
-        var cn = row.codigo_nacional != null ? String(row.codigo_nacional) : '';
-        var nr = row.nregistro != null ? String(row.nregistro) : '';
-        var nc = row.nombre_comercial || '';
-        var pa = row.principio_activo || '';
-        var np = row.nombre_presentacion || '';
-        return {
-            nombre_comercial: nc,
-            principio_activo: pa,
-            nombre_presentacion: np,
-            codigo_nacional: cn,
-            nregistro: nr,
-            dosis: row.dosis_presentacion || '',
-            via: row.via || '',
-            es_hospitalario: row.es_hospitalario_derivado || '',
-            biosimilar: row.biosimilar || '',
-            drug_id: row.drug_source_id != null ? String(row.drug_source_id) : '',
-            source_type: 'CIMA',
-            display_name: nc || np || '',
-            forma_farmaceutica: row.forma_farmaceutica || ''
-        };
-    }
-
-    function normalizeLOCAL(row) {
-        var dn = row.display_name || '';
-        var ncs = row.nombre_comercial_si_existe || '';
-        var pam = row.principio_activo_o_molecula || '';
-        var pt = row.presentacion_texto || '';
-        return {
-            nombre_comercial: ncs || dn || '',
-            principio_activo: pam,
-            nombre_presentacion: pt,
-            codigo_nacional: '',
-            nregistro: '',
-            dosis: row.dosis_texto || '',
-            via: row.via || '',
-            es_hospitalario: 'SI',
-            biosimilar: '',
-            drug_id: row.local_drug_id != null ? String(row.local_drug_id) : '',
-            source_type: 'LOCAL',
-            display_name: dn || '',
-            forma_farmaceutica: row.forma_farmaceutica || '',
-            tipo_situacion: row.tipo_situacion || '',
-            activo_en_catalogo: row.activo_en_catalogo || ''
-        };
-    }
-
     function isTruthyRobust(value) {
         if (value === true || value === 1 || value === '1') return true;
         if (value === false || value === 0 || value === '0') return false;
@@ -354,67 +306,27 @@
         return s === 'TRUE' || s === 'SI' || s === 'SÍ' || s === 'YES' || s === '1';
     }
 
-    function buildSearchableText(drug) {
-        return [
-            drug.nombre_comercial || '',
-            drug.principio_activo || '',
-            drug.nombre_presentacion || '',
-            drug.codigo_nacional || ''
-        ].join(' ').toLowerCase();
-    }
-
-    function parseAndStoreExcel(arrayBuffer) {
-        try {
-            var workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-            var cimaSheet = workbook.Sheets['CATALOGO_CIMA'];
-            var localSheet = workbook.Sheets['CATALOGO_LOCAL_ESPECIAL'];
-            if (!cimaSheet || !localSheet) {
-                window.alert('El Excel no contiene las hojas esperadas: CATALOGO_CIMA y CATALOGO_LOCAL_ESPECIAL.');
-                return;
-            }
-            var cimaData = XLSX.utils.sheet_to_json(cimaSheet, { defval: '' });
-            var localData = XLSX.utils.sheet_to_json(localSheet, { defval: '' });
-            var cimaNormalized = cimaData.map(normalizeCIMA);
-            var localNormalized = localData.map(normalizeLOCAL);
-            drugCatalog = cimaNormalized.concat(localNormalized);
-            drugCatalog.forEach(function (drug) {
-                drug._searchable = buildSearchableText(drug);
-            });
-            drugCatalogLoaded = true;
-            var cimaCount = cimaNormalized.length;
-            var localCount = localNormalized.length;
-            var totalCount = drugCatalog.length;
-            var counter = document.getElementById('catalogCounter');
-            counter.textContent = 'Catálogo cargado: ' + totalCount + ' fármacos (CIMA: ' + cimaCount + ' + Locales: ' + localCount + ')';
-            counter.classList.remove('hidden');
-            var status = document.getElementById('catalogStatus');
-            status.textContent = '✓ Cargado';
-            status.className = 'catalog-status catalog-status--loaded';
-            enableAutocomplete();
-            document.getElementById('noFindDrugRow').classList.remove('hidden');
-        } catch (err) {
-            window.alert('Error al procesar el Excel: ' + (err.message || err));
-        }
-    }
-
-    function handleFileSelect(event) {
-        var file = event.target.files[0];
-        if (!file) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            parseAndStoreExcel(e.target.result);
-        };
-        reader.onerror = function () {
-            window.alert('Error al leer el archivo.');
-        };
-        reader.readAsArrayBuffer(file);
+    function updateCatalogUI() {
+        var counter = document.getElementById('catalogCounter');
+        counter.textContent = 'Catálogo cargado: ' + C.totalCount + ' fármacos (CIMA: ' + C.cimaCount + ' + Locales: ' + C.localCount + ')';
+        counter.classList.remove('hidden');
+        var status = document.getElementById('catalogStatus');
+        status.textContent = '✓ Cargado';
+        status.className = 'catalog-status catalog-status--loaded';
     }
 
     function initCatalogLoader() {
         var btnLoad = document.getElementById('btnLoadCatalog');
         var fileInput = document.getElementById('fileCatalogInput');
+
+        if (C.loaded) {
+            updateCatalogUI();
+            enableAutocomplete();
+            document.getElementById('noFindDrugRow').classList.remove('hidden');
+        }
+
         btnLoad.addEventListener('click', function () {
-            if (drugCatalogLoaded) {
+            if (C.loaded) {
                 window.alert('El catálogo ya está cargado.');
                 return;
             }
@@ -431,7 +343,10 @@
                     throw new Error('fetch_failed');
                 })
                 .then(function (arrayBuffer) {
-                    parseAndStoreExcel(arrayBuffer);
+                    C.loadFromExcel(arrayBuffer);
+                    updateCatalogUI();
+                    enableAutocomplete();
+                    document.getElementById('noFindDrugRow').classList.remove('hidden');
                 })
                 .catch(function () {
                     var statusEl = document.getElementById('catalogStatus');
@@ -441,7 +356,26 @@
                     fileInput.click();
                 });
         });
-        fileInput.addEventListener('change', handleFileSelect);
+
+        fileInput.addEventListener('change', function (event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    C.loadFromExcel(e.target.result);
+                    updateCatalogUI();
+                    enableAutocomplete();
+                    document.getElementById('noFindDrugRow').classList.remove('hidden');
+                } catch (err) {
+                    window.alert('Error al procesar el Excel: ' + (err.message || err));
+                }
+            };
+            reader.onerror = function () {
+                window.alert('Error al leer el archivo.');
+            };
+            reader.readAsArrayBuffer(file);
+        });
     }
 
     function mapViaToSelect(catalogVia) {
@@ -465,16 +399,7 @@
             var otraIdx = viaOptions.indexOf('Otra');
             if (otraIdx !== -1) viaSelect.value = 'Otra';
         }
-        selectedDrugSnapshot = {
-            nombre_snapshot: drug.nombre_comercial || drug.display_name || '',
-            principio_activo_snapshot: drug.principio_activo || '',
-            presentacion_snapshot: drug.nombre_presentacion || '',
-            via_snapshot: drug.via || '',
-            codigo_nacional_snapshot: drug.codigo_nacional || '',
-            nregistro_snapshot: drug.nregistro || '',
-            source_type: drug.source_type || '',
-            selected_drug_id: drug.drug_id || ''
-        };
+        C.selectDrug(drug);
         clearAutocompleteDropdown();
     }
 
@@ -542,27 +467,20 @@
     }
 
     function handleAutocompleteInput() {
-        if (!drugCatalogLoaded) return;
-        var query = document.getElementById('fhDermaFarmaco').value.trim().toLowerCase();
+        if (!C.loaded) return;
+        var query = document.getElementById('fhDermaFarmaco').value.trim();
         if (query.length < 2) {
             clearAutocompleteDropdown();
-            selectedDrugSnapshot = null;
             return;
         }
-        var results = [];
-        for (var i = 0; i < drugCatalog.length; i++) {
-            if (drugCatalog[i]._searchable.indexOf(query) !== -1) {
-                results.push(drugCatalog[i]);
-                if (results.length >= 15) break;
-            }
-        }
+        var results = C.search(query);
         renderAutocompleteDropdown(results);
     }
 
     function enableAutocomplete() {
         var input = document.getElementById('fhDermaFarmaco');
         input.disabled = false;
-        input.placeholder = 'Ej. Cosentyx®, Humira®, Skyrizi®...';
+        input.placeholder = 'Ej. Cosentyx\u00AE, Humira\u00AE, Skyrizi\u00AE...';
         input.addEventListener('input', handleAutocompleteInput);
         input.addEventListener('keydown', function (event) {
             var dropdown = document.getElementById('autocompleteDropdown');
@@ -616,7 +534,7 @@
         closeBtn.id = 'btnCloseLocalDrugModal';
         closeBtn.setAttribute('type', 'button');
         closeBtn.setAttribute('aria-label', 'Cerrar');
-        closeBtn.textContent = '×';
+        closeBtn.textContent = '\u00D7';
         closeBtn.addEventListener('click', closeLocalDrugModal);
         header.appendChild(title);
         header.appendChild(closeBtn);
@@ -624,7 +542,7 @@
         body.className = 'local-drug-modal-body';
         var warning = document.createElement('div');
         warning.className = 'warning-box';
-        warning.textContent = '⚠️ Solicitud local pendiente de validación por Farmacia. Demo sin persistencia real.';
+        warning.textContent = '\u26A0\uFE0F Solicitud local pendiente de validación por Farmacia. Demo sin persistencia real.';
         body.appendChild(warning);
         var formGrid = document.createElement('div');
         formGrid.className = 'form-grid';
@@ -722,16 +640,20 @@
                 if (otraIdx !== -1) viaSelect.value = 'Otra';
             }
         }
-        selectedDrugSnapshot = {
-            nombre_snapshot: displayName,
-            principio_activo_snapshot: principio || '',
-            presentacion_snapshot: presentacion || '',
-            via_snapshot: via || '',
-            codigo_nacional_snapshot: '',
-            nregistro_snapshot: '',
+        C.selectDrug({
+            display_name: displayName,
+            nombre_comercial: displayName,
+            principio_activo: principio || '',
+            nombre_presentacion: presentacion || '',
+            via: via || '',
+            codigo_nacional: '',
+            nregistro: '',
+            dosis: presentacion || '',
             source_type: 'LOCAL_PENDIENTE_DEMO',
-            selected_drug_id: ''
-        };
+            drug_id: '',
+            es_hospitalario: 'SI',
+            biosimilar: ''
+        });
         closeLocalDrugModal();
     }
 
@@ -786,8 +708,17 @@
         });
 
         initCatalogLoader();
+
         var btnNoFind = document.getElementById('btnNoFindDrug');
         if (btnNoFind) btnNoFind.addEventListener('click', showLocalDrugModal);
+
+        document.addEventListener('farmacia:catalog-loaded', function () {
+            if (!C.loaded) return;
+            updateCatalogUI();
+            enableAutocomplete();
+            document.getElementById('noFindDrugRow').classList.remove('hidden');
+        });
+
         applyContext();
     });
 })();

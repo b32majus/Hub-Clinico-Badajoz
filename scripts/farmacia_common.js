@@ -276,6 +276,254 @@
         initContextSummary();
     });
 
+    window.FarmaciaCatalog = (function () {
+        var drugs = [];
+        var loaded = false;
+        var totalCount = 0;
+        var cimaCount = 0;
+        var localCount = 0;
+        var selectedSnapshot = null;
+
+        function isTruthyRobust(value) {
+            if (value === true || value === 1 || value === '1') return true;
+            if (value === false || value === 0 || value === '0') return false;
+            if (value === null || value === undefined || value === '') return false;
+            var s = String(value).trim().toUpperCase();
+            return s === 'TRUE' || s === 'SI' || s === 'S\u00CD' || s === 'YES' || s === '1';
+        }
+
+        function buildSearchableText(drug) {
+            return [
+                drug.nombre_comercial || '',
+                drug.principio_activo || '',
+                drug.nombre_presentacion || '',
+                drug.display_name || '',
+                drug.codigo_nacional || ''
+            ].join(' ').toLowerCase();
+        }
+
+        function normalizeCIMA(row) {
+            var cn = row.codigo_nacional != null ? String(row.codigo_nacional) : '';
+            var nr = row.nregistro != null ? String(row.nregistro) : '';
+            var nc = row.nombre_comercial || '';
+            var pa = row.principio_activo || '';
+            var np = row.nombre_presentacion || '';
+            return {
+                nombre_comercial: nc,
+                principio_activo: pa,
+                nombre_presentacion: np,
+                codigo_nacional: cn,
+                nregistro: nr,
+                dosis: row.dosis_presentacion || '',
+                via: row.via || '',
+                es_hospitalario: row.es_hospitalario_derivado || '',
+                biosimilar: row.biosimilar || '',
+                drug_id: row.drug_source_id != null ? String(row.drug_source_id) : '',
+                source_type: 'CIMA',
+                display_name: nc || np || '',
+                forma_farmaceutica: row.forma_farmaceutica || '',
+                _searchable: ''
+            };
+        }
+
+        function normalizeLOCAL(row) {
+            var dn = row.display_name || '';
+            var ncs = row.nombre_comercial_si_existe || '';
+            var pam = row.principio_activo_o_molecula || '';
+            var pt = row.presentacion_texto || '';
+            return {
+                nombre_comercial: ncs || dn || '',
+                principio_activo: pam,
+                nombre_presentacion: pt,
+                codigo_nacional: '',
+                nregistro: '',
+                dosis: row.dosis_texto || '',
+                via: row.via || '',
+                es_hospitalario: 'SI',
+                biosimilar: '',
+                drug_id: row.local_drug_id != null ? String(row.local_drug_id) : '',
+                source_type: 'LOCAL',
+                display_name: dn || '',
+                forma_farmaceutica: row.forma_farmaceutica || '',
+                tipo_situacion: row.tipo_situacion || '',
+                activo_en_catalogo: row.activo_en_catalogo || '',
+                _searchable: ''
+            };
+        }
+
+        function loadFromExcel(arrayBuffer) {
+            if (typeof XLSX === 'undefined') {
+                throw new Error('SheetJS (XLSX) no est\u00E1 disponible. Cargue vendor/sheetjs/xlsx.full.min.js antes.');
+            }
+            var workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+            var cimaSheet = workbook.Sheets['CATALOGO_CIMA'];
+            var localSheet = workbook.Sheets['CATALOGO_LOCAL_ESPECIAL'];
+            if (!cimaSheet || !localSheet) {
+                throw new Error('El Excel no contiene las hojas esperadas: CATALOGO_CIMA y CATALOGO_LOCAL_ESPECIAL.');
+            }
+            var cimaData = XLSX.utils.sheet_to_json(cimaSheet, { defval: '' });
+            var localData = XLSX.utils.sheet_to_json(localSheet, { defval: '' });
+            var cimaNormalized = cimaData.map(normalizeCIMA);
+            var localNormalized = localData.map(normalizeLOCAL);
+            drugs = cimaNormalized.concat(localNormalized);
+            for (var i = 0; i < drugs.length; i++) {
+                drugs[i]._searchable = buildSearchableText(drugs[i]);
+            }
+            cimaCount = cimaNormalized.length;
+            localCount = localNormalized.length;
+            totalCount = drugs.length;
+            loaded = true;
+            selectedSnapshot = null;
+            return { totalCount: totalCount, cimaCount: cimaCount, localCount: localCount, loaded: loaded };
+        }
+
+        function search(query) {
+            if (!loaded || !query || String(query).trim().length < 2) return [];
+            var q = String(query).trim().toLowerCase();
+            var results = [];
+            for (var i = 0; i < drugs.length; i++) {
+                if (drugs[i]._searchable && drugs[i]._searchable.indexOf(q) !== -1) {
+                    results.push(drugs[i]);
+                    if (results.length >= 15) break;
+                }
+            }
+            return results;
+        }
+
+        function selectDrug(drug) {
+            selectedSnapshot = {
+                nombre_snapshot: drug.nombre_comercial || drug.display_name || '',
+                principio_activo_snapshot: drug.principio_activo || '',
+                presentacion_snapshot: drug.nombre_presentacion || '',
+                via_snapshot: drug.via || '',
+                codigo_nacional_snapshot: drug.codigo_nacional || '',
+                nregistro_snapshot: drug.nregistro || '',
+                source_type: drug.source_type || '',
+                selected_drug_id: drug.drug_id || '',
+                etiquetas: {
+                    es_hospitalario: isTruthyRobust(drug.es_hospitalario),
+                    biosimilar: isTruthyRobust(drug.biosimilar)
+                }
+            };
+            return selectedSnapshot;
+        }
+
+        function getSnapshot() {
+            return selectedSnapshot;
+        }
+
+        function getStatusText() {
+            if (!loaded) return 'Cat\u00E1logo no cargado';
+            return totalCount + ' f\u00E1rmacos (CIMA: ' + cimaCount + ' + Locales: ' + localCount + ')';
+        }
+
+        function ensureXLSX(callback, onError) {
+            if (typeof XLSX !== 'undefined') { callback(); return; }
+            var script = document.createElement('script');
+            script.src = 'vendor/sheetjs/xlsx.full.min.js';
+            script.onload = callback;
+            script.onerror = function () {
+                if (typeof onError === 'function') onError('No se pudo cargar la librer\u00EDa SheetJS desde vendor/sheetjs/xlsx.full.min.js.');
+            };
+            document.head.appendChild(script);
+        }
+
+        function initSidebarCatalog() {
+            var btnLoad = document.getElementById('sidebarLoadCatalog');
+            if (!btnLoad) return;
+
+            var fileInput = document.getElementById('sidebarFileCatalog');
+            var statusEl = document.getElementById('catalogSidebarStatus');
+
+            btnLoad.addEventListener('click', function () {
+                if (loaded) {
+                    if (statusEl) {
+                        statusEl.textContent = getStatusText();
+                        statusEl.className = 'catalog-status catalog-status--loaded';
+                    }
+                    document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: { totalCount: totalCount, cimaCount: cimaCount, localCount: localCount, loaded: loaded } }));
+                    return;
+                }
+                ensureXLSX(function () {
+                    if (statusEl) {
+                        statusEl.textContent = 'Cargando...';
+                        statusEl.className = 'catalog-status';
+                    }
+                    fetch('data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx')
+                        .then(function (response) {
+                            if (response.ok) return response.arrayBuffer();
+                            throw new Error('fetch_failed');
+                        })
+                        .then(function (arrayBuffer) {
+                            var result = loadFromExcel(arrayBuffer);
+                            if (statusEl) {
+                                statusEl.textContent = getStatusText();
+                                statusEl.className = 'catalog-status catalog-status--loaded';
+                            }
+                            document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
+                        })
+                        .catch(function () {
+                            if (statusEl) {
+                                statusEl.textContent = 'Seleccione el archivo Excel manualmente';
+                                statusEl.className = 'catalog-status catalog-status--manual';
+                            }
+                            if (fileInput) {
+                                fileInput.classList.remove('hidden');
+                                fileInput.click();
+                            }
+                        });
+                }, function (errMsg) {
+                    if (statusEl) {
+                        statusEl.textContent = errMsg;
+                        statusEl.className = 'catalog-status catalog-status--error';
+                    }
+                });
+            });
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function (event) {
+                    var file = event.target.files[0];
+                    if (!file) return;
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        try {
+                            var result = loadFromExcel(e.target.result);
+                            if (statusEl) {
+                                statusEl.textContent = getStatusText();
+                                statusEl.className = 'catalog-status catalog-status--loaded';
+                            }
+                            document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
+                        } catch (err) {
+                            window.alert('Error al procesar el Excel: ' + (err.message || err));
+                        }
+                    };
+                    reader.onerror = function () {
+                        window.alert('Error al leer el archivo.');
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initSidebarCatalog();
+        });
+
+        return {
+            get drugs() { return drugs; },
+            get loaded() { return loaded; },
+            get totalCount() { return totalCount; },
+            get cimaCount() { return cimaCount; },
+            get localCount() { return localCount; },
+            get selectedSnapshot() { return selectedSnapshot; },
+            loadFromExcel: loadFromExcel,
+            search: search,
+            selectDrug: selectDrug,
+            getSnapshot: getSnapshot,
+            getStatusText: getStatusText
+        };
+    })();
+
     window.FarmaciaDemo = {
         patients,
         profesionales,

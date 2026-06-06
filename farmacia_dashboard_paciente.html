@@ -65,6 +65,12 @@
             <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
         </div>
     </div>
+    <div class="catalog-sidebar-block">
+        <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus">Catálogo no cargado</div>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
     <div class="sidebar-footer">v. 0.1 — demo</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--dashboard">
@@ -81,7 +87,9 @@
 </section>
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Resumen Farmacia</h2><div class="info-grid" id="dashboardSummaryGrid"></div></section>
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-timeline"></i> Timeline longitudinal mínima</h2><div class="timeline" id="farmaciaTimeline"></div></section>
-<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-table"></i> Bloques incluidos</h2><div class="info-grid"><div class="info-field"><span class="info-field__label">Validaciones</span><span class="info-field__value">Histórico demo disponible</span></div><div class="info-field"><span class="info-field__label">Primera visita</span><span class="info-field__value">Fecha, inducción, estratificación y PROM basal</span></div><div class="info-field"><span class="info-field__label">Seguimientos</span><span class="info-field__value">Adherencia, PROMs, EA, optimizaciones y suspensiones</span></div><div class="info-field"><span class="info-field__label">Sin dashboard poblacional</span><span class="info-field__value">Fuera de alcance v0.1</span></div></div></section>
+<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-notes-medical"></i> Actividad clínica / Índices</h2><div class="info-grid" id="actividadClinicaIndices"></div></section>
+<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-clipboard-check"></i> PROMs</h2><div id="promsContainer"></div></section>
+<section class="dashboard-card"><h2 class="card-title"><i class="fas fa-clock"></i> Timeline de tratamiento</h2><div class="timeline" id="timelineTratamiento"></div></section>
                 </main>
             </div>
             <script src="scripts/farmacia_common.js?v=20260606b"></script>

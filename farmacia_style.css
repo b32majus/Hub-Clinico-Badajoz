@@ -997,3 +997,177 @@
 .fh-qv-checklist__item--ok i { color: var(--ses-green); }
 .fh-qv-checklist__item--pending i { color: #F59E0B; }
 .fh-qv-checklist__item--review i { color: #64748B; }
+
+/* ============================================================
+   T8 — CSS UI additions for T1–T7 components
+   ============================================================ */
+
+/* --- Button small variant --- */
+.btn-sm {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    border-radius: 10px;
+}
+
+/* --- Catalog sidebar block --- */
+.catalog-sidebar-block {
+    margin-top: 12px;
+    padding: 14px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+}
+.catalog-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+.catalog-sidebar-header i {
+    color: var(--ses-green);
+    font-size: 0.9rem;
+}
+.catalog-sidebar-btn {
+    width: 100%;
+    margin-top: 8px;
+}
+.catalog-sidebar-status {
+    font-size: 0.82rem;
+    color: #64748B;
+    line-height: 1.4;
+}
+
+/* --- Catalog status error state --- */
+.catalog-status--error {
+    color: #991B1B;
+    font-weight: 600;
+}
+
+/* --- Drug tag variants --- */
+.drug-tag--local-especial {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+.drug-tag--demo {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #E2E8F0;
+}
+
+/* --- Notice boxes (optimización / cambio de fármaco) --- */
+.notice-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+.notice-box--info {
+    background: #EFF6FF;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+}
+.notice-box i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+/* --- Stats note banner --- */
+.stats-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: #F0FDFA;
+    color: var(--ses-green-dark);
+    border: 1px solid #CFF5E7;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+.stats-note i {
+    color: var(--ses-green);
+}
+
+/* --- Stats list inside dynamic stat cards --- */
+.stats-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.stats-list li {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    color: #475569;
+    font-size: 0.85rem;
+    border: 1px solid #E2E8F0;
+}
+
+/* --- Patient header actions (dashboard) --- */
+.patient-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* --- PROMs container spacing --- */
+#promsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* --- Timeline blocks specific spacing --- */
+#timelineTratamiento,
+#farmaciaTimeline {
+    margin-top: 4px;
+}
+
+/* --- Actividad clínica indices --- */
+#actividadClinicaIndices {
+    margin-top: 4px;
+}
+
+/* --- Responsive mobile additions --- */
+@media (max-width: 768px) {
+    .catalog-sidebar-block {
+        padding: 12px;
+    }
+    .catalog-sidebar-header {
+        font-size: 0.82rem;
+    }
+    .patient-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .patient-header-actions .btn {
+        width: 100%;
+    }
+    .notice-box {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .stats-note {
+        flex-wrap: wrap;
+    }
+    .btn-sm {
+        width: 100%;
+    }
+    .stats-list li {
+        word-break: break-word;
+    }
+}

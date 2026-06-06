@@ -65,6 +65,12 @@
             <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
         </div>
     </div>
+    <div class="catalog-sidebar-block">
+        <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus">Catálogo no cargado</div>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
     <div class="sidebar-footer">v. 0.1 — demo</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--primera">
@@ -86,6 +92,9 @@
     <div class="form-grid"><div class="form-group"><label for="fhPvCip">CIP</label><input class="form-control" id="fhPvCip" readonly></div><div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio" readonly></div><div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco" readonly></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis" readonly></div><div class="form-group"><label for="fhPvPauta">Pauta</label><input class="form-control" id="fhPvPauta" readonly></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion" readonly></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada" readonly></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica" readonly></div></div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
+    <div class="info-grid" id="fhPvTratamientoGrid"></div>
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
     <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>

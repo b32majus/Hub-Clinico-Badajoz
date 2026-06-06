@@ -65,6 +65,12 @@
             <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
         </div>
     </div>
+    <div class="catalog-sidebar-block">
+        <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus">Catálogo no cargado</div>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
     <div class="sidebar-footer">v. 0.1 — demo</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--estadisticas">
@@ -82,9 +88,10 @@
         </div>
         <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
     </div>
-</section><section class="action-grid"><div class="dashboard-card"><h2 class="card-title"><i class="fas fa-user-clock"></i> Validaciones pendientes</h2><p class="patient-name">2</p></div><div class="dashboard-card"><h2 class="card-title"><i class="fas fa-pills"></i> Fármacos demo</h2><p class="patient-name">3</p></div><div class="dashboard-card"><h2 class="card-title"><i class="fas fa-notes-medical"></i> Indicaciones</h2><p class="patient-name">HS · AR</p></div></section>
+</section><div class="stats-note" id="statsDemoNote" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Indicadores demo — datos sintéticos</div><div class="action-grid" id="estadisticasCards"></div>
                 </main>
             </div>
             <script src="scripts/farmacia_common.js?v=20260606b"></script>
+            <script src="scripts/farmacia_estadisticas.js?v=20260607"></script>
         </body>
         </html>

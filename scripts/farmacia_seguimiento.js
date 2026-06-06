@@ -9,8 +9,11 @@
         F.setValue('fhSegCip', ctx.cip);
         F.setValue('fhSegServicio', ctx.servicio || ctx.patient?.servicio);
         F.setValue('fhSegPatologia', ctx.patologia || ctx.patient?.patologia);
+
+        const snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
+
         if (ctx.patient) {
-            F.setValue('fhSegFarmaco', ctx.patient.farmaco);
+            F.setValue('fhSegFarmaco', snap?.nombre_snapshot || ctx.patient.farmaco);
             F.setValue('fhSegDosisActual', ctx.patient.dosis);
             F.setValue('fhSegPautaActual', ctx.patient.pauta);
             F.setValue('fhSegVia', ctx.patient.via);
@@ -18,7 +21,41 @@
             F.setValue('fhSegUltimaAdherencia', ctx.patient.adherencia);
             F.setValue('fhSegUltimosProms', ctx.patient.proms);
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
+
+            F.setValue('fhSegPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '');
+            F.setValue('fhSegPresentacion', snap?.presentacion_snapshot || '');
         }
+
+        if (snap) {
+            F.setValue('fhSegCodigoNacional', snap.codigo_nacional_snapshot || '');
+            F.setValue('fhSegNregistro', snap.nregistro_snapshot || '');
+            var tags = [];
+            if (snap.etiquetas && snap.etiquetas.biosimilar) tags.push('Biosimilar');
+            if (snap.etiquetas && snap.etiquetas.es_hospitalario) tags.push('Hospitalario');
+            F.setValue('fhSegEtiquetas', tags.length ? tags.join(', ') : '\u2014');
+        } else {
+            F.setValue('fhSegCodigoNacional', '');
+            F.setValue('fhSegNregistro', '');
+            F.setValue('fhSegEtiquetas', '');
+        }
+
+        (function setOrigenCatalogo() {
+            var sourceType = snap ? (snap.source_type || '').toString().toUpperCase() : '';
+            var label;
+            if (!snap) {
+                label = 'Demo';
+            } else if (sourceType === 'CIMA') {
+                label = 'CIMA';
+            } else if (sourceType === 'LOCAL') {
+                label = 'Local Especial';
+            } else if (sourceType === 'LOCAL_PENDIENTE_DEMO') {
+                label = 'Demo/local pendiente';
+            } else {
+                label = 'Demo';
+            }
+            F.setValue('fhSegOrigenCatalogo', label);
+        })();
+
         const fhSegFecha = document.getElementById('fhSegFecha');
         if (fhSegFecha && !fhSegFecha.value) {
             fhSegFecha.value = new Date().toISOString().slice(0, 10);
@@ -49,12 +86,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();
         document.querySelectorAll('input[name^="mg"]').forEach(input => input.addEventListener('change', updateMorisky));
-        const cambioFarmaco = document.getElementById('fhSegCambioFarmaco');
-        if (cambioFarmaco) cambioFarmaco.addEventListener('input', event => {
-            const warning = document.getElementById('fhSegCambioFarmacoWarning');
-            if (warning) warning.classList.toggle('hidden', !event.target.value.trim());
-        });
-
         const cambiaNivel = document.getElementById('fhSegCambiaNivel');
         if (cambiaNivel) {
             const applyNivel = () => toggleField('fhSegNuevoNivel', cambiaNivel.value === 'Sí');
