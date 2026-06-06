@@ -260,6 +260,111 @@
 .data-table td { padding: 11px 12px; border-bottom: 1px solid #F1F5F9; color: #1E293B; }
 .data-table tr:hover td { background: var(--ses-green-light); }
 
+/* --- Overlay quick-view (Farmacia) --- */
+
+#fhQuickViewPanel.quick-view-panel {
+    background: #FFFFFF;
+}
+
+.fh-overlay-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    border: 1px solid #E2E8F0;
+    padding: 20px;
+}
+
+.fh-overlay-card__summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.fh-overlay-card__summary .patient-avatar {
+    width: 64px;
+    height: 64px;
+    background: var(--ses-green-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.fh-overlay-card__summary .patient-avatar i {
+    font-size: 1.6rem;
+    color: var(--ses-green);
+}
+
+.fh-overlay-card__info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.fh-overlay-card__info .patient-id-badge {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.fh-overlay-card__info .patient-name {
+    margin: 0 0 8px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1E293B;
+    line-height: 1.2;
+}
+
+.fh-overlay-card__info .patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.fh-overlay-card__info .patient-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fh-overlay-card__info .patient-meta i {
+    color: #64748B;
+}
+
+.fh-overlay-card__summary > .status-badge {
+    flex-shrink: 0;
+}
+
+.fh-overlay-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 768px max-width: overlay panel takes full width on mobile */
+@media (max-width: 768px) {
+    #fhQuickViewPanel.quick-view-panel {
+        max-height: calc(100vh - 48px);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .fh-overlay-card__summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #fhQvActions {
+        flex-direction: column;
+    }
+}
+
 .hidden { display: none !important; }
 
 @media (max-width: 768px) {
