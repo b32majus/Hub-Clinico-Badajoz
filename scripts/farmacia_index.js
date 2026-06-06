@@ -15,6 +15,9 @@
         var panel = document.createElement('section');
         panel.id = 'fhQuickViewPanel';
         panel.className = 'search-results quick-view-panel hidden';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-labelledby', 'fhTitle');
         panel.setAttribute('aria-live', 'polite');
 
         var header = document.createElement('header');
@@ -50,10 +53,12 @@
         overlay.append(backdrop, panel);
         document.body.appendChild(overlay);
 
+        var _triggerEl = null;
         var close = function () {
             panel.classList.add('hidden');
             overlay.classList.add('hidden');
             document.body.classList.remove('quick-view-open');
+            if (_triggerEl) { _triggerEl.focus(); _triggerEl = null; }
         };
 
         overlay.addEventListener('click', function (e) {
@@ -63,7 +68,14 @@
             if (e.key === 'Escape' && !overlay.classList.contains('hidden')) close();
         });
 
-        farmaciaOverlayMount = { overlay: overlay, panel: panel, content: content, title: title, subtitle: subtitle, close: close };
+        var open = function (triggerEl) {
+            _triggerEl = triggerEl || null;
+            panel.classList.remove('hidden');
+            overlay.classList.remove('hidden');
+            document.body.classList.add('quick-view-open');
+            closeBtn.focus();
+        };
+        farmaciaOverlayMount = { overlay: overlay, panel: panel, content: content, title: title, subtitle: subtitle, close: close, open: open };
         return farmaciaOverlayMount;
     }
 
@@ -191,10 +203,10 @@
         ]);
         renderActions(patient, document.getElementById('fhQvActions'));
 
-        mount.panel.classList.remove('hidden');
-        mount.overlay.classList.remove('hidden');
-        document.body.classList.add('quick-view-open');
-        document.getElementById('guidedIntakePanel').classList.add('hidden');
+        var guidedPanel = document.getElementById('guidedIntakePanel');
+        if (guidedPanel) guidedPanel.classList.add('hidden');
+        var trigger = document.getElementById('fhSearchBtn');
+        mount.open(trigger);
     }
 
     function showGuidedIntake(cip) {
@@ -251,12 +263,14 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         ensureOverlay();
-        document.getElementById('fhSearchBtn').addEventListener('click', search);
-        document.getElementById('fhCipInput').addEventListener('keydown', function (event) { if (event.key === 'Enter') search(); });
+        var searchBtn = document.getElementById('fhSearchBtn');
+        var cipInput = document.getElementById('fhCipInput');
+        if (searchBtn) searchBtn.addEventListener('click', search);
+        if (cipInput) cipInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') search(); });
         initGuidedIntake();
         var context = F.getQueryContext();
-        if (context.cip) {
-            document.getElementById('fhCipInput').value = context.cip;
+        if (context.cip && cipInput) {
+            cipInput.value = context.cip;
             search();
         }
     });

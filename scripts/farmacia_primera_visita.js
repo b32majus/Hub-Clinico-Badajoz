@@ -21,8 +21,10 @@
     }
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();
-        document.getElementById('fhPvGuardar').addEventListener('click', () => {
+        const guardar = document.getElementById('fhPvGuardar');
+        if (guardar) guardar.addEventListener('click', () => {
             const result = document.getElementById('fhPvResultado');
+            if (!result) return;
             result.className = 'result-box result-box--success';
             F.clearChildren(result);
             const cip = document.getElementById('fhPvCip').value || 'CIP demo no indicado';

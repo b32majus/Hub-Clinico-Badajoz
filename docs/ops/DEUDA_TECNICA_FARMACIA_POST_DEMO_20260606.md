@@ -119,3 +119,63 @@
 ---
 
 *Documento generado: WO-031, 2026-06-06. Builder: Claude Code / Sonnet 4.6.*
+
+---
+
+## 6. WO-032-lite — Limpieza con tokens limitados (2026-06-06)
+
+**Builder:** Claude Code / Sonnet 4.6  
+**Rama:** `work/hermes/nightly-farmacia-v0-1-20260606`  
+**Estado al finalizar:** completed (todas las fases ejecutadas)
+
+### Qué se hizo
+
+**FASE A — Smoke check automatizado** ✅ Completado  
+- Creado `tools/farmacia_smoke_check.mjs` con 10 comprobaciones (33 checks individuales).
+- Verificaciones: presencia de 8 HTMLs, 6 scripts, 2 CSS; ausencia de innerHTML y style= inline; existencia y estados de FH-001/002/003; referencias script↔HTML correctas; sin datos reales (DNI, teléfono, email).
+- Resultado: 33/33 OK.
+
+**FASE B — Guards JS mínimos** ✅ Completado  
+- `farmacia_index.js`: guards en `fhSearchBtn`, `fhCipInput` antes de `addEventListener`.
+- `farmacia_primera_visita.js`: guard en `fhPvGuardar` + guard en `fhPvResultado` antes de operar.
+- `farmacia_seguimiento.js`: guards en `fhSegFecha`, `fhSegCambioFarmaco`, `fhSegCambiaNivel`, `fhSegOptimiza`, `fhSegSuspension`, `fhSegGuardar`, `fhSegResultado`. No se alteró flujo ni IDs.
+
+**FASE C — Accesibilidad básica overlay** ✅ Completado  
+- `role="dialog"`, `aria-modal="true"`, `aria-labelledby="fhTitle"` en `fhQuickViewPanel`.
+- `aria-label="Cerrar vista rápida"` en botón cerrar (ya existía desde WO-031).
+- Foco inicial al botón cerrar al abrir el overlay.
+- Devolución de foco al `fhSearchBtn` al cerrar.
+- No se implementó focus trap completo (fuera de scope WO-032-lite).
+
+**FASE D — Documentación** ✅ Completado  
+- Esta sección.
+
+### Qué no se hizo por límite de tokens / scope
+
+- Focus trap completo (Tab y Shift+Tab contenido en el dialog).
+- CSS cleanup amplio.
+- HTML formatting masivo.
+- Refactor sidebar.
+- Persistencia / backend.
+
+### Qué queda post-demo
+
+- Focus trap completo para WCAG 2.1 AA (Fase 4).
+- Tests Playwright para flujos críticos (Fase 5).
+- Smoke check integrado en CI (github workflow).
+- Revisión accesibilidad con lector de pantalla real.
+
+### Verificaciones finales
+
+| Check | Resultado |
+|-------|-----------|
+| `node tools/farmacia_smoke_check.mjs` | 33/33 OK ✅ |
+| `node --check farmacia_common.js` | OK ✅ |
+| `node --check farmacia_index.js` | OK ✅ |
+| `node --check farmacia_validacion.js` | OK ✅ |
+| `node --check farmacia_primera_visita.js` | OK ✅ |
+| `node --check farmacia_seguimiento.js` | OK ✅ |
+| `node --check farmacia_dashboard_paciente.js` | OK ✅ |
+| FH-001/002/003 estados correctos | Confirmado ✅ |
+
+*Actualizado: WO-032-lite, 2026-06-06. Builder: Claude Code / Sonnet 4.6.*

@@ -19,8 +19,9 @@
             F.setValue('fhSegUltimosProms', ctx.patient.proms);
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
         }
-        if (!document.getElementById('fhSegFecha').value) {
-            document.getElementById('fhSegFecha').value = new Date().toISOString().slice(0, 10);
+        const fhSegFecha = document.getElementById('fhSegFecha');
+        if (fhSegFecha && !fhSegFecha.value) {
+            fhSegFecha.value = new Date().toISOString().slice(0, 10);
         }
         if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhSegNoCipBanner');
     }
@@ -48,32 +49,44 @@
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();
         document.querySelectorAll('input[name^="mg"]').forEach(input => input.addEventListener('change', updateMorisky));
-        document.getElementById('fhSegCambioFarmaco').addEventListener('input', event => {
-            document.getElementById('fhSegCambioFarmacoWarning').classList.toggle('hidden', !event.target.value.trim());
+        const cambioFarmaco = document.getElementById('fhSegCambioFarmaco');
+        if (cambioFarmaco) cambioFarmaco.addEventListener('input', event => {
+            const warning = document.getElementById('fhSegCambioFarmacoWarning');
+            if (warning) warning.classList.toggle('hidden', !event.target.value.trim());
         });
 
         const cambiaNivel = document.getElementById('fhSegCambiaNivel');
-        const applyNivel = () => toggleField('fhSegNuevoNivel', cambiaNivel.value === 'Sí');
-        cambiaNivel.addEventListener('change', applyNivel);
-        applyNivel();
+        if (cambiaNivel) {
+            const applyNivel = () => toggleField('fhSegNuevoNivel', cambiaNivel.value === 'Sí');
+            cambiaNivel.addEventListener('change', applyNivel);
+            applyNivel();
+        }
 
         const optimiza = document.getElementById('fhSegOptimiza');
-        const applyOptimiza = () => {
-            const show = optimiza.value === 'Sí';
-            ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegMotivoOpt'].forEach(id => toggleField(id, show));
-        };
-        optimiza.addEventListener('change', applyOptimiza);
-        applyOptimiza();
+        if (optimiza) {
+            const applyOptimiza = () => {
+                const show = optimiza.value === 'Sí';
+                ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegMotivoOpt'].forEach(id => toggleField(id, show));
+            };
+            optimiza.addEventListener('change', applyOptimiza);
+            applyOptimiza();
+        }
 
         const suspension = document.getElementById('fhSegSuspension');
-        const applySusp = () => toggleField('fhSegMotivoSusp', suspension.value === 'Sí');
-        suspension.addEventListener('change', applySusp);
-        applySusp();
-        document.getElementById('fhSegGuardar').addEventListener('click', () => {
+        if (suspension) {
+            const applySusp = () => toggleField('fhSegMotivoSusp', suspension.value === 'Sí');
+            suspension.addEventListener('change', applySusp);
+            applySusp();
+        }
+        const segGuardar = document.getElementById('fhSegGuardar');
+        if (segGuardar) segGuardar.addEventListener('click', () => {
             const result = document.getElementById('fhSegResultado');
+            if (!result) return;
             result.className = 'result-box result-box--success';
             F.clearChildren(result);
-            F.appendIconText(result, 'fa-check-circle', `Seguimiento registrado para ${document.getElementById('fhSegCip').value || 'CIP demo no indicado'}. Morisky: ${document.getElementById('fhSegMoriskyResultado').textContent}.`);
+            const cipVal = document.getElementById('fhSegCip');
+            const moriskyEl = document.getElementById('fhSegMoriskyResultado');
+            F.appendIconText(result, 'fa-check-circle', `Seguimiento registrado para ${cipVal ? cipVal.value : 'CIP demo no indicado'}. Morisky: ${moriskyEl ? moriskyEl.textContent : '—'}.`);
             const small = document.createElement('small');
             small.textContent = F.DEMO_SESSION_NOTE;
             result.appendChild(small);
