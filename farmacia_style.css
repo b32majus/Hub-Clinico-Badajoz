@@ -151,6 +151,8 @@
     font-weight: 700;
 }
 
+.card-title--tight { margin-top: 4px; }
+
 .card-title i,
 .section-title i {
     width: 32px;
@@ -459,6 +461,70 @@
 
 .hidden { display: none !important; }
 
+/* --- Checklist chips (WO farmacia v0.1) --- */
+.checklist-visual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.checklist-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 24px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
+}
+.checklist-chip:hover {
+    border-color: var(--ses-green);
+    background: var(--ses-green-light);
+}
+.checklist-chip input[type="checkbox"] {
+    accent-color: var(--ses-green);
+    width: 15px;
+    height: 15px;
+    margin: 0;
+}
+.checklist-chip:has(input:checked) {
+    background: var(--ses-green-light);
+    border-color: var(--ses-green);
+    color: var(--ses-green-dark);
+    font-weight: 600;
+}
+
+/* --- Session professional block (WO farmacia v0.1) --- */
+.session-professional-block {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F0FDFA;
+    border: 1px solid #CFF5E7;
+    border-left: 4px solid var(--ses-green);
+    margin-bottom: 16px;
+}
+.session-professional-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.session-professional-text {
+    color: #1E293B;
+    font-weight: 600;
+}
+
 /* ============================================================
    Adiciones WO-029 / WO-030 — pulido pre-demo
    ============================================================ */
@@ -543,6 +609,77 @@
 .fh-intake-active > .action-grid {
     opacity: 0.45;
     pointer-events: none;
+}
+
+/* ============================================================
+   Micro-WO Farmacia v0.1 — pulido visual Kimi
+   ============================================================ */
+
+/* Separación clara entre selector de tipo y context-strip */
+.dashboard-card .context-strip {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* Jerarquía visual entre sub-bloques internos */
+.dashboard-card .card-title {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #E2E8F0;
+}
+.dashboard-card .card-title:first-of-type {
+    padding-top: 0;
+    border-top: none;
+}
+.dashboard-card .card-title--tight {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* Form-actions separados del bloque anterior */
+.dashboard-card .form-actions {
+    margin-top: 24px;
+}
+
+/* Farmacéutico responsable: separación clara del bloque anterior */
+.session-professional-block {
+    margin-top: 20px;
+}
+
+/* Checklist chips: sin desbordamiento de texto */
+.checklist-chip {
+    overflow-wrap: break-word;
+}
+
+/* Responsive: chips y campos no desbordan en mobile */
+@media (max-width: 768px) {
+    .farmacia-paciente {
+        padding: 18px;
+        gap: 16px;
+    }
+    .dashboard-card {
+        padding: 18px;
+    }
+    .checklist-visual {
+        gap: 6px;
+    }
+    .checklist-chip {
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 /* --- Quick View visual field additions --- */
