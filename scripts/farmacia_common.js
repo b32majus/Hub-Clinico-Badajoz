@@ -121,11 +121,52 @@
         });
     }
 
+    const STATES = {
+        PENDING: 'pending',
+        VALIDATED: 'validated',
+        FOLLOWUP: 'followup',
+        DENIED: 'denied'
+    };
+
+    const DEMO_SESSION_NOTE = 'Demo — los datos se almacenan en memoria de sesión.';
+
     function statusClass(status) {
-        if (status === 'validated') return 'status-badge status-badge--validated';
-        if (status === 'followup') return 'status-badge status-badge--followup';
-        if (status === 'denied') return 'status-badge status-badge--denied';
+        if (status === STATES.VALIDATED) return 'status-badge status-badge--validated';
+        if (status === STATES.FOLLOWUP) return 'status-badge status-badge--followup';
+        if (status === STATES.DENIED) return 'status-badge status-badge--denied';
         return 'status-badge status-badge--pending';
+    }
+
+    function downloadFile(name, content, mimeType) {
+        const blob = new Blob([content], { type: mimeType });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function insertNoCipBanner(bannerId) {
+        if (document.getElementById(bannerId)) return;
+        var banner = document.createElement('div');
+        banner.id = bannerId;
+        banner.className = 'no-cip-banner';
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-info-circle';
+        icon.setAttribute('aria-hidden', 'true');
+        var msg = document.createElement('span');
+        msg.textContent = ' Busca primero un paciente por CIP o accede desde el Quick View para precargar datos.';
+        var link = document.createElement('a');
+        link.href = 'farmacia_index.html';
+        link.className = 'btn btn-secondary no-cip-banner__link';
+        var linkIcon = document.createElement('i');
+        linkIcon.className = 'fas fa-search';
+        linkIcon.setAttribute('aria-hidden', 'true');
+        link.appendChild(linkIcon);
+        link.appendChild(document.createTextNode(' Ir al buscador de Farmacia'));
+        banner.append(icon, msg, link);
+        var firstCard = document.querySelector('section.dashboard-card');
+        if (firstCard) firstCard.parentNode.insertBefore(banner, firstCard);
     }
 
     function initSidebarSearch() {
@@ -170,6 +211,10 @@
         renderFields,
         appendIconText,
         populateSelect,
-        statusClass
+        statusClass,
+        STATES,
+        DEMO_SESSION_NOTE,
+        downloadFile,
+        insertNoCipBanner
     };
 })();

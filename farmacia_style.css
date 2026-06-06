@@ -368,6 +368,10 @@
 
 .hidden { display: none !important; }
 
+/* ============================================================
+   Adiciones WO-029 / WO-030 — pulido pre-demo
+   ============================================================ */
+
 /* --- Quick view close button (H-01: visible en mobile/tablet) --- */
 .quick-view-close-btn {
     position: absolute;

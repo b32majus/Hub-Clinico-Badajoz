@@ -90,7 +90,7 @@
         const text = document.createElement('span');
         text.textContent = message;
         const small = document.createElement('small');
-        small.textContent = 'Demo — los datos se almacenan en memoria de sesión.';
+        small.textContent = F.DEMO_SESSION_NOTE;
         result.append(icon, text, document.createElement('br'), small);
         result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -145,15 +145,6 @@
         return lines;
     }
 
-    function download(name, content, type) {
-        const blob = new Blob([content], { type });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = name;
-        a.click();
-        URL.revokeObjectURL(a.href);
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fhModoDerma').addEventListener('click', () => mostrarFormulario('derma'));
         document.getElementById('fhModoReuma').addEventListener('click', () => mostrarFormulario('reuma'));
@@ -174,7 +165,7 @@
             renderResult(`Validación registrada — ${estadoLabel()} | Paciente: ${selectedCip()} | Fecha: ${new Date().toLocaleDateString('es-ES')}`);
         });
         document.getElementById('fhValExportTxt').addEventListener('click', () => {
-            download(`validacion_FH_${new Date().toISOString().slice(0, 10)}.txt`, buildValidationLines().join('\n'), 'text/plain;charset=utf-8');
+            F.downloadFile(`validacion_FH_${new Date().toISOString().slice(0, 10)}.txt`, buildValidationLines().join('\n'), 'text/plain;charset=utf-8');
         });
         document.getElementById('fhValExportCsv').addEventListener('click', () => {
             const rows = [
@@ -182,7 +173,7 @@
                 [`FH-${Date.now().toString(36).toUpperCase()}`, new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), document.getElementById('fhValFarmaco').value || '—', document.getElementById('fhValFarmaceutico').value || '—']
             ];
             const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-            download(`validaciones_FH_${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv;charset=utf-8');
+            F.downloadFile(`validaciones_FH_${new Date().toISOString().slice(0, 10)}.csv`, csv, 'text/csv;charset=utf-8');
         });
         applyContext();
     });

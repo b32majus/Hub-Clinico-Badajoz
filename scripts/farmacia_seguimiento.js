@@ -22,35 +22,12 @@
         if (!document.getElementById('fhSegFecha').value) {
             document.getElementById('fhSegFecha').value = new Date().toISOString().slice(0, 10);
         }
-        if (!ctx.cip && !ctx.patient) insertNoCipBanner('fhSegNoCipBanner');
+        if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhSegNoCipBanner');
     }
 
     function toggleField(fieldId, show) {
         const el = document.getElementById(fieldId);
         if (el) el.closest('.form-group').classList.toggle('hidden', !show);
-    }
-
-    function insertNoCipBanner(bannerId) {
-        if (document.getElementById(bannerId)) return;
-        var banner = document.createElement('div');
-        banner.id = bannerId;
-        banner.className = 'no-cip-banner';
-        var icon = document.createElement('i');
-        icon.className = 'fas fa-info-circle';
-        icon.setAttribute('aria-hidden', 'true');
-        var msg = document.createElement('span');
-        msg.textContent = ' Busca primero un paciente por CIP o accede desde el Quick View para precargar datos.';
-        var link = document.createElement('a');
-        link.href = 'farmacia_index.html';
-        link.className = 'btn btn-secondary no-cip-banner__link';
-        var linkIcon = document.createElement('i');
-        linkIcon.className = 'fas fa-search';
-        linkIcon.setAttribute('aria-hidden', 'true');
-        link.appendChild(linkIcon);
-        link.appendChild(document.createTextNode(' Ir al buscador de Farmacia'));
-        banner.append(icon, msg, link);
-        var firstCard = document.querySelector('section.dashboard-card');
-        if (firstCard) firstCard.parentNode.insertBefore(banner, firstCard);
     }
 
     function updateMorisky() {
@@ -98,7 +75,7 @@
             F.clearChildren(result);
             F.appendIconText(result, 'fa-check-circle', `Seguimiento registrado para ${document.getElementById('fhSegCip').value || 'CIP demo no indicado'}. Morisky: ${document.getElementById('fhSegMoriskyResultado').textContent}.`);
             const small = document.createElement('small');
-            small.textContent = 'Demo — los datos se almacenan en memoria de sesión.';
+            small.textContent = F.DEMO_SESSION_NOTE;
             result.appendChild(small);
         });
     });

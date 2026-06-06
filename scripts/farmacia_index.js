@@ -8,27 +8,47 @@
         const overlay = document.createElement('div');
         overlay.id = 'fhQuickViewOverlay';
         overlay.className = 'quick-view-overlay hidden';
-        overlay.innerHTML = [
-            '<div class="quick-view-backdrop" data-fh-qv-close></div>',
-            '<section id="fhQuickViewPanel" class="search-results quick-view-panel hidden" aria-live="polite">',
-                '<header class="results-header">',
-                    '<div>',
-                        '<h2 class="results-title" id="fhTitle">Quick View Farmacia</h2>',
-                        '<p class="results-subtitle" id="fhSubtitle"></p>',
-                    '</div>',
-                    '<button type="button" class="quick-view-close-btn" data-fh-qv-close aria-label="Cerrar vista r\u00e1pida">',
-                        '<i class="fas fa-times" aria-hidden="true"></i>',
-                    '</button>',
-                '</header>',
-                '<div id="fhContent" class="results-content"></div>',
-            '</section>'
-        ].join('');
-        document.body.appendChild(overlay);
+        var backdrop = document.createElement('div');
+        backdrop.className = 'quick-view-backdrop';
+        backdrop.setAttribute('data-fh-qv-close', '');
 
-        const panel = overlay.querySelector('#fhQuickViewPanel');
-        const content = overlay.querySelector('#fhContent');
-        const title = overlay.querySelector('#fhTitle');
-        const subtitle = overlay.querySelector('#fhSubtitle');
+        var panel = document.createElement('section');
+        panel.id = 'fhQuickViewPanel';
+        panel.className = 'search-results quick-view-panel hidden';
+        panel.setAttribute('aria-live', 'polite');
+
+        var header = document.createElement('header');
+        header.className = 'results-header';
+
+        var headerInner = document.createElement('div');
+        var title = document.createElement('h2');
+        title.className = 'results-title';
+        title.id = 'fhTitle';
+        title.textContent = 'Quick View Farmacia';
+        var subtitle = document.createElement('p');
+        subtitle.className = 'results-subtitle';
+        subtitle.id = 'fhSubtitle';
+        headerInner.append(title, subtitle);
+
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'quick-view-close-btn';
+        closeBtn.setAttribute('data-fh-qv-close', '');
+        closeBtn.setAttribute('aria-label', 'Cerrar vista r\u00e1pida');
+        var closeIcon = document.createElement('i');
+        closeIcon.className = 'fas fa-times';
+        closeIcon.setAttribute('aria-hidden', 'true');
+        closeBtn.appendChild(closeIcon);
+
+        header.append(headerInner, closeBtn);
+
+        var content = document.createElement('div');
+        content.id = 'fhContent';
+        content.className = 'results-content';
+
+        panel.append(header, content);
+        overlay.append(backdrop, panel);
+        document.body.appendChild(overlay);
 
         var close = function () {
             panel.classList.add('hidden');
