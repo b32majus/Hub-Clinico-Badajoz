@@ -122,6 +122,216 @@
         });
     }
 
+    /* ─── Quick View visual field helpers ─── */
+
+    var SCORE_INTERPRETATIONS = {
+        IHS4: function (v) { return v <= 10 ? 'Leve' : v <= 25 ? 'Moderado' : 'Grave'; },
+        DLQI: function (v) { return v <= 1 ? 'Sin efecto' : v <= 5 ? 'Leve' : v <= 10 ? 'Moderado' : v <= 20 ? 'Muy grave' : 'Extremadamente grave'; },
+        DAS28: function (v) { return v <= 2.6 ? 'Remisi\u00f3n' : v <= 3.2 ? 'Baja' : v <= 5.1 ? 'Moderada' : 'Alta'; },
+        HAQ: function (v) { return v <= 1 ? 'Leve' : v <= 2 ? 'Moderado' : 'Grave'; }
+    };
+
+    function knownScoreInterpretation(name, val) {
+        var num = parseFloat(val);
+        if (isNaN(num)) return '';
+        var fn = SCORE_INTERPRETATIONS[name];
+        return fn ? fn(num) : '';
+    }
+
+    function parseScores(str) {
+        var out = [];
+        if (!str || str === '\u2014') return out;
+        var known = ['IHS4', 'DLQI', 'DAS28', 'HAQ'];
+        for (var ki = 0; ki < known.length; ki++) {
+            var name = known[ki];
+            var escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            var re = new RegExp(escaped + '\\s*(?:demo)?:?\\s*(\\d+(?:\\.\\d+)?)(?:\\s*\u2192\\s*(\\d+(?:\\.\\d+)?))?', 'i');
+            var m = str.match(re);
+            if (m) {
+                var val = m[2] || m[1];
+                var interp = knownScoreInterpretation(name, val);
+                out.push({ name: name, value: val, interpretation: interp });
+            }
+        }
+        return out;
+    }
+
+    function parseAdherencia(str) {
+        if (!str || str === '\u2014') return { value: '\u2014', interpretation: 'Sin registro' };
+        var morisky = str.match(/Morisky[^:]*:\s*(\d+\/\d+)/i);
+        if (morisky) return { value: morisky[1], interpretation: 'Alta' };
+        if (/alta/i.test(str)) return { value: str, interpretation: 'Alta' };
+        if (/media/i.test(str)) return { value: str, interpretation: 'Media' };
+        if (/baja/i.test(str)) return { value: str, interpretation: 'Baja' };
+        if (/sin registro/i.test(str)) return { value: '\u2014', interpretation: 'Sin registro' };
+        return { value: str, interpretation: '' };
+    }
+
+    function parseProms(str) {
+        var out = [];
+        if (!str || str === '\u2014') return out;
+        if (/basal pendiente/i.test(str) || /sin registro/i.test(str)) {
+            out.push({ name: 'PROMs', value: 'Basal pendiente', interpretation: 'No disponible' });
+            return out;
+        }
+        var dlqi = str.match(/DLQI\s*(\d+)/i);
+        if (dlqi) {
+            out.push({ name: 'DLQI', value: dlqi[1], interpretation: knownScoreInterpretation('DLQI', dlqi[1]) });
+        }
+        var eva = str.match(/EVA\s*(picor|dolor)?\s*(\d+)\/10/i);
+        if (eva) {
+            var evaVal = parseInt(eva[2]);
+            var evaName = 'EVA' + (eva[1] ? ' ' + eva[1] : '');
+            var evaInterp = isNaN(evaVal) ? '' : evaVal <= 3 ? 'Leve' : evaVal <= 6 ? 'Moderado' : 'Grave';
+            out.push({ name: evaName, value: eva[2] + '/10', interpretation: evaInterp });
+        }
+        var haq = str.match(/HAQ\s*(\d+(?:\.\d+)?)/i);
+        if (haq) {
+            out.push({ name: 'HAQ', value: haq[1], interpretation: knownScoreInterpretation('HAQ', haq[1]) });
+        }
+        return out;
+    }
+
+    function createScoreChip(score) {
+        var chip = document.createElement('div');
+        chip.className = 'fh-qv-score-chip';
+        var nameEl = document.createElement('span');
+        nameEl.className = 'fh-qv-score-chip__name';
+        nameEl.textContent = score.name;
+        var valueEl = document.createElement('span');
+        valueEl.className = 'fh-qv-score-chip__value';
+        valueEl.textContent = score.value;
+        chip.append(nameEl, valueEl);
+        if (score.interpretation) {
+            var interpEl = document.createElement('span');
+            interpEl.className = 'fh-qv-score-chip__interp';
+            interpEl.textContent = score.interpretation;
+            chip.appendChild(interpEl);
+        }
+        return chip;
+    }
+
+    function createAdherenciaChip(adh) {
+        var chip = document.createElement('div');
+        chip.className = 'fh-qv-score-chip';
+        var nameEl = document.createElement('span');
+        nameEl.className = 'fh-qv-score-chip__name';
+        nameEl.textContent = 'Adherencia';
+        var valueEl = document.createElement('span');
+        valueEl.className = 'fh-qv-score-chip__value';
+        valueEl.textContent = adh.value;
+        chip.append(nameEl, valueEl);
+        if (adh.interpretation) {
+            var interpEl = document.createElement('span');
+            interpEl.className = 'fh-qv-score-chip__interp';
+            interpEl.textContent = adh.interpretation;
+            chip.appendChild(interpEl);
+        }
+        return chip;
+    }
+
+    function createPromCard(prom) {
+        var card = document.createElement('div');
+        card.className = 'fh-qv-score-chip';
+        var nameEl = document.createElement('span');
+        nameEl.className = 'fh-qv-score-chip__name';
+        nameEl.textContent = prom.name;
+        var valueEl = document.createElement('span');
+        valueEl.className = 'fh-qv-score-chip__value';
+        valueEl.textContent = prom.value;
+        card.append(nameEl, valueEl);
+        if (prom.interpretation) {
+            var interpEl = document.createElement('span');
+            interpEl.className = 'fh-qv-score-chip__interp';
+            interpEl.textContent = prom.interpretation;
+            card.appendChild(interpEl);
+        }
+        return card;
+    }
+
+    function createFarmacoGroup(patient) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'fh-qv-farmaco-field fh-qv-span-full';
+        var label = document.createElement('span');
+        label.className = 'info-field__label';
+        label.textContent = 'F\u00e1rmaco / Dosis / Pauta';
+        wrapper.appendChild(label);
+        var group = document.createElement('div');
+        group.className = 'fh-qv-farmaco-group';
+        function miniCard(lbl, val) {
+            var c = document.createElement('div');
+            c.className = 'fh-qv-farmaco-chip';
+            var l = document.createElement('span');
+            l.className = 'fh-qv-farmaco-chip__label';
+            l.textContent = lbl;
+            var v = document.createElement('span');
+            v.className = 'fh-qv-farmaco-chip__value';
+            v.textContent = val || '\u2014';
+            c.append(l, v);
+            return c;
+        }
+        group.appendChild(miniCard('F\u00e1rmaco', patient.farmaco));
+        group.appendChild(miniCard('Dosis', patient.dosis));
+        group.appendChild(miniCard('Pauta', patient.pauta));
+        wrapper.appendChild(group);
+        return wrapper;
+    }
+
+    function createAnaliticaChecklist(patient) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'info-field fh-qv-span-full';
+        var label = document.createElement('span');
+        label.className = 'info-field__label';
+        label.textContent = 'Estado anal\u00edtica / vacunaci\u00f3n';
+        wrapper.appendChild(label);
+        var list = document.createElement('div');
+        list.className = 'fh-qv-checklist';
+        function item(iconCls, text, stateCls) {
+            var it = document.createElement('div');
+            it.className = 'fh-qv-checklist__item ' + stateCls;
+            var ic = document.createElement('i');
+            ic.className = 'fas ' + iconCls;
+            ic.setAttribute('aria-hidden', 'true');
+            var sp = document.createElement('span');
+            sp.textContent = text;
+            it.append(ic, sp);
+            return it;
+        }
+        var at = patient.analitica.toLowerCase();
+        var aOk = /completa|apto/i.test(at);
+        var aPend = /pendiente/i.test(at);
+        var vOk = /vacuna/i.test(at) && /completa|apto/i.test(at);
+        list.appendChild(item(
+            aOk ? 'fa-check-circle' : aPend ? 'fa-clock' : 'fa-exclamation-circle',
+            'Anal\u00edtica: ' + (aOk ? 'OK' : aPend ? 'Pendiente' : 'Revisar'),
+            aOk ? 'fh-qv-checklist__item--ok' : aPend ? 'fh-qv-checklist__item--pending' : 'fh-qv-checklist__item--review'
+        ));
+        list.appendChild(item(
+            vOk ? 'fa-check-circle' : 'fa-clock',
+            'Vacunaci\u00f3n: ' + (vOk ? 'OK' : 'Pendiente'),
+            vOk ? 'fh-qv-checklist__item--ok' : 'fh-qv-checklist__item--pending'
+        ));
+        wrapper.appendChild(list);
+        return wrapper;
+    }
+
+    function renderFhQuickViewFields(grid, patient) {
+        F.clearChildren(grid);
+        grid.appendChild(F.createField('\u00daltima solicitud FH', patient.ultimaSolicitud));
+        grid.appendChild(createFarmacoGroup(patient));
+        grid.appendChild(createAnaliticaChecklist(patient));
+        var scores = parseScores(patient.scores);
+        for (var si = 0; si < scores.length; si++) {
+            grid.appendChild(createScoreChip(scores[si]));
+        }
+        grid.appendChild(createAdherenciaChip(parseAdherencia(patient.adherencia)));
+        grid.appendChild(F.createField('Efectos adversos activos', patient.efectosAdversos));
+        var proms = parseProms(patient.proms);
+        for (var pi = 0; pi < proms.length; pi++) {
+            grid.appendChild(createPromCard(proms[pi]));
+        }
+    }
+
     function renderPatientView(patient) {
         var mount = ensureOverlay();
         F.clearChildren(mount.content);
@@ -144,7 +354,7 @@
 
         var idBadge = document.createElement('div');
         idBadge.className = 'patient-id-badge';
-        idBadge.textContent = patient.cip;
+        idBadge.textContent = 'Paciente demo';
 
         var nameEl = document.createElement('h3');
         nameEl.className = 'patient-name';
@@ -164,7 +374,7 @@
         }
         meta.appendChild(metaSpan('fa-stethoscope', patient.patologia));
         meta.appendChild(metaSpan('fa-hospital', patient.servicio));
-        meta.appendChild(metaSpan('fa-calendar-alt', '\u00daltima visita: ' + patient.ultimaVisita));
+        meta.appendChild(metaSpan('fa-calendar-alt', '\u00daltima visita cl\u00ednica: ' + patient.ultimaVisita));
         meta.appendChild(metaSpan('fa-birthday-cake', patient.edad + ' a\u00f1os'));
         meta.appendChild(metaSpan('fa-venus-mars', patient.sexo));
 
@@ -191,20 +401,13 @@
         mount.title.textContent = 'Quick View Farmacia';
         mount.subtitle.textContent = patient.cip;
 
-        F.renderFields(document.getElementById('fhQvGrid'), [
-            { label: '\u00daltima solicitud FH', value: patient.ultimaSolicitud },
-            { label: 'F\u00e1rmaco solicitado / activo', value: patient.farmaco },
-            { label: 'Dosis / pauta actual', value: patient.dosis + ' \u00b7 ' + patient.pauta },
-            { label: 'Estado anal\u00edtica/vacunaci\u00f3n', value: patient.analitica },
-            { label: 'Scores relevantes', value: patient.scores },
-            { label: 'Adherencia', value: patient.adherencia },
-            { label: 'Efectos adversos activos', value: patient.efectosAdversos },
-            { label: '\u00daltimos PROMs', value: patient.proms }
-        ]);
+        renderFhQuickViewFields(document.getElementById('fhQvGrid'), patient);
         renderActions(patient, document.getElementById('fhQvActions'));
 
         var guidedPanel = document.getElementById('guidedIntakePanel');
         if (guidedPanel) guidedPanel.classList.add('hidden');
+        var mainEl = document.querySelector('main.main-content');
+        if (mainEl) mainEl.classList.remove('fh-intake-active');
         var trigger = document.getElementById('fhSearchBtn');
         mount.open(trigger);
     }
@@ -215,6 +418,8 @@
         }
         F.setText('guidedCip', cip);
         document.getElementById('guidedIntakePanel').classList.remove('hidden');
+        var mainEl = document.querySelector('main.main-content');
+        if (mainEl) mainEl.classList.add('fh-intake-active');
     }
 
     function search() {
@@ -234,6 +439,8 @@
         });
         document.getElementById('fhAltaCancelar').addEventListener('click', function () {
             document.getElementById('guidedIntakePanel').classList.add('hidden');
+            var mainEl = document.querySelector('main.main-content');
+            if (mainEl) mainEl.classList.remove('fh-intake-active');
         });
         document.getElementById('fhAltaAcceder').addEventListener('click', function (event) {
             event.preventDefault();
@@ -245,7 +452,7 @@
                 seguimiento: 'farmacia_seguimiento.html'
             };
             if (!punto || !destinos[punto]) {
-                window.alert('Seleccione un punto de entrada para continuar.');
+                window.alert('Seleccione un circuito de entrada para continuar.');
                 return;
             }
             if (!servicio.value || !patologia.value) {

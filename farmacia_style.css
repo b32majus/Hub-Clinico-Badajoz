@@ -337,6 +337,25 @@
 
 #fhQuickViewPanel.quick-view-panel {
     background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#fhQuickViewPanel.quick-view-panel .results-header {
+    flex-shrink: 0;
+    background: #FFFFFF;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 20px 24px;
+    z-index: 2;
+}
+
+#fhQuickViewPanel.quick-view-panel .results-content {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 0 24px 24px;
 }
 
 .fh-overlay-card {
@@ -465,9 +484,6 @@
 .quick-view-close-btn:hover { background: #CBD5E1; color: #1E293B; }
 .quick-view-close-btn:focus-visible { outline: 3px solid var(--ses-green); outline-offset: 2px; }
 
-/* Asegurar posición relativa en el panel para el botón absoluto */
-#fhQuickViewPanel.quick-view-panel { position: relative; }
-
 /* --- Focus visible en botones (WCAG-04) --- */
 .btn:focus-visible {
     outline: 3px solid var(--ses-green);
@@ -512,6 +528,121 @@
     /* Overlay scrollable en mobile con padding para botones de acción (ítem 11) */
     #fhQuickViewPanel.quick-view-panel {
         overflow-y: auto;
+        display: block;
         padding-bottom: 24px;
     }
+    #fhQuickViewPanel.quick-view-panel .results-content {
+        overflow-y: visible;
+        flex: none;
+        min-height: auto;
+    }
 }
+
+/* --- Guided intake: dim quick access section --- */
+.fh-intake-active > .section-title,
+.fh-intake-active > .action-grid {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* --- Quick View visual field additions --- */
+
+.fh-qv-span-full {
+    grid-column: 1 / -1;
+}
+
+/* Score / PROM / Adherencia chip */
+.fh-qv-score-chip {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+.fh-qv-score-chip__name {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.fh-qv-score-chip__value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+.fh-qv-score-chip__interp {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ses-green);
+}
+
+/* Fármaco / Dosis / Pauta mini cards */
+.fh-qv-farmaco-field {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+.fh-qv-farmaco-field .info-field__label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.fh-qv-farmaco-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+.fh-qv-farmaco-chip {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+}
+.fh-qv-farmaco-chip__label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748B;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.fh-qv-farmaco-chip__value {
+    display: block;
+    color: #1E293B;
+    font-weight: 600;
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+/* Analítica / Vacunación mini-checklist */
+.fh-qv-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.fh-qv-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.87rem;
+    color: #475569;
+}
+.fh-qv-checklist__item i {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+.fh-qv-checklist__item--ok i { color: var(--ses-green); }
+.fh-qv-checklist__item--pending i { color: #F59E0B; }
+.fh-qv-checklist__item--review i { color: #64748B; }
