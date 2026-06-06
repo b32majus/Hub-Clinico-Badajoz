@@ -331,6 +331,51 @@ CIP + fecha_evento + origen_evento + tipo_evento
 
 ---
 
+### DEC-019 — Congelación de Farmacia Hospitalaria v0.1 como demo funcional multipatología
+
+**Fecha:** 2026-06-06
+
+**Decisión:** La rama nocturna `work/hermes/nightly-farmacia-v0-1-20260606` que contiene el prototipo funcional completo del módulo de Farmacia Hospitalaria v0.1 se congela para la demo del lunes 2026-06-08 con el jefe de Servicio de Farmacia Hospitalaria de Cáceres.
+
+**Propósito de la demo:** Presentar un prototipo funcional del circuito de Farmacia Hospitalaria con datos sintéticos que demuestre la viabilidad del modelo multipatología y la entrada por buscador CIP, permitiendo al interlocutor clínico visualizar el flujo completo y dar feedback para el diseño funcional definitivo.
+
+**Alcance de la demo congelada:**
+- Módulo completo de Farmacia: buscador CIP, Quick View, alta guiada, validación farmacoterapéutica, primera visita, seguimiento con Morisky-Green, dashboard paciente, catálogos de fármacos y profesionales, estadísticas placeholder.
+- 3 pacientes demo sintéticos (CIP-DEMO-FH-001/002/003) + alta guiada para CIP nuevos.
+- Export TXT + CSV descargables.
+- Estilo coherente con paleta SES del Hub.
+- Smoke check automatizado 33/33 OK + CI workflow.
+
+**Límites explícitos de la demo congelada:**
+- **No merge automático.** La rama no se mergea a `feature/` sin revisión humana post-demo.
+- **No datos reales.** Todos los datos son sintéticos (CIP-DEMO-FH-*).
+- **No integración real** con JARA, SES o Pharmatool.
+- **No seguridad productiva.** Perfil `farmaceutico` hardcodeado como filtro de interfaz.
+- **No contratos definitivos.** El diseño funcional completo de Farmacia queda pendiente de la Fase 1-2 del plan formativo.
+- **No persistencia real.** Datos en memoria de sesión JS. Se pierden al cerrar/refrescar navegador.
+- **No backend ni API.**
+
+**Qué se permite antes del lunes:**
+- Revisión visual humana de todos los flujos.
+- Ensayo del guion de demo.
+- Fix crítico si aparece bug P0/P1 real aprobado por Sil.
+
+**Qué NO se permite antes del lunes:**
+- Nuevas funcionalidades.
+- Persistencia real, backend, integración externa.
+- Refactor de sidebar, limpieza HTML/CSS masiva, cambios visuales grandes.
+- Cambios en datos demo salvo fix crítico aprobado.
+
+**Impacto en roadmap:** Esta demo es un hito táctico. No cierra la Fase 1 del plan formativo ni sustituye el diseño funcional completo de Farmacia. Las decisiones funcionales reales se extraerán del feedback post-demo y se incorporarán al canvas de Fase 1.
+
+**Referencias:**
+- `docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`
+- `docs/ops/FARMACIA_DEMO_FREEZE_20260606.md`
+- `docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md`
+- `docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`
+
+---
+
 ## 4. Versionado propuesto
 
 ### v1 — Legacy local Reuma

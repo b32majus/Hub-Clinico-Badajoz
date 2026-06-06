@@ -88,18 +88,22 @@ El Hub es una aplicación **local-first** (HTML/CSS/JS) que funciona en el naveg
 
 | Aspecto | Descripción |
 |---------|-------------|
-| Estado | 🟡 Diseño funcional — no implementado |
-| Qué hará | Validación farmacoterapéutica, pauta, adherencia, efectos adversos, recepción de Solicitud FH |
-| Fuente propia | `Hub_Farmacia_Reuma_V1.xlsx` (planificado) |
-| Entrada desde Reuma | Solicitud FH (actualmente texto plano a portapapeles) |
-| Visibilidad en timeline | Validaciones y efectos adversos visibles para todos los perfiles |
-| Referencia | `docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md` |
+| Estado | 🟢 **Prototipo funcional v0.1** — rama demo congelada, no mergeada |
+| Rama | `work/hermes/nightly-farmacia-v0-1-20260606` (congelada para demo 2026-06-08) |
+| Qué implementa | Validación farmacoterapéutica, pauta, adherencia, efectos adversos, buscador CIP, Quick View, alta guiada, dashboard paciente, Morisky-Green |
+| Modo demo | Datos sintéticos exclusivamente. Sin persistencia real (memoria de sesión JS). Sin integración JARA/SES/Pharmatool |
+| Fuente propia demo | `scripts/farmacia_common.js` (objeto `patients` hardcoded). CSVs en `data/farmacia_demo/` como espejo documental |
+| Fuente propia planificada | `Hub_Farmacia_Reuma_V1.xlsx` (pendiente de diseño funcional definitivo post-demo) |
+| Entrada desde Reuma | Solicitud FH (actualmente texto plano a portapapeles) + datos precargados para caso Reuma estructurado demo |
+| Visibilidad en timeline | Validaciones y efectos adversos visibles para todos los perfiles (en dashboard paciente demo) |
+| Referencias | `docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`, `docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md` |
+| Diseño funcional definitivo | ⏸️ Pendiente. No sustituye el diseño funcional completo ni contratos definitivos |
 
-> 📌 **Nota táctica (2026-06-05):** Para la reunión del 2026-06-08 con Farmacia Hospitalaria, se incorpora temporalmente una **capa de entrada multipatología** en el módulo de Farmacia. Permite dos modos:
+> 📌 **Nota táctica (2026-06-05, actualizada 2026-06-06):** Para la reunión del 2026-06-08 con Farmacia Hospitalaria, se ha construido una **rama demo funcional congelada** con capa de entrada multipatología. Permite dos modos:
 > - **HS/Dermatología:** entrada manual/semi-estructurada (servicio sin módulo Hub).
 > - **Reumatología:** entrada estructurada desde el Hub Reuma v2 (flujo end-to-end).
 >
-> Esta capa es táctica para la demo. No cambia el roadmap, no implica construir Dermatología completa y no sustituye los módulos clínicos futuros. Ver `docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`.
+> La rama está congelada (`ready_for_demo`, `pending human review`), **no mergeada**. Esta demo es táctica. No cambia el roadmap, no implica construir Dermatología completa y no sustituye los módulos clínicos futuros ni los contratos definitivos. El diseño funcional completo de Farmacia se abordará en la Fase 1-2 del plan formativo tras la demo. Ver `docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md` y DEC-019.
 
 ### 5.3 Perfiles funcionales
 

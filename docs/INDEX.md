@@ -90,7 +90,26 @@
 
 ---
 
-## 8. Documentos de sistema
+## 8. Farmacia Hospitalaria v0.1 — demo 2026-06-08
+
+> **Rama:** `work/hermes/nightly-farmacia-v0-1-20260606` (congelada, no mergeada)
+> **Estado:** `ready_for_demo` / `pending human review`
+
+| Documento | Ubicación | Propósito |
+|-----------|-----------|-----------|
+| Cierre de bloque Farmacia v0.1 | [`docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`](/docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md) | Cierre documental global: estado, flujos, decisiones, auditorías, deuda, aprendizaje |
+| Especificación funcional Farmacia v0.1 | [`docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md`](/docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md) | Especificación funcional del módulo para la demo |
+| Executive summary demo | [`docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md`](/docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md) | Resumen ejecutivo para revisión Sil/Cora |
+| Freeze demo | [`docs/ops/FARMACIA_DEMO_FREEZE_20260606.md`](/docs/ops/FARMACIA_DEMO_FREEZE_20260606.md) | Congelación de rama para demo del lunes |
+| Deuda técnica post-demo | [`docs/ops/DEUDA_TECNICA_FARMACIA_POST_DEMO_20260606.md`](/docs/ops/DEUDA_TECNICA_FARMACIA_POST_DEMO_20260606.md) | Deuda técnica identificada y plan de abordaje |
+| Auditoría visual Claude | [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md) | Auditoría visual con navegador real (WO-028) |
+| Auditoría global Claude | [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md) | Auditoría global: código, WCAG, UX (WO-028) |
+| Reporte implementación nocturna | [`docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md`](/docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md) | Reporte de cierre de la macro WO nocturna |
+| Smoke check / CI | [`tools/farmacia_smoke_check.mjs`](/tools/farmacia_smoke_check.mjs) + [workflow](/.github/workflows/farmacia-smoke-check.yml) | Smoke check automatizado (33/33 OK) + CI workflow |
+
+---
+
+## 9. Documentos de sistema
 
 | Documento | Ubicación |
 |-----------|-----------|
@@ -104,8 +123,7 @@
 | Mejoras propuestas | [`docs/MEJORAS_PROPUESTAS.md`](/docs/MEJORAS_PROPUESTAS.md) |
 | Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
 | Plan formativo y protocolo de decisiones | [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) |
-|| Capa entrada Farmacia multipatología | [`docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`](/docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md) |
-|| Especificación funcional Farmacia v0.1 | [`docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md`](/docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md) |
+| Capa entrada Farmacia multipatología | [`docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`](/docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md) |
 
 ---
 

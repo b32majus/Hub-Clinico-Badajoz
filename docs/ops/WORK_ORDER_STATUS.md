@@ -50,15 +50,44 @@
 
 ---
 
+## Bloque Farmacia Hospitalaria v0.1 — rama nocturna congelada
+
+> 📌 **Rama:** `work/hermes/nightly-farmacia-v0-1-20260606`
+> **Estado:** `ready_for_demo` / `pending human review`
+> **Merge:** ❌ **No mergeada.** Congelada para demo 2026-06-08.
+> **Base:** `feature/reuma-v2-prebiologico-fh-les-sjogren`
+
+| WO | Título | Estado | Rama | Merge/Commit | Notas |
+|----|--------|--------|------|-------------|-------|
+| **WO-017** | Shell UI Farmacia | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `e1892e0` | Commit en rama nocturna. No mergeado |
+| **WO-018** | Buscador CIP + Quick View + alta guiada | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-019** | Validación farmacoterapéutica | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-020** | Primera visita Farmacia | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-021** | Seguimiento Farmacia + Morisky-Green | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-022** | Dashboard paciente Farmacia | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-023** | Dataset demo + catálogos | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-024** | Export TXT JARA + CSV básico | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-025** | Smoke/reporte macro inicial | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Commit en rama nocturna. No mergeado |
+| **WO-026** | Hardening demo previo a visual review | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `0ceac8b` | Commit en rama nocturna. No mergeado |
+| **WO-027** | Executive summary Farmacia demo | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `5ce00a4` | Resumen ejecutivo. No mergeado |
+| **WO-028** | Auditoría visual + global Claude | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `9fa56ad`, `0d893e4` | Auditorías visual y global. No mergeado |
+| **WO-029** | Pulido pre-demo | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `947b066` | Correcciones visuales P1/P2. No mergeado |
+| **WO-030** | Robustez pre-demo | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | — | Guards JS, innerHTML zero. No mergeado |
+| **WO-031** | Reducción deuda técnica pre-demo | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `22e7a93` | Centralización common.js. No mergeado |
+| **WO-032-lite** | Limpieza con tokens limitados + smoke check | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `a80b4af` | Smoke check 33/33 OK. No mergeado |
+| **WO-033-lite** | Freeze demo + CI smoke check | 📋 Ready for review | `work/hermes/nightly-farmacia-v0-1-20260606` | `d0d9739`, `0ac562d` | CI workflow + freeze doc. No mergeado |
+
+---
+
 ## Resumen
 
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 22 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016) |
-| 📋 Ready for review | 0 |
+| 📋 Ready for review | 17 (WO-017 a WO-033-lite — rama nocturna Farmacia congelada) |
 | 🔄 Superseded | 1 (WO-011) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 24 work orders / preflights gestionadas.
+**Total:** 41 work orders / preflights gestionadas.

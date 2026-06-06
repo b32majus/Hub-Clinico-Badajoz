@@ -83,11 +83,11 @@ Cada fase sigue este patrón estándar:
 
 **Estado:** ⏸️ Pendiente de completar por Sil/Cora. Canvas creado (WO-010), no validado.
 
-> 📌 **Nota táctica (2026-06-05):** La Fase 1 se aborda tácticamente empezando por **Farmacia** debido a la reunión del 2026-06-08 con el jefe de Servicio de Farmacia de Cáceres. El diseño de Farmacia incorpora dos escenarios de entrada:
-> - **Manual/semi-estructurada** (HS/Dermatología, vía orden clínica/JARA simulada).
-> - **Estructurada** (Reumatología, vía Hub Reuma v2).
+> 📌 **Actualización táctica (2026-06-06):** El módulo de Farmacia Hospitalaria v0.1 existe como **rama demo funcional congelada** en `work/hermes/nightly-farmacia-v0-1-20260606` para la reunión del 2026-06-08 con el jefe de Servicio de Farmacia de Cáceres.
 >
-> Este enfoque táctico **no sustituye** el diseño posterior completo de Enfermería ni el diseño completo de Dermatología. Ver `docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md` y DEC-018.
+> **Esta demo NO cierra la Fase 1** ni sustituye el contrato funcional validado. Es un prototipo táctico con datos sintéticos construido por agentes, auditado y congelado para obtener feedback clínico real. El diseño funcional completo de Farmacia (y Enfermería) sigue pendiente de completar por Sil/Cora sobre el canvas WO-010.
+>
+> **Siguiente paso humano:** Revisar la demo, extraer decisiones funcionales reales de Farmacia a partir del feedback del interlocutor clínico, y completar el canvas y las decisiones de Fase 1 post-demo. Ver DEC-019 en `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md` y `docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`.
 
 | Elemento | Descripción |
 |----------|-------------|
