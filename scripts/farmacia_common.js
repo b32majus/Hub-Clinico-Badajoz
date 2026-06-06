@@ -10,14 +10,94 @@
             patologia: 'Hidradenitis supurativa', farmaco: 'Secukinumab 300 mg', dosis: '300 mg', pauta: 'SC / cada 4 semanas', via: 'SC',
             estado: 'followup', estadoLabel: 'En seguimiento', fechaSolicitud: '2026-05-10', ultimaSolicitud: '2026-05-10',
             analitica: 'Analítica y vacunación completas según protocolo prebiológico demo.', scores: 'IHS4 demo: 9 → 5 (mejoría); DLQI demo: 14 → 8',
-            ultimaVisita: '2026-06-01', adherencia: 'Alta (Morisky-Green: 4/4)', efectosAdversos: 'Reacción cutánea leve (2026-05-25, resuelta)', proms: 'DLQI 8; EVA picor 3/10', primeraVisita: '2026-05-12', seguimiento: 'Seguimiento abierto'
+            ultimaVisita: '2026-06-01', adherencia: 'Alta (Morisky-Green: 4/4)', efectosAdversos: 'Reacción cutánea leve (2026-05-25, resuelta)', proms: 'DLQI 8; EVA picor 3/10', primeraVisita: '2026-05-12', seguimiento: 'Seguimiento abierto',
+            ihs4: 9,
+            hurley: 'Hurley II',
+            dlqi: 14,
+            localizacion: 'Axilar bilateral',
+            tiempoEvolucion: '3 años',
+            tratamientosPreviosHS: {
+                doxiciclinaClindamicina: true,
+                rifampicinaClindamicina: true,
+                otrosAtb: true,
+                otrosAtbTexto: 'Minociclina 6 meses'
+            },
+            biologicosPrevios: {
+                adalimumab: true,
+                adalimumabDuracion: '6 meses',
+                adalimumabMotivo: 'Fallo secundario',
+                otrosBiologicos: false,
+                otrosBiologicosFarmaco: '',
+                otrosBiologicosMotivo: ''
+            },
+            analiticaEstruct: {
+                fecha: '2026-05-01',
+                reciente: 'si',
+                hemograma: true,
+                bioquimica: true,
+                mantoux: 'Negativo',
+                serologias: 'Negativo',
+                vacunacion: 'si',
+                observaciones: 'Vacunas al día antes del inicio.'
+            },
+            comorbilidades: {
+                imc: '30.2',
+                tabaquismo: 'Exfumador',
+                paquetesAno: '',
+                diabetes: 'no',
+                hba1c: '',
+                sindromeMetabolico: 'si',
+                otras: 'Obesidad grado I.'
+            },
+            motivoClinico: 'HS Hurley II refractaria a antibioterapia oral, candidata a biológico.',
+            principioActivo: 'Secukinumab'
         },
         'CIP-DEMO-FH-002': {
             nombre: 'Paciente Demo FH-002', cip: 'CIP-DEMO-FH-002', edad: '35', sexo: 'Hombre', servicio: 'Dermatología', servicioSlug: 'dermatologia',
             patologia: 'Hidradenitis supurativa', farmaco: 'Adalimumab 80/40 mg', dosis: '80 mg inducción; 40 mg mantenimiento', pauta: 'SC / semanal según fase', via: 'SC',
             estado: 'pending', estadoLabel: 'Pendiente', fechaSolicitud: '2026-06-06', ultimaSolicitud: '2026-06-06',
             analitica: 'Analítica y cribado infeccioso pendientes de cierre.', scores: 'IHS4 demo: 12; DLQI demo: 16',
-            ultimaVisita: '—', adherencia: 'Sin registro', efectosAdversos: 'No registrados', proms: 'Basal pendiente', primeraVisita: 'Pendiente', seguimiento: 'No iniciado'
+            ultimaVisita: '—', adherencia: 'Sin registro', efectosAdversos: 'No registrados', proms: 'Basal pendiente', primeraVisita: 'Pendiente', seguimiento: 'No iniciado',
+            ihs4: 12,
+            hurley: 'Hurley III',
+            dlqi: 16,
+            localizacion: 'Inguinal bilateral y axilar',
+            tiempoEvolucion: '5 años',
+            tratamientosPreviosHS: {
+                doxiciclinaClindamicina: true,
+                rifampicinaClindamicina: true,
+                otrosAtb: false,
+                otrosAtbTexto: ''
+            },
+            biologicosPrevios: {
+                adalimumab: false,
+                adalimumabDuracion: '',
+                adalimumabMotivo: '',
+                otrosBiologicos: false,
+                otrosBiologicosFarmaco: '',
+                otrosBiologicosMotivo: ''
+            },
+            analiticaEstruct: {
+                fecha: '2026-06-01',
+                reciente: 'si',
+                hemograma: true,
+                bioquimica: true,
+                mantoux: 'Pendiente',
+                serologias: 'Pendiente',
+                vacunacion: 'pendiente',
+                observaciones: ''
+            },
+            comorbilidades: {
+                imc: '28.5',
+                tabaquismo: 'Activo',
+                paquetesAno: '15',
+                diabetes: 'no',
+                hba1c: '',
+                sindromeMetabolico: 'no',
+                otras: ''
+            },
+            motivoClinico: 'HS Hurley III refractaria a múltiples líneas de antibióticos. Candidata a adalimumab.',
+            principioActivo: 'Adalimumab'
         },
         'CIP-DEMO-FH-003': {
             nombre: 'Paciente Demo FH-003', cip: 'CIP-DEMO-FH-003', edad: '52', sexo: 'Mujer', servicio: 'Reumatología', servicioSlug: 'reumatologia',
