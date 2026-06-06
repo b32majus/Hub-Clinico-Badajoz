@@ -8,9 +8,9 @@
         'CIP-DEMO-FH-001': {
             nombre: 'Paciente Demo FH-001', cip: 'CIP-DEMO-FH-001', edad: '48', sexo: 'Mujer', servicio: 'Dermatología', servicioSlug: 'dermatologia',
             patologia: 'Hidradenitis supurativa', farmaco: 'Secukinumab 300 mg', dosis: '300 mg', pauta: 'SC / cada 4 semanas', via: 'SC',
-            estado: 'pending', estadoLabel: 'Pendiente', fechaSolicitud: '2026-05-10', ultimaSolicitud: '2026-05-10',
-            analitica: 'Analítica pendiente de completar. Vacunación revisada en orden clínica simulada.', scores: 'IHS4 demo: 9; DLQI demo: 14',
-            ultimaVisita: '—', adherencia: 'Sin registro', efectosAdversos: 'No registrados', proms: 'Basal pendiente', primeraVisita: 'Pendiente', seguimiento: 'No iniciado'
+            estado: 'followup', estadoLabel: 'En seguimiento', fechaSolicitud: '2026-05-10', ultimaSolicitud: '2026-05-10',
+            analitica: 'Analítica y vacunación completas según protocolo prebiológico demo.', scores: 'IHS4 demo: 9 → 5 (mejoría); DLQI demo: 14 → 8',
+            ultimaVisita: '2026-06-01', adherencia: 'Alta (Morisky-Green: 4/4)', efectosAdversos: 'Reacción cutánea leve (2026-05-25, resuelta)', proms: 'DLQI 8; EVA picor 3/10', primeraVisita: '2026-05-12', seguimiento: 'Seguimiento abierto'
         },
         'CIP-DEMO-FH-002': {
             nombre: 'Paciente Demo FH-002', cip: 'CIP-DEMO-FH-002', edad: '35', sexo: 'Hombre', servicio: 'Dermatología', servicioSlug: 'dermatologia',
@@ -22,9 +22,9 @@
         'CIP-DEMO-FH-003': {
             nombre: 'Paciente Demo FH-003', cip: 'CIP-DEMO-FH-003', edad: '52', sexo: 'Mujer', servicio: 'Reumatología', servicioSlug: 'reumatologia',
             patologia: 'Artritis Reumatoide (AR)', farmaco: 'Adalimumab 40 mg', dosis: '40 mg', pauta: 'SC / cada 2 semanas', via: 'SC',
-            estado: 'followup', estadoLabel: 'En seguimiento', fechaSolicitud: '2026-05-15', ultimaSolicitud: '2026-05-15',
+            estado: 'validated', estadoLabel: 'Validado', fechaSolicitud: '2026-03-15', ultimaSolicitud: '2026-03-15',
             analitica: 'Prebiológico demo apto. Vacunación VHB y antineumocócica completa.', scores: 'DAS28 demo: 3.2; HAQ demo: 1.1',
-            ultimaVisita: '2026-05-20', adherencia: 'Alta', efectosAdversos: 'No activos', proms: 'HAQ 1.1; EVA dolor 4/10', primeraVisita: '2026-05-20', seguimiento: 'Seguimiento abierto'
+            ultimaVisita: '—', adherencia: 'Sin registro (primera visita pendiente)', efectosAdversos: 'No registrados', proms: 'HAQ 1.1 (basal); EVA dolor 4/10', primeraVisita: 'Pendiente', seguimiento: 'No iniciado'
         }
     };
 

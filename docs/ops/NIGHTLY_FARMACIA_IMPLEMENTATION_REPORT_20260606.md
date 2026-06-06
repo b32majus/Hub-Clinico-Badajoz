@@ -112,9 +112,9 @@ Hub-Clinico-Badajoz/repo/
 
 | CIP | Servicio | Patología | Estado | Para probar |
 |-----|----------|-----------|--------|-------------|
-| `CIP-DEMO-FH-001` | Dermatología | Hidradenitis supurativa | Validado | Buscador → Quick View → Seguimiento/Dashboard |
+| `CIP-DEMO-FH-001` | Dermatología | Hidradenitis supurativa | En seguimiento | Buscador → Quick View → Seguimiento/Dashboard |
 | `CIP-DEMO-FH-002` | Dermatología | Hidradenitis supurativa | Pendiente validación | Buscador → Quick View → Validación |
-| `CIP-DEMO-FH-003` | Reumatología | Artritis Reumatoide (AR) | Validado | Caso precargado, igual que FH-001 |
+| `CIP-DEMO-FH-003` | Reumatología | Artritis Reumatoide (AR) | Validado | Buscador → Quick View → Primera Visita/Dashboard |
 
 Para probar alta guiada: cualquier otro CIP (ej. `CIP-DEMO-TEST`).
 
@@ -178,8 +178,9 @@ Para probar alta guiada: cualquier otro CIP (ej. `CIP-DEMO-TEST`).
 ### Para la demo del lunes
 
 - Abrir directamente `farmacia_index.html`
-- Usar CIP-DEMO-FH-001 como caso principal (HS/Dermatología → validado → seguimiento)
+- Usar CIP-DEMO-FH-001 como caso principal (HS/Dermatología → en seguimiento → seguimiento y dashboard)
 - Usar CIP-DEMO-FH-002 para mostrar validación pendiente
-- Usar cualquier otro CIP para mostrar alta guiada
+- Usar CIP-DEMO-FH-003 para mostrar caso Reuma validado → primera visita pendiente
+- Cualquier otro CIP (ej. CIP-DEMO-TEST) para mostrar alta guiada
 - No refrescar la página durante la demo (los datos están en memoria JS)
 - Explicar que es prototipo funcional con datos sintéticos
