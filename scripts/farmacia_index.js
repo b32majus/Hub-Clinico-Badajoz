@@ -92,28 +92,70 @@
 
     function renderPatientView(patient) {
         var mount = ensureOverlay();
-        var html = [
-            '<div class="fh-overlay-card">',
-            '<div class="fh-overlay-card__summary">',
-                '<div class="patient-avatar"><i class="fas fa-user" aria-hidden="true"></i></div>',
-                '<div class="fh-overlay-card__info">',
-                    '<div class="patient-id-badge">' + patient.cip + '</div>',
-                    '<h3 class="patient-name">' + patient.nombre + '</h3>',
-                    '<div class="patient-meta">',
-                        '<span><i class="fas fa-stethoscope"></i> ' + patient.patologia + '</span>',
-                        '<span><i class="fas fa-hospital"></i> ' + patient.servicio + '</span>',
-                        '<span><i class="fas fa-calendar-alt"></i> \u00daltima visita: ' + patient.ultimaVisita + '</span>',
-                        '<span><i class="fas fa-birthday-cake"></i> ' + patient.edad + ' a\u00f1os</span>',
-                        '<span><i class="fas fa-venus-mars"></i> ' + patient.sexo + '</span>',
-                    '</div>',
-                '</div>',
-                '<span class="' + F.statusClass(patient.estado) + '">' + patient.estadoLabel + '</span>',
-            '</div>',
-            '</div>',
-            '<div class="info-grid" id="fhQvGrid"></div>',
-            '<div id="fhQvActions" class="fh-overlay-card__actions"></div>'
-        ].join('');
-        mount.content.innerHTML = html;
+        F.clearChildren(mount.content);
+
+        var card = document.createElement('div');
+        card.className = 'fh-overlay-card';
+
+        var summary = document.createElement('div');
+        summary.className = 'fh-overlay-card__summary';
+
+        var avatar = document.createElement('div');
+        avatar.className = 'patient-avatar';
+        var avatarIcon = document.createElement('i');
+        avatarIcon.className = 'fas fa-user';
+        avatarIcon.setAttribute('aria-hidden', 'true');
+        avatar.appendChild(avatarIcon);
+
+        var info = document.createElement('div');
+        info.className = 'fh-overlay-card__info';
+
+        var idBadge = document.createElement('div');
+        idBadge.className = 'patient-id-badge';
+        idBadge.textContent = patient.cip;
+
+        var nameEl = document.createElement('h3');
+        nameEl.className = 'patient-name';
+        nameEl.textContent = patient.nombre;
+
+        var meta = document.createElement('div');
+        meta.className = 'patient-meta';
+
+        function metaSpan(iconClass, text) {
+            var span = document.createElement('span');
+            var icon = document.createElement('i');
+            icon.className = 'fas ' + iconClass;
+            icon.setAttribute('aria-hidden', 'true');
+            span.appendChild(icon);
+            span.appendChild(document.createTextNode(' ' + text));
+            return span;
+        }
+        meta.appendChild(metaSpan('fa-stethoscope', patient.patologia));
+        meta.appendChild(metaSpan('fa-hospital', patient.servicio));
+        meta.appendChild(metaSpan('fa-calendar-alt', '\u00daltima visita: ' + patient.ultimaVisita));
+        meta.appendChild(metaSpan('fa-birthday-cake', patient.edad + ' a\u00f1os'));
+        meta.appendChild(metaSpan('fa-venus-mars', patient.sexo));
+
+        info.append(idBadge, nameEl, meta);
+
+        var statusSpan = document.createElement('span');
+        statusSpan.className = F.statusClass(patient.estado);
+        statusSpan.textContent = patient.estadoLabel;
+
+        summary.append(avatar, info, statusSpan);
+        card.appendChild(summary);
+        mount.content.appendChild(card);
+
+        var grid = document.createElement('div');
+        grid.className = 'info-grid';
+        grid.id = 'fhQvGrid';
+        mount.content.appendChild(grid);
+
+        var actionsDiv = document.createElement('div');
+        actionsDiv.id = 'fhQvActions';
+        actionsDiv.className = 'fh-overlay-card__actions';
+        mount.content.appendChild(actionsDiv);
+
         mount.title.textContent = 'Quick View Farmacia';
         mount.subtitle.textContent = patient.cip;
 

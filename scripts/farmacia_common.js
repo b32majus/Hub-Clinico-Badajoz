@@ -122,7 +122,8 @@
     }
 
     function statusClass(status) {
-        if (status === 'validated' || status === 'followup') return 'status-badge status-badge--validated';
+        if (status === 'validated') return 'status-badge status-badge--validated';
+        if (status === 'followup') return 'status-badge status-badge--followup';
         if (status === 'denied') return 'status-badge status-badge--denied';
         return 'status-badge status-badge--pending';
     }

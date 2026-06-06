@@ -14,7 +14,7 @@
         if (!note) {
             note = document.createElement('p');
             note.id = 'fhHSOtherNote';
-            note.style.cssText = 'font-size:0.82rem;color:#64748B;margin:8px 0 0;';
+            note.className = 'pathology-demo-note';
             document.getElementById('formDerma').appendChild(note);
         }
         const patologia = document.getElementById('fhDermaPatologia').value;

@@ -192,6 +192,7 @@
 .status-badge--pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
 .status-badge--validated { background: var(--ses-green-light); color: var(--ses-green-dark); border: 1px solid rgba(0, 135, 119, 0.25); }
 .status-badge--denied { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.status-badge--followup { background: #CCFBF1; color: #0F766E; border: 1px solid #99F6E4; }
 
 .form-grid {
     display: grid;
@@ -403,6 +404,29 @@
     border-color: #C8E6E3;
     cursor: default;
     color: #334155;
+}
+
+/* --- Guard: sin paciente seleccionado (Fix 2) --- */
+.no-cip-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    color: #1E40AF;
+    font-size: 0.88rem;
+}
+.no-cip-banner i { color: #3B82F6; }
+.no-cip-banner__link { margin-left: auto; }
+
+/* --- Nota patología no-HS (Fix 3) --- */
+.pathology-demo-note {
+    font-size: 0.82rem;
+    color: #64748B;
+    margin: 8px 0 0;
 }
 
 @media (max-width: 768px) {
