@@ -4,6 +4,14 @@
     const F = window.FarmaciaDemo;
     let modoActual = null;
 
+    function isHSPathology() {
+        return modoActual === 'derma' && document.getElementById('fhDermaPatologia').value === 'Hidradenitis supurativa';
+    }
+
+    function toggleHSBlock() {
+        document.getElementById('formHS').classList.toggle('hidden', !isHSPathology());
+    }
+
     function mostrarFormulario(modo) {
         modoActual = modo;
         document.getElementById('formDerma').classList.toggle('hidden', modo !== 'derma');
@@ -14,6 +22,7 @@
         if (modo === 'derma' && !document.getElementById('fhDermaFecha').value) {
             document.getElementById('fhDermaFecha').value = new Date().toISOString().slice(0, 10);
         }
+        toggleHSBlock();
     }
 
     function applyContext() {
@@ -34,7 +43,15 @@
             F.setValue('fhValVia', p.via);
             F.setValue('fhValIndicacion', p.patologia);
             if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
+            if (p.ihs4 !== undefined) F.setValue('fhHSIhs4', p.ihs4);
+            if (p.hurley) F.setValue('fhHSHurley', p.hurley);
+            if (p.dlqi !== undefined) F.setValue('fhHSDlqi', p.dlqi);
+            if (p.localizacion) F.setValue('fhHSLocalizacion', p.localizacion);
+            if (p.tratamientosPrevios) F.setValue('fhHSTratamientosPrevios', p.tratamientosPrevios);
+            if (p.biologicoPrevio) F.setValue('fhHSBiologicoPrevio', p.biologicoPrevio);
+            if (p.motivoClinico) F.setValue('fhHSMotivoClinico', p.motivoClinico);
         }
+        toggleHSBlock();
     }
 
     function selectedCip() {
@@ -88,6 +105,17 @@
             lines.push(`Dosis: ${document.getElementById('fhDermaDosis').value || '—'}`);
             lines.push(`Pauta: ${document.getElementById('fhDermaPauta').value || '—'}`);
         }
+        if (isHSPathology()) {
+            lines.push('');
+            lines.push('--- Datos específicos Hidradenitis supurativa ---');
+            lines.push(`IHS4: ${document.getElementById('fhHSIhs4').value || '—'}`);
+            lines.push(`Hurley: ${document.getElementById('fhHSHurley').value || '—'}`);
+            lines.push(`DLQI: ${document.getElementById('fhHSDlqi').value || '—'}`);
+            lines.push(`Localización principal: ${document.getElementById('fhHSLocalizacion').value || '—'}`);
+            lines.push(`Tratamientos previos: ${document.getElementById('fhHSTratamientosPrevios').value || '—'}`);
+            lines.push(`Biológico previo: ${document.getElementById('fhHSBiologicoPrevio').value || '—'}`);
+            lines.push(`Motivo clínico / línea terapéutica: ${document.getElementById('fhHSMotivoClinico').value || '—'}`);
+        }
         lines.push('');
         lines.push(`Estado validación: ${estadoLabel()}`);
         const motivo = document.getElementById('fhValMotivo').value.trim();
@@ -120,6 +148,9 @@
         document.getElementById('fhModoReuma').addEventListener('click', () => mostrarFormulario('reuma'));
         document.getElementById('fhValEstado').addEventListener('change', event => {
             document.getElementById('fhValMotivoRow').classList.toggle('hidden', event.target.value !== 'denied');
+        });
+        document.getElementById('fhDermaPatologia').addEventListener('change', () => {
+            toggleHSBlock();
         });
         document.getElementById('fhValGuardar').addEventListener('click', () => {
             if (!modoActual) { window.alert('Seleccione tipo de solicitud.'); return; }
