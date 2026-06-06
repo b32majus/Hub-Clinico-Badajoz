@@ -1,0 +1,37 @@
+name: Farmacia smoke check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Smoke check Farmacia
+        run: node tools/farmacia_smoke_check.mjs
+
+      - name: Syntax check farmacia_common.js
+        run: node --check scripts/farmacia_common.js
+
+      - name: Syntax check farmacia_index.js
+        run: node --check scripts/farmacia_index.js
+
+      - name: Syntax check farmacia_validacion.js
+        run: node --check scripts/farmacia_validacion.js
+
+      - name: Syntax check farmacia_primera_visita.js
+        run: node --check scripts/farmacia_primera_visita.js
+
+      - name: Syntax check farmacia_seguimiento.js
+        run: node --check scripts/farmacia_seguimiento.js
+
+      - name: Syntax check farmacia_dashboard_paciente.js
+        run: node --check scripts/farmacia_dashboard_paciente.js

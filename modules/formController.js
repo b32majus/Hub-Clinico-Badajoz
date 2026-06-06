@@ -20,14 +20,24 @@
 // FUNCIONES UTILITARIAS PARA GESTIÓN CSS
 // =====================================
 
+const FORM_DEBUG = false;
+
+function debugLog(...args) {
+    if (FORM_DEBUG) console.log(...args);
+}
+
+function debugWarn(...args) {
+    if (FORM_DEBUG) console.warn(...args);
+}
+
 // Función utilitaria para mostrar elementos con diferentes tipos de display
 function showElement(elementId, displayType = 'block') {
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = displayType;
-        console.log(`✅ Elemento ${elementId} mostrado con display: ${displayType}`);
+        debugLog(`✅ Elemento ${elementId} mostrado con display: ${displayType}`);
     } else {
-        console.warn(`⚠️ Elemento ${elementId} no encontrado`);
+        debugWarn(`⚠️ Elemento ${elementId} no encontrado`);
     }
 }
 
@@ -36,9 +46,9 @@ function hideElement(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
         element.style.display = 'none';
-        console.log(`✅ Elemento ${elementId} ocultado`);
+        debugLog(`✅ Elemento ${elementId} ocultado`);
     } else {
-        console.warn(`⚠️ Elemento ${elementId} no encontrado`);
+        debugWarn(`⚠️ Elemento ${elementId} no encontrado`);
     }
 }
 
@@ -51,7 +61,7 @@ function showElementsBySelector(selector, displayType = 'block') {
             el.style.display = displayType;
         }
     });
-    console.log(`✅ Elementos con selector "${selector}" mostrados`);
+    debugLog(`✅ Elementos con selector "${selector}" mostrados`);
 }
 
 // Función utilitaria para ocultar elementos por selector CSS
@@ -59,7 +69,7 @@ function hideElementsBySelector(selector) {
     document.querySelectorAll(selector).forEach(el => {
         el.style.display = 'none';
     });
-    console.log(`✅ Elementos con selector "${selector}" ocultados`);
+    debugLog(`✅ Elementos con selector "${selector}" ocultados`);
 }
 
 // =====================================
@@ -101,6 +111,16 @@ function adaptarFormulario(diagnostico) {
             patologiaSubtitle.textContent = 'Artritis Reumatoide';
             mostrarElementosAR();
             break;
+        case 'les':
+            patologiaHighlight.textContent = 'LES';
+            patologiaSubtitle.textContent = 'Lupus Eritematoso Sistémico';
+            mostrarElementosLES();
+            break;
+        case 'sjogren':
+            patologiaHighlight.textContent = 'Sjögren';
+            patologiaSubtitle.textContent = 'Síndrome de Sjögren';
+            mostrarElementosSjogren();
+            break;
         default:
             patologiaHighlight.textContent = 'Reumatología';
             patologiaSubtitle.textContent = 'Seleccione sospecha diagnóstica para adaptar el formulario';
@@ -112,10 +132,10 @@ function adaptarFormulario(diagnostico) {
 }
 
 function ocultarTodosElementosEspecificos() {
-    console.log('🔄 Ocultando todos los elementos específicos de patología');
+    debugLog('🔄 Ocultando todos los elementos específicos de patología');
 
     // Ocultar todos los elementos con clases específicas de patología
-    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only'];
+    const selectors = ['.espa-only', '.aps-only', '.espa-aps-only', '.ar-only', '.les-only', '.sjogren-only'];
     selectors.forEach(selector => hideElementsBySelector(selector));
 
     // Ocultar biomarcadores
@@ -127,11 +147,11 @@ function ocultarTodosElementosEspecificos() {
     casparInitialized = false;
     acrEularInitialized = false;
 
-    console.log('✅ Todos los elementos específicos ocultados');
+    debugLog('✅ Todos los elementos específicos ocultados');
 }
 
 function mostrarElementosEspA() {
-    console.log('📋 Mostrando elementos específicos de EspA');
+    debugLog('📋 Mostrando elementos específicos de EspA');
 
     // Biomarcadores: Solo HLA-B27
     showElement('hlaB27Container', 'block');
@@ -154,11 +174,11 @@ function mostrarElementosEspA() {
     // Inicializar funcionalidad ASAS
     setTimeout(() => initializeASAS(), 100);
 
-    console.log('✅ Elementos EspA mostrados correctamente');
+    debugLog('✅ Elementos EspA mostrados correctamente');
 }
 
 function mostrarElementosAPs() {
-    console.log('📋 Mostrando elementos específicos de APs');
+    debugLog('📋 Mostrando elementos específicos de APs');
 
     // Biomarcadores: HLA-B27 + FR + aPCC (clínica mixta)
     const containers = ['hlaB27Container', 'frContainer', 'apccContainer'];
@@ -183,11 +203,11 @@ function mostrarElementosAPs() {
     // Inicializar funcionalidad CASPAR
     setTimeout(() => initializeCASPAR(), 100);
 
-    console.log('✅ Elementos APs mostrados correctamente');
+    debugLog('✅ Elementos APs mostrados correctamente');
 }
 
 function mostrarElementosAR() {
-    console.log('📋 Mostrando elementos específicos de AR');
+    debugLog('📋 Mostrando elementos específicos de AR');
 
     // Biomarcadores: FR + Anti-CCP + ANA
     const containers = ['frContainer', 'apccContainer', 'anaContainer'];
@@ -196,9 +216,14 @@ function mostrarElementosAR() {
     // Secciones específicas de AR
     showElementsBySelector('.ar-only', 'block');
 
+    // Ocultar secciones ASDAS (no aplican en AR)
+    hideElement('asdasEsrSection');
+    hideElement('asdasSection');
+
     // Mostrar secciones específicas
     const elementosAR = [
         'criteriosACREULARSection', 'seccionesClinicasARSection',
+        'valoracionClinicaARSegSection',
         'das28CrpSection', 'das28EsrSection', 'evaMedicoSection',
         'cdaiSection', 'sdaiSection',
         'entesitisTitle', 'entesitisSection',
@@ -241,7 +266,62 @@ function mostrarElementosAR() {
         });
     }
 
-    console.log('✅ Elementos AR mostrados correctamente');
+    debugLog('✅ Elementos AR mostrados correctamente');
+}
+
+function mostrarElementosLES() {
+    debugLog('📋 Mostrando elementos específicos de LES');
+
+    // Biomarcadores: ANA
+    showElement('anaContainer', 'block');
+
+    // Secciones específicas de LES
+    showElementsBySelector('.les-only', 'block');
+
+    // Ocultar secciones no aplicables a LES
+    hideElementsBySelector('.ar-only');
+    hideElementsBySelector('.espa-only');
+    hideElementsBySelector('.aps-only');
+    hideElementsBySelector('.espa-aps-only');
+
+    // Mostrar secciones compatibles (tratamiento, PROs)
+    // El handler de brote actual (toggle tipo de brote)
+    const broteSelect = document.getElementById('broteActual');
+    if (broteSelect) {
+        broteSelect.addEventListener('change', function () {
+            const tipoGroup = document.getElementById('tipoBroteGroup');
+            if (tipoGroup) {
+                tipoGroup.style.display = (this.value && this.value !== 'No') ? 'block' : 'none';
+            }
+        });
+    }
+
+    debugLog('✅ Elementos LES mostrados correctamente');
+}
+
+function mostrarElementosSjogren() {
+    debugLog('📋 Mostrando elementos específicos de Sjögren');
+
+    // Biomarcadores: ANA, FR
+    showElement('anaContainer', 'block');
+    showElement('frContainer', 'block');
+
+    // Secciones específicas de Sjögren
+    showElementsBySelector('.sjogren-only', 'block');
+
+    // Ocultar secciones no aplicables a Sjögren
+    hideElementsBySelector('.ar-only');
+    hideElementsBySelector('.espa-only');
+    hideElementsBySelector('.aps-only');
+    hideElementsBySelector('.espa-aps-only');
+    hideElementsBySelector('.les-only');
+
+    // Asegurar que el cálculo ESSPRI esté activo
+    if (typeof calculateESSPRI === 'function') {
+        calculateESSPRI();
+    }
+
+    debugLog('✅ Elementos Sjögren mostrados correctamente');
 }
 
 function initializeACREULAR() {
@@ -256,7 +336,7 @@ function initializeACREULAR() {
         }
     });
     recalcularACREULAR();
-    console.log('✅ ACR/EULAR 2010 inicializado');
+    debugLog('✅ ACR/EULAR 2010 inicializado');
 }
 
 function recalcularACREULAR() {
@@ -290,7 +370,7 @@ function recalcularACREULAR() {
 // =====================================
 
 function inicializarCollapsibles() {
-    console.log('🔄 Inicializando secciones colapsables...');
+    debugLog('🔄 Inicializando secciones colapsables...');
 
     const collapsibleHeaders = document.getElementsByClassName("collapsible-header");
 
@@ -352,7 +432,7 @@ function inicializarCollapsibles() {
         header.setAttribute('data-collapsible-initialized', 'true');
     }
 
-    console.log(`✅ Secciones colapsables inicializadas: ${collapsibleHeaders.length}`);
+    debugLog(`✅ Secciones colapsables inicializadas: ${collapsibleHeaders.length}`);
 }
 
 // Función mejorada para refrescar alturas de secciones colapsables
@@ -383,7 +463,7 @@ function refreshOpenCollapsibles() {
                 content.style.maxHeight = content.scrollHeight + 'px';
             }
         });
-        console.log('Alturas de colapsables abiertos, recalibradas.');
+        debugLog('Alturas de colapsables abiertos, recalibradas.');
     }, 150); // Delay para esperar el repintado del DOM
 }
 
@@ -395,7 +475,7 @@ function validarFormulario() {
     const errores = [];
 
     if (!document.getElementById('idPaciente').value.trim()) {
-        errores.push('ID del Paciente');
+        errores.push('CIP');
     }
     if (!document.getElementById('fechaVisita').value) {
         errores.push('Fecha de la Visita');
@@ -416,7 +496,7 @@ function validarFormularioSeguimiento() {
     const errores = [];
 
     if (!document.getElementById('idPaciente')?.value?.trim()) {
-        errores.push('ID del Paciente');
+        errores.push('CIP');
     }
     if (!document.getElementById('fechaVisita')?.value) {
         errores.push('Fecha de la Visita');
@@ -476,6 +556,128 @@ function normalizarEstado(value, fallback = 'ND') {
     }
     if (normalized === 'NO-ANALIZADO' || normalized === 'NO ANALIZADO') return 'ND';
     return normalized;
+}
+
+function getValue(id, fallback = '') {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    if (el.type === 'checkbox') return el.checked ? 'SI' : 'NO';
+    if (el.textContent && (el.tagName === 'SPAN' || el.tagName === 'DIV')) {
+        return el.textContent.trim() || fallback;
+    }
+    return el.value !== undefined && el.value !== null && String(el.value).trim() !== '' ? el.value : fallback;
+}
+
+function getChecked(id) {
+    return !!document.getElementById(id)?.checked;
+}
+
+function getSelectValue(id, fallback = '') {
+    const el = document.getElementById(id);
+    return el && el.value !== undefined && el.value !== null && String(el.value).trim() !== '' ? el.value : fallback;
+}
+
+function getStateValue(id, fallback = 'ND') {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    if (el.type === 'checkbox') return el.checked ? 'SI' : 'NO';
+    if (el.dataset?.value) return normalizarEstado(el.dataset.value, fallback);
+    return normalizarEstado(el.value, fallback);
+}
+
+const SLEDAI_2K_ITEM_IDS = [
+    'sledaiSeizure', 'sledaiPsychosis', 'sledaiOrganicBrainSyndrome',
+    'sledaiVisualDisturbance', 'sledaiCranialNerveDisorder', 'sledaiLupusHeadache',
+    'sledaiCVA', 'sledaiVasculitis', 'sledaiArthritis', 'sledaiMyositis',
+    'sledaiUrinaryCasts', 'sledaiHematuria', 'sledaiProteinuria', 'sledaiPyuria',
+    'sledaiRash', 'sledaiAlopecia', 'sledaiMucosalUlcers', 'sledaiPleurisy',
+    'sledaiPericarditis', 'sledaiLowComplement', 'sledaiIncreasedDNABinding',
+    'sledaiFever', 'sledaiThrombocytopenia', 'sledaiLeukopenia'
+];
+
+const SLICC_DOMAIN_IDS = [
+    'sliccOcular', 'sliccNeuropsychiatric', 'sliccRenal', 'sliccPulmonary',
+    'sliccCardiovascular', 'sliccPeripheralVascular', 'sliccGastrointestinal',
+    'sliccMusculoskeletal', 'sliccSkin', 'sliccEndocrineDiabetes',
+    'sliccGonadal', 'sliccMalignancy'
+];
+
+const ESSDAI_DOMAIN_IDS = [
+    'essdaiConstitutional', 'essdaiLymphadenopathy', 'essdaiGlandular',
+    'essdaiArticular', 'essdaiCutaneous', 'essdaiPulmonary', 'essdaiRenal',
+    'essdaiMuscular', 'essdaiPeripheralNervousSystem', 'essdaiCentralNervousSystem',
+    'essdaiHematological', 'essdaiBiological'
+];
+
+const PREBIOLOGIC_V2_FIELD_IDS = [
+    'fechaDiagnostico',
+    'estadoPrebiologicoFinal',
+    'fechaValidacionPrebiologico',
+    'profesionalValidador',
+    'decisionClinicaManual',
+    'hemogramaSolicitado',
+    'hemogramaFechaSolicitud',
+    'hemogramaRecibido',
+    'hemogramaFechaRecepcion',
+    'hemogramaCorrecto',
+    'hemogramaObservaciones',
+    'bioquimicaSolicitada',
+    'bioquimicaFechaSolicitud',
+    'bioquimicaRecibida',
+    'bioquimicaFechaRecepcion',
+    'bioquimicaCorrecta',
+    'bioquimicaObservaciones',
+    'serologiasSolicitadas',
+    'serologiasFechaSolicitud',
+    'serologiasRecibidas',
+    'serologiasFechaRecepcion',
+    'serologiasCorrectas',
+    'serologiasObservaciones',
+    'igraMantouxSolicitado',
+    'igraMantouxTipo',
+    'igraMantouxFechaSolicitud',
+    'igraMantouxRecibido',
+    'igraMantouxFechaRecepcion',
+    'igraMantouxResultado',
+    'igraMantouxObservaciones',
+    'rxToraxSolicitada',
+    'rxToraxFechaSolicitud',
+    'rxToraxRecibida',
+    'rxToraxFechaRecepcion',
+    'rxToraxCorrecta',
+    'rxToraxObservaciones',
+    'vacunacionRevisada',
+    'vacunacionOK',
+    'medicinaPreventivaRequiereDerivacion',
+    'medicinaPreventivaDerivada',
+    'medicinaPreventivaFechaDerivacion',
+    'vacunasPendientes',
+    'vacunacionObservaciones',
+    'observacionesPrebiologico'
+];
+
+function collectFieldsByIds(ids, reader) {
+    return ids.reduce((acc, id) => {
+        if (document.getElementById(id)) {
+            acc[id] = reader(id);
+        }
+        return acc;
+    }, {});
+}
+
+function collectLesTraceabilityFields() {
+    return {
+        ...collectFieldsByIds(SLEDAI_2K_ITEM_IDS, getChecked),
+        ...collectFieldsByIds(SLICC_DOMAIN_IDS, id => getValue(id))
+    };
+}
+
+function collectSjogrenTraceabilityFields() {
+    return collectFieldsByIds(ESSDAI_DOMAIN_IDS, id => getValue(id));
+}
+
+function collectPrebiologicV2Fields() {
+    return collectFieldsByIds(PREBIOLOGIC_V2_FIELD_IDS, id => getValue(id));
 }
 
 function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId) {
@@ -1160,7 +1362,7 @@ function recopilarDatosFormulario() {
     // MDHAQ (RAPID3)
     const mdhaqData = {};
     ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
-        mdhaqData[id] = document.getElementById(id)?.value || '0';
+        mdhaqData[id] = document.getElementById(id)?.value || '';
     });
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
@@ -1171,6 +1373,13 @@ function recopilarDatosFormulario() {
     const pasiScore = document.getElementById('pasiValue')?.value || '';
     const bsaPercentage = document.getElementById('bsaValue')?.value || '';
     const psoriasisDescripcion = document.getElementById('psoriasisDescripcion')?.value || '';
+    const dapsaResult = document.getElementById('dapsaResult')?.value || '';
+    const dapsaCategoria = document.getElementById('dapsaCategoria')?.textContent || '';
+    const dapsaNAD68 = document.getElementById('dapsaNAD68')?.value || '';
+    const dapsaNAT66 = document.getElementById('dapsaNAT66')?.value || '';
+    const dapsaEvaDolorPaciente = document.getElementById('dapsaEvaDolorPaciente')?.value || '';
+    const dapsaEvaGlobalPaciente = document.getElementById('dapsaEvaGlobalPaciente')?.value || '';
+    const dapsaPCR = document.getElementById('dapsaPCR')?.value || '';
 
     const haqVestirse = document.querySelector('.haq-score[data-category="1"]')?.value || '';
     const haqLevantarse = document.querySelector('.haq-score[data-category="2"]')?.value || '';
@@ -1213,6 +1422,98 @@ function recopilarDatosFormulario() {
     const asasResultado = document.getElementById('resultadoASAS')?.textContent || '';
     const casparPuntuacion = document.getElementById('puntuacionCASPAR')?.textContent || '';
     const casparResultado = document.getElementById('resultadoCASPAR')?.textContent || '';
+
+    // === Campos LES ===
+    const sledaiResult = document.getElementById('sledaiResult')?.value || '';
+    const sledai2kResult = document.getElementById('sledai2kResult')?.value || '';
+    const sliccAcrSdi = document.getElementById('sliccAcrSdi')?.value || '';
+    const dosisPrednisona = document.getElementById('dosisPrednisona')?.value || '';
+    const broteActual = document.getElementById('broteActual')?.value || '';
+    const tipoBrote = document.getElementById('tipoBrote')?.value || '';
+    const actividadGlobalMedico = document.getElementById('actividadGlobalMedico')?.value || '';
+    const actividadGlobalPaciente = document.getElementById('actividadGlobalPaciente')?.value || '';
+    // Manifestaciones LES
+    const lesCutaneo = document.getElementById('lesCutaneo')?.checked ? 'SI' : 'NO';
+    const lesArticular = document.getElementById('lesArticular')?.checked ? 'SI' : 'NO';
+    const lesRenal = document.getElementById('lesRenal')?.checked ? 'SI' : 'NO';
+    const lesNeurologico = document.getElementById('lesNeurologico')?.checked ? 'SI' : 'NO';
+    const lesHematologico = document.getElementById('lesHematologico')?.checked ? 'SI' : 'NO';
+    const lesSeroso = document.getElementById('lesSeroso')?.checked ? 'SI' : 'NO';
+    const lesCardiopulmonar = document.getElementById('lesCardiopulmonar')?.checked ? 'SI' : 'NO';
+    const lesVascular = document.getElementById('lesVascular')?.checked ? 'SI' : 'NO';
+    const lesOcular = document.getElementById('lesOcular')?.checked ? 'SI' : 'NO';
+    const lesOtros = document.getElementById('lesOtros')?.checked ? 'SI' : 'NO';
+    const lesManifestacionesDescripcion = document.getElementById('lesManifestacionesDescripcion')?.value || '';
+    // Inmunología LES
+    const anaLes = document.getElementById('anaLes')?.value || '';
+    const antiDnaLes = document.getElementById('antiDnaLes')?.value || '';
+    const antiSmLes = document.getElementById('antiSmLes')?.value || '';
+    const antiRoLes = document.getElementById('antiRoLes')?.value || '';
+    const antiLaLes = document.getElementById('antiLaLes')?.value || '';
+    const complementoC3 = document.getElementById('complementoC3')?.value || '';
+    const complementoC4 = document.getElementById('complementoC4')?.value || '';
+    const proteinuriaLes = document.getElementById('proteinuriaLes')?.value || '';
+    const sedimentoUrinarioLes = document.getElementById('sedimentoUrinarioLes')?.value || '';
+    const creatininaLes = document.getElementById('creatininaLes')?.value || '';
+    const pcrLes = document.getElementById('pcrLes')?.value || '';
+    const vsgLes = document.getElementById('vsgLes')?.value || '';
+    const hemogramaAlteracionesLes = document.getElementById('hemogramaAlteracionesLes')?.value || '';
+    const otrosHallazgosAnaliticaLes = document.getElementById('otrosHallazgosAnaliticaLes')?.value || '';
+    // PROs LES
+    const evaDolorLes = document.getElementById('evaDolorLes')?.value || '';
+    const evaFatigaLes = document.getElementById('evaFatigaLes')?.value || '';
+    const evaGlobalLes = document.getElementById('evaGlobalLes')?.value || '';
+    const calidadVidaComentarioLes = document.getElementById('calidadVidaComentarioLes')?.value || '';
+
+    // === Campos Sjögren ===
+    const esspriSequedad = document.getElementById('esspriSequedad')?.value || '';
+    const esspriFatiga = document.getElementById('esspriFatiga')?.value || '';
+    const esspriDolor = document.getElementById('esspriDolor')?.value || '';
+    const esspriResult = document.getElementById('esspriResult')?.value || '';
+    const essdaiResult = document.getElementById('essdaiResult')?.value || '';
+    const evaSequedadOral = document.getElementById('evaSequedadOral')?.value || '';
+    const evaSequedadOcular = document.getElementById('evaSequedadOcular')?.value || '';
+    const evaFatigaSjogren = document.getElementById('evaFatigaSjogren')?.value || '';
+    const evaDolorSjogren = document.getElementById('evaDolorSjogren')?.value || '';
+    const evaGlobalSjogren = document.getElementById('evaGlobalSjogren')?.value || '';
+    // Manifestaciones Sjögren
+    const sjogrenOcular = document.getElementById('sjogrenOcular')?.checked ? 'SI' : 'NO';
+    const sjogrenOral = document.getElementById('sjogrenOral')?.checked ? 'SI' : 'NO';
+    const sjogrenGlandular = document.getElementById('sjogrenGlandular')?.checked ? 'SI' : 'NO';
+    const sjogrenArticular = document.getElementById('sjogrenArticular')?.checked ? 'SI' : 'NO';
+    const sjogrenCutaneo = document.getElementById('sjogrenCutaneo')?.checked ? 'SI' : 'NO';
+    const sjogrenPulmonar = document.getElementById('sjogrenPulmonar')?.checked ? 'SI' : 'NO';
+    const sjogrenRenal = document.getElementById('sjogrenRenal')?.checked ? 'SI' : 'NO';
+    const sjogrenNeurologico = document.getElementById('sjogrenNeurologico')?.checked ? 'SI' : 'NO';
+    const sjogrenHematologico = document.getElementById('sjogrenHematologico')?.checked ? 'SI' : 'NO';
+    const sjogrenLinfomaRiesgo = document.getElementById('sjogrenLinfomaRiesgo')?.checked ? 'SI' : 'NO';
+    const sjogrenManifestacionesDescripcion = document.getElementById('sjogrenManifestacionesDescripcion')?.value || '';
+    // Pruebas / Inmunología Sjögren
+    const anaSjogren = document.getElementById('anaSjogren')?.value || '';
+    const frSjogren = document.getElementById('frSjogren')?.value || '';
+    const antiRoSjogren = document.getElementById('antiRoSjogren')?.value || '';
+    const antiLaSjogren = document.getElementById('antiLaSjogren')?.value || '';
+    const complementoC3Sjogren = document.getElementById('complementoC3Sjogren')?.value || '';
+    const complementoC4Sjogren = document.getElementById('complementoC4Sjogren')?.value || '';
+    const crioglobulinasSjogren = document.getElementById('crioglobulinasSjogren')?.value || '';
+    const proteinogramaSjogren = document.getElementById('proteinogramaSjogren')?.value || '';
+    const biopsiaGlandulaSalival = document.getElementById('biopsiaGlandulaSalival')?.value || '';
+    const testSchirmer = document.getElementById('testSchirmer')?.value || '';
+    const tincionOcular = document.getElementById('tincionOcular')?.value || '';
+    const flujoSalival = document.getElementById('flujoSalival')?.value || '';
+    const ecografiaGlandular = document.getElementById('ecografiaGlandular')?.value || '';
+    const pcrSjogren = document.getElementById('pcrSjogren')?.value || '';
+    const vsgSjogren = document.getElementById('vsgSjogren')?.value || '';
+    const otrosHallazgosAnaliticaSjogren = document.getElementById('otrosHallazgosAnaliticaSjogren')?.value || '';
+    // Tratamiento Sjögren
+    const tratSintomaticoSequedad = document.getElementById('tratSintomaticoSequedad')?.value || '';
+    const tratSintomaticoSequedadDosis = document.getElementById('tratSintomaticoSequedadDosis')?.value || '';
+    const tratInmunomodulador = document.getElementById('tratInmunomodulador')?.value || '';
+    const tratInmunomoduladorDosis = document.getElementById('tratInmunomoduladorDosis')?.value || '';
+    const lesTraceabilityFields = collectLesTraceabilityFields();
+    const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
+    const prebiologicV2Fields = collectPrebiologicV2Fields();
+
     const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
 
     const datosCompletos = {
@@ -1244,12 +1545,40 @@ function recopilarDatosFormulario() {
         haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
         leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
         mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        dapsaResult, dapsaCategoria, dapsaNAD68, dapsaNAT66,
+        dapsaEvaDolorPaciente, dapsaEvaGlobalPaciente, dapsaPCR,
         planSistemicosEntries, planFamesEntries, planBiologicosEntries,
         previoSistemicosEntries, previoFamesEntries, previoBiologicosEntries,
         psoriasisSistemicosEntries,
         maniobrasSacroiliacas, comentariosSacroiliacas,
         asasLumbalgia3Meses, asasCriteriosCumplidos, asasResultado,
         casparPuntuacion, casparResultado,
+        // LES
+        sledaiResult, sledai2kResult, sliccAcrSdi, dosisPrednisona, broteActual, tipoBrote,
+        actividadGlobalMedico, actividadGlobalPaciente,
+        lesCutaneo, lesArticular, lesRenal, lesNeurologico, lesHematologico, lesSeroso,
+        lesCardiopulmonar, lesVascular, lesOcular, lesOtros, lesManifestacionesDescripcion,
+        anaLes, antiDnaLes, antiSmLes, antiRoLes, antiLaLes,
+        complementoC3, complementoC4, proteinuriaLes, sedimentoUrinarioLes,
+        creatininaLes, pcrLes, vsgLes, hemogramaAlteracionesLes, otrosHallazgosAnaliticaLes,
+        evaDolorLes, evaFatigaLes, evaGlobalLes, calidadVidaComentarioLes,
+        // Sjögren
+        esspriSequedad, esspriFatiga, esspriDolor, esspriResult,
+        essdaiResult,
+        evaSequedadOral, evaSequedadOcular, evaFatigaSjogren, evaDolorSjogren, evaGlobalSjogren,
+        sjogrenOcular, sjogrenOral, sjogrenGlandular, sjogrenArticular, sjogrenCutaneo,
+        sjogrenPulmonar, sjogrenRenal, sjogrenNeurologico, sjogrenHematologico, sjogrenLinfomaRiesgo,
+        sjogrenManifestacionesDescripcion,
+        anaSjogren, frSjogren, antiRoSjogren, antiLaSjogren,
+        complementoC3Sjogren, complementoC4Sjogren,
+        crioglobulinasSjogren, proteinogramaSjogren,
+        biopsiaGlandulaSalival, testSchirmer, tincionOcular, flujoSalival, ecografiaGlandular,
+        pcrSjogren, vsgSjogren, otrosHallazgosAnaliticaSjogren,
+        tratSintomaticoSequedad, tratSintomaticoSequedadDosis,
+        tratInmunomodulador, tratInmunomoduladorDosis,
+        ...lesTraceabilityFields,
+        ...sjogrenTraceabilityFields,
+        ...prebiologicV2Fields,
         comentariosAdicionales
     };
 
@@ -1289,7 +1618,7 @@ function prefillSeguimientoForm(visitData) {
         return;
     }
 
-    console.log('🔄 Pre-llenando formulario de seguimiento con datos:', visitData);
+    debugLog('🔄 Pre-llenando formulario de seguimiento con datos:', visitData);
 
     // 1. IDENTIFICACIÓN DEL PACIENTE (campos readonly)
     if (visitData.idPaciente) {
@@ -1388,7 +1717,7 @@ function prefillSeguimientoForm(visitData) {
         if (sexoInput) sexoInput.value = normalizeSexoPacienteValue(visitData.sexoPaciente);
     }
 
-    console.log('? Formulario de seguimiento pre-llenado correctamente');
+    debugLog('? Formulario de seguimiento pre-llenado correctamente');
 }
 
 /**
@@ -1448,7 +1777,7 @@ function populateSelectFromDatabase(selectId, tipo, includeNo = true) {
         }
     });
 
-    console.log(`✓ Select #${selectId} poblado con ${farmacos.length} opciones de tipo "${tipo}"`);
+    debugLog(`✓ Select #${selectId} poblado con ${farmacos.length} opciones de tipo "${tipo}"`);
 }
 
 function recopilarDatosFormularioSeguimiento() {
@@ -1575,15 +1904,107 @@ function recopilarDatosFormularioSeguimiento() {
 
     const mdhaqData = {};
     ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'].forEach(id => {
-        mdhaqData[id] = getValue(id) || '0';
+        mdhaqData[id] = getValue(id) || '';
     });
     const rapid3Total = document.getElementById('rapid3Total')?.textContent || '';
     const rapid3Categoria = document.getElementById('rapid3Categoria')?.textContent || '';
+    const dapsaResult = getValue('dapsaResult');
+    const dapsaCategoria = document.getElementById('dapsaCategoria')?.textContent || '';
+    const dapsaNAD68 = getValue('dapsaNAD68');
+    const dapsaNAT66 = getValue('dapsaNAT66');
+    const dapsaEvaDolorPaciente = getValue('dapsaEvaDolorPaciente');
+    const dapsaEvaGlobalPaciente = getValue('dapsaEvaGlobalPaciente');
+    const dapsaPCR = getValue('dapsaPCR');
 
     let decisionTerapeutica = 'continuar';
     if (document.getElementById('btnCambiarTratamiento')?.classList.contains('active')) {
         decisionTerapeutica = 'cambiar';
     }
+
+    // === Campos LES ===
+    const sledaiResult = getValue('sledaiResult');
+    const sledai2kResult = getValue('sledai2kResult');
+    const sliccAcrSdi = getValue('sliccAcrSdi');
+    const dosisPrednisona = getValue('dosisPrednisona');
+    const broteActual = getValue('broteActual');
+    const tipoBrote = getValue('tipoBrote');
+    const actividadGlobalMedico = getValue('actividadGlobalMedico');
+    const actividadGlobalPaciente = getValue('actividadGlobalPaciente');
+    const lesCutaneo = isChecked('lesCutaneo') ? 'SI' : 'NO';
+    const lesArticular = isChecked('lesArticular') ? 'SI' : 'NO';
+    const lesRenal = isChecked('lesRenal') ? 'SI' : 'NO';
+    const lesNeurologico = isChecked('lesNeurologico') ? 'SI' : 'NO';
+    const lesHematologico = isChecked('lesHematologico') ? 'SI' : 'NO';
+    const lesSeroso = isChecked('lesSeroso') ? 'SI' : 'NO';
+    const lesCardiopulmonar = isChecked('lesCardiopulmonar') ? 'SI' : 'NO';
+    const lesVascular = isChecked('lesVascular') ? 'SI' : 'NO';
+    const lesOcular = isChecked('lesOcular') ? 'SI' : 'NO';
+    const lesOtros = isChecked('lesOtros') ? 'SI' : 'NO';
+    const lesManifestacionesDescripcion = getValue('lesManifestacionesDescripcion');
+    const anaLes = getValue('anaLes');
+    const antiDnaLes = getValue('antiDnaLes');
+    const antiSmLes = getValue('antiSmLes');
+    const antiRoLes = getValue('antiRoLes');
+    const antiLaLes = getValue('antiLaLes');
+    const complementoC3 = getValue('complementoC3');
+    const complementoC4 = getValue('complementoC4');
+    const proteinuriaLes = getValue('proteinuriaLes');
+    const sedimentoUrinarioLes = getValue('sedimentoUrinarioLes');
+    const creatininaLes = getValue('creatininaLes');
+    const pcrLes = getValue('pcrLes');
+    const vsgLes = getValue('vsgLes');
+    const hemogramaAlteracionesLes = getValue('hemogramaAlteracionesLes');
+    const otrosHallazgosAnaliticaLes = getValue('otrosHallazgosAnaliticaLes');
+    const evaDolorLes = getValue('evaDolorLes');
+    const evaFatigaLes = getValue('evaFatigaLes');
+    const evaGlobalLes = getValue('evaGlobalLes');
+    const calidadVidaComentarioLes = getValue('calidadVidaComentarioLes');
+
+    // === Campos Sjögren ===
+    const esspriSequedad = getValue('esspriSequedad');
+    const esspriFatiga = getValue('esspriFatiga');
+    const esspriDolor = getValue('esspriDolor');
+    const esspriResult = getValue('esspriResult');
+    const essdaiResult = getValue('essdaiResult');
+    const evaSequedadOral = getValue('evaSequedadOral');
+    const evaSequedadOcular = getValue('evaSequedadOcular');
+    const evaFatigaSjogren = getValue('evaFatigaSjogren');
+    const evaDolorSjogren = getValue('evaDolorSjogren');
+    const evaGlobalSjogren = getValue('evaGlobalSjogren');
+    const sjogrenOcular = isChecked('sjogrenOcular') ? 'SI' : 'NO';
+    const sjogrenOral = isChecked('sjogrenOral') ? 'SI' : 'NO';
+    const sjogrenGlandular = isChecked('sjogrenGlandular') ? 'SI' : 'NO';
+    const sjogrenArticular = isChecked('sjogrenArticular') ? 'SI' : 'NO';
+    const sjogrenCutaneo = isChecked('sjogrenCutaneo') ? 'SI' : 'NO';
+    const sjogrenPulmonar = isChecked('sjogrenPulmonar') ? 'SI' : 'NO';
+    const sjogrenRenal = isChecked('sjogrenRenal') ? 'SI' : 'NO';
+    const sjogrenNeurologico = isChecked('sjogrenNeurologico') ? 'SI' : 'NO';
+    const sjogrenHematologico = isChecked('sjogrenHematologico') ? 'SI' : 'NO';
+    const sjogrenLinfomaRiesgo = isChecked('sjogrenLinfomaRiesgo') ? 'SI' : 'NO';
+    const sjogrenManifestacionesDescripcion = getValue('sjogrenManifestacionesDescripcion');
+    const anaSjogren = getValue('anaSjogren');
+    const frSjogren = getValue('frSjogren');
+    const antiRoSjogren = getValue('antiRoSjogren');
+    const antiLaSjogren = getValue('antiLaSjogren');
+    const complementoC3Sjogren = getValue('complementoC3Sjogren');
+    const complementoC4Sjogren = getValue('complementoC4Sjogren');
+    const crioglobulinasSjogren = getValue('crioglobulinasSjogren');
+    const proteinogramaSjogren = getValue('proteinogramaSjogren');
+    const biopsiaGlandulaSalival = getValue('biopsiaGlandulaSalival');
+    const testSchirmer = getValue('testSchirmer');
+    const tincionOcular = getValue('tincionOcular');
+    const flujoSalival = getValue('flujoSalival');
+    const ecografiaGlandular = getValue('ecografiaGlandular');
+    const pcrSjogren = getValue('pcrSjogren');
+    const vsgSjogren = getValue('vsgSjogren');
+    const otrosHallazgosAnaliticaSjogren = getValue('otrosHallazgosAnaliticaSjogren');
+    const tratSintomaticoSequedad = getValue('tratSintomaticoSequedad');
+    const tratSintomaticoSequedadDosis = getValue('tratSintomaticoSequedadDosis');
+    const tratInmunomodulador = getValue('tratInmunomodulador');
+    const tratInmunomoduladorDosis = getValue('tratInmunomoduladorDosis');
+    const lesTraceabilityFields = collectLesTraceabilityFields();
+    const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
+    const prebiologicV2Fields = collectPrebiologicV2Fields();
 
     const tratamientoData = {
         continuar: {
@@ -1613,6 +2034,8 @@ function recopilarDatosFormularioSeguimiento() {
         haqVestirse, haqLevantarse, haqComer, haqCaminar, haqHigiene, haqAlcanzar, haqAgarrar, haqActividades, haqTotal,
         leiEpicondiloLatIzq, leiEpicondiloLatDer, leiEpicondiloMedIzq, leiEpicondiloMedDer, leiAquilesIzq, leiAquilesDer, leiScore,
         mdaNAT, mdaNAD, mdaPASI, mdaDolor, mdaGlobal, mdaHAQ, mdaEntesitis, mdaCumple,
+        dapsaResult, dapsaCategoria, dapsaNAD68, dapsaNAT66,
+        dapsaEvaDolorPaciente, dapsaEvaGlobalPaciente, dapsaPCR,
         das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
         rigidezMatutinaAR, nodulosReumatoideos, nodulosLocalizacionTexto,
         erosionesRadiologicas, erosionesDescripcionTexto,
@@ -1621,6 +2044,32 @@ function recopilarDatosFormularioSeguimiento() {
         sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
         cambioSistemicosEntries, cambioFamesEntries, cambioBiologicosEntries,
         tratamientoData, decisionTerapeutica,
+        // LES
+        sledaiResult, sledai2kResult, sliccAcrSdi, dosisPrednisona, broteActual, tipoBrote,
+        actividadGlobalMedico, actividadGlobalPaciente,
+        lesCutaneo, lesArticular, lesRenal, lesNeurologico, lesHematologico, lesSeroso,
+        lesCardiopulmonar, lesVascular, lesOcular, lesOtros, lesManifestacionesDescripcion,
+        anaLes, antiDnaLes, antiSmLes, antiRoLes, antiLaLes,
+        complementoC3, complementoC4, proteinuriaLes, sedimentoUrinarioLes,
+        creatininaLes, pcrLes, vsgLes, hemogramaAlteracionesLes, otrosHallazgosAnaliticaLes,
+        evaDolorLes, evaFatigaLes, evaGlobalLes, calidadVidaComentarioLes,
+        // Sjögren
+        esspriSequedad, esspriFatiga, esspriDolor, esspriResult,
+        essdaiResult,
+        evaSequedadOral, evaSequedadOcular, evaFatigaSjogren, evaDolorSjogren, evaGlobalSjogren,
+        sjogrenOcular, sjogrenOral, sjogrenGlandular, sjogrenArticular, sjogrenCutaneo,
+        sjogrenPulmonar, sjogrenRenal, sjogrenNeurologico, sjogrenHematologico, sjogrenLinfomaRiesgo,
+        sjogrenManifestacionesDescripcion,
+        anaSjogren, frSjogren, antiRoSjogren, antiLaSjogren,
+        complementoC3Sjogren, complementoC4Sjogren,
+        crioglobulinasSjogren, proteinogramaSjogren,
+        biopsiaGlandulaSalival, testSchirmer, tincionOcular, flujoSalival, ecografiaGlandular,
+        pcrSjogren, vsgSjogren, otrosHallazgosAnaliticaSjogren,
+        tratSintomaticoSequedad, tratSintomaticoSequedadDosis,
+        tratInmunomodulador, tratInmunomoduladorDosis,
+        ...lesTraceabilityFields,
+        ...sjogrenTraceabilityFields,
+        ...prebiologicV2Fields,
         fechaProximaRevision, comentariosAdicionales
     };
 }
@@ -1644,7 +2093,76 @@ function recopilarDatosFormularioSeguimiento() {
  * 7. RAPID3 (auto desde HAQ + EVA)
  */
 function initScoreWiring() {
-    console.log('🔧 Inicializando wiring de scores...');
+    debugLog('🔧 Inicializando wiring de scores...');
+
+    function getFormValue(id) {
+        var el = document.getElementById(id);
+        return el ? el.value : '';
+    }
+
+    function parseStrictNumber(value) {
+        if (value === undefined || value === null || value === '') return null;
+        var raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+        var parsed = Number(raw);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function applyScoreCategory(value, scoreType, fieldEl, categoryEl) {
+        var parsed = parseStrictNumber(value);
+        var cat = HubTools.scores.categorizeScore(parsed, scoreType);
+        if (fieldEl) {
+            fieldEl.style.backgroundColor = cat.backgroundColor;
+            fieldEl.style.color = cat.color;
+            fieldEl.title = cat.label;
+        }
+        if (categoryEl) {
+            categoryEl.textContent = cat.label;
+            categoryEl.style.color = cat.color;
+            categoryEl.style.fontWeight = '700';
+        }
+        return cat;
+    }
+
+    function syncDapsaSourceFields() {
+        var mappings = [
+            ['dapsaNAD68', 'asdasNAD'],
+            ['dapsaNAT66', 'asdasNAT'],
+            ['dapsaEvaDolorPaciente', 'evaDolor'],
+            ['dapsaEvaGlobalPaciente', 'evaGlobal'],
+            ['dapsaPCR', 'pcrValue']
+        ];
+        mappings.forEach(function(pair) {
+            var target = document.getElementById(pair[0]);
+            if (target) target.value = getFormValue(pair[1]);
+        });
+    }
+
+    function recalcularDAPSA() {
+        if (typeof HubTools.scores.calcularDAPSA !== 'function') return;
+        syncDapsaSourceFields();
+
+        var datos = {
+            dapsaNAD68: getFormValue('dapsaNAD68'),
+            dapsaNAT66: getFormValue('dapsaNAT66'),
+            dapsaEvaDolorPaciente: getFormValue('dapsaEvaDolorPaciente'),
+            dapsaEvaGlobalPaciente: getFormValue('dapsaEvaGlobalPaciente'),
+            dapsaPCR: getFormValue('dapsaPCR')
+        };
+        var result = HubTools.scores.calcularDAPSA(datos);
+        var dapsaField = document.getElementById('dapsaResult');
+        var dapsaCatEl = document.getElementById('dapsaCategoria');
+
+        if (dapsaField) {
+            dapsaField.value = result.total;
+            applyScoreCategory(result.total, 'dapsa', dapsaField, dapsaCatEl);
+        }
+        if (dapsaCatEl && result.categoria === 'Incompleto') {
+            dapsaCatEl.textContent = 'Incompleto';
+            dapsaCatEl.style.color = '#6c757d';
+            dapsaCatEl.style.fontWeight = '700';
+        }
+        debugLog('  📊 DAPSA recalculado:', result.total || 'Incompleto');
+    }
 
     // --- 1. SYNC PCR / VSG → ASDAS readonly ---
     const pcrInput = document.getElementById('pcrValue');
@@ -1656,16 +2174,17 @@ function initScoreWiring() {
         pcrInput.addEventListener('input', function () {
             asdasPCRField.value = this.value;
             recalcularASDAS();
+            recalcularDAPSA();
             recalcularMDA();
         });
-        console.log('  ✓ PCR → asdasPCR sync');
+        debugLog('  ✓ PCR → asdasPCR sync');
     }
     if (vsgInput && asdasVSGField) {
         vsgInput.addEventListener('input', function () {
             asdasVSGField.value = this.value;
             recalcularASDAS();
         });
-        console.log('  ✓ VSG → asdasVSG sync');
+        debugLog('  ✓ VSG → asdasVSG sync');
     }
 
     // --- 2. AUTO-CÁLCULO BASDAI ---
@@ -1683,24 +2202,15 @@ function initScoreWiring() {
         if (!basdaiResult || typeof HubTools.scores.calcularBASDAI !== 'function') return;
         var datos = {};
         basdaiFields.forEach(function (id) {
-            datos[id] = document.getElementById(id)?.value || '0';
+            datos[id] = getFormValue(id);
         });
         var resultado = HubTools.scores.calcularBASDAI(datos);
         basdaiResult.value = resultado;
-        // Categorizar
-        var cat = HubTools.scores.categorizeScore(parseFloat(resultado), 'basdai');
-        basdaiResult.style.backgroundColor = cat.backgroundColor;
-        basdaiResult.style.color = cat.color;
-        basdaiResult.title = cat.label;
         var basdaiCatEl = document.getElementById('basdaiCategoria');
-        if (basdaiCatEl) {
-            basdaiCatEl.textContent = cat.label;
-            basdaiCatEl.style.color = cat.color;
-            basdaiCatEl.style.fontWeight = '700';
-        }
-        console.log('  📊 BASDAI recalculado:', resultado, cat.label);
+        var cat = applyScoreCategory(resultado, 'basdai', basdaiResult, basdaiCatEl);
+        debugLog('  📊 BASDAI recalculado:', resultado, cat.label);
     }
-    if (basdaiResult) console.log('  ✓ BASDAI wiring');
+    if (basdaiResult) debugLog('  ✓ BASDAI wiring');
 
     // --- 3. AUTO-CÁLCULO ASDAS ---
     var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasEvaGlobal', 'asdasNAD'];
@@ -1715,12 +2225,12 @@ function initScoreWiring() {
     function recalcularASDAS() {
         if (typeof HubTools.scores.calcularASDAS !== 'function') return;
         var datos = {
-            asdasDolorEspalda: document.getElementById('asdasDolorEspalda')?.value || '0',
-            asdasDuracionRigidez: document.getElementById('asdasDuracionRigidez')?.value || '0',
-            asdasEvaGlobal: document.getElementById('asdasEvaGlobal')?.value || '0',
-            asdasNAD: document.getElementById('asdasNAD')?.value || '0',
-            asdasPCR: document.getElementById('asdasPCR')?.value || '0',
-            asdasVSG: document.getElementById('asdasVSG')?.value || '0'
+            asdasDolorEspalda: getFormValue('asdasDolorEspalda'),
+            asdasDuracionRigidez: getFormValue('asdasDuracionRigidez'),
+            asdasEvaGlobal: getFormValue('asdasEvaGlobal'),
+            asdasNAD: getFormValue('asdasNAD'),
+            asdasPCR: getFormValue('asdasPCR'),
+            asdasVSG: getFormValue('asdasVSG')
         };
         var result = HubTools.scores.calcularASDAS(datos);
 
@@ -1729,36 +2239,19 @@ function initScoreWiring() {
 
         if (crpField) {
             crpField.value = result.asdasCRP;
-            var catCRP = HubTools.scores.categorizeScore(parseFloat(result.asdasCRP), 'asdas');
-            crpField.style.backgroundColor = catCRP.backgroundColor;
-            crpField.style.color = catCRP.color;
-            crpField.title = catCRP.label;
-            var crpCatEl = document.getElementById('asdasCrpCategoria');
-            if (crpCatEl) {
-                crpCatEl.textContent = catCRP.label;
-                crpCatEl.style.color = catCRP.color;
-                crpCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.asdasCRP, 'asdas', crpField, document.getElementById('asdasCrpCategoria'));
         }
         if (esrField) {
             esrField.value = result.asdasESR;
-            var catESR = HubTools.scores.categorizeScore(parseFloat(result.asdasESR), 'asdas');
-            esrField.style.backgroundColor = catESR.backgroundColor;
-            esrField.style.color = catESR.color;
-            esrField.title = catESR.label;
-            var esrCatEl = document.getElementById('asdasEsrCategoria');
-            if (esrCatEl) {
-                esrCatEl.textContent = catESR.label;
-                esrCatEl.style.color = catESR.color;
-                esrCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.asdasESR, 'asdas', esrField, document.getElementById('asdasEsrCategoria'));
         }
-        console.log('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
+        debugLog('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
+        recalcularDAPSA();
     }
 
     // Exponer para homunculus.js
     window.calcularASDASLocal = recalcularASDAS;
-    console.log('  ✓ ASDAS wiring + calcularASDASLocal');
+    debugLog('  ✓ ASDAS wiring + calcularASDASLocal');
 
     // --- 4. AUTO-CÁLCULO HAQ-DI ---
     var haqScoreSelects = document.querySelectorAll('.haq-score');
@@ -1771,13 +2264,13 @@ function initScoreWiring() {
         for (var i = 1; i <= 8; i++) {
             var sel = document.querySelector('.haq-score[data-category="' + i + '"]');
             var aid = document.querySelector('.haq-aid[data-category="' + i + '"]');
-            datos['haqCategoria' + i] = sel ? sel.value : '0';
+            datos['haqCategoria' + i] = sel ? sel.value : '';
             datos['haqAyuda' + i] = aid ? aid.checked : false;
         }
         var haqValue = HubTools.scores.calcularHAQ(datos);
-        haqTotalEl.textContent = haqValue.toFixed(2);
-        // Categorizar
-        var cat = HubTools.scores.categorizeScore(haqValue, 'haq');
+        var haqNumber = parseStrictNumber(haqValue);
+        haqTotalEl.textContent = haqNumber === null ? '' : haqNumber.toFixed(2);
+        var cat = HubTools.scores.categorizeScore(haqNumber, 'haq');
         haqTotalEl.style.color = cat.color;
         var haqCatEl = document.getElementById('haqCategoria');
         if (haqCatEl) {
@@ -1789,7 +2282,7 @@ function initScoreWiring() {
         // Cascada: HAQ afecta RAPID3 y MDA
         recalcularRAPID3();
         recalcularMDA();
-        console.log('  📊 HAQ-DI recalculado:', haqValue.toFixed(2), cat.label);
+        debugLog('  📊 HAQ-DI recalculado:', haqTotalEl.textContent, cat.label);
     }
 
     haqScoreSelects.forEach(function (sel) {
@@ -1798,7 +2291,7 @@ function initScoreWiring() {
     haqAidCheckboxes.forEach(function (cb) {
         cb.addEventListener('change', recalcularHAQ);
     });
-    if (haqTotalEl) console.log('  ✓ HAQ-DI wiring');
+    if (haqTotalEl) debugLog('  ✓ HAQ-DI wiring');
 
     // --- 5. AUTO-CÁLCULO LEI ---
     var leiCheckboxes = document.querySelectorAll('.lei-point');
@@ -1812,13 +2305,14 @@ function initScoreWiring() {
         if (leiTotalEl) leiTotalEl.textContent = count;
         // Cascada: LEI afecta MDA
         recalcularMDA();
+        recalcularDAPSA();
         return count;
     }
 
     leiCheckboxes.forEach(function (cb) {
         cb.addEventListener('change', recalcularLEI);
     });
-    if (leiCheckboxes.length > 0) console.log('  ✓ LEI wiring');
+    if (leiCheckboxes.length > 0) debugLog('  ✓ LEI wiring');
 
     // --- 6. EVA inputs → cascada a MDA y RAPID3 ---
     var evaGlobalInput = document.getElementById('evaGlobal');
@@ -1828,33 +2322,36 @@ function initScoreWiring() {
         evaGlobalInput.addEventListener('input', function () {
             recalcularMDA();
             recalcularRAPID3();
+            recalcularDAPSA();
         });
     }
     if (evaDolorInput) {
         evaDolorInput.addEventListener('input', function () {
             recalcularMDA();
             recalcularRAPID3();
+            recalcularDAPSA();
         });
     }
-    if (evaGlobalInput || evaDolorInput) console.log('  ✓ EVA → MDA/RAPID3 wiring');
+    if (evaGlobalInput || evaDolorInput) debugLog('  ✓ EVA → MDA/RAPID3 wiring');
 
     // --- 7. AUTO-CÁLCULO MDA ---
     function recalcularMDA() {
         if (typeof HubTools.scores.calcularMDA !== 'function') return;
 
-        var haqVal = parseFloat(document.getElementById('haqTotal')?.textContent) || 0;
+        var haqVal = parseStrictNumber(document.getElementById('haqTotal')?.textContent);
         var leiCheckboxesNow = document.querySelectorAll('.lei-point:checked');
-        var leiVal = leiCheckboxesNow.length;
+        var hasLeiInputs = document.querySelectorAll('.lei-point').length > 0;
+        var leiVal = hasLeiInputs ? leiCheckboxesNow.length : '';
 
         var datos = {
-            nat: parseInt(document.getElementById('asdasNAT')?.value) || 0,
-            nad: parseInt(document.getElementById('asdasNAD')?.value) || 0,
-            pasiValue: document.getElementById('pasiValue')?.value || '0',
-            bsaValue: document.getElementById('bsaValue')?.value || '0',
+            nat: getFormValue('asdasNAT'),
+            nad: getFormValue('asdasNAD'),
+            pasiValue: getFormValue('pasiValue'),
+            bsaValue: getFormValue('bsaValue'),
             lei: leiVal,
-            evaDolor: document.getElementById('evaDolor')?.value || '0',
-            evaGlobal: document.getElementById('evaGlobal')?.value || '0',
-            haq: haqVal
+            evaDolor: getFormValue('evaDolor'),
+            evaGlobal: getFormValue('evaGlobal'),
+            haq: haqVal === null ? '' : haqVal
         };
 
         var result = HubTools.scores.calcularMDA(datos);
@@ -1893,7 +2390,11 @@ function initScoreWiring() {
         }
 
         if (mdaResultEl) {
-            if (result.mdaAlcanzado) {
+            if (!result.evaluable) {
+                mdaResultEl.textContent = 'MDA INCOMPLETO';
+                mdaResultEl.style.color = '#6c757d';
+                mdaResultEl.style.fontWeight = 'normal';
+            } else if (result.mdaAlcanzado) {
                 mdaResultEl.textContent = 'MDA ALCANZADO ✓';
                 mdaResultEl.style.color = '#28a745';
                 mdaResultEl.style.fontWeight = 'bold';
@@ -1907,7 +2408,10 @@ function initScoreWiring() {
 
     // Exponer para homunculus.js
     window.calcularMDALocal = recalcularMDA;
-    console.log('  ✓ MDA wiring + calcularMDALocal');
+    debugLog('  ✓ MDA wiring + calcularMDALocal');
+
+    window.calcularDAPSALocal = recalcularDAPSA;
+    debugLog('  ✓ DAPSA wiring + calcularDAPSALocal');
 
     // --- 8. AUTO-CÁLCULO RAPID3 (MDHAQ 10 preguntas) ---
     function recalcularRAPID3() {
@@ -1915,16 +2419,30 @@ function initScoreWiring() {
 
         // Suma de las 10 preguntas MDHAQ (a-j)
         const mdhaqIds = ['mdhaqA', 'mdhaqB', 'mdhaqC', 'mdhaqD', 'mdhaqE', 'mdhaqF', 'mdhaqG', 'mdhaqH', 'mdhaqI', 'mdhaqJ'];
-        let fnRaw = 0;
+        var mdhaqValues = [];
         mdhaqIds.forEach(function (id) {
             var el = document.getElementById(id);
-            if (el) fnRaw += parseInt(el.value) || 0;
+            if (el) mdhaqValues.push(el.value);
         });
+        var fnRaw = '';
+        if (mdhaqValues.length === mdhaqIds.length && mdhaqValues.every(function(value) { return value !== ''; })) {
+            var fnSum = 0;
+            var allValid = true;
+            mdhaqValues.forEach(function(value) {
+                var parsed = parseStrictNumber(value);
+                if (parsed === null || !Number.isInteger(parsed)) {
+                    allValid = false;
+                } else {
+                    fnSum += parsed;
+                }
+            });
+            if (allValid) fnRaw = fnSum;
+        }
 
         var datos = {
             fnRaw: fnRaw,
-            evaDolor: document.getElementById('evaDolor')?.value || '0',
-            evaGlobal: document.getElementById('evaGlobal')?.value || '0'
+            evaDolor: getFormValue('evaDolor'),
+            evaGlobal: getFormValue('evaGlobal')
         };
 
         var result = HubTools.scores.calcularRAPID3(datos);
@@ -1945,7 +2463,7 @@ function initScoreWiring() {
         if (catEl) catEl.textContent = result.categoria;
 
         // Colorear según categoría
-        var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'rapid3');
+        var cat = HubTools.scores.categorizeScore(parseStrictNumber(result.total), 'rapid3');
         if (totalEl) totalEl.style.color = cat.color;
         if (catEl) { catEl.style.color = cat.color; catEl.style.fontWeight = 'bold'; }
     }
@@ -1956,18 +2474,18 @@ function initScoreWiring() {
         if (el) el.addEventListener('change', recalcularRAPID3);
     });
 
-    console.log('  ✓ RAPID3 wiring (MDHAQ)');
+    debugLog('  ✓ RAPID3 wiring (MDHAQ)');
 
     // --- 9. AUTO-CÁLCULO DAS28 (AR) ---
     function recalcularDAS28() {
         if (typeof HubTools.scores.calcularDAS28 !== 'function') return;
 
         var datos = {
-            nad28: document.getElementById('das28NAD')?.value || '0',
-            nat28: document.getElementById('das28NAT')?.value || '0',
-            pcr: document.getElementById('das28PCR')?.value || '0',
-            vsg: document.getElementById('das28VSG')?.value || '0',
-            evaGlobal: document.getElementById('das28EVA')?.value || '0'
+            nad28: getFormValue('das28NAD'),
+            nat28: getFormValue('das28NAT'),
+            pcr: getFormValue('das28PCR'),
+            vsg: getFormValue('das28VSG'),
+            evaGlobal: getFormValue('das28EVA')
         };
         var result = HubTools.scores.calcularDAS28(datos);
 
@@ -1978,38 +2496,22 @@ function initScoreWiring() {
 
         if (crpField) {
             crpField.value = result.das28CRP;
-            var catCRP = HubTools.scores.categorizeScore(parseFloat(result.das28CRP), 'das28');
-            crpField.style.backgroundColor = catCRP.backgroundColor;
-            crpField.style.color = catCRP.color;
-            crpField.title = catCRP.label;
-            if (crpCatEl) {
-                crpCatEl.textContent = catCRP.label;
-                crpCatEl.style.color = catCRP.color;
-                crpCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.das28CRP, 'das28', crpField, crpCatEl);
         }
         if (esrField) {
             esrField.value = result.das28ESR;
-            var catESR = HubTools.scores.categorizeScore(parseFloat(result.das28ESR), 'das28');
-            esrField.style.backgroundColor = catESR.backgroundColor;
-            esrField.style.color = catESR.color;
-            esrField.title = catESR.label;
-            if (esrCatEl) {
-                esrCatEl.textContent = catESR.label;
-                esrCatEl.style.color = catESR.color;
-                esrCatEl.style.fontWeight = '700';
-            }
+            applyScoreCategory(result.das28ESR, 'das28', esrField, esrCatEl);
         }
         // También recalcular CDAI y SDAI ya que comparten NAD28/NAT28
         recalcularCDAI();
         recalcularSDAI();
 
-        console.log('  📊 DAS28 recalculado: CRP=' + result.das28CRP + ', ESR=' + result.das28ESR);
+        debugLog('  📊 DAS28 recalculado: CRP=' + result.das28CRP + ', ESR=' + result.das28ESR);
     }
 
     // Exponer para homunculus.js
     window.calcularDAS28Local = recalcularDAS28;
-    console.log('  ✓ DAS28 wiring + calcularDAS28Local');
+    debugLog('  ✓ DAS28 wiring + calcularDAS28Local');
 
     // --- 10. AUTO-CÁLCULO CDAI (AR) ---
     var evaMedicoInput = document.getElementById('evaMedico');
@@ -2023,56 +2525,42 @@ function initScoreWiring() {
     function recalcularCDAI() {
         if (typeof HubTools.scores.calcularCDAI !== 'function') return;
         var datos = {
-            nad28: document.getElementById('das28NAD')?.value || '0',
-            nat28: document.getElementById('das28NAT')?.value || '0',
-            evaPaciente: document.getElementById('evaGlobal')?.value || '0',
-            evaMedico: document.getElementById('evaMedico')?.value || '0'
+            nad28: getFormValue('das28NAD'),
+            nat28: getFormValue('das28NAT'),
+            evaPaciente: getFormValue('evaGlobal'),
+            evaMedico: getFormValue('evaMedico')
         };
         var result = HubTools.scores.calcularCDAI(datos);
         var cdaiField = document.getElementById('cdaiResult');
         var cdaiCatEl = document.getElementById('cdaiCategoria');
 
         if (cdaiField) {
-            cdaiField.value = result.total + ' - ' + result.categoria;
-            var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'cdai');
-            cdaiField.style.backgroundColor = cat.backgroundColor;
-            cdaiField.style.color = cat.color;
-            if (cdaiCatEl) {
-                cdaiCatEl.textContent = cat.label;
-                cdaiCatEl.style.color = cat.color;
-                cdaiCatEl.style.fontWeight = '700';
-            }
+            cdaiField.value = result.total ? result.total + ' - ' + result.categoria : result.categoria;
+            applyScoreCategory(result.total, 'cdai', cdaiField, cdaiCatEl);
         }
     }
-    console.log('  ✓ CDAI wiring');
+    debugLog('  ✓ CDAI wiring');
 
     // --- 11. AUTO-CÁLCULO SDAI (AR) ---
     function recalcularSDAI() {
         if (typeof HubTools.scores.calcularSDAI !== 'function') return;
         var datos = {
-            nad28: document.getElementById('das28NAD')?.value || '0',
-            nat28: document.getElementById('das28NAT')?.value || '0',
-            evaPaciente: document.getElementById('evaGlobal')?.value || '0',
-            evaMedico: document.getElementById('evaMedico')?.value || '0',
-            pcr: document.getElementById('das28PCR')?.value || '0'
+            nad28: getFormValue('das28NAD'),
+            nat28: getFormValue('das28NAT'),
+            evaPaciente: getFormValue('evaGlobal'),
+            evaMedico: getFormValue('evaMedico'),
+            pcr: getFormValue('das28PCR')
         };
         var result = HubTools.scores.calcularSDAI(datos);
         var sdaiField = document.getElementById('sdaiResult');
         var sdaiCatEl = document.getElementById('sdaiCategoria');
 
         if (sdaiField) {
-            sdaiField.value = result.total + ' - ' + result.categoria;
-            var cat = HubTools.scores.categorizeScore(parseFloat(result.total), 'sdai');
-            sdaiField.style.backgroundColor = cat.backgroundColor;
-            sdaiField.style.color = cat.color;
-            if (sdaiCatEl) {
-                sdaiCatEl.textContent = cat.label;
-                sdaiCatEl.style.color = cat.color;
-                sdaiCatEl.style.fontWeight = '700';
-            }
+            sdaiField.value = result.total ? result.total + ' - ' + result.categoria : result.categoria;
+            applyScoreCategory(result.total, 'sdai', sdaiField, sdaiCatEl);
         }
     }
-    console.log('  ✓ SDAI wiring');
+    debugLog('  ✓ SDAI wiring');
 
     // --- 12. SYNC PCR/VSG/EVA → DAS28 (AR) ---
     if (pcrInput) {
@@ -2107,9 +2595,117 @@ function initScoreWiring() {
             recalcularRAPID3();
         });
     }
-    console.log('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
+    debugLog('  ✓ PCR/VSG/EVA → DAS28/CDAI/SDAI sync');
 
-    console.log('✅ Score wiring completado');
+    // --- 13. LES / SJÖGREN SCORE WIRING ---
+    (function () {
+        // SLEDAI-2K checkboxes
+        var sledaiCheckboxes = document.querySelectorAll('.sledai-item');
+        sledaiCheckboxes.forEach(function (cb) {
+            cb.addEventListener('change', updateLesSjogrenScores);
+        });
+
+        // SLICC domain inputs
+        var sliccInputs = document.querySelectorAll('.slicc-domain');
+        sliccInputs.forEach(function (el) {
+            el.addEventListener('input', updateLesSjogrenScores);
+        });
+
+        // ESSPRI inputs
+        ['esspriSequedad', 'esspriFatiga', 'esspriDolor'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateLesSjogrenScores);
+        });
+
+        // ESSDAI selector domains
+        var essdaiSelectors = document.querySelectorAll('.essdai-domain');
+        essdaiSelectors.forEach(function (sel) {
+            sel.addEventListener('change', updateLesSjogrenScores);
+        });
+
+        if (sledaiCheckboxes.length > 0 || essdaiSelectors.length > 0) {
+            debugLog('  ✓ LES/Sjögren wiring (SLEDAI-2K, SLICC, ESSPRI, ESSDAI)');
+        }
+    })();
+
+    debugLog('✅ Score wiring completado');
+}
+
+/**
+ * Recopila datos LES/Sjögren y recalcula SLEDAI-2K, SLICC/ACR SDI, ESSPRI, ESSDAI.
+ * Se dispara desde el wiring de initScoreWiring.
+ */
+function updateLesSjogrenScores() {
+    // --- SLEDAI-2K ---
+    var sledaiResultEl = document.getElementById('sledai2kResult');
+    if (sledaiResultEl && typeof HubTools.scores.calcularSLEDAI2K === 'function') {
+        var sledaiData = {};
+        var allSledaiIds = [
+            'sledaiSeizure', 'sledaiPsychosis', 'sledaiOrganicBrainSyndrome',
+            'sledaiVisualDisturbance', 'sledaiCranialNerveDisorder', 'sledaiLupusHeadache',
+            'sledaiCVA', 'sledaiVasculitis',
+            'sledaiArthritis', 'sledaiMyositis', 'sledaiUrinaryCasts',
+            'sledaiHematuria', 'sledaiProteinuria', 'sledaiPyuria',
+            'sledaiRash', 'sledaiAlopecia', 'sledaiMucosalUlcers',
+            'sledaiPleurisy', 'sledaiPericarditis', 'sledaiLowComplement',
+            'sledaiIncreasedDNABinding',
+            'sledaiFever', 'sledaiThrombocytopenia', 'sledaiLeukopenia'
+        ];
+        allSledaiIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            sledaiData[id] = el && el.checked;
+        });
+        var sledaiVal = HubTools.scores.calcularSLEDAI2K(sledaiData);
+        sledaiResultEl.value = sledaiVal;
+    }
+
+    // --- SLICC/ACR SDI ---
+    var sliccResultEl = document.getElementById('sliccAcrSdi');
+    if (sliccResultEl && typeof HubTools.scores.calcularSLICCSDI === 'function') {
+        var sliccData = {};
+        var sliccIds = [
+            'sliccOcular', 'sliccNeuropsychiatric', 'sliccRenal', 'sliccPulmonary',
+            'sliccCardiovascular', 'sliccPeripheralVascular', 'sliccGastrointestinal',
+            'sliccMusculoskeletal', 'sliccSkin', 'sliccEndocrineDiabetes',
+            'sliccGonadal', 'sliccMalignancy'
+        ];
+        sliccIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            sliccData[id] = el ? el.value : '';
+        });
+        var sliccVal = HubTools.scores.calcularSLICCSDI(sliccData);
+        sliccResultEl.value = sliccVal;
+    }
+
+    // --- ESSPRI ---
+    var esspriResultEl = document.getElementById('esspriResult');
+    if (esspriResultEl && typeof HubTools.scores.calcularESSPRI === 'function') {
+        var esspriData = {};
+        ['esspriSequedad', 'esspriFatiga', 'esspriDolor'].forEach(function(id) {
+            var el = document.getElementById(id);
+            esspriData[id] = el ? el.value : '';
+        });
+        var esspriVal = HubTools.scores.calcularESSPRI(esspriData);
+        esspriResultEl.value = esspriVal;
+    }
+
+    // --- ESSDAI ---
+    var essdaiResultEl = document.getElementById('essdaiResult');
+    if (essdaiResultEl && typeof HubTools.scores.calcularESSDAI === 'function') {
+        var essdaiData = {};
+        var essdaiIds = [
+            'essdaiConstitutional', 'essdaiLymphadenopathy', 'essdaiGlandular',
+            'essdaiArticular', 'essdaiCutaneous', 'essdaiPulmonary', 'essdaiRenal',
+            'essdaiMuscular', 'essdaiPeripheralNervousSystem', 'essdaiCentralNervousSystem',
+            'essdaiHematological', 'essdaiBiological'
+        ];
+        essdaiIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            essdaiData[id] = el ? el.value : '';
+        });
+        var essdaiVal = HubTools.scores.calcularESSDAI(essdaiData);
+        essdaiResultEl.value = essdaiVal;
+    }
 }
 
 // Verificar que HubTools existe antes de asignar funciones
@@ -2134,7 +2730,7 @@ if (typeof HubTools !== 'undefined' && HubTools.form) {
     HubTools.form.populateSelectFromDatabase = populateSelectFromDatabase;
     HubTools.form.initScoreWiring = initScoreWiring;
 
-    console.log('✅ Módulo formController cargado');
+    debugLog('✅ Módulo formController cargado');
 } else {
     console.error('❌ Error: HubTools namespace no encontrado. Asegúrate de cargar hubTools.js primero.');
 }

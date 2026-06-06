@@ -1,0 +1,999 @@
+/* Farmacia Hospitalaria v0.1 — estilos del módulo.
+   Extiende style.css y reutiliza paleta SES: --ses-green #008777. */
+
+.farmacia-paciente {
+    padding: var(--spacing-xl, 32px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg, 24px);
+    background-color: #F8FAFC;
+    min-height: 100vh;
+}
+
+.profile-badge {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.demo-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 18px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #FFF7ED, #FFFBF5);
+    border: 1px solid #FED7AA;
+    color: #92400E;
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
+
+.demo-banner i { color: #F59E0B; margin-top: 2px; }
+
+.module-hero .patient-name { margin-bottom: 6px; }
+.hero-eyebrow {
+    margin: 0 0 4px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ses-green);
+}
+.hero-description { margin: 0; color: #475569; line-height: 1.6; max-width: 62ch; }
+.patient-status-badge--demo { background: var(--ses-green-light); color: var(--ses-green-dark); }
+
+/* --- Hero de inicio de módulo (coherencia con estilo Reuma) --- */
+.farmacia-paciente--index {
+    padding: 48px 56px;
+    gap: 28px;
+    background: linear-gradient(160deg, #f9fbff 0%, #eef2ff 80%);
+}
+
+.patient-header-card.module-hero {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    padding: 28px 32px;
+}
+
+.module-hero .patient-header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.module-hero .patient-info {
+    flex: 1 1 auto;
+    min-width: 200px;
+}
+
+.module-hero .patient-id-badge {
+    display: inline-block;
+    margin-bottom: 8px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.module-hero .patient-name {
+    margin: 0 0 10px;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1E293B;
+    line-height: 1.2;
+}
+
+.module-hero .hero-description {
+    margin: 0;
+    color: #475569;
+    line-height: 1.6;
+    max-width: 62ch;
+}
+
+.patient-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.patient-status-badge .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.dashboard-card,
+.search-card,
+.guided-intake-card {
+    background: #FFFFFF;
+    border-radius: var(--radius-lg, 16px);
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0, 0, 0, 0.08));
+    border: 1px solid #E2E8F0;
+    padding: 24px;
+}
+
+.dashboard-card { position: relative; overflow: hidden; }
+.dashboard-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--ses-green);
+}
+
+.card-title,
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    color: #1E293B;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.card-title--tight { margin-top: 4px; }
+
+.card-title i,
+.section-title i {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--ses-green);
+    background: var(--ses-green-light);
+}
+
+.search-card__label {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--ses-green);
+    font-size: 0.77rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+}
+
+.search-card__row,
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-card__input,
+.form-control,
+.form-select,
+.form-textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border-radius: 10px;
+    border: 1.5px solid #E2E8F0;
+    background: #F8FAFC;
+    color: #1E293B;
+    font: inherit;
+}
+
+.search-card__input { flex: 1 1 260px; letter-spacing: 0.04em; }
+.search-card__input:focus,
+.form-control:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--ses-green);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.10);
+}
+.search-card__hint { margin: 10px 0 0; color: #64748B; font-size: 0.82rem; }
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(15, 23, 42, 0.10); }
+.btn-primary { background: var(--ses-green); color: #FFFFFF; }
+.btn-primary:hover { background: var(--ses-green-dark); }
+.btn-secondary { background: var(--ses-green-light); color: var(--ses-green-dark); border-color: rgba(0, 135, 119, 0.24); }
+.btn-outline { background: #FFFFFF; color: #475569; border-color: #CBD5E1; }
+
+.quick-view-panel,
+.guided-intake-card { animation: farmaciaFadeIn 0.22s ease; }
+@keyframes farmaciaFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+}
+.info-field {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+.info-field__label {
+    display: block;
+    margin-bottom: 4px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.info-field__value { display: block; color: #1E293B; font-weight: 600; line-height: 1.45; }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+.status-badge--pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.status-badge--validated { background: var(--ses-green-light); color: var(--ses-green-dark); border: 1px solid rgba(0, 135, 119, 0.25); }
+.status-badge--denied { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.status-badge--followup { background: #CCFBF1; color: #0F766E; border: 1px solid #99F6E4; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+}
+.form-grid--full { grid-template-columns: 1fr; }
+.form-group label,
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748B;
+    font-size: 0.77rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.required { color: #DC2626; }
+.inline-control-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.inline-control-group label { display: inline-flex; align-items: center; gap: 6px; color: #1E293B; font-size: 0.92rem; }
+.context-strip { display: flex; flex-wrap: wrap; gap: 10px; color: #475569; font-size: 0.9rem; }
+.context-strip span { padding: 6px 10px; border-radius: 999px; background: #EEF2F7; }
+
+.result-box {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    line-height: 1.5;
+}
+.result-box--success { background: var(--ses-green-light); color: var(--ses-green-dark); border: 1px solid rgba(0, 135, 119, 0.25); }
+.result-box small { color: #64748B; }
+.warning-box { padding: 12px 14px; border-radius: 12px; background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+
+.action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+}
+.action-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    text-decoration: none;
+    color: #1E293B;
+}
+.action-card:hover { border-color: var(--ses-green); box-shadow: 0 8px 22px rgba(0, 135, 119, 0.10); }
+.action-card__icon { color: var(--ses-green); font-size: 1.15rem; }
+.action-card__title { font-weight: 800; color: #17335B; }
+.action-card__desc { color: #64748B; font-size: 0.84rem; line-height: 1.45; }
+
+.timeline { position: relative; padding-left: 24px; }
+.timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #E2E8F0; }
+.timeline-item { position: relative; margin-bottom: 18px; }
+.timeline-marker { position: absolute; left: -24px; top: 2px; width: 14px; height: 14px; border-radius: 999px; background: var(--ses-green); border: 3px solid #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.timeline-date { color: #64748B; font-size: 0.82rem; }
+.timeline-title { font-weight: 800; color: #1E293B; }
+.timeline-description { color: #475569; font-size: 0.9rem; }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.data-table th { padding: 10px 12px; text-align: left; color: #64748B; background: #F8FAFC; border-bottom: 2px solid #E2E8F0; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.data-table td { padding: 11px 12px; border-bottom: 1px solid #F1F5F9; color: #1E293B; }
+.data-table tr:hover td { background: var(--ses-green-light); }
+
+/* --- Overlay quick-view (Farmacia) --- */
+
+#fhQuickViewPanel.quick-view-panel {
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#fhQuickViewPanel.quick-view-panel .results-header {
+    flex-shrink: 0;
+    background: #FFFFFF;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 20px 24px;
+    z-index: 2;
+}
+
+#fhQuickViewPanel.quick-view-panel .results-content {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 0 24px 24px;
+}
+
+.fh-overlay-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+    border: 1px solid #E2E8F0;
+    padding: 20px;
+}
+
+.fh-overlay-card__summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.fh-overlay-card__summary .patient-avatar {
+    width: 64px;
+    height: 64px;
+    background: var(--ses-green-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.fh-overlay-card__summary .patient-avatar i {
+    font-size: 1.6rem;
+    color: var(--ses-green);
+}
+
+.fh-overlay-card__info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.fh-overlay-card__info .patient-id-badge {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.fh-overlay-card__info .patient-name {
+    margin: 0 0 8px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1E293B;
+    line-height: 1.2;
+}
+
+.fh-overlay-card__info .patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.fh-overlay-card__info .patient-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.fh-overlay-card__info .patient-meta i {
+    color: #64748B;
+}
+
+.fh-overlay-card__summary > .status-badge {
+    flex-shrink: 0;
+}
+
+.fh-overlay-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* 768px max-width: overlay panel takes full width on mobile */
+@media (max-width: 768px) {
+    #fhQuickViewPanel.quick-view-panel {
+        max-height: calc(100vh - 48px);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    .fh-overlay-card__summary {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #fhQvActions {
+        flex-direction: column;
+    }
+}
+
+.hidden { display: none !important; }
+
+/* --- Checklist chips (WO farmacia v0.1) --- */
+.checklist-visual {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.checklist-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 24px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #475569;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
+}
+.checklist-chip:hover {
+    border-color: var(--ses-green);
+    background: var(--ses-green-light);
+}
+.checklist-chip input[type="checkbox"] {
+    accent-color: var(--ses-green);
+    width: 15px;
+    height: 15px;
+    margin: 0;
+}
+.checklist-chip:has(input:checked) {
+    background: var(--ses-green-light);
+    border-color: var(--ses-green);
+    color: var(--ses-green-dark);
+    font-weight: 600;
+}
+
+/* --- Session professional block (WO farmacia v0.1) --- */
+.session-professional-block {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F0FDFA;
+    border: 1px solid #CFF5E7;
+    border-left: 4px solid var(--ses-green);
+    margin-bottom: 16px;
+}
+.session-professional-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.session-professional-text {
+    color: #1E293B;
+    font-weight: 600;
+}
+
+/* ============================================================
+   Adiciones WO-029 / WO-030 — pulido pre-demo
+   ============================================================ */
+
+/* --- Quick view close button (H-01: visible en mobile/tablet) --- */
+.quick-view-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #E2E8F0;
+    color: #475569;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.15s;
+}
+.quick-view-close-btn:hover { background: #CBD5E1; color: #1E293B; }
+.quick-view-close-btn:focus-visible { outline: 3px solid var(--ses-green); outline-offset: 2px; }
+
+/* --- Focus visible en botones (WCAG-04) --- */
+.btn:focus-visible {
+    outline: 3px solid var(--ses-green);
+    outline-offset: 2px;
+}
+
+/* ============================================================
+   Adiciones WO v0.2 — autocomplete farmacológico dual
+   ============================================================ */
+
+/* --- Catalog loader block --- */
+.catalog-loader-block {
+    margin-bottom: 16px;
+}
+.catalog-loader-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+.catalog-file-input {
+    max-width: 280px;
+}
+.catalog-status {
+    font-size: 0.85rem;
+    color: #64748B;
+}
+.catalog-status--loaded {
+    color: var(--ses-green);
+    font-weight: 600;
+}
+.catalog-status--manual {
+    color: #92400E;
+    font-weight: 600;
+}
+.catalog-counter {
+    margin-top: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 135, 119, 0.20);
+}
+
+/* --- Autocomplete --- */
+.autocomplete-wrapper {
+    position: relative;
+    margin-top: 4px;
+}
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    max-height: 360px;
+    overflow-y: auto;
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+.autocomplete-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #F1F5F9;
+    transition: background 0.12s;
+}
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+.autocomplete-item:hover,
+.autocomplete-item--active {
+    background: var(--ses-green-light);
+}
+.autocomplete-item-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+}
+.autocomplete-item-name {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.88rem;
+}
+.autocomplete-item-detail {
+    font-size: 0.78rem;
+    color: #64748B;
+    line-height: 1.4;
+}
+.drug-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.drug-tag--hosp {
+    background: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+.drug-tag--bio {
+    background: #E0E7FF;
+    color: #3730A3;
+    border: 1px solid #C7D2FE;
+}
+.drug-source-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-left: auto;
+}
+.drug-source-tag--cima {
+    background: #DBEAFE;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+}
+.drug-source-tag--local {
+    background: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+/* --- No find drug row --- */
+.no-find-drug-row {
+    margin-top: 8px;
+    margin-bottom: 6px;
+}
+
+/* --- Local drug modal --- */
+.local-drug-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.50);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.local-drug-modal {
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.local-drug-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+}
+.local-drug-modal-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+.local-drug-modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #E2E8F0;
+    color: #475569;
+    border: none;
+    cursor: pointer;
+    font-size: 1.15rem;
+    font-weight: 700;
+    transition: background 0.15s;
+}
+.local-drug-modal-close:hover { background: #CBD5E1; color: #1E293B; }
+.local-drug-modal-body {
+    padding: 16px 24px;
+}
+.local-drug-modal-body .warning-box {
+    margin-bottom: 16px;
+}
+.local-drug-modal-body .form-grid {
+    margin-bottom: 12px;
+}
+.local-drug-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 24px 20px;
+}
+
+/* --- Form group full width (used in modal) --- */
+.form-group--full {
+    grid-column: 1 / -1;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 768px) {
+    .local-drug-modal {
+        max-height: calc(100vh - 48px);
+        border-radius: 14px;
+    }
+    .autocomplete-dropdown {
+        max-height: 260px;
+    }
+}
+
+/* --- Campos readonly: aspecto precargado (ítem 7) --- */
+.form-control[readonly] {
+    background: #EFF6F5;
+    border-color: #C8E6E3;
+    cursor: default;
+    color: #334155;
+}
+
+/* --- Guard: sin paciente seleccionado (Fix 2) --- */
+.no-cip-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    color: #1E40AF;
+    font-size: 0.88rem;
+}
+.no-cip-banner i { color: #3B82F6; }
+.no-cip-banner__link { margin-left: auto; }
+
+/* --- Nota patología no-HS (Fix 3) --- */
+.pathology-demo-note {
+    font-size: 0.82rem;
+    color: #64748B;
+    margin: 8px 0 0;
+}
+
+@media (max-width: 768px) {
+    .farmacia-paciente { padding: 18px; }
+    .search-card__row { flex-direction: column; align-items: stretch; }
+    .btn { width: 100%; }
+    /* Overlay scrollable en mobile con padding para botones de acción (ítem 11) */
+    #fhQuickViewPanel.quick-view-panel {
+        overflow-y: auto;
+        display: block;
+        padding-bottom: 24px;
+    }
+    #fhQuickViewPanel.quick-view-panel .results-content {
+        overflow-y: visible;
+        flex: none;
+        min-height: auto;
+    }
+}
+
+/* --- Guided intake: dim quick access section --- */
+.fh-intake-active > .section-title,
+.fh-intake-active > .action-grid {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* ============================================================
+   Micro-WO Farmacia v0.1 — pulido visual Kimi
+   ============================================================ */
+
+/* Separación clara entre selector de tipo y context-strip */
+.dashboard-card .context-strip {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* Jerarquía visual entre sub-bloques internos */
+.dashboard-card .card-title {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #E2E8F0;
+}
+.dashboard-card .card-title:first-of-type {
+    padding-top: 0;
+    border-top: none;
+}
+.dashboard-card .card-title--tight {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #E2E8F0;
+}
+
+/* Form-actions separados del bloque anterior */
+.dashboard-card .form-actions {
+    margin-top: 24px;
+}
+
+/* Farmacéutico responsable: separación clara del bloque anterior */
+.session-professional-block {
+    margin-top: 20px;
+}
+
+/* Checklist chips: sin desbordamiento de texto */
+.checklist-chip {
+    overflow-wrap: break-word;
+}
+
+/* Responsive: chips y campos no desbordan en mobile */
+@media (max-width: 768px) {
+    .farmacia-paciente {
+        padding: 18px;
+        gap: 16px;
+    }
+    .dashboard-card {
+        padding: 18px;
+    }
+    .checklist-visual {
+        gap: 6px;
+    }
+    .checklist-chip {
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+/* --- Quick View visual field additions --- */
+
+.fh-qv-span-full {
+    grid-column: 1 / -1;
+}
+
+/* Score / PROM / Adherencia chip */
+.fh-qv-score-chip {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+.fh-qv-score-chip__name {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.fh-qv-score-chip__value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+.fh-qv-score-chip__interp {
+    display: block;
+    margin-top: 3px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ses-green);
+}
+
+/* Fármaco / Dosis / Pauta mini cards */
+.fh-qv-farmaco-field {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+.fh-qv-farmaco-field .info-field__label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.fh-qv-farmaco-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+.fh-qv-farmaco-chip {
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+}
+.fh-qv-farmaco-chip__label {
+    display: block;
+    margin-bottom: 2px;
+    color: #64748B;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.fh-qv-farmaco-chip__value {
+    display: block;
+    color: #1E293B;
+    font-weight: 600;
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+/* Analítica / Vacunación mini-checklist */
+.fh-qv-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.fh-qv-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.87rem;
+    color: #475569;
+}
+.fh-qv-checklist__item i {
+    font-size: 0.9rem;
+    width: 16px;
+    text-align: center;
+}
+.fh-qv-checklist__item--ok i { color: var(--ses-green); }
+.fh-qv-checklist__item--pending i { color: #F59E0B; }
+.fh-qv-checklist__item--review i { color: #64748B; }

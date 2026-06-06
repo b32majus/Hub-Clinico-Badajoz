@@ -1,0 +1,108 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Seguimiento Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
+</head>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">FH</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link active" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--seguimiento">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-avatar"><i class="fas fa-clipboard-list" aria-hidden="true"></i></div>
+        <div class="patient-info">
+            <div class="patient-id-badge">Farmacia Hospitalaria</div>
+            <p class="hero-eyebrow">Farmacia Hospitalaria · Seguimiento</p>
+            <h1 class="patient-name">Visita de Seguimiento</h1>
+            <p class="hero-description">Registre optimización, suspensión, adherencia Morisky-Green, PROMs y efectos adversos.</p>
+        </div>
+        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
+    </div>
+</section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-pills"></i> Datos precargados</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhSegCip">CIP</label><input class="form-control" id="fhSegCip" readonly></div><div class="form-group"><label for="fhSegServicio">Servicio origen</label><input class="form-control" id="fhSegServicio" readonly></div><div class="form-group"><label for="fhSegPatologia">Indicación</label><input class="form-control" id="fhSegPatologia" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegFarmaco">Tratamiento activo</label><input class="form-control" id="fhSegFarmaco" readonly></div><div class="form-group"><label for="fhSegDosisActual">Dosis actual</label><input class="form-control" id="fhSegDosisActual" readonly></div><div class="form-group"><label for="fhSegPautaActual">Pauta actual</label><input class="form-control" id="fhSegPautaActual" readonly></div><div class="form-group"><label for="fhSegVia">Vía</label><input class="form-control" id="fhSegVia" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegFechaInicio">Fecha inicio real / primera visita</label><input class="form-control" id="fhSegFechaInicio" readonly></div><div class="form-group"><label for="fhSegUltimaAdherencia">Última adherencia</label><input class="form-control" id="fhSegUltimaAdherencia" readonly></div><div class="form-group"><label for="fhSegUltimosProms">Últimos PROMs</label><input class="form-control" id="fhSegUltimosProms" readonly></div><div class="form-group"><label for="fhSegEaPrevios">EA previos</label><input class="form-control" id="fhSegEaPrevios" readonly></div></div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-route"></i> Evolución farmacoterapéutica</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhSegFecha">Fecha seguimiento</label><input type="date" class="form-control" id="fhSegFecha"></div><div class="form-group"><label for="fhSegCambiaNivel">¿Cambia nivel?</label><select class="form-select" id="fhSegCambiaNivel"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegNuevoNivel">Nuevo nivel si cambia</label><select class="form-select" id="fhSegNuevoNivel"><option></option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegOptimiza">¿Requiere optimización?</label><select class="form-select" id="fhSegOptimiza"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegNuevaDosis">Nueva dosis</label><input class="form-control" id="fhSegNuevaDosis"></div><div class="form-group"><label for="fhSegNuevaPauta">Nueva pauta / intervalo</label><input class="form-control" id="fhSegNuevaPauta"></div><div class="form-group"><label for="fhSegMotivoOpt">Motivo optimización</label><select class="form-select" id="fhSegMotivoOpt"><option>No aplica</option><option>Respuesta clínica adecuada</option><option>Respuesta insuficiente</option><option>Ajuste por peso</option><option>Efecto adverso</option><option>Adherencia</option><option>Criterio farmacoterapéutico</option><option>Otro</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegSuspension">¿Suspensión?</label><select class="form-select" id="fhSegSuspension"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegMotivoSusp">Motivo suspensión</label><select class="form-select" id="fhSegMotivoSusp"><option>No aplica</option><option>Efecto adverso</option><option>Falta de eficacia</option><option>Decisión clínica</option><option>Preferencia paciente</option><option>Problema de adherencia</option><option>Otro</option></select></div><div class="form-group"><label for="fhSegCambioFarmaco">Cambio de fármaco propuesto</label><input class="form-control" id="fhSegCambioFarmaco" placeholder="Solo para avisar / nueva solicitud"></div></div>
+    <div id="fhSegCambioFarmacoWarning" class="warning-box hidden">El cambio de fármaco requiere una nueva solicitud desde el servicio origen. La optimización solo aplica a dosis, pauta o intervalo del mismo fármaco.</div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Morisky-Green y PROMs</h2>
+    <div class="form-grid form-grid--full"><div class="form-group"><label>Morisky-Green 4 preguntas</label><div class="inline-control-group"><span>1. ¿Olvida tomarlo?</span><label><input type="radio" name="mg1" value="si"> Sí</label><label><input type="radio" name="mg1" value="no"> No</label></div><div class="inline-control-group"><span>2. ¿Lo toma a la hora?</span><label><input type="radio" name="mg2" value="si"> Sí</label><label><input type="radio" name="mg2" value="no"> No</label></div><div class="inline-control-group"><span>3. ¿Lo deja si se encuentra bien?</span><label><input type="radio" name="mg3" value="si"> Sí</label><label><input type="radio" name="mg3" value="no"> No</label></div><div class="inline-control-group"><span>4. ¿Lo deja si le sienta mal?</span><label><input type="radio" name="mg4" value="si"> Sí</label><label><input type="radio" name="mg4" value="no"> No</label></div></div></div>
+    <div class="info-field"><span class="info-field__label">Interpretación automática</span><span class="info-field__value" id="fhSegMoriskyResultado">Pendiente de completar</span></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegProms">PROMs seguimiento</label><select class="form-select" id="fhSegProms"><option>No recogido</option><option>DLQI</option><option>HAQ</option><option>EVA dolor</option><option>Otro</option></select></div><div class="form-group"><label for="fhSegEa">Efecto adverso detectado</label><select class="form-select" id="fhSegEa"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegEaGravedad">Gravedad</label><select class="form-select" id="fhSegEaGravedad"><option></option><option>Leve</option><option>Moderado</option><option>Grave</option></select></div><div class="form-group"><label for="fhSegEaActuacion">Actuación</label><select class="form-select" id="fhSegEaActuacion"><option>Sin cambios</option><option>Observación</option><option>Ajuste de pauta</option><option>Suspensión</option><option>Contactar/derivar a servicio origen</option></select></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegEaDescripcion">Descripción efecto adverso / notas</label><textarea class="form-textarea" id="fhSegEaDescripcion" rows="3"></textarea></div></div>
+    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhSegGuardar"><i class="fas fa-save"></i> Guardar seguimiento</button></div><div id="fhSegResultado" class="result-box hidden"></div>
+</section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260606b"></script>
+        </body>
+        </html>

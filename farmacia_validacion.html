@@ -1,0 +1,175 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Validación Farmacoterapéutica</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260308c">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260606b">
+</head>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">FH</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link active" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="sidebar-footer">v. 0.1 — demo</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--validacion">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo v0.1 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-avatar"><i class="fas fa-check-double" aria-hidden="true"></i></div>
+        <div class="patient-info">
+            <div class="patient-id-badge">Farmacia Hospitalaria</div>
+            <p class="hero-eyebrow">Farmacia Hospitalaria · Validación</p>
+            <h1 class="patient-name">Validación Farmacoterapéutica</h1>
+            <p class="hero-description">Revise la solicitud del servicio origen y emita Pendiente, Validado o Denegado.</p>
+        </div>
+        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
+    </div>
+</section><section class="dashboard-card">
+    <h2 class="section-title"><i class="fas fa-list"></i> Tipo de solicitud</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhTipoSolicitud">Tipo de solicitud</label><select class="form-select" id="fhTipoSolicitud"><option value="">Seleccionar...</option><option value="derma">Dermatología / entrada manual</option><option value="reuma">Reumatología (precargado)</option></select></div></div>
+    <div class="context-strip"><span>CIP: <strong data-context="cip">—</strong></span><span>Servicio: <strong data-context="servicio">—</strong></span><span>Patología: <strong data-context="patologia">—</strong></span></div>
+</section>
+
+<section class="dashboard-card hidden" id="formDerma">
+    <h2 class="section-title"><i class="fas fa-disease"></i> Datos de solicitud — Dermatología</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaCip">CIP</label><input type="text" class="form-control" id="fhDermaCip" placeholder="CIP-DEMO-FH-..."></div><div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" value="Dermatología" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaPatologia">Patología</label><select class="form-select" id="fhDermaPatologia"><option value="">Seleccionar...</option><option>Hidradenitis supurativa</option><option>Psoriasis</option><option>Dermatitis atópica</option><option>Vitíligo</option><option>Alopecia areata</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaFecha">Fecha solicitud</label><input type="date" class="form-control" id="fhDermaFecha"></div></div>
+
+    <h3 class="card-title card-title--tight"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
+    <div class="catalog-loader-block" id="catalogLoaderBlock"><div class="catalog-loader-row"><button type="button" class="btn btn-secondary" id="btnLoadCatalog">📂 Cargar catálogo de fármacos</button><input type="file" id="fileCatalogInput" class="form-control catalog-file-input hidden" accept=".xlsx,.xls"><span class="catalog-status" id="catalogStatus"></span></div><div class="catalog-counter hidden" id="catalogCounter"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaFarmaco">Fármaco solicitado (marca comercial)</label><div class="autocomplete-wrapper" id="autocompleteWrapper"><input type="text" class="form-control" id="fhDermaFarmaco" placeholder="Cargue el catálogo primero..." autocomplete="off" disabled><div class="autocomplete-dropdown hidden" id="autocompleteDropdown"></div></div></div><div class="form-group"><label for="fhDermaDosis">Dosis solicitada</label><input type="text" class="form-control" id="fhDermaDosis" placeholder="Ej. 300 mg"></div></div>
+    <div class="no-find-drug-row hidden" id="noFindDrugRow"><button type="button" class="btn btn-outline" id="btnNoFindDrug">No encuentro el fármaco</button></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaPrincipioActivo">Principio activo / molécula (opcional)</label><input type="text" class="form-control" id="fhDermaPrincipioActivo" placeholder="Ej. Secukinumab, Adalimumab..."></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaVia">Vía de administración</label><select class="form-select" id="fhDermaVia"><option value="">Seleccionar...</option><option>SC</option><option>IV</option><option>Oral</option><option>Otra</option></select></div><div class="form-group"><label for="fhDermaPauta">Intervalo / pauta</label><input type="text" class="form-control" id="fhDermaPauta" placeholder="Ej. cada 4 semanas"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaInduccion">Inducción solicitada</label><select class="form-select" id="fhDermaInduccion"><option value="no">No</option><option value="si">Sí</option></select></div><div class="form-group"><label for="fhDermaPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhDermaPeso" placeholder="Ej. 72 kg"></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaJustificacion">Justificación clínica</label><textarea class="form-textarea" id="fhDermaJustificacion" rows="3"></textarea></div><div class="form-group"><label for="fhDermaObservaciones">Observaciones del servicio origen</label><textarea class="form-textarea" id="fhDermaObservaciones" rows="2"></textarea></div><div class="form-group hidden"><label for="fhDermaAnalitica">Analítica / vacunación (compat)</label><textarea class="form-textarea" id="fhDermaAnalitica" rows="2"></textarea></div></div>
+
+    <h3 class="card-title"><i class="fas fa-flask"></i> Analítica y vacunación</h3>
+    <div class="form-grid"><div class="form-group"><label for="fhAnaliticaFecha">Fecha analítica</label><input type="date" class="form-control" id="fhAnaliticaFecha"></div><div class="form-group"><label for="fhAnaliticaReciente">Analítica &lt;3 meses</label><select class="form-select" id="fhAnaliticaReciente"><option value="">Seleccionar...</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><div class="checklist-visual"><label class="checklist-chip"><input type="checkbox" id="fhAnaliticaHemograma"> Hemograma completo (Verificado)</label><label class="checklist-chip"><input type="checkbox" id="fhAnaliticaBioquimica"> Bioquímica (Verificado)</label></div></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhAnaliticaMantoux">Mantoux/IGRA</label><select class="form-select" id="fhAnaliticaMantoux"><option value="">Seleccionar...</option><option value="Negativo">Negativo</option><option value="Positivo - tratado">Positivo - tratado</option><option value="Pendiente">Pendiente</option></select></div><div class="form-group"><label for="fhAnaliticaSerologias">VHB, VHC, VIH</label><select class="form-select" id="fhAnaliticaSerologias"><option value="">Seleccionar...</option><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option><option value="Pendiente">Pendiente</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhAnaliticaVacunacion">Vacunación</label><select class="form-select" id="fhAnaliticaVacunacion"><option value="">Seleccionar...</option><option value="si">Sí</option><option value="no">No</option><option value="pendiente">Pendiente</option></select></div><div class="form-group"><label for="fhAnaliticaObservaciones">Observaciones vacunación</label><textarea class="form-textarea" id="fhAnaliticaObservaciones" rows="2"></textarea></div></div>
+</section>
+
+<section class="dashboard-card hidden" id="formHS">
+    <h2 class="section-title"><i class="fas fa-skin"></i> Datos clínicos de origen — Hidradenitis supurativa</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhHSIhs4">IHS4</label><input type="number" class="form-control" id="fhHSIhs4" min="0" step="0.1" placeholder="Ej. 12.5"></div><div class="form-group"><label for="fhHSHurley">Hurley</label><select class="form-select" id="fhHSHurley"><option value="">Seleccionar...</option><option>Hurley I</option><option>Hurley II</option><option>Hurley III</option></select></div><div class="form-group"><label for="fhHSDlqi">DLQI</label><input type="number" class="form-control" id="fhHSDlqi" min="0" max="30" placeholder="Ej. 18"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhHSLocalizacion">Localización principal</label><input type="text" class="form-control" id="fhHSLocalizacion" placeholder="Ej. Axilar bilateral"></div><div class="form-group"><label for="fhHSTiempoEvolucion">Tiempo evolución</label><input type="text" class="form-control" id="fhHSTiempoEvolucion" placeholder="Ej. 5 años"></div></div>
+    <h3 class="card-title"><i class="fas fa-heartbeat"></i> Comorbilidades</h3>
+    <div class="form-grid"><div class="form-group"><label for="fhHSComorbImc">IMC</label><input type="text" class="form-control" id="fhHSComorbImc" placeholder="XX kg/m²"></div><div class="form-group"><label for="fhHSComorbTabaquismo">Tabaquismo</label><select class="form-select" id="fhHSComorbTabaquismo"><option value="">Seleccionar...</option><option value="Activo">Activo</option><option value="Exfumador">Exfumador</option><option value="No fumador">No fumador</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhHSComorbPaquetes">Paquetes/año (si activo)</label><input type="text" class="form-control" id="fhHSComorbPaquetes" placeholder="Ej. 15"></div><div class="form-group"><label for="fhHSComorbDiabetes">Diabetes</label><select class="form-select" id="fhHSComorbDiabetes"><option value="">Seleccionar...</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhHSComorbHba1c">HbA1c (si diabetes)</label><input type="text" class="form-control" id="fhHSComorbHba1c" placeholder="%"></div><div class="form-group"><label for="fhHSComorbSdMetabolico">Síndrome metabólico</label><select class="form-select" id="fhHSComorbSdMetabolico"><option value="">Seleccionar...</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhHSComorbOtras">Otras comorbilidades relevantes</label><textarea class="form-textarea" id="fhHSComorbOtras" rows="2" placeholder="Describir otras comorbilidades relevantes..."></textarea></div></div>
+    <div class="form-group hidden"><label for="fhHSComorbilidades">Comorbilidades (compat)</label><textarea class="form-textarea" id="fhHSComorbilidades" rows="2"></textarea></div>
+
+    <h3 class="card-title"><i class="fas fa-history"></i> Tratamientos previos</h3>
+    <div class="form-grid form-grid--full"><div class="form-group"><div class="checklist-visual"><label class="checklist-chip"><input type="checkbox" id="fhHSTtoDoxiClinda"> Doxiciclina / Clindamicina (Fallo terapéutico previo)</label><label class="checklist-chip"><input type="checkbox" id="fhHSTtoRifClinda"> Rifampicina + Clindamicina (Fallo terapéutico previo)</label><label class="checklist-chip"><input type="checkbox" id="fhHSTtoOtrosAb"> Otros ATB</label></div></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhHSTtoOtrosAbTxt">Especificar otros ATB</label><input type="text" class="form-control" id="fhHSTtoOtrosAbTxt" placeholder="Especificar..."></div></div>
+    <div class="form-group hidden"><label for="fhHSTratamientosPrevios">Tratamientos previos (compat)</label><textarea class="form-textarea" id="fhHSTratamientosPrevios" rows="2"></textarea></div>
+
+    <h3 class="card-title"><i class="fas fa-dna"></i> Biológicos previos</h3>
+    <div class="form-grid form-grid--full"><div class="form-group"><div class="checklist-visual"><label class="checklist-chip"><input type="checkbox" id="fhHSBioAda"> Adalimumab</label><label class="checklist-chip"><input type="checkbox" id="fhHSBioOtros"> Otros biológicos</label></div></div></div>
+    <div class="form-grid hidden" id="fhHSBioAdaDetalle"><div class="form-group"><label for="fhHSBioAdaDuracion">Duración</label><input type="text" class="form-control" id="fhHSBioAdaDuracion" placeholder="Ej. 12 meses"></div><div class="form-group"><label for="fhHSBioAdaMotivo">Motivo fin</label><input type="text" class="form-control" id="fhHSBioAdaMotivo" placeholder="Ej. Fallo secundario"></div></div>
+    <div class="form-grid hidden" id="fhHSBioOtrosDetalle"><div class="form-group"><label for="fhHSBioOtrosFarmaco">Fármaco</label><input type="text" class="form-control" id="fhHSBioOtrosFarmaco" placeholder="Especificar..."></div><div class="form-group"><label for="fhHSBioOtrosMotivo">Motivo suspensión</label><input type="text" class="form-control" id="fhHSBioOtrosMotivo" placeholder="Especificar..."></div></div>
+
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhHSMotivoClinico">Motivo clínico / línea terapéutica</label><textarea class="form-textarea" id="fhHSMotivoClinico" rows="2" placeholder="Ej. HS Hurley III refractaria a antibioterapia y antiinflamatorios sistémicos."></textarea></div></div>
+</section>
+
+<section class="dashboard-card hidden" id="formReuma">
+    <h2 class="section-title"><i class="fas fa-bone"></i> Solicitud precargada — Reumatología</h2>
+    <h3 class="card-title"><i class="fas fa-disease"></i> Datos de solicitud</h3>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">CIP</span><span class="info-field__value">CIP-DEMO-FH-003</span></div>
+        <div class="info-field"><span class="info-field__label">Servicio origen</span><span class="info-field__value">Reumatología</span></div>
+        <div class="info-field"><span class="info-field__label">Patología</span><span class="info-field__value">Artritis Reumatoide (AR)</span></div>
+        <div class="info-field"><span class="info-field__label">Indicación</span><span class="info-field__value">Tratamiento biológico de primera línea</span></div>
+        <div class="info-field"><span class="info-field__label">Origen / circuito</span><span class="info-field__value">Consulta Reumatología</span></div>
+        <div class="info-field"><span class="info-field__label">Fecha solicitud</span><span class="info-field__value">2026-03-15</span></div>
+    </div>
+    <h3 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">Fármaco solicitado</span><span class="info-field__value">Adalimumab 40 mg</span></div>
+        <div class="info-field"><span class="info-field__label">Dosis solicitada</span><span class="info-field__value">40 mg</span></div>
+        <div class="info-field"><span class="info-field__label">Vía de administración</span><span class="info-field__value">SC</span></div>
+        <div class="info-field"><span class="info-field__label">Intervalo / pauta</span><span class="info-field__value">SC / cada 2 semanas</span></div>
+    </div>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">Prebiológico / contexto</span><span class="info-field__value">Analítica OK; vacunación completa; DAS28 3.2; HAQ 1.1</span></div>
+    </div>
+</section>
+
+<section class="dashboard-card hidden" id="validationBlock">
+    <h2 class="section-title"><i class="fas fa-check-circle"></i> Validación farmacoterapéutica</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
+    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
+    <div class="session-professional-block"><span class="session-professional-label">Farmacéutico responsable</span><div id="fhValFarmaceutico" class="session-professional-text">Profesional FH-01 — Farmacia Hospitalaria</div></div>
+    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhValGuardar"><i class="fas fa-save"></i> Guardar validación</button><button type="button" class="btn btn-secondary" id="fhValExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT JARA</button><button type="button" class="btn btn-outline" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
+    <div id="fhValResultado" class="result-box hidden"></div>
+</section>
+                </main>
+            </div>
+            <script src="vendor/sheetjs/xlsx.full.min.js"></script>
+            <script src="scripts/farmacia_common.js?v=20260606b"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260606e"></script>
+        </body>
+        </html>

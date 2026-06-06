@@ -1,0 +1,4 @@
+CIP,Nombre_Demo,Edad,Servicio_Origen,Patologia,Estado_FH,Fecha_Alta
+CIP-DEMO-FH-001,Paciente Demo FH-001,48,Dermatologia,Hidradenitis supurativa,En seguimiento,2026-05-10
+CIP-DEMO-FH-002,Paciente Demo FH-002,35,Dermatologia,Hidradenitis supurativa,Pendiente validacion,
+CIP-DEMO-FH-003,Paciente Demo FH-003,52,Reumatologia,Artritis Reumatoide (AR),Validado,2026-04-01
