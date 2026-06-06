@@ -60,7 +60,6 @@
             F.setValue('fhDermaDosis', p.dosis);
             F.setValue('fhDermaPauta', p.pauta);
             F.setValue('fhDermaVia', p.via);
-            F.setValue('fhDermaIndicacion', p.patologia);
             F.setValue('fhDermaAnalitica', p.analitica);
             if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
             if (p.ihs4 !== undefined) F.setValue('fhHSIhs4', p.ihs4);
@@ -186,8 +185,6 @@
             lines.push('Servicio origen: Dermatología');
             lines.push('CIP: ' + selectedCip());
             lines.push('Patología: ' + selectedPatologia());
-            lines.push('Indicación: ' + (document.getElementById('fhDermaIndicacion').value || '—'));
-            lines.push('Origen / circuito: ' + (document.getElementById('fhDermaOrigenCircuito').value || '—'));
             lines.push('Fecha solicitud: ' + (document.getElementById('fhDermaFecha').value || '—'));
             var marca = document.getElementById('fhDermaFarmaco').value || '—';
             var principio = document.getElementById('fhDermaPrincipioActivo').value.trim();
