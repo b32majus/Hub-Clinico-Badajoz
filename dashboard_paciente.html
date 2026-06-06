@@ -91,6 +91,7 @@
                                 <span><i class="fas fa-birthday-cake"></i> <span id="patientAge">---</span> años</span>
                                 <span><i class="fas fa-venus-mars"></i> <span id="patientGender">---</span></span>
                             </div>
+                            <div class="patient-prebiologic-badge" id="prebiologicBadgeContainer" style="display:none;"></div>
                         </div>
                         <div class="patient-status-badge" id="patientStatusBadge">
                             <span class="status-dot"></span>
@@ -101,6 +102,9 @@
                         <a href="#" id="btnSeguimiento" class="btn btn-primary">
                             <i class="fas fa-clipboard-list"></i> Registrar Seguimiento
                         </a>
+                        <button id="btnSolicitudFH" class="btn btn-secondary" title="Generar solicitud a Farmacia Hospitalaria">
+                            <i class="fas fa-file-prescription"></i> Solicitud FH
+                        </button>
                     </div>
                 </div>
 
@@ -225,7 +229,16 @@
                                 <option value="haq">HAQ</option>
                                 <option value="lei">LEI</option>
                                 <option value="rapid3">RAPID3</option>
-                                <option value="pcr">PCR</option>
+                                <option value="das28Crp">DAS28-CRP</option>
+                                <option value="das28Esr">DAS28-ESR</option>
+                                <option value="cdai">CDAI</option>
+                                <option value="sdai">SDAI</option>
+                                <option value="sledai2k">SLEDAI-2K</option>
+                                <option value="esspri">ESSPRI</option>
+                                <option value="essdai">ESSDAI</option>
+                                <option value="slicc">SLICC/ACR SDI</option>
+                                <option value="prednisona">Prednisona</option>
+                                <option value="pcr">PCR (mg/L)</option>
                                 <option value="vsg">VSG</option>
                             </select>
                             <input type="checkbox" id="compareActivityCheckbox">
@@ -237,7 +250,16 @@
                                 <option value="haq">HAQ</option>
                                 <option value="lei">LEI</option>
                                 <option value="rapid3">RAPID3</option>
-                                <option value="pcr">PCR</option>
+                                <option value="das28Crp">DAS28-CRP</option>
+                                <option value="das28Esr">DAS28-ESR</option>
+                                <option value="cdai">CDAI</option>
+                                <option value="sdai">SDAI</option>
+                                <option value="sledai2k">SLEDAI-2K</option>
+                                <option value="esspri">ESSPRI</option>
+                                <option value="essdai">ESSDAI</option>
+                                <option value="slicc">SLICC/ACR SDI</option>
+                                <option value="prednisona">Prednisona</option>
+                                <option value="pcr">PCR (mg/L)</option>
                                 <option value="vsg">VSG</option>
                             </select>
                         </div>
@@ -253,12 +275,18 @@
                         <div class="chart-controls">
                             <label for="selectPRO">PRO:</label>
                             <select id="selectPRO" class="select-modern">
+                                <option value="evaSequedadOral">EVA Sequedad Oral</option>
+                                <option value="evaSequedadOcular">EVA Sequedad Ocular</option>
+                                <option value="evaFatiga">EVA Fatiga</option>
                                 <option value="evaDolor">EVA Dolor</option>
                                 <option value="evaGlobal">EVA Global</option>
                             </select>
                             <input type="checkbox" id="comparePROCheckbox">
                             <label for="comparePROCheckbox">Comparar con:</label>
                             <select id="comparePROSelect" class="select-modern hidden">
+                                <option value="evaSequedadOral">EVA Sequedad Oral</option>
+                                <option value="evaSequedadOcular">EVA Sequedad Ocular</option>
+                                <option value="evaFatiga">EVA Fatiga</option>
                                 <option value="evaGlobal">EVA Global</option>
                                 <option value="evaDolor">EVA Dolor</option>
                             </select>
@@ -285,7 +313,7 @@
                                         <th data-sort="basdai" id="visitsTablePrimaryHeader">BASDAI <i class="fas fa-sort"></i></th>
                                         <th data-sort="asdas" id="visitsTableSecondaryHeader">ASDAS <i class="fas fa-sort"></i></th>
                                         <th data-sort="evaDolor">EVA Dolor <i class="fas fa-sort"></i></th>
-                                        <th data-sort="pcr">PCR <i class="fas fa-sort"></i></th>
+                                        <th data-sort="pcr">PCR (mg/L) <i class="fas fa-sort"></i></th>
                                         <th>Tratamiento</th>
                                     </tr>
                                 </thead>
@@ -322,6 +350,9 @@
     <script src="modules/exportManager.js?v=20260306l"></script>
     <script src="modules/formController.js?v=20260307m"></script>
     <script src="modules/dataManager.js?v=20260307s"></script>
+    <script src="modules/prebiologicManager.js?v=20260503"></script>
+    <script src="modules/pharmacyRequest.js?v=20260503"></script>
+    <script src="modules/treatmentEventsManager.js?v=20260503"></script>
 
     <script src="script.js?v=20260307t"></script>
     <script src="scripts/script_dashboard.js?v=20260307s"></script>

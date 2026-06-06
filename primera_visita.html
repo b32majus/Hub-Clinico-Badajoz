@@ -29,7 +29,7 @@
             </div>
 
             <div class="search-container">
-                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." autocomplete="off">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
                 <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times-circle"></i>
@@ -84,8 +84,8 @@
                     <h2 class="section-title"><i class="fas fa-id-card"></i> Datos del Paciente</h2>
                     <div class="patient-fields">
                         <div class="form-group">
-                            <label for="idPaciente">ID Paciente:</label>
-                            <input type="text" id="idPaciente" placeholder="Ingrese ID del paciente">
+                            <label for="idPaciente">CIP:</label>
+                            <input type="text" id="idPaciente" placeholder="Ingrese CIP del paciente">
                         </div>
                         <div class="form-group">
                             <label for="nombrePaciente">Nombre y Apellidos:</label>
@@ -116,6 +116,8 @@
                                     <option value="espa">Espondiloartritis Axial (EspA)</option>
                                     <option value="aps">Artritis Psoriásica (APs)</option>
                                     <option value="ar">Artritis Reumatoide (AR)</option>
+                                    <option value="les">Lupus eritematoso sistémico (LES)</option>
+                                    <option value="sjogren">Síndrome de Sjögren</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1422,7 +1424,7 @@
                             </div>
                         </div>
 
-                        <div class="indices-apartado">
+                        <div class="indices-apartado espa-aps-only" id="asdasEsrSection" style="display: none;">
                             <h5><i class="fas fa-heartbeat"></i> ASDAS-ESR (con VSG)</h5>
                             <p class="info-note"><i class="fas fa-info-circle"></i> Utiliza los mismos parámetros que
                                 ASDAS-CRP, pero con VSG en lugar de PCR.</p>
@@ -1661,6 +1663,37 @@
                             </div>
                         </div>
 
+                        <div class="indices-apartado aps-only" id="dapsaSection" style="display: none;">
+                            <h5><i class="fas fa-calculator"></i> DAPSA (Disease Activity in Psoriatic Arthritis)</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="dapsaNAD68">NAD68:</label>
+                                    <input type="number" id="dapsaNAD68" readonly class="asdas-readonly-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="dapsaNAT66">NAT66:</label>
+                                    <input type="number" id="dapsaNAT66" readonly class="asdas-readonly-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="dapsaEvaDolorPaciente">EVA Dolor paciente (0-10):</label>
+                                    <input type="number" id="dapsaEvaDolorPaciente" readonly class="asdas-readonly-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="dapsaEvaGlobalPaciente">EVA Global paciente (0-10):</label>
+                                    <input type="number" id="dapsaEvaGlobalPaciente" readonly class="asdas-readonly-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="dapsaPCR">PCR (mg/L):</label>
+                                    <input type="number" id="dapsaPCR" readonly class="asdas-readonly-input">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dapsaResult">Resultado DAPSA:</label>
+                                <input type="text" id="dapsaResult" readonly class="indice-resultado">
+                                <span id="dapsaCategoria" class="indice-categoria"></span>
+                            </div>
+                        </div>
+
                         <!-- MDA (MINIMAL DISEASE ACTIVITY) - SOLO APs -->
                         <div class="indices-apartado aps-only" id="mdaSection" style="display: none;">
                             <h5><i class="fas fa-bullseye"></i> MDA (Minimal Disease Activity)</h5>
@@ -1863,13 +1896,608 @@
                                     Casi Remisión (≤3)
                                 </div>
                             </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================== LES: LUPUS ERITEMATOSO SISTÉMICO ===================== -->
+            <div class="les-only" style="display: none;">
+
+                <!-- Actividad LES -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-chart-line"></i> Actividad LES</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+
+                        <!-- SLEDAI-2K: Checklist de 24 ítems ponderados -->
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-clipboard-list"></i> SLEDAI-2K (Índice de Actividad)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Marque los ítems presentes en los últimos 10 días. Puntuación ponderada automática.</p>
+
+                            <!-- Peso 8 -->
+                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 8</h6>
+                            <div class="two-col-grid">
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiSeizure" class="sledai-item"> Convulsiones</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPsychosis" class="sledai-item"> Psicosis</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiOrganicBrainSyndrome" class="sledai-item"> Síndrome orgánico cerebral</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiVisualDisturbance" class="sledai-item"> Alteración visual</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiCranialNerveDisorder" class="sledai-item"> Alteración pares craneales</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiLupusHeadache" class="sledai-item"> Cefalea lúpica</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiCVA" class="sledai-item"> Accidente cerebrovascular</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiVasculitis" class="sledai-item"> Vasculitis</label></div>
+                            </div>
+
+                            <!-- Peso 4 -->
+                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 4</h6>
+                            <div class="two-col-grid">
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiArthritis" class="sledai-item"> Artritis</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiMyositis" class="sledai-item"> Miositis</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiUrinaryCasts" class="sledai-item"> Cilindros urinarios</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiHematuria" class="sledai-item"> Hematuria</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiProteinuria" class="sledai-item"> Proteinuria</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPyuria" class="sledai-item"> Piuria</label></div>
+                            </div>
+
+                            <!-- Peso 2 -->
+                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 2</h6>
+                            <div class="two-col-grid">
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiRash" class="sledai-item"> Rash / exantema</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiAlopecia" class="sledai-item"> Alopecia</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiMucosalUlcers" class="sledai-item"> Úlceras mucosas</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPleurisy" class="sledai-item"> Pleuritis</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiPericarditis" class="sledai-item"> Pericarditis</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiLowComplement" class="sledai-item"> Complemento bajo</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiIncreasedDNABinding" class="sledai-item"> Anti-DNA elevado</label></div>
+                            </div>
+
+                            <!-- Peso 1 -->
+                            <h6 style="margin-top:12px; color: var(--color-primary);">Peso 1</h6>
+                            <div class="two-col-grid">
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiFever" class="sledai-item"> Fiebre</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiThrombocytopenia" class="sledai-item"> Trombocitopenia</label></div>
+                                <div class="form-group-checkbox"><label><input type="checkbox" id="sledaiLeukopenia" class="sledai-item"> Leucopenia</label></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sledai2kResult">SLEDAI-2K Resultado:</label>
+                                <input type="text" id="sledai2kResult" readonly class="indice-resultado" placeholder="Calculado automáticamente">
+                            </div>
+                        </div>
+
+                        <!-- SLICC/ACR SDI: Daño acumulado por dominios -->
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-clipboard-check"></i> SLICC/ACR Damage Index (SDI)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Daño acumulado desde el diagnóstico, no actividad actual. Introduzca el subtotal por dominio (0 = sin daño en ese dominio).</p>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="sliccOcular">Ocular (0-2):</label>
+                                    <input type="number" id="sliccOcular" min="0" max="2" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccNeuropsychiatric">Neuropsiquiátrico (0-6):</label>
+                                    <input type="number" id="sliccNeuropsychiatric" min="0" max="6" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccRenal">Renal (0-3):</label>
+                                    <input type="number" id="sliccRenal" min="0" max="3" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccPulmonary">Pulmonar (0-5):</label>
+                                    <input type="number" id="sliccPulmonary" min="0" max="5" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccCardiovascular">Cardiovascular (0-6):</label>
+                                    <input type="number" id="sliccCardiovascular" min="0" max="6" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccPeripheralVascular">Vascular Periférico (0-5):</label>
+                                    <input type="number" id="sliccPeripheralVascular" min="0" max="5" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccGastrointestinal">Gastrointestinal (0-6):</label>
+                                    <input type="number" id="sliccGastrointestinal" min="0" max="6" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccMusculoskeletal">Musculoesquelético (0-7):</label>
+                                    <input type="number" id="sliccMusculoskeletal" min="0" max="7" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccSkin">Piel (0-3):</label>
+                                    <input type="number" id="sliccSkin" min="0" max="3" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccEndocrineDiabetes">Endocrino / Diabetes (0-1):</label>
+                                    <input type="number" id="sliccEndocrineDiabetes" min="0" max="1" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccGonadal">Gonadal (0-1):</label>
+                                    <input type="number" id="sliccGonadal" min="0" max="1" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sliccMalignancy">Malignidad (0-2):</label>
+                                    <input type="number" id="sliccMalignancy" min="0" max="2" step="1" class="slicc-domain" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="sliccAcrSdi">SLICC/ACR SDI Resultado:</label>
+                                <input type="text" id="sliccAcrSdi" readonly class="indice-resultado" placeholder="Calculado automáticamente">
+                            </div>
+                        </div>
+
+                        <!-- Complementarios LES -->
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-notes-medical"></i> Datos Clínicos Complementarios</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="dosisPrednisona">Prednisona (mg/día):</label>
+                                    <input type="number" id="dosisPrednisona" step="0.5" min="0" placeholder="Dosis diaria">
+                                </div>
+                                <div class="form-group">
+                                    <label for="broteActual">Brote actual:</label>
+                                    <select id="broteActual">
+                                        <option value="">-- Seleccionar --</option>
+                                        <option value="No">No</option>
+                                        <option value="Sí leve">Sí leve</option>
+                                        <option value="Sí moderado">Sí moderado</option>
+                                        <option value="Sí grave">Sí grave</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" id="tipoBroteGroup" style="display: none;">
+                                <label for="tipoBrote">Tipo de brote:</label>
+                                <input type="text" id="tipoBrote" placeholder="Describir tipo de brote">
+                            </div>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="actividadGlobalMedico">Actividad global médico (0-10):</label>
+                                    <input type="number" id="actividadGlobalMedico" step="0.1" min="0" max="10" placeholder="Valoración médico">
+                                </div>
+                                <div class="form-group">
+                                    <label for="actividadGlobalPaciente">Actividad global paciente (0-10):</label>
+                                    <input type="number" id="actividadGlobalPaciente" step="0.1" min="0" max="10" placeholder="Valoración paciente">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Manifestaciones por órgano -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-stethoscope"></i> Manifestaciones por Órgano</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="manifestations-grid">
+                            <label class="toggle-label"><input type="checkbox" id="lesCutaneo"> Cutáneo</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesArticular"> Articular</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesRenal"> Renal</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesNeurologico"> Neurológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesHematologico"> Hematológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesSeroso"> Seroso</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesCardiopulmonar"> Cardiopulmonar</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesVascular"> Vascular</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesOcular"> Ocular</label>
+                            <label class="toggle-label"><input type="checkbox" id="lesOtros"> Otros</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="lesManifestacionesDescripcion"><i class="fas fa-pen"></i> Descripción:</label>
+                            <textarea id="lesManifestacionesDescripcion" rows="3" placeholder="Describir manifestaciones clínicas"></textarea>
                         </div>
                     </div>
                 </div>
 
+                <!-- Inmunología / Analítica LES -->
                 <div class="collapsible-section">
                     <button class="collapsible-header">
-                        <span class="header-icon-text"><i class="fas fa-pills"></i> Plan Terapéutico</span>
+                        <span class="header-icon-text"><i class="fas fa-flask"></i> Inmunología / Analítica</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="form-group">
+                            <label for="anaLes"><i class="fas fa-vial"></i> ANA:</label>
+                            <input type="text" id="anaLes" placeholder="Título y patrón ANA">
+                        </div>
+                        <div class="form-group">
+                            <label for="antiDnaLes"><i class="fas fa-dna"></i> Anti-DNA:</label>
+                            <input type="text" id="antiDnaLes" placeholder="Resultado anti-DNA">
+                        </div>
+                        <div class="form-group">
+                            <label for="antiSmLes"><i class="fas fa-dna"></i> Anti-Sm:</label>
+                            <input type="text" id="antiSmLes" placeholder="Resultado anti-Sm">
+                        </div>
+                        <div class="form-group">
+                            <label for="antiRoLes"><i class="fas fa-dna"></i> Anti-Ro:</label>
+                            <input type="text" id="antiRoLes" placeholder="Resultado anti-Ro">
+                        </div>
+                        <div class="form-group">
+                            <label for="antiLaLes"><i class="fas fa-dna"></i> Anti-La:</label>
+                            <input type="text" id="antiLaLes" placeholder="Resultado anti-La">
+                        </div>
+                        <div class="form-group">
+                            <label for="complementoC3"><i class="fas fa-tint"></i> C3:</label>
+                            <input type="number" id="complementoC3" step="0.1" placeholder="Nivel C3">
+                        </div>
+                        <div class="form-group">
+                            <label for="complementoC4"><i class="fas fa-tint"></i> C4:</label>
+                            <input type="number" id="complementoC4" step="0.1" placeholder="Nivel C4">
+                        </div>
+                        <div class="form-group">
+                            <label for="proteinuriaLes"><i class="fas fa-tint"></i> Proteinuria:</label>
+                            <input type="text" id="proteinuriaLes" placeholder="Proteinuria (mg/24h o ratio)">
+                        </div>
+                        <div class="form-group">
+                            <label for="sedimentoUrinarioLes"><i class="fas fa-microscope"></i> Sedimento urinario:</label>
+                            <textarea id="sedimentoUrinarioLes" rows="2" placeholder="Descripción del sedimento urinario"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="creatininaLes"><i class="fas fa-tint"></i> Creatinina:</label>
+                            <input type="number" id="creatininaLes" step="0.01" placeholder="Creatinina mg/dL">
+                        </div>
+                        <div class="form-group">
+                            <label for="pcrLes"><i class="fas fa-flask"></i> PCR (mg/L):</label>
+                            <input type="number" id="pcrLes" step="0.01" placeholder="PCR mg/L">
+                        </div>
+                        <div class="form-group">
+                            <label for="vsgLes"><i class="fas fa-flask"></i> VSG:</label>
+                            <input type="number" id="vsgLes" step="0.1" placeholder="VSG mm/h">
+                        </div>
+                        <div class="form-group">
+                            <label for="hemogramaAlteracionesLes"><i class="fas fa-flask"></i> Hemograma (alteraciones):</label>
+                            <textarea id="hemogramaAlteracionesLes" rows="2" placeholder="Alteraciones relevantes del hemograma"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="otrosHallazgosAnaliticaLes"><i class="fas fa-flask"></i> Otros hallazgos:</label>
+                            <textarea id="otrosHallazgosAnaliticaLes" rows="2" placeholder="Otros hallazgos analíticos relevantes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROs / Impacto LES -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-heartbeat"></i> PROs / Impacto</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="form-group">
+                            <label for="evaDolorLes"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolorLes" step="0.1" min="0" max="10" placeholder="Dolor">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaFatigaLes"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
+                            <input type="number" id="evaFatigaLes" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaGlobalLes"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
+                            <input type="number" id="evaGlobalLes" step="0.1" min="0" max="10" placeholder="Valoración global">
+                        </div>
+                        <div class="form-group">
+                            <label for="calidadVidaComentarioLes"><i class="fas fa-comment-dots"></i> Calidad de vida / Comentario:</label>
+                            <textarea id="calidadVidaComentarioLes" rows="3" placeholder="Impacto en calidad de vida"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ===================== FIN BLOQUE LES ===================== -->
+
+            <!-- ===================== SJÖGREN: SÍNDROME DE SJÖGREN ===================== -->
+            <div class="sjogren-only" style="display: none;">
+
+                <!-- Actividad / PROs Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-chart-line"></i> Actividad Sjögren</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <!-- ESSPRI -->
+                        <div class="form-group">
+                            <label for="esspriSequedad"><i class="fas fa-tint"></i> ESSPRI — Sequedad (0-10):</label>
+                            <input type="number" id="esspriSequedad" step="0.1" min="0" max="10" placeholder="Sequedad" >
+                        </div>
+                        <div class="form-group">
+                            <label for="esspriFatiga"><i class="fas fa-battery-quarter"></i> ESSPRI — Fatiga (0-10):</label>
+                            <input type="number" id="esspriFatiga" step="0.1" min="0" max="10" placeholder="Fatiga" >
+                        </div>
+                        <div class="form-group">
+                            <label for="esspriDolor"><i class="fas fa-hand-holding-heart"></i> ESSPRI — Dolor (0-10):</label>
+                            <input type="number" id="esspriDolor" step="0.1" min="0" max="10" placeholder="Dolor" >
+                        </div>
+                        <div class="form-group">
+                            <label for="esspriResult"><i class="fas fa-calculator"></i> ESSPRI Result (media):</label>
+                            <input type="text" id="esspriResult" readonly placeholder="Calculado automáticamente">
+                        </div>
+                        <!-- ESSDAI: 12 dominios ponderados -->
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-calculator"></i> ESSDAI (EULAR Sjögren Disease Activity Index)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Implementación operativa inicial; la definición exacta de cada nivel debe validarse clínicamente con la guía ESSDAI. Nivel: 0 = Sin actividad, 1 = Baja, 2 = Moderada, 3 = Alta.</p>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="essdaiConstitutional">Constitucional (peso 3):</label>
+                                    <select id="essdaiConstitutional" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiLymphadenopathy">Linfadenopatía (peso 4):</label>
+                                    <select id="essdaiLymphadenopathy" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiGlandular">Glandular (peso 2):</label>
+                                    <select id="essdaiGlandular" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiArticular">Articular (peso 2):</label>
+                                    <select id="essdaiArticular" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiCutaneous">Cutáneo (peso 3):</label>
+                                    <select id="essdaiCutaneous" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiPulmonary">Pulmonar (peso 5):</label>
+                                    <select id="essdaiPulmonary" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiRenal">Renal (peso 5):</label>
+                                    <select id="essdaiRenal" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiMuscular">Muscular (peso 6):</label>
+                                    <select id="essdaiMuscular" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiPeripheralNervousSystem">SN Periférico (peso 5):</label>
+                                    <select id="essdaiPeripheralNervousSystem" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiCentralNervousSystem">SN Central (peso 5):</label>
+                                    <select id="essdaiCentralNervousSystem" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiHematological">Hematológico (peso 2):</label>
+                                    <select id="essdaiHematological" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="essdaiBiological">Biológico (peso 1):</label>
+                                    <select id="essdaiBiological" class="essdai-domain">
+                                        <option value="0">0 - Sin actividad</option>
+                                        <option value="1">1 - Baja</option>
+                                        <option value="2">2 - Moderada</option>
+                                        <option value="3">3 - Alta</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="essdaiResult">ESSDAI Resultado:</label>
+                                <input type="text" id="essdaiResult" readonly class="indice-resultado" placeholder="Calculado automáticamente">
+                            </div>
+                        </div>
+                        <!-- EVAs -->
+                        <div class="form-group">
+                            <label for="evaSequedadOral"><i class="fas fa-tint"></i> EVA Sequedad oral (0-10):</label>
+                            <input type="number" id="evaSequedadOral" step="0.1" min="0" max="10" placeholder="Sequedad oral">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaSequedadOcular"><i class="fas fa-eye"></i> EVA Sequedad ocular (0-10):</label>
+                            <input type="number" id="evaSequedadOcular" step="0.1" min="0" max="10" placeholder="Sequedad ocular">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaFatigaSjogren"><i class="fas fa-battery-quarter"></i> EVA Fatiga (0-10):</label>
+                            <input type="number" id="evaFatigaSjogren" step="0.1" min="0" max="10" placeholder="Fatiga">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaDolorSjogren"><i class="fas fa-hand-holding-heart"></i> EVA Dolor (0-10):</label>
+                            <input type="number" id="evaDolorSjogren" step="0.1" min="0" max="10" placeholder="Dolor">
+                        </div>
+                        <div class="form-group">
+                            <label for="evaGlobalSjogren"><i class="fas fa-chart-pie"></i> EVA Global (0-10):</label>
+                            <input type="number" id="evaGlobalSjogren" step="0.1" min="0" max="10" placeholder="Valoración global">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manifestaciones Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-stethoscope"></i> Manifestaciones</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="manifestations-grid">
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenOcular"> Ocular</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenOral"> Oral</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenGlandular"> Glandular</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenArticular"> Articular</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenCutaneo"> Cutáneo</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenPulmonar"> Pulmonar</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenRenal"> Renal</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenNeurologico"> Neurológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenHematologico"> Hematológico</label>
+                            <label class="toggle-label"><input type="checkbox" id="sjogrenLinfomaRiesgo"> Riesgo linfoma</label>
+                        </div>
+                        <div class="form-group">
+                            <label for="sjogrenManifestacionesDescripcion"><i class="fas fa-pen"></i> Descripción:</label>
+                            <textarea id="sjogrenManifestacionesDescripcion" rows="3" placeholder="Describir manifestaciones clínicas"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pruebas / Inmunología Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-flask"></i> Pruebas / Inmunología</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="form-group">
+                            <label for="anaSjogren"><i class="fas fa-vial"></i> ANA:</label>
+                            <input type="text" id="anaSjogren" placeholder="Título y patrón ANA">
+                        </div>
+                        <div class="form-group">
+                            <label for="frSjogren"><i class="fas fa-vial"></i> FR:</label>
+                            <input type="text" id="frSjogren" placeholder="Factor Reumatoide">
+                        </div>
+                        <div class="form-group">
+                            <label for="antiRoSjogren"><i class="fas fa-dna"></i> Anti-Ro:</label>
+                            <input type="text" id="antiRoSjogren" placeholder="Resultado anti-Ro">
+                        </div>
+                        <div class="form-group">
+                            <label for="antiLaSjogren"><i class="fas fa-dna"></i> Anti-La:</label>
+                            <input type="text" id="antiLaSjogren" placeholder="Resultado anti-La">
+                        </div>
+                        <div class="form-group">
+                            <label for="complementoC3Sjogren"><i class="fas fa-tint"></i> C3:</label>
+                            <input type="number" id="complementoC3Sjogren" step="0.1" placeholder="Nivel C3">
+                        </div>
+                        <div class="form-group">
+                            <label for="complementoC4Sjogren"><i class="fas fa-tint"></i> C4:</label>
+                            <input type="number" id="complementoC4Sjogren" step="0.1" placeholder="Nivel C4">
+                        </div>
+                        <div class="form-group">
+                            <label for="crioglobulinasSjogren"><i class="fas fa-vial"></i> Crioglobulinas:</label>
+                            <input type="text" id="crioglobulinasSjogren" placeholder="Resultado crioglobulinas">
+                        </div>
+                        <div class="form-group">
+                            <label for="proteinogramaSjogren"><i class="fas fa-vial"></i> Proteinograma:</label>
+                            <input type="text" id="proteinogramaSjogren" placeholder="Resultado proteinograma">
+                        </div>
+                        <div class="form-group">
+                            <label for="biopsiaGlandulaSalival"><i class="fas fa-microscope"></i> Biopsia glándula salival:</label>
+                            <textarea id="biopsiaGlandulaSalival" rows="2" placeholder="Resultado biopsia glándula salival"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="testSchirmer"><i class="fas fa-eye"></i> Test Schirmer:</label>
+                            <input type="text" id="testSchirmer" placeholder="Resultado test Schirmer">
+                        </div>
+                        <div class="form-group">
+                            <label for="tincionOcular"><i class="fas fa-eye"></i> Tinción ocular:</label>
+                            <input type="text" id="tincionOcular" placeholder="Resultado tinción ocular">
+                        </div>
+                        <div class="form-group">
+                            <label for="flujoSalival"><i class="fas fa-tint"></i> Flujo salival:</label>
+                            <input type="text" id="flujoSalival" placeholder="Resultado flujo salival">
+                        </div>
+                        <div class="form-group">
+                            <label for="ecografiaGlandular"><i class="fas fa-ultrasound"></i> Ecografía glandular:</label>
+                            <textarea id="ecografiaGlandular" rows="2" placeholder="Resultado ecografía glandular"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="pcrSjogren"><i class="fas fa-flask"></i> PCR (mg/L):</label>
+                            <input type="number" id="pcrSjogren" step="0.01" placeholder="PCR mg/L">
+                        </div>
+                        <div class="form-group">
+                            <label for="vsgSjogren"><i class="fas fa-flask"></i> VSG:</label>
+                            <input type="number" id="vsgSjogren" step="0.1" placeholder="VSG mm/h">
+                        </div>
+                        <div class="form-group">
+                            <label for="otrosHallazgosAnaliticaSjogren"><i class="fas fa-flask"></i> Otros hallazgos:</label>
+                            <textarea id="otrosHallazgosAnaliticaSjogren" rows="2" placeholder="Otros hallazgos analíticos relevantes"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tratamiento Sjögren -->
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-pills"></i> Tratamiento Sjögren</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <div class="form-group">
+                            <label for="tratSintomaticoSequedad"><i class="fas fa-tint"></i> Tratamiento sintomático sequedad:</label>
+                            <select id="tratSintomaticoSequedad">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="No">No</option>
+                                <option value="Lágrimas artificiales">Lágrimas artificiales</option>
+                                <option value="Saliva artificial">Saliva artificial</option>
+                                <option value="Pilocarpina">Pilocarpina</option>
+                                <option value="Cevimelina">Cevimelina</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <input type="text" id="tratSintomaticoSequedadDosis" class="form-control treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="tratInmunomodulador"><i class="fas fa-shield-virus"></i> Inmunomodulador:</label>
+                            <select id="tratInmunomodulador">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="No">No</option>
+                                <option value="Hidroxicloroquina">Hidroxicloroquina</option>
+                                <option value="Metotrexato">Metotrexato</option>
+                                <option value="Azatioprina">Azatioprina</option>
+                                <option value="Micofenolato">Micofenolato</option>
+                                <option value="Ciclofosfamida">Ciclofosfamida</option>
+                                <option value="Otros">Otros</option>
+                            </select>
+                            <input type="text" id="tratInmunomoduladorDosis" class="form-control treatment-dose-input" placeholder="Dosis / frecuencia" style="margin-top: 4px;">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <!-- ===================== FIN BLOQUE SJÖGREN ===================== -->
+
+            <div class="collapsible-section">
+                <button class="collapsible-header">
+                    <span class="header-icon-text"><i class="fas fa-pills"></i> Plan Terapéutico</span>
                         <i class="fas fa-chevron-down arrow"></i>
                     </button>
                     <div class="collapsible-content">
@@ -1933,6 +2561,233 @@
 
                 <div class="collapsible-section">
                     <button class="collapsible-header">
+                        <span class="header-icon-text"><i class="fas fa-shield-virus"></i> Evaluación prebiológica y vacunación</span>
+                        <i class="fas fa-chevron-down arrow"></i>
+                    </button>
+                    <div class="collapsible-content">
+                        <p class="info-note"><i class="fas fa-info-circle"></i> Registro estructurado prebiológico/vacunal para exportación clínica v2.</p>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-clipboard-check"></i> Estado global</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="fechaDiagnostico">Fecha diagnóstico</label>
+                                    <input type="date" id="fechaDiagnostico">
+                                </div>
+                                <div class="form-group">
+                                    <label for="estadoPrebiologicoFinal">Estado prebiológico final</label>
+                                    <select id="estadoPrebiologicoFinal">
+                                        <option value="NO_EVALUADO">NO_EVALUADO</option>
+                                        <option value="EN_CURSO">EN_CURSO</option>
+                                        <option value="APTO">APTO</option>
+                                        <option value="NO_APTO">NO_APTO</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fechaValidacionPrebiologico">Fecha validación</label>
+                                    <input type="date" id="fechaValidacionPrebiologico">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profesionalValidador">Profesional validador</label>
+                                    <input type="text" id="profesionalValidador" placeholder="Nombre o identificador">
+                                </div>
+                                <div class="form-group">
+                                    <label for="decisionClinicaManual">Decisión clínica manual</label>
+                                    <select id="decisionClinicaManual">
+                                        <option value="ND">ND</option>
+                                        <option value="SI">SI</option>
+                                        <option value="NO">NO</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-flask"></i> Analítica y cribado</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="hemogramaSolicitado">Hemograma solicitado</label>
+                                    <select id="hemogramaSolicitado"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaFechaSolicitud">Hemograma fecha solicitud</label>
+                                    <input type="date" id="hemogramaFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaRecibido">Hemograma recibido</label>
+                                    <select id="hemogramaRecibido"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaFechaRecepcion">Hemograma fecha recepción</label>
+                                    <input type="date" id="hemogramaFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaCorrecto">Hemograma correcto</label>
+                                    <select id="hemogramaCorrecto"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hemogramaObservaciones">Hemograma observaciones</label>
+                                    <textarea id="hemogramaObservaciones" rows="2" placeholder="Observaciones hemograma"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="bioquimicaSolicitada">Bioquímica solicitada</label>
+                                    <select id="bioquimicaSolicitada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaFechaSolicitud">Bioquímica fecha solicitud</label>
+                                    <input type="date" id="bioquimicaFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaRecibida">Bioquímica recibida</label>
+                                    <select id="bioquimicaRecibida"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaFechaRecepcion">Bioquímica fecha recepción</label>
+                                    <input type="date" id="bioquimicaFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaCorrecta">Bioquímica correcta</label>
+                                    <select id="bioquimicaCorrecta"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bioquimicaObservaciones">Bioquímica observaciones</label>
+                                    <textarea id="bioquimicaObservaciones" rows="2" placeholder="Observaciones bioquímica"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="serologiasSolicitadas">Serologías solicitadas</label>
+                                    <select id="serologiasSolicitadas"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasFechaSolicitud">Serologías fecha solicitud</label>
+                                    <input type="date" id="serologiasFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasRecibidas">Serologías recibidas</label>
+                                    <select id="serologiasRecibidas"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasFechaRecepcion">Serologías fecha recepción</label>
+                                    <input type="date" id="serologiasFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasCorrectas">Serologías correctas</label>
+                                    <select id="serologiasCorrectas"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="serologiasObservaciones">Serologías observaciones</label>
+                                    <textarea id="serologiasObservaciones" rows="2" placeholder="Observaciones serologías"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-lungs"></i> Tuberculosis / radiografía de tórax</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="igraMantouxSolicitado">IGRA/Mantoux solicitado</label>
+                                    <select id="igraMantouxSolicitado"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxTipo">Tipo IGRA/Mantoux</label>
+                                    <select id="igraMantouxTipo">
+                                        <option value="ND">ND</option>
+                                        <option value="IGRA">IGRA</option>
+                                        <option value="Quantiferon">Quantiferon</option>
+                                        <option value="Mantoux">Mantoux</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxFechaSolicitud">IGRA/Mantoux fecha solicitud</label>
+                                    <input type="date" id="igraMantouxFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxRecibido">IGRA/Mantoux recibido</label>
+                                    <select id="igraMantouxRecibido"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxFechaRecepcion">IGRA/Mantoux fecha recepción</label>
+                                    <input type="date" id="igraMantouxFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxResultado">IGRA/Mantoux resultado</label>
+                                    <input type="text" id="igraMantouxResultado" placeholder="Resultado">
+                                </div>
+                                <div class="form-group">
+                                    <label for="igraMantouxObservaciones">IGRA/Mantoux observaciones</label>
+                                    <textarea id="igraMantouxObservaciones" rows="2" placeholder="Observaciones TB"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="rxToraxSolicitada">Rx tórax solicitada</label>
+                                    <select id="rxToraxSolicitada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxFechaSolicitud">Rx tórax fecha solicitud</label>
+                                    <input type="date" id="rxToraxFechaSolicitud">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxRecibida">Rx tórax recibida</label>
+                                    <select id="rxToraxRecibida"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxFechaRecepcion">Rx tórax fecha recepción</label>
+                                    <input type="date" id="rxToraxFechaRecepcion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxCorrecta">Rx tórax correcta</label>
+                                    <select id="rxToraxCorrecta"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rxToraxObservaciones">Rx tórax observaciones</label>
+                                    <textarea id="rxToraxObservaciones" rows="2" placeholder="Observaciones Rx tórax"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="indices-apartado">
+                            <h5><i class="fas fa-syringe"></i> Vacunación y medicina preventiva</h5>
+                            <div class="form-group-grid">
+                                <div class="form-group">
+                                    <label for="vacunacionRevisada">Vacunación revisada</label>
+                                    <select id="vacunacionRevisada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vacunacionOK">Vacunación OK</label>
+                                    <select id="vacunacionOK"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicinaPreventivaRequiereDerivacion">Medicina preventiva requiere derivación</label>
+                                    <select id="medicinaPreventivaRequiereDerivacion"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicinaPreventivaDerivada">Medicina preventiva derivada</label>
+                                    <select id="medicinaPreventivaDerivada"><option value="ND">ND</option><option value="SI">SI</option><option value="NO">NO</option></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medicinaPreventivaFechaDerivacion">Fecha derivación preventiva</label>
+                                    <input type="date" id="medicinaPreventivaFechaDerivacion">
+                                </div>
+                                <div class="form-group">
+                                    <label for="vacunasPendientes">Vacunas pendientes</label>
+                                    <textarea id="vacunasPendientes" rows="2" placeholder="Listado o detalle de vacunas pendientes"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vacunacionObservaciones">Vacunación observaciones</label>
+                                    <textarea id="vacunacionObservaciones" rows="2" placeholder="Observaciones vacunación"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="observacionesPrebiologico">Observaciones prebiológico</label>
+                                    <textarea id="observacionesPrebiologico" rows="3" placeholder="Observaciones globales del bloque prebiológico"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapsible-section">
+                    <button class="collapsible-header">
                         <span class="header-icon-text"><i class="fas fa-comment-medical"></i> Comentarios
                             Adicionales</span>
                         <i class="fas fa-chevron-down arrow"></i>
@@ -1953,6 +2808,9 @@
                         Estructurar CSV (Excel)</button>
                     <button id="btnNuevoPaciente" class="action-btn warning-btn"><i class="fas fa-user-plus"></i> Nuevo
                         Paciente</button>
+                    <button type="button" id="btnSolicitudFH" class="action-btn primary-btn" title="Generar solicitud a Farmacia Hospitalaria">
+                        <i class="fas fa-file-prescription"></i> Solicitud FH
+                    </button>
                 </div>
             </div>
         </main>
@@ -1972,6 +2830,8 @@
     <script src="modules/dataManager.js?v=20260307s"></script>
     <script src="modules/exportManager.js?v=20260306l"></script>
     <script src="modules/formController.js?v=20260307n"></script>
+    <script src="modules/prebiologicManager.js?v=20260503"></script>
+    <script src="modules/pharmacyRequest.js?v=20260503"></script>
 
     <!-- Scripts globales y coordinadores -->
     <script src="script.js?v=20260307t"></script>

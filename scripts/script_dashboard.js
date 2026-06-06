@@ -2,7 +2,7 @@
 
 // ============================================
 // DASHBOARD DE PACIENTE INDIVIDUAL - PREMIUM
-// Hub Cl?nico Reumatolog?a v2.0
+// Hub Clínico Reumatología v2.0
 // ============================================
 
 window.patientHistory = null;
@@ -20,7 +20,7 @@ let visitsTableState = {
     data: []
 };
 
-// Colores consistentes con el sistema de diseo
+// Colores consistentes con el sistema de diseño
 const COLORS = {
     remission: '#10B981',
     lowActivity: '#3B82F6',
@@ -38,6 +38,13 @@ function normalizePathology(value) {
     return (value || '').toString().trim().toLowerCase();
 }
 
+function parseStrictNumber(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeRecord(record, extra) {
     if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
         return HubTools.normalizer.normalizeRecord(record, extra);
@@ -49,34 +56,36 @@ function isARPathology() {
     return (window.currentPathology || '').toLowerCase() === 'ar';
 }
 
-function getARPrimaryMetric(visit) {
-    const toNumber = (value) => {
-        const parsed = parseFloat(value);
-        return Number.isFinite(parsed) ? parsed : null;
-    };
+function isAPSPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'aps';
+}
 
-    const das28Crp = toNumber(getVisitMetric(visit, 'das28Crp'));
+function isLESPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'les';
+}
+
+function isSjogrenPathology() {
+    return (window.currentPathology || '').toLowerCase() === 'sjogren';
+}
+
+function getARPrimaryMetric(visit) {
+    const das28Crp = parseStrictNumber(getVisitMetric(visit, 'das28Crp'));
     if (das28Crp !== null) return das28Crp;
 
-    const das28Esr = toNumber(getVisitMetric(visit, 'das28Esr'));
+    const das28Esr = parseStrictNumber(getVisitMetric(visit, 'das28Esr'));
     if (das28Esr !== null) return das28Esr;
 
-    const cdai = toNumber(getVisitMetric(visit, 'cdai'));
+    const cdai = parseStrictNumber(getVisitMetric(visit, 'cdai'));
     if (cdai !== null) return cdai;
 
     return null;
 }
 
 function getARSecondaryMetric(visit) {
-    const toNumber = (value) => {
-        const parsed = parseFloat(value);
-        return Number.isFinite(parsed) ? parsed : null;
-    };
-
-    const cdai = toNumber(getVisitMetric(visit, 'cdai'));
+    const cdai = parseStrictNumber(getVisitMetric(visit, 'cdai'));
     if (cdai !== null) return cdai;
 
-    const sdai = toNumber(getVisitMetric(visit, 'sdai'));
+    const sdai = parseStrictNumber(getVisitMetric(visit, 'sdai'));
     if (sdai !== null) return sdai;
 
     return null;
@@ -89,8 +98,26 @@ function configureDashboardMetricLabels() {
     const secondaryTableHeader = document.getElementById('visitsTableSecondaryHeader');
 
     const isAR = isARPathology();
-    const primaryLabel = isAR ? 'DAS28' : 'BASDAI';
-    const secondaryLabel = isAR ? 'CDAI' : 'ASDAS';
+    const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
+    const isAPS = (window.currentPathology || '').toLowerCase() === 'aps';
+    let primaryLabel, secondaryLabel;
+    if (isSJOGREN) {
+        primaryLabel = 'ESSPRI';
+        secondaryLabel = 'ESSDAI';
+    } else if (isLES) {
+        primaryLabel = 'SLEDAI-2K';
+        secondaryLabel = 'SLICC/ACR SDI';
+    } else if (isAR) {
+        primaryLabel = 'DAS28';
+        secondaryLabel = 'CDAI/SDAI';
+    } else if (isAPS) {
+        primaryLabel = 'DAPSA/RAPID3/HAQ';
+        secondaryLabel = 'PASI/LEI/BSA';
+    } else {
+        primaryLabel = 'BASDAI';
+        secondaryLabel = 'ASDAS';
+    }
 
     if (primaryKpiLabel) primaryKpiLabel.textContent = primaryLabel;
     if (secondaryKpiLabel) secondaryKpiLabel.textContent = secondaryLabel;
@@ -108,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const bundle = loadPatientBundle(patientId);
     if (!bundle) {
-        showEmptyState(`No se encontr? informaci?n para el ID ${patientId}.`);
+        showEmptyState(`No se encontró información para el ID ${patientId}.`);
         return;
     }
 
@@ -121,17 +148,48 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function attachDashboardActions(patientId) {
-    // Bot?n de registrar seguimiento
+    // Botón de registrar seguimiento
     const btnSeguimiento = document.getElementById('btnSeguimiento');
     if (btnSeguimiento) {
         const pathology = window.currentPathology || 'espa';
         btnSeguimiento.href = `seguimiento.html?id=${encodeURIComponent(patientId)}&patologia=${encodeURIComponent(pathology)}`;
     }
 
-    // Bot?n de exportar visitas
+    // Botón de exportar visitas
     const exportBtn = document.getElementById('exportVisitsBtn');
     if (exportBtn) {
         exportBtn.addEventListener('click', exportVisitsToCSV);
+    }
+
+    // Botón de Solicitud FH
+    const btnSolicitudFH = document.getElementById('btnSolicitudFH');
+    if (btnSolicitudFH) {
+        btnSolicitudFH.addEventListener('click', function() {
+            var summary = window.patientSummary || {};
+            var latestVisit = (window.patientHistory && window.patientHistory.latestVisit) ? normalizeRecord(window.patientHistory.latestVisit) : {};
+
+            // Construir objeto datos: spread completo para no perder campos,
+            // luego override con aliases y campos mínimos normalizados.
+            var datos = {
+                ...latestVisit,
+                ...summary,
+                cip: summary.cip || latestVisit.cip || summary.idPaciente || latestVisit.idPaciente || latestVisit.CIP || '',
+                idPaciente: summary.idPaciente || latestVisit.idPaciente || latestVisit.ID_Paciente || latestVisit.CIP || '',
+                nombrePaciente: summary.nombre || summary.nombrePaciente || latestVisit.nombrePaciente || latestVisit.Nombre_Paciente || '',
+                diagnosticoPrimario: summary.diagnosticoPrimario || latestVisit.diagnosticoPrimario || latestVisit.Diagnostico_Principal || window.currentPathology || '',
+                diagnosticoSecundario: summary.diagnosticoSecundario || latestVisit.diagnosticoSecundario || latestVisit.Diagnostico_Secundario || '',
+                tratamientoActual: summary.tratamientoActual || latestVisit.tratamientoActual || latestVisit.Tratamiento_Actual || ''
+            };
+
+            if (typeof HubTools !== 'undefined' && HubTools.pharmacy && typeof HubTools.pharmacy.copyRequestToClipboard === 'function') {
+                HubTools.pharmacy.copyRequestToClipboard(datos);
+            } else {
+                console.error('[Dashboard] HubTools.pharmacy.copyRequestToClipboard no disponible');
+                if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                    HubTools.utils.mostrarNotificacion('Módulo de solicitud FH no disponible.', 'error');
+                }
+            }
+        });
     }
 
     // Ordenamiento de tabla
@@ -254,7 +312,7 @@ function loadFromMock(patientId) {
 
 function populateDashboard() {
     if (!window.patientHistory || !window.patientSummary) {
-        showEmptyState('No hay informaci?n disponible para este paciente.');
+        showEmptyState('No hay información disponible para este paciente.');
         return;
     }
 
@@ -264,8 +322,9 @@ function populateDashboard() {
     const allVisits = window.patientHistory.allVisits || [];
 
     configureDashboardMetricLabels();
+    renderPrebiologicBadge(summary.idPaciente || getPatientIdFromURL(), latest);
 
-    // Mostrar contenido, ocultar estado vac?o
+    // Mostrar contenido, ocultar estado vacío
     document.getElementById('emptyState').classList.add('hidden');
     document.getElementById('dashboardContent').classList.remove('hidden');
 
@@ -288,16 +347,16 @@ function populateDashboard() {
     document.getElementById('patientGeneralId').textContent = summary.idPaciente || '---';
     document.getElementById('patientGeneralName').textContent = summary.nombre || '---';
     document.getElementById('patientGeneralGender').textContent = summary.sexoPaciente || latest.sexoPaciente || latest.Sexo || '---';
-    document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} aos` : '---';
+    document.getElementById('patientGeneralAge').textContent = age !== '---' ? `${age} años` : '---';
     document.getElementById('patientGeneralDiagnosis').textContent = getPathologyLabel(window.currentPathology);
-    document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' a?os';
+    document.getElementById('patientDiseaseYears').textContent = calculateDiseaseYears(getVisitDate(firstVisit)) + ' años';
 
     // Tarjeta 2: Biomarcadores Clave
     applyBiomarkerStatus('biomarkerHlaB27', pickValue(latest, ['hlaB27', 'HLA_B27', 'hla']));
     applyBiomarkerStatus('biomarkerFr', pickValue(latest, ['fr', 'FR']));
     applyBiomarkerStatus('biomarkerApcc', pickValue(latest, ['apcc', 'APCC']));
 
-    // Tarjeta 3: Resumen Cl?nico
+    // Tarjeta 3: Resumen Clínico
     const comorbidities = (latest.comorbilidades || '').split(',').filter(Boolean).map(s => `<li>${s.trim()}</li>`).join('') || '<li>Sin comorbilidades registradas</li>';
     document.getElementById('comorbiditiesList').innerHTML = comorbidities;
 
@@ -317,13 +376,14 @@ function populateDashboard() {
     // Tarjeta 5: Historial de Tratamientos
     populateTreatmentHistory();
 
-    // Tarjeta 6: Eventos Cl?nicos Clave
+    // Tarjeta 6: Eventos Clínicos Clave
     populateKeyEvents();
 
     // ============================================
-    // GRFICOS
+    // GRÁFICOS
     // ============================================
     populateChartSelectors();
+    filterMetricSelectorsByPathology(window.currentPathology);
     initActivityChart();
     initPROChart();
 
@@ -343,7 +403,7 @@ function populatePatientHeader(summary, latest, firstVisit) {
     // Nombre
     document.getElementById('patientName').textContent = summary.nombre || 'Paciente';
 
-    // Diagn?stico
+    // Diagnóstico
     document.getElementById('patientDiagnosis').textContent = getPathologyLabel(window.currentPathology);
 
     // ltima visita
@@ -356,7 +416,7 @@ function populatePatientHeader(summary, latest, firstVisit) {
     // Sexo
     document.getElementById('patientGender').textContent = summary.sexoPaciente || latest.sexoPaciente || '---';
 
-    // Estado cl?nico (badge)
+    // Estado clínico (badge)
     const clinicalStatus = calculateClinicalStatus(latest);
     updateStatusBadge(clinicalStatus);
 }
@@ -375,9 +435,18 @@ function calculateClinicalStatus(visit) {
 
         const cdai = getARSecondaryMetric(visit);
         if (cdai !== null && !isNaN(cdai)) {
-            if (cdai <= 2.8) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
+            if (cdai <= 2.8) return { status: 'remission', text: 'Remisión', class: '' };
             if (cdai <= 10) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
             if (cdai <= 22) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+
+        // Fallback SDAI
+        const sdai = getVisitMetric(visit, 'sdai');
+        if (sdai !== null && !isNaN(sdai)) {
+            if (sdai <= 3.3) return { status: 'remission', text: 'Remisión', class: '' };
+            if (sdai <= 11) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (sdai <= 26) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
             return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
         }
     }
@@ -393,9 +462,54 @@ function calculateClinicalStatus(visit) {
     }
 
     if (basdai !== null && !isNaN(basdai)) {
-        if (basdai < 4) return { status: 'remission', text: 'Remisi\u00f3n', class: '' };
+        if (basdai < 4) return { status: 'remission', text: 'Remisión', class: '' };
         if (basdai < 6) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
         return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+    }
+
+    // ── APs: DAPSA > RAPID3 > HAQ ──
+    if (isAPSPathology()) {
+        const dapsa = getVisitMetric(visit, 'dapsa');
+        if (dapsa !== null && !isNaN(dapsa)) {
+            if (dapsa <= 4) return { status: 'remission', text: 'Remisión', class: '' };
+            if (dapsa <= 14) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (dapsa <= 28) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+        const rapid3 = getVisitMetric(visit, 'rapid3');
+        if (rapid3 !== null && !isNaN(rapid3)) {
+            if (rapid3 <= 3) return { status: 'remission', text: 'Remisión', class: '' };
+            if (rapid3 <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+        const haq = getVisitMetric(visit, 'haq');
+        if (haq !== null && !isNaN(haq)) {
+            if (haq <= 0.5) return { status: 'remission', text: 'Remisión', class: '' };
+            if (haq <= 1.5) return { status: 'low', text: 'Actividad Leve', class: 'patient-status-badge--low' };
+            if (haq <= 2) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+    }
+
+    // ── LES: SLEDAI-2K ──
+    if (isLESPathology()) {
+        const sledai = getVisitMetric(visit, 'sledai2k');
+        if (sledai !== null && !isNaN(sledai)) {
+            if (sledai <= 2) return { status: 'remission', text: 'Remisión', class: '' };
+            if (sledai <= 6) return { status: 'low', text: 'Baja Actividad', class: 'patient-status-badge--low' };
+            if (sledai <= 12) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
+    }
+
+    // ── Sjögren: ESSDAI ──
+    if (isSjogrenPathology()) {
+        const essdai = getVisitMetric(visit, 'essdai');
+        if (essdai !== null && !isNaN(essdai)) {
+            if (essdai < 5) return { status: 'remission', text: 'Baja Actividad', class: '' };
+            if (essdai < 14) return { status: 'moderate', text: 'Actividad Moderada', class: 'patient-status-badge--moderate' };
+            return { status: 'high', text: 'Alta Actividad', class: 'patient-status-badge--active' };
+        }
     }
 
     return { status: 'unknown', text: 'Sin datos', class: '' };
@@ -418,9 +532,50 @@ function updateStatusBadge(clinicalStatus) {
 
 function populatePatientKPIs(latest, summary, allVisits) {
     const isAR = isARPathology();
+    const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
 
-    const primaryMetric = isAR ? getARPrimaryMetric(latest) : getVisitMetric(latest, 'basdai');
-    const primaryMetricKey = isAR ? 'das28' : 'basdai';
+    let primaryMetric, primaryMetricKey, secondaryMetric, secondaryMetricKey;
+
+    const isESPA = (window.currentPathology || '').toLowerCase() === 'espa';
+    const isAPS = (window.currentPathology || '').toLowerCase() === 'aps';
+
+    if (isSJOGREN) {
+        primaryMetric = getVisitMetric(latest, 'esspri');
+        primaryMetricKey = 'esspri';
+        secondaryMetric = getVisitMetric(latest, 'essdai');
+        secondaryMetricKey = 'essdai';
+    } else if (isLES) {
+        primaryMetric = getVisitMetric(latest, 'sledai2k');
+        primaryMetricKey = 'sledai2k';
+        secondaryMetric = getVisitMetric(latest, 'slicc');
+        secondaryMetricKey = 'slicc';
+    } else if (isAR) {
+        primaryMetric = getARPrimaryMetric(latest);
+        primaryMetricKey = 'das28';
+        secondaryMetric = getARSecondaryMetric(latest);
+        secondaryMetricKey = 'cdai';
+    } else if (isAPS) {
+        primaryMetric = getVisitMetric(latest, 'dapsa') || getVisitMetric(latest, 'rapid3') || getVisitMetric(latest, 'haq');
+        primaryMetricKey = primaryMetric !== null ? (getVisitMetric(latest, 'dapsa') !== null ? 'dapsa' : (getVisitMetric(latest, 'rapid3') !== null ? 'rapid3' : 'haq')) : 'haq';
+        secondaryMetric = getVisitMetric(latest, 'pasi') || getVisitMetric(latest, 'lei') || getVisitMetric(latest, 'bsa');
+        secondaryMetricKey = secondaryMetric !== null ? (getVisitMetric(latest, 'pasi') !== null ? 'pasi' : (getVisitMetric(latest, 'lei') !== null ? 'lei' : 'bsa')) : 'lei';
+    } else if (isESPA) {
+        primaryMetric = getVisitMetric(latest, 'basdai');
+        primaryMetricKey = 'basdai';
+        secondaryMetric = getVisitMetric(latest, 'asdas');
+        secondaryMetricKey = 'asdas';
+    } else {
+        primaryMetric = getVisitMetric(latest, 'basdai');
+        primaryMetricKey = 'basdai';
+        secondaryMetric = getVisitMetric(latest, 'asdas');
+        secondaryMetricKey = 'asdas';
+    }
+    const primaryLabelEl = document.getElementById('kpiPrimaryMetricLabel');
+    const secondaryLabelEl = document.getElementById('kpiSecondaryMetricLabel');
+    if (primaryLabelEl) primaryLabelEl.textContent = getMetricLabel(primaryMetricKey);
+    if (secondaryLabelEl) secondaryLabelEl.textContent = getMetricLabel(secondaryMetricKey);
+
     const primaryMetricValue = primaryMetric !== null ? Number(primaryMetric).toFixed(1) : '---';
     const primaryStatus = getKPIStatus(primaryMetricKey, primaryMetric);
     document.getElementById('kpiBASDAIValue').textContent = primaryMetricValue;
@@ -429,8 +584,6 @@ function populatePatientKPIs(latest, summary, allVisits) {
     if (kpiBASDAIThreshold) kpiBASDAIThreshold.textContent = primaryStatus.threshold || '';
     updateKPICardClass('kpiBASDAI', primaryStatus.class);
 
-    const secondaryMetric = isAR ? getARSecondaryMetric(latest) : getVisitMetric(latest, 'asdas');
-    const secondaryMetricKey = isAR ? 'cdai' : 'asdas';
     const secondaryMetricValue = secondaryMetric !== null ? Number(secondaryMetric).toFixed(1) : '---';
     const secondaryStatus = getKPIStatus(secondaryMetricKey, secondaryMetric);
     document.getElementById('kpiASDASValue').textContent = secondaryMetricValue;
@@ -498,9 +651,28 @@ function getKPIStatus(metric, value) {
             return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u22643.3 remisi\u00f3n | \u226411 baja | \u226426 moderada | \u003e26 alta' };
 
         case 'pcr':
-            if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
-            if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
-            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 normal | 5\u201310 elevado | \u003e10 alto' };
+            if (numValue < 5) return { text: 'Normal', class: 'kpi-card--success', threshold: '\u003c5 mg/L normal | 5\u201310 mg/L elevado | \u003e10 mg/L alto' };
+            if (numValue < 10) return { text: 'Elevado', class: 'kpi-card--warning', threshold: '\u003c5 mg/L normal | 5\u201310 mg/L elevado | \u003e10 mg/L alto' };
+            return { text: 'Alto', class: 'kpi-card--danger', threshold: '\u003c5 mg/L normal | 5\u201310 mg/L elevado | \u003e10 mg/L alto' };
+
+        case 'sledai2k':
+            if (numValue <= 2) return { text: 'Remisión', class: 'kpi-card--success', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+            if (numValue <= 6) return { text: 'Baja', class: 'kpi-card--info', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+            if (numValue <= 12) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '\u22642 remisión | 3\u20136 baja | 7\u201312 moderada | >12 alta' };
+
+        case 'slicc':
+            if (numValue <= 0) return { text: 'Sin daño', class: 'kpi-card--success', threshold: '0 sin daño | ≥1 daño acumulado' };
+            return { text: 'Daño acumulado', class: 'kpi-card--warning', threshold: '0 sin daño | ≥1 daño acumulado' };
+
+        case 'esspri':
+            if (numValue < 5) return { text: 'Aceptable', class: 'kpi-card--success', threshold: '<5 aceptable | ≥5 mal control' };
+            return { text: 'Mal control', class: 'kpi-card--danger', threshold: '<5 aceptable | ≥5 mal control' };
+
+        case 'essdai':
+            if (numValue < 5) return { text: 'Baja actividad', class: 'kpi-card--success', threshold: '<5 baja | 5-13 moderada | ≥14 alta' };
+            if (numValue < 14) return { text: 'Moderada', class: 'kpi-card--warning', threshold: '<5 baja | 5-13 moderada | ≥14 alta' };
+            return { text: 'Alta', class: 'kpi-card--danger', threshold: '<5 baja | 5-13 moderada | ≥14 alta' };
 
         default:
             return { text: '', class: '', threshold: '' };
@@ -536,8 +708,8 @@ function calculateTreatmentDuration(startDate) {
     const years = Math.floor(diffDays / 365);
     const months = Math.floor((diffDays % 365) / 30);
 
-    if (months === 0) return `${years} ao${years > 1 ? 's' : ''}`;
-    return `${years} ao${years > 1 ? 's' : ''} y ${months} mes${months > 1 ? 'es' : ''}`;
+    if (months === 0) return `${years} año${years > 1 ? 's' : ''}`;
+    return `${years} año${years > 1 ? 's' : ''} y ${months} mes${months > 1 ? 'es' : ''}`;
 }
 
 // ============================================
@@ -546,10 +718,26 @@ function calculateTreatmentDuration(startDate) {
 
 function initVisitsTable(visits) {
     const isAR = isARPathology();
+    const isAPS = isAPSPathology();
+    const isLES = isLESPathology();
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
     visitsTableState.data = visits.map(visit => ({
+        rawVisit: visit,
         fecha: getVisitDate(visit),
-        basdai: isAR ? getARPrimaryMetric(visit) : getVisitMetric(visit, 'basdai'),
-        asdas: isAR ? getARSecondaryMetric(visit) : getVisitMetric(visit, 'asdas'),
+        basdai: isAR ? getARPrimaryMetric(visit) : (
+            isLES ? getVisitMetric(visit, 'sledai2k') : (
+                isSJOGREN ? getVisitMetric(visit, 'esspri') : (
+                    isAPS ? (getVisitMetric(visit, 'dapsa') ?? getVisitMetric(visit, 'rapid3') ?? getVisitMetric(visit, 'haq')) : getVisitMetric(visit, 'basdai')
+                )
+            )
+        ),
+        asdas: isAR ? getARSecondaryMetric(visit) : (
+            isLES ? getVisitMetric(visit, 'slicc') : (
+                isSJOGREN ? getVisitMetric(visit, 'essdai') : (
+                    isAPS ? (getVisitMetric(visit, 'pasi') ?? getVisitMetric(visit, 'lei') ?? getVisitMetric(visit, 'bsa')) : getVisitMetric(visit, 'asdas')
+                )
+            )
+        ),
         evaDolor: getVisitMetric(visit, 'evaDolor'),
         pcr: getVisitMetric(visit, 'pcr'),
         tratamiento: visit.tratamientoActual || visit.Tratamiento_Actual || '---'
@@ -594,8 +782,8 @@ function sortVisitsData(column, direction) {
             valA = new Date(valA);
             valB = new Date(valB);
         } else {
-            valA = parseFloat(valA) || 0;
-            valB = parseFloat(valB) || 0;
+            valA = parseStrictNumber(valA) ?? 0;
+            valB = parseStrictNumber(valB) ?? 0;
         }
 
         if (direction === 'asc') {
@@ -647,7 +835,7 @@ function renderVisitsTable() {
     if (paginationControls) {
         let controlsHTML = '';
 
-        // Bot?n anterior
+        // Botón anterior
         controlsHTML += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">
             <i class="fas fa-chevron-left"></i>
         </button>`;
@@ -661,7 +849,7 @@ function renderVisitsTable() {
             }
         }
 
-        // Bot?n siguiente
+        // Botón siguiente
         controlsHTML += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">
             <i class="fas fa-chevron-right"></i>
         </button>`;
@@ -678,6 +866,67 @@ function goToPage(page) {
     renderVisitsTable();
 }
 
+function getVisitCSVMetricDefinitions() {
+    const pathology = normalizePathology(window.currentPathology);
+    const definitions = {
+        ar: [
+            ['DAS28-CRP', 'das28Crp'],
+            ['DAS28-VSG', 'das28Esr'],
+            ['CDAI', 'cdai'],
+            ['SDAI', 'sdai'],
+            ['RAPID3', 'rapid3'],
+            ['HAQ', 'haq'],
+            ['PCR (mg/L)', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        espa: [
+            ['BASDAI', 'basdai'],
+            ['ASDAS', 'asdas'],
+            ['BASFI', 'basfi'],
+            ['HAQ', 'haq'],
+            ['PCR (mg/L)', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        aps: [
+            ['DAPSA', 'dapsa'],
+            ['PASI', 'pasi'],
+            ['BSA', 'bsa'],
+            ['LEI', 'lei'],
+            ['HAQ', 'haq'],
+            ['RAPID3', 'rapid3'],
+            ['PCR (mg/L)', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        les: [
+            ['SLEDAI-2K', 'sledai2k'],
+            ['SLICC/ACR SDI', 'slicc'],
+            ['Prednisona', 'prednisona'],
+            ['PCR (mg/L)', 'pcr'],
+            ['VSG', 'vsg']
+        ],
+        sjogren: [
+            ['ESSPRI', 'esspri'],
+            ['ESSDAI', 'essdai'],
+            ['EVA Sequedad Oral', 'evaSequedadOral'],
+            ['EVA Sequedad Ocular', 'evaSequedadOcular'],
+            ['EVA Fatiga', 'evaFatiga'],
+            ['PCR (mg/L)', 'pcr'],
+            ['VSG', 'vsg']
+        ]
+    };
+    return definitions[pathology] || definitions.espa;
+}
+
+function formatCSVMetricValue(value) {
+    const num = parseStrictNumber(value);
+    return num === null ? '' : String(num).replace('.', ',');
+}
+
+function escapeCSVCell(value) {
+    const text = value === undefined || value === null ? '' : String(value);
+    return /[;"\n\r]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text;
+}
+
 function exportVisitsToCSV() {
     const data = visitsTableState.data;
     if (data.length === 0) {
@@ -685,18 +934,18 @@ function exportVisitsToCSV() {
         return;
     }
 
-    const isAR = isARPathology();
-    const headers = ['Fecha', isAR ? 'DAS28' : 'BASDAI', isAR ? 'CDAI' : 'ASDAS', 'EVA Dolor', 'PCR', 'Tratamiento'];
-    const rows = data.map(visit => [
-        formatDate(visit.fecha),
-        visit.basdai !== null ? Number(visit.basdai).toFixed(1) : '',
-        visit.asdas !== null ? Number(visit.asdas).toFixed(1) : '',
-        visit.evaDolor !== null ? Number(visit.evaDolor).toFixed(0) : '',
-        visit.pcr !== null ? Number(visit.pcr).toFixed(1) : '',
-        visit.tratamiento
-    ]);
+    const metricDefinitions = getVisitCSVMetricDefinitions();
+    const headers = ['Fecha', ...metricDefinitions.map(([label]) => label), 'Tratamiento'];
+    const rows = data.map(row => {
+        const visit = row.rawVisit || row;
+        return [
+            formatDate(row.fecha),
+            ...metricDefinitions.map(([, metric]) => formatCSVMetricValue(getVisitMetric(visit, metric))),
+            row.tratamiento
+        ];
+    });
 
-    const csvContent = [headers.join(';'), ...rows.map(row => row.join(';'))].join('\n');
+    const csvContent = [headers, ...rows].map(row => row.map(escapeCSVCell).join(';')).join('\n');
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -710,32 +959,87 @@ function exportVisitsToCSV() {
 
 function populateChartSelectors() {
     const isAR = isARPathology();
-    const activityMetrics = isAR
-        ? [
+    const isLES = (window.currentPathology || '').toLowerCase() === 'les';
+    const isSJOGREN = (window.currentPathology || '').toLowerCase() === 'sjogren';
+
+    const isESPA = (window.currentPathology || '').toLowerCase() === 'espa';
+    const isAPS = (window.currentPathology || '').toLowerCase() === 'aps';
+
+    let activityMetrics;
+    if (isLES) {
+        activityMetrics = [
+            { value: 'sledai2k', text: 'SLEDAI-2K' },
+            { value: 'slicc', text: 'SLICC/ACR SDI' },
+            { value: 'prednisona', text: 'Prednisona' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isSJOGREN) {
+        activityMetrics = [
+            { value: 'esspri', text: 'ESSPRI' },
+            { value: 'essdai', text: 'ESSDAI' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isAR) {
+        activityMetrics = [
             { value: 'das28Crp', text: 'DAS28-CRP' },
             { value: 'das28Esr', text: 'DAS28-ESR' },
             { value: 'cdai', text: 'CDAI' },
             { value: 'sdai', text: 'SDAI' },
             { value: 'rapid3', text: 'RAPID3' },
             { value: 'haq', text: 'HAQ' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
-        ]
-        : [
+        ];
+    } else if (isAPS) {
+        activityMetrics = [
+            { value: 'dapsa', text: 'DAPSA' },
+            { value: 'pasi', text: 'PASI' },
+            { value: 'bsa', text: 'BSA' },
+            { value: 'haq', text: 'HAQ' },
+            { value: 'lei', text: 'LEI' },
+            { value: 'rapid3', text: 'RAPID3' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else if (isESPA) {
+        activityMetrics = [
+            { value: 'basdai', text: 'BASDAI' },
+            { value: 'asdas', text: 'ASDAS' },
+            { value: 'basfi', text: 'BASFI' },
+            { value: 'haq', text: 'HAQ' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
+            { value: 'vsg', text: 'VSG' }
+        ];
+    } else {
+        activityMetrics = [
             { value: 'basdai', text: 'BASDAI' },
             { value: 'asdas', text: 'ASDAS' },
             { value: 'basfi', text: 'BASFI' },
             { value: 'haq', text: 'HAQ' },
             { value: 'lei', text: 'LEI' },
             { value: 'rapid3', text: 'RAPID3' },
-            { value: 'pcr', text: 'PCR' },
+            { value: 'pcr', text: 'PCR (mg/L)' },
             { value: 'vsg', text: 'VSG' }
         ];
+    }
 
-    const proMetrics = [
-        { value: 'evaDolor', text: 'EVA Dolor' },
-        { value: 'evaGlobal', text: 'EVA Global' }
-    ];
+    let proMetrics;
+    if (isSJOGREN) {
+        proMetrics = [
+            { value: 'evaSequedadOral', text: 'EVA Sequedad Oral' },
+            { value: 'evaSequedadOcular', text: 'EVA Sequedad Ocular' },
+            { value: 'evaFatiga', text: 'EVA Fatiga' },
+            { value: 'evaDolor', text: 'EVA Dolor' },
+            { value: 'evaGlobal', text: 'EVA Global' }
+        ];
+    } else {
+        proMetrics = [
+            { value: 'evaDolor', text: 'EVA Dolor' },
+            { value: 'evaGlobal', text: 'EVA Global' }
+        ];
+    }
 
     const selectActivityIndex = document.getElementById('selectActivityIndex');
     const compareActivityIndexSelect = document.getElementById('compareActivityIndexSelect');
@@ -765,13 +1069,50 @@ function populateChartSelectors() {
     });
 
     if (selectActivityIndex) {
-        selectActivityIndex.value = isAR ? 'das28Crp' : 'basdai';
+        selectActivityIndex.value = isLES ? 'sledai2k' : (isSJOGREN ? 'esspri' : (isAR ? 'das28Crp' : (isAPS ? 'dapsa' : 'basdai')));
     }
     if (compareActivityIndexSelect) {
-        compareActivityIndexSelect.value = isAR ? 'cdai' : 'asdas';
+        compareActivityIndexSelect.value = isLES ? 'slicc' : (isSJOGREN ? 'essdai' : (isAR ? 'cdai' : (isAPS ? 'rapid3' : 'asdas')));
     }
-    if (selectPRO) selectPRO.value = 'evaDolor';
-    if (comparePROSelect) comparePROSelect.value = 'evaGlobal';
+    if (selectPRO) selectPRO.value = isSJOGREN ? 'evaSequedadOral' : 'evaDolor';
+    if (comparePROSelect) comparePROSelect.value = isSJOGREN ? 'evaFatiga' : 'evaGlobal';
+}
+
+/**
+ * Filtra las opciones de los selectores de métrica según la patología activa.
+ * Oculta métricas irrelevantes y ajusta la selección actual si es necesario.
+ * @param {string} pathology - Código de patología normalizado (ar, espa, aps, les, sjogren)
+ */
+function filterMetricSelectorsByPathology(pathology) {
+    const normalized = normalizePathology(pathology);
+
+    const metricsByPathology = {
+        ar: ['das28Crp', 'das28Esr', 'cdai', 'sdai', 'rapid3', 'haq', 'pcr', 'vsg'],
+        espa: ['basdai', 'asdas', 'basfi', 'haq', 'pcr', 'vsg'],
+        aps: ['dapsa', 'pasi', 'bsa', 'haq', 'lei', 'rapid3', 'pcr', 'vsg'],
+        les: ['sledai2k', 'slicc', 'prednisona', 'pcr', 'vsg'],
+        sjogren: ['esspri', 'essdai', 'evaSequedadOral', 'evaSequedadOcular', 'evaFatiga', 'evaDolor']
+    };
+
+    const allowed = metricsByPathology[normalized] || [];
+
+    const selectors = ['selectActivityIndex', 'compareActivityIndexSelect', 'selectPRO', 'comparePROSelect'];
+    selectors.forEach(function(id) {
+        const select = document.getElementById(id);
+        if (!select) return;
+
+        Array.from(select.options).forEach(function(option) {
+            const value = option.value;
+            const isCommonPRO = ['evaDolor', 'evaGlobal'].includes(value);
+            const isAllowed = allowed.includes(value) || isCommonPRO;
+            option.hidden = !isAllowed;
+        });
+
+        if (select.selectedOptions[0] && select.selectedOptions[0].hidden) {
+            const firstVisible = Array.from(select.options).find(function(o) { return !o.hidden; });
+            if (firstVisible) select.value = firstVisible.value;
+        }
+    });
 }
 
 function applyBiomarkerStatus(elementId, value) {
@@ -808,51 +1149,176 @@ function collectManifestations(visit) {
 }
 
 function populateTreatmentHistory() {
-    const container = document.getElementById('treatmentHistory');
+    var container = document.getElementById('treatmentHistory');
     if (!container) return;
 
-    const treatments = window.patientHistory.treatmentHistory || [];
+    var treatments = window.patientHistory.treatmentHistory || [];
     if (!treatments.length) {
         container.innerHTML = '<p class="empty-message">No hay historial de tratamientos previos.</p>';
         return;
     }
 
-    container.innerHTML = treatments.map(treatment => `
-        <div class="timeline-item event-type-treatment">
-            <div class="timeline-marker"></div>
-            <div class="timeline-date">${formatDate(treatment.startDate)}</div>
-            <div class="timeline-content">
-                <div class="timeline-title">${treatment.name}</div>
-                <div class="timeline-description">${treatment.reason || 'Tratamiento en seguimiento'}</div>
-            </div>
-        </div>
-    `).join('');
+    // Ordenar por fecha descendente
+    var sorted = treatments.slice().sort(function(a, b) {
+        return new Date(b.startDate || 0) - new Date(a.startDate || 0);
+    });
+
+    var html = '<div class="treatment-timeline">';
+
+    sorted.forEach(function(treatment) {
+        var dateStr = formatDate(treatment.startDate);
+        var name = treatment.name || 'Tratamiento no especificado';
+        var type = treatment.type || 'otro';
+        var typeLabel = {
+            'biologico': 'Biológico',
+            'biologic': 'Biológico',
+            'fame': 'FAME',
+            'sistemico': 'Sistémico',
+            'sistemic': 'Sistémico',
+            'corticoide': 'Corticoide',
+            'otro': 'Otro'
+        }[type] || type;
+
+        var dose = treatment.dose || '';
+        var reason = treatment.reason || '';
+        var status = treatment.status || 'activo';
+        var statusClass = status === 'suspendido' || status === 'suspended' ? 'status-suspended' : 'status-active';
+        var statusLabel = status === 'suspendido' || status === 'suspended' ? 'Suspendido' : 'Activo';
+
+        html += '<div class="treatment-item ' + statusClass + '" style="padding: 10px 0; border-bottom: 1px solid #eee;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: flex-start;">';
+        html += '<div>';
+        html += '<div style="font-weight: 600; font-size: 14px; color: #2c3e50;">' + escapeHtml(name) + '</div>';
+        html += '<div style="font-size: 12px; color: #7f8c8d; margin-top: 3px;">';
+        html += '<span class="treatment-type-badge" style="background: #ecf0f1; padding: 2px 6px; border-radius: 3px; font-size: 11px;">' + typeLabel + '</span>';
+        if (dose) html += ' · ' + escapeHtml(dose);
+        html += '</div>';
+        if (reason) {
+            html += '<div style="font-size: 11px; color: #95a5a6; margin-top: 3px; font-style: italic;">' + escapeHtml(reason) + '</div>';
+        }
+        html += '</div>';
+        html += '<div style="text-align: right;">';
+        html += '<div style="font-size: 12px; color: #7f8c8d;">' + dateStr + '</div>';
+        html += '<div style="font-size: 11px; margin-top: 2px;" class="' + statusClass + '">' + statusLabel + '</div>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
 }
 
 function populateKeyEvents() {
-    const container = document.getElementById('keyEventsTimeline');
+    var container = document.getElementById('keyEventsTimeline');
     if (!container) return;
 
-    const events = window.patientHistory.keyEvents || [];
+    // Intentar usar el pipeline de eventos del módulo treatmentEventsManager (9B.5)
+    if (typeof HubTools !== 'undefined' && HubTools.events &&
+        typeof HubTools.events.extractTreatmentEvents === 'function' &&
+        typeof HubTools.events.renderTreatmentTimeline === 'function') {
+
+        try {
+            var patientId = (window.patientSummary && window.patientSummary.idPaciente)
+                || getPatientIdFromURL() || '';
+            var prebiologicStatus = null;
+            if (typeof HubTools.prebiologic !== 'undefined' &&
+                typeof HubTools.prebiologic.getStatus === 'function' && patientId) {
+                prebiologicStatus = HubTools.prebiologic.getStatus(patientId);
+            }
+
+            var allEvents = HubTools.events.extractTreatmentEvents(window.patientHistory, prebiologicStatus);
+
+            // FILTRAR: solo eventos clínicos no puramente farmacológicos
+            var clinicalEvents = allEvents.filter(function(e) {
+                if (!e) return false;
+                // Excluir eventos de tratamiento puro (ya están en Historial de Tratamientos)
+                if (e.type === 'treatment_start' || e.type === 'treatment_change' || e.type === 'treatment_suspend') {
+                    // PERO mantener si tiene efecto adverso asociado
+                    if (e.metadata && e.metadata.hasAdverseEvent) return true;
+                    return false;
+                }
+                // Excluir biológicos puros (ya están en Historial)
+                if (e.type === 'biologic_start' || e.type === 'biologic_change') {
+                    return false;
+                }
+                // Mantener: flare, remission, adverse_event, prebiologic_apto
+                return true;
+            });
+
+            // Guardar en variable global para que los gráficos puedan acceder sin recalcular
+            window.currentEvents = clinicalEvents;
+
+            // Renderizar timeline
+            HubTools.events.renderTreatmentTimeline(clinicalEvents, 'keyEventsTimeline');
+            return;
+        } catch (e) {
+            console.warn('[Dashboard] Error en pipeline de eventos terapéuticos:', e);
+            // Fallback al comportamiento anterior
+        }
+    }
+
+    // Fallback: comportamiento original con keyEvents del patientHistory
+    var events = window.patientHistory.keyEvents || [];
     if (!events.length) {
-        container.innerHTML = '<p class="empty-message">No hay eventos cl?nicos registrados.</p>';
+        container.innerHTML = '<p class="empty-message">No hay eventos clínicos registrados.</p>';
         return;
     }
 
-    container.innerHTML = events.map(event => `
-        <div class="timeline-item event-type-${event.type}">
-            <div class="timeline-marker"></div>
-            <div class="timeline-date">${formatDate(event.date)}</div>
-            <div class="timeline-content">
-                <div class="timeline-title">${capitalizeFirst(event.type)}</div>
-                <div class="timeline-description">${event.description}</div>
-            </div>
-        </div>
-    `).join('');
+    container.innerHTML = events.map(function (event) {
+        return '<div class="timeline-item event-type-' + event.type + '">' +
+            '<div class="timeline-marker"></div>' +
+            '<div class="timeline-date">' + formatDate(event.date) + '</div>' +
+            '<div class="timeline-content">' +
+            '<div class="timeline-title">' + capitalizeFirst(event.type) + '</div>' +
+            '<div class="timeline-description">' + event.description + '</div>' +
+            '</div></div>';
+    }).join('');
 }
 
 // ============================================
-// GRFICOS
+// EVENTOS TERAPÉUTICOS — Anotaciones en gráficos (9B.6)
+// ============================================
+
+/**
+ * Obtiene anotaciones de eventos terapéuticos para los gráficos Chart.js.
+ * Usa window.currentEvents si ya fue poblado por populateKeyEvents.
+ * @param {string[]} chartLabels - Labels del eje X del gráfico
+ * @returns {Object} Objeto de anotaciones para merge en plugin annotation
+ */
+function getEventAnnotations(chartLabels) {
+    if (typeof HubTools === 'undefined' || !HubTools.events ||
+        typeof HubTools.events.buildChartAnnotationsFromEvents !== 'function') {
+        return {};
+    }
+
+    // Usar eventos cacheados si están disponibles
+    var events = window.currentEvents;
+    if (!events || !events.length) {
+        // Computar eventos si no están cacheados
+        try {
+            var patientId = (window.patientSummary && window.patientSummary.idPaciente)
+                || getPatientIdFromURL() || '';
+            var prebiologicStatus = null;
+            if (typeof HubTools.prebiologic !== 'undefined' &&
+                typeof HubTools.prebiologic.getStatus === 'function' && patientId) {
+                prebiologicStatus = HubTools.prebiologic.getStatus(patientId);
+            }
+            if (typeof HubTools.events.extractTreatmentEvents === 'function') {
+                events = HubTools.events.extractTreatmentEvents(window.patientHistory, prebiologicStatus);
+                window.currentEvents = events;
+            }
+        } catch (e) {
+            console.warn('[Dashboard] Error generando anotaciones de eventos:', e);
+            return {};
+        }
+    }
+
+    return HubTools.events.buildChartAnnotationsFromEvents(events || [], chartLabels);
+}
+
+// ============================================
+// GRÁFICOS
 // ============================================
 
 function initActivityChart() {
@@ -884,7 +1350,10 @@ function initActivityChart() {
         window.activityChartInstance.destroy();
     }
 
-    const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+    const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+        ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 8 })
+        : {};
+    const eventAnnotations = getEventAnnotations(chartData.labels);
     const cutoffAnnotations = getCutoffAnnotations(primaryMetric, secondaryMetric, window.currentPathology);
 
     window.activityChartInstance = new Chart(ctx, {
@@ -909,8 +1378,9 @@ function initActivityChart() {
                 },
                 annotation: {
                     annotations: {
-                        ...annotations,
-                        ...cutoffAnnotations
+                        ...cutoffAnnotations,
+                        ...treatmentAnnotations,
+                        ...eventAnnotations
                     }
                 }
             },
@@ -991,9 +1461,12 @@ function updateActivityChart() {
         } else if (window.activityChartInstance.options.scales.y1) {
             delete window.activityChartInstance.options.scales.y1;
         }
-        const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+        const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+            ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 8 })
+            : {};
+        const eventAnnotations = getEventAnnotations(chartData.labels);
         const cutoffAnnotations = getCutoffAnnotations(primaryMetric, secondaryMetric, window.currentPathology);
-        window.activityChartInstance.options.plugins.annotation.annotations = { ...annotations, ...cutoffAnnotations };
+        window.activityChartInstance.options.plugins.annotation.annotations = { ...cutoffAnnotations, ...treatmentAnnotations, ...eventAnnotations };
         window.activityChartInstance.update();
     } else {
         initActivityChart();
@@ -1029,7 +1502,10 @@ function initPROChart() {
         window.proChartInstance.destroy();
     }
 
-    const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
+    const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+        ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 6 })
+        : {};
+    const eventAnnotations = getEventAnnotations(chartData.labels);
 
     window.proChartInstance = new Chart(ctx, {
         type: 'line',
@@ -1052,7 +1528,10 @@ function initPROChart() {
                     padding: 12
                 },
                 annotation: {
-                    annotations: annotations
+                    annotations: {
+                        ...treatmentAnnotations,
+                        ...eventAnnotations
+                    }
                 }
             },
             scales: {
@@ -1137,8 +1616,11 @@ function updatePROChart() {
         } else if (window.proChartInstance.options.scales.y1) {
             delete window.proChartInstance.options.scales.y1;
         }
-        const annotations = getChartAnnotations(window.patientHistory.treatmentHistory, chartData.labels, window.currentPathology);
-        window.proChartInstance.options.plugins.annotation.annotations = annotations;
+        const treatmentAnnotations = (typeof HubTools !== 'undefined' && HubTools.events && HubTools.events.buildTreatmentDrugAnnotations)
+            ? HubTools.events.buildTreatmentDrugAnnotations(window.patientHistory.treatmentHistory || [], chartData.labels, { maxVisible: 6 })
+            : {};
+        const eventAnnotations = getEventAnnotations(chartData.labels);
+        window.proChartInstance.options.plugins.annotation.annotations = { ...treatmentAnnotations, ...eventAnnotations };
         window.proChartInstance.update();
     } else {
         initPROChart();
@@ -1150,8 +1632,8 @@ function getVisitMetric(visit, metric) {
         'basdai': ['basdaiResult', 'BASDAI', 'basdai'],
         'asdas': ['asdasCrpResult', 'ASDAS', 'asdas'],
         'basfi': ['basfiResult', 'BASFI', 'basfi'],
-        'haq': ['haqResult', 'HAQ', 'haq'],
-        'lei': ['leiResult', 'LEI', 'lei'],
+        'haq': ['haqResult', 'HAQ_Total', 'HAQ', 'haq'],
+        'lei': ['leiResult', 'LEI_Score', 'LEI', 'lei'],
         'rapid3': ['rapid3Result', 'RAPID3', 'RAPID3_Score', 'rapid3Total', 'rapid3'],
         'das28Crp': ['das28CrpResult', 'DAS28_CRP_Result', 'DAS28_CRP', 'das28Crp', 'DAS28-CRP'],
         'das28Esr': ['das28EsrResult', 'DAS28_ESR_Result', 'DAS28_ESR', 'das28Esr', 'DAS28-ESR'],
@@ -1160,15 +1642,31 @@ function getVisitMetric(visit, metric) {
         'pcr': ['pcrResult', 'PCR', 'pcr'],
         'vsg': ['vsgResult', 'VSG', 'vsg'],
         'evaDolor': ['evaDolor', 'EVA_Dolor', 'eva_dolor'],
-        'evaGlobal': ['evaGlobal', 'EVA_Global', 'eva_global']
+        'evaGlobal': ['evaGlobal', 'EVA_Global', 'eva_global'],
+        'sledai2k': ['sledai2kResult', 'SLEDAI_2K_Result', 'SLEDAI_2K', 'SLEDAI', 'sledai2k', 'SLEDAI_Result', 'sledai'],
+        'esspri': ['esspriResult', 'ESSPRI_Result', 'ESSPRI', 'esspri'],
+        'essdai': ['essdaiResult', 'ESSDAI_Result', 'ESSDAI', 'essdai'],
+        'slicc': ['sliccAcrSdi', 'SLICC_ACR_SDI', 'SLICC_SDI', 'SLICC', 'slicc'],
+        'prednisona': ['dosisPrednisona', 'Dosis_Prednisona_Mg_Dia', 'prednisona', 'Prednisona'],
+        'evaSequedadOral': ['evaSequedadOral', 'EVA_Sequedad_Oral', 'eva_sequedad_oral'],
+        'evaSequedadOcular': ['evaSequedadOcular', 'EVA_Sequedad_Ocular', 'eva_sequedad_ocular'],
+        'evaFatiga': ['evaFatiga', 'EVA_Fatiga', 'eva_fatiga'],
+        'dapsa': ['dapsaResult', 'DAPSA_Result', 'DAPSA', 'dapsa'],
+        'pasi': ['pasiResult', 'PASI_Score', 'PASI', 'pasi'],
+        'bsa': ['bsaResult', 'BSA_Percentage', 'BSA', 'bsa']
     };
 
     const possibleFields = fieldMap[metric] || [metric];
+    const invalidValues = ['NA', 'ND', '---', 'N/A', 'n/a', 'na'];
 
     for (const field of possibleFields) {
-        if (visit[field] !== null && visit[field] !== undefined && visit[field] !== '') {
-            return visit[field];
-        }
+        const val = visit[field];
+        if (val === null || val === undefined || val === '') continue;
+        const strVal = String(val).trim();
+        if (invalidValues.includes(strVal)) continue;
+        const num = parseStrictNumber(strVal);
+        if (num !== null) return num;
+        return null;
     }
 
     return null;
@@ -1249,10 +1747,21 @@ function getMetricLabel(metric) {
         das28Esr: 'DAS28-ESR',
         cdai: 'CDAI',
         sdai: 'SDAI',
-        pcr: 'PCR',
+        pcr: 'PCR (mg/L)',
         vsg: 'VSG',
         evaDolor: 'EVA Dolor',
-        evaGlobal: 'EVA Global'
+        evaGlobal: 'EVA Global',
+        sledai2k: 'SLEDAI-2K',
+        esspri: 'ESSPRI',
+        essdai: 'ESSDAI',
+        slicc: 'SLICC/ACR SDI',
+        prednisona: 'Prednisona (mg/día)',
+        evaSequedadOral: 'EVA Sequedad Oral',
+        evaSequedadOcular: 'EVA Sequedad Ocular',
+        evaFatiga: 'EVA Fatiga',
+        dapsa: 'DAPSA',
+        pasi: 'PASI',
+        bsa: 'BSA'
     };
     return labels[metric] || metric.toUpperCase();
 }
@@ -1272,7 +1781,7 @@ function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
                 borderDash: [5, 5],
                 label: {
                     content: label,
-                    enabled: true,
+                    display: true,
                     position: 'start',
                     color: color,
                     font: { size: 10 }
@@ -1283,7 +1792,7 @@ function getCutoffAnnotations(primaryMetric, secondaryMetric, pathology) {
     };
 
     const processMetricCutoffs = (metricKey, scaleID) => {
-        const cutoffKeyMap = { das28Crp: 'das28', das28Esr: 'das28', cdai: 'cdai', sdai: 'sdai', rapid3: 'rapid3', basdai: 'basdai', asdas: 'asdas', haq: 'haq' };
+        const cutoffKeyMap = { das28Crp: 'das28', das28Esr: 'das28', cdai: 'cdai', sdai: 'sdai', rapid3: 'rapid3', basdai: 'basdai', asdas: 'asdas', haq: 'haq', sledai2k: 'sledai2k', esspri: 'esspri', essdai: 'essdai' };
         const metricCutoffs = cutoffs[cutoffKeyMap[metricKey] || metricKey];
         if (metricCutoffs) {
             if (metricCutoffs.remission !== undefined) addCutoffLine(metricKey, scaleID, COLORS.remission, metricCutoffs.remission, 'Remisi\u00f3n');
@@ -1332,7 +1841,7 @@ function getChartAnnotations(treatmentHistory, chartLabels, pathology) {
                 borderWidth: 1,
                 label: {
                     content: treatment.name,
-                    enabled: true,
+                    display: true,
                     position: 'start',
                     color: COLORS.biologic,
                     font: { size: 10 }
@@ -1358,8 +1867,14 @@ function showEmptyState(message = 'Busca un paciente para ver su dashboard.') {
 }
 
 function getPathologyLabel(code) {
-    if (!code) return 'Sin diagnstico';
-    const map = { espa: 'Espondiloartritis Axial', aps: 'Artritis Psorisica', ar: 'Artritis Reumatoide' };
+    if (!code) return 'Sin diagnóstico';
+    const map = { 
+        espa: 'Espondiloartritis Axial', 
+        aps: 'Artritis Psoriásica', 
+        ar: 'Artritis Reumatoide',
+        les: 'Lupus eritematoso sistémico',
+        sjogren: 'Síndrome de Sjögren' 
+    };
     return map[code.toLowerCase()] || code.toUpperCase();
 }
 
@@ -1393,6 +1908,11 @@ function formatDate(dateStr) {
     return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+function escapeHtml(text) {
+    if (!text) return '';
+    return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 function calculateAge(birthDate) {
     const date = new Date(birthDate);
     if (Number.isNaN(date.getTime())) return '';
@@ -1418,6 +1938,34 @@ function getLastItem(list) {
     return list[list.length - 1];
 }
 
+function renderPrebiologicBadge(cip, latestVisit) {
+    var container = document.getElementById('prebiologicBadgeContainer');
+    if (!container) return;
+
+    if (!cip) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    var badgeHTML = '';
+    if (
+        typeof HubTools !== 'undefined' &&
+        HubTools.prebiologic &&
+        typeof HubTools.prebiologic.getBadgeHTML === 'function'
+    ) {
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip, latestVisit || {});
+    }
+
+    if (badgeHTML) {
+        container.innerHTML = badgeHTML;
+        container.style.display = '';
+    } else {
+        container.style.display = 'none';
+        container.innerHTML = '';
+    }
+}
+
 // ============================================
 // EXPONER FUNCIONES GLOBALES
 // ============================================
@@ -1430,6 +1978,7 @@ window.populateKeyEvents = populateKeyEvents;
 window.showEmptyState = showEmptyState;
 window.formatBiomarker = formatBiomarker;
 window.formatDate = formatDate;
+window.escapeHtml = escapeHtml;
 window.calculateAge = calculateAge;
 window.calculateDiseaseYears = calculateDiseaseYears;
 window.capitalizeFirst = capitalizeFirst;
@@ -1440,8 +1989,19 @@ window.updatePROChart = updatePROChart;
 window.prepareChartData = prepareChartData;
 window.getChartAnnotations = getChartAnnotations;
 window.getCutoffAnnotations = getCutoffAnnotations;
+window.getEventAnnotations = getEventAnnotations;
 window.getVisitMetric = getVisitMetric;
 window.exportVisitsToCSV = exportVisitsToCSV;
+
+/**
+ * Placeholder para resaltar un evento en el gráfico al hacer click en el timeline.
+ * Implementación futura: desplazar chart, aplicar highlight visual al punto correspondiente.
+ * @param {string} eventId - ID del evento a resaltar
+ */
+window.highlightChartEvent = function (eventId) {
+    console.log('[Dashboard] highlightChartEvent llamado con:', eventId);
+    // TODO: Implementar resaltado visual en el gráfico (9B.6 - futuro)
+};
 
 
 

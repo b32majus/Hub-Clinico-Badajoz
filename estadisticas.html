@@ -32,7 +32,7 @@
             </div>
 
             <div class="search-container">
-                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por ID..." autocomplete="off">
+                <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
                 <i class="fas fa-search search-icon" aria-hidden="true"></i>
                 <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
                     <i class="fas fa-times-circle"></i>
@@ -153,6 +153,8 @@
                                         <option value="AR">Artritis Reumatoide (AR)</option>
                                         <option value="ESPA">Espondiloartritis Axial (ESPA)</option>
                                         <option value="APS">Artritis Psoriásica (APS)</option>
+                                        <option value="LES">Lupus eritematoso sistémico (LES)</option>
+                                        <option value="SJOGREN">Síndrome de Sjögren</option>
                                     </select>
                                 </div>
                             </div>
@@ -211,7 +213,14 @@
                                         <option value="CDAI">CDAI</option>
                                         <option value="SDAI">SDAI</option>
                                         <option value="RAPID3">RAPID3</option>
-                                        <option value="PCR">PCR</option>
+                                        <option value="SLEDAI-2K">SLEDAI-2K</option>
+                                        <option value="ESSDAI">ESSDAI</option>
+                                        <option value="ESSPRI">ESSPRI</option>
+                                        <option value="DAPSA">DAPSA</option>
+                                        <option value="PASI">PASI</option>
+                                        <option value="LEI">LEI</option>
+                                        <option value="Prednisona">Prednisona</option>
+                                        <option value="PCR">PCR (mg/L)</option>
                                         <option value="VSG">VSG</option>
                                     </select>
                                 </div>
@@ -439,7 +448,7 @@
                     <table class="data-table" id="cohortTable">
                         <thead>
                             <tr>
-                                <th data-sort="ID_Paciente">ID <i class="fas fa-sort"></i></th>
+                                <th data-sort="ID_Paciente">CIP <i class="fas fa-sort"></i></th>
                                 <th data-sort="Nombre">Nombre <i class="fas fa-sort"></i></th>
                                 <th data-sort="pathology">Patología <i class="fas fa-sort"></i></th>
                                 <th data-sort="Fecha_Visita">Última Visita <i class="fas fa-sort"></i></th>

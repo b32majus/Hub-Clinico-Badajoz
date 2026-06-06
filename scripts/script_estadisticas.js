@@ -52,34 +52,73 @@ function normalizeRecord(record, extra) {
     return { ...(record || {}), ...(extra || {}) };
 }
 
+function parseStrictNumber(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const raw = typeof value === 'string' ? value.trim().replace(',', '.') : value;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 function getDisplayMetricForPatient(patient, pathology) {
     if (pathology === 'ESPA') {
-        const basdai = parseFloat(patient.BASDAI_Result);
+        const basdai = parseStrictNumber(patient.BASDAI_Result);
         return {
             label: 'BASDAI',
-            value: !isNaN(basdai) ? basdai.toFixed(1) : 'N/A'
+            value: basdai !== null ? basdai.toFixed(1) : 'N/A'
         };
     }
 
+    if (pathology === 'LES') {
+        const sledai = parseStrictNumber(patient.SLEDAI_2K_Result || patient.SLEDAI_2K || patient.sledai2kResult || patient.SLEDAI);
+        if (sledai !== null) {
+            return { label: 'SLEDAI-2K', value: sledai.toFixed(1) };
+        }
+        const slicc = parseStrictNumber(patient.SLICC_ACR_SDI || patient.SLICC_SDI || patient.sliccSdi);
+        if (slicc !== null) {
+            return { label: 'SLICC/ACR SDI', value: slicc.toFixed(1) };
+        }
+        return { label: 'SLEDAI-2K', value: 'N/A' };
+    }
+
+    if (pathology === 'SJOGREN') {
+        const essdai = parseStrictNumber(patient.ESSDAI_Result || patient.ESSDAI || patient.essdaiResult);
+        if (essdai !== null) {
+            return { label: 'ESSDAI', value: essdai.toFixed(1) };
+        }
+        const esspri = parseStrictNumber(patient.ESSPRI_Result || patient.ESSPRI || patient.esspriResult);
+        if (esspri !== null) {
+            return { label: 'ESSPRI', value: esspri.toFixed(1) };
+        }
+        return { label: 'ESSDAI', value: 'N/A' };
+    }
+
     if (pathology === 'APS') {
-        const haq = parseFloat(patient.HAQ_Total);
-        return {
-            label: 'HAQ',
-            value: !isNaN(haq) ? haq.toFixed(2) : 'N/A'
-        };
+        const dapsa = parseStrictNumber(patient.DAPSA_Result || patient.dapsaResult || patient.DAPSA);
+        if (dapsa !== null) {
+            return { label: 'DAPSA', value: dapsa.toFixed(1) };
+        }
+        const rapid3 = parseStrictNumber(patient.RAPID3_Score || patient.RAPID3_Total || patient.rapid3Result);
+        if (rapid3 !== null) {
+            return { label: 'RAPID3', value: rapid3.toFixed(1) };
+        }
+        const haq = parseStrictNumber(patient.HAQ_Total || patient.haqResult);
+        if (haq !== null) {
+            return { label: 'HAQ', value: haq.toFixed(2) };
+        }
+        return { label: 'DAPSA', value: 'N/A' };
     }
 
     if (pathology === 'AR') {
         // Nombres exactos del contrato AR (template_ar_excel.md)
         const metricCandidates = [
-            ['DAS28-CRP', parseFloat(patient.DAS28_CRP_Result), 1],
-            ['DAS28-ESR', parseFloat(patient.DAS28_ESR_Result), 1],
-            ['CDAI', parseFloat(patient.CDAI_Result), 1],
-            ['SDAI', parseFloat(patient.SDAI_Result), 1]
+            ['DAS28-CRP', parseStrictNumber(patient.DAS28_CRP_Result), 1],
+            ['DAS28-ESR', parseStrictNumber(patient.DAS28_ESR_Result), 1],
+            ['CDAI', parseStrictNumber(patient.CDAI_Result), 1],
+            ['SDAI', parseStrictNumber(patient.SDAI_Result), 1]
         ];
 
         for (const [label, value, decimals] of metricCandidates) {
-            if (!isNaN(value)) {
+            if (value !== null) {
                 return { label, value: value.toFixed(decimals) };
             }
         }
@@ -341,17 +380,19 @@ function initializeFilters() {
     // Poblar selectores de correlación
     const scatterX = document.getElementById('scatterX');
     const scatterY = document.getElementById('scatterY');
-    const options = ['BASDAI', 'ASDAS', 'HAQ', 'DAS28_CRP', 'DAS28_ESR', 'CDAI', 'SDAI', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+    const options = ['BASDAI', 'ASDAS', 'HAQ', 'DAS28_CRP', 'DAS28_ESR', 'CDAI', 'SDAI',
+        'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global',
+        'SLEDAI-2K', 'ESSPRI', 'ESSDAI', 'DAPSA', 'PASI', 'LEI', 'Prednisona'];
 
     options.forEach((option, index) => {
         const optX = document.createElement('option');
         optX.value = option;
-        optX.textContent = option;
+        optX.textContent = option === 'PCR' ? 'PCR (mg/L)' : option;
         scatterX?.appendChild(optX);
 
         const optY = document.createElement('option');
         optY.value = option;
-        optY.textContent = option;
+        optY.textContent = option === 'PCR' ? 'PCR (mg/L)' : option;
         if (index === 1) optY.selected = true; // ASDAS por defecto en Y
         scatterY?.appendChild(optY);
     });
@@ -369,6 +410,7 @@ function bindAutoApplyFilters() {
         const handler = () => {
             if (input.id === 'filterPathology') {
                 syncActivityIndexForPathology();
+                updateStatisticsOptionsByPathology();
             }
             applyFiltersAndRefresh();
         };
@@ -398,9 +440,25 @@ function syncActivityIndexForPathology() {
     }
 
     if (pathology === 'APS') {
-        const apsIndices = ['HAQ', 'ASDAS', 'RAPID3', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+        const apsIndices = ['DAPSA', 'HAQ', 'RAPID3', 'PASI', 'LEI', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
         if (!apsIndices.includes(current)) {
-            activityIndex.value = 'HAQ';
+            activityIndex.value = 'DAPSA';
+        }
+        return;
+    }
+
+    if (pathology === 'LES') {
+        const lesIndices = ['SLEDAI-2K', 'SLICC/ACR SDI', 'Prednisona', 'PCR', 'VSG', 'EVA Dolor', 'EVA Global'];
+        if (!lesIndices.includes(current)) {
+            activityIndex.value = 'SLEDAI-2K';
+        }
+        return;
+    }
+
+    if (pathology === 'SJOGREN') {
+        const sjogrenIndices = ['ESSDAI', 'ESSPRI', 'EVA Sequedad Oral', 'EVA Sequedad Ocular', 'EVA Fatiga', 'EVA Dolor', 'PCR', 'VSG'];
+        if (!sjogrenIndices.includes(current)) {
+            activityIndex.value = 'ESSDAI';
         }
         return;
     }
@@ -410,6 +468,30 @@ function syncActivityIndexForPathology() {
         if (!arIndices.includes(current)) {
             activityIndex.value = 'DAS28_CRP';
         }
+    }
+}
+
+/**
+ * Oculta/muestra opciones ASDAS y KPI card según patología.
+ * En AR: oculta option ASDAS y kpiAsdasCard.
+ * En EspA/APs: los restaura.
+ */
+function updateStatisticsOptionsByPathology() {
+    const pathology = document.getElementById('filterPathology')?.value || '';
+    const normalized = HubTools?.normalizer?.normalizePathology?.(pathology) || (pathology || '').toLowerCase();
+    const asdasOption = document.querySelector('option[value="ASDAS"]');
+    const asdasCard = document.getElementById('kpiAsdasCard');
+
+    if (normalized === 'ar' || normalized === 'les' || normalized === 'sjogren') {
+        if (asdasOption) asdasOption.hidden = true;
+        if (asdasOption && asdasOption.selected) {
+            const das28Option = document.querySelector('option[value="DAS28_CRP"]') || document.querySelector('option[value="DAS28_ESR"]');
+            if (das28Option) das28Option.selected = true;
+        }
+        if (asdasCard) asdasCard.style.display = 'none';
+    } else {
+        if (asdasOption) asdasOption.hidden = false;
+        if (asdasCard) asdasCard.style.display = '';
     }
 }
 
@@ -656,14 +738,14 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'ASDAS', label: 'ASDAS', unit: '' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
             { key: 'EVA_Global', label: 'EVA Global', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else if (pathologyType === 'HAQ') {
-        // APS: HAQ, ASDAS, RAPID3, EVA Dolor, EVA Global, PASI, LEI, PCR, VSG
+        // APS legacy fallback: HAQ/RAPID3/PASI/LEI; DAPSA es la métrica principal cuando existe.
         metricsToShow = [
+            { key: 'DAPSA', label: 'DAPSA', unit: '' },
             { key: 'HAQ', label: 'HAQ', unit: '' },
-            { key: 'ASDAS', label: 'ASDAS', unit: '' },
             { key: 'RAPID3', label: 'RAPID3', unit: '' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
             { key: 'PASI', label: 'PASI', unit: '' },
@@ -678,7 +760,42 @@ function updateMetricsDisplay(metrics, pathologyType) {
             { key: 'SDAI', label: 'SDAI', unit: '' },
             { key: 'RAPID3', label: 'RAPID3', unit: '' },
             { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
-            { key: 'PCR', label: 'PCR', unit: ' mg/L' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
+            { key: 'VSG', label: 'VSG', unit: ' mm/h' }
+        ];
+    } else if (pathologyType && (pathologyType.includes('SLEDAI') || pathologyType === 'LES')) {
+        // LES
+        metricsToShow = [
+            { key: 'SLEDAI_2K', label: 'SLEDAI-2K', unit: '' },
+            { key: 'SLICC_SDI', label: 'SLICC/ACR SDI', unit: '' },
+            { key: 'PREDNISONA', label: 'Prednisona', unit: ' mg/día' },
+            { key: 'EVA_Dolor', label: 'EVA Dolor', unit: '' },
+            { key: 'EVA_Global', label: 'EVA Global', unit: '' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
+            { key: 'VSG', label: 'VSG', unit: ' mm/h' }
+        ];
+    } else if (pathologyType && (pathologyType.includes('ESSDAI') || pathologyType.includes('ESSPRI') || pathologyType === 'SJOGREN')) {
+        // Sjögren
+        metricsToShow = [
+            { key: 'ESSDAI', label: 'ESSDAI', unit: '' },
+            { key: 'ESSPRI', label: 'ESSPRI', unit: '' },
+            { key: 'EVA_SEQUEDAD_ORAL', label: 'EVA Seq. Oral', unit: '' },
+            { key: 'EVA_SEQUEDAD_OCULAR', label: 'EVA Seq. Ocular', unit: '' },
+            { key: 'EVA_FATIGA_SJOGREN', label: 'EVA Fatiga', unit: '' },
+            { key: 'EVA_DOLOR_SJOGREN', label: 'EVA Dolor', unit: '' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
+            { key: 'VSG', label: 'VSG', unit: ' mm/h' }
+        ];
+    } else if (pathologyType === 'DAPSA' || pathologyType === 'APS') {
+        // APs
+        metricsToShow = [
+            { key: 'DAPSA', label: 'DAPSA', unit: '' },
+            { key: 'RAPID3', label: 'RAPID3', unit: '' },
+            { key: 'PASI', label: 'PASI', unit: '' },
+            { key: 'LEI', label: 'LEI', unit: '' },
+            { key: 'BSA', label: 'BSA', unit: '%' },
+            { key: 'HAQ', label: 'HAQ', unit: '' },
+            { key: 'PCR', label: 'PCR (mg/L)', unit: '' },
             { key: 'VSG', label: 'VSG', unit: ' mm/h' }
         ];
     } else {
