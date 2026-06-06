@@ -47,6 +47,9 @@
             result.className = 'result-box result-box--success';
             F.clearChildren(result);
             F.appendIconText(result, 'fa-check-circle', `Seguimiento registrado para ${document.getElementById('fhSegCip').value || 'CIP demo no indicado'}. Morisky: ${document.getElementById('fhSegMoriskyResultado').textContent}.`);
+            const small = document.createElement('small');
+            small.textContent = 'Demo — los datos se almacenan en memoria de sesión.';
+            result.appendChild(small);
         });
     });
 })();

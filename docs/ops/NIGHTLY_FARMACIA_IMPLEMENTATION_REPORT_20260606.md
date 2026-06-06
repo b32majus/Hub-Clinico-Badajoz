@@ -162,9 +162,57 @@ Para probar alta guiada: cualquier otro CIP (ej. `CIP-DEMO-TEST`).
 
 ---
 
-## 9. Recomendación
+## Hardening demo WO-026
 
-**ready_for_human_review** — No mergear automáticamente.
+**WO-026 ejecutada:** 2026-06-06 — correcciones de bajo riesgo antes de prueba visual.
+
+### Qué se revisó
+
+| Punto | Acción | Resultado |
+|-------|--------|-----------|
+| 1. SRI Font Awesome | Verificar integrity CDN | ✅ Correcto — hash base64 coincide con el archivo real |
+| 2. Persistencia demo | Revisar mensajes al guardar | ✅ Validación: "Demo — memoria de sesión". Primera visita: "Demo en memoria de sesión". Seguimiento: corregido para incluir "Demo — memoria de sesión" |
+| 3. Fuente de datos | Nota en reporte | ✅ Documentada abajo |
+| 4. Banners demo | Revisar textos visibles | ✅ Las 8 páginas tienen banner "Datos sintéticos, sin JARA/SES/Pharmatool, sin seguridad productiva" |
+| 5. Formateo HTML | Indentación irregular | ⏭️ **No corregido** — el HTML tiene indentación desigual (~8 espacios en DOCTYPE/html vs 4 en head). Corregirlo tocaría cada línea de 8 archivos con riesgo de errores. Se reporta como deuda técnica. |
+| 6. Reporte | Esta sección | ✅ |
+
+### Nota sobre fuente de datos
+
+La fuente funcional real de la demo es **`scripts/farmacia_common.js`** (objeto `patients` con datos hardcoded).  
+Los CSVs en `data/farmacia_demo/` son **dataset espejo/documental** para revisión humana.  
+La app no lee CSV dinámicamente. No implementar lectura real de CSV sin cambiar la arquitectura.
+
+### Archivos modificados
+
+- `scripts/farmacia_seguimiento.js` — añadido mensaje "Demo — memoria de sesión" al guardar
+- `docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md` — esta sección
+
+### Riesgos restantes
+
+| Riesgo | Nivel | Nota |
+|--------|-------|------|
+| HTML con indentación irregular | 🟢 Bajo | Solo estético. No afecta funcionalidad ni renderizado |
+| Datos en memoria volátil | 🟡 Medio | Ya documentado en banners y mensajes de guardado |
+| Sin SRI en páginas Reuma | 🟢 Bajo | Es global del Hub, no solo de Farmacia |
+
+### Checklist para prueba visual
+
+- [ ] Abrir `farmacia_index.html` — banner, buscador, hint
+- [ ] CIP-DEMO-FH-001 → Quick View con badge "En seguimiento", acciones: Seguimiento + Dashboard
+- [ ] CIP-DEMO-FH-002 → Quick View con badge "Pendiente", acciones: Validación + Dashboard
+- [ ] CIP-DEMO-FH-003 → Quick View con badge "Validado", acciones: Primera Visita + Dashboard
+- [ ] CIP nuevo → Alta guiada con servicio/patología/punto de entrada
+- [ ] Validación → Pendiente/Validado/Denegado, TXT export, CSV export
+- [ ] Primera visita → precarga por query params, guardar con mensaje demo
+- [ ] Seguimiento → Morisky-Green, optimización, EA, guardar con mensaje demo
+- [ ] Dashboard → timeline, bloques de datos
+- [ ] Navegación Reuma → enlace a Farmacia desde sidebar
+- [ ] No hay errores JS en consola del navegador
+
+## Recomendación
+
+**ready_for_visual_review** — No mergear automáticamente.
 
 ### Orden de revisión sugerido (Sil + Cora)
 
