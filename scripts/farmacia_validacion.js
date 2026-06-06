@@ -10,6 +10,17 @@
 
     function toggleHSBlock() {
         document.getElementById('formHS').classList.toggle('hidden', !isHSPathology());
+        let note = document.getElementById('fhHSOtherNote');
+        if (!note) {
+            note = document.createElement('p');
+            note.id = 'fhHSOtherNote';
+            note.style.cssText = 'font-size:0.82rem;color:#64748B;margin:8px 0 0;';
+            document.getElementById('formDerma').appendChild(note);
+        }
+        const patologia = document.getElementById('fhDermaPatologia').value;
+        const showNote = modoActual === 'derma' && patologia && patologia !== 'Hidradenitis supurativa';
+        note.textContent = showNote ? 'Campos específicos de HS no activados para esta patología en la demo.' : '';
+        note.classList.toggle('hidden', !showNote);
     }
 
     function mostrarFormulario(modo) {

@@ -47,6 +47,18 @@
             timelineItem(patient.primeraVisita, 'Primera visita', patient.primeraVisita === 'Pendiente' ? 'Pendiente de registrar' : 'Inicio de seguimiento farmacoterapéutico'),
             timelineItem(patient.ultimaVisita, 'Seguimiento', patient.seguimiento)
         );
+
+        const actionBtns = document.querySelectorAll('.patient-header-actions a');
+        if (actionBtns[0]) {
+            actionBtns[0].href = F.makeContextUrl('farmacia_seguimiento.html', {
+                cip: patient.cip, servicio: patient.servicioSlug, patologia: patient.patologia, entrada: 'seguimiento'
+            });
+        }
+        if (actionBtns[1]) {
+            actionBtns[1].href = F.makeContextUrl('farmacia_validacion.html', {
+                cip: patient.cip, servicio: patient.servicioSlug, patologia: patient.patologia, entrada: 'validacion'
+            });
+        }
     }
     document.addEventListener('DOMContentLoaded', () => {
         const ctx = F.getQueryContext();

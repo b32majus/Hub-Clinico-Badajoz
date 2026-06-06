@@ -17,7 +17,7 @@
                         '<p class="results-subtitle" id="fhSubtitle"></p>',
                     '</div>',
                     '<button type="button" class="quick-view-close-btn" data-fh-qv-close aria-label="Cerrar vista r\u00e1pida">',
-                        '<i class="fas fa-times"></i>',
+                        '<i class="fas fa-times" aria-hidden="true"></i>',
                     '</button>',
                 '</header>',
                 '<div id="fhContent" class="results-content"></div>',

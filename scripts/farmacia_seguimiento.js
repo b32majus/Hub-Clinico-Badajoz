@@ -19,6 +19,14 @@
             F.setValue('fhSegUltimosProms', ctx.patient.proms);
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
         }
+        if (!document.getElementById('fhSegFecha').value) {
+            document.getElementById('fhSegFecha').value = new Date().toISOString().slice(0, 10);
+        }
+    }
+
+    function toggleField(fieldId, show) {
+        const el = document.getElementById(fieldId);
+        if (el) el.closest('.form-group').classList.toggle('hidden', !show);
     }
 
     function updateMorisky() {
@@ -42,6 +50,24 @@
         document.getElementById('fhSegCambioFarmaco').addEventListener('input', event => {
             document.getElementById('fhSegCambioFarmacoWarning').classList.toggle('hidden', !event.target.value.trim());
         });
+
+        const cambiaNivel = document.getElementById('fhSegCambiaNivel');
+        const applyNivel = () => toggleField('fhSegNuevoNivel', cambiaNivel.value === 'Sí');
+        cambiaNivel.addEventListener('change', applyNivel);
+        applyNivel();
+
+        const optimiza = document.getElementById('fhSegOptimiza');
+        const applyOptimiza = () => {
+            const show = optimiza.value === 'Sí';
+            ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegMotivoOpt'].forEach(id => toggleField(id, show));
+        };
+        optimiza.addEventListener('change', applyOptimiza);
+        applyOptimiza();
+
+        const suspension = document.getElementById('fhSegSuspension');
+        const applySusp = () => toggleField('fhSegMotivoSusp', suspension.value === 'Sí');
+        suspension.addEventListener('change', applySusp);
+        applySusp();
         document.getElementById('fhSegGuardar').addEventListener('click', () => {
             const result = document.getElementById('fhSegResultado');
             result.className = 'result-box result-box--success';
