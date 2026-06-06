@@ -15,7 +15,7 @@ La rama nocturna `work/hermes/nightly-farmacia-v0-1-20260606` contiene un **prot
 
 | Indicador | Valor |
 |-----------|-------|
-| Commits en rama | **18** |
+| Commits en rama (desde base) | **32** |
 | Archivos funcionales | **31** (8 HTML + 1 CSS + 6 JS + 8 CSV + 7 páginas Reuma con navegación añadida + 1 smoke check) |
 | Builders | KairOS (DeepSeek Flash) → PM Codex (GPT-5.5) → Claude Code (auditoría + hardening) |
 | Iteraciones | 3: implementación inicial → auditoría + corrección → hardening + visual review + freeze |
@@ -56,7 +56,7 @@ La rama nocturna `work/hermes/nightly-farmacia-v0-1-20260606` contiene un **prot
 ### Arquitectura
 
 - HTML estático servido desde el mismo directorio que el Hub existente.
-- Estilo en `farmacia_style.css` (269 líneas) siguiendo variables SES del Hub (`--ses-green: #008777`).
+- Estilo en `farmacia_style.css` — hoja modular del módulo Farmacia siguiendo variables SES del Hub (`--ses-green: #008777`).
 - JS modular en `scripts/farmacia_*.js` (6 scripts, 0 inline, 0 `innerHTML`).
 - Datos demo hardcodeados en `scripts/farmacia_common.js` (objeto `patients`).
 - Navegación bidireccional: Farmacia ↔ Reuma desde la sidebar.
@@ -123,7 +123,7 @@ La rama nocturna `work/hermes/nightly-farmacia-v0-1-20260606` contiene un **prot
 | Decisión | Descripción |
 |----------|-------------|
 | **HTML estático vanilla** | Sin framework. Servido desde el mismo directorio que el Hub existente. |
-| **CSS modular** | `farmacia_style.css` (269 líneas) con paleta SES verde `#008777`. |
+| **CSS modular** | `farmacia_style.css` — hoja modular con paleta SES verde `#008777`. |
 | **JS 0 inline, 0 innerHTML** | 6 scripts modulares en `scripts/farmacia_*.js`. DOM puro (`createElement`/`textContent`). |
 | **Namespace `F`** | `farmacia_common.js` como módulo compartido con namespace `F` (datos, utilidades, constantes). |
 | **Contexto por query params** | `?cip=X&servicio=Y&patologia=Z&entrada=N` para paso de contexto entre pantallas. |
