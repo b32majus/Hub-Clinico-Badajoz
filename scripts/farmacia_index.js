@@ -171,12 +171,12 @@
         var out = [];
         if (!str || str === '\u2014') return out;
         if (/basal pendiente/i.test(str) || /sin registro/i.test(str)) {
-            out.push({ name: 'PROMs', value: 'Basal pendiente', interpretation: 'No disponible' });
+            out.push({ name: 'PROMs demo / último valor', value: 'Basal pendiente', interpretation: 'No disponible' });
             return out;
         }
         var dlqi = str.match(/DLQI\s*(\d+)/i);
         if (dlqi) {
-            out.push({ name: 'DLQI', value: dlqi[1], interpretation: knownScoreInterpretation('DLQI', dlqi[1]) });
+            out.push({ name: 'DLQI demo / último valor', value: dlqi[1], interpretation: knownScoreInterpretation('DLQI', dlqi[1]) });
         }
         var eva = str.match(/EVA\s*(picor|dolor)?\s*(\d+)\/10/i);
         if (eva) {
@@ -473,7 +473,12 @@
         var searchBtn = document.getElementById('fhSearchBtn');
         var cipInput = document.getElementById('fhCipInput');
         if (searchBtn) searchBtn.addEventListener('click', search);
-        if (cipInput) cipInput.addEventListener('keydown', function (event) { if (event.key === 'Enter') search(); });
+        if (cipInput) cipInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                search();
+            }
+        });
         initGuidedIntake();
         var context = F.getQueryContext();
         if (context.cip && cipInput) {

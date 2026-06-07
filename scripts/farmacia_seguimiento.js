@@ -63,6 +63,123 @@
         if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhSegNoCipBanner');
     }
 
+    var cipSearchFields = [
+        'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo',
+        'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual',
+        'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas',
+        'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms',
+        'fhSegOrigenCatalogo', 'fhSegEaPrevios'
+    ];
+
+    function clearCipFields() {
+        for (var i = 0; i < cipSearchFields.length; i++) {
+            var el = document.getElementById(cipSearchFields[i]);
+            if (el) { el.value = ''; el.readOnly = false; }
+        }
+    }
+
+    function clearCipNotice() {
+        var notice = document.getElementById('fhSegCipSearchNotice');
+        if (notice) notice.parentNode.removeChild(notice);
+    }
+
+    function showCipNotice(msg, type) {
+        var cipInput = document.getElementById('fhSegCip');
+        if (!cipInput) return;
+        var div = document.createElement('div');
+        div.id = 'fhSegCipSearchNotice';
+        div.className = 'notice-box notice-box--' + (type === 'warning' ? 'warning' : 'info');
+        var icon = document.createElement('i');
+        icon.className = type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+        icon.setAttribute('aria-hidden', 'true');
+        div.appendChild(icon);
+        div.appendChild(document.createTextNode(' ' + msg));
+        var fg = cipInput.closest('.form-group');
+        if (fg) fg.insertAdjacentElement('afterend', div);
+    }
+
+    function searchCIP() {
+        var cipInput = document.getElementById('fhSegCip');
+        if (!cipInput) return;
+        var cip = cipInput.value.trim();
+        if (!cip) return;
+
+        clearCipNotice();
+
+        var patient = F.patients[cip];
+        if (!patient) {
+            clearCipFields();
+            showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
+            return;
+        }
+
+        F.setValue('fhSegCip', patient.cip);
+        F.setValue('fhSegServicio', patient.servicio);
+        F.setValue('fhSegPatologia', patient.patologia);
+        F.setValue('fhSegFarmaco', patient.farmaco);
+        F.setValue('fhSegDosisActual', patient.dosis);
+        F.setValue('fhSegPautaActual', patient.pauta);
+        F.setValue('fhSegVia', patient.via);
+        F.setValue('fhSegFechaInicio', patient.primeraVisita);
+        F.setValue('fhSegUltimaAdherencia', patient.adherencia);
+        F.setValue('fhSegUltimosProms', patient.proms);
+        F.setValue('fhSegEaPrevios', patient.efectosAdversos);
+
+        var snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
+        F.setValue('fhSegPrincipioActivo', snap ? snap.principio_activo_snapshot || patient.principioActivo || '' : patient.principioActivo || '');
+        F.setValue('fhSegPresentacion', snap ? snap.presentacion_snapshot || '' : '');
+
+        if (snap) {
+            F.setValue('fhSegCodigoNacional', snap.codigo_nacional_snapshot || '');
+            F.setValue('fhSegNregistro', snap.nregistro_snapshot || '');
+            var tags = [];
+            if (snap.etiquetas && snap.etiquetas.biosimilar) tags.push('Biosimilar');
+            if (snap.etiquetas && snap.etiquetas.es_hospitalario) tags.push('Hospitalario');
+            F.setValue('fhSegEtiquetas', tags.length ? tags.join(', ') : '\u2014');
+        } else {
+            F.setValue('fhSegCodigoNacional', '');
+            F.setValue('fhSegNregistro', '');
+            F.setValue('fhSegEtiquetas', '');
+        }
+
+        (function setOrigenCatalogo() {
+            var sourceType = snap ? (snap.source_type || '').toString().toUpperCase() : '';
+            var label;
+            if (!snap) {
+                label = 'Demo';
+            } else if (sourceType === 'CIMA') {
+                label = 'CIMA';
+            } else if (sourceType === 'LOCAL') {
+                label = 'Local Especial';
+            } else if (sourceType === 'LOCAL_PENDIENTE_DEMO') {
+                label = 'Demo/local pendiente';
+            } else {
+                label = 'Demo';
+            }
+            F.setValue('fhSegOrigenCatalogo', label);
+        })();
+
+        for (var i = 0; i < cipSearchFields.length; i++) {
+            var el = document.getElementById(cipSearchFields[i]);
+            if (el) el.readOnly = true;
+        }
+
+        var banner = document.getElementById('fhSegNoCipBanner');
+        if (banner) banner.parentNode.removeChild(banner);
+    }
+
+    function initCipSearch() {
+        var cipInput = document.getElementById('fhSegCip');
+        if (!cipInput) return;
+        cipInput.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            searchCIP();
+        });
+        var btn = document.getElementById('fhSegCipSearchBtn');
+        if (btn) btn.addEventListener('click', searchCIP);
+    }
+
     function toggleField(fieldId, show) {
         const el = document.getElementById(fieldId);
         if (el) el.closest('.form-group').classList.toggle('hidden', !show);
@@ -74,12 +191,12 @@
             const selected = document.querySelector(`input[name="${name}"]:checked`);
             if (selected && selected.value !== correct) incorrectas += 1;
         });
-        let text = 'Pendiente de completar';
+        let text = 'Resultado Morisky-Green: pendiente de completar';
         let resultClass = '';
         if (document.querySelectorAll('input[name^="mg"]:checked').length === 4) {
-            if (incorrectas === 0) { text = 'Alta adherencia'; resultClass = 'mg-result--high'; }
-            else if (incorrectas <= 2) { text = 'Adherencia media / parcial'; resultClass = 'mg-result--medium'; }
-            else { text = 'Baja adherencia'; resultClass = 'mg-result--low'; }
+            if (incorrectas === 0) { text = 'Resultado Morisky-Green: alta adherencia'; resultClass = 'mg-result--high'; }
+            else if (incorrectas <= 2) { text = 'Resultado Morisky-Green: adherencia media / parcial'; resultClass = 'mg-result--medium'; }
+            else { text = 'Resultado Morisky-Green: baja adherencia'; resultClass = 'mg-result--low'; }
         }
         F.setText('fhSegMoriskyResultado', text);
         const el = document.getElementById('fhSegMoriskyResultado');
@@ -434,6 +551,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();
+        initCipSearch();
         document.querySelectorAll('input[name^="mg"]').forEach(input => input.addEventListener('change', updateMorisky));
         renderDLQI();
         setupEVASliders();

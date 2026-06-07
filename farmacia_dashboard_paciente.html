@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607d">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607e">
 </head>
         <body>
             <div class="hub-shell">
@@ -80,8 +80,20 @@
 </div><section class="patient-header-card">
     <div class="patient-header-main">
         <div class="patient-avatar"><i class="fas fa-user" aria-hidden="true"></i></div>
-        <div class="patient-info"><div class="patient-id-badge" id="patientIdBadge">—</div><h1 class="patient-name" id="patientName">Paciente Demo</h1><div class="patient-meta"><span><i class="fas fa-stethoscope"></i> <span id="patientDiagnosis">—</span></span><span><i class="fas fa-hospital"></i> <span id="patientService">—</span></span><span><i class="fas fa-calendar-alt"></i> Última visita: <span id="patientLastVisit">—</span></span><span><i class="fas fa-birthday-cake"></i> <span id="patientAge">—</span> años</span><span><i class="fas fa-venus-mars"></i> <span id="patientGender">—</span></span></div></div>
-        <span class="status-badge" id="patientStatusBadge">—</span>
+        <div class="patient-info">
+            <div class="patient-header-topline">
+                <h1 class="patient-name" id="patientName">Paciente Demo</h1>
+                <span class="patient-id-badge" id="patientIdBadge">—</span>
+                <span class="status-badge" id="patientStatusBadge">—</span>
+            </div>
+            <div class="patient-meta">
+                <span class="patient-meta-chip"><i class="fas fa-stethoscope"></i> <span id="patientDiagnosis">—</span></span>
+                <span class="patient-meta-chip"><i class="fas fa-hospital"></i> <span id="patientService">—</span></span>
+                <span class="patient-meta-chip"><i class="fas fa-calendar-alt"></i> Última visita: <span id="patientLastVisit">—</span></span>
+                <span class="patient-meta-chip"><i class="fas fa-birthday-cake"></i> <span id="patientAge">—</span> años</span>
+                <span class="patient-meta-chip"><i class="fas fa-venus-mars"></i> <span id="patientGender">—</span></span>
+            </div>
+        </div>
     </div>
     <div class="patient-header-actions"><a href="farmacia_seguimiento.html" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="btn btn-secondary"><i class="fas fa-check-double"></i> Validación</a></div>
 </section>
@@ -92,7 +104,7 @@
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-clock"></i> Timeline de tratamiento</h2><div class="timeline" id="timelineTratamiento"></div></section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607d"></script>
+            <script src="scripts/farmacia_common.js?v=20260607e"></script>
     <script src="scripts/farmacia_dashboard_paciente.js?v=20260607a"></script>
         </body>
         </html>

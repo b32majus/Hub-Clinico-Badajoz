@@ -332,8 +332,6 @@
 
     function buildPVLines() {
         var pa = getPrincipioActivo();
-        var cuestionario = fv('fhPvCuestionario');
-        var resultado = fv('fhPvResultadoBasal');
 
         var lines = [];
         lines.push('=== INFORME DE PRIMERA VISITA FARMACIA ===');
@@ -351,10 +349,6 @@
         lines.push('Inducción realizada: ' + (fv('fhPvInduccionRealizada') || '—'));
         lines.push('Fecha primera visita: ' + (fv('fhPvFecha') || '—'));
         lines.push('PROM basal: ' + (fv('fhPvProms') || '—'));
-        if (cuestionario && cuestionario !== 'No aplica')
-            lines.push('Cuestionario: ' + cuestionario);
-        if (resultado && !isPromsExpandedVisible())
-            lines.push('Resultado basal: ' + resultado);
         if (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) {
             lines.push('');
             lines.push('--- PROMs DLQI detallado ---');
@@ -393,6 +387,13 @@
         clearCipNotice();
 
         if (!patient) {
+            var fieldsToClear = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvPauta', 'fhPvVia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica'];
+            for (var i = 0; i < fieldsToClear.length; i++) {
+                var el = document.getElementById(fieldsToClear[i]);
+                if (el) el.value = '';
+            }
+            var grid = document.getElementById('fhPvTratamientoGrid');
+            if (grid) F.clearChildren(grid);
             showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
             return;
         }
@@ -444,17 +445,8 @@
             searchCIP();
         });
 
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'fhPvCipSearchBtn';
-        btn.className = 'btn btn-sm btn-outline cip-search-btn';
-        var icon = document.createElement('i');
-        icon.className = 'fas fa-search';
-        icon.setAttribute('aria-hidden', 'true');
-        btn.appendChild(icon);
-        btn.appendChild(document.createTextNode(' Buscar CIP'));
-        btn.addEventListener('click', searchCIP);
-        cipInput.insertAdjacentElement('afterend', btn);
+        var btn = document.getElementById('fhPvCipSearchBtn');
+        if (btn) btn.addEventListener('click', searchCIP);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -474,15 +466,13 @@
         const exportCsv = document.getElementById('fhPvExportCsv');
         if (exportCsv) exportCsv.addEventListener('click', () => {
             var pa = getPrincipioActivo();
-            var cuestionario = fv('fhPvCuestionario');
-            var resultado = fv('fhPvResultadoBasal');
             var dlqiTotalExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getDLQITotal() : '';
             var dlqiInterpExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? (document.getElementById('fhPvDlqiInterp') && document.getElementById('fhPvDlqiInterp').textContent || '').replace(/^ — /, '').trim() : '';
             var evaDolorExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getEVADolor() : '';
             var evaPruritoExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
             var rows = [
-                ['ID', 'FechaExportacion', 'CIP', 'Servicio', 'Patologia', 'TratamientoValidado', 'PrincipioActivo', 'PresentacionDosis', 'Pauta', 'Via', 'FechaPrimeraVisita', 'InduccionRealizada', 'PROMBasal', 'Cuestionario', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'ResultadoBasal', 'Observaciones'],
-                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', fv('fhPvPauta') || '—', fv('fhPvVia') || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', cuestionario || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', resultado || '—', fv('fhPvNotas') || '—']
+                ['ID', 'FechaExportacion', 'CIP', 'Servicio', 'Patologia', 'TratamientoValidado', 'PrincipioActivo', 'PresentacionDosis', 'Pauta', 'Via', 'FechaPrimeraVisita', 'InduccionRealizada', 'PROMBasal', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'Observaciones'],
+                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', fv('fhPvPauta') || '—', fv('fhPvVia') || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {

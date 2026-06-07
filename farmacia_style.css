@@ -461,6 +461,13 @@
 
 .hidden { display: none !important; }
 
+/* --- Analitica radio chip groups (WO farmacia v0.2 T6) --- */
+.analitica-chip-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 /* --- Checklist chips (WO farmacia v0.1) --- */
 .checklist-visual {
     display: flex;
@@ -744,6 +751,11 @@
 .local-drug-modal-body .warning-box {
     margin-bottom: 16px;
 }
+.local-drug-modal-body .local-drug-modal-explainer {
+    margin-top: 0.5em;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
 .local-drug-modal-body .form-grid {
     margin-bottom: 12px;
 }
@@ -1009,13 +1021,40 @@
     border-radius: 10px;
 }
 
-.cip-search-btn {
-    padding: 6px 10px;
-    font-size: 0.78rem;
-    border-radius: 8px;
-    white-space: nowrap;
-    margin-left: 8px;
-    vertical-align: middle;
+.cip-search-wrap {
+    position: relative;
+}
+.cip-search-wrap .form-control {
+    padding-left: 36px;
+    padding-right: 40px;
+}
+.cip-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94A3B8;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+.cip-search-action {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #64748B;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.cip-search-action:hover {
+    color: #334155;
 }
 
 /* --- Catalog sidebar block --- */
@@ -1306,6 +1345,89 @@
     }
     .stats-list li {
         word-break: break-word;
+    }
+}
+
+/* ============================================================
+   T4 — Dashboard paciente: cabecera reorganizada
+   ============================================================ */
+
+/* Topline: nombre + CIP + estado en una sola línea principal */
+.patient-header-topline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.patient-header-topline .patient-name {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1E293B;
+    line-height: 1.2;
+}
+
+.patient-header-topline .patient-id-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.patient-header-topline .status-badge {
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* Meta chips: patología, servicio, edad, etc. como chips claros */
+.patient-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.patient-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #F1F5F9;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid #E2E8F0;
+}
+
+.patient-meta-chip i {
+    color: #64748B;
+    font-size: 0.82rem;
+}
+
+/* Ajustes responsive */
+@media (max-width: 768px) {
+    .patient-header-topline {
+        gap: 8px;
+    }
+    .patient-header-topline .patient-name {
+        font-size: 1.25rem;
+        width: 100%;
+    }
+    .patient-header-topline .status-badge {
+        margin-left: 0;
+    }
+    .patient-meta-chip {
+        font-size: 0.82rem;
+        padding: 5px 10px;
     }
 }
 

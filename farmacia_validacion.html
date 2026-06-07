@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607d">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607e">
 </head>
         <body>
             <div class="hub-shell">
@@ -79,14 +79,10 @@
     <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
 </div><section class="patient-header-card module-hero">
     <div class="patient-header-main">
-        <div class="patient-avatar"><i class="fas fa-check-double" aria-hidden="true"></i></div>
         <div class="patient-info">
-            <div class="patient-id-badge">Farmacia Hospitalaria</div>
-            <p class="hero-eyebrow">Farmacia Hospitalaria · Validación</p>
             <h1 class="patient-name">Validación Farmacoterapéutica</h1>
             <p class="hero-description">Revise la solicitud del servicio origen y emita Pendiente, Validado o Denegado.</p>
         </div>
-        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
     </div>
 </section><section class="dashboard-card">
     <h2 class="section-title"><i class="fas fa-list"></i> Tipo de solicitud</h2>
@@ -112,8 +108,8 @@
     <h3 class="card-title"><i class="fas fa-flask"></i> Analítica y vacunación</h3>
     <div class="form-grid"><div class="form-group"><label for="fhAnaliticaFecha">Fecha analítica</label><input type="date" class="form-control" id="fhAnaliticaFecha"></div><div class="form-group"><label for="fhAnaliticaReciente">Analítica &lt;3 meses</label><select class="form-select" id="fhAnaliticaReciente"><option value="">Seleccionar...</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><div class="checklist-visual"><label class="checklist-chip"><input type="checkbox" id="fhAnaliticaHemograma"> Hemograma completo (Verificado)</label><label class="checklist-chip"><input type="checkbox" id="fhAnaliticaBioquimica"> Bioquímica (Verificado)</label></div></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhAnaliticaMantoux">Mantoux/IGRA</label><select class="form-select" id="fhAnaliticaMantoux"><option value="">Seleccionar...</option><option value="Negativo">Negativo</option><option value="Positivo - tratado">Positivo - tratado</option><option value="Pendiente">Pendiente</option></select></div><div class="form-group"><label for="fhAnaliticaSerologiasVhb">VHB</label><select class="form-select" id="fhAnaliticaSerologiasVhb"><option value="">Seleccionar...</option><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option><option value="Pendiente">Pendiente</option></select></div><div class="form-group"><label for="fhAnaliticaSerologiasVhc">VHC</label><select class="form-select" id="fhAnaliticaSerologiasVhc"><option value="">Seleccionar...</option><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option><option value="Pendiente">Pendiente</option></select></div><div class="form-group"><label for="fhAnaliticaSerologiasVih">VIH</label><select class="form-select" id="fhAnaliticaSerologiasVih"><option value="">Seleccionar...</option><option value="Negativo">Negativo</option><option value="Positivo">Positivo</option><option value="Pendiente">Pendiente</option></select></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhAnaliticaVacunacion">Vacunación</label><select class="form-select" id="fhAnaliticaVacunacion"><option value="">Seleccionar...</option><option value="si">Sí</option><option value="no">No</option><option value="pendiente">Pendiente</option></select></div><div class="form-group"><label for="fhAnaliticaObservaciones">Observaciones vacunación</label><textarea class="form-textarea" id="fhAnaliticaObservaciones" rows="2"></textarea></div></div>
+    <div class="form-grid"><div class="form-group"><label>Mantoux/IGRA</label><input type="hidden" id="fhAnaliticaMantoux" value=""><div class="analitica-chip-group" data-chip-target="fhAnaliticaMantoux"><label class="mg-option"><input type="radio" name="fhAnaliticaMantoux_rb" value="Negativo">Negativo</label><label class="mg-option"><input type="radio" name="fhAnaliticaMantoux_rb" value="Positivo - tratado">Positivo - tratado</label><label class="mg-option"><input type="radio" name="fhAnaliticaMantoux_rb" value="Pendiente">Pendiente</label></div></div><div class="form-group"><label>VHB</label><input type="hidden" id="fhAnaliticaSerologiasVhb" value=""><div class="analitica-chip-group" data-chip-target="fhAnaliticaSerologiasVhb"><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVhb_rb" value="Negativo">Negativo</label><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVhb_rb" value="Positivo">Positivo</label><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVhb_rb" value="Pendiente">Pendiente</label></div></div><div class="form-group"><label>VHC</label><input type="hidden" id="fhAnaliticaSerologiasVhc" value=""><div class="analitica-chip-group" data-chip-target="fhAnaliticaSerologiasVhc"><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVhc_rb" value="Negativo">Negativo</label><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVhc_rb" value="Positivo">Positivo</label><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVhc_rb" value="Pendiente">Pendiente</label></div></div><div class="form-group"><label>VIH</label><input type="hidden" id="fhAnaliticaSerologiasVih" value=""><div class="analitica-chip-group" data-chip-target="fhAnaliticaSerologiasVih"><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVih_rb" value="Negativo">Negativo</label><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVih_rb" value="Positivo">Positivo</label><label class="mg-option"><input type="radio" name="fhAnaliticaSerologiasVih_rb" value="Pendiente">Pendiente</label></div></div></div>
+    <div class="form-grid"><div class="form-group"><label>Vacunación</label><input type="hidden" id="fhAnaliticaVacunacion" value=""><div class="analitica-chip-group" data-chip-target="fhAnaliticaVacunacion"><label class="mg-option"><input type="radio" name="fhAnaliticaVacunacion_rb" value="si">Sí</label><label class="mg-option"><input type="radio" name="fhAnaliticaVacunacion_rb" value="no">No</label><label class="mg-option"><input type="radio" name="fhAnaliticaVacunacion_rb" value="pendiente">Pendiente</label></div></div><div class="form-group"><label for="fhAnaliticaObservaciones">Observaciones vacunación</label><textarea class="form-textarea" id="fhAnaliticaObservaciones" rows="2"></textarea></div></div>
 </section>
 
 <section class="dashboard-card hidden" id="formHS">
@@ -129,7 +125,7 @@
 
     <h3 class="card-title"><i class="fas fa-history"></i> Tratamientos previos</h3>
     <div class="form-grid form-grid--full"><div class="form-group"><div class="checklist-visual"><label class="checklist-chip"><input type="checkbox" id="fhHSTtoDoxiClinda"> Doxiciclina / Clindamicina (Fallo terapéutico previo)</label><label class="checklist-chip"><input type="checkbox" id="fhHSTtoRifClinda"> Rifampicina + Clindamicina (Fallo terapéutico previo)</label><label class="checklist-chip"><input type="checkbox" id="fhHSTtoOtrosAb"> Otros ATB</label></div></div></div>
-    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhHSTtoOtrosAbTxt">Especificar otros ATB</label><input type="text" class="form-control" id="fhHSTtoOtrosAbTxt" placeholder="Especificar..."></div></div>
+     <div class="form-grid form-grid--full hidden" id="fhHSTtoOtrosAbTxtRow"><div class="form-group"><label for="fhHSTtoOtrosAbTxt">Especificar otros ATB</label><input type="text" class="form-control" id="fhHSTtoOtrosAbTxt" placeholder="Especificar..."></div></div>
     <div class="form-group hidden"><label for="fhHSTratamientosPrevios">Tratamientos previos (compat)</label><textarea class="form-textarea" id="fhHSTratamientosPrevios" rows="2"></textarea></div>
 
     <h3 class="card-title"><i class="fas fa-dna"></i> Biológicos previos</h3>
@@ -175,7 +171,7 @@
                 </main>
             </div>
             <script src="vendor/sheetjs/xlsx.full.min.js"></script>
-            <script src="scripts/farmacia_common.js?v=20260607d"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260607d"></script>
+            <script src="scripts/farmacia_common.js?v=20260607e"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260607e"></script>
         </body>
         </html>

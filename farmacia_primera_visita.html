@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607d">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607e">
 </head>
         <body>
             <div class="hub-shell">
@@ -79,15 +79,26 @@
     <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
 </div><section class="patient-header-card module-hero">
     <div class="patient-header-main">
-        <div class="patient-avatar"><i class="fas fa-plus-circle" aria-hidden="true"></i></div>
         <div class="patient-info">
-            <div class="patient-id-badge">Farmacia Hospitalaria</div>
-            <p class="hero-eyebrow">Primera visita de Farmacia</p>
+            <h1 class="patient-name">Primera Visita Farmacia</h1>
             <p class="hero-description">Registre el inicio del seguimiento farmacoterapéutico con datos precargados desde validación o alta guiada.</p>
         </div>
     </div>
 </section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-id-card"></i> Datos del paciente</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhPvCip">CIP</label><input class="form-control" id="fhPvCip"></div><div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio"></div><div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia"></div></div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhPvCip">CIP</label>
+            <div class="cip-search-wrap">
+                <input type="text" id="fhPvCip" class="form-control" placeholder="Buscar paciente por CIP..." autocomplete="off">
+                <i class="fas fa-search cip-search-icon" aria-hidden="true"></i>
+                <button type="button" class="cip-search-action" id="fhPvCipSearchBtn" aria-label="Buscar CIP">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio"></div>
+        <div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia"></div>
+    </div>
     <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco"></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><input class="form-control" id="fhPvPauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion"></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada"></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica"></div></div>
 </section>
@@ -96,7 +107,7 @@
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
     <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhPvCuestionario">Cuestionario basal</label><select class="form-select" id="fhPvCuestionario"><option>No aplica</option><option>DLQI</option><option>HAQ</option><option>EVA dolor</option><option>Otro</option></select></div><div class="form-group"><label for="fhPvResultadoBasal">Resultado basal</label><input class="form-control" id="fhPvResultadoBasal"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div></div>
 <div id="fhPvPromsExpanded" class="hidden">
     <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA basal</h3>
     <div class="proms-block" id="fhPvDlqiBlock">
@@ -135,7 +146,7 @@
 </section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607d"></script>
-    <script src="scripts/farmacia_primera_visita.js?v=20260607d"></script>
+            <script src="scripts/farmacia_common.js?v=20260607e"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260607e"></script>
         </body>
         </html>

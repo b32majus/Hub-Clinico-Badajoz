@@ -39,6 +39,17 @@
         if (cb && detalle) detalle.classList.toggle('hidden', !cb.checked);
     }
 
+    function toggleOtrosAtbDetalle() {
+        const cb = document.getElementById('fhHSTtoOtrosAb');
+        const row = document.getElementById('fhHSTtoOtrosAbTxtRow');
+        if (cb && row) {
+            row.classList.toggle('hidden', !cb.checked);
+            if (!cb.checked) {
+                document.getElementById('fhHSTtoOtrosAbTxt').value = '';
+            }
+        }
+    }
+
     function mostrarFormulario(modo) {
         modoActual = modo;
         document.getElementById('formDerma').classList.toggle('hidden', modo !== 'derma');
@@ -79,6 +90,7 @@
                 setChecked('fhHSTtoRifClinda', hsTto.rifampicinaClindamicina);
                 setChecked('fhHSTtoOtrosAb', hsTto.otrosAtb);
                 if (hsTto.otrosAtbTexto) F.setValue('fhHSTtoOtrosAbTxt', hsTto.otrosAtbTexto);
+                toggleOtrosAtbDetalle();
             }
 
             if (p.biologicosPrevios) {
@@ -158,6 +170,25 @@
         if (el) el.checked = !!value;
     }
 
+    function initAnaliticaChips() {
+        var groups = document.querySelectorAll('[data-chip-target]');
+        groups.forEach(function (group) {
+            var targetId = group.getAttribute('data-chip-target');
+            var radios = group.querySelectorAll('input[type="radio"]');
+            radios.forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    var hidden = document.getElementById(targetId);
+                    if (hidden) hidden.value = this.value;
+                });
+            });
+            var hidden = document.getElementById(targetId);
+            if (hidden && hidden.value) {
+                var matching = group.querySelector('input[type="radio"][value="' + hidden.value.replace(/"/g, '&quot;') + '"]');
+                if (matching) matching.checked = true;
+            }
+        });
+    }
+
     function buildValidationLines() {
         var lines = [];
         lines.push('=== INFORME DE VALIDACIÓN FARMACOTERAPÉUTICA ===');
@@ -222,8 +253,9 @@
                 var tcb = document.getElementById(ttoIds[ti]);
                 lines.push((tcb && tcb.checked ? '[X]' : '[ ]') + ' ' + ttoNames[ti]);
             }
+            var otrosAtbCb = document.getElementById('fhHSTtoOtrosAb');
             var otrosAtbTxt = document.getElementById('fhHSTtoOtrosAbTxt').value.trim();
-            if (otrosAtbTxt) lines.push('  Especificar otros ATB: ' + otrosAtbTxt);
+            if (otrosAtbTxt && otrosAtbCb && otrosAtbCb.checked) lines.push('  Especificar otros ATB: ' + otrosAtbTxt);
 
             lines.push('');
             lines.push('--- Biológicos previos ---');
@@ -464,7 +496,15 @@
         body.className = 'local-drug-modal-body';
         var warning = document.createElement('div');
         warning.className = 'warning-box';
-        warning.textContent = '\u26A0\uFE0F Solicitud local pendiente de validación por Farmacia. Demo sin persistencia real.';
+        var p1 = document.createElement('p');
+        var strong = document.createElement('strong');
+        strong.textContent = '\u26A0\uFE0F Solicitud local especial pendiente de revisi\u00F3n por Farmacia.';
+        p1.appendChild(strong);
+        warning.appendChild(p1);
+        var p2 = document.createElement('p');
+        p2.className = 'local-drug-modal-explainer';
+        p2.textContent = 'Esta opci\u00F3n crea una solicitud local especial pendiente de revisi\u00F3n por Farmacia. No modifica CIMA ni el cat\u00E1logo oficial. En esta demo solo genera un registro temporal para continuar la validaci\u00F3n.';
+        warning.appendChild(p2);
         body.appendChild(warning);
         var formGrid = document.createElement('div');
         formGrid.className = 'form-grid';
@@ -600,6 +640,10 @@
             toggleBioOtrosDetalle();
         });
 
+        document.getElementById('fhHSTtoOtrosAb').addEventListener('change', function () {
+            toggleOtrosAtbDetalle();
+        });
+
         document.getElementById('fhValExportTxt').addEventListener('click', function () {
             F.downloadFile('validacion_FH_' + new Date().toISOString().slice(0, 10) + '.txt', buildValidationLines().join('\n'), 'text/plain;charset=utf-8');
         });
@@ -660,5 +704,6 @@
         });
 
         applyContext();
+        initAnaliticaChips();
     });
 })();
