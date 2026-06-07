@@ -3179,3 +3179,100 @@
     font-size: 0.82rem;
     padding: 6px 10px;
 }
+
+/* ============================================================
+   T2 — Temporal data points on treatment band track
+   ============================================================ */
+
+.longitudinal-data-hint {
+    margin-top: 12px;
+    color: #64748B;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.longitudinal-data-point-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 4px 0;
+}
+
+.longitudinal-data-point-row__label {
+    flex: 0 0 auto;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    min-width: 110px;
+}
+
+.longitudinal-data-point-track {
+    position: relative;
+    flex: 1 1 auto;
+    height: 18px;
+    min-height: 18px;
+}
+
+.longitudinal-data-point-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.longitudinal-data-line {
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.longitudinal-data-line--clinical {
+    stroke: #2563EB;
+}
+
+.longitudinal-data-line--prom {
+    stroke: #7C3AED;
+}
+
+.longitudinal-data-point-marker {
+    position: absolute;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 2;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+}
+
+.longitudinal-data-point-marker--clinical {
+    background: #2563EB;
+}
+
+.longitudinal-data-point-marker--prom {
+    background: #7C3AED;
+}
+
+@media (max-width: 768px) {
+    .longitudinal-data-point-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .longitudinal-data-point-row__label {
+        min-width: 0;
+    }
+
+    .longitudinal-data-point-marker {
+        width: 8px;
+        height: 8px;
+    }
+}

@@ -152,13 +152,6 @@
             { label: 'Últimos PROMs Farmacia', value: patient.proms }
         ]);
         document.getElementById('dashboardSummaryGrid').appendChild(createChecksVisualBlock(patient));
-        const timeline = document.getElementById('farmaciaTimeline');
-        F.clearChildren(timeline);
-        timeline.append(
-            timelineItem(patient.fechaSolicitud, 'Solicitud FH', `${patient.servicio}: ${patient.farmaco}`),
-            timelineItem(patient.primeraVisita, 'Primera visita', patient.primeraVisita === 'Pendiente' ? 'Pendiente de registrar' : 'Inicio de seguimiento farmacoterapéutico'),
-            timelineItem(patient.ultimaVisita, 'Seguimiento', patient.seguimiento)
-        );
 
         const actionBtns = document.querySelectorAll('.patient-header-actions a');
         if (actionBtns[0]) {
@@ -172,123 +165,10 @@
             });
         }
 
-        renderActividadClinica(patient);
-        renderProms(patient);
-        renderTimelineTratamiento(patient);
         renderLongitudinalForCip(patient.cip);
     }
-    function renderActividadClinica(patient) {
-        const container = document.getElementById('actividadClinicaIndices');
-        if (!container) return;
-        F.clearChildren(container);
-        let fields;
-        if (patient.cip === 'CIP-DEMO-FH-001') {
-            fields = [
-                { label: 'IHS4', value: '9 \u2192 5 (mejor\u00EDa)' },
-                { label: 'Hurley', value: patient.hurley || '\u2014' },
-                { label: 'DLQI', value: '14 \u2192 8' },
-                { label: 'Localizaci\u00F3n', value: patient.localizacion || '\u2014' },
-                { label: 'Tiempo evoluci\u00F3n', value: patient.tiempoEvolucion || '\u2014' }
-            ];
-        } else if (patient.cip === 'CIP-DEMO-FH-003') {
-            fields = [
-                { label: 'DAS28', value: '3.2' },
-                { label: 'HAQ', value: '1.1' }
-            ];
-        } else {
-            fields = [{ label: 'Estado', value: 'Sin dato cl\u00EDnico estructurado en esta demo' }];
-        }
-        fields.forEach(function(f) { container.appendChild(F.createField(f.label, f.value)); });
-    }
 
-    function renderProms(patient) {
-        const container = document.getElementById('promsContainer');
-        if (!container) return;
-        F.clearChildren(container);
-        let proms;
-        if (patient.cip === 'CIP-DEMO-FH-001') {
-            proms = [
-                { name: 'DLQI', value: '8', source: 'Profesional', note: '\u00DAltimo valor' },
-                { name: 'EVA picor', value: '3/10', source: 'Paciente remoto', note: '\u00DAltimo valor' },
-                { name: 'EVA dolor', value: '\u2014', source: 'Farmacia', note: 'No registrado' }
-            ];
-        } else if (patient.cip === 'CIP-DEMO-FH-003') {
-            proms = [
-                { name: 'HAQ', value: '1.1', source: 'Profesional', note: 'Basal' },
-                { name: 'EVA dolor', value: '4/10', source: 'Paciente remoto', note: '\u00DAltimo valor' }
-            ];
-        } else {
-            container.appendChild(F.createField('Estado', 'Sin dato cl\u00EDnico estructurado en esta demo'));
-            return;
-        }
-        const grid = document.createElement('div');
-        grid.className = 'proms-card-grid';
-        proms.forEach(function(p) {
-            const card = document.createElement('div');
-            card.className = 'prom-card';
-            const nameEl = document.createElement('span');
-            nameEl.className = 'prom-card__name';
-            nameEl.textContent = p.name;
-            const valueEl = document.createElement('span');
-            valueEl.className = 'prom-card__value';
-            valueEl.textContent = p.value || '\u2014';
-            const sourceEl = document.createElement('span');
-            sourceEl.className = 'prom-card__source';
-            sourceEl.textContent = p.source;
-            card.append(nameEl, valueEl, sourceEl);
-            if (p.note) {
-                const noteEl = document.createElement('span');
-                noteEl.className = 'prom-card__note';
-                noteEl.textContent = p.note;
-                card.appendChild(noteEl);
-            }
-            grid.appendChild(card);
-        });
-        container.appendChild(grid);
-    }
 
-    function renderTimelineTratamiento(patient) {
-        const container = document.getElementById('timelineTratamiento');
-        if (!container) return;
-        F.clearChildren(container);
-        const snapshot = (window.FarmaciaCatalog && window.FarmaciaCatalog.getSnapshot()) || null;
-        const events = [];
-        if (patient.cip === 'CIP-DEMO-FH-001') {
-            const farmaco = (snapshot && snapshot.nombre_snapshot) || patient.farmaco;
-            const principio = (snapshot && snapshot.principio_activo_snapshot) || patient.principioActivo || '\u2014';
-            const presentacion = (snapshot && snapshot.presentacion_snapshot) || patient.dosis;
-            const viaSnap = (snapshot && snapshot.via_snapshot) || patient.via;
-            events.push({
-                fecha: patient.primeraVisita,
-                titulo: 'Inicio de tratamiento',
-                descripcion: farmaco + ' \u00B7 ' + principio + ' \u00B7 ' + presentacion + ' \u00B7 ' + viaSnap + ' \u00B7 ' + patient.pauta
-            });
-            if (patient.efectosAdversos && patient.efectosAdversos !== 'No registrados') {
-                events.push({
-                    fecha: '2026-05-25',
-                    titulo: 'Evento adverso / optimizaci\u00F3n',
-                    descripcion: patient.efectosAdversos
-                });
-            }
-        } else if (patient.cip === 'CIP-DEMO-FH-003') {
-            const farmaco = (snapshot && snapshot.nombre_snapshot) || patient.farmaco;
-            const principio = (snapshot && snapshot.principio_activo_snapshot) || 'Adalimumab';
-            const presentacion = (snapshot && snapshot.presentacion_snapshot) || patient.dosis;
-            const viaSnap = (snapshot && snapshot.via_snapshot) || patient.via;
-            events.push({
-                fecha: patient.fechaSolicitud,
-                titulo: 'Solicitud / Validaci\u00F3n',
-                descripcion: farmaco + ' \u00B7 ' + principio + ' \u00B7 ' + presentacion + ' \u00B7 ' + viaSnap + ' \u00B7 ' + patient.pauta
-            });
-        }
-        if (events.length === 0) {
-            container.appendChild(timelineItem('\u2014', 'Sin registros demo', 'El paciente no tiene eventos de tratamiento registrados en el dataset demo.'));
-            return;
-        }
-        events.forEach(function(ev) {
-            container.appendChild(timelineItem(ev.fecha, ev.titulo, ev.descripcion));
-        });
-    }
 
     var longDataset = null;
     var longCurrentCip = null;
@@ -697,131 +577,138 @@
         var clinicalKey = clinicalSel ? clinicalSel.value : '';
         var promKey = promSel ? promSel.value : '';
 
-        var dataWrapper = document.createElement('div');
-        dataWrapper.className = 'longitudinal-data-series';
-        if (clinicalKey) {
-            var clinicalType = LONG_CLINICAL_MAP[clinicalKey] || clinicalKey;
-            var clinicalItems = (patient.actividad_clinica || []).filter(function (a) { return a.tipo_indice === clinicalType; });
-            clinicalItems.sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
-            var cMax = CLINICAL_MAX[clinicalType] || 100;
+        var track = container.querySelector('.longitudinal-treatment-track');
+        if (!track) return;
 
-            var cHeader = document.createElement('div');
-            cHeader.className = 'longitudinal-data-header';
-            var cTitle = document.createElement('strong');
-            cTitle.className = 'longitudinal-data-header__title';
-            cTitle.textContent = clinicalType;
-            var cScale = document.createElement('span');
-            cScale.className = 'longitudinal-data-header__scale';
-            cScale.textContent = '(escala 0-' + cMax + ')';
-            cHeader.appendChild(cTitle);
-            cHeader.appendChild(cScale);
-            dataWrapper.appendChild(cHeader);
-
-            if (clinicalItems.length === 0) {
-                var cEmpty = document.createElement('div');
-                cEmpty.className = 'longitudinal-empty';
-                cEmpty.textContent = 'Sin datos de ' + clinicalType + ' para este paciente.';
-                dataWrapper.appendChild(cEmpty);
-            } else {
-                var cGrid = document.createElement('div');
-                cGrid.className = 'longitudinal-data-grid';
-                for (var i = 0; i < clinicalItems.length; i++) {
-                    var item = clinicalItems[i];
-                    var numericVal = parseFloat(item.valor);
-                    var sevInfo = getLongSeverityInfo(clinicalType, numericVal);
-                    var chip = document.createElement('div');
-                    chip.className = 'longitudinal-data-chip';
-                    var chipDate = document.createElement('span');
-                    chipDate.className = 'longitudinal-data-chip__date';
-                    chipDate.textContent = item.fecha || '—';
-                    var chipVal = document.createElement('span');
-                    chipVal.className = 'longitudinal-data-chip__value';
-                    chipVal.textContent = (item.valor || '—') + ' / ' + cMax;
-                    var chipSev = document.createElement('span');
-                    chipSev.className = 'longitudinal-data-chip__severity ' + sevInfo.cssClass;
-                    chipSev.textContent = sevInfo.label;
-                    chip.appendChild(chipDate);
-                    chip.appendChild(chipVal);
-                    chip.appendChild(chipSev);
-                    if (item.interpretacion) {
-                        var chipInterp = document.createElement('span');
-                        chipInterp.className = 'longitudinal-data-chip__interp';
-                        chipInterp.textContent = item.interpretacion;
-                        chip.appendChild(chipInterp);
-                    }
-                    cGrid.appendChild(chip);
-                }
-                dataWrapper.appendChild(cGrid);
-            }
+        var oldRows = track.querySelectorAll('.longitudinal-data-point-row, .longitudinal-data-svg-overlay, .longitudinal-data-hint');
+        for (var r = 0; r < oldRows.length; r++) {
+            oldRows[r].parentNode.removeChild(oldRows[r]);
         }
 
-        if (promKey) {
-            var promType = LONG_PROM_MAP[promKey] || promKey;
-            var promItems = (patient.proms || []).filter(function (p) { return p.tipo_prom === promType; });
-            promItems.sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
-            var pMax = PROM_MAX[promType] || 100;
+        var clinicalType = clinicalKey ? (LONG_CLINICAL_MAP[clinicalKey] || clinicalKey) : null;
+        var promType = promKey ? (LONG_PROM_MAP[promKey] || promKey) : null;
 
-            var pHeader = document.createElement('div');
-            pHeader.className = 'longitudinal-data-header';
-            if (clinicalKey) pHeader.classList.add('longitudinal-data-header--with-margin');
-            var pTitle = document.createElement('strong');
-            pTitle.className = 'longitudinal-data-header__title';
-            pTitle.textContent = promType;
-            var pScale = document.createElement('span');
-            pScale.className = 'longitudinal-data-header__scale';
-            pScale.textContent = '(escala 0-' + pMax + ')';
-            pHeader.appendChild(pTitle);
-            pHeader.appendChild(pScale);
-            dataWrapper.appendChild(pHeader);
-
-            if (promItems.length === 0) {
-                var pEmpty = document.createElement('div');
-                pEmpty.className = 'longitudinal-empty';
-                pEmpty.textContent = 'Sin datos de ' + promType + ' para este paciente.';
-                dataWrapper.appendChild(pEmpty);
-            } else {
-                var pGrid = document.createElement('div');
-                pGrid.className = 'longitudinal-data-grid';
-                for (var j = 0; j < promItems.length; j++) {
-                    var pItem = promItems[j];
-                    var pNumericVal = parseFloat(pItem.valor);
-                    var pSevInfo = getLongSeverityInfo(promType, pNumericVal);
-                    var pChip = document.createElement('div');
-                    pChip.className = 'longitudinal-data-chip';
-                    var pChipDate = document.createElement('span');
-                    pChipDate.className = 'longitudinal-data-chip__date';
-                    pChipDate.textContent = pItem.fecha || '—';
-                    var pChipVal = document.createElement('span');
-                    pChipVal.className = 'longitudinal-data-chip__value';
-                    pChipVal.textContent = (pItem.valor || '—') + ' / ' + pMax;
-                    var pChipSev = document.createElement('span');
-                    pChipSev.className = 'longitudinal-data-chip__severity ' + pSevInfo.cssClass;
-                    pChipSev.textContent = pSevInfo.label;
-                    pChip.appendChild(pChipDate);
-                    pChip.appendChild(pChipVal);
-                    pChip.appendChild(pChipSev);
-                    if (pItem.interpretacion) {
-                        var pChipInterp = document.createElement('span');
-                        pChipInterp.className = 'longitudinal-data-chip__interp';
-                        pChipInterp.textContent = pItem.interpretacion;
-                        pChip.appendChild(pChipInterp);
-                    }
-                    pGrid.appendChild(pChip);
-                }
-                dataWrapper.appendChild(pGrid);
-            }
-        }
+        var clinicalItems = clinicalKey ? (patient.actividad_clinica || []).filter(function (a) { return a.tipo_indice === clinicalType; }) : [];
+        var promItems = promKey ? (patient.proms || []).filter(function (p) { return p.tipo_prom === promType; }) : [];
 
         if (!clinicalKey && !promKey) {
             var hint = document.createElement('div');
-            hint.className = 'longitudinal-empty';
-            hint.textContent = 'Seleccione una variable clinica o PROM para ver la evolucion.';
-            dataWrapper.appendChild(hint);
+            hint.className = 'longitudinal-data-hint';
+            hint.textContent = 'Seleccione una variable cl\u00EDnica o PROM para ver la evoluci\u00F3n.';
+            track.appendChild(hint);
+            return;
         }
 
-        var existing = container.querySelector('.longitudinal-data-series');
-        if (existing) existing.parentNode.removeChild(existing);
-        container.appendChild(dataWrapper);
+        var allDates = [];
+        var treatments = patient.tratamientos || [];
+        for (var i = 0; i < treatments.length; i++) {
+            var td = longParseDate(treatments[i].fecha_inicio);
+            if (td) allDates.push(td);
+            var te = longParseDate(treatments[i].fecha_fin);
+            if (te) allDates.push(te);
+        }
+        var changes = patient.cambios_pauta || [];
+        for (var j = 0; j < changes.length; j++) {
+            var cd = longParseDate(changes[j].fecha);
+            if (cd) allDates.push(cd);
+        }
+        var evts = patient.eventos_adversos || [];
+        for (var k = 0; k < evts.length; k++) {
+            var ed = longParseDate(evts[k].fecha);
+            if (ed) allDates.push(ed);
+        }
+        for (var ci = 0; ci < clinicalItems.length; ci++) {
+            var cid = longParseDate(clinicalItems[ci].fecha);
+            if (cid) allDates.push(cid);
+        }
+        for (var pi = 0; pi < promItems.length; pi++) {
+            var pid = longParseDate(promItems[pi].fecha);
+            if (pid) allDates.push(pid);
+        }
+
+        if (allDates.length === 0) return;
+        allDates.sort(function (a, b) { return a - b; });
+        var minDate = allDates[0];
+        var maxDate = allDates[allDates.length - 1];
+        var totalMs = maxDate.getTime() - minDate.getTime();
+        var totalDays = totalMs / (1000 * 60 * 60 * 24);
+        if (totalDays <= 0) totalDays = 1;
+
+        function pct(d) {
+            var days = (d.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24);
+            return Math.max(0, Math.min(100, (days / totalDays) * 100));
+        }
+
+        var svgNS = 'http://www.w3.org/2000/svg';
+
+        function buildPointTrack(labelText, items, dataType, maxVal) {
+            var sorted = items.slice().sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+
+            var row = document.createElement('div');
+            row.className = 'longitudinal-data-point-row longitudinal-data-point-row--' + dataType;
+
+            var labelEl = document.createElement('span');
+            labelEl.className = 'longitudinal-data-point-row__label';
+            labelEl.textContent = labelText + ' (0\u2013' + maxVal + ')';
+            row.appendChild(labelEl);
+
+            var pointTrack = document.createElement('div');
+            pointTrack.className = 'longitudinal-data-point-track';
+
+            var svgEl = document.createElementNS(svgNS, 'svg');
+            svgEl.setAttribute('class', 'longitudinal-data-point-svg');
+            svgEl.setAttribute('viewBox', '0 0 100 20');
+            svgEl.setAttribute('preserveAspectRatio', 'none');
+            var polyline = document.createElementNS(svgNS, 'polyline');
+            polyline.setAttribute('class', 'longitudinal-data-line longitudinal-data-line--' + dataType);
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('stroke-linejoin', 'round');
+            var points = [];
+
+            for (var s = 0; s < sorted.length; s++) {
+                var item = sorted[s];
+                var d = longParseDate(item.fecha);
+                if (!d) continue;
+                var pos = pct(d);
+                points.push(pos + ',10');
+
+                var marker = document.createElement('div');
+                marker.className = 'longitudinal-data-point-marker longitudinal-data-point-marker--' + dataType;
+                marker.style.left = pos + '%';
+
+                var numericVal = parseFloat(item.valor);
+                var sevInfo = getLongSeverityInfo(labelText, numericVal);
+                var tip = labelText + ': ' + (item.valor || '\u2014') + ' (' + item.fecha + ')\n' + sevInfo.label;
+                if (item.interpretacion) tip += '\n' + item.interpretacion;
+                marker.setAttribute('title', tip);
+
+                pointTrack.appendChild(marker);
+            }
+
+            polyline.setAttribute('points', points.join(' '));
+            svgEl.appendChild(polyline);
+            pointTrack.appendChild(svgEl);
+            row.appendChild(pointTrack);
+            return row;
+        }
+
+        if (clinicalKey && clinicalItems.length > 0) {
+            track.appendChild(buildPointTrack(clinicalType, clinicalItems, 'clinical', CLINICAL_MAX[clinicalType] || 100));
+        } else if (clinicalKey) {
+            var cEmpty = document.createElement('div');
+            cEmpty.className = 'longitudinal-data-hint';
+            cEmpty.textContent = 'Sin datos de ' + clinicalType + ' para este paciente.';
+            track.appendChild(cEmpty);
+        }
+
+        if (promKey && promItems.length > 0) {
+            track.appendChild(buildPointTrack(promType, promItems, 'prom', PROM_MAX[promType] || 100));
+        } else if (promKey) {
+            var pEmpty = document.createElement('div');
+            pEmpty.className = 'longitudinal-data-hint';
+            pEmpty.textContent = 'Sin datos de ' + promType + ' para este paciente.';
+            track.appendChild(pEmpty);
+        }
     }
 
     function renderLongLegend(container) {

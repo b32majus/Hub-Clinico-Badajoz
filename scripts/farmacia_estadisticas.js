@@ -80,7 +80,15 @@
             gravedad_eventos: [],
             adherencia_nivel: 'no_registrada',
             estado_validacion: 'pendiente',
-            farmacos_nombres: []
+            farmacos_nombres: [],
+            dosis: [],
+            pautas: [],
+            vias: [],
+            prom_fuentes: [],
+            tipos_eventos_adversos: [],
+            acciones_tomadas: [],
+            intensificacion: 'no_determinable',
+            desintensificacion: 'no_determinable'
         };
 
         (p.tratamientos || []).forEach(function (t) {
@@ -95,10 +103,19 @@
                 profile.estados_tratamiento.push('suspendido');
             }
             if (t.estado_validacion_farmacia) {
-                profile.estado_validacion = t.estado_validacion;
+                profile.estado_validacion = t.estado_validacion_farmacia;
             }
             if (t.nombre_comercial) {
                 profile.farmacos_nombres.push(t.nombre_comercial);
+            }
+            if (t.presentacion_dosis && profile.dosis.indexOf(t.presentacion_dosis) === -1) {
+                profile.dosis.push(t.presentacion_dosis);
+            }
+            if (t.pauta && profile.pautas.indexOf(t.pauta) === -1) {
+                profile.pautas.push(t.pauta);
+            }
+            if (t.via && profile.vias.indexOf(t.via) === -1) {
+                profile.vias.push(t.via);
             }
         });
 
@@ -106,6 +123,8 @@
             profile.tiene_cambio_pauta = true;
             p.cambios_pauta.forEach(function (cp) {
                 if (cp.tipo) profile.cambio_pauta_estados.push(cp.tipo);
+                if (cp.tipo === 'intensificacion') profile.intensificacion = 'si';
+                if (cp.tipo === 'desintensificacion') profile.desintensificacion = 'si';
             });
         }
 
@@ -115,6 +134,9 @@
         sortedProms.forEach(function (pr) {
             if (pr.tipo_prom && profile.prom_tipos.indexOf(pr.tipo_prom) === -1) {
                 profile.prom_tipos.push(pr.tipo_prom);
+            }
+            if (pr.fuente && profile.prom_fuentes.indexOf(pr.fuente) === -1) {
+                profile.prom_fuentes.push(pr.fuente);
             }
         });
         if (sortedProms.length > 0) {
@@ -151,6 +173,12 @@
                 if (ea.gravedad && profile.gravedad_eventos.indexOf(ea.gravedad) === -1) {
                     profile.gravedad_eventos.push(ea.gravedad);
                 }
+                if (ea.tipo && profile.tipos_eventos_adversos.indexOf(ea.tipo) === -1) {
+                    profile.tipos_eventos_adversos.push(ea.tipo);
+                }
+                if (ea.accion_tomada && profile.acciones_tomadas.indexOf(ea.accion_tomada) === -1) {
+                    profile.acciones_tomadas.push(ea.accion_tomada);
+                }
             });
         }
 
@@ -181,6 +209,16 @@
         if (states['Primera visita Farmacia']) return 'pendiente';
         if (states['Validacion Farmacia']) return 'validado';
         return 'pendiente';
+    }
+
+    function seededRandom(seed) {
+        var x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+    }
+    var seed = 20260607;
+    function random() {
+        seed++;
+        return seededRandom(seed);
     }
 
     function generateSyntheticPatients(basePatients) {
@@ -228,48 +266,48 @@
 
         for (var i = 0; i < 28; i++) {
             idx++;
-            var svc = services[Math.floor(Math.random() * services.length)];
+            var svc = services[Math.floor(random() * services.length)];
             var pathOptions = svc === 'Dermatologia' ? ['Hidradenitis supurativa', 'Psoriasis'] : ['Artritis Reumatoide (AR)', 'Artritis Psoriasica (APs)'];
-            var pat = pathOptions[Math.floor(Math.random() * pathOptions.length)];
-            var sex = sexes[Math.floor(Math.random() * sexes.length)];
-            var age = 25 + Math.floor(Math.random() * 45);
+            var pat = pathOptions[Math.floor(random() * pathOptions.length)];
+            var sex = sexes[Math.floor(random() * sexes.length)];
+            var age = 25 + Math.floor(random() * 45);
 
-            var numComorb = Math.floor(Math.random() * 4);
-            var shuffledComorb = comorbidityOptions.slice().sort(function () { return Math.random() - 0.5; });
+            var numComorb = Math.floor(random() * 4);
+            var shuffledComorb = comorbidityOptions.slice().sort(function () { return random() - 0.5; });
             var selComorb = shuffledComorb.slice(0, numComorb);
 
-            var activeDrugIdx = Math.floor(Math.random() * activeDrugs.length);
+            var activeDrugIdx = Math.floor(random() * activeDrugs.length);
             var activeDrug = activeDrugs[activeDrugIdx];
-            var hasPrev = Math.random() > 0.5;
-            var prevDrugIdx = Math.floor(Math.random() * prevDrugs.length);
+            var hasPrev = random() > 0.5;
+            var prevDrugIdx = Math.floor(random() * prevDrugs.length);
 
-            var selectedPromType = promTypes[Math.floor(Math.random() * promTypes.length)];
+            var selectedPromType = promTypes[Math.floor(random() * promTypes.length)];
             var promVal;
-            if (selectedPromType === 'DLQI') promVal = Math.floor(Math.random() * 25);
-            else if (selectedPromType === 'HAQ') promVal = (Math.random() * 2.5).toFixed(1);
-            else promVal = Math.floor(Math.random() * 10);
+            if (selectedPromType === 'DLQI') promVal = Math.floor(random() * 25);
+            else if (selectedPromType === 'HAQ') promVal = (random() * 2.5).toFixed(1);
+            else promVal = Math.floor(random() * 10);
             var promCat = classifyPROMCategory(selectedPromType, promVal);
 
-            var selectedClinIdx = pat.indexOf('HS') !== -1 ? clinIndexes[Math.floor(Math.random() * 2)] : clinIndexes[2 + Math.floor(Math.random() * 2)];
+            var selectedClinIdx = pat.indexOf('HS') !== -1 ? clinIndexes[Math.floor(random() * 2)] : clinIndexes[2 + Math.floor(random() * 2)];
             var clinVal;
-            if (selectedClinIdx === 'IHS4') clinVal = Math.floor(Math.random() * 20);
-            else if (selectedClinIdx === 'DAS28') clinVal = (Math.random() * 6 + 0.5).toFixed(1);
-            else if (selectedClinIdx === 'HAQ') clinVal = (Math.random() * 2.5).toFixed(1);
-            else clinVal = String(Math.floor(Math.random() * 3) + 1);
+            if (selectedClinIdx === 'IHS4') clinVal = Math.floor(random() * 20);
+            else if (selectedClinIdx === 'DAS28') clinVal = (random() * 6 + 0.5).toFixed(1);
+            else if (selectedClinIdx === 'HAQ') clinVal = (random() * 2.5).toFixed(1);
+            else clinVal = String(Math.floor(random() * 3) + 1);
             var clinCat = classifyClinical(selectedClinIdx, clinVal);
 
-            var hasAE = Math.random() > 0.6;
-            var aeGrav = hasAE ? ['leve', 'moderado', 'grave'][Math.floor(Math.random() * 3)] : null;
+            var hasAE = random() > 0.6;
+            var aeGrav = hasAE ? ['leve', 'moderado', 'grave'][Math.floor(random() * 3)] : null;
 
-            var adh = adherencias[Math.floor(Math.random() * adherencias.length)];
+            var adh = adherencias[Math.floor(random() * adherencias.length)];
             var adhLevel = adh.toLowerCase().indexOf('alta') !== -1 ? 'alta' : (adh.toLowerCase().indexOf('media') !== -1 ? 'media' : 'baja');
 
-            var valState = validaciones[Math.floor(Math.random() * validaciones.length)];
+            var valState = validaciones[Math.floor(random() * validaciones.length)];
 
             var es = 'en_seguimiento';
             if (valState === 'pendiente') es = 'pendiente';
-            else if (Math.random() > 0.8) es = 'validado';
-            if (Math.random() > 0.9) es = 'alta';
+            else if (random() > 0.8) es = 'validado';
+            if (random() > 0.9) es = 'alta';
 
             var tratamientos = [];
             if (hasPrev) {
@@ -343,6 +381,32 @@
                     fuente: 'Servicio clinico'
                 });
             }
+            var rndInt = random();
+            if (rndInt < 0.25) {
+                cambios.push({
+                    id: 'CAM-SYN-' + idx + '-int',
+                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
+                    fecha: '2026-04-01',
+                    tipo: 'intensificacion',
+                    motivo: 'Respuesta insuficiente',
+                    descripcion: 'Intensificacion de pauta por actividad moderada-alta',
+                    servicio_solicitante: svc,
+                    estado_validacion_farmacia: valState,
+                    fuente: 'Servicio clinico'
+                });
+            } else if (rndInt < 0.45) {
+                cambios.push({
+                    id: 'CAM-SYN-' + idx + '-des',
+                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
+                    fecha: '2026-04-01',
+                    tipo: 'desintensificacion',
+                    motivo: 'Remision sostenida',
+                    descripcion: 'Desintensificacion de pauta por buena respuesta',
+                    servicio_solicitante: svc,
+                    estado_validacion_farmacia: valState,
+                    fuente: 'Farmacia'
+                });
+            }
 
             var episodios = [
                 { tipo: 'Validacion Farmacia', fecha: '2026-02-01', servicio: 'Farmacia', estado: 'completado', nota: 'Validacion completada.' },
@@ -355,11 +419,12 @@
                 episodios.push({ tipo: 'Alta', fecha: '2026-06-01', servicio: 'Farmacia', estado: 'completado', nota: 'Alta del servicio.' });
             }
 
+            var promFuente = ['Farmacia', 'Servicio clinico', 'Farmacia'];
             var proms = [
-                { id: 'PROM-SYN-' + idx, cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-05-20', tipo_prom: selectedPromType, valor: String(promVal), interpretacion: 'PROM de seguimiento', fuente: 'Farmacia' }
+                { id: 'PROM-SYN-' + idx, cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-05-20', tipo_prom: selectedPromType, valor: String(promVal), interpretacion: 'PROM de seguimiento', fuente: promFuente[Math.floor(random() * promFuente.length)] }
             ];
-            if (Math.random() > 0.5) {
-                proms.push({ id: 'PROM-SYN-' + idx + '-b', cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-06-05', tipo_prom: 'EVA dolor', valor: String(Math.floor(Math.random() * 10)), interpretacion: 'EVA dolor seguimiento', fuente: 'Paciente remoto' });
+            if (random() > 0.5) {
+                proms.push({ id: 'PROM-SYN-' + idx + '-b', cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-06-05', tipo_prom: 'EVA dolor', valor: String(Math.floor(random() * 10)), interpretacion: 'EVA dolor seguimiento', fuente: 'Paciente remoto' });
             }
 
             var actividades = [
@@ -368,16 +433,20 @@
 
             var eventos = [];
             if (hasAE) {
+                var eaTipos = ['Reaccion adversa', 'Infeccion', 'Reaccion en punto de inyeccion', 'Alteracion analitica'];
+                var eaAcciones = ['Observacion', 'Suspension', 'Cambio dosis', 'Tratamiento sintomatico'];
+                var eaTipo = eaTipos[Math.floor(random() * eaTipos.length)];
+                var eaAccion = eaAcciones[Math.floor(random() * eaAcciones.length)];
                 eventos.push({
                     id: 'EA-SYN-' + idx,
                     cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
                     fecha: '2026-05-15',
-                    tipo: 'Reaccion adversa',
+                    tipo: eaTipo,
                     gravedad: aeGrav,
                     relacion_tratamiento: 'Posible',
-                    accion_tomada: 'Observacion',
+                    accion_tomada: eaAccion,
                     descripcion_corta: 'Evento adverso ' + aeGrav + ' reportado.',
-                    resuelto: Math.random() > 0.5
+                    resuelto: random() > 0.5
                 });
             }
 
@@ -547,7 +616,14 @@
             actividad_tipos: [],
             comorbilidades: [],
             adherencia_niveles: ['alta', 'media', 'baja', 'no_registrada'],
-            validacion_estados: ['pendiente', 'validado', 'en_seguimiento', 'denegado']
+            validacion_estados: ['pendiente', 'validado', 'en_seguimiento', 'denegado'],
+            farmacos_nombres: [],
+            dosis: [],
+            pautas: [],
+            vias: [],
+            prom_fuentes: [],
+            tipos_ea: [],
+            acciones_tomadas: []
         };
 
         var svcSet = {};
@@ -558,6 +634,13 @@
         var promSet = {};
         var actSet = {};
         var comSet = {};
+        var fnSet = {};
+        var dosisSet = {};
+        var pautaSet = {};
+        var viaSet = {};
+        var pfSet = {};
+        var teaSet = {};
+        var atSet = {};
 
         allPatients.forEach(function (p) {
             var prof = p._profile;
@@ -570,6 +653,13 @@
             prof.prom_tipos.forEach(function (pt) { promSet[pt] = true; });
             prof.actividad_tipos.forEach(function (at) { actSet[at] = true; });
             prof.comorbilidades.forEach(function (c) { comSet[c] = true; });
+            prof.farmacos_nombres.forEach(function (fn) { fnSet[fn] = true; });
+            prof.dosis.forEach(function (d) { dosisSet[d] = true; });
+            prof.pautas.forEach(function (pa) { pautaSet[pa] = true; });
+            prof.vias.forEach(function (v) { viaSet[v] = true; });
+            prof.prom_fuentes.forEach(function (pf) { pfSet[pf] = true; });
+            prof.tipos_eventos_adversos.forEach(function (t) { teaSet[t] = true; });
+            prof.acciones_tomadas.forEach(function (a) { atSet[a] = true; });
         });
 
         options.servicios = Object.keys(svcSet).sort().map(function (s) { return { value: s, label: s }; });
@@ -583,6 +673,13 @@
         options.prom_tipos = Object.keys(promSet).sort().map(function (p) { return { value: p, label: p }; });
         options.actividad_tipos = Object.keys(actSet).sort().map(function (a) { return { value: a, label: a }; });
         options.comorbilidades = Object.keys(comSet).sort().map(function (c) { return { value: c, label: c }; });
+        options.farmacos_nombres = Object.keys(fnSet).sort().map(function (f) { return { value: f, label: f }; });
+        options.dosis = Object.keys(dosisSet).sort().map(function (d) { return { value: d, label: d }; });
+        options.pautas = Object.keys(pautaSet).sort().map(function (p) { return { value: p, label: p }; });
+        options.vias = Object.keys(viaSet).sort().map(function (v) { return { value: v, label: v }; });
+        options.prom_fuentes = Object.keys(pfSet).sort().map(function (f) { return { value: f, label: f }; });
+        options.tipos_ea = Object.keys(teaSet).sort().map(function (t) { return { value: t, label: t }; });
+        options.acciones_tomadas = Object.keys(atSet).sort().map(function (a) { return { value: a, label: a }; });
 
         return options;
     }
@@ -647,20 +744,48 @@
             var h4a = el('h4', 'filter-block__subtitle', 'Principio activo');
             wrap.appendChild(h4a);
             wrap.appendChild(buildSelectGroup('principio_activo', opts.principios_activos, ''));
-            var h4b = el('h4', 'filter-block__subtitle', 'Estado tratamiento');
+            var h4b = el('h4', 'filter-block__subtitle', 'Nombre comercial / fármaco');
             wrap.appendChild(h4b);
+            wrap.appendChild(buildCheckboxGroup('farmaco_nombre', opts.farmacos_nombres, []));
+            var h4c = el('h4', 'filter-block__subtitle', 'Estado tratamiento');
+            wrap.appendChild(h4c);
             var etOpts = [
                 { value: 'activo', label: 'Activo' },
                 { value: 'suspendido', label: 'Suspendido' }
             ];
             wrap.appendChild(buildCheckboxGroup('estado_tratamiento', etOpts, []));
-            var h4c = el('h4', 'filter-block__subtitle', 'Cambio de pauta');
-            wrap.appendChild(h4c);
+            var h4d = el('h4', 'filter-block__subtitle', 'Dosis');
+            wrap.appendChild(h4d);
+            wrap.appendChild(buildSelectGroup('dosis', opts.dosis, ''));
+            var h4e = el('h4', 'filter-block__subtitle', 'Pauta / intervalo');
+            wrap.appendChild(h4e);
+            wrap.appendChild(buildCheckboxGroup('pauta', opts.pautas, []));
+            var h4f = el('h4', 'filter-block__subtitle', 'Vía');
+            wrap.appendChild(h4f);
+            wrap.appendChild(buildCheckboxGroup('via', opts.vias, []));
+            var h4g = el('h4', 'filter-block__subtitle', 'Cambio de pauta');
+            wrap.appendChild(h4g);
             var cpOpts = [
                 { value: 'si', label: 'Sí' },
                 { value: 'no', label: 'No' }
             ];
             wrap.appendChild(buildRadioGroup('cambio_pauta', cpOpts, ''));
+            var h4h = el('h4', 'filter-block__subtitle', 'Intensificación');
+            wrap.appendChild(h4h);
+            var intOpts = [
+                { value: 'si', label: 'Sí' },
+                { value: 'no', label: 'No' },
+                { value: 'no_determinable', label: 'No determinable' }
+            ];
+            wrap.appendChild(buildRadioGroup('intensificacion', intOpts, ''));
+            var h4i = el('h4', 'filter-block__subtitle', 'Desintensificación');
+            wrap.appendChild(h4i);
+            var desOpts = [
+                { value: 'si', label: 'Sí' },
+                { value: 'no', label: 'No' },
+                { value: 'no_determinable', label: 'No determinable' }
+            ];
+            wrap.appendChild(buildRadioGroup('desintensificacion', desOpts, ''));
             return wrap;
         })()));
 
@@ -680,6 +805,9 @@
             var h4c = el('h4', 'filter-block__subtitle', 'Rango valor PROM');
             wrap.appendChild(h4c);
             wrap.appendChild(buildRangeGroup('prom_valor', 'Valor mínimo', 'Valor máximo'));
+            var h4d = el('h4', 'filter-block__subtitle', 'Fuente del PROM');
+            wrap.appendChild(h4d);
+            wrap.appendChild(buildCheckboxGroup('prom_fuente', opts.prom_fuentes, []));
             return wrap;
         })()));
 
@@ -708,6 +836,12 @@
                 { value: 'grave', label: 'Grave' }
             ];
             wrap.appendChild(buildCheckboxGroup('gravedad_ea', gravOpts, []));
+            var h4c = el('h4', 'filter-block__subtitle', 'Tipo de efecto adverso');
+            wrap.appendChild(h4c);
+            wrap.appendChild(buildCheckboxGroup('tipo_ea', opts.tipos_ea, []));
+            var h4d = el('h4', 'filter-block__subtitle', 'Acción tomada');
+            wrap.appendChild(h4d);
+            wrap.appendChild(buildCheckboxGroup('accion_tomada', opts.acciones_tomadas, []));
             return wrap;
         })()));
 
@@ -831,6 +965,12 @@
             case 'gravedad_ea': profValues = prof.gravedad_eventos; break;
             case 'adherencia': return selectedValues.indexOf(prof.adherencia_nivel) !== -1;
             case 'validacion': return selectedValues.indexOf(prof.estado_validacion) !== -1;
+            case 'farmaco_nombre': profValues = prof.farmacos_nombres; break;
+            case 'pauta': profValues = prof.pautas; break;
+            case 'via': profValues = prof.vias; break;
+            case 'prom_fuente': profValues = prof.prom_fuentes; break;
+            case 'tipo_ea': profValues = prof.tipos_eventos_adversos; break;
+            case 'accion_tomada': profValues = prof.acciones_tomadas; break;
             default: return true;
         }
         if (!profValues || profValues.length === 0) return false;
@@ -857,6 +997,10 @@
                 if (value === '45-64') return prof.edad >= 45 && prof.edad <= 64;
                 if (value === 'gte65') return prof.edad >= 65;
                 return true;
+            case 'intensificacion':
+                return prof.intensificacion === value;
+            case 'desintensificacion':
+                return prof.desintensificacion === value;
             default: return true;
         }
     }
@@ -870,6 +1014,8 @@
                 return prof.actividad_tipos.indexOf(value) !== -1;
             case 'prom_tipo':
                 return prof.prom_tipos.indexOf(value) !== -1;
+            case 'dosis':
+                return prof.dosis.indexOf(value) !== -1;
             default: return true;
         }
     }
@@ -921,7 +1067,9 @@
                         servicio: 'Servicio', patologia: 'Patología', estado_seguimiento: 'Seguimiento',
                         sexo: 'Sexo', estado_tratamiento: 'Tratamiento', actividad_categoria: 'Actividad',
                         prom_categoria: 'PROM', comorbilidad: 'Comorbilidad', gravedad_ea: 'Gravedad EA',
-                        adherencia: 'Adherencia', validacion: 'Validación'
+                        adherencia: 'Adherencia', validacion: 'Validación',
+                        farmaco_nombre: 'Fármaco', pauta: 'Pauta', via: 'Vía',
+                        prom_fuente: 'Fuente PROM', tipo_ea: 'Tipo EA', accion_tomada: 'Acción'
                     };
                     chip.textContent = (labelMap[key] || key) + ': ' + v;
                     container.appendChild(chip);
@@ -929,13 +1077,13 @@
                 });
             } else if (f.type === 'radio' && f.value) {
                 var chip = el('span', 'filter-chip');
-                var labelMap = { cambio_pauta: 'Cambio pauta', eventos_adversos: 'EA', edad_grupo: 'Edad' };
+                var labelMap = { cambio_pauta: 'Cambio pauta', eventos_adversos: 'EA', edad_grupo: 'Edad', intensificacion: 'Intensificación', desintensificacion: 'Desintensificación' };
                 chip.textContent = (labelMap[key] || key) + ': ' + f.value;
                 container.appendChild(chip);
                 hasActive = true;
             } else if (f.type === 'select' && f.value) {
                 var chip2 = el('span', 'filter-chip');
-                var labelMap2 = { principio_activo: 'Fármaco', actividad_tipo: 'Índice', prom_tipo: 'PROM' };
+                var labelMap2 = { principio_activo: 'Fármaco', actividad_tipo: 'Índice', prom_tipo: 'PROM', dosis: 'Dosis' };
                 chip2.textContent = (labelMap2[key] || key) + ': ' + f.value;
                 container.appendChild(chip2);
                 hasActive = true;
@@ -1110,14 +1258,14 @@
         renderBarChart(chart5, 'Distribución por adherencia', sortAndTake(adhMap));
         grid.appendChild(chart5);
 
+        var chart5b = el('div', 'chart-card dashboard-card');
+        var esMap = countByLabel(f, function (p) { return p._profile ? p._profile.estado_seguimiento : null; });
+        renderBarChart(chart5b, 'Distribución por estado de seguimiento', sortAndTake(esMap));
+        grid.appendChild(chart5b);
+
         var chart6 = el('div', 'chart-card dashboard-card');
-        var eaMap = { 'Sí': 0, 'No': 0 };
-        f.forEach(function (p) {
-            if (!p._profile) return;
-            if (p._profile.tiene_eventos_adversos) eaMap['Sí']++; else eaMap['No']++;
-        });
-        renderBarChart(chart6, 'Distribución por efectos adversos',
-            [{ label: 'Sí', value: eaMap['Sí'] }, { label: 'No', value: eaMap['No'] }]);
+        var eaGravMap = countByLabel(f, function (p) { return p._profile ? p._profile.gravedad_eventos : []; });
+        renderBarChart(chart6, 'Efectos adversos por gravedad', sortAndTake(eaGravMap));
         grid.appendChild(chart6);
 
         var chart7 = el('div', 'chart-card dashboard-card');
@@ -1143,6 +1291,18 @@
         var etMap = countByLabel(f, function (p) { return p._profile ? p._profile.estados_tratamiento : []; });
         renderBarChart(chart10, 'Distribución por estado tratamiento', sortAndTake(etMap));
         grid.appendChild(chart10);
+
+        var chart11 = el('div', 'chart-card dashboard-card');
+        var intDesMap = {};
+        f.forEach(function (p) {
+            if (!p._profile) return;
+            var ik = 'Intensificación: ' + p._profile.intensificacion;
+            intDesMap[ik] = (intDesMap[ik] || 0) + 1;
+            var dk = 'Desintensificación: ' + p._profile.desintensificacion;
+            intDesMap[dk] = (intDesMap[dk] || 0) + 1;
+        });
+        renderBarChart(chart11, 'Intensificación / Desintensificación', sortAndTake(intDesMap));
+        grid.appendChild(chart11);
     }
 
     function renderPatientsTable() {
