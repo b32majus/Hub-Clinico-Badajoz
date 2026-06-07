@@ -84,6 +84,9 @@
                 bioquimica: true,
                 mantoux: 'Pendiente',
                 serologias: 'Pendiente',
+                serologiasVhb: 'Negativo',
+                serologiasVhc: 'Negativo',
+                serologiasVih: 'Negativo',
                 vacunacion: 'pendiente',
                 observaciones: ''
             },

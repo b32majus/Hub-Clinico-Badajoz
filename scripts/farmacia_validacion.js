@@ -101,6 +101,11 @@
                 if (an.serologiasVhb) F.setValue('fhAnaliticaSerologiasVhb', an.serologiasVhb);
                 if (an.serologiasVhc) F.setValue('fhAnaliticaSerologiasVhc', an.serologiasVhc);
                 if (an.serologiasVih) F.setValue('fhAnaliticaSerologiasVih', an.serologiasVih);
+                if (!an.serologiasVhb && !an.serologiasVhc && !an.serologiasVih && an.serologias) {
+                    F.setValue('fhAnaliticaSerologiasVhb', an.serologias);
+                    F.setValue('fhAnaliticaSerologiasVhc', an.serologias);
+                    F.setValue('fhAnaliticaSerologiasVih', an.serologias);
+                }
                 if (an.vacunacion) F.setValue('fhAnaliticaVacunacion', an.vacunacion);
                 if (an.observaciones) F.setValue('fhAnaliticaObservaciones', an.observaciones);
             }
@@ -282,7 +287,7 @@
         if (obs) lines.push('Observaciones: ' + obs);
         lines.push('');
         lines.push('=== FIN DEL INFORME ===');
-        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.1');
+        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2');
         lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
         return lines;
     }
@@ -601,9 +606,36 @@
 
         document.getElementById('fhValExportCsv').addEventListener('click', function () {
             const profesional = document.getElementById('fhValFarmaceutico').textContent.trim();
+            const seroVhbEl = document.getElementById('fhAnaliticaSerologiasVhb');
+            const seroVhcEl = document.getElementById('fhAnaliticaSerologiasVhc');
+            const seroVihEl = document.getElementById('fhAnaliticaSerologiasVih');
+
+            function safeVal(id) {
+                var el = document.getElementById(id);
+                return (el && el.value !== undefined) ? el.value.trim() || '—' : '—';
+            }
+
+            var farmaco = modoActual === 'reuma' ? 'Adalimumab 40 mg' : (document.getElementById('fhDermaFarmaco').value || '—');
+            var principioActivo = modoActual === 'reuma' ? 'Adalimumab' : safeVal('fhDermaPrincipioActivo');
+            var dosisPresentacion = modoActual === 'reuma' ? '40 mg' : safeVal('fhDermaDosis');
+            var via = modoActual === 'reuma' ? 'SC' : safeVal('fhDermaVia');
+            var pauta = modoActual === 'reuma' ? 'SC / cada 2 semanas' : safeVal('fhDermaPauta');
+            var induccion = modoActual === 'reuma' ? '—' : safeVal('fhDermaInduccion');
+            var motivoDenegacion = safeVal('fhValMotivo');
+
+            var snap = C.getSnapshot();
+            var snapDrugId = (snap && snap.drug_id) ? snap.drug_id : '—';
+            var snapSourceType = (snap && snap.source_type) ? snap.source_type : '—';
+            var codigoNacional = (snap && snap.codigo_nacional_snapshot) ? snap.codigo_nacional_snapshot : '—';
+            var nRegistro = (snap && snap.nregistro_snapshot) ? snap.nregistro_snapshot : '—';
+
+            var seroVhb = seroVhbEl ? (seroVhbEl.value || '—') : '—';
+            var seroVhc = seroVhcEl ? (seroVhcEl.value || '—') : '—';
+            var seroVih = seroVihEl ? (seroVihEl.value || '—') : '—';
+
             const rows = [
-                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'Profesional'],
-                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), (modoActual === 'reuma' ? 'Adalimumab 40 mg' : (document.getElementById('fhDermaFarmaco').value || '—')), profesional]
+                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro'],
+                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro]
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {

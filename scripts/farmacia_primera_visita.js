@@ -76,16 +76,16 @@
     // ---- T12: DLQI data and functions ----
 
     var DLQI_QUESTIONS = [
-        { id: 1, text: 'Durante la última semana, ¿ha sentido picor, dolor o escozor en la piel?' },
-        { id: 2, text: 'Durante la última semana, ¿se ha sentido avergonzado/a o cohibido/a por su piel?' },
-        { id: 3, text: 'Durante la última semana, ¿le ha interferido su piel para ir de compras, cuidar la casa o el jardín?' },
-        { id: 4, text: 'Durante la última semana, ¿ha influido su piel en la ropa que lleva?' },
-        { id: 5, text: 'Durante la última semana, ¿ha afectado su piel a actividades sociales o de ocio?' },
-        { id: 6, text: 'Durante la última semana, ¿le ha dificultado su piel practicar deporte?' },
-        { id: 7, text: 'Durante la última semana, ¿su piel le ha impedido trabajar o estudiar?', special: true },
-        { id: 8, text: 'Durante la última semana, ¿ha creado su piel problemas con su pareja, amigos o familiares?' },
-        { id: 9, text: 'Durante la última semana, ¿ha causado su piel dificultades sexuales?' },
-        { id: 10, text: 'Durante la última semana, ¿ha sido un problema el tratamiento de su piel?' }
+        { id: 1, text: 'Durante los últimos 7 días, ¿ha tenido la piel irritada, con picor, dolor o escozor?' },
+        { id: 2, text: 'Durante los últimos 7 días, ¿se ha sentido incómodo/a o avergonzado/a por tener problemas en la piel?' },
+        { id: 3, text: 'Durante los últimos 7 días, ¿han interferido sus problemas de piel en las actividades de compras o de cuidado de su casa o jardín?', sinRelacion: true },
+        { id: 4, text: 'Durante los últimos 7 días, ¿han influido sus problemas de piel en la elección de la ropa que lleva?', sinRelacion: true },
+        { id: 5, text: 'Durante los últimos 7 días, ¿han afectado sus problemas de piel a sus actividades sociales o de ocio?', sinRelacion: true },
+        { id: 6, text: 'Durante los últimos 7 días, ¿le ha sido difícil practicar algún deporte a causa de sus problemas de piel?', sinRelacion: true },
+        { id: 7, text: 'Durante los últimos 7 días, ¿sus problemas de piel le han impedido totalmente trabajar o estudiar?', special: true },
+        { id: 8, text: 'Durante los últimos 7 días, ¿han interferido sus problemas de piel en su relación con su pareja, amigos o familiares?', sinRelacion: true },
+        { id: 9, text: 'Durante los últimos 7 días, ¿le ha resultado difícil ir a la cama o dormir a causa de sus problemas de piel?', sinRelacion: true },
+        { id: 10, text: 'Durante los últimos 7 días, ¿el tratamiento para su problemas de piel le ha causado problemas en su casa o le ha resultado molesto?', sinRelacion: true }
     ];
 
     var DLQI_STANDARD_OPTIONS = [
@@ -93,6 +93,14 @@
         { label: 'Bastante', value: 2 },
         { label: 'Un poco', value: 1 },
         { label: 'Nada', value: 0 }
+    ];
+
+    var DLQI_OPTIONS_WITH_NR = [
+        { label: 'Mucho', value: 3 },
+        { label: 'Bastante', value: 2 },
+        { label: 'Un poco', value: 1 },
+        { label: 'Nada', value: 0 },
+        { label: 'Sin relación', value: 0 }
     ];
 
     var DLQI_Q7_FOLLOWUP = [
@@ -104,10 +112,10 @@
 
     function getDLQIInterpretation(total) {
         if (total <= 1) return 'Sin efecto sobre la calidad de vida';
-        if (total <= 5) return 'Efecto leve';
-        if (total <= 10) return 'Efecto moderado';
-        if (total <= 20) return 'Efecto importante';
-        return 'Efecto muy importante';
+        if (total <= 5) return 'Efecto leve sobre la calidad de vida';
+        if (total <= 10) return 'Efecto moderado sobre la calidad de vida';
+        if (total <= 20) return 'Efecto muy importante sobre la calidad de vida';
+        return 'Efecto extremadamente importante sobre la calidad de vida';
     }
 
     function getDLQIAnswer(q) {
@@ -115,7 +123,7 @@
             var aRadio = document.querySelector('input[name="dlqi_q7_a"]:checked');
             if (aRadio) {
                 if (aRadio.getAttribute('data-dlqi-val') !== null) {
-                    return { score: aRadio.getAttribute('data-dlqi-val'), text: 'Sí, me ha impedido' };
+                    return { score: aRadio.getAttribute('data-dlqi-val'), text: 'Sí' };
                 }
                 var bRadio = document.querySelector('input[name="dlqi_q7_b"]:checked');
                 if (bRadio) {
@@ -207,6 +215,12 @@
         var container = document.getElementById('fhPvDlqiQuestions');
         if (!container) return;
         F.clearChildren(container);
+
+        var periodHeader = document.createElement('div');
+        periodHeader.className = 'dlqi-period';
+        periodHeader.textContent = 'DURANTE LOS ÚLTIMOS 7 DÍAS';
+        container.appendChild(periodHeader);
+
         DLQI_QUESTIONS.forEach(function (q) {
             var card = document.createElement('div');
             card.className = 'dlqi-card';
@@ -217,14 +231,14 @@
             var optionsRow = document.createElement('div');
             optionsRow.className = 'dlqi-card__options';
             if (q.special) {
-                optionsRow.appendChild(createDLQIOption(7, 'a', 'Sí, me ha impedido', 3, false));
+                optionsRow.appendChild(createDLQIOption(7, 'a', 'Sí', 3, false));
                 optionsRow.appendChild(createDLQIOption(7, 'a', 'No', null, true));
                 card.appendChild(optionsRow);
                 var followUp = document.createElement('div');
                 followUp.className = 'dlqi-card__followup hidden';
                 var fuLabel = document.createElement('span');
                 fuLabel.className = 'dlqi-card__followup-label';
-                fuLabel.textContent = 'Si no: ¿cuánto problema le ha causado en el trabajo o estudios?';
+                fuLabel.textContent = 'Durante los últimos 7 días, ¿le han molestado sus problemas de piel en su trabajo o en sus estudios?';
                 followUp.appendChild(fuLabel);
                 var fuOptions = document.createElement('div');
                 fuOptions.className = 'dlqi-card__options dlqi-card__options--followup';
@@ -234,7 +248,8 @@
                 followUp.appendChild(fuOptions);
                 card.appendChild(followUp);
             } else {
-                DLQI_STANDARD_OPTIONS.forEach(function (opt) {
+                var opts = q.sinRelacion ? DLQI_OPTIONS_WITH_NR : DLQI_STANDARD_OPTIONS;
+                opts.forEach(function (opt) {
                     optionsRow.appendChild(createDLQIOption(q.id, null, opt.label, opt.value, false));
                 });
                 card.appendChild(optionsRow);
@@ -363,9 +378,83 @@
         lines.push('Observaciones: ' + (fv('fhPvNotas') || '—'));
         lines.push('');
         lines.push('=== FIN DEL INFORME ===');
-        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.1');
+        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2');
         lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
         return lines;
+    }
+
+    function searchCIP() {
+        var cipInput = document.getElementById('fhPvCip');
+        if (!cipInput) return;
+        var cip = cipInput.value.trim();
+        if (!cip) return;
+
+        var patient = F.patients[cip];
+        clearCipNotice();
+
+        if (!patient) {
+            showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
+            return;
+        }
+
+        F.setValue('fhPvCip', patient.cip);
+        F.setValue('fhPvServicio', patient.servicio);
+        F.setValue('fhPvPatologia', patient.patologia);
+        F.setValue('fhPvFarmaco', patient.farmaco);
+        F.setValue('fhPvDosis', patient.dosis);
+        F.setValue('fhPvPauta', patient.pauta);
+        F.setValue('fhPvVia', patient.via);
+        F.setValue('fhPvFechaValidacion', patient.fechaSolicitud);
+        F.setValue('fhPvInduccionSolicitada', patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
+        F.setValue('fhPvAnalitica', patient.analitica);
+
+        applyTratamientoValidado({ patient: patient });
+
+        var banner = document.getElementById('fhPvNoCipBanner');
+        if (banner) banner.parentNode.removeChild(banner);
+    }
+
+    function clearCipNotice() {
+        var notice = document.getElementById('fhPvCipSearchNotice');
+        if (notice) notice.parentNode.removeChild(notice);
+    }
+
+    function showCipNotice(msg, type) {
+        var cipInput = document.getElementById('fhPvCip');
+        if (!cipInput) return;
+        var div = document.createElement('div');
+        div.id = 'fhPvCipSearchNotice';
+        div.className = 'notice-box notice-box--' + (type === 'warning' ? 'warning' : 'info');
+        var icon = document.createElement('i');
+        icon.className = type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+        icon.setAttribute('aria-hidden', 'true');
+        div.appendChild(icon);
+        div.appendChild(document.createTextNode(' ' + msg));
+        var fg = cipInput.closest('.form-group');
+        if (fg) fg.insertAdjacentElement('afterend', div);
+    }
+
+    function initCipSearch() {
+        var cipInput = document.getElementById('fhPvCip');
+        if (!cipInput) return;
+
+        cipInput.addEventListener('keydown', function (event) {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            searchCIP();
+        });
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'fhPvCipSearchBtn';
+        btn.className = 'btn btn-sm btn-outline cip-search-btn';
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-search';
+        icon.setAttribute('aria-hidden', 'true');
+        btn.appendChild(icon);
+        btn.appendChild(document.createTextNode(' Buscar CIP'));
+        btn.addEventListener('click', searchCIP);
+        cipInput.insertAdjacentElement('afterend', btn);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -375,6 +464,7 @@
         renderDLQI();
         setupEVASliders();
         setupPromsToggle();
+        initCipSearch();
 
         const exportTxt = document.getElementById('fhPvExportTxt');
         if (exportTxt) exportTxt.addEventListener('click', () => {

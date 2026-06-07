@@ -94,16 +94,16 @@
     // ---- T13: DLQI / EVA for Seguimiento ----
 
     var DLQI_QUESTIONS = [
-        { id: 1, text: 'Durante la última semana, ¿ha sentido picor, dolor o escozor en la piel?' },
-        { id: 2, text: 'Durante la última semana, ¿se ha sentido avergonzado/a o cohibido/a por su piel?' },
-        { id: 3, text: 'Durante la última semana, ¿le ha interferido su piel para ir de compras, cuidar la casa o el jardín?' },
-        { id: 4, text: 'Durante la última semana, ¿ha influido su piel en la ropa que lleva?' },
-        { id: 5, text: 'Durante la última semana, ¿ha afectado su piel a actividades sociales o de ocio?' },
-        { id: 6, text: 'Durante la última semana, ¿le ha dificultado su piel practicar deporte?' },
-        { id: 7, text: 'Durante la última semana, ¿su piel le ha impedido trabajar o estudiar?', special: true },
-        { id: 8, text: 'Durante la última semana, ¿ha creado su piel problemas con su pareja, amigos o familiares?' },
-        { id: 9, text: 'Durante la última semana, ¿ha causado su piel dificultades sexuales?' },
-        { id: 10, text: 'Durante la última semana, ¿ha sido un problema el tratamiento de su piel?' }
+        { id: 1, text: 'Durante los últimos 7 días, ¿ha tenido la piel irritada, con picor, dolor o escozor?' },
+        { id: 2, text: 'Durante los últimos 7 días, ¿se ha sentido incómodo/a o avergonzado/a por tener problemas en la piel?' },
+        { id: 3, text: 'Durante los últimos 7 días, ¿han interferido sus problemas de piel en las actividades de compras o de cuidado de su casa o jardín?', sinRelacion: true },
+        { id: 4, text: 'Durante los últimos 7 días, ¿han influido sus problemas de piel en la elección de la ropa que lleva?', sinRelacion: true },
+        { id: 5, text: 'Durante los últimos 7 días, ¿han afectado sus problemas de piel a sus actividades sociales o de ocio?', sinRelacion: true },
+        { id: 6, text: 'Durante los últimos 7 días, ¿le ha sido difícil practicar algún deporte a causa de sus problemas de piel?', sinRelacion: true },
+        { id: 7, text: 'Durante los últimos 7 días, ¿sus problemas de piel le han impedido totalmente trabajar o estudiar?', special: true },
+        { id: 8, text: 'Durante los últimos 7 días, ¿han interferido sus problemas de piel en su relación con su pareja, amigos o familiares?', sinRelacion: true },
+        { id: 9, text: 'Durante los últimos 7 días, ¿le ha resultado difícil ir a la cama o dormir a causa de sus problemas de piel?', sinRelacion: true },
+        { id: 10, text: 'Durante los últimos 7 días, ¿el tratamiento para su problemas de piel le ha causado problemas en su casa o le ha resultado molesto?', sinRelacion: true }
     ];
 
     var DLQI_STANDARD_OPTIONS = [
@@ -111,6 +111,14 @@
         { label: 'Bastante', value: 2 },
         { label: 'Un poco', value: 1 },
         { label: 'Nada', value: 0 }
+    ];
+
+    var DLQI_OPTIONS_WITH_NR = [
+        { label: 'Mucho', value: 3 },
+        { label: 'Bastante', value: 2 },
+        { label: 'Un poco', value: 1 },
+        { label: 'Nada', value: 0 },
+        { label: 'Sin relación', value: 0 }
     ];
 
     var DLQI_Q7_FOLLOWUP = [
@@ -122,10 +130,10 @@
 
     function getDLQIInterpretation(total) {
         if (total <= 1) return 'Sin efecto sobre la calidad de vida';
-        if (total <= 5) return 'Efecto leve';
-        if (total <= 10) return 'Efecto moderado';
-        if (total <= 20) return 'Efecto importante';
-        return 'Efecto muy importante';
+        if (total <= 5) return 'Efecto leve sobre la calidad de vida';
+        if (total <= 10) return 'Efecto moderado sobre la calidad de vida';
+        if (total <= 20) return 'Efecto muy importante sobre la calidad de vida';
+        return 'Efecto extremadamente importante sobre la calidad de vida';
     }
 
     function getDLQIAnswer(q) {
@@ -133,7 +141,7 @@
             var aRadio = document.querySelector('input[name="dlqi_q7_a"]:checked');
             if (aRadio) {
                 if (aRadio.getAttribute('data-dlqi-val') !== null) {
-                    return { score: aRadio.getAttribute('data-dlqi-val'), text: 'Sí, me ha impedido' };
+                    return { score: aRadio.getAttribute('data-dlqi-val'), text: 'Sí' };
                 }
                 var bRadio = document.querySelector('input[name="dlqi_q7_b"]:checked');
                 if (bRadio) {
@@ -225,6 +233,12 @@
         var container = document.getElementById('fhSegDlqiQuestions');
         if (!container) return;
         F.clearChildren(container);
+
+        var periodHeader = document.createElement('div');
+        periodHeader.className = 'dlqi-period';
+        periodHeader.textContent = 'DURANTE LOS ÚLTIMOS 7 DÍAS';
+        container.appendChild(periodHeader);
+
         DLQI_QUESTIONS.forEach(function (q) {
             var card = document.createElement('div');
             card.className = 'dlqi-card';
@@ -235,14 +249,14 @@
             var optionsRow = document.createElement('div');
             optionsRow.className = 'dlqi-card__options';
             if (q.special) {
-                optionsRow.appendChild(createDLQIOption(7, 'a', 'Sí, me ha impedido', 3, false));
+                optionsRow.appendChild(createDLQIOption(7, 'a', 'Sí', 3, false));
                 optionsRow.appendChild(createDLQIOption(7, 'a', 'No', null, true));
                 card.appendChild(optionsRow);
                 var followUp = document.createElement('div');
                 followUp.className = 'dlqi-card__followup hidden';
                 var fuLabel = document.createElement('span');
                 fuLabel.className = 'dlqi-card__followup-label';
-                fuLabel.textContent = 'Si no: ¿cuánto problema le ha causado en el trabajo o estudios?';
+                fuLabel.textContent = 'Durante los últimos 7 días, ¿le han molestado sus problemas de piel en su trabajo o en sus estudios?';
                 followUp.appendChild(fuLabel);
                 var fuOptions = document.createElement('div');
                 fuOptions.className = 'dlqi-card__options dlqi-card__options--followup';
@@ -252,7 +266,8 @@
                 followUp.appendChild(fuOptions);
                 card.appendChild(followUp);
             } else {
-                DLQI_STANDARD_OPTIONS.forEach(function (opt) {
+                var opts = q.sinRelacion ? DLQI_OPTIONS_WITH_NR : DLQI_STANDARD_OPTIONS;
+                opts.forEach(function (opt) {
                     optionsRow.appendChild(createDLQIOption(q.id, null, opt.label, opt.value, false));
                 });
                 card.appendChild(optionsRow);
@@ -283,7 +298,7 @@
         var expanded = document.getElementById('fhSegPromsExpanded');
         if (!promsSelect || !expanded) return;
         function toggle() {
-            if (promsSelect.value === 'DLQI') {
+            if (promsSelect.value === 'Sí, recoger DLQI + EVA dolor/prurito') {
                 expanded.classList.remove('hidden');
                 calculateDLQI();
             } else {
@@ -390,7 +405,7 @@
         lines.push('Actuación EA: ' + (fv('fhSegEaActuacion') || '—'));
         const eaDesc = fv('fhSegEaDescripcion');
         if (eaDesc) lines.push('Descripción EA: ' + eaDesc);
-        if (fv('fhSegProms') === 'DLQI' && isPromsExpandedVisible()) {
+        if (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) {
             lines.push('');
             lines.push('--- DLQI detallado ---');
             var anyDlqi = false;
@@ -412,7 +427,7 @@
         }
         lines.push('');
         lines.push('=== FIN DEL INFORME ===');
-        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.1');
+        lines.push('Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2');
         lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
         return lines;
     }
@@ -455,10 +470,10 @@
         const exportCsv = document.getElementById('fhSegExportCsv');
         if (exportCsv) exportCsv.addEventListener('click', () => {
             const moriskyEl = document.getElementById('fhSegMoriskyResultado');
-            var dlqiTotalExport = (fv('fhSegProms') === 'DLQI' && isPromsExpandedVisible()) ? getDLQITotal() : '';
-            var dlqiInterpExport = (fv('fhSegProms') === 'DLQI' && isPromsExpandedVisible()) ? (document.getElementById('fhSegDlqiInterp') && document.getElementById('fhSegDlqiInterp').textContent || '').replace(/^ — /, '').trim() : '';
-            var evaDolorExport = (fv('fhSegProms') === 'DLQI' && isPromsExpandedVisible()) ? getEVADolor() : '';
-            var evaPruritoExport = (fv('fhSegProms') === 'DLQI' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
+            var dlqiTotalExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getDLQITotal() : '';
+            var dlqiInterpExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? (document.getElementById('fhSegDlqiInterp') && document.getElementById('fhSegDlqiInterp').textContent || '').replace(/^ — /, '').trim() : '';
+            var evaDolorExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getEVADolor() : '';
+            var evaPruritoExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
             const rows = [
                 ['ID', 'Fecha', 'CIP', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EA', 'GravedadEA', 'Decision', 'AvisoCambioFarmaco'],
                 [
