@@ -1,0 +1,410 @@
+{
+  "version": "v0.3",
+  "status": "pending_review",
+  "generated_for": "Farmacia v0.3 post-demo exploratory dataset",
+  "synthetic_data": true,
+  "source_note": "Dataset sintetico longitudinal construido a partir de datos demo v0.2 y modelo conceptual v0.3. Ningun dato corresponde a pacientes reales.",
+  "limitations": [
+    "Solo datos sinteticos con CIP demo. No usar para decisiones clinicas.",
+    "Sin validacion clinica. Los valores, interpretaciones y relaciones son ilustrativos.",
+    "Sin integracion con JARA, SES, Farmatool, CIMA ni sistemas externos.",
+    "Sin persistencia ni backend. Dataset JSON embebido en memoria.",
+    "Un solo tratamiento activo por paciente en la representacion actual.",
+    "Sin normalizacion completa de catalogo farmacologico.",
+    "Sin separacion de roles ni permisos a nivel de datos."
+  ],
+  "pacientes": [
+    {
+      "cip": "CIP-DEMO-FH-001",
+      "nombre_demo": "Paciente Demo FH-001",
+      "sexo": "Mujer",
+      "edad": 48,
+      "servicios_origen": ["Dermatologia", "Farmacia"],
+      "patologias": ["Hidradenitis supurativa"],
+      "comorbilidades_relevantes": [
+        {
+          "nombre": "Obesidad grado I",
+          "tipo": "metabolica",
+          "nota": "IMC 30.2"
+        },
+        {
+          "nombre": "Exfumador",
+          "tipo": "habito toxico",
+          "nota": "Abandono hace 5 anos"
+        },
+        {
+          "nombre": "Hipertension arterial controlada",
+          "tipo": "cardiovascular",
+          "nota": "En tratamiento con IECA, TA controlada"
+        }
+      ],
+      "episodios_asistenciales": [
+        {
+          "tipo": "Validacion Farmacia",
+          "fecha": "2026-05-10",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Validacion completa. Seguimiento farmacoterapeutico iniciado."
+        },
+        {
+          "tipo": "Primera visita Farmacia",
+          "fecha": "2026-05-12",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Paciente inicia tratamiento con Secukinumab. Induccion realizada sin incidencias."
+        },
+        {
+          "tipo": "Seguimiento Farmacia",
+          "fecha": "2026-06-01",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Paciente tolera bien el tratamiento. Adherencia alta."
+        },
+        {
+          "tipo": "Consulta Dermatologia",
+          "fecha": "2026-05-05",
+          "servicio": "Dermatologia",
+          "estado": "completado",
+          "nota": "Solicitud de cambio de tratamiento. Fallo secundario a Adalimumab."
+        }
+      ],
+      "tratamientos": [
+        {
+          "id": "TRAT-FH-001",
+          "cip": "CIP-DEMO-FH-001",
+          "drug_id": "FAR-002",
+          "selected_drug_id": "FAR-002",
+          "nombre_comercial": "Humira",
+          "principio_activo": "Adalimumab",
+          "presentacion_dosis": "40 mg solucion inyectable",
+          "via": "SC",
+          "pauta": "Cada 2 semanas",
+          "fecha_inicio": "2025-09-15",
+          "fecha_fin": "2026-05-05",
+          "activo": false,
+          "motivo_inicio": "HS Hurley II refractaria a antibioterapia oral",
+          "motivo_cambio": null,
+          "motivo_suspension": "Fallo secundario. Perdida de respuesta clinica tras 8 meses de tratamiento.",
+          "servicio_clinico_origen": "Dermatologia",
+          "estado_validacion_farmacia": "validado"
+        },
+        {
+          "id": "TRAT-FH-002",
+          "cip": "CIP-DEMO-FH-001",
+          "drug_id": "FAR-001",
+          "selected_drug_id": "FAR-001",
+          "nombre_comercial": "Cosentyx",
+          "principio_activo": "Secukinumab",
+          "presentacion_dosis": "300 mg solucion inyectable",
+          "via": "SC",
+          "pauta": "Cada 4 semanas",
+          "fecha_inicio": "2026-05-12",
+          "fecha_fin": null,
+          "activo": true,
+          "motivo_inicio": "HS Hurley II con fallo secundario a Adalimumab. Cambio de diana terapeutica a IL-17.",
+          "motivo_cambio": "Cambio de Adalimumab (anti-TNF) a Secukinumab (anti-IL-17) por fallo secundario. Optimizacion de dosis a 300 mg mensual.",
+          "motivo_suspension": null,
+          "servicio_clinico_origen": "Dermatologia",
+          "estado_validacion_farmacia": "en_seguimiento"
+        }
+      ],
+      "cambios_pauta": [
+        {
+          "id": "CAM-FH-001",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-05-05",
+          "tipo": "cambio_farmaco",
+          "tratamiento_id": null,
+          "tratamiento_anterior_id": "TRAT-FH-001",
+          "tratamiento_nuevo_id": "TRAT-FH-002",
+          "motivo": "Fallo secundario a Adalimumab. Cambio de diana terapeutica de anti-TNF a anti-IL-17.",
+          "descripcion": "Suspension de Adalimumab 40 mg SC/2sem e inicio de Secukinumab 300 mg SC/4sem con induccion. Paciente informada del nuevo plan terapeutico.",
+          "servicio_solicitante": "Dermatologia",
+          "estado_validacion_farmacia": "validado",
+          "fuente": "Servicio clinico"
+        }
+      ],
+      "proms": [
+        {
+          "id": "PROM-FH-001",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-05-12",
+          "tipo_prom": "DLQI",
+          "valor": "13",
+          "interpretacion": "Efecto moderado sobre la calidad de vida (basal pre-Secukinumab)",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "PROM-FH-002",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-06-01",
+          "tipo_prom": "DLQI",
+          "valor": "8",
+          "interpretacion": "Mejoria respecto a basal. Efecto leve-moderado.",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "PROM-FH-003",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-06-01",
+          "tipo_prom": "EVA dolor",
+          "valor": "3",
+          "interpretacion": "Dolor leve",
+          "fuente": "Paciente remoto"
+        },
+        {
+          "id": "PROM-FH-004",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-06-01",
+          "tipo_prom": "EVA prurito",
+          "valor": "2",
+          "interpretacion": "Prurito leve",
+          "fuente": "Paciente remoto"
+        }
+      ],
+      "actividad_clinica": [
+        {
+          "id": "ACT-FH-001",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-05-12",
+          "tipo_indice": "IHS4",
+          "valor": "9",
+          "interpretacion": "Actividad moderada (basal al inicio de Secukinumab)",
+          "servicio_origen": "Farmacia",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "ACT-FH-002",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-06-01",
+          "tipo_indice": "IHS4",
+          "valor": "5",
+          "interpretacion": "Mejoria respecto a basal. Actividad leve-moderada.",
+          "servicio_origen": "Farmacia",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "ACT-FH-007",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-05-12",
+          "tipo_indice": "Hurley",
+          "valor": "2",
+          "interpretacion": "Hurley II",
+          "servicio_origen": "Dermatologia",
+          "fuente": "Servicio clinico"
+        },
+        {
+          "id": "ACT-FH-008",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-06-01",
+          "tipo_indice": "Hurley",
+          "valor": "2",
+          "interpretacion": "Hurley II",
+          "servicio_origen": "Farmacia",
+          "fuente": "Farmacia"
+        }
+      ],
+      "eventos_adversos": [
+        {
+          "id": "EA-FH-001",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-05-25",
+          "tipo": "Reaccion cutanea",
+          "gravedad": "leve",
+          "relacion_tratamiento": "Posible",
+          "accion_tomada": "Antihistaminico oral",
+          "descripcion_corta": "Reaccion cutanea leve en zona de inyeccion de Secukinumab, resuelta con antihistaminico oral en 48h.",
+          "resuelto": true
+        }
+      ],
+      "adherencia": [
+        {
+          "id": "ADH-FH-001",
+          "cip": "CIP-DEMO-FH-001",
+          "fecha": "2026-06-01",
+          "escala": "Morisky-Green",
+          "resultado": "4/4",
+          "interpretacion": "Alta adherencia",
+          "fuente": "Farmacia"
+        }
+      ]
+    },
+    {
+      "cip": "CIP-DEMO-FH-003",
+      "nombre_demo": "Paciente Demo FH-003",
+      "sexo": "Mujer",
+      "edad": 52,
+      "servicios_origen": ["Reumatologia", "Farmacia"],
+      "patologias": ["Artritis Reumatoide (AR)"],
+      "comorbilidades_relevantes": [
+        {
+          "nombre": "Dislipemia",
+          "tipo": "metabolica",
+          "nota": "En tratamiento con estatina. LDL controlado."
+        },
+        {
+          "nombre": "Osteopenia lumbar",
+          "tipo": "osteoarticular",
+          "nota": "DXA lumbar T-score -1.7. Suplementacion con calcio y vitamina D."
+        }
+      ],
+      "episodios_asistenciales": [
+        {
+          "tipo": "Validacion Farmacia",
+          "fecha": "2026-04-01",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Paciente con AR activa. Validado para inicio de tratamiento con Adalimumab."
+        },
+        {
+          "tipo": "Primera visita Farmacia",
+          "fecha": "2026-04-05",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Paciente con AR estable. Inicio de Adalimumab sin incidencias."
+        },
+        {
+          "tipo": "Seguimiento Farmacia",
+          "fecha": "2026-05-20",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Paciente estable. Buena tolerancia."
+        },
+        {
+          "tipo": "Consulta Reumatologia",
+          "fecha": "2026-03-10",
+          "servicio": "Reumatologia",
+          "estado": "completado",
+          "nota": "AR activa (DAS28 5.1). Indicacion de inicio de biologico. Solicitud de Adalimumab."
+        },
+        {
+          "tipo": "Consulta Reumatologia seguimiento",
+          "fecha": "2026-05-15",
+          "servicio": "Reumatologia",
+          "estado": "completado",
+          "nota": "AR en mejoria (DAS28 3.2). Respuesta clinica favorable a Adalimumab."
+        }
+      ],
+      "tratamientos": [
+        {
+          "id": "TRAT-FH-003",
+          "cip": "CIP-DEMO-FH-003",
+          "drug_id": "FAR-002",
+          "selected_drug_id": "FAR-002",
+          "nombre_comercial": "Amgevita",
+          "principio_activo": "Adalimumab",
+          "presentacion_dosis": "40 mg solucion inyectable",
+          "via": "SC",
+          "pauta": "Cada 2 semanas",
+          "fecha_inicio": "2026-04-05",
+          "fecha_fin": null,
+          "activo": true,
+          "motivo_inicio": "AR activa (DAS28 5.1) con mala respuesta a FAMEs convencionales (Metotrexato + Leflunomida).",
+          "motivo_cambio": null,
+          "motivo_suspension": null,
+          "servicio_clinico_origen": "Reumatologia",
+          "estado_validacion_farmacia": "validado"
+        }
+      ],
+      "cambios_pauta": [
+        {
+          "id": "CAM-FH-002",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-06-07",
+          "tipo": "optimizacion_intervalo",
+          "tratamiento_id": "TRAT-FH-003",
+          "tratamiento_anterior_id": null,
+          "tratamiento_nuevo_id": null,
+          "motivo": "Propuesta de espaciado de dosis por buena respuesta clinica mantenida (DAS28 < 3.2 en dos controles consecutivos).",
+          "descripcion": "Propuesta de cambio de pauta de Adalimumab 40 mg cada 2 semanas a cada 3 semanas. Pendiente de validacion por Farmacia y consenso con paciente.",
+          "servicio_solicitante": "Reumatologia",
+          "estado_validacion_farmacia": "pendiente",
+          "fuente": "Servicio clinico"
+        }
+      ],
+      "proms": [
+        {
+          "id": "PROM-FH-005",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-04-05",
+          "tipo_prom": "HAQ",
+          "valor": "1.5",
+          "interpretacion": "Discapacidad moderada (basal al inicio de Adalimumab)",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "PROM-FH-006",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-05-20",
+          "tipo_prom": "HAQ",
+          "valor": "0.75",
+          "interpretacion": "Discapacidad leve. Mejoria significativa respecto a basal.",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "PROM-FH-007",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-05-20",
+          "tipo_prom": "EVA dolor",
+          "valor": "2",
+          "interpretacion": "Dolor leve",
+          "fuente": "Paciente remoto"
+        }
+      ],
+      "actividad_clinica": [
+        {
+          "id": "ACT-FH-003",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-03-10",
+          "tipo_indice": "DAS28",
+          "valor": "5.1",
+          "interpretacion": "Actividad moderada-alta (basal pre-biologico)",
+          "servicio_origen": "Reumatologia",
+          "fuente": "Servicio clinico"
+        },
+        {
+          "id": "ACT-FH-004",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-05-15",
+          "tipo_indice": "DAS28",
+          "valor": "3.2",
+          "interpretacion": "Actividad baja. Respuesta clinica favorable a Adalimumab.",
+          "servicio_origen": "Reumatologia",
+          "fuente": "Servicio clinico"
+        },
+        {
+          "id": "ACT-FH-005",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-04-05",
+          "tipo_indice": "HAQ",
+          "valor": "1.5",
+          "interpretacion": "Discapacidad moderada (basal al inicio de Adalimumab)",
+          "servicio_origen": "Farmacia",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "ACT-FH-006",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-05-20",
+          "tipo_indice": "HAQ",
+          "valor": "0.75",
+          "interpretacion": "Discapacidad leve. Mejoria significativa respecto a basal.",
+          "servicio_origen": "Farmacia",
+          "fuente": "Farmacia"
+        }
+      ],
+      "eventos_adversos": [],
+      "adherencia": [
+        {
+          "id": "ADH-FH-002",
+          "cip": "CIP-DEMO-FH-003",
+          "fecha": "2026-05-20",
+          "escala": "Morisky-Green",
+          "resultado": "4/4",
+          "interpretacion": "Alta adherencia",
+          "fuente": "Farmacia"
+        }
+      ]
+    }
+  ]
+}

@@ -1870,3 +1870,162 @@
         gap: var(--spacing-lg, 24px);
     }
 }
+
+/* --- Farmacia v0.3 longitudinal exploratory dashboard --- */
+
+.longitudinal-demo-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 18px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #FFF7ED, #FFFBF5);
+    border: 1px solid #FED7AA;
+    color: #92400E;
+    font-size: 0.85rem;
+    line-height: 1.55;
+}
+
+.longitudinal-demo-banner i { color: #F59E0B; margin-top: 2px; }
+
+.longitudinal-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.longitudinal-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg, 24px);
+}
+
+.longitudinal-timeline {
+    position: relative;
+    padding-left: 24px;
+}
+
+.longitudinal-timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #E2E8F0;
+}
+
+.longitudinal-timeline-band {
+    position: relative;
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.longitudinal-timeline-band__label {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.9rem;
+}
+
+.longitudinal-timeline-band__range {
+    color: #64748B;
+    font-size: 0.82rem;
+}
+
+.longitudinal-timeline-marker {
+    position: absolute;
+    left: -24px;
+    top: 16px;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--ses-green);
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+
+.longitudinal-chart-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.longitudinal-chart-label {
+    width: 80px;
+    flex-shrink: 0;
+    color: #64748B;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.longitudinal-chart-bar {
+    height: 18px;
+    border-radius: 9px;
+    background: var(--ses-green);
+    min-width: 4px;
+}
+
+.longitudinal-chart-point {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--ses-green);
+    display: inline-block;
+}
+
+.longitudinal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.longitudinal-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.longitudinal-legend__swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.longitudinal-data-status {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748B;
+    font-weight: 500;
+}
+
+.longitudinal-data-status--loading {
+    color: #92400E;
+}
+
+.longitudinal-data-status--error {
+    color: #991B1B;
+}
+
+.longitudinal-data-status--ready {
+    color: var(--ses-green-dark);
+}
+
+@media (max-width: 768px) {
+    .longitudinal-chart-grid {
+        grid-template-columns: 1fr;
+    }
+    .longitudinal-controls-grid {
+        grid-template-columns: 1fr;
+    }
+}
