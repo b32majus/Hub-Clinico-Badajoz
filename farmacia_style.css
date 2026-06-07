@@ -1915,68 +1915,293 @@
     background: #E2E8F0;
 }
 
-.longitudinal-timeline-band {
+.longitudinal-timeline-card {
     position: relative;
-    margin-bottom: 18px;
-    padding: 12px 14px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
     border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.longitudinal-timeline-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.longitudinal-drug-name {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
+
+.longitudinal-timeline-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.longitudinal-timeline-principle,
+.longitudinal-timeline-dose,
+.longitudinal-timeline-pauta,
+.longitudinal-timeline-via {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 8px;
     background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    font-size: 0.82rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.longitudinal-timeline-dates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.longitudinal-timeline-date {
+    color: #64748B;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.longitudinal-timeline-motive {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #FEF3C7;
+    border: 1px solid #FDE68A;
+}
+
+.longitudinal-timeline-motive-text {
+    font-size: 0.85rem;
+    color: #92400E;
+    line-height: 1.4;
+}
+
+.longitudinal-timeline-validation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #E2E8F0;
+    font-size: 0.82rem;
+    color: var(--ses-green-dark);
+    font-weight: 600;
+}
+
+.longitudinal-change-label {
+    font-weight: 700;
+    color: #92400E;
+    font-size: 0.95rem;
+}
+
+.longitudinal-empty {
+    color: #64748B;
+    font-size: 0.9rem;
+    font-style: italic;
+    padding: 12px 0;
+}
+
+.longitudinal-error {
+    color: #991B1B;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Bar charts (PROMs / Clinical) */
+.longitudinal-bar-row {
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #FFFFFF;
     border: 1px solid #E2E8F0;
 }
 
-.longitudinal-timeline-band__label {
-    font-weight: 700;
-    color: #1E293B;
-    font-size: 0.9rem;
-}
-
-.longitudinal-timeline-band__range {
-    color: #64748B;
-    font-size: 0.82rem;
-}
-
-.longitudinal-timeline-marker {
-    position: absolute;
-    left: -24px;
-    top: 16px;
-    width: 14px;
-    height: 14px;
-    border-radius: 999px;
-    background: var(--ses-green);
-    border: 3px solid #FFFFFF;
-    box-shadow: 0 1px 2px rgba(0,0,0,.12);
-}
-
-.longitudinal-chart-row {
+.longitudinal-bar-info {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
-    margin-bottom: 8px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.longitudinal-chart-label {
-    width: 80px;
-    flex-shrink: 0;
+.longitudinal-bar-date {
     color: #64748B;
     font-size: 0.82rem;
     font-weight: 600;
 }
 
-.longitudinal-chart-bar {
-    height: 18px;
-    border-radius: 9px;
-    background: var(--ses-green);
-    min-width: 4px;
+.longitudinal-bar-value {
+    color: #1E293B;
+    font-size: 0.9rem;
+    font-weight: 700;
 }
 
-.longitudinal-chart-point {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--ses-green);
-    display: inline-block;
+.longitudinal-bar-source {
+    color: #94A3B8;
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-left: auto;
 }
 
+.longitudinal-bar-wrapper {
+    height: 12px;
+    border-radius: 6px;
+    background: #E2E8F0;
+    overflow: hidden;
+}
+
+.longitudinal-bar {
+    height: 100%;
+    border-radius: 6px;
+    min-width: 2px;
+    transition: width 0.3s ease;
+}
+
+/* T5 — Threshold bar colours via CSS classes */
+.longitudinal-bar.threshold-low       { background-color: #27ae60; }
+.longitudinal-bar.threshold-moderate  { background-color: #e67e22; }
+.longitudinal-bar.threshold-high      { background-color: #c0392b; }
+.longitudinal-bar.threshold-severe    { background-color: #922b21; }
+.longitudinal-bar.threshold-no-data   { background-color: #95a5a6; }
+
+.longitudinal-bar.hurley-i,
+.longitudinal-bar.hurley-ii,
+.longitudinal-bar.hurley-iii          { background-color: #64748B; }
+
+/* T5 — Adverse event icon colours */
+.longitudinal-ae-icon.event-low       { color: #e6a817; }
+.longitudinal-ae-icon.event-moderate  { color: #e67e22; }
+.longitudinal-ae-icon.event-high      { color: #c0392b; }
+.longitudinal-ae-icon.event-serious   { color: #922b21; }
+
+.longitudinal-bar-interpretation {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #F1F5F9;
+}
+
+.longitudinal-bar-interp-text {
+    font-size: 0.85rem;
+    color: #475569;
+    font-style: italic;
+}
+
+/* Adverse events */
+.longitudinal-ae-card {
+    position: relative;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.longitudinal-ae-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.longitudinal-ae-icon {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+}
+
+.longitudinal-ae-title {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.95rem;
+    flex: 1 1 auto;
+}
+
+.longitudinal-ae-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.longitudinal-ae-detail {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.longitudinal-ae-description {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #F1F5F9;
+    font-size: 0.85rem;
+    color: #64748B;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* T7 — Severity badge & card border for adverse events */
+.longitudinal-ae-card {
+    border-left: 4px solid #CBD5E1;
+}
+
+.longitudinal-ae-card--low       { border-left-color: #e6a817; }
+.longitudinal-ae-card--moderate  { border-left-color: #e67e22; }
+.longitudinal-ae-card--high      { border-left-color: #c0392b; }
+.longitudinal-ae-card--serious   { border-left-color: #922b21; }
+
+.longitudinal-ae-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.longitudinal-ae-badge--low {
+    background: #FEF9E7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+.longitudinal-ae-badge--moderate {
+    background: #FFF2E5;
+    color: #9A3412;
+    border: 1px solid #FED7AA;
+}
+
+.longitudinal-ae-badge--high {
+    background: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
+.longitudinal-ae-badge--serious {
+    background: #FCE4E4;
+    color: #7F1D1D;
+    border: 1px solid #FCA5A5;
+}
+
+/* Legend */
 .longitudinal-legend {
     display: flex;
     flex-wrap: wrap;
@@ -1987,19 +2212,50 @@
     border: 1px solid #E2E8F0;
 }
 
-.longitudinal-legend__item {
+.longitudinal-legend-item {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-size: 0.85rem;
     color: #475569;
 }
 
-.longitudinal-legend__swatch {
-    width: 12px;
-    height: 12px;
+.longitudinal-legend-swatch {
+    width: 16px;
+    height: 16px;
     border-radius: 3px;
     display: inline-block;
+    flex-shrink: 0;
+}
+
+.longitudinal-legend-label {
+    line-height: 1.35;
+}
+
+.longitudinal-legend-note {
+    width: 100%;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: #94A3B8;
+    font-style: italic;
+}
+
+.longitudinal-bar-severity {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #F1F5F9;
+}
+.longitudinal-bar-severity-text {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #334155;
+}
+.longitudinal-legend-threshold {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.5;
+    padding: 3px 0;
 }
 
 .longitudinal-data-status {
@@ -2027,5 +2283,336 @@
     }
     .longitudinal-controls-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   T4b — Refined threshold legend
+   ============================================================ */
+
+.longitudinal-legend-panel {
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.longitudinal-legend-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1E293B;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.longitudinal-legend-title__icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--ses-green);
+    background: var(--ses-green-light);
+    font-size: 0.85rem;
+}
+
+.longitudinal-legend-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.longitudinal-legend-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-left: 3px solid var(--ses-green);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.longitudinal-legend-row:hover {
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+}
+
+.longitudinal-legend-scale {
+    font-weight: 700;
+    color: #1E293B;
+    flex-shrink: 0;
+}
+
+.longitudinal-legend-ranges {
+    color: #475569;
+}
+
+.longitudinal-legend-note {
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid #F1F5F9;
+    font-size: 0.8rem;
+    color: #94A3B8;
+    font-style: italic;
+    line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+    .longitudinal-legend-panel {
+        padding: 14px;
+    }
+    .longitudinal-legend-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+/* ============================================================
+   T6a — Timeline de tratamientos como bandas temporales
+   ============================================================ */
+
+.longitudinal-treatment-track {
+    position: relative;
+    padding: 28px 0 12px;
+    min-height: 80px;
+    overflow-x: auto;
+}
+
+.longitudinal-treatment-track__axis {
+    position: relative;
+    height: 22px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.longitudinal-treatment-track__axis-label {
+    position: absolute;
+    bottom: -18px;
+    font-size: 0.7rem;
+    color: #64748B;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.longitudinal-treatment-track__axis-label--start {
+    left: 0;
+}
+
+.longitudinal-treatment-track__axis-label--end {
+    right: 0;
+}
+
+.longitudinal-treatment-band-row {
+    position: relative;
+    height: 46px;
+    margin-bottom: 6px;
+}
+
+.longitudinal-treatment-band {
+    position: absolute;
+    top: 6px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+    overflow: hidden;
+    min-width: 4px;
+    box-sizing: border-box;
+    font-size: 0.75rem;
+    line-height: 1.25;
+    cursor: default;
+}
+
+.longitudinal-treatment-band--active {
+    background: #DCFCE7;
+    border: 1.5px solid #86EFAC;
+}
+
+.longitudinal-treatment-band--suspended {
+    background: #FEE2E2;
+    border: 1.5px solid #FECACA;
+}
+
+.longitudinal-treatment-band--previous {
+    background: #F1F5F9;
+    border: 1.5px solid #CBD5E1;
+}
+
+.longitudinal-treatment-band--optimized {
+    border-right-style: dashed;
+}
+
+.longitudinal-treatment-band__label {
+    font-weight: 700;
+    color: #1E293B;
+    white-space: nowrap;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.longitudinal-treatment-band__meta {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-shrink: 1;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.longitudinal-treatment-band__dose,
+.longitudinal-treatment-band__pauta,
+.longitudinal-treatment-band__via,
+.longitudinal-treatment-band__principle {
+    color: #475569;
+    white-space: nowrap;
+    font-size: 0.72rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.longitudinal-treatment-band__dates {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.longitudinal-treatment-band__date {
+    color: #64748B;
+    font-size: 0.66rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.longitudinal-treatment-band__status {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.longitudinal-treatment-band__status--active {
+    background: #86EFAC;
+    color: #14532D;
+}
+
+.longitudinal-treatment-band__status--suspended {
+    background: #FECACA;
+    color: #7F1D1D;
+}
+
+.longitudinal-treatment-band__status--previous {
+    background: #CBD5E1;
+    color: #334155;
+}
+
+.longitudinal-treatment-track__markers {
+    position: relative;
+    height: 22px;
+    margin-top: 6px;
+    border-top: 1px dashed #E2E8F0;
+}
+
+.longitudinal-timeline-change-marker {
+    position: absolute;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #F59E0B;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transform: translateX(-50%);
+    cursor: pointer;
+    z-index: 2;
+}
+
+.longitudinal-timeline-ae-marker {
+    position: absolute;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transform: translateX(-50%);
+    cursor: pointer;
+    z-index: 2;
+}
+
+.longitudinal-timeline-ae-marker.event-low {
+    background: #e6a817;
+}
+
+.longitudinal-timeline-ae-marker.event-moderate {
+    background: #e67e22;
+}
+
+.longitudinal-timeline-ae-marker.event-high {
+    background: #c0392b;
+}
+
+.longitudinal-timeline-ae-marker.event-serious {
+    background: #922b21;
+}
+
+@media (max-width: 768px) {
+    .longitudinal-treatment-track {
+        min-height: 60px;
+        padding: 20px 0 8px;
+    }
+
+    .longitudinal-treatment-band {
+        font-size: 0.68rem;
+        height: 28px;
+        top: 4px;
+    }
+
+    .longitudinal-treatment-band-row {
+        height: 38px;
+        margin-bottom: 4px;
+    }
+
+    .longitudinal-treatment-band__label {
+        font-size: 0.7rem;
+    }
+
+    .longitudinal-treatment-band__meta {
+        gap: 3px;
+    }
+
+    .longitudinal-treatment-band__dose,
+    .longitudinal-treatment-band__pauta,
+    .longitudinal-treatment-band__via,
+    .longitudinal-treatment-band__principle {
+        font-size: 0.66rem;
+    }
+
+    .longitudinal-treatment-band__dates {
+        gap: 3px;
+    }
+
+    .longitudinal-treatment-band__date {
+        font-size: 0.6rem;
     }
 }
