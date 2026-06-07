@@ -2616,3 +2616,566 @@
         font-size: 0.6rem;
     }
 }
+
+/* ============================================================
+   Task C — Longitudinal section in patient dashboard
+   ============================================================ */
+
+.longitudinal-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.longitudinal-section-header .card-title {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.longitudinal-section-header .card-title::before {
+    content: none;
+}
+
+.longitudinal-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.longitudinal-controls .form-select {
+    width: auto;
+    min-width: 180px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #E2E8F0;
+    background: #F8FAFC;
+    color: #1E293B;
+    font: inherit;
+    font-size: 0.85rem;
+}
+
+.longitudinal-controls .form-select:focus {
+    outline: none;
+    border-color: var(--ses-green);
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.10);
+}
+
+/* --- Data series (clinical / PROM chips) --- */
+
+.longitudinal-data-series {
+    margin-top: 16px;
+    border-top: 1px solid #E2E8F0;
+    padding-top: 12px;
+}
+
+.longitudinal-data-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.longitudinal-data-header__title {
+    color: #1E293B;
+}
+
+.longitudinal-data-header__scale {
+    color: #64748B;
+    font-size: 0.82rem;
+}
+
+.longitudinal-data-header--with-margin {
+    margin-top: 20px;
+}
+
+.longitudinal-data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.longitudinal-data-chip {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.longitudinal-data-chip__date {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.longitudinal-data-chip__value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.longitudinal-data-chip__severity {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    align-self: flex-start;
+}
+
+.longitudinal-data-chip__severity.threshold-low {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.longitudinal-data-chip__severity.threshold-moderate {
+    background: #FFF2E5;
+    color: #9A3412;
+}
+
+.longitudinal-data-chip__severity.threshold-high {
+    background: #FEF2F2;
+    color: #991B1B;
+}
+
+.longitudinal-data-chip__severity.threshold-severe {
+    background: #FCE4E4;
+    color: #7F1D1D;
+}
+
+.longitudinal-data-chip__severity.hurley-i,
+.longitudinal-data-chip__severity.hurley-ii,
+.longitudinal-data-chip__severity.hurley-iii {
+    background: #F1F5F9;
+    color: #475569;
+}
+
+.longitudinal-data-chip__severity.threshold-no-data {
+    background: #F1F5F9;
+    color: #94A3B8;
+}
+
+.longitudinal-data-chip__interp {
+    font-size: 0.78rem;
+    color: #475569;
+    font-style: italic;
+    line-height: 1.3;
+}
+
+@media (max-width: 768px) {
+    .longitudinal-section-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .longitudinal-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .longitudinal-controls .form-select {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .longitudinal-data-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #longitudinal-chart-container {
+        min-height: 280px !important;
+        overflow-x: auto;
+    }
+}
+
+/* --- Rule fix: card-title flush (no margin/border/padding) --- */
+.card-title--flush {
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+/* --- Rule fix: form-select longitudinal variant --- */
+.form-select--longitudinal {
+    width: auto;
+    min-width: 180px;
+}
+
+/* --- Rule fix: card-body flush variant --- */
+.card-body--flush {
+    padding: 0;
+}
+
+/* --- Rule fix: longitudinal chart container --- */
+.longitudinal-chart-container {
+    position: relative;
+    min-height: 400px;
+}
+
+/* --- Rule fix: longitudinal demo banner spaced --- */
+.longitudinal-demo-banner--spaced {
+    margin-top: 12px;
+}
+
+/* ============================================================
+   Task F — Estadísticas del servicio: filtros, charts, tabla
+   ============================================================ */
+
+/* --- Filters grid layout --- */
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.filters-column {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+/* --- Filter block --- */
+.filter-block {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.filter-block__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.filter-block__header i {
+    color: var(--ses-green);
+    font-size: 0.9rem;
+}
+
+.filter-block__title {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.filter-block__subtitle {
+    margin: 10px 0 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #64748B;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filter-block__subtitle:first-child {
+    margin-top: 0;
+}
+
+/* --- Filter actions --- */
+.filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+/* --- Filter result count --- */
+.filter-result-count {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 135, 119, 0.20);
+}
+
+/* --- Filter chips --- */
+.chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #EFF6FF;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.filter-chip--empty {
+    background: #F1F5F9;
+    color: #94A3B8;
+    border-color: #E2E8F0;
+    font-style: italic;
+}
+
+/* --- Filter range row --- */
+.filter-range-row {
+    display: flex;
+    gap: 10px;
+}
+
+.filter-range-item {
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-range-item .form-label {
+    font-size: 0.7rem;
+}
+
+.filter-range-input {
+    width: 100%;
+    padding: 7px 9px;
+    border-radius: 8px;
+    border: 1.5px solid #E2E8F0;
+    background: #FFFFFF;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.filter-range-input:focus {
+    outline: none;
+    border-color: var(--ses-green);
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.10);
+}
+
+/* --- Stats summary cards --- */
+.stats-summary-card {
+    text-align: center;
+    padding: 20px 18px;
+}
+
+.stats-summary-card .card-title {
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.stats-summary-value {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--ses-green-dark);
+    line-height: 1.2;
+}
+
+/* --- Charts grid --- */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.chart-card {
+    padding: 18px 20px;
+    min-height: 200px;
+}
+
+.chart-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 14px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.chart-title i {
+    color: var(--ses-green);
+}
+
+.chart-empty {
+    color: #94A3B8;
+    font-size: 0.88rem;
+    font-style: italic;
+    text-align: center;
+    padding: 20px 0;
+}
+
+.chart-bar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chart-bar-label {
+    flex: 0 0 130px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #475569;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chart-bar-wrapper {
+    flex: 1 1 auto;
+    height: 16px;
+    border-radius: 8px;
+    background: #E2E8F0;
+    overflow: hidden;
+    min-width: 40px;
+}
+
+.chart-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    background: var(--ses-green);
+    min-width: 2px;
+    transition: width 0.3s ease;
+}
+
+.chart-bar-value {
+    flex: 0 0 36px;
+    text-align: right;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+/* --- Table responsive wrapper --- */
+.table-responsive-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -24px;
+    padding: 0 24px;
+}
+
+.table-responsive-wrapper .data-table {
+    min-width: 900px;
+}
+
+/* --- Pagination --- */
+.table-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #E2E8F0;
+}
+
+.pagination-info {
+    font-size: 0.85rem;
+    color: #64748B;
+    font-weight: 500;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* --- Section title (for charts and summary sections) --- */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.section-title i {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: var(--ses-green);
+    background: var(--ses-green-light);
+}
+
+/* --- Responsive: filters, charts --- */
+@media (max-width: 768px) {
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    .filter-range-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .chart-bar-label {
+        flex: 0 0 90px;
+        font-size: 0.74rem;
+    }
+    .chart-bar-value {
+        flex: 0 0 28px;
+        font-size: 0.76rem;
+    }
+    .stats-summary-value {
+        font-size: 1.5rem;
+    }
+    .table-pagination {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* --- Fix: Form select used in filter blocks --- */
+.filter-block .form-select {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1.5px solid #E2E8F0;
+    background: #FFFFFF;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.filter-block .form-select:focus {
+    outline: none;
+    border-color: var(--ses-green);
+    box-shadow: 0 0 0 3px rgba(0, 135, 119, 0.10);
+}
+
+/* Ensure checklist chips fit inside filter blocks */
+.filter-block .checklist-visual {
+    margin-bottom: 2px;
+}
+
+.filter-block .checklist-chip {
+    font-size: 0.82rem;
+    padding: 6px 10px;
+}

@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607g">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607-postdemo-c">
 </head>
         <body>
             <div class="hub-shell">
@@ -45,7 +45,8 @@
         <div class="nav-section">
             <h3 class="nav-title">Gestión</h3>
             <ul class="nav-list">
-                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas</a></li>
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
                 <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
                 <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
             </ul>
@@ -98,6 +99,22 @@
     <div class="patient-header-actions"><a href="farmacia_seguimiento.html" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="btn btn-secondary"><i class="fas fa-check-double"></i> Validación</a></div>
 </section>
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Resumen Farmacia</h2><div class="info-grid" id="dashboardSummaryGrid"></div></section>
+<section id="longitudinal-section" class="dashboard-card hidden">
+    <div class="longitudinal-section-header">
+        <h2 class="card-title card-title--flush"><i class="fas fa-chart-line"></i> Evolución longitudinal del paciente</h2>
+        <div class="longitudinal-controls">
+            <select id="clinical-var-select" class="form-select form-select--longitudinal"><option value="">Variable clínica</option></select>
+            <select id="prom-select" class="form-select form-select--longitudinal"><option value="">PROM</option></select>
+            <button id="toggle-legend" class="btn btn-sm btn-outline">Ver leyenda</button>
+        </div>
+    </div>
+    <div class="card-body card-body--flush">
+        <div id="longitudinal-chart-container" class="longitudinal-chart-container"></div>
+        <div id="longitudinal-legend" class="hidden"></div>
+        <div id="longitudinal-no-data" class="alert alert-info hidden">Sin datos longitudinales disponibles para este paciente.</div>
+        <div id="longitudinal-demo-note" class="longitudinal-demo-banner longitudinal-demo-banner--spaced hidden"><i class="fas fa-flask" aria-hidden="true"></i><span>Datos demo/sintéticos — no usar para decisiones clínicas.</span></div>
+    </div>
+</section>
 <div class="dashboard-timeline-grid">
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-timeline"></i> Timeline longitudinal mínima</h2><div class="timeline" id="farmaciaTimeline"></div></section>
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-clock"></i> Timeline de tratamiento</h2><div class="timeline" id="timelineTratamiento"></div></section>
@@ -106,7 +123,7 @@
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-clipboard-check"></i> PROMs</h2><div id="promsContainer"></div></section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607g"></script>
-    <script src="scripts/farmacia_dashboard_paciente.js?v=20260607g"></script>
+            <script src="scripts/farmacia_common.js?v=20260607-postdemo-c"></script>
+    <script src="scripts/farmacia_dashboard_paciente.js?v=20260607-postdemo-c"></script>
         </body>
         </html>

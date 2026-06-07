@@ -1,17 +1,17 @@
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hub Clínico — Estadísticas Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607g">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607-postdemo-c">
 </head>
-        <body>
-            <div class="hub-shell">
-        <aside class="sidebar">
+<body>
+    <div class="hub-shell">
+<aside class="sidebar">
     <div class="sidebar-header">
         <div class="logo-circle"><span class="logo-text">FH</span></div>
         <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
@@ -62,7 +62,7 @@
         <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
         <div class="db-status-indicator__text">
             <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
-            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">Cargando...</span>
         </div>
     </div>
     <div class="catalog-sidebar-block">
@@ -71,24 +71,60 @@
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
     </div>
-    <div class="sidebar-footer">Demo Farmacia v0.2</div>
+    <div class="sidebar-footer">Demo Farmacia v0.3</div>
 </aside>
-                <main class="main-content farmacia-paciente farmacia-paciente--estadisticas">
-        <div class="demo-banner" role="note">
-    <i class="fas fa-flask" aria-hidden="true"></i>
-    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
-</div><section class="patient-header-card module-hero">
-    <div class="patient-header-main">
-        <div class="patient-avatar"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
-        <div class="patient-info">
-            <h1 class="patient-name">Estadísticas del servicio</h1>
-            <p class="hero-description">Indicadores sintéticos para revisar la actividad del servicio en la demo.</p>
-        </div>
-    </div>
-</section><div class="stats-note" id="statsDemoNote" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Indicadores demo — datos sintéticos</div><div class="action-grid" id="estadisticasCards"></div>
-                </main>
+        <main class="main-content farmacia-paciente farmacia-paciente--estadisticas">
+            <div class="demo-banner" role="note">
+                <i class="fas fa-flask" aria-hidden="true"></i>
+                <span><strong>Demo Farmacia v0.3 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607g"></script>
-            <script src="scripts/farmacia_estadisticas.js?v=20260607g"></script>
-        </body>
-        </html>
+            <section class="patient-header-card module-hero">
+                <div class="patient-header-main">
+                    <div class="patient-avatar"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
+                    <div class="patient-info">
+                        <h1 class="patient-name">Estadísticas del servicio</h1>
+                        <p class="hero-description">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
+                    </div>
+                </div>
+            </section>
+            <div class="stats-note" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Indicadores demo — datos sintéticos. No usar para decisiones clínicas.</div>
+            <section id="filters-panel" class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-filter"></i> Filtros poblacionales</h2>
+                <div id="filters-container" class="filters-grid"></div>
+                <div class="filter-actions">
+                    <button id="apply-filters" class="btn btn-primary"><i class="fas fa-search"></i> Aplicar filtros</button>
+                    <button id="clear-filters" class="btn btn-outline"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+                </div>
+                <div id="active-filters-chips" class="chips-container"></div>
+                <div id="filter-result-count" class="filter-result-count"></div>
+            </section>
+            <div id="no-results-message" class="hidden">
+                <div class="notice-box notice-box--info">
+                    <i class="fas fa-info-circle"></i>
+                    <span>No hay pacientes que coincidan con los filtros aplicados. Ajuste los criterios o limpie los filtros para ver todos los pacientes.</span>
+                </div>
+            </div>
+            <section id="summary-cards-section">
+                <h2 class="section-title"><i class="fas fa-chart-pie"></i> Resumen de la cohorte</h2>
+                <div id="summary-cards" class="action-grid"></div>
+            </section>
+            <section id="charts-section">
+                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Distribuciones</h2>
+                <div id="charts-grid" class="charts-grid"></div>
+            </section>
+            <section id="patients-table-section" class="dashboard-card">
+                <h2 class="card-title"><i class="fas fa-table"></i> Pacientes filtrados</h2>
+                <div class="table-responsive-wrapper">
+                    <table id="patients-table" class="data-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="table-pagination" class="table-pagination"></div>
+            </section>
+        </main>
+    </div>
+    <script src="scripts/farmacia_common.js?v=20260607-postdemo-c"></script>
+    <script src="scripts/farmacia_estadisticas.js?v=20260607-postdemo-c"></script>
+</body>
+</html>
