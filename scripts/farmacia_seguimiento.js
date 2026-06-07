@@ -4,8 +4,24 @@
     const F = window.FarmaciaDemo;
     const correctAnswers = { mg1: 'no', mg2: 'si', mg3: 'no', mg4: 'no' };
 
+    function isTruthyRobust(value) {
+        if (value === true || value === 1 || value === '1') return true;
+        if (value === false || value === 0 || value === '0') return false;
+        if (value === null || value === undefined || value === '') return false;
+        var s = String(value).trim().toUpperCase();
+        return s === 'TRUE' || s === 'SI' || s === 'S\u00CD' || s === 'YES' || s === '1';
+    }
+
+    var segAutocompleteActiveIndex = -1;
+
     function applyContext() {
         const ctx = F.getQueryContext();
+
+        if (ctx.cip && !ctx.patient) {
+            var C = window.FarmaciaCatalog;
+            if (C && C.clearSnapshot) C.clearSnapshot();
+        }
+
         F.setValue('fhSegCip', ctx.cip);
         F.setValue('fhSegServicio', ctx.servicio || ctx.patient?.servicio);
         F.setValue('fhSegPatologia', ctx.patologia || ctx.patient?.patologia);
@@ -109,9 +125,15 @@
         var patient = F.patients[cip];
         if (!patient) {
             clearCipFields();
+            var C2 = getCatalog();
+            if (C2 && C2.clearSnapshot) C2.clearSnapshot();
+            showSegDrugAutocomplete();
             showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
             return;
         }
+
+        var C2 = getCatalog();
+        if (C2 && C2.clearSnapshot) C2.clearSnapshot();
 
         F.setValue('fhSegCip', patient.cip);
         F.setValue('fhSegServicio', patient.servicio);
@@ -164,6 +186,8 @@
             if (el) el.readOnly = true;
         }
 
+        hideSegDrugAutocomplete();
+
         var banner = document.getElementById('fhSegNoCipBanner');
         if (banner) banner.parentNode.removeChild(banner);
     }
@@ -178,6 +202,193 @@
         });
         var btn = document.getElementById('fhSegCipSearchBtn');
         if (btn) btn.addEventListener('click', searchCIP);
+    }
+
+    function getCatalog() {
+        try { return window.FarmaciaCatalog; } catch (e) { return null; }
+    }
+
+    function showSegDrugAutocomplete() {
+        var block = document.getElementById('fhSegAutocompleteBlock');
+        if (block) block.classList.remove('hidden');
+    }
+
+    function hideSegDrugAutocomplete() {
+        var block = document.getElementById('fhSegAutocompleteBlock');
+        if (block) block.classList.add('hidden');
+        clearSegDrugAutocompleteDropdown();
+    }
+
+    function clearSegDrugAutocompleteDropdown() {
+        var dropdown = document.getElementById('fhSegAutocompleteDropdown');
+        if (dropdown) {
+            F.clearChildren(dropdown);
+            dropdown.classList.add('hidden');
+        }
+        segAutocompleteActiveIndex = -1;
+    }
+
+    function renderSegDrugAutocompleteDropdown(results) {
+        var dropdown = document.getElementById('fhSegAutocompleteDropdown');
+        if (!dropdown) return;
+        F.clearChildren(dropdown);
+        if (!results || results.length === 0) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+        var maxResults = Math.min(results.length, 15);
+        for (var i = 0; i < maxResults; i++) {
+            var drug = results[i];
+            var item = document.createElement('div');
+            item.className = 'autocomplete-item';
+            if (i === segAutocompleteActiveIndex) item.classList.add('autocomplete-item--active');
+
+            var mainRow = document.createElement('div');
+            mainRow.className = 'autocomplete-item-main';
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'autocomplete-item-name';
+            nameSpan.textContent = drug.display_name || drug.nombre_comercial || '\u2014';
+            mainRow.appendChild(nameSpan);
+
+            if (isTruthyRobust(drug.es_hospitalario)) {
+                var hospTag = document.createElement('span');
+                hospTag.className = 'drug-tag drug-tag--hosp';
+                hospTag.textContent = 'HOSP';
+                mainRow.appendChild(hospTag);
+            }
+            if (isTruthyRobust(drug.biosimilar)) {
+                var bioTag = document.createElement('span');
+                bioTag.className = 'drug-tag drug-tag--bio';
+                bioTag.textContent = 'BIO';
+                mainRow.appendChild(bioTag);
+            }
+            var sourceType = (drug.source_type || '').toLowerCase();
+            var sourceTag = document.createElement('span');
+            sourceTag.className = 'drug-source-tag drug-source-tag--' + (sourceType === 'cima' ? 'cima' : 'local');
+            sourceTag.textContent = drug.source_type || '\u2014';
+            mainRow.appendChild(sourceTag);
+
+            item.appendChild(mainRow);
+
+            var detailRow = document.createElement('div');
+            detailRow.className = 'autocomplete-item-detail';
+            var parts = [];
+            if (drug.principio_activo) parts.push(drug.principio_activo);
+            if (drug.dosis) parts.push(drug.dosis);
+            if (drug.via) parts.push(drug.via);
+            if (drug.codigo_nacional) parts.push('CN ' + drug.codigo_nacional);
+            detailRow.textContent = parts.join(' \u00B7 ');
+            item.appendChild(detailRow);
+
+            (function (d) {
+                item.addEventListener('click', function () {
+                    selectDrugSeg(d);
+                });
+            })(drug);
+
+            dropdown.appendChild(item);
+        }
+        dropdown.classList.remove('hidden');
+        segAutocompleteActiveIndex = -1;
+    }
+
+    function selectDrugSeg(drug) {
+        var C = getCatalog();
+        if (!C || !drug) return;
+
+        C.selectDrug(drug);
+
+        F.setValue('fhSegFarmaco', drug.display_name || drug.nombre_comercial || '');
+        F.setValue('fhSegPrincipioActivo', drug.principio_activo || '');
+        F.setValue('fhSegPresentacion', drug.nombre_presentacion || '');
+        F.setValue('fhSegDosisActual', drug.dosis || '');
+        F.setValue('fhSegVia', drug.via || '');
+        F.setValue('fhSegCodigoNacional', drug.codigo_nacional || '');
+        F.setValue('fhSegNregistro', drug.nregistro || '');
+
+        var sourceType = (drug.source_type || '').toUpperCase();
+        var origenLabel;
+        if (sourceType === 'CIMA') {
+            origenLabel = 'CIMA';
+        } else if (sourceType === 'LOCAL') {
+            origenLabel = 'Local Especial';
+        } else {
+            origenLabel = drug.source_type || 'Demo';
+        }
+        F.setValue('fhSegOrigenCatalogo', origenLabel);
+
+        var tags = [];
+        if (isTruthyRobust(drug.es_hospitalario)) tags.push('Hospitalario');
+        if (isTruthyRobust(drug.biosimilar)) tags.push('Biosimilar');
+        F.setValue('fhSegEtiquetas', tags.length ? tags.join(', ') : '\u2014');
+
+        clearSegDrugAutocompleteDropdown();
+        var searchInput = document.getElementById('fhSegDrugSearch');
+        if (searchInput) {
+            searchInput.value = drug.display_name || drug.nombre_comercial || '';
+        }
+    }
+
+    function handleSegDrugSearchInput() {
+        var C = getCatalog();
+        if (!C || !C.loaded) return;
+        var input = document.getElementById('fhSegDrugSearch');
+        if (!input) return;
+        var query = input.value.trim();
+        if (query.length < 2) {
+            clearSegDrugAutocompleteDropdown();
+            return;
+        }
+        var results = C.search(query);
+        renderSegDrugAutocompleteDropdown(results);
+    }
+
+    function initSegDrugAutocomplete() {
+        var input = document.getElementById('fhSegDrugSearch');
+        if (!input) return;
+
+        input.addEventListener('input', handleSegDrugSearchInput);
+        input.addEventListener('keydown', function (event) {
+            var dropdown = document.getElementById('fhSegAutocompleteDropdown');
+            if (!dropdown || dropdown.classList.contains('hidden')) return;
+            var items = dropdown.querySelectorAll('.autocomplete-item');
+            if (items.length === 0) return;
+
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                segAutocompleteActiveIndex = Math.min(segAutocompleteActiveIndex + 1, items.length - 1);
+                for (var k = 0; k < items.length; k++) {
+                    items[k].classList.toggle('autocomplete-item--active', k === segAutocompleteActiveIndex);
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                segAutocompleteActiveIndex = Math.max(segAutocompleteActiveIndex - 1, -1);
+                for (var j = 0; j < items.length; j++) {
+                    items[j].classList.toggle('autocomplete-item--active', j === segAutocompleteActiveIndex);
+                }
+            } else if (event.key === 'Enter') {
+                if (segAutocompleteActiveIndex >= 0 && segAutocompleteActiveIndex < items.length) {
+                    event.preventDefault();
+                    items[segAutocompleteActiveIndex].click();
+                }
+            } else if (event.key === 'Escape') {
+                clearSegDrugAutocompleteDropdown();
+            }
+        });
+
+        input.addEventListener('blur', function () {
+            setTimeout(function () {
+                if (!document.activeElement || !document.getElementById('fhSegAutocompleteDropdown').contains(document.activeElement)) {
+                    clearSegDrugAutocompleteDropdown();
+                }
+            }, 150);
+        });
+
+        var catalog = getCatalog();
+        if (catalog) {
+            catalog.autoLoad();
+        }
     }
 
     function toggleField(fieldId, show) {
@@ -475,6 +686,17 @@
         return 'No requiere';
     }
 
+    function getSnapshotMetaForExportSeg() {
+        var C = getCatalog();
+        if (!C) return null;
+        var snap = C.getSnapshot ? C.getSnapshot() : C.selectedSnapshot;
+        if (!snap || !snap.selected_drug_id) return null;
+        return {
+            source_type: snap.source_type || '',
+            selected_drug_id: snap.selected_drug_id || ''
+        };
+    }
+
     function buildSegLines() {
         const lines = [];
         lines.push('=== INFORME DE SEGUIMIENTO FARMACIA ===');
@@ -498,6 +720,11 @@
         lines.push('Última adherencia: ' + (fv('fhSegUltimaAdherencia') || '—'));
         lines.push('Últimos PROMs: ' + (fv('fhSegUltimosProms') || '—'));
         lines.push('Origen catálogo: ' + (fv('fhSegOrigenCatalogo') || '—'));
+        var metaSeg = getSnapshotMetaForExportSeg();
+        if (metaSeg) {
+            lines.push('Origen catálogo source_type: ' + (metaSeg.source_type || '—'));
+            lines.push('ID fármaco seleccionado: ' + (metaSeg.selected_drug_id || '—'));
+        }
         lines.push('EA previos: ' + (fv('fhSegEaPrevios') || '—'));
         lines.push('');
         lines.push('--- Evolución farmacoterapéutica ---');
@@ -552,6 +779,12 @@
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();
         initCipSearch();
+        initSegDrugAutocomplete();
+
+        if (!F.getQueryContext().patient) {
+            showSegDrugAutocomplete();
+        }
+
         document.querySelectorAll('input[name^="mg"]').forEach(input => input.addEventListener('change', updateMorisky));
         renderDLQI();
         setupEVASliders();
@@ -592,8 +825,9 @@
             var dlqiInterpExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? (document.getElementById('fhSegDlqiInterp') && document.getElementById('fhSegDlqiInterp').textContent || '').replace(/^ — /, '').trim() : '';
             var evaDolorExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getEVADolor() : '';
             var evaPruritoExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
+            var metaSeg = getSnapshotMetaForExportSeg();
             const rows = [
-                ['ID', 'Fecha', 'CIP', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EA', 'GravedadEA', 'Decision', 'AvisoCambioFarmaco'],
+                ['ID', 'Fecha', 'CIP', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'OrigenCatalogoSourceType', 'SelectedDrugId', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EA', 'GravedadEA', 'Decision', 'AvisoCambioFarmaco'],
                 [
                     'FH-SEG-' + Date.now().toString(36).toUpperCase(),
                     new Date().toLocaleDateString('es-ES'),
@@ -603,6 +837,8 @@
                     fv('fhSegDosisActual') || '—',
                     fv('fhSegVia') || '—',
                     fv('fhSegPautaActual') || '—',
+                    (metaSeg && metaSeg.source_type) || '—',
+                    (metaSeg && metaSeg.selected_drug_id) || '—',
                     fv('fhSegOptimiza') || '—',
                     moriskyEl ? moriskyEl.textContent : '—',
                     fv('fhSegProms') || '—',

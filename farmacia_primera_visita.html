@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607e">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607f">
 </head>
         <body>
             <div class="hub-shell">
@@ -104,6 +104,16 @@
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
     <div class="info-grid" id="fhPvTratamientoGrid"></div>
+    <div id="fhPvAutocompleteBlock" class="hidden">
+        <h3 class="card-title card-title--tight"><i class="fas fa-search"></i> Buscar fármaco en catálogo</h3>
+        <div class="form-group">
+            <label for="fhPvDrugSearch">Buscar por marca, principio activo, presentación o código</label>
+            <div class="autocomplete-wrapper">
+                <input type="text" id="fhPvDrugSearch" class="form-control" placeholder="Ej. Cosentyx, secukinumab, Humira..." autocomplete="off">
+                <div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
+        </div>
+    </div>
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
     <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
@@ -147,6 +157,6 @@
                 </main>
             </div>
             <script src="scripts/farmacia_common.js?v=20260607e"></script>
-    <script src="scripts/farmacia_primera_visita.js?v=20260607e"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260607f"></script>
         </body>
         </html>

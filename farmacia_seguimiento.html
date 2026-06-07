@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607e">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607f">
 </head>
         <body>
             <div class="hub-shell">
@@ -86,6 +86,7 @@
     </div>
 </section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-pills"></i> Tratamiento actual</h2>
     <div class="form-grid"><div class="form-group"><label for="fhSegCip">CIP</label><div class="cip-search-wrap"><input type="text" id="fhSegCip" class="form-control" placeholder="Buscar paciente por CIP..." autocomplete="off"><i class="fas fa-search cip-search-icon" aria-hidden="true"></i><button type="button" class="cip-search-action" id="fhSegCipSearchBtn" aria-label="Buscar CIP"><i class="fas fa-search"></i></button></div></div><div class="form-group"><label for="fhSegServicio">Origen</label><input class="form-control" id="fhSegServicio" readonly></div><div class="form-group"><label for="fhSegPatologia">Indicación</label><input class="form-control" id="fhSegPatologia" readonly></div></div>
+    <div id="fhSegAutocompleteBlock" class="hidden"><div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDrugSearch">Buscar fármaco por marca, principio activo o código</label><div class="autocomplete-wrapper"><input type="text" id="fhSegDrugSearch" class="form-control" placeholder="Ej. Cosentyx, secukinumab, Humira..." autocomplete="off"><div id="fhSegAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegFarmaco">Fármaco / Marca</label><input class="form-control" id="fhSegFarmaco" readonly></div><div class="form-group"><label for="fhSegPrincipioActivo">Principio activo</label><input class="form-control" id="fhSegPrincipioActivo" readonly></div><div class="form-group"><label for="fhSegPresentacion">Presentación</label><input class="form-control" id="fhSegPresentacion" readonly></div><div class="form-group"><label for="fhSegDosisActual">Dosis</label><input class="form-control" id="fhSegDosisActual" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegVia">Vía</label><input class="form-control" id="fhSegVia" readonly></div><div class="form-group"><label for="fhSegPautaActual">Pauta / Intervalo</label><input class="form-control" id="fhSegPautaActual" readonly></div><div class="form-group"><label for="fhSegCodigoNacional">Cód. Nacional</label><input class="form-control" id="fhSegCodigoNacional" readonly></div><div class="form-group"><label for="fhSegNregistro">Nº Registro</label><input class="form-control" id="fhSegNregistro" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhSegEtiquetas">Etiquetas</label><input class="form-control" id="fhSegEtiquetas" readonly></div><div class="form-group"><label for="fhSegFechaInicio">Fecha inicio / 1ª visita</label><input class="form-control" id="fhSegFechaInicio" readonly></div><div class="form-group"><label for="fhSegUltimaAdherencia">Última adherencia</label><input class="form-control" id="fhSegUltimaAdherencia" readonly></div><div class="form-group"><label for="fhSegUltimosProms">Últimos PROMs</label><input class="form-control" id="fhSegUltimosProms" readonly></div></div>
@@ -174,6 +175,6 @@
                 </main>
             </div>
             <script src="scripts/farmacia_common.js?v=20260607e"></script>
-    <script src="scripts/farmacia_seguimiento.js?v=20260607e"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260607f"></script>
         </body>
         </html>
