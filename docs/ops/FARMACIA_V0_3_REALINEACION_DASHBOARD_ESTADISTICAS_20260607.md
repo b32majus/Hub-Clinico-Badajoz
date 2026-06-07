@@ -101,4 +101,17 @@ Los filtros se aplican en el lado cliente sobre `farmacia_longitudinal_demo_v0_3
 
 ---
 
+## 7. Correcciones P1 — 2026-06-07
+
+Correcciones aplicadas tras la demo del 2026-06-07, previo al cierre de la iteración v0.3:
+
+- **T2:** Longitudinal con eje Y real (escalas independientes por métrica)
+- **T3:** Ejes visuales izquierdo/derecho para variables con distinto rango
+- **T4:** Marcador de evento adverso (EA) representado como triángulo
+- **T5:** Marcador de cambio de pauta con icono específico
+- **T6:** Diferenciación visual entre intensificación y desintensificación
+- **T7:** Corrección de bug en rangos con valor 0
+
+---
+
 *Documento generado: Realineación dashboard estadísticas v0.3, 2026-06-07. Builder: DeepSeek v4 Flash.*

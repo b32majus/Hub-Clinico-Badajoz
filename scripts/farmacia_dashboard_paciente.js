@@ -368,6 +368,34 @@
         }
     }
 
+    function detectIntensityChange(treatment, cambios_pauta) {
+        if (!cambios_pauta || cambios_pauta.length === 0) return null;
+        if (!treatment.fecha_inicio) return null;
+        var tStart = longParseDate(treatment.fecha_inicio);
+        var tEnd = null;
+        if (treatment.fecha_fin) {
+            tEnd = longParseDate(treatment.fecha_fin);
+        }
+        if (!tStart) return null;
+        for (var i = 0; i < cambios_pauta.length; i++) {
+            var c = cambios_pauta[i];
+            var cDate = longParseDate(c.fecha);
+            if (!cDate) continue;
+            var inRange = cDate >= tStart && (!tEnd || cDate <= tEnd);
+            var matchesTreatment = true;
+            if (c.tratamiento_id && treatment.id && c.tratamiento_id !== treatment.id) matchesTreatment = false;
+            var matchesPrev = c.tratamiento_anterior_id && treatment.id && c.tratamiento_anterior_id === treatment.id;
+            var matchesNew = c.tratamiento_nuevo_id && treatment.id && c.tratamiento_nuevo_id === treatment.id;
+            if (!inRange && !matchesPrev && !matchesNew) continue;
+            if (!inRange && !matchesTreatment && !matchesPrev && !matchesNew) continue;
+            if (matchesPrev && !inRange) continue;
+            var txt = ((c.tipo || '') + ' ' + (c.motivo || '') + ' ' + (c.descripcion || '')).toLowerCase();
+            if (/intensific|aumento\s|subida|escalada|dosis.*superior|dosis.*mayor|increment/i.test(txt)) return 'intensified';
+            if (/desintensif|reducci[oó]n|bajada|desescalada|espaciado|cada\s*[456789]|optimizacion_intervalo/i.test(txt)) return 'deintensified';
+        }
+        return null;
+    }
+
     function renderLongTreatmentBands(patient, container) {
         if (!container) return;
         var treatments = patient.tratamientos || [];
@@ -448,7 +476,12 @@
             if (t.activo && !t.fecha_fin) statusClass = 'longitudinal-treatment-band--active';
             else if (!t.activo && t.motivo_suspension) statusClass = 'longitudinal-treatment-band--suspended';
 
-            var bandClasses = 'longitudinal-treatment-band ' + statusClass;
+            var intensityResult = detectIntensityChange(t, changes);
+            var intensityClass = '';
+            if (intensityResult === 'intensified') intensityClass = ' treatment-intensified';
+            else if (intensityResult === 'deintensified') intensityClass = ' treatment-deintensified';
+
+            var bandClasses = 'longitudinal-treatment-band ' + statusClass + intensityClass;
             if (t.motivo_cambio) bandClasses += ' longitudinal-treatment-band--optimized';
 
             var band = document.createElement('div');
@@ -520,49 +553,67 @@
             if (t.motivo_suspension) tooltipParts.push('Suspension: ' + t.motivo_suspension);
             if (t.motivo_cambio) tooltipParts.push('Cambio: ' + t.motivo_cambio);
             if (t.estado_validacion_farmacia) tooltipParts.push('Validacion: ' + t.estado_validacion_farmacia);
+            if (intensityResult) {
+                tooltipParts.push('Intensidad: ' + (intensityResult === 'intensified' ? 'Intensificacion' : 'Desintensificacion'));
+            }
             if (tooltipParts.length > 0) band.setAttribute('title', tooltipParts.join(' | '));
 
-            bandRow.appendChild(band);
-            track.appendChild(bandRow);
-        }
-
-        if (changes.length > 0 || events.length > 0) {
-            var markerRow = document.createElement('div');
-            markerRow.className = 'longitudinal-treatment-track__markers';
+            var bandMs = endDate.getTime() - startDate.getTime();
+            var bandDays = bandMs / (1000 * 60 * 60 * 24);
+            if (bandDays <= 0) bandDays = 0.5;
 
             for (var ci = 0; ci < changes.length; ci++) {
                 var c = changes[ci];
                 var cdDate = longParseDate(c.fecha);
                 if (!cdDate) continue;
-                var marker = document.createElement('div');
-                marker.className = 'longitudinal-timeline-change-marker';
-                marker.style.left = pct(cdDate) + '%';
-                var cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—') + '\nMotivo: ' + (c.motivo || '—');
+                if (cdDate < startDate || cdDate > endDate) continue;
+                var cDaysFromStart = (cdDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+                var cPosPct = (cDaysFromStart / bandDays) * 100;
+                if (cPosPct < 0) cPosPct = 0;
+                if (cPosPct > 100) cPosPct = 100;
+                var doseMarker = document.createElement('div');
+                doseMarker.className = 'event-marker--dose-change';
+                doseMarker.style.left = cPosPct + '%';
+                var doseIcon = document.createElement('i');
+                doseIcon.className = 'fas fa-rotate';
+                doseIcon.setAttribute('aria-hidden', 'true');
+                doseMarker.appendChild(doseIcon);
+                var cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—');
                 if (c.descripcion) cTooltip += '\n' + c.descripcion;
+                if (c.motivo) cTooltip += '\nMotivo: ' + c.motivo;
+                if (c.dosis_anterior) cTooltip += '\nDosis anterior: ' + c.dosis_anterior;
+                if (c.dosis_nueva) cTooltip += '\nDosis nueva: ' + c.dosis_nueva;
                 if (c.estado_validacion_farmacia) cTooltip += '\nValidacion: ' + c.estado_validacion_farmacia;
-                marker.setAttribute('title', cTooltip);
-                markerRow.appendChild(marker);
+                doseMarker.setAttribute('title', cTooltip);
+                band.appendChild(doseMarker);
             }
 
             for (var ei = 0; ei < events.length; ei++) {
                 var ev = events[ei];
                 var edDate = longParseDate(ev.fecha);
                 if (!edDate) continue;
+                if (edDate < startDate || edDate > endDate) continue;
+                var eDaysFromStart = (edDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+                var ePosPct = (eDaysFromStart / bandDays) * 100;
+                if (ePosPct < 0) ePosPct = 0;
+                if (ePosPct > 100) ePosPct = 100;
                 var grav = ev.gravedad || '';
-                var gravClass = 'event-high';
-                if (grav === 'leve') gravClass = 'event-low';
-                else if (grav === 'moderado' || grav === 'moderada') gravClass = 'event-moderate';
-                else if (grav === 'grave') gravClass = 'event-high';
-                else if (grav === 'serio') gravClass = 'event-serious';
+                var gravSuffix = 'high';
+                if (grav === 'leve') gravSuffix = 'low';
+                else if (grav === 'moderado' || grav === 'moderada') gravSuffix = 'moderate';
+                else if (grav === 'grave') gravSuffix = 'high';
+                else if (grav === 'serio') gravSuffix = 'serious';
                 var aeMarker = document.createElement('div');
-                aeMarker.className = 'longitudinal-timeline-ae-marker ' + gravClass;
-                aeMarker.style.left = pct(edDate) + '%';
+                aeMarker.className = 'event-marker--adverse event-marker--ae-' + gravSuffix;
+                aeMarker.style.left = ePosPct + '%';
                 var aeTooltip = 'EA: ' + (ev.tipo || '—') + ' (' + (ev.fecha || '') + ')\nGravedad: ' + (ev.gravedad || '—') + '\nRelacion: ' + (ev.relacion_tratamiento || '—') + '\nAccion: ' + (ev.accion_tomada || '—');
                 if (ev.descripcion_corta) aeTooltip += '\n' + ev.descripcion_corta;
                 aeMarker.setAttribute('title', aeTooltip);
-                markerRow.appendChild(aeMarker);
+                band.appendChild(aeMarker);
             }
-            track.appendChild(markerRow);
+
+            bandRow.appendChild(band);
+            track.appendChild(bandRow);
         }
 
         while (container.firstChild) container.removeChild(container.firstChild);
@@ -580,6 +631,10 @@
         var track = container.querySelector('.longitudinal-treatment-track');
         if (!track) return;
 
+        var oldCanvas = track.querySelector('.longitudinal-chart-canvas');
+        if (oldCanvas) oldCanvas.parentNode.removeChild(oldCanvas);
+        var oldLegend = track.querySelector('.longitudinal-axis-legend');
+        if (oldLegend) oldLegend.parentNode.removeChild(oldLegend);
         var oldRows = track.querySelectorAll('.longitudinal-data-point-row, .longitudinal-data-svg-overlay, .longitudinal-data-hint');
         for (var r = 0; r < oldRows.length; r++) {
             oldRows[r].parentNode.removeChild(oldRows[r]);
@@ -639,75 +694,205 @@
             return Math.max(0, Math.min(100, (days / totalDays) * 100));
         }
 
+        var clinicalMax = clinicalType ? (CLINICAL_MAX[clinicalType] || 100) : 100;
+        var promMax = promType ? (PROM_MAX[promType] || 100) : 100;
+
+        var hasClinical = clinicalKey && clinicalItems.length > 0;
+        var hasProm = promKey && promItems.length > 0;
+
+        if (!hasClinical && !hasProm) {
+            if (clinicalKey) {
+                var cEmpty = document.createElement('div');
+                cEmpty.className = 'longitudinal-data-hint';
+                cEmpty.textContent = 'Sin datos de ' + clinicalType + ' para este paciente.';
+                track.appendChild(cEmpty);
+            }
+            if (promKey) {
+                var pEmpty = document.createElement('div');
+                pEmpty.className = 'longitudinal-data-hint';
+                pEmpty.textContent = 'Sin datos de ' + promType + ' para este paciente.';
+                track.appendChild(pEmpty);
+            }
+            return;
+        }
+
         var svgNS = 'http://www.w3.org/2000/svg';
 
-        function buildPointTrack(labelText, items, dataType, maxVal) {
-            var sorted = items.slice().sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+        var canvas = document.createElement('div');
+        canvas.className = 'longitudinal-chart-canvas';
 
-            var row = document.createElement('div');
-            row.className = 'longitudinal-data-point-row longitudinal-data-point-row--' + dataType;
+        if (hasClinical) {
+            var leftAxis = document.createElement('div');
+            leftAxis.className = 'longitudinal-chart-yaxis longitudinal-chart-yaxis--left';
+            var topTickC = document.createElement('div');
+            topTickC.className = 'longitudinal-chart-yaxis__tick';
+            var topValC = document.createElement('span');
+            topValC.className = 'longitudinal-chart-yaxis__value';
+            topValC.textContent = String(clinicalMax);
+            var topLabelC = document.createElement('span');
+            topLabelC.className = 'longitudinal-chart-yaxis__label';
+            topLabelC.textContent = clinicalType || '';
+            topTickC.appendChild(topValC);
+            topTickC.appendChild(topLabelC);
+            var botTickC = document.createElement('div');
+            botTickC.className = 'longitudinal-chart-yaxis__tick';
+            var botValC = document.createElement('span');
+            botValC.className = 'longitudinal-chart-yaxis__value';
+            botValC.textContent = '0';
+            var botLabelC = document.createElement('span');
+            botLabelC.className = 'longitudinal-chart-yaxis__label';
+            botLabelC.textContent = 'min';
+            botTickC.appendChild(botValC);
+            botTickC.appendChild(botLabelC);
+            leftAxis.appendChild(topTickC);
+            leftAxis.appendChild(botTickC);
+            canvas.appendChild(leftAxis);
+        } else {
+            var leftSpacer = document.createElement('div');
+            leftSpacer.className = 'longitudinal-chart-yaxis';
+            canvas.appendChild(leftSpacer);
+        }
 
-            var labelEl = document.createElement('span');
-            labelEl.className = 'longitudinal-data-point-row__label';
-            labelEl.textContent = labelText + ' (0\u2013' + maxVal + ')';
-            row.appendChild(labelEl);
+        var svgArea = document.createElement('div');
+        svgArea.className = 'longitudinal-chart-svg-area';
 
-            var pointTrack = document.createElement('div');
-            pointTrack.className = 'longitudinal-data-point-track';
+        var svgEl = document.createElementNS(svgNS, 'svg');
+        svgEl.setAttribute('class', 'longitudinal-chart-svg');
+        svgEl.setAttribute('viewBox', '0 0 100 100');
+        svgEl.setAttribute('preserveAspectRatio', 'none');
 
-            var svgEl = document.createElementNS(svgNS, 'svg');
-            svgEl.setAttribute('class', 'longitudinal-data-point-svg');
-            svgEl.setAttribute('viewBox', '0 0 100 20');
-            svgEl.setAttribute('preserveAspectRatio', 'none');
-            var polyline = document.createElementNS(svgNS, 'polyline');
-            polyline.setAttribute('class', 'longitudinal-data-line longitudinal-data-line--' + dataType);
-            polyline.setAttribute('fill', 'none');
-            polyline.setAttribute('stroke-linejoin', 'round');
-            var points = [];
+        function yCoord(value, maxVal) {
+            if (isNaN(value) || value === null || value === undefined || maxVal <= 0) return 50;
+            var ratio = value / maxVal;
+            if (ratio > 1) ratio = 1;
+            if (ratio < 0) ratio = 0;
+            return 100 - (ratio * 100);
+        }
 
-            for (var s = 0; s < sorted.length; s++) {
-                var item = sorted[s];
+        if (hasClinical) {
+            var clinicalSorted = clinicalItems.slice().sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+            var clinicalPoints = [];
+            for (var s = 0; s < clinicalSorted.length; s++) {
+                var item = clinicalSorted[s];
                 var d = longParseDate(item.fecha);
                 if (!d) continue;
-                var pos = pct(d);
-                points.push(pos + ',10');
+                var x = pct(d);
+                var y = yCoord(parseFloat(item.valor), clinicalMax);
+                clinicalPoints.push(x + ',' + y);
 
                 var marker = document.createElement('div');
-                marker.className = 'longitudinal-data-point-marker longitudinal-data-point-marker--' + dataType;
-                marker.style.left = pos + '%';
-
+                marker.className = 'longitudinal-chart-marker longitudinal-chart-marker--clinical';
+                if (clinicalSorted.length === 1) marker.className += ' longitudinal-chart-marker--single';
+                marker.style.left = x + '%';
+                marker.style.top = y + '%';
                 var numericVal = parseFloat(item.valor);
-                var sevInfo = getLongSeverityInfo(labelText, numericVal);
-                var tip = labelText + ': ' + (item.valor || '\u2014') + ' (' + item.fecha + ')\n' + sevInfo.label;
+                var sevInfo = getLongSeverityInfo(clinicalType, numericVal);
+                var tip = clinicalType + ': ' + (item.valor || '\u2014') + ' (' + item.fecha + ')\n' + sevInfo.label;
                 if (item.interpretacion) tip += '\n' + item.interpretacion;
                 marker.setAttribute('title', tip);
+                svgArea.appendChild(marker);
+            }
+            if (clinicalPoints.length > 0) {
+                var clinicalLine = document.createElementNS(svgNS, 'polyline');
+                clinicalLine.setAttribute('class', 'longitudinal-chart-line longitudinal-chart-line--clinical');
+                clinicalLine.setAttribute('points', clinicalPoints.join(' '));
+                svgEl.appendChild(clinicalLine);
+            }
+        }
 
-                pointTrack.appendChild(marker);
+        if (hasProm) {
+            var promSorted = promItems.slice().sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+            var promPoints = [];
+            for (var ps = 0; ps < promSorted.length; ps++) {
+                var pItem = promSorted[ps];
+                var pd = longParseDate(pItem.fecha);
+                if (!pd) continue;
+                var px = pct(pd);
+                var py = yCoord(parseFloat(pItem.valor), promMax);
+                promPoints.push(px + ',' + py);
+
+                var pMarker = document.createElement('div');
+                pMarker.className = 'longitudinal-chart-marker longitudinal-chart-marker--prom';
+                if (promSorted.length === 1) pMarker.className += ' longitudinal-chart-marker--single';
+                pMarker.style.left = px + '%';
+                pMarker.style.top = py + '%';
+                var pNumericVal = parseFloat(pItem.valor);
+                var pSevInfo = getLongSeverityInfo(promType, pNumericVal);
+                var pTip = promType + ': ' + (pItem.valor || '\u2014') + ' (' + pItem.fecha + ')\n' + pSevInfo.label;
+                if (pItem.interpretacion) pTip += '\n' + pItem.interpretacion;
+                pMarker.setAttribute('title', pTip);
+                svgArea.appendChild(pMarker);
+            }
+            if (promPoints.length > 0) {
+                var promLine = document.createElementNS(svgNS, 'polyline');
+                promLine.setAttribute('class', 'longitudinal-chart-line longitudinal-chart-line--prom');
+                promLine.setAttribute('points', promPoints.join(' '));
+                svgEl.appendChild(promLine);
+            }
+        }
+
+        svgArea.appendChild(svgEl);
+        canvas.appendChild(svgArea);
+
+        if (hasProm) {
+            var rightAxis = document.createElement('div');
+            rightAxis.className = 'longitudinal-chart-yaxis longitudinal-chart-yaxis--right';
+            var topTickP = document.createElement('div');
+            topTickP.className = 'longitudinal-chart-yaxis__tick';
+            var topValP = document.createElement('span');
+            topValP.className = 'longitudinal-chart-yaxis__value';
+            topValP.textContent = String(promMax);
+            var topLabelP = document.createElement('span');
+            topLabelP.className = 'longitudinal-chart-yaxis__label';
+            topLabelP.textContent = promType || '';
+            topTickP.appendChild(topValP);
+            topTickP.appendChild(topLabelP);
+            var botTickP = document.createElement('div');
+            botTickP.className = 'longitudinal-chart-yaxis__tick';
+            var botValP = document.createElement('span');
+            botValP.className = 'longitudinal-chart-yaxis__value';
+            botValP.textContent = '0';
+            var botLabelP = document.createElement('span');
+            botLabelP.className = 'longitudinal-chart-yaxis__label';
+            botLabelP.textContent = 'min';
+            botTickP.appendChild(botValP);
+            botTickP.appendChild(botLabelP);
+            rightAxis.appendChild(topTickP);
+            rightAxis.appendChild(botTickP);
+            canvas.appendChild(rightAxis);
+        } else {
+            var rightSpacer = document.createElement('div');
+            rightSpacer.className = 'longitudinal-chart-yaxis';
+            canvas.appendChild(rightSpacer);
+        }
+
+        track.insertBefore(canvas, track.querySelector('.longitudinal-treatment-track__axis'));
+
+        if (hasClinical || hasProm) {
+            var axisLegend = document.createElement('div');
+            axisLegend.className = 'longitudinal-axis-legend';
+
+            if (hasClinical) {
+                var clinItem = document.createElement('span');
+                clinItem.className = 'longitudinal-axis-legend__item';
+                var clinSwatch = document.createElement('span');
+                clinSwatch.className = 'longitudinal-axis-legend__swatch longitudinal-axis-legend__swatch--clinical';
+                clinItem.appendChild(clinSwatch);
+                clinItem.appendChild(document.createTextNode(clinicalType + ' (eje izq. 0-' + clinicalMax + ')'));
+                axisLegend.appendChild(clinItem);
             }
 
-            polyline.setAttribute('points', points.join(' '));
-            svgEl.appendChild(polyline);
-            pointTrack.appendChild(svgEl);
-            row.appendChild(pointTrack);
-            return row;
-        }
+            if (hasProm) {
+                var promItem = document.createElement('span');
+                promItem.className = 'longitudinal-axis-legend__item';
+                var promSwatch = document.createElement('span');
+                promSwatch.className = 'longitudinal-axis-legend__swatch longitudinal-axis-legend__swatch--prom';
+                promItem.appendChild(promSwatch);
+                promItem.appendChild(document.createTextNode(promType + ' (eje der. 0-' + promMax + ')'));
+                axisLegend.appendChild(promItem);
+            }
 
-        if (clinicalKey && clinicalItems.length > 0) {
-            track.appendChild(buildPointTrack(clinicalType, clinicalItems, 'clinical', CLINICAL_MAX[clinicalType] || 100));
-        } else if (clinicalKey) {
-            var cEmpty = document.createElement('div');
-            cEmpty.className = 'longitudinal-data-hint';
-            cEmpty.textContent = 'Sin datos de ' + clinicalType + ' para este paciente.';
-            track.appendChild(cEmpty);
-        }
-
-        if (promKey && promItems.length > 0) {
-            track.appendChild(buildPointTrack(promType, promItems, 'prom', PROM_MAX[promType] || 100));
-        } else if (promKey) {
-            var pEmpty = document.createElement('div');
-            pEmpty.className = 'longitudinal-data-hint';
-            pEmpty.textContent = 'Sin datos de ' + promType + ' para este paciente.';
-            track.appendChild(pEmpty);
+            track.appendChild(axisLegend);
         }
     }
 

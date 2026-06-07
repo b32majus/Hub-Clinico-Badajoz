@@ -2576,6 +2576,20 @@
     background: #922b21;
 }
 
+/* Markers embedded inside treatment bands (T4/T5) */
+.longitudinal-treatment-band .event-marker--adverse {
+    position: absolute;
+    bottom: 2px;
+    z-index: 3;
+}
+
+.longitudinal-treatment-band .event-marker--dose-change {
+    position: absolute;
+    bottom: 2px;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+
 @media (max-width: 768px) {
     .longitudinal-treatment-track {
         min-height: 60px;
@@ -3274,5 +3288,275 @@
     .longitudinal-data-point-marker {
         width: 8px;
         height: 8px;
+    }
+}
+
+/* ============================================================
+   T2 — Chart canvas with real Y axes (overlaid on treatment track)
+   ============================================================ */
+
+.longitudinal-chart-canvas {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    height: 130px;
+    min-height: 90px;
+    position: relative;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.longitudinal-chart-yaxis {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 2px 4px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: #64748B;
+    min-width: 48px;
+    max-width: 64px;
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+
+.longitudinal-chart-yaxis--left {
+    border-right: 1px dashed #CBD5E1;
+    text-align: right;
+    color: #2563EB;
+}
+
+.longitudinal-chart-yaxis--right {
+    border-left: 1px dashed #CBD5E1;
+    text-align: left;
+    color: #7C3AED;
+}
+
+.longitudinal-chart-yaxis__tick {
+    display: flex;
+    flex-direction: column;
+}
+
+.longitudinal-chart-yaxis__value {
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.longitudinal-chart-yaxis__label {
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.longitudinal-chart-svg-area {
+    flex: 1 1 auto;
+    position: relative;
+    min-width: 40px;
+}
+
+.longitudinal-chart-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.longitudinal-chart-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.longitudinal-chart-line--clinical {
+    stroke: #2563EB;
+}
+
+.longitudinal-chart-line--prom {
+    stroke: #7C3AED;
+}
+
+.longitudinal-chart-marker {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 2;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+    pointer-events: auto;
+}
+
+.longitudinal-chart-marker--clinical {
+    background: #2563EB;
+}
+
+.longitudinal-chart-marker--prom {
+    background: #7C3AED;
+}
+
+.longitudinal-chart-marker--single {
+    width: 12px;
+    height: 12px;
+    border-width: 3px;
+}
+
+/* T3 — Axis legend (shows which line belongs to which axis) */
+
+.longitudinal-axis-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    font-size: 0.78rem;
+}
+
+.longitudinal-axis-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.longitudinal-axis-legend__swatch {
+    width: 16px;
+    height: 3px;
+    border-radius: 2px;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.longitudinal-axis-legend__swatch--clinical {
+    background: #2563EB;
+}
+
+.longitudinal-axis-legend__swatch--prom {
+    background: #7C3AED;
+}
+
+.longitudinal-axis-legend__axis-tag {
+    font-size: 0.66rem;
+    font-weight: 400;
+    color: #94A3B8;
+}
+
+/* T4 — Adverse event marker as triangle */
+
+.event-marker--adverse {
+    width: 0 !important;
+    height: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    border-left: 6px solid transparent !important;
+    border-right: 6px solid transparent !important;
+    border-bottom-width: 12px;
+    border-bottom-style: solid;
+    border-top: none !important;
+    border-bottom-color: #c0392b;
+}
+
+.event-marker--adverse.event-marker--ae-low {
+    border-bottom-color: #e6a817;
+}
+
+.event-marker--adverse.event-marker--ae-moderate {
+    border-bottom-color: #e67e22;
+}
+
+.event-marker--adverse.event-marker--ae-high {
+    border-bottom-color: #c0392b;
+}
+
+.event-marker--adverse.event-marker--ae-serious {
+    border-bottom-color: #922b21;
+}
+
+/* T5 — Dose/regimen change marker with icon */
+
+.event-marker--dose-change {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50%;
+    background: #F59E0B !important;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #FFFFFF;
+    font-size: 0.6rem;
+    line-height: 1;
+}
+
+.event-marker--dose-change i {
+    font-size: 0.52rem;
+}
+
+/* T6 — Intensification / deintensification visual on treatment bands */
+
+.longitudinal-treatment-band.treatment-intensified {
+    filter: brightness(0.82);
+    border-left: 3px solid #166534;
+}
+
+.longitudinal-treatment-band.treatment-deintensified {
+    filter: brightness(1.15);
+    border-left: 3px solid #F59E0B;
+}
+
+/* T6 — Neutral state when no intensification data */
+.longitudinal-treatment-band.treatment-intensity-neutral {
+    /* default appearance, no override */
+}
+
+@media (max-width: 768px) {
+    .longitudinal-chart-canvas {
+        height: 100px;
+        min-height: 70px;
+    }
+
+    .longitudinal-chart-yaxis {
+        min-width: 40px;
+        max-width: 50px;
+        font-size: 0.56rem;
+    }
+
+    .longitudinal-chart-yaxis__value {
+        font-size: 0.62rem;
+    }
+
+    .longitudinal-chart-yaxis__label {
+        font-size: 0.52rem;
+    }
+
+    .longitudinal-chart-marker {
+        width: 8px;
+        height: 8px;
+    }
+
+    .event-marker--adverse {
+        border-left-width: 5px !important;
+        border-right-width: 5px !important;
+        border-bottom-width: 10px;
+    }
+
+    .event-marker--dose-change {
+        width: 14px !important;
+        height: 14px !important;
     }
 }

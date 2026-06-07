@@ -891,9 +891,9 @@
                 filters[group].value = input.value;
             } else if (input.type === 'number') {
                 if (input.name.indexOf('_min') !== -1) {
-                    filters[group].min = parseFloat(input.value) || null;
+                    filters[group].min = input.value === "" ? null : parseFloat(input.value);
                 } else if (input.name.indexOf('_max') !== -1) {
-                    filters[group].max = parseFloat(input.value) || null;
+                    filters[group].max = input.value === "" ? null : parseFloat(input.value);
                 }
             }
         });
