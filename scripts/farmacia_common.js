@@ -283,6 +283,7 @@
         var cimaCount = 0;
         var localCount = 0;
         var selectedSnapshot = null;
+        var FARMACIA_DRUG_SNAPSHOT_KEY = 'farmacia_drug_snapshot';
 
         function isTruthyRobust(value) {
             if (value === true || value === 1 || value === '1') return true;
@@ -298,7 +299,9 @@
                 drug.principio_activo || '',
                 drug.nombre_presentacion || '',
                 drug.display_name || '',
-                drug.codigo_nacional || ''
+                drug.codigo_nacional || '',
+                drug.nregistro || '',
+                drug.drug_id || ''
             ].join(' ').toLowerCase();
         }
 
@@ -392,24 +395,49 @@
 
         function selectDrug(drug) {
             selectedSnapshot = {
+                drug_id: drug.drug_id || '',
+                selected_drug_id: drug.drug_id || '',
+                source_type: drug.source_type || '',
                 nombre_snapshot: drug.nombre_comercial || drug.display_name || '',
                 principio_activo_snapshot: drug.principio_activo || '',
                 presentacion_snapshot: drug.nombre_presentacion || '',
                 via_snapshot: drug.via || '',
                 codigo_nacional_snapshot: drug.codigo_nacional || '',
                 nregistro_snapshot: drug.nregistro || '',
-                source_type: drug.source_type || '',
-                selected_drug_id: drug.drug_id || '',
+                nombre_comercial: drug.nombre_comercial || '',
+                dosis_presentacion: drug.dosis || '',
                 etiquetas: {
                     es_hospitalario: isTruthyRobust(drug.es_hospitalario),
                     biosimilar: isTruthyRobust(drug.biosimilar)
-                }
+                },
+                selected_at: new Date().toISOString()
             };
+            try {
+                sessionStorage.setItem(FARMACIA_DRUG_SNAPSHOT_KEY, JSON.stringify(selectedSnapshot));
+            } catch (e) { /* sessionStorage unavailable */ }
             return selectedSnapshot;
         }
 
         function getSnapshot() {
-            return selectedSnapshot;
+            if (selectedSnapshot) return selectedSnapshot;
+            try {
+                var raw = sessionStorage.getItem(FARMACIA_DRUG_SNAPSHOT_KEY);
+                if (raw) {
+                    var parsed = JSON.parse(raw);
+                    if (parsed && typeof parsed === 'object') {
+                        selectedSnapshot = parsed;
+                        return selectedSnapshot;
+                    }
+                }
+            } catch (e) { /* sessionStorage unavailable or parse error */ }
+            return null;
+        }
+
+        function clearSnapshot() {
+            selectedSnapshot = null;
+            try {
+                sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_KEY);
+            } catch (e) { /* sessionStorage unavailable */ }
         }
 
         function getStatusText() {
@@ -520,6 +548,7 @@
             search: search,
             selectDrug: selectDrug,
             getSnapshot: getSnapshot,
+            clearSnapshot: clearSnapshot,
             getStatusText: getStatusText
         };
     })();
