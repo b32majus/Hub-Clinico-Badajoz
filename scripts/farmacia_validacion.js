@@ -98,7 +98,9 @@
                 setChecked('fhAnaliticaHemograma', an.hemograma);
                 setChecked('fhAnaliticaBioquimica', an.bioquimica);
                 if (an.mantoux) F.setValue('fhAnaliticaMantoux', an.mantoux);
-                if (an.serologias) F.setValue('fhAnaliticaSerologias', an.serologias);
+                if (an.serologiasVhb) F.setValue('fhAnaliticaSerologiasVhb', an.serologiasVhb);
+                if (an.serologiasVhc) F.setValue('fhAnaliticaSerologiasVhc', an.serologiasVhc);
+                if (an.serologiasVih) F.setValue('fhAnaliticaSerologiasVih', an.serologiasVih);
                 if (an.vacunacion) F.setValue('fhAnaliticaVacunacion', an.vacunacion);
                 if (an.observaciones) F.setValue('fhAnaliticaObservaciones', an.observaciones);
             }
@@ -133,21 +135,6 @@
         if (estado === 'validated') return 'Validado';
         if (estado === 'denied') return 'Denegado';
         return 'Pendiente';
-    }
-
-    function renderResult(message) {
-        const result = document.getElementById('fhValResultado');
-        result.className = 'result-box result-box--success';
-        F.clearChildren(result);
-        const icon = document.createElement('i');
-        icon.className = 'fas fa-check-circle';
-        icon.setAttribute('aria-hidden', 'true');
-        const text = document.createElement('span');
-        text.textContent = message;
-        const small = document.createElement('small');
-        small.textContent = F.DEMO_SESSION_NOTE;
-        result.append(icon, text, document.createElement('br'), small);
-        result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function getCheckedLabels(ids) {
@@ -275,7 +262,9 @@
             var bioCb = document.getElementById('fhAnaliticaBioquimica');
             lines.push('Bioquímica: ' + (bioCb && bioCb.checked ? 'Verificado' : 'No verificado'));
             lines.push('Mantoux/IGRA: ' + (document.getElementById('fhAnaliticaMantoux').value || '—'));
-            lines.push('Serologías VHB/VHC/VIH: ' + (document.getElementById('fhAnaliticaSerologias').value || '—'));
+            lines.push('VHB: ' + (document.getElementById('fhAnaliticaSerologiasVhb').value || '—'));
+            lines.push('VHC: ' + (document.getElementById('fhAnaliticaSerologiasVhc').value || '—'));
+            lines.push('VIH: ' + (document.getElementById('fhAnaliticaSerologiasVih').value || '—'));
             lines.push('Vacunación: ' + (document.getElementById('fhAnaliticaVacunacion').value || '—'));
             var obsVac = document.getElementById('fhAnaliticaObservaciones').value.trim();
             if (obsVac) lines.push('Observaciones vacunación: ' + obsVac);
@@ -304,78 +293,6 @@
         if (value === null || value === undefined || value === '') return false;
         var s = String(value).trim().toUpperCase();
         return s === 'TRUE' || s === 'SI' || s === 'SÍ' || s === 'YES' || s === '1';
-    }
-
-    function updateCatalogUI() {
-        var counter = document.getElementById('catalogCounter');
-        counter.textContent = 'Catálogo cargado: ' + C.totalCount + ' fármacos (CIMA: ' + C.cimaCount + ' + Locales: ' + C.localCount + ')';
-        counter.classList.remove('hidden');
-        var status = document.getElementById('catalogStatus');
-        status.textContent = '✓ Cargado';
-        status.className = 'catalog-status catalog-status--loaded';
-    }
-
-    function initCatalogLoader() {
-        var btnLoad = document.getElementById('btnLoadCatalog');
-        var fileInput = document.getElementById('fileCatalogInput');
-
-        if (C.loaded) {
-            updateCatalogUI();
-            enableAutocomplete();
-            document.getElementById('noFindDrugRow').classList.remove('hidden');
-        }
-
-        btnLoad.addEventListener('click', function () {
-            if (C.loaded) {
-                window.alert('El catálogo ya está cargado.');
-                return;
-            }
-            if (typeof XLSX === 'undefined') {
-                window.alert('La librería SheetJS no se ha cargado. Recargue la página.');
-                return;
-            }
-            var status = document.getElementById('catalogStatus');
-            status.textContent = 'Cargando...';
-            status.className = 'catalog-status';
-            fetch('data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx')
-                .then(function (response) {
-                    if (response.ok) return response.arrayBuffer();
-                    throw new Error('fetch_failed');
-                })
-                .then(function (arrayBuffer) {
-                    C.loadFromExcel(arrayBuffer);
-                    updateCatalogUI();
-                    enableAutocomplete();
-                    document.getElementById('noFindDrugRow').classList.remove('hidden');
-                })
-                .catch(function () {
-                    var statusEl = document.getElementById('catalogStatus');
-                    statusEl.textContent = 'Seleccione el archivo Excel manualmente';
-                    statusEl.className = 'catalog-status catalog-status--manual';
-                    fileInput.classList.remove('hidden');
-                    fileInput.click();
-                });
-        });
-
-        fileInput.addEventListener('change', function (event) {
-            var file = event.target.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    C.loadFromExcel(e.target.result);
-                    updateCatalogUI();
-                    enableAutocomplete();
-                    document.getElementById('noFindDrugRow').classList.remove('hidden');
-                } catch (err) {
-                    window.alert('Error al procesar el Excel: ' + (err.message || err));
-                }
-            };
-            reader.onerror = function () {
-                window.alert('Error al leer el archivo.');
-            };
-            reader.readAsArrayBuffer(file);
-        });
     }
 
     function mapViaToSelect(catalogVia) {
@@ -678,17 +595,6 @@
             toggleBioOtrosDetalle();
         });
 
-        document.getElementById('fhValGuardar').addEventListener('click', function () {
-            if (!modoActual) { window.alert('Seleccione tipo de solicitud.'); return; }
-            const estado = document.getElementById('fhValEstado').value;
-            if (!estado) { window.alert('Seleccione un estado de validación.'); return; }
-            if (estado === 'denied' && !document.getElementById('fhValMotivo').value.trim()) {
-                window.alert('El motivo de denegación es obligatorio.');
-                return;
-            }
-            renderResult('Validación registrada — ' + estadoLabel() + ' | Paciente: ' + selectedCip() + ' | Fecha: ' + new Date().toLocaleDateString('es-ES'));
-        });
-
         document.getElementById('fhValExportTxt').addEventListener('click', function () {
             F.downloadFile('validacion_FH_' + new Date().toISOString().slice(0, 10) + '.txt', buildValidationLines().join('\n'), 'text/plain;charset=utf-8');
         });
@@ -707,14 +613,16 @@
             F.downloadFile('validaciones_FH_' + new Date().toISOString().slice(0, 10) + '.csv', csv, 'text/csv;charset=utf-8');
         });
 
-        initCatalogLoader();
+        if (C.loaded) {
+            enableAutocomplete();
+            document.getElementById('noFindDrugRow').classList.remove('hidden');
+        }
 
         var btnNoFind = document.getElementById('btnNoFindDrug');
         if (btnNoFind) btnNoFind.addEventListener('click', showLocalDrugModal);
 
         document.addEventListener('farmacia:catalog-loaded', function () {
             if (!C.loaded) return;
-            updateCatalogUI();
             enableAutocomplete();
             document.getElementById('noFindDrugRow').classList.remove('hidden');
         });

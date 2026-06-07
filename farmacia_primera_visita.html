@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607c">
 </head>
         <body>
             <div class="hub-shell">
@@ -82,29 +82,60 @@
         <div class="patient-avatar"><i class="fas fa-plus-circle" aria-hidden="true"></i></div>
         <div class="patient-info">
             <div class="patient-id-badge">Farmacia Hospitalaria</div>
-            <p class="hero-eyebrow">Farmacia Hospitalaria · Primera Visita</p>
-            <h1 class="patient-name">Primera Visita / Administración</h1>
+            <p class="hero-eyebrow">Primera visita de Farmacia</p>
             <p class="hero-description">Registre el inicio del seguimiento farmacoterapéutico con datos precargados desde validación o alta guiada.</p>
         </div>
-        <div class="patient-status-badge patient-status-badge--demo"><span class="status-dot"></span><span class="status-text">Perfil demo: farmaceutico</span></div>
     </div>
-</section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-id-card"></i> Datos precargados</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhPvCip">CIP</label><input class="form-control" id="fhPvCip" readonly></div><div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio" readonly></div><div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia" readonly></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco" readonly></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis" readonly></div><div class="form-group"><label for="fhPvPauta">Pauta</label><input class="form-control" id="fhPvPauta" readonly></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia" readonly></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion" readonly></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada" readonly></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica" readonly></div></div>
+</section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-id-card"></i> Datos del paciente</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhPvCip">CIP</label><input class="form-control" id="fhPvCip"></div><div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio"></div><div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco"></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><input class="form-control" id="fhPvPauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion"></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada"></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica"></div></div>
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
     <div class="info-grid" id="fhPvTratamientoGrid"></div>
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhPvCuestionario">Cuestionario basal</label><select class="form-select" id="fhPvCuestionario"><option>No aplica</option><option>DLQI</option><option>HAQ</option><option>EVA dolor</option><option>Otro</option></select></div><div class="form-group"><label for="fhPvResultadoBasal">Resultado basal</label><input class="form-control" id="fhPvResultadoBasal"></div></div>
+<div id="fhPvPromsExpanded" class="hidden">
+    <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA basal</h3>
+    <div class="proms-block" id="fhPvDlqiBlock">
+        <p class="proms-block__subtitle">DLQI — Índice de Calidad de Vida en Dermatología. Señale cómo le ha afectado su piel durante la <strong>última semana</strong>.</p>
+        <div class="dlqi-questions" id="fhPvDlqiQuestions"></div>
+        <div class="dlqi-result" id="fhPvDlqiResult">
+            <span class="dlqi-result__label">Puntuación total DLQI:</span>
+            <span class="dlqi-result__value" id="fhPvDlqiTotal">—</span>
+            <span class="dlqi-result__max">/ 30</span>
+            <span class="dlqi-result__interp" id="fhPvDlqiInterp"></span>
+        </div>
+    </div>
+    <div class="proms-block" id="fhPvEvaBlock">
+        <p class="proms-block__subtitle">EVA — Escala Visual Analógica (marque la intensidad en una escala de 0 a 10)</p>
+        <div class="form-grid eva-grid">
+            <div class="form-group eva-group">
+                <label for="fhPvEvaDolorRange">EVA Dolor</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhPvEvaDolorRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhPvEvaDolorValue">0</span>
+                </div>
+            </div>
+            <div class="form-group eva-group">
+                <label for="fhPvEvaPruritoRange">EVA Prurito</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhPvEvaPruritoRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhPvEvaPruritoValue">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="form-textarea" id="fhPvNotas" rows="4"></textarea></div></div>
-    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhPvGuardar"><i class="fas fa-save"></i> Guardar primera visita</button></div><div id="fhPvResultado" class="result-box hidden"></div>
+    <div id="fhPvDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT</button><button type="button" class="btn btn-outline" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
 </section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607b"></script>
-    <script src="scripts/farmacia_primera_visita.js?v=20260607a"></script>
+            <script src="scripts/farmacia_common.js?v=20260607c"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260607c"></script>
         </body>
         </html>

@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260308c">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260607c">
 </head>
         <body>
             <div class="hub-shell">
@@ -103,15 +103,82 @@
     <div class="form-actions"><button type="button" class="btn btn-outline" id="fhSegNuevaSolicitud" disabled><i class="fas fa-file-medical-alt"></i> Crear nueva solicitud (demo)</button></div>
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Morisky-Green y PROMs</h2>
-    <div class="form-grid form-grid--full"><div class="form-group"><label>Morisky-Green 4 preguntas</label><div class="inline-control-group"><span>1. ¿Olvida tomarlo?</span><label><input type="radio" name="mg1" value="si"> Sí</label><label><input type="radio" name="mg1" value="no"> No</label></div><div class="inline-control-group"><span>2. ¿Lo toma a la hora?</span><label><input type="radio" name="mg2" value="si"> Sí</label><label><input type="radio" name="mg2" value="no"> No</label></div><div class="inline-control-group"><span>3. ¿Lo deja si se encuentra bien?</span><label><input type="radio" name="mg3" value="si"> Sí</label><label><input type="radio" name="mg3" value="no"> No</label></div><div class="inline-control-group"><span>4. ¿Lo deja si le sienta mal?</span><label><input type="radio" name="mg4" value="si"> Sí</label><label><input type="radio" name="mg4" value="no"> No</label></div></div></div>
-    <div class="info-field"><span class="info-field__label">Interpretación automática</span><span class="info-field__value" id="fhSegMoriskyResultado">Pendiente de completar</span></div>
+    <div class="form-grid form-grid--full">
+        <div class="form-group">
+            <label>Morisky-Green 4 preguntas</label>
+            <div class="mg-card-list">
+                <div class="mg-card">
+                    <div class="mg-card__question">1. ¿Olvida tomarlo?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg1" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg1" value="no"><span>No</span></label>
+                    </div>
+                </div>
+                <div class="mg-card">
+                    <div class="mg-card__question">2. ¿Lo toma a la hora?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg2" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg2" value="no"><span>No</span></label>
+                    </div>
+                </div>
+                <div class="mg-card">
+                    <div class="mg-card__question">3. ¿Lo deja si se encuentra bien?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg3" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg3" value="no"><span>No</span></label>
+                    </div>
+                </div>
+                <div class="mg-card">
+                    <div class="mg-card__question">4. ¿Lo deja si le sienta mal?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg4" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg4" value="no"><span>No</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mg-result" id="fhSegMoriskyResultado">Pendiente de completar</div>
     <div class="form-grid"><div class="form-group"><label for="fhSegProms">PROMs seguimiento</label><select class="form-select" id="fhSegProms"><option>No recogido</option><option>DLQI</option><option>HAQ</option><option>EVA dolor</option><option>Otro</option></select></div><div class="form-group"><label for="fhSegEa">Efecto adverso detectado</label><select class="form-select" id="fhSegEa"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegEaGravedad">Gravedad</label><select class="form-select" id="fhSegEaGravedad"><option></option><option>Leve</option><option>Moderado</option><option>Grave</option></select></div><div class="form-group"><label for="fhSegEaActuacion">Actuación</label><select class="form-select" id="fhSegEaActuacion"><option>Sin cambios</option><option>Observación</option><option>Ajuste de pauta</option><option>Suspensión</option><option>Contactar/derivar a servicio origen</option></select></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegEaDescripcion">Descripción efecto adverso / notas</label><textarea class="form-textarea" id="fhSegEaDescripcion" rows="3"></textarea></div></div>
-    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhSegGuardar"><i class="fas fa-save"></i> Guardar seguimiento</button></div><div id="fhSegResultado" class="result-box hidden"></div>
+    <div id="fhSegPromsExpanded" class="hidden">
+    <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA</h3>
+    <div class="proms-block" id="fhSegDlqiBlock">
+        <p class="proms-block__subtitle">DLQI — Índice de Calidad de Vida en Dermatología. Señale cómo le ha afectado su piel durante la <strong>última semana</strong>.</p>
+        <div class="dlqi-questions" id="fhSegDlqiQuestions"></div>
+        <div class="dlqi-result" id="fhSegDlqiResult">
+            <span class="dlqi-result__label">Puntuación total DLQI:</span>
+            <span class="dlqi-result__value" id="fhSegDlqiTotal">—</span>
+            <span class="dlqi-result__max">/ 30</span>
+            <span class="dlqi-result__interp" id="fhSegDlqiInterp"></span>
+        </div>
+    </div>
+    <div class="proms-block" id="fhSegEvaBlock">
+        <p class="proms-block__subtitle">EVA — Escala Visual Analógica (marque la intensidad en una escala de 0 a 10)</p>
+        <div class="form-grid eva-grid">
+            <div class="form-group eva-group">
+                <label for="fhSegEvaDolorRange">EVA Dolor</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhSegEvaDolorRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhSegEvaDolorValue">0</span>
+                </div>
+            </div>
+            <div class="form-group eva-group">
+                <label for="fhSegEvaPruritoRange">EVA Prurito</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhSegEvaPruritoRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhSegEvaPruritoValue">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT</button><button type="button" class="btn btn-outline" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
 </section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607b"></script>
-    <script src="scripts/farmacia_seguimiento.js?v=20260607a"></script>
+            <script src="scripts/farmacia_common.js?v=20260607c"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260607c"></script>
         </body>
         </html>

@@ -279,6 +279,7 @@
     window.FarmaciaCatalog = (function () {
         var drugs = [];
         var loaded = false;
+        var loading = false;
         var totalCount = 0;
         var cimaCount = 0;
         var localCount = 0;
@@ -440,6 +441,45 @@
             } catch (e) { /* sessionStorage unavailable */ }
         }
 
+        function autoLoad() {
+            if (loaded || loading) return;
+            var statusEl = document.getElementById('catalogSidebarStatus');
+            loading = true;
+            if (statusEl) {
+                statusEl.textContent = 'Cargando...';
+                statusEl.className = 'catalog-status';
+            }
+            ensureXLSX(function () {
+                fetch('data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx')
+                    .then(function (response) {
+                        if (response.ok) return response.arrayBuffer();
+                        throw new Error('fetch_failed');
+                    })
+                    .then(function (arrayBuffer) {
+                        var result = loadFromExcel(arrayBuffer);
+                        if (statusEl) {
+                            statusEl.textContent = getStatusText();
+                            statusEl.className = 'catalog-status catalog-status--loaded';
+                        }
+                        loading = false;
+                        document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
+                    })
+                    .catch(function () {
+                        loading = false;
+                        if (statusEl) {
+                            statusEl.textContent = 'Cat\u00E1logo no disponible. Use carga manual.';
+                            statusEl.className = 'catalog-status catalog-status--manual';
+                        }
+                    });
+            }, function (errMsg) {
+                loading = false;
+                if (statusEl) {
+                    statusEl.textContent = errMsg;
+                    statusEl.className = 'catalog-status catalog-status--error';
+                }
+            });
+        }
+
         function getStatusText() {
             if (!loaded) return 'Cat\u00E1logo no cargado';
             return totalCount + ' f\u00E1rmacos (CIMA: ' + cimaCount + ' + Locales: ' + localCount + ')';
@@ -457,6 +497,8 @@
         }
 
         function initSidebarCatalog() {
+            autoLoad();
+
             var btnLoad = document.getElementById('sidebarLoadCatalog');
             if (!btnLoad) return;
 
@@ -549,7 +591,8 @@
             selectDrug: selectDrug,
             getSnapshot: getSnapshot,
             clearSnapshot: clearSnapshot,
-            getStatusText: getStatusText
+            getStatusText: getStatusText,
+            autoLoad: autoLoad
         };
     })();
 

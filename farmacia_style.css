@@ -1114,6 +1114,122 @@
     border: 1px solid #E2E8F0;
 }
 
+/* --- Morisky-Green cards (T8) --- */
+.mg-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+.mg-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    flex-wrap: wrap;
+    transition: border-color 0.15s, background 0.15s;
+}
+.mg-card:hover {
+    border-color: #CBD5E1;
+    background: #F1F5F9;
+}
+.mg-card__question {
+    flex: 1 1 auto;
+    font-weight: 600;
+    color: #1E293B;
+    font-size: 0.95rem;
+    min-width: 200px;
+    line-height: 1.4;
+}
+.mg-card__options {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.mg-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #FFFFFF;
+    border: 1.5px solid #E2E8F0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+}
+.mg-option:hover {
+    border-color: #CBD5E1;
+}
+.mg-option input[type="radio"] {
+    accent-color: var(--ses-green);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+.mg-option:has(input:checked) {
+    border-color: var(--ses-green);
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-weight: 600;
+}
+
+.mg-result {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    color: #64748B;
+    margin-bottom: 16px;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.mg-result--high {
+    background: #F0FDFA;
+    border-color: #99F6E4;
+    color: #0F766E;
+}
+.mg-result--medium {
+    background: #FFFBEB;
+    border-color: #FDE68A;
+    color: #92400E;
+}
+.mg-result--low {
+    background: #FEF2F2;
+    border-color: #FECACA;
+    color: #991B1B;
+}
+
+@media (max-width: 768px) {
+    .mg-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .mg-card__options {
+        justify-content: flex-start;
+    }
+    .mg-option {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+    .mg-result {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
 /* --- Patient header actions (dashboard) --- */
 .patient-header-actions {
     display: flex;
@@ -1129,6 +1245,13 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+/* --- PROMs expanded block title separation (T13 visual fix) --- */
+#fhPvPromsExpanded .card-title--tight,
+#fhSegPromsExpanded .card-title--tight {
+    padding-top: 12px;
+    border-top: 1px solid #E2E8F0;
 }
 
 /* --- Timeline blocks specific spacing --- */
@@ -1169,5 +1292,263 @@
     }
     .stats-list li {
         word-break: break-word;
+    }
+}
+
+/* ============================================================
+   T12 — PROMs DLQI / EVA — Primera Visita Farmacia
+   ============================================================ */
+
+/* --- PROMs expanded container --- */
+#fhPvPromsExpanded,
+#fhSegPromsExpanded {
+    margin-top: 8px;
+    margin-bottom: 16px;
+}
+
+.proms-block {
+    margin-bottom: 20px;
+}
+
+.proms-block__subtitle {
+    margin: 0 0 12px;
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+/* --- DLQI question cards (follow mg-card pattern) --- */
+.dlqi-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    flex-wrap: wrap;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 8px;
+}
+
+.dlqi-card:hover {
+    border-color: #CBD5E1;
+    background: #F1F5F9;
+}
+
+.dlqi-card__question {
+    flex: 1 1 auto;
+    font-weight: 600;
+    color: #1E293B;
+    font-size: 0.95rem;
+    min-width: 200px;
+    line-height: 1.4;
+}
+
+.dlqi-card__options {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.dlqi-card__options--followup {
+    margin-top: 8px;
+}
+
+/* --- DLQI option chips (follow mg-option pattern) --- */
+.dlqi-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #FFFFFF;
+    border: 1.5px solid #E2E8F0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #475569;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.dlqi-option:hover {
+    border-color: #CBD5E1;
+}
+
+.dlqi-option input[type="radio"] {
+    accent-color: var(--ses-green);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.dlqi-option:has(input:checked) {
+    border-color: var(--ses-green);
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    font-weight: 600;
+}
+
+/* --- Q7 follow-up --- */
+.dlqi-card__followup {
+    width: 100%;
+    padding-top: 10px;
+    margin-top: 6px;
+    border-top: 1px solid #E2E8F0;
+}
+
+.dlqi-card__followup.hidden {
+    display: none;
+}
+
+.dlqi-card__followup-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748B;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* --- DLQI result display --- */
+.dlqi-result {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F0FDFA;
+    border: 1px solid #99F6E4;
+    margin-top: 12px;
+}
+
+.dlqi-result__label {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.95rem;
+}
+
+.dlqi-result__value {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: var(--ses-green-dark);
+}
+
+.dlqi-result__max {
+    color: #64748B;
+    font-size: 0.95rem;
+}
+
+.dlqi-result__interp {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0F766E;
+}
+
+/* --- EVA sliders --- */
+.eva-grid {
+    gap: 14px;
+}
+
+.eva-group {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.eva-group label {
+    margin-bottom: 10px;
+}
+
+.eva-input-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.eva-range {
+    flex: 1 1 auto;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    background: #E2E8F0;
+    outline: none;
+    max-width: 280px;
+}
+
+.eva-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ses-green);
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+}
+
+.eva-range::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--ses-green);
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+}
+
+.eva-value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--ses-green);
+    color: #FFFFFF;
+    font-weight: 800;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+/* --- Responsive DLQI / EVA --- */
+@media (max-width: 768px) {
+    .dlqi-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .dlqi-card__options {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .dlqi-option {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .dlqi-result {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .eva-input-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .eva-range {
+        max-width: 100%;
+        width: 100%;
     }
 }
