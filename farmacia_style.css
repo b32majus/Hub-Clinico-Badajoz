@@ -1700,3 +1700,173 @@
         width: 100%;
     }
 }
+
+/* ============================================================
+   T4 — PROMs tarjetas horizontales (dashboard paciente)
+   ============================================================ */
+
+.proms-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.prom-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.prom-card__name {
+    display: block;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.prom-card__value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.prom-card__source {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.prom-card__note {
+    display: block;
+    font-size: 0.78rem;
+    color: #94A3B8;
+}
+
+@media (max-width: 768px) {
+    .proms-card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   T2 — Dashboard checks mini-cards (analítica/vacunación)
+   ============================================================ */
+
+.fh-dashboard-checks-wrapper {
+    grid-column: 1 / -1;
+}
+
+.fh-dashboard-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.fh-dashboard-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    font-size: 0.85rem;
+    flex: 1 1 auto;
+    min-width: 140px;
+}
+
+.fh-dashboard-check i {
+    font-size: 0.95rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.fh-dashboard-check__name {
+    font-weight: 600;
+    color: #1E293B;
+    flex: 1 1 auto;
+}
+
+.fh-dashboard-check__status {
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.fh-dashboard-check--ok {
+    border-left: 3px solid var(--ses-green);
+}
+.fh-dashboard-check--ok i {
+    color: var(--ses-green);
+}
+.fh-dashboard-check--ok .fh-dashboard-check__status {
+    color: var(--ses-green);
+}
+
+.fh-dashboard-check--pending {
+    border-left: 3px solid #F59E0B;
+}
+.fh-dashboard-check--pending i {
+    color: #F59E0B;
+}
+.fh-dashboard-check--pending .fh-dashboard-check__status {
+    color: #F59E0B;
+}
+
+.fh-dashboard-check--review {
+    border-left: 3px solid #64748B;
+}
+.fh-dashboard-check--review i {
+    color: #64748B;
+}
+.fh-dashboard-check--review .fh-dashboard-check__status {
+    color: #64748B;
+}
+
+.fh-dashboard-check--demo {
+    border-left: 3px solid #CBD5E1;
+}
+.fh-dashboard-check--demo i {
+    color: #94A3B8;
+}
+.fh-dashboard-check--demo .fh-dashboard-check__status {
+    color: #94A3B8;
+}
+
+@media (max-width: 768px) {
+    .fh-dashboard-check {
+        min-width: 100%;
+    }
+}
+
+/* ============================================================
+   T3 — Dashboard timeline grid: dos columnas en desktop, una en móvil
+   ============================================================ */
+
+.dashboard-timeline-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg, 24px);
+}
+
+.dashboard-timeline-grid .dashboard-card {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .dashboard-timeline-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-lg, 24px);
+    }
+}
