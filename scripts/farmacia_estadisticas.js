@@ -726,12 +726,12 @@
 
         var parts = [];
         var qf = currentQuickFilters;
-        if (qf.servicio) parts.push(qf.servicio);
-        if (qf.patologia) parts.push(qf.patologia);
-        if (qf.farmaco) parts.push(qf.farmaco);
-        if (qf.estado) parts.push(qf.estado);
-        if (qf.ea) parts.push('EA: ' + qf.ea);
-        if (qf.adherencia) parts.push('Adherencia: ' + qf.adherencia);
+        if (qf.servicio) parts.push({key: 'servicio', label: qf.servicio});
+        if (qf.patologia) parts.push({key: 'patologia', label: qf.patologia});
+        if (qf.farmaco) parts.push({key: 'farmaco', label: qf.farmaco});
+        if (qf.estado) parts.push({key: 'estado', label: qf.estado});
+        if (qf.ea) parts.push({key: 'ea', label: 'EA: ' + qf.ea});
+        if (qf.adherencia) parts.push({key: 'adherencia', label: 'Adherencia: ' + qf.adherencia});
 
         var labelMap = {
             servicio: 'Servicio', patologia: 'Patología', estado_seguimiento: 'Seguimiento',
@@ -750,26 +750,51 @@
             var f = currentFilters[key];
             if (f.type === 'checkbox' && f.values && f.values.length > 0) {
                 f.values.forEach(function (v) {
-                    parts.push((labelMap[key] || key) + ': ' + v);
+                    parts.push({key: key, label: (labelMap[key] || key) + ': ' + v});
                 });
             } else if (f.type === 'radio' && f.value) {
-                parts.push((labelMapRadio[key] || key) + ': ' + f.value);
+                parts.push({key: key, label: (labelMapRadio[key] || key) + ': ' + f.value});
             } else if (f.type === 'select' && f.value) {
-                parts.push((labelMapSelect[key] || key) + ': ' + f.value);
+                parts.push({key: key, label: (labelMapSelect[key] || key) + ': ' + f.value});
             } else if (f.type === 'range' && (f.min !== null || f.max !== null)) {
                 var rangeParts = [];
                 if (f.min !== null) rangeParts.push('min ' + f.min);
                 if (f.max !== null) rangeParts.push('max ' + f.max);
-                parts.push((labelMapRange[key] || key) + ': ' + rangeParts.join(', '));
+                parts.push({key: key, label: (labelMapRange[key] || key) + ': ' + rangeParts.join(', ')});
             }
         }
 
         if (parts.length === 0) {
+            var emptyEl = document.createElement('span');
+            emptyEl.className = 'stats-cohort-empty';
+            emptyEl.textContent = 'Sin filtros activos';
+            container.appendChild(emptyEl);
             return;
         }
 
-        var pill = el('span', 'stats-cohort-pill', parts.join(' \u00B7 '));
-        container.appendChild(pill);
+        parts.forEach(function (p) {
+            var chip = document.createElement('span');
+            chip.className = 'stats-cohort-chip';
+
+            var textSpan = document.createElement('span');
+            textSpan.textContent = p.label;
+            chip.appendChild(textSpan);
+
+            var removeBtn = document.createElement('span');
+            removeBtn.className = 'stats-cohort-chip-remove';
+            removeBtn.textContent = '\u00D7';
+            removeBtn.setAttribute('data-filter-key', p.key);
+            removeBtn.addEventListener('click', function (key) {
+                return function () {
+                    var selectEl = document.getElementById('qf-' + key);
+                    if (selectEl) selectEl.value = '';
+                    applyFilters();
+                };
+            }(p.key));
+
+            chip.appendChild(removeBtn);
+            container.appendChild(chip);
+        });
     }
 
 

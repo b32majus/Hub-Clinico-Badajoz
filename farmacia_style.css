@@ -4284,6 +4284,47 @@
     cursor: pointer;
 }
 
+.stats-cohort-empty {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: #94A3B8;
+    font-style: italic;
+}
+
+.stats-cohort-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1E40AF;
+}
+
+.stats-cohort-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #DBEAFE;
+    color: #1E40AF;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    transition: background 0.15s;
+}
+
+.stats-cohort-chip-remove:hover {
+    background: #93C5FD;
+    color: #1E3A8A;
+}
+
 /* 6. Charts grid 4 bloques */
 .stats-charts-section {
     margin-top: 4px;
