@@ -486,6 +486,43 @@
         container.appendChild(grid);
     }
 
+    function renderExtendedBlocks(patient) {
+        // Buscar datos extendidos del paciente en longDataset
+        var extData = null;
+        if (longDataset && longDataset.pacientes) {
+            for (var ei = 0; ei < longDataset.pacientes.length; ei++) {
+                if (longDataset.pacientes[ei].cip === patient.cip) {
+                    extData = longDataset.pacientes[ei];
+                    break;
+                }
+            }
+        }
+        // Fusionar datos extendidos en patient
+        if (extData) {
+            patient.episodios_asistenciales = extData.episodios_asistenciales || [];
+            patient.tratamientos = extData.tratamientos || [];
+            patient.cambios_pauta = extData.cambios_pauta || [];
+            patient.proms = extData.proms || [];
+            patient.actividad_clinica = extData.actividad_clinica || [];
+            patient.eventos_adversos = extData.eventos_adversos || [];
+            patient.comorbilidades_relevantes = extData.comorbilidades_relevantes || [];
+        } else {
+            patient.episodios_asistenciales = patient.episodios_asistenciales || [];
+            patient.tratamientos = patient.tratamientos || [];
+            patient.cambios_pauta = patient.cambios_pauta || [];
+            patient.proms = patient.proms || [];
+            patient.actividad_clinica = patient.actividad_clinica || [];
+            patient.eventos_adversos = patient.eventos_adversos || [];
+            patient.comorbilidades_relevantes = patient.comorbilidades_relevantes || [];
+        }
+
+        renderClinicalActivity(patient);
+        renderProms(patient);
+        renderTimelines(patient);
+        renderAdverseEvents(patient);
+        renderComorbidities(patient);
+    }
+
     function renderDashboard(patient) {
         F.setText('patientIdBadge', patient.cip);
         F.setText('patientName', patient.nombre);
@@ -520,40 +557,7 @@
 
         renderLongitudinalForCip(patient.cip);
 
-        // Buscar datos extendidos del paciente en longDataset
-        var extData = null;
-        if (longDataset && longDataset.pacientes) {
-            for (var ei = 0; ei < longDataset.pacientes.length; ei++) {
-                if (longDataset.pacientes[ei].cip === patient.cip) {
-                    extData = longDataset.pacientes[ei];
-                    break;
-                }
-            }
-        }
-        // Fusionar datos extendidos en patient para las funciones de render
-        if (extData) {
-            patient.episodios_asistenciales = extData.episodios_asistenciales || [];
-            patient.tratamientos = extData.tratamientos || [];
-            patient.cambios_pauta = extData.cambios_pauta || [];
-            patient.proms = extData.proms || [];
-            patient.actividad_clinica = extData.actividad_clinica || [];
-            patient.eventos_adversos = extData.eventos_adversos || [];
-            patient.comorbilidades_relevantes = extData.comorbilidades_relevantes || [];
-        } else {
-            patient.episodios_asistenciales = patient.episodios_asistenciales || [];
-            patient.tratamientos = patient.tratamientos || [];
-            patient.cambios_pauta = patient.cambios_pauta || [];
-            patient.proms = patient.proms || [];
-            patient.actividad_clinica = patient.actividad_clinica || [];
-            patient.eventos_adversos = patient.eventos_adversos || [];
-            patient.comorbilidades_relevantes = patient.comorbilidades_relevantes || [];
-        }
-
-        renderClinicalActivity(patient);
-        renderProms(patient);
-        renderTimelines(patient);
-        renderAdverseEvents(patient);
-        renderComorbidities(patient);
+        renderExtendedBlocks(patient);
     }
 
 
@@ -653,6 +657,12 @@
                 }
                 if (longCurrentCip) {
                     renderLongitudinalForCip(longCurrentCip);
+                }
+                // Re-render secciones extendidas ahora que longDataset está disponible
+                var ctx = F.getQueryContext();
+                var patient = ctx.patient || F.patients[longCurrentCip || 'CIP-DEMO-FH-001'];
+                if (patient) {
+                    renderExtendedBlocks(patient);
                 }
             })
             .catch(function () {
