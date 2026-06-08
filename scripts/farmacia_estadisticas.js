@@ -1422,6 +1422,7 @@
             var count = el('span', 'stats-donut-legend-count', d.value + ' (' + (total > 0 ? Math.round((d.value / total) * 100) : 0) + '%)');
             item.appendChild(document.createTextNode(labelText));
             item.appendChild(count);
+            if (d.tooltip) { item.title = d.tooltip; }
             legend.appendChild(item);
         });
         wrap.appendChild(legend);
@@ -1458,11 +1459,6 @@
             sub1b.appendChild(patContainer);
             sub1.appendChild(sub1b);
 
-            var link1 = el('button', 'stats-chart-link', 'Ver detalle');
-            link1.type = 'button';
-            link1.disabled = true;
-            link1.title = 'Próximamente';
-            sub1.appendChild(link1);
             b1.appendChild(sub1);
         }
 
@@ -1486,26 +1482,23 @@
             var paContainer = el('div', '');
             renderMiniBarChart(paContainer, paData);
             sub2group.appendChild(paContainer);
-
-            var h4opt = el('h4', 'stats-chart-block-subtitle', 'Optimización farmacoterapéutica');
-            sub2group.appendChild(h4opt);
-            var optContainer = el('div', '');
-            var optData = [
-                { label: 'Sin cambios', value: f.filter(function (p) { var prof = p._profile; return prof && !prof.tiene_cambio_pauta && prof.intensificacion === 'no_determinable' && prof.desintensificacion === 'no_determinable'; }).length },
-                { label: 'Intensificación', value: f.filter(function (p) { var prof = p._profile; return prof && prof.intensificacion === 'si'; }).length },
-                { label: 'Desintensificación', value: f.filter(function (p) { var prof = p._profile; return prof && prof.desintensificacion === 'si'; }).length },
-                { label: 'Cambio de tratamiento', value: f.filter(function (p) { var prof = p._profile; return prof && prof.tiene_cambio_pauta === true; }).length },
-                { label: 'Suspensión', value: f.filter(function (p) { var prof = p._profile; return prof && prof.estados_tratamiento.indexOf('suspendido') !== -1; }).length }
-            ];
-            renderMiniBarChart(optContainer, optData);
-            sub2group.appendChild(optContainer);
             sub2.appendChild(sub2group);
 
-            var link2 = el('button', 'stats-chart-link', 'Ver detalle');
-            link2.type = 'button';
-            link2.disabled = true;
-            link2.title = 'Próximamente';
-            sub2.appendChild(link2);
+            var sub2opt = el('div', 'stats-chart-block-subgroup');
+            var h4opt = el('h4', 'stats-chart-block-subtitle', 'Optimización farmacoterapéutica');
+            sub2opt.appendChild(h4opt);
+            var optContainer = el('div', '');
+            var optData = [
+                { label: 'Sin cambios', value: f.filter(function (p) { var prof = p._profile; return prof && !prof.tiene_cambio_pauta && prof.intensificacion === 'no_determinable' && prof.desintensificacion === 'no_determinable'; }).length, tooltip: 'Sin cambios de dosis ni fármaco en el período' },
+                { label: 'Intensificación', value: f.filter(function (p) { var prof = p._profile; return prof && prof.intensificacion === 'si'; }).length, tooltip: 'Aumento de dosis, frecuencia o acortamiento del intervalo' },
+                { label: 'Desintensificación', value: f.filter(function (p) { var prof = p._profile; return prof && prof.desintensificacion === 'si'; }).length, tooltip: 'Reducción de dosis, frecuencia o espaciamiento del intervalo' },
+                { label: 'Cambio de tratamiento', value: f.filter(function (p) { var prof = p._profile; return prof && prof.tiene_cambio_pauta === true; }).length, tooltip: 'Sustitución por un fármaco diferente' },
+                { label: 'Suspensión', value: f.filter(function (p) { var prof = p._profile; return prof && prof.estados_tratamiento.indexOf('suspendido') !== -1; }).length, tooltip: 'Retirada del tratamiento activo' }
+            ];
+            renderDonut(optContainer, optData, 'pacientes');
+            sub2opt.appendChild(optContainer);
+            sub2.appendChild(sub2opt);
+
             b2.appendChild(sub2);
         }
 

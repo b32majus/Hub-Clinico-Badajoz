@@ -2894,6 +2894,7 @@
     border-radius: 12px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
+    margin-bottom: 16px;
 }
 
 .filter-block__header {
@@ -2912,14 +2913,14 @@
 
 .filter-block__title {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: #1E293B;
 }
 
 .filter-block__subtitle {
     margin: 10px 0 6px;
-    font-size: 0.76rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #64748B;
     text-transform: uppercase;
@@ -4103,7 +4104,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 20px;
+    padding: 10px 18px;
     background: #FFFFFF;
     border: none;
     cursor: pointer;
@@ -4120,7 +4121,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: #1E293B;
 }
@@ -4132,7 +4133,7 @@
 
 .stats-accordion-subtitle {
     margin-left: auto;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     color: #94A3B8;
     font-weight: 500;
 }
@@ -4148,7 +4149,7 @@
 }
 
 .stats-accordion-body {
-    padding: 0 20px 20px;
+    padding: 0 16px 16px;
     border-top: 1px solid #F1F5F9;
 }
 
@@ -4334,8 +4335,13 @@
 
 .stats-chart-block-subgroup {
     margin-bottom: 16px;
+    margin-top: 20px;
     padding-bottom: 12px;
     border-bottom: 1px solid #F1F5F9;
+}
+
+.stats-chart-block-subgroup:first-child {
+    margin-top: 0;
 }
 
 .stats-chart-block-subgroup:last-child {
@@ -4485,34 +4491,6 @@
 .stats-donut-legend-count {
     font-weight: 700;
     color: #1E293B;
-}
-
-.stats-chart-link {
-    margin-top: auto;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--ses-green);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    align-self: flex-start;
-}
-
-.stats-chart-link:hover {
-    color: var(--ses-green-dark);
-}
-
-.stats-chart-link:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    text-decoration: none;
-}
-
-.stats-chart-link:disabled:hover {
-    color: var(--ses-green);
 }
 
 /* 7. Table */
