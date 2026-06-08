@@ -325,7 +325,7 @@
 .timeline { position: relative; padding-left: 24px; }
 .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #E2E8F0; }
 .timeline-item { position: relative; margin-bottom: 18px; }
-.timeline-marker { position: absolute; left: -24px; top: 2px; width: 14px; height: 14px; border-radius: 999px; background: var(--ses-green); border: 3px solid #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.timeline-marker { position: absolute; left: -24px; top: 2px; width: 12px; height: 12px; border-radius: 999px; background: var(--ses-green); border: 3px solid #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
 .timeline-date { color: #64748B; font-size: 0.82rem; }
 .timeline-title { font-weight: 800; color: #1E293B; }
 .timeline-description { color: #475569; font-size: 0.9rem; }
@@ -1732,9 +1732,9 @@
 
 .prom-card__value {
     display: block;
-    font-size: 1.15rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: #1E293B;
+    color: var(--ses-green);
 }
 
 .prom-card__source {
@@ -1742,6 +1742,29 @@
     font-size: 0.82rem;
     font-weight: 600;
     color: #475569;
+}
+
+.prom-card__status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    align-self: flex-start;
+}
+
+.prom-card__status--registered {
+    background: var(--ses-green-light);
+    color: var(--ses-green-dark);
+    border: 1px solid rgba(0, 135, 119, 0.25);
+}
+
+.prom-card__status--missing {
+    background: #F1F5F9;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
 }
 
 .prom-card__note {
@@ -3539,7 +3562,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 14px 16px;
+    padding: 16px;
     border-radius: 12px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
@@ -3556,7 +3579,7 @@
 
 .clinical-activity-tile__value {
     display: block;
-    font-size: 1.15rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #1E293B;
 }
@@ -3576,7 +3599,7 @@
 
 .comorbidity-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 12px;
 }
 
@@ -3584,32 +3607,30 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 14px 16px;
-    border-radius: 12px;
+    padding: 12px;
+    border-radius: 10px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
 }
 
 .comorbidity-tile__name {
     display: block;
-    color: #64748B;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    color: #1E293B;
+    font-size: 0.9rem;
+    font-weight: 700;
 }
 
 .comorbidity-tile__value {
     display: block;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #1E293B;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #475569;
 }
 
 .comorbidity-tile__note {
     display: block;
-    font-size: 0.82rem;
-    color: #475569;
+    font-size: 0.78rem;
+    color: #94A3B8;
 }
 
 .empty-state {
@@ -3643,6 +3664,157 @@
 
 .timeline-marker--adverse {
     background: #c0392b;
+}
+
+/* ============================================================
+   Dashboard adverse event cards
+   ============================================================ */
+
+.adverse-event-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-left: 4px solid #CBD5E1;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    margin-bottom: 10px;
+}
+
+.adverse-event-card__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.adverse-event-card__icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #FEF2F2;
+    color: #c0392b;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.adverse-event-card__name {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.95rem;
+    flex: 1 1 auto;
+}
+
+.adverse-event-card__detail {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.adverse-event-card__detail-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+}
+
+.adverse-event-card__detail-label {
+    font-weight: 600;
+    color: #64748B;
+}
+
+.adverse-event-card__detail-value {
+    color: #1E293B;
+    font-weight: 500;
+}
+
+.adverse-event-card__comment {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid #F1F5F9;
+    font-size: 0.82rem;
+    color: #94A3B8;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.badge-gravedad {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.badge-gravedad-leve {
+    background: #FEF9E7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+.badge-gravedad-moderado {
+    background: #FFF2E5;
+    color: #9A3412;
+    border: 1px solid #FED7AA;
+}
+
+.badge-gravedad-moderada {
+    background: #FFF2E5;
+    color: #9A3412;
+    border: 1px solid #FED7AA;
+}
+
+.badge-gravedad-grave {
+    background: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
+/* Timeline badge for treatment type */
+.timeline-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+.timeline-badge--inicio {
+    background: #DCFCE7;
+    color: #14532D;
+    border: 1px solid #86EFAC;
+}
+
+.timeline-badge--fin {
+    background: #FEE2E2;
+    color: #7F1D1D;
+    border: 1px solid #FECACA;
+}
+
+.timeline-badge--cambio {
+    background: #FFFBEB;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+.timeline-badge--switch {
+    background: #E0E7FF;
+    color: #3730A3;
+    border: 1px solid #C7D2FE;
 }
 
 @media (max-width: 768px) {
@@ -3679,5 +3851,19 @@
     .event-marker--dose-change {
         width: 14px !important;
         height: 14px !important;
+    }
+
+    .adverse-event-card {
+        padding: 12px;
+    }
+
+    .adverse-event-card__header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .comorbidity-grid {
+        grid-template-columns: 1fr;
     }
 }
