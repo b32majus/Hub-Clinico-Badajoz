@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260607-postdemo-e">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607-postdemo-e">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260608-stats-a">
 </head>
 <body>
     <div class="hub-shell">
@@ -79,53 +79,185 @@
                 <i class="fas fa-flask" aria-hidden="true"></i>
                 <span><strong>Demo Farmacia v0.3 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
             </div>
-            <section class="patient-header-card module-hero">
-                <div class="patient-header-main">
-                    <div class="patient-avatar"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
-                    <div class="patient-info">
-                        <h1 class="patient-name">Estadísticas del servicio</h1>
-                        <p class="hero-description">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
+
+            <!-- 1. Header de página con resumen ejecutivo -->
+            <section class="stats-hero-header">
+                <div class="stats-hero-main">
+                    <div class="stats-hero-icon">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                    </div>
+                    <div class="stats-hero-info">
+                        <h1 class="stats-hero-title">Estadísticas del servicio</h1>
+                        <p class="stats-hero-subtitle">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
+                        <div class="stats-hero-summary" id="executive-summary">
+                            <span class="stats-hero-summary-item"><i class="fas fa-users"></i> <strong id="summary-pacientes">0</strong> pacientes</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-hospital"></i> <strong id="summary-servicios">0</strong> servicios</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-disease"></i> <strong id="summary-patologias">0</strong> patologías</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-pills"></i> <strong id="summary-farmacos">0</strong> fármacos</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-exclamation-triangle"></i> <strong id="summary-ea">0</strong> con EA</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-hero-actions">
+                    <button type="button" class="btn btn-outline stats-hero-export" id="exportReportBtn">
+                        <i class="fas fa-download"></i> Exportar informe
+                    </button>
+                    <button type="button" class="stats-hero-notify" id="notifyBtn" aria-label="Notificaciones">
+                        <i class="fas fa-bell"></i>
+                        <span class="stats-hero-notify-badge" id="notifyBadge">0</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 2. 6 KPI cards ejecutivas -->
+            <section class="stats-kpi-section" id="kpi-section">
+                <div class="stats-kpi-grid" id="kpi-grid"></div>
+            </section>
+
+            <!-- 3. Filtros poblacionales avanzados (accordion colapsado por defecto) -->
+            <section class="stats-accordion-section" id="advanced-filters-section">
+                <button type="button" class="stats-accordion-header" id="advancedFiltersToggle" aria-expanded="false" aria-controls="advanced-filters-body">
+                    <span class="stats-accordion-title">
+                        <i class="fas fa-filter"></i> Filtros poblacionales
+                    </span>
+                    <span class="stats-accordion-subtitle">Filtros rápidos y avanzados</span>
+                    <i class="fas fa-chevron-down stats-accordion-chevron" aria-hidden="true"></i>
+                </button>
+                <div class="stats-accordion-body hidden" id="advanced-filters-body">
+                    <div id="filters-container" class="filters-grid"></div>
+                    <div class="filter-actions">
+                        <button id="apply-filters" class="btn btn-primary"><i class="fas fa-search"></i> Aplicar filtros</button>
+                        <button id="clear-filters" class="btn btn-outline"><i class="fas fa-eraser"></i> Limpiar filtros</button>
                     </div>
                 </div>
             </section>
-            <div class="stats-note" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Indicadores demo — datos sintéticos. No usar para decisiones clínicas.</div>
-            <section id="filters-panel" class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-filter"></i> Filtros poblacionales</h2>
-                <div id="filters-container" class="filters-grid"></div>
-                <div class="filter-actions">
-                    <button id="apply-filters" class="btn btn-primary"><i class="fas fa-search"></i> Aplicar filtros</button>
-                    <button id="clear-filters" class="btn btn-outline"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+
+            <!-- 4. Filtros rápidos (siempre visibles, dropdowns compactos) -->
+            <section class="stats-quick-filters-section" id="quick-filters-section">
+                <div class="stats-quick-filters-row">
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-servicio" class="stats-quick-filter-label">Servicio</label>
+                        <select id="qf-servicio" class="stats-quick-filter-select" data-quick-filter="servicio">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-patologia" class="stats-quick-filter-label">Patología</label>
+                        <select id="qf-patologia" class="stats-quick-filter-select" data-quick-filter="patologia">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-farmaco" class="stats-quick-filter-label">Fármaco</label>
+                        <select id="qf-farmaco" class="stats-quick-filter-select" data-quick-filter="farmaco">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-estado" class="stats-quick-filter-label">Estado seguimiento</label>
+                        <select id="qf-estado" class="stats-quick-filter-select" data-quick-filter="estado">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-ea" class="stats-quick-filter-label">Eventos adversos</label>
+                        <select id="qf-ea" class="stats-quick-filter-select" data-quick-filter="ea">
+                            <option value="">Todos</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-adherencia" class="stats-quick-filter-label">Adherencia</label>
+                        <select id="qf-adherencia" class="stats-quick-filter-select" data-quick-filter="adherencia">
+                            <option value="">Todas</option>
+                            <option value="alta">Alta</option>
+                            <option value="media">Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+                    <button type="button" class="stats-quick-filter-funnel" id="quickFilterFunnel" aria-label="Más filtros">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 5. Chips de cohorte actual / filtros activos -->
+            <section class="stats-cohort-section" id="cohort-section">
+                <div class="stats-cohort-header">
+                    <div class="stats-cohort-label">
+                        <i class="fas fa-users"></i> Cohorte actual:
+                        <span class="stats-cohort-pills" id="cohort-pills"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline" id="clear-quick-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
                 </div>
                 <div id="active-filters-chips" class="chips-container"></div>
                 <div id="filter-result-count" class="filter-result-count"></div>
             </section>
-            <div id="no-results-message" class="hidden">
-                <div class="notice-box notice-box--info">
-                    <i class="fas fa-info-circle"></i>
-                    <span>No hay pacientes que coincidan con los filtros aplicados. Ajuste los criterios o limpie los filtros para ver todos los pacientes.</span>
+
+            <!-- 6. 4 bloques de gráficos agrupados por pregunta analítica -->
+            <section class="stats-charts-section" id="charts-section">
+                <div class="stats-charts-grid" id="charts-grid">
+                    <div class="stats-chart-block" id="chart-block-quienes">
+                        <h3 class="stats-chart-block-title">¿Quiénes son?</h3>
+                        <div class="stats-chart-block-content" id="chart-quienes-content"></div>
+                    </div>
+                    <div class="stats-chart-block" id="chart-block-tratamiento">
+                        <h3 class="stats-chart-block-title">¿Qué tratamiento reciben?</h3>
+                        <div class="stats-chart-block-content" id="chart-tratamiento-content"></div>
+                    </div>
+                    <div class="stats-chart-block" id="chart-block-evolucion">
+                        <h3 class="stats-chart-block-title">¿Cómo evolucionan?</h3>
+                        <div class="stats-chart-block-content" id="chart-evolucion-content"></div>
+                    </div>
+                    <div class="stats-chart-block" id="chart-block-riesgos">
+                        <h3 class="stats-chart-block-title">¿Qué riesgos aparecen?</h3>
+                        <div class="stats-chart-block-content" id="chart-riesgos-content"></div>
+                    </div>
                 </div>
-            </div>
-            <section id="summary-cards-section">
-                <h2 class="section-title"><i class="fas fa-chart-pie"></i> Resumen de la cohorte</h2>
-                <div id="summary-cards" class="action-grid"></div>
             </section>
-            <section id="charts-section">
-                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Distribuciones</h2>
-                <div id="charts-grid" class="charts-grid"></div>
+
+            <!-- 9. Estado vacío elegante -->
+            <section id="no-results-message" class="hidden">
+                <div class="stats-empty-state">
+                    <div class="stats-empty-state-icon">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="stats-empty-state-title">No hay pacientes que coincidan con los filtros aplicados</h3>
+                    <p class="stats-empty-state-desc">Ajuste los criterios o limpie los filtros para ver todos los pacientes.</p>
+                    <button type="button" class="btn btn-primary" id="empty-clear-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+                </div>
             </section>
-            <section id="patients-table-section" class="dashboard-card">
-                <h2 class="card-title"><i class="fas fa-table"></i> Pacientes filtrados</h2>
+
+            <!-- 7. Tabla de pacientes filtrados -->
+            <section id="patients-table-section" class="dashboard-card stats-table-section">
+                <div class="stats-table-header">
+                    <h2 class="card-title stats-table-title"><i class="fas fa-table"></i> Pacientes incluidos en la cohorte filtrada</h2>
+                    <button type="button" class="btn btn-sm btn-outline" id="customizeColumnsBtn"><i class="fas fa-columns"></i> Personalizar columnas</button>
+                </div>
                 <div class="table-responsive-wrapper">
-                    <table id="patients-table" class="data-table">
+                    <table id="patients-table" class="data-table stats-data-table">
                         <thead></thead>
                         <tbody></tbody>
                     </table>
                 </div>
                 <div id="table-pagination" class="table-pagination"></div>
             </section>
+
+            <!-- 8. Aviso demo/sintético -->
+            <section class="stats-demo-footer">
+                <div class="stats-demo-footer-content">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <span>Datos demo/sintéticos — no usar para decisiones clínicas.</span>
+                </div>
+            </section>
         </main>
     </div>
     <script src="scripts/farmacia_common.js?v=20260607-postdemo-e"></script>
-    <script src="scripts/farmacia_estadisticas.js?v=20260607-postdemo-e"></script>
+    <script src="scripts/farmacia_estadisticas.js?v=20260608-stats-a"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@
     var allPatients = [];
     var filteredPatients = [];
     var currentFilters = {};
+    var currentQuickFilters = {};
     var PAGE_SIZE = 50;
     var currentPage = 1;
     var ITEMS_PER_PAGE = 50;
@@ -877,7 +878,7 @@
 
     function readFilters() {
         var filters = {};
-        var inputs = document.querySelectorAll('#filters-panel input, #filters-panel select');
+        var inputs = document.querySelectorAll('#advanced-filters-body input, #advanced-filters-body select');
         inputs.forEach(function (input) {
             var group = input.dataset.filterGroup;
             if (!group) return;
@@ -901,23 +902,28 @@
     }
 
     function applyFilters() {
-        var filters = readFilters();
-        currentFilters = filters;
+        var advFilters = readFilters();
+        var qf = readQuickFilters();
+        currentFilters = advFilters;
+        currentQuickFilters = qf;
 
         var hasActiveFilter = false;
-        Object.keys(filters).forEach(function (key) {
-            var f = filters[key];
+        Object.keys(advFilters).forEach(function (key) {
+            var f = advFilters[key];
             if (f.type === 'checkbox' && f.values && f.values.length > 0) hasActiveFilter = true;
             if (f.type === 'radio' && f.value) hasActiveFilter = true;
             if (f.type === 'select' && f.value) hasActiveFilter = true;
             if (f.type === 'range' && (f.min !== null || f.max !== null)) hasActiveFilter = true;
+        });
+        Object.keys(qf).forEach(function (key) {
+            if (qf[key]) hasActiveFilter = true;
         });
 
         if (!hasActiveFilter) {
             filteredPatients = allPatients.slice();
         } else {
             filteredPatients = allPatients.filter(function (p) {
-                return matchesAllFilters(p._profile, filters);
+                return matchesAllFilters(p._profile, advFilters) && matchesQuickFilters(p._profile, qf);
             });
         }
 
@@ -1035,7 +1041,7 @@
     }
 
     function clearFilters() {
-        var inputs = document.querySelectorAll('#filters-panel input, #filters-panel select');
+        var inputs = document.querySelectorAll('#advanced-filters-body input, #advanced-filters-body select');
         inputs.forEach(function (input) {
             if (input.type === 'checkbox' || input.type === 'radio') {
                 input.checked = false;
@@ -1045,10 +1051,197 @@
                 input.value = '';
             }
         });
+        clearQuickFilters();
         currentFilters = {};
+        currentQuickFilters = {};
         filteredPatients = allPatients.slice();
         currentPage = 1;
         renderAll();
+    }
+
+    function populateQuickFilters() {
+        var opts = deriveFilterOptions();
+        var sServ = document.getElementById('qf-servicio');
+        var sPat = document.getElementById('qf-patologia');
+        var sFar = document.getElementById('qf-farmaco');
+        var sEst = document.getElementById('qf-estado');
+
+        function fill(select, options, label) {
+            if (!select) return;
+            var cur = select.value;
+            while (select.options.length > 1) select.remove(1);
+            options.forEach(function (opt) {
+                var o = document.createElement('option');
+                o.value = opt.value;
+                o.textContent = opt.label;
+                select.appendChild(o);
+            });
+            select.value = cur;
+        }
+
+        fill(sServ, opts.servicios, 'Todos');
+        fill(sPat, opts.patologias, 'Todas');
+        fill(sFar, opts.principios_activos, 'Todos');
+        if (sEst) {
+            var cur = sEst.value;
+            while (sEst.options.length > 1) sEst.remove(1);
+            var estOpts = [
+                { value: 'en_seguimiento', label: 'En seguimiento' },
+                { value: 'pendiente', label: 'Pendiente' },
+                { value: 'alta', label: 'Alta' },
+                { value: 'validado', label: 'Validado' }
+            ];
+            estOpts.forEach(function (opt) {
+                var o = document.createElement('option');
+                o.value = opt.value;
+                o.textContent = opt.label;
+                sEst.appendChild(o);
+            });
+            sEst.value = cur;
+        }
+    }
+
+    function readQuickFilters() {
+        var qf = {};
+        var selects = document.querySelectorAll('.stats-quick-filter-select');
+        selects.forEach(function (sel) {
+            var key = sel.dataset.quickFilter;
+            if (key && sel.value) qf[key] = sel.value;
+        });
+        return qf;
+    }
+
+    function matchesQuickFilters(prof, qf) {
+        if (!qf || Object.keys(qf).length === 0) return true;
+        if (!prof) return false;
+        if (qf.servicio) {
+            if (prof.servicios_origen.indexOf(qf.servicio) === -1) return false;
+        }
+        if (qf.patologia) {
+            if (prof.patologias.indexOf(qf.patologia) === -1) return false;
+        }
+        if (qf.farmaco) {
+            if (prof.principios_activos.indexOf(qf.farmaco) === -1 && prof.farmacos_nombres.indexOf(qf.farmaco) === -1) return false;
+        }
+        if (qf.estado) {
+            if (prof.estado_seguimiento !== qf.estado) return false;
+        }
+        if (qf.ea) {
+            if (qf.ea === 'si' && !prof.tiene_eventos_adversos) return false;
+            if (qf.ea === 'no' && prof.tiene_eventos_adversos) return false;
+        }
+        if (qf.adherencia) {
+            if (prof.adherencia_nivel !== qf.adherencia) return false;
+        }
+        return true;
+    }
+
+    function clearQuickFilters() {
+        var selects = document.querySelectorAll('.stats-quick-filter-select');
+        selects.forEach(function (sel) {
+            sel.value = '';
+        });
+    }
+
+    function renderExecutiveSummary() {
+        var total = filteredPatients.length;
+        var svcSet = {};
+        var patSet = {};
+        var farmSet = {};
+        var eaCount = 0;
+        filteredPatients.forEach(function (p) {
+            var prof = p._profile;
+            if (!prof) return;
+            prof.servicios_origen.forEach(function (s) { if (s !== 'Farmacia') svcSet[s] = true; });
+            prof.patologias.forEach(function (pt) { patSet[pt] = true; });
+            prof.principios_activos.forEach(function (f) { farmSet[f] = true; });
+            if (prof.tiene_eventos_adversos) eaCount++;
+        });
+        var elPac = document.getElementById('summary-pacientes');
+        var elSvc = document.getElementById('summary-servicios');
+        var elPat = document.getElementById('summary-patologias');
+        var elFar = document.getElementById('summary-farmacos');
+        var elEa = document.getElementById('summary-ea');
+        if (elPac) elPac.textContent = total;
+        if (elSvc) elSvc.textContent = Object.keys(svcSet).length;
+        if (elPat) elPat.textContent = Object.keys(patSet).length;
+        if (elFar) elFar.textContent = Object.keys(farmSet).length;
+        if (elEa) elEa.textContent = eaCount;
+    }
+
+    function renderKpiCards() {
+        var container = document.getElementById('kpi-grid');
+        if (!container) return;
+        clearChildren(container);
+
+        var count = filteredPatients.length;
+        var activeRx = 0;
+        var highPROM = 0;
+        var lowAdh = 0;
+        var hasAE = 0;
+        var pendingVal = 0;
+
+        filteredPatients.forEach(function (p) {
+            var prof = p._profile;
+            if (!prof) return;
+            if (prof.tiene_tratamiento_activo) activeRx++;
+            if (prof.ultimo_prom && prof.ultimo_prom.categoria === 'alto') highPROM++;
+            if (prof.adherencia_nivel === 'baja') lowAdh++;
+            if (prof.tiene_eventos_adversos) hasAE++;
+            if (prof.estado_validacion === 'pendiente' || prof.estado_validacion === 'en_seguimiento') pendingVal++;
+        });
+
+        var cards = [
+            { cls: 'stats-kpi-card--green', icon: 'fa-users', label: 'Pacientes incluidos', value: count },
+            { cls: 'stats-kpi-card--green', icon: 'fa-syringe', label: 'Tratamiento activo', value: activeRx },
+            { cls: 'stats-kpi-card--orange', icon: 'fa-exclamation-triangle', label: 'PROM alto', value: highPROM },
+            { cls: 'stats-kpi-card--red', icon: 'fa-arrow-down', label: 'Baja adherencia', value: lowAdh },
+            { cls: 'stats-kpi-card--yellow', icon: 'fa-exclamation-circle', label: 'Eventos adversos', value: hasAE },
+            { cls: 'stats-kpi-card--purple', icon: 'fa-clock', label: 'Validación pendiente', value: pendingVal }
+        ];
+
+        cards.forEach(function (c) {
+            var card = el('div', 'stats-kpi-card ' + c.cls);
+            var iconWrap = el('div', 'stats-kpi-icon');
+            iconWrap.appendChild(icon(c.icon));
+            card.appendChild(iconWrap);
+            card.appendChild(el('div', 'stats-kpi-label', c.label));
+            card.appendChild(el('div', 'stats-kpi-value', String(c.value)));
+            container.appendChild(card);
+        });
+    }
+
+    function renderCohortPills() {
+        var container = document.getElementById('cohort-pills');
+        if (!container) return;
+        clearChildren(container);
+
+        var qf = currentQuickFilters;
+        var hasAny = false;
+        var pillData = [];
+        if (qf.servicio) pillData.push({ label: qf.servicio, type: 'servicio' });
+        if (qf.patologia) pillData.push({ label: qf.patologia, type: 'patologia' });
+        if (qf.farmaco) pillData.push({ label: qf.farmaco, type: 'farmaco' });
+        if (qf.estado) pillData.push({ label: qf.estado, type: 'estado' });
+        if (qf.ea) pillData.push({ label: 'EA: ' + qf.ea, type: 'ea' });
+        if (qf.adherencia) pillData.push({ label: 'Adh: ' + qf.adherencia, type: 'adherencia' });
+
+        if (pillData.length === 0) {
+            var pill = el('span', 'stats-cohort-pill', 'Todos los pacientes');
+            container.appendChild(pill);
+            return;
+        }
+
+        pillData.forEach(function (pd) {
+            var pill = el('span', 'stats-cohort-pill', pd.label);
+            var closeIcon = icon('fa-times');
+            closeIcon.addEventListener('click', function () {
+                var sel = document.querySelector('[data-quick-filter="' + pd.type + '"]');
+                if (sel) { sel.value = ''; applyFilters(); }
+            });
+            pill.appendChild(closeIcon);
+            container.appendChild(pill);
+        });
     }
 
     function renderFilterChips() {
@@ -1117,52 +1310,6 @@
         }
     }
 
-    function renderSummaryCards() {
-        var container = document.getElementById('summary-cards');
-        if (!container) return;
-        clearChildren(container);
-
-        var count = filteredPatients.length;
-        var activeRx = 0;
-        var pendingVal = 0;
-        var activeFollow = 0;
-        var highPROM = 0;
-        var lowAdh = 0;
-        var hasAE = 0;
-
-        filteredPatients.forEach(function (p) {
-            var prof = p._profile;
-            if (!prof) return;
-            if (prof.tiene_tratamiento_activo) activeRx++;
-            if (prof.estado_validacion === 'pendiente' || prof.estado_validacion === 'en_seguimiento') pendingVal++;
-            if (prof.estado_seguimiento === 'en_seguimiento') activeFollow++;
-            if (prof.ultimo_prom && prof.ultimo_prom.categoria === 'alto') highPROM++;
-            if (prof.adherencia_nivel === 'baja') lowAdh++;
-            if (prof.tiene_eventos_adversos) hasAE++;
-        });
-
-        var cards = [
-            { icon: 'fa-users', title: 'Pacientes', value: String(count) },
-            { icon: 'fa-syringe', title: 'Tratamiento activo', value: String(activeRx) },
-            { icon: 'fa-clock', title: 'Validación pendiente', value: String(pendingVal) },
-            { icon: 'fa-clipboard-check', title: 'Seguimiento activo', value: String(activeFollow) },
-            { icon: 'fa-exclamation-triangle', title: 'PROM alto', value: String(highPROM) },
-            { icon: 'fa-hand-holding-medical', title: 'Baja adherencia', value: String(lowAdh) },
-            { icon: 'fa-exclamation-circle', title: 'Eventos adversos', value: String(hasAE) }
-        ];
-
-        cards.forEach(function (c) {
-            var card = el('div', 'dashboard-card stats-summary-card');
-            var title = el('h2', 'card-title');
-            title.appendChild(icon(c.icon));
-            title.appendChild(document.createTextNode(' ' + c.title));
-            card.appendChild(title);
-            var val = el('p', 'stats-summary-value', c.value);
-            card.appendChild(val);
-            container.appendChild(card);
-        });
-    }
-
     function countByLabel(filtered, fn) {
         var map = {};
         filtered.forEach(function (p) {
@@ -1182,127 +1329,197 @@
         return entries;
     }
 
-    function renderBarChart(container, title, data, maxVal) {
+    function renderMiniBarChart(container, data, maxVal) {
         clearChildren(container);
-        var titleEl = el('h3', 'chart-title');
-        titleEl.appendChild(icon('fa-chart-bar'));
-        titleEl.appendChild(document.createTextNode(' ' + title));
-        container.appendChild(titleEl);
-
         if (!data || data.length === 0) {
-            var emptyMsg = el('p', 'chart-empty', 'Sin datos para mostrar');
-            container.appendChild(emptyMsg);
+            container.appendChild(el('p', 'chart-empty', 'Sin datos'));
             return;
         }
-
         var max = maxVal || 0;
         if (!maxVal) {
             data.forEach(function (d) { if (d.value > max) max = d.value; });
         }
         if (max === 0) max = 1;
-
-        var list = el('div', 'chart-bar-list');
+        var list = el('div', 'stats-mini-bars');
         data.forEach(function (d) {
-            var row = el('div', 'chart-bar-row');
-            var labelSpan = el('span', 'chart-bar-label', d.label);
-            var barWrap = el('div', 'chart-bar-wrapper');
-            var bar = el('div', 'chart-bar-fill');
+            var row = el('div', 'stats-mini-bar-row');
+            var label = el('span', 'stats-mini-bar-label', d.label);
+            var track = el('div', 'stats-mini-bar-track');
+            var fill = el('div', 'stats-mini-bar-fill');
             var pct = Math.round((d.value / max) * 100);
-            bar.style.width = pct + '%';
-            barWrap.appendChild(bar);
-            var valSpan = el('span', 'chart-bar-value', String(d.value));
-            row.appendChild(labelSpan);
-            row.appendChild(barWrap);
-            row.appendChild(valSpan);
+            fill.style.width = pct + '%';
+            track.appendChild(fill);
+            var val = el('span', 'stats-mini-bar-value', String(d.value));
+            row.appendChild(label);
+            row.appendChild(track);
+            row.appendChild(val);
             list.appendChild(row);
         });
         container.appendChild(list);
     }
 
-    function renderCharts() {
-        var grid = document.getElementById('charts-grid');
-        if (!grid) return;
-        clearChildren(grid);
+    function renderDonut(container, data, totalLabel) {
+        clearChildren(container);
+        if (!data || data.length === 0) {
+            container.appendChild(el('p', 'chart-empty', 'Sin datos'));
+            return;
+        }
+        var total = 0;
+        data.forEach(function (d) { total += d.value; });
+        var colors = ['#22C55E', '#F97316', '#EF4444', '#EAB308', '#A855F7', '#3B82F6', '#64748B'];
+        var wrap = el('div', 'stats-donut-wrap');
+        var ring = el('div', 'stats-donut-ring');
+        var conicParts = [];
+        var currentDeg = 0;
+        data.forEach(function (d, idx) {
+            var pct = total > 0 ? (d.value / total) * 100 : 0;
+            var color = colors[idx % colors.length];
+            conicParts.push(color + ' ' + currentDeg + '% ' + (currentDeg + pct) + '%');
+            currentDeg += pct;
+        });
+        ring.style.background = 'conic-gradient(' + conicParts.join(', ') + ')';
+        var inner = el('div', 'stats-donut-inner');
+        inner.appendChild(el('div', 'stats-donut-value', String(total)));
+        inner.appendChild(el('div', 'stats-donut-unit', totalLabel || 'pacientes'));
+        ring.appendChild(inner);
+        wrap.appendChild(ring);
 
+        var legend = el('div', 'stats-donut-legend');
+        data.forEach(function (d, idx) {
+            var item = el('div', 'stats-donut-legend-item');
+            var dot = el('span', 'stats-donut-legend-dot');
+            dot.style.backgroundColor = colors[idx % colors.length];
+            item.appendChild(dot);
+            var labelText = d.label + ' ';
+            var count = el('span', 'stats-donut-legend-count', d.value + ' (' + (total > 0 ? Math.round((d.value / total) * 100) : 0) + '%)');
+            item.appendChild(document.createTextNode(labelText));
+            item.appendChild(count);
+            legend.appendChild(item);
+        });
+        wrap.appendChild(legend);
+        container.appendChild(wrap);
+    }
+
+    function renderCharts() {
         var f = filteredPatients;
 
-        var chart1 = el('div', 'chart-card dashboard-card');
-        renderBarChart(chart1, 'Distribución por servicio de origen',
-            sortAndTake(countByLabel(f, function (p) { return (p._profile && p._profile.servicios_origen) ? p._profile.servicios_origen.filter(function (s) { return s !== 'Farmacia'; }) : []; })));
-        grid.appendChild(chart1);
+        // Bloque 1: ¿Quiénes son?
+        var b1 = document.getElementById('chart-quienes-content');
+        if (b1) {
+            clearChildren(b1);
+            var svcData = sortAndTake(countByLabel(f, function (p) {
+                return (p._profile && p._profile.servicios_origen) ? p._profile.servicios_origen.filter(function (s) { return s !== 'Farmacia'; }) : [];
+            }));
+            var patData = sortAndTake(countByLabel(f, function (p) {
+                return p._profile ? p._profile.patologias : [];
+            }));
+            var sub1 = el('div', '');
+            var h4a = el('h4', 'stats-chart-block-subtitle', 'Por servicio');
+            sub1.appendChild(h4a);
+            var svcContainer = el('div', '');
+            renderMiniBarChart(svcContainer, svcData);
+            sub1.appendChild(svcContainer);
 
-        var chart2 = el('div', 'chart-card dashboard-card');
-        renderBarChart(chart2, 'Distribución por patología',
-            sortAndTake(countByLabel(f, function (p) { return p._profile ? p._profile.patologias : []; })));
-        grid.appendChild(chart2);
+            var h4b = el('h4', 'stats-chart-block-subtitle', 'Por patología');
+            sub1.appendChild(h4b);
+            var patContainer = el('div', '');
+            renderMiniBarChart(patContainer, patData);
+            sub1.appendChild(patContainer);
 
-        var chart3 = el('div', 'chart-card dashboard-card');
-        var paMap = {};
-        f.forEach(function (p) {
-            if (!p._profile) return;
-            var seen = {};
-            p._profile.principios_activos.forEach(function (pa) {
-                if (!seen[pa]) { seen[pa] = true; paMap[pa] = (paMap[pa] || 0) + 1; }
+            var link1 = el('button', 'stats-chart-link', 'Ver detalle');
+            link1.type = 'button';
+            sub1.appendChild(link1);
+            b1.appendChild(sub1);
+        }
+
+        // Bloque 2: ¿Qué tratamiento reciben?
+        var b2 = document.getElementById('chart-tratamiento-content');
+        if (b2) {
+            clearChildren(b2);
+            var paMap = {};
+            f.forEach(function (p) {
+                if (!p._profile) return;
+                var seen = {};
+                p._profile.principios_activos.forEach(function (pa) {
+                    if (!seen[pa]) { seen[pa] = true; paMap[pa] = (paMap[pa] || 0) + 1; }
+                });
             });
-        });
-        renderBarChart(chart3, 'Distribución por principio activo (top 10)', sortAndTake(paMap, 10));
-        grid.appendChild(chart3);
+            var paData = sortAndTake(paMap, 10);
+            var sub2 = el('div', '');
+            var h4c = el('h4', 'stats-chart-block-subtitle', 'Principios activos (tratamiento activo)');
+            sub2.appendChild(h4c);
+            var paContainer = el('div', '');
+            renderMiniBarChart(paContainer, paData);
+            sub2.appendChild(paContainer);
+            var link2 = el('button', 'stats-chart-link', 'Ver detalle');
+            link2.type = 'button';
+            sub2.appendChild(link2);
+            b2.appendChild(sub2);
+        }
 
-        var chart4 = el('div', 'chart-card dashboard-card');
-        var valMap = countByLabel(f, function (p) { return p._profile ? p._profile.estado_validacion : null; });
-        renderBarChart(chart4, 'Distribución por estado de validación', sortAndTake(valMap));
-        grid.appendChild(chart4);
+        // Bloque 3: ¿Cómo evolucionan?
+        var b3 = document.getElementById('chart-evolucion-content');
+        if (b3) {
+            clearChildren(b3);
+            var promCatMap = countByLabel(f, function (p) {
+                return p._profile && p._profile.ultimo_prom ? p._profile.ultimo_prom.categoria : null;
+            });
+            var adhMap = countByLabel(f, function (p) {
+                return p._profile ? p._profile.adherencia_nivel : null;
+            });
+            var promEntries = sortAndTake(promCatMap);
+            var adhEntries = sortAndTake(adhMap);
+            var grid = el('div', 'stats-donut-grid');
+            var wrapProm = el('div', 'stats-donut-wrap');
+            var h4d = el('h4', 'stats-donut-label', 'Nivel de PROM (DLQI)');
+            wrapProm.appendChild(h4d);
+            var promContainer = el('div', '');
+            renderDonut(promContainer, promEntries, 'pacientes');
+            wrapProm.appendChild(promContainer);
+            grid.appendChild(wrapProm);
 
-        var chart5 = el('div', 'chart-card dashboard-card');
-        var adhMap = countByLabel(f, function (p) { return p._profile ? p._profile.adherencia_nivel : null; });
-        renderBarChart(chart5, 'Distribución por adherencia', sortAndTake(adhMap));
-        grid.appendChild(chart5);
+            var wrapAdh = el('div', 'stats-donut-wrap');
+            var h4e = el('h4', 'stats-donut-label', 'Adherencia al tratamiento');
+            wrapAdh.appendChild(h4e);
+            var adhContainer = el('div', '');
+            renderDonut(adhContainer, adhEntries, 'pacientes');
+            wrapAdh.appendChild(adhContainer);
+            grid.appendChild(wrapAdh);
+            b3.appendChild(grid);
+        }
 
-        var chart5b = el('div', 'chart-card dashboard-card');
-        var esMap = countByLabel(f, function (p) { return p._profile ? p._profile.estado_seguimiento : null; });
-        renderBarChart(chart5b, 'Distribución por estado de seguimiento', sortAndTake(esMap));
-        grid.appendChild(chart5b);
+        // Bloque 4: ¿Qué riesgos aparecen?
+        var b4 = document.getElementById('chart-riesgos-content');
+        if (b4) {
+            clearChildren(b4);
+            var eaMap = {};
+            f.forEach(function (p) {
+                if (!p._profile) return;
+                eaMap[p._profile.tiene_eventos_adversos ? 'Con EA' : 'Sin EA'] = (eaMap[p._profile.tiene_eventos_adversos ? 'Con EA' : 'Sin EA'] || 0) + 1;
+            });
+            var valMap = countByLabel(f, function (p) {
+                return p._profile ? p._profile.estado_validacion : null;
+            });
+            var eaEntries = sortAndTake(eaMap);
+            var valEntries = sortAndTake(valMap);
+            var grid2 = el('div', 'stats-donut-grid');
+            var wrapEa = el('div', 'stats-donut-wrap');
+            var h4f = el('h4', 'stats-donut-label', 'Eventos adversos');
+            wrapEa.appendChild(h4f);
+            var eaContainer = el('div', '');
+            renderDonut(eaContainer, eaEntries, 'pacientes');
+            wrapEa.appendChild(eaContainer);
+            grid2.appendChild(wrapEa);
 
-        var chart6 = el('div', 'chart-card dashboard-card');
-        var eaGravMap = countByLabel(f, function (p) { return p._profile ? p._profile.gravedad_eventos : []; });
-        renderBarChart(chart6, 'Efectos adversos por gravedad', sortAndTake(eaGravMap));
-        grid.appendChild(chart6);
-
-        var chart7 = el('div', 'chart-card dashboard-card');
-        var promCatMap = countByLabel(f, function (p) {
-            return p._profile && p._profile.ultimo_prom ? p._profile.ultimo_prom.categoria : null;
-        });
-        renderBarChart(chart7, 'Distribución por categoría PROM', sortAndTake(promCatMap));
-        grid.appendChild(chart7);
-
-        var chart8 = el('div', 'chart-card dashboard-card');
-        var clinCatMap = countByLabel(f, function (p) {
-            return p._profile && p._profile.ultima_actividad ? p._profile.ultima_actividad.categoria : null;
-        });
-        renderBarChart(chart8, 'Distribución por actividad clínica', sortAndTake(clinCatMap));
-        grid.appendChild(chart8);
-
-        var chart9 = el('div', 'chart-card dashboard-card');
-        var comMap = countByLabel(f, function (p) { return p._profile ? p._profile.comorbilidades : []; });
-        renderBarChart(chart9, 'Comorbilidades más frecuentes (top 5)', sortAndTake(comMap, 5));
-        grid.appendChild(chart9);
-
-        var chart10 = el('div', 'chart-card dashboard-card');
-        var etMap = countByLabel(f, function (p) { return p._profile ? p._profile.estados_tratamiento : []; });
-        renderBarChart(chart10, 'Distribución por estado tratamiento', sortAndTake(etMap));
-        grid.appendChild(chart10);
-
-        var chart11 = el('div', 'chart-card dashboard-card');
-        var intDesMap = {};
-        f.forEach(function (p) {
-            if (!p._profile) return;
-            var ik = 'Intensificación: ' + p._profile.intensificacion;
-            intDesMap[ik] = (intDesMap[ik] || 0) + 1;
-            var dk = 'Desintensificación: ' + p._profile.desintensificacion;
-            intDesMap[dk] = (intDesMap[dk] || 0) + 1;
-        });
-        renderBarChart(chart11, 'Intensificación / Desintensificación', sortAndTake(intDesMap));
-        grid.appendChild(chart11);
+            var wrapVal = el('div', 'stats-donut-wrap');
+            var h4g = el('h4', 'stats-donut-label', 'Estado de validación');
+            wrapVal.appendChild(h4g);
+            var valContainer = el('div', '');
+            renderDonut(valContainer, valEntries, 'pacientes');
+            wrapVal.appendChild(valContainer);
+            grid2.appendChild(wrapVal);
+            b4.appendChild(grid2);
+        }
     }
 
     function renderPatientsTable() {
@@ -1313,10 +1530,9 @@
         clearChildren(tbody);
 
         var columns = [
-            'CIP demo', 'Nombre demo', 'Servicio', 'Patología',
-            'Tratamiento activo', 'Principio activo', 'Dosis/pauta',
-            'Último PROM', 'Última actividad clínica', 'Adherencia',
-            'Eventos adversos', 'Estado validación', 'Estado seguimiento'
+            'CIP demo', 'Servicio / patología', 'Tratamiento activo',
+            'Último PROM', 'Actividad clínica', 'Adherencia',
+            'EA', 'Validación', 'Última visita'
         ];
 
         var headerRow = document.createElement('tr');
@@ -1345,33 +1561,109 @@
                 activeTx = p.tratamientos[p.tratamientos.length - 1];
             }
 
-            var cipCell = el('td', '', p.cip);
-            var nameCell = el('td', '', p.nombre_demo);
-            var svcCell = el('td', '', prof.servicios_origen.filter(function (s) { return s !== 'Farmacia'; }).join(', '));
-            var patCell = el('td', '', prof.patologias.join(', '));
-            var txActiveCell = el('td', '', prof.tiene_tratamiento_activo ? 'Sí' : 'No');
-            var paCell = el('td', '', activeTx ? activeTx.principio_activo : '—');
-            var doseCell = el('td', '', activeTx ? (activeTx.presentacion_dosis + ' ' + activeTx.pauta) : '—');
-            var promCell = el('td', '', prof.ultimo_prom ? (prof.ultimo_prom.tipo + ': ' + prof.ultimo_prom.valor) : '—');
-            var clinCell = el('td', '', prof.ultima_actividad ? (prof.ultima_actividad.tipo_indice + ': ' + prof.ultima_actividad.valor) : '—');
-            var adhCell = el('td', '', prof.adherencia_nivel);
-            var eaCell = el('td', '', prof.tiene_eventos_adversos ? 'Sí (' + prof.gravedad_eventos.join(', ') + ')' : 'No');
-            var valCell = el('td', '', prof.estado_validacion);
-            var segCell = el('td', '', prof.estado_seguimiento);
+            // CIP
+            row.appendChild(el('td', '', p.cip));
 
-            row.appendChild(cipCell);
-            row.appendChild(nameCell);
-            row.appendChild(svcCell);
-            row.appendChild(patCell);
-            row.appendChild(txActiveCell);
-            row.appendChild(paCell);
-            row.appendChild(doseCell);
+            // Servicio / patología
+            var svcPat = prof.servicios_origen.filter(function (s) { return s !== 'Farmacia'; }).join(', ') +
+                ' / ' + prof.patologias.join(', ');
+            row.appendChild(el('td', '', svcPat));
+
+            // Tratamiento activo
+            var txText = activeTx ? (activeTx.principio_activo + ' ' + activeTx.presentacion_dosis + ' ' + activeTx.pauta) : '—';
+            // Nota: presentacion_dosis ya incluye dosis + vía en los datos sintéticos.
+            // No se reescribe lógica compleja de dosis/pauta por separado.
+            row.appendChild(el('td', '', txText));
+
+            // Último PROM
+            var promCell = el('td', '');
+            if (prof.ultimo_prom) {
+                promCell.textContent = prof.ultimo_prom.tipo + ' ' + prof.ultimo_prom.valor;
+                var promClass = 'stats-cell-risk-neutral';
+                if (prof.ultimo_prom.categoria === 'alto') promClass = 'stats-cell-risk-high';
+                else if (prof.ultimo_prom.categoria === 'moderado') promClass = 'stats-cell-risk-moderate';
+                else if (prof.ultimo_prom.categoria === 'bajo') promClass = 'stats-cell-risk-low';
+                promCell.className = promClass;
+            } else {
+                promCell.textContent = '—';
+            }
             row.appendChild(promCell);
+
+            // Actividad clínica
+            var clinCell = el('td', '');
+            if (prof.ultima_actividad) {
+                clinCell.textContent = prof.ultima_actividad.tipo_indice + ' ' + prof.ultima_actividad.valor;
+                var clinClass = 'stats-cell-risk-neutral';
+                if (prof.ultima_actividad.categoria === 'alta') clinClass = 'stats-cell-risk-high';
+                else if (prof.ultima_actividad.categoria === 'moderada') clinClass = 'stats-cell-risk-moderate';
+                else if (prof.ultima_actividad.categoria === 'baja' || prof.ultima_actividad.categoria === 'remision') clinClass = 'stats-cell-risk-ok';
+                clinCell.className = clinClass;
+            } else {
+                clinCell.textContent = '—';
+            }
             row.appendChild(clinCell);
+
+            // Adherencia
+            var adhCell = el('td', '');
+            var adhBadge = el('span', 'stats-badge');
+            if (prof.adherencia_nivel === 'alta') {
+                adhBadge.className = 'stats-badge stats-badge--bajo';
+                adhBadge.textContent = 'Alta';
+            } else if (prof.adherencia_nivel === 'media') {
+                adhBadge.className = 'stats-badge stats-badge--moderado';
+                adhBadge.textContent = 'Media';
+            } else if (prof.adherencia_nivel === 'baja') {
+                adhBadge.className = 'stats-badge stats-badge--alto';
+                adhBadge.textContent = 'Baja';
+            } else {
+                adhBadge.className = 'stats-badge stats-badge--pendiente';
+                adhBadge.textContent = 'No registrada';
+            }
+            adhCell.appendChild(adhBadge);
             row.appendChild(adhCell);
+
+            // EA
+            var eaCell = el('td', '');
+            var eaBadge = el('span', 'stats-badge');
+            if (prof.tiene_eventos_adversos) {
+                eaBadge.className = 'stats-badge stats-badge--alto';
+                eaBadge.textContent = 'Sí';
+            } else {
+                eaBadge.className = 'stats-badge stats-badge--no';
+                eaBadge.textContent = 'No';
+            }
+            eaCell.appendChild(eaBadge);
             row.appendChild(eaCell);
+
+            // Validación
+            var valCell = el('td', '');
+            var valBadge = el('span', 'stats-badge');
+            if (prof.estado_validacion === 'validado') {
+                valBadge.className = 'stats-badge stats-badge--validado';
+                valBadge.textContent = 'Validado';
+            } else if (prof.estado_validacion === 'pendiente') {
+                valBadge.className = 'stats-badge stats-badge--pendiente';
+                valBadge.textContent = 'Pendiente';
+            } else if (prof.estado_validacion === 'en_seguimiento') {
+                valBadge.className = 'stats-badge stats-badge--bajo';
+                valBadge.textContent = 'En seguimiento';
+            } else {
+                valBadge.className = 'stats-badge stats-badge--no';
+                valBadge.textContent = prof.estado_validacion;
+            }
+            valCell.appendChild(valBadge);
             row.appendChild(valCell);
-            row.appendChild(segCell);
+
+            // Última visita
+            var lastVisit = '—';
+            var episodios = p.episodios_asistenciales || [];
+            if (episodios.length > 0) {
+                var sortedEp = episodios.slice().sort(function (a, b) {
+                    return new Date(b.fecha) - new Date(a.fecha);
+                });
+                lastVisit = sortedEp[0].fecha;
+            }
+            row.appendChild(el('td', '', lastVisit));
 
             tbody.appendChild(row);
         });
@@ -1411,26 +1703,32 @@
 
     function renderAll() {
         var noResults = document.getElementById('no-results-message');
-        var summarySection = document.getElementById('summary-cards-section');
+        var kpiSection = document.getElementById('kpi-section');
         var chartsSection = document.getElementById('charts-section');
         var tableSection = document.getElementById('patients-table-section');
+        var cohortSection = document.getElementById('cohort-section');
+
+        renderExecutiveSummary();
+        renderKpiCards();
+        renderCohortPills();
+        renderFilterChips();
+        renderResultCount();
 
         if (filteredPatients.length === 0) {
             if (noResults) noResults.classList.remove('hidden');
-            if (summarySection) summarySection.classList.add('hidden');
+            if (kpiSection) kpiSection.classList.add('hidden');
             if (chartsSection) chartsSection.classList.add('hidden');
             if (tableSection) tableSection.classList.add('hidden');
+            if (cohortSection) cohortSection.classList.add('hidden');
         } else {
             if (noResults) noResults.classList.add('hidden');
-            if (summarySection) summarySection.classList.remove('hidden');
+            if (kpiSection) kpiSection.classList.remove('hidden');
             if (chartsSection) chartsSection.classList.remove('hidden');
             if (tableSection) tableSection.classList.remove('hidden');
-            renderSummaryCards();
+            if (cohortSection) cohortSection.classList.remove('hidden');
             renderCharts();
             renderPatientsTable();
         }
-        renderFilterChips();
-        renderResultCount();
     }
 
     function bindEvents() {
@@ -1445,6 +1743,58 @@
         if (clearBtn) {
             clearBtn.addEventListener('click', function () {
                 clearFilters();
+            });
+        }
+
+        var clearQuickBtn = document.getElementById('clear-quick-filters');
+        if (clearQuickBtn) {
+            clearQuickBtn.addEventListener('click', function () {
+                clearFilters();
+            });
+        }
+
+        var emptyClearBtn = document.getElementById('empty-clear-filters');
+        if (emptyClearBtn) {
+            emptyClearBtn.addEventListener('click', function () {
+                clearFilters();
+            });
+        }
+
+        var quickSelects = document.querySelectorAll('.stats-quick-filter-select');
+        quickSelects.forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                applyFilters();
+            });
+        });
+
+        var accordionToggle = document.getElementById('advancedFiltersToggle');
+        var accordionBody = document.getElementById('advanced-filters-body');
+        if (accordionToggle && accordionBody) {
+            accordionToggle.addEventListener('click', function () {
+                var expanded = accordionToggle.getAttribute('aria-expanded') === 'true';
+                accordionToggle.setAttribute('aria-expanded', String(!expanded));
+                if (expanded) {
+                    accordionBody.classList.add('hidden');
+                } else {
+                    accordionBody.classList.remove('hidden');
+                }
+            });
+        }
+
+        var funnelBtn = document.getElementById('quickFilterFunnel');
+        if (funnelBtn && accordionToggle && accordionBody) {
+            funnelBtn.addEventListener('click', function () {
+                var expanded = accordionToggle.getAttribute('aria-expanded') === 'true';
+                accordionToggle.setAttribute('aria-expanded', 'true');
+                accordionBody.classList.remove('hidden');
+                accordionBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        var exportBtn = document.getElementById('exportReportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function () {
+                alert('Exportar informe: funcionalidad en desarrollo.');
             });
         }
     }
@@ -1465,6 +1815,7 @@
                 });
                 filteredPatients = allPatients.slice();
                 if (statusTime) statusTime.textContent = allPatients.length + ' pacientes (sintéticos)';
+                populateQuickFilters();
                 buildFiltersUI();
                 bindEvents();
                 renderAll();
