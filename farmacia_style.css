@@ -2930,6 +2930,13 @@
     margin-top: 0;
 }
 
+.stats-filter-info-icon {
+    font-size: 0.75rem;
+    color: #94A3B8;
+    cursor: help;
+    margin-left: 4px;
+}
+
 /* --- Filter actions --- */
 .filter-actions {
     display: flex;
@@ -4325,6 +4332,18 @@
     color: #1E293B;
 }
 
+.stats-chart-block-subgroup {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+.stats-chart-block-subgroup:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
 .stats-chart-block-content {
     flex: 1;
     display: flex;
@@ -4409,8 +4428,8 @@
 
 .stats-donut-ring {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
 }
 
@@ -4423,19 +4442,19 @@
     align-items: center;
     justify-content: center;
     background: #FFFFFF;
-    margin: 14px;
+    margin: 20px;
     z-index: 2;
 }
 
 .stats-donut-value {
-    font-size: 1.3rem;
+    font-size: 1.6rem;
     font-weight: 800;
     color: #1E293B;
     line-height: 1;
 }
 
 .stats-donut-unit {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     color: #94A3B8;
     font-weight: 600;
 }
@@ -4444,7 +4463,7 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     margin-top: 4px;
 }
 
@@ -4452,7 +4471,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     color: #475569;
 }
 
@@ -4484,6 +4503,16 @@
 
 .stats-chart-link:hover {
     color: var(--ses-green-dark);
+}
+
+.stats-chart-link:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.stats-chart-link:disabled:hover {
+    color: var(--ses-green);
 }
 
 /* 7. Table */

@@ -773,6 +773,9 @@
             wrap.appendChild(buildRadioGroup('cambio_pauta', cpOpts, ''));
             var h4h = el('h4', 'filter-block__subtitle', 'Intensificación');
             wrap.appendChild(h4h);
+            var infoInt = el('span', 'stats-filter-info-icon', '\u24D8');
+            infoInt.title = 'Aumento de dosis, frecuencia o acortamiento del intervalo';
+            wrap.appendChild(infoInt);
             var intOpts = [
                 { value: 'si', label: 'Sí' },
                 { value: 'no', label: 'No' },
@@ -781,6 +784,9 @@
             wrap.appendChild(buildRadioGroup('intensificacion', intOpts, ''));
             var h4i = el('h4', 'filter-block__subtitle', 'Desintensificación');
             wrap.appendChild(h4i);
+            var infoDes = el('span', 'stats-filter-info-icon', '\u24D8');
+            infoDes.title = 'Reducción de dosis, frecuencia o espaciamiento del intervalo';
+            wrap.appendChild(infoDes);
             var desOpts = [
                 { value: 'si', label: 'Sí' },
                 { value: 'no', label: 'No' },
@@ -1216,32 +1222,54 @@
         if (!container) return;
         clearChildren(container);
 
+        var parts = [];
         var qf = currentQuickFilters;
-        var hasAny = false;
-        var pillData = [];
-        if (qf.servicio) pillData.push({ label: qf.servicio, type: 'servicio' });
-        if (qf.patologia) pillData.push({ label: qf.patologia, type: 'patologia' });
-        if (qf.farmaco) pillData.push({ label: qf.farmaco, type: 'farmaco' });
-        if (qf.estado) pillData.push({ label: qf.estado, type: 'estado' });
-        if (qf.ea) pillData.push({ label: 'EA: ' + qf.ea, type: 'ea' });
-        if (qf.adherencia) pillData.push({ label: 'Adh: ' + qf.adherencia, type: 'adherencia' });
+        if (qf.servicio) parts.push(qf.servicio);
+        if (qf.patologia) parts.push(qf.patologia);
+        if (qf.farmaco) parts.push(qf.farmaco);
+        if (qf.estado) parts.push(qf.estado);
+        if (qf.ea) parts.push('EA: ' + qf.ea);
+        if (qf.adherencia) parts.push('Adherencia: ' + qf.adherencia);
 
-        if (pillData.length === 0) {
-            var pill = el('span', 'stats-cohort-pill', 'Todos los pacientes');
+        var labelMap = {
+            servicio: 'Servicio', patologia: 'Patología', estado_seguimiento: 'Seguimiento',
+            sexo: 'Sexo', estado_tratamiento: 'Tratamiento', actividad_categoria: 'Actividad',
+            prom_categoria: 'PROM', comorbilidad: 'Comorbilidad', gravedad_ea: 'Gravedad EA',
+            adherencia: 'Adherencia', validacion: 'Validación',
+            farmaco_nombre: 'Fármaco', pauta: 'Pauta', via: 'Vía',
+            prom_fuente: 'Fuente PROM', tipo_ea: 'Tipo EA', accion_tomada: 'Acción'
+        };
+        var labelMapRadio = { cambio_pauta: 'Cambio pauta', eventos_adversos: 'EA', edad_grupo: 'Edad', intensificacion: 'Intensificación', desintensificacion: 'Desintensificación' };
+        var labelMapSelect = { principio_activo: 'Fármaco', actividad_tipo: 'Índice', prom_tipo: 'PROM', dosis: 'Dosis' };
+        var labelMapRange = { actividad_valor: 'Valor clín.', prom_valor: 'Valor PROM' };
+
+        for (var key in currentFilters) {
+            if (!currentFilters.hasOwnProperty(key)) continue;
+            var f = currentFilters[key];
+            if (f.type === 'checkbox' && f.values && f.values.length > 0) {
+                f.values.forEach(function (v) {
+                    parts.push((labelMap[key] || key) + ': ' + v);
+                });
+            } else if (f.type === 'radio' && f.value) {
+                parts.push((labelMapRadio[key] || key) + ': ' + f.value);
+            } else if (f.type === 'select' && f.value) {
+                parts.push((labelMapSelect[key] || key) + ': ' + f.value);
+            } else if (f.type === 'range' && (f.min !== null || f.max !== null)) {
+                var rangeParts = [];
+                if (f.min !== null) rangeParts.push('min ' + f.min);
+                if (f.max !== null) rangeParts.push('max ' + f.max);
+                parts.push((labelMapRange[key] || key) + ': ' + rangeParts.join(', '));
+            }
+        }
+
+        if (parts.length === 0) {
+            var pill = el('span', 'stats-cohort-pill', 'Sin filtros activos');
             container.appendChild(pill);
             return;
         }
 
-        pillData.forEach(function (pd) {
-            var pill = el('span', 'stats-cohort-pill', pd.label);
-            var closeIcon = icon('fa-times');
-            closeIcon.addEventListener('click', function () {
-                var sel = document.querySelector('[data-quick-filter="' + pd.type + '"]');
-                if (sel) { sel.value = ''; applyFilters(); }
-            });
-            pill.appendChild(closeIcon);
-            container.appendChild(pill);
-        });
+        var pill = el('span', 'stats-cohort-pill', parts.join(' \u00B7 '));
+        container.appendChild(pill);
     }
 
     function renderFilterChips() {
@@ -1414,20 +1442,26 @@
                 return p._profile ? p._profile.patologias : [];
             }));
             var sub1 = el('div', '');
+            var sub1a = el('div', 'stats-chart-block-subgroup');
             var h4a = el('h4', 'stats-chart-block-subtitle', 'Por servicio');
-            sub1.appendChild(h4a);
+            sub1a.appendChild(h4a);
             var svcContainer = el('div', '');
             renderMiniBarChart(svcContainer, svcData);
-            sub1.appendChild(svcContainer);
+            sub1a.appendChild(svcContainer);
+            sub1.appendChild(sub1a);
 
+            var sub1b = el('div', 'stats-chart-block-subgroup');
             var h4b = el('h4', 'stats-chart-block-subtitle', 'Por patología');
-            sub1.appendChild(h4b);
+            sub1b.appendChild(h4b);
             var patContainer = el('div', '');
             renderMiniBarChart(patContainer, patData);
-            sub1.appendChild(patContainer);
+            sub1b.appendChild(patContainer);
+            sub1.appendChild(sub1b);
 
             var link1 = el('button', 'stats-chart-link', 'Ver detalle');
             link1.type = 'button';
+            link1.disabled = true;
+            link1.title = 'Próximamente';
             sub1.appendChild(link1);
             b1.appendChild(sub1);
         }
@@ -1446,13 +1480,31 @@
             });
             var paData = sortAndTake(paMap, 10);
             var sub2 = el('div', '');
+            var sub2group = el('div', 'stats-chart-block-subgroup');
             var h4c = el('h4', 'stats-chart-block-subtitle', 'Principios activos (tratamiento activo)');
-            sub2.appendChild(h4c);
+            sub2group.appendChild(h4c);
             var paContainer = el('div', '');
             renderMiniBarChart(paContainer, paData);
-            sub2.appendChild(paContainer);
+            sub2group.appendChild(paContainer);
+
+            var h4opt = el('h4', 'stats-chart-block-subtitle', 'Optimización farmacoterapéutica');
+            sub2group.appendChild(h4opt);
+            var optContainer = el('div', '');
+            var optData = [
+                { label: 'Sin cambios', value: f.filter(function (p) { var prof = p._profile; return prof && !prof.tiene_cambio_pauta && prof.intensificacion === 'no_determinable' && prof.desintensificacion === 'no_determinable'; }).length },
+                { label: 'Intensificación', value: f.filter(function (p) { var prof = p._profile; return prof && prof.intensificacion === 'si'; }).length },
+                { label: 'Desintensificación', value: f.filter(function (p) { var prof = p._profile; return prof && prof.desintensificacion === 'si'; }).length },
+                { label: 'Cambio de tratamiento', value: f.filter(function (p) { var prof = p._profile; return prof && prof.tiene_cambio_pauta === true; }).length },
+                { label: 'Suspensión', value: f.filter(function (p) { var prof = p._profile; return prof && prof.estados_tratamiento.indexOf('suspendido') !== -1; }).length }
+            ];
+            renderMiniBarChart(optContainer, optData);
+            sub2group.appendChild(optContainer);
+            sub2.appendChild(sub2group);
+
             var link2 = el('button', 'stats-chart-link', 'Ver detalle');
             link2.type = 'button';
+            link2.disabled = true;
+            link2.title = 'Próximamente';
             sub2.appendChild(link2);
             b2.appendChild(sub2);
         }
