@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260607-postdemo-e">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260608-stats-d">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260608-stats-e">
 </head>
 <body>
     <div class="hub-shell">
@@ -118,25 +118,7 @@
                 <div class="stats-kpi-grid" id="kpi-grid"></div>
             </section>
 
-            <!-- 3. Filtros poblacionales avanzados (accordion colapsado por defecto) -->
-            <section class="stats-accordion-section" id="advanced-filters-section">
-                <button type="button" class="stats-accordion-header" id="advancedFiltersToggle" aria-expanded="false" aria-controls="advanced-filters-body">
-                    <span class="stats-accordion-title">
-                        <i class="fas fa-filter"></i> Filtros poblacionales
-                    </span>
-                    <span class="stats-accordion-subtitle">Filtros avanzados — Use estos filtros para análisis más específicos.</span>
-                    <i class="fas fa-chevron-down stats-accordion-chevron" aria-hidden="true"></i>
-                </button>
-                <div class="stats-accordion-body hidden" id="advanced-filters-body">
-                    <div id="filters-container" class="filters-grid"></div>
-                    <div class="filter-actions">
-                        <button id="apply-filters" class="btn btn-primary"><i class="fas fa-search"></i> Aplicar filtros</button>
-                        <button id="clear-filters" class="btn btn-outline"><i class="fas fa-eraser"></i> Limpiar filtros</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 4. Filtros rápidos (siempre visibles, dropdowns compactos) -->
+            <!-- 3. Filtros rápidos (siempre visibles, dropdowns compactos) -->
             <section class="stats-quick-filters-section" id="quick-filters-section">
                 <div class="stats-quick-filters-row">
                     <div class="stats-quick-filter-group">
@@ -180,13 +162,10 @@
                             <option value="baja">Baja</option>
                         </select>
                     </div>
-                    <button type="button" class="stats-quick-filter-funnel" id="quickFilterFunnel" aria-label="Más filtros">
-                        <i class="fas fa-filter"></i>
-                    </button>
                 </div>
             </section>
 
-            <!-- 5. Chips de cohorte actual / filtros activos -->
+            <!-- 4. Chips de cohorte actual / filtros activos -->
             <section class="stats-cohort-section" id="cohort-section">
                 <div class="stats-cohort-header">
                     <div class="stats-cohort-label">
@@ -195,7 +174,6 @@
                     </div>
                     <button type="button" class="btn btn-sm btn-outline" id="clear-quick-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
                 </div>
-                <div id="active-filters-chips" class="chips-container"></div>
                 <div id="filter-result-count" class="filter-result-count"></div>
             </section>
 
@@ -258,6 +236,6 @@
         </main>
     </div>
     <script src="scripts/farmacia_common.js?v=20260607-postdemo-e"></script>
-    <script src="scripts/farmacia_estadisticas.js?v=20260608-stats-c"></script>
+    <script src="scripts/farmacia_estadisticas.js?v=20260608-stats-e"></script>
 </body>
 </html>

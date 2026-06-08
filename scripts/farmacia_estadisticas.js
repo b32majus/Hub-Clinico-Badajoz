@@ -495,432 +495,18 @@
         }
     }
 
-    function buildFilterBlock(title, iconClass, contentEl) {
-        var block = el('div', 'filter-block');
-        var header = el('div', 'filter-block__header');
-        var ic = icon(iconClass);
-        var h3 = el('h3', 'filter-block__title', title);
-        header.appendChild(ic);
-        header.appendChild(h3);
-        block.appendChild(header);
-        block.appendChild(contentEl);
-        return block;
-    }
 
-    function buildCheckboxGroup(name, options, selectedValues) {
-        var container = el('div', 'checklist-visual');
-        options.forEach(function (opt) {
-            var label = el('label', 'checklist-chip');
-            var input = document.createElement('input');
-            input.type = 'checkbox';
-            input.name = name;
-            input.value = opt.value;
-            input.dataset.filterGroup = name;
-            if (selectedValues && selectedValues.indexOf(opt.value) !== -1) {
-                input.checked = true;
-            }
-            label.appendChild(input);
-            label.appendChild(document.createTextNode(' ' + opt.label));
-            container.appendChild(label);
-        });
-        return container;
-    }
 
-    function buildRadioGroup(name, options, selectedValue) {
-        var container = el('div', 'checklist-visual');
-        options.forEach(function (opt) {
-            var label = el('label', 'checklist-chip');
-            var input = document.createElement('input');
-            input.type = 'radio';
-            input.name = name;
-            input.value = opt.value;
-            input.dataset.filterGroup = name;
-            if (selectedValue === opt.value) {
-                input.checked = true;
-            }
-            label.appendChild(input);
-            label.appendChild(document.createTextNode(' ' + opt.label));
-            container.appendChild(label);
-        });
-        return container;
-    }
 
-    function buildSelectGroup(name, options, selectedValue) {
-        var select = document.createElement('select');
-        select.className = 'form-select';
-        select.name = name;
-        select.dataset.filterGroup = name;
-        var placeholder = el('option', '');
-        placeholder.value = '';
-        placeholder.textContent = 'Seleccionar...';
-        select.appendChild(placeholder);
-        options.forEach(function (opt) {
-            var o = el('option', '');
-            o.value = opt.value;
-            o.textContent = opt.label;
-            if (selectedValue === opt.value) o.selected = true;
-            select.appendChild(o);
-        });
-        return select;
-    }
 
-    function buildRangeGroup(name, minLabel, maxLabel) {
-        var container = el('div', 'filter-range-row');
-        var minWrap = el('div', 'filter-range-item');
-        var minLbl = el('label', 'form-label', minLabel);
-        var minInput = document.createElement('input');
-        minInput.type = 'number';
-        minInput.className = 'form-control filter-range-input';
-        minInput.name = name + '_min';
-        minInput.dataset.filterGroup = name;
-        minInput.placeholder = 'Min';
-        minInput.step = 'any';
-        minWrap.appendChild(minLbl);
-        minWrap.appendChild(minInput);
 
-        var maxWrap = el('div', 'filter-range-item');
-        var maxLbl = el('label', 'form-label', maxLabel);
-        var maxInput = document.createElement('input');
-        maxInput.type = 'number';
-        maxInput.className = 'form-control filter-range-input';
-        maxInput.name = name + '_max';
-        maxInput.dataset.filterGroup = name;
-        maxInput.placeholder = 'Max';
-        maxInput.step = 'any';
-        maxWrap.appendChild(maxLbl);
-        maxWrap.appendChild(maxInput);
-
-        container.appendChild(minWrap);
-        container.appendChild(maxWrap);
-        return container;
-    }
-
-    function buildAgeGroupFilter() {
-        var groups = [
-            { value: 'lt30', label: '< 30' },
-            { value: '30-44', label: '30-44' },
-            { value: '45-64', label: '45-64' },
-            { value: 'gte65', label: '>= 65' }
-        ];
-        return buildRadioGroup('edad_grupo', groups, '');
-    }
-
-    function deriveFilterOptions() {
-        var options = {
-            servicios: [],
-            patologias: [],
-            estados_seguimiento: [],
-            sexos: [],
-            principios_activos: [],
-            estados_tratamiento: ['activo', 'suspendido'],
-            prom_tipos: [],
-            actividad_tipos: [],
-            comorbilidades: [],
-            adherencia_niveles: ['alta', 'media', 'baja', 'no_registrada'],
-            validacion_estados: ['pendiente', 'validado', 'en_seguimiento', 'denegado'],
-            farmacos_nombres: [],
-            dosis: [],
-            pautas: [],
-            vias: [],
-            prom_fuentes: [],
-            tipos_ea: [],
-            acciones_tomadas: []
-        };
-
-        var svcSet = {};
-        var patSet = {};
-        var esSet = {};
-        var sexSet = {};
-        var paSet = {};
-        var promSet = {};
-        var actSet = {};
-        var comSet = {};
-        var fnSet = {};
-        var dosisSet = {};
-        var pautaSet = {};
-        var viaSet = {};
-        var pfSet = {};
-        var teaSet = {};
-        var atSet = {};
-
-        allPatients.forEach(function (p) {
-            var prof = p._profile;
-            if (!prof) return;
-            prof.servicios_origen.forEach(function (s) { svcSet[s] = true; });
-            prof.patologias.forEach(function (pt) { patSet[pt] = true; });
-            esSet[prof.estado_seguimiento] = true;
-            sexSet[prof.sexo] = true;
-            prof.principios_activos.forEach(function (pa) { paSet[pa] = true; });
-            prof.prom_tipos.forEach(function (pt) { promSet[pt] = true; });
-            prof.actividad_tipos.forEach(function (at) { actSet[at] = true; });
-            prof.comorbilidades.forEach(function (c) { comSet[c] = true; });
-            prof.farmacos_nombres.forEach(function (fn) { fnSet[fn] = true; });
-            prof.dosis.forEach(function (d) { dosisSet[d] = true; });
-            prof.pautas.forEach(function (pa) { pautaSet[pa] = true; });
-            prof.vias.forEach(function (v) { viaSet[v] = true; });
-            prof.prom_fuentes.forEach(function (pf) { pfSet[pf] = true; });
-            prof.tipos_eventos_adversos.forEach(function (t) { teaSet[t] = true; });
-            prof.acciones_tomadas.forEach(function (a) { atSet[a] = true; });
-        });
-
-        options.servicios = Object.keys(svcSet).sort().map(function (s) { return { value: s, label: s }; });
-        options.patologias = Object.keys(patSet).sort().map(function (p) { return { value: p, label: p }; });
-        options.estados_seguimiento = Object.keys(esSet).sort().map(function (e) {
-            var labels = { en_seguimiento: 'En seguimiento', pendiente: 'Pendiente', alta: 'Alta', validado: 'Validado' };
-            return { value: e, label: labels[e] || e };
-        });
-        options.sexos = Object.keys(sexSet).sort().map(function (s) { return { value: s, label: s }; });
-        options.principios_activos = Object.keys(paSet).sort().map(function (p) { return { value: p, label: p }; });
-        options.prom_tipos = Object.keys(promSet).sort().map(function (p) { return { value: p, label: p }; });
-        options.actividad_tipos = Object.keys(actSet).sort().map(function (a) { return { value: a, label: a }; });
-        options.comorbilidades = Object.keys(comSet).sort().map(function (c) { return { value: c, label: c }; });
-        options.farmacos_nombres = Object.keys(fnSet).sort().map(function (f) { return { value: f, label: f }; });
-        options.dosis = Object.keys(dosisSet).sort().map(function (d) { return { value: d, label: d }; });
-        options.pautas = Object.keys(pautaSet).sort().map(function (p) { return { value: p, label: p }; });
-        options.vias = Object.keys(viaSet).sort().map(function (v) { return { value: v, label: v }; });
-        options.prom_fuentes = Object.keys(pfSet).sort().map(function (f) { return { value: f, label: f }; });
-        options.tipos_ea = Object.keys(teaSet).sort().map(function (t) { return { value: t, label: t }; });
-        options.acciones_tomadas = Object.keys(atSet).sort().map(function (a) { return { value: a, label: a }; });
-
-        return options;
-    }
-
-    function buildFiltersUI() {
-        var container = document.getElementById('filters-container');
-        if (!container) return;
-        clearChildren(container);
-        var opts = deriveFilterOptions();
-
-        var col1 = el('div', 'filters-column');
-        var col2 = el('div', 'filters-column');
-        var col3 = el('div', 'filters-column');
-
-        col1.appendChild(buildFilterBlock('Identidad / Origen', 'fa-hospital-user', (function () {
-            var wrap = el('div', '');
-            var h4a = el('h4', 'filter-block__subtitle', 'Servicio de origen');
-            wrap.appendChild(h4a);
-            wrap.appendChild(buildCheckboxGroup('servicio', opts.servicios, []));
-            var h4b = el('h4', 'filter-block__subtitle', 'Patología');
-            wrap.appendChild(h4b);
-            wrap.appendChild(buildCheckboxGroup('patologia', opts.patologias, []));
-            var h4c = el('h4', 'filter-block__subtitle', 'Estado seguimiento');
-            wrap.appendChild(h4c);
-            wrap.appendChild(buildCheckboxGroup('estado_seguimiento', opts.estados_seguimiento, []));
-            return wrap;
-        })()));
-
-        col1.appendChild(buildFilterBlock('Demográfico', 'fa-users', (function () {
-            var wrap = el('div', '');
-            var h4a = el('h4', 'filter-block__subtitle', 'Sexo');
-            wrap.appendChild(h4a);
-            wrap.appendChild(buildCheckboxGroup('sexo', opts.sexos, []));
-            var h4b = el('h4', 'filter-block__subtitle', 'Grupo de edad');
-            wrap.appendChild(h4b);
-            wrap.appendChild(buildAgeGroupFilter());
-            return wrap;
-        })()));
-
-        col2.appendChild(buildFilterBlock('Clínico', 'fa-heartbeat', (function () {
-            var wrap = el('div', '');
-            var h4a = el('h4', 'filter-block__subtitle', 'Variable clínica');
-            wrap.appendChild(h4a);
-            wrap.appendChild(buildSelectGroup('actividad_tipo', opts.actividad_tipos, ''));
-            var h4b = el('h4', 'filter-block__subtitle', 'Categoría clínica');
-            wrap.appendChild(h4b);
-            var catOpts = [
-                { value: 'remision', label: 'Remisión' },
-                { value: 'baja', label: 'Baja actividad' },
-                { value: 'moderada', label: 'Moderada' },
-                { value: 'alta', label: 'Alta' }
-            ];
-            wrap.appendChild(buildCheckboxGroup('actividad_categoria', catOpts, []));
-            var h4c = el('h4', 'filter-block__subtitle', 'Rango valor');
-            wrap.appendChild(h4c);
-            wrap.appendChild(buildRangeGroup('actividad_valor', 'Valor mínimo', 'Valor máximo'));
-            return wrap;
-        })()));
-
-        col2.appendChild(buildFilterBlock('Tratamiento', 'fa-pills', (function () {
-            var wrap = el('div', '');
-            var h4a = el('h4', 'filter-block__subtitle', 'Principio activo');
-            wrap.appendChild(h4a);
-            wrap.appendChild(buildSelectGroup('principio_activo', opts.principios_activos, ''));
-            var h4b = el('h4', 'filter-block__subtitle', 'Nombre comercial / fármaco');
-            wrap.appendChild(h4b);
-            wrap.appendChild(buildCheckboxGroup('farmaco_nombre', opts.farmacos_nombres, []));
-            var h4c = el('h4', 'filter-block__subtitle', 'Estado tratamiento');
-            wrap.appendChild(h4c);
-            var etOpts = [
-                { value: 'activo', label: 'Activo' },
-                { value: 'suspendido', label: 'Suspendido' }
-            ];
-            wrap.appendChild(buildCheckboxGroup('estado_tratamiento', etOpts, []));
-            var h4d = el('h4', 'filter-block__subtitle', 'Dosis');
-            wrap.appendChild(h4d);
-            wrap.appendChild(buildSelectGroup('dosis', opts.dosis, ''));
-            var h4e = el('h4', 'filter-block__subtitle', 'Pauta / intervalo');
-            wrap.appendChild(h4e);
-            wrap.appendChild(buildCheckboxGroup('pauta', opts.pautas, []));
-            var h4f = el('h4', 'filter-block__subtitle', 'Vía');
-            wrap.appendChild(h4f);
-            wrap.appendChild(buildCheckboxGroup('via', opts.vias, []));
-            var h4g = el('h4', 'filter-block__subtitle', 'Cambio de pauta');
-            wrap.appendChild(h4g);
-            var cpOpts = [
-                { value: 'si', label: 'Sí' },
-                { value: 'no', label: 'No' }
-            ];
-            wrap.appendChild(buildRadioGroup('cambio_pauta', cpOpts, ''));
-            var h4h = el('h4', 'filter-block__subtitle', 'Intensificación');
-            wrap.appendChild(h4h);
-            var infoInt = el('span', 'stats-filter-info-icon', '\u24D8');
-            infoInt.title = 'Aumento de dosis, frecuencia o acortamiento del intervalo';
-            wrap.appendChild(infoInt);
-            var intOpts = [
-                { value: 'si', label: 'Sí' },
-                { value: 'no', label: 'No' },
-                { value: 'no_determinable', label: 'No determinable' }
-            ];
-            wrap.appendChild(buildRadioGroup('intensificacion', intOpts, ''));
-            var h4i = el('h4', 'filter-block__subtitle', 'Desintensificación');
-            wrap.appendChild(h4i);
-            var infoDes = el('span', 'stats-filter-info-icon', '\u24D8');
-            infoDes.title = 'Reducción de dosis, frecuencia o espaciamiento del intervalo';
-            wrap.appendChild(infoDes);
-            var desOpts = [
-                { value: 'si', label: 'Sí' },
-                { value: 'no', label: 'No' },
-                { value: 'no_determinable', label: 'No determinable' }
-            ];
-            wrap.appendChild(buildRadioGroup('desintensificacion', desOpts, ''));
-            return wrap;
-        })()));
-
-        col3.appendChild(buildFilterBlock('PROMs', 'fa-file-medical-alt', (function () {
-            var wrap = el('div', '');
-            var h4a = el('h4', 'filter-block__subtitle', 'Tipo PROM');
-            wrap.appendChild(h4a);
-            wrap.appendChild(buildSelectGroup('prom_tipo', opts.prom_tipos, ''));
-            var h4b = el('h4', 'filter-block__subtitle', 'Categoría PROM');
-            wrap.appendChild(h4b);
-            var promCatOpts = [
-                { value: 'bajo', label: 'Bajo' },
-                { value: 'moderado', label: 'Moderado' },
-                { value: 'alto', label: 'Alto' }
-            ];
-            wrap.appendChild(buildCheckboxGroup('prom_categoria', promCatOpts, []));
-            var h4c = el('h4', 'filter-block__subtitle', 'Rango valor PROM');
-            wrap.appendChild(h4c);
-            wrap.appendChild(buildRangeGroup('prom_valor', 'Valor mínimo', 'Valor máximo'));
-            var h4d = el('h4', 'filter-block__subtitle', 'Fuente del PROM');
-            wrap.appendChild(h4d);
-            wrap.appendChild(buildCheckboxGroup('prom_fuente', opts.prom_fuentes, []));
-            return wrap;
-        })()));
-
-        col3.appendChild(buildFilterBlock('Comorbilidades', 'fa-notes-medical', (function () {
-            var wrap = el('div', '');
-            wrap.appendChild(buildCheckboxGroup('comorbilidad', opts.comorbilidades, []));
-            return wrap;
-        })()));
-
-        var col4 = el('div', 'filters-column');
-
-        col4.appendChild(buildFilterBlock('Seguridad', 'fa-shield-alt', (function () {
-            var wrap = el('div', '');
-            var h4a = el('h4', 'filter-block__subtitle', 'Efectos adversos');
-            wrap.appendChild(h4a);
-            var eaOpts = [
-                { value: 'si', label: 'Sí' },
-                { value: 'no', label: 'No' }
-            ];
-            wrap.appendChild(buildRadioGroup('eventos_adversos', eaOpts, ''));
-            var h4b = el('h4', 'filter-block__subtitle', 'Gravedad');
-            wrap.appendChild(h4b);
-            var gravOpts = [
-                { value: 'leve', label: 'Leve' },
-                { value: 'moderado', label: 'Moderado' },
-                { value: 'grave', label: 'Grave' }
-            ];
-            wrap.appendChild(buildCheckboxGroup('gravedad_ea', gravOpts, []));
-            var h4c = el('h4', 'filter-block__subtitle', 'Tipo de efecto adverso');
-            wrap.appendChild(h4c);
-            wrap.appendChild(buildCheckboxGroup('tipo_ea', opts.tipos_ea, []));
-            var h4d = el('h4', 'filter-block__subtitle', 'Acción tomada');
-            wrap.appendChild(h4d);
-            wrap.appendChild(buildCheckboxGroup('accion_tomada', opts.acciones_tomadas, []));
-            return wrap;
-        })()));
-
-        col4.appendChild(buildFilterBlock('Adherencia', 'fa-hand-holding-heart', (function () {
-            var wrap = el('div', '');
-            var adhOpts = [
-                { value: 'alta', label: 'Alta' },
-                { value: 'media', label: 'Media' },
-                { value: 'baja', label: 'Baja' },
-                { value: 'no_registrada', label: 'No registrada' }
-            ];
-            wrap.appendChild(buildCheckboxGroup('adherencia', adhOpts, []));
-            return wrap;
-        })()));
-
-        col4.appendChild(buildFilterBlock('Validación Farmacia', 'fa-check-double', (function () {
-            var wrap = el('div', '');
-            var valOpts = [
-                { value: 'pendiente', label: 'Pendiente' },
-                { value: 'validado', label: 'Validado' },
-                { value: 'en_seguimiento', label: 'En seguimiento' },
-                { value: 'denegado', label: 'Denegado' }
-            ];
-            wrap.appendChild(buildCheckboxGroup('validacion', valOpts, []));
-            return wrap;
-        })()));
-
-        container.appendChild(col1);
-        container.appendChild(col2);
-        container.appendChild(col3);
-        container.appendChild(col4);
-    }
-
-    function readFilters() {
-        var filters = {};
-        var inputs = document.querySelectorAll('#advanced-filters-body input, #advanced-filters-body select');
-        inputs.forEach(function (input) {
-            var group = input.dataset.filterGroup;
-            if (!group) return;
-            if (!filters[group]) filters[group] = { type: input.type === 'checkbox' ? 'checkbox' : (input.type === 'radio' ? 'radio' : input.tagName === 'SELECT' ? 'select' : 'range') };
-            if (input.type === 'checkbox') {
-                if (!filters[group].values) filters[group].values = [];
-                if (input.checked) filters[group].values.push(input.value);
-            } else if (input.type === 'radio') {
-                if (input.checked) filters[group].value = input.value;
-            } else if (input.tagName === 'SELECT') {
-                filters[group].value = input.value;
-            } else if (input.type === 'number') {
-                if (input.name.indexOf('_min') !== -1) {
-                    filters[group].min = input.value === "" ? null : parseFloat(input.value);
-                } else if (input.name.indexOf('_max') !== -1) {
-                    filters[group].max = input.value === "" ? null : parseFloat(input.value);
-                }
-            }
-        });
-        return filters;
-    }
 
     function applyFilters() {
-        var advFilters = readFilters();
         var qf = readQuickFilters();
-        currentFilters = advFilters;
+        currentFilters = {};
         currentQuickFilters = qf;
 
         var hasActiveFilter = false;
-        Object.keys(advFilters).forEach(function (key) {
-            var f = advFilters[key];
-            if (f.type === 'checkbox' && f.values && f.values.length > 0) hasActiveFilter = true;
-            if (f.type === 'radio' && f.value) hasActiveFilter = true;
-            if (f.type === 'select' && f.value) hasActiveFilter = true;
-            if (f.type === 'range' && (f.min !== null || f.max !== null)) hasActiveFilter = true;
-        });
         Object.keys(qf).forEach(function (key) {
             if (qf[key]) hasActiveFilter = true;
         });
@@ -929,7 +515,7 @@
             filteredPatients = allPatients.slice();
         } else {
             filteredPatients = allPatients.filter(function (p) {
-                return matchesAllFilters(p._profile, advFilters) && matchesQuickFilters(p._profile, qf);
+                return matchesQuickFilters(p._profile, qf);
             });
         }
 
@@ -937,132 +523,48 @@
         renderAll();
     }
 
-    function matchesAllFilters(prof, filters) {
-        for (var key in filters) {
-            if (!filters.hasOwnProperty(key)) continue;
-            var f = filters[key];
-            if (f.type === 'checkbox') {
-                if (f.values && f.values.length > 0) {
-                    if (!checkboxFilterMatches(prof, key, f.values)) return false;
-                }
-            } else if (f.type === 'radio') {
-                if (f.value) {
-                    if (!radioFilterMatches(prof, key, f.value)) return false;
-                }
-            } else if (f.type === 'select') {
-                if (f.value) {
-                    if (!selectFilterMatches(prof, key, f.value)) return false;
-                }
-            } else if (f.type === 'range') {
-                if (f.min !== null || f.max !== null) {
-                    if (!rangeFilterMatches(prof, key, f.min, f.max)) return false;
-                }
-            }
-        }
-        return true;
-    }
 
-    function checkboxFilterMatches(prof, group, selectedValues) {
-        if (!prof) return false;
-        var profValues;
-        switch (group) {
-            case 'servicio': profValues = prof.servicios_origen; break;
-            case 'patologia': profValues = prof.patologias; break;
-            case 'estado_seguimiento': return selectedValues.indexOf(prof.estado_seguimiento) !== -1;
-            case 'sexo': return selectedValues.indexOf(prof.sexo) !== -1;
-            case 'estado_tratamiento': profValues = prof.estados_tratamiento; break;
-            case 'actividad_categoria': return prof.ultima_actividad && selectedValues.indexOf(prof.ultima_actividad.categoria) !== -1;
-            case 'prom_categoria': return prof.ultimo_prom && selectedValues.indexOf(prof.ultimo_prom.categoria) !== -1;
-            case 'comorbilidad': profValues = prof.comorbilidades; break;
-            case 'gravedad_ea': profValues = prof.gravedad_eventos; break;
-            case 'adherencia': return selectedValues.indexOf(prof.adherencia_nivel) !== -1;
-            case 'validacion': return selectedValues.indexOf(prof.estado_validacion) !== -1;
-            case 'farmaco_nombre': profValues = prof.farmacos_nombres; break;
-            case 'pauta': profValues = prof.pautas; break;
-            case 'via': profValues = prof.vias; break;
-            case 'prom_fuente': profValues = prof.prom_fuentes; break;
-            case 'tipo_ea': profValues = prof.tipos_eventos_adversos; break;
-            case 'accion_tomada': profValues = prof.acciones_tomadas; break;
-            default: return true;
-        }
-        if (!profValues || profValues.length === 0) return false;
-        for (var i = 0; i < selectedValues.length; i++) {
-            if (profValues.indexOf(selectedValues[i]) !== -1) return true;
-        }
-        return false;
-    }
-
-    function radioFilterMatches(prof, group, value) {
-        if (!prof) return false;
-        switch (group) {
-            case 'cambio_pauta':
-                if (value === 'si') return prof.tiene_cambio_pauta === true;
-                if (value === 'no') return prof.tiene_cambio_pauta === false;
-                return true;
-            case 'eventos_adversos':
-                if (value === 'si') return prof.tiene_eventos_adversos === true;
-                if (value === 'no') return prof.tiene_eventos_adversos === false;
-                return true;
-            case 'edad_grupo':
-                if (value === 'lt30') return prof.edad < 30;
-                if (value === '30-44') return prof.edad >= 30 && prof.edad <= 44;
-                if (value === '45-64') return prof.edad >= 45 && prof.edad <= 64;
-                if (value === 'gte65') return prof.edad >= 65;
-                return true;
-            case 'intensificacion':
-                return prof.intensificacion === value;
-            case 'desintensificacion':
-                return prof.desintensificacion === value;
-            default: return true;
-        }
-    }
-
-    function selectFilterMatches(prof, group, value) {
-        if (!prof) return false;
-        switch (group) {
-            case 'principio_activo':
-                return prof.principios_activos.indexOf(value) !== -1;
-            case 'actividad_tipo':
-                return prof.actividad_tipos.indexOf(value) !== -1;
-            case 'prom_tipo':
-                return prof.prom_tipos.indexOf(value) !== -1;
-            case 'dosis':
-                return prof.dosis.indexOf(value) !== -1;
-            default: return true;
-        }
-    }
-
-    function rangeFilterMatches(prof, group, min, max) {
-        if (!prof) return false;
-        var val = null;
-        if (group === 'actividad_valor' && prof.ultima_actividad) {
-            val = prof.ultima_actividad.valor;
-        } else if (group === 'prom_valor' && prof.ultimo_prom) {
-            val = prof.ultimo_prom.valor;
-        }
-        if (val === null || isNaN(val)) return false;
-        if (min !== null && val < min) return false;
-        if (max !== null && val > max) return false;
-        return true;
-    }
 
     function clearFilters() {
-        var inputs = document.querySelectorAll('#advanced-filters-body input, #advanced-filters-body select');
-        inputs.forEach(function (input) {
-            if (input.type === 'checkbox' || input.type === 'radio') {
-                input.checked = false;
-            } else if (input.tagName === 'SELECT') {
-                input.selectedIndex = 0;
-            } else if (input.type === 'number') {
-                input.value = '';
-            }
-        });
-        clearQuickFilters();
+        var quickSelects = document.querySelectorAll('.stats-quick-filter-select');
+        quickSelects.forEach(function (sel) { sel.value = ''; });
         currentFilters = {};
         currentQuickFilters = {};
-        filteredPatients = allPatients.slice();
-        currentPage = 1;
-        renderAll();
+        applyFilters();
+    }
+
+    function deriveFilterOptions() {
+        var options = {
+            servicios: [], patologias: [], estados_seguimiento: [], sexos: [],
+            principios_activos: [], farmacos_nombres: [], dosis: [], pautas: [], vias: []
+        };
+        var svcSet = {}, patSet = {}, esSet = {}, sexSet = {}, paSet = {}, fnSet = {}, dosisSet = {}, pautaSet = {}, viaSet = {};
+        allPatients.forEach(function (p) {
+            var prof = p._profile;
+            if (!prof) return;
+            prof.servicios_origen.forEach(function (s) { svcSet[s] = true; });
+            prof.patologias.forEach(function (pt) { patSet[pt] = true; });
+            esSet[prof.estado_seguimiento] = true;
+            sexSet[prof.sexo] = true;
+            prof.principios_activos.forEach(function (pa) { paSet[pa] = true; });
+            prof.farmacos_nombres.forEach(function (fn) { fnSet[fn] = true; });
+            prof.dosis.forEach(function (d) { dosisSet[d] = true; });
+            prof.pautas.forEach(function (pa) { pautaSet[pa] = true; });
+            prof.vias.forEach(function (v) { viaSet[v] = true; });
+        });
+        options.servicios = Object.keys(svcSet).sort().map(function (s) { return { value: s, label: s }; });
+        options.patologias = Object.keys(patSet).sort().map(function (p) { return { value: p, label: p }; });
+        options.estados_seguimiento = Object.keys(esSet).sort().map(function (e) {
+            var labels = { en_seguimiento: 'En seguimiento', pendiente: 'Pendiente', alta: 'Alta', validado: 'Validado' };
+            return { value: e, label: labels[e] || e };
+        });
+        options.sexos = Object.keys(sexSet).sort().map(function (s) { return { value: s, label: s }; });
+        options.principios_activos = Object.keys(paSet).sort().map(function (p) { return { value: p, label: p }; });
+        options.farmacos_nombres = Object.keys(fnSet).sort().map(function (f) { return { value: f, label: f }; });
+        options.dosis = Object.keys(dosisSet).sort().map(function (d) { return { value: d, label: d }; });
+        options.pautas = Object.keys(pautaSet).sort().map(function (p) { return { value: p, label: p }; });
+        options.vias = Object.keys(viaSet).sort().map(function (v) { return { value: v, label: v }; });
+        return options;
     }
 
     function populateQuickFilters() {
@@ -1263,8 +765,6 @@
         }
 
         if (parts.length === 0) {
-            var pill = el('span', 'stats-cohort-pill', 'Sin filtros activos');
-            container.appendChild(pill);
             return;
         }
 
@@ -1272,59 +772,7 @@
         container.appendChild(pill);
     }
 
-    function renderFilterChips() {
-        var container = document.getElementById('active-filters-chips');
-        if (!container) return;
-        clearChildren(container);
 
-        var hasActive = false;
-        for (var key in currentFilters) {
-            if (!currentFilters.hasOwnProperty(key)) continue;
-            var f = currentFilters[key];
-            if (f.type === 'checkbox' && f.values && f.values.length > 0) {
-                f.values.forEach(function (v) {
-                    var chip = el('span', 'filter-chip');
-                    var labelMap = {
-                        servicio: 'Servicio', patologia: 'Patología', estado_seguimiento: 'Seguimiento',
-                        sexo: 'Sexo', estado_tratamiento: 'Tratamiento', actividad_categoria: 'Actividad',
-                        prom_categoria: 'PROM', comorbilidad: 'Comorbilidad', gravedad_ea: 'Gravedad EA',
-                        adherencia: 'Adherencia', validacion: 'Validación',
-                        farmaco_nombre: 'Fármaco', pauta: 'Pauta', via: 'Vía',
-                        prom_fuente: 'Fuente PROM', tipo_ea: 'Tipo EA', accion_tomada: 'Acción'
-                    };
-                    chip.textContent = (labelMap[key] || key) + ': ' + v;
-                    container.appendChild(chip);
-                    hasActive = true;
-                });
-            } else if (f.type === 'radio' && f.value) {
-                var chip = el('span', 'filter-chip');
-                var labelMap = { cambio_pauta: 'Cambio pauta', eventos_adversos: 'EA', edad_grupo: 'Edad', intensificacion: 'Intensificación', desintensificacion: 'Desintensificación' };
-                chip.textContent = (labelMap[key] || key) + ': ' + f.value;
-                container.appendChild(chip);
-                hasActive = true;
-            } else if (f.type === 'select' && f.value) {
-                var chip2 = el('span', 'filter-chip');
-                var labelMap2 = { principio_activo: 'Fármaco', actividad_tipo: 'Índice', prom_tipo: 'PROM', dosis: 'Dosis' };
-                chip2.textContent = (labelMap2[key] || key) + ': ' + f.value;
-                container.appendChild(chip2);
-                hasActive = true;
-            } else if (f.type === 'range' && (f.min !== null || f.max !== null)) {
-                var chip3 = el('span', 'filter-chip');
-                var labelMap3 = { actividad_valor: 'Valor clín.', prom_valor: 'Valor PROM' };
-                var parts = [];
-                if (f.min !== null) parts.push('min ' + f.min);
-                if (f.max !== null) parts.push('max ' + f.max);
-                chip3.textContent = (labelMap3[key] || key) + ': ' + parts.join(', ');
-                container.appendChild(chip3);
-                hasActive = true;
-            }
-        }
-
-        if (!hasActive) {
-            var empty = el('span', 'filter-chip filter-chip--empty', 'Sin filtros activos');
-            container.appendChild(empty);
-        }
-    }
 
     function renderResultCount() {
         var el = document.getElementById('filter-result-count');
@@ -1442,7 +890,7 @@
             var patData = sortAndTake(countByLabel(f, function (p) {
                 return p._profile ? p._profile.patologias : [];
             }));
-            var sub1 = el('div', '');
+            var sub1 = el('div', 'stats-who-grid');
             var sub1a = el('div', 'stats-chart-block-subgroup');
             var h4a = el('h4', 'stats-chart-block-subtitle', 'Por servicio');
             sub1a.appendChild(h4a);
@@ -1475,7 +923,7 @@
                 });
             });
             var paData = sortAndTake(paMap, 10);
-            var sub2 = el('div', '');
+            var sub2 = el('div', 'stats-treatment-grid');
             var sub2group = el('div', 'stats-chart-block-subgroup');
             var h4c = el('h4', 'stats-chart-block-subtitle', 'Principios activos (tratamiento activo)');
             sub2group.appendChild(h4c);
@@ -1542,28 +990,14 @@
                 if (!p._profile) return;
                 eaMap[p._profile.tiene_eventos_adversos ? 'Con EA' : 'Sin EA'] = (eaMap[p._profile.tiene_eventos_adversos ? 'Con EA' : 'Sin EA'] || 0) + 1;
             });
-            var valMap = countByLabel(f, function (p) {
-                return p._profile ? p._profile.estado_validacion : null;
-            });
             var eaEntries = sortAndTake(eaMap);
-            var valEntries = sortAndTake(valMap);
-            var grid2 = el('div', 'stats-donut-grid');
             var wrapEa = el('div', 'stats-donut-wrap');
             var h4f = el('h4', 'stats-donut-label', 'Eventos adversos');
             wrapEa.appendChild(h4f);
             var eaContainer = el('div', '');
             renderDonut(eaContainer, eaEntries, 'pacientes');
             wrapEa.appendChild(eaContainer);
-            grid2.appendChild(wrapEa);
-
-            var wrapVal = el('div', 'stats-donut-wrap');
-            var h4g = el('h4', 'stats-donut-label', 'Estado de validación');
-            wrapVal.appendChild(h4g);
-            var valContainer = el('div', '');
-            renderDonut(valContainer, valEntries, 'pacientes');
-            wrapVal.appendChild(valContainer);
-            grid2.appendChild(wrapVal);
-            b4.appendChild(grid2);
+            b4.appendChild(wrapEa);
         }
     }
 
@@ -1756,7 +1190,6 @@
         renderExecutiveSummary();
         renderKpiCards();
         renderCohortPills();
-        renderFilterChips();
         renderResultCount();
 
         if (filteredPatients.length === 0) {
@@ -1777,20 +1210,6 @@
     }
 
     function bindEvents() {
-        var applyBtn = document.getElementById('apply-filters');
-        if (applyBtn) {
-            applyBtn.addEventListener('click', function () {
-                applyFilters();
-            });
-        }
-
-        var clearBtn = document.getElementById('clear-filters');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function () {
-                clearFilters();
-            });
-        }
-
         var clearQuickBtn = document.getElementById('clear-quick-filters');
         if (clearQuickBtn) {
             clearQuickBtn.addEventListener('click', function () {
@@ -1811,30 +1230,6 @@
                 applyFilters();
             });
         });
-
-        var accordionToggle = document.getElementById('advancedFiltersToggle');
-        var accordionBody = document.getElementById('advanced-filters-body');
-        if (accordionToggle && accordionBody) {
-            accordionToggle.addEventListener('click', function () {
-                var expanded = accordionToggle.getAttribute('aria-expanded') === 'true';
-                accordionToggle.setAttribute('aria-expanded', String(!expanded));
-                if (expanded) {
-                    accordionBody.classList.add('hidden');
-                } else {
-                    accordionBody.classList.remove('hidden');
-                }
-            });
-        }
-
-        var funnelBtn = document.getElementById('quickFilterFunnel');
-        if (funnelBtn && accordionToggle && accordionBody) {
-            funnelBtn.addEventListener('click', function () {
-                var expanded = accordionToggle.getAttribute('aria-expanded') === 'true';
-                accordionToggle.setAttribute('aria-expanded', 'true');
-                accordionBody.classList.remove('hidden');
-                accordionBody.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        }
 
         var exportBtn = document.getElementById('exportReportBtn');
         if (exportBtn) {
@@ -1861,7 +1256,6 @@
                 filteredPatients = allPatients.slice();
                 if (statusTime) statusTime.textContent = allPatients.length + ' pacientes (sintéticos)';
                 populateQuickFilters();
-                buildFiltersUI();
                 bindEvents();
                 renderAll();
             })

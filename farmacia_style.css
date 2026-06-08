@@ -4291,7 +4291,7 @@
 
 .stats-charts-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 16px;
 }
 
@@ -4355,6 +4355,28 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+}
+
+/* Filas internas para bloques ¿Quiénes son? y ¿Qué tratamiento? */
+.stats-chart-block-row {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    flex: 1;
+}
+.stats-chart-block-row > .stats-chart-block-subgroup {
+    flex: 1;
+    min-width: 0;
+    margin-top: 0;
+}
+
+/* Panel de filtros avanzados (independiente, sin accordion exterior) */
+.stats-advanced-filters-panel {
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    padding: 16px 18px;
+    margin-top: 8px;
 }
 
 /* Mini bar charts inside blocks */
@@ -4642,7 +4664,11 @@
 
 @media (max-width: 900px) {
     .stats-charts-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr;
+    }
+
+    .stats-chart-block-row {
+        flex-direction: column;
     }
 
     .stats-accordion-body {
