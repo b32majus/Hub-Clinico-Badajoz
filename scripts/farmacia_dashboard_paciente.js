@@ -520,22 +520,40 @@
 
         renderLongitudinalForCip(patient.cip);
 
+        // Buscar datos extendidos del paciente en longDataset
+        var extData = null;
+        if (longDataset && longDataset.pacientes) {
+            for (var ei = 0; ei < longDataset.pacientes.length; ei++) {
+                if (longDataset.pacientes[ei].cip === patient.cip) {
+                    extData = longDataset.pacientes[ei];
+                    break;
+                }
+            }
+        }
+        // Fusionar datos extendidos en patient para las funciones de render
+        if (extData) {
+            patient.episodios_asistenciales = extData.episodios_asistenciales || [];
+            patient.tratamientos = extData.tratamientos || [];
+            patient.cambios_pauta = extData.cambios_pauta || [];
+            patient.proms = extData.proms || [];
+            patient.actividad_clinica = extData.actividad_clinica || [];
+            patient.eventos_adversos = extData.eventos_adversos || [];
+            patient.comorbilidades_relevantes = extData.comorbilidades_relevantes || [];
+        } else {
+            patient.episodios_asistenciales = patient.episodios_asistenciales || [];
+            patient.tratamientos = patient.tratamientos || [];
+            patient.cambios_pauta = patient.cambios_pauta || [];
+            patient.proms = patient.proms || [];
+            patient.actividad_clinica = patient.actividad_clinica || [];
+            patient.eventos_adversos = patient.eventos_adversos || [];
+            patient.comorbilidades_relevantes = patient.comorbilidades_relevantes || [];
+        }
+
         renderClinicalActivity(patient);
         renderProms(patient);
         renderTimelines(patient);
         renderAdverseEvents(patient);
         renderComorbidities(patient);
-
-        if (patient.actividad_clinica && patient.actividad_clinica.length > 0) {
-            var clinicalSec = document.getElementById('clinical-activity-section');
-            if (clinicalSec) clinicalSec.classList.remove('hidden');
-        }
-        var promsSec = document.getElementById('proms-section');
-        if (promsSec) promsSec.classList.remove('hidden');
-        var aeSec = document.getElementById('adverse-events-section');
-        if (aeSec) aeSec.classList.remove('hidden');
-        var comSec = document.getElementById('comorbidities-section');
-        if (comSec) comSec.classList.remove('hidden');
     }
 
 
