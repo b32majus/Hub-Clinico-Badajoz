@@ -3524,6 +3524,127 @@
     /* default appearance, no override */
 }
 
+/* ============================================================
+   Dashboard Recomposition v20260608 — Clinical activity, PROMs,
+   Timelines, Adverse events, Comorbidities
+   ============================================================ */
+
+.clinical-activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.clinical-activity-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.clinical-activity-tile__name {
+    display: block;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.clinical-activity-tile__value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.clinical-activity-tile__trend {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ses-green);
+}
+
+.clinical-activity-tile__note {
+    display: block;
+    font-size: 0.78rem;
+    color: #94A3B8;
+}
+
+.comorbidity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.comorbidity-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+}
+
+.comorbidity-tile__name {
+    display: block;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.comorbidity-tile__value {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+
+.comorbidity-tile__note {
+    display: block;
+    font-size: 0.82rem;
+    color: #475569;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    color: #64748B;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.empty-state i {
+    color: #94A3B8;
+}
+
+.timeline-marker--treatment {
+    background: var(--ses-green);
+}
+
+.timeline-marker--change {
+    background: #F59E0B;
+}
+
+.timeline-marker--switch {
+    background: #7C3AED;
+}
+
+.timeline-marker--adverse {
+    background: #c0392b;
+}
+
 @media (max-width: 768px) {
     .longitudinal-chart-canvas {
         height: 100px;

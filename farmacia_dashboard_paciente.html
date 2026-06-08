@@ -6,8 +6,8 @@
     <title>Hub Clínico — Dashboard Paciente Farmacia</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="style.css?v=20260607-postdemo-e">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607-postdemo-e">
+    <link rel="stylesheet" href="style.css?v=20260608-dashboard-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260608-dashboard-a">
 </head>
         <body>
             <div class="hub-shell">
@@ -115,10 +115,36 @@
         <div id="longitudinal-demo-note" class="longitudinal-demo-banner longitudinal-demo-banner--spaced hidden"><i class="fas fa-flask" aria-hidden="true"></i><span>Datos demo/sintéticos — no usar para decisiones clínicas.</span></div>
     </div>
 </section>
+<section id="clinical-activity-section" class="dashboard-card hidden">
+    <h2 class="card-title"><i class="fas fa-heartbeat"></i> Actividad clínica / Índices</h2>
+    <div class="card-body" id="clinicalActivityContainer"></div>
+</section>
+<section id="proms-section" class="dashboard-card hidden">
+    <h2 class="card-title"><i class="fas fa-comment-medical"></i> PROMs</h2>
+    <div class="card-body" id="promsDashboardContainer"></div>
+</section>
+<section id="timelines-section" class="dashboard-timeline-grid">
+    <div class="dashboard-card">
+        <h2 class="card-title"><i class="fas fa-stream"></i> Timeline longitudinal mínima</h2>
+        <div class="card-body" id="timelineEpisodiosContainer"></div>
+    </div>
+    <div class="dashboard-card">
+        <h2 class="card-title"><i class="fas fa-pills"></i> Timeline de tratamiento</h2>
+        <div class="card-body" id="timelineTratamientoContainer"></div>
+    </div>
+</section>
+<section id="adverse-events-section" class="dashboard-card hidden">
+    <h2 class="card-title"><i class="fas fa-exclamation-triangle"></i> Eventos adversos</h2>
+    <div class="card-body" id="adverseEventsContainer"></div>
+</section>
+<section id="comorbidities-section" class="dashboard-card hidden">
+    <h2 class="card-title"><i class="fas fa-stethoscope"></i> Comorbilidades</h2>
+    <div class="card-body" id="comorbiditiesContainer"></div>
+</section>
 
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607-postdemo-e"></script>
-    <script src="scripts/farmacia_dashboard_paciente.js?v=20260607-postdemo-e"></script>
+            <script src="scripts/farmacia_common.js?v=20260608-dashboard-a"></script>
+    <script src="scripts/farmacia_dashboard_paciente.js?v=20260608-dashboard-a"></script>
         </body>
         </html>

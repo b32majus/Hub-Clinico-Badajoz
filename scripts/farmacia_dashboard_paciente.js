@@ -133,6 +133,359 @@
         return wrapper;
     }
 
+    function renderClinicalActivity(patient) {
+        var container = document.getElementById('clinicalActivityContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var actividad = patient.actividad_clinica || [];
+        if (actividad.length === 0) {
+            var emptyEl = document.createElement('div');
+            emptyEl.className = 'clinical-activity-grid';
+            emptyEl.textContent = 'Sin datos de actividad cl\u00EDnica';
+            container.appendChild(emptyEl);
+            return;
+        }
+        var grouped = {};
+        for (var gi = 0; gi < actividad.length; gi++) {
+            var a = actividad[gi];
+            var ti = a.tipo_indice;
+            if (!grouped[ti]) grouped[ti] = [];
+            grouped[ti].push(a);
+        }
+        var grid = document.createElement('div');
+        grid.className = 'clinical-activity-grid';
+        var tipos = Object.keys(grouped).sort();
+        for (var ct = 0; ct < tipos.length; ct++) {
+            var tipo = tipos[ct];
+            var items = grouped[tipo];
+            items.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+            var earliest = items[0];
+            var latest = items[items.length - 1];
+            var tile = document.createElement('div');
+            tile.className = 'clinical-activity-tile';
+            var caNameEl = document.createElement('div');
+            caNameEl.className = 'clinical-activity-tile__name';
+            caNameEl.textContent = tipo;
+            tile.appendChild(caNameEl);
+            var caValueEl = document.createElement('div');
+            caValueEl.className = 'clinical-activity-tile__value';
+            caValueEl.textContent = latest.valor || '\u2014';
+            tile.appendChild(caValueEl);
+            if (tipo === 'Hurley') {
+                var caNoteEl = document.createElement('div');
+                caNoteEl.className = 'clinical-activity-tile__note';
+                caNoteEl.textContent = 'Estadio ' + latest.valor + (latest.interpretacion ? ' \u2014 ' + latest.interpretacion : '');
+                tile.appendChild(caNoteEl);
+            } else {
+                var trendEl = document.createElement('div');
+                trendEl.className = 'clinical-activity-tile__trend';
+                var earliestVal = parseFloat(earliest.valor);
+                var latestVal = parseFloat(latest.valor);
+                if (!isNaN(earliestVal) && !isNaN(latestVal) && earliest !== latest) {
+                    var arrow = latestVal < earliestVal ? '\u2193' : (latestVal > earliestVal ? '\u2191' : '\u2192');
+                    trendEl.textContent = earliest.valor + ' ' + arrow + ' ' + latest.valor;
+                } else {
+                    trendEl.textContent = latest.valor;
+                }
+                tile.appendChild(trendEl);
+                if (latest.interpretacion) {
+                    var caInterpEl = document.createElement('div');
+                    caInterpEl.className = 'clinical-activity-tile__note';
+                    caInterpEl.textContent = latest.interpretacion;
+                    tile.appendChild(caInterpEl);
+                }
+            }
+            grid.appendChild(tile);
+        }
+        container.appendChild(grid);
+    }
+
+    function renderProms(patient) {
+        var container = document.getElementById('promsDashboardContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var proms = patient.proms || [];
+        var grouped = {};
+        for (var pi = 0; pi < proms.length; pi++) {
+            var pItem = proms[pi];
+            var pt = pItem.tipo_prom;
+            if (!grouped[pt]) grouped[pt] = [];
+            grouped[pt].push(pItem);
+        }
+        var grid = document.createElement('div');
+        grid.className = 'proms-grid';
+        var expectedTypes = ['DLQI', 'EVA dolor', 'EVA prurito'];
+        for (var et = 0; et < expectedTypes.length; et++) {
+            var tipo = expectedTypes[et];
+            var items = grouped[tipo] || [];
+            var tile = document.createElement('div');
+            tile.className = 'prom-tile';
+            var pNameEl = document.createElement('div');
+            pNameEl.className = 'prom-tile__name';
+            pNameEl.textContent = tipo;
+            tile.appendChild(pNameEl);
+            if (items.length > 0) {
+                items.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+                var latest = items[items.length - 1];
+                var pValueEl = document.createElement('div');
+                pValueEl.className = 'prom-tile__value';
+                var unit = (tipo === 'DLQI') ? '/30' : '/10';
+                pValueEl.textContent = latest.valor + ' ' + unit;
+                tile.appendChild(pValueEl);
+                var sourceEl = document.createElement('div');
+                sourceEl.className = 'prom-tile__source';
+                var sourceLabel = (latest.fuente || '').toLowerCase().indexOf('remoto') !== -1 ? '(Paciente remoto)' : '(Farmacia)';
+                sourceEl.textContent = sourceLabel;
+                tile.appendChild(sourceEl);
+            } else {
+                var noDataEl = document.createElement('div');
+                noDataEl.className = 'prom-tile__value';
+                noDataEl.textContent = 'No registrado';
+                tile.appendChild(noDataEl);
+            }
+            grid.appendChild(tile);
+        }
+        var displayed = {};
+        for (var dx = 0; dx < expectedTypes.length; dx++) { displayed[expectedTypes[dx]] = true; }
+        var otherTypes = Object.keys(grouped).filter(function(k) { return !displayed[k]; }).sort();
+        for (var oi = 0; oi < otherTypes.length; oi++) {
+            var oTipo = otherTypes[oi];
+            var oItems = grouped[oTipo];
+            oItems.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+            var oLatest = oItems[oItems.length - 1];
+            var oTile = document.createElement('div');
+            oTile.className = 'prom-tile';
+            var oNameEl = document.createElement('div');
+            oNameEl.className = 'prom-tile__name';
+            oNameEl.textContent = oTipo;
+            oTile.appendChild(oNameEl);
+            var oValueEl = document.createElement('div');
+            oValueEl.className = 'prom-tile__value';
+            oValueEl.textContent = oLatest.valor || '\u2014';
+            oTile.appendChild(oValueEl);
+            var oSourceEl = document.createElement('div');
+            oSourceEl.className = 'prom-tile__source';
+            var oSourceLabel = (oLatest.fuente || '').toLowerCase().indexOf('remoto') !== -1 ? '(Paciente remoto)' : '(Farmacia)';
+            oSourceEl.textContent = oSourceLabel;
+            oTile.appendChild(oSourceEl);
+            grid.appendChild(oTile);
+        }
+        container.appendChild(grid);
+    }
+
+    function renderTimelines(patient) {
+        renderTimelineEpisodios(patient);
+        renderTimelineTratamiento(patient);
+    }
+
+    function renderTimelineEpisodios(patient) {
+        var container = document.getElementById('timelineEpisodiosContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var episodios = patient.episodios_asistenciales || [];
+        if (episodios.length === 0) {
+            var emptyEl = document.createElement('div');
+            emptyEl.className = 'timeline-item';
+            emptyEl.textContent = 'Sin episodios asistenciales registrados';
+            container.appendChild(emptyEl);
+            return;
+        }
+        episodios.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+        for (var ei = 0; ei < episodios.length; ei++) {
+            var ep = episodios[ei];
+            var desc = (ep.servicio || '') + (ep.nota ? ' \u2014 ' + ep.nota : '');
+            var item = timelineItem(ep.fecha, ep.tipo, desc);
+            container.appendChild(item);
+        }
+    }
+
+    function renderTimelineTratamiento(patient) {
+        var container = document.getElementById('timelineTratamientoContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var treatments = patient.tratamientos || [];
+        var changes = patient.cambios_pauta || [];
+        var milestones = [];
+        for (var ti = 0; ti < treatments.length; ti++) {
+            var t = treatments[ti];
+            if (t.fecha_inicio) {
+                milestones.push({
+                    date: t.fecha_inicio,
+                    title: 'Inicio ' + (t.nombre_comercial || t.principio_activo || 'Tratamiento'),
+                    description: t.pauta || '',
+                    markerClass: 'timeline-marker--treatment'
+                });
+            }
+            if (t.fecha_fin) {
+                milestones.push({
+                    date: t.fecha_fin,
+                    title: 'Fin ' + (t.nombre_comercial || t.principio_activo || 'Tratamiento'),
+                    description: t.motivo_suspension || '',
+                    markerClass: 'timeline-marker--treatment'
+                });
+            }
+        }
+        for (var cj = 0; cj < changes.length; cj++) {
+            var c = changes[cj];
+            var markerClass = 'timeline-marker--change';
+            if (c.tipo === 'cambio_farmaco') markerClass = 'timeline-marker--switch';
+            milestones.push({
+                date: c.fecha,
+                title: c.tipo || 'Cambio',
+                description: (c.motivo || '') + (c.descripcion ? ' \u2014 ' + c.descripcion : ''),
+                markerClass: markerClass
+            });
+        }
+        milestones.sort(function(a, b) { return a.date.localeCompare(b.date); });
+        for (var mi = 0; mi < milestones.length; mi++) {
+            var ms = milestones[mi];
+            var item = document.createElement('div');
+            item.className = 'timeline-item';
+            var marker = document.createElement('span');
+            marker.className = 'timeline-marker ' + ms.markerClass;
+            var dateEl = document.createElement('div');
+            dateEl.className = 'timeline-date';
+            dateEl.textContent = ms.date || '\u2014';
+            var titleEl = document.createElement('div');
+            titleEl.className = 'timeline-title';
+            titleEl.textContent = ms.title;
+            var descEl = document.createElement('div');
+            descEl.className = 'timeline-description';
+            descEl.textContent = ms.description;
+            item.append(marker, dateEl, titleEl, descEl);
+            container.appendChild(item);
+        }
+    }
+
+    function renderAdverseEvents(patient) {
+        var container = document.getElementById('adverseEventsContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var events = patient.eventos_adversos || [];
+        if (events.length === 0) {
+            var emptyEl = document.createElement('div');
+            emptyEl.className = 'adverse-event-card';
+            emptyEl.textContent = 'Sin eventos adversos registrados';
+            container.appendChild(emptyEl);
+            return;
+        }
+        for (var ai = 0; ai < events.length; ai++) {
+            var ev = events[ai];
+            var card = document.createElement('div');
+            card.className = 'adverse-event-card';
+            var header = document.createElement('div');
+            header.className = 'adverse-event-card__header';
+            var headerDate = document.createElement('span');
+            headerDate.textContent = ev.fecha || '\u2014';
+            header.appendChild(headerDate);
+            var headerType = document.createElement('strong');
+            headerType.textContent = ' ' + (ev.tipo || '\u2014');
+            header.appendChild(headerType);
+            var grav = ev.gravedad || '';
+            if (grav) {
+                var gravNormalized = grav === 'moderada' ? 'moderado' : grav;
+                var gravClass = 'badge-gravedad badge-gravedad-' + gravNormalized;
+                var badge = document.createElement('span');
+                badge.className = gravClass;
+                badge.textContent = grav;
+                header.appendChild(badge);
+            }
+            card.appendChild(header);
+            var detail = document.createElement('div');
+            detail.className = 'adverse-event-card__detail';
+            var fields = [
+                { label: 'Relacion con tratamiento', value: ev.relacion_tratamiento || '\u2014' },
+                { label: 'Accion tomada', value: ev.accion_tomada || '\u2014' },
+                { label: 'Resuelto', value: ev.resuelto ? 'Si' : 'No' }
+            ];
+            for (var fi = 0; fi < fields.length; fi++) {
+                var fieldRow = document.createElement('div');
+                var fieldLabel = document.createElement('span');
+                fieldLabel.textContent = fields[fi].label + ': ';
+                var fieldValue = document.createElement('span');
+                fieldValue.textContent = fields[fi].value;
+                fieldRow.appendChild(fieldLabel);
+                fieldRow.appendChild(fieldValue);
+                detail.appendChild(fieldRow);
+            }
+            if (ev.descripcion_corta) {
+                var descRow = document.createElement('div');
+                descRow.textContent = ev.descripcion_corta;
+                detail.appendChild(descRow);
+            }
+            card.appendChild(detail);
+            container.appendChild(card);
+        }
+    }
+
+    function renderComorbidities(patient) {
+        var container = document.getElementById('comorbiditiesContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var comorbidities = patient.comorbilidades_relevantes || [];
+        if (comorbidities.length === 0) {
+            var emptyEl = document.createElement('div');
+            emptyEl.className = 'comorbidity-grid';
+            emptyEl.textContent = 'Sin comorbilidades registradas';
+            container.appendChild(emptyEl);
+            return;
+        }
+        var grid = document.createElement('div');
+        grid.className = 'comorbidity-grid';
+        var imcItem = null;
+        var tabaquismoItem = null;
+        var diabetesItem = null;
+        var metabolicoItem = null;
+        var otherItems = [];
+        for (var cmi = 0; cmi < comorbidities.length; cmi++) {
+            var item = comorbidities[cmi];
+            var nombreLower = (item.nombre || '').toLowerCase();
+            var notaLower = (item.nota || '').toLowerCase();
+            var tipoLower = (item.tipo || '').toLowerCase();
+            if ((tipoLower === 'metabolica' && notaLower.indexOf('imc') !== -1) || nombreLower.indexOf('imc') !== -1 || notaLower.indexOf('imc') !== -1) {
+                imcItem = item;
+            } else if (tipoLower === 'habito toxico' || nombreLower.indexOf('tabaquismo') !== -1 || nombreLower.indexOf('tabaco') !== -1) {
+                tabaquismoItem = item;
+            } else if (nombreLower.indexOf('diabetes') !== -1) {
+                diabetesItem = item;
+            } else if (nombreLower.indexOf('metabolico') !== -1 || nombreLower.indexOf('metab\u00F3lico') !== -1) {
+                metabolicoItem = item;
+            } else {
+                otherItems.push(item);
+            }
+        }
+        function createComorbidityTile(name, value, note) {
+            var tile = document.createElement('div');
+            tile.className = 'comorbidity-tile';
+            var cmNameEl = document.createElement('div');
+            cmNameEl.className = 'comorbidity-tile__name';
+            cmNameEl.textContent = name;
+            tile.appendChild(cmNameEl);
+            if (value) {
+                var cmValueEl = document.createElement('div');
+                cmValueEl.className = 'comorbidity-tile__value';
+                cmValueEl.textContent = value;
+                tile.appendChild(cmValueEl);
+            }
+            if (note) {
+                var cmNoteEl = document.createElement('div');
+                cmNoteEl.className = 'comorbidity-tile__note';
+                cmNoteEl.textContent = note;
+                tile.appendChild(cmNoteEl);
+            }
+            return tile;
+        }
+        if (imcItem) grid.appendChild(createComorbidityTile('IMC', imcItem.nombre, imcItem.nota));
+        if (tabaquismoItem) grid.appendChild(createComorbidityTile('Tabaquismo', tabaquismoItem.nombre, tabaquismoItem.nota));
+        if (diabetesItem) grid.appendChild(createComorbidityTile('Diabetes', diabetesItem.nombre, diabetesItem.nota));
+        if (metabolicoItem) grid.appendChild(createComorbidityTile('Sindrome Metabolico', metabolicoItem.nombre, metabolicoItem.nota));
+        for (var oj = 0; oj < otherItems.length; oj++) {
+            var o = otherItems[oj];
+            grid.appendChild(createComorbidityTile(o.tipo || o.nombre, o.nombre, o.nota));
+        }
+        container.appendChild(grid);
+    }
+
     function renderDashboard(patient) {
         F.setText('patientIdBadge', patient.cip);
         F.setText('patientName', patient.nombre);
@@ -166,6 +519,23 @@
         }
 
         renderLongitudinalForCip(patient.cip);
+
+        renderClinicalActivity(patient);
+        renderProms(patient);
+        renderTimelines(patient);
+        renderAdverseEvents(patient);
+        renderComorbidities(patient);
+
+        if (patient.actividad_clinica && patient.actividad_clinica.length > 0) {
+            var clinicalSec = document.getElementById('clinical-activity-section');
+            if (clinicalSec) clinicalSec.classList.remove('hidden');
+        }
+        var promsSec = document.getElementById('proms-section');
+        if (promsSec) promsSec.classList.remove('hidden');
+        var aeSec = document.getElementById('adverse-events-section');
+        if (aeSec) aeSec.classList.remove('hidden');
+        var comSec = document.getElementById('comorbidities-section');
+        if (comSec) comSec.classList.remove('hidden');
     }
 
 
@@ -575,7 +945,13 @@
                 doseMarker.className = 'event-marker--dose-change';
                 doseMarker.style.left = cPosPct + '%';
                 var doseIcon = document.createElement('i');
-                doseIcon.className = 'fas fa-rotate';
+                if (c.tipo === 'cambio_farmaco') {
+                    doseIcon.className = 'fas fa-exchange-alt';
+                } else if ((c.tipo || '').indexOf('optimizacion') !== -1 || (c.tipo || '').indexOf('optimización') !== -1) {
+                    doseIcon.className = 'fas fa-sliders-h';
+                } else {
+                    doseIcon.className = 'fas fa-rotate';
+                }
                 doseIcon.setAttribute('aria-hidden', 'true');
                 doseMarker.appendChild(doseIcon);
                 var cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—');
@@ -606,6 +982,10 @@
                 var aeMarker = document.createElement('div');
                 aeMarker.className = 'event-marker--adverse event-marker--ae-' + gravSuffix;
                 aeMarker.style.left = ePosPct + '%';
+                var aeIcon = document.createElement('i');
+                aeIcon.className = 'fas fa-exclamation-triangle';
+                aeIcon.setAttribute('aria-hidden', 'true');
+                aeMarker.appendChild(aeIcon);
                 var aeTooltip = 'EA: ' + (ev.tipo || '—') + ' (' + (ev.fecha || '') + ')\nGravedad: ' + (ev.gravedad || '—') + '\nRelacion: ' + (ev.relacion_tratamiento || '—') + '\nAccion: ' + (ev.accion_tomada || '—');
                 if (ev.descripcion_corta) aeTooltip += '\n' + ev.descripcion_corta;
                 aeMarker.setAttribute('title', aeTooltip);
