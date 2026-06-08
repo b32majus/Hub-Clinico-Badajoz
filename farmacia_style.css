@@ -5,7 +5,7 @@
     padding: var(--spacing-xl, 32px);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-lg, 24px);
+    gap: 28px;
     background-color: #F8FAFC;
     min-height: 100vh;
 }
@@ -253,7 +253,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
-.info-field__value { display: block; color: #1E293B; font-weight: 600; line-height: 1.45; }
+.info-field__value { display: block; color: #1E293B; font-weight: 700; font-size: 1.05rem; line-height: 1.45; }
 
 .status-badge {
     display: inline-flex;
@@ -322,13 +322,13 @@
 .action-card__title { font-weight: 800; color: #17335B; }
 .action-card__desc { color: #64748B; font-size: 0.84rem; line-height: 1.45; }
 
-.timeline { position: relative; padding-left: 24px; }
-.timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #E2E8F0; }
-.timeline-item { position: relative; margin-bottom: 18px; }
-.timeline-marker { position: absolute; left: -24px; top: 2px; width: 12px; height: 12px; border-radius: 999px; background: var(--ses-green); border: 3px solid #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
-.timeline-date { color: #64748B; font-size: 0.82rem; }
-.timeline-title { font-weight: 800; color: #1E293B; }
-.timeline-description { color: #475569; font-size: 0.9rem; }
+.timeline { position: relative; padding-left: 28px; }
+.timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #E2E8F0; }
+.timeline-item { position: relative; margin-bottom: 22px; }
+.timeline-marker { position: absolute; left: -28px; top: 2px; width: 12px; height: 12px; border-radius: 999px; background: var(--ses-green); border: 3px solid #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.timeline-date { color: #64748B; font-size: 0.82rem; margin-bottom: 2px; }
+.timeline-title { font-weight: 800; color: #1E293B; margin-bottom: 4px; }
+.timeline-description { color: #475569; font-size: 0.88rem; line-height: 1.45; }
 
 .data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .data-table th { padding: 10px 12px; text-align: left; color: #64748B; background: #F8FAFC; border-bottom: 2px solid #E2E8F0; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -1707,18 +1707,20 @@
 
 .proms-card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
 }
 
 .prom-card {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px 16px;
+    gap: 4px;
+    padding: 18px 20px;
     border-radius: 12px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
+    min-height: 0;
+    justify-content: flex-start;
 }
 
 .prom-card__name {
@@ -1732,9 +1734,10 @@
 
 .prom-card__value {
     display: block;
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
-    color: var(--ses-green);
+    color: #008777;
+    line-height: 1.2;
 }
 
 .prom-card__source {
@@ -1753,6 +1756,7 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     align-self: flex-start;
+    margin-top: 4px;
 }
 
 .prom-card__status--registered {
@@ -2664,8 +2668,8 @@
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
     border-bottom: 1px solid #E2E8F0;
 }
 
@@ -2857,12 +2861,12 @@
 /* --- Rule fix: longitudinal chart container --- */
 .longitudinal-chart-container {
     position: relative;
-    min-height: 400px;
+    min-height: 340px;
 }
 
 /* --- Rule fix: longitudinal demo banner spaced --- */
 .longitudinal-demo-banner--spaced {
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 /* ============================================================
@@ -3554,18 +3558,20 @@
 
 .clinical-activity-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
 }
 
 .clinical-activity-tile {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 16px;
+    gap: 4px;
+    padding: 18px;
     border-radius: 12px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
+    min-height: 0;
+    justify-content: flex-start;
 }
 
 .clinical-activity-tile__name {
@@ -3582,6 +3588,7 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: #1E293B;
+    line-height: 1.2;
 }
 
 .clinical-activity-tile__trend {
@@ -3595,22 +3602,25 @@
     display: block;
     font-size: 0.78rem;
     color: #94A3B8;
+    margin-top: 2px;
 }
 
 .comorbidity-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
 }
 
 .comorbidity-tile {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 12px;
+    gap: 4px;
+    padding: 14px 16px;
     border-radius: 10px;
     background: #F8FAFC;
     border: 1px solid #E2E8F0;
+    min-height: 0;
+    justify-content: flex-start;
 }
 
 .comorbidity-tile__name {
@@ -3674,13 +3684,13 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 14px 16px;
+    padding: 16px 18px;
     border-radius: 12px;
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
     border-left: 4px solid #CBD5E1;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .adverse-event-card__header {
@@ -3688,18 +3698,19 @@
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+    justify-content: space-between;
 }
 
 .adverse-event-card__icon {
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
     background: #FEF2F2;
     color: #c0392b;
-    font-size: 0.9rem;
+    font-size: 1rem;
     flex-shrink: 0;
 }
 
@@ -3711,9 +3722,9 @@
 }
 
 .adverse-event-card__detail {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
     font-size: 0.85rem;
     color: #475569;
     line-height: 1.4;
@@ -3736,11 +3747,11 @@
 }
 
 .adverse-event-card__comment {
-    margin-top: 6px;
-    padding-top: 8px;
-    border-top: 1px solid #F1F5F9;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #E2E8F0;
     font-size: 0.82rem;
-    color: #94A3B8;
+    color: #64748B;
     font-style: italic;
     line-height: 1.4;
 }
@@ -3861,6 +3872,10 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 6px;
+    }
+
+    .adverse-event-card__detail {
+        grid-template-columns: 1fr;
     }
 
     .comorbidity-grid {
