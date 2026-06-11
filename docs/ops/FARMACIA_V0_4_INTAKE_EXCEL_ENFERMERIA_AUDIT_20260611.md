@@ -91,3 +91,31 @@
 ---
 
 **Status:** `pending_review` — Pendiente de validación por Sil antes de implementar mapeo definitivo.
+
+---
+
+## Corrección P1 final — Precarga prebiológica desde Intake
+
+**Fecha:** 2026-06-11
+**SHA:** a48bc42 → (nuevo SHA tras commit)
+
+### Problemas corregidos
+
+1. **setChipValue** usaba `textContent` en vez de manejar radios correctamente.
+2. **IDs de serologías** incorrectos: `fhAnaliticaVHB/VHC/VIH` → `fhAnaliticaSerologiasVhb/Vhc/Vih`.
+3. **Mapeo de serologías** solo manejaba OK. Ahora: OK→Negativo, PENDIENTE→Pendiente, ALTERADA→observación.
+4. **Mapeo de Mantoux/IGRA** simplificado. Ahora: NEGATIVO→Negativo, PENDIENTE→Pendiente, POSITIVO+TRATADO→"Positivo - tratado", POSITIVO sin TRATADO→Pendiente+obs, NO PRECISA→obs.
+5. **Mapeo de vacunación** pasaba valor crudo. Ahora: OK→si, PENDIENTE→pendiente, NO PRECISA→no+obs.
+6. **Principio activo** usaba `bio.active_principle`. Ahora: `bio.principio_activo || bio.active_principle`.
+7. **Helper appendObservationIfExists** añadido para observaciones seguras.
+8. **Función importarExcelEnfermeria** eliminada (no conectada a UI).
+9. **Cache busting** actualizado a `v=20260611-intake-c`.
+
+### Validaciones
+
+- `node --check scripts/farmacia_validacion.js` → OK
+- `node tools/farmacia_smoke_check.mjs` → OK
+- `grep "fhAnaliticaVHB\|fhAnaliticaVHC\|fhAnaliticaVIH" scripts/farmacia_validacion.js` → 0 resultados
+- `grep "innerHTML" scripts/farmacia_validacion.js farmacia_validacion.html` → 0 resultados
+
+**Status:** `pending_review`

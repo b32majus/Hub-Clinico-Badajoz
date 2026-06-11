@@ -831,9 +831,27 @@ function precargarValidacion(data) {
     var el = document.getElementById(id);
     if (el) el.checked = !!checked;
   }
+  function appendObservationIfExists(id, text) {
+    var el = document.getElementById(id);
+    if (!el || !text) return;
+    var current = el.value || '';
+    if (current.indexOf(text) !== -1) return;
+    el.value = current ? current + '\n' + text : text;
+  }
   function setChipValue(targetId, value) {
-    var el = document.getElementById(targetId);
-    if (el && value) el.textContent = value;
+    var hidden = document.getElementById(targetId);
+    var normalizedValue = value || '';
+    if (hidden) hidden.value = normalizedValue;
+    var group = document.querySelector('[data-chip-target="' + targetId + '"]');
+    if (!group) return;
+    var radios = group.querySelectorAll('input[type="radio"]');
+    radios.forEach(function (radio) {
+      radio.checked = false;
+      if (normalizedValue && String(radio.value).toLowerCase() === String(normalizedValue).toLowerCase()) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
   }
 
   var contextCip = document.querySelector('[data-context="cip"]');
@@ -864,7 +882,7 @@ function precargarValidacion(data) {
 
   var bio = data.proposed_biologic || {};
   setValueIfExists('fhDermaFarmaco', bio.name);
-  setValueIfExists('fhDermaPrincipioActivo', bio.active_principle);
+  setValueIfExists('fhDermaPrincipioActivo', bio.principio_activo || bio.active_principle);
   setValueIfExists('fhDermaDosis', bio.dose);
   setValueIfExists('fhDermaVia', bio.route);
   setValueIfExists('fhDermaPauta', bio.schedule);
@@ -877,22 +895,49 @@ function precargarValidacion(data) {
   }
 
   if (prebio.tb_screening_status) {
-    var mantouxVal = prebio.tb_screening_status.toLowerCase();
-    var mantouxRadios = document.querySelectorAll('input[name="fhAnaliticaMantoux_rb"]');
-    mantouxRadios.forEach(function(radio) {
-      if (radio.value.toLowerCase() === mantouxVal || (mantouxVal.includes('neg') && radio.value.toLowerCase() === 'negativo')) {
-        radio.checked = true;
+    var tbVal = prebio.tb_screening_status.toUpperCase();
+    if (tbVal.indexOf('NEGATIVO') !== -1) {
+      setChipValue('fhAnaliticaMantoux', 'Negativo');
+    } else if (tbVal.indexOf('PENDIENTE') !== -1) {
+      setChipValue('fhAnaliticaMantoux', 'Pendiente');
+    } else if (tbVal.indexOf('POSITIVO') !== -1) {
+      if (tbVal.indexOf('TRATADO') !== -1) {
+        setChipValue('fhAnaliticaMantoux', 'Positivo - tratado');
+      } else {
+        setChipValue('fhAnaliticaMantoux', 'Pendiente');
+        appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Mantoux/IGRA positivo sin tratamiento registrado. Revisar.');
       }
-    });
+    } else if (tbVal.indexOf('NO PRECISA') !== -1) {
+      appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Mantoux/IGRA no preciso según Excel mock.');
+    }
   }
 
-  if (prebio.serologies_status === 'OK' || prebio.serologies_status === 'ok') {
-    setValueIfExists('fhAnaliticaVHB', 'Negativo');
-    setValueIfExists('fhAnaliticaVHC', 'Negativo');
-    setValueIfExists('fhAnaliticaVIH', 'Negativo');
+  if (prebio.serologies_status) {
+    var seroStatus = prebio.serologies_status.toUpperCase();
+    if (seroStatus === 'OK') {
+      setChipValue('fhAnaliticaSerologiasVhb', 'Negativo');
+      setChipValue('fhAnaliticaSerologiasVhc', 'Negativo');
+      setChipValue('fhAnaliticaSerologiasVih', 'Negativo');
+    } else if (seroStatus === 'PENDIENTE') {
+      setChipValue('fhAnaliticaSerologiasVhb', 'Pendiente');
+      setChipValue('fhAnaliticaSerologiasVhc', 'Pendiente');
+      setChipValue('fhAnaliticaSerologiasVih', 'Pendiente');
+    } else if (seroStatus === 'ALTERADA') {
+      appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Serologías alteradas según Excel mock. Revisar detalle antes de validar.');
+    }
   }
 
-  setValueIfExists('fhAnaliticaVacunacion', prebio.vaccination_status);
+  if (prebio.vaccination_status) {
+    var vaccStatus = prebio.vaccination_status.toUpperCase();
+    if (vaccStatus === 'OK') {
+      setChipValue('fhAnaliticaVacunacion', 'si');
+    } else if (vaccStatus === 'PENDIENTE') {
+      setChipValue('fhAnaliticaVacunacion', 'pendiente');
+    } else if (vaccStatus === 'NO PRECISA') {
+      setChipValue('fhAnaliticaVacunacion', 'no');
+      appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Vacunación no precisa según Excel mock.');
+    }
+  }
 
   if (data.nursing_observations) {
     setValueIfExists('fhAnaliticaObservaciones', '[Enfermería] ' + data.nursing_observations);
@@ -922,23 +967,5 @@ document.addEventListener('DOMContentLoaded', function() {
   initIntakeBandeja();
 });
 
-function importarExcelEnfermeria(arrayBuffer) {
-  var workbook = XLSX.read(arrayBuffer, {type: 'array'});
-  var hojaUsada = '';
-  var sheet = workbook.Sheets['INICIO_BIOLOGICO'];
-  if (sheet) {
-    hojaUsada = 'INICIO_BIOLOGICO';
-  } else {
-    sheet = workbook.Sheets['BD'];
-    if (sheet) {
-      hojaUsada = 'BD';
-    } else {
-      hojaUsada = workbook.SheetNames[0];
-      sheet = workbook.Sheets[hojaUsada];
-      console.warn('[Intake] Hoja INICIO_BIOLOGICO ni BD encontradas, usando primera hoja: ' + hojaUsada);
-    }
-  }
-  console.log('[Intake] Hoja usada: ' + hojaUsada);
-  return XLSX.utils.sheet_to_json(sheet, {defval: ''});
-}
+
 })();
