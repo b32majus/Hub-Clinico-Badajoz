@@ -66,6 +66,11 @@ for (const f of expectedScripts) {
     else fail(`Falta: ${f}`);
 }
 
+// ─── CHECK 2b: Script modelo validación ──────────────────────────────────────────
+console.log('\n[2b] Script modelo validación');
+if (exists('scripts/farmacia_validacion_model.js')) ok('scripts/farmacia_validacion_model.js existe');
+else fail('Falta: scripts/farmacia_validacion_model.js');
+
 // ─── CHECK 3: CSS ──────────────────────────────────────────────────────────────
 console.log('\n[3] CSS');
 for (const f of ['farmacia_style.css', 'style.css']) {
@@ -150,6 +155,9 @@ for (const [html, script] of Object.entries(htmlScriptMap)) {
     if (src.includes(script)) ok(`${html} → ${script}`);
     else fail(`${html} no referencia ${script}`);
 }
+// farmacia_validacion.html debe referenciar farmacia_validacion_model.js
+if (readFile('farmacia_validacion.html') && readFile('farmacia_validacion.html').includes('farmacia_validacion_model.js')) ok('farmacia_validacion.html → farmacia_validacion_model.js');
+else fail('farmacia_validacion.html no referencia farmacia_validacion_model.js');
 // farmacia_common.js debe estar en todos
 const requireCommon = Object.keys(htmlScriptMap);
 let commonMissing = false;
