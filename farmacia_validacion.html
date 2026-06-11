@@ -195,11 +195,11 @@
 <section class="dashboard-card hidden" id="eaBlock">
   <h2 class="section-title"><i class="fas fa-exclamation-triangle"></i> Evaluación de causalidad del efecto adverso</h2>
   <div class="form-grid">
-    <div class="form-group"><label for="fhEaNotificado">EA notificado</label><select class="form-select" id="fhEaNotificado"><option value="">Seleccionar...</option><option>Sí</option><option>No</option><option>Pendiente</option></select></div>
+    <div class="form-group"><label for="fhEaNotificado">EA notificado</label><select class="form-select" id="fhEaNotificado"><option value="">Seleccionar...</option><option value="No consta">No consta</option><option value="No">No</option><option value="Sí">Sí</option></select></div>
     <div class="form-group"><label for="fhEaTipo">Tipo de efecto adverso</label><input type="text" class="form-control" id="fhEaTipo" placeholder="Ej. infección, reacción local, alteración analítica, cefalea..."></div>
-    <div class="form-group"><label for="fhEaGravedad">Gravedad</label><select class="form-select" id="fhEaGravedad"><option value="">Seleccionar...</option><option>Leve</option><option>Moderado</option><option>Grave</option><option>Fatal</option></select></div>
-    <div class="form-group"><label for="fhEaAccion">Acción tomada</label><select class="form-select" id="fhEaAccion"><option value="">Seleccionar...</option><option>Continuar</option><option>Modificar dosis</option><option>Suspender</option><option>Observar</option></select></div>
-    <div class="form-group"><label for="fhEaCausalidad">Causalidad</label><select class="form-select" id="fhEaCausalidad"><option value="">Seleccionar...</option><option>No evaluada</option><option>Improbable</option><option>Posible</option><option>Probable</option><option>Muy probable</option><option>No clasificable con la información disponible</option></select></div>
+    <div class="form-group"><label for="fhEaGravedad">Gravedad</label><select class="form-select" id="fhEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option></select></div>
+    <div class="form-group"><label for="fhEaAccion">Acción tomada</label><select class="form-select" id="fhEaAccion"><option value="">Seleccionar...</option><option value="Continuar">Continuar</option><option value="Modificar dosis">Modificar dosis</option><option value="Suspender">Suspender</option><option value="Observar">Observar</option><option value="No aplica">No aplica</option></select></div>
+    <div class="form-group"><label for="fhEaCausalidad">Causalidad</label><select class="form-select" id="fhEaCausalidad"><option value="">Seleccionar...</option><option value="No evaluada">No evaluada</option><option value="Improbable">Improbable</option><option value="Posible">Posible</option><option value="Probable">Probable</option><option value="Muy probable">Muy probable</option><option value="No clasificable con la información disponible">No clasificable con la información disponible</option></select></div>
   </div>
   <h3 class="card-title"><i class="fas fa-clipboard-check"></i> Criterios de causalidad</h3>
   <div class="checklist-visual ea-criteria-grid">
@@ -222,6 +222,7 @@
             </div>
             <script src="vendor/sheetjs/xlsx.full.min.js"></script>
             <script src="scripts/farmacia_common.js?v=20260607-postdemo-d"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260611-intake-e"></script>
+    <script src="scripts/farmacia_validacion_model.js?v=20260611-pure-model-a"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260611-pure-model-a"></script>
         </body>
         </html>

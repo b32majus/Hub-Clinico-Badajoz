@@ -170,6 +170,41 @@
         if (el) el.checked = !!value;
     }
 
+    function setValueIfExists(id, value) {
+        var el = document.getElementById(id);
+        if (el && value !== undefined && value !== null && value !== '') el.value = value;
+    }
+    function setCheckedIfExists(id, checked) {
+        var el = document.getElementById(id);
+        if (el) el.checked = !!checked;
+    }
+    function appendObservationIfExists(id, text) {
+        var el = document.getElementById(id);
+        if (!el || !text) return;
+        var current = el.value || '';
+        if (current.indexOf(text) !== -1) return;
+        el.value = current ? current + '\n' + text : text;
+    }
+    function setChipValue(targetId, value) {
+        var hidden = document.getElementById(targetId);
+        var normalizedValue = value || '';
+        if (hidden) hidden.value = normalizedValue;
+        var group = document.querySelector('[data-chip-target="' + targetId + '"]');
+        if (!group) return;
+        var radios = group.querySelectorAll('input[type="radio"]');
+        radios.forEach(function (radio) {
+            radio.checked = false;
+            if (normalizedValue && String(radio.value).toLowerCase() === String(normalizedValue).toLowerCase()) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
+    function showIfExists(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('hidden');
+    }
+
     function initAnaliticaChips() {
         var groups = document.querySelectorAll('[data-chip-target]');
         groups.forEach(function (group) {
@@ -888,61 +923,28 @@ function iniciarValidacionDesdeIntake(data, triggerButton) {
   if (hero) hero.scrollIntoView({ behavior: 'smooth' });
 }
 
-function precargarValidacion(data) {
-  function setValueIfExists(id, value) {
-    var el = document.getElementById(id);
-    if (el && value !== undefined && value !== null && value !== '') el.value = value;
-  }
-  function setCheckedIfExists(id, checked) {
-    var el = document.getElementById(id);
-    if (el) el.checked = !!checked;
-  }
-  function appendObservationIfExists(id, text) {
-    var el = document.getElementById(id);
-    if (!el || !text) return;
-    var current = el.value || '';
-    if (current.indexOf(text) !== -1) return;
-    el.value = current ? current + '\n' + text : text;
-  }
-  function setChipValue(targetId, value) {
-    var hidden = document.getElementById(targetId);
-    var normalizedValue = value || '';
-    if (hidden) hidden.value = normalizedValue;
-    var group = document.querySelector('[data-chip-target="' + targetId + '"]');
-    if (!group) return;
-    var radios = group.querySelectorAll('input[type="radio"]');
-    radios.forEach(function (radio) {
-      radio.checked = false;
-      if (normalizedValue && String(radio.value).toLowerCase() === String(normalizedValue).toLowerCase()) {
-        radio.checked = true;
-        radio.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    });
-  }
-  function showIfExists(id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.remove('hidden');
-  }
+function applyValidationStateToDom(state) {
+  if (!state) return;
 
   var contextCip = document.querySelector('[data-context="cip"]');
   var contextServ = document.querySelector('[data-context="servicio"]');
   var contextPat = document.querySelector('[data-context="patologia"]');
-  if (contextCip) contextCip.textContent = data.patient_id || '—';
-  if (contextServ) contextServ.textContent = data.service || '—';
-  if (contextPat) contextPat.textContent = data.pathology || '—';
+  if (contextCip) contextCip.textContent = state.patient.cip || state.patient.displayId || '—';
+  if (contextServ) contextServ.textContent = state.source.service || '—';
+  if (contextPat) contextPat.textContent = state.source.pathology || '—';
 
-  var servicioLower = (data.service || '').toLowerCase();
+  var servicioLower = (state.source.service || '').toLowerCase();
   if (servicioLower.includes('derma')) setValueIfExists('fhTipoSolicitud', 'derma');
   else if (servicioLower.includes('reuma')) setValueIfExists('fhTipoSolicitud', 'reuma');
   var tipoSelect = document.getElementById('fhTipoSolicitud');
   if (tipoSelect) tipoSelect.dispatchEvent(new Event('change'));
 
-  setValueIfExists('fhDermaCip', data.patient_id);
+  setValueIfExists('fhDermaCip', state.patient.cip);
 
   var pat = document.getElementById('fhDermaPatologia');
-  if (pat && data.pathology) {
+  if (pat && state.source.pathology) {
     for (var i = 0; i < pat.options.length; i++) {
-      if (pat.options[i].text.toLowerCase().includes(data.pathology.toLowerCase())) {
+      if (pat.options[i].text.toLowerCase().includes(state.source.pathology.toLowerCase())) {
         pat.value = pat.options[i].text;
         break;
       }
@@ -950,67 +952,29 @@ function precargarValidacion(data) {
     if (pat.value) pat.dispatchEvent(new Event('change'));
   }
 
-  var bio = data.proposed_biologic || {};
-  setValueIfExists('fhDermaFarmaco', bio.name);
-  setValueIfExists('fhDermaPrincipioActivo', bio.principio_activo || bio.active_principle);
-  setValueIfExists('fhDermaDosis', bio.dose);
-  setValueIfExists('fhDermaVia', bio.route);
-  setValueIfExists('fhDermaPauta', bio.schedule);
+  setValueIfExists('fhDermaFarmaco', state.request.farmaco);
+  setValueIfExists('fhDermaPrincipioActivo', state.request.principioActivo);
+  setValueIfExists('fhDermaDosis', state.request.dosis);
+  setValueIfExists('fhDermaVia', state.request.via);
+  setValueIfExists('fhDermaPauta', state.request.pauta);
 
-  var prebio = data.prebiologic_status || {};
-  if (prebio.analytics_status === 'OK' || prebio.analytics_status === 'ok') {
-    setValueIfExists('fhAnaliticaReciente', 'si');
-    setCheckedIfExists('fhAnaliticaHemograma', true);
-    setCheckedIfExists('fhAnaliticaBioquimica', true);
+  if (state.prebiologic.analyticsRecent) {
+    setValueIfExists('fhAnaliticaReciente', state.prebiologic.analyticsRecent);
+    setCheckedIfExists('fhAnaliticaHemograma', state.prebiologic.hemograma);
+    setCheckedIfExists('fhAnaliticaBioquimica', state.prebiologic.bioquimica);
   }
 
-  if (prebio.tb_screening_status) {
-    var tbVal = prebio.tb_screening_status.toUpperCase();
-    if (tbVal.indexOf('NEGATIVO') !== -1) {
-      setChipValue('fhAnaliticaMantoux', 'Negativo');
-    } else if (tbVal.indexOf('PENDIENTE') !== -1) {
-      setChipValue('fhAnaliticaMantoux', 'Pendiente');
-    } else if (tbVal.indexOf('POSITIVO') !== -1) {
-      if (tbVal.indexOf('TRATADO') !== -1) {
-        setChipValue('fhAnaliticaMantoux', 'Positivo - tratado');
-      } else {
-        setChipValue('fhAnaliticaMantoux', 'Pendiente');
-        appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Mantoux/IGRA positivo sin tratamiento registrado. Revisar.');
-      }
-    } else if (tbVal.indexOf('NO PRECISA') !== -1) {
-      appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Mantoux/IGRA no preciso según Excel mock.');
-    }
-  }
+  if (state.prebiologic.tb) setChipValue('fhAnaliticaMantoux', state.prebiologic.tb);
+  if (state.prebiologic.vhb) setChipValue('fhAnaliticaSerologiasVhb', state.prebiologic.vhb);
+  if (state.prebiologic.vhc) setChipValue('fhAnaliticaSerologiasVhc', state.prebiologic.vhc);
+  if (state.prebiologic.vih) setChipValue('fhAnaliticaSerologiasVih', state.prebiologic.vih);
+  if (state.prebiologic.vaccination) setChipValue('fhAnaliticaVacunacion', state.prebiologic.vaccination);
 
-  if (prebio.serologies_status) {
-    var seroStatus = prebio.serologies_status.toUpperCase();
-    if (seroStatus === 'OK') {
-      setChipValue('fhAnaliticaSerologiasVhb', 'Negativo');
-      setChipValue('fhAnaliticaSerologiasVhc', 'Negativo');
-      setChipValue('fhAnaliticaSerologiasVih', 'Negativo');
-    } else if (seroStatus === 'PENDIENTE') {
-      setChipValue('fhAnaliticaSerologiasVhb', 'Pendiente');
-      setChipValue('fhAnaliticaSerologiasVhc', 'Pendiente');
-      setChipValue('fhAnaliticaSerologiasVih', 'Pendiente');
-    } else if (seroStatus === 'ALTERADA') {
-      appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Serologías alteradas según Excel mock. Revisar detalle antes de validar.');
-    }
+  if (state.request.observaciones) {
+    appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] ' + state.request.observaciones);
   }
-
-  if (prebio.vaccination_status) {
-    var vaccStatus = prebio.vaccination_status.toUpperCase();
-    if (vaccStatus === 'OK') {
-      setChipValue('fhAnaliticaVacunacion', 'si');
-    } else if (vaccStatus === 'PENDIENTE') {
-      setChipValue('fhAnaliticaVacunacion', 'pendiente');
-    } else if (vaccStatus === 'NO PRECISA') {
-      setChipValue('fhAnaliticaVacunacion', 'no');
-      appendObservationIfExists('fhAnaliticaObservaciones', '[Enfermería] Vacunación no precisa según Excel mock.');
-    }
-  }
-
-  if (data.nursing_observations) {
-    setValueIfExists('fhAnaliticaObservaciones', '[Enfermería] ' + data.nursing_observations);
+  if (state.prebiologic.observaciones) {
+    appendObservationIfExists('fhAnaliticaObservaciones', state.prebiologic.observaciones);
   }
 
   var origenStrip = document.querySelector('.context-strip');
@@ -1028,42 +992,31 @@ function precargarValidacion(data) {
   showIfExists('eaBlock');
   showIfExists('concomitantesBlock');
 
-  var ea = data.adverse_event || data.adverseEvent || null;
-  if (ea) {
-    var eaBlock = document.getElementById("eaBlock");
-    if (eaBlock) eaBlock.classList.remove("hidden");
-    if (ea.notificado) setValueIfExists("fhEaNotificado", ea.notificado);
-    if (ea.tipo) setValueIfExists("fhEaTipo", ea.tipo);
-    if (ea.gravedad) setValueIfExists("fhEaGravedad", ea.gravedad);
-    if (ea.accion) setValueIfExists("fhEaAccion", ea.accion);
-    if (ea.causalidad) setValueIfExists("fhEaCausalidad", ea.causalidad);
-    if (ea.criterios) {
-      var crits = ea.criterios;
-      if (crits.temporal) setCheckedIfExists("fhEaCritTemporal", true);
-      if (crits.dechallenge) setCheckedIfExists("fhEaCritDechallenge", true);
-      if (crits.rechallenge) setCheckedIfExists("fhEaCritRechallenge", true);
-      if (crits.alternativa) setCheckedIfExists("fhEaCritAlternativa", true);
-      if (crits.descrito) setCheckedIfExists("fhEaCritDescrito", true);
-      if (crits.dosis) setCheckedIfExists("fhEaCritDosis", true);
-      if (crits.insuficiente) setCheckedIfExists("fhEaCritInsuficiente", true);
-    }
-  } else {
-    setValueIfExists('fhEaNotificado', 'No consta');
-    setValueIfExists('fhEaGravedad', 'No consta');
-    setValueIfExists('fhEaAccion', 'No aplica');
-    setValueIfExists('fhEaCausalidad', 'No evaluada');
-  }
+  var ae = state.adverseEvent || {};
+  setValueIfExists('fhEaNotificado', ae.notificado);
+  setValueIfExists('fhEaTipo', ae.tipo);
+  setValueIfExists('fhEaGravedad', ae.gravedad);
+  setValueIfExists('fhEaAccion', ae.accion);
+  setValueIfExists('fhEaCausalidad', ae.causalidad);
+  var crits = ae.criterios || {};
+  setCheckedIfExists('fhEaCritTemporal', crits.temporal);
+  setCheckedIfExists('fhEaCritDechallenge', crits.dechallenge);
+  setCheckedIfExists('fhEaCritRechallenge', crits.rechallenge);
+  setCheckedIfExists('fhEaCritAlternativa', crits.alternativa);
+  setCheckedIfExists('fhEaCritDescrito', crits.descrito);
+  setCheckedIfExists('fhEaCritDosis', crits.dosis);
+  setCheckedIfExists('fhEaCritInsuficiente', crits.insuficiente);
 
-  var concom = data.other_biologics || data.concomitant_treatments || [];
+  var concom = state.concomitantTreatments || [];
   if (Array.isArray(concom) && concom.length > 0) {
-    var concBlock = document.getElementById("concomitantesBlock");
-    if (concBlock) concBlock.classList.remove("hidden");
-    var concList = document.getElementById("concomitantesList");
+    var concBlock = document.getElementById('concomitantesBlock');
+    if (concBlock) concBlock.classList.remove('hidden');
+    var concList = document.getElementById('concomitantesList');
     concom.forEach(function(item) {
       addConcomitanteRow(concList, item);
     });
   }
-  var concList = document.getElementById("concomitantesList");
+  var concList = document.getElementById('concomitantesList');
   if (concList && concList.children.length === 0) {
     var emptyMsg = document.createElement('p');
     emptyMsg.className = 'concomitante-empty';
@@ -1071,6 +1024,102 @@ function precargarValidacion(data) {
     concList.appendChild(emptyMsg);
   }
 }
+
+function precargarValidacion(data) {
+  if (!window.FarmaciaValidationModel || !window.FarmaciaValidationModel.buildValidationStateFromIntake) {
+    console.error('[precargarValidacion] FarmaciaValidationModel no disponible');
+    return;
+  }
+  var state = window.FarmaciaValidationModel.buildValidationStateFromIntake(data);
+  applyValidationStateToDom(state);
+}
+
+function readValidationStateFromDom() {
+  var safeVal = function(id) {
+    var el = document.getElementById(id);
+    return el ? el.value : '';
+  };
+  var safeChecked = function(id) {
+    var el = document.getElementById(id);
+    return el ? el.checked : false;
+  };
+  var safeChip = function(targetId) {
+    var hidden = document.getElementById(targetId);
+    return hidden ? hidden.value : '';
+  };
+
+  var concomRows = document.querySelectorAll('.concomitante-row');
+  var concomitantTreatments = [];
+  concomRows.forEach(function(row) {
+    concomitantTreatments.push({
+      nombre: (row.querySelector('.concomitante-nombre') || {}).value || '',
+      principio_activo: (row.querySelector('.concomitante-pa') || {}).value || '',
+      dosis: (row.querySelector('.concomitante-dosis') || {}).value || '',
+      via: (row.querySelector('.concomitante-via') || {}).value || '',
+      pauta: (row.querySelector('.concomitante-pauta') || {}).value || '',
+      motivo: (row.querySelector('.concomitante-motivo') || {}).value || ''
+    });
+  });
+
+  return {
+    source: {
+      service: safeVal('fhTipoSolicitud'),
+      pathology: safeVal('fhDermaPatologia')
+    },
+    patient: {
+      cip: safeVal('fhDermaCip'),
+      displayId: ''
+    },
+    request: {
+      farmaco: safeVal('fhDermaFarmaco'),
+      principioActivo: safeVal('fhDermaPrincipioActivo'),
+      dosis: safeVal('fhDermaDosis'),
+      via: safeVal('fhDermaVia'),
+      pauta: safeVal('fhDermaPauta'),
+      induccion: safeVal('fhDermaInduccion'),
+      peso: safeVal('fhDermaPeso'),
+      fechaSolicitud: safeVal('fhDermaFecha'),
+      justificacion: safeVal('fhDermaJustificacion'),
+      observaciones: safeVal('fhDermaObservaciones')
+    },
+    prebiologic: {
+      analyticsRecent: safeVal('fhAnaliticaReciente'),
+      hemograma: safeChecked('fhAnaliticaHemograma'),
+      bioquimica: safeChecked('fhAnaliticaBioquimica'),
+      tb: safeChip('fhAnaliticaMantoux'),
+      vhb: safeChip('fhAnaliticaSerologiasVhb'),
+      vhc: safeChip('fhAnaliticaSerologiasVhc'),
+      vih: safeChip('fhAnaliticaSerologiasVih'),
+      vaccination: safeChip('fhAnaliticaVacunacion'),
+      observaciones: safeVal('fhAnaliticaObservaciones')
+    },
+    adverseEvent: {
+      notificado: safeVal('fhEaNotificado') || 'No consta',
+      tipo: safeVal('fhEaTipo') || 'No consta',
+      gravedad: safeVal('fhEaGravedad') || 'No consta',
+      accion: safeVal('fhEaAccion') || 'No aplica',
+      causalidad: safeVal('fhEaCausalidad') || 'No evaluada',
+      criterios: {
+        temporal: safeChecked('fhEaCritTemporal'),
+        dechallenge: safeChecked('fhEaCritDechallenge'),
+        rechallenge: safeChecked('fhEaCritRechallenge'),
+        alternativa: safeChecked('fhEaCritAlternativa'),
+        descrito: safeChecked('fhEaCritDescrito'),
+        dosis: safeChecked('fhEaCritDosis'),
+        insuficiente: safeChecked('fhEaCritInsuficiente')
+      }
+    },
+    concomitantTreatments: concomitantTreatments,
+    validation: {
+      estado: safeVal('fhValEstado'),
+      motivoDenegacion: safeVal('fhValMotivo'),
+      citaFarmacia: safeVal('fhValCita'),
+      observaciones: safeVal('fhValObservaciones')
+    }
+  };
+}
+
+window.FarmaciaValidationModel.readValidationStateFromDom = readValidationStateFromDom;
 
 function addConcomitanteRow(container, data) {
   var row = document.createElement('div');
