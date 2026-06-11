@@ -706,4 +706,181 @@
         applyContext();
         initAnaliticaChips();
     });
+
+// ===== INTAKE ENFERMERÍA — BANDEJA =====
+function initIntakeBandeja() {
+  var container = document.getElementById('intakeCardsGrid');
+  if (!container) return;
+  fetch('data/demo/farmacia/farmacia_intake_enfermeria_prebiologico_demo_v0_1.json')
+    .then(function(r) { return r.json(); })
+    .then(function(records) { renderIntakeBandeja(records); })
+    .catch(function(err) {
+      console.warn('[Intake] No se pudo cargar intake:', err);
+      container.innerHTML = '<div class="intake-empty"><i class="fas fa-info-circle"></i> Bandeja no disponible.</div>';
+    });
+}
+
+function renderIntakeBandeja(records) {
+  var grid = document.getElementById('intakeCardsGrid');
+  var total = document.getElementById('intakeTotal');
+  var pend = document.getElementById('intakePendientes');
+  var ok = document.getElementById('intakeOk');
+  var block = document.getElementById('intakeBloqueados');
+  var batchBadge = document.getElementById('intakeBatchBadge');
+  if (!grid) return;
+  var counts = { pendiente_servicio: 0, devuelto_servicio: 0, ok_para_validacion: 0 };
+  records.forEach(function(r) {
+    var s = r.prebiologic_status.global_status;
+    if (counts[s] !== undefined) counts[s]++;
+  });
+  if (total) total.textContent = records.length;
+  if (pend) pend.textContent = counts.pendiente_servicio;
+  if (ok) ok.textContent = counts.ok_para_validacion;
+  if (block) block.textContent = counts.devuelto_servicio;
+  if (batchBadge && records[0]) batchBadge.textContent = 'Batch: ' + records[0].import_batch_id;
+  grid.innerHTML = '';
+  records.forEach(function(r) {
+    var card = document.createElement('div');
+    card.className = 'intake-card intake-card--' + r.prebiologic_status.global_status;
+    var statusLabel = '';
+    var statusClass = '';
+    if (r.prebiologic_status.global_status === 'ok_para_validacion') {
+      statusLabel = 'OK Farmacia';
+      statusClass = 'intake-status-ok';
+    } else if (r.prebiologic_status.global_status === 'pendiente_servicio') {
+      statusLabel = 'En vigilancia';
+      statusClass = 'intake-status-pending';
+    } else {
+      statusLabel = 'Bloqueado';
+      statusClass = 'intake-status-blocked';
+    }
+    var missingHtml = '';
+    if (r.prebiologic_status.missing_items && r.prebiologic_status.missing_items.length > 0) {
+      missingHtml = '<div class="intake-missing"><i class="fas fa-exclamation-triangle"></i> Faltan: ' + r.prebiologic_status.missing_items.join(', ') + '</div>';
+    }
+    var actionHtml = '';
+    if (r.ready_for_pharmacy_validation) {
+      actionHtml = '<button type="button" class="btn btn-primary btn-sm intake-btn-validar" data-intake=\'' + JSON.stringify(r).replace(/'/g, '&#39;') + '\'>Iniciar validación <i class="fas fa-arrow-right"></i></button>';
+    } else {
+      actionHtml = '<button type="button" class="btn btn-sm intake-btn-disabled" disabled><i class="fas fa-clock"></i> ' + statusLabel + '</button>';
+    }
+    var bio = r.proposed_biologic || {};
+    var bioHtml = bio.name ? '<div class="intake-drug"><i class="fas fa-pills"></i> ' + escapeHtml(bio.name) + '</div>' : '';
+    card.innerHTML = [
+      '<div class="intake-card-header">',
+        '<span class="intake-card-id">' + escapeHtml(r.display_id) + '</span>',
+        '<span class="intake-badge ' + statusClass + '">' + statusLabel + '</span>',
+      '</div>',
+      '<div class="intake-card-body">',
+        '<div class="intake-service-pat">',
+          '<span><i class="fas fa-hospital-alt"></i> ' + escapeHtml(r.service) + '</span>',
+          '<span><i class="fas fa-disease"></i> ' + escapeHtml(r.pathology) + '</span>',
+        '</div>',
+        bioHtml,
+        '<div class="intake-prebiologic">',
+          '<span>Vacuna: ' + (r.prebiologic_status.vaccination_status || '—') + '</span>',
+          '<span>Serologías: ' + (r.prebiologic_status.serologies_status || '—') + '</span>',
+          '<span>TB: ' + (r.prebiologic_status.tb_screening_status || '—') + '</span>',
+          '<span>Analítica: ' + (r.prebiologic_status.analytics_status || '—') + '</span>',
+        '</div>',
+        missingHtml,
+        (r.nursing_observations ? '<div class="intake-observations"><i class="fas fa-comment"></i> ' + escapeHtml(r.nursing_observations) + '</div>' : ''),
+      '</div>',
+      '<div class="intake-card-footer">',
+        actionHtml,
+      '</div>',
+    ].join('\n');
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('.intake-btn-validar').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var data = JSON.parse(this.getAttribute('data-intake'));
+      iniciarValidacionDesdeIntake(data);
+    });
+  });
+}
+
+function iniciarValidacionDesdeIntake(data) {
+  sessionStorage.setItem('intake_context', JSON.stringify(data));
+  precargarValidacion(data);
+  var hero = document.querySelector('.patient-header-card');
+  if (hero) hero.scrollIntoView({ behavior: 'smooth' });
+  var btn = document.querySelector('.intake-btn-validar[data-intake]');
+  if (btn) {
+    var orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i> Validación iniciada';
+    btn.classList.add('btn--success');
+    setTimeout(function() { btn.innerHTML = orig; btn.classList.remove('btn--success'); }, 2000);
+  }
+}
+
+function precargarValidacion(data) {
+  var tipoSelect = document.getElementById('fhTipoSolicitud');
+  if (tipoSelect) {
+    var servicioLower = (data.service || '').toLowerCase();
+    if (servicioLower.includes('derma')) {
+      tipoSelect.value = 'derma';
+    } else if (servicioLower.includes('reuma')) {
+      tipoSelect.value = 'reuma';
+    }
+    tipoSelect.dispatchEvent(new Event('change'));
+  }
+  var contextCip = document.querySelector('[data-context="cip"]');
+  var contextServ = document.querySelector('[data-context="servicio"]');
+  var contextPat = document.querySelector('[data-context="patologia"]');
+  if (contextCip) contextCip.textContent = data.patient_id || '—';
+  if (contextServ) contextServ.textContent = data.service || '—';
+  if (contextPat) contextPat.textContent = data.pathology || '—';
+  setTimeout(function() {
+    var cip = document.getElementById('fhDermaCip');
+    if (cip) cip.value = data.patient_id || '';
+    var pat = document.getElementById('fhDermaPatologia');
+    if (pat) {
+      for (var i = 0; i < pat.options.length; i++) {
+        if (pat.options[i].text.toLowerCase().includes((data.pathology || '').toLowerCase())) {
+          pat.value = pat.options[i].text;
+          break;
+        }
+      }
+      if (pat.value) pat.dispatchEvent(new Event('change'));
+    }
+    var farm = document.getElementById('fhDermaFarmaco');
+    if (farm && data.proposed_biologic && data.proposed_biologic.name) {
+      farm.value = data.proposed_biologic.name;
+    }
+    var motivo = document.getElementById('fhDermaMotivo');
+    if (motivo && data.nursing_observations) {
+      var existing = motivo.value || '';
+      var prefix = '[Enfermería] ';
+      if (existing.indexOf(prefix) === -1) {
+        motivo.value = prefix + data.nursing_observations + (existing ? '\n' + existing : '');
+      }
+    }
+    var origenStrip = document.querySelector('.context-strip');
+    if (origenStrip && !document.querySelector('[data-context-origen]')) {
+      var origenEl = document.createElement('span');
+      origenEl.innerHTML = 'Origen: <strong>Excel Enfermería mock</strong>';
+      origenEl.style.color = 'var(--ses-green, #008777)';
+      origenEl.style.fontSize = '0.82rem';
+      origenEl.setAttribute('data-context-origen', 'true');
+      origenStrip.appendChild(origenEl);
+    }
+  }, 100);
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
+// Intake: init
+document.addEventListener('DOMContentLoaded', function() {
+  var intakeCtx = sessionStorage.getItem('intake_context');
+  if (intakeCtx) {
+    try { precargarValidacion(JSON.parse(intakeCtx)); } catch(e) {}
+  }
+  initIntakeBandeja();
+});
 })();

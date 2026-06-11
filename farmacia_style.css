@@ -3173,6 +3173,197 @@
     background: var(--ses-green-light);
 }
 
+/* ============================================================
+   INTAKE BANDEJA — Enfermería / Servicios
+   ============================================================ */
+.intake-bandeja-section {
+    margin-bottom: 28px;
+}
+.intake-bandeja-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-bottom: 14px;
+}
+.intake-bandeja-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1E293B;
+}
+.intake-summary-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.84rem;
+    color: #64748B;
+}
+.intake-summary-strip strong {
+    font-weight: 700;
+}
+.intake-summary-dot {
+    color: #CBD5E1;
+}
+.text-amber { color: #D97706; }
+.text-green { color: #059669; }
+.text-red { color: #DC2626; }
+.intake-badge {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+.badge--info {
+    background: #EFF6FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+.badge--outline {
+    background: transparent;
+    border: 1px solid #E2E8F0;
+    color: #94A3B8;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+.intake-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+}
+.intake-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+    overflow: hidden;
+}
+.intake-card--ok_para_validacion { border-left: 4px solid #059669; }
+.intake-card--pendiente_servicio { border-left: 4px solid #D97706; }
+.intake-card--devuelto_servicio { border-left: 4px solid #DC2626; }
+.intake-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px 4px;
+}
+.intake-card-id {
+    font-weight: 700;
+    color: #1E293B;
+    font-size: 0.9rem;
+}
+.intake-status-ok { background: #D1FAE5; color: #065F46; }
+.intake-status-pending { background: #FEF3C7; color: #92400E; }
+.intake-status-blocked { background: #FEE2E2; color: #991B1B; }
+.intake-card-body {
+    padding: 8px 14px 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.intake-service-pat {
+    display: flex;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: #475569;
+    flex-wrap: wrap;
+}
+.intake-service-pat i {
+    width: 14px;
+    color: #94A3B8;
+}
+.intake-drug {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #1E293B;
+}
+.intake-drug i {
+    color: var(--ses-green, #008777);
+    width: 14px;
+}
+.intake-prebiologic {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 10px;
+    font-size: 0.75rem;
+    color: #64748B;
+    background: #F8FAFC;
+    padding: 6px 8px;
+    border-radius: 8px;
+}
+.intake-missing {
+    font-size: 0.75rem;
+    color: #DC2626;
+    background: #FEF2F2;
+    padding: 4px 8px;
+    border-radius: 6px;
+    margin-top: 2px;
+}
+.intake-observations {
+    font-size: 0.78rem;
+    color: #64748B;
+    font-style: italic;
+    background: #FFFBEB;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+.intake-card-footer {
+    padding: 6px 14px 12px;
+    display: flex;
+    justify-content: flex-end;
+}
+.intake-btn-validar {
+    background: var(--ses-green, #008777);
+    color: #FFFFFF;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.intake-btn-validar:hover {
+    background: #006B5F;
+}
+.intake-btn-disabled {
+    background: #F1F5F9;
+    color: #94A3B8;
+    border: 1px solid #E2E8F0;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: not-allowed;
+}
+.intake-empty {
+    text-align: center;
+    padding: 30px;
+    color: #94A3B8;
+    background: #FFFFFF;
+    border-radius: 14px;
+    border: 1px dashed #E2E8F0;
+    font-size: 0.9rem;
+}
+@media (max-width: 768px) {
+    .intake-cards-grid {
+        grid-template-columns: 1fr;
+    }
+    .intake-bandeja-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .intake-badge {
+        margin-left: 0;
+    }
+}
+
 /* --- Responsive: filters, charts --- */
 @media (max-width: 768px) {
     .filters-grid {
