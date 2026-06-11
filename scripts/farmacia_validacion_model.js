@@ -250,6 +250,53 @@
     };
   }
 
+  function calculateNaranjoScore(answers) {
+    const a = answers || {};
+    let score = 0;
+    score += a.q1 === true ? 1 : (a.q1 === false ? -1 : 0);
+    score += a.q2 === true ? 2 : (a.q2 === false ? -1 : 0);
+    score += a.q3 === true ? 1 : 0;
+    score += a.q4 === true ? 1 : (a.q4 === false ? -1 : 0);
+    score += a.q5 === true ? -1 : (a.q5 === false ? 1 : 0);
+    score += a.q6 === true ? 1 : (a.q6 === false ? -1 : 0);
+    score += a.q7 === true ? 1 : 0;
+    score += a.q8 === true ? 1 : (a.q8 === false ? -1 : 0);
+    score += a.q9 === true ? 1 : 0;
+    score += a.q10 === true ? 1 : 0;
+    return score;
+  }
+
+  function categorizeNaranjo(score) {
+    if (score >= 9) return 'Definitiva';
+    if (score >= 5) return 'Probable';
+    if (score >= 1) return 'Posible';
+    return 'Dudosa';
+  }
+
+  function categorizeKarchLasagna(answers) {
+    const a = answers || {};
+    const temporal = !!a.temporal;
+    const dechallenge = !!a.dechallenge;
+    const rechallenge = !!a.rechallenge;
+    const alternativa = !!a.alternativa;
+    const descrito = !!a.descrito;
+    const dosis = !!a.dosis;
+
+    if (temporal && dechallenge && (rechallenge || (!alternativa && descrito && dosis))) {
+      return 'Definitiva';
+    }
+    if (temporal && dechallenge && (alternativa || descrito || dosis)) {
+      return 'Probable';
+    }
+    if (temporal && (dechallenge || descrito)) {
+      return 'Posible';
+    }
+    if (temporal && !dechallenge && !descrito) {
+      return 'Improbable';
+    }
+    return 'No clasificable';
+  }
+
   window.FarmaciaValidationModel = {
     createEmptyValidationState: createEmptyValidationState,
     normalizeIntakeRecord: normalizeIntakeRecord,
@@ -257,7 +304,10 @@
     normalizeAdverseEvent: normalizeAdverseEvent,
     normalizeConcomitantTreatment: normalizeConcomitantTreatment,
     buildValidationStateFromIntake: buildValidationStateFromIntake,
-    buildExportPayloadFromState: buildExportPayloadFromState
+    buildExportPayloadFromState: buildExportPayloadFromState,
+    calculateNaranjoScore: calculateNaranjoScore,
+    categorizeNaranjo: categorizeNaranjo,
+    categorizeKarchLasagna: categorizeKarchLasagna
   };
 
 })();
