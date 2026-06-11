@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260607-postdemo-d">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260611-intake-e">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260611-causality-operational-a">
 </head>
         <body>
             <div class="hub-shell">
@@ -213,6 +213,68 @@
   </div>
   <div class="ea-note">Criterios orientativos no validados. Esta clasificación no sustituye la valoración clínica ni los circuitos oficiales de farmacovigilancia.</div>
 </section>
+
+<section class="dashboard-card hidden" id="naranjoBlock">
+  <h2 class="section-title"><i class="fas fa-clipboard-check"></i> Algoritmo de Naranjo — Causalidad</h2>
+  <p class="algorithm-description">Responda las 10 preguntas del algoritmo de Naranjo para evaluar la relación causal entre el fármaco y el efecto adverso.</p>
+  <div class="naranjo-questions-grid">
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ1" data-naranjo-q="q1"> 1. ¿Se han comunicado previamente reacciones adversas a este fármaco?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ2" data-naranjo-q="q2"> 2. ¿El efecto adverso se produjo tras una administración objetiva del fármaco?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ3" data-naranjo-q="q3"> 3. ¿Existen pruebas objetivas de la reacción (niveles en sangre, etc.)?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ4" data-naranjo-q="q4"> 4. ¿La relación temporal es adecuada?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ5" data-naranjo-q="q5"> 5. ¿Existen causas alternativas que puedan haber producido la reacción?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ6" data-naranjo-q="q6"> 6. ¿La reacción apareció tras la administración de un placebo?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ7" data-naranjo-q="q7"> 7. ¿Se detectaron niveles tóxicos del fármaco en sangre?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ8" data-naranjo-q="q8"> 8. ¿La reacción fue más grave con dosis mayores y menos grave con dosis menores?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ9" data-naranjo-q="q9"> 9. ¿El paciente ha tenido reacciones similares a este fármaco o similares en el pasado?</label>
+    <label class="naranjo-question"><input type="checkbox" id="fhNarQ10" data-naranjo-q="q10"> 10. ¿El efecto adverso se confirmó por cualquier evidencia objetiva?</label>
+  </div>
+  <div class="naranjo-result-strip">
+    <span class="naranjo-score-label">Puntuación Naranjo: <strong id="naranjoScoreValue">0</strong></span>
+    <span class="naranjo-category-label">Categoría: <strong id="naranjoCategoryValue" class="naranjo-category-badge">—</strong></span>
+  </div>
+  <div class="ea-note">Algoritmo de Naranjo: herramienta orientativa. No sustituye el juicio clínico ni los circuitos oficiales de farmacovigilancia.</div>
+</section>
+
+<section class="dashboard-card hidden" id="karchLasagnaBlock">
+  <h2 class="section-title"><i class="fas fa-balance-scale"></i> Algoritmo de Karch-Lasagna</h2>
+  <p class="algorithm-description">Clasificación de la relación causal según criterios de Karch y Lasagna.</p>
+  <div class="checklist-visual kl-criteria-grid">
+    <label class="checklist-chip"><input type="checkbox" id="fhKlTemporal" data-kl-q="temporal"> Relación temporal adecuada</label>
+    <label class="checklist-chip"><input type="checkbox" id="fhKlDechallenge" data-kl-q="dechallenge"> Dechallenge positivo (mejoría al retirar)</label>
+    <label class="checklist-chip"><input type="checkbox" id="fhKlRechallenge" data-kl-q="rechallenge"> Rechallenge positivo (reaparición al reintroducir)</label>
+    <label class="checklist-chip"><input type="checkbox" id="fhKlAlternativa" data-kl-q="alternativa"> Sin causa alternativa más probable</label>
+    <label class="checklist-chip"><input type="checkbox" id="fhKlDescrito" data-kl-q="descrito"> EA descrito en ficha técnica</label>
+    <label class="checklist-chip"><input type="checkbox" id="fhKlDosis" data-kl-q="dosis"> Relación dosis-respuesta confirmada</label>
+  </div>
+  <div class="kl-result-strip">
+    <span class="kl-category-label">Clasificación Karch-Lasagna: <strong id="klCategoryValue" class="kl-category-badge">—</strong></span>
+  </div>
+  <div class="ea-note">Clasificación orientativa. No sustituye la valoración clínica ni los circuitos oficiales de farmacovigilancia.</div>
+</section>
+
+<section class="dashboard-card hidden" id="resumenCausalidadBlock">
+  <h2 class="section-title"><i class="fas fa-file-medical-alt"></i> Resumen de causalidad</h2>
+  <div class="resumen-causalidad-grid">
+    <div class="resumen-item">
+      <span class="resumen-label">Efecto adverso</span>
+      <span class="resumen-value" id="resumenEa">—</span>
+    </div>
+    <div class="resumen-item">
+      <span class="resumen-label">Naranjo</span>
+      <span class="resumen-value" id="resumenNaranjo">—</span>
+    </div>
+    <div class="resumen-item">
+      <span class="resumen-label">Karch-Lasagna</span>
+      <span class="resumen-value" id="resumenKl">—</span>
+    </div>
+    <div class="resumen-item resumen-item--full">
+      <span class="resumen-label">Conclusión causalidad</span>
+      <span class="resumen-value resumen-conclusion" id="resumenConclusion">—</span>
+    </div>
+  </div>
+</section>
+
 <section class="dashboard-card hidden" id="concomitantesBlock">
   <h2 class="section-title"><i class="fas fa-pills"></i> Tratamientos concomitantes / otros biológicos</h2>
   <div id="concomitantesList"></div>
@@ -222,7 +284,7 @@
             </div>
             <script src="vendor/sheetjs/xlsx.full.min.js"></script>
             <script src="scripts/farmacia_common.js?v=20260607-postdemo-d"></script>
-    <script src="scripts/farmacia_validacion_model.js?v=20260611-pure-model-a"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260611-pure-model-a"></script>
+    <script src="scripts/farmacia_validacion_model.js?v=20260611-causality-operational-a"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260611-causality-operational-a"></script>
         </body>
         </html>

@@ -356,6 +356,20 @@
           if (cb && cb.checked) lines.push("  [X] " + critNames[ci]);
         }
 
+        lines.push("");
+        lines.push("--- Algoritmo de Naranjo ---");
+        lines.push("Puntuación: " + (document.getElementById("naranjoScoreValue") || {}).textContent || "—");
+        lines.push("Categoría: " + (document.getElementById("naranjoCategoryValue") || {}).textContent || "—");
+        lines.push("");
+        lines.push("--- Algoritmo de Karch-Lasagna ---");
+        lines.push("Clasificación: " + (document.getElementById("klCategoryValue") || {}).textContent || "—");
+        lines.push("");
+        lines.push("--- Resumen de causalidad ---");
+        lines.push("EA: " + (document.getElementById("resumenEa") || {}).textContent || "—");
+        lines.push("Naranjo: " + (document.getElementById("resumenNaranjo") || {}).textContent || "—");
+        lines.push("Karch-Lasagna: " + (document.getElementById("resumenKl") || {}).textContent || "—");
+        lines.push("Conclusión: " + (document.getElementById("resumenConclusion") || {}).textContent || "—");
+
         var concomRows = document.querySelectorAll(".concomitante-row");
         lines.push("");
         lines.push("--- Tratamientos concomitantes / otros biológicos ---");
@@ -691,6 +705,99 @@
         closeLocalDrugModal();
     }
 
+    function updateNaranjoScore() {
+        var answers = {};
+        var qIds = ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'];
+        for (var i = 0; i < qIds.length; i++) {
+            var cb = document.getElementById('fhNarQ' + (i + 1));
+            answers[qIds[i]] = cb ? cb.checked : false;
+        }
+        var model = window.FarmaciaValidationModel;
+        if (!model || !model.calculateNaranjoScore) return;
+        var score = model.calculateNaranjoScore(answers);
+        var category = model.categorizeNaranjo(score);
+        var scoreEl = document.getElementById('naranjoScoreValue');
+        var catEl = document.getElementById('naranjoCategoryValue');
+        if (scoreEl) scoreEl.textContent = score;
+        if (catEl) {
+            catEl.textContent = category;
+            catEl.classList.remove('cat-definitiva', 'cat-probable', 'cat-posible', 'cat-dudosa');
+            if (category === 'Definitiva') catEl.classList.add('cat-definitiva');
+            else if (category === 'Probable') catEl.classList.add('cat-probable');
+            else if (category === 'Posible') catEl.classList.add('cat-posible');
+            else if (category === 'Dudosa') catEl.classList.add('cat-dudosa');
+        }
+    }
+
+    function updateKarchLasagna() {
+        var answers = {};
+        var klMap = {
+            temporal: 'fhKlTemporal',
+            dechallenge: 'fhKlDechallenge',
+            rechallenge: 'fhKlRechallenge',
+            alternativa: 'fhKlAlternativa',
+            descrito: 'fhKlDescrito',
+            dosis: 'fhKlDosis'
+        };
+        for (var key in klMap) {
+            if (klMap.hasOwnProperty(key)) {
+                var cb = document.getElementById(klMap[key]);
+                answers[key] = cb ? cb.checked : false;
+            }
+        }
+        var model = window.FarmaciaValidationModel;
+        if (!model || !model.categorizeKarchLasagna) return;
+        var category = model.categorizeKarchLasagna(answers);
+        var catEl = document.getElementById('klCategoryValue');
+        if (catEl) {
+            catEl.textContent = category;
+            catEl.classList.remove('cat-definitiva', 'cat-probable', 'cat-posible', 'cat-dudosa');
+            if (category === 'Definitiva') catEl.classList.add('cat-definitiva');
+            else if (category === 'Probable') catEl.classList.add('cat-probable');
+            else if (category === 'Posible') catEl.classList.add('cat-posible');
+            else if (category === 'Dudosa') catEl.classList.add('cat-dudosa');
+        }
+    }
+
+    function updateResumenCausalidad() {
+        var tipoEl = document.getElementById('fhEaTipo');
+        var gravedadEl = document.getElementById('fhEaGravedad');
+        var tipo = (tipoEl && tipoEl.value) ? tipoEl.value : 'No consta';
+        var gravedad = (gravedadEl && gravedadEl.value) ? gravedadEl.value : 'No consta';
+        var resumenEa = document.getElementById('resumenEa');
+        if (resumenEa) {
+            resumenEa.textContent = gravedad ? tipo + ' (' + gravedad + ')' : tipo;
+        }
+        var scoreEl = document.getElementById('naranjoScoreValue');
+        var catEl = document.getElementById('naranjoCategoryValue');
+        var score = scoreEl ? scoreEl.textContent : '';
+        var naranjoCat = catEl ? catEl.textContent : '';
+        var resumenNaranjo = document.getElementById('resumenNaranjo');
+        if (resumenNaranjo) {
+            resumenNaranjo.textContent = score + ' pts \u2014 ' + naranjoCat;
+        }
+        var klCatEl = document.getElementById('klCategoryValue');
+        var klCat = klCatEl ? klCatEl.textContent : '';
+        var resumenKl = document.getElementById('resumenKl');
+        if (resumenKl) {
+            resumenKl.textContent = klCat;
+        }
+        var conclusion = '';
+        if (naranjoCat === 'Definitiva' && klCat === 'Definitiva') {
+            conclusion = 'Causalidad confirmada (Definitiva en ambos algoritmos)';
+        } else if (naranjoCat === 'Definitiva' || naranjoCat === 'Probable' || klCat === 'Definitiva' || klCat === 'Probable') {
+            conclusion = 'Causalidad probable \u2014 revisar y documentar';
+        } else if (naranjoCat === 'Posible' || klCat === 'Posible') {
+            conclusion = 'Causalidad posible \u2014 ampliar informaci\u00F3n';
+        } else {
+            conclusion = 'Causalidad no establecida \u2014 datos insuficientes';
+        }
+        var resumenConclusion = document.getElementById('resumenConclusion');
+        if (resumenConclusion) {
+            resumenConclusion.textContent = conclusion;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('fhTipoSolicitud').addEventListener('change', function () {
             if (this.value) mostrarFormulario(this.value);
@@ -771,8 +878,8 @@
             }
 
             const rows = [
-                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro', 'EANotificado', 'EATipo', 'EAGravedad', 'EAAccion', 'EACausalidad', 'ConcomitantesCount', 'OtrosFarmacosResumen'],
-                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro, eaNotifVal, eaTipoVal, eaGravedadVal, eaAccionVal, eaCausalidadVal, String(concomitantesCount), otrosFarmacosResumen]
+                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro', 'EANotificado', 'EATipo', 'EAGravedad', 'EAAccion', 'EACausalidad', 'ConcomitantesCount', 'OtrosFarmacosResumen', 'NaranjoScore', 'NaranjoCategoria', 'KarchLasagna'],
+                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro, eaNotifVal, eaTipoVal, eaGravedadVal, eaAccionVal, eaCausalidadVal, String(concomitantesCount), otrosFarmacosResumen, (document.getElementById('naranjoScoreValue') || {}).textContent || '—', (document.getElementById('naranjoCategoryValue') || {}).textContent || '—', (document.getElementById('klCategoryValue') || {}).textContent || '—']
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {
@@ -806,6 +913,24 @@
             if (concList) addConcomitanteRow(concList, null);
           });
         }
+
+        var narCheckboxes = document.querySelectorAll('[data-naranjo-q]');
+        narCheckboxes.forEach(function(cb) { cb.addEventListener('change', updateNaranjoScore); });
+        narCheckboxes.forEach(function(cb) { cb.addEventListener('change', updateResumenCausalidad); });
+
+        var klCheckboxes = document.querySelectorAll('[data-kl-q]');
+        klCheckboxes.forEach(function(cb) { cb.addEventListener('change', updateKarchLasagna); });
+        klCheckboxes.forEach(function(cb) { cb.addEventListener('change', updateResumenCausalidad); });
+
+        ['fhEaNotificado','fhEaTipo','fhEaGravedad','fhEaAccion','fhEaCausalidad'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('change', updateResumenCausalidad);
+        });
+
+        ['fhEaCritTemporal','fhEaCritDechallenge','fhEaCritRechallenge','fhEaCritAlternativa','fhEaCritDescrito','fhEaCritDosis','fhEaCritInsuficiente'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('change', updateResumenCausalidad);
+        });
     });
 
 // ===== INTAKE ENFERMERÍA — BANDEJA =====
@@ -991,6 +1116,9 @@ function applyValidationStateToDom(state) {
 
   showIfExists('eaBlock');
   showIfExists('concomitantesBlock');
+  showIfExists('naranjoBlock');
+  showIfExists('karchLasagnaBlock');
+  showIfExists('resumenCausalidadBlock');
 
   var ae = state.adverseEvent || {};
   setValueIfExists('fhEaNotificado', ae.notificado);
@@ -1023,6 +1151,7 @@ function applyValidationStateToDom(state) {
     emptyMsg.textContent = 'No hay otros fármacos añadidos todavía.';
     concList.appendChild(emptyMsg);
   }
+  updateResumenCausalidad();
 }
 
 function precargarValidacion(data) {
@@ -1120,6 +1249,9 @@ function readValidationStateFromDom() {
 }
 
 window.FarmaciaValidationModel.readValidationStateFromDom = readValidationStateFromDom;
+window.FarmaciaValidationModel.updateNaranjoScore = updateNaranjoScore;
+window.FarmaciaValidationModel.updateKarchLasagna = updateKarchLasagna;
+window.FarmaciaValidationModel.updateResumenCausalidad = updateResumenCausalidad;
 
 function addConcomitanteRow(container, data) {
   var row = document.createElement('div');
