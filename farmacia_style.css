@@ -3351,6 +3351,13 @@
     border: 1px dashed #E2E8F0;
     font-size: 0.9rem;
 }
+
+.intake-origin-note {
+  color: var(--ses-green, #008777);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
     .intake-cards-grid {
         grid-template-columns: 1fr;

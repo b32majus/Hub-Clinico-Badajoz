@@ -758,11 +758,26 @@ function renderIntakeBandeja(records) {
     if (r.prebiologic_status.missing_items && r.prebiologic_status.missing_items.length > 0) {
       var missingEl = document.createElement('div'); missingEl.className = 'intake-missing'; var ic3 = document.createElement('i'); ic3.className = 'fas fa-exclamation-triangle'; missingEl.appendChild(ic3); missingEl.appendChild(document.createTextNode(' Faltan: ' + r.prebiologic_status.missing_items.join(', ')));
     }
-    var actionHtml = '';
     if (r.ready_for_pharmacy_validation) {
-      actionHtml = '<button type="button" class="btn btn-primary btn-sm intake-btn-validar" data-intake=\'' + JSON.stringify(r).replace(/'/g, '&#39;') + '\'>Iniciar validación <i class="fas fa-arrow-right"></i></button>';
+      var actionBtn = document.createElement('button');
+      actionBtn.type = 'button';
+      actionBtn.className = 'btn btn-primary btn-sm intake-btn-validar';
+      actionBtn.textContent = 'Iniciar validación ';
+      var icArrow = document.createElement('i');
+      icArrow.className = 'fas fa-arrow-right';
+      actionBtn.appendChild(icArrow);
+      actionBtn.addEventListener('click', function() {
+        iniciarValidacionDesdeIntake(r, actionBtn);
+      });
     } else {
-      actionBtn = document.createElement('button'); actionBtn.type = 'button'; actionBtn.className = 'btn btn-sm intake-btn-disabled'; actionBtn.disabled = true; var ic5 = document.createElement('i'); ic5.className = 'fas fa-clock'; actionBtn.appendChild(ic5); actionBtn.appendChild(document.createTextNode(' ' + statusLabel));
+      var actionBtn = document.createElement('button');
+      actionBtn.type = 'button';
+      actionBtn.className = 'btn btn-sm intake-btn-disabled';
+      actionBtn.disabled = true;
+      var ic5 = document.createElement('i');
+      ic5.className = 'fas fa-clock';
+      actionBtn.appendChild(ic5);
+      actionBtn.appendChild(document.createTextNode(' ' + statusLabel));
     }
     var bio = r.proposed_biologic || {};
     var bioEl = null; if (bio.name) { bioEl = document.createElement('div'); bioEl.className = 'intake-drug'; var ic6 = document.createElement('i'); ic6.className = 'fas fa-pills'; ic6.style.color = '#008777'; bioEl.appendChild(ic6); bioEl.appendChild(document.createTextNode(' ' + escapeHtml(bio.name))); }
@@ -793,77 +808,107 @@ function renderIntakeBandeja(records) {
   card.appendChild(hdr); card.appendChild(body); card.appendChild(footer);
     grid.appendChild(card);
   });
-  grid.querySelectorAll('.intake-btn-validar').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var data = JSON.parse(this.getAttribute('data-intake'));
-      iniciarValidacionDesdeIntake(data);
-    });
-  });
+
 }
 
-function iniciarValidacionDesdeIntake(data) {
+function iniciarValidacionDesdeIntake(data, triggerButton) {
+  triggerButton.disabled = true;
+  triggerButton.textContent = 'Validación iniciada';
+  triggerButton.classList.remove('btn-primary');
+  triggerButton.classList.add('btn--success');
   sessionStorage.setItem('intake_context', JSON.stringify(data));
   precargarValidacion(data);
   var hero = document.querySelector('.patient-header-card');
   if (hero) hero.scrollIntoView({ behavior: 'smooth' });
-  var btn = document.querySelector('.intake-btn-validar[data-intake]');
-  if (btn) {
-    /* Save and change button */ btn.textContent = '✅ Validación iniciada'; btn.classList.add('btn--success'); var btnOrig = btn.cloneNode(true); setTimeout(function() { btn.textContent = ''; btn.className = btnOrig.className; Array.from(btnOrig.childNodes).forEach(function(n) { btn.appendChild(n.cloneNode(true)); }); }, 2000);
-  }
 }
 
 function precargarValidacion(data) {
-  var tipoSelect = document.getElementById('fhTipoSolicitud');
-  if (tipoSelect) {
-    var servicioLower = (data.service || '').toLowerCase();
-    if (servicioLower.includes('derma')) {
-      tipoSelect.value = 'derma';
-    } else if (servicioLower.includes('reuma')) {
-      tipoSelect.value = 'reuma';
-    }
-    tipoSelect.dispatchEvent(new Event('change'));
+  function setValueIfExists(id, value) {
+    var el = document.getElementById(id);
+    if (el && value !== undefined && value !== null && value !== '') el.value = value;
   }
+  function setCheckedIfExists(id, checked) {
+    var el = document.getElementById(id);
+    if (el) el.checked = !!checked;
+  }
+  function setChipValue(targetId, value) {
+    var el = document.getElementById(targetId);
+    if (el && value) el.textContent = value;
+  }
+
   var contextCip = document.querySelector('[data-context="cip"]');
   var contextServ = document.querySelector('[data-context="servicio"]');
   var contextPat = document.querySelector('[data-context="patologia"]');
   if (contextCip) contextCip.textContent = data.patient_id || '—';
   if (contextServ) contextServ.textContent = data.service || '—';
   if (contextPat) contextPat.textContent = data.pathology || '—';
-  setTimeout(function() {
-    var cip = document.getElementById('fhDermaCip');
-    if (cip) cip.value = data.patient_id || '';
-    var pat = document.getElementById('fhDermaPatologia');
-    if (pat) {
-      for (var i = 0; i < pat.options.length; i++) {
-        if (pat.options[i].text.toLowerCase().includes((data.pathology || '').toLowerCase())) {
-          pat.value = pat.options[i].text;
-          break;
-        }
-      }
-      if (pat.value) pat.dispatchEvent(new Event('change'));
-    }
-    var farm = document.getElementById('fhDermaFarmaco');
-    if (farm && data.proposed_biologic && data.proposed_biologic.name) {
-      farm.value = data.proposed_biologic.name;
-    }
-    var motivo = document.getElementById('fhDermaMotivo');
-    if (motivo && data.nursing_observations) {
-      var existing = motivo.value || '';
-      var prefix = '[Enfermería] ';
-      if (existing.indexOf(prefix) === -1) {
-        motivo.value = prefix + data.nursing_observations + (existing ? '\n' + existing : '');
+
+  var servicioLower = (data.service || '').toLowerCase();
+  if (servicioLower.includes('derma')) setValueIfExists('fhTipoSolicitud', 'derma');
+  else if (servicioLower.includes('reuma')) setValueIfExists('fhTipoSolicitud', 'reuma');
+  var tipoSelect = document.getElementById('fhTipoSolicitud');
+  if (tipoSelect) tipoSelect.dispatchEvent(new Event('change'));
+
+  setValueIfExists('fhDermaCip', data.patient_id);
+
+  var pat = document.getElementById('fhDermaPatologia');
+  if (pat && data.pathology) {
+    for (var i = 0; i < pat.options.length; i++) {
+      if (pat.options[i].text.toLowerCase().includes(data.pathology.toLowerCase())) {
+        pat.value = pat.options[i].text;
+        break;
       }
     }
-    var origenStrip = document.querySelector('.context-strip');
-    if (origenStrip && !document.querySelector('[data-context-origen]')) {
-      var origenEl = document.createElement('span');
-      origenEl.textContent = ''; var strong = document.createElement('strong'); strong.textContent = 'Excel Enfermería mock'; origenEl.appendChild(document.createTextNode('Origen: ')); origenEl.appendChild(strong);
-      origenEl.style.color = 'var(--ses-green, #008777)';
-      origenEl.style.fontSize = '0.82rem';
-      origenEl.setAttribute('data-context-origen', 'true');
-      origenStrip.appendChild(origenEl);
-    }
-  }, 100);
+    if (pat.value) pat.dispatchEvent(new Event('change'));
+  }
+
+  var bio = data.proposed_biologic || {};
+  setValueIfExists('fhDermaFarmaco', bio.name);
+  setValueIfExists('fhDermaPrincipioActivo', bio.active_principle);
+  setValueIfExists('fhDermaDosis', bio.dose);
+  setValueIfExists('fhDermaVia', bio.route);
+  setValueIfExists('fhDermaPauta', bio.schedule);
+
+  var prebio = data.prebiologic_status || {};
+  if (prebio.analytics_status === 'OK' || prebio.analytics_status === 'ok') {
+    setValueIfExists('fhAnaliticaReciente', 'si');
+    setCheckedIfExists('fhAnaliticaHemograma', true);
+    setCheckedIfExists('fhAnaliticaBioquimica', true);
+  }
+
+  if (prebio.tb_screening_status) {
+    var mantouxVal = prebio.tb_screening_status.toLowerCase();
+    var mantouxRadios = document.querySelectorAll('input[name="fhAnaliticaMantoux_rb"]');
+    mantouxRadios.forEach(function(radio) {
+      if (radio.value.toLowerCase() === mantouxVal || (mantouxVal.includes('neg') && radio.value.toLowerCase() === 'negativo')) {
+        radio.checked = true;
+      }
+    });
+  }
+
+  if (prebio.serologies_status === 'OK' || prebio.serologies_status === 'ok') {
+    setValueIfExists('fhAnaliticaVHB', 'Negativo');
+    setValueIfExists('fhAnaliticaVHC', 'Negativo');
+    setValueIfExists('fhAnaliticaVIH', 'Negativo');
+  }
+
+  setValueIfExists('fhAnaliticaVacunacion', prebio.vaccination_status);
+
+  if (data.nursing_observations) {
+    setValueIfExists('fhAnaliticaObservaciones', '[Enfermería] ' + data.nursing_observations);
+  }
+
+  var origenStrip = document.querySelector('.context-strip');
+  if (origenStrip && !document.querySelector('[data-context-origen]')) {
+    var origenEl = document.createElement('span');
+    origenEl.className = 'intake-origin-note';
+    var strong = document.createElement('strong');
+    strong.textContent = 'Excel Enfermería mock';
+    origenEl.appendChild(document.createTextNode('Origen: '));
+    origenEl.appendChild(strong);
+    origenEl.setAttribute('data-context-origen', 'true');
+    origenStrip.appendChild(origenEl);
+  }
 }
 
 function escapeHtml(text) { if (!text) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -876,4 +921,24 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   initIntakeBandeja();
 });
+
+function importarExcelEnfermeria(arrayBuffer) {
+  var workbook = XLSX.read(arrayBuffer, {type: 'array'});
+  var hojaUsada = '';
+  var sheet = workbook.Sheets['INICIO_BIOLOGICO'];
+  if (sheet) {
+    hojaUsada = 'INICIO_BIOLOGICO';
+  } else {
+    sheet = workbook.Sheets['BD'];
+    if (sheet) {
+      hojaUsada = 'BD';
+    } else {
+      hojaUsada = workbook.SheetNames[0];
+      sheet = workbook.Sheets[hojaUsada];
+      console.warn('[Intake] Hoja INICIO_BIOLOGICO ni BD encontradas, usando primera hoja: ' + hojaUsada);
+    }
+  }
+  console.log('[Intake] Hoja usada: ' + hojaUsada);
+  return XLSX.utils.sheet_to_json(sheet, {defval: ''});
+}
 })();
