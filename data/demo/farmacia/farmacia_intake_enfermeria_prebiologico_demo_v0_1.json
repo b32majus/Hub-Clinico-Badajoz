@@ -1,0 +1,126 @@
+[
+  {
+    "intake_id": "INTAKE-FH-001",
+    "patient_id": "CIP-DEMO-000000001",
+    "display_id": "FH-001",
+    "service": "Derma",
+    "pathology": "HS",
+    "proposed_biologic": {
+      "name": "Secukinumab",
+      "principio_activo": "",
+      "dose": "",
+      "route": "",
+      "schedule": ""
+    },
+    "prebiologic_status": {
+      "global_status": "pendiente_servicio",
+      "vaccination_status": "PENDIENTE",
+      "serologies_status": "OK",
+      "tb_screening_status": "NO PRECISA",
+      "analytics_status": "OK",
+      "missing_items": [
+        "Medicina Preventiva"
+      ]
+    },
+    "nursing_observations": "Pendiente cita Preventiva",
+    "ready_for_pharmacy_validation": false,
+    "validation_status": "pending",
+    "source_excel_row_id": "ROW-1",
+    "import_batch_id": "IMPORT-1781176880140",
+    "imported_at": "2026-06-11",
+    "source_type": "excel_enfermeria_mock"
+  },
+  {
+    "intake_id": "INTAKE-FH-002",
+    "patient_id": "CIP-DEMO-000000002",
+    "display_id": "FH-002",
+    "service": "Derma",
+    "pathology": "HS",
+    "proposed_biologic": {
+      "name": "Adalimumab",
+      "principio_activo": "",
+      "dose": "",
+      "route": "",
+      "schedule": ""
+    },
+    "prebiologic_status": {
+      "global_status": "devuelto_servicio",
+      "vaccination_status": "OK",
+      "serologies_status": "OK",
+      "tb_screening_status": "PENDIENTE",
+      "analytics_status": "ALTERADA / BLOQUEO",
+      "missing_items": [
+        "Analítica: ALTERADA / BLOQUEO",
+        "Mantoux",
+        "IGRA"
+      ]
+    },
+    "nursing_observations": "Analítica alterada, avisado médico",
+    "ready_for_pharmacy_validation": false,
+    "validation_status": "pending",
+    "source_excel_row_id": "ROW-2",
+    "import_batch_id": "IMPORT-1781176880140",
+    "imported_at": "2026-06-11",
+    "source_type": "excel_enfermeria_mock"
+  },
+  {
+    "intake_id": "INTAKE-FH-003",
+    "patient_id": "CIP-DEMO-000000003",
+    "display_id": "FH-003",
+    "service": "Reuma",
+    "pathology": "AR",
+    "proposed_biologic": {
+      "name": "Upadacitinib",
+      "principio_activo": "",
+      "dose": "",
+      "route": "",
+      "schedule": ""
+    },
+    "prebiologic_status": {
+      "global_status": "ok_para_validacion",
+      "vaccination_status": "OK",
+      "serologies_status": "OK",
+      "tb_screening_status": "NEGATIVO",
+      "analytics_status": "OK",
+      "missing_items": []
+    },
+    "nursing_observations": "",
+    "ready_for_pharmacy_validation": true,
+    "validation_status": "pending",
+    "source_excel_row_id": "ROW-3",
+    "import_batch_id": "IMPORT-1781176880140",
+    "imported_at": "2026-06-11",
+    "source_type": "excel_enfermeria_mock"
+  },
+  {
+    "intake_id": "INTAKE-FH-004",
+    "patient_id": "CIP-DEMO-000000004",
+    "display_id": "FH-004",
+    "service": "Digestivo",
+    "pathology": "EII",
+    "proposed_biologic": {
+      "name": "Vedolizumab",
+      "principio_activo": "",
+      "dose": "",
+      "route": "",
+      "schedule": ""
+    },
+    "prebiologic_status": {
+      "global_status": "pendiente_servicio",
+      "vaccination_status": "NO PRECISA",
+      "serologies_status": "OK",
+      "tb_screening_status": "NO PRECISA",
+      "analytics_status": "PENDIENTE",
+      "missing_items": [
+        "Analítica"
+      ]
+    },
+    "nursing_observations": "",
+    "ready_for_pharmacy_validation": false,
+    "validation_status": "pending",
+    "source_excel_row_id": "ROW-4",
+    "import_batch_id": "IMPORT-1781176880140",
+    "imported_at": "2026-06-11",
+    "source_type": "excel_enfermeria_mock"
+  }
+]

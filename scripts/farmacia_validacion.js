@@ -716,7 +716,7 @@ function initIntakeBandeja() {
     .then(function(records) { renderIntakeBandeja(records); })
     .catch(function(err) {
       console.warn('[Intake] No se pudo cargar intake:', err);
-      container.innerHTML = '<div class="intake-empty"><i class="fas fa-info-circle"></i> Bandeja no disponible.</div>';
+      var empty = document.createElement('div'); empty.className = 'intake-empty'; var ic = document.createElement('i'); ic.className = 'fas fa-info-circle'; empty.appendChild(ic); empty.appendChild(document.createTextNode(' Bandeja no disponible.')); container.appendChild(empty);
     });
 }
 
@@ -738,7 +738,7 @@ function renderIntakeBandeja(records) {
   if (ok) ok.textContent = counts.ok_para_validacion;
   if (block) block.textContent = counts.devuelto_servicio;
   if (batchBadge && records[0]) batchBadge.textContent = 'Batch: ' + records[0].import_batch_id;
-  grid.innerHTML = '';
+  while (grid.firstChild) grid.removeChild(grid.firstChild);
   records.forEach(function(r) {
     var card = document.createElement('div');
     card.className = 'intake-card intake-card--' + r.prebiologic_status.global_status;
@@ -756,40 +756,41 @@ function renderIntakeBandeja(records) {
     }
     var missingHtml = '';
     if (r.prebiologic_status.missing_items && r.prebiologic_status.missing_items.length > 0) {
-      missingHtml = '<div class="intake-missing"><i class="fas fa-exclamation-triangle"></i> Faltan: ' + r.prebiologic_status.missing_items.join(', ') + '</div>';
+      var missingEl = document.createElement('div'); missingEl.className = 'intake-missing'; var ic3 = document.createElement('i'); ic3.className = 'fas fa-exclamation-triangle'; missingEl.appendChild(ic3); missingEl.appendChild(document.createTextNode(' Faltan: ' + r.prebiologic_status.missing_items.join(', ')));
     }
     var actionHtml = '';
     if (r.ready_for_pharmacy_validation) {
       actionHtml = '<button type="button" class="btn btn-primary btn-sm intake-btn-validar" data-intake=\'' + JSON.stringify(r).replace(/'/g, '&#39;') + '\'>Iniciar validación <i class="fas fa-arrow-right"></i></button>';
     } else {
-      actionHtml = '<button type="button" class="btn btn-sm intake-btn-disabled" disabled><i class="fas fa-clock"></i> ' + statusLabel + '</button>';
+      actionBtn = document.createElement('button'); actionBtn.type = 'button'; actionBtn.className = 'btn btn-sm intake-btn-disabled'; actionBtn.disabled = true; var ic5 = document.createElement('i'); ic5.className = 'fas fa-clock'; actionBtn.appendChild(ic5); actionBtn.appendChild(document.createTextNode(' ' + statusLabel));
     }
     var bio = r.proposed_biologic || {};
-    var bioHtml = bio.name ? '<div class="intake-drug"><i class="fas fa-pills"></i> ' + escapeHtml(bio.name) + '</div>' : '';
-    card.innerHTML = [
-      '<div class="intake-card-header">',
-        '<span class="intake-card-id">' + escapeHtml(r.display_id) + '</span>',
-        '<span class="intake-badge ' + statusClass + '">' + statusLabel + '</span>',
-      '</div>',
-      '<div class="intake-card-body">',
-        '<div class="intake-service-pat">',
-          '<span><i class="fas fa-hospital-alt"></i> ' + escapeHtml(r.service) + '</span>',
-          '<span><i class="fas fa-disease"></i> ' + escapeHtml(r.pathology) + '</span>',
-        '</div>',
-        bioHtml,
-        '<div class="intake-prebiologic">',
-          '<span>Vacuna: ' + (r.prebiologic_status.vaccination_status || '—') + '</span>',
-          '<span>Serologías: ' + (r.prebiologic_status.serologies_status || '—') + '</span>',
-          '<span>TB: ' + (r.prebiologic_status.tb_screening_status || '—') + '</span>',
-          '<span>Analítica: ' + (r.prebiologic_status.analytics_status || '—') + '</span>',
-        '</div>',
-        missingHtml,
-        (r.nursing_observations ? '<div class="intake-observations"><i class="fas fa-comment"></i> ' + escapeHtml(r.nursing_observations) + '</div>' : ''),
-      '</div>',
-      '<div class="intake-card-footer">',
-        actionHtml,
-      '</div>',
-    ].join('\n');
+    var bioEl = null; if (bio.name) { bioEl = document.createElement('div'); bioEl.className = 'intake-drug'; var ic6 = document.createElement('i'); ic6.className = 'fas fa-pills'; ic6.style.color = '#008777'; bioEl.appendChild(ic6); bioEl.appendChild(document.createTextNode(' ' + escapeHtml(bio.name))); }
+    /* Build card with DOM */
+  var hdr = document.createElement('div'); hdr.className = 'intake-card-header';
+  var idSpan = document.createElement('span'); idSpan.className = 'intake-card-id'; idSpan.textContent = escapeHtml(r.display_id);
+  var badge = document.createElement('span'); badge.className = 'intake-badge ' + statusClass; badge.textContent = statusLabel;
+  hdr.appendChild(idSpan); hdr.appendChild(badge);
+  var body = document.createElement('div'); body.className = 'intake-card-body';
+  var spRow = document.createElement('div'); spRow.className = 'intake-service-pat';
+  var svcSpan = document.createElement('span'); var ic7 = document.createElement('i'); ic7.className = 'fas fa-hospital-alt'; svcSpan.appendChild(ic7); svcSpan.appendChild(document.createTextNode(' ' + escapeHtml(r.service)));
+  var patSpan = document.createElement('span'); var ic8 = document.createElement('i'); ic8.className = 'fas fa-disease'; patSpan.appendChild(ic8); patSpan.appendChild(document.createTextNode(' ' + escapeHtml(r.pathology)));
+  spRow.appendChild(svcSpan); spRow.appendChild(patSpan); body.appendChild(spRow);
+  if (bioEl) body.appendChild(bioEl);
+  var prebio = document.createElement('div'); prebio.className = 'intake-prebiologic';
+  var fields = [
+    {l:'Vacuna', v:r.prebiologic_status.vaccination_status},
+    {l:'Serologías', v:r.prebiologic_status.serologies_status},
+    {l:'TB', v:r.prebiologic_status.tb_screening_status},
+    {l:'Analítica', v:r.prebiologic_status.analytics_status}
+  ];
+  fields.forEach(function(f) { var sp = document.createElement('span'); sp.textContent = f.l + ': ' + (f.v || '—'); prebio.appendChild(sp); });
+  body.appendChild(prebio);
+  if (typeof missingEl !== 'undefined' && missingEl) body.appendChild(missingEl);
+  if (r.nursing_observations) { var obs = document.createElement('div'); obs.className = 'intake-observations'; var ic9 = document.createElement('i'); ic9.className = 'fas fa-comment'; obs.appendChild(ic9); obs.appendChild(document.createTextNode(' ' + escapeHtml(r.nursing_observations))); body.appendChild(obs); }
+  var footer = document.createElement('div'); footer.className = 'intake-card-footer';
+  if (actionBtn) footer.appendChild(actionBtn);
+  card.appendChild(hdr); card.appendChild(body); card.appendChild(footer);
     grid.appendChild(card);
   });
   grid.querySelectorAll('.intake-btn-validar').forEach(function(btn) {
@@ -807,10 +808,7 @@ function iniciarValidacionDesdeIntake(data) {
   if (hero) hero.scrollIntoView({ behavior: 'smooth' });
   var btn = document.querySelector('.intake-btn-validar[data-intake]');
   if (btn) {
-    var orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-check"></i> Validación iniciada';
-    btn.classList.add('btn--success');
-    setTimeout(function() { btn.innerHTML = orig; btn.classList.remove('btn--success'); }, 2000);
+    /* Save and change button */ btn.textContent = '✅ Validación iniciada'; btn.classList.add('btn--success'); var btnOrig = btn.cloneNode(true); setTimeout(function() { btn.textContent = ''; btn.className = btnOrig.className; Array.from(btnOrig.childNodes).forEach(function(n) { btn.appendChild(n.cloneNode(true)); }); }, 2000);
   }
 }
 
@@ -859,7 +857,7 @@ function precargarValidacion(data) {
     var origenStrip = document.querySelector('.context-strip');
     if (origenStrip && !document.querySelector('[data-context-origen]')) {
       var origenEl = document.createElement('span');
-      origenEl.innerHTML = 'Origen: <strong>Excel Enfermería mock</strong>';
+      origenEl.textContent = ''; var strong = document.createElement('strong'); strong.textContent = 'Excel Enfermería mock'; origenEl.appendChild(document.createTextNode('Origen: ')); origenEl.appendChild(strong);
       origenEl.style.color = 'var(--ses-green, #008777)';
       origenEl.style.fontSize = '0.82rem';
       origenEl.setAttribute('data-context-origen', 'true');
@@ -868,12 +866,7 @@ function precargarValidacion(data) {
   }, 100);
 }
 
-function escapeHtml(text) {
-  if (!text) return '';
-  var div = document.createElement('div');
-  div.appendChild(document.createTextNode(text));
-  return div.innerHTML;
-}
+function escapeHtml(text) { if (!text) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // Intake: init
 document.addEventListener('DOMContentLoaded', function() {
