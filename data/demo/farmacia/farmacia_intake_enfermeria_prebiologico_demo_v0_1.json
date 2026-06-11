@@ -71,7 +71,7 @@
     "pathology": "HS",
     "proposed_biologic": {
       "name": "Secukinumab",
-      "principio_activo": "",
+      "principio_activo": "Secukinumab",
       "dose": "300 mg",
       "route": "SC",
       "schedule": "cada 4 semanas"

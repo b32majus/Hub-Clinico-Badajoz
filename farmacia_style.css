@@ -830,6 +830,12 @@
     }
 }
 
+.concomitante-empty {
+  color: var(--text-muted, #6b7280);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
 /* --- Guided intake: dim quick access section --- */
 .fh-intake-active > .section-title,
 .fh-intake-active > .action-grid {

@@ -143,3 +143,36 @@
 - grep IDs antiguos serologías → 0 resultados
 
 **Status:** pending_review
+
+---
+
+## Corrección final pre-demo — Intake visibility
+**Fecha:** 2026-06-11
+**SHA base:** 556364d
+
+### Problemas detectados
+1. Bloques EA y concomitantes solo visibles si había datos adverse_event/other_biologics.
+2. fhEaTipo era select con opciones incorrectas (Leve/Moderado/Grave) en vez de input texto.
+3. Causalidad incluía 'Definitiva' (no válida) y 'No evaluable' (debe ser 'No evaluada').
+4. Nota visible con referencias a Naranjo/WHO-UMC.
+5. INTAKE-FH-003 tenía principio_activo vacío.
+6. CSV no exportaba resumen de fármacos concomitantes.
+7. TXT no exportaba secciones EA/concomitantes si vacías.
+
+### Correcciones aplicadas
+- T1: showIfExists helper — eaBlock y concomitantesBlock siempre visibles.
+- T2: Valores por defecto EA cuando no hay data.adverse_event.
+- T3: fhEaTipo → input texto con placeholder.
+- T4: Opciones causalidad corregidas.
+- T5: Nota Naranjo/WHO-UMC sustituida.
+- T6: Mensaje vacío en concomitantes.
+- T7: principio_activo INTAKE-FH-003 = 'Secukinumab'.
+- T8: Columna OtrosFarmacosResumen en CSV.
+- T9: TXT siempre exporta EA y concomitantes.
+- T11: Cache bust v=20260611-intake-e.
+
+### Limitaciones
+- Criterios causalidad orientativos, no validados clínicamente.
+- Datos demo sintéticos, sin integración real.
+
+**Status:** pending_review

@@ -307,27 +307,24 @@
             if (obsVac) lines.push('Observaciones vacunación: ' + obsVac);
         }
 
-        var eaNotif = document.getElementById("fhEaNotificado");
-        if (eaNotif && eaNotif.value) {
-          lines.push("");
-          lines.push("--- Evaluación de causalidad del efecto adverso ---");
-          lines.push("EA notificado: " + (document.getElementById("fhEaNotificado").value || "—"));
-          lines.push("Tipo EA: " + (document.getElementById("fhEaTipo").value || "—"));
-          lines.push("Gravedad: " + (document.getElementById("fhEaGravedad").value || "—"));
-          lines.push("Acción: " + (document.getElementById("fhEaAccion").value || "—"));
-          lines.push("Causalidad: " + (document.getElementById("fhEaCausalidad").value || "—"));
-          var critIds = ["fhEaCritTemporal","fhEaCritDechallenge","fhEaCritRechallenge","fhEaCritAlternativa","fhEaCritDescrito","fhEaCritDosis","fhEaCritInsuficiente"];
-          var critNames = ["Relación temporal","Dechallenge positivo","Rechallenge positivo","Sin alternativa más probable","EA descrito en ficha técnica","Relación dosis-respuesta","Evidencia insuficiente"];
-          for (var ci = 0; ci < critIds.length; ci++) {
-            var cb = document.getElementById(critIds[ci]);
-            if (cb && cb.checked) lines.push("  [X] " + critNames[ci]);
-          }
+        lines.push("");
+        lines.push("--- Evaluación de causalidad del efecto adverso ---");
+        lines.push("EA notificado: " + (document.getElementById("fhEaNotificado").value || "—"));
+        lines.push("Tipo EA: " + (document.getElementById("fhEaTipo").value || "—"));
+        lines.push("Gravedad: " + (document.getElementById("fhEaGravedad").value || "—"));
+        lines.push("Acción: " + (document.getElementById("fhEaAccion").value || "—"));
+        lines.push("Causalidad: " + (document.getElementById("fhEaCausalidad").value || "—"));
+        var critIds = ["fhEaCritTemporal","fhEaCritDechallenge","fhEaCritRechallenge","fhEaCritAlternativa","fhEaCritDescrito","fhEaCritDosis","fhEaCritInsuficiente"];
+        var critNames = ["Relación temporal","Dechallenge positivo","Rechallenge positivo","Sin alternativa más probable","EA descrito en ficha técnica","Relación dosis-respuesta","Evidencia insuficiente"];
+        for (var ci = 0; ci < critIds.length; ci++) {
+          var cb = document.getElementById(critIds[ci]);
+          if (cb && cb.checked) lines.push("  [X] " + critNames[ci]);
         }
 
         var concomRows = document.querySelectorAll(".concomitante-row");
+        lines.push("");
+        lines.push("--- Tratamientos concomitantes / otros biológicos ---");
         if (concomRows.length > 0) {
-          lines.push("");
-          lines.push("--- Tratamientos concomitantes / otros biológicos ---");
           for (var ri = 0; ri < concomRows.length; ri++) {
             var row = concomRows[ri];
             var nombre = (row.querySelector(".concomitante-nombre") || {}).value || "—";
@@ -343,6 +340,8 @@
             lines.push("  Pauta: " + pauta);
             lines.push("  Motivo: " + motivo);
           }
+        } else {
+          lines.push("No hay otros fármacos registrados.");
         }
 
         lines.push('');
@@ -722,9 +721,23 @@
             var eaCausalidadVal = safeVal('fhEaCausalidad');
             var concomitantesCount = document.querySelectorAll('.concomitante-row').length;
 
+            var concomRows2 = document.querySelectorAll('.concomitante-row');
+            var otrosFarmacosResumen = '';
+            if (concomRows2.length > 0) {
+              var parts = [];
+              for (var ri2 = 0; ri2 < concomRows2.length; ri2++) {
+                var r2 = concomRows2[ri2];
+                var fn = (r2.querySelector('.concomitante-nombre') || {}).value || '';
+                var fpa = (r2.querySelector('.concomitante-pa') || {}).value || '';
+                var fd = (r2.querySelector('.concomitante-dosis') || {}).value || '';
+                parts.push('Farmaco: ' + fn + '; PA: ' + fpa + '; Dosis: ' + fd);
+              }
+              otrosFarmacosResumen = parts.join(' | ');
+            }
+
             const rows = [
-                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro', 'EANotificado', 'EATipo', 'EAGravedad', 'EAAccion', 'EACausalidad', 'ConcomitantesCount'],
-                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro, eaNotifVal, eaTipoVal, eaGravedadVal, eaAccionVal, eaCausalidadVal, String(concomitantesCount)]
+                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro', 'EANotificado', 'EATipo', 'EAGravedad', 'EAAccion', 'EACausalidad', 'ConcomitantesCount', 'OtrosFarmacosResumen'],
+                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro, eaNotifVal, eaTipoVal, eaGravedadVal, eaAccionVal, eaCausalidadVal, String(concomitantesCount), otrosFarmacosResumen]
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {
@@ -906,6 +919,10 @@ function precargarValidacion(data) {
       }
     });
   }
+  function showIfExists(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('hidden');
+  }
 
   var contextCip = document.querySelector('[data-context="cip"]');
   var contextServ = document.querySelector('[data-context="servicio"]');
@@ -1008,6 +1025,9 @@ function precargarValidacion(data) {
     origenStrip.appendChild(origenEl);
   }
 
+  showIfExists('eaBlock');
+  showIfExists('concomitantesBlock');
+
   var ea = data.adverse_event || data.adverseEvent || null;
   if (ea) {
     var eaBlock = document.getElementById("eaBlock");
@@ -1027,6 +1047,11 @@ function precargarValidacion(data) {
       if (crits.dosis) setCheckedIfExists("fhEaCritDosis", true);
       if (crits.insuficiente) setCheckedIfExists("fhEaCritInsuficiente", true);
     }
+  } else {
+    setValueIfExists('fhEaNotificado', 'No consta');
+    setValueIfExists('fhEaGravedad', 'No consta');
+    setValueIfExists('fhEaAccion', 'No aplica');
+    setValueIfExists('fhEaCausalidad', 'No evaluada');
   }
 
   var concom = data.other_biologics || data.concomitant_treatments || [];
@@ -1037,6 +1062,13 @@ function precargarValidacion(data) {
     concom.forEach(function(item) {
       addConcomitanteRow(concList, item);
     });
+  }
+  var concList = document.getElementById("concomitantesList");
+  if (concList && concList.children.length === 0) {
+    var emptyMsg = document.createElement('p');
+    emptyMsg.className = 'concomitante-empty';
+    emptyMsg.textContent = 'No hay otros fármacos añadidos todavía.';
+    concList.appendChild(emptyMsg);
   }
 }
 
