@@ -192,6 +192,21 @@ for (const p of protected_) {
     ok(`${p} no accedido por smoke check`);
 }
 
+// ─── CHECK 11: Señales v0.4 multibiológico mínimas ───────────────────────────
+console.log('\n[11] Señales v0.4 multibiológico mínimas');
+if (common && common.includes('CIP-DEMO-FH-004')) ok('FH-004 presente en farmacia_common.js');
+else fail('FH-004 no encontrado en farmacia_common.js');
+if (common && common.includes('biologicos')) ok('Cadena biologicos presente en farmacia_common.js');
+else fail('Cadena biologicos no encontrada en farmacia_common.js');
+const segHtml = readFile('farmacia_seguimiento.html');
+if (segHtml && segHtml.includes('fhSegLineaPrincipal')) ok('fhSegLineaPrincipal presente en farmacia_seguimiento.html');
+else fail('fhSegLineaPrincipal no encontrado en farmacia_seguimiento.html');
+if (segHtml && segHtml.includes('fhSegEaSospechosos')) ok('fhSegEaSospechosos presente en farmacia_seguimiento.html');
+else fail('fhSegEaSospechosos no encontrado en farmacia_seguimiento.html');
+const segJs = readFile('scripts/farmacia_seguimiento.js');
+if (segJs && segJs.includes('causalidad')) ok('Cadena causalidad presente en scripts/farmacia_seguimiento.js');
+else fail('Cadena causalidad no encontrada en scripts/farmacia_seguimiento.js');
+
 // ─── RESUMEN ───────────────────────────────────────────────────────────────────
 console.log('\n' + '═'.repeat(60));
 console.log(`RESULTADO: ${passed} OK / ${failed} FALLIDO`);

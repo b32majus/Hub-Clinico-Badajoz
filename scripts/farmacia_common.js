@@ -108,6 +108,64 @@
             estado: 'validated', estadoLabel: 'Validado', fechaSolicitud: '2026-03-15', ultimaSolicitud: '2026-03-15',
             analitica: 'Prebiológico demo apto. Vacunación VHB y antineumocócica completa.', scores: 'DAS28 demo: 3.2; HAQ demo: 1.1',
             ultimaVisita: '—', adherencia: 'Sin registro (primera visita pendiente)', efectosAdversos: 'No registrados', proms: 'HAQ 1.1 (basal); EVA dolor 4/10', primeraVisita: 'Pendiente', seguimiento: 'No iniciado'
+        },
+        'CIP-DEMO-FH-004': {
+            nombre: 'Paciente Demo FH-004', cip: 'CIP-DEMO-FH-004', edad: '44', sexo: 'Mujer', servicio: 'Reumatología', servicioSlug: 'reumatologia',
+            patologia: 'LES / Síndrome de Sjögren', farmaco: 'Belimumab + Rituximab (demo multibiológico)', dosis: 'Belimumab 200 mg SC semanal + Rituximab 1 g IV semestral', pauta: 'L2 semanal + L3 semestral', via: 'SC / IV',
+            estado: 'followup', estadoLabel: 'En seguimiento', fechaSolicitud: '2026-02-14', ultimaSolicitud: '2026-05-28',
+            analitica: 'Seguimiento analítico activo. Caso sintético multibiológico para validación exploratoria.', scores: 'SLEDAI demo: 12 → 6; EVA dolor 6 → 3',
+            ultimaVisita: '2026-06-09', adherencia: 'Alta (Morisky-Green: 4/4)', efectosAdversos: 'Infección respiratoria leve-moderada en evaluación causal', proms: 'HAQ 0.9; EVA dolor 3/10', primeraVisita: '2026-02-20', seguimiento: 'Seguimiento multibiológico abierto',
+            principioActivo: 'Belimumab + Rituximab',
+            biologicos: [
+                {
+                    linea_id: 'BIO-FH-004-L1',
+                    orden: 1,
+                    nombre_linea: 'Abatacept',
+                    nombre_comercial: 'Orencia',
+                    principio_activo: 'Abatacept',
+                    dosis: '125 mg',
+                    via: 'SC',
+                    pauta: 'Semanal',
+                    fecha_inicio: '2025-09-01',
+                    fecha_fin: '2026-02-10',
+                    estado_linea: 'historico',
+                    tipo_relacion: 'cambio_terapeutico',
+                    es_principal: false,
+                    tratamiento_id_principal: 'TRAT-FH-004-A'
+                },
+                {
+                    linea_id: 'BIO-FH-004-L2',
+                    orden: 2,
+                    nombre_linea: 'Belimumab',
+                    nombre_comercial: 'Benlysta',
+                    principio_activo: 'Belimumab',
+                    dosis: '200 mg',
+                    via: 'SC',
+                    pauta: 'Semanal',
+                    fecha_inicio: '2026-02-20',
+                    fecha_fin: '',
+                    estado_linea: 'activo',
+                    tipo_relacion: 'base',
+                    es_principal: true,
+                    tratamiento_id_principal: 'TRAT-FH-004-B'
+                },
+                {
+                    linea_id: 'BIO-FH-004-L3',
+                    orden: 3,
+                    nombre_linea: 'Rituximab',
+                    nombre_comercial: 'Rixathon',
+                    principio_activo: 'Rituximab',
+                    dosis: '1 g',
+                    via: 'IV',
+                    pauta: 'Dias 1 y 15 cada 6 meses',
+                    fecha_inicio: '2026-05-28',
+                    fecha_fin: '',
+                    estado_linea: 'añadido',
+                    tipo_relacion: 'tratamiento_añadido',
+                    es_principal: false,
+                    tratamiento_id_principal: 'TRAT-FH-004-C'
+                }
+            ]
         }
     };
 

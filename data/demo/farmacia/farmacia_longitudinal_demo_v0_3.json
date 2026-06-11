@@ -19,8 +19,13 @@
       "nombre_demo": "Paciente Demo FH-001",
       "sexo": "Mujer",
       "edad": 48,
-      "servicios_origen": ["Dermatologia", "Farmacia"],
-      "patologias": ["Hidradenitis supurativa"],
+      "servicios_origen": [
+        "Dermatologia",
+        "Farmacia"
+      ],
+      "patologias": [
+        "Hidradenitis supurativa"
+      ],
       "comorbilidades_relevantes": [
         {
           "nombre": "Obesidad grado I",
@@ -234,8 +239,13 @@
       "nombre_demo": "Paciente Demo FH-003",
       "sexo": "Mujer",
       "edad": 52,
-      "servicios_origen": ["Reumatologia", "Farmacia"],
-      "patologias": ["Artritis Reumatoide (AR)"],
+      "servicios_origen": [
+        "Reumatologia",
+        "Farmacia"
+      ],
+      "patologias": [
+        "Artritis Reumatoide (AR)"
+      ],
       "comorbilidades_relevantes": [
         {
           "nombre": "Dislipemia",
@@ -399,6 +409,320 @@
           "id": "ADH-FH-002",
           "cip": "CIP-DEMO-FH-003",
           "fecha": "2026-05-20",
+          "escala": "Morisky-Green",
+          "resultado": "4/4",
+          "interpretacion": "Alta adherencia",
+          "fuente": "Farmacia"
+        }
+      ]
+    },
+    {
+      "cip": "CIP-DEMO-FH-004",
+      "nombre_demo": "Paciente Demo FH-004",
+      "sexo": "Mujer",
+      "edad": 44,
+      "servicios_origen": [
+        "Reumatologia",
+        "Farmacia"
+      ],
+      "patologias": [
+        "LES",
+        "Sindrome de Sjogren"
+      ],
+      "biologicos": [
+        {
+          "linea_id": "BIO-FH-004-L1",
+          "orden": 1,
+          "tipo_relacion": "cambio_terapeutico",
+          "estado_linea": "historico",
+          "es_principal": false,
+          "tratamiento_id_principal": "TRAT-FH-004-A",
+          "nombre_linea": "Abatacept",
+          "nombre_comercial": "Orencia",
+          "principio_activo": "Abatacept",
+          "dosis": "125 mg",
+          "via": "SC",
+          "pauta": "Semanal",
+          "fecha_inicio": "2025-09-01",
+          "fecha_fin": "2026-02-10",
+          "motivo_inicio": "Control insuficiente de actividad autoinmune.",
+          "motivo_fin": "Cambio terapeutico por respuesta parcial.",
+          "servicio_origen": "Reumatologia"
+        },
+        {
+          "linea_id": "BIO-FH-004-L2",
+          "orden": 2,
+          "tipo_relacion": "base",
+          "estado_linea": "activo",
+          "es_principal": true,
+          "tratamiento_id_principal": "TRAT-FH-004-B",
+          "nombre_linea": "Belimumab",
+          "nombre_comercial": "Benlysta",
+          "principio_activo": "Belimumab",
+          "dosis": "200 mg",
+          "via": "SC",
+          "pauta": "Semanal",
+          "fecha_inicio": "2026-02-20",
+          "fecha_fin": null,
+          "motivo_inicio": "Persistencia de actividad de LES.",
+          "motivo_fin": null,
+          "servicio_origen": "Reumatologia"
+        },
+        {
+          "linea_id": "BIO-FH-004-L3",
+          "orden": 3,
+          "tipo_relacion": "tratamiento_anadido",
+          "estado_linea": "anadido",
+          "es_principal": false,
+          "tratamiento_id_principal": "TRAT-FH-004-C",
+          "nombre_linea": "Rituximab",
+          "nombre_comercial": "Rixathon",
+          "principio_activo": "Rituximab",
+          "dosis": "1 g",
+          "via": "IV",
+          "pauta": "Dias 1 y 15 cada 6 meses",
+          "fecha_inicio": "2026-05-28",
+          "fecha_fin": null,
+          "motivo_inicio": "Tratamiento anadido por actividad glandular y articular persistente.",
+          "motivo_fin": null,
+          "servicio_origen": "Reumatologia"
+        }
+      ],
+      "comorbilidades_relevantes": [
+        {
+          "nombre": "Fenomeno de Raynaud",
+          "tipo": "autoinmune",
+          "nota": "Sin ulceras digitales."
+        },
+        {
+          "nombre": "Dislipemia",
+          "tipo": "metabolica",
+          "nota": "Controlada con estatina."
+        }
+      ],
+      "episodios_asistenciales": [
+        {
+          "tipo": "Validacion Farmacia",
+          "fecha": "2026-02-14",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Validacion inicial de Belimumab tras retirada de Abatacept."
+        },
+        {
+          "tipo": "Primera visita Farmacia",
+          "fecha": "2026-02-20",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Inicio de linea principal con Belimumab."
+        },
+        {
+          "tipo": "Validacion Farmacia",
+          "fecha": "2026-05-28",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Nueva validacion para Rituximab como tratamiento anadido, sin considerar cambio automatico."
+        },
+        {
+          "tipo": "Seguimiento Farmacia",
+          "fecha": "2026-06-09",
+          "servicio": "Farmacia",
+          "estado": "completado",
+          "nota": "Caso multibiologico. EA respiratorio en estudio de causalidad."
+        }
+      ],
+      "tratamientos": [
+        {
+          "id": "TRAT-FH-004-A",
+          "cip": "CIP-DEMO-FH-004",
+          "drug_id": "FAR-ABATACEPT",
+          "selected_drug_id": "FAR-ABATACEPT",
+          "nombre_comercial": "Orencia",
+          "principio_activo": "Abatacept",
+          "presentacion_dosis": "125 mg solucion inyectable",
+          "via": "SC",
+          "pauta": "Semanal",
+          "fecha_inicio": "2025-09-01",
+          "fecha_fin": "2026-02-10",
+          "activo": false,
+          "motivo_inicio": "Actividad autoinmune persistente.",
+          "motivo_cambio": null,
+          "motivo_suspension": "Respuesta parcial insuficiente.",
+          "servicio_clinico_origen": "Reumatologia",
+          "estado_validacion_farmacia": "validado",
+          "linea_id": "BIO-FH-004-L1"
+        },
+        {
+          "id": "TRAT-FH-004-B",
+          "cip": "CIP-DEMO-FH-004",
+          "drug_id": "FAR-BELIMUMAB",
+          "selected_drug_id": "FAR-BELIMUMAB",
+          "nombre_comercial": "Benlysta",
+          "principio_activo": "Belimumab",
+          "presentacion_dosis": "200 mg solucion inyectable",
+          "via": "SC",
+          "pauta": "Semanal",
+          "fecha_inicio": "2026-02-20",
+          "fecha_fin": null,
+          "activo": true,
+          "motivo_inicio": "Cambio de Abatacept a Belimumab.",
+          "motivo_cambio": "Cambio de tratamiento por respuesta parcial.",
+          "motivo_suspension": null,
+          "servicio_clinico_origen": "Reumatologia",
+          "estado_validacion_farmacia": "en_seguimiento",
+          "linea_id": "BIO-FH-004-L2"
+        },
+        {
+          "id": "TRAT-FH-004-C",
+          "cip": "CIP-DEMO-FH-004",
+          "drug_id": "FAR-RITUXIMAB",
+          "selected_drug_id": "FAR-RITUXIMAB",
+          "nombre_comercial": "Rixathon",
+          "principio_activo": "Rituximab",
+          "presentacion_dosis": "1 g perfusion IV",
+          "via": "IV",
+          "pauta": "Dias 1 y 15 cada 6 meses",
+          "fecha_inicio": "2026-05-28",
+          "fecha_fin": null,
+          "activo": true,
+          "motivo_inicio": "Tratamiento anadido por persistencia de actividad glandular y articular.",
+          "motivo_cambio": null,
+          "motivo_suspension": null,
+          "servicio_clinico_origen": "Reumatologia",
+          "estado_validacion_farmacia": "validado",
+          "linea_id": "BIO-FH-004-L3"
+        }
+      ],
+      "cambios_pauta": [
+        {
+          "id": "CAM-FH-004-A",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-02-14",
+          "tipo": "cambio_farmaco",
+          "tratamiento_id": null,
+          "tratamiento_anterior_id": "TRAT-FH-004-A",
+          "tratamiento_nuevo_id": "TRAT-FH-004-B",
+          "motivo": "Cambio a Belimumab por respuesta parcial a Abatacept.",
+          "descripcion": "Suspension de Abatacept e inicio de Belimumab como nueva linea principal.",
+          "servicio_solicitante": "Reumatologia",
+          "estado_validacion_farmacia": "validado",
+          "fuente": "Servicio clinico"
+        },
+        {
+          "id": "CAM-FH-004-B",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-05-28",
+          "tipo": "tratamiento_anadido",
+          "tratamiento_id": "TRAT-FH-004-C",
+          "tratamiento_anterior_id": null,
+          "tratamiento_nuevo_id": "TRAT-FH-004-C",
+          "motivo": "Rituximab anadido sin suspender Belimumab.",
+          "descripcion": "Se mantiene linea principal con Belimumab y se anade Rituximab como linea complementaria.",
+          "servicio_solicitante": "Reumatologia",
+          "estado_validacion_farmacia": "validado",
+          "fuente": "Servicio clinico"
+        }
+      ],
+      "proms": [
+        {
+          "id": "PROM-FH-004-A",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-02-20",
+          "tipo_prom": "HAQ",
+          "valor": "1.4",
+          "interpretacion": "Discapacidad moderada al inicio de Belimumab.",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "PROM-FH-004-B",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-06-09",
+          "tipo_prom": "HAQ",
+          "valor": "0.9",
+          "interpretacion": "Mejoria funcional parcial.",
+          "fuente": "Farmacia"
+        },
+        {
+          "id": "PROM-FH-004-C",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-06-09",
+          "tipo_prom": "EVA dolor",
+          "valor": "3",
+          "interpretacion": "Dolor leve.",
+          "fuente": "Paciente remoto"
+        }
+      ],
+      "actividad_clinica": [
+        {
+          "id": "ACT-FH-004-A",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-02-14",
+          "tipo_indice": "HAQ",
+          "valor": "1.4",
+          "interpretacion": "Discapacidad moderada previa al cambio terapeutico.",
+          "servicio_origen": "Reumatologia",
+          "fuente": "Servicio clinico"
+        },
+        {
+          "id": "ACT-FH-004-B",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-06-09",
+          "tipo_indice": "HAQ",
+          "valor": "0.9",
+          "interpretacion": "Mejoria funcional parcial.",
+          "servicio_origen": "Farmacia",
+          "fuente": "Farmacia"
+        }
+      ],
+      "eventos_adversos": [
+        {
+          "id": "EA-FH-004-A",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-06-09",
+          "tipo": "Infeccion respiratoria",
+          "gravedad": "moderado",
+          "relacion_tratamiento": "Probable",
+          "accion_tomada": "Observacion y retraso de siguiente administracion",
+          "descripcion_corta": "Infeccion respiratoria sin ingreso, en evaluacion de causalidad sobre dos biologicos activos.",
+          "resuelto": false,
+          "sospechosos": [
+            {
+              "linea_id": "BIO-FH-004-L2",
+              "tratamiento_id": "TRAT-FH-004-B",
+              "rol": "sospechoso_principal",
+              "nombre_linea": "Belimumab"
+            },
+            {
+              "linea_id": "BIO-FH-004-L3",
+              "tratamiento_id": "TRAT-FH-004-C",
+              "rol": "sospechoso_secundario",
+              "nombre_linea": "Rituximab"
+            }
+          ],
+          "causalidad": {
+            "algoritmo_principal": "sefh_karch_lasagna_mod",
+            "algoritmos": {
+              "sefh_karch_lasagna_mod": {
+                "puntuacion": 6,
+                "categoria": "probable",
+                "respuestas": {
+                  "secuencia_temporal": 2,
+                  "conocimiento_previo": 1,
+                  "retirada": 1,
+                  "reexposicion": 0,
+                  "causas_alternativas": 1,
+                  "factores_contribuyentes": 0,
+                  "exploraciones_complementarias": 1
+                }
+              }
+            }
+          }
+        }
+      ],
+      "adherencia": [
+        {
+          "id": "ADH-FH-004-A",
+          "cip": "CIP-DEMO-FH-004",
+          "fecha": "2026-06-09",
           "escala": "Morisky-Green",
           "resultado": "4/4",
           "interpretacion": "Alta adherencia",

@@ -204,6 +204,93 @@
         container.appendChild(grid);
     }
 
+    function getPatientBiologicLines(patient) {
+        if (Array.isArray(patient.biologicos) && patient.biologicos.length) return patient.biologicos;
+        var treatments = patient.tratamientos || [];
+        if (!treatments.length && patient.farmaco) {
+            return [{
+                linea_id: patient.cip + '-L1',
+                orden: 1,
+                nombre_linea: patient.principioActivo || patient.farmaco,
+                nombre_comercial: patient.farmaco,
+                principio_activo: patient.principioActivo || patient.farmaco,
+                pauta: patient.pauta || '',
+                via: patient.via || '',
+                fecha_inicio: patient.primeraVisita || '',
+                fecha_fin: '',
+                estado_linea: 'activo',
+                tipo_relacion: 'sin_cambios',
+                es_principal: true
+            }];
+        }
+        return treatments.map(function (t, index) {
+            return {
+                linea_id: t.linea_id || t.id || (patient.cip + '-L' + (index + 1)),
+                orden: index + 1,
+                nombre_linea: t.principio_activo || t.nombre_comercial || 'Tratamiento',
+                nombre_comercial: t.nombre_comercial || '',
+                principio_activo: t.principio_activo || '',
+                pauta: t.pauta || '',
+                via: t.via || '',
+                fecha_inicio: t.fecha_inicio || '',
+                fecha_fin: t.fecha_fin || '',
+                estado_linea: t.activo ? 'activo' : 'historico',
+                tipo_relacion: t.activo ? 'base' : 'historico',
+                es_principal: !!t.activo
+            };
+        });
+    }
+
+    function biologicStateLabel(state) {
+        if (state === 'activo') return 'Activo';
+        if (state === 'anadido' || state === 'añadido') return 'Añadido';
+        if (state === 'suspendido') return 'Suspendido';
+        if (state === 'historico') return 'Historico';
+        return 'Sin clasificar';
+    }
+
+    function biologicRelationLabel(type) {
+        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Cambio terapeutico';
+        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Tratamiento anadido';
+        if (type === 'base') return 'Linea base';
+        return 'Seguimiento';
+    }
+
+    function renderBiologicLines(patient) {
+        var container = document.getElementById('biologicLinesContainer');
+        if (!container) return;
+        F.clearChildren(container);
+        var lines = getPatientBiologicLines(patient);
+        if (!lines.length) {
+            var emptyEl = document.createElement('div');
+            emptyEl.className = 'empty-state';
+            emptyEl.textContent = 'Sin lineas biologicas registradas';
+            container.appendChild(emptyEl);
+            return;
+        }
+        var grid = document.createElement('div');
+        grid.className = 'info-grid';
+        lines.sort(function (a, b) { return (a.orden || 0) - (b.orden || 0); });
+        lines.forEach(function (line) {
+            var field = document.createElement('div');
+            field.className = 'info-field';
+            var label = document.createElement('span');
+            label.className = 'info-field__label';
+            label.textContent = 'L' + (line.orden || '?') + ' · ' + biologicStateLabel(line.estado_linea);
+            var value = document.createElement('span');
+            value.className = 'info-field__value';
+            value.textContent = (line.nombre_comercial || line.nombre_linea || line.principio_activo || 'Biologico') + ' · ' + biologicRelationLabel(line.tipo_relacion || 'sin_cambios');
+            var note = document.createElement('div');
+            note.className = 'timeline-description';
+            note.textContent = [line.principio_activo || '', line.via || '', line.pauta || '', line.fecha_inicio || ''].filter(Boolean).join(' · ');
+            field.appendChild(label);
+            field.appendChild(value);
+            field.appendChild(note);
+            grid.appendChild(field);
+        });
+        container.appendChild(grid);
+    }
+
     function renderProms(patient) {
         var container = document.getElementById('promsDashboardContainer');
         if (!container) return;
@@ -357,6 +444,9 @@
             if (c.tipo === 'cambio_farmaco') {
                 markerClass = 'timeline-marker--switch';
                 badgeType = 'switch';
+            } else if (c.tipo === 'tratamiento_anadido' || c.tipo === 'tratamiento_añadido') {
+                markerClass = 'timeline-marker--change';
+                badgeType = 'anadido';
             }
             milestones.push({
                 date: c.fecha,
@@ -385,7 +475,7 @@
             if (ms.badgeType) {
                 var badge = document.createElement('span');
                 badge.className = 'timeline-badge timeline-badge--' + ms.badgeType;
-                var badgeLabels = { inicio: 'Inicio', fin: 'Fin', cambio: 'Cambio', switch: 'Cambio' };
+                var badgeLabels = { inicio: 'Inicio', fin: 'Fin', cambio: 'Cambio', switch: 'Cambio', anadido: 'Añadido' };
                 badge.textContent = badgeLabels[ms.badgeType] || ms.badgeType;
                 titleEl.appendChild(badge);
             }
@@ -443,10 +533,16 @@
             card.appendChild(header);
             var detail = document.createElement('div');
             detail.className = 'adverse-event-card__detail';
+            var sospechosos = (ev.sospechosos || []).map(function (item) {
+                return item.nombre_linea || item.linea_id || item.tratamiento_id || 'Biologico';
+            }).join(' | ');
+            var causality = ev.causalidad && ev.causalidad.algoritmos ? (ev.causalidad.algoritmos[ev.causalidad.algoritmo_principal] || null) : null;
             var fields = [
-                { label: 'Relaci\u00f3n con tratamiento', value: ev.relacion_tratamiento || '\u2014' },
-                { label: 'Acci\u00f3n tomada', value: ev.accion_tomada || '\u2014' },
-                { label: 'Resultado', value: ev.resuelto ? 'Resuelto' : 'No resuelto' }
+                { label: 'Relación con tratamiento', value: ev.relacion_tratamiento || '—' },
+                { label: 'Biológicos sospechosos', value: sospechosos || '—' },
+                { label: 'Acción tomada', value: ev.accion_tomada || '—' },
+                { label: 'Resultado', value: ev.resuelto ? 'Resuelto' : 'No resuelto' },
+                { label: 'Causalidad', value: causality ? ((causality.categoria || '—') + (causality.puntuacion !== undefined ? ' (' + causality.puntuacion + ')' : '')) : '—' }
             ];
             for (var fi = 0; fi < fields.length; fi++) {
                 var fieldRow = document.createElement('div');
@@ -564,6 +660,7 @@
             patient.actividad_clinica = extData.actividad_clinica || [];
             patient.eventos_adversos = extData.eventos_adversos || [];
             patient.comorbilidades_relevantes = extData.comorbilidades_relevantes || [];
+            patient.biologicos = extData.biologicos || patient.biologicos || [];
         } else {
             patient.episodios_asistenciales = patient.episodios_asistenciales || [];
             patient.tratamientos = patient.tratamientos || [];
@@ -572,10 +669,12 @@
             patient.actividad_clinica = patient.actividad_clinica || [];
             patient.eventos_adversos = patient.eventos_adversos || [];
             patient.comorbilidades_relevantes = patient.comorbilidades_relevantes || [];
+            patient.biologicos = patient.biologicos || [];
         }
 
         renderClinicalActivity(patient);
         renderProms(patient);
+        renderBiologicLines(patient);
         renderTimelines(patient);
         renderAdverseEvents(patient);
         renderComorbidities(patient);
@@ -592,8 +691,14 @@
         const badge = document.getElementById('patientStatusBadge');
         badge.className = F.statusClass(patient.estado);
         badge.textContent = patient.estadoLabel;
+        var activeLines = getPatientBiologicLines(patient).filter(function (line) {
+            return line.estado_linea === 'activo' || line.estado_linea === 'anadido' || line.estado_linea === 'añadido';
+        });
+        var activeSummary = activeLines.length ? activeLines.map(function (line) {
+            return line.nombre_linea || line.principio_activo || line.nombre_comercial;
+        }).join(' + ') : (patient.farmaco + ' · ' + patient.pauta);
         F.renderFields(document.getElementById('dashboardSummaryGrid'), [
-            { label: 'Tratamiento actual', value: patient.farmaco + ' \u00B7 ' + patient.pauta },
+            { label: 'Tratamiento actual', value: activeSummary },
             { label: 'Estado validación', value: patient.estadoLabel },
             { label: 'Última adherencia', value: patient.adherencia },
             { label: 'Efectos adversos', value: patient.efectosAdversos },

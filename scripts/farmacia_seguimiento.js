@@ -13,6 +13,252 @@
     }
 
     var segAutocompleteActiveIndex = -1;
+    var currentSegPatient = null;
+    var currentBiologicLines = [];
+
+    function biologicStateLabel(state) {
+        if (state === 'activo') return 'Activo';
+        if (state === 'anadido' || state === 'añadido') return 'Añadido';
+        if (state === 'suspendido') return 'Suspendido';
+        if (state === 'historico') return 'Historico';
+        return 'Sin clasificar';
+    }
+
+    function biologicRelationLabel(type) {
+        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Cambio terapeutico';
+        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Tratamiento anadido';
+        if (type === 'revision_linea') return 'Revision de linea';
+        if (type === 'base') return 'Linea base';
+        return 'Sin cambios';
+    }
+
+    function setSegValue(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.value = value || '';
+    }
+
+    function normalizeBiologicLine(line, index, patient) {
+        return {
+            linea_id: line.linea_id || ('BIO-LEGACY-' + (index + 1)),
+            orden: line.orden || (index + 1),
+            nombre_linea: line.nombre_linea || line.principio_activo || line.nombre_comercial || ('Biologico ' + (index + 1)),
+            nombre_comercial: line.nombre_comercial || line.nombre_linea || patient.farmaco || '',
+            principio_activo: line.principio_activo || patient.principioActivo || '',
+            dosis: line.dosis || patient.dosis || '',
+            presentacion: line.presentacion || line.presentacion_dosis || line.dosis || '',
+            via: line.via || patient.via || '',
+            pauta: line.pauta || patient.pauta || '',
+            fecha_inicio: line.fecha_inicio || patient.primeraVisita || '',
+            fecha_fin: line.fecha_fin || '',
+            estado_linea: line.estado_linea || (line.activo ? 'activo' : 'historico'),
+            tipo_relacion: line.tipo_relacion || 'sin_cambios',
+            es_principal: !!line.es_principal,
+            tratamiento_id_principal: line.tratamiento_id_principal || line.id || ''
+        };
+    }
+
+    function getPatientBiologicLines(patient) {
+        if (!patient) return [];
+        if (Array.isArray(patient.biologicos) && patient.biologicos.length) {
+            return patient.biologicos.map(function (line, index) {
+                return normalizeBiologicLine(line, index, patient);
+            });
+        }
+        return [normalizeBiologicLine({
+            linea_id: patient.cip ? patient.cip + '-L1' : 'BIO-LEGACY-1',
+            orden: 1,
+            nombre_linea: patient.principioActivo || patient.farmaco || 'Tratamiento actual',
+            nombre_comercial: patient.farmaco || '',
+            principio_activo: patient.principioActivo || patient.farmaco || '',
+            dosis: patient.dosis || '',
+            via: patient.via || '',
+            pauta: patient.pauta || '',
+            fecha_inicio: patient.primeraVisita || '',
+            estado_linea: 'activo',
+            tipo_relacion: 'sin_cambios',
+            es_principal: true
+        }, 0, patient)];
+    }
+
+    function getCurrentSelectedLine() {
+        var select = document.getElementById('fhSegLineaPrincipal');
+        if (!currentBiologicLines.length) return null;
+        if (!select || !select.value) {
+            for (var i = 0; i < currentBiologicLines.length; i++) {
+                if (currentBiologicLines[i].es_principal) return currentBiologicLines[i];
+            }
+            return currentBiologicLines[0];
+        }
+        for (var j = 0; j < currentBiologicLines.length; j++) {
+            if (currentBiologicLines[j].linea_id === select.value) return currentBiologicLines[j];
+        }
+        return currentBiologicLines[0];
+    }
+
+    function renderEaSospechosos(selectedIds) {
+        var container = document.getElementById('fhSegEaSospechosos');
+        if (!container) return;
+        F.clearChildren(container);
+        if (!currentBiologicLines.length) {
+            container.appendChild(document.createTextNode('Sin lineas biologicas disponibles.'));
+            return;
+        }
+        var defaults = Array.isArray(selectedIds) && selectedIds.length ? selectedIds : [];
+        if (!defaults.length) {
+            var selectedLine = getCurrentSelectedLine();
+            if (selectedLine) defaults = [selectedLine.linea_id];
+        }
+        currentBiologicLines.forEach(function (line) {
+            var label = document.createElement('label');
+            label.className = 'checklist-chip';
+            var input = document.createElement('input');
+            input.type = 'checkbox';
+            input.name = 'fhSegEaSospechoso';
+            input.value = line.linea_id;
+            input.checked = defaults.indexOf(line.linea_id) !== -1;
+            input.addEventListener('change', updateEaCausalidad);
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(' L' + line.orden + ' · ' + line.nombre_linea + ' (' + biologicStateLabel(line.estado_linea) + ')'));
+            container.appendChild(label);
+        });
+    }
+
+    function syncBiologicControls(patient) {
+        currentSegPatient = patient || null;
+        currentBiologicLines = patient ? getPatientBiologicLines(patient) : [];
+        var select = document.getElementById('fhSegLineaPrincipal');
+        if (select) {
+            F.clearChildren(select);
+            var first = document.createElement('option');
+            first.value = '';
+            first.textContent = currentBiologicLines.length ? 'Linea principal activa' : 'Tratamiento actual';
+            select.appendChild(first);
+            currentBiologicLines.forEach(function (line) {
+                var opt = document.createElement('option');
+                opt.value = line.linea_id;
+                opt.textContent = 'L' + line.orden + ' · ' + line.nombre_linea + ' · ' + biologicStateLabel(line.estado_linea);
+                if (line.es_principal) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+        applySelectedBiologicLine();
+        renderEaSospechosos();
+        updateEaCausalidad();
+    }
+
+    function applySelectedBiologicLine() {
+        var line = getCurrentSelectedLine();
+        if (!line) {
+            setSegValue('fhSegFarmaco', '');
+            setSegValue('fhSegPrincipioActivo', '');
+            setSegValue('fhSegPresentacion', '');
+            setSegValue('fhSegDosisActual', '');
+            setSegValue('fhSegVia', '');
+            setSegValue('fhSegPautaActual', '');
+            setSegValue('fhSegFechaInicio', '');
+            setSegValue('fhSegEstadoLinea', '');
+            setSegValue('fhSegCodigoNacional', '');
+            setSegValue('fhSegNregistro', '');
+            setSegValue('fhSegEtiquetas', '');
+            setSegValue('fhSegOrigenCatalogo', '');
+            return;
+        }
+        setSegValue('fhSegFarmaco', line.nombre_comercial || line.nombre_linea || '');
+        setSegValue('fhSegPrincipioActivo', line.principio_activo || '');
+        setSegValue('fhSegPresentacion', line.presentacion || line.dosis || '');
+        setSegValue('fhSegDosisActual', line.dosis || '');
+        setSegValue('fhSegVia', line.via || '');
+        setSegValue('fhSegPautaActual', line.pauta || '');
+        setSegValue('fhSegFechaInicio', line.fecha_inicio || '');
+        setSegValue('fhSegEstadoLinea', biologicStateLabel(line.estado_linea));
+        setSegValue('fhSegCodigoNacional', line.codigo_nacional || '');
+        setSegValue('fhSegNregistro', line.nregistro || '');
+        setSegValue('fhSegEtiquetas', line.etiquetas || '');
+        setSegValue('fhSegOrigenCatalogo', line.origen_catalogo || '');
+        var moveSelect = document.getElementById('fhSegTipoRelacionTerapia');
+        if (moveSelect && line.tipo_relacion) moveSelect.value = line.tipo_relacion === 'tratamiento_añadido' ? 'tratamiento_anadido' : (line.tipo_relacion === 'cambio_farmaco' ? 'cambio_terapeutico' : line.tipo_relacion);
+        renderEaSospechosos();
+        updateEaCausalidad();
+    }
+
+    function getSelectedEaSospechosos() {
+        var selected = [];
+        var inputs = document.querySelectorAll('input[name="fhSegEaSospechoso"]:checked');
+        for (var i = 0; i < inputs.length; i++) {
+            for (var j = 0; j < currentBiologicLines.length; j++) {
+                if (currentBiologicLines[j].linea_id === inputs[i].value) {
+                    selected.push(currentBiologicLines[j]);
+                    break;
+                }
+            }
+        }
+        return selected;
+    }
+
+    function getEaCausalidadCategory(score) {
+        if (score <= 0) return 'Improbable / no relacionada';
+        if (score <= 3) return 'Condicional';
+        if (score <= 5) return 'Posible';
+        if (score <= 7) return 'Probable';
+        return 'Definida';
+    }
+
+    function getEaCausalidadSummary() {
+        var algorit = fv('fhSegEaAlgoritmo') || 'sefh_karch_lasagna_mod';
+        if (algorit === 'naranjo') {
+            return {
+                algoritmo: 'Naranjo (documentado, no activo)',
+                puntuacion: '',
+                categoria: 'Documental',
+                resumen: 'Naranjo queda documentado, no activo como calculadora en esta version.'
+            };
+        }
+        var ids = [
+            'fhSegCausSeqTemporal',
+            'fhSegCausConocPrevio',
+            'fhSegCausRetirada',
+            'fhSegCausReexposicion',
+            'fhSegCausAlternativas',
+            'fhSegCausFactores',
+            'fhSegCausExploraciones'
+        ];
+        var total = 0;
+        for (var i = 0; i < ids.length; i++) total += parseInt(fv(ids[i]) || '0', 10);
+        return {
+            algoritmo: 'Prototipo de causalidad — pendiente de matriz exacta/validación farmacovigilancia',
+            puntuacion: String(total),
+            categoria: getEaCausalidadCategory(total),
+            resumen: [
+                'Secuencia temporal=' + fv('fhSegCausSeqTemporal'),
+                'Conocimiento previo=' + fv('fhSegCausConocPrevio'),
+                'Retirada=' + fv('fhSegCausRetirada'),
+                'Reexposicion=' + fv('fhSegCausReexposicion'),
+                'Causas alternativas=' + fv('fhSegCausAlternativas'),
+                'Factores contribuyentes=' + fv('fhSegCausFactores'),
+                'Exploraciones=' + fv('fhSegCausExploraciones')
+            ].join(' | ')
+        };
+    }
+
+    function updateEaCausalidad() {
+        var block = document.getElementById('fhSegEaCausalidadBlock');
+        if (!block) return;
+        var show = fv('fhSegEa') === 'Sí';
+        block.classList.toggle('hidden', !show);
+        if (!show) return;
+        var summary = getEaCausalidadSummary();
+        setSegValue('fhSegEaCategoria', summary.categoria || '');
+        setSegValue('fhSegEaPuntuacion', summary.puntuacion || '');
+        var notice = document.getElementById('fhSegEaCausalidadResumen');
+        if (notice) {
+            var selected = getSelectedEaSospechosos().map(function (line) { return 'L' + line.orden + ' ' + line.nombre_linea; });
+            var span = notice.querySelector('span');
+            if (span) {
+                span.textContent = 'Prototipo de causalidad — pendiente de matriz exacta/validación farmacovigilancia. Sospechosos: ' + (selected.length ? selected.join(' | ') : 'ninguno') + '. ' + summary.algoritmo + (summary.puntuacion ? (' — puntuacion ' + summary.puntuacion + ', categoria ' + summary.categoria + '.') : '.');
+            }
+        }
+    }
+
 
     function applyContext() {
         const ctx = F.getQueryContext();
@@ -41,6 +287,7 @@
             F.setValue('fhSegPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '');
             F.setValue('fhSegPresentacion', snap?.presentacion_snapshot || '');
         }
+        syncBiologicControls(ctx.patient || null);
 
         if (snap) {
             F.setValue('fhSegCodigoNacional', snap.codigo_nacional_snapshot || '');
@@ -76,6 +323,7 @@
         if (fhSegFecha && !fhSegFecha.value) {
             fhSegFecha.value = new Date().toISOString().slice(0, 10);
         }
+        if (!ctx.patient) syncBiologicControls(null);
         if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhSegNoCipBanner');
     }
 
@@ -125,6 +373,7 @@
         var patient = F.patients[cip];
         if (!patient) {
             clearCipFields();
+            syncBiologicControls(null);
             var C2 = getCatalog();
             if (C2 && C2.clearSnapshot) C2.clearSnapshot();
             showSegDrugAutocomplete();
@@ -146,6 +395,7 @@
         F.setValue('fhSegUltimaAdherencia', patient.adherencia);
         F.setValue('fhSegUltimosProms', patient.proms);
         F.setValue('fhSegEaPrevios', patient.efectosAdversos);
+        syncBiologicControls(patient);
 
         var snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
         F.setValue('fhSegPrincipioActivo', snap ? snap.principio_activo_snapshot || patient.principioActivo || '' : patient.principioActivo || '');
@@ -675,14 +925,18 @@
         if (cambiaNivel === 'Sí') {
             partes.push('Cambio de nivel' + (fv('fhSegNuevoNivel') ? ' a ' + fv('fhSegNuevoNivel') : ''));
         }
+        if (fv('fhSegTipoRelacionTerapia')) {
+            partes.push('Movimiento terapéutico: ' + biologicRelationLabel(fv('fhSegTipoRelacionTerapia')));
+        }
         if (partes.length === 0) partes.push('Continuar sin cambios');
         return partes.join(' | ');
     }
 
     function buildCambioFarmacoValue() {
-        var suspension = fv('fhSegSuspension');
-        var optimiza = fv('fhSegOptimiza');
-        if (suspension === 'Sí' || optimiza === 'Sí') return 'Requiere revisión — cambio de tratamiento';
+        var tipo = fv('fhSegTipoRelacionTerapia');
+        if (tipo === 'cambio_terapeutico') return 'Si — requiere nuevo circuito de validacion';
+        if (tipo === 'tratamiento_anadido') return 'No — tratamiento anadido sin asumir cambio';
+        if (tipo === 'revision_linea') return 'No — revision de linea';
         return 'No requiere';
     }
 
@@ -707,6 +961,10 @@
         lines.push('CIP: ' + (fv('fhSegCip') || '—'));
         lines.push('Origen: ' + (fv('fhSegServicio') || '—'));
         lines.push('Indicación: ' + (fv('fhSegPatologia') || '—'));
+        var selectedLine = getCurrentSelectedLine();
+        lines.push('Linea principal: ' + (selectedLine ? ('L' + selectedLine.orden + ' · ' + selectedLine.nombre_linea) : '—'));
+        lines.push('Estado linea: ' + (fv('fhSegEstadoLinea') || '—'));
+        lines.push('Movimiento terapéutico: ' + biologicRelationLabel(fv('fhSegTipoRelacionTerapia') || 'sin_cambios'));
         lines.push('Fármaco / Marca: ' + (fv('fhSegFarmaco') || '—'));
         lines.push('Principio activo: ' + (fv('fhSegPrincipioActivo') || '—'));
         lines.push('Presentación: ' + (fv('fhSegPresentacion') || '—'));
@@ -749,6 +1007,18 @@
         lines.push('Actuación EA: ' + (fv('fhSegEaActuacion') || '—'));
         const eaDesc = fv('fhSegEaDescripcion');
         if (eaDesc) lines.push('Descripción EA: ' + eaDesc);
+        if (fv('fhSegEa') === 'Sí') {
+            var sospechosos = getSelectedEaSospechosos();
+            var sospechososTxt = sospechosos.map(function (line) {
+                return 'L' + line.orden + ' ' + line.nombre_linea;
+            }).join(' | ');
+            var causality = getEaCausalidadSummary();
+            lines.push('Biológicos sospechosos: ' + (sospechososTxt || '—'));
+            lines.push('Algoritmo causalidad: ' + causality.algoritmo);
+            lines.push('Puntuación causalidad: ' + (causality.puntuacion || '—'));
+            lines.push('Categoría causalidad: ' + (causality.categoria || '—'));
+            lines.push('Resumen causalidad: ' + (causality.resumen || '—'));
+        }
         if (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) {
             lines.push('');
             lines.push('--- DLQI detallado ---');
@@ -786,9 +1056,18 @@
         }
 
         document.querySelectorAll('input[name^="mg"]').forEach(input => input.addEventListener('change', updateMorisky));
+        var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
+        if (lineaPrincipal) lineaPrincipal.addEventListener('change', applySelectedBiologicLine);
+        var eaSelector = document.getElementById('fhSegEa');
+        if (eaSelector) eaSelector.addEventListener('change', updateEaCausalidad);
+        ['fhSegEaAlgoritmo', 'fhSegCausSeqTemporal', 'fhSegCausConocPrevio', 'fhSegCausRetirada', 'fhSegCausReexposicion', 'fhSegCausAlternativas', 'fhSegCausFactores', 'fhSegCausExploraciones'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('change', updateEaCausalidad);
+        });
         renderDLQI();
         setupEVASliders();
         setupPromsToggle();
+        updateEaCausalidad();
         const cambiaNivel = document.getElementById('fhSegCambiaNivel');
         if (cambiaNivel) {
             const applyNivel = () => toggleField('fhSegNuevoNivel', cambiaNivel.value === 'Sí');
@@ -826,12 +1105,20 @@
             var evaDolorExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getEVADolor() : '';
             var evaPruritoExport = (fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
             var metaSeg = getSnapshotMetaForExportSeg();
+            var selectedLine = getCurrentSelectedLine();
+            var sospechososCsv = getSelectedEaSospechosos().map(function (line) {
+                return 'L' + line.orden + ':' + line.nombre_linea;
+            }).join(' | ');
+            var causalityCsv = getEaCausalidadSummary();
             const rows = [
-                ['ID', 'Fecha', 'CIP', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'OrigenCatalogoSourceType', 'SelectedDrugId', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EA', 'GravedadEA', 'Decision', 'AvisoCambioFarmaco'],
+                ['ID', 'Fecha', 'CIP', 'LineaPrincipal', 'EstadoLinea', 'MovimientoTerapeutico', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'OrigenCatalogoSourceType', 'SelectedDrugId', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EA', 'GravedadEA', 'BiologicosSospechosos', 'AlgoritmoCausalidad', 'PuntuacionCausalidad', 'CategoriaCausalidad', 'Decision', 'AvisoCambioFarmaco'],
                 [
                     'FH-SEG-' + Date.now().toString(36).toUpperCase(),
                     new Date().toLocaleDateString('es-ES'),
                     fv('fhSegCip') || '—',
+                    selectedLine ? ('L' + selectedLine.orden + ' ' + selectedLine.nombre_linea) : '—',
+                    fv('fhSegEstadoLinea') || '—',
+                    biologicRelationLabel(fv('fhSegTipoRelacionTerapia') || 'sin_cambios'),
                     fv('fhSegFarmaco') || '—',
                     fv('fhSegPrincipioActivo') || '—',
                     fv('fhSegDosisActual') || '—',
@@ -848,6 +1135,10 @@
                     evaPruritoExport || '—',
                     fv('fhSegEa') || '—',
                     fv('fhSegEaGravedad') || '—',
+                    sospechososCsv || '—',
+                    causalityCsv.algoritmo || '—',
+                    causalityCsv.puntuacion || '—',
+                    causalityCsv.categoria || '—',
                     buildDecisionValue() || '—',
                     buildCambioFarmacoValue() || '—'
                 ]
