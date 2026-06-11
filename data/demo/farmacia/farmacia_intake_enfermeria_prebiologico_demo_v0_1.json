@@ -67,14 +67,14 @@
     "intake_id": "INTAKE-FH-003",
     "patient_id": "CIP-DEMO-000000003",
     "display_id": "FH-003",
-    "service": "Reuma",
-    "pathology": "AR",
+    "service": "Derma",
+    "pathology": "HS",
     "proposed_biologic": {
-      "name": "Upadacitinib",
+      "name": "Secukinumab",
       "principio_activo": "",
-      "dose": "",
-      "route": "",
-      "schedule": ""
+      "dose": "300 mg",
+      "route": "SC",
+      "schedule": "cada 4 semanas"
     },
     "prebiologic_status": {
       "global_status": "ok_para_validacion",

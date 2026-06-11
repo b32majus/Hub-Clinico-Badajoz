@@ -307,6 +307,44 @@
             if (obsVac) lines.push('Observaciones vacunación: ' + obsVac);
         }
 
+        var eaNotif = document.getElementById("fhEaNotificado");
+        if (eaNotif && eaNotif.value) {
+          lines.push("");
+          lines.push("--- Evaluación de causalidad del efecto adverso ---");
+          lines.push("EA notificado: " + (document.getElementById("fhEaNotificado").value || "—"));
+          lines.push("Tipo EA: " + (document.getElementById("fhEaTipo").value || "—"));
+          lines.push("Gravedad: " + (document.getElementById("fhEaGravedad").value || "—"));
+          lines.push("Acción: " + (document.getElementById("fhEaAccion").value || "—"));
+          lines.push("Causalidad: " + (document.getElementById("fhEaCausalidad").value || "—"));
+          var critIds = ["fhEaCritTemporal","fhEaCritDechallenge","fhEaCritRechallenge","fhEaCritAlternativa","fhEaCritDescrito","fhEaCritDosis","fhEaCritInsuficiente"];
+          var critNames = ["Relación temporal","Dechallenge positivo","Rechallenge positivo","Sin alternativa más probable","EA descrito en ficha técnica","Relación dosis-respuesta","Evidencia insuficiente"];
+          for (var ci = 0; ci < critIds.length; ci++) {
+            var cb = document.getElementById(critIds[ci]);
+            if (cb && cb.checked) lines.push("  [X] " + critNames[ci]);
+          }
+        }
+
+        var concomRows = document.querySelectorAll(".concomitante-row");
+        if (concomRows.length > 0) {
+          lines.push("");
+          lines.push("--- Tratamientos concomitantes / otros biológicos ---");
+          for (var ri = 0; ri < concomRows.length; ri++) {
+            var row = concomRows[ri];
+            var nombre = (row.querySelector(".concomitante-nombre") || {}).value || "—";
+            var pa = (row.querySelector(".concomitante-pa") || {}).value || "—";
+            var dosis = (row.querySelector(".concomitante-dosis") || {}).value || "—";
+            var via = (row.querySelector(".concomitante-via") || {}).value || "—";
+            var pauta = (row.querySelector(".concomitante-pauta") || {}).value || "—";
+            var motivo = (row.querySelector(".concomitante-motivo") || {}).value || "—";
+            lines.push("Fármaco " + (ri+1) + ": " + nombre);
+            lines.push("  PA: " + pa);
+            lines.push("  Dosis: " + dosis);
+            lines.push("  Vía: " + via);
+            lines.push("  Pauta: " + pauta);
+            lines.push("  Motivo: " + motivo);
+          }
+        }
+
         lines.push('');
         lines.push('Estado validación: ' + estadoLabel());
         var motivo = document.getElementById('fhValMotivo').value.trim();
@@ -677,9 +715,16 @@
             var seroVhc = seroVhcEl ? (seroVhcEl.value || '—') : '—';
             var seroVih = seroVihEl ? (seroVihEl.value || '—') : '—';
 
+            var eaNotifVal = safeVal('fhEaNotificado');
+            var eaTipoVal = safeVal('fhEaTipo');
+            var eaGravedadVal = safeVal('fhEaGravedad');
+            var eaAccionVal = safeVal('fhEaAccion');
+            var eaCausalidadVal = safeVal('fhEaCausalidad');
+            var concomitantesCount = document.querySelectorAll('.concomitante-row').length;
+
             const rows = [
-                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro'],
-                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro]
+                ['ID', 'Fecha', 'Servicio', 'CIP', 'Patologia', 'Estado', 'FarmacoSolicitado', 'PrincipioActivo', 'DosisPresentacion', 'Via', 'Pauta', 'InduccionSolicitada', 'Profesional', 'VHB', 'VHC', 'VIH', 'MotivoDenegacion', 'SnapshotDrugID', 'SnapshotSourceType', 'CodigoNacional', 'NRegistro', 'EANotificado', 'EATipo', 'EAGravedad', 'EAAccion', 'EACausalidad', 'ConcomitantesCount'],
+                ['FH-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), modoActual === 'reuma' ? 'Reumatología' : 'Dermatología', selectedCip(), selectedPatologia(), estadoLabel(), farmaco, principioActivo, dosisPresentacion, via, pauta, induccion, profesional, seroVhb, seroVhc, seroVih, motivoDenegacion, snapDrugId, snapSourceType, codigoNacional, nRegistro, eaNotifVal, eaTipoVal, eaGravedadVal, eaAccionVal, eaCausalidadVal, String(concomitantesCount)]
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {
@@ -705,6 +750,14 @@
 
         applyContext();
         initAnaliticaChips();
+
+        var btnAddConc = document.getElementById('btnAddConcomitante');
+        if (btnAddConc) {
+          btnAddConc.addEventListener('click', function() {
+            var concList = document.getElementById('concomitantesList');
+            if (concList) addConcomitanteRow(concList, null);
+          });
+        }
     });
 
 // ===== INTAKE ENFERMERÍA — BANDEJA =====
@@ -954,6 +1007,100 @@ function precargarValidacion(data) {
     origenEl.setAttribute('data-context-origen', 'true');
     origenStrip.appendChild(origenEl);
   }
+
+  var ea = data.adverse_event || data.adverseEvent || null;
+  if (ea) {
+    var eaBlock = document.getElementById("eaBlock");
+    if (eaBlock) eaBlock.classList.remove("hidden");
+    if (ea.notificado) setValueIfExists("fhEaNotificado", ea.notificado);
+    if (ea.tipo) setValueIfExists("fhEaTipo", ea.tipo);
+    if (ea.gravedad) setValueIfExists("fhEaGravedad", ea.gravedad);
+    if (ea.accion) setValueIfExists("fhEaAccion", ea.accion);
+    if (ea.causalidad) setValueIfExists("fhEaCausalidad", ea.causalidad);
+    if (ea.criterios) {
+      var crits = ea.criterios;
+      if (crits.temporal) setCheckedIfExists("fhEaCritTemporal", true);
+      if (crits.dechallenge) setCheckedIfExists("fhEaCritDechallenge", true);
+      if (crits.rechallenge) setCheckedIfExists("fhEaCritRechallenge", true);
+      if (crits.alternativa) setCheckedIfExists("fhEaCritAlternativa", true);
+      if (crits.descrito) setCheckedIfExists("fhEaCritDescrito", true);
+      if (crits.dosis) setCheckedIfExists("fhEaCritDosis", true);
+      if (crits.insuficiente) setCheckedIfExists("fhEaCritInsuficiente", true);
+    }
+  }
+
+  var concom = data.other_biologics || data.concomitant_treatments || [];
+  if (Array.isArray(concom) && concom.length > 0) {
+    var concBlock = document.getElementById("concomitantesBlock");
+    if (concBlock) concBlock.classList.remove("hidden");
+    var concList = document.getElementById("concomitantesList");
+    concom.forEach(function(item) {
+      addConcomitanteRow(concList, item);
+    });
+  }
+}
+
+function addConcomitanteRow(container, data) {
+  var row = document.createElement('div');
+  row.className = 'concomitante-row';
+
+  var inpNombre = document.createElement('input');
+  inpNombre.type = 'text';
+  inpNombre.className = 'concomitante-nombre form-control';
+  inpNombre.placeholder = 'Nombre fármaco';
+  if (data && data.nombre) inpNombre.value = data.nombre;
+
+  var inpPa = document.createElement('input');
+  inpPa.type = 'text';
+  inpPa.className = 'concomitante-pa form-control';
+  inpPa.placeholder = 'Principio activo';
+  if (data && data.principio_activo) inpPa.value = data.principio_activo;
+
+  var inpDosis = document.createElement('input');
+  inpDosis.type = 'text';
+  inpDosis.className = 'concomitante-dosis form-control';
+  inpDosis.placeholder = 'Dosis';
+  if (data && data.dosis) inpDosis.value = data.dosis;
+
+  var selVia = document.createElement('select');
+  selVia.className = 'concomitante-via form-select';
+  var viaOptions = ['', 'SC', 'IV', 'Oral', 'Otra'];
+  for (var vi = 0; vi < viaOptions.length; vi++) {
+    var opt = document.createElement('option');
+    opt.value = viaOptions[vi];
+    opt.textContent = viaOptions[vi] || '—';
+    selVia.appendChild(opt);
+  }
+  if (data && data.via) selVia.value = data.via;
+
+  var inpPauta = document.createElement('input');
+  inpPauta.type = 'text';
+  inpPauta.className = 'concomitante-pauta form-control';
+  inpPauta.placeholder = 'Pauta';
+  if (data && data.pauta) inpPauta.value = data.pauta;
+
+  var inpMotivo = document.createElement('input');
+  inpMotivo.type = 'text';
+  inpMotivo.className = 'concomitante-motivo form-control';
+  inpMotivo.placeholder = 'Motivo';
+  if (data && data.motivo) inpMotivo.value = data.motivo;
+
+  var btnRemove = document.createElement('button');
+  btnRemove.type = 'button';
+  btnRemove.className = 'btn btn-sm btn-outline btn-remove-concomitante';
+  var icRemove = document.createElement('i');
+  icRemove.className = 'fas fa-times';
+  btnRemove.appendChild(icRemove);
+  btnRemove.addEventListener('click', function() { row.remove(); });
+
+  row.appendChild(inpNombre);
+  row.appendChild(inpPa);
+  row.appendChild(inpDosis);
+  row.appendChild(selVia);
+  row.appendChild(inpPauta);
+  row.appendChild(inpMotivo);
+  row.appendChild(btnRemove);
+  container.appendChild(row);
 }
 
 function escapeHtml(text) { if (!text) return ''; return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

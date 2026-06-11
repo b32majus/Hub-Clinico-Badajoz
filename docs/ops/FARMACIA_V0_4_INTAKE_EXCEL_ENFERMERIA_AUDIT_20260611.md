@@ -119,3 +119,27 @@
 - `grep "innerHTML" scripts/farmacia_validacion.js farmacia_validacion.html` → 0 resultados
 
 **Status:** `pending_review`
+
+---
+
+## Corrección P2 — Demo coherente: Derma/HS + causalidad EA + múltiples biológicos
+**Fecha:** 2026-06-11
+**SHA:** dd7f394 → (nuevo SHA tras commit)
+
+### Cambios
+1. JSON demo INTAKE-FH-003 cambiado a Derma/HS/Secukinumab 300mg.
+2. Bloque causalidad EA añadido (fhEaNotificado, fhEaTipo, fhEaGravedad, fhEaAccion, fhEaCausalidad + 7 criterios checklist).
+3. Precarga defensiva de EA desde data.adverse_event || data.adverseEvent.
+4. Sección tratamientos concomitantes con botón "Añadir otro fármaco" + filas dinámicas.
+5. Precarga de otros biológicos desde data.other_biologics || data.concomitant_treatments.
+6. Export TXT/CSV ampliado con bloques EA y concomitantes.
+7. Estilos CSS para EA y concomitantes.
+8. Cache busting actualizado a v=20260611-intake-d.
+
+### Validaciones
+- node --check scripts/farmacia_validacion.js → OK
+- node tools/farmacia_smoke_check.mjs → OK
+- grep innerHTML → 0 resultados
+- grep IDs antiguos serologías → 0 resultados
+
+**Status:** pending_review

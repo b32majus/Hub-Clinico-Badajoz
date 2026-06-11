@@ -5042,3 +5042,56 @@
     }
 }
 
+/* === Bloque EA — causalidad efecto adverso === */
+.ea-criteria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.ea-note {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  color: #92400E;
+  line-height: 1.5;
+}
+
+/* === Tratamientos concomitantes === */
+.concomitante-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 100px 80px 1fr 1fr auto;
+  gap: 8px;
+  align-items: end;
+  padding: 10px 0;
+  border-bottom: 1px solid #E2E8F0;
+}
+.concomitante-row .form-control,
+.concomitante-row .form-select {
+  font-size: 0.82rem;
+  padding: 6px 8px;
+}
+.btn-remove-concomitante {
+  padding: 6px 10px;
+  color: #DC2626;
+  border-color: #DC2626;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+.btn-remove-concomitante:hover {
+  background: #DC2626;
+  color: white;
+}
+#concomitantesBlock .btn-outline {
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .concomitante-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
