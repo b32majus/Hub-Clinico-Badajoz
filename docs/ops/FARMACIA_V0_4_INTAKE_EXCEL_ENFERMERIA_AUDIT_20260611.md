@@ -97,7 +97,7 @@
 ## Corrección P1 final — Precarga prebiológica desde Intake
 
 **Fecha:** 2026-06-11
-**SHA:** a48bc42 → (nuevo SHA tras commit)
+**SHA:** a48bc42 → 4bfb959
 
 ### Problemas corregidos
 
