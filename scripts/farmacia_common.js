@@ -410,7 +410,18 @@
     function getQueryContext() {
         const params = new URLSearchParams(window.location.search);
         const cip = (params.get('cip') || params.get('id') || '').trim();
-        const patient = patients[cip] || getImportedPatientByCip(cip) || null;
+        let patient = null;
+        if (cip) {
+            const availablePatients = getAvailablePatients();
+            const target = String(cip).trim().toUpperCase();
+            for (let i = 0; i < availablePatients.length; i += 1) {
+                const candidate = availablePatients[i];
+                if (String((candidate && candidate.cip) || '').trim().toUpperCase() === target) {
+                    patient = candidate;
+                    break;
+                }
+            }
+        }
         return {
             cip,
             servicio: params.get('servicio') || patient?.servicio || '',
