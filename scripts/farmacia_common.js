@@ -426,10 +426,10 @@
 
         var normalized = normalizeCheckString(value);
         if (!normalized) return 'no_informado';
-        if (/^(si|sí|ok|correcto|correcta|completo|completa|normal|negativo|negativa|apto|apta)$/.test(normalized)) return 'ok';
+        if (/^(si|sí|ok|correcto|correcta|completo|completa|completado|completada|normal|negativo|negativa|negativos|negativas|apto|apta|al dia|al día|revisado|revisada)$/.test(normalized)) return 'ok';
         if (/pendient|solicit|en curso|por hacer|por revisar|falta/.test(normalized)) return 'pendiente';
         if (/positivo|positiva|alterad|anormal|reactiv|revisar|alerta|contraindic/.test(normalized)) return 'alerta';
-        if (/no aplica|n\/a|na/.test(normalized)) return 'no_aplica';
+        if (/^(no aplica|n\/a|na|no procede|no aplicable)$/.test(normalized)) return 'no_aplica';
         return 'no_informado';
     }
 
