@@ -1,10 +1,14 @@
 'use strict';
 
 (function () {
-    var patients = window.FarmaciaDemo ? window.FarmaciaDemo.patients : {};
-    var patientList = Object.values(patients);
+    var F = window.FarmaciaDemo || null;
 
-    function countBy(fn) {
+    function getPatients() {
+        if (!F || !F.getAvailablePatients) return [];
+        return F.getAvailablePatients();
+    }
+
+    function countBy(patientList, fn) {
         var c = 0;
         for (var i = 0; i < patientList.length; i++) {
             if (fn(patientList[i])) c++;
@@ -26,7 +30,6 @@
 
         var heading = document.createElement('h2');
         heading.className = 'card-title';
-
         var icon = document.createElement('i');
         icon.className = 'fas ' + iconClass;
         icon.setAttribute('aria-hidden', 'true');
@@ -35,7 +38,6 @@
         card.appendChild(heading);
 
         valueElBuilder(card);
-
         return card;
     }
 
@@ -61,23 +63,41 @@
         });
     }
 
+    function getSourceSummary(patientList) {
+        var hasDemo = false;
+        var hasEnfermeria = false;
+        var hasFarmacia = false;
+        for (var i = 0; i < patientList.length; i++) {
+            var source = String((patientList[i].importSource || 'demo')).toLowerCase();
+            if (source.indexOf('farmacia') !== -1) hasFarmacia = true;
+            else if (source.indexOf('enfermer') !== -1) hasEnfermeria = true;
+            else hasDemo = true;
+        }
+        if ((hasDemo && hasEnfermeria) || (hasDemo && hasFarmacia) || (hasEnfermeria && hasFarmacia)) return 'Fuente actual: combinado';
+        if (hasFarmacia) return 'Fuente actual: Excel Farmacia';
+        if (hasEnfermeria) return 'Fuente actual: Excel Enfermería';
+        return 'Fuente actual: datos demo';
+    }
+
     function renderStats() {
         var container = document.getElementById('actividadCards');
+        var sourceNote = document.getElementById('actividadSourceNote');
         if (!container) return;
+        F.clearChildren(container);
+        var patientList = getPatients();
 
-        var pendientes = countBy(function (p) { return p.estado === 'pending'; });
-        var realizadas = countBy(function (p) { return p.estado === 'followup' || p.estado === 'validated'; });
-        var seguimiento = countBy(function (p) { return p.estado === 'followup'; });
+        if (sourceNote) sourceNote.textContent = getSourceSummary(patientList);
 
-        var origenItems = ['Origen cat\u00e1logo demo: CIMA / Local Especial no persistido en dataset; 3 tratamientos demo'];
+        var pendientes = countBy(patientList, function (p) { return String(p.estado || '').toLowerCase() === 'pending'; });
+        var realizadas = countBy(patientList, function (p) {
+            var estado = String(p.estado || '').toLowerCase();
+            return estado === 'followup' || estado === 'validated';
+        });
+        var seguimiento = countBy(patientList, function (p) { return String(p.estado || '').toLowerCase() === 'followup'; });
 
-        if (window.FarmaciaCatalog && window.FarmaciaCatalog.getSnapshot()) {
-            var snap = window.FarmaciaCatalog.getSnapshot();
-            var st = (snap.source_type || '').toLowerCase();
-            var origenLabel = st === 'cima' ? 'CIMA'
-                : (st === 'local' || st === 'local_especial') ? 'Local Especial'
-                : st === 'local_pendiente_demo' ? 'Demo / local pendiente' : 'Sin cat\u00e1logo cargado';
-            origenItems.push('Origen cat\u00e1logo actual: ' + origenLabel);
+        var origenItems = [getSourceSummary(patientList)];
+        if (window.FarmaciaCatalog && window.FarmaciaCatalog.getStatus) {
+            origenItems.push(window.FarmaciaCatalog.getStatus().message);
         }
 
         var freqMap = {};
@@ -86,28 +106,30 @@
             if (princ) freqMap[princ] = (freqMap[princ] || 0) + 1;
         }
         var freqSorted = Object.keys(freqMap).sort(function (a, b) { return freqMap[b] - freqMap[a]; });
-        var freqItems = freqSorted.map(function (k) { return k + ': ' + freqMap[k]; });
+        var freqItems = freqSorted.length ? freqSorted.map(function (k) { return k + ': ' + freqMap[k]; }) : ['Sin datos suficientes'];
 
         var optimizaciones = 0;
-
-        var promsPend = countBy(function (p) {
-            var t = (p.proms || '').toLowerCase();
-            return t.indexOf('pendiente') !== -1 || t === '—' || t === '';
+        var promsPend = countBy(patientList, function (p) {
+            var t = String(p.proms || '').toLowerCase();
+            return t.indexOf('pendiente') !== -1 || t === '—' || t === '' || t === 'sin registro';
         });
-        var promsRep = countBy(function (p) {
-            var t = (p.proms || '').toLowerCase();
-            return t.indexOf('pendiente') === -1 && t !== '—' && t !== '';
+        var promsRep = countBy(patientList, function (p) {
+            var t = String(p.proms || '').toLowerCase();
+            return t && t !== '—' && t !== 'sin registro' && t.indexOf('pendiente') === -1;
         });
 
         container.appendChild(buildValueCard('fa-user-clock', 'Validaciones pendientes', String(pendientes)));
         container.appendChild(buildValueCard('fa-check-circle', 'Realizadas', String(realizadas)));
         container.appendChild(buildValueCard('fa-clipboard-list', 'En seguimiento', String(seguimiento)));
-        container.appendChild(buildListCard('fa-hospital-user', 'Tratamientos por origen de cat\u00e1logo', origenItems));
-        container.appendChild(buildListCard('fa-pills', 'F\u00e1rmacos frecuentes', freqItems));
+        container.appendChild(buildListCard('fa-hospital-user', 'Fuente actual', origenItems));
+        container.appendChild(buildListCard('fa-pills', 'Fármacos frecuentes', freqItems));
         container.appendChild(buildValueCard('fa-compress-arrows-alt', 'Optimizaciones', String(optimizaciones)));
         container.appendChild(buildValueCard('fa-hourglass-half', 'PROMs pendientes', String(promsPend)));
         container.appendChild(buildValueCard('fa-file-medical-alt', 'PROMs reportados', String(promsRep)));
     }
 
-    document.addEventListener('DOMContentLoaded', renderStats);
+    document.addEventListener('DOMContentLoaded', function () {
+        renderStats();
+        document.addEventListener('farmacia:data-imported', renderStats);
+    });
 })();

@@ -284,7 +284,7 @@
             pauta: mapping.pauta ? String(row[mapping.pauta] || '').trim() : '',
             via: mapping.via ? String(row[mapping.via] || '').trim() : '',
             estado: 'pending',
-            estadoLabel: 'Importado',
+            estadoLabel: 'Pendiente',
             fechaSolicitud: mapping.fecha ? String(row[mapping.fecha] || '').trim() : '',
             ultimaSolicitud: mapping.fecha ? String(row[mapping.fecha] || '').trim() : '',
             analitica: 'Datos importados desde Excel ' + sourceLabel + '. Pendiente de mapeo clínico detallado.',
@@ -297,7 +297,7 @@
             seguimiento: 'Pendiente de revisión',
             motivoClinico: mapping.patologia ? String(row[mapping.patologia] || '').trim() : '',
             principioActivo: mapping.principioActivo ? String(row[mapping.principioActivo] || '').trim() : '',
-            importSource: sourceLabel,
+            importSource: sourceLabel === 'Enfermería' ? 'Excel Enfermería' : (sourceLabel === 'Farmacia' ? 'Excel Farmacia' : sourceLabel),
             importRowIndex: rowIndex
         };
     }
@@ -319,6 +319,92 @@
             }
         }
         return null;
+    }
+
+
+    function patientSourcePriority(patient) {
+        var source = String((patient && patient.importSource) || 'demo').toLowerCase();
+        if (source.indexOf('farmacia') !== -1) return 3;
+        if (source.indexOf('enfermer') !== -1) return 2;
+        return 1;
+    }
+
+    function isBlankValue(value) {
+        return value === null || value === undefined || String(value).trim() === '' || String(value).trim() == '—';
+    }
+
+    function mergePatientRecord(basePatient, overlayPatient) {
+        var merged = Object.assign({}, basePatient || {});
+        Object.keys(overlayPatient || {}).forEach(function (key) {
+            var overlayValue = overlayPatient[key];
+            if (!isBlankValue(overlayValue)) {
+                merged[key] = overlayValue;
+            } else if (!(key in merged)) {
+                merged[key] = overlayValue;
+            }
+        });
+        if (!merged.importSource) merged.importSource = 'demo';
+        if (!merged.estado) merged.estado = 'pending';
+        if (!merged.estadoLabel) {
+            merged.estadoLabel = merged.estado === 'pending' ? 'Pendiente' : (merged.estado === 'validated' ? 'Validado' : (merged.estado === 'followup' ? 'En seguimiento' : 'Pendiente'));
+        }
+        return merged;
+    }
+
+    function getAvailablePatients() {
+        var mergedByCip = {};
+        var ordered = [];
+
+        Object.keys(patients).forEach(function (cip) {
+            var base = mergePatientRecord({}, Object.assign({ importSource: 'demo' }, patients[cip]));
+            mergedByCip[cip] = base;
+            ordered.push(base);
+        });
+
+        var importedPatients = [];
+        if (window.FarmaciaDataImports && window.FarmaciaDataImports.getImportedPatients) {
+            importedPatients = window.FarmaciaDataImports.getImportedPatients();
+        }
+
+        importedPatients.forEach(function (patient) {
+            if (!patient || !patient.cip) return;
+            var cip = String(patient.cip).trim();
+            var normalized = mergePatientRecord({}, patient);
+            var existing = mergedByCip[cip];
+            if (!existing) {
+                mergedByCip[cip] = normalized;
+                ordered.push(normalized);
+                return;
+            }
+            if (patientSourcePriority(normalized) >= patientSourcePriority(existing)) {
+                mergedByCip[cip] = mergePatientRecord(existing, normalized);
+            } else {
+                mergedByCip[cip] = mergePatientRecord(normalized, existing);
+            }
+        });
+
+        return ordered.map(function (patient) {
+            return mergedByCip[String(patient.cip).trim()] || patient;
+        }).filter(function (patient, index, list) {
+            return patient && patient.cip && list.findIndex(function (candidate) {
+                return candidate && String(candidate.cip).trim() === String(patient.cip).trim();
+            }) === index;
+        });
+    }
+
+    function isPendingValidationPatient(patient) {
+        if (!patient) return false;
+        var estado = String(patient.estado || '').trim().toLowerCase();
+        var estadoLabel = String(patient.estadoLabel || '').trim().toLowerCase();
+        var validacion = String(patient.estado_validacion_farmacia || '').trim().toLowerCase();
+        if (estado === 'pending') return true;
+        if (estadoLabel.indexOf('pend') !== -1) return true;
+        if (validacion === 'pendiente') return true;
+        return false;
+    }
+
+    function getPendingValidationPatients() {
+        return getAvailablePatients().filter(isPendingValidationPatient);
     }
 
     function getQueryContext() {
@@ -932,8 +1018,15 @@
         DEMO_SESSION_NOTE,
         downloadFile,
         insertNoCipBanner,
+        getAvailablePatients,
+        getPendingValidationPatients,
         findPatientByCip: function (cip) {
-            return patients[cip] || getImportedPatientByCip(cip) || null;
+            var available = getAvailablePatients();
+            var target = String(cip || '').trim().toUpperCase();
+            for (var i = 0; i < available.length; i++) {
+                if (String(available[i].cip || '').trim().toUpperCase() === target) return available[i];
+            }
+            return null;
         }
     };
 })();

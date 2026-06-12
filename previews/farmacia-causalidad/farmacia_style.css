@@ -5048,3 +5048,64 @@
 .import-card__button {
     width: 100%;
 }
+
+
+.pending-validation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.pending-validation-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    background: #F8FAFC;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.pending-validation-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pending-validation-card__title {
+    margin: 0;
+    font-size: 1rem;
+    color: #0F172A;
+}
+
+.pending-validation-card__subtitle {
+    margin: 4px 0 0;
+    color: #64748B;
+    font-size: 0.84rem;
+}
+
+.pending-validation-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pending-validation-card__meta {
+    color: #334155;
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+.pending-validation-card__meta i {
+    color: var(--ses-green);
+}
+
+.pending-validation-card__actions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.stats-note--source {
+    margin-top: 10px;
+}

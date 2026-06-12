@@ -6,8 +6,8 @@
     <title>Hub Clínico — Farmacia Hospitalaria</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="style.css?v=20260612-data-import-a">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260612-data-import-a">
+    <link rel="stylesheet" href="style.css?v=20260612-visibility-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-visibility-a">
 </head>
         <body>
             <div class="hub-shell">
@@ -156,16 +156,28 @@
     </div>
 </section>
 
+
+<section class="dashboard-card" id="pendingValidationBoard">
+    <h2 class="section-title"><i class="fas fa-user-clock"></i> Pacientes pendientes de validación farmacéutica</h2>
+    <p class="validation-module__intro">Bandeja operativa alimentada por Excel de Enfermería, Excel de Farmacia y demo fallback.</p>
+    <p class="empty-state hidden" id="pendingValidationEmpty">No hay pacientes pendientes de validación farmacéutica.</p>
+    <div class="pending-validation-grid" id="pendingValidationCards" aria-live="polite"></div>
+</section>
+
 <h2 class="section-title">Accesos rápidos</h2>
 <section class="action-grid">
     <a href="farmacia_validacion.html" class="action-card"><i class="fas fa-check-double action-card__icon"></i><span class="action-card__title">Validación</span><span class="action-card__desc">Evaluar solicitudes farmacoterapéuticas pendientes.</span></a>
     <a href="farmacia_primera_visita.html" class="action-card"><i class="fas fa-plus-circle action-card__icon"></i><span class="action-card__title">Primera Visita</span><span class="action-card__desc">Registrar inicio del seguimiento farmacoterapéutico.</span></a>
     <a href="farmacia_seguimiento.html" class="action-card"><i class="fas fa-clipboard-list action-card__icon"></i><span class="action-card__title">Seguimiento</span><span class="action-card__desc">Adherencia, PROMs, optimización, suspensión y efectos adversos.</span></a>
     <a href="farmacia_dashboard_paciente.html" class="action-card"><i class="fas fa-user-circle action-card__icon"></i><span class="action-card__title">Dashboard Paciente</span><span class="action-card__desc">Visión longitudinal individual del episodio FH.</span></a>
+    <a href="farmacia_actividad_servicio.html" class="action-card"><i class="fas fa-tasks action-card__icon"></i><span class="action-card__title">Actividad del servicio</span><span class="action-card__desc">Indicadores operativos con datos demo e importados.</span></a>
+    <a href="farmacia_estadisticas.html" class="action-card"><i class="fas fa-chart-bar action-card__icon"></i><span class="action-card__title">Estadísticas del servicio</span><span class="action-card__desc">Dashboard longitudinal de cohorte y seguimiento.</span></a>
+    <a href="farmacia_farmacos.html" class="action-card"><i class="fas fa-pills action-card__icon"></i><span class="action-card__title">Fármacos</span><span class="action-card__desc">Catálogo farmacológico demo con carga automática.</span></a>
+    <a href="farmacia_profesionales.html" class="action-card"><i class="fas fa-users action-card__icon"></i><span class="action-card__title">Profesionales</span><span class="action-card__desc">Vista operativa del equipo de Farmacia.</span></a>
 </section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260612-data-import-a"></script>
-    <script src="scripts/farmacia_index.js?v=20260612-data-import-a"></script>
+            <script src="scripts/farmacia_common.js?v=20260612-visibility-a"></script>
+    <script src="scripts/farmacia_index.js?v=20260612-visibility-a"></script>
         </body>
         </html>
