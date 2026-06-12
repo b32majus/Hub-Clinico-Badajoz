@@ -468,6 +468,87 @@
         });
     }
 
+
+    function textOrDash(value) {
+        return value === null || value === undefined || String(value).trim() === '' ? '—' : String(value).trim();
+    }
+
+    function buildPendingMeta(iconClass, text) {
+        var row = document.createElement('div');
+        row.className = 'pending-validation-card__meta';
+        var icon = document.createElement('i');
+        icon.className = 'fas ' + iconClass;
+        icon.setAttribute('aria-hidden', 'true');
+        row.appendChild(icon);
+        row.appendChild(document.createTextNode(' ' + text));
+        return row;
+    }
+
+    function pendingSourceLabel(patient) {
+        var source = String((patient && patient.importSource) || 'demo');
+        if (source.toLowerCase().indexOf('farmacia') !== -1) return 'Excel Farmacia';
+        if (source.toLowerCase().indexOf('enfermer') !== -1) return 'Excel Enfermería';
+        return 'demo';
+    }
+
+    function renderPendingValidationBoard() {
+        var board = document.getElementById('pendingValidationBoard');
+        var cards = document.getElementById('pendingValidationCards');
+        var empty = document.getElementById('pendingValidationEmpty');
+        if (!board || !cards || !empty || !F.getPendingValidationPatients) return;
+        F.clearChildren(cards);
+        var patients = F.getPendingValidationPatients();
+        empty.classList.toggle('hidden', patients.length > 0);
+        if (!patients.length) return;
+
+        patients.forEach(function (patient) {
+            var card = document.createElement('article');
+            card.className = 'pending-validation-card';
+
+            var header = document.createElement('div');
+            header.className = 'pending-validation-card__header';
+            var titleWrap = document.createElement('div');
+            titleWrap.className = 'pending-validation-card__title-wrap';
+            var title = document.createElement('h3');
+            title.className = 'pending-validation-card__title';
+            title.textContent = textOrDash(patient.cip);
+            var subtitle = document.createElement('p');
+            subtitle.className = 'pending-validation-card__subtitle';
+            subtitle.textContent = textOrDash(patient.nombre);
+            titleWrap.append(title, subtitle);
+            var badge = document.createElement('span');
+            badge.className = 'status-badge status-badge--pending';
+            badge.textContent = 'Pendiente de validación';
+            header.append(titleWrap, badge);
+            card.appendChild(header);
+
+            var body = document.createElement('div');
+            body.className = 'pending-validation-card__body';
+            body.appendChild(buildPendingMeta('fa-hospital', 'Servicio origen: ' + textOrDash(patient.servicio)));
+            body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología / indicación: ' + textOrDash(patient.patologia || patient.motivoClinico)));
+            body.appendChild(buildPendingMeta('fa-pills', 'Fármaco / tratamiento: ' + textOrDash(patient.farmaco || patient.principioActivo)));
+            body.appendChild(buildPendingMeta('fa-calendar-alt', 'Fecha solicitud: ' + textOrDash(patient.fechaSolicitud || patient.ultimaSolicitud)));
+            body.appendChild(buildPendingMeta('fa-database', 'Origen de datos: ' + pendingSourceLabel(patient)));
+            card.appendChild(body);
+
+            var actions = document.createElement('div');
+            actions.className = 'pending-validation-card__actions';
+            var link = document.createElement('a');
+            link.className = 'btn btn-primary';
+            link.href = F.makeContextUrl('farmacia_validacion.html', {
+                cip: patient.cip,
+                servicio: patient.servicioSlug || patient.servicio,
+                patologia: patient.patologia,
+                entrada: 'validacion'
+            });
+            F.appendIconText(link, 'fa-check-double', 'Abrir validación');
+            actions.appendChild(link);
+            card.appendChild(actions);
+
+            cards.appendChild(card);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         ensureOverlay();
         var searchBtn = document.getElementById('fhSearchBtn');
@@ -480,6 +561,8 @@
             }
         });
         initGuidedIntake();
+        renderPendingValidationBoard();
+        document.addEventListener('farmacia:data-imported', renderPendingValidationBoard);
         var context = F.getQueryContext();
         if (context.cip && cipInput) {
             cipInput.value = context.cip;
