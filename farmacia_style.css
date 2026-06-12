@@ -5009,3 +5009,42 @@
         margin-left: 0;
     }
 }
+
+
+.catalog-sidebar-note {
+    margin: 10px 0 0;
+    color: #64748B;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.import-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.import-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 18px;
+    background: #F8FAFC;
+}
+
+.import-card__status {
+    margin: 8px 0 6px;
+    color: #0F172A;
+    font-weight: 700;
+}
+
+.import-card__detail {
+    margin: 0 0 16px;
+    color: #64748B;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.import-card__button {
+    width: 100%;
+}

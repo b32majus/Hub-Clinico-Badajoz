@@ -184,10 +184,147 @@
         otro: ['Especificar en observaciones']
     };
 
+
+    const IMPORT_STORAGE_KEYS = {
+        enfermeria: 'farmaciaDemo.enfermeriaImport',
+        farmacia: 'farmaciaDemo.farmaciaImport'
+    };
+
+    const IMPORT_FIELD_ALIASES = {
+        cip: ['cip', 'codigo paciente', 'codigo_paciente', 'id paciente', 'id_paciente', 'paciente id', 'patient id', 'patient_id'],
+        nombre: ['nombre', 'nombre paciente', 'paciente', 'patient', 'apellidos y nombre'],
+        servicio: ['servicio', 'unidad', 'especialidad', 'servicio origen', 'origen'],
+        patologia: ['patologia', 'patología', 'diagnostico', 'diagnóstico', 'indicacion', 'indicación', 'proceso'],
+        farmaco: ['farmaco', 'fármaco', 'medicamento', 'tratamiento', 'biologico', 'biológico', 'nombre comercial'],
+        principioActivo: ['principio activo', 'principio_activo', 'molecula', 'molécula', 'pa'],
+        dosis: ['dosis', 'dose'],
+        via: ['via', 'vía', 'route'],
+        pauta: ['pauta', 'intervalo', 'frecuencia', 'posologia', 'posología'],
+        fecha: ['fecha', 'fecha visita', 'fecha_visita', 'fecha solicitud', 'fecha_solicitud', 'fecha seguimiento', 'fecha_seguimiento']
+    };
+
+    function safeGetLocalStorage(key) {
+        try { return window.localStorage.getItem(key); } catch (err) { return null; }
+    }
+
+    function safeSetLocalStorage(key, value) {
+        try { window.localStorage.setItem(key, value); return true; } catch (err) { return false; }
+    }
+
+    function safeParseJson(raw) {
+        if (!raw) return null;
+        try { return JSON.parse(raw); } catch (err) { return null; }
+    }
+
+    function normalizeHeaderToken(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, ' ')
+            .trim();
+    }
+
+    function slugifyService(value) {
+        var token = normalizeHeaderToken(value);
+        if (!token) return '';
+        if (token.indexOf('dermat') !== -1) return 'dermatologia';
+        if (token.indexOf('reumat') !== -1) return 'reumatologia';
+        if (token.indexOf('digest') !== -1) return 'digestivo';
+        if (token.indexOf('onco') !== -1 || token.indexOf('hemato') !== -1) return 'oncologia';
+        return token.replace(/\s+/g, '_');
+    }
+
+    function inferFieldMapping(headers) {
+        var mapping = {};
+        var matchedHeaders = {};
+        var headerList = Array.isArray(headers) ? headers.slice() : [];
+
+        Object.keys(IMPORT_FIELD_ALIASES).forEach(function (field) {
+            var aliases = IMPORT_FIELD_ALIASES[field];
+            var matchedHeader = '';
+            for (var i = 0; i < headerList.length; i++) {
+                var header = headerList[i];
+                var normalized = normalizeHeaderToken(header);
+                for (var j = 0; j < aliases.length; j++) {
+                    var alias = normalizeHeaderToken(aliases[j]);
+                    if (normalized === alias || normalized.indexOf(alias) !== -1 || alias.indexOf(normalized) !== -1) {
+                        matchedHeader = header;
+                        break;
+                    }
+                }
+                if (matchedHeader) break;
+            }
+            mapping[field] = matchedHeader;
+            if (matchedHeader) matchedHeaders[matchedHeader] = true;
+        });
+
+        return {
+            mapping: mapping,
+            unrecognizedHeaders: headerList.filter(function (header) { return !matchedHeaders[header]; })
+        };
+    }
+
+    function buildImportedPatientCandidate(row, mapping, sourceLabel, rowIndex) {
+        if (!row || !mapping || !mapping.cip) return null;
+        var cip = String(row[mapping.cip] || '').trim();
+        if (!cip) return null;
+        var servicioRaw = mapping.servicio ? String(row[mapping.servicio] || '').trim() : '';
+        var servicioSlug = slugifyService(servicioRaw);
+        return {
+            nombre: mapping.nombre ? String(row[mapping.nombre] || '').trim() || ('Paciente importado ' + cip) : ('Paciente importado ' + cip),
+            cip: cip,
+            edad: '',
+            sexo: '',
+            servicio: servicioRaw || sourceLabel,
+            servicioSlug: servicioSlug,
+            patologia: mapping.patologia ? String(row[mapping.patologia] || '').trim() : '',
+            farmaco: mapping.farmaco ? String(row[mapping.farmaco] || '').trim() : '',
+            dosis: mapping.dosis ? String(row[mapping.dosis] || '').trim() : '',
+            pauta: mapping.pauta ? String(row[mapping.pauta] || '').trim() : '',
+            via: mapping.via ? String(row[mapping.via] || '').trim() : '',
+            estado: 'pending',
+            estadoLabel: 'Importado',
+            fechaSolicitud: mapping.fecha ? String(row[mapping.fecha] || '').trim() : '',
+            ultimaSolicitud: mapping.fecha ? String(row[mapping.fecha] || '').trim() : '',
+            analitica: 'Datos importados desde Excel ' + sourceLabel + '. Pendiente de mapeo clínico detallado.',
+            scores: 'Pendiente de mapeo desde Excel importado.',
+            ultimaVisita: '—',
+            adherencia: 'Sin registro',
+            efectosAdversos: 'Sin registro',
+            proms: 'Sin registro',
+            primeraVisita: '',
+            seguimiento: 'Pendiente de revisión',
+            motivoClinico: mapping.patologia ? String(row[mapping.patologia] || '').trim() : '',
+            principioActivo: mapping.principioActivo ? String(row[mapping.principioActivo] || '').trim() : '',
+            importSource: sourceLabel,
+            importRowIndex: rowIndex
+        };
+    }
+
+    function readImportedDataset(kind) {
+        return safeParseJson(safeGetLocalStorage(IMPORT_STORAGE_KEYS[kind]));
+    }
+
+    function getImportedPatientByCip(cip) {
+        if (!cip) return null;
+        var normalizedTarget = String(cip).trim().toUpperCase();
+        var kinds = Object.keys(IMPORT_STORAGE_KEYS);
+        for (var i = 0; i < kinds.length; i++) {
+            var dataset = readImportedDataset(kinds[i]);
+            if (!dataset || !Array.isArray(dataset.rows)) continue;
+            for (var j = 0; j < dataset.rows.length; j++) {
+                var candidate = buildImportedPatientCandidate(dataset.rows[j], dataset.mappedFields || {}, dataset.sourceLabel || kinds[i], j);
+                if (candidate && String(candidate.cip).trim().toUpperCase() === normalizedTarget) return candidate;
+            }
+        }
+        return null;
+    }
+
     function getQueryContext() {
         const params = new URLSearchParams(window.location.search);
         const cip = (params.get('cip') || params.get('id') || '').trim();
-        const patient = patients[cip] || null;
+        const patient = patients[cip] || getImportedPatientByCip(cip) || null;
         return {
             cip,
             servicio: params.get('servicio') || patient?.servicio || '',
@@ -346,13 +483,35 @@
         var localCount = 0;
         var selectedSnapshot = null;
         var FARMACIA_DRUG_SNAPSHOT_KEY = 'farmacia_drug_snapshot';
+        var CATALOG_XLSX_PATH = 'data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx';
+        var catalogStatus = { state: 'idle', message: 'Catálogo farmacológico: pendiente de carga automática' };
+
+        function updateCatalogStatusUi() {
+            var statusNodes = document.querySelectorAll('[data-catalog-status]');
+            statusNodes.forEach(function (node) {
+                node.textContent = catalogStatus.message;
+                node.className = 'catalog-sidebar-status';
+                if (catalogStatus.state === 'loaded') {
+                    node.classList.add('catalog-status--loaded');
+                } else if (catalogStatus.state === 'missing') {
+                    node.classList.add('catalog-status--manual');
+                } else if (catalogStatus.state === 'error') {
+                    node.classList.add('catalog-status--error');
+                }
+            });
+        }
+
+        function setCatalogStatus(state, message) {
+            catalogStatus = { state: state, message: message };
+            updateCatalogStatusUi();
+        }
 
         function isTruthyRobust(value) {
             if (value === true || value === 1 || value === '1') return true;
             if (value === false || value === 0 || value === '0') return false;
             if (value === null || value === undefined || value === '') return false;
             var s = String(value).trim().toUpperCase();
-            return s === 'TRUE' || s === 'SI' || s === 'S\u00CD' || s === 'YES' || s === '1';
+            return s === 'TRUE' || s === 'SI' || s === 'SÍ' || s === 'YES' || s === '1';
         }
 
         function buildSearchableText(drug) {
@@ -418,7 +577,7 @@
 
         function loadFromExcel(arrayBuffer) {
             if (typeof XLSX === 'undefined') {
-                throw new Error('SheetJS (XLSX) no est\u00E1 disponible. Cargue vendor/sheetjs/xlsx.full.min.js antes.');
+                throw new Error('SheetJS (XLSX) no está disponible. Cargue vendor/sheetjs/xlsx.full.min.js antes.');
             }
             var workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
             var cimaSheet = workbook.Sheets['CATALOGO_CIMA'];
@@ -502,48 +661,9 @@
             } catch (e) { /* sessionStorage unavailable */ }
         }
 
-        function autoLoad() {
-            if (loaded || loading) return;
-            var statusEl = document.getElementById('catalogSidebarStatus');
-            loading = true;
-            if (statusEl) {
-                statusEl.textContent = 'Cargando...';
-                statusEl.className = 'catalog-status';
-            }
-            ensureXLSX(function () {
-                fetch('data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx')
-                    .then(function (response) {
-                        if (response.ok) return response.arrayBuffer();
-                        throw new Error('fetch_failed');
-                    })
-                    .then(function (arrayBuffer) {
-                        var result = loadFromExcel(arrayBuffer);
-                        if (statusEl) {
-                            statusEl.textContent = getStatusText();
-                            statusEl.className = 'catalog-status catalog-status--loaded';
-                        }
-                        loading = false;
-                        document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
-                    })
-                    .catch(function () {
-                        loading = false;
-                        if (statusEl) {
-                            statusEl.textContent = 'Cat\u00E1logo no disponible. Use carga manual.';
-                            statusEl.className = 'catalog-status catalog-status--manual';
-                        }
-                    });
-            }, function (errMsg) {
-                loading = false;
-                if (statusEl) {
-                    statusEl.textContent = errMsg;
-                    statusEl.className = 'catalog-status catalog-status--error';
-                }
-            });
-        }
-
         function getStatusText() {
-            if (!loaded) return 'Cat\u00E1logo no cargado';
-            return totalCount + ' f\u00E1rmacos (CIMA: ' + cimaCount + ' + Locales: ' + localCount + ')';
+            if (!loaded) return 'Catálogo no cargado';
+            return totalCount + ' fármacos (CIMA: ' + cimaCount + ' + Locales: ' + localCount + ')';
         }
 
         function ensureXLSX(callback, onError) {
@@ -552,88 +672,45 @@
             script.src = 'vendor/sheetjs/xlsx.full.min.js';
             script.onload = callback;
             script.onerror = function () {
-                if (typeof onError === 'function') onError('No se pudo cargar la librer\u00EDa SheetJS desde vendor/sheetjs/xlsx.full.min.js.');
+                if (typeof onError === 'function') onError('No se pudo cargar la librería SheetJS desde vendor/sheetjs/xlsx.full.min.js.');
             };
             document.head.appendChild(script);
         }
 
+        function autoLoad() {
+            if (loaded || loading) return;
+            loading = true;
+            setCatalogStatus('loading', 'Catálogo farmacológico: cargando automáticamente...');
+            ensureXLSX(function () {
+                fetch(CATALOG_XLSX_PATH)
+                    .then(function (response) {
+                        if (response.ok) return response.arrayBuffer();
+                        throw new Error('fetch_failed');
+                    })
+                    .then(function (arrayBuffer) {
+                        var result = loadFromExcel(arrayBuffer);
+                        setCatalogStatus('loaded', 'Catálogo CIMA cargado: ' + getStatusText());
+                        loading = false;
+                        document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
+                    })
+                    .catch(function (error) {
+                        loading = false;
+                        setCatalogStatus('missing', 'Catálogo farmacológico: no disponible en esta demo. CIMA pendiente de integración automática real.');
+                        document.dispatchEvent(new CustomEvent('farmacia:catalog-missing', { detail: { error: error ? error.message || String(error) : 'missing' } }));
+                    });
+            }, function (errMsg) {
+                loading = false;
+                setCatalogStatus('error', errMsg);
+            });
+        }
+
         function initSidebarCatalog() {
             autoLoad();
-
             var btnLoad = document.getElementById('sidebarLoadCatalog');
-            if (!btnLoad) return;
-
+            if (btnLoad) btnLoad.classList.add('hidden');
             var fileInput = document.getElementById('sidebarFileCatalog');
-            var statusEl = document.getElementById('catalogSidebarStatus');
-
-            btnLoad.addEventListener('click', function () {
-                if (loaded) {
-                    if (statusEl) {
-                        statusEl.textContent = getStatusText();
-                        statusEl.className = 'catalog-status catalog-status--loaded';
-                    }
-                    document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: { totalCount: totalCount, cimaCount: cimaCount, localCount: localCount, loaded: loaded } }));
-                    return;
-                }
-                ensureXLSX(function () {
-                    if (statusEl) {
-                        statusEl.textContent = 'Cargando...';
-                        statusEl.className = 'catalog-status';
-                    }
-                    fetch('data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx')
-                        .then(function (response) {
-                            if (response.ok) return response.arrayBuffer();
-                            throw new Error('fetch_failed');
-                        })
-                        .then(function (arrayBuffer) {
-                            var result = loadFromExcel(arrayBuffer);
-                            if (statusEl) {
-                                statusEl.textContent = getStatusText();
-                                statusEl.className = 'catalog-status catalog-status--loaded';
-                            }
-                            document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
-                        })
-                        .catch(function () {
-                            if (statusEl) {
-                                statusEl.textContent = 'Seleccione el archivo Excel manualmente';
-                                statusEl.className = 'catalog-status catalog-status--manual';
-                            }
-                            if (fileInput) {
-                                fileInput.classList.remove('hidden');
-                                fileInput.click();
-                            }
-                        });
-                }, function (errMsg) {
-                    if (statusEl) {
-                        statusEl.textContent = errMsg;
-                        statusEl.className = 'catalog-status catalog-status--error';
-                    }
-                });
-            });
-
-            if (fileInput) {
-                fileInput.addEventListener('change', function (event) {
-                    var file = event.target.files[0];
-                    if (!file) return;
-                    var reader = new FileReader();
-                    reader.onload = function (e) {
-                        try {
-                            var result = loadFromExcel(e.target.result);
-                            if (statusEl) {
-                                statusEl.textContent = getStatusText();
-                                statusEl.className = 'catalog-status catalog-status--loaded';
-                            }
-                            document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
-                        } catch (err) {
-                            window.alert('Error al procesar el Excel: ' + (err.message || err));
-                        }
-                    };
-                    reader.onerror = function () {
-                        window.alert('Error al leer el archivo.');
-                    };
-                    reader.readAsArrayBuffer(file);
-                });
-            }
+            if (fileInput) fileInput.classList.add('hidden');
+            updateCatalogStatusUi();
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -653,9 +730,187 @@
             getSnapshot: getSnapshot,
             clearSnapshot: clearSnapshot,
             getStatusText: getStatusText,
-            autoLoad: autoLoad
+            autoLoad: autoLoad,
+            getStatus: function () { return Object.assign({}, catalogStatus); },
+            ensureXLSX: ensureXLSX
         };
     })();
+
+    window.FarmaciaDataImports = (function () {
+        var importStates = {
+            enfermeria: readImportedDataset('enfermeria'),
+            farmacia: readImportedDataset('farmacia')
+        };
+
+        function emitImportEvent(kind, detail) {
+            document.dispatchEvent(new CustomEvent('farmacia:data-imported', {
+                detail: Object.assign({ kind: kind }, detail || {})
+            }));
+        }
+
+        function getKindLabel(kind) {
+            return kind === 'enfermeria' ? 'Enfermería' : 'Farmacia';
+        }
+
+        function formatImportStatus(kind) {
+            var state = importStates[kind];
+            if (!state || !Array.isArray(state.rows) || !state.rows.length) {
+                return 'No se ha cargado Excel de ' + getKindLabel(kind);
+            }
+            return 'Excel de ' + getKindLabel(kind) + ' cargado: ' + state.rows.length + ' registros';
+        }
+
+        function summarizeMappedFields(mappedFields) {
+            var fields = [];
+            Object.keys(mappedFields || {}).forEach(function (key) {
+                if (mappedFields[key]) fields.push(mappedFields[key]);
+            });
+            return fields.length ? fields.join(' · ') : 'Sin columnas reconocidas';
+        }
+
+        function updateImportUi(kind) {
+            var statusEl = document.getElementById(kind === 'enfermeria' ? 'estadoCargaEnfermeria' : 'estadoCargaFarmacia');
+            var detailsEl = document.getElementById(kind === 'enfermeria' ? 'detalleCargaEnfermeria' : 'detalleCargaFarmacia');
+            var state = importStates[kind];
+            if (statusEl) statusEl.textContent = formatImportStatus(kind);
+            if (!detailsEl) return;
+            if (!state || !Array.isArray(state.rows) || !state.rows.length) {
+                detailsEl.textContent = 'Sin importación local almacenada.';
+                return;
+            }
+            var parts = [
+                'Hoja: ' + (state.sheetName || 'Primera hoja'),
+                'Columnas detectadas: ' + summarizeMappedFields(state.mappedFields || {})
+            ];
+            if (Array.isArray(state.unrecognizedHeaders) && state.unrecognizedHeaders.length) {
+                parts.push('Columnas no reconocidas: ' + state.unrecognizedHeaders.join(', '));
+            }
+            detailsEl.textContent = parts.join(' | ');
+        }
+
+        function updateAllImportUi() {
+            updateImportUi('enfermeria');
+            updateImportUi('farmacia');
+        }
+
+        function parseWorkbook(kind, workbook, fileName) {
+            var firstSheetName = workbook.SheetNames[0];
+            var sheet = workbook.Sheets[firstSheetName];
+            var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+            var headers = rows.length ? Object.keys(rows[0]) : [];
+            var inferred = inferFieldMapping(headers);
+            var state = {
+                kind: kind,
+                sourceLabel: getKindLabel(kind),
+                fileName: fileName || '',
+                importedAt: new Date().toISOString(),
+                sheetName: firstSheetName || '',
+                rowCount: rows.length,
+                headers: headers,
+                mappedFields: inferred.mapping,
+                unrecognizedHeaders: inferred.unrecognizedHeaders,
+                rows: rows
+            };
+            importStates[kind] = state;
+            if (!safeSetLocalStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
+                state.storage = 'memory_only';
+            }
+            updateAllImportUi();
+            emitImportEvent(kind, { state: state });
+            return state;
+        }
+
+        function importFile(kind, file) {
+            return new Promise(function (resolve, reject) {
+                if (!file) {
+                    reject(new Error('No se ha seleccionado archivo.'));
+                    return;
+                }
+                var catalog = window.FarmaciaCatalog;
+                catalog.ensureXLSX(function () {
+                    var reader = new FileReader();
+                    reader.onload = function (event) {
+                        try {
+                            var workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
+                            resolve(parseWorkbook(kind, workbook, file.name));
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = function () {
+                        reject(new Error('Error al leer el archivo.'));
+                    };
+                    reader.readAsArrayBuffer(file);
+                }, function (errMsg) {
+                    reject(new Error(errMsg));
+                });
+            });
+        }
+
+        function initImportPanel() {
+            var wiring = [
+                { kind: 'enfermeria', buttonId: 'btnCargarExcelEnfermeria', inputId: 'inputExcelEnfermeria' },
+                { kind: 'farmacia', buttonId: 'btnCargarExcelFarmacia', inputId: 'inputExcelFarmacia' }
+            ];
+            wiring.forEach(function (item) {
+                var button = document.getElementById(item.buttonId);
+                var input = document.getElementById(item.inputId);
+                if (!button || !input) return;
+                button.addEventListener('click', function () {
+                    input.click();
+                });
+                input.addEventListener('change', function (event) {
+                    var file = event.target.files && event.target.files[0];
+                    if (!file) return;
+                    importFile(item.kind, file)
+                        .then(function () {
+                            input.value = '';
+                        })
+                        .catch(function (err) {
+                            var statusEl = document.getElementById(item.kind === 'enfermeria' ? 'estadoCargaEnfermeria' : 'estadoCargaFarmacia');
+                            if (statusEl) statusEl.textContent = 'Error al cargar Excel de ' + getKindLabel(item.kind) + ': ' + (err.message || err);
+                            input.value = '';
+                        });
+                });
+            });
+            updateAllImportUi();
+        }
+
+        function getImportedPatients() {
+            var items = [];
+            Object.keys(importStates).forEach(function (kind) {
+                var state = importStates[kind];
+                if (!state || !Array.isArray(state.rows)) return;
+                state.rows.forEach(function (row, index) {
+                    var candidate = buildImportedPatientCandidate(row, state.mappedFields || {}, state.sourceLabel || getKindLabel(kind), index);
+                    if (candidate) items.push(candidate);
+                });
+            });
+            return items;
+        }
+
+        function findImportedPatientByCip(cip) {
+            var patients = getImportedPatients();
+            var target = String(cip || '').trim().toUpperCase();
+            for (var i = 0; i < patients.length; i++) {
+                if (String(patients[i].cip || '').trim().toUpperCase() === target) return patients[i];
+            }
+            return null;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initImportPanel();
+        });
+
+        return {
+            getState: function (kind) { return importStates[kind] || null; },
+            getImportedPatients: getImportedPatients,
+            findImportedPatientByCip: findImportedPatientByCip,
+            importFile: importFile,
+            formatImportStatus: formatImportStatus
+        };
+    })();
+
 
     window.FarmaciaDemo = {
         patients,
@@ -676,6 +931,9 @@
         STATES,
         DEMO_SESSION_NOTE,
         downloadFile,
-        insertNoCipBanner
+        insertNoCipBanner,
+        findPatientByCip: function (cip) {
+            return patients[cip] || getImportedPatientByCip(cip) || null;
+        }
     };
 })();

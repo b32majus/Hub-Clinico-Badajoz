@@ -590,7 +590,7 @@
 
         clearCipNotice();
 
-        var patient = F.patients[cip];
+        var patient = F.findPatientByCip(cip);
         if (!patient) {
             clearCipFields();
             syncBiologicControls(null);

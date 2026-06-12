@@ -399,7 +399,7 @@
         var cip = cipInput.value.trim();
         if (!cip) return;
 
-        var patient = F.patients[cip];
+        var patient = F.findPatientByCip(cip);
         clearCipNotice();
 
         if (!patient) {

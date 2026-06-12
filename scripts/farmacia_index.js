@@ -425,7 +425,7 @@
     function search() {
         var cip = document.getElementById('fhCipInput').value.trim();
         if (!cip) return;
-        var patient = F.patients[cip];
+        var patient = F.findPatientByCip(cip);
         if (patient) renderPatientView(patient);
         else showGuidedIntake(cip);
     }

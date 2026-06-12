@@ -6,8 +6,8 @@
     <title>Hub Clínico — Farmacia Hospitalaria</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="style.css?v=20260607-postdemo-d">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607-postdemo-d">
+    <link rel="stylesheet" href="style.css?v=20260612-data-import-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-data-import-a">
 </head>
         <body>
             <div class="hub-shell">
@@ -68,8 +68,9 @@
     </div>
     <div class="catalog-sidebar-block">
         <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
-        <div class="catalog-sidebar-status" id="catalogSidebarStatus">Catálogo no cargado</div>
-        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</div>
+        <p class="catalog-sidebar-note">CIMA se carga automáticamente al abrir la demo.</p>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
     </div>
     <div class="sidebar-footer">Demo Farmacia v0.2</div>
@@ -130,6 +131,31 @@
     </div>
 </section>
 
+<section class="dashboard-card" id="modCargaDatosProyecto">
+    <h2 class="section-title"><i class="fas fa-file-import"></i> Carga de datos del proyecto</h2>
+    <p class="validation-module__intro">Cargue manualmente los Excel locales de Enfermería y Farmacia. Los datos quedan en el navegador para esta demo. El catálogo CIMA se intenta cargar automáticamente al abrir la app.</p>
+    <div class="import-grid">
+        <section class="import-card">
+            <h3 class="card-title card-title--tight"><i class="fas fa-notes-medical"></i> Excel de Enfermería</h3>
+            <p class="import-card__status" id="estadoCargaEnfermeria">No se ha cargado Excel de Enfermería</p>
+            <p class="import-card__detail" id="detalleCargaEnfermeria">Sin importación local almacenada.</p>
+            <button type="button" class="btn btn-primary import-card__button" id="btnCargarExcelEnfermeria"><i class="fas fa-upload"></i> Cargar Excel de Enfermería</button>
+            <input type="file" id="inputExcelEnfermeria" class="hidden" accept=".xlsx,.xls">
+        </section>
+        <section class="import-card">
+            <h3 class="card-title card-title--tight"><i class="fas fa-clinic-medical"></i> Excel de Farmacia</h3>
+            <p class="import-card__status" id="estadoCargaFarmacia">No se ha cargado Excel de Farmacia</p>
+            <p class="import-card__detail" id="detalleCargaFarmacia">Sin importación local almacenada.</p>
+            <button type="button" class="btn btn-primary import-card__button" id="btnCargarExcelFarmacia"><i class="fas fa-upload"></i> Cargar Excel de Farmacia</button>
+            <input type="file" id="inputExcelFarmacia" class="hidden" accept=".xlsx,.xls">
+        </section>
+    </div>
+    <div class="validation-note-block">
+        <span class="validation-note-block__label">CIMA</span>
+        <p class="validation-note-block__value" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</p>
+    </div>
+</section>
+
 <h2 class="section-title">Accesos rápidos</h2>
 <section class="action-grid">
     <a href="farmacia_validacion.html" class="action-card"><i class="fas fa-check-double action-card__icon"></i><span class="action-card__title">Validación</span><span class="action-card__desc">Evaluar solicitudes farmacoterapéuticas pendientes.</span></a>
@@ -139,7 +165,7 @@
 </section>
                 </main>
             </div>
-            <script src="scripts/farmacia_common.js?v=20260607-postdemo-d"></script>
-    <script src="scripts/farmacia_index.js?v=20260607-postdemo-d"></script>
+            <script src="scripts/farmacia_common.js?v=20260612-data-import-a"></script>
+    <script src="scripts/farmacia_index.js?v=20260612-data-import-a"></script>
         </body>
         </html>
