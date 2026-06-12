@@ -1,0 +1,164 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Primera Visita Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260612-data-import-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-data-import-a">
+</head>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">FH</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link active" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="catalog-sidebar-block">
+        <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</div>
+        <p class="catalog-sidebar-note">CIMA se carga automáticamente al abrir la demo.</p>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
+    <div class="sidebar-footer">Demo Farmacia v0.2</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--primera">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-info">
+            <h1 class="patient-name">Primera Visita Farmacia</h1>
+            <p class="hero-description">Registre el inicio del seguimiento farmacoterapéutico con datos precargados desde validación o alta guiada.</p>
+        </div>
+    </div>
+</section><section class="dashboard-card"><h2 class="section-title"><i class="fas fa-id-card"></i> Datos del paciente</h2>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhPvCip">CIP</label>
+            <div class="cip-search-wrap">
+                <input type="text" id="fhPvCip" class="form-control" placeholder="Buscar paciente por CIP..." autocomplete="off">
+                <i class="fas fa-search cip-search-icon" aria-hidden="true"></i>
+                <button type="button" class="cip-search-action" id="fhPvCipSearchBtn" aria-label="Buscar CIP">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio"></div>
+        <div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia"></div>
+    </div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco"></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><input class="form-control" id="fhPvPauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion"></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada"></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica"></div></div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
+    <div class="info-grid" id="fhPvTratamientoGrid"></div>
+    <div id="fhPvAutocompleteBlock" class="hidden">
+        <h3 class="card-title card-title--tight"><i class="fas fa-search"></i> Buscar fármaco en catálogo</h3>
+        <div class="form-group">
+            <label for="fhPvDrugSearch">Buscar por marca, principio activo, presentación o código</label>
+            <div class="autocomplete-wrapper">
+                <input type="text" id="fhPvDrugSearch" class="form-control" placeholder="Ej. Cosentyx, secukinumab, Humira..." autocomplete="off">
+                <div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div></div>
+<div id="fhPvPromsExpanded" class="hidden">
+    <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA basal</h3>
+    <div class="proms-block" id="fhPvDlqiBlock">
+        <p class="proms-block__subtitle">DLQI — Índice de Calidad de Vida en Dermatología. Señale cómo le ha afectado su piel durante la <strong>última semana</strong>.</p>
+        <div class="dlqi-questions" id="fhPvDlqiQuestions"></div>
+        <div class="dlqi-result" id="fhPvDlqiResult">
+            <span class="dlqi-result__label">Puntuación total DLQI:</span>
+            <span class="dlqi-result__value" id="fhPvDlqiTotal">—</span>
+            <span class="dlqi-result__max">/ 30</span>
+            <span class="dlqi-result__interp" id="fhPvDlqiInterp"></span>
+        </div>
+    </div>
+    <div class="proms-block" id="fhPvEvaBlock">
+        <p class="proms-block__subtitle">EVA — Escala Visual Analógica (marque la intensidad en una escala de 0 a 10)</p>
+        <div class="form-grid eva-grid">
+            <div class="form-group eva-group">
+                <label for="fhPvEvaDolorRange">EVA Dolor</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhPvEvaDolorRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhPvEvaDolorValue">0</span>
+                </div>
+            </div>
+            <div class="form-group eva-group">
+                <label for="fhPvEvaPruritoRange">EVA Prurito</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhPvEvaPruritoRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhPvEvaPruritoValue">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="form-textarea" id="fhPvNotas" rows="4"></textarea></div></div>
+    <div id="fhPvDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT</button><button type="button" class="btn btn-outline" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
+</section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260612-data-import-a"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260607-postdemo-d"></script>
+        </body>
+        </html>
