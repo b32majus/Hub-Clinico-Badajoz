@@ -4,6 +4,19 @@
     const qs = (selector, scope = document) => scope.querySelector(selector);
     const qsa = (selector, scope = document) => Array.from(scope.querySelectorAll(selector));
 
+    function evaluateBooleanLikeCheck(value) {
+        if (!value || typeof value !== 'string') return null;
+        var v = value.trim().toLowerCase();
+
+        // no_aplica: solo expresiones completas, nunca match parcial dentro de palabras
+        if (/^(no aplica|n\/a|na|no procede|no aplicable)$/.test(v)) return 'no_aplica';
+
+        // ok: expresiones frecuentes de campo estructurado
+        if (/^(al dia|al día|revisado|revisada|completado|completada|negativos|negativas)$/.test(v)) return 'ok';
+
+        return null;
+    }
+
     const patients = {
         'CIP-DEMO-FH-001': {
             nombre: 'Paciente Demo FH-001', cip: 'CIP-DEMO-FH-001', edad: '48', sexo: 'Mujer', servicio: 'Dermatología', servicioSlug: 'dermatologia',
@@ -618,6 +631,7 @@
         STATES,
         DEMO_SESSION_NOTE,
         downloadFile,
-        insertNoCipBanner
+        insertNoCipBanner,
+        evaluateBooleanLikeCheck
     };
 })();
