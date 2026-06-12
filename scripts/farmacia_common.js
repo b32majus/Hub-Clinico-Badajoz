@@ -407,6 +407,178 @@
         return getAvailablePatients().filter(isPendingValidationPatient);
     }
 
+    function normalizeCheckString(value) {
+        return String(value || '')
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    function hasMeaningfulValue(value) {
+        return value !== undefined && value !== null && String(value).trim() !== '' && String(value).trim() !== '—';
+    }
+
+    function evaluateBooleanLikeCheck(value) {
+        if (value === true) return 'ok';
+        if (value === false) return 'pendiente';
+        if (!hasMeaningfulValue(value)) return 'no_informado';
+
+        var normalized = normalizeCheckString(value);
+        if (!normalized) return 'no_informado';
+        if (/^(si|sí|ok|correcto|correcta|completo|completa|normal|negativo|negativa|apto|apta)$/.test(normalized)) return 'ok';
+        if (/pendient|solicit|en curso|por hacer|por revisar|falta/.test(normalized)) return 'pendiente';
+        if (/positivo|positiva|alterad|anormal|reactiv|revisar|alerta|contraindic/.test(normalized)) return 'alerta';
+        if (/no aplica|n\/a|na/.test(normalized)) return 'no_aplica';
+        return 'no_informado';
+    }
+
+    function evaluateAnaliticaStatus(patient) {
+        var est = patient && patient.analiticaEstruct;
+        if (est && typeof est === 'object') {
+            var reciente = evaluateBooleanLikeCheck(est.reciente);
+            var hemograma = evaluateBooleanLikeCheck(est.hemograma);
+            var bioquimica = evaluateBooleanLikeCheck(est.bioquimica);
+
+            if (reciente === 'alerta' || hemograma === 'alerta' || bioquimica === 'alerta') return 'alerta';
+            if (reciente === 'ok' && hemograma === 'ok' && bioquimica === 'ok') return 'ok';
+            if (reciente === 'pendiente' || hemograma === 'pendiente' || bioquimica === 'pendiente') return 'pendiente';
+            if (reciente !== 'no_informado' || hemograma !== 'no_informado' || bioquimica !== 'no_informado') return 'no_informado';
+        }
+
+        var analiticaText = normalizeCheckString(patient && patient.analitica);
+        if (!analiticaText) return 'no_informado';
+        if (/(analitica|analitica y vacunacion|prebiologic).*(completa|completo|ok|apto|apta)/.test(analiticaText)) return 'ok';
+        if (/(analitica|prebiologic).*(pendient|solicit|en curso|por revisar|falta)/.test(analiticaText)) return 'pendiente';
+        if (/(analitica|prebiologic).*(alterad|anormal|revisar|alerta)/.test(analiticaText)) return 'alerta';
+        return 'no_informado';
+    }
+
+    function evaluateSerologiasStatus(patient) {
+        var est = patient && patient.analiticaEstruct;
+        if (est && typeof est === 'object') {
+            var keys = ['serologiasVhb', 'serologiasVhc', 'serologiasVih'];
+            var values = keys.map(function (key) { return est[key]; }).filter(hasMeaningfulValue);
+            if (values.length > 0) {
+                if (values.length < keys.length) return 'no_informado';
+                var statuses = values.map(evaluateBooleanLikeCheck);
+                if (statuses.indexOf('alerta') !== -1) return 'alerta';
+                if (statuses.indexOf('pendiente') !== -1) return 'pendiente';
+                if (statuses.indexOf('no_informado') !== -1) return 'no_informado';
+                if (statuses.every(function (status) { return status === 'ok' || status === 'no_aplica'; })) return 'ok';
+                return 'no_informado';
+            }
+            if (hasMeaningfulValue(est.serologias)) return evaluateBooleanLikeCheck(est.serologias);
+        }
+
+        var analiticaText = normalizeCheckString(patient && patient.analitica);
+        if (/(serolog|vih|vhb|vhc).*(negativ|ok|apto|apta)/.test(analiticaText)) return 'ok';
+        if (/(serolog|vih|vhb|vhc).*(pendient|solicit|en curso|falta)/.test(analiticaText)) return 'pendiente';
+        if (/(serolog|vih|vhb|vhc).*(positiv|reactiv|revisar|alerta)/.test(analiticaText)) return 'alerta';
+        return 'no_informado';
+    }
+
+    function evaluateMantouxIgraStatus(patient) {
+        var est = patient && patient.analiticaEstruct;
+        if (est && typeof est === 'object' && hasMeaningfulValue(est.mantoux)) return evaluateBooleanLikeCheck(est.mantoux);
+        var analiticaText = normalizeCheckString(patient && patient.analitica);
+        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(negativ|ok|apto|apta)/.test(analiticaText)) return 'ok';
+        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(pendient|solicit|en curso|falta)/.test(analiticaText)) return 'pendiente';
+        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(positiv|revisar|alerta)/.test(analiticaText)) return 'alerta';
+        return 'no_informado';
+    }
+
+    function evaluateVacunacionStatus(patient) {
+        var est = patient && patient.analiticaEstruct;
+        if (est && typeof est === 'object' && hasMeaningfulValue(est.vacunacion)) return evaluateBooleanLikeCheck(est.vacunacion);
+        if (hasMeaningfulValue(patient && patient.vacunacion)) return evaluateBooleanLikeCheck(patient.vacunacion);
+        var analiticaText = normalizeCheckString(patient && patient.analitica);
+        if (/vacuna(cion)? .*(completa|completo|al dia|ok|apto|apta)/.test(analiticaText)) return 'ok';
+        if (/vacuna(cion)?.*(pendient|solicit|en curso|falta)/.test(analiticaText)) return 'pendiente';
+        if (/vacuna(cion)?.*(revisar|alerta|contraindic)/.test(analiticaText)) return 'alerta';
+        return 'no_informado';
+    }
+
+    function evaluateMedicinaPreventivaStatus(patient) {
+        var candidates = [
+            patient && patient.medicinaPreventiva,
+            patient && patient.medicina_preventiva,
+            patient && patient.preventiva,
+            patient && patient.medicinaPreventivaEstado,
+            patient && patient.preventivaEstado
+        ];
+        for (var i = 0; i < candidates.length; i++) {
+            if (hasMeaningfulValue(candidates[i])) return evaluateBooleanLikeCheck(candidates[i]);
+        }
+        return 'no_informado';
+    }
+
+    function buildPrebiologicoItem(label, status, meta) {
+        return Object.assign({
+            status: status,
+            label: label
+        }, meta || {});
+    }
+
+    function getPrebiologicoStatus(patient) {
+        var est = patient && patient.analiticaEstruct;
+        var items = {
+            analitica: buildPrebiologicoItem('Analítica reciente', evaluateAnaliticaStatus(patient), {
+                sourceFields: ['analiticaEstruct.reciente', 'analiticaEstruct.hemograma', 'analiticaEstruct.bioquimica', 'analitica']
+            }),
+            hemograma: buildPrebiologicoItem('Hemograma', evaluateBooleanLikeCheck(est && est.hemograma), {
+                sourceFields: ['analiticaEstruct.hemograma']
+            }),
+            bioquimica: buildPrebiologicoItem('Bioquímica', evaluateBooleanLikeCheck(est && est.bioquimica), {
+                sourceFields: ['analiticaEstruct.bioquimica']
+            }),
+            serologias: buildPrebiologicoItem('Serologías VHB/VHC/VIH', evaluateSerologiasStatus(patient), {
+                sourceFields: ['analiticaEstruct.serologiasVhb', 'analiticaEstruct.serologiasVhc', 'analiticaEstruct.serologiasVih', 'analiticaEstruct.serologias', 'analitica']
+            }),
+            mantouxIgra: buildPrebiologicoItem('Mantoux/IGRA', evaluateMantouxIgraStatus(patient), {
+                sourceFields: ['analiticaEstruct.mantoux', 'analitica']
+            }),
+            vacunacion: buildPrebiologicoItem('Vacunación', evaluateVacunacionStatus(patient), {
+                sourceFields: ['analiticaEstruct.vacunacion', 'vacunacion', 'analitica']
+            }),
+            medicinaPreventiva: buildPrebiologicoItem('Medicina preventiva', evaluateMedicinaPreventivaStatus(patient), {
+                sourceFields: ['medicinaPreventiva', 'medicina_preventiva', 'preventiva', 'medicinaPreventivaEstado', 'preventivaEstado']
+            })
+        };
+
+        var keys = Object.keys(items);
+        var missing = [];
+        var statuses = keys.map(function (key) {
+            var item = items[key];
+            if (item.status !== 'ok' && item.status !== 'no_aplica') missing.push(item.label);
+            return item.status;
+        });
+
+        var overall = 'ok';
+        var label = 'Prebiológico completo';
+        if (statuses.indexOf('alerta') !== -1) {
+            overall = 'alerta';
+            label = 'Prebiológico con alertas';
+        } else if (statuses.every(function (status) { return status === 'no_informado' || status === 'no_aplica'; })) {
+            overall = 'no_informado';
+            label = 'Prebiológico no informado';
+        } else if (statuses.indexOf('pendiente') !== -1) {
+            overall = 'pendiente';
+            label = 'Prebiológico pendiente';
+        } else if (statuses.indexOf('no_informado') !== -1) {
+            overall = 'incompleto';
+            label = 'Prebiológico incompleto';
+        }
+
+        return {
+            overall: overall,
+            label: label,
+            items: items,
+            missing: missing,
+            blocking: statuses.some(function (status) { return status === 'pendiente' || status === 'no_informado' || status === 'alerta'; })
+        };
+    }
+
     function getQueryContext() {
         const params = new URLSearchParams(window.location.search);
         const cip = (params.get('cip') || params.get('id') || '').trim();
@@ -1031,6 +1203,7 @@
         insertNoCipBanner,
         getAvailablePatients,
         getPendingValidationPatients,
+        getPrebiologicoStatus,
         findPatientByCip: function (cip) {
             var available = getAvailablePatients();
             var target = String(cip || '').trim().toUpperCase();
