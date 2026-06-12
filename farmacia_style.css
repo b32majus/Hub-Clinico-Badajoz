@@ -4844,3 +4844,168 @@
     }
 }
 
+
+
+.validation-modules-nav {
+    margin: 18px 0 26px;
+    padding: 18px 20px;
+    border: 1px solid #D8E2EC;
+    border-radius: 14px;
+    background: #F8FAFC;
+}
+
+.validation-modules-nav__text {
+    margin: 0 0 14px;
+    color: #64748B;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.validation-modules-nav__links,
+.validation-module__actions,
+.causality-result-grid,
+.other-drug-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.validation-module {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #E2E8F0;
+}
+
+.validation-module__intro {
+    margin: 0 0 14px;
+    color: #475569;
+    line-height: 1.6;
+}
+
+.validation-module-link {
+    min-height: 42px;
+}
+
+.validation-note-block {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+}
+
+.validation-note-block__label {
+    display: block;
+    margin-bottom: 6px;
+    color: #64748B;
+    font-size: 0.77rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.validation-note-block__value {
+    margin: 0;
+    color: #1E293B;
+    line-height: 1.55;
+}
+
+.empty-state {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px dashed #CBD5E1;
+    background: #F8FAFC;
+    color: #64748B;
+}
+
+.other-drugs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.other-drug-card {
+    padding: 18px;
+    border-radius: 14px;
+    border: 1px solid #D8E2EC;
+    background: #FFFFFF;
+}
+
+.other-drug-card__title {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #1E293B;
+}
+
+.other-drug-card__grid {
+    margin-top: 14px;
+}
+
+.btn-add-drug {
+    min-height: 46px;
+}
+
+.btn-remove-drug {
+    margin-left: auto;
+}
+
+.causality-question-list {
+    display: grid;
+    gap: 14px;
+}
+
+.causality-question {
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+}
+
+.causality-question label {
+    margin-bottom: 10px;
+}
+
+.causality-score-hint {
+    display: block;
+    margin-top: 4px;
+    color: #64748B;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.causality-result-grid {
+    margin-top: 16px;
+}
+
+.notice-box.notice-box--info {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #BFDBFE;
+    background: #EFF6FF;
+    color: #1D4ED8;
+}
+
+.notice-box.notice-box--info span {
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .validation-modules-nav__links,
+    .validation-module__actions,
+    .causality-result-grid,
+    .other-drug-card__header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-remove-drug {
+        margin-left: 0;
+    }
+}

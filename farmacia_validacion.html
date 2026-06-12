@@ -6,8 +6,8 @@
     <title>Hub Clínico — Validación Farmacoterapéutica</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="style.css?v=20260607-postdemo-d">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260607-postdemo-d">
+    <link rel="stylesheet" href="style.css?v=20260612-codex-rescue-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-codex-rescue-a">
 </head>
         <body>
             <div class="hub-shell">
@@ -165,14 +165,156 @@
     <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
     <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
+    <div class="validation-modules-nav" aria-labelledby="validationModulesTitle">
+        <div class="validation-modules-nav__header">
+            <h3 class="card-title card-title--tight" id="validationModulesTitle"><i class="fas fa-th-large"></i> Módulos de validación disponibles</h3>
+            <p class="validation-modules-nav__text">Acceso rápido a los bloques visibles de validación farmacoterapéutica.</p>
+        </div>
+        <div class="validation-modules-nav__links">
+            <a class="btn btn-outline validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
+            <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
+            <a class="btn btn-outline validation-module-link" href="#modPrebiologico">Estudio prebiológico</a>
+            <a class="btn btn-outline validation-module-link" href="#modEfectoAdverso">Efecto adverso / RAM</a>
+            <a class="btn btn-outline validation-module-link" href="#modNaranjo">Algoritmo de Naranjo</a>
+            <a class="btn btn-outline validation-module-link" href="#modKarchLasagna">Karch-Lasagna</a>
+            <a class="btn btn-outline validation-module-link" href="#modResumenCausalidad">Resumen de causalidad</a>
+            <a class="btn btn-outline validation-module-link" href="#modExportacion">Exportación</a>
+        </div>
+    </div>
+
+    <section class="validation-module" id="modTratamientoPrincipal">
+        <h3 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento principal</h3>
+        <div class="info-grid">
+            <div class="info-field"><span class="info-field__label">Fármaco solicitado</span><span class="info-field__value" id="fhResumenFarmaco">—</span></div>
+            <div class="info-field"><span class="info-field__label">Principio activo</span><span class="info-field__value" id="fhResumenPrincipioActivo">—</span></div>
+            <div class="info-field"><span class="info-field__label">Dosis</span><span class="info-field__value" id="fhResumenDosis">—</span></div>
+            <div class="info-field"><span class="info-field__label">Vía</span><span class="info-field__value" id="fhResumenVia">—</span></div>
+            <div class="info-field"><span class="info-field__label">Pauta</span><span class="info-field__value" id="fhResumenPauta">—</span></div>
+            <div class="info-field"><span class="info-field__label">Inducción</span><span class="info-field__value" id="fhResumenInduccion">—</span></div>
+        </div>
+        <div class="validation-note-block">
+            <span class="validation-note-block__label">Justificación clínica</span>
+            <p id="fhResumenJustificacion" class="validation-note-block__value">—</p>
+        </div>
+    </section>
+
+    <section class="validation-module" id="modOtrosFarmacos" title="Otros fármacos / biológicos relacionados">
+        <h3 class="card-title"><i class="fas fa-pills"></i> Otros fármacos / biológicos</h3>
+        <p class="validation-module__intro">Añada aquí biológicos previos, biológicos concomitantes, tratamientos puente u otros fármacos relevantes para la validación o para la evaluación de causalidad.</p>
+        <div class="validation-module__actions">
+            <button type="button" class="btn btn-primary btn-add-drug" id="btnAddOtherDrug"><i class="fas fa-plus"></i> + Añadir fármaco</button>
+        </div>
+        <p class="empty-state" id="otrosFarmacosEmpty">Sin otros fármacos añadidos todavía.</p>
+        <div class="other-drugs-list" id="otrosFarmacosList" aria-live="polite"></div>
+    </section>
+
+    <section class="validation-module" id="modPrebiologico">
+        <h3 class="card-title"><i class="fas fa-flask"></i> Estudio prebiológico</h3>
+        <div class="info-grid">
+            <div class="info-field"><span class="info-field__label">Fecha analítica</span><span class="info-field__value" id="fhResumenAnaliticaFecha">—</span></div>
+            <div class="info-field"><span class="info-field__label">Analítica &lt;3 meses</span><span class="info-field__value" id="fhResumenAnaliticaReciente">—</span></div>
+            <div class="info-field"><span class="info-field__label">Mantoux / IGRA</span><span class="info-field__value" id="fhResumenMantoux">—</span></div>
+            <div class="info-field"><span class="info-field__label">VHB</span><span class="info-field__value" id="fhResumenVhb">—</span></div>
+            <div class="info-field"><span class="info-field__label">VHC</span><span class="info-field__value" id="fhResumenVhc">—</span></div>
+            <div class="info-field"><span class="info-field__label">VIH</span><span class="info-field__value" id="fhResumenVih">—</span></div>
+            <div class="info-field"><span class="info-field__label">Vacunación</span><span class="info-field__value" id="fhResumenVacunacion">—</span></div>
+            <div class="info-field"><span class="info-field__label">Hemograma</span><span class="info-field__value" id="fhResumenHemograma">—</span></div>
+            <div class="info-field"><span class="info-field__label">Bioquímica</span><span class="info-field__value" id="fhResumenBioquimica">—</span></div>
+        </div>
+        <div class="validation-note-block">
+            <span class="validation-note-block__label">Observaciones vacunación</span>
+            <p id="fhResumenVacunacionObs" class="validation-note-block__value">—</p>
+        </div>
+    </section>
+
+    <section class="validation-module" id="modEfectoAdverso" title="Efecto adverso / sospecha de RAM">
+        <h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> Efecto adverso / sospecha de RAM</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhEaNotificado">¿Existe sospecha de RAM?</label>
+                <select class="form-select" id="fhEaNotificado">
+                    <option value="no_consta">No consta</option>
+                    <option value="no">No</option>
+                    <option value="si">Sí</option>
+                </select>
+            </div>
+        </div>
+        <div id="fhEaActivationNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Los cuestionarios de causalidad se activarán al marcar una sospecha de RAM.</span></div>
+    </section>
+
+    <section class="validation-module hidden" id="modNaranjo" title="Algoritmo de Naranjo">
+        <h3 class="card-title"><i class="fas fa-calculator"></i> Algoritmo de Naranjo</h3>
+        <div class="causality-question-list">
+            <div class="causality-question"><label for="naranjoQ1">1. Reacción previamente descrita <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ1"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ2">2. Evento aparece después de administrar el fármaco <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ2"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ3">3. Mejora tras retirar fármaco o administrar antagonista <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ3"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ4">4. Reaparición tras readministración <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ4"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ5">5. Existen causas alternativas <span class="causality-score-hint">Sí -1 · No +2 · Desconocido 0</span></label><select class="form-select" id="naranjoQ5"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ6">6. Reaparición con placebo <span class="causality-score-hint">Sí -1 · No +1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ6"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ7">7. Concentraciones tóxicas detectadas <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ7"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ8">8. Relación dosis-respuesta <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ8"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ9">9. Reacción similar previa <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ9"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ10">10. Evidencia objetiva <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ10"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        </div>
+        <div class="causality-result-grid">
+            <div class="info-field"><span class="info-field__label">Puntuación total</span><span class="info-field__value" id="naranjoScore">0</span></div>
+            <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="naranjoCategoria">Dudosa</span></div>
+        </div>
+    </section>
+
+    <section class="validation-module hidden" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
+        <h3 class="card-title"><i class="fas fa-project-diagram"></i> Algoritmo de Karch-Lasagna</h3>
+        <div class="causality-question-list">
+            <div class="causality-question"><label for="klTemporal">1. Intervalo temporal compatible</label><select class="form-select" id="klTemporal"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klConocido">2. Evento conocido para medicamento/clase</label><select class="form-select" id="klConocido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klAlternativa">3. Existe explicación alternativa</label><select class="form-select" id="klAlternativa"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klSuspendido">4. Se suspendió el medicamento</label><select class="form-select" id="klSuspendido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klMejoraRetirada">5. Mejoró tras suspensión</label><select class="form-select" id="klMejoraRetirada"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klReadministracion">6. Hubo readministración</label><select class="form-select" id="klReadministracion"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klReaparece">7. Reapareció tras readministración</label><select class="form-select" id="klReaparece"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        </div>
+        <div class="causality-result-grid">
+            <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No clasificable</span></div>
+        </div>
+    </section>
+
+    <section class="validation-module hidden" id="modResumenCausalidad" title="Resumen de causalidad">
+        <h3 class="card-title"><i class="fas fa-notes-medical"></i> Resumen de causalidad</h3>
+        <div class="info-grid">
+            <div class="info-field"><span class="info-field__label">Naranjo</span><span class="info-field__value" id="resumenNaranjo">0 · Dudosa</span></div>
+            <div class="info-field"><span class="info-field__label">Karch-Lasagna</span><span class="info-field__value" id="resumenKl">No clasificable</span></div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhCausalidadFinal">Causalidad final farmacéutica</label>
+                <select class="form-select" id="fhCausalidadFinal">
+                    <option value="No evaluada">No evaluada</option>
+                    <option value="Dudosa / sin relación">Dudosa / sin relación</option>
+                    <option value="Posible">Posible</option>
+                    <option value="Probable">Probable</option>
+                    <option value="Definida">Definida</option>
+                    <option value="No clasificable">No clasificable</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btnApplyNaranjo">Usar resultado Naranjo</button>
+            <button type="button" class="btn btn-outline" id="btnApplyKl">Usar resultado Karch-Lasagna</button>
+        </div>
+    </section>
+
     <div class="session-professional-block"><span class="session-professional-label">Farmacéutico responsable</span><div id="fhValFarmaceutico" class="session-professional-text">Profesional FH-01 — Farmacia Hospitalaria</div></div>
     <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
-    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT JARA</button><button type="button" class="btn btn-outline" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
+    <section class="validation-module" id="modExportacion">
+        <h3 class="card-title"><i class="fas fa-file-export"></i> Exportación</h3>
+        <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT JARA</button><button type="button" class="btn btn-outline" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
+    </section>
 </section>
                 </main>
             </div>
             <script src="vendor/sheetjs/xlsx.full.min.js"></script>
-            <script src="scripts/farmacia_common.js?v=20260607-postdemo-d"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260607-postdemo-d"></script>
+            <script src="scripts/farmacia_common.js?v=20260612-codex-rescue-a"></script>
+            <script src="scripts/farmacia_validacion_model.js?v=20260612-codex-rescue-a"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260612-codex-rescue-a"></script>
         </body>
         </html>
