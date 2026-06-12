@@ -169,6 +169,7 @@
         }
         toggleHSBlock();
         updateValidationModuleSummaries();
+        updateSeguimientoHandoffLink();
         toggleCausalityModules();
     }
 
@@ -325,6 +326,20 @@
     function updateValidationModuleSummaries() {
         updateTreatmentSummary();
         updatePrebiologicoSummary();
+    }
+
+    function updateSeguimientoHandoffLink() {
+        var link = byId('fhGoSeguimientoLink');
+        if (!link) return;
+        var params = [];
+        var cip = selectedCip();
+        var patologia = selectedPatologia();
+        if (cip && cip !== 'CIP-DEMO-FH-XXX') params.push('cip=' + encodeURIComponent(cip));
+        if (modoActual === 'reuma') params.push('servicio=' + encodeURIComponent('reumatologia'));
+        else params.push('servicio=' + encodeURIComponent('dermatologia'));
+        if (patologia && patologia !== '—') params.push('patologia=' + encodeURIComponent(patologia));
+        params.push('entrada=' + encodeURIComponent('seguimiento'));
+        link.href = 'farmacia_seguimiento.html' + (params.length ? ('?' + params.join('&')) : '');
     }
 
     function mapViaToSelect(catalogVia) {
@@ -709,11 +724,10 @@
     }
 
     function toggleCausalityModules() {
-        var active = byId("fhEaNotificado").value === "si";
-        ["modNaranjo", "modKarchLasagna", "modResumenCausalidad"].forEach(function (id) {
-            byId(id).classList.toggle("hidden", !active);
+        ["modEfectoAdverso", "modNaranjo", "modKarchLasagna", "modResumenCausalidad"].forEach(function (id) {
+            byId(id).classList.add("hidden");
         });
-        byId("fhEaActivationNotice").classList.toggle("hidden", active);
+        if (byId("fhEaActivationNotice")) byId("fhEaActivationNotice").classList.remove("hidden");
         updateResumenCausalidad();
     }
 

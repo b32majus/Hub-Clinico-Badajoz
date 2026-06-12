@@ -6,8 +6,8 @@
     <title>Hub Clínico — Validación Farmacoterapéutica</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="style.css?v=20260612-codex-rescue-a">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260612-codex-rescue-a">
+    <link rel="stylesheet" href="style.css?v=20260612-followup-ea-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-followup-ea-a">
 </head>
         <body>
             <div class="hub-shell">
@@ -174,10 +174,10 @@
             <a class="btn btn-outline validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
             <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
             <a class="btn btn-outline validation-module-link" href="#modPrebiologico">Estudio prebiológico</a>
-            <a class="btn btn-outline validation-module-link" href="#modEfectoAdverso">Efecto adverso / RAM</a>
-            <a class="btn btn-outline validation-module-link" href="#modNaranjo">Algoritmo de Naranjo</a>
-            <a class="btn btn-outline validation-module-link" href="#modKarchLasagna">Karch-Lasagna</a>
-            <a class="btn btn-outline validation-module-link" href="#modResumenCausalidad">Resumen de causalidad</a>
+            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Seguimiento / efectos adversos</a>
+            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Naranjo</a>
+            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Karch-Lasagna</a>
+            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Resumen de causalidad</a>
             <a class="btn btn-outline validation-module-link" href="#modExportacion">Exportación</a>
         </div>
     </div>
@@ -227,7 +227,19 @@
         </div>
     </section>
 
-    <section class="validation-module" id="modEfectoAdverso" title="Efecto adverso / sospecha de RAM">
+    <section class="validation-module" id="modSeguimientoEaHandoff">
+        <h3 class="card-title"><i class="fas fa-clipboard-list"></i> Seguimiento / efectos adversos</h3>
+        <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>La evaluación de efectos adversos y causalidad se realiza desde la visita de seguimiento.</span></div>
+        <div class="validation-note-block">
+            <span class="validation-note-block__label">Flujo operativo</span>
+            <p class="validation-note-block__value">La validación inicial no solicita fecha de efecto adverso ni activa los algoritmos de causalidad. Use la visita de seguimiento para registrar gravedad, resolución, fármaco sospechoso y cuestionarios de causalidad.</p>
+        </div>
+        <div class="validation-module__actions">
+            <a class="btn btn-primary" id="fhGoSeguimientoLink" href="farmacia_seguimiento.html">Abrir visita de seguimiento</a>
+        </div>
+    </section>
+
+    <section class="validation-module hidden" id="modEfectoAdverso" title="Efecto adverso / sospecha de RAM">
         <h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> Efecto adverso / sospecha de RAM</h3>
         <div class="form-grid">
             <div class="form-group">
@@ -313,8 +325,8 @@
                 </main>
             </div>
             <script src="vendor/sheetjs/xlsx.full.min.js"></script>
-            <script src="scripts/farmacia_common.js?v=20260612-codex-rescue-a"></script>
-            <script src="scripts/farmacia_validacion_model.js?v=20260612-codex-rescue-a"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260612-codex-rescue-a"></script>
+            <script src="scripts/farmacia_common.js?v=20260612-followup-ea-a"></script>
+            <script src="scripts/farmacia_validacion_model.js?v=20260612-followup-ea-a"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260612-followup-ea-a"></script>
         </body>
         </html>
