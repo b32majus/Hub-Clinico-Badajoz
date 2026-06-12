@@ -1,0 +1,280 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Seguimiento Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260612-followup-ea-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-followup-ea-a">
+</head>
+        <body>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="profile-badge">FH</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link active" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Módulos</h3>
+            <ul class="nav-list">
+                <li><a href="index.html" class="nav-link" data-nav-link><i class="fas fa-arrow-left"></i>Reumatología</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="catalog-sidebar-block">
+        <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus">Catálogo no cargado</div>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
+    <div class="sidebar-footer">Demo Farmacia v0.2</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--seguimiento">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-info">
+            <h1 class="patient-name">Visita de Seguimiento</h1>
+            <p class="hero-description">Registre optimización, suspensión, adherencia Morisky-Green, PROMs y efectos adversos.</p>
+        </div>
+    </div>
+</section><section class="dashboard-card validation-modules-nav-card">
+    <div class="validation-modules-nav" aria-labelledby="seguimientoModulesTitle">
+        <div class="validation-modules-nav__header">
+            <h2 class="section-title" id="seguimientoModulesTitle"><i class="fas fa-th-large"></i> Módulos disponibles</h2>
+            <p class="validation-modules-nav__text">Navegación rápida del flujo de seguimiento, efectos adversos y causalidad.</p>
+        </div>
+        <div class="validation-modules-nav__links">
+            <a class="btn btn-outline validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
+            <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
+            <a class="btn btn-outline validation-module-link" href="#modPrebiologico">Estudio prebiológico</a>
+            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEa">Seguimiento / efectos adversos</a>
+            <a class="btn btn-outline validation-module-link js-causality-nav" href="#modNaranjo">Naranjo</a>
+            <a class="btn btn-outline validation-module-link js-causality-nav" href="#modKarchLasagna">Karch-Lasagna</a>
+            <a class="btn btn-outline validation-module-link js-causality-nav" href="#modResumenCausalidad">Resumen de causalidad</a>
+            <a class="btn btn-outline validation-module-link" href="#modExportacion">Exportación</a>
+        </div>
+    </div>
+</section><section class="dashboard-card" id="modTratamientoPrincipal"><h2 class="section-title"><i class="fas fa-pills"></i> Tratamiento actual</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhSegCip">CIP</label><div class="cip-search-wrap"><input type="text" id="fhSegCip" class="form-control" placeholder="Buscar paciente por CIP..." autocomplete="off"><i class="fas fa-search cip-search-icon" aria-hidden="true"></i><button type="button" class="cip-search-action" id="fhSegCipSearchBtn" aria-label="Buscar CIP"><i class="fas fa-search"></i></button></div></div><div class="form-group"><label for="fhSegServicio">Origen</label><input class="form-control" id="fhSegServicio" readonly></div><div class="form-group"><label for="fhSegPatologia">Indicación</label><input class="form-control" id="fhSegPatologia" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegLineaPrincipal">Línea / biológico principal</label><select class="form-select" id="fhSegLineaPrincipal"><option value="">Tratamiento actual</option></select></div><div class="form-group"><label for="fhSegTipoRelacionTerapia">Tipo de movimiento terapéutico</label><select class="form-select" id="fhSegTipoRelacionTerapia"><option value="sin_cambios">Sin cambios</option><option value="tratamiento_anadido">Tratamiento añadido</option><option value="cambio_terapeutico">Cambio terapéutico</option><option value="revision_linea">Revisión de línea</option></select></div><div class="form-group"><label for="fhSegEstadoLinea">Estado de la línea</label><input class="form-control" id="fhSegEstadoLinea" readonly></div></div>
+    <div id="fhSegAutocompleteBlock" class="hidden"><div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDrugSearch">Buscar fármaco por marca, principio activo o código</label><div class="autocomplete-wrapper"><input type="text" id="fhSegDrugSearch" class="form-control" placeholder="Ej. Cosentyx, secukinumab, Humira..." autocomplete="off"><div id="fhSegAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegFarmaco">Fármaco / Marca</label><input class="form-control" id="fhSegFarmaco" readonly></div><div class="form-group"><label for="fhSegPrincipioActivo">Principio activo</label><input class="form-control" id="fhSegPrincipioActivo" readonly></div><div class="form-group"><label for="fhSegPresentacion">Presentación</label><input class="form-control" id="fhSegPresentacion" readonly></div><div class="form-group"><label for="fhSegDosisActual">Dosis</label><input class="form-control" id="fhSegDosisActual" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegVia">Vía</label><input class="form-control" id="fhSegVia" readonly></div><div class="form-group"><label for="fhSegPautaActual">Pauta / Intervalo</label><input class="form-control" id="fhSegPautaActual" readonly></div><div class="form-group"><label for="fhSegCodigoNacional">Cód. Nacional</label><input class="form-control" id="fhSegCodigoNacional" readonly></div><div class="form-group"><label for="fhSegNregistro">Nº Registro</label><input class="form-control" id="fhSegNregistro" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegEtiquetas">Etiquetas</label><input class="form-control" id="fhSegEtiquetas" readonly></div><div class="form-group"><label for="fhSegFechaInicio">Fecha inicio / 1ª visita</label><input class="form-control" id="fhSegFechaInicio" readonly></div><div class="form-group"><label for="fhSegUltimaAdherencia">Última adherencia</label><input class="form-control" id="fhSegUltimaAdherencia" readonly></div><div class="form-group"><label for="fhSegUltimosProms">Últimos PROMs</label><input class="form-control" id="fhSegUltimosProms" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegOrigenCatalogo">Origen catálogo</label><input class="form-control" id="fhSegOrigenCatalogo" readonly></div><div class="form-group"><label for="fhSegEaPrevios">EA previos</label><input class="form-control" id="fhSegEaPrevios" readonly></div></div>
+</section>
+<section class="dashboard-card" id="modOtrosFarmacos" title="Otros fármacos / biológicos relacionados">
+    <h2 class="section-title"><i class="fas fa-pills"></i> Otros fármacos / biológicos</h2>
+    <p class="validation-module__intro">Añada aquí biológicos previos, biológicos concomitantes, tratamientos puente u otros fármacos relevantes para el seguimiento o para la evaluación de causalidad.</p>
+    <div class="validation-module__actions">
+        <button type="button" class="btn btn-primary btn-add-drug" id="btnSegAddOtherDrug"><i class="fas fa-plus"></i> + Añadir fármaco</button>
+    </div>
+    <p class="empty-state" id="segOtrosFarmacosEmpty">Sin otros fármacos añadidos todavía.</p>
+    <div class="other-drugs-list" id="segOtrosFarmacosList" aria-live="polite"></div>
+</section>
+<section class="dashboard-card" id="modPrebiologico">
+    <h2 class="section-title"><i class="fas fa-flask"></i> Estudio prebiológico</h2>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">Origen del seguimiento</span><span class="info-field__value">Datos precargados desde la validación y el histórico del tratamiento.</span></div>
+        <div class="info-field"><span class="info-field__label">Fecha de inicio de tratamiento</span><span class="info-field__value" id="fhSegPrebioFechaInicioResumen">—</span></div>
+        <div class="info-field"><span class="info-field__label">EA previos</span><span class="info-field__value" id="fhSegPrebioEaPreviosResumen">—</span></div>
+        <div class="info-field"><span class="info-field__label">Origen catálogo</span><span class="info-field__value" id="fhSegPrebioOrigenResumen">—</span></div>
+    </div>
+    <div class="validation-note-block">
+        <span class="validation-note-block__label">Contexto</span>
+        <p class="validation-note-block__value">En seguimiento no se solicita de nuevo la fecha del efecto adverso ni la fecha de inicio del fármaco: ambas deben venir del histórico de la visita y del tratamiento.</p>
+    </div>
+</section>
+<section class="dashboard-card"><h2 class="section-title"><i class="fas fa-route"></i> Evolución farmacoterapéutica</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhSegFecha">Fecha seguimiento</label><input type="date" class="form-control" id="fhSegFecha"></div><div class="form-group"><label for="fhSegCambiaNivel">¿Cambia nivel de estratificación?</label><select class="form-select" id="fhSegCambiaNivel"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegNuevoNivel">Nuevo nivel si cambia</label><select class="form-select" id="fhSegNuevoNivel"><option></option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegOptimiza">¿Requiere optimización?</label><select class="form-select" id="fhSegOptimiza"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegNuevaDosis">Nueva dosis</label><input class="form-control" id="fhSegNuevaDosis"></div><div class="form-group"><label for="fhSegNuevaPauta">Nueva pauta / intervalo</label><input class="form-control" id="fhSegNuevaPauta"></div><div class="form-group"><label for="fhSegMotivoOpt">Motivo optimización</label><select class="form-select" id="fhSegMotivoOpt"><option>No aplica</option><option>Respuesta clínica adecuada</option><option>Respuesta insuficiente</option><option>Ajuste por peso</option><option>Efecto adverso</option><option>Adherencia</option><option>Criterio farmacoterapéutico</option><option>Otro</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhSegSuspension">¿Suspensión?</label><select class="form-select" id="fhSegSuspension"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegMotivoSusp">Motivo suspensión</label><select class="form-select" id="fhSegMotivoSusp"><option>No aplica</option><option>Efecto adverso</option><option>Falta de eficacia</option><option>Decisión clínica</option><option>Preferencia paciente</option><option>Problema de adherencia</option><option>Otro</option></select></div></div>
+    <div class="form-grid form-grid--full"><div id="fhSegCambioFarmacoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>El cambio de fármaco requiere nueva solicitud y validación farmacoterapéutica desde el servicio clínico de origen.</span></div></div>
+</section>
+<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Seguimiento / efectos adversos</h2>
+    <div class="form-grid form-grid--full">
+        <div class="form-group">
+            <label>Morisky-Green 4 preguntas</label>
+            <div class="mg-card-list">
+                <div class="mg-card">
+                    <div class="mg-card__question">1. ¿Olvida tomarlo?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg1" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg1" value="no"><span>No</span></label>
+                    </div>
+                </div>
+                <div class="mg-card">
+                    <div class="mg-card__question">2. ¿Lo toma a la hora?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg2" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg2" value="no"><span>No</span></label>
+                    </div>
+                </div>
+                <div class="mg-card">
+                    <div class="mg-card__question">3. ¿Lo deja si se encuentra bien?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg3" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg3" value="no"><span>No</span></label>
+                    </div>
+                </div>
+                <div class="mg-card">
+                    <div class="mg-card__question">4. ¿Lo deja si le sienta mal?</div>
+                    <div class="mg-card__options">
+                        <label class="mg-option"><input type="radio" name="mg4" value="si"><span>Sí</span></label>
+                        <label class="mg-option"><input type="radio" name="mg4" value="no"><span>No</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mg-result" id="fhSegMoriskyResultado">Resultado Morisky-Green: pendiente de completar</div>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhSegProms">PROMs seguimiento</label><select class="form-select" id="fhSegProms"><option>No recogido</option><option>Sí, recoger DLQI + EVA dolor/prurito</option></select></div>
+        <div class="form-group"><label for="fhSeguimientoEaPresente">¿El paciente ha presentado algún efecto adverso desde la última visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div class="form-group hidden" id="fhSeguimientoEaGravedadRow"><label for="fhSeguimientoEaGravedad">Gravedad del efecto adverso</label><select class="form-select" id="fhSeguimientoEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option><option value="Requiere suspensión / derivación">Requiere suspensión / derivación</option></select></div>
+        <div class="form-group hidden" id="fhSeguimientoEaResueltoRow"><label for="fhSeguimientoEaResuelto">¿Se ha solucionado el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaResuelto"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option><option value="en_seguimiento">En seguimiento</option></select></div>
+    </div>
+    <div class="form-grid form-grid--full hidden" id="fhSeguimientoEaObservacionesRow"><div class="form-group"><label for="fhSeguimientoEaObservaciones">Descripción breve / observaciones</label><textarea class="form-textarea" id="fhSeguimientoEaObservaciones" rows="3"></textarea></div></div>
+    <div class="form-grid hidden" id="fhSeguimientoEaFarmacoRow">
+        <div class="form-group"><label for="fhSeguimientoEaFarmacoSospechoso">Fármaco sospechoso asociado al efecto adverso</label><select class="form-select" id="fhSeguimientoEaFarmacoSospechoso"><option value="">No seleccionado</option></select><div class="search-card__hint hidden" id="fhSeguimientoEaFarmacoDefaultNotice"></div></div>
+    </div>
+    <div id="fhSeguimientoEaNoCausalidad" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>No se activa evaluación de causalidad.</span></div>
+    <div id="fhSeguimientoEaActivationNotice" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Para activar los cuestionarios de causalidad, marque primero que existe efecto adverso en la visita de seguimiento.</span></div>
+    <div class="hidden" id="fhSegEaSospechosos"></div>
+    <div id="fhSegPromsExpanded" class="hidden">
+    <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA</h3>
+    <div class="proms-block" id="fhSegDlqiBlock">
+        <p class="proms-block__subtitle">DLQI — Índice de Calidad de Vida en Dermatología. Señale cómo le ha afectado su piel durante la <strong>última semana</strong>.</p>
+        <div class="dlqi-questions" id="fhSegDlqiQuestions"></div>
+        <div class="dlqi-result" id="fhSegDlqiResult">
+            <span class="dlqi-result__label">Puntuación total DLQI:</span>
+            <span class="dlqi-result__value" id="fhSegDlqiTotal">—</span>
+            <span class="dlqi-result__max">/ 30</span>
+            <span class="dlqi-result__interp" id="fhSegDlqiInterp"></span>
+        </div>
+    </div>
+    <div class="proms-block" id="fhSegEvaBlock">
+        <p class="proms-block__subtitle">EVA — Escala Visual Analógica (marque la intensidad en una escala de 0 a 10)</p>
+        <div class="form-grid eva-grid">
+            <div class="form-group eva-group">
+                <label for="fhSegEvaDolorRange">EVA Dolor</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhSegEvaDolorRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhSegEvaDolorValue">0</span>
+                </div>
+            </div>
+            <div class="form-group eva-group">
+                <label for="fhSegEvaPruritoRange">EVA Prurito</label>
+                <div class="eva-input-row">
+                    <input type="range" id="fhSegEvaPruritoRange" min="0" max="10" value="0" class="eva-range">
+                    <span class="eva-value" id="fhSegEvaPruritoValue">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+<section class="dashboard-card hidden" id="modNaranjo" title="Algoritmo de Naranjo">
+    <h2 class="section-title"><i class="fas fa-calculator"></i> Algoritmo de Naranjo</h2>
+    <div class="validation-note-block"><span class="validation-note-block__label">Fármaco sospechoso evaluado</span><p class="validation-note-block__value" id="fhSeguimientoEaContextoNaranjo">—</p></div>
+    <div class="causality-question-list">
+        <div class="causality-question"><label for="naranjoQ1">1. Reacción previamente descrita <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ1"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ2">2. Evento aparece después de administrar el fármaco <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ2"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ3">3. Mejora tras retirar fármaco o administrar antagonista <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ3"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ4">4. Reaparición tras readministración <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ4"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ5">5. Existen causas alternativas <span class="causality-score-hint">Sí -1 · No +2 · Desconocido 0</span></label><select class="form-select" id="naranjoQ5"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ6">6. Reaparición con placebo <span class="causality-score-hint">Sí -1 · No +1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ6"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ7">7. Concentraciones tóxicas detectadas <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ7"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ8">8. Relación dosis-respuesta <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ8"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ9">9. Reacción similar previa <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ9"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        <div class="causality-question"><label for="naranjoQ10">10. Evidencia objetiva <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ10"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+    </div>
+    <div class="causality-result-grid">
+        <div class="info-field"><span class="info-field__label">Puntuación total</span><span class="info-field__value" id="naranjoScore">0</span></div>
+        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="naranjoCategoria">Dudosa</span></div>
+    </div>
+</section>
+<section class="dashboard-card hidden" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
+    <h2 class="section-title"><i class="fas fa-project-diagram"></i> Algoritmo de Karch-Lasagna</h2>
+    <div class="validation-note-block"><span class="validation-note-block__label">Fármaco sospechoso evaluado</span><p class="validation-note-block__value" id="fhSeguimientoEaContextoKl">—</p></div>
+    <div class="causality-question-list">
+        <div class="causality-question"><label for="klTemporal">1. Intervalo temporal compatible</label><select class="form-select" id="klTemporal"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        <div class="causality-question"><label for="klConocido">2. Evento conocido para medicamento/clase</label><select class="form-select" id="klConocido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        <div class="causality-question"><label for="klAlternativa">3. Existe explicación alternativa</label><select class="form-select" id="klAlternativa"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        <div class="causality-question"><label for="klSuspendido">4. Se suspendió el medicamento</label><select class="form-select" id="klSuspendido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        <div class="causality-question"><label for="klMejoraRetirada">5. Mejoró tras suspensión</label><select class="form-select" id="klMejoraRetirada"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        <div class="causality-question"><label for="klReadministracion">6. Hubo readministración</label><select class="form-select" id="klReadministracion"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        <div class="causality-question"><label for="klReaparece">7. Reapareció tras readministración</label><select class="form-select" id="klReaparece"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+    </div>
+    <div class="causality-result-grid"><div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No clasificable</span></div></div>
+</section>
+<section class="dashboard-card hidden" id="modResumenCausalidad" title="Resumen de causalidad">
+    <h2 class="section-title"><i class="fas fa-notes-medical"></i> Resumen de causalidad</h2>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoResumen">—</span></div>
+        <div class="info-field"><span class="info-field__label">Naranjo</span><span class="info-field__value" id="resumenNaranjo">0 · Dudosa</span></div>
+        <div class="info-field"><span class="info-field__label">Karch-Lasagna</span><span class="info-field__value" id="resumenKl">No clasificable</span></div>
+    </div>
+    <div class="form-grid"><div class="form-group"><label for="fhCausalidadFinal">Causalidad final farmacéutica</label><select class="form-select" id="fhCausalidadFinal"><option value="No evaluada">No evaluada</option><option value="Dudosa / sin relación">Dudosa / sin relación</option><option value="Posible">Posible</option><option value="Probable">Probable</option><option value="Definida">Definida</option><option value="No clasificable">No clasificable</option></select></div></div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="btnApplyNaranjo">Usar resultado Naranjo</button><button type="button" class="btn btn-outline" id="btnApplyKl">Usar resultado Karch-Lasagna</button></div>
+</section>
+<section class="dashboard-card" id="modExportacion">
+    <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
+    <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Exportar TXT</button><button type="button" class="btn btn-outline" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button></div>
+</section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_common.js?v=20260612-followup-ea-a"></script>
+            <script src="scripts/farmacia_validacion_model.js?v=20260612-followup-ea-a"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260612-followup-ea-a"></script>
+        </body>
+        </html>
