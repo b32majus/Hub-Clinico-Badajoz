@@ -531,6 +531,8 @@
             body.appendChild(buildPendingMeta('fa-database', 'Origen de datos: ' + pendingSourceLabel(patient)));
             card.appendChild(body);
 
+            card.appendChild(renderPrebioBlock(patient));
+
             var actions = document.createElement('div');
             actions.className = 'pending-validation-card__actions';
             var link = document.createElement('a');
@@ -547,6 +549,70 @@
 
             cards.appendChild(card);
         });
+    }
+
+    function renderPrebioBlock(patient) {
+        var prebio = F.getPrebiologicoStatus(patient);
+        var block = document.createElement('div');
+        block.className = 'pending-validation-card__prebio';
+
+        var labelRow = document.createElement('div');
+        labelRow.className = 'pending-validation-card__prebio-label';
+
+        var icon = document.createElement('i');
+        icon.setAttribute('aria-hidden', 'true');
+        var text = document.createElement('span');
+        text.textContent = prebio.label;
+
+        labelRow.appendChild(icon);
+        labelRow.appendChild(text);
+
+        if (prebio.overall === 'ok') {
+            icon.className = 'fas fa-check-circle';
+            block.classList.add('pending-validation-card__prebio--ok');
+        } else if (prebio.overall === 'alerta') {
+            icon.className = 'fas fa-exclamation-triangle';
+            block.classList.add('pending-validation-card__prebio--alerta');
+        } else {
+            icon.className = 'fas fa-hourglass-half';
+            block.classList.add('pending-validation-card__prebio--pending');
+        }
+
+        block.appendChild(labelRow);
+
+        if (prebio.missing && prebio.missing.length > 0) {
+            var missingList = document.createElement('div');
+            missingList.className = 'pending-validation-card__prebio-missing';
+
+            var maxShown = 5;
+            var shown = prebio.missing.slice(0, maxShown);
+            var extra = prebio.missing.length - maxShown;
+
+            var missingText = 'Faltan: ' + shown.join(' · ');
+            if (extra > 0) {
+                missingText += ' +' + extra;
+            }
+            missingList.textContent = missingText;
+            block.appendChild(missingList);
+        }
+
+        if (prebio.overall === 'alerta' && prebio.items) {
+            var alertItems = [];
+            var keys = Object.keys(prebio.items);
+            for (var ki = 0; ki < keys.length; ki++) {
+                if (prebio.items[keys[ki]].status === 'alerta') {
+                    alertItems.push(prebio.items[keys[ki]].label);
+                }
+            }
+            if (alertItems.length > 0) {
+                var alertList = document.createElement('div');
+                alertList.className = 'pending-validation-card__prebio-alert-items';
+                alertList.textContent = 'Revisar: ' + alertItems.join(' · ');
+                block.appendChild(alertList);
+            }
+        }
+
+        return block;
     }
 
     document.addEventListener('DOMContentLoaded', function () {

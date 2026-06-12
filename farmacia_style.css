@@ -5106,6 +5106,59 @@
     justify-content: flex-start;
 }
 
+.pending-validation-card__prebio {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    line-height: 1.4;
+}
+
+.pending-validation-card__prebio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.pending-validation-card__prebio-label i {
+    width: 16px;
+    text-align: center;
+}
+
+.pending-validation-card__prebio--ok {
+    background: #F0FDF4;
+    color: #166534;
+    border: 1px solid #BBF7D0;
+}
+
+.pending-validation-card__prebio--pending {
+    background: #FFFBEB;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+}
+
+.pending-validation-card__prebio--alerta {
+    background: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
+.pending-validation-card__prebio-missing {
+    color: #64748B;
+    font-size: 0.82rem;
+    margin-left: 24px;
+}
+
+.pending-validation-card__prebio-alert-items {
+    color: #991B1B;
+    font-size: 0.82rem;
+    margin-left: 24px;
+    font-weight: 600;
+}
+
 .stats-note--source {
     margin-top: 10px;
 }
