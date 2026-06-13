@@ -5305,6 +5305,36 @@
     padding: 8px 10px;
 }
 
+.causality-chip-group {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+.causality-chip {
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 999px;
+    background: var(--bg-color, #fff);
+    color: var(--text-color, #374151);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1.4;
+}
+.causality-chip:hover {
+    border-color: var(--primary-color, #2563eb);
+    background: var(--primary-light, #eff6ff);
+}
+.causality-chip--active {
+    background: var(--primary-color, #2563eb);
+    color: #fff;
+    border-color: var(--primary-color, #2563eb);
+}
+.causality-chip--active:hover {
+    background: var(--primary-dark, #1d4ed8);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .causality-question {

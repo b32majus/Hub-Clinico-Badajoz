@@ -353,29 +353,32 @@
     }
 
     function readNaranjoAnswersFromDom() {
+        function getVal(id) {
+            var group = document.querySelector('.causality-chip-group[data-answer-id="' + id + '"]');
+            if (!group) return 'desconocido';
+            var active = group.querySelector('.causality-chip--active');
+            return active ? active.getAttribute('data-value') : 'desconocido';
+        }
         return {
-            q1: byId('naranjoQ1').value,
-            q2: byId('naranjoQ2').value,
-            q3: byId('naranjoQ3').value,
-            q4: byId('naranjoQ4').value,
-            q5: byId('naranjoQ5').value,
-            q6: byId('naranjoQ6').value,
-            q7: byId('naranjoQ7').value,
-            q8: byId('naranjoQ8').value,
-            q9: byId('naranjoQ9').value,
-            q10: byId('naranjoQ10').value
+            q1: getVal('naranjoQ1'), q2: getVal('naranjoQ2'), q3: getVal('naranjoQ3'),
+            q4: getVal('naranjoQ4'), q5: getVal('naranjoQ5'), q6: getVal('naranjoQ6'),
+            q7: getVal('naranjoQ7'), q8: getVal('naranjoQ8'), q9: getVal('naranjoQ9'),
+            q10: getVal('naranjoQ10')
         };
     }
 
     function readKarchLasagnaAnswersFromDom() {
+        function getVal(id) {
+            var group = document.querySelector('.causality-chip-group[data-answer-id="' + id + '"]');
+            if (!group) return 'no_se_sabe';
+            var active = group.querySelector('.causality-chip--active');
+            return active ? active.getAttribute('data-value') : 'no_se_sabe';
+        }
         return {
-            temporal: byId('klTemporal').value,
-            conocido: byId('klConocido').value,
-            alternativa: byId('klAlternativa').value,
-            suspendido: byId('klSuspendido').value,
-            mejoraRetirada: byId('klMejoraRetirada').value,
-            readministracion: byId('klReadministracion').value,
-            reaparece: byId('klReaparece').value
+            temporal: getVal('klTemporal'), conocido: getVal('klConocido'),
+            alternativa: getVal('klAlternativa'), suspendido: getVal('klSuspendido'),
+            mejoraRetirada: getVal('klMejoraRetirada'), readministracion: getVal('klReadministracion'),
+            reaparece: getVal('klReaparece')
         };
     }
 
@@ -1428,13 +1431,23 @@
             if (!el) return;
             el.addEventListener(el.tagName === 'TEXTAREA' ? 'input' : 'change', updateFollowupCausalitySummary);
         });
-        ['naranjoQ1','naranjoQ2','naranjoQ3','naranjoQ4','naranjoQ5','naranjoQ6','naranjoQ7','naranjoQ8','naranjoQ9','naranjoQ10'].forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) el.addEventListener('change', updateNaranjoScore);
+        document.querySelectorAll('.causality-chip-group[data-answer-id^="naranjo"]').forEach(function (group) {
+            group.addEventListener('click', function (e) {
+                var btn = e.target.closest('.causality-chip');
+                if (!btn) return;
+                group.querySelectorAll('.causality-chip').forEach(function (b) { b.classList.remove('causality-chip--active'); });
+                btn.classList.add('causality-chip--active');
+                updateNaranjoScore();
+            });
         });
-        ['klTemporal','klConocido','klAlternativa','klSuspendido','klMejoraRetirada','klReadministracion','klReaparece'].forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) el.addEventListener('change', updateKarchLasagna);
+        document.querySelectorAll('.causality-chip-group[data-answer-id^="kl"]').forEach(function (group) {
+            group.addEventListener('click', function (e) {
+                var btn = e.target.closest('.causality-chip');
+                if (!btn) return;
+                group.querySelectorAll('.causality-chip').forEach(function (b) { b.classList.remove('causality-chip--active'); });
+                btn.classList.add('causality-chip--active');
+                updateKarchLasagna();
+            });
         });
         renderDLQI();
         setupEVASliders();
