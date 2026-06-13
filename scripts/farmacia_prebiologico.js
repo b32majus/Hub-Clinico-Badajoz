@@ -10,14 +10,18 @@
  *     overallStatus: "complete" | "incomplete" | "blocked",
  *     canValidate: boolean,
  *     checks: Array<{category, status, label, detail, blocking}>,
- *     blockers: string[],
- *     summaryText: string
+ *     blockers: Array<{category, label, status, detail}>,
+ *     blockerLabels: string[],
+ *     summaryText: string,
+ *     patientNotFound?: boolean,
+ *     fallbackLegacy?: boolean
  *   }
  *
  * Categories: analitica, hemograma, bioquimica, serologias, tuberculosis, vacunacion, medicinaPreventiva.
- * Check statuses: complete, pending, missing, unknown, not_applicable.
+ * Check statuses: complete, pending, missing, unknown, not_applicable, alert.
  *
  * Conservative: missing/unclear data → status = "unknown" and blocking = true.
+ * Blocking statuses: unknown, missing, pending, alert.
  * Does NOT modify the input patient object.
  */
 
@@ -114,8 +118,14 @@
 
     function evaluateTuberculosis(patient) {
         var est = patient && patient.analiticaEstruct;
-        if (est && typeof est === "object" && hasMeaningfulValue(est.mantoux)) {
-            return evaluateBooleanLikeCheck(est.mantoux);
+        if (est && typeof est === "object") {
+            var tbKeys = ["igra", "mantouxIgra", "cribadoTb", "tuberculosis", "tbScreening", "mantoux"];
+            for (var i = 0; i < tbKeys.length; i++) {
+                var key = tbKeys[i];
+                if (hasMeaningfulValue(est[key])) {
+                    return evaluateBooleanLikeCheck(est[key]);
+                }
+            }
         }
 
         var text = normalizeCheckString(patient && patient.analitica);
@@ -128,9 +138,31 @@
     function evaluateVacunacion(patient) {
         var est = patient && patient.analiticaEstruct;
         if (est && typeof est === "object" && hasMeaningfulValue(est.vacunacion)) {
+            var vacEstruct = est.vacunacion;
+            if (typeof vacEstruct === "object") {
+                if (vacEstruct.ok || vacEstruct.si) return "ok";
+                if (Array.isArray(vacEstruct.pendientes) && vacEstruct.pendientes.length > 0) return "pendiente";
+                if (hasMeaningfulValue(vacEstruct.pendientes)) return "pendiente";
+                if (hasMeaningfulValue(vacEstruct.observaciones)) {
+                    var obs = normalizeCheckString(vacEstruct.observaciones);
+                    if (/(alerta|revisar|contraindic)/.test(obs)) return "alerta";
+                }
+                return "no_informado";
+            }
             return evaluateBooleanLikeCheck(est.vacunacion);
         }
         if (hasMeaningfulValue(patient && patient.vacunacion)) {
+            var vac = patient.vacunacion;
+            if (typeof vac === "object") {
+                if (vac.ok || vac.si) return "ok";
+                if (Array.isArray(vac.pendientes) && vac.pendientes.length > 0) return "pendiente";
+                if (hasMeaningfulValue(vac.pendientes)) return "pendiente";
+                if (hasMeaningfulValue(vac.observaciones)) {
+                    var obsVac = normalizeCheckString(vac.observaciones);
+                    if (/(alerta|revisar|contraindic)/.test(obsVac)) return "alerta";
+                }
+                return "no_informado";
+            }
             return evaluateBooleanLikeCheck(patient.vacunacion);
         }
 
@@ -161,7 +193,7 @@
         switch (internalStatus) {
             case "ok":          return "complete";
             case "pendiente":   return "pending";
-            case "alerta":      return "unknown";
+            case "alerta":      return "alert";
             case "no_aplica":   return "not_applicable";
             case "no_informado":
             default:            return "unknown";
@@ -169,7 +201,7 @@
     }
 
     function isBlocking(status) {
-        return status === "unknown" || status === "missing";
+        return status === "unknown" || status === "missing" || status === "pending" || status === "alert";
     }
 
     function buildCheck(category, label, internalStatus, detail) {
@@ -195,7 +227,7 @@
         return "incomplete";
     }
 
-    function buildSummary(overallStatus, checks, blockers) {
+    function buildSummary(overallStatus, checks, blockerLabels) {
         var labelMap = {
             complete: "Prebiol\u00f3gico completo",
             incomplete: "Prebiol\u00f3gico incompleto",
@@ -204,15 +236,39 @@
         var base = labelMap[overallStatus] || "Prebiol\u00f3gico no evaluable";
         if (overallStatus === "complete") return base + ". Listo para validaci\u00f3n.";
         if (overallStatus === "incomplete") return base + ". Pendiente de datos.";
-        var listed = blockers.slice(0, 5).join("; ");
-        var extra = blockers.length > 5 ? " (y " + (blockers.length - 5) + " m\u00e1s)" : "";
-        return base + ": " + blockers.length + " bloqueo" + (blockers.length === 1 ? "" : "s") + " \u2014 " + listed + extra + ".";
+        var listed = blockerLabels.slice(0, 5).join("; ");
+        var extra = blockerLabels.length > 5 ? " (y " + (blockerLabels.length - 5) + " m\u00e1s)" : "";
+        return base + ": " + blockerLabels.length + " bloqueo" + (blockerLabels.length === 1 ? "" : "s") + " \u2014 " + listed + extra + ".";
     }
 
     // ─── Public API ───
 
     function evaluatePatientPrebiologico(patient) {
-        var input = patient || {};
+        if (patient === undefined || patient === null) {
+            return {
+                overallStatus: "blocked",
+                canValidate: false,
+                checks: [],
+                blockers: [],
+                blockerLabels: [],
+                summaryText: "Paciente no proporcionado",
+                patientNotFound: true
+            };
+        }
+
+        if (hasMeaningfulValue(patient.cip) && patient.__explicitCipNotFound === true) {
+            return {
+                overallStatus: "blocked",
+                canValidate: false,
+                checks: [],
+                blockers: [],
+                blockerLabels: [],
+                summaryText: "Paciente no encontrado: CIP " + patient.cip,
+                patientNotFound: true
+            };
+        }
+
+        var input = patient;
 
         var checks = [
             buildCheck("analitica", "Anal\u00edtica reciente", evaluateAnalitica(input), "Evaluaci\u00f3n general de anal\u00edtica"),
@@ -226,19 +282,37 @@
 
         var blockers = checks
             .filter(function (c) { return c.blocking; })
+            .map(function (c) {
+                return {
+                    category: c.category,
+                    label: c.label,
+                    status: c.status,
+                    detail: c.detail
+                };
+            });
+
+        var blockerLabels = checks
+            .filter(function (c) { return c.blocking; })
             .map(function (c) { return c.label + ": " + c.status; });
 
         var overallStatus = computeOverall(checks);
         var canValidate = overallStatus === "complete";
-        var summaryText = buildSummary(overallStatus, checks, blockers);
+        var summaryText = buildSummary(overallStatus, checks, blockerLabels);
 
-        return {
+        var result = {
             overallStatus: overallStatus,
             canValidate: canValidate,
             checks: checks,
             blockers: blockers,
+            blockerLabels: blockerLabels,
             summaryText: summaryText
         };
+
+        if (!hasMeaningfulValue(patient.cip)) {
+            result.fallbackLegacy = true;
+        }
+
+        return result;
     }
 
     var publicApi = {

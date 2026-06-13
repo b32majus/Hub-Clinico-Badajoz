@@ -105,7 +105,7 @@ assertEqual(resultB.overallStatus, 'blocked', 'overallStatus');
 assertValue(resultB.canValidate === false, 'canValidate = false');
 assertValue(resultB.blockers.length > 0, `bloqueos presentes: ${resultB.blockers.length}`);
 
-const bBlockerLabels = resultB.blockers.join(' ').toLowerCase();
+const bBlockerLabels = (resultB.blockerLabels || resultB.blockers.map(b => b.label + ": " + b.status)).join(' ').toLowerCase();
 assertValue(bBlockerLabels.includes('serolog'), 'bloqueo: Serologías');
 assertValue(bBlockerLabels.includes('medicina preventiva'), 'bloqueo: Medicina preventiva');
 assertValue(Array.isArray(resultB.checks) && resultB.checks.length === 7, '7 checks');
@@ -201,9 +201,184 @@ if (resultD) {
     fail('resultD es null/undefined sin crash');
 }
 
+// ─── TEST T1: pending bloquea (Mantoux=Pendiente) ──────────────────────────────
+
+console.log('\n[Test T1] Mantoux pendiente bloquea la validación');
+const patientT1 = {
+    cip: 'DEMO-T1',
+    analiticaEstruct: {
+        reciente: 'si',
+        hemograma: true,
+        bioquimica: true,
+        serologiasVhb: 'Negativo',
+        serologiasVhc: 'Negativo',
+        serologiasVih: 'Negativo',
+        mantoux: 'Pendiente',
+        vacunacion: 'si'
+    }
+};
+
+const resultT1 = evaluatePatientPrebiologico(patientT1);
+assertEqual(resultT1.overallStatus, 'blocked', 'overallStatus');
+assertValue(resultT1.canValidate === false, 'canValidate = false');
+
+const tbCheckT1 = resultT1.checks.find(function (c) { return c.category === 'tuberculosis'; });
+if (tbCheckT1) {
+    assertEqual(tbCheckT1.status, 'pending', 'tuberculosis status');
+    assertValue(tbCheckT1.blocking === true, 'tuberculosis blocking = true');
+} else {
+    fail('check tuberculosis no encontrado');
+}
+
+const t1BlockerLabels = (resultT1.blockerLabels || resultT1.blockers.map(b => b.label + ": " + b.status));
+assertValue(t1BlockerLabels.some(function (l) { return l.toLowerCase().includes('mantoux/igra: pending'); }), 'blockerLabels incluye Mantoux/IGRA: pending');
+
+// ─── TEST T2: Vacunación pendiente bloquea ─────────────────────────────────────
+
+console.log('\n[Test T2] Vacunación pendiente bloquea la validación');
+const patientT2 = {
+    cip: 'DEMO-T2',
+    analiticaEstruct: {
+        reciente: 'si',
+        hemograma: true,
+        bioquimica: true,
+        serologiasVhb: 'Negativo',
+        serologiasVhc: 'Negativo',
+        serologiasVih: 'Negativo',
+        mantoux: 'Negativo',
+        vacunacion: { ok: false, pendientes: ['gripe', 'neumococo'] }
+    }
+};
+
+const resultT2 = evaluatePatientPrebiologico(patientT2);
+assertEqual(resultT2.overallStatus, 'blocked', 'overallStatus');
+assertValue(resultT2.canValidate === false, 'canValidate = false');
+
+const vacCheckT2 = resultT2.checks.find(function (c) { return c.category === 'vacunacion'; });
+if (vacCheckT2) {
+    assertEqual(vacCheckT2.status, 'pending', 'vacunacion status');
+    assertValue(vacCheckT2.blocking === true, 'vacunacion blocking = true');
+} else {
+    fail('check vacunacion no encontrado');
+}
+
+const t2BlockerLabels = (resultT2.blockerLabels || resultT2.blockers.map(b => b.label + ": " + b.status));
+assertValue(t2BlockerLabels.some(function (l) { return l.toLowerCase().includes('vacunación: pending'); }), 'blockerLabels incluye Vacunación: pending');
+
+// ─── TEST T3: Vacunación OK no bloquea ─────────────────────────────────────────
+
+console.log('\n[Test T3] Vacunación OK no bloquea (otro campo pendiente bloquea)');
+const patientT3 = {
+    cip: 'DEMO-T3',
+    analiticaEstruct: {
+        reciente: 'si',
+        hemograma: true,
+        bioquimica: true,
+        serologiasVhb: 'Negativo',
+        serologiasVhc: 'Negativo',
+        serologiasVih: 'Negativo',
+        mantoux: 'Pendiente',
+        vacunacion: { ok: true, pendientes: [] }
+    },
+    medicinaPreventiva: 'revisado'
+};
+
+const resultT3 = evaluatePatientPrebiologico(patientT3);
+assertEqual(resultT3.overallStatus, 'blocked', 'overallStatus');
+assertValue(resultT3.canValidate === false, 'canValidate = false');
+
+const vacCheckT3 = resultT3.checks.find(function (c) { return c.category === 'vacunacion'; });
+if (vacCheckT3) {
+    assertEqual(vacCheckT3.status, 'complete', 'vacunacion status');
+    assertValue(vacCheckT3.blocking === false, 'vacunacion blocking = false');
+} else {
+    fail('check vacunacion no encontrado');
+}
+
+const t3BlockerLabels = (resultT3.blockerLabels || resultT3.blockers.map(b => b.label + ": " + b.status)).join(' ').toLowerCase();
+assertValue(!t3BlockerLabels.includes('vacun'), 'blockers NO incluye vacunacion');
+
+// ─── TEST T4: IGRA alias pendiente bloquea ─────────────────────────────────────
+
+console.log('\n[Test T4] IGRA alias pendiente bloquea la validación');
+const patientT4 = {
+    cip: 'DEMO-T4',
+    analiticaEstruct: {
+        reciente: 'si',
+        hemograma: true,
+        bioquimica: true,
+        serologiasVhb: 'Negativo',
+        serologiasVhc: 'Negativo',
+        serologiasVih: 'Negativo',
+        igra: 'Pendiente',
+        vacunacion: 'si'
+    }
+};
+
+const resultT4 = evaluatePatientPrebiologico(patientT4);
+const tbCheckT4 = resultT4.checks.find(function (c) { return c.category === 'tuberculosis'; });
+if (tbCheckT4) {
+    assertEqual(tbCheckT4.status, 'pending', 'tuberculosis status');
+    assertValue(tbCheckT4.blocking === true, 'tuberculosis blocking = true');
+} else {
+    fail('check tuberculosis no encontrado');
+}
+
+const t4BlockerLabels = (resultT4.blockerLabels || resultT4.blockers.map(b => b.label + ": " + b.status));
+assertValue(t4BlockerLabels.some(function (l) { return l.toLowerCase().includes('mantoux/igra: pending'); }), 'blockerLabels incluye Mantoux/IGRA: pending');
+
+// ─── TEST T5: alerta no se diluye ──────────────────────────────────────────────
+
+console.log('\n[Test T5] Serología reactiva genera alerta y bloquea');
+const patientT5 = {
+    cip: 'DEMO-T5',
+    analiticaEstruct: {
+        reciente: 'si',
+        hemograma: true,
+        bioquimica: true,
+        serologiasVhb: 'Negativo',
+        serologiasVhc: 'Negativo',
+        serologiasVih: 'Reactivo'
+    }
+};
+
+const resultT5 = evaluatePatientPrebiologico(patientT5);
+const serCheckT5 = resultT5.checks.find(function (c) { return c.category === 'serologias'; });
+if (serCheckT5) {
+    assertEqual(serCheckT5.status, 'alert', 'serologias status');
+    assertValue(serCheckT5.blocking === true, 'serologias blocking = true');
+} else {
+    fail('check serologias no encontrado');
+}
+
+// mapStatus es interno; la comprobación de status 'alert' arriba es suficiente
+
+// ─── TEST T6: No mutación del paciente ─────────────────────────────────────────
+
+console.log('\n[Test T6] El objeto paciente original no se muta');
+const patientT6 = {
+    cip: 'DEMO-T6',
+    analiticaEstruct: {
+        reciente: 'si',
+        hemograma: true,
+        bioquimica: true,
+        serologiasVhb: 'Negativo',
+        serologiasVhc: 'Negativo',
+        serologiasVih: 'Negativo',
+        mantoux: 'Negativo',
+        vacunacion: 'si'
+    },
+    medicinaPreventiva: 'revisado'
+};
+
+const patientT6Before = JSON.stringify(patientT6);
+evaluatePatientPrebiologico(patientT6);
+const patientT6After = JSON.stringify(patientT6);
+assertEqual(patientT6After, patientT6Before, 'paciente original no modificado');
+
 // ─── SUMMARY ───────────────────────────────────────────────────────────────────
 
-const totalCases = 4;
+const totalCases = 10;
 console.log('\n' + '═'.repeat(60));
 console.log(`RESULTADO: ${passed} OK / ${failed} FALLIDO  — ${failed === 0 ? totalCases : passed} / ${totalCases} PASS`);
 if (failed === 0) {
