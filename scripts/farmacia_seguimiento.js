@@ -1293,6 +1293,14 @@
             var eaSelect = document.getElementById("fhSeguimientoEaPresente");
             if (eaSelect && eaSelect.value !== "si") {
                 eaSelect.value = "si";
+                eaSelect.dispatchEvent(new Event('change'));
+            }
+
+            // Demo FH-004: pre-activar PROMs si el paciente tiene datos registrados
+            var promsSelect = document.getElementById('fhSegProms');
+            if (promsSelect) {
+                promsSelect.value = 'Sí, recoger DLQI + EVA dolor/prurito';
+                promsSelect.dispatchEvent(new Event('change'));
             }
         }
 
