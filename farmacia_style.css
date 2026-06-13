@@ -4975,6 +4975,10 @@
     margin-top: 16px;
 }
 
+.causality-result-grid + .form-grid {
+    margin-top: 24px;
+}
+
 .notice-box.notice-box--info {
     display: flex;
     gap: 10px;
@@ -5211,6 +5215,8 @@
     background: transparent;
     border: none;
     padding: 0;
+    flex: 1;
+    min-width: 140px;
 }
 
 .causality-result-grid--top .info-field__value {
