@@ -899,7 +899,7 @@
         }
         var C = getCatalog();
         if (!C || !C.loaded) return;
-        datalist.innerHTML = '';
+        while (datalist.firstChild) datalist.removeChild(datalist.firstChild);
         var drugs = C.drugs || [];
         var max = Math.min(drugs.length, 200);
         for (var i = 0; i < max; i++) {
