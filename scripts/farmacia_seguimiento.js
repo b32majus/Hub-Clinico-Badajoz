@@ -1062,12 +1062,14 @@
     function updateMorisky() {
         let incorrectas = 0;
         Object.entries(correctAnswers).forEach(([name, correct]) => {
-            const selected = document.querySelector(`input[name="${name}"]:checked`);
-            if (selected && selected.value !== correct) incorrectas += 1;
+            var group = document.querySelector('.mg-chip-group[data-mg-name="' + name + '"]');
+            var active = group ? group.querySelector('.mg-chip--active') : null;
+            var selected = active ? active.getAttribute('data-mg-value') : null;
+            if (selected && selected !== correct) incorrectas += 1;
         });
         let text = 'Resultado Morisky-Green: pendiente de completar';
         let resultClass = '';
-        if (document.querySelectorAll('input[name^="mg"]:checked').length === 4) {
+        if (document.querySelectorAll('.mg-chip--active').length === 4) {
             if (incorrectas === 0) { text = 'Resultado Morisky-Green: alta adherencia'; resultClass = 'mg-result--high'; }
             else if (incorrectas <= 2) { text = 'Resultado Morisky-Green: adherencia media / parcial'; resultClass = 'mg-result--medium'; }
             else { text = 'Resultado Morisky-Green: baja adherencia'; resultClass = 'mg-result--low'; }
@@ -1078,6 +1080,18 @@
             el.classList.remove('mg-result--high', 'mg-result--medium', 'mg-result--low');
             if (resultClass) el.classList.add(resultClass);
         }
+    }
+
+    function initMoriskyChips() {
+        document.querySelectorAll('.mg-chip-group').forEach(function (group) {
+            group.addEventListener('click', function (e) {
+                var chip = e.target.closest('.mg-chip');
+                if (!chip) return;
+                group.querySelectorAll('.mg-chip').forEach(function (c) { c.classList.remove('mg-chip--active'); });
+                chip.classList.add('mg-chip--active');
+                updateMorisky();
+            });
+        });
     }
 
     function fv(id) { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
@@ -1511,7 +1525,7 @@
             showSegDrugAutocomplete();
         }
 
-        document.querySelectorAll('input[name^="mg"]').forEach(input => input.addEventListener('change', updateMorisky));
+        initMoriskyChips();
         var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
         if (lineaPrincipal) lineaPrincipal.addEventListener('change', applySelectedBiologicLine);
         var eaSelector = document.getElementById('fhSeguimientoEaPresente');
