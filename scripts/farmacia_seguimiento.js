@@ -371,6 +371,13 @@
         updateSuspectDrugSelector();
     }
 
+    function normalizeFollowupDrugCategory(relationType) {
+        if (relationType === 'Biológico activo adicional') return 'Biológico adicional';
+        if (relationType === 'Biológico previo/histórico') return 'Biológico previo/histórico';
+        if (relationType === 'Exposición') return 'Exposición';
+        return 'Concomitante';
+    }
+
     function getRelevantDrugCandidates() {
         var candidates = [];
         currentBiologicLines.forEach(function (line) {
@@ -397,7 +404,7 @@
         followupOtherDrugs.forEach(function (drug) {
             var name = drug.farmaco || drug.principioActivo;
             if (!name) return;
-            var category = drug.relationType === 'Exposición' ? 'Exposición' : 'Concomitante';
+            var category = normalizeFollowupDrugCategory(drug.relationType);
             candidates.push({
                 id: 'other:' + drug.uid,
                 category: category,
