@@ -214,9 +214,25 @@
             var input = createElement('input', 'form-control');
             input.type = field.type;
             input.value = drug[field.key] || '';
+            input.setAttribute('data-field', field.key);
+
             if (field.key === 'farmaco') {
-                input.setAttribute('list', 'datalist-cima-farmacos');
+                input.classList.add('js-cima-autocomplete');
+                input.setAttribute('data-uid', drug.uid);
+                input.setAttribute('autocomplete', 'off');
+
+                var wrapper = createElement('div', 'autocomplete-wrapper');
+                wrapper.id = drug.uid + '-autocomplete-wrapper';
+                wrapper.appendChild(input);
+
+                var dropdown = createElement('div', 'autocomplete-dropdown hidden');
+                dropdown.id = drug.uid + '-dropdown';
+                wrapper.appendChild(dropdown);
+
+                grid.appendChild(buildFollowupField(field.label, wrapper));
+                return;
             }
+
             input.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, field.key, this.value); });
             grid.appendChild(buildFollowupField(field.label, input));
         });
@@ -246,7 +262,109 @@
         followupOtherDrugs.forEach(function (drug) {
             list.appendChild(renderFollowupOtherDrugRow(drug));
         });
+        followupOtherDrugs.forEach(function (drug) {
+            initOtherDrugAutocomplete(drug.uid);
+        });
         followupEmptyState();
+    }
+
+    function initOtherDrugAutocomplete(uid) {
+        var input = document.querySelector('input[data-uid="' + uid + '"].js-cima-autocomplete');
+        if (!input) return;
+        var dropdownId = uid + '-dropdown';
+
+        input.addEventListener('input', function () {
+            var C = getCatalog();
+            if (!C || !C.loaded) return;
+            var query = this.value.trim();
+            if (query.length < 2) {
+                clearOtherDrugDropdown(dropdownId);
+                return;
+            }
+            var results = C.search(query);
+            renderOtherDrugDropdown(dropdownId, results, uid);
+        });
+
+        input.addEventListener('keydown', function (e) {
+            var dropdown = document.getElementById(dropdownId);
+            if (!dropdown || dropdown.classList.contains('hidden')) return;
+            var items = dropdown.querySelectorAll('.autocomplete-item');
+            if (!items.length) return;
+            var activeIdx = Array.from(items).findIndex(function (i) { return i.classList.contains('autocomplete-item--active'); });
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIdx = Math.min(activeIdx + 1, items.length - 1);
+                items.forEach(function (it, i) { it.classList.toggle('autocomplete-item--active', i === activeIdx); });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIdx = Math.max(activeIdx - 1, 0);
+                items.forEach(function (it, i) { it.classList.toggle('autocomplete-item--active', i === activeIdx); });
+            } else if (e.key === 'Enter' && activeIdx >= 0) {
+                e.preventDefault();
+                items[activeIdx].click();
+            } else if (e.key === 'Escape') {
+                clearOtherDrugDropdown(dropdownId);
+            }
+        });
+
+        input.addEventListener('blur', function () {
+            setTimeout(function () {
+                var dd = document.getElementById(dropdownId);
+                if (dd && !dd.contains(document.activeElement)) clearOtherDrugDropdown(dropdownId);
+            }, 150);
+        });
+    }
+
+    function clearOtherDrugDropdown(dropdownId) {
+        var dd = document.getElementById(dropdownId);
+        if (!dd) return;
+        F.clearChildren(dd);
+        dd.classList.add('hidden');
+    }
+
+    function renderOtherDrugDropdown(dropdownId, results, uid) {
+        var dd = document.getElementById(dropdownId);
+        if (!dd) return;
+        F.clearChildren(dd);
+        if (!results || !results.length) { dd.classList.add('hidden'); return; }
+
+        var max = Math.min(results.length, 10);
+        for (var i = 0; i < max; i++) {
+            var drug = results[i];
+            var item = createElement('div', 'autocomplete-item');
+            var main = createElement('div', 'autocomplete-item-main');
+            var name = createElement('span', 'autocomplete-item-name');
+            name.textContent = drug.nombre_comercial || '\u2014';
+            main.appendChild(name);
+
+            var src = createElement('span', 'drug-source-tag drug-source-tag--' + ((drug.source_type || '').toLowerCase() === 'cima' ? 'cima' : 'local'));
+            src.textContent = drug.source_type || '\u2014';
+            main.appendChild(src);
+            item.appendChild(main);
+
+            var detail = createElement('div', 'autocomplete-item-detail');
+            var parts = [];
+            if (drug.principio_activo) parts.push(drug.principio_activo);
+            if (drug.dosis) parts.push(drug.dosis);
+            detail.textContent = parts.join(' \u00b7 ');
+            item.appendChild(detail);
+
+            (function (d) {
+                item.addEventListener('click', function () {
+                    var input = document.querySelector('input[data-uid="' + uid + '"].js-cima-autocomplete');
+                    if (input) input.value = d.nombre_comercial || '';
+                    updateFollowupOtherDrug(uid, 'farmaco', d.nombre_comercial || '');
+                    updateFollowupOtherDrug(uid, 'principioActivo', d.principio_activo || '');
+                    var paInput = document.querySelector('input[data-uid="' + uid + '"][data-field="principioActivo"]');
+                    if (paInput) paInput.value = d.principio_activo || '';
+                    clearOtherDrugDropdown(dropdownId);
+                });
+            })(drug);
+
+            dd.appendChild(item);
+        }
+        dd.classList.remove('hidden');
     }
 
     function addFollowupOtherDrug() {
@@ -892,29 +1010,6 @@
         renderSegDrugAutocompleteDropdown(results);
     }
 
-    function populateCimaDatalist() {
-        var datalistId = 'datalist-cima-farmacos';
-        var datalist = document.getElementById(datalistId);
-        if (!datalist) {
-            datalist = document.createElement('datalist');
-            datalist.id = datalistId;
-            document.body.appendChild(datalist);
-        }
-        var C = getCatalog();
-        if (!C || !C.loaded) return;
-        while (datalist.firstChild) datalist.removeChild(datalist.firstChild);
-        var drugs = C.drugs || [];
-        var max = Math.min(drugs.length, 200);
-        for (var i = 0; i < max; i++) {
-            var drug = drugs[i];
-            var name = drug.nombre_comercial;
-            if (!name) continue;
-            var option = document.createElement('option');
-            option.value = name;
-            datalist.appendChild(option);
-        }
-    }
-
     function initSegDrugAutocomplete() {
         var input = document.getElementById('fhSegDrugSearch');
         if (!input) return;
@@ -960,8 +1055,6 @@
         if (catalog) {
             catalog.autoLoad();
         }
-        populateCimaDatalist();
-        document.addEventListener('farmacia:catalog-loaded', populateCimaDatalist);
     }
 
     function toggleField(fieldId, show) {
