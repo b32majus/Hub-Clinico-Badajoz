@@ -680,6 +680,50 @@
         renderComorbidities(patient);
     }
 
+    function renderPatientNotFound(ctx) {
+        F.setText('patientIdBadge', ctx.cip);
+        F.setText('patientName', 'Paciente no encontrado');
+        F.setText('patientDiagnosis', '\u2014');
+        F.setText('patientService', '\u2014');
+        F.setText('patientLastVisit', '\u2014');
+        F.setText('patientAge', '\u2014');
+        F.setText('patientGender', '\u2014');
+        var badge = document.getElementById('patientStatusBadge');
+        if (badge) {
+            badge.className = 'status-badge status-badge--pending';
+            badge.textContent = 'CIP no encontrado';
+        }
+        var summaryGrid = document.getElementById('dashboardSummaryGrid');
+        if (summaryGrid) {
+            F.clearChildren(summaryGrid);
+            var msg = document.createElement('div');
+            msg.className = 'empty-state';
+            var icon = document.createElement('i');
+            icon.className = 'fas fa-exclamation-triangle';
+            icon.setAttribute('aria-hidden', 'true');
+            msg.appendChild(icon);
+            msg.appendChild(document.createTextNode(' CIP ' + ctx.cip + ' no encontrado en el sistema'));
+            summaryGrid.appendChild(msg);
+        }
+        var containerIds = ['clinicalActivityContainer','promsDashboardContainer','biologicLinesContainer','timelineEpisodiosContainer','timelineTratamientoContainer','adverseEventsContainer','comorbiditiesContainer'];
+        containerIds.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                F.clearChildren(el);
+                var emptyEl = document.createElement('div');
+                emptyEl.className = 'empty-state';
+                var emptyIcon = document.createElement('i');
+                emptyIcon.className = 'fas fa-info-circle';
+                emptyIcon.setAttribute('aria-hidden', 'true');
+                emptyEl.appendChild(emptyIcon);
+                emptyEl.appendChild(document.createTextNode(' Paciente no encontrado'));
+                el.appendChild(emptyEl);
+            }
+        });
+        var longSection = document.getElementById('longitudinal-section');
+        if (longSection) longSection.classList.add('hidden');
+    }
+
     function renderDashboard(patient) {
         F.setText('patientIdBadge', patient.cip);
         F.setText('patientName', patient.nombre);
@@ -829,9 +873,11 @@
                 }
                 // Re-render secciones extendidas ahora que longDataset está disponible
                 var ctx = F.getQueryContext();
-                var patient = ctx.patient || F.patients[longCurrentCip || 'CIP-DEMO-FH-001'];
-                if (patient) {
-                    renderExtendedBlocks(patient);
+                if (!ctx.patientNotFound) {
+                    var patient = ctx.patient || F.patients[longCurrentCip || 'CIP-DEMO-FH-001'];
+                    if (patient) {
+                        renderExtendedBlocks(patient);
+                    }
                 }
             })
             .catch(function () {
@@ -1581,6 +1627,10 @@
         bindLongitudinalEvents();
         initLongitudinalSection();
         const ctx = F.getQueryContext();
+        if (ctx.patientNotFound) {
+            renderPatientNotFound(ctx);
+            return;
+        }
         const patient = ctx.patient || F.patients['CIP-DEMO-FH-001'];
         renderDashboard(patient);
     });

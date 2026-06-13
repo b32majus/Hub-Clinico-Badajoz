@@ -727,28 +727,32 @@
         };
     }
 
-    function getQueryContext() {
-        const params = new URLSearchParams(window.location.search);
-        const cip = (params.get('cip') || params.get('id') || '').trim();
-        let patient = null;
-        if (cip) {
-            const availablePatients = getAvailablePatients();
-            const target = String(cip).trim().toUpperCase();
-            for (let i = 0; i < availablePatients.length; i += 1) {
-                const candidate = availablePatients[i];
-                if (String((candidate && candidate.cip) || '').trim().toUpperCase() === target) {
-                    patient = candidate;
-                    break;
-                }
-            }
+    function findAvailablePatientByCip(cip) {
+        if (!cip) return null;
+        var available = getAvailablePatients();
+        var target = String(cip).trim().toUpperCase();
+        for (var i = 0; i < available.length; i++) {
+            if (String(available[i].cip || '').trim().toUpperCase() === target) return available[i];
         }
+        return null;
+    }
+
+    function getQueryContext() {
+        var params = new URLSearchParams(window.location.search);
+        var cip = (params.get('cip') || params.get('id') || '').trim();
+        var hasExplicitCip = !!cip;
+        var patient = cip ? findAvailablePatientByCip(cip) : null;
+        var patientFound = !!patient;
         return {
-            cip,
-            servicio: params.get('servicio') || patient?.servicio || '',
-            servicioSlug: params.get('servicio') || patient?.servicioSlug || '',
-            patologia: params.get('patologia') || patient?.patologia || '',
+            cip: cip,
+            servicio: params.get('servicio') || (patientFound ? patient.servicio : '') || '',
+            servicioSlug: params.get('servicio') || (patientFound ? patient.servicioSlug : '') || '',
+            patologia: params.get('patologia') || (patientFound ? patient.patologia : '') || '',
             entrada: params.get('entrada') || '',
-            patient
+            patient: patient,
+            hasExplicitCip: hasExplicitCip,
+            patientNotFound: hasExplicitCip && !patientFound,
+            status: patientFound ? 'loaded' : (hasExplicitCip ? 'not_found' : 'no_cip')
         };
     }
 
@@ -1357,12 +1361,7 @@
         getPendingValidationPatients,
         getPrebiologicoStatus,
         findPatientByCip: function (cip) {
-            var available = getAvailablePatients();
-            var target = String(cip || '').trim().toUpperCase();
-            for (var i = 0; i < available.length; i++) {
-                if (String(available[i].cip || '').trim().toUpperCase() === target) return available[i];
-            }
-            return null;
+            return findAvailablePatientByCip(cip);
         }
     };
 })();
