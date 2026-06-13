@@ -200,7 +200,17 @@
         dosis: ['dosis', 'dose'],
         via: ['via', 'vía', 'route'],
         pauta: ['pauta', 'intervalo', 'frecuencia', 'posologia', 'posología'],
-        fecha: ['fecha', 'fecha visita', 'fecha_visita', 'fecha solicitud', 'fecha_solicitud', 'fecha seguimiento', 'fecha_seguimiento']
+        fecha: ['fecha', 'fecha visita', 'fecha_visita', 'fecha solicitud', 'fecha_solicitud', 'fecha seguimiento', 'fecha_seguimiento'],
+        analiticaGlobal: ['analitica', 'analítica', 'analiticaGlobal', 'analitica_global', 'analiticaReciente', 'analitica_reciente', 'fechaAnalitica', 'fecha_analitica', 'analiticaFecha', 'analitica_fecha', 'observacionesAnalitica', 'observaciones_analitica'],
+        hemograma: ['hemograma', 'hemogramaSolicitado', 'hemograma_solicitado', 'hemogramaRecibido', 'hemograma_recibido', 'hemogramaCorrecto', 'hemograma_correcto', 'hemogramaOK', 'hemograma_ok', 'hemogramaFechaSolicitud', 'hemograma_fecha_solicitud', 'hemogramaFechaRecepcion', 'hemograma_fecha_recepcion', 'hemogramaObservaciones', 'hemograma_observaciones'],
+        bioquimica: ['bioquimica', 'bioquímica', 'bioquimicaSolicitada', 'bioquimica_solicitada', 'bioquimicaRecibida', 'bioquimica_recibida', 'bioquimicaCorrecta', 'bioquimica_correcta', 'bioquimicaOK', 'bioquimica_ok', 'bioquimicaFechaSolicitud', 'bioquimica_fecha_solicitud', 'bioquimicaFechaRecepcion', 'bioquimica_fecha_recepcion', 'bioquimicaObservaciones', 'bioquimica_observaciones'],
+        serologias: ['serologias', 'serologías', 'serologiasSolicitadas', 'serologias_solicitadas', 'serologiasRecibidas', 'serologias_recibidas', 'serologiasCorrectas', 'serologias_correctas', 'serologiasOK', 'serologias_ok', 'serologiasFechaSolicitud', 'serologias_fecha_solicitud', 'serologiasFechaRecepcion', 'serologias_fecha_recepcion', 'serologiasObservaciones', 'serologias_observaciones'],
+        serologiaVhb: ['serologiaVHB', 'serologia_vhb', 'serologiasVhb', 'vhb', 'hepatitisB', 'hepatitis_b'],
+        serologiaVhc: ['serologiaVHC', 'serologia_vhc', 'serologiasVhc', 'vhc', 'hepatitisC', 'hepatitis_c'],
+        serologiaVih: ['serologiaVIH', 'serologia_vih', 'serologiasVih', 'vih', 'hiv'],
+        mantoux: ['mantoux', 'mantouxSolicitado', 'mantoux_solicitado', 'mantouxRecibido', 'mantoux_recibido', 'mantouxResultado', 'mantoux_resultado', 'igra', 'IGRA', 'quantiferon', 'quantiFERON', 'quantiferonResultado', 'quantiferon_resultado', 'tuberculosis', 'cribadoTuberculosis', 'cribado_tuberculosis'],
+        vacunacion: ['vacunacion', 'vacunación', 'vacunacionRevisada', 'vacunacion_revisada', 'vacunacionOK', 'vacunacion_ok', 'vacunasPendientes', 'vacunas_pendientes', 'vacunacionObservaciones', 'vacunacion_observaciones', 'cartillaVacunal', 'cartilla_vacunal', 'estadoVacunal', 'estado_vacunal'],
+        medicinaPreventiva: ['medicinaPreventiva', 'medicina_preventiva', 'preventiva', 'medicinaPreventivaEstado', 'medicina_preventiva_estado', 'preventivaEstado', 'preventiva_estado', 'derivadoPreventiva', 'derivado_preventiva', 'interconsultaPreventiva', 'interconsulta_preventiva']
     };
 
     function safeGetLocalStorage(key) {
@@ -265,13 +275,110 @@
         };
     }
 
+    function getFirstValue(row, aliases) {
+        if (!row || !Array.isArray(aliases)) return undefined;
+        for (var i = 0; i < aliases.length; i++) {
+            var alias = aliases[i];
+            // Try exact key match first
+            if (row.hasOwnProperty(alias) && row[alias] !== undefined && row[alias] !== null && String(row[alias]).trim() !== "") {
+                return row[alias];
+            }
+        }
+        // Fallback: normalized match
+        var normalizedRow = {};
+        Object.keys(row).forEach(function(key) {
+            normalizedRow[normalizeHeaderToken(key)] = row[key];
+        });
+        for (var j = 0; j < aliases.length; j++) {
+            var normAlias = normalizeHeaderToken(aliases[j]);
+            if (normalizedRow.hasOwnProperty(normAlias) && normalizedRow[normAlias] !== undefined && normalizedRow[normAlias] !== null && String(normalizedRow[normAlias]).trim() !== "") {
+                return normalizedRow[normAlias];
+            }
+        }
+        return undefined;
+    }
+
+    function normalizeBooleanLike(value) {
+        if (value === true) return "ok";
+        if (value === false) return "pendiente";
+        if (value === undefined || value === null) return "no_informado";
+        var s = String(value).trim();
+        if (s === "" || s === "—") return "no_informado";
+        var n = s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+        if (/^(si|sí|ok|correcto|correcta|completo|completa|completado|completada|revisado|revisada|negativo|negativa|negativos|negativas)$/.test(n)) return "ok";
+        if (/^(pendiente|solicitado|solicitada|en curso|por revisar|falta)$/.test(n)) return "pendiente";
+        if (/^(positivo|positiva|alterado|alterada|reactivo|reactiva|contraindicado|contraindicada|alerta)$/.test(n)) return "alerta";
+        if (/^(no aplica|n\/a|na|no procede|no aplicable)$/.test(n)) return "no_aplica";
+        // Texto libre no claro: conservar como texto
+        return s;
+    }
+
+    function buildAnaliticaEstructFromImport(row, mapping) {
+        if (!row || !mapping) return null;
+        var hasAny = false;
+        var result = {};
+
+        // Fecha analítica global
+        var fechaAnalitica = getFirstValue(row, mapping.analiticaGlobal ? IMPORT_FIELD_ALIASES.analiticaGlobal : []);
+        if (fechaAnalitica !== undefined) { result.fecha = String(fechaAnalitica).trim(); hasAny = true; }
+
+        // Analítica reciente / observaciones globales
+        var obsAnalitica = getFirstValue(row, mapping.analiticaGlobal ? IMPORT_FIELD_ALIASES.analiticaGlobal : []);
+        // No duplicar fecha como observaciones
+
+        // Hemograma
+        var hemogramaVal = getFirstValue(row, mapping.hemograma ? IMPORT_FIELD_ALIASES.hemograma : []);
+        if (hemogramaVal !== undefined) { result.hemograma = normalizeBooleanLike(hemogramaVal); hasAny = true; }
+
+        // Bioquímica
+        var bioquimicaVal = getFirstValue(row, mapping.bioquimica ? IMPORT_FIELD_ALIASES.bioquimica : []);
+        if (bioquimicaVal !== undefined) { result.bioquimica = normalizeBooleanLike(bioquimicaVal); hasAny = true; }
+
+        // Serologías individuales
+        var vhbVal = getFirstValue(row, mapping.serologiaVhb ? IMPORT_FIELD_ALIASES.serologiaVhb : []);
+        if (vhbVal !== undefined) { result.serologiasVhb = normalizeBooleanLike(vhbVal); hasAny = true; }
+
+        var vhcVal = getFirstValue(row, mapping.serologiaVhc ? IMPORT_FIELD_ALIASES.serologiaVhc : []);
+        if (vhcVal !== undefined) { result.serologiasVhc = normalizeBooleanLike(vhcVal); hasAny = true; }
+
+        var vihVal = getFirstValue(row, mapping.serologiaVih ? IMPORT_FIELD_ALIASES.serologiaVih : []);
+        if (vihVal !== undefined) { result.serologiasVih = normalizeBooleanLike(vihVal); hasAny = true; }
+
+        // Serologías global (solo si no hay individuales)
+        if (vhbVal === undefined && vhcVal === undefined && vihVal === undefined) {
+            var seroGlobal = getFirstValue(row, mapping.serologias ? IMPORT_FIELD_ALIASES.serologias : []);
+            if (seroGlobal !== undefined) { result.serologias = normalizeBooleanLike(seroGlobal); hasAny = true; }
+        }
+
+        // Mantoux / IGRA
+        var mantouxVal = getFirstValue(row, mapping.mantoux ? IMPORT_FIELD_ALIASES.mantoux : []);
+        if (mantouxVal !== undefined) { result.mantoux = normalizeBooleanLike(mantouxVal); hasAny = true; }
+
+        // Vacunación
+        var vacunacionVal = getFirstValue(row, mapping.vacunacion ? IMPORT_FIELD_ALIASES.vacunacion : []);
+        if (vacunacionVal !== undefined) { result.vacunacion = normalizeBooleanLike(vacunacionVal); hasAny = true; }
+
+        // Observaciones analítica
+        var obsVal = getFirstValue(row, mapping.analiticaGlobal ? IMPORT_FIELD_ALIASES.analiticaGlobal : []);
+        if (obsVal !== undefined && typeof obsVal === "string" && obsVal.trim().length > 20) {
+            result.observaciones = obsVal.trim();
+        }
+
+        if (!hasAny) return null;
+
+        // reciente: solo si hay columna explícita (analiticaReciente, analitica_reciente, etc.)
+        // No inferir desde hemograma+bioquimica — recencia requiere fecha o campo explícito.
+
+        return result;
+    }
+
     function buildImportedPatientCandidate(row, mapping, sourceLabel, rowIndex) {
         if (!row || !mapping || !mapping.cip) return null;
         var cip = String(row[mapping.cip] || '').trim();
         if (!cip) return null;
         var servicioRaw = mapping.servicio ? String(row[mapping.servicio] || '').trim() : '';
         var servicioSlug = slugifyService(servicioRaw);
-        return {
+        var candidate = {
             nombre: mapping.nombre ? String(row[mapping.nombre] || '').trim() || ('Paciente importado ' + cip) : ('Paciente importado ' + cip),
             cip: cip,
             edad: '',
@@ -300,6 +407,40 @@
             importSource: sourceLabel === 'Enfermería' ? 'Excel Enfermería' : (sourceLabel === 'Farmacia' ? 'Excel Farmacia' : sourceLabel),
             importRowIndex: rowIndex
         };
+
+        // Enriquecer con datos prebiológicos estructurados
+        var analiticaEstruct = buildAnaliticaEstructFromImport(row, mapping);
+        if (analiticaEstruct) {
+            candidate.analiticaEstruct = analiticaEstruct;
+        }
+
+        // Vacunación estructurada (si hay datos específicos)
+        if (mapping.vacunacion) {
+            var vacRev = getFirstValue(row, ["vacunacionRevisada", "vacunacion_revisada"]);
+            var vacOK = getFirstValue(row, ["vacunacionOK", "vacunacion_ok"]);
+            var vacPend = getFirstValue(row, ["vacunasPendientes", "vacunas_pendientes"]);
+            var vacObs = getFirstValue(row, ["vacunacionObservaciones", "vacunacion_observaciones"]);
+            if (vacRev !== undefined || vacOK !== undefined || vacPend !== undefined || vacObs !== undefined) {
+                candidate.vacunacion = {};
+                if (vacRev !== undefined) candidate.vacunacion.revisada = normalizeBooleanLike(vacRev);
+                if (vacOK !== undefined) candidate.vacunacion.ok = normalizeBooleanLike(vacOK);
+                if (vacPend !== undefined) candidate.vacunacion.pendientes = String(vacPend).trim();
+                if (vacObs !== undefined) candidate.vacunacion.observaciones = String(vacObs).trim();
+            }
+        }
+
+        // Medicina preventiva
+        if (mapping.medicinaPreventiva) {
+            var medPrev = getFirstValue(row, IMPORT_FIELD_ALIASES.medicinaPreventiva);
+            if (medPrev !== undefined) {
+                candidate.medicinaPreventiva = normalizeBooleanLike(medPrev);
+            }
+        }
+
+        // Conservar rawImport
+        candidate.rawImport = Object.assign({}, row);
+
+        return candidate;
     }
 
     function readImportedDataset(kind) {
