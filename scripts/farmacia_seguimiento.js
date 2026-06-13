@@ -214,6 +214,9 @@
             var input = createElement('input', 'form-control');
             input.type = field.type;
             input.value = drug[field.key] || '';
+            if (field.key === 'farmaco') {
+                input.setAttribute('list', 'datalist-cima-farmacos');
+            }
             input.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, field.key, this.value); });
             grid.appendChild(buildFollowupField(field.label, input));
         });
@@ -425,7 +428,7 @@
     function toggleFollowupEaFlow() {
         var value = byId('fhSeguimientoEaPresente').value;
         var active = value === 'si';
-        ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
+        ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
             var row = byId(id);
             if (row) row.classList.toggle('hidden', !active);
         });
@@ -886,6 +889,29 @@
         renderSegDrugAutocompleteDropdown(results);
     }
 
+    function populateCimaDatalist() {
+        var datalistId = 'datalist-cima-farmacos';
+        var datalist = document.getElementById(datalistId);
+        if (!datalist) {
+            datalist = document.createElement('datalist');
+            datalist.id = datalistId;
+            document.body.appendChild(datalist);
+        }
+        var C = getCatalog();
+        if (!C || !C.loaded) return;
+        datalist.innerHTML = '';
+        var drugs = C.drugs || [];
+        var max = Math.min(drugs.length, 200);
+        for (var i = 0; i < max; i++) {
+            var drug = drugs[i];
+            var name = drug.nombre_comercial;
+            if (!name) continue;
+            var option = document.createElement('option');
+            option.value = name;
+            datalist.appendChild(option);
+        }
+    }
+
     function initSegDrugAutocomplete() {
         var input = document.getElementById('fhSegDrugSearch');
         if (!input) return;
@@ -931,6 +957,8 @@
         if (catalog) {
             catalog.autoLoad();
         }
+        populateCimaDatalist();
+        document.addEventListener('farmacia:catalog-loaded', populateCimaDatalist);
     }
 
     function toggleField(fieldId, show) {
@@ -1382,6 +1410,8 @@
             var navDash = document.getElementById("navToDashboardPaciente");
             if (navDash) navDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip) + "&entrada=dashboard";
 
+            var sidebarDash = document.querySelector('.sidebar-nav-area .nav-link[href*="farmacia_dashboard_paciente.html"]');
+            if (sidebarDash) sidebarDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip);
         }
 
         if (!F.getQueryContext().patient) {
