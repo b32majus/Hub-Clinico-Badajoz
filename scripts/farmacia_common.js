@@ -201,7 +201,10 @@
         via: ['via', 'vía', 'route'],
         pauta: ['pauta', 'intervalo', 'frecuencia', 'posologia', 'posología'],
         fecha: ['fecha', 'fecha visita', 'fecha_visita', 'fecha solicitud', 'fecha_solicitud', 'fecha seguimiento', 'fecha_seguimiento'],
-        analiticaGlobal: ['analitica', 'analítica', 'analiticaGlobal', 'analitica_global', 'analiticaReciente', 'analitica_reciente', 'fechaAnalitica', 'fecha_analitica', 'analiticaFecha', 'analitica_fecha', 'observacionesAnalitica', 'observaciones_analitica'],
+        analiticaTexto: ['analitica', 'analítica', 'analiticaGlobal', 'analitica_global'],
+        analiticaReciente: ['analiticaReciente', 'analitica_reciente', 'analítica reciente', 'analitica reciente'],
+        fechaAnalitica: ['fechaAnalitica', 'fecha_analitica', 'analiticaFecha', 'analitica_fecha'],
+        observacionesAnalitica: ['observacionesAnalitica', 'observaciones_analitica', 'observaciones analitica', 'observaciones analítica'],
         hemograma: ['hemograma', 'hemogramaSolicitado', 'hemograma_solicitado', 'hemogramaRecibido', 'hemograma_recibido', 'hemogramaCorrecto', 'hemograma_correcto', 'hemogramaOK', 'hemograma_ok', 'hemogramaFechaSolicitud', 'hemograma_fecha_solicitud', 'hemogramaFechaRecepcion', 'hemograma_fecha_recepcion', 'hemogramaObservaciones', 'hemograma_observaciones'],
         bioquimica: ['bioquimica', 'bioquímica', 'bioquimicaSolicitada', 'bioquimica_solicitada', 'bioquimicaRecibida', 'bioquimica_recibida', 'bioquimicaCorrecta', 'bioquimica_correcta', 'bioquimicaOK', 'bioquimica_ok', 'bioquimicaFechaSolicitud', 'bioquimica_fecha_solicitud', 'bioquimicaFechaRecepcion', 'bioquimica_fecha_recepcion', 'bioquimicaObservaciones', 'bioquimica_observaciones'],
         serologias: ['serologias', 'serologías', 'serologiasSolicitadas', 'serologias_solicitadas', 'serologiasRecibidas', 'serologias_recibidas', 'serologiasCorrectas', 'serologias_correctas', 'serologiasOK', 'serologias_ok', 'serologiasFechaSolicitud', 'serologias_fecha_solicitud', 'serologiasFechaRecepcion', 'serologias_fecha_recepcion', 'serologiasObservaciones', 'serologias_observaciones'],
@@ -318,13 +321,23 @@
         var hasAny = false;
         var result = {};
 
-        // Fecha analítica global
-        var fechaAnalitica = getFirstValue(row, mapping.analiticaGlobal ? IMPORT_FIELD_ALIASES.analiticaGlobal : []);
-        if (fechaAnalitica !== undefined) { result.fecha = String(fechaAnalitica).trim(); hasAny = true; }
+        // Fecha analítica — solo de grupo fechaAnalitica
+        var fechaVal = getFirstValue(row, mapping.fechaAnalitica ? IMPORT_FIELD_ALIASES.fechaAnalitica : []);
+        if (fechaVal !== undefined) { result.fecha = String(fechaVal).trim(); hasAny = true; }
 
-        // Analítica reciente / observaciones globales
-        var obsAnalitica = getFirstValue(row, mapping.analiticaGlobal ? IMPORT_FIELD_ALIASES.analiticaGlobal : []);
-        // No duplicar fecha como observaciones
+        // Reciente — solo de grupo analiticaReciente
+        var recienteVal = getFirstValue(row, mapping.analiticaReciente ? IMPORT_FIELD_ALIASES.analiticaReciente : []);
+        if (recienteVal !== undefined) { result.reciente = normalizeBooleanLike(recienteVal); hasAny = true; }
+
+        // Observaciones — solo de grupo observacionesAnalitica
+        var obsVal = getFirstValue(row, mapping.observacionesAnalitica ? IMPORT_FIELD_ALIASES.observacionesAnalitica : []);
+        if (obsVal !== undefined && typeof obsVal === "string" && obsVal.trim().length > 0) {
+            var trimmed = obsVal.trim();
+            if (trimmed.length > 5) {
+                result.observaciones = trimmed;
+                hasAny = true;
+            }
+        }
 
         // Hemograma
         var hemogramaVal = getFirstValue(row, mapping.hemograma ? IMPORT_FIELD_ALIASES.hemograma : []);
@@ -357,12 +370,6 @@
         // Vacunación
         var vacunacionVal = getFirstValue(row, mapping.vacunacion ? IMPORT_FIELD_ALIASES.vacunacion : []);
         if (vacunacionVal !== undefined) { result.vacunacion = normalizeBooleanLike(vacunacionVal); hasAny = true; }
-
-        // Observaciones analítica
-        var obsVal = getFirstValue(row, mapping.analiticaGlobal ? IMPORT_FIELD_ALIASES.analiticaGlobal : []);
-        if (obsVal !== undefined && typeof obsVal === "string" && obsVal.trim().length > 20) {
-            result.observaciones = obsVal.trim();
-        }
 
         if (!hasAny) return null;
 
