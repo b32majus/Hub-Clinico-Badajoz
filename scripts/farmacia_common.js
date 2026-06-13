@@ -916,6 +916,10 @@
                     node.classList.add('catalog-status--error');
                 }
             });
+            var noteEl = document.getElementById('catalogSidebarNote');
+            if (noteEl && typeof cimaCount !== 'undefined' && typeof localCount !== 'undefined') {
+                noteEl.textContent = 'CIMA ' + cimaCount + ' + locales ' + localCount;
+            }
         }
 
         function setCatalogStatus(state, message) {
@@ -1097,7 +1101,7 @@
         function autoLoad() {
             if (loaded || loading) return;
             loading = true;
-            setCatalogStatus('loading', 'Catálogo farmacológico: cargando automáticamente...');
+            setCatalogStatus('loading', 'Catálogo farmacológico: cargando automáticamente…');
             ensureXLSX(function () {
                 fetch(CATALOG_XLSX_PATH)
                     .then(function (response) {
@@ -1106,7 +1110,7 @@
                     })
                     .then(function (arrayBuffer) {
                         var result = loadFromExcel(arrayBuffer);
-                        setCatalogStatus('loaded', 'Catálogo CIMA cargado: ' + getStatusText());
+                        setCatalogStatus('loaded', 'Catálogo CIMA cargado · ' + totalCount + ' Fx');
                         loading = false;
                         document.dispatchEvent(new CustomEvent('farmacia:catalog-loaded', { detail: result }));
                     })
