@@ -5332,3 +5332,55 @@
         text-align: left;
     }
 }
+
+/* ============================================================
+   WO5B.3 T5+T6 — Tarjetas compactadas
+   ============================================================ */
+
+.catalog-sidebar-block--compact {
+    margin-top: 10px;
+    padding: 10px 12px;
+}
+
+.catalog-sidebar-block--compact .catalog-sidebar-header {
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+}
+
+.catalog-sidebar-block--compact .catalog-sidebar-status {
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.catalog-sidebar-info {
+    margin-left: auto;
+    color: #94A3B8;
+    font-size: 0.85rem;
+    cursor: help;
+}
+
+.catalog-sidebar-block--compact .catalog-sidebar-note {
+    margin: 4px 0 0;
+    font-size: 0.72rem;
+    color: #94A3B8;
+}
+
+.validation-modules-nav-card--compact {
+    padding: 14px 16px;
+}
+
+.validation-modules-nav--compact {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+.validation-modules-nav--compact .section-title--compact {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.validation-modules-nav__links--compact {
+    gap: 8px;
+}

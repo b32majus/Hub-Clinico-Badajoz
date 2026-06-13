@@ -66,10 +66,13 @@
             <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
         </div>
     </div>
-    <div class="catalog-sidebar-block">
-        <div class="catalog-sidebar-header"><i class="fas fa-pills"></i> Catálogo farmacológico</div>
-        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</div>
-        <p class="catalog-sidebar-note">CIMA se carga automáticamente al abrir la demo.</p>
+    <div class="catalog-sidebar-block catalog-sidebar-block--compact">
+        <div class="catalog-sidebar-header">
+            <i class="fas fa-pills"></i> Catálogo farmacológico
+            <i class="fas fa-info-circle catalog-sidebar-info" title="CIMA se carga automáticamente al abrir la demo." aria-label="CIMA se carga automáticamente al abrir la demo."></i>
+        </div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: cargando automáticamente…</div>
+        <p class="catalog-sidebar-note" id="catalogSidebarNote">Esperando detalles…</p>
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
     </div>
@@ -86,13 +89,12 @@
             <p class="hero-description">Registre optimización, suspensión, adherencia Morisky-Green, PROMs y efectos adversos.</p>
         </div>
     </div>
-</section><section class="dashboard-card validation-modules-nav-card">
-    <div class="validation-modules-nav" aria-labelledby="seguimientoModulesTitle">
+</section><section class="dashboard-card validation-modules-nav-card validation-modules-nav-card--compact">
+    <div class="validation-modules-nav validation-modules-nav--compact" aria-labelledby="seguimientoModulesTitle">
         <div class="validation-modules-nav__header">
-            <h2 class="section-title" id="seguimientoModulesTitle"><i class="fas fa-th-large"></i> Módulos disponibles</h2>
-            <p class="validation-modules-nav__text">Navegación rápida del flujo de seguimiento, efectos adversos y causalidad.</p>
+            <h2 class="section-title section-title--compact" id="seguimientoModulesTitle"><i class="fas fa-th-large"></i> Módulos disponibles</h2>
         </div>
-        <div class="validation-modules-nav__links">
+        <div class="validation-modules-nav__links validation-modules-nav__links--compact">
             <a class="btn btn-outline validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
             <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
             <a class="btn btn-outline validation-module-link" href="#modPrebiologico">Estudio prebiológico</a>
