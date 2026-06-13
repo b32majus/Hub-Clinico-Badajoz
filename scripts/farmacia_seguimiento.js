@@ -213,6 +213,7 @@
             input.type = field.type;
             input.value = drug[field.key] || '';
             input.setAttribute('data-field', field.key);
+            input.setAttribute('data-uid', drug.uid);
 
             if (field.key === 'farmaco') {
                 input.classList.add('js-cima-autocomplete');
