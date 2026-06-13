@@ -5162,3 +5162,173 @@
 .stats-note--source {
     margin-top: 10px;
 }
+
+/* ============================================================
+   WO5B.3 T4 — Mejora estética/usabilidad Naranjo y Karch-Lasagna
+   ============================================================ */
+
+/* Cabecera con título + subtítulo */
+.section-title--with-subtitle {
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.section-title__text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.section-title__subtitle {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #64748B;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.35;
+}
+
+/* Ayuda y referencia */
+.causality-help-text {
+    margin: 0 0 12px;
+    color: #475569;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.causality-footer-ref {
+    margin: 14px 0 0;
+    color: #94A3B8;
+    font-size: 0.78rem;
+    font-style: italic;
+    text-align: right;
+}
+
+/* Resultado destacado arriba */
+.causality-result-grid--top {
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #F0FDFA;
+    border: 1px solid #99F6E4;
+}
+
+.causality-result-grid--top .info-field {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.causality-result-grid--top .info-field__value {
+    color: var(--ses-green-dark);
+}
+
+/* Colapsable de criterios */
+.causality-details {
+    margin: 0;
+}
+
+.causality-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    color: #1E293B;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    margin-bottom: 10px;
+}
+
+.causality-summary::-webkit-details-marker {
+    display: none;
+}
+
+.causality-summary:hover {
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+}
+
+.causality-summary__icon {
+    font-size: 0.8rem;
+    color: #64748B;
+    transition: transform 0.15s ease;
+}
+
+.causality-details[open] > .causality-summary {
+    margin-bottom: 10px;
+}
+
+.causality-details[open] > .causality-summary .causality-summary__icon {
+    transform: rotate(90deg);
+}
+
+/* Preguntas compactas en fila */
+.causality-question-list {
+    gap: 8px;
+}
+
+.causality-question {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+    flex-wrap: wrap;
+}
+
+.causality-question:nth-child(even) {
+    background: #F1F5F9;
+}
+
+.causality-question:hover {
+    border-color: #CBD5E1;
+}
+
+.causality-question label {
+    flex: 1 1 auto;
+    min-width: 180px;
+    margin-bottom: 0;
+    line-height: 1.35;
+}
+
+.causality-question .form-select {
+    flex: 0 0 180px;
+    max-width: 220px;
+    padding: 8px 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .causality-question {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .causality-question label {
+        min-width: auto;
+    }
+
+    .causality-question .form-select {
+        flex: 1 1 auto;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .causality-result-grid--top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .causality-footer-ref {
+        text-align: left;
+    }
+}

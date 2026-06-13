@@ -222,39 +222,69 @@
     </div>
 </div>
 </section>
-<section class="dashboard-card hidden" id="modNaranjo" title="Algoritmo de Naranjo">
-    <h2 class="section-title"><i class="fas fa-calculator"></i> Algoritmo de Naranjo</h2>
-    <div class="validation-note-block"><span class="validation-note-block__label">Fármaco sospechoso evaluado</span><p class="validation-note-block__value" id="fhSeguimientoEaContextoNaranjo">—</p></div>
-    <div class="causality-question-list">
-        <div class="causality-question"><label for="naranjoQ1">1. Reacción previamente descrita <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ1"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ2">2. Evento aparece después de administrar el fármaco <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ2"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ3">3. Mejora tras retirar fármaco o administrar antagonista <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ3"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ4">4. Reaparición tras readministración <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ4"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ5">5. Existen causas alternativas <span class="causality-score-hint">Sí -1 · No +2 · Desconocido 0</span></label><select class="form-select" id="naranjoQ5"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ6">6. Reaparición con placebo <span class="causality-score-hint">Sí -1 · No +1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ6"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ7">7. Concentraciones tóxicas detectadas <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ7"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ8">8. Relación dosis-respuesta <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ8"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ9">9. Reacción similar previa <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ9"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
-        <div class="causality-question"><label for="naranjoQ10">10. Evidencia objetiva <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ10"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+<section class="dashboard-card hidden causality-section" id="modNaranjo" title="Algoritmo de Naranjo">
+    <h2 class="section-title section-title--with-subtitle">
+        <i class="fas fa-calculator"></i>
+        <span class="section-title__text-group">
+            <span class="section-title__main">Algoritmo de Naranjo</span>
+            <span class="section-title__subtitle">Estimación de causalidad del evento adverso</span>
+        </span>
+    </h2>
+    <div class="validation-note-block">
+        <span class="validation-note-block__label">Fármaco sospechoso evaluado</span>
+        <p class="validation-note-block__value" id="fhSeguimientoEaContextoNaranjo">—</p>
     </div>
-    <div class="causality-result-grid">
+    <div class="causality-result-grid causality-result-grid--top">
         <div class="info-field"><span class="info-field__label">Puntuación total</span><span class="info-field__value" id="naranjoScore">0</span></div>
         <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="naranjoCategoria">Dudosa</span></div>
     </div>
+    <p class="causality-help-text">Seleccione la opción más adecuada para cada criterio.</p>
+    <details class="causality-details" open>
+        <summary class="causality-summary"><i class="fas fa-chevron-right causality-summary__icon" aria-hidden="true"></i> Criterios de evaluación</summary>
+        <div class="causality-question-list">
+            <div class="causality-question"><label for="naranjoQ1">1. Reacción previamente descrita <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ1"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ2">2. Evento aparece después de administrar el fármaco <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ2"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ3">3. Mejora tras retirar fármaco o administrar antagonista <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ3"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ4">4. Reaparición tras readministración <span class="causality-score-hint">Sí +2 · No -1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ4"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ5">5. Existen causas alternativas <span class="causality-score-hint">Sí -1 · No +2 · Desconocido 0</span></label><select class="form-select" id="naranjoQ5"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ6">6. Reaparición con placebo <span class="causality-score-hint">Sí -1 · No +1 · Desconocido 0</span></label><select class="form-select" id="naranjoQ6"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ7">7. Concentraciones tóxicas detectadas <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ7"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ8">8. Relación dosis-respuesta <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ8"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ9">9. Reacción similar previa <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ9"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+            <div class="causality-question"><label for="naranjoQ10">10. Evidencia objetiva <span class="causality-score-hint">Sí +1 · No 0 · Desconocido 0</span></label><select class="form-select" id="naranjoQ10"><option value="desconocido">Desconocido / No aplica</option><option value="si">Sí</option><option value="no">No</option></select></div>
+        </div>
+    </details>
+    <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
 </section>
-<section class="dashboard-card hidden" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
-    <h2 class="section-title"><i class="fas fa-project-diagram"></i> Algoritmo de Karch-Lasagna</h2>
-    <div class="validation-note-block"><span class="validation-note-block__label">Fármaco sospechoso evaluado</span><p class="validation-note-block__value" id="fhSeguimientoEaContextoKl">—</p></div>
-    <div class="causality-question-list">
-        <div class="causality-question"><label for="klTemporal">1. Intervalo temporal compatible</label><select class="form-select" id="klTemporal"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
-        <div class="causality-question"><label for="klConocido">2. Evento conocido para medicamento/clase</label><select class="form-select" id="klConocido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
-        <div class="causality-question"><label for="klAlternativa">3. Existe explicación alternativa</label><select class="form-select" id="klAlternativa"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
-        <div class="causality-question"><label for="klSuspendido">4. Se suspendió el medicamento</label><select class="form-select" id="klSuspendido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
-        <div class="causality-question"><label for="klMejoraRetirada">5. Mejoró tras suspensión</label><select class="form-select" id="klMejoraRetirada"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
-        <div class="causality-question"><label for="klReadministracion">6. Hubo readministración</label><select class="form-select" id="klReadministracion"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
-        <div class="causality-question"><label for="klReaparece">7. Reapareció tras readministración</label><select class="form-select" id="klReaparece"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+<section class="dashboard-card hidden causality-section" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
+    <h2 class="section-title section-title--with-subtitle">
+        <i class="fas fa-project-diagram"></i>
+        <span class="section-title__text-group">
+            <span class="section-title__main">Algoritmo de Karch-Lasagna</span>
+            <span class="section-title__subtitle">Estimación de causalidad del evento adverso</span>
+        </span>
+    </h2>
+    <div class="validation-note-block">
+        <span class="validation-note-block__label">Fármaco sospechoso evaluado</span>
+        <p class="validation-note-block__value" id="fhSeguimientoEaContextoKl">—</p>
     </div>
-    <div class="causality-result-grid"><div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No clasificable</span></div></div>
+    <div class="causality-result-grid causality-result-grid--top">
+        <div class="info-field"><span class="info-field__label">Categoría</span><span class="info-field__value" id="klCategoria">No clasificable</span></div>
+    </div>
+    <p class="causality-help-text">Seleccione la opción más adecuada para cada criterio.</p>
+    <details class="causality-details" open>
+        <summary class="causality-summary"><i class="fas fa-chevron-right causality-summary__icon" aria-hidden="true"></i> Criterios de evaluación</summary>
+        <div class="causality-question-list">
+            <div class="causality-question"><label for="klTemporal">1. Intervalo temporal compatible</label><select class="form-select" id="klTemporal"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klConocido">2. Evento conocido para medicamento/clase</label><select class="form-select" id="klConocido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klAlternativa">3. Existe explicación alternativa</label><select class="form-select" id="klAlternativa"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klSuspendido">4. Se suspendió el medicamento</label><select class="form-select" id="klSuspendido"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klMejoraRetirada">5. Mejoró tras suspensión</label><select class="form-select" id="klMejoraRetirada"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klReadministracion">6. Hubo readministración</label><select class="form-select" id="klReadministracion"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+            <div class="causality-question"><label for="klReaparece">7. Reapareció tras readministración</label><select class="form-select" id="klReaparece"><option value="no_se_sabe">No se sabe</option><option value="si">Sí</option><option value="no">No</option><option value="no_aplica">No aplica</option></select></div>
+        </div>
+    </details>
+    <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
 </section>
 <section class="dashboard-card hidden" id="modResumenCausalidad" title="Resumen de causalidad">
     <h2 class="section-title"><i class="fas fa-notes-medical"></i> Resumen de causalidad</h2>
