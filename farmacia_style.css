@@ -4968,13 +4968,7 @@
 }
 
 .causality-score-hint {
-    display: block;
-    margin-top: 4px;
-    color: #64748B;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0;
-    text-transform: none;
+    display: none;
 }
 
 .causality-result-grid {
