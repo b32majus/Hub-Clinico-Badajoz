@@ -478,6 +478,78 @@
         toggleFollowupEaFlow();
     }
 
+    function syncBiologicControls(patient) {
+        var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
+        var estadoLinea = document.getElementById('fhSegEstadoLinea');
+
+        if (!patient) {
+            currentBiologicLines = [];
+            if (lineaPrincipal) lineaPrincipal.value = '';
+            if (estadoLinea) estadoLinea.value = '';
+            return;
+        }
+
+        currentBiologicLines = getPatientBiologicLines(patient);
+
+        if (!lineaPrincipal) return;
+
+        while (lineaPrincipal.options.length > 0) lineaPrincipal.remove(0);
+        var placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = 'Seleccionar línea...';
+        lineaPrincipal.appendChild(placeholderOption);
+
+        var selectedLine = null;
+        for (var i = 0; i < currentBiologicLines.length; i++) {
+            var line = currentBiologicLines[i];
+            var opt = document.createElement('option');
+            opt.value = line.linea_id;
+            opt.textContent = line.nombre_linea;
+            if (line.es_principal) {
+                opt.selected = true;
+                selectedLine = line;
+            }
+            lineaPrincipal.appendChild(opt);
+        }
+
+        if (!selectedLine && currentBiologicLines.length) {
+            selectedLine = currentBiologicLines[0];
+            for (var j = 0; j < lineaPrincipal.options.length; j++) {
+                if (lineaPrincipal.options[j].value === selectedLine.linea_id) {
+                    lineaPrincipal.options[j].selected = true;
+                    break;
+                }
+            }
+        }
+
+        if (estadoLinea && selectedLine) {
+            estadoLinea.value = biologicStateLabel(selectedLine.estado_linea);
+        }
+    }
+
+    function applySelectedBiologicLine() {
+        var line = getCurrentSelectedLine();
+        if (line) {
+            setSegValue('fhSegFarmaco', line.nombre_comercial);
+            setSegValue('fhSegPrincipioActivo', line.principio_activo);
+            setSegValue('fhSegPresentacion', line.presentacion);
+            setSegValue('fhSegDosisActual', line.dosis);
+            setSegValue('fhSegVia', line.via);
+            setSegValue('fhSegPautaActual', line.pauta);
+            setSegValue('fhSegEstadoLinea', biologicStateLabel(line.estado_linea));
+        } else {
+            setSegValue('fhSegFarmaco', '');
+            setSegValue('fhSegPrincipioActivo', '');
+            setSegValue('fhSegPresentacion', '');
+            setSegValue('fhSegDosisActual', '');
+            setSegValue('fhSegVia', '');
+            setSegValue('fhSegPautaActual', '');
+            setSegValue('fhSegEstadoLinea', '');
+        }
+        updateSuspectDrugSelector();
+        updatePrebiologicoSummary();
+    }
+
     function applyContext() {
         const ctx = F.getQueryContext();
 
@@ -1309,8 +1381,7 @@
         if (ctxNav.cip) {
             var navDash = document.getElementById("navToDashboardPaciente");
             if (navDash) navDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip) + "&entrada=dashboard";
-            var navLong = document.getElementById("navToLongitudinal");
-            if (navLong) navLong.href = "farmacia_dashboard_longitudinal.html?cip=" + encodeURIComponent(ctxNav.cip);
+
         }
 
         if (!F.getQueryContext().patient) {
