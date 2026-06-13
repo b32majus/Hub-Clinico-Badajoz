@@ -140,13 +140,13 @@
         if (est && typeof est === "object" && hasMeaningfulValue(est.vacunacion)) {
             var vacEstruct = est.vacunacion;
             if (typeof vacEstruct === "object") {
-                if (vacEstruct.ok || vacEstruct.si) return "ok";
-                if (Array.isArray(vacEstruct.pendientes) && vacEstruct.pendientes.length > 0) return "pendiente";
-                if (hasMeaningfulValue(vacEstruct.pendientes)) return "pendiente";
                 if (hasMeaningfulValue(vacEstruct.observaciones)) {
                     var obs = normalizeCheckString(vacEstruct.observaciones);
                     if (/(alerta|revisar|contraindic)/.test(obs)) return "alerta";
                 }
+                if (Array.isArray(vacEstruct.pendientes) && vacEstruct.pendientes.length > 0) return "pendiente";
+                if (hasMeaningfulValue(vacEstruct.pendientes)) return "pendiente";
+                if (vacEstruct.ok || vacEstruct.si || vacEstruct.revisada) return "ok";
                 return "no_informado";
             }
             return evaluateBooleanLikeCheck(est.vacunacion);
@@ -154,13 +154,13 @@
         if (hasMeaningfulValue(patient && patient.vacunacion)) {
             var vac = patient.vacunacion;
             if (typeof vac === "object") {
-                if (vac.ok || vac.si) return "ok";
-                if (Array.isArray(vac.pendientes) && vac.pendientes.length > 0) return "pendiente";
-                if (hasMeaningfulValue(vac.pendientes)) return "pendiente";
                 if (hasMeaningfulValue(vac.observaciones)) {
                     var obsVac = normalizeCheckString(vac.observaciones);
                     if (/(alerta|revisar|contraindic)/.test(obsVac)) return "alerta";
                 }
+                if (Array.isArray(vac.pendientes) && vac.pendientes.length > 0) return "pendiente";
+                if (hasMeaningfulValue(vac.pendientes)) return "pendiente";
+                if (vac.ok || vac.si || vac.revisada) return "ok";
                 return "no_informado";
             }
             return evaluateBooleanLikeCheck(patient.vacunacion);
