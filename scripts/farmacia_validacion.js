@@ -11,12 +11,10 @@
     var otherDrugRowSeq = 0;
 
     var RELATION_OPTIONS = [
-        "Biológico actual adicional",
-        "Biológico previo",
-        "Tratamiento concomitante",
-        "Corticoide puente",
-        "Inmunosupresor",
-        "Otro"
+        'Biológico activo adicional',
+        'Biológico previo/histórico',
+        'Concomitante',
+        'Exposición'
     ];
     var EA_SUSPECT_OPTIONS = ["No consta", "No", "Sí"];
     var VIA_OPTIONS = ["", "SC", "IV", "Oral", "IM", "Otra"];

@@ -245,14 +245,14 @@
         if (state === 'activo') return 'Activo';
         if (state === 'anadido' || state === 'añadido') return 'Añadido';
         if (state === 'suspendido') return 'Suspendido';
-        if (state === 'historico') return 'Historico';
+        if (state === 'historico') return 'Histórico';
         return 'Sin clasificar';
     }
 
     function biologicRelationLabel(type) {
-        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Cambio terapeutico';
-        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Tratamiento anadido';
-        if (type === 'base') return 'Linea base';
+        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
+        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
+        if (type === 'base') return 'Línea terapéutica base';
         return 'Seguimiento';
     }
 

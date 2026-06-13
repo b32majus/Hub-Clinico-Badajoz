@@ -20,12 +20,10 @@
     var followupOtherDrugSeq = 0;
 
     var FOLLOWUP_RELATION_OPTIONS = [
-        'Biológico actual adicional',
-        'Biológico previo',
-        'Tratamiento concomitante',
-        'Corticoide puente',
-        'Inmunosupresor',
-        'Otro'
+        'Biológico activo adicional',
+        'Biológico previo/histórico',
+        'Concomitante',
+        'Exposición'
     ];
 
     function byId(id) {
@@ -70,15 +68,15 @@
         if (state === 'activo') return 'Activo';
         if (state === 'anadido' || state === 'añadido') return 'Añadido';
         if (state === 'suspendido') return 'Suspendido';
-        if (state === 'historico') return 'Historico';
+        if (state === 'historico') return 'Histórico';
         return 'Sin clasificar';
     }
 
     function biologicRelationLabel(type) {
-        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Cambio terapeutico';
-        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Tratamiento anadido';
-        if (type === 'revision_linea') return 'Revision de linea';
-        if (type === 'base') return 'Linea base';
+        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
+        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
+        if (type === 'revision_linea') return 'Revisión de línea';
+        if (type === 'base') return 'Línea terapéutica base';
         return 'Sin cambios';
     }
 
@@ -379,7 +377,8 @@
             if (line.estado_linea !== 'historico' || line.es_principal) {
                 candidates.push({
                     id: 'line:' + line.linea_id,
-                    label: line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Tratamiento principal',
+                    category: 'Biológico activo',
+                    label: '[Biológico activo] ' + (line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Tratamiento principal'),
                     source: 'principal'
                 });
             }
@@ -389,7 +388,8 @@
             if (selectedLine) {
                 candidates.push({
                     id: 'line:' + selectedLine.linea_id,
-                    label: selectedLine.nombre_linea || selectedLine.nombre_comercial || 'Tratamiento principal',
+                    category: 'Biológico activo',
+                    label: '[Biológico activo] ' + (selectedLine.nombre_linea || selectedLine.nombre_comercial || 'Tratamiento principal'),
                     source: 'principal'
                 });
             }
@@ -397,9 +397,11 @@
         followupOtherDrugs.forEach(function (drug) {
             var name = drug.farmaco || drug.principioActivo;
             if (!name) return;
+            var category = drug.relationType === 'Exposición' ? 'Exposición' : 'Concomitante';
             candidates.push({
                 id: 'other:' + drug.uid,
-                label: name,
+                category: category,
+                label: '[' + category + '] ' + name,
                 source: 'other'
             });
         });
