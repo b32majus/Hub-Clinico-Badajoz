@@ -5464,3 +5464,78 @@
 .validation-modules-nav__links--compact {
     gap: 8px;
 }
+
+/* ============================================================
+   WO5C.2 T2 — Tarjeta de contexto CIMA: principio activo
+   ============================================================ */
+
+.cima-context-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-left: 5px solid var(--ses-green);
+    box-shadow: 0 2px 8px rgba(0, 135, 119, 0.06);
+}
+
+.cima-context-card__icon {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--ses-green-light);
+    color: var(--ses-green);
+    font-size: 1rem;
+}
+
+.cima-context-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.cima-context-card__label {
+    display: block;
+    color: #64748B;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.cima-context-card__value {
+    display: block;
+    color: #1E293B;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.cima-context-card__hint {
+    display: block;
+    color: #94A3B8;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+    .cima-context-card {
+        flex-direction: column;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .cima-context-card__value {
+        font-size: 1.05rem;
+    }
+}

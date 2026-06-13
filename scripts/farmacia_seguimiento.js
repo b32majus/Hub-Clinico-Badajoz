@@ -696,6 +696,7 @@
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
 
             F.setValue('fhSegPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '');
+            F.setText('fhSegCimaContextPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '\u2014');
             F.setValue('fhSegPresentacion', snap?.presentacion_snapshot || '');
         }
         syncBiologicControls(ctx.patient || null);
@@ -811,7 +812,9 @@
         syncBiologicControls(patient);
 
         var snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
-        F.setValue('fhSegPrincipioActivo', snap ? snap.principio_activo_snapshot || patient.principioActivo || '' : patient.principioActivo || '');
+        var segPrincipioActivoValue = snap ? snap.principio_activo_snapshot || patient.principioActivo || '' : patient.principioActivo || '';
+        F.setValue('fhSegPrincipioActivo', segPrincipioActivoValue);
+        F.setText('fhSegCimaContextPrincipioActivo', segPrincipioActivoValue || '\u2014');
         F.setValue('fhSegPresentacion', snap ? snap.presentacion_snapshot || '' : '');
 
         if (snap) {
@@ -964,6 +967,7 @@
 
         F.setValue('fhSegFarmaco', drug.display_name || drug.nombre_comercial || '');
         F.setValue('fhSegPrincipioActivo', drug.principio_activo || '');
+        F.setText('fhSegCimaContextPrincipioActivo', drug.principio_activo || '\u2014');
         F.setValue('fhSegPresentacion', drug.nombre_presentacion || '');
         F.setValue('fhSegDosisActual', drug.dosis || '');
         F.setValue('fhSegVia', drug.via || '');
