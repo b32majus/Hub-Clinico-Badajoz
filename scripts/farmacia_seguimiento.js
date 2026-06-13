@@ -186,7 +186,7 @@
     function renderFollowupOtherDrugRow(drug) {
         var card = createElement('section', 'other-drug-card');
         var header = createElement('div', 'other-drug-card__header');
-        header.appendChild(createElement('h4', 'other-drug-card__title', 'Fármaco relacionado'));
+        header.appendChild(createElement('h4', 'other-drug-card__title', 'Fármaco concomitante'));
         var removeBtn = createElement('button', 'btn btn-outline btn-remove-drug', 'Eliminar');
         removeBtn.type = 'button';
         removeBtn.addEventListener('click', function () {
@@ -523,19 +523,7 @@
         });
     }
 
-    function applyNaranjoToFinal() {
-        var map = { Definitiva: 'Definida', Probable: 'Probable', Posible: 'Posible', Dudosa: 'Dudosa / sin relación' };
-        var value = map[byId('naranjoCategoria').textContent];
-        if (value) byId('fhCausalidadFinal').value = value;
-        updateFollowupCausalitySummary();
-    }
 
-    function applyKarchToFinal() {
-        var map = { Definida: 'Definida', Probable: 'Probable', Posible: 'Posible', Condicional: 'No clasificable', 'Sin relación': 'Dudosa / sin relación', 'No clasificable': 'No clasificable' };
-        var value = map[byId('klCategoria').textContent];
-        if (value) byId('fhCausalidadFinal').value = value;
-        updateFollowupCausalitySummary();
-    }
 
     function updateFollowupCausalitySummary() {
         updateCausalityContextLabels();
@@ -1551,10 +1539,7 @@
         document.querySelectorAll('.js-causality-nav').forEach(function (link) {
             link.addEventListener('click', handleCausalityNav);
         });
-        var applyN = document.getElementById('btnApplyNaranjo');
-        if (applyN) applyN.addEventListener('click', applyNaranjoToFinal);
-        var applyK = document.getElementById('btnApplyKl');
-        if (applyK) applyK.addEventListener('click', applyKarchToFinal);
+
         updateEaCausalidad();
         updateNaranjoScore();
         updateKarchLasagna();
