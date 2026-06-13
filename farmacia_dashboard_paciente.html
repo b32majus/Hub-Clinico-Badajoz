@@ -97,12 +97,13 @@
             </div>
         </div>
     </div>
-    <div class="patient-header-actions"><a href="farmacia_seguimiento.html" class="btn btn-primary"><i class="fas fa-clipboard-list"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="btn btn-secondary"><i class="fas fa-check-double"></i> Validación</a></div>
+    <div class="patient-header-actions"><a href="farmacia_seguimiento.html" class="btn btn-primary" id="navToSeguimiento"><i class="fas fa-clipboard-list"></i> Registrar seguimiento</a><a href="farmacia_validacion.html" class="btn btn-secondary"><i class="fas fa-check-double"></i> Validación</a></div>
 </section>
 <section class="dashboard-card"><h2 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Resumen Farmacia</h2><div class="info-grid" id="dashboardSummaryGrid"></div></section>
 <section id="longitudinal-section" class="dashboard-card hidden">
     <div class="longitudinal-section-header">
         <h2 class="card-title card-title--flush"><i class="fas fa-chart-line"></i> Evolución longitudinal del paciente</h2>
+        <a href="farmacia_dashboard_longitudinal.html" class="btn btn-sm btn-outline longitudinal-standalone-link" id="longitudinalStandaloneLink" title="Abrir en vista completa"><i class="fas fa-external-link-alt" aria-hidden="true"></i> Vista completa</a>
         <div class="longitudinal-controls">
             <select id="clinical-var-select" class="form-select form-select--longitudinal"><option value="">Variable clínica</option></select>
             <select id="prom-select" class="form-select form-select--longitudinal"><option value="">PROM</option></select>

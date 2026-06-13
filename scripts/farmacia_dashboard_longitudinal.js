@@ -866,12 +866,15 @@
             if (!success) { return; }
             populatePatientSelect();
 
-            if (dataset && dataset.pacientes && dataset.pacientes.length > 0) {
-                var firstCip = dataset.pacientes[0].cip;
-                if (patientSel) { patientSel.value = firstCip; }
-                currentCip = firstCip;
+            // Leer CIP de query param para preseleccionar
+            var urlParams = new URLSearchParams(window.location.search);
+            var cipParam = urlParams.get("cip");
+            var initialCip = cipParam || (dataset && dataset.pacientes && dataset.pacientes.length > 0 ? dataset.pacientes[0].cip : null);
 
-                var patient = getPatient(firstCip);
+            if (initialCip && patientSel) {
+                patientSel.value = initialCip;
+                currentCip = initialCip;
+                var patient = getPatient(initialCip);
                 if (patient) { renderAll(patient); }
             }
         });

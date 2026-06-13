@@ -1287,6 +1287,24 @@
         initCipSearch();
         initSegDrugAutocomplete();
 
+        // Demo FH-004: pre-activar causalidad si el paciente tiene EA registrado
+        var demoCtx = F.getQueryContext();
+        if (demoCtx.cip === "CIP-DEMO-FH-004") {
+            var eaSelect = document.getElementById("fhSeguimientoEaPresente");
+            if (eaSelect && eaSelect.value !== "si") {
+                eaSelect.value = "si";
+            }
+        }
+
+        // Actualizar enlaces de navegación con CIP actual
+        var ctxNav = F.getQueryContext();
+        if (ctxNav.cip) {
+            var navDash = document.getElementById("navToDashboardPaciente");
+            if (navDash) navDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip) + "&entrada=dashboard";
+            var navLong = document.getElementById("navToLongitudinal");
+            if (navLong) navLong.href = "farmacia_dashboard_longitudinal.html?cip=" + encodeURIComponent(ctxNav.cip);
+        }
+
         if (!F.getQueryContext().patient) {
             showSegDrugAutocomplete();
         }

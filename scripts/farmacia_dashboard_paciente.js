@@ -718,6 +718,12 @@
             });
         }
 
+        // Actualizar enlaces de navegación con CIP actual
+        var navSeg = document.getElementById("navToSeguimiento");
+        if (navSeg && patient.cip) {
+            navSeg.href = "farmacia_seguimiento.html?cip=" + encodeURIComponent(patient.cip) + "&entrada=seguimiento";
+        }
+
         renderLongitudinalForCip(patient.cip);
 
         renderExtendedBlocks(patient);
@@ -854,6 +860,11 @@
             return;
         }
         section.classList.remove('hidden');
+        // Actualizar enlace "Vista completa" con CIP actual
+        var standaloneLink = document.getElementById("longitudinalStandaloneLink");
+        if (standaloneLink) {
+            standaloneLink.href = "farmacia_dashboard_longitudinal.html?cip=" + encodeURIComponent(cip);
+        }
         if (noDataEl) noDataEl.classList.add('hidden');
         if (demoNoteEl) demoNoteEl.classList.remove('hidden');
         if (legendEl) legendEl.classList.add('hidden');
