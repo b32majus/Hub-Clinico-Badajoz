@@ -99,6 +99,7 @@
             <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
             <a class="btn btn-outline validation-module-link" href="#modPrebiologico">Estudio prebiológico</a>
             <a class="btn btn-outline validation-module-link" href="#modSeguimientoEa">Seguimiento / efectos adversos</a>
+            <a class="btn btn-outline validation-module-link" href="#modSeguimientoCausalidad">Análisis de causalidad</a>
             <a class="btn btn-outline validation-module-link" href="#" id="navToDashboardPaciente"><i class="fas fa-user-circle" aria-hidden="true"></i> Dashboard paciente</a>
             <a class="btn btn-outline validation-module-link" href="#modExportacion">Exportación</a>
         </div>
@@ -148,7 +149,7 @@
     <div class="form-grid"><div class="form-group"><label for="fhSegSuspension">¿Suspensión?</label><select class="form-select" id="fhSegSuspension"><option>No</option><option>Sí</option></select></div><div class="form-group"><label for="fhSegMotivoSusp">Motivo suspensión</label><select class="form-select" id="fhSegMotivoSusp"><option>No aplica</option><option>Efecto adverso</option><option>Falta de eficacia</option><option>Decisión clínica</option><option>Preferencia paciente</option><option>Problema de adherencia</option><option>Otro</option></select></div></div>
     <div class="form-grid form-grid--full"><div id="fhSegCambioFarmacoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>El cambio de fármaco requiere nueva solicitud y validación farmacoterapéutica desde el servicio clínico de origen.</span></div></div>
 </section>
-<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Seguimiento / efectos adversos</h2>
+<section class="dashboard-card" id="modSeguimientoAdherencia"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Adherencia al tratamiento</h2>
     <div class="form-grid form-grid--full">
         <div class="form-group">
             <label>Morisky-Green 4 preguntas</label>
@@ -193,20 +194,11 @@
         </div>
     </div>
     <div class="mg-result" id="fhSegMoriskyResultado">Resultado Morisky-Green: pendiente de completar</div>
+</section>
+<section class="dashboard-card" id="modSeguimientoProms"><h2 class="section-title"><i class="fas fa-clipboard-list"></i> PROMs de seguimiento</h2>
     <div class="form-grid">
         <div class="form-group"><label for="fhSegProms">PROMs seguimiento</label><select class="form-select" id="fhSegProms"><option>No recogido</option><option>Sí, recoger DLQI + EVA dolor/prurito</option></select></div>
-        <div class="form-group"><label for="fhSeguimientoEaPresente">¿El paciente ha presentado algún efecto adverso desde la última visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select></div>
-        <div class="form-group hidden" id="fhSeguimientoEaGravedadRow"><label for="fhSeguimientoEaGravedad">Gravedad del efecto adverso</label><select class="form-select" id="fhSeguimientoEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option><option value="Requiere suspensión / derivación">Requiere suspensión / derivación</option></select></div>
-        <div class="form-group hidden" id="fhSeguimientoEaResueltoRow"><label for="fhSeguimientoEaResuelto">¿Se ha solucionado el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaResuelto"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option><option value="en_seguimiento">En seguimiento</option></select></div>
-        <div class="form-group hidden" id="fhSeguimientoEaCorregidoRow"><label for="fhSeguimientoEaCorregido">¿Cómo se ha corregido el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaCorregido"><option value="no_consta">No consta</option><option value="reduccion_dosis">Reducción de dosis</option><option value="cambio_farmaco">Cambio de fármaco</option><option value="tratamiento_sintomatico">Tratamiento sintomático</option><option value="suspension_temporal">Suspensión temporal</option><option value="otro">Otro</option></select></div>
     </div>
-    <div class="form-grid form-grid--full hidden" id="fhSeguimientoEaObservacionesRow"><div class="form-group"><label for="fhSeguimientoEaObservaciones">Descripción breve / observaciones</label><textarea class="form-textarea" id="fhSeguimientoEaObservaciones" rows="3"></textarea></div></div>
-    <div class="form-grid hidden" id="fhSeguimientoEaFarmacoRow">
-        <div class="form-group"><label for="fhSeguimientoEaFarmacoSospechoso">Fármaco sospechoso asociado al efecto adverso</label><select class="form-select" id="fhSeguimientoEaFarmacoSospechoso"><option value="">No seleccionado</option></select><div class="search-card__hint hidden" id="fhSeguimientoEaFarmacoDefaultNotice"></div></div>
-    </div>
-    <div id="fhSeguimientoEaNoCausalidad" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>No se activa evaluación de causalidad.</span></div>
-    <div id="fhSeguimientoEaActivationNotice" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Para activar los cuestionarios de causalidad, marque primero que existe efecto adverso en la visita de seguimiento.</span></div>
-    <div class="hidden" id="fhSegEaSospechosos"></div>
     <div id="fhSegPromsExpanded" class="hidden">
     <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA</h3>
     <div class="proms-block" id="fhSegDlqiBlock">
@@ -240,7 +232,23 @@
     </div>
 </div>
 </section>
-<section class="dashboard-card hidden causality-section" id="modNaranjo" title="Algoritmo de Naranjo">
+<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title"><i class="fas fa-exclamation-triangle"></i> Evaluación de efectos adversos</h2>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhSeguimientoEaPresente">¿El paciente ha presentado algún efecto adverso desde la última visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div class="form-group hidden" id="fhSeguimientoEaGravedadRow"><label for="fhSeguimientoEaGravedad">Gravedad del efecto adverso</label><select class="form-select" id="fhSeguimientoEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option><option value="Requiere suspensión / derivación">Requiere suspensión / derivación</option></select></div>
+        <div class="form-group hidden" id="fhSeguimientoEaResueltoRow"><label for="fhSeguimientoEaResuelto">¿Se ha solucionado el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaResuelto"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option><option value="en_seguimiento">En seguimiento</option></select></div>
+        <div class="form-group hidden" id="fhSeguimientoEaCorregidoRow"><label for="fhSeguimientoEaCorregido">¿Cómo se ha corregido el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaCorregido"><option value="no_consta">No consta</option><option value="reduccion_dosis">Reducción de dosis</option><option value="cambio_farmaco">Cambio de fármaco</option><option value="tratamiento_sintomatico">Tratamiento sintomático</option><option value="suspension_temporal">Suspensión temporal</option><option value="otro">Otro</option></select></div>
+    </div>
+    <div class="form-grid form-grid--full hidden" id="fhSeguimientoEaObservacionesRow"><div class="form-group"><label for="fhSeguimientoEaObservaciones">Descripción breve / observaciones</label><textarea class="form-textarea" id="fhSeguimientoEaObservaciones" rows="3"></textarea></div></div>
+    <div class="form-grid hidden" id="fhSeguimientoEaFarmacoRow">
+        <div class="form-group"><label for="fhSeguimientoEaFarmacoSospechoso">Fármaco sospechoso asociado al efecto adverso</label><select class="form-select" id="fhSeguimientoEaFarmacoSospechoso"><option value="">No seleccionado</option></select><div class="search-card__hint hidden" id="fhSeguimientoEaFarmacoDefaultNotice"></div></div>
+    </div>
+    <div id="fhSeguimientoEaNoCausalidad" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>No se activa evaluación de causalidad.</span></div>
+    <div id="fhSeguimientoEaActivationNotice" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Para activar los cuestionarios de causalidad, marque primero que existe efecto adverso en la visita de seguimiento.</span></div>
+    <div class="hidden" id="fhSegEaSospechosos"></div>
+</section>
+<section class="dashboard-card" id="modSeguimientoCausalidad"><h2 class="section-title"><i class="fas fa-calculator"></i> Análisis de causalidad</h2>
+<div class="causality-section hidden" id="modNaranjo" title="Algoritmo de Naranjo">
     <h2 class="section-title section-title--with-subtitle">
         <i class="fas fa-calculator"></i>
         <span class="section-title__text-group">
@@ -270,8 +278,8 @@
         </div>
     </details>
     <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
-</section>
-<section class="dashboard-card hidden causality-section" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
+</div>
+<div class="causality-section hidden" id="modKarchLasagna" title="Algoritmo de Karch-Lasagna">
     <h2 class="section-title section-title--with-subtitle">
         <i class="fas fa-project-diagram"></i>
         <span class="section-title__text-group">
@@ -297,8 +305,8 @@
         </div>
     </details>
     <p class="causality-footer-ref">Resultado resumido en la parte superior.</p>
-</section>
-<section class="dashboard-card hidden" id="modResumenCausalidad" title="Resumen de causalidad">
+</div>
+<div class="hidden" id="modResumenCausalidad" title="Resumen de causalidad">
     <h2 class="section-title"><i class="fas fa-notes-medical"></i> Resumen de causalidad</h2>
     <div class="info-grid">
         <div class="info-field"><span class="info-field__label">Fármaco sospechoso</span><span class="info-field__value" id="fhSeguimientoEaContextoResumen">—</span></div>
@@ -307,6 +315,7 @@
     </div>
     <div class="form-grid"><div class="form-group"><label for="fhCausalidadFinal">Causalidad final farmacéutica</label><select class="form-select" id="fhCausalidadFinal"><option value="No evaluada">No evaluada</option><option value="Dudosa / sin relación">Dudosa / sin relación</option><option value="Posible">Posible</option><option value="Probable">Probable</option><option value="Definida">Definida</option><option value="No clasificable">No clasificable</option></select></div></div>
     <p class="causality-help-text">Puedes apoyarte en Naranjo y Karch-Lasagna para registrar la valoración final.</p>
+</div>
 </section>
 <section class="dashboard-card" id="modExportacion">
     <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>

@@ -551,7 +551,7 @@
             var row = byId(id);
             if (row) row.classList.toggle('hidden', !active);
         });
-        ['modNaranjo', 'modKarchLasagna', 'modResumenCausalidad'].forEach(function (id) {
+        ['modSeguimientoCausalidad', 'modNaranjo', 'modKarchLasagna', 'modResumenCausalidad'].forEach(function (id) {
             var section = byId(id);
             if (section) section.classList.toggle('hidden', !active);
         });
