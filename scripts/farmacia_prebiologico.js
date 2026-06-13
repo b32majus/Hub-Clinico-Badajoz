@@ -136,6 +136,10 @@
     }
 
     function evaluateVacunacion(patient) {
+        function isExplicitlyOk(value) {
+            if (value === true) return true;
+            return evaluateBooleanLikeCheck(value) === "ok";
+        }
         var est = patient && patient.analiticaEstruct;
         if (est && typeof est === "object" && hasMeaningfulValue(est.vacunacion)) {
             var vacEstruct = est.vacunacion;
@@ -146,7 +150,7 @@
                 }
                 if (Array.isArray(vacEstruct.pendientes) && vacEstruct.pendientes.length > 0) return "pendiente";
                 if (hasMeaningfulValue(vacEstruct.pendientes)) return "pendiente";
-                if (vacEstruct.ok || vacEstruct.si || vacEstruct.revisada) return "ok";
+                if (isExplicitlyOk(vacEstruct.ok) || isExplicitlyOk(vacEstruct.si) || isExplicitlyOk(vacEstruct.revisada)) return "ok";
                 return "no_informado";
             }
             return evaluateBooleanLikeCheck(est.vacunacion);
@@ -160,7 +164,7 @@
                 }
                 if (Array.isArray(vac.pendientes) && vac.pendientes.length > 0) return "pendiente";
                 if (hasMeaningfulValue(vac.pendientes)) return "pendiente";
-                if (vac.ok || vac.si || vac.revisada) return "ok";
+                if (isExplicitlyOk(vac.ok) || isExplicitlyOk(vac.si) || isExplicitlyOk(vac.revisada)) return "ok";
                 return "no_informado";
             }
             return evaluateBooleanLikeCheck(patient.vacunacion);
