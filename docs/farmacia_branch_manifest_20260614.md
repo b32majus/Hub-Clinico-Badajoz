@@ -816,7 +816,7 @@ WO8/WO posterior revisará export/persistencia, incluyendo CSV.
 ## WO7H.3 — Bugfix Seguimiento: candidatos de sospechoso EA
 
 **Estado:** completada técnicamente, pendiente de revisión visual Sil/Cora  
-**HEAD de rama:** (pendiente de commit)
+**HEAD de rama:** `070e818` (tras WO7H.3)
 
 **Causa raíz:** `getRelevantDrugCandidates()` usaba `'line:' + line.linea_id` como clave de deduplicación. Las líneas normalizadas vía `buildTreatmentFromPatient()` tienen `tratamiento_id` pero no `linea_id`, por lo que todas las líneas generaban la misma clave `'line:undefined'`. Solo la primera línea del array (Abatacept, al ser la más antigua en `patient.biologicos`) pasaba la dedup, ocultando Belimumab, Rituximab y el resto de candidatos.
 
