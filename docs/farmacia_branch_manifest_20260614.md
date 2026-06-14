@@ -1069,3 +1069,72 @@ No se implementa parser/importación.
 No se modifica la rama demo.  
 No se modifica main.  
 Pendiente de validación visual/manual de Sil.
+
+## WO8.1c — Excel operativo FH poblado con datos sintéticos
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD final:** `[PENDING COMMIT]`
+
+**Alcance:**
+Se crea una versión sintética poblada de la plantilla Excel operativa FH para probar el circuito longitudinal: validación, primera visita, seguimiento, cambios, adiciones, suspensiones, efectos adversos, varios fármacos, tratamientos históricos y fármacos especiales.
+
+**Archivos creados:**
+- `templates/farmacia_excel_operativo_FH_WO8_v1_sintetico.xlsx` — Excel FH sintético (32 KB, 6 hojas)
+- `tools/farmacia_excel_sintetico_check.mjs` — check sintético (38 tests, 0 failed)
+- `tools/generate_farmacia_excel_sintetico.py` — generador reproducible
+- `docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md` — gap Enfermería
+
+**Archivos modificados:**
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Dataset FH:**
+| Hoja | Filas | Tipos de acto |
+|---|---|---|
+| `01_DERMA` | 10 | validacion_inicial, primera_visita, seguimiento, nueva_validacion_cambio, nueva_validacion_adicion, suspension |
+| `02_REUMA` | 12 | seguimiento, primera_visita, nueva_validacion_cambio, nueva_validacion_adicion, suspension |
+| `03_DIGESTIVO` | 10 | seguimiento, primera_visita, validacion_inicial, nueva_validacion_cambio, suspension |
+| `04_ONCO` | 11 | seguimiento, validacion_inicial, nueva_validacion_adicion, suspension |
+
+**Total:** 43 filas FH sintéticas.
+
+**Casuística cubierta por servicio:**
+| Caso | DERMA | REUMA | DIGESTIVO | ONCO |
+|---|---|---|---|---|
+| Pendiente validación inicial | ✅ | — | ✅ | ✅ |
+| Validación completada | ✅ | ✅ | ✅ | ✅ |
+| Primera visita | ✅ | ✅ | ✅ | — |
+| Seguimiento rutinario | ✅ | ✅ | ✅ | ✅ |
+| EA (leve/moderado/grave) | ✅ | ✅ | ✅ | ✅ |
+| Suspensión | ✅ | ✅ | ✅ | ✅ |
+| Cambio terapéutico | ✅ | ✅ | ✅ | — |
+| Adición de fármaco | ✅ | ✅ | — | ✅ |
+| Pauta modificada | ✅ | ✅ | ✅ | — |
+| Histórico conservado | ✅ | ✅ | ✅ | ✅ |
+| Varios fármacos activos | — | ✅ | — | ✅ |
+| Adherencia baja | — | ✅ | ✅ | — |
+| PROMs (HAQ, EVA, DLQI) | ✅ | ✅ | ✅ | — |
+| Medicación extranjera | — | — | — | ✅ |
+| Uso compasivo | — | — | — | ✅ |
+| Ensayo clínico | — | — | — | ✅ |
+| Fuera de ficha técnica | — | — | — | ✅ |
+| Preparación especial | — | — | — | ✅ |
+| Pendiente normalización | — | — | — | ✅ |
+
+**Fármacos especiales (05_CATALOGOS):** 12 registros activos con 7 categorías.
+
+**Checks:**
+- Template check (WO8.1a): 36/36 PASS
+- Row export check (WO8.1b): 44/44 PASS
+- Sintético check (WO8.1c): 38/38 PASS
+
+**Importante:**
+No se usan datos reales. Todos los IDs son FH-SYN-*.  
+No se modifica la plantilla base WO8.1a.  
+No se implementa parser/importación.  
+No se modifica código funcional del Hub.  
+No se modifica la rama demo.  
+No se modifica main.  
+No se modifica kairos-os-lab.  
+No se toca el panel de control.  
+
