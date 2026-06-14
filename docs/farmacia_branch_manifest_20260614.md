@@ -422,3 +422,32 @@ WO7D no modifica validación, seguimiento ni dashboard.
 WO6 sigue `pending_review`.  
 Fuente activa funcional sigue WO5.  
 No se toca `main` ni GitHub Pages.
+
+---
+
+## WO7D.1 — Pulido visual de Primera visita tras contrato de tratamiento
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** `699bc4a` (tras WO7D.1)
+**Alcance:**
+- Eliminado código legacy duplicado (dos pares `applyContext`/`applyTratamientoValidado` legacy que sobrescribían la lógica nueva de WO7D)
+- Eliminada tarjeta azul informativa redundante
+- Eliminado subbloque redundante "Buscar fármaco en catálogo"
+- Autocomplete fusionado en el campo `fhPvFarmaco` como campo principal de captura
+- Corregida visibilidad del dropdown autocomplete (z-index: 1000, overflow: visible)
+- Tests ampliados con 6 validaciones específicas de WO7D.1 (24 total, 0 failed)
+
+**Archivos modificados:**
+- `farmacia_primera_visita.html` — HTML reestructurado
+- `scripts/farmacia_primera_visita.js` — código legacy eliminado, autocomplete integrado
+- `tools/farmacia_primera_visita_check.mjs` — 6 nuevos tests
+- `docs/farmacia_branch_manifest_20260614.md` — esta entrada
+
+**Deuda explícita:**
+Analítica/vacunación de primera visita no alineada con lógica estructurada de validación/prebiológico. Pendiente WO posterior.
+
+**No se tocó:** main, GitHub Pages, validación, seguimiento, dashboard, `FarmaciaTratamiento`, `farmacia_common.js`, pautas catalog, datos demo.
+
+**WO6 sigue `pending_review`.** Fuente activa funcional sigue WO5.
+
+---

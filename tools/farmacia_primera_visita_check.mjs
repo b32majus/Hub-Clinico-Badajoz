@@ -60,6 +60,21 @@ const farmacoPos = html.indexOf('id="fhPvFarmaco"');
 assert(treatmentSectionPos !== -1 && farmacoPos > treatmentSectionPos, 'el bloque editable de tratamiento está en la tarjeta de tratamiento validado');
 assert(html.includes('scripts/farmacia_tratamiento_common.js'), 'Primera visita carga FarmaciaTratamiento');
 
+// WO7D.1: no debe existir tarjeta azul informativa
+assert(!html.includes('fhPvTreatmentNotice'), 'no existe la tarjeta azul informativa');
+// WO7D.1: no debe existir subbloque redundante de búsqueda
+assert(!html.includes('fhPvAutocompleteBlock'), 'no existe subbloque redundante Buscar fármaco en catálogo');
+// WO7D.1: fhPvFarmaco debe estar dentro de autocomplete-wrapper
+const wrapperStart = html.indexOf('autocomplete-wrapper');
+const farmacoInWrapper = wrapperStart !== -1 && html.indexOf('id="fhPvFarmaco"') > wrapperStart;
+assert(farmacoInWrapper, 'fhPvFarmaco está dentro de autocomplete-wrapper');
+// WO7D.1: dropdown debe existir junto a fhPvFarmaco
+assert(html.includes('fhPvAutocompleteDropdown'), 'dropdown autocomplete presente en HTML');
+// WO7D.1: no debe referenciar fhPvDrugSearch en JS (eliminado)
+assert(!js.includes('fhPvDrugSearch'), 'JS no referencia fhPvDrugSearch (eliminado)');
+// WO7D.1: z-index style para dropdown
+assert(html.includes('z-index: 1000'), 'estilo z-index para dropdown presente');
+
 const sandbox = {
   window: {
     FarmaciaDemo: {

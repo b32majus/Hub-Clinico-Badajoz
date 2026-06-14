@@ -317,75 +317,6 @@
         F.renderFields(container, fields);
     }
 
-
-    function applyContext(ctx) {
-        F.setValue('fhPvCip', ctx.cip);
-        F.setValue('fhPvServicio', ctx.servicio || ctx.patient?.servicio);
-        F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
-        if (ctx.patient) {
-            F.setValue('fhPvFarmaco', ctx.patient.farmaco);
-            F.setValue('fhPvDosis', ctx.patient.dosis);
-            setPautaFromContext(ctx.patient.pauta);
-            F.setValue('fhPvVia', ctx.patient.via);
-            F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
-            F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
-            F.setValue('fhPvAnalitica', ctx.patient.analitica);
-        }
-        if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhPvNoCipBanner');
-    }
-
-    function applyTratamientoValidado(ctx) {
-        const container = document.getElementById('fhPvTratamientoGrid');
-        if (!container) return;
-
-        let C = null;
-        let snapshot = null;
-        try { C = window.FarmaciaCatalog; } catch (e) { /* noop */ }
-        if (C) snapshot = C.getSnapshot ? C.getSnapshot() : C.selectedSnapshot;
-
-        const fields = [];
-
-        if (snapshot) {
-            const st = (snapshot.source_type || '').toLowerCase();
-            const origen = st === 'cima' ? 'CIMA'
-                : st === 'local' || st === 'local_especial' ? 'Local Especial'
-                : st === 'local_pendiente_demo' ? 'Demo/local pendiente' : '—';
-            const codigo = snapshot.codigo_nacional_snapshot || snapshot.nregistro_snapshot || '—';
-
-            const etiquetas = [];
-            if (snapshot.etiquetas) {
-                if (snapshot.etiquetas.es_hospitalario) etiquetas.push('HOSP');
-                if (snapshot.etiquetas.biosimilar) etiquetas.push('BIO');
-            }
-            if (st === 'local' || st === 'local_especial') etiquetas.push('Local Especial');
-            const etiquetasStr = etiquetas.length ? etiquetas.join(' · ') : '—';
-
-            fields.push(
-                { label: 'Fármaco / marca comercial', value: snapshot.nombre_snapshot || '—' },
-                { label: 'Principio activo', value: snapshot.principio_activo_snapshot || '—' },
-                { label: 'Presentación / dosis', value: snapshot.presentacion_snapshot || '—' },
-                { label: 'Vía', value: snapshot.via_snapshot || '—' },
-                { label: 'Pauta / intervalo', value: (ctx.patient && ctx.patient.pauta) || '—' },
-                { label: 'Origen catálogo', value: origen },
-                { label: 'Código nacional / n.º registro', value: codigo },
-                { label: 'Etiquetas', value: etiquetasStr }
-            );
-        } else if (ctx.patient) {
-            fields.push(
-                { label: 'Fármaco / marca comercial', value: ctx.patient.farmaco || '—' },
-                { label: 'Principio activo', value: ctx.patient.principioActivo || ctx.patient.farmaco || '—' },
-                { label: 'Presentación / dosis', value: ctx.patient.dosis || '—' },
-                { label: 'Vía', value: ctx.patient.via || '—' },
-                { label: 'Pauta / intervalo', value: ctx.patient.pauta || '—' },
-                { label: 'Origen catálogo', value: 'Demo' },
-                { label: 'Código nacional / n.º registro', value: '—' },
-                { label: 'Etiquetas', value: '—' }
-            );
-        }
-
-        if (fields.length) F.renderFields(container, fields);
-    }
-
     function fv(id) { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
 
     function populatePautaSelectPv(id, otroId) {
@@ -781,7 +712,7 @@
             clearTreatmentForm();
             var grid = document.getElementById('fhPvTratamientoGrid');
             if (grid) F.clearChildren(grid);
-            var drugSearchInput = document.getElementById('fhPvDrugSearch');
+            var drugSearchInput = document.getElementById('fhPvFarmaco');
             if (drugSearchInput) drugSearchInput.value = '';
             var C2 = getCatalog();
             if (C2 && C2.clearSnapshot) C2.clearSnapshot();
@@ -824,13 +755,11 @@
     }
 
     function showDrugAutocomplete() {
-        var block = document.getElementById('fhPvAutocompleteBlock');
-        if (block) block.classList.remove('hidden');
+        // Autocomplete integrado en campo fhPvFarmaco — siempre visible
     }
 
     function hideDrugAutocomplete() {
-        var block = document.getElementById('fhPvAutocompleteBlock');
-        if (block) block.classList.add('hidden');
+        // No aplica: autocomplete es el propio campo fhPvFarmaco
         clearDrugAutocompleteDropdown();
     }
 
@@ -922,7 +851,7 @@
         applyTratamientoValidado(getCurrentContext());
 
         clearDrugAutocompleteDropdown();
-        var searchInput = document.getElementById('fhPvDrugSearch');
+        var searchInput = document.getElementById('fhPvFarmaco');
         if (searchInput) {
             searchInput.value = drug.display_name || drug.nombre_comercial || '';
         }
@@ -931,7 +860,7 @@
     function handleDrugSearchInput() {
         var C = getCatalog();
         if (!C || !C.loaded) return;
-        var input = document.getElementById('fhPvDrugSearch');
+        var input = document.getElementById('fhPvFarmaco');
         if (!input) return;
         var query = input.value.trim();
         if (query.length < 2) {
@@ -943,7 +872,7 @@
     }
 
     function initDrugAutocomplete() {
-        var input = document.getElementById('fhPvDrugSearch');
+        var input = document.getElementById('fhPvFarmaco');
         if (!input) return;
 
         input.addEventListener('input', handleDrugSearchInput);
