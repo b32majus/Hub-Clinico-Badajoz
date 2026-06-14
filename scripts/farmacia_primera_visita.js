@@ -10,8 +10,313 @@
         if (value === false || value === 0 || value === '0') return false;
         if (value === null || value === undefined || value === '') return false;
         var s = String(value).trim().toUpperCase();
-        return s === 'TRUE' || s === 'SI' || s === 'S\u00CD' || s === 'YES' || s === '1';
+        return s === 'TRUE' || s === 'SI' || s === 'SÍ' || s === 'YES' || s === '1';
     }
+
+    function firstNonEmpty() {
+        for (var i = 0; i < arguments.length; i++) {
+            if (arguments[i] == null) continue;
+            var value = String(arguments[i]).trim();
+            if (value) return value;
+        }
+        return '';
+    }
+
+    function assignObjects(target) {
+        target = target || {};
+        for (var i = 1; i < arguments.length; i++) {
+            var source = arguments[i] || {};
+            Object.keys(source).forEach(function (key) {
+                target[key] = source[key];
+            });
+        }
+        return target;
+    }
+
+    function getTreatmentHelper() {
+        return window.FarmaciaTratamiento || null;
+    }
+
+    function getCurrentContext() {
+        try {
+            return F.getQueryContext ? F.getQueryContext() : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function getCurrentSnapshot() {
+        var catalog = getCatalog();
+        if (!catalog) return null;
+        return catalog.getSnapshot ? catalog.getSnapshot() : catalog.selectedSnapshot;
+    }
+
+    function resolvePrimaryRelation(ctx, snapshot) {
+        if ((ctx && ctx.patient) || snapshot) return 'validado';
+        return 'principal';
+    }
+
+    function buildFallbackTreatment(input) {
+        return {
+            tratamiento_id: input && input.tratamiento_id || '',
+            paciente_cip: input && input.paciente_cip || '',
+            farmaco_nombre: input && input.farmaco_nombre || '',
+            nombre_comercial: input && input.nombre_comercial || '',
+            principio_activo: input && input.principio_activo || '',
+            dosis_valor: '',
+            dosis_unidad: '',
+            dosis_texto: input && input.dosis_texto || '',
+            presentacion: input && input.presentacion || '',
+            via: input && input.via || '',
+            pauta: input && input.pauta || '',
+            pauta_codigo: input && input.pauta_codigo || '',
+            pauta_label: input && input.pauta_label || '',
+            pauta_intervalo_dias: input && input.pauta_intervalo_dias != null ? input.pauta_intervalo_dias : null,
+            pauta_unidad: input && input.pauta_unidad || '',
+            pauta_otro_texto: input && input.pauta_otro_texto || '',
+            tipo_relacion: input && input.tipo_relacion || '',
+            estado_linea: input && input.estado_linea || '',
+            tipo_movimiento: input && input.tipo_movimiento || '',
+            fase_tratamiento: input && input.fase_tratamiento || '',
+            fecha_inicio: input && input.fecha_inicio || '',
+            fecha_fin: input && input.fecha_fin || '',
+            motivo: input && input.motivo || '',
+            observaciones: input && input.observaciones || '',
+            fuente: input && input.fuente || '',
+            source_type: input && input.source_type || '',
+            selected_drug_id: input && input.selected_drug_id || '',
+            codigo_nacional: input && input.codigo_nacional || '',
+            nregistro: input && input.nregistro || '',
+            es_principal: !!(input && input.es_principal),
+            es_validado_farmacia: !!(input && input.es_validado_farmacia),
+            snapshot_origen: input && input.snapshot_origen != null ? input.snapshot_origen : null
+        };
+    }
+
+    function normalizePrimaryTreatment(input, options) {
+        var treatmentHelper = getTreatmentHelper();
+        if (treatmentHelper && typeof treatmentHelper.normalizeTreatmentInput === 'function') {
+            return treatmentHelper.normalizeTreatmentInput(input || {}, options || {});
+        }
+        return buildFallbackTreatment(input || {});
+    }
+
+    function setTreatmentForm(treatment) {
+        F.setValue('fhPvFarmaco', treatment.farmaco_nombre || treatment.nombre_comercial || '');
+        F.setValue('fhPvDosis', treatment.dosis_texto || treatment.presentacion || '');
+        F.setValue('fhPvVia', treatment.via || '');
+        setPautaFromContext(treatment.pauta || treatment.pauta_label || treatment.pauta_otro_texto || '');
+    }
+
+    function clearTreatmentForm() {
+        F.setValue('fhPvFarmaco', '');
+        F.setValue('fhPvDosis', '');
+        F.setValue('fhPvVia', '');
+        setPautaFromContext('');
+    }
+
+    function hasMeaningfulTreatment(treatment) {
+        if (!treatment) return false;
+        return !!firstNonEmpty(
+            treatment.farmaco_nombre,
+            treatment.nombre_comercial,
+            treatment.principio_activo,
+            treatment.dosis_texto,
+            treatment.presentacion,
+            treatment.pauta,
+            treatment.selected_drug_id
+        );
+    }
+
+    function buildPrimaryTreatmentFromContext(ctx) {
+        var sourceCtx = ctx || getCurrentContext() || {};
+        var patient = sourceCtx.patient || null;
+        var snapshot = getCurrentSnapshot();
+        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var treatmentHelper = getTreatmentHelper();
+        var treatment = normalizePrimaryTreatment({
+            paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
+            farmaco_nombre: patient && patient.farmaco || '',
+            nombre_comercial: patient && patient.farmaco || '',
+            principio_activo: patient && (patient.principioActivo || patient.farmaco) || '',
+            dosis_texto: patient && patient.dosis || '',
+            presentacion: patient && patient.dosis || '',
+            via: patient && patient.via || '',
+            pauta: patient && patient.pauta || '',
+            fecha_inicio: fv('fhPvFecha') || '',
+            tipo_relacion: relation,
+            es_principal: true,
+            es_validado_farmacia: relation === 'validado',
+            fuente: 'primera_visita',
+            snapshot_origen: patient
+        }, {
+            paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
+            fuente: 'primera_visita'
+        });
+
+        if (snapshot && treatmentHelper && typeof treatmentHelper.buildTreatmentSnapshot === 'function') {
+            var snapshotTreatment = treatmentHelper.buildTreatmentSnapshot(snapshot, {
+                paciente_cip: treatment.paciente_cip,
+                fuente: 'primera_visita'
+            });
+            treatment = normalizePrimaryTreatment(assignObjects({}, snapshotTreatment, treatment, {
+                paciente_cip: treatment.paciente_cip,
+                tipo_relacion: relation,
+                es_principal: true,
+                es_validado_farmacia: relation === 'validado',
+                fuente: 'primera_visita',
+                principio_activo: firstNonEmpty(treatment.principio_activo, snapshotTreatment.principio_activo),
+                dosis_texto: firstNonEmpty(treatment.dosis_texto, snapshotTreatment.dosis_texto),
+                presentacion: firstNonEmpty(treatment.presentacion, snapshotTreatment.presentacion),
+                via: firstNonEmpty(treatment.via, snapshotTreatment.via),
+                pauta: firstNonEmpty(treatment.pauta, snapshotTreatment.pauta)
+            }), {
+                paciente_cip: treatment.paciente_cip,
+                fuente: 'primera_visita'
+            });
+        }
+
+        return treatment;
+    }
+
+    function buildPrimaryTreatmentFromSelection(drug, ctx) {
+        var sourceCtx = ctx || getCurrentContext() || {};
+        var treatmentHelper = getTreatmentHelper();
+        var relation = resolvePrimaryRelation(sourceCtx, sourceCtx.patient ? {} : getCurrentSnapshot());
+        var cip = firstNonEmpty(sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip, fv('fhPvCip'));
+        var base = {
+            paciente_cip: cip,
+            pauta: getPautaLabelForExport(),
+            fecha_inicio: fv('fhPvFecha') || '',
+            tipo_relacion: relation,
+            es_principal: true,
+            es_validado_farmacia: relation === 'validado',
+            fuente: 'primera_visita'
+        };
+        if (treatmentHelper && typeof treatmentHelper.buildTreatmentFromCatalogSelection === 'function') {
+            return normalizePrimaryTreatment(assignObjects({}, treatmentHelper.buildTreatmentFromCatalogSelection(drug, base), {
+                paciente_cip: cip,
+                pauta: firstNonEmpty(base.pauta, sourceCtx.patient && sourceCtx.patient.pauta),
+                tipo_relacion: relation,
+                es_principal: true,
+                es_validado_farmacia: relation === 'validado',
+                fuente: 'primera_visita'
+            }), {
+                paciente_cip: cip,
+                fuente: 'primera_visita'
+            });
+        }
+        return normalizePrimaryTreatment(assignObjects({}, base, {
+            farmaco_nombre: drug && (drug.display_name || drug.nombre_comercial) || '',
+            nombre_comercial: drug && drug.nombre_comercial || '',
+            principio_activo: drug && drug.principio_activo || '',
+            dosis_texto: drug && (drug.dosis || drug.nombre_presentacion) || '',
+            presentacion: drug && drug.nombre_presentacion || '',
+            via: drug && drug.via || '',
+            source_type: drug && drug.source_type || '',
+            selected_drug_id: drug && (drug.drug_id || drug.selected_drug_id) || '',
+            codigo_nacional: drug && drug.codigo_nacional || '',
+            nregistro: drug && drug.nregistro || '',
+            snapshot_origen: drug || null
+        }), {
+            paciente_cip: cip,
+            fuente: 'primera_visita'
+        });
+    }
+
+    function getCurrentPrimaryTreatment(ctx) {
+        var sourceCtx = ctx || getCurrentContext() || {};
+        var snapshot = getCurrentSnapshot();
+        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var treatment = buildPrimaryTreatmentFromContext(sourceCtx);
+        if (!hasMeaningfulTreatment(treatment)) {
+            treatment = normalizePrimaryTreatment({
+                paciente_cip: firstNonEmpty(fv('fhPvCip'), sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
+                tipo_relacion: relation,
+                es_principal: true,
+                es_validado_farmacia: relation === 'validado',
+                fuente: 'primera_visita'
+            }, {
+                paciente_cip: firstNonEmpty(fv('fhPvCip'), sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
+                fuente: 'primera_visita'
+            });
+        }
+        treatment = normalizePrimaryTreatment(assignObjects({}, treatment, {
+            paciente_cip: firstNonEmpty(fv('fhPvCip'), treatment.paciente_cip, sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
+            farmaco_nombre: firstNonEmpty(fv('fhPvFarmaco'), treatment.farmaco_nombre, treatment.nombre_comercial),
+            nombre_comercial: firstNonEmpty(fv('fhPvFarmaco'), treatment.nombre_comercial),
+            principio_activo: firstNonEmpty(treatment.principio_activo),
+            dosis_texto: firstNonEmpty(fv('fhPvDosis'), treatment.dosis_texto, treatment.presentacion),
+            presentacion: firstNonEmpty(fv('fhPvDosis'), treatment.presentacion, treatment.dosis_texto),
+            via: firstNonEmpty(fv('fhPvVia'), treatment.via),
+            pauta: firstNonEmpty(getPautaLabelForExport(), treatment.pauta, treatment.pauta_label),
+            tipo_relacion: relation,
+            es_principal: true,
+            es_validado_farmacia: relation === 'validado',
+            fuente: 'primera_visita'
+        }), {
+            paciente_cip: firstNonEmpty(fv('fhPvCip'), treatment.paciente_cip, sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
+            fuente: 'primera_visita'
+        });
+        return treatment;
+    }
+
+    function applyContext(ctx) {
+        F.setValue('fhPvCip', ctx.cip);
+        F.setValue('fhPvServicio', ctx.servicio || ctx.patient?.servicio);
+        F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
+        if (ctx.patient) {
+            F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
+            F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
+            F.setValue('fhPvAnalitica', ctx.patient.analitica);
+            setTreatmentForm(buildPrimaryTreatmentFromContext(ctx));
+        } else {
+            clearTreatmentForm();
+        }
+        if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhPvNoCipBanner');
+    }
+
+    function applyTratamientoValidado(ctx) {
+        const container = document.getElementById('fhPvTratamientoGrid');
+        if (!container) return;
+        const treatmentHelper = getTreatmentHelper();
+        const treatment = getCurrentPrimaryTreatment(ctx);
+        F.clearChildren(container);
+        if (!hasMeaningfulTreatment(treatment)) return;
+
+        const summary = treatmentHelper && typeof treatmentHelper.buildTreatmentSummary === 'function'
+            ? treatmentHelper.buildTreatmentSummary(treatment)
+            : {
+                titulo: treatment.farmaco_nombre || treatment.nombre_comercial || treatment.principio_activo || 'Tratamiento',
+                subtitulo: [treatment.principio_activo, treatment.dosis_texto || treatment.presentacion, treatment.via, treatment.pauta].filter(Boolean).join(' · '),
+                meta: []
+            };
+
+        const origen = treatment.source_type === 'CIMA' ? 'CIMA'
+            : treatment.source_type === 'LOCAL' ? 'Local Especial'
+            : treatment.source_type === 'LOCAL_PENDIENTE_DEMO' ? 'Demo/local pendiente'
+            : (treatment.fuente || '—');
+        const codigo = firstNonEmpty(treatment.codigo_nacional, treatment.nregistro, '—');
+        const metaFlags = [];
+        if (treatment.es_validado_farmacia) metaFlags.push('Validado');
+        if (treatment.es_principal) metaFlags.push('Principal');
+        if (treatment.selected_drug_id) metaFlags.push('Catálogo');
+
+        const fields = [
+            { label: 'Tratamiento principal', value: summary.titulo || '—' },
+            { label: 'Principio activo', value: treatment.principio_activo || '—' },
+            { label: 'Presentación / dosis', value: treatment.dosis_texto || treatment.presentacion || '—' },
+            { label: 'Vía', value: treatment.via || '—' },
+            { label: 'Pauta / intervalo', value: treatment.pauta || '—' },
+            { label: 'Relación terapéutica', value: treatment.tipo_relacion || '—' },
+            { label: 'Origen catálogo', value: origen },
+            { label: 'Código nacional / n.º registro', value: codigo },
+            { label: 'Resumen', value: summary.subtitulo || '—' },
+            { label: 'Estado', value: metaFlags.length ? metaFlags.join(' · ') : '—' }
+        ];
+        F.renderFields(container, fields);
+    }
+
 
     function applyContext(ctx) {
         F.setValue('fhPvCip', ctx.cip);
@@ -400,22 +705,12 @@
     }
 
     function getPrincipioActivo() {
-        try {
-            var C = window.FarmaciaCatalog;
-            if (C) {
-                var snap = C.getSnapshot ? C.getSnapshot() : C.selectedSnapshot;
-                if (snap && snap.principio_activo_snapshot) return snap.principio_activo_snapshot;
-            }
-        } catch (e) { /* noop */ }
-        try {
-            var p = window.FarmaciaDemo.getQueryContext().patient;
-            if (p && p.principioActivo) return p.principioActivo;
-        } catch (e) { /* noop */ }
-        return '';
+        return getCurrentPrimaryTreatment().principio_activo || '';
     }
 
     function buildPVLines() {
-        var pa = getPrincipioActivo();
+        var treatment = getCurrentPrimaryTreatment();
+        var pa = treatment.principio_activo || '';
 
         var lines = [];
         lines.push('=== INFORME DE PRIMERA VISITA FARMACIA ===');
@@ -425,11 +720,11 @@
         lines.push('CIP: ' + (fv('fhPvCip') || '—'));
         lines.push('Servicio: ' + (fv('fhPvServicio') || '—'));
         lines.push('Patología: ' + (fv('fhPvPatologia') || '—'));
-        lines.push('Tratamiento validado: ' + (fv('fhPvFarmaco') || '—'));
+        lines.push('Tratamiento validado: ' + (treatment.farmaco_nombre || treatment.nombre_comercial || '—'));
         lines.push('Principio activo: ' + (pa || '—'));
-        lines.push('Presentación/dosis: ' + (fv('fhPvDosis') || '—'));
-        lines.push('Vía: ' + (fv('fhPvVia') || '—'));
-        lines.push('Pauta: ' + (getPautaLabelForExport() || '—'));
+        lines.push('Presentación/dosis: ' + (treatment.dosis_texto || treatment.presentacion || '—'));
+        lines.push('Vía: ' + (treatment.via || '—'));
+        lines.push('Pauta: ' + (treatment.pauta || '—'));
         var meta = getSnapshotMetaForExport();
         if (meta) {
             lines.push('Código nacional: ' + (meta.codigo_nacional || '—'));
@@ -478,17 +773,12 @@
         clearCipNotice();
 
         if (!patient) {
-            var fieldsToClear = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica'];
+            var fieldsToClear = ['fhPvServicio', 'fhPvPatologia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica'];
             for (var i = 0; i < fieldsToClear.length; i++) {
                 var el = document.getElementById(fieldsToClear[i]);
                 if (el) el.value = '';
             }
-            setPautaFromContext('');
-            var otroInput = document.getElementById('fhPvPautaOtro');
-            if (otroInput) {
-                otroInput.value = '';
-                otroInput.classList.add('hidden');
-            }
+            clearTreatmentForm();
             var grid = document.getElementById('fhPvTratamientoGrid');
             if (grid) F.clearChildren(grid);
             var drugSearchInput = document.getElementById('fhPvDrugSearch');
@@ -500,22 +790,13 @@
             return;
         }
 
-        F.setValue('fhPvCip', patient.cip);
-        F.setValue('fhPvServicio', patient.servicio);
-        F.setValue('fhPvPatologia', patient.patologia);
-        F.setValue('fhPvFarmaco', patient.farmaco);
-        F.setValue('fhPvDosis', patient.dosis);
-        setPautaFromContext(patient.pauta);
-        F.setValue('fhPvVia', patient.via);
-        F.setValue('fhPvFechaValidacion', patient.fechaSolicitud);
-        F.setValue('fhPvInduccionSolicitada', patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
-        F.setValue('fhPvAnalitica', patient.analitica);
+        applyContext({ cip: patient.cip, patient: patient });
 
         var C = getCatalog();
         if (C && C.clearSnapshot) C.clearSnapshot();
-        applyTratamientoValidado({ patient: patient });
+        applyTratamientoValidado({ patient: patient, cip: patient.cip });
 
-        hideDrugAutocomplete();
+        showDrugAutocomplete();
         clearCipNotice();
 
         var banner = document.getElementById('fhPvNoCipBanner');
@@ -635,12 +916,10 @@
         var C = getCatalog();
         if (!C || !drug) return;
 
-        F.setValue('fhPvFarmaco', drug.display_name || drug.nombre_comercial || '');
-        F.setValue('fhPvDosis', drug.dosis || drug.nombre_presentacion || '');
-        F.setValue('fhPvVia', drug.via || '');
-
         C.selectDrug(drug);
-        applyTratamientoValidado({});
+        var treatment = buildPrimaryTreatmentFromSelection(drug);
+        setTreatmentForm(treatment);
+        applyTratamientoValidado(getCurrentContext());
 
         clearDrugAutocompleteDropdown();
         var searchInput = document.getElementById('fhPvDrugSearch');
@@ -711,15 +990,13 @@
     }
 
     function getSnapshotMetaForExport() {
-        var C = getCatalog();
-        if (!C) return null;
-        var snap = C.getSnapshot ? C.getSnapshot() : C.selectedSnapshot;
-        if (!snap || !snap.selected_drug_id) return null;
+        var treatment = getCurrentPrimaryTreatment();
+        if (!treatment || !treatment.selected_drug_id) return null;
         return {
-            codigo_nacional: snap.codigo_nacional_snapshot || '',
-            nregistro: snap.nregistro_snapshot || '',
-            source_type: snap.source_type || '',
-            selected_drug_id: snap.selected_drug_id || ''
+            codigo_nacional: treatment.codigo_nacional || '',
+            nregistro: treatment.nregistro || '',
+            source_type: treatment.source_type || '',
+            selected_drug_id: treatment.selected_drug_id || ''
         };
     }
 
@@ -737,6 +1014,29 @@
         if (btn) btn.addEventListener('click', searchCIP);
     }
 
+    function initTreatmentFormEvents() {
+        ['fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvPautaOtro'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', function () {
+                    applyTratamientoValidado(getCurrentContext());
+                });
+            }
+        });
+        var pautaSelect = document.getElementById('fhPvPauta');
+        if (pautaSelect) {
+            pautaSelect.addEventListener('change', function () {
+                applyTratamientoValidado(getCurrentContext());
+            });
+        }
+    }
+
+    window.FarmaciaPrimeraVisita = {
+        buildPrimaryTreatmentFromContext: buildPrimaryTreatmentFromContext,
+        buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
+        getCurrentPrimaryTreatment: getCurrentPrimaryTreatment
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         const ctx = F.getQueryContext();
 
@@ -753,9 +1053,8 @@
         setupPromsToggle();
         initCipSearch();
         initDrugAutocomplete();
+        initTreatmentFormEvents();
 
-        // El autocomplete de fármacos debe estar siempre disponible,
-        // tanto si hay paciente pre-cargado como si no
         showDrugAutocomplete();
 
         const exportTxt = document.getElementById('fhPvExportTxt');
@@ -765,21 +1064,15 @@
 
         const exportCsv = document.getElementById('fhPvExportCsv');
         if (exportCsv) exportCsv.addEventListener('click', () => {
-            var pa = getPrincipioActivo();
+            var treatment = getCurrentPrimaryTreatment();
             var dlqiTotalExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getDLQITotal() : '';
             var dlqiInterpExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? (document.getElementById('fhPvDlqiInterp') && document.getElementById('fhPvDlqiInterp').textContent || '').replace(/^ — /, '').trim() : '';
             var evaDolorExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getEVADolor() : '';
             var evaPruritoExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
             var meta = getSnapshotMetaForExport();
-            var pautaObj = getPautaObjectForExport();
-            var pautaCodigo = pautaObj ? pautaObj.pauta_codigo : '—';
-            var pautaLabel = pautaObj ? pautaObj.pauta_label : '—';
-            var pautaIntervalo = pautaObj ? pautaObj.pauta_intervalo_dias : '—';
-            var pautaUnidad = pautaObj ? pautaObj.pauta_unidad : '—';
-            var pautaOtroTexto = pautaObj ? (pautaObj.pauta_otro_texto || '—') : '—';
             var rows = [
                 ['ID', 'FechaExportacion', 'CIP', 'Servicio', 'Patologia', 'TratamientoValidado', 'PrincipioActivo', 'PresentacionDosis', 'Pauta', 'PautaCodigo', 'PautaLabel', 'PautaIntervaloDias', 'PautaUnidad', 'PautaOtroTexto', 'Via', 'CodigoNacional', 'NRegistro', 'OrigenCatalogo', 'SelectedDrugId', 'FechaPrimeraVisita', 'InduccionRealizada', 'PROMBasal', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'Observaciones'],
-                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', getPautaLabelForExport() || '—', pautaCodigo, pautaLabel, pautaIntervalo, pautaUnidad, pautaOtroTexto, fv('fhPvVia') || '—', (meta && meta.codigo_nacional) || '—', (meta && meta.nregistro) || '—', (meta && meta.source_type) || '—', (meta && meta.selected_drug_id) || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
+                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', treatment.farmaco_nombre || treatment.nombre_comercial || '—', treatment.principio_activo || '—', treatment.dosis_texto || treatment.presentacion || '—', treatment.pauta || '—', treatment.pauta_codigo || '—', treatment.pauta_label || '—', treatment.pauta_intervalo_dias != null ? treatment.pauta_intervalo_dias : '—', treatment.pauta_unidad || '—', treatment.pauta_otro_texto || '—', treatment.via || '—', (meta && meta.codigo_nacional) || '—', (meta && meta.nregistro) || '—', (meta && meta.source_type) || '—', (meta && meta.selected_drug_id) || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {

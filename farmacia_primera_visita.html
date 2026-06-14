@@ -104,10 +104,11 @@
         <div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio"></div>
         <div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia"></div>
     </div>
-    <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco activo / validado</label><input class="form-control" id="fhPvFarmaco"></div><div class="form-group"><label for="fhPvDosis">Dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><select class="form-select" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
+    <div class="notice-box notice-box--info" id="fhPvTreatmentNotice"><i class="fas fa-info-circle" aria-hidden="true"></i><span>El tratamiento principal se edita en el bloque inferior “Tratamiento validado por Farmacia”.</span></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvFechaValidacion">Fecha solicitud / validación</label><input class="form-control" id="fhPvFechaValidacion"></div><div class="form-group"><label for="fhPvInduccionSolicitada">Inducción solicitada</label><input class="form-control" id="fhPvInduccionSolicitada"></div><div class="form-group"><label for="fhPvAnalitica">Analítica / vacunación</label><input class="form-control" id="fhPvAnalitica"></div></div>
 </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco principal / validado</label><input class="form-control" id="fhPvFarmaco"></div><div class="form-group"><label for="fhPvDosis">Presentación / dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><select class="form-select" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
     <div class="info-grid" id="fhPvTratamientoGrid"></div>
     <div id="fhPvAutocompleteBlock" class="hidden">
         <h3 class="card-title card-title--tight"><i class="fas fa-search"></i> Buscar fármaco en catálogo</h3>
@@ -163,6 +164,7 @@
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
             <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
-    <script src="scripts/farmacia_primera_visita.js?v=20260614-wo6-b"></script>
+            <script src="scripts/farmacia_tratamiento_common.js?v=20260614-wo7c2"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260614-wo7d"></script>
         </body>
         </html>

@@ -408,3 +408,17 @@ Corregir la selección por defecto del tratamiento principal y endurecer la norm
 - `buildTreatmentFromPatient()` ya no devuelve ciegamente `lines[0]`; prioriza línea principal explícita y conserva `paciente_cip` en shape vacío.
 - `normalizeTipoRelacion()` deja de convertir `sin_cambios` y `base` en `principal`.
 - Se amplía la cobertura del check con casos de multibiológico desordenado, snapshot real, summary y mapeo de vía.
+
+---
+
+## WO7D — Primera visita alineada con contrato común de tratamiento
+
+**Estado:** completada técnicamente, pendiente de revisión Cora/Sil  
+**Alcance:**
+Primera visita deja de tener captura duplicada del tratamiento principal y pasa a apoyarse en `FarmaciaTratamiento` como normalizador común.
+
+**Importante:**
+WO7D no modifica validación, seguimiento ni dashboard.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.  
+No se toca `main` ni GitHub Pages.
