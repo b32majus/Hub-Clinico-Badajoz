@@ -498,9 +498,22 @@
         if (!board || !cards || !empty || !F.getPendingValidationPatients || !F.isEnfermeriaPatient) return;
         F.clearChildren(cards);
         var patients = F.getPendingValidationPatients();
-        // Filtrar: los pacientes de Enfermería que NO son OK FARMACIA no deben aparecer aquí
+
+        // Detectar si hay datos importados desde Excel (Enfermería o Farmacia)
+        var hasImportedData = false;
+        if (window.FarmaciaDataImports && typeof window.FarmaciaDataImports.getImportedPatients === 'function') {
+            var importedPats = window.FarmaciaDataImports.getImportedPatients();
+            hasImportedData = importedPats && importedPats.length > 0;
+        }
+
         var filtered = patients.filter(function (p) {
-            return !F.isEnfermeriaPatient(p);
+            if (F.isEnfermeriaPatient(p)) return false;
+            // Si hay datos importados, ocultar fallback demo
+            if (hasImportedData) {
+                var src = String(p.importSource || '').toLowerCase();
+                if (src === 'demo' || src === '') return false;
+            }
+            return true;
         });
         empty.classList.toggle('hidden', filtered.length > 0);
         if (!filtered.length) return;

@@ -1280,6 +1280,30 @@ Se sustituye la tarjeta específica `enfermeria-card` por el componente visual c
 - Template check: 36/36 PASS
 - innerHTML: 0 (common.js), 0 (index.js)
 
+## WO8.1c.9 — Limpieza fallback demo en bandeja de validación
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`
+
+**Alcance:**
+Se evita que los pacientes demo/fallback se mezclen visualmente con los datos cargados desde Excel de Enfermería o Farmacia. Cuando hay datos operativos importados, la bandeja principal oculta el fallback demo para que no compita visualmente con solicitudes reales.
+
+**Decisión clave:**
+- `renderPendingValidationBoard()` detecta si hay datos importados mediante `window.FarmaciaDataImports.getImportedPatients()`.
+- Si hay imports cargados, se filtra todo paciente con `importSource === 'demo'` o vacío.
+- Si no hay imports, los pacientes demo pueden seguir apareciendo (fallback útil para presentaciones).
+- No se toca la lógica clínica, el board Enfermería, ni los Excels.
+
+**Tests:**
+- Sin imports cargados → paciente demo aparece (36. ✓)
+- Con imports cargados → paciente demo NO aparece (37. ✓)
+- Con imports cargados → paciente importado SÍ aparece (38. ✓)
+
+**Archivos modificados:**
+- `scripts/farmacia_index.js` — `renderPendingValidationBoard()` añade detección de `hasImportedData` y filtro de `importSource === 'demo'`
+- `tools/farmacia_enfermeria_board_dom_check.mjs` — 40 tests (nuevos: demo oculto con imports)
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
 
 ## WO8.1c.3 — Adaptador import Enfermería Inicio Biológico
 

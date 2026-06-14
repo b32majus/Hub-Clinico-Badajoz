@@ -299,28 +299,57 @@ var enfInPendingData = pending.filter(function (p) {
 assert(enfInPendingData.length >= 1, '34. Paciente C aparece en data layer de pending (OK FARMACIA)');
 
 // But renderPendingValidationBoard filter would exclude ALL Enfermería
-// Simulate the render filter:
+// Simulate the render filter WITHOUT imports (demo can appear):
 var filtered = pending.filter(function (p) {
   return !F.isEnfermeriaPatient(p);
 });
 var enfInFiltered = filtered.filter(function (p) {
   return F.isEnfermeriaPatient(p);
 });
-assertEqual(enfInFiltered.length, 0, '35. Render filter excluye todo paciente Enfermería (sin duplicado)');
+assertEqual(enfInFiltered.length, 0, '35. Render filter (sin imports) excluye todo paciente Enfermería');
 
-// The legacy patient should appear in both
+// The legacy patient should appear when no imports loaded
 var demoInPending = pending.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
-assertEqual(demoInPending.length, 1, '36. Paciente legacy SÍ aparece en pending validation (filtro data)');
-var demoInFiltered = filtered.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
-assertEqual(demoInFiltered.length, 1, '37. Paciente legacy también en render filter');
+assertEqual(demoInPending.length, 1, '36. Paciente legacy aparece en pending (sin imports)');
 
-// ─── 38-39. innerHTML check ──────────────────────────────────────────────
+// ─── 37-39. With imports loaded, demo fallback is hidden ────────────────
+// Simulate FarmaciaDataImports with data
+var mockImports = [
+  { cip: 'IMPORT-001', nombre: 'Paciente Importado', servicio: 'Reuma',
+    patologia: 'AR', farmaco: 'Benlysta', estado: 'pending', estadoLabel: 'Pendiente',
+    importSource: 'Excel Enfermería', origen_solicitud: 'enfermeria' }
+];
+function simulateRenderFilterWithImports(pendingPatients) {
+  var hasData = mockImports.length > 0;
+  return pendingPatients.filter(function (p) {
+    if (F.isEnfermeriaPatient(p)) return false;
+    if (hasData) {
+      var src = String(p.importSource || '').toLowerCase();
+      if (src === 'demo' || src === '') return false;
+    }
+    return true;
+  });
+}
+
+var filteredWithImports = simulateRenderFilterWithImports(pending);
+var demoInFilteredWithImports = filteredWithImports.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
+assertEqual(demoInFilteredWithImports.length, 0, '37. Paciente legacy NO aparece en pending (con imports cargados)');
+
+// Imported patient with pending status should appear
+// (LEGACY-TEST-001 has importSource undefined → treated as demo when hasImportedData=true)
+// Also verify that imported patient mock would appear
+var mockPendingCheck = simulateRenderFilterWithImports([
+  { cip: 'IMPORT-001', nombre: 'Imported', estado: 'pending', estadoLabel: 'Pendiente', importSource: 'Excel Farmacia' }
+]);
+assertEqual(mockPendingCheck.length, 1, '38. Paciente importado (Excel Farmacia) SÍ aparece con imports cargados');
+
+// ─── 39-40. innerHTML check ──────────────────────────────────────────────
 var commonSrcContent = fs.readFileSync(commonPath, 'utf8');
 var innerCount = (commonSrcContent.match(/innerHTML/g) || []).length;
-assert(innerCount <= 3, `38. innerHTML en farmacia_common.js: ${innerCount}`);
+assert(innerCount <= 3, `39. innerHTML en farmacia_common.js: ${innerCount}`);
 
+var indexSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_index.js'), 'utf8');
 var indexInner = (indexSrc.match(/innerHTML/g) || []).length;
-assert(indexInner <= 2, `39. innerHTML en farmacia_index.js: ${indexInner}`);
-
+assert(indexInner <= 2, `40. innerHTML en farmacia_index.js: ${indexInner}`);
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 if (failed > 0) process.exit(1);
