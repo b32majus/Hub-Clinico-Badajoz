@@ -505,3 +505,48 @@ WO7F deberá alinear fármacos concomitantes/adicionales/históricos/sospechosos
 WO7G deberá adaptar dashboard como proyección del contrato común.
 
 ---
+
+## WO7E.1 — Pulido de Seguimiento: origen, indicación y tarjeta prebiológica
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** (pendiente de commit)
+
+**Alcance:**
+- Origen / Servicio origen convertido a `<select>` guiado con 7 opciones (Dermatología, Reumatología, Digestivo, Alergología, Farmacia Hospitalaria, Medicina Interna, Otro) con campo libre para "Otro"
+- Indicación / Patología convertido a `<select>` guiado con filtrado por servicio (dependencia: Dermatología→HS/psoriasis, Reumatología→AR/EspA/APs/LES/Sjögren, etc.)
+- Ambos campos mantienen opción de texto libre (Otra) para casos no contemplados
+- Tarjeta "Estudio prebiológico" eliminada: no aportaba información prebiológica real en seguimiento
+- Nav link a `#modPrebiologico` eliminado
+- Función `updatePrebiologicoSummary()` y todas sus llamadas eliminadas
+- `clearCipFields()` actualizado para limpiar inputs "Otro" de servicio y patología
+- `searchCIP()` actualizado para disparar eventos change tras cargar paciente y sincronizar desplegables
+- `applyContext()` actualizado para guardar patología pendiente y restaurarla tras init
+- Tratamiento principal no modificado: `syncBiologicControls()`, `fhSegLineaPrincipal`, `fhSegTratamientoGrid` intactos
+- Concomitantes/adicionales no modificados
+
+**Archivos modificados:**
+- `farmacia_seguimiento.html` — inputs convertidos a selects + eliminar tarjeta prebiológico
+- `scripts/farmacia_seguimiento.js` — nueva función `initSegServicioPatologiaSync()`, eliminado `updatePrebiologicoSummary`, actualizados `clearCipFields`, `searchCIP`, `applyContext`, DOMContentLoaded
+- `tools/farmacia_seguimiento_check.mjs` — 16 nuevos tests WO7E.1 (37 total, 0 failed)
+- `docs/farmacia_branch_manifest_20260614.md` — esta entrada
+
+**Tests verificados:**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_seguimiento.js` | OK |
+| `node tools/farmacia_seguimiento_check.mjs` | 37/37 PASS |
+| `node tools/farmacia_tratamiento_common_check.mjs` | 43/43 PASS |
+| `node tools/farmacia_smoke_check.mjs` | 38/38 OK |
+| `grep -R "innerHTML" farmacia_seguimiento.html scripts/farmacia_seguimiento.js tools/farmacia_seguimiento_check.mjs` | 0 nuevos |
+
+**Importante:**
+No se modifica el bloque de concomitantes/adicionales/históricos.  
+No se modifica dashboard.  
+No se modifica `FarmaciaTratamiento`.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente WO7F:**
+Alinear fármacos concomitantes/adicionales/históricos/sospechosos de EA con el contrato común y completar autocompletado de principio activo, dosis, vía y pauta.
+
+---

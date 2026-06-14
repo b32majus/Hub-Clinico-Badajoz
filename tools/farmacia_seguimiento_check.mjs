@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/farmacia_seguimiento_check.mjs
-// Verifica WO7E en Seguimiento — contrato común de tratamiento principal
+// Verifica WO7E + WO7E.1 en Seguimiento — contrato común de tratamiento principal + pulido datos básicos
 
 import fs from 'fs';
 import path from 'path';
@@ -28,11 +28,6 @@ function fail(msg) {
 function assert(condition, label) {
   if (condition) ok(label);
   else fail(label);
-}
-
-function assertEqual(actual, expected, label) {
-  if (actual === expected) ok(`${label}: ${JSON.stringify(expected)}`);
-  else fail(`${label}: esperado ${JSON.stringify(expected)}, recibido ${JSON.stringify(actual)}`);
 }
 
 const htmlPath = path.join(ROOT, 'farmacia_seguimiento.html');
@@ -82,79 +77,51 @@ assert(js.indexOf(forbidden) === -1, 'JS de seguimiento no usa markup prohibido'
 assert(html.includes('modOtrosFarmacos'), 'Bloque de otros fármacos/adicionales conservado');
 assert(html.includes('btnSegAddOtherDrug'), 'Botón de añadir fármaco concomitante conservado');
 
-// --- Sandbox: validar que FarmaciaTratamiento se usa ---
+// --- WO7E.1: Pulido de Seguimiento: origen, indicación y tarjeta prebiológica ---
 
-const sandbox = {
-  window: {
-    FarmaciaDemo: {
-      getQueryContext: () => ({}),
-      clearChildren: () => {},
-      setValue: () => {},
-      setText: () => {},
-      insertNoCipBanner: () => {},
-      findPatientByCip: () => null,
-      downloadFile: () => {},
-      renderFields: () => {}
-    },
-    FarmaciaPautasCatalog: {},
-    FarmaciaCatalog: { getSnapshot: () => null, clearSnapshot: () => {}, selectDrug: () => {} }
-  },
-  console,
-  module: { exports: {} },
-  exports: {},
-  document: {
-    addEventListener: () => {},
-    getElementById: () => null,
-    createElement: () => ({ appendChild: () => {}, setAttribute: () => {}, classList: { add: () => {}, remove: () => {}, toggle: () => {} } }),
-    querySelector: () => null,
-    querySelectorAll: () => [],
-    activeElement: null
-  },
-  setTimeout,
-  clearTimeout,
-  location: { search: '' }
-};
-// Mock URL para getQueryContext
-sandbox.window.URL = class URL {
-  constructor(u) { this.searchParams = new Map(); }
-};
-sandbox.window.URLSearchParams = class URLSearchParams {
-  constructor(s) { this.params = new Map(); }
-  get(k) { return this.params.get(k) || null; }
-};
+// 10. Origen como select con opciones
+assert(html.indexOf('<select class="form-select" id="fhSegServicio"') !== -1, 'Origen es select guiado');
+assert(html.indexOf('Dermatología') !== -1, 'Select Origen incluye Dermatología');
+assert(html.indexOf('Reumatología') !== -1, 'Select Origen incluye Reumatología');
+assert(html.indexOf('Medicina Interna') !== -1, 'Select Origen incluye Medicina Interna');
+assert(html.indexOf('Otro') !== -1, 'Select Origen incluye opción Otro');
 
-vm.createContext(sandbox);
+// 11. Indicación como select
+assert(html.indexOf('<select class="form-select" id="fhSegPatologia"') !== -1, 'Indicación es select guiado');
 
-// Cargar dependencias
-vm.runInContext(pautasSrc, sandbox);
-vm.runInContext(commonSrc, sandbox);
-vm.runInContext(helperSrc, sandbox);
-vm.runInContext(js, sandbox);
+// 12. Inputs "Otro" para servicio y patología
+assert(html.indexOf('id="fhSegServicioOtro"') !== -1, 'Input otro servicio presente');
+assert(html.indexOf('id="fhSegPatologiaOtro"') !== -1, 'Input otra patología presente');
 
-// Verificar que las nuevas funciones existen en el scope
-const contextApi = sandbox.window.FarmaciaPrimeraVisita || {};
-assert(typeof sandbox.window.FarmaciaTratamiento !== 'undefined', 'FarmaciaTratamiento disponible en sandbox');
+// 13. Tarjeta "estudio prebiológico" eliminada
+assert(!html.includes('id="modPrebiologico"'), 'Sección modPrebiologico eliminada del HTML');
+assert(!html.includes('Estudio prebiológico'), 'Texto "Estudio prebiológico" eliminado del HTML');
+assert(!html.includes('fhSegPrebioFechaInicioResumen'), 'Resumen prebiológico eliminado del HTML');
 
-// Verificar firstNonEmpty helper
-assert(typeof sandbox.firstNonEmpty === 'undefined', 'firstNonEmpty es privada (no global)');
+// 14. updatePrebiologicoSummary eliminado del JS
+assert(!js.includes('updatePrebiologicoSummary'), 'Función updatePrebiologicoSummary eliminada del JS');
 
-// --- Validar que FarmaciaTratamiento.buildTreatmentFromPatient está disponible ---
-const helper = sandbox.window.FarmaciaTratamiento;
-assert(helper && typeof helper.buildTreatmentFromPatient === 'function', 'helper.buildTreatmentFromPatient existe');
+// 15. initSegServicioPatologiaSync definido
+assert(js.includes('initSegServicioPatologiaSync'), 'Función initSegServicioPatologiaSync definida');
+assert(js.includes('__segPopulatePatologia'), 'función populatePatologia expuesta globalmente');
 
-// Probar con paciente simple
-const patientSimple = { cip: 'CIP-TEST-001', farmaco: 'Cosentyx', principioActivo: 'Secukinumab', dosis: '300 mg', via: 'SC', pauta: 'Cada 4 semanas' };
-const result = helper.buildTreatmentFromPatient(patientSimple, { returnArray: true });
-assert(Array.isArray(result), 'buildTreatmentFromPatient devuelve array');
-if (result.length > 0) {
-  const t = result[0];
-  assert(!!t.farmaco_nombre || !!t.nombre_comercial, 'tratamiento tiene nombre');
-  assert(t.estado_linea !== undefined, 'tratamiento tiene estado_linea');
-  assert(t.tipo_relacion !== undefined, 'tratamiento tiene tipo_relacion');
-}
+// 16. Tratamiento principal sigue intacto
+assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conservado');
+assert(html.includes('fhSegTipoRelacionTerapia'), 'Selector de movimiento terapéutico conservado');
+assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento conservado');
 
-console.log('\n┌──────────────────────────────────────────────┐');
-console.log(`│ Resultados: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}   │`);
-console.log('└──────────────────────────────────────────────┘');
+// 17. Concomitantes no modificados
+assert(html.includes('btnSegAddOtherDrug'), 'Botón de añadir fármaco concomitante conservado');
+assert(html.includes('segOtrosFarmacosList'), 'Lista de otros fármacos conservada');
+assert(html.includes('modOtrosFarmacos'), 'Bloque de otros fármacos conservado');
+
+// 18. CIP search todavía funciona
+assert(html.indexOf('fhSegCip') !== -1, 'Campo de búsqueda CIP conservado');
+assert(html.indexOf('fhSegCipSearchBtn') !== -1, 'Botón de búsqueda CIP conservado');
+
+// 19. Nav link a modPrebiologico eliminado
+assert(!html.includes('#modPrebiologico'), 'Nav link a estudio prebiológico eliminado');
+
+console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);

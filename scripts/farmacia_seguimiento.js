@@ -667,15 +667,6 @@
         showCausalityNavNotice();
     }
 
-    function updatePrebiologicoSummary() {
-        var fechaInicio = byId('fhSegFechaInicio');
-        var eaPrevios = byId('fhSegEaPrevios');
-        var origen = byId('fhSegOrigenCatalogo');
-        if (byId('fhSegPrebioFechaInicioResumen')) byId('fhSegPrebioFechaInicioResumen').textContent = fechaInicio ? textOrDash(fechaInicio.value) : '—';
-        if (byId('fhSegPrebioEaPreviosResumen')) byId('fhSegPrebioEaPreviosResumen').textContent = eaPrevios ? textOrDash(eaPrevios.value) : '—';
-        if (byId('fhSegPrebioOrigenResumen')) byId('fhSegPrebioOrigenResumen').textContent = origen ? textOrDash(origen.value) : '—';
-    }
-
     function renderEaSospechosos(selectedIds) {
         updateSuspectDrugSelector();
     }
@@ -774,7 +765,6 @@
             if (grid) F.clearChildren(grid);
         }
         updateSuspectDrugSelector();
-        updatePrebiologicoSummary();
     }
 
     function applyContext() {
@@ -787,7 +777,12 @@
 
         F.setValue('fhSegCip', ctx.cip);
         F.setValue('fhSegServicio', ctx.servicio || ctx.patient?.servicio);
-        F.setValue('fhSegPatologia', ctx.patologia || ctx.patient?.patologia);
+        // Guardar valor de patología para restaurarlo tras initSegServicioPatologiaSync
+        // (el select aún no tiene opciones pobladas)
+        var patSelectPending = document.getElementById('fhSegPatologia');
+        if (patSelectPending) {
+            patSelectPending.dataset.pendingPatologia = ctx.patologia || ctx.patient?.patologia || '';
+        }
 
         const snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
 
@@ -860,7 +855,6 @@
         }
         if (!ctx.patient) syncBiologicControls(null);
         if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhSegNoCipBanner');
-        updatePrebiologicoSummary();
         updateSuspectDrugSelector();
     }
 
@@ -881,6 +875,11 @@
         var pautaOtro = document.getElementById('fhSegNuevaPautaOtro');
         if (pautaSelect) pautaSelect.value = '';
         if (pautaOtro) { pautaOtro.value = ''; pautaOtro.classList.add('hidden'); }
+        // Limpiar inputs "Otro" de servicio y patología
+        var segServicioOtro = document.getElementById('fhSegServicioOtro');
+        if (segServicioOtro) { segServicioOtro.value = ''; segServicioOtro.classList.add('hidden'); }
+        var segPatologiaOtro = document.getElementById('fhSegPatologiaOtro');
+        if (segPatologiaOtro) { segPatologiaOtro.value = ''; segPatologiaOtro.classList.add('hidden'); }
     }
 
     function clearCipNotice() {
@@ -927,7 +926,12 @@
 
         F.setValue('fhSegCip', patient.cip);
         F.setValue('fhSegServicio', patient.servicio);
+        // Disparar cambio para sincronizar patología y visibilidad "Otro"
+        var servSelectEvt = document.getElementById('fhSegServicio');
+        if (servSelectEvt) servSelectEvt.dispatchEvent(new Event('change'));
         F.setValue('fhSegPatologia', patient.patologia);
+        var patSelectEvt = document.getElementById('fhSegPatologia');
+        if (patSelectEvt) patSelectEvt.dispatchEvent(new Event('change'));
         F.setValue('fhSegFarmaco', patient.farmaco);
         F.setValue('fhSegDosisActual', patient.dosis);
         F.setValue('fhSegPautaActual', patient.pauta);
@@ -1012,6 +1016,97 @@
         });
         var btn = document.getElementById('fhSegCipSearchBtn');
         if (btn) btn.addEventListener('click', searchCIP);
+    }
+
+    function initSegServicioPatologiaSync() {
+        var servicioMap = {
+            'Dermatología': ['Hidradenitis supurativa', 'Psoriasis', 'Dermatitis atópica', 'Vitíligo', 'Alopecia areata', 'Otra'],
+            'Reumatología': ['Artritis Reumatoide (AR)', 'Espondiloartritis (EspA)', 'Artritis Psoriásica (APs)', 'LES', 'Síndrome de Sjögren', 'Otra'],
+            'Digestivo': ['Enfermedad de Crohn', 'Colitis ulcerosa', 'Otra'],
+            'Alergología': ['Urticaria crónica espontánea', 'Otra'],
+            'Farmacia Hospitalaria': ['Otra'],
+            'Medicina Interna': ['Otra'],
+            'Otro': ['Otra']
+        };
+        // Consultar FarmaciaDemo.patologiaPorServicio si existe para datos adicionales
+        var extMap = F && F.patologiaPorServicio;
+        if (extMap) {
+            Object.keys(extMap).forEach(function (key) {
+                var mapped = key.charAt(0).toUpperCase() + key.slice(1);
+                if (!servicioMap[mapped] && mapped !== 'Otro') {
+                    servicioMap[mapped] = extMap[key].slice();
+                    if (servicioMap[mapped].indexOf('Otra') === -1 && servicioMap[mapped].indexOf('Otro') === -1) {
+                        servicioMap[mapped].push('Otra');
+                    }
+                }
+            });
+        }
+        var servicioSelect = document.getElementById('fhSegServicio');
+        var patologiaSelect = document.getElementById('fhSegPatologia');
+        var patologiaOtro = document.getElementById('fhSegPatologiaOtro');
+        var servicioOtro = document.getElementById('fhSegServicioOtro');
+        if (!servicioSelect || !patologiaSelect) return;
+
+        function populatePatologia(servicioValue) {
+            F.clearChildren(patologiaSelect);
+            var placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Seleccionar...';
+            patologiaSelect.appendChild(placeholder);
+            var pats = servicioMap[servicioValue] || [];
+            pats.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                patologiaSelect.appendChild(opt);
+            });
+            if (patologiaOtro) {
+                patologiaOtro.classList.add('hidden');
+                patologiaOtro.value = '';
+            }
+        }
+
+        servicioSelect.addEventListener('change', function () {
+            var val = this.value;
+            if (servicioOtro) {
+                servicioOtro.classList.toggle('hidden', val !== 'Otro');
+                if (val !== 'Otro') servicioOtro.value = '';
+            }
+            populatePatologia(val);
+        });
+
+        if (patologiaSelect) {
+            patologiaSelect.addEventListener('change', function () {
+                if (patologiaOtro) {
+                    patologiaOtro.classList.toggle('hidden', this.value !== 'Otra');
+                    if (this.value !== 'Otra') patologiaOtro.value = '';
+                }
+            });
+        }
+
+        // Si ya hay un valor precargado (desde applyContext), sincronizar patología
+        if (servicioSelect.value) {
+            populatePatologia(servicioSelect.value);
+            var servicioVal = servicioSelect.value;
+            if (servicioOtro) {
+                servicioOtro.classList.toggle('hidden', servicioVal !== 'Otro');
+            }
+        }
+        // Si ya hay patología precargada, mostrar input Otro si aplica
+        if (patologiaSelect.value === 'Otra' && patologiaOtro) {
+            patologiaOtro.classList.remove('hidden');
+        }
+        // Exponer para que searchCIP pueda sincronizar tras cargar paciente
+        window.__segPopulatePatologia = populatePatologia;
+
+        // Restaurar patología precargada por applyContext (dataset.pendingPatologia)
+        if (patologiaSelect.dataset.pendingPatologia) {
+            patologiaSelect.value = patologiaSelect.dataset.pendingPatologia;
+            if (patologiaSelect.value === 'Otra' && patologiaOtro) {
+                patologiaOtro.classList.remove('hidden');
+            }
+            delete patologiaSelect.dataset.pendingPatologia;
+        }
     }
 
     function getCatalog() {
@@ -1641,6 +1736,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();
         initCipSearch();
+        initSegServicioPatologiaSync();
         initSegDrugAutocomplete();
         populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
 
