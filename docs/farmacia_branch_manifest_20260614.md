@@ -898,3 +898,36 @@ No se implementa WO8.
 **Pendiente:**
 Revisión visual de Sil.  
 WO8 queda pendiente para export/persistencia.
+
+## WO7G.2.1 — Criterio visual de fármacos biológicos por marca comercial
+
+**Estado:** verificada, pendiente de revisión visual Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD:** `8990dac`
+
+**Alcance:**
+Se formaliza el criterio de visualización farmacéutica: en biológicos/biosimilares, la marca comercial o medicamento concreto se muestra como nombre principal y el principio activo como dato secundario/contextual.
+
+**Criterio aplicado en `renderTimelineTratamiento()`:**
+```
+tName = t.nombre_comercial || t.principio_activo || t.nombre_linea || t.farmaco_nombre
+```
+
+**Resultado para FH-004:**
+- **Orencia · Abatacept** — evento histórico con badge "Fin" + " — Histórico"
+- **Benlysta · Belimumab** — evento activo con badge "Activo" + " — Activo"
+- **Rixathon · Rituximab** — evento añadido con badge "Activo" + " — Activo"
+- Evento de cambio farmaco y cambios de pauta intactos
+
+**Tests:**
+- `node tools/farmacia_dashboard_paciente_check.mjs` — 37/37 PASS
+- `node tools/farmacia_seguimiento_check.mjs` — 116/116 PASS
+- `node tools/farmacia_tratamiento_common_check.mjs` — 43/43 PASS
+- `node tools/farmacia_smoke_check.mjs` — 38/38 OK
+
+**Importante:**
+No se modifica la rama demo.  
+No se modifica main.  
+No se modifica seguimiento, primera visita ni validación.  
+No se modifica JSON longitudinal.  
+No se modifica export CSV.
