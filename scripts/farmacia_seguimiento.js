@@ -90,14 +90,20 @@
         var select = byId(id);
         var otro = byId(otroId);
         if (!select) return;
-        select.innerHTML = '<option value="">Seleccionar...</option>';
-        if (P && P.getPautaOptions) {
+        F.clearChildren(select);
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Seleccionar...';
+        select.appendChild(placeholder);
+        if (P && typeof P.getPautaOptions === 'function') {
             P.getPautaOptions().forEach(function (opt) {
                 var option = document.createElement('option');
                 option.value = opt.value;
                 option.textContent = opt.label;
                 select.appendChild(option);
             });
+        } else {
+            console.warn('[farmacia_seguimiento] FarmaciaPautasCatalog no disponible para poblar pautas.');
         }
         select.addEventListener('change', function () {
             if (otro) {
@@ -112,8 +118,8 @@
         var otro = byId('fhSegNuevaPautaOtro');
         if (!select || !select.value) return '';
         if (select.value === 'OTRO') return otro ? otro.value : '';
-        var pauta = P && P.getPautaByCodigo ? P.getPautaByCodigo(select.value) : null;
-        return P && P.getLegacyPautaLabel ? P.getLegacyPautaLabel(pauta) : select.value;
+        var pauta = P && typeof P.getPautaByCodigo === 'function' ? P.getPautaByCodigo(select.value) : null;
+        return P && typeof P.getLegacyPautaLabel === 'function' ? P.getLegacyPautaLabel(pauta) : select.value;
     }
 
     function normalizeBiologicLine(line, index, patient) {
@@ -1650,8 +1656,14 @@
             var metaSeg = getSnapshotMetaForExportSeg();
             var selectedLine = getCurrentSelectedLine();
             var causalityCsv = getEaCausalidadSummary();
+            var pautaNormalizedSeg = (P && typeof P.normalizePautaLabel === 'function') ? P.normalizePautaLabel(fv('fhSegPautaActual')) : null;
+            var pautaSegCodigo = pautaNormalizedSeg ? pautaNormalizedSeg.pauta_codigo : '—';
+            var pautaSegLabel = pautaNormalizedSeg ? pautaNormalizedSeg.pauta_label : '—';
+            var pautaSegIntervalo = pautaNormalizedSeg ? pautaNormalizedSeg.pauta_intervalo_dias : '—';
+            var pautaSegUnidad = pautaNormalizedSeg ? pautaNormalizedSeg.pauta_unidad : '—';
+            var pautaSegOtroTexto = pautaNormalizedSeg ? (pautaNormalizedSeg.pauta_otro_texto || '—') : '—';
             const rows = [
-                ['ID', 'Fecha', 'CIP', 'LineaPrincipal', 'EstadoLinea', 'MovimientoTerapeutico', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'OrigenCatalogoSourceType', 'SelectedDrugId', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EaSeguimientoPresente', 'EaSeguimientoGravedad', 'EaSeguimientoResuelto', 'EaFarmacoSospechoso', 'EaSeguimientoObservaciones', 'NaranjoScore', 'NaranjoCategoria', 'KLCategoria', 'CausalidadFinalFarmaceutica', 'Decision', 'AvisoCambioFarmaco'],
+                ['ID', 'Fecha', 'CIP', 'LineaPrincipal', 'EstadoLinea', 'MovimientoTerapeutico', 'TratamientoActual', 'PrincipioActivo', 'Dosis', 'Via', 'Pauta', 'PautaCodigo', 'PautaLabel', 'PautaIntervaloDias', 'PautaUnidad', 'PautaOtroTexto', 'OrigenCatalogoSourceType', 'SelectedDrugId', 'Optimizacion', 'MoriskyGreen', 'PROMs', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'EaSeguimientoPresente', 'EaSeguimientoGravedad', 'EaSeguimientoResuelto', 'EaFarmacoSospechoso', 'EaSeguimientoObservaciones', 'NaranjoScore', 'NaranjoCategoria', 'KLCategoria', 'CausalidadFinalFarmaceutica', 'Decision', 'AvisoCambioFarmaco'],
                 [
                     'FH-SEG-' + Date.now().toString(36).toUpperCase(),
                     new Date().toLocaleDateString('es-ES'),
@@ -1664,6 +1676,11 @@
                     fv('fhSegDosisActual') || '—',
                     fv('fhSegVia') || '—',
                     fv('fhSegPautaActual') || '—',
+                    pautaSegCodigo,
+                    pautaSegLabel,
+                    pautaSegIntervalo,
+                    pautaSegUnidad,
+                    pautaSegOtroTexto,
                     (metaSeg && metaSeg.source_type) || '—',
                     (metaSeg && metaSeg.selected_drug_id) || '—',
                     fv('fhSegOptimiza') || '—',

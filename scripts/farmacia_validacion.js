@@ -95,13 +95,21 @@
         var select = byId(id);
         var otro = byId(otroId);
         if (!select) return;
-        select.innerHTML = '<option value="">Seleccionar...</option>';
-        P.getPautaOptions().forEach(function (opt) {
-            var option = document.createElement("option");
-            option.value = opt.value;
-            option.textContent = opt.label;
-            select.appendChild(option);
-        });
+        F.clearChildren(select);
+        var placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Seleccionar...";
+        select.appendChild(placeholder);
+        if (P && typeof P.getPautaOptions === "function") {
+            P.getPautaOptions().forEach(function (opt) {
+                var option = document.createElement("option");
+                option.value = opt.value;
+                option.textContent = opt.label;
+                select.appendChild(option);
+            });
+        } else {
+            console.warn("[farmacia_validacion] FarmaciaPautasCatalog no disponible para poblar pautas.");
+        }
         select.addEventListener("change", function () {
             if (otro) {
                 otro.classList.toggle("hidden", select.value !== "OTRO");
@@ -203,9 +211,9 @@
             F.setValue("fhDermaFarmaco", p.farmaco);
             F.setValue("fhDermaDosis", p.dosis);
             if (p.pauta) {
-                var pautaObj = P.normalizePautaLabel(p.pauta);
-                F.setValue("fhDermaPauta", pautaObj.pauta_codigo);
-                if (pautaObj.pauta_codigo === "OTRO" && pautaObj.pauta_otro_texto) {
+                var pautaObj = P && typeof P.normalizePautaLabel === "function" ? P.normalizePautaLabel(p.pauta) : null;
+                F.setValue("fhDermaPauta", pautaObj ? pautaObj.pauta_codigo : "");
+                if (pautaObj && pautaObj.pauta_codigo === "OTRO" && pautaObj.pauta_otro_texto) {
                     F.setValue("fhDermaPautaOtro", pautaObj.pauta_otro_texto);
                     byId("fhDermaPautaOtro").classList.remove("hidden");
                 } else {
@@ -325,8 +333,11 @@
                 var select = byId("fhDermaPauta");
                 var value = select ? select.value : "";
                 if (value === "OTRO") return valueOrDash(byId("fhDermaPautaOtro").value);
-                var pautaObj = P.getPautaByCodigo(value);
-                return valueOrDash(P.getLegacyPautaLabel(pautaObj));
+                if (P && typeof P.getPautaByCodigo === "function" && typeof P.getLegacyPautaLabel === "function") {
+                    var pautaObj = P.getPautaByCodigo(value);
+                    return valueOrDash(P.getLegacyPautaLabel(pautaObj));
+                }
+                return valueOrDash(value);
             })(),
             induccion: byId("fhDermaInduccion").value === "si" ? "Sí" : (byId("fhDermaInduccion").value === "no" ? "No" : "—"),
             justificacion: valueOrDash(byId("fhDermaJustificacion").value || byId("fhHSMotivoClinico").value)
@@ -891,10 +902,11 @@
         var naranjoAnswers = readNaranjoAnswersFromDom();
         var klAnswers = readKarchLasagnaAnswersFromDom();
         var summary = currentTreatmentSummary();
+        var pautaNormalized = (P && typeof P.normalizePautaLabel === "function") ? P.normalizePautaLabel(summary.pauta) : null;
         var snap = C.getSnapshot();
         var rows = [
             [
-                "ID", "Fecha", "Servicio", "CIP", "Patologia", "Estado", "FarmacoSolicitado", "PrincipioActivo", "DosisPresentacion", "Via", "Pauta", "InduccionSolicitada", "Profesional", "VHB", "VHC", "VIH", "MotivoDenegacion", "SnapshotDrugID", "SnapshotSourceType", "CodigoNacional", "NRegistro",
+                "ID", "Fecha", "Servicio", "CIP", "Patologia", "Estado", "FarmacoSolicitado", "PrincipioActivo", "DosisPresentacion", "Via", "Pauta", "PautaCodigo", "PautaLabel", "PautaIntervaloDias", "PautaUnidad", "PautaOtroTexto", "InduccionSolicitada", "Profesional", "VHB", "VHC", "VIH", "MotivoDenegacion", "SnapshotDrugID", "SnapshotSourceType", "CodigoNacional", "NRegistro",
                 "NaranjoScore", "NaranjoCategoria", "KLCategoria", "CausalidadFinalFarmaceutica",
                 "NaranjoQ1", "NaranjoQ2", "NaranjoQ3", "NaranjoQ4", "NaranjoQ5", "NaranjoQ6", "NaranjoQ7", "NaranjoQ8", "NaranjoQ9", "NaranjoQ10",
                 "KLTemporal", "KLConocido", "KLAlternativa", "KLSuspendido", "KLMejora", "KLReadministracion", "KLReaparece",
@@ -912,6 +924,11 @@
                 summary.dosis,
                 summary.via,
                 summary.pauta,
+                pautaNormalized ? pautaNormalized.pauta_codigo : "—",
+                pautaNormalized ? pautaNormalized.pauta_label : "—",
+                pautaNormalized ? pautaNormalized.pauta_intervalo_dias : "—",
+                pautaNormalized ? pautaNormalized.pauta_unidad : "—",
+                pautaNormalized ? (pautaNormalized.pauta_otro_texto || "—") : "—",
                 summary.induccion,
                 byId("fhValFarmaceutico").textContent.trim(),
                 valueOrDash(byId("fhAnaliticaSerologiasVhb").value),

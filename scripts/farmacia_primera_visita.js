@@ -87,14 +87,20 @@
         var select = document.getElementById(id);
         var otro = document.getElementById(otroId);
         if (!select) return;
-        select.innerHTML = '<option value="">Seleccionar...</option>';
-        if (P && P.getPautaOptions) {
+        F.clearChildren(select);
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Seleccionar...';
+        select.appendChild(placeholder);
+        if (P && typeof P.getPautaOptions === 'function') {
             P.getPautaOptions().forEach(function (opt) {
                 var option = document.createElement('option');
                 option.value = opt.value;
                 option.textContent = opt.label;
                 select.appendChild(option);
             });
+        } else {
+            console.warn('[farmacia_primera_visita] FarmaciaPautasCatalog no disponible para poblar pautas.');
         }
         select.addEventListener('change', function () {
             if (otro) {
@@ -108,7 +114,7 @@
         var select = document.getElementById('fhPvPauta');
         var otro = document.getElementById('fhPvPautaOtro');
         if (!select) return;
-        var pautaObj = P && P.normalizePautaLabel ? P.normalizePautaLabel(value) : null;
+        var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(value) : null;
         if (pautaObj && pautaObj.pauta_codigo) {
             select.value = pautaObj.pauta_codigo;
             if (pautaObj.pauta_codigo === 'OTRO' && otro) {
@@ -132,8 +138,23 @@
         var otro = document.getElementById('fhPvPautaOtro');
         if (!select || !select.value) return '';
         if (select.value === 'OTRO') return otro ? otro.value.trim() : '';
-        var pauta = P && P.getPautaByCodigo ? P.getPautaByCodigo(select.value) : null;
-        return P && P.getLegacyPautaLabel ? P.getLegacyPautaLabel(pauta) : select.value;
+        var pauta = P && typeof P.getPautaByCodigo === 'function' ? P.getPautaByCodigo(select.value) : null;
+        return P && typeof P.getLegacyPautaLabel === 'function' ? P.getLegacyPautaLabel(pauta) : select.value;
+    }
+
+    function getPautaObjectForExport() {
+        var select = document.getElementById('fhPvPauta');
+        var otro = document.getElementById('fhPvPautaOtro');
+        if (!select || !select.value) return null;
+        if (select.value === 'OTRO') {
+            if (!(P && typeof P.getPautaByCodigo === 'function')) return null;
+            var otroObj = P.getPautaByCodigo('OTRO');
+            if (!otroObj) return null;
+            var cloned = JSON.parse(JSON.stringify(otroObj));
+            cloned.pauta_otro_texto = otro ? otro.value.trim() : '';
+            return cloned;
+        }
+        return P && typeof P.getPautaByCodigo === 'function' ? P.getPautaByCodigo(select.value) : null;
     }
 
     // ---- T12: DLQI data and functions ----
@@ -750,9 +771,15 @@
             var evaDolorExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getEVADolor() : '';
             var evaPruritoExport = (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) ? getEVAPrurito() : '';
             var meta = getSnapshotMetaForExport();
+            var pautaObj = getPautaObjectForExport();
+            var pautaCodigo = pautaObj ? pautaObj.pauta_codigo : '—';
+            var pautaLabel = pautaObj ? pautaObj.pauta_label : '—';
+            var pautaIntervalo = pautaObj ? pautaObj.pauta_intervalo_dias : '—';
+            var pautaUnidad = pautaObj ? pautaObj.pauta_unidad : '—';
+            var pautaOtroTexto = pautaObj ? (pautaObj.pauta_otro_texto || '—') : '—';
             var rows = [
-                ['ID', 'FechaExportacion', 'CIP', 'Servicio', 'Patologia', 'TratamientoValidado', 'PrincipioActivo', 'PresentacionDosis', 'Pauta', 'Via', 'CodigoNacional', 'NRegistro', 'OrigenCatalogo', 'SelectedDrugId', 'FechaPrimeraVisita', 'InduccionRealizada', 'PROMBasal', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'Observaciones'],
-                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', getPautaLabelForExport() || '—', fv('fhPvVia') || '—', (meta && meta.codigo_nacional) || '—', (meta && meta.nregistro) || '—', (meta && meta.source_type) || '—', (meta && meta.selected_drug_id) || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
+                ['ID', 'FechaExportacion', 'CIP', 'Servicio', 'Patologia', 'TratamientoValidado', 'PrincipioActivo', 'PresentacionDosis', 'Pauta', 'PautaCodigo', 'PautaLabel', 'PautaIntervaloDias', 'PautaUnidad', 'PautaOtroTexto', 'Via', 'CodigoNacional', 'NRegistro', 'OrigenCatalogo', 'SelectedDrugId', 'FechaPrimeraVisita', 'InduccionRealizada', 'PROMBasal', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'Observaciones'],
+                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', getPautaLabelForExport() || '—', pautaCodigo, pautaLabel, pautaIntervalo, pautaUnidad, pautaOtroTexto, fv('fhPvVia') || '—', (meta && meta.codigo_nacional) || '—', (meta && meta.nregistro) || '—', (meta && meta.source_type) || '—', (meta && meta.selected_drug_id) || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {
