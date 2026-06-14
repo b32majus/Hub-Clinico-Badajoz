@@ -605,7 +605,7 @@ No se toca `main` ni GitHub Pages.
 ## WO7F.1 — Cierre fino de Seguimiento farmacológico
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS como operador local, pendiente de revisión visual Sil/Cora)
-**HEAD de rama:** (pendiente de commit)
+**HEAD de rama:** `d27b6d8` (tras WO7F.1)
 
 **Alcance:**
 - Selector de fármaco sospechoso de EA ampliado: incluye tratamiento principal/líneas activas, fármacos concomitantes, adicionales, históricos y exposiciones con deduplicación por `seenIds`. Históricos/exposiciones se muestran como «Biológico previo/histórico» en lugar de excluirse.
