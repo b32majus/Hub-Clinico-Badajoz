@@ -272,6 +272,47 @@ assert(js.includes("opt.value = line.linea_id || line.tratamiento_id || ('BIO-' 
 assert(js.includes('applySelectedBiologicLine();'),
     'applySelectedBiologicLine se llama tras syncBiologicControls con la línea seleccionada exacta');
 
+// --- WO7H.3: Bugfix — candidatos de sospechoso EA ---
+
+// 51. getRelevantDrugCandidates dedup key usa linea_id con fallback tratamiento_id
+var rdcMatch = js.match(/function getRelevantDrugCandidates[\s\S]*?^    \}/m);
+var rdcBody = rdcMatch ? rdcMatch[0] : '';
+assert(rdcBody.includes("line.linea_id || line.tratamiento_id || line.id"),
+    'getRelevantDrugCandidates dedup key usa linea_id, tratamiento_id e id como fallback');
+
+// 52. getRelevantDrugCandidates incluye farmaco_nombre en name
+assert(rdcBody.includes('line.farmaco_nombre') && rdcBody.includes('line.nombre_comercial'),
+    'getRelevantDrugCandidates name usa farmaco_nombre antes de nombre_comercial');
+
+// 53. Candidates tienen campo prioridad para orden
+assert(rdcBody.includes('prioridad'), 'getRelevantDrugCandidates asigna prioridad a cada candidato');
+
+// 54. Candidates se ordenan antes de devolverse
+assert(rdcBody.includes('candidates.sort'), 'getRelevantDrugCandidates ordena candidatos antes de devolver');
+
+// 55. Prioridad 1 = principal, 5 = histórico
+assert(rdcBody.includes("prioridad: line.es_principal ? 1 : (line.estado_linea === 'historico' ? 5 : 2)"),
+    'Prioridad 1 para principal, 2 activo, 5 histórico en líneas biológicas');
+
+// 56. Concomitante prioridad 3, adicional prioridad 4
+assert(rdcBody.includes("'concomitante') p = 3"),
+    'Concomitante prioridad 3 (tercer orden)');
+assert(rdcBody.includes("'adicional') p = 4"),
+    'Adicional prioridad 4 (cuarto orden)');
+
+// 57. If candidates.length > 0, fallback DOM no silencia otras líneas (verificación de no regresión)
+assert(js.includes("if (!candidates.length)"),
+    'Fallback DOM solo se activa si NO hay candidatos de currentBiologicLines');
+
+// 58. WO7H.2 intacta: getCurrentSelectedLine usa matchVal con tratamiento_id
+assert(gcsBody.includes('matchVal'), 'getCurrentSelectedLine sigue usando matchVal (WO7H.2 no revertida)');
+
+// 59. updateSuspectDrugSelector usa candidates.length > 1 para opción múltiple
+assert(js.includes('candidates.length > 1'),
+    'Selector de sospechoso EA maneja múltiples candidatos');
+assert(js.includes("candidates.length === 1"),
+    'Selector de sospechoso EA tiene lógica para candidato único');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);

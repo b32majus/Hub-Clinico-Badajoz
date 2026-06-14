@@ -812,3 +812,44 @@ Fuente activa funcional sigue WO5.
 **Pendiente:**
 WO7G.2 podrá revisar timeline terapéutico o secundarios del dashboard si aporta valor visual real.  
 WO8/WO posterior revisará export/persistencia, incluyendo CSV.
+
+## WO7H.3 — Bugfix Seguimiento: candidatos de sospechoso EA
+
+**Estado:** completada técnicamente, pendiente de revisión visual Sil/Cora  
+**HEAD de rama:** (pendiente de commit)
+
+**Causa raíz:** `getRelevantDrugCandidates()` usaba `'line:' + line.linea_id` como clave de deduplicación. Las líneas normalizadas vía `buildTreatmentFromPatient()` tienen `tratamiento_id` pero no `linea_id`, por lo que todas las líneas generaban la misma clave `'line:undefined'`. Solo la primera línea del array (Abatacept, al ser la más antigua en `patient.biologicos`) pasaba la dedup, ocultando Belimumab, Rituximab y el resto de candidatos.
+
+**Corrección:**
+1. Clave de dedup ahora usa `line.linea_id || line.tratamiento_id || line.id || 'bio-' + index`
+2. Nombre visible de línea incluye `farmaco_nombre` como fallback
+3. Se añade campo `prioridad` y ordenación: principal (1) → activo (2) → concomitante (3) → adicional (4) → histórico/suspendido (5)
+4. Fallback DOM y dedup de línea seleccionada también corregidos
+
+**Archivos modificados:**
+- `scripts/farmacia_seguimiento.js` — 17 líneas modificadas en `getRelevantDrugCandidates()`
+- `tools/farmacia_seguimiento_check.mjs` — 11 nuevos tests WO7H.3 (116 total, 0 failed)
+
+**Tests:**
+- `node tools/farmacia_seguimiento_check.mjs` — 116/116 PASS
+- `node tools/farmacia_dashboard_paciente_check.mjs` — 28/28 PASS
+- `node tools/farmacia_tratamiento_common_check.mjs` — 43/43 PASS
+- `node tools/farmacia_smoke_check.mjs` — 38/38 OK
+- `grep -c innerHTML` — 0
+
+**Resultado esperado para FH-004:**
+- Selector sospechoso EA incluye: Belimumab (tratamiento principal), Rituximab (línea activa), Abatacept (histórico/suspendido)
+- Belimumab aparece primero en la lista
+- Abatacept no es la única opción
+
+**Importante:**
+Se mantiene WO7H.2: línea seleccionada Belimumab → campos visibles Belimumab.  
+No se modifica Dashboard.  
+No se modifica `FarmaciaTratamiento`.  
+No se modifica timeline, export CSV ni datos demo.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente:**
+WO7G.2 podrá revisar timeline terapéutico o secundarios del dashboard si aporta valor visual real.  
+WO8/WO posterior revisará export/persistencia, incluyendo CSV.

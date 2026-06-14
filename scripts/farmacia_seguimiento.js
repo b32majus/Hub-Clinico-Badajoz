@@ -660,17 +660,18 @@
         var seenIds = {};
         // Añadir todas las líneas biológicas (principales, activas, históricas)
         currentBiologicLines.forEach(function (line) {
-            var id = 'line:' + line.linea_id;
+            var id = 'line:' + (line.linea_id || line.tratamiento_id || line.id || 'bio-' + candidates.length);
             if (seenIds[id]) return;
             seenIds[id] = true;
             var cat = (line.estado_linea === 'historico' && !line.es_principal) ? 'Biológico previo/histórico' : 'Biológico activo';
-            var name = line.nombre_linea || line.nombre_comercial || line.principio_activo || '';
+            var name = line.nombre_linea || line.farmaco_nombre || line.nombre_comercial || line.principio_activo || '';
             candidates.push({
                 id: id,
                 category: cat,
                 label: name ? (name + ' — ' + cat) : 'Tratamiento principal',
                 source: 'principal',
-                tipo_relacion: line.tipo_relacion || (line.es_principal ? 'principal' : 'historico')
+                tipo_relacion: line.tipo_relacion || (line.es_principal ? 'principal' : 'historico'),
+                prioridad: line.es_principal ? 1 : (line.estado_linea === 'historico' ? 5 : 2)
             });
         });
         // Fallback DOM: leer tratamiento actual directamente si no hay líneas cargadas
@@ -687,23 +688,25 @@
                         category: 'Tratamiento principal',
                         label: domName + ' — Tratamiento principal',
                         source: 'principal',
-                        tipo_relacion: 'principal'
+                        tipo_relacion: 'principal',
+                        prioridad: 1
                     });
                 }
             }
             // Fallback adicional: línea seleccionada actual en el select
             var selectedLine = getCurrentSelectedLine();
             if (selectedLine) {
-                var sid = 'line:' + selectedLine.linea_id;
+                var sid = 'line:' + (selectedLine.linea_id || selectedLine.tratamiento_id || selectedLine.id || 'selected');
                 if (!seenIds[sid]) {
                     seenIds[sid] = true;
-                    var sName = selectedLine.nombre_linea || selectedLine.nombre_comercial || selectedLine.principio_activo || '';
+                    var sName = selectedLine.nombre_linea || selectedLine.farmaco_nombre || selectedLine.nombre_comercial || selectedLine.principio_activo || '';
                     candidates.push({
                         id: sid,
                         category: 'Biológico activo',
                         label: sName ? (sName + ' — Biológico activo') : 'Tratamiento principal',
                         source: 'principal',
-                        tipo_relacion: selectedLine.tipo_relacion || 'principal'
+                        tipo_relacion: selectedLine.tipo_relacion || 'principal',
+                        prioridad: 1
                     });
                 }
             }
@@ -720,14 +723,20 @@
             if (contract.tipo_relacion === 'sospechoso_ea') {
                 category = 'Sospechoso de EA';
             }
+            var p = 5;
+            if (contract.tipo_relacion === 'concomitante') p = 3;
+            else if (contract.tipo_relacion === 'adicional') p = 4;
             candidates.push({
                 id: oid,
                 category: category,
                 label: name + ' — ' + category,
                 source: 'other',
-                tipo_relacion: contract.tipo_relacion
+                tipo_relacion: contract.tipo_relacion,
+                prioridad: p
             });
         });
+        // Ordenar: principal, activos, concomitantes, adicionales, históricos/exposiciones
+        candidates.sort(function (a, b) { return (a.prioridad || 9) - (b.prioridad || 9); });
         return candidates;
     }
 
