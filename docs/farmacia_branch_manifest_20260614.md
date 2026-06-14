@@ -20,9 +20,9 @@ main (a25cccb) — demo pública inmutable
       │     └── WO2e: tests vacunación texto libre (T16-T17)
       ├── work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614 ✅ VALIDADA — FUENTE DE TRABAJO ANTERIOR
       │     └── WO3: bandeja bloqueantes prebiológicos
-      ├── work/farmacia-wo4-actividad-validaciones-pendientes-20260614 ✅ VALIDADA por Sil — NUEVA FUENTE DE TRABAJO
+      ├── work/farmacia-wo4-actividad-validaciones-pendientes-20260614 ✅ VALIDADA por Sil — FUENTE DE TRABAJO ANTERIOR
       │     └── WO4: actividad servicio validaciones pendientes desplegables
-      └── work/farmacia-wo5-prebiologico-single-source-20260614 ⏳ PENDING REVIEW
+      └── work/farmacia-wo5-prebiologico-single-source-20260614 ✅ VALIDADA por Sil — NUEVA FUENTE DE TRABAJO
             └── WO5: unificar fuente de verdad prebiológica (adaptador + eliminación legacy)
 ```
 
@@ -45,8 +45,8 @@ main (a25cccb) — demo pública inmutable
 | `work/farmacia-wo2e-vacunacion-text-fallback-20260614` | `9201003` | WO2e: regex acotado a frase + tests T16-T17 | ✅ Cerrado | ❌ Auditoría | No tocar |
 | **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`9201003`** | **Todo lo anterior consolidado: demo + WO1 + WO2 + WO2b-e** | **✅ Preservada** | **✅ PUNTO DE RETORNO** | **Preservar. No borrar. No reabrir.** |
 | **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc52`** | **WO3: pintar bloqueantes prebiológicos en bandeja de validación** | **✅ VALIDADA por Sil (2026-06-14)** | **✅ FUENTE ANTERIOR** | **Preservar como histórico validado** |
-| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`90f79ec`** | **WO4: tarjeta validaciones pendientes clicable/desplegable en Actividad del Servicio** | **✅ VALIDADA por Sil** | **✅ NUEVA FUENTE DE TRABAJO** | **Activa para próximas mejoras** |
-| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`8bed809`** | **WO5: adaptador getPrebiologicoStatus + eliminación lógica clínica legacy** | **⏳ PENDING REVIEW** | **❌ Pendiente validación** | **Esperar validación Sil/Cora** |
+| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`90f79ec`** | **WO4: tarjeta validaciones pendientes clicable/desplegable en Actividad del Servicio** | **✅ VALIDADA por Sil** | **✅ FUENTE ANTERIOR** | **Preservar como histórico validado** |
+| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`12356ce`** | **WO5: adaptador getPrebiologicoStatus + eliminación lógica clínica legacy** | **✅ VALIDADA por Sil** | **✅ NUEVA FUENTE DE TRABAJO** | **Activa para próximas mejoras** |
 | `main` | `a25cccb` | Rama principal pública. Sin cambios tras la demo | ✅ Estable | ❌ No tocar sin autorización | No mergear sin validación explícita |
 | `work/hermes/farmacia-demo-v0-2-candidate-20260606` | antecesor | Rama de trabajo original de WO5B | 🟡 Histórico | ❌ Histórico | No reabrir |
 | `preview/demo-lunes-wo3-20260614` | `fecdc52` | Rama de preview Pages para demo lunes post-WO3 | 🟡 Preview | ❌ Pages | Sirve demo final WO3 |
@@ -56,14 +56,19 @@ main (a25cccb) — demo pública inmutable
 
 ## Reglas de gobernanza
 
-### Fuente de trabajo actual — WO4 ✅ validada por Sil
+### Fuente de trabajo actual — WO5 validada por Sil
+**`work/farmacia-wo5-prebiologico-single-source-20260614`** (SHA **`12356ce`**)
+- Validada por Sil (2026-06-14) tras mini-validacion funcional.
+- WO5 ejecutada: adaptador getPrebiologicoStatus + eliminacion logica clinica legacy.
+- Fuente unica de verdad prebiologica: FarmaciaPrebiologico.evaluatePatientPrebiologico().
+- Tests: 8/8 syntax, 38/38 smoke, 72/72 helper, 29/29 single source.
+- Sin cambios UI, sin nuevas dependencias, sin refactor global.
+
+### Fuente de trabajo anterior — WO4 validada
 **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** (SHA **`90f79ec`**)
-- ✅ Validada visualmente por Sil (2026-06-14).
-- WO4 ejecutada: tarjeta "Validaciones pendientes" clicable/desplegable en Actividad del Servicio.
-- Reutiliza `FarmaciaDemo.getPendingValidationPatients()` como fuente única.
-- Reutiliza `FarmaciaPrebiologico.evaluatePatientPrebiologico()` si está disponible.
-- No duplica datos, no reimplementa lógica clínica.
-- Tests: 8/8 syntax OK, 38/38 smoke, 72/72 helper (21/21 tests).
+- Validada visualmente por Sil (2026-06-14).
+- Contiene: tarjeta Validaciones pendientes clicable/desplegable en Actividad del Servicio.
+- Preservada como historico validado.
 
 ### Fuente de trabajo anterior — WO3 validada
 **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** (SHA **`fecdc52`**)
@@ -121,7 +126,7 @@ En `farmacia_actividad_servicio.html`, la tarjeta "Validaciones pendientes" se c
 
 **WO5 — Adaptador getPrebiologicoStatus + eliminación lógica clínica legacy**
 
-**Estado:** ⏳ **PENDING REVIEW** (pendiente de validación Sil/Cora)
+**Estado:** ✅ **VALIDADA por Sil** (2026-06-14)
 
 **Qué se hizo:**
 - `getPrebiologicoStatus` en `farmacia_common.js` convertido a adaptador que delega en `FarmaciaPrebiologico.evaluatePatientPrebiologico`
@@ -145,9 +150,16 @@ En `farmacia_actividad_servicio.html`, la tarjeta "Validaciones pendientes" se c
 - Syntax: 8/8 OK
 - innerHTML nuevo: 0
 
-**La fuente de trabajo actual NO cambia** hasta validación explícita de Sil/Cora.
-Sigue siendo `work/farmacia-wo4-actividad-validaciones-pendientes-20260614`.
+**La fuente de trabajo actual pasa a WO5.** WO4 preservada como historico validado.
 La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
+
+---
+
+## WO6 — Pendiente de ejecucion
+
+**WO6 — Calidad de dato: sessionStorage + pautas normalizadas**
+**Estado:** ⏳ Pendiente de ejecucion (registrada tras promocion WO5)
+**Siguiente accion:** Crear rama work/farmacia-wo6-storage-pautas-normalizadas-20260614 desde WO5 (`12356ce`)
 
 ---
 
@@ -167,21 +179,21 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 | **`farmacia-demo-lunes-final-wo3-20260614`** (tag) | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
 | **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
 | **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`90f79ecb07419895660463eb84de1be72bcf92d2`** ✅ validada por Sil |
-| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`8bed80955be4e393f3e5aea11a8af4d85f55f887`** ⏳ pending review |
+| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`12356ce05165c81faa1f94d66b1f99402ef249a0`** ✅ VALIDADA por Sil — NUEVA FUENTE DE TRABAJO |
 | `preview/demo-lunes-wo3-20260614` | `fecdc5203c22167d1bf6a17a19e11bb3345a06d0` |
 | `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 
 ---
 
-**Status:** `active` (WO4 `validated_by_Sil`, WO5 `pending_review`)
-**Validación:** ✅ WO4 validada visualmente por Sil (2026-06-14). Tests: 8/8 syntax, 38/38 smoke, 72/72 helper, 29/29 single source.
-**Fuente de trabajo activa:** `work/farmacia-wo4-actividad-validaciones-pendientes-20260614` (`90f79ec`) — NO CAMBIA hasta validación WO5
-**Fuente de trabajo anterior:** `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` (`fecdc52`)
+**Status:** `active` (WO5 `validated_by_Sil`)
+**Validacion:** WO5 validada por Sil (2026-06-14). Tests: 8/8 syntax, 38/38 smoke, 72/72 helper, 29/29 single source.
+**Fuente de trabajo activa:** `work/farmacia-wo5-prebiologico-single-source-20260614` (`12356ce`)
+**Fuente de trabajo anterior:** `work/farmacia-wo4-actividad-validaciones-pendientes-20260614` (`90f79ec`)
 **Punto de retorno:** `work/farmacia-demo-lunes-plus-wo1-wo2-20260614` (`9201003`)
 **Demo lunes pre-WO4:** `farmacia-demo-lunes-final-wo3-20260614` (tag, `fecdc52`)
 **Demo lunes post-WO4:** `farmacia-demo-lunes-final-wo4-20260614` (tag, `90f79ec`)
-**Preview Pages post-WO4:** `preview/demo-lunes-wo4-20260614` (`90f79ec`)
+**Preview Pages:** `preview/demo-lunes-wo4-20260614` (`90f79ec`)
 **Backup original:** `farmacia-demo-lunes-stable-924d316` (tag, `924d316`)
-**WO4 validada:** 2026-06-14
-**WO5 pendiente:** 2026-06-14
-**Actualizado:** 2026-06-14 (post-WO5)
+**WO5 validada:** 2026-06-14
+**WO6 pendiente:** sessionStorage + pautas normalizadas
+**Actualizado:** 2026-06-14 (post-WO5 promocionada)
