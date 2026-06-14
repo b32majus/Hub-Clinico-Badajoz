@@ -555,7 +555,7 @@ Alinear fármacos concomitantes/adicionales/históricos/sospechosos de EA con el
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
 **HEAD inicial de rama:** `592557bd7721d82dd77d1a17692f6a7359316740`
-**HEAD final de rama:** `2e480e3` (`2e480e31337aa8ace7130545e6e3e4aa2072c921`)
+**HEAD final de rama:** `93f2791` (`93f2791dc3dce58ed81a8d666c36832fb6d2609c`)
 **SHA commit funcional:** `2e480e3` (`2e480e31337aa8ace7130545e6e3e4aa2072c921`)
 
 **Alcance:**
@@ -585,7 +585,7 @@ Alinear fármacos concomitantes/adicionales/históricos/sospechosos de EA con el
 | `grep -R "innerHTML" farmacia_seguimiento.html scripts/farmacia_seguimiento.js tools/farmacia_seguimiento_check.mjs` | 0 uso real (solo comentarios/asserts del test) |
 
 **innerHTML:** 0 uso real
-**Push:** pendiente
+**Push:** OK (`work/farmacia-wo6-storage-pautas-normalizadas-20260614` → remoto)
 **Working tree:** limpio tras commit
 
 **Deuda explícita:**
