@@ -601,3 +601,45 @@ Fuente activa funcional sigue WO5.
 No se toca `main` ni GitHub Pages.
 
 ---
+
+## WO7F.1 — Cierre fino de Seguimiento farmacológico
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS como operador local, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** (pendiente de commit)
+
+**Alcance:**
+- Selector de fármaco sospechoso de EA ampliado: incluye tratamiento principal/líneas activas, fármacos concomitantes, adicionales, históricos y exposiciones con deduplicación por `seenIds`. Históricos/exposiciones se muestran como «Biológico previo/histórico» en lugar de excluirse.
+- Pauta del tratamiento actual convertida a desplegable normalizado con catálogo WO6 (`fhSegPautaActual` como `<select>` + input «Otro»). Se normaliza automáticamente al cargar paciente o seleccionar línea. No crea nueva línea terapéutica al cambiar valor.
+- `setSegPautaActualNormalized()` creada: normaliza el texto de pauta mediante `FarmaciaPautasCatalog.normalizePautaLabel()`, setea el `<select>` con el código y muestra/oculta input «Otro».
+- `getRelevantDrugCandidates()` reforzada con `seenIds` para evitar duplicados y categorización explícita de históricos.
+- Vía de concomitante verificada: se autocompleta desde el catálogo al seleccionar fármaco.
+
+**Archivos modificados:**
+- `farmacia_seguimiento.html` — pauta actual convertida a `<select>` + input Otro
+- `scripts/farmacia_seguimiento.js` — `setSegPautaActualNormalized()`, llamada en 3 puntos, `getRelevantDrugCandidates` reforzado, pauta actual poblada en DOMContentLoaded, clearCipFields actualizado
+- `tools/farmacia_seguimiento_check.mjs` — 9 nuevos tests WO7F.1 (81 total, 0 failed)
+- `docs/farmacia_branch_manifest_20260614.md` — esta entrada
+
+**Tests verificados:**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_seguimiento.js` | OK |
+| `node tools/farmacia_seguimiento_check.mjs` | 81/81 PASS |
+| `node tools/farmacia_tratamiento_common_check.mjs` | 43/43 PASS |
+| `node tools/farmacia_smoke_check.mjs` | 38/38 OK |
+| `grep -R "innerHTML" ...` | 0 nuevos |
+
+**Importante:**
+No se modifica dashboard.  
+No se modifica export CSV.  
+No se modifica primera visita ni validación.  
+No se modifica `FarmaciaTratamiento` ni `FarmaciaPautasCatalog`.  
+No se modifica `kairos-os-lab` ni el panel de control.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente:**
+WO7G deberá adaptar dashboard como proyección del contrato común.  
+WO8/WO posterior deberá revisar export/persistencia, incluyendo CSV.
+
+---

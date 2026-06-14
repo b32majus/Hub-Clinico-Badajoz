@@ -171,6 +171,35 @@ assert(js.includes('applySelectedBiologicLine'), 'applySelectedBiologicLine sigu
 assert(html.indexOf(forbidden) === -1, 'HTML de seguimiento no usa innerHTML');
 assert(js.indexOf(forbidden) === -1, 'JS de seguimiento no usa innerHTML');
 
+// --- WO7F.1: Cierre fino de Seguimiento farmacológico ---
+
+// 29. Pauta tratamiento actual es select editable con catálogo
+assert(html.indexOf('id="fhSegPautaActual"') !== -1, 'Pauta actual presente en HTML');
+assert(html.indexOf('<select class="form-select" id="fhSegPautaActual"') !== -1, 'Pauta actual es select guiado');
+assert(html.indexOf('id="fhSegPautaActualOtro"') !== -1, 'Pauta actual tiene input Otro');
+
+// 30. setSegPautaActualNormalized definida y usada
+assert(js.includes('setSegPautaActualNormalized'), 'Función setSegPautaActualNormalized definida');
+assert(js.includes('populatePautaSelectSeg(\'fhSegPautaActual\''), 'Pauta actual se puebla con catálogo WO6');
+
+// 31. getRelevantDrugCandidates con deduplicación y cobertura total
+assert(js.includes('seenIds'), 'getRelevantDrugCandidates usa deduplicación seenIds');
+assert(js.includes('Biológico previo/histórico'), 'Incluye históricos como categoría');
+assert(js.includes('followupOtherDrugs.forEach'), 'Itera todos los otros fármacos');
+
+// 32. Vía de concomitante se autocompleta desde catálogo
+assert(js.includes("setOtherDrugField(uid, 'via'"), 'Autocomplete via definido en WO7F');
+assert(js.includes("setOtherDrugField(uid, 'dosis'"), 'Autocomplete dosis definido en WO7F');
+assert(js.includes("setOtherDrugField(uid, 'principioActivo'"), 'Autocomplete principio activo definido en WO7F');
+
+// 33. updateSuspectDrugSelector se llama en contextos clave (tras cambio de línea y al añadir/eliminar fármaco)
+assert(js.includes('updateSuspectDrugSelector();'), 'updateSuspectDrugSelector se llama explícitamente');
+
+// 34. Tratamiento principal no se rompe
+assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conservado');
+assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento conservado');
+assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual se normaliza sin crear nueva línea');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);
