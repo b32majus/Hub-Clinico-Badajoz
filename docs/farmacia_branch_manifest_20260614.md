@@ -482,7 +482,7 @@ Analítica/vacunación de primera visita no alineada con lógica estructurada de
 ## WO7E — Seguimiento alineado con contrato común de tratamiento principal
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
-**HEAD de rama:** (tras el commit WO7E)
+**HEAD de rama:** `818ed45` (tras WO7E)
 
 **Alcance:**
 - Se alinea el bloque de tratamiento actual de seguimiento con `FarmaciaTratamiento`
