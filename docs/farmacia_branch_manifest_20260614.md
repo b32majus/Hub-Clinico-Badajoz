@@ -931,3 +931,33 @@ No se modifica main.
 No se modifica seguimiento, primera visita ni validación.  
 No se modifica JSON longitudinal.  
 No se modifica export CSV.
+
+## WO8.0 — Contrato de exportación longitudinal FH
+
+**Estado:** completada documentalmente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD:** `8275535`
+
+**Alcance:**
+Se crea el contrato técnico-documental `docs/farmacia_export_longitudinal_contract_WO8.md` para la exportación longitudinal de Farmacia Hospitalaria, definiendo 10 hojas/tablas, claves, columnas mínimo (P0/P1/P2), reglas clínicas y criterios de migración futura a base de datos.
+
+**Decisiones clave del contrato:**
+- Excel único con 10 hojas separadas por dominio
+- Marca comercial como nombre principal (Benlysta, Orencia, Rixathon)
+- Principio activo como campo secundario obligatorio
+- Una fila por evento atómico (no colapsar multibiológico)
+- Pauta se exporta como código + texto visible
+- Estructura migrable a SQL con PK/FK explícitas
+- P0: 6 hojas imprescindibles (pacientes, líneas, visitas, eventos, EA, concomitantes)
+- P1: 2 hojas deseables (prebiológico, PROMs/adherencia)
+- P2: 2 hojas futuras (catálogos de fármacos y pautas)
+
+**Archivos creados:**
+- `docs/farmacia_export_longitudinal_contract_WO8.md` (~26 KB, documento completo)
+
+**Importante:**
+No se modifica código funcional.  
+No se modifica la rama demo.  
+No se modifica main.  
+No se implementa todavía export CSV/Excel.  
+WO8.1 queda como implementación posterior.
