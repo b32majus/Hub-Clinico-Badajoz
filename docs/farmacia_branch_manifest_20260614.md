@@ -688,3 +688,44 @@ WO6 sigue `pending_review`.
 Fuente activa funcional sigue WO5.
 
 ---
+
+## WO7G.1 — Dashboard: tratamiento principal y líneas biológicas desde contrato común
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS como operador local, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** `1bba1dc` (tras WO7G.1)
+
+**Alcance:**
+- Se adapta el resumen terapéutico (`renderDashboard()`) para separar tratamiento principal de otras líneas activas en lugar de colapsarlo en cadena única `join(' + ')`.
+- Se actualiza `getPatientBiologicLines()` para usar `FarmaciaTratamiento.buildTreatmentFromPatient()` como primera opción, con fallback a lógica legacy.
+- Se actualiza `renderBiologicLines()` para mostrar dosis, vía, pauta, fechas de inicio/fin por línea y usar etiquetas de estado y relación del contrato.
+- Se carga `scripts/farmacia_tratamiento_common.js` en el HTML del dashboard.
+
+**Archivos modificados:**
+- `farmacia_dashboard_paciente.html` — script tag para `farmacia_tratamiento_common.js`
+- `scripts/farmacia_dashboard_paciente.js` — `getPatientBiologicLines()` con helper, `renderDashboard()` sin colapso, `renderBiologicLines()` con contrato
+- `tools/farmacia_dashboard_paciente_check.mjs` — 25 tests (creado)
+- `docs/farmacia_branch_manifest_20260614.md` — esta entrada
+
+**Tests verificados:**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_dashboard_paciente.js` | OK |
+| `node tools/farmacia_dashboard_paciente_check.mjs` | 25/25 PASS |
+| `node tools/farmacia_tratamiento_common_check.mjs` | 43/43 PASS |
+| `node tools/farmacia_smoke_check.mjs` | 38/38 OK |
+| `grep -R "innerHTML" ...` | 0 nuevos |
+
+**Importante:**
+No se modifica timeline terapéutico.  
+No se modifica longitudinal, PROMs, EA ni comorbilidades.  
+No se modifica seguimiento, primera visita ni validación.  
+No se modifica export CSV.  
+No se modifica `FarmaciaTratamiento` ni `FarmaciaPautasCatalog`.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente:**
+WO7G.2 podrá revisar timeline terapéutico o secundarios si aporta valor visual real.  
+WO8/WO posterior revisará export/persistencia, incluyendo CSV.
+
+---
