@@ -158,8 +158,8 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 ## WO6 — Ejecutada, pendiente de validación
 
 **WO6 — Calidad de dato: sessionStorage + pautas normalizadas**
-**Estado:** 🟡 **pending_review** (WO6c ejecutada, a la espera de validación de Sil)
-**Siguiente acción:** Validar cambios de WO6c y decidir promoción a fuente de trabajo
+**Estado:** 🟡 **pending_review** (WO6e ejecutada, a la espera de validación visual de Sil)
+**Siguiente acción:** Validar WO6e visualmente y decidir promoción a fuente de trabajo
 
 **Nota de deuda explícita:** Campos de pauta que siguen fuera de WO6: otros fármacos/biológicos en validación; fármacos concomitantes/adicionales en seguimiento. Motivo: evitar reabrir lógica de separación clínica ya validada.
 
