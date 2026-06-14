@@ -550,3 +550,53 @@ Fuente activa funcional sigue WO5.
 Alinear fármacos concomitantes/adicionales/históricos/sospechosos de EA con el contrato común y completar autocompletado de principio activo, dosis, vía y pauta.
 
 ---
+
+## WO7F — Seguimiento: alinear concomitantes/adicionales/históricos/EA con contrato común
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
+**HEAD inicial de rama:** `592557bd7721d82dd77d1a17692f6a7359316740`
+**HEAD final de rama:** `PENDIENTE_COMMIT_WO7F` (se actualizará tras commit)
+**SHA commit funcional:** `PENDIENTE_COMMIT_WO7F` (se actualizará tras commit)
+
+**Alcance:**
+- Concomitantes con autocomplete completo del catálogo: fármaco/marca, principio activo, dosis, presentación, vía (select normalizado), pauta (select normalizado con catálogo WO6), código nacional, nº registro y origen catálogo.
+- Pauta concomitante usa `FarmaciaPautasCatalog.getPautaOptions()`; si se selecciona `OTRO`, aparece input de texto libre `pautaOtro` y se guarda en el objeto del fármaco.
+- Fármacos con relación "Concomitante" usan internamente `tipo_relacion: "concomitante"`, `estado_linea: "activo"`, `tipo_movimiento: "no_aplica"`. No se convierten en línea principal ni validada silenciosa.
+- "Biológico activo adicional" usa `tipo_relacion: "adicional"`, `tipo_movimiento: "tratamiento_anadido"`. No se convierte en switch formal.
+- "Biológico previo/histórico" usa `tipo_relacion: "historico"`; "Exposición" usa `tipo_relacion: "exposicion"`. No se reactivan como línea actual.
+- "Sospechoso de EA" = "Sí" marca internamente `tipo_relacion: "sospechoso_ea"` como flag adicional, sin mezclar con principal/concomitante.
+- UI estable: no rediseño del seguimiento, no datos fantasma, sin `innerHTML`, uso de `createElement` y `textContent`.
+- Tratamiento principal intacto: `syncBiologicControls`, `fhSegLineaPrincipal`, `fhSegTratamientoGrid` y resumen normalizado se conservan.
+
+**Archivos modificados:**
+- `scripts/farmacia_seguimiento.js`
+- `tools/farmacia_seguimiento_check.mjs`
+- `docs/farmacia_branch_manifest_20260614.md`
+- `farmacia_seguimiento.html` (sin cambios funcionales en WO7F)
+
+**Tests verificados:**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_seguimiento.js` | OK |
+| `node tools/farmacia_seguimiento_check.mjs` | 66/66 PASS |
+| `node --check scripts/farmacia_tratamiento_common.js` | OK |
+| `node tools/farmacia_tratamiento_common_check.mjs` | 43/43 PASS |
+| `node tools/farmacia_smoke_check.mjs` | 38/38 OK |
+| `grep -R "innerHTML" farmacia_seguimiento.html scripts/farmacia_seguimiento.js tools/farmacia_seguimiento_check.mjs` | 0 uso real (solo comentarios/asserts del test) |
+
+**innerHTML:** 0 uso real
+**Push:** pendiente
+**Working tree:** limpio tras commit
+
+**Deuda explícita:**
+- Exportación CSV de concomitantes no ampliada con columnas normalizadas de pauta/vía en WO7F; se mantiene la estructura actual de seguimiento.
+- Los otros fármacos siguen siendo una lista en memoria de la página; no hay persistencia real (consistente con demo actual).
+
+**Importante:**
+No se modifica `FarmaciaTratamiento`.  
+No se modifica dashboard.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.  
+No se toca `main` ni GitHub Pages.
+
+---

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/farmacia_seguimiento_check.mjs
-// Verifica WO7E + WO7E.1 en Seguimiento — contrato común de tratamiento principal + pulido datos básicos
+// Verifica WO7E + WO7E.1 + WO7F en Seguimiento — contrato común de tratamiento principal + pulido datos básicos + concomitantes/adicionales/históricos
 
 import fs from 'fs';
 import path from 'path';
@@ -121,6 +121,55 @@ assert(html.indexOf('fhSegCipSearchBtn') !== -1, 'Botón de búsqueda CIP conser
 
 // 19. Nav link a modPrebiologico eliminado
 assert(!html.includes('#modPrebiologico'), 'Nav link a estudio prebiológico eliminado');
+
+// --- WO7F: Concomitantes/adicionales/históricos alineados con contrato común ---
+
+// 20. Funciones WO7F definidas
+assert(js.includes('mapOtherDrugToContract'), 'Función mapOtherDrugToContract definida');
+assert(js.includes('buildPautaSelectForOtherDrug'), 'Función buildPautaSelectForOtherDrug definida');
+assert(js.includes('applyCatalogSelectionToOtherDrug'), 'Función applyCatalogSelectionToOtherDrug definida');
+assert(js.includes('normalizeOtherDrugVia'), 'Función normalizeOtherDrugVia definida');
+
+// 21. Autocomplete rellena principio activo, vía, pauta y dosis
+assert(js.includes("setOtherDrugField(uid, 'principioActivo'"), 'Autocomplete rellena principio activo');
+assert(js.includes("setOtherDrugField(uid, 'via'"), 'Autocomplete rellena vía');
+assert(js.includes("setOtherDrugField(uid, 'pautaCodigo'"), 'Autocomplete rellena pauta');
+assert(js.includes("setOtherDrugField(uid, 'dosis'"), 'Autocomplete rellena dosis');
+
+// 22. Pauta concomitante es desplegable normalizado (no input texto libre único)
+assert(js.includes('P.getPautaOptions') || js.includes('FarmaciaPautasCatalog.getPautaOptions'), 'Pauta concomitante usa catálogo de pautas');
+assert(js.includes('buildPautaSelectForOtherDrug'), 'Pauta concomitante genera select control');
+assert(!js.includes("{ key: 'pauta', label: 'Pauta', type: 'text' }"), 'Pauta concomitante ya no es input texto libre');
+
+// 23. Concomitante usa contrato: tipo_relacion concomitante, estado activo, movimiento no_aplica
+assert(js.includes("relation = 'concomitante'"), 'Concomitante mapea tipo_relacion a concomitante');
+assert(js.includes("estado_linea = 'activo'"), 'Concomitante mapea estado_linea a activo');
+assert(js.includes("tipo_movimiento = 'no_aplica'"), 'Concomitante mapea tipo_movimiento a no_aplica');
+
+// 24. Adicional conserva tipo_relacion adicional y movimiento tratamiento_anadido
+assert(js.includes("relation = 'adicional'"), 'Adicional mapea tipo_relacion a adicional');
+assert(js.includes("tipo_movimiento = 'tratamiento_anadido'"), 'Adicional mapea tipo_movimiento a tratamiento_anadido');
+
+// 25. Histórico/exposición no se reactivan como línea actual
+assert(js.includes("relation = 'historico'"), 'Histórico mapea tipo_relacion a historico');
+assert(js.includes("relation = 'exposicion'"), 'Exposición mapea tipo_relacion a exposicion');
+assert(js.includes("estado_linea = 'historico'"), 'Histórico mantiene estado_linea historico');
+assert(js.includes("estado_linea = 'no_aplica'"), 'Exposición mantiene estado_linea no_aplica');
+
+// 26. Sospechoso de EA no se mezcla con principal/concomitante
+assert(js.includes("relation = 'sospechoso_ea'"), 'Sospechoso EA mapea tipo_relacion a sospechoso_ea');
+assert(js.includes("if (drug.sospechosoEa === 'Sí')"), 'Sospechoso EA se evalúa explícitamente');
+assert(!js.includes("tipo_relacion: 'principal'"), 'No se asigna tipo_relacion principal en otros fármacos');
+
+// 27. Tratamiento principal sigue presente (reafirmación WO7E)
+assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conservado');
+assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento conservado');
+assert(js.includes('syncBiologicControls'), 'syncBiologicControls sigue definida');
+assert(js.includes('applySelectedBiologicLine'), 'applySelectedBiologicLine sigue definida');
+
+// 28. Sin innerHTML en archivos WO7F
+assert(html.indexOf(forbidden) === -1, 'HTML de seguimiento no usa innerHTML');
+assert(js.indexOf(forbidden) === -1, 'JS de seguimiento no usa innerHTML');
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 

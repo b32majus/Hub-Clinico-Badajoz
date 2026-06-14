@@ -240,8 +240,15 @@
             farmaco: '',
             principioActivo: '',
             dosis: '',
+            presentacion: '',
             via: '',
             pauta: '',
+            pautaCodigo: '',
+            pautaOtro: '',
+            codigoNacional: '',
+            nregistro: '',
+            origenCatalogo: '',
+            sourceType: '',
             fechaInicio: '',
             fechaFin: '',
             motivo: '',
@@ -270,6 +277,45 @@
         return group;
     }
 
+    function buildPautaSelectForOtherDrug(drug) {
+        var pautaOptions = [];
+        if (P && typeof P.getPautaOptions === 'function') {
+            pautaOptions = P.getPautaOptions();
+        }
+        var select = buildSelectControl(pautaOptions, drug.pautaCodigo, 'Seleccionar...');
+        var otroInput = createElement('input', 'form-control hidden');
+        otroInput.type = 'text';
+        otroInput.value = drug.pautaOtro || '';
+        otroInput.placeholder = 'Especificar otra pauta';
+        otroInput.setAttribute('data-field', 'pautaOtro');
+        otroInput.setAttribute('data-uid', drug.uid);
+        otroInput.addEventListener('input', function () {
+            updateFollowupOtherDrug(drug.uid, 'pautaOtro', this.value);
+        });
+        select.addEventListener('change', function () {
+            var isOtro = this.value === 'OTRO';
+            otroInput.classList.toggle('hidden', !isOtro);
+            if (!isOtro) {
+                otroInput.value = '';
+                updateFollowupOtherDrug(drug.uid, 'pautaOtro', '');
+            }
+            updateFollowupOtherDrug(drug.uid, 'pautaCodigo', this.value);
+            var label = '';
+            if (this.value && P && typeof P.getPautaByCodigo === 'function') {
+                var pautaObj = P.getPautaByCodigo(this.value);
+                if (pautaObj) label = pautaObj.pauta_label || '';
+            }
+            updateFollowupOtherDrug(drug.uid, 'pauta', label);
+        });
+        if (drug.pautaCodigo === 'OTRO') {
+            otroInput.classList.remove('hidden');
+        }
+        var wrapper = createElement('div', 'other-drug-pauta-wrapper');
+        wrapper.appendChild(select);
+        wrapper.appendChild(otroInput);
+        return wrapper;
+    }
+
     function renderFollowupOtherDrugRow(drug) {
         var card = createElement('section', 'other-drug-card');
         var header = createElement('div', 'other-drug-card__header');
@@ -289,38 +335,31 @@
         relationSelect.addEventListener('change', function () { updateFollowupOtherDrug(drug.uid, 'relationType', this.value); });
         grid.appendChild(buildFollowupField('Tipo de relación', relationSelect));
 
+        var farmacoInput = createElement('input', 'form-control js-cima-autocomplete');
+        farmacoInput.type = 'text';
+        farmacoInput.value = drug.farmaco || '';
+        farmacoInput.setAttribute('data-field', 'farmaco');
+        farmacoInput.setAttribute('data-uid', drug.uid);
+        farmacoInput.setAttribute('autocomplete', 'off');
+        farmacoInput.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, 'farmaco', this.value); });
+        var autocompleteWrapper = createElement('div', 'autocomplete-wrapper');
+        autocompleteWrapper.id = drug.uid + '-autocomplete-wrapper';
+        autocompleteWrapper.appendChild(farmacoInput);
+        var autocompleteDropdown = createElement('div', 'autocomplete-dropdown hidden');
+        autocompleteDropdown.id = drug.uid + '-dropdown';
+        autocompleteWrapper.appendChild(autocompleteDropdown);
+        grid.appendChild(buildFollowupField('Fármaco', autocompleteWrapper));
+
         [
-            { key: 'farmaco', label: 'Fármaco', type: 'text' },
             { key: 'principioActivo', label: 'Principio activo', type: 'text' },
             { key: 'dosis', label: 'Dosis', type: 'text' },
-            { key: 'pauta', label: 'Pauta', type: 'text' },
-            { key: 'fechaInicio', label: 'Fecha inicio', type: 'date' },
-            { key: 'fechaFin', label: 'Fecha fin', type: 'date' },
-            { key: 'motivo', label: 'Motivo/contexto', type: 'text' }
+            { key: 'presentacion', label: 'Presentación', type: 'text' }
         ].forEach(function (field) {
             var input = createElement('input', 'form-control');
             input.type = field.type;
             input.value = drug[field.key] || '';
             input.setAttribute('data-field', field.key);
             input.setAttribute('data-uid', drug.uid);
-
-            if (field.key === 'farmaco') {
-                input.classList.add('js-cima-autocomplete');
-                input.setAttribute('data-uid', drug.uid);
-                input.setAttribute('autocomplete', 'off');
-
-                var wrapper = createElement('div', 'autocomplete-wrapper');
-                wrapper.id = drug.uid + '-autocomplete-wrapper';
-                wrapper.appendChild(input);
-
-                var dropdown = createElement('div', 'autocomplete-dropdown hidden');
-                dropdown.id = drug.uid + '-dropdown';
-                wrapper.appendChild(dropdown);
-
-                grid.appendChild(buildFollowupField(field.label, wrapper));
-                return;
-            }
-
             input.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, field.key, this.value); });
             grid.appendChild(buildFollowupField(field.label, input));
         });
@@ -332,10 +371,52 @@
             { value: 'IM', label: 'IM' },
             { value: 'Otra', label: 'Otra' }
         ], drug.via, 'Seleccionar...');
+        viaSelect.setAttribute('data-field', 'via');
+        viaSelect.setAttribute('data-uid', drug.uid);
         viaSelect.addEventListener('change', function () { updateFollowupOtherDrug(drug.uid, 'via', this.value); });
         grid.appendChild(buildFollowupField('Vía', viaSelect));
 
+        var pautaWrapper = buildPautaSelectForOtherDrug(drug);
+        grid.appendChild(buildFollowupField('Pauta', pautaWrapper));
+
+        [
+            { key: 'codigoNacional', label: 'Cód. Nacional', type: 'text' },
+            { key: 'nregistro', label: 'Nº Registro', type: 'text' }
+        ].forEach(function (field) {
+            var input = createElement('input', 'form-control');
+            input.type = field.type;
+            input.value = drug[field.key] || '';
+            input.setAttribute('data-field', field.key);
+            input.setAttribute('data-uid', drug.uid);
+            input.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, field.key, this.value); });
+            grid.appendChild(buildFollowupField(field.label, input));
+        });
+
+        var origenInput = createElement('input', 'form-control');
+        origenInput.type = 'text';
+        origenInput.value = drug.origenCatalogo || '';
+        origenInput.setAttribute('data-field', 'origenCatalogo');
+        origenInput.setAttribute('data-uid', drug.uid);
+        origenInput.readOnly = true;
+        grid.appendChild(buildFollowupField('Origen catálogo', origenInput));
+
+        [
+            { key: 'fechaInicio', label: 'Fecha inicio', type: 'date' },
+            { key: 'fechaFin', label: 'Fecha fin', type: 'date' },
+            { key: 'motivo', label: 'Motivo/contexto', type: 'text' }
+        ].forEach(function (field) {
+            var input = createElement('input', 'form-control');
+            input.type = field.type;
+            input.value = drug[field.key] || '';
+            input.setAttribute('data-field', field.key);
+            input.setAttribute('data-uid', drug.uid);
+            input.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, field.key, this.value); });
+            grid.appendChild(buildFollowupField(field.label, input));
+        });
+
         var suspectSelect = buildSelectControl(['No consta', 'No', 'Sí'], drug.sospechosoEa);
+        suspectSelect.setAttribute('data-field', 'sospechosoEa');
+        suspectSelect.setAttribute('data-uid', drug.uid);
         suspectSelect.addEventListener('change', function () { updateFollowupOtherDrug(drug.uid, 'sospechosoEa', this.value); });
         grid.appendChild(buildFollowupField('Sospechoso de EA', suspectSelect));
 
@@ -404,6 +485,68 @@
         });
     }
 
+    function normalizeOtherDrugVia(value) {
+        if (!value) return '';
+        var key = String(value).toLowerCase().trim();
+        if (key === 'sc' || key === 'subcutánea' || key === 'subcutanea') return 'SC';
+        if (key === 'iv' || key === 'intravenosa') return 'IV';
+        if (key === 'oral' || key === 'vo' || key === 'v.o.' || key === 'v.o') return 'Oral';
+        if (key === 'im' || key === 'intramuscular') return 'IM';
+        return 'Otra';
+    }
+
+    function setOtherDrugField(uid, key, value) {
+        updateFollowupOtherDrug(uid, key, value);
+        var input = document.querySelector('[data-uid="' + uid + '"][data-field="' + key + '"]');
+        if (input) {
+            if (input.tagName === 'SELECT') {
+                input.value = value || '';
+            } else {
+                input.value = value || '';
+            }
+        }
+    }
+
+    function applyCatalogSelectionToOtherDrug(uid, d) {
+        var catalogVia = normalizeOtherDrugVia(d.via || '');
+        var pautaCodigo = '';
+        var pautaLabel = '';
+        var pautaOtro = '';
+        var pautaText = d.pauta || '';
+        if (pautaText && P && typeof P.normalizePautaLabel === 'function') {
+            var pautaObj = P.normalizePautaLabel(pautaText);
+            if (pautaObj && pautaObj.pauta_codigo) {
+                pautaCodigo = pautaObj.pauta_codigo;
+                pautaLabel = pautaObj.pauta_label || '';
+                pautaOtro = pautaObj.pauta_otro_texto || '';
+            }
+        }
+        var sourceType = String(d.source_type || '').toUpperCase();
+        var origenLabel = '';
+        if (sourceType === 'CIMA') origenLabel = 'CIMA';
+        else if (sourceType === 'LOCAL') origenLabel = 'Local Especial';
+        else if (sourceType === 'LOCAL_PENDIENTE_DEMO') origenLabel = 'Demo/local pendiente';
+        else origenLabel = d.source_type || 'Demo';
+
+        setOtherDrugField(uid, 'farmaco', d.nombre_comercial || '');
+        setOtherDrugField(uid, 'principioActivo', d.principio_activo || '');
+        setOtherDrugField(uid, 'dosis', d.dosis || '');
+        setOtherDrugField(uid, 'presentacion', d.nombre_presentacion || '');
+        setOtherDrugField(uid, 'via', catalogVia);
+        setOtherDrugField(uid, 'pautaCodigo', pautaCodigo);
+        setOtherDrugField(uid, 'pauta', pautaLabel);
+        setOtherDrugField(uid, 'pautaOtro', pautaOtro);
+        setOtherDrugField(uid, 'codigoNacional', d.codigo_nacional || '');
+        setOtherDrugField(uid, 'nregistro', d.nregistro || '');
+        setOtherDrugField(uid, 'origenCatalogo', origenLabel);
+        setOtherDrugField(uid, 'sourceType', sourceType);
+
+        var pautaOtroInput = document.querySelector('[data-uid="' + uid + '"][data-field="pautaOtro"]');
+        if (pautaOtroInput) {
+            pautaOtroInput.classList.toggle('hidden', pautaCodigo !== 'OTRO');
+        }
+    }
+
     function clearOtherDrugDropdown(dropdownId) {
         var dd = document.getElementById(dropdownId);
         if (!dd) return;
@@ -440,16 +583,7 @@
 
             (function (d) {
             item.addEventListener('click', function () {
-                var input = document.querySelector('input[data-uid="' + uid + '"].js-cima-autocomplete');
-                if (input) input.value = d.nombre_comercial || '';
-                updateFollowupOtherDrug(uid, 'farmaco', d.nombre_comercial || '');
-                updateFollowupOtherDrug(uid, 'principioActivo', d.principio_activo || '');
-                var paInput = document.querySelector('input[data-uid="' + uid + '"][data-field="principioActivo"]');
-                if (paInput) paInput.value = d.principio_activo || '';
-                // Auto-rellenar dosis desde catálogo
-                updateFollowupOtherDrug(uid, 'dosis', d.dosis || d.nombre_presentacion || '');
-                var dosisInput = document.querySelector('input[data-uid="' + uid + '"][data-field="dosis"]');
-                if (dosisInput) dosisInput.value = d.dosis || d.nombre_presentacion || '';
+                applyCatalogSelectionToOtherDrug(uid, d);
                 clearOtherDrugDropdown(dropdownId);
             });
             })(drug);
@@ -472,6 +606,34 @@
         return 'Concomitante';
     }
 
+    function mapOtherDrugToContract(drug) {
+        var relation = 'concomitante';
+        var estado_linea = 'activo';
+        var tipo_movimiento = 'no_aplica';
+        if (drug.relationType === 'Biológico activo adicional') {
+            relation = 'adicional';
+            tipo_movimiento = 'tratamiento_anadido';
+            estado_linea = '';
+        } else if (drug.relationType === 'Biológico previo/histórico') {
+            relation = 'historico';
+            tipo_movimiento = '';
+            estado_linea = 'historico';
+        } else if (drug.relationType === 'Exposición') {
+            relation = 'exposicion';
+            tipo_movimiento = '';
+            estado_linea = 'no_aplica';
+        }
+        if (drug.sospechosoEa === 'Sí') {
+            relation = 'sospechoso_ea';
+            if (!estado_linea) estado_linea = 'no_aplica';
+        }
+        return {
+            tipo_relacion: relation,
+            estado_linea: estado_linea,
+            tipo_movimiento: tipo_movimiento
+        };
+    }
+
     function getRelevantDrugCandidates() {
         var candidates = [];
         currentBiologicLines.forEach(function (line) {
@@ -480,7 +642,8 @@
                     id: 'line:' + line.linea_id,
                     category: 'Biológico activo',
                     label: '[Biológico activo] ' + (line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Tratamiento principal'),
-                    source: 'principal'
+                    source: 'principal',
+                    tipo_relacion: line.tipo_relacion || 'principal'
                 });
             }
         });
@@ -491,19 +654,25 @@
                     id: 'line:' + selectedLine.linea_id,
                     category: 'Biológico activo',
                     label: '[Biológico activo] ' + (selectedLine.nombre_linea || selectedLine.nombre_comercial || 'Tratamiento principal'),
-                    source: 'principal'
+                    source: 'principal',
+                    tipo_relacion: selectedLine.tipo_relacion || 'principal'
                 });
             }
         }
         followupOtherDrugs.forEach(function (drug) {
             var name = drug.farmaco || drug.principioActivo;
             if (!name) return;
+            var contract = mapOtherDrugToContract(drug);
             var category = normalizeFollowupDrugCategory(drug.relationType);
+            if (contract.tipo_relacion === 'sospechoso_ea') {
+                category = 'Sospechoso de EA';
+            }
             candidates.push({
                 id: 'other:' + drug.uid,
                 category: category,
                 label: '[' + category + '] ' + name,
-                source: 'other'
+                source: 'other',
+                tipo_relacion: contract.tipo_relacion
             });
         });
         return candidates;
