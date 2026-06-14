@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/farmacia_tratamiento_common_check.mjs
-// Verifica el helper comun de tratamiento farmacologico WO7C
+// Verifica el helper comun de tratamiento farmacologico WO7C / WO7C.2
 
 import fs from 'fs';
 import path from 'path';
@@ -127,10 +127,12 @@ assertEqual(api.normalizeTreatmentInput({ tipo_relacion: 'adicional' }).tipo_rel
 assertEqual(api.normalizeTreatmentInput({ tipo_relacion: 'historico' }).estado_linea, 'historico', 'historico no pasa a activo por defecto');
 assertEqual(api.normalizeTreatmentInput({ tipo_relacion: 'exposicion' }).estado_linea, 'no_aplica', 'exposicion no pasa a activo por defecto');
 assertEqual(api.normalizeTreatmentInput({ tipo_relacion: 'sospechoso_ea', es_principal: true }).es_principal, false, 'sospechoso_ea no pasa a principal');
+assertEqual(api.normalizeTreatmentInput({ tipo_relacion: 'sin_cambios' }).tipo_relacion, '', 'sin_cambios no se convierte en principal');
+assertEqual(api.normalizeTreatmentInput({ tipo_relacion: 'base' }).tipo_relacion, '', 'base no se convierte en principal');
 
 const patientWithoutBiologics = api.buildTreatmentFromPatient({ cip: 'CIP-TEST' });
 assert(patientWithoutBiologics && typeof patientWithoutBiologics === 'object', 'buildTreatmentFromPatient no rompe con paciente sin biologicos');
-assertEqual(patientWithoutBiologics.paciente_cip, '', 'paciente sin tratamiento devuelve shape vacio');
+assertEqual(patientWithoutBiologics.paciente_cip, 'CIP-TEST', 'paciente sin biologicos conserva paciente_cip en shape vacio');
 
 const patientWithBiologics = {
     cip: 'CIP-DEMO-FH-004',
@@ -172,12 +174,66 @@ const patientWithBiologics = {
 };
 const lines = api.buildTreatmentFromPatient(patientWithBiologics, { returnArray: true });
 assertEqual(lines.length, 3, 'buildTreatmentFromPatient returnArray devuelve todas las lineas');
-assertEqual(lines[0].tipo_relacion, 'principal', 'base/sin_cambios mapea a principal');
+assertEqual(lines[0].tipo_relacion, 'principal', 'linea es_principal se normaliza como principal');
 assertEqual(lines[0].tipo_movimiento, 'sin_cambios', 'base/sin_cambios fija tipo_movimiento');
 assertEqual(lines[1].tipo_relacion, 'adicional', 'tratamiento_añadido mapea a adicional');
 assertEqual(lines[1].tipo_movimiento, 'tratamiento_anadido', 'tratamiento_añadido fija tipo_movimiento');
 assertEqual(lines[2].tipo_relacion, 'historico', 'cambio_terapeutico mapea a historico');
 assertEqual(lines[2].tipo_movimiento, 'cambio_terapeutico', 'cambio_terapeutico fija tipo_movimiento');
+
+const unsortedPatient = {
+    cip: 'CIP-UNSORTED',
+    biologicos: [
+        {
+            linea_id: 'H1',
+            nombre_linea: 'Historico',
+            principio_activo: 'Ustekinumab',
+            estado_linea: 'historico',
+            tipo_relacion: 'historico'
+        },
+        {
+            linea_id: 'P1',
+            nombre_linea: 'Principal',
+            principio_activo: 'Secukinumab',
+            estado_linea: 'activo',
+            tipo_relacion: 'base',
+            es_principal: true
+        },
+        {
+            linea_id: 'A1',
+            nombre_linea: 'Adicional',
+            principio_activo: 'Rituximab',
+            estado_linea: 'añadido',
+            tipo_relacion: 'tratamiento_añadido'
+        }
+    ]
+};
+const selectedPrincipal = api.buildTreatmentFromPatient(unsortedPatient);
+assertEqual(selectedPrincipal.tratamiento_id, 'P1', 'paciente multibiologico desordenado selecciona la linea principal');
+assertEqual(selectedPrincipal.tipo_relacion, 'principal', 'seleccion principal explicita en paciente desordenado');
+
+const snapshot = api.buildTreatmentSnapshot({
+    selected_drug_id: 'CIMA-99',
+    source_type: 'CIMA',
+    nombre_snapshot: 'Secukinumab',
+    principio_activo_snapshot: 'Secukinumab',
+    presentacion_snapshot: '300 mg pluma',
+    via_snapshot: 'SC',
+    codigo_nacional_snapshot: '999999',
+    nregistro_snapshot: 'EU/1/99/999',
+    dosis_presentacion: '300 mg'
+});
+assertEqual(snapshot.selected_drug_id, 'CIMA-99', 'buildTreatmentSnapshot mapea selectedSnapshot real');
+assertEqual(snapshot.codigo_nacional, '999999', 'buildTreatmentSnapshot mapea codigo nacional snapshot');
+assertEqual(snapshot.via, 'SC', 'buildTreatmentSnapshot mapea via snapshot');
+
+const summary = api.buildTreatmentSummary(lines[0]);
+assertEqual(summary.titulo, lines[0].farmaco_nombre, 'buildTreatmentSummary construye titulo');
+assert(Array.isArray(summary.meta), 'buildTreatmentSummary devuelve meta array');
+
+assertEqual(api.mapViaToSelect('subcutánea'), 'SC', 'mapViaToSelect normaliza SC');
+assertEqual(api.mapViaToSelect('intravenosa'), 'IV', 'mapViaToSelect normaliza IV');
+assertEqual(api.mapViaToSelect('vía no catalogada'), 'Otra', 'mapViaToSelect degrada a Otra');
 
 const csv = api.buildTreatmentCsvFields(lines[0], 'seg_');
 assertEqual(csv.seg_farmaco_nombre, lines[0].farmaco_nombre, 'buildTreatmentCsvFields devuelve campos planos con prefijo');

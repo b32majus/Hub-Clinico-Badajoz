@@ -107,10 +107,7 @@
         if (key === "historico") return "historico";
         if (key === "exposicion") return "exposicion";
         if (key === "sospechoso_ea") return "sospechoso_ea";
-        if (key === "sin_cambios" || key === "base") {
-            if (context && (context.es_principal || normalizeEstadoLinea(context.estado_linea) === "activo")) return "principal";
-            return "principal";
-        }
+        if (key === "sin_cambios" || key === "base") return "";
         if (key === "tratamiento_anadido" || key === "tratamiento_añadido") return "adicional";
         if (key === "cambio_terapeutico") return "historico";
         return "";
@@ -409,7 +406,28 @@
         }
 
         if (opts.returnArray) return lines;
-        return lines[0] || normalizeTreatmentInput({}, opts);
+        if (!lines.length) {
+            return normalizeTreatmentInput({
+                paciente_cip: source.cip || ""
+            }, opts);
+        }
+        var principalLine = lines.find(function (line) {
+            return line.es_principal === true;
+        });
+        if (principalLine) return principalLine;
+        principalLine = lines.find(function (line) {
+            return line.tipo_relacion === "principal";
+        });
+        if (principalLine) return principalLine;
+        principalLine = lines.find(function (line) {
+            return line.tipo_relacion === "validado" && (line.estado_linea === "activo" || line.estado_linea === "validado");
+        });
+        if (principalLine) return principalLine;
+        var activeLines = lines.filter(function (line) {
+            return line.estado_linea === "activo";
+        });
+        if (activeLines.length === 1) return activeLines[0];
+        return lines[0];
     }
 
     function buildTreatmentCsvFields(treatment, prefix) {

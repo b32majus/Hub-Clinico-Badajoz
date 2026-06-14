@@ -391,3 +391,20 @@ Reducir consumo de tokens y mejorar consistencia operativa en futuras WOs median
 
 **Regla activa:**
 A partir de WO7D, los prompts deben referenciar este protocolo y evitar repetir todo el contexto histórico salvo que sea necesario.
+
+---
+
+## WO7C.2 — Correcciones del helper común de tratamiento
+
+**Estado:** completada técnicamente, pendiente de revisión Cora/Sil  
+**Archivos actualizados:**
+- `scripts/farmacia_tratamiento_common.js`
+- `tools/farmacia_tratamiento_common_check.mjs`
+
+**Objetivo:**
+Corregir la selección por defecto del tratamiento principal y endurecer la normalización de `tipo_relacion` antes de reutilizar el helper en WO7D.
+
+**Correcciones aplicadas:**
+- `buildTreatmentFromPatient()` ya no devuelve ciegamente `lines[0]`; prioriza línea principal explícita y conserva `paciente_cip` en shape vacío.
+- `normalizeTipoRelacion()` deja de convertir `sin_cambios` y `base` en `principal`.
+- Se amplía la cobertura del check con casos de multibiológico desordenado, snapshot real, summary y mapeo de vía.
