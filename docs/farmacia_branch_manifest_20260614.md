@@ -20,7 +20,7 @@ main (a25cccb) — demo pública inmutable
       │     └── WO2e: tests vacunación texto libre (T16-T17)
       ├── work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614 ✅ VALIDADA — FUENTE DE TRABAJO ANTERIOR
       │     └── WO3: bandeja bloqueantes prebiológicos
-      └── work/farmacia-wo4-actividad-validaciones-pendientes-20260614 🟡 PENDING REVIEW — NUEVA FUENTE DE TRABAJO
+      └── work/farmacia-wo4-actividad-validaciones-pendientes-20260614 ✅ VALIDADA por Sil — NUEVA FUENTE DE TRABAJO
             └── WO4: actividad servicio validaciones pendientes desplegables
 ```
 
@@ -43,7 +43,7 @@ main (a25cccb) — demo pública inmutable
 | `work/farmacia-wo2e-vacunacion-text-fallback-20260614` | `9201003` | WO2e: regex acotado a frase + tests T16-T17 | ✅ Cerrado | ❌ Auditoría | No tocar |
 | **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`9201003`** | **Todo lo anterior consolidado: demo + WO1 + WO2 + WO2b-e** | **✅ Preservada** | **✅ PUNTO DE RETORNO** | **Preservar. No borrar. No reabrir.** |
 | **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc52`** | **WO3: pintar bloqueantes prebiológicos en bandeja de validación** | **✅ VALIDADA por Sil (2026-06-14)** | **✅ FUENTE ANTERIOR** | **Preservar como histórico validado** |
-| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`PENDING`** | **WO4: tarjeta validaciones pendientes clicable/desplegable en Actividad del Servicio** | **🟡 PENDING REVIEW** | **✅ NUEVA FUENTE DE TRABAJO** | **Esperar validación visual de Sil** |
+| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`533112a`** | **WO4: tarjeta validaciones pendientes clicable/desplegable en Actividad del Servicio** | **✅ VALIDADA por Sil** | **✅ NUEVA FUENTE DE TRABAJO** | **Activa para próximas mejoras** |
 | `main` | `a25cccb` | Rama principal pública. Sin cambios tras la demo | ✅ Estable | ❌ No tocar sin autorización | No mergear sin validación explícita |
 | `work/hermes/farmacia-demo-v0-2-candidate-20260606` | antecesor | Rama de trabajo original de WO5B | 🟡 Histórico | ❌ Histórico | No reabrir |
 | `preview/demo-lunes-wo3-20260614` | `fecdc52` | Rama de preview Pages para demo lunes post-WO3 | 🟡 Preview | ❌ Pages | Sirve demo final WO3 |
@@ -53,15 +53,14 @@ main (a25cccb) — demo pública inmutable
 
 ## Reglas de gobernanza
 
-### Fuente de trabajo actual — WO4 pending_review
-**`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** (SHA **`PENDING`**)
+### Fuente de trabajo actual — WO4 ✅ validada por Sil
+**`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** (SHA **`533112a`**)
+- ✅ Validada visualmente por Sil (2026-06-14).
 - WO4 ejecutada: tarjeta "Validaciones pendientes" clicable/desplegable en Actividad del Servicio.
 - Reutiliza `FarmaciaDemo.getPendingValidationPatients()` como fuente única.
 - Reutiliza `FarmaciaPrebiologico.evaluatePatientPrebiologico()` si está disponible.
 - No duplica datos, no reimplementa lógica clínica.
-- **Pendiente de validación visual por Sil.**
 - Tests: 8/8 syntax OK, 38/38 smoke, 72/72 helper (21/21 tests).
-- **No marcar como fuente definitiva hasta validación visual de Sil.**
 
 ### Fuente de trabajo anterior — WO3 validada
 **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** (SHA **`fecdc52`**)
@@ -102,7 +101,7 @@ main (a25cccb) — demo pública inmutable
 
 **WO4 — Actividad del servicio: tarjeta "Validaciones pendientes" clicable/desplegable**
 
-**Estado:** 🟡 **EJECUTADA — PENDING REVIEW** (2026-06-14)
+**Estado:** ✅ **VALIDADA por Sil** (2026-06-14)
 
 **Qué se hizo:**
 En `farmacia_actividad_servicio.html`, la tarjeta "Validaciones pendientes" se convirtió en un botón accesible que despliega un panel con la lista de pacientes pendientes.
@@ -111,7 +110,7 @@ En `farmacia_actividad_servicio.html`, la tarjeta "Validaciones pendientes" se c
 - No innerHTML, no duplicación de datos, no reimplementación de lógica clínica
 
 **Tests:** 8/8 syntax OK, 38/38 smoke, 72/72 helper
-**Pendiente:** Validación visual por Sil
+**Validación:** ✅ Validada visualmente por Sil (2026-06-14)
 
 ---
 
@@ -130,18 +129,20 @@ En `farmacia_actividad_servicio.html`, la tarjeta "Validaciones pendientes" se c
 | `work/farmacia-demo-lunes-plus-wo1-wo2-20260614` | `92010036b65512f5057fc4071be2fbb40f1b4a18` |
 | **`farmacia-demo-lunes-final-wo3-20260614`** (tag) | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
 | **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
-| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`PENDING`** (HEAD aún no fijado hasta validación Sil) |
+| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`533112a4fcccde8aea8efc79db66b9c6bf51ae17`** ✅ validada por Sil |
 | `preview/demo-lunes-wo3-20260614` | `fecdc5203c22167d1bf6a17a19e11bb3345a06d0` |
 | `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 
 ---
 
-**Status:** `active` (WO4 `pending_review`)
-**Validación:** ✅ WO3 validada visualmente por Sil (2026-06-14). Tests 1-10 superados. WO4 ejecutada, pendiente de validación visual.
-**Fuente de trabajo activa:** `work/farmacia-wo4-actividad-validaciones-pendientes-20260614` (pendiente de SHA fijo tras validación)
+**Status:** `active` (WO4 `validated_by_Sil`)
+**Validación:** ✅ WO4 validada visualmente por Sil (2026-06-14). Tests: 8/8 syntax, 38/38 smoke, 72/72 helper.
+**Fuente de trabajo activa:** `work/farmacia-wo4-actividad-validaciones-pendientes-20260614` (`533112a`)
 **Fuente de trabajo anterior:** `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` (`fecdc52`)
 **Punto de retorno:** `work/farmacia-demo-lunes-plus-wo1-wo2-20260614` (`9201003`)
-**Demo final lunes:** `farmacia-demo-lunes-final-wo3-20260614` (tag, `fecdc52`)
+**Demo lunes pre-WO4:** `farmacia-demo-lunes-final-wo3-20260614` (tag, `fecdc52`)
+**Demo lunes post-WO4:** `farmacia-demo-lunes-final-wo4-20260614` (tag, `533112a`)
+**Preview Pages post-WO4:** `preview/demo-lunes-wo4-20260614` (`533112a`)
 **Backup original:** `farmacia-demo-lunes-stable-924d316` (tag, `924d316`)
-**WO4 ejecutada:** 2026-06-14 — pendiente de validación visual
-**Actualizado:** 2026-06-14 (post-WO4)
+**WO4 validada:** 2026-06-14
+**Actualizado:** 2026-06-14 (post-WO4 validada)
