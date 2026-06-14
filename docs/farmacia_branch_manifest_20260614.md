@@ -428,7 +428,7 @@ No se toca `main` ni GitHub Pages.
 ## WO7D.1 — Pulido visual de Primera visita tras contrato de tratamiento
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
-**HEAD de rama:** `699bc4a` (tras WO7D.1)
+**HEAD de rama:** `7086718` (tras WO7D.1)
 **Alcance:**
 - Eliminado código legacy duplicado (dos pares `applyContext`/`applyTratamientoValidado` legacy que sobrescribían la lógica nueva de WO7D)
 - Eliminada tarjeta azul informativa redundante
