@@ -142,6 +142,107 @@ assertNoKey(candidateC, 'pauta_codigo', 'candidate no tiene pauta_codigo');
 assertNoKey(candidateC, 'pauta_estructurada', 'candidate no tiene pauta_estructurada');
 assertEqual(candidateC.pauta, '', 'candidate.pauta permanece vacía');
 
+// ─── WO8.1c.2 — Tests de clasificación importación ─────────────────────────
+console.log('\n[Caso D] isPharmacyAct — Farmacia');
+const isPharmacyAct = sandbox.window.FarmaciaDemo.isPharmacyAct;
+const isValidationRequest = sandbox.window.FarmaciaDemo.isValidationRequest;
+const shouldAppearInValidationInbox = sandbox.window.FarmaciaDemo.shouldAppearInValidationInbox;
+
+assertEqual(isPharmacyAct({ importSource: 'Excel Farmacia' }), true, 'isPharmacyAct(Excel Farmacia) = true');
+assertEqual(isPharmacyAct({ importSource: 'Excel Enfermería' }), false, 'isPharmacyAct(Excel Enfermería) = false');
+assertEqual(isPharmacyAct({}), false, 'isPharmacyAct(vacío) = false');
+
+console.log('\n[Caso E] isValidationRequest');
+assertEqual(isValidationRequest({ importSource: 'Excel Enfermería' }), true, 'isValidationRequest(Excel Enfermería) = true');
+assertEqual(isValidationRequest({ importSource: 'Excel Farmacia' }), false, 'isValidationRequest(Excel Farmacia) = false');
+assertEqual(isValidationRequest({ estado_solicitud_validacion: 'pendiente' }), true, 'isValidationRequest(pendiente explícito) = true');
+assertEqual(isValidationRequest({ origen_solicitud: 'enfermeria' }), true, 'isValidationRequest(origen enfermeria) = true');
+
+console.log('\n[Caso F] shouldAppearInValidationInbox');
+// Farmacia con validación completada → NO aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', resultado_validacion: 'validado', estado_registro: 'completado' }), false,
+    'Farmacia validado+completado = false');
+// Farmacia seguimiento → NO aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', tipo_acto_fh: 'seguimiento' }), false,
+    'Farmacia seguimiento = false');
+// Farmacia histórico → NO aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', estado_linea: 'historico' }), false,
+    'Farmacia historico = false');
+// Farmacia concomitante → NO aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', tipo_relacion: 'concomitante' }), false,
+    'Farmacia concomitante = false');
+// Enfermería → SÍ aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Enfermería' }), true,
+    'Enfermería = true');
+// Farmacia con pendiente explícito → SÍ aparece (caso borde)
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', resultado_validacion: 'pendiente', estado_registro: 'pendiente_revision' }), true,
+    'Farmacia pendiente explícito = true');
+// Solicitud directa pendiente → SÍ aparece
+assertEqual(shouldAppearInValidationInbox({ estado_solicitud_validacion: 'pendiente' }), true,
+    'Solicitud pendiente explícita = true');
+
+console.log('\n[Caso G] Candidate Farmacia completado (no pending)');
+const candidateD = buildImportedPatientCandidate(
+    { cip: 'VALID-001', tipo_acto_fh: 'validacion_inicial', resultado_validacion: 'validado', estado_registro: 'completado' },
+    { cip: 'cip', tipoActoFH: 'tipo_acto_fh', resultadoValidacion: 'resultado_validacion', estadoRegistro: 'estado_registro' },
+    'Farmacia',
+    3
+);
+assertEqual(candidateD.estado, 'completado', 'Farmacia validado+completado → estado=completado');
+assertEqual(candidateD.estadoLabel, 'Validación registrada', 'Farmacia validacion_inicial → estadoLabel correcto');
+assertEqual(candidateD.importSource, 'Excel Farmacia', 'importSource=Excel Farmacia');
+
+console.log('\n[Caso H] Candidate Farmacia con seguimiento (no pending)');
+const candidateE = buildImportedPatientCandidate(
+    { cip: 'SEG-001', tipo_acto_fh: 'seguimiento' },
+    { cip: 'cip', tipoActoFH: 'tipo_acto_fh' },
+    'Farmacia',
+    4
+);
+assertEqual(candidateE.estado, 'completado', 'Farmacia seguimiento → estado=completado');
+assertEqual(candidateE.estadoLabel, 'Seguimiento', 'Farmacia seguimiento → estadoLabel=Seguimiento');
+
+console.log('\n[Caso I] Candidate Enfermería (sigue siendo pending)');
+const candidateF = buildImportedPatientCandidate(
+    { cip: 'ENF-001', farmaco: 'Secukinumab' },
+    { cip: 'cip', farmaco: 'farmaco' },
+    'Enfermería',
+    5
+);
+assertEqual(candidateF.estado, 'pending', 'Enfermería → estado=pending');
+assertEqual(candidateF.estadoLabel, 'Pendiente', 'Enfermería → estadoLabel=Pendiente');
+assertEqual(candidateF.importSource, 'Excel Enfermería', 'importSource=Excel Enfermería');
+
+console.log('\n[Caso J] Candidate Farmacia simultáneo pendiente (caso borde)');
+const candidateG = buildImportedPatientCandidate(
+    { cip: 'PEND-001', tipo_acto_fh: 'validacion_inicial', resultado_validacion: 'pendiente', estado_registro: 'pendiente_revision' },
+    { cip: 'cip', tipoActoFH: 'tipo_acto_fh', resultadoValidacion: 'resultado_validacion', estadoRegistro: 'estado_registro' },
+    'Farmacia',
+    6
+);
+assertEqual(candidateG.estado, 'pending', 'Farmacia pendiente explícito → estado=pending');
+assertEqual(candidateG.estadoLabel, 'Pendiente de revisión', 'Farmacia pendiente explícito → label correcto');
+
+console.log('\n[Caso K] Candidate Farmacia histórico (nunca pending)');
+const candidateH = buildImportedPatientCandidate(
+    { cip: 'HIST-001', tipo_acto_fh: 'suspension', estado_linea: 'suspendido', fecha_fin: '2026-04-15' },
+    { cip: 'cip', tipoActoFH: 'tipo_acto_fh', estadoLinea: 'estado_linea' },
+    'Farmacia',
+    7
+);
+assertEqual(candidateH.estado, 'completado', 'Farmacia histórico → estado=completado');
+assertEqual(candidateH.estadoLabel, 'Histórico', 'Farmacia histórico → estadoLabel=Histórico');
+
+console.log('\n[Caso L] Candidate Farmacia concomitante (nunca pending)');
+const candidateI = buildImportedPatientCandidate(
+    { cip: 'CONC-001', tipo_relacion: 'concomitante' },
+    { cip: 'cip', tipoRelacion: 'tipo_relacion' },
+    'Farmacia',
+    8
+);
+assertEqual(candidateI.estado, 'completado', 'Farmacia concomitante → estado=completado');
+assertEqual(candidateI.estadoLabel, 'Concomitante', 'Farmacia concomitante → label=Concomitante');
+
 // ─── FINAL ────────────────────────────────────────────────────────────────────
 
 console.log(`\n┌──────────────────────────────────────────────┐`);

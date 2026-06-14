@@ -213,7 +213,14 @@
         serologiaVih: ['serologiaVIH', 'serologia_vih', 'serologiasVih', 'vih', 'hiv'],
         mantoux: ['mantoux', 'mantouxSolicitado', 'mantoux_solicitado', 'mantouxRecibido', 'mantoux_recibido', 'mantouxResultado', 'mantoux_resultado', 'igra', 'IGRA', 'quantiferon', 'quantiFERON', 'quantiferonResultado', 'quantiferon_resultado', 'tuberculosis', 'cribadoTuberculosis', 'cribado_tuberculosis'],
         vacunacion: ['vacunacion', 'vacunación', 'vacunacionRevisada', 'vacunacion_revisada', 'vacunacionOK', 'vacunacion_ok', 'vacunasPendientes', 'vacunas_pendientes', 'vacunacionObservaciones', 'vacunacion_observaciones', 'cartillaVacunal', 'cartilla_vacunal', 'estadoVacunal', 'estado_vacunal'],
-        medicinaPreventiva: ['medicinaPreventiva', 'medicina_preventiva', 'preventiva', 'medicinaPreventivaEstado', 'medicina_preventiva_estado', 'preventivaEstado', 'preventiva_estado', 'derivadoPreventiva', 'derivado_preventiva', 'interconsultaPreventiva', 'interconsulta_preventiva']
+        medicinaPreventiva: ['medicinaPreventiva', 'medicina_preventiva', 'preventiva', 'medicinaPreventivaEstado', 'medicina_preventiva_estado', 'preventivaEstado', 'preventiva_estado', 'derivadoPreventiva', 'derivado_preventiva', 'interconsultaPreventiva', 'interconsulta_preventiva'],
+        // FH Excel operativo (WO8) — columnas de acto farmacéutico
+        tipoActoFH: ['tipo_acto_fh', 'tipo acto fh', 'tipoActoFh', 'tipo acto'],
+        resultadoValidacion: ['resultado_validacion', 'resultado validacion', 'resultadoValidacion'],
+        estadoRegistro: ['estado_registro', 'estado registro', 'estadoRegistro'],
+        estadoLinea: ['estado_linea', 'estado linea', 'estadoLinea'],
+        tipoRelacion: ['tipo_relacion', 'tipo relacion', 'tipoRelacion'],
+        marcaComercial: ['marca_comercial', 'marca comercial', 'marcaComercial', 'nombre comercial', 'nombre_comercial'],
     };
 
     function safeGetLocalStorage(key) {
@@ -401,6 +408,57 @@
         return result;
     }
 
+    /* ── Helpers de clasificación de importación WO8.1c.2 ─────────────────── */
+
+    /**
+     * Determina si un paciente/registro importado representa un acto farmacéutico
+     * ya registrado/completado por Farmacia (no una solicitud pendiente).
+     */
+    function isPharmacyAct(patient) {
+        if (!patient) return false;
+        var source = String(patient.importSource || '').toLowerCase();
+        return source.indexOf('farmacia') !== -1;
+    }
+
+    /**
+     * Determina si un registro importado es una solicitud de validación genuina
+     * (Enfermería / solicitud clínica explícita).
+     */
+    function isValidationRequest(patient) {
+        if (!patient) return false;
+        var source = String(patient.importSource || '').toLowerCase();
+        if (source.indexOf('enfermer') !== -1) return true;
+        // Explícitamente marcado como solicitud
+        if (patient.estado_solicitud_validacion === 'pendiente') return true;
+        if (patient.origen_solicitud === 'enfermeria') return true;
+        return false;
+    }
+
+    /**
+     * Decide si un registro debe aparecer en la bandeja de pendientes de validación.
+     * - Actos farmacéuticos de Farmacia NO aparecen por defecto.
+     * - Solicitudes de Enfermería SÍ aparecen.
+     * - Excepción: fila de Farmacia marcada explícitamente como pendiente.
+     */
+    function shouldAppearInValidationInbox(patient) {
+        if (!patient) return false;
+
+        // Si es solicitud de Enfermería o explícita → sí
+        if (isValidationRequest(patient)) return true;
+
+        // Si es acto de Farmacia → solo si está explícitamente pendiente
+        if (isPharmacyAct(patient)) {
+            var valResult = String(patient.resultado_validacion || '').trim().toLowerCase();
+            var estReg = String(patient.estado_registro || '').trim().toLowerCase();
+            if (valResult === 'pendiente' && estReg === 'pendiente_revision') return true;
+            return false;
+        }
+
+        // Fallback: comportamiento legacy para otros orígenes
+        if (patient.estado === 'pending') return true;
+        return false;
+    }
+
     function buildImportedPatientCandidate(row, mapping, sourceLabel, rowIndex) {
         if (!row || !mapping || !mapping.cip) return null;
         var cip = String(row[mapping.cip] || '').trim();
@@ -436,6 +494,65 @@
             importSource: sourceLabel === 'Enfermería' ? 'Excel Enfermería' : (sourceLabel === 'Farmacia' ? 'Excel Farmacia' : sourceLabel),
             importRowIndex: rowIndex
         };
+
+        // Determinar estado del registro según origen y campos FH
+        var esFarmacia = String(sourceLabel || '').indexOf('Farmacia') !== -1;
+        var tipoActo = mapping.tipoActoFH ? String(row[mapping.tipoActoFH] || '').trim().toLowerCase() : '';
+        var valResultado = mapping.resultadoValidacion ? String(row[mapping.resultadoValidacion] || '').trim().toLowerCase() : '';
+        var estReg = mapping.estadoRegistro ? String(row[mapping.estadoRegistro] || '').trim().toLowerCase() : '';
+        var estLinea = mapping.estadoLinea ? String(row[mapping.estadoLinea] || '').trim().toLowerCase() : '';
+        var tipoRel = mapping.tipoRelacion ? String(row[mapping.tipoRelacion] || '').trim().toLowerCase() : '';
+
+        if (esFarmacia) {
+            // Acto farmacéutico de Farmacia: NO es pendiente por defecto
+            // Solo marcar como pendiente si explícitamente indicado
+            if (valResultado === 'pendiente' && estReg === 'pendiente_revision') {
+                candidate.estado = 'pending';
+                candidate.estadoLabel = 'Pendiente de revisión';
+            } else {
+                candidate.estado = 'completado';
+                candidate.estadoLabel = 'Acto Farmacia';
+                // Añadir matiz según tipo_acto_fh
+                if (tipoActo === 'validacion_inicial') {
+                    candidate.estadoLabel = 'Validación registrada';
+                } else if (tipoActo === 'primera_visita') {
+                    candidate.estadoLabel = 'Primera visita';
+                } else if (tipoActo === 'seguimiento') {
+                    candidate.estadoLabel = 'Seguimiento';
+                } else if (tipoActo === 'suspension') {
+                    candidate.estadoLabel = 'Suspensión';
+                } else if (tipoActo === 'nueva_validacion_cambio' || tipoActo === 'nueva_validacion_adicion') {
+                    candidate.estadoLabel = 'Nueva validación tramitada';
+                }
+            }
+            // Marcar tipo_acto_fh en el paciente si fue reconocido
+            if (tipoActo) candidate.tipo_acto_fh = tipoActo;
+            if (valResultado) candidate.resultado_validacion = valResultado;
+            if (estReg) candidate.estado_registro = estReg;
+            if (estLinea) candidate.estado_linea = estLinea;
+            if (tipoRel) candidate.tipo_relacion = tipoRel;
+            // Históricos/concomitantes nunca son pendientes
+            if (estLinea === 'historico' || estLinea === 'suspendido' || estLinea === 'finalizado') {
+                candidate.estado = 'completado';
+                candidate.estadoLabel = 'Histórico';
+            }
+            if (tipoRel === 'concomitante') {
+                candidate.estado = 'completado';
+                candidate.estadoLabel = 'Concomitante';
+            }
+        } else {
+            // Enfermería u otro origen: comportamiento legacy (pending por defecto)
+            candidate.estado = 'pending';
+            candidate.estadoLabel = 'Pendiente';
+        }
+
+        // Conservar marca_comercial y principio_activo reconocidos
+        if (mapping.marcaComercial) {
+            candidate.marca_comercial = String(row[mapping.marcaComercial] || '').trim();
+        }
+        if (mapping.principioActivo) {
+            candidate.principio_activo_import = String(row[mapping.principioActivo] || '').trim();
+        }
 
         // Normalizar pauta importada manteniendo compatibilidad legacy
         var rawPauta = candidate.pauta;
@@ -603,6 +720,11 @@
 
     function isPendingValidationPatient(patient) {
         if (!patient) return false;
+        // Usar el clasificador semántico WO8.1c.2
+        if (typeof shouldAppearInValidationInbox === 'function') {
+            return shouldAppearInValidationInbox(patient);
+        }
+        // Fallback legacy si el helper no está disponible
         var estado = String(patient.estado || '').trim().toLowerCase();
         var estadoLabel = String(patient.estadoLabel || '').trim().toLowerCase();
         var validacion = String(patient.estado_validacion_farmacia || '').trim().toLowerCase();
@@ -1363,6 +1485,9 @@
         getPrebiologicoStatus,
         normalizePautaString: normalizePautaString,
         buildImportedPatientCandidate: buildImportedPatientCandidate,
+        isPharmacyAct: isPharmacyAct,
+        isValidationRequest: isValidationRequest,
+        shouldAppearInValidationInbox: shouldAppearInValidationInbox,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }

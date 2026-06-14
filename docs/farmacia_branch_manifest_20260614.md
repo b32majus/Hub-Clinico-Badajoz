@@ -1138,6 +1138,57 @@ No se modifica main.
 No se modifica kairos-os-lab.  
 No se toca el panel de control.  
 
+## WO8.1c.2 — Corrección semántica import Excel Farmacia vs pendientes de validación
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD final:** `[PENDING COMMIT]`
+
+**Alcance:**
+Se corrige la interpretación del Excel operativo de Farmacia: sus filas representan actos farmacéuticos registrados, no solicitudes pendientes de validación por defecto. La bandeja de pendientes queda reservada para solicitudes de Enfermería, solicitudes clínicas explícitas o mensajes directos aún no validados.
+
+**Decisión clave:**
+`solicitud_validacion` y `acto_farmaceutico` son conceptos distintos.
+
+**Archivos modificados:**
+- `scripts/farmacia_common.js` — nuevas funciones `isPharmacyAct`, `isValidationRequest`, `shouldAppearInValidationInbox`; `buildImportedPatientCandidate` con estado según origen y campos FH; `isPendingValidationPatient` delegada a `shouldAppearInValidationInbox`; nuevos field aliases FH; API expuesta
+- `tools/farmacia_common_check.mjs` — 12 nuevos tests WO8.1c.2 (Casos D-L, 41 total, 0 failed)
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Origen del bug:**
+En `buildImportedPatientCandidate()`, los campos `estado: 'pending'` y `estadoLabel: 'Pendiente'` estaban hardcodeados para TODOS los pacientes importados, sin distinguir entre origen (Farmacia vs Enfermería) ni examinar campos del acto farmacéutico (`tipo_acto_fh`, `resultado_validacion`, `estado_registro`, `estado_linea`, `tipo_relacion`).
+
+**Regla aplicada:**
+- Excel Farmacia → acto farmacéutico → `estado: 'completado'` por defecto (con label semántico según `tipo_acto_fh`)
+- Excel Enfermería → solicitud de validación → `estado: 'pending'` (comportamiento legacy)
+- Excepción: Farmacia con `resultado_validacion = pendiente` y `estado_registro = pendiente_revision` → `estado: 'pending'`
+
+**Tests añadidos (Casos D-L):**
+| Caso | Test | Resultado |
+|---|---|---|
+| D | `isPharmacyAct` clasifica Farmacia/Enfermería/vacío | ✅ |
+| E | `isValidationRequest` identifica solicitudes | ✅ |
+| F | `shouldAppearInValidationInbox` — 7 escenarios | ✅ |
+| G | Candidate Farmacia validado+completado → completado | ✅ |
+| H | Candidate Farmacia seguimiento → completado | ✅ |
+| I | Candidate Enfermería → pending (legacy) | ✅ |
+| J | Candidate Farmacia pendiente explícito → pending | ✅ |
+| K | Candidate Farmacia histórico → completado | ✅ |
+| L | Candidate Farmacia concomitante → completado | ✅ |
+
+**Checks:**
+- `node --check scripts/farmacia_common.js`: OK
+- `node tools/farmacia_common_check.mjs`: 41/41 PASS
+
+**Importante:**
+No se modifica código HTML/CSS funcional del Hub.  
+No se modifica la rama demo.  
+No se modifica main.  
+No se modifica el Excel FH base ni sintético.  
+No se rompe la búsqueda ni el dashboard.  
+No se rompe el botón de copiar fila Excel.  
+No se toca la rama demo.  
+
 ## WO8.1c.1 — Incorporación plantilla Enfermería Inicio Biológico
 
 **Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
