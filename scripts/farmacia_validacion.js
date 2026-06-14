@@ -1047,5 +1047,23 @@
         updateNaranjoScore();
         updateKarchLasagna();
         toggleCausalityModules();
+        // WO8.1b — Botón Excel FH
+        (function initValExcelBtn() {
+            var btn = document.getElementById('fhValExcelExportBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var exp = window.FarmaciaExcelRowExport;
+                if (!exp) return;
+                var ctx = F.getQueryContext ? F.getQueryContext() : {};
+                var patient = ctx.patient || null;
+                if (!patient) { alert('No hay paciente seleccionado.'); return; }
+                var opts = { tipoActo: 'validacion_inicial', tipoValidacion: 'inicial', resultadoValidacion: 'validado', fechaActo: new Date().toISOString().substring(0, 10), demoFlag: true };
+                var context = exp.buildContextFromValidacion(patient, opts);
+                var rowObj = exp.buildExcelRowObject(context);
+                var rowArr = exp.buildExcelRowArray(rowObj);
+                var sheetName = exp.getServiceSheetName(patient.servicio || '') || 'hoja correspondiente';
+                exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
+            });
+        })();
     });
 })();

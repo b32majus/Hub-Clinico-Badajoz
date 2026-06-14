@@ -1668,5 +1668,30 @@
         }
         const patient = ctx.patient || F.patients['CIP-DEMO-FH-001'];
         renderDashboard(patient);
+        // WO8.1b — Botón Excel FH
+        (function initDashExcelBtn() {
+            var btn = document.getElementById('fhDashExcelExportBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var exp = window.FarmaciaExcelRowExport;
+                if (!exp) return;
+                var patient = (typeof getLongPatient === 'function' && typeof longCurrentCip !== 'undefined') ? getLongPatient(longCurrentCip) : null;
+                if (!patient) { alert('No hay paciente seleccionado.'); return; }
+                var lines = (typeof getPatientBiologicLines === 'function') ? getPatientBiologicLines(patient) : [];
+                var opts = {
+                    tipoActo: 'seguimiento',
+                    visitaId: 'DASH-' + Date.now().toString(36).toUpperCase(),
+                    lineaActual: Array.isArray(lines) && lines.length ? lines[0] : null,
+                    fechaActo: new Date().toISOString().substring(0, 10),
+                    proms: patient.proms || null,
+                    demoFlag: true,
+                };
+                var context = exp.buildContextFromDashboard(patient, opts);
+                var rowObj = exp.buildExcelRowObject(context);
+                var rowArr = exp.buildExcelRowArray(rowObj);
+                var sheetName = exp.getServiceSheetName(patient.servicio || '') || 'hoja correspondiente';
+                exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
+            });
+        })();
     });
 })();

@@ -1090,5 +1090,28 @@
             }).join('\n');
             F.downloadFile('primeras_visitas_FH_' + new Date().toISOString().slice(0, 10) + '.csv', csv, 'text/csv;charset=utf-8');
         });
+        // WO8.1b — Botón Excel FH
+        (function initPvExcelBtn() {
+            var btn = document.getElementById('fhPvExcelExportBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var exp = window.FarmaciaExcelRowExport;
+                if (!exp) return;
+                var patient = ctx && ctx.patient ? ctx.patient : (window.F && F.patients ? F.patients['CIP-DEMO-FH-001'] : null);
+                if (!patient) { alert('No hay paciente seleccionado.'); return; }
+                var treatment = typeof getCurrentPrimaryTreatment === 'function' ? getCurrentPrimaryTreatment() : {};
+                var opts = {
+                    tipoActo: 'primera_visita', visitaId: 'PV-' + Date.now().toString(36).toUpperCase(),
+                    lineaActual: treatment, fechaActo: new Date().toISOString().substring(0, 10),
+                    proms: { morisky_green: '', haq: '', eva_dolor: fv('fhPvEvaDolor') || '', dlqi: '' },
+                    demoFlag: true,
+                };
+                var context = exp.buildContextFromPrimeraVisita(patient, opts);
+                var rowObj = exp.buildExcelRowObject(context);
+                var rowArr = exp.buildExcelRowArray(rowObj);
+                var sheetName = exp.getServiceSheetName(patient.servicio || '') || 'hoja correspondiente';
+                exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
+            });
+        })();
     });
 })();

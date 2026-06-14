@@ -2159,5 +2159,46 @@
             }).join('\n');
             F.downloadFile('seguimientos_FH_' + new Date().toISOString().slice(0, 10) + '.csv', csv, 'text/csv;charset=utf-8');
         });
+        // WO8.1b — Botón Excel FH
+        (function initSegExcelBtn() {
+            var btn = document.getElementById('fhSegExcelExportBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var exp = window.FarmaciaExcelRowExport;
+                if (!exp) return;
+                var ctx = typeof F !== 'undefined' && F.getQueryContext ? F.getQueryContext() : {};
+                var patient = ctx && ctx.patient ? ctx.patient : null;
+                if (!patient) { alert('No hay paciente seleccionado.'); return; }
+                var line = null;
+                if (typeof getCurrentSelectedLine === 'function') line = getCurrentSelectedLine();
+                var ea = null;
+                var eaSelect = document.getElementById('fhSeguimientoEaFarmacoSospechoso');
+                var hasEa = eaSelect && eaSelect.value && eaSelect.value !== '';
+                if (hasEa) {
+                    ea = {
+                        ea_id: 'EA-' + Date.now().toString(36).toUpperCase(),
+                        descripcion: (document.getElementById('fhSeguimientoEaDescripcion') || {}).value || '',
+                        ea_gravedad: (document.getElementById('fhSeguimientoEaGravedad') || {}).value || '',
+                        farmaco_sospechoso_nombre: eaSelect.options[eaSelect.selectedIndex] ? eaSelect.options[eaSelect.selectedIndex].text : '',
+                        causalidad_naranjo: (document.getElementById('fhSeguimientoEaNaranjo') || {}).value || '',
+                    };
+                }
+                var opts = {
+                    tipoActo: hasEa ? 'efecto_adverso' : 'seguimiento',
+                    visitaId: 'SEG-' + Date.now().toString(36).toUpperCase(),
+                    lineaActual: line,
+                    fechaActo: new Date().toISOString().substring(0, 10),
+                    efectoAdverso: ea,
+                    hayEa: !!hasEa,
+                    proms: patient.proms || null,
+                    demoFlag: true,
+                };
+                var context = exp.buildContextFromSeguimiento(patient, opts);
+                var rowObj = exp.buildExcelRowObject(context);
+                var rowArr = exp.buildExcelRowArray(rowObj);
+                var sheetName = exp.getServiceSheetName(patient.servicio || '') || 'hoja correspondiente';
+                exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
+            });
+        })();
     });
 })();

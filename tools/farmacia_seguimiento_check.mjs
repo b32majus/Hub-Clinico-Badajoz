@@ -224,7 +224,7 @@ assert(js.includes("Fallback DOM"), 'Código documenta fallback DOM');
 // 39. No hay otra función que sobrescriba el desplegable visible
 // updateSuspectDrugSelector es la única que escribe en fhSeguimientoEaFarmacoSospechoso
 var suspectSelectorWrites = (js.match(/fhSeguimientoEaFarmacoSospechoso/g) || []).length;
-assert(suspectSelectorWrites <= 3, 'Sospechoso EA solo referenciado para getElementById (no sobrescrito por otras rutas)');
+assert(suspectSelectorWrites <= 4, 'Sospechoso EA solo referenciado para getElementById en rutas controladas (3 existentes + 1 WO8.1b export)');
 
 // --- WO7H.1: Consistencia visual de línea terapéutica ---
 

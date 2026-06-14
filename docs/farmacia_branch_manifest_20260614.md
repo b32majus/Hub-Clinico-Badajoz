@@ -1022,3 +1022,50 @@ No se modifica código funcional del Hub.
 No se implementa WO8.1b parser.  
 No se implementa export analítico.  
 Pendiente de validación visual de Sil antes de WO8.1b.
+
+## WO8.1b — Exportador de fila operativa Excel FH
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD:** `5fae03f`
+
+**Alcance:**
+Se implementa un helper común (`FarmaciaExcelRowExport`) para generar una fila operativa WO8 compatible con la plantilla Excel FH. Cada pantalla clínica (validación, primera visita, seguimiento, dashboard) tiene un botón "Copiar fila Excel FH" que copia al portapapeles una fila TSV lista para pegar en la primera celda libre de la hoja del servicio correspondiente.
+
+**Archivos creados:**
+- `scripts/farmacia_excel_row_export.js` — helper central (expone API en `window.FarmaciaExcelRowExport`)
+- `tools/farmacia_excel_row_export_check.mjs` — 44 tests, 0 failed
+
+**Archivos modificados:**
+- `farmacia_validacion.html` — +script + botón "Copiar fila Excel FH"
+- `farmacia_primera_visita.html` — +script + botón
+- `farmacia_seguimiento.html` — +script + botón
+- `farmacia_dashboard_paciente.html` — +script + botón
+- `scripts/farmacia_validacion.js` — handler Excel FH
+- `scripts/farmacia_primera_visita.js` — handler Excel FH
+- `scripts/farmacia_seguimiento.js` — handler Excel FH
+- `scripts/farmacia_dashboard_paciente.js` — handler Excel FH
+- `tools/farmacia_seguimiento_check.mjs` — ajuste límite referencia EA (3→4)
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Funcionalidad:**
+- `buildExcelRowObject(context)` → objeto con 61 campos orden canónico
+- `buildExcelRowArray(rowObject)` → array de 61 valores
+- `toTSVRow(array)` → línea TSV (valores separados por tabulador)
+- `copyTSVRowToClipboard(array, opts)` → copia al portapapeles + toast
+- `getServiceSheetName(servicio)` → mapea servicio a hoja (01_DERMA, etc.)
+- Context builders específicos por pantalla (buildContextFromValidacion, etc.)
+
+**Reglas de mapeo:**
+- `marca_comercial` antes que `principio_activo` (criterio clínico)
+- Servicio → hoja: Derma/Reuma/Digestivo/Onco
+- `tipo_acto_fh` según pantalla (validacion_inicial, primera_visita, seguimiento, efecto_adverso)
+- EA detecta automáticamente si hay fármaco sospechoso seleccionado
+- `demo_flag = TRUE` por defecto
+
+**Importante:**
+No se escribe directamente en Excel.  
+No se implementa parser/importación.  
+No se modifica la rama demo.  
+No se modifica main.  
+Pendiente de validación visual/manual de Sil.
