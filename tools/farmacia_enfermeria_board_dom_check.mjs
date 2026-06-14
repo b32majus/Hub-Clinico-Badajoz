@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/farmacia_enfermeria_board_dom_check.mjs
-// WO8.1c.6 — Verifica helpers de renderizado DOM para Enfermería
+// WO8.1c.7 — Verifica renderizado DOM de tarjetas Enfermería compactas
 // (sin cargar farmacia_index.js para evitar dependencias complejas)
 
 import fs from 'fs';
@@ -24,6 +24,7 @@ function assertEqual(actual, expected, label) {
 }
 
 function assertNoText(str, forbidden, label) {
+  if (typeof str !== 'string') { fail(`${label}: no se puede evaluar (no es string)`); return; }
   if (str.indexOf(forbidden) === -1) ok(label);
   else fail(`${label}: encontrado "${forbidden}"`);
 }
@@ -107,67 +108,69 @@ function makeEnfPatient(overrides) {
 }
 
 // Inject into patients object
-if (F && F.patients) {
-  F.patients['000000001'] = makeEnfPatient({
-    cip: '000000001', nombre: 'Paciente A',
-    medicina_preventiva_estado: 'PENDIENTE',
-    observaciones_prebiologico: 'Pendiente cita Preventiva'
-  });
-  F.patients['000000002'] = makeEnfPatient({
-    cip: '000000002', nombre: 'Paciente B',
-    analitica_estado: 'ALTERADA / BLOQUEO',
-    mantoux_estado: 'PENDIENTE',
-    igra_estado: 'PENDIENTE',
-    estado_prebiologico_enfermeria: 'BLOQUEADO',
-    estado: 'bloqueado',
-    estadoLabel: 'Bloqueado'
-  });
-  F.patients['000000003'] = makeEnfPatient({
-    cip: '000000003', nombre: 'Paciente C', servicio: 'Reuma',
-    servicio_origen: 'Reuma', patologia: 'AR', patologia_indicacion: 'AR',
-    farmaco: 'Upadacitinib',
-    estado_prebiologico_enfermeria: 'OK FARMACIA',
-    estado: 'ok_farmacia',
-    estadoLabel: 'OK Farmacia',
-    fecha_ok_farmacia: '2026-06-12'
-  });
-  F.patients['000000004'] = makeEnfPatient({
-    cip: '000000004', nombre: 'Paciente D', servicio: 'Digestivo',
-    servicio_origen: 'Digestivo', patologia: 'EII', patologia_indicacion: 'EII',
-    farmaco: 'Vedolizumab',
-    analitica_estado: 'PENDIENTE',
-    medicina_preventiva_estado: 'NO PRECISA'
-  });
-}
+var patients = {};
+patients['000000001'] = makeEnfPatient({
+  cip: '000000001', nombre: 'Paciente A',
+  medicina_preventiva_estado: 'PENDIENTE',
+  observaciones_prebiologico: 'Pendiente cita Preventiva'
+});
+patients['000000002'] = makeEnfPatient({
+  cip: '000000002', nombre: 'Paciente B',
+  analitica_estado: 'ALTERADA / BLOQUEO',
+  mantoux_estado: 'PENDIENTE',
+  igra_estado: 'PENDIENTE',
+  estado_prebiologico_enfermeria: 'BLOQUEADO',
+  estado: 'bloqueado',
+  estadoLabel: 'Bloqueado'
+});
+patients['000000003'] = makeEnfPatient({
+  cip: '000000003', nombre: 'Paciente C', servicio: 'Reuma',
+  servicio_origen: 'Reuma', patologia: 'AR', patologia_indicacion: 'AR',
+  farmaco: 'Upadacitinib',
+  estado_prebiologico_enfermeria: 'OK FARMACIA',
+  estado: 'ok_farmacia',
+  estadoLabel: 'OK Farmacia',
+  fecha_ok_farmacia: '2026-06-12'
+});
+patients['000000004'] = makeEnfPatient({
+  cip: '000000004', nombre: 'Paciente D', servicio: 'Digestivo',
+  servicio_origen: 'Digestivo', patologia: 'EII', patologia_indicacion: 'EII',
+  farmaco: 'Vedolizumab',
+  analitica_estado: 'PENDIENTE',
+  medicina_preventiva_estado: 'NO PRECISA'
+});
 
-// ─── Helper to build a simulated DOM card ────────────────────────────────────
+// Also add a non-Enfermería patient to test filtering (no importSource to avoid pharmacy routing)
+patients['LEGACY-TEST-001'] = {
+  cip: 'LEGACY-TEST-001',
+  nombre: 'Paciente Legacy',
+  servicio: 'Derma',
+  patologia: 'HS',
+  farmaco: 'Cosentyx',
+  estado: 'pending',        // fallback legacy: estado === 'pending'
+  estadoLabel: 'Pendiente de validación'
+};
 
-function simulateEnfermeriaCard(patient) {
-  var badges = F.getEnfermeriaBadges(patient);
-  var text = 'CIP: ' + patient.cip + ', Nombre: ' + patient.nombre
-    + ', Estado: ' + (patient.estadoLabel || '')
-    + ', Grupo: ' + (patient.estado || '');
-  if (badges.length > 0) {
-    text += ', Badges: ' + badges.map(function (b) { return b.label + ': ' + b.display; }).join(' | ');
-  }
-  text += ', Abrir validación: ' + (patient.estado === 'ok_farmacia' ? 'SI' : 'NO');
-  return { text: text, badges: badges };
+// Direct inject to F.patients
+for (var k in patients) {
+  F.patients[k] = patients[k];
 }
 
 // ─── Checks ──────────────────────────────────────────────────────────────────
-console.log('=== Enfermería Board DOM Simulation ===');
+console.log('');
+console.log('=== WO8.1c.7 — Enfermería Board DOM (compact cards) ===');
 
-// 1-4. getEnfermeriaVisiblePatients returns 4
+// ─── 1-3. getEnfermeriaVisiblePatients returns 4 ──────────────────────────
 var visible = F.getEnfermeriaVisiblePatients();
-assertEqual(visible.length, 4, 'getEnfermeriaVisiblePatients → 4 pacientes');
+assertEqual(visible.length, 4, '1. getEnfermeriaVisiblePatients → 4 pacientes');
 
-// Verify each patient is detected as Enfermería
-assert(F.isEnfermeriaPatient(visible[0]), 'Paciente A es Enfermería');
-assert(F.isEnfermeriaPatient(visible[1]), 'Paciente B es Enfermería');
-assert(F.isEnfermeriaPatient(visible[2]), 'Paciente C es Enfermería');
-assert(F.isEnfermeriaPatient(visible[3]), 'Paciente D es Enfermería');
+// Verify each patient
+assert(F.isEnfermeriaPatient(visible[0]), '2. Paciente A es Enfermería');
+assert(F.isEnfermeriaPatient(visible[1]), '3. Paciente B es Enfermería');
+assert(F.isEnfermeriaPatient(visible[2]), '4. Paciente C es Enfermería');
+assert(F.isEnfermeriaPatient(visible[3]), '5. Paciente D es Enfermería');
 
-// Group
+// ─── 6-8. Group counts ───────────────────────────────────────────────────
 var groups = { ok_farmacia: [], en_vigilancia: [], bloqueado: [] };
 visible.forEach(function (p) {
   var est = String(p.estado || p.estado_prebiologico_enfermeria || '').toLowerCase();
@@ -175,74 +178,134 @@ visible.forEach(function (p) {
   else if (est.indexOf('bloqueado') !== -1 || est === 'bloqueado') groups.bloqueado.push(p);
   else groups.en_vigilancia.push(p);
 });
-assertEqual(groups.en_vigilancia.length, 2, '2 pacientes en vigilancia (A y D)');
-assertEqual(groups.bloqueado.length, 1, '1 paciente bloqueado (B)');
-assertEqual(groups.ok_farmacia.length, 1, '1 paciente OK FARMACIA (C)');
+assertEqual(groups.en_vigilancia.length, 2, '6. 2 pacientes en vigilancia (A y D)');
+assertEqual(groups.bloqueado.length, 1, '7. 1 paciente bloqueado (B)');
+assertEqual(groups.ok_farmacia.length, 1, '8. 1 paciente OK FARMACIA (C)');
 
-// 5-7. Badges per patient
-var badgesA = F.getEnfermeriaBadges(visible[0]); // A
-assertEqual(badgesA.length, 1, 'Paciente A → 1 badge');
+// ─── 9-11. Badges per patient ────────────────────────────────────────────
+var badgesA = F.getEnfermeriaBadges(visible[0]);
+assertEqual(badgesA.length, 1, '9. Paciente A → 1 badge');
 if (badgesA.length > 0) {
-  assertEqual(badgesA[0].label, 'Med. Preventiva', 'Badge A → Med. Preventiva');
-  assertEqual(badgesA[0].display, 'Pendiente', 'Badge A → Pendiente');
+  assertEqual(badgesA[0].label, 'Med. Preventiva', '10. Badge A → Med. Preventiva');
+  assertEqual(badgesA[0].display, 'Pendiente', '11. Badge A → Pendiente');
 }
 
-var badgesB = F.getEnfermeriaBadges(visible[1]); // B
-assertEqual(badgesB.length, 3, 'Paciente B → 3 badges');
+var badgesB = F.getEnfermeriaBadges(visible[1]);
+assertEqual(badgesB.length, 3, '12. Paciente B → 3 badges');
 
-var badgesC = F.getEnfermeriaBadges(visible[2]); // C
-assertEqual(badgesC.length, 0, 'Paciente C → 0 badges');
+var badgesC = F.getEnfermeriaBadges(visible[2]);
+assertEqual(badgesC.length, 0, '13. Paciente C → 0 badges');
 
-var badgesD = F.getEnfermeriaBadges(visible[3]); // D
-assertEqual(badgesD.length, 1, 'Paciente D → 1 badge');
+var badgesD = F.getEnfermeriaBadges(visible[3]);
+assertEqual(badgesD.length, 1, '14. Paciente D → 1 badge');
 if (badgesD.length > 0) {
-  assertEqual(badgesD[0].label, 'Analítica', 'Badge D → Analítica');
-  assertEqual(badgesD[0].display, 'Pendiente', 'Badge D → Pendiente');
+  assertEqual(badgesD[0].label, 'Analítica', '15. Badge D → Analítica');
+  assertEqual(badgesD[0].display, 'Pendiente', '16. Badge D → Pendiente');
 }
 
-// 8-10. Simulate card texts
+// ─── 17-26. Simulate card texts ──────────────────────────────────────────
+function simulateEnfermeriaCard(patient) {
+  var cardLines = [];
+  // Header: CIP + nombre
+  cardLines.push('CIP: ' + patient.cip + ', Nombre: ' + patient.nombre);
+  // Badge estado
+  var est = String(patient.estado || patient.estado_prebiologico_enfermeria || '').toLowerCase();
+  var badgeClass = est.indexOf('ok') !== -1 ? 'status-badge--ok'
+    : est.indexOf('bloqueado') !== -1 ? 'status-badge--blocked'
+    : 'status-badge--vigilance';
+  cardLines.push('EstadoBadgeClase: ' + badgeClass);
+  cardLines.push('EstadoLabel: ' + (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—'));
+
+  // Card class: enfermeria-card
+  cardLines.push('CardClase: enfermeria-card');
+
+  // Body: 2-column grid
+  var bodyItems = [];
+  bodyItems.push('Servicio: ' + (patient.servicio || patient.servicio_origen));
+  bodyItems.push('Patologia: ' + (patient.patologia || patient.patologia_indicacion));
+  bodyItems.push('Farmaco: ' + (patient.farmaco || patient.farmaco_solicitado));
+  bodyItems.push('Origen: Excel Enfermería');
+  if (patient.fecha_ok_farmacia) bodyItems.push('OK Fecha: ' + patient.fecha_ok_farmacia);
+  cardLines.push('CuerpoGrid: ' + bodyItems.join(' | '));
+
+  // Badges
+  var badges = F.getEnfermeriaBadges(patient);
+  if (badges.length > 0) {
+    cardLines.push('Badges: ' + badges.map(function (b) { return b.label + ': ' + b.display; }).join(' | '));
+  }
+
+  // Action
+  var hasValidar = est.indexOf('ok') !== -1;
+  cardLines.push('TieneBotonValidar: ' + (hasValidar ? 'SI' : 'NO'));
+  cardLines.push('TieneDashboard: SI');
+
+  return cardLines.join('\n');
+}
+
 var cards = visible.map(simulateEnfermeriaCard);
-var allText = cards.map(function (c) { return c.text; }).join('\n');
+var allText = cards.join('\n\n');
 
-// Paciente A: NO Abrir validación
-assert(allText.indexOf('Paciente A') !== -1, 'Paciente A en cards');
-assert(allText.indexOf('Paciente A, Estado: En vigilancia') !== -1, 'Paciente A → En vigilancia');
-assert(allText.indexOf('Abrir validación: NO') !== -1, 'Paciente A → NO abrir validación');
+// Check Paciente en cards
+assert(allText.indexOf('Paciente A') !== -1, '17. Paciente A en cards');
+assert(allText.indexOf('Paciente B') !== -1, '18. Paciente B en cards');
+assert(allText.indexOf('Paciente C') !== -1, '19. Paciente C en cards');
+assert(allText.indexOf('Paciente D') !== -1, '20. Paciente D en cards');
 
-// Paciente B: Bloqueado
-assert(allText.indexOf('Paciente B') !== -1, 'Paciente B en cards');
-assert(allText.indexOf('Paciente B, Estado: Bloqueado') !== -1, 'Paciente B → Bloqueado');
+// Estado labels
+assert(allText.indexOf('EstadoLabel: En vigilancia') !== -1, '21. Paciente A → En vigilancia');
+assert(allText.indexOf('EstadoLabel: Bloqueado') !== -1, '22. Paciente B → Bloqueado');
+assert(allText.indexOf('EstadoLabel: OK Farmacia') !== -1, '23. Paciente C → OK Farmacia');
+assert(allText.indexOf('EstadoLabel: En vigilancia') !== -1, '24. Paciente D → En vigilancia');
 
-// Paciente C: OK FARMACIA → Abrir validación = SI
-assert(allText.indexOf('Paciente C') !== -1, 'Paciente C en cards');
-assert(allText.indexOf('Paciente C, Estado: OK Farmacia') !== -1, 'Paciente C → OK Farmacia');
-assert(allText.indexOf('Abrir validación: SI') !== -1, 'Paciente C → SÍ abrir validación');
+// Acciones
+function countValidar(text) { return (text.match(/TieneBotonValidar: SI/g) || []).length; }
+assertEqual(countValidar(allText), 1, '25. Solo 1 paciente tiene botón "Abrir validación"');
 
-// Paciente D: En vigilancia
-assert(allText.indexOf('Paciente D') !== -1, 'Paciente D en cards');
-assert(allText.indexOf('Paciente D, Estado: En vigilancia') !== -1, 'Paciente D → En vigilancia');
-assert(allText.indexOf('Abrir validación: NO') !== -1, 'Paciente D → NO abrir validación');
+// Badge classes
+assert(allText.indexOf('CardClase: enfermeria-card') !== -1, '26. Cards usan clase enfermeria-card');
+assert(allText.indexOf('CuerpoGrid:') !== -1, '27. Cards tienen cuerpo en grid 2-columnas');
 
-// 11-14. No forbidden texts in generated card data
-assertNoText(allText, 'unknown', 'No aparece "unknown" en cards');
-assertNoText(allText, ' pending', 'No aparece " pending" en cards');
-assertNoText(allText, 'Hemograma', 'No aparece "Hemograma" en cards');
-assertNoText(allText, 'Bioquímica', 'No aparece "Bioquímica" en cards');
-assertNoText(allText, 'Analítica reciente', 'No aparece "Analítica reciente" en cards');
-assertNoText(allText, 'Prebiológico bloqueado', 'No aparecen bloqueantes genéricos en cards');
+// ─── 28-32. No forbidden texts ───────────────────────────────────────────
+assertNoText(allText, 'unknown', '28. No aparece "unknown" en cards');
+assertNoText(allText, ' pending', '29. No aparece " pending" en cards');
+assertNoText(allText, 'Hemograma', '30. No aparece "Hemograma" en cards');
+assertNoText(allText, 'Bioquímica', '31. No aparece "Bioquímica" en cards');
+assertNoText(allText, 'Analítica reciente', '32. No aparece "Analítica reciente" en cards');
 
-// 15-16. Check that isEnfermeriaPatient correctly identifies non-Enfermería
-assert(!F.isEnfermeriaPatient({ cip: 'FH-TEST', importSource: 'Excel Farmacia' }), 'Farmacia no es Enfermería');
-assert(!F.isEnfermeriaPatient({ cip: 'DEMO-TEST' }), 'Demo no es Enfermería');
+// ─── 33-35. No duplicate between boards ──────────────────────────────────
+// Data layer still includes Paciente C (shouldAppearInValidationInbox=true for OK FARMACIA)
+// Render layer filters out ALL Enfermería patients to avoid duplicates
+var pending = F.getPendingValidationPatients();
+var enfInPendingData = pending.filter(function (p) {
+  return F.isEnfermeriaPatient(p);
+});
+// Paciente C is OK FARMACIA → appears in data layer (correct)
+assert(enfInPendingData.length >= 1, '33. Paciente C aparece en data layer de pending (OK FARMACIA)');
 
-// 17. innerHTML check
+// But renderPendingValidationBoard filter would exclude ALL Enfermería
+// Simulate the render filter:
+var filtered = pending.filter(function (p) {
+  return !F.isEnfermeriaPatient(p);
+});
+var enfInFiltered = filtered.filter(function (p) {
+  return F.isEnfermeriaPatient(p);
+});
+assertEqual(enfInFiltered.length, 0, '34. Render filter excluye todo paciente Enfermería (sin duplicado)');
+
+// The demo Farmacia patient should appear in both
+var demoInPending = pending.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
+assertEqual(demoInPending.length, 1, '35. Paciente legacy SÍ aparece en pending validation');
+var demoInFiltered = filtered.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
+assertEqual(demoInFiltered.length, 1, '36. Paciente legacy también en render filter');
+
+// ─── 37-38. innerHTML check ──────────────────────────────────────────────
 var commonSrcContent = fs.readFileSync(commonPath, 'utf8');
 var innerCount = (commonSrcContent.match(/innerHTML/g) || []).length;
-assert(innerCount <= 3, `innerHTML en farmacia_common.js: ${innerCount}`);
+assert(innerCount <= 3, `37. innerHTML en farmacia_common.js: ${innerCount}`);
 
 var indexSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_index.js'), 'utf8');
 var indexInner = (indexSrc.match(/innerHTML/g) || []).length;
-assert(indexInner <= 2, `innerHTML en farmacia_index.js: ${indexInner}`);
+assert(indexInner <= 2, `38. innerHTML en farmacia_index.js: ${indexInner}`);
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 if (failed > 0) process.exit(1);

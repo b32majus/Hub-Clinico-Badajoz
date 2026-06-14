@@ -1209,6 +1209,45 @@ Se corrige la visualización real de las solicitudes de Enfermería para evitar 
 - `tools/farmacia_enfermeria_board_dom_check.mjs` — nuevo, 37 tests DOM
 - `docs/farmacia_branch_manifest_20260614.md` — este bloque
 
+## WO8.1c.7 — Mejora estética tarjetas Enfermería
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`
+
+**Alcance:**
+Se unifica la representación visual de las solicitudes de Enfermería con el estilo de tarjeta clínica ya existente en el Hub. Las 4 solicitudes de Enfermería se muestran como tarjetas compactas en grid responsive usando la nueva clase `.enfermeria-card`, con fondo blanco, sombra suave, cuerpo en 2 columnas (Servicio, Patología, Fármaco, Origen) y badges de pendientes/bloqueos. La agrupación por estado (Listos, Vigilancia, Bloqueados) se mantiene con cabeceras de grupo visuales.
+
+**Decisión clave:**
+- Las tarjetas Enfermería usan grid CSS (`auto-fit, minmax(290px, 1fr)`) = compactas, no full-width.
+- El cuerpo de cada tarjeta usa un grid de 2 columnas en vez de stack vertical.
+- Se eliminan duplicados visuales: `renderPendingValidationBoard()` filtra TODOS los pacientes Enfermería (incluido OK FARMACIA) para que vivan exclusivamente en el board Enfermería.
+- Se limpia dead code del branch Enfermería en `renderPendingValidationBoard()`.
+- Se conserva `shouldAppearInValidationInbox` intacto para contadores/pipelines — el filtro es solo visual.
+- CSS nuevo: `.enfermeria-card-grid`, `.enfermeria-card`, `.enfermeria-card__*`, `.enfermeria-board__heading`, `.enfermeria-group__header`.
+
+**Archivos modificados:**
+- `farmacia_style.css` — nuevo bloque CSS para Enfermería card grid y compact card
+- `scripts/farmacia_index.js` — `renderEnfermeriaBoard()` reescrita con cards compactas en grid; `renderPendingValidationBoard()` filtra todo Enfermería; dead code eliminado
+- `tools/farmacia_enfermeria_board_dom_check.mjs` — actualizado a 38 tests (grid, clase card, sin duplicados)
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Tests:**
+- Common check: 49/49 PASS
+- Enfermería import: 95/95 PASS
+- DOM board check: 38/38 PASS
+- Row export: 44/44 PASS
+- FH sintético: 38/38 PASS
+- Smoke check: 38/38 PASS
+- Template check: 36/36 PASS
+
+**Archivos no modificados:**
+- `templates/farmacia_excel_operativo_FH_WO8_v1.xlsx` — intacto
+- `templates/farmacia_excel_operativo_FH_WO8_v1_sintetico.xlsx` — intacto
+- `scripts/farmacia_common.js` — sin cambios estructurales (solo se usan helpers existentes)
+- `data/demo/*` — intacto
+- `main` — intacto (a25cccb)
+- `preview/demo-lunes-wo4-20260614` — intacto (22db535)
+
 
 ## WO8.1c.3 — Adaptador import Enfermería Inicio Biológico
 

@@ -500,16 +500,12 @@
         var patients = F.getPendingValidationPatients();
         // Filtrar: los pacientes de Enfermería que NO son OK FARMACIA no deben aparecer aquí
         var filtered = patients.filter(function (p) {
-            if (!F.isEnfermeriaPatient(p)) return true; // Farmacia/demo → sí
-            // Enfermería: solo OK FARMACIA aparece aquí
-            var est = String(p.estado || p.estado_prebiologico_enfermeria || '').toLowerCase();
-            return est.indexOf('ok') !== -1;
+            return !F.isEnfermeriaPatient(p);
         });
         empty.classList.toggle('hidden', filtered.length > 0);
         if (!filtered.length) return;
 
         filtered.forEach(function (patient) {
-            var esEnf = F.isEnfermeriaPatient(patient);
             var card = document.createElement('article');
             card.className = 'pending-validation-card';
 
@@ -525,13 +521,8 @@
             subtitle.textContent = textOrDash(patient.nombre);
             titleWrap.append(title, subtitle);
             var badge = document.createElement('span');
-            if (esEnf) {
-                badge.className = 'status-badge status-badge--ok';
-                badge.textContent = 'OK Farmacia';
-            } else {
-                badge.className = 'status-badge status-badge--pending';
-                badge.textContent = 'Pendiente de validación';
-            }
+            badge.className = 'status-badge status-badge--pending';
+            badge.textContent = 'Pendiente de validación';
             header.append(titleWrap, badge);
             card.appendChild(header);
 
@@ -544,28 +535,7 @@
             body.appendChild(buildPendingMeta('fa-database', 'Origen de datos: ' + pendingSourceLabel(patient)));
             card.appendChild(body);
 
-            // Prebiológico: usar render específico según origen
-            if (esEnf) {
-                // Enfermería: usar badges específicos, NO renderPrebioBlock genérico
-                var enfBadges = F.getEnfermeriaBadges(patient);
-                if (enfBadges.length > 0) {
-                    var enfBlock = document.createElement('div');
-                    enfBlock.className = 'pending-validation-card__prebio prebio-complete pending-validation-card__prebio--ok';
-                    var labelRow = document.createElement('div');
-                    labelRow.className = 'pending-validation-card__prebio-label';
-                    var icon = document.createElement('i');
-                    icon.className = 'fas fa-check-circle';
-                    icon.setAttribute('aria-hidden', 'true');
-                    var text = document.createElement('span');
-                    text.textContent = 'Prebiológico completo · Listo para validación';
-                    labelRow.appendChild(icon);
-                    labelRow.appendChild(text);
-                    enfBlock.appendChild(labelRow);
-                    card.appendChild(enfBlock);
-                }
-            } else {
-                card.appendChild(renderPrebioBlock(patient));
-            }
+            card.appendChild(renderPrebioBlock(patient));
 
             var actions = document.createElement('div');
             actions.className = 'pending-validation-card__actions';
@@ -711,7 +681,8 @@
 
         var enfBoard = document.createElement('section');
         enfBoard.id = 'enfermeriaBoard';
-        enfBoard.className = 'enfermeria-board';
+        enfBoard.className = 'dashboard-card';
+        enfBoard.style.overflow = 'visible';
 
         var heading = document.createElement('h2');
         heading.className = 'enfermeria-board__heading';
@@ -747,21 +718,27 @@
             groupHeader.appendChild(document.createTextNode(' ' + cfg.label + ' (' + g.length + ')'));
             enfBoard.appendChild(groupHeader);
 
+            // Grid container for cards in this group
+            var grid = document.createElement('div');
+            grid.className = 'enfermeria-card-grid';
+
             for (var pi = 0; pi < g.length; pi++) {
                 var p = g[pi];
                 var card = document.createElement('article');
-                card.className = 'pending-validation-card enfermeria-card';
+                card.className = 'enfermeria-card';
+                card.setAttribute('data-enf-cip', p.cip);
+                card.setAttribute('data-enf-estado', gk);
 
-                // Header
+                // Header: CIP + nombre + badge estado
                 var header = document.createElement('div');
-                header.className = 'pending-validation-card__header';
+                header.className = 'enfermeria-card__header';
                 var titleWrap = document.createElement('div');
-                titleWrap.className = 'pending-validation-card__title-wrap';
+                titleWrap.className = 'enfermeria-card__title-wrap';
                 var title = document.createElement('h3');
-                title.className = 'pending-validation-card__title';
+                title.className = 'enfermeria-card__title';
                 title.textContent = textOrDash(p.cip);
                 var subtitle = document.createElement('p');
-                subtitle.className = 'pending-validation-card__subtitle';
+                subtitle.className = 'enfermeria-card__subtitle';
                 subtitle.textContent = textOrDash(p.nombre || p.paciente_nombre);
                 titleWrap.append(title, subtitle);
                 var badge = document.createElement('span');
@@ -771,23 +748,35 @@
                 header.append(titleWrap, badge);
                 card.appendChild(header);
 
-                // Body
+                // Body: grid 2-column con datos clínicos
                 var body = document.createElement('div');
-                body.className = 'pending-validation-card__body';
-                body.appendChild(buildPendingMeta('fa-hospital', 'Servicio: ' + textOrDash(p.servicio || p.servicio_origen)));
-                body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología: ' + textOrDash(p.patologia || p.patologia_indicacion)));
-                body.appendChild(buildPendingMeta('fa-pills', 'Fármaco: ' + textOrDash(p.farmaco || p.farmaco_solicitado)));
-                if (p.fecha_ok_farmacia) {
-                    body.appendChild(buildPendingMeta('fa-calendar-check', 'Fecha OK Farmacia: ' + p.fecha_ok_farmacia));
+                body.className = 'enfermeria-card__body-grid';
+
+                function enfMeta(iconClass, text) {
+                    var row = document.createElement('div');
+                    row.className = 'enfermeria-card__meta';
+                    var ic = document.createElement('i');
+                    ic.className = 'fas ' + iconClass;
+                    ic.setAttribute('aria-hidden', 'true');
+                    row.appendChild(ic);
+                    row.appendChild(document.createTextNode(' ' + text));
+                    return row;
                 }
-                body.appendChild(buildPendingMeta('fa-database', 'Origen: Excel Enfermería'));
+
+                body.appendChild(enfMeta('fa-hospital', textOrDash(p.servicio || p.servicio_origen)));
+                body.appendChild(enfMeta('fa-stethoscope', textOrDash(p.patologia || p.patologia_indicacion)));
+                body.appendChild(enfMeta('fa-pills', textOrDash(p.farmaco || p.farmaco_solicitado)));
+                body.appendChild(enfMeta('fa-database', 'Excel Enfermería'));
+                if (p.fecha_ok_farmacia) {
+                    body.appendChild(enfMeta('fa-calendar-check', 'OK: ' + p.fecha_ok_farmacia));
+                }
                 card.appendChild(body);
 
                 // Badges prebiológicos
                 var badges = F.getEnfermeriaBadges(p);
                 if (badges.length > 0) {
                     var badgesContainer = document.createElement('div');
-                    badgesContainer.className = 'pending-validation-card__prebio-chips';
+                    badgesContainer.className = 'enfermeria-card__badges';
                     for (var bi = 0; bi < badges.length; bi++) {
                         var chip = document.createElement('span');
                         chip.className = 'prebio-chip status-' + badges[bi].status;
@@ -800,16 +789,17 @@
                 // Observación
                 if (p.observaciones_prebiologico) {
                     var obsRow = document.createElement('div');
-                    obsRow.className = 'pending-validation-card__meta';
-                    obsRow.style.marginTop = '8px';
+                    obsRow.className = 'enfermeria-card__meta';
                     obsRow.style.fontStyle = 'italic';
+                    obsRow.style.color = '#64748B';
+                    obsRow.style.fontSize = '0.78rem';
                     obsRow.textContent = 'Observación: ' + p.observaciones_prebiologico;
                     card.appendChild(obsRow);
                 }
 
                 // Actions
                 var actions = document.createElement('div');
-                actions.className = 'pending-validation-card__actions';
+                actions.className = 'enfermeria-card__actions';
                 if (gk === 'ok_farmacia') {
                     var link = document.createElement('a');
                     link.className = 'btn btn-primary';
@@ -820,6 +810,7 @@
                         entrada: 'validacion'
                     });
                     F.appendIconText(link, 'fa-check-double', 'Abrir validación');
+                    link.setAttribute('data-enf-action', 'validar');
                     actions.appendChild(link);
                 } else {
                     var infoBtn = document.createElement('span');
@@ -843,8 +834,10 @@
                 actions.appendChild(dashLink);
                 card.appendChild(actions);
 
-                enfBoard.appendChild(card);
+                grid.appendChild(card);
             }
+
+            enfBoard.appendChild(grid);
         }
 
         board.parentNode.insertBefore(enfBoard, board.nextSibling);
