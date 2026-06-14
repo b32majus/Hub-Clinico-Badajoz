@@ -356,3 +356,25 @@ No implementar nuevos autocompletes terapéuticos ni nuevos campos de dosis/vía
 
 **Siguiente paso recomendado:**  
 `WO7C — Crear helper común farmacia_tratamiento_common.js`, todavía sin rediseñar formularios completos.
+
+---
+
+## WO7C — Helper común de tratamiento farmacológico
+
+**Estado:** completada técnicamente, pendiente de revisión Cora/Sil  
+**Archivos nuevos:**
+- `scripts/farmacia_tratamiento_common.js`
+- `tools/farmacia_tratamiento_common_check.mjs`
+
+**Alcance:**
+WO7C crea un helper común no invasivo para normalizar y construir objetos de tratamiento farmacológico conforme a `docs/farmacia_treatment_data_contract.md`.
+
+**Importante:**
+WO7C no cablea todavía las pantallas clínicas. Validación, primera visita, seguimiento y dashboard siguen usando sus flujos previos hasta WO7D/WO7E/WO7F/WO7G.
+
+**Estado de gobierno:**
+- WO6 sigue `pending_review`.
+- Fuente activa funcional sigue WO5.
+- No se ha tocado `main`.
+- No se ha tocado GitHub Pages.
+- No se ha modificado ninguna pantalla clínica.
