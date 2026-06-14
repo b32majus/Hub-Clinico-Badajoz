@@ -2,6 +2,7 @@
 
 (function () {
     const F = window.FarmaciaDemo;
+    var P = window.FarmaciaPautasCatalog;
     var pvAutocompleteActiveIndex = -1;
 
     function isTruthyRobust(value) {
@@ -19,7 +20,7 @@
         if (ctx.patient) {
             F.setValue('fhPvFarmaco', ctx.patient.farmaco);
             F.setValue('fhPvDosis', ctx.patient.dosis);
-            F.setValue('fhPvPauta', ctx.patient.pauta);
+            setPautaFromContext(ctx.patient.pauta);
             F.setValue('fhPvVia', ctx.patient.via);
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
             F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
@@ -81,6 +82,59 @@
     }
 
     function fv(id) { const el = document.getElementById(id); return el ? (el.value || '').trim() : ''; }
+
+    function populatePautaSelectPv(id, otroId) {
+        var select = document.getElementById(id);
+        var otro = document.getElementById(otroId);
+        if (!select) return;
+        select.innerHTML = '<option value="">Seleccionar...</option>';
+        if (P && P.getPautaOptions) {
+            P.getPautaOptions().forEach(function (opt) {
+                var option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                select.appendChild(option);
+            });
+        }
+        select.addEventListener('change', function () {
+            if (otro) {
+                otro.classList.toggle('hidden', select.value !== 'OTRO');
+                if (select.value !== 'OTRO') otro.value = '';
+            }
+        });
+    }
+
+    function setPautaFromContext(value) {
+        var select = document.getElementById('fhPvPauta');
+        var otro = document.getElementById('fhPvPautaOtro');
+        if (!select) return;
+        var pautaObj = P && P.normalizePautaLabel ? P.normalizePautaLabel(value) : null;
+        if (pautaObj && pautaObj.pauta_codigo) {
+            select.value = pautaObj.pauta_codigo;
+            if (pautaObj.pauta_codigo === 'OTRO' && otro) {
+                otro.value = pautaObj.pauta_otro_texto || '';
+                otro.classList.remove('hidden');
+            } else if (otro) {
+                otro.value = '';
+                otro.classList.add('hidden');
+            }
+        } else {
+            select.value = '';
+            if (otro) {
+                otro.value = '';
+                otro.classList.add('hidden');
+            }
+        }
+    }
+
+    function getPautaLabelForExport() {
+        var select = document.getElementById('fhPvPauta');
+        var otro = document.getElementById('fhPvPautaOtro');
+        if (!select || !select.value) return '';
+        if (select.value === 'OTRO') return otro ? otro.value.trim() : '';
+        var pauta = P && P.getPautaByCodigo ? P.getPautaByCodigo(select.value) : null;
+        return P && P.getLegacyPautaLabel ? P.getLegacyPautaLabel(pauta) : select.value;
+    }
 
     // ---- T12: DLQI data and functions ----
 
@@ -354,7 +408,7 @@
         lines.push('Principio activo: ' + (pa || '—'));
         lines.push('Presentación/dosis: ' + (fv('fhPvDosis') || '—'));
         lines.push('Vía: ' + (fv('fhPvVia') || '—'));
-        lines.push('Pauta: ' + (fv('fhPvPauta') || '—'));
+        lines.push('Pauta: ' + (getPautaLabelForExport() || '—'));
         var meta = getSnapshotMetaForExport();
         if (meta) {
             lines.push('Código nacional: ' + (meta.codigo_nacional || '—'));
@@ -403,10 +457,16 @@
         clearCipNotice();
 
         if (!patient) {
-            var fieldsToClear = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvPauta', 'fhPvVia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica'];
+            var fieldsToClear = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica'];
             for (var i = 0; i < fieldsToClear.length; i++) {
                 var el = document.getElementById(fieldsToClear[i]);
                 if (el) el.value = '';
+            }
+            setPautaFromContext('');
+            var otroInput = document.getElementById('fhPvPautaOtro');
+            if (otroInput) {
+                otroInput.value = '';
+                otroInput.classList.add('hidden');
             }
             var grid = document.getElementById('fhPvTratamientoGrid');
             if (grid) F.clearChildren(grid);
@@ -424,7 +484,7 @@
         F.setValue('fhPvPatologia', patient.patologia);
         F.setValue('fhPvFarmaco', patient.farmaco);
         F.setValue('fhPvDosis', patient.dosis);
-        F.setValue('fhPvPauta', patient.pauta);
+        setPautaFromContext(patient.pauta);
         F.setValue('fhPvVia', patient.via);
         F.setValue('fhPvFechaValidacion', patient.fechaSolicitud);
         F.setValue('fhPvInduccionSolicitada', patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
@@ -664,6 +724,7 @@
             if (C && C.clearSnapshot) C.clearSnapshot();
         }
 
+        populatePautaSelectPv('fhPvPauta', 'fhPvPautaOtro');
         applyContext(ctx);
         applyTratamientoValidado(ctx);
         renderDLQI();
@@ -691,7 +752,7 @@
             var meta = getSnapshotMetaForExport();
             var rows = [
                 ['ID', 'FechaExportacion', 'CIP', 'Servicio', 'Patologia', 'TratamientoValidado', 'PrincipioActivo', 'PresentacionDosis', 'Pauta', 'Via', 'CodigoNacional', 'NRegistro', 'OrigenCatalogo', 'SelectedDrugId', 'FechaPrimeraVisita', 'InduccionRealizada', 'PROMBasal', 'DLQITotal', 'DLQIInterpretacion', 'EVADolor', 'EVAPrurito', 'Observaciones'],
-                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', fv('fhPvPauta') || '—', fv('fhPvVia') || '—', (meta && meta.codigo_nacional) || '—', (meta && meta.nregistro) || '—', (meta && meta.source_type) || '—', (meta && meta.selected_drug_id) || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
+                ['FH-PV-' + Date.now().toString(36).toUpperCase(), new Date().toLocaleDateString('es-ES'), fv('fhPvCip') || '—', fv('fhPvServicio') || '—', fv('fhPvPatologia') || '—', fv('fhPvFarmaco') || '—', pa || '—', fv('fhPvDosis') || '—', getPautaLabelForExport() || '—', fv('fhPvVia') || '—', (meta && meta.codigo_nacional) || '—', (meta && meta.nregistro) || '—', (meta && meta.source_type) || '—', (meta && meta.selected_drug_id) || '—', fv('fhPvFecha') || '—', fv('fhPvInduccionRealizada') || '—', fv('fhPvProms') || '—', dlqiTotalExport || '—', dlqiInterpExport || '—', evaDolorExport || '—', evaPruritoExport || '—', fv('fhPvNotas') || '—']
             ];
             const csv = rows.map(function (row) {
                 return row.map(function (cell) {
