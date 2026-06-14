@@ -1689,6 +1689,83 @@
     })();
 
 
+    /* ── Visibilidad Enfermería WO8.1c.5 ─────────────────────────────── */
+
+    /**
+     * Normaliza un valor de campo prebiológico de Enfermería a etiqueta legible en español.
+     */
+    function normalizeEnfermeriaFieldValue(value) {
+        var v = String(value || '').trim().toUpperCase();
+        if (!v || v === '—' || v === '') return 'No informado';
+        if (v === 'OK' || v === 'COMPLETO' || v === 'COMPLETADA' || v === 'COMPLETADO') return 'Completo';
+        if (v === 'NEGATIVO' || v === 'NEGATIVA' || v === 'NEGATIVOS') return 'Completo';
+        if (v === 'NO PRECISA' || v === 'NO_PRECISA' || v === 'NO APLICA' || v === 'N/A' || v === 'NA') return 'No precisa';
+        if (v.indexOf('PENDIENT') !== -1) return 'Pendiente';
+        if (v.indexOf('BLOQUEO') !== -1 || v.indexOf('ALTERADA') !== -1) return 'Bloqueo';
+        if (v.indexOf('POSITIV') !== -1) return 'Positivo';
+        return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
+    }
+
+    /**
+     * Determina el campo de estado individual de un badge prebiológico.
+     * 'completo' y 'no_precisa' cuentan como OK (no bloqueo).
+     * 'pendiente' y 'bloqueo' cuentan como pendiente/bloqueo.
+     */
+    function getEnfermeriaFieldStatus(value) {
+        var v = String(value || '').trim().toUpperCase();
+        if (!v || v === '—') return 'no_informado';
+        if (v === 'OK' || v === 'COMPLETO' || v === 'COMPLETADA' || v === 'COMPLETADO') return 'completo';
+        if (v === 'NEGATIVO' || v === 'NEGATIVOS' || v === 'NEGATIVA') return 'completo';
+        if (v === 'NO PRECISA' || v === 'NO_PRECISA') return 'no_aplica';
+        if (v.indexOf('PENDIENT') !== -1) return 'pendiente';
+        if (v.indexOf('BLOQUEO') !== -1 || v.indexOf('ALTERADA') !== -1) return 'bloqueo';
+        if (v.indexOf('POSITIV') !== -1) return 'alerta';
+        return 'no_informado';
+    }
+
+    /**
+     * Obtiene los badges de estado prebiológico para un paciente de Enfermería.
+     * Solo incluye campos con datos (ignora vacíos).
+     * No incluye Hemograma, Bioquímica ni Analítica reciente (no existen en plantilla Enfermería).
+     */
+    function getEnfermeriaBadges(patient) {
+        if (!patient) return [];
+        var badges = [];
+        var fields = [
+            { key: 'analitica_estado', label: 'Analítica' },
+            { key: 'mantoux_estado', label: 'Mantoux' },
+            { key: 'igra_estado', label: 'IGRA' },
+            { key: 'vhb_estado', label: 'VHB' },
+            { key: 'vhc_estado', label: 'VHC' },
+            { key: 'vih_estado', label: 'VIH' },
+            { key: 'medicina_preventiva_estado', label: 'Med. Preventiva' }
+        ];
+        for (var i = 0; i < fields.length; i++) {
+            var val = patient[fields[i].key];
+            if (!val || String(val).trim() === '') continue;
+            var display = normalizeEnfermeriaFieldValue(val);
+            var status = getEnfermeriaFieldStatus(val);
+            if (status === 'completo' || status === 'no_aplica') continue; // OK items no se muestran como badge
+            badges.push({ label: fields[i].label, value: val, display: display, status: status });
+        }
+        return badges;
+    }
+
+    /**
+     * Retorna todos los pacientes de Enfermería visibles en el Hub.
+     * No filtra por estado de validación — todos los casos prebiológicos se muestran.
+     */
+    function getEnfermeriaVisiblePatients() {
+        var all = getAvailablePatients();
+        return all.filter(function (patient) {
+            if (!patient) return false;
+            if (patient.origen_solicitud === 'enfermeria') return true;
+            if (patient.tipo_origen === 'enfermeria_inicio_biologico') return true;
+            if (patient.source_type === 'ENFERMERIA') return true;
+            return false;
+        });
+    }
+
     window.FarmaciaDemo = {
         patients,
         profesionales,
@@ -1724,6 +1801,11 @@
         parseEnfermeriaInicioBiologicoSheet: parseEnfermeriaInicioBiologicoSheet,
         buildEnfermeriaHeaderMap: buildEnfermeriaHeaderMap,
         shouldEnfermeriaRowAppearInValidationInbox: shouldEnfermeriaRowAppearInValidationInbox,
+        /* Visibilidad Enfermería WO8.1c.5 */
+        normalizeEnfermeriaFieldValue: normalizeEnfermeriaFieldValue,
+        getEnfermeriaFieldStatus: getEnfermeriaFieldStatus,
+        getEnfermeriaBadges: getEnfermeriaBadges,
+        getEnfermeriaVisiblePatients: getEnfermeriaVisiblePatients,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }

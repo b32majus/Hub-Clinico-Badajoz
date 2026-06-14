@@ -215,5 +215,90 @@ const matches = commonSrcContent.match(/innerHTML/g);
 const count = matches ? matches.length : 0;
 assert(count <= 3, `innerHTML en farmacia_common.js: ${count} (máx 3 permitido, 0-2 en código existente)`);
 
+// ─── WO8.1c.5 — Tests de normalización y visibilidad ───────────────────
+console.log('\n[Caso O] normalizeEnfermeriaFieldValue');
+const normVal = F.normalizeEnfermeriaFieldValue;
+assertEqual(normVal('OK'), 'Completo', 'OK → Completo');
+assertEqual(normVal('NEGATIVO'), 'Completo', 'NEGATIVO → Completo');
+assertEqual(normVal('NO PRECISA'), 'No precisa', 'NO PRECISA → No precisa');
+assertEqual(normVal('PENDIENTE'), 'Pendiente', 'PENDIENTE → Pendiente');
+assertEqual(normVal('ALTERADA / BLOQUEO'), 'Bloqueo', 'ALTERADA/BLOQUEO → Bloqueo');
+assertEqual(normVal(''), 'No informado', 'vacío → No informado');
+assertEqual(normVal('  '), 'No informado', 'espacios → No informado');
+
+console.log('\n[Caso P] getEnfermeriaFieldStatus');
+const fldStatus = F.getEnfermeriaFieldStatus;
+assertEqual(fldStatus('OK'), 'completo', 'OK → completo');
+assertEqual(fldStatus('NEGATIVO'), 'completo', 'NEGATIVO → completo');
+assertEqual(fldStatus('NO PRECISA'), 'no_aplica', 'NO PRECISA → no_aplica');
+assertEqual(fldStatus('PENDIENTE'), 'pendiente', 'PENDIENTE → pendiente');
+assertEqual(fldStatus('ALTERADA / BLOQUEO'), 'bloqueo', 'ALTERADA/BLOQUEO → bloqueo');
+assertEqual(fldStatus('POSITIVO'), 'alerta', 'POSITIVO → alerta');
+
+console.log('\n[Caso Q] getEnfermeriaBadges — Paciente A (EN VIGILANCIA)');
+const badgesA = F.getEnfermeriaBadges({
+analitica_estado: 'OK',
+mantoux_estado: 'NEGATIVO',
+igra_estado: 'NO PRECISA',
+vhb_estado: 'NEGATIVO',
+vhc_estado: 'NEGATIVO',
+vih_estado: 'NEGATIVO',
+medicina_preventiva_estado: 'PENDIENTE'
+});
+assertEqual(badgesA.length, 1, 'Paciente A → 1 badge (solo Med. Preventiva pendiente)');
+if (badgesA.length > 0) {
+assertEqual(badgesA[0].label, 'Med. Preventiva', 'Badge A → Med. Preventiva');
+assertEqual(badgesA[0].display, 'Pendiente', 'Badge A → Pendiente');
+}
+
+console.log('\n[Caso R] getEnfermeriaBadges — Paciente B (BLOQUEADO)');
+const badgesB = F.getEnfermeriaBadges({
+analitica_estado: 'ALTERADA / BLOQUEO',
+mantoux_estado: 'PENDIENTE',
+igra_estado: 'PENDIENTE',
+vhb_estado: 'NEGATIVO',
+vhc_estado: 'NEGATIVO',
+vih_estado: 'NEGATIVO',
+medicina_preventiva_estado: 'OK'
+});
+assertEqual(badgesB.length, 3, 'Paciente B → 3 badges (Analítica bloqueo + Mantoux pendiente + IGRA pendiente)');
+
+console.log('\n[Caso S] getEnfermeriaBadges — Paciente C (OK FARMACIA)');
+const badgesC = F.getEnfermeriaBadges({
+analitica_estado: 'OK',
+mantoux_estado: 'NEGATIVO',
+igra_estado: 'NEGATIVO',
+vhb_estado: 'NEGATIVO',
+vhc_estado: 'NEGATIVO',
+vih_estado: 'NEGATIVO',
+medicina_preventiva_estado: 'OK'
+});
+assertEqual(badgesC.length, 0, 'Paciente C → 0 badges (todo completo/no precisa)');
+
+console.log('\n[Caso T] getEnfermeriaBadges — Paciente D (EN VIGILANCIA)');
+const badgesD = F.getEnfermeriaBadges({
+analitica_estado: 'PENDIENTE',
+mantoux_estado: 'NO PRECISA',
+igra_estado: 'NO PRECISA',
+vhb_estado: 'NEGATIVO',
+vhc_estado: 'NEGATIVO',
+vih_estado: 'NEGATIVO',
+medicina_preventiva_estado: 'NO PRECISA'
+});
+assertEqual(badgesD.length, 1, 'Paciente D → 1 badge (solo Analítica pendiente)');
+if (badgesD.length > 0) {
+assertEqual(badgesD[0].label, 'Analítica', 'Badge D → Analítica');
+assertEqual(badgesD[0].display, 'Pendiente', 'Badge D → Pendiente');
+}
+
+console.log('\n[Caso U] getEnfermeriaVisiblePatients existe');
+assert(typeof F.getEnfermeriaVisiblePatients === 'function', 'getEnfermeriaVisiblePatients existe');
+
+console.log('\n[Caso V] NO PRECISA no cuenta como bloqueo');
+assertEqual(fldStatus('NO PRECISA') !== 'bloqueo' && fldStatus('NO PRECISA') !== 'pendiente', true, 'NO PRECISA no es bloqueo ni pendiente');
+
+console.log('\n[Caso W] NEGATIVO no cuenta como bloqueo');
+assertEqual(fldStatus('NEGATIVO'), 'completo', 'NEGATIVO es completo');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 if (failed > 0) process.exit(1);

@@ -655,6 +655,167 @@
         return block;
     }
 
+    /* ── Board de solicitudes Enfermería WO8.1c.5 ────────────────── */
+
+    var ENFERMERIA_GROUP_CONFIG = {
+        ok_farmacia: { label: 'Listos para validación', icon: 'fa-check-circle', cls: 'enf-group--ok' },
+        en_vigilancia: { label: 'En vigilancia prebiológica', icon: 'fa-hourglass-half', cls: 'enf-group--vigilance' },
+        bloqueado: { label: 'Bloqueados', icon: 'fa-exclamation-triangle', cls: 'enf-group--blocked' }
+    };
+
+    function renderEnfermeriaBoard() {
+        if (!F.getEnfermeriaVisiblePatients || !F.getEnfermeriaBadges) return;
+        var board = document.getElementById('pendingValidationBoard');
+        if (!board) return;
+
+        // Remove existing enfermeria board if any
+        var existing = document.getElementById('enfermeriaBoard');
+        if (existing) existing.remove();
+
+        var patients = F.getEnfermeriaVisiblePatients();
+        if (!patients.length) return;
+
+        var enfBoard = document.createElement('section');
+        enfBoard.id = 'enfermeriaBoard';
+        enfBoard.className = 'enfermeria-board';
+
+        var heading = document.createElement('h2');
+        heading.className = 'enfermeria-board__heading';
+        var headingIcon = document.createElement('i');
+        headingIcon.className = 'fas fa-user-nurse';
+        headingIcon.setAttribute('aria-hidden', 'true');
+        heading.appendChild(headingIcon);
+        heading.appendChild(document.createTextNode(' Solicitudes Enfermería / Inicio biológico (' + patients.length + ')'));
+        enfBoard.appendChild(heading);
+
+        // Group patients
+        var groups = { ok_farmacia: [], en_vigilancia: [], bloqueado: [] };
+        patients.forEach(function (p) {
+            var est = String(p.estado || p.estado_prebiologico_enfermeria || '').toLowerCase();
+            if (est.indexOf('ok') !== -1 || est === 'ok_farmacia') groups.ok_farmacia.push(p);
+            else if (est.indexOf('bloqueado') !== -1 || est === 'bloqueado') groups.bloqueado.push(p);
+            else groups.en_vigilancia.push(p);
+        });
+
+        var order = ['ok_farmacia', 'en_vigilancia', 'bloqueado'];
+        for (var gi = 0; gi < order.length; gi++) {
+            var gk = order[gi];
+            var g = groups[gk];
+            if (!g || !g.length) continue;
+            var cfg = ENFERMERIA_GROUP_CONFIG[gk] || { label: gk, icon: 'fa-question-circle', cls: '' };
+
+            var groupHeader = document.createElement('h3');
+            groupHeader.className = 'enfermeria-group__header ' + (cfg.cls || '');
+            var gIcon = document.createElement('i');
+            gIcon.className = 'fas ' + cfg.icon;
+            gIcon.setAttribute('aria-hidden', 'true');
+            groupHeader.appendChild(gIcon);
+            groupHeader.appendChild(document.createTextNode(' ' + cfg.label + ' (' + g.length + ')'));
+            enfBoard.appendChild(groupHeader);
+
+            for (var pi = 0; pi < g.length; pi++) {
+                var p = g[pi];
+                var card = document.createElement('article');
+                card.className = 'pending-validation-card enfermeria-card';
+
+                // Header
+                var header = document.createElement('div');
+                header.className = 'pending-validation-card__header';
+                var titleWrap = document.createElement('div');
+                titleWrap.className = 'pending-validation-card__title-wrap';
+                var title = document.createElement('h3');
+                title.className = 'pending-validation-card__title';
+                title.textContent = textOrDash(p.cip);
+                var subtitle = document.createElement('p');
+                subtitle.className = 'pending-validation-card__subtitle';
+                subtitle.textContent = textOrDash(p.nombre || p.paciente_nombre);
+                titleWrap.append(title, subtitle);
+                var badge = document.createElement('span');
+                badge.className = 'status-badge status-badge--' + (gk === 'ok_farmacia' ? 'ok' : gk === 'bloqueado' ? 'blocked' : 'vigilance');
+                var estadoLabel = p.estadoLabel || p.estado_prebiologico_enfermeria || '—';
+                badge.textContent = estadoLabel;
+                header.append(titleWrap, badge);
+                card.appendChild(header);
+
+                // Body
+                var body = document.createElement('div');
+                body.className = 'pending-validation-card__body';
+                body.appendChild(buildPendingMeta('fa-hospital', 'Servicio: ' + textOrDash(p.servicio || p.servicio_origen)));
+                body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología: ' + textOrDash(p.patologia || p.patologia_indicacion)));
+                body.appendChild(buildPendingMeta('fa-pills', 'Fármaco: ' + textOrDash(p.farmaco || p.farmaco_solicitado)));
+                if (p.fecha_ok_farmacia) {
+                    body.appendChild(buildPendingMeta('fa-calendar-check', 'Fecha OK Farmacia: ' + p.fecha_ok_farmacia));
+                }
+                body.appendChild(buildPendingMeta('fa-database', 'Origen: Excel Enfermería'));
+                card.appendChild(body);
+
+                // Badges prebiológicos
+                var badges = F.getEnfermeriaBadges(p);
+                if (badges.length > 0) {
+                    var badgesContainer = document.createElement('div');
+                    badgesContainer.className = 'pending-validation-card__prebio-chips';
+                    for (var bi = 0; bi < badges.length; bi++) {
+                        var chip = document.createElement('span');
+                        chip.className = 'prebio-chip status-' + badges[bi].status;
+                        chip.textContent = badges[bi].label + ': ' + badges[bi].display;
+                        badgesContainer.appendChild(chip);
+                    }
+                    card.appendChild(badgesContainer);
+                }
+
+                // Observación
+                if (p.observaciones_prebiologico) {
+                    var obsRow = document.createElement('div');
+                    obsRow.className = 'pending-validation-card__meta';
+                    obsRow.style.marginTop = '8px';
+                    obsRow.style.fontStyle = 'italic';
+                    obsRow.textContent = 'Observación: ' + p.observaciones_prebiologico;
+                    card.appendChild(obsRow);
+                }
+
+                // Actions
+                var actions = document.createElement('div');
+                actions.className = 'pending-validation-card__actions';
+                if (gk === 'ok_farmacia') {
+                    var link = document.createElement('a');
+                    link.className = 'btn btn-primary';
+                    link.href = F.makeContextUrl('farmacia_validacion.html', {
+                        cip: p.cip,
+                        servicio: p.servicioSlug || p.servicio || p.servicio_origen,
+                        patologia: p.patologia || p.patologia_indicacion,
+                        entrada: 'validacion'
+                    });
+                    F.appendIconText(link, 'fa-check-double', 'Abrir validación');
+                    actions.appendChild(link);
+                } else {
+                    var infoBtn = document.createElement('span');
+                    infoBtn.className = 'btn btn-secondary';
+                    infoBtn.style.cursor = 'default';
+                    if (gk === 'bloqueado') {
+                        F.appendIconText(infoBtn, 'fa-exclamation-triangle', 'Ver bloqueantes');
+                    } else {
+                        F.appendIconText(infoBtn, 'fa-hourglass-half', 'Ver pendientes prebiológicos');
+                    }
+                    actions.appendChild(infoBtn);
+                }
+                // Dashboard siempre disponible
+                var dashLink = document.createElement('a');
+                dashLink.className = 'btn btn-secondary';
+                dashLink.href = F.makeContextUrl('farmacia_dashboard_paciente.html', {
+                    cip: p.cip,
+                    entrada: 'dashboard'
+                });
+                F.appendIconText(dashLink, 'fa-user-circle', 'Dashboard');
+                actions.appendChild(dashLink);
+                card.appendChild(actions);
+
+                enfBoard.appendChild(card);
+            }
+        }
+
+        board.parentNode.insertBefore(enfBoard, board.nextSibling);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         ensureOverlay();
         var searchBtn = document.getElementById('fhSearchBtn');
@@ -668,7 +829,11 @@
         });
         initGuidedIntake();
         renderPendingValidationBoard();
-        document.addEventListener('farmacia:data-imported', renderPendingValidationBoard);
+        renderEnfermeriaBoard();
+        document.addEventListener('farmacia:data-imported', function () {
+            renderPendingValidationBoard();
+            renderEnfermeriaBoard();
+        });
         var context = F.getQueryContext();
         if (context.cip && cipInput) {
             cipInput.value = context.cip;
