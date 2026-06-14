@@ -729,3 +729,52 @@ WO7G.2 podrá revisar timeline terapéutico o secundarios si aporta valor visual
 WO8/WO posterior revisará export/persistencia, incluyendo CSV.
 
 ---
+
+## WO7H.1 — Consistencia visual de línea terapéutica entre Dashboard y Seguimiento
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS como operador local, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** `f3efec7` (tras WO7H.1)
+
+**Alcance:**
+- Corregidas las cadenas de fallback de nombre de línea terapéutica en Dashboard y Seguimiento para priorizar `farmaco_nombre` sobre `nombre_comercial` cuando `nombre_linea` no está disponible (porque el helper `FarmaciaTratamiento` normaliza `nombre_linea` → `farmaco_nombre`).
+- En Dashboard: `renderDashboard()` primaryName y otherNames, `renderBiologicLines()` value.
+- En Seguimiento: `applySelectedBiologicLine()` setSegValue('fhSegFarmaco') ahora usa `farmaco_nombre` antes que `nombre_comercial`.
+- Añadida sincronización de tarjeta CIMA contextual: si el snapshot del catálogo no corresponde al principio activo de la línea seleccionada, se limpia la tarjeta CIMA y el snapshot, evitando que muestre principios activos de otros pacientes (ej. Secukinumab de FH-001).
+
+**Archivos modificados:**
+- `scripts/farmacia_dashboard_paciente.js` — fallback chains en 3 ubicaciones
+- `scripts/farmacia_seguimiento.js` — fallback en applySelectedBiologicLine + sincronización CIMA
+- `tools/farmacia_dashboard_paciente_check.mjs` — 3 nuevos tests WO7H.1 (28 total, 0 failed)
+- `tools/farmacia_seguimiento_check.mjs` — 5 nuevos tests WO7H.1 (99 total, 0 failed)
+
+**Tests verificados:**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_dashboard_paciente.js` | OK |
+| `node tools/farmacia_dashboard_paciente_check.mjs` | 28/28 PASS |
+| `node --check scripts/farmacia_seguimiento.js` | OK |
+| `node tools/farmacia_seguimiento_check.mjs` | 99/99 PASS |
+| `node tools/farmacia_tratamiento_common_check.mjs` | 43/43 PASS |
+| `node tools/farmacia_smoke_check.mjs` | 38/38 OK |
+| `grep -R "innerHTML" ...` | 0 nuevos |
+
+**Resultado esperado para FH-004:**
+| Pantalla | Campo | Valor |
+|---|---|---|
+| Dashboard | Tratamiento principal | Belimumab |
+| Dashboard | Otras líneas activas | Rituximab |
+| Seguimiento | Línea/biológico principal | Belimumab |
+| Seguimiento | Fármaco / marca | Belimumab |
+| Seguimiento | Tarjeta CIMA | — (limpia si snapshot no coincide) |
+
+**Importante:**
+No se modifica `FarmaciaTratamiento`.  
+No se modifica timeline, longitudinal, PROMs, EA, concomitantes ni export CSV.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente:**
+WO7G.2 podrá revisar timeline terapéutico o secundarios del dashboard si aporta valor visual real.  
+WO8/WO posterior revisará export/persistencia, incluyendo CSV.
+
+---
