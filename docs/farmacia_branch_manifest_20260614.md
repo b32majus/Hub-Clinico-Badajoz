@@ -555,8 +555,8 @@ Alinear fármacos concomitantes/adicionales/históricos/sospechosos de EA con el
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
 **HEAD inicial de rama:** `592557bd7721d82dd77d1a17692f6a7359316740`
-**HEAD final de rama:** `PENDIENTE_COMMIT_WO7F` (se actualizará tras commit)
-**SHA commit funcional:** `PENDIENTE_COMMIT_WO7F` (se actualizará tras commit)
+**HEAD final de rama:** `2e480e3` (`2e480e31337aa8ace7130545e6e3e4aa2072c921`)
+**SHA commit funcional:** `2e480e3` (`2e480e31337aa8ace7130545e6e3e4aa2072c921`)
 
 **Alcance:**
 - Concomitantes con autocomplete completo del catálogo: fármaco/marca, principio activo, dosis, presentación, vía (select normalizado), pauta (select normalizado con catálogo WO6), código nacional, nº registro y origen catálogo.
