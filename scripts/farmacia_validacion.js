@@ -286,6 +286,110 @@
         if (modoActual) byId("fhTipoSolicitud").value = modoActual;
         toggleHSBlock();
         updateValidationModuleSummaries();
+        // WO8.1c.11 — Enfermería: override modo, header, servicio, campos y chips prebiológicos
+        var isEnfPatient = context.patient && F && typeof F.isEnfermeriaPatient === 'function'
+            && F.isEnfermeriaPatient(context.patient);
+        if (isEnfPatient) {
+            var enf = context.patient;
+            var enfServicioSlug = enf.servicioSlug || '';
+            var enfServicio = enf.servicio || '';
+            // 1. Override modo según servicioSlug real del paciente
+            if (enfServicioSlug === 'reumatologia' || String(enfServicio).toLowerCase().indexOf('reuma') !== -1) {
+                mostrarFormulario('reuma');
+                byId('fhTipoSolicitud').value = 'reuma';
+            } else {
+                mostrarFormulario('derma');
+                byId('fhTipoSolicitud').value = 'derma';
+            }
+            // 2. Header título dinámico
+            var dermaTitle = document.querySelector('#formDerma h2.section-title');
+            if (dermaTitle) {
+                var sd = enfServicio || 'Enfermería / Inicio biológico';
+                // Rebuild preserving icon via DOM methods
+                dermaTitle.textContent = '';
+                var iconEl = document.createElement('i');
+                iconEl.className = 'fas fa-disease';
+                iconEl.setAttribute('aria-hidden', 'true');
+                dermaTitle.appendChild(iconEl);
+                dermaTitle.appendChild(document.createTextNode(' Datos de solicitud — ' + sd));
+            }
+            // 3. Servicio readonly
+            var srvInput = byId('fhDermaServicioOrigen');
+            if (srvInput) srvInput.value = enfServicio || 'Enfermería / Inicio biológico';
+            // 4. Context-strip
+            var cipCtx = document.querySelector('[data-context="cip"]');
+            if (cipCtx) cipCtx.textContent = enf.cip || '—';
+            var servCtx = document.querySelector('[data-context="servicio"]');
+            if (servCtx) servCtx.textContent = enfServicio || '—';
+            var patCtx = document.querySelector('[data-context="patologia"]');
+            if (patCtx) patCtx.textContent = (enf.patologia || enf.patologia_indicacion || '—');
+            // 5. CIP
+            F.setValue('fhDermaCip', enf.cip || '');
+            // 6. Patología
+            var enfPat = enf.patologia || enf.patologia_indicacion || '';
+            if (enfPat) {
+                var patSelect = byId('fhDermaPatologia');
+                if (patSelect) {
+                    var found = false;
+                    for (var pi = 0; pi < patSelect.options.length; pi++) {
+                        if (patSelect.options[pi].value === enfPat || patSelect.options[pi].textContent === enfPat) {
+                            patSelect.value = enfPat;
+                            found = true; break;
+                        }
+                    }
+                    if (!found) {
+                        var newOpt = document.createElement('option');
+                        newOpt.value = enfPat; newOpt.textContent = enfPat; newOpt.selected = true;
+                        patSelect.appendChild(newOpt);
+                    }
+                }
+            }
+            // 7. Fármaco solicitado
+            var enfFarmaco = enf.farmaco || enf.farmaco_solicitado || '';
+            if (enfFarmaco) F.setValue('fhDermaFarmaco', enfFarmaco);
+            // 8. Justificación clínica si vacía
+            if (byId('fhDermaJustificacion') && !byId('fhDermaJustificacion').value) {
+                F.setValue('fhDermaJustificacion', 'Solicitud desde Enfermería / Inicio biológico · ' + (enfPat || ''));
+            }
+            // 9. Chips prebiológicos desde Enfermería
+            (function applyEnfermeriaPrebioChips(enfP) {
+                var chipMap = [
+                    { enfKey: 'mantoux_estado', hidId: 'fhAnaliticaMantoux',
+                      vals: { 'NEGATIVO': 'Negativo', 'PENDIENTE': 'Pendiente', 'POSITIVO': 'Positivo - tratado' } },
+                    { enfKey: 'igra_estado', hidId: 'fhAnaliticaMantoux',
+                      vals: { 'NEGATIVO': 'Negativo', 'PENDIENTE': 'Pendiente' } },
+                    { enfKey: 'vhb_estado', hidId: 'fhAnaliticaSerologiasVhb',
+                      vals: { 'NEGATIVO': 'Negativo', 'POSITIVO': 'Positivo', 'PENDIENTE': 'Pendiente' } },
+                    { enfKey: 'vhc_estado', hidId: 'fhAnaliticaSerologiasVhc',
+                      vals: { 'NEGATIVO': 'Negativo', 'POSITIVO': 'Positivo', 'PENDIENTE': 'Pendiente' } },
+                    { enfKey: 'vih_estado', hidId: 'fhAnaliticaSerologiasVih',
+                      vals: { 'NEGATIVO': 'Negativo', 'POSITIVO': 'Positivo', 'PENDIENTE': 'Pendiente' } },
+                    { enfKey: 'medicina_preventiva_estado', hidId: 'fhAnaliticaVacunacion',
+                      vals: { 'OK': 'si', 'NEGATIVO': 'si', 'PENDIENTE': 'pendiente', 'NO PRECISA': 'pendiente' } }
+                ];
+                chipMap.forEach(function (mEntry) {
+                    var raw = enfP[mEntry.enfKey];
+                    if (!raw) return;
+                    var upper = String(raw).trim().toUpperCase();
+                    var chipVal = mEntry.vals[upper];
+                    if (!chipVal) return;
+                    var hid = byId(mEntry.hidId);
+                    if (!hid) return;
+                    hid.value = chipVal;
+                    var grp = document.querySelector('.analitica-chip-group[data-chip-target="' + mEntry.hidId + '"]');
+                    if (grp && typeof syncRadioGroup === 'function') syncRadioGroup(grp, chipVal);
+                });
+            })(enf);
+            // Limpiar defaults demo heredados si no aplican
+            if (modoActual !== 'derma') {
+                // Si estamos en Reuma y el formulario Derma tiene datos demo, no arrastrarlos
+                if (byId('fhDermaPeso')) F.setValue('fhDermaPeso', '');
+                if (byId('fhDermaInduccion')) {
+                    var indSel = byId('fhDermaInduccion');
+                    if (indSel.value === 'si' && !enf.patologia) indSel.value = 'no';
+                }
+            }
+        }
         // WO8.1c.10 — Hidratar resumen prebiológico desde Enfermería
         if (context.patient && (context.patient.origen_solicitud === 'enfermeria' ||
             context.patient.source_type === 'ENFERMERIA' ||

@@ -1422,9 +1422,24 @@ Se localiza e incorpora al repo una copia versionada de la plantilla existente d
 No se usan datos reales.  
 No se modifica código funcional del Hub.  
 No se modifica el Excel FH base ni el Excel FH sintético.  
-No se implementa parser/importación.  
-No se modifica la rama demo.  
-No se modifica main.  
-No se modifica kairos-os-lab.  
-No se toca el panel de control.  
+No se implementa parser/importación.
+No se modifica la rama demo.
+No se modifica main.
+No se modifica kairos-os-lab.
+No se toca el panel de control.
+
+## WO8.1c.11 — Hidratación del formulario de validación desde Enfermería
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora
+**Alcance:**
+Corregido el flujo Enfermería → Validación. Al abrir validación desde Paciente C (OK FARMACIA):
+- El formulario se hidrata correctamente con CIP, servicio, patología y fármaco del Excel Enfermería.
+- El header deja de mostrar "Dermatología" y muestra el servicio real (Reuma).
+- Los chips prebiológicos (Mantoux, VHB, VHC, VIH, Med. Preventiva) se rellenan con los valores del Excel Enfermería.
+- El estado de validación y observaciones quedan vacíos para que Farmacia complete.
+- No se usan defaults demo.
+- Sin innerHTML.
+- Sin tocar main, demo, plantilla base ni datos sintéticos.
+
+**Commit:** 736b0fd → próximo
 
