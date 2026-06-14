@@ -740,7 +740,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const ctx = F.getQueryContext();
 
-        if (ctx.cip && !ctx.patient) {
+        if (!ctx.patient) {
             var C = window.FarmaciaCatalog;
             if (C && C.clearSnapshot) C.clearSnapshot();
         }
@@ -754,9 +754,9 @@
         initCipSearch();
         initDrugAutocomplete();
 
-        if (!ctx.patient) {
-            showDrugAutocomplete();
-        }
+        // El autocomplete de fármacos debe estar siempre disponible,
+        // tanto si hay paciente pre-cargado como si no
+        showDrugAutocomplete();
 
         const exportTxt = document.getElementById('fhPvExportTxt');
         if (exportTxt) exportTxt.addEventListener('click', () => {

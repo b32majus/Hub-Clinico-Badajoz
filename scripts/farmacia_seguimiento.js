@@ -387,15 +387,19 @@
             item.appendChild(detail);
 
             (function (d) {
-                item.addEventListener('click', function () {
-                    var input = document.querySelector('input[data-uid="' + uid + '"].js-cima-autocomplete');
-                    if (input) input.value = d.nombre_comercial || '';
-                    updateFollowupOtherDrug(uid, 'farmaco', d.nombre_comercial || '');
-                    updateFollowupOtherDrug(uid, 'principioActivo', d.principio_activo || '');
-                    var paInput = document.querySelector('input[data-uid="' + uid + '"][data-field="principioActivo"]');
-                    if (paInput) paInput.value = d.principio_activo || '';
-                    clearOtherDrugDropdown(dropdownId);
-                });
+            item.addEventListener('click', function () {
+                var input = document.querySelector('input[data-uid="' + uid + '"].js-cima-autocomplete');
+                if (input) input.value = d.nombre_comercial || '';
+                updateFollowupOtherDrug(uid, 'farmaco', d.nombre_comercial || '');
+                updateFollowupOtherDrug(uid, 'principioActivo', d.principio_activo || '');
+                var paInput = document.querySelector('input[data-uid="' + uid + '"][data-field="principioActivo"]');
+                if (paInput) paInput.value = d.principio_activo || '';
+                // Auto-rellenar dosis desde catálogo
+                updateFollowupOtherDrug(uid, 'dosis', d.dosis || d.nombre_presentacion || '');
+                var dosisInput = document.querySelector('input[data-uid="' + uid + '"][data-field="dosis"]');
+                if (dosisInput) dosisInput.value = d.dosis || d.nombre_presentacion || '';
+                clearOtherDrugDropdown(dropdownId);
+            });
             })(drug);
 
             dd.appendChild(item);
@@ -727,6 +731,23 @@
             F.setValue('fhSegFarmaco', snap?.nombre_snapshot || ctx.patient.farmaco);
             F.setValue('fhSegDosisActual', ctx.patient.dosis);
             F.setValue('fhSegPautaActual', ctx.patient.pauta);
+            (function() {
+                var segCtxSelect = document.getElementById('fhSegNuevaPauta');
+                if (segCtxSelect && ctx.patient.pauta) {
+                    var segCtxPautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(ctx.patient.pauta) : null;
+                    if (segCtxPautaObj && segCtxPautaObj.pauta_codigo) {
+                        segCtxSelect.value = segCtxPautaObj.pauta_codigo;
+                        var segCtxOtro = document.getElementById('fhSegNuevaPautaOtro');
+                        if (segCtxPautaObj.pauta_codigo === 'OTRO' && segCtxOtro) {
+                            segCtxOtro.value = segCtxPautaObj.pauta_otro_texto || '';
+                            segCtxOtro.classList.remove('hidden');
+                        } else if (segCtxOtro) {
+                            segCtxOtro.value = '';
+                            segCtxOtro.classList.add('hidden');
+                        }
+                    }
+                }
+            })();
             F.setValue('fhSegVia', ctx.patient.via);
             F.setValue('fhSegFechaInicio', ctx.patient.primeraVisita);
             F.setValue('fhSegUltimaAdherencia', ctx.patient.adherencia);
@@ -846,6 +867,23 @@
         F.setValue('fhSegFarmaco', patient.farmaco);
         F.setValue('fhSegDosisActual', patient.dosis);
         F.setValue('fhSegPautaActual', patient.pauta);
+        (function() {
+            var segSelect = document.getElementById('fhSegNuevaPauta');
+            if (segSelect && patient.pauta) {
+                var segPautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(patient.pauta) : null;
+                if (segPautaObj && segPautaObj.pauta_codigo) {
+                    segSelect.value = segPautaObj.pauta_codigo;
+                    var segOtro = document.getElementById('fhSegNuevaPautaOtro');
+                    if (segPautaObj.pauta_codigo === 'OTRO' && segOtro) {
+                        segOtro.value = segPautaObj.pauta_otro_texto || '';
+                        segOtro.classList.remove('hidden');
+                    } else if (segOtro) {
+                        segOtro.value = '';
+                        segOtro.classList.add('hidden');
+                    }
+                }
+            }
+        })();
         F.setValue('fhSegVia', patient.via);
         F.setValue('fhSegFechaInicio', patient.primeraVisita);
         F.setValue('fhSegUltimaAdherencia', patient.adherencia);
