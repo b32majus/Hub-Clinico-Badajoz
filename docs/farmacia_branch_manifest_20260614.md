@@ -478,3 +478,30 @@ Analítica/vacunación de primera visita no alineada con lógica estructurada de
 **WO6 sigue `pending_review`.** Fuente activa funcional sigue WO5.
 
 ---
+
+## WO7E — Seguimiento alineado con contrato común de tratamiento principal
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** (tras el commit WO7E)
+
+**Alcance:**
+- Se alinea el bloque de tratamiento actual de seguimiento con `FarmaciaTratamiento`
+- `getPatientBiologicLines()` usa `buildTreatmentFromPatient()` del helper como primera opción, con fallback legacy
+- `syncBiologicControls()` normaliza líneas con el contrato, renderiza resumen vía `renderSegTreatmentSummary()`
+- `applySelectedBiologicLine()` normaliza con `normalizeTreatmentInput()` y muestra grid de resumen
+- `biologicStateLabel()` ampliado a estados del contrato: activo, suspendido, finalizado, histórico, validado, no_aplica
+- Selector de movimiento ampliado con `optimizacion` y `suspension`
+- Nueva cuadrícula `fhSegTratamientoGrid` para resumen visual del tratamiento actual
+- Script tag `farmacia_tratamiento_common.js` añadido al HTML
+
+**Importante:**
+WO7E no modifica concomitantes, adicionales, históricos, dashboard ni exports.  
+No se modifica `FarmaciaTratamiento`.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente:**
+WO7F deberá alinear fármacos concomitantes/adicionales/históricos/sospechosos de EA.  
+WO7G deberá adaptar dashboard como proyección del contrato común.
+
+---
