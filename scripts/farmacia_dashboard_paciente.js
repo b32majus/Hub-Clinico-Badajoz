@@ -435,7 +435,7 @@
         var milestones = [];
         for (var ti = 0; ti < treatments.length; ti++) {
             var t = treatments[ti];
-            var tName = t.nombre_linea || t.farmaco_nombre || t.principio_activo || t.nombre_comercial || 'Tratamiento';
+            var tName = t.nombre_comercial || t.principio_activo || t.nombre_linea || t.farmaco_nombre || 'Tratamiento';
             var isActive = (t.activo === true) || (!t.fecha_fin && t.activo !== false);
             if (t.fecha_inicio) {
                 milestones.push({

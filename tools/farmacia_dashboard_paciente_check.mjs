@@ -111,11 +111,11 @@ assert(js.indexOf(pdBioValueStr) !== -1, 'Dashboard renderBiologicLines usa farm
 
 // --- WO7G.2: Dashboard timeline terapéutico consistente ---
 
-// 16. renderTimelineTratamiento prioriza principio_activo antes de nombre_comercial
+// 16. renderTimelineTratamiento prioriza nombre_comercial (marca) antes de principio_activo
 var tlFunc = js.match(/function renderTimelineTratamiento[\s\S]*?^    \}/m);
 var tlBody = tlFunc ? tlFunc[0] : '';
-assert(tlBody.includes("t.nombre_linea || t.farmaco_nombre || t.principio_activo || t.nombre_comercial"),
-    'Timeline título prioriza nombre_linea/farmaco_nombre/principio_activo antes de nombre_comercial');
+assert(tlBody.includes("t.nombre_comercial || t.principio_activo || t.nombre_linea || t.farmaco_nombre"),
+    'Timeline título prioriza nombre_comercial (marca) antes de principio_activo (por biosimilares)');
 
 // 17. Timeline usa tName consistente para fecha_inicio y fecha_fin
 assert(tlBody.includes('title: tName'), 'Timeline usa variable tName unificada para título');
