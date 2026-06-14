@@ -455,7 +455,7 @@ Analítica/vacunación de primera visita no alineada con lógica estructurada de
 ## WO7D.2 — Desplegables clínicos básicos en Primera visita
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
-**HEAD de rama:** (tras el commit WO7D.2)
+**HEAD de rama:** `1e65ec3` (tras WO7D.2)
 
 **Alcance:**
 - `Servicio origen` convertido a `<select>` con 7 opciones (Dermatología, Reumatología, Digestivo, Alergología, Farmacia Hospitalaria, Oncología, Otro)
