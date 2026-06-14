@@ -167,7 +167,7 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 | **`farmacia-demo-lunes-final-wo3-20260614`** (tag) | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
 || **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
 || **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`0c3de778fd8818c6ffa9a642ecfc47420565b853`** ✅ validada por Sil |
-|| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **pendiente** ⏳ pending review (SHA pendiente de commit) |
+|| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`4c61ddc937aa8984d506853b5e43feb38c90f7de`** ⏳ pending review |
 || `preview/demo-lunes-wo3-20260614` | `fecdc5203c22167d1bf6a17a19e11bb3345a06d0` |
 || `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 
