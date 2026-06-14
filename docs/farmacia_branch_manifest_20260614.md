@@ -960,4 +960,29 @@ No se modifica código funcional.
 No se modifica la rama demo.  
 No se modifica main.  
 No se implementa todavía export CSV/Excel.  
-WO8.1 queda como implementación posterior.
+WO8.1 quedará como implementación posterior.
+
+## WO8.0.2 — Rediseño Excel operativo por servicio FH
+
+**Estado:** completada documentalmente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD:** `54f5a65`
+
+**Alcance:**
+Se redefine el contrato WO8 para priorizar un Excel operativo usable por Farmacia Hospitalaria, organizado por servicio clínico de procedencia: Derma, Reuma, Digestivo y Onco, más una hoja de catálogos/listas. El modelo normalizado se mantiene como capa lógica interna/analítica derivada, no como Excel manual obligatorio.
+
+**Decisiones clave:**
+- El Excel visible se organiza por servicio y por actos farmacéuticos longitudinales.
+- Cada fila = un acto farmacéutico con bloques A-H (identificación, acto, medicamento, pauta, validación, seguimiento, EA, trazabilidad).
+- Mismo esquema de columnas en todas las hojas de servicio (DERMA = REUMA = DIGESTIVO = ONCO).
+- Catálogo CIMA no se replica en Excel; solo fármacos especiales en 05_CATALOGOS.
+- Todo fármaco nuevo relevante debe generar validación farmacoterapéutica.
+- El modelo relacional del contrato original se conserva como capa futura / export analítico derivado, no se descarta.
+
+**Archivos modificados:**
+- `docs/farmacia_export_longitudinal_contract_WO8.md` — reescrito v2.0 (27 KB)
+
+**Importante:**
+No se modifica código funcional.  
+No se implementa todavía export/import Excel.  
+WO8.1a/b/c queda pendiente.
