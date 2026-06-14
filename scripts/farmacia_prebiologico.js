@@ -98,11 +98,10 @@
             var keys = ["serologiasVhb", "serologiasVhc", "serologiasVih"];
             var values = keys.map(function (k) { return est[k]; }).filter(hasMeaningfulValue);
             if (values.length > 0) {
-                if (values.length < keys.length) return "no_informado";
                 var statuses = values.map(evaluateBooleanLikeCheck);
                 if (statuses.indexOf("alerta") !== -1) return "alerta";
                 if (statuses.indexOf("pendiente") !== -1) return "pendiente";
-                if (statuses.indexOf("no_informado") !== -1) return "no_informado";
+                if (values.length < keys.length) return "no_informado";
                 if (statuses.every(function (s) { return s === "ok" || s === "no_aplica"; })) return "ok";
                 return "no_informado";
             }
@@ -120,11 +119,19 @@
         var est = patient && patient.analiticaEstruct;
         if (est && typeof est === "object") {
             var tbKeys = ["igra", "mantouxIgra", "cribadoTb", "tuberculosis", "tbScreening", "mantoux"];
+            var tbStatuses = [];
             for (var i = 0; i < tbKeys.length; i++) {
                 var key = tbKeys[i];
                 if (hasMeaningfulValue(est[key])) {
-                    return evaluateBooleanLikeCheck(est[key]);
+                    tbStatuses.push(evaluateBooleanLikeCheck(est[key]));
                 }
+            }
+            if (tbStatuses.length > 0) {
+                if (tbStatuses.indexOf("alerta") !== -1) return "alerta";
+                if (tbStatuses.indexOf("pendiente") !== -1) return "pendiente";
+                if (tbStatuses.indexOf("ok") !== -1) return "ok";
+                if (tbStatuses.indexOf("no_aplica") !== -1) return "no_aplica";
+                return "no_informado";
             }
         }
 
