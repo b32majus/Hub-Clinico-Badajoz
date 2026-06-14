@@ -777,4 +777,38 @@ Fuente activa funcional sigue WO5.
 WO7G.2 podrá revisar timeline terapéutico o secundarios del dashboard si aporta valor visual real.  
 WO8/WO posterior revisará export/persistencia, incluyendo CSV.
 
----
+## WO7H.2 — Bugfix Seguimiento: línea seleccionada y campos visibles coherentes
+
+**Estado:** completada técnicamente, pendiente de revisión visual Sil/Cora  
+**HEAD de rama:** `e9dfba6` (tras WO7H.2)
+
+**Causa raíz:** `getCurrentSelectedLine()` solo comparaba `linea_id` contra `select.value`. Las líneas normalizadas vía `buildTreatmentFromPatient()` tienen `tratamiento_id` (no `linea_id`), por lo que el match fallaba y la función retornaba `currentBiologicLines[0]` (Abatacept/Orencia para FH-004) aunque el selector mostrara Belimumab.
+
+**Corrección:** `getCurrentSelectedLine()` ahora usa `matchVal = linea_id || tratamiento_id` para la comparación, alineando el matching con cómo se genera `opt.value` en `syncBiologicControls()` (que ya usaba `linea_id || tratamiento_id`).
+
+**Archivos modificados:**
+- `scripts/farmacia_seguimiento.js` — patch de 3 líneas en `getCurrentSelectedLine()`
+- `tools/farmacia_seguimiento_check.mjs` — 6 nuevos tests WO7H.2 (105 total, 0 failed)
+
+**Tests:**
+- `node tools/farmacia_seguimiento_check.mjs` — 105/105 PASS
+- `node tools/farmacia_dashboard_paciente_check.mjs` — 28/28 PASS
+- `node tools/farmacia_tratamiento_common_check.mjs` — 43/43 PASS
+- `node tools/farmacia_smoke_check.mjs` — 38/38 OK
+- `grep -c innerHTML` — 0
+
+**Resultado esperado para FH-004:**
+- Selector Belimumab → campos tratamiento actual: Belimumab/Benlysta (no Abatacept/Orencia)
+- Abatacept/Orencia conservado como histórico/suspendido en longitudinal
+- Tarjeta CIMA/contextual limpia si snapshot no corresponde a línea seleccionada
+
+**Importante:**
+No se modifica `FarmaciaTratamiento`.  
+No se modifica Dashboard.  
+No se modifica timeline, concomitantes, sospechoso EA ni export CSV.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+**Pendiente:**
+WO7G.2 podrá revisar timeline terapéutico o secundarios del dashboard si aporta valor visual real.  
+WO8/WO posterior revisará export/persistencia, incluyendo CSV.

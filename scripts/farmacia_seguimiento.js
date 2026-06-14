@@ -247,7 +247,8 @@
             return currentBiologicLines[0];
         }
         for (var j = 0; j < currentBiologicLines.length; j++) {
-            if (currentBiologicLines[j].linea_id === select.value) return currentBiologicLines[j];
+            var matchVal = currentBiologicLines[j].linea_id || currentBiologicLines[j].tratamiento_id;
+            if (matchVal && matchVal === select.value) return currentBiologicLines[j];
         }
         return currentBiologicLines[0];
     }

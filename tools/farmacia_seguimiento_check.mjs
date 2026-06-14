@@ -246,6 +246,32 @@ assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual normalizada sig
 assert(js.includes('btnSegAddOtherDrug'), 'Botón añadir concomitante conservado');
 assert(js.includes('segOtrosFarmacosList'), 'Lista otros fármacos conservada');
 
+// --- WO7H.2: Bugfix — línea seleccionada y campos visibles coherentes ---
+
+// 45. getCurrentSelectedLine usa tratamiento_id como fallback de matching
+var gcsMatch = js.match(/function getCurrentSelectedLine[\s\S]*?^    \}/m);
+var gcsBody = gcsMatch ? gcsMatch[0] : '';
+assert(gcsBody.includes('matchVal'), 'getCurrentSelectedLine usa variable matchVal para matching unificado');
+
+// 46. matchVal combina linea_id y tratamiento_id
+assert(gcsBody.includes('linea_id || currentBiologicLines[j].tratamiento_id'),
+    'matchVal usa linea_id con fallback a tratamiento_id');
+
+// 47. Comparación usa matchVal contra select.value
+assert(gcsBody.includes('matchVal === select.value'), 'getCurrentSelectedLine compara matchVal contra select.value');
+
+// 48. Fallback a currentBiologicLines[0] solo si ningún match (no se queda en Abatacept si selector es Belimumab)
+assert(gcsBody.includes('return currentBiologicLines[0]'),
+    'Fallback a currentBiologicLines[0] existe como protección pero no es la ruta principal');
+
+// 49. opt.value en syncBiologicControls es coherente (mismo fallback)
+assert(js.includes("opt.value = line.linea_id || line.tratamiento_id || ('BIO-' + i)"),
+    'syncBiologicControls genera opt.value coherente con matching fallback');
+
+// 50. applySelectedBiologicLine recibe línea exacta del selector (no primera línea por defecto)
+assert(js.includes('applySelectedBiologicLine();'),
+    'applySelectedBiologicLine se llama tras syncBiologicControls con la línea seleccionada exacta');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);
