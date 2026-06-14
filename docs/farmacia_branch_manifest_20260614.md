@@ -451,3 +451,30 @@ Analítica/vacunación de primera visita no alineada con lógica estructurada de
 **WO6 sigue `pending_review`.** Fuente activa funcional sigue WO5.
 
 ---
+
+## WO7D.2 — Desplegables clínicos básicos en Primera visita
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** (tras el commit WO7D.2)
+
+**Alcance:**
+- `Servicio origen` convertido a `<select>` con 7 opciones (Dermatología, Reumatología, Digestivo, Alergología, Farmacia Hospitalaria, Oncología, Otro)
+- `Patología / indicación` convertido a `<select>` con filtrado por servicio (dependencia: Dermatología→HS/psoriasis, Reumatología→AR/EspA/APs/LES/Sjögren, Digestivo→Crohn/colitis, Alergología→UCE, etc.)
+- Ambos campos mantienen opción de texto libre (Otro/Otra) para casos no contemplados
+- Se reutiliza `FarmaciaDemo.patologiaPorServicio` de `farmacia_common.js` donde aplica
+- No se modifica el bloque de tratamiento validado por Farmacia
+
+**Archivos modificados:**
+- `farmacia_primera_visita.html` — inputs convertidos a selects + campos Otro
+- `scripts/farmacia_primera_visita.js` — lógica de dependencia servicio→patología, populate dinámico
+- `tools/farmacia_primera_visita_check.mjs` — 7 nuevos tests (31 total, 0 failed)
+- `docs/farmacia_branch_manifest_20260614.md` — esta entrada
+
+**Deuda explícita:**
+Analítica/vacunación de primera visita no alineada con lógica estructurada de validación/prebiológico. Pendiente WO posterior.
+
+**No se tocó:** main, GitHub Pages, validación, seguimiento, dashboard, tratamiento, `FarmaciaTratamiento`, `farmacia_common.js`, pautas catalog, datos demo.
+
+**WO6 sigue `pending_review`.** Fuente activa funcional sigue WO5.
+
+---

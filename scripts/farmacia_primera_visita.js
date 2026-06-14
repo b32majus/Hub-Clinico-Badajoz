@@ -266,10 +266,17 @@
         F.setValue('fhPvServicio', ctx.servicio || ctx.patient?.servicio);
         F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
         if (ctx.patient) {
+            // Poblar patología según servicio del paciente antes de asignar valor
+            var servicioVal = ctx.servicio || ctx.patient.servicio || '';
+            if (servicioVal && window.__pvPopulatePatologia) {
+                window.__pvPopulatePatologia(servicioVal);
+            }
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
             F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
             F.setValue('fhPvAnalitica', ctx.patient.analitica);
             setTreatmentForm(buildPrimaryTreatmentFromContext(ctx));
+            // Re-aplicar tras poblar opciones
+            F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
         } else {
             clearTreatmentForm();
         }
@@ -960,6 +967,78 @@
         }
     }
 
+    function initServicioPatologiaSync() {
+        var servicioMap = {
+            'Dermatología': ['Hidradenitis supurativa', 'Psoriasis', 'Dermatitis atópica', 'Vitíligo', 'Alopecia areata', 'Otra'],
+            'Reumatología': ['Artritis Reumatoide (AR)', 'Espondiloartritis (EspA)', 'Artritis Psoriásica (APs)', 'LES', 'Síndrome de Sjögren', 'Otra'],
+            'Digestivo': ['Enfermedad de Crohn', 'Colitis ulcerosa', 'Otra'],
+            'Alergología': ['Urticaria crónica espontánea', 'Otra'],
+            'Farmacia Hospitalaria': ['Otra'],
+            'Oncología': ['Indicación oncológica', 'Otra'],
+            'Otro': ['Otra']
+        };
+        // También consultar FarmaciaDemo.patologiaPorServicio si existe para datos adicionales
+        var extMap = F && F.patologiaPorServicio;
+        if (extMap) {
+            Object.keys(extMap).forEach(function (key) {
+                var mapped = key.charAt(0).toUpperCase() + key.slice(1);
+                if (!servicioMap[mapped] && mapped !== 'Otro') {
+                    servicioMap[mapped] = extMap[key].slice();
+                    if (servicioMap[mapped].indexOf('Otra') === -1 && servicioMap[mapped].indexOf('Otro') === -1) {
+                        servicioMap[mapped].push('Otra');
+                    }
+                }
+            });
+        }
+        var servicioSelect = document.getElementById('fhPvServicio');
+        var patologiaSelect = document.getElementById('fhPvPatologia');
+        var patologiaOtro = document.getElementById('fhPvPatologiaOtro');
+        var servicioOtro = document.getElementById('fhPvServicioOtro');
+        if (!servicioSelect || !patologiaSelect) return;
+
+        function populatePatologia(servicioValue) {
+            F.clearChildren(patologiaSelect);
+            var placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Seleccionar...';
+            patologiaSelect.appendChild(placeholder);
+            var pats = servicioMap[servicioValue] || [];
+            pats.forEach(function (p) {
+                var opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                patologiaSelect.appendChild(opt);
+            });
+            if (patologiaOtro) {
+                patologiaOtro.classList.add('hidden');
+                patologiaOtro.value = '';
+            }
+        }
+        window.__pvPopulatePatologia = populatePatologia;
+
+        servicioSelect.addEventListener('change', function () {
+            var val = this.value;
+            if (servicioOtro) {
+                servicioOtro.classList.toggle('hidden', val !== 'Otro');
+                if (val !== 'Otro') servicioOtro.value = '';
+            }
+            populatePatologia(val);
+            applyTratamientoValidado(getCurrentContext());
+        });
+
+        if (patologiaSelect) {
+            patologiaSelect.addEventListener('change', function () {
+                if (patologiaOtro) {
+                    patologiaOtro.classList.toggle('hidden', this.value !== 'Otra');
+                    if (this.value !== 'Otra') patologiaOtro.value = '';
+                }
+                applyTratamientoValidado(getCurrentContext());
+            });
+        }
+
+        return { servicioMap: servicioMap, populatePatologia: populatePatologia };
+    }
+
     window.FarmaciaPrimeraVisita = {
         buildPrimaryTreatmentFromContext: buildPrimaryTreatmentFromContext,
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
@@ -983,6 +1062,7 @@
         initCipSearch();
         initDrugAutocomplete();
         initTreatmentFormEvents();
+        var servicioSync = initServicioPatologiaSync();
 
         showDrugAutocomplete();
 

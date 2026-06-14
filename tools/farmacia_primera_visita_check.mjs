@@ -74,6 +74,16 @@ assert(html.includes('fhPvAutocompleteDropdown'), 'dropdown autocomplete present
 assert(!js.includes('fhPvDrugSearch'), 'JS no referencia fhPvDrugSearch (eliminado)');
 // WO7D.1: z-index style para dropdown
 assert(html.includes('z-index: 1000'), 'estilo z-index para dropdown presente');
+// WO7D.2: servicio origen como select con opciones
+assert(html.indexOf('id=\"fhPvServicio\"') !== -1 && html.indexOf('select') < html.indexOf('id=\"fhPvServicio\"'), 'Servicio origen es un select');
+assert(html.includes('Dermatología') && html.includes('Reumatología') && html.includes('Digestivo'), 'Servicio origen tiene opciones guiadas');
+assert(html.includes('fhPvServicioOtro'), 'Servicio origen tiene campo Otro');
+// WO7D.2: patología como select con opciones guiadas
+assert(html.indexOf('id=\"fhPvPatologia\"') !== -1 && html.indexOf('select') < html.indexOf('id=\"fhPvPatologia\"'), 'Patología / indicación es un select');
+assert(html.includes('fhPvPatologiaOtro'), 'Patología tiene campo Otra');
+// WO7D.2: tratamiento no se ha eliminado
+assert(html.includes('fhPvFarmaco'), 'Campo fhPvFarmaco sigue presente');
+assert(html.includes('fhPvAutocompleteDropdown'), 'Dropdown autocomplete sigue presente');
 
 const sandbox = {
   window: {

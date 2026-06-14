@@ -106,8 +106,27 @@
                 </button>
             </div>
         </div>
-        <div class="form-group"><label for="fhPvServicio">Servicio origen</label><input class="form-control" id="fhPvServicio"></div>
-        <div class="form-group"><label for="fhPvPatologia">Patología / indicación</label><input class="form-control" id="fhPvPatologia"></div>
+        <div class="form-group">
+            <label for="fhPvServicio">Servicio origen</label>
+            <select class="form-select" id="fhPvServicio">
+                <option value="">Seleccionar...</option>
+                <option>Dermatología</option>
+                <option>Reumatología</option>
+                <option>Digestivo</option>
+                <option>Alergología</option>
+                <option>Farmacia Hospitalaria</option>
+                <option>Oncología</option>
+                <option>Otro</option>
+            </select>
+            <input type="text" class="form-control hidden" id="fhPvServicioOtro" placeholder="Especificar otro servicio">
+        </div>
+        <div class="form-group">
+            <label for="fhPvPatologia">Patología / indicación</label>
+            <select class="form-select" id="fhPvPatologia">
+                <option value="">Seleccionar...</option>
+            </select>
+            <input type="text" class="form-control hidden" id="fhPvPatologiaOtro" placeholder="Especificar otra patología">
+        </div>
     </section>
     <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-clipboard-check"></i> Tratamiento validado por Farmacia</h2>
         <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco principal / validado</label><div class="autocomplete-wrapper"><input type="text" id="fhPvFarmaco" class="form-control" placeholder="Buscar por marca, principio activo, presentación o código..." autocomplete="off"><div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div><div class="form-group"><label for="fhPvDosis">Presentación / dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><select class="form-select" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
