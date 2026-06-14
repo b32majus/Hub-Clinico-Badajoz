@@ -5104,88 +5104,12 @@
     gap: 16px;
 }
 
-/* WO8.1c.7 — Enfermería card grid y compact card styles */
+/* WO8.1c.7/8 — Enfermería grid y headers (cards reusan pending-validation-card) */
 .enfermeria-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
     gap: 14px;
     margin-top: 10px;
-}
-
-.enfermeria-card {
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-    background: #FFFFFF;
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: box-shadow 0.15s, border-color 0.15s;
-}
-.enfermeria-card:hover {
-    box-shadow: 0 4px 16px rgba(0, 135, 119, 0.10);
-    border-color: var(--ses-green);
-}
-
-.enfermeria-card__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.enfermeria-card__title-wrap {
-    min-width: 0;
-}
-
-.enfermeria-card__title {
-    margin: 0;
-    font-size: 0.92rem;
-    color: #0F172A;
-    font-weight: 600;
-}
-.enfermeria-card__subtitle {
-    margin: 2px 0 0;
-    color: #475569;
-    font-size: 0.84rem;
-}
-
-.enfermeria-card__body-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3px 12px;
-    font-size: 0.82rem;
-    color: #334155;
-}
-
-.enfermeria-card__meta {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-.enfermeria-card__meta i {
-    width: 14px;
-    text-align: center;
-    color: var(--ses-green);
-    font-size: 0.78rem;
-}
-
-.enfermeria-card__badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
-
-.enfermeria-card__actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 2px;
-    flex-wrap: wrap;
-}
-.enfermeria-card__actions .btn {
-    font-size: 0.82rem;
-    padding: 6px 14px;
 }
 
 /* Status badge variants for Enfermería cards */

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/farmacia_enfermeria_board_dom_check.mjs
-// WO8.1c.7 — Verifica renderizado DOM de tarjetas Enfermería compactas
+// WO8.1c.8 — Verifica que las tarjetas Enfermería reutilizan pending-validation-card
 // (sin cargar farmacia_index.js para evitar dependencias complejas)
 
 import fs from 'fs';
@@ -158,7 +158,7 @@ for (var k in patients) {
 
 // ─── Checks ──────────────────────────────────────────────────────────────────
 console.log('');
-console.log('=== WO8.1c.7 — Enfermería Board DOM (compact cards) ===');
+console.log('=== WO8.1c.8 — Enfermería Board (reusa pending-validation-card) ===');
 
 // ─── 1-3. getEnfermeriaVisiblePatients returns 4 ──────────────────────────
 var visible = F.getEnfermeriaVisiblePatients();
@@ -216,17 +216,17 @@ function simulateEnfermeriaCard(patient) {
   cardLines.push('EstadoBadgeClase: ' + badgeClass);
   cardLines.push('EstadoLabel: ' + (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—'));
 
-  // Card class: enfermeria-card
-  cardLines.push('CardClase: enfermeria-card');
+  // Card class: pending-validation-card (reutilizada, no enfermeria-card)
+  cardLines.push('CardClase: pending-validation-card');
 
-  // Body: 2-column grid
+  // Body: meta rows
   var bodyItems = [];
   bodyItems.push('Servicio: ' + (patient.servicio || patient.servicio_origen));
   bodyItems.push('Patologia: ' + (patient.patologia || patient.patologia_indicacion));
   bodyItems.push('Farmaco: ' + (patient.farmaco || patient.farmaco_solicitado));
   bodyItems.push('Origen: Excel Enfermería');
   if (patient.fecha_ok_farmacia) bodyItems.push('OK Fecha: ' + patient.fecha_ok_farmacia);
-  cardLines.push('CuerpoGrid: ' + bodyItems.join(' | '));
+  cardLines.push('CuerpoMeta: ' + bodyItems.join(' | '));
 
   // Badges
   var badges = F.getEnfermeriaBadges(patient);
@@ -261,18 +261,34 @@ assert(allText.indexOf('EstadoLabel: En vigilancia') !== -1, '24. Paciente D →
 function countValidar(text) { return (text.match(/TieneBotonValidar: SI/g) || []).length; }
 assertEqual(countValidar(allText), 1, '25. Solo 1 paciente tiene botón "Abrir validación"');
 
-// Badge classes
-assert(allText.indexOf('CardClase: enfermeria-card') !== -1, '26. Cards usan clase enfermeria-card');
-assert(allText.indexOf('CuerpoGrid:') !== -1, '27. Cards tienen cuerpo en grid 2-columnas');
+// Card class check: pending-validation-card, NOT enfermeria-card
+assert(allText.indexOf('CardClase: pending-validation-card') !== -1, '26. Cards usan clase pending-validation-card');
 
-// ─── 28-32. No forbidden texts ───────────────────────────────────────────
-assertNoText(allText, 'unknown', '28. No aparece "unknown" en cards');
-assertNoText(allText, ' pending', '29. No aparece " pending" en cards');
-assertNoText(allText, 'Hemograma', '30. No aparece "Hemograma" en cards');
-assertNoText(allText, 'Bioquímica', '31. No aparece "Bioquímica" en cards');
-assertNoText(allText, 'Analítica reciente', '32. No aparece "Analítica reciente" en cards');
+// ─── 27. No .enfermeria-card en producción (clase en elementos, no en grid/headers) ──
+var indexSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_index.js'), 'utf8');
+// Check for actual class assignment 'enfermeria-card' (not enfermeria-card-grid or __*)
+var badEnfCardRe = /['\"]enfermeria-card['\"]/g;
+var badMatch = indexSrc.match(badEnfCardRe);
+assert(!badMatch, '27. No existe "enfermeria-card" asignado en farmacia_index.js');
 
-// ─── 33-35. No duplicate between boards ──────────────────────────────────
+// ─── 28-32. No forbidden texts in card display data ─────────────────────
+// Check only body/badges content, not class names
+var bodyAndBadgesText = cards.map(function (c) {
+  return c.split('\n').filter(function (line) {
+    return line.indexOf('CardClase:') === -1 && line.indexOf('EstadoBadgeClase:') === -1;
+  }).join('\n');
+}).join('\n\n');
+
+assertNoText(bodyAndBadgesText, 'unknown', '28. No aparece "unknown" en cards');
+assertNoText(bodyAndBadgesText, ' pending', '29. No aparece " pending" en cards');
+assertNoText(bodyAndBadgesText, 'Hemograma', '30. No aparece "Hemograma" en cards');
+assertNoText(bodyAndBadgesText, 'Bioquímica', '31. No aparece "Bioquímica" en cards');
+assertNoText(bodyAndBadgesText, 'Analítica reciente', '32. No aparece "Analítica reciente" en cards');
+
+// ─── 33. Prebiológico bloqueado genérico ────────────────────────────────
+assertNoText(allText, 'Prebiológico bloqueado', '33. No aparece "Prebiológico bloqueado" genérico');
+
+// ─── 34-36. No duplicate between boards ──────────────────────────────────
 // Data layer still includes Paciente C (shouldAppearInValidationInbox=true for OK FARMACIA)
 // Render layer filters out ALL Enfermería patients to avoid duplicates
 var pending = F.getPendingValidationPatients();
@@ -280,7 +296,7 @@ var enfInPendingData = pending.filter(function (p) {
   return F.isEnfermeriaPatient(p);
 });
 // Paciente C is OK FARMACIA → appears in data layer (correct)
-assert(enfInPendingData.length >= 1, '33. Paciente C aparece en data layer de pending (OK FARMACIA)');
+assert(enfInPendingData.length >= 1, '34. Paciente C aparece en data layer de pending (OK FARMACIA)');
 
 // But renderPendingValidationBoard filter would exclude ALL Enfermería
 // Simulate the render filter:
@@ -290,22 +306,21 @@ var filtered = pending.filter(function (p) {
 var enfInFiltered = filtered.filter(function (p) {
   return F.isEnfermeriaPatient(p);
 });
-assertEqual(enfInFiltered.length, 0, '34. Render filter excluye todo paciente Enfermería (sin duplicado)');
+assertEqual(enfInFiltered.length, 0, '35. Render filter excluye todo paciente Enfermería (sin duplicado)');
 
-// The demo Farmacia patient should appear in both
+// The legacy patient should appear in both
 var demoInPending = pending.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
-assertEqual(demoInPending.length, 1, '35. Paciente legacy SÍ aparece en pending validation');
+assertEqual(demoInPending.length, 1, '36. Paciente legacy SÍ aparece en pending validation (filtro data)');
 var demoInFiltered = filtered.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
-assertEqual(demoInFiltered.length, 1, '36. Paciente legacy también en render filter');
+assertEqual(demoInFiltered.length, 1, '37. Paciente legacy también en render filter');
 
-// ─── 37-38. innerHTML check ──────────────────────────────────────────────
+// ─── 38-39. innerHTML check ──────────────────────────────────────────────
 var commonSrcContent = fs.readFileSync(commonPath, 'utf8');
 var innerCount = (commonSrcContent.match(/innerHTML/g) || []).length;
-assert(innerCount <= 3, `37. innerHTML en farmacia_common.js: ${innerCount}`);
+assert(innerCount <= 3, `38. innerHTML en farmacia_common.js: ${innerCount}`);
 
-var indexSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_index.js'), 'utf8');
 var indexInner = (indexSrc.match(/innerHTML/g) || []).length;
-assert(indexInner <= 2, `38. innerHTML en farmacia_index.js: ${indexInner}`);
+assert(indexInner <= 2, `39. innerHTML en farmacia_index.js: ${indexInner}`);
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 if (failed > 0) process.exit(1);

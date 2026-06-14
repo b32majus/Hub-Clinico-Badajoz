@@ -1248,6 +1248,38 @@ Se unifica la representación visual de las solicitudes de Enfermería con el es
 - `main` — intacto (a25cccb)
 - `preview/demo-lunes-wo4-20260614` — intacto (22db535)
 
+## WO8.1c.8 — Reutilización real de tarjeta clínica para Enfermería
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`
+
+**Alcance:**
+Se sustituye la tarjeta específica `enfermeria-card` por el componente visual clínico existente basado en `pending-validation-card`, para que las solicitudes de Enfermería se muestren con la misma estética que las tarjetas principales del Hub. El board Enfermería se coloca antes del board genérico y se evitan duplicados visuales.
+
+**Decisión clave:**
+- No se crea una tercera UI para Enfermería. Enfermería reutiliza la tarjeta clínica principal del Hub (`pending-validation-card`) con variantes de estado y acciones específicas.
+- Nuevo helper `renderEnfermeriaAsPendingCard(patient, groupKey)` que construye una tarjeta DOM exacta a las del board de validación.
+- El board Enfermería se inserta ANTES del board de validación (`insertBefore(enfBoard, board)` en vez de `board.nextSibling`).
+- `renderPendingValidationBoard()` filtra TODOS los pacientes Enfermería (incluido OK FARMACIA) — viven exclusivamente en el board Enfermería.
+- Se eliminan todas las clases `enfermeria-card`, `enfermeria-card__*` del JS y CSS. Solo se conservan clases estructurales: `.enfermeria-card-grid` (grid responsive), `.enfermeria-board__heading`, `.enfermeria-group__header`, `.status-badge--ok/blocked/vigilance`.
+- No se modifica `farmacia_common.js`, Excels, demo, HTML, main ni rama demo.
+
+**Archivos modificados:**
+- `farmacia_style.css` — eliminadas clases `.enfermeria-card`, `.enfermeria-card__*`, `.enfermeria-card__actions`; conservadas grid, headings y badge variants
+- `scripts/farmacia_index.js` — `renderEnfermeriaBoard()` ahora usa helper `renderEnfermeriaAsPendingCard()` con clases `pending-validation-card`; inserción ANTES del board; filtro total en `renderPendingValidationBoard()` (mantenido)
+- `tools/farmacia_enfermeria_board_dom_check.mjs` — 39 tests (clase `pending-validation-card`, no `enfermeria-card`, sin duplicados, sin textos prohibidos)
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Tests:**
+- Common check: 49/49 PASS
+- Enfermería import: 95/95 PASS
+- DOM board check: 39/39 PASS
+- Row export: 44/44 PASS
+- FH sintético: 38/38 PASS
+- Smoke check: 38/38 PASS
+- Template check: 36/36 PASS
+- innerHTML: 0 (common.js), 0 (index.js)
+
 
 ## WO8.1c.3 — Adaptador import Enfermería Inicio Biológico
 
