@@ -509,7 +509,7 @@ WO7G deberá adaptar dashboard como proyección del contrato común.
 ## WO7E.1 — Pulido de Seguimiento: origen, indicación y tarjeta prebiológica
 
 **Estado:** 🟡 **pending_review** (ejecutada por KairOS, pendiente de revisión visual Sil/Cora)
-**HEAD de rama:** (pendiente de commit)
+**HEAD de rama:** `29f9206` (tras WO7E.1)
 
 **Alcance:**
 - Origen / Servicio origen convertido a `<select>` guiado con 7 opciones (Dermatología, Reumatología, Digestivo, Alergología, Farmacia Hospitalaria, Medicina Interna, Otro) con campo libre para "Otro"
