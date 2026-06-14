@@ -330,6 +330,14 @@
         return s;
     }
 
+    function normalizePautaString(pautaString) {
+        var catalog = (typeof window !== 'undefined' && window.FarmaciaPautasCatalog) ? window.FarmaciaPautasCatalog : null;
+        if (catalog && typeof catalog.normalizePautaLabel === 'function') {
+            return catalog.normalizePautaLabel(String(pautaString || ''));
+        }
+        return null;
+    }
+
     function buildAnaliticaEstructFromImport(row, mapping) {
         if (!row || !mapping) return null;
         var hasAny = false;
@@ -429,6 +437,18 @@
             importRowIndex: rowIndex
         };
 
+        // Normalizar pauta importada manteniendo compatibilidad legacy
+        var rawPauta = candidate.pauta;
+        var pautaEstruct = normalizePautaString(rawPauta);
+        if (pautaEstruct) {
+            if (pautaEstruct.pauta_codigo === 'OTRO' && pautaEstruct.pauta_otro_texto) {
+                candidate.pauta = pautaEstruct.pauta_otro_texto;
+            } else {
+                candidate.pauta = pautaEstruct.pauta_label || rawPauta;
+            }
+            candidate.pauta_estructurada = pautaEstruct;
+        }
+
         // Enriquecer con datos prebiológicos estructurados
         var analiticaEstruct = buildAnaliticaEstructFromImport(row, mapping);
         if (analiticaEstruct) {
@@ -515,6 +535,23 @@
         if (!merged.estadoLabel) {
             merged.estadoLabel = merged.estado === 'pending' ? 'Pendiente' : (merged.estado === 'validated' ? 'Validado' : (merged.estado === 'followup' ? 'En seguimiento' : 'Pendiente'));
         }
+
+        // Normalizar/preservar pauta estructurada y su representación legacy
+        var pautasCatalog = (typeof window !== 'undefined' && window.FarmaciaPautasCatalog) ? window.FarmaciaPautasCatalog : null;
+        if (merged.pauta_estructurada) {
+            if (pautasCatalog && typeof pautasCatalog.getLegacyPautaLabel === 'function') {
+                merged.pauta = pautasCatalog.getLegacyPautaLabel(merged.pauta_estructurada);
+            }
+        } else if (merged.pauta) {
+            var derivedPautaEstruct = normalizePautaString(merged.pauta);
+            if (derivedPautaEstruct) {
+                merged.pauta_estructurada = derivedPautaEstruct;
+                if (pautasCatalog && typeof pautasCatalog.getLegacyPautaLabel === 'function') {
+                    merged.pauta = pautasCatalog.getLegacyPautaLabel(derivedPautaEstruct);
+                }
+            }
+        }
+
         return merged;
     }
 
@@ -1319,6 +1356,7 @@
         getAvailablePatients,
         getPendingValidationPatients,
         getPrebiologicoStatus,
+        normalizePautaString: normalizePautaString,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }
