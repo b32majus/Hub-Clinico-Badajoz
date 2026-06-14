@@ -643,3 +643,48 @@ WO7G deberá adaptar dashboard como proyección del contrato común.
 WO8/WO posterior deberá revisar export/persistencia, incluyendo CSV.
 
 ---
+
+## WO7F.2 — Bugfix desplegable sospechoso EA en Seguimiento
+
+**Estado:** 🟡 **pending_review** (ejecutada por KairOS como operador local, pendiente de revisión visual Sil/Cora)
+**HEAD de rama:** `646c1b1` (tras WO7F.2)
+
+**Causa raíz diagnosticada:**
+`getRelevantDrugCandidates()` dependía exclusivamente de `currentBiologicLines` (poblado por `syncBiologicControls`). Si el paciente se cargaba antes de que las líneas estuvieran disponibles, o si el desplegable se actualizaba en un momento donde `currentBiologicLines` estaba vacío, los candidatos del tratamiento principal no llegaban al DOM y el selector solo mostraba los fármacos de `followupOtherDrugs`.
+
+**Corrección aplicada:**
+- `getRelevantDrugCandidates()` ahora tiene un **fallback DOM** que lee `fhSegFarmaco` y `fhSegPrincipioActivo` directamente del formulario si `currentBiologicLines` está vacío, garantizando que el tratamiento principal siempre aparezca como candidato.
+- El fallback DOM genera un candidato con id `dom:current-treatment` y label `"NombreFármaco — Tratamiento principal"`.
+- Se añadió deduplicación con `seenIds` para evitar duplicados entre el fallback DOM y `getCurrentSelectedLine()`.
+- Las etiquetas de candidatos cambiaron de formato `[Categoría] Nombre` a `Nombre — Categoría` (más legible en desplegable).
+- Se verificó que `updateSuspectDrugSelector()` es la única función que escribe en `fhSeguimientoEaFarmacoSospechoso` (no hay rutas legacy que sobrescriban).
+
+**Tests específicos añadidos:**
+- Fallback DOM presente en `getRelevantDrugCandidates`
+- Labels en formato `Nombre — Categoría` sin corchetes
+- `mapOtherDrugToContract` no asigna `relation = 'principal'` a otros fármacos
+- No hay otra función que sobrescriba el desplegable sospechoso EA
+
+**Archivos modificados:**
+- `scripts/farmacia_seguimiento.js` — `getRelevantDrugCandidates()` con fallback DOM + labels limpias
+- `tools/farmacia_seguimiento_check.mjs` — 11 nuevos tests WO7F.2 (92 total, 0 failed)
+- `docs/farmacia_branch_manifest_20260614.md` — esta entrada
+
+**Tests verificados:**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_seguimiento.js` | OK |
+| `node tools/farmacia_seguimiento_check.mjs` | 92/92 PASS |
+| `node tools/farmacia_tratamiento_common_check.mjs` | 43/43 PASS |
+| `node tools/farmacia_smoke_check.mjs` | 38/38 OK |
+| `grep -R "innerHTML" ...` | 0 nuevos |
+
+**Importante:**
+No se modifica dashboard.  
+No se modifica export CSV.  
+No se modifica primera visita ni validación.  
+No se modifica `FarmaciaTratamiento` ni `FarmaciaPautasCatalog`.  
+WO6 sigue `pending_review`.  
+Fuente activa funcional sigue WO5.
+
+---
