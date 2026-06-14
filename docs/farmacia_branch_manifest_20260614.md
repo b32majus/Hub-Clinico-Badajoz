@@ -35,7 +35,7 @@ main (a25cccb) — demo pública inmutable
 | Rama / Ref | SHA | Contenido | Estado | Fuente de trabajo | Siguiente acción |
 |---|---|---|---|---|---|
 | `farmacia-demo-lunes-stable-924d316` (tag) | `924d316` | Demo original congelada: WO5B-WO5C.3, causalidad, PROMs, Morisky, concomitantes, reordenación visual 4 bloques | ✅ Congelado (backup) | ❌ Histórico | No tocar |
-| **`farmacia-demo-lunes-final-wo3-20260614`** (tag) | **`fecdc52`** | **Demo final post-WO3: demo + WO1 + WO2 + WO2b-e + WO3** | **✅ Congelado (demo lunes)** | **❌ Demo final** | **No tocar. Preview Pages apunta a `preview/demo-lunes-wo3-20260614`** |
+| **`farmacia-demo-lunes-final-wo3-20260614`** (tag) | **`fecdc52`** | **Demo final post-WO3: demo + WO1 + WO2 + WO2b-e + WO3** | **✅ Congelado (demo lunes)** | **❌ Demo final** | **No tocar. Preview Pages apunta a `preview/demo-lunes-wo4-20260614`** |
 | `backup/farmacia-demo-lunes-stable-924d316` | `924d316` | Ídem, respaldo local | ✅ Congelado | ❌ Histórico | No tocar |
 | `work/farmacia-wo1-continuidad-paciente-20260614` | `f27a976` | WO1: unificar `getQueryContext` con `findPatientByCip`, eliminar fallback silencioso | ✅ Cerrado | ❌ Auditoría | No tocar |
 | `work/farmacia-wo2-helper-bloqueantes-prebiologicos-20260614` | `c7ac08a` | WO2: helper `FarmaciaPrebiologico.evaluatePatientPrebiologico()` base | ✅ Cerrado | ❌ Auditoría | No tocar |
@@ -45,9 +45,9 @@ main (a25cccb) — demo pública inmutable
 | `work/farmacia-wo2e-vacunacion-text-fallback-20260614` | `9201003` | WO2e: regex acotado a frase + tests T16-T17 | ✅ Cerrado | ❌ Auditoría | No tocar |
 | **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`9201003`** | **Todo lo anterior consolidado: demo + WO1 + WO2 + WO2b-e** | **✅ Preservada** | **✅ PUNTO DE RETORNO** | **Preservar. No borrar. No reabrir.** |
 | **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc52`** | **WO3: pintar bloqueantes prebiológicos en bandeja de validación** | **✅ VALIDADA por Sil (2026-06-14)** | **✅ FUENTE ANTERIOR** | **Preservar como histórico validado** |
-|| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`0c3de77`** | **WO4: tarjeta validaciones pendientes clicable/desplegable en Actividad del Servicio** | **✅ VALIDADA por Sil** | **✅ NUEVA FUENTE DE TRABAJO** | **Activa para próximas mejoras** |
-|| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **pendiente** | **WO5: adaptador getPrebiologicoStatus + eliminación lógica clínica legacy** | **⏳ PENDING REVIEW** | **❌ Pendiente validación** | **Esperar validación Sil/Cora** |
-|| `main` | `a25cccb` | Rama principal pública. Sin cambios tras la demo | ✅ Estable | ❌ No tocar sin autorización | No mergear sin validación explícita |
+| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`90f79ec`** | **WO4: tarjeta validaciones pendientes clicable/desplegable en Actividad del Servicio** | **✅ VALIDADA por Sil** | **✅ NUEVA FUENTE DE TRABAJO** | **Activa para próximas mejoras** |
+| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`8bed809`** | **WO5: adaptador getPrebiologicoStatus + eliminación lógica clínica legacy** | **⏳ PENDING REVIEW** | **❌ Pendiente validación** | **Esperar validación Sil/Cora** |
+| `main` | `a25cccb` | Rama principal pública. Sin cambios tras la demo | ✅ Estable | ❌ No tocar sin autorización | No mergear sin validación explícita |
 | `work/hermes/farmacia-demo-v0-2-candidate-20260606` | antecesor | Rama de trabajo original de WO5B | 🟡 Histórico | ❌ Histórico | No reabrir |
 | `preview/demo-lunes-wo3-20260614` | `fecdc52` | Rama de preview Pages para demo lunes post-WO3 | 🟡 Preview | ❌ Pages | Sirve demo final WO3 |
 | Otras `work/` y `backup/` | varios | Ramas de preview, evaluaciones, experimentos previos | 🟡 Histórico | ❌ Histórico | No reabrir |
@@ -57,7 +57,7 @@ main (a25cccb) — demo pública inmutable
 ## Reglas de gobernanza
 
 ### Fuente de trabajo actual — WO4 ✅ validada por Sil
-**`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** (SHA **`0c3de77`**)
+**`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** (SHA **`90f79ec`**)
 - ✅ Validada visualmente por Sil (2026-06-14).
 - WO4 ejecutada: tarjeta "Validaciones pendientes" clicable/desplegable en Actividad del Servicio.
 - Reutiliza `FarmaciaDemo.getPendingValidationPatients()` como fuente única.
@@ -79,7 +79,7 @@ main (a25cccb) — demo pública inmutable
 
 ### Rama demo congelada
 - `farmacia-demo-lunes-stable-924d316` (tag) → backup exclusivo.
-- Preview GitHub Pages sigue apuntando a `924d316` (main).
+- Preview GitHub Pages sirve `preview/demo-lunes-wo4-20260614` (`90f79ec`).
 - No mover, no mergear, no eliminar.
 
 ### main
@@ -165,22 +165,22 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 | `work/farmacia-wo2e-vacunacion-text-fallback-20260614` | `92010036b65512f5057fc4071be2fbb40f1b4a18` |
 | `work/farmacia-demo-lunes-plus-wo1-wo2-20260614` | `92010036b65512f5057fc4071be2fbb40f1b4a18` |
 | **`farmacia-demo-lunes-final-wo3-20260614`** (tag) | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
-|| **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
-|| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`0c3de778fd8818c6ffa9a642ecfc47420565b853`** ✅ validada por Sil |
-|| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`4c61ddc937aa8984d506853b5e43feb38c90f7de`** ⏳ pending review |
-|| `preview/demo-lunes-wo3-20260614` | `fecdc5203c22167d1bf6a17a19e11bb3345a06d0` |
-|| `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
+| **`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** | **`fecdc5203c22167d1bf6a17a19e11bb3345a06d0`** |
+| **`work/farmacia-wo4-actividad-validaciones-pendientes-20260614`** | **`90f79ecb07419895660463eb84de1be72bcf92d2`** ✅ validada por Sil |
+| **`work/farmacia-wo5-prebiologico-single-source-20260614`** | **`8bed80955be4e393f3e5aea11a8af4d85f55f887`** ⏳ pending review |
+| `preview/demo-lunes-wo3-20260614` | `fecdc5203c22167d1bf6a17a19e11bb3345a06d0` |
+| `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 
 ---
 
 **Status:** `active` (WO4 `validated_by_Sil`, WO5 `pending_review`)
 **Validación:** ✅ WO4 validada visualmente por Sil (2026-06-14). Tests: 8/8 syntax, 38/38 smoke, 72/72 helper, 29/29 single source.
-**Fuente de trabajo activa:** `work/farmacia-wo4-actividad-validaciones-pendientes-20260614` (`0c3de77`) — NO CAMBIA hasta validación WO5
+**Fuente de trabajo activa:** `work/farmacia-wo4-actividad-validaciones-pendientes-20260614` (`90f79ec`) — NO CAMBIA hasta validación WO5
 **Fuente de trabajo anterior:** `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` (`fecdc52`)
 **Punto de retorno:** `work/farmacia-demo-lunes-plus-wo1-wo2-20260614` (`9201003`)
 **Demo lunes pre-WO4:** `farmacia-demo-lunes-final-wo3-20260614` (tag, `fecdc52`)
-**Demo lunes post-WO4:** `farmacia-demo-lunes-final-wo4-20260614` (tag, `0c3de77`)
-**Preview Pages post-WO4:** `preview/demo-lunes-wo4-20260614` (`0c3de77`)
+**Demo lunes post-WO4:** `farmacia-demo-lunes-final-wo4-20260614` (tag, `90f79ec`)
+**Preview Pages post-WO4:** `preview/demo-lunes-wo4-20260614` (`90f79ec`)
 **Backup original:** `farmacia-demo-lunes-stable-924d316` (tag, `924d316`)
 **WO4 validada:** 2026-06-14
 **WO5 pendiente:** 2026-06-14
