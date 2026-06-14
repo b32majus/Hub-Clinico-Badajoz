@@ -289,7 +289,7 @@
             label.textContent = labelParts.join(' · ');
             var value = document.createElement('span');
             value.className = 'info-field__value';
-            value.textContent = line.nombre_linea || line.nombre_comercial || line.principio_activo || line.farmaco_nombre || 'Biológico';
+            value.textContent = line.nombre_linea || line.farmaco_nombre || line.principio_activo || line.nombre_comercial || 'Biológico';
             var note = document.createElement('div');
             note.className = 'timeline-description';
             var noteParts = [];
@@ -767,13 +767,13 @@
         }
         var summaryFields = [];
         if (primaryLine) {
-            var primaryName = primaryLine.nombre_linea || primaryLine.nombre_comercial || primaryLine.principio_activo || patient.farmaco || '—';
+            var primaryName = primaryLine.nombre_linea || primaryLine.farmaco_nombre || primaryLine.principio_activo || primaryLine.nombre_comercial || patient.farmaco || '—';
             summaryFields.push({ label: 'Tratamiento principal', value: primaryName });
         } else if (patient.farmaco) {
             summaryFields.push({ label: 'Tratamiento actual', value: patient.farmaco + ' · ' + (patient.pauta || '') });
         }
         if (otherLines.length) {
-            var otherNames = otherLines.map(function (l) { return l.nombre_linea || l.nombre_comercial || l.principio_activo || '—'; }).join(', ');
+            var otherNames = otherLines.map(function (l) { return l.nombre_linea || l.farmaco_nombre || l.principio_activo || l.nombre_comercial || '—'; }).join(', ');
             summaryFields.push({ label: 'Otras líneas activas', value: otherNames });
         }
         summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });

@@ -960,7 +960,7 @@
         var line = getCurrentSelectedLine();
         var helper = getTreatmentHelper();
         if (line) {
-            setSegValue('fhSegFarmaco', line.nombre_comercial || line.farmaco_nombre || '');
+            setSegValue('fhSegFarmaco', line.farmaco_nombre || line.nombre_comercial || line.nombre_linea || '');
             setSegValue('fhSegPrincipioActivo', line.principio_activo || '');
             setSegValue('fhSegPresentacion', line.presentacion || line.dosis_texto || '');
             setSegValue('fhSegDosisActual', line.dosis || line.dosis_texto || '');
@@ -984,6 +984,22 @@
             setSegValue('fhSegEstadoLinea', '');
             var grid = document.getElementById('fhSegTratamientoGrid');
             if (grid) F.clearChildren(grid);
+        }
+        // Sincronizar tarjeta CIMA con la línea seleccionada
+        var cimaEl = document.getElementById('fhSegCimaContextPrincipioActivo');
+        if (cimaEl && line) {
+            var C = window.FarmaciaCatalog;
+            var snap = C && C.getSnapshot ? C.getSnapshot() : null;
+            var snapPrincipio = snap ? (snap.principio_activo_snapshot || '').toString().toLowerCase().trim() : '';
+            var linePrincipio = (line.principio_activo || '').toString().toLowerCase().trim();
+            var lineFarmaco = (line.farmaco_nombre || '').toString().toLowerCase().trim();
+            // Si el snapshot no corresponde a la línea, limpiar CIMA y snapshot
+            if (snapPrincipio && snapPrincipio !== linePrincipio && snapPrincipio !== lineFarmaco) {
+                if (C && C.clearSnapshot) C.clearSnapshot();
+                F.setText('fhSegCimaContextPrincipioActivo', '\u2014');
+            }
+        } else if (cimaEl && !line) {
+            F.setText('fhSegCimaContextPrincipioActivo', '\u2014');
         }
         updateSuspectDrugSelector();
     }

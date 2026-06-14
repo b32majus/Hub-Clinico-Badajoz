@@ -226,6 +226,26 @@ assert(js.includes("Fallback DOM"), 'Código documenta fallback DOM');
 var suspectSelectorWrites = (js.match(/fhSeguimientoEaFarmacoSospechoso/g) || []).length;
 assert(suspectSelectorWrites <= 3, 'Sospechoso EA solo referenciado para getElementById (no sobrescrito por otras rutas)');
 
+// --- WO7H.1: Consistencia visual de línea terapéutica ---
+
+// 40. applySelectedBiologicLine usa farmaco_nombre antes de nombre_comercial
+var segFhSegFarmaco = "setSegValue('fhSegFarmaco', line.farmaco_nombre || line.nombre_comercial";
+assert(js.indexOf(segFhSegFarmaco) !== -1, 'Seguimiento setSegFarmaco usa farmaco_nombre antes de nombre_comercial');
+
+// 41. syncBiologicControls ya incluye farmaco_nombre en su cadena
+assert(js.includes('line.farmaco_nombre || line.nombre_comercial'), 'syncBiologicControls usa farmaco_nombre como segundo fallback');
+
+// 42. Tarjeta CIMA se limpia si no corresponde a la línea seleccionada
+assert(js.includes('fhSegCimaContextPrincipioActivo'), 'Código de sincronización tarjeta CIMA presente');
+assert(js.includes('clearSnapshot'), 'Se limpia snapshot si no corresponde a línea seleccionada');
+
+// 43. No se rompe pauta actual editable
+assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual normalizada sigue funcionando');
+
+// 44. Concomitantes intactos
+assert(js.includes('btnSegAddOtherDrug'), 'Botón añadir concomitante conservado');
+assert(js.includes('segOtrosFarmacosList'), 'Lista otros fármacos conservada');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);

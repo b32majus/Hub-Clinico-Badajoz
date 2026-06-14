@@ -95,6 +95,20 @@ assert(js.includes('patient.tratamientos'), 'Código de timeline conservado');
 // 12. Biológicos previos no colapsan como activos
 assert(js.includes("line.estado_linea !== 'historico'"), 'renderDashboard filtra históricos correctamente');
 
+// --- WO7H.1: Consistencia visual de línea terapéutica ---
+
+// 13. Fallback primaryName usa farmaco_nombre antes de nombre_comercial
+var pdPrimaryLineStr = "primaryLine.farmaco_nombre || primaryLine.principio_activo || primaryLine.nombre_comercial";
+assert(js.indexOf(pdPrimaryLineStr) !== -1, 'Dashboard primaryName usa farmaco_nombre antes de nombre_comercial');
+
+// 14. Fallback otherNames usa farmaco_nombre antes de nombre_comercial
+var pdOtherLineStr = "l.farmaco_nombre || l.principio_activo || l.nombre_comercial";
+assert(js.indexOf(pdOtherLineStr) !== -1, 'Dashboard otherNames usa farmaco_nombre antes de nombre_comercial');
+
+// 15. Fallback biologic value usa farmaco_nombre antes de nombre_comercial
+var pdBioValueStr = "line.farmaco_nombre || line.principio_activo || line.nombre_comercial";
+assert(js.indexOf(pdBioValueStr) !== -1, 'Dashboard renderBiologicLines usa farmaco_nombre antes de nombre_comercial');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);
