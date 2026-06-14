@@ -18,7 +18,7 @@ main (a25cccb) — demo pública inmutable
       │     ├── WO2c: precedencia clínica
       │     ├── WO2d: precedencia texto libre
       │     └── WO2e: tests vacunación texto libre (T16-T17)
-      └── work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614 ← FUENTE DE TRABAJO ACTUAL (post-revisión)
+      └── work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614 ← WO3 pending_review — candidata a nueva fuente de trabajo tras validación visual de Sil
             └── WO3: bandeja bloqueantes prebiológicos
 ```
 
@@ -38,9 +38,9 @@ main (a25cccb) — demo pública inmutable
 | `work/farmacia-wo2c-prebiologico-precedencia-clinica-20260614` | `e734724` | WO2c: precedencia clínica TB y serologías parciales, tests T7-T11 | ✅ Cerrado | ❌ Auditoría | No tocar |
 | `work/farmacia-wo2d-prebiologico-text-fallback-20260614` | `540f321` | WO2d: precedencia texto libre alert>pending>ok>unknown, tests T12-T15 | ✅ Cerrado | ❌ Auditoría | No tocar |
 | `work/farmacia-wo2e-vacunacion-text-fallback-20260614` | `9201003` | WO2e: regex acotado a frase + tests T16-T17 | ✅ Cerrado | ❌ Auditoría | No tocar |
-|| **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`9201003`** | **Todo lo anterior consolidado: demo + WO1 + WO2 + WO2b-e** | **✅ Activa** | **✅ PRESERVADA** | **Rama fuente de WO3. No borrar.** |
-|| `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` | `ef882d9` | WO3: pintar bloqueantes prebiológicos en bandeja de validación usando helper común | **✅ Activa** | **✅ FUENTE DE TRABAJO ACTUAL** | **Tras revisión de Sil, esta rama es la nueva fuente de trabajo.** |
-|| `main` | `a25cccb` | Rama principal pública. Sin cambios tras la demo | ✅ Estable | ❌ No tocar sin autorización | No mergear sin validación explícita |
+| **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`9201003`** | **Todo lo anterior consolidado: demo + WO1 + WO2 + WO2b-e** | **✅ Activa** | **✅ FUENTE DE TRABAJO ACTUAL** | **Rama fuente hasta validación visual de Sil. No borrar.** |
+| `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` | `d17093f` | WO3: pintar bloqueantes prebiológicos en bandeja de validación usando helper común | **🟡 pending_review** | **❌ Candidata** | **Pasa a fuente de trabajo solo tras validación visual explícita de Sil.** |
+| `main` | `a25cccb` | Rama principal pública. Sin cambios tras la demo | ✅ Estable | ❌ No tocar sin autorización | No mergear sin validación explícita |
 | `work/hermes/farmacia-demo-v0-2-candidate-20260606` | antecesor | Rama de trabajo original de WO5B | 🟡 Histórico | ❌ Histórico | No reabrir |
 | Otras `work/` y `backup/` | varios | Ramas de preview, evaluaciones, experimentos previos | 🟡 Histórico | ❌ Histórico | No reabrir |
 
@@ -48,16 +48,16 @@ main (a25cccb) — demo pública inmutable
 
 ## Reglas de gobernanza
 
-**Fuente de trabajo actual**
-**`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** (SHA `ef882d9`)
-- Rama WO3 nacida desde `work/farmacia-demo-lunes-plus-wo1-wo2-20260614`.
-- Tras revisión de Sil, esta rama es la nueva fuente de trabajo.
-- La rama fuente anterior (`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`) queda preservada.
-
-### Rama fuente preservada
+**Fuente de trabajo actual (hasta validación visual de Sil)**
 **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** (SHA `9201003`)
-- Rama que contiene demo + WO1 + WO2 + WO2b-e.
-- No borrar. Se mantiene como punto de retorno si WO3 necesita revisión.
+- Contiene demo + WO1 + WO2 + WO2b-e.
+- WO3 aún pendiente de revisión visual por Sil. Esta rama sigue siendo la fuente hasta nueva instrucción.
+
+### Rama WO3 — candidata
+**`work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614`** (SHA `d17093f`)
+- Rama WO3 nacida desde `work/farmacia-demo-lunes-plus-wo1-wo2-20260614`.
+- Estado: **pending_review**. Solo pasará a fuente de trabajo tras validación visual explícita de Sil.
+- La rama fuente anterior queda preservada como punto de retorno.
 
 ### Rama demo congelada
 - `farmacia-demo-lunes-stable-924d316` (tag) → backup exclusivo.
@@ -95,9 +95,9 @@ main (a25cccb) — demo pública inmutable
 | `work/farmacia-wo2c-prebiologico-precedencia-clinica-20260614` | `e7347242ca6a5309e032692b13cffd5629585e0c` |
 | `work/farmacia-wo2d-prebiologico-text-fallback-20260614` | `540f3217d4a1579e8443eb44e0d9bfe9d0676e5d` |
 | `work/farmacia-wo2e-vacunacion-text-fallback-20260614` | `92010036b65512f5057fc4071be2fbb40f1b4a18` |
-|| **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`92010036b65512f5057fc4071be2fbb40f1b4a18`** |
-|| `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` | `ef882d944aff79d592d218c6c607d3b4455a8647` |
-|| `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
+| **`work/farmacia-demo-lunes-plus-wo1-wo2-20260614`** | **`92010036b65512f5057fc4071be2fbb40f1b4a18`** |
+| `work/farmacia-wo3-bandeja-bloqueantes-prebiologicos-20260614` | `d17093f938cf1e36a8ca7a1943d0b61360f8080f` |
+| `main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 
 ---
 
