@@ -195,6 +195,39 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 
 ---
 
+## WO6d ejecutada — Contrato de datos de pautas normalizadas (documental)
+
+**WO6d — Documentación: contratos de datos de pautas normalizadas**
+
+**Estado:** 🟡 **pending_review** (2026-06-14, WO6d ejecutada)
+**HEAD final de la rama:** `7b5a78e` (`7b5a78e1de18eaf81eb8de1ac90a2c2d2a5d7d70`)
+
+**Qué se hizo:**
+- `docs/farmacia_data_contracts.md` creado con:
+  - Propósito y principios generales del contrato de datos
+  - Catálogo oficial de 12 códigos de pauta (objeto canónico, propiedades, tabla completa)
+  - Reglas de normalización (algoritmo, tabla de 30 casos de prueba, patrones regex por código)
+  - Compatibilidad legacy y función `getLegacyPautaLabel`
+  - Contrato de importación Excel (`buildImportedPatientCandidate`, campos planos generados)
+  - Contrato de exportación CSV/Excel (columnas Pauta, PautaCodigo, PautaLabel, PautaIntervaloDias, PautaUnidad, PautaOtroTexto)
+  - Política de storage (sessionStorage, no localStorage, fallback en memoria)
+  - Deuda explícita (pautas de otros fármacos, concomitantes, combinaciones complejas)
+  - Tests asociados (catalog check, common check, storage policy check, syntax check)
+  - Reglas para futuras WOs (7 reglas)
+- `docs/farmacia_branch_manifest_20260614.md` actualizado (esta entrada)
+
+**Solo documentación.** No se modificó código funcional, HTML, CSS, JS, tests, Pages ni main.
+
+**Tests verificados:**
+- Syntax: `node --check scripts/farmacia_pautas_catalog.js` → OK
+- Catalog check: `node tools/farmacia_pautas_catalog_check.mjs` → PASSED
+- Common check: `node tools/farmacia_common_check.mjs` → PASSED
+- Storage policy check: `node tools/farmacia_storage_policy_check.mjs` → PASSED
+
+**Nota:** WO6 sigue en pending_review. La fuente de trabajo activa sigue siendo WO5.
+
+---
+
 ## SHA verificados
 
 | Ref | SHA completo |
