@@ -205,6 +205,13 @@
     }
 
     function getPatientBiologicLines(patient) {
+        if (!patient) return [];
+        var helper = window.FarmaciaTratamiento;
+        if (helper && typeof helper.buildTreatmentFromPatient === 'function') {
+            var result = helper.buildTreatmentFromPatient(patient, { returnArray: true, fuente: 'dashboard_adapter' });
+            if (Array.isArray(result) && result.length) return result;
+        }
+        // Fallback legacy (sin helper)
         if (Array.isArray(patient.biologicos) && patient.biologicos.length) return patient.biologicos;
         var treatments = patient.tratamientos || [];
         if (!treatments.length && patient.farmaco) {
@@ -276,13 +283,23 @@
             field.className = 'info-field';
             var label = document.createElement('span');
             label.className = 'info-field__label';
-            label.textContent = 'L' + (line.orden || '?') + ' · ' + biologicStateLabel(line.estado_linea);
+            var labelParts = ['L' + (line.orden || '?')];
+            if (line.estado_linea) labelParts.push(biologicStateLabel(line.estado_linea));
+            if (line.tipo_relacion) labelParts.push(biologicRelationLabel(line.tipo_relacion));
+            label.textContent = labelParts.join(' · ');
             var value = document.createElement('span');
             value.className = 'info-field__value';
-            value.textContent = (line.nombre_comercial || line.nombre_linea || line.principio_activo || 'Biologico') + ' · ' + biologicRelationLabel(line.tipo_relacion || 'sin_cambios');
+            value.textContent = line.nombre_linea || line.nombre_comercial || line.principio_activo || line.farmaco_nombre || 'Biológico';
             var note = document.createElement('div');
             note.className = 'timeline-description';
-            note.textContent = [line.principio_activo || '', line.via || '', line.pauta || '', line.fecha_inicio || ''].filter(Boolean).join(' · ');
+            var noteParts = [];
+            if (line.principio_activo) noteParts.push(line.principio_activo);
+            if (line.dosis || line.dosis_texto) noteParts.push(line.dosis || line.dosis_texto);
+            if (line.via) noteParts.push(line.via);
+            if (line.pauta) noteParts.push(line.pauta);
+            if (line.fecha_inicio) noteParts.push('Inicio: ' + line.fecha_inicio);
+            if (line.fecha_fin) noteParts.push('Fin: ' + line.fecha_fin);
+            note.textContent = noteParts.length ? noteParts.join(' · ') : '—';
             field.appendChild(label);
             field.appendChild(value);
             field.appendChild(note);
@@ -735,19 +752,35 @@
         const badge = document.getElementById('patientStatusBadge');
         badge.className = F.statusClass(patient.estado);
         badge.textContent = patient.estadoLabel;
-        var activeLines = getPatientBiologicLines(patient).filter(function (line) {
-            return line.estado_linea === 'activo' || line.estado_linea === 'anadido' || line.estado_linea === 'añadido';
+        var bioLines = getPatientBiologicLines(patient);
+        var primaryLine = null;
+        var otherLines = [];
+        bioLines.forEach(function (line) {
+            if (line.es_principal || line.tipo_relacion === 'principal' || (!primaryLine && line.estado_linea !== 'historico')) {
+                primaryLine = line;
+            } else if (line.estado_linea !== 'historico') {
+                otherLines.push(line);
+            }
         });
-        var activeSummary = activeLines.length ? activeLines.map(function (line) {
-            return line.nombre_linea || line.principio_activo || line.nombre_comercial;
-        }).join(' + ') : (patient.farmaco + ' · ' + patient.pauta);
-        F.renderFields(document.getElementById('dashboardSummaryGrid'), [
-            { label: 'Tratamiento actual', value: activeSummary },
-            { label: 'Estado validación', value: patient.estadoLabel },
-            { label: 'Última adherencia', value: patient.adherencia },
-            { label: 'Efectos adversos', value: patient.efectosAdversos },
-            { label: 'Últimos PROMs Farmacia', value: patient.proms }
-        ]);
+        if (!primaryLine && bioLines.length) {
+            primaryLine = bioLines[0];
+        }
+        var summaryFields = [];
+        if (primaryLine) {
+            var primaryName = primaryLine.nombre_linea || primaryLine.nombre_comercial || primaryLine.principio_activo || patient.farmaco || '—';
+            summaryFields.push({ label: 'Tratamiento principal', value: primaryName });
+        } else if (patient.farmaco) {
+            summaryFields.push({ label: 'Tratamiento actual', value: patient.farmaco + ' · ' + (patient.pauta || '') });
+        }
+        if (otherLines.length) {
+            var otherNames = otherLines.map(function (l) { return l.nombre_linea || l.nombre_comercial || l.principio_activo || '—'; }).join(', ');
+            summaryFields.push({ label: 'Otras líneas activas', value: otherNames });
+        }
+        summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });
+        summaryFields.push({ label: 'Última adherencia', value: patient.adherencia });
+        summaryFields.push({ label: 'Efectos adversos', value: patient.efectosAdversos });
+        summaryFields.push({ label: 'Últimos PROMs Farmacia', value: patient.proms });
+        F.renderFields(document.getElementById('dashboardSummaryGrid'), summaryFields);
         document.getElementById('dashboardSummaryGrid').appendChild(createChecksVisualBlock(patient));
 
         const actionBtns = document.querySelectorAll('.patient-header-actions a');
