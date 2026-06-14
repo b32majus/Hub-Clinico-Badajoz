@@ -4,6 +4,7 @@
     var F = window.FarmaciaDemo;
     var C = window.FarmaciaCatalog;
     var M = window.FarmaciaValidationModel;
+    var P = window.FarmaciaPautasCatalog;
     var modoActual = null;
     var autocompleteActiveIndex = -1;
     var currentPatient = null;
@@ -88,6 +89,25 @@
             select.appendChild(opt);
         });
         return select;
+    }
+
+    function populatePautaSelect(id, otroId) {
+        var select = byId(id);
+        var otro = byId(otroId);
+        if (!select) return;
+        select.innerHTML = '<option value="">Seleccionar...</option>';
+        P.getPautaOptions().forEach(function (opt) {
+            var option = document.createElement("option");
+            option.value = opt.value;
+            option.textContent = opt.label;
+            select.appendChild(option);
+        });
+        select.addEventListener("change", function () {
+            if (otro) {
+                otro.classList.toggle("hidden", select.value !== "OTRO");
+                if (select.value !== "OTRO") otro.value = "";
+            }
+        });
     }
 
     function isHSPathology() {
@@ -182,7 +202,17 @@
             var p = context.patient;
             F.setValue("fhDermaFarmaco", p.farmaco);
             F.setValue("fhDermaDosis", p.dosis);
-            F.setValue("fhDermaPauta", p.pauta);
+            if (p.pauta) {
+                var pautaObj = P.normalizePautaLabel(p.pauta);
+                F.setValue("fhDermaPauta", pautaObj.pauta_codigo);
+                if (pautaObj.pauta_codigo === "OTRO" && pautaObj.pauta_otro_texto) {
+                    F.setValue("fhDermaPautaOtro", pautaObj.pauta_otro_texto);
+                    byId("fhDermaPautaOtro").classList.remove("hidden");
+                } else {
+                    F.setValue("fhDermaPautaOtro", "");
+                    byId("fhDermaPautaOtro").classList.add("hidden");
+                }
+            }
             F.setValue("fhDermaVia", p.via);
             F.setValue("fhDermaAnalitica", p.analitica);
             if (p.estado === "pending") F.setValue("fhValEstado", "pending");
@@ -291,7 +321,13 @@
             principioActivo: valueOrDash(byId("fhDermaPrincipioActivo").value),
             dosis: valueOrDash(byId("fhDermaDosis").value),
             via: valueOrDash(byId("fhDermaVia").value),
-            pauta: valueOrDash(byId("fhDermaPauta").value),
+            pauta: (function () {
+                var select = byId("fhDermaPauta");
+                var value = select ? select.value : "";
+                if (value === "OTRO") return valueOrDash(byId("fhDermaPautaOtro").value);
+                var pautaObj = P.getPautaByCodigo(value);
+                return valueOrDash(P.getLegacyPautaLabel(pautaObj));
+            })(),
             induccion: byId("fhDermaInduccion").value === "si" ? "Sí" : (byId("fhDermaInduccion").value === "no" ? "No" : "—"),
             justificacion: valueOrDash(byId("fhDermaJustificacion").value || byId("fhHSMotivoClinico").value)
         };
@@ -915,7 +951,7 @@
 
     function bindSummaryInputs() {
         [
-            "fhDermaFarmaco", "fhDermaPrincipioActivo", "fhDermaDosis", "fhDermaVia", "fhDermaPauta",
+            "fhDermaFarmaco", "fhDermaPrincipioActivo", "fhDermaDosis", "fhDermaVia", "fhDermaPauta", "fhDermaPautaOtro",
             "fhDermaInduccion", "fhDermaJustificacion", "fhHSMotivoClinico", "fhAnaliticaFecha",
             "fhAnaliticaReciente", "fhAnaliticaMantoux", "fhAnaliticaSerologiasVhb", "fhAnaliticaSerologiasVhc",
             "fhAnaliticaSerologiasVih", "fhAnaliticaVacunacion", "fhAnaliticaObservaciones"
@@ -974,6 +1010,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        populatePautaSelect("fhDermaPauta", "fhDermaPautaOtro");
         bindCoreEvents();
         bindSummaryInputs();
         bindCausalityEvents();
