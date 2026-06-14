@@ -986,3 +986,39 @@ Se redefine el contrato WO8 para priorizar un Excel operativo usable por Farmaci
 No se modifica código funcional.  
 No se implementa todavía export/import Excel.  
 WO8.1a/b/c queda pendiente.
+
+## WO8.1a — Plantilla Excel operativa FH
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD:** `f5e246b`
+
+**Alcance:**
+Se crea la primera plantilla Excel operativa de Farmacia Hospitalaria (`farmacia_excel_operativo_FH_WO8_v1.xlsx`) organizada por servicio clínico: Derma, Reuma, Digestivo y Onco, más hoja de catálogos (listas desplegables + fármacos especiales) y hoja técnica de mapeo a entidades.
+
+**Archivos creados:**
+- `templates/farmacia_excel_operativo_FH_WO8_v1.xlsx` — plantilla Excel (16 KB, 6 hojas)
+- `tools/farmacia_excel_operativo_template_check.mjs` — check (36 tests, 0 failed)
+- `scripts/build_excel_template.py` — generador de la plantilla
+
+**Hojas:**
+- `01_DERMA` / `02_REUMA` / `03_DIGESTIVO` / `04_ONCO` — 61 columnas idénticas (bloques A-H)
+- `05_CATALOGOS` — listas desplegables (22 listas controladas) + catálogo de fármacos especiales
+- `99_CONFIG_EXPORT_MAP` — mapeo columna → entidad destino para parser futuro
+
+**Checklist de la plantilla:**
+- ✅ Congelada primera fila
+- ✅ Autofiltro activo
+- ✅ Cabeceras con colores por bloque (A-H)
+- ✅ `servicio_origen` prellenado por hoja
+- ✅ 2-3 filas demo en DERMA con `demo_flag = TRUE`
+- ✅ Sin macros, sin contraseñas, sin datos reales
+- ✅ 22 listas desplegables con valores controlados
+- ✅ Catálogo de fármacos especiales con 7 categorías
+- ✅ Hoja de mapeo con entidades P0
+
+**Importante:**
+No se modifica código funcional del Hub.  
+No se implementa WO8.1b parser.  
+No se implementa export analítico.  
+Pendiente de validación visual de Sil antes de WO8.1b.
