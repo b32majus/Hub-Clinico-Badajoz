@@ -566,9 +566,43 @@ if (vacCheckT15) {
     fail('check vacunacion no encontrado');
 }
 
+// ─── Test T16 ─ Vacunación texto libre: pendiente prevalece sobre completa ───────
+console.log('\n[Test T16] Vacunación texto libre: pendiente prevalece sobre completa');
+const patientT16 = {
+    cip: 'DEMO-T16',
+    analitica: 'Analítica reciente. Hemograma ok. Bioquímica ok. Serologías negativas. Mantoux negativo. Vacunación completa, neumococo pendiente. Medicina preventiva revisada.',
+    medicinaPreventiva: 'revisado'
+};
+const resultT16 = evaluatePatientPrebiologico(patientT16);
+const vacCheckT16 = resultT16.checks.find(function (c) { return c.category === 'vacunacion'; });
+if (vacCheckT16) {
+    assertEqual(vacCheckT16.status, 'pending', 'T16 vacunacion status');
+    assertValue(vacCheckT16.blocking === true, 'T16 vacunacion blocking = true');
+    assertValue(resultT16.canValidate === false, 'T16 canValidate = false');
+} else {
+    fail('T16: check vacunacion no encontrado');
+}
+
+// ─── Test T17 ─ Vacunación texto libre: alerta prevalece sobre completa ──────────
+console.log('\n[Test T17] Vacunación texto libre: alerta prevalece sobre completa');
+const patientT17 = {
+    cip: 'DEMO-T17',
+    analitica: 'Analítica reciente. Hemograma ok. Bioquímica ok. Serologías negativas. Mantoux negativo. Vacunación completa, revisar contraindicación. Medicina preventiva revisada.',
+    medicinaPreventiva: 'revisado'
+};
+const resultT17 = evaluatePatientPrebiologico(patientT17);
+const vacCheckT17 = resultT17.checks.find(function (c) { return c.category === 'vacunacion'; });
+if (vacCheckT17) {
+    assertEqual(vacCheckT17.status, 'alert', 'T17 vacunacion status');
+    assertValue(vacCheckT17.blocking === true, 'T17 vacunacion blocking = true');
+    assertValue(resultT17.canValidate === false, 'T17 canValidate = false');
+} else {
+    fail('T17: check vacunacion no encontrado');
+}
+
 // ─── SUMMARY ───────────────────────────────────────────────────────────────────
 
-const totalCases = 19;
+const totalCases = 21;
 console.log('\n' + '═'.repeat(60));
 console.log(`RESULTADO: ${passed} OK / ${failed} FALLIDO  — ${failed === 0 ? totalCases : passed} / ${totalCases} PASS`);
 if (failed === 0) {

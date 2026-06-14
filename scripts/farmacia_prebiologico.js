@@ -178,9 +178,9 @@
         }
 
         var text = normalizeCheckString(patient && patient.analitica);
-        if (/vacuna(cion)?.*(revisar|alerta|contraindic)/.test(text)) return "alerta";
-        if (/vacuna(cion)?.*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
-        if (/vacuna(cion)? .*(completa|completo|al dia|ok|apto|apta)/.test(text)) return "ok";
+        if (/vacuna[^.]*(revisar|alerta|contraindic)/.test(text)) return "alerta";
+        if (/vacuna[^.]*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
+        if (/vacuna[^.]*(completa|completo|al dia|ok|apto|apta)/.test(text)) return "ok";
         return "no_informado";
     }
 
