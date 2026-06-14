@@ -70,9 +70,9 @@
 
         var text = normalizeCheckString(patient && patient.analitica);
         if (!text) return "no_informado";
-        if (/(analitica|analitica y vacunacion|prebiologic).*(completa|completo|ok|apto|apta)/.test(text)) return "ok";
+        if (/(analitica|analitica y vacunacion|prebiologic).*(alterad|anormal|revisar|alerta)/.test(text)) return "alerta";
         if (/(analitica|prebiologic).*(pendient|solicit|en curso|por revisar|falta)/.test(text)) return "pendiente";
-        if (/(analitica|prebiologic).*(alterad|anormal|revisar|alerta)/.test(text)) return "alerta";
+        if (/(analitica|analitica y vacunacion|prebiologic).*(completa|completo|ok|apto|apta)/.test(text)) return "ok";
         return "no_informado";
     }
 
@@ -109,9 +109,9 @@
         }
 
         var text = normalizeCheckString(patient && patient.analitica);
-        if (/(serolog|vih|vhb|vhc).*(negativ|ok|apto|apta)/.test(text)) return "ok";
-        if (/(serolog|vih|vhb|vhc).*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
         if (/(serolog|vih|vhb|vhc).*(positiv|reactiv|revisar|alerta)/.test(text)) return "alerta";
+        if (/(serolog|vih|vhb|vhc).*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
+        if (/(serolog|vih|vhb|vhc).*(negativ|ok|apto|apta)/.test(text)) return "ok";
         return "no_informado";
     }
 
@@ -136,9 +136,9 @@
         }
 
         var text = normalizeCheckString(patient && patient.analitica);
-        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(negativ|ok|apto|apta)/.test(text)) return "ok";
-        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
         if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(positiv|revisar|alerta)/.test(text)) return "alerta";
+        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
+        if (/(mantoux|igra|quantiferon|quanti feron|tubercul).*(negativ|ok|apto|apta)/.test(text)) return "ok";
         return "no_informado";
     }
 
@@ -178,9 +178,9 @@
         }
 
         var text = normalizeCheckString(patient && patient.analitica);
-        if (/vacuna(cion)? .*(completa|completo|al dia|ok|apto|apta)/.test(text)) return "ok";
-        if (/vacuna(cion)?.*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
         if (/vacuna(cion)?.*(revisar|alerta|contraindic)/.test(text)) return "alerta";
+        if (/vacuna(cion)?.*(pendient|solicit|en curso|falta)/.test(text)) return "pendiente";
+        if (/vacuna(cion)? .*(completa|completo|al dia|ok|apto|apta)/.test(text)) return "ok";
         return "no_informado";
     }
 

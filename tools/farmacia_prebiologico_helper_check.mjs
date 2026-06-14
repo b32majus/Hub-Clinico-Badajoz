@@ -508,9 +508,67 @@ if (serCheckT11) {
     fail('check serologias no encontrado');
 }
 
+// ─── TEST T12-T15: Texto libre precedencia alert > pending > ok ───────────────
+
+console.log('\n[Test T12] Analítica texto libre: alerta prevalece sobre ok');
+const patientT12 = {
+    cip: 'DEMO-T12',
+    analitica: 'Analítica alterada. Prebiológico completo.'
+};
+const resultT12 = evaluatePatientPrebiologico(patientT12);
+const anaCheckT12 = resultT12.checks.find(function (c) { return c.category === 'analitica'; });
+if (anaCheckT12) {
+    assertEqual(anaCheckT12.status, 'alert', 'analitica status');
+    assertValue(anaCheckT12.blocking === true, 'analitica blocking = true');
+} else {
+    fail('check analitica no encontrado');
+}
+
+console.log('\n[Test T13] Serologías texto libre: pendiente prevalece sobre ok');
+const patientT13 = {
+    cip: 'DEMO-T13',
+    analitica: 'Serologías pendientes. VIH negativo.'
+};
+const resultT13 = evaluatePatientPrebiologico(patientT13);
+const serCheckT13 = resultT13.checks.find(function (c) { return c.category === 'serologias'; });
+if (serCheckT13) {
+    assertEqual(serCheckT13.status, 'pending', 'serologias status');
+    assertValue(serCheckT13.blocking === true, 'serologias blocking = true');
+} else {
+    fail('check serologias no encontrado');
+}
+
+console.log('\n[Test T14] TB texto libre: alerta prevalece sobre ok');
+const patientT14 = {
+    cip: 'DEMO-T14',
+    analitica: 'Mantoux positivo. IGRA negativo ok.'
+};
+const resultT14 = evaluatePatientPrebiologico(patientT14);
+const tbCheckT14 = resultT14.checks.find(function (c) { return c.category === 'tuberculosis'; });
+if (tbCheckT14) {
+    assertEqual(tbCheckT14.status, 'alert', 'tuberculosis status');
+    assertValue(tbCheckT14.blocking === true, 'tuberculosis blocking = true');
+} else {
+    fail('check tuberculosis no encontrado');
+}
+
+console.log('\n[Test T15] Vacunación texto libre: pendiente prevalece sobre ok');
+const patientT15 = {
+    cip: 'DEMO-T15',
+    analitica: 'Vacunación pendiente. Calendario completo.'
+};
+const resultT15 = evaluatePatientPrebiologico(patientT15);
+const vacCheckT15 = resultT15.checks.find(function (c) { return c.category === 'vacunacion'; });
+if (vacCheckT15) {
+    assertEqual(vacCheckT15.status, 'pending', 'vacunacion status');
+    assertValue(vacCheckT15.blocking === true, 'vacunacion blocking = true');
+} else {
+    fail('check vacunacion no encontrado');
+}
+
 // ─── SUMMARY ───────────────────────────────────────────────────────────────────
 
-const totalCases = 15;
+const totalCases = 19;
 console.log('\n' + '═'.repeat(60));
 console.log(`RESULTADO: ${passed} OK / ${failed} FALLIDO  — ${failed === 0 ? totalCases : passed} / ${totalCases} PASS`);
 if (failed === 0) {
