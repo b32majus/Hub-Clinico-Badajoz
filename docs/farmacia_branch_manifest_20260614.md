@@ -312,3 +312,47 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 **WO5 validada:** 2026-06-14
 **WO6 pendiente:** sessionStorage + pautas normalizadas
 **Actualizado:** 2026-06-14 (post-WO5 promocionada)
+
+---
+
+## WO7A — Auditoría visual y contrato común de tratamiento farmacológico
+
+**Estado:** completada y subida a remoto  
+**Commit:** `6dd4218`  
+**Archivo principal:** `reports/wo7a-auditoria-visual-contrato-tratamiento.md`
+
+**Resumen:**  
+WO7A confirma que WO6 resolvió pauta/storage, pero detecta una causa raíz estructural: validación, primera visita, seguimiento y dashboard no comparten un contrato común de tratamiento farmacológico.
+
+**Conclusión:**  
+WO6 no debe promocionarse todavía. Se mantiene en `pending_review`.
+
+---
+
+## WO7B — Contrato común de tratamiento farmacológico
+
+**Estado:** completada y subida a remoto  
+**Commit:** `e245500`  
+**Archivo principal:** `docs/farmacia_treatment_data_contract.md`
+
+**Resumen:**  
+WO7B define el contrato documental común para representar tratamiento farmacológico entre pantallas, incluyendo fármaco, principio activo, dosis, vía, pauta, relación terapéutica, estado de línea, movimiento, fase, fuente y campos de catálogo.
+
+**Regla activa:**  
+No implementar nuevos autocompletes terapéuticos ni nuevos campos de dosis/vía/pauta sin mapearlos al contrato común.
+
+---
+
+## Estado consolidado tras WO7B
+
+- WO6 sigue `pending_review`.
+- Fuente activa funcional sigue siendo `work/farmacia-wo5-prebiologico-single-source-20260614`.
+- Rama de trabajo actual: `work/farmacia-wo6-storage-pautas-normalizadas-20260614`.
+- Último HEAD documental: `e245500`.
+- No se ha tocado `main`.
+- No se ha tocado GitHub Pages.
+- No se ha tocado código funcional.
+- WO7C todavía no está ejecutada.
+
+**Siguiente paso recomendado:**  
+`WO7C — Crear helper común farmacia_tratamiento_common.js`, todavía sin rediseñar formularios completos.
