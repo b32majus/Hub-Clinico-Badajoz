@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // tools/farmacia_validacion_enfermeria_import_check.mjs
-// WO8.1c.10–11 — Verifica que la validación recibe/hidrata contexto Enfermería
-// Paciente C (CIP 000000003, Reuma, AR, Upadacitinib) arrastra datos correctamente
-// sin caer a demo, sin defaults Dermatología, sin innerHTML.
+// WO8.1c.12 — Verifica hidratación formReuma para Paciente C (Reuma / AR / Upadacitinib)
+// sin inferir dosis/vía/pauta, sin innerHTML, sin strings técnicos sueltos.
 
 import fs from 'fs';
 import path from 'path';
@@ -17,8 +16,8 @@ let failed = 0;
 const errors = [];
 const DOMContentLoadedCallbacks = [];
 
-function ok(msg) { console.log('  \u2713 ' + msg); passed++; }
-function fail(msg) { console.log('  \u2717 ' + msg); failed++; errors.push(msg); }
+function ok(msg) { console.log('  ✓ ' + msg); passed++; }
+function fail(msg) { console.log('  ✗ ' + msg); failed++; errors.push(msg); }
 function assert(condition, label) { if (condition) ok(label); else fail(label); }
 function assertEqual(actual, expected, label) {
   if (actual === expected) ok(label + ': ' + JSON.stringify(expected));
@@ -43,13 +42,12 @@ function createMockElement(tag, attrs) {
     value: (attrs && attrs.value !== undefined) ? attrs.value : '',
     checked: false,
     textContent: (attrs && attrs.textContent !== undefined) ? attrs.textContent : '',
-    innerHTML: '',
     disabled: false,
     placeholder: '',
     style: {},
     type: (attrs && attrs.type) ? attrs.type : 'text',
     classList: {
-      _classes: [],
+      _classes: ((attrs && attrs.className) || '').split(/\s+/).filter(function (c) { return c; }),
       add: function (c) { if (this._classes.indexOf(c) === -1) this._classes.push(c); },
       remove: function (c) { var i = this._classes.indexOf(c); if (i !== -1) this._classes.splice(i, 1); },
       contains: function (c) { return this._classes.indexOf(c) !== -1; },
@@ -115,7 +113,12 @@ function buildMockDom() {
 
   // Header title
   var dermaTitle = createMockElement('h2', { className: 'section-title' });
-  dermaTitle.innerHTML = '<i class="fas fa-disease"></i> Datos de solicitud — Dermatología';
+  dermaTitle.textContent = '';
+  var initialIcon = createMockElement('i', { className: 'fas fa-disease' });
+  initialIcon.setAttribute('aria-hidden', 'true');
+  var initialText = { nodeType: 3, textContent: ' Datos de solicitud — Dermatología' };
+  dermaTitle.appendChild(initialIcon);
+  dermaTitle.appendChild(initialText);
   formDerma.children.push(dermaTitle);
 
   // All form fields
@@ -163,7 +166,11 @@ function buildMockDom() {
     'fhResumenVacunacionObs',
     'naranjoScore', 'naranjoCategoria', 'klCategoria',
     'resumenNaranjo', 'resumenKl',
-    'fhEnfermeriaResumen'
+    'fhEnfermeriaResumen',
+    // WO8.1c.12 — spans dinámicos de formReuma
+    'fhReumaCip', 'fhReumaPatologia', 'fhReumaIndicacion', 'fhReumaOrigen',
+    'fhReumaFecha', 'fhReumaFarmaco', 'fhReumaDosis', 'fhReumaVia',
+    'fhReumaPauta', 'fhReumaPrebiologico'
   ];
   allIds.forEach(function (id) {
     var el = createMockElement('input');
@@ -172,6 +179,28 @@ function buildMockDom() {
     if (id === 'fhDermaServicioOrigen') el.value = 'Dermatología';
     formDerma.children.push(el);
   });
+
+  // formReuma dynamic spans: use span elements with readable textContent
+  [
+    'fhReumaCip', 'fhReumaPatologia', 'fhReumaIndicacion', 'fhReumaOrigen',
+    'fhReumaFecha', 'fhReumaFarmaco', 'fhReumaDosis', 'fhReumaVia',
+    'fhReumaPauta', 'fhReumaPrebiologico'
+  ].forEach(function (id) {
+    var span = createMockElement('span', { id: id, className: 'info-field__value' });
+    span.textContent = '—';
+    mockElements[id] = span;
+    formReuma.children.push(span);
+  });
+
+  // modSeguimientoEaHandoff starts hidden (matches HTML)
+  mockElements['modSeguimientoEaHandoff'].className = 'validation-module hidden';
+  mockElements['modSeguimientoEaHandoff'].classList._classes = ['validation-module', 'hidden'];
+
+  // Farmacéutico responsable wrapper uses validation-meta-line
+  mockElements['fhValFarmaceutico'].className = 'validation-meta-value';
+  var metaLine = createMockElement('div', { className: 'validation-meta-line' });
+  metaLine.appendChild(mockElements['fhValFarmaceutico']);
+  formDerma.children.push(metaLine);
 
   // Make select-like elements for selects
   ['fhDermaPatologia', 'fhDermaVia', 'fhDermaPauta',
@@ -251,29 +280,8 @@ function buildMockDom() {
     dispatchEvent: function () { return true; }
   };
 
-  var pautasCatalog = {
-    getPautaOptions: function () {
-      return [{ value: 'CADA_8_SEMANAS', label: 'Cada 8 semanas' },
-              { value: 'CADA_4_SEMANAS', label: 'Cada 4 semanas' },
-              { value: 'CADA_2_SEMANAS', label: 'Cada 2 semanas' },
-              { value: 'SEMANAL', label: 'Semanal' },
-              { value: 'OTRO', label: 'OTRO' }];
-    },
-    normalizePautaLabel: function (label) {
-      var opts = this.getPautaOptions();
-      for (var i = 0; i < opts.length; i++) {
-        if (opts[i].label === label || opts[i].value === label) {
-          return opts[i].value === 'OTRO' ? { pauta_codigo: 'OTRO', pauta_otro_texto: label } : opts[i];
-        }
-      }
-      return null;
-    },
-    getPautaByCodigo: function (c) { var o = this.getPautaOptions(); for (var i = 0; i < o.length; i++) { if (o[i].value === c) return o[i]; } return null; },
-    getLegacyPautaLabel: function (p) { return p ? p.label : ''; }
-  };
-
   return { doc: mockDoc, dermaTitle: dermaTitle, ctxCip: ctxCip, ctxServ: ctxServ, ctxPat: ctxPat,
-           chipGroups: chipGroups, elements: mockElements, pautasCatalog: pautasCatalog, formDerma: formDerma };
+           chipGroups: chipGroups, elements: mockElements, formDerma: formDerma, formReuma: formReuma };
 }
 
 // ─── Run simulation ──────────────────────────────────────────────────────────
@@ -331,7 +339,6 @@ var sandbox = {
 };
 vm.createContext(sandbox);
 
-sandbox.window.FarmaciaPautasCatalog = dom.pautasCatalog;
 // FarmaciaCatalog mock
 sandbox.window.FarmaciaCatalog = { search: function () { return []; }, selectDrug: function () {}, getSnapshot: function () { return {}; }, loaded: true };
 
@@ -371,7 +378,7 @@ var enfPatientC = {
 };
 F.patients['000000003'] = enfPatientC;
 
-// Demo patient FH-002
+// Demo patient FH-002 demo
 F.patients['CIP-DEMO-FH-002'] = {
   cip: 'CIP-DEMO-FH-002',
   nombre: 'Paciente Demo FH-002',
@@ -399,12 +406,13 @@ for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { DOMContentLoaded
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 console.log('');
-console.log('=== WO8.1c.10-11 — Validación desde Enfermería ===');
+console.log('=== WO8.1c.12 — Validación desde Enfermería / formReuma ===');
 
 function $(id) { return dom.elements[id]; }
 function v(id) { var e = $(id); return e ? e.value : ''; }
+function t(id) { var e = $(id); return e ? e.textContent : ''; }
 
-// 1-6. Basic field values from Enfermería
+// 1-3. Basic field values from Enfermería
 assertEqual(v('fhDermaCip'), '000000003', '1. CIP = 000000003');
 assertEqual(v('fhDermaPatologia'), 'AR', '2. Patología = AR');
 assertEqual(v('fhDermaFarmaco'), 'Upadacitinib', '3. Fármaco = Upadacitinib');
@@ -416,7 +424,6 @@ assertEqual(dom.ctxPat.textContent, 'AR', '6. Context patología = AR');
 
 // 7-9. Header / Servicio no son Dermatología
 var headerText = '';
-// After rebuild via textContent+appendChild, check children text
 if (dom.dermaTitle.children && dom.dermaTitle.children.length > 1) {
   var lastChild = dom.dermaTitle.children[dom.dermaTitle.children.length - 1];
   headerText = lastChild && lastChild.textContent ? lastChild.textContent : '';
@@ -427,7 +434,7 @@ assertNotIncludes(headerText, 'Dermatología', '7. Header NO contiene "Dermatolo
 assertIncludes(headerText, 'Reuma', '8. Header contiene "Reuma"');
 assertEqual(v('fhDermaServicioOrigen'), 'Reuma', '9. Servicio readonly = Reuma');
 
-// 10-11. Modo
+// 10. Modo
 assertEqual(v('fhTipoSolicitud'), 'reuma', '10. Tipo solicitud = reuma');
 
 // 11-15. Chip values
@@ -437,13 +444,13 @@ assertEqual(v('fhAnaliticaSerologiasVhc'), 'Negativo', '13. VHC = Negativo');
 assertEqual(v('fhAnaliticaSerologiasVih'), 'Negativo', '14. VIH = Negativo');
 assertEqual(v('fhAnaliticaVacunacion'), 'si', '15. Med. Preventiva = si');
 
-// 16-18. Validation fields empty
+// 16-19. Validation / default fields empty
 assertEqual(v('fhValEstado'), '', '16. Estado validación vacío');
 assertEqual(v('fhValCita'), '', '17. Fecha cita vacío');
 assertEqual(v('fhValObservaciones'), '', '18. Observaciones vacío');
-
-// 19-20. No defaults demo
 assertEqual(v('fhDermaPeso'), '', '19. Peso vacío');
+
+// 20. No demo CIP
 assertNotIncludes(v('fhDermaCip'), 'CIP-DEMO', '20. No CIP demo');
 
 // 21. Justificación llena
@@ -451,20 +458,42 @@ var just = v('fhDermaJustificacion');
 assert(just.indexOf('Enfermería') !== -1 || just.indexOf('AR') !== -1,
   '21. Justificación contiene Enfermería/AR: "' + just + '"');
 
-// 22. Resumen container exists
-assert(dom.elements['fhEnfermeriaResumen'] !== undefined, '22. fhEnfermeriaResumen existe');
+// 22-27. formReuma dynamic spans
+assertEqual(t('fhReumaCip'), '000000003', '22. fhReumaCip = 000000003');
+assertEqual(t('fhReumaFarmaco'), 'Upadacitinib', '23. fhReumaFarmaco = Upadacitinib');
+assertEqual(t('fhReumaDosis'), 'Pendiente de completar por Farmacia', '24. fhReumaDosis = Pendiente de completar por Farmacia');
+assertEqual(t('fhReumaVia'), 'Pendiente de completar por Farmacia', '25. fhReumaVia = Pendiente de completar por Farmacia');
+assertEqual(t('fhReumaPauta'), 'Pendiente de completar por Farmacia', '26. fhReumaPauta = Pendiente de completar por Farmacia');
+assert(t('fhReumaPrebiologico').toLowerCase().indexOf('ok farmacia') !== -1,
+  '27. fhReumaPrebiologico contiene "OK Farmacia": "' + t('fhReumaPrebiologico') + '"');
 
-// 23. Demo FH-002 sigue en datos
-assert(F.patients['CIP-DEMO-FH-002'] !== undefined, '23. FH-002 existe');
-
-// 24-25. innerHTML count
+// 28. innerHTML count in validacion.js
 var vSrc = fs.readFileSync(validacionPath, 'utf8');
 var ic = (vSrc.match(/innerHTML/g) || []).length;
-assert(ic <= 2, '24. innerHTML en validacion.js: ' + ic + ' (max 2)');
+assert(ic <= 2, '28. innerHTML en validacion.js: ' + ic + ' (max 2)');
 
-// 25. No technical texts
-var hasUnknown = vSrc.indexOf(' unknown') !== -1 || vSrc.indexOf('"unknown"') !== -1;
-assert(!hasUnknown, '25. No " unknown" en validacion.js');
+// 29. No loose English status strings in rendered formReuma spans
+var looseEnglish = /\b(unknown|pending|complete|blocked)\b/i;
+var reumaSpanIds = [
+  'fhReumaCip', 'fhReumaPatologia', 'fhReumaIndicacion', 'fhReumaOrigen',
+  'fhReumaFecha', 'fhReumaFarmaco', 'fhReumaDosis', 'fhReumaVia',
+  'fhReumaPauta', 'fhReumaPrebiologico'
+];
+var hasLoose = false;
+var foundLoose = '';
+for (var ri = 0; ri < reumaSpanIds.length; ri++) {
+  var txt = t(reumaSpanIds[ri]);
+  if (looseEnglish.test(txt)) {
+    hasLoose = true;
+    foundLoose = reumaSpanIds[ri] + ': "' + txt + '"';
+    break;
+  }
+}
+assert(!hasLoose, '29. No "unknown"/"pending"/"complete"/"blocked" sueltos en spans Reuma' + (foundLoose ? ' (' + foundLoose + ')' : ''));
+
+// 30. modSeguimientoEaHandoff remains hidden
+assert($('modSeguimientoEaHandoff').classList.contains('hidden'),
+  '30. modSeguimientoEaHandoff tiene class hidden');
 
 console.log('\nTotal: ' + passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);

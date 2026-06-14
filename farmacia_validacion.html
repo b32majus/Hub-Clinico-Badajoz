@@ -145,22 +145,22 @@
     <h2 class="section-title"><i class="fas fa-bone"></i> Solicitud precargada — Reumatología</h2>
     <h3 class="card-title"><i class="fas fa-disease"></i> Datos de solicitud</h3>
     <div class="info-grid">
-        <div class="info-field"><span class="info-field__label">CIP</span><span class="info-field__value">CIP-DEMO-FH-003</span></div>
+        <div class="info-field"><span class="info-field__label">CIP</span><span class="info-field__value" id="fhReumaCip">—</span></div>
         <div class="info-field"><span class="info-field__label">Servicio origen</span><span class="info-field__value">Reumatología</span></div>
-        <div class="info-field"><span class="info-field__label">Patología</span><span class="info-field__value">Artritis Reumatoide (AR)</span></div>
-        <div class="info-field"><span class="info-field__label">Indicación</span><span class="info-field__value">Tratamiento biológico de primera línea</span></div>
-        <div class="info-field"><span class="info-field__label">Origen / circuito</span><span class="info-field__value">Consulta Reumatología</span></div>
-        <div class="info-field"><span class="info-field__label">Fecha solicitud</span><span class="info-field__value">2026-03-15</span></div>
+        <div class="info-field"><span class="info-field__label">Patología</span><span class="info-field__value" id="fhReumaPatologia">—</span></div>
+        <div class="info-field"><span class="info-field__label">Indicación</span><span class="info-field__value" id="fhReumaIndicacion">—</span></div>
+        <div class="info-field"><span class="info-field__label">Origen / circuito</span><span class="info-field__value" id="fhReumaOrigen">—</span></div>
+        <div class="info-field"><span class="info-field__label">Fecha solicitud</span><span class="info-field__value" id="fhReumaFecha">—</span></div>
     </div>
     <h3 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
     <div class="info-grid">
-        <div class="info-field"><span class="info-field__label">Fármaco solicitado</span><span class="info-field__value">Adalimumab 40 mg</span></div>
-        <div class="info-field"><span class="info-field__label">Dosis solicitada</span><span class="info-field__value">40 mg</span></div>
-        <div class="info-field"><span class="info-field__label">Vía de administración</span><span class="info-field__value">SC</span></div>
-        <div class="info-field"><span class="info-field__label">Intervalo / pauta</span><span class="info-field__value">SC / cada 2 semanas</span></div>
+        <div class="info-field"><span class="info-field__label">Fármaco solicitado</span><span class="info-field__value" id="fhReumaFarmaco">—</span></div>
+        <div class="info-field"><span class="info-field__label">Dosis solicitada</span><span class="info-field__value" id="fhReumaDosis">—</span></div>
+        <div class="info-field"><span class="info-field__label">Vía de administración</span><span class="info-field__value" id="fhReumaVia">—</span></div>
+        <div class="info-field"><span class="info-field__label">Intervalo / pauta</span><span class="info-field__value" id="fhReumaPauta">—</span></div>
     </div>
     <div class="info-grid">
-        <div class="info-field"><span class="info-field__label">Prebiológico / contexto</span><span class="info-field__value">Analítica OK; vacunación completa; DAS28 3.2; HAQ 1.1</span></div>
+        <div class="info-field"><span class="info-field__label">Prebiológico / contexto</span><span class="info-field__value" id="fhReumaPrebiologico">—</span></div>
     </div>
 </section>
 
@@ -169,22 +169,7 @@
     <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
     <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
-    <div class="validation-modules-nav" aria-labelledby="validationModulesTitle">
-        <div class="validation-modules-nav__header">
-            <h3 class="card-title card-title--tight" id="validationModulesTitle"><i class="fas fa-th-large"></i> Módulos de validación disponibles</h3>
-            <p class="validation-modules-nav__text">Acceso rápido a los bloques visibles de validación farmacoterapéutica.</p>
-        </div>
-        <div class="validation-modules-nav__links">
-            <a class="btn btn-outline validation-module-link" href="#modTratamientoPrincipal">Tratamiento principal</a>
-            <a class="btn btn-outline validation-module-link" href="#modOtrosFarmacos">Otros fármacos / biológicos</a>
-            <a class="btn btn-outline validation-module-link" href="#modPrebiologico">Estudio prebiológico</a>
-            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Seguimiento / efectos adversos</a>
-            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Naranjo</a>
-            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Karch-Lasagna</a>
-            <a class="btn btn-outline validation-module-link" href="#modSeguimientoEaHandoff">Resumen de causalidad</a>
-            <a class="btn btn-outline validation-module-link" href="#modExportacion">Exportación</a>
-        </div>
-    </div>
+    <!-- WO8.1c.12: módulos-nav eliminado -->
 
     <section class="validation-module" id="modTratamientoPrincipal">
         <h3 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento principal</h3>
@@ -231,7 +216,7 @@
         </div>
     </section>
 
-    <section class="validation-module" id="modSeguimientoEaHandoff">
+    <section class="validation-module hidden" id="modSeguimientoEaHandoff">
         <h3 class="card-title"><i class="fas fa-clipboard-list"></i> Seguimiento / efectos adversos</h3>
         <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>La evaluación de efectos adversos y causalidad se realiza desde la visita de seguimiento.</span></div>
         <div class="validation-note-block">
@@ -319,7 +304,7 @@
         </div>
     </section>
 
-    <div class="session-professional-block"><span class="session-professional-label">Farmacéutico responsable</span><div id="fhValFarmaceutico" class="session-professional-text">Profesional FH-01 — Farmacia Hospitalaria</div></div>
+    <div class="validation-meta-line"><span class="validation-meta-label">Farmacéutico responsable:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH-01 — Farmacia Hospitalaria</span></div>
     <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
     <section class="validation-module" id="modExportacion">
         <h3 class="card-title"><i class="fas fa-file-export"></i> Exportación</h3>

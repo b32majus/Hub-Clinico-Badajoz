@@ -42,15 +42,15 @@
         "Dudosa": "Dudosa / sin relación"
     };
     var REUMA_DEFAULT = {
-        cip: "CIP-DEMO-FH-003",
-        patologia: "Artritis Reumatoide (AR)",
-        farmaco: "Adalimumab 40 mg",
-        principioActivo: "Adalimumab",
-        dosis: "40 mg",
-        via: "SC",
-        pauta: "SC / cada 2 semanas",
-        induccion: "No aplica",
-        justificacion: "Analítica OK; vacunación completa; DAS28 3.2; HAQ 1.1"
+        cip: "",
+        patologia: "",
+        farmaco: "",
+        principioActivo: "",
+        dosis: "",
+        via: "",
+        pauta: "",
+        induccion: "",
+        justificacion: ""
     };
 
     function byId(id) {
@@ -64,6 +64,11 @@
 
     function valueOrDash(value) {
         return value === null || value === undefined || String(value).trim() === "" ? "—" : String(value).trim();
+    }
+
+    function formatMissingForPharmacy(value) {
+        if (value === null || value === undefined || String(value).trim() === "") return "Pendiente de completar por Farmacia";
+        return String(value).trim();
     }
 
     function createEl(tag, className, text) {
@@ -129,14 +134,14 @@
 
     function selectedCip() {
         if (modoActual === "reuma") {
-            return currentPatient && currentPatient.cip ? currentPatient.cip : REUMA_DEFAULT.cip;
+            return currentPatient && currentPatient.cip ? currentPatient.cip : "";
         }
         return byId("fhDermaCip").value.trim() || "CIP-DEMO-FH-XXX";
     }
 
     function selectedPatologia() {
         if (modoActual === "reuma") {
-            return currentPatient && currentPatient.patologia ? currentPatient.patologia : REUMA_DEFAULT.patologia;
+            return currentPatient && currentPatient.patologia ? currentPatient.patologia : "";
         }
         return byId("fhDermaPatologia").value || "—";
     }
@@ -197,6 +202,25 @@
         updateValidationModuleSummaries();
         updateSeguimientoHandoffLink();
         toggleCausalityModules();
+    }
+
+    function hydrateReumaForm(patient) {
+        setText("fhReumaCip", patient && patient.cip ? patient.cip : "—");
+        setText("fhReumaPatologia", patient && patient.patologia ? patient.patologia : "—");
+        setText("fhReumaIndicacion", patient && patient.patologia_indicacion ? patient.patologia_indicacion : "—");
+        setText("fhReumaOrigen", patient && patient.origen_solicitud ? "Excel Enfermería" : (patient && patient.tipo_origen ? "Enfermería / Inicio biológico" : "—"));
+        setText("fhReumaFecha", patient && patient.fecha_solicitud ? patient.fecha_solicitud : "Pendiente de completar por Farmacia");
+        setText("fhReumaFarmaco", patient && patient.farmaco ? patient.farmaco : "—");
+        setText("fhReumaDosis", patient && patient.dosis ? patient.dosis : "Pendiente de completar por Farmacia");
+        setText("fhReumaVia", patient && patient.via ? patient.via : "Pendiente de completar por Farmacia");
+        setText("fhReumaPauta", patient && patient.pauta ? patient.pauta : "Pendiente de completar por Farmacia");
+        var prebioText = "—";
+        if (patient && patient.estado_prebiologico_enfermeria) {
+            prebioText = patient.estado_prebiologico_enfermeria;
+        } else if (patient && patient.analitica_estado) {
+            prebioText = "Analítica: " + patient.analitica_estado;
+        }
+        setText("fhReumaPrebiologico", prebioText);
     }
 
     function applyContext() {
@@ -389,6 +413,10 @@
                     if (indSel.value === 'si' && !enf.patologia) indSel.value = 'no';
                 }
             }
+            // WO8.1c.12 — Hidratar formReuma con datos Enfermería
+            if (modoActual === "reuma") {
+                hydrateReumaForm(enf);
+            }
         }
         // WO8.1c.10 — Hidratar resumen prebiológico desde Enfermería
         if (context.patient && (context.patient.origen_solicitud === 'enfermeria' ||
@@ -484,13 +512,13 @@
     function currentTreatmentSummary() {
         if (modoActual === "reuma") {
             return {
-                farmaco: valueOrDash(currentPatient && currentPatient.farmaco ? currentPatient.farmaco : REUMA_DEFAULT.farmaco),
-                principioActivo: valueOrDash(currentPatient && currentPatient.principioActivo ? currentPatient.principioActivo : REUMA_DEFAULT.principioActivo),
-                dosis: valueOrDash(currentPatient && currentPatient.dosis ? currentPatient.dosis : REUMA_DEFAULT.dosis),
-                via: valueOrDash(currentPatient && currentPatient.via ? currentPatient.via : REUMA_DEFAULT.via),
-                pauta: valueOrDash(currentPatient && currentPatient.pauta ? currentPatient.pauta : REUMA_DEFAULT.pauta),
-                induccion: valueOrDash(REUMA_DEFAULT.induccion),
-                justificacion: valueOrDash(currentPatient && currentPatient.analitica ? currentPatient.analitica : REUMA_DEFAULT.justificacion)
+                farmaco: valueOrDash(currentPatient ? currentPatient.farmaco : null),
+                principioActivo: valueOrDash(currentPatient ? currentPatient.principioActivo : null),
+                dosis: currentPatient && currentPatient.dosis ? valueOrDash(currentPatient.dosis) : "Pendiente de completar por Farmacia",
+                via: currentPatient && currentPatient.via ? valueOrDash(currentPatient.via) : "Pendiente de completar por Farmacia",
+                pauta: currentPatient && currentPatient.pauta ? valueOrDash(currentPatient.pauta) : "Pendiente de completar por Farmacia",
+                induccion: currentPatient && currentPatient.induccion ? valueOrDash(currentPatient.induccion) : "Pendiente de completar por Farmacia",
+                justificacion: valueOrDash(currentPatient ? (currentPatient.analitica || currentPatient.justificacion) : null)
             };
         }
         return {
@@ -545,6 +573,10 @@
     function updateSeguimientoHandoffLink() {
         var link = byId('fhGoSeguimientoLink');
         if (!link) return;
+        if (!currentPatient) {
+            link.removeAttribute('href');
+            return;
+        }
         var params = [];
         var cip = selectedCip();
         var patologia = selectedPatologia();
@@ -996,7 +1028,7 @@
         lines.push("Identificador demo: FH-VAL-" + Date.now().toString(36).toUpperCase());
         lines.push("Fecha: " + new Date().toLocaleDateString("es-ES"));
         lines.push("");
-        lines.push("Servicio origen: " + (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "Reumatología") : "Dermatología"));
+        lines.push("Servicio origen: " + (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología"));
         lines.push("CIP: " + selectedCip());
         lines.push("Patología: " + selectedPatologia());
         if (modoActual !== "reuma") lines.push("Fecha solicitud: " + valueOrDash(byId("fhDermaFecha").value));
@@ -1084,7 +1116,7 @@
             [
                 "FH-" + Date.now().toString(36).toUpperCase(),
                 new Date().toLocaleDateString("es-ES"),
-                modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "Reumatología") : "Dermatología",
+                modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología",
                 selectedCip(),
                 selectedPatologia(),
                 estadoLabel(),

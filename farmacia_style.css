@@ -532,6 +532,28 @@
     font-weight: 600;
 }
 
+/* WO8.1c.12 — Farmacéutico responsable compacto */
+.validation-meta-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+}
+.validation-meta-label {
+    color: #64748B;
+    font-weight: 600;
+    font-size: 0.78rem;
+}
+.validation-meta-value {
+    color: #1E293B;
+    font-weight: 700;
+}
+
 /* ============================================================
    Adiciones WO-029 / WO-030 — pulido pre-demo
    ============================================================ */
