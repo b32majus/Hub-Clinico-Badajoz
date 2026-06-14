@@ -199,8 +199,8 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 
 **WO6d — Documentación: contratos de datos de pautas normalizadas**
 
-**Estado:** 🟡 **pending_review** (2026-06-14, WO6d ejecutada)
-**HEAD final de la rama:** `7b5a78e` (`7b5a78e1de18eaf81eb8de1ac90a2c2d2a5d7d70`)
+**Estado:** 🟡 **pending_review** (2026-06-14, WO6d ejecutada, luego validated_in_remote_for_data_contracts)
+**HEAD final de la rama:** `dcb33df` (`dcb33df49258bb25b5894eec747e9300c8e26fc3`)
 
 **Qué se hizo:**
 - `docs/farmacia_data_contracts.md` creado con:
