@@ -443,8 +443,19 @@
     function shouldAppearInValidationInbox(patient) {
         if (!patient) return false;
 
-        // Si es solicitud de Enfermería o explícita → sí
-        if (isValidationRequest(patient)) return true;
+        // Si es solicitud de Enfermería → evaluar por estado prebiológico
+        if (isValidationRequest(patient)) {
+            // Solo aplicar filtro de estado si es específicamente de Enfermería
+            var source = String(patient.importSource || '').toLowerCase();
+            if (source.indexOf('enfermer') !== -1) {
+                return shouldEnfermeriaRowAppearInValidationInbox(patient);
+            }
+            // Solicitud clínica explícita (no de Enfermería) → sí aparece
+            if (patient.estado_solicitud_validacion === 'pendiente') return true;
+            if (patient.origen_solicitud === 'enfermeria') return shouldEnfermeriaRowAppearInValidationInbox(patient);
+            if (patient.tipo_origen === 'enfermeria_inicio_biologico') return shouldEnfermeriaRowAppearInValidationInbox(patient);
+            return true; // legacy: otras solicitudes aparecen como pendientes
+        }
 
         // Si es acto de Farmacia → solo si está explícitamente pendiente
         if (isPharmacyAct(patient)) {
@@ -457,6 +468,143 @@
         // Fallback: comportamiento legacy para otros orígenes
         if (patient.estado === 'pending') return true;
         return false;
+    }
+
+    /* ── Helpers Enfermería / Inicio Biológico WO8.1c.3 ─────────────── */
+
+    /**
+     * Determina si un registro de Enfermería debe aparecer en la bandeja
+     * de validación farmacoterapéutica según su estado prebiológico.
+     * Solo Estado = OK FARMACIA genera pendiente de validación.
+     */
+    function shouldEnfermeriaRowAppearInValidationInbox(row) {
+        if (!row) return false;
+        var estado = String(row.estado_prebiologico_enfermeria || row.estado || '').trim().toUpperCase();
+        // Solo OK FARMACIA → pendiente de validación farmacoterapéutica
+        return estado === 'OK FARMACIA' || estado === 'OK_FARMACIA';
+    }
+
+    /**
+     * Determina si un workbook tiene estructura de Enfermería / Inicio Biológico.
+     */
+    function isEnfermeriaInicioBiologicoWorkbook(workbook) {
+        if (!workbook || !workbook.SheetNames) return false;
+        for (var i = 0; i < workbook.SheetNames.length; i++) {
+            var name = String(workbook.SheetNames[i] || '').trim().toUpperCase();
+            if (name === 'INICIO_BIOLOGICO') return true;
+        }
+        return false;
+    }
+
+    /**
+     * Encuentra la fila de cabecera real en la hoja INICIO_BIOLOGICO,
+     * buscando la primera fila que contenga "CIP".
+     */
+    function findEnfermeriaHeaderRow(rows) {
+        if (!Array.isArray(rows)) return -1;
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            if (!Array.isArray(row)) continue;
+            for (var j = 0; j < row.length; j++) {
+                var cell = String(row[j] || '').trim().toUpperCase();
+                if (cell === 'CIP') return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Convierte una fila de la hoja INICIO_BIOLOGICO (formato array)
+     * en un objeto con campos mapeados según la cabecera.
+     */
+    function normalizeEnfermeriaInicioBiologicoRow(cells, headerMap) {
+        if (!Array.isArray(cells) || !headerMap) return null;
+        var cip = String(cells[headerMap.cip] || '').trim();
+        if (!cip) return null;
+
+        return {
+            cip_demo_o_hash: cip,
+            paciente_nombre: headerMap.paciente !== undefined ? String(cells[headerMap.paciente] || '').trim() : '',
+            servicio_origen: headerMap.servicio !== undefined ? String(cells[headerMap.servicio] || '').trim() : '',
+            patologia_indicacion: headerMap.patologia !== undefined ? String(cells[headerMap.patologia] || '').trim() : '',
+            farmaco_solicitado: headerMap.farmaco !== undefined ? String(cells[headerMap.farmaco] || '').trim() : '',
+            analitica_estado: headerMap.analitica !== undefined ? String(cells[headerMap.analitica] || '').trim() : '',
+            mantoux_estado: headerMap.mantoux !== undefined ? String(cells[headerMap.mantoux] || '').trim() : '',
+            igra_estado: headerMap.igra !== undefined ? String(cells[headerMap.igra] || '').trim() : '',
+            vhb_estado: headerMap.vhb !== undefined ? String(cells[headerMap.vhb] || '').trim() : '',
+            vhc_estado: headerMap.vhc !== undefined ? String(cells[headerMap.vhc] || '').trim() : '',
+            vih_estado: headerMap.vih !== undefined ? String(cells[headerMap.vih] || '').trim() : '',
+            medicina_preventiva_estado: headerMap.medPreventiva !== undefined ? String(cells[headerMap.medPreventiva] || '').trim() : '',
+            estado_prebiologico_enfermeria: headerMap.estado !== undefined ? String(cells[headerMap.estado] || '').trim() : '',
+            fecha_ok_farmacia: headerMap.fechaOk !== undefined ? String(cells[headerMap.fechaOk] || '').trim() : '',
+            observaciones_prebiologico: headerMap.observacion !== undefined ? String(cells[headerMap.observacion] || '').trim() : '',
+            estado: headerMap.estado !== undefined ? String(cells[headerMap.estado] || '').trim() : 'EN VIGILANCIA',
+            source_type: 'ENFERMERIA',
+            origen_solicitud: 'enfermeria',
+            tipo_origen: 'enfermeria_inicio_biologico'
+        };
+    }
+
+    /**
+     * Construye un header map (índice de columna por nombre) desde la fila de cabecera.
+     */
+    function buildEnfermeriaHeaderMap(headerRow) {
+        if (!Array.isArray(headerRow)) return null;
+        var map = {};
+        for (var i = 0; i < headerRow.length; i++) {
+            var h = String(headerRow[i] || '').trim().toUpperCase();
+            if (h === 'CIP') map.cip = i;
+            else if (h === 'PACIENTE') map.paciente = i;
+            else if (h === 'SERVICIO') map.servicio = i;
+            else if (h === 'PATOLOGÍA' || h === 'PATOLOGIA') map.patologia = i;
+            else if (h === 'FÁRMACO' || h === 'FARMACO') map.farmaco = i;
+            else if (h === 'ANALÍTICA' || h === 'ANALITICA') map.analitica = i;
+            else if (h === 'MANTOUX') map.mantoux = i;
+            else if (h === 'IGRA') map.igra = i;
+            else if (h === 'VHB') map.vhb = i;
+            else if (h === 'VHC') map.vhc = i;
+            else if (h === 'VIH') map.vih = i;
+            else if (h === 'MED. PREVENTIVA' || h === 'MEDICINA PREVENTIVA' || h === 'MED_PREVENTIVA') map.medPreventiva = i;
+            else if (h === 'ESTADO') map.estado = i;
+            else if (h === 'FECHA OK') map.fechaOk = i;
+            else if (h === 'OBSERVACIÓN PREBIOLÓGICO' || h === 'OBSERVACION PREBIOLOGICO' || h.indexOf('OBSERV') !== -1) map.observacion = i;
+        }
+        // CIP is mandatory
+        if (map.cip === undefined) return null;
+        return map;
+    }
+
+    /**
+     * Parsea todas las filas de la hoja INICIO_BIOLOGICO.
+     * Ignora filas antes de la cabecera, filas vacías y hojas no clínicas.
+     */
+    function parseEnfermeriaInicioBiologicoSheet(rows, sheetName) {
+        var sheetNameUpper = String(sheetName || '').trim().toUpperCase();
+        // Solo procesar INICIO_BIOLOGICO
+        if (sheetNameUpper !== 'INICIO_BIOLOGICO') return [];
+
+        var headerIdx = findEnfermeriaHeaderRow(rows);
+        if (headerIdx < 0) return [];
+
+        var headerRow = rows[headerIdx];
+        var headerMap = buildEnfermeriaHeaderMap(headerRow);
+        if (!headerMap) return [];
+
+        var result = [];
+        for (var i = headerIdx + 1; i < rows.length; i++) {
+            var cells = rows[i];
+            if (!Array.isArray(cells)) continue;
+            // Skip empty rows
+            var hasData = false;
+            for (var j = 0; j < cells.length; j++) {
+                if (String(cells[j] || '').trim()) { hasData = true; break; }
+            }
+            if (!hasData) continue;
+
+            var normalized = normalizeEnfermeriaInicioBiologicoRow(cells, headerMap);
+            if (normalized) result.push(normalized);
+        }
+        return result;
     }
 
     function buildImportedPatientCandidate(row, mapping, sourceLabel, rowIndex) {
@@ -496,7 +644,9 @@
         };
 
         // Determinar estado del registro según origen y campos FH
-        var esFarmacia = String(sourceLabel || '').indexOf('Farmacia') !== -1;
+        var sourceStr = String(sourceLabel || '').toLowerCase();
+        var esFarmacia = sourceStr === 'farmacia';
+        var esEnfermeria = sourceStr === 'enfermería' || sourceStr === 'enfermeria';
         var tipoActo = mapping.tipoActoFH ? String(row[mapping.tipoActoFH] || '').trim().toLowerCase() : '';
         var valResultado = mapping.resultadoValidacion ? String(row[mapping.resultadoValidacion] || '').trim().toLowerCase() : '';
         var estReg = mapping.estadoRegistro ? String(row[mapping.estadoRegistro] || '').trim().toLowerCase() : '';
@@ -540,6 +690,39 @@
                 candidate.estado = 'completado';
                 candidate.estadoLabel = 'Concomitante';
             }
+        } else if (esEnfermeria) {
+            // Enfermería: conservar estado prebiológico del adaptador
+            // El adaptador ya estableció estado (OK FARMACIA, EN VIGILANCIA, BLOQUEADO)
+            var estadoEnfermeria = String(row.estado || '').trim().toUpperCase();
+            var estadoLabelEnfermeria = estadoEnfermeria;
+            if (estadoEnfermeria === 'OK FARMACIA' || estadoEnfermeria === 'OK_FARMACIA') {
+                candidate.estado = 'ok_farmacia';
+                candidate.estadoLabel = 'OK Farmacia';
+            } else if (estadoEnfermeria === 'EN VIGILANCIA' || estadoEnfermeria === 'EN_VIGILANCIA') {
+                candidate.estado = 'en_vigilancia';
+                candidate.estadoLabel = 'En vigilancia';
+            } else if (estadoEnfermeria === 'BLOQUEADO') {
+                candidate.estado = 'bloqueado';
+                candidate.estadoLabel = 'Bloqueado';
+            } else {
+                candidate.estado = 'pending';
+                candidate.estadoLabel = 'Pendiente';
+            }
+            // Preservar campos enriquecidos del adaptador
+            candidate.source_type = 'ENFERMERIA';
+            candidate.origen_solicitud = 'enfermeria';
+            candidate.tipo_origen = 'enfermeria_inicio_biologico';
+            // Mapear campos prebiológicos si el adaptador los cargó
+            if (row.analitica_estado) candidate.analitica_estado = row.analitica_estado;
+            if (row.mantoux_estado) candidate.mantoux_estado = row.mantoux_estado;
+            if (row.igra_estado) candidate.igra_estado = row.igra_estado;
+            if (row.vhb_estado) candidate.vhb_estado = row.vhb_estado;
+            if (row.vhc_estado) candidate.vhc_estado = row.vhc_estado;
+            if (row.vih_estado) candidate.vih_estado = row.vih_estado;
+            if (row.medicina_preventiva_estado) candidate.medicina_preventiva_estado = row.medicina_preventiva_estado;
+            if (row.estado_prebiologico_enfermeria) candidate.estado_prebiologico_enfermeria = row.estado_prebiologico_enfermeria;
+            if (row.fecha_ok_farmacia) candidate.fecha_ok_farmacia = row.fecha_ok_farmacia;
+            if (row.observaciones_prebiologico) candidate.observaciones_prebiologico = row.observaciones_prebiologico;
         } else {
             // Enfermería u otro origen: comportamiento legacy (pending por defecto)
             candidate.estado = 'pending';
@@ -1341,6 +1524,52 @@
         }
 
         function parseWorkbook(kind, workbook, fileName) {
+            if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook === 'function'
+                && window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook(workbook)) {
+                // Enfermería: usar adaptador específico
+                var sheetNames = workbook.SheetNames;
+                var allCandidates = [];
+                var sheetNameUsed = '';
+                for (var si = 0; si < sheetNames.length; si++) {
+                    var sn = sheetNames[si];
+                    var sheet = workbook.Sheets[sn];
+                    var rawRows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+                    var candidates = window.FarmaciaDemo.parseEnfermeriaInicioBiologicoSheet(rawRows, sn);
+                    if (candidates.length > 0) {
+                        allCandidates = allCandidates.concat(candidates);
+                        if (!sheetNameUsed) sheetNameUsed = sn;
+                    }
+                }
+                var mappedFields = {
+                    cip: 'cip_demo_o_hash',
+                    nombre: 'paciente_nombre',
+                    servicio: 'servicio_origen',
+                    patologia: 'patologia_indicacion',
+                    farmaco: 'farmaco_solicitado'
+                };
+                var state = {
+                    kind: kind,
+                    sourceLabel: 'Enfermería',
+                    fileName: fileName || '',
+                    importedAt: new Date().toISOString(),
+                    sheetName: sheetNameUsed || (sheetNames.length > 0 ? sheetNames[0] : ''),
+                    rowCount: allCandidates.length,
+                    headers: allCandidates.length ? Object.keys(allCandidates[0]) : [],
+                    mappedFields: mappedFields,
+                    unrecognizedHeaders: [],
+                    rows: allCandidates
+                };
+                importStates[kind] = state;
+                if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
+                    SESSION_STORAGE_FALLBACK[kind] = state;
+                    state.storage = 'memory_only';
+                }
+                updateAllImportUi();
+                emitImportEvent(kind, { state: state });
+                return state;
+            }
+
+            // Generic import (Farmacia u otros)
             var firstSheetName = workbook.SheetNames[0];
             var sheet = workbook.Sheets[firstSheetName];
             var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
@@ -1488,6 +1717,13 @@
         isPharmacyAct: isPharmacyAct,
         isValidationRequest: isValidationRequest,
         shouldAppearInValidationInbox: shouldAppearInValidationInbox,
+        /* Enfermería / Inicio Biológico WO8.1c.3 */
+        isEnfermeriaInicioBiologicoWorkbook: isEnfermeriaInicioBiologicoWorkbook,
+        findEnfermeriaHeaderRow: findEnfermeriaHeaderRow,
+        normalizeEnfermeriaInicioBiologicoRow: normalizeEnfermeriaInicioBiologicoRow,
+        parseEnfermeriaInicioBiologicoSheet: parseEnfermeriaInicioBiologicoSheet,
+        buildEnfermeriaHeaderMap: buildEnfermeriaHeaderMap,
+        shouldEnfermeriaRowAppearInValidationInbox: shouldEnfermeriaRowAppearInValidationInbox,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }

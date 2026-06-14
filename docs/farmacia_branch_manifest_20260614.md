@@ -1189,6 +1189,40 @@ No se rompe la búsqueda ni el dashboard.
 No se rompe el botón de copiar fila Excel.  
 No se toca la rama demo.  
 
+## WO8.1c.3 — Adaptador import Enfermería Inicio Biológico
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`
+
+**Alcance:**
+Se implementa un adaptador específico para leer la plantilla de Enfermería / Inicio Biológico, detectando la hoja `INICIO_BIOLOGICO`, localizando la fila real de cabecera (busca "CIP" en cualquier fila, no asume fila 1) y mapeando sus 15 columnas al modelo de solicitudes/prebiológico. Se evita tratar esta plantilla como Excel operativo de Farmacia WO8.
+
+**Decisión clave:**
+Enfermería genera solicitudes/prebiológico; Farmacia registra actos farmacéuticos. Solo los registros de Enfermería con `Estado = OK FARMACIA` deben entrar como pendientes de validación farmacoterapéutica.
+
+**Archivos modificados:**
+- `scripts/farmacia_common.js` — +6 funciones adaptador Enfermería: `isEnfermeriaInicioBiologicoWorkbook`, `findEnfermeriaHeaderRow`, `buildEnfermeriaHeaderMap`, `normalizeEnfermeriaInicioBiologicoRow`, `parseEnfermeriaInicioBiologicoSheet`, `shouldEnfermeriaRowAppearInValidationInbox`; `parseWorkbook` con detección y ruta Enfermería; `buildImportedPatientCandidate` con estados prebiológicos (`ok_farmacia`, `en_vigilancia`, `bloqueado`); `shouldAppearInValidationInbox` delegada; corrección `sourceStr === 'farmacia'` para evitar falso positivo con 'Enfermería'; API expuesta
+- `tools/farmacia_common_check.mjs` — +3 tests (Casos M, N) + actualización Caso F e I para semántica Enfermería, 49 total, 0 failed
+- `tools/farmacia_enfermeria_import_check.mjs` — 71 tests específicos, 0 failed
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Checks:**
+- `node --check scripts/farmacia_common.js`: OK
+- `node tools/farmacia_enfermeria_import_check.mjs`: 71/71 PASS
+- `node tools/farmacia_common_check.mjs`: 49/49 PASS
+- `node tools/farmacia_excel_row_export_check.mjs`: 44/44 PASS
+- `node tools/farmacia_excel_sintetico_check.mjs`: 38/38 PASS
+- `node tools/enfermeria_inicio_biologico_template_check.mjs`: 19/19 PASS
+- innerHTML: 0 (farmacia_common.js)
+
+**Importante:**
+No se modifica código HTML/CSS funcional del Hub.  
+No se modifica la rama demo.  
+No se modifica main.  
+No se modifica el Excel FH base ni sintético.  
+No se rompe la búsqueda ni el dashboard.  
+No se rompe el botón de copiar fila Excel.  
+
 ## WO8.1c.1 — Incorporación plantilla Enfermería Inicio Biológico
 
 **Estado:** completada técnicamente, pendiente de revisión Sil/Cora  

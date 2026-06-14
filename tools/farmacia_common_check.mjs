@@ -171,9 +171,18 @@ assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', esta
 // Farmacia concomitante → NO aparece
 assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', tipo_relacion: 'concomitante' }), false,
     'Farmacia concomitante = false');
-// Enfermería → SÍ aparece
-assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Enfermería' }), true,
-    'Enfermería = true');
+// Enfermería sin estado OK FARMACIA → NO aparece (debe tener estado explícito)
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Enfermería' }), false,
+    'Enfermería sin OK FARMACIA = false');
+// Enfermería con OK FARMACIA → SÍ aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Enfermería', estado_prebiologico_enfermeria: 'OK FARMACIA' }), true,
+    'Enfermería OK FARMACIA = true');
+// Enfermería con EN VIGILANCIA → NO aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Enfermería', estado_prebiologico_enfermeria: 'EN VIGILANCIA' }), false,
+    'Enfermería EN VIGILANCIA = false');
+// Enfermería con BLOQUEADO → NO aparece
+assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Enfermería', estado_prebiologico_enfermeria: 'BLOQUEADO' }), false,
+    'Enfermería BLOQUEADO = false');
 // Farmacia con pendiente explícito → SÍ aparece (caso borde)
 assertEqual(shouldAppearInValidationInbox({ importSource: 'Excel Farmacia', resultado_validacion: 'pendiente', estado_registro: 'pendiente_revision' }), true,
     'Farmacia pendiente explícito = true');
@@ -202,16 +211,37 @@ const candidateE = buildImportedPatientCandidate(
 assertEqual(candidateE.estado, 'completado', 'Farmacia seguimiento → estado=completado');
 assertEqual(candidateE.estadoLabel, 'Seguimiento', 'Farmacia seguimiento → estadoLabel=Seguimiento');
 
-console.log('\n[Caso I] Candidate Enfermería (sigue siendo pending)');
+console.log('\n[Caso I] Candidate Enfermería (conserva estado prebiológico)');
 const candidateF = buildImportedPatientCandidate(
-    { cip: 'ENF-001', farmaco: 'Secukinumab' },
+    { cip: 'ENF-001', farmaco: 'Secukinumab', estado: 'OK FARMACIA', analitica_estado: 'OK', mantoux_estado: 'NEGATIVO' },
     { cip: 'cip', farmaco: 'farmaco' },
     'Enfermería',
     5
 );
-assertEqual(candidateF.estado, 'pending', 'Enfermería → estado=pending');
-assertEqual(candidateF.estadoLabel, 'Pendiente', 'Enfermería → estadoLabel=Pendiente');
+assertEqual(candidateF.estado, 'ok_farmacia', 'Enfermería OK FARMACIA → estado=ok_farmacia');
+assertEqual(candidateF.estadoLabel, 'OK Farmacia', 'Enfermería OK FARMACIA → label=OK Farmacia');
 assertEqual(candidateF.importSource, 'Excel Enfermería', 'importSource=Excel Enfermería');
+assertEqual(candidateF.origen_solicitud, 'enfermeria', 'origen_solicitud=enfermeria');
+
+console.log('\n[Caso M] Candidate Enfermería en vigilancia (no pending)');
+const candidateM = buildImportedPatientCandidate(
+    { cip: 'ENF-002', farmaco: 'Adalimumab', estado: 'EN VIGILANCIA' },
+    { cip: 'cip', farmaco: 'farmaco' },
+    'Enfermería',
+    6
+);
+assertEqual(candidateM.estado, 'en_vigilancia', 'Enfermería EN VIGILANCIA → estado=en_vigilancia');
+assertEqual(candidateM.estadoLabel, 'En vigilancia', 'Enfermería EN VIGILANCIA → label=En vigilancia');
+
+console.log('\n[Caso N] Candidate Enfermería bloqueado (no pending)');
+const candidateN = buildImportedPatientCandidate(
+    { cip: 'ENF-003', farmaco: 'Upadacitinib', estado: 'BLOQUEADO' },
+    { cip: 'cip', farmaco: 'farmaco' },
+    'Enfermería',
+    7
+);
+assertEqual(candidateN.estado, 'bloqueado', 'Enfermería BLOQUEADO → estado=bloqueado');
+assertEqual(candidateN.estadoLabel, 'Bloqueado', 'Enfermería BLOQUEADO → label=Bloqueado');
 
 console.log('\n[Caso J] Candidate Farmacia simultáneo pendiente (caso borde)');
 const candidateG = buildImportedPatientCandidate(
