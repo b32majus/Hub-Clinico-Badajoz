@@ -239,6 +239,17 @@ function simulateEnfermeriaCard(patient) {
   cardLines.push('TieneBotonValidar: ' + (hasValidar ? 'SI' : 'NO'));
   cardLines.push('TieneDashboard: SI');
 
+  // Button label
+  var btnLabel = hasValidar ? 'Abrir validación'
+    : est.indexOf('bloqueado') !== -1 ? 'Ver bloqueantes'
+    : 'Ver pendientes prebiológicos';
+  cardLines.push('BotonLabel: ' + btnLabel);
+
+  // Detail panel: expandible con todos los ítems
+  cardLines.push('TieneDetailPanel: SI');
+  var enfFields = ['Analítica', 'Mantoux', 'IGRA', 'VHB', 'VHC', 'VIH', 'Med. Preventiva'];
+  cardLines.push('CamposDetalle: ' + enfFields.join(', '));
+
   return cardLines.join('\n');
 }
 
@@ -336,20 +347,31 @@ var demoInFilteredWithImports = filteredWithImports.filter(function (p) { return
 assertEqual(demoInFilteredWithImports.length, 0, '37. Paciente legacy NO aparece en pending (con imports cargados)');
 
 // Imported patient with pending status should appear
-// (LEGACY-TEST-001 has importSource undefined → treated as demo when hasImportedData=true)
-// Also verify that imported patient mock would appear
 var mockPendingCheck = simulateRenderFilterWithImports([
   { cip: 'IMPORT-001', nombre: 'Imported', estado: 'pending', estadoLabel: 'Pendiente', importSource: 'Excel Farmacia' }
 ]);
 assertEqual(mockPendingCheck.length, 1, '38. Paciente importado (Excel Farmacia) SÍ aparece con imports cargados');
 
-// ─── 39-40. innerHTML check ──────────────────────────────────────────────
+// ─── 39-42. Detail panel and toggle buttons ──────────────────────────
+// All 4 cards have detail panel with all 7 fields
+assert(allText.indexOf('TieneDetailPanel: SI') !== -1, '39. Tarjetas tienen detail panel expandible');
+assert(allText.indexOf('CamposDetalle: Analítica, Mantoux, IGRA, VHB, VHC, VIH, Med. Preventiva') !== -1, '40. Detail panel cubre 7 campos prebiológicos');
+
+// Verify button labels per patient group
+assert(allText.indexOf('BotonLabel: Ver pendientes prebiológicos') !== -1, '41. Pacientes en vigilancia tienen botón "Ver pendientes prebiológicos"');
+assert(allText.indexOf('BotonLabel: Ver bloqueantes') !== -1, '42. Paciente bloqueado tiene botón "Ver bloqueantes"');
+
+// ─── 43-45. innerHTML check ──────────────────────────────────────────────
 var commonSrcContent = fs.readFileSync(commonPath, 'utf8');
 var innerCount = (commonSrcContent.match(/innerHTML/g) || []).length;
-assert(innerCount <= 3, `39. innerHTML en farmacia_common.js: ${innerCount}`);
+assert(innerCount <= 3, `43. innerHTML en farmacia_common.js: ${innerCount}`);
 
 var indexSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_index.js'), 'utf8');
 var indexInner = (indexSrc.match(/innerHTML/g) || []).length;
-assert(indexInner <= 2, `40. innerHTML en farmacia_index.js: ${indexInner}`);
+assert(indexInner <= 2, `44. innerHTML en farmacia_index.js: ${indexInner}`);
+
+var valSrc = fs.readFileSync(path.join(ROOT, 'scripts', 'farmacia_validacion.js'), 'utf8');
+var valInner = (valSrc.match(/innerHTML/g) || []).length;
+assert(valInner <= 2, `45. innerHTML en farmacia_validacion.js: ${valInner}`);
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 if (failed > 0) process.exit(1);

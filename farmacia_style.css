@@ -5786,7 +5786,61 @@
 .prebio-blocked { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
 .prebio-incomplete { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
 
+/* Color-coded prebio chips — variants for status-* classes used by getEnfermeriaBadges */
 .prebio-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; margin: 2px; }
+.status-completo { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+.status-pendiente { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.status-bloqueo { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.status-alerta { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.status-no_aplica { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+.status-no_informado { background: #F1F5F9; color: #94A3B8; border: 1px solid #E2E8F0; }
 .prebio-chip--more { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
 
 .pending-validation-card__prebio-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; margin-left: 24px; }
+
+/* WO8.1c.10 — Enfermería prebiológico detail panel (expand/colapsar) */
+.enfermeria-detail-panel {
+    display: none;
+    padding: 10px 12px;
+    margin-top: 4px;
+    border-radius: 8px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    font-size: 0.82rem;
+}
+.enfermeria-detail-panel.open {
+    display: block;
+}
+.enfermeria-detail-panel__title {
+    font-weight: 600;
+    color: #1E293B;
+    margin: 0 0 8px;
+    font-size: 0.84rem;
+}
+.enfermeria-detail-panel__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+}
+.enfermeria-detail-panel__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+}
+.enfermeria-detail-panel__item-label {
+    color: #64748B;
+    min-width: 80px;
+}
+.enfermeria-detail-panel__item-value {
+    font-weight: 600;
+}
+
+/* Color-coded prebio chips */
+.prebio-chip--ok { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+.prebio-chip--pending { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+.prebio-chip--blocked { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.prebio-chip--alert { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.prebio-chip--neutral { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+.prebio-chip--complete { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+.prebio-chip--no_aplica { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }

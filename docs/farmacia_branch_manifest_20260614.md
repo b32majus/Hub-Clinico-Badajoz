@@ -1304,6 +1304,52 @@ Se evita que los pacientes demo/fallback se mezclen visualmente con los datos ca
 - `tools/farmacia_enfermeria_board_dom_check.mjs` — 40 tests (nuevos: demo oculto con imports)
 - `docs/farmacia_branch_manifest_20260614.md` — este bloque
 
+## WO8.1c.10 — Corrección funcional pre-demo flujo Enfermería → Validación
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `preview/demo-lunes-wo4-20260614`
+
+**Alcance:**
+Se completa el flujo funcional desde las tarjetas de Enfermería hasta la validación farmacéutica. Los botones "Ver pendientes prebiológicos" y "Ver bloqueantes" ahora expanden un panel de detalle con todos los 7 ítems prebiológicos (Analítica, Mantoux, IGRA, VHB, VHC, VIH, Med. Preventiva). La tarjeta OK FARMACIA abre validación arrastrando CIP, servicio, patología y fármaco, y la pantalla de validación muestra un resumen prebiológico de Enfermería con campos normalizados. Los chips de estado usan colores semáforo (verde/amarillo/rojo/gris).
+
+
+
+## WO8.1c.10 — Corrección funcional pre-demo flujo Enfermería → Validación
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `preview/demo-lunes-wo4-20260614`
+
+**Alcance:**
+Se completa el flujo funcional desde las tarjetas de Enfermería hasta la validación farmacéutica. Los botones "Ver pendientes prebiológicos" y "Ver bloqueantes" ahora expanden un panel de detalle con todos los 7 ítems prebiológicos (Analítica, Mantoux, IGRA, VHB, VHC, VIH, Med. Preventiva). La tarjeta OK FARMACIA abre validación arrastrando CIP, servicio, patología y fármaco, y la pantalla de validación muestra un resumen prebiológico de Enfermería con campos normalizados. Los chips de estado usan colores semáforo (verde/amarillo/rojo/gris).
+
+**Decisiones clave:**
+- Botones Ver pendientes/Ver bloqueantes: `<button>` con `addEventListener` que togglea panel `.enfermeria-detail-panel.open`. Sin navegación, sin spans falsos.
+- Detail panel: grid 2-columnas con 7 campos, valores normalizados vía `normalizeEnfermeriaFieldValue`.
+- Abrir validación: URL con `cip, servicio, patologia, entrada=validacion` → `getQueryContext` encuentra el paciente importado → `applyContext` hidrata formulario + muestra resumen Enfermería en sección prebiológico.
+- Chips coloreados: CSS `.status-completo` (verde), `.status-pendiente` (amarillo), `.status-bloqueo` (rojo), `.status-no_aplica` (gris), etc.
+- Sin `innerHTML` en producción. Sin modificar HTML. Sin modificar Excels.
+
+**Archivos modificados:**
+- `farmacia_style.css` — `.enfermeria-detail-panel`, `.enfermeria-detail-panel__grid`, `.status-completo/pendiente/bloqueo/alerta/no_aplica/no_informado`, `.prebio-chip--ok/pending/blocked/alert/neutral/complete/no_aplica`
+- `scripts/farmacia_index.js` — `renderEnfermeriaAsPendingCard()` añade detail panel expandible con 7 campos; botones `<button>` con toggle; sin `innerHTML`
+- `scripts/farmacia_validacion.js` — `applyContext()` detecta paciente Enfermería e inyecta resumen prebiológico en sección `#modPrebiologico`
+- `tools/farmacia_enfermeria_board_dom_check.mjs` — 45 tests (nuevos: detail panel, toggle buttons, 7 campos, innerHTML validacion.js)
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Tests:**
+- Common check: 49/49 PASS
+- Enfermería import: 95/95 PASS
+- DOM board: 45/45 PASS
+- Row export: 44/44 PASS
+- FH sintético: 38/38 PASS
+- Template: 36/36 PASS
+- Dashboard: 37/37 PASS
+- Seguimiento: 116/116 PASS
+- Tratamiento common: 43/43 PASS
+- Smoke: 38/38 PASS
+- innerHTML: 0 (common.js), 0 (index.js), 0 (validacion.js)
+
+**Backup:** `backup-demo-manana-pre-enfermeria-clicks-20260614` (22db535 → 103060b)
 
 ## WO8.1c.3 — Adaptador import Enfermería Inicio Biológico
 

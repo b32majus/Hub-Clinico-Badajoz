@@ -743,7 +743,47 @@
             card.appendChild(obsRow);
         }
 
-        // Actions
+        // ── Detail panel: todos los ítems prebiológicos ────────────
+        var detailPanel = document.createElement('div');
+        detailPanel.className = 'enfermeria-detail-panel';
+        detailPanel.id = 'enfDetail_' + (patient.cip || '0');
+
+        var detailTitle = document.createElement('h4');
+        detailTitle.className = 'enfermeria-detail-panel__title';
+        detailTitle.textContent = 'Detalle prebiológico Enfermería';
+        detailPanel.appendChild(detailTitle);
+
+        var detailGrid = document.createElement('div');
+        detailGrid.className = 'enfermeria-detail-panel__grid';
+
+        var enfFields = [
+            { key: 'analitica_estado', label: 'Analítica' },
+            { key: 'mantoux_estado', label: 'Mantoux' },
+            { key: 'igra_estado', label: 'IGRA' },
+            { key: 'vhb_estado', label: 'VHB' },
+            { key: 'vhc_estado', label: 'VHC' },
+            { key: 'vih_estado', label: 'VIH' },
+            { key: 'medicina_preventiva_estado', label: 'Med. Preventiva' }
+        ];
+        for (var fi = 0; fi < enfFields.length; fi++) {
+            var rawVal = patient[enfFields[fi].key];
+            var displayVal = rawVal ? String(rawVal).trim() : '—';
+            var normalized = F.normalizeEnfermeriaFieldValue ? F.normalizeEnfermeriaFieldValue(rawVal) : displayVal;
+            var item = document.createElement('div');
+            item.className = 'enfermeria-detail-panel__item';
+            var labelSpan = document.createElement('span');
+            labelSpan.className = 'enfermeria-detail-panel__item-label';
+            labelSpan.textContent = enfFields[fi].label;
+            var valueSpan = document.createElement('span');
+            valueSpan.className = 'enfermeria-detail-panel__item-value';
+            valueSpan.textContent = normalized;
+            item.append(labelSpan, valueSpan);
+            detailGrid.appendChild(item);
+        }
+        detailPanel.appendChild(detailGrid);
+        card.appendChild(detailPanel);
+
+        // ── Actions ───────────────────────────────────────────────
         var actions = document.createElement('div');
         actions.className = 'pending-validation-card__actions';
         if (groupKey === 'ok_farmacia') {
@@ -759,15 +799,31 @@
             link.setAttribute('data-enf-action', 'validar');
             actions.appendChild(link);
         } else {
-            var infoBtn = document.createElement('span');
-            infoBtn.className = 'btn btn-secondary';
-            infoBtn.style.cursor = 'default';
+            var toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'btn btn-secondary';
+            toggleBtn.style.cursor = 'pointer';
+            toggleBtn.setAttribute('data-enf-toggle', patient.cip || '');
             if (groupKey === 'bloqueado') {
-                F.appendIconText(infoBtn, 'fa-exclamation-triangle', 'Ver bloqueantes');
+                F.appendIconText(toggleBtn, 'fa-exclamation-triangle', 'Ver bloqueantes');
             } else {
-                F.appendIconText(infoBtn, 'fa-hourglass-half', 'Ver pendientes prebiológicos');
+                F.appendIconText(toggleBtn, 'fa-hourglass-half', 'Ver pendientes prebiológicos');
             }
-            actions.appendChild(infoBtn);
+            toggleBtn.addEventListener('click', function (cip, panel) {
+                return function () {
+                    panel.classList.toggle('open');
+                    var isOpen = panel.classList.contains('open');
+                    var btnText = groupKey === 'bloqueado'
+                        ? (isOpen ? 'Ocultar bloqueantes' : 'Ver bloqueantes')
+                        : (isOpen ? 'Ocultar detalle prebiológico' : 'Ver pendientes prebiológicos');
+                    // Update button text keeping icon
+                    var icon = this.querySelector('i');
+                    F.clearChildren(this);
+                    if (icon) this.appendChild(icon);
+                    this.appendChild(document.createTextNode(' ' + btnText));
+                };
+            }(patient.cip, detailPanel));
+            actions.appendChild(toggleBtn);
         }
         // Dashboard siempre disponible
         var dashLink = document.createElement('a');

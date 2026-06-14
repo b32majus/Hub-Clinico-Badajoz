@@ -286,6 +286,71 @@
         if (modoActual) byId("fhTipoSolicitud").value = modoActual;
         toggleHSBlock();
         updateValidationModuleSummaries();
+        // WO8.1c.10 — Hidratar resumen prebiológico desde Enfermería
+        if (context.patient && (context.patient.origen_solicitud === 'enfermeria' ||
+            context.patient.source_type === 'ENFERMERIA' ||
+            String(context.patient.importSource || '').toLowerCase().indexOf('enfermer') !== -1)) {
+            var enf = context.patient;
+            var summaryContainer = byId('fhEnfermeriaResumen');
+            if (!summaryContainer) {
+                summaryContainer = document.createElement('div');
+                summaryContainer.id = 'fhEnfermeriaResumen';
+                summaryContainer.className = 'info-card info-card--enf-resumen';
+                summaryContainer.style.cssText = 'margin-top:12px;padding:12px 14px;border-radius:10px;background:#F0FDF4;border:1px solid #BBF7D0;';
+                var prebioSection = document.querySelector('#modPrebiologico .card-body') ||
+                    document.querySelector('#modPrebiologico');
+                if (prebioSection) {
+                    prebioSection.appendChild(summaryContainer);
+                }
+            }
+            F.clearChildren(summaryContainer);
+            var sTitle = document.createElement('h4');
+            sTitle.style.cssText = 'margin:0 0 8px;font-size:0.9rem;color:#166534;';
+            var sTitleIcon = document.createElement('i');
+            sTitleIcon.className = 'fas fa-user-nurse';
+            sTitleIcon.setAttribute('aria-hidden', 'true');
+            sTitle.appendChild(sTitleIcon);
+            sTitle.appendChild(document.createTextNode(' Datos prebiológicos desde Excel Enfermería'));
+            summaryContainer.appendChild(sTitle);
+            var sGrid = document.createElement('div');
+            sGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:0.84rem;';
+            var enfFields = [
+                { key: 'analitica_estado', label: 'Analítica' },
+                { key: 'mantoux_estado', label: 'Mantoux' },
+                { key: 'igra_estado', label: 'IGRA' },
+                { key: 'vhb_estado', label: 'VHB' },
+                { key: 'vhc_estado', label: 'VHC' },
+                { key: 'vih_estado', label: 'VIH' },
+                { key: 'medicina_preventiva_estado', label: 'Med. Preventiva' }
+            ];
+            for (var ei = 0; ei < enfFields.length; ei++) {
+                var raw = enf[enfFields[ei].key];
+                var display = F.normalizeEnfermeriaFieldValue ? F.normalizeEnfermeriaFieldValue(raw) : (raw || '—');
+                var item = document.createElement('div');
+                item.style.cssText = 'display:flex;align-items:center;gap:6px;';
+                var lbl = document.createElement('span');
+                lbl.style.cssText = 'color:#475569;min-width:85px;';
+                lbl.textContent = enfFields[ei].label + ':';
+                var val = document.createElement('span');
+                val.style.cssText = 'font-weight:600;color:#0F172A;';
+                val.textContent = display;
+                item.append(lbl, val);
+                sGrid.appendChild(item);
+            }
+            summaryContainer.appendChild(sGrid);
+            if (enf.observaciones_prebiologico) {
+                var obs = document.createElement('div');
+                obs.style.cssText = 'margin-top:8px;font-style:italic;color:#166534;font-size:0.82rem;';
+                obs.textContent = 'Observación: ' + enf.observaciones_prebiologico;
+                summaryContainer.appendChild(obs);
+            }
+            if (enf.fecha_ok_farmacia) {
+                var fok = document.createElement('div');
+                fok.style.cssText = 'margin-top:4px;font-size:0.82rem;color:#166534;';
+                fok.textContent = 'OK Farmacia desde: ' + enf.fecha_ok_farmacia;
+                summaryContainer.appendChild(fok);
+            }
+        }
     }
 
     function syncRadioGroup(group, value) {
