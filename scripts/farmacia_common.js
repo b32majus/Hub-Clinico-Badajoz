@@ -1362,6 +1362,7 @@
         getPendingValidationPatients,
         getPrebiologicoStatus,
         normalizePautaString: normalizePautaString,
+        buildImportedPatientCandidate: buildImportedPatientCandidate,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }
