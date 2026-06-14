@@ -158,8 +158,36 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 ## WO6 — Pendiente de ejecucion
 
 **WO6 — Calidad de dato: sessionStorage + pautas normalizadas**
-**Estado:** ⏳ Pendiente de ejecucion (registrada tras promocion WO5)
-**Siguiente accion:** Crear rama work/farmacia-wo6-storage-pautas-normalizadas-20260614 desde WO5 (`12356ce`)
+**Estado:** 🟡 **pending_review** (WO6b ejecutada, a la espera de validacion de Sil)
+**Siguiente accion:** Validar cambios de WO6b y decidir promocion a fuente de trabajo
+
+---
+
+## WO6b ejecutada — Correccion tecnica
+
+**WO6b — Tests, cache-busting y manifiesto**
+
+**Estado:** 🟡 **pending_review** (2026-06-14)
+
+**HEAD final de la rama:** `9073af3` (`9073af34ca2deda498371574b38d572a559d9575`)
+
+**Correcciones tecnicas aplicadas:**
+- `scripts/farmacia_pautas_catalog.js`: unidades corregidas (MENSUAL/SEMESTRAL → "meses", SEGUN_FASE → "variable", OTRO → "texto_libre"); normalizePautaLabel ampliado para reconocer patrones en texto libre.
+- `scripts/farmacia_validacion.js`, `scripts/farmacia_primera_visita.js`, `scripts/farmacia_seguimiento.js`: eliminado innerHTML en selects de pauta (F.clearChildren + createElement), añadido fail-safe si FarmaciaPautasCatalog no carga, CSV ampliado con PautaCodigo/PautaLabel/PautaIntervaloDias/PautaUnidad/PautaOtroTexto sin quitar columna legacy Pauta.
+- `tools/farmacia_storage_policy_check.mjs`: ruta absoluta reemplazada por calculo relativo con `import.meta.url` y `fileURLToPath`.
+- `tools/farmacia_pautas_catalog_check.mjs`: casos de prueba funcionales ampliados (vacío, SC cada 4/2 semanas, según fase, semanal+semestral, cada 6 meses, mensual, c/4 sem, texto libre y unidades).
+- Cache-busting: parametro `v=` actualizado a `20260614-wo6-b` en los 23 script tags que cargan `farmacia_common.js`, `farmacia_pautas_catalog.js`, `farmacia_validacion.js`, `farmacia_primera_visita.js` o `farmacia_seguimiento.js` en todos los HTMLs de farmacia.
+
+**Tests:**
+- Syntax: 5/5 OK (scripts modificados de WO6)
+- Storage policy check: PASSED
+- Pautas catalog check: PASSED
+- Helper check: 72/72 PASS (21 tests)
+- Single source check: 29/29 PASS
+- Smoke check: 38/38 PASS
+- innerHTML nuevo (`innerHTML = '<option`) en `scripts/farmacia_*.js`: 0
+
+**Nota:** La fuente de trabajo activa sigue siendo `work/farmacia-wo5-prebiologico-single-source-20260614` (`12356ce`) hasta que Sil valide WO6.
 
 ---
 
