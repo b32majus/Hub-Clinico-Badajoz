@@ -145,6 +145,82 @@ function main() {
           var options = catalog.getPautaOptions();
           return Array.isArray(options) && options.length === 12;
         }
+      },
+      {
+        label: 'normalizePautaLabel("") devuelve null (no inventa pauta vacia)',
+        test: function () {
+          var result = catalog.normalizePautaLabel('');
+          return result === null;
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / cada 4 semanas").pauta_codigo === "CADA_4_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / cada 4 semanas');
+          return result && result.pauta_codigo === 'CADA_4_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / cada 2 semanas").pauta_codigo === "CADA_2_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / cada 2 semanas');
+          return result && result.pauta_codigo === 'CADA_2_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / semanal segun fase").pauta_codigo === "SEGUN_FASE"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / semanal según fase');
+          return result && result.pauta_codigo === 'SEGUN_FASE';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("L2 semanal + L3 semestral").pauta_codigo === "SEGUN_FASE"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('L2 semanal + L3 semestral');
+          return result && result.pauta_codigo === 'SEGUN_FASE';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("Dias 1 y 15 cada 6 meses").pauta_codigo === "SEMESTRAL"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('Dias 1 y 15 cada 6 meses');
+          return result && result.pauta_codigo === 'SEMESTRAL';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("mensual").pauta_codigo === "MENSUAL"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('mensual');
+          return result && result.pauta_codigo === 'MENSUAL';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("cada mes").pauta_codigo === "MENSUAL"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('cada mes');
+          return result && result.pauta_codigo === 'MENSUAL';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("c/4 sem").pauta_codigo === "CADA_4_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('c/4 sem');
+          return result && result.pauta_codigo === 'CADA_4_SEMANAS';
+        }
+      },
+      {
+        label: 'Unidades correctas para MENSUAL, SEMESTRAL, SEGUN_FASE y OTRO',
+        test: function () {
+          var mensual = catalog.normalizePautaLabel('mensual');
+          var semestral = catalog.normalizePautaLabel('Dias 1 y 15 cada 6 meses');
+          var segunFase = catalog.normalizePautaLabel('SC / semanal según fase');
+          var otro = catalog.normalizePautaLabel('Texto inventado');
+          return mensual && mensual.pauta_unidad === 'meses' &&
+            semestral && semestral.pauta_unidad === 'meses' &&
+            segunFase && segunFase.pauta_unidad === 'variable' &&
+            otro && otro.pauta_unidad === 'texto_libre';
+        }
       }
     ];
 

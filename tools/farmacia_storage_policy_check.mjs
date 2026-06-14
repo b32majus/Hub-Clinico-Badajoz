@@ -4,8 +4,10 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const TARGET_DIR = '/srv/kairos-lab/projects/promueve/hub-clinico-badajoz/repo';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TARGET_DIR = path.resolve(__dirname, '..');
 const FARMACIA_COMMON = path.join(TARGET_DIR, 'scripts', 'farmacia_common.js');
 
 function main() {
