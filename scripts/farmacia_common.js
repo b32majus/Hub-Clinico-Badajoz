@@ -224,6 +224,20 @@
         try { window.localStorage.setItem(key, value); return true; } catch (err) { return false; }
     }
 
+    function safeGetSessionStorage(key) {
+        try { return window.sessionStorage.getItem(key); } catch (err) { return null; }
+    }
+
+    function safeSetSessionStorage(key, value) {
+        try { window.sessionStorage.setItem(key, value); return true; } catch (err) { return false; }
+    }
+
+    function safeRemoveSessionStorage(key) {
+        try { window.sessionStorage.removeItem(key); return true; } catch (err) { return false; }
+    }
+
+    var SESSION_STORAGE_FALLBACK = {};
+
     function safeParseJson(raw) {
         if (!raw) return null;
         try { return JSON.parse(raw); } catch (err) { return null; }
@@ -451,7 +465,9 @@
     }
 
     function readImportedDataset(kind) {
-        return safeParseJson(safeGetLocalStorage(IMPORT_STORAGE_KEYS[kind]));
+        var raw = safeGetSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+        if (!raw) raw = safeGetLocalStorage(IMPORT_STORAGE_KEYS[kind]);
+        return safeParseJson(raw);
     }
 
     function getImportedPatientByCip(cip) {
@@ -1176,7 +1192,8 @@
                 rows: rows
             };
             importStates[kind] = state;
-            if (!safeSetLocalStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
+            if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
+                SESSION_STORAGE_FALLBACK[kind] = state;
                 state.storage = 'memory_only';
             }
             updateAllImportUi();
