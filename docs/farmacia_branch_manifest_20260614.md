@@ -378,3 +378,16 @@ WO7C no cablea todavía las pantallas clínicas. Validación, primera visita, se
 - No se ha tocado `main`.
 - No se ha tocado GitHub Pages.
 - No se ha modificado ninguna pantalla clínica.
+
+---
+
+## WO7C.1 — Protocolo estándar de ejecución Farmacia
+
+**Estado:** completada, pendiente de revisión Cora/Sil  
+**Archivo nuevo:** `docs/farmacia_wo_execution_protocol.md`
+
+**Objetivo:**
+Reducir consumo de tokens y mejorar consistencia operativa en futuras WOs mediante un protocolo reutilizable de preflight, alcance, diff, tests, commit, push y reporte final.
+
+**Regla activa:**
+A partir de WO7D, los prompts deben referenciar este protocolo y evitar repetir todo el contexto histórico salvo que sea necesario.
