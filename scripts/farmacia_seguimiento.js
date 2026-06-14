@@ -3,6 +3,7 @@
 (function () {
     const F = window.FarmaciaDemo;
     const M = window.FarmaciaValidationModel;
+    var P = window.FarmaciaPautasCatalog;
     const correctAnswers = { mg1: 'no', mg2: 'si', mg3: 'no', mg4: 'no' };
 
     function isTruthyRobust(value) {
@@ -83,6 +84,36 @@
     function setSegValue(id, value) {
         var el = document.getElementById(id);
         if (el) el.value = value || '';
+    }
+
+    function populatePautaSelectSeg(id, otroId) {
+        var select = byId(id);
+        var otro = byId(otroId);
+        if (!select) return;
+        select.innerHTML = '<option value="">Seleccionar...</option>';
+        if (P && P.getPautaOptions) {
+            P.getPautaOptions().forEach(function (opt) {
+                var option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                select.appendChild(option);
+            });
+        }
+        select.addEventListener('change', function () {
+            if (otro) {
+                otro.classList.toggle('hidden', select.value !== 'OTRO');
+                if (select.value !== 'OTRO') otro.value = '';
+            }
+        });
+    }
+
+    function getSegNuevaPautaLabel() {
+        var select = byId('fhSegNuevaPauta');
+        var otro = byId('fhSegNuevaPautaOtro');
+        if (!select || !select.value) return '';
+        if (select.value === 'OTRO') return otro ? otro.value : '';
+        var pauta = P && P.getPautaByCodigo ? P.getPautaByCodigo(select.value) : null;
+        return P && P.getLegacyPautaLabel ? P.getLegacyPautaLabel(pauta) : select.value;
     }
 
     function normalizeBiologicLine(line, index, patient) {
@@ -755,6 +786,10 @@
             var el = document.getElementById(cipSearchFields[i]);
             if (el) { el.value = ''; el.readOnly = false; }
         }
+        var pautaSelect = document.getElementById('fhSegNuevaPauta');
+        var pautaOtro = document.getElementById('fhSegNuevaPautaOtro');
+        if (pautaSelect) pautaSelect.value = '';
+        if (pautaOtro) { pautaOtro.value = ''; pautaOtro.classList.add('hidden'); }
     }
 
     function clearCipNotice() {
@@ -1349,8 +1384,9 @@
         }
         if (optimiza === 'Sí') {
             var optDetails = 'Optimización';
+            var nuevaPautaLabel = getSegNuevaPautaLabel();
             if (fv('fhSegNuevaDosis')) optDetails += ' (Dosis: ' + fv('fhSegNuevaDosis') + ')';
-            if (fv('fhSegNuevaPauta')) optDetails += ' (Pauta: ' + fv('fhSegNuevaPauta') + ')';
+            if (nuevaPautaLabel) optDetails += ' (Pauta: ' + nuevaPautaLabel + ')';
             if (fv('fhSegMotivoOpt') && fv('fhSegMotivoOpt') !== 'No aplica') optDetails += ' — ' + fv('fhSegMotivoOpt');
             partes.push(optDetails);
         }
@@ -1423,7 +1459,7 @@
         lines.push('Nuevo nivel: ' + (fv('fhSegNuevoNivel') || '—'));
         lines.push('Requiere optimización: ' + (fv('fhSegOptimiza') || '—'));
         lines.push('Nueva dosis: ' + (fv('fhSegNuevaDosis') || '—'));
-        lines.push('Nueva pauta: ' + (fv('fhSegNuevaPauta') || '—'));
+        lines.push('Nueva pauta: ' + (getSegNuevaPautaLabel() || '—'));
         lines.push('Motivo optimización: ' + (fv('fhSegMotivoOpt') || '—'));
         lines.push('Suspensión: ' + (fv('fhSegSuspension') || '—'));
         lines.push('Motivo suspensión: ' + (fv('fhSegMotivoSusp') || '—'));
@@ -1498,6 +1534,7 @@
         applyContext();
         initCipSearch();
         initSegDrugAutocomplete();
+        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
 
         // Demo FH-004: pre-activar causalidad si el paciente tiene EA registrado
         var demoCtx = F.getQueryContext();
@@ -1582,7 +1619,10 @@
         if (optimiza) {
             const applyOptimiza = () => {
                 const show = optimiza.value === 'Sí';
-                ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegMotivoOpt'].forEach(id => toggleField(id, show));
+                ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegMotivoOpt'].forEach(id => toggleField(id, show));
+                var otro = byId('fhSegNuevaPautaOtro');
+                var pauta = byId('fhSegNuevaPauta');
+                if (show && otro && pauta && pauta.value !== 'OTRO') otro.classList.add('hidden');
             };
             optimiza.addEventListener('change', applyOptimiza);
             applyOptimiza();
