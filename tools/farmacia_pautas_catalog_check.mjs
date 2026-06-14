@@ -210,16 +210,139 @@ function main() {
         }
       },
       {
-        label: 'Unidades correctas para MENSUAL, SEMESTRAL, SEGUN_FASE y OTRO',
+        label: 'normalizePautaLabel("SC / diaria").pauta_codigo === "DIARIA"',
         test: function () {
-          var mensual = catalog.normalizePautaLabel('mensual');
-          var semestral = catalog.normalizePautaLabel('Dias 1 y 15 cada 6 meses');
-          var segunFase = catalog.normalizePautaLabel('SC / semanal según fase');
-          var otro = catalog.normalizePautaLabel('Texto inventado');
-          return mensual && mensual.pauta_unidad === 'meses' &&
-            semestral && semestral.pauta_unidad === 'meses' &&
-            segunFase && segunFase.pauta_unidad === 'variable' &&
-            otro && otro.pauta_unidad === 'texto_libre';
+          var result = catalog.normalizePautaLabel('SC / diaria');
+          return result && result.pauta_codigo === 'DIARIA';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("cada 48 horas").pauta_codigo === "CADA_48_HORAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('cada 48 horas');
+          return result && result.pauta_codigo === 'CADA_48_HORAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("cada 48h").pauta_codigo === "CADA_48_HORAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('cada 48h');
+          return result && result.pauta_codigo === 'CADA_48_HORAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / semanal").pauta_codigo === "SEMANAL"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / semanal');
+          return result && result.pauta_codigo === 'SEMANAL';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("1 vez por semana").pauta_codigo === "SEMANAL"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('1 vez por semana');
+          return result && result.pauta_codigo === 'SEMANAL';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("c/2 sem").pauta_codigo === "CADA_2_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('c/2 sem');
+          return result && result.pauta_codigo === 'CADA_2_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / cada 6 semanas").pauta_codigo === "CADA_6_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / cada 6 semanas');
+          return result && result.pauta_codigo === 'CADA_6_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("c/6 sem").pauta_codigo === "CADA_6_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('c/6 sem');
+          return result && result.pauta_codigo === 'CADA_6_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / cada 8 semanas").pauta_codigo === "CADA_8_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / cada 8 semanas');
+          return result && result.pauta_codigo === 'CADA_8_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("IV cada 8 semanas").pauta_codigo === "CADA_8_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('IV cada 8 semanas');
+          return result && result.pauta_codigo === 'CADA_8_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("c/8 sem").pauta_codigo === "CADA_8_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('c/8 sem');
+          return result && result.pauta_codigo === 'CADA_8_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / cada 12 semanas").pauta_codigo === "CADA_12_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / cada 12 semanas');
+          return result && result.pauta_codigo === 'CADA_12_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("c/12 sem").pauta_codigo === "CADA_12_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('c/12 sem');
+          return result && result.pauta_codigo === 'CADA_12_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("cada 6 meses").pauta_codigo === "SEMESTRAL"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('cada 6 meses');
+          return result && result.pauta_codigo === 'SEMESTRAL';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("segun fase").pauta_codigo === "SEGUN_FASE"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('segun fase');
+          return result && result.pauta_codigo === 'SEGUN_FASE';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("induccion mantenimiento").pauta_codigo === "SEGUN_FASE"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('induccion mantenimiento');
+          return result && result.pauta_codigo === 'SEGUN_FASE';
+        }
+      },
+      {
+        label: 'Unidades correctas para todos los codigos del catalogo',
+        test: function () {
+          var expected = {
+            DIARIA: 'dias',
+            CADA_48_HORAS: 'dias',
+            SEMANAL: 'semanas',
+            CADA_2_SEMANAS: 'semanas',
+            CADA_4_SEMANAS: 'semanas',
+            CADA_6_SEMANAS: 'semanas',
+            CADA_8_SEMANAS: 'semanas',
+            CADA_12_SEMANAS: 'semanas',
+            MENSUAL: 'meses',
+            SEMESTRAL: 'meses',
+            SEGUN_FASE: 'variable',
+            OTRO: 'texto_libre'
+          };
+          for (var code in expected) {
+            var p = catalog.getPautaByCodigo(code);
+            if (!p || p.pauta_unidad !== expected[code]) return false;
+          }
+          return true;
         }
       }
     ];

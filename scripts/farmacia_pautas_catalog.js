@@ -56,53 +56,99 @@
     });
   }
 
+  const PAUTA_REGEX_PATTERNS = [
+    {
+      codigo: "DIARIA",
+      regex: [/\b(diaria|diario|cada\s+dia)\b/]
+    },
+    {
+      codigo: "CADA_48_HORAS",
+      regex: [/\bcada\s+48\s*(horas|h)\b/, /\b48\s*h\b/]
+    },
+    {
+      codigo: "SEMANAL",
+      regex: [/\bsemanal\b/, /\b1\s+vez\s+por\s+semana\b/]
+    },
+    {
+      codigo: "CADA_2_SEMANAS",
+      regex: [/\bcada\s+2\s+semanas\b/, /\bc\s*2\s*sem(?:anas)?\b/]
+    },
+    {
+      codigo: "CADA_4_SEMANAS",
+      regex: [/\bcada\s+4\s+semanas\b/, /\bc\s*4\s*sem(?:anas)?\b/]
+    },
+    {
+      codigo: "CADA_6_SEMANAS",
+      regex: [/\bcada\s+6\s+semanas\b/, /\bc\s*6\s*sem(?:anas)?\b/]
+    },
+    {
+      codigo: "CADA_8_SEMANAS",
+      regex: [/\bcada\s+8\s+semanas\b/, /\bc\s*8\s*sem(?:anas)?\b/, /\biv\s+cada\s+8\s+semanas\b/]
+    },
+    {
+      codigo: "CADA_12_SEMANAS",
+      regex: [/\bcada\s+12\s+semanas\b/, /\bc\s*12\s*sem(?:anas)?\b/]
+    },
+    {
+      codigo: "MENSUAL",
+      regex: [/\bmensual\b/, /\bcada\s+mes\b/]
+    },
+    {
+      codigo: "SEMESTRAL",
+      regex: [/\bsemestral\b/, /\bcada\s+6\s+meses\b/]
+    }
+  ];
+
+  function matchesAnyPattern(text, patternList) {
+    for (let i = 0; i < patternList.length; i++) {
+      if (patternList[i].test(text)) return true;
+    }
+    return false;
+  }
+
+  function containsMultiplePautaSeparator(text) {
+    if (text == null) return false;
+    return String(text).indexOf("\n") !== -1;
+  }
+
+  function isSegunFasePattern(normalized, originalText) {
+    if (
+      normalized.indexOf("segun fase") !== -1 ||
+      normalized.indexOf("induccion") !== -1 ||
+      normalized.indexOf("mantenimiento") !== -1
+    ) {
+      return true;
+    }
+
+    if (containsMultiplePautaSeparator(originalText)) {
+      return true;
+    }
+
+    const found = [];
+    for (let i = 0; i < PAUTA_REGEX_PATTERNS.length; i++) {
+      const item = PAUTA_REGEX_PATTERNS[i];
+      if (matchesAnyPattern(normalized, item.regex) && found.indexOf(item.codigo) === -1) {
+        found.push(item.codigo);
+      }
+    }
+    return found.length > 1;
+  }
+
   function matchPautaByPattern(textoLibre) {
     const normalized = normalizeText(textoLibre);
     if (!normalized) return undefined;
 
-    // SEGUN_FASE: menciones de fase, inducción-mantenimiento o combinación semanal+semestral
-    if (
-      normalized.indexOf("segun fase") !== -1 ||
-      normalized.indexOf("induccion mantenimiento") !== -1 ||
-      normalized.indexOf("semanal") !== -1 && normalized.indexOf("semestral") !== -1
-    ) {
+    // SEGUN_FASE: menciones de fase, inducción-mantenimiento, múltiples pautas
+    // o saltos de línea en el texto original
+    if (isSegunFasePattern(normalized, textoLibre)) {
       return getPautaByCodigo("SEGUN_FASE");
     }
 
-    // CADA_4_SEMANAS
-    if (
-      normalized.indexOf("cada 4 semanas") !== -1 ||
-      normalized.indexOf("c 4 sem") !== -1 ||
-      /\b4\s+sem\b/.test(normalized)
-    ) {
-      return getPautaByCodigo("CADA_4_SEMANAS");
-    }
-
-    // CADA_2_SEMANAS
-    if (
-      normalized.indexOf("cada 2 semanas") !== -1 ||
-      normalized.indexOf("c 2 sem") !== -1 ||
-      /\b2\s+sem\b/.test(normalized)
-    ) {
-      return getPautaByCodigo("CADA_2_SEMANAS");
-    }
-
-    // SEMESTRAL
-    if (
-      normalized.indexOf("semestral") !== -1 ||
-      normalized.indexOf("cada 6 meses") !== -1 ||
-      /\b6\s+meses?\b/.test(normalized)
-    ) {
-      return getPautaByCodigo("SEMESTRAL");
-    }
-
-    // MENSUAL
-    if (
-      normalized.indexOf("mensual") !== -1 ||
-      normalized.indexOf("cada mes") !== -1 ||
-      /\bmes\b/.test(normalized)
-    ) {
-      return getPautaByCodigo("MENSUAL");
+    for (let i = 0; i < PAUTA_REGEX_PATTERNS.length; i++) {
+      const item = PAUTA_REGEX_PATTERNS[i];
+      if (matchesAnyPattern(normalized, item.regex)) {
+        return getPautaByCodigo(item.codigo);
+      }
     }
 
     return undefined;

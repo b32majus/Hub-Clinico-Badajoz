@@ -447,6 +447,11 @@
                 candidate.pauta = pautaEstruct.pauta_label || rawPauta;
             }
             candidate.pauta_estructurada = pautaEstruct;
+            candidate.pauta_codigo = pautaEstruct.pauta_codigo;
+            candidate.pauta_label = pautaEstruct.pauta_label;
+            candidate.pauta_intervalo_dias = pautaEstruct.pauta_intervalo_dias;
+            candidate.pauta_unidad = pautaEstruct.pauta_unidad;
+            candidate.pauta_otro_texto = pautaEstruct.pauta_otro_texto;
         }
 
         // Enriquecer con datos prebiológicos estructurados
