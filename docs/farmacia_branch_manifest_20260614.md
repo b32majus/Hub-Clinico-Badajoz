@@ -858,7 +858,7 @@ WO8/WO posterior revisará export/persistencia, incluyendo CSV.
 
 **Estado:** completada técnicamente, pendiente de revisión visual Sil/Cora  
 **Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
-**HEAD de rama:** (pendiente de commit)
+**HEAD de rama:** `f78c430` (tras WO7G.2)
 
 **Alcance:**
 Se ajusta `renderTimelineTratamiento()` del Dashboard Paciente para priorizar `nombre_linea`/`farmaco_nombre`/`principio_activo` frente a `nombre_comercial`, y se añade indicación visual simple de estado (Activo/Histórico) mediante badge y descripción textual.
