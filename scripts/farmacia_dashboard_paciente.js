@@ -435,20 +435,22 @@
         var milestones = [];
         for (var ti = 0; ti < treatments.length; ti++) {
             var t = treatments[ti];
+            var tName = t.nombre_linea || t.farmaco_nombre || t.principio_activo || t.nombre_comercial || 'Tratamiento';
+            var isActive = (t.activo === true) || (!t.fecha_fin && t.activo !== false);
             if (t.fecha_inicio) {
                 milestones.push({
                     date: t.fecha_inicio,
-                    title: (t.nombre_comercial || t.principio_activo || 'Tratamiento'),
-                    description: t.pauta || '',
+                    title: tName,
+                    description: (t.pauta || '') + (isActive ? ' — Activo' : ''),
                     markerClass: 'timeline-marker--treatment',
-                    badgeType: 'inicio'
+                    badgeType: isActive ? 'activo' : 'inicio'
                 });
             }
             if (t.fecha_fin) {
                 milestones.push({
                     date: t.fecha_fin,
-                    title: (t.nombre_comercial || t.principio_activo || 'Tratamiento'),
-                    description: (t.motivo_suspension ? 'Motivo: ' + t.motivo_suspension : 'Suspensi\u00f3n'),
+                    title: tName,
+                    description: (t.motivo_suspension ? 'Motivo: ' + t.motivo_suspension : 'Suspensión') + ' — Histórico',
                     markerClass: 'timeline-marker--treatment',
                     badgeType: 'fin'
                 });
@@ -492,7 +494,7 @@
             if (ms.badgeType) {
                 var badge = document.createElement('span');
                 badge.className = 'timeline-badge timeline-badge--' + ms.badgeType;
-                var badgeLabels = { inicio: 'Inicio', fin: 'Fin', cambio: 'Cambio', switch: 'Cambio', anadido: 'Añadido' };
+                var badgeLabels = { inicio: 'Inicio', activo: 'Activo', fin: 'Fin', cambio: 'Cambio', switch: 'Cambio', anadido: 'Añadido' };
                 badge.textContent = badgeLabels[ms.badgeType] || ms.badgeType;
                 titleEl.appendChild(badge);
             }

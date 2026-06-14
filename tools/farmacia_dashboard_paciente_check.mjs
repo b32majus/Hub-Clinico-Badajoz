@@ -109,6 +109,37 @@ assert(js.indexOf(pdOtherLineStr) !== -1, 'Dashboard otherNames usa farmaco_nomb
 var pdBioValueStr = "line.farmaco_nombre || line.principio_activo || line.nombre_comercial";
 assert(js.indexOf(pdBioValueStr) !== -1, 'Dashboard renderBiologicLines usa farmaco_nombre antes de nombre_comercial');
 
+// --- WO7G.2: Dashboard timeline terapéutico consistente ---
+
+// 16. renderTimelineTratamiento prioriza principio_activo antes de nombre_comercial
+var tlFunc = js.match(/function renderTimelineTratamiento[\s\S]*?^    \}/m);
+var tlBody = tlFunc ? tlFunc[0] : '';
+assert(tlBody.includes("t.nombre_linea || t.farmaco_nombre || t.principio_activo || t.nombre_comercial"),
+    'Timeline título prioriza nombre_linea/farmaco_nombre/principio_activo antes de nombre_comercial');
+
+// 17. Timeline usa tName consistente para fecha_inicio y fecha_fin
+assert(tlBody.includes('title: tName'), 'Timeline usa variable tName unificada para título');
+
+// 18. Timeline incluye indicación de estado activo
+assert(tlBody.includes("' — Activo'") && tlBody.includes("isActive"),
+    'Timeline añade indicación " — Activo" cuando línea está activa');
+
+// 19. Timeline incluye indicación de estado histórico en fecha_fin
+assert(tlBody.includes("' — Histórico'"), 'Timeline añade indicación " — Histórico" en fecha_fin');
+
+// 20. badgeLabels incluye 'activo'
+assert(js.includes("activo: 'Activo'"), 'badgeLabels incluye entrada para estado Activo');
+
+// 21. No desaparecen eventos de patient.tratamientos
+assert(tlBody.includes('patient.tratamientos || []'), 'Timeline conserva tratamientos como fuente');
+
+// 22. No desaparecen eventos de patient.cambios_pauta
+assert(tlBody.includes('patient.cambios_pauta || []'), 'Timeline conserva cambios_pauta como fuente');
+
+// 23. Sin innerHTML en dashboard
+assert(html.indexOf(forbidden) === -1, 'HTML dashboard no usa innerHTML');
+assert(js.indexOf(forbidden) === -1, 'JS dashboard no usa innerHTML');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);

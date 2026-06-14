@@ -853,3 +853,48 @@ Fuente activa funcional sigue WO5.
 **Pendiente:**
 WO7G.2 podrá revisar timeline terapéutico o secundarios del dashboard si aporta valor visual real.  
 WO8/WO posterior revisará export/persistencia, incluyendo CSV.
+
+## WO7G.2 — Dashboard: consistencia visual del timeline terapéutico
+
+**Estado:** completada técnicamente, pendiente de revisión visual Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD de rama:** (pendiente de commit)
+
+**Alcance:**
+Se ajusta `renderTimelineTratamiento()` del Dashboard Paciente para priorizar `nombre_linea`/`farmaco_nombre`/`principio_activo` frente a `nombre_comercial`, y se añade indicación visual simple de estado (Activo/Histórico) mediante badge y descripción textual.
+
+**Cambios:**
+1. Nuevo fallback de nombre: `t.nombre_linea || t.farmaco_nombre || t.principio_activo || t.nombre_comercial || 'Tratamiento'`
+2. Indicación de estado: badge `activo` + texto " — Activo" para líneas activas; " — Histórico" para eventos de fin
+3. `badgeLabels` extendido con `activo: 'Activo'`
+
+**Resultado esperado FH-004:**
+- Abatacept (no Orencia) como nombre principal del evento histórico
+- Belimumab (no Benlysta) como nombre principal del evento activo
+- Rituximab (no Rixathon) como nombre principal del evento añadido
+- Badge "Activo" + descripción " — Activo" en inicios de Belimumab y Rituximab
+- Badge "Fin" + descripción " — Histórico" en fin de Abatacept
+
+**Archivos modificados:**
+- `scripts/farmacia_dashboard_paciente.js` — 8 líneas en `renderTimelineTratamiento()`
+- `tools/farmacia_dashboard_paciente_check.mjs` — 8 nuevos tests WO7G.2 (37 total, 0 failed)
+
+**Tests:**
+- `node tools/farmacia_dashboard_paciente_check.mjs` — 37/37 PASS
+- `node tools/farmacia_seguimiento_check.mjs` — 116/116 PASS
+- `node tools/farmacia_tratamiento_common_check.mjs` — 43/43 PASS
+- `node tools/farmacia_smoke_check.mjs` — 38/38 OK
+- `grep -c innerHTML` — 0
+
+**Importante:**
+No se modifica la rama demo.  
+No se modifica `main`.  
+No se modifica seguimiento, primera visita ni validación.  
+No se modifica `FarmaciaTratamiento`.  
+No se modifica longitudinal demo JSON.  
+No se modifica export CSV.  
+No se implementa WO8.
+
+**Pendiente:**
+Revisión visual de Sil.  
+WO8 queda pendiente para export/persistencia.
