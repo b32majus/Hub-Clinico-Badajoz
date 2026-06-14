@@ -663,25 +663,44 @@
             if (seenIds[id]) return;
             seenIds[id] = true;
             var cat = (line.estado_linea === 'historico' && !line.es_principal) ? 'Biológico previo/histórico' : 'Biológico activo';
+            var name = line.nombre_linea || line.nombre_comercial || line.principio_activo || '';
             candidates.push({
                 id: id,
                 category: cat,
-                label: '[' + cat + '] ' + (line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Tratamiento principal'),
+                label: name ? (name + ' — ' + cat) : 'Tratamiento principal',
                 source: 'principal',
                 tipo_relacion: line.tipo_relacion || (line.es_principal ? 'principal' : 'historico')
             });
         });
-        // Fallback si no hay líneas: línea seleccionada actual
+        // Fallback DOM: leer tratamiento actual directamente si no hay líneas cargadas
         if (!candidates.length) {
+            var fhSegFarmaco = byId('fhSegFarmaco');
+            var fhSegPrincipioActivo = byId('fhSegPrincipioActivo');
+            var domName = (fhSegFarmaco && fhSegFarmaco.value) || (fhSegPrincipioActivo && fhSegPrincipioActivo.value) || '';
+            if (domName) {
+                var domId = 'dom:current-treatment';
+                if (!seenIds[domId]) {
+                    seenIds[domId] = true;
+                    candidates.push({
+                        id: domId,
+                        category: 'Tratamiento principal',
+                        label: domName + ' — Tratamiento principal',
+                        source: 'principal',
+                        tipo_relacion: 'principal'
+                    });
+                }
+            }
+            // Fallback adicional: línea seleccionada actual en el select
             var selectedLine = getCurrentSelectedLine();
             if (selectedLine) {
                 var sid = 'line:' + selectedLine.linea_id;
                 if (!seenIds[sid]) {
                     seenIds[sid] = true;
+                    var sName = selectedLine.nombre_linea || selectedLine.nombre_comercial || selectedLine.principio_activo || '';
                     candidates.push({
                         id: sid,
                         category: 'Biológico activo',
-                        label: '[Biológico activo] ' + (selectedLine.nombre_linea || selectedLine.nombre_comercial || 'Tratamiento principal'),
+                        label: sName ? (sName + ' — Biológico activo') : 'Tratamiento principal',
                         source: 'principal',
                         tipo_relacion: selectedLine.tipo_relacion || 'principal'
                     });
@@ -703,7 +722,7 @@
             candidates.push({
                 id: oid,
                 category: category,
-                label: '[' + category + '] ' + name,
+                label: name + ' — ' + category,
                 source: 'other',
                 tipo_relacion: contract.tipo_relacion
             });

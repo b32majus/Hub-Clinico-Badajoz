@@ -159,7 +159,10 @@ assert(js.includes("estado_linea = 'no_aplica'"), 'Exposición mantiene estado_l
 // 26. Sospechoso de EA no se mezcla con principal/concomitante
 assert(js.includes("relation = 'sospechoso_ea'"), 'Sospechoso EA mapea tipo_relacion a sospechoso_ea');
 assert(js.includes("if (drug.sospechosoEa === 'Sí')"), 'Sospechoso EA se evalúa explícitamente');
-assert(!js.includes("tipo_relacion: 'principal'"), 'No se asigna tipo_relacion principal en otros fármacos');
+// mapOtherDrugToContract no asigna relation = 'principal' (el fallback DOM sí tiene tipo_relacion: 'principal' para tratamiento)
+var mdcMatch = js.match(/function mapOtherDrugToContract[\s\S]*?^    \}/m);
+var mdcBody = mdcMatch ? mdcMatch[0] : '';
+assert(mdcBody.indexOf("relation = 'principal'") === -1, 'mapOtherDrugToContract no asigna tipo_relacion principal a otros fármacos');
 
 // 27. Tratamiento principal sigue presente (reafirmación WO7E)
 assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conservado');
@@ -199,6 +202,29 @@ assert(js.includes('updateSuspectDrugSelector();'), 'updateSuspectDrugSelector s
 assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conservado');
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento conservado');
 assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual se normaliza sin crear nueva línea');
+
+// 35. WO7F.2 — getRelevantDrugCandidates tiene fallback DOM para tratamiento actual
+assert(js.includes('dom:current-treatment'), 'getRelevantDrugCandidates tiene fallback DOM para tratamiento');
+assert(js.includes('fhSegFarmaco'), 'Fallback DOM lee fhSegFarmaco');
+assert(js.includes('fhSegPrincipioActivo'), 'Fallback DOM lee fhSegPrincipioActivo');
+
+// 36. Labels legibles sin corchetes (formato "Nombre — Categoría")
+assert(!js.includes("'[Biológico activo] '"), 'Labels sin corchetes en getRelevantDrugCandidates');
+assert(js.includes("name"), 'Labels formato "Nombre — Categoría" en línea (usa name + — + cat)');
+assert(js.includes("name + ' — ' + category"), 'Labels formato "Nombre — Categoría" en otros fármacos');
+
+// 37. El desplegable sospechoso EA usa única función fuente
+assert(js.includes('getRelevantDrugCandidates();'), 'updateSuspectDrugSelector usa getRelevantDrugCandidates');
+
+// 38. Candidatos incluyen todos los orígenes documentados
+assert(js.includes("Añadir todas las líneas biológicas"), 'Código documenta inclusión de todas las líneas');
+assert(js.includes("todos los otros fármacos"), 'Código documenta inclusión de otros fármacos');
+assert(js.includes("Fallback DOM"), 'Código documenta fallback DOM');
+
+// 39. No hay otra función que sobrescriba el desplegable visible
+// updateSuspectDrugSelector es la única que escribe en fhSeguimientoEaFarmacoSospechoso
+var suspectSelectorWrites = (js.match(/fhSeguimientoEaFarmacoSospechoso/g) || []).length;
+assert(suspectSelectorWrites <= 3, 'Sospechoso EA solo referenciado para getElementById (no sobrescrito por otras rutas)');
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
