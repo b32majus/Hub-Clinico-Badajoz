@@ -5539,3 +5539,22 @@
         font-size: 1.05rem;
     }
 }
+
+/* ============================================================
+   WO Prebiológico — status indicators & chips
+   ============================================================ */
+
+.status-complete { color: #166534; background: #F0FDF4; border: 1px solid #BBF7D0; }
+.status-pending { color: #92400E; background: #FFFBEB; border: 1px solid #FDE68A; }
+.status-unknown { color: #64748B; background: #F1F5F9; border: 1px solid #CBD5E1; }
+.status-alert { color: #991B1B; background: #FEF2F2; border: 1px solid #FECACA; }
+.status-not_applicable { color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; }
+
+.prebio-complete { background: #F0FDF4; color: #166534; border: 1px solid #BBF7D0; }
+.prebio-blocked { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+.prebio-incomplete { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+
+.prebio-chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; margin: 2px; }
+.prebio-chip--more { background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1; }
+
+.pending-validation-card__prebio-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; margin-left: 24px; }

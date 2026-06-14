@@ -552,66 +552,106 @@
     }
 
     function renderPrebioBlock(patient) {
-        var prebio = F.getPrebiologicoStatus(patient);
         var block = document.createElement('div');
         block.className = 'pending-validation-card__prebio';
 
+        if (!patient) {
+            block.textContent = 'Prebiológico no evaluable';
+            return block;
+        }
+
+        if (!window.FarmaciaPrebiologico) {
+            console.warn('[Farmacia] FarmaciaPrebiologico no disponible');
+            block.textContent = 'Prebiológico no evaluable';
+            return block;
+        }
+
+        if (typeof window.FarmaciaPrebiologico.evaluatePatientPrebiologico !== 'function') {
+            block.textContent = 'Prebiológico no evaluable';
+            return block;
+        }
+
+        var result = window.FarmaciaPrebiologico.evaluatePatientPrebiologico(patient);
+
+        if (!result || !result.overallStatus) {
+            block.textContent = 'Prebiológico no evaluable';
+            return block;
+        }
+
+        var overallStatus = result.overallStatus;
+        var blockers = result.blockers || [];
+
         var labelRow = document.createElement('div');
         labelRow.className = 'pending-validation-card__prebio-label';
-
         var icon = document.createElement('i');
         icon.setAttribute('aria-hidden', 'true');
         var text = document.createElement('span');
-        text.textContent = prebio.label;
 
-        labelRow.appendChild(icon);
-        labelRow.appendChild(text);
-
-        if (prebio.overall === 'ok') {
+        if (overallStatus === 'complete') {
+            block.className = 'pending-validation-card__prebio prebio-complete pending-validation-card__prebio--ok';
             icon.className = 'fas fa-check-circle';
-            block.classList.add('pending-validation-card__prebio--ok');
-        } else if (prebio.overall === 'alerta') {
-            icon.className = 'fas fa-exclamation-triangle';
-            block.classList.add('pending-validation-card__prebio--alerta');
-        } else {
-            icon.className = 'fas fa-hourglass-half';
-            block.classList.add('pending-validation-card__prebio--pending');
+            text.textContent = 'Prebiológico completo · Listo para validación';
+            labelRow.appendChild(icon);
+            labelRow.appendChild(text);
+            block.appendChild(labelRow);
+            return block;
         }
 
-        block.appendChild(labelRow);
+        if (overallStatus === 'blocked' || overallStatus === 'incomplete') {
+            var statusClass = overallStatus === 'blocked' ? 'prebio-blocked pending-validation-card__prebio--alerta' : 'prebio-incomplete pending-validation-card__prebio--pending';
+            block.className = 'pending-validation-card__prebio ' + statusClass;
 
-        if (prebio.missing && prebio.missing.length > 0) {
-            var missingList = document.createElement('div');
-            missingList.className = 'pending-validation-card__prebio-missing';
-
-            var maxShown = 5;
-            var shown = prebio.missing.slice(0, maxShown);
-            var extra = prebio.missing.length - maxShown;
-
-            var missingText = 'Faltan: ' + shown.join(' · ');
-            if (extra > 0) {
-                missingText += ' +' + extra;
+            if (overallStatus === 'blocked') {
+                icon.className = 'fas fa-exclamation-triangle';
+                text.textContent = 'Prebiológico bloqueado · ' + blockers.length + ' bloqueo' + (blockers.length === 1 ? '' : 's');
+            } else {
+                icon.className = 'fas fa-hourglass-half';
+                text.textContent = 'Prebiológico incompleto · ' + blockers.length + ' bloqueo' + (blockers.length === 1 ? '' : 's');
             }
-            missingList.textContent = missingText;
-            block.appendChild(missingList);
-        }
 
-        if (prebio.overall === 'alerta' && prebio.items) {
-            var alertItems = [];
-            var keys = Object.keys(prebio.items);
-            for (var ki = 0; ki < keys.length; ki++) {
-                if (prebio.items[keys[ki]].status === 'alerta') {
-                    alertItems.push(prebio.items[keys[ki]].label);
+            labelRow.appendChild(icon);
+            labelRow.appendChild(text);
+            block.appendChild(labelRow);
+
+            if (blockers.length > 0) {
+                var priority = { alert: 0, pending: 1, unknown: 2, missing: 3 };
+                var sorted = blockers.slice().sort(function (a, b) {
+                    var pa = priority[a.status] !== undefined ? priority[a.status] : 99;
+                    var pb = priority[b.status] !== undefined ? priority[b.status] : 99;
+                    return pa - pb;
+                });
+
+                var chipsContainer = document.createElement('div');
+                chipsContainer.className = 'pending-validation-card__prebio-chips';
+                var maxShown = 3;
+                var shown = sorted.slice(0, maxShown);
+                var extra = sorted.length - maxShown;
+
+                for (var i = 0; i < shown.length; i++) {
+                    var item = shown[i];
+                    var chip = document.createElement('span');
+                    chip.className = 'prebio-chip status-' + item.status;
+                    chip.textContent = item.label + ': ' + item.status;
+                    if (item.detail) {
+                        chip.setAttribute('title', item.detail);
+                    }
+                    chipsContainer.appendChild(chip);
                 }
+
+                if (extra > 0) {
+                    var moreChip = document.createElement('span');
+                    moreChip.className = 'prebio-chip prebio-chip--more';
+                    moreChip.textContent = '+' + extra + ' más';
+                    chipsContainer.appendChild(moreChip);
+                }
+
+                block.appendChild(chipsContainer);
             }
-            if (alertItems.length > 0) {
-                var alertList = document.createElement('div');
-                alertList.className = 'pending-validation-card__prebio-alert-items';
-                alertList.textContent = 'Revisar: ' + alertItems.join(' · ');
-                block.appendChild(alertList);
-            }
+
+            return block;
         }
 
+        block.textContent = 'Prebiológico no evaluable';
         return block;
     }
 
