@@ -21,11 +21,13 @@ function main() {
     if (!content.includes('safeGetSessionStorage')) issues.push('ERROR: Falta safeGetSessionStorage');
     if (!content.includes('safeSetSessionStorage')) issues.push('ERROR: Falta safeSetSessionStorage');
     if (!content.includes('safeRemoveSessionStorage')) issues.push('ERROR: Falta safeRemoveSessionStorage');
-    // Verificar que no hay escrituras directas a localStorage para import
-    if (content.includes('safeSetLocalStorage(IMPORT_STORAGE_KEYS')) issues.push('ERROR: Aun se usa safeSetLocalStorage con IMPORT_STORAGE_KEYS');
+    // Verificar que no hay lecturas directas a localStorage para import
+    if (content.includes('safeGetLocalStorage(IMPORT_STORAGE_KEYS')) issues.push('ERROR: Aun se usa safeGetLocalStorage con IMPORT_STORAGE_KEYS');
     // Verificar que readImportedDataset usa sessionStorage
     if (!content.includes('safeGetSessionStorage(IMPORT_STORAGE_KEYS')) issues.push('ERROR: readImportedDataset no usa sessionStorage');
-    // Verificar fallback memoria
+    // Verificar que readImportedDataset lee fallback memoria
+    if (!content.includes('SESSION_STORAGE_FALLBACK[kind]')) issues.push('ERROR: readImportedDataset no lee SESSION_STORAGE_FALLBACK[kind]');
+    // Verificar fallback memoria declarado
     if (!content.includes('SESSION_STORAGE_FALLBACK')) issues.push('ERROR: Falta fallback en memoria');
   }
 

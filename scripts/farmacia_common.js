@@ -466,7 +466,10 @@
 
     function readImportedDataset(kind) {
         var raw = safeGetSessionStorage(IMPORT_STORAGE_KEYS[kind]);
-        if (!raw) raw = safeGetLocalStorage(IMPORT_STORAGE_KEYS[kind]);
+        if (!raw) {
+            var fallback = SESSION_STORAGE_FALLBACK[kind];
+            if (fallback) return fallback;
+        }
         return safeParseJson(raw);
     }
 
