@@ -228,6 +228,56 @@ La demo final del lunes sigue siendo `farmacia-demo-lunes-final-wo4-20260614`.
 
 ---
 
+## WO6e ejecutada — Microfixes visuales bloqueantes
+
+**WO6e — Corrección de bloqueantes visuales detectados por Sil en validación manual de WO6**
+
+**Estado:** 🟡 **pending_review** (2026-06-14, WO6e ejecutada)
+**HEAD final de la rama:** `44724a3` (`44724a36f3995c7f6a95a3686053d76df0865a81`)
+
+**Fix 1 — Seguimiento: nueva pauta preseleccionada y editable**
+- `scripts/farmacia_seguimiento.js`:
+  - En `searchCIP()`: al cargar paciente, se normaliza su pauta actual y se preselecciona en `fhSegNuevaPauta`
+  - En `applyContext()`: mismo comportamiento cuando el paciente viene por contexto URL
+  - El select sigue siendo editable: el usuario puede cambiar la pauta libremente
+
+**Fix 2 — Primera visita: eliminar datos fantasma sin paciente**
+- `scripts/farmacia_primera_visita.js`:
+  - La limpieza del catálogo (`C.clearSnapshot()`) ahora se ejecuta siempre que no haya paciente (`!ctx.patient`), no solo cuando hay CIP sin paciente
+  - Esto evita que un snapshot persistente de otra página rellene el grid "Tratamiento validado" con datos fantasma
+
+**Fix 3 — Primera visita: autocomplete de fármaco siempre disponible**
+- `scripts/farmacia_primera_visita.js`:
+  - El bloque de autocomplete (`fhPvAutocompleteBlock`) ahora se muestra **siempre**, tanto si hay paciente precargado como si no
+  - Comportamiento coherente con la pantalla de validación
+
+**Auditoría — Pauta y dosis en concomitantes (sin corregir, reportado)**
+- `scripts/farmacia_seguimiento.js`:
+  - **Dosis auto-rellenada desde catálogo** al seleccionar un fármaco en concomitantes (antes solo rellenaba farmaco + principioActivo). Cambio trivial, incluido en WO6e.
+  - **Pauta en concomitantes** sigue siendo input texto libre. La conversión a desplegable no es trivial (cambia patrón de renderizado en `renderFollowupOtherDrugRow`). Se reporta como deuda para WO7.
+  - **Diferencias de contrato de dosis entre pantallas**: en validación la dosis se asigna desde `drug.dosis`; en PV y seguimiento se permite `drug.dosis || drug.nombre_presentacion` (más tolerante). Inconsistencia menor, no bloqueante.
+
+**Tests verificados (WO6e):**
+| Test | Resultado |
+|---|---|
+| `node --check scripts/farmacia_primera_visita.js` | OK |
+| `node --check scripts/farmacia_seguimiento.js` | OK |
+| `node --check scripts/farmacia_common.js` | OK |
+| `node --check scripts/farmacia_pautas_catalog.js` | OK |
+| `node tools/farmacia_pautas_catalog_check.mjs` | PASSED |
+| `node tools/farmacia_common_check.mjs` | 13/13 passed |
+| `node tools/farmacia_storage_policy_check.mjs` | PASSED |
+| `node tools/farmacia_prebiologico_helper_check.mjs` | PASSED |
+| `node tools/farmacia_prebiologico_single_source_check.mjs` | 29 passed |
+| `node tools/farmacia_smoke_check.mjs` | PASSED |
+| `grep -R "innerHTML" farmacia_*.html scripts/farmacia_*.js` | 0 nuevos |
+
+**No se tocó:** main, Pages, datos demo estáticos, lógica de separación clínica, filtro inducción, modelo Excel FH, fármacos especiales.
+
+**WO6 sigue en pending_review.** Fuente activa: WO5.
+
+---
+
 ## SHA verificados
 
 | Ref | SHA completo |
