@@ -1138,3 +1138,46 @@ No se modifica main.
 No se modifica kairos-os-lab.  
 No se toca el panel de control.  
 
+## WO8.1c.1 — Incorporación plantilla Enfermería Inicio Biológico
+
+**Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
+**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**HEAD final:** `[PENDING COMMIT]`
+
+**Alcance:**
+Se localiza e incorpora al repo una copia versionada de la plantilla existente de Enfermería / Inicio Biológico como recurso sintético operativo. La plantilla no se inventa desde cero; se conserva la estructura original del activo de conocimiento del proyecto.
+
+**Archivos creados:**
+- `templates/enfermeria_inicio_biologico_PROMueve_sintetico_v1.xlsx` — copia versionada (44 KB, 4 hojas)
+- `tools/enfermeria_inicio_biologico_template_check.mjs` — check (tests, 0 failed)
+
+**Archivos modificados:**
+- `docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md` — gap resuelto → nota de resolución
+- `docs/farmacia_branch_manifest_20260614.md` — este bloque
+
+**Estructura de la plantilla:**
+| Hoja | Filas | Propósito |
+|---|---|---|
+| `INICIO_BIOLOGICO` | 7 | Registro de inicio de biológico con datos demo |
+| `PANEL_ENFERMERIA` | 14 | Resumen y evolución por servicio |
+| `LISTAS` | 11 | Listas desplegables controladas |
+| `INSTRUCCIONES` | 6 | Instrucciones rápidas para Enfermería |
+
+**Ruta origen de la plantilla:**
+`/srv/kairos-lab/preview/farmacia-v0-3/data/import/enfermeria/Excel_Enfermeria_Inicio_Biologico_PROMueve_FHs_v3_panel_servicios_mock.xlsx`
+
+**Checks:**
+- Enfermería template check: PASS
+- Template check FH (WO8.1a): 36/36 PASS
+- Sintético check FH (WO8.1c): 38/38 PASS
+
+**Importante:**
+No se usan datos reales.  
+No se modifica código funcional del Hub.  
+No se modifica el Excel FH base ni el Excel FH sintético.  
+No se implementa parser/importación.  
+No se modifica la rama demo.  
+No se modifica main.  
+No se modifica kairos-os-lab.  
+No se toca el panel de control.  
+
