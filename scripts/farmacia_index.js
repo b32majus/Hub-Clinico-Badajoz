@@ -495,13 +495,21 @@
         var board = document.getElementById('pendingValidationBoard');
         var cards = document.getElementById('pendingValidationCards');
         var empty = document.getElementById('pendingValidationEmpty');
-        if (!board || !cards || !empty || !F.getPendingValidationPatients) return;
+        if (!board || !cards || !empty || !F.getPendingValidationPatients || !F.isEnfermeriaPatient) return;
         F.clearChildren(cards);
         var patients = F.getPendingValidationPatients();
-        empty.classList.toggle('hidden', patients.length > 0);
-        if (!patients.length) return;
+        // Filtrar: los pacientes de Enfermería que NO son OK FARMACIA no deben aparecer aquí
+        var filtered = patients.filter(function (p) {
+            if (!F.isEnfermeriaPatient(p)) return true; // Farmacia/demo → sí
+            // Enfermería: solo OK FARMACIA aparece aquí
+            var est = String(p.estado || p.estado_prebiologico_enfermeria || '').toLowerCase();
+            return est.indexOf('ok') !== -1;
+        });
+        empty.classList.toggle('hidden', filtered.length > 0);
+        if (!filtered.length) return;
 
-        patients.forEach(function (patient) {
+        filtered.forEach(function (patient) {
+            var esEnf = F.isEnfermeriaPatient(patient);
             var card = document.createElement('article');
             card.className = 'pending-validation-card';
 
@@ -517,8 +525,13 @@
             subtitle.textContent = textOrDash(patient.nombre);
             titleWrap.append(title, subtitle);
             var badge = document.createElement('span');
-            badge.className = 'status-badge status-badge--pending';
-            badge.textContent = 'Pendiente de validación';
+            if (esEnf) {
+                badge.className = 'status-badge status-badge--ok';
+                badge.textContent = 'OK Farmacia';
+            } else {
+                badge.className = 'status-badge status-badge--pending';
+                badge.textContent = 'Pendiente de validación';
+            }
             header.append(titleWrap, badge);
             card.appendChild(header);
 
@@ -531,7 +544,28 @@
             body.appendChild(buildPendingMeta('fa-database', 'Origen de datos: ' + pendingSourceLabel(patient)));
             card.appendChild(body);
 
-            card.appendChild(renderPrebioBlock(patient));
+            // Prebiológico: usar render específico según origen
+            if (esEnf) {
+                // Enfermería: usar badges específicos, NO renderPrebioBlock genérico
+                var enfBadges = F.getEnfermeriaBadges(patient);
+                if (enfBadges.length > 0) {
+                    var enfBlock = document.createElement('div');
+                    enfBlock.className = 'pending-validation-card__prebio prebio-complete pending-validation-card__prebio--ok';
+                    var labelRow = document.createElement('div');
+                    labelRow.className = 'pending-validation-card__prebio-label';
+                    var icon = document.createElement('i');
+                    icon.className = 'fas fa-check-circle';
+                    icon.setAttribute('aria-hidden', 'true');
+                    var text = document.createElement('span');
+                    text.textContent = 'Prebiológico completo · Listo para validación';
+                    labelRow.appendChild(icon);
+                    labelRow.appendChild(text);
+                    enfBlock.appendChild(labelRow);
+                    card.appendChild(enfBlock);
+                }
+            } else {
+                card.appendChild(renderPrebioBlock(patient));
+            }
 
             var actions = document.createElement('div');
             actions.className = 'pending-validation-card__actions';
@@ -828,11 +862,11 @@
             }
         });
         initGuidedIntake();
-        renderPendingValidationBoard();
         renderEnfermeriaBoard();
+        renderPendingValidationBoard();
         document.addEventListener('farmacia:data-imported', function () {
-            renderPendingValidationBoard();
             renderEnfermeriaBoard();
+            renderPendingValidationBoard();
         });
         var context = F.getQueryContext();
         if (context.cip && cipInput) {

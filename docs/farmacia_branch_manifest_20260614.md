@@ -1188,20 +1188,27 @@ No se modifica el Excel FH base ni sintético.
 No se rompe la búsqueda ni el dashboard.  
 No se rompe el botón de copiar fila Excel.  
 
-## WO8.1c.5 — Visibilidad y estados correctos de solicitudes Enfermería
+## WO8.1c.6 — Corrección visual DOM tarjetas Enfermería
 
 **Estado:** completada técnicamente, pendiente de revisión Sil/Cora  
 **Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`
 
 **Alcance:**
-Se corrige la visualización de las solicitudes procedentes de Enfermería / Inicio Biológico para que todas las filas útiles aparezcan en el Hub con su estado correspondiente.
+Se corrige la visualización real de las solicitudes de Enfermería para evitar que el board antiguo de pendientes pinte tarjetas con bloqueantes genéricos, textos en inglés o acciones de validación incorrectas. Las 4 solicitudes de Enfermería aparecen en el panel propio con estado y acción correctos.
+
+**Decisiones clave:**
+- Board Enfermería se renderiza antes que pendientes de validación
+- `renderPendingValidationBoard()` filtra pacientes Enfermería que no son OK FARMACIA
+- OK FARMACIA en board de validación usa badges Enfermería, no `renderPrebioBlock()` genérico
+- Nuevo helper `isEnfermeriaPatient()` para detectar pacientes del circuito Enfermería
+- Nuevo test DOM que verifica 4 pacientes, grupos correctos y textos prohibidos
 
 **Archivos modificados:**
-- `scripts/farmacia_common.js` — +4 funciones normalización/visibilidad
-- `scripts/farmacia_index.js` — nuevo `renderEnfermeriaBoard()`
-- `tools/farmacia_enfermeria_import_check.mjs` — +9 tests, 95 total
+- `scripts/farmacia_common.js` — nuevo `isEnfermeriaPatient()`
+- `scripts/farmacia_index.js` — `renderPendingValidationBoard` filtra Enfermería, usa badges específicos; boards reordenados (Enfermería primero)
+- `tools/farmacia_enfermeria_board_dom_check.mjs` — nuevo, 37 tests DOM
 - `docs/farmacia_branch_manifest_20260614.md` — este bloque
-No se toca la rama demo.  
+
 
 ## WO8.1c.3 — Adaptador import Enfermería Inicio Biológico
 

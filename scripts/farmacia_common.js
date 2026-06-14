@@ -1766,6 +1766,19 @@
         });
     }
 
+    /**
+     * Determina si un paciente proviene del circuito Enfermería / Inicio Biológico.
+     */
+    function isEnfermeriaPatient(patient) {
+        if (!patient) return false;
+        if (patient.origen_solicitud === 'enfermeria') return true;
+        if (patient.tipo_origen === 'enfermeria_inicio_biologico') return true;
+        if (patient.source_type === 'ENFERMERIA') return true;
+        var source = String(patient.importSource || '').toLowerCase();
+        if (source.indexOf('enfermer') !== -1) return true;
+        return false;
+    }
+
     window.FarmaciaDemo = {
         patients,
         profesionales,
@@ -1806,6 +1819,7 @@
         getEnfermeriaFieldStatus: getEnfermeriaFieldStatus,
         getEnfermeriaBadges: getEnfermeriaBadges,
         getEnfermeriaVisiblePatients: getEnfermeriaVisiblePatients,
+        isEnfermeriaPatient: isEnfermeriaPatient,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }
