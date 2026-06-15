@@ -292,10 +292,35 @@
     }
 
     function resolveModoFromOrigen(origen) {
+        if (origen === "derma" || origen === "reuma" || origen === "digestivo") return origen;
         if (origen === "excel_enfermeria") return "reuma";
         if (origen === "manual_farmacia") return byId("fhServicioManual") ? byId("fhServicioManual").value || "" : "";
         if (origen === "demo_formacion") return "derma";
         return "derma";
+    }
+
+    function formatImportedDate(rawValue) {
+        var raw = String(rawValue || "").trim();
+        if (!raw) return "";
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            var parts = raw.split("-");
+            return parts[2] + "/" + parts[1] + "/" + parts[0];
+        }
+        if (/^\d+(?:\.\d+)?$/.test(raw)) {
+            var serial = Number(raw);
+            if (!isNaN(serial) && serial > 0) {
+                var utcDays = Math.floor(serial - 25569);
+                var utcValue = utcDays * 86400;
+                var date = new Date(utcValue * 1000);
+                if (!isNaN(date.getTime())) {
+                    var day = String(date.getUTCDate()).padStart(2, "0");
+                    var month = String(date.getUTCMonth() + 1).padStart(2, "0");
+                    return day + "/" + month + "/" + date.getUTCFullYear();
+                }
+            }
+        }
+        return raw;
     }
 
     function setDermaFormReadonly(readonly) {
@@ -687,14 +712,14 @@
         if (gs && enf) {
             var parts = [];
             if (enf.estado_prebiologico_enfermeria) parts.push(enf.estado_prebiologico_enfermeria);
-            if (enf.fecha_ok_farmacia) parts.push('Fecha: ' + enf.fecha_ok_farmacia);
+            if (enf.fecha_ok_farmacia) parts.push('Fecha: ' + formatImportedDate(enf.fecha_ok_farmacia));
             gs.textContent = parts.length ? parts.join(' · ') : '-';
         }
         var upperGs = byId('upperPrebioGlobalStatus');
         if (upperGs) {
             var gsParts = [];
             if (enf && enf.estado_prebiologico_enfermeria) gsParts.push(enf.estado_prebiologico_enfermeria);
-            if (enf && enf.fecha_ok_farmacia) gsParts.push('Fecha: ' + enf.fecha_ok_farmacia);
+            if (enf && enf.fecha_ok_farmacia) gsParts.push('Fecha: ' + formatImportedDate(enf.fecha_ok_farmacia));
             upperGs.textContent = gsParts.length ? gsParts.join(' · ') : '-';
         }
     }
@@ -721,7 +746,7 @@
         if (gs) {
             var parts = [];
             if (enfP.estado_prebiologico_enfermeria) parts.push(enfP.estado_prebiologico_enfermeria);
-            if (enfP.fecha_ok_farmacia) parts.push('Fecha: ' + enfP.fecha_ok_farmacia);
+            if (enfP.fecha_ok_farmacia) parts.push('Fecha: ' + formatImportedDate(enfP.fecha_ok_farmacia));
             gs.textContent = parts.length ? parts.join(' · ') : '-';
         }
         /* Mirror upper chips for Enfermería patient */
@@ -734,7 +759,7 @@
         if (upperGs) {
             var uparts = [];
             if (enfP.estado_prebiologico_enfermeria) uparts.push(enfP.estado_prebiologico_enfermeria);
-            if (enfP.fecha_ok_farmacia) uparts.push('Fecha: ' + enfP.fecha_ok_farmacia);
+            if (enfP.fecha_ok_farmacia) uparts.push('Fecha: ' + formatImportedDate(enfP.fecha_ok_farmacia));
             upperGs.textContent = uparts.length ? uparts.join(' · ') : '-';
         }
     }
