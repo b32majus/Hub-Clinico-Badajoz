@@ -666,9 +666,15 @@
     function selectValidadoDrug(drug) {
         byId("fhValidadoFarmaco").value = drug.display_name || drug.nombre_comercial || "";
         if (byId("fhValidadoPrincipioActivo")) byId("fhValidadoPrincipioActivo").value = drug.principio_activo || "";
-        if (byId("fhValidadoPresentacion")) byId("fhValidadoPresentacion").value = drug.presentacion || "";
+        if (byId("fhValidadoPresentacion")) byId("fhValidadoPresentacion").value = drug.nombre_presentacion || drug.presentacion || drug.display_name || "";
         if (byId("fhValidadoDosis")) byId("fhValidadoDosis").value = drug.dosis || "";
-        if (byId("fhValidadoVia")) byId("fhValidadoVia").value = drug.via || "";
+        if (byId("fhValidadoVia") && drug.via) {
+            var viaValue = mapViaToSelect(drug.via);
+            var viaSelect = byId("fhValidadoVia");
+            var viaOptions = Array.from(viaSelect.options).map(function (opt) { return opt.value; });
+            if (viaOptions.indexOf(viaValue) !== -1) viaSelect.value = viaValue;
+            else if (viaOptions.indexOf("Otra") !== -1) viaSelect.value = "Otra";
+        }
         if (byId("fhValidadoPauta")) {
             var pop = byId("fhValidadoPauta");
             if (drug.pauta && drug.pauta !== "Otra") {
