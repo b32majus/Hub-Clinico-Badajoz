@@ -412,6 +412,8 @@
             }
             var enfFarmaco = enf.farmaco || enf.farmaco_solicitado || '';
             if (enfFarmaco) F.setValue('fhDermaFarmaco', enfFarmaco);
+            // Precarga fhValidadoFarmaco con el nombre del fármaco desde origen (sin seleccionar CIMA)
+            if (enfFarmaco && !byId("fhValidadoFarmaco").value) F.setValue("fhValidadoFarmaco", enfFarmaco);
             F.setValue('fhDermaDosis', '');
             F.setValue('fhDermaPeso', '');
             var indSel = byId('fhDermaInduccion');
@@ -659,6 +661,124 @@
         C.selectDrug(drug);
         clearAutocompleteDropdown();
         updateValidationModuleSummaries();
+    }
+
+    function selectValidadoDrug(drug) {
+        byId("fhValidadoFarmaco").value = drug.display_name || drug.nombre_comercial || "";
+        if (byId("fhValidadoPrincipioActivo")) byId("fhValidadoPrincipioActivo").value = drug.principio_activo || "";
+        if (byId("fhValidadoPresentacion")) byId("fhValidadoPresentacion").value = drug.presentacion || "";
+        if (byId("fhValidadoDosis")) byId("fhValidadoDosis").value = drug.dosis || "";
+        if (byId("fhValidadoVia")) byId("fhValidadoVia").value = drug.via || "";
+        if (byId("fhValidadoPauta")) {
+            var pop = byId("fhValidadoPauta");
+            if (drug.pauta && drug.pauta !== "Otra") {
+                var opt = Array.from(pop.options).find(function (o) { return o.value === drug.pauta || o.text === drug.pauta; });
+                if (opt) pop.value = opt.value;
+            }
+        }
+        if (byId("fhValidadoInduccion")) {
+            var ind = byId("fhValidadoInduccion");
+            if (drug.induccion === "Sí" || drug.induccion === "Si" || drug.induccion === true || drug.induccion === "true") {
+                ind.value = "si";
+            } else if (drug.induccion === "No" || drug.induccion === false || drug.induccion === "false") {
+                ind.value = "no";
+            }
+        }
+        clearValidadoAutocompleteDropdown();
+        updateValidationModuleSummaries();
+    }
+
+    function renderValidadoAutocompleteDropdown(results) {
+        var dropdown = byId("autocompleteValidadoDropdown");
+        F.clearChildren(dropdown);
+        if (!results || results.length === 0) {
+            dropdown.classList.add("hidden");
+            return;
+        }
+        var maxResults = Math.min(results.length, 15);
+        for (var i = 0; i < maxResults; i++) {
+            var drug = results[i];
+            var item = createEl("div", "autocomplete-item");
+            if (i === autocompleteActiveIndex) item.classList.add("autocomplete-item--active");
+            var mainRow = createEl("div", "autocomplete-item-main");
+            var nameSpan = createEl("span", "autocomplete-item-name", drug.display_name || drug.nombre_comercial || "—");
+            mainRow.appendChild(nameSpan);
+            if (isTruthyRobust(drug.es_hospitalario)) mainRow.appendChild(createEl("span", "drug-tag drug-tag--hosp", "[HOSP]"));
+            if (isTruthyRobust(drug.biosimilar)) mainRow.appendChild(createEl("span", "drug-tag drug-tag--bio", "[BIO]"));
+            var sourceTag = createEl("span", "drug-source-tag drug-source-tag--" + drug.source_type.toLowerCase(), drug.source_type);
+            mainRow.appendChild(sourceTag);
+            item.appendChild(mainRow);
+            var detailRow = createEl("div", "autocomplete-item-detail");
+            var parts = [];
+            if (drug.principio_activo) parts.push(drug.principio_activo);
+            if (drug.dosis) parts.push(drug.dosis);
+            if (drug.via) parts.push(drug.via);
+            if (drug.codigo_nacional) parts.push("CN " + drug.codigo_nacional);
+            detailRow.textContent = parts.join(" · ");
+            item.appendChild(detailRow);
+            (function (d) {
+                item.addEventListener("click", function () { selectValidadoDrug(d); });
+            })(drug);
+            dropdown.appendChild(item);
+        }
+        dropdown.classList.remove("hidden");
+        autocompleteActiveIndex = -1;
+    }
+
+    function clearValidadoAutocompleteDropdown() {
+        var dropdown = byId("autocompleteValidadoDropdown");
+        F.clearChildren(dropdown);
+        dropdown.classList.add("hidden");
+        autocompleteActiveIndex = -1;
+    }
+
+    function handleValidadoAutocompleteInput() {
+        if (!C.loaded) return;
+        var query = byId("fhValidadoFarmaco").value.trim();
+        if (query.length < 2) {
+            clearValidadoAutocompleteDropdown();
+            return;
+        }
+        renderValidadoAutocompleteDropdown(C.search(query));
+        updateValidationModuleSummaries();
+    }
+
+    function enableAutocompleteValidado() {
+        var input = byId("fhValidadoFarmaco");
+        if (!input) return;
+        input.placeholder = "Buscar en catálogo...";
+        input.addEventListener("input", handleValidadoAutocompleteInput);
+        input.addEventListener("keydown", function (event) {
+            var dropdown = byId("autocompleteValidadoDropdown");
+            if (dropdown.classList.contains("hidden")) return;
+            var items = dropdown.querySelectorAll(".autocomplete-item");
+            if (items.length === 0) return;
+            if (event.key === "ArrowDown") {
+                event.preventDefault();
+                autocompleteActiveIndex = Math.min(autocompleteActiveIndex + 1, items.length - 1);
+                items.forEach(function (item, idx) {
+                    item.classList.toggle("autocomplete-item--active", idx === autocompleteActiveIndex);
+                });
+            } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                autocompleteActiveIndex = Math.max(autocompleteActiveIndex - 1, -1);
+                items.forEach(function (item, idx) {
+                    item.classList.toggle("autocomplete-item--active", idx === autocompleteActiveIndex);
+                });
+            } else if (event.key === "Enter") {
+                if (autocompleteActiveIndex >= 0 && autocompleteActiveIndex < items.length) {
+                    event.preventDefault();
+                    items[autocompleteActiveIndex].click();
+                }
+            } else if (event.key === "Escape") {
+                clearValidadoAutocompleteDropdown();
+            }
+        });
+        input.addEventListener("blur", function () {
+            setTimeout(function () {
+                if (!document.activeElement || !byId("autocompleteValidadoDropdown").contains(document.activeElement)) clearValidadoAutocompleteDropdown();
+            }, 150);
+        });
     }
 
     function isTruthyRobust(value) {
@@ -1324,11 +1444,13 @@
         renderOtherDrugs();
         if (C.loaded) {
             enableAutocomplete();
+            enableAutocompleteValidado();
             byId("noFindDrugRow").classList.remove("hidden");
         }
         document.addEventListener("farmacia:catalog-loaded", function () {
             if (!C.loaded) return;
             enableAutocomplete();
+            enableAutocompleteValidado();
             byId("noFindDrugRow").classList.remove("hidden");
         });
         applyContext();
