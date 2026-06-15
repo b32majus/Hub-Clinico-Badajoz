@@ -938,10 +938,12 @@
     }
 
     function mapViaToSelect(catalogVia) {
-        var v = (catalogVia || "").toLowerCase();
-        if (v.indexOf("subcut") !== -1 || v === "sc") return "SC";
-        if (v.indexOf("intraven") !== -1 || v === "iv") return "IV";
-        if (v.indexOf("oral") !== -1) return "Oral";
+        var v = String(catalogVia || "").trim().toLowerCase();
+        if (!v) return "";
+        if (v.indexOf("subcut") !== -1 || v === "sc" || v === "s.c." || v === "subcutanea" || v === "subcutáneo") return "SC";
+        if (v.indexOf("intraven") !== -1 || v === "iv" || v === "i.v." || v === "intravenosa" || v === "intravenoso") return "IV";
+        if (v.indexOf("oral") !== -1 || v === "vo" || v === "v.o.") return "Oral";
+        if (v.indexOf("intramus") !== -1 || v === "im" || v === "i.m.") return "IM";
         return "Otra";
     }
 
@@ -956,32 +958,46 @@
     }
 
     function selectValidadoDrug(drug) {
-        byId("fhValidadoFarmaco").value = drug.display_name || drug.nombre_comercial || "";
-        if (byId("fhValidadoPrincipioActivo")) byId("fhValidadoPrincipioActivo").value = drug.principio_activo || "";
-        if (byId("fhValidadoPresentacion")) byId("fhValidadoPresentacion").value = drug.nombre_presentacion || drug.presentacion || drug.display_name || "";
-        if (byId("fhValidadoDosis")) byId("fhValidadoDosis").value = drug.dosis || "";
-        if (byId("fhValidadoVia") && drug.via) {
-            var viaValue = mapViaToSelect(drug.via);
-            var viaSelect = byId("fhValidadoVia");
-            var viaOptions = Array.from(viaSelect.options).map(function (opt) { return opt.value; });
-            if (viaOptions.indexOf(viaValue) !== -1) viaSelect.value = viaValue;
-            else if (viaOptions.indexOf("Otra") !== -1) viaSelect.value = "Otra";
-        }
-        if (byId("fhValidadoPauta")) {
-            var pop = byId("fhValidadoPauta");
-            if (drug.pauta && drug.pauta !== "Otra") {
-                var opt = Array.from(pop.options).find(function (o) { return o.value === drug.pauta || o.text === drug.pauta; });
-                if (opt) pop.value = opt.value;
+        var farmacoEl = byId("fhValidadoFarmaco");
+        var princEl = byId("fhValidadoPrincipioActivo");
+        var presEl = byId("fhValidadoPresentacion");
+        var dosisEl = byId("fhValidadoDosis");
+        var viaEl = byId("fhValidadoVia");
+        var pautaEl = byId("fhValidadoPauta");
+        var indEl = byId("fhValidadoInduccion");
+        if (!drug || !farmacoEl) return;
+
+        var displayName = drug.display_name || drug.nombre || drug.nombre_presentacion || drug.presentacion || drug.principio_activo || drug.principioActivo || drug.pa || farmacoEl.value || "";
+        farmacoEl.value = displayName;
+        if (princEl) princEl.value = drug.principio_activo || drug.principioActivo || drug.pa || "";
+        if (presEl) presEl.value = drug.nombre_presentacion || drug.presentacion || drug.display_name || displayName || "";
+        if (dosisEl && drug.dosis) dosisEl.value = drug.dosis;
+        if (viaEl) {
+            var viaRaw = drug.via || drug.via_administracion || "";
+            if (viaRaw) {
+                var viaValue = mapViaToSelect(viaRaw);
+                var viaOptions = Array.from(viaEl.options).map(function (opt) { return opt.value; });
+                if (viaOptions.indexOf(viaValue) !== -1) viaEl.value = viaValue;
+                else if (viaOptions.indexOf("Otra") !== -1) viaEl.value = "Otra";
             }
         }
-        if (byId("fhValidadoInduccion")) {
-            var ind = byId("fhValidadoInduccion");
+        if (pautaEl && Object.prototype.hasOwnProperty.call(drug, "pauta") && drug.pauta && drug.pauta !== "Otra") {
+            var pautaOpt = Array.from(pautaEl.options).find(function (o) { return o.value === drug.pauta || o.text === drug.pauta; });
+            if (pautaOpt) pautaEl.value = pautaOpt.value;
+        }
+        if (indEl && Object.prototype.hasOwnProperty.call(drug, "induccion")) {
             if (drug.induccion === "Sí" || drug.induccion === "Si" || drug.induccion === true || drug.induccion === "true") {
-                ind.value = "si";
+                indEl.value = "si";
             } else if (drug.induccion === "No" || drug.induccion === false || drug.induccion === "false") {
-                ind.value = "no";
+                indEl.value = "no";
             }
         }
+
+        [farmacoEl, princEl, presEl, dosisEl, viaEl, pautaEl, indEl].forEach(function (el) {
+            if (!el) return;
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+        });
         clearValidadoAutocompleteDropdown();
         updateValidationModuleSummaries();
     }
