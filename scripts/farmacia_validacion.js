@@ -415,6 +415,7 @@
                 F.setValue('fhDermaJustificacion', 'Solicitud desde Enfermería / Inicio biológico · ' + (enfPat || ''));
             }
             if (typeof applyEnfermeriaPrebioChips === 'function') applyEnfermeriaPrebioChips(enf);
+            if (typeof hydrateUpperFormFromEnfermeria === 'function') hydrateUpperFormFromEnfermeria(enf);
             if (modoActual === 'reuma') {
                 hydrateReumaForm(enf);
             }
@@ -567,6 +568,46 @@
             if (enfP.estado_prebiologico_enfermeria) uparts.push(enfP.estado_prebiologico_enfermeria);
             if (enfP.fecha_ok_farmacia) uparts.push('Fecha: ' + enfP.fecha_ok_farmacia);
             upperGs.textContent = uparts.length ? uparts.join(' · ') : '-';
+        }
+    }
+
+    function hydrateUpperFormFromEnfermeria(enfP) {
+        if (!enfP) return;
+        function setChipVal(targetId, val) {
+            if (!val || String(val).trim() === '') return;
+            F.setValue(targetId, val);
+            var g = document.querySelector('[data-chip-target="' + targetId + '"]');
+            if (g) syncRadioGroup(g, val);
+        }
+        if (enfP.analitica_estado) {
+            var au = String(enfP.analitica_estado).toUpperCase();
+            if (/^(OK|COMPLETO|COMPLETADA|COMPLETADO|SI|SÍ)$/.test(au)) F.setValue('fhAnaliticaReciente', 'si');
+            else if (/^NO$/.test(au)) F.setValue('fhAnaliticaReciente', 'no');
+        }
+        if (enfP.mantoux_estado) {
+            var mu = String(enfP.mantoux_estado).toUpperCase();
+            if (mu.indexOf('NEGATIVO') !== -1) setChipVal('fhAnaliticaMantoux', 'Negativo');
+            else if (mu.indexOf('POSITIV') !== -1) setChipVal('fhAnaliticaMantoux', 'Positivo - tratado');
+            else if (mu.indexOf('PENDIENTE') !== -1) setChipVal('fhAnaliticaMantoux', 'Pendiente');
+        }
+        function setSerologia(hiddenId, raw) {
+            if (!raw) return;
+            var ru = String(raw).toUpperCase();
+            if (ru.indexOf('NEGATIVO') !== -1) setChipVal(hiddenId, 'Negativo');
+            else if (ru.indexOf('POSITIV') !== -1 || ru.indexOf('REACTIV') !== -1) setChipVal(hiddenId, 'Positivo');
+            else if (ru.indexOf('PENDIENTE') !== -1) setChipVal(hiddenId, 'Pendiente');
+        }
+        setSerologia('fhAnaliticaSerologiasVhb', enfP.vhb_estado);
+        setSerologia('fhAnaliticaSerologiasVhc', enfP.vhc_estado);
+        setSerologia('fhAnaliticaSerologiasVih', enfP.vih_estado);
+        if (enfP.medicina_preventiva_estado) {
+            var mp = String(enfP.medicina_preventiva_estado).toUpperCase();
+            if (/^(OK|COMPLETO|COMPLETADA|COMPLETADO)$/.test(mp)) setChipVal('fhAnaliticaVacunacion', 'si');
+            else if (/^NO$/.test(mp)) setChipVal('fhAnaliticaVacunacion', 'no');
+            else if (mp.indexOf('PENDIENTE') !== -1) setChipVal('fhAnaliticaVacunacion', 'pendiente');
+        }
+        if (enfP.observaciones_prebiologico && String(enfP.observaciones_prebiologico).trim()) {
+            F.setValue('fhAnaliticaObservaciones', enfP.observaciones_prebiologico);
         }
     }
 
