@@ -5924,3 +5924,11 @@
   color: #1e40af;
 }
 .catalog-note-badge i { color: #3b82f6; }
+
+.card-title--prebio-upper { margin-top: 12px; }
+
+.prebio-upper-summary {
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+    margin-top: 4px;
+}

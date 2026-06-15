@@ -241,14 +241,7 @@
         setText("fhReumaFarmaco", patient && patient.farmaco ? patient.farmaco : "—");
         setText("fhReumaDosis", patient && patient.dosis ? patient.dosis : "Pendiente de completar por Farmacia");
         setText("fhReumaVia", patient && patient.via ? patient.via : "Pendiente de completar por Farmacia");
-        setText("fhReumaPauta", patient && patient.pauta ? patient.pauta : "Pendiente de completar por Farmacia");
-        var prebioText = "—";
-        if (patient && patient.estado_prebiologico_enfermeria) {
-            prebioText = patient.estado_prebiologico_enfermeria;
-        } else if (patient && patient.analitica_estado) {
-            prebioText = "Analítica: " + patient.analitica_estado;
-        }
-        setText("fhReumaPrebiologico", prebioText);
+        setText('fhReumaPauta', patient && patient.pauta ? patient.pauta : 'Pendiente de completar por Farmacia');
     }
 
     function inferOrigenEntrada(context) {
@@ -476,6 +469,16 @@
         chip.setAttribute('data-estado', valueObj.text);
     }
 
+    function setUpperPbChip(chipId, valueObj) {
+        var chip = byId(chipId);
+        if (!chip) return;
+        var statusEl = chip.querySelector('.pb-chip__status') || byId(chipId.replace('upperPbChip', 'upperPbStatus'));
+        if (!statusEl) statusEl = chip;
+        statusEl.textContent = valueObj.text;
+        statusEl.setAttribute('data-estado', valueObj.text);
+        chip.setAttribute('data-estado', valueObj.text);
+    }
+
     function updatePrebiologicoChips() {
         var p = currentPatient;
         var an = p && p.analiticaEstruct ? p.analiticaEstruct : null;
@@ -491,6 +494,24 @@
         setPbChip('pbChipVih', normalizePbValue(an ? (an.serologiasVih || '') : (enf ? enf.vih_estado : byId('fhAnaliticaSerologiasVih').value), 'vih'));
         setPbChip('pbChipVacunacion', normalizePbValue(an ? an.vacunacion : (enf ? enf.medicina_preventiva_estado : byId('fhAnaliticaVacunacion').value), 'vacunacion'));
         setPbChip('pbChipMedPreventiva', normalizePbValue(enf ? enf.medicina_preventiva_estado : (an ? an.vacunacion : ''), 'vacunacion'));
+        /* Mirror upper section chips */
+        var upperChipIds = [
+            'upperPbChipAnaliticaReciente', 'upperPbChipMantoux', 'upperPbChipIgra',
+            'upperPbChipVhb', 'upperPbChipVhc', 'upperPbChipVih',
+            'upperPbChipVacunacion', 'upperPbChipMedPreventiva'
+        ];
+        var lowerChipIds = [
+            'pbChipAnaliticaReciente', 'pbChipMantoux', 'pbChipIgra',
+            'pbChipVhb', 'pbChipVhc', 'pbChipVih',
+            'pbChipVacunacion', 'pbChipMedPreventiva'
+        ];
+        for (var ui = 0; ui < upperChipIds.length; ui++) {
+            var lowerEl = byId(lowerChipIds[ui]);
+            if (!lowerEl) continue;
+            var lowerStatus = lowerEl.getAttribute('data-estado') || '';
+            var lowerText = (lowerEl.querySelector('.pb-chip__status') || lowerEl).textContent || '';
+            setUpperPbChip(upperChipIds[ui], { text: lowerText, estado: lowerStatus });
+        }
         var obs = byId('fhPrebiologicoObservaciones');
         if (obs) obs.textContent = valueOrDash(an && an.observaciones ? an.observaciones : (enf ? (enf.observaciones_prebiologico || '') : byId('fhAnaliticaObservaciones').value));
         var gs = byId('fhPrebioGlobalStatus');
@@ -499,6 +520,13 @@
             if (enf.estado_prebiologico_enfermeria) parts.push(enf.estado_prebiologico_enfermeria);
             if (enf.fecha_ok_farmacia) parts.push('Fecha: ' + enf.fecha_ok_farmacia);
             gs.textContent = parts.length ? parts.join(' · ') : '-';
+        }
+        var upperGs = byId('upperPrebioGlobalStatus');
+        if (upperGs) {
+            var gsParts = [];
+            if (enf && enf.estado_prebiologico_enfermeria) gsParts.push(enf.estado_prebiologico_enfermeria);
+            if (enf && enf.fecha_ok_farmacia) gsParts.push('Fecha: ' + enf.fecha_ok_farmacia);
+            upperGs.textContent = gsParts.length ? gsParts.join(' · ') : '-';
         }
     }
 
@@ -526,6 +554,19 @@
             if (enfP.estado_prebiologico_enfermeria) parts.push(enfP.estado_prebiologico_enfermeria);
             if (enfP.fecha_ok_farmacia) parts.push('Fecha: ' + enfP.fecha_ok_farmacia);
             gs.textContent = parts.length ? parts.join(' · ') : '-';
+        }
+        /* Mirror upper chips for Enfermería patient */
+        chipMap.forEach(function (m) {
+            if (!m.value || String(m.value).trim() === '') return;
+            var upperId = m.id.replace('pbChip', 'upperPbChip');
+            setUpperPbChip(upperId, normalizePbValue(m.value, m.key));
+        });
+        var upperGs = byId('upperPrebioGlobalStatus');
+        if (upperGs) {
+            var uparts = [];
+            if (enfP.estado_prebiologico_enfermeria) uparts.push(enfP.estado_prebiologico_enfermeria);
+            if (enfP.fecha_ok_farmacia) uparts.push('Fecha: ' + enfP.fecha_ok_farmacia);
+            upperGs.textContent = uparts.length ? uparts.join(' · ') : '-';
         }
     }
 
