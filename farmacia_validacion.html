@@ -123,6 +123,27 @@
     </div>
 </section>
 
+<section class="dashboard-card hidden" id="formServicioManual">
+    <h2 class="section-title"><i class="fas fa-hospital-alt"></i> Selección manual — servicio y patología</h2>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhServicioManual">Servicio</label>
+            <select class="form-select" id="fhServicioManual">
+                <option value="">Seleccionar servicio...</option>
+                <option value="derma">Dermatología</option>
+                <option value="reuma">Reumatología</option>
+                <option value="digestivo">Digestivo</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="fhPatologiaManual">Patología</label>
+            <select class="form-select" id="fhPatologiaManual">
+                <option value="">Seleccionar servicio primero...</option>
+            </select>
+        </div>
+    </div>
+</section>
+
 <section class="dashboard-card hidden" id="formDerma">
     <h2 class="section-title"><i class="fas fa-disease"></i> Datos de solicitud — Dermatología</h2>
     <div class="form-grid"><div class="form-group"><label for="fhDermaCip">CIP</label><input type="text" class="form-control" id="fhDermaCip" placeholder="CIP-DEMO-FH-..."></div><div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDermaServicioOrigen" value="Dermatología" readonly></div></div>
@@ -201,27 +222,6 @@
     <div class="prebio-upper-summary" id="upperPrebioGlobalStatus">-</div>
 </section>
 
-<section class="dashboard-card hidden" id="formServicioManual">
-    <h2 class="section-title"><i class="fas fa-hospital-alt"></i> Selección manual — servicio y patología</h2>
-    <div class="form-grid">
-        <div class="form-group">
-            <label for="fhServicioManual">Servicio</label>
-            <select class="form-select" id="fhServicioManual">
-                <option value="">Seleccionar servicio...</option>
-                <option value="derma">Dermatología</option>
-                <option value="reuma">Reumatología</option>
-                <option value="digestivo">Digestivo</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="fhPatologiaManual">Patología</label>
-            <select class="form-select" id="fhPatologiaManual">
-                <option value="">Seleccionar servicio primero...</option>
-            </select>
-        </div>
-    </div>
-</section>
-
 <section class="dashboard-card hidden" id="formDigestivo">
     <h2 class="section-title"><i class="fas fa-stomach"></i> Datos de solicitud — Digestivo</h2>
     <div class="form-grid">
@@ -256,7 +256,6 @@
         <div class="form-group"><label for="fhDigObservaciones">Observaciones</label><textarea class="form-textarea" id="fhDigObservaciones" rows="2"></textarea></div>
     </div>
 </section>
-
 
 <section class="dashboard-card hidden" id="validationBlock">
     <h2 class="section-title"><i class="fas fa-check-circle"></i> Validación farmacoterapéutica</h2>
