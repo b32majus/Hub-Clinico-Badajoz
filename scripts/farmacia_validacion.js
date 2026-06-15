@@ -479,41 +479,54 @@
     function updatePrebiologicoChips() {
         var p = currentPatient;
         var an = p && p.analiticaEstruct ? p.analiticaEstruct : null;
-        setPbChip('pbChipAnaliticaReciente', normalizePbValue(an ? an.reciente : byId('fhAnaliticaReciente').value, 'analiticaReciente'));
+        var isEnf = p && F && typeof F.isEnfermeriaPatient === 'function' && F.isEnfermeriaPatient(p);
+        var enf = isEnf ? p : null;
+        setPbChip('pbChipAnaliticaReciente', normalizePbValue(an ? an.reciente : (enf ? enf.analitica_estado : byId('fhAnaliticaReciente').value), 'analiticaReciente'));
         setPbChip('pbChipHemograma', normalizePbValue(an ? an.hemograma : byId('fhAnaliticaHemograma').checked, 'hemograma'));
         setPbChip('pbChipBioquimica', normalizePbValue(an ? an.bioquimica : byId('fhAnaliticaBioquimica').checked, 'bioquimica'));
-        setPbChip('pbChipMantoux', normalizePbValue(an ? (an.mantoux || '') : byId('fhAnaliticaMantoux').value, 'mantoux'));
-        setPbChip('pbChipVhb', normalizePbValue(an ? (an.serologiasVhb || '') : byId('fhAnaliticaSerologiasVhb').value, 'vhb'));
-        setPbChip('pbChipVhc', normalizePbValue(an ? (an.serologiasVhc || '') : byId('fhAnaliticaSerologiasVhc').value, 'vhc'));
-        setPbChip('pbChipVih', normalizePbValue(an ? (an.serologiasVih || '') : byId('fhAnaliticaSerologiasVih').value, 'vih'));
-        setPbChip('pbChipVacunacion', normalizePbValue(an ? an.vacunacion : byId('fhAnaliticaVacunacion').value, 'vacunacion'));
+        setPbChip('pbChipMantoux', normalizePbValue(an ? (an.mantoux || '') : (enf ? enf.mantoux_estado : byId('fhAnaliticaMantoux').value), 'mantoux'));
+        setPbChip('pbChipIgra', normalizePbValue(enf ? enf.igra_estado : (an ? (an.mantoux || '') : ''), 'mantoux'));
+        setPbChip('pbChipVhb', normalizePbValue(an ? (an.serologiasVhb || '') : (enf ? enf.vhb_estado : byId('fhAnaliticaSerologiasVhb').value), 'vhb'));
+        setPbChip('pbChipVhc', normalizePbValue(an ? (an.serologiasVhc || '') : (enf ? enf.vhc_estado : byId('fhAnaliticaSerologiasVhc').value), 'vhc'));
+        setPbChip('pbChipVih', normalizePbValue(an ? (an.serologiasVih || '') : (enf ? enf.vih_estado : byId('fhAnaliticaSerologiasVih').value), 'vih'));
+        setPbChip('pbChipVacunacion', normalizePbValue(an ? an.vacunacion : (enf ? enf.medicina_preventiva_estado : byId('fhAnaliticaVacunacion').value), 'vacunacion'));
+        setPbChip('pbChipMedPreventiva', normalizePbValue(enf ? enf.medicina_preventiva_estado : (an ? an.vacunacion : ''), 'vacunacion'));
         var obs = byId('fhPrebiologicoObservaciones');
-        if (obs) obs.textContent = valueOrDash(an && an.observaciones ? an.observaciones : byId('fhAnaliticaObservaciones').value);
+        if (obs) obs.textContent = valueOrDash(an && an.observaciones ? an.observaciones : (enf ? (enf.observaciones_prebiologico || '') : byId('fhAnaliticaObservaciones').value));
+        var gs = byId('fhPrebioGlobalStatus');
+        if (gs && enf) {
+            var parts = [];
+            if (enf.estado_prebiologico_enfermeria) parts.push(enf.estado_prebiologico_enfermeria);
+            if (enf.fecha_ok_farmacia) parts.push('Fecha: ' + enf.fecha_ok_farmacia);
+            gs.textContent = parts.length ? parts.join(' · ') : '-';
+        }
     }
 
     function applyEnfermeriaPrebioChips(enfP) {
         if (!enfP) return;
-        var valueMap = {
-            pbChipAnaliticaReciente: enfP.analitica_estado,
-            pbChipMantoux: enfP.mantoux_estado || enfP.igra_estado,
-            pbChipVhb: enfP.vhb_estado,
-            pbChipVhc: enfP.vhc_estado,
-            pbChipVih: enfP.vih_estado,
-            pbChipVacunacion: enfP.medicina_preventiva_estado
-        };
-        Object.keys(valueMap).forEach(function (chipId) {
-            var raw = valueMap[chipId];
-            if (!raw || String(raw).trim() === '') return;
-            var key = chipId.replace('pbChip', '').replace('AnaliticaReciente', 'analiticaReciente').replace('Hemograma', 'hemograma').replace('Bioquimica', 'bioquimica').replace('Mantoux', 'mantoux').replace('Vhb', 'vhb').replace('Vhc', 'vhc').replace('Vih', 'vih').replace('Vacunacion', 'vacunacion');
-            var display = F.normalizeEnfermeriaFieldValue ? F.normalizeEnfermeriaFieldValue(raw) : String(raw);
-            var status = F.getEnfermeriaFieldStatus ? F.getEnfermeriaFieldStatus(raw) : 'no_informado';
-            var estadoMap = { completo: 'ok', no_aplica: 'no_precisa', pendiente: 'pendiente', bloqueo: 'bloqueante', alerta: 'positivo_alterado', no_informado: 'no_informado' };
-            var textMap = { ok: 'OK', no_precisa: 'No precisa', pendiente: 'Pendiente', bloqueante: 'Bloqueante', positivo_alterado: 'Positivo/alterado', no_informado: 'No informado' };
-            var estado = estadoMap[status] || 'no_informado';
-            setPbChip(chipId, { text: textMap[estado] || display, estado: estado });
+        var chipMap = [
+            { id: 'pbChipAnaliticaReciente', value: enfP.analitica_estado, key: 'analiticaReciente' },
+            { id: 'pbChipMantoux', value: enfP.mantoux_estado, key: 'mantoux' },
+            { id: 'pbChipIgra', value: enfP.igra_estado, key: 'mantoux' },
+            { id: 'pbChipVhb', value: enfP.vhb_estado, key: 'vhb' },
+            { id: 'pbChipVhc', value: enfP.vhc_estado, key: 'vhc' },
+            { id: 'pbChipVih', value: enfP.vih_estado, key: 'vih' },
+            { id: 'pbChipVacunacion', value: enfP.medicina_preventiva_estado, key: 'vacunacion' },
+            { id: 'pbChipMedPreventiva', value: enfP.medicina_preventiva_estado, key: 'vacunacion' }
+        ];
+        chipMap.forEach(function (m) {
+            if (!m.value || String(m.value).trim() === '') return;
+            setPbChip(m.id, normalizePbValue(m.value, m.key));
         });
         var obs = byId('fhPrebiologicoObservaciones');
-        if (obs && enfP.observaciones_prebiologico) obs.textContent = enfP.observaciones_prebiologico;
+        if (obs) obs.textContent = (enfP.observaciones_prebiologico && String(enfP.observaciones_prebiologico).trim()) ? enfP.observaciones_prebiologico : '-';
+        var gs = byId('fhPrebioGlobalStatus');
+        if (gs) {
+            var parts = [];
+            if (enfP.estado_prebiologico_enfermeria) parts.push(enfP.estado_prebiologico_enfermeria);
+            if (enfP.fecha_ok_farmacia) parts.push('Fecha: ' + enfP.fecha_ok_farmacia);
+            gs.textContent = parts.length ? parts.join(' · ') : '-';
+        }
     }
 
     function syncRadioGroup(group, value) {
