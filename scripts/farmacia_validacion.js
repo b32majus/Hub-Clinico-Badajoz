@@ -371,11 +371,17 @@
             // 7. Fármaco solicitado
             var enfFarmaco = enf.farmaco || enf.farmaco_solicitado || '';
             if (enfFarmaco) F.setValue('fhDermaFarmaco', enfFarmaco);
+            // Limpiar defaults Derma que no aplican a Reuma desde Enfermería
+            F.setValue('fhDermaDosis', '');
+            F.setValue('fhDermaPeso', '');
+            byId('fhDermaInduccion').value = 'no';
             // 8. Justificación clínica si vacía
             if (byId('fhDermaJustificacion') && !byId('fhDermaJustificacion').value) {
                 F.setValue('fhDermaJustificacion', 'Solicitud desde Enfermería / Inicio biológico · ' + (enfPat || ''));
             }
-            // 9. Chips prebiológicos desde Enfermería
+            // 9. Chips prebiológicos desde Enfermería (solo si no existe ya fhEnfermeriaResumen)
+            var existingEnfResumen = byId('fhEnfermeriaResumen');
+            if (!existingEnfResumen || !existingEnfResumen.children || existingEnfResumen.children.length === 0) {
             (function applyEnfermeriaPrebioChips(enfP) {
                 var chipMap = [
                     { enfKey: 'mantoux_estado', hidId: 'fhAnaliticaMantoux',
@@ -404,14 +410,12 @@
                     if (grp && typeof syncRadioGroup === 'function') syncRadioGroup(grp, chipVal);
                 });
             })(enf);
+            }
             // Limpiar defaults demo heredados si no aplican
             if (modoActual !== 'derma') {
                 // Si estamos en Reuma y el formulario Derma tiene datos demo, no arrastrarlos
                 if (byId('fhDermaPeso')) F.setValue('fhDermaPeso', '');
-                if (byId('fhDermaInduccion')) {
-                    var indSel = byId('fhDermaInduccion');
-                    if (indSel.value === 'si' && !enf.patologia) indSel.value = 'no';
-                }
+                if (byId('fhDermaInduccion')) byId('fhDermaInduccion').value = 'no';
             }
             // WO8.1c.12 — Hidratar formReuma con datos Enfermería
             if (modoActual === "reuma") {
@@ -599,12 +603,7 @@
     function selectDrug(drug) {
         byId("fhDermaFarmaco").value = drug.display_name || drug.nombre_comercial || "";
         byId("fhDermaPrincipioActivo").value = drug.principio_activo || "";
-        byId("fhDermaDosis").value = drug.dosis || "";
-        var viaValue = mapViaToSelect(drug.via);
-        var viaSelect = byId("fhDermaVia");
-        var viaOptions = Array.from(viaSelect.options).map(function (opt) { return opt.value; });
-        if (viaOptions.indexOf(viaValue) !== -1) viaSelect.value = viaValue;
-        else if (viaOptions.indexOf("Otra") !== -1) viaSelect.value = "Otra";
+        // No inferir dosis/vía/pauta desde catálogo: Farmacia debe seleccionar presentación y pauta.
         C.selectDrug(drug);
         clearAutocompleteDropdown();
         updateValidationModuleSummaries();

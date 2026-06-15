@@ -495,5 +495,13 @@ assert(!hasLoose, '29. No "unknown"/"pending"/"complete"/"blocked" sueltos en sp
 assert($('modSeguimientoEaHandoff').classList.contains('hidden'),
   '30. modSeguimientoEaHandoff tiene class hidden');
 
+// 31-32. Campos Derma vacíos para Reuma Enfermería
+assert(v('fhDermaDosis') === '', '31. Dosis no inferida desde Enfermería');
+assert(v('fhDermaVia') === '', '32. Vía no inferida desde Enfermería');
+
+// 33. Prebiológico Enfermería: una sola representación
+var prebioResumen = $('fhEnfermeriaResumen');
+assert(prebioResumen !== null, '33. fhEnfermeriaResumen existe para paciente Enfermería');
+
 console.log('\nTotal: ' + passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);
