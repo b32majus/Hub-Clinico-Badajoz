@@ -203,7 +203,7 @@
 
     function resolveModoFromOrigen(origen) {
         if (origen === "excel_enfermeria") return "reuma";
-        if (origen === "manual_farmacia") return byId("fhServicioManual") ? byId("fhServicioManual").value || "derma" : "derma";
+        if (origen === "manual_farmacia") return byId("fhServicioManual") ? byId("fhServicioManual").value || "" : "";
         if (origen === "demo_formacion") return "derma";
         return "derma";
     }
