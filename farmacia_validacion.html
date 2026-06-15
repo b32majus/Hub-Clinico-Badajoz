@@ -201,6 +201,62 @@
     <div class="prebio-upper-summary" id="upperPrebioGlobalStatus">-</div>
 </section>
 
+<section class="dashboard-card hidden" id="formServicioManual">
+    <h2 class="section-title"><i class="fas fa-hospital-alt"></i> Selección manual — servicio y patología</h2>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhServicioManual">Servicio</label>
+            <select class="form-select" id="fhServicioManual">
+                <option value="">Seleccionar servicio...</option>
+                <option value="derma">Dermatología</option>
+                <option value="reuma">Reumatología</option>
+                <option value="digestivo">Digestivo</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="fhPatologiaManual">Patología</label>
+            <select class="form-select" id="fhPatologiaManual">
+                <option value="">Seleccionar servicio primero...</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<section class="dashboard-card hidden" id="formDigestivo">
+    <h2 class="section-title"><i class="fas fa-stomach"></i> Datos de solicitud — Digestivo</h2>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhDigCip">CIP</label><input type="text" class="form-control" id="fhDigCip" placeholder="CIP del paciente"></div>
+        <div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDigServicioOrigen" value="Digestivo" readonly></div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhDigPatologia">Patología</label>
+            <select class="form-select" id="fhDigPatologia">
+                <option value="">Seleccionar...</option>
+                <option>Crohn</option>
+                <option>Colitis ulcerosa</option>
+            </select>
+        </div>
+        <div class="form-group"><label for="fhDigFecha">Fecha solicitud</label><input type="date" class="form-control" id="fhDigFecha"></div>
+    </div>
+    <h3 class="card-title card-title--tight"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhDigFarmaco">Fármaco solicitado</label><input type="text" class="form-control" id="fhDigFarmaco" placeholder="Ej. Vedolizumab, Infliximab..."></div>
+        <div class="form-group"><label for="fhDigDosis">Dosis solicitada</label><input type="text" class="form-control" id="fhDigDosis" placeholder="Ej. 300 mg"></div>
+    </div>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhDigVia">Vía de administración</label>
+            <select class="form-select" id="fhDigVia"><option value="">Seleccionar...</option><option>SC</option><option>IV</option><option>Oral</option><option>Otra</option></select>
+        </div>
+        <div class="form-group"><label for="fhDigPauta">Intervalo / pauta</label>
+            <select class="form-select" id="fhDigPauta"><option value="">Seleccionar...</option></select>
+            <input type="text" class="form-control hidden" id="fhDigPautaOtro" placeholder="Especificar otra pauta">
+        </div>
+    </div>
+    <div class="form-grid form-grid--full">
+        <div class="form-group"><label for="fhDigObservaciones">Observaciones</label><textarea class="form-textarea" id="fhDigObservaciones" rows="2"></textarea></div>
+    </div>
+</section>
+
 
 <section class="dashboard-card hidden" id="validationBlock">
     <h2 class="section-title"><i class="fas fa-check-circle"></i> Validación farmacoterapéutica</h2>

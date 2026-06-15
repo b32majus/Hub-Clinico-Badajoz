@@ -41,6 +41,11 @@
         "Posible": "Posible",
         "Dudosa": "Dudosa / sin relación"
     };
+    var SERVICIO_PATOLOGIAS = {
+        derma: ['Hidradenitis supurativa', 'Psoriasis', 'Dermatitis atópica', 'Vitíligo', 'Alopecia areata'],
+        reuma: ['AR', 'APs', 'EspAax', 'LES'],
+        digestivo: ['Crohn', 'Colitis ulcerosa']
+    };
     var REUMA_DEFAULT = {
         cip: "",
         patologia: "",
@@ -124,7 +129,13 @@
     }
 
     function isHSPathology() {
-        return modoActual === "derma" && byId("fhDermaPatologia").value === "Hidradenitis supurativa";
+        if (modoActual === "derma" && byId("fhDermaPatologia")) {
+            if (byId("fhDermaPatologia").value === "Hidradenitis supurativa") return true;
+        }
+        if (modoActual === "derma" && byId("fhPatologiaManual")) {
+            if (byId("fhPatologiaManual").value === "Hidradenitis supurativa") return true;
+        }
+        return false;
     }
 
     function setChecked(id, value) {
@@ -192,12 +203,8 @@
 
     function resolveModoFromOrigen(origen) {
         if (origen === "excel_enfermeria") return "reuma";
-        if (origen === "manual_farmacia" || origen === "demo_formacion") return "derma";
-        if (origen === "servicio_clinico_compatible") {
-            if (currentPatient && currentPatient.servicioSlug === "reumatologia") return "reuma";
-            if (currentPatient && currentPatient.servicio && String(currentPatient.servicio).toLowerCase().indexOf("reuma") !== -1) return "reuma";
-            return "derma";
-        }
+        if (origen === "manual_farmacia") return byId("fhServicioManual") ? byId("fhServicioManual").value || "derma" : "derma";
+        if (origen === "demo_formacion") return "derma";
         return "derma";
     }
 
@@ -221,6 +228,8 @@
         modoActual = resolveModoFromOrigen(origen);
         byId("formDerma").classList.toggle("hidden", modoActual !== "derma");
         byId("formReuma").classList.toggle("hidden", modoActual !== "reuma");
+        byId("formDigestivo").classList.toggle("hidden", modoActual !== "digestivo");
+        byId("formServicioManual").classList.toggle("hidden", origen !== "manual_farmacia");
         byId("validationBlock").classList.remove("hidden");
         if (modoActual === "derma" && !byId("fhDermaFecha").value) {
             byId("fhDermaFecha").value = new Date().toISOString().slice(0, 10);
@@ -267,6 +276,41 @@
         var sel = byId('fhTipoValidacion');
         if (!sel) return;
         sel.value = value || 'inicio_nuevo';
+    }
+
+    function onServicioManualChange() {
+        var serv = byId('fhServicioManual');
+        var pat = byId('fhPatologiaManual');
+        if (!serv || !pat) return;
+        var val = serv.value;
+        F.clearChildren(pat);
+        var opts = val ? SERVICIO_PATOLOGIAS[val] : null;
+        if (!opts) {
+            var ph = document.createElement('option');
+            ph.value = ''; ph.textContent = 'Seleccionar servicio primero...';
+            pat.appendChild(ph);
+            return;
+        }
+        var def = document.createElement('option');
+        def.value = ''; def.textContent = 'Seleccionar patología...';
+        pat.appendChild(def);
+        opts.forEach(function (p) {
+            var o = document.createElement('option');
+            o.textContent = p;
+            pat.appendChild(o);
+        });
+        /* Switch to the selected service form */
+        modoActual = val;
+        byId('formDerma').classList.toggle('hidden', val !== 'derma');
+        byId('formReuma').classList.toggle('hidden', val !== 'reuma');
+        byId('formDigestivo').classList.toggle('hidden', val !== 'digestivo');
+        toggleHSBlock();
+        updateValidationModuleSummaries();
+    }
+
+    function onPatologiaManualChange() {
+        toggleHSBlock();
+        updateValidationModuleSummaries();
     }
 
     function applyContext() {
@@ -1516,6 +1560,15 @@
         byId("fhDermaPatologia").addEventListener("change", function () {
             toggleHSBlock();
             updateValidationModuleSummaries();
+        });
+        var servMan = byId("fhServicioManual");
+        if (servMan) servMan.addEventListener("change", function () {
+            onServicioManualChange();
+            updateSeguimientoHandoffLink();
+        });
+        var patMan = byId("fhPatologiaManual");
+        if (patMan) patMan.addEventListener("change", function () {
+            onPatologiaManualChange();
         });
         byId("fhHSBioAda").addEventListener("change", toggleBioAdaDetalle);
         byId("fhHSBioOtros").addEventListener("change", toggleBioOtrosDetalle);
