@@ -207,6 +207,21 @@ const segJs = readFile('scripts/farmacia_seguimiento.js');
 if (segJs && segJs.includes('causalidad')) ok('Cadena causalidad presente en scripts/farmacia_seguimiento.js');
 else fail('Cadena causalidad no encontrada en scripts/farmacia_seguimiento.js');
 
+// ─── CHECK 12: Contrato mínimo entrada manual validación ─────────────────────
+console.log('\n[12] Contrato mínimo entrada manual validación');
+const valHtml = readFile('farmacia_validacion.html');
+const valJs = readFile('scripts/farmacia_validacion.js');
+if (valHtml && valHtml.includes('id="formManualSolicitud"')) ok('formManualSolicitud presente en farmacia_validacion.html');
+else fail('formManualSolicitud no encontrado en farmacia_validacion.html');
+for (const id of ['fhManualCip', 'fhManualFarmaco', 'fhManualDosis', 'fhManualVia', 'fhManualPauta', 'fhServicioManual', 'fhPatologiaManual']) {
+    if (valHtml && valHtml.includes(`id="${id}"`)) ok(`${id} presente en farmacia_validacion.html`);
+    else fail(`${id} no encontrado en farmacia_validacion.html`);
+}
+if (valHtml && /id="formManualSolicitud"[\s\S]*id="formDerma"/.test(valHtml)) ok('formManualSolicitud no depende de formDerma');
+else fail('No se pudo confirmar la separación entre formManualSolicitud y formDerma');
+if (valJs && !/innerHTML/.test(valJs)) ok('scripts/farmacia_validacion.js sigue sin innerHTML');
+else fail('Se detectó innerHTML en scripts/farmacia_validacion.js');
+
 // ─── RESUMEN ───────────────────────────────────────────────────────────────────
 console.log('\n' + '═'.repeat(60));
 console.log(`RESULTADO: ${passed} OK / ${failed} FALLIDO`);

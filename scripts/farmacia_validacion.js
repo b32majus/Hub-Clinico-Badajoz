@@ -76,6 +76,89 @@
         return String(value).trim();
     }
 
+    function currentOrigenEntradaValue() {
+        var el = byId("fhOrigenEntrada");
+        return el ? (el.value || "") : "";
+    }
+
+    function isManualOrigin() {
+        return currentOrigenEntradaValue() === "manual_farmacia";
+    }
+
+    function currentManualService() {
+        var el = byId("fhServicioManual");
+        return el ? (el.value || "") : "";
+    }
+
+    function currentManualPatologia() {
+        var el = byId("fhPatologiaManual");
+        return el ? (el.value || "") : "";
+    }
+
+    function manualSelectionReady() {
+        return !!(currentManualService() && currentManualPatologia());
+    }
+
+    function mapServiceToken(value) {
+        var raw = String(value || "").trim().toLowerCase();
+        if (raw === "derma" || raw === "dermatologia" || raw === "dermatología") return "derma";
+        if (raw === "reuma" || raw === "reumatologia" || raw === "reumatología") return "reuma";
+        if (raw === "digestivo") return "digestivo";
+        return "";
+    }
+
+    function serviceSlugFromMode(mode) {
+        if (mode === "reuma") return "reumatologia";
+        if (mode === "digestivo") return "digestivo";
+        return "dermatologia";
+    }
+
+    function serviceLabelFromMode(mode) {
+        if (mode === "reuma") return "Reumatología";
+        if (mode === "digestivo") return "Digestivo";
+        return "Dermatología";
+    }
+
+    function requestedFieldIds() {
+        if (isManualOrigin()) {
+            return {
+                cip: "fhManualCip",
+                fecha: "fhManualFecha",
+                farmaco: "fhManualFarmaco",
+                principioActivo: "fhManualPrincipioActivo",
+                dosis: "fhManualDosis",
+                via: "fhManualVia",
+                pauta: "fhManualPauta",
+                pautaOtro: "fhManualPautaOtro",
+                induccion: "fhManualInduccion",
+                peso: "fhManualPeso",
+                justificacion: "fhManualJustificacion",
+                observaciones: "fhManualObservaciones"
+            };
+        }
+        return {
+            cip: "fhDermaCip",
+            fecha: "fhDermaFecha",
+            farmaco: "fhDermaFarmaco",
+            principioActivo: "fhDermaPrincipioActivo",
+            dosis: "fhDermaDosis",
+            via: "fhDermaVia",
+            pauta: "fhDermaPauta",
+            pautaOtro: "fhDermaPautaOtro",
+            induccion: "fhDermaInduccion",
+            peso: "fhDermaPeso",
+            justificacion: "fhDermaJustificacion",
+            observaciones: "fhDermaObservaciones"
+        };
+    }
+
+    function setManualContextDisplay() {
+        var serviceDisplay = byId("fhManualServicioDisplay");
+        var patDisplay = byId("fhManualPatologiaDisplay");
+        if (serviceDisplay) serviceDisplay.value = currentManualService() ? serviceLabelFromMode(currentManualService()) : "Seleccione servicio arriba";
+        if (patDisplay) patDisplay.value = currentManualPatologia() || "Seleccione patología arriba";
+    }
+
     function createEl(tag, className, text) {
         var el = document.createElement(tag);
         if (className) el.className = className;
@@ -144,6 +227,10 @@
     }
 
     function selectedCip() {
+        if (isManualOrigin()) {
+            var manualCip = byId("fhManualCip");
+            return manualCip ? (manualCip.value.trim() || "CIP-DEMO-FH-XXX") : "CIP-DEMO-FH-XXX";
+        }
         if (modoActual === "reuma") {
             return currentPatient && currentPatient.cip ? currentPatient.cip : "";
         }
@@ -151,6 +238,7 @@
     }
 
     function selectedPatologia() {
+        if (isManualOrigin()) return currentManualPatologia() || "—";
         if (modoActual === "reuma") {
             return currentPatient && currentPatient.patologia ? currentPatient.patologia : "";
         }
@@ -165,15 +253,17 @@
     }
 
     function toggleHSBlock() {
-        byId("formHS").classList.toggle("hidden", !isHSPathology());
+        var formHs = byId("formHS");
+        if (!formHs) return;
+        formHs.classList.toggle("hidden", !isHSPathology());
         var note = byId("fhHSOtherNote");
         if (!note) {
             note = createEl("p", "pathology-demo-note");
             note.id = "fhHSOtherNote";
             byId("formDerma").appendChild(note);
         }
-        var patologia = byId("fhDermaPatologia").value;
-        var showNote = modoActual === "derma" && patologia && patologia !== "Hidradenitis supurativa";
+        var patologia = isManualOrigin() ? currentManualPatologia() : byId("fhDermaPatologia").value;
+        var showNote = modoActual === "derma" && !isManualOrigin() && patologia && patologia !== "Hidradenitis supurativa";
         note.textContent = showNote ? "Demo activa: bloque específico parametrizado para HS. Resto de patologías incluidas en plantilla Dermatología → Farmacia pendiente de parametrización." : "";
         note.classList.toggle("hidden", !showNote);
         toggleBioAdaDetalle();
@@ -226,15 +316,22 @@
     function mostrarFormulario(modo) {
         var origen = modo || (byId("fhOrigenEntrada") ? byId("fhOrigenEntrada").value : "");
         modoActual = resolveModoFromOrigen(origen);
-        byId("formDerma").classList.toggle("hidden", modoActual !== "derma");
-        byId("formReuma").classList.toggle("hidden", modoActual !== "reuma");
-        byId("formDigestivo").classList.toggle("hidden", modoActual !== "digestivo");
-        byId("formServicioManual").classList.toggle("hidden", origen !== "manual_farmacia");
-        byId("validationBlock").classList.remove("hidden");
-        if (modoActual === "derma" && !byId("fhDermaFecha").value) {
+        var isManual = origen === "manual_farmacia";
+        var manualReady = isManual && manualSelectionReady();
+        byId("formServicioManual").classList.toggle("hidden", !isManual);
+        byId("formManualSolicitud").classList.toggle("hidden", !manualReady);
+        byId("validationBlock").classList.toggle("hidden", isManual ? !manualReady : false);
+        byId("formDerma").classList.toggle("hidden", isManual || modoActual !== "derma");
+        byId("formReuma").classList.toggle("hidden", isManual || modoActual !== "reuma");
+        byId("formDigestivo").classList.toggle("hidden", isManual || modoActual !== "digestivo");
+        if (isManual && manualReady && !byId("fhManualFecha").value) {
+            byId("fhManualFecha").value = new Date().toISOString().slice(0, 10);
+        }
+        if (!isManual && modoActual === "derma" && !byId("fhDermaFecha").value) {
             byId("fhDermaFecha").value = new Date().toISOString().slice(0, 10);
         }
-        setDermaFormReadonly(origen !== "manual_farmacia");
+        setDermaFormReadonly(isManual);
+        setManualContextDisplay();
         toggleHSBlock();
         updateValidationModuleSummaries();
         updateSeguimientoHandoffLink();
@@ -289,6 +386,8 @@
             var ph = document.createElement('option');
             ph.value = ''; ph.textContent = 'Seleccionar servicio primero...';
             pat.appendChild(ph);
+            setManualContextDisplay();
+            mostrarFormulario('manual_farmacia');
             return;
         }
         var def = document.createElement('option');
@@ -299,16 +398,14 @@
             o.textContent = p;
             pat.appendChild(o);
         });
-        /* Switch to the selected service form */
         modoActual = val;
-        byId('formDerma').classList.toggle('hidden', val !== 'derma');
-        byId('formReuma').classList.toggle('hidden', val !== 'reuma');
-        byId('formDigestivo').classList.toggle('hidden', val !== 'digestivo');
-        toggleHSBlock();
-        updateValidationModuleSummaries();
+        setManualContextDisplay();
+        mostrarFormulario('manual_farmacia');
     }
 
     function onPatologiaManualChange() {
+        setManualContextDisplay();
+        mostrarFormulario('manual_farmacia');
         toggleHSBlock();
         updateValidationModuleSummaries();
     }
@@ -319,6 +416,33 @@
         var origen = inferOrigenEntrada(context);
         setOrigenEntrada(origen);
         setTipoValidacion(context.patient && context.patient.tipo_validacion ? context.patient.tipo_validacion : 'inicio_nuevo');
+        if (origen === 'manual_farmacia') {
+            var mappedService = mapServiceToken(context.servicioSlug || context.servicio);
+            if (mappedService && byId('fhServicioManual')) {
+                byId('fhServicioManual').value = mappedService;
+                onServicioManualChange();
+            }
+            if (context.patologia && byId('fhPatologiaManual')) {
+                var patManual = byId('fhPatologiaManual');
+                var foundManual = false;
+                for (var mi = 0; mi < patManual.options.length; mi++) {
+                    if (patManual.options[mi].value === context.patologia || patManual.options[mi].textContent === context.patologia) {
+                        patManual.value = patManual.options[mi].value || context.patologia;
+                        foundManual = true;
+                        break;
+                    }
+                }
+                if (!foundManual && mappedService) {
+                    var extraOpt = document.createElement('option');
+                    extraOpt.value = context.patologia;
+                    extraOpt.textContent = context.patologia;
+                    extraOpt.selected = true;
+                    patManual.appendChild(extraOpt);
+                }
+            }
+            if (context.cip) F.setValue('fhManualCip', context.cip);
+            setManualContextDisplay();
+        }
 
         if (context.cip) F.setValue('fhDermaCip', context.cip);
         if (context.patologia) F.setValue('fhDermaPatologia', context.patologia);
@@ -702,8 +826,7 @@
     }
 
     function requestedTreatmentSummary() {
-        var origenEl = byId('fhOrigenEntrada');
-        var origenVal = origenEl ? origenEl.value : '';
+        var origenVal = currentOrigenEntradaValue();
         if (currentPatient && origenVal !== 'manual_farmacia') {
             var p = currentPatient;
             return {
@@ -716,23 +839,24 @@
                 justificacion: valueOrDash(p.justificacion || p.motivoClinico || p.analitica)
             };
         }
+        var ids = requestedFieldIds();
         return {
-            farmaco: valueOrDash(byId("fhDermaFarmaco").value),
-            principioActivo: valueOrDash(byId("fhDermaPrincipioActivo").value),
-            dosis: valueOrDash(byId("fhDermaDosis").value),
-            via: valueOrDash(byId("fhDermaVia").value),
+            farmaco: valueOrDash(byId(ids.farmaco).value),
+            principioActivo: valueOrDash(byId(ids.principioActivo).value),
+            dosis: valueOrDash(byId(ids.dosis).value),
+            via: valueOrDash(byId(ids.via).value),
             pauta: (function () {
-                var select = byId("fhDermaPauta");
+                var select = byId(ids.pauta);
                 var value = select ? select.value : "";
-                if (value === "OTRO") return valueOrDash(byId("fhDermaPautaOtro").value);
+                if (value === "OTRO") return valueOrDash(byId(ids.pautaOtro).value);
                 if (P && typeof P.getPautaByCodigo === "function" && typeof P.getLegacyPautaLabel === "function") {
                     var pautaObj = P.getPautaByCodigo(value);
                     return valueOrDash(P.getLegacyPautaLabel(pautaObj));
                 }
                 return valueOrDash(value);
             })(),
-            induccion: byId("fhDermaInduccion").value === "si" ? "Sí" : (byId("fhDermaInduccion").value === "no" ? "No" : "—"),
-            justificacion: valueOrDash(byId("fhDermaJustificacion").value || byId("fhHSMotivoClinico").value)
+            induccion: byId(ids.induccion).value === "si" ? "Sí" : (byId(ids.induccion).value === "no" ? "No" : "—"),
+            justificacion: valueOrDash(byId(ids.justificacion).value || (!isManualOrigin() ? byId("fhHSMotivoClinico").value : ""))
         };
     }
 
@@ -770,7 +894,11 @@
     function updateSeguimientoHandoffLink() {
         var link = byId('fhGoSeguimientoLink');
         if (!link) return;
-        if (!currentPatient) {
+        if (isManualOrigin() && !manualSelectionReady()) {
+            link.removeAttribute('href');
+            return;
+        }
+        if (!isManualOrigin() && !currentPatient) {
             link.removeAttribute('href');
             return;
         }
@@ -778,8 +906,7 @@
         var cip = selectedCip();
         var patologia = selectedPatologia();
         if (cip && cip !== 'CIP-DEMO-FH-XXX') params.push('cip=' + encodeURIComponent(cip));
-        if (modoActual === 'reuma') params.push('servicio=' + encodeURIComponent('reumatologia'));
-        else params.push('servicio=' + encodeURIComponent('dermatologia'));
+        params.push('servicio=' + encodeURIComponent(serviceSlugFromMode(isManualOrigin() ? currentManualService() : modoActual)));
         if (patologia && patologia !== '—') params.push('patologia=' + encodeURIComponent(patologia));
         params.push('entrada=' + encodeURIComponent('seguimiento'));
         link.href = 'farmacia_seguimiento.html' + (params.length ? ('?' + params.join('&')) : '');
@@ -794,8 +921,9 @@
     }
 
     function selectDrug(drug) {
-        byId("fhDermaFarmaco").value = drug.display_name || drug.nombre_comercial || "";
-        byId("fhDermaPrincipioActivo").value = drug.principio_activo || "";
+        var ids = requestedFieldIds();
+        byId(ids.farmaco).value = drug.display_name || drug.nombre_comercial || "";
+        byId(ids.principioActivo).value = drug.principio_activo || "";
         // No inferir dosis/vía/pauta desde catálogo: Farmacia debe seleccionar presentación y pauta.
         C.selectDrug(drug);
         clearAutocompleteDropdown();
@@ -980,7 +1108,8 @@
 
     function handleAutocompleteInput() {
         if (!C.loaded) return;
-        var query = byId("fhDermaFarmaco").value.trim();
+        var ids = requestedFieldIds();
+        var query = byId(ids.farmaco).value.trim();
         if (query.length < 2) {
             clearAutocompleteDropdown();
             return;
@@ -1116,12 +1245,13 @@
             window.alert("El nombre / display name es obligatorio.");
             return;
         }
-        byId("fhDermaFarmaco").value = displayName;
-        if (principio) byId("fhDermaPrincipioActivo").value = principio;
-        if (presentacion) byId("fhDermaDosis").value = presentacion;
+        var ids = requestedFieldIds();
+        byId(ids.farmaco).value = displayName;
+        if (principio) byId(ids.principioActivo).value = principio;
+        if (presentacion) byId(ids.dosis).value = presentacion;
         if (via) {
             var viaValue = mapViaToSelect(via);
-            var viaSelect = byId("fhDermaVia");
+            var viaSelect = byId(ids.via);
             var viaOptions = Array.from(viaSelect.options).map(function (opt) { return opt.value; });
             if (viaOptions.indexOf(viaValue) !== -1) viaSelect.value = viaValue;
             else if (viaOptions.indexOf("Otra") !== -1) viaSelect.value = "Otra";
@@ -1349,10 +1479,10 @@
         lines.push("");
         lines.push("Origen de entrada: " + (origenLabel && origenLabel.options[origenLabel.selectedIndex] ? origenLabel.options[origenLabel.selectedIndex].text : "—"));
         lines.push("Tipo de validación: " + (tipoValLabel && tipoValLabel.options[tipoValLabel.selectedIndex] ? tipoValLabel.options[tipoValLabel.selectedIndex].text : "—"));
-        lines.push("Servicio origen: " + (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología"));
+        lines.push("Servicio origen: " + (isManualOrigin() ? serviceLabelFromMode(currentManualService()) : (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología")));
         lines.push("CIP: " + selectedCip());
         lines.push("Patología: " + selectedPatologia());
-        if (modoActual !== "reuma") lines.push("Fecha solicitud: " + valueOrDash(byId("fhDermaFecha").value));
+        lines.push("Fecha solicitud: " + valueOrDash(isManualOrigin() ? byId("fhManualFecha").value : (modoActual !== "reuma" ? byId("fhDermaFecha").value : "")));
 
         lines.push("");
         lines.push("TRATAMIENTO SOLICITADO");
@@ -1445,7 +1575,7 @@
     function buildCsvRows() {
         var naranjoAnswers = readNaranjoAnswersFromDom();
         var klAnswers = readKarchLasagnaAnswersFromDom();
-        var summary = currentTreatmentSummary();
+        var summary = requestedTreatmentSummary();
         var pautaNormalized = (P && typeof P.normalizePautaLabel === "function") ? P.normalizePautaLabel(summary.pauta) : null;
         var snap = C.getSnapshot();
         var rows = [
@@ -1459,7 +1589,7 @@
             [
                 "FH-" + Date.now().toString(36).toUpperCase(),
                 new Date().toLocaleDateString("es-ES"),
-                modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología",
+                isManualOrigin() ? serviceLabelFromMode(currentManualService()) : (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología"),
                 selectedCip(),
                 selectedPatologia(),
                 estadoLabel(),
@@ -1512,6 +1642,8 @@
 
     function bindSummaryInputs() {
         [
+            "fhManualCip", "fhManualFecha", "fhManualFarmaco", "fhManualPrincipioActivo", "fhManualDosis", "fhManualVia", "fhManualPauta", "fhManualPautaOtro",
+            "fhManualInduccion", "fhManualPeso", "fhManualJustificacion", "fhManualObservaciones",
             "fhDermaFarmaco", "fhDermaPrincipioActivo", "fhDermaDosis", "fhDermaVia", "fhDermaPauta", "fhDermaPautaOtro",
             "fhDermaInduccion", "fhDermaJustificacion", "fhHSMotivoClinico", "fhAnaliticaFecha",
             "fhAnaliticaReciente", "fhAnaliticaMantoux", "fhAnaliticaSerologiasVhb", "fhAnaliticaSerologiasVhc",
@@ -1569,6 +1701,7 @@
         var patMan = byId("fhPatologiaManual");
         if (patMan) patMan.addEventListener("change", function () {
             onPatologiaManualChange();
+            updateSeguimientoHandoffLink();
         });
         byId("fhHSBioAda").addEventListener("change", toggleBioAdaDetalle);
         byId("fhHSBioOtros").addEventListener("change", toggleBioOtrosDetalle);
@@ -1590,6 +1723,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        populatePautaSelect("fhManualPauta", "fhManualPautaOtro");
         populatePautaSelect("fhDermaPauta", "fhDermaPautaOtro");
         populatePautaSelect("fhValidadoPauta", "fhValidadoPautaOtro");
         bindCoreEvents();
