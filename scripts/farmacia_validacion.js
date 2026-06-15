@@ -190,14 +190,42 @@
         }
     }
 
+    function resolveModoFromOrigen(origen) {
+        if (origen === "excel_enfermeria") return "reuma";
+        if (origen === "manual_farmacia" || origen === "demo_formacion") return "derma";
+        if (origen === "servicio_clinico_compatible") {
+            if (currentPatient && currentPatient.servicioSlug === "reumatologia") return "reuma";
+            if (currentPatient && currentPatient.servicio && String(currentPatient.servicio).toLowerCase().indexOf("reuma") !== -1) return "reuma";
+            return "derma";
+        }
+        return "derma";
+    }
+
+    function setDermaFormReadonly(readonly) {
+        var fields = ["fhDermaCip", "fhDermaPatologia", "fhDermaFecha", "fhDermaFarmaco",
+            "fhDermaDosis", "fhDermaPrincipioActivo", "fhDermaVia", "fhDermaPauta",
+            "fhDermaPautaOtro", "fhDermaInduccion", "fhDermaPeso", "fhDermaJustificacion",
+            "fhDermaObservaciones", "fhDermaAnalitica"];
+        fields.forEach(function (id) {
+            var el = byId(id);
+            if (!el) return;
+            if (readonly) el.setAttribute("readonly", "readonly");
+            else el.removeAttribute("readonly");
+        });
+        var pat = byId("fhDermaPatologia");
+        if (pat) pat.disabled = readonly;
+    }
+
     function mostrarFormulario(modo) {
-        modoActual = modo;
-        byId("formDerma").classList.toggle("hidden", modo !== "derma");
-        byId("formReuma").classList.toggle("hidden", modo !== "reuma");
+        var origen = modo || (byId("fhOrigenEntrada") ? byId("fhOrigenEntrada").value : "");
+        modoActual = resolveModoFromOrigen(origen);
+        byId("formDerma").classList.toggle("hidden", modoActual !== "derma");
+        byId("formReuma").classList.toggle("hidden", modoActual !== "reuma");
         byId("validationBlock").classList.remove("hidden");
-        if (modo === "derma" && !byId("fhDermaFecha").value) {
+        if (modoActual === "derma" && !byId("fhDermaFecha").value) {
             byId("fhDermaFecha").value = new Date().toISOString().slice(0, 10);
         }
+        setDermaFormReadonly(origen !== "manual_farmacia");
         toggleHSBlock();
         updateValidationModuleSummaries();
         updateSeguimientoHandoffLink();
@@ -223,113 +251,137 @@
         setText("fhReumaPrebiologico", prebioText);
     }
 
+    function inferOrigenEntrada(context) {
+        if (context.patient && F && typeof F.isEnfermeriaPatient === 'function' && F.isEnfermeriaPatient(context.patient)) {
+            return 'excel_enfermeria';
+        }
+        if (context.patient && context.patient.cip && String(context.patient.cip).indexOf('CIP-DEMO-FH') !== -1) {
+            return 'demo_formacion';
+        }
+        if (context.cip || context.servicio || context.patologia) {
+            return 'manual_farmacia';
+        }
+        return 'manual_farmacia';
+    }
+
+    function setOrigenEntrada(value) {
+        var sel = byId('fhOrigenEntrada');
+        if (!sel) return;
+        sel.value = value;
+    }
+
+    function setTipoValidacion(value) {
+        var sel = byId('fhTipoValidacion');
+        if (!sel) return;
+        sel.value = value || 'inicio_nuevo';
+    }
+
     function applyContext() {
         var context = F.getQueryContext();
         currentPatient = context.patient || null;
-        if (context.cip) F.setValue("fhDermaCip", context.cip);
-        if (context.servicioSlug === "reumatologia" || context.servicio === "reumatologia") mostrarFormulario("reuma");
-        else if (context.cip || context.servicio || context.patologia) mostrarFormulario("derma");
-        if (context.patologia) F.setValue("fhDermaPatologia", context.patologia);
+        var origen = inferOrigenEntrada(context);
+        setOrigenEntrada(origen);
+        setTipoValidacion(context.patient && context.patient.tipo_validacion ? context.patient.tipo_validacion : 'inicio_nuevo');
+
+        if (context.cip) F.setValue('fhDermaCip', context.cip);
+        if (context.patologia) F.setValue('fhDermaPatologia', context.patologia);
+
         if (context.patient) {
             var p = context.patient;
-            F.setValue("fhDermaFarmaco", p.farmaco);
-            F.setValue("fhDermaDosis", p.dosis);
+            F.setValue('fhDermaFarmaco', p.farmaco);
+            F.setValue('fhDermaDosis', p.dosis);
             if (p.pauta) {
-                var pautaObj = P && typeof P.normalizePautaLabel === "function" ? P.normalizePautaLabel(p.pauta) : null;
-                F.setValue("fhDermaPauta", pautaObj ? pautaObj.pauta_codigo : "");
-                if (pautaObj && pautaObj.pauta_codigo === "OTRO" && pautaObj.pauta_otro_texto) {
-                    F.setValue("fhDermaPautaOtro", pautaObj.pauta_otro_texto);
-                    byId("fhDermaPautaOtro").classList.remove("hidden");
+                var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(p.pauta) : null;
+                F.setValue('fhDermaPauta', pautaObj ? pautaObj.pauta_codigo : '');
+                if (pautaObj && pautaObj.pauta_codigo === 'OTRO' && pautaObj.pauta_otro_texto) {
+                    F.setValue('fhDermaPautaOtro', pautaObj.pauta_otro_texto);
+                    byId('fhDermaPautaOtro').classList.remove('hidden');
                 } else {
-                    F.setValue("fhDermaPautaOtro", "");
-                    byId("fhDermaPautaOtro").classList.add("hidden");
+                    F.setValue('fhDermaPautaOtro', '');
+                    byId('fhDermaPautaOtro').classList.add('hidden');
                 }
             }
-            F.setValue("fhDermaVia", p.via);
-            F.setValue("fhDermaAnalitica", p.analitica);
-            if (p.estado === "pending") F.setValue("fhValEstado", "pending");
-            if (p.estado === "validated") F.setValue("fhValEstado", "validated");
-            if (p.ihs4 !== undefined) F.setValue("fhHSIhs4", p.ihs4);
-            if (p.hurley) F.setValue("fhHSHurley", p.hurley);
-            if (p.dlqi !== undefined) F.setValue("fhHSDlqi", p.dlqi);
-            if (p.localizacion) F.setValue("fhHSLocalizacion", p.localizacion);
-            if (p.tiempoEvolucion) F.setValue("fhHSTiempoEvolucion", p.tiempoEvolucion);
-            if (p.tratamientosPrevios) F.setValue("fhHSTratamientosPrevios", p.tratamientosPrevios);
-            if (p.motivoClinico) F.setValue("fhHSMotivoClinico", p.motivoClinico);
-            if (p.principioActivo) F.setValue("fhDermaPrincipioActivo", p.principioActivo);
+            F.setValue('fhDermaVia', p.via);
+            F.setValue('fhDermaAnalitica', p.analitica);
+            if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
+            if (p.estado === 'validated') F.setValue('fhValEstado', 'validated');
+            if (p.ihs4 !== undefined) F.setValue('fhHSIhs4', p.ihs4);
+            if (p.hurley) F.setValue('fhHSHurley', p.hurley);
+            if (p.dlqi !== undefined) F.setValue('fhHSDlqi', p.dlqi);
+            if (p.localizacion) F.setValue('fhHSLocalizacion', p.localizacion);
+            if (p.tiempoEvolucion) F.setValue('fhHSTiempoEvolucion', p.tiempoEvolucion);
+            if (p.tratamientosPrevios) F.setValue('fhHSTratamientosPrevios', p.tratamientosPrevios);
+            if (p.motivoClinico) F.setValue('fhHSMotivoClinico', p.motivoClinico);
+            if (p.principioActivo) F.setValue('fhDermaPrincipioActivo', p.principioActivo);
 
             if (p.tratamientosPreviosHS) {
                 var hsTto = p.tratamientosPreviosHS;
-                setChecked("fhHSTtoDoxiClinda", hsTto.doxiciclinaClindamicina);
-                setChecked("fhHSTtoRifClinda", hsTto.rifampicinaClindamicina);
-                setChecked("fhHSTtoOtrosAb", hsTto.otrosAtb);
-                if (hsTto.otrosAtbTexto) F.setValue("fhHSTtoOtrosAbTxt", hsTto.otrosAtbTexto);
+                setChecked('fhHSTtoDoxiClinda', hsTto.doxiciclinaClindamicina);
+                setChecked('fhHSTtoRifClinda', hsTto.rifampicinaClindamicina);
+                setChecked('fhHSTtoOtrosAb', hsTto.otrosAtb);
+                if (hsTto.otrosAtbTexto) F.setValue('fhHSTtoOtrosAbTxt', hsTto.otrosAtbTexto);
                 toggleOtrosAtbDetalle();
             }
 
             if (p.biologicosPrevios) {
                 var hsBio = p.biologicosPrevios;
-                setChecked("fhHSBioAda", hsBio.adalimumab);
-                if (hsBio.adalimumabDuracion) F.setValue("fhHSBioAdaDuracion", hsBio.adalimumabDuracion);
-                if (hsBio.adalimumabMotivo) F.setValue("fhHSBioAdaMotivo", hsBio.adalimumabMotivo);
-                setChecked("fhHSBioOtros", hsBio.otrosBiologicos);
-                if (hsBio.otrosBiologicosFarmaco) F.setValue("fhHSBioOtrosFarmaco", hsBio.otrosBiologicosFarmaco);
-                if (hsBio.otrosBiologicosMotivo) F.setValue("fhHSBioOtrosMotivo", hsBio.otrosBiologicosMotivo);
+                setChecked('fhHSBioAda', hsBio.adalimumab);
+                if (hsBio.adalimumabDuracion) F.setValue('fhHSBioAdaDuracion', hsBio.adalimumabDuracion);
+                if (hsBio.adalimumabMotivo) F.setValue('fhHSBioAdaMotivo', hsBio.adalimumabMotivo);
+                setChecked('fhHSBioOtros', hsBio.otrosBiologicos);
+                if (hsBio.otrosBiologicosFarmaco) F.setValue('fhHSBioOtrosFarmaco', hsBio.otrosBiologicosFarmaco);
+                if (hsBio.otrosBiologicosMotivo) F.setValue('fhHSBioOtrosMotivo', hsBio.otrosBiologicosMotivo);
             }
 
             if (p.analiticaEstruct) {
                 var an = p.analiticaEstruct;
-                if (an.fecha) F.setValue("fhAnaliticaFecha", an.fecha);
-                if (an.reciente) F.setValue("fhAnaliticaReciente", an.reciente);
-                setChecked("fhAnaliticaHemograma", an.hemograma);
-                setChecked("fhAnaliticaBioquimica", an.bioquimica);
-                if (an.mantoux) F.setValue("fhAnaliticaMantoux", an.mantoux);
-                if (an.serologiasVhb) F.setValue("fhAnaliticaSerologiasVhb", an.serologiasVhb);
-                if (an.serologiasVhc) F.setValue("fhAnaliticaSerologiasVhc", an.serologiasVhc);
-                if (an.serologiasVih) F.setValue("fhAnaliticaSerologiasVih", an.serologiasVih);
+                if (an.fecha) F.setValue('fhAnaliticaFecha', an.fecha);
+                if (an.reciente) F.setValue('fhAnaliticaReciente', an.reciente);
+                setChecked('fhAnaliticaHemograma', an.hemograma);
+                setChecked('fhAnaliticaBioquimica', an.bioquimica);
+                if (an.mantoux) F.setValue('fhAnaliticaMantoux', an.mantoux);
+                if (an.serologiasVhb) F.setValue('fhAnaliticaSerologiasVhb', an.serologiasVhb);
+                if (an.serologiasVhc) F.setValue('fhAnaliticaSerologiasVhc', an.serologiasVhc);
+                if (an.serologiasVih) F.setValue('fhAnaliticaSerologiasVih', an.serologiasVih);
                 if (!an.serologiasVhb && !an.serologiasVhc && !an.serologiasVih && an.serologias) {
-                    F.setValue("fhAnaliticaSerologiasVhb", an.serologias);
-                    F.setValue("fhAnaliticaSerologiasVhc", an.serologias);
-                    F.setValue("fhAnaliticaSerologiasVih", an.serologias);
+                    F.setValue('fhAnaliticaSerologiasVhb', an.serologias);
+                    F.setValue('fhAnaliticaSerologiasVhc', an.serologias);
+                    F.setValue('fhAnaliticaSerologiasVih', an.serologias);
                 }
-                if (an.vacunacion) F.setValue("fhAnaliticaVacunacion", an.vacunacion);
-                if (an.observaciones) F.setValue("fhAnaliticaObservaciones", an.observaciones);
+                if (an.vacunacion) F.setValue('fhAnaliticaVacunacion', an.vacunacion);
+                if (an.observaciones) F.setValue('fhAnaliticaObservaciones', an.observaciones);
             }
 
             if (p.comorbilidades) {
                 var com = p.comorbilidades;
-                if (com.imc) F.setValue("fhHSComorbImc", com.imc);
-                if (com.tabaquismo) F.setValue("fhHSComorbTabaquismo", com.tabaquismo);
-                if (com.paquetesAno) F.setValue("fhHSComorbPaquetes", com.paquetesAno);
-                if (com.diabetes) F.setValue("fhHSComorbDiabetes", com.diabetes);
-                if (com.hba1c) F.setValue("fhHSComorbHba1c", com.hba1c);
-                if (com.sindromeMetabolico) F.setValue("fhHSComorbSdMetabolico", com.sindromeMetabolico);
-                if (com.otras) F.setValue("fhHSComorbOtras", com.otras);
+                if (com.imc) F.setValue('fhHSComorbImc', com.imc);
+                if (com.tabaquismo) F.setValue('fhHSComorbTabaquismo', com.tabaquismo);
+                if (com.paquetesAno) F.setValue('fhHSComorbPaquetes', com.paquetesAno);
+                if (com.diabetes) F.setValue('fhHSComorbDiabetes', com.diabetes);
+                if (com.hba1c) F.setValue('fhHSComorbHba1c', com.hba1c);
+                if (com.sindromeMetabolico) F.setValue('fhHSComorbSdMetabolico', com.sindromeMetabolico);
+                if (com.otras) F.setValue('fhHSComorbOtras', com.otras);
             }
         }
-        if (modoActual) byId("fhTipoSolicitud").value = modoActual;
+
+        mostrarFormulario();
         toggleHSBlock();
         updateValidationModuleSummaries();
-        // WO8.1c.11 — Enfermería: override modo, header, servicio, campos y chips prebiológicos
-        var isEnfPatient = context.patient && F && typeof F.isEnfermeriaPatient === 'function'
-            && F.isEnfermeriaPatient(context.patient);
+
+        var isEnfPatient = currentPatient && F && typeof F.isEnfermeriaPatient === 'function'
+            && F.isEnfermeriaPatient(currentPatient);
         if (isEnfPatient) {
-            var enf = context.patient;
+            var enf = currentPatient;
             var enfServicioSlug = enf.servicioSlug || '';
             var enfServicio = enf.servicio || '';
-            // 1. Override modo según servicioSlug real del paciente
             if (enfServicioSlug === 'reumatologia' || String(enfServicio).toLowerCase().indexOf('reuma') !== -1) {
                 mostrarFormulario('reuma');
-                byId('fhTipoSolicitud').value = 'reuma';
             } else {
                 mostrarFormulario('derma');
-                byId('fhTipoSolicitud').value = 'derma';
             }
-            // 2. Header título dinámico
             var dermaTitle = document.querySelector('#formDerma h2.section-title');
             if (dermaTitle) {
                 var sd = enfServicio || 'Enfermería / Inicio biológico';
-                // Rebuild preserving icon via DOM methods
                 dermaTitle.textContent = '';
                 var iconEl = document.createElement('i');
                 iconEl.className = 'fas fa-disease';
@@ -337,19 +389,9 @@
                 dermaTitle.appendChild(iconEl);
                 dermaTitle.appendChild(document.createTextNode(' Datos de solicitud — ' + sd));
             }
-            // 3. Servicio readonly
             var srvInput = byId('fhDermaServicioOrigen');
             if (srvInput) srvInput.value = enfServicio || 'Enfermería / Inicio biológico';
-            // 4. Context-strip
-            var cipCtx = document.querySelector('[data-context="cip"]');
-            if (cipCtx) cipCtx.textContent = enf.cip || '—';
-            var servCtx = document.querySelector('[data-context="servicio"]');
-            if (servCtx) servCtx.textContent = enfServicio || '—';
-            var patCtx = document.querySelector('[data-context="patologia"]');
-            if (patCtx) patCtx.textContent = (enf.patologia || enf.patologia_indicacion || '—');
-            // 5. CIP
             F.setValue('fhDermaCip', enf.cip || '');
-            // 6. Patología
             var enfPat = enf.patologia || enf.patologia_indicacion || '';
             if (enfPat) {
                 var patSelect = byId('fhDermaPatologia');
@@ -368,125 +410,108 @@
                     }
                 }
             }
-            // 7. Fármaco solicitado
             var enfFarmaco = enf.farmaco || enf.farmaco_solicitado || '';
             if (enfFarmaco) F.setValue('fhDermaFarmaco', enfFarmaco);
-            // Limpiar defaults Derma que no aplican a Reuma desde Enfermería
             F.setValue('fhDermaDosis', '');
             F.setValue('fhDermaPeso', '');
-            byId('fhDermaInduccion').value = 'no';
-            // 8. Justificación clínica si vacía
+            var indSel = byId('fhDermaInduccion');
+            if (indSel) indSel.value = 'no';
             if (byId('fhDermaJustificacion') && !byId('fhDermaJustificacion').value) {
                 F.setValue('fhDermaJustificacion', 'Solicitud desde Enfermería / Inicio biológico · ' + (enfPat || ''));
             }
-            // 9. Chips prebiológicos desde Enfermería (solo si no existe ya fhEnfermeriaResumen)
-            var existingEnfResumen = byId('fhEnfermeriaResumen');
-            if (!existingEnfResumen || !existingEnfResumen.children || existingEnfResumen.children.length === 0) {
-            (function applyEnfermeriaPrebioChips(enfP) {
-                var chipMap = [
-                    { enfKey: 'mantoux_estado', hidId: 'fhAnaliticaMantoux',
-                      vals: { 'NEGATIVO': 'Negativo', 'PENDIENTE': 'Pendiente', 'POSITIVO': 'Positivo - tratado' } },
-                    { enfKey: 'igra_estado', hidId: 'fhAnaliticaMantoux',
-                      vals: { 'NEGATIVO': 'Negativo', 'PENDIENTE': 'Pendiente' } },
-                    { enfKey: 'vhb_estado', hidId: 'fhAnaliticaSerologiasVhb',
-                      vals: { 'NEGATIVO': 'Negativo', 'POSITIVO': 'Positivo', 'PENDIENTE': 'Pendiente' } },
-                    { enfKey: 'vhc_estado', hidId: 'fhAnaliticaSerologiasVhc',
-                      vals: { 'NEGATIVO': 'Negativo', 'POSITIVO': 'Positivo', 'PENDIENTE': 'Pendiente' } },
-                    { enfKey: 'vih_estado', hidId: 'fhAnaliticaSerologiasVih',
-                      vals: { 'NEGATIVO': 'Negativo', 'POSITIVO': 'Positivo', 'PENDIENTE': 'Pendiente' } },
-                    { enfKey: 'medicina_preventiva_estado', hidId: 'fhAnaliticaVacunacion',
-                      vals: { 'OK': 'si', 'NEGATIVO': 'si', 'PENDIENTE': 'pendiente', 'NO PRECISA': 'pendiente' } }
-                ];
-                chipMap.forEach(function (mEntry) {
-                    var raw = enfP[mEntry.enfKey];
-                    if (!raw) return;
-                    var upper = String(raw).trim().toUpperCase();
-                    var chipVal = mEntry.vals[upper];
-                    if (!chipVal) return;
-                    var hid = byId(mEntry.hidId);
-                    if (!hid) return;
-                    hid.value = chipVal;
-                    var grp = document.querySelector('.analitica-chip-group[data-chip-target="' + mEntry.hidId + '"]');
-                    if (grp && typeof syncRadioGroup === 'function') syncRadioGroup(grp, chipVal);
-                });
-            })(enf);
-            }
-            // Limpiar defaults demo heredados si no aplican
-            if (modoActual !== 'derma') {
-                // Si estamos en Reuma y el formulario Derma tiene datos demo, no arrastrarlos
-                if (byId('fhDermaPeso')) F.setValue('fhDermaPeso', '');
-                if (byId('fhDermaInduccion')) byId('fhDermaInduccion').value = 'no';
-            }
-            // WO8.1c.12 — Hidratar formReuma con datos Enfermería
-            if (modoActual === "reuma") {
+            if (typeof applyEnfermeriaPrebioChips === 'function') applyEnfermeriaPrebioChips(enf);
+            if (modoActual === 'reuma') {
                 hydrateReumaForm(enf);
             }
         }
-        // WO8.1c.10 — Hidratar resumen prebiológico desde Enfermería
-        if (context.patient && (context.patient.origen_solicitud === 'enfermeria' ||
-            context.patient.source_type === 'ENFERMERIA' ||
-            String(context.patient.importSource || '').toLowerCase().indexOf('enfermer') !== -1)) {
-            var enf = context.patient;
-            var summaryContainer = byId('fhEnfermeriaResumen');
-            if (!summaryContainer) {
-                summaryContainer = document.createElement('div');
-                summaryContainer.id = 'fhEnfermeriaResumen';
-                summaryContainer.className = 'info-card info-card--enf-resumen';
-                summaryContainer.style.cssText = 'margin-top:12px;padding:12px 14px;border-radius:10px;background:#F0FDF4;border:1px solid #BBF7D0;';
-                var prebioSection = document.querySelector('#modPrebiologico .card-body') ||
-                    document.querySelector('#modPrebiologico');
-                if (prebioSection) {
-                    prebioSection.appendChild(summaryContainer);
-                }
-            }
-            F.clearChildren(summaryContainer);
-            var sTitle = document.createElement('h4');
-            sTitle.style.cssText = 'margin:0 0 8px;font-size:0.9rem;color:#166534;';
-            var sTitleIcon = document.createElement('i');
-            sTitleIcon.className = 'fas fa-user-nurse';
-            sTitleIcon.setAttribute('aria-hidden', 'true');
-            sTitle.appendChild(sTitleIcon);
-            sTitle.appendChild(document.createTextNode(' Datos prebiológicos desde Excel Enfermería'));
-            summaryContainer.appendChild(sTitle);
-            var sGrid = document.createElement('div');
-            sGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:0.84rem;';
-            var enfFields = [
-                { key: 'analitica_estado', label: 'Analítica' },
-                { key: 'mantoux_estado', label: 'Mantoux' },
-                { key: 'igra_estado', label: 'IGRA' },
-                { key: 'vhb_estado', label: 'VHB' },
-                { key: 'vhc_estado', label: 'VHC' },
-                { key: 'vih_estado', label: 'VIH' },
-                { key: 'medicina_preventiva_estado', label: 'Med. Preventiva' }
-            ];
-            for (var ei = 0; ei < enfFields.length; ei++) {
-                var raw = enf[enfFields[ei].key];
-                var display = F.normalizeEnfermeriaFieldValue ? F.normalizeEnfermeriaFieldValue(raw) : (raw || '—');
-                var item = document.createElement('div');
-                item.style.cssText = 'display:flex;align-items:center;gap:6px;';
-                var lbl = document.createElement('span');
-                lbl.style.cssText = 'color:#475569;min-width:85px;';
-                lbl.textContent = enfFields[ei].label + ':';
-                var val = document.createElement('span');
-                val.style.cssText = 'font-weight:600;color:#0F172A;';
-                val.textContent = display;
-                item.append(lbl, val);
-                sGrid.appendChild(item);
-            }
-            summaryContainer.appendChild(sGrid);
-            if (enf.observaciones_prebiologico) {
-                var obs = document.createElement('div');
-                obs.style.cssText = 'margin-top:8px;font-style:italic;color:#166534;font-size:0.82rem;';
-                obs.textContent = 'Observación: ' + enf.observaciones_prebiologico;
-                summaryContainer.appendChild(obs);
-            }
-            if (enf.fecha_ok_farmacia) {
-                var fok = document.createElement('div');
-                fok.style.cssText = 'margin-top:4px;font-size:0.82rem;color:#166534;';
-                fok.textContent = 'OK Farmacia desde: ' + enf.fecha_ok_farmacia;
-                summaryContainer.appendChild(fok);
-            }
+    }
+
+    function normalizePbValue(rawValue, key) {
+        var v = String(rawValue || '').trim();
+        var upper = v.toUpperCase();
+        if (!v || v === '—') return { text: 'No informado', estado: 'no_informado' };
+
+        var isBooleanPositive = function (val) {
+            if (val === true || val === 1 || val === '1') return true;
+            var s = String(val).trim().toUpperCase();
+            return /^(SI|SÍ|OK|COMPLETO|COMPLETADA|COMPLETADO|NEGATIVO|NEGATIVA|NEGATIVOS)$/.test(s);
+        };
+
+        if (key === 'analiticaReciente') {
+            if (/^(SI|SÍ|OK)$/.test(upper)) return { text: 'OK', estado: 'ok' };
+            if (/^NO$/.test(upper)) return { text: 'Pendiente', estado: 'pendiente' };
+            return { text: 'No informado', estado: 'no_informado' };
         }
+        if (key === 'hemograma' || key === 'bioquimica') {
+            if (isBooleanPositive(rawValue)) return { text: 'OK', estado: 'ok' };
+            if (rawValue === false || /^(NO|PENDIENTE)$/.test(upper)) return { text: 'Pendiente', estado: 'pendiente' };
+            return { text: 'No informado', estado: 'no_informado' };
+        }
+        if (key === 'mantoux' || key === 'vhb' || key === 'vhc' || key === 'vih') {
+            if (upper.indexOf('NEGATIVO') !== -1) return { text: 'Negativo', estado: 'ok' };
+            if (/^(POSITIVO|POSITIVA|ALTERADO|ALTERADA|REACTIVO|REACTIVA)$/.test(upper) || upper.indexOf('POSITIV') !== -1) return { text: 'Positivo/alterado', estado: 'alerta' };
+            if (upper.indexOf('PENDIENTE') !== -1) return { text: 'Pendiente', estado: 'pendiente' };
+            if (/^(NO PRECISA|NO_PRECISA|NO APLICA|N\/A|NA)$/.test(upper)) return { text: 'No precisa', estado: 'no_precisa' };
+            return { text: 'No informado', estado: 'no_informado' };
+        }
+        if (key === 'vacunacion') {
+            if (/^(SI|SÍ|OK|COMPLETO|COMPLETADA|COMPLETADO)$/.test(upper)) return { text: 'OK', estado: 'ok' };
+            if (/^(NO PRECISA|NO_PRECISA|NO APLICA|N\/A|NA)$/.test(upper)) return { text: 'No precisa', estado: 'no_precisa' };
+            if (/^NO$/.test(upper)) return { text: 'No informado', estado: 'no_informado' };
+            if (upper.indexOf('PENDIENTE') !== -1) return { text: 'Pendiente', estado: 'pendiente' };
+            return { text: 'No informado', estado: 'no_informado' };
+        }
+        return { text: v, estado: 'no_informado' };
+    }
+
+    function setPbChip(chipId, valueObj) {
+        var chip = byId(chipId);
+        if (!chip) return;
+        var statusEl = chip.querySelector('.pb-chip__status') || byId(chipId.replace('pbChip', 'pbStatus').replace('Chip', 'Status'));
+        if (!statusEl) statusEl = chip;
+        statusEl.textContent = valueObj.text;
+        statusEl.setAttribute('data-estado', valueObj.text);
+        chip.setAttribute('data-estado', valueObj.text);
+    }
+
+    function updatePrebiologicoChips() {
+        var p = currentPatient;
+        var an = p && p.analiticaEstruct ? p.analiticaEstruct : null;
+        setPbChip('pbChipAnaliticaReciente', normalizePbValue(an ? an.reciente : byId('fhAnaliticaReciente').value, 'analiticaReciente'));
+        setPbChip('pbChipHemograma', normalizePbValue(an ? an.hemograma : byId('fhAnaliticaHemograma').checked, 'hemograma'));
+        setPbChip('pbChipBioquimica', normalizePbValue(an ? an.bioquimica : byId('fhAnaliticaBioquimica').checked, 'bioquimica'));
+        setPbChip('pbChipMantoux', normalizePbValue(an ? (an.mantoux || '') : byId('fhAnaliticaMantoux').value, 'mantoux'));
+        setPbChip('pbChipVhb', normalizePbValue(an ? (an.serologiasVhb || '') : byId('fhAnaliticaSerologiasVhb').value, 'vhb'));
+        setPbChip('pbChipVhc', normalizePbValue(an ? (an.serologiasVhc || '') : byId('fhAnaliticaSerologiasVhc').value, 'vhc'));
+        setPbChip('pbChipVih', normalizePbValue(an ? (an.serologiasVih || '') : byId('fhAnaliticaSerologiasVih').value, 'vih'));
+        setPbChip('pbChipVacunacion', normalizePbValue(an ? an.vacunacion : byId('fhAnaliticaVacunacion').value, 'vacunacion'));
+        var obs = byId('fhPrebiologicoObservaciones');
+        if (obs) obs.textContent = valueOrDash(an && an.observaciones ? an.observaciones : byId('fhAnaliticaObservaciones').value);
+    }
+
+    function applyEnfermeriaPrebioChips(enfP) {
+        if (!enfP) return;
+        var valueMap = {
+            pbChipAnaliticaReciente: enfP.analitica_estado,
+            pbChipMantoux: enfP.mantoux_estado || enfP.igra_estado,
+            pbChipVhb: enfP.vhb_estado,
+            pbChipVhc: enfP.vhc_estado,
+            pbChipVih: enfP.vih_estado,
+            pbChipVacunacion: enfP.medicina_preventiva_estado
+        };
+        Object.keys(valueMap).forEach(function (chipId) {
+            var raw = valueMap[chipId];
+            if (!raw || String(raw).trim() === '') return;
+            var key = chipId.replace('pbChip', '').replace('AnaliticaReciente', 'analiticaReciente').replace('Hemograma', 'hemograma').replace('Bioquimica', 'bioquimica').replace('Mantoux', 'mantoux').replace('Vhb', 'vhb').replace('Vhc', 'vhc').replace('Vih', 'vih').replace('Vacunacion', 'vacunacion');
+            var display = F.normalizeEnfermeriaFieldValue ? F.normalizeEnfermeriaFieldValue(raw) : String(raw);
+            var status = F.getEnfermeriaFieldStatus ? F.getEnfermeriaFieldStatus(raw) : 'no_informado';
+            var estadoMap = { completo: 'ok', no_aplica: 'no_precisa', pendiente: 'pendiente', bloqueo: 'bloqueante', alerta: 'positivo_alterado', no_informado: 'no_informado' };
+            var textMap = { ok: 'OK', no_precisa: 'No precisa', pendiente: 'Pendiente', bloqueante: 'Bloqueante', positivo_alterado: 'Positivo/alterado', no_informado: 'No informado' };
+            var estado = estadoMap[status] || 'no_informado';
+            setPbChip(chipId, { text: textMap[estado] || display, estado: estado });
+        });
+        var obs = byId('fhPrebiologicoObservaciones');
+        if (obs && enfP.observaciones_prebiologico) obs.textContent = enfP.observaciones_prebiologico;
     }
 
     function syncRadioGroup(group, value) {
@@ -514,15 +539,40 @@
     }
 
     function currentTreatmentSummary() {
-        if (modoActual === "reuma") {
+        return {
+            farmaco: valueOrDash(byId("fhValidadoFarmaco").value),
+            principioActivo: valueOrDash(byId("fhValidadoPrincipioActivo").value),
+            dosis: valueOrDash(byId("fhValidadoDosis").value),
+            via: valueOrDash(byId("fhValidadoVia").value),
+            pauta: (function () {
+                var select = byId("fhValidadoPauta");
+                var value = select ? select.value : "";
+                if (value === "OTRO") return valueOrDash(byId("fhValidadoPautaOtro").value);
+                if (P && typeof P.getPautaByCodigo === "function" && typeof P.getLegacyPautaLabel === "function") {
+                    var pautaObj = P.getPautaByCodigo(value);
+                    return valueOrDash(P.getLegacyPautaLabel(pautaObj));
+                }
+                return valueOrDash(value);
+            })(),
+            induccion: byId("fhValidadoInduccion").value === "si" ? "Sí" : (byId("fhValidadoInduccion").value === "no" ? "No" : "—"),
+            presentacion: valueOrDash(byId("fhValidadoPresentacion").value),
+            justificacion: valueOrDash(byId("fhValidadoJustificacion").value)
+        };
+    }
+
+    function requestedTreatmentSummary() {
+        var origenEl = byId('fhOrigenEntrada');
+        var origenVal = origenEl ? origenEl.value : '';
+        if (currentPatient && origenVal !== 'manual_farmacia') {
+            var p = currentPatient;
             return {
-                farmaco: valueOrDash(currentPatient ? currentPatient.farmaco : null),
-                principioActivo: valueOrDash(currentPatient ? currentPatient.principioActivo : null),
-                dosis: currentPatient && currentPatient.dosis ? valueOrDash(currentPatient.dosis) : "Pendiente de completar por Farmacia",
-                via: currentPatient && currentPatient.via ? valueOrDash(currentPatient.via) : "Pendiente de completar por Farmacia",
-                pauta: currentPatient && currentPatient.pauta ? valueOrDash(currentPatient.pauta) : "Pendiente de completar por Farmacia",
-                induccion: currentPatient && currentPatient.induccion ? valueOrDash(currentPatient.induccion) : "Pendiente de completar por Farmacia",
-                justificacion: valueOrDash(currentPatient ? (currentPatient.analitica || currentPatient.justificacion) : null)
+                farmaco: valueOrDash(p.farmaco),
+                principioActivo: valueOrDash(p.principioActivo),
+                dosis: p.dosis ? valueOrDash(p.dosis) : "Pendiente de completar por Farmacia",
+                via: p.via ? valueOrDash(p.via) : "Pendiente de completar por Farmacia",
+                pauta: p.pauta ? valueOrDash(p.pauta) : "Pendiente de completar por Farmacia",
+                induccion: p.induccion ? valueOrDash(p.induccion) : "—",
+                justificacion: valueOrDash(p.justificacion || p.motivoClinico || p.analitica)
             };
         }
         return {
@@ -545,33 +595,35 @@
         };
     }
 
-    function updateTreatmentSummary() {
-        var summary = currentTreatmentSummary();
-        setText("fhResumenFarmaco", summary.farmaco);
-        setText("fhResumenPrincipioActivo", summary.principioActivo);
-        setText("fhResumenDosis", summary.dosis);
-        setText("fhResumenVia", summary.via);
-        setText("fhResumenPauta", summary.pauta);
-        setText("fhResumenInduccion", summary.induccion);
-        setText("fhResumenJustificacion", summary.justificacion);
+    function updateSolicitadoSummary() {
+        var summary = requestedTreatmentSummary();
+        setText("fhSolicitadoFarmaco", summary.farmaco);
+        setText("fhSolicitadoDosis", summary.dosis);
+        setText("fhSolicitadoVia", summary.via);
+        setText("fhSolicitadoPauta", summary.pauta);
+        setText("fhSolicitadoInduccion", summary.induccion);
+        setText("fhSolicitadoPrincipioActivo", summary.principioActivo);
+        setText("fhSolicitadoJustificacion", summary.justificacion);
+        var indRow = byId("fhSolicitadoInduccionRow");
+        if (indRow) indRow.classList.toggle("hidden", !summary.induccion || summary.induccion === "—");
     }
 
-    function updatePrebiologicoSummary() {
-        setText("fhResumenAnaliticaFecha", valueOrDash(byId("fhAnaliticaFecha").value));
-        setText("fhResumenAnaliticaReciente", valueOrDash(byId("fhAnaliticaReciente").value));
-        setText("fhResumenMantoux", valueOrDash(byId("fhAnaliticaMantoux").value));
-        setText("fhResumenVhb", valueOrDash(byId("fhAnaliticaSerologiasVhb").value));
-        setText("fhResumenVhc", valueOrDash(byId("fhAnaliticaSerologiasVhc").value));
-        setText("fhResumenVih", valueOrDash(byId("fhAnaliticaSerologiasVih").value));
-        setText("fhResumenVacunacion", valueOrDash(byId("fhAnaliticaVacunacion").value));
-        setText("fhResumenHemograma", byId("fhAnaliticaHemograma").checked ? "Verificado" : "No verificado");
-        setText("fhResumenBioquimica", byId("fhAnaliticaBioquimica").checked ? "Verificado" : "No verificado");
-        setText("fhResumenVacunacionObs", valueOrDash(byId("fhAnaliticaObservaciones").value));
+    function updateValidadoSummary() {
+        var summary = currentTreatmentSummary();
+        var validadoFarmaco = byId("fhValidadoFarmaco");
+        if (validadoFarmaco && !validadoFarmaco.value && summary.farmaco !== "—") {
+            F.setValue("fhValidadoFarmaco", summary.farmaco);
+            F.setValue("fhValidadoPrincipioActivo", summary.principioActivo);
+            F.setValue("fhValidadoDosis", summary.dosis);
+            F.setValue("fhValidadoVia", summary.via);
+            F.setValue("fhValidadoPresentacion", summary.presentacion);
+        }
     }
 
     function updateValidationModuleSummaries() {
-        updateTreatmentSummary();
-        updatePrebiologicoSummary();
+        updateSolicitadoSummary();
+        updatePrebiologicoChips();
+        updateValidadoSummary();
     }
 
     function updateSeguimientoHandoffLink() {
@@ -1020,24 +1072,43 @@
 
     function buildValidationLines() {
         var lines = [];
-        var summary = currentTreatmentSummary();
+        var validado = currentTreatmentSummary();
+        var solicitado = requestedTreatmentSummary();
         var naranjoAnswers = readNaranjoAnswersFromDom();
         var klAnswers = readKarchLasagnaAnswersFromDom();
+        var origenLabel = byId("fhOrigenEntrada");
+        var tipoValLabel = byId("fhTipoValidacion");
         lines.push("=== INFORME DE VALIDACIÓN FARMACOTERAPÉUTICA ===");
         lines.push("Identificador demo: FH-VAL-" + Date.now().toString(36).toUpperCase());
         lines.push("Fecha: " + new Date().toLocaleDateString("es-ES"));
         lines.push("");
+        lines.push("Origen de entrada: " + (origenLabel && origenLabel.options[origenLabel.selectedIndex] ? origenLabel.options[origenLabel.selectedIndex].text : "—"));
+        lines.push("Tipo de validación: " + (tipoValLabel && tipoValLabel.options[tipoValLabel.selectedIndex] ? tipoValLabel.options[tipoValLabel.selectedIndex].text : "—"));
         lines.push("Servicio origen: " + (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología"));
         lines.push("CIP: " + selectedCip());
         lines.push("Patología: " + selectedPatologia());
         if (modoActual !== "reuma") lines.push("Fecha solicitud: " + valueOrDash(byId("fhDermaFecha").value));
-        lines.push("Fármaco solicitado: " + summary.farmaco);
-        lines.push("Principio activo: " + summary.principioActivo);
-        lines.push("Dosis: " + summary.dosis);
-        lines.push("Vía: " + summary.via);
-        lines.push("Pauta: " + summary.pauta);
-        lines.push("Inducción: " + summary.induccion);
-        lines.push("Justificación clínica: " + summary.justificacion);
+
+        lines.push("");
+        lines.push("TRATAMIENTO SOLICITADO");
+        lines.push("Fármaco solicitado: " + solicitado.farmaco);
+        lines.push("Principio activo: " + solicitado.principioActivo);
+        lines.push("Dosis solicitada: " + solicitado.dosis);
+        lines.push("Vía: " + solicitado.via);
+        lines.push("Pauta: " + solicitado.pauta);
+        lines.push("Inducción: " + solicitado.induccion);
+        lines.push("Justificación clínica: " + solicitado.justificacion);
+
+        lines.push("");
+        lines.push("TRATAMIENTO VALIDADO POR FARMACIA");
+        lines.push("Fármaco validado: " + validado.farmaco);
+        lines.push("Principio activo: " + validado.principioActivo);
+        lines.push("Dosis prescrita: " + validado.dosis);
+        lines.push("Vía: " + validado.via);
+        lines.push("Pauta: " + validado.pauta);
+        lines.push("Inducción: " + validado.induccion);
+        lines.push("Presentación: " + validado.presentacion);
+        lines.push("Justificación farmacéutica: " + validado.justificacion);
 
         lines.push("");
         lines.push("OTROS FÁRMACOS / BIOLÓGICOS");
@@ -1046,44 +1117,52 @@
         lines.push("");
         lines.push("ESTUDIO PREBIOLÓGICO");
         lines.push("Fecha analítica: " + valueOrDash(byId("fhAnaliticaFecha").value));
-        lines.push("Analítica <3 meses: " + valueOrDash(byId("fhAnaliticaReciente").value));
-        lines.push("Hemograma: " + (byId("fhAnaliticaHemograma").checked ? "Verificado" : "No verificado"));
-        lines.push("Bioquímica: " + (byId("fhAnaliticaBioquimica").checked ? "Verificado" : "No verificado"));
-        lines.push("Mantoux/IGRA: " + valueOrDash(byId("fhAnaliticaMantoux").value));
-        lines.push("VHB: " + valueOrDash(byId("fhAnaliticaSerologiasVhb").value));
-        lines.push("VHC: " + valueOrDash(byId("fhAnaliticaSerologiasVhc").value));
-        lines.push("VIH: " + valueOrDash(byId("fhAnaliticaSerologiasVih").value));
-        lines.push("Vacunación: " + valueOrDash(byId("fhAnaliticaVacunacion").value));
-        lines.push("Observaciones vacunación: " + valueOrDash(byId("fhAnaliticaObservaciones").value));
+        lines.push("Analítica <3 meses: " + (byId("pbStatusAnaliticaReciente") ? byId("pbStatusAnaliticaReciente").textContent : valueOrDash(byId("fhAnaliticaReciente").value)));
+        lines.push("Hemograma: " + (byId("pbStatusHemograma") ? byId("pbStatusHemograma").textContent : (byId("fhAnaliticaHemograma").checked ? "Verificado" : "No verificado")));
+        lines.push("Bioquímica: " + (byId("pbStatusBioquimica") ? byId("pbStatusBioquimica").textContent : (byId("fhAnaliticaBioquimica").checked ? "Verificado" : "No verificado")));
+        lines.push("Mantoux/IGRA: " + (byId("pbStatusMantoux") ? byId("pbStatusMantoux").textContent : valueOrDash(byId("fhAnaliticaMantoux").value)));
+        lines.push("VHB: " + (byId("pbStatusVhb") ? byId("pbStatusVhb").textContent : valueOrDash(byId("fhAnaliticaSerologiasVhb").value)));
+        lines.push("VHC: " + (byId("pbStatusVhc") ? byId("pbStatusVhc").textContent : valueOrDash(byId("fhAnaliticaSerologiasVhc").value)));
+        lines.push("VIH: " + (byId("pbStatusVih") ? byId("pbStatusVih").textContent : valueOrDash(byId("fhAnaliticaSerologiasVih").value)));
+        lines.push("Vacunación: " + (byId("pbStatusVacunacion") ? byId("pbStatusVacunacion").textContent : valueOrDash(byId("fhAnaliticaVacunacion").value)));
+        lines.push("Observaciones prebiológico: " + valueOrDash(byId("fhPrebiologicoObservaciones") ? byId("fhPrebiologicoObservaciones").textContent : byId("fhAnaliticaObservaciones").value));
 
-        lines.push("");
-        lines.push("EFECTO ADVERSO / RAM");
-        lines.push("¿Existe sospecha de RAM?: " + byId("fhEaNotificado").options[byId("fhEaNotificado").selectedIndex].text);
+        if (!byId("modEfectoAdverso").classList.contains("hidden")) {
+            lines.push("");
+            lines.push("EFECTO ADVERSO / RAM");
+            lines.push("¿Existe sospecha de RAM?: " + byId("fhEaNotificado").options[byId("fhEaNotificado").selectedIndex].text);
+        }
 
-        lines.push("");
-        lines.push("ALGORITMO DE NARANJO");
-        Object.keys(naranjoAnswers).forEach(function (key) {
-            lines.push(key.toUpperCase() + ": " + valueOrDash(naranjoAnswers[key]));
-        });
-        lines.push("Puntuación total: " + byId("naranjoScore").textContent);
-        lines.push("Categoría: " + byId("naranjoCategoria").textContent);
+        if (!byId("modNaranjo").classList.contains("hidden")) {
+            lines.push("");
+            lines.push("ALGORITMO DE NARANJO");
+            Object.keys(naranjoAnswers).forEach(function (key) {
+                lines.push(key.toUpperCase() + ": " + valueOrDash(naranjoAnswers[key]));
+            });
+            lines.push("Puntuación total: " + byId("naranjoScore").textContent);
+            lines.push("Categoría: " + byId("naranjoCategoria").textContent);
+        }
 
-        lines.push("");
-        lines.push("KARCH-LASAGNA");
-        lines.push("Temporalidad: " + valueOrDash(klAnswers.temporal));
-        lines.push("Evento conocido: " + valueOrDash(klAnswers.conocido));
-        lines.push("Alternativa: " + valueOrDash(klAnswers.alternativa));
-        lines.push("Retirada: " + valueOrDash(klAnswers.suspendido));
-        lines.push("Mejora: " + valueOrDash(klAnswers.mejoraRetirada));
-        lines.push("Readministración: " + valueOrDash(klAnswers.readministracion));
-        lines.push("Reaparición: " + valueOrDash(klAnswers.reaparece));
-        lines.push("Categoría: " + byId("klCategoria").textContent);
+        if (!byId("modKarchLasagna").classList.contains("hidden")) {
+            lines.push("");
+            lines.push("KARCH-LASAGNA");
+            lines.push("Temporalidad: " + valueOrDash(klAnswers.temporal));
+            lines.push("Evento conocido: " + valueOrDash(klAnswers.conocido));
+            lines.push("Alternativa: " + valueOrDash(klAnswers.alternativa));
+            lines.push("Retirada: " + valueOrDash(klAnswers.suspendido));
+            lines.push("Mejora: " + valueOrDash(klAnswers.mejoraRetirada));
+            lines.push("Readministración: " + valueOrDash(klAnswers.readministracion));
+            lines.push("Reaparición: " + valueOrDash(klAnswers.reaparece));
+            lines.push("Categoría: " + byId("klCategoria").textContent);
+        }
 
-        lines.push("");
-        lines.push("RESUMEN DE CAUSALIDAD");
-        lines.push("Naranjo: " + byId("resumenNaranjo").textContent);
-        lines.push("Karch-Lasagna: " + byId("resumenKl").textContent);
-        lines.push("Causalidad final farmacéutica: " + byId("fhCausalidadFinal").value);
+        if (!byId("modResumenCausalidad").classList.contains("hidden")) {
+            lines.push("");
+            lines.push("RESUMEN DE CAUSALIDAD");
+            lines.push("Naranjo: " + byId("resumenNaranjo").textContent);
+            lines.push("Karch-Lasagna: " + byId("resumenKl").textContent);
+            lines.push("Causalidad final farmacéutica: " + byId("fhCausalidadFinal").value);
+        }
 
         lines.push("");
         lines.push("Estado validación: " + estadoLabel());
@@ -1171,7 +1250,9 @@
             "fhDermaFarmaco", "fhDermaPrincipioActivo", "fhDermaDosis", "fhDermaVia", "fhDermaPauta", "fhDermaPautaOtro",
             "fhDermaInduccion", "fhDermaJustificacion", "fhHSMotivoClinico", "fhAnaliticaFecha",
             "fhAnaliticaReciente", "fhAnaliticaMantoux", "fhAnaliticaSerologiasVhb", "fhAnaliticaSerologiasVhc",
-            "fhAnaliticaSerologiasVih", "fhAnaliticaVacunacion", "fhAnaliticaObservaciones"
+            "fhAnaliticaSerologiasVih", "fhAnaliticaVacunacion", "fhAnaliticaObservaciones",
+            "fhValidadoFarmaco", "fhValidadoPrincipioActivo", "fhValidadoDosis", "fhValidadoVia",
+            "fhValidadoPauta", "fhValidadoPautaOtro", "fhValidadoInduccion", "fhValidadoPresentacion", "fhValidadoJustificacion"
         ].forEach(function (id) {
             var el = byId(id);
             if (!el) return;
@@ -1197,8 +1278,16 @@
     }
 
     function bindCoreEvents() {
-        byId("fhTipoSolicitud").addEventListener("change", function () {
-            if (this.value) mostrarFormulario(this.value);
+        var origenSel = byId("fhOrigenEntrada");
+        if (origenSel) origenSel.addEventListener("change", function () {
+            mostrarFormulario(this.value);
+            updateValidationModuleSummaries();
+        });
+        var tipoValSel = byId("fhTipoValidacion");
+        if (tipoValSel) tipoValSel.addEventListener("change", function () {
+            var notice = byId("fhTipoValidacionNotice");
+            if (notice) notice.classList.toggle("hidden", this.value === "inicio_nuevo" || this.value === "");
+            updateValidationModuleSummaries();
         });
         byId("fhValEstado").addEventListener("change", function (event) {
             byId("fhValMotivoRow").classList.toggle("hidden", event.target.value !== "denied");
@@ -1228,6 +1317,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         populatePautaSelect("fhDermaPauta", "fhDermaPautaOtro");
+        populatePautaSelect("fhValidadoPauta", "fhValidadoPautaOtro");
         bindCoreEvents();
         bindSummaryInputs();
         bindCausalityEvents();

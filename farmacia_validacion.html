@@ -89,10 +89,38 @@
             <p class="hero-description">Revise la solicitud del servicio origen y emita Pendiente, Validado o Denegado.</p>
         </div>
     </div>
-</section><section class="dashboard-card">
-    <h2 class="section-title"><i class="fas fa-list"></i> Tipo de solicitud</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhTipoSolicitud">Tipo de solicitud</label><select class="form-select" id="fhTipoSolicitud"><option value="">Seleccionar...</option><option value="derma">Dermatología / entrada manual</option><option value="reuma">Reumatología (precargado)</option></select></div></div>
-    <div class="context-strip"><span>CIP: <strong data-context="cip">—</strong></span><span>Servicio: <strong data-context="servicio">—</strong></span><span>Patología: <strong data-context="patologia">—</strong></span></div>
+</section><section class="dashboard-card" id="origenEntradaCard">
+    <h2 class="section-title"><i class="fas fa-door-open"></i> Origen de entrada</h2>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhOrigenEntrada">Origen de entrada</label>
+            <select class="form-select" id="fhOrigenEntrada">
+                <option value="">Seleccionar...</option>
+                <option value="manual_farmacia">Entrada manual - Farmacia</option>
+                <option value="servicio_clinico_compatible">Servicio clinico compatible (futuro)</option>
+                <option value="excel_enfermeria">Solicitud desde Excel Enfermeria</option>
+                <option value="demo_formacion">Demo / Formacion</option>
+            </select>
+        </div>
+    </div>
+</section>
+<section class="dashboard-card" id="tipoValidacionCard">
+    <h2 class="section-title"><i class="fas fa-tag"></i> Tipo de validacion</h2>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhTipoValidacion">Tipo de validacion</label>
+            <select class="form-select" id="fhTipoValidacion">
+                <option value="">Seleccionar...</option>
+                <option value="inicio_nuevo">Inicio de nuevo farmaco</option>
+                <option value="switch_cambio">Switch / cambio de tratamiento</option>
+                <option value="addon">Add-on / tratamiento adicional</option>
+                <option value="renovacion">Renovacion / revalidacion</option>
+            </select>
+        </div>
+    </div>
+    <div id="fhTipoValidacionNotice" class="hidden">
+        <p class="notice-box notice-box--info"><i class="fas fa-info-circle"></i> Logica especifica pendiente de desarrollo para demo.</p>
+    </div>
 </section>
 
 <section class="dashboard-card hidden" id="formDerma">
@@ -164,26 +192,83 @@
     </div>
 </section>
 
+<section class="dashboard-card" id="tratamientoSolicitadoCard">
+  <h2 class="section-title"><i class="fas fa-file-prescription"></i> Tratamiento solicitado (desde origen)</h2>
+  <div class="info-grid">
+    <div class="info-field"><span class="info-field__label">Farmaco solicitado</span><span class="info-field__value" id="fhSolicitadoFarmaco">-</span></div>
+    <div class="info-field"><span class="info-field__label">Dosis solicitada</span><span class="info-field__value" id="fhSolicitadoDosis">-</span></div>
+    <div class="info-field"><span class="info-field__label">Via de administracion</span><span class="info-field__value" id="fhSolicitadoVia">-</span></div>
+    <div class="info-field"><span class="info-field__label">Intervalo / pauta</span><span class="info-field__value" id="fhSolicitadoPauta">-</span></div>
+    <div class="info-field" id="fhSolicitadoInduccionRow"><span class="info-field__label">Induccion</span><span class="info-field__value" id="fhSolicitadoInduccion">-</span></div>
+    <div class="info-field"><span class="info-field__label">Principio activo</span><span class="info-field__value" id="fhSolicitadoPrincipioActivo">-</span></div>
+  </div>
+  <div class="validation-note-block">
+    <span class="validation-note-block__label">Justificacion clinica del origen</span>
+    <p id="fhSolicitadoJustificacion" class="validation-note-block__value">-</p>
+  </div>
+</section>
+
 <section class="dashboard-card hidden" id="validationBlock">
     <h2 class="section-title"><i class="fas fa-check-circle"></i> Validación farmacoterapéutica</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
-    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
-    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
-    <!-- WO8.1c.12: módulos-nav eliminado -->
 
-    <section class="validation-module" id="modTratamientoPrincipal">
-        <h3 class="card-title"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento principal</h3>
-        <div class="info-grid">
-            <div class="info-field"><span class="info-field__label">Fármaco solicitado</span><span class="info-field__value" id="fhResumenFarmaco">—</span></div>
-            <div class="info-field"><span class="info-field__label">Principio activo</span><span class="info-field__value" id="fhResumenPrincipioActivo">—</span></div>
-            <div class="info-field"><span class="info-field__label">Dosis</span><span class="info-field__value" id="fhResumenDosis">—</span></div>
-            <div class="info-field"><span class="info-field__label">Vía</span><span class="info-field__value" id="fhResumenVia">—</span></div>
-            <div class="info-field"><span class="info-field__label">Pauta</span><span class="info-field__value" id="fhResumenPauta">—</span></div>
-            <div class="info-field"><span class="info-field__label">Inducción</span><span class="info-field__value" id="fhResumenInduccion">—</span></div>
+    <section class="validation-module" id="modTratamientoValidado">
+        <h3 class="card-title"><i class="fas fa-check-circle"></i> Tratamiento validado por Farmacia</h3>
+        <div class="catalog-note-badge">
+            <i class="fas fa-info-circle"></i> Precargado desde catalogo - editable por Farmacia
         </div>
-        <div class="validation-note-block">
-            <span class="validation-note-block__label">Justificación clínica</span>
-            <p id="fhResumenJustificacion" class="validation-note-block__value">—</p>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhValidadoFarmaco">Farmaco (autocomplete CIMA)</label>
+                <div class="autocomplete-wrapper" id="autocompleteValidadoWrapper">
+                    <input type="text" class="form-control" id="fhValidadoFarmaco" placeholder="Buscar en catalogo..." autocomplete="off">
+                    <div class="autocomplete-dropdown hidden" id="autocompleteValidadoDropdown"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="fhValidadoPrincipioActivo">Principio activo</label>
+                <input type="text" class="form-control" id="fhValidadoPrincipioActivo" placeholder="Ej. Secukinumab">
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhValidadoDosis">Dosis prescrita</label>
+                <input type="text" class="form-control" id="fhValidadoDosis" placeholder="Ej. 300 mg">
+            </div>
+            <div class="form-group">
+                <label for="fhValidadoVia">Via de administracion</label>
+                <select class="form-select" id="fhValidadoVia">
+                    <option value="">Seleccionar...</option>
+                    <option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhValidadoPauta">Pauta clinica</label>
+                <select class="form-select" id="fhValidadoPauta">
+                    <option value="">Seleccionar...</option>
+                </select>
+                <input type="text" class="form-control hidden" id="fhValidadoPautaOtro" placeholder="Especificar otra pauta">
+            </div>
+            <div class="form-group">
+                <label for="fhValidadoInduccion">Induccion</label>
+                <select class="form-select" id="fhValidadoInduccion">
+                    <option value="no">No</option>
+                    <option value="si">Si</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhValidadoPresentacion">Presentacion (opcional)</label>
+                <input type="text" class="form-control" id="fhValidadoPresentacion" placeholder="Ej. Pluma precargada 300 mg">
+            </div>
+        </div>
+        <div class="form-grid form-grid--full">
+            <div class="form-group">
+                <label for="fhValidadoJustificacion">Justificacion farmaceutica</label>
+                <textarea class="form-textarea" id="fhValidadoJustificacion" rows="2" placeholder="Justificacion de la validacion..."></textarea>
+            </div>
         </div>
     </section>
 
@@ -198,23 +283,54 @@
     </section>
 
     <section class="validation-module" id="modPrebiologico">
-        <h3 class="card-title"><i class="fas fa-flask"></i> Estudio prebiológico</h3>
-        <div class="info-grid">
-            <div class="info-field"><span class="info-field__label">Fecha analítica</span><span class="info-field__value" id="fhResumenAnaliticaFecha">—</span></div>
-            <div class="info-field"><span class="info-field__label">Analítica &lt;3 meses</span><span class="info-field__value" id="fhResumenAnaliticaReciente">—</span></div>
-            <div class="info-field"><span class="info-field__label">Mantoux / IGRA</span><span class="info-field__value" id="fhResumenMantoux">—</span></div>
-            <div class="info-field"><span class="info-field__label">VHB</span><span class="info-field__value" id="fhResumenVhb">—</span></div>
-            <div class="info-field"><span class="info-field__label">VHC</span><span class="info-field__value" id="fhResumenVhc">—</span></div>
-            <div class="info-field"><span class="info-field__label">VIH</span><span class="info-field__value" id="fhResumenVih">—</span></div>
-            <div class="info-field"><span class="info-field__label">Vacunación</span><span class="info-field__value" id="fhResumenVacunacion">—</span></div>
-            <div class="info-field"><span class="info-field__label">Hemograma</span><span class="info-field__value" id="fhResumenHemograma">—</span></div>
-            <div class="info-field"><span class="info-field__label">Bioquímica</span><span class="info-field__value" id="fhResumenBioquimica">—</span></div>
-        </div>
-        <div class="validation-note-block">
-            <span class="validation-note-block__label">Observaciones vacunación</span>
-            <p id="fhResumenVacunacionObs" class="validation-note-block__value">—</p>
-        </div>
-    </section>
+  <h3 class="card-title"><i class="fas fa-flask"></i> Estudio prebiologico</h3>
+  <div class="pb-chips-grid">
+    <div class="pb-chip" id="pbChipAnaliticaReciente">
+      <span class="pb-chip__icon"><i class="fas fa-clock"></i></span>
+      <span class="pb-chip__label">Analitica &lt;3 meses</span>
+      <span class="pb-chip__status" id="pbStatusAnaliticaReciente">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipHemograma">
+      <span class="pb-chip__icon"><i class="fas fa-tint"></i></span>
+      <span class="pb-chip__label">Hemograma</span>
+      <span class="pb-chip__status" id="pbStatusHemograma">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipBioquimica">
+      <span class="pb-chip__icon"><i class="fas fa-vial"></i></span>
+      <span class="pb-chip__label">Bioquimica</span>
+      <span class="pb-chip__status" id="pbStatusBioquimica">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipMantoux">
+      <span class="pb-chip__icon"><i class="fas fa-syringe"></i></span>
+      <span class="pb-chip__label">Mantoux / IGRA</span>
+      <span class="pb-chip__status" id="pbStatusMantoux">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipVhb">
+      <span class="pb-chip__icon"><i class="fas fa-shield-virus"></i></span>
+      <span class="pb-chip__label">VHB</span>
+      <span class="pb-chip__status" id="pbStatusVhb">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipVhc">
+      <span class="pb-chip__icon"><i class="fas fa-shield-virus"></i></span>
+      <span class="pb-chip__label">VHC</span>
+      <span class="pb-chip__status" id="pbStatusVhc">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipVih">
+      <span class="pb-chip__icon"><i class="fas fa-shield-virus"></i></span>
+      <span class="pb-chip__label">VIH</span>
+      <span class="pb-chip__status" id="pbStatusVih">-</span>
+    </div>
+    <div class="pb-chip" id="pbChipVacunacion">
+      <span class="pb-chip__icon"><i class="fas fa-syringe"></i></span>
+      <span class="pb-chip__label">Vacunacion</span>
+      <span class="pb-chip__status" id="pbStatusVacunacion">-</span>
+    </div>
+  </div>
+  <div class="validation-note-block">
+    <span class="validation-note-block__label">Observaciones prebiologico</span>
+    <p id="fhPrebiologicoObservaciones" class="validation-note-block__value">-</p>
+  </div>
+</section>
 
     <section class="validation-module hidden" id="modSeguimientoEaHandoff">
         <h3 class="card-title"><i class="fas fa-clipboard-list"></i> Seguimiento / efectos adversos</h3>
@@ -241,6 +357,7 @@
             </div>
         </div>
         <div id="fhEaActivationNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Los cuestionarios de causalidad se activarán al marcar una sospecha de RAM.</span></div>
+        <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Evaluacion de causalidad accesible desde visita de seguimiento.</span></div>
     </section>
 
     <section class="validation-module hidden" id="modNaranjo" title="Algoritmo de Naranjo">
@@ -303,6 +420,11 @@
             <button type="button" class="btn btn-outline" id="btnApplyKl">Usar resultado Karch-Lasagna</button>
         </div>
     </section>
+
+    <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
+    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
+    <!-- WO8.1c.12: módulos-nav eliminado -->
 
     <div class="validation-meta-line"><span class="validation-meta-label">Farmacéutico responsable:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH-01 — Farmacia Hospitalaria</span></div>
     <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use exportación TXT/CSV para generar salida revisable.</span></div>
