@@ -1,9 +1,9 @@
 # Decisión estratégica: no integrar Farmacia en `main` ni en Reuma v2 post-SES
 
-**Fecha:** 2026-07-10  
-**Contexto:** Post-reunión SES y post-SES roadmap (`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`)  
-**WO:** `WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01`  
-**Estado de esta decisión:** Revisable únicamente tras discovery con equipos clínicos de Badajoz/Mérida  
+**Fecha:** 2026-07-10
+**Contexto:** Post-reunión SES y post-SES roadmap (`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`)
+**WO:** `WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01`
+**Estado de esta decisión:** Revisable únicamente tras discovery con equipos clínicos de Badajoz/Mérida
 **Rama de trabajo:** `work/hermes/WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01-20260710`
 
 ---
@@ -87,8 +87,8 @@ Reuma v2 genera una solicitud clínica estructurada (o texto derivado). No gener
 
 ## 6. Principio funcional de separación
 
-> **Reumatología genera una solicitud clínica estructurada.**  
-> **Farmacia Hospitalaria valida farmacoterapéuticamente y sigue su propio circuito de farmacoterapia.**  
+> **Reumatología genera una solicitud clínica estructurada.**
+> **Farmacia Hospitalaria valida farmacoterapéuticamente y sigue su propio circuito de farmacoterapia.**
 > **El Hub digital coordina visibilidad y flujo, pero nunca sustituye el acto profesional clínico ni farmacéutico.**
 
 Este principio implica:

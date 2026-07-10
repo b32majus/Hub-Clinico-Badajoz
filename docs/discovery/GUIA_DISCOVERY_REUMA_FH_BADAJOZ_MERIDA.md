@@ -1,9 +1,9 @@
 # Guía de discovery — Interfaz Reumatología ↔ Farmacia Hospitalaria Badajoz / Mérida
 
-**Fecha:** 2026-07-10  
-**WO:** `WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01`  
-**Ámbito:** Hospitales de Badajoz y Mérida (Reumatología, Farmacia Hospitalaria, Enfermería si aplica)  
-**Estado:** Documento de trabajo; no define contratos finales ni autoriza integración  
+**Fecha:** 2026-07-10
+**WO:** `WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01`
+**Ámbito:** Hospitales de Badajoz y Mérida (Reumatología, Farmacia Hospitalaria, Enfermería si aplica)
+**Estado:** Documento de trabajo; no define contratos finales ni autoriza integración
 **Nota sobre Cáceres:** El trabajo previo con Farmacia Hospitalaria de Cáceres se usa únicamente como referencia de aprendizaje. No se asume que el circuito de Cáceres defina los circuitos de Badajoz ni de Mérida.
 
 ---
@@ -152,22 +152,22 @@ Preparar una reunión de discovery con los equipos clínicos de Reumatología y 
 
 ### 6.1 Seguridad clínica (obligatorias)
 
-1. **¿Quién decide la dosis, vía, pauta, presentación e inducción del fármaco?**  
+1. **¿Quién decide la dosis, vía, pauta, presentación e inducción del fármaco?**
    *Esperado: el médico de Reumatología propone; Farmacia valida farmacoterapéuticamente. El Hub no decide.*
 
-2. **¿Qué ocurre si el catálogo de fármacos del Hub no coincide con la decisión clínica?**  
+2. **¿Qué ocurre si el catálogo de fármacos del Hub no coincide con la decisión clínica?**
    *Esperado: prevalece la decisión profesional; el sistema no fuerza una opción.*
 
-3. **¿El Hub debería poder bloquear o autorizar un tratamiento?**  
+3. **¿El Hub debería poder bloquear o autorizar un tratamiento?**
    *Esperado: no. Puede alertar sobre datos faltantes, pero no sustituye la validación profesional.*
 
-4. **¿Quién asume la responsabilidad si un dato viaja mal entre módulos?**  
+4. **¿Quién asume la responsabilidad si un dato viaja mal entre módulos?**
    *Esperado: cada profesional sigue responsable de su acto; el Hub es soporte, no responsable clínico.*
 
-5. **¿Cómo se gestiona un efecto adverso comunicado por el paciente?**  
+5. **¿Cómo se gestiona un efecto adverso comunicado por el paciente?**
    *Esperado: Enfermería/Reumatología recoge; Farmacia valora; el Hub puede registrar sin inferir causalidad.*
 
-6. **¿Qué datos de paciente real podrían circular por el Hub?**  
+6. **¿Qué datos de paciente real podrían circular por el Hub?**
    *Esperado: ninguno en fase de diseño/discovery; solo datos sintéticos en demos.*
 
 ### 6.2 No inferencia de datos terapéuticos
