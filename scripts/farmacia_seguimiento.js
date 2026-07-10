@@ -1872,6 +1872,21 @@
         };
     }
 
+    function cleanExportToken(value) {
+        if (value === null || value === undefined) return '';
+        return String(value).replace(/[\r\n\t]+/g, ' ').trim();
+    }
+
+    function formatSelectedLineForExport(line) {
+        if (!line) return '—';
+        var orden = cleanExportToken(line.orden);
+        var nombre = cleanExportToken(line.nombre_linea || line.farmaco_nombre || line.nombre_comercial || line.principio_activo || fv('fhSegFarmaco'));
+        if (orden && nombre) return 'L' + orden + ' · ' + nombre;
+        if (nombre) return nombre;
+        if (orden) return 'L' + orden;
+        return '—';
+    }
+
     function buildSegLines() {
         const lines = [];
         lines.push('=== INFORME DE SEGUIMIENTO FARMACIA ===');
@@ -1883,7 +1898,7 @@
         lines.push('Origen: ' + (fv('fhSegServicio') || '—'));
         lines.push('Indicación: ' + (fv('fhSegPatologia') || '—'));
         var selectedLine = getCurrentSelectedLine();
-        lines.push('Linea principal: ' + (selectedLine ? ('L' + selectedLine.orden + ' · ' + selectedLine.nombre_linea) : '—'));
+        lines.push('Línea principal: ' + formatSelectedLineForExport(selectedLine));
         lines.push('Estado linea: ' + (fv('fhSegEstadoLinea') || '—'));
         lines.push('Movimiento terapéutico: ' + biologicRelationLabel(fv('fhSegTipoRelacionTerapia') || 'sin_cambios'));
         lines.push('Fármaco / Marca: ' + (fv('fhSegFarmaco') || '—'));
@@ -2092,7 +2107,7 @@
 
         const exportTxt = document.getElementById('fhSegExportTxt');
         if (exportTxt) exportTxt.addEventListener('click', () => {
-            F.downloadFile('seguimiento_FH_' + new Date().toISOString().slice(0, 10) + '.txt', buildSegLines().join('\n'), 'text/plain;charset=utf-8');
+            F.copyTextToClipboard(buildSegLines().join('\n'), 'Texto JARA copiado al portapapeles.');
         });
 
         const exportCsv = document.getElementById('fhSegExportCsv');
@@ -2117,7 +2132,7 @@
                     'FH-SEG-' + Date.now().toString(36).toUpperCase(),
                     new Date().toLocaleDateString('es-ES'),
                     fv('fhSegCip') || '—',
-                    selectedLine ? ('L' + selectedLine.orden + ' ' + selectedLine.nombre_linea) : '—',
+                    formatSelectedLineForExport(selectedLine),
                     fv('fhSegEstadoLinea') || '—',
                     biologicRelationLabel(fv('fhSegTipoRelacionTerapia') || 'sin_cambios'),
                     fv('fhSegFarmaco') || '—',

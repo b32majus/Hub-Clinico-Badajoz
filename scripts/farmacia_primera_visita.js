@@ -1068,7 +1068,7 @@
 
         const exportTxt = document.getElementById('fhPvExportTxt');
         if (exportTxt) exportTxt.addEventListener('click', () => {
-            F.downloadFile('primera_visita_FH_' + new Date().toISOString().slice(0, 10) + '.txt', buildPVLines().join('\n'), 'text/plain;charset=utf-8');
+            F.copyTextToClipboard(buildPVLines().join('\n'), 'Texto JARA copiado al portapapeles.');
         });
 
         const exportCsv = document.getElementById('fhPvExportCsv');
