@@ -1,6 +1,6 @@
 # Índice Documental — Hub Clínico Badajoz
 
-**Última actualización:** 2026-06-05  
+**Última actualización:** 2026-07-10
 **Repo:** `b32majus/Hub-Clinico-Badajoz`  
 **Rama viva:** `feature/reuma-v2-prebiologico-fh-les-sjogren`
 
@@ -21,7 +21,8 @@
 
 | Documento | Ubicación | Propósito |
 |-----------|-----------|-----------|
-| Decisiones de evolución | [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Decisiones cerradas (DEC-001 a DEC-017) que guían el desarrollo |
+| Roadmap de arquitectura post-SES | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Fuente de verdad post-SES para estado, arquitectura objetivo, fases propuestas y decisiones pendientes |
+| Decisiones de evolución | [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Decisiones cerradas (DEC-001 a DEC-019) que guían el desarrollo |
 | Arquitectura funcional v2.1 | [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Visión funcional del sistema actual y planificado (recomendado como primera lectura) |
 | Plan de implementación Reuma v2 | [`docs/PLAN_IMPLEMENTACION_REUMA_V2.md`](/docs/PLAN_IMPLEMENTACION_REUMA_V2.md) | Plan detallado de implementación v2 (3.500 líneas) |
 
