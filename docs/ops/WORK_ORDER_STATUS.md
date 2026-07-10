@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-06-06  
+**Última actualización:** 2026-07-10
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -47,6 +47,7 @@
 | **WO-015** | Documentar capa temporal de entrada multipatología para Farmacia | ✅ **Merged** | `work/hermes/wo-015-documentar-capa-entrada-farmacia` → `feature/...` | `d3f785f` | Mergeado vía WO-015b. Fast-forward en rama viva |
 | **WO-015b** | Corregir frase truncada en arquitectura funcional tras WO-015 | ✅ **Merged** | `work/hermes/wo-015b-fix-arquitectura-frase-perfiles` → `feature/...` | `c3bade0` | Fast-forward merge a rama viva. Incluye WO-015 |
 | **WO-016** | Especificación funcional Farmacia Hospitalaria v0.1 para demo 2026-06-08 | ✅ **Merged** | `work/hermes/wo-016-especificacion-funcional-farmacia-v0-1` → `feature/...` | `f5a6397` | Fast-forward merge a rama viva |
+| **WO-DOC-ROADMAP-POST-SES-01** | Roadmap de arquitectura post-SES | 📋 Ready for review | `work/hermes/WO-DOC-ROADMAP-POST-SES-01-20260710` | Este commit | Documento canónico propuesto; sin cambios de código ni merge automático |
 
 ---
 
@@ -102,7 +103,7 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 22 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) + 1 (WO-DOC-ROADMAP-POST-SES-01) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
 | ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
@@ -110,4 +111,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 46 work orders / preflights gestionadas.
+**Total:** 47 work orders / preflights gestionadas.
