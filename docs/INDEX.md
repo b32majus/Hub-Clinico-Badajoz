@@ -133,6 +133,15 @@
 
 ---
 
+## 10. Decisiones y discovery post-SES
+
+| Documento | Ubicación | Propósito |
+|-----------|-----------|-----------|
+| Decisión: no integrar Farmacia en main ni Reuma v2 | [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Decisión estratégica reversible de separación de planos; no autoriza merge ni campos finales |
+| Guía de discovery Reuma-FH Badajoz/Mérida | [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Guía práctica para reuniones de discovery; no define contratos ni autoriza integración |
+
+---
+
 ## Orden de lectura recomendado
 
 Para entender el proyecto desde cero:
