@@ -48,7 +48,8 @@
 | **WO-015b** | Corregir frase truncada en arquitectura funcional tras WO-015 | ✅ **Merged** | `work/hermes/wo-015b-fix-arquitectura-frase-perfiles` → `feature/...` | `c3bade0` | Fast-forward merge a rama viva. Incluye WO-015 |
 | **WO-016** | Especificación funcional Farmacia Hospitalaria v0.1 para demo 2026-06-08 | ✅ **Merged** | `work/hermes/wo-016-especificacion-funcional-farmacia-v0-1` → `feature/...` | `f5a6397` | Fast-forward merge a rama viva |
 | **WO-DOC-ROADMAP-POST-SES-01** | Roadmap de arquitectura post-SES | ✅ Merged | `work/hermes/WO-DOC-ROADMAP-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `14e86b29` (PR #9) | Documento canónico propuesto; sin cambios de código ni merge automático |
-| **WO-DOC-ARCHIVE-POST-SES-01** | Archivar documentos obsoletos post-SES | 📋 Ready for review | `work/hermes/WO-DOC-ARCHIVE-POST-SES-01-20260710` | Este commit | Mueve tres documentos legacy a `docs/archive/` y corrige enlaces canónicos; sin cambios de código/demo |
+| **WO-DOC-ARCHIVE-POST-SES-01** | Archivar documentos obsoletos post-SES | ✅ Merged | `work/hermes/WO-DOC-ARCHIVE-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `fa2a4d53` (PR #10) | Mueve tres documentos legacy a `docs/archive/` y corrige enlaces canónicos; sin cambios de código/demo |
+| **WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01** | Alinear arquitectura con estado post-SES | 📋 Ready for review | `work/hermes/WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01-20260710` | Este commit | Actualiza `ARCHITECTURE.md` con estado real de Farmacia preview, distinción demo/piloto/producción y arquitectura futura propuesta; sin cambios de código |
 
 ---
 
@@ -103,8 +104,8 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 23 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016, WO-DOC-ROADMAP-POST-SES-01) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) + 1 (WO-DOC-ARCHIVE-POST-SES-01) |
+| ✅ Merged | 24 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016, WO-DOC-ROADMAP-POST-SES-01, WO-DOC-ARCHIVE-POST-SES-01) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) + 1 (WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
 | ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
@@ -112,4 +113,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 48 work orders / preflights gestionadas.
+**Total:** 49 work orders / preflights gestionadas.
