@@ -1150,6 +1150,31 @@
         URL.revokeObjectURL(a.href);
     }
 
+    function copyTextToClipboard(text, successMessage) {
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(text)
+                .then(function () { alert(successMessage || 'Copiado al portapapeles.'); })
+                .catch(function () { alert('No se pudo copiar al portapapeles. Copia manualmente.'); });
+            return;
+        }
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (ok) alert(successMessage || 'Copiado al portapapeles.');
+            else alert('No se pudo copiar al portapapeles. Copia manualmente.');
+        } catch (e) {
+            document.body.removeChild(ta);
+            alert('No se pudo copiar al portapapeles. Copia manualmente.');
+        }
+    }
+
     function insertNoCipBanner(bannerId) {
         if (document.getElementById(bannerId)) return;
         var banner = document.createElement('div');
@@ -1487,15 +1512,34 @@
             if (!state || !Array.isArray(state.rows) || !state.rows.length) {
                 return 'No se ha cargado Excel de ' + getKindLabel(kind);
             }
-            return 'Excel de ' + getKindLabel(kind) + ' cargado: ' + state.rows.length + ' registros';
+            return 'Excel ' + getKindLabel(kind) + ' cargado · ' + state.rows.length + ' registros';
         }
 
-        function summarizeMappedFields(mappedFields) {
-            var fields = [];
-            Object.keys(mappedFields || {}).forEach(function (key) {
-                if (mappedFields[key]) fields.push(mappedFields[key]);
-            });
-            return fields.length ? fields.join(' · ') : 'Sin columnas reconocidas';
+        function hasImportData(kind) {
+            var state = importStates[kind];
+            return !!(state && Array.isArray(state.rows) && state.rows.length);
+        }
+
+        function updateDbStatusIndicator() {
+            var indicator = document.getElementById('dbStatusIndicator');
+            if (!indicator) return;
+            var labelEl = document.getElementById('dbStatusLabel');
+            var timeEl = document.getElementById('dbStatusTime');
+            var hasEnfermeria = hasImportData('enfermeria');
+            var hasFarmacia = hasImportData('farmacia');
+            if (labelEl) labelEl.textContent = 'Datos FH cargados';
+            if (timeEl) {
+                if (hasEnfermeria && hasFarmacia) {
+                    timeEl.textContent = 'Enfermería + Farmacia';
+                } else if (hasEnfermeria) {
+                    timeEl.textContent = 'Enfermería cargada';
+                } else if (hasFarmacia) {
+                    timeEl.textContent = 'Farmacia cargada';
+                }
+            }
+            if (hasEnfermeria || hasFarmacia) {
+                indicator.classList.add('db-status-indicator--loaded');
+            }
         }
 
         function updateImportUi(kind) {
@@ -1503,19 +1547,14 @@
             var detailsEl = document.getElementById(kind === 'enfermeria' ? 'detalleCargaEnfermeria' : 'detalleCargaFarmacia');
             var state = importStates[kind];
             if (statusEl) statusEl.textContent = formatImportStatus(kind);
-            if (!detailsEl) return;
-            if (!state || !Array.isArray(state.rows) || !state.rows.length) {
-                detailsEl.textContent = 'Sin importación local almacenada.';
-                return;
+            if (detailsEl) {
+                if (!state || !Array.isArray(state.rows) || !state.rows.length) {
+                    detailsEl.textContent = 'Sin importación local almacenada.';
+                } else {
+                    detailsEl.textContent = '';
+                }
             }
-            var parts = [
-                'Hoja: ' + (state.sheetName || 'Primera hoja'),
-                'Columnas detectadas: ' + summarizeMappedFields(state.mappedFields || {})
-            ];
-            if (Array.isArray(state.unrecognizedHeaders) && state.unrecognizedHeaders.length) {
-                parts.push('Columnas no reconocidas: ' + state.unrecognizedHeaders.join(', '));
-            }
-            detailsEl.textContent = parts.join(' | ');
+            updateDbStatusIndicator();
         }
 
         function updateAllImportUi() {
@@ -1798,6 +1837,7 @@
         STATES,
         DEMO_SESSION_NOTE,
         downloadFile,
+        copyTextToClipboard,
         insertNoCipBanner,
         getAvailablePatients,
         getPendingValidationPatients,

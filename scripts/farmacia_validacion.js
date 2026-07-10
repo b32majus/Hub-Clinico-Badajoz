@@ -1749,7 +1749,7 @@
         byId("fhHSTtoOtrosAb").addEventListener("change", toggleOtrosAtbDetalle);
         byId("btnAddOtherDrug").addEventListener("click", addOtherDrug);
         byId("fhValExportTxt").addEventListener("click", function () {
-            F.downloadFile("validacion_FH_" + new Date().toISOString().slice(0, 10) + ".txt", buildValidationLines().join("\n"), "text/plain;charset=utf-8");
+            F.copyTextToClipboard(buildValidationLines().join("\n"), "Texto JARA copiado al portapapeles.");
         });
         byId("fhValExportCsv").addEventListener("click", function () {
             var csv = buildCsvRows().map(function (row) {
