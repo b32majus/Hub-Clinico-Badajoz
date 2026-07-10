@@ -371,14 +371,16 @@ Esta clasificación procede de la auditoría. **No se ha movido, renombrado ni a
 | `docs/ops/WORK_ORDER_STATUS.md` | No registra WO5-WO8, PR #8 ni estado post-SES. |
 | `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Revisar alineación con el modelo operativo v2 si se confirma. |
 
-### 17.3 Candidatos a archivo, sin ejecutar aún
+### 17.3 Archivo ejecutado
 
-| Documento | Clasificación de auditoría | Destino propuesto |
+Los tres candidatos claros se archivaron en `WO-DOC-ARCHIVE-POST-SES-01`.
+
+| Documento | Clasificación de auditoría | Destino real |
 |---|---|---|
-| `docs/ESTADO_IMPLEMENTACION.md` | Obsoleto, 2026-03-07. | `docs/archive/ESTADO_IMPLEMENTACION_20260307.md` |
-| `docs/CHANGELOG.md` | Duplicado y obsoleto frente al changelog raíz. | `docs/archive/CHANGELOG_20260307.md` |
-| `docs/CONTRATO_DATOS_UNIFICADO.md` | Legacy, reemplazado para Reuma por el contrato v2. | `docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md` |
-| `docs/ops/FARMACIA_DEMO_FREEZE_20260606.md` | Histórico ya cubierto por el manifiesto; archivo opcional. | Decidir ruta en WO documental. |
+| `docs/ESTADO_IMPLEMENTACION.md` | Obsoleto, 2026-03-07. | `docs/archive/ESTADO_IMPLEMENTACION_20260307.md` ✅ |
+| `docs/CHANGELOG.md` | Duplicado y obsoleto frente al changelog raíz. | `docs/archive/CHANGELOG_20260307.md` ✅ |
+| `docs/CONTRATO_DATOS_UNIFICADO.md` | Legacy, reemplazado para Reuma por el contrato v2. | `docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md` ✅ |
+| `docs/ops/FARMACIA_DEMO_FREEZE_20260606.md` | Histórico ya cubierto por el manifiesto; archivo opcional/pendiente. | Se mantiene en su ubicación original a decisión de Sil/Cora. |
 
 [E5][E6]
 
