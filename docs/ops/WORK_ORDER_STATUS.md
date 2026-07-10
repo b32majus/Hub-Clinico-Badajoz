@@ -50,6 +50,7 @@
 | **WO-DOC-ROADMAP-POST-SES-01** | Roadmap de arquitectura post-SES | ✅ Merged | `work/hermes/WO-DOC-ROADMAP-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `14e86b29` (PR #9) | Documento canónico propuesto; sin cambios de código ni merge automático |
 | **WO-DOC-ARCHIVE-POST-SES-01** | Archivar documentos obsoletos post-SES | ✅ Merged | `work/hermes/WO-DOC-ARCHIVE-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `fa2a4d53` (PR #10) | Mueve tres documentos legacy a `docs/archive/` y corrige enlaces canónicos; sin cambios de código/demo |
 | **WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01** | Alinear arquitectura con estado post-SES | ✅ Merged | `work/hermes/WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `dc1ce11` (PR #11) | Actualiza `ARCHITECTURE.md` con estado real de Farmacia preview, distinción demo/piloto/producción y arquitectura futura propuesta; sin cambios de código |
+| **WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01** | Decisión no merge Reuma-Farmacia + guía discovery Badajoz/Mérida | 📋 Ready for review | `work/hermes/WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | — | Documentos estratégicos de discovery; sin cambios de código ni merge |
 
 ---
 
@@ -105,7 +106,7 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 25 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016, WO-DOC-ROADMAP-POST-SES-01, WO-DOC-ARCHIVE-POST-SES-01, WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01) |
-| 📋 Ready for review | 19 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) |
+| 📋 Ready for review | 20 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) + 1 (WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
 | ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
@@ -113,4 +114,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 49 work orders / preflights gestionadas.
+**Total:** 50 work orders / preflights gestionadas.
