@@ -34,8 +34,13 @@
 |-----------|-----------|-----------|
 | Resumen de release v2 | [`docs/RESUMEN_RELEASE_REUMA_V2.md`](/docs/RESUMEN_RELEASE_REUMA_V2.md) | Qué se implementó en v2: LES, Sjögren, prebiológico, FH, eventos |
 | Contrato de datos Reuma v2 | [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md) | Contrato Excel de 497 columnas por hoja clínica |
-| Changelog | [`docs/CHANGELOG.md`](/docs/CHANGELOG.md) | Histórico de cambios |
-| Estado de implementación | [`docs/ESTADO_IMPLEMENTACION.md`](/docs/ESTADO_IMPLEMENTACION.md) | Estado puntual de implementación |
+
+> 🗃️ **Documentos archivados (legacy):** El changelog y el estado de implementación anteriores a Reuma v2 se movieron a `docs/archive/`. No deben usarse como fuentes canónicas actuales.
+>
+> | Documento | Ubicación de archivo |
+> |---|---|
+> | Changelog legacy | [`docs/archive/CHANGELOG_20260307.md`](/docs/archive/CHANGELOG_20260307.md) |
+> | Estado de implementación legacy | [`docs/archive/ESTADO_IMPLEMENTACION_20260307.md`](/docs/archive/ESTADO_IMPLEMENTACION_20260307.md) |
 
 ---
 
@@ -119,7 +124,7 @@
 | TODO | [`TODO.md`](/TODO.md) |
 | README | [`README.md`](/README.md) |
 | Manual de usuario (PDF) | [`docs/Manual_Usuario_Hub_Clinico_Badajoz.pdf`](/docs/Manual_Usuario_Hub_Clinico_Badajoz.pdf) |
-| Contrato de datos unificado | [`docs/CONTRATO_DATOS_UNIFICADO.md`](/docs/CONTRATO_DATOS_UNIFICADO.md) |
+| Contrato de datos unificado (legacy) | [`docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md`](/docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md) — archivado; no vigente para Reuma v2 |
 | Decisiones estructura Excel demo v2 | [`docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md`](/docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md) |
 | Mejoras propuestas | [`docs/MEJORAS_PROPUESTAS.md`](/docs/MEJORAS_PROPUESTAS.md) |
 | Orden columnas Excel Reuma v2 | [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md) |
