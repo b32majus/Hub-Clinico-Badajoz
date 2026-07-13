@@ -28,6 +28,7 @@
 | **E4** | `docs/farmacia_branch_manifest_20260614.md`, contratos Farmacia WO6-WO8 y documentos `docs/ops/FARMACIA_V0_3*`, `FARMACIA_V0_4*`, `FARMACIA_V0_5*` |
 | **E5** | `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y `docs/ops/farmacia-roadmap-post-demo-v0-3-20260607.md` |
 | **E6** | Informe externo de auditoría `/srv/kairos-lab/outbox/reports/WO-DOC-AUDIT-HUB-POST-SES-01.md`, 2026-07-10 |
+| **E7** | Rama HOLD `origin/docs/promueve-fh-control-plane-federado-20260713` — propuesta de control plane federado, 2026-07-13 |
 
 Las referencias indican procedencia, no aprobación. Cuando una afirmación procede del contexto post-SES aportado por esta work order y no de un acta institucional, se marca expresamente como propuesta o pendiente.
 
@@ -151,6 +152,68 @@ Hay colisión con los conceptos existentes del repositorio: v1 legacy, Reuma v2/
 | **8. Hub agnóstico configurable V5** | Configurar organización, servicio, programa, patología, journey, visita, formularios, scores y PROMs. | Framework portable sin exponer complejidad técnica al clínico. | Exploratorio y no aprobado. |
 
 Ninguna fase posterior autoriza por sí sola el uso de datos reales. [E2][E3][E6]
+
+## Control plane federado y configuración no-paciente
+
+> **Estado:** propuesta arquitectónica derivada del análisis post-SES reflejado en la rama HOLD `origin/docs/promueve-fh-control-plane-federado-20260713`. **No es arquitectura aprobada ni capacidad implementada.** Solo introduce una distinción conceptual para futuras decisiones.
+
+El roadmap post-SES distingue dos planos que evolucionarán de forma desacoplada:
+
+| Plano | Contenido | Ejemplos |
+|---|---|---|
+| **Plano de datos clínicos / data plane** | Información vinculada a pacientes, tratamientos, visitas, validaciones, formularios respondidos y resultados. | Pacientes, visitas, tratamientos, validaciones FH, seguimientos, respuestas de formularios, resultados de cohortes. |
+| **Plano de control / control plane** | Configuración, metadatos y preferencias del servicio que no son datos clínicos individuales. | Filtros guardados, formularios declarativos, catálogos locales, profesionales, roles, permisos, plantillas de exportación, widgets de dashboard, configuración por área. |
+
+### Reglas de separación
+
+- **Los datos clínicos de paciente, respuestas de formularios, tratamientos, visitas, validaciones, seguimientos y resultados de cohortes no deben almacenarse en el control plane** sin backend autorizado y marco institucional explícito.
+- **Los filtros guardados almacenan criterios, no resultados.** Ejecutar un filtro implica aplicar los criterios sobre el backend clínico autorizado; el resultado no se persiste en el plano de configuración.
+- **Los formularios declarativos versionados definen estructura, campos, validaciones y mapeos a variables, pero no contienen respuestas de pacientes.**
+- **Los campos explotables de un formulario deben mapearse a una variable del diccionario de variables** o quedar explícitamente marcados como texto libre/no explotable.
+
+### Modelo de despliegue propuesto
+
+Hasta que exista gobernanza corporativa explícita (SES / Salud Digital / STIC) que resuelva titularidad, permisos, auditoría y soporte, se prefiere un modelo **federado por área sanitaria**:
+
+```text
+Código común
++ esquema común
++ diccionario común
++ paquetes de configuración interoperables
++ bases / backends separados por área sanitaria
+```
+
+- Cada área puede desplegar su propia instancia con su backend autorizado.
+- La configuración común se comparte mediante **paquetes exportables/importables** (filtros, formularios, widgets, plantillas, variables), no necesariamente mediante una base central multi-tenant única.
+- Una **base multi-tenant central** solo es futura y condicional: requiere que Salud Digital/STIC asuma la gobernanza, el soporte y las responsabilidades legales/operativas.
+
+### Elementos propuestos para el control plane
+
+- Filtros poblacionales guardados (criterios, no resultados).
+- Catálogos farmacológicos locales (ensayos clínicos, uso compasivo, medicación extranjera, protocolos locales) junto al catálogo CIMA/global.
+- Profesionales, roles y permisos funcionales.
+- Formularios declarativos versionados con estados (borrador, validado localmente, publicado, archivado).
+- Diccionario de variables compartido.
+- Plantillas de exportación.
+- Widgets de dashboard declarativos.
+
+### Dashboard
+
+- **Dashboard basal común:** resumen del paciente, tratamientos activos, línea temporal, últimas visitas, formularios completados, pendientes, alertas, exportaciones y observaciones. No depende de una patología concreta.
+- **Dashboard específico configurable:** widgets declarativos vinculados a variables del diccionario. El sistema no inventa significado clínico; solo representa variables, reglas o widgets definidos y validados.
+
+### Relación con otros conceptos del roadmap
+
+Esta propuesta es coherente con los principios ya establecidos:
+
+- **Backend intercambiable:** el dominio no debe depender de Excel, SharePoint, PostgreSQL, Supabase, Neon, Firebase, AWS, Azure, OCI o una API concreta. Se mantiene la repository layer como abstracción.
+- **Diccionario de variables:** conecta nombres clínicos, columnas Excel, formularios, repositorios y futuros contratos de API.
+- **Formularios declarativos:** las variaciones funcionales repetibles deben expresarse configurando, no reescribiendo código.
+- **Catálogo CIMA/local:** el catálogo asiste selección y normalización, pero no decide datos terapéuticos.
+- **No inferencia:** nunca se deben inferir dosis, vía, pauta, presentación, inducción ni intervalo de administración a partir del nombre del fármaco o del catálogo.
+- **Futuro backend:** la transición a backend real requiere modelo validado, soporte institucional y plan de datos aprobado.
+
+[E7]
 
 ## 8. Estrategia Excel a backend
 
