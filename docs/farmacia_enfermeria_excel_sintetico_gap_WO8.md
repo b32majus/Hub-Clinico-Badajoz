@@ -33,9 +33,11 @@ templates/enfermeria_inicio_biologico_PROMueve_sintetico_v1.xlsx
 
 La plantilla mantiene su estructura original y datos sintéticos/mock existentes. No se ha modificado ni rediseñado.
 
-Queda pendiente revisar manualmente su alineación con:
+El gap técnico original de disponibilidad de la plantilla y lectura de sus datos queda resuelto en la preview: existen el importer y checks dedicados para el circuito Enfermería → Farmacia. Esto no convierte el adaptador de demo en un contrato clínico definitivo.
+
+Queda pendiente revisar y validar funcionalmente su alineación con:
 - El Excel FH WO8 (`farmacia_excel_operativo_FH_WO8_v1.xlsx`)
 - El Excel FH sintético (`farmacia_excel_operativo_FH_WO8_v1_sintetico.xlsx`)
-- El futuro parser/importación del circuito FH + Enfermería
+- El contrato clínico definitivo del circuito FH + Enfermería, incluida la responsabilidad sobre cada dato y su validación
 
 **Status:** `resolved`

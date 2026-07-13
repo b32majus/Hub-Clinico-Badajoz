@@ -4,7 +4,7 @@
 
 > **Estado post-SES (2026-07-10)**
 > Este documento es una **referencia técnica**, no una hoja de ruta. La fuente de verdad sobre estado, fases propuestas y decisiones pendientes es `docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`.
-> Lo descrito aquí como **implementado** se refiere únicamente a evidencia funcional en la rama de preview `preview/demo-lunes-wo4-20260614` (`7486243` y posteriores descendientes). **No implica aprobación de producción, autorización institucional, integración real con JARA ni permiso para usar datos reales.** El estado actual del proyecto **no es producción**.
+> Lo descrito aquí como **implementado** se refiere únicamente a evidencia funcional en la rama de preview `preview/demo-lunes-wo4-20260614`. El baseline funcional verificado es `7486243264e6952e7f1d6afe3d1b24e5907a2a0f`; el snapshot documental actual tras el PR #14 es `17f29fa14611c5f020a9f164935456b8019cf211`. Los commits posteriores al baseline funcional incorporados hasta ese snapshot son documentales y no equivalen a una nueva validación funcional. **No implica aprobación de producción, autorización institucional, integración real con JARA ni permiso para usar datos reales.** El estado actual del proyecto **no es producción**.
 
 ---
 
@@ -227,7 +227,7 @@ Todas las fases posteriores a v2.0 son propuestas sujetas a validación humana y
 1. **Acoplamiento Excel-UI:** nombres de hoja y columna exactos. Cambios rompen en silencio.
 2. **HTML masivos:** `primera_visita.html` (205 KB), `seguimiento.html` (183 KB).
 3. **formController.js (127 KB):** crecimiento orgánico sin separación por patología.
-4. **Sin tests automatizados:** riesgo alto de regresión.
+4. **Sin suite unitaria formal completa:** existen checks ejecutables Node, smoke checks de Farmacia, comprobaciones de importación y política de almacenamiento, además de un workflow smoke. Esta cobertura técnica no sustituye QA clínica, E2E en navegador ni validación productiva.
 5. **sessionStorage como BD:** límite 5-10 MB, volátil.
 6. **Dependencias CDN:** no funciona sin conexión.
 7. **Riesgo de desalineación por edición manual de Excel.**

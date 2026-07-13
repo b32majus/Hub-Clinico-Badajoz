@@ -5,7 +5,8 @@
 | Estado | **Propuesta canónica pendiente de validación humana** |
 | Fecha | 2026-07-10 |
 | Rama fuente | `preview/demo-lunes-wo4-20260614` |
-| Commit fuente | `7486243264e6952e7f1d6afe3d1b24e5907a2a0f` |
+| Baseline funcional verificado | `7486243264e6952e7f1d6afe3d1b24e5907a2a0f` |
+| Snapshot documental actual | `17f29fa14611c5f020a9f164935456b8019cf211` (post-PR #14) |
 | Alcance | Roadmap documental post-reunión SES para Reumatología, Enfermería y Farmacia Hospitalaria; no aprueba arquitectura, contratos clínicos, despliegues ni integraciones |
 | Propietaria y validadores | Sil / Cora |
 
@@ -43,7 +44,7 @@ Por ello se propone una vía dual:
 1. **Piloto local controlado:** continuar con navegador, Excel/archivos estructurados y datos exclusivamente sintéticos mientras se endurecen contratos, validaciones y trazabilidad.
 2. **Arquitectura corporativa futura:** preparar abstracciones y modelos portables para una integración que deberá diseñarse con Salud Digital/STIC, cuyo papel, requisitos y capacidad de soporte siguen **pendientes**.
 
-El estado verificable de referencia es la preview de GitHub Pages `preview/demo-lunes-wo4-20260614` en el commit completo `7486243264e6952e7f1d6afe3d1b24e5907a2a0f`. No debe confundirse con una release institucional ni con producción. [E2][E4][E6]
+El baseline funcional verificado de la preview de GitHub Pages `preview/demo-lunes-wo4-20260614` es `7486243264e6952e7f1d6afe3d1b24e5907a2a0f`. El snapshot documental actual tras el PR #14 es `17f29fa14611c5f020a9f164935456b8019cf211`; los commits posteriores al baseline funcional incorporados hasta ese snapshot son documentales y no sustituyen una nueva validación funcional. Ninguna de estas referencias debe confundirse con una release institucional ni con producción. [E2][E4][E6]
 
 ## 2. Nomenclatura provisional
 
