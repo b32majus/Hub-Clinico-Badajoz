@@ -248,6 +248,18 @@ El documento canónico [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO
 
 Este módulo no sustituye la historia clínica, no implica una app de paciente y no autoriza uso con datos reales. El portal paciente no debe permitir lectura de histórico ni mostrar datos identificativos. Cualquier endpoint público de capacidad limitada procesaría datos de salud seudonimizados y requeriría validación institucional, STIC/DPO, seguridad y auditoría.
 
+## Identity Plane local y Nursing Readiness Gateway
+
+> **Estado:** propuesta exploratoria avanzada. No implementada. No autoriza datos reales, producción ni despliegue institucional.
+
+Se propone extender el patrón del PROM Capture Gateway hacia una arquitectura por capas: un Identity Plane local/hospitalario para la correspondencia `CIP <-> hub_patient_key`, un Clinical Event Plane seudonimizado para PROMs y eventos clínico-operativos estructurados, y un Control Plane para configuración, profesionales, roles y permisos.
+
+La primera aplicación concreta sería el Nursing Readiness Gateway, destinado a registrar de forma estructurada el estado prebiológico de Enfermería antes de la validación o citación por Farmacia. La recomposición entre identidad y eventos ocurre únicamente en el Hub profesional.
+
+La fase transitoria puede evaluar SharePoint hospitalario para la correspondencia y Supabase para eventos seudonimizados, siempre con RLS o controles equivalentes, permisos mínimos, sin texto libre, sin identificadores directos y sin autorización implícita de datos reales. La evolución propuesta es probar un mini PC o servidor local como custodio inicial de la correspondencia de seudonimización.
+
+El documento canónico [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md) detalla altas técnicas, riesgos de duplicado, eventos huérfanos, roles por tenant, bloqueos y una petición operativa orientativa a informática. No es una implementación ni un contrato clínico final.
+
 ## 8. Estrategia Excel a backend
 
 Excel es un **backend provisional** y una capa de aprendizaje: permite observar qué registra el equipo, qué corrige manualmente y qué necesita consultar. Su valor no elimina riesgos de edición manual, columnas desplazadas, formatos inconsistentes, concurrencia, pérdida de trazabilidad o roturas silenciosas.
