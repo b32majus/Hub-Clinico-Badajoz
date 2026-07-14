@@ -52,9 +52,10 @@
 | **WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01** | Alinear arquitectura con estado post-SES | ✅ Merged | `work/hermes/WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `dc1ce11` (PR #11) | Actualiza `ARCHITECTURE.md` con estado real de Farmacia preview, distinción demo/piloto/producción y arquitectura futura propuesta; sin cambios de código |
 | **WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01** | Decisión no merge Reuma-Farmacia + guía discovery Badajoz/Mérida | ✅ Merged | `work/hermes/WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `bd5687c` (PR #13) | Documentos estratégicos de discovery; solo documentación. |
 | **WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01** | Índice documental maestro + control plane federado | ✅ Merged | `work/hermes/WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713` → `preview/demo-lunes-wo4-20260614` | `17f29fa` (PR #14) | Índice documental maestro + control plane federado; solo documentación. |
-| **WO-DOC-PROM-CAPTURE-GATEWAY-QR-01** | Documentar PROM Capture Gateway con QR permanente seudonimizado | 📋 Ready for review | `work/hermes/WO-DOC-PROM-CAPTURE-GATEWAY-QR-20260714` → `preview/demo-lunes-wo4-20260614` | Pendiente | Solo documentación. Registra arquitectura exploratoria de tarjetas PROM, QR universal, código corto de asignación manual, token temporal de visita y backends intercambiables. No toca código ni autoriza datos reales. |
+| **WO-DOC-PROM-CAPTURE-GATEWAY-QR-01** | Documentar PROM Capture Gateway con QR permanente seudonimizado | ✅ Merged | `work/hermes/WO-DOC-PROM-CAPTURE-GATEWAY-QR-20260714` → `preview/demo-lunes-wo4-20260614` | `2440924` (PR #16) | Solo documentación. Registra arquitectura exploratoria de tarjetas PROM, QR universal, código corto de asignación manual, token temporal de visita y backends intercambiables. No toca código ni autoriza datos reales. |
 | **WO-DOC-IDENTITY-PLANE-NURSING-READINESS-01** | Documentar Identity Plane local y Nursing Readiness Gateway | ✅ Merged | `work/hermes/WO-DOC-IDENTITY-PLANE-NURSING-READINESS-20260714` → `preview/demo-lunes-wo4-20260614` | `0a9019b` (PR #17) | Solo documentación. Registra arquitectura exploratoria para correspondencia local de seudonimización, eventos clínico-operativos seudonimizados, Nursing Readiness, profesionales/roles por tenant y ruta SharePoint → mini PC. No toca código ni autoriza datos reales. |
 | **WO-DOC-TREATMENT-LIFECYCLE-ENGINE-01** | Documentar Treatment Lifecycle Engine y renovaciones por línea de tratamiento | ✅ Merged | `work/hermes/WO-DOC-TREATMENT-LIFECYCLE-ENGINE-20260714` → `preview/demo-lunes-wo4-20260614` | `b59e09a` (PR #18) | Solo documentación. Registra ciclos de tratamiento, fechas confirmadas/estimadas, reglas declarativas, tareas, roles, switches y scheduler futuro. No toca código ni autoriza datos reales. |
+| **WO-DOC-HOUSEKEEPING-POST-PR17-PR18-01** | Actualizar estado tras PR #17 y PR #18 | ✅ Merged | `work/hermes/WO-DOC-HOUSEKEEPING-POST-PR17-PR18-20260714` → `preview/demo-lunes-wo4-20260614` | `84d161d` (PR #19) | Solo housekeeping documental de estados y totales. No toca código ni autoriza datos reales. |
 
 ---
 
@@ -109,8 +110,9 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 29 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016, WO-DOC-ROADMAP-POST-SES-01, WO-DOC-ARCHIVE-POST-SES-01, WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01, WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01, WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01, WO-DOC-IDENTITY-PLANE-NURSING-READINESS-01, WO-DOC-TREATMENT-LIFECYCLE-ENGINE-01) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) + 1 (WO-DOC-PROM-CAPTURE-GATEWAY-QR-01) |
+| ✅ Merged | 31 (incluye PR #16 PROM Capture Gateway, PR #17 Identity Plane/Nursing Readiness, PR #18 Treatment Lifecycle Engine y PR #19 housekeeping de estado) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) |
+| 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
 | ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
@@ -118,4 +120,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 54 work orders / preflights gestionadas.
+**Total:** 55 work orders / preflights gestionadas.
