@@ -260,6 +260,18 @@ La fase transitoria puede evaluar SharePoint hospitalario para la correspondenci
 
 El documento canónico [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md) detalla altas técnicas, riesgos de duplicado, eventos huérfanos, roles por tenant, bloqueos y una petición operativa orientativa a informática. No es una implementación ni un contrato clínico final.
 
+## Treatment Lifecycle Engine y renovaciones por línea de tratamiento
+
+> **Estado:** propuesta exploratoria avanzada. No implementada. No autoriza datos reales ni automatizaciones productivas.
+
+Se propone una capacidad de dominio para representar el ciclo de vida de cada línea de tratamiento, evaluar reglas temporales configurables y generar tareas operativas. La renovación se modela por tratamiento, no por paciente, permitiendo múltiples tratamientos, pacientes ya en seguimiento, switches, suspensiones y ciclos históricos.
+
+Las reglas pueden expresarse declarativamente, pero requieren un motor de evaluación. En una primera fase, el cálculo puede ejecutarse al abrir el Hub; una ejecución periódica diaria queda como evolución futura. El mismo motor debe servir para ambos mecanismos.
+
+La fecha de vencimiento debe distinguir entre confirmada y estimada. La fecha del primer registro de Enfermería puede servir como referencia provisional, pero no debe presentarse como fecha real de prescripción si no está confirmada.
+
+Enfermería podrá marcar la renovación como solicitada y Farmacia verificarla en el flujo actual. Las tareas se asignarán preferentemente a colas de rol o servicio, manteniendo auditoría e histórico. El documento canónico es [`docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`](/docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md).
+
 ## 8. Estrategia Excel a backend
 
 Excel es un **backend provisional** y una capa de aprendizaje: permite observar qué registra el equipo, qué corrige manualmente y qué necesita consultar. Su valor no elimina riesgos de edición manual, columnas desplazadas, formatos inconsistentes, concurrencia, pérdida de trazabilidad o roturas silenciosas.
