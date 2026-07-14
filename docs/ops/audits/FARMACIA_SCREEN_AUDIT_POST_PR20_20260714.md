@@ -19,12 +19,20 @@ No se observaron decisiones clínicas automáticas que deban aceptarse sin inter
 | Datos | Exclusivamente fixtures y casos sintéticos del repositorio |
 | Sintaxis | `node --check script.js` y `scripts/farmacia_*.js`: PASS |
 | Checks del repo | Checks ejecutados secuencialmente: todos los anteriores al check de importación pasan; `farmacia_validacion_enfermeria_import_check.mjs`: FAIL con `TypeError` en `formServicioManual.classList` |
-| Smoke Farmacia | PASS, 48 OK / 0 fallos |
+| Smoke Farmacia | `node tools/farmacia_smoke_check.mjs`: PASS, salida final `RESULTADO: 48 OK / 0 FALLIDO` y `Smoke check PASSED`. El conteo 38 de documentación/expectativas anteriores no corresponde al script ejecutado en este snapshot: el check actual incluye verificaciones posteriores, entre ellas señales multibiológico y contrato mínimo de entrada manual. |
 | Storage policy | PASS |
-| Import Enfermería | Check parser: PASS, 95 OK / 0 fallos; check integración Validación: FAIL |
+| Import Enfermería | `node tools/farmacia_enfermeria_import_check.mjs`: PASS, salida final `Total: 95 passed, 0 failed`. El conteo 71 no corresponde a la versión ejecutada: el parser actual añade casos O-W para normalización, estados, badges y visibilidad. Check integración Validación: FAIL. |
 | Browser general | 11 rutas HTTP 200; acciones principales ejecutadas; suite termina FAIL por 2 `pageerror` reproducibles en dashboard FH-004 |
 | Autocomplete | PASS: 7 resultados visibles para `secu` |
 | Exportaciones | Validación 1382 caracteres/61 columnas; primera visita 546/61; seguimiento 2281/61 |
+
+### Verificación de observaciones del reviewer
+
+| Observación | Veredicto basado en evidencia |
+|---|---|
+| Smoke supuestamente 38 | Rechazada. El comando exacto sobre el commit auditado produce 48 comprobaciones correctas. El número 38 describe una expectativa/documentación anterior, no la ejecución actual. |
+| Parser Enfermería supuestamente 71 | Rechazada. El comando exacto produce 95 comprobaciones correctas. El script actual contiene casos adicionales de normalización y bandeja. |
+| Tablas supuestamente incompletas con 17 de 18 campos | Rechazada. La WO enumera literalmente 17 campos y cada una de las 11 tablas contiene esos 17. No existe un campo 18 exigible y no se añade uno artificial. |
 
 ## 3. Resumen de pantallas
 
