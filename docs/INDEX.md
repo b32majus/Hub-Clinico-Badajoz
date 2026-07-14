@@ -138,6 +138,7 @@
 - [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — sección de arquitectura futura y control plane federado.
 - [`ARCHITECTURE.md`](/ARCHITECTURE.md) — repository layer, diccionario de variables, backend e integraciones.
 - [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md) — propuesta exploratoria avanzada para captura PROM/PREM seudonimizada con tarjeta PROM universal, QR permanente, código corto de asignación manual, token temporal de visita y backend intercambiable.
+- [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md) — propuesta exploratoria avanzada para Identity Plane local, tabla maestra de correspondencia de seudonimización, Nursing Readiness Gateway, eventos clínico-operativos seudonimizados y control de profesionales/roles por tenant.
 - [`docs/deuda-tecnica/cdc-001-cima-auto-update.md`](/docs/deuda-tecnica/cdc-001-cima-auto-update.md)
 
 ### Gobernanza KairOS / Hermes y operativa
@@ -200,6 +201,7 @@
 | Versionado unificado producto / técnico | Propuesta / pendiente | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 6. |
 | Control plane federado y configuración no-paciente | HOLD / propuesta derivada de `origin/docs/promueve-fh-control-plane-federado-20260713` | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md); no es arquitectura aprobada ni implementada. |
 | PROM Capture Gateway con QR permanente | Exploratorio avanzado / pendiente de validación | [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md); no autoriza datos reales, producción ni despliegue sin validación institucional/STIC/DPO. |
+| Identity Plane local y Nursing Readiness Gateway | Exploratorio avanzado / pendiente de validación | [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md) + roadmap post-SES. No autoriza datos reales, producción ni despliegue sin validación institucional/STIC/DPO. |
 | Destino del HOLD `origin/docs/promueve-fh-control-plane-federado-20260713` | Pendiente | Decisión humana: integrar, descartar o redefinir. No mergear sin WO. |
 
 ---
