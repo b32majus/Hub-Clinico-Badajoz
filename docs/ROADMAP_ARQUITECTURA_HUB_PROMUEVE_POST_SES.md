@@ -216,6 +216,38 @@ Esta propuesta es coherente con los principios ya establecidos:
 
 [E7]
 
+## PROM Capture Gateway seudonimizado y tarjetas QR
+
+> **Estado:** propuesta exploratoria avanzada. No implementada. No autoriza datos reales, producción ni integración institucional.
+
+Se propone una capa específica de captura PROM/PREM para evitar la dispersión de Microsoft Forms y Excels. El módulo permitiría recoger cuestionarios cerrados mediante tarjeta PROM permanente, QR universal y tokens temporales de visita, manteniendo la identidad clínica en entorno local/hospitalario.
+
+### Decisión conceptual
+
+- El QR no representa una patología ni un cuestionario concreto.
+- El QR representa una tarjeta PROM universal.
+- Las tarjetas nacen preimpresas y no asignadas.
+- La asignación ocurre desde el Hub profesional con el paciente abierto.
+- El profesional puede teclear un código corto visible; no se requiere móvil personal, NFC ni escáner.
+- El backend PROM almacena `hub_patient_key`, tarjeta, cuestionario y respuestas cerradas.
+- La relación `CIP <-> hub_patient_key` permanece fuera del backend PROM cloud.
+- La longitudinalidad depende de `hub_patient_key`, no de la tarjeta física.
+- Las respuestas PROM/PREM son datos de salud seudonimizados, no datos anónimos.
+
+### Modelos de despliegue
+
+| Modelo | Uso | Estado |
+|---|---|---|
+| Supabase cloud | Laboratorio o MVP exploratorio con datos sintéticos o escenario explícitamente validado | Exploratorio |
+| Mini servidor local | Laboratorio técnico o piloto local controlado | Exploratorio |
+| Backend institucional | Uso real con gobierno SES/STIC, identidad, permisos, auditoría, soporte y DPO | Pendiente |
+
+El documento canónico [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md) define flujos de asignación, respuesta, revocación/reemisión, token temporal de visita y una `PromRepository` intercambiable. No es una especificación de seguridad ni un contrato clínico final; los tokens y códigos mostrados son ejemplos conceptuales.
+
+### Límites
+
+Este módulo no sustituye la historia clínica, no implica una app de paciente y no autoriza uso con datos reales. El portal paciente no debe permitir lectura de histórico ni mostrar datos identificativos. Cualquier endpoint público de capacidad limitada procesaría datos de salud seudonimizados y requeriría validación institucional, STIC/DPO, seguridad y auditoría.
+
 ## 8. Estrategia Excel a backend
 
 Excel es un **backend provisional** y una capa de aprendizaje: permite observar qué registra el equipo, qué corrige manualmente y qué necesita consultar. Su valor no elimina riesgos de edición manual, columnas desplazadas, formatos inconsistentes, concurrencia, pérdida de trazabilidad o roturas silenciosas.

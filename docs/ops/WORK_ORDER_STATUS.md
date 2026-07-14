@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-13
+**Última actualización:** 2026-07-14
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -52,6 +52,7 @@
 | **WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01** | Alinear arquitectura con estado post-SES | ✅ Merged | `work/hermes/WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `dc1ce11` (PR #11) | Actualiza `ARCHITECTURE.md` con estado real de Farmacia preview, distinción demo/piloto/producción y arquitectura futura propuesta; sin cambios de código |
 | **WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01** | Decisión no merge Reuma-Farmacia + guía discovery Badajoz/Mérida | ✅ Merged | `work/hermes/WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01-20260710` → `preview/demo-lunes-wo4-20260614` | `bd5687c` (PR #13) | Documentos estratégicos de discovery; solo documentación. |
 | **WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01** | Índice documental maestro + control plane federado | ✅ Merged | `work/hermes/WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713` → `preview/demo-lunes-wo4-20260614` | `17f29fa` (PR #14) | Índice documental maestro + control plane federado; solo documentación. |
+| **WO-DOC-PROM-CAPTURE-GATEWAY-QR-01** | Documentar PROM Capture Gateway con QR permanente seudonimizado | 📋 Ready for review | `work/hermes/WO-DOC-PROM-CAPTURE-GATEWAY-QR-20260714` → `preview/demo-lunes-wo4-20260614` | Pendiente | Solo documentación. Registra arquitectura exploratoria de tarjetas PROM, QR universal, código corto de asignación manual, token temporal de visita y backends intercambiables. No toca código ni autoriza datos reales. |
 
 ---
 
@@ -107,7 +108,7 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 27 (Preflights, WO-001, WO-001b, WO-003 a WO-010, WO-012, WO-012b, WO-013, WO-013b, WO-014, WO-014b, WO-015, WO-015b, WO-016, WO-DOC-ROADMAP-POST-SES-01, WO-DOC-ARCHIVE-POST-SES-01, WO-DOC-UPDATE-ARCHITECTURE-POST-SES-01, WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01, WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) + 1 (WO-037 — PR #5 draft) + 1 (WO-DOC-PROM-CAPTURE-GATEWAY-QR-01) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
 | ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
@@ -115,4 +116,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 51 work orders / preflights gestionadas.
+**Total:** 52 work orders / preflights gestionadas.
