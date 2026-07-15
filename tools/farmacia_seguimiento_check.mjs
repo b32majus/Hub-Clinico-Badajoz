@@ -42,6 +42,59 @@ const helperSrc = fs.readFileSync(helperPath, 'utf8');
 const pautasSrc = fs.readFileSync(pautasPath, 'utf8');
 const commonSrc = fs.readFileSync(commonPath, 'utf8');
 
+const behaviorSandbox = {
+  window: { FarmaciaDemo: {} },
+  console,
+  document: { addEventListener: () => {}, getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: () => ({}) },
+  Event: function Event(type) { this.type = type; },
+  setTimeout,
+  clearTimeout
+};
+vm.createContext(behaviorSandbox);
+vm.runInContext(js, behaviorSandbox);
+const behaviorApi = behaviorSandbox.window.FarmaciaSeguimiento;
+assert(behaviorApi && typeof behaviorApi.searchCIP === 'function' && typeof behaviorApi.setActivePatientCip === 'function', 'Seguimiento exposes testable guarded CIP search');
+if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
+  const ids = ['fhSegCip', 'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas', 'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms', 'fhSegOrigenCatalogo', 'fhSegEaPrevios', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegTratamientoGrid', 'fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegProms', 'fhSeguimientoEaObservaciones'];
+  const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null, dispatchEvent: () => {}, appendChild(child) { this.children.push(child); this.options.push(child); }, remove() {} }]));
+  elements.fhSegCip.value = 'CIP-FRESH';
+  elements.fhSegProms.value = 'No recogido';
+  behaviorSandbox.document.getElementById = (id) => elements[id] || null;
+  behaviorSandbox.document.createElement = () => ({ value: '', textContent: '', selected: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, appendChild: () => {}, setAttribute: () => {} });
+  behaviorSandbox.document.createTextNode = (text) => ({ textContent: text });
+  const F = behaviorSandbox.window.FarmaciaDemo;
+  F.setValue = (id, value) => { if (elements[id]) elements[id].value = value || ''; };
+  F.setText = (id, value) => { if (elements[id]) elements[id].textContent = value || ''; };
+  F.clearChildren = (el) => { if (el) { el.children = []; el.options = []; } };
+  F.renderFields = () => {};
+  F.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', tratamientos_biologicos: [] } : null;
+  F.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
+    if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
+    if (hasContext && confirmed === undefined) return { action: 'confirm' };
+    if (hasContext && confirmed === false) return { action: 'cancel' };
+    return { action: 'switch' };
+  };
+  behaviorSandbox.window.FarmaciaCatalog = { clearSnapshot: () => {}, getSnapshot: () => null };
+  let confirmation = false;
+  let confirmationCalls = 0;
+  behaviorSandbox.window.confirm = () => { confirmationCalls++; return confirmation; };
+  behaviorApi.searchCIP();
+  assert(confirmationCalls === 0, 'Seguimiento fresh screen ignores neutral PROM default');
+  elements.fhSegNuevaDosis.value = 'A-only dose';
+  elements.fhSeguimientoEaObservaciones.value = 'A-only adverse event';
+  elements.fhSegCip.value = 'CIP-B';
+  behaviorApi.setActivePatientCip('CIP-A');
+  behaviorApi.searchCIP();
+  assert(elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento cancel restores CIP and preserves edits');
+  confirmation = true;
+  elements.fhSegCip.value = 'CIP-B';
+  behaviorApi.searchCIP();
+  assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '', 'Seguimiento confirmed switch clears A-only movement and loads B');
+  elements.fhSegCip.value = 'CIP-UNKNOWN';
+  behaviorApi.searchCIP();
+  assert(elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento unknown CIP enters clean manual mode');
+}
+
 // --- WO7E: contrato común de tratamiento ---
 
 // 1. FarmaciaTratamiento cargado
@@ -224,7 +277,7 @@ assert(js.includes("Fallback DOM"), 'Código documenta fallback DOM');
 // 39. No hay otra función que sobrescriba el desplegable visible
 // updateSuspectDrugSelector es la única que escribe en fhSeguimientoEaFarmacoSospechoso
 var suspectSelectorWrites = (js.match(/fhSeguimientoEaFarmacoSospechoso/g) || []).length;
-assert(suspectSelectorWrites <= 4, 'Sospechoso EA solo referenciado para getElementById en rutas controladas (3 existentes + 1 WO8.1b export)');
+assert(suspectSelectorWrites <= 5, 'Sospechoso EA solo referenciado en rutas controladas, incluido reset de paciente');
 
 // --- WO7H.1: Consistencia visual de línea terapéutica ---
 

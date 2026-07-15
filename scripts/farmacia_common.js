@@ -1818,6 +1818,15 @@
         return false;
     }
 
+    function resolvePatientContextSwitch(currentCip, requestedCip, hasContext, confirmed) {
+        var current = String(currentCip || '').trim().toUpperCase();
+        var requested = String(requestedCip || '').trim().toUpperCase();
+        if (current && current === requested) return { action: 'same', cip: currentCip };
+        if (hasContext && confirmed === undefined) return { action: 'confirm', cip: requestedCip };
+        if (hasContext && confirmed === false) return { action: 'cancel', cip: currentCip };
+        return { action: 'switch', cip: requestedCip };
+    }
+
     window.FarmaciaDemo = {
         patients,
         profesionales,
@@ -1860,6 +1869,7 @@
         getEnfermeriaBadges: getEnfermeriaBadges,
         getEnfermeriaVisiblePatients: getEnfermeriaVisiblePatients,
         isEnfermeriaPatient: isEnfermeriaPatient,
+        resolvePatientContextSwitch: resolvePatientContextSwitch,
         findPatientByCip: function (cip) {
             return findAvailablePatientByCip(cip);
         }

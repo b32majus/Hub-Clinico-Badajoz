@@ -60,6 +60,7 @@
     var currentBiologicLines = [];
     var followupOtherDrugs = [];
     var followupOtherDrugSeq = 0;
+    var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
 
     var FOLLOWUP_RELATION_OPTIONS = [
         'Biológico activo adicional',
@@ -1016,6 +1017,7 @@
 
     function applyContext() {
         const ctx = F.getQueryContext();
+        currentSegPatient = ctx.patient || (ctx.cip ? { cip: ctx.cip } : null);
 
         if (ctx.cip && !ctx.patient) {
             var C = window.FarmaciaCatalog;
@@ -1158,14 +1160,27 @@
         var cip = cipInput.value.trim();
         if (!cip) return;
 
+        var currentCip = currentSegPatient && currentSegPatient.cip || '';
+        var hasContext = !!currentCip || hasPatientBoundData();
+        var decision = F.resolvePatientContextSwitch(currentCip, cip, hasContext);
+        if (decision.action === 'same') {
+            cipInput.value = currentCip || cip;
+            return;
+        }
+        if (decision.action === 'confirm') {
+            decision = F.resolvePatientContextSwitch(currentCip, cip, hasContext, window.confirm(SWITCH_MESSAGE));
+        }
+        if (decision.action === 'cancel') {
+            cipInput.value = currentCip;
+            return;
+        }
+
         clearCipNotice();
 
         var patient = F.findPatientByCip(cip);
+        resetPatientContext(cip);
         if (!patient) {
-            clearCipFields();
-            syncBiologicControls(null);
-            var C2 = getCatalog();
-            if (C2 && C2.clearSnapshot) C2.clearSnapshot();
+            currentSegPatient = { cip: cip };
             showSegDrugAutocomplete();
             showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
             return;
@@ -1208,6 +1223,7 @@
         F.setValue('fhSegUltimosProms', patient.proms);
         F.setValue('fhSegEaPrevios', patient.efectosAdversos);
         syncBiologicControls(patient);
+        currentSegPatient = patient;
 
         var snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
         var segPrincipioActivoValue = snap ? snap.principio_activo_snapshot || patient.principioActivo || '' : patient.principioActivo || '';
@@ -1254,6 +1270,37 @@
 
         var banner = document.getElementById('fhSegNoCipBanner');
         if (banner) banner.parentNode.removeChild(banner);
+    }
+
+    function hasPatientBoundData() {
+        var ids = cipSearchFields.concat(['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSeguimientoEaObservaciones']);
+        var proms = fv('fhSegProms');
+        return followupOtherDrugs.length > 0 || ids.some(function (id) { return !!fv(id); }) || !!proms && proms !== 'No recogido';
+    }
+
+    function resetPatientContext(requestedCip) {
+        clearCipFields();
+        var ids = ['fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegCambiaNivel', 'fhSegNuevoNivel', 'fhSegOptimiza', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegMotivoOpt', 'fhSegSuspension', 'fhSegMotivoSusp', 'fhSegProms', 'fhSeguimientoEaPresente', 'fhSeguimientoEaGravedad', 'fhSeguimientoEaResuelto', 'fhSeguimientoEaCorregido', 'fhSeguimientoEaObservaciones', 'fhSeguimientoEaFarmacoSospechoso', 'fhCausalidadFinal'];
+        ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+        F.setValue('fhSegCip', requestedCip);
+        currentBiologicLines = [];
+        followupOtherDrugs = [];
+        followupOtherDrugSeq = 0;
+        renderFollowupOtherDrugs();
+        syncBiologicControls(null);
+        ['fhSegPromsExpanded', 'fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+        document.querySelectorAll('.morisky-question input').forEach(function (el) { el.checked = false; });
+        document.querySelectorAll('.causality-chip-group .causality-chip').forEach(function (el) { el.classList.remove('causality-chip--active'); });
+        ['fhSegEvaDolorRange', 'fhSegEvaPruritoRange'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = '0'; });
+        F.setText('fhSegMoriskyResultado', 'Resultado Morisky-Green: pendiente de completar');
+        F.setText('fhSegDlqiTotal', '—');
+        F.setText('fhSegDlqiInterp', '');
+        F.setText('naranjoScore', '0');
+        F.setText('naranjoCategoria', 'Dudosa');
+        F.setText('klCategoria', 'No clasificable');
+        F.setText('fhSegCimaContextPrincipioActivo', '—');
+        var catalog = getCatalog();
+        if (catalog && catalog.clearSnapshot) catalog.clearSnapshot();
     }
 
     function initCipSearch() {
@@ -1997,6 +2044,11 @@
         lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
         return lines;
     }
+
+    window.FarmaciaSeguimiento = {
+        searchCIP: searchCIP,
+        setActivePatientCip: function (cip) { currentSegPatient = cip ? { cip: cip } : null; }
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         applyContext();

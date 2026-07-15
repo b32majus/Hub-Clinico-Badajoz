@@ -102,6 +102,17 @@ console.log('  ✓ Catalog + Common cargados en VM sandbox');
 
 const buildImportedPatientCandidate = sandbox.window.FarmaciaDemo.buildImportedPatientCandidate;
 
+console.log('\n[Patient context switch policy]');
+const resolvePatientContextSwitch = sandbox.window.FarmaciaDemo.resolvePatientContextSwitch;
+assertEqual(typeof resolvePatientContextSwitch, 'function', 'shared switch policy is exposed');
+if (typeof resolvePatientContextSwitch === 'function') {
+    assertEqual(resolvePatientContextSwitch(' cip-a ', 'CIP-A', true).action, 'same', 'normalized same CIP is non-destructive');
+    assertEqual(resolvePatientContextSwitch('CIP-A', 'CIP-B', true).action, 'confirm', 'different CIP with context asks for confirmation');
+    assertEqual(resolvePatientContextSwitch('CIP-A', 'CIP-B', true, false).action, 'cancel', 'cancelled switch preserves context');
+    assertEqual(resolvePatientContextSwitch('CIP-A', 'CIP-B', true, true).action, 'switch', 'confirmed switch replaces context');
+    assertEqual(resolvePatientContextSwitch('', 'CIP-B', false).action, 'switch', 'clean screen loads without confirmation');
+}
+
 // ─── Caso A: pauta reconocible ───────────────────────────────────────────────
 console.log('\n[Caso A] Pauta reconocible: SC / cada 4 semanas');
 const candidateA = buildImportedPatientCandidate(

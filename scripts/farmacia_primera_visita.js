@@ -4,6 +4,8 @@
     const F = window.FarmaciaDemo;
     var P = window.FarmaciaPautasCatalog;
     var pvAutocompleteActiveIndex = -1;
+    var activePatientCip = '';
+    var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
 
     function isTruthyRobust(value) {
         if (value === true || value === 1 || value === '1') return true;
@@ -707,22 +709,26 @@
         var cip = cipInput.value.trim();
         if (!cip) return;
 
+        var hasContext = !!activePatientCip || hasPatientBoundData();
+        var decision = F.resolvePatientContextSwitch(activePatientCip, cip, hasContext);
+        if (decision.action === 'same') {
+            cipInput.value = activePatientCip || cip;
+            return;
+        }
+        if (decision.action === 'confirm') {
+            decision = F.resolvePatientContextSwitch(activePatientCip, cip, hasContext, window.confirm(SWITCH_MESSAGE));
+        }
+        if (decision.action === 'cancel') {
+            cipInput.value = activePatientCip;
+            return;
+        }
+
         var patient = F.findPatientByCip(cip);
         clearCipNotice();
+        resetPatientContext(cip);
 
         if (!patient) {
-            var fieldsToClear = ['fhPvServicio', 'fhPvPatologia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica'];
-            for (var i = 0; i < fieldsToClear.length; i++) {
-                var el = document.getElementById(fieldsToClear[i]);
-                if (el) el.value = '';
-            }
-            clearTreatmentForm();
-            var grid = document.getElementById('fhPvTratamientoGrid');
-            if (grid) F.clearChildren(grid);
-            var drugSearchInput = document.getElementById('fhPvFarmaco');
-            if (drugSearchInput) drugSearchInput.value = '';
-            var C2 = getCatalog();
-            if (C2 && C2.clearSnapshot) C2.clearSnapshot();
+            activePatientCip = cip;
             showDrugAutocomplete();
             showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
             return;
@@ -733,12 +739,37 @@
         var C = getCatalog();
         if (C && C.clearSnapshot) C.clearSnapshot();
         applyTratamientoValidado({ patient: patient, cip: patient.cip });
+        activePatientCip = patient.cip;
 
         showDrugAutocomplete();
         clearCipNotice();
 
         var banner = document.getElementById('fhPvNoCipBanner');
         if (banner) banner.parentNode.removeChild(banner);
+    }
+
+    function hasPatientBoundData() {
+        var ids = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvNotas'];
+        var proms = fv('fhPvProms');
+        return ids.some(function (id) { return !!fv(id); }) || !!proms && proms !== 'No';
+    }
+
+    function resetPatientContext(requestedCip) {
+        var ids = ['fhPvServicio', 'fhPvServicioOtro', 'fhPvPatologia', 'fhPvPatologiaOtro', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica', 'fhPvFarmaco', 'fhPvDosis', 'fhPvPauta', 'fhPvPautaOtro', 'fhPvVia', 'fhPvFecha', 'fhPvInduccionRealizada', 'fhPvEstratificacion', 'fhPvProms', 'fhPvNotas'];
+        ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+        F.setValue('fhPvCip', requestedCip);
+        ['fhPvServicioOtro', 'fhPvPatologiaOtro', 'fhPvPautaOtro', 'fhPvPromsExpanded'].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+        ['fhPvEvaDolorRange', 'fhPvEvaPruritoRange'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = '0'; });
+        F.setText && F.setText('fhPvEvaDolorValue', '0');
+        F.setText && F.setText('fhPvEvaPruritoValue', '0');
+        F.setText && F.setText('fhPvDlqiTotal', '—');
+        F.setText && F.setText('fhPvDlqiInterp', '');
+        document.querySelectorAll('#fhPvDlqiQuestions input').forEach(function (el) { el.checked = false; });
+        clearTreatmentForm();
+        F.clearChildren(document.getElementById('fhPvTratamientoGrid'));
+        clearDrugAutocompleteDropdown();
+        var catalog = getCatalog();
+        if (catalog && catalog.clearSnapshot) catalog.clearSnapshot();
     }
 
     function clearCipNotice() {
@@ -1042,7 +1073,9 @@
     window.FarmaciaPrimeraVisita = {
         buildPrimaryTreatmentFromContext: buildPrimaryTreatmentFromContext,
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
-        getCurrentPrimaryTreatment: getCurrentPrimaryTreatment
+        getCurrentPrimaryTreatment: getCurrentPrimaryTreatment,
+        searchCIP: searchCIP,
+        setActivePatientCip: function (cip) { activePatientCip = cip || ''; }
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1055,6 +1088,7 @@
 
         populatePautaSelectPv('fhPvPauta', 'fhPvPautaOtro');
         applyContext(ctx);
+        activePatientCip = ctx.patient ? (ctx.patient.cip || ctx.cip || '') : (ctx.cip || '');
         applyTratamientoValidado(ctx);
         renderDLQI();
         setupEVASliders();
