@@ -472,11 +472,13 @@
         if (context.cip) F.setValue('fhDermaCip', context.cip);
         if (context.patologia) F.setValue('fhDermaPatologia', context.patologia);
 
+        var isEnfPatient = currentPatient && F && typeof F.isEnfermeriaPatient === 'function'
+            && F.isEnfermeriaPatient(currentPatient);
         if (context.patient) {
             var p = context.patient;
-            F.setValue('fhDermaFarmaco', p.farmaco);
-            F.setValue('fhDermaDosis', p.dosis);
-            if (p.pauta) {
+            if (!isEnfPatient) F.setValue('fhDermaFarmaco', p.farmaco);
+            if (!isEnfPatient) F.setValue('fhDermaDosis', p.dosis);
+            if (!isEnfPatient && p.pauta) {
                 var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(p.pauta) : null;
                 F.setValue('fhDermaPauta', pautaObj ? pautaObj.pauta_codigo : '');
                 if (pautaObj && pautaObj.pauta_codigo === 'OTRO' && pautaObj.pauta_otro_texto) {
@@ -487,7 +489,7 @@
                     byId('fhDermaPautaOtro').classList.add('hidden');
                 }
             }
-            F.setValue('fhDermaVia', p.via);
+            if (!isEnfPatient) F.setValue('fhDermaVia', p.via);
             F.setValue('fhDermaAnalitica', p.analitica);
             if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
             if (p.estado === 'validated') F.setValue('fhValEstado', 'validated');
@@ -498,7 +500,7 @@
             if (p.tiempoEvolucion) F.setValue('fhHSTiempoEvolucion', p.tiempoEvolucion);
             if (p.tratamientosPrevios) F.setValue('fhHSTratamientosPrevios', p.tratamientosPrevios);
             if (p.motivoClinico) F.setValue('fhHSMotivoClinico', p.motivoClinico);
-            if (p.principioActivo) F.setValue('fhDermaPrincipioActivo', p.principioActivo);
+            if (!isEnfPatient && p.principioActivo) F.setValue('fhDermaPrincipioActivo', p.principioActivo);
 
             if (p.tratamientosPreviosHS) {
                 var hsTto = p.tratamientosPreviosHS;
@@ -554,8 +556,6 @@
         toggleHSBlock();
         updateValidationModuleSummaries();
 
-        var isEnfPatient = currentPatient && F && typeof F.isEnfermeriaPatient === 'function'
-            && F.isEnfermeriaPatient(currentPatient);
         if (isEnfPatient) {
             var enf = currentPatient;
             var enfServicioSlug = enf.servicioSlug || '';
@@ -596,17 +596,12 @@
                     }
                 }
             }
-            var enfFarmaco = enf.farmaco || enf.farmaco_solicitado || '';
+            var enfFarmaco = enf.farmaco_solicitado || '';
             if (enfFarmaco) F.setValue('fhDermaFarmaco', enfFarmaco);
-            // Precarga fhValidadoFarmaco con el nombre del fármaco desde origen (sin seleccionar CIMA)
-            if (enfFarmaco && !byId("fhValidadoFarmaco").value) F.setValue("fhValidadoFarmaco", enfFarmaco);
             F.setValue('fhDermaDosis', '');
             F.setValue('fhDermaPeso', '');
             var indSel = byId('fhDermaInduccion');
-            if (indSel) indSel.value = 'no';
-            if (byId('fhDermaJustificacion') && !byId('fhDermaJustificacion').value) {
-                F.setValue('fhDermaJustificacion', 'Solicitud desde Enfermería / Inicio biológico · ' + (enfPat || ''));
-            }
+            if (indSel) indSel.value = '';
             if (typeof applyEnfermeriaPrebioChips === 'function') applyEnfermeriaPrebioChips(enf);
             if (typeof hydrateUpperFormFromEnfermeria === 'function') hydrateUpperFormFromEnfermeria(enf);
             if (modoActual === 'reuma') {
