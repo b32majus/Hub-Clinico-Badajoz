@@ -51,7 +51,12 @@ function createMockElement(tag, attrs) {
       add: function (c) { if (this._classes.indexOf(c) === -1) this._classes.push(c); },
       remove: function (c) { var i = this._classes.indexOf(c); if (i !== -1) this._classes.splice(i, 1); },
       contains: function (c) { return this._classes.indexOf(c) !== -1; },
-      toggle: function (c) { if (this.contains(c)) this.remove(c); else this.add(c); }
+      toggle: function (c, force) {
+        if (force === true) { this.add(c); return true; }
+        if (force === false) { this.remove(c); return false; }
+        if (this.contains(c)) { this.remove(c); return false; }
+        this.add(c); return true;
+      }
     },
     options: [],
     children: [],
@@ -72,6 +77,7 @@ function createMockElement(tag, attrs) {
     append: function () {},
     getAttribute: function (name) { return this._attrs && this._attrs[name]; },
     setAttribute: function (name, val) { if (!this._attrs) this._attrs = {}; this._attrs[name] = val; },
+    removeAttribute: function (name) { if (this._attrs) delete this._attrs[name]; },
     _attrs: {},
     _parentSelect: null,
     closest: function () { return null; },
@@ -108,6 +114,12 @@ function buildMockDom() {
   mockElements['formReuma'] = formReuma;
   var formHS = createMockElement('section', { id: 'formHS', className: 'dashboard-card hidden' });
   mockElements['formHS'] = formHS;
+  var formServicioManual = createMockElement('section', { id: 'formServicioManual', className: 'dashboard-card hidden' });
+  mockElements['formServicioManual'] = formServicioManual;
+  var formManualSolicitud = createMockElement('section', { id: 'formManualSolicitud', className: 'dashboard-card hidden' });
+  mockElements['formManualSolicitud'] = formManualSolicitud;
+  var formDigestivo = createMockElement('section', { id: 'formDigestivo', className: 'dashboard-card hidden' });
+  mockElements['formDigestivo'] = formDigestivo;
   var validationBlock = createMockElement('section', { id: 'validationBlock', className: 'dashboard-card hidden' });
   mockElements['validationBlock'] = validationBlock;
 
@@ -139,6 +151,15 @@ function buildMockDom() {
     'fhHSComorbOtras', 'fhHSComorbilidades',
     'fhValEstado', 'fhValCita', 'fhValMotivo', 'fhValObservaciones',
     'fhValFarmaceutico',
+    'fhOrigenEntrada', 'fhTipoValidacion', 'fhTipoValidacionNotice',
+    'fhServicioManual', 'fhPatologiaManual', 'fhManualCip', 'fhManualFecha',
+    'fhManualFarmaco', 'fhManualPrincipioActivo', 'fhManualDosis', 'fhManualVia',
+    'fhManualPauta', 'fhManualPautaOtro', 'fhManualInduccion', 'fhManualPeso',
+    'fhManualJustificacion', 'fhManualObservaciones',
+    'fhValidadoFarmaco', 'fhValidadoPrincipioActivo', 'fhValidadoDosis',
+    'fhValidadoVia', 'fhValidadoPauta', 'fhValidadoPautaOtro',
+    'fhValidadoInduccion', 'fhValidadoPresentacion', 'fhValidadoJustificacion',
+    'fhValMotivoRow',
     'fhTipoSolicitud',
     'fhEaNotificado', 'fhCausalidadFinal',
     'fhEaActivationNotice',
@@ -204,7 +225,10 @@ function buildMockDom() {
 
   // Make select-like elements for selects
   ['fhDermaPatologia', 'fhDermaVia', 'fhDermaPauta',
-   'fhDermaInduccion', 'fhAnaliticaReciente',
+    'fhDermaInduccion', 'fhAnaliticaReciente',
+    'fhOrigenEntrada', 'fhTipoValidacion', 'fhServicioManual', 'fhPatologiaManual',
+    'fhManualVia', 'fhManualPauta', 'fhManualInduccion',
+    'fhValidadoVia', 'fhValidadoPauta', 'fhValidadoInduccion',
    'fhValEstado', 'fhTipoSolicitud',
    'fhEaNotificado', 'fhCausalidadFinal'].forEach(function (id) {
     mockElements[id].tagName = 'SELECT';
@@ -416,11 +440,12 @@ function t(id) { var e = $(id); return e ? e.textContent : ''; }
 assertEqual(v('fhDermaCip'), '000000003', '1. CIP = 000000003');
 assertEqual(v('fhDermaPatologia'), 'AR', '2. Patología = AR');
 assertEqual(v('fhDermaFarmaco'), 'Upadacitinib', '3. Fármaco = Upadacitinib');
+assertEqual(v('fhValidadoFarmaco'), '', '3b. Fármaco validado permanece vacío');
 
-// 4-6. Context-strip
-assertEqual(dom.ctxCip.textContent, '000000003', '4. Context CIP = 000000003');
-assertEqual(dom.ctxServ.textContent, 'Reuma', '5. Context servicio = Reuma');
-assertEqual(dom.ctxPat.textContent, 'AR', '6. Context patología = AR');
+// 4-6. Contexto explícito de origen
+assertEqual(v('fhDermaCip'), '000000003', '4. Contexto conserva CIP');
+assertEqual(v('fhDermaServicioOrigen'), 'Reuma', '5. Contexto conserva servicio');
+assertEqual(v('fhDermaPatologia'), 'AR', '6. Contexto conserva patología');
 
 // 7-9. Header / Servicio no son Dermatología
 var headerText = '';
@@ -435,7 +460,7 @@ assertIncludes(headerText, 'Reuma', '8. Header contiene "Reuma"');
 assertEqual(v('fhDermaServicioOrigen'), 'Reuma', '9. Servicio readonly = Reuma');
 
 // 10. Modo
-assertEqual(v('fhTipoSolicitud'), 'reuma', '10. Tipo solicitud = reuma');
+assertEqual(v('fhOrigenEntrada'), 'excel_enfermeria', '10. Origen = excel_enfermeria');
 
 // 11-15. Chip values
 assertEqual(v('fhAnaliticaMantoux'), 'Negativo', '11. Mantoux = Negativo');
@@ -453,10 +478,8 @@ assertEqual(v('fhDermaPeso'), '', '19. Peso vacío');
 // 20. No demo CIP
 assertNotIncludes(v('fhDermaCip'), 'CIP-DEMO', '20. No CIP demo');
 
-// 21. Justificación llena
-var just = v('fhDermaJustificacion');
-assert(just.indexOf('Enfermería') !== -1 || just.indexOf('AR') !== -1,
-  '21. Justificación contiene Enfermería/AR: "' + just + '"');
+// 21. Sin inferencia terapéutica desde el contexto importado
+assertEqual(v('fhDermaJustificacion'), '', '21. Justificación no inferida');
 
 // 22-27. formReuma dynamic spans
 assertEqual(t('fhReumaCip'), '000000003', '22. fhReumaCip = 000000003');
@@ -464,9 +487,6 @@ assertEqual(t('fhReumaFarmaco'), 'Upadacitinib', '23. fhReumaFarmaco = Upadaciti
 assertEqual(t('fhReumaDosis'), 'Pendiente de completar por Farmacia', '24. fhReumaDosis = Pendiente de completar por Farmacia');
 assertEqual(t('fhReumaVia'), 'Pendiente de completar por Farmacia', '25. fhReumaVia = Pendiente de completar por Farmacia');
 assertEqual(t('fhReumaPauta'), 'Pendiente de completar por Farmacia', '26. fhReumaPauta = Pendiente de completar por Farmacia');
-assert(t('fhReumaPrebiologico').toLowerCase().indexOf('ok farmacia') !== -1,
-  '27. fhReumaPrebiologico contiene "OK Farmacia": "' + t('fhReumaPrebiologico') + '"');
-
 // 28. innerHTML count in validacion.js
 var vSrc = fs.readFileSync(validacionPath, 'utf8');
 var ic = (vSrc.match(/innerHTML/g) || []).length;
@@ -498,10 +518,50 @@ assert($('modSeguimientoEaHandoff').classList.contains('hidden'),
 // 31-32. Campos Derma vacíos para Reuma Enfermería
 assert(v('fhDermaDosis') === '', '31. Dosis no inferida desde Enfermería');
 assert(v('fhDermaVia') === '', '32. Vía no inferida desde Enfermería');
+assertEqual(v('fhDermaPauta'), '', '32b. Pauta no inferida desde Enfermería');
+assertEqual(v('fhDermaInduccion'), '', '32c. Inducción no inferida desde Enfermería');
+assertEqual(v('fhValidadoDosis'), '', '32d. Dosis validada vacía');
+assertEqual(v('fhValidadoVia'), '', '32e. Vía validada vacía');
+assertEqual(v('fhValidadoPauta'), '', '32f. Pauta validada vacía');
+assertEqual(v('fhValidadoPresentacion'), '', '32g. Presentación validada vacía');
 
 // 33. Prebiológico Enfermería: una sola representación
 var prebioResumen = $('fhEnfermeriaResumen');
 assert(prebioResumen !== null, '33. fhEnfermeriaResumen existe para paciente Enfermería');
+
+function rerunWithContext(context) {
+  [
+    'fhDermaCip', 'fhDermaPatologia', 'fhDermaFarmaco', 'fhDermaDosis',
+    'fhDermaVia', 'fhDermaPauta', 'fhDermaInduccion', 'fhDermaJustificacion',
+    'fhValidadoFarmaco', 'fhValidadoDosis', 'fhValidadoVia', 'fhValidadoPauta',
+    'fhValidadoInduccion', 'fhValidadoPresentacion', 'fhManualCip'
+  ].forEach(function (id) { if ($(id)) $(id).value = ''; });
+  F.getQueryContext = function () { return context; };
+  DOMContentLoadedCallbacks[DOMContentLoadedCallbacks.length - 1]();
+}
+
+var enfWithoutRequestedDrug = {
+  cip: '000000004', servicio: 'Reuma', servicioSlug: 'reumatologia',
+  patologia: 'AR', farmaco: 'Fallback no explícito', farmaco_solicitado: '',
+  origen_solicitud: 'enfermeria', tipo_origen: 'enfermeria_inicio_biologico',
+  source_type: 'ENFERMERIA'
+};
+rerunWithContext({ cip: '000000004', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: enfWithoutRequestedDrug });
+assertEqual(v('fhDermaFarmaco'), '', '34. Enfermería sin fármaco explícito mantiene solicitado vacío');
+assertEqual(v('fhValidadoFarmaco'), '', '35. Enfermería sin fármaco explícito mantiene validado vacío');
+
+rerunWithContext({ cip: 'CIP-GUIADO-001', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', entrada: 'validacion', patient: null });
+assertEqual(v('fhManualCip'), 'CIP-GUIADO-001', '36. Inicio guiado conserva CIP');
+assertEqual(v('fhServicioManual'), 'reuma', '37. Inicio guiado conserva servicio');
+assertEqual(v('fhPatologiaManual'), 'AR', '38. Inicio guiado conserva patología');
+assertEqual(v('fhOrigenEntrada'), 'manual_farmacia', '39. Inicio guiado conserva origen seguro');
+assertEqual(v('fhManualFarmaco'), '', '40. Inicio guiado no infiere fármaco solicitado');
+assertEqual(v('fhValidadoFarmaco'), '', '41. Inicio guiado no infiere fármaco validado');
+assertEqual(v('fhManualDosis'), '', '42. Inicio guiado no infiere dosis');
+assertEqual(v('fhManualVia'), '', '43. Inicio guiado no infiere vía');
+assertEqual(v('fhManualPauta'), '', '44. Inicio guiado no infiere pauta');
+assert(!$('formServicioManual').classList.contains('hidden'), '45. Flujo manual Farmacia sigue visible');
+assert(!$('formManualSolicitud').classList.contains('hidden'), '46. Flujo manual Farmacia sigue operativo con contexto completo');
 
 console.log('\nTotal: ' + passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);
