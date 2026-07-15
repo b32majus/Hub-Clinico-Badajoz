@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-14
+**Última actualización:** 2026-07-15
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -58,6 +58,7 @@
 | **WO-DOC-HOUSEKEEPING-POST-PR17-PR18-01** | Actualizar estado tras PR #17 y PR #18 | ✅ Merged | `work/hermes/WO-DOC-HOUSEKEEPING-POST-PR17-PR18-20260714` → `preview/demo-lunes-wo4-20260614` | `84d161d` (PR #19) | Solo housekeeping documental de estados y totales. No toca código ni autoriza datos reales. |
 | **WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01** | Ingestar revisión funcional/manual de Sil post-PR20 | 📋 Ready for review | `work/hermes/WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01-20260714` | `bc092fb06d998572d499d2474cbbe99d88d5cfb5` | Ingesta documental de revisión funcional/manual Sil; sin cambios de código; pendiente de PR/revisión humana. |
 | **WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01** | Ingestar auditoría técnica pantalla a pantalla Farmacia post-PR20 | 📋 Ready for review | `work/hermes/WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01-20260715` | `a7e08eb` | Ingesta documental de auditoría técnica Farmacia post-PR20 desde rama no absorbida; sin cambios de código; pendiente de PR/revisión humana. |
+| **WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01** | Reconciliar auditoría técnica y revisión funcional Sil de pantallas Farmacia | 📋 Ready for review | `work/hermes/WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01-20260715` | `549950081c8ecdb46f9b913ee68013bdd69f98f2` | Auditoría reconciliada técnica + Sil; solo documentación; sin cambios de código; no autoriza implementación. |
 
 ---
 
@@ -113,7 +114,7 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 31 (incluye PR #16 PROM Capture Gateway, PR #17 Identity Plane/Nursing Readiness, PR #18 Treatment Lifecycle Engine y PR #19 housekeeping de estado) |
-| 📋 Ready for review | 20 (WO-017 a WO-034 — rama nocturna Farmacia frozen; incluye las ingestas de revisión funcional/manual Sil y auditoría técnica post-PR20) |
+| 📋 Ready for review | 21 (WO-017 a WO-034 — rama nocturna Farmacia frozen; incluye las ingestas post-PR20 y la auditoría reconciliada técnica + Sil post-PR22) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
@@ -122,4 +123,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 57 work orders / preflights gestionadas.
+**Total:** 58 work orders / preflights gestionadas.
