@@ -185,6 +185,9 @@ function buildMockDom() {
     'fhResumenMantoux', 'fhResumenVhb', 'fhResumenVhc', 'fhResumenVih',
     'fhResumenVacunacion', 'fhResumenHemograma', 'fhResumenBioquimica',
     'fhResumenVacunacionObs',
+    'fhSolicitadoFarmaco', 'fhSolicitadoPrincipioActivo', 'fhSolicitadoDosis',
+    'fhSolicitadoVia', 'fhSolicitadoPauta', 'fhSolicitadoInduccion',
+    'fhSolicitadoJustificacion', 'fhSolicitadoInduccionRow',
     'naranjoScore', 'naranjoCategoria', 'klCategoria',
     'resumenNaranjo', 'resumenKl',
     'fhEnfermeriaResumen',
@@ -380,9 +383,9 @@ var enfPatientC = {
   servicio_origen: 'Reuma',
   patologia: 'AR',
   patologia_indicacion: 'AR',
-  farmaco: 'Upadacitinib',
-  farmaco_solicitado: 'Upadacitinib',
-  dosis: '', pauta: '', via: '',
+  farmaco: 'Fármaco genérico no solicitado',
+  rawImport: { farmaco_solicitado: 'Upadacitinib' },
+  dosis: '', pauta: '', via: '', induccion: 'Sí', justificacion: 'No debe inferirse',
   analitica_estado: 'OK',
   mantoux_estado: 'NEGATIVO',
   igra_estado: 'NEGATIVO',
@@ -484,6 +487,9 @@ assertEqual(v('fhDermaJustificacion'), '', '21. Justificación no inferida');
 // 22-27. formReuma dynamic spans
 assertEqual(t('fhReumaCip'), '000000003', '22. fhReumaCip = 000000003');
 assertEqual(t('fhReumaFarmaco'), 'Upadacitinib', '23. fhReumaFarmaco = Upadacitinib');
+assertEqual(t('fhSolicitadoFarmaco'), 'Upadacitinib', '23b. Resumen solicitado usa farmaco_solicitado explícito');
+assertEqual(t('fhSolicitadoInduccion'), '—', '23c. Resumen solicitado no infiere inducción');
+assertEqual(t('fhSolicitadoJustificacion'), '—', '23d. Resumen solicitado no infiere justificación');
 assertEqual(t('fhReumaDosis'), 'Pendiente de completar por Farmacia', '24. fhReumaDosis = Pendiente de completar por Farmacia');
 assertEqual(t('fhReumaVia'), 'Pendiente de completar por Farmacia', '25. fhReumaVia = Pendiente de completar por Farmacia');
 assertEqual(t('fhReumaPauta'), 'Pendiente de completar por Farmacia', '26. fhReumaPauta = Pendiente de completar por Farmacia');

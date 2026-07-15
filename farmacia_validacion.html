@@ -19,7 +19,7 @@
 
     <div class="user-block">
         <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
-        <span class="user-name" id="currentProfessional">Profesional FH-01</span>
+        <span class="user-name" id="currentProfessional">Profesional FH demo</span>
         <span class="profile-badge">FH</span>
     </div>
 
@@ -97,9 +97,9 @@
             <select class="form-select" id="fhOrigenEntrada">
                 <option value="">Seleccionar...</option>
                 <option value="manual_farmacia">Entrada manual - Farmacia</option>
-                <option value="servicio_clinico_compatible">Servicio clinico compatible (futuro)</option>
+                <option value="servicio_clinico_compatible" hidden disabled>Servicio clinico compatible (futuro, no disponible)</option>
                 <option value="excel_enfermeria">Solicitud desde Excel Enfermeria</option>
-                <option value="demo_formacion">Demo / Formacion</option>
+                <option value="demo_formacion" hidden disabled>Demo / Formacion (no disponible)</option>
             </select>
         </div>
     </div>
@@ -243,7 +243,7 @@
         <div class="info-field"><span class="info-field__label">Intervalo / pauta</span><span class="info-field__value" id="fhReumaPauta">—</span></div>
     </div>
     <h3 class="card-title card-title--prebio-upper"><i class="fas fa-flask"></i> Analítica y vacunación</h3>
-    <div class="pb-chips-grid" id="upperPrebioChips">
+    <div class="pb-chips-grid hidden" id="upperPrebioChips">
         <div class="pb-chip" id="upperPbChipAnaliticaReciente"><span class="pb-chip__icon"><i class="fas fa-clock"></i></span><span class="pb-chip__label">Analítica</span><span class="pb-chip__status" id="upperPbStatusAnaliticaReciente">-</span></div>
         <div class="pb-chip" id="upperPbChipMantoux"><span class="pb-chip__icon"><i class="fas fa-syringe"></i></span><span class="pb-chip__label">Mantoux</span><span class="pb-chip__status" id="upperPbStatusMantoux">-</span></div>
         <div class="pb-chip" id="upperPbChipIgra"><span class="pb-chip__icon"><i class="fas fa-syringe"></i></span><span class="pb-chip__label">IGRA</span><span class="pb-chip__status" id="upperPbStatusIgra">-</span></div>
@@ -253,7 +253,7 @@
         <div class="pb-chip" id="upperPbChipVacunacion"><span class="pb-chip__icon"><i class="fas fa-syringe"></i></span><span class="pb-chip__label">Vacunación</span><span class="pb-chip__status" id="upperPbStatusVacunacion">-</span></div>
         <div class="pb-chip" id="upperPbChipMedPreventiva"><span class="pb-chip__icon"><i class="fas fa-shield-virus"></i></span><span class="pb-chip__label">Medicina preventiva</span><span class="pb-chip__status" id="upperPbStatusMedPreventiva">-</span></div>
     </div>
-    <div class="prebio-upper-summary" id="upperPrebioGlobalStatus">-</div>
+    <div class="prebio-upper-summary hidden" id="upperPrebioGlobalStatus">-</div>
 </section>
 
 <section class="dashboard-card hidden" id="formDigestivo">
@@ -523,11 +523,11 @@
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
     <!-- WO8.1c.12: módulos-nav eliminado -->
 
-    <div class="validation-meta-line"><span class="validation-meta-label">Farmacéutico responsable:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH-01 — Farmacia Hospitalaria</span></div>
-    <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables.</span></div>
+    <div class="validation-meta-line"><span class="validation-meta-label">Responsable mostrado:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH demo — identidad no nominal. No constituye firma electrónica ni controla permisos.</span></div>
+    <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables. Copia manual; no integración automática.</span></div>
     <section class="validation-module" id="modExportacion">
-        <h3 class="card-title"><i class="fas fa-file-export"></i> Exportación</h3>
-        <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline hidden" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhValExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+        <h3 class="card-title"><i class="fas fa-file-export"></i> Copia manual para sistemas externos</h3>
+        <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt" title="Copiar texto JARA"><i class="fas fa-file-alt"></i> Copiar texto para JARA</button><button type="button" class="btn btn-outline hidden" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhValExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
     </section>
 </section>
                 </main>
