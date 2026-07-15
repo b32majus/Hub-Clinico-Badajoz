@@ -749,8 +749,9 @@
     }
 
     function hasPatientBoundData() {
-        var ids = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvProms', 'fhPvNotas'];
-        return ids.some(function (id) { return !!fv(id); });
+        var ids = ['fhPvServicio', 'fhPvPatologia', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvNotas'];
+        var proms = fv('fhPvProms');
+        return ids.some(function (id) { return !!fv(id); }) || !!proms && proms !== 'No';
     }
 
     function resetPatientContext(requestedCip) {

@@ -124,8 +124,7 @@ if (api && typeof api.searchCIP === 'function') {
   const ids = ['fhPvCip', 'fhPvServicio', 'fhPvPatologia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvPauta', 'fhPvPautaOtro', 'fhPvProms', 'fhPvNotas', 'fhPvTratamientoGrid'];
   const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null }]));
   elements.fhPvCip.value = 'CIP-B';
-  elements.fhPvNotas.value = 'A-only note';
-  elements.fhPvFarmaco.value = 'A-only drug';
+  elements.fhPvProms.value = 'No';
   sandbox.document.getElementById = (id) => elements[id] || null;
   sandbox.document.createTextNode = (text) => ({ textContent: text });
   sandbox.window.FarmaciaDemo.setValue = (id, value) => { if (elements[id]) elements[id].value = value || ''; };
@@ -139,7 +138,13 @@ if (api && typeof api.searchCIP === 'function') {
   };
   sandbox.window.FarmaciaCatalog = { clearSnapshot: () => {} };
   let confirmation = false;
-  sandbox.window.confirm = () => confirmation;
+  let confirmationCalls = 0;
+  sandbox.window.confirm = () => { confirmationCalls++; return confirmation; };
+  api.searchCIP();
+  assertEqual(confirmationCalls, 0, 'Primera visita fresh screen ignores neutral PROM default');
+  elements.fhPvNotas.value = 'A-only note';
+  elements.fhPvFarmaco.value = 'A-only drug';
+  elements.fhPvCip.value = 'CIP-B';
   api.setActivePatientCip('CIP-A');
   api.searchCIP();
   assertEqual(elements.fhPvCip.value, 'CIP-A', 'Primera visita cancel restores previous CIP');

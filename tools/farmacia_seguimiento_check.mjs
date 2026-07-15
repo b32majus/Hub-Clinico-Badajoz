@@ -57,9 +57,8 @@ assert(behaviorApi && typeof behaviorApi.searchCIP === 'function' && typeof beha
 if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   const ids = ['fhSegCip', 'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas', 'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms', 'fhSegOrigenCatalogo', 'fhSegEaPrevios', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegTratamientoGrid', 'fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegProms', 'fhSeguimientoEaObservaciones'];
   const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null, dispatchEvent: () => {}, appendChild(child) { this.children.push(child); this.options.push(child); }, remove() {} }]));
-  elements.fhSegCip.value = 'CIP-B';
-  elements.fhSegNuevaDosis.value = 'A-only dose';
-  elements.fhSeguimientoEaObservaciones.value = 'A-only adverse event';
+  elements.fhSegCip.value = 'CIP-FRESH';
+  elements.fhSegProms.value = 'No recogido';
   behaviorSandbox.document.getElementById = (id) => elements[id] || null;
   behaviorSandbox.document.createElement = () => ({ value: '', textContent: '', selected: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, appendChild: () => {}, setAttribute: () => {} });
   behaviorSandbox.document.createTextNode = (text) => ({ textContent: text });
@@ -77,7 +76,13 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   };
   behaviorSandbox.window.FarmaciaCatalog = { clearSnapshot: () => {}, getSnapshot: () => null };
   let confirmation = false;
-  behaviorSandbox.window.confirm = () => confirmation;
+  let confirmationCalls = 0;
+  behaviorSandbox.window.confirm = () => { confirmationCalls++; return confirmation; };
+  behaviorApi.searchCIP();
+  assert(confirmationCalls === 0, 'Seguimiento fresh screen ignores neutral PROM default');
+  elements.fhSegNuevaDosis.value = 'A-only dose';
+  elements.fhSeguimientoEaObservaciones.value = 'A-only adverse event';
+  elements.fhSegCip.value = 'CIP-B';
   behaviorApi.setActivePatientCip('CIP-A');
   behaviorApi.searchCIP();
   assert(elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento cancel restores CIP and preserves edits');

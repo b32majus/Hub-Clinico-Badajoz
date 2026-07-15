@@ -1273,8 +1273,9 @@
     }
 
     function hasPatientBoundData() {
-        var ids = cipSearchFields.concat(['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegProms', 'fhSeguimientoEaObservaciones']);
-        return followupOtherDrugs.length > 0 || ids.some(function (id) { return !!fv(id); });
+        var ids = cipSearchFields.concat(['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSeguimientoEaObservaciones']);
+        var proms = fv('fhSegProms');
+        return followupOtherDrugs.length > 0 || ids.some(function (id) { return !!fv(id); }) || !!proms && proms !== 'No recogido';
     }
 
     function resetPatientContext(requestedCip) {
