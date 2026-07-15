@@ -161,6 +161,7 @@
 - [`docs/AUDITORIA_EXCEL_MAESTRO_V2.md`](/docs/AUDITORIA_EXCEL_MAESTRO_V2.md)
 - [`docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`](/docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md)
 - [`docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md`](/docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md)
+- [`docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md) — revisión funcional/manual de Sil post-PR20 de pantallas Farmacia; complementa y no sustituye la auditoría técnica, y no autoriza implementación ni piloto.
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md)
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md)
 
