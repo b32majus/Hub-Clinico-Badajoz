@@ -57,8 +57,9 @@ assert(behaviorApi && typeof behaviorApi.searchCIP === 'function' && typeof beha
 if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   const ids = ['fhSegCip', 'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas', 'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms', 'fhSegOrigenCatalogo', 'fhSegEaPrevios', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegTratamientoGrid', 'fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegProms', 'fhSeguimientoEaObservaciones'];
   const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null, dispatchEvent: () => {}, appendChild(child) { this.children.push(child); this.options.push(child); }, remove() {} }]));
-  elements.fhSegCip.value = 'CIP-FRESH';
+  elements.fhSegCip.value = 'CIP-B';
   elements.fhSegProms.value = 'No recogido';
+  elements.fhSegOrigenCatalogo.value = 'Demo';
   behaviorSandbox.document.getElementById = (id) => elements[id] || null;
   behaviorSandbox.document.createElement = () => ({ value: '', textContent: '', selected: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, appendChild: () => {}, setAttribute: () => {} });
   behaviorSandbox.document.createTextNode = (text) => ({ textContent: text });
@@ -78,14 +79,40 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   let confirmation = false;
   let confirmationCalls = 0;
   behaviorSandbox.window.confirm = () => { confirmationCalls++; return confirmation; };
+  const resetElements = () => ids.forEach((id) => {
+    elements[id].value = '';
+    elements[id].children = [];
+    elements[id].options = [];
+  });
   behaviorApi.searchCIP();
-  assert(confirmationCalls === 0, 'Seguimiento fresh screen ignores neutral PROM default');
+  assert(confirmationCalls === 0 && elements.fhSegFarmaco.value === 'Drug B', 'Seguimiento clean first existing CIP search ignores neutral Demo origin');
+
+  resetElements();
+  behaviorApi.setActivePatientCip('');
+  elements.fhSegCip.value = 'CIP-UNKNOWN';
+  elements.fhSegProms.value = 'No recogido';
+  elements.fhSegOrigenCatalogo.value = 'Demo';
+  confirmationCalls = 0;
+  behaviorApi.searchCIP();
+  assert(confirmationCalls === 0 && elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento clean first unknown CIP search skips confirmation and leaves no residue');
+
+  resetElements();
+  behaviorApi.setActivePatientCip('');
+  elements.fhSegOrigenCatalogo.value = 'Demo';
+  elements.fhSegNuevaDosis.value = 'Manual clinical dose';
+  elements.fhSegCip.value = 'CIP-B';
+  confirmationCalls = 0;
+  behaviorApi.searchCIP();
+  assert(confirmationCalls === 1 && elements.fhSegCip.value === '' && elements.fhSegNuevaDosis.value === 'Manual clinical dose', 'Seguimiento manual clinical data without patient remains protected');
+
+  resetElements();
   elements.fhSegNuevaDosis.value = 'A-only dose';
   elements.fhSeguimientoEaObservaciones.value = 'A-only adverse event';
   elements.fhSegCip.value = 'CIP-B';
   behaviorApi.setActivePatientCip('CIP-A');
+  confirmationCalls = 0;
   behaviorApi.searchCIP();
-  assert(elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento cancel restores CIP and preserves edits');
+  assert(confirmationCalls === 1 && elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento real A to B switch keeps confirmation and cancel preserves A');
   confirmation = true;
   elements.fhSegCip.value = 'CIP-B';
   behaviorApi.searchCIP();
