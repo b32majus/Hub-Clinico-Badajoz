@@ -446,6 +446,8 @@
             event.preventDefault();
             var punto = document.getElementById('fhAltaPuntoEntrada').value;
             var cip = document.getElementById('guidedCip').textContent.trim();
+            var servicioOption = servicio.selectedOptions && servicio.selectedOptions[0];
+            var servicioLabel = servicioOption ? servicioOption.textContent.trim() : '';
             var destinos = {
                 validacion: 'farmacia_validacion.html',
                 primera_visita: 'farmacia_primera_visita.html',
@@ -455,16 +457,18 @@
                 window.alert('Seleccione un circuito de entrada para continuar.');
                 return;
             }
-            if (!servicio.value || !patologia.value) {
-                window.alert('Seleccione servicio origen y patolog\u00eda/indicaci\u00f3n.');
+            if (!cip || !servicio.value || !patologia.value) {
+                window.alert('Complete CIP, servicio origen y patolog\u00eda/indicaci\u00f3n para continuar.');
                 return;
             }
-            window.location.href = F.makeContextUrl(destinos[punto], {
+            var currentParams = new URLSearchParams(window.location.search);
+            var url = F.makeContextUrl(destinos[punto], {
                 cip: cip,
-                servicio: servicio.value,
+                servicio: servicioLabel,
                 patologia: patologia.value,
-                entrada: punto
+                entrada: currentParams.get('entrada') || punto
             });
+            window.location.href = url + (url.indexOf('?') === -1 ? '?' : '&') + 'destino=' + encodeURIComponent(punto);
         });
     }
 

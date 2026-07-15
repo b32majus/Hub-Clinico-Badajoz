@@ -265,20 +265,17 @@
 
     function applyContext(ctx) {
         F.setValue('fhPvCip', ctx.cip);
-        F.setValue('fhPvServicio', ctx.servicio || ctx.patient?.servicio);
+        var servicioVal = ctx.servicio || ctx.patient?.servicio || '';
+        F.setValue('fhPvServicio', servicioVal);
+        if (servicioVal && window.__pvPopulatePatologia) {
+            window.__pvPopulatePatologia(servicioVal);
+        }
         F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
         if (ctx.patient) {
-            // Poblar patología según servicio del paciente antes de asignar valor
-            var servicioVal = ctx.servicio || ctx.patient.servicio || '';
-            if (servicioVal && window.__pvPopulatePatologia) {
-                window.__pvPopulatePatologia(servicioVal);
-            }
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
             F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
             F.setValue('fhPvAnalitica', ctx.patient.analitica);
             setTreatmentForm(buildPrimaryTreatmentFromContext(ctx));
-            // Re-aplicar tras poblar opciones
-            F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
         } else {
             clearTreatmentForm();
         }
@@ -1087,6 +1084,7 @@
         }
 
         populatePautaSelectPv('fhPvPauta', 'fhPvPautaOtro');
+        var servicioSync = initServicioPatologiaSync();
         applyContext(ctx);
         activePatientCip = ctx.patient ? (ctx.patient.cip || ctx.cip || '') : (ctx.cip || '');
         applyTratamientoValidado(ctx);
@@ -1096,7 +1094,6 @@
         initCipSearch();
         initDrugAutocomplete();
         initTreatmentFormEvents();
-        var servicioSync = initServicioPatologiaSync();
 
         showDrugAutocomplete();
 
