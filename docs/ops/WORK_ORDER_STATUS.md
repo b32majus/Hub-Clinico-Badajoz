@@ -57,6 +57,7 @@
 | **WO-DOC-TREATMENT-LIFECYCLE-ENGINE-01** | Documentar Treatment Lifecycle Engine y renovaciones por línea de tratamiento | ✅ Merged | `work/hermes/WO-DOC-TREATMENT-LIFECYCLE-ENGINE-20260714` → `preview/demo-lunes-wo4-20260614` | `b59e09a` (PR #18) | Solo documentación. Registra ciclos de tratamiento, fechas confirmadas/estimadas, reglas declarativas, tareas, roles, switches y scheduler futuro. No toca código ni autoriza datos reales. |
 | **WO-DOC-HOUSEKEEPING-POST-PR17-PR18-01** | Actualizar estado tras PR #17 y PR #18 | ✅ Merged | `work/hermes/WO-DOC-HOUSEKEEPING-POST-PR17-PR18-20260714` → `preview/demo-lunes-wo4-20260614` | `84d161d` (PR #19) | Solo housekeeping documental de estados y totales. No toca código ni autoriza datos reales. |
 | **WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01** | Ingestar revisión funcional/manual de Sil post-PR20 | 📋 Ready for review | `work/hermes/WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01-20260714` | `bc092fb06d998572d499d2474cbbe99d88d5cfb5` | Ingesta documental de revisión funcional/manual Sil; sin cambios de código; pendiente de PR/revisión humana. |
+| **WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01** | Ingestar auditoría técnica pantalla a pantalla Farmacia post-PR20 | 📋 Ready for review | `work/hermes/WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01-20260715` | `a7e08eb` | Ingesta documental de auditoría técnica Farmacia post-PR20 desde rama no absorbida; sin cambios de código; pendiente de PR/revisión humana. |
 
 ---
 
@@ -112,7 +113,7 @@
 | Estado | Cantidad |
 |--------|----------|
 | ✅ Merged | 31 (incluye PR #16 PROM Capture Gateway, PR #17 Identity Plane/Nursing Readiness, PR #18 Treatment Lifecycle Engine y PR #19 housekeeping de estado) |
-| 📋 Ready for review | 19 (WO-017 a WO-034 — rama nocturna Farmacia frozen; incluye ingesta de revisión funcional/manual Sil post-PR20) |
+| 📋 Ready for review | 20 (WO-017 a WO-034 — rama nocturna Farmacia frozen; incluye las ingestas de revisión funcional/manual Sil y auditoría técnica post-PR20) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
@@ -121,4 +122,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 56 work orders / preflights gestionadas.
+**Total:** 57 work orders / preflights gestionadas.
