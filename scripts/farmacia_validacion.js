@@ -363,13 +363,18 @@
         toggleCausalityModules();
     }
 
+    function explicitRequestedDrug(patient) {
+        if (!patient) return "";
+        return patient.farmaco_solicitado || (patient.rawImport && patient.rawImport.farmaco_solicitado) || "";
+    }
+
     function hydrateReumaForm(patient) {
         setText("fhReumaCip", patient && patient.cip ? patient.cip : "—");
         setText("fhReumaPatologia", patient && patient.patologia ? patient.patologia : "—");
         setText("fhReumaIndicacion", patient && patient.patologia_indicacion ? patient.patologia_indicacion : "—");
         setText("fhReumaOrigen", patient && patient.origen_solicitud ? "Excel Enfermería" : (patient && patient.tipo_origen ? "Enfermería / Inicio biológico" : "—"));
         setText("fhReumaFecha", patient && patient.fecha_solicitud ? patient.fecha_solicitud : "Pendiente de completar por Farmacia");
-        setText("fhReumaFarmaco", patient && patient.farmaco ? patient.farmaco : "—");
+        setText("fhReumaFarmaco", explicitRequestedDrug(patient) || "—");
         setText("fhReumaDosis", patient && patient.dosis ? patient.dosis : "Pendiente de completar por Farmacia");
         setText("fhReumaVia", patient && patient.via ? patient.via : "Pendiente de completar por Farmacia");
         setText('fhReumaPauta', patient && patient.pauta ? patient.pauta : 'Pendiente de completar por Farmacia');
@@ -596,7 +601,7 @@
                     }
                 }
             }
-            var enfFarmaco = enf.farmaco_solicitado || '';
+            var enfFarmaco = explicitRequestedDrug(enf);
             if (enfFarmaco) F.setValue('fhDermaFarmaco', enfFarmaco);
             F.setValue('fhDermaDosis', '');
             F.setValue('fhDermaPeso', '');
@@ -850,13 +855,13 @@
         if (currentPatient && origenVal !== 'manual_farmacia') {
             var p = currentPatient;
             return {
-                farmaco: valueOrDash(p.farmaco),
+                farmaco: valueOrDash(explicitRequestedDrug(p)),
                 principioActivo: valueOrDash(p.principioActivo),
                 dosis: p.dosis ? valueOrDash(p.dosis) : "Pendiente de completar por Farmacia",
                 via: p.via ? valueOrDash(p.via) : "Pendiente de completar por Farmacia",
                 pauta: p.pauta ? valueOrDash(p.pauta) : "Pendiente de completar por Farmacia",
-                induccion: p.induccion ? valueOrDash(p.induccion) : "—",
-                justificacion: valueOrDash(p.justificacion || p.motivoClinico || p.analitica)
+                induccion: "—",
+                justificacion: "—"
             };
         }
         var ids = requestedFieldIds();
