@@ -163,6 +163,7 @@
 - [`docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md`](/docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md)
 - [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md) — auditoría técnica pantalla a pantalla de Farmacia post-PR20; complementa la revisión manual/funcional de Sil, no la sustituye ni autoriza implementación o piloto; pendiente de reconciliación técnica + Sil.
 - [`docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md) — revisión funcional/manual de Sil post-PR20 de pantallas Farmacia; complementa y no sustituye la auditoría técnica, y no autoriza implementación ni piloto.
+- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md) — reconciliación técnica + criterio Sil (`pending_review`); no autoriza implementación, piloto, backlog ni contratos clínicos.
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md)
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md)
 
