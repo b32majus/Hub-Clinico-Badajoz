@@ -2,10 +2,10 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-14 |
+| Última actualización | 2026-07-16 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada de referencia | `origin/preview/demo-lunes-wo4-20260614` |
-| Rama de trabajo de este índice | `work/hermes/WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713` |
+| Rama de trabajo de este índice | `work/hermes/WO-DOC-FH-AUDIT-IMPLEMENTATION-RECONCILIATION-POST-PR29-01-20260716` |
 
 > Este índice es una guía de navegación. No sustituye a los documentos que referencia; su función es orientar sobre qué documento consultar para cada propósito y qué estado tiene.
 
@@ -161,9 +161,9 @@
 - [`docs/AUDITORIA_EXCEL_MAESTRO_V2.md`](/docs/AUDITORIA_EXCEL_MAESTRO_V2.md)
 - [`docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`](/docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md)
 - [`docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md`](/docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md)
-- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md) — auditoría técnica pantalla a pantalla de Farmacia post-PR20; complementa la revisión manual/funcional de Sil, no la sustituye ni autoriza implementación o piloto; pendiente de reconciliación técnica + Sil.
+- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md) — auditoría técnica pantalla a pantalla de Farmacia post-PR20; fuente histórica preservada para la reconciliación técnica + Sil, no autoriza implementación o piloto.
 - [`docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md) — revisión funcional/manual de Sil post-PR20 de pantallas Farmacia; complementa y no sustituye la auditoría técnica, y no autoriza implementación ni piloto.
-- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md) — reconciliación técnica + criterio Sil (`pending_review`); no autoriza implementación, piloto, backlog ni contratos clínicos.
+- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md) — reconciliación técnica + criterio Sil con seguimiento post-PR29 (`reviewed_with_partial_implementation_followup`): FH-R01 resuelto; FH-R02 y FH-R03 resueltos en alcance mínimo de demo; FH-R04 y FH-R09-FH-R11 parcialmente resueltos; FH-R05, FH-R06 y FH-R08 pendientes; FH-R07 requiere diagnóstico; FH-R12 y FH-R13 diferidos deliberadamente; FH-R14 solo documentado, no implementado. No autoriza piloto, backlog ni contratos clínicos.
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md)
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md)
 

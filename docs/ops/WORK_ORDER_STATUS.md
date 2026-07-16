@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-15
+**Última actualización:** 2026-07-16
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -56,9 +56,14 @@
 | **WO-DOC-IDENTITY-PLANE-NURSING-READINESS-01** | Documentar Identity Plane local y Nursing Readiness Gateway | ✅ Merged | `work/hermes/WO-DOC-IDENTITY-PLANE-NURSING-READINESS-20260714` → `preview/demo-lunes-wo4-20260614` | `0a9019b` (PR #17) | Solo documentación. Registra arquitectura exploratoria para correspondencia local de seudonimización, eventos clínico-operativos seudonimizados, Nursing Readiness, profesionales/roles por tenant y ruta SharePoint → mini PC. No toca código ni autoriza datos reales. |
 | **WO-DOC-TREATMENT-LIFECYCLE-ENGINE-01** | Documentar Treatment Lifecycle Engine y renovaciones por línea de tratamiento | ✅ Merged | `work/hermes/WO-DOC-TREATMENT-LIFECYCLE-ENGINE-20260714` → `preview/demo-lunes-wo4-20260614` | `b59e09a` (PR #18) | Solo documentación. Registra ciclos de tratamiento, fechas confirmadas/estimadas, reglas declarativas, tareas, roles, switches y scheduler futuro. No toca código ni autoriza datos reales. |
 | **WO-DOC-HOUSEKEEPING-POST-PR17-PR18-01** | Actualizar estado tras PR #17 y PR #18 | ✅ Merged | `work/hermes/WO-DOC-HOUSEKEEPING-POST-PR17-PR18-20260714` → `preview/demo-lunes-wo4-20260614` | `84d161d` (PR #19) | Solo housekeeping documental de estados y totales. No toca código ni autoriza datos reales. |
-| **WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01** | Ingestar revisión funcional/manual de Sil post-PR20 | 📋 Ready for review | `work/hermes/WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01-20260714` | `bc092fb06d998572d499d2474cbbe99d88d5cfb5` | Ingesta documental de revisión funcional/manual Sil; sin cambios de código; pendiente de PR/revisión humana. |
-| **WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01** | Ingestar auditoría técnica pantalla a pantalla Farmacia post-PR20 | 📋 Ready for review | `work/hermes/WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01-20260715` | `a7e08eb` | Ingesta documental de auditoría técnica Farmacia post-PR20 desde rama no absorbida; sin cambios de código; pendiente de PR/revisión humana. |
-| **WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01** | Reconciliar auditoría técnica y revisión funcional Sil de pantallas Farmacia | 📋 Ready for review | `work/hermes/WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01-20260715` | `549950081c8ecdb46f9b913ee68013bdd69f98f2` | Auditoría reconciliada técnica + Sil; solo documentación; sin cambios de código; no autoriza implementación. |
+| **WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01** | Ingestar revisión funcional/manual de Sil post-PR20 | ✅ Merged | `work/hermes/WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01-20260714` → `preview/demo-lunes-wo4-20260614` | `bc092fb06d998572d499d2474cbbe99d88d5cfb5` → merge `269627cd9f50464603ae3c2d34042848d478b645` (PR #21) | Ingesta documental de revisión Sil; no implementa ni autoriza cambios funcionales. |
+| **WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01** | Ingestar auditoría técnica pantalla a pantalla Farmacia post-PR20 | ✅ Merged | `work/hermes/WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01-20260715` → `preview/demo-lunes-wo4-20260614` | `a7e08ebf27c1e5632824af47fb43d2bfc7cc4a43` → merge `7d9bedd61bcc5c55f643d86dcc8e9a2b50b77d52` (PR #22) | Ingesta documental de auditoría técnica; no implementa ni autoriza cambios funcionales. |
+| **WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01** | Reconciliar auditoría técnica y revisión funcional Sil de pantallas Farmacia | ✅ Merged | `work/hermes/WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01-20260715` → `preview/demo-lunes-wo4-20260614` | `549950081c8ecdb46f9b913ee68013bdd69f98f2` → merge `06b5e2ff4d3242b7ef8750a3ef62aa44252e5676` (PR #23) | Auditoría reconciliada técnica + Sil; documentación, no implementación ni autorización de piloto. |
+| **WO-FH-PATIENT-CONTEXT-SWITCH-GUARD-01** | Proteger cambio de contexto de paciente por CIP | ✅ Merged | `work/hermes/WO-FH-PATIENT-CONTEXT-SWITCH-GUARD-01-20260715` → `preview/demo-lunes-wo4-20260614` | `4be7604713b8bd98866a51bc0a527e91f198087f` → merge `48de5909898100f1b13cdad68a030afba0f6899c` (PR #24) | Guard acotado a Primera Visita y Seguimiento con datos sintéticos; no acredita cobertura transversal ni piloto. |
+| **WO-FH-ALTA-GUIADA-CONTEXT-PROPAGATION-01** | Propagar contexto de alta guiada | ✅ Merged | `work/hermes/WO-FH-ALTA-GUIADA-CONTEXT-PROPAGATION-01-20260715` → `preview/demo-lunes-wo4-20260614` | `2c7bfae2e8d9101fc2218ac495e5d145e33c6340` → merge `8f7fc562d21cc436e12e65b08ea48d8d244962e1` (PR #25) | Contexto de navegación demo; no persistencia ni contrato interservicios definitivo. |
+| **WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01** | Hacer explícita la precarga de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `905ddf07091e25be4ad85730b37c3580cd6f4826` → merge `1d8aac746ddfe7c72a5dd71636a8fc67af180571` (PR #26) | Precarga sintética y no inferencia; no integración real ni contrato clínico definitivo. |
+| **WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01** | Simplificar la UI funcional de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `51e1bf04fa60a9c8a66246abc5104da0e569da3a` → merge `58e59b1143da5fbe57af4d48b7f143b2f7d67f8a` (PR #27) | Limpieza mínima; no cierra multifármaco, renovación, catálogos ni el contrato funcional completo. |
+| **WO-FH-SEGUIMIENTO-FIRST-SEARCH-CONFIRMATION-FIX-01** | Evitar confirmación falsa en la primera búsqueda de Seguimiento | ✅ Merged | `fix/fh-seguimiento-first-search-confirmation-20260715` → `preview/demo-lunes-wo4-20260614` | `f1592bed5ce3adc853a40b4b644710904b1c6fca` → merge `84a44bbb7deec46a6b91fd8e2c08e6b264f80b9e` (PR #29) | Corrige el valor neutral `Demo` sin desproteger datos clínicos manuales; no cierra el hallazgo multifármaco ni la frontera Validación/Seguimiento. |
 
 ---
 
@@ -113,8 +118,8 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 31 (incluye PR #16 PROM Capture Gateway, PR #17 Identity Plane/Nursing Readiness, PR #18 Treatment Lifecycle Engine y PR #19 housekeeping de estado) |
-| 📋 Ready for review | 21 (WO-017 a WO-034 — rama nocturna Farmacia frozen; incluye las ingestas post-PR20 y la auditoría reconciliada técnica + Sil post-PR22) |
+| ✅ Merged | 39 (incluye PR #21-#27 y PR #29; documentación y alcances funcionales parciales no equivalen a piloto) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
@@ -123,4 +128,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 58 work orders / preflights gestionadas.
+**Total:** 63 work orders / preflights gestionadas.
