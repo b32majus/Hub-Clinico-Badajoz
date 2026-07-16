@@ -212,269 +212,6 @@
         return 'pendiente';
     }
 
-    function seededRandom(seed) {
-        var x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-    }
-    var seed = 20260607;
-    function random() {
-        seed++;
-        return seededRandom(seed);
-    }
-
-    function generateSyntheticPatients(basePatients) {
-        var synthetic = [];
-        var idx = 10;
-        var sexes = ['Mujer', 'Hombre'];
-        var services = ['Dermatologia', 'Reumatologia'];
-        var pathologies = ['Hidradenitis supurativa', 'Artritis Reumatoide (AR)', 'Psoriasis', 'Artritis Psoriasica (APs)'];
-        var comorbidityOptions = [
-            { nombre: 'Obesidad grado I', tipo: 'metabolica', nota: 'IMC 30-35' },
-            { nombre: 'Exfumador', tipo: 'habito toxico', nota: 'Abandono +5 anos' },
-            { nombre: 'Hipertension arterial controlada', tipo: 'cardiovascular', nota: 'TA controlada' },
-            { nombre: 'Dislipemia', tipo: 'metabolica', nota: 'En tratamiento con estatina' },
-            { nombre: 'Osteopenia lumbar', tipo: 'osteoarticular', nota: 'DXA lumbar T-score -1.7' },
-            { nombre: 'Diabetes tipo 2', tipo: 'metabolica', nota: 'HbA1c controlada' },
-            { nombre: 'Tabaquismo activo', tipo: 'habito toxico', nota: '10-20 cig/dia' },
-            { nombre: 'Sindrome metabolico', tipo: 'metabolica', nota: 'Criterios ATP-III' },
-            { nombre: 'Depresion', tipo: 'psiquiatrica', nota: 'En tratamiento' },
-            { nombre: 'Ansiedad', tipo: 'psiquiatrica', nota: 'En seguimiento' },
-            { nombre: 'Enfermedad cardiovascular', tipo: 'cardiovascular', nota: 'Cardiopatia isquemica' },
-            { nombre: 'Hepatopatia', tipo: 'hepatica', nota: 'Esteatosis hepatica' }
-        ];
-        var activeDrugs = [
-            { principio: 'Adalimumab', nombre: 'Humira', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas' },
-            { principio: 'Adalimumab', nombre: 'Amgevita', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas' },
-            { principio: 'Secukinumab', nombre: 'Cosentyx', dosis: '300 mg', via: 'SC', pauta: 'Cada 4 semanas' },
-            { principio: 'Etanercept', nombre: 'Enbrel', dosis: '50 mg', via: 'SC', pauta: 'Semanal' },
-            { principio: 'Ustekinumab', nombre: 'Stelara', dosis: '45 mg', via: 'SC', pauta: 'Cada 12 semanas' },
-            { principio: 'Infliximab', nombre: 'Remicade', dosis: '5 mg/kg', via: 'IV', pauta: 'Cada 8 semanas' },
-            { principio: 'Tocilizumab', nombre: 'RoActemra', dosis: '8 mg/kg', via: 'IV', pauta: 'Cada 4 semanas' },
-            { principio: 'Golimumab', nombre: 'Simponi', dosis: '50 mg', via: 'SC', pauta: 'Mensual' },
-            { principio: 'Certolizumab', nombre: 'Cimzia', dosis: '200 mg', via: 'SC', pauta: 'Cada 2 semanas' },
-            { principio: 'Apremilast', nombre: 'Otezla', dosis: '30 mg', via: 'Oral', pauta: 'Diario' }
-        ];
-        var prevDrugs = [
-            { principio: 'Adalimumab', nombre: 'Humira', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas' },
-            { principio: 'Metotrexato', nombre: 'Metotrexato', dosis: '15 mg', via: 'Oral', pauta: 'Semanal' },
-            { principio: 'Leflunomida', nombre: 'Leflunomida', dosis: '20 mg', via: 'Oral', pauta: 'Diario' },
-            { principio: 'Ciclosporina', nombre: 'Ciclosporina', dosis: '3 mg/kg', via: 'Oral', pauta: 'Diario' }
-        ];
-        var promTypes = ['DLQI', 'EVA dolor', 'EVA prurito', 'HAQ'];
-        var clinIndexes = ['IHS4', 'Hurley', 'DAS28', 'HAQ'];
-        var adherencias = ['Alta adherencia', 'Alta adherencia', 'Alta adherencia', 'Media adherencia', 'Baja adherencia', 'Media adherencia'];
-        var validaciones = ['validado', 'validado', 'validado', 'en_seguimiento', 'pendiente'];
-
-        for (var i = 0; i < 28; i++) {
-            idx++;
-            var svc = services[Math.floor(random() * services.length)];
-            var pathOptions = svc === 'Dermatologia' ? ['Hidradenitis supurativa', 'Psoriasis'] : ['Artritis Reumatoide (AR)', 'Artritis Psoriasica (APs)'];
-            var pat = pathOptions[Math.floor(random() * pathOptions.length)];
-            var sex = sexes[Math.floor(random() * sexes.length)];
-            var age = 25 + Math.floor(random() * 45);
-
-            var numComorb = Math.floor(random() * 4);
-            var shuffledComorb = comorbidityOptions.slice().sort(function () { return random() - 0.5; });
-            var selComorb = shuffledComorb.slice(0, numComorb);
-
-            var activeDrugIdx = Math.floor(random() * activeDrugs.length);
-            var activeDrug = activeDrugs[activeDrugIdx];
-            var hasPrev = random() > 0.5;
-            var prevDrugIdx = Math.floor(random() * prevDrugs.length);
-
-            var selectedPromType = promTypes[Math.floor(random() * promTypes.length)];
-            var promVal;
-            if (selectedPromType === 'DLQI') promVal = Math.floor(random() * 25);
-            else if (selectedPromType === 'HAQ') promVal = (random() * 2.5).toFixed(1);
-            else promVal = Math.floor(random() * 10);
-            var promCat = classifyPROMCategory(selectedPromType, promVal);
-
-            var selectedClinIdx = pat.indexOf('HS') !== -1 ? clinIndexes[Math.floor(random() * 2)] : clinIndexes[2 + Math.floor(random() * 2)];
-            var clinVal;
-            if (selectedClinIdx === 'IHS4') clinVal = Math.floor(random() * 20);
-            else if (selectedClinIdx === 'DAS28') clinVal = (random() * 6 + 0.5).toFixed(1);
-            else if (selectedClinIdx === 'HAQ') clinVal = (random() * 2.5).toFixed(1);
-            else clinVal = String(Math.floor(random() * 3) + 1);
-            var clinCat = classifyClinical(selectedClinIdx, clinVal);
-
-            var hasAE = random() > 0.6;
-            var aeGrav = hasAE ? ['leve', 'moderado', 'grave'][Math.floor(random() * 3)] : null;
-
-            var adh = adherencias[Math.floor(random() * adherencias.length)];
-            var adhLevel = adh.toLowerCase().indexOf('alta') !== -1 ? 'alta' : (adh.toLowerCase().indexOf('media') !== -1 ? 'media' : 'baja');
-
-            var valState = validaciones[Math.floor(random() * validaciones.length)];
-
-            var es = 'en_seguimiento';
-            if (valState === 'pendiente') es = 'pendiente';
-            else if (random() > 0.8) es = 'validado';
-            if (random() > 0.9) es = 'alta';
-
-            var tratamientos = [];
-            if (hasPrev) {
-                var pd = prevDrugs[prevDrugIdx];
-                tratamientos.push({
-                    id: 'TRAT-SYN-' + idx + '-prev',
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    drug_id: 'FAR-SYN-' + idx,
-                    nombre_comercial: pd.nombre,
-                    principio_activo: pd.principio,
-                    presentacion_dosis: pd.dosis + ' ' + pd.via,
-                    via: pd.via,
-                    pauta: pd.pauta,
-                    fecha_inicio: '2025-01-15',
-                    fecha_fin: '2026-01-15',
-                    activo: false,
-                    motivo_inicio: 'Tratamiento previo',
-                    motivo_suspension: 'Cambio de tratamiento',
-                    servicio_clinico_origen: svc,
-                    estado_validacion_farmacia: 'validado'
-                });
-                tratamientos.push({
-                    id: 'TRAT-SYN-' + idx + '-cambio',
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    drug_id: 'FAR-SYN-' + idx + '-curr',
-                    nombre_comercial: activeDrug.nombre,
-                    principio_activo: activeDrug.principio,
-                    presentacion_dosis: activeDrug.dosis + ' ' + activeDrug.via,
-                    via: activeDrug.via,
-                    pauta: activeDrug.pauta,
-                    fecha_inicio: '2026-02-01',
-                    fecha_fin: null,
-                    activo: true,
-                    motivo_inicio: 'Inicio nuevo tratamiento',
-                    motivo_cambio: 'Cambio de ' + pd.principio + ' a ' + activeDrug.principio,
-                    servicio_clinico_origen: svc,
-                    estado_validacion_farmacia: valState
-                });
-            } else {
-                tratamientos.push({
-                    id: 'TRAT-SYN-' + idx,
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    drug_id: 'FAR-SYN-' + idx,
-                    nombre_comercial: activeDrug.nombre,
-                    principio_activo: activeDrug.principio,
-                    presentacion_dosis: activeDrug.dosis + ' ' + activeDrug.via,
-                    via: activeDrug.via,
-                    pauta: activeDrug.pauta,
-                    fecha_inicio: '2026-03-01',
-                    fecha_fin: null,
-                    activo: true,
-                    motivo_inicio: 'Inicio de tratamiento biologico',
-                    servicio_clinico_origen: svc,
-                    estado_validacion_farmacia: valState
-                });
-            }
-
-            var cambios = [];
-            if (hasPrev) {
-                cambios.push({
-                    id: 'CAM-SYN-' + idx,
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    fecha: '2026-02-01',
-                    tipo: 'cambio_farmaco',
-                    tratamiento_anterior_id: 'TRAT-SYN-' + idx + '-prev',
-                    tratamiento_nuevo_id: 'TRAT-SYN-' + idx + '-cambio',
-                    motivo: 'Cambio terapeutico',
-                    descripcion: 'Cambio a ' + activeDrug.principio,
-                    servicio_solicitante: svc,
-                    estado_validacion_farmacia: valState,
-                    fuente: 'Servicio clinico'
-                });
-            }
-            var rndInt = random();
-            if (rndInt < 0.25) {
-                cambios.push({
-                    id: 'CAM-SYN-' + idx + '-int',
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    fecha: '2026-04-01',
-                    tipo: 'intensificacion',
-                    motivo: 'Respuesta insuficiente',
-                    descripcion: 'Intensificacion de pauta por actividad moderada-alta',
-                    servicio_solicitante: svc,
-                    estado_validacion_farmacia: valState,
-                    fuente: 'Servicio clinico'
-                });
-            } else if (rndInt < 0.45) {
-                cambios.push({
-                    id: 'CAM-SYN-' + idx + '-des',
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    fecha: '2026-04-01',
-                    tipo: 'desintensificacion',
-                    motivo: 'Remision sostenida',
-                    descripcion: 'Desintensificacion de pauta por buena respuesta',
-                    servicio_solicitante: svc,
-                    estado_validacion_farmacia: valState,
-                    fuente: 'Farmacia'
-                });
-            }
-
-            var episodios = [
-                { tipo: 'Validacion Farmacia', fecha: '2026-02-01', servicio: 'Farmacia', estado: 'completado', nota: 'Validacion completada.' },
-                { tipo: 'Primera visita Farmacia', fecha: '2026-03-05', servicio: 'Farmacia', estado: 'completado', nota: 'Inicio de tratamiento sin incidencias.' }
-            ];
-            if (es === 'en_seguimiento') {
-                episodios.push({ tipo: 'Seguimiento Farmacia', fecha: '2026-05-20', servicio: 'Farmacia', estado: 'completado', nota: 'Seguimiento rutinario. Buena tolerancia.' });
-            }
-            if (es === 'alta') {
-                episodios.push({ tipo: 'Alta', fecha: '2026-06-01', servicio: 'Farmacia', estado: 'completado', nota: 'Alta del servicio.' });
-            }
-
-            var promFuente = ['Farmacia', 'Servicio clinico', 'Farmacia'];
-            var proms = [
-                { id: 'PROM-SYN-' + idx, cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-05-20', tipo_prom: selectedPromType, valor: String(promVal), interpretacion: 'PROM de seguimiento', fuente: promFuente[Math.floor(random() * promFuente.length)] }
-            ];
-            if (random() > 0.5) {
-                proms.push({ id: 'PROM-SYN-' + idx + '-b', cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-06-05', tipo_prom: 'EVA dolor', valor: String(Math.floor(random() * 10)), interpretacion: 'EVA dolor seguimiento', fuente: 'Paciente remoto' });
-            }
-
-            var actividades = [
-                { id: 'ACT-SYN-' + idx, cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-05-20', tipo_indice: selectedClinIdx, valor: String(clinVal), interpretacion: 'Actividad clinica seguimiento', servicio_origen: svc, fuente: svc }
-            ];
-
-            var eventos = [];
-            if (hasAE) {
-                var eaTipos = ['Reaccion adversa', 'Infeccion', 'Reaccion en punto de inyeccion', 'Alteracion analitica'];
-                var eaAcciones = ['Observacion', 'Suspension', 'Cambio dosis', 'Tratamiento sintomatico'];
-                var eaTipo = eaTipos[Math.floor(random() * eaTipos.length)];
-                var eaAccion = eaAcciones[Math.floor(random() * eaAcciones.length)];
-                eventos.push({
-                    id: 'EA-SYN-' + idx,
-                    cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                    fecha: '2026-05-15',
-                    tipo: eaTipo,
-                    gravedad: aeGrav,
-                    relacion_tratamiento: 'Posible',
-                    accion_tomada: eaAccion,
-                    descripcion_corta: 'Evento adverso ' + aeGrav + ' reportado.',
-                    resuelto: random() > 0.5
-                });
-            }
-
-            var adhData = [
-                { id: 'ADH-SYN-' + idx, cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'), fecha: '2026-05-20', escala: 'Morisky-Green', resultado: adhLevel === 'alta' ? '4/4' : (adhLevel === 'media' ? '2/4' : '1/4'), interpretacion: adh, fuente: 'Farmacia' }
-            ];
-
-            synthetic.push({
-                cip: 'CIP-DEMO-FH-' + String(idx).padStart(3, '0'),
-                nombre_demo: 'Paciente Demo FH-' + String(idx).padStart(3, '0'),
-                sexo: sex,
-                edad: age,
-                servicios_origen: [svc, 'Farmacia'],
-                patologias: [pat],
-                comorbilidades_relevantes: selComorb,
-                episodios_asistenciales: episodios,
-                tratamientos: tratamientos,
-                cambios_pauta: cambios,
-                proms: proms,
-                actividad_clinica: actividades,
-                eventos_adversos: eventos,
-                adherencia: adhData
-            });
-        }
-        return synthetic;
-    }
-
     function el(tag, cls, text) {
         var e = document.createElement(tag);
         if (cls) e.className = cls;
@@ -1266,15 +1003,44 @@
 
     function loadDataset() {
         var statusTime = document.querySelector('#dbStatusTime');
-        fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
-            .then(function (response) {
-                if (!response.ok) throw new Error('Failed to load dataset');
-                return response.json();
-            })
-            .then(function (data) {
-                var basePatients = data.pacientes || [];
-                var syntheticPatients = generateSyntheticPatients(basePatients);
-                allPatients = basePatients.concat(syntheticPatients);
+        window.FarmaciaDemo.ready
+            .then(function () {
+                allPatients = window.FarmaciaDemo.getAvailablePatients().map(function (patient) {
+                    return {
+                        cip: patient.cip,
+                        nombre_demo: patient.nombre,
+                        sexo: patient.sexo,
+                        edad: patient.edad,
+                        servicios_origen: [patient.servicio],
+                        patologias: [patient.patologia],
+                        comorbilidades_relevantes: [],
+                        episodios_asistenciales: (patient.rawActs || []).map(function (act) {
+                            return { tipo: act.tipo_acto_fh, fecha: act.fecha_acto, servicio: patient.servicio, estado: act.estado_registro, nota: act.observaciones_generales };
+                        }),
+                        tratamientos: (patient.biologicos || []).map(function (line) {
+                            return {
+                                id: line.linea_id,
+                                cip: patient.cip,
+                                nombre_comercial: line.nombre_comercial,
+                                principio_activo: line.principio_activo,
+                                presentacion_dosis: line.dosis,
+                                via: line.via,
+                                pauta: line.pauta,
+                                activo: line.estado_linea === 'activo' || line.estado_linea === 'anadido',
+                                estado_validacion_farmacia: patient.estado
+                            };
+                        }),
+                        cambios_pauta: [],
+                        proms: [],
+                        actividad_clinica: [],
+                        eventos_adversos: (patient.rawAdverseEvents || []).filter(function (event) { return event.ea_id; }).map(function (event) {
+                            return { id: event.ea_id, cip: patient.cip, fecha: event.fecha_acto, tipo: event.ea_descripcion, gravedad: event.ea_gravedad, accion_tomada: event.accion_ea };
+                        }),
+                        adherencia: (patient.rawFollowups || []).filter(function (followup) { return followup.adherencia_morisky; }).map(function (followup) {
+                            return { cip: patient.cip, fecha: followup.fecha_acto, interpretacion: followup.adherencia_morisky };
+                        })
+                    };
+                });
                 allPatients.forEach(function (p) {
                     p._profile = derivePatientProfile(p);
                 });

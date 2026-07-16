@@ -194,7 +194,7 @@
             linea_id: line.linea_id || ('BIO-LEGACY-' + (index + 1)),
             orden: line.orden || (index + 1),
             nombre_linea: line.nombre_linea || line.principio_activo || line.nombre_comercial || ('Biologico ' + (index + 1)),
-            nombre_comercial: line.nombre_comercial || line.nombre_linea || patient.farmaco || '',
+            nombre_comercial: line.nombre_comercial || line.nombre_linea || patient.marcaComercial || '',
             principio_activo: line.principio_activo || patient.principioActivo || '',
             dosis: line.dosis || patient.dosis || '',
             presentacion: line.presentacion || line.presentacion_dosis || line.dosis || '',
@@ -225,9 +225,9 @@
         return [normalizeBiologicLine({
             linea_id: patient.cip ? patient.cip + '-L1' : 'BIO-LEGACY-1',
             orden: 1,
-            nombre_linea: patient.principioActivo || patient.farmaco || 'Tratamiento actual',
-            nombre_comercial: patient.farmaco || '',
-            principio_activo: patient.principioActivo || patient.farmaco || '',
+            nombre_linea: patient.principioActivo || patient.marcaComercial || 'Tratamiento actual',
+            nombre_comercial: patient.marcaComercial || '',
+            principio_activo: patient.principioActivo || '',
             dosis: patient.dosis || '',
             via: patient.via || '',
             pauta: patient.pauta || '',
@@ -1036,7 +1036,7 @@
         const snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot() : null;
 
         if (ctx.patient) {
-            F.setValue('fhSegFarmaco', snap?.nombre_snapshot || ctx.patient.farmaco);
+            F.setValue('fhSegFarmaco', snap?.nombre_snapshot || ctx.patient.marcaComercial || ctx.patient.principioActivo);
             F.setValue('fhSegDosisActual', ctx.patient.dosis);
             setSegPautaActualNormalized(ctx.patient.pauta);
             (function() {
@@ -1197,7 +1197,7 @@
         F.setValue('fhSegPatologia', patient.patologia);
         var patSelectEvt = document.getElementById('fhSegPatologia');
         if (patSelectEvt) patSelectEvt.dispatchEvent(new Event('change'));
-        F.setValue('fhSegFarmaco', patient.farmaco);
+        F.setValue('fhSegFarmaco', patient.marcaComercial || patient.principioActivo);
         F.setValue('fhSegDosisActual', patient.dosis);
         setSegPautaActualNormalized(patient.pauta);
         (function() {
@@ -2055,6 +2055,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        F.whenReady(function () {
         applyContext();
         initCipSearch();
         initSegServicioPatologiaSync();
@@ -2062,16 +2063,16 @@
         populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
         populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
 
-        // Demo FH-004: pre-activar causalidad si el paciente tiene EA registrado
+        // Pre-activar causalidad si el paciente tiene EA registrado.
         var demoCtx = F.getQueryContext();
-        if (demoCtx.cip === "CIP-DEMO-FH-004") {
+        if (demoCtx.patient && demoCtx.patient.rawAdverseEvents && demoCtx.patient.rawAdverseEvents.length) {
             var eaSelect = document.getElementById("fhSeguimientoEaPresente");
             if (eaSelect && eaSelect.value !== "si") {
                 eaSelect.value = "si";
                 eaSelect.dispatchEvent(new Event('change'));
             }
 
-            // Demo FH-004: pre-activar PROMs si el paciente tiene datos registrados
+            // Pre-activar PROMs si el paciente tiene datos registrados.
             var promsSelect = document.getElementById('fhSegProms');
             if (promsSelect) {
                 promsSelect.value = 'Sí, recoger DLQI + EVA dolor/prurito';
@@ -2271,5 +2272,6 @@
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();
+        });
     });
 })();

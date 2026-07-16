@@ -122,14 +122,14 @@ assert(api && typeof api.searchCIP === 'function' && typeof api.setActivePatient
 assert(sandbox.window.FarmaciaTratamiento, 'FarmaciaTratamiento está disponible en el entorno cargado');
 if (api && typeof api.searchCIP === 'function') {
   const ids = ['fhPvCip', 'fhPvServicio', 'fhPvPatologia', 'fhPvFechaValidacion', 'fhPvInduccionSolicitada', 'fhPvAnalitica', 'fhPvFarmaco', 'fhPvDosis', 'fhPvVia', 'fhPvPauta', 'fhPvPautaOtro', 'fhPvProms', 'fhPvNotas', 'fhPvTratamientoGrid'];
-  const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null }]));
-  elements.fhPvCip.value = 'CIP-B';
+  const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null, appendChild(child) { this.children.push(child); this.options.push(child); } }]));
+  elements.fhPvCip.value = 'DEMO-CIP-DER-002';
   elements.fhPvProms.value = 'No';
   sandbox.document.getElementById = (id) => elements[id] || null;
   sandbox.document.createTextNode = (text) => ({ textContent: text });
   sandbox.window.FarmaciaDemo.setValue = (id, value) => { if (elements[id]) elements[id].value = value || ''; };
   sandbox.window.FarmaciaDemo.clearChildren = (el) => { if (el) el.children = []; };
-  sandbox.window.FarmaciaDemo.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas' } : null;
+  sandbox.window.FarmaciaDemo.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'DEMO-CIP-DER-002' ? { cip: 'DEMO-CIP-DER-002', servicio: 'Dermatología', patologia: 'Psoriasis', marcaComercial: 'Drug B', principioActivo: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas' } : null;
   sandbox.window.FarmaciaDemo.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
     if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
     if (hasContext && confirmed === undefined) return { action: 'confirm' };
@@ -144,13 +144,13 @@ if (api && typeof api.searchCIP === 'function') {
   assertEqual(confirmationCalls, 0, 'Primera visita fresh screen ignores neutral PROM default');
   elements.fhPvNotas.value = 'A-only note';
   elements.fhPvFarmaco.value = 'A-only drug';
-  elements.fhPvCip.value = 'CIP-B';
-  api.setActivePatientCip('CIP-A');
+  elements.fhPvCip.value = 'DEMO-CIP-DER-002';
+  api.setActivePatientCip('DEMO-CIP-DER-001');
   api.searchCIP();
-  assertEqual(elements.fhPvCip.value, 'CIP-A', 'Primera visita cancel restores previous CIP');
+  assertEqual(elements.fhPvCip.value, 'DEMO-CIP-DER-001', 'Primera visita cancel restores previous CIP');
   assertEqual(elements.fhPvNotas.value, 'A-only note', 'Primera visita cancel preserves edits');
   confirmation = true;
-  elements.fhPvCip.value = 'CIP-B';
+  elements.fhPvCip.value = 'DEMO-CIP-DER-002';
   api.searchCIP();
   assertEqual(elements.fhPvFarmaco.value, 'Drug B', 'Primera visita confirmed switch loads patient B');
   assertEqual(elements.fhPvNotas.value, '', 'Primera visita confirmed switch clears A-only notes');
