@@ -299,58 +299,20 @@ assertNoText(bodyAndBadgesText, 'Analítica reciente', '32. No aparece "Analíti
 // ─── 33. Prebiológico bloqueado genérico ────────────────────────────────
 assertNoText(allText, 'Prebiológico bloqueado', '33. No aparece "Prebiológico bloqueado" genérico');
 
-// ─── 34-36. No duplicate between boards ──────────────────────────────────
-// Data layer still includes Paciente C (shouldAppearInValidationInbox=true for OK FARMACIA)
-// Render layer filters out ALL Enfermería patients to avoid duplicates
-var pending = F.getPendingValidationPatients();
-var enfInPendingData = pending.filter(function (p) {
-  return F.isEnfermeriaPatient(p);
-});
-// Paciente C is OK FARMACIA → appears in data layer (correct)
-assert(enfInPendingData.length >= 1, '34. Paciente C aparece en data layer de pending (OK FARMACIA)');
-
-// But renderPendingValidationBoard filter would exclude ALL Enfermería
-// Simulate the render filter WITHOUT imports (demo can appear):
-var filtered = pending.filter(function (p) {
-  return !F.isEnfermeriaPatient(p);
-});
-var enfInFiltered = filtered.filter(function (p) {
-  return F.isEnfermeriaPatient(p);
-});
-assertEqual(enfInFiltered.length, 0, '35. Render filter (sin imports) excluye todo paciente Enfermería');
-
-// The legacy patient should appear when no imports loaded
-var demoInPending = pending.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
-assertEqual(demoInPending.length, 1, '36. Paciente legacy aparece en pending (sin imports)');
-
-// ─── 37-39. With imports loaded, demo fallback is hidden ────────────────
-// Simulate FarmaciaDataImports with data
-var mockImports = [
-  { cip: 'IMPORT-001', nombre: 'Paciente Importado', servicio: 'Reuma',
-    patologia: 'AR', farmaco: 'Benlysta', estado: 'pending', estadoLabel: 'Pendiente',
-    importSource: 'Excel Enfermería', origen_solicitud: 'enfermeria' }
-];
-function simulateRenderFilterWithImports(pendingPatients) {
-  var hasData = mockImports.length > 0;
-  return pendingPatients.filter(function (p) {
-    if (F.isEnfermeriaPatient(p)) return false;
-    if (hasData) {
-      var src = String(p.importSource || '').toLowerCase();
-      if (src === 'demo' || src === '') return false;
-    }
-    return true;
-  });
-}
-
-var filteredWithImports = simulateRenderFilterWithImports(pending);
-var demoInFilteredWithImports = filteredWithImports.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; });
-assertEqual(demoInFilteredWithImports.length, 0, '37. Paciente legacy NO aparece en pending (con imports cargados)');
-
-// Imported patient with pending status should appear
-var mockPendingCheck = simulateRenderFilterWithImports([
-  { cip: 'IMPORT-001', nombre: 'Imported', estado: 'pending', estadoLabel: 'Pendiente', importSource: 'Excel Farmacia' }
-]);
-assertEqual(mockPendingCheck.length, 1, '38. Paciente importado (Excel Farmacia) SÍ aparece con imports cargados');
+// ─── 34-38. Clasificación explícita y exclusiva ──────────────────────────
+var classified = F.getInicioInboxClassification();
+var enfClassified = classified.enfermeria.ok_farmacia
+  .concat(classified.enfermeria.en_vigilancia, classified.enfermeria.bloqueado);
+assertEqual(enfClassified.length, 4, '34. Las 4 solicitudes Enfermería quedan solo en Bandeja A');
+assertEqual(classified.otras.filter(function (p) { return F.isEnfermeriaPatient(p); }).length, 0,
+  '35. Bandeja B excluye todo registro Enfermería');
+assertEqual(classified.otras.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; }).length, 0,
+  '36. Estado legacy pending sin solicitud explícita queda fuera');
+assertEqual(classified.unclassified.filter(function (p) { return p.cip === 'LEGACY-TEST-001'; }).length, 1,
+  '37. Registro insuficiente queda detectable como no clasificado');
+assertEqual(enfClassified.filter(function (p) {
+  return classified.otras.some(function (other) { return other.cip === p.cip; });
+}).length, 0, '38. No hay CIP duplicados entre bandejas');
 
 // ─── 39-42. Detail panel and toggle buttons ──────────────────────────
 // All 4 cards have detail panel with all 7 fields

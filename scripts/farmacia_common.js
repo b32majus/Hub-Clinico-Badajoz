@@ -35,6 +35,7 @@
         var primaryLine = lines.find(function (line) { return String(line.es_principal).toUpperCase() === 'TRUE'; }) || lines[0] || {};
         var latestAct = acts[acts.length - 1] || {};
         var latestFollowup = followups[followups.length - 1] || {};
+        var pendingValidation = validations.find(function (item) { return item.resultado_validacion === 'pendiente'; });
         var state = canonicalWorkflowState(acts, validations);
         return {
             patient_id: person.patient_id,
@@ -90,6 +91,8 @@
             rawValidations: validations,
             rawFollowups: followups,
             rawAdverseEvents: adverseEvents,
+            estado_solicitud_validacion: pendingValidation ? 'pendiente' : '',
+            resultado_validacion: pendingValidation ? pendingValidation.resultado_validacion : '',
             importSource: 'Farmacia WO8'
         };
     }
@@ -867,6 +870,31 @@
         return getAvailablePatients().filter(isPendingValidationPatient);
     }
 
+    function getInicioInboxClassification() {
+        var classified = {
+            enfermeria: { ok_farmacia: [], en_vigilancia: [], bloqueado: [] },
+            otras: [],
+            unclassified: []
+        };
+
+        getAvailablePatients().forEach(function (patient) {
+            if (isEnfermeriaPatient(patient)) {
+                var prebioState = String(patient.estado_prebiologico_enfermeria || patient.estado || '').trim().toUpperCase().replace(/\s+/g, '_');
+                if (prebioState === 'OK_FARMACIA') classified.enfermeria.ok_farmacia.push(patient);
+                else if (prebioState === 'EN_VIGILANCIA') classified.enfermeria.en_vigilancia.push(patient);
+                else if (prebioState === 'BLOQUEADO') classified.enfermeria.bloqueado.push(patient);
+                else classified.unclassified.push(patient);
+                return;
+            }
+
+            var requestState = String(patient.estado_solicitud_validacion || patient.resultado_validacion || '').trim().toLowerCase();
+            if (requestState === 'pendiente') classified.otras.push(patient);
+            else classified.unclassified.push(patient);
+        });
+
+        return classified;
+    }
+
     function getPrebiologicoStatus(patient) {
         // Adaptador: delega en FarmaciaPrebiologico.evaluatePatientPrebiologico
         // Sin lógica clínica duplicada. Solo adaptación de formato.
@@ -1473,7 +1501,9 @@
             var timeEl = document.getElementById('dbStatusTime');
             var hasEnfermeria = hasImportData('enfermeria');
             var hasFarmacia = hasImportData('farmacia');
-            if (labelEl) labelEl.textContent = 'Datos FH cargados';
+            if (labelEl) labelEl.textContent = hasEnfermeria || hasFarmacia
+                ? 'Dataset sintético WO8 + cargas locales'
+                : 'Dataset sintético WO8';
             if (timeEl) {
                 if (hasEnfermeria && hasFarmacia) {
                     timeEl.textContent = 'Enfermería + Farmacia';
@@ -1481,6 +1511,8 @@
                     timeEl.textContent = 'Enfermería cargada';
                 } else if (hasFarmacia) {
                     timeEl.textContent = 'Farmacia cargada';
+                } else {
+                    timeEl.textContent = 'Generado desde Excel operativo';
                 }
             }
             if (hasEnfermeria || hasFarmacia) {
@@ -1802,6 +1834,7 @@
         insertNoCipBanner,
         getAvailablePatients,
         getPendingValidationPatients,
+        getInicioInboxClassification: getInicioInboxClassification,
         getPrebiologicoStatus,
         normalizePautaString: normalizePautaString,
         buildImportedPatientCandidate: buildImportedPatientCandidate,

@@ -59,11 +59,11 @@
         </div>
     </div>
 
-    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset sintético WO8 cargado">
         <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
         <div class="db-status-indicator__text">
-            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
-            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset sintético WO8</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">Generado desde Excel operativo</span>
         </div>
     </div>
     <div class="catalog-sidebar-block catalog-sidebar-block--compact">
@@ -135,7 +135,7 @@
 
 <section class="dashboard-card" id="modCargaDatosProyecto">
     <h2 class="section-title"><i class="fas fa-file-import"></i> Carga de datos del proyecto</h2>
-    <p class="validation-module__intro">Cargue manualmente los Excel locales de Enfermería y Farmacia. Los datos quedan en el navegador para esta demo. El catálogo CIMA se intenta cargar automáticamente al abrir la app.</p>
+    <p class="validation-module__intro">El dataset sintético WO8 se carga como base. Los Excel locales de Enfermería y Farmacia son cargas opcionales para esta demo. El catálogo CIMA se carga por su circuito separado.</p>
     <div class="import-grid">
         <section class="import-card">
             <h3 class="card-title card-title--tight"><i class="fas fa-notes-medical"></i> Excel de Enfermería</h3>
@@ -159,10 +159,10 @@
 </section>
 
 
-<section class="dashboard-card" id="pendingValidationBoard">
-    <h2 class="section-title"><i class="fas fa-user-clock"></i> Pacientes pendientes de validación farmacéutica</h2>
-    <p class="validation-module__intro">Bandeja operativa alimentada por Excel de Enfermería, Excel de Farmacia y demo fallback.</p>
-    <p class="empty-state hidden" id="pendingValidationEmpty">No hay pacientes pendientes de validación farmacéutica.</p>
+<section class="dashboard-card hidden" id="pendingValidationBoard">
+    <h2 class="section-title" id="pendingValidationHeading"><i class="fas fa-user-clock"></i> Otras validaciones farmacéuticas pendientes</h2>
+    <p class="validation-module__intro">Solicitudes no procedentes de Enfermería con validación pendiente informada explícitamente.</p>
+    <p class="empty-state hidden" id="pendingValidationEmpty">No hay otras validaciones farmacéuticas pendientes.</p>
     <div class="pending-validation-grid" id="pendingValidationCards" aria-live="polite"></div>
 </section>
 

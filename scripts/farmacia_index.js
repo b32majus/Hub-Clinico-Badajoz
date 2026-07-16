@@ -498,42 +498,31 @@
     }
 
     function pendingSourceLabel(patient) {
-        var source = String((patient && patient.importSource) || 'demo');
+        var source = String((patient && patient.importSource) || '');
+        if (source.toLowerCase() === 'farmacia wo8') return 'Dataset sintético WO8';
         if (source.toLowerCase().indexOf('farmacia') !== -1) return 'Excel Farmacia';
         if (source.toLowerCase().indexOf('enfermer') !== -1) return 'Excel Enfermería';
-        return 'demo';
+        return 'Origen no informado';
     }
 
     function renderPendingValidationBoard() {
         var board = document.getElementById('pendingValidationBoard');
         var cards = document.getElementById('pendingValidationCards');
         var empty = document.getElementById('pendingValidationEmpty');
-        if (!board || !cards || !empty || !F.getPendingValidationPatients || !F.isEnfermeriaPatient) return;
+        if (!board || !cards || !empty || !F.getInicioInboxClassification) return;
         F.clearChildren(cards);
-        var patients = F.getPendingValidationPatients();
-
-        // Detectar si hay datos importados desde Excel (Enfermería o Farmacia)
-        var hasImportedData = false;
-        if (window.FarmaciaDataImports && typeof window.FarmaciaDataImports.getImportedPatients === 'function') {
-            var importedPats = window.FarmaciaDataImports.getImportedPatients();
-            hasImportedData = importedPats && importedPats.length > 0;
-        }
-
-        var filtered = patients.filter(function (p) {
-            if (F.isEnfermeriaPatient(p)) return false;
-            // Si hay datos importados, ocultar fallback demo
-            if (hasImportedData) {
-                var src = String(p.importSource || '').toLowerCase();
-                if (src === 'demo' || src === '') return false;
-            }
-            return true;
-        });
+        var filtered = F.getInicioInboxClassification().otras;
+        board.classList.toggle('hidden', !filtered.length);
         empty.classList.toggle('hidden', filtered.length > 0);
+        var heading = document.getElementById('pendingValidationHeading');
+        if (heading) heading.lastChild.textContent = ' Otras validaciones farmacéuticas pendientes (' + filtered.length + ')';
         if (!filtered.length) return;
 
         filtered.forEach(function (patient) {
             var card = document.createElement('article');
             card.className = 'pending-validation-card';
+            card.setAttribute('data-inbox-cip', patient.cip);
+            card.setAttribute('data-inbox-type', 'otras-validaciones');
 
             var header = document.createElement('div');
             header.className = 'pending-validation-card__header';
@@ -702,6 +691,8 @@
         card.className = 'pending-validation-card';
         card.setAttribute('data-enf-cip', patient.cip);
         card.setAttribute('data-enf-estado', groupKey);
+        card.setAttribute('data-inbox-cip', patient.cip);
+        card.setAttribute('data-inbox-type', 'enfermeria');
 
         // Header: CIP + nombre + badge estado
         var header = document.createElement('div');
@@ -853,7 +844,7 @@
     }
 
     function renderEnfermeriaBoard() {
-        if (!F.getEnfermeriaVisiblePatients || !F.getEnfermeriaBadges) return;
+        if (!F.getInicioInboxClassification || !F.getEnfermeriaBadges) return;
         var board = document.getElementById('pendingValidationBoard');
         if (!board) return;
 
@@ -861,7 +852,9 @@
         var existing = document.getElementById('enfermeriaBoard');
         if (existing) existing.remove();
 
-        var patients = F.getEnfermeriaVisiblePatients();
+        var classified = F.getInicioInboxClassification();
+        var groups = classified.enfermeria;
+        var patients = groups.ok_farmacia.concat(groups.en_vigilancia, groups.bloqueado);
         if (!patients.length) return;
 
         var enfBoard = document.createElement('section');
@@ -875,17 +868,13 @@
         headingIcon.className = 'fas fa-user-nurse';
         headingIcon.setAttribute('aria-hidden', 'true');
         heading.appendChild(headingIcon);
-        heading.appendChild(document.createTextNode(' Solicitudes Enfermería / Inicio biológico (' + patients.length + ')'));
+        heading.appendChild(document.createTextNode(' Preparación prebiológica — solicitudes de Enfermería (' + patients.length + ')'));
         enfBoard.appendChild(heading);
 
-        // Group patients
-        var groups = { ok_farmacia: [], en_vigilancia: [], bloqueado: [] };
-        patients.forEach(function (p) {
-            var est = String(p.estado || p.estado_prebiologico_enfermeria || '').toLowerCase();
-            if (est.indexOf('ok') !== -1 || est === 'ok_farmacia') groups.ok_farmacia.push(p);
-            else if (est.indexOf('bloqueado') !== -1 || est === 'bloqueado') groups.bloqueado.push(p);
-            else groups.en_vigilancia.push(p);
-        });
+        var intro = document.createElement('p');
+        intro.className = 'validation-module__intro';
+        intro.textContent = 'Solicitudes con origen Enfermería informado explícitamente, separadas por su estado prebiológico.';
+        enfBoard.appendChild(intro);
 
         var order = ['ok_farmacia', 'en_vigilancia', 'bloqueado'];
         for (var gi = 0; gi < order.length; gi++) {
