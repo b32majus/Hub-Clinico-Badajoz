@@ -368,6 +368,11 @@ vm.createContext(sandbox);
 
 // FarmaciaCatalog mock
 sandbox.window.FarmaciaCatalog = { search: function () { return []; }, selectDrug: function () {}, getSnapshot: function () { return {}; }, loaded: true };
+sandbox.window.FarmaciaDataSource = {
+  ready: Promise.resolve(), getPersons: function () { return []; }, getActsByPatientId: function () { return []; },
+  getValidationsByPatientId: function () { return []; }, getTreatmentLinesByPatientId: function () { return []; },
+  getVisitsByPatientId: function () { return []; }, getFollowupsByPatientId: function () { return []; }, getAdverseEventsByPatientId: function () { return []; }
+};
 
 vm.runInContext(catalogSrc, sandbox);
 vm.runInContext(commonSrc, sandbox);
@@ -405,17 +410,6 @@ var enfPatientC = {
 };
 F.patients['000000003'] = enfPatientC;
 
-// Demo patient FH-002 demo
-F.patients['CIP-DEMO-FH-002'] = {
-  cip: 'CIP-DEMO-FH-002',
-  nombre: 'Paciente Demo FH-002',
-  servicio: 'Derma',
-  patologia: 'Hidradenitis supurativa',
-  farmaco: 'Cosentyx',
-  dosis: '300 mg', via: 'SC', pauta: 'Cada 4 semanas',
-  estado: 'pending', estadoLabel: 'Pendiente'
-};
-
 // Mock FarmaciaDataImports
 sandbox.window.FarmaciaDataImports = {
   getImportedPatients: function () { return [enfPatientC]; },
@@ -430,6 +424,8 @@ if (modelSrc) vm.runInContext(modelSrc, sandbox);
 vm.runInContext(validacionSrc, sandbox);
 // Fire DOMContentLoaded
 for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { DOMContentLoadedCallbacks[di](); }
+await F.ready;
+await Promise.resolve();
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 console.log('');
@@ -535,7 +531,7 @@ assertEqual(v('fhValidadoPresentacion'), '', '32g. Presentación validada vacía
 var prebioResumen = $('fhEnfermeriaResumen');
 assert(prebioResumen !== null, '33. fhEnfermeriaResumen existe para paciente Enfermería');
 
-function rerunWithContext(context) {
+async function rerunWithContext(context) {
   [
     'fhDermaCip', 'fhDermaPatologia', 'fhDermaFarmaco', 'fhDermaDosis',
     'fhDermaVia', 'fhDermaPauta', 'fhDermaInduccion', 'fhDermaJustificacion',
@@ -544,6 +540,7 @@ function rerunWithContext(context) {
   ].forEach(function (id) { if ($(id)) $(id).value = ''; });
   F.getQueryContext = function () { return context; };
   DOMContentLoadedCallbacks[DOMContentLoadedCallbacks.length - 1]();
+  await Promise.resolve();
 }
 
 var enfWithoutRequestedDrug = {
@@ -552,11 +549,11 @@ var enfWithoutRequestedDrug = {
   origen_solicitud: 'enfermeria', tipo_origen: 'enfermeria_inicio_biologico',
   source_type: 'ENFERMERIA'
 };
-rerunWithContext({ cip: '000000004', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: enfWithoutRequestedDrug });
+await rerunWithContext({ cip: '000000004', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: enfWithoutRequestedDrug });
 assertEqual(v('fhDermaFarmaco'), '', '34. Enfermería sin fármaco explícito mantiene solicitado vacío');
 assertEqual(v('fhValidadoFarmaco'), '', '35. Enfermería sin fármaco explícito mantiene validado vacío');
 
-rerunWithContext({ cip: 'CIP-GUIADO-001', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', entrada: 'validacion', patient: null });
+await rerunWithContext({ cip: 'CIP-GUIADO-001', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', entrada: 'validacion', patient: null });
 assertEqual(v('fhManualCip'), 'CIP-GUIADO-001', '36. Inicio guiado conserva CIP');
 assertEqual(v('fhServicioManual'), 'reuma', '37. Inicio guiado conserva servicio');
 assertEqual(v('fhPatologiaManual'), 'AR', '38. Inicio guiado conserva patología');

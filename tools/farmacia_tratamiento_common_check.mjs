@@ -135,7 +135,7 @@ assert(patientWithoutBiologics && typeof patientWithoutBiologics === 'object', '
 assertEqual(patientWithoutBiologics.paciente_cip, 'CIP-TEST', 'paciente sin biologicos conserva paciente_cip en shape vacio');
 
 const patientWithBiologics = {
-    cip: 'CIP-DEMO-FH-004',
+    cip: 'DEMO-CIP-REU-001',
     principioActivo: 'Belimumab + Rituximab',
     via: 'SC / IV',
     biologicos: [

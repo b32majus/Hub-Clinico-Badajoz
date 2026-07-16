@@ -169,6 +169,15 @@
 
     function parseProms(str) {
         var out = [];
+        if (Array.isArray(str)) {
+            return str.map(function (item) {
+                return {
+                    name: item.tipo_prom || '',
+                    value: item.valor == null ? '' : String(item.valor),
+                    interpretation: knownScoreInterpretation(item.tipo_prom, item.valor)
+                };
+            });
+        }
         if (!str || str === '\u2014') return out;
         if (/basal pendiente/i.test(str) || /sin registro/i.test(str)) {
             out.push({ name: 'PROMs demo / último valor', value: 'Basal pendiente', interpretation: 'No disponible' });
@@ -270,7 +279,7 @@
             c.append(l, v);
             return c;
         }
-        group.appendChild(miniCard('F\u00e1rmaco', patient.farmaco));
+        group.appendChild(miniCard('F\u00e1rmaco', patient.marcaComercial || patient.principioActivo));
         group.appendChild(miniCard('Dosis', patient.dosis));
         group.appendChild(miniCard('Pauta', patient.pauta));
         wrapper.appendChild(group);
@@ -547,7 +556,7 @@
             body.className = 'pending-validation-card__body';
             body.appendChild(buildPendingMeta('fa-hospital', 'Servicio origen: ' + textOrDash(patient.servicio)));
             body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología / indicación: ' + textOrDash(patient.patologia || patient.motivoClinico)));
-            body.appendChild(buildPendingMeta('fa-pills', 'Fármaco / tratamiento: ' + textOrDash(patient.farmaco || patient.principioActivo)));
+            body.appendChild(buildPendingMeta('fa-pills', 'Fármaco / tratamiento: ' + textOrDash(patient.marcaComercial || patient.principioActivo)));
             body.appendChild(buildPendingMeta('fa-calendar-alt', 'Fecha solicitud: ' + textOrDash(patient.fechaSolicitud || patient.ultimaSolicitud)));
             body.appendChild(buildPendingMeta('fa-database', 'Origen de datos: ' + pendingSourceLabel(patient)));
             card.appendChild(body);
@@ -717,7 +726,7 @@
         body.className = 'pending-validation-card__body';
         body.appendChild(buildPendingMeta('fa-hospital', 'Servicio: ' + textOrDash(patient.servicio || patient.servicio_origen)));
         body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología: ' + textOrDash(patient.patologia || patient.patologia_indicacion)));
-        body.appendChild(buildPendingMeta('fa-pills', 'Fármaco: ' + textOrDash(patient.farmaco || patient.farmaco_solicitado)));
+        body.appendChild(buildPendingMeta('fa-pills', 'Fármaco: ' + textOrDash(patient.farmaco_solicitado || patient.marcaComercial || patient.principioActivo)));
         body.appendChild(buildPendingMeta('fa-database', 'Origen: Excel Enfermería'));
         if (patient.fecha_ok_farmacia) {
             body.appendChild(buildPendingMeta('fa-calendar-check', 'Fecha OK Farmacia: ' + patient.fecha_ok_farmacia));
@@ -911,6 +920,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        F.whenReady(function () {
         ensureOverlay();
         var searchBtn = document.getElementById('fhSearchBtn');
         var cipInput = document.getElementById('fhCipInput');
@@ -933,5 +943,6 @@
             cipInput.value = context.cip;
             search();
         }
+        });
     });
 })();

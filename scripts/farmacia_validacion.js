@@ -229,12 +229,12 @@
     function selectedCip() {
         if (isManualOrigin()) {
             var manualCip = byId("fhManualCip");
-            return manualCip ? (manualCip.value.trim() || "CIP-DEMO-FH-XXX") : "CIP-DEMO-FH-XXX";
+            return manualCip ? manualCip.value.trim() : "";
         }
         if (modoActual === "reuma") {
             return currentPatient && currentPatient.cip ? currentPatient.cip : "";
         }
-        return byId("fhDermaCip").value.trim() || "CIP-DEMO-FH-XXX";
+        return byId("fhDermaCip").value.trim();
     }
 
     function selectedPatologia() {
@@ -384,7 +384,7 @@
         if (context.patient && F && typeof F.isEnfermeriaPatient === 'function' && F.isEnfermeriaPatient(context.patient)) {
             return 'excel_enfermeria';
         }
-        if (context.patient && context.patient.cip && String(context.patient.cip).indexOf('CIP-DEMO-FH') !== -1) {
+        if (context.patient && context.patient.cip) {
             return 'demo_formacion';
         }
         if (context.cip || context.servicio || context.patologia) {
@@ -930,7 +930,7 @@
         var params = [];
         var cip = selectedCip();
         var patologia = selectedPatologia();
-        if (cip && cip !== 'CIP-DEMO-FH-XXX') params.push('cip=' + encodeURIComponent(cip));
+        if (cip) params.push('cip=' + encodeURIComponent(cip));
         params.push('servicio=' + encodeURIComponent(serviceSlugFromMode(isManualOrigin() ? currentManualService() : modoActual)));
         if (patologia && patologia !== '—') params.push('patologia=' + encodeURIComponent(patologia));
         params.push('entrada=' + encodeURIComponent('seguimiento'));
@@ -1764,6 +1764,7 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
+        F.whenReady(function () {
         populatePautaSelect("fhManualPauta", "fhManualPautaOtro");
         populatePautaSelect("fhDermaPauta", "fhDermaPautaOtro");
         populatePautaSelect("fhValidadoPauta", "fhValidadoPautaOtro");
@@ -1806,5 +1807,6 @@
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();
+        });
     });
 })();

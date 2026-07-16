@@ -18,7 +18,7 @@
 
     function extractPrinciple(patient) {
         if (patient.principioActivo) return patient.principioActivo;
-        var farmaco = patient.farmaco || '';
+        var farmaco = patient.marcaComercial || patient.principioActivo || '';
         var idx = farmaco.search(/[0-9]/);
         if (idx === -1) return farmaco.trim();
         return farmaco.substring(0, idx).trim();
@@ -246,7 +246,7 @@
             var detailParts = [];
             if (patient.servicio) detailParts.push(textOrDash(patient.servicio));
             if (patient.patologia || patient.motivoClinico) detailParts.push(textOrDash(patient.patologia || patient.motivoClinico));
-            if (patient.farmaco || patient.principioActivo) detailParts.push(textOrDash(patient.farmaco || patient.principioActivo));
+            if (patient.marcaComercial || patient.principioActivo) detailParts.push(textOrDash(patient.marcaComercial || patient.principioActivo));
             if (patient.fechaSolicitud || patient.ultimaSolicitud) detailParts.push('Sol: ' + textOrDash(patient.fechaSolicitud || patient.ultimaSolicitud));
             if (patient.importSource) detailParts.push('Origen: ' + textOrDash(patient.importSource));
             detail.textContent = detailParts.join(' · ');
@@ -399,7 +399,9 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        renderStats();
-        document.addEventListener('farmacia:data-imported', renderStats);
+        F.whenReady(function () {
+            renderStats();
+            document.addEventListener('farmacia:data-imported', renderStats);
+        });
     });
 })();

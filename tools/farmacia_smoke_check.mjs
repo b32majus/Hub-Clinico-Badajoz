@@ -107,33 +107,29 @@ for (const f of expectedHtmls) {
 }
 if (!inlineFound) ok('Sin style= inline en páginas Farmacia');
 
-// ─── CHECK 6: FH-001/002/003 existen en farmacia_common.js ───────────────────
-console.log('\n[6] FH-001/002/003 en farmacia_common.js');
+// ─── CHECK 6: personas canónicas WO8 disponibles ─────────────────────────────
+console.log('\n[6] Personas canónicas WO8');
 const common = readFile('scripts/farmacia_common.js');
+const runtimeDataset = JSON.parse(readFile('data/demo/farmacia/farmacia_wo8_runtime_v1.json') || '{}');
 if (!common) {
     fail('farmacia_common.js no existe');
 } else {
-    for (const id of ['FH-001', 'FH-002', 'FH-003']) {
-        if (common.includes(id)) ok(`${id} presente`);
-        else fail(`${id} no encontrado en farmacia_common.js`);
+    for (const cip of ['DEMO-CIP-DER-001', 'DEMO-CIP-DER-002', 'DEMO-CIP-DER-004']) {
+        if ((runtimeDataset.persons || []).some((person) => person.cip === cip)) ok(`${cip} presente`);
+        else fail(`${cip} no encontrado en dataset runtime`);
     }
 }
 
 // ─── CHECK 7: Estados correctos por paciente ──────────────────────────────────
-console.log('\n[7] Estados FH-001=followup, FH-002=pending, FH-003=validated');
-if (common) {
-    const checks = [
-        { id: 'FH-001', estado: 'followup' },
-        { id: 'FH-002', estado: 'pending' },
-        { id: 'FH-003', estado: 'validated' },
-    ];
-    for (const { id, estado } of checks) {
-        // Buscar bloque del paciente y verificar que su estado sea el correcto
-        const re = new RegExp(`'CIP-DEMO-${id}'[^}]+?estado:\\s*'${estado}'`, 's');
-        if (re.test(common)) ok(`${id} → ${estado}`);
-        else fail(`${id} no tiene estado '${estado}'`);
-    }
-}
+console.log('\n[7] Flujos WO8 pendiente, validado y seguimiento');
+const personIdByCip = Object.fromEntries((runtimeDataset.persons || []).map((person) => [person.cip, person.patient_id]));
+const validationByPatient = Object.fromEntries((runtimeDataset.validations || []).map((item) => [item.patient_id, item.resultado_validacion]));
+if (validationByPatient[personIdByCip['DEMO-CIP-DER-001']] === 'pendiente') ok('DEMO-CIP-DER-001 → pendiente');
+else fail('DEMO-CIP-DER-001 no conserva validación pendiente');
+if (validationByPatient[personIdByCip['DEMO-CIP-DER-002']] === 'validado') ok('DEMO-CIP-DER-002 → validado');
+else fail('DEMO-CIP-DER-002 no conserva validación validada');
+if ((runtimeDataset.acts || []).some((item) => item.patient_id === personIdByCip['DEMO-CIP-DER-004'] && item.tipo_acto_fh === 'seguimiento')) ok('DEMO-CIP-DER-004 → seguimiento');
+else fail('DEMO-CIP-DER-004 no conserva acto de seguimiento');
 
 // ─── CHECK 8: Cada HTML referencia su script correcto ─────────────────────────
 console.log('\n[8] Referencias de scripts en HTMLs');
@@ -194,8 +190,8 @@ for (const p of protected_) {
 
 // ─── CHECK 11: Señales v0.4 multibiológico mínimas ───────────────────────────
 console.log('\n[11] Señales v0.4 multibiológico mínimas');
-if (common && common.includes('CIP-DEMO-FH-004')) ok('FH-004 presente en farmacia_common.js');
-else fail('FH-004 no encontrado en farmacia_common.js');
+if ((runtimeDataset.treatment_lines || []).filter((line) => line.patient_id === 'FH-SYN-REU-001').length === 2) ok('FH-SYN-REU-001 conserva dos líneas explícitas');
+else fail('FH-SYN-REU-001 no conserva sus dos líneas explícitas');
 if (common && common.includes('biologicos')) ok('Cadena biologicos presente en farmacia_common.js');
 else fail('Cadena biologicos no encontrada en farmacia_common.js');
 const segHtml = readFile('farmacia_seguimiento.html');

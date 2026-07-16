@@ -76,7 +76,17 @@ const mockDoc = {
 const sandbox = {
     window: {
         localStorage: makeStorageMock(),
-        sessionStorage: makeStorageMock()
+        sessionStorage: makeStorageMock(),
+        FarmaciaDataSource: {
+            ready: Promise.resolve(),
+            getPersons: function () { return []; },
+            getActsByPatientId: function () { return []; },
+            getValidationsByPatientId: function () { return []; },
+            getTreatmentLinesByPatientId: function () { return []; },
+            getVisitsByPatientId: function () { return []; },
+            getFollowupsByPatientId: function () { return []; },
+            getAdverseEventsByPatientId: function () { return []; }
+        }
     },
     console: console,
     document: mockDoc,

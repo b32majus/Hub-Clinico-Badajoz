@@ -134,12 +134,12 @@ if (resultC.checks && Array.isArray(resultC.checks)) {
     fail('checks ausente o no es array');
 }
 
-// ─── TEST D: FH-004 real data ──────────────────────────────────────────────────
+// ─── TEST D: positive fixture without analiticaEstruct ─────────────────────────
 
-console.log('\n[Test D] Paciente FH-004 (sin analiticaEstruct, con biologicos)');
+console.log('\n[Test D] TEST-PREBIO-OK-001 (sin analiticaEstruct, con biologicos)');
 const patientD = {
-    cip: 'CIP-DEMO-FH-004',
-    nombre: 'Paciente Demo FH-004',
+    cip: 'TEST-PREBIO-OK-001',
+    nombre: 'TEST-PREBIO-OK-001',
     edad: '44',
     sexo: 'Mujer',
     servicio: 'Reumatología',
@@ -149,7 +149,7 @@ const patientD = {
     analitica: 'Seguimiento analítico activo. Caso sintético multibiológico para validación exploratoria.',
     biologicos: [
         {
-            linea_id: 'BIO-FH-004-L1',
+            linea_id: 'TEST-PREBIO-OK-001-L1',
             orden: 1,
             nombre_linea: 'Abatacept',
             principio_activo: 'Abatacept',
@@ -158,7 +158,7 @@ const patientD = {
             estado_linea: 'historico',
         },
         {
-            linea_id: 'BIO-FH-004-L2',
+            linea_id: 'TEST-PREBIO-OK-001-L2',
             orden: 2,
             nombre_linea: 'Belimumab',
             principio_activo: 'Belimumab',
@@ -167,7 +167,7 @@ const patientD = {
             estado_linea: 'activo',
         },
         {
-            linea_id: 'BIO-FH-004-L3',
+            linea_id: 'TEST-PREBIO-OK-001-L3',
             orden: 3,
             nombre_linea: 'Rituximab',
             principio_activo: 'Rituximab',
@@ -184,11 +184,11 @@ try {
     resultD = evaluatePatientPrebiologico(patientD);
 } catch (e) {
     crashed = true;
-    fail('Crash al evaluar FH-004: ' + e.message);
+    fail('Crash al evaluar TEST-PREBIO-OK-001: ' + e.message);
 }
 
 if (!crashed) {
-    ok('Sin crash al evaluar FH-004');
+    ok('Sin crash al evaluar TEST-PREBIO-OK-001');
 }
 
 if (resultD) {

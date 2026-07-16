@@ -57,7 +57,7 @@ assert(behaviorApi && typeof behaviorApi.searchCIP === 'function' && typeof beha
 if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   const ids = ['fhSegCip', 'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas', 'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms', 'fhSegOrigenCatalogo', 'fhSegEaPrevios', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegTratamientoGrid', 'fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegProms', 'fhSeguimientoEaObservaciones'];
   const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null, dispatchEvent: () => {}, appendChild(child) { this.children.push(child); this.options.push(child); }, remove() {} }]));
-  elements.fhSegCip.value = 'CIP-B';
+  elements.fhSegCip.value = 'DEMO-CIP-DER-004';
   elements.fhSegProms.value = 'No recogido';
   elements.fhSegOrigenCatalogo.value = 'Demo';
   behaviorSandbox.document.getElementById = (id) => elements[id] || null;
@@ -68,7 +68,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   F.setText = (id, value) => { if (elements[id]) elements[id].textContent = value || ''; };
   F.clearChildren = (el) => { if (el) { el.children = []; el.options = []; } };
   F.renderFields = () => {};
-  F.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', tratamientos_biologicos: [] } : null;
+  F.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'DEMO-CIP-DER-004' ? { cip: 'DEMO-CIP-DER-004', servicio: 'Dermatología', patologia: 'Hidradenitis supurativa', marcaComercial: 'Drug B', principioActivo: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', biologicos: [] } : null;
   F.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
     if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
     if (hasContext && confirmed === undefined) return { action: 'confirm' };
@@ -100,7 +100,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   behaviorApi.setActivePatientCip('');
   elements.fhSegOrigenCatalogo.value = 'Demo';
   elements.fhSegNuevaDosis.value = 'Manual clinical dose';
-  elements.fhSegCip.value = 'CIP-B';
+  elements.fhSegCip.value = 'DEMO-CIP-DER-004';
   confirmationCalls = 0;
   behaviorApi.searchCIP();
   assert(confirmationCalls === 1 && elements.fhSegCip.value === '' && elements.fhSegNuevaDosis.value === 'Manual clinical dose', 'Seguimiento manual clinical data without patient remains protected');
@@ -108,13 +108,13 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   resetElements();
   elements.fhSegNuevaDosis.value = 'A-only dose';
   elements.fhSeguimientoEaObservaciones.value = 'A-only adverse event';
-  elements.fhSegCip.value = 'CIP-B';
-  behaviorApi.setActivePatientCip('CIP-A');
+  elements.fhSegCip.value = 'DEMO-CIP-DER-004';
+  behaviorApi.setActivePatientCip('DEMO-CIP-DER-001');
   confirmationCalls = 0;
   behaviorApi.searchCIP();
-  assert(confirmationCalls === 1 && elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento real A to B switch keeps confirmation and cancel preserves A');
+  assert(confirmationCalls === 1 && elements.fhSegCip.value === 'DEMO-CIP-DER-001' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento real A to B switch keeps confirmation and cancel preserves A');
   confirmation = true;
-  elements.fhSegCip.value = 'CIP-B';
+  elements.fhSegCip.value = 'DEMO-CIP-DER-004';
   behaviorApi.searchCIP();
   assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '', 'Seguimiento confirmed switch clears A-only movement and loads B');
   elements.fhSegCip.value = 'CIP-UNKNOWN';

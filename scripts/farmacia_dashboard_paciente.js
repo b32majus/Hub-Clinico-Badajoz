@@ -214,13 +214,13 @@
         // Fallback legacy (sin helper)
         if (Array.isArray(patient.biologicos) && patient.biologicos.length) return patient.biologicos;
         var treatments = patient.tratamientos || [];
-        if (!treatments.length && patient.farmaco) {
+        if (!treatments.length && (patient.marcaComercial || patient.principioActivo)) {
             return [{
                 linea_id: patient.cip + '-L1',
                 orden: 1,
-                nombre_linea: patient.principioActivo || patient.farmaco,
-                nombre_comercial: patient.farmaco,
-                principio_activo: patient.principioActivo || patient.farmaco,
+                nombre_linea: patient.principioActivo || patient.marcaComercial,
+                nombre_comercial: patient.marcaComercial,
+                principio_activo: patient.principioActivo,
                 pauta: patient.pauta || '',
                 via: patient.via || '',
                 fecha_inicio: patient.primeraVisita || '',
@@ -769,10 +769,10 @@
         }
         var summaryFields = [];
         if (primaryLine) {
-            var primaryName = primaryLine.nombre_linea || primaryLine.farmaco_nombre || primaryLine.principio_activo || primaryLine.nombre_comercial || patient.farmaco || '—';
+            var primaryName = primaryLine.nombre_linea || primaryLine.farmaco_nombre || primaryLine.principio_activo || primaryLine.nombre_comercial || patient.marcaComercial || patient.principioActivo || '—';
             summaryFields.push({ label: 'Tratamiento principal', value: primaryName });
-        } else if (patient.farmaco) {
-            summaryFields.push({ label: 'Tratamiento actual', value: patient.farmaco + ' · ' + (patient.pauta || '') });
+        } else if (patient.marcaComercial || patient.principioActivo) {
+            summaryFields.push({ label: 'Tratamiento actual', value: (patient.marcaComercial || patient.principioActivo) + ' · ' + (patient.pauta || '') });
         }
         if (otherLines.length) {
             var otherNames = otherLines.map(function (l) { return l.nombre_linea || l.farmaco_nombre || l.principio_activo || l.nombre_comercial || '—'; }).join(', ');
@@ -891,37 +891,16 @@
             var timeEl = statusEl.querySelector('.db-status-indicator__time');
             if (timeEl) timeEl.textContent = 'Cargando datos longitudinales...';
         }
-        fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
-            .then(function (response) {
-                if (!response.ok) throw new Error('Failed to fetch longitudinal dataset');
-                return response.json();
-            })
-            .then(function (data) {
-                longDataset = data;
-                longSectionReady = true;
-                if (statusEl) {
-                    var timeEl = statusEl.querySelector('.db-status-indicator__time');
-                    if (timeEl) timeEl.textContent = 'Longitudinal cargado';
-                }
-                if (longCurrentCip) {
-                    renderLongitudinalForCip(longCurrentCip);
-                }
-                // Re-render secciones extendidas ahora que longDataset está disponible
-                var ctx = F.getQueryContext();
-                if (!ctx.patientNotFound) {
-                    var patient = ctx.patient || F.patients[longCurrentCip || 'CIP-DEMO-FH-001'];
-                    if (patient) {
-                        renderExtendedBlocks(patient);
-                    }
-                }
-            })
-            .catch(function () {
-                longSectionReady = false;
-                if (statusEl) {
-                    var timeEl = statusEl.querySelector('.db-status-indicator__time');
-                    if (timeEl) timeEl.textContent = 'CSV sintetico';
-                }
-            });
+        longDataset = F.getLongitudinalDataset();
+        longSectionReady = true;
+        if (statusEl) {
+            var timeEl = statusEl.querySelector('.db-status-indicator__time');
+            if (timeEl) timeEl.textContent = 'Longitudinal cargado';
+        }
+        if (longCurrentCip) renderLongitudinalForCip(longCurrentCip);
+        var ctx = F.getQueryContext();
+        var patient = !ctx.patientNotFound && (ctx.patient || (longCurrentCip ? F.patients[longCurrentCip] : null));
+        if (patient) renderExtendedBlocks(patient);
     }
 
     function renderLongitudinalForCip(cip) {
@@ -1659,6 +1638,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        F.whenReady(function () {
         bindLongitudinalEvents();
         initLongitudinalSection();
         const ctx = F.getQueryContext();
@@ -1666,7 +1646,7 @@
             renderPatientNotFound(ctx);
             return;
         }
-        const patient = ctx.patient || F.patients['CIP-DEMO-FH-001'];
+        const patient = ctx.patient;
         renderDashboard(patient);
         // WO8.1b — Botón Excel FH
         (function initDashExcelBtn() {
@@ -1693,5 +1673,6 @@
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();
+        });
     });
 })();

@@ -223,7 +223,7 @@ function simulateEnfermeriaCard(patient) {
   var bodyItems = [];
   bodyItems.push('Servicio: ' + (patient.servicio || patient.servicio_origen));
   bodyItems.push('Patologia: ' + (patient.patologia || patient.patologia_indicacion));
-  bodyItems.push('Farmaco: ' + (patient.farmaco || patient.farmaco_solicitado));
+  bodyItems.push('Farmaco: ' + (patient.farmaco_solicitado || patient.marcaComercial || patient.principioActivo));
   bodyItems.push('Origen: Excel Enfermería');
   if (patient.fecha_ok_farmacia) bodyItems.push('OK Fecha: ' + patient.fecha_ok_farmacia);
   cardLines.push('CuerpoMeta: ' + bodyItems.join(' | '));

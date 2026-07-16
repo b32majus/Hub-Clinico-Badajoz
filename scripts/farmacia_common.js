@@ -4,170 +4,116 @@
     const qs = (selector, scope = document) => scope.querySelector(selector);
     const qsa = (selector, scope = document) => Array.from(scope.querySelectorAll(selector));
 
-    const patients = {
-        'CIP-DEMO-FH-001': {
-            nombre: 'Paciente Demo FH-001', cip: 'CIP-DEMO-FH-001', edad: '48', sexo: 'Mujer', servicio: 'Dermatología', servicioSlug: 'dermatologia',
-            patologia: 'Hidradenitis supurativa', farmaco: 'Secukinumab 300 mg', dosis: '300 mg', pauta: 'SC / cada 4 semanas', via: 'SC',
-            estado: 'followup', estadoLabel: 'En seguimiento', fechaSolicitud: '2026-05-10', ultimaSolicitud: '2026-05-10',
-            analitica: 'Analítica y vacunación completas según protocolo prebiológico demo.', scores: 'IHS4 demo: 9 → 5 (mejoría); DLQI demo: 14 → 8',
-            ultimaVisita: '2026-06-01', adherencia: 'Alta (Morisky-Green: 4/4)', efectosAdversos: 'Reacción cutánea leve (2026-05-25, resuelta)', proms: 'DLQI 8; EVA picor 3/10', primeraVisita: '2026-05-12', seguimiento: 'Seguimiento abierto',
-            ihs4: 9,
-            hurley: 'Hurley II',
-            dlqi: 14,
-            localizacion: 'Axilar bilateral',
-            tiempoEvolucion: '3 años',
-            tratamientosPreviosHS: {
-                doxiciclinaClindamicina: true,
-                rifampicinaClindamicina: true,
-                otrosAtb: true,
-                otrosAtbTexto: 'Minociclina 6 meses'
-            },
-            biologicosPrevios: {
-                adalimumab: true,
-                adalimumabDuracion: '6 meses',
-                adalimumabMotivo: 'Fallo secundario',
-                otrosBiologicos: false,
-                otrosBiologicosFarmaco: '',
-                otrosBiologicosMotivo: ''
-            },
-            analiticaEstruct: {
-                fecha: '2026-05-01',
-                reciente: 'si',
-                hemograma: true,
-                bioquimica: true,
-                mantoux: 'Negativo',
-                serologias: 'Negativo',
-                vacunacion: 'si',
-                observaciones: 'Vacunas al día antes del inicio.'
-            },
-            comorbilidades: {
-                imc: '30.2',
-                tabaquismo: 'Exfumador',
-                paquetesAno: '',
-                diabetes: 'no',
-                hba1c: '',
-                sindromeMetabolico: 'si',
-                otras: 'Obesidad grado I.'
-            },
-            motivoClinico: 'HS Hurley II refractaria a antibioterapia oral, candidata a biológico.',
-            principioActivo: 'Secukinumab'
-        },
-        'CIP-DEMO-FH-002': {
-            nombre: 'Paciente Demo FH-002', cip: 'CIP-DEMO-FH-002', edad: '35', sexo: 'Hombre', servicio: 'Dermatología', servicioSlug: 'dermatologia',
-            patologia: 'Hidradenitis supurativa', farmaco: 'Adalimumab 80/40 mg', dosis: '80 mg inducción; 40 mg mantenimiento', pauta: 'SC / semanal según fase', via: 'SC',
-            estado: 'pending', estadoLabel: 'Pendiente', fechaSolicitud: '2026-06-06', ultimaSolicitud: '2026-06-06',
-            analitica: 'Analítica y cribado infeccioso pendientes de cierre.', scores: 'IHS4 demo: 12; DLQI demo: 16',
-            ultimaVisita: '—', adherencia: 'Sin registro', efectosAdversos: 'No registrados', proms: 'Basal pendiente', primeraVisita: 'Pendiente', seguimiento: 'No iniciado',
-            ihs4: 12,
-            hurley: 'Hurley III',
-            dlqi: 16,
-            localizacion: 'Inguinal bilateral y axilar',
-            tiempoEvolucion: '5 años',
-            tratamientosPreviosHS: {
-                doxiciclinaClindamicina: true,
-                rifampicinaClindamicina: true,
-                otrosAtb: false,
-                otrosAtbTexto: ''
-            },
-            biologicosPrevios: {
-                adalimumab: false,
-                adalimumabDuracion: '',
-                adalimumabMotivo: '',
-                otrosBiologicos: false,
-                otrosBiologicosFarmaco: '',
-                otrosBiologicosMotivo: ''
-            },
-            analiticaEstruct: {
-                fecha: '2026-06-01',
-                reciente: 'si',
-                hemograma: true,
-                bioquimica: true,
-                mantoux: 'Pendiente',
-                serologias: 'Pendiente',
-                serologiasVhb: 'Negativo',
-                serologiasVhc: 'Negativo',
-                serologiasVih: 'Negativo',
-                vacunacion: 'pendiente',
-                observaciones: ''
-            },
-            comorbilidades: {
-                imc: '28.5',
-                tabaquismo: 'Activo',
-                paquetesAno: '15',
-                diabetes: 'no',
-                hba1c: '',
-                sindromeMetabolico: 'no',
-                otras: ''
-            },
-            motivoClinico: 'HS Hurley III refractaria a múltiples líneas de antibióticos. Candidata a adalimumab.',
-            principioActivo: 'Adalimumab'
-        },
-        'CIP-DEMO-FH-003': {
-            nombre: 'Paciente Demo FH-003', cip: 'CIP-DEMO-FH-003', edad: '52', sexo: 'Mujer', servicio: 'Reumatología', servicioSlug: 'reumatologia',
-            patologia: 'Artritis Reumatoide (AR)', farmaco: 'Adalimumab 40 mg', dosis: '40 mg', pauta: 'SC / cada 2 semanas', via: 'SC',
-            estado: 'validated', estadoLabel: 'Validado', fechaSolicitud: '2026-03-15', ultimaSolicitud: '2026-03-15',
-            analitica: 'Prebiológico demo apto. Vacunación VHB y antineumocócica completa.', scores: 'DAS28 demo: 3.2; HAQ demo: 1.1',
-            ultimaVisita: '—', adherencia: 'Sin registro (primera visita pendiente)', efectosAdversos: 'No registrados', proms: 'HAQ 1.1 (basal); EVA dolor 4/10', primeraVisita: 'Pendiente', seguimiento: 'No iniciado'
-        },
-        'CIP-DEMO-FH-004': {
-            nombre: 'Paciente Demo FH-004', cip: 'CIP-DEMO-FH-004', edad: '44', sexo: 'Mujer', servicio: 'Reumatología', servicioSlug: 'reumatologia',
-            patologia: 'LES / Síndrome de Sjögren', farmaco: 'Belimumab + Rituximab (demo multibiológico)', dosis: 'Belimumab 200 mg SC semanal + Rituximab 1 g IV semestral', pauta: 'L2 semanal + L3 semestral', via: 'SC / IV',
-            estado: 'followup', estadoLabel: 'En seguimiento', fechaSolicitud: '2026-02-14', ultimaSolicitud: '2026-05-28',
-            analitica: 'Seguimiento analítico activo. Caso sintético multibiológico para validación exploratoria.', scores: 'SLEDAI demo: 12 → 6; EVA dolor 6 → 3',
-            ultimaVisita: '2026-06-09', adherencia: 'Alta (Morisky-Green: 4/4)', efectosAdversos: 'Infección respiratoria leve-moderada en evaluación causal', proms: 'HAQ 0.9; EVA dolor 3/10', primeraVisita: '2026-02-20', seguimiento: 'Seguimiento multibiológico abierto',
-            principioActivo: 'Belimumab + Rituximab',
-            biologicos: [
-                {
-                    linea_id: 'BIO-FH-004-L1',
-                    orden: 1,
-                    nombre_linea: 'Abatacept',
-                    nombre_comercial: 'Orencia',
-                    principio_activo: 'Abatacept',
-                    dosis: '125 mg',
-                    via: 'SC',
-                    pauta: 'Semanal',
-                    fecha_inicio: '2025-09-01',
-                    fecha_fin: '2026-02-10',
-                    estado_linea: 'historico',
-                    tipo_relacion: 'cambio_terapeutico',
-                    es_principal: false,
-                    tratamiento_id_principal: 'TRAT-FH-004-A'
-                },
-                {
-                    linea_id: 'BIO-FH-004-L2',
-                    orden: 2,
-                    nombre_linea: 'Belimumab',
-                    nombre_comercial: 'Benlysta',
-                    principio_activo: 'Belimumab',
-                    dosis: '200 mg',
-                    via: 'SC',
-                    pauta: 'Semanal',
-                    fecha_inicio: '2026-02-20',
-                    fecha_fin: '',
-                    estado_linea: 'activo',
-                    tipo_relacion: 'base',
-                    es_principal: true,
-                    tratamiento_id_principal: 'TRAT-FH-004-B'
-                },
-                {
-                    linea_id: 'BIO-FH-004-L3',
-                    orden: 3,
-                    nombre_linea: 'Rituximab',
-                    nombre_comercial: 'Rixathon',
-                    principio_activo: 'Rituximab',
-                    dosis: '1 g',
-                    via: 'IV',
-                    pauta: 'Dias 1 y 15 cada 6 meses',
-                    fecha_inicio: '2026-05-28',
-                    fecha_fin: '',
-                    estado_linea: 'añadido',
-                    tipo_relacion: 'tratamiento_añadido',
-                    es_principal: false,
-                    tratamiento_id_principal: 'TRAT-FH-004-C'
-                }
-            ]
-        }
-    };
+    var patients = Object.create(null);
+
+    function loadFarmaciaDataSource() {
+        if (window.FarmaciaDataSource) return Promise.resolve(window.FarmaciaDataSource);
+        return new Promise(function (resolve, reject) {
+            var script = document.createElement('script');
+            script.src = 'scripts/farmacia_data_source.js?v=20260716-wo8';
+            script.onload = function () { resolve(window.FarmaciaDataSource); };
+            script.onerror = function () { reject(new Error('No se pudo cargar el dataset sintético de Farmacia.')); };
+            (document.head || document.documentElement).appendChild(script);
+        });
+    }
+
+    function canonicalWorkflowState(acts, validations) {
+        if (validations.some(function (item) { return item.resultado_validacion === 'pendiente'; })) return 'pending';
+        if (acts.some(function (item) { return item.tipo_acto_fh === 'seguimiento' || item.tipo_acto_fh === 'primera_visita'; })) return 'followup';
+        if (validations.some(function (item) { return item.resultado_validacion === 'validado'; })) return 'validated';
+        return 'followup';
+    }
+
+    function canonicalPatient(person) {
+        var source = window.FarmaciaDataSource;
+        var acts = source.getActsByPatientId(person.patient_id);
+        var validations = source.getValidationsByPatientId(person.patient_id);
+        var lines = source.getTreatmentLinesByPatientId(person.patient_id);
+        var visits = source.getVisitsByPatientId(person.patient_id);
+        var followups = source.getFollowupsByPatientId(person.patient_id);
+        var adverseEvents = source.getAdverseEventsByPatientId(person.patient_id);
+        var primaryLine = lines.find(function (line) { return String(line.es_principal).toUpperCase() === 'TRUE'; }) || lines[0] || {};
+        var latestAct = acts[acts.length - 1] || {};
+        var latestFollowup = followups[followups.length - 1] || {};
+        var state = canonicalWorkflowState(acts, validations);
+        return {
+            patient_id: person.patient_id,
+            nombre: person.patient_id,
+            cip: person.cip,
+            edad: person.birth_or_age,
+            sexo: person.sex,
+            servicio: person.service,
+            servicioSlug: slugifyService(person.service),
+            patologia: person.pathology,
+            estado: state,
+            estadoLabel: state === 'pending' ? 'Pendiente' : (state === 'validated' ? 'Validado' : 'En seguimiento'),
+            fechaSolicitud: latestAct.fecha_acto,
+            ultimaSolicitud: latestAct.fecha_acto,
+            ultimaVisita: latestAct.fecha_acto,
+            primeraVisita: visits.length ? visits[0].fecha_acto : null,
+            seguimiento: latestFollowup.fecha_acto,
+            principioActivo: primaryLine.principio_activo,
+            marcaComercial: primaryLine.marca_comercial,
+            dosis: primaryLine.dosis_presentacion,
+            pauta: primaryLine.pauta_label || primaryLine.pauta_otro_texto,
+            via: primaryLine.via,
+            biologicos: lines.map(function (line) {
+                return {
+                    linea_id: line.linea_id,
+                    nombre_linea: line.principio_activo,
+                    nombre_comercial: line.marca_comercial,
+                    principio_activo: line.principio_activo,
+                    dosis: line.dosis_presentacion,
+                    via: line.via,
+                    pauta: line.pauta_label || line.pauta_otro_texto,
+                    fecha_inicio: line.fecha_inicio,
+                    fecha_fin: line.fecha_fin,
+                    estado_linea: line.estado_linea,
+                    tipo_relacion: line.tipo_relacion,
+                    es_principal: String(line.es_principal).toUpperCase() === 'TRUE',
+                    tratamiento_id_principal: line.tratamiento_id
+                };
+            }),
+            adherencia: latestFollowup.adherencia_morisky,
+            scores: [latestFollowup.haq, latestFollowup.eva_dolor, latestFollowup.dlqi].filter(Boolean).join(' · '),
+            efectosAdversos: adverseEvents.map(function (event) { return event.ea_descripcion; }).filter(Boolean).join(' · '),
+            analitica: validations.map(function (item) { return item.observaciones_validacion; }).filter(Boolean).join(' · '),
+            proms: followups.reduce(function (items, followup) {
+                [['HAQ', 'haq'], ['EVA dolor', 'eva_dolor'], ['DLQI', 'dlqi']].forEach(function (definition) {
+                    if (followup[definition[1]] !== null && followup[definition[1]] !== undefined) {
+                        items.push({ tipo_prom: definition[0], valor: followup[definition[1]], fecha: followup.fecha_acto });
+                    }
+                });
+                return items;
+            }, []),
+            rawActs: acts,
+            rawValidations: validations,
+            rawFollowups: followups,
+            rawAdverseEvents: adverseEvents,
+            importSource: 'Farmacia WO8'
+        };
+    }
+
+    var canonicalReady = loadFarmaciaDataSource().then(function (dataSource) {
+        return dataSource.ready;
+    }).then(function () {
+        window.FarmaciaDataSource.getPersons().forEach(function (person) {
+            patients[person.cip] = canonicalPatient(person);
+        });
+    });
+
+    function whenReady(init) {
+        return canonicalReady.then(init).catch(function () {
+            var status = document.getElementById('farmaciaDataSourceError');
+            if (!status) {
+                status = document.createElement('p');
+                status.id = 'farmaciaDataSourceError';
+                status.setAttribute('role', 'alert');
+                document.body.insertBefore(status, document.body.firstChild);
+            }
+            status.textContent = 'No se pudo cargar el dataset sintético de Farmacia.';
+        });
+    }
 
     const profesionales = [
         { id: 'PRO-FH-01', nombre: 'Profesional FH-01', rol: 'Farmacéutico/a Hospitalario/a', especialidad: 'Dermatología; Reumatología', estado: 'Activo' },
@@ -1608,10 +1554,13 @@
                 return state;
             }
 
-            // Generic import (Farmacia u otros)
-            var firstSheetName = workbook.SheetNames[0];
-            var sheet = workbook.Sheets[firstSheetName];
-            var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+            // Generic import: preserve every clinical service sheet and ignore catalogs/config.
+            var clinicalSheetNames = workbook.SheetNames.filter(function (name) { return /^0[1-4]_/.test(name); });
+            var selectedSheetNames = clinicalSheetNames.length ? clinicalSheetNames : workbook.SheetNames.slice();
+            var rows = [];
+            selectedSheetNames.forEach(function (sheetName) {
+                rows = rows.concat(XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' }));
+            });
             var headers = rows.length ? Object.keys(rows[0]) : [];
             var inferred = inferFieldMapping(headers);
             var state = {
@@ -1619,7 +1568,7 @@
                 sourceLabel: getKindLabel(kind),
                 fileName: fileName || '',
                 importedAt: new Date().toISOString(),
-                sheetName: firstSheetName || '',
+                sheetName: selectedSheetNames.join(', '),
                 rowCount: rows.length,
                 headers: headers,
                 mappedFields: inferred.mapping,
@@ -1829,6 +1778,9 @@
 
     window.FarmaciaDemo = {
         patients,
+        ready: canonicalReady,
+        whenReady: whenReady,
+        getLongitudinalDataset: function () { return window.FarmaciaDataSource.getLongitudinalDataset(); },
         profesionales,
         patologiaPorServicio,
         qs,

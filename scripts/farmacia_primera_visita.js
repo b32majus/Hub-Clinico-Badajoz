@@ -138,9 +138,9 @@
         var treatmentHelper = getTreatmentHelper();
         var treatment = normalizePrimaryTreatment({
             paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
-            farmaco_nombre: patient && patient.farmaco || '',
-            nombre_comercial: patient && patient.farmaco || '',
-            principio_activo: patient && (patient.principioActivo || patient.farmaco) || '',
+            farmaco_nombre: patient && (patient.marcaComercial || patient.principioActivo) || '',
+            nombre_comercial: patient && patient.marcaComercial || '',
+            principio_activo: patient && patient.principioActivo || '',
             dosis_texto: patient && patient.dosis || '',
             presentacion: patient && patient.dosis || '',
             via: patient && patient.via || '',
@@ -270,7 +270,15 @@
         if (servicioVal && window.__pvPopulatePatologia) {
             window.__pvPopulatePatologia(servicioVal);
         }
-        F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
+        var pathologyValue = ctx.patologia || ctx.patient?.patologia || '';
+        var pathologySelect = document.getElementById('fhPvPatologia');
+        if (pathologyValue && pathologySelect && !Array.from(pathologySelect.options).some(function (option) { return option.value === pathologyValue; })) {
+            var canonicalOption = document.createElement('option');
+            canonicalOption.value = pathologyValue;
+            canonicalOption.textContent = pathologyValue;
+            pathologySelect.appendChild(canonicalOption);
+        }
+        F.setValue('fhPvPatologia', pathologyValue);
         if (ctx.patient) {
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
             F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
@@ -1076,6 +1084,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        F.whenReady(function () {
         const ctx = F.getQueryContext();
 
         if (!ctx.patient) {
@@ -1128,7 +1137,7 @@
             btn.addEventListener('click', function () {
                 var exp = window.FarmaciaExcelRowExport;
                 if (!exp) return;
-                var patient = ctx && ctx.patient ? ctx.patient : (window.F && F.patients ? F.patients['CIP-DEMO-FH-001'] : null);
+                var patient = ctx && ctx.patient ? ctx.patient : null;
                 if (!patient) { alert('No hay paciente seleccionado.'); return; }
                 var treatment = typeof getCurrentPrimaryTreatment === 'function' ? getCurrentPrimaryTreatment() : {};
                 var opts = {
@@ -1144,5 +1153,6 @@
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();
+        });
     });
 })();

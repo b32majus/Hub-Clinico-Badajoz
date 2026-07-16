@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+    var F = window.FarmaciaDemo;
     var dataset = null;
     var currentCip = null;
 
@@ -175,24 +176,12 @@
 
     function fetchDataset(callback) {
         var statusEl = $('longitudinalDataStatus');
-        fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
-            .then(function (response) {
-                if (!response.ok) { throw new Error('Failed to fetch dataset'); }
-                return response.json();
-            })
-            .then(function (data) {
-                dataset = data;
-                if (statusEl) {
-                    var count = (dataset.pacientes && dataset.pacientes.length) ? dataset.pacientes.length : 0;
-                    statusEl.textContent = 'Dataset cargado — ' + count + ' paciente(s) demo';
-                }
-                if (typeof callback === 'function') { callback(true); }
-            })
-            .catch(function () {
-                if (statusEl) { statusEl.textContent = 'Error al cargar dataset demo longitudinal'; }
-                renderError();
-                if (typeof callback === 'function') { callback(false); }
-            });
+        dataset = F.getLongitudinalDataset();
+        if (statusEl) {
+            var count = dataset.pacientes.length;
+            statusEl.textContent = 'Dataset cargado — ' + count + ' paciente(s) demo';
+        }
+        if (typeof callback === 'function') { callback(true); }
     }
 
     function populatePatientSelect() {
@@ -880,5 +869,7 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function () {
+        F.whenReady(init);
+    });
 })();
