@@ -1,6 +1,6 @@
 # Auditoría reconciliada de pantallas de Farmacia post-PR22
 
-Status: pending_review
+Status: reviewed_with_partial_implementation_followup
 
 ## 1. Resumen ejecutivo y límites
 
@@ -188,3 +188,52 @@ Cada ficha distingue los campos exigidos; las citas completas están en la matri
 | `WO-FH-SYNTHETIC-DATA-DEMO-HARDCODED-REDUCTION-01` | FH-R08 y FH-R11; técnica P2-01/deuda hardcoded; Sil 2.3, 4.2 y 7.15. | Dataset sintético canónico, oráculo de bandejas y autorización de cualquier nombre profesional real. |
 
 Una corrección del dashboard, gates de piloto y decisiones de arquitectura pueden estudiarse como temas diferidos, pero **no se añaden a esta lista de siete WOs candidatas**. No existe autorización para ejecutarlos ni para convertirlos en backlog.
+
+## 7. Seguimiento de implementación post-PR29
+
+**Fecha de seguimiento:** 2026-07-16
+**Snapshot verificado:** `84a44bbb7deec46a6b91fd8e2c08e6b264f80b9e` (`preview/demo-lunes-wo4-20260614`, merge de PR #29)
+
+Este seguimiento preserva la auditoría original y contrasta sus hallazgos con los merges posteriores. El estado `reviewed_with_partial_implementation_followup` significa que existe evidencia de implementación para una parte del registro; **no significa que todos los hallazgos estén cerrados, que la demo equivalga a un piloto ni que exista validación clínica o institucional**.
+
+Estados permitidos en esta matriz:
+
+- `resuelto`: el hallazgo auditado tiene código y checks específicos mergeados.
+- `resuelto en alcance mínimo de demo`: el alcance mínimo autorizado para demo tiene código y checks específicos mergeados, sin acreditar piloto.
+- `parcialmente resuelto`: existe implementación verificable, pero no cubre todo el hallazgo reconciliado.
+- `pendiente`: el hallazgo permanece abierto sin implementación que lo cierre.
+- `requiere diagnóstico`: existe evidencia del defecto, pero su causa exacta y corrección siguen por determinar.
+- `diferido deliberadamente`: el alcance sigue pospuesto por una decisión explícita de producto, clínica o arquitectura.
+- `solo documentado / no implementado`: existe documentación exploratoria, pero no implementación funcional.
+
+| ID | Estado post-PR29 | PR / commit funcional | Evidencia verificada | Limitación vigente | Siguiente decisión |
+|---|---|---|---|---|---|
+| FH-R01 | `resuelto` | PR #24, `4be7604713b8bd98866a51bc0a527e91f198087f`; ajuste PR #29, `f1592bed5ce3adc853a40b4b644710904b1c6fca` | Guard de cambio de CIP y limpieza/cancelación en Primera Visita y Seguimiento; PR #29 evita la confirmación falsa en la primera búsqueda de Seguimiento sin dejar de proteger datos clínicos manuales. Checks específicos cubren CIP existente, desconocido, cancelación y cambio confirmado. | Hallazgo resuelto en las pantallas auditadas, Primera Visita y Seguimiento, con datos sintéticos; no certifica una política transversal, backend, persistencia ni aptitud para piloto. | Evaluar por separado si Validación o Inicio necesitan un contrato transversal equivalente; esa decisión no reabre FH-R01. |
+| FH-R02 | `resuelto en alcance mínimo de demo` | PR #25, `2c7bfae2e8d9101fc2218ac495e5d145e33c6340` | Alta guiada exige CIP, servicio y patología; transporta CIP, etiqueta canónica de servicio, patología, circuito y destino a Validación, Primera Visita o Seguimiento. El check dedicado cubre los tres destinos, bloqueo por contexto incompleto y no inferencia terapéutica. | Es contexto de navegación en demo, no persistencia ni contrato interservicios; la inicialización receptora detallada se verifica específicamente en Primera Visita. | Mantener la frontera de no persistencia y validar humanamente el contexto mínimo por destino antes de cualquier piloto. |
+| FH-R03 | `resuelto en alcance mínimo de demo` | PR #26, `905ddf07091e25be4ad85730b37c3580cd6f4826` | El harness DOM vuelve a representar los bloques actuales; la precarga Enfermería -> Validación conserva CIP, servicio, patología y fármaco solicitado explícito, deja vacíos los campos no informados y prueba el flujo manual guiado sin inferencias. | Check sintético de regresión y flujo demo; no demuestra integración institucional, datos reales ni contrato clínico definitivo. | Conservar el check como gate y someter el resultado funcional a revisión humana antes de ampliar el contrato. |
+| FH-R04 | `parcialmente resuelto` | PR #27, `51e1bf04fa60a9c8a66246abc5104da0e569da3a` | Limpieza mínima: orígenes futuros/demo quedan no operativos, se oculta el resumen prebiológico superior duplicado, el responsable se etiqueta como identidad demo no nominal y la salida se presenta como copia manual, no integración. | No resuelve todo el conjunto original: multifármaco, renovación, catálogo, chips, opciones clínicas y contrato definitivo permanecen fuera de alcance. | Decidir por separado los subproblemas restantes; no interpretar la limpieza visual mínima como cierre funcional completo. |
+| FH-R05 | `pendiente` | Sin PR de cierre en #24-#29 | Ninguno de esos PR introduce un contrato estructurado multilínea para acto de validación, estados, movimientos y salidas por tratamiento. | El soporte demo previo no equivale a modelo multilínea gobernado. | Sil/Cora deben cerrar acto, identidad y campos por línea antes de autorizar implementación. |
+| FH-R06 | `pendiente` | Sin PR de cierre en #24-#29 | No hay evidencia mergeada que separe formalmente «registrar línea previa» de «iniciar fármaco nuevo» en Seguimiento. | Los guards de CIP de PR #24/#29 protegen contexto, no esta frontera funcional. | Definir evidencia mínima de línea previa y prohibición verificable de alta nueva desde Seguimiento. |
+| FH-R07 | `requiere diagnóstico` | Sin PR de cierre en #24-#29 | No se modificaron los dashboards ni se añadió un guard/fixture temporal para el `localeCompare` observado. | La causa exacta y el contrato de eventos sin fecha siguen sin demostrarse. | Reproducir y diagnosticar en una WO acotada sin inferir fechas ni rediseñar dashboards. |
+| FH-R08 | `pendiente` | Sin PR de cierre en #24-#29 | No se definió ni implementó un oráculo funcional para bandejas y fixtures. | Una bandeja vacía no demuestra por sí sola un defecto. | Decidir una o dos bandejas y el resultado esperado por estado/fixture. |
+| FH-R09 | `parcialmente resuelto` | Sin PR de cierre en #24-#29 | La limpieza de PR #27 se limita a Validación y no implementa el paquete transversal de copy, PROMs y acceso CMO. | No hay validación de umbrales/instrumentos por patología. | Autorizar WOs de limpieza por pantalla solo tras validar textos y umbrales. |
+| FH-R10 | `parcialmente resuelto` | Sin PR de cierre en #24-#29 | No se cerró un contrato uniforme para «Otro/Otra», etiquetas y procedencia CIMA/local. | Ocultar opciones de origen en Validación no resuelve catálogos, patologías ni prescripción. | Confirmar opciones soportadas y terminología de catálogo antes de retirar o añadir alternativas. |
+| FH-R11 | `parcialmente resuelto` | Sin PR de cierre en #24-#29 | PR #27 mitiga la responsabilidad aparente al rotular al responsable como identidad demo no nominal; los PR funcionales usan fixtures sintéticos para checks, pero no migran los casos/profesionales hardcoded a una fuente canónica. | La aclaración de identidad demo no equivale a reducción general del hardcoded, y usar datos sintéticos en tests no demuestra esa migración. | Definir dataset sintético canónico y autorización separada para cualquier identidad profesional. |
+| FH-R12 | `diferido deliberadamente` | Sin PR de implementación | No se incorporaron autenticación, autorización, backend, Control Plane ni trazabilidad productiva. | Los avisos de demo siguen sin ser controles técnicos. | Requiere decisión arquitectónica e institucional independiente antes de piloto. |
+| FH-R13 | `diferido deliberadamente` | Sin PR de implementación | No existe motor de PROMs por patología en #24-#29. | Los PROMs actuales continúan limitados a la demo y no acreditan instrumentos universales. | Validar instrumentos y umbrales por patología antes de diseñar el motor. |
+| FH-R14 | `solo documentado / no implementado` | Sin PR de implementación funcional | La documentación exploratoria de Treatment Lifecycle previa a esta auditoría no se convierte en código por los PR #24-#29. | Documentación no equivale a implementación; renovaciones, validez, ciclos y dashboards definitivos siguen abiertos. | Cerrar primero contratos por línea y decisiones clínicas; después autorizar diseño/implementación específicos. |
+
+### 7.1 Trazabilidad de merges consultados
+
+| PR | Rama | Commit funcional/documental | Merge commit | Resultado relevante |
+|---|---|---|---|---|
+| #21 | `work/hermes/WO-DOC-INGEST-SIL-SCREEN-REVIEW-POST-PR20-01-20260714` | `bc092fb06d998572d499d2474cbbe99d88d5cfb5` | `269627cd9f50464603ae3c2d34042848d478b645` | Ingesta documental de la revisión Sil; no implementación. |
+| #22 | `work/hermes/WO-DOC-INGEST-FH-TECHNICAL-SCREEN-AUDIT-POST-PR21-01-20260715` | `a7e08ebf27c1e5632824af47fb43d2bfc7cc4a43` | `7d9bedd61bcc5c55f643d86dcc8e9a2b50b77d52` | Ingesta documental de la auditoría técnica; no implementación. |
+| #23 | `work/hermes/WO-DOC-FH-SCREEN-AUDIT-RECONCILIATION-POST-PR22-01-20260715` | `549950081c8ecdb46f9b913ee68013bdd69f98f2` | `06b5e2ff4d3242b7ef8750a3ef62aa44252e5676` | Auditoría reconciliada original; no implementación. |
+| #24 | `work/hermes/WO-FH-PATIENT-CONTEXT-SWITCH-GUARD-01-20260715` | `4be7604713b8bd98866a51bc0a527e91f198087f` | `48de5909898100f1b13cdad68a030afba0f6899c` | Guard de contexto en Primera Visita y Seguimiento. |
+| #25 | `work/hermes/WO-FH-ALTA-GUIADA-CONTEXT-PROPAGATION-01-20260715` | `2c7bfae2e8d9101fc2218ac495e5d145e33c6340` | `8f7fc562d21cc436e12e65b08ea48d8d244962e1` | Propagación de contexto de alta guiada. |
+| #26 | `work/hermes/WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01-20260715` | `905ddf07091e25be4ad85730b37c3580cd6f4826` | `1d8aac746ddfe7c72a5dd71636a8fc67af180571` | Precarga explícita y no inferencia en Validación. |
+| #27 | `work/hermes/WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01-20260715` | `51e1bf04fa60a9c8a66246abc5104da0e569da3a` | `58e59b1143da5fbe57af4d48b7f143b2f7d67f8a` | Limpieza funcional mínima de Validación. |
+| #29 | `fix/fh-seguimiento-first-search-confirmation-20260715` | `f1592bed5ce3adc853a40b4b644710904b1c6fca` | `84a44bbb7deec46a6b91fd8e2c08e6b264f80b9e` | Corrección del falso positivo de confirmación inicial en Seguimiento. |
+
+No existe PR #28 en el repositorio; el número #28 corresponde al issue de seguimiento usado por la corrección que terminó en PR #29.
