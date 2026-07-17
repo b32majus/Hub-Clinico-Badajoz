@@ -130,6 +130,8 @@ assert(html.includes('scripts/farmacia_tratamiento_common.js'), 'Seguimiento car
 // 2. Tipo de movimiento tiene opciones del contrato (en HTML select)
 assert(html.indexOf('value="optimizacion"') !== -1, 'HTML incluye movimiento optimización');
 assert(html.indexOf('value="suspension"') !== -1, 'HTML incluye movimiento suspensión');
+assert(html.indexOf('value="tratamiento_anadido"') === -1, 'Seguimiento no permite iniciar tratamiento añadido');
+assert(html.indexOf('value="cambio_terapeutico"') === -1, 'Seguimiento no permite iniciar switch terapéutico');
 
 // 3. Grid de resumen presente
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento presente');
@@ -210,11 +212,14 @@ assert(js.includes('buildPautaSelectForOtherDrug'), 'Función buildPautaSelectFo
 assert(js.includes('applyCatalogSelectionToOtherDrug'), 'Función applyCatalogSelectionToOtherDrug definida');
 assert(js.includes('normalizeOtherDrugVia'), 'Función normalizeOtherDrugVia definida');
 
-// 21. Autocomplete rellena principio activo, vía, pauta y dosis
+// 21. Autocomplete identifica el fármaco sin inferir datos terapéuticos
 assert(js.includes("setOtherDrugField(uid, 'principioActivo'"), 'Autocomplete rellena principio activo');
-assert(js.includes("setOtherDrugField(uid, 'via'"), 'Autocomplete rellena vía');
-assert(js.includes("setOtherDrugField(uid, 'pautaCodigo'"), 'Autocomplete rellena pauta');
-assert(js.includes("setOtherDrugField(uid, 'dosis'"), 'Autocomplete rellena dosis');
+var catalogSelectionMatch = js.match(/function applyCatalogSelectionToOtherDrug[\s\S]*?^    \}/m);
+var catalogSelectionBody = catalogSelectionMatch ? catalogSelectionMatch[0] : '';
+assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'dosis'") === -1, 'Autocomplete no infiere dosis');
+assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'presentacion'") === -1, 'Autocomplete no infiere presentación');
+assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'via'") === -1, 'Autocomplete no infiere vía');
+assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'pautaCodigo'") === -1, 'Autocomplete no infiere pauta');
 
 // 22. Pauta concomitante es desplegable normalizado (no input texto libre único)
 assert(js.includes('P.getPautaOptions') || js.includes('FarmaciaPautasCatalog.getPautaOptions'), 'Pauta concomitante usa catálogo de pautas');
@@ -226,9 +231,13 @@ assert(js.includes("relation = 'concomitante'"), 'Concomitante mapea tipo_relaci
 assert(js.includes("estado_linea = 'activo'"), 'Concomitante mapea estado_linea a activo');
 assert(js.includes("tipo_movimiento = 'no_aplica'"), 'Concomitante mapea tipo_movimiento a no_aplica');
 
-// 24. Adicional conserva tipo_relacion adicional y movimiento tratamiento_anadido
-assert(js.includes("relation = 'adicional'"), 'Adicional mapea tipo_relacion a adicional');
-assert(js.includes("tipo_movimiento = 'tratamiento_anadido'"), 'Adicional mapea tipo_movimiento a tratamiento_anadido');
+// 24. Una línea activa previa se registra sin crear un movimiento de alta
+assert(js.includes('Tratamiento activo previo / línea existente'), 'Seguimiento ofrece registro explícito de línea activa previa');
+assert(js.includes("relation = 'adicional'"), 'Línea activa previa conserva tipo_relacion adicional');
+var mapPreviousTreatmentMatch = js.match(/function mapOtherDrugToContract[\s\S]*?^    \}/m);
+var mapPreviousTreatmentBody = mapPreviousTreatmentMatch ? mapPreviousTreatmentMatch[0] : '';
+assert(mapPreviousTreatmentBody.indexOf("tipo_movimiento = 'tratamiento_anadido'") === -1, 'Línea activa previa no crea movimiento tratamiento_anadido');
+assert(!js.includes("'Biológico activo adicional'"), 'Seguimiento no ofrece alta de biológico activo adicional');
 
 // 25. Histórico/exposición no se reactivan como línea actual
 assert(js.includes("relation = 'historico'"), 'Histórico mapea tipo_relacion a historico');
@@ -270,9 +279,9 @@ assert(js.includes('seenIds'), 'getRelevantDrugCandidates usa deduplicación see
 assert(js.includes('Biológico previo/histórico'), 'Incluye históricos como categoría');
 assert(js.includes('followupOtherDrugs.forEach'), 'Itera todos los otros fármacos');
 
-// 32. Vía de concomitante se autocompleta desde catálogo
-assert(js.includes("setOtherDrugField(uid, 'via'"), 'Autocomplete via definido en WO7F');
-assert(js.includes("setOtherDrugField(uid, 'dosis'"), 'Autocomplete dosis definido en WO7F');
+// 32. El catálogo no sobrescribe los campos terapéuticos manuales
+assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'via'") === -1, 'Autocomplete no sobrescribe vía');
+assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'dosis'") === -1, 'Autocomplete no sobrescribe dosis');
 assert(js.includes("setOtherDrugField(uid, 'principioActivo'"), 'Autocomplete principio activo definido en WO7F');
 
 // 33. updateSuspectDrugSelector se llama en contextos clave (tras cambio de línea y al añadir/eliminar fármaco)
