@@ -162,7 +162,10 @@
         for (var ct = 0; ct < tipos.length; ct++) {
             var tipo = tipos[ct];
             var items = grouped[tipo];
-            items.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+            items.sort(function(a, b) {
+                if (typeof a.fecha !== 'string' || typeof b.fecha !== 'string') return 0;
+                return a.fecha.localeCompare(b.fecha);
+            });
             var earliest = items[0];
             var latest = items[items.length - 1];
             var tile = document.createElement('div');
