@@ -63,7 +63,7 @@
     var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
 
     var FOLLOWUP_RELATION_OPTIONS = [
-        'Biológico activo adicional',
+        'Tratamiento activo previo / línea existente',
         'Biológico previo/histórico',
         'Concomitante',
         'Exposición'
@@ -341,7 +341,7 @@
     function renderFollowupOtherDrugRow(drug) {
         var card = createElement('section', 'other-drug-card');
         var header = createElement('div', 'other-drug-card__header');
-        header.appendChild(createElement('h4', 'other-drug-card__title', 'Fármaco concomitante'));
+        header.appendChild(createElement('h4', 'other-drug-card__title', 'Tratamiento relacionado'));
         var removeBtn = createElement('button', 'btn btn-outline btn-remove-drug', 'Eliminar');
         removeBtn.type = 'button';
         removeBtn.addEventListener('click', function () {
@@ -530,19 +530,6 @@
     }
 
     function applyCatalogSelectionToOtherDrug(uid, d) {
-        var catalogVia = normalizeOtherDrugVia(d.via || '');
-        var pautaCodigo = '';
-        var pautaLabel = '';
-        var pautaOtro = '';
-        var pautaText = d.pauta || '';
-        if (pautaText && P && typeof P.normalizePautaLabel === 'function') {
-            var pautaObj = P.normalizePautaLabel(pautaText);
-            if (pautaObj && pautaObj.pauta_codigo) {
-                pautaCodigo = pautaObj.pauta_codigo;
-                pautaLabel = pautaObj.pauta_label || '';
-                pautaOtro = pautaObj.pauta_otro_texto || '';
-            }
-        }
         var sourceType = String(d.source_type || '').toUpperCase();
         var origenLabel = '';
         if (sourceType === 'CIMA') origenLabel = 'CIMA';
@@ -552,21 +539,10 @@
 
         setOtherDrugField(uid, 'farmaco', d.nombre_comercial || '');
         setOtherDrugField(uid, 'principioActivo', d.principio_activo || '');
-        setOtherDrugField(uid, 'dosis', d.dosis || '');
-        setOtherDrugField(uid, 'presentacion', d.nombre_presentacion || '');
-        setOtherDrugField(uid, 'via', catalogVia);
-        setOtherDrugField(uid, 'pautaCodigo', pautaCodigo);
-        setOtherDrugField(uid, 'pauta', pautaLabel);
-        setOtherDrugField(uid, 'pautaOtro', pautaOtro);
         setOtherDrugField(uid, 'codigoNacional', d.codigo_nacional || '');
         setOtherDrugField(uid, 'nregistro', d.nregistro || '');
         setOtherDrugField(uid, 'origenCatalogo', origenLabel);
         setOtherDrugField(uid, 'sourceType', sourceType);
-
-        var pautaOtroInput = document.querySelector('[data-uid="' + uid + '"][data-field="pautaOtro"]');
-        if (pautaOtroInput) {
-            pautaOtroInput.classList.toggle('hidden', pautaCodigo !== 'OTRO');
-        }
     }
 
     function clearOtherDrugDropdown(dropdownId) {
@@ -622,7 +598,7 @@
     }
 
     function normalizeFollowupDrugCategory(relationType) {
-        if (relationType === 'Biológico activo adicional') return 'Biológico adicional';
+        if (relationType === 'Tratamiento activo previo / línea existente') return 'Tratamiento activo previo';
         if (relationType === 'Biológico previo/histórico') return 'Biológico previo/histórico';
         if (relationType === 'Exposición') return 'Exposición';
         return 'Concomitante';
@@ -632,10 +608,9 @@
         var relation = 'concomitante';
         var estado_linea = 'activo';
         var tipo_movimiento = 'no_aplica';
-        if (drug.relationType === 'Biológico activo adicional') {
+        if (drug.relationType === 'Tratamiento activo previo / línea existente') {
             relation = 'adicional';
-            tipo_movimiento = 'tratamiento_anadido';
-            estado_linea = '';
+            tipo_movimiento = '';
         } else if (drug.relationType === 'Biológico previo/histórico') {
             relation = 'historico';
             tipo_movimiento = '';
