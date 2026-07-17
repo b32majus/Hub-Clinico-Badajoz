@@ -122,3 +122,32 @@ Antes del commit: restaurar los archivos autorizados y limpiar únicamente `.ope
 ## Validación de esta versión
 
 Ejecutar `opencode debug paths`, `opencode debug config`, `opencode mcp list`, `engram doctor`, `engram projects list`, `git diff --check` y una tarea read-only que informe rama, HEAD, worktree y documentos guía sin crear archivos.
+
+## Perfil OpenAI PROMueve
+
+El perfil híbrido se mantiene sin cambios con `opencode`. El lanzador
+`promueve-gpt` aplica únicamente el overlay
+`config/opencode/profiles/promueve-gpt.json` mediante `OPENCODE_CONFIG_CONTENT`
+para el proceso iniciado.
+
+El overlay contiene solo proveedor, modelos y variantes:
+
+| Agente | Modelo normal | Variante |
+|---|---|---|
+| explore | `openai/gpt-5.6-luna` | `low` |
+| plan | `openai/gpt-5.6-terra` | `low` |
+| build | `openai/gpt-5.6-terra` | `medium` |
+| promueve-review | `openai/gpt-5.6-sol` | `medium` |
+| promueve-critical | `openai/gpt-5.6-sol` | `high` |
+
+El modelo global es `openai/gpt-5.6-terra` y `small_model` es
+`openai/gpt-5.6-luna`. No se usan variantes Fast ni `xhigh` por defecto.
+
+Los agentes, modos, permisos, skills, comandos, MCP e instrucciones se
+heredan de la configuración del proyecto. El lanzador no modifica archivos,
+no persiste variables de entorno y falla si no encuentra el worktree o el
+overlay válido.
+
+La credencial OAuth permanece fuera del repositorio. El inventario CLI del
+17-07-2026 confirmó los IDs normales `openai/gpt-5.6-luna`,
+`openai/gpt-5.6-terra` y `openai/gpt-5.6-sol`.
