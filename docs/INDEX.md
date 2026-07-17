@@ -16,6 +16,7 @@
 1. [`README.md`](/README.md) — visión general, contexto y alcance del proyecto.
 2. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — estado post-reunión SES, fases propuestas, decisiones cerradas y pendientes.
 3. [`AGENTS.md`](/AGENTS.md) — reglas operativas para agentes, ramas protegidas, datos prohibidos y definición de done.
+4. [`docs/ops/AI_HARNESS_PROMUEVE_V1.md`](/docs/ops/AI_HARNESS_PROMUEVE_V1.md) — arnés OpenCode mínimo, agentes, modelos y procedimiento de work orders.
 4. [`ARCHITECTURE.md`](/ARCHITECTURE.md) — arquitectura técnica e implementación actual (estado post-SES).
 5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — tablero de work orders y estado de ejecución.
 
