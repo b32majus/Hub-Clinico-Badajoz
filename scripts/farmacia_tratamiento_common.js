@@ -212,22 +212,46 @@
     function buildTreatmentFromCatalogSelection(drug, base) {
         var treatment = normalizeTreatmentInput(base || {}, base || {});
         if (!drug || typeof drug !== "object") return treatment;
-        treatment.farmaco_nombre = firstNonEmpty(drug.display_name, drug.nombre_comercial, drug.principio_activo, treatment.farmaco_nombre);
-        treatment.nombre_comercial = firstNonEmpty(drug.nombre_comercial, treatment.nombre_comercial);
-        treatment.principio_activo = firstNonEmpty(drug.principio_activo, treatment.principio_activo);
-        treatment.presentacion = firstNonEmpty(drug.nombre_presentacion, treatment.presentacion);
-        treatment.dosis_texto = firstNonEmpty(drug.dosis, drug.nombre_presentacion, treatment.dosis_texto);
-        treatment.via = normalizeVia(firstNonEmpty(drug.via, treatment.via));
-        treatment.codigo_nacional = firstNonEmpty(drug.codigo_nacional, treatment.codigo_nacional);
-        treatment.nregistro = firstNonEmpty(drug.nregistro, treatment.nregistro);
-        treatment.selected_drug_id = firstNonEmpty(drug.drug_id, drug.selected_drug_id, treatment.selected_drug_id);
-        treatment.source_type = normalizeSourceType(firstNonEmpty(drug.source_type, treatment.source_type));
+        treatment.farmaco_nombre = firstNonEmpty(drug.display_name, drug.nombre_snapshot, drug.nombre_comercial, drug.principio_activo_snapshot, drug.principio_activo);
+        treatment.nombre_comercial = stringValue(drug.nombre_comercial);
+        treatment.principio_activo = stringValue(drug.principio_activo_snapshot || drug.principio_activo);
+        treatment.codigo_nacional = stringValue(drug.codigo_nacional_snapshot || drug.codigo_nacional);
+        treatment.nregistro = stringValue(drug.nregistro_snapshot || drug.nregistro);
+        treatment.selected_drug_id = firstNonEmpty(drug.selected_drug_id, drug.drug_id);
+        treatment.source_type = normalizeSourceType(drug.source_type);
         if (!treatment.fuente) {
             if (treatment.source_type === "CIMA") treatment.fuente = "cima";
             else if (treatment.source_type === "LOCAL") treatment.fuente = "local_especial";
         }
-        treatment.snapshot_origen = clone(drug);
+        treatment.snapshot_origen = sanitizeCatalogSnapshot(drug);
         return treatment;
+    }
+
+    function sanitizeCatalogSnapshot(source) {
+        var snapshot = source && typeof source === "object" ? source : {};
+        return {
+            snapshot_kind: stringValue(snapshot.snapshot_kind) || "catalog_selection",
+            snapshot_version: snapshot.snapshot_version === 1 ? 1 : 1,
+            selected_at: stringValue(snapshot.selected_at),
+            context: {
+                slot: stringValue(snapshot.context && snapshot.context.slot),
+                paciente_cip: stringValue(snapshot.context && snapshot.context.paciente_cip),
+                tratamiento_id: stringValue(snapshot.context && snapshot.context.tratamiento_id),
+                linea_id: stringValue(snapshot.context && snapshot.context.linea_id)
+            },
+            farmaco_nombre: firstNonEmpty(snapshot.display_name, snapshot.nombre_snapshot, snapshot.nombre_comercial),
+            nombre_comercial: stringValue(snapshot.nombre_comercial),
+            principio_activo: stringValue(snapshot.principio_activo_snapshot || snapshot.principio_activo),
+            drug_id: firstNonEmpty(snapshot.drug_id, snapshot.selected_drug_id),
+            selected_drug_id: firstNonEmpty(snapshot.selected_drug_id, snapshot.drug_id),
+            source_type: normalizeSourceType(snapshot.source_type),
+            codigo_nacional: stringValue(snapshot.codigo_nacional_snapshot || snapshot.codigo_nacional),
+            nregistro: stringValue(snapshot.nregistro_snapshot || snapshot.nregistro)
+        };
+    }
+
+    function buildTreatmentFromCatalogSnapshot(snapshot, base) {
+        return buildTreatmentFromCatalogSelection(snapshot, base);
     }
 
     function normalizeLegacyMovement(treatment, original) {
@@ -308,29 +332,8 @@
 
     function buildTreatmentSnapshot(input, options) {
         var source = input && typeof input === "object" ? input : {};
-        if (source.selected_drug_id || source.drug_id || source.source_type || source.nombre_presentacion || source.principio_activo_snapshot || source.presentacion_snapshot) {
-            if (source.principio_activo_snapshot || source.presentacion_snapshot || source.codigo_nacional_snapshot || source.nregistro_snapshot) {
-                return normalizeTreatmentInput({
-                    tratamiento_id: source.tratamiento_id || source.linea_id || "",
-                    paciente_cip: source.paciente_cip || source.cip || "",
-                    farmaco_nombre: source.nombre_snapshot || "",
-                    nombre_comercial: source.nombre_comercial || source.nombre_snapshot || "",
-                    principio_activo: source.principio_activo_snapshot || "",
-                    dosis_texto: source.dosis_presentacion || "",
-                    presentacion: source.presentacion_snapshot || "",
-                    via: source.via_snapshot || "",
-                    pauta: source.pauta || "",
-                    fuente: options && options.fuente,
-                    source_type: source.source_type || "",
-                    selected_drug_id: source.selected_drug_id || source.drug_id || "",
-                    codigo_nacional: source.codigo_nacional_snapshot || "",
-                    nregistro: source.nregistro_snapshot || "",
-                    snapshot_origen: source
-                }, options);
-            }
-            return buildTreatmentFromCatalogSelection(source, options || {});
-        }
-        return normalizeTreatmentInput(source, options || {});
+        var opts = options || {};
+        return buildTreatmentFromCatalogSnapshot(source, opts.base || opts);
     }
 
     function buildTreatmentFromPatient(patient, options) {
@@ -387,21 +390,7 @@
         if (snapshot && lines.length) {
             lines = lines.map(function (line, index) {
                 if (index > 0) return line;
-                var merged = clone(line);
-                var snapTreatment = buildTreatmentSnapshot(snapshot, opts);
-                if (!merged.selected_drug_id) merged.selected_drug_id = snapTreatment.selected_drug_id;
-                if (!merged.codigo_nacional) merged.codigo_nacional = snapTreatment.codigo_nacional;
-                if (!merged.nregistro) merged.nregistro = snapTreatment.nregistro;
-                if (!merged.source_type) merged.source_type = snapTreatment.source_type;
-                if (!merged.fuente) merged.fuente = snapTreatment.fuente;
-                if (!merged.presentacion) merged.presentacion = snapTreatment.presentacion;
-                if (!merged.dosis_texto) merged.dosis_texto = snapTreatment.dosis_texto;
-                if (!merged.via) merged.via = snapTreatment.via;
-                merged.snapshot_origen = {
-                    patient: clone(line.snapshot_origen),
-                    snapshot: clone(snapshot)
-                };
-                return merged;
+                return buildTreatmentSnapshot(snapshot, { base: line, fuente: opts.fuente });
             });
         }
 
@@ -467,6 +456,7 @@
         normalizeTreatmentInput: normalizeTreatmentInput,
         buildTreatmentSnapshot: buildTreatmentSnapshot,
         buildTreatmentFromCatalogSelection: buildTreatmentFromCatalogSelection,
+        buildTreatmentFromCatalogSnapshot: buildTreatmentFromCatalogSnapshot,
         buildTreatmentFromPatient: buildTreatmentFromPatient,
         normalizeTipoRelacion: normalizeTipoRelacion,
         normalizeEstadoLinea: normalizeEstadoLinea,

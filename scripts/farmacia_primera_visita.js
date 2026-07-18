@@ -47,15 +47,27 @@
         }
     }
 
-    function getCurrentSnapshot() {
-        var catalog = getCatalog();
-        if (!catalog) return null;
-        return catalog.getSnapshot ? catalog.getSnapshot() : catalog.selectedSnapshot;
+    function getSnapshotContext(ctx) {
+        var source = ctx || getCurrentContext() || {};
+        var patient = source.patient || {};
+        return {
+            slot: 'primera_visita.tratamiento',
+            paciente_cip: firstNonEmpty(source.cip, patient.cip, fv('fhPvCip')),
+            tratamiento_id: firstNonEmpty(source.tratamiento_id, patient.tratamiento_id),
+            linea_id: firstNonEmpty(source.linea_id, patient.linea_id)
+        };
     }
 
-    function resolvePrimaryRelation(ctx, snapshot) {
-        if ((ctx && ctx.patient) || snapshot) return 'validado';
-        return 'principal';
+    function getCurrentSnapshot(ctx) {
+        var catalog = getCatalog();
+        if (!catalog) return null;
+        return catalog.getSnapshot ? catalog.getSnapshot(getSnapshotContext(ctx)) : null;
+    }
+
+    function resolvePrimaryRelation(ctx) {
+        var source = ctx || {};
+        var patient = source.patient || {};
+        return firstNonEmpty(source.tipo_relacion, patient.tipo_relacion);
     }
 
     function buildFallbackTreatment(input) {
@@ -133,8 +145,8 @@
     function buildPrimaryTreatmentFromContext(ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var patient = sourceCtx.patient || null;
-        var snapshot = getCurrentSnapshot();
-        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var snapshot = getCurrentSnapshot(sourceCtx);
+        var relation = resolvePrimaryRelation(sourceCtx);
         var treatmentHelper = getTreatmentHelper();
         var treatment = normalizePrimaryTreatment({
             paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
@@ -147,7 +159,7 @@
             pauta: patient && patient.pauta || '',
             fecha_inicio: fv('fhPvFecha') || '',
             tipo_relacion: relation,
-            es_principal: true,
+            es_principal: patient && patient.es_principal === true,
             es_validado_farmacia: relation === 'validado',
             fuente: 'primera_visita',
             snapshot_origen: patient
@@ -157,22 +169,8 @@
         });
 
         if (snapshot && treatmentHelper && typeof treatmentHelper.buildTreatmentSnapshot === 'function') {
-            var snapshotTreatment = treatmentHelper.buildTreatmentSnapshot(snapshot, {
-                paciente_cip: treatment.paciente_cip,
-                fuente: 'primera_visita'
-            });
-            treatment = normalizePrimaryTreatment(assignObjects({}, snapshotTreatment, treatment, {
-                paciente_cip: treatment.paciente_cip,
-                tipo_relacion: relation,
-                es_principal: true,
-                es_validado_farmacia: relation === 'validado',
-                fuente: 'primera_visita',
-                principio_activo: firstNonEmpty(treatment.principio_activo, snapshotTreatment.principio_activo),
-                dosis_texto: firstNonEmpty(treatment.dosis_texto, snapshotTreatment.dosis_texto),
-                presentacion: firstNonEmpty(treatment.presentacion, snapshotTreatment.presentacion),
-                via: firstNonEmpty(treatment.via, snapshotTreatment.via),
-                pauta: firstNonEmpty(treatment.pauta, snapshotTreatment.pauta)
-            }), {
+            treatment = treatmentHelper.buildTreatmentSnapshot(snapshot, {
+                base: treatment,
                 paciente_cip: treatment.paciente_cip,
                 fuente: 'primera_visita'
             });
@@ -184,24 +182,20 @@
     function buildPrimaryTreatmentFromSelection(drug, ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var treatmentHelper = getTreatmentHelper();
-        var relation = resolvePrimaryRelation(sourceCtx, sourceCtx.patient ? {} : getCurrentSnapshot());
         var cip = firstNonEmpty(sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip, fv('fhPvCip'));
-        var base = {
+        var base = assignObjects({}, buildPrimaryTreatmentFromContext(sourceCtx), {
             paciente_cip: cip,
-            pauta: getPautaLabelForExport(),
-            fecha_inicio: fv('fhPvFecha') || '',
-            tipo_relacion: relation,
-            es_principal: true,
-            es_validado_farmacia: relation === 'validado',
+            dosis_texto: firstNonEmpty(fv('fhPvDosis')),
+            presentacion: firstNonEmpty(fv('fhPvDosis')),
+            via: firstNonEmpty(fv('fhPvVia')),
+            pauta: firstNonEmpty(getPautaLabelForExport()),
+            fecha_inicio: firstNonEmpty(fv('fhPvFecha')),
             fuente: 'primera_visita'
-        };
+        });
         if (treatmentHelper && typeof treatmentHelper.buildTreatmentFromCatalogSelection === 'function') {
             return normalizePrimaryTreatment(assignObjects({}, treatmentHelper.buildTreatmentFromCatalogSelection(drug, base), {
                 paciente_cip: cip,
                 pauta: firstNonEmpty(base.pauta, sourceCtx.patient && sourceCtx.patient.pauta),
-                tipo_relacion: relation,
-                es_principal: true,
-                es_validado_farmacia: relation === 'validado',
                 fuente: 'primera_visita'
             }), {
                 paciente_cip: cip,
@@ -212,9 +206,6 @@
             farmaco_nombre: drug && (drug.display_name || drug.nombre_comercial) || '',
             nombre_comercial: drug && drug.nombre_comercial || '',
             principio_activo: drug && drug.principio_activo || '',
-            dosis_texto: drug && (drug.dosis || drug.nombre_presentacion) || '',
-            presentacion: drug && drug.nombre_presentacion || '',
-            via: drug && drug.via || '',
             source_type: drug && drug.source_type || '',
             selected_drug_id: drug && (drug.drug_id || drug.selected_drug_id) || '',
             codigo_nacional: drug && drug.codigo_nacional || '',
@@ -228,15 +219,10 @@
 
     function getCurrentPrimaryTreatment(ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
-        var snapshot = getCurrentSnapshot();
-        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
         var treatment = buildPrimaryTreatmentFromContext(sourceCtx);
         if (!hasMeaningfulTreatment(treatment)) {
             treatment = normalizePrimaryTreatment({
                 paciente_cip: firstNonEmpty(fv('fhPvCip'), sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
-                tipo_relacion: relation,
-                es_principal: true,
-                es_validado_farmacia: relation === 'validado',
                 fuente: 'primera_visita'
             }, {
                 paciente_cip: firstNonEmpty(fv('fhPvCip'), sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
@@ -252,9 +238,6 @@
             presentacion: firstNonEmpty(fv('fhPvDosis'), treatment.presentacion, treatment.dosis_texto),
             via: firstNonEmpty(fv('fhPvVia'), treatment.via),
             pauta: firstNonEmpty(getPautaLabelForExport(), treatment.pauta, treatment.pauta_label),
-            tipo_relacion: relation,
-            es_principal: true,
-            es_validado_farmacia: relation === 'validado',
             fuente: 'primera_visita'
         }), {
             paciente_cip: firstNonEmpty(fv('fhPvCip'), treatment.paciente_cip, sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip),
@@ -888,8 +871,9 @@
         var C = getCatalog();
         if (!C || !drug) return;
 
-        C.selectDrug(drug);
-        var treatment = buildPrimaryTreatmentFromSelection(drug);
+        var context = getCurrentContext();
+        var snapshot = C.selectDrug(drug, getSnapshotContext(context));
+        var treatment = buildPrimaryTreatmentFromSelection(snapshot, context);
         setTreatmentForm(treatment);
         applyTratamientoValidado(getCurrentContext());
 
