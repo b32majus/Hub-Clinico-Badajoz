@@ -178,7 +178,7 @@ const selectedTreatment = api.buildPrimaryTreatmentFromSelection({
 }, { cip: 'CIP-PV-002' });
 assertEqual(selectedTreatment.paciente_cip, 'CIP-PV-002', 'paciente con CIP conserva paciente_cip');
 assertEqual(selectedTreatment.source_type, 'CIMA', 'selección catálogo conserva source_type');
-assertEqual(selectedTreatment.tipo_relacion, 'principal', 'selección manual desde primera visita usa relación principal');
+assertEqual(selectedTreatment.tipo_relacion, '', 'selección manual desde primera visita no crea relación principal');
 assertEqual(selectedTreatment.codigo_nacional, '123456', 'selección catálogo conserva CN');
 
 const sandboxNoHelper = {

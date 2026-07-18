@@ -971,19 +971,12 @@
             var grid = document.getElementById('fhSegTratamientoGrid');
             if (grid) F.clearChildren(grid);
         }
-        // Sincronizar tarjeta CIMA con la línea seleccionada
+        // El contexto del snapshot, no el principio activo previo, determina si la selección sigue siendo válida.
         var cimaEl = document.getElementById('fhSegCimaContextPrincipioActivo');
         if (cimaEl && line) {
             var C = window.FarmaciaCatalog;
-            var snap = C && C.getSnapshot ? C.getSnapshot() : null;
-            var snapPrincipio = snap ? (snap.principio_activo_snapshot || '').toString().toLowerCase().trim() : '';
-            var linePrincipio = (line.principio_activo || '').toString().toLowerCase().trim();
-            var lineFarmaco = (line.farmaco_nombre || '').toString().toLowerCase().trim();
-            // Si el snapshot no corresponde a la línea, limpiar CIMA y snapshot
-            if (snapPrincipio && snapPrincipio !== linePrincipio && snapPrincipio !== lineFarmaco) {
-                if (C && C.clearSnapshot) C.clearSnapshot();
-                F.setText('fhSegCimaContextPrincipioActivo', '\u2014');
-            }
+            var snap = C && C.getSnapshot ? C.getSnapshot(getSegSnapshotContext()) : null;
+            F.setText('fhSegCimaContextPrincipioActivo', snap ? (snap.principio_activo_snapshot || '\u2014') : '\u2014');
         } else if (cimaEl && !line) {
             F.setText('fhSegCimaContextPrincipioActivo', '\u2014');
         }
@@ -1389,6 +1382,16 @@
         try { return window.FarmaciaCatalog; } catch (e) { return null; }
     }
 
+    function getSegSnapshotContext() {
+        var line = getCurrentSelectedLine() || {};
+        return {
+            slot: 'seguimiento.tratamiento',
+            paciente_cip: firstNonEmpty(currentSegPatient && currentSegPatient.cip, fv('fhSegCip')),
+            tratamiento_id: firstNonEmpty(line.tratamiento_id, line.tratamiento_id_principal),
+            linea_id: line.linea_id || ''
+        };
+    }
+
     function showSegDrugAutocomplete() {
         var block = document.getElementById('fhSegAutocompleteBlock');
         if (block) block.classList.remove('hidden');
@@ -1478,14 +1481,11 @@
         var C = getCatalog();
         if (!C || !drug) return;
 
-        C.selectDrug(drug);
+        C.selectDrug(drug, getSegSnapshotContext());
 
         F.setValue('fhSegFarmaco', drug.display_name || drug.nombre_comercial || '');
         F.setValue('fhSegPrincipioActivo', drug.principio_activo || '');
         F.setText('fhSegCimaContextPrincipioActivo', drug.principio_activo || '\u2014');
-        F.setValue('fhSegPresentacion', drug.nombre_presentacion || '');
-        F.setValue('fhSegDosisActual', drug.dosis || '');
-        F.setValue('fhSegVia', drug.via || '');
         F.setValue('fhSegCodigoNacional', drug.codigo_nacional || '');
         F.setValue('fhSegNregistro', drug.nregistro || '');
 
@@ -1890,7 +1890,7 @@
     function getSnapshotMetaForExportSeg() {
         var C = getCatalog();
         if (!C) return null;
-        var snap = C.getSnapshot ? C.getSnapshot() : C.selectedSnapshot;
+        var snap = C.getSnapshot ? C.getSnapshot(getSegSnapshotContext()) : null;
         if (!snap || !snap.selected_drug_id) return null;
         return {
             source_type: snap.source_type || '',
