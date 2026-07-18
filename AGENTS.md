@@ -7,12 +7,14 @@ Los agentes ejecutan work orders previamente razonadas y aprobadas. No redefinen
 ## Fuentes de verdad
 
 1. Work order actual.
-2. `docs/INDEX.md`.
-3. `docs/ops/WORK_ORDER_STATUS.md`.
-4. Documento vivo específico indicado por la work order.
-5. Código y tests del HEAD autorizado.
+2. Ref Git autorizada, HEAD, código y documentación versionados.
+3. `docs/INDEX.md`.
+4. `docs/ops/WORK_ORDER_STATUS.md`.
+5. Documento vivo específico indicado por la work order.
+6. Artefactos locales de handoff.
+7. Engram y memoria como contexto auxiliar.
 
-Engram es memoria auxiliar y puede estar obsoleta. GitHub y la documentación versionada son la fuente de verdad.
+El cierre y handoff se rigen por [`docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md). Un worktree o commit local no equivale a estado publicado; GitHub prevalece sobre copias históricas y todo SHA o estado vivo debe verificarse.
 
 ## Preflight
 
@@ -22,6 +24,14 @@ Antes de escribir:
 - confirmar el alcance y los archivos autorizados;
 - crear backup cuando lo exija la work order;
 - comprobar que el checkout no contiene cambios ajenos que puedan mezclarse.
+
+## Riesgo y diagnóstico
+
+- Verde: documentación o test aislado, cambio local de bajo riesgo o una pantalla sin helper compartido ni persistencia.
+- Ámbar: varias pantallas, helper compartido, snapshots, import/export, persistencia, navegación o identidad, contrato clínico, datos o compatibilidad histórica.
+- Rojo: backend, migraciones, autenticación/permisos/identidad, infraestructura, datos reales, arquitectura transversal o cambios destructivos y de seguridad crítica.
+
+Las WOs ámbar y rojas requieren diagnóstico read-only previo de productores, consumidores, callers, persistencia, rerenders, import/export, contratos, legacy, decisiones pendientes y rutas afectadas. No diseñar cambios transversales solo desde el síntoma UI. Rojo requiere además WO diagnóstica o contractual separada y aprobación explícita antes de implementar.
 
 ## Seguridad clínica
 
@@ -43,6 +53,7 @@ Tratamiento solicitado no equivale a tratamiento validado. Los datos ausentes pe
 - Un defecto UI solo es válido si se reproduce mediante interacción soportada.
 - No inyectar estados imposibles mediante DOM, campos readonly o campos ocultos.
 - Mantener el proyecto sin herramientas o dependencias nuevas salvo autorización explícita.
+- Ante un primer bloqueo independiente, limitar la corrección al contrato vigente. Ante un segundo bloqueo con la misma raíz conceptual, detener, congelar el worktree, generar evidencia y abrir una WO diagnóstica o contractual; no encadenar parches.
 
 ## Engram
 
@@ -55,12 +66,15 @@ Guardar en Engram únicamente aprendizajes durables, decisiones técnicas y gotc
 - No hacer push, PR, merge ni borrar ramas sin autorización explícita.
 - No limpiar, restaurar ni sobrescribir cambios ajenos.
 - Mantener commits atómicos y revisables.
-- Verificar el diff antes de cualquier commit.
+- Antes de cualquier commit, generar fuera del repositorio el paquete pre-commit exigido por el protocolo canónico, con `REPORT.md`, `DIFF.patch`, `TESTS.log` y `MANIFEST.sha256`.
+- Verificar el diff y obtener autorización posterior al paquete; las WOs ámbar y rojas requieren revisión independiente read-only.
+- Distinguir siempre diff local, commit local, rama remota y estado publicado.
 
 ## Criterio de cierre
 
-Una WO solo se considera cerrada cuando los checks pasan, el diff contiene únicamente archivos autorizados y el reporte identifica riesgos y acciones Git. Si el commit no está autorizado, se deja preparado pero no se publica.
+Una WO solo se considera cerrada cuando los checks pasan, el diff contiene únicamente archivos autorizados y el paquete de evidencia identifica riesgos y acciones Git. Si el commit no está autorizado, el diff se conserva sin stage ni publicación.
 El reporte debe distinguir hechos comprobados de riesgos pendientes.
+Build puede declarar `APTO PARA REVISIÓN`, `BLOQUEADO` o `IMPLEMENTACIÓN EXPERIMENTAL CONGELADA`. En riesgo ámbar o rojo no puede autodeclarar el trabajo apto para commit.
 
 ## STOP
 

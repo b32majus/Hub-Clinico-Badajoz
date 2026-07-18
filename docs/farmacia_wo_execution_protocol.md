@@ -1,138 +1,64 @@
-# Protocolo estándar de ejecución — Farmacia
+# Suplemento de ejecución de work orders — Farmacia
 
-## 1. Propósito
+## 1. Propósito y prevalencia
 
-Este protocolo define una pauta operativa reutilizable para ejecutar futuras WOs del módulo de Farmacia Hospitalaria Badajoz con menor consumo de tokens y sin perder seguridad, trazabilidad ni calidad técnica.
+Este documento añade controles clínicos y técnicos específicos para WOs de Farmacia Hospitalaria Badajoz. El protocolo global [`docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md) prevalece y define preflight, evidencia, handoff, revisión, commit y publicación.
 
-Su objetivo es evitar que cada prompt tenga que repetir todo el contexto histórico, manteniendo un marco estable de preflight, alcance, controles de diff, tests, commit, push y reporte final.
+La WO concreta debe declarar objetivo, alcance, archivos permitidos y prohibidos, checks y autorizaciones. Puede endurecer ambos documentos, pero no rebajarlos.
 
-## 2. Regla base de cada WO
+## 2. Riesgo mínimo
 
-Cada WO debe declarar explícitamente:
+Son riesgo ámbar como mínimo las WOs de Farmacia que afecten a:
 
-- objetivo
-- alcance permitido
-- archivos prohibidos
-- tests obligatorios
-- formato de reporte final
+- helpers compartidos;
+- snapshots o persistencia;
+- contratos clínicos o de datos;
+- más de una pantalla;
+- importación o exportación;
+- navegación, identidad o compatibilidad histórica.
 
-Si una WO no define estos cinco elementos, debe considerarse incompleta antes de empezar su ejecución.
+Estas WOs requieren diagnóstico read-only previo, mapa de productores/consumidores/callers y revisión independiente antes de cualquier commit. Los gates rojos del protocolo global siguen aplicándose cuando aparezcan backend, identidad, permisos, datos reales, arquitectura transversal o seguridad crítica.
 
-## 3. Preflight obligatorio
+## 3. Preflight específico
 
-Antes de modificar nada, cada WO debe verificar:
+Además del preflight global, verificar:
 
-- rama actual
-- HEAD actual
-- working tree limpio
-- `git status --short --branch`
-- `git log --oneline -5`
+- contratos de Farmacia indicados por la WO;
+- estado de los datos sintéticos usados en pruebas;
+- consumidores clínicos y pantallas que compartan helpers o snapshots;
+- importadores, exportadores y persistencia relacionados;
+- ausencia de cambios ajenos o rutas no autorizadas.
 
-Regla operativa:
+Si la rama, HEAD o ref remota no coinciden con la WO, detenerse antes de editar.
 
-- si el working tree no está limpio y el prompt no autoriza trabajar sobre cambios previos, detenerse y reportar
-- si la rama o el HEAD no coinciden con lo esperado, reportar antes de editar
-
-## 4. Reglas de seguridad
-
-Reglas fijas:
-
-- no tocar `main`
-- no tocar GitHub Pages
-- no tocar demo congelada salvo autorización explícita
-- no usar `git push origin`
-- usar `gh` más URL HTTPS explícita para el push
-- no usar `sudo git`
-- no imprimir secretos
-- no ejecutar `gh auth token`
-- no modificar `origin` de forma permanente
-- si el diff incluye archivos no autorizados, detenerse
-
-Regla de push recomendada:
-
-```bash
-gh auth status
-gh auth setup-git
-git push https://github.com/b32majus/Hub-Clinico-Badajoz.git work/farmacia-wo6-storage-pautas-normalizadas-20260614
-```
-
-## 5. Reglas clínicas
+## 4. Reglas de seguridad clínica
 
 En cualquier WO con impacto terapéutico o de representación clínica:
 
-- no convertir un concomitante en tratamiento principal
-- no convertir un tratamiento adicional en switch formal
-- no crear líneas terapéuticas validadas de forma silenciosa
-- no mezclar fármaco sospechoso de efecto adverso con tratamiento principal
-- respetar `docs/farmacia_treatment_data_contract.md`
+- no convertir un concomitante en tratamiento principal;
+- no convertir un tratamiento adicional en switch formal;
+- no crear líneas terapéuticas validadas de forma silenciosa;
+- no mezclar fármaco sospechoso de efecto adverso con tratamiento principal;
+- no inferir dosis, vía, pauta, presentación, inducción, duración, causalidad o validación desde nombres, CIMA o catálogo;
+- respetar `docs/farmacia_treatment_data_contract.md` y cualquier contrato publicado indicado por la WO;
+- usar únicamente datos sintéticos y de demostración.
 
-Si una WO necesita cambiar cualquiera de estas reglas, debe documentarlo de forma explícita antes de implementar.
+Si una WO necesita cambiar una de estas reglas, requiere decisión y contrato explícitos antes de implementar.
 
-## 6. Reglas técnicas
+## 5. Reglas técnicas
 
-Reglas mínimas:
+- No introducir `innerHTML`.
+- Si se crea o modifica un helper compartido, añadir o actualizar un check dedicado y ejecutar sus regresiones consumidoras.
+- Si se modifica una pantalla clínica, ejecutar al menos checks sintácticos, smoke check y las interacciones soportadas que exija la WO.
+- No validar defectos mediante estados imposibles inyectados en DOM, campos readonly u ocultos.
+- Si se toca un contrato, snapshot o helper común, comprobar consumidores, persistencia, rerenders, import/export y compatibilidad legacy.
+- Si el diff incluye archivos no autorizados, detenerse y reportar.
+- Aplicar la regla global de parada tras el segundo bloqueo con la misma raíz conceptual.
 
-- no introducir `innerHTML`
-- si se crea un helper nuevo, crear también un test o check dedicado
-- si se modifica una pantalla clínica, ejecutar al menos checks sintácticos y smoke check
-- si el diff incluye archivos no autorizados por la WO, detenerse y reportar
-- si se toca un contrato documental o helper común, validar que no se rompe el smoke check global cuando aplique
+## 6. Cierre y handoff
 
-## 7. Plantilla corta para futuras WOs
+No existe un reporte compacto de Farmacia que sustituya el cierre global. Toda WO con cambios genera el paquete pre-commit y usa los veredictos definidos por [`WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md).
 
-```markdown
-# WO[XX] — [Título]
+El paquete debe reflejar también los riesgos de no inferencia clínica, contratos y compatibilidad propios de Farmacia. La salida de los checks se captura durante la ejecución en `TESTS.log`; no se reconstruye al final.
 
-## Objetivo
-...
-
-## Archivos permitidos
-...
-
-## Archivos prohibidos específicos
-...
-
-## Criterios de aceptación
-...
-
-## Tests obligatorios
-...
-
-## Commit
-...
-
-## Reporte final compacto
-HEAD inicial:
-HEAD final:
-Commit:
-Archivos modificados:
-Tests:
-Push:
-Working tree:
-Desviaciones:
-```
-
-## 8. Reporte final estándar compacto
-
-Usar este formato por defecto, salvo que la WO pida más detalle:
-
-```text
-HEAD inicial:
-HEAD final:
-Commit:
-Archivos modificados:
-Tests:
-Push:
-Working tree:
-Desviaciones:
-```
-
-## 9. Uso recomendado a partir de WO7D
-
-A partir de WO7D, los prompts operativos deben:
-
-- referenciar este protocolo
-- evitar repetir todo el contexto histórico salvo que afecte a la WO concreta
-- declarar solo las restricciones o comprobaciones adicionales que difieran del protocolo base
-
-Esto permite prompts más compactos sin perder controles de rama, diff, validación ni gobierno clínico-técnico.
+Commit, issue, push, PR y merge son acciones separadas y solo se ejecutan con autorización concreta. Este suplemento no prescribe comandos ni destinos de push.

@@ -2,25 +2,26 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-16 |
+| Última actualización | 2026-07-18 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada de referencia | `origin/preview/demo-lunes-wo4-20260614` |
-| Rama de trabajo de este índice | `work/hermes/WO-DOC-FH-AUDIT-IMPLEMENTATION-RECONCILIATION-POST-PR29-01-20260716` |
+| Estado de ref y HEAD | Verificar en GitHub antes de cada WO; este índice no fija una rama de trabajo viva. |
 
 > Este índice es una guía de navegación. No sustituye a los documentos que referencia; su función es orientar sobre qué documento consultar para cada propósito y qué estado tiene.
 
 ---
 
-## 1. Lectura recomendada para incorporarse al proyecto (máximo 5 documentos)
+## 1. Lectura recomendada para incorporarse al proyecto (máximo 7 documentos)
 
 1. [`README.md`](/README.md) — visión general, contexto y alcance del proyecto.
 2. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — estado post-reunión SES, fases propuestas, decisiones cerradas y pendientes.
-3. [`AGENTS.md`](/AGENTS.md) — reglas operativas para agentes, ramas protegidas, datos prohibidos y definición de done.
-4. [`docs/ops/AI_HARNESS_PROMUEVE_V1.md`](/docs/ops/AI_HARNESS_PROMUEVE_V1.md) — arnés OpenCode mínimo, agentes, modelos y procedimiento de work orders.
-4. [`ARCHITECTURE.md`](/ARCHITECTURE.md) — arquitectura técnica e implementación actual (estado post-SES).
+3. [`AGENTS.md`](/AGENTS.md) — contrato operativo breve: fuentes de verdad, riesgo, seguridad, Git y gates de cierre.
+4. [`docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](/docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md) — protocolo canónico global de evidencia pre-commit, revisión, commit y publicación.
 5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — tablero de work orders y estado de ejecución.
+6. [`docs/ops/AI_HARNESS_PROMUEVE_V1.md`](/docs/ops/AI_HARNESS_PROMUEVE_V1.md) — arnés OpenCode mínimo y procedimiento trazable de WOs; la base se verifica en cada ejecución.
+7. [`ARCHITECTURE.md`](/ARCHITECTURE.md) — arquitectura técnica e implementación actual (estado post-SES).
 
-> Después de estos cinco, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → manifiesto de ramas y documentos v0.3–v0.5; descubrimiento → guía Badajoz/Mérida.
+> Después de estos siete, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → manifiesto de ramas y documentos v0.3–v0.5; descubrimiento → guía Badajoz/Mérida.
 
 ---
 
@@ -49,7 +50,11 @@
 
 | Documento | Estado | Sirve para | No sirve para |
 |---|---|---|---|
-| [`AGENTS.md`](/AGENTS.md) | Vigente | Gobernanza operativa de agentes, ramas, commits, DoD. | Decisiones clínicas ni arquitectura funcional detallada. |
+| [`AGENTS.md`](/AGENTS.md) | Vigente | Contrato operativo breve, clasificación de riesgo, seguridad, Git y gates de ejecución. | Especificación completa del paquete de evidencia ni decisiones clínicas. |
+| [`docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](/docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md) | Canónico global | Preparación, cierre, paquete pre/post-commit, handoff, revisión y publicación de todas las WOs PROMueve. | Sustituir el objetivo, alcance o controles clínicos de una WO concreta. |
+| [`docs/ops/AI_HARNESS_PROMUEVE_V1.md`](/docs/ops/AI_HARNESS_PROMUEVE_V1.md) | Vigente | Agentes, modelos y procedimiento trazable del arnés; verificación de base por WO. | Configuración clínica, autorización de commit o estado publicado. |
+| [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md) | Vigente | Redactar WOs con riesgo razonado, base verificable, diagnóstico, RED/GREEN, QA y política de revisión. | Evidencia de una ejecución real. |
+| [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md) | Vigente | Estructurar `REPORT.md` pre-commit sin presuponer commit ni publicación. | Sustituir `DIFF.patch`, `TESTS.log` o el worktree. |
 | [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md) | Parcial | Marco operativo completo, pipeline v1. | Modelo operativo v2 Cora-Hermes (parcialmente reflejado en `AGENTS.md`). |
 | [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Vigente | Decisiones cerradas DEC-001..019. | Aprobación de tags DEC-002 (pendientes) ni decisiones post-SES. |
 | [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Parcial | Visión funcional de Reuma v2 y planificación inicial. | Estado real de Farmacia post-demo (aún describe Farmacia como no implementado). |
@@ -64,7 +69,7 @@
 | [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) | Parcial / log operativo | Historial operativo de ramas y WOs Farmacia. | Roadmap ejecutivo ni documento canónico de arquitectura. |
 | [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) | Vigente (preview) | Contrato de pautas Farmacia en preview. | Contrato clínico definitivo sin validación. |
 | [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md) | Vigente (preview) | Contrato de tratamiento Farmacia en preview. | Contrato clínico definitivo sin validación. |
-| [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md) | Vigente | Protocolo de ejecución de WOs Farmacia. | Otros módulos ni decisiones de alcance. |
+| [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md) | Suplemento vigente | Controles clínicos y técnicos específicos para WOs de Farmacia. | Cierre o handoff paralelo al protocolo global; otros módulos. |
 
 ---
 
@@ -76,10 +81,11 @@
 - [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md)
 - [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md)
 - [`AGENTS.md`](/AGENTS.md)
+- [`docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](/docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md) — fuente canónica global para cierre, evidencia, revisión, commit y publicación de WOs.
 - [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md)
 - [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md)
-- [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md)
-- [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md)
+- [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md) — plantilla de WO con riesgo razonado, base/SHA, diagnóstico, RED/GREEN, QA y reconciliación.
+- [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md) — plantilla de evidencia pre-commit que distingue diff local, commit y publicación.
 - [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md)
 - [`docs/ops/BRANCH_AND_DECISION_STATUS_20260606.md`](/docs/ops/BRANCH_AND_DECISION_STATUS_20260606.md)
 - [`docs/ops/BRANCH_CLEANUP_POLICY.md`](/docs/ops/BRANCH_CLEANUP_POLICY.md)
@@ -145,10 +151,12 @@
 
 ### Gobernanza KairOS / Hermes y operativa
 - [`AGENTS.md`](/AGENTS.md)
+- [`docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](/docs/ops/WO_HANDOFF_AND_REVIEW_PROTOCOL.md)
+- [`docs/ops/AI_HARNESS_PROMUEVE_V1.md`](/docs/ops/AI_HARNESS_PROMUEVE_V1.md) — procedimiento y trazabilidad del arnés sin SHA vivo permanente.
 - [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md)
 - [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md)
-- [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md)
-- [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md)
+- [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md) — preparación contractual y gates de cada WO.
+- [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md) — reporte pre-commit y visibilidad de evidencia.
 - [`docs/ops/NIGHTLY_GREEN_BATCH_REPORT_20260606.md`](/docs/ops/NIGHTLY_GREEN_BATCH_REPORT_20260606.md)
 
 ### Contratos y plantillas
