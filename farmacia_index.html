@@ -159,10 +159,17 @@
 </section>
 
 
+<section class="dashboard-card" id="enfermeriaBoard">
+    <h2 class="section-title enfermeria-board__heading"><i class="fas fa-user-nurse"></i> Solicitudes Enfermería / Inicio biológico (<span id="enfermeriaBoardCount">0</span>)</h2>
+    <p class="validation-module__intro">Solicitudes procedentes de Enfermería, agrupadas por estado prebiológico explícito.</p>
+    <p class="empty-state hidden" id="enfermeriaBoardEmpty">No hay solicitudes de Enfermería / Inicio biológico.</p>
+    <div id="enfermeriaBoardCards" aria-live="polite"></div>
+</section>
+
 <section class="dashboard-card" id="pendingValidationBoard">
-    <h2 class="section-title"><i class="fas fa-user-clock"></i> Pacientes pendientes de validación farmacéutica</h2>
-    <p class="validation-module__intro">Bandeja operativa alimentada por Excel de Enfermería, Excel de Farmacia y demo fallback.</p>
-    <p class="empty-state hidden" id="pendingValidationEmpty">No hay pacientes pendientes de validación farmacéutica.</p>
+    <h2 class="section-title"><i class="fas fa-user-clock"></i> Solicitudes generales pendientes de validación (<span id="pendingValidationBoardCount">0</span>)</h2>
+    <p class="validation-module__intro">Solicitudes pendientes que no proceden de Enfermería / Inicio biológico.</p>
+    <p class="empty-state hidden" id="pendingValidationEmpty">No hay solicitudes generales pendientes de validación.</p>
     <div class="pending-validation-grid" id="pendingValidationCards" aria-live="polite"></div>
 </section>
 
