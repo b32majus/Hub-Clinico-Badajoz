@@ -64,6 +64,14 @@
 | **WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01** | Hacer explícita la precarga de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `905ddf07091e25be4ad85730b37c3580cd6f4826` → merge `1d8aac746ddfe7c72a5dd71636a8fc67af180571` (PR #26) | Precarga sintética y no inferencia; no integración real ni contrato clínico definitivo. |
 | **WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01** | Simplificar la UI funcional de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `51e1bf04fa60a9c8a66246abc5104da0e569da3a` → merge `58e59b1143da5fbe57af4d48b7f143b2f7d67f8a` (PR #27) | Limpieza mínima; no cierra multifármaco, renovación, catálogos ni el contrato funcional completo. |
 | **WO-FH-SEGUIMIENTO-FIRST-SEARCH-CONFIRMATION-FIX-01** | Evitar confirmación falsa en la primera búsqueda de Seguimiento | ✅ Merged | `fix/fh-seguimiento-first-search-confirmation-20260715` → `preview/demo-lunes-wo4-20260614` | `f1592bed5ce3adc853a40b4b644710904b1c6fca` → merge `84a44bbb7deec46a6b91fd8e2c08e6b264f80b9e` (PR #29) | Corrige el valor neutral `Demo` sin desproteger datos clínicos manuales; no cierra el hallazgo multifármaco ni la frontera Validación/Seguimiento. |
+| **WO-DOC-FH-AUDIT-IMPLEMENTATION-RECONCILIATION-POST-PR29-01** | Reconciliar auditoría de implementación post-PR29 | ✅ Merged | `work/hermes/WO-DOC-FH-AUDIT-IMPLEMENTATION-RECONCILIATION-POST-PR29-01-20260716` → `preview/demo-lunes-wo4-20260614` | `22811bec68bd04a41bfbbafa0dcffaec98ab9167` → merge `9b7ad5bdd8926ef6e94257a7c0688f72cf08eaf3` (PR #31) | Actualiza la auditoría y el estado de implementación; no acredita piloto ni contratos clínicos. |
+| **WO-FH-WO8-CANONICAL-DATA-SOURCE-HARDCODED-REMOVAL-01** | Sustituir pacientes demo legacy por fuente canónica WO8 | ✅ Merged | `work/hermes/WO-FH-WO8-CANONICAL-DATA-SOURCE-HARDCODED-REMOVAL-01-20260716` → `preview/demo-lunes-wo4-20260614` | `8976cba6828b682115452da1c97766053126ed36` → merge `6d86025a8c973d0e9e11b3811b525368972795b7` (PR #32) | Reduce hardcoded legacy con fuente sintética WO8; no introduce datos reales ni cierra FH-R05/FH-R08 por sí solo. |
+| **WO-TOOLING-PROMUEVE-OPENCODE-HARNESS-V1** | Establecer arnés OpenCode PROMueve | ✅ Merged | `tooling/promueve-opencode-harness-v1-20260717` → `preview/demo-lunes-wo4-20260614` | `3bbef084a56bcb5d565422770f93d2ace251ee4c` → merge `674f3736e1203755203a33682a96fd7558469eb1` (PR #34) | Gobernanza y tooling operativo; no funcionalidad clínica. |
+| **WO-TOOLING-PROMUEVE-GPT-PROFILE** | Añadir perfil OpenAI PROMueve | ✅ Merged | `tooling/promueve-gpt-profile-20260717` → `preview/demo-lunes-wo4-20260614` | `3a3b6e3977c7b0adf7011b67e9e7000e34450e9d` → merge `0d4bddc99213e15a3b20cf73bfc12bd1bb520cd2` (PR #36) | Configuración de tooling; no funcionalidad clínica ni cambio de arquitectura. |
+| **WO-FH-DASHBOARD-UNDEFINED-SORT-GUARD-PILOT-01** | Proteger ordenación de actividad ante fechas undefined | ✅ Merged | `work/fh-dashboard-undefined-sort-guard-pilot-20260717` → `preview/demo-lunes-wo4-20260614` | `d840853936424e0895b999305a30ac6e50895d6f` → merge `6b3b1836d15cd5c0cd3fff546edc85b77311301b` (PR #38) | Resuelve defensivamente el defecto de ordenación observado; no acredita contrato longitudinal ni piloto. |
+| **WO-FH-VALIDATION-FOLLOWUP-BOUNDARY-GUARD-01** | Proteger la frontera Validación → Seguimiento | ✅ Merged | `work/fh-validation-followup-boundary-guard-20260717` → `preview/demo-lunes-wo4-20260614` | `3f447d1d5192fdb634c7a26784d7a976f76f36fb` → merge `a6b15353a2e5a813818695642a07f0d27298904e` (PR #40) | Resuelve FH-R06 en el alcance implementado; mantiene pendiente el modelo multifármaco/líneas. |
+| **WO-DOC-WO-HANDOFF-REVIEW-PROTOCOL-01** | Establecer protocolo de handoff y revisión de WOs | ✅ Merged | `work/doc-wo-handoff-review-protocol-20260718` → `preview/demo-lunes-wo4-20260614` | `1e69e5437d898084e051892dcf4c4eca45e841e8` → merge `345415be4b095c11104f91972bf649e91c8a39bb` (PR #43) | Gobernanza operativa publicada; no es funcionalidad clínica. |
+| **WO-FH-CATALOG-SNAPSHOT-CONTEXT-NONINFERENCE-01** | Acotar snapshots de catálogo y evitar inferencia clínica | ✅ Merged | `work/fh-catalog-snapshot-context-noninference-20260718` → `preview/demo-lunes-wo4-20260614` | `f80e8bc94e3c84676e9311dfc1434e599dcc52a1` → merge `776e0e6cdee6930eb7382ca5bc57a544e42d0075` (PR #45) | Frontera catálogo/tratamiento publicada y no inferencial; no tuvo QA visual de navegador y no acredita piloto. |
 
 ---
 
@@ -118,7 +126,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 39 (incluye PR #21-#27 y PR #29; documentación y alcances funcionales parciales no equivalen a piloto) |
+| ✅ Merged | 40 (filas reales; incluye PR #21-#27, PR #29, #31, #32, #34, #36, #38, #40, #43 y #45; documentación, tooling y alcances funcionales parciales no equivalen a piloto) |
 | 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -128,4 +136,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 63 work orders / preflights gestionadas.
+**Total:** 64 work orders / preflights gestionadas (filas reales).
