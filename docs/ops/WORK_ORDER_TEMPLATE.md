@@ -5,6 +5,7 @@
 **Fecha:** YYYY-MM-DD
 **Autor:** Sil / Cora
 **Riesgo:** 🟢 Verde / 🟡 Amarillo / 🔴 Rojo
+**Razón del nivel de riesgo:** Factor concreto que determina el nivel y sus gates
 
 ---
 
@@ -16,10 +17,11 @@ Una frase clara que describa qué se va a hacer.
 
 Máximo 5 líneas. Por qué es necesario, qué lo motiva. Sin historia ni arquitectura.
 
-## Rama base
+## Base autorizada
 
 ```
-feature/reuma-v2-prebiologico-fh-les-sjogren
+Ref: <rama-o-tag-autorizado>
+SHA remoto esperado: <sha-completo-verificable>
 ```
 
 ## Rama de trabajo
@@ -35,6 +37,20 @@ Lista de documentos que Hermes debe leer antes de ejecutar:
 - `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`
 - `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`
 - ...
+
+Incluir [`WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](WO_HANDOFF_AND_REVIEW_PROTOCOL.md) para toda WO con cambios.
+
+## Diagnóstico previo (obligatorio para ámbar/rojo)
+
+- Productores:
+- Consumidores:
+- Callers:
+- Persistencia y rerenders:
+- Importación/exportación:
+- Contrato publicado afectado:
+- Compatibilidad legacy:
+- Decisiones humanas pendientes:
+- Rutas previsiblemente afectadas:
 
 ## Alcance
 
@@ -64,19 +80,41 @@ Checklist verificable. Todo debe poder comprobarse con comandos o lectura direct
 
 Si aplica, describir qué pruebas deben pasar antes de dar la tarea por completada.
 
-## Política de commit/push
+### Plan RED/GREEN
+
+- RED reproducible esperado:
+- Cambio mínimo para GREEN:
+- Regresiones que deben permanecer GREEN:
+
+### QA soportada
+
+Indicar interacciones soportadas, QA manual, navegador, harness o checks automatizados. No usar estados DOM imposibles como evidencia.
+
+## Paquete de cierre esperado
+
+- Ruta externa: `/srv/kairos-lab/outbox/reports/<WO-ID>/<UTC-TIMESTAMP>/`
+- Contenido mínimo: `REPORT.md`, `DIFF.patch`, `TESTS.log`, `MANIFEST.sha256`.
+- Requisitos adicionales de evidencia:
+- Captura literal de checks desde su ejecución: sí / no aplicable.
+
+## Política de revisión, commit y publicación
 
 - Formato del mensaje de commit
-- ¿Push automático o no?
-- ¿Crear PR?
+- Revisión proporcional (verde) o independiente read-only (ámbar/rojo)
+- Quién puede autorizar el commit después del paquete
+- Estado inicial del commit: no autorizado / pendiente / autorizado
+- Autorizaciones separadas para issue, push, PR y merge
+- Reconciliación documental post-merge esperada
 
 ## Condiciones de parada
 
 Situaciones en las que Hermes debe detenerse y escalar a Sil/Cora sin intentar resolver.
 
+Aplicar siempre la regla de segundo bloqueo: si un segundo bloqueo comparte raíz conceptual con el primero, detener la implementación, congelar el worktree, generar evidencia y abrir una WO diagnóstica o contractual.
+
 ## Reporte final esperado
 
-Estructura del reporte que Hermes debe devolver tras la ejecución.
+Seguir [`WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](WO_HANDOFF_AND_REVIEW_PROTOCOL.md) y [`HERMES_EXECUTION_REPORT_TEMPLATE.md`](HERMES_EXECUTION_REPORT_TEMPLATE.md). Indicar el veredicto de build permitido y la ruta del paquete; el reporte no presupone commit.
 
 ## Notas adicionales
 

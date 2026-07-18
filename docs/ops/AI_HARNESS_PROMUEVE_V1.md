@@ -5,7 +5,7 @@
 - Proyecto: `Hub-Clinico-Badajoz`
 - Proyecto Engram: `hub-clinico-badajoz`
 - Rama de referencia: `preview/demo-lunes-wo4-20260614`
-- Base validada: `6d86025a8c973d0e9e11b3811b525368972795b7`
+- Base: se verifica en cada WO contra la ref y el SHA autorizados; ningún SHA vivo se conserva aquí como verdad permanente.
 - Estado: tooling versionado, pendiente de revisión humana antes de la primera WO piloto.
 
 ## Propósito
@@ -72,9 +72,9 @@ El repositorio trabaja con contratos clínicos y datos sintéticos. Nunca inferi
 
 ## GitHub y Git
 
-GitHub y la documentación versionada son la fuente de verdad. Antes de escribir se confirma repositorio, rama, HEAD y worktree. No se toca `main`, Reuma ni HOLD sin autorización. No hay push, PR, merge ni borrado de ramas en esta versión.
+La WO, la ref/HEAD autorizada, GitHub y la documentación versionada son las fuentes de verdad según el orden del [protocolo canónico de handoff y revisión](WO_HANDOFF_AND_REVIEW_PROTOCOL.md). Antes de escribir se confirma repositorio, rama, HEAD y worktree, y se verifica la base declarada por cada WO. No se toca `main`, Reuma ni HOLD sin autorización. No hay push, PR, merge ni borrado de ramas en esta versión.
 
-Los commits locales deben ser atómicos y revisables. Cada cierre incluye diff, checks, riesgos y acciones Git.
+Los commits locales deben ser atómicos y revisables. Un diff local, un commit local y un estado publicado son estados distintos.
 
 ## Engram
 
@@ -101,13 +101,17 @@ No se añaden proveedores, plugins, dependencias, automatizaciones persistentes 
 ## Procedimiento de una WO
 
 1. Leer la WO y las fuentes indicadas.
-2. Ejecutar preflight y confirmar alcance.
-3. Seleccionar `build` o `promueve-critical` según el nivel y la capacidad requerida.
-4. Implementar únicamente los archivos autorizados.
-5. Ejecutar checks y revisar diff.
-6. Solicitar `/wo-review` cuando la WO lo autorice o el riesgo lo justifique.
-7. Preparar commit local solo si está autorizado.
-8. Entregar reporte sin push ni PR.
+2. Ejecutar preflight, verificar la base ref/SHA y confirmar alcance.
+3. Clasificar el riesgo y, para ámbar/rojo, completar el diagnóstico read-only de productores, consumidores, callers, persistencia, rerenders, import/export, contratos, legacy y rutas afectadas.
+4. Seleccionar `build` o `promueve-critical` según el nivel y la capacidad requerida.
+5. Implementar únicamente los archivos autorizados y aplicar la regla de parada tras el segundo bloqueo conceptual.
+6. Ejecutar checks capturando desde su ejecución stdout, stderr y exit code; revisar el diff completo sin stage.
+7. Crear el paquete pre-commit externo (`REPORT.md`, `DIFF.patch`, `TESTS.log`, `MANIFEST.sha256`) conforme a [`WO_HANDOFF_AND_REVIEW_PROTOCOL.md`](WO_HANDOFF_AND_REVIEW_PROTOCOL.md).
+8. Obtener revisión proporcional en verde e independiente read-only en ámbar/rojo.
+9. Preparar un commit local solo tras revisión y autorización posteriores al paquete.
+10. Crear el paquete post-commit sin modificar el pre-commit revisado.
+11. Tratar issue, push, PR, merge y publicación como acciones separadas que requieren autorización concreta.
+12. Tras merge, reconciliar `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y documentos vivos, mediante WO separada si corresponde.
 
 ## Cambio de modelos
 

@@ -1,87 +1,132 @@
 # Execution Report — Hub Clínico Badajoz
 
-**WO-ID:** `WO-NNN`
-**WO Título:** Título de la work order
-**Ejecutor:** Hermes PM
-**Fecha:** YYYY-MM-DD HH:MM UTC
-**Ejecución:** diurna / nocturna
-**Estado:** completed / blocked / failed
+Esta plantilla materializa `REPORT.md` según el [protocolo canónico de handoff y revisión](WO_HANDOFF_AND_REVIEW_PROTOCOL.md). Describe evidencia pre-commit y no presupone que exista un commit.
 
----
+## Metadatos
 
-## Rama de trabajo
+| Campo | Valor |
+|---|---|
+| WO-ID / título | `<WO-ID>` — `<título>` |
+| Fecha UTC | `<YYYY-MM-DDTHH:MM:SSZ>` |
+| Repositorio | `<ruta y remoto verificados>` |
+| Worktree | `<ruta absoluta>` |
+| Rama | `<rama>` |
+| Base ref / SHA esperado | `<ref>` / `<sha>` |
+| HEAD observado | `<sha>` |
+| Ejecutor / perfil / modelo | `<valores verificables o no verificable>` |
+| Riesgo y razón | `verde / ámbar / rojo` — `<razón>` |
+| Package path | `/srv/kairos-lab/outbox/reports/<WO-ID>/<UTC-TIMESTAMP>/` |
 
+## Fuentes realmente leídas
+
+- `<WO o instrucción>`
+- `<ruta/ref verificada>`
+
+## Objetivo y contrato funcional
+
+Describir el resultado exigido y las invariantes que no pueden cambiar.
+
+## Alcance
+
+- `<incluido>`
+
+## NO TOCA
+
+- `<fuera de alcance>`
+
+## Diagnóstico y flujo
+
+| Tipo | Elementos verificados |
+|---|---|
+| Productores | `<símbolos/rutas>` |
+| Consumidores | `<símbolos/rutas>` |
+| Callers | `<flujo>` |
+| Persistencia / rerenders | `<impacto o no aplica>` |
+| Importación / exportación | `<impacto o no aplica>` |
+| Contratos publicados | `<afectados o no aplica>` |
+| Compatibilidad legacy | `<tratamiento y evidencia>` |
+
+## Estado del diff real
+
+| Ruta | Estado Git | Tracked/untracked | Explicación semántica |
+|---|---|---|---|
+| `<ruta>` | `modificada/nueva/eliminada/renombrada` | `<tipo>` | `<por qué cambió>` |
+
+Indicar expresamente archivos untracked, eliminados, renombrados y binarios. `DIFF.patch` debe incluirlos sin hacer stage.
+
+## RED
+
+| Timestamp UTC | Comando | Exit code | Fallo reproducido |
+|---|---|---|---|
+| `<hora>` | `<comando>` | `<código>` | `<evidencia>` |
+
+## GREEN
+
+| Timestamp UTC | Comando | Exit code | Resultado |
+|---|---|---|---|
+| `<hora>` | `<comando>` | `<código>` | `<evidencia>` |
+
+La salida literal, incluidos stdout, stderr, warnings y errores posteriores a assertions, vive en `TESTS.log`. Si no se preservó, declararlo sin reconstruirla.
+
+## QA manual y automatizada
+
+- Interacciones soportadas ejecutadas:
+- QA de navegador ejecutada y evidencia:
+- Checks automatizados:
+- QA no ejecutada y motivo:
+
+## Compatibilidad histórica
+
+Describir compatibilidad legacy, degradaciones deliberadas y cobertura disponible.
+
+## Riesgos y limitaciones
+
+- `<riesgo o limitación residual>`
+
+## Decisiones humanas pendientes
+
+- `<decisión, responsable e impacto>`
+
+## Estado Git literal
+
+```text
+<salida literal de git status --short --branch>
 ```
-work/hermes/<paquete>-<descripcion-corta>
-```
 
-## Commit generado
+## Acciones Git
 
-```
-<commit-sha> <mensaje del commit>
-```
+| Acción | Estado | Evidencia |
+|---|---|---|
+| Stage | no realizado / realizado | `<detalle>` |
+| Commit | no autorizado / pendiente / realizado | `<SHA y mensaje solo si existe>` |
+| Push | no autorizado / pendiente / realizado | `<ref remota solo si existe>` |
+| Issue / PR / merge | no autorizado / pendiente / realizado | `<URL/SHA solo si existe>` |
+| Rebase / amend / limpieza | no realizado | `<detalle si aplica>` |
 
-## Archivos creados/modificados
+## Visibilidad y publicación
 
-- `ruta/al/archivo` — creado/modificado — descripción breve
-- ...
+- OpenCode observó: `<worktree, diff, checks>`.
+- Evidencia entregada a Cora/Sil: `<artefactos>`.
+- GitHub verificado: `<rama/commit/PR/merge o no publicado>`.
+- Estado: `diff local / commit local / rama remota / PR / merge publicado`.
 
-## Subtareas ejecutadas
+## Documentación viva
 
-Listar cada subtarea delegada al Builder y su resultado individual.
+- Modificada por esta WO:
+- Pendiente de reconciliación post-merge:
 
-| Subtarea | Builder | Modelo | Estado | Intentos |
-|---|---|---|---|---|
-| 1 | OpenCode | modelo usado | ok/failed | N |
-| 2 | OpenCode | modelo usado | ok/failed | N |
+## Condiciones de parada y desviaciones
 
-## Builder / Modelo usado
+- Bloqueos encontrados e intentos acotados:
+- Regla de segundo bloqueo activada: sí / no.
+- Desviaciones de la WO: ninguna / `<detalle>`.
 
-Indicar qué builder se usó (OpenCode CLI, Claude Code, etc.) y qué modelo concreto.
+## Veredicto
 
-## Intentos de corrección
+Elegir exactamente uno:
 
-Si alguna subtarea requirió corrección, detallar:
-- Subtarea, motivo de corrección, resultado tras corrección.
+- **APTO PARA REVISIÓN**
+- **BLOQUEADO**
+- **IMPLEMENTACIÓN EXPERIMENTAL CONGELADA**
 
-## Desviaciones del plan
-
-Describir cualquier diferencia entre lo planeado en la work order y lo realmente ejecutado. Si no hay desviaciones, indicar "Ninguna".
-
-## Riesgos detectados
-
-Listar riesgos identificados durante la ejecución que puedan afectar a la calidad, seguridad o planificación futura.
-
-## Condiciones de parada activadas
-
-Indicar si se activó alguna condición de parada de las definidas en la work order. Si no, indicar "Ninguna".
-
-## Verificaciones realizadas
-
-- [ ] `git status --short` limpio (solo archivos esperados)
-- [ ] `git diff --stat` muestra solo los cambios previstos
-- [ ] No hay datos reales, secretos ni credenciales
-- [ ] Criterios de aceptación cumplidos (listar cada uno)
-- [ ] Pruebas ejecutadas (si aplica)
-
-## Incidencias
-
-Describir cualquier problema encontrado durante la ejecución y cómo se resolvió (o por qué no).
-
-## Decisiones requeridas por Sil/Cora
-
-Indicar si hace falta intervención humana, qué se necesita decidir y qué impacto tiene en el proyecto.
-
-## Siguiente acción recomendada
-
-Indicar qué debería pasar después: revisión, siguiente work order, corrección, pausa, etc.
-
-## Recomendación final
-
-- ✅ **ready_for_review** — todo correcto, pendiente de revisión humana
-- ⚠️ **needs_human_decision** — requiere decisión antes de continuar
-- ❌ **do_not_merge** — no mergear sin correcciones
-
----
-
-*Reporte generado automáticamente por Hermes PM*
+Para riesgo ámbar o rojo, `APTO PARA REVISIÓN` exige todavía revisión independiente y autorización humana posterior antes de commit.
