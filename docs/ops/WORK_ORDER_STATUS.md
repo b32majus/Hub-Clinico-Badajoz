@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-16
+**Última actualización:** 2026-07-19
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -72,6 +72,9 @@
 | **WO-FH-VALIDATION-FOLLOWUP-BOUNDARY-GUARD-01** | Proteger la frontera Validación → Seguimiento | ✅ Merged | `work/fh-validation-followup-boundary-guard-20260717` → `preview/demo-lunes-wo4-20260614` | `3f447d1d5192fdb634c7a26784d7a976f76f36fb` → merge `a6b15353a2e5a813818695642a07f0d27298904e` (PR #40) | Resuelve FH-R06 en el alcance implementado; mantiene pendiente el modelo multifármaco/líneas. |
 | **WO-DOC-WO-HANDOFF-REVIEW-PROTOCOL-01** | Establecer protocolo de handoff y revisión de WOs | ✅ Merged | `work/doc-wo-handoff-review-protocol-20260718` → `preview/demo-lunes-wo4-20260614` | `1e69e5437d898084e051892dcf4c4eca45e841e8` → merge `345415be4b095c11104f91972bf649e91c8a39bb` (PR #43) | Gobernanza operativa publicada; no es funcionalidad clínica. |
 | **WO-FH-CATALOG-SNAPSHOT-CONTEXT-NONINFERENCE-01** | Acotar snapshots de catálogo y evitar inferencia clínica | ✅ Merged | `work/fh-catalog-snapshot-context-noninference-20260718` → `preview/demo-lunes-wo4-20260614` | `f80e8bc94e3c84676e9311dfc1434e599dcc52a1` → merge `776e0e6cdee6930eb7382ca5bc57a544e42d0075` (PR #45) | Frontera catálogo/tratamiento publicada y no inferencial; no tuvo QA visual de navegador y no acredita piloto. |
+| **PR #47** | Reconciliar estado documental hasta PR #45 | ✅ Merged | `work/doc-post-merge-reconciliation-pr45-20260718` → `preview/demo-lunes-wo4-20260614` | `743c07cd9a3120a541480c83fbb395e5a6d5b351` → merge `2286029ad731fb80cc77222d841f4d11483d5542` | Reconciliación documental de status, índice y auditoría; no añade funcionalidad clínica ni acredita piloto. |
+| **WO-FH-INICIO-DUAL-TRAY-SEMANTICS-01** | Aclarar semántica de bandejas de Inicio | ✅ Merged | `work/fh-inicio-dual-tray-semantics-20260718` → `preview/demo-lunes-wo4-20260614` | `53a330eb4abf33bea171df8ba5c07e1bc7b79473` → merge `e1e1b77c4d3c631600dd349e84a33eb009e655f8` (PR #49) | Resuelve FH-R08 en alcance mínimo de demo: dos bandejas persistentes/excluyentes, estados explícitos, contadores, estados vacíos y guardas de rerender; 21/21 y smoke 48/48. No persistencia ni piloto. |
+| **WO-FH-FOLLOWUP-HISTORICAL-PAYLOAD-COVERAGE-01** | Cubrir payload histórico de Seguimiento | ✅ Merged | `work/hermes/WO-FH-FOLLOWUP-HISTORICAL-PAYLOAD-COVERAGE-01-20260718` → `preview/demo-lunes-wo4-20260614` | `1bf5ebdaf302acb476fc06ef958cfffd391e67c6` → merge `7f7b7331bb89a3a7e70e450c5ee2621ed2cdb762` (PR #50) | Test-only: cobertura histórica 22/22 en VM/DOM simulado; no modifica producción, no tuvo QA de navegador y no acredita piloto. Issue #41 cerrado como completado. |
 
 ---
 
@@ -126,7 +129,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 40 (filas reales; incluye PR #21-#27, PR #29, #31, #32, #34, #36, #38, #40, #43 y #45; documentación, tooling y alcances funcionales parciales no equivalen a piloto) |
+| ✅ Merged | 43 (filas reales; incluye PR #21-#27, PR #29, #31, #32, #34, #36, #38, #40, #43, #45, #47, #49 y #50; documentación, tooling y alcances funcionales parciales no equivalen a piloto) |
 | 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -136,4 +139,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 64 work orders / preflights gestionadas (filas reales).
+**Total:** 67 work orders / preflights gestionadas (filas reales).
