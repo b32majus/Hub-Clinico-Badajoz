@@ -4,8 +4,21 @@
 **Título:** Descriptivo y corto
 **Fecha:** YYYY-MM-DD
 **Autor:** Sil / Cora
-**Riesgo:** 🟢 Verde / 🟡 Amarillo / 🔴 Rojo
-**Razón del nivel de riesgo:** Factor concreto que determina el nivel y sus gates
+**Riesgo:** Verde / Amarillo / Rojo
+**Factores requeridos y adicionales:** Factores concretos que determinan el nivel y sus gates
+
+## Proporcionalidad
+
+**Obligatorio para:** toda WO ámbar o roja, y para cualquier WO (incluidas verdes) que introduzca dependencia, servicio, capa, persistencia, contrato compartido o infraestructura nuevos.
+
+**Campos mínimos (ámbar/rojo o nuevo factor):**
+- **Factor de riesgo que obliga a esta sección:** (dependencia, capa, persistencia, contrato compartido, infraestructura, ámbito multiarchivo, etc.)
+- **Solución mínima suficiente propuesta:** qué alcance concreto resuelve el riesgo sin sobredimensionar.
+- **Por qué no basta una solución más simple:** justificación de que la solución elegida es la mínima viable, no la máxima disponible.
+- **Modelo y perfil justificados:** qué perfil de modelo activo del harness ejecuta y por qué es el de menor coste capaz para el riesgo.
+
+**Para WOs verdes sin los factores anteriores:** basta una línea:
+`Solución mínima suficiente, sin nuevas dependencias, servicios, infraestructura, capas, persistencia ni contratos compartidos.`
 
 ---
 

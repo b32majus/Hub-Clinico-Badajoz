@@ -33,6 +33,17 @@ Antes de escribir:
 
 Las WOs ámbar y rojas requieren diagnóstico read-only previo de productores, consumidores, callers, persistencia, rerenders, import/export, contratos, legacy, decisiones pendientes y rutas afectadas. No diseñar cambios transversales solo desde el síntoma UI. Rojo requiere además WO diagnóstica o contractual separada y aprobación explícita antes de implementar.
 
+## Proporcionalidad y calidad del cambio
+
+Aplicar siempre la solución mínima suficiente y proporcional al riesgo, evitando overskill, auditorías repetidas, gates sin valor, WOs sobredimensionadas y modelos caros para tareas mecánicas. Cuando la evidencia ya sea suficiente, ejecutar y avanzar.
+
+- **Modelo y perfil proporcionales:** Usar el perfil y modelo activos de menor coste que puedan resolver la tarea con fiabilidad, verificándolos contra el arnés versionado vigente. Escalar capacidad únicamente cuando exista un factor de riesgo o una necesidad demostrada. No fijar nombres concretos de modelos en AGENTS.md ni invocar auditoría de modelo de revisión si la evidencia local ya es suficiente.
+- **Sin capas ni dependencias no solicitadas:** no añadir herramientas, skills, automatismos, infraestructura, servicios, capas de persistencia ni contratos compartidos salvo que la WO los autorice explícitamente.
+- **Fuente única de verdad:** no duplicar reglas, contratos ni protocolos entre documentos. Referenciar la fuente canónica en lugar de copiarla.
+- **Deuda técnica:** jubilar solo la deuda que esta WO genera o deja obsoleta. La deuda heredada se reporta como hallazgo fuera de alcance y no se aborda sin WO separada.
+- **Auditoría suficiente:** detener la revisión cuando la evidencia cubra el riesgo declarado. Una revisión ámbar no escala a roja sin factor nuevo detectado. No repetir auditorías ya superadas.
+- **Abstracciones:** no extraer helpers, componentes ni módulos por mera similitud entre fragmentos. Solo abstraer cuando los fragmentos compartan la misma semántica, deban evolucionar juntos y la abstracción reduzca el riesgo sin ocultar diferencias funcionales o clínicas. No aplicar refactors de estilo personal ni limpieza fuera de alcance.
+
 ## Seguridad clínica
 
 Nunca inferir desde el nombre de un fármaco, CIMA o catálogo:
@@ -52,7 +63,6 @@ Tratamiento solicitado no equivale a tratamiento validado. Los datos ausentes pe
 - Una sugerencia de revisión no cambia el contrato.
 - Un defecto UI solo es válido si se reproduce mediante interacción soportada.
 - No inyectar estados imposibles mediante DOM, campos readonly o campos ocultos.
-- Mantener el proyecto sin herramientas o dependencias nuevas salvo autorización explícita.
 - Ante un primer bloqueo independiente, limitar la corrección al contrato vigente. Ante un segundo bloqueo con la misma raíz conceptual, detener, congelar el worktree, generar evidencia y abrir una WO diagnóstica o contractual; no encadenar parches.
 
 ## Engram
