@@ -2,10 +2,11 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-18 |
+| Última actualización | 2026-07-19 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada de referencia | `origin/preview/demo-lunes-wo4-20260614` |
 | Estado de ref y HEAD | Verificar en GitHub antes de cada WO; este índice no fija una rama de trabajo viva. |
+| Snapshot reconciliado | PR #50 / `7f7b7331bb89a3a7e70e450c5ee2621ed2cdb762`; verificar de nuevo antes de ejecutar otra WO. |
 
 > Este índice es una guía de navegación. No sustituye a los documentos que referencia; su función es orientar sobre qué documento consultar para cada propósito y qué estado tiene.
 
@@ -170,9 +171,10 @@
 - [`docs/AUDITORIA_EXCEL_MAESTRO_V2.md`](/docs/AUDITORIA_EXCEL_MAESTRO_V2.md)
 - [`docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`](/docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md)
 - [`docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md`](/docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md)
+- [`docs/ops/audits/FARMACIA_IMPLEMENTATION_STATUS_POST_PR50_20260719.md`](/docs/ops/audits/FARMACIA_IMPLEMENTATION_STATUS_POST_PR50_20260719.md) — seguimiento vigente y acotado del delta publicado post-PR50: FH-R08 resuelto en alcance mínimo de demo por PR #49; PR #50 añade cobertura histórica sin cambios productivos ni QA de navegador; FH-R05 multifármaco/líneas continúa pendiente.
 - [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md) — auditoría técnica pantalla a pantalla de Farmacia post-PR20; fuente histórica preservada para la reconciliación técnica + Sil, no autoriza implementación o piloto.
 - [`docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md) — revisión funcional/manual de Sil post-PR20 de pantallas Farmacia; complementa y no sustituye la auditoría técnica, y no autoriza implementación ni piloto.
-- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md) — reconciliación técnica + criterio Sil con seguimiento post-PR45 (`reviewed_with_partial_implementation_followup`): FH-R01 resuelto; FH-R02 y FH-R03 resueltos en alcance mínimo de demo; FH-R04 y FH-R09-FH-R11 parcialmente resueltos; FH-R06 resuelto en el alcance implementado por PR #40; FH-R07 resuelto defensivamente por PR #38; FH-R05 y FH-R08 pendientes; FH-R12 y FH-R13 diferidos deliberadamente; FH-R14 solo documentado, no implementado. La frontera catálogo/tratamiento de PR #45 es publicada y no inferencial. No autoriza piloto, backlog ni contratos clínicos.
+- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md) — baseline reconciliada técnica + criterio Sil con seguimiento hasta PR #45 (`reviewed_with_partial_implementation_followup`). Se conserva como auditoría extensa; el delta vigente post-PR50 se registra en `FARMACIA_IMPLEMENTATION_STATUS_POST_PR50_20260719.md`. No autoriza piloto, backlog ni contratos clínicos.
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md)
 - [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md)
 
@@ -220,4 +222,4 @@
 
 ---
 
-*Índice generado en el contexto de `WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713`. No autoriza cambios de código, merges ni integraciones.*
+*Índice generado en el contexto de `WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713` y reconciliado por `WO-DOC-FH-RECONCILIATION-POST-PR50-01`. No autoriza cambios de código, merges ni integraciones.*
