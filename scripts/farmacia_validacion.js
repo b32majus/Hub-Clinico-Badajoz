@@ -5,6 +5,7 @@
     var C = window.FarmaciaCatalog;
     var M = window.FarmaciaValidationModel;
     var P = window.FarmaciaPautasCatalog;
+    var MT = window.FarmaciaMultitreatmentCore;
     var modoActual = null;
     var autocompleteActiveIndex = -1;
     var currentPatient = null;
@@ -922,6 +923,411 @@
             pauta_label: pauta.pauta_label,
             pauta_otro_texto: pauta.pauta_otro_texto
         };
+    }
+
+    var HUB_REGISTRATION_DRAFT_ID = "validation_registration_current_v1";
+    var HUB_REGISTRATION_MESSAGES = {
+        pending: "Solicitud y actuación pendiente registradas. No se ha creado ninguna línea de tratamiento.",
+        denied: "Actuación denegada registrada. No se ha creado ninguna línea de tratamiento.",
+        validated: "Validación registrada. Línea creada como validada y pendiente de inicio.",
+        replay: "Ya registrado en esta sesión",
+        unsupported: "Este tipo de validación todavía no tiene registro estructurado habilitado en la demo."
+    };
+
+    function normalizedSignatureText(value) {
+        return explicitValue(value).toLowerCase().replace(/\s+/g, " ");
+    }
+
+    function signatureOf(value) {
+        var source = JSON.stringify(value);
+        var first = 2166136261;
+        var second = 5381;
+        for (var i = 0; i < source.length; i++) {
+            first ^= source.charCodeAt(i);
+            first = Math.imul(first, 16777619);
+            second = Math.imul(second, 33) ^ source.charCodeAt(i);
+        }
+        return "sig_v1_" + (first >>> 0).toString(36) + "_" + (second >>> 0).toString(36) + "_" + source.length.toString(36);
+    }
+
+    function setHubRegistrationStatus(message) {
+        setText("fhValRegisterHubStatus", message || "");
+    }
+
+    function registrationOrigin(value) {
+        if (value === "manual_farmacia") return "manual_fh_capture";
+        if (value === "excel_enfermeria") return "imported_nursing";
+        return "";
+    }
+
+    function registrationResult() {
+        var value = elementValue("fhValEstado");
+        return ["pending", "validated", "denied"].indexOf(value) !== -1 ? value : "";
+    }
+
+    function requestedMetadata() {
+        if (isManualOrigin()) {
+            return {
+                requested_at: elementValue("fhManualFecha"),
+                justification: elementValue("fhManualJustificacion"),
+                observations: elementValue("fhManualObservaciones")
+            };
+        }
+        if (modoActual === "reuma") {
+            return {
+                requested_at: elementText("fhReumaFecha"),
+                justification: "",
+                observations: ""
+            };
+        }
+        if (modoActual === "digestivo") {
+            return { requested_at: elementValue("fhDigFecha"), justification: "", observations: elementValue("fhDigObservaciones") };
+        }
+        return {
+            requested_at: elementValue("fhDermaFecha"),
+            justification: elementValue("fhDermaJustificacion"),
+            observations: elementValue("fhDermaObservaciones")
+        };
+    }
+
+    function joinedObservations(justification, observations) {
+        var lines = [];
+        if (justification) lines.push("Justificación: " + justification);
+        if (observations) lines.push("Observaciones: " + observations);
+        return lines.join("\n");
+    }
+
+    function readCatalogSnapshotWithoutMutation() {
+        if (C && C.selectedSnapshot) return C.selectedSnapshot;
+        try {
+            var raw = window.sessionStorage && window.sessionStorage.getItem("farmacia_drug_snapshot");
+            return raw ? JSON.parse(raw) : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function catalogValueCompatible(identityValue, explicitValueToCompare) {
+        return comparableDrugName(identityValue) === comparableDrugName(explicitValueToCompare);
+    }
+
+    function catalogSnapshotContextMatches(context, expected) {
+        return ["slot", "paciente_cip", "tratamiento_id", "linea_id"].every(function (key) {
+            return explicitValue(context && context[key]) === explicitValue(expected && expected[key]);
+        });
+    }
+
+    function selectedCatalogIdentity(slot, visibleDrugName, visibleActiveIngredient) {
+        var snapshot = readCatalogSnapshotWithoutMutation();
+        var context = snapshot && snapshot.context;
+        var patientId = selectedCip();
+        if (!snapshot || snapshot.snapshot_kind !== "catalog_selection" || snapshot.snapshot_version !== 1 || !context) return null;
+        if (!catalogSnapshotContextMatches(context, {
+            slot: slot,
+            paciente_cip: patientId,
+            tratamiento_id: "",
+            linea_id: ""
+        })) return null;
+        var snapshotName = explicitValue(snapshot.nombre_snapshot || snapshot.nombre_comercial || snapshot.display_name);
+        if (!snapshotName || comparableDrugName(snapshotName) !== comparableDrugName(visibleDrugName)) return null;
+        var snapshotActiveIngredient = explicitValue(snapshot.principio_activo_snapshot || snapshot.principio_activo);
+        if (snapshotActiveIngredient && visibleActiveIngredient && !catalogValueCompatible(snapshotActiveIngredient, visibleActiveIngredient)) return null;
+        return {
+            selected_drug_id: explicitValue(snapshot.selected_drug_id || snapshot.drug_id),
+            source_type: explicitValue(snapshot.source_type),
+            national_code: explicitValue(snapshot.codigo_nacional_snapshot || snapshot.codigo_nacional),
+            registration_number: explicitValue(snapshot.nregistro_snapshot || snapshot.nregistro),
+            drug_name: snapshotName,
+            active_ingredient: snapshotActiveIngredient
+        };
+    }
+
+    function emptyCatalogIdentity(drugName, activeIngredient) {
+        return {
+            selected_drug_id: "",
+            source_type: "",
+            national_code: "",
+            registration_number: "",
+            drug_name: explicitValue(drugName),
+            active_ingredient: explicitValue(activeIngredient)
+        };
+    }
+
+    function requestedRegistrationInput(patientId, origin) {
+        var fields = readRequestedTreatmentFields();
+        var metadata = requestedMetadata();
+        var catalog = selectedCatalogIdentity("validacion.solicitado", fields.farmaco_nombre, fields.principio_activo) || emptyCatalogIdentity(fields.farmaco_nombre, fields.principio_activo);
+        return {
+            patient_id: patientId,
+            request_type: "new_start",
+            origin: origin,
+            requested_at: metadata.requested_at,
+            professional_demo_id: "",
+            drug: {
+                drug_name: fields.farmaco_nombre,
+                active_ingredient: fields.principio_activo,
+                catalog_identity: catalog,
+                catalog_snapshot: catalog
+            },
+            therapy: {
+                dose_text: fields.dosis,
+                presentation: fields.presentacion,
+                route: fields.via,
+                pauta_codigo: fields.pauta_codigo,
+                pauta_label: fields.pauta_label,
+                pauta_otro_texto: fields.pauta_otro_texto || (!fields.pauta_codigo && !fields.pauta_label ? fields.pauta : "")
+            },
+            observations: joinedObservations(metadata.justification, metadata.observations)
+        };
+    }
+
+    function requestComparable(input, omitCatalogIdentity) {
+        var drug = input && input.drug ? input.drug : {};
+        var therapy = input && input.therapy ? input.therapy : {};
+        var comparable = {
+            patient_id: normalizedSignatureText(input && input.patient_id),
+            request_type: normalizedSignatureText(input && input.request_type),
+            origin: normalizedSignatureText(input && input.origin),
+            requested_at: normalizedSignatureText(input && input.requested_at),
+            drug_name: normalizedSignatureText(drug.drug_name),
+            active_ingredient: normalizedSignatureText(drug.active_ingredient),
+            therapy: {
+                dose_text: normalizedSignatureText(therapy.dose_text),
+                presentation: normalizedSignatureText(therapy.presentation),
+                route: normalizedSignatureText(therapy.route),
+                pauta_codigo: normalizedSignatureText(therapy.pauta_codigo),
+                pauta_label: normalizedSignatureText(therapy.pauta_label),
+                pauta_otro_texto: normalizedSignatureText(therapy.pauta_otro_texto)
+            },
+            observations: normalizedSignatureText(input && input.observations)
+        };
+        if (!omitCatalogIdentity) {
+            var catalog = drug.catalog_identity || {};
+            comparable.catalog_identity = {
+                selected_drug_id: normalizedSignatureText(catalog.selected_drug_id),
+                source_type: normalizedSignatureText(catalog.source_type),
+                national_code: normalizedSignatureText(catalog.national_code),
+                registration_number: normalizedSignatureText(catalog.registration_number),
+                drug_name: normalizedSignatureText(catalog.drug_name),
+                active_ingredient: normalizedSignatureText(catalog.active_ingredient)
+            };
+        }
+        return comparable;
+    }
+
+    function hasExplicitCatalogIdentity(requestInput) {
+        var catalog = requestInput && requestInput.drug && requestInput.drug.catalog_identity;
+        return !!(catalog && ["selected_drug_id", "source_type", "national_code", "registration_number"].some(function (key) {
+            return !!explicitValue(catalog[key]);
+        }));
+    }
+
+    function catalogIdentityMatchesLine(catalog, drugName, activeIngredient) {
+        if (!catalog) return false;
+        return catalogValueCompatible(catalog.drug_name, drugName) && catalogValueCompatible(catalog.active_ingredient, activeIngredient);
+    }
+
+    function lineRegistrationInput(request) {
+        var validated = readValidatedTreatmentFields();
+        var requested = readRequestedTreatmentFields();
+        function preferred(key) { return explicitValue(validated[key]) || explicitValue(requested[key]); }
+        var drugName = preferred("farmaco_nombre");
+        var activeIngredient = preferred("principio_activo");
+        var catalog = selectedCatalogIdentity("validacion.validado", validated.farmaco_nombre, activeIngredient);
+        if (catalog && !catalogIdentityMatchesLine(catalog, drugName, activeIngredient)) catalog = null;
+        if (!catalog && catalogIdentityMatchesLine(request.drug.catalog_identity, drugName, activeIngredient)) catalog = request.drug.catalog_identity;
+        catalog = catalog || emptyCatalogIdentity(drugName, activeIngredient);
+        return {
+            relationship: "primary",
+            catalog_identity: catalog,
+            catalog_snapshot: catalog,
+            drug_name: drugName,
+            active_ingredient: activeIngredient,
+            dose_text: preferred("dosis"),
+            presentation: preferred("presentacion"),
+            route: preferred("via"),
+            pauta_codigo: preferred("pauta_codigo"),
+            pauta_label: preferred("pauta_label"),
+            pauta_otro_texto: preferred("pauta_otro_texto") || explicitValue(request.therapy.pauta_otro_texto),
+            start_date: "",
+            end_date: ""
+        };
+    }
+
+    function validationObservations(result) {
+        var observations = elementValue("fhValObservaciones");
+        var denialReason = result === "denied" ? elementValue("fhValMotivo") : "";
+        if (denialReason) return observations ? observations + "\nMotivo de denegación: " + denialReason : "Motivo de denegación: " + denialReason;
+        return observations;
+    }
+
+    function actSignature(requestSignature, result, lineInput) {
+        var comparable = {
+            request_signature: requestSignature,
+            result: result,
+            observations: normalizedSignatureText(validationObservations(result))
+        };
+        if (result === "validated") {
+            comparable.line = Object.keys(lineInput).reduce(function (out, key) {
+                out[key] = normalizedSignatureText(lineInput[key] && typeof lineInput[key] === "object" ? JSON.stringify(lineInput[key]) : lineInput[key]);
+                return out;
+            }, {});
+        }
+        return signatureOf(comparable);
+    }
+
+    function draftIsExactReplay(patient, draft, requestSignature, lastActSignature, result) {
+        if (!draft || draft.patient_id !== selectedCip() || draft.request_signature !== requestSignature || draft.last_act_signature !== lastActSignature || draft.result !== result) return false;
+        var request = patient.requests[draft.request_id];
+        var act = patient.validation_acts[draft.validation_act_id];
+        if (!request || !act || act.request_id !== request.request_id || act.result !== result) return false;
+        if (result === "validated") return !!(draft.produced_line_id && patient.lines[draft.produced_line_id] && act.produced_line_id === draft.produced_line_id);
+        return !draft.produced_line_id && !act.produced_line_id;
+    }
+
+    function findRequestBySignature(patient, requestSignature) {
+        var ids = Object.keys(patient.requests || {});
+        for (var i = 0; i < ids.length; i++) {
+            var request = patient.requests[ids[i]];
+            if (signatureOf(requestComparable(request)) === requestSignature) return request;
+        }
+        return null;
+    }
+
+    function findRequestForInput(patient, requestInput, requestSignature) {
+        var exact = findRequestBySignature(patient, requestSignature);
+        if (exact || hasExplicitCatalogIdentity(requestInput)) return exact;
+        var visibleSignature = signatureOf(requestComparable(requestInput, true));
+        var draft = patient.drafts[HUB_REGISTRATION_DRAFT_ID];
+        if (draft && patient.requests[draft.request_id] && signatureOf(requestComparable(patient.requests[draft.request_id], true)) === visibleSignature) {
+            return patient.requests[draft.request_id];
+        }
+        var matches = Object.keys(patient.requests).map(function (requestId) { return patient.requests[requestId]; }).filter(function (request) {
+            return signatureOf(requestComparable(request, true)) === visibleSignature;
+        });
+        return matches.length === 1 ? matches[0] : null;
+    }
+
+    function requestAlreadyProducedLine(patient, requestId) {
+        return Object.keys(patient.lines || {}).some(function (lineId) {
+            return patient.lines[lineId].source_request_id === requestId;
+        });
+    }
+
+    function registrationError(message) {
+        setHubRegistrationStatus(message);
+        return { ok: false, message: message };
+    }
+
+    function registerValidationInHub() {
+        var originValue = currentOrigenEntradaValue();
+        var origin = registrationOrigin(originValue);
+        var type = elementValue("fhTipoValidacion");
+        var patientId = selectedCip();
+        var result = registrationResult();
+        if (!originValue) return registrationError("Seleccione un origen de entrada antes de registrar.");
+        if (!origin) return registrationError("Este origen todavía no tiene registro estructurado habilitado en la demo.");
+        if (!type) return registrationError("Seleccione un tipo de validación antes de registrar.");
+        if (type !== "inicio_nuevo") return registrationError(HUB_REGISTRATION_MESSAGES.unsupported);
+        if (!patientId) return registrationError("Introduzca o seleccione un CIP demo visible antes de registrar.");
+        if (!result) return registrationError("Seleccione un resultado de validación antes de registrar.");
+        var requestInput = requestedRegistrationInput(patientId, origin);
+        if (!requestInput.drug.drug_name) return registrationError("Complete el fármaco solicitado antes de registrar.");
+        if (result === "denied" && !elementValue("fhValMotivo")) return registrationError("Indique el motivo de denegación antes de registrar.");
+        if (!MT) return registrationError("El registro estructurado del Hub no está disponible en esta demo.");
+
+        try {
+            var store = MT.createSessionStore(window.sessionStorage);
+            var state = store.load();
+            var patient = store.getPatientState(state, patientId);
+            var requestSignature = signatureOf(requestComparable(requestInput));
+            var matchingRequest = findRequestForInput(patient, requestInput, requestSignature);
+            if (matchingRequest) requestSignature = signatureOf(requestComparable(matchingRequest));
+            var provisionalRequest = matchingRequest || MT.createTreatmentRequest(Object.assign({}, requestInput, {
+                created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+            }));
+            var lineInput = lineRegistrationInput(provisionalRequest);
+            var lastActSignature = actSignature(requestSignature, result, lineInput);
+            var draft = patient.drafts[HUB_REGISTRATION_DRAFT_ID];
+            if (draftIsExactReplay(patient, draft, requestSignature, lastActSignature, result)) {
+                setHubRegistrationStatus(HUB_REGISTRATION_MESSAGES.replay);
+                return { ok: true, replay: true, message: HUB_REGISTRATION_MESSAGES.replay };
+            }
+            if (matchingRequest && requestAlreadyProducedLine(patient, matchingRequest.request_id)) {
+                return registrationError("Esta solicitud ya está cerrada en la demo y no puede producir otra línea.");
+            }
+            var now = new Date().toISOString();
+            var request = matchingRequest || provisionalRequest;
+            var next = state;
+            if (!matchingRequest) next = store.upsertRequest(next, patientId, request);
+            var act = MT.createValidationAct({
+                patient_id: patientId,
+                request_id: request.request_id,
+                produced_line_id: "",
+                performed_at: now,
+                result: result,
+                professional_demo_id: "",
+                observations: validationObservations(result),
+                origin: origin,
+                created_at: now
+            });
+            next = store.upsertValidationAct(next, patientId, act);
+            var producedLineId = "";
+            if (result === "validated") {
+                lineInput.created_at = now;
+                lineInput.updated_at = now;
+                var existingLines = Object.keys(patient.lines).map(function (lineId) { return patient.lines[lineId]; });
+                var line = MT.createTreatmentLineFromValidatedRequest(request, act, lineInput, { existingLines: existingLines });
+                producedLineId = line.line_id;
+                next = store.upsertLine(next, patientId, line);
+                act.produced_line_id = producedLineId;
+                next = store.upsertValidationAct(next, patientId, act);
+            }
+            next = store.upsertDraft(next, patientId, HUB_REGISTRATION_DRAFT_ID, {
+                patient_id: patientId,
+                request_signature: requestSignature,
+                last_act_signature: lastActSignature,
+                request_id: request.request_id,
+                validation_act_id: act.validation_act_id,
+                produced_line_id: producedLineId,
+                result: result,
+                saved_at: now
+            });
+            var finalPatient = store.getPatientState(next, patientId);
+            var validation = MT.validatePatientState(finalPatient, patientId);
+            if (!validation.valid) throw new Error("invalid final patient state");
+            store.save(next);
+            setHubRegistrationStatus(HUB_REGISTRATION_MESSAGES[result]);
+            return { ok: true, replay: false, message: HUB_REGISTRATION_MESSAGES[result] };
+        } catch (error) {
+            return registrationError("No se pudo completar el registro estructurado. No se guardaron cambios.");
+        }
+    }
+
+    function recognizeCurrentHubRegistration() {
+        if (!MT) return false;
+        var origin = registrationOrigin(currentOrigenEntradaValue());
+        var patientId = selectedCip();
+        var type = elementValue("fhTipoValidacion");
+        var result = registrationResult();
+        var requested = readRequestedTreatmentFields();
+        if (!origin || !patientId || type !== "inicio_nuevo" || !result || !requested.farmaco_nombre) return false;
+        try {
+            var store = MT.createSessionStore(window.sessionStorage);
+            var state = store.load();
+            var patient = store.getPatientState(state, patientId);
+            var requestInput = requestedRegistrationInput(patientId, origin);
+            var requestSignature = signatureOf(requestComparable(requestInput));
+            var request = findRequestForInput(patient, requestInput, requestSignature);
+            if (!request) return false;
+            requestSignature = signatureOf(requestComparable(request));
+            var signature = actSignature(requestSignature, result, lineRegistrationInput(request));
+            if (!draftIsExactReplay(patient, patient.drafts[HUB_REGISTRATION_DRAFT_ID], requestSignature, signature, result)) return false;
+            setHubRegistrationStatus(HUB_REGISTRATION_MESSAGES.replay);
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     function hasExplicitTreatment(fields) {
@@ -1943,6 +2349,8 @@
             }).join("\n");
             F.downloadFile("validaciones_FH_" + new Date().toISOString().slice(0, 10) + ".csv", csv, "text/csv;charset=utf-8");
         });
+        var registerHubBtn = byId("fhValRegisterHubBtn");
+        if (registerHubBtn) registerHubBtn.addEventListener("click", registerValidationInHub);
         var btnNoFind = byId("btnNoFindDrug");
         if (btnNoFind) btnNoFind.addEventListener("click", showLocalDrugModal);
     }
@@ -1973,6 +2381,7 @@
         updateNaranjoScore();
         updateKarchLasagna();
         toggleCausalityModules();
+        recognizeCurrentHubRegistration();
         // WO8.1b — Botón Excel FH
         (function initValExcelBtn() {
             var btn = document.getElementById('fhValExcelExportBtn');

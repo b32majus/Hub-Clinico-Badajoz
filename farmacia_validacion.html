@@ -525,6 +525,12 @@
 
     <div class="validation-meta-line"><span class="validation-meta-label">Responsable mostrado:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH demo — identidad no nominal. No constituye firma electrónica ni controla permisos.</span></div>
     <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables. Copia manual; no integración automática.</span></div>
+    <section class="validation-module" id="modRegistroHub">
+        <h3 class="card-title"><i class="fas fa-project-diagram"></i> Registro estructurado en el Hub</h3>
+        <p>Registra esta actuación en el estado demo del Hub. Validar no equivale a confirmar el inicio del tratamiento.</p>
+        <div class="form-actions"><button type="button" class="btn btn-primary" id="fhValRegisterHubBtn">Registrar actuación en el Hub (demo)</button></div>
+        <p class="validation-note-block__value" id="fhValRegisterHubStatus" role="status" aria-live="polite"></p>
+    </section>
     <section class="validation-module" id="modExportacion">
         <h3 class="card-title"><i class="fas fa-file-export"></i> Copia manual para sistemas externos</h3>
         <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt" title="Copiar texto JARA"><i class="fas fa-file-alt"></i> Copiar texto para JARA</button><button type="button" class="btn btn-outline hidden" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhValExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
@@ -538,6 +544,7 @@
             <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
             <script src="scripts/farmacia_validacion_model.js?v=20260612-data-import-a"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260614-wo6-b"></script>
+            <script src="scripts/farmacia_multitreatment_core.js?v=20260719-validation-registration-01b"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260719-validation-registration-01b"></script>
         </body>
         </html>
