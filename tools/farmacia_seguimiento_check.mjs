@@ -85,7 +85,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
     elements[id].options = [];
   });
   behaviorApi.searchCIP();
-  assert(confirmationCalls === 0 && elements.fhSegFarmaco.value === 'Drug B', 'Seguimiento clean first existing CIP search ignores neutral Demo origin');
+  assert(confirmationCalls === 0 && elements.fhSegServicio.value === 'Dermatología' && elements.fhSegFarmaco.value === '', 'Seguimiento carga datos neutrales y no proyecta tratamiento legacy sin línea seleccionada');
 
   resetElements();
   behaviorApi.setActivePatientCip('');
@@ -116,7 +116,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   confirmation = true;
   elements.fhSegCip.value = 'DEMO-CIP-DER-004';
   behaviorApi.searchCIP();
-  assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '', 'Seguimiento confirmed switch clears A-only movement and loads B');
+  assert(elements.fhSegServicio.value === 'Dermatología' && elements.fhSegFarmaco.value === '' && elements.fhSegNuevaDosis.value === '', 'Seguimiento confirmed switch clears A-only data without restoring legacy line fields');
   elements.fhSegCip.value = 'CIP-UNKNOWN';
   behaviorApi.searchCIP();
   assert(elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento unknown CIP enters clean manual mode');
@@ -274,10 +274,12 @@ assert(html.indexOf('id="fhSegPautaActualOtro"') !== -1, 'Pauta actual tiene inp
 assert(js.includes('setSegPautaActualNormalized'), 'Función setSegPautaActualNormalized definida');
 assert(js.includes('populatePautaSelectSeg(\'fhSegPautaActual\''), 'Pauta actual se puebla con catálogo WO6');
 
-// 31. getRelevantDrugCandidates con deduplicación y cobertura total
-assert(js.includes('seenIds'), 'getRelevantDrugCandidates usa deduplicación seenIds');
-assert(js.includes('Biológico previo/histórico'), 'Incluye históricos como categoría');
-assert(js.includes('followupOtherDrugs.forEach'), 'Itera todos los otros fármacos');
+// 31. El selector sospechoso queda ligado solo a la línea canónica activa seleccionada.
+var suspectCandidatesMatch = js.match(/function getRelevantDrugCandidates[\s\S]*?^    \}/m);
+var suspectCandidatesBody = suspectCandidatesMatch ? suspectCandidatesMatch[0] : '';
+assert(suspectCandidatesBody.includes('getCurrentSelectedLine()'), 'Sospechoso parte de la selección canónica actual');
+assert(!suspectCandidatesBody.includes('historical'), 'Sospechoso no activa líneas históricas');
+assert(!suspectCandidatesBody.includes('followupOtherDrugs'), 'Sospechoso no usa fármacos auxiliares como identidad de línea');
 
 // 32. El catálogo no sobrescribe los campos terapéuticos manuales
 assert(catalogSelectionBody.indexOf("setOtherDrugField(uid, 'via'") === -1, 'Autocomplete no sobrescribe vía');
@@ -292,37 +294,34 @@ assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conse
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento conservado');
 assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual se normaliza sin crear nueva línea');
 
-// 35. WO7F.2 — getRelevantDrugCandidates tiene fallback DOM para tratamiento actual
-assert(js.includes('dom:current-treatment'), 'getRelevantDrugCandidates tiene fallback DOM para tratamiento');
-assert(js.includes('fhSegFarmaco'), 'Fallback DOM lee fhSegFarmaco');
-assert(js.includes('fhSegPrincipioActivo'), 'Fallback DOM lee fhSegPrincipioActivo');
+// 35. No hay reconstrucción de identidad por DOM o nombre.
+assert(!suspectCandidatesBody.includes('dom:current-treatment'), 'getRelevantDrugCandidates no tiene fallback DOM');
+assert(!suspectCandidatesBody.includes('fhSegFarmaco'), 'Sospechoso no identifica por nombre visible');
+assert(!suspectCandidatesBody.includes('fhSegPrincipioActivo'), 'Sospechoso no identifica por principio activo visible');
 
 // 36. Labels legibles sin corchetes (formato "Nombre — Categoría")
 assert(!js.includes("'[Biológico activo] '"), 'Labels sin corchetes en getRelevantDrugCandidates');
 assert(js.includes("name"), 'Labels formato "Nombre — Categoría" en línea (usa name + — + cat)');
-assert(js.includes("name + ' — ' + category"), 'Labels formato "Nombre — Categoría" en otros fármacos');
+assert(suspectCandidatesBody.includes("name + ' — Biológico activo'"), 'Label sospechoso conserva formato legible sin gobernar identidad');
 
 // 37. El desplegable sospechoso EA usa única función fuente
 assert(js.includes('getRelevantDrugCandidates();'), 'updateSuspectDrugSelector usa getRelevantDrugCandidates');
 
-// 38. Candidatos incluyen todos los orígenes documentados
-assert(js.includes("Añadir todas las líneas biológicas"), 'Código documenta inclusión de todas las líneas');
-assert(js.includes("todos los otros fármacos"), 'Código documenta inclusión de otros fármacos');
-assert(js.includes("Fallback DOM"), 'Código documenta fallback DOM');
+// 38. La identidad sospechosa conserva los límites canónicos.
+assert(suspectCandidatesBody.includes('id: line.line_id'), 'Valor de sospechoso es line_id canónico');
+assert(suspectCandidatesBody.includes("category: 'Biológico activo'"), 'Solo una línea activa puede ser sospechosa');
+assert(!suspectCandidatesBody.includes('tratamiento_id'), 'Sospechoso no usa tratamiento_id');
 
 // 39. No hay otra función que sobrescriba el desplegable visible
 // updateSuspectDrugSelector es la única que escribe en fhSeguimientoEaFarmacoSospechoso
 var suspectSelectorWrites = (js.match(/fhSeguimientoEaFarmacoSospechoso/g) || []).length;
-assert(suspectSelectorWrites <= 5, 'Sospechoso EA solo referenciado en rutas controladas, incluido reset de paciente');
+assert(suspectSelectorWrites <= 8, 'Sospechoso EA solo referenciado en rutas controladas, incluido borrador por línea');
 
 // --- WO7H.1: Consistencia visual de línea terapéutica ---
 
-// 40. applySelectedBiologicLine usa farmaco_nombre antes de nombre_comercial
-var segFhSegFarmaco = "setSegValue('fhSegFarmaco', line.farmaco_nombre || line.nombre_comercial";
-assert(js.indexOf(segFhSegFarmaco) !== -1, 'Seguimiento setSegFarmaco usa farmaco_nombre antes de nombre_comercial');
-
-// 41. syncBiologicControls ya incluye farmaco_nombre en su cadena
-assert(js.includes('line.farmaco_nombre || line.nombre_comercial'), 'syncBiologicControls usa farmaco_nombre como segundo fallback');
+// 40-41. La proyección visible procede de campos canónicos explícitos.
+assert(js.includes("setSegValue('fhSegFarmaco', line.drug_name || '')"), 'Seguimiento muestra drug_name canónico sin fallback por catálogo');
+assert(js.includes("setSegValue('fhSegPrincipioActivo', line.active_ingredient || '')"), 'Seguimiento muestra active_ingredient canónico explícito');
 
 // 42. Tarjeta CIMA se limpia si no corresponde a la línea seleccionada
 assert(js.includes('fhSegCimaContextPrincipioActivo'), 'Código de sincronización tarjeta CIMA presente');
@@ -342,27 +341,17 @@ assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual normalizada sig
 assert(js.includes('btnSegAddOtherDrug'), 'Botón añadir concomitante conservado');
 assert(js.includes('segOtrosFarmacosList'), 'Lista otros fármacos conservada');
 
-// --- WO7H.2: Bugfix — línea seleccionada y campos visibles coherentes ---
+// --- WO-FH-MULTITREATMENT-FOLLOWUP-LINES-MVP-01: identidad canónica exacta ---
 
-// 45. getCurrentSelectedLine usa tratamiento_id como fallback de matching
+// 45. getCurrentSelectedLine exige patient_id + line_id y estado activo.
 var gcsMatch = js.match(/function getCurrentSelectedLine[\s\S]*?^    \}/m);
 var gcsBody = gcsMatch ? gcsMatch[0] : '';
-assert(gcsBody.includes('matchVal'), 'getCurrentSelectedLine usa variable matchVal para matching unificado');
-
-// 46. matchVal combina linea_id y tratamiento_id
-assert(gcsBody.includes('linea_id || currentBiologicLines[j].tratamiento_id'),
-    'matchVal usa linea_id con fallback a tratamiento_id');
-
-// 47. Comparación usa matchVal contra select.value
-assert(gcsBody.includes('matchVal === select.value'), 'getCurrentSelectedLine compara matchVal contra select.value');
-
-// 48. Fallback a currentBiologicLines[0] solo si ningún match (no se queda en Abatacept si selector es Belimumab)
-assert(gcsBody.includes('return currentBiologicLines[0]'),
-    'Fallback a currentBiologicLines[0] existe como protección pero no es la ruta principal');
-
-// 49. opt.value en syncBiologicControls es coherente (mismo fallback)
-assert(js.includes("opt.value = line.linea_id || line.tratamiento_id || ('BIO-' + i)"),
-    'syncBiologicControls genera opt.value coherente con matching fallback');
+assert(gcsBody.includes('patient_id === currentCanonicalPatientId'), 'getCurrentSelectedLine aísla por patient_id');
+assert(gcsBody.includes('line_id === currentSelectedCanonicalLineId'), 'getCurrentSelectedLine compara line_id exacto seleccionado');
+assert(gcsBody.includes("status === 'active'"), 'getCurrentSelectedLine solo habilita línea activa');
+assert(!gcsBody.includes('tratamiento_id'), 'getCurrentSelectedLine nunca selecciona por tratamiento_id');
+assert(!gcsBody.includes('currentBiologicLines[0]'), 'getCurrentSelectedLine no usa primera línea como fallback');
+assert(js.includes('opt.value = line.line_id'), 'syncBiologicControls usa line_id canónico como valor');
 
 // 50. applySelectedBiologicLine recibe línea exacta del selector (no primera línea por defecto)
 assert(js.includes('applySelectedBiologicLine();'),
@@ -370,15 +359,15 @@ assert(js.includes('applySelectedBiologicLine();'),
 
 // --- WO7H.3: Bugfix — candidatos de sospechoso EA ---
 
-// 51. getRelevantDrugCandidates dedup key usa linea_id con fallback tratamiento_id
+// 51. getRelevantDrugCandidates usa identidad canónica exacta.
 var rdcMatch = js.match(/function getRelevantDrugCandidates[\s\S]*?^    \}/m);
 var rdcBody = rdcMatch ? rdcMatch[0] : '';
-assert(rdcBody.includes("line.linea_id || line.tratamiento_id || line.id"),
-    'getRelevantDrugCandidates dedup key usa linea_id, tratamiento_id e id como fallback');
+assert(rdcBody.includes('id: line.line_id'),
+    'getRelevantDrugCandidates usa line_id canónico como valor');
 
-// 52. getRelevantDrugCandidates incluye farmaco_nombre en name
-assert(rdcBody.includes('line.farmaco_nombre') && rdcBody.includes('line.nombre_comercial'),
-    'getRelevantDrugCandidates name usa farmaco_nombre antes de nombre_comercial');
+// 52. El nombre procede de la línea, no identifica la línea.
+assert(rdcBody.includes('line.drug_name || line.active_ingredient'),
+    'getRelevantDrugCandidates muestra identidad clínica canónica');
 
 // 53. Candidates tienen campo prioridad para orden
 assert(rdcBody.includes('prioridad'), 'getRelevantDrugCandidates asigna prioridad a cada candidato');
@@ -386,26 +375,26 @@ assert(rdcBody.includes('prioridad'), 'getRelevantDrugCandidates asigna priorida
 // 54. Candidates se ordenan antes de devolverse
 assert(rdcBody.includes('candidates.sort'), 'getRelevantDrugCandidates ordena candidatos antes de devolver');
 
-// 55. Prioridad 1 = principal, 5 = histórico
-assert(rdcBody.includes("prioridad: line.es_principal ? 1 : (line.estado_linea === 'historico' ? 5 : 2)"),
-    'Prioridad 1 para principal, 2 activo, 5 histórico en líneas biológicas');
+// 55. Solo la línea activa seleccionada recibe prioridad.
+assert(rdcBody.includes('prioridad: 1'),
+    'La línea activa seleccionada tiene prioridad única');
 
-// 56. Concomitante prioridad 3, adicional prioridad 4
-assert(rdcBody.includes("'concomitante') p = 3"),
-    'Concomitante prioridad 3 (tercer orden)');
-assert(rdcBody.includes("'adicional') p = 4"),
-    'Adicional prioridad 4 (cuarto orden)');
+// 56. Concomitantes y adicionales no sustituyen la identidad canónica sospechosa.
+assert(!rdcBody.includes("'concomitante'"),
+    'Concomitante no entra en selector canónico de sospechoso');
+assert(!rdcBody.includes("'adicional'"),
+    'Adicional no entra en selector canónico de sospechoso');
 
-// 57. If candidates.length > 0, fallback DOM no silencia otras líneas (verificación de no regresión)
-assert(js.includes("if (!candidates.length)"),
-    'Fallback DOM solo se activa si NO hay candidatos de currentBiologicLines');
+// 57. Ausencia de selección produce lista vacía, nunca fallback.
+assert(!rdcBody.includes("if (!candidates.length)"),
+    'Ausencia de línea seleccionada no reconstruye candidato por fallback');
 
-// 58. WO7H.2 intacta: getCurrentSelectedLine usa matchVal con tratamiento_id
-assert(gcsBody.includes('matchVal'), 'getCurrentSelectedLine sigue usando matchVal (WO7H.2 no revertida)');
+// 58. El contrato legado no puede redirigir selección canónica.
+assert(!gcsBody.includes('tratamiento_id'), 'tratamiento_id no gobierna la selección canónica');
 
-// 59. updateSuspectDrugSelector usa candidates.length > 1 para opción múltiple
-assert(js.includes('candidates.length > 1'),
-    'Selector de sospechoso EA maneja múltiples candidatos');
+// 59. updateSuspectDrugSelector solo admite el candidato canónico actual.
+assert(!js.includes('multiple:unassigned'),
+    'Selector de sospechoso EA no introduce identidad múltiple no canónica');
 assert(js.includes("candidates.length === 1"),
     'Selector de sospechoso EA tiene lógica para candidato único');
 

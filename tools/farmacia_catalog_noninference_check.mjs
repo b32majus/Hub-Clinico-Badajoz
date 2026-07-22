@@ -86,7 +86,7 @@ catalog.selectDrug = (drug, selectionContext) => {
 
 vm.runInContext(loadSource('farmacia_primera_visita.js', '\nwindow.__catalogPv = { selectDrugPV, applyTratamientoValidado, getCurrentPrimaryTreatment };\n'), sandbox);
 vm.runInContext(loadSource('farmacia_validacion.js', '\nwindow.__catalogValidation = { selectDrug, selectValidadoDrug, updateValidationModuleSummaries, updateValidadoSummary };\n'), sandbox);
-vm.runInContext(loadSource('farmacia_seguimiento.js', '\nwindow.__catalogSeguimiento = { selectDrugSeg, applySelectedBiologicLine, getSnapshotMetaForExportSeg, setState: function (patient, lines) { currentSegPatient = patient; currentBiologicLines = lines; } };\n'), sandbox);
+vm.runInContext(loadSource('farmacia_seguimiento.js', '\nwindow.__catalogSeguimiento = { selectDrugSeg, applySelectedBiologicLine, getSnapshotMetaForExportSeg, setState: function (patient, lines, selectedLineId) { currentSegPatient = patient; currentCanonicalPatientId = patient.cip; currentBiologicLines = lines; currentSelectedCanonicalLineId = selectedLineId; } };\n'), sandbox);
 
 const drug = { display_name: 'Marca catálogo 15 mg', nombre_comercial: 'Marca catálogo', principio_activo: 'Principio catálogo', dosis: '15 mg', nombre_presentacion: 'Pluma CIMA', via: 'SC', pauta: 'Cada 2 semanas', induccion: 'Sí', source_type: 'CIMA', drug_id: 'CIMA-SYN-01', codigo_nacional: '123456', nregistro: 'REG-01' };
 console.log('\n=== Primera Visita: interacción productiva ===');
@@ -130,8 +130,8 @@ assertEqual(byId('fhValidadoInduccion').value, 'no', 'Validado conserva inducci�
 assertEqual(byId('fhResultadoValidacion').value, '', 'Validado no crea resultado profesional');
 
 console.log('\n=== Seguimiento: interacción y exportación productivas ===');
-const line = { linea_id: 'L-SYN-01', tratamiento_id: 'T-SYN-01', farmaco_nombre: 'Tratamiento manual', principio_activo: 'Principio manual', dosis_texto: '60 mg manual', presentacion: 'Presentación manual', via: 'Oral', pauta: 'Cada 4 semanas', tipo_relacion: 'validado', estado_linea: 'activo', tipo_movimiento: 'revision_linea', es_principal: true };
-sandbox.window.__catalogSeguimiento.setState({ cip: 'CIP-SYN-01' }, [line]);
+const line = { patient_id: 'CIP-SYN-01', line_id: 'L-SYN-01', drug_name: 'Tratamiento manual', active_ingredient: 'Principio manual', dose_text: '60 mg manual', presentation: 'Presentación manual', route: 'Oral', pauta_label: 'Cada 4 semanas', relationship: 'validated', status: 'active', provenance: 'manual' };
+sandbox.window.__catalogSeguimiento.setState({ cip: 'CIP-SYN-01' }, [line], line.line_id);
 byId('fhSegCip').value = 'CIP-SYN-01'; byId('fhSegDosisActual').value = '60 mg manual'; byId('fhSegPresentacion').value = 'Presentación manual'; byId('fhSegVia').value = 'Oral'; byId('fhSegPautaActual').value = 'CADA_4_SEMANAS'; byId('fhSegTipoRelacionTerapia').value = 'revision_linea';
 sandbox.window.__catalogSeguimiento.selectDrugSeg(drug);
 sandbox.window.__catalogSeguimiento.applySelectedBiologicLine();
