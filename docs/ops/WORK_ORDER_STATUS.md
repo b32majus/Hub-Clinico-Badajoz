@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-19
+**Última actualización:** 2026-07-22
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -75,6 +75,10 @@
 | **PR #47** | Reconciliar estado documental hasta PR #45 | ✅ Merged | `work/doc-post-merge-reconciliation-pr45-20260718` → `preview/demo-lunes-wo4-20260614` | `743c07cd9a3120a541480c83fbb395e5a6d5b351` → merge `2286029ad731fb80cc77222d841f4d11483d5542` | Reconciliación documental de status, índice y auditoría; no añade funcionalidad clínica ni acredita piloto. |
 | **WO-FH-INICIO-DUAL-TRAY-SEMANTICS-01** | Aclarar semántica de bandejas de Inicio | ✅ Merged | `work/fh-inicio-dual-tray-semantics-20260718` → `preview/demo-lunes-wo4-20260614` | `53a330eb4abf33bea171df8ba5c07e1bc7b79473` → merge `e1e1b77c4d3c631600dd349e84a33eb009e655f8` (PR #49) | Resuelve FH-R08 en alcance mínimo de demo: dos bandejas persistentes/excluyentes, estados explícitos, contadores, estados vacíos y guardas de rerender; 21/21 y smoke 48/48. No persistencia ni piloto. |
 | **WO-FH-FOLLOWUP-HISTORICAL-PAYLOAD-COVERAGE-01** | Cubrir payload histórico de Seguimiento | ✅ Merged | `work/hermes/WO-FH-FOLLOWUP-HISTORICAL-PAYLOAD-COVERAGE-01-20260718` → `preview/demo-lunes-wo4-20260614` | `1bf5ebdaf302acb476fc06ef958cfffd391e67c6` → merge `7f7b7331bb89a3a7e70e450c5ee2621ed2cdb762` (PR #50) | Test-only: cobertura histórica 22/22 en VM/DOM simulado; no modifica producción, no tuvo QA de navegador y no acredita piloto. Issue #41 cerrado como completado. |
+| **PR #52** | Reconciliar estado documental hasta PR #50 | ✅ Merged | `work/docs/fh-reconciliation-post-pr50-20260719` → `preview/demo-lunes-wo4-20260614` | `54c1c7390a059c0acb0ff318c62cfaa92697a516` → merge `91c5a64faa83fa5729483d5239ec0de952efad1d` | Reconciliación documental post-PR50; identifica FH-R05 como siguiente bloque funcional. No añade código ni acredita piloto. |
+| **WO-FH-VALIDATION-EXPORT-TRUTH-GUARD-01** | Alinear exportación de Validación con el estado visible | ✅ Merged | `work/fh-validation-export-truth-guard-20260719` → `preview/demo-lunes-wo4-20260614` | `a3d3fdf5f25c29075f3d5cf059639752a2863b7e` → merge `c404d597989b80fd807fc5aeb8a78380c09fc269` (PR #54) | Exporta pendiente/validado/denegado sin defaults ni `lines[0]`; no implementa el modelo multilínea completo ni acredita piloto. |
+| **WO-FH-MULTITREATMENT-CORE-IDENTITY-SESSION-MVP-01A** | Añadir núcleo canónico multifármaco | ✅ Merged | `work/fh-multitreatment-core-identity-session-20260719` → `preview/demo-lunes-wo4-20260614` | `d08d199a0afaa2523f8551ca46e2c48afcd0f14d` → merge `7efddf275688007c7966f246a110ad6a431c2536` (PR #56) | Núcleo canónico y almacenamiento demo por paciente; `validated_in_hub` produce `validated_not_started`. Inicialmente no cableado ni visible; no acredita piloto. |
+| **WO-FH-MULTITREATMENT-FOLLOWUP-LINES-MVP-01** | Cablear Seguimiento a líneas canónicas | ✅ Merged | `work/fh-multitreatment-followup-lines-mvp-20260721` → `preview/demo-lunes-wo4-20260614` | `8a23bb27d69d9ef25fb1383dc8dfb94d7eff0c77` → merge `8cbe362283a4f14e6a45fc29486e4751e57560bb` (PR #57) | FH-R05 queda resuelto en este slice de Seguimiento: identidad `patient_id + line_id`, borradores y PROs aislados por línea, payload canónico JARA/CSV/Excel, Playwright PASS. Pendiente transición explícita de inicio; no piloto. Ver [cierre](/docs/ops/FH_R05_MULTITREATMENT_CLOSEOUT_20260722.md). |
 
 ---
 
@@ -129,7 +133,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 43 (filas reales; incluye PR #21-#27, PR #29, #31, #32, #34, #36, #38, #40, #43, #45, #47, #49 y #50; documentación, tooling y alcances funcionales parciales no equivalen a piloto) |
+| ✅ Merged | 47 (filas reales; incluye PR #21-#27, PR #29, #31, #32, #34, #36, #38, #40, #43, #45, #47, #49, #50, #52, #54, #56 y #57; documentación, tooling y alcances funcionales parciales no equivalen a piloto) |
 | 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -139,4 +143,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 67 work orders / preflights gestionadas (filas reales).
+**Total:** 71 work orders / preflights gestionadas (filas reales).
