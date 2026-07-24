@@ -91,6 +91,7 @@ assert.throws(() => stateApi.saveDecision({
 
 const bootstrap = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_data_source.js'), 'utf8');
 assert.match(bootstrap, /farmacia_data_source_v4_core\.js/);
+assert.match(bootstrap, /farmacia_index_v4_state_guard\.js/);
 assert.match(bootstrap, /farmacia_multitreatment_core\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_model\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_ui\.js/);
@@ -101,7 +102,7 @@ vm.runInNewContext(bootstrap, {
   window: { location: { pathname: '/farmacia_validacion.html' } },
   document: { write(value) { writtenScripts.push(value); } }
 });
-assert.equal(writtenScripts.length, 5);
+assert.equal(writtenScripts.length, 6);
 writtenScripts.forEach((markup) => assert.match(markup, /^<script src="[^"]+"><\/script>$/));
 
 const stateSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_model.js'), 'utf8');

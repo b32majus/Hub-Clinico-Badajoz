@@ -1,0 +1,57 @@
+name: Farmacia V4 validation browser QA
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/farmacia_data_source.js'
+      - 'scripts/farmacia_index_v4_state_guard.js'
+      - 'scripts/farmacia_validation_state_v4_safety.js'
+      - 'tools/farmacia_v4_validation_browser_qa.mjs'
+      - '.github/workflows/farmacia-v4-validation-browser-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-http.log 2>&1 &
+          echo $! > /tmp/farmacia-v4-http.pid
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-http.log
+          exit 1
+      - name: Validation browser QA
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/farmacia_v4_validation_browser_qa.mjs 2>&1 | tee /tmp/farmacia-v4-browser-qa.log
+      - name: Upload QA logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-browser-qa-logs
+          path: |
+            /tmp/farmacia-v4-browser-qa.log
+            /tmp/farmacia-v4-http.log
+          if-no-files-found: ignore
