@@ -48,8 +48,42 @@
         updateCatalogMessage();
     }
 
-    root.FarmaciaValidationStateV4Safety = { apply: applySafetyUi };
+    function restorePostLoadSafety() {
+        var demo = root.FarmaciaDemo;
+        var model = root.FarmaciaValidationStateV4Model;
+        var core = root.FarmaciaMultitreatmentCore;
+        var source = root.FarmaciaDataSource;
+        if (!demo || !model || !core || !source || !root.sessionStorage) return;
+        Promise.resolve(demo.ready).then(function () {
+            var context = demo.getQueryContext ? demo.getQueryContext() : {};
+            var patient = context.patient;
+            if (!patient || !patient.patient_id) return;
+            var scenario = source.getScenarioStateByPatientId ? source.getScenarioStateByPatientId(patient.patient_id) : null;
+            if (!scenario) return;
+            var store = core.createSessionStore(root.sessionStorage);
+            var snapshot = model.restoreDecision({ store: store, patientId: patient.patient_id });
+
+            if (["ready_for_pharmacy_validation", "general_pending_validation"].indexOf(scenario.initial_state) !== -1 && !snapshot.result) {
+                var resultSelect = byId("fhValEstado");
+                if (resultSelect) resultSelect.value = "";
+                var neutralReasonRow = byId("fhValMotivoRow");
+                if (neutralReasonRow) neutralReasonRow.classList.add("hidden");
+                var status = byId("fhValV4Status");
+                if (status) status.textContent = "Sin decisión canónica guardada para este paciente.";
+            }
+
+            if (scenario.initial_state === "validation_denied" && snapshot.result === "denied" && !snapshot.denial_reason && snapshot.observations) {
+                var reason = byId("fhValMotivo");
+                if (reason) reason.value = snapshot.observations;
+                var deniedReasonRow = byId("fhValMotivoRow");
+                if (deniedReasonRow) deniedReasonRow.classList.remove("hidden");
+            }
+        });
+    }
+
+    root.FarmaciaValidationStateV4Safety = { apply: applySafetyUi, restorePostLoadSafety: restorePostLoadSafety };
     if (root.document && typeof root.document.addEventListener === "function") {
         root.document.addEventListener("DOMContentLoaded", applySafetyUi);
+        root.addEventListener("load", restorePostLoadSafety);
     }
 })(typeof window !== "undefined" ? window : globalThis);
