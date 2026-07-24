@@ -104,6 +104,24 @@
     return s;
   }
 
+  function normalizeValidationResult(value) {
+    var normalized = cleanValue(value).toLowerCase();
+    if (normalized === 'pending' || normalized === 'pendiente') return 'pendiente';
+    if (normalized === 'validated' || normalized === 'validado') return 'validado';
+    if (normalized === 'denied' || normalized === 'denegado') return 'denegado';
+    return '';
+  }
+
+  function validationRecordState(result) {
+    if (result === 'pendiente') return 'pendiente';
+    if (result === 'validado' || result === 'denegado') return 'completado';
+    return '';
+  }
+
+  function normalizeServiceKey(value) {
+    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+  }
+
   /* ---- Construir objeto de fila desde contexto ---- */
   function buildExcelRowObject(context) {
     if (!context) context = {};
@@ -113,24 +131,14 @@
 
     // Detectar servicio para hoja
     var servicio = context.servicio || p.servicio || '';
-    var servicioMatch = (servicio || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+    var servicioMatch = normalizeServiceKey(servicio);
     var sheetName = SERVICE_SHEET_MAP[servicioMatch] || '';
 
     // Detectar tipo de acto
     var tipoActo = context.tipoActo || 'otro';
 
-    // Línea de tratamiento actual
+    // La línea debe llegar identificada de forma explícita por la pantalla caller.
     var line = context.lineaActual || null;
-    if (!line && p) {
-      // Intentar obtener primera línea
-      var helper = window.FarmaciaTratamiento;
-      if (helper && typeof helper.buildTreatmentFromPatient === 'function') {
-        var lines = helper.buildTreatmentFromPatient(p, { returnArray: true, fuente: 'excel_export' });
-        if (Array.isArray(lines) && lines.length) {
-          line = lines[0]; // primera línea como referencia
-        }
-      }
-    }
 
     // Datos de validación prebiológica
     var prebio = context.prebiologico || null;
@@ -155,33 +163,37 @@
       tipo_acto_fh: cleanValue(tipoActo),
       visita_id: cleanValue(context.visitaId || ''),
       validacion_id: cleanValue(context.validacionId || ''),
-      tratamiento_id: cleanValue(line ? (line.tratamiento_id || line.linea_id || '') : ''),
+      tratamiento_id: cleanValue(line ? (line.tratamiento_id || '') : ''),
       linea_id: cleanValue(line ? (line.linea_id || '') : ''),
       profesional_fh: cleanValue(context.profesional || ''),
-      estado_registro: cleanValue(context.estadoRegistro || 'completado'),
+      estado_registro: cleanValue(context.estadoRegistro || ''),
       /* C */
-      marca_comercial: cleanValue(line ? (line.nombre_comercial || line.farmaco_nombre || line.principio_activo || '') : ''),
-      principio_activo: cleanValue(line ? (line.principio_activo || line.farmaco_nombre || '') : ''),
+      marca_comercial: cleanValue(line ? (line.nombre_comercial || line.farmaco_nombre || '') : ''),
+      principio_activo: cleanValue(line ? (line.principio_activo || '') : ''),
       codigo_nacional: cleanValue(line ? (line.codigo_nacional || '') : ''),
       numero_registro: cleanValue(line ? (line.nregistro || '') : ''),
-      source_type: cleanValue(line ? (line.source_type || 'DEMO') : ''),
+      source_type: cleanValue(line ? (line.source_type || '') : ''),
       categoria_farmaco: cleanValue(context.categoriaFarmaco || ''),
-      tipo_relacion: cleanValue(line ? (line.tipo_relacion || 'principal') : ''),
-      estado_linea: cleanValue(line ? (line.estado_linea || 'activo') : ''),
-      tipo_movimiento: cleanValue(line ? (line.tipo_movimiento || 'sin_cambios') : ''),
-      es_principal: cleanValue(line ? (line.es_principal ? 'TRUE' : 'FALSE') : 'TRUE'),
+      tipo_relacion: cleanValue(line ? (line.tipo_relacion || '') : ''),
+      estado_linea: cleanValue(line ? (line.estado_linea || '') : ''),
+      tipo_movimiento: cleanValue(line ? (line.tipo_movimiento || '') : ''),
+      es_principal: cleanValue(line && Object.prototype.hasOwnProperty.call(line, 'es_principal')
+        ? (line.es_principal ? 'TRUE' : 'FALSE')
+        : ''),
       fecha_inicio: cleanValue(line ? (line.fecha_inicio || '') : ''),
       fecha_fin: cleanValue(line ? (line.fecha_fin || '') : ''),
       motivo_inicio_cambio_suspension: cleanValue(context.motivo || ''),
       /* D */
-      dosis_presentacion: cleanValue(line ? (line.dosis || line.dosis_texto || line.presentacion || '') : ''),
+      dosis_presentacion: cleanValue(line ? (line.dosis_texto || line.dosis || line.presentacion || '') : ''),
       via: cleanValue(line ? (line.via || '') : ''),
       pauta_codigo: cleanValue(line ? (line.pauta_codigo || '') : ''),
       pauta_label: cleanValue(line ? (line.pauta_label || '') : ''),
-      pauta_otro_texto: cleanValue(line ? (line.pauta_otro_texto || line.pauta || '') : ''),
+      pauta_otro_texto: cleanValue(line
+        ? (line.pauta_otro_texto || ((!line.pauta_codigo && !line.pauta_label) ? (line.pauta || '') : ''))
+        : ''),
       /* E */
       tipo_validacion: cleanValue(context.tipoValidacion || ''),
-      resultado_validacion: cleanValue(context.resultadoValidacion || ''),
+      resultado_validacion: normalizeValidationResult(context.resultadoValidacion),
       requiere_prebiologico: cleanValue(prebio ? 'TRUE' : ''),
       tb_estado: cleanValue(prebio ? (prebio.tb || '') : ''),
       serologias_estado: cleanValue(prebio ? (prebio.serologias || '') : ''),
@@ -236,7 +248,7 @@
   /* ---- Obtener nombre de hoja según servicio ---- */
   function getServiceSheetName(servicio_origen) {
     if (!servicio_origen) return '';
-    var key = servicio_origen.toString().toLowerCase().replace(/[^a-z0-9]/g, '');
+    var key = normalizeServiceKey(servicio_origen);
     return SERVICE_SHEET_MAP[key] || '';
   }
 
@@ -312,6 +324,8 @@
   /* ---- Generar contexto desde una pantalla de validación ---- */
   function buildContextFromValidacion(patient, opts) {
     opts = opts || {};
+    var rawResult = opts.resultadoValidacion !== undefined ? opts.resultadoValidacion : opts.resultado;
+    var result = normalizeValidationResult(rawResult);
     return {
       patient: patient,
       patientId: patient && patient.cip,
@@ -321,14 +335,14 @@
       edad: patient && patient.edad,
       sexo: patient && patient.sexo,
       tipoActo: opts.tipoActo || 'validacion_inicial',
-      tipoValidacion: opts.tipoValidacion || 'inicial',
-      resultadoValidacion: opts.resultado || 'validado',
+      tipoValidacion: opts.tipoValidacion !== undefined ? opts.tipoValidacion : '',
+      resultadoValidacion: result,
       lineaActual: opts.lineaActual || null,
       prebiologico: opts.prebiologico || null,
       fechaActo: opts.fechaActo || '',
       profesional: opts.profesional || '',
       demoFlag: opts.demoFlag !== undefined ? opts.demoFlag : true,
-      estadoRegistro: 'completado',
+      estadoRegistro: validationRecordState(result),
     };
   }
 
@@ -411,6 +425,7 @@
   window.FarmaciaExcelRowExport = {
     WO8_COLUMNS: WO8_COLUMNS,
     cleanValue: cleanValue,
+    normalizeValidationResult: normalizeValidationResult,
     buildExcelRowObject: buildExcelRowObject,
     buildExcelRowArray: buildExcelRowArray,
     toTSVRow: toTSVRow,
