@@ -5,6 +5,10 @@
         return root.document ? root.document.getElementById(id) : null;
     }
 
+    function text(value) {
+        return value === null || value === undefined ? "" : String(value).trim();
+    }
+
     function ensureBlankOption(select) {
         if (!select) return;
         var hasBlank = Array.prototype.some.call(select.options || [], function (option) { return option.value === ""; });
@@ -14,7 +18,7 @@
             option.textContent = "Seleccionar...";
             select.insertBefore(option, select.firstChild || null);
         }
-        select.value = "";
+        if (!select.hasAttribute("data-v4-explicit-selection")) select.value = "";
         select.addEventListener("change", function () {
             select.setAttribute("data-v4-explicit-selection", "true");
         });
@@ -48,6 +52,44 @@
         updateCatalogMessage();
     }
 
+    function setValue(id, value) {
+        var element = byId(id);
+        if (element) element.value = text(value);
+    }
+
+    function applyCanonicalSnapshot(snapshot) {
+        var result = text(snapshot && snapshot.result);
+        setValue("fhValEstado", result);
+        setValue("fhValMotivo", snapshot && snapshot.denial_reason);
+        setValue("fhValObservaciones", snapshot && snapshot.observations);
+        setValue("fhValCita", snapshot && snapshot.appointment_date);
+
+        if (snapshot && snapshot.line) {
+            setValue("fhValidadoFarmaco", snapshot.line.drug_name);
+            setValue("fhValidadoPrincipioActivo", snapshot.line.active_ingredient);
+            setValue("fhValidadoDosis", snapshot.line.dose_text);
+            setValue("fhValidadoPresentacion", snapshot.line.presentation);
+            setValue("fhValidadoVia", snapshot.line.route);
+            setValue("fhValidadoPauta", snapshot.line.pauta_codigo);
+            setValue("fhValidadoPautaOtro", snapshot.line.pauta_otro_texto);
+        }
+
+        var reasonRow = byId("fhValMotivoRow");
+        if (reasonRow) reasonRow.classList.toggle("hidden", result !== "denied");
+
+        var firstVisit = byId("fhValGoFirstVisitV4");
+        if (firstVisit) firstVisit.classList.toggle("hidden", result !== "validated" || !text(snapshot && snapshot.produced_line_id));
+
+        var status = byId("fhValV4Status");
+        if (status) {
+            if (!result) status.textContent = "Sin decisión canónica guardada para este paciente.";
+            else {
+                var labels = { pending: "Pendiente", denied: "Denegado", validated: "Validado · pendiente de inicio" };
+                status.textContent = labels[result] + (text(snapshot && snapshot.produced_line_id) ? " · Línea " + snapshot.produced_line_id : " · Sin línea terapéutica");
+            }
+        }
+    }
+
     function restorePostLoadSafety() {
         var demo = root.FarmaciaDemo;
         var model = root.FarmaciaValidationStateV4Model;
@@ -63,21 +105,10 @@
             var store = core.createSessionStore(root.sessionStorage);
             var snapshot = model.restoreDecision({ store: store, patientId: patient.patient_id });
 
-            if (["ready_for_pharmacy_validation", "general_pending_validation"].indexOf(scenario.initial_state) !== -1 && !snapshot.result) {
-                var resultSelect = byId("fhValEstado");
-                if (resultSelect) resultSelect.value = "";
-                var neutralReasonRow = byId("fhValMotivoRow");
-                if (neutralReasonRow) neutralReasonRow.classList.add("hidden");
-                var status = byId("fhValV4Status");
-                if (status) status.textContent = "Sin decisión canónica guardada para este paciente.";
-            }
-
             if (scenario.initial_state === "validation_denied" && snapshot.result === "denied" && !snapshot.denial_reason && snapshot.observations) {
-                var reason = byId("fhValMotivo");
-                if (reason) reason.value = snapshot.observations;
-                var deniedReasonRow = byId("fhValMotivoRow");
-                if (deniedReasonRow) deniedReasonRow.classList.remove("hidden");
+                snapshot.denial_reason = snapshot.observations;
             }
+            applyCanonicalSnapshot(snapshot);
         });
     }
 
