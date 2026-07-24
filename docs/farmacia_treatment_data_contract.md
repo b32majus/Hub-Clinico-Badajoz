@@ -1,7 +1,7 @@
 # Contrato de datos — Tratamiento farmacológico
 
-**Versión:** 1.0
-**Fecha:** 2026-06-14
+**Versión:** 1.1
+**Fecha:** 2026-07-18
 **WO asociada:** WO7B (documental)
 **Origen:** WO7A — Auditoría visual y contrato común de tratamiento farmacológico
 **Estado de WO6:** `pending_review`
@@ -42,7 +42,7 @@ Riesgo principal:
 2. Las pantallas pueden mostrarlo de forma distinta, pero no deben inventar contratos distintos.
 3. Validación, primera visita, seguimiento y dashboard deben leer/escribir contra el mismo contrato base.
 4. La pauta debe reutilizar el contrato WO6 cuando aplique.
-5. CIMA/local debe alimentar el mismo snapshot terapéutico.
+5. CIMA/local identifica el medicamento y aporta trazabilidad de catálogo; no alimenta un snapshot terapéutico.
 6. El seguimiento no debe crear de forma silenciosa una nueva línea terapéutica validada.
 7. Concomitante, adicional, histórico y exposición no son lo mismo.
 8. El dashboard debe ser proyección/lectura, no otro modelo paralelo.
@@ -94,7 +94,7 @@ Riesgo principal:
 - `nombre_comercial`: nombre de marca cuando existe.
 - `dosis_texto`: representación clínica visible completa.
 - `dosis_valor` + `dosis_unidad`: opcionales para una capa más estructurada futura.
-- `snapshot_origen`: huella serializable del origen catálogo si aplica.
+- `snapshot_origen`: huella saneada y serializable del origen catálogo si aplica; no es fuente de decisión clínica.
 
 ---
 
@@ -296,3 +296,51 @@ Se deja explícito:
 - no se promociona todavía;
 - WO6 queda como base técnica de pauta y storage;
 - WO7 es necesaria para alineación terapéutica entre pantallas.
+
+---
+
+## 15. Frontera aprobada catálogo/tratamiento
+
+La frontera entre identidad de catálogo y tratamiento clínico queda aprobada para esta versión. Las decisiones más amplias de ciclo de vida, líneas, movimientos, validación y persistencia longitudinal continúan siendo provisionales y requieren su propia aprobación.
+
+### CatalogSelectionSnapshot v1
+
+La selección desde CIMA o catálogo local produce exclusivamente un `CatalogSelectionSnapshot`:
+
+```javascript
+{
+  snapshot_kind: "catalog_selection",
+  snapshot_version: 1,
+  selected_at: "",
+  context: {
+    slot: "primera_visita.tratamiento | validacion.solicitado | validacion.validado | seguimiento.tratamiento",
+    paciente_cip: "",
+    tratamiento_id: "",
+    linea_id: ""
+  }
+}
+```
+
+El snapshot puede conservar nombre, principio activo, fuente, identificadores y metadatos CIMA como referencia interna de catálogo. Esos metadatos no son tratamiento clínico.
+
+### Contexto y persistencia
+
+Una selección persistida solo se aplica si el `slot` coincide exactamente. CIP, `tratamiento_id` y `linea_id` también deben coincidir exactamente cuando cualquiera de los dos contextos informa el valor. Ante una incompatibilidad se descarta y limpia el snapshot de memoria y `sessionStorage`, sin modificar los datos clínicos actuales.
+
+Un snapshot recuperado implícitamente de `sessionStorage` sin tipo o sin contexto compatible se rechaza y limpia. Un snapshot legacy pasado explícitamente a un adaptador puede aportar únicamente identidad y trazabilidad; nunca se clasifica por presencia de dosis, presentación, vía o principio activo.
+
+### Sustitución atómica de identidad
+
+Una selección reemplaza conjuntamente `farmaco_nombre`, `nombre_comercial`, `principio_activo`, `drug_id`, `selected_drug_id`, `source_type`, `codigo_nacional`, `nregistro` y la trazabilidad de catálogo. Los valores ausentes del nuevo medicamento quedan vacíos; no se conservan identificadores del anterior.
+
+La selección no escribe dosis, presentación prescrita, vía, pauta, inducción, duración, fechas, relación, estado, movimiento, fase, validación u observaciones profesionales. Tampoco deriva relación, estado o movimiento desde `es_principal` dentro de esta corrección.
+
+### snapshot_origen saneado
+
+En el tratamiento canónico, `snapshot_origen` solo puede conservar `snapshot_kind`, `snapshot_version`, `selected_at`, `context`, identidad farmacológica, fuente e identificadores de catálogo. No contiene `dosis_presentacion`, `presentacion_snapshot`, `via_snapshot`, pauta, inducción ni etiquetas terapéuticamente interpretables. No se exporta en bruto.
+
+`snapshot_kind` y `snapshot_version` no pertenecen al tratamiento canónico.
+
+### Fuera de alcance
+
+No se implementa `ClinicalTreatmentSnapshot`: no existe un productor real aprobado. Un tipo desconocido, typo o `clinical_treatment` no registrado no recibe privilegios clínicos. El tratamiento clínico solo se construye desde formulario, paciente, línea, validación o importación explícita.

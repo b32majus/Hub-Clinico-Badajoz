@@ -328,6 +328,13 @@ assert(js.includes('line.farmaco_nombre || line.nombre_comercial'), 'syncBiologi
 assert(js.includes('fhSegCimaContextPrincipioActivo'), 'Código de sincronización tarjeta CIMA presente');
 assert(js.includes('clearSnapshot'), 'Se limpia snapshot si no corresponde a línea seleccionada');
 
+// WO-FH-CATALOG-SNAPSHOT-CONTEXT-NONINFERENCE-01: el catálogo solo actualiza identidad.
+var selectDrugSegMatch = js.match(/function selectDrugSeg[\s\S]*?^    \}/m);
+var selectDrugSegBody = selectDrugSegMatch ? selectDrugSegMatch[0] : '';
+assert(selectDrugSegBody.indexOf("F.setValue('fhSegDosisActual', drug.dosis") === -1, 'Seguimiento no copia dosis CIMA al seleccionar catálogo');
+assert(selectDrugSegBody.indexOf("F.setValue('fhSegPresentacion', drug.nombre_presentacion") === -1, 'Seguimiento no copia presentación CIMA al seleccionar catálogo');
+assert(selectDrugSegBody.indexOf("F.setValue('fhSegVia', drug.via") === -1, 'Seguimiento no copia vía CIMA al seleccionar catálogo');
+
 // 43. No se rompe pauta actual editable
 assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual normalizada sigue funcionando');
 

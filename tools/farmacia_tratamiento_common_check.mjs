@@ -78,6 +78,7 @@ const emptyKeys = [
     'es_principal', 'es_validado_farmacia', 'snapshot_origen'
 ];
 assert(emptyKeys.every(function (key) { return Object.prototype.hasOwnProperty.call(empty, key); }), 'objeto vacio devuelve shape completo');
+assert(!Object.prototype.hasOwnProperty.call(empty, 'snapshot_kind'), 'tratamiento canónico no contiene snapshot_kind');
 
 const cimaDrug = {
     nombre_comercial: 'Secukinumab',
@@ -94,8 +95,9 @@ const cimaDrug = {
 const cimaTreatment = api.buildTreatmentFromCatalogSelection(cimaDrug, {});
 assertEqual(cimaTreatment.farmaco_nombre, 'Secukinumab 300 mg', 'CIMA mapea nombre');
 assertEqual(cimaTreatment.principio_activo, 'Secukinumab', 'CIMA mapea principio activo');
-assertEqual(cimaTreatment.dosis_texto, '300 mg', 'CIMA mapea dosis');
-assertEqual(cimaTreatment.via, 'SC', 'CIMA mapea via');
+assertEqual(cimaTreatment.dosis_texto, '', 'CIMA no infiere dosis');
+assertEqual(cimaTreatment.presentacion, '', 'CIMA no infiere presentación');
+assertEqual(cimaTreatment.via, '', 'CIMA no infiere vía');
 assertEqual(cimaTreatment.codigo_nacional, '123456', 'CIMA mapea codigo nacional');
 assertEqual(cimaTreatment.nregistro, 'EU/1/01/123', 'CIMA mapea nregistro');
 assertEqual(cimaTreatment.selected_drug_id, 'CIMA-1', 'CIMA mapea selected_drug_id');
@@ -225,7 +227,42 @@ const snapshot = api.buildTreatmentSnapshot({
 });
 assertEqual(snapshot.selected_drug_id, 'CIMA-99', 'buildTreatmentSnapshot mapea selectedSnapshot real');
 assertEqual(snapshot.codigo_nacional, '999999', 'buildTreatmentSnapshot mapea codigo nacional snapshot');
-assertEqual(snapshot.via, 'SC', 'buildTreatmentSnapshot mapea via snapshot');
+assertEqual(snapshot.via, '', 'snapshot legacy explícito no infiere vía');
+assertEqual(snapshot.dosis_texto, '', 'snapshot legacy explícito no infiere dosis');
+assert(!Object.prototype.hasOwnProperty.call(snapshot.snapshot_origen || {}, 'dosis_presentacion'), 'snapshot_origen saneado no conserva dosis de catálogo');
+
+const preservedTherapy = api.buildTreatmentSnapshot({
+    snapshot_kind: 'catalog_selection',
+    snapshot_version: 1,
+    selected_at: '2026-07-18T12:00:00.000Z',
+    context: { slot: 'seguimiento.tratamiento', paciente_cip: 'CIP-CTX-01', tratamiento_id: 'T-01', linea_id: 'L-01' },
+    selected_drug_id: 'CIMA-CTX-01',
+    source_type: 'CIMA',
+    nombre_snapshot: 'Identidad de catálogo',
+    principio_activo_snapshot: 'Principio de catálogo',
+    dosis_presentacion: '15 mg no prescritos',
+    presentacion_snapshot: 'Presentación CIMA no prescrita',
+    via_snapshot: 'SC'
+}, {
+    base: { dosis_texto: '30 mg profesional', presentacion: 'Presentación profesional', via: 'Oral', pauta: 'Cada 24 horas', tipo_relacion: 'validado', estado_linea: 'activo' }
+});
+assertEqual(preservedTherapy.dosis_texto, '30 mg profesional', 'catálogo conserva dosis profesional');
+assertEqual(preservedTherapy.presentacion, 'Presentación profesional', 'catálogo conserva presentación profesional');
+assertEqual(preservedTherapy.via, 'Oral', 'catálogo conserva vía profesional');
+assertEqual(preservedTherapy.tipo_relacion, 'validado', 'catálogo no crea relación');
+assertEqual(preservedTherapy.estado_linea, 'activo', 'catálogo no crea estado');
+assertEqual(preservedTherapy.snapshot_origen.snapshot_kind, 'catalog_selection', 'snapshot_origen conserva clase saneada');
+assertEqual(preservedTherapy.snapshot_origen.context.slot, 'seguimiento.tratamiento', 'snapshot_origen conserva contexto saneado');
+assert(!Object.prototype.hasOwnProperty.call(preservedTherapy.snapshot_origen, 'via_snapshot'), 'snapshot_origen no conserva vía de catálogo');
+
+const unknownKind = api.buildTreatmentSnapshot({
+    snapshot_kind: 'clinical_treatment',
+    dosis_presentacion: '90 mg no autorizados',
+    via_snapshot: 'IV',
+    nombre_snapshot: 'Identidad sin privilegios'
+});
+assertEqual(unknownKind.dosis_texto, '', 'clinical_treatment no registrado no obtiene privilegios clínicos');
+assertEqual(unknownKind.via, '', 'tipo clínico no registrado no obtiene vía clínica');
 
 const summary = api.buildTreatmentSummary(lines[0]);
 assertEqual(summary.titulo, lines[0].farmaco_nombre, 'buildTreatmentSummary construye titulo');
