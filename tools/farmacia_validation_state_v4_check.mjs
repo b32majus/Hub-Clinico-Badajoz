@@ -96,6 +96,10 @@ assert.match(bootstrap, /farmacia_import_mode_v4\.js/);
 assert.match(bootstrap, /farmacia_multitreatment_core\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_model\.js/);
 assert.match(bootstrap, /farmacia_import_validation_bridge_v4\.js/);
+assert.match(bootstrap, /farmacia_validation_export_truth_v4_helpers\.js/);
+assert.match(bootstrap, /farmacia_validation_export_truth_v4_state\.js/);
+assert.match(bootstrap, /farmacia_validation_export_truth_v4_outputs\.js/);
+assert.match(bootstrap, /farmacia_validation_export_truth_v4_ui\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_ui\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_safety\.js/);
 assert.doesNotMatch(bootstrap, /farmacia_wo8_runtime_v1/);
@@ -105,7 +109,7 @@ vm.runInNewContext(bootstrap, {
   window: { location: { pathname: '/farmacia_validacion.html' } },
   document: { write(value) { writtenScripts.push(value); } }
 });
-assert.equal(writtenScripts.length, 8);
+assert.equal(writtenScripts.length, 12);
 writtenScripts.forEach((markup) => assert.match(markup, /^<script src="[^"]+"><\/script>$/));
 
 const stateSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_model.js'), 'utf8');
@@ -113,6 +117,7 @@ const uiSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_st
 const safetySource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_safety.js'), 'utf8');
 const importModeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_mode_v4.js'), 'utf8');
 const importBridgeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_validation_bridge_v4.js'), 'utf8');
+const truthSource = ['helpers', 'state', 'outputs', 'ui'].map((part) => fs.readFileSync(path.join(ROOT, `scripts/farmacia_validation_export_truth_v4_${part}.js`), 'utf8')).join('\n');
 
 assert.match(uiSource, /Guardar validación/);
 assert.match(stateSource, /validated_not_started/);
@@ -129,4 +134,15 @@ assert.match(importBridgeSource, /createTreatmentRequest/);
 assert.match(importBridgeSource, /imported_nursing/);
 assert.doesNotMatch(importBridgeSource, /dose_text:\s*['"][^'"]+/);
 
-console.log('farmacia_validation_state_v4_check: PASSED_REAL_IMPORT_MODE');
+assert.match(truthSource, /Guarde primero la decisión de Validación/);
+assert.match(truthSource, /stopImmediatePropagation/);
+assert.match(truthSource, /validation_act_id/);
+assert.match(truthSource, /validated_not_started/);
+assert.match(truthSource, /patient\.patient_id/);
+assert.match(truthSource, /dateParts/);
+assert.match(truthSource, /Recencia analítica <3 meses/);
+assert.match(truthSource, /Medicina preventiva/);
+assert.match(truthSource, /analitica_reciente_explicit/);
+assert.match(truthSource, /No existe una línea terapéutica validada/);
+
+console.log('farmacia_validation_state_v4_check: PASSED_CANONICAL_EXPORT_TRUTH');
