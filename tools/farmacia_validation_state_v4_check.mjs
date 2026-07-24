@@ -92,22 +92,28 @@ assert.throws(() => stateApi.saveDecision({
 const bootstrap = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_data_source.js'), 'utf8');
 assert.match(bootstrap, /farmacia_data_source_v4_core\.js/);
 assert.match(bootstrap, /farmacia_index_v4_state_guard\.js/);
+assert.match(bootstrap, /farmacia_import_mode_v4\.js/);
 assert.match(bootstrap, /farmacia_multitreatment_core\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_model\.js/);
+assert.match(bootstrap, /farmacia_import_validation_bridge_v4\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_ui\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_safety\.js/);
 assert.doesNotMatch(bootstrap, /farmacia_wo8_runtime_v1/);
+
 const writtenScripts = [];
 vm.runInNewContext(bootstrap, {
   window: { location: { pathname: '/farmacia_validacion.html' } },
   document: { write(value) { writtenScripts.push(value); } }
 });
-assert.equal(writtenScripts.length, 6);
+assert.equal(writtenScripts.length, 8);
 writtenScripts.forEach((markup) => assert.match(markup, /^<script src="[^"]+"><\/script>$/));
 
 const stateSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_model.js'), 'utf8');
 const uiSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_ui.js'), 'utf8');
 const safetySource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_safety.js'), 'utf8');
+const importModeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_mode_v4.js'), 'utf8');
+const importBridgeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_validation_bridge_v4.js'), 'utf8');
+
 assert.match(uiSource, /Guardar validación/);
 assert.match(stateSource, /validated_not_started/);
 assert.match(stateSource, /a validation that already produced a line cannot be downgraded/);
@@ -116,5 +122,11 @@ assert.match(safetySource, /fhValidadoInduccion/);
 assert.match(safetySource, /select\.value = ""/);
 assert.match(safetySource, /switch_cambio/);
 assert.match(safetySource, /Catálogo: identidad y trazabilidad/);
+assert.match(importModeSource, /qa_fixture/);
+assert.match(importModeSource, /real_import/);
+assert.match(importModeSource, /No hay pacientes demo de fallback/);
+assert.match(importBridgeSource, /createTreatmentRequest/);
+assert.match(importBridgeSource, /imported_nursing/);
+assert.doesNotMatch(importBridgeSource, /dose_text:\s*['"][^'"]+/);
 
-console.log('farmacia_validation_state_v4_check: PASSED');
+console.log('farmacia_validation_state_v4_check: PASSED_REAL_IMPORT_MODE');
