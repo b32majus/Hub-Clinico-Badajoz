@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
@@ -94,8 +95,14 @@ assert.match(bootstrap, /farmacia_multitreatment_core\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_model\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_ui\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_safety\.js/);
-assert.ok(bootstrap.includes("'</' + 'script>'"), 'bootstrap must emit a real closing script tag');
 assert.doesNotMatch(bootstrap, /farmacia_wo8_runtime_v1/);
+const writtenScripts = [];
+vm.runInNewContext(bootstrap, {
+  window: { location: { pathname: '/farmacia_validacion.html' } },
+  document: { write(value) { writtenScripts.push(value); } }
+});
+assert.equal(writtenScripts.length, 5);
+writtenScripts.forEach((markup) => assert.match(markup, /^<script src="[^"]+"><\/script>$/));
 
 const stateSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_model.js'), 'utf8');
 const uiSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_ui.js'), 'utf8');
