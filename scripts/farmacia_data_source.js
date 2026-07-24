@@ -2,13 +2,18 @@
 
 (function () {
     var coreSource = 'scripts/farmacia_data_source_v4_core.js?v=20260724-validation-state';
-    var isValidationPage = /(?:^|\/)farmacia_validacion\.html$/i.test(window.location.pathname || '');
+    var pathname = window.location.pathname || '';
+    var isValidationPage = /(?:^|\/)farmacia_validacion\.html$/i.test(pathname);
+    var isIndexPage = /(?:^|\/)farmacia_index\.html$/i.test(pathname);
 
     function writeScript(src) {
         document.write('<script src="' + src + '"></' + 'script>');
     }
 
     writeScript(coreSource);
+    if (isIndexPage) {
+        writeScript('scripts/farmacia_index_v4_state_guard.js?v=20260724-browser-qa');
+    }
     if (isValidationPage) {
         writeScript('scripts/farmacia_multitreatment_core.js?v=20260724-validation-state');
         writeScript('scripts/farmacia_validation_state_v4_model.js?v=20260724-validation-state');
