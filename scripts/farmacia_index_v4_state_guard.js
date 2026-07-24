@@ -10,20 +10,44 @@
         return '';
     }
 
+    function addLegacyAliases(patient) {
+        if (!patient) return patient;
+        var drugName = patient.farmaco_solicitado || patient.farmaco || patient.marcaComercial || '';
+        if (drugName) {
+            patient.farmaco = patient.farmaco || drugName;
+            patient.farmaco_solicitado = patient.farmaco_solicitado || drugName;
+        }
+        return patient;
+    }
+
     function patchDemo(demo) {
-        if (!demo || demo.__v4IndexNursingStateGuard) return demo;
-        demo.__v4IndexNursingStateGuard = true;
-        var original = demo.getEnfermeriaVisiblePatients;
-        if (typeof original !== 'function') return demo;
-        demo.getEnfermeriaVisiblePatients = function () {
-            return original.call(demo).map(function (patient) {
-                var state = explicitNursingState(patient);
-                if (!state) return patient;
-                var adapted = Object.assign({}, patient);
-                adapted.estado = state;
-                return adapted;
-            });
-        };
+        if (!demo || demo.__v4PatientCompatibilityGuard) return demo;
+        demo.__v4PatientCompatibilityGuard = true;
+
+        Object.keys(demo.patients || {}).forEach(function (cip) {
+            addLegacyAliases(demo.patients[cip]);
+        });
+
+        var originalFind = demo.findPatientByCip;
+        if (typeof originalFind === 'function') {
+            demo.findPatientByCip = function (cip) {
+                return addLegacyAliases(originalFind.call(demo, cip));
+            };
+        }
+
+        var originalNursing = demo.getEnfermeriaVisiblePatients;
+        if (typeof originalNursing === 'function') {
+            demo.getEnfermeriaVisiblePatients = function () {
+                return originalNursing.call(demo).map(function (patient) {
+                    addLegacyAliases(patient);
+                    var state = explicitNursingState(patient);
+                    if (!state) return patient;
+                    var adapted = Object.assign({}, patient);
+                    adapted.estado = state;
+                    return adapted;
+                });
+            };
+        }
         return demo;
     }
 
