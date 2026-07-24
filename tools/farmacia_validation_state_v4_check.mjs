@@ -41,11 +41,12 @@ const storage = memoryStorage();
 const store = core.createSessionStore(storage);
 stateApi.seedPatientState({ core, store, dataSource: sourceFor(), patientId: 'fhv4-patient-check' });
 
+const emptyIdentity = stateApi.emptyCatalogIdentity();
 const blankExplicit = {
   saved_at: '2026-07-24T20:00:00.000Z',
-  drug: { drug_name: 'Upadacitinib', active_ingredient: '', catalog_identity: {}, catalog_snapshot: {} },
+  drug: { drug_name: 'Upadacitinib', active_ingredient: '', catalog_identity: emptyIdentity, catalog_snapshot: emptyIdentity },
   therapy: { dose_text: '', presentation: '', route: '', pauta_codigo: '', pauta_label: '', pauta_otro_texto: '' },
-  line: { relationship: 'primary', drug_name: 'Upadacitinib', active_ingredient: '', dose_text: '', presentation: '', route: '', pauta_codigo: '', pauta_label: '', pauta_otro_texto: '', catalog_identity: {}, catalog_snapshot: {}, start_date: '', end_date: '' }
+  line: { relationship: 'primary', drug_name: 'Upadacitinib', active_ingredient: '', dose_text: '', presentation: '', route: '', pauta_codigo: '', pauta_label: '', pauta_otro_texto: '', catalog_identity: emptyIdentity, catalog_snapshot: emptyIdentity, start_date: '', end_date: '' }
 };
 
 let saved = stateApi.saveDecision({
