@@ -38,7 +38,22 @@ jobs:
           node --check scripts/farmacia_validation_state_v4_safety.js
           node --check tools/farmacia_validation_state_v4_check.mjs
       - name: Canonical validation state
-        run: node tools/farmacia_validation_state_v4_check.mjs
+        id: canonical
+        continue-on-error: true
+        run: node tools/farmacia_validation_state_v4_check.mjs > validation-state.log 2>&1
+      - name: Upload validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-validation-state-log
+          path: validation-state.log
+          if-no-files-found: error
+      - name: Show validation log
+        if: always()
+        run: cat validation-state.log
+      - name: Require canonical validation success
+        if: always()
+        run: test '${{ steps.canonical.outcome }}' = 'success'
       - name: Multitreatment core
         run: node tools/farmacia_multitreatment_core_check.mjs
       - name: Catalog non-inference
