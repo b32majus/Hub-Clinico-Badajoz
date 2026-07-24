@@ -1315,8 +1315,36 @@
             return results;
         }
 
-        function selectDrug(drug) {
+        function normalizeSnapshotContext(context) {
+            var source = context && typeof context === 'object' ? context : {};
+            return {
+                slot: String(source.slot || '').trim(),
+                paciente_cip: String(source.paciente_cip || source.cip || '').trim(),
+                tratamiento_id: String(source.tratamiento_id || '').trim(),
+                linea_id: String(source.linea_id || '').trim()
+            };
+        }
+
+        function isCompatibleSnapshotContext(snapshotContext, requestedContext) {
+            var snapshot = normalizeSnapshotContext(snapshotContext);
+            var requested = normalizeSnapshotContext(requestedContext);
+            if (!snapshot.slot || snapshot.slot !== requested.slot) return false;
+            return ['paciente_cip', 'tratamiento_id', 'linea_id'].every(function (key) {
+                return !(snapshot[key] || requested[key]) || snapshot[key] === requested[key];
+            });
+        }
+
+        function isCatalogSelectionSnapshot(snapshot, context) {
+            return !!(snapshot && snapshot.snapshot_kind === 'catalog_selection' && snapshot.snapshot_version === 1 &&
+                snapshot.context && isCompatibleSnapshotContext(snapshot.context, context));
+        }
+
+        function selectDrug(drug, context) {
+            var selectedContext = normalizeSnapshotContext(context);
             selectedSnapshot = {
+                snapshot_kind: 'catalog_selection',
+                snapshot_version: 1,
+                context: selectedContext,
                 drug_id: drug.drug_id || '',
                 selected_drug_id: drug.drug_id || '',
                 source_type: drug.source_type || '',
@@ -1340,16 +1368,21 @@
             return selectedSnapshot;
         }
 
-        function getSnapshot() {
-            if (selectedSnapshot) return selectedSnapshot;
+        function getSnapshot(context) {
+            if (selectedSnapshot) {
+                if (isCatalogSelectionSnapshot(selectedSnapshot, context)) return selectedSnapshot;
+                clearSnapshot();
+                return null;
+            }
             try {
                 var raw = sessionStorage.getItem(FARMACIA_DRUG_SNAPSHOT_KEY);
                 if (raw) {
                     var parsed = JSON.parse(raw);
-                    if (parsed && typeof parsed === 'object') {
+                    if (isCatalogSelectionSnapshot(parsed, context)) {
                         selectedSnapshot = parsed;
                         return selectedSnapshot;
                     }
+                    safeRemoveSessionStorage(FARMACIA_DRUG_SNAPSHOT_KEY);
                 }
             } catch (e) { /* sessionStorage unavailable or parse error */ }
             return null;
@@ -1357,9 +1390,7 @@
 
         function clearSnapshot() {
             selectedSnapshot = null;
-            try {
-                sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_KEY);
-            } catch (e) { /* sessionStorage unavailable */ }
+            safeRemoveSessionStorage(FARMACIA_DRUG_SNAPSHOT_KEY);
         }
 
         function getStatusText() {
