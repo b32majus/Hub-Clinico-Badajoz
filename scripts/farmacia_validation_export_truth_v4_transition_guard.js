@@ -55,36 +55,40 @@
     });
   }
 
-  function buildFirstVisitHref() {
+  function buildFirstVisitHref(snapshot) {
     var demo = root.FarmaciaDemo;
     var context = currentContext();
     var patient = context && context.patient;
-    if (!demo || !patient || typeof demo.makeContextUrl !== 'function') return '';
+    var decision = snapshot || canonicalSnapshot();
+    var patientId = text(patient && patient.patient_id);
+    var lineId = text(decision && decision.produced_line_id);
+    if (!demo || typeof demo.makeContextUrl !== 'function' || !patient || !patientId || !isValidatedWithLine(decision) || !lineId) return '';
     return demo.makeContextUrl('farmacia_primera_visita.html', {
       cip: patient.cip,
+      patient_id: patientId,
+      line_id: lineId,
       servicio: patient.servicioSlug || patient.servicio,
       patologia: patient.patologia,
       entrada: 'primera_visita'
     });
   }
 
-  function setFirstVisitAccess(allowed) {
+  function setFirstVisitAccess(allowed, snapshot) {
     var link = byId('fhValGoFirstVisitV4');
     if (!link) return;
     if (allowed) {
-      var href = text(link.getAttribute('data-v4-href')) || buildFirstVisitHref();
+      var href = buildFirstVisitHref(snapshot);
       if (href) {
         link.setAttribute('href', href);
         link.setAttribute('data-v4-href', href);
+        link.classList.remove('hidden');
+        link.removeAttribute('aria-disabled');
+        link.removeAttribute('tabindex');
+        return;
       }
-      link.classList.remove('hidden');
-      link.removeAttribute('aria-disabled');
-      link.removeAttribute('tabindex');
-      return;
     }
-    var currentHref = text(link.getAttribute('href'));
-    if (currentHref) link.setAttribute('data-v4-href', currentHref);
     link.removeAttribute('href');
+    link.removeAttribute('data-v4-href');
     link.classList.add('hidden');
     link.setAttribute('aria-disabled', 'true');
     link.setAttribute('tabindex', '-1');
@@ -110,7 +114,7 @@
       unlockResultOptions();
       var snapshot = canonicalSnapshot();
       var canContinue = isValidatedWithLine(snapshot) && selectedResult() === 'validated' && !dirty;
-      setFirstVisitAccess(canContinue);
+      setFirstVisitAccess(canContinue, snapshot);
       var note = ensureNote();
       if (note) {
         var rectifying = isValidatedWithLine(snapshot) && selectedResult() && selectedResult() !== 'validated';
@@ -184,6 +188,7 @@
   root.FarmaciaValidationTransitionGuardV4 = {
     refresh: refresh,
     canonicalSnapshot: canonicalSnapshot,
-    isValidatedWithLine: isValidatedWithLine
+    isValidatedWithLine: isValidatedWithLine,
+    buildFirstVisitHref: buildFirstVisitHref
   };
 })(typeof window !== 'undefined' ? window : globalThis);
