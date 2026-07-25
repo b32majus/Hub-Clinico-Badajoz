@@ -31,6 +31,13 @@ jobs:
         run: |
           sed -i '/if git_blob_sha(raw) != EXPECTED_INPUT_BLOB:/,+1d' tools/apply_treatment_start_core_patch.py
           sed -i '/if git_blob_sha(out) != EXPECTED_OUTPUT_BLOB:/,+1d' tools/apply_treatment_start_core_patch.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tools/apply_treatment_start_core_patch.py')
+          source = path.read_text()
+          source = source.replace("s = raw.decode('utf-8')", "s = raw.decode('utf-8').replace('\\r\\n', '\\n')")
+          path.write_text(source)
+          PY
           python3 tools/apply_treatment_start_core_patch.py > treatment-start-patch.log 2>&1
           git hash-object scripts/farmacia_multitreatment_core.js >> treatment-start-patch.log
       - name: Show patch log
