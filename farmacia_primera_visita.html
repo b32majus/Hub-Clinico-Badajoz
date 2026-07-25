@@ -132,6 +132,16 @@
         <div class="form-grid"><div class="form-group"><label for="fhPvFarmaco">Fármaco principal / validado</label><div class="autocomplete-wrapper"><input type="text" id="fhPvFarmaco" class="form-control" placeholder="Buscar por marca, principio activo, presentación o código..." autocomplete="off"><div id="fhPvAutocompleteDropdown" class="autocomplete-dropdown hidden"></div></div></div><div class="form-group"><label for="fhPvDosis">Presentación / dosis</label><input class="form-control" id="fhPvDosis"></div><div class="form-group"><label for="fhPvPauta">Pauta</label><select class="form-select" id="fhPvPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhPvPautaOtro" placeholder="Especificar otra pauta"></div><div class="form-group"><label for="fhPvVia">Vía</label><input class="form-control" id="fhPvVia"></div></div>
         <div class="info-grid" id="fhPvTratamientoGrid"></div>
     </section>
+    <section class="dashboard-card" id="fhPvCanonicalContext" aria-labelledby="fhPvCanonicalContextTitle" data-context-state="loading">
+        <h2 class="section-title" id="fhPvCanonicalContextTitle"><i class="fas fa-link"></i> Contexto canónico de Primera Visita</h2>
+        <div class="notice-box notice-box--info" id="fhPvCanonicalStatus" role="status" aria-live="polite">Comprobando patient_id y line_id…</div>
+        <div class="form-grid">
+            <div class="form-group"><span class="form-label">Patient ID</span><p class="validation-note-block__value" id="fhPvCanonicalPatientId">No informado</p></div>
+            <div class="form-group"><span class="form-label">Line ID</span><p class="validation-note-block__value" id="fhPvCanonicalLineId">No informado</p></div>
+            <div class="form-group"><span class="form-label">Tratamiento validado</span><p class="validation-note-block__value" id="fhPvCanonicalDrug">No informado</p></div>
+            <div class="form-group"><span class="form-label">Estado de línea</span><p class="validation-note-block__value" id="fhPvCanonicalLineStatus">No informado</p></div>
+        </div>
+    </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
     <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div></div>
@@ -175,9 +185,11 @@
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
             <script src="scripts/farmacia_data_source.js?v=20260716-wo8"></script>
+            <script src="scripts/farmacia_multitreatment_core.js?v=20260725-canonical-context"></script>
             <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
             <script src="scripts/farmacia_tratamiento_common.js?v=20260614-wo7c2"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
     <script src="scripts/farmacia_primera_visita.js?v=20260614-wo7d"></script>
+    <script src="scripts/farmacia_first_visit_identity_v4.js?v=20260725-canonical-context"></script>
         </body>
         </html>
