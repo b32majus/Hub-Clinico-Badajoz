@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-24
+**Última actualización:** 2026-07-25
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -64,7 +64,28 @@
 | **WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01** | Hacer explícita la precarga de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `905ddf07091e25be4ad85730b37c3580cd6f4826` → merge `1d8aac746ddfe7c72a5dd71636a8fc67af180571` (PR #26) | Precarga sintética y no inferencia; no integración real ni contrato clínico definitivo. |
 | **WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01** | Simplificar la UI funcional de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `51e1bf04fa60a9c8a66246abc5104da0e569da3a` → merge `58e59b1143da5fbe57af4d48b7f143b2f7d67f8a` (PR #27) | Limpieza mínima; no cierra multifármaco, renovación, catálogos ni el contrato funcional completo. |
 | **WO-FH-SEGUIMIENTO-FIRST-SEARCH-CONFIRMATION-FIX-01** | Evitar confirmación falsa en la primera búsqueda de Seguimiento | ✅ Merged | `fix/fh-seguimiento-first-search-confirmation-20260715` → `preview/demo-lunes-wo4-20260614` | `f1592bed5ce3adc853a40b4b644710904b1c6fca` → merge `84a44bbb7deec46a6b91fd8e2c08e6b264f80b9e` (PR #29) | Corrige el valor neutral `Demo` sin desproteger datos clínicos manuales; no cierra el hallazgo multifármaco ni la frontera Validación/Seguimiento. |
-| **WO-DOC-FH-RESCUE-MASTER-PLAN-V4-01** | Publicar plan maestro de rescate PROMueve Farmacia V4 | 📋 Ready for review | `work/docs/fh-rescue-master-plan-v4-20260724` → `preview/demo-lunes-wo4-20260614` | Issue #61 · commit de esta WO | Crea el plan maestro y actualiza índice/status. Solo documentación; no autoriza código, rama V4, escenarios, piloto ni merge automático. |
+| **WO-DOC-FH-RESCUE-MASTER-PLAN-V4-01** | Publicar plan maestro de rescate PROMueve Farmacia V4 | ✅ Merged | `work/docs/fh-rescue-master-plan-v4-20260724` → `preview/demo-lunes-wo4-20260614` | `ddbcf85bdb693e600315a2520a0f7a38e08ffc39` (PR #62) | Plan rector integrado; el commit pasó después a ser ancestro de `rescue/farmacia-v4`. Solo documentación; su merge no autorizó por sí solo código, piloto ni publicación. |
+| **WO-DOC-FH-SCENARIO-CONTRACT-V4-01** | Contrato de escenarios sintéticos S01–S12 | ✅ Merged | `work/docs/fh-scenario-contract-v4-20260724` → `preview/demo-lunes-wo4-20260614` | `eee913a11198b4ce71ee9fdff2bd075ce0e94e47` (PR #64) | Contrato no inferencial integrado y después ancestro de `rescue/farmacia-v4`; no prueba por sí solo ejecución E2E, demo-ready ni piloto. |
+| **WO-FH-SCENARIO-MANIFEST-V4-01** | Manifiesto versionado de escenarios V4 | ✅ Merged | `work/fh-scenario-manifest-v4-20260724` → `preview/demo-lunes-wo4-20260614` | `35a2cdd58a43f588a94882824bf1de9444521ad6` (PR #66) | Fuente sintética versionada, después ancestro del rescue y preservada además como backup previo a QA V4. |
+| **WO-FH-WO8-SCENARIO-PARITY-REPAIR-01** | Runtime coherente y paridad de escenarios V4 | ✅ Merged | `work/fh-wo8-scenario-parity-repair-20260724` → `rescue/farmacia-v4` | `3ff02ba0f9fe5f194723e8cf0441435136277e92` (PR #68) | Runtime determinista sobre escenarios sintéticos; no acredita todas las pantallas S01–S12. |
+| **WO-FH-V4-DATA-SOURCE-INICIO-S01-S04-01** | Cablear la fuente V4 en Inicio S01–S04 | ✅ Merged | integración directa en `rescue/farmacia-v4` | `1a8e4f413e47ebeb7741c8aa70c35be538d30883` (issue #69) | Commit en la ascendencia del rescue; cableado de fuente, no publicación ni cierre completo de Inicio. |
+| **WO-FH-CATALOG-NONINFERENCE-RECOVERY-V4-01** | Recuperar selección de catálogo sin inferencia | ✅ Merged | integración directa en `rescue/farmacia-v4` | `24510d2dd5cab627e2798d6cc35f932174f9ebca` | Merge directo trazable, no PR GitHub; el catálogo no decide tratamiento ni completa datos ausentes. |
+| **WO-FH-VALIDATION-VISIBLE-TRUTH-RECOVERY-V4-01** | Recuperar verdad visible de Validación | ✅ Merged | integración directa en `rescue/farmacia-v4` | `73021a0194283a94019a7e3fc53d5124138bbd67` | Merge directo trazable, no PR GitHub; alcance visible inicial, ampliado por persistencia/QA/exportación posteriores. |
+| **WO-FH-MULTITREATMENT-CORE-RECOVERY-V4-01** | Recuperar core canónico multitratamiento | ✅ Merged | `work/fh-multitreatment-core-recovery-v4-*` → `rescue/farmacia-v4` | `9ce8171459aceaeeff9f4d8cff56e0cd0508d0c1` (PR #73) | Core recuperado; no equivale a Seguimiento funcional S09–S12. |
+| **WO-FH-VALIDATION-CANONICAL-PERSISTENCE-V4-01** | Persistencia canónica de Validación | ✅ Merged | `work/fh-validation-canonical-persistence-v4-*` → `rescue/farmacia-v4` | `d563d13f52e994fa5104a9135269001b587ceaf5` (PR #75) | Pendiente/denegado no crean línea; validado crea una línea `validated_not_started`; datos sintéticos. |
+| **WO-FH-V4-VALIDATION-BROWSER-QA-01** | Probar Validación S01–S07 en navegador real | ✅ Merged | `work/fh-v4-validation-browser-qa-20260724` → `rescue/farmacia-v4` | `810644d628bd58e4b0baeb3e13cd6b52bd737937` (PR #77; issue #76) | QA por interacción soportada del alcance de Validación; no acredita S08–S12 ni piloto. |
+| **WO-FH-V4-REAL-NURSING-IMPORT-E2E-01** | Importar XLSX sintético real de Enfermería | ✅ Merged | `work/fh-v4-real-nursing-import-e2e-20260724` → `rescue/farmacia-v4` | `8902aa334ab2ed51ae47c187603595f6e75f9d92` (PR #79; issue #78) | Importación por input soportado; fixtures S01–S12 quedan tras modo QA explícito. |
+| **WO-FH-V4-VALIDATION-CANONICAL-EXPORT-TRUTH-01** | Exportar la verdad canónica visible de Validación | ✅ Merged | `work/fh-v4-validation-canonical-export-truth-20260725` → `rescue/farmacia-v4` | `562a8d50936010ef9d287c50b2d673ea6dabd83c` (PR #82; issue #81) | Salida canónica sintética/revisable; no integración JARA automática. |
+| **WO-FH-V4-VALIDATION-TRANSITION-GUARD-01** | Guard inicial de transición a Primera Visita | ✅ Merged | `work/fh-v4-validation-transition-guard-clean-20260725` → `rescue/farmacia-v4` | `2020f949038df2019a3628e82644e8df4929f248` (PR #84; issue #83) | El guard inicial resultó irreversible; esa limitación fue corregida por PR #86. No tomar #84 aisladamente como estado final. |
+| **WO-FH-V4-VALIDATION-REVERSIBLE-BEFORE-FIRST-VISIT-01** | Permitir rectificación antes del inicio | ✅ Merged | `work/fh-v4-validation-reversible-before-first-visit-20260725` → `rescue/farmacia-v4` | `2ee3b34739abec874424a572d445798fef565765` (PR #86; issue #85) | Corrige #84: rectificación reversible mientras la línea está `validated_not_started`. |
+| **Issue #80 — publicación temporal V4** | Iniciar el movimiento temporal de la fuente Pages configurada | ✅ Completada | `preview/demo-lunes-wo4-20260614` | movimiento inicial hasta `8902aa334ab2ed51ae47c187603595f6e75f9d92` | El issue #80 inició la publicación temporal hasta ese SHA. La rama fue avanzada posteriormente; el estado actual verificado de la fuente Pages y de la candidata `preview/farmacia-v4-rescue` es `2ee3b34739abec874424a572d445798fef565765`. Esta reconciliación no atribuye ese avance posterior al issue #80. |
+| **WO-HUB-KAIROS-V4-PROJECT-OVERLAY-CUTOVER-01** | Migrar overlay operativo a KairOS V4 | ✅ Merged | overlay de tooling → `rescue/farmacia-v4` | `f253d53336c780469651f0bdfab8f8985567d939` (PR #88; issue #87) | Cambio operativo/tooling; no añade funcionalidad clínica de Farmacia. No está en la preview publicada. |
+| **WO-FH-TREATMENT-START-CORE-CONTRACT-V4-01** | Núcleo canónico de inicio de tratamiento | ✅ Merged | `work/fh-treatment-start-core-v4-*` → `rescue/farmacia-v4` | `f4b0fb9d6ce76bf9878e277e6bd6f836a5815330` (PR #91) | Core de transición de inicio; la cadena UI/identidad se completa en PR #98–#104. No está publicado. |
+| **WO-FH-FIRST-VISIT-IDENTITY-HANDOFF-V4-01** | Propagar `patient_id + line_id` a Primera Visita | ✅ Merged | `work/fh-first-visit-identity-handoff-v4-20260725` → `rescue/farmacia-v4` | `57e769918eb2d0a061718778fd24e91eccccd43f` (PR #98; issue #97) | Handoff de identidad canónica; no inicia tratamiento por sí solo. No está publicado. |
+| **WO-FH-FIRST-VISIT-CANONICAL-CONTEXT-V4-01** | Resolver y mostrar contexto canónico en Primera Visita | ✅ Merged | `work/fh-first-visit-canonical-context-v4-20260725` → `rescue/farmacia-v4` | `510972a19e1a9eabfd2724890573691b13c0f284` (PR #100; issue #99) | Resolución fail-closed y QA soportada sin iniciar tratamiento. No está publicado. |
+| **WO-FH-FIRST-VISIT-CONFIRM-START-V4-01** | Confirmar explícitamente el inicio | ✅ Merged | `work/fh-first-visit-confirm-start-v4-20260725` → `rescue/farmacia-v4` | `c76d394fafb5909912e90efad34fb5a1f35ca8f8` (PR #102; issue #101) | Activa la misma línea con fecha explícita, evita duplicado y restaura estado; no implementa lifecycle completo. No está publicado. |
+| **WO-FH-FIRST-VISIT-FOLLOWUP-HANDOFF-V4-01** | Habilitar handoff identificado tras inicio | ✅ Merged | `work/fh-first-visit-followup-handoff-v4-20260725` → `rescue/farmacia-v4` | `a1fcdeaed4b2ae288ecf08fa057c34fb8cc9f1ea` (PR #104; issue #103) | Enlace solo para línea activa y coherente; **no implementa Seguimiento interno S09–S12**. No está publicado. |
+| **WO-FH-VALIDATION-POSTSTART-GUARD-V4-01** | Bloquear rectificación tras inicio confirmado | ✅ Merged | PR #106 → `rescue/farmacia-v4` | `d1df695f3573066b09e2ff978f3cf5d8d84fdb32` (PR #106; issue #105) | Mantiene rectificación pre-inicio y bloquea cambios cuando la línea ya está activa con inicio explícito. Rescue HEAD; no está publicado. |
 
 ---
 
@@ -119,14 +140,14 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 39 (incluye PR #21-#27 y PR #29; documentación y alcances funcionales parciales no equivalen a piloto) |
-| 📋 Ready for review | 19 (18 de WO-017 a WO-034 en rama nocturna frozen + 1 WO documental de rescate V4) |
+| ✅ Merged | 60 (incluye el rescate V4 integrado hasta PR #106; mergeado no equivale a publicado, demo-ready ni piloto) |
+| 📋 Ready for review | 18 (WO-017 a WO-034 en rama nocturna frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
-| ✅ Completada | 1 (WO-038 — auditoría pre-prueba) |
+| ✅ Completada | 2 (WO-038 + publicación temporal autorizada por issue #80) |
 | ⏸️ Pausada | 1 (WO-002) |
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 64 work orders / preflights gestionadas.
+**Total:** 85 work orders / preflights / pasos operativos gestionados.
