@@ -41,22 +41,18 @@
       note.id = 'fhValTransitionGuardNote';
       note.className = 'validation-note-block__value hidden';
       note.setAttribute('role', 'note');
-      note.textContent = 'La validación ya creó una línea pendiente de inicio. Para rectificarla se necesita una acción explícita de anulación; no puede cambiarse desde este selector.';
       select.parentNode.appendChild(note);
       select.setAttribute('aria-describedby', note.id);
     }
     return note;
   }
 
-  function setResultOptionsLocked(locked) {
+  function unlockResultOptions() {
     var select = byId('fhValEstado');
     if (!select) return;
-    ['pending', 'denied'].forEach(function (value) {
-      var option = Array.prototype.find.call(select.options || [], function (item) { return item.value === value; });
-      if (option) option.disabled = !!locked;
+    Array.prototype.forEach.call(select.options || [], function (option) {
+      option.disabled = false;
     });
-    var note = ensureNote();
-    if (note) note.classList.toggle('hidden', !locked);
   }
 
   function buildFirstVisitHref() {
@@ -102,14 +98,27 @@
   var dirty = false;
   var refreshing = false;
 
+  function selectedResult() {
+    var select = byId('fhValEstado');
+    return text(select && select.value);
+  }
+
   function refresh(message) {
     if (refreshing) return;
     refreshing = true;
     try {
+      unlockResultOptions();
       var snapshot = canonicalSnapshot();
-      var locked = isValidatedWithLine(snapshot);
-      setResultOptionsLocked(locked);
-      setFirstVisitAccess(locked && !dirty);
+      var canContinue = isValidatedWithLine(snapshot) && selectedResult() === 'validated' && !dirty;
+      setFirstVisitAccess(canContinue);
+      var note = ensureNote();
+      if (note) {
+        var rectifying = isValidatedWithLine(snapshot) && selectedResult() && selectedResult() !== 'validated';
+        note.textContent = rectifying
+          ? 'Al guardar esta rectificación, se retirará la línea pendiente de inicio y no se podrá continuar a Primera Visita.'
+          : '';
+        note.classList.toggle('hidden', !rectifying);
+      }
       if (message) setStatus(message);
     } finally {
       refreshing = false;
@@ -119,31 +128,22 @@
   function relevantEditable(target) {
     if (!target || !target.matches) return false;
     return target.matches([
-      '#fhValidadoFarmaco', '#fhValidadoPrincipioActivo', '#fhValidadoDosis', '#fhValidadoPresentacion',
+      '#fhValEstado', '#fhValidadoFarmaco', '#fhValidadoPrincipioActivo', '#fhValidadoDosis', '#fhValidadoPresentacion',
       '#fhValidadoVia', '#fhValidadoPauta', '#fhValidadoPautaOtro', '#fhValidadoInduccion',
-      '#fhValidadoJustificacion', '#fhValObservaciones', '#fhValCita', '#fhTipoValidacion'
+      '#fhValidadoJustificacion', '#fhValObservaciones', '#fhValCita', '#fhTipoValidacion', '#fhValMotivo'
     ].join(','));
-  }
-
-  function handleResultChange(event) {
-    var target = event.target;
-    if (!target || target.id !== 'fhValEstado') return;
-    var snapshot = canonicalSnapshot();
-    if (!isValidatedWithLine(snapshot) || target.value === 'validated') return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    target.value = 'validated';
-    dirty = false;
-    var reasonRow = byId('fhValMotivoRow');
-    if (reasonRow) reasonRow.classList.add('hidden');
-    refresh('La validación ya creó una línea pendiente de inicio. No puede cambiarse directamente a Pendiente o Denegado; requiere una anulación explícita.');
   }
 
   function handleEdit(event) {
     if (!relevantEditable(event.target)) return;
-    if (!isValidatedWithLine(canonicalSnapshot())) return;
+    var snapshot = canonicalSnapshot();
+    if (!isValidatedWithLine(snapshot)) return;
     dirty = true;
-    refresh('Hay cambios sin guardar. Guarde la validación antes de continuar a Primera Visita.');
+    if (event.target.id === 'fhValEstado' && text(event.target.value) !== 'validated') {
+      refresh('Rectificación sin guardar. Guarde el nuevo estado para retirar la línea pendiente de inicio.');
+    } else {
+      refresh('Hay cambios sin guardar. Guarde la validación antes de continuar a Primera Visita.');
+    }
   }
 
   function observeStatus() {
@@ -169,7 +169,6 @@
   }
 
   if (root.document) {
-    root.document.addEventListener('change', handleResultChange, true);
     root.document.addEventListener('input', handleEdit, true);
     root.document.addEventListener('change', handleEdit, true);
     root.document.addEventListener('click', function (event) {

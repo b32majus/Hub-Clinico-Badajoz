@@ -7,6 +7,7 @@ on:
       - 'scripts/farmacia_index_v4_state_guard.js'
       - 'scripts/farmacia_import_mode_v4.js'
       - 'scripts/farmacia_import_validation_bridge_v4.js'
+      - 'scripts/farmacia_validation_state_v4_*.js'
       - 'scripts/farmacia_validation_export_truth_v4_*.js'
       - 'scripts/farmacia_validation_state_v4_safety.js'
       - 'tools/farmacia_validation_state_v4_check.mjs'
@@ -55,7 +56,7 @@ jobs:
         run: |
           set -o pipefail
           node tools/farmacia_v4_validation_browser_qa.mjs 2>&1 | tee /tmp/farmacia-v4-browser-qa.log
-      - name: Validation transition guard QA
+      - name: Reversible validation transition QA
         env:
           BASE_URL: http://127.0.0.1:4173
         shell: bash

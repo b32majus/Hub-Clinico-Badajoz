@@ -95,6 +95,7 @@ assert.match(bootstrap, /farmacia_index_v4_state_guard\.js/);
 assert.match(bootstrap, /farmacia_import_mode_v4\.js/);
 assert.match(bootstrap, /farmacia_multitreatment_core\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_model\.js/);
+assert.match(bootstrap, /farmacia_validation_state_v4_rectification\.js/);
 assert.match(bootstrap, /farmacia_import_validation_bridge_v4\.js/);
 assert.match(bootstrap, /farmacia_validation_export_truth_v4_helpers\.js/);
 assert.match(bootstrap, /farmacia_validation_export_truth_v4_state\.js/);
@@ -110,10 +111,11 @@ vm.runInNewContext(bootstrap, {
   window: { location: { pathname: '/farmacia_validacion.html' } },
   document: { write(value) { writtenScripts.push(value); } }
 });
-assert.equal(writtenScripts.length, 13);
+assert.equal(writtenScripts.length, 14);
 writtenScripts.forEach((markup) => assert.match(markup, /^<script src="[^"]+"><\/script>$/));
 
 const stateSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_model.js'), 'utf8');
+const rectificationSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_rectification.js'), 'utf8');
 const uiSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_ui.js'), 'utf8');
 const safetySource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_safety.js'), 'utf8');
 const importModeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_mode_v4.js'), 'utf8');
@@ -124,6 +126,10 @@ assert.match(uiSource, /Guardar validación/);
 assert.match(stateSource, /validated_not_started/);
 assert.match(stateSource, /a validation that already produced a line cannot be downgraded/);
 assert.doesNotMatch(stateSource, /start_date:\s*new Date/);
+assert.match(rectificationSource, /validated_not_started/);
+assert.match(rectificationSource, /delete preparedPatient\.lines/);
+assert.match(rectificationSource, /produced_line_id = ''/);
+assert.match(rectificationSource, /La línea ya se inició/);
 assert.match(safetySource, /fhValidadoInduccion/);
 assert.match(safetySource, /select\.value = ""/);
 assert.match(safetySource, /switch_cambio/);
@@ -145,9 +151,9 @@ assert.match(truthSource, /Recencia analítica <3 meses/);
 assert.match(truthSource, /Medicina preventiva/);
 assert.match(truthSource, /analitica_reciente_explicit/);
 assert.match(truthSource, /No existe una línea terapéutica validada/);
-assert.match(truthSource, /acción explícita de anulación/);
-assert.match(truthSource, /option\.disabled/);
+assert.match(truthSource, /retirará la línea pendiente de inicio/);
+assert.match(truthSource, /option\.disabled = false/);
 assert.match(truthSource, /Hay cambios sin guardar/);
 assert.match(truthSource, /aria-disabled/);
 
-console.log('farmacia_validation_state_v4_check: PASSED_CANONICAL_EXPORT_AND_TRANSITION_GUARD');
+console.log('farmacia_validation_state_v4_check: PASSED_CANONICAL_EXPORT_AND_REVERSIBLE_TRANSITION');

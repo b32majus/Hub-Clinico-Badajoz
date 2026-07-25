@@ -35,10 +35,12 @@ jobs:
           node --check scripts/farmacia_data_source.js
           node --check scripts/farmacia_data_source_v4_core.js
           node --check scripts/farmacia_validation_state_v4_model.js
+          node --check scripts/farmacia_validation_state_v4_rectification.js
           node --check scripts/farmacia_validation_export_truth_v4_helpers.js
           node --check scripts/farmacia_validation_export_truth_v4_state.js
           node --check scripts/farmacia_validation_export_truth_v4_outputs.js
           node --check scripts/farmacia_validation_export_truth_v4_ui.js
+          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
           node --check scripts/farmacia_validation_state_v4_ui.js
           node --check scripts/farmacia_validation_state_v4_safety.js
           node --check tools/farmacia_validation_state_v4_check.mjs
