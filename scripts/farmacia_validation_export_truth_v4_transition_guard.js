@@ -56,21 +56,21 @@
   }
 
   function buildFirstVisitHref(snapshot) {
-    var demo = root.FarmaciaDemo;
     var context = currentContext();
     var patient = context && context.patient;
     var decision = snapshot || canonicalSnapshot();
     var patientId = text(patient && patient.patient_id);
     var lineId = text(decision && decision.produced_line_id);
-    if (!demo || typeof demo.makeContextUrl !== 'function' || !patient || !patientId || !isValidatedWithLine(decision) || !lineId) return '';
-    return demo.makeContextUrl('farmacia_primera_visita.html', {
-      cip: patient.cip,
-      patient_id: patientId,
-      line_id: lineId,
-      servicio: patient.servicioSlug || patient.servicio,
-      patologia: patient.patologia,
-      entrada: 'primera_visita'
-    });
+    var Params = root.URLSearchParams || (typeof URLSearchParams !== 'undefined' ? URLSearchParams : null);
+    if (!patient || !patientId || !isValidatedWithLine(decision) || !lineId || !Params) return '';
+    var params = new Params();
+    if (patient.cip) params.set('cip', patient.cip);
+    params.set('patient_id', patientId);
+    params.set('line_id', lineId);
+    if (patient.servicioSlug || patient.servicio) params.set('servicio', patient.servicioSlug || patient.servicio);
+    if (patient.patologia) params.set('patologia', patient.patologia);
+    params.set('entrada', 'primera_visita');
+    return 'farmacia_primera_visita.html?' + params.toString();
   }
 
   function setFirstVisitAccess(allowed, snapshot) {
