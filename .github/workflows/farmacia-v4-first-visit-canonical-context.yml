@@ -59,7 +59,8 @@ jobs:
           BASE_URL: http://127.0.0.1:4173
         shell: bash
         run: |
-          node --input-type=module <<'NODE'
+          set -o pipefail
+          node --input-type=module <<'NODE' 2>&1 | tee /tmp/farmacia-v4-first-visit-context-browser.log
           import { assert, browser, page, consoleErrors, pageErrors, clearSession, importNursingWorkbook, waitValidation, assertRealImportBoard } from './tools/farmacia_v4_validation_browser_qa_helpers.mjs';
 
           await clearSession();
@@ -90,5 +91,14 @@ jobs:
           await browser.close();
           console.log('farmacia_v4_first_visit_canonical_context_browser_qa: PASSED_SUPPORTED_FLOW');
           NODE
+      - name: Upload browser QA log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-context-browser-log
+          path: |
+            /tmp/farmacia-v4-first-visit-context-browser.log
+            /tmp/farmacia-v4-first-visit-context-http.log
+          if-no-files-found: ignore
       - name: Diff hygiene
         run: git diff --check origin/rescue/farmacia-v4...HEAD
