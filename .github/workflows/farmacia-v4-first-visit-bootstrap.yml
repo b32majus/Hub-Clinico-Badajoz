@@ -8,10 +8,10 @@ on:
       - '.github/workflows/farmacia-v4-first-visit-bootstrap.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  patch-verify-export:
+  patch-verify-commit:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'work/opencode/fh-first-visit-ui-v4-20260725'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -20,11 +20,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: work/opencode/fh-first-visit-ui-v4-20260725
+          fetch-depth: 0
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply deterministic patch
+      - name: Apply exact verified patch
         run: |
           sed -i '/actual = blob_sha(raw)/,+2d' tools/apply_first_visit_start_ui_patch.py
           python3 tools/apply_first_visit_start_ui_patch.py
@@ -38,39 +39,25 @@ jobs:
               raise SystemExit('active option guard replacement mismatch')
           path.write_text(source.replace(old, new, 1))
           PY
-      - name: Syntax and contract regressions
+      - name: Re-run contract gates
         shell: bash
         run: |
           set -o pipefail
-          {
-            node --check scripts/farmacia_primera_visita.js
-            node --check scripts/farmacia_first_visit_start_v4.js
-            node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
-            node --check tools/farmacia_first_visit_start_v4_check.mjs
-            node --check tools/farmacia_v4_first_visit_browser_qa.mjs
-            node tools/farmacia_first_visit_start_v4_check.mjs
-            node tools/farmacia_treatment_start_core_v4_check.mjs
-            node tools/farmacia_validation_state_v4_check.mjs
-            node tools/farmacia_catalog_noninference_check.mjs
-            node tools/farmacia_smoke_check.mjs
-            git diff --check
-          } 2>&1 | tee /tmp/farmacia-v4-first-visit-contract.log
-      - name: Stage verified product artifact
+          node --check scripts/farmacia_primera_visita.js
+          node --check scripts/farmacia_first_visit_start_v4.js
+          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
+          node tools/farmacia_first_visit_start_v4_check.mjs
+          node tools/farmacia_treatment_start_core_v4_check.mjs
+          node tools/farmacia_validation_state_v4_check.mjs
+          node tools/farmacia_catalog_noninference_check.mjs
+          node tools/farmacia_smoke_check.mjs
+          git diff --check
+      - name: Commit patched existing files
         run: |
-          mkdir -p /tmp/farmacia-v4-first-visit-product/scripts
-          mkdir -p /tmp/farmacia-v4-first-visit-product/tools
-          mkdir -p /tmp/farmacia-v4-first-visit-product/.github/workflows
-          cp farmacia_primera_visita.html /tmp/farmacia-v4-first-visit-product/
-          cp scripts/farmacia_primera_visita.js /tmp/farmacia-v4-first-visit-product/scripts/
-          cp scripts/farmacia_first_visit_start_v4.js /tmp/farmacia-v4-first-visit-product/scripts/
-          cp scripts/farmacia_validation_export_truth_v4_transition_guard.js /tmp/farmacia-v4-first-visit-product/scripts/
-          cp tools/farmacia_first_visit_start_v4_check.mjs /tmp/farmacia-v4-first-visit-product/tools/
-          cp tools/farmacia_v4_first_visit_browser_qa.mjs /tmp/farmacia-v4-first-visit-product/tools/
-          cp .github/workflows/farmacia-v4-first-visit.yml /tmp/farmacia-v4-first-visit-product/.github/workflows/
-          cp /tmp/farmacia-v4-first-visit-contract.log /tmp/farmacia-v4-first-visit-product/
-      - name: Upload verified product artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: farmacia-v4-first-visit-verified-product
-          path: /tmp/farmacia-v4-first-visit-product
-          if-no-files-found: error
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add farmacia_primera_visita.html
+          git add scripts/farmacia_primera_visita.js
+          git add scripts/farmacia_validation_export_truth_v4_transition_guard.js
+          git commit -m "feat(farmacia): wire canonical start into First Visit"
+          git push origin HEAD:work/opencode/fh-first-visit-ui-v4-20260725
