@@ -1,0 +1,146 @@
+name: Farmacia V4 First Visit Follow-up handoff
+
+on:
+  pull_request:
+    branches:
+      - 'rescue/farmacia-v4'
+    paths:
+      - 'scripts/farmacia_first_visit_identity_v4.js'
+      - 'tools/farmacia_first_visit_followup_handoff_v4_check.mjs'
+      - '.github/workflows/farmacia-v4-first-visit-followup-handoff.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  followup-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_first_visit_identity_v4.js
+          node --check tools/farmacia_first_visit_followup_handoff_v4_check.mjs
+      - name: Active-only Follow-up handoff
+        run: node tools/farmacia_first_visit_followup_handoff_v4_check.mjs
+      - name: Prior S08 regressions
+        run: |
+          node tools/farmacia_treatment_start_core_v4_check.mjs
+          node tools/farmacia_first_visit_canonical_context_v4_check.mjs
+          node tools/farmacia_first_visit_confirm_start_v4_check.mjs
+          node tools/farmacia_validation_state_v4_check.mjs
+          node tools/farmacia_smoke_check.mjs
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-followup-handoff-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-followup-handoff-http.log
+          exit 1
+      - name: Browser QA through supported flow
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        shell: bash
+        run: |
+          set -o pipefail
+          node --input-type=module <<'NODE' 2>&1 | tee /tmp/farmacia-v4-followup-handoff-browser.log
+          import { assert, browser, page, consoleErrors, pageErrors, clearSession, importNursingWorkbook, waitValidation, assertRealImportBoard } from './tools/farmacia_v4_validation_browser_qa_helpers.mjs';
+
+          const START_DATE = '2026-07-21';
+
+          await clearSession();
+          await importNursingWorkbook();
+          const patientC = await assertRealImportBoard();
+          await patientC.locator('[data-enf-action="validar"]').click();
+          await waitValidation();
+          await page.selectOption('#fhValEstado', 'validated');
+          await page.click('#fhValSaveV4');
+          await page.waitForFunction(() => /Validado · pendiente de inicio/.test(document.getElementById('fhValV4Status')?.textContent || ''));
+          await page.waitForFunction(() => typeof window.FarmaciaValidationTransitionGuardV4?.prepareFirstVisitNavigation === 'function');
+          const firstVisit = page.locator('#fhValGoFirstVisitV4:not(.hidden)');
+          await Promise.all([
+            page.waitForURL((url) => url.pathname.endsWith('/farmacia_primera_visita.html')),
+            firstVisit.click()
+          ]);
+
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="ready"]');
+          await page.waitForSelector('#fhPvGoFollowup', { state: 'attached' });
+          const pendingFollowup = page.locator('#fhPvGoFollowup');
+          assert.equal(await pendingFollowup.getAttribute('href'), null, 'Follow-up must have no target before start');
+          assert.equal(await pendingFollowup.getAttribute('aria-disabled'), 'true');
+          assert.equal(await pendingFollowup.evaluate((element) => element.classList.contains('hidden')), true);
+
+          await page.fill('#fhPvFecha', START_DATE);
+          await page.click('#fhPvConfirmStart');
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="active"]');
+          const current = new URL(page.url());
+          const patientId = current.searchParams.get('patient_id');
+          const lineId = current.searchParams.get('line_id');
+          assert.equal(patientId, 'fhv4-import-nursing-000000003');
+          assert.match(lineId || '', /^line_/);
+
+          const followup = page.locator('#fhPvGoFollowup:not(.hidden)');
+          assert.equal(await followup.count(), 1);
+          const href = await followup.getAttribute('href');
+          const target = new URL(href, page.url());
+          assert.equal(target.pathname.endsWith('/farmacia_seguimiento.html'), true);
+          assert.equal(target.searchParams.get('cip'), '000000003');
+          assert.equal(target.searchParams.get('patient_id'), patientId);
+          assert.equal(target.searchParams.get('line_id'), lineId);
+          assert.equal(target.searchParams.get('servicio'), 'reuma');
+          assert.equal(target.searchParams.get('patologia'), 'AR');
+          assert.equal(target.searchParams.get('entrada'), 'seguimiento');
+
+          await page.reload();
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="active"]');
+          const restored = page.locator('#fhPvGoFollowup:not(.hidden)');
+          assert.equal(await restored.count(), 1);
+          const restoredHref = await restored.getAttribute('href');
+          const restoredTarget = new URL(restoredHref, page.url());
+          assert.equal(restoredTarget.searchParams.get('patient_id'), patientId);
+          assert.equal(restoredTarget.searchParams.get('line_id'), lineId);
+
+          assert.deepEqual(pageErrors, []);
+          assert.deepEqual(consoleErrors, []);
+
+          await Promise.all([
+            page.waitForURL((url) => url.pathname.endsWith('/farmacia_seguimiento.html')),
+            restored.click()
+          ]);
+          const followed = new URL(page.url());
+          assert.equal(followed.searchParams.get('patient_id'), patientId);
+          assert.equal(followed.searchParams.get('line_id'), lineId);
+          assert.equal(followed.searchParams.get('entrada'), 'seguimiento');
+
+          await browser.close();
+          console.log('farmacia_v4_first_visit_followup_handoff_browser_qa: PASSED_ACTIVE_ONLY_LINK_AND_RELOAD');
+          NODE
+      - name: Upload browser QA log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-followup-handoff-browser-log
+          path: |
+            /tmp/farmacia-v4-followup-handoff-browser.log
+            /tmp/farmacia-v4-followup-handoff-http.log
+          if-no-files-found: ignore
+      - name: Diff hygiene
+        run: git diff --check origin/rescue/farmacia-v4...HEAD
