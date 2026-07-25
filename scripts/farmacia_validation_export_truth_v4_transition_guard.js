@@ -162,6 +162,22 @@
     }).observe(status, { childList: true, subtree: true, characterData: true });
   }
 
+  function prepareFirstVisitNavigation(event) {
+    var link = event.target && event.target.closest ? event.target.closest('#fhValGoFirstVisitV4') : null;
+    if (!link) return;
+    var snapshot = canonicalSnapshot();
+    var allowed = isValidatedWithLine(snapshot) && selectedResult() === 'validated' && !dirty;
+    var href = allowed ? buildFirstVisitHref(snapshot) : '';
+    if (!href) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setFirstVisitAccess(false, snapshot);
+      return;
+    }
+    link.setAttribute('href', href);
+    link.setAttribute('data-v4-href', href);
+  }
+
   function boot() {
     var demo = root.FarmaciaDemo;
     var ready = demo && demo.ready && typeof demo.ready.then === 'function' ? demo.ready : Promise.resolve();
@@ -175,13 +191,7 @@
   if (root.document) {
     root.document.addEventListener('input', handleEdit, true);
     root.document.addEventListener('change', handleEdit, true);
-    root.document.addEventListener('click', function (event) {
-      var link = event.target && event.target.closest ? event.target.closest('#fhValGoFirstVisitV4[aria-disabled="true"]') : null;
-      if (link) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    }, true);
+    root.document.addEventListener('click', prepareFirstVisitNavigation, true);
     root.document.addEventListener('DOMContentLoaded', boot);
   }
 
@@ -189,6 +199,7 @@
     refresh: refresh,
     canonicalSnapshot: canonicalSnapshot,
     isValidatedWithLine: isValidatedWithLine,
-    buildFirstVisitHref: buildFirstVisitHref
+    buildFirstVisitHref: buildFirstVisitHref,
+    prepareFirstVisitNavigation: prepareFirstVisitNavigation
   };
 })(typeof window !== 'undefined' ? window : globalThis);
