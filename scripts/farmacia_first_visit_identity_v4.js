@@ -155,6 +155,73 @@
         }
     }
 
+    function buildFollowupHref(environment, result) {
+        var env = environment || root;
+        var active = !!(result && result.ok && result.line && result.line.status === 'active');
+        var Params = env.URLSearchParams || root.URLSearchParams || (typeof URLSearchParams !== 'undefined' ? URLSearchParams : null);
+        if (!active || !Params || !text(result.patient_id) || !text(result.line_id)) return '';
+
+        var params = new Params((env.location && env.location.search) || '');
+        var cip = text(params.get('cip'));
+        var servicio = text(params.get('servicio')) || text(byId(env, 'fhPvServicio') && byId(env, 'fhPvServicio').value);
+        var patologia = text(params.get('patologia')) || text(byId(env, 'fhPvPatologia') && byId(env, 'fhPvPatologia').value);
+
+        params.delete('id');
+        if (cip) params.set('cip', cip);
+        else params.delete('cip');
+        params.set('patient_id', result.patient_id);
+        params.set('line_id', result.line_id);
+        if (servicio) params.set('servicio', servicio);
+        else params.delete('servicio');
+        if (patologia) params.set('patologia', patologia);
+        else params.delete('patologia');
+        params.set('entrada', 'seguimiento');
+        return 'farmacia_seguimiento.html?' + params.toString();
+    }
+
+    function ensureFollowupLink(environment) {
+        var env = environment || root;
+        var document = env.document;
+        if (!document) return null;
+        var existing = byId(env, 'fhPvGoFollowup');
+        if (existing) return existing;
+        var actions = byId(env, 'fhPvConfirmStart');
+        actions = actions && actions.parentNode;
+        if (!actions) return null;
+
+        var link = document.createElement('a');
+        link.id = 'fhPvGoFollowup';
+        link.className = 'btn btn-outline hidden';
+        link.setAttribute('aria-disabled', 'true');
+        link.setAttribute('tabindex', '-1');
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-arrow-right';
+        icon.setAttribute('aria-hidden', 'true');
+        link.appendChild(icon);
+        link.appendChild(document.createTextNode(' Continuar a Seguimiento'));
+        actions.appendChild(link);
+        return link;
+    }
+
+    function setFollowupAccess(environment, result) {
+        var env = environment || root;
+        var link = ensureFollowupLink(env);
+        if (!link) return '';
+        var href = buildFollowupHref(env, result);
+        if (!href) {
+            link.removeAttribute('href');
+            link.classList.add('hidden');
+            link.setAttribute('aria-disabled', 'true');
+            link.setAttribute('tabindex', '-1');
+            return '';
+        }
+        link.setAttribute('href', href);
+        link.classList.remove('hidden');
+        link.removeAttribute('aria-disabled');
+        link.removeAttribute('tabindex');
+        return href;
+    }
+
     function render(environment) {
         var env = environment || root;
         var identity = readIdentity(env.location && env.location.search);
@@ -183,6 +250,7 @@
         setText(env, 'fhPvCanonicalLineStatus', result.line && result.line.status);
         setText(env, 'fhPvCanonicalProfessional', result.start_movement && result.start_movement.declared_by_demo);
         setStartControls(env, result);
+        setFollowupAccess(env, result);
         setExportGate(env, result.ok, result.message);
 
         return result;
@@ -272,6 +340,8 @@
     return {
         readIdentity: readIdentity,
         resolveCanonicalContext: resolveCanonicalContext,
+        buildFollowupHref: buildFollowupHref,
+        setFollowupAccess: setFollowupAccess,
         render: render,
         confirmStart: confirmStart,
         boot: boot
