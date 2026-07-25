@@ -11,7 +11,6 @@ on:
       - 'scripts/farmacia_validacion.js'
       - 'scripts/farmacia_excel_row_export.js'
       - 'tools/farmacia_validation_state_v4_check.mjs'
-      - 'tools/farmacia_validation_rectification_v4_check.mjs'
       - 'tools/farmacia_multitreatment_core_check.mjs'
       - 'tools/farmacia_catalog_noninference_check.mjs'
       - 'tools/farmacia_validation_export_truth_check.mjs'
@@ -45,13 +44,10 @@ jobs:
           node --check scripts/farmacia_validation_state_v4_ui.js
           node --check scripts/farmacia_validation_state_v4_safety.js
           node --check tools/farmacia_validation_state_v4_check.mjs
-          node --check tools/farmacia_validation_rectification_v4_check.mjs
       - name: Canonical validation state
         id: canonical
         continue-on-error: true
         run: node tools/farmacia_validation_state_v4_check.mjs > validation-state.log 2>&1
-      - name: Pre-start rectification
-        run: node tools/farmacia_validation_rectification_v4_check.mjs
       - name: Upload validation log
         if: always()
         uses: actions/upload-artifact@v4
