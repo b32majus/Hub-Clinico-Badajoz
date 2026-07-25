@@ -8,21 +8,18 @@ on:
       - '.github/workflows/farmacia-v4-first-visit-bootstrap.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-verify-commit:
+  patch-verify-export:
     if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'work/opencode/fh-first-visit-ui-v4-20260725'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
-    env:
-      TZ: Europe/Madrid
+    timeout-minutes: 10
     steps:
       - name: Checkout work branch
         uses: actions/checkout@v4
         with:
           ref: work/opencode/fh-first-visit-ui-v4-20260725
-          fetch-depth: 0
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -58,45 +55,22 @@ jobs:
             node tools/farmacia_smoke_check.mjs
             git diff --check
           } 2>&1 | tee /tmp/farmacia-v4-first-visit-contract.log
-      - name: Install Playwright
+      - name: Stage verified product artifact
         run: |
-          npm init -y >/dev/null 2>&1
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-      - name: Start local server
-        run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-first-visit-http.log 2>&1 &
-          for i in {1..30}; do
-            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
-            sleep 1
-          done
-          cat /tmp/farmacia-v4-first-visit-http.log
-          exit 1
-      - name: Supported S08 browser QA
-        env:
-          BASE_URL: http://127.0.0.1:4173
-        shell: bash
-        run: |
-          set -o pipefail
-          node tools/farmacia_v4_first_visit_browser_qa.mjs 2>&1 | tee /tmp/farmacia-v4-first-visit-browser.log
-      - name: Upload verification logs
-        if: always()
+          mkdir -p /tmp/farmacia-v4-first-visit-product/scripts
+          mkdir -p /tmp/farmacia-v4-first-visit-product/tools
+          mkdir -p /tmp/farmacia-v4-first-visit-product/.github/workflows
+          cp farmacia_primera_visita.html /tmp/farmacia-v4-first-visit-product/
+          cp scripts/farmacia_primera_visita.js /tmp/farmacia-v4-first-visit-product/scripts/
+          cp scripts/farmacia_first_visit_start_v4.js /tmp/farmacia-v4-first-visit-product/scripts/
+          cp scripts/farmacia_validation_export_truth_v4_transition_guard.js /tmp/farmacia-v4-first-visit-product/scripts/
+          cp tools/farmacia_first_visit_start_v4_check.mjs /tmp/farmacia-v4-first-visit-product/tools/
+          cp tools/farmacia_v4_first_visit_browser_qa.mjs /tmp/farmacia-v4-first-visit-product/tools/
+          cp .github/workflows/farmacia-v4-first-visit.yml /tmp/farmacia-v4-first-visit-product/.github/workflows/
+          cp /tmp/farmacia-v4-first-visit-contract.log /tmp/farmacia-v4-first-visit-product/
+      - name: Upload verified product artifact
         uses: actions/upload-artifact@v4
         with:
-          name: farmacia-v4-first-visit-bootstrap-logs
-          path: |
-            /tmp/farmacia-v4-first-visit-contract.log
-            /tmp/farmacia-v4-first-visit-browser.log
-            /tmp/farmacia-v4-first-visit-http.log
-          if-no-files-found: ignore
-      - name: Commit verified product delta
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm tools/apply_first_visit_start_ui_patch.py
-          git rm .github/workflows/farmacia-v4-first-visit-bootstrap.yml
-          git add farmacia_primera_visita.html
-          git add scripts/farmacia_primera_visita.js
-          git add scripts/farmacia_validation_export_truth_v4_transition_guard.js
-          git commit -m "feat(farmacia): confirm treatment start in First Visit"
-          git push origin HEAD:work/opencode/fh-first-visit-ui-v4-20260725
+          name: farmacia-v4-first-visit-verified-product
+          path: /tmp/farmacia-v4-first-visit-product
+          if-no-files-found: error
