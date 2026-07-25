@@ -64,13 +64,17 @@
 
         var line = patient.lines && patient.lines[lineId];
         if (!line) return blocked('LINE_NOT_FOUND', 'La línea indicada no pertenece al contexto terapéutico disponible.', identity);
+        if (text(line.line_id) !== lineId) return blocked('LINE_MISMATCH', 'La identidad interna de la línea no coincide con el enlace.', identity);
         if (text(line.patient_id) !== patientId) return blocked('PATIENT_MISMATCH', 'La línea no pertenece al paciente indicado.', identity);
         if (line.provenance !== 'validated_in_hub') {
             return blocked('UNSUPPORTED_PROVENANCE', 'La línea no procede de una validación positiva realizada en el Hub.', identity);
         }
 
         var validationAct = patient.validation_acts && patient.validation_acts[line.source_validation_act_id];
-        if (!validationAct || validationAct.result !== 'validated' || text(validationAct.produced_line_id) !== lineId) {
+        if (!validationAct || text(validationAct.validation_act_id) !== text(line.source_validation_act_id) ||
+                text(validationAct.patient_id) !== patientId || validationAct.result !== 'validated' ||
+                text(validationAct.request_id) !== text(line.source_request_id) ||
+                text(validationAct.produced_line_id) !== lineId) {
             return blocked('VALIDATION_MISMATCH', 'No existe una validación positiva coherente para esta línea.', identity);
         }
 
@@ -100,6 +104,9 @@
             }
             if (text(starts[0].effective_at) !== text(line.start_date) || text(starts[0].validation_act_id) !== text(line.source_validation_act_id)) {
                 return blocked('ACTIVE_START_MISMATCH', 'La fecha o la validación del movimiento de inicio no coinciden con la línea activa.', identity);
+            }
+            if (text(starts[0].patient_id) !== patientId || text(starts[0].target_line_id) !== lineId) {
+                return blocked('ACTIVE_START_IDENTITY_MISMATCH', 'El movimiento de inicio no pertenece al paciente y línea indicados.', identity);
             }
             return {
                 ok: true,
@@ -240,7 +247,9 @@
             card.setAttribute('data-line-id', result.line_id || '');
         }
         if (status) {
-            status.textContent = result.message;
+            status.textContent = result.ok && !active
+                ? 'Confirme el inicio de tratamiento antes de generar salidas de Primera Visita.'
+                : result.message;
             status.setAttribute('data-status-code', result.code);
         }
 
@@ -251,7 +260,7 @@
         setText(env, 'fhPvCanonicalProfessional', result.start_movement && result.start_movement.declared_by_demo);
         setStartControls(env, result);
         setFollowupAccess(env, result);
-        setExportGate(env, result.ok, result.message);
+        setExportGate(env, active, 'Confirme el inicio de tratamiento antes de generar salidas de Primera Visita.');
 
         return result;
     }
