@@ -660,8 +660,16 @@
             lines.push('Origen catálogo: ' + (meta.source_type || '—'));
             lines.push('ID fármaco seleccionado: ' + (meta.selected_drug_id || '—'));
         }
-        lines.push('Inducción realizada: ' + (fv('fhPvInduccionRealizada') || '—'));
-        lines.push('Fecha primera visita: ' + (fv('fhPvFecha') || '—'));
+        var startApi = window.FarmaciaFirstVisitStartV4;
+        var canonicalLine = startApi && typeof startApi.getCanonicalLine === 'function' ? startApi.getCanonicalLine() : null;
+        if (canonicalLine && canonicalLine.status === 'active') {
+            lines.push('Línea: ' + canonicalLine.line_id);
+            lines.push('Estado línea: active');
+            lines.push('Fecha real de inicio: ' + canonicalLine.start_date);
+            lines.push('Profesional demo de inicio: ' + (startApi.getDeclaredByDemo() || '—'));
+        }
+        lines.push('Inducción realizada: ' + (fv('fhPvInduccionRealizada') || 'No informado'));
+        lines.push('Fecha primera visita: ' + (canonicalLine && canonicalLine.status === 'active' ? canonicalLine.start_date : '—'));
         lines.push('PROM basal: ' + (fv('fhPvProms') || '—'));
         if (getPromsBasal() === 'Sí' && isPromsExpandedVisible()) {
             lines.push('');
@@ -1123,10 +1131,20 @@
                 if (!exp) return;
                 var patient = ctx && ctx.patient ? ctx.patient : null;
                 if (!patient) { alert('No hay paciente seleccionado.'); return; }
+                var startApi = window.FarmaciaFirstVisitStartV4;
+                var canonicalLine = startApi && typeof startApi.getCanonicalLine === 'function' ? startApi.getCanonicalLine() : null;
+                var canonicalStartDate = startApi && typeof startApi.getCanonicalStartDate === 'function' ? startApi.getCanonicalStartDate() : '';
+                if (!canonicalLine || canonicalLine.status !== 'active' || !canonicalStartDate) {
+                    alert('Confirme primero el inicio canónico del tratamiento.');
+                    return;
+                }
                 var treatment = typeof getCurrentPrimaryTreatment === 'function' ? getCurrentPrimaryTreatment() : {};
+                treatment.linea_id = canonicalLine.line_id;
+                treatment.estado_linea = canonicalLine.status;
+                treatment.fecha_inicio = canonicalStartDate;
                 var opts = {
                     tipoActo: 'primera_visita', visitaId: 'PV-' + Date.now().toString(36).toUpperCase(),
-                    lineaActual: treatment, fechaActo: new Date().toISOString().substring(0, 10),
+                    lineaActual: treatment, fechaActo: canonicalStartDate,
                     proms: { morisky_green: '', haq: '', eva_dolor: fv('fhPvEvaDolor') || '', dlqi: '' },
                     demoFlag: true,
                 };
