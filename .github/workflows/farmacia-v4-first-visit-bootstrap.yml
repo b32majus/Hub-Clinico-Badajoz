@@ -29,17 +29,33 @@ jobs:
       - name: Apply deterministic patch
         run: python3 tools/apply_first_visit_start_ui_patch.py
       - name: Syntax and Node regressions
+        id: nodechecks
+        continue-on-error: true
+        shell: bash
         run: |
-          node --check scripts/farmacia_first_visit_start_v4.js
-          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
-          node --check tools/farmacia_first_visit_start_v4_check.mjs
-          node --check tools/farmacia_v4_first_visit_browser_qa.mjs
-          node tools/farmacia_treatment_start_core_v4_check.mjs
-          node tools/farmacia_first_visit_start_v4_check.mjs
-          node tools/farmacia_validation_state_v4_check.mjs
-          node tools/farmacia_catalog_noninference_check.mjs
-          node tools/farmacia_smoke_check.mjs
-          git diff --check
+          set -o pipefail
+          {
+            node --check scripts/farmacia_first_visit_start_v4.js
+            node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
+            node --check tools/farmacia_first_visit_start_v4_check.mjs
+            node --check tools/farmacia_v4_first_visit_browser_qa.mjs
+            node tools/farmacia_treatment_start_core_v4_check.mjs
+            node tools/farmacia_first_visit_start_v4_check.mjs
+            node tools/farmacia_validation_state_v4_check.mjs
+            node tools/farmacia_catalog_noninference_check.mjs
+            node tools/farmacia_smoke_check.mjs
+            git diff --check
+          } 2>&1 | tee /tmp/farmacia-v4-first-visit-node.log
+      - name: Upload Node log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-node-log
+          path: /tmp/farmacia-v4-first-visit-node.log
+          if-no-files-found: error
+      - name: Require Node success
+        if: always()
+        run: test '${{ steps.nodechecks.outcome }}' = 'success'
       - name: Install Playwright
         run: |
           npm init -y >/dev/null 2>&1
