@@ -1,0 +1,42 @@
+name: Farmacia V4 First Visit identity handoff
+
+on:
+  pull_request:
+    branches:
+      - 'rescue/farmacia-v4'
+    paths:
+      - 'scripts/farmacia_validation_export_truth_v4_transition_guard.js'
+      - 'tools/farmacia_first_visit_identity_handoff_v4_check.mjs'
+      - '.github/workflows/farmacia-v4-first-visit-identity-handoff.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  identity-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
+          node --check tools/farmacia_first_visit_identity_handoff_v4_check.mjs
+      - name: Canonical identity handoff
+        run: node tools/farmacia_first_visit_identity_handoff_v4_check.mjs
+      - name: Validation regression
+        run: node tools/farmacia_validation_state_v4_check.mjs
+      - name: Smoke
+        run: node tools/farmacia_smoke_check.mjs
+      - name: Diff hygiene
+        run: git diff --check origin/rescue/farmacia-v4...HEAD
