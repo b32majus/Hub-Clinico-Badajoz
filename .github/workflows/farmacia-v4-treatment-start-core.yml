@@ -1,0 +1,38 @@
+name: Farmacia V4 treatment start core
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/farmacia_multitreatment_core.js'
+      - 'tools/farmacia_treatment_start_core_v4_check.mjs'
+      - '.github/workflows/farmacia-v4-treatment-start-core.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  treatment-start-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_multitreatment_core.js
+          node --check tools/farmacia_treatment_start_core_v4_check.mjs
+      - name: Existing multitreatment regression
+        run: node tools/farmacia_multitreatment_core_check.mjs
+      - name: Treatment start contract
+        run: node tools/farmacia_treatment_start_core_v4_check.mjs
+      - name: Validation state and pre-start rectification regression
+        run: node tools/farmacia_validation_state_v4_check.mjs
+      - name: Catalog non-inference
+        run: node tools/farmacia_catalog_noninference_check.mjs
+      - name: Smoke
+        run: node tools/farmacia_smoke_check.mjs
