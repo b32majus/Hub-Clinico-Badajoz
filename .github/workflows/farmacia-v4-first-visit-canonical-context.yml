@@ -73,6 +73,10 @@ jobs:
           await page.waitForFunction(() => /Validado · pendiente de inicio/.test(document.getElementById('fhValV4Status')?.textContent || ''));
           const link = page.locator('#fhValGoFirstVisitV4:not(.hidden)');
           assert.equal(await link.count(), 1);
+          await page.waitForFunction(() => {
+            const href = document.getElementById('fhValGoFirstVisitV4')?.getAttribute('href') || '';
+            return /patient_id=fhv4-import-nursing-000000003/.test(href) && /line_id=line_/.test(href);
+          });
           const href = await link.getAttribute('href');
           assert.match(href, /patient_id=fhv4-import-nursing-000000003/);
           assert.match(href, /line_id=line_/);
