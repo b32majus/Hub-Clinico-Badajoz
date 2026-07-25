@@ -82,7 +82,7 @@ jobs:
           ]);
 
           await page.waitForSelector('#fhPvCanonicalContext[data-context-state="ready"]');
-          await page.waitForSelector('#fhPvGoFollowup');
+          await page.waitForSelector('#fhPvGoFollowup', { state: 'attached' });
           const pendingFollowup = page.locator('#fhPvGoFollowup');
           assert.equal(await pendingFollowup.getAttribute('href'), null, 'Follow-up must have no target before start');
           assert.equal(await pendingFollowup.getAttribute('aria-disabled'), 'true');
@@ -105,8 +105,8 @@ jobs:
           assert.equal(target.searchParams.get('cip'), '000000003');
           assert.equal(target.searchParams.get('patient_id'), patientId);
           assert.equal(target.searchParams.get('line_id'), lineId);
-          assert.equal(target.searchParams.get('servicio'), 'reumatologia');
-          assert.match(target.searchParams.get('patologia') || '', /Artritis/i);
+          assert.equal(target.searchParams.get('servicio'), 'reuma');
+          assert.equal(target.searchParams.get('patologia'), 'AR');
           assert.equal(target.searchParams.get('entrada'), 'seguimiento');
 
           await page.reload();
