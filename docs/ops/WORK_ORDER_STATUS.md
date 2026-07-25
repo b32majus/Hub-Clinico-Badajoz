@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-25
+**Última actualización:** 2026-07-26
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -85,7 +85,9 @@
 | **WO-FH-FIRST-VISIT-CANONICAL-CONTEXT-V4-01** | Resolver y mostrar contexto canónico en Primera Visita | ✅ Merged | `work/fh-first-visit-canonical-context-v4-20260725` → `rescue/farmacia-v4` | `510972a19e1a9eabfd2724890573691b13c0f284` (PR #100; issue #99) | Resolución fail-closed y QA soportada sin iniciar tratamiento. No está publicado. |
 | **WO-FH-FIRST-VISIT-CONFIRM-START-V4-01** | Confirmar explícitamente el inicio | ✅ Merged | `work/fh-first-visit-confirm-start-v4-20260725` → `rescue/farmacia-v4` | `c76d394fafb5909912e90efad34fb5a1f35ca8f8` (PR #102; issue #101) | Activa la misma línea con fecha explícita, evita duplicado y restaura estado; no implementa lifecycle completo. No está publicado. |
 | **WO-FH-FIRST-VISIT-FOLLOWUP-HANDOFF-V4-01** | Habilitar handoff identificado tras inicio | ✅ Merged | `work/fh-first-visit-followup-handoff-v4-20260725` → `rescue/farmacia-v4` | `a1fcdeaed4b2ae288ecf08fa057c34fb8cc9f1ea` (PR #104; issue #103) | Enlace solo para línea activa y coherente; **no implementa Seguimiento interno S09–S12**. No está publicado. |
-| **WO-FH-VALIDATION-POSTSTART-GUARD-V4-01** | Bloquear rectificación tras inicio confirmado | ✅ Merged | PR #106 → `rescue/farmacia-v4` | `d1df695f3573066b09e2ff978f3cf5d8d84fdb32` (PR #106; issue #105) | Mantiene rectificación pre-inicio y bloquea cambios cuando la línea ya está activa con inicio explícito. Rescue HEAD; no está publicado. |
+| **WO-FH-VALIDATION-POSTSTART-GUARD-V4-01** | Bloquear rectificación tras inicio confirmado | ✅ Merged | PR #106 → `rescue/farmacia-v4` | `d1df695f3573066b09e2ff978f3cf5d8d84fdb32` (PR #106; issue #105) | Mantiene rectificación pre-inicio y bloquea cambios cuando la línea ya está activa con inicio explícito. Rescue HEAD al cierre de PR #106; no está publicado. |
+| **WO-DOC-FH-RESCUE-STATUS-RECONCILIATION-V4-01** | Reconciliar el estado documental del rescate V4 | ✅ Merged | `work/docs/fh-rescue-status-reconciliation-v4-20260725` → `rescue/farmacia-v4` | merge `da2fd42ab06324901e150651a2b3877f6e57d5e2` (PR #108; issue #107) | Reconciliación previa hasta PR #106; no añadió funcionalidad ni movió Pages. |
+| **WO-FH-FIRST-VISIT-CANONICAL-OUTPUTS-V4-01** | Cerrar salidas canónicas de Primera Visita | ✅ Merged | `work/fh-first-visit-canonical-outputs-v4-20260725` → `rescue/farmacia-v4` | merge `567a519d1b049c4259115853c77cf8a517319deb` (PR #110; issue #109) | Cierre técnico S01–S08: gate preinicio, salidas canónicas postinicio, `start_date`, 61 columnas Excel, defaults neutrales y QA de navegador por interacción soportada; workflows de PR completados con success. No publicado en Pages y sin Seguimiento S09–S12. |
 
 ---
 
@@ -140,7 +142,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 60 (incluye el rescate V4 integrado hasta PR #106; mergeado no equivale a publicado, demo-ready ni piloto) |
+| ✅ Merged | 62 (incluye el rescate V4 integrado hasta PR #110; mergeado no equivale a publicado, demo-ready ni piloto) |
 | 📋 Ready for review | 18 (WO-017 a WO-034 en rama nocturna frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -150,4 +152,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 85 work orders / preflights / pasos operativos gestionados.
+**Total:** 87 work orders / preflights / pasos operativos gestionados.

@@ -1,11 +1,11 @@
 # Plan maestro de rescate — PROMueve Farmacia V4
 
-**Estado:** plan vivo reconciliado con la integración hasta PR #106
-**Fecha de reconciliación:** 2026-07-25
+**Estado:** plan vivo reconciliado con la integración hasta PR #110
+**Fecha de reconciliación:** 2026-07-26
 **WO:** `WO-DOC-FH-RESCUE-MASTER-PLAN-V4-01`  
 **Issue:** #61  
 **Rama de rescate integrada:** `rescue/farmacia-v4`
-**HEAD de rescate verificado:** `d1df695f3573066b09e2ff978f3cf5d8d84fdb32`
+**Último HEAD funcional reconciliado:** `567a519d1b049c4259115853c77cf8a517319deb` (PR #110). La propia reconciliación documental puede avanzar posteriormente el HEAD sin añadir funcionalidad clínica.
 **Fuente Pages configurada/publicada:** `preview/demo-lunes-wo4-20260614` en `2ee3b34739abec874424a572d445798fef565765`
 **Ref candidata coincidente:** `preview/farmacia-v4-rescue` en `2ee3b34739abec874424a572d445798fef565765`; no es una segunda fuente Pages publicada
 **Inicio de publicación temporal:** issue #80 llevó inicialmente la fuente Pages a `8902aa334ab2ed51ae47c187603595f6e75f9d92`; no cubre todo el avance posterior
@@ -30,7 +30,7 @@ Este documento gobierna el rescate funcional de PROMueve Farmacia Hospitalaria V
 
 La reconstrucción previa se considera suficientemente cerrada. El problema rector no es la ausencia de funcionalidad aislada, sino la pérdida de historias sintéticas coherentes durante la migración a la fuente WO8 y la posterior evolución parcial del lifecycle terapéutico.
 
-La estrategia aprobada fue no restaurar una rama completa, sino reconstruir una línea V4 controlada desde la referencia hospitalaria y recuperar selectivamente mejoras después de reparar el contrato de escenarios. Esa ejecución ya está integrada hasta PR #106; este documento conserva el razonamiento histórico y distingue lo integrado de lo publicado y de lo todavía pendiente.
+La estrategia aprobada fue no restaurar una rama completa, sino reconstruir una línea V4 controlada desde la referencia hospitalaria y recuperar selectivamente mejoras después de reparar el contrato de escenarios. Esa ejecución ya está integrada hasta PR #110; este documento conserva el razonamiento histórico y distingue lo integrado de lo publicado y de lo todavía pendiente.
 
 ---
 
@@ -83,16 +83,16 @@ No debe convertirse directamente en nueva base de trabajo, publicarse como conju
 
 ```text
 rescue/farmacia-v4
-d1df695f3573066b09e2ff978f3cf5d8d84fdb32
+567a519d1b049c4259115853c77cf8a517319deb
 
 preview/farmacia-v4-rescue
 preview/demo-lunes-wo4-20260614
 2ee3b34739abec874424a572d445798fef565765
 ```
 
-La rama de rescate contiene la secuencia integrada hasta PR #106. El issue #80 inició la publicación temporal llevando la fuente Pages `preview/demo-lunes-wo4-20260614` hasta `8902aa...`.
+La rama de rescate contiene la secuencia funcional integrada hasta PR #110. El issue #80 inició la publicación temporal llevando la fuente Pages `preview/demo-lunes-wo4-20260614` hasta `8902aa...`.
 
-La rama fue avanzada posteriormente y su estado actual verificado es `2ee3b347...`, hasta PR #86. Esta reconciliación registra el estado actual sin atribuir todo el avance posterior al alcance original del issue #80. La candidata `preview/farmacia-v4-rescue` coincide en ese SHA, pero no es una segunda publicación Pages. En consecuencia, **integrado no equivale a publicado**: PR #88 y posteriores no están acreditados en Pages.
+La rama fue avanzada posteriormente y su estado actual verificado es `2ee3b347...`, hasta PR #86. Esta reconciliación registra el estado actual sin atribuir todo el avance posterior al alcance original del issue #80. La candidata `preview/farmacia-v4-rescue` coincide en ese SHA, pero no es una segunda publicación Pages. En consecuencia, **integrado no equivale a publicado**: PR #88 a #110 no están acreditados en Pages.
 
 ---
 
@@ -146,9 +146,10 @@ El rescate integrado actual:
 - contiene el cableado de Inicio V4 y recuperaciones selectivas de catálogo/no inferencia, verdad visible y core multitratamiento;
 - integra Validación con persistencia canónica, QA de navegador real, importación XLSX sintética por interacción soportada, exportación canónica y rectificación reversible antes del inicio (PR #75–#86);
 - integra el core de inicio y la cadena de Primera Visita hasta confirmación explícita, handoff a Seguimiento y bloqueo de rectificación post-inicio (PR #91–#106);
+- cierra en PR #110 el gate que impide exportar antes del inicio y genera JARA/CSV/Excel postinicio desde el contexto canónico, con `start_date` canónico, 61 columnas Excel, defaults clínicos neutrales y QA soportada S01–S08;
 - no implementa por ello la funcionalidad interna de Seguimiento S09–S12, dashboards canónicos, release freeze, backend, V5 ni piloto.
 
-La fuente Pages publicada actual llega solo a PR #86. No acredita como publicados el cutover operativo de PR #88 ni la cadena de inicio/Primera Visita de PR #91–#106.
+La fuente Pages publicada actual llega solo a PR #86. No acredita como publicados el cutover operativo de PR #88 ni la cadena de inicio/Primera Visita de PR #91–#110.
 
 ---
 
@@ -338,16 +339,22 @@ Criterios de salida:
 
 ### Fase 4 — Primera Visita e inicio explícito
 
-**Estado reconciliado:** núcleo clínico-técnico integrado en el rescue HEAD, no publicado y todavía no cerrado como fase. El core (#91), identidad (#98), contexto canónico (#100), confirmación explícita (#102), handoff (#104) y bloqueo post-inicio (#106) cubren la transición canónica, pero queda trabajo visible pendiente.
+**Estado reconciliado:** cerrada en alcance clínico-técnico e integrada en `rescue/farmacia-v4`. El core (#91), identidad (#98), contexto canónico (#100), confirmación explícita (#102), handoff (#104), bloqueo postinicio (#106) y salidas canónicas con QA S01–S08 (#110) cierran este alcance.
 
-Pendiente para cerrar Primera Visita:
+La Fase 4:
 
-- exportaciones postinicio desde la línea canónica;
-- bloqueo de esas exportaciones antes del inicio;
-- uso de `start_date` canónico en las salidas;
-- neutralización de defaults clínicos legacy de inducción, estratificación y PROMs;
-- QA final integrada S01–S08;
-- publicación y freeze de la preview candidata.
+- existe en código;
+- está cableada;
+- está visible;
+- funciona por interacción soportada;
+- tiene tests;
+- tiene QA de navegador;
+- está integrada en `rescue/farmacia-v4`;
+- **NO** está publicada en Pages;
+- **NO** está congelada como demo-ready;
+- **NO** es apta para piloto.
+
+La publicación y el freeze no son condiciones del cierre técnico de Fase 4; permanecen bajo la Fase 7.
 
 **Objetivo:** cerrar la transición:
 
@@ -375,7 +382,7 @@ Criterios de salida:
 
 ### Fase 5 — Seguimiento por línea
 
-**Estado reconciliado:** No iniciada funcionalmente dentro de Seguimiento. Existen prerrequisitos técnicos integrados —core multitratamiento y handoff identificado—, pero no están implementados ni demostrados S09–S12 dentro de la pantalla.
+**Estado reconciliado:** No iniciada funcionalmente dentro de Seguimiento. Existen prerrequisitos técnicos integrados —core multitratamiento y handoff identificado—, pero no están implementados ni demostrados S09–S12 dentro de la pantalla. PR #104 entrega solo el handoff y PR #110 cierra el origen en Primera Visita; ninguno implementa S09–S12.
 
 La fase permanece **no iniciada funcionalmente**. El core y el handoff no constituyen implementación parcial de borradores, PROMs, adherencia, EA/causalidad o exportaciones de Seguimiento.
 
@@ -498,6 +505,7 @@ Esta lista preserva la cola original y registra qué se integró o quedó pendie
 
 ```text
 WO-DOC-FH-SCENARIO-CONTRACT-V4-01 — completada, PR #64
+WO-DOC-FH-RESCUE-STATUS-RECONCILIATION-V4-01 — completada, PR #108; reconciliación previa hasta PR #106, sin funcionalidad ni movimiento de Pages
 ```
 
 ### Datos
@@ -536,7 +544,7 @@ WO-FH-FIRST-VISIT-IDENTITY-HANDOFF-V4-01 — completada, PR #98; no publicada
 WO-FH-FIRST-VISIT-CANONICAL-CONTEXT-V4-01 — completada, PR #100; no publicada
 WO-FH-FIRST-VISIT-CONFIRM-START-V4-01 — completada, PR #102; no publicada
 WO-FH-FIRST-VISIT-FOLLOWUP-HANDOFF-V4-01 — completada, PR #104; prerrequisito técnico, no implementación de Seguimiento S09–S12, y no publicada
-Pendiente de cierre de Fase 4 — exportaciones postinicio canónicas, bloqueo preinicio, start_date canónico, neutralización de defaults legacy, QA S01–S08 y publicación/freeze
+WO-FH-FIRST-VISIT-CANONICAL-OUTPUTS-V4-01 — completada, PR #110; cierre técnico S01–S08, no publicada
 ```
 
 ### Seguimiento
@@ -558,7 +566,7 @@ WO-FH-STATISTICS-CANONICAL-SOURCE-01 — pendiente
 
 ```text
 WO-FH-V4-DEMO-QA-FREEZE-01 — pendiente
-WO-DOC-FH-V4-STATE-RECONCILIATION-01 — cubierta por WO-DOC-FH-RESCUE-STATUS-RECONCILIATION-V4-01, en ejecución al 2026-07-25
+WO-DOC-FH-V4-STATE-RECONCILIATION-01 — cubierta por WO-DOC-FH-RESCUE-STATUS-RECONCILIATION-V4-01, completada en PR #108
 ```
 
 ---
@@ -615,25 +623,26 @@ Además requiere:
 | Campo | Estado |
 |---|---|
 | Mapa y diagnóstico | Cerrados |
-| Ejecución técnica | Integrada hasta PR #106; Fases 1 y 3 completadas en su alcance técnico, Fase 2 parcial, Fase 4 con núcleo integrado pero cierre pendiente y Fase 5 no iniciada funcionalmente |
-| Fase actual | Cierre de Primera Visita S01–S08; después, Seguimiento interno S09–S12 |
-| Rescue actual | `rescue/farmacia-v4` en `d1df695f3573066b09e2ff978f3cf5d8d84fdb32` |
+| Ejecución técnica | Integrada hasta PR #110; Fases 1 y 3 completadas en su alcance técnico, Fase 2 parcial, Fase 4 cerrada técnicamente y Fase 5 no iniciada funcionalmente |
+| Fase actual | Seguimiento interno S09–S12 |
+| Release/freeze (Fase 7) | Pendiente; no condiciona el cierre clínico-técnico de Fase 4 |
+| Rescue actual | `rescue/farmacia-v4`; último HEAD funcional reconciliado `567a519d1b049c4259115853c77cf8a517319deb` (PR #110) |
 | Baseline histórico | `a6b15353a2e5a813818695642a07f0d27298904e` |
 | Fuente Pages publicada | `preview/demo-lunes-wo4-20260614` en `2ee3b34739abec874424a572d445798fef565765` (hasta PR #86); no permanece en el baseline histórico |
 | Ref candidata | `preview/farmacia-v4-rescue` coincide en `2ee3b34739abec874424a572d445798fef565765`; no es una segunda fuente Pages publicada |
 | Backup hospitalario | `backup/preview-hospital-before-v4-qa-20260725` en `35a2cdd58a43f588a94882824bf1de9444521ad6` |
 | Backup avanzado | `backup/preview-before-hospital-demo-rollback-20260722` preservado en `c19297b...` |
-| Próximo hito seguro | Cerrar Primera Visita: exportaciones postinicio canónicas, neutralización de defaults legacy y QA S01–S08. Después, abordar Seguimiento S09–S12 por `patient_id + line_id`. |
+| Próximo hito seguro | Abordar Seguimiento interno S09–S12 por `patient_id + line_id`; después permanecen dashboards y, separadamente, publicación/freeze en Fase 7. |
 | Riesgo principal | Presentar como publicado/demo-ready el rescue HEAD o asumir que el handoff equivale a Seguimiento implementado |
-| Aptitud actual | Preview parcial disponible para demo supervisada hasta PR #86; rescue HEAD integrado pero no publicado ni congelado como demo-ready |
-| Aptitud piloto | No demostrada |
+| Aptitud actual | Pages permanece hasta PR #86; el último HEAD funcional está integrado pero no publicado ni congelado como demo-ready |
+| Aptitud piloto | No; no demostrada |
 | Backend/V5 | Aparcados |
 
 ### Señales de desviación
 
 Detener el trabajo si:
 
-- se tocan dashboards antes de cerrar Primera Visita S01–S08 y después Seguimiento S09–S12 sobre escenarios soportados;
+- se tocan dashboards antes de cerrar Seguimiento S09–S12 sobre escenarios soportados;
 - se presenta el handoff #104 como Seguimiento multilínea implementado;
 - se usa un test sin interacción soportada como prueba E2E;
 - se corrige una contradicción desde la UI;
@@ -680,10 +689,10 @@ La reconciliación de este plan:
 Siguientes acciones seguras propuestas tras esta reconciliación, en este orden:
 
 ```text
-1. Cerrar Primera Visita: exportaciones postinicio canónicas,
-   neutralización de defaults legacy y QA S01–S08.
-2. Abordar Seguimiento S09–S12 por patient_id + line_id.
+1. Abordar Seguimiento S09–S12 por patient_id + line_id.
    Aplicar contrato acotado, datos sintéticos y QA por interacción soportada.
+2. Reconstruir dashboards canónicos solo después de cerrar Seguimiento.
+3. Ejecutar publicación, QA de release y freeze bajo la Fase 7.
 ```
 
-Después, y no antes, permanecen dashboards canónicos y el freeze/release V4. No hay evidencia actual para declarar producción, piloto-ready, QA institucional, datos reales, backend o V5.
+La publicación y el freeze no condicionan el cierre técnico ya alcanzado de Primera Visita. No hay evidencia actual para declarar V4 demo-ready, producción, aptitud para piloto, QA institucional, datos reales, backend o V5.
