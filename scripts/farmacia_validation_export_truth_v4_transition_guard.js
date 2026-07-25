@@ -32,6 +32,20 @@
     return !!(snapshot && snapshot.result === 'validated' && text(snapshot.produced_line_id));
   }
 
+  var POSTSTART_NOTE = 'El tratamiento ya está iniciado. Los cambios posteriores requieren un movimiento clínico trazable.';
+
+  function isCoherentPoststart(snapshot) {
+    return !!(
+      snapshot &&
+      snapshot.result === 'validated' &&
+      snapshot.line &&
+      text(snapshot.line.line_id) &&
+      snapshot.line.line_id === snapshot.produced_line_id &&
+      snapshot.line.status === 'active' &&
+      text(snapshot.line.start_date)
+    );
+  }
+
   function ensureNote() {
     var select = byId('fhValEstado');
     if (!select || !select.parentNode) return null;
@@ -53,6 +67,29 @@
     Array.prototype.forEach.call(select.options || [], function (option) {
       option.disabled = false;
     });
+  }
+
+  function setPoststartControls(locked) {
+    var select = byId('fhValEstado');
+    var save = byId('fhValSaveV4');
+    if (select) {
+      if (locked) select.value = 'validated';
+      Array.prototype.forEach.call(select.options || [], function (option) {
+        option.disabled = !!(locked && (option.value === 'pending' || option.value === 'denied'));
+      });
+    }
+    if (!save) return;
+    if (locked) {
+      save.disabled = true;
+      save.setAttribute('aria-disabled', 'true');
+      save.setAttribute('title', POSTSTART_NOTE);
+      save.setAttribute('data-fh-v4-poststart-guard', 'true');
+    } else if (save.getAttribute('data-fh-v4-poststart-guard') === 'true') {
+      save.disabled = false;
+      save.removeAttribute('aria-disabled');
+      save.removeAttribute('title');
+      save.removeAttribute('data-fh-v4-poststart-guard');
+    }
   }
 
   function buildFirstVisitHref(snapshot) {
@@ -113,15 +150,17 @@
     try {
       unlockResultOptions();
       var snapshot = canonicalSnapshot();
+      var poststart = isCoherentPoststart(snapshot);
+      setPoststartControls(poststart);
       var canContinue = isValidatedWithLine(snapshot) && selectedResult() === 'validated' && !dirty;
       setFirstVisitAccess(canContinue, snapshot);
       var note = ensureNote();
       if (note) {
-        var rectifying = isValidatedWithLine(snapshot) && selectedResult() && selectedResult() !== 'validated';
-        note.textContent = rectifying
-          ? 'Al guardar esta rectificación, se retirará la línea pendiente de inicio y no se podrá continuar a Primera Visita.'
-          : '';
-        note.classList.toggle('hidden', !rectifying);
+        var rectifying = !poststart && isValidatedWithLine(snapshot) && selectedResult() && selectedResult() !== 'validated';
+        note.textContent = poststart
+          ? POSTSTART_NOTE
+          : (rectifying ? 'Al guardar esta rectificación, se retirará la línea pendiente de inicio y no se podrá continuar a Primera Visita.' : '');
+        note.classList.toggle('hidden', !poststart && !rectifying);
       }
       if (message) setStatus(message);
     } finally {
@@ -142,6 +181,12 @@
     if (!relevantEditable(event.target)) return;
     var snapshot = canonicalSnapshot();
     if (!isValidatedWithLine(snapshot)) return;
+    if (isCoherentPoststart(snapshot) && event.target.id === 'fhValEstado') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      refresh();
+      return;
+    }
     dirty = true;
     if (event.target.id === 'fhValEstado' && text(event.target.value) !== 'validated') {
       refresh('Rectificación sin guardar. Guarde el nuevo estado para retirar la línea pendiente de inicio.');
@@ -180,6 +225,14 @@
     else if (root.location) root.location.href = href;
   }
 
+  function preventPoststartSave(event) {
+    var save = event.target && event.target.closest ? event.target.closest('#fhValSaveV4') : null;
+    if (!save || !isCoherentPoststart(canonicalSnapshot())) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    refresh();
+  }
+
   function boot() {
     var demo = root.FarmaciaDemo;
     var ready = demo && demo.ready && typeof demo.ready.then === 'function' ? demo.ready : Promise.resolve();
@@ -193,6 +246,7 @@
   if (root.document) {
     root.document.addEventListener('input', handleEdit, true);
     root.document.addEventListener('change', handleEdit, true);
+    root.document.addEventListener('click', preventPoststartSave, true);
     root.document.addEventListener('click', prepareFirstVisitNavigation, true);
     root.document.addEventListener('DOMContentLoaded', boot);
   }
@@ -201,7 +255,9 @@
     refresh: refresh,
     canonicalSnapshot: canonicalSnapshot,
     isValidatedWithLine: isValidatedWithLine,
+    isCoherentPoststart: isCoherentPoststart,
     buildFirstVisitHref: buildFirstVisitHref,
-    prepareFirstVisitNavigation: prepareFirstVisitNavigation
+    prepareFirstVisitNavigation: prepareFirstVisitNavigation,
+    preventPoststartSave: preventPoststartSave
   };
 })(typeof window !== 'undefined' ? window : globalThis);
