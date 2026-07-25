@@ -1,0 +1,49 @@
+name: Bootstrap Farmacia V4 treatment start core
+
+on:
+  push:
+    branches:
+      - 'work/fh-treatment-start-core-v4-20260725'
+    paths:
+      - '.github/workflows/farmacia-v4-treatment-start-core-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: work/fh-treatment-start-core-v4-20260725
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic patch
+        run: python3 tools/apply_treatment_start_core_patch.py
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_multitreatment_core.js
+          node --check tools/farmacia_treatment_start_core_v4_check.mjs
+      - name: Regressions
+        run: |
+          node tools/farmacia_multitreatment_core_check.mjs
+          node tools/farmacia_treatment_start_core_v4_check.mjs
+          node tools/farmacia_validation_state_v4_check.mjs
+          node tools/farmacia_validation_rectification_v4_check.mjs
+          node tools/farmacia_catalog_noninference_check.mjs
+          node tools/farmacia_smoke_check.mjs
+      - name: Commit verified product delta
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm tools/apply_treatment_start_core_patch.py
+          git rm .github/workflows/farmacia-v4-treatment-start-core-bootstrap.yml
+          git add scripts/farmacia_multitreatment_core.js
+          git commit -m "feat(farmacia): add canonical treatment start core"
+          git push origin HEAD:work/fh-treatment-start-core-v4-20260725
