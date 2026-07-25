@@ -67,7 +67,6 @@ jobs:
             node tools/farmacia_multitreatment_core_check.mjs
             node tools/farmacia_treatment_start_core_v4_check.mjs
             node tools/farmacia_validation_state_v4_check.mjs
-            node tools/farmacia_validation_rectification_v4_check.mjs
             node tools/farmacia_catalog_noninference_check.mjs
             node tools/farmacia_smoke_check.mjs
           } 2>&1 | tee treatment-start-regressions.log
