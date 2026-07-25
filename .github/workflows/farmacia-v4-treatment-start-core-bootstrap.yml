@@ -58,13 +58,29 @@ jobs:
           node --check scripts/farmacia_multitreatment_core.js
           node --check tools/farmacia_treatment_start_core_v4_check.mjs
       - name: Regressions
+        id: regressions
+        continue-on-error: true
+        shell: bash
         run: |
-          node tools/farmacia_multitreatment_core_check.mjs
-          node tools/farmacia_treatment_start_core_v4_check.mjs
-          node tools/farmacia_validation_state_v4_check.mjs
-          node tools/farmacia_validation_rectification_v4_check.mjs
-          node tools/farmacia_catalog_noninference_check.mjs
-          node tools/farmacia_smoke_check.mjs
+          set -o pipefail
+          {
+            node tools/farmacia_multitreatment_core_check.mjs
+            node tools/farmacia_treatment_start_core_v4_check.mjs
+            node tools/farmacia_validation_state_v4_check.mjs
+            node tools/farmacia_validation_rectification_v4_check.mjs
+            node tools/farmacia_catalog_noninference_check.mjs
+            node tools/farmacia_smoke_check.mjs
+          } 2>&1 | tee treatment-start-regressions.log
+      - name: Upload regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: treatment-start-regression-log
+          path: treatment-start-regressions.log
+          if-no-files-found: error
+      - name: Require regression success
+        if: always()
+        run: test '${{ steps.regressions.outcome }}' = 'success'
       - name: Commit verified product delta
         run: |
           git config user.name "github-actions[bot]"
