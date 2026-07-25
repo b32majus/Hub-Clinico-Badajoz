@@ -168,14 +168,16 @@
     var snapshot = canonicalSnapshot();
     var allowed = isValidatedWithLine(snapshot) && selectedResult() === 'validated' && !dirty;
     var href = allowed ? buildFirstVisitHref(snapshot) : '';
+    event.preventDefault();
+    event.stopImmediatePropagation();
     if (!href) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
       setFirstVisitAccess(false, snapshot);
       return;
     }
     link.setAttribute('href', href);
     link.setAttribute('data-v4-href', href);
+    if (root.location && typeof root.location.assign === 'function') root.location.assign(href);
+    else if (root.location) root.location.href = href;
   }
 
   function boot() {
