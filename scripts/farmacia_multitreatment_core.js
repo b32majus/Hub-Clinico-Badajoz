@@ -16,7 +16,7 @@
     var RELATIONSHIPS = ["primary", "additional"];
     var LINE_STATUSES = ["validated_not_started", "active", "paused", "suspended", "completed", "historical", "unknown"];
     var PROVENANCES = ["validated_in_hub", "pre_hub_validated", "pre_hub_existing"];
-    var MOVEMENT_TYPES = ["switch", "add_on", "suspension", "pause", "resume", "optimization", "completion"];
+    var MOVEMENT_TYPES = ["start", "switch", "add_on", "suspension", "pause", "resume", "optimization", "completion"];
     var COLLECTIONS = ["requests", "validation_acts", "lines", "movements", "drafts"];
     var ID_FIELDS = {
         requests: "request_id",
@@ -253,6 +253,13 @@
         var base = text(source.base_line_id);
         if (type === "switch" && (!from || !to)) throw new Error("switch requires from_line_id and to_line_id");
         if (type === "add_on" && (!base || !(target || to))) throw new Error("add_on requires base_line_id and an added line reference");
+        if (type === "start") {
+            if (!target) throw new Error("start requires target_line_id");
+            if (!text(source.effective_at)) throw new Error("start requires effective_at");
+            if (!text(source.validation_act_id)) throw new Error("start requires validation_act_id");
+            if (!text(source.declared_by_demo)) throw new Error("start requires declared_by_demo");
+            if (from || to || base) throw new Error("start cannot include from_line_id, to_line_id, or base_line_id");
+        }
         if (["suspension", "pause", "resume", "optimization", "completion"].indexOf(type) !== -1 && !target) {
             throw new Error(type + " requires target_line_id");
         }
@@ -327,7 +334,9 @@
         if (RELATIONSHIPS.indexOf(line.relationship) === -1 || LINE_STATUSES.indexOf(line.status) === -1 || PROVENANCES.indexOf(line.provenance) === -1) return false;
         if (!catalogIsValid(line.catalog_identity) || !catalogIsValid(line.catalog_snapshot)) return false;
         if (line.provenance === "validated_in_hub") {
-            return line.status === "validated_not_started" && !!line.source_request_id && !!line.source_validation_act_id;
+            var supportedStatus = line.status === "validated_not_started" || line.status === "active";
+            var startDateCoherent = line.status === "active" ? !!line.start_date : line.start_date === "";
+            return supportedStatus && startDateCoherent && !!line.source_request_id && !!line.source_validation_act_id;
         }
         return line.source_request_id === "" && line.source_validation_act_id === "";
     }
@@ -340,6 +349,10 @@
         if (!prefixed(movement.validation_act_id, "val_", true)) return false;
         if (movement.movement_type === "switch" && (!movement.from_line_id || !movement.to_line_id)) return false;
         if (movement.movement_type === "add_on" && (!movement.base_line_id || !(movement.target_line_id || movement.to_line_id))) return false;
+        if (movement.movement_type === "start") {
+            if (!movement.target_line_id || !movement.effective_at || !movement.validation_act_id || !movement.declared_by_demo) return false;
+            if (movement.from_line_id || movement.to_line_id || movement.base_line_id) return false;
+        }
         if (["suspension", "pause", "resume", "optimization", "completion"].indexOf(movement.movement_type) !== -1 && !movement.target_line_id) return false;
         return true;
     }
@@ -415,6 +428,36 @@
                 if (!own(patient.lines, lineId)) errors.push("movement has dangling line reference");
             });
             if (movement.validation_act_id && !own(patient.validation_acts, movement.validation_act_id)) errors.push("movement has dangling validation reference");
+            if (movement.movement_type === "start") {
+                var startedLine = patient.lines[movement.target_line_id];
+                if (!startedLine || startedLine.provenance !== "validated_in_hub") errors.push("start movement requires validated-in-Hub line");
+                else {
+                    if (startedLine.status !== "active") errors.push("start movement target must be active");
+                    if (startedLine.start_date !== movement.effective_at) errors.push("start movement date must match line start_date");
+                    if (startedLine.source_validation_act_id !== movement.validation_act_id) errors.push("start movement validation reference mismatch");
+                }
+            }
+        });
+        Object.keys(patient.lines).forEach(function (key) {
+            var line = patient.lines[key];
+            if (line.provenance !== "validated_in_hub") return;
+            var starts = Object.keys(patient.movements).map(function (movementId) {
+                return patient.movements[movementId];
+            }).filter(function (movement) {
+                return movement.movement_type === "start" && movement.target_line_id === line.line_id;
+            });
+            if (line.status === "validated_not_started") {
+                if (line.start_date) errors.push("validated_not_started line cannot have start_date");
+                if (starts.length) errors.push("validated_not_started line cannot have start movement");
+            }
+            if (line.status === "active") {
+                if (!line.start_date) errors.push("active validated-in-Hub line requires start_date");
+                if (starts.length !== 1) errors.push("active validated-in-Hub line requires exactly one start movement");
+                if (starts.length === 1) {
+                    if (starts[0].effective_at !== line.start_date) errors.push("active line and start movement dates differ");
+                    if (starts[0].validation_act_id !== line.source_validation_act_id) errors.push("active line and start movement validation differ");
+                }
+            }
         });
         if (patient.selected_line_id && !own(patient.lines, patient.selected_line_id)) errors.push("selected line does not belong to patient");
         var activePrimaryCount = Object.keys(patient.lines).filter(function (key) {
@@ -450,6 +493,74 @@
         var partition = text(patientId) || (inferredIds.length === 1 ? inferredIds[0] : "");
         var errors = partition ? patientStateErrors(partition, patient) : ["patient_id is required or must be unambiguous"];
         return { valid: errors.length === 0, errors: errors };
+    }
+
+
+    function confirmTreatmentStart(input, options) {
+        var source = isRecord(input) ? input : {};
+        var store = source.store;
+        if (!store || typeof store.load !== "function" || typeof store.save !== "function") {
+            throw new Error("store is required");
+        }
+        var patientId = requireText(source.patient_id, "patient_id");
+        var lineId = requireText(source.line_id, "line_id");
+        var startDate = requireText(source.start_date, "start_date");
+        var declaredBy = requireText(source.declared_by_demo, "declared_by_demo");
+        var createdAt = requireText(source.created_at, "created_at");
+        var state = store.load();
+        if (!sessionStateIsValid(state)) throw new Error("invalid session state");
+        var patient = state.patients[patientId];
+        if (!patient) throw new Error("patient not found");
+        var line = patient.lines[lineId];
+        if (!line) throw new Error("line not found");
+        if (line.patient_id !== patientId) throw new Error("line patient mismatch");
+        if (line.provenance !== "validated_in_hub") throw new Error("only validated-in-Hub line can be started");
+        var act = patient.validation_acts[line.source_validation_act_id];
+        if (!act || act.result !== "validated" || act.produced_line_id !== line.line_id) {
+            throw new Error("positive validation for line is required");
+        }
+        var existingStarts = Object.keys(patient.movements).map(function (movementId) {
+            return patient.movements[movementId];
+        }).filter(function (movement) {
+            return movement.movement_type === "start" && movement.target_line_id === lineId;
+        });
+        if (line.status === "active") {
+            if (line.start_date !== startDate) throw new Error("active line start_date cannot be changed");
+            if (existingStarts.length !== 1) throw new Error("active line must have exactly one start movement");
+            return {
+                state: clone(state),
+                line: clone(line),
+                movement: clone(existingStarts[0]),
+                idempotent: true
+            };
+        }
+        if (line.status !== "validated_not_started") throw new Error("line is not pending explicit start");
+        if (line.start_date) throw new Error("line already has start_date");
+        if (existingStarts.length) throw new Error("line already has start movement");
+        var next = clone(state);
+        var nextPatient = next.patients[patientId];
+        var nextLine = nextPatient.lines[lineId];
+        nextLine.status = "active";
+        nextLine.start_date = startDate;
+        nextLine.updated_at = createdAt;
+        var movement = createTreatmentMovement({
+            patient_id: patientId,
+            movement_type: "start",
+            target_line_id: lineId,
+            effective_at: startDate,
+            validation_act_id: line.source_validation_act_id,
+            declared_by_demo: declaredBy,
+            created_at: createdAt
+        }, options);
+        nextPatient.movements[movement.movement_id] = movement;
+        if (!sessionStateIsValid(next)) throw new Error("invalid treatment start transaction");
+        var saved = store.save(next);
+        return {
+            state: clone(saved),
+            line: clone(saved.patients[patientId].lines[lineId]),
+            movement: clone(saved.patients[patientId].movements[movement.movement_id]),
+            idempotent: false
+        };
     }
 
     function createSessionStore(storage) {
@@ -575,6 +686,7 @@
         createTreatmentLineFromValidatedRequest: createTreatmentLineFromValidatedRequest,
         createPreHubTreatmentLine: createPreHubTreatmentLine,
         createTreatmentMovement: createTreatmentMovement,
+        confirmTreatmentStart: confirmTreatmentStart,
         createEmptySessionState: createEmptySessionState,
         createSessionStore: createSessionStore,
         validatePatientState: validatePatientState
