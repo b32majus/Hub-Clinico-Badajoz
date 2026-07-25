@@ -56,21 +56,21 @@
   }
 
   function buildFirstVisitHref(snapshot) {
-    var demo = root.FarmaciaDemo;
     var context = currentContext();
     var patient = context && context.patient;
     var decision = snapshot || canonicalSnapshot();
     var patientId = text(patient && patient.patient_id);
     var lineId = text(decision && decision.produced_line_id);
-    if (!demo || typeof demo.makeContextUrl !== 'function' || !patient || !patientId || !isValidatedWithLine(decision) || !lineId) return '';
-    return demo.makeContextUrl('farmacia_primera_visita.html', {
-      cip: patient.cip,
-      patient_id: patientId,
-      line_id: lineId,
-      servicio: patient.servicioSlug || patient.servicio,
-      patologia: patient.patologia,
-      entrada: 'primera_visita'
-    });
+    var Params = root.URLSearchParams || (typeof URLSearchParams !== 'undefined' ? URLSearchParams : null);
+    if (!patient || !patientId || !isValidatedWithLine(decision) || !lineId || !Params) return '';
+    var params = new Params();
+    if (patient.cip) params.set('cip', patient.cip);
+    params.set('patient_id', patientId);
+    params.set('line_id', lineId);
+    if (patient.servicioSlug || patient.servicio) params.set('servicio', patient.servicioSlug || patient.servicio);
+    if (patient.patologia) params.set('patologia', patient.patologia);
+    params.set('entrada', 'primera_visita');
+    return 'farmacia_primera_visita.html?' + params.toString();
   }
 
   function setFirstVisitAccess(allowed, snapshot) {
@@ -162,6 +162,24 @@
     }).observe(status, { childList: true, subtree: true, characterData: true });
   }
 
+  function prepareFirstVisitNavigation(event) {
+    var link = event.target && event.target.closest ? event.target.closest('#fhValGoFirstVisitV4') : null;
+    if (!link) return;
+    var snapshot = canonicalSnapshot();
+    var allowed = isValidatedWithLine(snapshot) && selectedResult() === 'validated' && !dirty;
+    var href = allowed ? buildFirstVisitHref(snapshot) : '';
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (!href) {
+      setFirstVisitAccess(false, snapshot);
+      return;
+    }
+    link.setAttribute('href', href);
+    link.setAttribute('data-v4-href', href);
+    if (root.location && typeof root.location.assign === 'function') root.location.assign(href);
+    else if (root.location) root.location.href = href;
+  }
+
   function boot() {
     var demo = root.FarmaciaDemo;
     var ready = demo && demo.ready && typeof demo.ready.then === 'function' ? demo.ready : Promise.resolve();
@@ -175,13 +193,7 @@
   if (root.document) {
     root.document.addEventListener('input', handleEdit, true);
     root.document.addEventListener('change', handleEdit, true);
-    root.document.addEventListener('click', function (event) {
-      var link = event.target && event.target.closest ? event.target.closest('#fhValGoFirstVisitV4[aria-disabled="true"]') : null;
-      if (link) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }
-    }, true);
+    root.document.addEventListener('click', prepareFirstVisitNavigation, true);
     root.document.addEventListener('DOMContentLoaded', boot);
   }
 
@@ -189,6 +201,7 @@
     refresh: refresh,
     canonicalSnapshot: canonicalSnapshot,
     isValidatedWithLine: isValidatedWithLine,
-    buildFirstVisitHref: buildFirstVisitHref
+    buildFirstVisitHref: buildFirstVisitHref,
+    prepareFirstVisitNavigation: prepareFirstVisitNavigation
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,107 @@
+name: Farmacia V4 First Visit canonical context
+
+on:
+  pull_request:
+    branches:
+      - 'rescue/farmacia-v4'
+    paths:
+      - 'farmacia_primera_visita.html'
+      - 'scripts/farmacia_first_visit_identity_v4.js'
+      - 'scripts/farmacia_validation_export_truth_v4_transition_guard.js'
+      - 'tools/farmacia_first_visit_canonical_context_v4_check.mjs'
+      - '.github/workflows/farmacia-v4-first-visit-canonical-context.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_first_visit_identity_v4.js
+          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
+          node --check tools/farmacia_first_visit_canonical_context_v4_check.mjs
+      - name: Exact patient and line resolution
+        run: node tools/farmacia_first_visit_canonical_context_v4_check.mjs
+      - name: Core and Validation regressions
+        run: |
+          node tools/farmacia_treatment_start_core_v4_check.mjs
+          node tools/farmacia_validation_state_v4_check.mjs
+          node tools/farmacia_smoke_check.mjs
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-first-visit-context-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-first-visit-context-http.log
+          exit 1
+      - name: Browser QA through supported flow
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        shell: bash
+        run: |
+          set -o pipefail
+          node --input-type=module <<'NODE' 2>&1 | tee /tmp/farmacia-v4-first-visit-context-browser.log
+          import { assert, browser, page, consoleErrors, pageErrors, clearSession, importNursingWorkbook, waitValidation, assertRealImportBoard } from './tools/farmacia_v4_validation_browser_qa_helpers.mjs';
+
+          await clearSession();
+          await importNursingWorkbook();
+          const patientC = await assertRealImportBoard();
+          await patientC.locator('[data-enf-action="validar"]').click();
+          await waitValidation();
+          await page.selectOption('#fhValEstado', 'validated');
+          await page.click('#fhValSaveV4');
+          await page.waitForFunction(() => /Validado · pendiente de inicio/.test(document.getElementById('fhValV4Status')?.textContent || ''));
+          await page.waitForFunction(() => typeof window.FarmaciaValidationTransitionGuardV4?.prepareFirstVisitNavigation === 'function');
+          const link = page.locator('#fhValGoFirstVisitV4:not(.hidden)');
+          assert.equal(await link.count(), 1);
+          await Promise.all([
+            page.waitForURL((url) => url.pathname.endsWith('/farmacia_primera_visita.html')),
+            link.click()
+          ]);
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="ready"]');
+          const current = new URL(page.url());
+          assert.equal(current.searchParams.get('patient_id'), 'fhv4-import-nursing-000000003');
+          assert.match(current.searchParams.get('line_id') || '', /^line_/);
+          assert.equal((await page.textContent('#fhPvCanonicalPatientId')).trim(), current.searchParams.get('patient_id'));
+          assert.equal((await page.textContent('#fhPvCanonicalLineId')).trim(), current.searchParams.get('line_id'));
+          assert.match(await page.textContent('#fhPvCanonicalDrug'), /Upadacitinib/i);
+          assert.equal((await page.textContent('#fhPvCanonicalLineStatus')).trim(), 'validated_not_started');
+          assert.equal(await page.locator('#fhPvConfirmStart').count(), 0, 'this WO must not add a start action');
+          assert.deepEqual(pageErrors, []);
+          assert.deepEqual(consoleErrors, []);
+          await browser.close();
+          console.log('farmacia_v4_first_visit_canonical_context_browser_qa: PASSED_SUPPORTED_FLOW');
+          NODE
+      - name: Upload browser QA log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-context-browser-log
+          path: |
+            /tmp/farmacia-v4-first-visit-context-browser.log
+            /tmp/farmacia-v4-first-visit-context-http.log
+          if-no-files-found: ignore
+      - name: Diff hygiene
+        run: git diff --check origin/rescue/farmacia-v4...HEAD

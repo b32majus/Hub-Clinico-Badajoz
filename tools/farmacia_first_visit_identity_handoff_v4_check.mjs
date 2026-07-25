@@ -15,13 +15,6 @@ function loadGuard({ patient, snapshot }) {
     FarmaciaDemo: {
       getQueryContext() {
         return { patient };
-      },
-      makeContextUrl(route, params) {
-        const query = new URLSearchParams();
-        Object.entries(params || {}).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && String(value) !== '') query.set(key, String(value));
-        });
-        return `${route}?${query.toString()}`;
       }
     },
     FarmaciaMultitreatmentCore: {
@@ -35,7 +28,8 @@ function loadGuard({ patient, snapshot }) {
         return snapshot;
       }
     },
-    sessionStorage: {}
+    sessionStorage: {},
+    URLSearchParams
   };
 
   vm.runInNewContext(source, {
@@ -78,9 +72,10 @@ assert.equal(loadGuard({ patient, snapshot: { result: 'validated', produced_line
 assert.equal(loadGuard({ patient: { ...patient, patient_id: '' }, snapshot: validated }).buildFirstVisitHref(), '', 'missing patient_id must fail closed');
 assert.equal(loadGuard({ patient: null, snapshot: validated }).buildFirstVisitHref(), '', 'missing patient context must fail closed');
 
-assert.match(source, /patient_id:\s*patientId/);
-assert.match(source, /line_id:\s*lineId/);
+assert.match(source, /params\.set\('patient_id',\s*patientId\)/);
+assert.match(source, /params\.set\('line_id',\s*lineId\)/);
 assert.match(source, /decision\.produced_line_id/);
+assert.doesNotMatch(source, /makeContextUrl\(/, 'canonical identity must not pass through the legacy URL helper');
 assert.doesNotMatch(source, /lines\s*\[\s*0\s*\]/);
 
 console.log('farmacia_first_visit_identity_handoff_v4_check: PASSED_CANONICAL_PATIENT_AND_LINE_ID');
