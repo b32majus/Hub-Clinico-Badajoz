@@ -31,6 +31,16 @@ jobs:
         run: |
           sed -i '/actual = blob_sha(raw)/,+2d' tools/apply_first_visit_start_ui_patch.py
           python3 tools/apply_first_visit_start_ui_patch.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/farmacia_validation_export_truth_v4_transition_guard.js')
+          source = path.read_text()
+          old = "      option.disabled = !!(active && option.value && option.value !== 'validated');"
+          new = "      option.disabled = false;\n      if (active && option.value && option.value !== 'validated') option.disabled = true;"
+          if source.count(old) != 1:
+              raise SystemExit('active option guard replacement mismatch')
+          path.write_text(source.replace(old, new, 1))
+          PY
       - name: Syntax and contract regressions
         shell: bash
         run: |
