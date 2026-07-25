@@ -1,0 +1,88 @@
+name: Farmacia V4 First Visit start
+
+on:
+  pull_request:
+    paths:
+      - 'farmacia_primera_visita.html'
+      - 'scripts/farmacia_primera_visita.js'
+      - 'scripts/farmacia_first_visit_start_v4.js'
+      - 'scripts/farmacia_validation_export_truth_v4_transition_guard.js'
+      - 'tools/farmacia_first_visit_start_v4_check.mjs'
+      - 'tools/farmacia_v4_first_visit_browser_qa.mjs'
+      - '.github/workflows/farmacia-v4-first-visit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  first-visit-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_primera_visita.js
+          node --check scripts/farmacia_first_visit_start_v4.js
+          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
+          node --check tools/farmacia_first_visit_start_v4_check.mjs
+          node --check tools/farmacia_v4_first_visit_browser_qa.mjs
+      - name: First Visit UI contract
+        run: node tools/farmacia_first_visit_start_v4_check.mjs
+      - name: Treatment start core regression
+        run: node tools/farmacia_treatment_start_core_v4_check.mjs
+      - name: Validation state regression
+        run: node tools/farmacia_validation_state_v4_check.mjs
+      - name: Catalog non-inference
+        run: node tools/farmacia_catalog_noninference_check.mjs
+      - name: Smoke
+        run: node tools/farmacia_smoke_check.mjs
+
+  first-visit-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-first-visit-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-first-visit-http.log
+          exit 1
+      - name: Supported S08 browser QA
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        shell: bash
+        run: |
+          set -o pipefail
+          node tools/farmacia_v4_first_visit_browser_qa.mjs 2>&1 | tee /tmp/farmacia-v4-first-visit-browser.log
+      - name: Upload browser QA logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-browser-log
+          path: |
+            /tmp/farmacia-v4-first-visit-browser.log
+            /tmp/farmacia-v4-first-visit-http.log
+          if-no-files-found: ignore
