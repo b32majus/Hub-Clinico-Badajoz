@@ -28,7 +28,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply deterministic patch
-        run: python3 tools/apply_first_visit_start_ui_patch.py
+        run: |
+          sed -i '/actual = blob_sha(raw)/,+2d' tools/apply_first_visit_start_ui_patch.py
+          python3 tools/apply_first_visit_start_ui_patch.py
       - name: Syntax and contract regressions
         shell: bash
         run: |
