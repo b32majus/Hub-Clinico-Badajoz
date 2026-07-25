@@ -80,12 +80,10 @@ jobs:
       - name: Require regression success
         if: always()
         run: test '${{ steps.regressions.outcome }}' = 'success'
-      - name: Commit verified product delta
+      - name: Commit verified core blob
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm tools/apply_treatment_start_core_patch.py
-          git rm .github/workflows/farmacia-v4-treatment-start-core-bootstrap.yml
           git add scripts/farmacia_multitreatment_core.js
           git commit -m "feat(farmacia): add canonical treatment start core"
           git push origin HEAD:work/fh-treatment-start-core-v4-20260725
