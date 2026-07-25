@@ -7,6 +7,7 @@ on:
     paths:
       - 'farmacia_primera_visita.html'
       - 'scripts/farmacia_first_visit_identity_v4.js'
+      - 'scripts/farmacia_validation_export_truth_v4_transition_guard.js'
       - 'tools/farmacia_first_visit_canonical_context_v4_check.mjs'
       - '.github/workflows/farmacia-v4-first-visit-canonical-context.yml'
   workflow_dispatch:
@@ -32,6 +33,7 @@ jobs:
       - name: Syntax
         run: |
           node --check scripts/farmacia_first_visit_identity_v4.js
+          node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
           node --check tools/farmacia_first_visit_canonical_context_v4_check.mjs
       - name: Exact patient and line resolution
         run: node tools/farmacia_first_visit_canonical_context_v4_check.mjs
@@ -73,14 +75,10 @@ jobs:
           await page.waitForFunction(() => /Validado · pendiente de inicio/.test(document.getElementById('fhValV4Status')?.textContent || ''));
           const link = page.locator('#fhValGoFirstVisitV4:not(.hidden)');
           assert.equal(await link.count(), 1);
-          await page.waitForFunction(() => {
-            const href = document.getElementById('fhValGoFirstVisitV4')?.getAttribute('href') || '';
-            return /patient_id=fhv4-import-nursing-000000003/.test(href) && /line_id=line_/.test(href);
-          });
-          const href = await link.getAttribute('href');
-          assert.match(href, /patient_id=fhv4-import-nursing-000000003/);
-          assert.match(href, /line_id=line_/);
-          await link.click();
+          await Promise.all([
+            page.waitForURL((url) => url.pathname.endsWith('/farmacia_primera_visita.html')),
+            link.click()
+          ]);
           await page.waitForSelector('#fhPvCanonicalContext[data-context-state="ready"]');
           const current = new URL(page.url());
           assert.equal(current.searchParams.get('patient_id'), 'fhv4-import-nursing-000000003');
