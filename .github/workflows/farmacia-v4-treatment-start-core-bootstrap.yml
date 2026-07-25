@@ -1,9 +1,9 @@
 name: Bootstrap Farmacia V4 treatment start core
 
 on:
-  push:
+  pull_request:
     branches:
-      - 'work/fh-treatment-start-core-v4-20260725'
+      - 'rescue/farmacia-v4'
     paths:
       - '.github/workflows/farmacia-v4-treatment-start-core-bootstrap.yml'
 
@@ -12,10 +12,11 @@ permissions:
 
 jobs:
   patch-and-verify:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'work/fh-treatment-start-core-v4-20260725'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout
+      - name: Checkout work branch
         uses: actions/checkout@v4
         with:
           ref: work/fh-treatment-start-core-v4-20260725
