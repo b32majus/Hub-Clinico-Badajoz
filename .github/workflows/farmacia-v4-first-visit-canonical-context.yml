@@ -73,6 +73,7 @@ jobs:
           await page.selectOption('#fhValEstado', 'validated');
           await page.click('#fhValSaveV4');
           await page.waitForFunction(() => /Validado · pendiente de inicio/.test(document.getElementById('fhValV4Status')?.textContent || ''));
+          await page.waitForFunction(() => typeof window.FarmaciaValidationTransitionGuardV4?.prepareFirstVisitNavigation === 'function');
           const link = page.locator('#fhValGoFirstVisitV4:not(.hidden)');
           assert.equal(await link.count(), 1);
           await Promise.all([
