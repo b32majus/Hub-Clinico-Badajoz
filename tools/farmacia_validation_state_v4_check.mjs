@@ -101,6 +101,7 @@ assert.match(bootstrap, /farmacia_validation_export_truth_v4_state\.js/);
 assert.match(bootstrap, /farmacia_validation_export_truth_v4_outputs\.js/);
 assert.match(bootstrap, /farmacia_validation_export_truth_v4_ui\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_ui\.js/);
+assert.match(bootstrap, /farmacia_validation_export_truth_v4_transition_guard\.js/);
 assert.match(bootstrap, /farmacia_validation_state_v4_safety\.js/);
 assert.doesNotMatch(bootstrap, /farmacia_wo8_runtime_v1/);
 
@@ -109,7 +110,7 @@ vm.runInNewContext(bootstrap, {
   window: { location: { pathname: '/farmacia_validacion.html' } },
   document: { write(value) { writtenScripts.push(value); } }
 });
-assert.equal(writtenScripts.length, 12);
+assert.equal(writtenScripts.length, 13);
 writtenScripts.forEach((markup) => assert.match(markup, /^<script src="[^"]+"><\/script>$/));
 
 const stateSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_model.js'), 'utf8');
@@ -117,7 +118,7 @@ const uiSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_st
 const safetySource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validation_state_v4_safety.js'), 'utf8');
 const importModeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_mode_v4.js'), 'utf8');
 const importBridgeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_import_validation_bridge_v4.js'), 'utf8');
-const truthSource = ['helpers', 'state', 'outputs', 'ui'].map((part) => fs.readFileSync(path.join(ROOT, `scripts/farmacia_validation_export_truth_v4_${part}.js`), 'utf8')).join('\n');
+const truthSource = ['helpers', 'state', 'outputs', 'ui', 'transition_guard'].map((part) => fs.readFileSync(path.join(ROOT, `scripts/farmacia_validation_export_truth_v4_${part}.js`), 'utf8')).join('\n');
 
 assert.match(uiSource, /Guardar validación/);
 assert.match(stateSource, /validated_not_started/);
@@ -144,5 +145,9 @@ assert.match(truthSource, /Recencia analítica <3 meses/);
 assert.match(truthSource, /Medicina preventiva/);
 assert.match(truthSource, /analitica_reciente_explicit/);
 assert.match(truthSource, /No existe una línea terapéutica validada/);
+assert.match(truthSource, /acción explícita de anulación/);
+assert.match(truthSource, /option\.disabled/);
+assert.match(truthSource, /Hay cambios sin guardar/);
+assert.match(truthSource, /aria-disabled/);
 
-console.log('farmacia_validation_state_v4_check: PASSED_CANONICAL_EXPORT_TRUTH');
+console.log('farmacia_validation_state_v4_check: PASSED_CANONICAL_EXPORT_AND_TRANSITION_GUARD');
