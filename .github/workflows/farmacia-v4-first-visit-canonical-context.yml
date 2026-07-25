@@ -88,7 +88,7 @@ jobs:
           assert.equal((await page.textContent('#fhPvCanonicalLineId')).trim(), current.searchParams.get('line_id'));
           assert.match(await page.textContent('#fhPvCanonicalDrug'), /Upadacitinib/i);
           assert.equal((await page.textContent('#fhPvCanonicalLineStatus')).trim(), 'validated_not_started');
-          assert.equal(await page.locator('#fhPvConfirmStart').count(), 0, 'this WO must not add a start action');
+          assert.equal(await page.locator('#fhPvConfirmStart:not(.hidden)').count(), 1, 'pending-start context must expose the explicit start action');
           assert.deepEqual(pageErrors, []);
           assert.deepEqual(consoleErrors, []);
           await browser.close();

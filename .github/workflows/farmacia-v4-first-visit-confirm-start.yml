@@ -1,0 +1,178 @@
+name: Farmacia V4 First Visit confirm start
+
+on:
+  pull_request:
+    branches:
+      - 'rescue/farmacia-v4'
+    paths:
+      - 'farmacia_primera_visita.html'
+      - 'scripts/farmacia_first_visit_identity_v4.js'
+      - 'tools/farmacia_first_visit_confirm_start_v4_check.mjs'
+      - '.github/workflows/farmacia-v4-first-visit-confirm-start.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  confirm-start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_first_visit_identity_v4.js
+          node --check tools/farmacia_first_visit_confirm_start_v4_check.mjs
+      - name: Explicit start UI model
+        run: node tools/farmacia_first_visit_confirm_start_v4_check.mjs
+      - name: Core and regression checks
+        run: |
+          node tools/farmacia_treatment_start_core_v4_check.mjs
+          node tools/farmacia_first_visit_canonical_context_v4_check.mjs
+          node tools/farmacia_validation_state_v4_check.mjs
+          node tools/farmacia_smoke_check.mjs
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-first-visit-start-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-first-visit-start-http.log
+          exit 1
+      - name: Browser QA through supported flow
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        shell: bash
+        run: |
+          set -o pipefail
+          node --input-type=module <<'NODE' 2>&1 | tee /tmp/farmacia-v4-first-visit-start-browser.log
+          import { assert, browser, page, consoleErrors, pageErrors, clearSession, importNursingWorkbook, waitValidation, assertRealImportBoard } from './tools/farmacia_v4_validation_browser_qa_helpers.mjs';
+
+          const STORAGE_KEY = 'farmaciaDemo.multitreatment.v1';
+          const START_DATE = '2026-07-21';
+
+          await clearSession();
+          await importNursingWorkbook();
+          const patientC = await assertRealImportBoard();
+          await patientC.locator('[data-enf-action="validar"]').click();
+          await waitValidation();
+          await page.selectOption('#fhValEstado', 'validated');
+          await page.click('#fhValSaveV4');
+          await page.waitForFunction(() => /Validado · pendiente de inicio/.test(document.getElementById('fhValV4Status')?.textContent || ''));
+          await page.waitForFunction(() => typeof window.FarmaciaValidationTransitionGuardV4?.prepareFirstVisitNavigation === 'function');
+          const link = page.locator('#fhValGoFirstVisitV4:not(.hidden)');
+          await Promise.all([
+            page.waitForURL((url) => url.pathname.endsWith('/farmacia_primera_visita.html')),
+            link.click()
+          ]);
+
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="ready"]');
+          const current = new URL(page.url());
+          const patientId = current.searchParams.get('patient_id');
+          const lineId = current.searchParams.get('line_id');
+          assert.equal(patientId, 'fhv4-import-nursing-000000003');
+          assert.match(lineId || '', /^line_/);
+          assert.equal(await page.inputValue('#fhPvFecha'), '', 'start date must begin empty');
+          assert.equal((await page.textContent('#fhPvCanonicalLineStatus')).trim(), 'validated_not_started');
+          assert.equal(await page.locator('#fhPvConfirmStart:not(.hidden)').count(), 1);
+
+          // Empty date: supported click, fail closed, no state change.
+          await page.click('#fhPvConfirmStart');
+          await page.waitForFunction(() => document.getElementById('fhPvCanonicalStatus')?.getAttribute('data-status-code') === 'START_DATE_REQUIRED');
+          let snapshot = await page.evaluate(({ key, patientId, lineId }) => {
+            const state = JSON.parse(sessionStorage.getItem(key));
+            const patient = state.patients[patientId];
+            return {
+              line: patient.lines[lineId],
+              lineCount: Object.keys(patient.lines).length,
+              movements: Object.values(patient.movements)
+            };
+          }, { key: STORAGE_KEY, patientId, lineId });
+          assert.equal(snapshot.line.status, 'validated_not_started');
+          assert.equal(snapshot.line.start_date, '');
+          assert.equal(snapshot.movements.length, 0);
+
+          // Writing the date alone must not activate.
+          await page.fill('#fhPvFecha', START_DATE);
+          snapshot = await page.evaluate(({ key, patientId, lineId }) => {
+            const patient = JSON.parse(sessionStorage.getItem(key)).patients[patientId];
+            return { line: patient.lines[lineId], movements: Object.values(patient.movements) };
+          }, { key: STORAGE_KEY, patientId, lineId });
+          assert.equal(snapshot.line.status, 'validated_not_started');
+          assert.equal(snapshot.movements.length, 0);
+
+          // Double invocation is absorbed by synchronous UI disabling.
+          await page.evaluate(() => {
+            const button = document.getElementById('fhPvConfirmStart');
+            button.click();
+            button.click();
+          });
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="active"]');
+
+          snapshot = await page.evaluate(({ key, patientId, lineId }) => {
+            const patient = JSON.parse(sessionStorage.getItem(key)).patients[patientId];
+            return {
+              line: patient.lines[lineId],
+              lineCount: Object.keys(patient.lines).length,
+              movements: Object.values(patient.movements)
+            };
+          }, { key: STORAGE_KEY, patientId, lineId });
+          const starts = snapshot.movements.filter((movement) => movement.movement_type === 'start' && movement.target_line_id === lineId);
+          assert.equal(snapshot.lineCount, 1);
+          assert.equal(snapshot.line.line_id, lineId);
+          assert.equal(snapshot.line.status, 'active');
+          assert.equal(snapshot.line.start_date, START_DATE);
+          assert.equal(starts.length, 1);
+          assert.equal(starts[0].effective_at, START_DATE);
+          assert.equal(starts[0].declared_by_demo, 'Profesional FH-01');
+          assert.equal((await page.textContent('#fhPvCanonicalProfessional')).trim(), 'Profesional FH-01');
+          assert.equal(await page.inputValue('#fhPvFecha'), START_DATE);
+          assert.equal(await page.locator('#fhPvFecha').getAttribute('readonly'), '');
+          assert.equal(await page.locator('#fhPvConfirmStart:not(.hidden)').count(), 0);
+
+          await page.reload();
+          await page.waitForSelector('#fhPvCanonicalContext[data-context-state="active"]');
+          assert.equal((await page.textContent('#fhPvCanonicalLineId')).trim(), lineId);
+          assert.equal((await page.textContent('#fhPvCanonicalLineStatus')).trim(), 'active');
+          assert.equal(await page.inputValue('#fhPvFecha'), START_DATE);
+          const restored = await page.evaluate(({ key, patientId, lineId }) => {
+            const patient = JSON.parse(sessionStorage.getItem(key)).patients[patientId];
+            return {
+              line: patient.lines[lineId],
+              starts: Object.values(patient.movements).filter((movement) => movement.movement_type === 'start' && movement.target_line_id === lineId)
+            };
+          }, { key: STORAGE_KEY, patientId, lineId });
+          assert.equal(restored.line.status, 'active');
+          assert.equal(restored.starts.length, 1);
+          assert.deepEqual(pageErrors, []);
+          assert.deepEqual(consoleErrors, []);
+          await browser.close();
+          console.log('farmacia_v4_first_visit_confirm_start_browser_qa: PASSED_EXPLICIT_START_RELOAD_IDEMPOTENCY');
+          NODE
+      - name: Upload browser QA log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-confirm-start-browser-log
+          path: |
+            /tmp/farmacia-v4-first-visit-start-browser.log
+            /tmp/farmacia-v4-first-visit-start-http.log
+          if-no-files-found: ignore
+      - name: Diff hygiene
+        run: git diff --check origin/rescue/farmacia-v4...HEAD

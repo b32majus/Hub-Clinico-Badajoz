@@ -113,7 +113,13 @@ const started = core.confirmTreatmentStart({
     created_at: '2026-07-25T16:05:00.000Z'
 }, { idFactory: (prefix) => `${prefix}started_context_001` });
 assert.equal(started.line.status, 'active');
-assert.equal(adapter.resolveCanonicalContext({ identity, core, storage: seeded.storage }).code, 'LINE_NOT_PENDING_START');
+const active = adapter.resolveCanonicalContext({ identity, core, storage: seeded.storage });
+assert.equal(active.ok, true);
+assert.equal(active.code, 'CANONICAL_START_CONFIRMED');
+assert.equal(active.line.status, 'active');
+assert.equal(active.line.start_date, '2026-07-25');
+assert.equal(active.start_movement.movement_type, 'start');
+assert.equal(active.start_movement.target_line_id, seeded.line.line_id);
 
 const source = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_first_visit_identity_v4.js'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'farmacia_primera_visita.html'), 'utf8');
@@ -130,4 +136,4 @@ assert.match(html, /scripts\/farmacia_multitreatment_core\.js/);
 assert.match(html, /scripts\/farmacia_first_visit_identity_v4\.js/);
 assert.ok(html.indexOf('scripts/farmacia_multitreatment_core.js') < html.indexOf('scripts/farmacia_first_visit_identity_v4.js'), 'core must load before the First Visit identity adapter');
 
-console.log('farmacia_first_visit_canonical_context_v4_check: PASSED_EXACT_PATIENT_AND_LINE_RESOLUTION');
+console.log('farmacia_first_visit_canonical_context_v4_check: PASSED_EXACT_PATIENT_LINE_AND_ACTIVE_RESTORE');
