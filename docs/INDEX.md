@@ -2,10 +2,13 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-24 |
+| Última actualización | 2026-07-25 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
-| Rama publicada de referencia | `origin/preview/demo-lunes-wo4-20260614` |
-| Rama de trabajo de este índice | `work/docs/fh-rescue-master-plan-v4-20260724` |
+| Rama de rescate integrada | `origin/rescue/farmacia-v4` en `d1df695f3573066b09e2ff978f3cf5d8d84fdb32` |
+| Fuente Pages configurada/publicada | `origin/preview/demo-lunes-wo4-20260614` en `2ee3b34739abec874424a572d445798fef565765` |
+| Ref candidata coincidente | `origin/preview/farmacia-v4-rescue` también en `2ee3b34739abec874424a572d445798fef565765`; no es una segunda fuente Pages publicada |
+| Trazabilidad de publicación temporal | El issue #80 inició el movimiento de Pages hasta `8902aa334ab2ed51ae47c187603595f6e75f9d92`; el avance posterior hasta el SHA actual no se atribuye a ese issue |
+| Rama de trabajo de este índice | `work/docs/fh-rescue-status-reconciliation-v4-20260725` |
 
 > Este índice es una guía de navegación. No sustituye a los documentos que referencia; su función es orientar sobre qué documento consultar para cada propósito y qué estado tiene.
 
@@ -20,7 +23,7 @@
 4. [`ARCHITECTURE.md`](/ARCHITECTURE.md) — arquitectura técnica e implementación actual (estado post-SES).
 5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — tablero de work orders y estado de ejecución.
 
-> Después de estos cinco, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md), manifiesto de ramas y documentos v0.3–v0.5; descubrimiento → guía Badajoz/Mérida.
+> Después de estos cinco, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md), [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md), manifiesto de ramas y documentos v0.3–v0.5; descubrimiento → guía Badajoz/Mérida.
 
 ---
 
@@ -30,7 +33,10 @@
 |---|---|---|---|
 | `origin/main` | Legacy / stale. Congelada en `a25cccb` (2026-03-07). | Historia del proyecto antes de Reuma v2. | Estado actual, Reuma v2, Farmacia, Enfermería ni roadmap post-SES. |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica viva de Reuma v2. | Reumatología multipatología, contrato Excel v2, decisiones DEC-001..019. | Post-demo Farmacia (v0.3–v0.5), preview publicada ni decisiones post-SES. |
-| `origin/preview/demo-lunes-wo4-20260614` | Rama publicada en GitHub Pages. Referencia operativa Farmacia post-demo. | Estado funcional de Farmacia validado en demo/preview: validación farmacoterapéutica, primera visita, seguimiento, dashboard, importación Enfermería/Farmacia, catálogo CIMA/local, exportaciones. | Arquitectura aprobada, contratos clínicos definitivos, producción ni datos reales. |
+| `origin/rescue/farmacia-v4` | Integración viva del rescate V4 en `d1df695f3573066b09e2ff978f3cf5d8d84fdb32`, hasta PR #106. | Código y tests integrados del contrato/manifiesto/runtime V4, Validación, núcleo e inicio de tratamiento y handoff identificado a Seguimiento. | Estado publicado, demo-ready, piloto, producción, datos reales, backend, V5, dashboards reconstruidos ni Seguimiento interno S09–S12. |
+| `origin/preview/demo-lunes-wo4-20260614` | Fuente Pages configurada; estado actual verificado `2ee3b34739abec874424a572d445798fef565765`, hasta PR #86. La cronología del movimiento inicial y el avance posterior se registra en las notas. | QA/demo supervisada del rescate publicado hasta Validación reversible pre-inicio. | PR #88 y posteriores, HEAD actual del rescate, piloto, producción ni datos reales. |
+| `origin/preview/farmacia-v4-rescue` | Ref candidata coincidente en `2ee3b34739abec874424a572d445798fef565765`. | Comparación/candidata al mismo estado que la fuente Pages verificada. | Fuente Pages configurada independiente, segunda publicación, PR #88 y posteriores, piloto o producción. |
+| `origin/backup/preview-hospital-before-v4-qa-20260725` | Referencia hospitalaria preservada en `35a2cdd58a43f588a94882824bf1de9444521ad6`; el baseline anterior `a6b15353...` queda como antecedente histórico. | Retorno y comparación del estado previo a la publicación temporal V4. | Rama de integración, estado actual del rescate o publicación vigente. |
 | `origin/backup/preview-before-hospital-demo-rollback-20260722` | Estado avanzado preservado en `c19297b68cd188cc455ffcd7a45bc6831f8fb54a`. | Recuperación selectiva de código, contratos y tests posteriores al estado hospitalario. | Nueva base automática, restauración masiva, piloto o producción. |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | **HOLD / propuesta arquitectónica. No mergear.** | Concepto de control plane federado y configuración no-paciente derivado del análisis post-SES. | Arquitectura aprobada, capacidad implementada ni decisión institucional. |
 | `origin/work/*` | Ramas de trabajo en progreso o históricas. | Desarrollo atómico revisable; trazabilidad de WO. | Estado publicado ni canónico sin merge previo y validación. |
@@ -40,8 +46,9 @@
 ### Notas sobre ramas
 
 - `main` es legacy por decisión DEC-001; su conservación obedece a DEC-002 (no eliminar sin trazabilidad). Los tags propuestos en DEC-002 aún no existen.
-- La rama `feature/reuma-v2...` no contiene los avances post-demo de Farmacia documentados en v0.3–v0.5; estos viven principalmente en `preview/demo-lunes-wo4-20260614` y en worktrees locales.
-- `preview/demo-lunes-wo4-20260614` es la referencia publicada actual; cualquier modificación requiere WO autorizada.
+- La rama `feature/reuma-v2...` no contiene los avances V4 integrados en `rescue/farmacia-v4`.
+- El issue #80 inició la publicación temporal llevando la fuente Pages `preview/demo-lunes-wo4-20260614` hasta `8902aa...`. La rama fue avanzada posteriormente y su estado actual verificado es `2ee3b347...`. Esta reconciliación registra el estado actual sin atribuir todo el avance posterior al alcance original del issue #80. La candidata `preview/farmacia-v4-rescue` coincide en el SHA actual, pero no constituye una segunda fuente Pages publicada; ambas refs van por detrás del rescue HEAD `d1df695f...`.
+- `backup/preview-hospital-before-v4-qa-20260725` conserva en `35a2cdd...` la referencia previa al tramo de QA/publicación V4; `a6b15353...` permanece como baseline hospitalario anterior en la historia.
 - `backup/preview-before-hospital-demo-rollback-20260722` se conserva como cantera de recuperación selectiva; no debe usarse como rama de integración ni restaurarse en bloque.
 - El HOLD `docs/promueve-fh-control-plane-federado-20260713` contiene una propuesta de control plane federado; su destino (integrar, descartar o redefinir) es una decisión pendiente.
 
@@ -57,7 +64,8 @@
 | [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Parcial | Visión funcional de Reuma v2 y planificación inicial. | Estado real de Farmacia post-demo (aún describe Farmacia como no implementado). |
 | [`ARCHITECTURE.md`](/ARCHITECTURE.md) | Vigente post-SES | Arquitectura técnica, módulos, flujo de datos, transición propuesta. | Aprobación institucional ni producción. |
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica post-SES | Estado post-SES, fases propuestas, decisiones pendientes, nomenclatura provisional. | Arquitectura aprobada ni plan de implementación vinculante. |
-| [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md) | Propuesta publicada; ejecución técnica no iniciada | Gobierno del rescate V4, referencias congeladas, fases, dependencias, criterios de aptitud y cola futura de WOs. | Autorización automática de código, merge, piloto, backend o V5. |
+| [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md) | Plan vivo reconciliado hasta PR #106 | Gobierno y estado del rescate V4, referencias, fases, dependencias, aptitud y trabajo restante. | Autorización automática de código, publicación, piloto, backend o V5. |
+| [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md) | Integrado en PR #64 | Contrato sintético/no inferencial S01–S12 que gobierna el rescate V4. | Evidencia por sí solo de implementación, publicación, demo-ready o piloto. |
 | [`CHANGELOG.md`](/CHANGELOG.md) | Vigente | Release log principal del proyecto. | Historial detallado de WOs (ver `WORK_ORDER_STATUS.md`). |
 | [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md) | Vigente | Contrato Excel 497 columnas para Reuma v2. | Farmacia, Enfermería ni contratos interservicios definitivos. |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Estado y trazabilidad de work orders. | Decisiones de arquitectura ni contratos clínicos. |
@@ -105,6 +113,7 @@
 
 ### Farmacia Hospitalaria
 - [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md)
+- [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md)
 - [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md)
 - [`docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md`](/docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md)
 - [`docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`](/docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md)
@@ -161,7 +170,8 @@
 - [`docs/template_ar_excel.md`](/docs/template_ar_excel.md), [`docs/template_les_excel.md`](/docs/template_les_excel.md), [`docs/template_prebiologico_excel.md`](/docs/template_prebiologico_excel.md), [`docs/template_sjogren_excel.md`](/docs/template_sjogren_excel.md), [`docs/template_solicitud_fh.md`](/docs/template_solicitud_fh.md)
 - [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md)
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
-- `docs/contratos/` (solo en rama `work/hermes/wo-002-contratos-minimos`; exploratorio/pausado; no disponible en el árbol actual)
+- [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md)
+- Otros borradores de `docs/contratos/` asociados a `work/hermes/wo-002-contratos-minimos` siguen exploratorios/pausados y no están disponibles en el árbol actual.
 
 ### Auditorías
 - [`docs/AUDITORIA_EXCEL_MAESTRO_V2.md`](/docs/AUDITORIA_EXCEL_MAESTRO_V2.md)
@@ -205,8 +215,10 @@
 
 | Tema | Estado | Dónde se documentará / decide |
 |---|---|---|
-| Integración de Farmacia preview en base canónica | Pendiente | Decisión humana; no autoriza este índice. Afecta a `feature/reuma-v2...` vs `preview/demo-lunes-wo4-20260614`. |
-| Contrato de escenarios sintéticos Farmacia V4 | Próxima WO documental propuesta | [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md); no autoriza ejecución automática. |
+| Destino canónico posterior del rescate Farmacia V4 | Pendiente | El rescate está integrado en `rescue/farmacia-v4`; su integración futura con otras líneas requiere decisión humana y WO específica. |
+| Cierre de Primera Visita S01–S08 | Pendiente prioritario | Cerrar exportaciones postinicio canónicas, neutralización de defaults legacy y QA S01–S08 antes de abordar Seguimiento. Ver plan maestro. |
+| Seguimiento V4 S09–S12 | Pendiente posterior | Tras cerrar Primera Visita, abordar S09–S12 por `patient_id + line_id`. El handoff de PR #104 es un prerrequisito y no implementa funcionalidad dentro de Seguimiento. |
+| Dashboards y release V4 | Pendientes | No están reconstruidos/congelados contra la fuente canónica ni acreditados como demo-ready. La preview publicada queda en PR #86. |
 | Tags DEC-002 (`legacy-v1-main-antes-reuma-v2`, `v2.0.0-*`) | Pendiente | Decisión de Sil/Cora; requiere WO específica. |
 | Nomenclatura externa (framework, piloto, módulos) | Propuesta / pendiente validación | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 2. |
 | Versionado unificado producto / técnico | Propuesta / pendiente | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 6. |
@@ -218,4 +230,4 @@
 
 ---
 
-*Índice generado en el contexto de `WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713` y actualizado por `WO-DOC-FH-RESCUE-MASTER-PLAN-V4-01`. No autoriza cambios de código, merges ni integraciones.*
+*Índice generado en el contexto de `WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713` y reconciliado hasta PR #106 por `WO-DOC-FH-RESCUE-STATUS-RECONCILIATION-V4-01`. No autoriza cambios de código, publicación, merges ni integraciones.*
