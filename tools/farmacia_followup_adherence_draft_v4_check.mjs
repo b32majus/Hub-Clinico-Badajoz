@@ -13,9 +13,9 @@ const html = fs.readFileSync(path.join(ROOT, 'farmacia_seguimiento.html'), 'utf8
 const draftSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_followup_drafts_v4.js'), 'utf8');
 const contextSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_followup_context_v4.js'), 'utf8');
 
-const LEGACY_SCENARIOS = ['valid_v2', 'valid_v3_precedence', 'corrupt_v3_no_fallback', 'absent_v1_v2_v3'];
+const LEGACY_SCENARIOS = ['valid_v2_to_v4', 'valid_v4_precedence', 'corrupt_v4_no_fallback', 'absent_v1_v2_v3_v4'];
 const INTENTIONALLY_RETIRED = [];
-const MIGRATION_PARITY = Object.freeze({ valid_v2: 'identity_notes_answers_preserved_ae_empty', valid_v3_precedence: 'v3_used', corrupt_v3_no_fallback: 'fail_closed', absent_v1_v2_v3: 'empty' });
+const MIGRATION_PARITY = Object.freeze({ valid_v2_to_v4: 'identity_notes_answers_preserved_ae_proms_empty', valid_v4_precedence: 'v4_used_without_legacy_read_or_write', corrupt_v4_no_fallback: 'fail_closed', absent_v1_v2_v3_v4: 'empty' });
 const CONTRACT_MATRIX = Object.freeze({
   context_data_line_producers: ['FarmaciaFollowupContextV4', 'FarmaciaDataSource', 'FarmaciaMultitreatmentCore'],
   ui_producer: ['farmacia_seguimiento.html#fhSegDraftCard'],
@@ -43,11 +43,13 @@ function storage(seed = {}) {
 function draft(patientId = 'patient-a', lineId = 'line-a', overrides = {}) {
   return { draft_id: `followup:${lineId}`, patient_id: patientId, line_id: lineId, kind: 'followup', notes: 'saved',
     mg1: '', mg2: '', mg3: '', mg4: '', ae_present: '', ae_description: '', ae_severity: '', ae_resolution: '',
+    proms_collected: '', dlqi_total: '', eva_dolor: '', eva_prurito: '',
     saved_at: '2026-07-26T10:00:00.000Z', saved_by_demo: 'Profesional FH-01', ...overrides };
 }
 function legacyDraft(patientId = 'patient-a', lineId = 'line-a', notes = 'legacy notes') {
   const value = draft(patientId, lineId, { notes });
   delete value.ae_present; delete value.ae_description; delete value.ae_severity; delete value.ae_resolution;
+  delete value.proms_collected; delete value.dlqi_total; delete value.eva_dolor; delete value.eva_prurito;
   return value;
 }
 function state(schema, ...items) {
@@ -84,7 +86,7 @@ function app(backing = storage(), confirm = () => true) {
   return { backing, elements, env, controller, apply, applyShape, answer };
 }
 
-test('valid v2 migrates through controller and UI with answers preserved, empty AE and leaves v2 untouched', () => {
+test('valid v2 migrates to v4 through controller and UI with answers preserved, empty AE/PROMs and leaves v2 untouched', () => {
   const old = JSON.stringify(state(drafts.LEGACY_STORE_KEY, legacyDraft()));
   const backing = storage({ [drafts.LEGACY_STORE_KEY]: old });
   const value = app(backing);
@@ -98,32 +100,32 @@ test('valid v2 migrates through controller and UI with answers preserved, empty 
   assert.equal(value.elements.fhSegDraftStatus.attributes['data-status-code'], 'DRAFT_RESTORED');
   assert.equal(backing.getItem(drafts.LEGACY_STORE_KEY), old);
   assert.deepEqual(backing.writes, [drafts.STORE_KEY]);
-  migrationResult('valid_v2', 'identity_notes_answers_preserved_ae_empty', {
+  migrationResult('valid_v2_to_v4', 'identity_notes_answers_preserved_ae_proms_empty', {
     draft_store: backing.writes.length === 1 && backing.writes[0] === drafts.STORE_KEY,
     draft_controller: value.controller.state().ready,
     canonical_draft_ui: value.elements.fhSegDraftNotes.value === 'legacy notes'
   });
 });
-test('valid v3 has precedence and does not read or rewrite valid v2', () => {
-  const v2 = state(drafts.SCHEMA, draft('patient-a', 'line-a', { notes: 'v2', mg1: 'si' }));
-  const backing = storage({ [drafts.STORE_KEY]: JSON.stringify(v2), [drafts.LEGACY_STORE_KEY]: JSON.stringify(state(drafts.LEGACY_STORE_KEY, legacyDraft())) });
+test('valid v4 has precedence and does not read or rewrite valid v2', () => {
+  const v4 = state(drafts.SCHEMA, draft('patient-a', 'line-a', { notes: 'v4', mg1: 'si' }));
+  const backing = storage({ [drafts.STORE_KEY]: JSON.stringify(v4), [drafts.LEGACY_STORE_KEY]: JSON.stringify(state(drafts.LEGACY_STORE_KEY, legacyDraft())) });
   const loaded = drafts.createStore(backing).read();
-  assert.equal(loaded.state.patients['patient-a'].lines['line-a'].notes, 'v2');
+  assert.equal(loaded.state.patients['patient-a'].lines['line-a'].notes, 'v4');
   assert.deepEqual(backing.writes, []);
-  migrationResult('valid_v3_precedence', 'v3_used', { draft_store: loaded.state.patients['patient-a'].lines['line-a'].notes === 'v2' });
+  migrationResult('valid_v4_precedence', 'v4_used_without_legacy_read_or_write', { draft_store: loaded.state.patients['patient-a'].lines['line-a'].notes === 'v4' });
 });
-test('present corrupt v3 fails closed without v2 fallback or writes', () => {
+test('present corrupt v4 fails closed without v2 fallback or writes', () => {
   const v1 = JSON.stringify(state(drafts.LEGACY_STORE_KEY, legacyDraft()));
   const backing = storage({ [drafts.STORE_KEY]: '{', [drafts.LEGACY_STORE_KEY]: v1 });
   const loaded = drafts.createStore(backing).read();
   assert.equal(loaded.code, 'DRAFT_STORAGE_CORRUPT');
   assert.equal(backing.getItem(drafts.LEGACY_STORE_KEY), v1);
   assert.deepEqual(backing.writes, []);
-  migrationResult('corrupt_v3_no_fallback', 'fail_closed', { draft_store: loaded.code === 'DRAFT_STORAGE_CORRUPT' });
+  migrationResult('corrupt_v4_no_fallback', 'fail_closed', { draft_store: loaded.code === 'DRAFT_STORAGE_CORRUPT' });
 });
-test('absent v1, v2 and v3 is empty and does not write', () => { const backing = storage(); const loaded = drafts.createStore(backing).read(); assert.equal(loaded.code, 'DRAFT_EMPTY'); assert.deepEqual(backing.writes, []); migrationResult('absent_v1_v2_v3', 'empty', { draft_store: loaded.code === 'DRAFT_EMPTY' }); });
+test('absent v1, v2, v3 and v4 is empty and does not write', () => { const backing = storage(); const loaded = drafts.createStore(backing).read(); assert.equal(loaded.code, 'DRAFT_EMPTY'); assert.deepEqual(backing.writes, []); migrationResult('absent_v1_v2_v3_v4', 'empty', { draft_store: loaded.code === 'DRAFT_EMPTY' }); });
 test('incompatible or invalid v2 fails closed without writes', () => { const backing = storage({ [drafts.LEGACY_STORE_KEY]: JSON.stringify({ schema: 'wrong', patients: {} }) }); assert.equal(drafts.createStore(backing).read().code, 'DRAFT_SCHEMA_MISMATCH'); assert.deepEqual(backing.writes, []); });
-test('migration write failure leaves v2 untouched and v3 absent', () => {
+test('migration write failure leaves v2 untouched and v4 absent', () => {
   const old = JSON.stringify(state(drafts.LEGACY_STORE_KEY, legacyDraft()));
   const data = new Map([[drafts.LEGACY_STORE_KEY, old]]);
   const backing = { getItem: (key) => data.has(key) ? data.get(key) : null, setItem: () => { throw new Error('denied'); } };
@@ -131,7 +133,7 @@ test('migration write failure leaves v2 untouched and v3 absent', () => {
   assert.equal(data.get(drafts.LEGACY_STORE_KEY), old);
   assert.equal(data.has(drafts.STORE_KEY), false);
 });
-test('v3 answer values are exactly empty, si or no', () => { for (const value of ['', 'si', 'no']) assert.equal(drafts.validateState(state(drafts.SCHEMA, draft('p', 'l', { mg1: value }))).ok, true); assert.equal(drafts.validateState(state(drafts.SCHEMA, draft('p', 'l', { mg1: 'unknown' }))).code, 'DRAFT_STATE_INVALID'); });
+test('v4 answer values are exactly empty, si or no', () => { for (const value of ['', 'si', 'no']) assert.equal(drafts.validateState(state(drafts.SCHEMA, draft('p', 'l', { mg1: value }))).ok, true); assert.equal(drafts.validateState(state(drafts.SCHEMA, draft('p', 'l', { mg1: 'unknown' }))).code, 'DRAFT_STATE_INVALID'); });
 test('active coherent context enables notes and all answers', () => { const value = app(); value.apply(); assert.equal(value.elements.fhSegDraftNotes.disabled, false); for (let i = 1; i <= 4; i += 1) assert.equal(value.elements[`fhSegDraftMg${i}`].disabled, false); });
 test('nested active status without top-level status enables all draft fields', () => { const value = app(); value.applyShape({ line: { status: 'active' } }); assert.equal(value.controller.state().ready, true); assert.equal(value.elements.fhSegDraftNotes.disabled, false); for (let i = 1; i <= 4; i += 1) assert.equal(value.elements[`fhSegDraftMg${i}`].disabled, false); });
 test('top-level and nested active statuses allow save', () => { const value = app(); value.applyShape({ status: 'active', line: { status: 'active' } }); value.answer('mg1', 'si'); assert.equal(value.controller.save().ok, true); assert.equal(value.controller.store.get('patient-a', 'line-a').draft.mg1, 'si'); });

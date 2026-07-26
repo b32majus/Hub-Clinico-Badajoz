@@ -89,11 +89,12 @@ try {
   let current = await snapshot();
   assert.equal(current.notes, 'V2 sintético');
   assert.equal(current.present, '');
-  const migrated = await page.evaluate(() => ({ v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2'), v3: JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')) }));
+  const migrated = await page.evaluate(() => ({ v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2'), v4: JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')) }));
   assert.equal(migrated.v2, v2);
-  assert.deepEqual(migrated.v3.patients['fhv4-patient-s09'].lines['fhv4-line-s09'], {
+  assert.deepEqual(migrated.v4.patients['fhv4-patient-s09'].lines['fhv4-line-s09'], {
     draft_id: 'followup:fhv4-line-s09', patient_id: 'fhv4-patient-s09', line_id: 'fhv4-line-s09', kind: 'followup', notes: 'V2 sintético',
     mg1: 'si', mg2: 'no', mg3: '', mg4: '', ae_present: '', ae_description: '', ae_severity: '', ae_resolution: '',
+    proms_collected: '', dlqi_total: '', eva_dolor: '', eva_prurito: '',
     saved_at: '2026-07-26T09:00:00.000Z', saved_by_demo: 'Profesional FH-01'
   });
 
@@ -134,7 +135,7 @@ try {
   await ae({ description: 'EA persistido misma identidad', severity: 'moderado', resolution: 'en_seguimiento' });
   await save();
   const persistedSameIdentity = await snapshot();
-  const storeBeforeBlocked = await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3'));
+  const storeBeforeBlocked = await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4'));
   await page.fill('#fhSegDraftNotes', 'Notas transitorias que no deben persistir');
   await page.selectOption('#fhSegDraftMg1', 'no'); await page.selectOption('#fhSegDraftMg2', 'si');
   await page.selectOption('#fhSegDraftMg3', 'no'); await page.selectOption('#fhSegDraftMg4', 'si');
@@ -150,7 +151,7 @@ try {
   assert.equal(page.url(), activeUrl);
   assert.equal(await page.inputValue('#fhSegCip'), activeCip);
   assert.deepEqual(await snapshot(), dirtySameIdentity);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), storeBeforeBlocked);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), storeBeforeBlocked);
 
   await search('FH-V4-UNKNOWN', 'accept');
   await waitContext('PATIENT_NOT_FOUND');
@@ -160,14 +161,14 @@ try {
   assert.equal(await page.locator('#fhSegDraftSave').isDisabled(), true);
   assert.equal(await page.locator('#fhSegDraftNotes').isDisabled(), true);
   assert.equal(dialogs.length, dialogsBeforeInvalidSearch + 2);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), storeBeforeBlocked);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), storeBeforeBlocked);
   await search('FH-V4-0009');
   await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
   current = await snapshot();
   assert.deepEqual([current.notes, current.mg1, current.mg2, current.mg3, current.mg4, current.present, current.description, current.severity, current.resolution],
     [persistedSameIdentity.notes, persistedSameIdentity.mg1, persistedSameIdentity.mg2, persistedSameIdentity.mg3, persistedSameIdentity.mg4, persistedSameIdentity.present, persistedSameIdentity.description, persistedSameIdentity.severity, persistedSameIdentity.resolution]);
   assert.equal(current.draftCode, 'DRAFT_RESTORED');
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), storeBeforeBlocked);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), storeBeforeBlocked);
 
   // A clean invalid search blocks without a dialog and restores the same persisted partition without writes.
   const dialogsBeforeCleanInvalid = dialogs.length;
@@ -177,13 +178,13 @@ try {
   assert.deepEqual([current.notes, current.mg1, current.mg2, current.mg3, current.mg4, current.present, current.description, current.severity, current.resolution], ['', '', '', '', '', '', '', '', '']);
   assert.equal(current.draftCode, 'DRAFT_CONTEXT_INELIGIBLE');
   assert.equal(dialogs.length, dialogsBeforeCleanInvalid);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), storeBeforeBlocked);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), storeBeforeBlocked);
   await search('FH-V4-0009');
   await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
   current = await snapshot();
   assert.deepEqual([current.notes, current.mg1, current.mg2, current.mg3, current.mg4, current.present, current.description, current.severity, current.resolution],
     [persistedSameIdentity.notes, persistedSameIdentity.mg1, persistedSameIdentity.mg2, persistedSameIdentity.mg3, persistedSameIdentity.mg4, persistedSameIdentity.present, persistedSameIdentity.description, persistedSameIdentity.severity, persistedSameIdentity.resolution]);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), storeBeforeBlocked);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), storeBeforeBlocked);
 
   // Non-si clears and persists no details residue.
   await ae({ present: 'no_consta' });
@@ -191,7 +192,7 @@ try {
   assert.deepEqual([current.description, current.severity, current.resolution], ['', '', '']);
   for (const selector of ['#fhSegDraftAeDescription', '#fhSegDraftAeSeverity', '#fhSegDraftAeResolution']) assert.equal(await page.locator(selector).isDisabled(), true);
   await save();
-  const clean = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')).patients['fhv4-patient-s09'].lines['fhv4-line-s09']);
+  const clean = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')).patients['fhv4-patient-s09'].lines['fhv4-line-s09']);
   assert.deepEqual([clean.ae_present, clean.ae_description, clean.ae_severity, clean.ae_resolution], ['no_consta', '', '', '']);
 
   // S10 historical is empty and blocked.
@@ -238,7 +239,7 @@ try {
   await ae({ present: 'si', description: 'EA persistido mismatch', severity: 'moderado', resolution: 'en_seguimiento' });
   await save();
   const persistedMismatch = await snapshot();
-  const mismatchStore = await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3'));
+  const mismatchStore = await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4'));
   await page.fill('#fhSegDraftNotes', 'Transitorio S10 mismatch');
   await page.selectOption('#fhSegDraftMg1', 'no'); await page.selectOption('#fhSegDraftMg2', 'si');
   await page.selectOption('#fhSegDraftMg3', 'no'); await page.selectOption('#fhSegDraftMg4', 'si');
@@ -247,17 +248,17 @@ try {
   const mismatchUrl = page.url(); const mismatchCip = await page.inputValue('#fhSegCip'); const mismatchDialogs = dialogs.length;
   await search('FH-V4-0009', 'dismiss'); await page.waitForTimeout(100);
   assert.equal(dialogs.length, mismatchDialogs + 1); assert.equal(page.url(), mismatchUrl); assert.equal(await page.inputValue('#fhSegCip'), mismatchCip);
-  assert.deepEqual(await snapshot(), dirtyMismatch); assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), mismatchStore);
+  assert.deepEqual(await snapshot(), dirtyMismatch); assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), mismatchStore);
   await search('FH-V4-0009', 'accept'); await waitContext('PATIENT_MISMATCH');
   current = await snapshot();
   assert.deepEqual([current.notes, current.mg1, current.mg2, current.mg3, current.mg4, current.present, current.description, current.severity, current.resolution], ['', '', '', '', '', '', '', '', '']);
   assert.equal(current.draftCode, 'DRAFT_UNSAVED_NOT_PERSISTED_CONTEXT_INELIGIBLE'); assert.equal(await page.locator('#fhSegDraftSave').isDisabled(), true);
-  assert.equal(dialogs.length, mismatchDialogs + 2); assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), mismatchStore);
+  assert.equal(dialogs.length, mismatchDialogs + 2); assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), mismatchStore);
   await search('FH-V4-0010'); await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
   current = await snapshot();
   assert.deepEqual([current.notes, current.mg1, current.mg2, current.mg3, current.mg4, current.present, current.description, current.severity, current.resolution],
     [persistedMismatch.notes, persistedMismatch.mg1, persistedMismatch.mg2, persistedMismatch.mg3, persistedMismatch.mg4, persistedMismatch.present, persistedMismatch.description, persistedMismatch.severity, persistedMismatch.resolution]);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), mismatchStore);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), mismatchStore);
 
   // The same supported PATIENT_MISMATCH transition is silent when the restored partition is clean.
   const cleanMismatchDialogs = dialogs.length;
@@ -269,18 +270,18 @@ try {
     assert.equal(await page.locator(selector).isDisabled(), true, `${selector} must be blocked for clean PATIENT_MISMATCH`);
   }
   assert.equal(await page.locator('#fhSegDraftSave').isDisabled(), true); assert.equal(dialogs.length, cleanMismatchDialogs);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), mismatchStore);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), mismatchStore);
   await search('FH-V4-0010'); await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
   current = await snapshot();
   assert.deepEqual([current.notes, current.mg1, current.mg2, current.mg3, current.mg4, current.present, current.description, current.severity, current.resolution],
     [persistedMismatch.notes, persistedMismatch.mg1, persistedMismatch.mg2, persistedMismatch.mg3, persistedMismatch.mg4, persistedMismatch.present, persistedMismatch.description, persistedMismatch.severity, persistedMismatch.resolution]);
   assert.equal(current.draftCode, 'DRAFT_RESTORED'); assert.equal(dialogs.length, cleanMismatchDialogs);
-  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), mismatchStore);
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v4')), mismatchStore);
 
   assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join(' | ')}`);
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join(' | ')}`);
   console.log('QA_ERRORS', JSON.stringify({ consoleErrors, pageErrors }));
-  console.log('farmacia_followup_ae_draft_v4_qa: PASSED_V2_TO_V3_AE_STATES_CLEANING_S09_S10_S11_S12_GATES_ZERO_ERRORS');
+  console.log('farmacia_followup_ae_draft_v4_qa: PASSED_V2_TO_V4_AE_PROMS_EMPTY_STATES_CLEANING_S09_S10_S11_S12_GATES_ZERO_ERRORS');
 } finally {
   await browser.close();
 }
