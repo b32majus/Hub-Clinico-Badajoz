@@ -92,7 +92,7 @@ try {
   assert.equal(current.text, 'Hay cambios sin guardar. Esta revisión muestra únicamente el último borrador persistido.');
   assert.deepEqual([current.notes, current.mg[0], current.ae[1], current.proms[1]], ['Persistido S09', 'Sí', 'EA sintético', '0']);
   assert.equal(await page.evaluate((key) => sessionStorage.getItem(key), STORE_KEY), savedBytes);
-  await page.reload({ waitUntil: 'domcontentloaded' }); await waitContext('CANONICAL_ACTIVE_CONTEXT_READY'); await waitReview('REVIEW_READY'); assert.equal((await reviewSnap()).notes, 'Persistido S09');
+  page.__nextDialogAction = 'accept'; await page.reload({ waitUntil: 'domcontentloaded' }); await waitContext('CANONICAL_ACTIVE_CONTEXT_READY'); await waitReview('REVIEW_READY'); assert.equal((await reviewSnap()).notes, 'Persistido S09');
 
   // S11 exact partitions and S12 cancel/accept preserve review or switch only to destination persistence.
   await search('FH-V4-0011'); await waitContext('SELECTION_REQUIRED'); await waitReview('REVIEW_CONTEXT_BLOCKED');
