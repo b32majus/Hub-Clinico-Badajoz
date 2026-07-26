@@ -7,11 +7,14 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
     'use strict';
 
-    var STORE_KEY = 'farmaciaDemo.followupDrafts.v1';
+    var STORE_KEY = 'farmaciaDemo.followupDrafts.v2';
+    var LEGACY_STORE_KEY = 'farmaciaDemo.followupDrafts.v1';
     var SCHEMA = STORE_KEY;
     var CHANGE_MESSAGE = 'Hay cambios sin guardar en el borrador de esta línea. Cambiar de paciente o línea descartará esos cambios. El último borrador guardado se conservará. ¿Quieres continuar?';
     var DISCARD_MESSAGE = '¿Quieres descartar el borrador guardado de esta línea?';
-    var FIELDS = ['draft_id', 'patient_id', 'line_id', 'kind', 'notes', 'saved_at', 'saved_by_demo'];
+    var ANSWERS = ['mg1', 'mg2', 'mg3', 'mg4'];
+    var FIELDS = ['draft_id', 'patient_id', 'line_id', 'kind', 'notes', 'mg1', 'mg2', 'mg3', 'mg4', 'saved_at', 'saved_by_demo'];
+    var LEGACY_FIELDS = ['draft_id', 'patient_id', 'line_id', 'kind', 'notes', 'saved_at', 'saved_by_demo'];
     var controller = null;
     var dependencies = {};
 
@@ -24,9 +27,9 @@
     function emptyState() { return { schema: SCHEMA, patients: {} }; }
     function failure(code) { return { ok: false, code: code, state: null }; }
 
-    function validateState(state) {
+    function validateWith(state, schema, fields) {
         if (!state || typeof state !== 'object' || Array.isArray(state)) return failure('DRAFT_STATE_INVALID');
-        if (state.schema !== SCHEMA) return failure('DRAFT_SCHEMA_MISMATCH');
+        if (state.schema !== schema) return failure('DRAFT_SCHEMA_MISMATCH');
         if (!exactKeys(state, ['schema', 'patients']) || !state.patients || typeof state.patients !== 'object' || Array.isArray(state.patients)) {
             return failure('DRAFT_STATE_INVALID');
         }
@@ -36,11 +39,28 @@
             if (!patientId || !exactKeys(patient, ['lines']) || !patient.lines || typeof patient.lines !== 'object' || Array.isArray(patient.lines)) { valid = false; return; }
             Object.keys(patient.lines).forEach(function (lineId) {
                 var draft = patient.lines[lineId];
-                if (!lineId || !exactKeys(draft, FIELDS) || !FIELDS.every(function (field) { return typeof draft[field] === 'string'; }) ||
-                        draft.kind !== 'followup' || draft.draft_id !== 'followup:' + lineId || draft.patient_id !== patientId || draft.line_id !== lineId) valid = false;
+                if (!lineId || !exactKeys(draft, fields) || !fields.every(function (field) { return typeof draft[field] === 'string'; }) ||
+                        draft.kind !== 'followup' || draft.draft_id !== 'followup:' + lineId || draft.patient_id !== patientId || draft.line_id !== lineId ||
+                        (fields === FIELDS && !ANSWERS.every(function (field) { return ['', 'si', 'no'].indexOf(draft[field]) !== -1; }))) valid = false;
             });
         });
         return valid ? { ok: true, code: 'DRAFT_STATE_VALID', state: state } : failure('DRAFT_STATE_INVALID');
+    }
+    function validateState(state) { return validateWith(state, SCHEMA, FIELDS); }
+    function validateLegacyState(state) { return validateWith(state, LEGACY_STORE_KEY, LEGACY_FIELDS); }
+    function migrateLegacy(state) {
+        var migrated = emptyState();
+        Object.keys(state.patients).forEach(function (patientId) {
+            migrated.patients[patientId] = { lines: {} };
+            Object.keys(state.patients[patientId].lines).forEach(function (lineId) {
+                var old = state.patients[patientId].lines[lineId];
+                migrated.patients[patientId].lines[lineId] = {
+                    draft_id: old.draft_id, patient_id: old.patient_id, line_id: old.line_id, kind: old.kind, notes: old.notes,
+                    mg1: '', mg2: '', mg3: '', mg4: '', saved_at: old.saved_at, saved_by_demo: old.saved_by_demo
+                };
+            });
+        });
+        return migrated;
     }
 
     function createStore(storage) {
@@ -48,7 +68,18 @@
             if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') return failure('DRAFT_STORAGE_UNAVAILABLE');
             var raw;
             try { raw = storage.getItem(STORE_KEY); } catch (error) { return failure('DRAFT_STORAGE_UNAVAILABLE'); }
-            if (raw === null) return { ok: true, code: 'DRAFT_EMPTY', state: emptyState() };
+            if (raw === null) {
+                var legacyRaw;
+                try { legacyRaw = storage.getItem(LEGACY_STORE_KEY); } catch (error) { return failure('DRAFT_STORAGE_UNAVAILABLE'); }
+                if (legacyRaw === null) return { ok: true, code: 'DRAFT_EMPTY', state: emptyState() };
+                var legacyParsed;
+                try { legacyParsed = JSON.parse(legacyRaw); } catch (error) { return failure('DRAFT_STORAGE_CORRUPT'); }
+                var legacy = validateLegacyState(legacyParsed);
+                if (!legacy.ok) return legacy;
+                var migrated = migrateLegacy(legacy.state);
+                try { storage.setItem(STORE_KEY, JSON.stringify(migrated)); } catch (error) { return failure('DRAFT_STORAGE_UNAVAILABLE'); }
+                return { ok: true, code: 'DRAFT_MIGRATED', state: migrated };
+            }
             var parsed;
             try { parsed = JSON.parse(raw); } catch (error) { return failure('DRAFT_STORAGE_CORRUPT'); }
             return validateState(parsed);
@@ -91,20 +122,32 @@
         return left.patient_id === right.patient_id && left.line_id === right.line_id;
     }
 
+    function hasConsistentActiveStatus(value) {
+        if (!value || typeof value !== 'object') return false;
+        var statuses = [];
+        if (Object.prototype.hasOwnProperty.call(value, 'status')) statuses.push(value.status);
+        if (value.line && typeof value.line === 'object' && Object.prototype.hasOwnProperty.call(value.line, 'status')) {
+            statuses.push(value.line.status);
+        }
+        return statuses.length > 0 && statuses.every(function (status) { return String(status || '').trim() === 'active'; });
+    }
+
     function createController(environment, injected) {
         var env = environment || root;
         var deps = injected || {};
         var store = createStore(deps.storage !== undefined ? deps.storage : env.sessionStorage);
         var current = { patient_id: '', line_id: '' };
         var ready = false;
-        var baseline = '';
+        var baseline = { notes: '', mg1: '', mg2: '', mg3: '', mg4: '' };
         var dirty = false;
         var storageError = '';
         var restored = false;
         var hasSaved = false;
 
         function elements() {
-            return { notes: byId(env, 'fhSegDraftNotes'), save: byId(env, 'fhSegDraftSave'), discard: byId(env, 'fhSegDraftDiscard'), status: byId(env, 'fhSegDraftStatus') };
+            return { notes: byId(env, 'fhSegDraftNotes'), adherence: byId(env, 'fhSegDraftAdherence'), adherenceStatus: byId(env, 'fhSegDraftAdherenceStatus'),
+                mg1: byId(env, 'fhSegDraftMg1'), mg2: byId(env, 'fhSegDraftMg2'), mg3: byId(env, 'fhSegDraftMg3'), mg4: byId(env, 'fhSegDraftMg4'),
+                save: byId(env, 'fhSegDraftSave'), discard: byId(env, 'fhSegDraftDiscard'), status: byId(env, 'fhSegDraftStatus') };
         }
         function setStatus(value, code) {
             var status = elements().status;
@@ -114,8 +157,31 @@
             var ui = elements();
             var blocked = !ready || !!storageError;
             if (ui.notes) { ui.notes.disabled = blocked; ui.notes.setAttribute('aria-disabled', blocked ? 'true' : 'false'); }
+            if (ui.adherence) { ui.adherence.disabled = blocked; ui.adherence.setAttribute('aria-disabled', blocked ? 'true' : 'false'); }
+            ANSWERS.forEach(function (field) { if (ui[field]) { ui[field].disabled = blocked; ui[field].setAttribute('aria-disabled', blocked ? 'true' : 'false'); } });
             if (ui.save) { ui.save.disabled = blocked; ui.save.setAttribute('aria-disabled', blocked ? 'true' : 'false'); }
             if (ui.discard) { ui.discard.disabled = blocked; ui.discard.setAttribute('aria-disabled', blocked ? 'true' : 'false'); }
+        }
+        function valuesFromUi() {
+            var ui = elements();
+            return { notes: ui.notes ? ui.notes.value : '', mg1: ui.mg1 ? ui.mg1.value : '', mg2: ui.mg2 ? ui.mg2.value : '',
+                mg3: ui.mg3 ? ui.mg3.value : '', mg4: ui.mg4 ? ui.mg4.value : '' };
+        }
+        function applyValues(value) {
+            var ui = elements();
+            ui.notes && (ui.notes.value = value.notes || '');
+            ANSWERS.forEach(function (field) { if (ui[field]) ui[field].value = value[field] || ''; });
+            showAdherenceStatus();
+        }
+        function sameValues(left, right) { return ['notes'].concat(ANSWERS).every(function (field) { return left[field] === right[field]; }); }
+        function showAdherenceStatus() {
+            var status = elements().adherenceStatus;
+            if (!status) return;
+            var count = ANSWERS.filter(function (field) { return !!valuesFromUi()[field]; }).length;
+            var code = count === 0 ? 'ADHERENCE_EMPTY' : count === ANSWERS.length ? 'ADHERENCE_COMPLETE_UNINTERPRETED' : 'ADHERENCE_PARTIAL';
+            var message = count === 0 ? 'Cuestionario de adherencia sin respuestas.' : count === ANSWERS.length ?
+                'Cuestionario de adherencia completo. Interpretación clínica no habilitada en esta versión.' : 'Cuestionario de adherencia parcialmente completado.';
+            status.textContent = message; status.setAttribute('data-status-code', code);
         }
         function showError(code) {
             storageError = code;
@@ -132,56 +198,58 @@
         }
         function applyContext(detail) {
             var next = identityOf(detail);
-            var nextReady = !!(detail && detail.ok && detail.code === 'CANONICAL_ACTIVE_CONTEXT_READY' && next.patient_id && next.line_id);
+            var nextReady = !!(detail && detail.ok && detail.code === 'CANONICAL_ACTIVE_CONTEXT_READY' &&
+                hasConsistentActiveStatus(detail) && next.patient_id && next.line_id);
             if (sameIdentity(current, next)) {
                 ready = nextReady;
                 refreshControls();
-                if (!ready && !storageError) setStatus('Sin borrador guardado', 'DRAFT_EMPTY');
+                if (!ready && !storageError) { applyValues({ notes: '', mg1: '', mg2: '', mg3: '', mg4: '' }); setStatus('Sin borrador guardado', 'DRAFT_EMPTY'); }
                 else showWorkingStatus(false);
                 return;
             }
             current = next;
             ready = nextReady;
-            baseline = '';
+            baseline = { notes: '', mg1: '', mg2: '', mg3: '', mg4: '' };
             dirty = false;
             restored = false;
             hasSaved = false;
             storageError = '';
-            var ui = elements();
-            if (ui.notes) ui.notes.value = '';
+            applyValues(baseline);
             if (ready) {
                 var loaded = store.get(current.patient_id, current.line_id);
                 if (!loaded.ok) { showError(loaded.code); return; }
                 if (loaded.draft) {
-                    baseline = loaded.draft.notes;
+                    baseline = { notes: loaded.draft.notes, mg1: loaded.draft.mg1, mg2: loaded.draft.mg2, mg3: loaded.draft.mg3, mg4: loaded.draft.mg4 };
                     restored = true;
                     hasSaved = true;
-                    if (ui.notes) ui.notes.value = baseline;
+                    applyValues(baseline);
                 }
             }
             refreshControls();
             showWorkingStatus(restored);
         }
         function onInput() {
-            var notes = elements().notes;
-            dirty = !!notes && notes.value !== baseline;
+            dirty = !sameValues(valuesFromUi(), baseline);
             restored = false;
+            showAdherenceStatus();
             showWorkingStatus(false);
         }
         function save() {
             var context = env.__farmaciaFollowupContextV4;
-            if (!ready || !context || !context.ok || context.code !== 'CANONICAL_ACTIVE_CONTEXT_READY' || !sameIdentity(context, current)) {
+            if (!ready || !context || !context.ok || context.code !== 'CANONICAL_ACTIVE_CONTEXT_READY' ||
+                    !hasConsistentActiveStatus(context) || !sameIdentity(context, current)) {
                 setStatus('Error de borrador: DRAFT_ACTIVE_CONTEXT_REQUIRED', 'DRAFT_ACTIVE_CONTEXT_REQUIRED');
                 return { ok: false, code: 'DRAFT_ACTIVE_CONTEXT_REQUIRED' };
             }
-            var notes = elements().notes;
+            var values = valuesFromUi();
             var now = typeof deps.now === 'function' ? deps.now() : new Date().toISOString();
             var professional = typeof deps.professional === 'function' ? deps.professional() : (byId(env, 'currentProfessional') && byId(env, 'currentProfessional').textContent || '');
             var draft = { draft_id: 'followup:' + current.line_id, patient_id: current.patient_id, line_id: current.line_id,
-                kind: 'followup', notes: notes ? notes.value : '', saved_at: String(now), saved_by_demo: String(professional).trim() };
+                kind: 'followup', notes: values.notes, mg1: values.mg1, mg2: values.mg2, mg3: values.mg3, mg4: values.mg4,
+                saved_at: String(now), saved_by_demo: String(professional).trim() };
             var result = store.save(draft);
             if (!result.ok) { showError(result.code); return result; }
-            baseline = draft.notes;
+            baseline = values;
             dirty = false;
             restored = false;
             hasSaved = true;
@@ -194,8 +262,8 @@
             if (typeof ask === 'function' && !ask(DISCARD_MESSAGE)) return { ok: false, code: 'DRAFT_DISCARD_CANCELLED' };
             var result = store.discard(current.patient_id, current.line_id);
             if (!result.ok) { showError(result.code); return result; }
-            baseline = ''; dirty = false; restored = false; hasSaved = false;
-            if (elements().notes) elements().notes.value = '';
+            baseline = { notes: '', mg1: '', mg2: '', mg3: '', mg4: '' }; dirty = false; restored = false; hasSaved = false;
+            applyValues(baseline);
             setStatus('Sin borrador guardado', 'DRAFT_EMPTY');
             return { ok: true, code: 'DRAFT_DISCARDED' };
         }
@@ -206,7 +274,7 @@
                 var ask = deps.confirm || env.confirm;
                 if (typeof ask !== 'function' || !ask(CHANGE_MESSAGE)) return 'cancel';
                 dirty = false;
-                if (elements().notes) elements().notes.value = baseline;
+                applyValues(baseline);
             }
             return 'proceed';
         }
@@ -221,6 +289,7 @@
         controller = createController(env, injected || dependencies);
         env.document.addEventListener('farmacia:followup-context-applied-v4', function (event) { controller.applyContext(event.detail || {}); });
         env.document.addEventListener('input', function (event) { if (event.target && event.target.id === 'fhSegDraftNotes') controller.onInput(); });
+        env.document.addEventListener('change', function (event) { if (event.target && event.target.getAttribute && event.target.getAttribute('data-draft-adherence')) controller.onInput(); });
         env.document.addEventListener('click', function (event) {
             if (!event.target || typeof event.target.closest !== 'function') return;
             if (event.target.closest('#fhSegDraftSave')) { event.preventDefault(); controller.save(); }
@@ -231,7 +300,7 @@
     function beforeContextChange(change) { return controller ? controller.beforeContextChange(change) : 'proceed'; }
     function configure(next) { dependencies = next || {}; }
 
-    return { STORE_KEY: STORE_KEY, SCHEMA: SCHEMA, CHANGE_MESSAGE: CHANGE_MESSAGE, DISCARD_MESSAGE: DISCARD_MESSAGE,
-        emptyState: emptyState, validateState: validateState, createStore: createStore, createController: createController,
+    return { STORE_KEY: STORE_KEY, LEGACY_STORE_KEY: LEGACY_STORE_KEY, SCHEMA: SCHEMA, CHANGE_MESSAGE: CHANGE_MESSAGE, DISCARD_MESSAGE: DISCARD_MESSAGE,
+        emptyState: emptyState, validateState: validateState, validateLegacyState: validateLegacyState, migrateLegacy: migrateLegacy, createStore: createStore, createController: createController,
         configure: configure, install: install, beforeContextChange: beforeContextChange };
 });
