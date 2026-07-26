@@ -180,6 +180,21 @@
         var hasSaved = false;
         var pendingAcceptedContextDiscard = false;
 
+        function emitState(reason) {
+            if (!env.document || typeof env.document.dispatchEvent !== 'function') return;
+            var EventConstructor = env.CustomEvent || root.CustomEvent;
+            if (typeof EventConstructor !== 'function') return;
+            env.document.dispatchEvent(new EventConstructor('farmacia:followup-draft-state-v4', { detail: {
+                patient_id: current.patient_id,
+                line_id: current.line_id,
+                ready: !!ready,
+                dirty: !!dirty,
+                storage_error: storageError,
+                has_saved: !!hasSaved,
+                reason: String(reason || '')
+            } }));
+        }
+
         function elements() {
             return { notes: byId(env, 'fhSegDraftNotes'), adherence: byId(env, 'fhSegDraftAdherence'), adherenceStatus: byId(env, 'fhSegDraftAdherenceStatus'),
                 mg1: byId(env, 'fhSegDraftMg1'), mg2: byId(env, 'fhSegDraftMg2'), mg3: byId(env, 'fhSegDraftMg3'), mg4: byId(env, 'fhSegDraftMg4'),
@@ -294,12 +309,14 @@
             applyValues(baseline);
             setStatus('Error de borrador: ' + code, code);
             refreshControls();
+            emitState('STORAGE_READ_ERROR');
         }
         function showMutationError(code) {
             storageError = code;
             ready = false;
             setStatus('Error de borrador: ' + code, code);
             refreshControls();
+            emitState('STORAGE_WRITE_ERROR');
         }
         function preserveUiState() {
             var values = valuesFromUi(); var ui = elements();
@@ -329,7 +346,7 @@
                 hasConsistentActiveStatus(detail) && next.patient_id && next.line_id);
             if (sameIdentity(current, next)) {
                 var wasReady = ready;
-                if (storageError) { ready = false; showWorkingStatus(false); return; }
+                if (storageError) { ready = false; showWorkingStatus(false); emitState('CONTEXT_APPLIED'); return; }
                 if (wasReady && !nextReady) {
                     var droppedUnsaved = dirty || pendingAcceptedContextDiscard;
                     pendingAcceptedContextDiscard = false;
@@ -340,6 +357,7 @@
                         setStatus('Cambios sin guardar no persistidos: el contexto dejó de ser elegible.', 'DRAFT_UNSAVED_NOT_PERSISTED_CONTEXT_INELIGIBLE');
                     } else setStatus('Captura bloqueada: contexto no elegible.', 'DRAFT_CONTEXT_INELIGIBLE');
                     refreshControls();
+                    emitState('CONTEXT_APPLIED');
                     return;
                 }
                 if (!wasReady && nextReady) {
@@ -353,11 +371,12 @@
                         baseline = valuesFromDraft(reloaded.draft);
                         restored = true; hasSaved = true; applyValues(baseline);
                     }
-                    refreshControls(); showWorkingStatus(restored); return;
+                    refreshControls(); showWorkingStatus(restored); emitState('CONTEXT_APPLIED'); return;
                 }
                 ready = nextReady;
                 refreshControls();
                 if (ready) showWorkingStatus(false);
+                emitState('CONTEXT_APPLIED');
                 return;
             }
             current = next;
@@ -381,6 +400,7 @@
             }
             refreshControls();
             showWorkingStatus(restored);
+            emitState('CONTEXT_APPLIED');
         }
         function onInput(eventField) {
             var ui = elements();
@@ -397,17 +417,20 @@
             showAeStatus();
             showPromsStatus();
             showWorkingStatus(false);
+            emitState('DIRTY_INPUT');
         }
         function save() {
             var context = env.__farmaciaFollowupContextV4;
             if (!ready || !context || !context.ok || context.code !== 'CANONICAL_ACTIVE_CONTEXT_READY' ||
                     !hasConsistentActiveStatus(context) || !sameIdentity(context, current)) {
                 setStatus('Error de borrador: DRAFT_ACTIVE_CONTEXT_REQUIRED', 'DRAFT_ACTIVE_CONTEXT_REQUIRED');
+                emitState('SAVE_REJECTED');
                 return { ok: false, code: 'DRAFT_ACTIVE_CONTEXT_REQUIRED' };
             }
             var values = valuesFromUi();
             if ([values.dlqi_total, values.eva_dolor, values.eva_prurito].some(function (value) { return value === null; })) {
                 setStatus('Error de borrador: DRAFT_VALUES_INVALID', 'DRAFT_VALUES_INVALID');
+                emitState('SAVE_REJECTED');
                 return { ok: false, code: 'DRAFT_VALUES_INVALID' };
             }
             var now = typeof deps.now === 'function' ? deps.now() : new Date().toISOString();
@@ -432,17 +455,19 @@
             hasSaved = true;
             applyValues(baseline);
             setStatus('Borrador guardado', 'DRAFT_SAVED');
+            emitState('SAVE');
             return { ok: true, code: 'DRAFT_SAVED', draft: draft };
         }
         function discard() {
-            if (!ready || storageError) return { ok: false, code: storageError || 'DRAFT_ACTIVE_CONTEXT_REQUIRED' };
+            if (!ready || storageError) { emitState('DISCARD_REJECTED'); return { ok: false, code: storageError || 'DRAFT_ACTIVE_CONTEXT_REQUIRED' }; }
             var ask = deps.confirm || env.confirm;
-            if (typeof ask === 'function' && !ask(DISCARD_MESSAGE)) return { ok: false, code: 'DRAFT_DISCARD_CANCELLED' };
+            if (typeof ask === 'function' && !ask(DISCARD_MESSAGE)) { emitState('DISCARD_CANCELLED'); return { ok: false, code: 'DRAFT_DISCARD_CANCELLED' }; }
             var result = store.discard(current.patient_id, current.line_id);
             if (!result.ok) { if (result.phase === 'write' || result.phase === 'migration-write') showMutationError(result.code); else showReadError(result.code); return result; }
             baseline = emptyValues(); dirty = false; restored = false; hasSaved = false;
             applyValues(baseline);
             setStatus('Sin borrador guardado', 'DRAFT_EMPTY');
+            emitState('DISCARD');
             return { ok: true, code: 'DRAFT_DISCARDED' };
         }
         function beforeContextChange(change) {
