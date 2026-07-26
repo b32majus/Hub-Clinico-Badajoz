@@ -306,7 +306,7 @@ test('Hub supplied unknown CIP fails closed', () => {
     assert.equal(result.code, 'PATIENT_MISMATCH');
 });
 
-test('page-local downstream output guards are direct-call safe, idempotent and permanent', () => {
+test('page-local output gate is idempotent and preserves global helper identities', () => {
     const effects = { copy: 0, download: 0, excel: 0 };
     const environment = {
         FarmaciaDemo: {
@@ -316,18 +316,16 @@ test('page-local downstream output guards are direct-call safe, idempotent and p
         FarmaciaExcelRowExport: { copyTSVRowToClipboard() { effects.excel += 1; } }
     };
     const first = adapter.installOutputGuards(environment);
-    const guardedCopy = environment.FarmaciaDemo.copyTextToClipboard;
-    const guardedDownload = environment.FarmaciaDemo.downloadFile;
-    const guardedExcel = environment.FarmaciaExcelRowExport.copyTSVRowToClipboard;
+    const originalCopy = environment.FarmaciaDemo.copyTextToClipboard;
+    const originalDownload = environment.FarmaciaDemo.downloadFile;
+    const originalExcel = environment.FarmaciaExcelRowExport.copyTSVRowToClipboard;
     const second = adapter.installOutputGuards(environment);
     assert.equal(first, second);
-    assert.equal(environment.FarmaciaDemo.copyTextToClipboard, guardedCopy);
-    assert.equal(environment.FarmaciaDemo.downloadFile, guardedDownload);
-    assert.equal(environment.FarmaciaExcelRowExport.copyTSVRowToClipboard, guardedExcel);
-    environment.FarmaciaDemo.copyTextToClipboard('blocked');
-    environment.FarmaciaDemo.downloadFile('blocked.csv', 'blocked');
-    environment.FarmaciaExcelRowExport.copyTSVRowToClipboard(['blocked']);
+    assert.equal(environment.FarmaciaDemo.copyTextToClipboard, originalCopy);
+    assert.equal(environment.FarmaciaDemo.downloadFile, originalDownload);
+    assert.equal(environment.FarmaciaExcelRowExport.copyTSVRowToClipboard, originalExcel);
     assert.deepEqual(effects, { copy: 0, download: 0, excel: 0 });
+    assert.equal(first.helpersPreserved, true);
     assert.equal(adapter.restoreOutputGuards, undefined);
     assert.equal(sourceText.includes('restoreOutputGuards'), false);
 });
@@ -416,4 +414,4 @@ assert.ok(html.indexOf('scripts/farmacia_multitreatment_core.js?v=20260726-follo
 assert.ok(html.indexOf('scripts/farmacia_seguimiento.js?v=20260726-followup-context-v4-legacy') < html.indexOf('scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01'));
 assert.match(dataSourceText, /patient_id=' \+ encodeURIComponent\(followupIdentity\.patient_id\)/);
 assert.match(dataSourceText, /if \(followupIdentity\.line_id\) expectedHref \+= '&line_id='/);
-console.log('farmacia_followup_canonical_context_v4_check: PASSED_35_CANONICAL_IDENTITY_SEARCH_CONTEXT_AND_PERMANENT_GATE_CASES');
+console.log('farmacia_followup_canonical_context_v4_check: PASSED_35_CANONICAL_IDENTITY_SEARCH_CONTEXT_GATE_AND_HELPER_IDENTITY_CASES');

@@ -46,12 +46,11 @@ async function assertGate() {
   for (const selector of ['#fhSegExportTxt', '#fhSegExportCsv', '#fhSegExcelExportBtn', '#btnSegAddOtherDrug', '#fhSegFecha', '#fhSegProms', '#fhSeguimientoEaPresente']) {
     assert.equal(await page.locator(selector).isDisabled(), true, `${selector} remains disabled`);
   }
-  const direct = await page.evaluate(() => [
-    window.FarmaciaDemo.copyTextToClipboard('blocked'),
-    window.FarmaciaDemo.downloadFile('blocked.csv', 'blocked'),
-    window.FarmaciaExcelRowExport.copyTSVRowToClipboard(['blocked'])
-  ]);
-  assert.deepEqual(direct, [false, false, false]);
+  const identities = await page.evaluate(() => {
+    window.__draftQaHelpers ||= [window.FarmaciaDemo.copyTextToClipboard, window.FarmaciaDemo.downloadFile, window.FarmaciaExcelRowExport.copyTSVRowToClipboard];
+    return [window.FarmaciaDemo.copyTextToClipboard === window.__draftQaHelpers[0], window.FarmaciaDemo.downloadFile === window.__draftQaHelpers[1], window.FarmaciaExcelRowExport.copyTSVRowToClipboard === window.__draftQaHelpers[2]];
+  });
+  assert.deepEqual(identities, [true, true, true]);
 }
 
 try {

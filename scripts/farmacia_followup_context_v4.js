@@ -8,7 +8,7 @@
     'use strict';
 
     var STORE_KEY = 'farmaciaDemo.multitreatment.v1';
-    var SAFETY_MESSAGE = 'Contexto canónico de línea preparado. El registro clínico y las exportaciones de Seguimiento se habilitarán tras su migración por línea.';
+    var SAFETY_MESSAGE = 'Contexto canónico de línea preparado. Los módulos clínicos legacy permanecen bloqueados; las salidas solo usan visitas confirmadas.';
     var OUTPUT_IDS = ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn'];
     var USABLE_IDS = ['fhSegCip', 'fhSegCipSearchBtn', 'fhSegLineaPrincipal'];
     var renderSequence = 0;
@@ -353,7 +353,8 @@
             button.setAttribute('title', SAFETY_MESSAGE);
         });
         Array.prototype.forEach.call(document.querySelectorAll('main section.dashboard-card'), function (section) {
-            if (section.id === 'fhSegCanonicalContext' || section.id === 'fhSegDraftCard' || section.id === 'modTratamientoPrincipal') return;
+            if (section.id === 'fhSegCanonicalContext' || section.id === 'fhSegDraftCard' || section.id === 'modTratamientoPrincipal' ||
+                    (section.id === 'modExportacion' && environment.__farmaciaFollowupOutputsV4Installed === true)) return;
             section.inert = true;
             section.setAttribute('aria-disabled', 'true');
             Array.prototype.forEach.call(section.querySelectorAll('input, select, textarea, button'), function (control) {
@@ -387,20 +388,7 @@
         var env = environment || root;
         var existing = env.__farmaciaFollowupOutputGuardV4;
         if (existing && existing.installed) return existing;
-        var guard = { installed: true };
-
-        function protect(target, key) {
-            if (!target || typeof target[key] !== 'function') return;
-            var original = target[key];
-            if (original.__farmaciaFollowupBlockedV4) return;
-            var replacement = function () { return false; };
-            replacement.__farmaciaFollowupBlockedV4 = true;
-            target[key] = replacement;
-        }
-
-        protect(env.FarmaciaDemo, 'copyTextToClipboard');
-        protect(env.FarmaciaDemo, 'downloadFile');
-        protect(env.FarmaciaExcelRowExport, 'copyTSVRowToClipboard');
+        var guard = { installed: true, helpersPreserved: true };
         env.__farmaciaFollowupOutputGuardV4 = guard;
         return guard;
     }
@@ -573,10 +561,11 @@
         document.addEventListener('click', function (event) {
             var target = event.target;
             var output = closest(target, '#fhSegExportTxt, #fhSegExportCsv, #fhSegExcelExportBtn');
-            if (output) { absorb(event); return; }
+            if (output) { if (env.__farmaciaFollowupOutputsV4Installed !== true) absorb(event); return; }
             if (closest(target, '#fhSegCipSearchBtn')) { absorb(event); searchCip(env); return; }
             var gated = closest(target, 'main section.dashboard-card');
-            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'fhSegDraftCard' && gated.id !== 'modTratamientoPrincipal') { absorb(event); return; }
+            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'fhSegDraftCard' && gated.id !== 'modTratamientoPrincipal' &&
+                    !(gated.id === 'modExportacion' && env.__farmaciaFollowupOutputsV4Installed === true)) { absorb(event); return; }
             var treatmentControl = closest(target, '#modTratamientoPrincipal input, #modTratamientoPrincipal select, #modTratamientoPrincipal textarea, #modTratamientoPrincipal button');
             if (treatmentControl && USABLE_IDS.indexOf(treatmentControl.id) === -1) absorb(event);
         }, true);
@@ -594,7 +583,8 @@
                 return;
             }
             var gated = closest(event.target, 'main section.dashboard-card');
-            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'fhSegDraftCard' && gated.id !== 'modTratamientoPrincipal') absorb(event);
+            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'fhSegDraftCard' && gated.id !== 'modTratamientoPrincipal' &&
+                    !(gated.id === 'modExportacion' && env.__farmaciaFollowupOutputsV4Installed === true)) absorb(event);
         }, true);
     }
 

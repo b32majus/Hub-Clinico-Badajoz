@@ -44,15 +44,14 @@ async function assertPermanentGate() {
 async function assertOutputsCannotExecute(label) {
   await clipboard(`sentinel-${label}`);
   const before = downloads.length;
+  const helperIdentity = await page.evaluate(() => {
+    window.__followupHelperIdentity ||= [window.FarmaciaDemo.copyTextToClipboard, window.FarmaciaDemo.downloadFile, window.FarmaciaExcelRowExport.copyTSVRowToClipboard];
+    return [window.FarmaciaDemo.copyTextToClipboard === window.__followupHelperIdentity[0], window.FarmaciaDemo.downloadFile === window.__followupHelperIdentity[1], window.FarmaciaExcelRowExport.copyTSVRowToClipboard === window.__followupHelperIdentity[2]];
+  });
   for (const id of ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn']) {
     await page.locator(`#${id}`).dispatchEvent('click');
   }
-  const directResults = await page.evaluate(() => [
-    window.FarmaciaDemo.copyTextToClipboard('DIRECT-COPY-MUST-BE-BLOCKED'),
-    window.FarmaciaDemo.downloadFile('direct-must-not-download.csv', 'blocked', 'text/csv'),
-    window.FarmaciaExcelRowExport.copyTSVRowToClipboard(['DIRECT-EXCEL-MUST-BE-BLOCKED'])
-  ]);
-  assert.deepEqual(directResults, [false, false, false], `${label}: downstream guards return safely`);
+  assert.deepEqual(helperIdentity, [true, true, true], `${label}: global helpers retain identity`);
   await page.waitForTimeout(100);
   assert.equal(await clipboard(), `sentinel-${label}`, `${label}: clipboard unchanged`);
   assert.equal(downloads.length, before, `${label}: no download`);
@@ -234,7 +233,7 @@ try {
 
   assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join(' | ')}`);
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join(' | ')}`);
-  console.log('farmacia_followup_canonical_context_v4_qa: PASSED_SUPPORTED_S08_S11_GATE_URL_RELOAD_AND_OUTPUT_BLOCKS');
+  console.log('farmacia_followup_canonical_context_v4_qa: PASSED_SUPPORTED_S08_S11_GATE_URL_RELOAD_OUTPUT_BLOCKS_AND_HELPER_IDENTITIES');
 } finally {
   await browser.close();
 }

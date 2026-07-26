@@ -176,6 +176,12 @@
                 return result;
             }
             justConfirmed = record.patient_id + '\u0000' + record.line_id + '\u0000' + record.source_draft_saved_at; showAudit(record); controls(false); setStatus('VISIT_CONFIRMED', CONFIRMED_TEXT);
+            if (env.document && typeof env.document.dispatchEvent === 'function') {
+                var EventConstructor = env.CustomEvent || root.CustomEvent;
+                if (typeof EventConstructor === 'function') env.document.dispatchEvent(new EventConstructor('farmacia:followup-confirmed-visit-v1', { detail: {
+                    patient_id: record.patient_id, line_id: record.line_id, record_id: record.record_id, confirmed_at: record.confirmed_at
+                } }));
+            }
             return result;
         }
         function applyDraftState(detail) { eventState = detail && typeof detail === 'object' ? detail : {}; return refresh(); }

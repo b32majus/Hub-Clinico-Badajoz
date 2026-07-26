@@ -99,7 +99,7 @@
         <div class="info-field"><span class="info-field__label">Relación</span><span class="info-field__value" id="fhSegCanonicalRelationship">No informado</span></div>
         <div class="info-field"><span class="info-field__label">Procedencia</span><span class="info-field__value" id="fhSegCanonicalProvenance">No informado</span></div>
     </div>
-    <div class="notice-box notice-box--info" id="fhSegCanonicalSafety"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Contexto canónico de línea preparado. El registro clínico y las exportaciones de Seguimiento se habilitarán tras su migración por línea.</span></div>
+    <div class="notice-box notice-box--info" id="fhSegCanonicalSafety"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Contexto canónico de línea preparado. Los módulos clínicos legacy permanecen bloqueados; las salidas solo usan visitas confirmadas.</span></div>
 </section><div class="dashboard-card" id="fhSegPersistedReviewCard" data-review-state="REVIEW_CONTEXT_BLOCKED" aria-labelledby="fhSegPersistedReviewTitle">
     <h2 class="section-title section-title--compact" id="fhSegPersistedReviewTitle"><i class="fas fa-eye" aria-hidden="true"></i> Revisión del último borrador persistido</h2>
     <p id="fhSegPersistedReviewStatus" role="status" data-status-code="REVIEW_CONTEXT_BLOCKED">Revisión bloqueada: no hay un contexto canónico activo elegible.</p>
@@ -395,8 +395,16 @@
 </section>
 <section class="dashboard-card" id="modExportacion">
     <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
-    <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables.</span></div>
-    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline hidden" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+    <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Las salidas se construyen exclusivamente desde la última visita confirmada exacta de la línea activa. El borrador actual no forma parte del payload.</span></div>
+    <p id="fhSegOutputStatus" role="status" data-status-code="FOLLOWUP_OUTPUT_CONTEXT_BLOCKED">Salidas bloqueadas: no hay un contexto canónico activo elegible.</p>
+    <div class="info-grid" aria-label="Fuente canónica de las salidas de seguimiento">
+        <div class="info-field"><span class="info-field__label">record_id</span><span class="info-field__value" id="fhSegOutputRecordId">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">visit_date</span><span class="info-field__value" id="fhSegOutputVisitDate">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">confirmed_at</span><span class="info-field__value" id="fhSegOutputConfirmedAt">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">confirmed_by_demo</span><span class="info-field__value" id="fhSegOutputConfirmedBy">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">line_id</span><span class="info-field__value" id="fhSegOutputLineId">No informado</span></div>
+    </div>
+    <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt" disabled aria-disabled="true"><i class="fas fa-file-alt"></i> Copiar texto JARA (demo)</button><button type="button" class="btn btn-outline" id="fhSegExportCsv" disabled aria-disabled="true"><i class="fas fa-file-csv"></i> Descargar CSV canónico</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn" disabled aria-disabled="true"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
 </section>
                 </main>
             </div>
@@ -411,6 +419,7 @@
     <script src="scripts/farmacia_followup_drafts_v4.js?v=20260726-followup-proms-draft-v4-01"></script>
     <script src="scripts/farmacia_followup_persisted_review_v4.js?v=20260726-followup-persisted-review-v4-01"></script>
     <script src="scripts/farmacia_followup_confirmed_visit_v4.js?v=20260726-followup-confirmed-visit-v4-01"></script>
+    <script src="scripts/farmacia_followup_outputs_v4.js?v=20260726-followup-canonical-outputs-v4-01"></script>
     <script src="scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01"></script>
         </body>
         </html>
