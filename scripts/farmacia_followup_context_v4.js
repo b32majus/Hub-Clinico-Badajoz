@@ -353,7 +353,7 @@
             button.setAttribute('title', SAFETY_MESSAGE);
         });
         Array.prototype.forEach.call(document.querySelectorAll('main section.dashboard-card'), function (section) {
-            if (section.id === 'fhSegCanonicalContext' || section.id === 'modTratamientoPrincipal') return;
+            if (section.id === 'fhSegCanonicalContext' || section.id === 'fhSegDraftCard' || section.id === 'modTratamientoPrincipal') return;
             section.inert = true;
             section.setAttribute('aria-disabled', 'true');
             Array.prototype.forEach.call(section.querySelectorAll('input, select, textarea, button'), function (control) {
@@ -429,6 +429,12 @@
         projectLine(environment, result);
         applySafetyGate(environment);
         environment.__farmaciaFollowupContextV4 = result;
+        environment.__farmaciaFollowupVisibleCipV4 = text(byId(environment, 'fhSegCip') && byId(environment, 'fhSegCip').value);
+        if (environment.document && typeof environment.document.dispatchEvent === 'function') {
+            var detail = { ok: !!result.ok, code: result.code, patient_id: result.patient_id || '', line_id: result.line_id || '', status: result.line && result.line.status || '' };
+            var EventConstructor = environment.CustomEvent || root.CustomEvent;
+            if (typeof EventConstructor === 'function') environment.document.dispatchEvent(new EventConstructor('farmacia:followup-context-applied-v4', { detail: detail }));
+        }
         return result;
     }
 
@@ -488,6 +494,7 @@
 
     function searchCip(environment) {
         var env = environment || root;
+        var previousIdentity = readIdentity(env.location && env.location.search);
         var cip = text(byId(env, 'fhSegCip') && byId(env, 'fhSegCip').value).toUpperCase();
         var dataSource = env.FarmaciaDataSource;
         var demo = env.FarmaciaDemo;
@@ -497,6 +504,14 @@
             var resolved = resolveCipSearch({ cip: cip, demo: demo, dataSource: dataSource,
                 core: env.FarmaciaMultitreatmentCore, storage: env.sessionStorage });
             var identity = { cip: cip, patient_id: resolved.patient_id, line_id: resolved.ok ? resolved.line_id : '' };
+            var drafts = env.FarmaciaFollowupDraftsV4;
+            var decision = drafts && typeof drafts.beforeContextChange === 'function' ? drafts.beforeContextChange({
+                current: env.__farmaciaFollowupContextV4 || {}, next: identity
+            }) : 'proceed';
+            if (decision === 'cancel' || decision === 'same') {
+                if (decision === 'cancel') setValue(env, 'fhSegCip', env.__farmaciaFollowupVisibleCipV4 || previousIdentity.cip);
+                return env.__farmaciaFollowupContextV4;
+            }
             replaceIdentityUrl(env, identity);
             return applyResult(env, resolved);
         });
@@ -506,8 +521,19 @@
         var env = environment || root;
         var identity = readIdentity(env.location && env.location.search);
         identity.line_id = text(lineId);
+        var candidate = resolveCanonicalContext({ identity: identity, allowSoleActive: false, core: env.FarmaciaMultitreatmentCore,
+            storage: env.sessionStorage, dataSource: env.FarmaciaDataSource, demo: env.FarmaciaDemo });
+        var drafts = env.FarmaciaFollowupDraftsV4;
+        var decision = drafts && typeof drafts.beforeContextChange === 'function' ? drafts.beforeContextChange({
+            current: env.__farmaciaFollowupContextV4 || {}, next: { patient_id: candidate.patient_id, line_id: candidate.ok ? candidate.line_id : '' }
+        }) : 'proceed';
+        if (decision === 'cancel' || decision === 'same') {
+            var selector = byId(env, 'fhSegLineaPrincipal');
+            if (selector && env.__farmaciaFollowupContextV4) selector.value = env.__farmaciaFollowupContextV4.line_id || '';
+            return env.__farmaciaFollowupContextV4;
+        }
         replaceIdentityUrl(env, identity);
-        return render(env, { identity: identity, allowSoleActive: false });
+        return applyResult(env, candidate);
     }
 
     function closest(element, selector) {
@@ -531,7 +557,7 @@
             if (output) { absorb(event); return; }
             if (closest(target, '#fhSegCipSearchBtn')) { absorb(event); searchCip(env); return; }
             var gated = closest(target, 'main section.dashboard-card');
-            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'modTratamientoPrincipal') { absorb(event); return; }
+            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'fhSegDraftCard' && gated.id !== 'modTratamientoPrincipal') { absorb(event); return; }
             var treatmentControl = closest(target, '#modTratamientoPrincipal input, #modTratamientoPrincipal select, #modTratamientoPrincipal textarea, #modTratamientoPrincipal button');
             if (treatmentControl && USABLE_IDS.indexOf(treatmentControl.id) === -1) absorb(event);
         }, true);
@@ -549,7 +575,7 @@
                 return;
             }
             var gated = closest(event.target, 'main section.dashboard-card');
-            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'modTratamientoPrincipal') absorb(event);
+            if (gated && gated.id !== 'fhSegCanonicalContext' && gated.id !== 'fhSegDraftCard' && gated.id !== 'modTratamientoPrincipal') absorb(event);
         }, true);
     }
 
