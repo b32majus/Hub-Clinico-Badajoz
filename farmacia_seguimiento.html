@@ -86,9 +86,20 @@
     <div class="patient-header-main">
         <div class="patient-info">
             <h1 class="patient-name">Visita de Seguimiento</h1>
-            <p class="hero-description">Registre optimización, suspensión, adherencia Morisky-Green, PROMs y efectos adversos.</p>
+            <p class="hero-description">Prepare el contexto canónico de paciente y línea. El registro clínico de Seguimiento todavía no está habilitado.</p>
         </div>
     </div>
+</section><section class="dashboard-card" id="fhSegCanonicalContext" data-context-state="loading" aria-labelledby="fhSegCanonicalContextTitle">
+    <h2 class="section-title section-title--compact" id="fhSegCanonicalContextTitle"><i class="fas fa-link" aria-hidden="true"></i> Contexto canónico de línea</h2>
+    <p class="validation-note-block__value" id="fhSegCanonicalStatus" role="status" data-status-code="CONTEXT_LOADING">Comprobando contexto canónico…</p>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">Patient ID</span><span class="info-field__value" id="fhSegCanonicalPatientId">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Line ID</span><span class="info-field__value" id="fhSegCanonicalLineId">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Estado de línea</span><span class="info-field__value" id="fhSegCanonicalLineStatus">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Relación</span><span class="info-field__value" id="fhSegCanonicalRelationship">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Procedencia</span><span class="info-field__value" id="fhSegCanonicalProvenance">No informado</span></div>
+    </div>
+    <div class="notice-box notice-box--info" id="fhSegCanonicalSafety"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Contexto canónico de línea preparado. El registro clínico y las exportaciones de Seguimiento se habilitarán tras su migración por línea.</span></div>
 </section><section class="dashboard-card validation-modules-nav-card validation-modules-nav-card--compact hidden">
     <div class="validation-modules-nav validation-modules-nav--compact" aria-labelledby="seguimientoModulesTitle">
         <div class="validation-modules-nav__header">
@@ -319,6 +330,8 @@
             <script src="scripts/farmacia_validacion_model.js?v=20260612-data-import-a"></script>
             <script src="scripts/farmacia_tratamiento_common.js?v=20260614-wo7c2"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
-    <script src="scripts/farmacia_seguimiento.js?v=20260614-wo6-b"></script>
+    <script src="scripts/farmacia_multitreatment_core.js?v=20260726-followup-context-v4-01"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260726-followup-context-v4-legacy"></script>
+    <script src="scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01"></script>
         </body>
         </html>
