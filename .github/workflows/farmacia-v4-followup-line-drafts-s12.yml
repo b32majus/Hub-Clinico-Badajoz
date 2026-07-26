@@ -8,10 +8,13 @@ on:
       - 'scripts/farmacia_followup_context_v4.js'
       - 'scripts/farmacia_followup_drafts_v4.js'
       - 'scripts/farmacia_followup_persisted_review_v4.js'
+      - 'scripts/farmacia_followup_confirmed_visit_v4.js'
       - 'tools/farmacia_followup_line_drafts_s12_v4_check.mjs'
       - 'tools/farmacia_followup_line_drafts_s12_v4_qa.mjs'
       - 'tools/farmacia_followup_persisted_review_v4_check.mjs'
       - 'tools/farmacia_followup_persisted_review_v4_qa.mjs'
+      - 'tools/farmacia_followup_confirmed_visit_v4_check.mjs'
+      - 'tools/farmacia_followup_confirmed_visit_v4_qa.mjs'
       - 'tools/farmacia_followup_adherence_draft_v4_check.mjs'
       - 'tools/farmacia_followup_adherence_draft_v4_qa.mjs'
       - 'tools/farmacia_followup_ae_draft_v4_check.mjs'
@@ -42,10 +45,13 @@ jobs:
           node --check scripts/farmacia_followup_context_v4.js
           node --check scripts/farmacia_followup_drafts_v4.js
           node --check scripts/farmacia_followup_persisted_review_v4.js
+          node --check scripts/farmacia_followup_confirmed_visit_v4.js
           node --check tools/farmacia_followup_line_drafts_s12_v4_check.mjs
           node --check tools/farmacia_followup_line_drafts_s12_v4_qa.mjs
           node --check tools/farmacia_followup_persisted_review_v4_check.mjs
           node --check tools/farmacia_followup_persisted_review_v4_qa.mjs
+          node --check tools/farmacia_followup_confirmed_visit_v4_check.mjs
+          node --check tools/farmacia_followup_confirmed_visit_v4_qa.mjs
           node --check tools/farmacia_followup_adherence_draft_v4_check.mjs
           node --check tools/farmacia_followup_adherence_draft_v4_qa.mjs
           node --check tools/farmacia_followup_ae_draft_v4_check.mjs
@@ -57,6 +63,7 @@ jobs:
         run: |
           node tools/farmacia_followup_line_drafts_s12_v4_check.mjs
           node tools/farmacia_followup_persisted_review_v4_check.mjs
+          node tools/farmacia_followup_confirmed_visit_v4_check.mjs
           node tools/farmacia_followup_adherence_draft_v4_check.mjs
           node tools/farmacia_followup_ae_draft_v4_check.mjs
           node tools/farmacia_followup_proms_draft_v4_check.mjs
@@ -92,6 +99,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173
         run: node tools/farmacia_followup_persisted_review_v4_qa.mjs
+      - name: Confirmed visit browser QA
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tools/farmacia_followup_confirmed_visit_v4_qa.mjs
       - name: Adherence draft browser QA
         env:
           BASE_URL: http://127.0.0.1:4173
