@@ -123,7 +123,24 @@
         <div class="info-field"><span class="info-field__label">EVA prurito persistida</span><span class="info-field__value" id="fhSegPersistedReviewEvaPrurito">No informado</span></div>
     </div>
     <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Esta tarjeta es una revisión de un borrador persistido de sesión. No constituye un registro asistencial ni interpreta clínicamente los datos.</span></div>
-</div><section class="dashboard-card" id="fhSegDraftCard" aria-labelledby="fhSegDraftTitle">
+</div><section aria-label="Confirmación de visita de seguimiento de demo"><div class="dashboard-card validation-modules-nav-card--compact" id="fhSegVisitConfirmCard" data-confirm-state="VISIT_CONFIRM_CONTEXT_BLOCKED" aria-labelledby="fhSegVisitConfirmTitle">
+    <h2 class="section-title section-title--compact" id="fhSegVisitConfirmTitle"><i class="fas fa-calendar-check" aria-hidden="true"></i> Confirmación de visita de seguimiento (demo)</h2>
+    <div class="form-grid">
+        <div class="form-group"><label for="fhSegVisitConfirmDate">Fecha de visita</label><input type="date" class="form-control" id="fhSegVisitConfirmDate"></div>
+        <div class="info-field"><span class="info-field__label">Profesional FH de demo</span><span class="info-field__value" id="fhSegVisitConfirmProfessional">No informado</span></div>
+    </div>
+    <p id="fhSegVisitConfirmStatus" role="status" data-status-code="VISIT_CONFIRM_CONTEXT_BLOCKED">Confirmación bloqueada: no hay un contexto canónico activo elegible.</p>
+    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhSegVisitConfirmButton" disabled aria-disabled="true">Confirmar visita de seguimiento (demo)</button></div>
+    <div class="info-grid" aria-label="Auditoría de la última visita confirmada de esta línea">
+        <div class="info-field"><span class="info-field__label">record_id</span><span class="info-field__value" id="fhSegVisitConfirmRecordId">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">visit_date</span><span class="info-field__value" id="fhSegVisitConfirmAuditDate">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">confirmed_at</span><span class="info-field__value" id="fhSegVisitConfirmConfirmedAt">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">confirmed_by_demo</span><span class="info-field__value" id="fhSegVisitConfirmConfirmedBy">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">source_draft_saved_at</span><span class="info-field__value" id="fhSegVisitConfirmSourceSavedAt">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">source_draft_saved_by_demo</span><span class="info-field__value" id="fhSegVisitConfirmSourceSavedBy">No informado</span></div>
+    </div>
+    <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Visita confirmada de demo. No constituye firma clínica, integración JARA ni registro productivo.</span></div>
+</div></section><section class="dashboard-card" id="fhSegDraftCard" aria-labelledby="fhSegDraftTitle">
     <h2 class="section-title section-title--compact" id="fhSegDraftTitle"><i class="fas fa-edit" aria-hidden="true"></i> Borrador de Seguimiento</h2>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDraftNotes">Observaciones de trabajo del borrador</label><textarea class="form-textarea" id="fhSegDraftNotes" rows="4" disabled aria-disabled="true"></textarea></div></div>
     <fieldset id="fhSegDraftAdherence" disabled aria-disabled="true">
@@ -393,6 +410,7 @@
     <script src="scripts/farmacia_seguimiento.js?v=20260726-followup-context-v4-legacy"></script>
     <script src="scripts/farmacia_followup_drafts_v4.js?v=20260726-followup-proms-draft-v4-01"></script>
     <script src="scripts/farmacia_followup_persisted_review_v4.js?v=20260726-followup-persisted-review-v4-01"></script>
+    <script src="scripts/farmacia_followup_confirmed_visit_v4.js?v=20260726-followup-confirmed-visit-v4-01"></script>
     <script src="scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01"></script>
         </body>
         </html>
