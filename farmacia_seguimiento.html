@@ -100,7 +100,30 @@
         <div class="info-field"><span class="info-field__label">Procedencia</span><span class="info-field__value" id="fhSegCanonicalProvenance">No informado</span></div>
     </div>
     <div class="notice-box notice-box--info" id="fhSegCanonicalSafety"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Contexto canónico de línea preparado. El registro clínico y las exportaciones de Seguimiento se habilitarán tras su migración por línea.</span></div>
-</section><section class="dashboard-card" id="fhSegDraftCard" aria-labelledby="fhSegDraftTitle">
+</section><div class="dashboard-card" id="fhSegPersistedReviewCard" data-review-state="REVIEW_CONTEXT_BLOCKED" aria-labelledby="fhSegPersistedReviewTitle">
+    <h2 class="section-title section-title--compact" id="fhSegPersistedReviewTitle"><i class="fas fa-eye" aria-hidden="true"></i> Revisión del último borrador persistido</h2>
+    <p id="fhSegPersistedReviewStatus" role="status" data-status-code="REVIEW_CONTEXT_BLOCKED">Revisión bloqueada: no hay un contexto canónico activo elegible.</p>
+    <div class="info-grid">
+        <div class="info-field"><span class="info-field__label">Patient ID persistido</span><span class="info-field__value" id="fhSegPersistedReviewPatientId">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Line ID persistido</span><span class="info-field__value" id="fhSegPersistedReviewLineId">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Guardado en</span><span class="info-field__value" id="fhSegPersistedReviewSavedAt">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Guardado por (demo)</span><span class="info-field__value" id="fhSegPersistedReviewSavedBy">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Observaciones persistidas</span><span class="info-field__value" id="fhSegPersistedReviewNotes">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">MG 1</span><span class="info-field__value" id="fhSegPersistedReviewMg1">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">MG 2</span><span class="info-field__value" id="fhSegPersistedReviewMg2">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">MG 3</span><span class="info-field__value" id="fhSegPersistedReviewMg3">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">MG 4</span><span class="info-field__value" id="fhSegPersistedReviewMg4">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Efecto adverso presente</span><span class="info-field__value" id="fhSegPersistedReviewAePresent">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Descripción de efecto adverso</span><span class="info-field__value" id="fhSegPersistedReviewAeDescription">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Gravedad documentada</span><span class="info-field__value" id="fhSegPersistedReviewAeSeverity">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">Resolución documentada</span><span class="info-field__value" id="fhSegPersistedReviewAeResolution">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">PROMs recogidos</span><span class="info-field__value" id="fhSegPersistedReviewPromsCollected">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">DLQI total persistido</span><span class="info-field__value" id="fhSegPersistedReviewDlqiTotal">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">EVA dolor persistida</span><span class="info-field__value" id="fhSegPersistedReviewEvaDolor">No informado</span></div>
+        <div class="info-field"><span class="info-field__label">EVA prurito persistida</span><span class="info-field__value" id="fhSegPersistedReviewEvaPrurito">No informado</span></div>
+    </div>
+    <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Esta tarjeta es una revisión de un borrador persistido de sesión. No constituye un registro asistencial ni interpreta clínicamente los datos.</span></div>
+</div><section class="dashboard-card" id="fhSegDraftCard" aria-labelledby="fhSegDraftTitle">
     <h2 class="section-title section-title--compact" id="fhSegDraftTitle"><i class="fas fa-edit" aria-hidden="true"></i> Borrador de Seguimiento</h2>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDraftNotes">Observaciones de trabajo del borrador</label><textarea class="form-textarea" id="fhSegDraftNotes" rows="4" disabled aria-disabled="true"></textarea></div></div>
     <fieldset id="fhSegDraftAdherence" disabled aria-disabled="true">
@@ -369,6 +392,7 @@
     <script src="scripts/farmacia_multitreatment_core.js?v=20260726-followup-context-v4-01"></script>
     <script src="scripts/farmacia_seguimiento.js?v=20260726-followup-context-v4-legacy"></script>
     <script src="scripts/farmacia_followup_drafts_v4.js?v=20260726-followup-proms-draft-v4-01"></script>
+    <script src="scripts/farmacia_followup_persisted_review_v4.js?v=20260726-followup-persisted-review-v4-01"></script>
     <script src="scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01"></script>
         </body>
         </html>

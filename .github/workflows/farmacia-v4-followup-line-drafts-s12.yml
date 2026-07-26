@@ -7,8 +7,11 @@ on:
       - 'farmacia_seguimiento.html'
       - 'scripts/farmacia_followup_context_v4.js'
       - 'scripts/farmacia_followup_drafts_v4.js'
+      - 'scripts/farmacia_followup_persisted_review_v4.js'
       - 'tools/farmacia_followup_line_drafts_s12_v4_check.mjs'
       - 'tools/farmacia_followup_line_drafts_s12_v4_qa.mjs'
+      - 'tools/farmacia_followup_persisted_review_v4_check.mjs'
+      - 'tools/farmacia_followup_persisted_review_v4_qa.mjs'
       - 'tools/farmacia_followup_adherence_draft_v4_check.mjs'
       - 'tools/farmacia_followup_adherence_draft_v4_qa.mjs'
       - 'tools/farmacia_followup_ae_draft_v4_check.mjs'
@@ -38,8 +41,11 @@ jobs:
         run: |
           node --check scripts/farmacia_followup_context_v4.js
           node --check scripts/farmacia_followup_drafts_v4.js
+          node --check scripts/farmacia_followup_persisted_review_v4.js
           node --check tools/farmacia_followup_line_drafts_s12_v4_check.mjs
           node --check tools/farmacia_followup_line_drafts_s12_v4_qa.mjs
+          node --check tools/farmacia_followup_persisted_review_v4_check.mjs
+          node --check tools/farmacia_followup_persisted_review_v4_qa.mjs
           node --check tools/farmacia_followup_adherence_draft_v4_check.mjs
           node --check tools/farmacia_followup_adherence_draft_v4_qa.mjs
           node --check tools/farmacia_followup_ae_draft_v4_check.mjs
@@ -50,6 +56,7 @@ jobs:
       - name: Focused contract and mandatory regressions
         run: |
           node tools/farmacia_followup_line_drafts_s12_v4_check.mjs
+          node tools/farmacia_followup_persisted_review_v4_check.mjs
           node tools/farmacia_followup_adherence_draft_v4_check.mjs
           node tools/farmacia_followup_ae_draft_v4_check.mjs
           node tools/farmacia_followup_proms_draft_v4_check.mjs
@@ -81,6 +88,10 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:4173
         run: node tools/farmacia_followup_line_drafts_s12_v4_qa.mjs
+      - name: Persisted review browser QA
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tools/farmacia_followup_persisted_review_v4_qa.mjs
       - name: Adherence draft browser QA
         env:
           BASE_URL: http://127.0.0.1:4173
