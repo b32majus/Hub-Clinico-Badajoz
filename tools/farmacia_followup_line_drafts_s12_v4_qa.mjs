@@ -163,7 +163,7 @@ try {
   page.__nextDialogAction = 'accept';
   await page.click('#fhSegDraftDiscard');
   await waitDraft('Sin borrador guardado');
-  const partitions = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v1')));
+  const partitions = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v2')));
   assert.equal(partitions.patients['fhv4-patient-s09'].lines['fhv4-line-s09'], undefined);
   assert.equal(partitions.patients['fhv4-patient-s11'].lines['fhv4-line-s11-primary'].notes, 'Borrador S11 principal');
   assert.equal(partitions.patients['fhv4-patient-s11'].lines['fhv4-line-s11-additional'].notes, 'Borrador S11 adicional');

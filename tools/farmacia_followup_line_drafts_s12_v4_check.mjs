@@ -22,6 +22,7 @@ function storage(raw) {
 }
 function object(patientId = 'patient-a', lineId = 'line-a', notes = 'saved') {
   return { draft_id: `followup:${lineId}`, patient_id: patientId, line_id: lineId, kind: 'followup', notes,
+    mg1: '', mg2: '', mg3: '', mg4: '',
     saved_at: '2026-07-26T10:00:00.000Z', saved_by_demo: 'Profesional FH-01' };
 }
 function state(...items) {
@@ -63,7 +64,7 @@ test('all draft fields are required strings', () => { const value = state(object
 test('kind must be followup', () => { const value = state(object()); value.patients['patient-a'].lines['line-a'].kind = 'clinical'; assert.equal(drafts.validateState(value).code, 'DRAFT_STATE_INVALID'); });
 test('save requires active applied context', () => { const app = uiEnvironment(); assert.equal(app.controller.save().code, 'DRAFT_ACTIVE_CONTEXT_REQUIRED'); });
 test('URL-like identity without applied result is insufficient', () => { const app = uiEnvironment(); app.env.location = { search: '?patient_id=patient-a&line_id=line-a' }; assert.equal(app.controller.save().code, 'DRAFT_ACTIVE_CONTEXT_REQUIRED'); });
-test('Hub and pre-Hub use the same independent store', () => assert.equal(drafts.STORE_KEY, 'farmaciaDemo.followupDrafts.v1'));
+test('Hub and pre-Hub use the same independent v2 store', () => assert.equal(drafts.STORE_KEY, 'farmaciaDemo.followupDrafts.v2'));
 test('draft module does not copy multitreatment core', () => assert.doesNotMatch(draftSource, /FarmaciaMultitreatmentCore|multitreatment\.v1/));
 test('draft module has no localStorage or autosave path', () => assert.doesNotMatch(draftSource, /localStorage|autosave/i));
 test('save and restore partition A', () => { const app = uiEnvironment(); app.apply(); app.elements.fhSegDraftNotes.value = 'A'; app.controller.onInput(); assert.equal(app.controller.save().ok, true); const again = uiEnvironment(app.store); again.apply(); assert.equal(again.elements.fhSegDraftNotes.value, 'A'); });
@@ -86,7 +87,7 @@ test('discard removes only exact current draft', () => { const value = state(obj
 test('discard cancellation preserves exact draft', () => { const app = uiEnvironment(storage(JSON.stringify(state(object()))), () => false); app.apply(); assert.equal(app.controller.discard().code, 'DRAFT_DISCARD_CANCELLED'); assert.ok(app.controller.store.get('patient-a', 'line-a').draft); });
 test('sessionStorage read failure is visible and blocks', () => { const bad = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } }; const app = uiEnvironment(bad); app.apply(); assert.equal(app.controller.state().storageError, 'DRAFT_STORAGE_UNAVAILABLE'); assert.equal(app.elements.fhSegDraftNotes.disabled, true); });
 test('corruption is never overwritten by save or discard', () => { const app = uiEnvironment(storage('{')); app.apply(); assert.equal(app.controller.save().code, 'DRAFT_ACTIVE_CONTEXT_REQUIRED'); assert.equal(app.controller.discard().code, 'DRAFT_STORAGE_CORRUPT'); assert.equal(app.store.getItem(drafts.STORE_KEY), '{'); });
-test('draft schema contains no therapy or clinical fields', () => { assert.deepEqual(Object.keys(object()).sort(), ['draft_id', 'kind', 'line_id', 'notes', 'patient_id', 'saved_at', 'saved_by_demo'].sort()); assert.doesNotMatch(draftSource, /drug_name|dose_text|route|pauta|therapy/); });
+test('draft schema contains only identity, notes, adherence answers and audit strings', () => { assert.deepEqual(Object.keys(object()).sort(), ['draft_id', 'kind', 'line_id', 'notes', 'patient_id', 'mg1', 'mg2', 'mg3', 'mg4', 'saved_at', 'saved_by_demo'].sort()); assert.doesNotMatch(draftSource, /drug_name|dose_text|route|pauta|therapy/); });
 test('outputs remain directly guarded', () => assert.match(contextSource, /protect\(env\.FarmaciaDemo, 'copyTextToClipboard'\)[\s\S]*protect\(env\.FarmaciaExcelRowExport/));
 test('legacy clinical cards remain inert and draft card is excluded', () => { assert.match(contextSource, /section\.inert = true/); assert.match(contextSource, /section\.id === 'fhSegDraftCard'/); });
 test('context event has the exact five-field detail', () => assert.match(contextSource, /var detail = \{ ok: !!result\.ok, code: result\.code, patient_id: result\.patient_id \|\| '', line_id: result\.line_id \|\| '', status:/));
