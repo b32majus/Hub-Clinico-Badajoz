@@ -96,7 +96,9 @@
 | **WO-FH-FOLLOWUP-AE-DRAFT-V4-01** | Añadir captura cruda de efectos adversos sin interpretación | ✅ **Merged** | `work/fh-followup-ae-draft-v4-20260726` → `rescue/farmacia-v4` | merge `cbc36870ddb84d2085365e5817f4ef94cf941fce` (PR #124; issue #123) | Borrador EA con `ae_present`, descripción, gravedad y resolución; estados explícitos sin causalidad, store v3 con migración/fallo cerrado, aislamiento por paciente/línea, dirty state y guard S12. Protecciones `PATIENT_NOT_FOUND` y `PATIENT_MISMATCH` y QA visible con XLSX sintético. Issue #123 cerrado con `stateReason: COMPLETED`. No publicado. |
 | **WO-DOC-FH-POST-PR124-AE-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #124 | ✅ **Merged** | `work/docs/fh-post-pr124-ae-reconciliation-v4-20260726` → `rescue/farmacia-v4` | merge `332412d39e32db63b28507fb4205e659ae70a929` (PR #126; issue #125) | Reconciliación exclusivamente documental completada; issue #125 cerrado con `stateReason: COMPLETED`. No fue un HEAD funcional nuevo, no movió Pages ni añadió funcionalidad clínica. |
 | **WO-FH-FOLLOWUP-PROMS-DRAFT-V4-01** | Añadir captura manual de PROMs sin interpretación | ✅ **Merged** | `work/fh-followup-proms-draft-v4-20260726` → `rescue/farmacia-v4` | merge `1d4a68463942518a1d7e38d8a5d2db15da2e6ff7` (PR #128; issue #127) | Captura manual de `proms_collected`, `dlqi_total`, `eva_dolor` y `eva_prurito`; cero válido y ausencia vacía, sin cálculo ni interpretación. Store v4, migraciones no destructivas v3/v2/v1→v4, fallo cerrado, aislamiento paciente/línea, dirty state/guard S12 con PROMs y QA visible con consola/pageerror cero. Issue #127 cerrado con `stateReason: COMPLETED`. No publicado. |
-| **WO-DOC-FH-POST-PR128-PROMS-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #128 | 📋 **READY_FOR_CORA_REVIEW** | `work/docs/fh-post-pr128-proms-reconciliation-v4-20260726` → `rescue/farmacia-v4` | issue #129; sin PR/merge | Reconciliación de los tres documentos vivos; no mueve Pages ni convierte lo integrado en publicado, demo-ready, piloto o producción. |
+| **WO-DOC-FH-POST-PR128-PROMS-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #128 | ✅ **Merged** | `work/docs/fh-post-pr128-proms-reconciliation-v4-20260726` → `rescue/farmacia-v4` | merge `02b03e29901dbc63d92fb783db1593e82c9d8f3d` (PR #130; issue #129) | Reconciliación exclusivamente documental completada; no fue un HEAD funcional nuevo, no movió Pages ni añadió funcionalidad clínica. |
+| **WO-FH-FOLLOWUP-PERSISTED-REVIEW-V4-01** | Añadir revisión canónica del último borrador persistido | ✅ **Merged** | `work/fh-followup-persisted-review-v4-20260726` → `rescue/farmacia-v4` | merge `2ac049ddb247a2784d2fb8a079700633230d8f79` (PR #132; issue #131) | Tarjeta read-only por `patient_id + line_id` con cinco estados explícitos; lee solo store v4 y nunca dirty inputs, conserva bytes guardados en stale, muestra cero como `0` y ausencia como `No informado`, falla cerrado y no escribe. Evento sin payload clínico, store/esquema sin cambios, QA soportada S09–S12 e identidad con consola/pageerror cero. No es registro clínico/asistencial final ni firmado; no publicado. |
+| **WO-DOC-FH-POST-PR132-PERSISTED-REVIEW-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #132 | 📋 **READY_FOR_CORA_REVIEW** | `work/docs/fh-post-pr132-persisted-review-reconciliation-v4-20260726` → `rescue/farmacia-v4` | issue #133; sin PR/merge | Reconciliación de los tres documentos vivos; no mueve Pages ni convierte lo integrado en publicado, demo-ready, piloto o producción. |
 
 ---
 
@@ -151,7 +153,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 70 (incluye el rescate V4 integrado hasta PR #128; mergeado no equivale a publicado, demo-ready ni piloto) |
+| ✅ Merged | 72 (incluye el rescate V4 integrado hasta PR #132; mergeado no equivale a publicado, demo-ready ni piloto) |
 | 📋 Ready for review | 19 (WO-017 a WO-034 en rama nocturna frozen + esta reconciliación documental) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -161,4 +163,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 96 work orders / preflights / pasos operativos gestionados.
+**Total:** 98 work orders / preflights / pasos operativos gestionados.
