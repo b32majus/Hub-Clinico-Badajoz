@@ -1,11 +1,11 @@
 # Plan maestro de rescate — PROMueve Farmacia V4
 
-**Estado:** plan vivo reconciliado con la integración hasta PR #140
-**Fecha de reconciliación:** 2026-07-26
+**Estado:** plan vivo reconciliado con la integración hasta PR #144
+**Fecha de reconciliación:** 2026-07-27
 **WO:** `WO-DOC-FH-RESCUE-MASTER-PLAN-V4-01`  
 **Issue:** #61  
 **Rama de rescate integrada:** `rescue/farmacia-v4`
-**Último HEAD funcional reconciliado:** `2ad406e0fc14ce50a1bb3e9f898bab482591ddc6` (PR #140 / issue #139, completados). PR #138 / issue #137 integraron antes la reconciliación exclusivamente documental `11b7ae642cc76c035ca42bdf386b86b77046f7eb`; no fue un HEAD funcional nuevo.
+**Último HEAD funcional reconciliado:** `c5a0da77fb8707c6d85cb4e3f8f67df331aaec1e` (PR #144 / issue #143, completados). PR #142 / issue #141 integraron antes la reconciliación exclusivamente documental `d2c4d88d204fe2a8600a41067065aebb33a782d4`; no fue un HEAD funcional nuevo.
 **Fuente Pages configurada/publicada:** `preview/demo-lunes-wo4-20260614` en `2ee3b34739abec874424a572d445798fef565765`
 **Ref candidata coincidente:** `preview/farmacia-v4-rescue` en `2ee3b34739abec874424a572d445798fef565765`; no es una segunda fuente Pages publicada
 **Inicio de publicación temporal:** issue #80 llevó inicialmente la fuente Pages a `8902aa334ab2ed51ae47c187603595f6e75f9d92`; no cubre todo el avance posterior
@@ -13,6 +13,8 @@
 **Baseline hospitalario histórico:** `a6b15353a2e5a813818695642a07f0d27298904e`
 **Estado avanzado preservado:** `backup/preview-before-hospital-demo-rollback-20260722`  
 **HEAD avanzado preservado:** `c19297b68cd188cc455ffcd7a45bc6831f8fb54a`
+**Reconciliación documental actual:** `WO-DOC-FH-POST-PR144-FOLLOWUP-E2E-GUARD-RECONCILIATION-V4-01`, issue #145, `READY_FOR_CORA_REVIEW`, sin PR ni merge
+**Rama de esta reconciliación:** `work/docs/fh-post-pr144-followup-e2e-guard-reconciliation-v4-20260727`
 
 ---
 
@@ -30,7 +32,7 @@ Este documento gobierna el rescate funcional de PROMueve Farmacia Hospitalaria V
 
 La reconstrucción previa se considera suficientemente cerrada. El problema rector no es la ausencia de funcionalidad aislada, sino la pérdida de historias sintéticas coherentes durante la migración a la fuente WO8 y la posterior evolución parcial del lifecycle terapéutico.
 
-La estrategia aprobada fue no restaurar una rama completa, sino reconstruir una línea V4 controlada desde la referencia hospitalaria y recuperar selectivamente mejoras después de reparar el contrato de escenarios. Esa ejecución ya está integrada hasta PR #140; este documento conserva el razonamiento histórico y distingue lo integrado de lo publicado y de lo todavía pendiente.
+La estrategia aprobada fue no restaurar una rama completa, sino reconstruir una línea V4 controlada desde la referencia hospitalaria y recuperar selectivamente mejoras después de reparar el contrato de escenarios. Esa ejecución ya está integrada hasta PR #144; este documento conserva el razonamiento histórico y distingue el cierre técnico E2E soportado de la todavía pendiente clausura clínica de Seguimiento, así como lo integrado de lo publicado.
 
 ---
 
@@ -83,16 +85,16 @@ No debe convertirse directamente en nueva base de trabajo, publicarse como conju
 
 ```text
 rescue/farmacia-v4
-2ad406e0fc14ce50a1bb3e9f898bab482591ddc6
+c5a0da77fb8707c6d85cb4e3f8f67df331aaec1e
 
 preview/farmacia-v4-rescue
 preview/demo-lunes-wo4-20260614
 2ee3b34739abec874424a572d445798fef565765
 ```
 
-La rama de rescate contiene la secuencia funcional integrada hasta PR #140. PR #138 / issue #137 completaron la reconciliación exclusivamente documental posterior a PR #136 mediante merge `11b7ae642cc76c035ca42bdf386b86b77046f7eb`; PR #140 / issue #139 añadieron después las salidas canónicas de Seguimiento y fijaron el HEAD funcional actual. Ambos issues están completados; PR #138 no fue un HEAD funcional nuevo. El issue #80 inició la publicación temporal llevando la fuente Pages `preview/demo-lunes-wo4-20260614` hasta `8902aa...`.
+La rama de rescate contiene la secuencia funcional integrada hasta PR #144. PR #142 / issue #141 completaron la reconciliación exclusivamente documental posterior a PR #140 mediante merge `d2c4d88d204fe2a8600a41067065aebb33a782d4`; PR #144 / issue #143 añadieron después el guard E2E de salida desde Seguimiento y fijaron el HEAD funcional actual. Ambos issues están completados; PR #142 no fue un HEAD funcional nuevo. El issue #80 inició la publicación temporal llevando la fuente Pages `preview/demo-lunes-wo4-20260614` hasta `8902aa...`.
 
-La rama fue avanzada posteriormente y su estado actual verificado es `2ee3b347...`, hasta PR #86. Esta reconciliación registra el estado actual sin atribuir todo el avance posterior al alcance original del issue #80. La candidata `preview/farmacia-v4-rescue` coincide en ese SHA, pero no es una segunda publicación Pages. En consecuencia, **integrado no equivale a publicado**: PR #88 a #140 no están acreditados en Pages.
+La rama fue avanzada posteriormente y su estado actual verificado es `2ee3b347...`, hasta PR #86. Esta reconciliación registra el estado actual sin atribuir todo el avance posterior al alcance original del issue #80. La candidata `preview/farmacia-v4-rescue` coincide en ese SHA, pero no es una segunda publicación Pages. En consecuencia, **integrado no equivale a publicado**: PR #88 a #144 no están acreditados en Pages.
 
 ---
 
@@ -167,10 +169,17 @@ El rescate integrado actual:
 - en cada ejecución relee contexto y stores; la fuente clínica exclusiva es la última visita confirmada exacta para `patient_id + line_id` más contexto canónico activo explícito. Borrador, DOM, legacy, causalidad, decisiones y movimientos no son fuentes;
 - preserva ceros PROM y ausencia machine-readable vacía, MG1–MG4 crudos sin clasificación y EA explícito sin fármaco sospechoso, causalidad ni acción; intercepta y deja inertes handlers legacy, preserva helpers globales y protege fallos asíncronos y cambios de contexto en vuelo;
 - emite `farmacia:followup-confirmed-visit-v1` con payload mínimo no clínico y demuestra por QA soportada S09, S10, ambas líneas S11, S12, identidad, recarga, invariancia ante dirty inputs y fallos de helpers/storage, con consola y `pageerror` a cero;
-- inicia parcialmente la Fase 5 solo en el alcance demostrado de contexto canónico, borradores, captura no interpretada, revisión del persistido, visita demo confirmada y sus salidas canónicas de revisión, sin cerrar clínicamente Seguimiento/S09–S12 ni demostrar el guard S12 transversalmente. La visita y las salidas **NO** son firma clínica, validez legal, registro asistencial ni registro productivo;
+- integra en PR #144 el cierre técnico E2E actualmente soportado: contexto canónico activo → borrador por línea → persistido → visita demo confirmada → TXT/CSV/Excel canónicos;
+- el guard de salida se invoca exclusivamente desde Seguimiento y solo usa dirty real de `FarmaciaFollowupDraftsV4`: añadió la API mínima `isDirty()` read-only + `beforePageExit()`, sin cambio de esquema ni store y sin identidades ficticias. No existe esta implementación dentro de Validación, Primera Visita, Dashboard Paciente u otras pantallas destino;
+- la navegación limpia no muestra prompt. Ante dirty, cancelar preserva URL, UI, contexto, inputs, baseline, outputs y stores; aceptar descarta solo el dirty de UI y preserva byte a byte el borrador persistido, las visitas confirmadas y multitratamiento. Al volver se restaura únicamente lo persistido;
+- tras aceptar navega exactamente una vez al `href` exacto y evita un segundo `beforeunload`; `beforeunload` solo se activa con dirty real y nunca muta datos;
+- prueba cinco destinos reales: Inicio Farmacia, Validación, Primera Visita, Dashboard Paciente y Reumatología;
+- demuestra S09 con identidad común en TXT/CSV/Excel e invariancia dirty; S10 con histórica visible/no elegible y sin visita ni outputs; S11 con líneas activas aisladas e histórica separada; y S12 para cambio de CIP, línea y salida de página desde Seguimiento;
+- `PATIENT_NOT_FOUND` y `PATIENT_MISMATCH` fallan cerrado; smoke, contexto/S12, outputs y E2E están verdes, con consola y `pageerror` a cero;
+- cierra técnicamente el recorrido E2E soportado de Fase 5, pero no cierra clínicamente Seguimiento/S09–S12. La visita y las salidas **NO** son firma clínica, validez legal, registro asistencial ni registro productivo;
 - no integra interpretación clínica de adherencia, EA o PROMs; cálculo de DLQI; causalidad Naranjo/Karch-Lasagna; fármaco sospechoso, corrección o acción ante EA; respuesta, recomendaciones, alertas, umbrales o tendencias; switch, add-on, optimización, pausa, suspensión, reanudación, finalización u otras decisiones/movimientos terapéuticos; integración JARA real; dashboards; ni cierre completo de Seguimiento/S09–S12. Los módulos legacy clínicos, causalidad, movimientos y dashboards permanecen inertes. No acredita release freeze, backend, V5, demo-ready, piloto ni producción.
 
-La fuente Pages publicada actual llega solo a PR #86. No acredita como publicados PR #88–#140, incluidos el cutover operativo, la cadena de inicio/Primera Visita y el alcance parcial de Seguimiento.
+La fuente Pages publicada actual llega solo a PR #86. No acredita como publicados PR #88–#144, incluidos el cutover operativo, la cadena de inicio/Primera Visita y el alcance técnico de Seguimiento.
 
 ---
 
@@ -403,7 +412,7 @@ Criterios de salida:
 
 ### Fase 5 — Seguimiento por línea
 
-**Estado reconciliado:** iniciada parcialmente. PR #114–#132 demuestran contexto/gate, borradores, captura no interpretada y revisión canónica del último persistido; PR #136 añade la visita demo confirmada. PR #140 integra TXT tipo JARA solo para revisión demo —no integración JARA real—, CSV canónico de una fila y exactamente 42 columnas, y fila Excel FH de exactamente 61 columnas. S09–S12 están demostrados únicamente para este alcance parcial y sus protecciones. Esto no cierra clínicamente Seguimiento/S09–S12; ni la visita ni sus salidas son firma clínica, validez legal, registro asistencial o registro productivo, y no demuestran un guard S12 transversal fuera de Seguimiento.
+**Estado reconciliado:** cierre técnico E2E soportado; cierre clínico pendiente. PR #114–#140 enlazan contexto canónico, borrador por línea, persistido, visita demo confirmada y TXT/CSV/Excel canónicos. PR #144 completa el guard de salida desde Seguimiento sobre dirty real y prueba el recorrido hacia cinco destinos. S09–S12 están demostrados para este alcance técnico y sus protecciones. Esto no cierra clínicamente Seguimiento/S09–S12; ni la visita ni sus salidas son firma clínica, validez legal, registro asistencial o registro productivo. El guard no está implementado dentro de las pantallas destino.
 
 Demostrado:
 
@@ -440,10 +449,13 @@ Demostrado:
 - ceros PROM preservados y ausencias machine-readable vacías; MG1–MG4 crudos sin clasificación; EA explícito sin fármaco sospechoso, causalidad ni acción;
 - handlers legacy de salida interceptados e inertes, helpers globales preservados y protección frente a fallos asíncronos y cambios de contexto en vuelo;
 - evento `farmacia:followup-confirmed-visit-v1` con payload mínimo no clínico;
-- guard S12 dentro de Seguimiento antes de cambiar paciente, CIP, línea, URL o contexto;
+- guard S12 exclusivamente desde Seguimiento antes de cambiar paciente, CIP, línea, URL o contexto, sobre el dirty real de `FarmaciaFollowupDraftsV4`; su API mínima es `isDirty()` read-only + `beforePageExit()`, sin cambio de esquema ni store y sin identidades ficticias;
+- navegación limpia sin prompt; cancelación dirty que preserva URL/UI/contexto/inputs/baseline/outputs y stores; aceptación dirty que descarta solo UI dirty, conserva byte a byte persistido, visitas confirmadas y multitratamiento, y permite restaurar después únicamente lo persistido;
+- una única navegación al `href` exacto tras aceptar, con bypass del segundo `beforeunload`; `beforeunload` solo ante dirty real y sin mutación de datos;
+- cinco destinos reales probados desde Seguimiento: Inicio Farmacia, Validación, Primera Visita, Dashboard Paciente y Reumatología; el guard no se declara implementado dentro de esos destinos;
 - en `PATIENT_NOT_FOUND` y `PATIENT_MISMATCH`, cancelar conserva contexto y cambios sin guardar, aceptar descarta únicamente esos cambios y volver al CIP original restaura solo el último borrador persistido;
 - transición soportada de la misma identidad desde `blocked` a `active`;
-- QA soportada mediante controles visibles para S09, S10, ambas líneas de S11 y S12, incluida identidad, importación XLSX sintética para el conflicto de identidad, recarga, invariancia frente a inputs dirty y fallos de helpers/storage/escritura/verificación, con consola y `pageerror` a cero.
+- QA soportada mediante controles visibles: S09 conserva identidad común TXT/CSV/Excel e invariancia dirty; S10 deja histórica visible/no elegible sin visita ni salidas; S11 aísla líneas activas y separa histórica; S12 cubre CIP, línea y salida de página desde Seguimiento. Incluye `PATIENT_NOT_FOUND`/`PATIENT_MISMATCH` fail-closed, recarga, fallos de helpers/storage/escritura/verificación y gates smoke, contexto/S12, outputs y E2E verdes, con consola y `pageerror` a cero.
 
 No demostrado o pendiente:
 
@@ -460,7 +472,7 @@ No demostrado o pendiente:
 - integración real con JARA y validez clínica/legal/asistencial/productiva de las salidas demo;
 - dashboards;
 - cierre clínico completo de Seguimiento/S09–S12;
-- guard S12 transversal fuera de Seguimiento;
+- guard S12 implementado dentro de pantallas destino o transversal fuera de Seguimiento;
 - activación de los módulos legacy clínicos, causalidad, movimientos o dashboards, que permanecen inertes.
 
 **Objetivo:** recuperar Seguimiento canónico sobre historias coherentes.
@@ -568,9 +580,10 @@ No se autorizó un cherry-pick masivo de los 24 commits posteriores al estado ho
 | Cobertura histórica VM/DOM | Auxiliar; no sustituye QA por interacción soportada. |
 | Exportación fiel de Validación | Integrada en PR #82. |
 | Core multifármaco | Integrado en PR #73 y reutilizado por la cadena de inicio. |
-| Seguimiento por líneas | PR #114–#132 integran contexto/gate, borradores y capturas no interpretadas por línea, y revisión read-only del último persistido; PR #136 añade la visita demo confirmada. PR #140 integra TXT tipo JARA solo de revisión demo, CSV de una fila/42 columnas y fila Excel FH/61 columnas, todos con la misma visita confirmada exacta. Cada ejecución relee contexto/stores y usa exclusivamente esa visita para `patient_id + line_id` más contexto activo explícito; no usa borrador, DOM, legacy, causalidad, decisiones ni movimientos. Mantiene ceros PROM, ausencias machine-readable vacías, MG1–MG4 crudos y EA sin sospechoso/causalidad/acción; intercepta handlers legacy, preserva helpers globales y protege fallos asíncronos/cambios de contexto en vuelo. QA soportada cubre S09, S10, ambas líneas S11, S12, identidad, recarga, dirty invariance y fallos de helpers/storage con consola/pageerror cero. Solo está demostrado ese alcance parcial; visita y salidas no son firma clínica, validez legal, registro asistencial ni productivo. Interpretación, DLQI calculado, causalidad, decisiones/movimientos, integración JARA real, dashboards, cierre clínico completo y guard transversal siguen pendientes. Legacy clínico, causalidad, movimientos y dashboards permanecen inertes. |
+| Seguimiento por líneas | PR #114–#140 enlazan contexto/gate, borrador por línea, persistido, visita demo confirmada y TXT/CSV/Excel con identidad común. PR #144 cierra el E2E técnico soportado con guard exclusivamente desde Seguimiento sobre dirty real de `FarmaciaFollowupDraftsV4`, navegación limpia sin prompt y cancelación/aceptación no destructivas hacia cinco destinos reales. S09–S12, `PATIENT_NOT_FOUND`/`PATIENT_MISMATCH`, smoke, contexto/S12, outputs y E2E están verdes, con consola/`pageerror` cero. No hay guard implementado dentro de destinos ni cierre clínico completo. Visita y salidas no son firma clínica, validez legal ni registro asistencial/productivo. Interpretación, DLQI calculado, causalidad, respuesta, EA, movimientos, integración JARA real y dashboards siguen pendientes. Legacy clínico, causalidad, movimientos y dashboards permanecen inertes. |
 | Visita demo confirmada | PR #136 integra confirmación profesional explícita solo desde el último borrador v4 limpio/persistido exacto de la línea activa, con fecha y profesional FH demo; store estricto append-only, dedupe por fuente, UUID v4 criptográfico, mapas seguros, rollback/verificación exacta y aislamiento paciente/línea. No cambia borrador ni multitratamiento. No es firma clínica, validez legal ni registro productivo; no cierra Seguimiento/S09–S12 ni activa legacy, causalidad, movimientos, outputs o dashboards. |
 | Salidas canónicas de visita confirmada | PR #140 integra TXT tipo JARA solo para revisión demo —no integración JARA real—, CSV canónico de una fila/42 columnas exactas y fila Excel FH/61 columnas exactas desde la misma identidad confirmada. Relee contexto/stores en cada ejecución, no toma clínica de borrador/DOM/legacy/causalidad/decisiones/movimientos, preserva cero y ausencia, deja handlers legacy inertes y protege fallos asíncronos/cambios de contexto. No es firma clínica, validez legal, registro asistencial ni productivo y no cierra Seguimiento/S09–S12. |
+| Guard E2E de salida de Seguimiento | PR #144 integra la API mínima `isDirty()` read-only + `beforePageExit()` sobre dirty real, sin cambio de esquema ni store y sin identidades ficticias. Cancelar conserva URL/UI/contexto/inputs/baseline/outputs y stores; aceptar descarta solo UI dirty, preserva byte a byte persistido, visitas y multitratamiento, restaura luego solo persistido y navega una vez al `href` exacto sin segundo `beforeunload`. `beforeunload` nunca muta. No implementa guard dentro de pantallas destino. |
 | Dashboards avanzados | Pendientes; siguen siendo referencia, no restauración directa. |
 | Gobernanza KairOS | `WO-HUB-KAIROS-V4-PROJECT-OVERLAY-CUTOVER-01` integrado en PR #88; no es funcionalidad de Farmacia. |
 
@@ -591,7 +604,8 @@ WO-DOC-FH-POST-PR124-AE-RECONCILIATION-V4-01 — completada, merge 332412d3... /
 WO-DOC-FH-POST-PR128-PROMS-RECONCILIATION-V4-01 — completada, merge 02b03e29... / PR #130 / issue #129; solo documentación, no HEAD funcional nuevo y sin movimiento de Pages
 WO-DOC-FH-POST-PR132-PERSISTED-REVIEW-RECONCILIATION-V4-01 — completada, merge 7a928712... / PR #134 / issue #133; solo documentación, no HEAD funcional nuevo y sin movimiento de Pages
 WO-DOC-FH-POST-PR136-CONFIRMED-VISIT-RECONCILIATION-V4-01 — completada, merge 11b7ae64... / PR #138 / issue #137; solo documentación, no HEAD funcional nuevo y sin movimiento de Pages
-WO-DOC-FH-POST-PR140-CANONICAL-OUTPUTS-RECONCILIATION-V4-01 — READY_FOR_CORA_REVIEW, issue #141; sin PR ni merge, solo documentación y sin movimiento de Pages
+WO-DOC-FH-POST-PR140-CANONICAL-OUTPUTS-RECONCILIATION-V4-01 — completada, merge d2c4d88d... / PR #142 / issue #141; solo documentación, no HEAD funcional nuevo y sin movimiento de Pages
+WO-DOC-FH-POST-PR144-FOLLOWUP-E2E-GUARD-RECONCILIATION-V4-01 — READY_FOR_CORA_REVIEW, issue #145; sin PR ni merge, solo documentación y sin movimiento de Pages
 ```
 
 ### Datos
@@ -646,6 +660,7 @@ WO-FH-FOLLOWUP-PROMS-DRAFT-V4-01 — completada, merge 1d4a6846... / PR #128 / i
 WO-FH-FOLLOWUP-PERSISTED-REVIEW-V4-01 — completada, merge 2ac049dd... / PR #132 / issue #131; revisión read-only del último persistido exacto por paciente/línea, sin lectura de dirty inputs, sin payload clínico en eventos, sin escrituras ni cambio de store/esquema; cinco estados y QA soportada sin errores; no es registro final/firmado ni está publicada
 WO-FH-FOLLOWUP-CONFIRMED-VISIT-V4-01 — completada, merge 969af261... / PR #136 / issue #135; confirmación profesional explícita de visita demo desde el último borrador v4 limpio/persistido exacto de la línea activa, con fecha/profesional FH demo, store estricto append-only, dedupe, UUID criptográfico, mapas seguros, rollback/verificación exacta y QA soportada sin errores; no es firma clínica, validez legal, registro productivo ni cierre completo
 WO-FH-FOLLOWUP-CANONICAL-OUTPUTS-V4-01 — completada, merge 2ad406e0... / PR #140 / issue #139; TXT JARA de revisión demo, CSV de una fila/42 columnas y fila Excel FH/61 columnas desde la misma visita confirmada exacta y contexto activo, con relectura por ejecución, sin fuentes dirty/DOM/legacy ni inferencia clínica, y QA soportada sin errores; no es integración JARA real, firma, validez legal, registro asistencial/productivo ni cierre completo
+WO-FH-FOLLOWUP-E2E-NAVIGATION-GUARD-V4-01 — completada, merge c5a0da77... / PR #144 / issue #143; guard exclusivamente desde Seguimiento sobre dirty real de FarmaciaFollowupDraftsV4, navegación limpia sin prompt y cancelación/aceptación no destructivas probadas hacia cinco destinos; S09–S12, identidad, outputs y E2E verdes sin errores; no implementa guard dentro de destinos ni cierre clínico completo
 ```
 
 ### Dashboards
@@ -716,10 +731,10 @@ Además requiere:
 | Campo | Estado |
 |---|---|
 | Mapa y diagnóstico | Cerrados |
-| Ejecución técnica | Integrada hasta PR #140; Fases 1 y 3 completadas en su alcance técnico, Fase 2 parcial, Fase 4 cerrada técnicamente y Fase 5 iniciada parcialmente |
-| Fase actual | Seguimiento por línea iniciado parcialmente para contexto canónico, borradores, capturas no interpretadas, revisión del último persistido, visita demo confirmada y sus tres salidas canónicas de revisión; interpretación y capacidades clínicas pendientes |
+| Ejecución técnica | Integrada hasta PR #144; Fases 1 y 3 completadas en su alcance técnico, Fase 2 parcial, Fase 4 cerrada técnicamente y Fase 5 con cierre técnico E2E soportado pero cierre clínico pendiente |
+| Fase actual | Seguimiento por línea enlaza contexto canónico activo, borrador por línea, persistido, visita demo confirmada, TXT/CSV/Excel y guard de salida solo desde Seguimiento; interpretación y capacidades clínicas siguen pendientes |
 | Release/freeze (Fase 7) | Pendiente; no condiciona el cierre clínico-técnico de Fase 4 |
-| Rescue actual | `rescue/farmacia-v4`; último HEAD funcional reconciliado `2ad406e0fc14ce50a1bb3e9f898bab482591ddc6` (PR #140 / issue #139). El merge documental previo de PR #138 / issue #137 fue `11b7ae642cc76c035ca42bdf386b86b77046f7eb` y no constituyó un HEAD funcional nuevo. |
+| Rescue actual | `rescue/farmacia-v4`; último HEAD funcional reconciliado `c5a0da77fb8707c6d85cb4e3f8f67df331aaec1e` (PR #144 / issue #143). El merge documental previo de PR #142 / issue #141 fue `d2c4d88d204fe2a8600a41067065aebb33a782d4` y no constituyó un HEAD funcional nuevo. |
 | Baseline histórico | `a6b15353a2e5a813818695642a07f0d27298904e` |
 | Fuente Pages publicada | `preview/demo-lunes-wo4-20260614` en `2ee3b34739abec874424a572d445798fef565765` (hasta PR #86); no permanece en el baseline histórico |
 | Ref candidata | `preview/farmacia-v4-rescue` coincide en `2ee3b34739abec874424a572d445798fef565765`; no es una segunda fuente Pages publicada |
@@ -727,7 +742,7 @@ Además requiere:
 | Backup avanzado | `backup/preview-before-hospital-demo-rollback-20260722` preservado en `c19297b...` |
 | Próximo hito seguro | Definir mediante una WO separada una única capacidad clínica de Seguimiento, sin fijar todavía qué módulo debe ir primero. |
 | Riesgo principal | Confundir contexto, borrador, visita demo confirmada o sus salidas de revisión con firma, validez legal o registro clínico/productivo, o presentar el rescue HEAD como publicado/demo-ready |
-| Aptitud actual | Integrado hasta PR #140; no publicado, no demo-ready, no piloto y no producción |
+| Aptitud actual | Integrado hasta PR #144; no publicado, no demo-ready, no piloto y no producción |
 | Aptitud piloto | No; no demostrada ni autorizada |
 | Backend/V5 | Aparcados |
 
@@ -779,7 +794,7 @@ La reconciliación de este plan:
 - no convierte integración en publicación o freeze;
 - no convierte la aplicación en piloto.
 
-La WO documental anterior (`WO-DOC-FH-POST-PR136-CONFIRMED-VISIT-RECONCILIATION-V4-01`) quedó completada mediante PR #138 / issue #137, con merge documental `11b7ae642cc76c035ca42bdf386b86b77046f7eb` que no fue un HEAD funcional nuevo. La WO funcional `WO-FH-FOLLOWUP-CANONICAL-OUTPUTS-V4-01` quedó completada mediante PR #140 / issue #139 y fijó el HEAD funcional `2ad406e0fc14ce50a1bb3e9f898bab482591ddc6`. La WO documental actual (`WO-DOC-FH-POST-PR140-CANONICAL-OUTPUTS-RECONCILIATION-V4-01`, issue #141) está `READY_FOR_CORA_REVIEW`; todavía no tiene PR ni merge.
+La WO documental anterior (`WO-DOC-FH-POST-PR140-CANONICAL-OUTPUTS-RECONCILIATION-V4-01`) quedó completada mediante PR #142 / issue #141, con merge documental `d2c4d88d204fe2a8600a41067065aebb33a782d4` que no fue un HEAD funcional nuevo. La WO funcional `WO-FH-FOLLOWUP-E2E-NAVIGATION-GUARD-V4-01` quedó completada mediante PR #144 / issue #143 y fijó el HEAD funcional `c5a0da77fb8707c6d85cb4e3f8f67df331aaec1e`. La WO documental actual (`WO-DOC-FH-POST-PR144-FOLLOWUP-E2E-GUARD-RECONCILIATION-V4-01`, issue #145) está `READY_FOR_CORA_REVIEW`; todavía no tiene PR ni merge.
 
 Siguientes acciones seguras propuestas tras esta reconciliación:
 
@@ -790,4 +805,4 @@ Siguientes acciones seguras propuestas tras esta reconciliación:
 3. Ejecutar publicación, QA de release y freeze bajo la Fase 7.
 ```
 
-La publicación y el freeze no condicionan el cierre técnico ya alcanzado de Primera Visita. La fuente Pages `preview/demo-lunes-wo4-20260614` y la candidata `preview/farmacia-v4-rescue` siguen en `2ee3b34739abec874424a572d445798fef565765`, hasta PR #86; la candidata no es una segunda publicación y PR #88–#140 no están acreditados como publicados. No hay evidencia actual para declarar V4 publicado, demo-ready, producción, aptitud para piloto, QA institucional, datos reales, backend o V5. `main` permanece intacta y backend/V5 siguen aparcados.
+La publicación y el freeze no condicionan el cierre técnico ya alcanzado de Primera Visita ni el cierre técnico E2E soportado de Seguimiento; tampoco equivalen a cierre clínico. La fuente Pages `preview/demo-lunes-wo4-20260614` y la candidata `preview/farmacia-v4-rescue` siguen en `2ee3b34739abec874424a572d445798fef565765`, hasta PR #86; la candidata no es una segunda publicación y PR #88–#144 no están acreditados como publicados. No hay evidencia actual para declarar V4 publicado, demo-ready, producción, aptitud para piloto, QA institucional, datos reales, backend o V5. `main` permanece intacta y backend/V5 siguen aparcados.
