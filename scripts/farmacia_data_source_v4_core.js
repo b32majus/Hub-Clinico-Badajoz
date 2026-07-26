@@ -201,6 +201,18 @@
         return { route: null, reason: 'No hay una acción asistencial V4 habilitada para este estado.' };
     }
 
+    function followupActionIdentity(patientId) {
+        var activeLines = getCanonicalLinesByPatientId(patientId).filter(function (line) {
+            return line && line.patient_id === patientId && line.status === 'active';
+        });
+        var soleActiveLineId = '';
+        if (activeLines.length === 1) activeLines.forEach(function (line) { soleActiveLineId = line.line_id; });
+        return {
+            patient_id: patientId,
+            line_id: soleActiveLineId
+        };
+    }
+
     function visiblePatient(person) {
         var scenario = getScenarioStateByPatientId(person.patient_id) || {};
         var presentation = statePresentation(scenario.initial_state);
@@ -278,13 +290,14 @@
         if (typeof document === 'undefined') return;
         var actions = document.getElementById('fhQvActions');
         var subtitle = document.getElementById('fhSubtitle');
-        if (!actions || !subtitle || actions.getAttribute('data-v4-policy-applied') === subtitle.textContent) return;
+        if (!actions || !subtitle) return;
         var patient = demo.findPatientByCip ? demo.findPatientByCip(subtitle.textContent) : null;
         if (!patient || !patient.v4InitialState) return;
         var policy = actionPolicy(patient.v4InitialState);
-        while (actions.firstChild) actions.removeChild(actions.firstChild);
-        actions.setAttribute('data-v4-policy-applied', subtitle.textContent);
         if (!policy.route) {
+            if (actions.getAttribute('data-v4-policy-applied') === subtitle.textContent && actions.querySelector('[data-v4-action="blocked"]')) return;
+            while (actions.firstChild) actions.removeChild(actions.firstChild);
+            actions.setAttribute('data-v4-policy-applied', subtitle.textContent);
             var note = document.createElement('span');
             note.className = 'validation-note-block__value';
             note.setAttribute('data-v4-action', 'blocked');
@@ -292,15 +305,29 @@
             actions.appendChild(note);
             return;
         }
-        var link = document.createElement('a');
-        link.className = 'btn btn-primary';
-        link.setAttribute('data-v4-action', policy.entrada);
-        link.href = demo.makeContextUrl(policy.route, {
+        var context = {
             cip: patient.cip,
             servicio: patient.servicioSlug || patient.servicio,
             patologia: patient.patologia,
             entrada: policy.entrada
-        });
+        };
+        var followupIdentity = null;
+        if (policy.entrada === 'seguimiento') {
+            followupIdentity = followupActionIdentity(patient.patient_id);
+        }
+        var expectedHref = demo.makeContextUrl(policy.route, context);
+        if (followupIdentity) {
+            expectedHref += (expectedHref.indexOf('?') === -1 ? '?' : '&') + 'patient_id=' + encodeURIComponent(followupIdentity.patient_id);
+            if (followupIdentity.line_id) expectedHref += '&line_id=' + encodeURIComponent(followupIdentity.line_id);
+        }
+        var currentLink = actions.querySelector('[data-v4-action="' + policy.entrada + '"]');
+        if (actions.getAttribute('data-v4-policy-applied') === subtitle.textContent && currentLink && currentLink.getAttribute('href') === expectedHref) return;
+        while (actions.firstChild) actions.removeChild(actions.firstChild);
+        actions.setAttribute('data-v4-policy-applied', subtitle.textContent);
+        var link = document.createElement('a');
+        link.className = 'btn btn-primary';
+        link.setAttribute('data-v4-action', policy.entrada);
+        link.href = expectedHref;
         demo.appendIconText(link, policy.icon, policy.label);
         actions.appendChild(link);
     }
@@ -444,6 +471,7 @@
         expectedMetadata: EXPECTED_METADATA,
         statePresentation: statePresentation,
         actionPolicy: actionPolicy,
+        followupActionIdentity: followupActionIdentity,
         visiblePatient: visiblePatient,
         enrichFarmaciaDemo: enrichFarmaciaDemo
     };
