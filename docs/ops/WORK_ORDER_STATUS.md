@@ -11,7 +11,7 @@
 | Símbolo | Estado |
 |---------|--------|
 | ✅ Merged | Incorporada a rama base |
-| 📋 Ready for review | Commiteada y pusheada, esperando revisión humana |
+| 📋 Ready for review | Preparada para revisión humana; cualquier commit, push o publicación Git requiere autorización separada |
 | 🔄 Superseded | Contenido absorbido por otra WO. No mergear por separado |
 | ⏸️ Pausada | Detenida hasta decisión humana |
 | 🔴 Bloqueada | No puede continuar sin resolver incidencia |
@@ -94,7 +94,9 @@
 | **WO-FH-FOLLOWUP-ADHERENCE-DRAFT-V4-01** | Añadir captura estructurada de adherencia sin interpretación | ✅ Merged | `work/fh-followup-adherence-draft-v4-20260726` → `rescue/farmacia-v4` | `33244df411a5f57bc1107212e8eba8bb35a4dd71` → merge `da35ced9fe00ffc3dc22cc938e83de72f5372db6` (PR #120; issue #119) | `mg1`–`mg4` como borrador aislado por `patient_id + line_id`, con estados empty/partial/complete-uninterpreted, migración v1→v2, fallo cerrado, dirty state, guard S12 y QA S09–S12. Sin interpretación clínica, registro asistencial ni outputs. Issue #119 cerrado manualmente con `stateReason: COMPLETED` tras el merge. No publicado. |
 | **WO-DOC-FH-POST-PR120-ADHERENCE-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #120 | ✅ **Merged** | `work/docs/fh-post-pr120-adherence-reconciliation-v4-20260726` → `rescue/farmacia-v4` | merge `0f9aa595dc6e93fb92b1d4a8095888f73e05c05d` (PR #122; issue #121) | Reconciliación solo documental completada; issue #121 cerrado con `stateReason: COMPLETED`. No movió Pages ni añadió funcionalidad clínica. |
 | **WO-FH-FOLLOWUP-AE-DRAFT-V4-01** | Añadir captura cruda de efectos adversos sin interpretación | ✅ **Merged** | `work/fh-followup-ae-draft-v4-20260726` → `rescue/farmacia-v4` | merge `cbc36870ddb84d2085365e5817f4ef94cf941fce` (PR #124; issue #123) | Borrador EA con `ae_present`, descripción, gravedad y resolución; estados explícitos sin causalidad, store v3 con migración/fallo cerrado, aislamiento por paciente/línea, dirty state y guard S12. Protecciones `PATIENT_NOT_FOUND` y `PATIENT_MISMATCH` y QA visible con XLSX sintético. Issue #123 cerrado con `stateReason: COMPLETED`. No publicado. |
-| **WO-DOC-FH-POST-PR124-AE-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #124 | 📋 **READY_FOR_CORA_REVIEW** | `work/docs/fh-post-pr124-ae-reconciliation-v4-20260726` → `rescue/farmacia-v4` | issue #125; sin PR/merge | Reconciliación de los tres documentos vivos; no mueve Pages ni convierte lo integrado en publicado, demo-ready, piloto o producción. |
+| **WO-DOC-FH-POST-PR124-AE-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #124 | ✅ **Merged** | `work/docs/fh-post-pr124-ae-reconciliation-v4-20260726` → `rescue/farmacia-v4` | merge `332412d39e32db63b28507fb4205e659ae70a929` (PR #126; issue #125) | Reconciliación exclusivamente documental completada; issue #125 cerrado con `stateReason: COMPLETED`. No fue un HEAD funcional nuevo, no movió Pages ni añadió funcionalidad clínica. |
+| **WO-FH-FOLLOWUP-PROMS-DRAFT-V4-01** | Añadir captura manual de PROMs sin interpretación | ✅ **Merged** | `work/fh-followup-proms-draft-v4-20260726` → `rescue/farmacia-v4` | merge `1d4a68463942518a1d7e38d8a5d2db15da2e6ff7` (PR #128; issue #127) | Captura manual de `proms_collected`, `dlqi_total`, `eva_dolor` y `eva_prurito`; cero válido y ausencia vacía, sin cálculo ni interpretación. Store v4, migraciones no destructivas v3/v2/v1→v4, fallo cerrado, aislamiento paciente/línea, dirty state/guard S12 con PROMs y QA visible con consola/pageerror cero. Issue #127 cerrado con `stateReason: COMPLETED`. No publicado. |
+| **WO-DOC-FH-POST-PR128-PROMS-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #128 | 📋 **READY_FOR_CORA_REVIEW** | `work/docs/fh-post-pr128-proms-reconciliation-v4-20260726` → `rescue/farmacia-v4` | issue #129; sin PR/merge | Reconciliación de los tres documentos vivos; no mueve Pages ni convierte lo integrado en publicado, demo-ready, piloto o producción. |
 
 ---
 
@@ -149,7 +151,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 68 (incluye el rescate V4 integrado hasta PR #124; mergeado no equivale a publicado, demo-ready ni piloto) |
+| ✅ Merged | 70 (incluye el rescate V4 integrado hasta PR #128; mergeado no equivale a publicado, demo-ready ni piloto) |
 | 📋 Ready for review | 19 (WO-017 a WO-034 en rama nocturna frozen + esta reconciliación documental) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -159,4 +161,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 94 work orders / preflights / pasos operativos gestionados.
+**Total:** 96 work orders / preflights / pasos operativos gestionados.
