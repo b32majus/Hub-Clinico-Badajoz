@@ -405,7 +405,7 @@
         return guard;
     }
 
-    function applyResult(environment, result) {
+    function applyResult(environment, result, draftPartitionIdentity) {
         var card = byId(environment, 'fhSegCanonicalContext');
         var status = byId(environment, 'fhSegCanonicalStatus');
         if (card) {
@@ -431,7 +431,8 @@
         environment.__farmaciaFollowupContextV4 = result;
         environment.__farmaciaFollowupVisibleCipV4 = text(byId(environment, 'fhSegCip') && byId(environment, 'fhSegCip').value);
         if (environment.document && typeof environment.document.dispatchEvent === 'function') {
-            var detail = { ok: !!result.ok, code: result.code, patient_id: result.patient_id || '', line_id: result.line_id || '', status: result.line && result.line.status || '' };
+            var partition = draftPartitionIdentity || result;
+            var detail = { ok: !!result.ok, code: result.code, patient_id: partition.patient_id || '', line_id: partition.line_id || '', status: result.line && result.line.status || '' };
             var EventConstructor = environment.CustomEvent || root.CustomEvent;
             if (typeof EventConstructor === 'function') environment.document.dispatchEvent(new EventConstructor('farmacia:followup-context-applied-v4', { detail: detail }));
         }
@@ -492,6 +493,18 @@
         });
     }
 
+    function retainedDraftPartition(previous, resolved) {
+        if (!previous || !previous.ok || previous.code !== 'CANONICAL_ACTIVE_CONTEXT_READY' ||
+                !previous.patient_id || !previous.line_id || !resolved || resolved.ok) return null;
+        var sameResolvedIdentity = resolved.patient_id === previous.patient_id && resolved.line_id === previous.line_id;
+        var identitylessInvalidSearch = !resolved.patient_id && !resolved.line_id &&
+            ['PATIENT_NOT_FOUND', 'PATIENT_MISMATCH'].indexOf(resolved.code) !== -1;
+        var sameLineIneligible = sameResolvedIdentity &&
+            ['LINE_NOT_ACTIVE', 'HUB_GRAPH_INCOHERENT', 'HUB_START_INCOHERENT', 'UNSUPPORTED_PROVENANCE', 'STORAGE_UNAVAILABLE', 'STORAGE_CORRUPT'].indexOf(resolved.code) !== -1;
+        if (!identitylessInvalidSearch && !sameLineIneligible) return null;
+        return { patient_id: previous.patient_id, line_id: previous.line_id };
+    }
+
     function searchCip(environment) {
         var env = environment || root;
         var previousIdentity = readIdentity(env.location && env.location.search);
@@ -503,17 +516,20 @@
         return Promise.all([demoReady, dataReady]).then(function () {
             var resolved = resolveCipSearch({ cip: cip, demo: demo, dataSource: dataSource,
                 core: env.FarmaciaMultitreatmentCore, storage: env.sessionStorage });
+            var previousContext = env.__farmaciaFollowupContextV4 || {};
             var identity = { cip: cip, patient_id: resolved.patient_id, line_id: resolved.ok ? resolved.line_id : '' };
             var drafts = env.FarmaciaFollowupDraftsV4;
             var decision = drafts && typeof drafts.beforeContextChange === 'function' ? drafts.beforeContextChange({
-                current: env.__farmaciaFollowupContextV4 || {}, next: identity
+                current: previousContext, next: identity
             }) : 'proceed';
-            if (decision === 'cancel' || decision === 'same') {
+            var sameIdentityReactivation = decision === 'same' && !previousContext.ok && resolved.ok;
+            if (decision === 'cancel' || (decision === 'same' && !sameIdentityReactivation)) {
                 if (decision === 'cancel') setValue(env, 'fhSegCip', env.__farmaciaFollowupVisibleCipV4 || previousIdentity.cip);
                 return env.__farmaciaFollowupContextV4;
             }
+            var draftPartition = retainedDraftPartition(previousContext, resolved);
             replaceIdentityUrl(env, identity);
-            return applyResult(env, resolved);
+            return applyResult(env, resolved, draftPartition);
         });
     }
 
@@ -523,17 +539,20 @@
         identity.line_id = text(lineId);
         var candidate = resolveCanonicalContext({ identity: identity, allowSoleActive: false, core: env.FarmaciaMultitreatmentCore,
             storage: env.sessionStorage, dataSource: env.FarmaciaDataSource, demo: env.FarmaciaDemo });
+        var previousContext = env.__farmaciaFollowupContextV4 || {};
         var drafts = env.FarmaciaFollowupDraftsV4;
         var decision = drafts && typeof drafts.beforeContextChange === 'function' ? drafts.beforeContextChange({
-            current: env.__farmaciaFollowupContextV4 || {}, next: { patient_id: candidate.patient_id, line_id: candidate.ok ? candidate.line_id : '' }
+            current: previousContext, next: identity
         }) : 'proceed';
-        if (decision === 'cancel' || decision === 'same') {
+        var sameIdentityReactivation = decision === 'same' && !previousContext.ok && candidate.ok;
+        if (decision === 'cancel' || (decision === 'same' && !sameIdentityReactivation)) {
             var selector = byId(env, 'fhSegLineaPrincipal');
             if (selector && env.__farmaciaFollowupContextV4) selector.value = env.__farmaciaFollowupContextV4.line_id || '';
             return env.__farmaciaFollowupContextV4;
         }
+        var draftPartition = retainedDraftPartition(previousContext, candidate);
         replaceIdentityUrl(env, identity);
-        return applyResult(env, candidate);
+        return applyResult(env, candidate, draftPartition);
     }
 
     function closest(element, selector) {

@@ -43,12 +43,13 @@ async function snapshot() {
 }
 function legacyRaw(notes) {
   return JSON.stringify({
-    schema: 'farmaciaDemo.followupDrafts.v1',
+    schema: 'farmaciaDemo.followupDrafts.v2',
     patients: {
       'fhv4-patient-s09': {
         lines: {
           'fhv4-line-s09': {
             draft_id: 'followup:fhv4-line-s09', patient_id: 'fhv4-patient-s09', line_id: 'fhv4-line-s09', kind: 'followup', notes,
+            mg1: 'si', mg2: 'no', mg3: '', mg4: '',
             saved_at: '2026-07-26T09:00:00.000Z', saved_by_demo: 'Profesional FH-01'
           }
         }
@@ -61,50 +62,51 @@ function recordMigration(scenario, parity, evidence) {
 }
 
 try {
-  // Consumer-level migration: v1 exists before Follow-up initializes and v2 is absent.
+  // Consumer-level migration: v2 exists before Follow-up initializes and v3 is absent.
   await clearSession();
-  const v1 = legacyRaw('Notas v1 restauradas por UI');
+  const v1 = legacyRaw('Notas v2 restauradas por UI');
   await page.evaluate(({ legacy, raw }) => {
     sessionStorage.clear();
     sessionStorage.setItem(legacy, raw);
-  }, { legacy: 'farmaciaDemo.followupDrafts.v1', raw: v1 });
+  }, { legacy: 'farmaciaDemo.followupDrafts.v2', raw: v1 });
   assert.deepEqual(await page.evaluate(() => ({
-    v1: sessionStorage.getItem('farmaciaDemo.followupDrafts.v1'),
-    v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2')
-  })), { v1, v2: null });
+    v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2'),
+    v3: sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')
+  })), { v2: v1, v3: null });
   await goto('farmacia_seguimiento.html');
   await search('FH-V4-0009');
   await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
   let current = await snapshot();
   assert.equal(current.patient, 'fhv4-patient-s09');
   assert.equal(current.line, 'fhv4-line-s09');
-  assert.equal(current.notes, 'Notas v1 restauradas por UI');
-  assert.deepEqual(current.answers, ['', '', '', '']);
+  assert.equal(current.notes, 'Notas v2 restauradas por UI');
+  assert.deepEqual(current.answers, ['si', 'no', '', '']);
   assert.equal(await page.locator('#fhSegDraftNotes').isDisabled(), false);
   assert.equal(await page.locator('#fhSegDraftStatus').getAttribute('data-status-code'), 'DRAFT_RESTORED');
   const migrated = await page.evaluate(() => ({
-    v1: sessionStorage.getItem('farmaciaDemo.followupDrafts.v1'),
-    v2: JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v2'))
+    v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2'),
+    v3: JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v3'))
   }));
-  assert.equal(migrated.v1, v1);
-  assert.deepEqual(migrated.v2.patients['fhv4-patient-s09'].lines['fhv4-line-s09'], {
+  assert.equal(migrated.v2, v1);
+  assert.deepEqual(migrated.v3.patients['fhv4-patient-s09'].lines['fhv4-line-s09'], {
     draft_id: 'followup:fhv4-line-s09', patient_id: 'fhv4-patient-s09', line_id: 'fhv4-line-s09', kind: 'followup',
-    notes: 'Notas v1 restauradas por UI', mg1: '', mg2: '', mg3: '', mg4: '',
+    notes: 'Notas v2 restauradas por UI', mg1: 'si', mg2: 'no', mg3: '', mg4: '',
+    ae_present: '', ae_description: '', ae_severity: '', ae_resolution: '',
     saved_at: '2026-07-26T09:00:00.000Z', saved_by_demo: 'Profesional FH-01'
   });
-  recordMigration('valid_v1', 'identity_notes_preserved_answers_empty', {
-    browser_session_storage: migrated.v1 === v1,
+  recordMigration('valid_v2', 'identity_notes_answers_preserved_ae_empty', {
+    browser_session_storage: migrated.v2 === v1,
     canonical_context_caller: current.patient === 'fhv4-patient-s09' && current.line === 'fhv4-line-s09',
     draft_controller: await page.locator('#fhSegDraftStatus').getAttribute('data-status-code') === 'DRAFT_RESTORED',
-    canonical_draft_ui: current.notes === 'Notas v1 restauradas por UI' && current.answers.every((answer) => answer === '')
+    canonical_draft_ui: current.notes === 'Notas v2 restauradas por UI' && current.answers.join(',') === 'si,no,,'
   });
 
-  // A present invalid v2 remains authoritative and blocks without falling back to valid v1.
+  // A present invalid v3 remains authoritative and blocks without falling back to valid v2.
   await page.evaluate(({ legacy, raw }) => {
     sessionStorage.clear();
     sessionStorage.setItem(legacy, raw);
-    sessionStorage.setItem('farmaciaDemo.followupDrafts.v2', '{');
-  }, { legacy: 'farmaciaDemo.followupDrafts.v1', raw: v1 });
+    sessionStorage.setItem('farmaciaDemo.followupDrafts.v3', '{');
+  }, { legacy: 'farmaciaDemo.followupDrafts.v2', raw: v1 });
   await goto('farmacia_seguimiento.html');
   await search('FH-V4-0009');
   await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
@@ -114,12 +116,12 @@ try {
   assert.equal(await page.locator('#fhSegDraftNotes').isDisabled(), true);
   assert.equal(await page.locator('#fhSegDraftStatus').getAttribute('data-status-code'), 'DRAFT_STORAGE_CORRUPT');
   const corrupt = await page.evaluate(() => ({
-    v1: sessionStorage.getItem('farmaciaDemo.followupDrafts.v1'),
-    v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2')
+    v2: sessionStorage.getItem('farmaciaDemo.followupDrafts.v2'),
+    v3: sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')
   }));
-  assert.deepEqual(corrupt, { v1, v2: '{' });
-  recordMigration('corrupt_v2_no_fallback', 'fail_closed', {
-    browser_session_storage: corrupt.v1 === v1 && corrupt.v2 === '{',
+  assert.deepEqual(corrupt, { v2: v1, v3: '{' });
+  recordMigration('corrupt_v3_no_fallback', 'fail_closed', {
+    browser_session_storage: corrupt.v2 === v1 && corrupt.v3 === '{',
     canonical_context_caller: current.patient === 'fhv4-patient-s09' && current.line === 'fhv4-line-s09',
     draft_controller: await page.locator('#fhSegDraftStatus').getAttribute('data-status-code') === 'DRAFT_STORAGE_CORRUPT',
     canonical_draft_ui: current.notes === '' && current.answers.every((answer) => answer === '')
@@ -190,15 +192,15 @@ try {
   assert.equal(current.notes, 'S11 principal guardado');
   assert.deepEqual(current.answers, ['si', 'si', '', '']);
 
-  const persisted = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v2')));
+  const persisted = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')));
   assert.deepEqual(Object.keys(persisted.patients['fhv4-patient-s11'].lines).sort(), ['fhv4-line-s11-additional', 'fhv4-line-s11-primary']);
   assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join(' | ')}`);
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join(' | ')}`);
-  assert.deepEqual(migrationResults.map((result) => result.scenario), ['valid_v1', 'corrupt_v2_no_fallback']);
+  assert.deepEqual(migrationResults.map((result) => result.scenario), ['valid_v2', 'corrupt_v3_no_fallback']);
   assert.ok(migrationResults.every((result) => result.consumers.length === 4));
   console.log('MIGRATION_CONSUMERS', JSON.stringify(migrationResults));
   console.log('QA_ERRORS', JSON.stringify({ consoleErrors, pageErrors }));
-  console.log('farmacia_followup_adherence_draft_v4_qa: PASSED_V1_MIGRATION_V2_FAIL_CLOSED_S09_S10_S11_S12_SUPPORTED_INTERACTIONS_ZERO_ERRORS');
+  console.log('farmacia_followup_adherence_draft_v4_qa: PASSED_V2_MIGRATION_V3_FAIL_CLOSED_S09_S10_S11_S12_SUPPORTED_INTERACTIONS_ZERO_ERRORS');
 } finally {
   await browser.close();
 }

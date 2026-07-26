@@ -145,25 +145,38 @@ try {
   assert.equal(dialogs.length, sameDialogs);
   assert.equal(await page.inputValue('#fhSegDraftNotes'), 'S09 mismo contexto sin guardar');
 
-  // Unknown CIP cancel/accept; accepted result is neutral and draft-disabled.
+  // Invalid CIP follows S12 cancel/accept, then restores only the persisted same partition.
+  const invalidDialogs = dialogs.length;
+  const invalidOriginUrl = page.url();
+  const invalidOriginCip = await page.inputValue('#fhSegCip');
+  const invalidOriginStore = await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3'));
   await search('FH-V4-UNKNOWN', 'dismiss');
   await page.waitForTimeout(50);
-  assert.equal((await waitContext('CANONICAL_ACTIVE_CONTEXT_READY')).lineId, 'fhv4-line-s09');
+  assert.equal(dialogs.length, invalidDialogs + 1);
+  assert.equal(page.url(), invalidOriginUrl);
+  assert.equal(await page.inputValue('#fhSegCip'), invalidOriginCip);
   assert.equal(await page.inputValue('#fhSegDraftNotes'), 'S09 mismo contexto sin guardar');
+  assert.equal(await page.locator('#fhSegDraftStatus').getAttribute('data-status-code'), 'DRAFT_DIRTY');
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), invalidOriginStore);
   await search('FH-V4-UNKNOWN', 'accept');
   context = await waitContext('PATIENT_NOT_FOUND');
   assert.equal(context.patientId, '');
   assert.equal(context.lineId, '');
+  assert.equal(dialogs.length, invalidDialogs + 2);
   assert.equal(await page.locator('#fhSegDraftNotes').isDisabled(), true);
   assert.equal(await page.inputValue('#fhSegDraftNotes'), '');
+  assert.equal(await page.locator('#fhSegDraftStatus').getAttribute('data-status-code'), 'DRAFT_UNSAVED_NOT_PERSISTED_CONTEXT_INELIGIBLE');
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), invalidOriginStore);
 
   // Discard affects only current exact partition; S11 remains stored.
   await search('FH-V4-0009');
   await waitContext('CANONICAL_ACTIVE_CONTEXT_READY');
+  assert.equal(await page.inputValue('#fhSegDraftNotes'), 'Borrador sintético S09');
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')), invalidOriginStore);
   page.__nextDialogAction = 'accept';
   await page.click('#fhSegDraftDiscard');
   await waitDraft('Sin borrador guardado');
-  const partitions = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v2')));
+  const partitions = await page.evaluate(() => JSON.parse(sessionStorage.getItem('farmaciaDemo.followupDrafts.v3')));
   assert.equal(partitions.patients['fhv4-patient-s09'].lines['fhv4-line-s09'], undefined);
   assert.equal(partitions.patients['fhv4-patient-s11'].lines['fhv4-line-s11-primary'].notes, 'Borrador S11 principal');
   assert.equal(partitions.patients['fhv4-patient-s11'].lines['fhv4-line-s11-additional'].notes, 'Borrador S11 adicional');
