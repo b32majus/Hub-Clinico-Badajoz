@@ -1,0 +1,106 @@
+name: Farmacia V4 Follow-up E2E navigation guard
+
+on:
+  pull_request:
+    branches: ['rescue/farmacia-v4']
+    paths:
+      - 'farmacia_seguimiento.html'
+      - 'scripts/farmacia_followup_drafts_v4.js'
+      - 'scripts/farmacia_followup_navigation_guard_v4.js'
+      - 'tools/farmacia_followup_e2e_navigation_guard_v4_check.mjs'
+      - 'tools/farmacia_followup_e2e_navigation_guard_v4_qa.mjs'
+      - 'tools/farmacia_followup_persisted_review_v4_qa.mjs'
+      - '.github/workflows/farmacia-v4-followup-e2e-navigation-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  followup-e2e-navigation-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check scripts/farmacia_followup_drafts_v4.js
+          node --check scripts/farmacia_followup_navigation_guard_v4.js
+          node --check tools/farmacia_followup_e2e_navigation_guard_v4_check.mjs
+          node --check tools/farmacia_followup_e2e_navigation_guard_v4_qa.mjs
+      - name: Follow-up, First Visit, Validation and smoke regressions
+        env:
+          FARMACIA_CHANGED_ROUTES_BASE: origin/${{ github.base_ref || 'rescue/farmacia-v4' }}
+        run: |
+          node tools/farmacia_followup_e2e_navigation_guard_v4_check.mjs
+          node tools/farmacia_followup_canonical_context_v4_check.mjs
+          node tools/farmacia_followup_line_drafts_s12_v4_check.mjs
+          node tools/farmacia_followup_adherence_draft_v4_check.mjs
+          node tools/farmacia_followup_ae_draft_v4_check.mjs
+          node tools/farmacia_followup_proms_draft_v4_check.mjs
+          node tools/farmacia_followup_persisted_review_v4_check.mjs
+          node tools/farmacia_followup_confirmed_visit_v4_check.mjs
+          node tools/farmacia_followup_outputs_v4_check.mjs
+          node tools/farmacia_first_visit_identity_handoff_v4_check.mjs
+          node tools/farmacia_first_visit_canonical_context_v4_check.mjs
+          node tools/farmacia_first_visit_confirm_start_v4_check.mjs
+          node tools/farmacia_first_visit_followup_handoff_v4_check.mjs
+          node tools/farmacia_first_visit_canonical_outputs_v4_check.mjs
+          node tools/farmacia_treatment_start_core_v4_check.mjs
+          node tools/farmacia_validation_state_v4_check.mjs
+          node tools/farmacia_validation_export_truth_check.mjs
+          node tools/farmacia_validation_poststart_guard_v4_check.mjs
+          node tools/farmacia_smoke_check.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-followup-e2e-navigation-guard-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-followup-e2e-navigation-guard-http.log
+          exit 1
+      - name: Follow-up E2E and navigation guard browser QA
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tools/farmacia_followup_e2e_navigation_guard_v4_qa.mjs
+      - name: All current Follow-up browser regressions
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: |
+          node tools/farmacia_followup_canonical_context_v4_qa.mjs
+          node tools/farmacia_followup_line_drafts_s12_v4_qa.mjs
+          node tools/farmacia_followup_adherence_draft_v4_qa.mjs
+          node tools/farmacia_followup_ae_draft_v4_qa.mjs
+          node tools/farmacia_followup_proms_draft_v4_qa.mjs
+          node tools/farmacia_followup_persisted_review_v4_qa.mjs
+          node tools/farmacia_followup_confirmed_visit_v4_qa.mjs
+          node tools/farmacia_followup_outputs_v4_qa.mjs
+      - name: First Visit and Validation browser regressions
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: |
+          node tools/farmacia_first_visit_canonical_outputs_v4_qa.mjs
+          node tools/farmacia_v4_validation_browser_qa.mjs
+          node tools/farmacia_validation_poststart_guard_v4_qa.mjs
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-followup-e2e-navigation-guard-failure
+          path: /tmp/farmacia-v4-followup-e2e-navigation-guard-http.log
+          if-no-files-found: ignore
+      - name: Diff hygiene
+        run: git diff --check origin/rescue/farmacia-v4...HEAD

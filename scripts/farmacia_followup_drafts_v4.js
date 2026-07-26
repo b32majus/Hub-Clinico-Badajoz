@@ -482,8 +482,21 @@
             } else pendingAcceptedContextDiscard = false;
             return 'proceed';
         }
+        function isDirty() { return !!dirty; }
+        function beforePageExit() {
+            if (!dirty) return 'proceed';
+            var ask = deps.confirm || env.confirm;
+            if (typeof ask !== 'function' || !ask(CHANGE_MESSAGE)) return 'cancel';
+            dirty = false;
+            pendingAcceptedContextDiscard = false;
+            restored = false;
+            applyValues(baseline);
+            showWorkingStatus(false);
+            emitState('PAGE_EXIT_DISCARD_UNSAVED');
+            return 'proceed';
+        }
         function state() { return { current: identityOf(current), ready: ready, baseline: baseline, dirty: dirty, storageError: storageError, restored: restored, hasSaved: hasSaved, pendingAcceptedContextDiscard: pendingAcceptedContextDiscard }; }
-        return { applyContext: applyContext, onInput: onInput, save: save, discard: discard, beforeContextChange: beforeContextChange, state: state, store: store };
+        return { applyContext: applyContext, onInput: onInput, save: save, discard: discard, beforeContextChange: beforeContextChange, isDirty: isDirty, beforePageExit: beforePageExit, state: state, store: store };
     }
 
     function install(environment, injected) {
@@ -511,9 +524,11 @@
         return controller;
     }
     function beforeContextChange(change) { return controller ? controller.beforeContextChange(change) : 'proceed'; }
+    function isDirty() { return controller ? controller.isDirty() : false; }
+    function beforePageExit() { return controller ? controller.beforePageExit() : 'proceed'; }
     function configure(next) { dependencies = next || {}; }
 
     return { STORE_KEY: STORE_KEY, V3_STORE_KEY: V3_STORE_KEY, LEGACY_STORE_KEY: LEGACY_STORE_KEY, V1_STORE_KEY: V1_STORE_KEY, SCHEMA: SCHEMA, CHANGE_MESSAGE: CHANGE_MESSAGE, DISCARD_MESSAGE: DISCARD_MESSAGE,
         emptyState: emptyState, validateState: validateState, validateV3State: validateV3State, validateLegacyState: validateLegacyState, validateV1State: validateV1State, migrateLegacy: migrateLegacy, createStore: createStore, createController: createController,
-        configure: configure, install: install, beforeContextChange: beforeContextChange };
+        configure: configure, install: install, beforeContextChange: beforeContextChange, isDirty: isDirty, beforePageExit: beforePageExit };
 });
