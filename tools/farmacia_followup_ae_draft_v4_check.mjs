@@ -265,7 +265,7 @@ test('canonical card is the only new AE capture; legacy AE/causality and outputs
   for (const id of ['fhSegDraftAePresent', 'fhSegDraftAeDescription', 'fhSegDraftAeSeverity', 'fhSegDraftAeResolution', 'fhSegDraftAeStatus']) assert.match(card, new RegExp(`id="${id}"`));
   assert.doesNotMatch(card, /Naranjo|Karch|f[aá]rmaco sospechoso|correcci[oó]n|recomendaci[oó]n|decisi[oó]n terap[eé]utica/i);
   assert.match(contextSource, /section\.inert = true/); assert.match(contextSource, /section\.id === 'fhSegDraftCard'/);
-  assert.match(contextSource, /protect\(env\.FarmaciaDemo, 'copyTextToClipboard'\)[\s\S]*protect\(env\.FarmaciaExcelRowExport/);
+  assert.match(contextSource, /__farmaciaFollowupOutputsV4Installed/); assert.doesNotMatch(contextSource, /function protect\(|__farmaciaFollowupBlockedV4/);
   assert.match(contextSource, /FarmaciaFollowupDraftsV4[\s\S]*beforeContextChange/);
 });
 
