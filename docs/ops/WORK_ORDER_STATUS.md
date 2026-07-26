@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-26
+**Última actualización:** 2026-07-27
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -102,7 +102,9 @@
 | **WO-FH-FOLLOWUP-CONFIRMED-VISIT-V4-01** | Confirmar explícitamente una visita demo de Seguimiento | ✅ **Merged** | `work/fh-followup-confirmed-visit-v4-20260726` → `rescue/farmacia-v4` | merge `969af261b8917765d13c447f09537cedb5dcce28` (PR #136; issue #135) | Confirmación profesional explícita desde el último borrador v4 limpio/persistido exacto de la línea activa, con fecha y profesional FH demo; store de visitas estricto, append-only, dedupe, rollback atómico y QA soportada. No es firma clínica, validez legal, registro productivo ni cierre de Seguimiento/S09–S12. No publicado. |
 | **WO-DOC-FH-POST-PR136-CONFIRMED-VISIT-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #136 | ✅ **Merged** | `work/docs/fh-post-pr136-confirmed-visit-reconciliation-v4-20260726` → `rescue/farmacia-v4` | merge `11b7ae642cc76c035ca42bdf386b86b77046f7eb` (PR #138; issue #137) | Reconciliación exclusivamente documental completada; no fue un HEAD funcional nuevo, no movió Pages ni añadió funcionalidad clínica. |
 | **WO-FH-FOLLOWUP-CANONICAL-OUTPUTS-V4-01** | Añadir salidas canónicas de Seguimiento desde visita confirmada | ✅ **Merged** | `work/fh-followup-canonical-outputs-v4-20260726` → `rescue/farmacia-v4` | merge `2ad406e0fc14ce50a1bb3e9f898bab482591ddc6` (PR #140; issue #139) | TXT tipo JARA solo para revisión demo, CSV canónico de una fila/42 columnas y fila Excel FH/61 columnas desde la misma última visita confirmada exacta y contexto activo; sin inferencia clínica ni integración JARA real. QA soportada S09–S12, identidad, recarga, dirty invariance y fallos; no publicado ni cierre completo de Seguimiento. |
-| **WO-DOC-FH-POST-PR140-CANONICAL-OUTPUTS-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #140 | 📋 **READY_FOR_CORA_REVIEW** | `work/docs/fh-post-pr140-canonical-outputs-reconciliation-v4-20260726` → `rescue/farmacia-v4` | issue #141; sin PR/merge | Reconciliación de los tres documentos vivos; no mueve Pages ni convierte lo integrado en publicado, demo-ready, piloto o producción. |
+| **WO-DOC-FH-POST-PR140-CANONICAL-OUTPUTS-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #140 | ✅ **Merged** | `work/docs/fh-post-pr140-canonical-outputs-reconciliation-v4-20260726` → `rescue/farmacia-v4` | merge `d2c4d88d204fe2a8600a41067065aebb33a782d4` (PR #142; issue #141) | Reconciliación exclusivamente documental completada; no fue un HEAD funcional nuevo, no movió Pages ni añadió funcionalidad clínica. |
+| **WO-FH-FOLLOWUP-E2E-NAVIGATION-GUARD-V4-01** | Cerrar guard E2E de navegación desde Seguimiento | ✅ **Merged** | `work/fh-followup-e2e-navigation-guard-v4-20260726` → `rescue/farmacia-v4` | merge `c5a0da77fb8707c6d85cb4e3f8f67df331aaec1e` (PR #144; issue #143) | Guard exclusivo desde Seguimiento sobre dirty real de `FarmaciaFollowupDraftsV4`, probado hacia cinco destinos reales y con S09–S12/E2E verdes. No implementa guard dentro de destinos, no cierra clínicamente Seguimiento y no está publicado. |
+| **WO-DOC-FH-POST-PR144-FOLLOWUP-E2E-GUARD-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #144 | 📋 **READY_FOR_CORA_REVIEW** | `work/docs/fh-post-pr144-followup-e2e-guard-reconciliation-v4-20260727` → `rescue/farmacia-v4` | issue #145; sin PR/merge | Reconciliación de los tres documentos vivos; no mueve Pages ni convierte lo integrado en publicado, demo-ready, piloto o producción. |
 
 ---
 
@@ -157,7 +159,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 76 (incluye el rescate V4 integrado hasta PR #140; mergeado no equivale a publicado, demo-ready ni piloto) |
+| ✅ Merged | 78 (incluye el rescate V4 integrado hasta PR #144; mergeado no equivale a publicado, demo-ready ni piloto) |
 | 📋 Ready for review | 19 (WO-017 a WO-034 en rama nocturna frozen + esta reconciliación documental) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -167,4 +169,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 102 work orders / preflights / pasos operativos gestionados.
+**Total:** 104 work orders / preflights / pasos operativos gestionados.
