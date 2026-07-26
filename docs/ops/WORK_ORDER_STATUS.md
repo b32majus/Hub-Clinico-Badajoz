@@ -88,6 +88,9 @@
 | **WO-FH-VALIDATION-POSTSTART-GUARD-V4-01** | Bloquear rectificación tras inicio confirmado | ✅ Merged | PR #106 → `rescue/farmacia-v4` | `d1df695f3573066b09e2ff978f3cf5d8d84fdb32` (PR #106; issue #105) | Mantiene rectificación pre-inicio y bloquea cambios cuando la línea ya está activa con inicio explícito. Rescue HEAD al cierre de PR #106; no está publicado. |
 | **WO-DOC-FH-RESCUE-STATUS-RECONCILIATION-V4-01** | Reconciliar el estado documental del rescate V4 | ✅ Merged | `work/docs/fh-rescue-status-reconciliation-v4-20260725` → `rescue/farmacia-v4` | merge `da2fd42ab06324901e150651a2b3877f6e57d5e2` (PR #108; issue #107) | Reconciliación previa hasta PR #106; no añadió funcionalidad ni movió Pages. |
 | **WO-FH-FIRST-VISIT-CANONICAL-OUTPUTS-V4-01** | Cerrar salidas canónicas de Primera Visita | ✅ Merged | `work/fh-first-visit-canonical-outputs-v4-20260725` → `rescue/farmacia-v4` | merge `567a519d1b049c4259115853c77cf8a517319deb` (PR #110; issue #109) | Cierre técnico S01–S08: gate preinicio, salidas canónicas postinicio, `start_date`, 61 columnas Excel, defaults neutrales y QA de navegador por interacción soportada; workflows de PR completados con success. No publicado en Pages y sin Seguimiento S09–S12. |
+| **WO-FH-FOLLOWUP-CANONICAL-CONTEXT-GATE-V4-01** | Establecer contexto canónico y gate de Seguimiento | ✅ Merged | `work/fh-followup-canonical-context-gate-v4-20260726` → `rescue/farmacia-v4` | merge `9e6c2ad8b7ea790e265be6f6e4a235f87f0a6118` (PR #114; issue #113) | Contexto exacto `patient_id + line_id`; S09–S11 demostrados solo en selección/contexto/gate; módulos clínicos y exportaciones bloqueados; no publicado. |
+| **WO-FH-FOLLOWUP-LINE-DRAFTS-S12-GUARD-V4-01** | Añadir borradores por línea y guard S12 | ✅ Merged | `work/fh-followup-line-drafts-s12-v4-20260726` → `rescue/farmacia-v4` | merge `6e920bb68d8796b9780c7daaf106fe80d14c7d78` (PR #116; issue #115) | Borradores de sesión aislados por `patient_id + line_id` y guard S12 dentro de Seguimiento; no son registro asistencial; módulos clínicos y JARA/CSV/Excel siguen bloqueados; no publicado. |
+| **WO-DOC-FH-FOLLOWUP-POST-PR114-PR116-RECONCILIATION-V4-01** | Reconciliar documentación tras PR #114 y #116 | 📋 Ready for review | `work/docs/fh-followup-post-pr114-pr116-reconciliation-v4-20260726` → `rescue/farmacia-v4` | issue #117 | Reconciliación solo documental; no mueve Pages, no habilita módulos clínicos y no declara S09–S12 cerrados. |
 
 ---
 
@@ -142,8 +145,8 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 62 (incluye el rescate V4 integrado hasta PR #110; mergeado no equivale a publicado, demo-ready ni piloto) |
-| 📋 Ready for review | 18 (WO-017 a WO-034 en rama nocturna frozen) |
+| ✅ Merged | 64 (incluye el rescate V4 integrado hasta PR #116; mergeado no equivale a publicado, demo-ready ni piloto) |
+| 📋 Ready for review | 19 (WO-017 a WO-034 en rama nocturna frozen + esta reconciliación documental) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
 | 🔄 Superseded | 2 (WO-011, WO-035) |
@@ -152,4 +155,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 87 work orders / preflights / pasos operativos gestionados.
+**Total:** 90 work orders / preflights / pasos operativos gestionados.
