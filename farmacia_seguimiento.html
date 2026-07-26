@@ -113,6 +113,16 @@
         </div>
     </fieldset>
     <p id="fhSegDraftAdherenceStatus" role="status" data-status-code="ADHERENCE_EMPTY">Cuestionario de adherencia sin respuestas.</p>
+    <fieldset id="fhSegDraftAe" disabled aria-disabled="true">
+        <legend>Efectos adversos explícitos (borrador)</legend>
+        <div class="form-grid">
+            <div class="form-group"><label for="fhSegDraftAePresent">¿Consta algún efecto adverso?</label><select class="form-select" id="fhSegDraftAePresent" data-draft-ae="ae_present"><option value="">Sin respuesta</option><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select></div>
+            <div class="form-group"><label for="fhSegDraftAeSeverity">Gravedad documentada</label><select class="form-select" id="fhSegDraftAeSeverity" data-draft-ae="ae_severity" disabled aria-disabled="true"><option value="">Sin respuesta</option><option value="leve">Leve</option><option value="moderado">Moderado</option><option value="grave">Grave</option><option value="requiere_derivacion">Requiere derivación</option></select></div>
+            <div class="form-group"><label for="fhSegDraftAeResolution">Resolución documentada</label><select class="form-select" id="fhSegDraftAeResolution" data-draft-ae="ae_resolution" disabled aria-disabled="true"><option value="">Sin respuesta</option><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option><option value="en_seguimiento">En seguimiento</option></select></div>
+        </div>
+        <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDraftAeDescription">Descripción libre</label><textarea class="form-textarea" id="fhSegDraftAeDescription" data-draft-ae="ae_description" rows="3" disabled aria-disabled="true"></textarea></div></div>
+    </fieldset>
+    <p id="fhSegDraftAeStatus" role="status" data-status-code="AE_EMPTY">Efectos adversos sin respuesta.</p>
     <p id="fhSegDraftStatus" role="status" data-status-code="DRAFT_EMPTY">Sin borrador guardado</p>
     <div class="form-actions"><button type="button" class="btn btn-primary" id="fhSegDraftSave" disabled aria-disabled="true">Guardar borrador</button><button type="button" class="btn btn-outline" id="fhSegDraftDiscard" disabled aria-disabled="true">Descartar borrador</button></div>
     <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Este contenido es un borrador de sesión. No constituye un registro asistencial y no se incluye en JARA, CSV ni Excel.</span></div>
@@ -348,7 +358,7 @@
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
     <script src="scripts/farmacia_multitreatment_core.js?v=20260726-followup-context-v4-01"></script>
     <script src="scripts/farmacia_seguimiento.js?v=20260726-followup-context-v4-legacy"></script>
-    <script src="scripts/farmacia_followup_drafts_v4.js?v=20260726-followup-adherence-draft-v4-01"></script>
+    <script src="scripts/farmacia_followup_drafts_v4.js?v=20260726-followup-ae-draft-v4-01"></script>
     <script src="scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01"></script>
         </body>
         </html>
