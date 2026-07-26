@@ -100,6 +100,12 @@
         <div class="info-field"><span class="info-field__label">Procedencia</span><span class="info-field__value" id="fhSegCanonicalProvenance">No informado</span></div>
     </div>
     <div class="notice-box notice-box--info" id="fhSegCanonicalSafety"><i class="fas fa-shield-alt" aria-hidden="true"></i><span>Contexto canónico de línea preparado. El registro clínico y las exportaciones de Seguimiento se habilitarán tras su migración por línea.</span></div>
+</section><section class="dashboard-card" id="fhSegDraftCard" aria-labelledby="fhSegDraftTitle">
+    <h2 class="section-title section-title--compact" id="fhSegDraftTitle"><i class="fas fa-edit" aria-hidden="true"></i> Borrador de Seguimiento</h2>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhSegDraftNotes">Observaciones de trabajo del borrador</label><textarea class="form-textarea" id="fhSegDraftNotes" rows="4" disabled aria-disabled="true"></textarea></div></div>
+    <p id="fhSegDraftStatus" role="status" data-status-code="DRAFT_EMPTY">Sin borrador guardado</p>
+    <div class="form-actions"><button type="button" class="btn btn-primary" id="fhSegDraftSave" disabled aria-disabled="true">Guardar borrador</button><button type="button" class="btn btn-outline" id="fhSegDraftDiscard" disabled aria-disabled="true">Descartar borrador</button></div>
+    <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Este contenido es un borrador de sesión. No constituye un registro asistencial y no se incluye en JARA, CSV ni Excel.</span></div>
 </section><section class="dashboard-card validation-modules-nav-card validation-modules-nav-card--compact hidden">
     <div class="validation-modules-nav validation-modules-nav--compact" aria-labelledby="seguimientoModulesTitle">
         <div class="validation-modules-nav__header">
@@ -332,6 +338,7 @@
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
     <script src="scripts/farmacia_multitreatment_core.js?v=20260726-followup-context-v4-01"></script>
     <script src="scripts/farmacia_seguimiento.js?v=20260726-followup-context-v4-legacy"></script>
+    <script src="scripts/farmacia_followup_drafts_v4.js?v=20260726-followup-line-drafts-s12-v4-01"></script>
     <script src="scripts/farmacia_followup_context_v4.js?v=20260726-followup-context-v4-01"></script>
         </body>
         </html>
