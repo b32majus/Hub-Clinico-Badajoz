@@ -906,13 +906,12 @@
         if (!C || !drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         var helper = getTreatmentHelper();
         var context = firstVisitCatalogContext();
-        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
-        var previous = C.getSnapshot(context);
+        var contextValid = typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
+        var previous = contextValid && typeof C.getSnapshot === 'function' ? C.getSnapshot(context) : null;
         var current = getCurrentPrimaryTreatment();
         var reconciled = helper && typeof helper.reconcileCatalogSelection === 'function'
             ? helper.reconcileCatalogSelection(current, previous, drug, context.slot)
             : { values: buildPrimaryTreatmentFromSelection(drug), proposal_values: {} };
-        C.selectDrug(drug, context, reconciled);
         var treatment = normalizePrimaryTreatment(assignObjects({}, current, reconciled.values, {
             paciente_cip: context.cip,
             pauta: getPautaLabelForExport(),
@@ -926,6 +925,7 @@
         }), { paciente_cip: context.cip, fuente: 'primera_visita' });
         setTreatmentForm(treatment);
         applyTratamientoValidado(getCurrentContext());
+        if (contextValid && typeof C.selectDrug === 'function') C.selectDrug(drug, context, reconciled);
 
         clearDrugAutocompleteDropdown();
     }

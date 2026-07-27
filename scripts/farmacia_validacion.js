@@ -973,8 +973,8 @@
         if (!drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         ids = ids || requestedFieldIds();
         var context = { slot: "validacion.solicitado", cip: byId(ids.cip) ? byId(ids.cip).value : selectedCip() };
-        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
-        var previous = C.getSnapshot(context);
+        var contextValid = typeof C.snapshotContextKey !== "function" || Boolean(C.snapshotContextKey(context));
+        var previous = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
         var reconciled = reconcileSelection({
             farmaco_nombre: byId(ids.farmaco).value,
             principio_activo: byId(ids.principioActivo).value,
@@ -988,7 +988,7 @@
         byId(ids.principioActivo).value = reconciled.values.principio_activo || "";
         byId(ids.dosis).value = reconciled.values.dosis_texto || "";
         byId(ids.via).value = requestedViaValue;
-        C.selectDrug(drug, context, reconciled);
+        if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
         clearRequestedAutocompleteDropdown(dropdownId);
         updateSolicitadoSummary();
     }
@@ -1001,8 +1001,8 @@
         var viaEl = byId("fhValidadoVia");
         if (!drug || !farmacoEl || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         var context = catalogContext("validacion.validado");
-        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
-        var previous = C.getSnapshot(context);
+        var contextValid = typeof C.snapshotContextKey !== "function" || Boolean(C.snapshotContextKey(context));
+        var previous = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
         var reconciled = reconcileSelection({
             farmaco_nombre: farmacoEl.value,
             principio_activo: princEl ? princEl.value : "",
@@ -1018,7 +1018,7 @@
         if (presEl) presEl.value = reconciled.values.presentacion || "";
         if (dosisEl) dosisEl.value = reconciled.values.dosis_texto || "";
         if (viaEl) viaEl.value = validatedViaValue;
-        C.selectDrug(drug, context, reconciled);
+        if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
 
         [farmacoEl, princEl, presEl, dosisEl, viaEl].forEach(function (el) {
             if (!el) return;

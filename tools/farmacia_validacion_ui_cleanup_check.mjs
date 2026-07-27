@@ -109,6 +109,7 @@ addElement('autocompleteDropdown', 'div').classList.add('hidden');
 addElement('fhManualAutocompleteDropdown', 'div').classList.add('hidden');
 ['fhManualVia', 'fhDermaVia'].forEach((id) => { dom.get(id).options = ['', 'SC', 'IV', 'Oral', 'IM', 'Otra'].map((value) => ({ value, text: value, textContent: value })); });
 const snapshots = new Map();
+const persistenceCalls = { getSnapshot: 0, selectDrug: 0 };
 const products = [
   { drug_id: 'CIMA-SYN-A', source_type: 'CIMA', display_name: 'Marca sintética A', nombre_comercial: 'Marca sintética A', nombre_presentacion: 'Marca sintética A 300 mg vial', principio_activo: 'Activo A', dosis: '300 mg', via: 'IV', codigo_nacional: '700001' },
   { drug_id: 'CIMA-SYN-B', source_type: 'CIMA', display_name: 'Marca sintética B', nombre_comercial: 'Marca sintética B', nombre_presentacion: 'Marca sintética B 120 mg jeringa', principio_activo: 'Activo B', dosis: '120 mg', via: 'VÍA INTRAMUSCULAR', codigo_nacional: '700002' }
@@ -118,7 +119,7 @@ const catalog = {
   search: () => products,
   isConcreteCatalogSelection: (drug) => Boolean(drug && drug.drug_id && drug.nombre_presentacion),
   snapshotContextKey: (ctx) => ctx && ctx.slot && ctx.cip ? `${ctx.slot}|${ctx.cip}` : '',
-  getSnapshot: (ctx) => snapshots.get(`${ctx.slot}|${ctx.cip}`) || null,
+  getSnapshot: (ctx) => { persistenceCalls.getSnapshot++; return snapshots.get(`${ctx.slot}|${ctx.cip}`) || null; },
   mapCatalogViaToSelect: (value) => /intramus/i.test(value) ? 'IM' : (/^IV$/i.test(value) ? 'IV' : (/subcut|^SC$/i.test(value) ? 'SC' : (/oral|^VO$/i.test(value) ? 'Oral' : (value ? 'Otra' : '')))),
   reconcileCatalogSelection(current, previous, drug) {
     const prior = previous?.proposal_values || {};
@@ -129,7 +130,7 @@ const catalog = {
     if (canApply('via')) { values.via = this.mapCatalogViaToSelect(drug.via); if (values.via) proposal_values.via = values.via; }
     return { values, proposal_values };
   },
-  selectDrug(drug, ctx, metadata) { snapshots.set(`${ctx.slot}|${ctx.cip}`, { context: ctx, proposal_values: { ...metadata.proposal_values } }); }
+  selectDrug(drug, ctx, metadata) { persistenceCalls.selectDrug++; snapshots.set(`${ctx.slot}|${ctx.cip}`, { context: ctx, proposal_values: { ...metadata.proposal_values } }); }
 };
 const validationSandbox = {
   window: {
@@ -152,15 +153,31 @@ vm.runInContext(js, validationSandbox);
 validationSandbox.window.FarmaciaValidacion.enableRequestedAutocomplete();
 
 dom.get('fhOrigenEntrada').value = '';
-dom.get('fhDermaCip').value = 'CIP-SYN-DERMA';
-dom.get('fhDermaDosis').value = 'Dosis profesional';
-dom.get('fhDermaVia').value = 'Oral';
+dom.get('fhDermaCip').value = '';
+dom.get('fhDermaDosis').value = '';
+dom.get('fhDermaVia').value = '';
 dom.get('fhDermaPauta').value = 'PAUTA-MANUAL';
 dom.get('fhDermaInduccion').value = 'si';
 dom.get('fhDermaJustificacion').value = 'Justificación profesional';
 dom.get('fhDermaFarmaco').value = 'marca';
 dom.get('fhDermaFarmaco').dispatchEvent({ type: 'input' });
-check(dom.get('fhDermaDosis').value === 'Dosis profesional' && dom.get('fhDermaVia').value === 'Oral', 'Escribir en solicitado Dermatología no muta dosis ni vía');
+check(dom.get('fhDermaDosis').value === '' && dom.get('fhDermaVia').value === '', 'Escribir en solicitado Dermatología no muta dosis ni vía');
+dom.get('autocompleteDropdown').children[0].click();
+check(dom.get('fhDermaFarmaco').value === products[0].display_name && dom.get('fhDermaPrincipioActivo').value === 'Activo A' && dom.get('fhDermaDosis').value === '300 mg' && dom.get('fhDermaVia').value === 'IV', 'Click con contexto vacío aplica identidad, principio activo, dosis y vía visibles');
+check(persistenceCalls.getSnapshot === 0 && persistenceCalls.selectDrug === 0 && snapshots.size === 0, 'Contexto vacío omite lectura y persistencia de snapshot');
+check(dom.get('fhDermaPauta').value === 'PAUTA-MANUAL' && dom.get('fhDermaInduccion').value === 'si', 'Selección con contexto vacío preserva pauta e inducción');
+
+dom.get('fhDermaCip').value = 'CIP-SYN-DERMA';
+dom.get('fhDermaFarmaco').value = 'marca';
+dom.get('fhDermaFarmaco').dispatchEvent({ type: 'input' });
+dom.get('autocompleteDropdown').children[1].click();
+check(persistenceCalls.getSnapshot === 1 && persistenceCalls.selectDrug === 1 && snapshots.size === 1, 'Selección concreta posterior con contexto válido persiste por el flujo público');
+check(dom.get('fhDermaPauta').value === 'PAUTA-MANUAL' && dom.get('fhDermaInduccion').value === 'si', 'Selección posterior preserva pauta e inducción');
+
+dom.get('fhDermaDosis').value = 'Dosis profesional';
+dom.get('fhDermaVia').value = 'Oral';
+dom.get('fhDermaFarmaco').value = 'marca';
+dom.get('fhDermaFarmaco').dispatchEvent({ type: 'input' });
 dom.get('autocompleteDropdown').children[0].click();
 check(dom.get('fhDermaFarmaco').value === products[0].display_name && dom.get('fhDermaPrincipioActivo').value === 'Activo A', 'Click en Dermatología sustituye el fragmento por la identidad de catálogo');
 check(dom.get('fhDermaDosis').value === 'Dosis profesional' && dom.get('fhDermaVia').value === 'Oral' && dom.get('fhDermaPauta').value === 'PAUTA-MANUAL' && dom.get('fhDermaInduccion').value === 'si' && dom.get('fhDermaJustificacion').value === 'Justificación profesional', 'Selección Dermatología preserva edición profesional, pauta, inducción y justificación');

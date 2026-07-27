@@ -591,15 +591,15 @@
         var C = getCatalog();
         if (C && C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(d)) return;
         var context = followupCatalogContext('', uid);
-        if (C && C.snapshotContextKey && !C.snapshotContextKey(context)) return;
-        var previous = C && C.getSnapshot ? C.getSnapshot(context) : null;
+        var contextValid = !C || typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
+        var previous = contextValid && C && typeof C.getSnapshot === 'function' ? C.getSnapshot(context) : null;
         var reconciled = mergeRelatedTreatmentCatalogIdentity(existing, d, previous);
         Object.keys(reconciled.values).forEach(function (key) { existing[key] = reconciled.values[key]; });
         Object.keys(reconciled.values).forEach(function (key) {
             var control = document.querySelector('[data-uid="' + uid + '"][data-field="' + key + '"]');
             if (control) control.value = reconciled.values[key] || '';
         });
-        if (C && C.selectDrug) C.selectDrug(d, context, reconciled);
+        if (contextValid && C && typeof C.selectDrug === 'function') C.selectDrug(d, context, reconciled);
     }
 
     function clearOtherDrugDropdown(dropdownId) {
@@ -1544,8 +1544,8 @@
         if (currentBiologicLines.length) return;
         var helper = getTreatmentHelper();
         var context = followupCatalogContext('seguimiento.tratamiento');
-        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
-        var previous = C.getSnapshot(context);
+        var contextValid = typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
+        var previous = contextValid && typeof C.getSnapshot === 'function' ? C.getSnapshot(context) : null;
         var reconciled = helper && typeof helper.reconcileCatalogSelection === 'function'
             ? helper.reconcileCatalogSelection({
                 farmaco_nombre: fv('fhSegFarmaco'),
@@ -1557,8 +1557,6 @@
                 nregistro: fv('fhSegNregistro')
             }, previous, drug, context.slot)
             : { values: {}, proposal_values: {} };
-        C.selectDrug(drug, context, reconciled);
-
         setSegValue('fhSegFarmaco', reconciled.values.farmaco_nombre || '');
         setSegValue('fhSegPrincipioActivo', reconciled.values.principio_activo || '');
         F.setText('fhSegCimaContextPrincipioActivo', reconciled.values.principio_activo || '\u2014');
@@ -1583,6 +1581,7 @@
         if (isTruthyRobust(drug.es_hospitalario)) tags.push('Hospitalario');
         if (isTruthyRobust(drug.biosimilar)) tags.push('Biosimilar');
         setSegValue('fhSegEtiquetas', tags.length ? tags.join(', ') : '\u2014');
+        if (contextValid && typeof C.selectDrug === 'function') C.selectDrug(drug, context, reconciled);
 
         clearSegDrugAutocompleteDropdown();
         var searchInput = document.getElementById('fhSegDrugSearch');
