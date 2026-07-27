@@ -82,6 +82,9 @@
     var followupOtherDrugSeq = 0;
     var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
     var LINE_DISCARD_MESSAGE = 'Esta línea contiene datos introducidos en la visita actual. Si la desmarca, se perderán.';
+    var SUSPECT_DISCARD_MESSAGE = 'Este fármaco tiene una evaluación de causalidad en la visita actual. Si lo desmarca, se perderá.';
+    var RELATED_DISCARD_MESSAGE = 'Este tratamiento está vinculado al efecto adverso o tiene una evaluación de causalidad. Si lo elimina, se perderán esos datos.';
+    var EA_DISABLE_MESSAGE = 'Al desactivar el efecto adverso se eliminarán los sospechosos y las evaluaciones de causalidad de esta visita.';
     var LINE_CONTROL_IDS = ['fhSegTipoRelacionTerapia', 'fhSegOptimiza', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegMotivoOpt', 'fhSegSuspension', 'fhSegMotivoSusp', 'fhSegObservacionesLinea'];
     var LINE_CONTROL_DEFAULTS = {
         fhSegTipoRelacionTerapia: 'sin_cambios', fhSegOptimiza: 'No', fhSegNuevaDosis: '',
@@ -262,6 +265,7 @@
             selected_drug_id: line.selected_drug_id || '',
             fuente: line.fuente || '',
             etiquetas: line.etiquetas == null ? '' : line.etiquetas,
+            candidate_explicit: line.candidate_explicit !== false,
             estado_linea: overrides.estado_linea || canonicalLineStatus(line.estado_linea),
             tipo_relacion: overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion),
             es_principal: (overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion)) === 'primary',
@@ -294,6 +298,7 @@
         if (Object.prototype.hasOwnProperty.call(DEMO_LINE_CONTRACT, patient.cip)) {
             return DEMO_LINE_CONTRACT[patient.cip].map(function (contractLine) {
                 var source = findPatientLineById(patient, contractLine.linea_id);
+                var explicitCandidate = !!source;
                 if (!source) source = {
                     linea_id: contractLine.linea_id,
                     farmaco_nombre: patient.farmaco || '',
@@ -304,6 +309,7 @@
                     fecha_inicio: patient.primeraVisita || ''
                 };
                 var merged = Object.assign({}, source, contractLine);
+                merged.candidate_explicit = explicitCandidate;
                 return normalizeBiologicLine(merged, patient, contractLine);
             });
         }
@@ -331,7 +337,9 @@
         currentFollowupVisit = {
             cip: String(cip || '').trim(),
             visit_id: 'FH-VISIT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
-            selected_line_ids: [], editing_line_id: '', line_state: {}
+            selected_line_ids: [], editing_line_id: '', line_state: {},
+            adverse_event: { present: 'no_consta', severity: '', resolved: 'no_consta', corrected: 'no_consta', observations: '', suspect_ids: [], causality_editing_id: '' },
+            causality_by_suspect: {}
         };
         return currentFollowupVisit;
     }
@@ -415,12 +423,15 @@
 
     function updateExportInterlock() {
         var count = currentFollowupVisit ? currentFollowupVisit.selected_line_ids.length : 0;
+        var suspectCount = currentFollowupVisit ? currentFollowupVisit.adverse_event.suspect_ids.length : 0;
         ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn'].forEach(function (id) {
             var button = byId(id);
-            if (button) button.disabled = count !== 1;
+            if (button) button.disabled = count !== 1 || suspectCount > 1;
         });
         var warning = byId('fhSegMultilineExportWarning');
         if (warning) warning.classList.toggle('hidden', count < 2);
+        var suspectWarning = byId('fhSegMultiSuspectExportWarning');
+        if (suspectWarning) suspectWarning.classList.toggle('hidden', suspectCount < 2);
     }
 
     function setEditingLine(lineId) {
@@ -480,8 +491,7 @@
             sourceType: '',
             fechaInicio: '',
             fechaFin: '',
-            motivo: '',
-            sospechosoEa: 'No consta'
+            motivo: ''
         };
     }
 
@@ -545,19 +555,27 @@
         return wrapper;
     }
 
+    function deleteFollowupOtherDrug(uid) {
+        var drug = followupOtherDrugs.find(function (item) { return item.uid === uid; });
+        if (!drug) return false;
+        var suspectId = 'other:' + uid;
+        var linked = currentFollowupVisit && (currentFollowupVisit.adverse_event.suspect_ids.indexOf(suspectId) >= 0 || currentFollowupVisit.causality_by_suspect[suspectId]);
+        if (linked && !window.confirm(RELATED_DISCARD_MESSAGE)) return false;
+        var C = getCatalog();
+        if (C && C.clearSnapshot) C.clearSnapshot(followupCatalogContext('', uid));
+        followupOtherDrugs = followupOtherDrugs.filter(function (item) { return item.uid !== uid; });
+        removeSuspectData(suspectId);
+        renderFollowupOtherDrugs(); updateSuspectDrugSelector();
+        return true;
+    }
+
     function renderFollowupOtherDrugRow(drug) {
         var card = createElement('section', 'other-drug-card');
         var header = createElement('div', 'other-drug-card__header');
         header.appendChild(createElement('h4', 'other-drug-card__title', 'Tratamiento relacionado'));
         var removeBtn = createElement('button', 'btn btn-outline btn-remove-drug', 'Eliminar');
         removeBtn.type = 'button';
-        removeBtn.addEventListener('click', function () {
-            var C = getCatalog();
-            if (C && C.clearSnapshot) C.clearSnapshot(followupCatalogContext('', drug.uid));
-            followupOtherDrugs = followupOtherDrugs.filter(function (item) { return item.uid !== drug.uid; });
-            renderFollowupOtherDrugs();
-            updateSuspectDrugSelector();
-        });
+        removeBtn.addEventListener('click', function () { deleteFollowupOtherDrug(drug.uid); });
         header.appendChild(removeBtn);
         card.appendChild(header);
 
@@ -643,12 +661,6 @@
             input.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, field.key, this.value); });
             grid.appendChild(buildFollowupField(field.label, input));
         });
-
-        var suspectSelect = buildSelectControl(['No consta', 'No', 'Sí'], drug.sospechosoEa);
-        suspectSelect.setAttribute('data-field', 'sospechosoEa');
-        suspectSelect.setAttribute('data-uid', drug.uid);
-        suspectSelect.addEventListener('change', function () { updateFollowupOtherDrug(drug.uid, 'sospechosoEa', this.value); });
-        grid.appendChild(buildFollowupField('Sospechoso de EA', suspectSelect));
 
         card.appendChild(grid);
         return card;
@@ -864,10 +876,6 @@
             tipo_movimiento = '';
             estado_linea = 'no_aplica';
         }
-        if (drug.sospechosoEa === 'Sí') {
-            relation = 'sospechoso_ea';
-            if (!estado_linea) estado_linea = 'no_aplica';
-        }
         return {
             tipo_relacion: relation,
             estado_linea: estado_linea,
@@ -880,6 +888,7 @@
         var seenIds = {};
         // Añadir todas las líneas biológicas (principales, activas, históricas)
         currentBiologicLines.forEach(function (line) {
+            if (!line.linea_id || line.candidate_explicit === false) return;
             var id = 'line:' + line.linea_id;
             if (seenIds[id]) return;
             seenIds[id] = true;
@@ -908,55 +917,14 @@
                 prioridad: linePriority
             });
         });
-        // Fallback DOM: leer tratamiento actual directamente si no hay líneas cargadas
-        if (!candidates.length) {
-            var fhSegFarmaco = byId('fhSegFarmaco');
-            var fhSegPrincipioActivo = byId('fhSegPrincipioActivo');
-            var domName = (fhSegFarmaco && fhSegFarmaco.value) || (fhSegPrincipioActivo && fhSegPrincipioActivo.value) || '';
-            if (domName) {
-                var domId = 'dom:current-treatment';
-                if (!seenIds[domId]) {
-                    seenIds[domId] = true;
-                    candidates.push({
-                        id: domId,
-                        category: 'Tratamiento principal',
-                        label: domName + ' — Tratamiento principal',
-                        source: 'principal',
-                        tipo_relacion: 'principal',
-                        prioridad: 1
-                    });
-                }
-            }
-            // Fallback adicional: línea seleccionada actual en el select
-            var selectedLine = getCurrentSelectedLine();
-            if (selectedLine) {
-                var sid = 'line:' + selectedLine.linea_id;
-                if (!seenIds[sid]) {
-                    seenIds[sid] = true;
-                    var sName = selectedLine.nombre_linea || selectedLine.farmaco_nombre || selectedLine.nombre_comercial || selectedLine.principio_activo || '';
-                    candidates.push({
-                        id: sid,
-                        category: 'Biológico activo',
-                        label: sName ? (sName + ' — Biológico activo') : 'Tratamiento principal',
-                        source: 'principal',
-                        tipo_relacion: selectedLine.tipo_relacion || 'principal',
-                        prioridad: 1
-                    });
-                }
-            }
-        }
         // Añadir todos los otros fármacos (existentes, concomitantes, históricos, exposiciones)
         followupOtherDrugs.forEach(function (drug) {
-            var name = drug.farmaco || drug.principioActivo;
-            if (!name) return;
+            var name = drug.farmaco || drug.principioActivo || 'Tratamiento relacionado ' + drug.uid;
             var oid = 'other:' + drug.uid;
             if (seenIds[oid]) return;
             seenIds[oid] = true;
             var contract = mapOtherDrugToContract(drug);
             var category = normalizeFollowupDrugCategory(drug.relationType);
-            if (contract.tipo_relacion === 'sospechoso_ea') {
-                category = 'Sospechoso de EA';
-            }
             var p = 5;
             if (contract.tipo_relacion === 'concomitante') p = 3;
             else if (contract.tipo_relacion === 'adicional') p = 4;
@@ -974,14 +942,14 @@
         return candidates;
     }
 
-    function updateLegacySuspectSummary(candidates, selectedValue) {
+    function updateLegacySuspectSummary(candidates) {
         var container = byId('fhSegEaSospechosos');
         if (!container) return;
         F.clearChildren(container);
         var text = 'Sin fármacos relevantes disponibles.';
         if (candidates.length) {
-            var selected = candidates.find(function (candidate) { return candidate.id === selectedValue; });
-            text = 'Contexto de sospecha: ' + (selected ? selected.label : candidates.map(function (candidate) { return candidate.label; }).join(' | '));
+            var marked = currentFollowupVisit ? currentFollowupVisit.adverse_event.suspect_ids : [];
+            text = marked.length ? 'Sospechosos marcados: ' + candidates.filter(function (candidate) { return marked.indexOf(candidate.id) >= 0; }).map(function (candidate) { return candidate.label; }).join(' | ') : 'Ningún fármaco marcado como sospechoso.';
         }
         container.appendChild(document.createTextNode(text));
     }
@@ -989,53 +957,153 @@
     function updateSuspectDrugSelector() {
         var row = byId('fhSeguimientoEaFarmacoRow');
         var select = byId('fhSeguimientoEaFarmacoSospechoso');
-        var notice = byId('fhSeguimientoEaFarmacoDefaultNotice');
-        if (!row || !select || !notice) return;
+        var list = byId('fhSeguimientoEaSuspectCandidates');
+        if (!row || !select || !list || !currentFollowupVisit) return;
         var candidates = getRelevantDrugCandidates();
-        var currentValue = select.value;
+        var adverse = currentFollowupVisit.adverse_event;
+        var previousSuspects = adverse.suspect_ids.slice();
+        adverse.suspect_ids = adverse.suspect_ids.filter(function (id) { return candidates.some(function (candidate) { return candidate.id === id; }); });
+        previousSuspects.forEach(function (id) { if (adverse.suspect_ids.indexOf(id) < 0) delete currentFollowupVisit.causality_by_suspect[id]; });
+        if (previousSuspects.length !== adverse.suspect_ids.length) adverse.causality_editing_id = adverse.suspect_ids.length === 1 ? adverse.suspect_ids[0] : '';
+        F.clearChildren(list);
+        candidates.forEach(function (candidate) {
+            var label = createElement('label', 'ea-suspect-option');
+            var checkbox = createElement('input');
+            checkbox.type = 'checkbox'; checkbox.value = candidate.id;
+            checkbox.checked = adverse.suspect_ids.indexOf(candidate.id) >= 0;
+            checkbox.addEventListener('change', function () { toggleEaSuspect(candidate.id, checkbox.checked); });
+            label.appendChild(checkbox); label.appendChild(document.createTextNode(candidate.label)); list.appendChild(label);
+        });
         F.clearChildren(select);
-        var autoSelected = '';
         var placeholder = document.createElement('option');
         placeholder.value = '';
-        placeholder.textContent = 'No seleccionado';
+        placeholder.textContent = 'Seleccionar sospechoso...';
         select.appendChild(placeholder);
-        candidates.forEach(function (candidate) {
+        candidates.filter(function (candidate) { return adverse.suspect_ids.indexOf(candidate.id) >= 0; }).forEach(function (candidate) {
             var option = document.createElement('option');
             option.value = candidate.id;
             option.textContent = candidate.label;
-            if (candidate.id === currentValue) option.selected = true;
             select.appendChild(option);
         });
-        if (candidates.length > 1) {
-            var unassigned = document.createElement('option');
-            unassigned.value = 'multiple:unassigned';
-            unassigned.textContent = 'No se puede atribuir a un único fármaco';
-            if (currentValue === unassigned.value) unassigned.selected = true;
-            select.appendChild(unassigned);
-        }
-        if (candidates.length === 1) {
-            autoSelected = candidates[0].id;
-            select.value = autoSelected;
-            notice.textContent = 'Fármaco sospechoso por defecto: ' + candidates[0].label;
-            notice.classList.remove('hidden');
-        } else {
-            notice.textContent = '';
-            notice.classList.add('hidden');
-            if (currentValue && Array.from(select.options).some(function (opt) { return opt.value === currentValue; })) {
-                select.value = currentValue;
-            } else {
-                select.value = '';
-            }
-        }
-        updateLegacySuspectSummary(candidates, select.value || autoSelected);
+        if (adverse.suspect_ids.indexOf(adverse.causality_editing_id) < 0) adverse.causality_editing_id = '';
+        select.value = adverse.causality_editing_id;
+        select.disabled = adverse.suspect_ids.length === 0;
+        updateLegacySuspectSummary(candidates);
         updateCausalityContextLabels();
+        updateCausalityVisibility();
+        updateExportInterlock();
     }
 
     function getSelectedSuspectDrugLabel() {
         var select = byId('fhSeguimientoEaFarmacoSospechoso');
         if (!select) return '—';
         var option = select.options[select.selectedIndex];
-        return option && option.text ? option.text : '—';
+        return option && (option.text || option.textContent) ? (option.text || option.textContent) : '—';
+    }
+
+    function blankCausalityState() {
+        return { naranjo_answers: {}, naranjo_score: 0, naranjo_category: 'Dudosa', karch_answers: {}, karch_category: 'No clasificable', final_assessment: 'No evaluada' };
+    }
+
+    function causalityStateIsDirty(state) {
+        if (!state) return false;
+        return Object.keys(state.naranjo_answers || {}).some(function (key) { return state.naranjo_answers[key] !== 'desconocido'; }) ||
+            Object.keys(state.karch_answers || {}).some(function (key) { return state.karch_answers[key] !== 'no_se_sabe'; }) ||
+            !!state.final_assessment && state.final_assessment !== 'No evaluada';
+    }
+
+    function captureCausalityEditor() {
+        if (!currentFollowupVisit) return;
+        var id = currentFollowupVisit.adverse_event.causality_editing_id;
+        if (!id) return;
+        currentFollowupVisit.causality_by_suspect[id] = {
+            naranjo_answers: readNaranjoAnswersFromDom(),
+            naranjo_score: Number(byId('naranjoScore').textContent || 0),
+            naranjo_category: byId('naranjoCategoria').textContent || 'Dudosa',
+            karch_answers: readKarchLasagnaAnswersFromDom(),
+            karch_category: byId('klCategoria').textContent || 'No clasificable',
+            final_assessment: byId('fhCausalidadFinal').value || 'No evaluada'
+        };
+    }
+
+    function setCausalityAnswers(prefix, answers, defaultValue) {
+        document.querySelectorAll('.causality-chip-group[data-answer-id^="' + prefix + '"]').forEach(function (group) {
+            var key = group.getAttribute('data-answer-id');
+            var value = answers && answers[key.replace(prefix === 'naranjo' ? 'naranjoQ' : 'kl', prefix === 'naranjo' ? 'q' : '').replace(/^./, function (c) { return c.toLowerCase(); })];
+            if (prefix === 'kl') {
+                var klKeys = { klTemporal: 'temporal', klConocido: 'conocido', klAlternativa: 'alternativa', klSuspendido: 'suspendido', klMejoraRetirada: 'mejoraRetirada', klReadministracion: 'readministracion', klReaparece: 'reaparece' };
+                value = answers && answers[klKeys[key]];
+            }
+            group.querySelectorAll('.causality-chip').forEach(function (chip) {
+                chip.classList.toggle('causality-chip--active', chip.getAttribute('data-value') === (value || defaultValue));
+                chip.disabled = !currentFollowupVisit.adverse_event.causality_editing_id;
+            });
+        });
+    }
+
+    function restoreCausalityEditor() {
+        var id = currentFollowupVisit && currentFollowupVisit.adverse_event.causality_editing_id;
+        var state = id && currentFollowupVisit.causality_by_suspect[id] || blankCausalityState();
+        setCausalityAnswers('naranjo', state.naranjo_answers, 'desconocido');
+        setCausalityAnswers('kl', state.karch_answers, 'no_se_sabe');
+        F.setText('naranjoScore', String(state.naranjo_score));
+        F.setText('naranjoCategoria', state.naranjo_category);
+        F.setText('klCategoria', state.karch_category);
+        var finalEl = byId('fhCausalidadFinal');
+        if (finalEl) { finalEl.value = state.final_assessment; finalEl.disabled = !id; }
+        updateFollowupCausalitySummary();
+    }
+
+    function setCausalityEditor(id) {
+        if (!currentFollowupVisit) return false;
+        captureCausalityEditor();
+        var suspects = currentFollowupVisit.adverse_event.suspect_ids;
+        currentFollowupVisit.adverse_event.causality_editing_id = suspects.indexOf(id) >= 0 ? id : '';
+        updateSuspectDrugSelector();
+        restoreCausalityEditor();
+        return !!currentFollowupVisit.adverse_event.causality_editing_id;
+    }
+
+    function removeSuspectData(id) {
+        if (!currentFollowupVisit) return;
+        var adverse = currentFollowupVisit.adverse_event;
+        adverse.suspect_ids = adverse.suspect_ids.filter(function (item) { return item !== id; });
+        delete currentFollowupVisit.causality_by_suspect[id];
+        adverse.causality_editing_id = adverse.suspect_ids.length === 1 ? adverse.suspect_ids[0] : '';
+    }
+
+    function toggleEaSuspect(id, selected) {
+        if (!currentFollowupVisit || !getRelevantDrugCandidates().some(function (candidate) { return candidate.id === id; })) return false;
+        captureCausalityEditor();
+        var adverse = currentFollowupVisit.adverse_event;
+        var index = adverse.suspect_ids.indexOf(id);
+        if (selected && index < 0) {
+            var priorCount = adverse.suspect_ids.length;
+            adverse.suspect_ids.push(id);
+            adverse.causality_editing_id = priorCount === 0 ? id : (priorCount === 1 ? '' : adverse.causality_editing_id);
+        } else if (!selected && index >= 0) {
+            if (causalityStateIsDirty(currentFollowupVisit.causality_by_suspect[id]) && !window.confirm(SUSPECT_DISCARD_MESSAGE)) { updateSuspectDrugSelector(); return false; }
+            removeSuspectData(id);
+        }
+        updateSuspectDrugSelector();
+        restoreCausalityEditor();
+        return true;
+    }
+
+    function updateCausalityVisibility() {
+        var active = !!currentFollowupVisit && currentFollowupVisit.adverse_event.present === 'si';
+        var editing = active && !!currentFollowupVisit.adverse_event.causality_editing_id;
+        ['modSeguimientoCausalidad', 'modNaranjo', 'modKarchLasagna', 'modResumenCausalidad'].forEach(function (id) {
+            var section = byId(id); if (section) section.classList.toggle('hidden', !editing);
+        });
+    }
+
+    function captureCommonAdverseEvent() {
+        if (!currentFollowupVisit) return;
+        var adverse = currentFollowupVisit.adverse_event;
+        adverse.present = fv('fhSeguimientoEaPresente') || 'no_consta';
+        adverse.severity = fv('fhSeguimientoEaGravedad'); adverse.resolved = fv('fhSeguimientoEaResuelto') || 'no_consta';
+        adverse.corrected = fv('fhSeguimientoEaCorregido') || 'no_consta'; adverse.observations = fv('fhSeguimientoEaObservaciones');
     }
 
     function readNaranjoAnswersFromDom() {
@@ -1074,12 +1142,14 @@
         var category = M.categorizeNaranjo(score);
         byId('naranjoScore').textContent = String(score);
         byId('naranjoCategoria').textContent = category;
+        captureCausalityEditor();
         updateFollowupCausalitySummary();
     }
 
     function updateKarchLasagna() {
         if (!M) return;
         byId('klCategoria').textContent = M.categorizeKarchLasagna(readKarchLasagnaAnswersFromDom());
+        captureCausalityEditor();
         updateFollowupCausalitySummary();
     }
 
@@ -1097,25 +1167,25 @@
         updateCausalityContextLabels();
         byId('resumenNaranjo').textContent = byId('naranjoScore').textContent + ' · ' + byId('naranjoCategoria').textContent;
         byId('resumenKl').textContent = byId('klCategoria').textContent;
-        if (byId('fhSeguimientoEaPresente').value !== 'si') {
-            byId('fhCausalidadFinal').value = 'No evaluada';
-        }
     }
 
     function toggleFollowupEaFlow() {
         var value = byId('fhSeguimientoEaPresente').value;
+        var adverse = currentFollowupVisit && currentFollowupVisit.adverse_event;
+        if (adverse && adverse.present === 'si' && value !== 'si' && (adverse.suspect_ids.length || Object.keys(currentFollowupVisit.causality_by_suspect).length)) {
+            if (!window.confirm(EA_DISABLE_MESSAGE)) { byId('fhSeguimientoEaPresente').value = 'si'; return; }
+            adverse.suspect_ids = []; adverse.causality_editing_id = ''; currentFollowupVisit.causality_by_suspect = {};
+        }
+        captureCommonAdverseEvent();
         var active = value === 'si';
         ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
             var row = byId(id);
             if (row) row.classList.toggle('hidden', !active);
         });
-        ['modSeguimientoCausalidad', 'modNaranjo', 'modKarchLasagna', 'modResumenCausalidad'].forEach(function (id) {
-            var section = byId(id);
-            if (section) section.classList.toggle('hidden', !active);
-        });
         byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
         byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
         updateSuspectDrugSelector();
+        restoreCausalityEditor();
         updateFollowupCausalitySummary();
     }
 
@@ -1557,11 +1627,13 @@
         var hasVisitLineData = !!visibleLineState && lineStateIsDirty(visibleLineState) || !!currentFollowupVisit && Object.keys(currentFollowupVisit.line_state).some(function (lineId) {
             return lineStateIsDirty(currentFollowupVisit.line_state[lineId]);
         });
+        var adverse = currentFollowupVisit && currentFollowupVisit.adverse_event;
+        var hasAdverseData = !!adverse && (adverse.present === 'si' || adverse.severity || adverse.resolved !== 'no_consta' || adverse.corrected !== 'no_consta' || adverse.observations || adverse.suspect_ids.length || Object.keys(currentFollowupVisit.causality_by_suspect).length);
         return followupOtherDrugs.length > 0 || ids.some(function (id) {
             var value = fv(id);
             if (id === 'fhSegOrigenCatalogo' && value === 'Demo' && !currentSegPatient) return false;
             return !!value;
-        }) || !!proms && proms !== 'No recogido' || hasVisitLineData;
+        }) || !!proms && proms !== 'No recogido' || hasVisitLineData || hasAdverseData;
     }
 
     function resetPatientContext(requestedCip) {
@@ -2374,6 +2446,8 @@
         },
         addFollowupOtherDrug: addFollowupOtherDrug,
         getFollowupOtherDrugs: function () { return JSON.parse(JSON.stringify(followupOtherDrugs)); },
+        updateFollowupOtherDrug: updateFollowupOtherDrug,
+        deleteFollowupOtherDrug: deleteFollowupOtherDrug,
         mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
         mapRelatedTreatmentToContract: mapOtherDrugToContract,
         getCanonicalLinesForPatient: function (patient) { return getPatientBiologicLines(patient).map(function (line) { return Object.assign({}, line); }); },
@@ -2382,6 +2456,12 @@
         selectLineById: selectBiologicLineById,
         toggleLineSelection: toggleBiologicLineSelection,
         captureEditingLineState: captureEditingLineState,
+        toggleEaSuspect: toggleEaSuspect,
+        setCausalityEditor: setCausalityEditor,
+        captureCausalityEditor: captureCausalityEditor,
+        captureCommonAdverseEvent: captureCommonAdverseEvent,
+        refreshEaCandidates: updateSuspectDrugSelector,
+        setEaPresent: function (value) { var el = byId('fhSeguimientoEaPresente'); if (!el) return; el.value = value; toggleFollowupEaFlow(); },
         syncLinesForPatient: syncBiologicControls,
         canonicalRelationship: canonicalRelationship,
         canonicalLineStatus: canonicalLineStatus
@@ -2395,15 +2475,8 @@
         populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
         populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
 
-        // Demo FH-004: pre-activar causalidad si el paciente tiene EA registrado
         var demoCtx = F.getQueryContext();
         if (demoCtx.cip === "CIP-DEMO-FH-004") {
-            var eaSelect = document.getElementById("fhSeguimientoEaPresente");
-            if (eaSelect && eaSelect.value !== "si") {
-                eaSelect.value = "si";
-                eaSelect.dispatchEvent(new Event('change'));
-            }
-
             // Demo FH-004: pre-activar PROMs si el paciente tiene datos registrados
             var promsSelect = document.getElementById('fhSegProms');
             if (promsSelect) {
@@ -2431,11 +2504,15 @@
         if (lineaPrincipal) lineaPrincipal.addEventListener('change', function () { setEditingLine(lineaPrincipal.value); });
         var eaSelector = document.getElementById('fhSeguimientoEaPresente');
         if (eaSelector) eaSelector.addEventListener('change', updateEaCausalidad);
-        ['fhSeguimientoEaGravedad', 'fhSeguimientoEaResuelto', 'fhSeguimientoEaObservaciones', 'fhSeguimientoEaFarmacoSospechoso'].forEach(function (id) {
+        ['fhSeguimientoEaGravedad', 'fhSeguimientoEaResuelto', 'fhSeguimientoEaCorregido', 'fhSeguimientoEaObservaciones'].forEach(function (id) {
             var el = document.getElementById(id);
             if (!el) return;
-            el.addEventListener(el.tagName === 'TEXTAREA' ? 'input' : 'change', updateFollowupCausalitySummary);
+            el.addEventListener(el.tagName === 'TEXTAREA' ? 'input' : 'change', function () { captureCommonAdverseEvent(); updateFollowupCausalitySummary(); });
         });
+        var suspectEditor = byId('fhSeguimientoEaFarmacoSospechoso');
+        if (suspectEditor) suspectEditor.addEventListener('change', function () { setCausalityEditor(suspectEditor.value); });
+        var finalAssessment = byId('fhCausalidadFinal');
+        if (finalAssessment) finalAssessment.addEventListener('change', captureCausalityEditor);
         document.querySelectorAll('.causality-chip-group[data-answer-id^="naranjo"]').forEach(function (group) {
             group.addEventListener('click', function (e) {
                 var btn = e.target.closest('.causality-chip');

@@ -410,10 +410,10 @@ assert(js.includes("relation = 'exposicion'"), 'Exposición mapea tipo_relacion 
 assert(js.includes("estado_linea = 'historico'"), 'Histórico mantiene estado_linea historico');
 assert(js.includes("estado_linea = 'no_aplica'"), 'Exposición mantiene estado_linea no_aplica');
 
-// 26. Sospechoso de EA no se mezcla con principal/concomitante
-assert(js.includes("relation = 'sospechoso_ea'"), 'Sospechoso EA mapea tipo_relacion a sospechoso_ea');
-assert(js.includes("if (drug.sospechosoEa === 'Sí')"), 'Sospechoso EA se evalúa explícitamente');
-// mapOtherDrugToContract no asigna relation = 'principal' (el fallback DOM sí tiene tipo_relacion: 'principal' para tratamiento)
+// 26. Sospecha de EA no se mezcla con la relación terapéutica
+assert(!js.includes("relation = 'sospechoso_ea'"), 'Sospecha EA no reescribe tipo_relacion');
+assert(!js.includes("if (drug.sospechosoEa === 'Sí')"), 'Tratamiento relacionado no mantiene una segunda verdad de sospecha');
+// mapOtherDrugToContract no asigna relation = 'principal'
 var mdcMatch = js.match(/function mapOtherDrugToContract[\s\S]*?^    \}/m);
 var mdcBody = mdcMatch ? mdcMatch[0] : '';
 assert(mdcBody.indexOf("relation = 'principal'") === -1, 'mapOtherDrugToContract no asigna tipo_relacion principal a otros fármacos');
@@ -457,10 +457,10 @@ assert(html.includes('fhSegLineaPrincipal'), 'Selector de línea principal conse
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento conservado');
 assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual se normaliza sin crear nueva línea');
 
-// 35. WO7F.2 — getRelevantDrugCandidates tiene fallback DOM para tratamiento actual
-assert(js.includes('dom:current-treatment'), 'getRelevantDrugCandidates tiene fallback DOM para tratamiento');
-assert(js.includes('fhSegFarmaco'), 'Fallback DOM lee fhSegFarmaco');
-assert(js.includes('fhSegPrincipioActivo'), 'Fallback DOM lee fhSegPrincipioActivo');
+// 35. PR57C — candidatos exclusivamente canónicos
+assert(!js.includes('dom:current-treatment'), 'getRelevantDrugCandidates no fabrica candidato DOM');
+assert(js.includes("'line:' + line.linea_id"), 'Candidatos de línea usan identidad line:<linea_id>');
+assert(js.includes("'other:' + drug.uid"), 'Candidatos relacionados usan identidad other:<uid>');
 
 // 36. Labels legibles sin corchetes (formato "Nombre — Categoría")
 assert(!js.includes("'[Biológico activo] '"), 'Labels sin corchetes en getRelevantDrugCandidates');
@@ -473,7 +473,7 @@ assert(js.includes('getRelevantDrugCandidates();'), 'updateSuspectDrugSelector u
 // 38. Candidatos incluyen todos los orígenes documentados
 assert(js.includes("Añadir todas las líneas biológicas"), 'Código documenta inclusión de todas las líneas');
 assert(js.includes("todos los otros fármacos"), 'Código documenta inclusión de otros fármacos');
-assert(js.includes("Fallback DOM"), 'Código documenta fallback DOM');
+assert(!js.includes("Fallback DOM"), 'Código elimina el fallback DOM no canónico');
 
 // 39. No hay otra función que sobrescriba el desplegable visible
 // updateSuspectDrugSelector es la única que escribe en fhSeguimientoEaFarmacoSospechoso
@@ -563,19 +563,19 @@ assert(rdcBody.includes("'concomitante') p = 3"),
 assert(rdcBody.includes("'adicional') p = 4"),
     'Tratamiento activo previo conserva prioridad de línea adicional ya existente');
 
-// 57. If candidates.length > 0, fallback DOM no silencia otras líneas (verificación de no regresión)
-assert(js.includes("if (!candidates.length)"),
-    'Fallback DOM solo se activa si NO hay candidatos de currentBiologicLines');
+// 57. Las líneas no explícitas del contrato demo no se ofrecen como candidatas
+assert(rdcBody.includes("line.candidate_explicit === false"),
+    'Candidatos excluyen líneas no presentes explícitamente en el paciente');
 
 // 58. Selección inválida termina en null y nunca elige la primera línea
-assert(gcsBody.trim().endsWith('return null;\n    }'),
+assert(/return null;\r?\n    \}$/.test(gcsBody.trim()),
     'getCurrentSelectedLine termina de forma segura en null si linea_id no coincide');
 
-// 59. updateSuspectDrugSelector usa candidates.length > 1 para opción múltiple
-assert(js.includes('candidates.length > 1'),
-    'Selector de sospechoso EA maneja múltiples candidatos');
-assert(js.includes("candidates.length === 1"),
-    'Selector de sospechoso EA tiene lógica para candidato único');
+// 59. Sospechosos se marcan por checkbox y el editor solo contiene IDs marcados
+assert(js.includes("checkbox.type = 'checkbox'") && js.includes('adverse.suspect_ids.indexOf(candidate.id)'),
+    'Marcado de sospechosos es explícito y no autoselecciona candidatos');
+assert(js.includes("candidates.filter(function (candidate) { return adverse.suspect_ids.indexOf(candidate.id) >= 0; })"),
+    'Selector de causalidad se limita a sospechosos marcados');
 
 // --- PR57B: visita multilínea efímera e aislamiento de editor ---
 assert(html.includes('Línea que estás editando'), 'PR57B conserva la etiqueta exacta del editor único');
@@ -584,7 +584,7 @@ assert(js.includes('currentFollowupVisit') && js.includes('selected_line_ids') &
     'PR57B mantiene el modelo de visita y línea exclusivamente en memoria JS');
 assert(js.includes('captureEditingLineState();') && js.includes('restoreEditingLineState();'),
     'PR57B captura y restaura el editor al cambiar de línea');
-assert(js.includes('button.disabled = count !== 1'), 'PR57B bloquea salidas salvo con una línea seleccionada');
+assert(js.includes('button.disabled = count !== 1 || suspectCount > 1'), 'PR57B/PR57C bloquea salidas salvo una línea y como máximo un sospechoso');
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
