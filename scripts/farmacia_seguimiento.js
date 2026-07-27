@@ -63,7 +63,7 @@
     var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
 
     var FOLLOWUP_RELATION_OPTIONS = [
-        'Biológico activo adicional',
+        'Tratamiento activo previo / línea existente',
         'Biológico previo/histórico',
         'Concomitante',
         'Exposición'
@@ -341,7 +341,7 @@
     function renderFollowupOtherDrugRow(drug) {
         var card = createElement('section', 'other-drug-card');
         var header = createElement('div', 'other-drug-card__header');
-        header.appendChild(createElement('h4', 'other-drug-card__title', 'Fármaco concomitante'));
+        header.appendChild(createElement('h4', 'other-drug-card__title', 'Tratamiento relacionado'));
         var removeBtn = createElement('button', 'btn btn-outline btn-remove-drug', 'Eliminar');
         removeBtn.type = 'button';
         removeBtn.addEventListener('click', function () {
@@ -419,7 +419,7 @@
         origenInput.value = drug.origenCatalogo || '';
         origenInput.setAttribute('data-field', 'origenCatalogo');
         origenInput.setAttribute('data-uid', drug.uid);
-        origenInput.readOnly = true;
+        origenInput.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, 'origenCatalogo', this.value); });
         grid.appendChild(buildFollowupField('Origen catálogo', origenInput));
 
         [
@@ -507,16 +507,6 @@
         });
     }
 
-    function normalizeOtherDrugVia(value) {
-        if (!value) return '';
-        var key = String(value).toLowerCase().trim();
-        if (key === 'sc' || key === 'subcutánea' || key === 'subcutanea') return 'SC';
-        if (key === 'iv' || key === 'intravenosa') return 'IV';
-        if (key === 'oral' || key === 'vo' || key === 'v.o.' || key === 'v.o') return 'Oral';
-        if (key === 'im' || key === 'intramuscular') return 'IM';
-        return 'Otra';
-    }
-
     function setOtherDrugField(uid, key, value) {
         updateFollowupOtherDrug(uid, key, value);
         var input = document.querySelector('[data-uid="' + uid + '"][data-field="' + key + '"]');
@@ -529,20 +519,9 @@
         }
     }
 
-    function applyCatalogSelectionToOtherDrug(uid, d) {
-        var catalogVia = normalizeOtherDrugVia(d.via || '');
-        var pautaCodigo = '';
-        var pautaLabel = '';
-        var pautaOtro = '';
-        var pautaText = d.pauta || '';
-        if (pautaText && P && typeof P.normalizePautaLabel === 'function') {
-            var pautaObj = P.normalizePautaLabel(pautaText);
-            if (pautaObj && pautaObj.pauta_codigo) {
-                pautaCodigo = pautaObj.pauta_codigo;
-                pautaLabel = pautaObj.pauta_label || '';
-                pautaOtro = pautaObj.pauta_otro_texto || '';
-            }
-        }
+    function mergeRelatedTreatmentCatalogIdentity(existing, d) {
+        existing = existing || {};
+        d = d || {};
         var sourceType = String(d.source_type || '').toUpperCase();
         var origenLabel = '';
         if (sourceType === 'CIMA') origenLabel = 'CIMA';
@@ -550,23 +529,24 @@
         else if (sourceType === 'LOCAL_PENDIENTE_DEMO') origenLabel = 'Demo/local pendiente';
         else origenLabel = d.source_type || 'Demo';
 
-        setOtherDrugField(uid, 'farmaco', d.nombre_comercial || '');
-        setOtherDrugField(uid, 'principioActivo', d.principio_activo || '');
-        setOtherDrugField(uid, 'dosis', d.dosis || '');
-        setOtherDrugField(uid, 'presentacion', d.nombre_presentacion || '');
-        setOtherDrugField(uid, 'via', catalogVia);
-        setOtherDrugField(uid, 'pautaCodigo', pautaCodigo);
-        setOtherDrugField(uid, 'pauta', pautaLabel);
-        setOtherDrugField(uid, 'pautaOtro', pautaOtro);
-        setOtherDrugField(uid, 'codigoNacional', d.codigo_nacional || '');
-        setOtherDrugField(uid, 'nregistro', d.nregistro || '');
-        setOtherDrugField(uid, 'origenCatalogo', origenLabel);
-        setOtherDrugField(uid, 'sourceType', sourceType);
+        return {
+            farmaco: firstNonEmpty(existing.farmaco, d.nombre_comercial),
+            principioActivo: firstNonEmpty(existing.principioActivo, d.principio_activo),
+            presentacion: firstNonEmpty(existing.presentacion, d.nombre_presentacion),
+            codigoNacional: firstNonEmpty(existing.codigoNacional, d.codigo_nacional),
+            nregistro: firstNonEmpty(existing.nregistro, d.nregistro),
+            origenCatalogo: firstNonEmpty(existing.origenCatalogo, origenLabel),
+            sourceType: firstNonEmpty(existing.sourceType, sourceType)
+        };
+    }
 
-        var pautaOtroInput = document.querySelector('[data-uid="' + uid + '"][data-field="pautaOtro"]');
-        if (pautaOtroInput) {
-            pautaOtroInput.classList.toggle('hidden', pautaCodigo !== 'OTRO');
-        }
+    function applyCatalogSelectionToOtherDrug(uid, d) {
+        var existing = followupOtherDrugs.find(function (drug) { return drug.uid === uid; });
+        if (!existing) return;
+        var identity = mergeRelatedTreatmentCatalogIdentity(existing, d);
+        Object.keys(identity).forEach(function (key) {
+            setOtherDrugField(uid, key, identity[key]);
+        });
     }
 
     function clearOtherDrugDropdown(dropdownId) {
@@ -622,7 +602,7 @@
     }
 
     function normalizeFollowupDrugCategory(relationType) {
-        if (relationType === 'Biológico activo adicional') return 'Biológico adicional';
+        if (relationType === 'Tratamiento activo previo / línea existente') return 'Tratamiento activo previo';
         if (relationType === 'Biológico previo/histórico') return 'Biológico previo/histórico';
         if (relationType === 'Exposición') return 'Exposición';
         return 'Concomitante';
@@ -632,10 +612,9 @@
         var relation = 'concomitante';
         var estado_linea = 'activo';
         var tipo_movimiento = 'no_aplica';
-        if (drug.relationType === 'Biológico activo adicional') {
+        if (drug.relationType === 'Tratamiento activo previo / línea existente') {
             relation = 'adicional';
-            tipo_movimiento = 'tratamiento_anadido';
-            estado_linea = '';
+            tipo_movimiento = '';
         } else if (drug.relationType === 'Biológico previo/histórico') {
             relation = 'historico';
             tipo_movimiento = '';
@@ -712,7 +691,7 @@
                 }
             }
         }
-        // Añadir todos los otros fármacos (concomitantes, adicionales, históricos, exposiciones)
+        // Añadir todos los otros fármacos (existentes, concomitantes, históricos, exposiciones)
         followupOtherDrugs.forEach(function (drug) {
             var name = drug.farmaco || drug.principioActivo;
             if (!name) return;
@@ -736,7 +715,7 @@
                 prioridad: p
             });
         });
-        // Ordenar: principal, activos, concomitantes, adicionales, históricos/exposiciones
+        // Ordenar: principal, activos, concomitantes, líneas previas, históricos/exposiciones
         candidates.sort(function (a, b) { return (a.prioridad || 9) - (b.prioridad || 9); });
         return candidates;
     }
@@ -2051,7 +2030,9 @@
 
     window.FarmaciaSeguimiento = {
         searchCIP: searchCIP,
-        setActivePatientCip: function (cip) { currentSegPatient = cip ? { cip: cip } : null; }
+        setActivePatientCip: function (cip) { currentSegPatient = cip ? { cip: cip } : null; },
+        mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
+        mapRelatedTreatmentToContract: mapOtherDrugToContract
     };
 
     document.addEventListener('DOMContentLoaded', () => {
