@@ -118,12 +118,20 @@ assert(data.lineaActual.pauta_codigo === 'Q14D' && data.lineaActual.pauta_label 
 setField('fhValidadoFarmaco', 'Validado editado');
 setField('fhValidadoPrincipioActivo', 'PA validado editado');
 setField('fhValidadoDosis', '20 mg');
+setField('fhValidadoPresentacion', 'Jeringa precargada 20 mg');
 setField('fhValidadoVia', 'IV');
 setPauta('fhValidadoPauta', 'OTRO', 'Otra pauta');
 setField('fhValidadoPautaOtro', 'Pauta profesional visible');
 data = validation.buildValidationExcelExportData();
 assert(data.slot === 'validacion.validado' && data.lineaActual.farmaco_nombre === 'Validado editado', 'Tratamiento validado explícito prevalece sobre solicitado');
 assert(data.lineaActual.pauta_otro_texto === 'Pauta profesional visible', 'edición profesional visible de pauta prevalece');
+const dosePresentationRow = exporter.buildExcelRowObject(exporter.buildContextFromValidacion(null, {
+  lineaActual: data.lineaActual
+}));
+assert(
+  dosePresentationRow.dosis_presentacion === '20 mg · Jeringa precargada 20 mg',
+  'dosis_presentacion combina exactamente dosis y presentación visibles'
+);
 
 snapshot = {
   selected_drug_id: 'CAT-SINTETICO-1', source_type: 'CIMA', nombre_snapshot: 'Validado editado',

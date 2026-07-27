@@ -1034,7 +1034,9 @@
         var line = {
             farmaco_nombre: values.farmaco,
             principio_activo: values.principioActivo,
-            dosis_texto: values.dosis,
+            dosis_texto: values.dosis && values.presentacion && values.dosis !== values.presentacion
+                ? values.dosis + " · " + values.presentacion
+                : (values.dosis || values.presentacion),
             presentacion: values.presentacion,
             via: values.via,
             pauta_codigo: values.pautaCodigo,
