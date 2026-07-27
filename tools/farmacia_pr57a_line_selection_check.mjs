@@ -60,7 +60,7 @@ const api = sandbox.window.FarmaciaSeguimiento;
 
 const p1 = { cip: 'CIP-DEMO-FH-001', farmaco: 'Secukinumab 300 mg', principioActivo: 'Secukinumab', dosis: '300 mg', via: 'SC', pauta: 'SC / cada 4 semanas' };
 const p2 = { cip: 'CIP-DEMO-FH-002', farmaco: 'Tratamiento solicitado' };
-const p3 = { cip: 'CIP-DEMO-FH-003', farmaco: 'Adalimumab 40 mg', principioActivo: 'Adalimumab' };
+const p3 = { cip: 'CIP-DEMO-FH-003', farmaco: 'Adalimumab 40 mg', dosis: '40 mg', via: 'SC', pauta: 'SC / cada 2 semanas' };
 const p4 = {
   cip: 'CIP-DEMO-FH-004',
   biologicos: [
@@ -79,6 +79,8 @@ const l2 = api.getCanonicalLinesForPatient(p2);
 assert(l2.length === 0, 'FH-002 no expone línea activa o seleccionable');
 const l3 = api.getCanonicalLinesForPatient(p3);
 assert(l3.length === 1 && l3[0].estado_linea === 'validated_not_started', 'FH-003 queda visible como validada pendiente de inicio');
+assert(l3[0].farmaco_nombre === 'Adalimumab 40 mg' && l3[0].principio_activo === '', 'FH-003 conserva nombre visible sin inferir principio activo');
+assert(l3[0].presentacion === '' && l3[0].dosis === '40 mg' && l3[0].via === 'SC' && l3[0].pauta === 'SC / cada 2 semanas', 'FH-003 conserva dosis, vía y pauta sin inferir presentación');
 api.syncLinesForPatient(p3);
 assert(cardInputs().some((input) => input.value === 'BIO-FH-003-L1' && input.disabled), 'FH-003 tiene control deshabilitado');
 
@@ -105,6 +107,19 @@ assert(elements.fhSegCimaContextPrincipioActivo.textContent === 'Rituximab CIMA'
 assert(cardInputs().filter((input) => input.checked).length === 1 && cardInputs().find((input) => input.checked).value === 'BIO-FH-004-L3', 'tarjetas actuales mantienen una única selección por line_id');
 api.selectLineById('BIO-FH-004-L1');
 assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && elements.fhSegFarmaco.value === '' && cardInputs().every((input) => !input.checked), 'selección no activa se rechaza, limpia y no elige primera línea');
+
+const p5 = { cip: 'CIP-SYN-METADATA', biologicos: [
+  { linea_id: 'SYN-META-A', farmaco_nombre: 'Producto sintético A', dosis: '80 mg', codigo_nacional: 'CN-SYN-A', nregistro: 'NR-SYN-A', source_type: 'SYNTHETIC_SOURCE', selected_drug_id: 'DRUG-SYN-A', etiquetas: ['Sintético'], presentacion: 'Envase sintético', estado_linea: 'activo', tipo_relacion: 'base' },
+  { linea_id: 'SYN-META-B', farmaco_nombre: 'Producto sintético B', dosis: '20 mg', estado_linea: 'activo', tipo_relacion: 'adicional' }
+] };
+elements.fhSegCip.value = p5.cip;
+api.syncLinesForPatient(p5);
+api.selectLineById('SYN-META-A');
+assert(api.getSelectedLine().selected_drug_id === 'DRUG-SYN-A' && elements.fhSegCodigoNacional.value === 'CN-SYN-A' && elements.fhSegNregistro.value === 'NR-SYN-A', 'línea explícita conserva selección, CN y registro sin snapshot');
+assert(elements.fhSegOrigenCatalogo.value === 'SYNTHETIC_SOURCE' && elements.fhSegOrigenCatalogo.value !== 'Demo' && elements.fhSegEtiquetas.value === 'Sintético', 'línea explícita conserva origen no Demo y etiquetas');
+api.selectLineById('SYN-META-B');
+assert(elements.fhSegPresentacion.value === '' && elements.fhSegDosisActual.value === '20 mg', 'línea con dosis sin presentación mantiene presentación vacía');
+assert(elements.fhSegCodigoNacional.value === '' && elements.fhSegNregistro.value === '' && elements.fhSegEtiquetas.value === '' && elements.fhSegOrigenCatalogo.value === 'Demo' && api.getSelectedLine().selected_drug_id === '', 'cambiar a línea sin metadatos limpia identidad, etiquetas, presentación y contexto previo');
 
 assert(api.canonicalLineStatus('añadido') === 'unknown' && api.canonicalRelationship('tratamiento_añadido') === 'unknown', 'añadido genérico no se traduce como activo o adicional');
 assert(api.getCanonicalLinesForPatient({ cip: 'CIP-DESCONOCIDO', farmaco: 'Contexto manual' }).length === 0, 'CIP desconocido no fabrica línea ni identificador');

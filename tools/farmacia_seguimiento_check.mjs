@@ -483,7 +483,7 @@ assert(suspectSelectorWrites <= 5, 'Sospechoso EA solo referenciado en rutas con
 // --- WO7H.1: Consistencia visual de línea terapéutica ---
 
 // 40. applySelectedBiologicLine respeta snapshot y luego farmaco_nombre antes de nombre_comercial
-var segFhSegFarmaco = /setSegValue\('fhSegFarmaco',\s*snap\s*&&\s*snap\.nombre_snapshot\s*\|\|\s*line\.farmaco_nombre\s*\|\|\s*line\.nombre_comercial/;
+var segFhSegFarmaco = /if\s*\(\s*snap\s*&&\s*snap\.nombre_snapshot\s*\)\s*setSegValue\('fhSegFarmaco',\s*snap\.nombre_snapshot\);\s*else\s*setSegValue\('fhSegFarmaco',\s*line\.farmaco_nombre\s*\|\|\s*line\.nombre_comercial\s*\|\|\s*line\.nombre_linea\s*\|\|\s*''\);/;
 assert(segFhSegFarmaco.test(js), 'Seguimiento setSegFarmaco prioriza snapshot asociado y conserva precedencia farmaco_nombre/nombre_comercial');
 
 // 41. syncBiologicControls identifica opciones exclusivamente por linea_id

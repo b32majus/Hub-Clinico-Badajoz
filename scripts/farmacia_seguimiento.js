@@ -237,15 +237,23 @@
             cip: patient.cip,
             linea_id: line.linea_id,
             orden: line.orden || '',
-            nombre_linea: line.nombre_linea || line.principio_activo || line.nombre_comercial || '',
-            nombre_comercial: line.nombre_comercial || line.nombre_linea || patient.farmaco || '',
-            principio_activo: line.principio_activo || patient.principioActivo || '',
-            dosis: line.dosis || patient.dosis || '',
-            presentacion: line.presentacion || line.presentacion_dosis || line.dosis || '',
-            via: line.via || patient.via || '',
-            pauta: line.pauta || patient.pauta || '',
-            fecha_inicio: line.fecha_inicio || patient.primeraVisita || '',
+            farmaco_nombre: line.farmaco_nombre || '',
+            nombre_linea: line.nombre_linea || line.farmaco_nombre || line.principio_activo || line.nombre_comercial || '',
+            nombre_comercial: line.nombre_comercial || line.nombre_linea || '',
+            principio_activo: line.principio_activo || '',
+            dosis: line.dosis || '',
+            dosis_texto: line.dosis_texto || '',
+            presentacion: line.presentacion || line.presentacion_dosis || '',
+            via: line.via || '',
+            pauta: line.pauta || '',
+            fecha_inicio: line.fecha_inicio || '',
             fecha_fin: line.fecha_fin || '',
+            codigo_nacional: line.codigo_nacional || '',
+            nregistro: line.nregistro || '',
+            source_type: line.source_type || '',
+            selected_drug_id: line.selected_drug_id || '',
+            fuente: line.fuente || '',
+            etiquetas: line.etiquetas == null ? '' : line.etiquetas,
             estado_linea: overrides.estado_linea || canonicalLineStatus(line.estado_linea),
             tipo_relacion: overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion),
             es_principal: (overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion)) === 'primary',
@@ -254,9 +262,9 @@
     }
 
     var DEMO_LINE_CONTRACT = {
-        'CIP-DEMO-FH-001': [{ linea_id: 'BIO-FH-001-L1', nombre_linea: 'Secukinumab', nombre_comercial: 'Secukinumab 300 mg', principio_activo: 'Secukinumab', dosis: '300 mg', presentacion: '300 mg', via: 'SC', pauta: 'SC / cada 4 semanas', estado_linea: 'active', tipo_relacion: 'primary' }],
+        'CIP-DEMO-FH-001': [{ linea_id: 'BIO-FH-001-L1', estado_linea: 'active', tipo_relacion: 'primary' }],
         'CIP-DEMO-FH-002': [],
-        'CIP-DEMO-FH-003': [{ linea_id: 'BIO-FH-003-L1', nombre_linea: 'Adalimumab', nombre_comercial: 'Adalimumab 40 mg', principio_activo: 'Adalimumab', dosis: '40 mg', presentacion: '40 mg', via: 'SC', pauta: 'SC / cada 2 semanas', estado_linea: 'validated_not_started', tipo_relacion: 'primary' }],
+        'CIP-DEMO-FH-003': [{ linea_id: 'BIO-FH-003-L1', estado_linea: 'validated_not_started', tipo_relacion: 'primary' }],
         'CIP-DEMO-FH-004': [
             { linea_id: 'BIO-FH-004-L1', estado_linea: 'completed', tipo_relacion: 'primary' },
             { linea_id: 'BIO-FH-004-L2', estado_linea: 'active', tipo_relacion: 'primary' },
@@ -273,24 +281,37 @@
     }
 
     function getPatientBiologicLines(patient) {
-        if (!patient || !patient.cip) return [];
+        if (!patient) return [];
+        if (!patient.cip) return [];
         if (Object.prototype.hasOwnProperty.call(DEMO_LINE_CONTRACT, patient.cip)) {
             return DEMO_LINE_CONTRACT[patient.cip].map(function (contractLine) {
-                var source = findPatientLineById(patient, contractLine.linea_id) || contractLine;
+                var source = findPatientLineById(patient, contractLine.linea_id);
+                if (!source) source = {
+                    linea_id: contractLine.linea_id,
+                    farmaco_nombre: patient.farmaco || '',
+                    principio_activo: patient.principioActivo || '',
+                    dosis: patient.dosis || '',
+                    via: patient.via || '',
+                    pauta: patient.pauta || '',
+                    fecha_inicio: patient.primeraVisita || ''
+                };
                 var merged = Object.assign({}, source, contractLine);
                 return normalizeBiologicLine(merged, patient, contractLine);
             });
         }
-        if (!Array.isArray(patient.biologicos)) return [];
-        return patient.biologicos.filter(function (line) {
-            return !!line.linea_id;
-        }).map(function (line) {
-            return normalizeBiologicLine(line, patient);
-        });
+        if (Array.isArray(patient.biologicos) && patient.biologicos.length) {
+            return patient.biologicos.filter(function (line) {
+                return !!line.linea_id;
+            }).map(function (line) {
+                return normalizeBiologicLine(line, patient);
+            });
+        }
+        return [];
     }
 
     function getCurrentSelectedLine() {
         var select = document.getElementById('fhSegLineaPrincipal');
+        if (!currentBiologicLines.length) return null;
         if (!select || !select.value) return null;
         for (var i = 0; i < currentBiologicLines.length; i++) {
             if (currentBiologicLines[i].linea_id === select.value) return currentBiologicLines[i];
@@ -1017,8 +1038,9 @@
                 var opt = document.createElement('option');
                 opt.value = line.linea_id;
                 opt.textContent = line.nombre_linea || line.nombre_comercial || line.principio_activo || line.linea_id;
-                lineaPrincipal.appendChild(opt);
             }
+            if (line.estado_linea !== 'active') continue;
+            lineaPrincipal.appendChild(opt);
         }
         lineaPrincipal.value = '';
         renderBiologicLineCards();
@@ -1064,15 +1086,34 @@
         return selected;
     }
 
+    function formatLineTags(value) {
+        if (Array.isArray(value)) return value.map(String).filter(Boolean).join(', ');
+        if (!value || typeof value !== 'object') return value == null ? '' : String(value);
+        return Object.keys(value).filter(function (key) { return !!value[key]; }).map(function (key) {
+            return key === 'biosimilar' ? 'Biosimilar' : key === 'es_hospitalario' ? 'Hospitalario' : key;
+        }).join(', ');
+    }
+
+    function biologicSourceLabel(sourceType, fuente, fallback) {
+        var explicit = firstNonEmpty(sourceType);
+        var normalized = explicit.toUpperCase();
+        if (normalized === 'CIMA') return 'CIMA';
+        if (normalized === 'LOCAL') return 'Local Especial';
+        if (normalized === 'LOCAL_PENDIENTE_DEMO') return 'Demo/local pendiente';
+        return explicit || firstNonEmpty(fuente) || fallback || '';
+    }
+
     function applySelectedBiologicLine() {
         var line = getCurrentSelectedLine();
         var helper = getTreatmentHelper();
         var C = window.FarmaciaCatalog;
         var snap = line && C && C.getSnapshot ? C.getSnapshot(followupCatalogContext('seguimiento.tratamiento')) : null;
         if (line) {
-            setSegValue('fhSegFarmaco', snap && snap.nombre_snapshot || line.farmaco_nombre || line.nombre_comercial || line.nombre_linea || '');
-            setSegValue('fhSegPrincipioActivo', snap && snap.principio_activo_snapshot || line.principio_activo || '');
-            setSegValue('fhSegPresentacion', snap && snap.presentacion_snapshot || line.presentacion || line.dosis_texto || '');
+            if (snap && snap.nombre_snapshot) setSegValue('fhSegFarmaco', snap.nombre_snapshot);
+            else setSegValue('fhSegFarmaco', line.farmaco_nombre || line.nombre_comercial || line.nombre_linea || '');
+            if (snap && snap.principio_activo_snapshot) setSegValue('fhSegPrincipioActivo', snap.principio_activo_snapshot);
+            else setSegValue('fhSegPrincipioActivo', line.principio_activo || '');
+            setSegValue('fhSegPresentacion', snap && snap.presentacion_snapshot || line.presentacion || '');
             setSegValue('fhSegDosisActual', line.dosis || line.dosis_texto || '');
             setSegValue('fhSegVia', mapRouteToSelect(line.via));
             setSegPautaActualNormalized(line.pauta || '');
@@ -1102,18 +1143,16 @@
         // Sincronizar tarjeta CIMA con la línea seleccionada
         var cimaEl = document.getElementById('fhSegCimaContextPrincipioActivo');
         if (cimaEl && line) {
-            F.setText('fhSegCimaContextPrincipioActivo', snap && snap.principio_activo_snapshot || line.principio_activo || '\u2014');
+            if (!snap) F.setText('fhSegCimaContextPrincipioActivo', line.principio_activo || '\u2014');
+            else F.setText('fhSegCimaContextPrincipioActivo', snap.principio_activo_snapshot || line.principio_activo || '\u2014');
         } else if (cimaEl && !line) {
             F.setText('fhSegCimaContextPrincipioActivo', '\u2014');
         }
         setSegValue('fhSegCodigoNacional', snap && snap.codigo_nacional_snapshot || line && line.codigo_nacional || '');
         setSegValue('fhSegNregistro', snap && snap.nregistro_snapshot || line && line.nregistro || '');
-        var tags = [];
-        if (snap && snap.etiquetas && snap.etiquetas.biosimilar) tags.push('Biosimilar');
-        if (snap && snap.etiquetas && snap.etiquetas.es_hospitalario) tags.push('Hospitalario');
-        setSegValue('fhSegEtiquetas', tags.join(', '));
-        var sourceType = snap && String(snap.source_type || '').toUpperCase();
-        setSegValue('fhSegOrigenCatalogo', sourceType === 'CIMA' ? 'CIMA' : sourceType === 'LOCAL' ? 'Local Especial' : sourceType === 'LOCAL_PENDIENTE_DEMO' ? 'Demo/local pendiente' : line ? 'Demo' : '');
+        var tags = snap && Object.prototype.hasOwnProperty.call(snap, 'etiquetas') ? snap.etiquetas : line && line.etiquetas;
+        setSegValue('fhSegEtiquetas', formatLineTags(tags));
+        setSegValue('fhSegOrigenCatalogo', biologicSourceLabel(snap && snap.source_type, snap && snap.fuente, snap ? '' : line ? biologicSourceLabel(line.source_type, line.fuente, 'Demo') : ''));
         updateSuspectDrugSelector();
     }
 
