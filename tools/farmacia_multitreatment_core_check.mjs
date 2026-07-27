@@ -154,4 +154,57 @@ check("16 an existing line keeps its original ID", () => {
     return core.getLine(state, "CIP-SYN-16", original).line_id === original;
 });
 
-if (!process.exitCode) console.log(`multitreatment_core_check: PASSED (${passed}/16)`);
+check("17 successive validation acts produce at most one line", () => {
+    const state = core.emptyState();
+    request(state, "CIP-SYN-17", "R1");
+    core.createValidatedLineBundle(state, {
+        cip: "CIP-SYN-17", request_id: "R1", validation_act_id: "V1", result: "pending"
+    });
+    core.createValidatedLineBundle(state, {
+        cip: "CIP-SYN-17", request_id: "R1", validation_act_id: "V2", result: "approved", relationship: "additional"
+    });
+    const rejected = rejects(() => core.createValidatedLineBundle(state, {
+        cip: "CIP-SYN-17", request_id: "R1", validation_act_id: "V3", result: "approved", relationship: "additional"
+    }));
+    const patient = state.patients["CIP-SYN-17"];
+    return rejected && Object.keys(patient.validation_acts).length === 2 &&
+        Object.values(patient.lines).filter(line => line.status === "validated_not_started").length === 1;
+});
+
+check("18 complete graph validation blocks invalid load, save, and supplied state", () => {
+    const extra = core.emptyState();
+    extra.patients["CIP-SYN-18-A"] = { requests: {}, validation_acts: {}, lines: {}, movements: {}, drafts: {} };
+    const duplicatePrimary = core.emptyState();
+    existing(duplicatePrimary, "CIP-SYN-18-B", "P1", "primary", "active");
+    duplicatePrimary.patients["CIP-SYN-18-B"].lines.P2 = {
+        cip: "CIP-SYN-18-B", line_id: "P2", relationship: "primary", status: "active", provenance: "pre_hub_existing"
+    };
+    let writes = 0;
+    const storage = { getItem: () => null, setItem: () => { writes += 1; } };
+    return JSON.stringify(core.loadState({ getItem: () => JSON.stringify(extra) })) === JSON.stringify(core.emptyState()) &&
+        JSON.stringify(core.loadState({ getItem: () => JSON.stringify(duplicatePrimary) })) === JSON.stringify(core.emptyState()) &&
+        rejects(() => core.saveState(extra, storage)) && writes === 0 &&
+        rejects(() => core.createStore({ state: duplicatePrimary, storage }));
+});
+
+check("19 movement-specific references are required without status transitions", () => {
+    const state = core.emptyState();
+    ["TARGET", "FROM", "ADD", "BASE"].forEach(id => existing(state, "CIP-SYN-19", id, "additional", "active"));
+    const before = core.getLine(state, "CIP-SYN-19", "TARGET").status;
+    const missingSwitch = rejects(() => core.createMovement(state, {
+        cip: "CIP-SYN-19", movement_id: "M-BAD-S", line_id: "TARGET", type: "switch"
+    }));
+    const missingAddOn = rejects(() => core.createMovement(state, {
+        cip: "CIP-SYN-19", movement_id: "M-BAD-A", line_id: "ADD", type: "add_on"
+    }));
+    core.createMovement(state, {
+        cip: "CIP-SYN-19", movement_id: "M-S", line_id: "TARGET", from_line_id: "FROM", type: "switch"
+    });
+    core.createMovement(state, {
+        cip: "CIP-SYN-19", movement_id: "M-A", line_id: "ADD", base_line_id: "BASE", type: "add_on"
+    });
+    return missingSwitch && missingAddOn && Object.keys(state.patients["CIP-SYN-19"].movements).length === 2 &&
+        core.getLine(state, "CIP-SYN-19", "TARGET").status === before;
+});
+
+if (!process.exitCode) console.log(`multitreatment_core_check: PASSED (${passed}/19)`);
