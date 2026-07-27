@@ -1996,6 +1996,19 @@
 }
 
 .seg-line-card--disabled { opacity: 0.7; cursor: not-allowed; background: #F1F5F9; }
+.seg-line-card:has(.seg-line-card__control:checked) {
+    border-color: var(--ses-green);
+    background: var(--ses-green-light);
+}
+.seg-line-selection__selector { margin-top: 14px; }
+.seg-line-selection__help {
+    margin: 8px 0 0;
+    color: #64748B;
+    font-size: 0.84rem;
+}
+.seg-line-selection__help.hidden { display: none; }
+.mg-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+#fhSegMultilineExportWarning { margin-top: 12px; }
 .seg-line-card__body { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; min-width: 0; }
 .seg-line-card__name { color: #0F172A; }
 .seg-line-card__id { font-size: 0.78rem; overflow-wrap: anywhere; }

@@ -71,17 +71,20 @@ const p4 = {
 };
 
 const l1 = api.getCanonicalLinesForPatient(p1);
-assert(l1.length === 1 && l1[0].linea_id === 'BIO-FH-001-L1' && l1[0].estado_linea === 'active', 'FH-001 tiene una línea activa canónica');
+assert(JSON.stringify(l1.map((line) => [line.linea_id, line.estado_linea, line.tipo_relacion])) === JSON.stringify([
+  ['BIO-FH-001-L1', 'active', 'primary']
+]), 'FH-001 tiene identidad, estado y relación canónicos');
 api.syncLinesForPatient(p1);
-assert(api.getSelectedLine()?.linea_id === 'BIO-FH-001-L1' && elements.fhSegLineaPrincipal.value === 'BIO-FH-001-L1' && cardInputs().find((input) => input.value === 'BIO-FH-001-L1')?.checked, 'FH-001 sincroniza selector y tarjeta con su única línea activa');
+assert(api.getSelectedLine()?.linea_id === 'BIO-FH-001-L1' && elements.fhSegLineaPrincipal.value === 'BIO-FH-001-L1' && cardInputs().find((input) => input.value === 'BIO-FH-001-L1')?.checked, 'FH-001 autoselecciona por line_id su única línea activa');
+assert(cardInputs().every((input) => input.type === 'checkbox'), 'las tarjetas usan checkboxes, no radios');
 assert(elements.fhSegFarmaco.value === 'Secukinumab 300 mg' && elements.fhSegPrincipioActivo.value === 'Secukinumab' && elements.fhSegDosisActual.value === '300 mg', 'FH-001 carga el contexto exacto de Secukinumab');
 
 const l2 = api.getCanonicalLinesForPatient(p2);
-assert(l2.length === 0, 'FH-002 no expone línea activa o seleccionable');
+assert(JSON.stringify(l2) === '[]', 'FH-002 conserva el contrato canónico sin líneas');
 api.syncLinesForPatient(p2);
 assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().every((input) => !input.checked), 'FH-002 no se selecciona automáticamente');
 const l3 = api.getCanonicalLinesForPatient(p3);
-assert(l3.length === 1 && l3[0].estado_linea === 'validated_not_started', 'FH-003 queda visible como validada pendiente de inicio');
+assert(l3.length === 1 && l3[0].linea_id === 'BIO-FH-003-L1' && l3[0].estado_linea === 'validated_not_started' && l3[0].tipo_relacion === 'primary', 'FH-003 conserva identidad, estado y relación canónicos');
 assert(l3[0].farmaco_nombre === 'Adalimumab 40 mg' && l3[0].principio_activo === '', 'FH-003 conserva nombre visible sin inferir principio activo');
 assert(l3[0].presentacion === '' && l3[0].dosis === '40 mg' && l3[0].via === 'SC' && l3[0].pauta === 'SC / cada 2 semanas', 'FH-003 conserva dosis, vía y pauta sin inferir presentación');
 api.syncLinesForPatient(p3);
@@ -94,9 +97,14 @@ assert(JSON.stringify(l4.map((line) => [line.linea_id, line.tipo_relacion, line.
 elements.fhSegCip.value = p4.cip;
 api.syncLinesForPatient(p4);
 const activeOptionIds = elements.fhSegLineaPrincipal.options.slice(1).map((option) => option.value);
-assert(activeOptionIds.length === 2 && JSON.stringify(activeOptionIds) === JSON.stringify(['BIO-FH-004-L2', 'BIO-FH-004-L3']), 'selector contiene exactamente L2 y L3 activas');
-assert(api.getSelectedLine() === null, 'FH-004 tampoco tiene selección automática');
+assert(activeOptionIds.length === 0 && elements.fhSegLineaPrincipal.options.length === 1, 'FH-004 inicia con solo el placeholder del editor');
+assert(api.getSelectedLine() === null && cardInputs().filter((input) => input.checked).length === 0, 'FH-004 con dos activas no tiene selección automática');
+assert(cardInputs().every((input) => input.type === 'checkbox') && cardInputs().find((input) => input.value === 'BIO-FH-004-L1')?.disabled && cardInputs().filter((input) => !input.disabled).length === 2, 'solo las tarjetas activas son seleccionables mediante checkbox');
 
+api.toggleLineSelection('BIO-FH-004-L2', true);
+assert(JSON.stringify(elements.fhSegLineaPrincipal.options.slice(1).map((option) => option.value)) === JSON.stringify(['BIO-FH-004-L2']), 'al seleccionar L2 el editor ofrece solo L2');
+api.toggleLineSelection('BIO-FH-004-L3', true);
+assert(JSON.stringify(elements.fhSegLineaPrincipal.options.slice(1).map((option) => option.value)) === JSON.stringify(['BIO-FH-004-L2', 'BIO-FH-004-L3']) && cardInputs().filter((input) => input.checked).length === 2, 'L2 y L3 pueden quedar seleccionadas y son las únicas opciones del editor');
 api.selectLineById('BIO-FH-004-L2');
 assert(api.getSelectedLine().linea_id === 'BIO-FH-004-L2' && elements.fhSegFarmaco.value === 'Benlysta' && elements.fhSegPrincipioActivo.value === 'Belimumab CIMA', 'seleccionar L2 carga marca y principio snapshot exactos');
 assert(elements.fhSegPresentacion.value === 'Jeringa L2' && elements.fhSegDosisActual.value === '200 mg' && elements.fhSegVia.value === 'SC' && elements.fhSegPautaActual.value === 'Semanal', 'L2 carga presentación, dosis, vía y pauta');
@@ -107,9 +115,13 @@ assert(api.getSelectedLine().linea_id === 'BIO-FH-004-L3' && elements.fhSegFarma
 assert(elements.fhSegPresentacion.value === 'Vial L3' && elements.fhSegDosisActual.value === '1 g' && elements.fhSegVia.value === 'IV' && elements.fhSegPautaActual.value === 'Cada 6 meses', 'L3 reemplaza presentación, dosis, vía y pauta');
 assert(elements.fhSegEstadoLinea.value === 'Activo' && elements.fhSegFechaInicio.value === '2026-05-28' && elements.fhSegCodigoNacional.value === 'CN-L3' && elements.fhSegNregistro.value === 'NR-L3', 'L3 reemplaza estado, fecha y códigos sin residuo L2');
 assert(elements.fhSegCimaContextPrincipioActivo.textContent === 'Rituximab CIMA' && lastSummary.fields.some((field) => field.value === 'Rituximab'), 'L3 actualiza contexto CIMA y resumen');
-assert(cardInputs().filter((input) => input.checked).length === 1 && cardInputs().find((input) => input.checked).value === 'BIO-FH-004-L3', 'tarjetas actuales mantienen una única selección por line_id');
+api.selectLineById('BIO-FH-004-L2');
+assert(api.getSelectedLine().linea_id === 'BIO-FH-004-L2' && elements.fhSegPrincipioActivo.value === 'Belimumab CIMA' && elements.fhSegPresentacion.value === 'Jeringa L2' && elements.fhSegCodigoNacional.value === 'CN-L2' && elements.fhSegNregistro.value === 'NR-L2', 'volver a L2 restaura identidad y catálogo exactos sin datos de L3');
+api.selectLineById('BIO-FH-004-L3');
+assert(api.getSelectedLine().linea_id === 'BIO-FH-004-L3' && elements.fhSegPrincipioActivo.value === 'Rituximab CIMA' && elements.fhSegPresentacion.value === 'Vial L3' && elements.fhSegCodigoNacional.value === 'CN-L3' && elements.fhSegNregistro.value === 'NR-L3', 'volver a L3 restaura identidad y catálogo exactos sin datos de L2');
 api.selectLineById('BIO-FH-004-L1');
-assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && elements.fhSegFarmaco.value === '' && cardInputs().every((input) => !input.checked), 'selección no activa se rechaza, limpia y no elige primera línea');
+assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && elements.fhSegFarmaco.value === '' && cardInputs().filter((input) => input.checked).length === 2, 'editor no activo se rechaza sin borrar las líneas seleccionadas');
+assert(api.toggleLineSelection('BIO-FH-004-L1', true) === false && cardInputs().find((input) => input.value === 'BIO-FH-004-L1')?.disabled && api.getCurrentVisit().selected_line_ids.length === 2, 'la API activa tampoco selecciona L1 completada y el control permanece deshabilitado');
 
 const p5 = { cip: 'CIP-SYN-METADATA', biologicos: [
   { linea_id: 'SYN-META-A', farmaco_nombre: 'Producto sintético A', dosis: '80 mg', codigo_nacional: 'CN-SYN-A', nregistro: 'NR-SYN-A', source_type: 'SYNTHETIC_SOURCE', selected_drug_id: 'DRUG-SYN-A', etiquetas: ['Sintético'], presentacion: 'Envase sintético', estado_linea: 'activo', tipo_relacion: 'base' },
@@ -117,6 +129,8 @@ const p5 = { cip: 'CIP-SYN-METADATA', biologicos: [
 ] };
 elements.fhSegCip.value = p5.cip;
 api.syncLinesForPatient(p5);
+api.toggleLineSelection('SYN-META-A', true);
+api.toggleLineSelection('SYN-META-B', true);
 api.selectLineById('SYN-META-A');
 assert(api.getSelectedLine().selected_drug_id === 'DRUG-SYN-A' && elements.fhSegCodigoNacional.value === 'CN-SYN-A' && elements.fhSegNregistro.value === 'NR-SYN-A', 'línea explícita conserva selección, CN y registro sin snapshot');
 assert(elements.fhSegOrigenCatalogo.value === 'SYNTHETIC_SOURCE' && elements.fhSegOrigenCatalogo.value !== 'Demo' && elements.fhSegEtiquetas.value === 'Sintético', 'línea explícita conserva origen no Demo y etiquetas');
@@ -128,9 +142,19 @@ assert(api.canonicalLineStatus('añadido') === 'unknown' && api.canonicalRelatio
 assert(api.getCanonicalLinesForPatient({ cip: 'CIP-DESCONOCIDO', farmaco: 'Contexto manual' }).length === 0, 'CIP desconocido no fabrica línea ni identificador');
 ['completed', 'suspended', 'validated_not_started', 'unknown'].forEach((status) => {
   api.syncLinesForPatient({ cip: `CIP-SYN-${status}`, biologicos: [{ linea_id: `SYN-${status}`, estado_linea: status }] });
-  assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().every((input) => !input.checked), `una única línea ${status} no se autoselecciona`);
+  assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().some((input) => input.value === `SYN-${status}` && input.disabled && input.type === 'checkbox'), `una línea ${status} permanece visible, deshabilitada y sin autoselección`);
 });
-assert(html.includes('Líneas de tratamiento del paciente') && html.includes('>Línea seleccionada<'), 'la UI presenta el bloque y etiqueta requeridos');
+assert(html.includes('Líneas de tratamiento del paciente') && /<label for="fhSegLineaPrincipal">Línea que estás editando<\/label>/.test(html), 'la UI presenta el bloque y la etiqueta exacta del editor');
+
+const strictIdentityPatient = { cip: 'CIP-SYN-STRICT', biologicos: [
+  { linea_id: 'SYN-STRICT-A', farmaco_nombre: 'Marca fallback', principio_activo: 'Ingrediente fallback', tratamiento_id_principal: 'TRAT-FALLBACK', estado_linea: 'active', tipo_relacion: 'primary' },
+  { linea_id: 'SYN-STRICT-B', farmaco_nombre: 'Otra marca', estado_linea: 'active', tipo_relacion: 'additional' }
+] };
+api.syncLinesForPatient(strictIdentityPatient);
+[0, 'first', 'principal', 'Marca fallback', 'Ingrediente fallback', 'TRAT-FALLBACK'].forEach((fallback) => {
+  assert(api.toggleLineSelection(fallback, true) === false && api.selectLineById(fallback) === null && api.getCurrentVisit().selected_line_ids.length === 0, `identidad no acepta fallback ${fallback}`);
+});
+assert(api.toggleLineSelection('SYN-STRICT-B', true) === true && api.selectLineById('SYN-STRICT-B')?.linea_id === 'SYN-STRICT-B', 'la misma ruta acepta únicamente el line_id exacto');
 
 const preserved = [
   ['DLQI', /DLQI/], ['catálogo', /fhSegDrugSearch/], ['Naranjo', /modNaranjo/],
@@ -140,11 +164,6 @@ const preserved = [
 ];
 preserved.forEach(([name, pattern]) => assert(pattern.test(html) || pattern.test(js), `${name} permanece en Seguimiento`));
 assert(['modOtrosFarmacos', 'modNaranjo', 'modKarchLasagna', 'modExportacion'].every((id) => new RegExp(`<[^>]+id="${id}"`).test(html)), 'módulos preservados mantienen estructura e IDs navegables');
-const selectionRoute = js.slice(js.indexOf('function getCurrentSelectedLine'), js.indexOf('function createFollowupOtherDrug'));
-const syncRoute = js.slice(js.indexOf('function syncBiologicControls'), js.indexOf('function renderBiologicLineCards'));
-assert(/activeLines\s*=\s*currentBiologicLines\.filter[\s\S]*estado_linea === 'active'/.test(syncRoute) && /activeLines\.length === 1[\s\S]*selectBiologicLineById\(activeLines\[0\]\.linea_id\)/.test(syncRoute), 'la autoselección filtra active y exige exactamente una línea');
-assert(!/currentBiologicLines\s*\[\s*0\s*\]|(?:^|[^A-Za-z])lines\s*\[\s*0\s*\]|es_principal|\b(?:drug|ingredient|tratamiento_id)\b/.test(syncRoute), 'la autoselección rechaza fallbacks posicionales, principal, fármaco, ingrediente o tratamiento');
-assert(!/currentBiologicLines\s*\[\s*0\s*\]|(?:^|[^A-Za-z])lines\s*\[\s*0\s*\]/.test(selectionRoute), 'la ruta nueva no usa fallback de primera línea');
 
 if (failed) process.exit(1);
 console.log('PASS farmacia_pr57a_line_selection_check');

@@ -65,7 +65,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   elements.fhSegProms.value = 'No recogido';
   elements.fhSegOrigenCatalogo.value = 'Demo';
   behaviorSandbox.document.getElementById = (id) => elements[id] || null;
-  behaviorSandbox.document.createElement = () => ({ value: '', textContent: '', selected: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, appendChild: () => {}, setAttribute: () => {} });
+  behaviorSandbox.document.createElement = () => ({ value: '', textContent: '', selected: false, checked: false, disabled: false, dataset: {}, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, appendChild: () => {}, addEventListener: () => {}, setAttribute: () => {} });
   behaviorSandbox.document.createTextNode = (text) => ({ textContent: text });
   const F = behaviorSandbox.window.FarmaciaDemo;
   F.setValue = (id, value) => { if (elements[id]) elements[id].value = value || ''; };
@@ -486,8 +486,8 @@ assert(suspectSelectorWrites <= 5, 'Sospechoso EA solo referenciado en rutas con
 var segFhSegFarmaco = /if\s*\(\s*snap\s*&&\s*snap\.nombre_snapshot\s*\)\s*setSegValue\('fhSegFarmaco',\s*snap\.nombre_snapshot\);\s*else\s*setSegValue\('fhSegFarmaco',\s*line\.farmaco_nombre\s*\|\|\s*line\.nombre_comercial\s*\|\|\s*line\.nombre_linea\s*\|\|\s*''\);/;
 assert(segFhSegFarmaco.test(js), 'Seguimiento setSegFarmaco prioriza snapshot asociado y conserva precedencia farmaco_nombre/nombre_comercial');
 
-// 41. syncBiologicControls identifica opciones exclusivamente por linea_id
-assert(js.includes('opt.value = line.linea_id'), 'syncBiologicControls usa linea_id explícito para cada opción');
+// 41. El selector de editor identifica opciones exclusivamente por linea_id
+assert(js.includes('option.value = lineId'), 'syncEditorOptions usa linea_id explícito para cada opción');
 
 // 42. Tarjeta CIMA se limpia si no corresponde a la línea seleccionada
 assert(js.includes('fhSegCimaContextPrincipioActivo'), 'Código de sincronización tarjeta CIMA presente');
@@ -520,16 +520,16 @@ assert(!gcsBody.includes('tratamiento_id') && !gcsBody.includes('matchVal'),
 assert(!gcsBody.includes('currentBiologicLines[0]') && !gcsBody.includes('es_principal'),
     'getCurrentSelectedLine devuelve null sin fallback a primera/principal');
 
-// 49. syncBiologicControls solo crea opciones activas con linea_id explícito
+// 49. syncBiologicControls hidrata selección solo desde líneas active canónicas
 var syncMatch = js.match(/function syncBiologicControls[\s\S]*?^    \}/m);
 var syncBody = syncMatch ? syncMatch[0] : '';
-assert(syncBody.includes("line.estado_linea === 'active'") && syncBody.includes('opt.value = line.linea_id'),
-    'syncBiologicControls limita opciones a active y usa linea_id');
-assert(!syncBody.includes("('BIO-' + i)") && !syncBody.includes('opt.selected = true'),
-    'syncBiologicControls no genera IDs ni autoselecciona opciones');
+assert(syncBody.includes("line.estado_linea === 'active'") && syncBody.includes('activeLines[0].linea_id'),
+    'syncBiologicControls limita hidratación a active e identidad linea_id');
+assert(!syncBody.includes("('BIO-' + i)") && syncBody.includes('activeLines.length === 1'),
+    'syncBiologicControls no genera IDs y solo autoselecciona el caso de una activa');
 
 // 50. Aplicación pasa por selección explícita y sincronizada
-assert(js.includes('selectBiologicLineById(lineaPrincipal.value)') && js.includes('applySelectedBiologicLine();'),
+assert(js.includes('setEditingLine(lineaPrincipal.value)') && js.includes('applySelectedBiologicLine();'),
     'Selector aplica únicamente la línea explícita identificada por linea_id');
 
 // --- PR57A: candidatos de sospechoso EA por línea canónica ---
@@ -576,6 +576,15 @@ assert(js.includes('candidates.length > 1'),
     'Selector de sospechoso EA maneja múltiples candidatos');
 assert(js.includes("candidates.length === 1"),
     'Selector de sospechoso EA tiene lógica para candidato único');
+
+// --- PR57B: visita multilínea efímera e aislamiento de editor ---
+assert(html.includes('Línea que estás editando'), 'PR57B conserva la etiqueta exacta del editor único');
+assert(html.includes('fhSegObservacionesLinea'), 'PR57B añade observaciones específicas por línea');
+assert(js.includes('currentFollowupVisit') && js.includes('selected_line_ids') && js.includes('editing_line_id') && js.includes('line_state'),
+    'PR57B mantiene el modelo de visita y línea exclusivamente en memoria JS');
+assert(js.includes('captureEditingLineState();') && js.includes('restoreEditingLineState();'),
+    'PR57B captura y restaura el editor al cambiar de línea');
+assert(js.includes('button.disabled = count !== 1'), 'PR57B bloquea salidas salvo con una línea seleccionada');
 
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
