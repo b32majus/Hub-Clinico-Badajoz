@@ -123,12 +123,17 @@
     return { resultado: '', estadoRegistro: '' };
   }
 
+  function translateCanonical(value, translations) {
+    var raw = cleanValue(value);
+    return Object.prototype.hasOwnProperty.call(translations, raw) ? translations[raw] : raw;
+  }
+
   /* ---- Construir objeto de fila desde contexto ---- */
   function buildExcelRowObject(context) {
     if (!context) context = {};
     var p = context.patient || {};
     var now = new Date();
-    var isoNow = now.toISOString().replace('T', ' ').substring(0, 19);
+    var isoNow = cleanValue(context.timestamp || now.toISOString()).replace('T', ' ').substring(0, 19);
 
     // Detectar tipo de acto antes de aplicar reglas exclusivas de Validación.
     var tipoActo = context.tipoActo || 'otro';
@@ -183,9 +188,9 @@
       numero_registro: cleanValue(line ? (line.nregistro || '') : ''),
       source_type: cleanValue(line ? (line.source_type || '') : ''),
       categoria_farmaco: cleanValue(context.categoriaFarmaco || ''),
-      tipo_relacion: cleanValue(line ? (line.tipo_relacion || '') : ''),
-      estado_linea: cleanValue(line ? (line.estado_linea || '') : ''),
-      tipo_movimiento: cleanValue(line ? (line.tipo_movimiento || '') : ''),
+      tipo_relacion: translateCanonical(line ? (line.tipo_relacion || '') : '', { primary: 'principal', additional: 'adicional', unknown: '' }),
+      estado_linea: translateCanonical(line ? (line.estado_linea || '') : '', { active: 'activo', suspended: 'suspendido', completed: 'finalizado', validated_not_started: 'validado_pendiente_inicio', unknown: '' }),
+      tipo_movimiento: translateCanonical(line ? (line.tipo_movimiento || '') : '', { optimization: 'optimizacion', suspension: 'suspension' }),
       es_principal: cleanValue(line && line.es_principal !== undefined && line.es_principal !== null
         ? (line.es_principal ? 'TRUE' : 'FALSE') : ''),
       fecha_inicio: cleanValue(line ? (line.fecha_inicio || '') : ''),
@@ -207,7 +212,7 @@
       bloqueantes_validacion: cleanValue(prebio ? (prebio.bloqueante || '') : ''),
       observaciones_validacion: cleanValue(context.obsValidacion || ''),
       /* F */
-      adherencia_morisky: cleanValue(proms ? (proms.morisky_green || proms.morisky || '') : ''),
+      adherencia_morisky: translateCanonical(proms ? (proms.morisky_green || proms.morisky || '') : '', { high: 'Alta', medium: 'Media', low: 'Baja', not_evaluated: 'No evaluada' }),
       haq: cleanValue(proms ? (proms.haq || '') : ''),
       eva_dolor: cleanValue(proms ? (proms.eva_dolor || proms.evaDolor || '') : ''),
       dlqi: cleanValue(proms ? (proms.dlqi || '') : ''),
@@ -251,6 +256,12 @@
     return rowArray.join('\t');
   }
 
+  /* ---- Convertir N filas a un único bloque TSV ---- */
+  function toTSVRows(rows) {
+    if (!Array.isArray(rows)) return '';
+    return rows.filter(Array.isArray).map(toTSVRow).filter(Boolean).join('\n');
+  }
+
   /* ---- Obtener nombre de hoja según servicio ---- */
   function getServiceSheetName(servicio_origen) {
     if (!servicio_origen) return '';
@@ -259,28 +270,34 @@
   }
 
   /* ---- Copiar TSV al portapapeles ---- */
-  function copyTSVRowToClipboard(rowArray, opts) {
+  function copyTSVRowsToClipboard(rows, opts) {
     opts = opts || {};
-    var tsv = toTSVRow(rowArray);
+    var tsv = toTSVRows(rows);
     var sheetName = opts.sheetName || 'la hoja correspondiente';
+    var rowCount = Array.isArray(rows) ? rows.length : 0;
 
     if (!tsv) return false;
 
     // Intentar clipboard API
     if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
       navigator.clipboard.writeText(tsv).then(function () {
-        showToast('Fila copiada. Pega en la primera fila libre de la hoja ' + sheetName + '.');
+        showToast(rowCount + (rowCount === 1 ? ' fila copiada. ' : ' filas copiadas. ') + 'Pega en la primera fila libre de la hoja ' + sheetName + '.');
       })['catch'](function () {
-        fallbackCopy(tsv, sheetName);
+        fallbackCopy(tsv, sheetName, rowCount);
       });
     } else {
-      fallbackCopy(tsv, sheetName);
+      fallbackCopy(tsv, sheetName, rowCount);
     }
     return true;
   }
 
+  /* ---- Compatibilidad: la API de una fila conserva su firma ---- */
+  function copyTSVRowToClipboard(rowArray, opts) {
+    return copyTSVRowsToClipboard([rowArray], opts);
+  }
+
   /* ---- Fallback: textarea temporal ---- */
-  function fallbackCopy(tsv, sheetName) {
+  function fallbackCopy(tsv, sheetName, rowCount) {
     // Buscar o crear textarea temporal
     var ta = document.getElementById('fhExcelRowExportFallback');
     if (!ta) {
@@ -293,7 +310,7 @@
     ta.select();
     try {
       document.execCommand('copy');
-      showToast('Fila copiada. Pega en la primera fila libre de la hoja ' + sheetName + '.');
+      showToast((rowCount || 1) + ((rowCount || 1) === 1 ? ' fila copiada. ' : ' filas copiadas. ') + 'Pega en la primera fila libre de la hoja ' + sheetName + '.');
     } catch (e) {
       // Mostrar textarea visible para copia manual
       ta.style.cssText = 'position:fixed;top:50%;left:50%;width:400px;height:100px;opacity:1;z-index:9999;font-size:12px;';
@@ -437,7 +454,9 @@
     buildExcelRowObject: buildExcelRowObject,
     buildExcelRowArray: buildExcelRowArray,
     toTSVRow: toTSVRow,
+    toTSVRows: toTSVRows,
     copyTSVRowToClipboard: copyTSVRowToClipboard,
+    copyTSVRowsToClipboard: copyTSVRowsToClipboard,
     getServiceSheetName: getServiceSheetName,
     buildFilename: buildFilename,
     buildContextFromValidacion: buildContextFromValidacion,

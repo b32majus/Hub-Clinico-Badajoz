@@ -200,5 +200,24 @@ assert(exp.buildExcelRowObject(nonValidationContexts[0][1]).resultado_validacion
 assert(exp.buildExcelRowObject(nonValidationContexts[1][1]).resultado_validacion === '', 'Seguimiento conserva resultado_validacion vacío');
 assert(exp.buildExcelRowObject(nonValidationContexts[2][1]).resultado_validacion === '', 'Dashboard conserva resultado_validacion vacío');
 
+// 25. Multilínea: N filas, una sola operación TSV y compatibilidad de una fila
+assert(typeof exp.toTSVRows === 'function' && typeof exp.copyTSVRowsToClipboard === 'function', 'API TSV multilínea expuesta');
+const rowA = exp.buildExcelRowArray(exp.buildExcelRowObject({ timestamp: '2026-07-27T10:00:00.000Z', visitaId: 'VIS-SYN', lineaActual: { linea_id: 'L-A', estado_linea: 'active', tipo_relacion: 'primary', tipo_movimiento: 'optimization' }, proms: { morisky_green: 'high' } }));
+const rowB = exp.buildExcelRowArray(exp.buildExcelRowObject({ timestamp: '2026-07-27T10:00:00.000Z', visitaId: 'VIS-SYN', lineaActual: { linea_id: 'L-B', estado_linea: 'suspended', tipo_relacion: 'additional', tipo_movimiento: 'suspension' }, proms: { morisky_green: 'low' } }));
+const multiTsv = exp.toTSVRows([rowA, rowB]);
+assert(multiTsv.split('\n').length === 2 && multiTsv.split('\n').every((row) => row.split('\t').length === 61), 'toTSVRows produces N complete rows in one block');
+assert(exp.toTSVRows([rowA]) === exp.toTSVRow(rowA), 'one-row TSV compatibility is exact');
+const translatedA = exp.buildExcelRowObject({ lineaActual: { linea_id: 'L-A', estado_linea: 'active', tipo_relacion: 'primary', tipo_movimiento: 'optimization' }, proms: { morisky_green: 'high' } });
+assert(translatedA.estado_linea === 'activo' && translatedA.tipo_relacion === 'principal' && translatedA.tipo_movimiento === 'optimizacion' && translatedA.adherencia_morisky === 'Alta', 'canonical follow-up values translate for Excel');
+const translatedValidated = exp.buildExcelRowObject({ lineaActual: { linea_id: 'L-V', estado_linea: 'validated_not_started', tipo_relacion: 'additional', tipo_movimiento: '' } });
+assert(translatedValidated.estado_linea === 'validado_pendiente_inicio' && translatedValidated.tipo_relacion === 'adicional' && translatedValidated.tipo_movimiento === '', 'validated-not-started and empty movement use exact Excel translations');
+const translatedUnknown = exp.buildExcelRowObject({ lineaActual: { linea_id: 'L-U', estado_linea: 'unknown', tipo_relacion: 'unknown', tipo_movimiento: '' } });
+assert(translatedUnknown.estado_linea === '' && translatedUnknown.tipo_relacion === '' && translatedUnknown.tipo_movimiento === '', 'unknown canonical relation/state export as empty values');
+const preservedLegacy = exp.buildExcelRowObject({ lineaActual: { linea_id: 'L-LEG', estado_linea: 'historico', tipo_relacion: 'base', tipo_movimiento: 'sin_cambios' } });
+assert(preservedLegacy.estado_linea === 'historico' && preservedLegacy.tipo_relacion === 'base' && preservedLegacy.tipo_movimiento === 'sin_cambios', 'unrelated legacy Excel values remain backward compatible');
+const stampA = exp.buildExcelRowObject({ timestamp: '2026-07-27T10:00:00.000Z', lineaActual: { linea_id: 'L-A' } });
+const stampB = exp.buildExcelRowObject({ timestamp: '2026-07-27T10:00:00.000Z', lineaActual: { linea_id: 'L-B' } });
+assert(stampA.created_at === stampB.created_at && stampA.updated_at === stampB.updated_at, 'multiline rows preserve one visit timestamp');
+
 console.log('\n Total: ' + passed + ' passed, ' + failed + ' failed' + (errors.length ? ' (' + errors.length + ' errores)' : ''));
 if (failed > 0) process.exit(1);

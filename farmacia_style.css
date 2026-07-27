@@ -5932,3 +5932,55 @@
     color: var(--text-muted, #666);
     margin-top: 4px;
 }
+/* Seguimiento multilínea: selección explícita y estado de exportación en memoria. */
+.followup-lines {
+    margin: 1rem 0;
+}
+
+.followup-line-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: .75rem;
+    margin-top: .75rem;
+}
+
+.followup-line-card {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+    padding: .85rem;
+    border: 1px solid #cbd5e1;
+    border-radius: .65rem;
+    background: #fff;
+    cursor: pointer;
+}
+
+.followup-line-card:has(input:checked) {
+    border-color: #2f5496;
+    box-shadow: 0 0 0 2px rgba(47, 84, 150, .12);
+}
+
+.followup-line-card--disabled {
+    background: #f3f4f6;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.followup-line-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.followup-export-statuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: .75rem 0;
+}
+
+.followup-export-statuses span {
+    padding: .4rem .65rem;
+    border-radius: .45rem;
+    background: #eef2ff;
+}
