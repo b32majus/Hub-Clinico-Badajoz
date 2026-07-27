@@ -41,7 +41,7 @@
         return {
             slot: uid ? ('seguimiento.relacionado:' + uid) : (slot || 'seguimiento.tratamiento'),
             cip: firstNonEmpty(cipEl && cipEl.value, currentSegPatient && currentSegPatient.cip),
-            tratamiento_id: line && line.tratamiento_id || '',
+            tratamiento_id: '',
             linea_id: line && line.linea_id || ''
         };
     }
@@ -131,7 +131,9 @@
         var s = String(state).toLowerCase().trim();
         if (s === 'activo' || s === 'active') return 'Activo';
         if (s === 'suspendido' || s === 'suspended') return 'Suspendido';
-        if (s === 'finalizado' || s === 'finished') return 'Finalizado';
+        if (s === 'finalizado' || s === 'finished' || s === 'completed') return 'Finalizado';
+        if (s === 'validado_pendiente_inicio' || s === 'validated_not_started') return 'Validado, pendiente de inicio';
+        if (s === 'desconocido' || s === 'unknown') return 'Desconocido';
         if (s === 'historico' || s === 'historical' || s === 'previo') return 'Histórico';
         if (s === 'validado' || s === 'validated') return 'Validado';
         if (s === 'no_aplica' || s === 'n/a') return 'No aplica';
@@ -140,6 +142,9 @@
     }
 
     function biologicRelationLabel(type) {
+        if (type === 'primary') return 'Principal';
+        if (type === 'additional') return 'Adicional';
+        if (type === 'unknown') return 'Desconocida';
         if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
         if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
         if (type === 'revision_linea') return 'Revisión de línea';
@@ -208,11 +213,31 @@
         return P && typeof P.getLegacyPautaLabel === 'function' ? P.getLegacyPautaLabel(pauta) : select.value;
     }
 
-    function normalizeBiologicLine(line, index, patient) {
+    function canonicalRelationship(value) {
+        var normalized = String(value || '').toLowerCase().trim();
+        if (normalized === 'primary' || normalized === 'principal') return 'primary';
+        if (normalized === 'additional' || normalized === 'adicional') return 'additional';
+        if (normalized === 'unknown' || normalized === 'desconocido') return 'unknown';
+        return 'unknown';
+    }
+
+    function canonicalLineStatus(value) {
+        var normalized = String(value || '').toLowerCase().trim();
+        if (normalized === 'active' || normalized === 'activo') return 'active';
+        if (normalized === 'suspended' || normalized === 'suspendido') return 'suspended';
+        if (normalized === 'completed' || normalized === 'finalizado') return 'completed';
+        if (normalized === 'validated_not_started' || normalized === 'validado_pendiente_inicio') return 'validated_not_started';
+        if (normalized === 'unknown' || normalized === 'desconocido') return 'unknown';
+        return 'unknown';
+    }
+
+    function normalizeBiologicLine(line, patient, overrides) {
+        overrides = overrides || {};
         return {
-            linea_id: line.linea_id || ('BIO-LEGACY-' + (index + 1)),
-            orden: line.orden || (index + 1),
-            nombre_linea: line.nombre_linea || line.principio_activo || line.nombre_comercial || ('Biologico ' + (index + 1)),
+            cip: patient.cip,
+            linea_id: line.linea_id,
+            orden: line.orden || '',
+            nombre_linea: line.nombre_linea || line.principio_activo || line.nombre_comercial || '',
             nombre_comercial: line.nombre_comercial || line.nombre_linea || patient.farmaco || '',
             principio_activo: line.principio_activo || patient.principioActivo || '',
             dosis: line.dosis || patient.dosis || '',
@@ -221,56 +246,56 @@
             pauta: line.pauta || patient.pauta || '',
             fecha_inicio: line.fecha_inicio || patient.primeraVisita || '',
             fecha_fin: line.fecha_fin || '',
-            estado_linea: line.estado_linea || (line.activo ? 'activo' : 'historico'),
-            tipo_relacion: line.tipo_relacion || 'sin_cambios',
-            es_principal: !!line.es_principal,
+            estado_linea: overrides.estado_linea || canonicalLineStatus(line.estado_linea),
+            tipo_relacion: overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion),
+            es_principal: (overrides.tipo_relacion || canonicalRelationship(line.tipo_relacion)) === 'primary',
             tratamiento_id_principal: line.tratamiento_id_principal || line.id || ''
         };
     }
 
-    function getPatientBiologicLines(patient) {
-        if (!patient) return [];
-        var helper = getTreatmentHelper();
-        if (helper && typeof helper.buildTreatmentFromPatient === 'function') {
-            var result = helper.buildTreatmentFromPatient(patient, { returnArray: true, fuente: 'seguimiento' });
-            if (Array.isArray(result) && result.length) return result;
+    var DEMO_LINE_CONTRACT = {
+        'CIP-DEMO-FH-001': [{ linea_id: 'BIO-FH-001-L1', nombre_linea: 'Secukinumab', nombre_comercial: 'Secukinumab 300 mg', principio_activo: 'Secukinumab', dosis: '300 mg', presentacion: '300 mg', via: 'SC', pauta: 'SC / cada 4 semanas', estado_linea: 'active', tipo_relacion: 'primary' }],
+        'CIP-DEMO-FH-002': [],
+        'CIP-DEMO-FH-003': [{ linea_id: 'BIO-FH-003-L1', nombre_linea: 'Adalimumab', nombre_comercial: 'Adalimumab 40 mg', principio_activo: 'Adalimumab', dosis: '40 mg', presentacion: '40 mg', via: 'SC', pauta: 'SC / cada 2 semanas', estado_linea: 'validated_not_started', tipo_relacion: 'primary' }],
+        'CIP-DEMO-FH-004': [
+            { linea_id: 'BIO-FH-004-L1', estado_linea: 'completed', tipo_relacion: 'primary' },
+            { linea_id: 'BIO-FH-004-L2', estado_linea: 'active', tipo_relacion: 'primary' },
+            { linea_id: 'BIO-FH-004-L3', estado_linea: 'active', tipo_relacion: 'additional' }
+        ]
+    };
+
+    function findPatientLineById(patient, lineId) {
+        if (!patient || !Array.isArray(patient.biologicos)) return null;
+        for (var i = 0; i < patient.biologicos.length; i++) {
+            if (patient.biologicos[i].linea_id === lineId) return patient.biologicos[i];
         }
-        // Fallback legacy
-        if (Array.isArray(patient.biologicos) && patient.biologicos.length) {
-            return patient.biologicos.map(function (line, index) {
-                return normalizeBiologicLine(line, index, patient);
+        return null;
+    }
+
+    function getPatientBiologicLines(patient) {
+        if (!patient || !patient.cip) return [];
+        if (Object.prototype.hasOwnProperty.call(DEMO_LINE_CONTRACT, patient.cip)) {
+            return DEMO_LINE_CONTRACT[patient.cip].map(function (contractLine) {
+                var source = findPatientLineById(patient, contractLine.linea_id) || contractLine;
+                var merged = Object.assign({}, source, contractLine);
+                return normalizeBiologicLine(merged, patient, contractLine);
             });
         }
-        return [normalizeBiologicLine({
-            linea_id: patient.cip ? patient.cip + '-L1' : 'BIO-LEGACY-1',
-            orden: 1,
-            nombre_linea: patient.principioActivo || patient.farmaco || 'Tratamiento actual',
-            nombre_comercial: patient.farmaco || '',
-            principio_activo: patient.principioActivo || patient.farmaco || '',
-            dosis: patient.dosis || '',
-            via: patient.via || '',
-            pauta: patient.pauta || '',
-            fecha_inicio: patient.primeraVisita || '',
-            estado_linea: 'activo',
-            tipo_relacion: 'sin_cambios',
-            es_principal: true
-        }, 0, patient)];
+        if (!Array.isArray(patient.biologicos)) return [];
+        return patient.biologicos.filter(function (line) {
+            return !!line.linea_id;
+        }).map(function (line) {
+            return normalizeBiologicLine(line, patient);
+        });
     }
 
     function getCurrentSelectedLine() {
         var select = document.getElementById('fhSegLineaPrincipal');
-        if (!currentBiologicLines.length) return null;
-        if (!select || !select.value) {
-            for (var i = 0; i < currentBiologicLines.length; i++) {
-                if (currentBiologicLines[i].es_principal) return currentBiologicLines[i];
-            }
-            return currentBiologicLines[0];
+        if (!select || !select.value) return null;
+        for (var i = 0; i < currentBiologicLines.length; i++) {
+            if (currentBiologicLines[i].linea_id === select.value) return currentBiologicLines[i];
         }
-        for (var j = 0; j < currentBiologicLines.length; j++) {
-            var matchVal = currentBiologicLines[j].linea_id || currentBiologicLines[j].tratamiento_id;
-            if (matchVal && matchVal === select.value) return currentBiologicLines[j];
-        }
-        return currentBiologicLines[0];
+        return null;
     }
 
     function createFollowupOtherDrug() {
@@ -693,10 +718,24 @@
         var seenIds = {};
         // Añadir todas las líneas biológicas (principales, activas, históricas)
         currentBiologicLines.forEach(function (line) {
-            var id = 'line:' + (line.linea_id || line.tratamiento_id || line.id || 'bio-' + candidates.length);
+            var id = 'line:' + line.linea_id;
             if (seenIds[id]) return;
             seenIds[id] = true;
-            var cat = (line.estado_linea === 'historico' && !line.es_principal) ? 'Biológico previo/histórico' : 'Biológico activo';
+            var cat = 'Biológico no clasificado';
+            var linePriority = 6;
+            if (line.estado_linea === 'active') {
+                cat = 'Biológico activo';
+                linePriority = line.es_principal ? 1 : 2;
+            } else if (line.estado_linea === 'validated_not_started') {
+                cat = 'Biológico validado pendiente de inicio';
+                linePriority = 4;
+            } else if (line.estado_linea === 'suspended') {
+                cat = 'Biológico suspendido';
+                linePriority = 5;
+            } else if (line.estado_linea === 'completed') {
+                cat = 'Biológico finalizado/histórico';
+                linePriority = 5;
+            }
             var name = line.nombre_linea || line.farmaco_nombre || line.nombre_comercial || line.principio_activo || '';
             candidates.push({
                 id: id,
@@ -704,7 +743,7 @@
                 label: name ? (name + ' — ' + cat) : 'Tratamiento principal',
                 source: 'principal',
                 tipo_relacion: line.tipo_relacion || (line.es_principal ? 'principal' : 'historico'),
-                prioridad: line.es_principal ? 1 : (line.estado_linea === 'historico' ? 5 : 2)
+                prioridad: linePriority
             });
         });
         // Fallback DOM: leer tratamiento actual directamente si no hay líneas cargadas
@@ -729,7 +768,7 @@
             // Fallback adicional: línea seleccionada actual en el select
             var selectedLine = getCurrentSelectedLine();
             if (selectedLine) {
-                var sid = 'line:' + (selectedLine.linea_id || selectedLine.tratamiento_id || selectedLine.id || 'selected');
+                var sid = 'line:' + selectedLine.linea_id;
                 if (!seenIds[sid]) {
                     seenIds[sid] = true;
                     var sName = selectedLine.nombre_linea || selectedLine.farmaco_nombre || selectedLine.nombre_comercial || selectedLine.principio_activo || '';
@@ -951,11 +990,13 @@
     function syncBiologicControls(patient) {
         var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
         var estadoLinea = document.getElementById('fhSegEstadoLinea');
+        var cards = document.getElementById('fhSegLineCards');
 
         if (!patient) {
             currentBiologicLines = [];
             if (lineaPrincipal) lineaPrincipal.value = '';
             if (estadoLinea) estadoLinea.value = '';
+            if (cards) F.clearChildren(cards);
             F.clearChildren(document.getElementById('fhSegTratamientoGrid'));
             return;
         }
@@ -970,46 +1011,73 @@
         placeholderOption.textContent = 'Seleccionar línea...';
         lineaPrincipal.appendChild(placeholderOption);
 
-        var selectedLine = null;
         for (var i = 0; i < currentBiologicLines.length; i++) {
             var line = currentBiologicLines[i];
-            var opt = document.createElement('option');
-            opt.value = line.linea_id || line.tratamiento_id || ('BIO-' + i);
-            opt.textContent = line.nombre_linea || line.farmaco_nombre || line.nombre_comercial || line.principio_activo || ('Línea ' + (i + 1));
-            if (line.es_principal || (!selectedLine && i === 0)) {
-                opt.selected = true;
-                selectedLine = line;
-            }
-            lineaPrincipal.appendChild(opt);
-        }
-
-        if (!selectedLine && currentBiologicLines.length) {
-            selectedLine = currentBiologicLines[0];
-            for (var j = 0; j < lineaPrincipal.options.length; j++) {
-                if (lineaPrincipal.options[j].value === (selectedLine.linea_id || selectedLine.tratamiento_id)) {
-                    lineaPrincipal.options[j].selected = true;
-                    break;
-                }
+            if (line.estado_linea === 'active') {
+                var opt = document.createElement('option');
+                opt.value = line.linea_id;
+                opt.textContent = line.nombre_linea || line.nombre_comercial || line.principio_activo || line.linea_id;
+                lineaPrincipal.appendChild(opt);
             }
         }
-
-        if (estadoLinea && selectedLine) {
-            estadoLinea.value = biologicStateLabel(selectedLine.estado_linea);
-        }
+        lineaPrincipal.value = '';
+        renderBiologicLineCards();
         applySelectedBiologicLine();
+    }
+
+    function renderBiologicLineCards() {
+        var container = document.getElementById('fhSegLineCards');
+        if (!container) return;
+        F.clearChildren(container);
+        currentBiologicLines.forEach(function (line) {
+            var selectable = line.estado_linea === 'active';
+            var card = createElement('label', 'seg-line-card' + (selectable ? '' : ' seg-line-card--disabled'));
+            card.dataset.lineId = line.linea_id;
+            var control = createElement('input', 'seg-line-card__control');
+            control.type = 'radio';
+            control.name = 'fhSegLineCardSelection';
+            control.value = line.linea_id;
+            control.disabled = !selectable;
+            control.setAttribute('aria-label', 'Seleccionar línea ' + line.linea_id);
+            control.addEventListener('change', function () { selectBiologicLineById(line.linea_id); });
+            var body = createElement('span', 'seg-line-card__body');
+            body.appendChild(createElement('strong', 'seg-line-card__name', line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Línea sin nombre'));
+            body.appendChild(createElement('code', 'seg-line-card__id', line.linea_id));
+            body.appendChild(createElement('span', 'seg-line-card__meta', biologicRelationLabel(line.tipo_relacion) + ' · ' + biologicStateLabel(line.estado_linea)));
+            card.appendChild(control);
+            card.appendChild(body);
+            container.appendChild(card);
+        });
+        if (!currentBiologicLines.length) container.appendChild(createElement('p', 'seg-line-cards__empty', 'No hay líneas activas o históricas disponibles.'));
+    }
+
+    function selectBiologicLineById(lineId) {
+        var selected = null;
+        for (var i = 0; i < currentBiologicLines.length; i++) {
+            if (currentBiologicLines[i].linea_id === lineId && currentBiologicLines[i].estado_linea === 'active') selected = currentBiologicLines[i];
+        }
+        var select = document.getElementById('fhSegLineaPrincipal');
+        if (select) select.value = selected ? selected.linea_id : '';
+        var controls = document.querySelectorAll('#fhSegLineCards input[name="fhSegLineCardSelection"]');
+        for (var j = 0; j < controls.length; j++) controls[j].checked = !!selected && controls[j].value === selected.linea_id;
+        applySelectedBiologicLine();
+        return selected;
     }
 
     function applySelectedBiologicLine() {
         var line = getCurrentSelectedLine();
         var helper = getTreatmentHelper();
+        var C = window.FarmaciaCatalog;
+        var snap = line && C && C.getSnapshot ? C.getSnapshot(followupCatalogContext('seguimiento.tratamiento')) : null;
         if (line) {
-            setSegValue('fhSegFarmaco', line.farmaco_nombre || line.nombre_comercial || line.nombre_linea || '');
-            setSegValue('fhSegPrincipioActivo', line.principio_activo || '');
-            setSegValue('fhSegPresentacion', line.presentacion || line.dosis_texto || '');
+            setSegValue('fhSegFarmaco', snap && snap.nombre_snapshot || line.farmaco_nombre || line.nombre_comercial || line.nombre_linea || '');
+            setSegValue('fhSegPrincipioActivo', snap && snap.principio_activo_snapshot || line.principio_activo || '');
+            setSegValue('fhSegPresentacion', snap && snap.presentacion_snapshot || line.presentacion || line.dosis_texto || '');
             setSegValue('fhSegDosisActual', line.dosis || line.dosis_texto || '');
             setSegValue('fhSegVia', mapRouteToSelect(line.via));
             setSegPautaActualNormalized(line.pauta || '');
             setSegValue('fhSegEstadoLinea', biologicStateLabel(line.estado_linea));
+            setSegValue('fhSegFechaInicio', line.fecha_inicio || '');
             // Renderizar resumen con contrato común
             if (helper && typeof helper.normalizeTreatmentInput === 'function') {
                 var normalized = helper.normalizeTreatmentInput(line, { fuente: 'seguimiento' });
@@ -1018,6 +1086,8 @@
                 renderSegTreatmentSummary(line);
             }
         } else {
+            // Compatibilidad para integraciones antiguas sin el bloque de tarjetas; la pantalla actual siempre lo incluye.
+            if (!document.getElementById('fhSegLineCards')) return;
             setSegValue('fhSegFarmaco', '');
             setSegValue('fhSegPrincipioActivo', '');
             setSegValue('fhSegPresentacion', '');
@@ -1025,18 +1095,25 @@
             setSegValue('fhSegVia', '');
             setSegValue('fhSegPautaActual', '');
             setSegValue('fhSegEstadoLinea', '');
+            setSegValue('fhSegFechaInicio', '');
             var grid = document.getElementById('fhSegTratamientoGrid');
             if (grid) F.clearChildren(grid);
         }
         // Sincronizar tarjeta CIMA con la línea seleccionada
         var cimaEl = document.getElementById('fhSegCimaContextPrincipioActivo');
         if (cimaEl && line) {
-            var C = window.FarmaciaCatalog;
-            var snap = C && C.getSnapshot ? C.getSnapshot(followupCatalogContext('seguimiento.tratamiento')) : null;
-            if (!snap) F.setText('fhSegCimaContextPrincipioActivo', line.principio_activo || '\u2014');
+            F.setText('fhSegCimaContextPrincipioActivo', snap && snap.principio_activo_snapshot || line.principio_activo || '\u2014');
         } else if (cimaEl && !line) {
             F.setText('fhSegCimaContextPrincipioActivo', '\u2014');
         }
+        setSegValue('fhSegCodigoNacional', snap && snap.codigo_nacional_snapshot || line && line.codigo_nacional || '');
+        setSegValue('fhSegNregistro', snap && snap.nregistro_snapshot || line && line.nregistro || '');
+        var tags = [];
+        if (snap && snap.etiquetas && snap.etiquetas.biosimilar) tags.push('Biosimilar');
+        if (snap && snap.etiquetas && snap.etiquetas.es_hospitalario) tags.push('Hospitalario');
+        setSegValue('fhSegEtiquetas', tags.join(', '));
+        var sourceType = snap && String(snap.source_type || '').toUpperCase();
+        setSegValue('fhSegOrigenCatalogo', sourceType === 'CIMA' ? 'CIMA' : sourceType === 'LOCAL' ? 'Local Especial' : sourceType === 'LOCAL_PENDIENTE_DEMO' ? 'Demo/local pendiente' : line ? 'Demo' : '');
         updateSuspectDrugSelector();
     }
 
@@ -1091,8 +1168,6 @@
             F.setText('fhSegCimaContextPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '\u2014');
             F.setValue('fhSegPresentacion', snap?.presentacion_snapshot || '');
         }
-        syncBiologicControls(ctx.patient || null);
-
         if (snap) {
             F.setValue('fhSegCodigoNacional', snap.codigo_nacional_snapshot || '');
             F.setValue('fhSegNregistro', snap.nregistro_snapshot || '');
@@ -1122,6 +1197,7 @@
             }
             F.setValue('fhSegOrigenCatalogo', label);
         })();
+        syncBiologicControls(ctx.patient || null);
 
         const fhSegFecha = document.getElementById('fhSegFecha');
         if (fhSegFecha && !fhSegFecha.value) {
@@ -1247,7 +1323,6 @@
         F.setValue('fhSegUltimaAdherencia', patient.adherencia);
         F.setValue('fhSegUltimosProms', patient.proms);
         F.setValue('fhSegEaPrevios', patient.efectosAdversos);
-        syncBiologicControls(patient);
         currentSegPatient = patient;
 
         var snap = window.FarmaciaCatalog ? window.FarmaciaCatalog.getSnapshot(followupCatalogContext('seguimiento.tratamiento')) : null;
@@ -1285,6 +1360,7 @@
             }
             F.setValue('fhSegOrigenCatalogo', label);
         })();
+        syncBiologicControls(patient);
 
         for (var i = 0; i < cipSearchFields.length; i++) {
             var el = document.getElementById(cipSearchFields[i]);
@@ -1313,7 +1389,7 @@
         var previousMainContext = previousCip ? {
             slot: 'seguimiento.tratamiento',
             cip: previousCip,
-            tratamiento_id: previousLine && previousLine.tratamiento_id || '',
+            tratamiento_id: '',
             linea_id: previousLine && previousLine.linea_id || ''
         } : null;
         var resetCatalog = getCatalog();
@@ -2110,7 +2186,13 @@
         addFollowupOtherDrug: addFollowupOtherDrug,
         getFollowupOtherDrugs: function () { return JSON.parse(JSON.stringify(followupOtherDrugs)); },
         mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
-        mapRelatedTreatmentToContract: mapOtherDrugToContract
+        mapRelatedTreatmentToContract: mapOtherDrugToContract,
+        getCanonicalLinesForPatient: function (patient) { return getPatientBiologicLines(patient).map(function (line) { return Object.assign({}, line); }); },
+        getSelectedLine: function () { var line = getCurrentSelectedLine(); return line ? Object.assign({}, line) : null; },
+        selectLineById: selectBiologicLineById,
+        syncLinesForPatient: syncBiologicControls,
+        canonicalRelationship: canonicalRelationship,
+        canonicalLineStatus: canonicalLineStatus
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -2154,7 +2236,7 @@
 
         initMoriskyChips();
         var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
-        if (lineaPrincipal) lineaPrincipal.addEventListener('change', applySelectedBiologicLine);
+        if (lineaPrincipal) lineaPrincipal.addEventListener('change', function () { selectBiologicLineById(lineaPrincipal.value); });
         var eaSelector = document.getElementById('fhSeguimientoEaPresente');
         if (eaSelector) eaSelector.addEventListener('change', updateEaCausalidad);
         ['fhSeguimientoEaGravedad', 'fhSeguimientoEaResuelto', 'fhSeguimientoEaObservaciones', 'fhSeguimientoEaFarmacoSospechoso'].forEach(function (id) {
