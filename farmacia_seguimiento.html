@@ -232,13 +232,14 @@
     </div>
     <div class="form-grid form-grid--full hidden" id="fhSeguimientoEaObservacionesRow"><div class="form-group"><label for="fhSeguimientoEaObservaciones">Descripción breve / observaciones</label><textarea class="form-textarea" id="fhSeguimientoEaObservaciones" rows="3"></textarea></div></div>
     <div class="form-grid hidden" id="fhSeguimientoEaFarmacoRow">
-        <div class="form-group"><label for="fhSeguimientoEaFarmacoSospechoso">Fármaco sospechoso asociado al efecto adverso</label><select class="form-select" id="fhSeguimientoEaFarmacoSospechoso"><option value="">No seleccionado</option></select><div class="search-card__hint hidden" id="fhSeguimientoEaFarmacoDefaultNotice"></div></div>
+        <div class="form-group form-group--full"><span class="form-label">Fármacos sospechosos en esta visita</span><div class="ea-suspect-list" id="fhSeguimientoEaSuspectCandidates"></div></div>
+        <div class="form-group"><label for="fhSeguimientoEaFarmacoSospechoso">Fármaco cuya causalidad estás evaluando</label><select class="form-select" id="fhSeguimientoEaFarmacoSospechoso" disabled><option value="">Seleccionar sospechoso...</option></select></div>
     </div>
     <div id="fhSeguimientoEaNoCausalidad" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>No se activa evaluación de causalidad.</span></div>
     <div id="fhSeguimientoEaActivationNotice" class="notice-box notice-box--info hidden"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Para activar los cuestionarios de causalidad, marque primero que existe efecto adverso en la visita de seguimiento.</span></div>
     <div class="hidden" id="fhSegEaSospechosos"></div>
 </section>
-<section class="dashboard-card" id="modSeguimientoCausalidad"><h2 class="section-title"><i class="fas fa-calculator"></i> Análisis de causalidad</h2>
+<section class="dashboard-card hidden" id="modSeguimientoCausalidad"><h2 class="section-title"><i class="fas fa-calculator"></i> Análisis de causalidad</h2>
 <div class="causality-section hidden" id="modNaranjo" title="Algoritmo de Naranjo">
     <h2 class="section-title section-title--with-subtitle">
         <i class="fas fa-calculator"></i>
@@ -312,6 +313,7 @@
     <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
     <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables.</span></div>
     <div id="fhSegMultilineExportWarning" class="notice-box notice-box--warning hidden"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>La exportación multilínea se incorporará en el checkpoint de salidas. Reduzca temporalmente la visita a una línea para usar las exportaciones actuales.</span></div>
+    <div id="fhSegMultiSuspectExportWarning" class="notice-box notice-box--warning hidden"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>La exportación con múltiples fármacos sospechosos se incorporará en el checkpoint de salidas.</span></div>
     <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline hidden" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
 </section>
                 </main>

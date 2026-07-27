@@ -209,7 +209,7 @@ check(syncBlock.includes('currentFollowupVisit.line_state = {}'), 'known CIP hyd
 check(js.includes('syncBiologicControls(null)') && editorBlock.includes(": ''"), 'unknown CIP remains clean with line controls cleared');
 check(js.includes('LINE_CONTROL_DEFAULTS') && editorBlock.includes('LINE_CONTROL_DEFAULTS[id]'), 'fresh and discarded lines restore explicit contract defaults');
 
-check(js.includes("button.disabled = count !== 1"), 'exports are enabled only for exactly one selected line');
+check(js.includes("button.disabled = count !== 1 || suspectCount > 1"), 'exports require exactly one selected line and preserve the PR57C suspect gate');
 check(html.includes('La exportación multilínea se incorporará en el checkpoint de salidas. Reduzca temporalmente la visita a una línea para usar las exportaciones actuales.'), 'multiline export warning is exact');
 check(html.includes('fhSegExportTxt') && html.includes('fhSegExportCsv') && html.includes('fhSegExcelExportBtn'), 'JARA, CSV and Excel export anchors remain');
 check(js.includes("'CIP-DEMO-FH-002': []") && js.includes("estado_linea: 'validated_not_started'"), 'FH-002/003 have no active selectable line');
