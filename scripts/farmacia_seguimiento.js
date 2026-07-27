@@ -77,9 +77,17 @@
     var segAutocompleteActiveIndex = -1;
     var currentSegPatient = null;
     var currentBiologicLines = [];
+    var currentFollowupVisit = null;
     var followupOtherDrugs = [];
     var followupOtherDrugSeq = 0;
     var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
+    var LINE_DISCARD_MESSAGE = 'Esta línea contiene datos introducidos en la visita actual. Si la desmarca, se perderán.';
+    var LINE_CONTROL_IDS = ['fhSegTipoRelacionTerapia', 'fhSegOptimiza', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegMotivoOpt', 'fhSegSuspension', 'fhSegMotivoSusp', 'fhSegObservacionesLinea'];
+    var LINE_CONTROL_DEFAULTS = {
+        fhSegTipoRelacionTerapia: 'sin_cambios', fhSegOptimiza: 'No', fhSegNuevaDosis: '',
+        fhSegNuevaPauta: '', fhSegNuevaPautaOtro: '', fhSegMotivoOpt: 'No aplica',
+        fhSegSuspension: 'No', fhSegMotivoSusp: 'No aplica', fhSegObservacionesLinea: ''
+    };
 
     var FOLLOWUP_RELATION_OPTIONS = [
         'Tratamiento activo previo / línea existente',
@@ -317,6 +325,139 @@
             if (currentBiologicLines[i].linea_id === select.value) return currentBiologicLines[i];
         }
         return null;
+    }
+
+    function createFollowupVisit(cip) {
+        currentFollowupVisit = {
+            cip: String(cip || '').trim(),
+            visit_id: 'FH-VISIT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+            selected_line_ids: [], editing_line_id: '', line_state: {}
+        };
+        return currentFollowupVisit;
+    }
+
+    function clearMoriskyControls(disabled) {
+        document.querySelectorAll('.mg-chip').forEach(function (chip) {
+            chip.classList.remove('mg-chip--active');
+            chip.disabled = disabled;
+        });
+        F.setText('fhSegMoriskyResultado', 'Resultado Morisky-Green: pendiente de completar');
+        var result = byId('fhSegMoriskyResultado');
+        if (result) result.classList.remove('mg-result--high', 'mg-result--medium', 'mg-result--low');
+    }
+
+    function readVisibleLineState() {
+        var state = { controls: {}, morisky: {} };
+        LINE_CONTROL_IDS.forEach(function (id) { state.controls[id] = fv(id); });
+        document.querySelectorAll('.mg-chip--active').forEach(function (chip) {
+            state.morisky[chip.getAttribute('data-mg-name')] = chip.getAttribute('data-mg-value');
+        });
+        return state;
+    }
+
+    function lineStateIsDirty(state) {
+        return !!state && (LINE_CONTROL_IDS.some(function (id) {
+            return String((state.controls || {})[id] == null ? LINE_CONTROL_DEFAULTS[id] : state.controls[id]) !== LINE_CONTROL_DEFAULTS[id];
+        }) || Object.keys(state.morisky || {}).length > 0);
+    }
+
+    function captureEditingLineState() {
+        if (currentFollowupVisit && currentFollowupVisit.editing_line_id) {
+            currentFollowupVisit.line_state[currentFollowupVisit.editing_line_id] = readVisibleLineState();
+        }
+    }
+
+    function restoreEditingLineState() {
+        var editing = currentFollowupVisit && currentFollowupVisit.editing_line_id;
+        var state = editing && currentFollowupVisit.line_state[editing] || { controls: {}, morisky: {} };
+        LINE_CONTROL_IDS.forEach(function (id) {
+            var el = byId(id);
+            if (!el) return;
+            el.disabled = !editing;
+            el.value = editing
+                ? (Object.prototype.hasOwnProperty.call(state.controls, id) ? state.controls[id] : LINE_CONTROL_DEFAULTS[id])
+                : '';
+        });
+        clearMoriskyControls(!editing);
+        if (editing) {
+            document.querySelectorAll('.mg-chip').forEach(function (chip) {
+                chip.disabled = false;
+                if (state.morisky[chip.getAttribute('data-mg-name')] === chip.getAttribute('data-mg-value')) chip.classList.add('mg-chip--active');
+            });
+            updateMorisky();
+        }
+        var help = byId('fhSegLineEditorHelp');
+        if (help) help.classList.toggle('hidden', !!editing);
+        ['fhSegOptimiza', 'fhSegSuspension', 'fhSegNuevaPauta'].forEach(function (id) {
+            var el = byId(id);
+            if (editing && el) el.dispatchEvent(new Event('change'));
+        });
+    }
+
+    function syncEditorOptions() {
+        var select = byId('fhSegLineaPrincipal');
+        if (!select || !currentFollowupVisit) return;
+        F.clearChildren(select);
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Seleccionar línea...';
+        select.appendChild(placeholder);
+        currentFollowupVisit.selected_line_ids.forEach(function (lineId) {
+            var line = currentBiologicLines.find(function (item) { return item.linea_id === lineId; });
+            if (!line) return;
+            var option = document.createElement('option');
+            option.value = lineId;
+            option.textContent = line.nombre_linea || line.nombre_comercial || line.principio_activo || lineId;
+            select.appendChild(option);
+        });
+        select.value = currentFollowupVisit.editing_line_id || '';
+    }
+
+    function updateExportInterlock() {
+        var count = currentFollowupVisit ? currentFollowupVisit.selected_line_ids.length : 0;
+        ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn'].forEach(function (id) {
+            var button = byId(id);
+            if (button) button.disabled = count !== 1;
+        });
+        var warning = byId('fhSegMultilineExportWarning');
+        if (warning) warning.classList.toggle('hidden', count < 2);
+    }
+
+    function setEditingLine(lineId) {
+        if (!currentFollowupVisit) return null;
+        captureEditingLineState();
+        currentFollowupVisit.editing_line_id = currentFollowupVisit.selected_line_ids.indexOf(lineId) >= 0 ? lineId : '';
+        syncEditorOptions();
+        restoreEditingLineState();
+        applySelectedBiologicLine();
+        return getCurrentSelectedLine();
+    }
+
+    function toggleBiologicLineSelection(lineId, selected) {
+        if (!currentFollowupVisit) return false;
+        var line = currentBiologicLines.find(function (item) { return item.linea_id === lineId; });
+        if (!line || line.estado_linea !== 'active') return false;
+        var ids = currentFollowupVisit.selected_line_ids;
+        var index = ids.indexOf(lineId);
+        captureEditingLineState();
+        if (selected && index < 0) {
+            ids.push(lineId);
+            if (!currentFollowupVisit.editing_line_id && ids.length === 1) currentFollowupVisit.editing_line_id = lineId;
+        } else if (!selected && index >= 0) {
+            if (lineStateIsDirty(currentFollowupVisit.line_state[lineId]) && !window.confirm(LINE_DISCARD_MESSAGE)) {
+                renderBiologicLineCards();
+                return false;
+            }
+            ids.splice(index, 1);
+            delete currentFollowupVisit.line_state[lineId];
+            if (currentFollowupVisit.editing_line_id === lineId) currentFollowupVisit.editing_line_id = ids.length === 1 ? ids[0] : '';
+        }
+        syncEditorOptions();
+        renderBiologicLineCards();
+        restoreEditingLineState();
+        applySelectedBiologicLine();
+        updateExportInterlock();
+        return true;
     }
 
     function createFollowupOtherDrug() {
@@ -1015,38 +1156,33 @@
 
         if (!patient) {
             currentBiologicLines = [];
-            if (lineaPrincipal) lineaPrincipal.value = '';
+            if (currentFollowupVisit) {
+                currentFollowupVisit.selected_line_ids = [];
+                currentFollowupVisit.editing_line_id = '';
+                currentFollowupVisit.line_state = {};
+            }
+            syncEditorOptions();
             if (estadoLinea) estadoLinea.value = '';
             if (cards) F.clearChildren(cards);
             F.clearChildren(document.getElementById('fhSegTratamientoGrid'));
+            restoreEditingLineState();
+            updateExportInterlock();
             return;
         }
 
+        if (!currentFollowupVisit || currentFollowupVisit.cip !== patient.cip) createFollowupVisit(patient.cip);
         currentBiologicLines = getPatientBiologicLines(patient);
         var activeLines = currentBiologicLines.filter(function (line) { return line.estado_linea === 'active'; });
 
         if (!lineaPrincipal) return;
-
-        while (lineaPrincipal.options.length > 0) lineaPrincipal.remove(0);
-        var placeholderOption = document.createElement('option');
-        placeholderOption.value = '';
-        placeholderOption.textContent = 'Seleccionar línea...';
-        lineaPrincipal.appendChild(placeholderOption);
-
-        for (var i = 0; i < currentBiologicLines.length; i++) {
-            var line = currentBiologicLines[i];
-            if (line.estado_linea === 'active') {
-                var opt = document.createElement('option');
-                opt.value = line.linea_id;
-                opt.textContent = line.nombre_linea || line.nombre_comercial || line.principio_activo || line.linea_id;
-            }
-            if (line.estado_linea !== 'active') continue;
-            lineaPrincipal.appendChild(opt);
-        }
-        lineaPrincipal.value = '';
+        currentFollowupVisit.selected_line_ids = activeLines.length === 1 ? [activeLines[0].linea_id] : [];
+        currentFollowupVisit.editing_line_id = activeLines.length === 1 ? activeLines[0].linea_id : '';
+        currentFollowupVisit.line_state = {};
+        syncEditorOptions();
         renderBiologicLineCards();
-        if (activeLines.length === 1) { selectBiologicLineById(activeLines[0].linea_id); return; }
+        restoreEditingLineState();
         applySelectedBiologicLine();
+        updateExportInterlock();
     }
 
     function renderBiologicLineCards() {
@@ -1058,12 +1194,13 @@
             var card = createElement('label', 'seg-line-card' + (selectable ? '' : ' seg-line-card--disabled'));
             card.dataset.lineId = line.linea_id;
             var control = createElement('input', 'seg-line-card__control');
-            control.type = 'radio';
+            control.type = 'checkbox';
             control.name = 'fhSegLineCardSelection';
             control.value = line.linea_id;
             control.disabled = !selectable;
             control.setAttribute('aria-label', 'Seleccionar línea ' + line.linea_id);
-            control.addEventListener('change', function () { selectBiologicLineById(line.linea_id); });
+            control.checked = !!currentFollowupVisit && currentFollowupVisit.selected_line_ids.indexOf(line.linea_id) >= 0;
+            control.addEventListener('change', function () { toggleBiologicLineSelection(line.linea_id, control.checked); });
             var body = createElement('span', 'seg-line-card__body');
             body.appendChild(createElement('strong', 'seg-line-card__name', line.nombre_linea || line.nombre_comercial || line.principio_activo || 'Línea sin nombre'));
             body.appendChild(createElement('code', 'seg-line-card__id', line.linea_id));
@@ -1080,11 +1217,9 @@
         for (var i = 0; i < currentBiologicLines.length; i++) {
             if (currentBiologicLines[i].linea_id === lineId && currentBiologicLines[i].estado_linea === 'active') selected = currentBiologicLines[i];
         }
-        var select = document.getElementById('fhSegLineaPrincipal');
-        if (select) select.value = selected ? selected.linea_id : '';
-        var controls = document.querySelectorAll('#fhSegLineCards input[name="fhSegLineCardSelection"]');
-        for (var j = 0; j < controls.length; j++) controls[j].checked = !!selected && controls[j].value === selected.linea_id;
-        applySelectedBiologicLine();
+        if (!selected) return setEditingLine('');
+        if (currentFollowupVisit.selected_line_ids.indexOf(lineId) < 0) toggleBiologicLineSelection(lineId, true);
+        else setEditingLine(lineId);
         return selected;
     }
 
@@ -1161,6 +1296,7 @@
     function applyContext() {
         const ctx = F.getQueryContext();
         currentSegPatient = ctx.patient || (ctx.cip ? { cip: ctx.cip } : null);
+        createFollowupVisit(currentSegPatient && currentSegPatient.cip || ctx.cip || '');
 
         if (ctx.cip && !ctx.patient) {
             var C = window.FarmaciaCatalog;
@@ -1417,11 +1553,15 @@
     function hasPatientBoundData() {
         var ids = cipSearchFields.concat(['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSeguimientoEaObservaciones']);
         var proms = fv('fhSegProms');
+        var visibleLineState = currentFollowupVisit && currentFollowupVisit.editing_line_id ? readVisibleLineState() : null;
+        var hasVisitLineData = !!visibleLineState && lineStateIsDirty(visibleLineState) || !!currentFollowupVisit && Object.keys(currentFollowupVisit.line_state).some(function (lineId) {
+            return lineStateIsDirty(currentFollowupVisit.line_state[lineId]);
+        });
         return followupOtherDrugs.length > 0 || ids.some(function (id) {
             var value = fv(id);
             if (id === 'fhSegOrigenCatalogo' && value === 'Demo' && !currentSegPatient) return false;
             return !!value;
-        }) || !!proms && proms !== 'No recogido';
+        }) || !!proms && proms !== 'No recogido' || hasVisitLineData;
     }
 
     function resetPatientContext(requestedCip) {
@@ -1445,12 +1585,13 @@
         ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
         F.setValue('fhSegCip', requestedCip);
         currentBiologicLines = [];
+        currentFollowupVisit = null;
         followupOtherDrugs = [];
         followupOtherDrugSeq = 0;
         renderFollowupOtherDrugs();
         syncBiologicControls(null);
         ['fhSegPromsExpanded', 'fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
-        document.querySelectorAll('.morisky-question input').forEach(function (el) { el.checked = false; });
+        clearMoriskyControls(true);
         document.querySelectorAll('.causality-chip-group .causality-chip').forEach(function (el) { el.classList.remove('causality-chip--active'); });
         ['fhSegEvaDolorRange', 'fhSegEvaPruritoRange'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = '0'; });
         F.setText('fhSegMoriskyResultado', 'Resultado Morisky-Green: pendiente de completar');
@@ -1460,6 +1601,9 @@
         F.setText('naranjoCategoria', 'Dudosa');
         F.setText('klCategoria', 'No clasificable');
         F.setText('fhSegCimaContextPrincipioActivo', '—');
+        createFollowupVisit(requestedCip);
+        syncEditorOptions();
+        updateExportInterlock();
     }
 
     function initCipSearch() {
@@ -2223,14 +2367,21 @@
         searchCIP: searchCIP,
         initCipSearch: initCipSearch,
         initSegDrugAutocomplete: initSegDrugAutocomplete,
-        setActivePatientCip: function (cip) { currentSegPatient = cip ? { cip: cip } : null; },
+        setActivePatientCip: function (cip) {
+            var normalizedCip = String(cip || '').trim();
+            currentSegPatient = normalizedCip ? { cip: normalizedCip } : null;
+            if (!currentFollowupVisit || currentFollowupVisit.cip !== normalizedCip) createFollowupVisit(normalizedCip);
+        },
         addFollowupOtherDrug: addFollowupOtherDrug,
         getFollowupOtherDrugs: function () { return JSON.parse(JSON.stringify(followupOtherDrugs)); },
         mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
         mapRelatedTreatmentToContract: mapOtherDrugToContract,
         getCanonicalLinesForPatient: function (patient) { return getPatientBiologicLines(patient).map(function (line) { return Object.assign({}, line); }); },
         getSelectedLine: function () { var line = getCurrentSelectedLine(); return line ? Object.assign({}, line) : null; },
+        getCurrentVisit: function () { return currentFollowupVisit ? JSON.parse(JSON.stringify(currentFollowupVisit)) : null; },
         selectLineById: selectBiologicLineById,
+        toggleLineSelection: toggleBiologicLineSelection,
+        captureEditingLineState: captureEditingLineState,
         syncLinesForPatient: syncBiologicControls,
         canonicalRelationship: canonicalRelationship,
         canonicalLineStatus: canonicalLineStatus
@@ -2277,7 +2428,7 @@
 
         initMoriskyChips();
         var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
-        if (lineaPrincipal) lineaPrincipal.addEventListener('change', function () { selectBiologicLineById(lineaPrincipal.value); });
+        if (lineaPrincipal) lineaPrincipal.addEventListener('change', function () { setEditingLine(lineaPrincipal.value); });
         var eaSelector = document.getElementById('fhSeguimientoEaPresente');
         if (eaSelector) eaSelector.addEventListener('change', updateEaCausalidad);
         ['fhSeguimientoEaGravedad', 'fhSeguimientoEaResuelto', 'fhSeguimientoEaObservaciones', 'fhSeguimientoEaFarmacoSospechoso'].forEach(function (id) {
