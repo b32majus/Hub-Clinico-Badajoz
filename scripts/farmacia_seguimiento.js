@@ -1023,6 +1023,7 @@
         }
 
         currentBiologicLines = getPatientBiologicLines(patient);
+        var activeLines = currentBiologicLines.filter(function (line) { return line.estado_linea === 'active'; });
 
         if (!lineaPrincipal) return;
 
@@ -1044,6 +1045,7 @@
         }
         lineaPrincipal.value = '';
         renderBiologicLineCards();
+        if (activeLines.length === 1) { selectBiologicLineById(activeLines[0].linea_id); return; }
         applySelectedBiologicLine();
     }
 

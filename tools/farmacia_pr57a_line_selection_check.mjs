@@ -73,16 +73,19 @@ const p4 = {
 const l1 = api.getCanonicalLinesForPatient(p1);
 assert(l1.length === 1 && l1[0].linea_id === 'BIO-FH-001-L1' && l1[0].estado_linea === 'active', 'FH-001 tiene una línea activa canónica');
 api.syncLinesForPatient(p1);
-assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '', 'FH-001 no se selecciona inicialmente');
+assert(api.getSelectedLine()?.linea_id === 'BIO-FH-001-L1' && elements.fhSegLineaPrincipal.value === 'BIO-FH-001-L1' && cardInputs().find((input) => input.value === 'BIO-FH-001-L1')?.checked, 'FH-001 sincroniza selector y tarjeta con su única línea activa');
+assert(elements.fhSegFarmaco.value === 'Secukinumab 300 mg' && elements.fhSegPrincipioActivo.value === 'Secukinumab' && elements.fhSegDosisActual.value === '300 mg', 'FH-001 carga el contexto exacto de Secukinumab');
 
 const l2 = api.getCanonicalLinesForPatient(p2);
 assert(l2.length === 0, 'FH-002 no expone línea activa o seleccionable');
+api.syncLinesForPatient(p2);
+assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().every((input) => !input.checked), 'FH-002 no se selecciona automáticamente');
 const l3 = api.getCanonicalLinesForPatient(p3);
 assert(l3.length === 1 && l3[0].estado_linea === 'validated_not_started', 'FH-003 queda visible como validada pendiente de inicio');
 assert(l3[0].farmaco_nombre === 'Adalimumab 40 mg' && l3[0].principio_activo === '', 'FH-003 conserva nombre visible sin inferir principio activo');
 assert(l3[0].presentacion === '' && l3[0].dosis === '40 mg' && l3[0].via === 'SC' && l3[0].pauta === 'SC / cada 2 semanas', 'FH-003 conserva dosis, vía y pauta sin inferir presentación');
 api.syncLinesForPatient(p3);
-assert(cardInputs().some((input) => input.value === 'BIO-FH-003-L1' && input.disabled), 'FH-003 tiene control deshabilitado');
+assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().some((input) => input.value === 'BIO-FH-003-L1' && input.disabled), 'FH-003 queda sin selección y con control deshabilitado');
 
 const l4 = api.getCanonicalLinesForPatient(p4);
 assert(JSON.stringify(l4.map((line) => [line.linea_id, line.tipo_relacion, line.estado_linea])) === JSON.stringify([
@@ -123,6 +126,10 @@ assert(elements.fhSegCodigoNacional.value === '' && elements.fhSegNregistro.valu
 
 assert(api.canonicalLineStatus('añadido') === 'unknown' && api.canonicalRelationship('tratamiento_añadido') === 'unknown', 'añadido genérico no se traduce como activo o adicional');
 assert(api.getCanonicalLinesForPatient({ cip: 'CIP-DESCONOCIDO', farmaco: 'Contexto manual' }).length === 0, 'CIP desconocido no fabrica línea ni identificador');
+['completed', 'suspended', 'validated_not_started', 'unknown'].forEach((status) => {
+  api.syncLinesForPatient({ cip: `CIP-SYN-${status}`, biologicos: [{ linea_id: `SYN-${status}`, estado_linea: status }] });
+  assert(api.getSelectedLine() === null && elements.fhSegLineaPrincipal.value === '' && cardInputs().every((input) => !input.checked), `una única línea ${status} no se autoselecciona`);
+});
 assert(html.includes('Líneas de tratamiento del paciente') && html.includes('>Línea seleccionada<'), 'la UI presenta el bloque y etiqueta requeridos');
 
 const preserved = [
@@ -134,7 +141,10 @@ const preserved = [
 preserved.forEach(([name, pattern]) => assert(pattern.test(html) || pattern.test(js), `${name} permanece en Seguimiento`));
 assert(['modOtrosFarmacos', 'modNaranjo', 'modKarchLasagna', 'modExportacion'].every((id) => new RegExp(`<[^>]+id="${id}"`).test(html)), 'módulos preservados mantienen estructura e IDs navegables');
 const selectionRoute = js.slice(js.indexOf('function getCurrentSelectedLine'), js.indexOf('function createFollowupOtherDrug'));
-assert(!/lines\s*\[\s*0\s*\]|currentBiologicLines\s*\[\s*0\s*\]/.test(selectionRoute), 'la ruta nueva no usa fallback de primera línea');
+const syncRoute = js.slice(js.indexOf('function syncBiologicControls'), js.indexOf('function renderBiologicLineCards'));
+assert(/activeLines\s*=\s*currentBiologicLines\.filter[\s\S]*estado_linea === 'active'/.test(syncRoute) && /activeLines\.length === 1[\s\S]*selectBiologicLineById\(activeLines\[0\]\.linea_id\)/.test(syncRoute), 'la autoselección filtra active y exige exactamente una línea');
+assert(!/currentBiologicLines\s*\[\s*0\s*\]|(?:^|[^A-Za-z])lines\s*\[\s*0\s*\]|es_principal|\b(?:drug|ingredient|tratamiento_id)\b/.test(syncRoute), 'la autoselección rechaza fallbacks posicionales, principal, fármaco, ingrediente o tratamiento');
+assert(!/currentBiologicLines\s*\[\s*0\s*\]|(?:^|[^A-Za-z])lines\s*\[\s*0\s*\]/.test(selectionRoute), 'la ruta nueva no usa fallback de primera línea');
 
 if (failed) process.exit(1);
 console.log('PASS farmacia_pr57a_line_selection_check');
