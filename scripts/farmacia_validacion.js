@@ -937,24 +937,60 @@
         link.href = 'farmacia_seguimiento.html' + (params.length ? ('?' + params.join('&')) : '');
     }
 
-    function mapViaToSelect(catalogVia) {
+    function mapViaToSelect(catalogVia, control) {
+        var mapped = "";
+        if (C && typeof C.mapCatalogViaToSelect === "function") mapped = C.mapCatalogViaToSelect(catalogVia);
         var v = String(catalogVia || "").trim().toLowerCase();
-        if (!v) return "";
-        if (v.indexOf("subcut") !== -1 || v === "sc" || v === "s.c." || v === "subcutanea" || v === "subcutáneo") return "SC";
-        if (v.indexOf("intraven") !== -1 || v === "iv" || v === "i.v." || v === "intravenosa" || v === "intravenoso") return "IV";
-        if (v.indexOf("oral") !== -1 || v === "vo" || v === "v.o.") return "Oral";
-        if (v.indexOf("intramus") !== -1 || v === "im" || v === "i.m.") return "IM";
-        return "Otra";
+        if (!mapped && v) {
+            if (v.indexOf("subcut") !== -1 || v === "sc" || v === "s.c." || v === "subcutanea" || v === "subcutáneo") mapped = "SC";
+            else if (v.indexOf("intraven") !== -1 || v === "iv" || v === "i.v." || v === "intravenosa" || v === "intravenoso") mapped = "IV";
+            else if (v.indexOf("oral") !== -1 || v === "vo" || v === "v.o.") mapped = "Oral";
+            else if (v.indexOf("intramus") !== -1 || v === "im" || v === "i.m.") mapped = "IM";
+            else mapped = "Otra";
+        }
+        if (!control || !control.options || !control.options.length) return mapped;
+        var supported = Array.from(control.options).map(function (option) { return option.value || option.text || option.textContent || ""; });
+        if (supported.indexOf(mapped) !== -1) return mapped;
+        return mapped && supported.indexOf("Otra") !== -1 ? "Otra" : "";
+    }
+
+    function catalogContext(slot) {
+        return { slot: slot, cip: selectedCip() };
+    }
+
+    function reconcileSelection(current, previous, drug) {
+        if (C && typeof C.reconcileCatalogSelection === "function") {
+            return C.reconcileCatalogSelection(current, previous, drug);
+        }
+        var helper = window.FarmaciaTratamiento;
+        if (helper && typeof helper.reconcileCatalogSelection === "function") {
+            return helper.reconcileCatalogSelection(current, previous, drug);
+        }
+        return { values: current, proposal_values: {} };
     }
 
     function selectDrug(drug) {
+        if (!drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         var ids = requestedFieldIds();
-        byId(ids.farmaco).value = drug.display_name || drug.nombre_comercial || "";
-        byId(ids.principioActivo).value = drug.principio_activo || "";
-        // No inferir dosis/vía/pauta desde catálogo: Farmacia debe seleccionar presentación y pauta.
-        C.selectDrug(drug);
+        var context = catalogContext("validacion.solicitado");
+        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
+        var previous = C.getSnapshot(context);
+        var reconciled = reconcileSelection({
+            farmaco_nombre: byId(ids.farmaco).value,
+            principio_activo: byId(ids.principioActivo).value,
+            dosis_texto: byId(ids.dosis).value,
+            via: byId(ids.via).value
+        }, previous, drug);
+        var requestedViaValue = reconciled.values.via ? mapViaToSelect(reconciled.values.via, byId(ids.via)) : "";
+        reconciled.values.via = requestedViaValue;
+        if (Object.prototype.hasOwnProperty.call(reconciled.proposal_values, "via")) reconciled.proposal_values.via = requestedViaValue;
+        byId(ids.farmaco).value = reconciled.values.farmaco_nombre || "";
+        byId(ids.principioActivo).value = reconciled.values.principio_activo || "";
+        byId(ids.dosis).value = reconciled.values.dosis_texto || "";
+        byId(ids.via).value = requestedViaValue;
+        C.selectDrug(drug, context, reconciled);
         clearAutocompleteDropdown();
-        updateValidationModuleSummaries();
+        updateSolicitadoSummary();
     }
 
     function selectValidadoDrug(drug) {
@@ -963,37 +999,28 @@
         var presEl = byId("fhValidadoPresentacion");
         var dosisEl = byId("fhValidadoDosis");
         var viaEl = byId("fhValidadoVia");
-        var pautaEl = byId("fhValidadoPauta");
-        var indEl = byId("fhValidadoInduccion");
-        if (!drug || !farmacoEl) return;
+        if (!drug || !farmacoEl || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
+        var context = catalogContext("validacion.validado");
+        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
+        var previous = C.getSnapshot(context);
+        var reconciled = reconcileSelection({
+            farmaco_nombre: farmacoEl.value,
+            principio_activo: princEl ? princEl.value : "",
+            presentacion: presEl ? presEl.value : "",
+            dosis_texto: dosisEl ? dosisEl.value : "",
+            via: viaEl ? viaEl.value : ""
+        }, previous, drug);
+        var validatedViaValue = reconciled.values.via ? mapViaToSelect(reconciled.values.via, viaEl) : "";
+        reconciled.values.via = validatedViaValue;
+        if (Object.prototype.hasOwnProperty.call(reconciled.proposal_values, "via")) reconciled.proposal_values.via = validatedViaValue;
+        farmacoEl.value = reconciled.values.farmaco_nombre || "";
+        if (princEl) princEl.value = reconciled.values.principio_activo || "";
+        if (presEl) presEl.value = reconciled.values.presentacion || "";
+        if (dosisEl) dosisEl.value = reconciled.values.dosis_texto || "";
+        if (viaEl) viaEl.value = validatedViaValue;
+        C.selectDrug(drug, context, reconciled);
 
-        var displayName = drug.display_name || drug.nombre || drug.nombre_presentacion || drug.presentacion || drug.principio_activo || drug.principioActivo || drug.pa || farmacoEl.value || "";
-        farmacoEl.value = displayName;
-        if (princEl) princEl.value = drug.principio_activo || drug.principioActivo || drug.pa || "";
-        if (presEl) presEl.value = drug.nombre_presentacion || drug.presentacion || drug.display_name || displayName || "";
-        if (dosisEl && drug.dosis) dosisEl.value = drug.dosis;
-        if (viaEl) {
-            var viaRaw = drug.via || drug.via_administracion || "";
-            if (viaRaw) {
-                var viaValue = mapViaToSelect(viaRaw);
-                var viaOptions = Array.from(viaEl.options).map(function (opt) { return opt.value; });
-                if (viaOptions.indexOf(viaValue) !== -1) viaEl.value = viaValue;
-                else if (viaOptions.indexOf("Otra") !== -1) viaEl.value = "Otra";
-            }
-        }
-        if (pautaEl && Object.prototype.hasOwnProperty.call(drug, "pauta") && drug.pauta && drug.pauta !== "Otra") {
-            var pautaOpt = Array.from(pautaEl.options).find(function (o) { return o.value === drug.pauta || o.text === drug.pauta; });
-            if (pautaOpt) pautaEl.value = pautaOpt.value;
-        }
-        if (indEl && Object.prototype.hasOwnProperty.call(drug, "induccion")) {
-            if (drug.induccion === "Sí" || drug.induccion === "Si" || drug.induccion === true || drug.induccion === "true") {
-                indEl.value = "si";
-            } else if (drug.induccion === "No" || drug.induccion === false || drug.induccion === "false") {
-                indEl.value = "no";
-            }
-        }
-
-        [farmacoEl, princEl, presEl, dosisEl, viaEl, pautaEl, indEl].forEach(function (el) {
+        [farmacoEl, princEl, presEl, dosisEl, viaEl].forEach(function (el) {
             if (!el) return;
             el.dispatchEvent(new Event("input", { bubbles: true }));
             el.dispatchEvent(new Event("change", { bubbles: true }));
@@ -1054,7 +1081,6 @@
             return;
         }
         renderValidadoAutocompleteDropdown(C.search(query));
-        updateValidationModuleSummaries();
     }
 
     function enableAutocompleteValidado() {
@@ -1156,7 +1182,6 @@
             return;
         }
         renderAutocompleteDropdown(C.search(query));
-        updateValidationModuleSummaries();
     }
 
     function enableAutocomplete() {
@@ -1297,22 +1322,9 @@
             if (viaOptions.indexOf(viaValue) !== -1) viaSelect.value = viaValue;
             else if (viaOptions.indexOf("Otra") !== -1) viaSelect.value = "Otra";
         }
-        C.selectDrug({
-            display_name: displayName,
-            nombre_comercial: displayName,
-            principio_activo: principio || "",
-            nombre_presentacion: presentacion || "",
-            via: via || "",
-            codigo_nacional: "",
-            nregistro: "",
-            dosis: presentacion || "",
-            source_type: "LOCAL_PENDIENTE_DEMO",
-            drug_id: "",
-            es_hospitalario: "SI",
-            biosimilar: ""
-        });
+        // This is free professional entry, not selection of a concrete catalog presentation.
         closeLocalDrugModal();
-        updateValidationModuleSummaries();
+        updateSolicitadoSummary();
     }
 
     function createOtherDrug() {
@@ -1618,7 +1630,7 @@
         var klAnswers = readKarchLasagnaAnswersFromDom();
         var summary = requestedTreatmentSummary();
         var pautaNormalized = (P && typeof P.normalizePautaLabel === "function") ? P.normalizePautaLabel(summary.pauta) : null;
-        var snap = C.getSnapshot();
+        var snap = C.getSnapshot(catalogContext("validacion.solicitado"));
         var rows = [
             [
                 "ID", "Fecha", "Servicio", "CIP", "Patologia", "Estado", "FarmacoSolicitado", "PrincipioActivo", "DosisPresentacion", "Via", "Pauta", "PautaCodigo", "PautaLabel", "PautaIntervaloDias", "PautaUnidad", "PautaOtroTexto", "InduccionSolicitada", "Profesional", "VHB", "VHC", "VIH", "MotivoDenegacion", "SnapshotDrugID", "SnapshotSourceType", "CodigoNacional", "NRegistro",

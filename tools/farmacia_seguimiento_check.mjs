@@ -51,6 +51,7 @@ const behaviorSandbox = {
   clearTimeout
 };
 vm.createContext(behaviorSandbox);
+vm.runInContext(helperSrc, behaviorSandbox);
 vm.runInContext(js, behaviorSandbox);
 const behaviorApi = behaviorSandbox.window.FarmaciaSeguimiento;
 assert(behaviorApi && typeof behaviorApi.searchCIP === 'function' && typeof behaviorApi.setActivePatientCip === 'function', 'Seguimiento exposes testable guarded CIP search');
@@ -68,14 +69,19 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   F.setText = (id, value) => { if (elements[id]) elements[id].textContent = value || ''; };
   F.clearChildren = (el) => { if (el) { el.children = []; el.options = []; } };
   F.renderFields = () => {};
-  F.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', tratamientos_biologicos: [] } : null;
+  F.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', biologicos: [{ linea_id: 'LINE-B', tratamiento_id_principal: 'TRAT-B', nombre_linea: 'Drug B', principio_activo: 'Activo B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', estado_linea: 'activo', tipo_relacion: 'base', es_principal: true }] } : null;
   F.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
     if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
     if (hasContext && confirmed === undefined) return { action: 'confirm' };
     if (hasContext && confirmed === false) return { action: 'cancel' };
     return { action: 'switch' };
   };
-  behaviorSandbox.window.FarmaciaCatalog = { clearSnapshot: () => {}, getSnapshot: () => null };
+  const snapshotContextKey = (ctx) => [ctx.slot || '', ctx.cip || '', ctx.tratamiento_id || '', ctx.linea_id || ''].join('|');
+  const snapshotKeys = new Set();
+  behaviorSandbox.window.FarmaciaCatalog = {
+    clearSnapshot: (ctx) => snapshotKeys.delete(snapshotContextKey(ctx || {})),
+    getSnapshot: () => null
+  };
   let confirmation = false;
   let confirmationCalls = 0;
   behaviorSandbox.window.confirm = () => { confirmationCalls++; return confirmation; };
@@ -117,9 +123,19 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   elements.fhSegCip.value = 'CIP-B';
   behaviorApi.searchCIP();
   assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '', 'Seguimiento confirmed switch clears A-only movement and loads B');
+  behaviorApi.addFollowupOtherDrug();
+  const oldMainKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-B', tratamiento_id: 'TRAT-B' });
+  const oldRelatedKey = snapshotContextKey({ slot: 'seguimiento.relacionado:seg-other-1', cip: 'CIP-B' });
+  const unrelatedNewKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-UNKNOWN', tratamiento_id: 'TRAT-NEW' });
+  snapshotKeys.add(oldMainKey);
+  snapshotKeys.add(oldRelatedKey);
+  snapshotKeys.add(unrelatedNewKey);
   elements.fhSegCip.value = 'CIP-UNKNOWN';
   behaviorApi.searchCIP();
   assert(elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento unknown CIP enters clean manual mode');
+  assert(!snapshotKeys.has(oldMainKey), 'Patient switch clears previous main treatment snapshot with treatment context');
+  assert(!snapshotKeys.has(oldRelatedKey), 'Patient switch clears previous related UID snapshot');
+  assert(snapshotKeys.has(unrelatedNewKey), 'Patient switch does not delete unrelated/new-patient snapshot');
 }
 
 // --- WO7E: contrato común de tratamiento ---
@@ -214,20 +230,28 @@ assert(js.includes('buildPautaSelectForOtherDrug'), 'Función buildPautaSelectFo
 assert(js.includes('applyCatalogSelectionToOtherDrug'), 'Función applyCatalogSelectionToOtherDrug definida');
 assert(js.includes('mergeRelatedTreatmentCatalogIdentity'), 'Fusión de identidad de catálogo definida');
 
-// 21. Autocomplete relacionado solo aporta identidad/trazabilidad sin sobrescribir ni inferir terapia
+// 21. Autocomplete relacionado reemplaza identidad y reconcilia solo propuestas editables
 assert(behaviorApi && typeof behaviorApi.mergeRelatedTreatmentCatalogIdentity === 'function', 'Fusión de catálogo relacionada es comprobable');
 if (behaviorApi && typeof behaviorApi.mergeRelatedTreatmentCatalogIdentity === 'function') {
-  const catalog = { nombre_comercial: 'Marca catálogo', principio_activo: 'Activo catálogo', nombre_presentacion: 'Presentación catálogo', codigo_nacional: 'CN-CAT', nregistro: 'REG-CAT', source_type: 'CIMA', dosis: '999 mg', via: 'IV', pauta: 'Cada día' };
+  const catalog = { drug_id: 'CIMA-SYN', nombre_comercial: 'Marca catálogo', principio_activo: 'Activo catálogo', nombre_presentacion: 'Presentación catálogo', codigo_nacional: 'CN-CAT', nregistro: 'REG-CAT', source_type: 'CIMA', dosis: '999 mg', via: 'IV', pauta: 'Cada día' };
   const manual = { farmaco: 'Marca manual', principioActivo: 'Activo manual', presentacion: 'Presentación manual', codigoNacional: 'CN-MAN', nregistro: 'REG-MAN', origenCatalogo: 'Fuente manual', sourceType: 'MANUAL', dosis: 'Dosis manual', via: 'SC', pauta: 'Pauta manual' };
   const preserved = behaviorApi.mergeRelatedTreatmentCatalogIdentity(manual, catalog);
-  assert(preserved.farmaco === 'Marca manual' && preserved.principioActivo === 'Activo manual' && preserved.presentacion === 'Presentación manual' && preserved.codigoNacional === 'CN-MAN' && preserved.nregistro === 'REG-MAN' && preserved.origenCatalogo === 'Fuente manual' && preserved.sourceType === 'MANUAL', 'Catálogo no sobrescribe identidad/trazabilidad manual no vacía');
-  assert(!Object.hasOwn(preserved, 'dosis') && !Object.hasOwn(preserved, 'via') && !Object.hasOwn(preserved, 'pauta'), 'Catálogo relacionado no propone dosis, vía ni pauta');
+  assert(preserved.values.farmaco === 'Marca catálogo' && preserved.values.principioActivo === 'Activo catálogo' && preserved.values.codigoNacional === 'CN-CAT' && preserved.values.nregistro === 'REG-CAT' && preserved.values.origenCatalogo === 'CIMA' && preserved.values.sourceType === 'CIMA', 'Catálogo reemplaza identidad/trazabilidad atómicamente');
+  assert(preserved.values.presentacion === 'Presentación manual' && preserved.values.dosis === 'Dosis manual' && preserved.values.via === 'SC' && !Object.hasOwn(preserved.values, 'pauta'), 'Campos profesionales manuales sobreviven y pauta no se propone');
   const filled = behaviorApi.mergeRelatedTreatmentCatalogIdentity({}, catalog);
-  assert(filled.farmaco === 'Marca catálogo' && filled.principioActivo === 'Activo catálogo' && filled.presentacion === 'Presentación catálogo' && filled.codigoNacional === 'CN-CAT' && filled.nregistro === 'REG-CAT' && filled.origenCatalogo === 'CIMA' && filled.sourceType === 'CIMA', 'Catálogo completa identidad, presentación y trazabilidad cuando están vacías');
+  assert(filled.values.farmaco === 'Marca catálogo' && filled.values.principioActivo === 'Activo catálogo' && filled.values.presentacion === 'Presentación catálogo' && filled.values.dosis === '999 mg' && filled.values.via === 'IV' && filled.values.codigoNacional === 'CN-CAT' && filled.values.nregistro === 'REG-CAT' && filled.values.origenCatalogo === 'CIMA' && filled.values.sourceType === 'CIMA', 'Catálogo completa identidad y propuestas elegibles cuando están vacías');
+  const unknownRoute = behaviorApi.mergeRelatedTreatmentCatalogIdentity({}, { ...catalog, via: 'VÍA TRANSDÉRMICA' });
+  assert(unknownRoute.values.via === 'Otra' && unknownRoute.proposal_values.via === 'Otra', 'Ruta relacionada desconocida conserva provenance visible Otra');
+  const updatesProposedOther = behaviorApi.mergeRelatedTreatmentCatalogIdentity(unknownRoute.values, { ...catalog, via: 'VÍA SUBCUTÁNEA' }, { proposal_values: unknownRoute.proposal_values });
+  assert(updatesProposedOther.values.via === 'SC' && updatesProposedOther.proposal_values.via === 'SC', 'Ruta relacionada Otra aún propuesta se actualiza a SC');
+  const preservesManualOther = behaviorApi.mergeRelatedTreatmentCatalogIdentity({ ...unknownRoute.values, via: 'Oral' }, { ...catalog, via: 'VÍA INTRAMUSCULAR' }, { proposal_values: unknownRoute.proposal_values });
+  assert(preservesManualOther.values.via === 'Oral' && !Object.hasOwn(preservesManualOther.proposal_values, 'via'), 'Ruta relacionada manual sobrevive selección IM posterior');
+  const fillsImOther = behaviorApi.mergeRelatedTreatmentCatalogIdentity({}, { ...catalog, via: 'VÍA INTRAMUSCULAR' });
+  assert(fillsImOther.values.via === 'IM' && fillsImOther.proposal_values.via === 'IM', 'Ruta relacionada IM prefijada es representable');
 }
 var applyCatalogMatch = js.match(/function applyCatalogSelectionToOtherDrug[\s\S]*?^    \}/m);
 var applyCatalogBody = applyCatalogMatch ? applyCatalogMatch[0] : '';
-assert(!/['"](?:dosis|via|pauta|pautaCodigo|pautaOtro)['"]/.test(applyCatalogBody), 'Aplicación de catálogo relacionada no escribe campos terapéuticos');
+assert(!/['"](?:pauta|pautaCodigo|pautaOtro|fechaInicio|fechaFin|relationType|sospechosoEa)['"]/.test(applyCatalogBody), 'Aplicación de catálogo relacionada no escribe pauta, fechas, relación ni causalidad');
 
 // 22. Pauta concomitante es desplegable normalizado (no input texto libre único)
 assert(js.includes('P.getPautaOptions') || js.includes('FarmaciaPautasCatalog.getPautaOptions'), 'Pauta concomitante usa catálogo de pautas');
@@ -337,7 +361,7 @@ assert(js.includes('line.farmaco_nombre || line.nombre_comercial'), 'syncBiologi
 
 // 42. Tarjeta CIMA se limpia si no corresponde a la línea seleccionada
 assert(js.includes('fhSegCimaContextPrincipioActivo'), 'Código de sincronización tarjeta CIMA presente');
-assert(js.includes('clearSnapshot'), 'Se limpia snapshot si no corresponde a línea seleccionada');
+assert(js.includes("getSnapshot(followupCatalogContext('seguimiento.tratamiento'))"), 'Snapshot de seguimiento se consulta con contexto de línea');
 
 // 43. No se rompe pauta actual editable
 assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual normalizada sigue funcionando');

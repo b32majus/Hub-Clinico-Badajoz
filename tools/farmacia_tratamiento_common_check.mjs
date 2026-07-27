@@ -68,6 +68,17 @@ if (!api || typeof api.normalizeTreatmentInput !== 'function') {
 
 console.log('  ✓ Catalogo de pautas + helper WO7C cargados en VM sandbox');
 
+let delegatedReconciliation = false;
+sandbox.window.FarmaciaCatalog = {
+    reconcileCatalogSelection: function () {
+        delegatedReconciliation = true;
+        return { values: { farmaco_nombre: 'shared' }, proposal_values: {} };
+    }
+};
+assertEqual(api.reconcileCatalogSelection({}, null, {}).values.farmaco_nombre, 'shared', 'helper delegates reconciliation to shared FarmaciaCatalog primitive');
+assert(delegatedReconciliation, 'shared reconciliation delegation is executed');
+delete sandbox.window.FarmaciaCatalog;
+
 const empty = api.normalizeTreatmentInput({});
 const emptyKeys = [
     'tratamiento_id', 'paciente_cip', 'farmaco_nombre', 'nombre_comercial', 'principio_activo',
@@ -114,6 +125,48 @@ const localDrug = {
 const localTreatment = api.buildTreatmentFromCatalogSelection(localDrug, {});
 assertEqual(localTreatment.source_type, 'LOCAL', 'LOCAL conserva source_type');
 assertEqual(localTreatment.fuente, 'local_especial', 'LOCAL fija fuente local_especial');
+
+console.log('\n[Catalog proposal reconciliation]');
+const protectedClinical = {
+    pauta: 'Pauta profesional', fase_tratamiento: 'induccion', fecha_inicio: '2026-07-01',
+    estado_linea: 'activo', tipo_relacion: 'principal', tipo_movimiento: 'sin_cambios',
+    presentacion: '', dosis_texto: '', via: ''
+};
+const initialProposal = api.reconcileCatalogSelection(protectedClinical, null, cimaDrug);
+assertEqual(initialProposal.values.presentacion, '300 mg pluma precargada', 'empty presentation receives proposal');
+assertEqual(initialProposal.values.dosis_texto, '300 mg', 'empty dose receives proposal');
+assertEqual(initialProposal.values.via, 'SC', 'empty route receives proposal');
+assertEqual(initialProposal.values.pauta, 'Pauta profesional', 'regimen remains untouched');
+assertEqual(initialProposal.values.fase_tratamiento, 'induccion', 'induction remains untouched');
+assertEqual(initialProposal.values.fecha_inicio, '2026-07-01', 'date remains untouched');
+assertEqual(initialProposal.values.estado_linea, 'activo', 'line state remains untouched');
+assertEqual(initialProposal.values.tipo_relacion, 'principal', 'relationship remains untouched');
+assertEqual(initialProposal.values.tipo_movimiento, 'sin_cambios', 'movement remains untouched');
+
+const previousSnapshot = { proposal_values: initialProposal.proposal_values };
+const secondDrug = {
+    nombre_comercial: 'Producto sintético B', principio_activo: 'Molécula sintética B',
+    nombre_presentacion: '200 mg vial', dosis: '200 mg', via: 'IV', drug_id: 'CIMA-2',
+    source_type: 'CIMA', codigo_nacional: '', nregistro: ''
+};
+const updatedProposal = api.reconcileCatalogSelection(initialProposal.values, previousSnapshot, secondDrug);
+assertEqual(updatedProposal.values.dosis_texto, '200 mg', 'second selection updates still-proposed dose');
+assertEqual(updatedProposal.values.via, 'IV', 'second selection updates still-proposed route');
+assertEqual(updatedProposal.values.codigo_nacional, '', 'new missing national code clears old identity');
+assertEqual(updatedProposal.values.nregistro, '', 'new missing registration clears old identity');
+
+const manualCurrent = { ...initialProposal.values, dosis_texto: 'Dosis profesional', via: 'Oral', presentacion: 'Presentación profesional' };
+const manualSurvives = api.reconcileCatalogSelection(manualCurrent, previousSnapshot, secondDrug);
+assertEqual(manualSurvives.values.dosis_texto, 'Dosis profesional', 'manual dose survives later selection');
+assertEqual(manualSurvives.values.via, 'Oral', 'manual route survives later selection');
+assertEqual(manualSurvives.values.presentacion, 'Presentación profesional', 'manual presentation survives later selection');
+
+const noProposalDrug = { nombre_comercial: 'Producto sintético C', principio_activo: 'Molécula sintética C', drug_id: 'LOCAL-2', source_type: 'LOCAL' };
+const clearsProposed = api.reconcileCatalogSelection(initialProposal.values, previousSnapshot, noProposalDrug);
+assertEqual(clearsProposed.values.dosis_texto, '', 'absent new dose clears prior proposal');
+assertEqual(clearsProposed.values.via, '', 'absent new route clears prior proposal');
+const preservesManualAbsent = api.reconcileCatalogSelection(manualCurrent, previousSnapshot, noProposalDrug);
+assertEqual(preservesManualAbsent.values.dosis_texto, 'Dosis profesional', 'absent new dose does not clear manual input');
 
 const knownPauta = api.normalizeTreatmentInput({ pauta: 'SC / cada 4 semanas' });
 assertEqual(knownPauta.pauta_codigo, 'CADA_4_SEMANAS', 'reutiliza normalizacion WO6 si disponible');
@@ -233,6 +286,7 @@ assert(Array.isArray(summary.meta), 'buildTreatmentSummary devuelve meta array')
 
 assertEqual(api.mapViaToSelect('subcutánea'), 'SC', 'mapViaToSelect normaliza SC');
 assertEqual(api.mapViaToSelect('intravenosa'), 'IV', 'mapViaToSelect normaliza IV');
+assertEqual(api.mapViaToSelect('VÍA INTRAMUSCULAR'), 'IM', 'mapViaToSelect normaliza ruta IM prefijada');
 assertEqual(api.mapViaToSelect('vía no catalogada'), 'Otra', 'mapViaToSelect degrada a Otra');
 
 const csv = api.buildTreatmentCsvFields(lines[0], 'seg_');

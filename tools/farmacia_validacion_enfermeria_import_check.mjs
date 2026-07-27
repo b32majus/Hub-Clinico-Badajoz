@@ -35,6 +35,7 @@ function assertNotIncludes(str, substr, label) {
 // ─── Build mock DOM for validation page ──────────────────────────────────────
 
 function createMockElement(tag, attrs) {
+  var listeners = {};
   var el = {
     tagName: (tag || 'div').toUpperCase(),
     id: (attrs && attrs.id) || '',
@@ -70,8 +71,16 @@ function createMockElement(tag, attrs) {
       var i = this.children.indexOf(child);
       if (i !== -1) this.children.splice(i, 1);
     },
-    addEventListener: function () {},
+    addEventListener: function (type, callback) {
+      if (!listeners[type]) listeners[type] = [];
+      listeners[type].push(callback);
+    },
     removeEventListener: function () {},
+    dispatchEvent: function (event) {
+      var type = event && event.type ? event.type : String(event || '');
+      (listeners[type] || []).forEach(function (callback) { callback.call(el, event); });
+      return true;
+    },
     querySelector: function () { return null; },
     querySelectorAll: function () { return []; },
     append: function () {},
@@ -89,6 +98,7 @@ function createMockElement(tag, attrs) {
     el.selected = false;
     el.label = '';
   }
+  Object.defineProperty(el, 'firstChild', { get: function () { return el.children.length ? el.children[0] : null; } });
   return el;
 }
 
@@ -178,7 +188,7 @@ function buildMockDom() {
     'modEfectoAdverso', 'modNaranjo', 'modKarchLasagna', 'modResumenCausalidad',
     'modPrebiologico', 'modTratamientoPrincipal', 'modOtrosFarmacos',
     'modSeguimientoEaHandoff', 'modExportacion',
-    'autocompleteDropdown', 'autocompleteWrapper',
+    'autocompleteDropdown', 'autocompleteWrapper', 'autocompleteValidadoDropdown',
     'fhResumenFarmaco', 'fhResumenPrincipioActivo', 'fhResumenDosis',
     'fhResumenVia', 'fhResumenPauta', 'fhResumenInduccion', 'fhResumenJustificacion',
     'fhResumenAnaliticaFecha', 'fhResumenAnaliticaReciente',
@@ -237,6 +247,9 @@ function buildMockDom() {
     mockElements[id].tagName = 'SELECT';
     mockElements[id].options = [];
   });
+  mockElements['fhDermaVia'].options = ['', 'SC', 'IV', 'Oral', 'Otra'].map(function (value) { return { value: value, text: value, textContent: value }; });
+  mockElements['fhManualVia'].options = ['', 'SC', 'IV', 'Oral', 'Otra'].map(function (value) { return { value: value, text: value, textContent: value }; });
+  mockElements['fhValidadoVia'].options = ['', 'SC', 'IV', 'Oral', 'IM', 'Otra'].map(function (value) { return { value: value, text: value, textContent: value }; });
 
   // Naranjo/KL selects
   ['naranjoQ1','naranjoQ2','naranjoQ3','naranjoQ4','naranjoQ5',
@@ -362,7 +375,8 @@ var sandbox = {
     return { get: function (k) { return params[k] || null; }, has: function (k) { return params[k] !== undefined; } };
   },
   XLSX: { utils: { sheet_to_json: function () { return []; } } },
-  CustomEvent: globalThis.CustomEvent || function() { return {}; }
+  CustomEvent: globalThis.CustomEvent || function() { return {}; },
+  Event: function Event(type, options) { this.type = type; this.bubbles = !!(options && options.bubbles); }
 };
 vm.createContext(sandbox);
 
@@ -371,6 +385,23 @@ sandbox.window.FarmaciaCatalog = { search: function () { return []; }, selectDru
 
 vm.runInContext(catalogSrc, sandbox);
 vm.runInContext(commonSrc, sandbox);
+
+// Real validation HTML does not load farmacia_tratamiento_common.js. Load a synthetic
+// dual catalog through FarmaciaCatalog exactly as the page does.
+sandbox.XLSX = {
+  read: function () {
+    return { Sheets: {
+      CATALOGO_CIMA: { rows: [
+        { codigo_nacional: '710001', nregistro: 'SYN/VAL/A', nombre_comercial: 'Producto Validado A', principio_activo: 'Activo A', nombre_presentacion: '100 mg pluma', dosis_presentacion: '100 mg', via: 'VÍA SUBCUTÁNEA' },
+        { codigo_nacional: '710002', nregistro: 'SYN/VAL/B', nombre_comercial: 'Producto Validado B', principio_activo: 'Activo B', nombre_presentacion: '200 mg vial', dosis_presentacion: '200 mg', via: 'VÍA INTRAMUSCULAR' },
+        { codigo_nacional: '710003', nregistro: 'SYN/VAL/C', nombre_comercial: 'Producto Validado C', principio_activo: 'Activo C', nombre_presentacion: '300 mg parche', dosis_presentacion: '300 mg', via: 'VÍA TRANSDÉRMICA' }
+      ] },
+      CATALOGO_LOCAL_ESPECIAL: { rows: [] }
+    } };
+  },
+  utils: { sheet_to_json: function (sheet) { return sheet.rows; } }
+};
+sandbox.window.FarmaciaCatalog.loadFromExcel(new ArrayBuffer(0));
 
 var F = sandbox.window.FarmaciaDemo;
 
@@ -530,6 +561,93 @@ assertEqual(v('fhValidadoDosis'), '', '32d. Dosis validada vacía');
 assertEqual(v('fhValidadoVia'), '', '32e. Vía validada vacía');
 assertEqual(v('fhValidadoPauta'), '', '32f. Pauta validada vacía');
 assertEqual(v('fhValidadoPresentacion'), '', '32g. Presentación validada vacía');
+var requestedSearchBody = (vSrc.match(/function handleAutocompleteInput\(\)[\s\S]*?^    \}/m) || [''])[0];
+var validatedSearchBody = (vSrc.match(/function handleValidadoAutocompleteInput\(\)[\s\S]*?^    \}/m) || [''])[0];
+assert(!requestedSearchBody.includes('updateValidationModuleSummaries') && !validatedSearchBody.includes('updateValidationModuleSummaries'), '32h. Escribir/buscar no precarga otros campos');
+var validatedSelectionBody = (vSrc.match(/function selectValidadoDrug\(drug\)[\s\S]*?^    \}/m) || [''])[0];
+assert(!validatedSelectionBody.includes('fhValidadoPauta') && !validatedSelectionBody.includes('fhValidadoInduccion'), '32i. Selección validada no propone pauta ni inducción');
+
+// Real validated autocomplete path with exactly the scripts loaded by farmacia_validacion.html.
+assertEqual(typeof sandbox.window.FarmaciaTratamiento, 'undefined', '32j. Sandbox no carga FarmaciaTratamiento');
+$('fhDermaDosis').value = '';
+$('fhDermaVia').value = '';
+$('fhDermaPauta').value = 'Pauta solicitada profesional';
+$('fhDermaInduccion').value = 'no';
+$('fhDermaFarmaco').value = 'Producto Validado A';
+$('fhDermaFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhDermaFarmaco'), 'Producto Validado A', '32ja. Click solicitado aplica identidad');
+assertEqual(v('fhDermaPrincipioActivo'), 'Activo A', '32jb. Click solicitado aplica principio activo');
+assertEqual(v('fhDermaDosis'), '100 mg', '32jc. Click solicitado propone dosis');
+assertEqual(v('fhDermaVia'), 'SC', '32jd. Click solicitado propone vía');
+assertEqual(v('fhDermaPauta'), 'Pauta solicitada profesional', '32je. Click solicitado mantiene pauta');
+assertEqual(v('fhDermaInduccion'), 'no', '32jf. Click solicitado mantiene inducción');
+$('fhDermaVia').value = '';
+$('fhDermaFarmaco').value = 'Producto Validado B';
+$('fhDermaFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhDermaVia'), 'Otra', '32jfa. Ruta IM no soportada se representa como Otra en solicitado');
+var requestedImSnapshot = sandbox.window.FarmaciaCatalog.getSnapshot({ slot: 'validacion.solicitado', cip: '000000003' });
+assertEqual(requestedImSnapshot.proposal_values.via, 'Otra', '32jfb. Solicitado almacena provenance visible Otra');
+$('fhDermaFarmaco').value = 'Producto Validado A';
+$('fhDermaFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhDermaVia'), 'SC', '32jfc. Otra propuesta en solicitado se actualiza después');
+$('fhDermaDosis').value = 'Dosis solicitada manual';
+$('fhDermaVia').value = 'Oral';
+$('fhDermaFarmaco').value = 'Producto Validado B';
+$('fhDermaFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhDermaFarmaco'), 'Producto Validado B', '32jg. Segunda selección solicitada reemplaza identidad');
+assertEqual(v('fhDermaPrincipioActivo'), 'Activo B', '32jh. Segunda selección solicitada reemplaza principio activo');
+assertEqual(v('fhDermaDosis'), 'Dosis solicitada manual', '32ji. Segunda selección solicitada preserva dosis manual');
+assertEqual(v('fhDermaVia'), 'Oral', '32jj. Segunda selección solicitada preserva vía manual');
+assertEqual(v('fhDermaPauta'), 'Pauta solicitada profesional', '32jk. Segunda selección solicitada mantiene pauta');
+assertEqual(v('fhDermaInduccion'), 'no', '32jl. Segunda selección solicitada mantiene inducción');
+$('fhValidadoPauta').value = 'Pauta profesional';
+$('fhValidadoInduccion').value = 'si';
+$('fhValEstado').value = 'pending';
+$('fhValidadoFarmaco').value = 'Producto Validado A';
+$('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
+assert($('autocompleteValidadoDropdown').firstChild, '32k. Autocomplete validado renderiza resultado CIMA real normalizado');
+$('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhValidadoFarmaco'), 'Producto Validado A', '32l. Click aplica identidad comercial');
+assertEqual(v('fhValidadoPrincipioActivo'), 'Activo A', '32m. Click aplica principio activo');
+assertEqual(v('fhValidadoPresentacion'), '100 mg pluma', '32n. Click propone presentación');
+assertEqual(v('fhValidadoDosis'), '100 mg', '32o. Click propone dosis');
+assertEqual(v('fhValidadoVia'), 'SC', '32p. Click propone vía');
+assertEqual(v('fhValidadoPauta'), 'Pauta profesional', '32q. Click no modifica pauta profesional');
+assertEqual(v('fhValidadoInduccion'), 'si', '32r. Click no modifica inducción');
+assertEqual(v('fhValEstado'), 'pending', '32s. Click no modifica estado de validación');
+$('fhValidadoVia').value = '';
+$('fhValidadoFarmaco').value = 'Producto Validado B';
+$('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhValidadoVia'), 'IM', '32sa. Ruta IM prefijada se representa en select validado');
+$('fhValidadoFarmaco').value = 'Producto Validado C';
+$('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhValidadoVia'), 'Otra', '32sb. Ruta desconocida se representa como Otra');
+var unknownRouteSnapshot = sandbox.window.FarmaciaCatalog.getSnapshot({ slot: 'validacion.validado', cip: '000000003' });
+assertEqual(unknownRouteSnapshot.proposal_values.via, 'Otra', '32sc. Provenance almacena el valor visible Otra');
+$('fhValidadoFarmaco').value = 'Producto Validado A';
+$('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhValidadoVia'), 'SC', '32sd. Otra aún propuesta se actualiza en selección posterior');
+$('fhValidadoPresentacion').value = 'Presentación profesional';
+$('fhValidadoDosis').value = 'Dosis profesional';
+$('fhValidadoVia').value = 'Oral';
+$('fhValidadoFarmaco').value = 'Producto Validado B';
+$('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
+$('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
+assertEqual(v('fhValidadoFarmaco'), 'Producto Validado B', '32t. Segunda selección reemplaza identidad');
+assertEqual(v('fhValidadoPrincipioActivo'), 'Activo B', '32u. Segunda selección reemplaza principio activo');
+assertEqual(v('fhValidadoPresentacion'), 'Presentación profesional', '32v. Segunda selección preserva presentación manual');
+assertEqual(v('fhValidadoDosis'), 'Dosis profesional', '32w. Segunda selección preserva dosis manual');
+assertEqual(v('fhValidadoVia'), 'Oral', '32x. Segunda selección preserva vía manual');
+assertEqual(v('fhValidadoPauta'), 'Pauta profesional', '32y. Segunda selección mantiene pauta');
+assertEqual(v('fhValidadoInduccion'), 'si', '32z. Segunda selección mantiene inducción');
+assertEqual(v('fhValEstado'), 'pending', '32aa. Segunda selección mantiene estado');
 
 // 33. Prebiológico Enfermería: una sola representación
 var prebioResumen = $('fhEnfermeriaResumen');

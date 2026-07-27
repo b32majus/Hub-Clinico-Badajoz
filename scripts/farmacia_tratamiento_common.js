@@ -162,6 +162,9 @@
     function normalizeVia(value) {
         var key = normalizeKey(value);
         if (!key) return "";
+        if (key.indexOf("via_de_administracion_") === 0) key = key.slice("via_de_administracion_".length);
+        else if (key.indexOf("via_") === 0) key = key.slice("via_".length);
+        else if (key.indexOf("administracion_") === 0) key = key.slice("administracion_".length);
         if (key === "sc" || key === "subcutanea" || key === "subcutanea_subcutanea") return "SC";
         if (key === "iv" || key === "intravenosa") return "IV";
         if (key === "oral" || key === "vo" || key === "v_o") return "Oral";
@@ -212,22 +215,70 @@
     function buildTreatmentFromCatalogSelection(drug, base) {
         var treatment = normalizeTreatmentInput(base || {}, base || {});
         if (!drug || typeof drug !== "object") return treatment;
-        treatment.farmaco_nombre = firstNonEmpty(drug.display_name, drug.nombre_comercial, drug.principio_activo, treatment.farmaco_nombre);
-        treatment.nombre_comercial = firstNonEmpty(drug.nombre_comercial, treatment.nombre_comercial);
-        treatment.principio_activo = firstNonEmpty(drug.principio_activo, treatment.principio_activo);
-        treatment.presentacion = firstNonEmpty(drug.nombre_presentacion, treatment.presentacion);
-        treatment.dosis_texto = firstNonEmpty(drug.dosis, drug.nombre_presentacion, treatment.dosis_texto);
-        treatment.via = normalizeVia(firstNonEmpty(drug.via, treatment.via));
-        treatment.codigo_nacional = firstNonEmpty(drug.codigo_nacional, treatment.codigo_nacional);
-        treatment.nregistro = firstNonEmpty(drug.nregistro, treatment.nregistro);
-        treatment.selected_drug_id = firstNonEmpty(drug.drug_id, drug.selected_drug_id, treatment.selected_drug_id);
-        treatment.source_type = normalizeSourceType(firstNonEmpty(drug.source_type, treatment.source_type));
-        if (!treatment.fuente) {
-            if (treatment.source_type === "CIMA") treatment.fuente = "cima";
-            else if (treatment.source_type === "LOCAL") treatment.fuente = "local_especial";
-        }
+        treatment.farmaco_nombre = firstNonEmpty(drug.display_name, drug.nombre_comercial, drug.principio_activo);
+        treatment.nombre_comercial = stringValue(drug.nombre_comercial);
+        treatment.principio_activo = stringValue(drug.principio_activo);
+        treatment.presentacion = stringValue(drug.nombre_presentacion);
+        treatment.dosis_texto = stringValue(drug.dosis);
+        treatment.via = normalizeVia(drug.via);
+        treatment.codigo_nacional = stringValue(drug.codigo_nacional);
+        treatment.nregistro = stringValue(drug.nregistro);
+        treatment.selected_drug_id = firstNonEmpty(drug.drug_id, drug.selected_drug_id);
+        treatment.source_type = normalizeSourceType(drug.source_type);
+        treatment.fuente = treatment.source_type === "CIMA" ? "cima" : (treatment.source_type === "LOCAL" ? "local_especial" : "");
         treatment.snapshot_origen = clone(drug);
         return treatment;
+    }
+
+    function shouldApplyProposal(currentValue, previousValue) {
+        var current = stringValue(currentValue);
+        return !current || current === "—" || current === "Pendiente de completar por Farmacia" || current === stringValue(previousValue);
+    }
+
+    function reconcileCatalogSelectionFallback(current, previousSnapshot, drug) {
+        var existing = current && typeof current === "object" ? current : {};
+        var selected = drug && typeof drug === "object" ? drug : {};
+        var previous = previousSnapshot && previousSnapshot.proposal_values && typeof previousSnapshot.proposal_values === "object"
+            ? previousSnapshot.proposal_values : {};
+        var values = Object.assign({}, existing);
+
+        // Product identity is one atomic unit. Missing identifiers intentionally clear stale identity.
+        values.farmaco_nombre = firstNonEmpty(selected.display_name, selected.nombre_comercial, selected.principio_activo);
+        values.nombre_comercial = stringValue(selected.nombre_comercial);
+        values.principio_activo = stringValue(selected.principio_activo);
+        values.codigo_nacional = stringValue(selected.codigo_nacional);
+        values.nregistro = stringValue(selected.nregistro);
+        values.selected_drug_id = firstNonEmpty(selected.drug_id, selected.selected_drug_id);
+        values.source_type = normalizeSourceType(selected.source_type);
+        values.fuente = values.source_type === "CIMA" ? "cima" : (values.source_type === "LOCAL" ? "local_especial" : "");
+
+        var proposed = {
+            presentacion: stringValue(selected.nombre_presentacion),
+            dosis_texto: firstNonEmpty(selected.dosis, selected.nombre_presentacion),
+            via: normalizeVia(selected.via)
+        };
+        var nextProposalValues = {};
+        Object.keys(proposed).forEach(function (field) {
+            if (shouldApplyProposal(existing[field], previous[field])) {
+                values[field] = proposed[field];
+                if (proposed[field]) nextProposalValues[field] = proposed[field];
+            }
+        });
+
+        return {
+            values: values,
+            proposal_values: nextProposalValues
+        };
+    }
+
+    function reconcileCatalogSelection(current, previousSnapshot, drug) {
+        var catalogApi = root && root.FarmaciaCatalog
+            ? root.FarmaciaCatalog
+            : (root && root.window && root.window.FarmaciaCatalog ? root.window.FarmaciaCatalog : null);
+        if (catalogApi && typeof catalogApi.reconcileCatalogSelection === "function") {
+            return catalogApi.reconcileCatalogSelection(current, previousSnapshot, drug);
+        }
+        return reconcileCatalogSelectionFallback(current, previousSnapshot, drug);
     }
 
     function normalizeLegacyMovement(treatment, original) {
@@ -467,6 +518,7 @@
         normalizeTreatmentInput: normalizeTreatmentInput,
         buildTreatmentSnapshot: buildTreatmentSnapshot,
         buildTreatmentFromCatalogSelection: buildTreatmentFromCatalogSelection,
+        reconcileCatalogSelection: reconcileCatalogSelection,
         buildTreatmentFromPatient: buildTreatmentFromPatient,
         normalizeTipoRelacion: normalizeTipoRelacion,
         normalizeEstadoLinea: normalizeEstadoLinea,

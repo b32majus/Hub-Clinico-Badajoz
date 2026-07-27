@@ -50,11 +50,19 @@
     function getCurrentSnapshot() {
         var catalog = getCatalog();
         if (!catalog) return null;
-        return catalog.getSnapshot ? catalog.getSnapshot() : catalog.selectedSnapshot;
+        return catalog.getSnapshot ? catalog.getSnapshot(firstVisitCatalogContext()) : null;
     }
 
-    function resolvePrimaryRelation(ctx, snapshot) {
-        if ((ctx && ctx.patient) || snapshot) return 'validado';
+    function firstVisitCatalogContext(cip) {
+        var ctx = getCurrentContext();
+        return {
+            slot: 'primera_visita.tratamiento',
+            cip: firstNonEmpty(cip, fv('fhPvCip'), activePatientCip, ctx && ctx.cip, ctx && ctx.patient && ctx.patient.cip)
+        };
+    }
+
+    function resolvePrimaryRelation(ctx) {
+        if (ctx && ctx.patient) return 'validado';
         return 'principal';
     }
 
@@ -134,7 +142,7 @@
         var sourceCtx = ctx || getCurrentContext() || {};
         var patient = sourceCtx.patient || null;
         var snapshot = getCurrentSnapshot();
-        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var relation = resolvePrimaryRelation(sourceCtx);
         var treatmentHelper = getTreatmentHelper();
         var treatment = normalizePrimaryTreatment({
             paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
@@ -167,6 +175,11 @@
                 es_principal: true,
                 es_validado_farmacia: relation === 'validado',
                 fuente: 'primera_visita',
+                nombre_comercial: snapshotTreatment.nombre_comercial,
+                selected_drug_id: snapshotTreatment.selected_drug_id,
+                codigo_nacional: snapshotTreatment.codigo_nacional,
+                nregistro: snapshotTreatment.nregistro,
+                source_type: snapshotTreatment.source_type,
                 principio_activo: firstNonEmpty(treatment.principio_activo, snapshotTreatment.principio_activo),
                 dosis_texto: firstNonEmpty(treatment.dosis_texto, snapshotTreatment.dosis_texto),
                 presentacion: firstNonEmpty(treatment.presentacion, snapshotTreatment.presentacion),
@@ -184,7 +197,7 @@
     function buildPrimaryTreatmentFromSelection(drug, ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var treatmentHelper = getTreatmentHelper();
-        var relation = resolvePrimaryRelation(sourceCtx, sourceCtx.patient ? {} : getCurrentSnapshot());
+        var relation = resolvePrimaryRelation(sourceCtx);
         var cip = firstNonEmpty(sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip, fv('fhPvCip'));
         var base = {
             paciente_cip: cip,
@@ -229,7 +242,7 @@
     function getCurrentPrimaryTreatment(ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var snapshot = getCurrentSnapshot();
-        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var relation = resolvePrimaryRelation(sourceCtx);
         var treatment = buildPrimaryTreatmentFromContext(sourceCtx);
         if (!hasMeaningfulTreatment(treatment)) {
             treatment = normalizePrimaryTreatment({
@@ -734,7 +747,7 @@
         applyContext({ cip: patient.cip, patient: patient });
 
         var C = getCatalog();
-        if (C && C.clearSnapshot) C.clearSnapshot();
+        if (C && C.clearSnapshot) C.clearSnapshot(firstVisitCatalogContext(patient.cip));
         applyTratamientoValidado({ patient: patient, cip: patient.cip });
         activePatientCip = patient.cip;
 
@@ -766,7 +779,7 @@
         F.clearChildren(document.getElementById('fhPvTratamientoGrid'));
         clearDrugAutocompleteDropdown();
         var catalog = getCatalog();
-        if (catalog && catalog.clearSnapshot) catalog.clearSnapshot();
+        if (catalog && catalog.clearSnapshot && activePatientCip) catalog.clearSnapshot(firstVisitCatalogContext(activePatientCip));
     }
 
     function clearCipNotice() {
@@ -878,10 +891,27 @@
 
     function selectDrugPV(drug) {
         var C = getCatalog();
-        if (!C || !drug) return;
-
-        C.selectDrug(drug);
-        var treatment = buildPrimaryTreatmentFromSelection(drug);
+        if (!C || !drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
+        var helper = getTreatmentHelper();
+        var context = firstVisitCatalogContext();
+        if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
+        var previous = C.getSnapshot(context);
+        var current = getCurrentPrimaryTreatment();
+        var reconciled = helper && typeof helper.reconcileCatalogSelection === 'function'
+            ? helper.reconcileCatalogSelection(current, previous, drug)
+            : { values: buildPrimaryTreatmentFromSelection(drug), proposal_values: {} };
+        C.selectDrug(drug, context, reconciled);
+        var treatment = normalizePrimaryTreatment(assignObjects({}, current, reconciled.values, {
+            paciente_cip: context.cip,
+            pauta: getPautaLabelForExport(),
+            fecha_inicio: fv('fhPvFecha') || current.fecha_inicio || '',
+            tipo_relacion: current.tipo_relacion,
+            estado_linea: current.estado_linea,
+            tipo_movimiento: current.tipo_movimiento,
+            es_principal: current.es_principal,
+            es_validado_farmacia: current.es_validado_farmacia,
+            fuente: 'primera_visita'
+        }), { paciente_cip: context.cip, fuente: 'primera_visita' });
         setTreatmentForm(treatment);
         applyTratamientoValidado(getCurrentContext());
 
@@ -1080,7 +1110,7 @@
 
         if (!ctx.patient) {
             var C = window.FarmaciaCatalog;
-            if (C && C.clearSnapshot) C.clearSnapshot();
+            if (C && C.clearSnapshot && ctx.cip) C.clearSnapshot(firstVisitCatalogContext(ctx.cip));
         }
 
         populatePautaSelectPv('fhPvPauta', 'fhPvPautaOtro');

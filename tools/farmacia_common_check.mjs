@@ -59,7 +59,8 @@ function makeStorageMock() {
     return {
         getItem: function (key) { return store[key] === undefined ? null : store[key]; },
         setItem: function (key, value) { store[key] = String(value); },
-        removeItem: function (key) { delete store[key]; }
+        removeItem: function (key) { delete store[key]; },
+        dump: function () { return { ...store }; }
     };
 }
 
@@ -73,11 +74,13 @@ const mockDoc = {
     body: { classList: { add: function () {}, remove: function () {} } }
 };
 
+const sessionStorage = makeStorageMock();
 const sandbox = {
     window: {
         localStorage: makeStorageMock(),
-        sessionStorage: makeStorageMock()
+        sessionStorage: sessionStorage
     },
+    sessionStorage: sessionStorage,
     console: console,
     document: mockDoc,
     location: { search: '' }
@@ -112,6 +115,101 @@ if (typeof resolvePatientContextSwitch === 'function') {
     assertEqual(resolvePatientContextSwitch('CIP-A', 'CIP-B', true, true).action, 'switch', 'confirmed switch replaces context');
     assertEqual(resolvePatientContextSwitch('', 'CIP-B', false).action, 'switch', 'clean screen loads without confirmation');
 }
+
+console.log('\n[Contextual catalog proposal registry]');
+const catalogApi = sandbox.window.FarmaciaCatalog;
+const cimaRowsWithoutNativeId = [{
+    drug_source_id: '', codigo_nacional: '700001', nregistro: 'SYN/CIMA/1',
+    nombre_comercial: 'Producto CIMA visible', principio_activo: 'Activo CIMA sintético',
+    nombre_presentacion: '150 mg pluma', dosis_presentacion: '150 mg', via: 'SC',
+    forma_farmaceutica: 'Solución inyectable'
+}, {
+    drug_source_id: 'CIMA-NATIVE-SYN', codigo_nacional: '700002',
+    nombre_comercial: 'Producto CIMA con ID', principio_activo: 'Activo CIMA B',
+    nombre_presentacion: '50 mg vial', dosis_presentacion: '50 mg', via: 'IV'
+}];
+const localRowsWithoutNativeId = [{
+    local_drug_id: '', display_name: 'Producto local visible', principio_activo_o_molecula: 'Activo local sintético',
+    presentacion_texto: '25 mg vial', dosis_texto: '25 mg', via: 'IV', tipo_situacion: 'Sintética'
+}, {
+    local_drug_id: '', display_name: 'Entrada local manual incompleta', principio_activo_o_molecula: 'Activo sin presentación'
+}];
+sandbox.XLSX = {
+    read: function () {
+        return { Sheets: { CATALOGO_CIMA: { rows: cimaRowsWithoutNativeId }, CATALOGO_LOCAL_ESPECIAL: { rows: localRowsWithoutNativeId } } };
+    },
+    utils: { sheet_to_json: function (sheet) { return sheet.rows; } }
+};
+catalogApi.loadFromExcel(new ArrayBuffer(0));
+const firstGeneratedIds = catalogApi.drugs.map(function (drug) { return drug.drug_id; });
+assertEqual(firstGeneratedIds[0].startsWith('CIMA-AUTO-'), true, 'CIMA row without native source ID receives fallback ID');
+assertEqual(firstGeneratedIds[1], 'CIMA-NATIVE-SYN', 'CIMA native source ID remains preferred');
+assertEqual(firstGeneratedIds[2].startsWith('LOCAL-AUTO-'), true, 'LOCAL row without native source ID receives fallback ID');
+catalogApi.loadFromExcel(new ArrayBuffer(0));
+assertEqual(catalogApi.drugs[0].drug_id, firstGeneratedIds[0], 'CIMA fallback ID is stable across normalization');
+assertEqual(catalogApi.drugs[2].drug_id, firstGeneratedIds[2], 'LOCAL fallback ID is stable across normalization');
+const normalizedConcreteCima = catalogApi.drugs[0];
+assertEqual(catalogApi.isConcreteCatalogSelection(normalizedConcreteCima), true, 'normalized visible CIMA presentation is selectable');
+assertEqual(catalogApi.reconcileCatalogSelection({}, null, { source_type: 'CIMA', via: 'VÍA SUBCUTÁNEA' }).values.via, 'SC', 'prefixed CIMA subcutaneous route normalizes to SC');
+assertEqual(catalogApi.mapCatalogViaToSelect('VÍA INTRAMUSCULAR'), 'IM', 'prefixed intramuscular route is select-representable');
+assertEqual(catalogApi.mapCatalogViaToSelect('VÍA TRANSDÉRMICA'), 'Otra', 'unknown prefixed route maps to Otra');
+const selectedDrug = {
+    drug_id: 'CIMA-SYN-1', source_type: 'CIMA', nombre_comercial: 'Producto sintético A',
+    principio_activo: 'Molécula sintética A', nombre_presentacion: '100 mg jeringa',
+    dosis: '100 mg', via: 'SC', codigo_nacional: '100001', nregistro: 'SYN/1'
+};
+const contexts = [
+    { slot: 'validacion.solicitado', cip: 'CIP-SYN-1' },
+    { slot: 'validacion.validado', cip: 'CIP-SYN-1' },
+    { slot: 'primera_visita.tratamiento', cip: 'CIP-SYN-1' },
+    { slot: 'seguimiento.tratamiento', cip: 'CIP-SYN-1', linea_id: 'LINE-SYN-1' },
+    { slot: 'seguimiento.relacionado:uid-syn-1', cip: 'CIP-SYN-1' }
+];
+contexts.forEach(function (context, index) {
+    const snapshot = catalogApi.selectDrug({ ...selectedDrug, drug_id: selectedDrug.drug_id + '-' + index }, context, { proposal_values: { via: 'SC' } });
+    assertEqual(snapshot && snapshot.context.slot, context.slot, `slot ${index + 1} stores own context`);
+});
+assertEqual(catalogApi.getSnapshot(contexts[0]).selected_drug_id, 'CIMA-SYN-1-0', 'requested slot remains isolated');
+assertEqual(catalogApi.getSnapshot(contexts[4]).selected_drug_id, 'CIMA-SYN-1-4', 'dynamic UID slot remains isolated');
+assertEqual(catalogApi.getSnapshot({ ...contexts[3], linea_id: 'OTHER-LINE' }), null, 'different line cannot reuse snapshot');
+assertEqual(catalogApi.getSnapshot({ slot: 'validacion.solicitado', cip: 'OTHER-CIP' }), null, 'different CIP cannot reuse snapshot');
+assertEqual(catalogApi.snapshotContextKey({ slot: 'arbitrary.slot', cip: 'CIP-SYN-1' }), '', 'arbitrary snapshot slot is rejected');
+assertEqual(catalogApi.snapshotContextKey({ slot: 'seguimiento.relacionado:', cip: 'CIP-SYN-1' }), '', 'empty related UID is rejected');
+assertEqual(catalogApi.snapshotContextKey({ slot: 'seguimiento.relacionado:unsafe uid', cip: 'CIP-SYN-1' }), '', 'unsafe related UID is rejected');
+assertEqual(catalogApi.getSnapshot(), null, 'contextless lookup is rejected');
+assertEqual(catalogApi.selectDrug(selectedDrug), null, 'contextless selection creates no metadata');
+assertEqual(catalogApi.selectDrug({ drug_id: 'LOCAL-INCOMPLETE', source_type: 'LOCAL', nombre_comercial: 'Entrada sin presentación' }, contexts[0]), null, 'non-concrete local entry creates no proposal metadata');
+assertEqual(catalogApi.isConcreteCatalogSelection(catalogApi.drugs[3]), false, 'normalized incomplete local entry remains rejected');
+const normalizedSnapshot = catalogApi.selectDrug(normalizedConcreteCima, { slot: 'validacion.validado', cip: 'CIP-SYN-CATALOG' }, { proposal_values: { presentacion: normalizedConcreteCima.nombre_presentacion, dosis_texto: normalizedConcreteCima.dosis, via: normalizedConcreteCima.via } });
+assertEqual(normalizedSnapshot && normalizedSnapshot.selected_drug_id, firstGeneratedIds[0], 'explicit normalized CIMA selection creates contextual snapshot');
+assertEqual(normalizedSnapshot && normalizedSnapshot.proposal_values.dosis_texto, '150 mg', 'explicit normalized CIMA selection carries proposal metadata');
+sessionStorage.setItem('farmacia_drug_snapshot', JSON.stringify({ selected_drug_id: 'LEGACY' }));
+assertEqual(catalogApi.getSnapshot(), null, 'legacy singleton is rejected');
+assertEqual(sessionStorage.getItem('farmacia_drug_snapshot'), null, 'legacy singleton is cleaned');
+
+const registryRaw = JSON.parse(sessionStorage.getItem('farmacia_drug_snapshot_registry_v2'));
+const malformedKey = catalogApi.snapshotContextKey({ slot: 'validacion.solicitado', cip: 'CIP-BAD' });
+registryRaw.snapshots[malformedKey] = { context: { slot: 'validacion.solicitado', cip: 'CIP-BAD' } };
+registryRaw.snapshots['arbitrary%2Eslot|CIP-BAD||'] = { selected_drug_id: 'BAD-SLOT', source_type: 'CIMA', context: { slot: 'arbitrary.slot', cip: 'CIP-BAD' } };
+registryRaw.snapshots['mismatched-key'] = { selected_drug_id: 'BAD-KEY', source_type: 'CIMA', context: { slot: 'validacion.validado', cip: 'CIP-BAD' } };
+registryRaw.snapshots['seguimiento.relacionado%3Aunsafe%20uid|CIP-BAD||'] = { selected_drug_id: 'BAD-UID', source_type: 'LOCAL', context: { slot: 'seguimiento.relacionado:unsafe uid', cip: 'CIP-BAD' } };
+const invalidSourceKey = catalogApi.snapshotContextKey({ slot: 'validacion.validado', cip: 'CIP-BAD-SOURCE' });
+registryRaw.snapshots[invalidSourceKey] = { selected_drug_id: 'BAD-SOURCE', source_type: 'DEMO', context: { slot: 'validacion.validado', cip: 'CIP-BAD-SOURCE', tratamiento_id: '', linea_id: '' } };
+sessionStorage.setItem('farmacia_drug_snapshot_registry_v2', JSON.stringify(registryRaw));
+// Force a fresh in-memory registry through a new VM evaluation.
+const malformedSession = sessionStorage;
+const malformedSandbox = { window: { localStorage: makeStorageMock(), sessionStorage: malformedSession }, sessionStorage: malformedSession, console, document: mockDoc, location: { search: '' } };
+vm.createContext(malformedSandbox);
+vm.runInContext(catalogSrc, malformedSandbox);
+vm.runInContext(commonSrc, malformedSandbox);
+assertEqual(malformedSandbox.window.FarmaciaCatalog.getSnapshot(contexts[0]).selected_drug_id, 'CIMA-SYN-1-0', 'valid isolated entry survives proactive registry sanitation');
+assertEqual(malformedSandbox.window.FarmaciaCatalog.getSnapshot({ slot: 'validacion.solicitado', cip: 'CIP-BAD' }), null, 'malformed snapshot is rejected');
+const cleanedRegistry = JSON.parse(malformedSession.getItem('farmacia_drug_snapshot_registry_v2'));
+assertEqual(Object.hasOwn(cleanedRegistry.snapshots, malformedKey), false, 'malformed snapshot is cleaned');
+assertEqual(Object.hasOwn(cleanedRegistry.snapshots, 'arbitrary%2Eslot|CIP-BAD||'), false, 'arbitrary slot is proactively cleaned');
+assertEqual(Object.hasOwn(cleanedRegistry.snapshots, 'mismatched-key'), false, 'key/context mismatch is proactively cleaned');
+assertEqual(Object.hasOwn(cleanedRegistry.snapshots, 'seguimiento.relacionado%3Aunsafe%20uid|CIP-BAD||'), false, 'unsafe dynamic UID is proactively cleaned');
+assertEqual(Object.hasOwn(cleanedRegistry.snapshots, invalidSourceKey), false, 'snapshot with incompatible source is proactively cleaned');
 
 // ─── Caso A: pauta reconocible ───────────────────────────────────────────────
 console.log('\n[Caso A] Pauta reconocible: SC / cada 4 semanas');
