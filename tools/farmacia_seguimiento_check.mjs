@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // tools/farmacia_seguimiento_check.mjs
-// Verifica WO7E + WO7E.1 + WO7F en Seguimiento — contrato común de tratamiento principal + pulido datos básicos + concomitantes/adicionales/históricos
+// Verifica Seguimiento, incluida la frontera de documentación de tratamientos relacionados ya existentes.
 
 import fs from 'fs';
 import path from 'path';
@@ -130,6 +130,10 @@ assert(html.includes('scripts/farmacia_tratamiento_common.js'), 'Seguimiento car
 // 2. Tipo de movimiento tiene opciones del contrato (en HTML select)
 assert(html.indexOf('value="optimizacion"') !== -1, 'HTML incluye movimiento optimización');
 assert(html.indexOf('value="suspension"') !== -1, 'HTML incluye movimiento suspensión');
+const movementSelect = (html.match(/<select class="form-select" id="fhSegTipoRelacionTerapia">[\s\S]*?<\/select>/) || [''])[0];
+assert(!movementSelect.includes('value="tratamiento_anadido"'), 'Seguimiento no permite iniciar tratamiento añadido');
+assert(!movementSelect.includes('value="cambio_terapeutico"'), 'Seguimiento no permite iniciar cambio terapéutico');
+assert(movementSelect.includes('value="revision_linea"'), 'Seguimiento conserva revisión de línea');
 
 // 3. Grid de resumen presente
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento presente');
@@ -208,13 +212,22 @@ assert(!html.includes('#modPrebiologico'), 'Nav link a estudio prebiológico eli
 assert(js.includes('mapOtherDrugToContract'), 'Función mapOtherDrugToContract definida');
 assert(js.includes('buildPautaSelectForOtherDrug'), 'Función buildPautaSelectForOtherDrug definida');
 assert(js.includes('applyCatalogSelectionToOtherDrug'), 'Función applyCatalogSelectionToOtherDrug definida');
-assert(js.includes('normalizeOtherDrugVia'), 'Función normalizeOtherDrugVia definida');
+assert(js.includes('mergeRelatedTreatmentCatalogIdentity'), 'Fusión de identidad de catálogo definida');
 
-// 21. Autocomplete rellena principio activo, vía, pauta y dosis
-assert(js.includes("setOtherDrugField(uid, 'principioActivo'"), 'Autocomplete rellena principio activo');
-assert(js.includes("setOtherDrugField(uid, 'via'"), 'Autocomplete rellena vía');
-assert(js.includes("setOtherDrugField(uid, 'pautaCodigo'"), 'Autocomplete rellena pauta');
-assert(js.includes("setOtherDrugField(uid, 'dosis'"), 'Autocomplete rellena dosis');
+// 21. Autocomplete relacionado solo aporta identidad/trazabilidad sin sobrescribir ni inferir terapia
+assert(behaviorApi && typeof behaviorApi.mergeRelatedTreatmentCatalogIdentity === 'function', 'Fusión de catálogo relacionada es comprobable');
+if (behaviorApi && typeof behaviorApi.mergeRelatedTreatmentCatalogIdentity === 'function') {
+  const catalog = { nombre_comercial: 'Marca catálogo', principio_activo: 'Activo catálogo', nombre_presentacion: 'Presentación catálogo', codigo_nacional: 'CN-CAT', nregistro: 'REG-CAT', source_type: 'CIMA', dosis: '999 mg', via: 'IV', pauta: 'Cada día' };
+  const manual = { farmaco: 'Marca manual', principioActivo: 'Activo manual', presentacion: 'Presentación manual', codigoNacional: 'CN-MAN', nregistro: 'REG-MAN', origenCatalogo: 'Fuente manual', sourceType: 'MANUAL', dosis: 'Dosis manual', via: 'SC', pauta: 'Pauta manual' };
+  const preserved = behaviorApi.mergeRelatedTreatmentCatalogIdentity(manual, catalog);
+  assert(preserved.farmaco === 'Marca manual' && preserved.principioActivo === 'Activo manual' && preserved.presentacion === 'Presentación manual' && preserved.codigoNacional === 'CN-MAN' && preserved.nregistro === 'REG-MAN' && preserved.origenCatalogo === 'Fuente manual' && preserved.sourceType === 'MANUAL', 'Catálogo no sobrescribe identidad/trazabilidad manual no vacía');
+  assert(!Object.hasOwn(preserved, 'dosis') && !Object.hasOwn(preserved, 'via') && !Object.hasOwn(preserved, 'pauta'), 'Catálogo relacionado no propone dosis, vía ni pauta');
+  const filled = behaviorApi.mergeRelatedTreatmentCatalogIdentity({}, catalog);
+  assert(filled.farmaco === 'Marca catálogo' && filled.principioActivo === 'Activo catálogo' && filled.presentacion === 'Presentación catálogo' && filled.codigoNacional === 'CN-CAT' && filled.nregistro === 'REG-CAT' && filled.origenCatalogo === 'CIMA' && filled.sourceType === 'CIMA', 'Catálogo completa identidad, presentación y trazabilidad cuando están vacías');
+}
+var applyCatalogMatch = js.match(/function applyCatalogSelectionToOtherDrug[\s\S]*?^    \}/m);
+var applyCatalogBody = applyCatalogMatch ? applyCatalogMatch[0] : '';
+assert(!/['"](?:dosis|via|pauta|pautaCodigo|pautaOtro)['"]/.test(applyCatalogBody), 'Aplicación de catálogo relacionada no escribe campos terapéuticos');
 
 // 22. Pauta concomitante es desplegable normalizado (no input texto libre único)
 assert(js.includes('P.getPautaOptions') || js.includes('FarmaciaPautasCatalog.getPautaOptions'), 'Pauta concomitante usa catálogo de pautas');
@@ -226,9 +239,16 @@ assert(js.includes("relation = 'concomitante'"), 'Concomitante mapea tipo_relaci
 assert(js.includes("estado_linea = 'activo'"), 'Concomitante mapea estado_linea a activo');
 assert(js.includes("tipo_movimiento = 'no_aplica'"), 'Concomitante mapea tipo_movimiento a no_aplica');
 
-// 24. Adicional conserva tipo_relacion adicional y movimiento tratamiento_anadido
-assert(js.includes("relation = 'adicional'"), 'Adicional mapea tipo_relacion a adicional');
-assert(js.includes("tipo_movimiento = 'tratamiento_anadido'"), 'Adicional mapea tipo_movimiento a tratamiento_anadido');
+// 24. Tratamiento activo previo/existente se documenta sin movimiento iniciador
+assert(js.includes("'Tratamiento activo previo / línea existente'"), 'Relación previa/existente usa el texto vinculante exacto');
+assert(behaviorApi && typeof behaviorApi.mapRelatedTreatmentToContract === 'function', 'Mapeo de tratamiento relacionado es comprobable');
+if (behaviorApi && typeof behaviorApi.mapRelatedTreatmentToContract === 'function') {
+  const existingContract = behaviorApi.mapRelatedTreatmentToContract({ relationType: 'Tratamiento activo previo / línea existente', sospechosoEa: 'No' });
+  assert(existingContract.tipo_relacion === 'adicional' && existingContract.estado_linea === 'activo' && existingContract.tipo_movimiento === '', 'Tratamiento previo/existente permanece activo sin movimiento add-on, switch ni inicio automático');
+}
+var relationLabelMatch = js.match(/function biologicRelationLabel[\s\S]*?^    \}/m);
+var relationLabelBody = relationLabelMatch ? relationLabelMatch[0] : '';
+assert(relationLabelBody.includes("type === 'cambio_terapeutico'") && relationLabelBody.includes("type === 'tratamiento_anadido'"), 'Lectura histórica conserva mappings de switch y add-on');
 
 // 25. Histórico/exposición no se reactivan como línea actual
 assert(js.includes("relation = 'historico'"), 'Histórico mapea tipo_relacion a historico');
@@ -270,10 +290,10 @@ assert(js.includes('seenIds'), 'getRelevantDrugCandidates usa deduplicación see
 assert(js.includes('Biológico previo/histórico'), 'Incluye históricos como categoría');
 assert(js.includes('followupOtherDrugs.forEach'), 'Itera todos los otros fármacos');
 
-// 32. Vía de concomitante se autocompleta desde catálogo
-assert(js.includes("setOtherDrugField(uid, 'via'"), 'Autocomplete via definido en WO7F');
-assert(js.includes("setOtherDrugField(uid, 'dosis'"), 'Autocomplete dosis definido en WO7F');
-assert(js.includes("setOtherDrugField(uid, 'principioActivo'"), 'Autocomplete principio activo definido en WO7F');
+// 32. Campos terapéuticos relacionados siguen siendo editables, pero no se infieren del catálogo
+assert(js.includes("{ key: 'dosis', label: 'Dosis', type: 'text' }"), 'Dosis relacionada permanece editable');
+assert(js.includes("buildFollowupField('Vía', viaSelect)"), 'Vía relacionada permanece editable');
+assert(js.includes("buildFollowupField('Pauta', pautaWrapper)"), 'Pauta relacionada permanece editable');
 
 // 33. updateSuspectDrugSelector se llama en contextos clave (tras cambio de línea y al añadir/eliminar fármaco)
 assert(js.includes('updateSuspectDrugSelector();'), 'updateSuspectDrugSelector se llama explícitamente');
@@ -374,11 +394,11 @@ assert(rdcBody.includes('candidates.sort'), 'getRelevantDrugCandidates ordena ca
 assert(rdcBody.includes("prioridad: line.es_principal ? 1 : (line.estado_linea === 'historico' ? 5 : 2)"),
     'Prioridad 1 para principal, 2 activo, 5 histórico en líneas biológicas');
 
-// 56. Concomitante prioridad 3, adicional prioridad 4
+// 56. Concomitante prioridad 3, línea previa adicional prioridad 4
 assert(rdcBody.includes("'concomitante') p = 3"),
     'Concomitante prioridad 3 (tercer orden)');
 assert(rdcBody.includes("'adicional') p = 4"),
-    'Adicional prioridad 4 (cuarto orden)');
+    'Tratamiento activo previo conserva prioridad de línea adicional ya existente');
 
 // 57. If candidates.length > 0, fallback DOM no silencia otras líneas (verificación de no regresión)
 assert(js.includes("if (!candidates.length)"),
