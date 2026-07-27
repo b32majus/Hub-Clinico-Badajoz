@@ -131,8 +131,9 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   elements.fhSegCip.value = 'CIP-B';
   clickCipSearch();
   assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '' && elements.fhSegDrugSearch.value === '' && elements.fhSegAutocompleteDropdown.children.length === 0 && elements.fhSegAutocompleteDropdown.classList.contains('hidden') && behaviorApi.getFollowupOtherDrugs().length === 0, 'Seguimiento confirmed switch clears old fields, search/dropdown and related rows before loading B');
+  behaviorApi.selectLineById('LINE-B');
   behaviorApi.addFollowupOtherDrug();
-  const oldMainKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-B', tratamiento_id: 'TRAT-B' });
+  const oldMainKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-B', linea_id: 'LINE-B' });
   const oldRelatedKey = snapshotContextKey({ slot: 'seguimiento.relacionado:seg-other-1', cip: 'CIP-B' });
   const unrelatedNewKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-UNKNOWN', tratamiento_id: 'TRAT-NEW' });
   const unrelatedNewManualKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-UNKNOWN' });
@@ -143,7 +144,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   elements.fhSegCip.value = 'CIP-UNKNOWN';
   clickCipSearch();
   assert(elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento unknown CIP enters clean manual mode');
-  assert(!snapshotKeys.has(oldMainKey), 'Patient switch clears previous main treatment snapshot with treatment context');
+  assert(!snapshotKeys.has(oldMainKey), 'Patient switch clears explicitly selected prior line snapshot by CIP and linea_id');
   assert(!snapshotKeys.has(oldRelatedKey), 'Patient switch clears previous related UID snapshot');
   assert(snapshotKeys.has(unrelatedNewKey), 'Patient switch does not delete unrelated/new-patient snapshot');
   assert(snapshotKeys.has(unrelatedNewManualKey), 'Patient switch preserves new-CIP manual-context snapshot');
@@ -481,12 +482,12 @@ assert(suspectSelectorWrites <= 5, 'Sospechoso EA solo referenciado en rutas con
 
 // --- WO7H.1: Consistencia visual de línea terapéutica ---
 
-// 40. applySelectedBiologicLine usa farmaco_nombre antes de nombre_comercial
-var segFhSegFarmaco = "setSegValue('fhSegFarmaco', line.farmaco_nombre || line.nombre_comercial";
-assert(js.indexOf(segFhSegFarmaco) !== -1, 'Seguimiento setSegFarmaco usa farmaco_nombre antes de nombre_comercial');
+// 40. applySelectedBiologicLine respeta snapshot y luego farmaco_nombre antes de nombre_comercial
+var segFhSegFarmaco = /if\s*\(\s*snap\s*&&\s*snap\.nombre_snapshot\s*\)\s*setSegValue\('fhSegFarmaco',\s*snap\.nombre_snapshot\);\s*else\s*setSegValue\('fhSegFarmaco',\s*line\.farmaco_nombre\s*\|\|\s*line\.nombre_comercial\s*\|\|\s*line\.nombre_linea\s*\|\|\s*''\);/;
+assert(segFhSegFarmaco.test(js), 'Seguimiento setSegFarmaco prioriza snapshot asociado y conserva precedencia farmaco_nombre/nombre_comercial');
 
-// 41. syncBiologicControls ya incluye farmaco_nombre en su cadena
-assert(js.includes('line.farmaco_nombre || line.nombre_comercial'), 'syncBiologicControls usa farmaco_nombre como segundo fallback');
+// 41. syncBiologicControls identifica opciones exclusivamente por linea_id
+assert(js.includes('opt.value = line.linea_id'), 'syncBiologicControls usa linea_id explícito para cada opción');
 
 // 42. Tarjeta CIMA se limpia si no corresponde a la línea seleccionada
 assert(js.includes('fhSegCimaContextPrincipioActivo'), 'Código de sincronización tarjeta CIMA presente');
@@ -499,39 +500,45 @@ assert(js.includes('setSegPautaActualNormalized'), 'Pauta actual normalizada sig
 assert(js.includes('btnSegAddOtherDrug'), 'Botón añadir concomitante conservado');
 assert(js.includes('segOtrosFarmacosList'), 'Lista otros fármacos conservada');
 
-// --- WO7H.2: Bugfix — línea seleccionada y campos visibles coherentes ---
+// --- PR57A: selección canónica explícita de línea ---
 
-// 45. getCurrentSelectedLine usa tratamiento_id como fallback de matching
+// 45. getCurrentSelectedLine exige selector no vacío
 var gcsMatch = js.match(/function getCurrentSelectedLine[\s\S]*?^    \}/m);
 var gcsBody = gcsMatch ? gcsMatch[0] : '';
-assert(gcsBody.includes('matchVal'), 'getCurrentSelectedLine usa variable matchVal para matching unificado');
+assert(gcsBody.includes('if (!select || !select.value) return null'),
+    'getCurrentSelectedLine no hace selección implícita sin valor explícito');
 
-// 46. matchVal combina linea_id y tratamiento_id
-assert(gcsBody.includes('linea_id || currentBiologicLines[j].tratamiento_id'),
-    'matchVal usa linea_id con fallback a tratamiento_id');
+// 46. Matching exacto únicamente por linea_id
+assert(gcsBody.includes('currentBiologicLines[i].linea_id === select.value'),
+    'getCurrentSelectedLine compara linea_id exacto contra select.value');
 
-// 47. Comparación usa matchVal contra select.value
-assert(gcsBody.includes('matchVal === select.value'), 'getCurrentSelectedLine compara matchVal contra select.value');
+// 47. tratamiento_id no participa en identidad o matching
+assert(!gcsBody.includes('tratamiento_id') && !gcsBody.includes('matchVal'),
+    'getCurrentSelectedLine no usa tratamiento_id ni matching alternativo');
 
-// 48. Fallback a currentBiologicLines[0] solo si ningún match (no se queda en Abatacept si selector es Belimumab)
-assert(gcsBody.includes('return currentBiologicLines[0]'),
-    'Fallback a currentBiologicLines[0] existe como protección pero no es la ruta principal');
+// 48. Sin fallback a índice, principal o primera línea
+assert(!gcsBody.includes('currentBiologicLines[0]') && !gcsBody.includes('es_principal'),
+    'getCurrentSelectedLine devuelve null sin fallback a primera/principal');
 
-// 49. opt.value en syncBiologicControls es coherente (mismo fallback)
-assert(js.includes("opt.value = line.linea_id || line.tratamiento_id || ('BIO-' + i)"),
-    'syncBiologicControls genera opt.value coherente con matching fallback');
+// 49. syncBiologicControls solo crea opciones activas con linea_id explícito
+var syncMatch = js.match(/function syncBiologicControls[\s\S]*?^    \}/m);
+var syncBody = syncMatch ? syncMatch[0] : '';
+assert(syncBody.includes("line.estado_linea === 'active'") && syncBody.includes('opt.value = line.linea_id'),
+    'syncBiologicControls limita opciones a active y usa linea_id');
+assert(!syncBody.includes("('BIO-' + i)") && !syncBody.includes('opt.selected = true'),
+    'syncBiologicControls no genera IDs ni autoselecciona opciones');
 
-// 50. applySelectedBiologicLine recibe línea exacta del selector (no primera línea por defecto)
-assert(js.includes('applySelectedBiologicLine();'),
-    'applySelectedBiologicLine se llama tras syncBiologicControls con la línea seleccionada exacta');
+// 50. Aplicación pasa por selección explícita y sincronizada
+assert(js.includes('selectBiologicLineById(lineaPrincipal.value)') && js.includes('applySelectedBiologicLine();'),
+    'Selector aplica únicamente la línea explícita identificada por linea_id');
 
-// --- WO7H.3: Bugfix — candidatos de sospechoso EA ---
+// --- PR57A: candidatos de sospechoso EA por línea canónica ---
 
-// 51. getRelevantDrugCandidates dedup key usa linea_id con fallback tratamiento_id
+// 51. getRelevantDrugCandidates dedup key usa solo linea_id
 var rdcMatch = js.match(/function getRelevantDrugCandidates[\s\S]*?^    \}/m);
 var rdcBody = rdcMatch ? rdcMatch[0] : '';
-assert(rdcBody.includes("line.linea_id || line.tratamiento_id || line.id"),
-    'getRelevantDrugCandidates dedup key usa linea_id, tratamiento_id e id como fallback');
+assert(rdcBody.includes("var id = 'line:' + line.linea_id") && !rdcBody.includes('line.tratamiento_id'),
+    'getRelevantDrugCandidates identifica y deduplica por linea_id');
 
 // 52. getRelevantDrugCandidates incluye farmaco_nombre en name
 assert(rdcBody.includes('line.farmaco_nombre') && rdcBody.includes('line.nombre_comercial'),
@@ -543,9 +550,12 @@ assert(rdcBody.includes('prioridad'), 'getRelevantDrugCandidates asigna priorida
 // 54. Candidates se ordenan antes de devolverse
 assert(rdcBody.includes('candidates.sort'), 'getRelevantDrugCandidates ordena candidatos antes de devolver');
 
-// 55. Prioridad 1 = principal, 5 = histórico
-assert(rdcBody.includes("prioridad: line.es_principal ? 1 : (line.estado_linea === 'historico' ? 5 : 2)"),
-    'Prioridad 1 para principal, 2 activo, 5 histórico en líneas biológicas');
+// 55. Categorías y prioridades distinguen líneas activas y no activas
+assert(rdcBody.includes("line.estado_linea === 'active'") && rdcBody.includes("cat = 'Biológico activo'"),
+    'Solo estado active recibe categoría Biológico activo');
+assert(rdcBody.includes('Biológico validado pendiente de inicio') && rdcBody.includes('Biológico suspendido') && rdcBody.includes('Biológico finalizado/histórico'),
+    'Estados no activos reciben categorías clínicas legibles y no activas');
+assert(rdcBody.includes('prioridad: linePriority'), 'Prioridad de candidato deriva del estado canónico');
 
 // 56. Concomitante prioridad 3, línea previa adicional prioridad 4
 assert(rdcBody.includes("'concomitante') p = 3"),
@@ -557,8 +567,9 @@ assert(rdcBody.includes("'adicional') p = 4"),
 assert(js.includes("if (!candidates.length)"),
     'Fallback DOM solo se activa si NO hay candidatos de currentBiologicLines');
 
-// 58. WO7H.2 intacta: getCurrentSelectedLine usa matchVal con tratamiento_id
-assert(gcsBody.includes('matchVal'), 'getCurrentSelectedLine sigue usando matchVal (WO7H.2 no revertida)');
+// 58. Selección inválida termina en null y nunca elige la primera línea
+assert(gcsBody.trim().endsWith('return null;\n    }'),
+    'getCurrentSelectedLine termina de forma segura en null si linea_id no coincide');
 
 // 59. updateSuspectDrugSelector usa candidates.length > 1 para opción múltiple
 assert(js.includes('candidates.length > 1'),

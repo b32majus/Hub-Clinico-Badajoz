@@ -1972,6 +1972,37 @@
 
 /* --- Farmacia v0.3 longitudinal exploratory dashboard --- */
 
+/* --- Seguimiento: selección canónica de línea --- */
+.seg-line-selection {
+    margin: 12px 0 18px;
+    padding: 14px;
+    border: 1px solid #D7E1E8;
+    border-radius: 10px;
+    background: #F8FAFC;
+}
+
+.seg-line-selection h3 { margin: 0 0 10px; font-size: 0.95rem; color: #334155; }
+.seg-line-cards { display: grid; gap: 8px; }
+
+.seg-line-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #94A3B8;
+    border-radius: 8px;
+    background: #FFFFFF;
+    cursor: pointer;
+}
+
+.seg-line-card--disabled { opacity: 0.7; cursor: not-allowed; background: #F1F5F9; }
+.seg-line-card__body { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; min-width: 0; }
+.seg-line-card__name { color: #0F172A; }
+.seg-line-card__id { font-size: 0.78rem; overflow-wrap: anywhere; }
+.seg-line-card__meta { color: #475569; font-size: 0.82rem; }
+.seg-line-selection__selector { max-width: 420px; margin: 12px 0 0; }
+.seg-line-cards__empty { margin: 0; color: #64748B; font-size: 0.85rem; }
+
 .longitudinal-demo-banner {
     display: flex;
     align-items: flex-start;
