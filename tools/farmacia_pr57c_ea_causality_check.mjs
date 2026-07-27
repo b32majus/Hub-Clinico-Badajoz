@@ -51,9 +51,11 @@ answerIds.forEach((id) => {
   groups.set(id, group);
 });
 const setAnswer = (id, value) => groups.get(id).children.forEach((chip) => chip.classList.toggle('causality-chip--active', chip.getAttribute('data-value') === value));
+const descendants = (root) => [root, ...(root.children || []).flatMap(descendants)];
+const rendered = () => [...nodes.values()].flatMap(descendants);
 const document = {
   addEventListener() {}, createElement: (tag) => new Node(tag), createTextNode: (text) => ({ textContent: text }), getElementById: (id) => node(id),
-  querySelector(selector) { const id = selector.match(/data-answer-id="([^"]+)"/)?.[1]; return id ? groups.get(id) : null; },
+  querySelector(selector) { const id = selector.match(/data-answer-id="([^"]+)"/)?.[1]; if (id) return groups.get(id); const uid = selector.match(/data-uid="([^"]+)"/)?.[1]; const field = selector.match(/data-field="([^"]+)"/)?.[1]; const cls = selector.match(/\.([\w-]+)/)?.[1]; return rendered().find((el) => (!uid || el.getAttribute?.('data-uid') === uid) && (!field || el.getAttribute?.('data-field') === field) && (!cls || el.classList?.contains(cls))) || null; },
   querySelectorAll(selector) {
     if (selector.includes('data-answer-id^="naranjo"')) return [...groups.entries()].filter(([id]) => id.startsWith('naranjo')).map(([, group]) => group);
     if (selector.includes('data-answer-id^="kl"')) return [...groups.entries()].filter(([id]) => id.startsWith('kl')).map(([, group]) => group);
@@ -63,7 +65,9 @@ const document = {
 };
 const F = { clearChildren(el) { if (el) { el.children = []; el.options = []; } }, setText(id, value) { node(id).textContent = value || ''; }, setValue(id, value) { node(id).value = value || ''; }, renderFields() {} };
 let confirmations = []; let confirmCalls = [];
-const sandbox = { window: { FarmaciaDemo: F, confirm(message) { confirmCalls.push(message); return confirmations.length ? confirmations.shift() : true; } }, document, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
+const treatment = { reconcileCatalogSelection(current, previous, drug) { return { values: { ...current, farmaco_nombre: drug.nombre_comercial, selected_drug_id: drug.drug_id }, proposal_values: {} }; } };
+const catalog = { loaded: false, isConcreteCatalogSelection: (drug) => Boolean(drug.drug_id), selectDrug() {} };
+const sandbox = { window: { FarmaciaDemo: F, FarmaciaTratamiento: treatment, FarmaciaCatalog: catalog, confirm(message) { confirmCalls.push(message); return confirmations.length ? confirmations.shift() : true; } }, document, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
 vm.createContext(sandbox); vm.runInContext(model, sandbox); vm.runInContext(js, sandbox);
 const api = sandbox.window.FarmaciaSeguimiento;
 const patient = { cip: 'CIP-PR57C', biologicos: [
@@ -83,10 +87,16 @@ check(node('fhCausalidadFinal').value === 'Probable', 'explicit final assessment
 api.setCausalityEditor('line:L3');
 check(groups.get('naranjoQ2').querySelector('.causality-chip--active').getAttribute('data-value') === 'no' && node('klCategoria').textContent === 'Improbable', 'distinct L3 Naranjo and Karch state restores exactly');
 
-api.addFollowupOtherDrug(); const uid = api.getFollowupOtherDrugs()[0].uid; api.updateFollowupOtherDrug(uid, 'farmaco', 'Relacionado A'); api.refreshEaCandidates();
-check(node('fhSeguimientoEaSuspectCandidates').children.some((label) => label.children[0].value === `other:${uid}`), 'related treatment candidate uses stable other:<uid> identity');
-api.toggleEaSuspect(`other:${uid}`, true); api.setCausalityEditor(`other:${uid}`); setAnswer('klConocido', 'si'); node('klCategoria').textContent = 'Probable'; api.captureCausalityEditor(); api.updateFollowupOtherDrug(uid, 'farmaco', 'Relacionado renombrado');
-check(api.getCurrentVisit().causality_by_suspect[`other:${uid}`].karch_answers.conocido === 'si' && api.getCurrentVisit().adverse_event.suspect_ids.includes(`other:${uid}`), 'rename keeps related UID and Karch state');
+api.addFollowupOtherDrug(); const uid = api.getFollowupOtherDrugs()[0].uid; const relatedId = `other:${uid}`;
+const farmacoInput = rendered().find((el) => el.getAttribute?.('data-field') === 'farmaco' && el.getAttribute('data-uid') === uid);
+farmacoInput.value = 'Relacionado A'; farmacoInput.dispatchEvent(new sandbox.Event('input'));
+const candidateLabel = () => node('fhSeguimientoEaSuspectCandidates').children.find((label) => label.children[0].value === relatedId);
+const causalOption = () => node('fhSeguimientoEaFarmacoSospechoso').options.find((option) => option.value === relatedId);
+check(candidateLabel()?.children[1].textContent.includes('Relacionado A') && api.getFollowupOtherDrugs()[0].principioActivo === '', 'real visible input stores only explicit text and refreshes stable other:<uid> candidate');
+api.toggleEaSuspect(relatedId, true); api.setCausalityEditor(relatedId); setAnswer('klConocido', 'si'); node('klCategoria').textContent = 'Probable'; api.captureCausalityEditor(); farmacoInput.value = 'Relacionado renombrado'; farmacoInput.dispatchEvent(new sandbox.Event('input'));
+check(api.getFollowupOtherDrugs()[0].uid === uid && api.getCurrentVisit().causality_by_suspect[relatedId].karch_answers.conocido === 'si' && api.getCurrentVisit().adverse_event.suspect_ids.includes(relatedId) && api.getCurrentVisit().adverse_event.causality_editing_id === relatedId && candidateLabel().children[1].textContent.includes('Relacionado renombrado') && causalOption().textContent.includes('Relacionado renombrado'), 'real input rename preserves UID, mark, causal state and editor while refreshing labels');
+api.applyCatalogSelectionToOtherDrug(uid, { drug_id: 'CIMA-RELATED', nombre_comercial: 'Relacionado catálogo', source_type: 'CIMA' });
+check(api.getFollowupOtherDrugs()[0].uid === uid && api.getCurrentVisit().adverse_event.suspect_ids.includes(relatedId) && api.getCurrentVisit().causality_by_suspect[relatedId].karch_answers.conocido === 'si' && api.getCurrentVisit().adverse_event.causality_editing_id === relatedId && candidateLabel().children[1].textContent.includes('Relacionado catálogo') && causalOption().textContent.includes('Relacionado catálogo'), 'concrete catalog selection immediately refreshes labels without changing causal identity or state');
 
 api.addFollowupOtherDrug(); const cleanUid = api.getFollowupOtherDrugs()[1].uid; api.toggleEaSuspect(`other:${cleanUid}`, true); const beforeClean = confirmCalls.length; api.toggleEaSuspect(`other:${cleanUid}`, false);
 check(confirmCalls.length === beforeClean && !api.getCurrentVisit().causality_by_suspect[`other:${cleanUid}`], 'clean suspect unmarks immediately and removes clean state');

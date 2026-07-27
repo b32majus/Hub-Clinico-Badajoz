@@ -590,6 +590,7 @@
         farmacoInput.setAttribute('data-field', 'farmaco');
         farmacoInput.setAttribute('data-uid', drug.uid);
         farmacoInput.setAttribute('autocomplete', 'off');
+        farmacoInput.addEventListener('input', function () { updateFollowupOtherDrug(drug.uid, 'farmaco', this.value); });
         var autocompleteWrapper = createElement('div', 'autocomplete-wrapper');
         autocompleteWrapper.id = drug.uid + '-autocomplete-wrapper';
         autocompleteWrapper.appendChild(farmacoInput);
@@ -799,6 +800,7 @@
             if (control) control.value = reconciled.values[key] || '';
         });
         if (contextValid && C && typeof C.selectDrug === 'function') C.selectDrug(d, context, reconciled);
+        updateSuspectDrugSelector();
     }
 
     function clearOtherDrugDropdown(dropdownId) {
@@ -2448,6 +2450,7 @@
         getFollowupOtherDrugs: function () { return JSON.parse(JSON.stringify(followupOtherDrugs)); },
         updateFollowupOtherDrug: updateFollowupOtherDrug,
         deleteFollowupOtherDrug: deleteFollowupOtherDrug,
+        applyCatalogSelectionToOtherDrug: applyCatalogSelectionToOtherDrug,
         mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
         mapRelatedTreatmentToContract: mapOtherDrugToContract,
         getCanonicalLinesForPatient: function (patient) { return getPatientBiologicLines(patient).map(function (line) { return Object.assign({}, line); }); },

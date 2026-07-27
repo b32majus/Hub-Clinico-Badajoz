@@ -353,7 +353,7 @@ const [uidA, uidB] = eventApi.getFollowupOtherDrugs().map((drug) => drug.uid);
 const inputA = eventSelector(`input[data-uid="${uidA}"].js-cima-autocomplete`);
 inputA.value = 'partial-a';
 inputA.dispatchEvent({ type: 'input' });
-assert(eventApi.getFollowupOtherDrugs()[0].farmaco === '', 'Related typing leaves stored identity unchanged');
+assert(eventApi.getFollowupOtherDrugs()[0].farmaco === 'partial-a' && eventApi.getFollowupOtherDrugs()[0].principioActivo === '' && eventApi.getFollowupOtherDrugs()[0].selectedDrugId === '', 'Related typing stores explicit text without inferring clinical or catalog identity');
 eventIds.get(`${uidA}-dropdown`).children[0].click();
 assert(inputA.value === 'Producto SEG A', 'Related click leaves no partial query in existing UID');
 const doseA = eventSelector(`[data-uid="${uidA}"][data-field="dosis"]`);
