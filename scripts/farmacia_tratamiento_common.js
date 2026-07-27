@@ -235,7 +235,22 @@
         return !current || current === "—" || current === "Pendiente de completar por Farmacia" || current === stringValue(previousValue);
     }
 
-    function reconcileCatalogSelectionFallback(current, previousSnapshot, drug) {
+    function buildCatalogProposalForSlotFallback(slot, drug) {
+        var selected = drug && typeof drug === "object" ? drug : {};
+        var normalizedSlot = stringValue(slot).toLowerCase();
+        var presentation = stringValue(selected.nombre_presentacion);
+        var dose = stringValue(selected.dosis);
+        var route = mapViaToSelect(selected.via);
+        if (normalizedSlot === "validacion.solicitado") {
+            return { dosis_texto: dose, via: route };
+        }
+        if (normalizedSlot === "primera_visita.tratamiento") {
+            return { dosis_texto: firstNonEmpty(presentation, dose), via: route };
+        }
+        return { presentacion: presentation, dosis_texto: dose, via: route };
+    }
+
+    function reconcileCatalogSelectionFallback(current, previousSnapshot, drug, slot) {
         var existing = current && typeof current === "object" ? current : {};
         var selected = drug && typeof drug === "object" ? drug : {};
         var previous = previousSnapshot && previousSnapshot.proposal_values && typeof previousSnapshot.proposal_values === "object"
@@ -252,11 +267,8 @@
         values.source_type = normalizeSourceType(selected.source_type);
         values.fuente = values.source_type === "CIMA" ? "cima" : (values.source_type === "LOCAL" ? "local_especial" : "");
 
-        var proposed = {
-            presentacion: stringValue(selected.nombre_presentacion),
-            dosis_texto: firstNonEmpty(selected.dosis, selected.nombre_presentacion),
-            via: normalizeVia(selected.via)
-        };
+        var contextualSlot = slot || (previousSnapshot && previousSnapshot.context && previousSnapshot.context.slot) || "";
+        var proposed = buildCatalogProposalForSlotFallback(contextualSlot, selected);
         var nextProposalValues = {};
         Object.keys(proposed).forEach(function (field) {
             if (shouldApplyProposal(existing[field], previous[field])) {
@@ -271,14 +283,14 @@
         };
     }
 
-    function reconcileCatalogSelection(current, previousSnapshot, drug) {
+    function reconcileCatalogSelection(current, previousSnapshot, drug, slot) {
         var catalogApi = root && root.FarmaciaCatalog
             ? root.FarmaciaCatalog
             : (root && root.window && root.window.FarmaciaCatalog ? root.window.FarmaciaCatalog : null);
         if (catalogApi && typeof catalogApi.reconcileCatalogSelection === "function") {
-            return catalogApi.reconcileCatalogSelection(current, previousSnapshot, drug);
+            return catalogApi.reconcileCatalogSelection(current, previousSnapshot, drug, slot);
         }
-        return reconcileCatalogSelectionFallback(current, previousSnapshot, drug);
+        return reconcileCatalogSelectionFallback(current, previousSnapshot, drug, slot);
     }
 
     function normalizeLegacyMovement(treatment, original) {
@@ -518,6 +530,7 @@
         normalizeTreatmentInput: normalizeTreatmentInput,
         buildTreatmentSnapshot: buildTreatmentSnapshot,
         buildTreatmentFromCatalogSelection: buildTreatmentFromCatalogSelection,
+        buildCatalogProposalForSlot: buildCatalogProposalForSlotFallback,
         reconcileCatalogSelection: reconcileCatalogSelection,
         buildTreatmentFromPatient: buildTreatmentFromPatient,
         normalizeTipoRelacion: normalizeTipoRelacion,

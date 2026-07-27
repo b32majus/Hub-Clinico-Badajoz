@@ -1505,11 +1505,31 @@
             return !current || current === '—' || current === 'Pendiente de completar por Farmacia' || current === catalogStringValue(previousValue);
         }
 
-        function reconcileCatalogSelection(current, previousSnapshot, drug) {
+        function buildCatalogProposalForSlot(slot, drug) {
+            var selected = drug && typeof drug === 'object' ? drug : {};
+            var normalizedSlot = String(slot || '').trim().toLowerCase();
+            var presentation = catalogStringValue(selected.nombre_presentacion);
+            var dose = catalogStringValue(selected.dosis);
+            var route = mapCatalogViaToSelect(selected.via);
+            if (normalizedSlot === 'validacion.solicitado') {
+                return { dosis_texto: dose, via: route };
+            }
+            if (normalizedSlot === 'primera_visita.tratamiento') {
+                return { dosis_texto: firstCatalogValue(presentation, dose), via: route };
+            }
+            return {
+                presentacion: presentation,
+                dosis_texto: dose,
+                via: route
+            };
+        }
+
+        function reconcileCatalogSelection(current, previousSnapshot, drug, slot) {
             var existing = current && typeof current === 'object' ? current : {};
             var selected = drug && typeof drug === 'object' ? drug : {};
             var previous = previousSnapshot && previousSnapshot.proposal_values && typeof previousSnapshot.proposal_values === 'object'
                 ? previousSnapshot.proposal_values : {};
+            var contextualSlot = slot || (previousSnapshot && previousSnapshot.context && previousSnapshot.context.slot) || '';
             var values = Object.assign({}, existing);
             values.farmaco_nombre = firstCatalogValue(selected.display_name, selected.nombre_comercial, selected.principio_activo);
             values.nombre_comercial = catalogStringValue(selected.nombre_comercial);
@@ -1519,11 +1539,7 @@
             values.selected_drug_id = firstCatalogValue(selected.drug_id, selected.selected_drug_id);
             values.source_type = selected.source_type === 'CIMA' || selected.source_type === 'LOCAL' ? selected.source_type : '';
             values.fuente = values.source_type === 'CIMA' ? 'cima' : (values.source_type === 'LOCAL' ? 'local_especial' : '');
-            var proposed = {
-                presentacion: catalogStringValue(selected.nombre_presentacion),
-                dosis_texto: firstCatalogValue(selected.dosis, selected.nombre_presentacion),
-                via: normalizeCatalogVia(selected.via)
-            };
+            var proposed = buildCatalogProposalForSlot(contextualSlot, selected);
             var nextProposalValues = {};
             Object.keys(proposed).forEach(function (field) {
                 if (shouldApplyCatalogProposal(existing[field], previous[field])) {
@@ -1665,6 +1681,7 @@
             normalizeSnapshotContext: normalizeSnapshotContext,
             snapshotContextKey: snapshotContextKey,
             isConcreteCatalogSelection: isConcreteCatalogSelection,
+            buildCatalogProposalForSlot: buildCatalogProposalForSlot,
             reconcileCatalogSelection: reconcileCatalogSelection,
             mapCatalogViaToSelect: mapCatalogViaToSelect,
             getStatusText: getStatusText,

@@ -39,6 +39,14 @@
         return window.FarmaciaTratamiento || null;
     }
 
+    function mapRouteToSelect(value) {
+        var catalog = getCatalog();
+        if (catalog && typeof catalog.mapCatalogViaToSelect === 'function') return catalog.mapCatalogViaToSelect(value);
+        var helper = getTreatmentHelper();
+        if (helper && typeof helper.mapViaToSelect === 'function') return helper.mapViaToSelect(value);
+        return value ? 'Otra' : '';
+    }
+
     function getCurrentContext() {
         try {
             return F.getQueryContext ? F.getQueryContext() : {};
@@ -112,16 +120,20 @@
     }
 
     function setTreatmentForm(treatment) {
-        F.setValue('fhPvFarmaco', treatment.farmaco_nombre || treatment.nombre_comercial || '');
-        F.setValue('fhPvDosis', treatment.dosis_texto || treatment.presentacion || '');
-        F.setValue('fhPvVia', treatment.via || '');
+        var farmaco = document.getElementById('fhPvFarmaco');
+        var dosis = document.getElementById('fhPvDosis');
+        var via = document.getElementById('fhPvVia');
+        if (farmaco) farmaco.value = treatment.farmaco_nombre || treatment.nombre_comercial || '';
+        if (dosis) dosis.value = treatment.dosis_texto || treatment.presentacion || '';
+        if (via) via.value = mapRouteToSelect(treatment.via);
         setPautaFromContext(treatment.pauta || treatment.pauta_label || treatment.pauta_otro_texto || '');
     }
 
     function clearTreatmentForm() {
-        F.setValue('fhPvFarmaco', '');
-        F.setValue('fhPvDosis', '');
-        F.setValue('fhPvVia', '');
+        ['fhPvFarmaco', 'fhPvDosis', 'fhPvVia'].forEach(function (id) {
+            var element = document.getElementById(id);
+            if (element) element.value = '';
+        });
         setPautaFromContext('');
     }
 
@@ -898,7 +910,7 @@
         var previous = C.getSnapshot(context);
         var current = getCurrentPrimaryTreatment();
         var reconciled = helper && typeof helper.reconcileCatalogSelection === 'function'
-            ? helper.reconcileCatalogSelection(current, previous, drug)
+            ? helper.reconcileCatalogSelection(current, previous, drug, context.slot)
             : { values: buildPrimaryTreatmentFromSelection(drug), proposal_values: {} };
         C.selectDrug(drug, context, reconciled);
         var treatment = normalizePrimaryTreatment(assignObjects({}, current, reconciled.values, {
@@ -916,10 +928,6 @@
         applyTratamientoValidado(getCurrentContext());
 
         clearDrugAutocompleteDropdown();
-        var searchInput = document.getElementById('fhPvFarmaco');
-        if (searchInput) {
-            searchInput.value = drug.display_name || drug.nombre_comercial || '';
-        }
     }
 
     function handleDrugSearchInput() {
@@ -1102,6 +1110,7 @@
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
         getCurrentPrimaryTreatment: getCurrentPrimaryTreatment,
         searchCIP: searchCIP,
+        initDrugAutocomplete: initDrugAutocomplete,
         setActivePatientCip: function (cip) { activePatientCip = cip || ''; }
     };
 

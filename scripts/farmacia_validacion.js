@@ -494,7 +494,7 @@
                     byId('fhDermaPautaOtro').classList.add('hidden');
                 }
             }
-            if (!isEnfPatient) F.setValue('fhDermaVia', p.via);
+            if (!isEnfPatient) F.setValue('fhDermaVia', mapViaToSelect(p.via, byId('fhDermaVia')));
             F.setValue('fhDermaAnalitica', p.analitica);
             if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
             if (p.estado === 'validated') F.setValue('fhValEstado', 'validated');
@@ -905,7 +905,7 @@
             F.setValue("fhValidadoFarmaco", summary.farmaco);
             F.setValue("fhValidadoPrincipioActivo", summary.principioActivo);
             F.setValue("fhValidadoDosis", summary.dosis);
-            F.setValue("fhValidadoVia", summary.via);
+            F.setValue("fhValidadoVia", mapViaToSelect(summary.via, byId("fhValidadoVia")));
             F.setValue("fhValidadoPresentacion", summary.presentacion);
         }
     }
@@ -958,21 +958,21 @@
         return { slot: slot, cip: selectedCip() };
     }
 
-    function reconcileSelection(current, previous, drug) {
+    function reconcileSelection(current, previous, drug, slot) {
         if (C && typeof C.reconcileCatalogSelection === "function") {
-            return C.reconcileCatalogSelection(current, previous, drug);
+            return C.reconcileCatalogSelection(current, previous, drug, slot);
         }
         var helper = window.FarmaciaTratamiento;
         if (helper && typeof helper.reconcileCatalogSelection === "function") {
-            return helper.reconcileCatalogSelection(current, previous, drug);
+            return helper.reconcileCatalogSelection(current, previous, drug, slot);
         }
         return { values: current, proposal_values: {} };
     }
 
-    function selectDrug(drug) {
+    function selectDrug(drug, ids, dropdownId) {
         if (!drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
-        var ids = requestedFieldIds();
-        var context = catalogContext("validacion.solicitado");
+        ids = ids || requestedFieldIds();
+        var context = { slot: "validacion.solicitado", cip: byId(ids.cip) ? byId(ids.cip).value : selectedCip() };
         if (C.snapshotContextKey && !C.snapshotContextKey(context)) return;
         var previous = C.getSnapshot(context);
         var reconciled = reconcileSelection({
@@ -980,7 +980,7 @@
             principio_activo: byId(ids.principioActivo).value,
             dosis_texto: byId(ids.dosis).value,
             via: byId(ids.via).value
-        }, previous, drug);
+        }, previous, drug, context.slot);
         var requestedViaValue = reconciled.values.via ? mapViaToSelect(reconciled.values.via, byId(ids.via)) : "";
         reconciled.values.via = requestedViaValue;
         if (Object.prototype.hasOwnProperty.call(reconciled.proposal_values, "via")) reconciled.proposal_values.via = requestedViaValue;
@@ -989,7 +989,7 @@
         byId(ids.dosis).value = reconciled.values.dosis_texto || "";
         byId(ids.via).value = requestedViaValue;
         C.selectDrug(drug, context, reconciled);
-        clearAutocompleteDropdown();
+        clearRequestedAutocompleteDropdown(dropdownId);
         updateSolicitadoSummary();
     }
 
@@ -1009,7 +1009,7 @@
             presentacion: presEl ? presEl.value : "",
             dosis_texto: dosisEl ? dosisEl.value : "",
             via: viaEl ? viaEl.value : ""
-        }, previous, drug);
+        }, previous, drug, context.slot);
         var validatedViaValue = reconciled.values.via ? mapViaToSelect(reconciled.values.via, viaEl) : "";
         reconciled.values.via = validatedViaValue;
         if (Object.prototype.hasOwnProperty.call(reconciled.proposal_values, "via")) reconciled.proposal_values.via = validatedViaValue;
@@ -1129,8 +1129,25 @@
         return s === "TRUE" || s === "SI" || s === "SÍ" || s === "YES" || s === "1";
     }
 
-    function renderAutocompleteDropdown(results) {
-        var dropdown = byId("autocompleteDropdown");
+    function requestedAutocompleteConfig(inputId) {
+        var manual = inputId === "fhManualFarmaco";
+        return {
+            inputId: inputId,
+            dropdownId: manual ? "fhManualAutocompleteDropdown" : "autocompleteDropdown",
+            ids: manual ? {
+                cip: "fhManualCip", farmaco: "fhManualFarmaco", principioActivo: "fhManualPrincipioActivo",
+                dosis: "fhManualDosis", via: "fhManualVia"
+            } : {
+                cip: "fhDermaCip", farmaco: "fhDermaFarmaco", principioActivo: "fhDermaPrincipioActivo",
+                dosis: "fhDermaDosis", via: "fhDermaVia"
+            },
+            activeIndex: -1
+        };
+    }
+
+    function renderRequestedAutocompleteDropdown(config, results) {
+        var dropdown = byId(config.dropdownId);
+        if (!dropdown) return;
         F.clearChildren(dropdown);
         if (!results || results.length === 0) {
             dropdown.classList.add("hidden");
@@ -1140,7 +1157,7 @@
         for (var i = 0; i < maxResults; i++) {
             var drug = results[i];
             var item = createEl("div", "autocomplete-item");
-            if (i === autocompleteActiveIndex) item.classList.add("autocomplete-item--active");
+            if (i === config.activeIndex) item.classList.add("autocomplete-item--active");
             var mainRow = createEl("div", "autocomplete-item-main");
             var nameSpan = createEl("span", "autocomplete-item-name", drug.display_name || drug.nombre_comercial || "—");
             mainRow.appendChild(nameSpan);
@@ -1158,68 +1175,84 @@
             detailRow.textContent = parts.join(" · ");
             item.appendChild(detailRow);
             (function (d) {
-                item.addEventListener("click", function () { selectDrug(d); });
+                item.addEventListener("click", function () { selectDrug(d, config.ids, config.dropdownId); });
             })(drug);
             dropdown.appendChild(item);
         }
         dropdown.classList.remove("hidden");
-        autocompleteActiveIndex = -1;
+        config.activeIndex = -1;
     }
 
-    function clearAutocompleteDropdown() {
-        var dropdown = byId("autocompleteDropdown");
+    function clearRequestedAutocompleteDropdown(dropdownId) {
+        var dropdown = byId(dropdownId || "autocompleteDropdown");
+        if (!dropdown) return;
         F.clearChildren(dropdown);
         dropdown.classList.add("hidden");
-        autocompleteActiveIndex = -1;
     }
 
-    function handleAutocompleteInput() {
+    function handleRequestedAutocompleteInput(config) {
         if (!C.loaded) return;
-        var ids = requestedFieldIds();
-        var query = byId(ids.farmaco).value.trim();
+        var query = byId(config.inputId).value.trim();
         if (query.length < 2) {
-            clearAutocompleteDropdown();
+            clearRequestedAutocompleteDropdown(config.dropdownId);
             return;
         }
-        renderAutocompleteDropdown(C.search(query));
+        renderRequestedAutocompleteDropdown(config, C.search(query));
     }
 
-    function enableAutocomplete() {
-        var input = byId("fhDermaFarmaco");
+    function markRequestedAutocompleteBound(input) {
+        if (input.dataset && input.dataset.catalogAutocompleteBound === "true") return false;
+        if (typeof input.getAttribute === "function" && input.getAttribute("data-catalog-autocomplete-bound") === "true") return false;
+        if (input.__farmaciaCatalogAutocompleteBound === true) return false;
+        if (input.dataset) input.dataset.catalogAutocompleteBound = "true";
+        else if (typeof input.setAttribute === "function") input.setAttribute("data-catalog-autocomplete-bound", "true");
+        input.__farmaciaCatalogAutocompleteBound = true;
+        return true;
+    }
+
+    function enableRequestedAutocomplete(inputId) {
+        var config = requestedAutocompleteConfig(inputId);
+        var input = byId(config.inputId);
+        if (!input || !markRequestedAutocompleteBound(input)) return;
         input.disabled = false;
         input.placeholder = "Ej. Cosentyx®, Humira®, Skyrizi®...";
-        input.addEventListener("input", handleAutocompleteInput);
+        input.addEventListener("input", function () { handleRequestedAutocompleteInput(config); });
         input.addEventListener("keydown", function (event) {
-            var dropdown = byId("autocompleteDropdown");
+            var dropdown = byId(config.dropdownId);
             if (dropdown.classList.contains("hidden")) return;
             var items = dropdown.querySelectorAll(".autocomplete-item");
             if (items.length === 0) return;
             if (event.key === "ArrowDown") {
                 event.preventDefault();
-                autocompleteActiveIndex = Math.min(autocompleteActiveIndex + 1, items.length - 1);
+                config.activeIndex = Math.min(config.activeIndex + 1, items.length - 1);
                 items.forEach(function (item, idx) {
-                    item.classList.toggle("autocomplete-item--active", idx === autocompleteActiveIndex);
+                    item.classList.toggle("autocomplete-item--active", idx === config.activeIndex);
                 });
             } else if (event.key === "ArrowUp") {
                 event.preventDefault();
-                autocompleteActiveIndex = Math.max(autocompleteActiveIndex - 1, -1);
+                config.activeIndex = Math.max(config.activeIndex - 1, -1);
                 items.forEach(function (item, idx) {
-                    item.classList.toggle("autocomplete-item--active", idx === autocompleteActiveIndex);
+                    item.classList.toggle("autocomplete-item--active", idx === config.activeIndex);
                 });
             } else if (event.key === "Enter") {
-                if (autocompleteActiveIndex >= 0 && autocompleteActiveIndex < items.length) {
+                if (config.activeIndex >= 0 && config.activeIndex < items.length) {
                     event.preventDefault();
-                    items[autocompleteActiveIndex].click();
+                    items[config.activeIndex].click();
                 }
             } else if (event.key === "Escape") {
-                clearAutocompleteDropdown();
+                clearRequestedAutocompleteDropdown(config.dropdownId);
             }
         });
         input.addEventListener("blur", function () {
             setTimeout(function () {
-                if (!document.activeElement || !byId("autocompleteDropdown").contains(document.activeElement)) clearAutocompleteDropdown();
+                if (!document.activeElement || !byId(config.dropdownId).contains(document.activeElement)) clearRequestedAutocompleteDropdown(config.dropdownId);
             }, 150);
         });
+    }
+
+    function enableAutocomplete() {
+        enableRequestedAutocomplete("fhDermaFarmaco");
+        enableRequestedAutocomplete("fhManualFarmaco");
     }
 
     function createLocalDrugModal() {
@@ -1399,8 +1432,8 @@
         });
 
         var viaSelect = buildSelect("", "form-select", VIA_OPTIONS.map(function (v) {
-            return { value: v, label: v || "Seleccionar..." };
-        }), drug.via || "");
+            return { value: v, label: v || "Seleccionar…" };
+        }), mapViaToSelect(drug.via, null));
         viaSelect.addEventListener("change", function () { updateOtherDrugField(drug.uid, "via", this.value); });
         grid.appendChild(buildOtherDrugField("Vía", viaSelect));
 
@@ -1774,6 +1807,10 @@
         var btnNoFind = byId("btnNoFindDrug");
         if (btnNoFind) btnNoFind.addEventListener("click", showLocalDrugModal);
     }
+
+    window.FarmaciaValidacion = {
+        enableRequestedAutocomplete: enableAutocomplete
+    };
 
     document.addEventListener("DOMContentLoaded", function () {
         populatePautaSelect("fhManualPauta", "fhManualPautaOtro");

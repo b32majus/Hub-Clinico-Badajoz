@@ -150,6 +150,10 @@ assertEqual(catalogApi.drugs[0].drug_id, firstGeneratedIds[0], 'CIMA fallback ID
 assertEqual(catalogApi.drugs[2].drug_id, firstGeneratedIds[2], 'LOCAL fallback ID is stable across normalization');
 const normalizedConcreteCima = catalogApi.drugs[0];
 assertEqual(catalogApi.isConcreteCatalogSelection(normalizedConcreteCima), true, 'normalized visible CIMA presentation is selectable');
+assertEqual(catalogApi.search('Producto CIMA visible')[0].drug_id, normalizedConcreteCima.drug_id, 'catalog search matches brand');
+assertEqual(catalogApi.search('Activo CIMA sintético')[0].drug_id, normalizedConcreteCima.drug_id, 'catalog search matches active ingredient');
+assertEqual(catalogApi.search('150 mg pluma')[0].drug_id, normalizedConcreteCima.drug_id, 'catalog search matches presentation');
+assertEqual(catalogApi.search('700001')[0].drug_id, normalizedConcreteCima.drug_id, 'catalog search matches national code');
 assertEqual(catalogApi.reconcileCatalogSelection({}, null, { source_type: 'CIMA', via: 'VÍA SUBCUTÁNEA' }).values.via, 'SC', 'prefixed CIMA subcutaneous route normalizes to SC');
 assertEqual(catalogApi.mapCatalogViaToSelect('VÍA INTRAMUSCULAR'), 'IM', 'prefixed intramuscular route is select-representable');
 assertEqual(catalogApi.mapCatalogViaToSelect('VÍA TRANSDÉRMICA'), 'Otra', 'unknown prefixed route maps to Otra');
@@ -158,6 +162,12 @@ const selectedDrug = {
     principio_activo: 'Molécula sintética A', nombre_presentacion: '100 mg jeringa',
     dosis: '100 mg', via: 'SC', codigo_nacional: '100001', nregistro: 'SYN/1'
 };
+assertEqual(catalogApi.buildCatalogProposalForSlot('validacion.solicitado', selectedDrug).dosis_texto, '100 mg', 'requested validation receives regulatory concentration only');
+assertEqual(Object.hasOwn(catalogApi.buildCatalogProposalForSlot('validacion.solicitado', selectedDrug), 'presentacion'), false, 'requested validation does not receive full presentation');
+assertEqual(catalogApi.buildCatalogProposalForSlot('validacion.validado', selectedDrug).presentacion, '100 mg jeringa', 'validated treatment receives concrete presentation');
+assertEqual(catalogApi.buildCatalogProposalForSlot('primera_visita.tratamiento', selectedDrug).dosis_texto, '100 mg jeringa', 'first visit combined field prefers one concrete presentation');
+assertEqual(catalogApi.buildCatalogProposalForSlot('seguimiento.tratamiento', selectedDrug).dosis_texto, '100 mg', 'follow-up dose remains separate');
+assertEqual(catalogApi.reconcileCatalogSelection({}, null, selectedDrug, 'seguimiento.tratamiento').values.farmaco_nombre, 'Producto sintético A', 'selection identity replaces a partial query with catalog product display name');
 const contexts = [
     { slot: 'validacion.solicitado', cip: 'CIP-SYN-1' },
     { slot: 'validacion.validado', cip: 'CIP-SYN-1' },

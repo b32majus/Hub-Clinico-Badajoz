@@ -41,6 +41,8 @@ const js = fs.readFileSync(jsPath, 'utf8');
 const helperSrc = fs.readFileSync(helperPath, 'utf8');
 const pautasSrc = fs.readFileSync(pautasPath, 'utf8');
 const commonSrc = fs.readFileSync(commonPath, 'utf8');
+const seguimientoIds = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
+assert(new Set(seguimientoIds).size === seguimientoIds.length, 'HTML de Seguimiento no contiene IDs duplicados');
 
 const behaviorSandbox = {
   window: { FarmaciaDemo: {} },
@@ -56,8 +58,9 @@ vm.runInContext(js, behaviorSandbox);
 const behaviorApi = behaviorSandbox.window.FarmaciaSeguimiento;
 assert(behaviorApi && typeof behaviorApi.searchCIP === 'function' && typeof behaviorApi.setActivePatientCip === 'function', 'Seguimiento exposes testable guarded CIP search');
 if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
-  const ids = ['fhSegCip', 'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas', 'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms', 'fhSegOrigenCatalogo', 'fhSegEaPrevios', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegTratamientoGrid', 'fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegProms', 'fhSeguimientoEaObservaciones'];
-  const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, classList: { add: () => {}, remove: () => {}, toggle: () => {} }, closest: () => null, dispatchEvent: () => {}, appendChild(child) { this.children.push(child); this.options.push(child); }, remove() {} }]));
+  const ids = ['fhSegCip', 'fhSegCipSearchBtn', 'fhSegServicio', 'fhSegPatologia', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegPautaActual', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegEtiquetas', 'fhSegFechaInicio', 'fhSegUltimaAdherencia', 'fhSegUltimosProms', 'fhSegOrigenCatalogo', 'fhSegEaPrevios', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegTratamientoGrid', 'fhSegLineaPrincipal', 'fhSegEstadoLinea', 'fhSegTipoRelacionTerapia', 'fhSegProms', 'fhSeguimientoEaObservaciones', 'fhSegDrugSearch', 'fhSegAutocompleteDropdown', 'fhSegAutocompleteBlock'];
+  const makeClassList = () => { const values = new Set(); return { add: (value) => values.add(value), remove: (value) => values.delete(value), toggle: (value, force) => force ? values.add(value) : values.delete(value), contains: (value) => values.has(value) }; };
+  const elements = Object.fromEntries(ids.map((id) => [id, { id, value: '', textContent: '', children: [], options: [], readOnly: false, listeners: {}, classList: makeClassList(), closest: () => null, addEventListener(type, handler) { (this.listeners[type] ||= []).push(handler); }, dispatchEvent(event) { event.target = this; (this.listeners[event.type] || []).forEach((handler) => handler.call(this, event)); }, click() { this.dispatchEvent({ type: 'click', preventDefault() {} }); }, appendChild(child) { this.children.push(child); this.options.push(child); }, remove() {} }]));
   elements.fhSegCip.value = 'CIP-B';
   elements.fhSegProms.value = 'No recogido';
   elements.fhSegOrigenCatalogo.value = 'Demo';
@@ -85,12 +88,14 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   let confirmation = false;
   let confirmationCalls = 0;
   behaviorSandbox.window.confirm = () => { confirmationCalls++; return confirmation; };
+  behaviorApi.initCipSearch();
+  const clickCipSearch = () => elements.fhSegCipSearchBtn.click();
   const resetElements = () => ids.forEach((id) => {
     elements[id].value = '';
     elements[id].children = [];
     elements[id].options = [];
   });
-  behaviorApi.searchCIP();
+  clickCipSearch();
   assert(confirmationCalls === 0 && elements.fhSegFarmaco.value === 'Drug B', 'Seguimiento clean first existing CIP search ignores neutral Demo origin');
 
   resetElements();
@@ -99,7 +104,7 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   elements.fhSegProms.value = 'No recogido';
   elements.fhSegOrigenCatalogo.value = 'Demo';
   confirmationCalls = 0;
-  behaviorApi.searchCIP();
+  clickCipSearch();
   assert(confirmationCalls === 0 && elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento clean first unknown CIP search skips confirmation and leaves no residue');
 
   resetElements();
@@ -108,34 +113,40 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   elements.fhSegNuevaDosis.value = 'Manual clinical dose';
   elements.fhSegCip.value = 'CIP-B';
   confirmationCalls = 0;
-  behaviorApi.searchCIP();
+  clickCipSearch();
   assert(confirmationCalls === 1 && elements.fhSegCip.value === '' && elements.fhSegNuevaDosis.value === 'Manual clinical dose', 'Seguimiento manual clinical data without patient remains protected');
 
   resetElements();
   elements.fhSegNuevaDosis.value = 'A-only dose';
   elements.fhSeguimientoEaObservaciones.value = 'A-only adverse event';
+  elements.fhSegDrugSearch.value = 'A-only partial query';
+  elements.fhSegAutocompleteDropdown.children = [{ textContent: 'A-only result' }];
+  behaviorApi.addFollowupOtherDrug();
   elements.fhSegCip.value = 'CIP-B';
   behaviorApi.setActivePatientCip('CIP-A');
   confirmationCalls = 0;
-  behaviorApi.searchCIP();
-  assert(confirmationCalls === 1 && elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose', 'Seguimiento real A to B switch keeps confirmation and cancel preserves A');
+  clickCipSearch();
+  assert(confirmationCalls === 1 && elements.fhSegCip.value === 'CIP-A' && elements.fhSegNuevaDosis.value === 'A-only dose' && elements.fhSegDrugSearch.value === 'A-only partial query' && elements.fhSegAutocompleteDropdown.children.length === 1 && behaviorApi.getFollowupOtherDrugs().length === 1, 'Seguimiento cancelled switch preserves fields, search, dropdown and related rows');
   confirmation = true;
   elements.fhSegCip.value = 'CIP-B';
-  behaviorApi.searchCIP();
-  assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '', 'Seguimiento confirmed switch clears A-only movement and loads B');
+  clickCipSearch();
+  assert(elements.fhSegFarmaco.value === 'Drug B' && elements.fhSegNuevaDosis.value === '' && elements.fhSegDrugSearch.value === '' && elements.fhSegAutocompleteDropdown.children.length === 0 && elements.fhSegAutocompleteDropdown.classList.contains('hidden') && behaviorApi.getFollowupOtherDrugs().length === 0, 'Seguimiento confirmed switch clears old fields, search/dropdown and related rows before loading B');
   behaviorApi.addFollowupOtherDrug();
   const oldMainKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-B', tratamiento_id: 'TRAT-B' });
   const oldRelatedKey = snapshotContextKey({ slot: 'seguimiento.relacionado:seg-other-1', cip: 'CIP-B' });
   const unrelatedNewKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-UNKNOWN', tratamiento_id: 'TRAT-NEW' });
+  const unrelatedNewManualKey = snapshotContextKey({ slot: 'seguimiento.tratamiento', cip: 'CIP-UNKNOWN' });
   snapshotKeys.add(oldMainKey);
   snapshotKeys.add(oldRelatedKey);
   snapshotKeys.add(unrelatedNewKey);
+  snapshotKeys.add(unrelatedNewManualKey);
   elements.fhSegCip.value = 'CIP-UNKNOWN';
-  behaviorApi.searchCIP();
+  clickCipSearch();
   assert(elements.fhSegCip.value === 'CIP-UNKNOWN' && elements.fhSegFarmaco.value === '' && elements.fhSeguimientoEaObservaciones.value === '', 'Seguimiento unknown CIP enters clean manual mode');
   assert(!snapshotKeys.has(oldMainKey), 'Patient switch clears previous main treatment snapshot with treatment context');
   assert(!snapshotKeys.has(oldRelatedKey), 'Patient switch clears previous related UID snapshot');
   assert(snapshotKeys.has(unrelatedNewKey), 'Patient switch does not delete unrelated/new-patient snapshot');
+  assert(snapshotKeys.has(unrelatedNewManualKey), 'Patient switch preserves new-CIP manual-context snapshot');
 }
 
 // --- WO7E: contrato común de tratamiento ---
@@ -153,6 +164,9 @@ assert(movementSelect.includes('value="revision_linea"'), 'Seguimiento conserva 
 
 // 3. Grid de resumen presente
 assert(html.includes('fhSegTratamientoGrid'), 'Grid de resumen de tratamiento presente');
+const segViaMarkup = (html.match(/<select[^>]+id="fhSegVia"[\s\S]*?<\/select>/) || [''])[0];
+const segViaLabels = [...segViaMarkup.matchAll(/<option[^>]*>([^<]*)<\/option>/g)].map((match) => match[1].trim());
+assert(JSON.stringify(segViaLabels) === JSON.stringify(['Seleccionar…', 'SC', 'IV', 'Oral', 'IM', 'Otra']), 'Vía principal usa el select canónico editable');
 
 // 4. sin_cambios presente como opción de movimiento en HTML select
 assert(html.indexOf('value="sin_cambios"') !== -1, 'sin_cambios presente como opción de movimiento en HTML');
@@ -249,6 +263,121 @@ if (behaviorApi && typeof behaviorApi.mergeRelatedTreatmentCatalogIdentity === '
   const fillsImOther = behaviorApi.mergeRelatedTreatmentCatalogIdentity({}, { ...catalog, via: 'VÍA INTRAMUSCULAR' });
   assert(fillsImOther.values.via === 'IM' && fillsImOther.proposal_values.via === 'IM', 'Ruta relacionada IM prefijada es representable');
 }
+
+class DomClassList {
+  constructor(value = '') { this.values = new Set(String(value).split(/\s+/).filter(Boolean)); }
+  add(value) { this.values.add(value); }
+  remove(value) { this.values.delete(value); }
+  contains(value) { return this.values.has(value); }
+  toggle(value, force) { const next = force === undefined ? !this.contains(value) : force; next ? this.add(value) : this.remove(value); return next; }
+}
+const eventNodes = [];
+const eventIds = new Map();
+class DomNode {
+  constructor(tag = 'div') { this.tagName = tag.toUpperCase(); this.children = []; this.options = []; this.attributes = {}; this.listeners = {}; this.value = ''; this.textContent = ''; this.classList = new DomClassList(); eventNodes.push(this); }
+  set id(value) { this._id = value; if (value) eventIds.set(value, this); }
+  get id() { return this._id || ''; }
+  set className(value) { this._className = value; this.classList = new DomClassList(value); }
+  get className() { return this._className || ''; }
+  appendChild(child) { this.children.push(child); if (this.tagName === 'SELECT') this.options.push(child); return child; }
+  addEventListener(type, handler) { (this.listeners[type] ||= []).push(handler); }
+  dispatchEvent(event) { event.target = this; event.currentTarget = this; (this.listeners[event.type] || []).forEach((handler) => handler.call(this, event)); }
+  click() { this.dispatchEvent({ type: 'click', preventDefault() {} }); }
+  setAttribute(name, value) { this.attributes[name] = String(value); if (name === 'data-uid') this.datasetUid = String(value); if (name === 'data-field') this.datasetField = String(value); }
+  getAttribute(name) { return this.attributes[name] ?? null; }
+  contains(node) { return node === this || this.children.some((child) => child.contains && child.contains(node)); }
+  querySelectorAll(selector) {
+    const descendants = [];
+    const visit = (node) => { node.children.forEach((child) => { descendants.push(child); visit(child); }); };
+    visit(this);
+    if (selector === '.autocomplete-item') return descendants.filter((node) => node.classList.contains('autocomplete-item'));
+    return [];
+  }
+  closest() { return null; }
+}
+function eventSelector(selector) {
+  const uid = selector.match(/data-uid="([^"]+)"/)?.[1];
+  const field = selector.match(/data-field="([^"]+)"/)?.[1];
+  return eventNodes.slice().reverse().find((node) => (!uid || node.datasetUid === uid) && (!field || node.datasetField === field) && (!selector.startsWith('input') || node.tagName === 'INPUT') && (!selector.includes('.js-cima-autocomplete') || node.classList.contains('js-cima-autocomplete'))) || null;
+}
+const eventDocument = {
+  activeElement: null,
+  addEventListener() {},
+  createElement: (tag) => new DomNode(tag),
+  createTextNode: (text) => ({ textContent: text }),
+  getElementById: (id) => eventIds.get(id) || null,
+  querySelector: eventSelector,
+  querySelectorAll: () => []
+};
+['segOtrosFarmacosList', 'segOtrosFarmacosEmpty', 'fhSegCip', 'fhSegDrugSearch', 'fhSegAutocompleteDropdown', 'fhSegFarmaco', 'fhSegPrincipioActivo', 'fhSegPresentacion', 'fhSegDosisActual', 'fhSegVia', 'fhSegCodigoNacional', 'fhSegNregistro', 'fhSegOrigenCatalogo', 'fhSegEtiquetas', 'fhSegCimaContextPrincipioActivo'].forEach((id) => { const node = new DomNode(id === 'fhSegVia' ? 'select' : 'div'); node.id = id; });
+eventIds.get('fhSegAutocompleteDropdown').classList.add('hidden');
+eventIds.get('fhSegCip').value = 'CIP-EVENT-SEG';
+const eventProducts = [
+  { drug_id: 'CIMA-SEG-A', source_type: 'CIMA', display_name: 'Producto SEG A', nombre_comercial: 'Producto SEG A', nombre_presentacion: 'Producto SEG A 300 mg vial', principio_activo: 'Activo SEG A', dosis: '300 mg', via: 'IV', codigo_nacional: '710001', nregistro: 'SYN/A' },
+  { drug_id: 'CIMA-SEG-B', source_type: 'CIMA', display_name: 'Producto SEG B', nombre_comercial: 'Producto SEG B', nombre_presentacion: 'Producto SEG B 108 mg jeringa', principio_activo: 'Activo SEG B', dosis: '108 mg', via: 'VÍA INTRAMUSCULAR', codigo_nacional: '710002', nregistro: 'SYN/B' }
+];
+const eventSnapshots = new Map();
+const eventContextKey = (ctx) => `${ctx.slot}|${ctx.cip}|${ctx.tratamiento_id || ''}|${ctx.linea_id || ''}`;
+const eventCatalog = {
+  loaded: true, autoLoad() {}, search: () => eventProducts,
+  isConcreteCatalogSelection: (drug) => Boolean(drug?.drug_id && drug?.nombre_presentacion),
+  snapshotContextKey: (ctx) => ctx?.slot && ctx?.cip ? eventContextKey(ctx) : '',
+  getSnapshot: (ctx) => eventSnapshots.get(eventContextKey(ctx)) || null,
+  selectDrug: (drug, ctx, metadata) => eventSnapshots.set(eventContextKey(ctx), { context: { ...ctx }, proposal_values: { ...metadata.proposal_values } }),
+  clearSnapshot: (ctx) => eventSnapshots.delete(eventContextKey(ctx)),
+  mapCatalogViaToSelect: (value) => /intramus|^IM$/i.test(value) ? 'IM' : (/intraven|^IV$/i.test(value) ? 'IV' : (/subcut|^SC$/i.test(value) ? 'SC' : (/oral|^VO$/i.test(value) ? 'Oral' : (value ? 'Otra' : ''))))
+};
+const eventF = {
+  clearChildren: (node) => { if (node) { node.children = []; node.options = []; } },
+  setValue: (id, value) => { const node = eventIds.get(id); if (node) node.value = value || ''; },
+  setText: (id, value) => { const node = eventIds.get(id); if (node) node.textContent = value || ''; },
+  renderFields() {},
+  getQueryContext: () => ({ cip: 'CIP-EVENT-SEG' })
+};
+const eventSandbox = { window: { FarmaciaDemo: eventF, FarmaciaCatalog: eventCatalog }, document: eventDocument, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
+vm.createContext(eventSandbox);
+vm.runInContext(helperSrc, eventSandbox);
+vm.runInContext(js, eventSandbox);
+const eventApi = eventSandbox.window.FarmaciaSeguimiento;
+
+eventApi.initSegDrugAutocomplete();
+eventIds.get('fhSegDrugSearch').value = 'producto';
+eventIds.get('fhSegDrugSearch').dispatchEvent({ type: 'input' });
+eventIds.get('fhSegAutocompleteDropdown').children[0].click();
+assert(eventIds.get('fhSegFarmaco').value === 'Producto SEG A' && eventIds.get('fhSegPresentacion').value === 'Producto SEG A 300 mg vial' && eventIds.get('fhSegDosisActual').value === '300 mg' && eventIds.get('fhSegVia').value === 'IV', 'Main follow-up click proposes product identity with separate presentation, dose and route');
+
+eventApi.addFollowupOtherDrug();
+eventApi.addFollowupOtherDrug();
+const [uidA, uidB] = eventApi.getFollowupOtherDrugs().map((drug) => drug.uid);
+const inputA = eventSelector(`input[data-uid="${uidA}"].js-cima-autocomplete`);
+inputA.value = 'partial-a';
+inputA.dispatchEvent({ type: 'input' });
+assert(eventApi.getFollowupOtherDrugs()[0].farmaco === '', 'Related typing leaves stored identity unchanged');
+eventIds.get(`${uidA}-dropdown`).children[0].click();
+assert(inputA.value === 'Producto SEG A', 'Related click leaves no partial query in existing UID');
+const doseA = eventSelector(`[data-uid="${uidA}"][data-field="dosis"]`);
+doseA.value = 'Dosis profesional relacionada';
+doseA.dispatchEvent({ type: 'input' });
+inputA.value = 'partial-b';
+inputA.dispatchEvent({ type: 'input' });
+eventIds.get(`${uidA}-dropdown`).children[1].click();
+const afterSecond = eventApi.getFollowupOtherDrugs();
+assert(afterSecond[0].farmaco === 'Producto SEG B' && afterSecond[0].principioActivo === 'Activo SEG B' && afterSecond[0].presentacion === 'Producto SEG B 108 mg jeringa' && afterSecond[0].dosis === 'Dosis profesional relacionada' && afterSecond[0].via === 'IM' && afterSecond[0].codigoNacional === '710002' && afterSecond[0].nregistro === 'SYN/B' && afterSecond[0].selectedDrugId === 'CIMA-SEG-B' && afterSecond[0].origenCatalogo === 'CIMA', 'Second click in same UID replaces identity atomically and preserves manual field');
+const inputB = eventSelector(`input[data-uid="${uidB}"].js-cima-autocomplete`);
+inputB.value = 'other-row';
+inputB.dispatchEvent({ type: 'input' });
+eventIds.get(`${uidB}-dropdown`).children[0].click();
+const isolatedRows = eventApi.getFollowupOtherDrugs();
+assert(isolatedRows[0].selectedDrugId === 'CIMA-SEG-B' && isolatedRows[1].selectedDrugId === 'CIMA-SEG-A', 'Two related UIDs remain isolated under click selection');
+
+eventF.resolvePatientContextSwitch = () => ({ action: 'switch' });
+eventF.findPatientByCip = () => ({ cip: 'CIP-LINE', farmaco: 'Línea biológica existente', principioActivo: 'Activo existente', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas', biologicos: [{ linea_id: 'LINE-LOCKED', nombre_linea: 'Línea biológica existente', principio_activo: 'Activo existente', dosis: '40 mg', via: 'SC', estado_linea: 'activo', tipo_relacion: 'base', es_principal: true }] });
+eventIds.get('fhSegCip').value = 'CIP-LINE';
+eventApi.searchCIP();
+eventIds.get('fhSegDrugSearch').value = 'producto';
+eventIds.get('fhSegDrugSearch').dispatchEvent({ type: 'input' });
+eventIds.get('fhSegAutocompleteDropdown').children[1].click();
+assert(eventIds.get('fhSegFarmaco').value === 'Línea biológica existente', 'Main follow-up click cannot replace an existing biological line');
 var applyCatalogMatch = js.match(/function applyCatalogSelectionToOtherDrug[\s\S]*?^    \}/m);
 var applyCatalogBody = applyCatalogMatch ? applyCatalogMatch[0] : '';
 assert(!/['"](?:pauta|pautaCodigo|pautaOtro|fechaInicio|fechaFin|relationType|sospechosoEa)['"]/.test(applyCatalogBody), 'Aplicación de catálogo relacionada no escribe pauta, fechas, relación ni causalidad');

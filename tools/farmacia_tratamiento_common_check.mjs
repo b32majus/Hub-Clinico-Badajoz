@@ -288,6 +288,8 @@ assertEqual(api.mapViaToSelect('subcutánea'), 'SC', 'mapViaToSelect normaliza S
 assertEqual(api.mapViaToSelect('intravenosa'), 'IV', 'mapViaToSelect normaliza IV');
 assertEqual(api.mapViaToSelect('VÍA INTRAMUSCULAR'), 'IM', 'mapViaToSelect normaliza ruta IM prefijada');
 assertEqual(api.mapViaToSelect('vía no catalogada'), 'Otra', 'mapViaToSelect degrada a Otra');
+assertEqual(api.buildCatalogProposalForSlot('validacion.solicitado', { nombre_presentacion: 'Caja 4 plumas', dosis: '80 mg', via: 'SC' }).dosis_texto, '80 mg', 'fallback slot contract keeps requested dose regulatory');
+assertEqual(api.buildCatalogProposalForSlot('primera_visita.tratamiento', { nombre_presentacion: 'Caja 4 plumas', dosis: '80 mg', via: 'SC' }).dosis_texto, 'Caja 4 plumas', 'fallback slot contract avoids PV concatenation');
 
 const csv = api.buildTreatmentCsvFields(lines[0], 'seg_');
 assertEqual(csv.seg_farmaco_nombre, lines[0].farmaco_nombre, 'buildTreatmentCsvFields devuelve campos planos con prefijo');

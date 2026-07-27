@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -69,6 +70,117 @@ check(Boolean(requestedSummary) && !/p\.farmaco(?!_solicitado)/.test(requestedSu
 const explicitRequested = js.match(/function explicitRequestedDrug\(patient\)[\s\S]*?\n    \}/);
 check(Boolean(explicitRequested) && explicitRequested[0].includes('rawImport.farmaco_solicitado'), 'Solicitud explícita admite el shape real del importador');
 check(Boolean(explicitRequested) && !/patient\.farmaco(?!_solicitado)/.test(explicitRequested[0]), 'Solicitud explícita nunca cae en patient.farmaco genérico');
+
+const htmlIds = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map((match) => match[1]);
+check(new Set(htmlIds).size === htmlIds.length, 'HTML de Validación no contiene IDs duplicados');
+check(/<select[^>]+id=["']fhManualVia["']/.test(html) && /<select[^>]+id=["']fhDermaVia["']/.test(html), 'Vías solicitadas son selects canónicos');
+['fhManualVia', 'fhDermaVia', 'fhValidadoVia'].forEach((id) => {
+  const markup = (html.match(new RegExp('<select[^>]+id=["\']' + id + '["\'][\\s\\S]*?<\\/select>', 'i')) || [''])[0];
+  const labels = [...markup.matchAll(/<option[^>]*>([^<]*)<\/option>/g)].map((match) => match[1].trim());
+  check(JSON.stringify(labels) === JSON.stringify(['Seleccionar…', 'SC', 'IV', 'Oral', 'IM', 'Otra']), id + ' usa exactamente las rutas canónicas');
+});
+
+class FakeClassList {
+  constructor(initial = '') { this.values = new Set(String(initial).split(/\s+/).filter(Boolean)); }
+  add(value) { this.values.add(value); }
+  remove(value) { this.values.delete(value); }
+  contains(value) { return this.values.has(value); }
+  toggle(value, force) { const next = force === undefined ? !this.contains(value) : force; next ? this.add(value) : this.remove(value); return next; }
+}
+class FakeElement {
+  constructor(tag = 'div') { this.tagName = tag.toUpperCase(); this.value = ''; this.textContent = ''; this.children = []; this.listeners = {}; this.dataset = {}; this.options = []; this.classList = new FakeClassList(); }
+  set className(value) { this._className = value; this.classList = new FakeClassList(value); }
+  get className() { return this._className || ''; }
+  addEventListener(type, handler) { (this.listeners[type] ||= []).push(handler); }
+  dispatchEvent(event) { event.target = this; event.currentTarget = this; (this.listeners[event.type] || []).forEach((handler) => handler.call(this, event)); }
+  click() { this.dispatchEvent({ type: 'click', preventDefault() {} }); }
+  appendChild(child) { this.children.push(child); if (this.tagName === 'SELECT') this.options.push(child); return child; }
+  querySelectorAll(selector) { return selector === '.autocomplete-item' ? this.children.filter((child) => child.classList.contains('autocomplete-item')) : []; }
+  contains(node) { return node === this || this.children.some((child) => child.contains && child.contains(node)); }
+  setAttribute(name, value) { this[name] = String(value); }
+}
+const dom = new Map();
+function addElement(id, tag = 'input') { const element = new FakeElement(tag); element.id = id; dom.set(id, element); return element; }
+[
+  'fhOrigenEntrada', 'fhManualCip', 'fhManualFarmaco', 'fhManualPrincipioActivo', 'fhManualDosis', 'fhManualVia', 'fhManualPauta', 'fhManualPautaOtro', 'fhManualInduccion', 'fhManualJustificacion',
+  'fhDermaCip', 'fhDermaFarmaco', 'fhDermaPrincipioActivo', 'fhDermaDosis', 'fhDermaVia', 'fhDermaPauta', 'fhDermaPautaOtro', 'fhDermaInduccion', 'fhDermaJustificacion', 'fhHSMotivoClinico'
+].forEach((id) => addElement(id, /Via|Pauta|Induccion|Origen/.test(id) ? 'select' : 'input'));
+addElement('autocompleteDropdown', 'div').classList.add('hidden');
+addElement('fhManualAutocompleteDropdown', 'div').classList.add('hidden');
+['fhManualVia', 'fhDermaVia'].forEach((id) => { dom.get(id).options = ['', 'SC', 'IV', 'Oral', 'IM', 'Otra'].map((value) => ({ value, text: value, textContent: value })); });
+const snapshots = new Map();
+const products = [
+  { drug_id: 'CIMA-SYN-A', source_type: 'CIMA', display_name: 'Marca sintética A', nombre_comercial: 'Marca sintética A', nombre_presentacion: 'Marca sintética A 300 mg vial', principio_activo: 'Activo A', dosis: '300 mg', via: 'IV', codigo_nacional: '700001' },
+  { drug_id: 'CIMA-SYN-B', source_type: 'CIMA', display_name: 'Marca sintética B', nombre_comercial: 'Marca sintética B', nombre_presentacion: 'Marca sintética B 120 mg jeringa', principio_activo: 'Activo B', dosis: '120 mg', via: 'VÍA INTRAMUSCULAR', codigo_nacional: '700002' }
+];
+const catalog = {
+  loaded: true,
+  search: () => products,
+  isConcreteCatalogSelection: (drug) => Boolean(drug && drug.drug_id && drug.nombre_presentacion),
+  snapshotContextKey: (ctx) => ctx && ctx.slot && ctx.cip ? `${ctx.slot}|${ctx.cip}` : '',
+  getSnapshot: (ctx) => snapshots.get(`${ctx.slot}|${ctx.cip}`) || null,
+  mapCatalogViaToSelect: (value) => /intramus/i.test(value) ? 'IM' : (/^IV$/i.test(value) ? 'IV' : (/subcut|^SC$/i.test(value) ? 'SC' : (/oral|^VO$/i.test(value) ? 'Oral' : (value ? 'Otra' : '')))),
+  reconcileCatalogSelection(current, previous, drug) {
+    const prior = previous?.proposal_values || {};
+    const canApply = (field) => !current[field] || current[field] === prior[field];
+    const values = { ...current, farmaco_nombre: drug.display_name || drug.nombre_comercial || drug.principio_activo, principio_activo: drug.principio_activo };
+    const proposal_values = {};
+    if (canApply('dosis_texto')) { values.dosis_texto = drug.dosis || ''; if (drug.dosis) proposal_values.dosis_texto = drug.dosis; }
+    if (canApply('via')) { values.via = this.mapCatalogViaToSelect(drug.via); if (values.via) proposal_values.via = values.via; }
+    return { values, proposal_values };
+  },
+  selectDrug(drug, ctx, metadata) { snapshots.set(`${ctx.slot}|${ctx.cip}`, { context: ctx, proposal_values: { ...metadata.proposal_values } }); }
+};
+const validationSandbox = {
+  window: {
+    FarmaciaCatalog: catalog,
+    FarmaciaDemo: {
+      clearChildren: (element) => { element.children = []; },
+      setValue: (id, value) => { if (dom.has(id)) dom.get(id).value = value || ''; }
+    }
+  },
+  document: {
+    getElementById: (id) => dom.get(id) || null,
+    createElement: (tag) => new FakeElement(tag),
+    addEventListener() {},
+    activeElement: null
+  },
+  console, setTimeout, clearTimeout, Event: function Event(type) { this.type = type; }, Array
+};
+vm.createContext(validationSandbox);
+vm.runInContext(js, validationSandbox);
+validationSandbox.window.FarmaciaValidacion.enableRequestedAutocomplete();
+
+dom.get('fhOrigenEntrada').value = '';
+dom.get('fhDermaCip').value = 'CIP-SYN-DERMA';
+dom.get('fhDermaDosis').value = 'Dosis profesional';
+dom.get('fhDermaVia').value = 'Oral';
+dom.get('fhDermaPauta').value = 'PAUTA-MANUAL';
+dom.get('fhDermaInduccion').value = 'si';
+dom.get('fhDermaJustificacion').value = 'Justificación profesional';
+dom.get('fhDermaFarmaco').value = 'marca';
+dom.get('fhDermaFarmaco').dispatchEvent({ type: 'input' });
+check(dom.get('fhDermaDosis').value === 'Dosis profesional' && dom.get('fhDermaVia').value === 'Oral', 'Escribir en solicitado Dermatología no muta dosis ni vía');
+dom.get('autocompleteDropdown').children[0].click();
+check(dom.get('fhDermaFarmaco').value === products[0].display_name && dom.get('fhDermaPrincipioActivo').value === 'Activo A', 'Click en Dermatología sustituye el fragmento por la identidad de catálogo');
+check(dom.get('fhDermaDosis').value === 'Dosis profesional' && dom.get('fhDermaVia').value === 'Oral' && dom.get('fhDermaPauta').value === 'PAUTA-MANUAL' && dom.get('fhDermaInduccion').value === 'si' && dom.get('fhDermaJustificacion').value === 'Justificación profesional', 'Selección Dermatología preserva edición profesional, pauta, inducción y justificación');
+
+dom.get('fhOrigenEntrada').value = 'manual_farmacia';
+dom.get('fhManualCip').value = 'CIP-SYN-MANUAL';
+dom.get('fhManualPauta').value = 'PAUTA-MANUAL';
+dom.get('fhManualInduccion').value = 'no';
+dom.get('fhManualJustificacion').value = 'Texto profesional';
+dom.get('fhManualDosis').value = 'Dosis antes de buscar';
+dom.get('fhManualVia').value = 'Oral';
+dom.get('fhManualFarmaco').value = 'activo';
+dom.get('fhManualFarmaco').dispatchEvent({ type: 'input' });
+check(dom.get('fhManualDosis').value === 'Dosis antes de buscar' && dom.get('fhManualVia').value === 'Oral' && dom.get('fhManualPauta').value === 'PAUTA-MANUAL' && dom.get('fhManualInduccion').value === 'no' && dom.get('fhManualJustificacion').value === 'Texto profesional', 'Escribir en solicitado manual no muta dosis, vía, pauta, inducción ni justificación');
+dom.get('fhManualDosis').value = '';
+dom.get('fhManualVia').value = '';
+dom.get('fhManualFarmaco').dispatchEvent({ type: 'keydown', key: 'ArrowDown', preventDefault() {} });
+dom.get('fhManualFarmaco').dispatchEvent({ type: 'keydown', key: 'Enter', preventDefault() {} });
+check(dom.get('fhManualFarmaco').value === products[0].display_name && dom.get('fhManualDosis').value === '300 mg' && dom.get('fhManualVia').value === 'IV', 'Teclado en solicitado manual selecciona y propone concentración/vía');
+check(dom.get('fhManualPauta').value === 'PAUTA-MANUAL' && dom.get('fhManualInduccion').value === 'no' && dom.get('fhManualJustificacion').value === 'Texto profesional', 'Selección manual preserva pauta, inducción y justificación');
 
 console.log('\nTotal: ' + passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);
