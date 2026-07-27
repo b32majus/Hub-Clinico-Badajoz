@@ -958,6 +958,166 @@
         return { slot: slot, cip: selectedCip() };
     }
 
+    function explicitExportValue(value) {
+        var text = value === null || value === undefined ? "" : String(value).trim();
+        if (text === "—" || text === "-" || text === "Pendiente de completar por Farmacia") return "";
+        return text;
+    }
+
+    function visibleElementValue(id) {
+        var el = byId(id);
+        if (!el) return "";
+        return explicitExportValue(el.value !== undefined ? el.value : el.textContent);
+    }
+
+    function visiblePauta(pautaId, pautaOtroId) {
+        var select = byId(pautaId);
+        var code = select ? explicitExportValue(select.value) : "";
+        var label = "";
+        if (select && code && select.options && select.selectedIndex >= 0 && select.options[select.selectedIndex]) {
+            label = explicitExportValue(select.options[select.selectedIndex].textContent || select.options[select.selectedIndex].text);
+        }
+        var other = code === "OTRO" ? visibleElementValue(pautaOtroId) : "";
+        return { codigo: code, label: code === "OTRO" ? other : label, otro: other };
+    }
+
+    function treatmentValuesFromIds(ids) {
+        var pauta = visiblePauta(ids.pauta, ids.pautaOtro);
+        return {
+            farmaco: visibleElementValue(ids.farmaco),
+            principioActivo: visibleElementValue(ids.principioActivo),
+            dosis: visibleElementValue(ids.dosis),
+            via: visibleElementValue(ids.via),
+            pautaCodigo: pauta.codigo,
+            pautaLabel: pauta.label,
+            pautaOtro: pauta.otro,
+            presentacion: visibleElementValue(ids.presentacion)
+        };
+    }
+
+    function requestedTreatmentValuesForExport() {
+        if (isManualOrigin()) return treatmentValuesFromIds(requestedFieldIds());
+        if (modoActual === "reuma") {
+            var reumaValues = treatmentValuesFromIds({
+                farmaco: "fhReumaFarmaco", principioActivo: "", dosis: "fhReumaDosis", via: "fhReumaVia",
+                pauta: "", pautaOtro: "", presentacion: ""
+            });
+            reumaValues.pautaLabel = visibleElementValue("fhReumaPauta");
+            return reumaValues;
+        }
+        if (modoActual === "digestivo") {
+            return treatmentValuesFromIds({
+                farmaco: "fhDigFarmaco", principioActivo: "", dosis: "fhDigDosis", via: "fhDigVia",
+                pauta: "fhDigPauta", pautaOtro: "fhDigPautaOtro", presentacion: ""
+            });
+        }
+        return treatmentValuesFromIds(requestedFieldIds());
+    }
+
+    function hasExplicitTherapeuticData(values) {
+        return !!(values && [
+            values.farmaco, values.principioActivo, values.dosis, values.via,
+            values.pautaCodigo, values.pautaLabel, values.pautaOtro, values.presentacion
+        ].some(function (value) { return explicitExportValue(value) !== ""; }));
+    }
+
+    function sameVisibleDrugName(snapshot, visibleName) {
+        var normalize = function (value) { return explicitExportValue(value).toLocaleLowerCase("es"); };
+        var name = normalize(visibleName);
+        if (!snapshot || !name) return false;
+        return [snapshot.nombre_snapshot, snapshot.nombre_comercial]
+            .some(function (candidate) { return normalize(candidate) === name; });
+    }
+
+    function treatmentLineForExport(values, slot, cip) {
+        if (!hasExplicitTherapeuticData(values)) return null;
+        var line = {
+            farmaco_nombre: values.farmaco,
+            principio_activo: values.principioActivo,
+            dosis_texto: values.dosis && values.presentacion && values.dosis !== values.presentacion
+                ? values.dosis + " · " + values.presentacion
+                : (values.dosis || values.presentacion),
+            presentacion: values.presentacion,
+            via: values.via,
+            pauta_codigo: values.pautaCodigo,
+            pauta_label: values.pautaLabel,
+            pauta_otro_texto: values.pautaOtro
+        };
+        var snapshot = C && typeof C.getSnapshot === "function" ? C.getSnapshot({ slot: slot, cip: cip }) : null;
+        if (sameVisibleDrugName(snapshot, values.farmaco)) {
+            line.selected_drug_id = snapshot.selected_drug_id || snapshot.drug_id || "";
+            line.source_type = snapshot.source_type || "";
+            line.codigo_nacional = snapshot.codigo_nacional_snapshot || "";
+            line.nregistro = snapshot.nregistro_snapshot || "";
+        }
+        return line;
+    }
+
+    function visibleCipForExport() {
+        if (isManualOrigin()) return visibleElementValue("fhManualCip");
+        if (modoActual === "reuma") return visibleElementValue("fhReumaCip");
+        if (modoActual === "digestivo") return visibleElementValue("fhDigCip");
+        return visibleElementValue("fhDermaCip");
+    }
+
+    function visibleServiceForExport() {
+        if (isManualOrigin()) return currentManualService() ? serviceLabelFromMode(currentManualService()) : "";
+        return modoActual ? serviceLabelFromMode(modoActual) : "";
+    }
+
+    function visiblePatologiaForExport() {
+        if (isManualOrigin()) return explicitExportValue(currentManualPatologia());
+        if (modoActual === "reuma") return visibleElementValue("fhReumaPatologia");
+        if (modoActual === "digestivo") return visibleElementValue("fhDigPatologia");
+        return visibleElementValue("fhDermaPatologia");
+    }
+
+    function normalizeValidationExportStatus(value) {
+        var normalized = explicitExportValue(value).toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (normalized === "pending" || normalized === "pendiente") {
+            return { resultadoValidacion: "pendiente", estadoRegistro: "pendiente", canCopy: true };
+        }
+        if (normalized === "validated" || normalized === "validado") {
+            return { resultadoValidacion: "validado", estadoRegistro: "completado", canCopy: true };
+        }
+        if (normalized === "denied" || normalized === "denegado") {
+            return { resultadoValidacion: "denegado", estadoRegistro: "completado", canCopy: true };
+        }
+        return { resultadoValidacion: "", estadoRegistro: "", canCopy: false };
+    }
+
+    function buildValidationExcelExportData() {
+        var status = normalizeValidationExportStatus(visibleElementValue("fhValEstado"));
+        var cip = visibleCipForExport();
+        var validated = treatmentValuesFromIds({
+            farmaco: "fhValidadoFarmaco", principioActivo: "fhValidadoPrincipioActivo", dosis: "fhValidadoDosis",
+            via: "fhValidadoVia", pauta: "fhValidadoPauta", pautaOtro: "fhValidadoPautaOtro",
+            presentacion: "fhValidadoPresentacion"
+        });
+        var useValidated = hasExplicitTherapeuticData(validated);
+        var values = useValidated ? validated : requestedTreatmentValuesForExport();
+        var slot = useValidated ? "validacion.validado" : "validacion.solicitado";
+        return {
+            canCopy: status.canCopy,
+            resultadoValidacion: status.resultadoValidacion,
+            estadoRegistro: status.estadoRegistro,
+            cip: cip,
+            servicio: visibleServiceForExport(),
+            patologia: visiblePatologiaForExport(),
+            tipoValidacion: visibleElementValue("fhTipoValidacion"),
+            profesional: visibleElementValue("fhValFarmaceutico"),
+            motivo: visibleElementValue("fhValMotivo"),
+            obsValidacion: visibleElementValue("fhValObservaciones"),
+            slot: slot,
+            lineaActual: treatmentLineForExport(values, slot, cip)
+        };
+    }
+
+    function updateValidationExcelExportAvailability() {
+        var btn = byId("fhValExcelExportBtn");
+        if (btn) btn.disabled = !normalizeValidationExportStatus(visibleElementValue("fhValEstado")).canCopy;
+    }
+
     function reconcileSelection(current, previous, drug, slot) {
         if (C && typeof C.reconcileCatalogSelection === "function") {
             return C.reconcileCatalogSelection(current, previous, drug, slot);
@@ -1774,6 +1934,7 @@
         });
         byId("fhValEstado").addEventListener("change", function (event) {
             byId("fhValMotivoRow").classList.toggle("hidden", event.target.value !== "denied");
+            updateValidationExcelExportAvailability();
         });
         byId("fhDermaPatologia").addEventListener("change", function () {
             toggleHSBlock();
@@ -1809,7 +1970,9 @@
     }
 
     window.FarmaciaValidacion = {
-        enableRequestedAutocomplete: enableAutocomplete
+        enableRequestedAutocomplete: enableAutocomplete,
+        normalizeValidationExportStatus: normalizeValidationExportStatus,
+        buildValidationExcelExportData: buildValidationExcelExportData
     };
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -1841,17 +2004,37 @@
         (function initValExcelBtn() {
             var btn = document.getElementById('fhValExcelExportBtn');
             if (!btn) return;
+            updateValidationExcelExportAvailability();
             btn.addEventListener('click', function () {
                 var exp = window.FarmaciaExcelRowExport;
                 if (!exp) return;
                 var ctx = F.getQueryContext ? F.getQueryContext() : {};
                 var patient = ctx.patient || null;
-                if (!patient) { alert('No hay paciente seleccionado.'); return; }
-                var opts = { tipoActo: 'validacion_inicial', tipoValidacion: 'inicial', resultadoValidacion: 'validado', fechaActo: new Date().toISOString().substring(0, 10), demoFlag: true };
+                var exportData = buildValidationExcelExportData();
+                if (!exportData.canCopy) {
+                    alert('Selecciona un resultado de validación antes de copiar la fila Excel FH.');
+                    return;
+                }
+                var opts = {
+                    patientId: exportData.cip,
+                    cip: exportData.cip,
+                    servicio: exportData.servicio,
+                    patologia: exportData.patologia,
+                    tipoActo: 'validacion_inicial',
+                    tipoValidacion: exportData.tipoValidacion,
+                    resultado: exportData.resultadoValidacion,
+                    estadoRegistro: exportData.estadoRegistro,
+                    lineaActual: exportData.lineaActual,
+                    fechaActo: new Date().toISOString().substring(0, 10),
+                    profesional: exportData.profesional,
+                    motivo: exportData.motivo,
+                    obsValidacion: exportData.obsValidacion,
+                    demoFlag: true
+                };
                 var context = exp.buildContextFromValidacion(patient, opts);
                 var rowObj = exp.buildExcelRowObject(context);
                 var rowArr = exp.buildExcelRowArray(rowObj);
-                var sheetName = exp.getServiceSheetName(patient.servicio || '') || 'hoja correspondiente';
+                var sheetName = exp.getServiceSheetName(exportData.servicio) || 'hoja correspondiente';
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();

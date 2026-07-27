@@ -4,6 +4,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import vm from 'vm';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -117,6 +118,87 @@ assert(js.indexOf('return WO8_COLUMNS.map(function ()') !== -1, 'buildExcelRowAr
 
 // 20. demo_flag por defecto TRUE
 assert(js.indexOf("demoFlag !== undefined") !== -1, 'demo_flag controlable vía contexto');
+
+// 21. Verificación funcional del contrato WO8 y hojas con tildes
+const sandbox = {
+  window: {},
+  navigator: {},
+  document: { getElementById: () => null, createElement: () => ({ style: {} }), body: { appendChild: () => {} } },
+  setTimeout: () => 0,
+  Date,
+  console
+};
+sandbox.window = sandbox;
+vm.createContext(sandbox);
+vm.runInContext(js, sandbox);
+const exp = sandbox.FarmaciaExcelRowExport;
+const blankArray = exp.buildExcelRowArray(exp.buildExcelRowObject({ fechaActo: '2026-07-27' }));
+assert(blankArray.length === 61, 'fila funcional conserva 61 columnas en orden WO8');
+assert(exp.WO8_COLUMNS[0] === 'patient_id' && exp.WO8_COLUMNS[60] === 'observaciones_generales', 'extremos del orden canónico WO8 preservados');
+assert(!/[\r\n]/.test(exp.toTSVRow(blankArray)) && exp.toTSVRow(blankArray).split('\t').length === 61, 'TSV funcional es una línea de 61 campos');
+assert(exp.getServiceSheetName('Dermatología') === '01_DERMA', 'Dermatología con tilde mapea a 01_DERMA');
+assert(exp.getServiceSheetName('Reumatología') === '02_REUMA', 'Reumatología con tilde mapea a 02_REUMA');
+assert(exp.getServiceSheetName('Digestivo') === '03_DIGESTIVO', 'Digestivo mapea a 03_DIGESTIVO');
+assert(exp.getServiceSheetName('Oncología') === '04_ONCO', 'Oncología con tilde mapea a 04_ONCO');
+
+// 22. Ausencias sin inferencias ni defaults de línea
+const patientOnly = exp.buildExcelRowObject({
+  patient: { cip: 'CIP-SINTETICO', farmaco: 'No exportar desde paciente', paciente_cip: 'LEGACY-NO-USAR' },
+  fechaActo: '2026-07-27'
+});
+assert(patientOnly.marca_comercial === '' && patientOnly.principio_activo === '', 'sin lineaActual no infiere tratamiento desde paciente');
+assert(patientOnly.tratamiento_id === '' && patientOnly.linea_id === '', 'IDs de tratamiento ausentes permanecen vacíos');
+assert(patientOnly.source_type === '' && patientOnly.tipo_relacion === '' && patientOnly.estado_linea === '' && patientOnly.tipo_movimiento === '' && patientOnly.es_principal === '', 'línea ausente no recibe defaults DEMO/principal/activo/sin_cambios/TRUE');
+assert(js.indexOf('buildTreatmentFromPatient') === -1, 'eliminado fallback buildTreatmentFromPatient(...)[0]');
+assert(js.indexOf('p.paciente_cip') === -1, 'patient_id nunca usa paciente_cip');
+
+const explicitLine = exp.buildExcelRowObject({
+  fechaActo: '2026-07-27',
+  lineaActual: { linea_id: 'LINEA-SINTETICA', farmaco_nombre: 'Marca visible', principio_activo: '' }
+});
+assert(explicitLine.tratamiento_id === '' && explicitLine.linea_id === 'LINEA-SINTETICA', 'tratamiento_id no reutiliza linea_id');
+assert(explicitLine.marca_comercial === 'Marca visible' && explicitLine.principio_activo === '', 'nombre comercial no sustituye principio activo ausente');
+
+// 23. La frontera normaliza resultado y deriva estado sin aceptar contradicciones
+[
+  ['pending', 'pendiente', 'pendiente'],
+  ['pendiente', 'pendiente', 'pendiente'],
+  ['validated', 'validado', 'completado'],
+  ['validado', 'validado', 'completado'],
+  ['denied', 'denegado', 'completado'],
+  ['denegado', 'denegado', 'completado'],
+  ['', '', ''],
+  ['desconocido', '', '']
+].forEach(function (sample) {
+  const normalizedRow = exp.buildExcelRowObject({
+    tipoActo: 'validacion_inicial',
+    resultadoValidacion: sample[0],
+    estadoRegistro: 'valor_contradictorio',
+    fechaActo: '2026-07-27'
+  });
+  assert(normalizedRow.resultado_validacion === sample[1] && normalizedRow.estado_registro === sample[2], 'normaliza frontera ' + (sample[0] || 'ausente'));
+});
+
+const unknownValidationContext = exp.buildContextFromValidacion(null, {
+  resultado: 'valor_desconocido',
+  estadoRegistro: 'completado'
+});
+assert(unknownValidationContext.resultadoValidacion === '' && unknownValidationContext.estadoRegistro === '', 'builder de Validación vacía resultado desconocido y estado contradictorio');
+
+// 24. Consumidores no-Validación conservan su estado previo
+const syntheticPatient = { cip: 'CIP-SINTETICO-MATRIZ', servicio: 'Reumatología', patologia: 'AR' };
+const nonValidationContexts = [
+  ['Primera Visita', exp.buildContextFromPrimeraVisita(syntheticPatient, {})],
+  ['Seguimiento', exp.buildContextFromSeguimiento(syntheticPatient, {})],
+  ['Dashboard', exp.buildContextFromDashboard(syntheticPatient, {})]
+];
+nonValidationContexts.forEach(function (sample) {
+  const nonValidationRow = exp.buildExcelRowObject(sample[1]);
+  assert(nonValidationRow.estado_registro === 'completado', sample[0] + ' conserva estado_registro completado');
+});
+assert(exp.buildExcelRowObject(nonValidationContexts[0][1]).resultado_validacion === 'validado', 'Primera Visita conserva su resultado_validacion previo');
+assert(exp.buildExcelRowObject(nonValidationContexts[1][1]).resultado_validacion === '', 'Seguimiento conserva resultado_validacion vacío');
+assert(exp.buildExcelRowObject(nonValidationContexts[2][1]).resultado_validacion === '', 'Dashboard conserva resultado_validacion vacío');
 
 console.log('\n Total: ' + passed + ' passed, ' + failed + ' failed' + (errors.length ? ' (' + errors.length + ' errores)' : ''));
 if (failed > 0) process.exit(1);
