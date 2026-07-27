@@ -499,7 +499,8 @@
         var board = document.getElementById('pendingValidationBoard');
         var cards = document.getElementById('pendingValidationCards');
         var empty = document.getElementById('pendingValidationEmpty');
-        if (!board || !cards || !empty || !F.getPendingValidationPatients || !F.isEnfermeriaPatient) return;
+        var count = document.getElementById('pendingValidationBoardCount');
+        if (!board || !cards || !empty || !count || !F.getPendingValidationPatients || !F.isEnfermeriaPatient) return;
         F.clearChildren(cards);
         var patients = F.getPendingValidationPatients();
 
@@ -519,6 +520,7 @@
             }
             return true;
         });
+        count.textContent = String(filtered.length);
         empty.classList.toggle('hidden', filtered.length > 0);
         if (!filtered.length) return;
 
@@ -681,8 +683,19 @@
     var ENFERMERIA_GROUP_CONFIG = {
         ok_farmacia: { label: 'Listos para validación', icon: 'fa-check-circle', cls: 'enf-group--ok' },
         en_vigilancia: { label: 'En vigilancia prebiológica', icon: 'fa-hourglass-half', cls: 'enf-group--vigilance' },
-        bloqueado: { label: 'Bloqueados', icon: 'fa-exclamation-triangle', cls: 'enf-group--blocked' }
+        bloqueado: { label: 'Bloqueados', icon: 'fa-exclamation-triangle', cls: 'enf-group--blocked' },
+        sin_clasificar: { label: 'Estado pendiente de clasificación', icon: 'fa-question-circle', cls: '' }
     };
+
+    function classifyEnfermeriaState(patient) {
+        var hasPrebiologicoState = patient && Object.prototype.hasOwnProperty.call(patient, 'estado_prebiologico_enfermeria');
+        var explicitState = hasPrebiologicoState ? patient.estado_prebiologico_enfermeria : (patient && patient.estado);
+        var normalized = String(explicitState || '').trim().toUpperCase().replace(/\s+/g, '_');
+        if (normalized === 'OK_FARMACIA') return 'ok_farmacia';
+        if (normalized === 'EN_VIGILANCIA') return 'en_vigilancia';
+        if (normalized === 'BLOQUEADO') return 'bloqueado';
+        return 'sin_clasificar';
+    }
 
     /**
      * Construye una tarjeta clínica para Enfermería reutilizando el
@@ -707,8 +720,10 @@
         subtitle.textContent = textOrDash(patient.nombre || patient.paciente_nombre);
         titleWrap.append(title, subtitle);
         var badge = document.createElement('span');
-        badge.className = 'status-badge status-badge--' + (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : 'vigilance');
-        badge.textContent = patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—';
+        badge.className = 'status-badge status-badge--' + (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending');
+        badge.textContent = groupKey === 'sin_clasificar'
+            ? ENFERMERIA_GROUP_CONFIG.sin_clasificar.label
+            : (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—');
         header.append(titleWrap, badge);
         card.appendChild(header);
 
@@ -810,6 +825,8 @@
             toggleBtn.setAttribute('data-enf-toggle', patient.cip || '');
             if (groupKey === 'bloqueado') {
                 F.appendIconText(toggleBtn, 'fa-exclamation-triangle', 'Ver bloqueantes');
+            } else if (groupKey === 'sin_clasificar') {
+                F.appendIconText(toggleBtn, 'fa-info-circle', 'Ver detalle');
             } else {
                 F.appendIconText(toggleBtn, 'fa-hourglass-half', 'Ver pendientes prebiológicos');
             }
@@ -819,7 +836,9 @@
                     var isOpen = panel.classList.contains('open');
                     var btnText = groupKey === 'bloqueado'
                         ? (isOpen ? 'Ocultar bloqueantes' : 'Ver bloqueantes')
-                        : (isOpen ? 'Ocultar detalle prebiológico' : 'Ver pendientes prebiológicos');
+                        : (groupKey === 'sin_clasificar'
+                            ? (isOpen ? 'Ocultar detalle' : 'Ver detalle')
+                            : (isOpen ? 'Ocultar detalle prebiológico' : 'Ver pendientes prebiológicos'));
                     // Update button text keeping icon
                     var icon = this.querySelector('i');
                     F.clearChildren(this);
@@ -845,40 +864,24 @@
 
     function renderEnfermeriaBoard() {
         if (!F.getEnfermeriaVisiblePatients || !F.getEnfermeriaBadges) return;
-        var board = document.getElementById('pendingValidationBoard');
-        if (!board) return;
-
-        // Remove existing enfermeria board if any
-        var existing = document.getElementById('enfermeriaBoard');
-        if (existing) existing.remove();
+        var board = document.getElementById('enfermeriaBoard');
+        var cards = document.getElementById('enfermeriaBoardCards');
+        var empty = document.getElementById('enfermeriaBoardEmpty');
+        var count = document.getElementById('enfermeriaBoardCount');
+        if (!board || !cards || !empty || !count) return;
 
         var patients = F.getEnfermeriaVisiblePatients();
+        F.clearChildren(cards);
+        count.textContent = String(patients.length);
+        empty.classList.toggle('hidden', patients.length > 0);
         if (!patients.length) return;
 
-        var enfBoard = document.createElement('section');
-        enfBoard.id = 'enfermeriaBoard';
-        enfBoard.className = 'dashboard-card';
-        enfBoard.style.overflow = 'visible';
-
-        var heading = document.createElement('h2');
-        heading.className = 'enfermeria-board__heading';
-        var headingIcon = document.createElement('i');
-        headingIcon.className = 'fas fa-user-nurse';
-        headingIcon.setAttribute('aria-hidden', 'true');
-        heading.appendChild(headingIcon);
-        heading.appendChild(document.createTextNode(' Solicitudes Enfermería / Inicio biológico (' + patients.length + ')'));
-        enfBoard.appendChild(heading);
-
-        // Group patients
-        var groups = { ok_farmacia: [], en_vigilancia: [], bloqueado: [] };
+        var groups = { ok_farmacia: [], en_vigilancia: [], bloqueado: [], sin_clasificar: [] };
         patients.forEach(function (p) {
-            var est = String(p.estado || p.estado_prebiologico_enfermeria || '').toLowerCase();
-            if (est.indexOf('ok') !== -1 || est === 'ok_farmacia') groups.ok_farmacia.push(p);
-            else if (est.indexOf('bloqueado') !== -1 || est === 'bloqueado') groups.bloqueado.push(p);
-            else groups.en_vigilancia.push(p);
+            groups[classifyEnfermeriaState(p)].push(p);
         });
 
-        var order = ['ok_farmacia', 'en_vigilancia', 'bloqueado'];
+        var order = ['ok_farmacia', 'en_vigilancia', 'bloqueado', 'sin_clasificar'];
         for (var gi = 0; gi < order.length; gi++) {
             var gk = order[gi];
             var g = groups[gk];
@@ -892,7 +895,7 @@
             gIcon.setAttribute('aria-hidden', 'true');
             groupHeader.appendChild(gIcon);
             groupHeader.appendChild(document.createTextNode(' ' + cfg.label + ' (' + g.length + ')'));
-            enfBoard.appendChild(groupHeader);
+            cards.appendChild(groupHeader);
 
             // Grid responsive para las tarjetas
             var grid = document.createElement('div');
@@ -903,11 +906,8 @@
                 grid.appendChild(card);
             }
 
-            enfBoard.appendChild(grid);
+            cards.appendChild(grid);
         }
-
-        // Insertar ENF board ANTES del board de validación
-        board.parentNode.insertBefore(enfBoard, board);
     }
 
     document.addEventListener('DOMContentLoaded', function () {
