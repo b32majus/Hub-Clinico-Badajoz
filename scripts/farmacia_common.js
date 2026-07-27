@@ -1232,8 +1232,10 @@
         var totalCount = 0;
         var cimaCount = 0;
         var localCount = 0;
-        var selectedSnapshot = null;
+        var snapshotRegistry = null;
         var FARMACIA_DRUG_SNAPSHOT_KEY = 'farmacia_drug_snapshot';
+        var FARMACIA_DRUG_SNAPSHOT_REGISTRY_KEY = 'farmacia_drug_snapshot_registry_v2';
+        var SNAPSHOT_REGISTRY_VERSION = 2;
         var CATALOG_XLSX_PATH = 'data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx';
         var catalogStatus = { state: 'idle', message: 'Catálogo farmacológico: pendiente de carga automática' };
 
@@ -1281,26 +1283,44 @@
             ].join(' ').toLowerCase();
         }
 
+        function buildStableCatalogId(sourceType, nativeId, metadataParts) {
+            var preferred = nativeId == null ? '' : String(nativeId).trim();
+            if (preferred) return preferred;
+            var canonical = (metadataParts || []).map(function (value) {
+                return value == null ? '' : String(value).trim().toLowerCase();
+            }).join('\u001f');
+            if (!canonical.replace(/\u001f/g, '')) return '';
+            var hash = 2166136261;
+            for (var i = 0; i < canonical.length; i++) {
+                hash ^= canonical.charCodeAt(i);
+                hash = Math.imul(hash, 16777619);
+            }
+            return String(sourceType || 'CATALOG').toUpperCase() + '-AUTO-' + (hash >>> 0).toString(16).padStart(8, '0') + '-' + canonical.length;
+        }
+
         function normalizeCIMA(row) {
             var cn = row.codigo_nacional != null ? String(row.codigo_nacional) : '';
             var nr = row.nregistro != null ? String(row.nregistro) : '';
             var nc = row.nombre_comercial || '';
             var pa = row.principio_activo || '';
             var np = row.nombre_presentacion || '';
+            var dose = row.dosis_presentacion || '';
+            var via = row.via || '';
+            var forma = row.forma_farmaceutica || '';
             return {
                 nombre_comercial: nc,
                 principio_activo: pa,
                 nombre_presentacion: np,
                 codigo_nacional: cn,
                 nregistro: nr,
-                dosis: row.dosis_presentacion || '',
-                via: row.via || '',
+                dosis: dose,
+                via: via,
                 es_hospitalario: row.es_hospitalario_derivado || '',
                 biosimilar: row.biosimilar || '',
-                drug_id: row.drug_source_id != null ? String(row.drug_source_id) : '',
+                drug_id: buildStableCatalogId('CIMA', row.drug_source_id, [cn, nr, nc, pa, np, dose, via, forma]),
                 source_type: 'CIMA',
                 display_name: nc || np || '',
-                forma_farmaceutica: row.forma_farmaceutica || '',
+                forma_farmaceutica: forma,
                 _searchable: ''
             };
         }
@@ -1310,20 +1330,23 @@
             var ncs = row.nombre_comercial_si_existe || '';
             var pam = row.principio_activo_o_molecula || '';
             var pt = row.presentacion_texto || '';
+            var dose = row.dosis_texto || '';
+            var via = row.via || '';
+            var forma = row.forma_farmaceutica || '';
             return {
                 nombre_comercial: ncs || dn || '',
                 principio_activo: pam,
                 nombre_presentacion: pt,
                 codigo_nacional: '',
                 nregistro: '',
-                dosis: row.dosis_texto || '',
-                via: row.via || '',
+                dosis: dose,
+                via: via,
                 es_hospitalario: 'SI',
                 biosimilar: '',
-                drug_id: row.local_drug_id != null ? String(row.local_drug_id) : '',
+                drug_id: buildStableCatalogId('LOCAL', row.local_drug_id, [dn, ncs, pam, pt, dose, via, forma, row.tipo_situacion]),
                 source_type: 'LOCAL',
                 display_name: dn || '',
-                forma_farmaceutica: row.forma_farmaceutica || '',
+                forma_farmaceutica: forma,
                 tipo_situacion: row.tipo_situacion || '',
                 activo_en_catalogo: row.activo_en_catalogo || '',
                 _searchable: ''
@@ -1352,7 +1375,6 @@
             localCount = localNormalized.length;
             totalCount = drugs.length;
             loaded = true;
-            selectedSnapshot = null;
             return { totalCount: totalCount, cimaCount: cimaCount, localCount: localCount, loaded: loaded };
         }
 
@@ -1369,8 +1391,172 @@
             return results;
         }
 
-        function selectDrug(drug) {
-            selectedSnapshot = {
+        function normalizeSnapshotContext(context) {
+            if (!context || typeof context !== 'object') return null;
+            var normalized = {
+                slot: String(context.slot || '').trim().toLowerCase(),
+                cip: String(context.cip || '').trim().toUpperCase(),
+                tratamiento_id: String(context.tratamiento_id || '').trim(),
+                linea_id: String(context.linea_id || '').trim()
+            };
+            var approvedFixedSlot = normalized.slot === 'validacion.solicitado'
+                || normalized.slot === 'validacion.validado'
+                || normalized.slot === 'primera_visita.tratamiento'
+                || normalized.slot === 'seguimiento.tratamiento';
+            var approvedRelatedSlot = /^seguimiento\.relacionado:[a-z0-9][a-z0-9._-]*$/.test(normalized.slot);
+            if ((!approvedFixedSlot && !approvedRelatedSlot) || !normalized.cip) return null;
+            return normalized;
+        }
+
+        function snapshotContextKey(context) {
+            var normalized = normalizeSnapshotContext(context);
+            if (!normalized) return '';
+            return [normalized.slot, normalized.cip, normalized.tratamiento_id, normalized.linea_id]
+                .map(function (part) { return encodeURIComponent(part); }).join('|');
+        }
+
+        function emptySnapshotRegistry() {
+            return { version: SNAPSHOT_REGISTRY_VERSION, snapshots: {} };
+        }
+
+        function persistSnapshotRegistry() {
+            try {
+                sessionStorage.setItem(FARMACIA_DRUG_SNAPSHOT_REGISTRY_KEY, JSON.stringify(snapshotRegistry || emptySnapshotRegistry()));
+            } catch (e) { /* sessionStorage unavailable */ }
+        }
+
+        function loadSnapshotRegistry() {
+            if (snapshotRegistry) return snapshotRegistry;
+            snapshotRegistry = emptySnapshotRegistry();
+            try {
+                // The historical singleton has no slot/CIP context and is never reusable safely.
+                sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_KEY);
+                var raw = sessionStorage.getItem(FARMACIA_DRUG_SNAPSHOT_REGISTRY_KEY);
+                if (!raw) return snapshotRegistry;
+                var parsed = JSON.parse(raw);
+                if (parsed && parsed.version === SNAPSHOT_REGISTRY_VERSION && parsed.snapshots && typeof parsed.snapshots === 'object' && !Array.isArray(parsed.snapshots)) {
+                    snapshotRegistry = parsed;
+                    var sanitized = false;
+                    Object.keys(snapshotRegistry.snapshots).forEach(function (key) {
+                        var snapshot = snapshotRegistry.snapshots[key];
+                        var context = snapshot && snapshot.context;
+                        if (!isValidStoredSnapshot(snapshot, context) || snapshotContextKey(context) !== key) {
+                            delete snapshotRegistry.snapshots[key];
+                            sanitized = true;
+                        }
+                    });
+                    if (sanitized) persistSnapshotRegistry();
+                } else {
+                    sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_REGISTRY_KEY);
+                }
+            } catch (e) {
+                snapshotRegistry = emptySnapshotRegistry();
+                try { sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_REGISTRY_KEY); } catch (ignore) { /* unavailable */ }
+            }
+            return snapshotRegistry;
+        }
+
+        function isValidStoredSnapshot(snapshot, context) {
+            if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return false;
+            var storedContext = normalizeSnapshotContext(snapshot.context);
+            if (!storedContext || snapshotContextKey(storedContext) !== snapshotContextKey(context)) return false;
+            if (!snapshot.selected_drug_id || !snapshot.source_type) return false;
+            return snapshot.source_type === 'CIMA' || snapshot.source_type === 'LOCAL';
+        }
+
+        function isConcreteCatalogSelection(drug) {
+            return !!(drug && drug.drug_id && (drug.source_type === 'CIMA' || drug.source_type === 'LOCAL') && (drug.nombre_presentacion || drug.dosis));
+        }
+
+        function catalogStringValue(value) {
+            return value == null ? '' : String(value).trim();
+        }
+
+        function normalizeCatalogVia(value) {
+            var raw = catalogStringValue(value);
+            var key = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            if (!key) return '';
+            if (key.indexOf('via_de_administracion_') === 0) key = key.slice('via_de_administracion_'.length);
+            else if (key.indexOf('via_') === 0) key = key.slice('via_'.length);
+            else if (key.indexOf('administracion_') === 0) key = key.slice('administracion_'.length);
+            if (key === 'sc' || key === 'subcutanea' || key === 'subcutanea_subcutanea') return 'SC';
+            if (key === 'iv' || key === 'intravenosa') return 'IV';
+            if (key === 'oral' || key === 'vo' || key === 'v_o') return 'Oral';
+            if (key === 'im' || key === 'intramuscular') return 'IM';
+            return raw;
+        }
+
+        function mapCatalogViaToSelect(value) {
+            var via = normalizeCatalogVia(value);
+            if (via === 'SC' || via === 'IV' || via === 'Oral' || via === 'IM') return via;
+            return via ? 'Otra' : '';
+        }
+
+        function firstCatalogValue() {
+            for (var i = 0; i < arguments.length; i++) {
+                var value = catalogStringValue(arguments[i]);
+                if (value) return value;
+            }
+            return '';
+        }
+
+        function shouldApplyCatalogProposal(currentValue, previousValue) {
+            var current = catalogStringValue(currentValue);
+            return !current || current === '—' || current === 'Pendiente de completar por Farmacia' || current === catalogStringValue(previousValue);
+        }
+
+        function buildCatalogProposalForSlot(slot, drug) {
+            var selected = drug && typeof drug === 'object' ? drug : {};
+            var normalizedSlot = String(slot || '').trim().toLowerCase();
+            var presentation = catalogStringValue(selected.nombre_presentacion);
+            var dose = catalogStringValue(selected.dosis);
+            var route = mapCatalogViaToSelect(selected.via);
+            if (normalizedSlot === 'validacion.solicitado') {
+                return { dosis_texto: dose, via: route };
+            }
+            if (normalizedSlot === 'primera_visita.tratamiento') {
+                return { dosis_texto: firstCatalogValue(presentation, dose), via: route };
+            }
+            return {
+                presentacion: presentation,
+                dosis_texto: dose,
+                via: route
+            };
+        }
+
+        function reconcileCatalogSelection(current, previousSnapshot, drug, slot) {
+            var existing = current && typeof current === 'object' ? current : {};
+            var selected = drug && typeof drug === 'object' ? drug : {};
+            var previous = previousSnapshot && previousSnapshot.proposal_values && typeof previousSnapshot.proposal_values === 'object'
+                ? previousSnapshot.proposal_values : {};
+            var contextualSlot = slot || (previousSnapshot && previousSnapshot.context && previousSnapshot.context.slot) || '';
+            var values = Object.assign({}, existing);
+            values.farmaco_nombre = firstCatalogValue(selected.display_name, selected.nombre_comercial, selected.principio_activo);
+            values.nombre_comercial = catalogStringValue(selected.nombre_comercial);
+            values.principio_activo = catalogStringValue(selected.principio_activo);
+            values.codigo_nacional = catalogStringValue(selected.codigo_nacional);
+            values.nregistro = catalogStringValue(selected.nregistro);
+            values.selected_drug_id = firstCatalogValue(selected.drug_id, selected.selected_drug_id);
+            values.source_type = selected.source_type === 'CIMA' || selected.source_type === 'LOCAL' ? selected.source_type : '';
+            values.fuente = values.source_type === 'CIMA' ? 'cima' : (values.source_type === 'LOCAL' ? 'local_especial' : '');
+            var proposed = buildCatalogProposalForSlot(contextualSlot, selected);
+            var nextProposalValues = {};
+            Object.keys(proposed).forEach(function (field) {
+                if (shouldApplyCatalogProposal(existing[field], previous[field])) {
+                    values[field] = proposed[field];
+                    if (proposed[field]) nextProposalValues[field] = proposed[field];
+                }
+            });
+            return { values: values, proposal_values: nextProposalValues };
+        }
+
+        function selectDrug(drug, context, metadata) {
+            var normalizedContext = normalizeSnapshotContext(context);
+            var key = snapshotContextKey(normalizedContext);
+            if (!key || !isConcreteCatalogSelection(drug)) return null;
+            var selectedSnapshot = {
+                version: SNAPSHOT_REGISTRY_VERSION,
+                context: normalizedContext,
                 drug_id: drug.drug_id || '',
                 selected_drug_id: drug.drug_id || '',
                 source_type: drug.source_type || '',
@@ -1386,34 +1572,42 @@
                     es_hospitalario: isTruthyRobust(drug.es_hospitalario),
                     biosimilar: isTruthyRobust(drug.biosimilar)
                 },
+                proposal_values: metadata && metadata.proposal_values && typeof metadata.proposal_values === 'object'
+                    ? Object.assign({}, metadata.proposal_values) : {},
                 selected_at: new Date().toISOString()
             };
-            try {
-                sessionStorage.setItem(FARMACIA_DRUG_SNAPSHOT_KEY, JSON.stringify(selectedSnapshot));
-            } catch (e) { /* sessionStorage unavailable */ }
+            var registry = loadSnapshotRegistry();
+            registry.snapshots[key] = selectedSnapshot;
+            persistSnapshotRegistry();
             return selectedSnapshot;
         }
 
-        function getSnapshot() {
-            if (selectedSnapshot) return selectedSnapshot;
-            try {
-                var raw = sessionStorage.getItem(FARMACIA_DRUG_SNAPSHOT_KEY);
-                if (raw) {
-                    var parsed = JSON.parse(raw);
-                    if (parsed && typeof parsed === 'object') {
-                        selectedSnapshot = parsed;
-                        return selectedSnapshot;
-                    }
+        function getSnapshot(context) {
+            var key = snapshotContextKey(context);
+            if (!key) {
+                try { sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_KEY); } catch (e) { /* unavailable */ }
+                return null;
+            }
+            var registry = loadSnapshotRegistry();
+            var snapshot = registry.snapshots[key];
+            if (!isValidStoredSnapshot(snapshot, context)) {
+                if (snapshot !== undefined) {
+                    delete registry.snapshots[key];
+                    persistSnapshotRegistry();
                 }
-            } catch (e) { /* sessionStorage unavailable or parse error */ }
-            return null;
+                return null;
+            }
+            return snapshot;
         }
 
-        function clearSnapshot() {
-            selectedSnapshot = null;
-            try {
-                sessionStorage.removeItem(FARMACIA_DRUG_SNAPSHOT_KEY);
-            } catch (e) { /* sessionStorage unavailable */ }
+        function clearSnapshot(context) {
+            var key = snapshotContextKey(context);
+            if (!key) return false;
+            var registry = loadSnapshotRegistry();
+            if (registry.snapshots[key] === undefined) return false;
+            delete registry.snapshots[key];
+            persistSnapshotRegistry();
+            return true;
         }
 
         function getStatusText() {
@@ -1478,12 +1672,18 @@
             get totalCount() { return totalCount; },
             get cimaCount() { return cimaCount; },
             get localCount() { return localCount; },
-            get selectedSnapshot() { return selectedSnapshot; },
+            get selectedSnapshot() { return null; },
             loadFromExcel: loadFromExcel,
             search: search,
             selectDrug: selectDrug,
             getSnapshot: getSnapshot,
             clearSnapshot: clearSnapshot,
+            normalizeSnapshotContext: normalizeSnapshotContext,
+            snapshotContextKey: snapshotContextKey,
+            isConcreteCatalogSelection: isConcreteCatalogSelection,
+            buildCatalogProposalForSlot: buildCatalogProposalForSlot,
+            reconcileCatalogSelection: reconcileCatalogSelection,
+            mapCatalogViaToSelect: mapCatalogViaToSelect,
             getStatusText: getStatusText,
             autoLoad: autoLoad,
             getStatus: function () { return Object.assign({}, catalogStatus); },

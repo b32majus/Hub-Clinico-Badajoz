@@ -39,6 +39,14 @@
         return window.FarmaciaTratamiento || null;
     }
 
+    function mapRouteToSelect(value) {
+        var catalog = getCatalog();
+        if (catalog && typeof catalog.mapCatalogViaToSelect === 'function') return catalog.mapCatalogViaToSelect(value);
+        var helper = getTreatmentHelper();
+        if (helper && typeof helper.mapViaToSelect === 'function') return helper.mapViaToSelect(value);
+        return value ? 'Otra' : '';
+    }
+
     function getCurrentContext() {
         try {
             return F.getQueryContext ? F.getQueryContext() : {};
@@ -50,11 +58,19 @@
     function getCurrentSnapshot() {
         var catalog = getCatalog();
         if (!catalog) return null;
-        return catalog.getSnapshot ? catalog.getSnapshot() : catalog.selectedSnapshot;
+        return catalog.getSnapshot ? catalog.getSnapshot(firstVisitCatalogContext()) : null;
     }
 
-    function resolvePrimaryRelation(ctx, snapshot) {
-        if ((ctx && ctx.patient) || snapshot) return 'validado';
+    function firstVisitCatalogContext(cip) {
+        var ctx = getCurrentContext();
+        return {
+            slot: 'primera_visita.tratamiento',
+            cip: firstNonEmpty(cip, fv('fhPvCip'), activePatientCip, ctx && ctx.cip, ctx && ctx.patient && ctx.patient.cip)
+        };
+    }
+
+    function resolvePrimaryRelation(ctx) {
+        if (ctx && ctx.patient) return 'validado';
         return 'principal';
     }
 
@@ -104,16 +120,20 @@
     }
 
     function setTreatmentForm(treatment) {
-        F.setValue('fhPvFarmaco', treatment.farmaco_nombre || treatment.nombre_comercial || '');
-        F.setValue('fhPvDosis', treatment.dosis_texto || treatment.presentacion || '');
-        F.setValue('fhPvVia', treatment.via || '');
+        var farmaco = document.getElementById('fhPvFarmaco');
+        var dosis = document.getElementById('fhPvDosis');
+        var via = document.getElementById('fhPvVia');
+        if (farmaco) farmaco.value = treatment.farmaco_nombre || treatment.nombre_comercial || '';
+        if (dosis) dosis.value = treatment.dosis_texto || treatment.presentacion || '';
+        if (via) via.value = mapRouteToSelect(treatment.via);
         setPautaFromContext(treatment.pauta || treatment.pauta_label || treatment.pauta_otro_texto || '');
     }
 
     function clearTreatmentForm() {
-        F.setValue('fhPvFarmaco', '');
-        F.setValue('fhPvDosis', '');
-        F.setValue('fhPvVia', '');
+        ['fhPvFarmaco', 'fhPvDosis', 'fhPvVia'].forEach(function (id) {
+            var element = document.getElementById(id);
+            if (element) element.value = '';
+        });
         setPautaFromContext('');
     }
 
@@ -134,7 +154,7 @@
         var sourceCtx = ctx || getCurrentContext() || {};
         var patient = sourceCtx.patient || null;
         var snapshot = getCurrentSnapshot();
-        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var relation = resolvePrimaryRelation(sourceCtx);
         var treatmentHelper = getTreatmentHelper();
         var treatment = normalizePrimaryTreatment({
             paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
@@ -167,6 +187,11 @@
                 es_principal: true,
                 es_validado_farmacia: relation === 'validado',
                 fuente: 'primera_visita',
+                nombre_comercial: snapshotTreatment.nombre_comercial,
+                selected_drug_id: snapshotTreatment.selected_drug_id,
+                codigo_nacional: snapshotTreatment.codigo_nacional,
+                nregistro: snapshotTreatment.nregistro,
+                source_type: snapshotTreatment.source_type,
                 principio_activo: firstNonEmpty(treatment.principio_activo, snapshotTreatment.principio_activo),
                 dosis_texto: firstNonEmpty(treatment.dosis_texto, snapshotTreatment.dosis_texto),
                 presentacion: firstNonEmpty(treatment.presentacion, snapshotTreatment.presentacion),
@@ -184,7 +209,7 @@
     function buildPrimaryTreatmentFromSelection(drug, ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var treatmentHelper = getTreatmentHelper();
-        var relation = resolvePrimaryRelation(sourceCtx, sourceCtx.patient ? {} : getCurrentSnapshot());
+        var relation = resolvePrimaryRelation(sourceCtx);
         var cip = firstNonEmpty(sourceCtx.cip, sourceCtx.patient && sourceCtx.patient.cip, fv('fhPvCip'));
         var base = {
             paciente_cip: cip,
@@ -229,7 +254,7 @@
     function getCurrentPrimaryTreatment(ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var snapshot = getCurrentSnapshot();
-        var relation = resolvePrimaryRelation(sourceCtx, snapshot);
+        var relation = resolvePrimaryRelation(sourceCtx);
         var treatment = buildPrimaryTreatmentFromContext(sourceCtx);
         if (!hasMeaningfulTreatment(treatment)) {
             treatment = normalizePrimaryTreatment({
@@ -734,7 +759,7 @@
         applyContext({ cip: patient.cip, patient: patient });
 
         var C = getCatalog();
-        if (C && C.clearSnapshot) C.clearSnapshot();
+        if (C && C.clearSnapshot) C.clearSnapshot(firstVisitCatalogContext(patient.cip));
         applyTratamientoValidado({ patient: patient, cip: patient.cip });
         activePatientCip = patient.cip;
 
@@ -766,7 +791,7 @@
         F.clearChildren(document.getElementById('fhPvTratamientoGrid'));
         clearDrugAutocompleteDropdown();
         var catalog = getCatalog();
-        if (catalog && catalog.clearSnapshot) catalog.clearSnapshot();
+        if (catalog && catalog.clearSnapshot && activePatientCip) catalog.clearSnapshot(firstVisitCatalogContext(activePatientCip));
     }
 
     function clearCipNotice() {
@@ -878,18 +903,31 @@
 
     function selectDrugPV(drug) {
         var C = getCatalog();
-        if (!C || !drug) return;
-
-        C.selectDrug(drug);
-        var treatment = buildPrimaryTreatmentFromSelection(drug);
+        if (!C || !drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
+        var helper = getTreatmentHelper();
+        var context = firstVisitCatalogContext();
+        var contextValid = typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
+        var previous = contextValid && typeof C.getSnapshot === 'function' ? C.getSnapshot(context) : null;
+        var current = getCurrentPrimaryTreatment();
+        var reconciled = helper && typeof helper.reconcileCatalogSelection === 'function'
+            ? helper.reconcileCatalogSelection(current, previous, drug, context.slot)
+            : { values: buildPrimaryTreatmentFromSelection(drug), proposal_values: {} };
+        var treatment = normalizePrimaryTreatment(assignObjects({}, current, reconciled.values, {
+            paciente_cip: context.cip,
+            pauta: getPautaLabelForExport(),
+            fecha_inicio: fv('fhPvFecha') || current.fecha_inicio || '',
+            tipo_relacion: current.tipo_relacion,
+            estado_linea: current.estado_linea,
+            tipo_movimiento: current.tipo_movimiento,
+            es_principal: current.es_principal,
+            es_validado_farmacia: current.es_validado_farmacia,
+            fuente: 'primera_visita'
+        }), { paciente_cip: context.cip, fuente: 'primera_visita' });
         setTreatmentForm(treatment);
         applyTratamientoValidado(getCurrentContext());
+        if (contextValid && typeof C.selectDrug === 'function') C.selectDrug(drug, context, reconciled);
 
         clearDrugAutocompleteDropdown();
-        var searchInput = document.getElementById('fhPvFarmaco');
-        if (searchInput) {
-            searchInput.value = drug.display_name || drug.nombre_comercial || '';
-        }
     }
 
     function handleDrugSearchInput() {
@@ -1072,6 +1110,7 @@
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
         getCurrentPrimaryTreatment: getCurrentPrimaryTreatment,
         searchCIP: searchCIP,
+        initDrugAutocomplete: initDrugAutocomplete,
         setActivePatientCip: function (cip) { activePatientCip = cip || ''; }
     };
 
@@ -1080,7 +1119,7 @@
 
         if (!ctx.patient) {
             var C = window.FarmaciaCatalog;
-            if (C && C.clearSnapshot) C.clearSnapshot();
+            if (C && C.clearSnapshot && ctx.cip) C.clearSnapshot(firstVisitCatalogContext(ctx.cip));
         }
 
         populatePautaSelectPv('fhPvPauta', 'fhPvPautaOtro');

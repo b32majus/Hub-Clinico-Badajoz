@@ -54,6 +54,11 @@ assert(countMatches(html, /id="fhPvFarmaco"/g) === 1, 'solo hay un campo fhPvFar
 assert(countMatches(html, /id="fhPvDosis"/g) === 1, 'solo hay un campo fhPvDosis editable');
 assert(countMatches(html, /id="fhPvPauta"/g) === 1, 'solo hay un campo fhPvPauta editable');
 assert(countMatches(html, /id="fhPvVia"/g) === 1, 'solo hay un campo fhPvVia editable');
+const pvIds = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]);
+assert(new Set(pvIds).size === pvIds.length, 'HTML de Primera Visita no contiene IDs duplicados');
+const pvViaMarkup = (html.match(/<select[^>]+id="fhPvVia"[\s\S]*?<\/select>/) || [''])[0];
+const pvViaLabels = [...pvViaMarkup.matchAll(/<option[^>]*>([^<]*)<\/option>/g)].map((match) => match[1].trim());
+assert(JSON.stringify(pvViaLabels) === JSON.stringify(['Seleccionar…', 'SC', 'IV', 'Oral', 'IM', 'Otra']), 'fhPvVia ofrece exactamente las rutas canónicas visibles');
 
 const treatmentSectionPos = html.indexOf('Tratamiento validado por Farmacia');
 const farmacoPos = html.indexOf('id="fhPvFarmaco"');
@@ -158,6 +163,61 @@ if (api && typeof api.searchCIP === 'function') {
   api.searchCIP();
   assertEqual(elements.fhPvCip.value, 'CIP-UNKNOWN', 'Primera visita unknown CIP remains typed');
   assertEqual(elements.fhPvFarmaco.value, '', 'Primera visita unknown CIP enters clean manual mode');
+
+  const makeInteractive = (element) => {
+    element.listeners = {};
+    element.dataset = {};
+    element.addEventListener = function (type, handler) { (this.listeners[type] ||= []).push(handler); };
+    element.dispatchEvent = function (event) { event.target = this; (this.listeners[event.type] || []).forEach((handler) => handler.call(this, event)); };
+    element.querySelectorAll = function (selector) { return selector === '.autocomplete-item' ? this.children.filter((child) => child.classList.contains('autocomplete-item')) : []; };
+    element.contains = function (node) { return node === this || this.children.includes(node); };
+    return element;
+  };
+  Object.values(elements).forEach(makeInteractive);
+  const makeNode = (tag = 'div') => {
+    const node = makeInteractive({ tagName: tag.toUpperCase(), value: '', textContent: '', children: [], options: [], classNames: new Set(), setAttribute(name, value) { this[name] = String(value); }, appendChild(child) { this.children.push(child); if (this.tagName === 'SELECT') this.options.push(child); return child; } });
+    node.classList = { add: (name) => node.classNames.add(name), remove: (name) => node.classNames.delete(name), contains: (name) => node.classNames.has(name), toggle: (name, force) => force ? node.classNames.add(name) : node.classNames.delete(name) };
+    Object.defineProperty(node, 'className', { set(value) { node.classNames = new Set(String(value).split(/\s+/).filter(Boolean)); }, get() { return [...node.classNames].join(' '); } });
+    node.click = () => node.dispatchEvent({ type: 'click', preventDefault() {} });
+    return node;
+  };
+  elements.fhPvAutocompleteDropdown = makeNode('div');
+  elements.fhPvAutocompleteDropdown.classList.add('hidden');
+  elements.fhPvVia.options = ['', 'SC', 'IV', 'Oral', 'IM', 'Otra'].map((value) => ({ value, text: value, textContent: value }));
+  sandbox.document.createElement = makeNode;
+  sandbox.document.activeElement = null;
+  sandbox.window.FarmaciaDemo.clearChildren = (el) => { if (el) { el.children = []; el.options = el.tagName === 'SELECT' ? [] : el.options; } };
+  const pvSnapshots = new Map();
+  const pvProducts = [
+    { drug_id: 'CIMA-PV-A', source_type: 'CIMA', display_name: 'Producto PV A', nombre_comercial: 'Producto PV A', nombre_presentacion: 'Producto PV A 300 mg vial', principio_activo: 'Activo PV A', dosis: '300 mg', via: 'IV' },
+    { drug_id: 'CIMA-PV-B', source_type: 'CIMA', display_name: 'Producto PV B', nombre_comercial: 'Producto PV B', nombre_presentacion: 'Producto PV B 120 mg jeringa', principio_activo: 'Activo PV B', dosis: '120 mg', via: 'VÍA INTRAMUSCULAR' }
+  ];
+  sandbox.window.FarmaciaCatalog = {
+    loaded: true,
+    autoLoad() {},
+    search: () => pvProducts,
+    isConcreteCatalogSelection: (drug) => Boolean(drug?.drug_id && drug?.nombre_presentacion),
+    snapshotContextKey: (ctx) => ctx?.slot && ctx?.cip ? `${ctx.slot}|${ctx.cip}` : '',
+    getSnapshot: (ctx) => pvSnapshots.get(`${ctx.slot}|${ctx.cip}`) || null,
+    selectDrug: (drug, ctx, metadata) => pvSnapshots.set(`${ctx.slot}|${ctx.cip}`, { context: { ...ctx }, proposal_values: { ...metadata.proposal_values } }),
+    mapCatalogViaToSelect: (value) => /intramus|^IM$/i.test(value) ? 'IM' : (/intraven|^IV$/i.test(value) ? 'IV' : (/subcut|^SC$/i.test(value) ? 'SC' : (/oral|^VO$/i.test(value) ? 'Oral' : (value ? 'Otra' : ''))))
+  };
+  elements.fhPvCip.value = 'CIP-PV-EVENT';
+  elements.fhPvFarmaco.value = 'prod';
+  elements.fhPvDosis.value = 'Dosis profesional PV';
+  elements.fhPvVia.value = 'Oral';
+  api.initDrugAutocomplete();
+  elements.fhPvFarmaco.dispatchEvent({ type: 'input' });
+  assert(elements.fhPvDosis.value === 'Dosis profesional PV' && elements.fhPvVia.value === 'Oral', 'PV typing does not mutate combined dose or route');
+  elements.fhPvAutocompleteDropdown.children[0].click();
+  assert(elements.fhPvFarmaco.value === 'Producto PV A', 'PV click replaces partial query with catalog product identity');
+  assert(elements.fhPvDosis.value === 'Dosis profesional PV' && elements.fhPvVia.value === 'Oral', 'PV click preserves professional combined dose and route edits');
+  elements.fhPvDosis.value = '';
+  elements.fhPvVia.value = '';
+  elements.fhPvFarmaco.value = 'segundo';
+  elements.fhPvFarmaco.dispatchEvent({ type: 'input' });
+  elements.fhPvAutocompleteDropdown.children[1].click();
+  assert(elements.fhPvDosis.value === 'Producto PV B 120 mg jeringa' && elements.fhPvVia.value === 'IM', 'PV selection proposes one full presentation and canonical route');
 }
 
 const ctxTreatment = api.buildPrimaryTreatmentFromContext({ cip: 'CIP-PV-001', patient: null });
