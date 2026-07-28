@@ -1,0 +1,88 @@
+name: Bootstrap Farmacia V4 First Visit S08
+
+on:
+  pull_request:
+    branches:
+      - 'rescue/farmacia-v4'
+    paths:
+      - '.github/workflows/farmacia-v4-first-visit-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'work/fh-first-visit-start-ui-v4-20260725'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      TZ: Europe/Madrid
+    steps:
+      - name: Checkout work branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/fh-first-visit-start-ui-v4-20260725
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply deterministic patch
+        run: |
+          python3 tools/apply_first_visit_start_ui_patch.py
+          python3 tools/apply_first_visit_check_patch.py
+      - name: Syntax and Node regressions
+        id: nodechecks
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          {
+            node --check scripts/farmacia_first_visit_start_v4.js
+            node --check scripts/farmacia_validation_export_truth_v4_transition_guard.js
+            node --check tools/farmacia_first_visit_start_v4_check.mjs
+            node --check tools/farmacia_v4_first_visit_browser_qa.mjs
+            node tools/farmacia_treatment_start_core_v4_check.mjs
+            node tools/farmacia_first_visit_start_v4_check.mjs
+            node tools/farmacia_validation_state_v4_check.mjs
+            node tools/farmacia_catalog_noninference_check.mjs
+            node tools/farmacia_smoke_check.mjs
+            git diff --check
+          } 2>&1 | tee /tmp/farmacia-v4-first-visit-node.log
+      - name: Upload Node log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: farmacia-v4-first-visit-node-log
+          path: /tmp/farmacia-v4-first-visit-node.log
+          if-no-files-found: error
+      - name: Require Node success
+        if: always()
+        run: test '${{ steps.nodechecks.outcome }}' = 'success'
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/farmacia-v4-first-visit-bootstrap-http.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4173/farmacia_index.html >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/farmacia-v4-first-visit-bootstrap-http.log
+          exit 1
+      - name: Browser QA supported flow
+        env:
+          BASE_URL: http://127.0.0.1:4173
+        run: node tools/farmacia_v4_first_visit_browser_qa.mjs
+      - name: Commit verified patch and remove bootstrap helpers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm tools/apply_first_visit_start_ui_patch.py
+          git rm tools/apply_first_visit_check_patch.py
+          git rm .github/workflows/farmacia-v4-first-visit-bootstrap.yml
+          git add farmacia_primera_visita.html scripts/farmacia_validation_export_truth_v4_transition_guard.js tools/farmacia_validation_state_v4_check.mjs
+          git commit -m "feat(farmacia): confirm treatment start in First Visit"
+          git push origin HEAD:work/fh-first-visit-start-ui-v4-20260725
