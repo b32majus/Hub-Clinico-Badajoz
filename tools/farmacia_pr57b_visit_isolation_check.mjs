@@ -127,7 +127,7 @@ check(ids.get('fhSegExportTxt').disabled && ids.get('fhSegExportCsv').disabled &
 
 api.toggleLineSelection('BIO-FH-004-L2', true);
 check(controlsMatch(defaults), 'fresh L2 restores visible baseline defaults');
-check(!ids.get('fhSegExportTxt').disabled && !ids.get('fhSegExcelExportBtn').disabled, 'one selected line enables existing exports');
+check(!ids.get('fhSegExportTxt').disabled && ids.get('fhSegExcelExportBtn').disabled, 'one evaluated line enables JARA but not row export before explicit dispensing');
 const beforeEmptyDeselect = confirmCalls;
 api.toggleLineSelection('BIO-FH-004-L2', false);
 check(confirmCalls === beforeEmptyDeselect && api.getCurrentVisit().selected_line_ids.length === 0, 'empty baseline line deselects immediately without confirm');
@@ -139,7 +139,7 @@ setChip('mg1', 'no'); setChip('mg2', 'si');
 ids.get('fhSegFecha').value = '2026-07-27'; ids.get('fhSegServicio').value = 'Reumatología'; ids.get('fhSegPatologia').value = 'LES';
 api.toggleLineSelection('BIO-FH-004-L3', true);
 check(controlsMatch(l2) && api.getCurrentVisit().editing_line_id === 'BIO-FH-004-L2', 'adding L3 preserves the current L2 editor and values');
-check(ids.get('fhSegExportTxt').disabled && !ids.get('fhSegMultilineExportWarning').classList.contains('hidden'), 'two selected lines disable exports and show warning');
+check(!ids.get('fhSegExportTxt').disabled, 'two selected lines remain eligible for the multilínea JARA output');
 
 api.selectLineById('BIO-FH-004-L3');
 check(controlsMatch(defaults), 'first L3 edit starts at baseline defaults');
@@ -181,7 +181,7 @@ const visitImplementationPaths = [visitBlock, syncBlock, cipLifecycleBlock].join
 check(/visit_id: 'FH-VISIT-'.*Date\.now.*Math\.random/.test(visitBlock), 'visit_id is generated freshly in memory');
 check(js.includes('createFollowupVisit(requestedCip)') && js.includes('createFollowupVisit(currentSegPatient'), 'initial and changed CIP create a visit');
 check(!/sessionStorage|localStorage|indexedDB|FarmaciaMultitreatment|URLSearchParams|FARMACIA_DRUG_SNAPSHOT/.test(visitImplementationPaths), 'all visit/line-state paths avoid persistent, multitreatment, snapshot and URL storage');
-check(/selected_line_ids: \[\], editing_line_id: '', line_state: \{\}/.test(visitBlock), 'visit owns selected IDs, editor ID and per-line state');
+check(/selected_line_ids: \[\], dispensed_line_ids: \[\], editing_line_id: '', line_state: \{\}/.test(visitBlock), 'visit owns evaluated/dispensed IDs, editor ID and per-line state');
 
 check(syncBlock.includes('activeLines.length === 1 ? [activeLines[0].linea_id] : []'), 'exactly one active line is auto-selected');
 check(syncBlock.includes("editing_line_id = activeLines.length === 1 ? activeLines[0].linea_id : ''"), 'exactly one active line is auto-edited');
@@ -209,8 +209,8 @@ check(syncBlock.includes('currentFollowupVisit.line_state = {}'), 'known CIP hyd
 check(js.includes('syncBiologicControls(null)') && editorBlock.includes(": ''"), 'unknown CIP remains clean with line controls cleared');
 check(js.includes('LINE_CONTROL_DEFAULTS') && editorBlock.includes('LINE_CONTROL_DEFAULTS[id]'), 'fresh and discarded lines restore explicit contract defaults');
 
-check(js.includes("button.disabled = count !== 1 || suspectCount > 1"), 'exports require exactly one selected line and preserve the PR57C suspect gate');
-check(html.includes('La exportación multilínea se incorporará en el checkpoint de salidas. Reduzca temporalmente la visita a una línea para usar las exportaciones actuales.'), 'multiline export warning is exact');
+check(js.includes('jara.disabled = count < 1') && js.includes('button.disabled = dispensedCount < 1'), 'PR57D replaces the obsolete exact-one interlock with evaluated/dispensed gates');
+check(html.includes('Marque al menos una línea como dispensada en esta visita para generar filas CSV o Excel.'), 'zero-dispense row-export notice is exact');
 check(html.includes('fhSegExportTxt') && html.includes('fhSegExportCsv') && html.includes('fhSegExcelExportBtn'), 'JARA, CSV and Excel export anchors remain');
 check(js.includes("'CIP-DEMO-FH-002': []") && js.includes("estado_linea: 'validated_not_started'"), 'FH-002/003 have no active selectable line');
 check(!/selected_line_ids.*tratamiento_id|editing_line_id.*tratamiento_id/.test(js), 'visit line identity has no treatment-ID fallback');

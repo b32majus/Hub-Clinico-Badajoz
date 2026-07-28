@@ -2014,6 +2014,9 @@
 .seg-line-card__id { font-size: 0.78rem; overflow-wrap: anywhere; }
 .seg-line-card__meta { color: #475569; font-size: 0.82rem; }
 .seg-line-selection__selector { max-width: 420px; margin: 12px 0 0; }
+.seg-line-selection__editors { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.seg-line-selection__editors .form-group { flex: 1 1 260px; }
+.seg-line-selection__dispensed { max-width: 260px; margin: 12px 0 0; }
 .seg-line-cards__empty { margin: 0; color: #64748B; font-size: 0.85rem; }
 
 .longitudinal-demo-banner {

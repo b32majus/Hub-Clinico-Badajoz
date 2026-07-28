@@ -225,8 +225,8 @@
       causalidad_karch: cleanValue(ea ? (ea.causalidad_karch || '') : ''),
       accion_ea: cleanValue(ea ? (ea.accion || '') : ''),
       /* H */
-      created_at: cleanValue(isoNow),
-      updated_at: cleanValue(isoNow),
+      created_at: cleanValue(context.createdAt || isoNow),
+      updated_at: cleanValue(context.updatedAt || context.createdAt || isoNow),
       demo_flag: cleanValue(context.demoFlag !== undefined ? (context.demoFlag ? 'TRUE' : 'FALSE') : 'TRUE'),
       observaciones_generales: cleanValue(context.observaciones || ''),
     };
@@ -279,8 +279,26 @@
     return true;
   }
 
+  /* ---- Copiar varias filas TSV en una única operación ---- */
+  function copyTSVRowsToClipboard(rowArrays, opts) {
+    opts = opts || {};
+    if (!Array.isArray(rowArrays) || !rowArrays.length) return false;
+    var tsv = rowArrays.map(toTSVRow).filter(Boolean).join('\n');
+    var sheetName = opts.sheetName || 'la hoja correspondiente';
+    var count = rowArrays.length;
+    if (!tsv) return false;
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(tsv).then(function () {
+        showToast(count + ' filas copiadas. Pega en las primeras filas libres de la hoja ' + sheetName + '.');
+      })['catch'](function () { fallbackCopy(tsv, sheetName, count); });
+    } else {
+      fallbackCopy(tsv, sheetName, count);
+    }
+    return true;
+  }
+
   /* ---- Fallback: textarea temporal ---- */
-  function fallbackCopy(tsv, sheetName) {
+  function fallbackCopy(tsv, sheetName, rowCount) {
     // Buscar o crear textarea temporal
     var ta = document.getElementById('fhExcelRowExportFallback');
     if (!ta) {
@@ -293,7 +311,9 @@
     ta.select();
     try {
       document.execCommand('copy');
-      showToast('Fila copiada. Pega en la primera fila libre de la hoja ' + sheetName + '.');
+      showToast(rowCount > 1
+        ? rowCount + ' filas copiadas. Pega en las primeras filas libres de la hoja ' + sheetName + '.'
+        : 'Fila copiada. Pega en la primera fila libre de la hoja ' + sheetName + '.');
     } catch (e) {
       // Mostrar textarea visible para copia manual
       ta.style.cssText = 'position:fixed;top:50%;left:50%;width:400px;height:100px;opacity:1;z-index:9999;font-size:12px;';
@@ -396,13 +416,16 @@
       fechaActo: opts.fechaActo || '',
       profesional: opts.profesional || '',
       efectoAdverso: ea,
-      hayEfectoAdverso: ea ? true : (opts.hayEa !== undefined ? opts.hayEa : false),
+      hayEfectoAdverso: ea ? true : (opts.hayEa !== undefined ? opts.hayEa : null),
       proms: opts.proms || (patient ? patient.proms : null),
       respuestaClinica: opts.respuestaClinica || '',
       incidencias: opts.incidencias || '',
       obsSeguimiento: opts.observaciones || '',
+      observaciones: opts.observacionesGenerales || '',
       demoFlag: opts.demoFlag !== undefined ? opts.demoFlag : true,
       estadoRegistro: 'completado',
+      createdAt: opts.createdAt || '',
+      updatedAt: opts.updatedAt || '',
     };
   }
 
@@ -438,6 +461,7 @@
     buildExcelRowArray: buildExcelRowArray,
     toTSVRow: toTSVRow,
     copyTSVRowToClipboard: copyTSVRowToClipboard,
+    copyTSVRowsToClipboard: copyTSVRowsToClipboard,
     getServiceSheetName: getServiceSheetName,
     buildFilename: buildFilename,
     buildContextFromValidacion: buildContextFromValidacion,

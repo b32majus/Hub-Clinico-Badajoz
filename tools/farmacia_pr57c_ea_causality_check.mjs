@@ -112,12 +112,12 @@ confirmations = [true]; api.setEaPresent('no'); check(api.getCurrentVisit().adve
 api.setEaPresent('si'); api.toggleEaSuspect(`other:${uid}`, true); api.setCausalityEditor(`other:${uid}`); node('fhCausalidadFinal').value = 'Posible'; api.captureCausalityEditor(); confirmations = [false]; check(!api.deleteFollowupOtherDrug(uid) && api.getFollowupOtherDrugs().some((drug) => drug.uid === uid), 'linked related delete cancel preserves row and causal data');
 confirmations = [true]; check(api.deleteFollowupOtherDrug(uid) && !api.getCurrentVisit().adverse_event.suspect_ids.includes(`other:${uid}`), 'linked related delete accept cleans suspect and causality references');
 
-api.toggleLineSelection('L3', false); api.toggleEaSuspect('line:L2', true); check(!node('fhSegExportTxt').disabled, 'one selected line and one suspect preserve current exports'); api.toggleEaSuspect('line:L3', true);
-check(node('fhSegExportTxt').disabled && !node('fhSegMultiSuspectExportWarning').classList.contains('hidden'), 'two suspects block exports and show the exact additional warning');
+api.toggleLineSelection('L3', false); api.toggleEaSuspect('line:L2', true); check(!node('fhSegExportTxt').disabled, 'one selected line and one suspect preserve JARA'); api.toggleEaSuspect('line:L3', true);
+check(!node('fhSegExportTxt').disabled, 'multiple suspects remain exportable after PR57D aggregation');
 
 const candidateBlock = (js.match(/function getRelevantDrugCandidates[\s\S]*?function updateLegacySuspectSummary/) || [''])[0];
 check(!/dom:|tratamiento_id|currentBiologicLines\[0\]|multiple:unassigned/.test(candidateBlock), 'candidate identity has no DOM, treatment-ID, index, first or multiple sentinel fallback');
-check(html.includes('Fármaco cuya causalidad estás evaluando') && html.includes('La exportación con múltiples fármacos sospechosos se incorporará en el checkpoint de salidas.'), 'binding editor label and multi-suspect warning are exact');
+check(html.includes('Fármaco cuya causalidad estás evaluando') && !html.includes('fhSegMultiSuspectExportWarning'), 'binding editor remains and obsolete multi-suspect warning is removed');
 check(js.includes('currentFollowupVisit = null') && !/sessionStorage|localStorage|indexedDB|URLSearchParams/.test((js.match(/function createFollowupVisit[\s\S]*?function clearMoriskyControls/) || [''])[0]), 'CIP/reload lifecycle is fresh runtime memory without restoration storage');
 check(js.includes('fhSegDlqiQuestions') && js.includes('data-mg-name') && js.includes('FarmaciaCatalog') && js.includes('navToDashboardPaciente') && js.includes('buildSegLines'), '#57A/#57B, DLQI, Morisky, catalog, dashboard and exporter anchors remain');
 check(!html.includes('Sospechoso de EA</label>') && !js.includes("relation = 'sospechoso_ea'"), 'related card has no redundant suspect control or relationship conversion');
