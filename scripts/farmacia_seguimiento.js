@@ -257,6 +257,9 @@
             presentacion: line.presentacion || line.presentacion_dosis || '',
             via: line.via || '',
             pauta: line.pauta || '',
+            pauta_codigo: line.pauta_codigo || '',
+            pauta_label: line.pauta_label || '',
+            pauta_otro_texto: line.pauta_otro_texto || '',
             fecha_inicio: line.fecha_inicio || '',
             fecha_fin: line.fecha_fin || '',
             codigo_nacional: line.codigo_nacional || '',
@@ -2396,7 +2399,12 @@
         getRelevantDrugCandidates().forEach(function (candidate) { candidates[candidate.id] = candidate.label; });
         var adverse = JSON.parse(JSON.stringify(currentFollowupVisit.adverse_event));
         var causalities = adverse.suspect_ids.map(function (id) {
-            return Object.assign({ suspect_id: id, suspect_label: candidates[id] || id }, currentFollowupVisit.causality_by_suspect[id] || blankCausalityState());
+            var state = currentFollowupVisit.causality_by_suspect[id] || blankCausalityState();
+            return Object.assign({
+                suspect_id: id,
+                suspect_label: candidates[id] || id,
+                evaluated: causalityStateIsDirty(state)
+            }, state);
         });
         var promsEnabled = fv('fhSegProms') === 'Sí, recoger DLQI + EVA dolor/prurito' && isPromsExpandedVisible();
         return {
@@ -2419,6 +2427,32 @@
         return Object.prototype.hasOwnProperty.call(item.controls, id) ? item.controls[id] : LINE_CONTROL_DEFAULTS[id];
     }
 
+    function resolveLineTherapeuticOutput(item) {
+        var line = item.line || {};
+        var optimized = lineControl(item, 'fhSegOptimiza') === 'Sí';
+        var suspended = lineControl(item, 'fhSegSuspension') === 'Sí';
+        var newDose = optimized ? cleanExportToken(lineControl(item, 'fhSegNuevaDosis')) : '';
+        var newPautaCode = optimized ? cleanExportToken(lineControl(item, 'fhSegNuevaPauta')) : '';
+        var pautaCode = newPautaCode || line.pauta_codigo || '';
+        var pautaLabel = line.pauta_label || line.pauta || '';
+        var pautaOther = line.pauta_otro_texto || '';
+        if (newPautaCode) {
+            var pauta = P && typeof P.getPautaByCodigo === 'function' ? P.getPautaByCodigo(newPautaCode) : null;
+            pautaLabel = pauta && pauta.pauta_label || newPautaCode;
+            pautaOther = newPautaCode === 'OTRO' ? cleanExportToken(lineControl(item, 'fhSegNuevaPautaOtro')) : '';
+        }
+        return {
+            optimized: optimized,
+            suspended: suspended,
+            dosis: newDose || line.dosis || line.dosis_texto || '',
+            pauta_codigo: pautaCode,
+            pauta_label: pautaLabel,
+            pauta_otro_texto: pautaOther,
+            motivo_optimizacion: optimized ? cleanExportToken(lineControl(item, 'fhSegMotivoOpt')) : '',
+            motivo_suspension: suspended ? cleanExportToken(lineControl(item, 'fhSegMotivoSusp')) : ''
+        };
+    }
+
     function buildAggregatedAdverseEvent(model) {
         if (model.adverse_event.present !== 'si') return null;
         return {
@@ -2426,8 +2460,8 @@
             gravedad: model.adverse_event.severity,
             farmaco_sospechoso_id: model.causalities.map(function (item) { return item.suspect_id; }).join(' | '),
             farmaco_sospechoso_nombre: model.causalities.map(function (item) { return item.suspect_label; }).join(' | '),
-            causalidad_naranjo: model.causalities.map(function (item) { return item.suspect_id + ': ' + item.naranjo_score + ' · ' + item.naranjo_category; }).join(' | '),
-            causalidad_karch: model.causalities.map(function (item) { return item.suspect_id + ': ' + item.karch_category; }).join(' | '),
+            causalidad_naranjo: model.causalities.map(function (item) { return item.suspect_id + ': ' + (item.evaluated ? item.naranjo_score + ' · ' + item.naranjo_category : 'No evaluada'); }).join(' | '),
+            causalidad_karch: model.causalities.map(function (item) { return item.suspect_id + ': ' + (item.evaluated ? item.karch_category : 'No evaluada'); }).join(' | '),
             accion: model.adverse_event.corrected
         };
     }
@@ -2445,10 +2479,13 @@
         var ea = buildAggregatedAdverseEvent(model);
         var hayEa = model.adverse_event.present === 'si' ? true : (model.adverse_event.present === 'no' ? false : null);
         return model.dispensed_lines.map(function (item) {
+            var therapeutic = resolveLineTherapeuticOutput(item);
             var line = Object.assign({}, item.line, {
                 tipo_movimiento: lineControl(item, 'fhSegTipoRelacionTerapia'),
-                dosis: lineControl(item, 'fhSegNuevaDosis') || item.line.dosis,
-                pauta_label: lineControl(item, 'fhSegNuevaPauta') || item.line.pauta
+                dosis: therapeutic.dosis,
+                pauta_codigo: therapeutic.pauta_codigo,
+                pauta_label: therapeutic.pauta_label,
+                pauta_otro_texto: therapeutic.pauta_otro_texto
             });
             var context = exp.buildContextFromSeguimiento(patient, {
                 tipoActo: 'seguimiento', visitaId: model.common_visit.visit_id, lineaActual: line,
@@ -2459,6 +2496,7 @@
                 observaciones: lineControl(item, 'fhSegObservacionesLinea'),
                 observacionesGenerales: buildGeneralObservations(model), demoFlag: true
             });
+            context.motivo = [therapeutic.motivo_optimizacion, therapeutic.motivo_suspension].filter(Boolean).join(' | ');
             return exp.buildExcelRowArray(exp.buildExcelRowObject(context));
         });
     }
@@ -2484,18 +2522,20 @@
         lines.push('');
         lines.push('LÍNEAS EVALUADAS EN LA VISITA');
         model.evaluated_lines.forEach(function (item, index) {
+            var therapeutic = resolveLineTherapeuticOutput(item);
             lines.push('--- Línea evaluada ' + (index + 1) + ' ---');
             lines.push('ID línea: ' + item.line_id);
             lines.push('Dispensado en esta visita: ' + (item.dispensed ? 'Sí' : 'No'));
             lines.push('Fármaco / Marca: ' + textOrDash(item.line.farmaco_nombre || item.line.nombre_comercial || item.line.nombre_linea));
             lines.push('Principio activo: ' + textOrDash(item.line.principio_activo));
-            lines.push('Dosis: ' + textOrDash(item.line.dosis));
+            lines.push('Dosis: ' + textOrDash(therapeutic.dosis));
             lines.push('Vía: ' + textOrDash(item.line.via));
-            lines.push('Pauta: ' + textOrDash(item.line.pauta));
+            lines.push('Pauta: ' + textOrDash(therapeutic.pauta_label + (therapeutic.pauta_otro_texto ? ' · ' + therapeutic.pauta_otro_texto : '')));
             lines.push('Movimiento terapéutico: ' + textOrDash(lineControl(item, 'fhSegTipoRelacionTerapia')));
             lines.push('Optimización: ' + textOrDash(lineControl(item, 'fhSegOptimiza')));
-            lines.push('Nueva dosis: ' + textOrDash(lineControl(item, 'fhSegNuevaDosis')));
+            lines.push('Motivo optimización: ' + textOrDash(therapeutic.motivo_optimizacion));
             lines.push('Suspensión: ' + textOrDash(lineControl(item, 'fhSegSuspension')));
+            lines.push('Motivo suspensión: ' + textOrDash(therapeutic.motivo_suspension));
             lines.push('Observaciones de esta línea: ' + textOrDash(lineControl(item, 'fhSegObservacionesLinea')));
             lines.push('Adherencia Morisky-Green: ' + item.morisky_result);
             lines.push('');
@@ -2511,7 +2551,7 @@
         lines.push('- Acción: ' + textOrDash(model.adverse_event.corrected));
         lines.push('- Observaciones: ' + textOrDash(model.adverse_event.observations));
         model.causalities.forEach(function (item) {
-            lines.push('Causalidad ' + item.suspect_id + ' (' + item.suspect_label + '): Naranjo ' + item.naranjo_score + ' · ' + item.naranjo_category + ' | Karch ' + item.karch_category + ' | Final ' + item.final_assessment);
+            lines.push('Causalidad ' + item.suspect_id + ' (' + item.suspect_label + '): ' + (item.evaluated ? 'Naranjo ' + item.naranjo_score + ' · ' + item.naranjo_category + ' | Karch ' + item.karch_category + ' | Final ' + item.final_assessment : 'No evaluada'));
         });
         lines.push('');
         lines.push('--- PROMs de la visita ---');
