@@ -68,7 +68,7 @@
 | **WO-FH-DERMA-PATHOLOGY-SPECIFIC-VALIDATION-01** | Añadir Validación Dermatología multipatología | ✅ Merged | `work/fh-derma-pathology-validation-20260728` → `recovery/farmacia-pr-replay-20260727` | commit `51009db8b16444e29e842f827a1a98a025d434a6` → merge `ce88818be931b0b008890fede19257530fca10c6` (PR #175, issue #174) | Cinco patologías, JARA/CSV/Excel coherentes y ausencia como `No informado`; pendiente de validación funcional externa. |
 | **WO-FH-CACERES-PHARMACY-ONLY-DEPLOYMENT-01** | Crear snapshot estable Pharmacy-only para Cáceres | ✅ Merged | `work/fh-caceres-pharmacy-only-deployment-20260728` → `recovery/farmacia-pr-replay-20260727` | commit `9e86f6ae9be7bb143bf516ce34e9d38858922bbc` → merge `cd258e76dad76d2abf1dfd0cb9f11f086516236e` (PR #177, issue #176) | `CÁCERES-REVIEW-0.1` publicado y enviado a Farmacia; solo datos sintéticos, no piloto ni producto. |
 
-> **Referencia publicada Farmacia desde 2026-07-28:** `recovery/farmacia-pr-replay-20260727` @ `cd258e76dad76d2abf1dfd0cb9f11f086516236e`. Estado detallado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md).
+> **Último HEAD funcional publicado de Farmacia:** `cd258e76dad76d2abf1dfd0cb9f11f086516236e` en `recovery/farmacia-pr-replay-20260727`. Los commits documentales posteriores pueden avanzar la rama sin modificar ese bundle funcional. Estado detallado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md).
 
 ---
 
