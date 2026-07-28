@@ -1,0 +1,207 @@
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Farmacia Hospitalaria</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260614-wo4-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260614-wo4-a">
+<style id="caceres-review-style">
+.caceres-review-identity{position:relative;z-index:10000;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
+.caceres-review-identity__meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+.caceres-review-identity__warning{margin-top:6px;padding:6px 10px;background:#fff3cd;color:#5f4600;border:2px solid #e0a800;border-radius:4px}
+</style>
+</head>
+        <body>
+<section class="caceres-review-identity" aria-label="Identidad del entorno de evaluación">
+  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.1</span></div>
+  <div class="caceres-review-identity__warning" role="alert"><strong>Datos exclusivamente sintéticos.</strong> No usar para asistencia clínica real.</div>
+</section>
+            <div class="hub-shell">
+        <aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH — Entorno de evaluación</span>
+        <span class="profile-badge">FH · EVALUACIÓN</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link active" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">CSV sintético</span>
+        </div>
+    </div>
+    <div class="catalog-sidebar-block catalog-sidebar-block--compact">
+        <div class="catalog-sidebar-header">
+            <i class="fas fa-pills"></i> Catálogo farmacológico
+            <i class="fas fa-info-circle catalog-sidebar-info" title="CIMA se carga automáticamente al abrir la demo." aria-label="CIMA se carga automáticamente al abrir la demo."></i>
+        </div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: cargando automáticamente…</div>
+        <p class="catalog-sidebar-note" id="catalogSidebarNote">Esperando detalles…</p>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
+    <div class="sidebar-footer">CÁCERES-REVIEW-0.1</div>
+</aside>
+                <main class="main-content farmacia-paciente farmacia-paciente--index">
+        <div class="demo-banner" role="note">
+    <i class="fas fa-flask" aria-hidden="true"></i>
+    <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+</div><section class="patient-header-card module-hero">
+    <div class="patient-header-main">
+        <div class="patient-info">
+            <h1 class="patient-name">Inicio Farmacia</h1>
+            <p class="hero-description">Entrada única por CIP para abrir Quick View o alta guiada.</p>
+        </div>
+    </div>
+</section><section class="search-card">
+    <span class="search-card__label"><i class="fas fa-search" aria-hidden="true"></i> Búsqueda por CIP</span>
+    <div class="search-card__row">
+        <input type="text" id="fhCipInput" class="search-card__input" placeholder="Ej. CIP-DEMO-FH-001" maxlength="24" autocomplete="off" spellcheck="false">
+        <button type="button" class="btn btn-primary" id="fhSearchBtn"><i class="fas fa-search" aria-hidden="true"></i> Buscar paciente</button>
+    </div>
+    <p class="search-card__hint">Demo: <strong>CIP-DEMO-FH-001</strong> (HS en seguimiento) · <strong>CIP-DEMO-FH-002</strong> (HS pendiente validación) · <strong>CIP-DEMO-FH-003</strong> (Reuma validado) · <strong>CIP-DEMO-FH-004</strong> (Multibiológico LES/Sjögren). Un CIP nuevo abre alta guiada.</p>
+</section>
+
+<section class="dashboard-card demo-case-card" id="demoCaseFh004">
+    <h2 class="section-title"><i class="fas fa-star" aria-hidden="true"></i> Caso demo destacado: Paciente FH-004</h2>
+    <p class="hero-description">Paciente sintético con <strong>3 biológicos</strong> (Belimumab + Rituximab), seguimiento multibiológico activo, evaluación de causalidad por efecto adverso y dashboard longitudinal completo.</p>
+    <div class="demo-case-card__actions">
+        <a href="farmacia_dashboard_paciente.html?cip=CIP-DEMO-FH-004&entrada=dashboard" class="btn btn-primary"><i class="fas fa-user-circle" aria-hidden="true"></i> Ver dashboard FH-004</a>
+        <a href="farmacia_seguimiento.html?cip=CIP-DEMO-FH-004&entrada=seguimiento" class="btn btn-outline"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Ir a seguimiento</a>
+    </div>
+</section>
+
+<section class="guided-intake-card hidden" id="guidedIntakePanel">
+    <h2 class="section-title"><i class="fas fa-user-plus" aria-hidden="true"></i> Paciente no encontrado — Alta guiada</h2>
+    <p class="hero-description">CIP introducido: <strong id="guidedCip">—</strong>. Complete los datos mínimos para abrir la pantalla correspondiente con contexto por URL.</p>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="fhAltaServicio">Servicio origen</label>
+            <select class="form-select" id="fhAltaServicio">
+                <option value="">Seleccionar...</option>
+                <option value="dermatologia">Dermatología</option>
+                <option value="reumatologia">Reumatología</option>
+                <option value="digestivo">Digestivo</option>
+                <option value="oncologia">Oncología</option>
+                <option value="otro">Otro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="fhAltaPatologia">Patología / indicación</label>
+            <select class="form-select" id="fhAltaPatologia" disabled><option value="">Seleccionar servicio primero...</option></select>
+        </div>
+        <div class="form-group">
+            <label for="fhAltaPuntoEntrada">Circuito de entrada</label>
+            <select class="form-select" id="fhAltaPuntoEntrada">
+                <option value="">Seleccionar...</option>
+                <option value="validacion">Validación farmacoterapéutica</option>
+                <option value="primera_visita">Primera visita Farmacia</option>
+                <option value="seguimiento">Visita de seguimiento</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-actions">
+        <a href="#" class="btn btn-primary" id="fhAltaAcceder"><i class="fas fa-arrow-right" aria-hidden="true"></i> Iniciar episodio</a>
+        <button type="button" class="btn btn-outline" id="fhAltaCancelar">Cancelar</button>
+    </div>
+</section>
+
+<section class="dashboard-card" id="modCargaDatosProyecto">
+    <h2 class="section-title"><i class="fas fa-file-import"></i> Carga de datos del proyecto</h2>
+    <p class="validation-module__intro">Cargue manualmente los Excel locales de Enfermería y Farmacia. Los datos quedan en el navegador para esta demo. El catálogo CIMA se intenta cargar automáticamente al abrir la app.</p>
+    <div class="import-grid">
+        <section class="import-card">
+            <h3 class="card-title card-title--tight"><i class="fas fa-notes-medical"></i> Excel de Enfermería</h3>
+            <p class="import-card__status" id="estadoCargaEnfermeria">No se ha cargado Excel de Enfermería</p>
+            <p class="import-card__detail" id="detalleCargaEnfermeria">Sin importación local almacenada.</p>
+            <button type="button" class="btn btn-primary import-card__button" id="btnCargarExcelEnfermeria"><i class="fas fa-upload"></i> Cargar Excel de Enfermería</button>
+            <input type="file" id="inputExcelEnfermeria" class="hidden" accept=".xlsx,.xls">
+        </section>
+        <section class="import-card">
+            <h3 class="card-title card-title--tight"><i class="fas fa-clinic-medical"></i> Excel de Farmacia</h3>
+            <p class="import-card__status" id="estadoCargaFarmacia">No se ha cargado Excel de Farmacia</p>
+            <p class="import-card__detail" id="detalleCargaFarmacia">Sin importación local almacenada.</p>
+            <button type="button" class="btn btn-primary import-card__button" id="btnCargarExcelFarmacia"><i class="fas fa-upload"></i> Cargar Excel de Farmacia</button>
+            <input type="file" id="inputExcelFarmacia" class="hidden" accept=".xlsx,.xls">
+        </section>
+    </div>
+    <div class="validation-note-block">
+        <span class="validation-note-block__label">CIMA</span>
+        <p class="validation-note-block__value" data-catalog-status>Catálogo farmacológico: pendiente de carga automática</p>
+    </div>
+</section>
+
+
+<section class="dashboard-card" id="enfermeriaBoard">
+    <h2 class="section-title enfermeria-board__heading"><i class="fas fa-user-nurse"></i> Solicitudes Enfermería / Inicio biológico (<span id="enfermeriaBoardCount">0</span>)</h2>
+    <p class="validation-module__intro">Solicitudes procedentes de Enfermería, agrupadas únicamente por su estado prebiológico explícito.</p>
+    <p class="empty-state hidden" id="enfermeriaBoardEmpty">No hay solicitudes de Enfermería / Inicio biológico.</p>
+    <div id="enfermeriaBoardCards" aria-live="polite"></div>
+</section>
+
+<section class="dashboard-card" id="pendingValidationBoard">
+    <h2 class="section-title"><i class="fas fa-user-clock"></i> Solicitudes generales pendientes de validación (<span id="pendingValidationBoardCount">0</span>)</h2>
+    <p class="validation-module__intro">Solicitudes pendientes que no proceden de Enfermería / Inicio biológico.</p>
+    <p class="empty-state hidden" id="pendingValidationEmpty">No hay solicitudes generales pendientes de validación.</p>
+    <div class="pending-validation-grid" id="pendingValidationCards" aria-live="polite"></div>
+</section>
+
+<h2 class="section-title">Accesos rápidos</h2>
+<section class="action-grid">
+    <a href="farmacia_validacion.html" class="action-card"><i class="fas fa-check-double action-card__icon"></i><span class="action-card__title">Validación</span><span class="action-card__desc">Evaluar solicitudes farmacoterapéuticas pendientes.</span></a>
+    <a href="farmacia_primera_visita.html" class="action-card"><i class="fas fa-plus-circle action-card__icon"></i><span class="action-card__title">Primera Visita</span><span class="action-card__desc">Registrar inicio del seguimiento farmacoterapéutico.</span></a>
+    <a href="farmacia_seguimiento.html" class="action-card"><i class="fas fa-clipboard-list action-card__icon"></i><span class="action-card__title">Seguimiento</span><span class="action-card__desc">Adherencia, PROMs, optimización, suspensión y efectos adversos.</span></a>
+    <a href="farmacia_dashboard_paciente.html" class="action-card"><i class="fas fa-user-circle action-card__icon"></i><span class="action-card__title">Dashboard Paciente</span><span class="action-card__desc">Visión longitudinal individual del episodio FH.</span></a>
+    <a href="farmacia_actividad_servicio.html" class="action-card"><i class="fas fa-tasks action-card__icon"></i><span class="action-card__title">Actividad del servicio</span><span class="action-card__desc">Indicadores operativos con datos demo e importados.</span></a>
+    <a href="farmacia_estadisticas.html" class="action-card"><i class="fas fa-chart-bar action-card__icon"></i><span class="action-card__title">Estadísticas del servicio</span><span class="action-card__desc">Dashboard longitudinal de cohorte y seguimiento.</span></a>
+    <a href="farmacia_farmacos.html" class="action-card"><i class="fas fa-pills action-card__icon"></i><span class="action-card__title">Fármacos</span><span class="action-card__desc">Catálogo farmacológico demo con carga automática.</span></a>
+    <a href="farmacia_profesionales.html" class="action-card"><i class="fas fa-users action-card__icon"></i><span class="action-card__title">Profesionales</span><span class="action-card__desc">Vista operativa del equipo de Farmacia.</span></a>
+</section>
+                </main>
+            </div>
+            <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
+            <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
+    <script src="scripts/farmacia_prebiologico.js?v=20260614-wo4-a"></script>
+    <script src="scripts/farmacia_index.js?v=20260614-wo4-a"></script>
+            <script src="scripts/caceres_review_deployment.js"></script>
+</body>
+        </html>
