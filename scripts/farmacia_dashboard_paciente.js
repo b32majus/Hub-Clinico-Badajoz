@@ -333,12 +333,13 @@
             pNameEl.textContent = tipo;
             tile.appendChild(pNameEl);
             if (items.length > 0) {
-                items.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+                items.sort(function(a, b) { return (a.fecha || '').localeCompare(b.fecha || ''); });
                 var latest = items[items.length - 1];
                 var pValueEl = document.createElement('div');
                 pValueEl.className = 'prom-card__value';
                 var unit = (tipo === 'DLQI') ? '/30' : '/10';
-                pValueEl.textContent = latest.valor + ' ' + unit;
+                var latestValue = latest.valor !== undefined && latest.valor !== null && latest.valor !== '' ? latest.valor : '—';
+                pValueEl.textContent = latestValue + ' ' + unit;
                 tile.appendChild(pValueEl);
                 var sourceEl = document.createElement('div');
                 sourceEl.className = 'prom-card__source';
@@ -367,7 +368,7 @@
         for (var oi = 0; oi < otherTypes.length; oi++) {
             var oTipo = otherTypes[oi];
             var oItems = grouped[oTipo];
-            oItems.sort(function(a, b) { return a.fecha.localeCompare(b.fecha); });
+            oItems.sort(function(a, b) { return (a.fecha || '').localeCompare(b.fecha || ''); });
             var oLatest = oItems[oItems.length - 1];
             var oTile = document.createElement('div');
             oTile.className = 'prom-card';
@@ -377,7 +378,7 @@
             oTile.appendChild(oNameEl);
             var oValueEl = document.createElement('div');
             oValueEl.className = 'prom-card__value';
-            oValueEl.textContent = oLatest.valor || '\u2014';
+            oValueEl.textContent = oLatest.valor !== undefined && oLatest.valor !== null && oLatest.valor !== '' ? oLatest.valor : '\u2014';
             oTile.appendChild(oValueEl);
             var oSourceEl = document.createElement('div');
             oSourceEl.className = 'prom-card__source';
@@ -403,7 +404,8 @@
         if (!container) return;
         F.clearChildren(container);
         var episodios = patient.episodios_asistenciales || [];
-        if (episodios.length === 0) {
+        var fhVisits = patient.visitas_fh || [];
+        if (episodios.length === 0 && fhVisits.length === 0) {
             var emptyEl = document.createElement('div');
             emptyEl.className = 'empty-state';
             var emptyIcon = document.createElement('i');
@@ -423,6 +425,20 @@
             var item = timelineItem(ep.fecha, ep.tipo, desc);
             timeline.appendChild(item);
         }
+        fhVisits.forEach(function (visit) {
+            var lines = (visit.lineas || []).map(function (line) {
+                var parts = [line.line_id || 'Línea sin ID'];
+                if (line.tratamiento !== undefined && line.tratamiento !== null && line.tratamiento !== '') parts.push('Tratamiento: ' + String(line.tratamiento));
+                var lineState = line.estado_linea !== undefined && line.estado_linea !== null && line.estado_linea !== '' ? line.estado_linea : line.estado;
+                if (lineState !== undefined && lineState !== null && lineState !== '') parts.push('Estado: ' + String(lineState));
+                if (line.evaluated === true) parts.push('Evaluada');
+                else if (line.evaluated === false) parts.push('No evaluada');
+                if (line.dispensed === true) parts.push('Dispensada');
+                else if (line.dispensed === false) parts.push('No dispensada');
+                return parts.join(' · ');
+            });
+            timeline.appendChild(timelineItem(visit.fecha, 'Visita FH' + (visit.visit_id ? ' · ' + visit.visit_id : ''), lines.join(' | ')));
+        });
         container.appendChild(timeline);
     }
 
@@ -680,6 +696,7 @@
             patient.eventos_adversos = extData.eventos_adversos || [];
             patient.comorbilidades_relevantes = extData.comorbilidades_relevantes || [];
             patient.biologicos = extData.biologicos || patient.biologicos || [];
+            patient.visitas_fh = extData.visitas_fh || [];
         } else {
             patient.episodios_asistenciales = patient.episodios_asistenciales || [];
             patient.tratamientos = patient.tratamientos || [];
@@ -689,6 +706,7 @@
             patient.eventos_adversos = patient.eventos_adversos || [];
             patient.comorbilidades_relevantes = patient.comorbilidades_relevantes || [];
             patient.biologicos = patient.biologicos || [];
+            patient.visitas_fh = patient.visitas_fh || [];
         }
 
         renderClinicalActivity(patient);
@@ -897,6 +915,8 @@
                 return response.json();
             })
             .then(function (data) {
+                var normalize = window.FarmaciaLongitudinal.normalizePatient;
+                data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
                 longDataset = data;
                 longSectionReady = true;
                 if (statusEl) {

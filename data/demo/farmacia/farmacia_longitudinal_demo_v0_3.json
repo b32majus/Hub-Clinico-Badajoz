@@ -429,6 +429,58 @@
         "LES",
         "Sindrome de Sjogren"
       ],
+      "filas_fh": [
+        {
+          "visit_id": "FH-VISIT-DEMO-004-20260609",
+          "fecha": "2026-06-09",
+          "line_id": "BIO-FH-004-L2",
+          "nombre_linea": "Belimumab",
+          "tratamiento": "Belimumab 200 mg SC semanal",
+          "estado_linea": "activo",
+          "evaluated": true,
+          "dispensed": false,
+          "prom": {
+            "tipo_prom": "EVA dolor",
+            "fecha": "2026-06-09",
+            "valor": 0,
+            "fuente": "Farmacia"
+          },
+          "evento_adverso": {
+            "ea_id": "EA-FH-004-A",
+            "fecha": "2026-06-09",
+            "tipo": "Infeccion respiratoria",
+            "gravedad": "moderado",
+            "relacion_tratamiento": "Probable",
+            "accion_tomada": "Observacion y retraso de siguiente administracion",
+            "resuelto": false
+          }
+        },
+        {
+          "visit_id": "FH-VISIT-DEMO-004-20260609",
+          "fecha": "2026-06-09",
+          "line_id": "BIO-FH-004-L3",
+          "nombre_linea": "Rituximab",
+          "tratamiento": "Rituximab 1 g IV dias 1 y 15",
+          "estado": "anadido",
+          "evaluated": true,
+          "dispensed": true,
+          "prom": {
+            "tipo_prom": "EVA dolor",
+            "fecha": "2026-06-09",
+            "valor": 0,
+            "fuente": "Farmacia"
+          },
+          "evento_adverso": {
+            "ea_id": "EA-FH-004-A",
+            "fecha": "2026-06-09",
+            "tipo": "Infeccion respiratoria",
+            "gravedad": "moderado",
+            "relacion_tratamiento": "Probable",
+            "accion_tomada": "Observacion y retraso de siguiente administracion",
+            "resuelto": false
+          }
+        }
+      ],
       "biologicos": [
         {
           "linea_id": "BIO-FH-004-L1",
@@ -676,6 +728,7 @@
       "eventos_adversos": [
         {
           "id": "EA-FH-004-A",
+          "ea_id": "EA-FH-004-A",
           "cip": "CIP-DEMO-FH-004",
           "fecha": "2026-06-09",
           "tipo": "Infeccion respiratoria",
