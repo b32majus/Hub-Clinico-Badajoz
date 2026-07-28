@@ -281,7 +281,6 @@
                 else if (line.evaluated === false) parts.push('No evaluada');
                 if (line.dispensed === true) parts.push('Dispensada');
                 else if (line.dispensed === false) parts.push('No dispensada');
-                if (Object.prototype.hasOwnProperty.call(line, 'dispensed_amount')) parts.push('Cantidad: ' + String(line.dispensed_amount));
                 return parts.join(' · ');
             });
             var visitField = buildInfoField('Visita FH' + (visit.visit_id ? ' · ' + visit.visit_id : ''), (visit.fecha || 'Fecha no registrada') + ' — ' + lineParts.join(' | '));

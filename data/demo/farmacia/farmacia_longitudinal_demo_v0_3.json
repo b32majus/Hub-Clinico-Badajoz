@@ -439,9 +439,8 @@
           "estado_linea": "activo",
           "evaluated": true,
           "dispensed": false,
-          "dispensed_amount": "No recogido",
           "prom": {
-            "tipo_prom": "DLQI",
+            "tipo_prom": "EVA dolor",
             "fecha": "2026-06-09",
             "valor": 0,
             "fuente": "Farmacia"
@@ -465,9 +464,8 @@
           "estado": "anadido",
           "evaluated": true,
           "dispensed": true,
-          "dispensed_amount": 1,
           "prom": {
-            "tipo_prom": "DLQI",
+            "tipo_prom": "EVA dolor",
             "fecha": "2026-06-09",
             "valor": 0,
             "fuente": "Farmacia"

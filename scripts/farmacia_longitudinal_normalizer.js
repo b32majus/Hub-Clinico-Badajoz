@@ -58,7 +58,7 @@
                 visit.lineas.push(line);
                 if (hasLineId) visit._linesById[row.line_id] = line;
             }
-            ['line_id', 'evaluated', 'dispensed', 'dispensed_amount', 'tratamiento', 'estado', 'estado_linea', 'nombre_linea', 'nombre_comercial', 'principio_activo'].forEach(function (key) {
+            ['line_id', 'evaluated', 'dispensed', 'tratamiento', 'estado', 'estado_linea', 'nombre_linea', 'nombre_comercial', 'principio_activo'].forEach(function (key) {
                 if (own(row, key) && explicit(row[key]) && !own(line, key)) line[key] = clone(row[key]);
             });
             var rowProms = Array.isArray(row.proms) ? row.proms : (row.prom ? [row.prom] : []);
