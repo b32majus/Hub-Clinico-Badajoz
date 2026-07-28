@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hub Clínico — Estadísticas Farmacia</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="style.css?v=20260612-visibility-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260612-visibility-a">
+<style id="caceres-review-style">
+.caceres-review-identity{position:relative;z-index:10000;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
+.caceres-review-identity__meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
+.caceres-review-identity__warning{margin-top:6px;padding:6px 10px;background:#fff3cd;color:#5f4600;border:2px solid #e0a800;border-radius:4px}
+</style>
+</head>
+<body>
+<section class="caceres-review-identity" aria-label="Identidad del entorno de evaluación">
+  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.1</span></div>
+  <div class="caceres-review-identity__warning" role="alert"><strong>Datos exclusivamente sintéticos.</strong> No usar para asistencia clínica real.</div>
+</section>
+    <div class="hub-shell">
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-circle"><span class="logo-text">FH</span></div>
+        <h1 class="sidebar-title">Hub Clínico<br>Farmacia Hosp.</h1>
+    </div>
+
+    <div class="user-block">
+        <i class="fas fa-user-circle user-icon" aria-hidden="true"></i>
+        <span class="user-name" id="currentProfessional">Profesional FH — Entorno de evaluación</span>
+        <span class="profile-badge">FH · EVALUACIÓN</span>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="patientSearch" class="search-input" placeholder="Buscar paciente por CIP..." autocomplete="off">
+        <i class="fas fa-search search-icon" aria-hidden="true"></i>
+        <button type="button" class="clear-search hidden" id="clearPatientSearch" aria-label="Limpiar búsqueda">
+            <i class="fas fa-times-circle"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-nav-area">
+        <div class="nav-section">
+            <h3 class="nav-title">Farmacia</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_index.html" class="nav-link" data-nav-link><i class="fas fa-search"></i>Inicio Farmacia</a></li>
+                <li><a href="farmacia_validacion.html" class="nav-link" data-nav-link><i class="fas fa-check-double"></i>Validación</a></li>
+                <li><a href="farmacia_primera_visita.html" class="nav-link" data-nav-link><i class="fas fa-plus-circle"></i>Primera Visita</a></li>
+                <li><a href="farmacia_seguimiento.html" class="nav-link" data-nav-link><i class="fas fa-clipboard-list"></i>Seguimiento</a></li>
+                <li><a href="farmacia_dashboard_paciente.html" class="nav-link" data-nav-link><i class="fas fa-user-circle"></i>Dashboard Paciente</a></li>
+            </ul>
+        </div>
+        <div class="nav-section">
+            <h3 class="nav-title">Gestión</h3>
+            <ul class="nav-list">
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_estadisticas.html" class="nav-link active" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
+                <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
+                <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="db-status-indicator db-status-indicator--loaded" id="dbStatusIndicator" role="status" title="Dataset demo Farmacia cargado">
+        <i class="fas fa-database db-status-indicator__icon" id="dbStatusIcon"></i>
+        <div class="db-status-indicator__text">
+            <span class="db-status-indicator__label" id="dbStatusLabel">Dataset demo FH</span>
+            <span class="db-status-indicator__time" id="dbStatusTime">Cargando...</span>
+        </div>
+    </div>
+    <div class="catalog-sidebar-block catalog-sidebar-block--compact">
+        <div class="catalog-sidebar-header">
+            <i class="fas fa-pills"></i> Catálogo farmacológico
+            <i class="fas fa-info-circle catalog-sidebar-info" title="CIMA se carga automáticamente al abrir la demo." aria-label="CIMA se carga automáticamente al abrir la demo."></i>
+        </div>
+        <div class="catalog-sidebar-status" id="catalogSidebarStatus" data-catalog-status>Catálogo farmacológico: cargando automáticamente…</div>
+        <p class="catalog-sidebar-note" id="catalogSidebarNote">Esperando detalles…</p>
+        <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
+        <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
+    </div>
+    <div class="sidebar-footer">CÁCERES-REVIEW-0.1</div>
+</aside>
+        <main class="main-content farmacia-paciente farmacia-paciente--estadisticas">
+            <div class="demo-banner" role="note">
+                <i class="fas fa-flask" aria-hidden="true"></i>
+                <span><strong>Demo Farmacia v0.3 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
+            </div>
+
+            <!-- 1. Header de página con resumen ejecutivo -->
+            <div class="stats-note" id="statsImportNotice" role="note"><i class="fas fa-info-circle" aria-hidden="true"></i> Estadísticas longitudinales basadas en dataset demo. Los Excel importados se usan en la bandeja operativa y actividad; integración estadística completa pendiente.</div>
+
+            <section class="stats-hero-header">
+                <div class="stats-hero-main">
+                    <div class="stats-hero-icon">
+                        <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                    </div>
+                    <div class="stats-hero-info">
+                        <h1 class="stats-hero-title">Estadísticas del servicio</h1>
+                        <p class="stats-hero-subtitle">Análisis poblacional filtrable de la cohorte de pacientes de Farmacia.</p>
+                        <div class="stats-hero-summary" id="executive-summary">
+                            <span class="stats-hero-summary-item"><i class="fas fa-users"></i> <strong id="summary-pacientes">0</strong> pacientes</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-hospital"></i> <strong id="summary-servicios">0</strong> servicios</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-disease"></i> <strong id="summary-patologias">0</strong> patologías</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-pills"></i> <strong id="summary-farmacos">0</strong> fármacos</span>
+                            <span class="stats-hero-summary-dot">·</span>
+                            <span class="stats-hero-summary-item"><i class="fas fa-exclamation-triangle"></i> <strong id="summary-ea">0</strong> con EA</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-hero-actions">
+                    <button type="button" class="btn btn-outline stats-hero-export" id="exportReportBtn">
+                        <i class="fas fa-download"></i> Exportar informe
+                    </button>
+                    <button type="button" class="stats-hero-notify" id="notifyBtn" aria-label="Notificaciones">
+                        <i class="fas fa-bell"></i>
+                        <span class="stats-hero-notify-badge" id="notifyBadge">0</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 2. 6 KPI cards ejecutivas -->
+            <section class="stats-kpi-section" id="kpi-section">
+                <div class="stats-kpi-grid" id="kpi-grid"></div>
+            </section>
+
+            <!-- 3. Filtros rápidos (siempre visibles, dropdowns compactos) -->
+            <section class="stats-quick-filters-section" id="quick-filters-section">
+                <div class="stats-quick-filters-row">
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-servicio" class="stats-quick-filter-label">Servicio</label>
+                        <select id="qf-servicio" class="stats-quick-filter-select" data-quick-filter="servicio">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-patologia" class="stats-quick-filter-label">Patología</label>
+                        <select id="qf-patologia" class="stats-quick-filter-select" data-quick-filter="patologia">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-farmaco" class="stats-quick-filter-label">Fármaco</label>
+                        <select id="qf-farmaco" class="stats-quick-filter-select" data-quick-filter="farmaco">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-estado" class="stats-quick-filter-label">Estado seguimiento</label>
+                        <select id="qf-estado" class="stats-quick-filter-select" data-quick-filter="estado">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-ea" class="stats-quick-filter-label">Eventos adversos</label>
+                        <select id="qf-ea" class="stats-quick-filter-select" data-quick-filter="ea">
+                            <option value="">Todos</option>
+                            <option value="si">Sí</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="stats-quick-filter-group">
+                        <label for="qf-adherencia" class="stats-quick-filter-label">Adherencia</label>
+                        <select id="qf-adherencia" class="stats-quick-filter-select" data-quick-filter="adherencia">
+                            <option value="">Todas</option>
+                            <option value="alta">Alta</option>
+                            <option value="media">Media</option>
+                            <option value="baja">Baja</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. Chips de cohorte actual / filtros activos -->
+            <section class="stats-cohort-section" id="cohort-section">
+                <div class="stats-cohort-header">
+                    <div class="stats-cohort-label">
+                        <i class="fas fa-users"></i> Cohorte actual:
+                        <span class="stats-cohort-pills" id="cohort-pills"></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline" id="clear-quick-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+                </div>
+                <div id="filter-result-count" class="filter-result-count"></div>
+            </section>
+
+            <!-- 6. 4 bloques de gráficos agrupados por pregunta analítica -->
+            <section class="stats-charts-section" id="charts-section">
+                <div class="stats-charts-grid" id="charts-grid">
+                    <div class="stats-chart-block" id="chart-block-quienes">
+                        <h3 class="stats-chart-block-title">¿Quiénes son?</h3>
+                        <div class="stats-chart-block-content" id="chart-quienes-content"></div>
+                    </div>
+                    <div class="stats-chart-block" id="chart-block-tratamiento">
+                        <h3 class="stats-chart-block-title">¿Qué tratamiento reciben?</h3>
+                        <div class="stats-chart-block-content" id="chart-tratamiento-content"></div>
+                    </div>
+                    <div class="stats-chart-block" id="chart-block-evolucion">
+                        <h3 class="stats-chart-block-title">¿Cómo evolucionan?</h3>
+                        <div class="stats-chart-block-content" id="chart-evolucion-content"></div>
+                    </div>
+                    <div class="stats-chart-block" id="chart-block-riesgos">
+                        <h3 class="stats-chart-block-title">¿Qué riesgos aparecen?</h3>
+                        <div class="stats-chart-block-content" id="chart-riesgos-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. Estado vacío elegante -->
+            <section id="no-results-message" class="hidden">
+                <div class="stats-empty-state">
+                    <div class="stats-empty-state-icon">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                    </div>
+                    <h3 class="stats-empty-state-title">No hay pacientes que coincidan con los filtros aplicados</h3>
+                    <p class="stats-empty-state-desc">Ajuste los criterios o limpie los filtros para ver todos los pacientes.</p>
+                    <button type="button" class="btn btn-primary" id="empty-clear-filters"><i class="fas fa-eraser"></i> Limpiar filtros</button>
+                </div>
+            </section>
+
+            <!-- 7. Tabla de pacientes filtrados -->
+            <section id="patients-table-section" class="dashboard-card stats-table-section">
+                <div class="stats-table-header">
+                    <h2 class="card-title stats-table-title"><i class="fas fa-table"></i> Pacientes incluidos en la cohorte filtrada</h2>
+                    <button type="button" class="btn btn-sm btn-outline" id="customizeColumnsBtn"><i class="fas fa-columns"></i> Personalizar columnas</button>
+                </div>
+                <div class="table-responsive-wrapper">
+                    <table id="patients-table" class="data-table stats-data-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="table-pagination" class="table-pagination"></div>
+            </section>
+
+            <!-- 8. Aviso demo/sintético -->
+            <section class="stats-demo-footer">
+                <div class="stats-demo-footer-content">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                    <span>Datos demo/sintéticos — no usar para decisiones clínicas.</span>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
+    <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
+    <script src="scripts/farmacia_estadisticas.js?v=20260612-visibility-a"></script>
+    <script src="scripts/caceres_review_deployment.js"></script>
+</body>
+</html>
