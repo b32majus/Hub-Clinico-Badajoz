@@ -4,7 +4,7 @@
 **Estado documental:** `current_published_evaluation_state`  
 **Repositorio:** `b32majus/Hub-Clinico-Badajoz`  
 **Rama regional publicada:** `recovery/farmacia-pr-replay-20260727`  
-**HEAD regional publicado:** `cd258e76dad76d2abf1dfd0cb9f11f086516236e`
+**Último HEAD funcional regional publicado:** `cd258e76dad76d2abf1dfd0cb9f11f086516236e`
 
 ---
 
@@ -27,13 +27,15 @@ No sustituye los contratos clínicos ni convierte la demo en piloto real.
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para pruebas y evolución regional |
-| HEAD regional | `cd258e76dad76d2abf1dfd0cb9f11f086516236e` | Vigente a 2026-07-28 |
+| Último HEAD funcional regional | `cd258e76dad76d2abf1dfd0cb9f11f086516236e` | Contiene el bundle funcional publicado antes de commits documentales posteriores |
 | Snapshot Cáceres | `previews/caceres-fh/` | Publicado y compartido para evaluación |
 | Manifest del snapshot | `previews/caceres-fh/deployment-manifest.json` | Registra versión, SHA fuente, allowlist y hashes |
 | Versión Cáceres | `CÁCERES-REVIEW-0.1` | Congelada hasta promoción explícita |
 | SHA fuente del snapshot | `ce88818be931b0b008890fede19257530fca10c6` | Fuente clínica/funcional del bundle Cáceres |
 | Índice documental | `docs/INDEX.md` | Debe apuntar a este estado vigente |
 | Tablero de WOs | `docs/ops/WORK_ORDER_STATUS.md` | Trazabilidad de implementación y merges |
+
+Los commits documentales posteriores pueden avanzar la rama `recovery` sin modificar el bundle funcional identificado por `cd258e76dad76d2abf1dfd0cb9f11f086516236e`.
 
 La rama histórica `preview/demo-lunes-wo4-20260614` deja de ser la referencia publicada vigente. Se conserva como evidencia histórica y punto de comparación, no como base de trabajo actual.
 
