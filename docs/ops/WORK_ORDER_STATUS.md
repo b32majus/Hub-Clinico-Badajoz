@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz
 
-**Última actualización:** 2026-07-16
+**Última actualización:** 2026-07-28
 **Propósito:** Tablero de estado de todas las work orders ejecutadas  
 **Mantenedor:** Hermes PM (actualizar al mergear/cambiar estado cada WO)
 
@@ -64,6 +64,11 @@
 | **WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01** | Hacer explícita la precarga de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FLOW-PREFILL-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `905ddf07091e25be4ad85730b37c3580cd6f4826` → merge `1d8aac746ddfe7c72a5dd71636a8fc67af180571` (PR #26) | Precarga sintética y no inferencia; no integración real ni contrato clínico definitivo. |
 | **WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01** | Simplificar la UI funcional de Validación | ✅ Merged | `work/hermes/WO-FH-VALIDACION-FUNCTIONAL-CLEANUP-MINIMAL-01-20260715` → `preview/demo-lunes-wo4-20260614` | `51e1bf04fa60a9c8a66246abc5104da0e569da3a` → merge `58e59b1143da5fbe57af4d48b7f143b2f7d67f8a` (PR #27) | Limpieza mínima; no cierra multifármaco, renovación, catálogos ni el contrato funcional completo. |
 | **WO-FH-SEGUIMIENTO-FIRST-SEARCH-CONFIRMATION-FIX-01** | Evitar confirmación falsa en la primera búsqueda de Seguimiento | ✅ Merged | `fix/fh-seguimiento-first-search-confirmation-20260715` → `preview/demo-lunes-wo4-20260614` | `f1592bed5ce3adc853a40b4b644710904b1c6fca` → merge `84a44bbb7deec46a6b91fd8e2c08e6b264f80b9e` (PR #29) | Corrige el valor neutral `Demo` sin desproteger datos clínicos manuales; no cierra el hallazgo multifármaco ni la frontera Validación/Seguimiento. |
+| **WO-FH-PR57E-DASHBOARD-VISIT-LINE-GROUPING-01** | Agrupar dashboard longitudinal por visita y línea | ✅ Merged | `work/fh-pr57e-dashboard-visit-line-grouping-20260728` → `recovery/farmacia-pr-replay-20260727` | commit `8dbc37aa0fdff6e8b826694ddd5ef7276406ab06` → merge `712b413e3ab0f011282fe93134f63858dcb4f9ae` (PR #173, issue #172) | Dashboard `visit_id + line_id` validado para demo; no acredita persistencia real ni piloto. |
+| **WO-FH-DERMA-PATHOLOGY-SPECIFIC-VALIDATION-01** | Añadir Validación Dermatología multipatología | ✅ Merged | `work/fh-derma-pathology-validation-20260728` → `recovery/farmacia-pr-replay-20260727` | commit `51009db8b16444e29e842f827a1a98a025d434a6` → merge `ce88818be931b0b008890fede19257530fca10c6` (PR #175, issue #174) | Cinco patologías, JARA/CSV/Excel coherentes y ausencia como `No informado`; pendiente de validación funcional externa. |
+| **WO-FH-CACERES-PHARMACY-ONLY-DEPLOYMENT-01** | Crear snapshot estable Pharmacy-only para Cáceres | ✅ Merged | `work/fh-caceres-pharmacy-only-deployment-20260728` → `recovery/farmacia-pr-replay-20260727` | commit `9e86f6ae9be7bb143bf516ce34e9d38858922bbc` → merge `cd258e76dad76d2abf1dfd0cb9f11f086516236e` (PR #177, issue #176) | `CÁCERES-REVIEW-0.1` publicado y enviado a Farmacia; solo datos sintéticos, no piloto ni producto. |
+
+> **Referencia publicada Farmacia desde 2026-07-28:** `recovery/farmacia-pr-replay-20260727` @ `cd258e76dad76d2abf1dfd0cb9f11f086516236e`. Estado detallado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md).
 
 ---
 
@@ -118,7 +123,7 @@
 
 | Estado | Cantidad |
 |--------|----------|
-| ✅ Merged | 39 (incluye PR #21-#27 y PR #29; documentación y alcances funcionales parciales no equivalen a piloto) |
+| ✅ Merged | 42 (incluye PR #21-#27, PR #29 y recovery PR #173/#175/#177; demo/documentación no equivalen a piloto) |
 | 📋 Ready for review | 18 (WO-017 a WO-034 — rama nocturna Farmacia frozen) |
 | 📋 Draft | 1 (WO-037 — PR #5 draft) |
 | 🟢 Validated | 1 (WO-036 — v0.2 candidate) |
@@ -128,4 +133,4 @@
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 63 work orders / preflights gestionadas.
+**Total:** 66 work orders / preflights gestionadas.
