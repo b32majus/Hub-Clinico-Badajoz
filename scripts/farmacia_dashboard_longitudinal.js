@@ -181,6 +181,8 @@
                 return response.json();
             })
             .then(function (data) {
+                var normalize = window.FarmaciaLongitudinal.normalizePatient;
+                data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
                 dataset = data;
                 if (statusEl) {
                     var count = (dataset.pacientes && dataset.pacientes.length) ? dataset.pacientes.length : 0;
@@ -259,12 +261,31 @@
         var treatments = patient.tratamientos || [];
         var changes = patient.cambios_pauta || [];
         var events = patient.eventos_adversos || [];
+        var fhVisits = patient.visitas_fh || [];
 
-        var hasAnyData = treatments.length > 0 || changes.length > 0 || events.length > 0;
+        var hasAnyData = treatments.length > 0 || changes.length > 0 || events.length > 0 || fhVisits.length > 0;
         if (!hasAnyData) {
             var emptyMsg = pEl('Sin tratamientos registrados en el dataset demo.', 'longitudinal-empty');
             container.appendChild(emptyMsg);
             return;
+        }
+
+        for (var vi = 0; vi < fhVisits.length; vi++) {
+            var visit = fhVisits[vi];
+            var lineParts = (visit.lineas || []).map(function (line) {
+                var parts = [line.line_id || 'Línea sin ID'];
+                if (line.tratamiento !== undefined && line.tratamiento !== null && line.tratamiento !== '') parts.push('Tratamiento: ' + String(line.tratamiento));
+                var lineState = line.estado_linea !== undefined && line.estado_linea !== null && line.estado_linea !== '' ? line.estado_linea : line.estado;
+                if (lineState !== undefined && lineState !== null && lineState !== '') parts.push('Estado: ' + String(lineState));
+                if (line.evaluated === true) parts.push('Evaluada');
+                else if (line.evaluated === false) parts.push('No evaluada');
+                if (line.dispensed === true) parts.push('Dispensada');
+                else if (line.dispensed === false) parts.push('No dispensada');
+                if (Object.prototype.hasOwnProperty.call(line, 'dispensed_amount')) parts.push('Cantidad: ' + String(line.dispensed_amount));
+                return parts.join(' · ');
+            });
+            var visitField = buildInfoField('Visita FH' + (visit.visit_id ? ' · ' + visit.visit_id : ''), (visit.fecha || 'Fecha no registrada') + ' — ' + lineParts.join(' | '));
+            container.appendChild(visitField);
         }
 
         var allDates = [];
@@ -568,11 +589,12 @@
 
         for (var i = 0; i < proms.length; i++) {
             var prom = proms[i];
+            var displayedValue = prom.valor !== undefined && prom.valor !== null && prom.valor !== '' ? prom.valor : '—';
             var row = divEl('longitudinal-bar-row');
 
             var info = divEl('longitudinal-bar-info');
             info.appendChild(span(prom.fecha || '—', 'longitudinal-bar-date'));
-            info.appendChild(span((prom.valor || '—') + ' (' + mappedType + ')', 'longitudinal-bar-value'));
+            info.appendChild(span(displayedValue + ' (' + mappedType + ')', 'longitudinal-bar-value'));
             info.appendChild(span('Fuente: ' + (prom.fuente || '—'), 'longitudinal-bar-source'));
             row.appendChild(info);
 
@@ -587,7 +609,7 @@
             } else {
                 bar.style.width = '0%';
             }
-            bar.setAttribute('aria-label', (prom.valor || '0') + ' de ' + maxVal + ' m\u00e1ximo (' + mappedType + ')');
+            bar.setAttribute('aria-label', displayedValue + ' de ' + maxVal + ' m\u00e1ximo (' + mappedType + ')');
             barWrapper.appendChild(bar);
             row.appendChild(barWrapper);
 
