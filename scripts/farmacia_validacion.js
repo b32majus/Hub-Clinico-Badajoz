@@ -211,14 +211,15 @@
         });
     }
 
+    function activeDermaPathology() {
+        if (isManualOrigin()) return currentManualService() === "derma" ? currentManualPatologia() : "";
+        if ((modoActual || resolveModoFromOrigen(currentOrigenEntradaValue())) !== "derma") return "";
+        var control = byId("fhDermaPatologia");
+        return control ? (control.value || "") : "";
+    }
+
     function isHSPathology() {
-        if (modoActual === "derma" && byId("fhDermaPatologia")) {
-            if (byId("fhDermaPatologia").value === "Hidradenitis supurativa") return true;
-        }
-        if (modoActual === "derma" && byId("fhPatologiaManual")) {
-            if (byId("fhPatologiaManual").value === "Hidradenitis supurativa") return true;
-        }
-        return false;
+        return activeDermaPathology() === "Hidradenitis supurativa";
     }
 
     function setChecked(id, value) {
@@ -253,21 +254,109 @@
     }
 
     function toggleHSBlock() {
-        var formHs = byId("formHS");
-        if (!formHs) return;
-        formHs.classList.toggle("hidden", !isHSPathology());
-        var note = byId("fhHSOtherNote");
-        if (!note) {
-            note = createEl("p", "pathology-demo-note");
-            note.id = "fhHSOtherNote";
-            byId("formDerma").appendChild(note);
-        }
-        var patologia = isManualOrigin() ? currentManualPatologia() : byId("fhDermaPatologia").value;
-        var showNote = modoActual === "derma" && !isManualOrigin() && patologia && patologia !== "Hidradenitis supurativa";
-        note.textContent = showNote ? "Demo activa: bloque específico parametrizado para HS. Resto de patologías incluidas en plantilla Dermatología → Farmacia pendiente de parametrización." : "";
-        note.classList.toggle("hidden", !showNote);
+        var pathology = activeDermaPathology();
+        var blocks = {
+            "Hidradenitis supurativa": "formHS",
+            "Psoriasis": "formPsoriasis",
+            "Dermatitis atópica": "formDermatitisAtopica",
+            "Vitíligo": "formVitiligo",
+            "Alopecia areata": "formAlopecia"
+        };
+        Object.keys(blocks).forEach(function (name) {
+            var block = byId(blocks[name]);
+            if (block) block.classList.toggle("hidden", pathology !== name);
+        });
+        var common = byId("formDermaComorbilidades");
+        if (common) common.classList.toggle("hidden", !blocks[pathology]);
+        toggleDermaConditionalDetails();
         toggleBioAdaDetalle();
         toggleBioOtrosDetalle();
+    }
+
+    function toggleDermaConditionalDetails() {
+        [["fhPsSistemicoPrevio", "fhPsSistemicoSiDetalle", "fhPsSistemicoNoDetalle"],
+            ["fhDaCiclosporinaPrevia", "fhDaCiclosporinaSiDetalle", "fhDaCiclosporinaNoDetalle"]]
+            .forEach(function (ids) {
+                var decision = byId(ids[0]);
+                var yesRow = byId(ids[1]);
+                var noRow = byId(ids[2]);
+                if (yesRow) yesRow.classList.toggle("hidden", !decision || decision.value !== "si");
+                if (noRow) noRow.classList.toggle("hidden", !decision || decision.value !== "no");
+            });
+    }
+
+    function dermaValue(id) {
+        var el = byId(id);
+        var value = el && el.value !== undefined ? String(el.value).trim() : "";
+        return value || "No informado";
+    }
+
+    function dermaDecision(id) {
+        var el = byId(id);
+        return el && el.value === "si" ? "Sí" : (el && el.value === "no" ? "No" : "No informado");
+    }
+
+    function legacyDecision(id) {
+        var el = byId(id);
+        return el && el.checked ? "Sí" : "No informado";
+    }
+
+    function buildDermaClinicalSummary() {
+        var pathology = activeDermaPathology();
+        if (!pathology) return { active: false, pathology: "", specific: [], common: [], lines: [], summary: "" };
+        var specific = [];
+        var add = function (label, value) { specific.push({ label: label, value: value }); };
+        if (pathology === "Hidradenitis supurativa") {
+            add("IHS4", dermaValue("fhHSIhs4")); add("Hurley", dermaValue("fhHSHurley")); add("DLQI", dermaValue("fhHSDlqi"));
+            add("Localización principal", dermaValue("fhHSLocalizacion")); add("Tiempo de evolución", dermaValue("fhHSTiempoEvolucion"));
+            var antibiotics = ["Doxiciclina / Clindamicina: " + legacyDecision("fhHSTtoDoxiClinda"), "Rifampicina + Clindamicina: " + legacyDecision("fhHSTtoRifClinda"), "Otros ATB: " + legacyDecision("fhHSTtoOtrosAb")];
+            if (legacyDecision("fhHSTtoOtrosAb") === "Sí") antibiotics.push("Detalle otros ATB: " + dermaValue("fhHSTtoOtrosAbTxt"));
+            if (dermaValue("fhHSTratamientosPrevios") !== "No informado") antibiotics.push("Detalle previo: " + dermaValue("fhHSTratamientosPrevios"));
+            add("Tratamientos antibióticos previos", antibiotics.join("; "));
+            var biologics = ["Adalimumab: " + legacyDecision("fhHSBioAda"), "Otros biológicos: " + legacyDecision("fhHSBioOtros")];
+            if (legacyDecision("fhHSBioAda") === "Sí") biologics.push("Duración adalimumab: " + dermaValue("fhHSBioAdaDuracion"), "Motivo fin adalimumab: " + dermaValue("fhHSBioAdaMotivo"));
+            if (legacyDecision("fhHSBioOtros") === "Sí") biologics.push("Fármaco: " + dermaValue("fhHSBioOtrosFarmaco"), "Motivo suspensión: " + dermaValue("fhHSBioOtrosMotivo"));
+            add("Biológicos previos", biologics.join("; ")); add("Motivo clínico / línea terapéutica", dermaValue("fhHSMotivoClinico"));
+        } else if (pathology === "Psoriasis") {
+            add("PASI", dermaValue("fhPsPasi")); add("BSA", dermaValue("fhPsBsa")); add("DLQI", dermaValue("fhPsDlqi")); add("PGA", dermaValue("fhPsPga"));
+            var psDecision = dermaDecision("fhPsSistemicoPrevio"); add("Tratamiento sistémico previo", psDecision);
+            if (psDecision === "Sí") { add("Fármaco previo", dermaValue("fhPsSistemicoFarmaco")); add("Duración", dermaValue("fhPsSistemicoDuracion")); add("Motivo de cambio/suspensión", dermaValue("fhPsSistemicoMotivo")); }
+            if (psDecision === "No") add("Motivo de no utilización o contraindicación", dermaValue("fhPsSistemicoNoMotivo"));
+        } else if (pathology === "Dermatitis atópica") {
+            add("EASI", dermaValue("fhDaEasi")); add("SCORAD", dermaValue("fhDaScorad")); add("DLQI o POEM", dermaValue("fhDaDlqiPoem"));
+            var daDecision = dermaDecision("fhDaCiclosporinaPrevia"); add("Ciclosporina previa", daDecision);
+            if (daDecision === "Sí") { add("Dosis", dermaValue("fhDaCiclosporinaDosis")); add("Duración", dermaValue("fhDaCiclosporinaDuracion")); add("Motivo de suspensión", dermaValue("fhDaCiclosporinaMotivo")); }
+            if (daDecision === "No") add("Motivo de no utilización o contraindicación", dermaValue("fhDaCiclosporinaNoMotivo"));
+        } else if (pathology === "Vitíligo") {
+            add("Extensión afectada", dermaValue("fhVitExtension")); add("Afectación facial", dermaDecision("fhVitFacial")); add("Inhibidor tópico de calcineurina previo", dermaDecision("fhVitCalcineurinaPrevia")); add("Corticoides tópicos previos", dermaDecision("fhVitCorticoidesPrevios")); add("Observaciones clínicas", dermaValue("fhVitObservaciones"));
+        } else if (pathology === "Alopecia areata") {
+            add("Extensión superior al 50 % del cuero cabelludo", dermaDecision("fhAaExtension50")); add("Episodio actual superior a 6 meses", dermaDecision("fhAaEpisodio6Meses")); add("Corticoesteroides orales sistémicos en monoterapia o con inmunosupresores", dermaDecision("fhAaCorticoidesSistemicos")); add("Observaciones clínicas", dermaValue("fhAaObservaciones"));
+        } else return { active: false, pathology: "", specific: [], common: [], lines: [], summary: "" };
+        var common = [
+            { label: "IMC", value: dermaValue("fhHSComorbImc") }, { label: "Tabaquismo", value: dermaValue("fhHSComorbTabaquismo") },
+            { label: "Paquetes/año", value: dermaValue("fhHSComorbPaquetes") }, { label: "Diabetes", value: dermaDecision("fhHSComorbDiabetes") },
+            { label: "HbA1c", value: dermaValue("fhHSComorbHba1c") }, { label: "Síndrome metabólico", value: dermaDecision("fhHSComorbSdMetabolico") },
+            { label: "Otras comorbilidades", value: dermaValue("fhHSComorbOtras") }
+        ];
+        var lines = ["DATOS CLÍNICOS DE ORIGEN — " + pathology];
+        specific.forEach(function (field) { lines.push(field.label + ": " + field.value); });
+        lines.push("", "COMORBILIDADES DERMATOLOGÍA");
+        common.forEach(function (field) { lines.push(field.label + ": " + field.value); });
+        return { active: true, pathology: pathology, specific: specific, common: common, lines: lines, summary: lines.join("\n") };
+    }
+
+    function buildExcelGeneralObservations(context, dermaSummary) {
+        context = context || {};
+        var mode = isManualOrigin() ? currentManualService() : (modoActual || resolveModoFromOrigen(currentOrigenEntradaValue()));
+        var sourceId = isManualOrigin() ? "fhManualObservaciones" : (mode === "derma" ? "fhDermaObservaciones" : (mode === "digestivo" ? "fhDigObservaciones" : ""));
+        var existing = context.observaciones || (!isManualOrigin() && mode === "reuma" && context.patient && context.patient.observaciones) || "";
+        var values = [existing, sourceId ? visibleElementValue(sourceId) : "", dermaSummary || ""];
+        var unique = [];
+        values.forEach(function (value) {
+            var text = explicitExportValue(value);
+            if (text && unique.indexOf(text) === -1) unique.push(text);
+        });
+        return unique.join("\n\n");
     }
 
     function toggleBioAdaDetalle() {
@@ -881,7 +970,7 @@
                 return valueOrDash(value);
             })(),
             induccion: byId(ids.induccion).value === "si" ? "Sí" : (byId(ids.induccion).value === "no" ? "No" : "—"),
-            justificacion: valueOrDash(byId(ids.justificacion).value || (!isManualOrigin() ? byId("fhHSMotivoClinico").value : ""))
+            justificacion: valueOrDash(byId(ids.justificacion).value || (!isManualOrigin() && isHSPathology() ? byId("fhHSMotivoClinico").value : ""))
         };
     }
 
@@ -1108,6 +1197,7 @@
             profesional: visibleElementValue("fhValFarmaceutico"),
             motivo: visibleElementValue("fhValMotivo"),
             obsValidacion: visibleElementValue("fhValObservaciones"),
+            dermaClinicalSummary: buildDermaClinicalSummary().summary,
             slot: slot,
             lineaActual: treatmentLineForExport(values, slot, cip)
         };
@@ -1729,6 +1819,11 @@
         lines.push("CIP: " + selectedCip());
         lines.push("Patología: " + selectedPatologia());
         lines.push("Fecha solicitud: " + valueOrDash(isManualOrigin() ? byId("fhManualFecha").value : (modoActual !== "reuma" ? byId("fhDermaFecha").value : "")));
+        var dermaClinical = buildDermaClinicalSummary();
+        if (dermaClinical.active) {
+            lines.push("");
+            dermaClinical.lines.forEach(function (line) { lines.push(line); });
+        }
 
         lines.push("");
         lines.push("TRATAMIENTO SOLICITADO");
@@ -1830,7 +1925,7 @@
                 "NaranjoScore", "NaranjoCategoria", "KLCategoria", "CausalidadFinalFarmaceutica",
                 "NaranjoQ1", "NaranjoQ2", "NaranjoQ3", "NaranjoQ4", "NaranjoQ5", "NaranjoQ6", "NaranjoQ7", "NaranjoQ8", "NaranjoQ9", "NaranjoQ10",
                 "KLTemporal", "KLConocido", "KLAlternativa", "KLSuspendido", "KLMejora", "KLReadministracion", "KLReaparece",
-                "OtrosFarmacosRelacionados"
+                "OtrosFarmacosRelacionados", "ResumenClinicoDermatologia"
             ],
             [
                 "FH-" + Date.now().toString(36).toUpperCase(),
@@ -1880,7 +1975,8 @@
                 klAnswers.mejoraRetirada,
                 klAnswers.readministracion,
                 klAnswers.reaparece,
-                otherDrugsLines().join(" || ")
+                otherDrugsLines().join(" || "),
+                buildDermaClinicalSummary().summary
             ]
         ];
         return rows;
@@ -1940,6 +2036,10 @@
             toggleHSBlock();
             updateValidationModuleSummaries();
         });
+        ["fhPsSistemicoPrevio", "fhDaCiclosporinaPrevia"].forEach(function (id) {
+            var decision = byId(id);
+            if (decision) decision.addEventListener("change", toggleDermaConditionalDetails);
+        });
         var servMan = byId("fhServicioManual");
         if (servMan) servMan.addEventListener("change", function () {
             onServicioManualChange();
@@ -1972,7 +2072,12 @@
     window.FarmaciaValidacion = {
         enableRequestedAutocomplete: enableAutocomplete,
         normalizeValidationExportStatus: normalizeValidationExportStatus,
-        buildValidationExcelExportData: buildValidationExcelExportData
+        buildValidationExcelExportData: buildValidationExcelExportData,
+        buildDermaClinicalSummary: buildDermaClinicalSummary,
+        buildValidationLines: buildValidationLines,
+        buildCsvRows: buildCsvRows,
+        buildExcelGeneralObservations: buildExcelGeneralObservations,
+        updateDermaPathologyVisibility: toggleHSBlock
     };
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -2032,6 +2137,7 @@
                     demoFlag: true
                 };
                 var context = exp.buildContextFromValidacion(patient, opts);
+                context.observaciones = buildExcelGeneralObservations(context, exportData.dermaClinicalSummary);
                 var rowObj = exp.buildExcelRowObject(context);
                 var rowArr = exp.buildExcelRowArray(rowObj);
                 var sheetName = exp.getServiceSheetName(exportData.servicio) || 'hoja correspondiente';
