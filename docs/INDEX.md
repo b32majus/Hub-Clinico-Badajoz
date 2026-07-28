@@ -2,10 +2,10 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-16 |
+| Última actualización | 2026-07-28 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
-| Rama publicada de referencia | `origin/preview/demo-lunes-wo4-20260614` |
-| Rama de trabajo de este índice | `work/hermes/WO-DOC-FH-AUDIT-IMPLEMENTATION-RECONCILIATION-POST-PR29-01-20260716` |
+| Rama publicada de referencia | `origin/recovery/farmacia-pr-replay-20260727` |
+| Rama de trabajo de este índice | `docs/fh-recovery-caceres-reconciliation-20260728` |
 
 > Este índice es una guía de navegación. No sustituye a los documentos que referencia; su función es orientar sobre qué documento consultar para cada propósito y qué estado tiene.
 
@@ -17,9 +17,9 @@
 2. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — estado post-reunión SES, fases propuestas, decisiones cerradas y pendientes.
 3. [`AGENTS.md`](/AGENTS.md) — reglas operativas para agentes, ramas protegidas, datos prohibidos y definición de done.
 4. [`ARCHITECTURE.md`](/ARCHITECTURE.md) — arquitectura técnica e implementación actual (estado post-SES).
-5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — tablero de work orders y estado de ejecución.
+5. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) — estado publicado actual de Farmacia regional y snapshot estable de evaluación Cáceres.
 
-> Después de estos cinco, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → manifiesto de ramas y documentos v0.3–v0.5; descubrimiento → guía Badajoz/Mérida.
+> Para trazabilidad de ejecución y merges, consultar también [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md). Después, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → estado recovery/Cáceres y manifiesto histórico; descubrimiento → guía Badajoz/Mérida.
 
 ---
 
@@ -28,18 +28,22 @@
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
 |---|---|---|---|
 | `origin/main` | Legacy / stale. Congelada en `a25cccb` (2026-03-07). | Historia del proyecto antes de Reuma v2. | Estado actual, Reuma v2, Farmacia, Enfermería ni roadmap post-SES. |
-| `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica viva de Reuma v2. | Reumatología multipatología, contrato Excel v2, decisiones DEC-001..019. | Post-demo Farmacia (v0.3–v0.5), preview publicada ni decisiones post-SES. |
-| `origin/preview/demo-lunes-wo4-20260614` | Rama publicada en GitHub Pages. Referencia operativa Farmacia post-demo. | Estado funcional de Farmacia validado en demo/preview: validación farmacoterapéutica, primera visita, seguimiento, dashboard, importación Enfermería/Farmacia, catálogo CIMA/local, exportaciones. | Arquitectura aprobada, contratos clínicos definitivos, producción ni datos reales. |
+| `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica viva de Reuma v2. | Reumatología multipatología, contrato Excel v2, decisiones DEC-001..019. | Farmacia recovery, snapshot Cáceres ni decisiones post-SES. |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada de Farmacia.** | Código Farmacia integrado y probado; fuente de la URL regional y contenedor del snapshot Cáceres. | Producción, piloto real, datos reales ni contratos clínicos definitivos. |
+| `origin/preview/demo-lunes-wo4-20260614` | Histórico / referencia demo anterior. | Evidencia de la evolución post-demo y comparación histórica. | Estado publicado vigente, fuente de nuevos desarrollos ni snapshot Cáceres. |
+| `previews/caceres-fh/` dentro de `recovery` | Snapshot estable `CÁCERES-REVIEW-0.1`. | Evaluación Pharmacy-only compartida con Farmacia Cáceres, con datos sintéticos. | Evolución regional automática, piloto real, autenticación, persistencia o multiusuario. |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | **HOLD / propuesta arquitectónica. No mergear.** | Concepto de control plane federado y configuración no-paciente derivado del análisis post-SES. | Arquitectura aprobada, capacidad implementada ni decisión institucional. |
 | `origin/work/*` | Ramas de trabajo en progreso o históricas. | Desarrollo atómico revisable; trazabilidad de WO. | Estado publicado ni canónico sin merge previo y validación. |
-| `origin/preview/*` | Previews publicables / demos. | Referencia de demo validada para Pages. | Producción ni base canónica automática. |
+| `origin/preview/*` | Previews históricas o auxiliares. | Evidencia de demos validadas en su momento. | Fuente publicada actual ni base canónica automática. |
 | `origin/backup/*` y tags `farmacia-demo-lunes-*` | Puntos de retorno operativos. | Recuperar estados demo congelados. | No son ramas de desarrollo activo. |
 
 ### Notas sobre ramas
 
 - `main` es legacy por decisión DEC-001; su conservación obedece a DEC-002 (no eliminar sin trazabilidad). Los tags propuestos en DEC-002 aún no existen.
-- La rama `feature/reuma-v2...` no contiene los avances post-demo de Farmacia documentados en v0.3–v0.5; estos viven principalmente en `preview/demo-lunes-wo4-20260614` y en worktrees locales.
-- `preview/demo-lunes-wo4-20260614` es la referencia publicada actual; cualquier modificación requiere WO autorizada.
+- La rama `feature/reuma-v2...` sigue siendo la base canónica de Reumatología, pero no contiene el estado Farmacia recovery.
+- `recovery/farmacia-pr-replay-20260727` es la fuente publicada regional de Farmacia desde 2026-07-28.
+- El snapshot Cáceres se actualiza solo mediante promoción explícita desde un SHA regional aprobado; no debe editarse manualmente.
+- `preview/demo-lunes-wo4-20260614` se conserva como histórico y deja de ser la referencia publicada vigente.
 - El HOLD `docs/promueve-fh-control-plane-federado-20260713` contiene una propuesta de control plane federado; su destino (integrar, descartar o redefinir) es una decisión pendiente.
 
 ---
@@ -51,16 +55,17 @@
 | [`AGENTS.md`](/AGENTS.md) | Vigente | Gobernanza operativa de agentes, ramas, commits, DoD. | Decisiones clínicas ni arquitectura funcional detallada. |
 | [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md) | Parcial | Marco operativo completo, pipeline v1. | Modelo operativo v2 Cora-Hermes (parcialmente reflejado en `AGENTS.md`). |
 | [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Vigente | Decisiones cerradas DEC-001..019. | Aprobación de tags DEC-002 (pendientes) ni decisiones post-SES. |
-| [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Parcial | Visión funcional de Reuma v2 y planificación inicial. | Estado real de Farmacia post-demo (aún describe Farmacia como no implementado). |
+| [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Parcial | Visión funcional de Reuma v2 y planificación inicial. | Estado real de Farmacia recovery. |
 | [`ARCHITECTURE.md`](/ARCHITECTURE.md) | Vigente post-SES | Arquitectura técnica, módulos, flujo de datos, transición propuesta. | Aprobación institucional ni producción. |
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica post-SES | Estado post-SES, fases propuestas, decisiones pendientes, nomenclatura provisional. | Arquitectura aprobada ni plan de implementación vinculante. |
 | [`CHANGELOG.md`](/CHANGELOG.md) | Vigente | Release log principal del proyecto. | Historial detallado de WOs (ver `WORK_ORDER_STATUS.md`). |
 | [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md) | Vigente | Contrato Excel 497 columnas para Reuma v2. | Farmacia, Enfermería ni contratos interservicios definitivos. |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Estado y trazabilidad de work orders. | Decisiones de arquitectura ni contratos clínicos. |
+| [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) | **Vigente** | Estado regional publicado, snapshot Cáceres, entrega a Farmacia, alcance demostrado, límites y pendientes reales. | Contratos clínicos definitivos, autorización de piloto o uso con datos reales. |
 | [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) | Vigente | Protocolo de fases F0–F6 y plan formativo. | Cronograma ejecutivo ni asignación de recursos. |
 | [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente post-SES | Decisión reversible de no integrar Farmacia en main ni Reuma v2 por ahora. | Autorización de merge ni campos finales. |
 | [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Vigente | Guía práctica de reuniones discovery Badajoz/Mérida. | Contratos clínicos ni integraciones aprobadas. |
-| [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) | Parcial / log operativo | Historial operativo de ramas y WOs Farmacia. | Roadmap ejecutivo ni documento canónico de arquitectura. |
+| [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) | Histórico / log operativo extenso | Evolución detallada de ramas y WOs Farmacia hasta la etapa preview. | Estado publicado vigente ni punto de entrada actual. |
 | [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) | Vigente (preview) | Contrato de pautas Farmacia en preview. | Contrato clínico definitivo sin validación. |
 | [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md) | Vigente (preview) | Contrato de tratamiento Farmacia en preview. | Contrato clínico definitivo sin validación. |
 | [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md) | Vigente | Protocolo de ejecución de WOs Farmacia. | Otros módulos ni decisiones de alcance. |
@@ -99,7 +104,8 @@
 - [`docs/template_solicitud_fh.md`](/docs/template_solicitud_fh.md)
 
 ### Farmacia Hospitalaria
-- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md)
+- [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) — estado publicado actual y punto de entrada recomendado.
+- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — log histórico extenso.
 - [`docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md`](/docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md)
 - [`docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`](/docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md)
 - [`docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md`](/docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md)
@@ -185,7 +191,7 @@
 
 > Estos documentos son valiosos para trazabilidad operativa, pero no son el punto de entrada para nuevos colaboradores.
 
-- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — manifiesto completo de ramas, WOs y evolución Farmacia.
+- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — manifiesto histórico completo de ramas, WOs y evolución Farmacia hasta la etapa preview.
 - Documentos `docs/ops/FARMACIA_V0_3_*` — evolución post-demo v0.3.
 - Documentos `docs/ops/FARMACIA_V0_4_*` — evolución v0.4.
 - [`docs/ops/FARMACIA_V0_5_PROGRAMMING_MODEL_REFACTOR_20260611.md`](/docs/ops/FARMACIA_V0_5_PROGRAMMING_MODEL_REFACTOR_20260611.md) — refactor v0.5.
@@ -199,7 +205,8 @@
 
 | Tema | Estado | Dónde se documentará / decide |
 |---|---|---|
-| Integración de Farmacia preview en base canónica | Pendiente | Decisión humana; no autoriza este índice. Afecta a `feature/reuma-v2...` vs `preview/demo-lunes-wo4-20260614`. |
+| Integración de Farmacia en rama regional publicada | **Resuelta para `recovery`** | [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md). No equivale a merge en `main` ni integración con Reuma v2. |
+| Promoción de nuevas versiones Cáceres | Pendiente de cada ciclo de feedback | Requiere nuevo SHA regional aprobado y regeneración explícita del snapshot. |
 | Tags DEC-002 (`legacy-v1-main-antes-reuma-v2`, `v2.0.0-*`) | Pendiente | Decisión de Sil/Cora; requiere WO específica. |
 | Nomenclatura externa (framework, piloto, módulos) | Propuesta / pendiente validación | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 2. |
 | Versionado unificado producto / técnico | Propuesta / pendiente | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 6. |
@@ -211,4 +218,4 @@
 
 ---
 
-*Índice generado en el contexto de `WO-DOC-INDEX-CONTROL-PLANE-POST-SES-01-20260713`. No autoriza cambios de código, merges ni integraciones.*
+*Índice actualizado en el contexto de `WO-DOC-FH-RECOVERY-CACERES-RECONCILIATION-01` (issue #178). No autoriza cambios de código, datos reales, piloto ni producción.*
