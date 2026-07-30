@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
 const TARGET_URL = process.env.FH_VALIDACION_URL || 'http://127.0.0.1:4174/farmacia_validacion.html';
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SEARCH_QUERY = 'secu';
 const MANUAL_SELECTION_IDS = ['fhManualFarmaco', 'fhManualPrincipioActivo', 'fhManualDosis', 'fhManualVia'];
 const TRACKED_IDS = [...MANUAL_SELECTION_IDS];
@@ -49,6 +51,26 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 page.on('dialog', (dialog) => dialog.dismiss());
 
 try {
+  const validationSource = readFileSync(path.join(ROOT, 'scripts', 'farmacia_validacion.js'), 'utf8');
+  assert.match(validationSource, /function selectManualRequestedDrug\(drug\)/, 'manual requested selection has a dedicated consumer');
+  assert.match(validationSource, /function enableAutocompleteManualRequested\(\)/, 'manual requested autocomplete has a dedicated binder');
+  assert.match(validationSource, /enableRequestedAutocomplete\("fhDermaFarmaco"\);\s*enableAutocompleteManualRequested\(\);/, 'top-level wiring keeps Dermatology generic and manual dedicated');
+  assert.doesNotMatch(validationSource, /enableRequestedAutocomplete\("fhManualFarmaco"\)/, 'manual requested field is not wired through the generic binder');
+  const manualSelectionSource = validationSource.slice(
+    validationSource.indexOf('function selectManualRequestedDrug'),
+    validationSource.indexOf('function renderManualRequestedAutocompleteDropdown')
+  );
+  assert.match(manualSelectionSource, /cipEl \? cipEl\.value\.trim\(\) : ""/, 'manual selection reads the direct literal CIP');
+  assert.doesNotMatch(manualSelectionSource, /selectedCip|catalogContext/, 'manual selection does not use fallback patient context');
+  assert.match(manualSelectionSource, /Boolean\(context\.cip\)[\s\S]*if \(contextValid[\s\S]*C\.selectDrug/, 'manual persistence requires a valid non-empty context');
+  assert.match(manualSelectionSource, /var previous = manualRequestedTransientProposal \|\| contextualPrevious;/, 'visible transient proposal takes priority over a contextual snapshot');
+  assert.match(manualSelectionSource, /if \(contextValid && typeof C\.selectDrug[\s\S]*manualRequestedTransientProposal = \{\s*proposal_values: Object\.assign\(\{\}, reconciled\.proposal_values\)/, 'every explicit selection retains its reconciled proposal after optional persistence');
+  const requestedConfigSource = validationSource.slice(
+    validationSource.indexOf('function requestedAutocompleteConfig'),
+    validationSource.indexOf('function renderRequestedAutocompleteDropdown')
+  );
+  assert.doesNotMatch(requestedConfigSource, /fhManual/, 'generic requested config contains no manual branch');
+
   await page.addInitScript((trackedIds) => {
     window.__fhCimaRuntime = { events: [], dropdown: [] };
     for (const type of ['input', 'change']) {
@@ -89,31 +111,8 @@ try {
   await page.locator('#validationBlock').waitFor({ state: 'visible' });
   await page.waitForFunction(() => window.FarmaciaCatalog && window.FarmaciaCatalog.loaded);
 
-  const catalogScenario = await page.evaluate((query) => {
-    const catalog = window.FarmaciaCatalog;
-    const association = (drug) => ({
-      farmaco: String(drug.display_name || drug.nombre_comercial || '').trim(),
-      principioActivo: String(drug.principio_activo || '').trim(),
-      dosis: String(drug.dosis || '').trim(),
-      via: String(typeof catalog.mapCatalogViaToSelect === 'function' ? catalog.mapCatalogViaToSelect(drug.via) : (drug.via || '')).trim()
-    });
-    const products = catalog.search(query)
-      .filter((drug) => drug.source_type === 'CIMA')
-      .map(association)
-      .filter((product) => Object.values(product).every(Boolean))
-      .filter((product, index, candidates) => candidates.findIndex((candidate) => candidate.farmaco === product.farmaco) === index);
-    return { query, products: products.slice(0, 2), completeDistinctCount: products.length };
-  }, SEARCH_QUERY);
-  assert.ok(
-    catalogScenario.completeDistinctCount >= 2,
-    `catalog must provide at least two distinct complete CIMA products for exactly "${SEARCH_QUERY}"; found ${catalogScenario.completeDistinctCount}`
-  );
-
   const pauta = page.locator('#fhManualPauta');
   const induccion = page.locator('#fhManualInduccion');
-  await pauta.selectOption('CADA_4_SEMANAS');
-  await induccion.selectOption('si');
-
   const requested = page.locator('#fhManualFarmaco');
   const dropdown = page.locator('#fhManualAutocompleteDropdown');
   const requestedFields = {
@@ -127,6 +126,17 @@ try {
   const readRequested = async () => Object.fromEntries(await Promise.all(
     Object.entries(requestedFields).map(async ([key, locator]) => [key, await locator.inputValue()])
   ));
+  const initialized = await readRequested();
+  assert.deepEqual(initialized, {
+    farmaco: '', principioActivo: '', dosis: '', via: '', pauta: '', induccion: 'no'
+  }, 'initialization leaves manual requested controls at their declared preload values');
+  assert.equal(await dropdown.locator('.autocomplete-item').count(), 0, 'initialization does not search or create suggestions');
+  assert.ok(await dropdown.isHidden(), 'initialization keeps the dropdown closed');
+  await page.waitForTimeout(500);
+  assert.deepEqual(await readRequested(), initialized, 'initialization does not erase, select, or infer values after 500 ms');
+
+  await pauta.selectOption('CADA_4_SEMANAS');
+  await induccion.selectOption('si');
 
   const copyRequestedSummary = async () => {
     const sentinel = `FH-CIMA-SENTINEL-${Date.now()}-${Math.random()}`;
@@ -161,19 +171,43 @@ try {
     assert.match(section, new RegExp(`Vía: ${escapeRegExp(expected.via)}`), `${label}: requested summary route`);
   };
 
-  const chooseFirst = async ({ cip, childSelector, label }) => {
+  const routeFromVisibleDetail = (value) => {
+    const normalized = String(value || '').toLocaleLowerCase('es');
+    if (normalized.includes('subcut') || /(^|\s)sc($|\s)/.test(normalized)) return 'SC';
+    if (normalized.includes('intraven') || /(^|\s)iv($|\s)/.test(normalized)) return 'IV';
+    if (normalized.includes('intramus') || /(^|\s)im($|\s)/.test(normalized)) return 'IM';
+    if (normalized.includes('oral')) return 'Oral';
+    return value ? 'Otra' : '';
+  };
+  const visibleCandidate = async (item) => {
+    const parts = (await item.locator('.autocomplete-item-detail').textContent()).split(' · ').map((part) => part.trim());
+    return {
+      farmaco: (await item.locator('.autocomplete-item-name').textContent()).trim(),
+      principioActivo: parts[0] || '',
+      dosis: parts[1] || '',
+      via: routeFromVisibleDetail(parts[2] || '')
+    };
+  };
+  const snapshotRegistry = () => page.evaluate(() => {
+    const raw = sessionStorage.getItem('farmacia_drug_snapshot_registry_v2');
+    return raw ? JSON.parse(raw) : { version: 2, snapshots: {} };
+  });
+  const requestedSnapshot = async (cip) => Object.values((await snapshotRegistry()).snapshots)
+    .find((snapshot) => snapshot.context?.slot === 'validacion.solicitado' && snapshot.context?.cip === cip);
+
+  const chooseFirst = async ({ cip, childSelector, label, query = SEARCH_QUERY }) => {
     await page.locator('#fhManualCip').fill(cip);
     await requestedFields.principioActivo.fill('');
     await requestedFields.dosis.fill('');
     await requestedFields.via.selectOption('');
     await requested.fill('');
-    await requested.fill(SEARCH_QUERY);
+    await requested.fill(query);
     await dropdown.waitFor({ state: 'visible' });
     const first = dropdown.locator('.autocomplete-item').first();
     await first.waitFor({ state: 'visible' });
-    const expectedName = (await first.locator('.autocomplete-item-name').textContent()).trim();
-    const expected = catalogScenario.products[0];
-    assert.equal(expectedName, expected.farmaco, `${label}: first result matches dynamically selected catalog product`);
+    const expected = await visibleCandidate(first);
+    const expectedName = expected.farmaco;
+    assert.ok(Object.values(expected).every(Boolean), `${label}: visible result exposes all associated therapeutic values`);
     assert.equal((await first.locator('.drug-source-tag').textContent()).trim(), 'CIMA', `${label}: first result source`);
     const eventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
 
@@ -199,12 +233,216 @@ try {
     assertRequestedSummary(sectionImmediate, expected, `${label}: immediately after click`);
     assertRequestedSummary(sectionDelayed, expected, `${label}: after 500 ms`);
     assert.equal(sectionDelayed, sectionImmediate, `${label}: requested summary stable after 500 ms`);
-    return { expectedName, clickEvents };
+    return { expected, expectedName, clickEvents };
   };
 
+  const professionalValues = {
+    principioActivo: 'Principio activo profesional previo',
+    dosis: '777 mg profesional',
+    via: 'Oral'
+  };
+  await page.locator('#fhManualCip').fill('');
+  await requestedFields.principioActivo.fill(professionalValues.principioActivo);
+  await requestedFields.dosis.fill(professionalValues.dosis);
+  await requestedFields.via.selectOption(professionalValues.via);
+  const professionalPreload = await readRequested();
+  await page.waitForTimeout(500);
+  assert.deepEqual(await readRequested(), professionalPreload, 'professional preloads remain unchanged before any drug search');
+  assert.ok(await dropdown.isHidden(), 'professional dose/route preloads do not trigger a drug search');
+  await requested.fill(SEARCH_QUERY);
+  await dropdown.waitFor({ state: 'visible' });
+  const professionalItem = dropdown.locator('.autocomplete-item').first();
+  const professionalCatalogExpected = await visibleCandidate(professionalItem);
+  const professionalEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
+  const registryBeforeProfessionalSelection = await snapshotRegistry();
+  await professionalItem.locator('.autocomplete-item-name').click();
+  const professionalImmediate = await readRequested();
+  await page.waitForTimeout(500);
+  const professionalDelayed = await readRequested();
+  const professionalClickEvents = await page.evaluate((start) => window.__fhCimaRuntime.events.slice(start), professionalEventStart);
+  const professionalExpected = {
+    ...professionalCatalogExpected,
+    dosis: professionalValues.dosis,
+    via: professionalValues.via
+  };
+  observations.push(`professional preload selection: immediate=${JSON.stringify(professionalImmediate)}`);
+  observations.push(`professional preload selection: after500ms=${JSON.stringify(professionalDelayed)}`);
+  assert.equal(professionalImmediate.farmaco, professionalExpected.farmaco, 'explicit selection replaces preloaded partial identity');
+  assert.equal(professionalImmediate.principioActivo, professionalExpected.principioActivo, 'explicit selection replaces preloaded active ingredient');
+  assert.equal(professionalImmediate.dosis, professionalValues.dosis, 'explicit selection preserves professional dose');
+  assert.equal(professionalImmediate.via, professionalValues.via, 'explicit selection preserves professional route');
+  assert.equal(professionalImmediate.pauta, 'CADA_4_SEMANAS', 'explicit selection preserves professional pauta');
+  assert.equal(professionalImmediate.induccion, 'si', 'explicit selection preserves professional induction');
+  assert.deepEqual(professionalDelayed, professionalImmediate, 'professional values remain stable after 500 ms');
+  assert.deepEqual(await snapshotRegistry(), registryBeforeProfessionalSelection, 'empty-CIP professional selection does not persist a snapshot');
+
+  const registryBeforeEmpty = await snapshotRegistry();
   const emptyCip = await chooseFirst({ cip: '', childSelector: '.autocomplete-item-name', label: 'empty CIP / first result name' });
-  const keyedTag = await chooseFirst({ cip: 'CIP-MANUAL-CIMA-001', childSelector: '.drug-source-tag', label: 'keyed CIP / first result CIMA tag' });
-  const keyedDetail = await chooseFirst({ cip: 'CIP-MANUAL-CIMA-001', childSelector: '.autocomplete-item-detail', label: 'keyed CIP / first result detail' });
+  assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP remains visible without creating or changing a snapshot');
+  await requested.fill('');
+  await requested.fill('tociliz');
+  await dropdown.waitFor({ state: 'visible' });
+  const emptySecondItem = dropdown.locator('.autocomplete-item').nth(1);
+  const emptySecondExpected = await visibleCandidate(emptySecondItem);
+  assert.notEqual(emptySecondExpected.dosis, emptyCip.expected.dosis, 'empty-CIP second fixture has a distinct catalog dose');
+  const emptySecondEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
+  await emptySecondItem.locator('.autocomplete-item-name').click();
+  const emptySecondImmediate = await readRequested();
+  await page.waitForTimeout(500);
+  const emptySecondDelayed = await readRequested();
+  const emptySecondClickEvents = await page.evaluate((start) => window.__fhCimaRuntime.events.slice(start), emptySecondEventStart);
+  observations.push(`empty CIP second distinct product: immediate=${JSON.stringify(emptySecondImmediate)}`);
+  observations.push(`empty CIP second distinct product: after500ms=${JSON.stringify(emptySecondDelayed)}`);
+  assertAssociatedFields(emptySecondImmediate, emptySecondExpected, 'empty CIP second distinct product');
+  assert.deepEqual(emptySecondDelayed, emptySecondImmediate, 'empty CIP second distinct product remains stable after 500 ms');
+  assert.equal(emptySecondImmediate.pauta, 'CADA_4_SEMANAS', 'empty CIP second product preserves pauta');
+  assert.equal(emptySecondImmediate.induccion, 'si', 'empty CIP second product preserves induction');
+  assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP second product still creates no snapshot');
+  const transientProfessionalEdit = { dosis: '888 mg edición profesional', via: 'Oral' };
+  await requestedFields.dosis.fill(transientProfessionalEdit.dosis);
+  await requestedFields.via.selectOption(transientProfessionalEdit.via);
+  await requested.fill('');
+  await requested.fill(SEARCH_QUERY);
+  await dropdown.waitFor({ state: 'visible' });
+  const emptyEditedThirdItem = dropdown.locator('.autocomplete-item').first();
+  const emptyEditedThirdExpected = await visibleCandidate(emptyEditedThirdItem);
+  const emptyEditedThirdEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
+  await emptyEditedThirdItem.locator('.autocomplete-item-name').click();
+  const emptyEditedThirdImmediate = await readRequested();
+  await page.waitForTimeout(500);
+  const emptyEditedThirdDelayed = await readRequested();
+  const emptyEditedThirdClickEvents = await page.evaluate((start) => window.__fhCimaRuntime.events.slice(start), emptyEditedThirdEventStart);
+  observations.push(`empty CIP product after professional edit: immediate=${JSON.stringify(emptyEditedThirdImmediate)}`);
+  observations.push(`empty CIP product after professional edit: after500ms=${JSON.stringify(emptyEditedThirdDelayed)}`);
+  assert.equal(emptyEditedThirdImmediate.farmaco, emptyEditedThirdExpected.farmaco, 'empty CIP later selection replaces product identity after professional edit');
+  assert.equal(emptyEditedThirdImmediate.principioActivo, emptyEditedThirdExpected.principioActivo, 'empty CIP later selection replaces active ingredient after professional edit');
+  assert.equal(emptyEditedThirdImmediate.dosis, transientProfessionalEdit.dosis, 'empty CIP later selection preserves professionally edited dose');
+  assert.equal(emptyEditedThirdImmediate.via, transientProfessionalEdit.via, 'empty CIP later selection preserves professionally edited route');
+  assert.equal(emptyEditedThirdImmediate.pauta, 'CADA_4_SEMANAS', 'empty CIP later selection preserves pauta after professional edit');
+  assert.equal(emptyEditedThirdImmediate.induccion, 'si', 'empty CIP later selection preserves induction after professional edit');
+  assert.deepEqual(emptyEditedThirdDelayed, emptyEditedThirdImmediate, 'empty CIP professional edits remain stable after 500 ms');
+  assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP professional-edit selection creates no snapshot');
+  const transitionSeed = await chooseFirst({
+    cip: '', childSelector: '.autocomplete-item-name', label: 'empty CIP seed before new synthetic context'
+  });
+  const transitionSyntheticCip = `CIP-MANUAL-TRANSIENT-${Date.now()}`;
+  await page.locator('#fhManualCip').fill(transitionSyntheticCip);
+  await requested.fill('');
+  await requested.fill('tociliz');
+  await dropdown.waitFor({ state: 'visible' });
+  const transitionItem = dropdown.locator('.autocomplete-item').nth(1);
+  const transitionExpected = await visibleCandidate(transitionItem);
+  assert.notEqual(transitionExpected.dosis, transitionSeed.expected.dosis, 'new-context fixture has a distinct proposed dose');
+  const transitionEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
+  await transitionItem.locator('.autocomplete-item-name').click();
+  const transitionImmediate = await readRequested();
+  await page.waitForTimeout(500);
+  const transitionDelayed = await readRequested();
+  const transitionClickEvents = await page.evaluate((start) => window.__fhCimaRuntime.events.slice(start), transitionEventStart);
+  observations.push(`empty CIP to new synthetic context: immediate=${JSON.stringify(transitionImmediate)}`);
+  observations.push(`empty CIP to new synthetic context: after500ms=${JSON.stringify(transitionDelayed)}`);
+  assertAssociatedFields(transitionImmediate, transitionExpected, 'new synthetic CIP uses transient proposals for distinct selection');
+  assert.deepEqual(transitionDelayed, transitionImmediate, 'new synthetic CIP distinct selection remains stable after 500 ms');
+  assert.equal(transitionImmediate.pauta, 'CADA_4_SEMANAS', 'new synthetic CIP transition preserves pauta');
+  assert.equal(transitionImmediate.induccion, 'si', 'new synthetic CIP transition preserves induction');
+  const transitionRegistry = await snapshotRegistry();
+  const transitionSnapshots = Object.values(transitionRegistry.snapshots).filter((snapshot) => snapshot.context?.slot === 'validacion.solicitado' && snapshot.context?.cip === transitionSyntheticCip);
+  assert.equal(transitionSnapshots.length, 1, 'new synthetic CIP transition persists exactly one contextual snapshot');
+  assert.equal(transitionSnapshots[0].nombre_snapshot, transitionExpected.farmaco, 'new synthetic CIP transition snapshot records the distinct product');
+
+  const selectVisibleProduct = async ({ cip, query, index, label }) => {
+    await page.locator('#fhManualCip').fill(cip);
+    await page.waitForTimeout(200);
+    await requested.fill('');
+    await requested.fill(query);
+    await dropdown.waitFor({ state: 'visible' });
+    const item = dropdown.locator('.autocomplete-item').nth(index);
+    await item.waitFor({ state: 'visible' });
+    const expected = await visibleCandidate(item);
+    assert.ok(Object.values(expected).every(Boolean), `${label}: visible candidate is complete`);
+    const eventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
+    await item.locator('.autocomplete-item-name').click();
+    const actual = await readRequested();
+    const clickEvents = await page.evaluate((start) => window.__fhCimaRuntime.events.slice(start), eventStart);
+    observations.push(`${label}: selected=${JSON.stringify(actual)}`);
+    return { expected, actual, clickEvents };
+  };
+  const assertFullProduct = (actual, expected, label) => {
+    assert.equal(actual.farmaco, expected.farmaco, `${label}: product identity`);
+    assert.equal(actual.principioActivo, expected.principioActivo, `${label}: active ingredient identity`);
+    assert.equal(actual.dosis, expected.dosis, `${label}: proposed dose`);
+    assert.equal(actual.via, expected.via, `${label}: proposed route`);
+  };
+  const cipA = `CIP-MANUAL-PRIORITY-A-${Date.now()}`;
+  const cipB = `CIP-MANUAL-PRIORITY-B-${Date.now()}`;
+  const clinicalControls = {
+    pauta,
+    induccion,
+    estado: page.locator('#fhValEstado'),
+    peso: page.locator('#fhManualPeso'),
+    justificacion: page.locator('#fhManualJustificacion'),
+    observaciones: page.locator('#fhManualObservaciones')
+  };
+  await clinicalControls.estado.selectOption('pending');
+  await clinicalControls.peso.fill('71 kg sintéticos');
+  await clinicalControls.justificacion.fill('Justificación profesional preservada');
+  await clinicalControls.observaciones.fill('Observación profesional preservada');
+  const readClinical = async () => Object.fromEntries(await Promise.all(
+    Object.entries(clinicalControls).map(async ([key, locator]) => [key, await locator.inputValue()])
+  ));
+  const clinicalBaseline = await readClinical();
+  const assertClinicalUnchanged = async (label) => assert.deepEqual(await readClinical(), clinicalBaseline, `${label}: pauta, induction, validation status, and other clinical fields stay unchanged`);
+
+  await requestedFields.principioActivo.fill('');
+  await requestedFields.dosis.fill('');
+  await requestedFields.via.selectOption('');
+  const priorityA = await selectVisibleProduct({ cip: cipA, query: SEARCH_QUERY, index: 0, label: 'priority A' });
+  assertFullProduct(priorityA.actual, priorityA.expected, 'priority A');
+  const snapshotAFirst = await requestedSnapshot(cipA);
+  assert.equal(snapshotAFirst?.nombre_snapshot, priorityA.expected.farmaco, 'priority A snapshot records product A');
+  assert.equal(snapshotAFirst?.principio_activo_snapshot, priorityA.expected.principioActivo, 'priority A snapshot records full identity');
+  await assertClinicalUnchanged('priority A');
+
+  const priorityB = await selectVisibleProduct({ cip: cipB, query: 'adal', index: 0, label: 'direct A-to-B transition' });
+  assert.notEqual(priorityB.expected.farmaco, priorityA.expected.farmaco, 'A-to-B fixture uses a distinct product');
+  assertFullProduct(priorityB.actual, priorityB.expected, 'direct A-to-B transition');
+  const snapshotB = await requestedSnapshot(cipB);
+  assert.equal(snapshotB?.nombre_snapshot, priorityB.expected.farmaco, 'CIP-B snapshot records product B');
+  assert.equal(snapshotB?.principio_activo_snapshot, priorityB.expected.principioActivo, 'CIP-B snapshot records B identity');
+  assert.equal(snapshotB?.proposal_values?.dosis_texto, priorityB.expected.dosis, 'CIP-B snapshot records B proposed dose');
+  assert.equal(snapshotB?.proposal_values?.via, priorityB.expected.via, 'CIP-B snapshot records B proposed route');
+  await assertClinicalUnchanged('direct A-to-B transition');
+
+  const priorityThird = await selectVisibleProduct({ cip: cipA, query: 'tociliz', index: 1, label: 'return B-to-A with third product' });
+  assert.notEqual(priorityThird.expected.farmaco, priorityA.expected.farmaco, 'return fixture is not historical product A');
+  assert.notEqual(priorityThird.expected.farmaco, priorityB.expected.farmaco, 'return fixture is not visible product B');
+  assert.notEqual(priorityThird.expected.dosis, priorityA.expected.dosis, 'third-product fixture dose differs from historical A proposal');
+  assert.notEqual(priorityThird.expected.dosis, priorityB.expected.dosis, 'third-product fixture dose differs from visible B proposal');
+  assertFullProduct(priorityThird.actual, priorityThird.expected, 'return B-to-A with third product');
+  const snapshotAThird = await requestedSnapshot(cipA);
+  assert.equal(snapshotAThird?.nombre_snapshot, priorityThird.expected.farmaco, 'CIP-A snapshot is replaced by the third product');
+  assert.equal(snapshotAThird?.proposal_values?.dosis_texto, priorityThird.expected.dosis, 'CIP-A snapshot replaces historical and visible dose proposals');
+  assert.equal(snapshotAThird?.proposal_values?.via, priorityThird.expected.via, 'CIP-A snapshot applies the third-product route proposal');
+  await assertClinicalUnchanged('return B-to-A with third product');
+
+  const professionalTransition = { dosis: '919 mg profesional', via: 'Oral' };
+  await requestedFields.dosis.fill(professionalTransition.dosis);
+  await requestedFields.via.selectOption(professionalTransition.via);
+  const priorityEdited = await selectVisibleProduct({ cip: cipB, query: SEARCH_QUERY, index: 0, label: 'valid CIP transition after professional edits' });
+  assert.equal(priorityEdited.actual.farmaco, priorityEdited.expected.farmaco, 'professional transition changes product identity');
+  assert.equal(priorityEdited.actual.principioActivo, priorityEdited.expected.principioActivo, 'professional transition changes active ingredient identity');
+  assert.equal(priorityEdited.actual.dosis, professionalTransition.dosis, 'professional transition preserves manually edited dose');
+  assert.equal(priorityEdited.actual.via, professionalTransition.via, 'professional transition preserves manually edited route');
+  assert.equal((await requestedSnapshot(cipB))?.nombre_snapshot, priorityEdited.expected.farmaco, 'professional transition updates CIP-B snapshot identity');
+  await assertClinicalUnchanged('valid CIP transition after professional edits');
+
+  const syntheticCip = `CIP-MANUAL-CIMA-${Date.now()}`;
+  const keyedTag = await chooseFirst({ cip: syntheticCip, childSelector: '.drug-source-tag', label: 'new synthetic CIP / first result CIMA tag' });
+  const keyedRegistry = await snapshotRegistry();
+  const keyedSnapshots = Object.values(keyedRegistry.snapshots).filter((snapshot) => snapshot.context?.slot === 'validacion.solicitado' && snapshot.context?.cip === syntheticCip);
+  assert.equal(keyedSnapshots.length, 1, 'new synthetic CIP persists exactly one requested-slot snapshot');
+  assert.equal(keyedSnapshots[0].nombre_snapshot, keyedTag.expectedName, 'new synthetic CIP snapshot records the explicitly selected product');
+  const keyedDetail = await chooseFirst({ cip: syntheticCip, childSelector: '.autocomplete-item-detail', label: 'new synthetic CIP / first result detail' });
 
   await page.locator('#fhPatologiaManual').selectOption({ label: 'Psoriasis' });
   assert.equal(await page.locator('#fhManualPatologiaDisplay').inputValue(), 'Psoriasis', 'pathology rerender is visible');
@@ -214,9 +452,9 @@ try {
   const items = dropdown.locator('.autocomplete-item');
   assert.ok(await items.count() > 1, 'demo catalog offers a second secu product');
   const second = items.nth(1);
-  const secondName = (await second.locator('.autocomplete-item-name').textContent()).trim();
-  const secondExpected = catalogScenario.products[1];
-  assert.equal(secondName, secondExpected.farmaco, 'second result matches dynamically selected catalog product after rerender');
+  const secondExpected = await visibleCandidate(second);
+  const secondName = secondExpected.farmaco;
+  assert.ok(Object.values(secondExpected).every(Boolean), 'second visible result exposes all associated therapeutic values');
   const secondEventStart = await page.evaluate(() => window.__fhCimaRuntime.events.length);
   await second.locator('.autocomplete-item-name').click();
   const secondImmediate = await readRequested();
@@ -248,13 +486,34 @@ try {
   const validatedFirst = validatedDropdown.locator('.autocomplete-item').first();
   const validatedExpected = (await validatedFirst.locator('.autocomplete-item-name').textContent()).trim();
   await validatedFirst.locator('.autocomplete-item-name').click();
-  observations.push(`validated comparison: value=${await validated.inputValue()}`);
+  const validatedAssociated = {
+    farmaco: await validated.inputValue(),
+    principioActivo: await page.locator('#fhValidadoPrincipioActivo').inputValue(),
+    dosis: await page.locator('#fhValidadoDosis').inputValue(),
+    via: await page.locator('#fhValidadoVia').inputValue()
+  };
+  observations.push(`validated comparison: value=${JSON.stringify(validatedAssociated)}`);
   assert.equal(await validated.inputValue(), validatedExpected, 'fhValidadoFarmaco selects the same first catalog result');
+  assert.deepEqual(validatedAssociated, emptyCip.expected, 'manual requested clone matches the validated visible selection contract');
   assert.equal(emptyCip.expectedName, validatedExpected, 'empty-CIP requested and validated first result match');
   assert.equal(keyedTag.expectedName, validatedExpected, 'CIMA-tag requested and validated first result match');
   assert.equal(keyedDetail.expectedName, validatedExpected, 'detail requested and validated first result match');
 
-  const requestedSelectionEvents = [...[emptyCip, keyedTag, keyedDetail].flatMap((result) => result.clickEvents), ...secondClickEvents];
+  const requestedSelectionEvents = [
+    ...professionalClickEvents,
+    ...emptyCip.clickEvents,
+    ...emptySecondClickEvents,
+    ...emptyEditedThirdClickEvents,
+    ...transitionSeed.clickEvents,
+    ...transitionClickEvents,
+    ...priorityA.clickEvents,
+    ...priorityB.clickEvents,
+    ...priorityThird.clickEvents,
+    ...priorityEdited.clickEvents,
+    ...keyedTag.clickEvents,
+    ...keyedDetail.clickEvents,
+    ...secondClickEvents
+  ];
   const dropdownRuntime = await page.evaluate(() => window.__fhCimaRuntime.dropdown);
   observations.push(`requested dropdown mutations=${JSON.stringify(dropdownRuntime)}`);
   console.log(`TARGET ${TARGET_URL}`);
