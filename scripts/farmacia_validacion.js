@@ -1219,6 +1219,12 @@
         return { values: current, proposal_values: {} };
     }
 
+    function isManualRequestedSelection(ids) {
+        return ids && ids.cip === "fhManualCip" && ids.farmaco === "fhManualFarmaco"
+            && ids.principioActivo === "fhManualPrincipioActivo" && ids.dosis === "fhManualDosis"
+            && ids.via === "fhManualVia" && byId(ids.farmaco) === byId("fhManualFarmaco");
+    }
+
     function selectDrug(drug, ids, dropdownId) {
         if (!drug || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
         ids = ids || requestedFieldIds();
@@ -1238,6 +1244,14 @@
         byId(ids.principioActivo).value = reconciled.values.principio_activo || "";
         byId(ids.dosis).value = reconciled.values.dosis_texto || "";
         byId(ids.via).value = requestedViaValue;
+
+        if (isManualRequestedSelection(ids)) {
+            [byId(ids.farmaco), byId(ids.principioActivo), byId(ids.dosis), byId(ids.via)].forEach(function (el) {
+                if (!el) return;
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            });
+        }
         if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
         clearRequestedAutocompleteDropdown(dropdownId);
         updateSolicitadoSummary();
