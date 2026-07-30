@@ -7,6 +7,8 @@
     var P = window.FarmaciaPautasCatalog;
     var modoActual = null;
     var autocompleteActiveIndex = -1;
+    var manualRequestedAutocompleteActiveIndex = -1;
+    var manualRequestedTransientProposal = null;
     var currentPatient = null;
     var otherDrugs = [];
     var otherDrugRowSeq = 0;
@@ -1238,6 +1240,7 @@
         byId(ids.principioActivo).value = reconciled.values.principio_activo || "";
         byId(ids.dosis).value = reconciled.values.dosis_texto || "";
         byId(ids.via).value = requestedViaValue;
+
         if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
         clearRequestedAutocompleteDropdown(dropdownId);
         updateSolicitadoSummary();
@@ -1371,6 +1374,142 @@
         });
     }
 
+    function selectManualRequestedDrug(drug) {
+        var farmacoEl = byId("fhManualFarmaco");
+        var princEl = byId("fhManualPrincipioActivo");
+        var dosisEl = byId("fhManualDosis");
+        var viaEl = byId("fhManualVia");
+        var cipEl = byId("fhManualCip");
+        if (!drug || !farmacoEl || (C.isConcreteCatalogSelection && !C.isConcreteCatalogSelection(drug))) return;
+        var context = { slot: "validacion.solicitado", cip: cipEl ? cipEl.value.trim() : "" };
+        var contextValid = Boolean(context.cip) && (typeof C.snapshotContextKey !== "function" || Boolean(C.snapshotContextKey(context)));
+        var contextualPrevious = contextValid && typeof C.getSnapshot === "function" ? C.getSnapshot(context) : null;
+        var previous = manualRequestedTransientProposal || contextualPrevious;
+        var reconciled = reconcileSelection({
+            farmaco_nombre: farmacoEl.value,
+            principio_activo: princEl ? princEl.value : "",
+            dosis_texto: dosisEl ? dosisEl.value : "",
+            via: viaEl ? viaEl.value : ""
+        }, previous, drug, context.slot);
+        var requestedViaValue = reconciled.values.via ? mapViaToSelect(reconciled.values.via, viaEl) : "";
+        reconciled.values.via = requestedViaValue;
+        if (Object.prototype.hasOwnProperty.call(reconciled.proposal_values, "via")) reconciled.proposal_values.via = requestedViaValue;
+        farmacoEl.value = reconciled.values.farmaco_nombre || "";
+        if (princEl) princEl.value = reconciled.values.principio_activo || "";
+        if (dosisEl) dosisEl.value = reconciled.values.dosis_texto || "";
+        if (viaEl) viaEl.value = requestedViaValue;
+        if (contextValid && typeof C.selectDrug === "function") C.selectDrug(drug, context, reconciled);
+        manualRequestedTransientProposal = {
+            proposal_values: Object.assign({}, reconciled.proposal_values)
+        };
+
+        [farmacoEl, princEl, dosisEl, viaEl].forEach(function (el) {
+            if (!el) return;
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+        clearManualRequestedAutocompleteDropdown();
+        updateSolicitadoSummary();
+    }
+
+    function renderManualRequestedAutocompleteDropdown(results) {
+        var dropdown = byId("fhManualAutocompleteDropdown");
+        if (!dropdown) return;
+        F.clearChildren(dropdown);
+        if (!results || results.length === 0) {
+            dropdown.classList.add("hidden");
+            return;
+        }
+        var maxResults = Math.min(results.length, 15);
+        for (var i = 0; i < maxResults; i++) {
+            var drug = results[i];
+            var item = createEl("div", "autocomplete-item");
+            if (i === manualRequestedAutocompleteActiveIndex) item.classList.add("autocomplete-item--active");
+            var mainRow = createEl("div", "autocomplete-item-main");
+            var nameSpan = createEl("span", "autocomplete-item-name", drug.display_name || drug.nombre_comercial || "—");
+            mainRow.appendChild(nameSpan);
+            if (isTruthyRobust(drug.es_hospitalario)) mainRow.appendChild(createEl("span", "drug-tag drug-tag--hosp", "[HOSP]"));
+            if (isTruthyRobust(drug.biosimilar)) mainRow.appendChild(createEl("span", "drug-tag drug-tag--bio", "[BIO]"));
+            var sourceTag = createEl("span", "drug-source-tag drug-source-tag--" + drug.source_type.toLowerCase(), drug.source_type);
+            mainRow.appendChild(sourceTag);
+            item.appendChild(mainRow);
+            var detailRow = createEl("div", "autocomplete-item-detail");
+            var parts = [];
+            if (drug.principio_activo) parts.push(drug.principio_activo);
+            if (drug.dosis) parts.push(drug.dosis);
+            if (drug.via) parts.push(drug.via);
+            if (drug.codigo_nacional) parts.push("CN " + drug.codigo_nacional);
+            detailRow.textContent = parts.join(" · ");
+            item.appendChild(detailRow);
+            (function (d) {
+                item.addEventListener("click", function () { selectManualRequestedDrug(d); });
+            })(drug);
+            dropdown.appendChild(item);
+        }
+        dropdown.classList.remove("hidden");
+        manualRequestedAutocompleteActiveIndex = -1;
+    }
+
+    function clearManualRequestedAutocompleteDropdown() {
+        var dropdown = byId("fhManualAutocompleteDropdown");
+        if (!dropdown) return;
+        F.clearChildren(dropdown);
+        dropdown.classList.add("hidden");
+        manualRequestedAutocompleteActiveIndex = -1;
+    }
+
+    function handleManualRequestedAutocompleteInput() {
+        if (!C.loaded) return;
+        var input = byId("fhManualFarmaco");
+        if (!input) return;
+        var query = input.value.trim();
+        if (query.length < 2) {
+            clearManualRequestedAutocompleteDropdown();
+            return;
+        }
+        renderManualRequestedAutocompleteDropdown(C.search(query));
+    }
+
+    function enableAutocompleteManualRequested() {
+        var input = byId("fhManualFarmaco");
+        if (!input || input.__farmaciaManualRequestedAutocompleteBound === true) return;
+        input.__farmaciaManualRequestedAutocompleteBound = true;
+        input.placeholder = "Buscar por marca, principio activo, presentación o código...";
+        input.addEventListener("input", handleManualRequestedAutocompleteInput);
+        input.addEventListener("keydown", function (event) {
+            var dropdown = byId("fhManualAutocompleteDropdown");
+            if (!dropdown || dropdown.classList.contains("hidden")) return;
+            var items = dropdown.querySelectorAll(".autocomplete-item");
+            if (items.length === 0) return;
+            if (event.key === "ArrowDown") {
+                event.preventDefault();
+                manualRequestedAutocompleteActiveIndex = Math.min(manualRequestedAutocompleteActiveIndex + 1, items.length - 1);
+                items.forEach(function (item, idx) {
+                    item.classList.toggle("autocomplete-item--active", idx === manualRequestedAutocompleteActiveIndex);
+                });
+            } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                manualRequestedAutocompleteActiveIndex = Math.max(manualRequestedAutocompleteActiveIndex - 1, -1);
+                items.forEach(function (item, idx) {
+                    item.classList.toggle("autocomplete-item--active", idx === manualRequestedAutocompleteActiveIndex);
+                });
+            } else if (event.key === "Enter") {
+                if (manualRequestedAutocompleteActiveIndex >= 0 && manualRequestedAutocompleteActiveIndex < items.length) {
+                    event.preventDefault();
+                    items[manualRequestedAutocompleteActiveIndex].click();
+                }
+            } else if (event.key === "Escape") {
+                clearManualRequestedAutocompleteDropdown();
+            }
+        });
+        input.addEventListener("blur", function () {
+            setTimeout(function () {
+                var dropdown = byId("fhManualAutocompleteDropdown");
+                if (dropdown && (!document.activeElement || !dropdown.contains(document.activeElement))) clearManualRequestedAutocompleteDropdown();
+            }, 150);
+        });
+    }
+
     function isTruthyRobust(value) {
         if (value === true || value === 1 || value === "1") return true;
         if (value === false || value === 0 || value === "0") return false;
@@ -1380,14 +1519,10 @@
     }
 
     function requestedAutocompleteConfig(inputId) {
-        var manual = inputId === "fhManualFarmaco";
         return {
             inputId: inputId,
-            dropdownId: manual ? "fhManualAutocompleteDropdown" : "autocompleteDropdown",
-            ids: manual ? {
-                cip: "fhManualCip", farmaco: "fhManualFarmaco", principioActivo: "fhManualPrincipioActivo",
-                dosis: "fhManualDosis", via: "fhManualVia"
-            } : {
+            dropdownId: "autocompleteDropdown",
+            ids: {
                 cip: "fhDermaCip", farmaco: "fhDermaFarmaco", principioActivo: "fhDermaPrincipioActivo",
                 dosis: "fhDermaDosis", via: "fhDermaVia"
             },
@@ -1502,7 +1637,7 @@
 
     function enableAutocomplete() {
         enableRequestedAutocomplete("fhDermaFarmaco");
-        enableRequestedAutocomplete("fhManualFarmaco");
+        enableAutocompleteManualRequested();
     }
 
     function createLocalDrugModal() {
@@ -1908,7 +2043,7 @@
         lines.push("Observaciones: " + valueOrDash(byId("fhValObservaciones").value));
         lines.push("");
         lines.push("=== FIN DEL INFORME ===");
-        lines.push("Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.1");
+        lines.push("Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.2");
         lines.push("ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.");
         return lines;
     }
