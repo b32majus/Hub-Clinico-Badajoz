@@ -11,9 +11,13 @@ const BUILD_ID = 'fh-cima-contextless-selection-p0-20260730';
 const ASSET_VERSION = '20260730-cima-contextless-p0';
 
 const pages = {
-  'farmacia_validacion.html': 'farmacia_validacion.js',
-  'farmacia_primera_visita.html': 'farmacia_primera_visita.js',
-  'farmacia_seguimiento.html': 'farmacia_seguimiento.js'
+  'farmacia_validacion.html': {
+    asset: 'farmacia_validacion.js',
+    buildId: 'fh-validation-manual-requested-cima-minifix-20260730',
+    assetVersion: '20260730-validation-manual-requested-cima-minifix'
+  },
+  'farmacia_primera_visita.html': { asset: 'farmacia_primera_visita.js', buildId: BUILD_ID, assetVersion: ASSET_VERSION },
+  'farmacia_seguimiento.html': { asset: 'farmacia_seguimiento.js', buildId: BUILD_ID, assetVersion: ASSET_VERSION }
 };
 
 const consumers = [
@@ -105,13 +109,13 @@ const clinical = {
 };
 
 async function main() {
-  for (const [page, pageAsset] of Object.entries(pages)) {
+  for (const [page, release] of Object.entries(pages)) {
     const html = await read(page);
-    assert.match(html, new RegExp(`<meta name="fh-build-id" content="${BUILD_ID}">`), `${page}: build ID`);
+    assert.match(html, new RegExp(`<meta name="fh-build-id" content="${release.buildId}">`), `${page}: build ID`);
     assert.match(html, new RegExp(`scripts/farmacia_common\\.js\\?v=${ASSET_VERSION}`), `${page}: common version`);
-    assert.match(html, new RegExp(`scripts/${pageAsset.replace('.', '\\.')}\\?v=${ASSET_VERSION}`), `${page}: page version`);
+    assert.match(html, new RegExp(`scripts/${release.asset.replace('.', '\\.')}\\?v=${release.assetVersion}`), `${page}: page version`);
   }
-  pass(1, 'regional pages expose one build ID and load newly versioned common/page assets');
+  pass(1, 'regional pages expose expected build IDs and load versioned common/page assets');
 
   const sources = Object.fromEntries(await Promise.all([...new Set(consumers.map((item) => item.script))].map(async (name) => [name, await read(`scripts/${name}`)])));
   for (const consumer of consumers) {
