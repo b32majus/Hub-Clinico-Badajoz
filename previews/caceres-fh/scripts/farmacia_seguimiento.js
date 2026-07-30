@@ -1649,7 +1649,7 @@
             if (el) el.readOnly = true;
         }
 
-        hideSegDrugAutocomplete();
+        syncSegDrugAutocompleteVisibility();
 
         var banner = document.getElementById('fhSegNoCipBanner');
         if (banner) banner.parentNode.removeChild(banner);
@@ -1829,6 +1829,14 @@
         var block = document.getElementById('fhSegAutocompleteBlock');
         if (block) block.classList.add('hidden');
         clearSegDrugAutocompleteDropdown();
+    }
+
+    function syncSegDrugAutocompleteVisibility() {
+        if (currentBiologicLines.length) {
+            hideSegDrugAutocomplete();
+        } else {
+            showSegDrugAutocomplete();
+        }
     }
 
     function clearSegDrugAutocompleteDropdown() {
@@ -2561,7 +2569,7 @@
         lines.push('EVA Prurito: ' + textOrDash(model.common_visit.eva_prurito));
         lines.push('');
         lines.push('=== FIN DEL INFORME ===');
-        lines.push('Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.1');
+        lines.push('Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.2');
         lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
         return lines;
     }
@@ -2632,9 +2640,7 @@
             if (sidebarDash) sidebarDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip);
         }
 
-        if (!F.getQueryContext().patient) {
-            showSegDrugAutocomplete();
-        }
+        syncSegDrugAutocompleteVisibility();
 
         initMoriskyChips();
         var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
