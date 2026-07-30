@@ -13,8 +13,8 @@ const ASSET_VERSION = '20260730-cima-contextless-p0';
 const pages = {
   'farmacia_validacion.html': {
     asset: 'farmacia_validacion.js',
-    buildId: 'fh-validation-manual-requested-cima-minifix-20260730',
-    assetVersion: '20260730-validation-manual-requested-cima-minifix'
+    buildId: 'fh-validation-manual-requested-clone-p0-20260730',
+    assetVersion: '20260730-validation-manual-requested-clone-p0'
   },
   'farmacia_primera_visita.html': { asset: 'farmacia_primera_visita.js', buildId: BUILD_ID, assetVersion: ASSET_VERSION },
   'farmacia_seguimiento.html': { asset: 'farmacia_seguimiento.js', buildId: BUILD_ID, assetVersion: ASSET_VERSION }
@@ -22,7 +22,7 @@ const pages = {
 
 const consumers = [
   { label: 'validation requested from patient', script: 'farmacia_validacion.js', fn: 'selectDrug', slot: 'validacion.solicitado', apply: 'byId(ids.farmaco).value =' },
-  { label: 'validation requested manual', script: 'farmacia_validacion.js', fn: 'selectDrug', slot: 'validacion.solicitado', apply: 'byId(ids.farmaco).value =' },
+  { label: 'validation requested manual', script: 'farmacia_validacion.js', fn: 'selectManualRequestedDrug', slot: 'validacion.solicitado', apply: 'farmacoEl.value =' },
   { label: 'validation validated', script: 'farmacia_validacion.js', fn: 'selectValidadoDrug', slot: 'validacion.validado', apply: 'farmacoEl.value =' },
   { label: 'first visit', script: 'farmacia_primera_visita.js', fn: 'selectDrugPV', slot: 'primera_visita.tratamiento', apply: 'setTreatmentForm(treatment);' },
   { label: 'follow-up primary', script: 'farmacia_seguimiento.js', fn: 'selectDrugSeg', slot: 'seguimiento.tratamiento', apply: "setSegValue('fhSegFarmaco'" },
@@ -191,9 +191,44 @@ async function main() {
   }
   pass(4, 'known/new keys persist; empty keys keep UI; second product replaces only catalog fields without clinical inference');
 
+  const validationSource = sources['farmacia_validacion.js'];
+  const manualSelectionSource = functionSource(validationSource, 'selectManualRequestedDrug');
+  assert.match(validationSource, /var manualRequestedTransientProposal = null;/, 'manual requested consumer owns private transient proposal state');
+  assert.match(manualSelectionSource, /var contextualPrevious = contextValid[\s\S]*var previous = manualRequestedTransientProposal \|\| contextualPrevious;/, 'snapshot reads are valid-context-only and visible transient proposals have priority');
+  assert.match(manualSelectionSource, /if \(contextValid && typeof C\.selectDrug[\s\S]*manualRequestedTransientProposal = \{/, 'valid selection persists and then retains transient proposals');
+  assert.match(manualSelectionSource, /manualRequestedTransientProposal = \{[\s\S]*proposal_values: Object\.assign/, 'transient state is established from an explicit reconciled selection');
+  let transientProposal = null;
+  const applyEmptyManualSelection = (current, drug) => {
+    const reconciled = catalog.reconcileCatalogSelection(current, transientProposal, drug, 'validacion.solicitado');
+    transientProposal = { proposal_values: { ...reconciled.proposal_values } };
+    return { ...reconciled.values };
+  };
+  const firstEmpty = applyEmptyManualSelection({}, productA);
+  const secondEmpty = applyEmptyManualSelection(firstEmpty, productB);
+  assert.equal(secondEmpty.dosis_texto, productB.dosis, 'empty CIP second product replaces still-proposed dose');
+  assert.equal(secondEmpty.via, productB.via, 'empty CIP second product replaces still-proposed route');
+  transientProposal = null;
+  const firstBeforeProfessionalEdit = applyEmptyManualSelection({}, productA);
+  const professionallyEdited = { ...firstBeforeProfessionalEdit, dosis_texto: '175 mg profesional', via: 'Oral' };
+  const secondAfterProfessionalEdit = applyEmptyManualSelection(professionallyEdited, productB);
+  assert.equal(secondAfterProfessionalEdit.dosis_texto, '175 mg profesional', 'empty CIP second product preserves professionally edited dose');
+  assert.equal(secondAfterProfessionalEdit.via, 'Oral', 'empty CIP second product preserves professionally edited route');
+  transientProposal = null;
+  const emptyBeforeNewContext = applyEmptyManualSelection({}, productA);
+  const newContext = { slot: 'validacion.solicitado', cip: 'CIP-SYN-TRANSIENT-01' };
+  const contextualPrevious = catalog.getSnapshot(newContext);
+  const reconciledNewContext = catalog.reconcileCatalogSelection(emptyBeforeNewContext, transientProposal || contextualPrevious, productB, newContext.slot);
+  assert.equal(reconciledNewContext.values.dosis_texto, productB.dosis, 'new valid CIP without snapshot updates the transient catalog dose');
+  assert.equal(reconciledNewContext.values.via, productB.via, 'new valid CIP without snapshot updates the transient catalog route');
+  catalog.selectDrug(productB, newContext, reconciledNewContext);
+  transientProposal = { proposal_values: { ...reconciledNewContext.proposal_values } };
+  assert.equal(catalog.getSnapshot(newContext).selected_drug_id, productB.drug_id, 'new valid CIP persists the distinct explicit selection');
+  assert.equal(transientProposal.proposal_values.dosis_texto, productB.dosis, 'valid-CIP persistence retains the latest visible proposal state');
+  pass(5, 'manual empty-CIP transient proposals update catalog values and preserve professional edits');
+
   for (const [file, expected] of Object.entries(frozenHashes)) assert.equal(await sha256(file), expected, `${file}: frozen hash changed`);
-  pass(5, 'frozen Cáceres HTML and affected script copies are byte-for-byte untouched');
-  console.log('PASS: CIMA contextless-selection focal regression (5/5 groups, 6 consumers).');
+  pass(6, 'frozen Cáceres HTML and affected script copies are byte-for-byte untouched');
+  console.log('PASS: CIMA contextless-selection focal regression (6/6 groups, 6 consumers).');
 }
 
 main().catch((error) => { console.error(`FAIL: ${error.message}`); process.exitCode = 1; });
