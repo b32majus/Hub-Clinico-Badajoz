@@ -1649,7 +1649,7 @@
             if (el) el.readOnly = true;
         }
 
-        hideSegDrugAutocomplete();
+        syncSegDrugAutocompleteVisibility();
 
         var banner = document.getElementById('fhSegNoCipBanner');
         if (banner) banner.parentNode.removeChild(banner);
@@ -1829,6 +1829,14 @@
         var block = document.getElementById('fhSegAutocompleteBlock');
         if (block) block.classList.add('hidden');
         clearSegDrugAutocompleteDropdown();
+    }
+
+    function syncSegDrugAutocompleteVisibility() {
+        if (currentBiologicLines.length) {
+            hideSegDrugAutocomplete();
+        } else {
+            showSegDrugAutocomplete();
+        }
     }
 
     function clearSegDrugAutocompleteDropdown() {
@@ -2632,9 +2640,7 @@
             if (sidebarDash) sidebarDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip);
         }
 
-        if (!F.getQueryContext().patient) {
-            showSegDrugAutocomplete();
-        }
+        syncSegDrugAutocompleteVisibility();
 
         initMoriskyChips();
         var lineaPrincipal = document.getElementById('fhSegLineaPrincipal');
