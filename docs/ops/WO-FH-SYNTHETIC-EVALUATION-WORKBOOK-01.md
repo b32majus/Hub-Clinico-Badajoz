@@ -3,8 +3,9 @@
 **Título:** Libro Excel acumulado para evaluación ficticia
 **Fecha:** 2026-08-01
 **Riesgo:** 🟡 Amarillo
-**Base funcional:** `work/fh-synthetic-evaluation-ledger-01-20260801`
-**HEAD esperado:** `ebd54557299ca434e296b84b073881e29bc8d3c1`
+**Base funcional:** `recovery/farmacia-pr-replay-20260727`
+**HEAD esperado:** `ac93575da6c07d9bf861baa5f1aa7a566d3877fd`
+**Dependencia cerrada:** ledger fusionado mediante PR `#199` e issue `#198`
 **Rama:** `work/fh-synthetic-evaluation-workbook-01-20260801`
 
 ## Objetivo y contexto
