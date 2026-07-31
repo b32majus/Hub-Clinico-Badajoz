@@ -114,6 +114,8 @@ summary = activate('Alopecia areata');
 check(onlyVisible('formAlopecia') && commonVisible() && ['Extensión superior al 50 % del cuero cabelludo: Sí', 'Episodio actual superior a 6 meses: No', 'Corticoesteroides orales sistémicos en monoterapia o con inmunosupresores: No informado', 'Observaciones clínicas: Observación sintética alopecia'].every((v) => summary.summary.includes(v)), '5/6. Alopecia única exporta tres decisiones, observaciones y comunes');
 
 set('fhHSComorbImc', '24.1'); set('fhHSComorbTabaquismo', 'No fumador'); set('fhHSComorbPaquetes', '0'); select('fhHSComorbDiabetes', 'no', 'No'); set('fhHSComorbHba1c', '5.2 %'); select('fhHSComorbSdMetabolico', '', 'No informado'); set('fhHSComorbOtras', 'Ninguna informada');
+select('fhDermaComorbInfeccionesRecurrentes', 'si', 'Sí'); select('fhDermaComorbRiesgoCardiovascular', 'no', 'No');
+select('fhDermaComorbAlteracionesNeurologicas', '', 'No informado'); select('fhDermaComorbRiesgoNeoplasia', 'si', 'Sí');
 summary = validation.buildDermaClinicalSummary();
 const jara = validation.buildValidationLines().join('\n');
 const csvRows = validation.buildCsvRows();
@@ -122,8 +124,10 @@ const context = excel.buildContextFromValidacion(null, { servicio: 'Dermatologí
 context.observaciones = summary.summary;
 const row = excel.buildExcelRowObject(context);
 check(jara.includes(summary.summary) && csvSummary === summary.summary && row.observaciones_generales.replace(/\s+/g, ' ') === summary.summary.replace(/\s+/g, ' '), '9. JARA, CSV y Excel consumen el mismo resumen');
+check(['Infecciones recurrentes: Sí', 'Riesgo o antecedentes cardiovasculares: No', 'Alteraciones neurológicas: No informado', 'Antecedentes o riesgo de neoplasia: Sí'].every((value) => summary.summary.includes(value)), 'cuatro comorbilidades trivalentes entran en el resumen común');
+check(csvRows[1][csvRows[0].indexOf('InfeccionesRecurrentes')] === 'Sí' && csvRows[1][csvRows[0].indexOf('RiesgoOAntecedentesCardiovasculares')] === 'No' && csvRows[1][csvRows[0].indexOf('AlteracionesNeurologicas')] === 'No informado' && csvRows[1][csvRows[0].indexOf('AntecedentesORiesgoNeoplasia')] === 'Sí', 'CSV conserva valores trivalentes de las cuatro comorbilidades');
 check(csvRows[0].at(-1) === 'ResumenClinicoDermatologia' && csvRows.length === 2 && csvRows[0].length === csvRows[1].length, 'CSV añade exactamente una columna final y conserva una fila');
-check(excel.WO8_COLUMNS.length === 61 && excel.buildExcelRowArray(row).length === 61 && row.observaciones_generales && !row.observaciones_validacion, '10. Excel conserva 61 columnas y usa observaciones_generales');
+check(excel.WO8_COLUMNS.length === 61 && excel.buildExcelRowArray(row).length === 61 && row.observaciones_generales.includes('Infecciones recurrentes: Sí') && !row.observaciones_validacion, '10. Excel conserva 61 columnas y usa observaciones_generales para el resumen común');
 
 select('fhOrigenEntrada', 'demo_formacion', 'Demo / Formación'); select('fhDermaPatologia', 'Vitíligo', 'Vitíligo'); set('fhDermaCip', 'CIP-SINTETICO-NONMANUAL');
 validation.updateDermaPathologyVisibility();

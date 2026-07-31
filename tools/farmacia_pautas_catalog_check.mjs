@@ -42,9 +42,9 @@ function main() {
 
   const pautas = catalog.PAUTAS_CATALOG;
 
-  // 1. Verificar que PAUTAS_CATALOG tiene exactamente 12 elementos
-  if (!Array.isArray(pautas) || pautas.length !== 12) {
-    errors.push('ERROR: PAUTAS_CATALOG debe tener 12 elementos, tiene ' + (Array.isArray(pautas) ? pautas.length : 'no es array'));
+  // 1. Verificar que PAUTAS_CATALOG tiene exactamente 13 elementos
+  if (!Array.isArray(pautas) || pautas.length !== 13) {
+    errors.push('ERROR: PAUTAS_CATALOG debe tener 13 elementos, tiene ' + (Array.isArray(pautas) ? pautas.length : 'no es array'));
     exitCode = 1;
   }
 
@@ -98,6 +98,14 @@ function main() {
   if (exitCode === 0) {
     var testCases = [
       {
+        label: 'CADA_3_SEMANAS conserva label, 21 días y unidad semanas',
+        test: function () {
+          var result = catalog.getPautaByCodigo('CADA_3_SEMANAS');
+          return result && result.pauta_label === 'Cada 3 semanas'
+            && result.pauta_intervalo_dias === 21 && result.pauta_unidad === 'semanas';
+        }
+      },
+      {
         label: 'getPautaByCodigo("CADA_4_SEMANAS").pauta_label === "Cada 4 semanas"',
         test: function () {
           var result = catalog.getPautaByCodigo('CADA_4_SEMANAS');
@@ -140,10 +148,25 @@ function main() {
         }
       },
       {
-        label: 'getPautaOptions().length === 12',
+        label: 'getPautaOptions().length === 13 e incluye Cada 3 semanas',
         test: function () {
           var options = catalog.getPautaOptions();
-          return Array.isArray(options) && options.length === 12;
+          return Array.isArray(options) && options.length === 13
+            && options.some(function (option) { return option.value === 'CADA_3_SEMANAS' && option.label === 'Cada 3 semanas'; });
+        }
+      },
+      {
+        label: 'normalizePautaLabel("SC / cada 3 semanas").pauta_codigo === "CADA_3_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('SC / cada 3 semanas');
+          return result && result.pauta_codigo === 'CADA_3_SEMANAS';
+        }
+      },
+      {
+        label: 'normalizePautaLabel("c/3 sem").pauta_codigo === "CADA_3_SEMANAS"',
+        test: function () {
+          var result = catalog.normalizePautaLabel('c/3 sem');
+          return result && result.pauta_codigo === 'CADA_3_SEMANAS';
         }
       },
       {
@@ -329,6 +352,7 @@ function main() {
             CADA_48_HORAS: 'dias',
             SEMANAL: 'semanas',
             CADA_2_SEMANAS: 'semanas',
+            CADA_3_SEMANAS: 'semanas',
             CADA_4_SEMANAS: 'semanas',
             CADA_6_SEMANAS: 'semanas',
             CADA_8_SEMANAS: 'semanas',

@@ -138,6 +138,23 @@
                 observaciones: "fhManualObservaciones"
             };
         }
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        if (mode === "digestivo") {
+            return {
+                cip: "fhDigCip",
+                fecha: "fhDigFecha",
+                farmaco: "fhDigFarmaco",
+                principioActivo: "",
+                dosis: "fhDigDosis",
+                via: "fhDigVia",
+                pauta: "fhDigPauta",
+                pautaOtro: "fhDigPautaOtro",
+                induccion: "",
+                peso: "",
+                justificacion: "",
+                observaciones: "fhDigObservaciones"
+            };
+        }
         return {
             cip: "fhDermaCip",
             fecha: "fhDermaFecha",
@@ -230,22 +247,16 @@
     }
 
     function selectedCip() {
-        if (isManualOrigin()) {
-            var manualCip = byId("fhManualCip");
-            return manualCip ? (manualCip.value.trim() || "CIP-DEMO-FH-XXX") : "CIP-DEMO-FH-XXX";
-        }
-        if (modoActual === "reuma") {
-            return currentPatient && currentPatient.cip ? currentPatient.cip : "";
-        }
-        return byId("fhDermaCip").value.trim() || "CIP-DEMO-FH-XXX";
+        return visibleCipForExport();
     }
 
     function selectedPatologia() {
         if (isManualOrigin()) return currentManualPatologia() || "—";
-        if (modoActual === "reuma") {
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        if (mode === "reuma") {
             return currentPatient && currentPatient.patologia ? currentPatient.patologia : "";
         }
-        return byId("fhDermaPatologia").value || "—";
+        return valueOrDash(visiblePatologiaForExport());
     }
 
     function estadoLabel() {
@@ -338,6 +349,10 @@
             { label: "IMC", value: dermaValue("fhHSComorbImc") }, { label: "Tabaquismo", value: dermaValue("fhHSComorbTabaquismo") },
             { label: "Paquetes/año", value: dermaValue("fhHSComorbPaquetes") }, { label: "Diabetes", value: dermaDecision("fhHSComorbDiabetes") },
             { label: "HbA1c", value: dermaValue("fhHSComorbHba1c") }, { label: "Síndrome metabólico", value: dermaDecision("fhHSComorbSdMetabolico") },
+            { label: "Infecciones recurrentes", value: dermaDecision("fhDermaComorbInfeccionesRecurrentes") },
+            { label: "Riesgo o antecedentes cardiovasculares", value: dermaDecision("fhDermaComorbRiesgoCardiovascular") },
+            { label: "Alteraciones neurológicas", value: dermaDecision("fhDermaComorbAlteracionesNeurologicas") },
+            { label: "Antecedentes o riesgo de neoplasia", value: dermaDecision("fhDermaComorbRiesgoNeoplasia") },
             { label: "Otras comorbilidades", value: dermaValue("fhHSComorbOtras") }
         ];
         var lines = ["DATOS CLÍNICOS DE ORIGEN — " + pathology];
@@ -352,7 +367,15 @@
         var mode = isManualOrigin() ? currentManualService() : (modoActual || resolveModoFromOrigen(currentOrigenEntradaValue()));
         var sourceId = isManualOrigin() ? "fhManualObservaciones" : (mode === "derma" ? "fhDermaObservaciones" : (mode === "digestivo" ? "fhDigObservaciones" : ""));
         var existing = context.observaciones || (!isManualOrigin() && mode === "reuma" && context.patient && context.patient.observaciones) || "";
-        var values = [existing, sourceId ? visibleElementValue(sourceId) : "", dermaSummary || ""];
+        var requestedJustification = requestedJustificationForExport();
+        var otrasObservacionesActo = visibleElementValue("fhValObservaciones");
+        var values = [
+            existing,
+            sourceId ? visibleElementValue(sourceId) : "",
+            requestedJustification ? "Justificación clínica solicitada: " + requestedJustification : "",
+            dermaSummary || "",
+            otrasObservacionesActo ? "Otras observaciones del acto de validación: " + otrasObservacionesActo : ""
+        ];
         var unique = [];
         values.forEach(function (value) {
             var text = explicitExportValue(value);
@@ -445,6 +468,9 @@
         }
         if (!isManual && modoActual === "derma" && !byId("fhDermaFecha").value) {
             byId("fhDermaFecha").value = new Date().toISOString().slice(0, 10);
+        }
+        if (!isManual && modoActual === "digestivo" && !byId("fhDigFecha").value) {
+            byId("fhDigFecha").value = new Date().toISOString().slice(0, 10);
         }
         setDermaFormReadonly(isManual);
         setManualContextDisplay();
@@ -937,13 +963,14 @@
             })(),
             induccion: byId("fhValidadoInduccion").value === "si" ? "Sí" : (byId("fhValidadoInduccion").value === "no" ? "No" : "—"),
             presentacion: valueOrDash(byId("fhValidadoPresentacion").value),
-            justificacion: valueOrDash(byId("fhValidadoJustificacion").value)
+            observacionesFh: valueOrDash(byId("fhValidadoJustificacion").value)
         };
     }
 
     function requestedTreatmentSummary() {
         var origenVal = currentOrigenEntradaValue();
-        if (currentPatient && origenVal !== 'manual_farmacia') {
+        var mode = modoActual || resolveModoFromOrigen(origenVal);
+        if (currentPatient && origenVal !== 'manual_farmacia' && mode !== 'digestivo') {
             var p = currentPatient;
             return {
                 farmaco: valueOrDash(explicitRequestedDrug(p)),
@@ -952,28 +979,37 @@
                 via: p.via ? valueOrDash(p.via) : "Pendiente de completar por Farmacia",
                 pauta: p.pauta ? valueOrDash(p.pauta) : "Pendiente de completar por Farmacia",
                 induccion: "—",
-                justificacion: "—"
+                justificacion: valueOrDash(requestedJustificationForExport())
             };
         }
         var ids = requestedFieldIds();
         return {
-            farmaco: valueOrDash(byId(ids.farmaco).value),
-            principioActivo: valueOrDash(byId(ids.principioActivo).value),
-            dosis: valueOrDash(byId(ids.dosis).value),
-            via: valueOrDash(byId(ids.via).value),
+            farmaco: valueOrDash(visibleElementValue(ids.farmaco)),
+            principioActivo: valueOrDash(visibleElementValue(ids.principioActivo)),
+            dosis: valueOrDash(visibleElementValue(ids.dosis)),
+            via: valueOrDash(visibleElementValue(ids.via)),
             pauta: (function () {
                 var select = byId(ids.pauta);
                 var value = select ? select.value : "";
-                if (value === "OTRO") return valueOrDash(byId(ids.pautaOtro).value);
+                if (value === "OTRO") return valueOrDash(visibleElementValue(ids.pautaOtro));
                 if (P && typeof P.getPautaByCodigo === "function" && typeof P.getLegacyPautaLabel === "function") {
                     var pautaObj = P.getPautaByCodigo(value);
                     return valueOrDash(P.getLegacyPautaLabel(pautaObj));
                 }
                 return valueOrDash(value);
             })(),
-            induccion: byId(ids.induccion).value === "si" ? "Sí" : (byId(ids.induccion).value === "no" ? "No" : "—"),
-            justificacion: valueOrDash(byId(ids.justificacion).value || (!isManualOrigin() && isHSPathology() ? byId("fhHSMotivoClinico").value : ""))
+            induccion: visibleElementValue(ids.induccion) === "si" ? "Sí" : (visibleElementValue(ids.induccion) === "no" ? "No" : "—"),
+            justificacion: valueOrDash(requestedJustificationForExport())
         };
+    }
+
+    function requestedJustificationForExport() {
+        var ids = requestedFieldIds();
+        var explicit = visibleElementValue(ids.justificacion);
+        if (explicit) return explicit;
+        if (!isManualOrigin() && isHSPathology()) return visibleElementValue("fhHSMotivoClinico");
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        return mode === "reuma" && currentPatient ? explicitExportValue(currentPatient.justificacion) : "";
     }
 
     function updateSolicitadoSummary() {
@@ -1088,7 +1124,8 @@
 
     function requestedTreatmentValuesForExport() {
         if (isManualOrigin()) return treatmentValuesFromIds(requestedFieldIds());
-        if (modoActual === "reuma") {
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        if (mode === "reuma") {
             var reumaValues = treatmentValuesFromIds({
                 farmaco: "fhReumaFarmaco", principioActivo: "", dosis: "fhReumaDosis", via: "fhReumaVia",
                 pauta: "", pautaOtro: "", presentacion: ""
@@ -1096,7 +1133,7 @@
             reumaValues.pautaLabel = visibleElementValue("fhReumaPauta");
             return reumaValues;
         }
-        if (modoActual === "digestivo") {
+        if (mode === "digestivo") {
             return treatmentValuesFromIds({
                 farmaco: "fhDigFarmaco", principioActivo: "", dosis: "fhDigDosis", via: "fhDigVia",
                 pauta: "fhDigPauta", pautaOtro: "fhDigPautaOtro", presentacion: ""
@@ -1146,21 +1183,32 @@
 
     function visibleCipForExport() {
         if (isManualOrigin()) return visibleElementValue("fhManualCip");
-        if (modoActual === "reuma") return visibleElementValue("fhReumaCip");
-        if (modoActual === "digestivo") return visibleElementValue("fhDigCip");
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        if (mode === "reuma") return visibleElementValue("fhReumaCip");
+        if (mode === "digestivo") return visibleElementValue("fhDigCip");
         return visibleElementValue("fhDermaCip");
     }
 
     function visibleServiceForExport() {
         if (isManualOrigin()) return currentManualService() ? serviceLabelFromMode(currentManualService()) : "";
-        return modoActual ? serviceLabelFromMode(modoActual) : "";
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        return mode ? serviceLabelFromMode(mode) : "";
     }
 
     function visiblePatologiaForExport() {
         if (isManualOrigin()) return explicitExportValue(currentManualPatologia());
-        if (modoActual === "reuma") return visibleElementValue("fhReumaPatologia");
-        if (modoActual === "digestivo") return visibleElementValue("fhDigPatologia");
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        if (mode === "reuma") return visibleElementValue("fhReumaPatologia");
+        if (mode === "digestivo") return visibleElementValue("fhDigPatologia");
         return visibleElementValue("fhDermaPatologia");
+    }
+
+    function visibleRequestedDateForExport() {
+        if (isManualOrigin()) return visibleElementValue("fhManualFecha");
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        if (mode === "digestivo") return visibleElementValue("fhDigFecha");
+        if (mode === "derma") return visibleElementValue("fhDermaFecha");
+        return currentPatient ? explicitExportValue(currentPatient.fecha_solicitud) : "";
     }
 
     function normalizeValidationExportStatus(value) {
@@ -1189,16 +1237,18 @@
         var values = useValidated ? validated : requestedTreatmentValuesForExport();
         var slot = useValidated ? "validacion.validado" : "validacion.solicitado";
         return {
-            canCopy: status.canCopy,
+            canCopy: status.canCopy && Boolean(cip),
             resultadoValidacion: status.resultadoValidacion,
             estadoRegistro: status.estadoRegistro,
             cip: cip,
             servicio: visibleServiceForExport(),
             patologia: visiblePatologiaForExport(),
+            fechaSolicitud: visibleRequestedDateForExport(),
             tipoValidacion: visibleElementValue("fhTipoValidacion"),
             profesional: visibleElementValue("fhValFarmaceutico"),
             motivo: visibleElementValue("fhValMotivo"),
-            obsValidacion: visibleElementValue("fhValObservaciones"),
+            obsValidacion: visibleElementValue("fhValidadoJustificacion"),
+            otrasObservacionesActo: visibleElementValue("fhValObservaciones"),
             dermaClinicalSummary: buildDermaClinicalSummary().summary,
             slot: slot,
             lineaActual: treatmentLineForExport(values, slot, cip)
@@ -1206,8 +1256,21 @@
     }
 
     function updateValidationExcelExportAvailability() {
-        var btn = byId("fhValExcelExportBtn");
-        if (btn) btn.disabled = !normalizeValidationExportStatus(visibleElementValue("fhValEstado")).canCopy;
+        var cipReady = Boolean(visibleCipForExport());
+        var statusReady = normalizeValidationExportStatus(visibleElementValue("fhValEstado")).canCopy;
+        var txtBtn = byId("fhValExportTxt");
+        var csvBtn = byId("fhValExportCsv");
+        var excelBtn = byId("fhValExcelExportBtn");
+        if (txtBtn) txtBtn.disabled = !cipReady;
+        if (csvBtn) csvBtn.disabled = !cipReady;
+        if (excelBtn) excelBtn.disabled = !(cipReady && statusReady);
+    }
+
+    function ensureCipForExport() {
+        if (visibleCipForExport()) return true;
+        alert("Introduce un CIP sintético no vacío antes de exportar.");
+        updateValidationExcelExportAvailability();
+        return false;
     }
 
     function reconcileSelection(current, previous, drug, slot) {
@@ -1950,10 +2013,10 @@
         lines.push("");
         lines.push("Origen de entrada: " + (origenLabel && origenLabel.options[origenLabel.selectedIndex] ? origenLabel.options[origenLabel.selectedIndex].text : "—"));
         lines.push("Tipo de validación: " + (tipoValLabel && tipoValLabel.options[tipoValLabel.selectedIndex] ? tipoValLabel.options[tipoValLabel.selectedIndex].text : "—"));
-        lines.push("Servicio origen: " + (isManualOrigin() ? serviceLabelFromMode(currentManualService()) : (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología")));
+        lines.push("Servicio origen: " + valueOrDash(visibleServiceForExport()));
         lines.push("CIP: " + selectedCip());
         lines.push("Patología: " + selectedPatologia());
-        lines.push("Fecha solicitud: " + valueOrDash(isManualOrigin() ? byId("fhManualFecha").value : (modoActual !== "reuma" ? byId("fhDermaFecha").value : "")));
+        lines.push("Fecha solicitud: " + valueOrDash(visibleRequestedDateForExport()));
         var dermaClinical = buildDermaClinicalSummary();
         if (dermaClinical.active) {
             lines.push("");
@@ -1979,7 +2042,7 @@
         lines.push("Pauta: " + validado.pauta);
         lines.push("Inducción: " + validado.induccion);
         lines.push("Presentación: " + validado.presentacion);
-        lines.push("Justificación farmacéutica: " + validado.justificacion);
+        lines.push("Observaciones de Farmacia Hospitalaria: " + validado.observacionesFh);
 
         lines.push("");
         lines.push("OTROS FÁRMACOS / BIOLÓGICOS");
@@ -2040,7 +2103,7 @@
         lines.push("Motivo denegación: " + valueOrDash(byId("fhValMotivo").value));
         lines.push("Fecha cita Farmacia: " + valueOrDash(byId("fhValCita").value));
         lines.push("Farmacéutico responsable: " + byId("fhValFarmaceutico").textContent.trim());
-        lines.push("Observaciones: " + valueOrDash(byId("fhValObservaciones").value));
+        lines.push("Otras observaciones del acto de validación: " + valueOrDash(byId("fhValObservaciones").value));
         lines.push("");
         lines.push("=== FIN DEL INFORME ===");
         lines.push("Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2");
@@ -2052,6 +2115,11 @@
         var naranjoAnswers = readNaranjoAnswersFromDom();
         var klAnswers = readKarchLasagnaAnswersFromDom();
         var summary = requestedTreatmentSummary();
+        var validatedSummary = currentTreatmentSummary();
+        var validatedPauta = visiblePauta("fhValidadoPauta", "fhValidadoPautaOtro");
+        var dermaClinical = buildDermaClinicalSummary();
+        var commonByLabel = {};
+        dermaClinical.common.forEach(function (field) { commonByLabel[field.label] = field.value; });
         var pautaNormalized = (P && typeof P.normalizePautaLabel === "function") ? P.normalizePautaLabel(summary.pauta) : null;
         var snap = C.getSnapshot(catalogContext("validacion.solicitado"));
         var rows = [
@@ -2060,12 +2128,15 @@
                 "NaranjoScore", "NaranjoCategoria", "KLCategoria", "CausalidadFinalFarmaceutica",
                 "NaranjoQ1", "NaranjoQ2", "NaranjoQ3", "NaranjoQ4", "NaranjoQ5", "NaranjoQ6", "NaranjoQ7", "NaranjoQ8", "NaranjoQ9", "NaranjoQ10",
                 "KLTemporal", "KLConocido", "KLAlternativa", "KLSuspendido", "KLMejora", "KLReadministracion", "KLReaparece",
-                "OtrosFarmacosRelacionados", "ResumenClinicoDermatologia"
+                "OtrosFarmacosRelacionados", "FarmacoValidado", "PrincipioActivoValidado", "DosisPresentacionValidada", "ViaValidada",
+                "PautaValidada", "PautaValidadaCodigo", "PautaValidadaLabel", "PautaValidadaOtroTexto", "JustificacionClinica",
+                "ObservacionesFarmaciaHospitalaria", "OtrasObservacionesActoValidacion", "InfeccionesRecurrentes",
+                "RiesgoOAntecedentesCardiovasculares", "AlteracionesNeurologicas", "AntecedentesORiesgoNeoplasia", "ResumenClinicoDermatologia"
             ],
             [
                 "FH-" + Date.now().toString(36).toUpperCase(),
-                new Date().toLocaleDateString("es-ES"),
-                isManualOrigin() ? serviceLabelFromMode(currentManualService()) : (modoActual === "reuma" ? (currentPatient && currentPatient.servicio ? currentPatient.servicio : "—") : "Dermatología"),
+                valueOrDash(visibleRequestedDateForExport()),
+                valueOrDash(visibleServiceForExport()),
                 selectedCip(),
                 selectedPatologia(),
                 estadoLabel(),
@@ -2111,7 +2182,22 @@
                 klAnswers.readministracion,
                 klAnswers.reaparece,
                 otherDrugsLines().join(" || "),
-                buildDermaClinicalSummary().summary
+                validatedSummary.farmaco,
+                validatedSummary.principioActivo,
+                validatedSummary.dosis,
+                validatedSummary.via,
+                validatedSummary.pauta,
+                validatedPauta.codigo || "—",
+                validatedPauta.label || "—",
+                validatedPauta.otro || "—",
+                summary.justificacion,
+                validatedSummary.observacionesFh,
+                valueOrDash(byId("fhValObservaciones").value),
+                commonByLabel["Infecciones recurrentes"] || "",
+                commonByLabel["Riesgo o antecedentes cardiovasculares"] || "",
+                commonByLabel["Alteraciones neurológicas"] || "",
+                commonByLabel["Antecedentes o riesgo de neoplasia"] || "",
+                dermaClinical.summary
             ]
         ];
         return rows;
@@ -2123,6 +2209,7 @@
             "fhManualInduccion", "fhManualPeso", "fhManualJustificacion", "fhManualObservaciones",
             "fhDermaFarmaco", "fhDermaPrincipioActivo", "fhDermaDosis", "fhDermaVia", "fhDermaPauta", "fhDermaPautaOtro",
             "fhDermaInduccion", "fhDermaJustificacion", "fhHSMotivoClinico", "fhAnaliticaFecha",
+            "fhDigCip", "fhDigFecha", "fhDigFarmaco", "fhDigDosis", "fhDigVia", "fhDigPauta", "fhDigPautaOtro", "fhDigObservaciones",
             "fhAnaliticaReciente", "fhAnaliticaMantoux", "fhAnaliticaSerologiasVhb", "fhAnaliticaSerologiasVhc",
             "fhAnaliticaSerologiasVih", "fhAnaliticaVacunacion", "fhAnaliticaObservaciones",
             "fhValidadoFarmaco", "fhValidadoPrincipioActivo", "fhValidadoDosis", "fhValidadoVia",
@@ -2156,6 +2243,7 @@
         if (origenSel) origenSel.addEventListener("change", function () {
             mostrarFormulario(this.value);
             updateValidationModuleSummaries();
+            updateValidationExcelExportAvailability();
         });
         var tipoValSel = byId("fhTipoValidacion");
         if (tipoValSel) tipoValSel.addEventListener("change", function () {
@@ -2189,10 +2277,18 @@
         byId("fhHSBioOtros").addEventListener("change", toggleBioOtrosDetalle);
         byId("fhHSTtoOtrosAb").addEventListener("change", toggleOtrosAtbDetalle);
         byId("btnAddOtherDrug").addEventListener("click", addOtherDrug);
+        ["fhManualCip", "fhDermaCip", "fhDigCip"].forEach(function (id) {
+            var cipControl = byId(id);
+            if (!cipControl) return;
+            cipControl.addEventListener("input", updateValidationExcelExportAvailability);
+            cipControl.addEventListener("change", updateValidationExcelExportAvailability);
+        });
         byId("fhValExportTxt").addEventListener("click", function () {
+            if (!ensureCipForExport()) return;
             F.copyTextToClipboard(buildValidationLines().join("\n"), "Texto JARA copiado al portapapeles.");
         });
         byId("fhValExportCsv").addEventListener("click", function () {
+            if (!ensureCipForExport()) return;
             var csv = buildCsvRows().map(function (row) {
                 return row.map(function (cell) {
                     return '"' + String(cell).replace(/"/g, '""') + '"';
@@ -2212,12 +2308,14 @@
         buildValidationLines: buildValidationLines,
         buildCsvRows: buildCsvRows,
         buildExcelGeneralObservations: buildExcelGeneralObservations,
+        updateValidationExportAvailability: updateValidationExcelExportAvailability,
         updateDermaPathologyVisibility: toggleHSBlock
     };
 
     document.addEventListener("DOMContentLoaded", function () {
         populatePautaSelect("fhManualPauta", "fhManualPautaOtro");
         populatePautaSelect("fhDermaPauta", "fhDermaPautaOtro");
+        populatePautaSelect("fhDigPauta", "fhDigPautaOtro");
         populatePautaSelect("fhValidadoPauta", "fhValidadoPautaOtro");
         bindCoreEvents();
         bindSummaryInputs();
@@ -2252,7 +2350,9 @@
                 var patient = ctx.patient || null;
                 var exportData = buildValidationExcelExportData();
                 if (!exportData.canCopy) {
-                    alert('Selecciona un resultado de validación antes de copiar la fila Excel FH.');
+                    alert(exportData.cip
+                        ? 'Selecciona un resultado de validación antes de copiar la fila Excel FH.'
+                        : 'Introduce un CIP sintético no vacío antes de exportar.');
                     return;
                 }
                 var opts = {
