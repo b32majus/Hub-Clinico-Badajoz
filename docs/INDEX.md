@@ -1,221 +1,275 @@
-# Índice documental maestro — Hub Clínico Badajoz / PROMueve
+# Índice documental maestro — Hub Clínico Badajoz / PROMueve Nexus
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-28 |
+| Última actualización | 2026-07-31 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
-| Rama publicada de referencia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Rama de trabajo de este índice | `docs/fh-recovery-caceres-reconciliation-20260728` |
+| Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
+| HEAD publicado Farmacia | `accac670ba216d8c291ee849d2198742d02bb3f0` |
+| Snapshot estable Cáceres | `CÁCERES-REVIEW-0.2` |
+| Rama documental de esta edición | `docs/fh-v4-vacation-plan-architecture-20260731` |
 
-> Este índice es una guía de navegación. No sustituye a los documentos que referencia; su función es orientar sobre qué documento consultar para cada propósito y qué estado tiene.
-
----
-
-## 1. Lectura recomendada para incorporarse al proyecto (máximo 5 documentos)
-
-1. [`README.md`](/README.md) — visión general, contexto y alcance del proyecto.
-2. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — estado post-reunión SES, fases propuestas, decisiones cerradas y pendientes.
-3. [`AGENTS.md`](/AGENTS.md) — reglas operativas para agentes, ramas protegidas, datos prohibidos y definición de done.
-4. [`ARCHITECTURE.md`](/ARCHITECTURE.md) — arquitectura técnica e implementación actual (estado post-SES).
-5. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) — estado publicado actual de Farmacia regional y snapshot estable de evaluación Cáceres.
-
-> Para trazabilidad de ejecución y merges, consultar también [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md). Después, el siguiente paso depende del interés: Reumatología → contrato y arquitectura funcional; Farmacia → estado recovery/Cáceres y manifiesto histórico; descubrimiento → guía Badajoz/Mérida.
+> Este índice orienta. La verdad funcional procede del código publicado, el manifest del despliegue, el estado vivo y los contratos relacionados. No convierte propuestas arquitectónicas en capacidades implementadas.
 
 ---
 
-## 2. Estado de ramas y fuentes de verdad
+## 1. Lectura recomendada actual
+
+1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — estado publicado actual, trazabilidad, QA y feedback de Farmacia.
+2. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan operativo 2026-07-31 a 2026-08-15.
+3. [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md) — arquitectura objetivo V4 por planos.
+4. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — roadmap post-SES y relación V4/V4.5/V5.
+5. [`AGENTS.md`](/AGENTS.md) — reglas operativas de agentes y Git.
+
+Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md).
+
+---
+
+## 2. Orden de verdad
+
+1. Instrucción o WO actual.
+2. GitHub: código y documentación publicados.
+3. Este índice.
+4. `docs/ops/WORK_ORDER_STATUS.md`.
+5. Documento vivo más reciente relacionado.
+6. Documentos históricos y biblioteca.
+
+Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificación.
+
+---
+
+## 3. Ramas y referencias
 
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
 |---|---|---|---|
-| `origin/main` | Legacy / stale. Congelada en `a25cccb` (2026-03-07). | Historia del proyecto antes de Reuma v2. | Estado actual, Reuma v2, Farmacia, Enfermería ni roadmap post-SES. |
-| `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica viva de Reuma v2. | Reumatología multipatología, contrato Excel v2, decisiones DEC-001..019. | Farmacia recovery, snapshot Cáceres ni decisiones post-SES. |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada de Farmacia.** | Código Farmacia integrado y probado; fuente de la URL regional y contenedor del snapshot Cáceres. | Producción, piloto real, datos reales ni contratos clínicos definitivos. |
-| `origin/preview/demo-lunes-wo4-20260614` | Histórico / referencia demo anterior. | Evidencia de la evolución post-demo y comparación histórica. | Estado publicado vigente, fuente de nuevos desarrollos ni snapshot Cáceres. |
-| `previews/caceres-fh/` dentro de `recovery` | Snapshot estable `CÁCERES-REVIEW-0.1`. | Evaluación Pharmacy-only compartida con Farmacia Cáceres, con datos sintéticos. | Evolución regional automática, piloto real, autenticación, persistencia o multiusuario. |
-| `origin/docs/promueve-fh-control-plane-federado-20260713` | **HOLD / propuesta arquitectónica. No mergear.** | Concepto de control plane federado y configuración no-paciente derivado del análisis post-SES. | Arquitectura aprobada, capacidad implementada ni decisión institucional. |
-| `origin/work/*` | Ramas de trabajo en progreso o históricas. | Desarrollo atómico revisable; trazabilidad de WO. | Estado publicado ni canónico sin merge previo y validación. |
-| `origin/preview/*` | Previews históricas o auxiliares. | Evidencia de demos validadas en su momento. | Fuente publicada actual ni base canónica automática. |
-| `origin/backup/*` y tags `farmacia-demo-lunes-*` | Puntos de retorno operativos. | Recuperar estados demo congelados. | No son ramas de desarrollo activo. |
+| `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
+| `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia** | Código Farmacia y snapshots hospitalarios | Piloto, producción o datos reales |
+| `previews/caceres-fh/` | **Snapshot estable 0.2** | Evaluación Pharmacy-only Cáceres | Evolución regional automática |
+| `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
+| `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
+| `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
+| `origin/backup/*` y tags demo | Retorno | Recuperación de estados | Desarrollo activo |
 
-### Notas sobre ramas
+### Reglas
 
-- `main` es legacy por decisión DEC-001; su conservación obedece a DEC-002 (no eliminar sin trazabilidad). Los tags propuestos en DEC-002 aún no existen.
-- La rama `feature/reuma-v2...` sigue siendo la base canónica de Reumatología, pero no contiene el estado Farmacia recovery.
-- `recovery/farmacia-pr-replay-20260727` es la fuente publicada regional de Farmacia desde 2026-07-28.
-- El snapshot Cáceres se actualiza solo mediante promoción explícita desde un SHA regional aprobado; no debe editarse manualmente.
-- `preview/demo-lunes-wo4-20260614` se conserva como histórico y deja de ser la referencia publicada vigente.
-- El HOLD `docs/promueve-fh-control-plane-federado-20260713` contiene una propuesta de control plane federado; su destino (integrar, descartar o redefinir) es una decisión pendiente.
+- No tocar `main` sin autorización explícita.
+- Reuma v2 y Farmacia permanecen separadas mientras siga vigente la decisión de no merge.
+- El snapshot Cáceres solo cambia por promoción explícita desde un SHA regional aprobado.
+- No editar manualmente `previews/caceres-fh/`.
 
 ---
 
-## 3. Documentos canónicos actuales
+## 4. Estado vivo de Farmacia
 
-| Documento | Estado | Sirve para | No sirve para |
-|---|---|---|---|
-| [`AGENTS.md`](/AGENTS.md) | Vigente | Gobernanza operativa de agentes, ramas, commits, DoD. | Decisiones clínicas ni arquitectura funcional detallada. |
-| [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md) | Parcial | Marco operativo completo, pipeline v1. | Modelo operativo v2 Cora-Hermes (parcialmente reflejado en `AGENTS.md`). |
-| [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Vigente | Decisiones cerradas DEC-001..019. | Aprobación de tags DEC-002 (pendientes) ni decisiones post-SES. |
-| [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) | Parcial | Visión funcional de Reuma v2 y planificación inicial. | Estado real de Farmacia recovery. |
-| [`ARCHITECTURE.md`](/ARCHITECTURE.md) | Vigente post-SES | Arquitectura técnica, módulos, flujo de datos, transición propuesta. | Aprobación institucional ni producción. |
-| [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica post-SES | Estado post-SES, fases propuestas, decisiones pendientes, nomenclatura provisional. | Arquitectura aprobada ni plan de implementación vinculante. |
-| [`CHANGELOG.md`](/CHANGELOG.md) | Vigente | Release log principal del proyecto. | Historial detallado de WOs (ver `WORK_ORDER_STATUS.md`). |
-| [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md) | Vigente | Contrato Excel 497 columnas para Reuma v2. | Farmacia, Enfermería ni contratos interservicios definitivos. |
-| [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Estado y trazabilidad de work orders. | Decisiones de arquitectura ni contratos clínicos. |
-| [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) | **Vigente** | Estado regional publicado, snapshot Cáceres, entrega a Farmacia, alcance demostrado, límites y pendientes reales. | Contratos clínicos definitivos, autorización de piloto o uso con datos reales. |
-| [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) | Vigente | Protocolo de fases F0–F6 y plan formativo. | Cronograma ejecutivo ni asignación de recursos. |
-| [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente post-SES | Decisión reversible de no integrar Farmacia en main ni Reuma v2 por ahora. | Autorización de merge ni campos finales. |
-| [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Vigente | Guía práctica de reuniones discovery Badajoz/Mérida. | Contratos clínicos ni integraciones aprobadas. |
-| [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) | Histórico / log operativo extenso | Evolución detallada de ramas y WOs Farmacia hasta la etapa preview. | Estado publicado vigente ni punto de entrada actual. |
-| [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) | Vigente (preview) | Contrato de pautas Farmacia en preview. | Contrato clínico definitivo sin validación. |
-| [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md) | Vigente (preview) | Contrato de tratamiento Farmacia en preview. | Contrato clínico definitivo sin validación. |
-| [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md) | Vigente | Protocolo de ejecución de WOs Farmacia. | Otros módulos ni decisiones de alcance. |
+| Elemento | Estado actual |
+|---|---|
+| Rama | `recovery/farmacia-pr-replay-20260727` |
+| HEAD | `accac670ba216d8c291ee849d2198742d02bb3f0` |
+| Último SHA funcional regional | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
+| Fuente funcional del snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| QA humana regional | PASS |
+| QA humana Cáceres | PASS |
+| Datos | Exclusivamente sintéticos |
+| Piloto real | No |
+
+Documento vivo: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
+
+El documento [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) queda histórico y superseded como estado vivo; conserva la fotografía de `CÁCERES-REVIEW-0.1`.
 
 ---
 
-## 4. Documentos por línea de trabajo
+## 5. Plan y arquitectura V4
 
-### General, roadmap y gobernanza
-- [`README.md`](/README.md)
-- [`ARCHITECTURE.md`](/ARCHITECTURE.md)
-- [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md)
-- [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md)
-- [`AGENTS.md`](/AGENTS.md)
-- [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md)
-- [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md)
-- [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md)
-- [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md)
-- [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md)
-- [`docs/ops/BRANCH_AND_DECISION_STATUS_20260606.md`](/docs/ops/BRANCH_AND_DECISION_STATUS_20260606.md)
-- [`docs/ops/BRANCH_CLEANUP_POLICY.md`](/docs/ops/BRANCH_CLEANUP_POLICY.md)
+### Plan operativo
 
-### Reumatología
+[`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
+
+Define:
+
+- entrega rápida del 2026-08-03;
+- modelo canónico;
+- Export Manager;
+- Excel Bridge;
+- roundtrip;
+- Control Plane Supabase;
+- CIMA;
+- parsers;
+- renovaciones;
+- FHIR/openEHR;
+- dependencias y WOs.
+
+### Arquitectura objetivo
+
+[`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md)
+
+Decisiones principales:
+
+- `PROMueve Nexus` como plataforma provisional;
+- `FarmaNEXus` como módulo Farmacia;
+- V4 local-first y backend-ready;
+- un Data Plane por hospital;
+- Supabase solo para configuración no-paciente;
+- CIMA oficial versionado en GitHub;
+- Identity Plane físico diferido hasta servidor/PROM Gateway automatizado;
+- una fila/evento por acto;
+- modelo canónico como fuente de Excel, JARA, FHIR y openEHR;
+- V5 agnóstica diferida.
+
+---
+
+## 6. Documentos canónicos generales
+
+| Documento | Estado | Uso |
+|---|---|---|
+| [`AGENTS.md`](/AGENTS.md) | Vigente con metadata histórica pendiente de alinear | Gobernanza operativa |
+| [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
+| [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica + addendum 2026-07-31 | Evolución post-SES |
+| [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente | Separación Reuma/Farmacia |
+| [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Vigente | Discovery Badajoz/Mérida |
+| [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Vigente para DEC-001..019 | Decisiones históricas Reuma |
+| [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) | Vigente | Aprendizaje y decisiones por fases |
+
+---
+
+## 7. Reumatología
+
+Fuentes principales:
+
 - [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md)
+- [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md)
 - [`docs/PLAN_IMPLEMENTACION_REUMA_V2.md`](/docs/PLAN_IMPLEMENTACION_REUMA_V2.md)
 - [`docs/RESUMEN_RELEASE_REUMA_V2.md`](/docs/RESUMEN_RELEASE_REUMA_V2.md)
-- [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md)
-- [`docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md`](/docs/ORDEN_COLUMNAS_EXCEL_REUMA_V2.md)
-- [`docs/AUDITORIA_EXCEL_MAESTRO_V2.md`](/docs/AUDITORIA_EXCEL_MAESTRO_V2.md)
-- [`docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`](/docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md)
 - [`docs/CHECKLIST_E2E_CLINICO_V2.md`](/docs/CHECKLIST_E2E_CLINICO_V2.md)
 - [`docs/VALIDACION_MANUAL_DEMO_V2.md`](/docs/VALIDACION_MANUAL_DEMO_V2.md)
-- [`docs/REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md`](/docs/REPORTE_DIFERENCIAS_EXCEL_DEMO_V2.md)
-- [`docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md`](/docs/DECISION_ESTRUCTURA_EXCEL_DEMO_V2.md)
-- [`docs/template_ar_excel.md`](/docs/template_ar_excel.md), [`docs/template_les_excel.md`](/docs/template_les_excel.md), [`docs/template_prebiologico_excel.md`](/docs/template_prebiologico_excel.md), [`docs/template_sjogren_excel.md`](/docs/template_sjogren_excel.md)
-- [`docs/template_solicitud_fh.md`](/docs/template_solicitud_fh.md)
 
-### Farmacia Hospitalaria
-- [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) — estado publicado actual y punto de entrada recomendado.
-- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — log histórico extenso.
-- [`docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md`](/docs/ops/ESPECIFICACION_FUNCIONAL_FARMACIA_HOSPITALARIA_V0_1_20260606.md)
-- [`docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md`](/docs/ops/CIERRE_BLOQUE_FARMACIA_V0_1_20260606.md)
-- [`docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md`](/docs/ops/EXECUTIVE_SUMMARY_FARMACIA_DEMO_20260606.md)
-- [`docs/ops/FARMACIA_DEMO_FREEZE_20260606.md`](/docs/ops/FARMACIA_DEMO_FREEZE_20260606.md)
-- [`docs/ops/FARMACIA_DEMO_V0_2_FREEZE_20260607.md`](/docs/ops/FARMACIA_DEMO_V0_2_FREEZE_20260607.md)
-- [`docs/ops/CHECKPOINT_FARMACIA_V0_3_POST_DEMO_20260608.md`](/docs/ops/CHECKPOINT_FARMACIA_V0_3_POST_DEMO_20260608.md)
-- [`docs/ops/FARMACIA_V0_3_CATALOGO_TRANSVERSAL_HUB_CLINICO_20260607.md`](/docs/ops/FARMACIA_V0_3_CATALOGO_TRANSVERSAL_HUB_CLINICO_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md`](/docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_DASHBOARD_LONGITUDINAL_REFINEMENT_20260607.md`](/docs/ops/FARMACIA_V0_3_DASHBOARD_LONGITUDINAL_REFINEMENT_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_DASHBOARD_SERVICIO_FILTROS_20260607.md`](/docs/ops/FARMACIA_V0_3_DASHBOARD_SERVICIO_FILTROS_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_MODELO_LONGITUDINAL_20260607.md`](/docs/ops/FARMACIA_V0_3_MODELO_LONGITUDINAL_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_POST_DEMO_EXPLORATORY_START_20260607.md`](/docs/ops/FARMACIA_V0_3_POST_DEMO_EXPLORATORY_START_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_REALIGNMENT_CORRECTION_20260607.md`](/docs/ops/FARMACIA_V0_3_REALIGNMENT_CORRECTION_20260607.md)
-- [`docs/ops/FARMACIA_V0_3_REALINEACION_DASHBOARD_ESTADISTICAS_20260607.md`](/docs/ops/FARMACIA_V0_3_REALINEACION_DASHBOARD_ESTADISTICAS_20260607.md)
-- [`docs/ops/FARMACIA_V0_4_BACKLOG_NEOPLASIAS_20260611.md`](/docs/ops/FARMACIA_V0_4_BACKLOG_NEOPLASIAS_20260611.md)
-- [`docs/ops/FARMACIA_V0_4_CAUSALIDAD_EA_20260611.md`](/docs/ops/FARMACIA_V0_4_CAUSALIDAD_EA_20260611.md)
-- [`docs/ops/FARMACIA_V0_4_MODELO_MULTIBIOLOGICO_20260611.md`](/docs/ops/FARMACIA_V0_4_MODELO_MULTIBIOLOGICO_20260611.md)
-- [`docs/ops/FARMACIA_V0_5_PROGRAMMING_MODEL_REFACTOR_20260611.md`](/docs/ops/FARMACIA_V0_5_PROGRAMMING_MODEL_REFACTOR_20260611.md)
-- [`docs/ops/FARMACIA_DATA_IMPORT_ENFERMERIA_FARMACIA_20260612.md`](/docs/ops/FARMACIA_DATA_IMPORT_ENFERMERIA_FARMACIA_20260612.md)
-- [`docs/ops/FARMACIA_EXPERIMENTAL_CAUSALIDAD_HOLD_20260612.md`](/docs/ops/FARMACIA_EXPERIMENTAL_CAUSALIDAD_HOLD_20260612.md)
-- [`docs/ops/DEUDA_TECNICA_FARMACIA_POST_DEMO_20260606.md`](/docs/ops/DEUDA_TECNICA_FARMACIA_POST_DEMO_20260606.md)
-- [`docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md`](/docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md)
-- [`docs/ops/farmacia-roadmap-post-demo-v0-3-20260607.md`](/docs/ops/farmacia-roadmap-post-demo-v0-3-20260607.md)
-- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md)
-- [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
-- [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md)
-- [`docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md`](/docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md)
+El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 de Farmacia ni normalizarse sin WO específica.
+
+---
+
+## 8. Farmacia Hospitalaria
+
+### Estado y ejecución
+
+- [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md)
+- [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
+- [`docs/ops/PLAN_RECUPERACION_FARMACIA_PR_REPLAY_20260727.md`](/docs/ops/PLAN_RECUPERACION_FARMACIA_PR_REPLAY_20260727.md)
+- [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md)
 - [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md)
 
-### Enfermería
-- [`docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md`](/docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md)
-- [`docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md`](/docs/ops/DECISION_CAPA_ENTRADA_FARMACIA_MULTIPATOLOGIA_20260605.md)
-- [`docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md`](/docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md)
+### Contratos
 
-### Backend, interoperabilidad y evolución técnica futura
-- [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — sección de arquitectura futura y control plane federado.
-- [`ARCHITECTURE.md`](/ARCHITECTURE.md) — repository layer, diccionario de variables, backend e integraciones.
-- [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md) — propuesta exploratoria avanzada para captura PROM/PREM seudonimizada con tarjeta PROM universal, QR permanente, código corto de asignación manual, token temporal de visita y backend intercambiable.
-- [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md) — propuesta exploratoria avanzada para Identity Plane local, tabla maestra de correspondencia de seudonimización, Nursing Readiness Gateway, eventos clínico-operativos seudonimizados y control de profesionales/roles por tenant.
-- [`docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`](/docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md) — propuesta exploratoria avanzada para gestión longitudinal por línea de tratamiento, ciclos de renovación, reglas temporales declarativas, tareas por roles, switches y ejecución al abrir el Hub o mediante scheduler futuro.
+- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — pautas; debe ampliarse con `Cada 3 semanas` mediante WO.
+- [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
+- [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md)
+- [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md)
+
+### Historia y auditoría
+
+- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — inventario histórico extenso.
+- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md)
+- `docs/ops/FARMACIA_V0_3_*`, `FARMACIA_V0_4_*`, `FARMACIA_V0_5_*` — exploración histórica, no estado vivo.
+
+---
+
+## 9. Enfermería, PROMs e identidad
+
+- [`docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md`](/docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md)
+- [`docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md`](/docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md)
+- [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md)
+- [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md)
+
+Decisión 2026-07-31: el Identity Plane físico no se implementa durante el ciclo de vacaciones. Se reservan identificadores e interfaz, pero se evita todo doble registro manual hasta disponer de servidor/PROM Gateway automatizado.
+
+---
+
+## 10. Treatment Lifecycle y renovaciones
+
+- [`docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`](/docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md)
+
+Reglas vigentes:
+
+- renovación por línea;
+- fechas confirmadas, verificadas y estimadas separadas;
+- JSON define reglas, no las ejecuta;
+- tareas, alertas y notificaciones son conceptos distintos;
+- no marcar renovado por silencio;
+- Presalud solo alimentará el motor desde campos reales verificados.
+
+---
+
+## 11. Catálogo CIMA y catálogo local
+
+- [`docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md`](/docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md)
 - [`docs/deuda-tecnica/cdc-001-cima-auto-update.md`](/docs/deuda-tecnica/cdc-001-cima-auto-update.md)
 
-### Gobernanza KairOS / Hermes y operativa
-- [`AGENTS.md`](/AGENTS.md)
-- [`docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`](/docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md)
-- [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md)
-- [`docs/ops/WORK_ORDER_TEMPLATE.md`](/docs/ops/WORK_ORDER_TEMPLATE.md)
-- [`docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md`](/docs/ops/HERMES_EXECUTION_REPORT_TEMPLATE.md)
-- [`docs/ops/NIGHTLY_GREEN_BATCH_REPORT_20260606.md`](/docs/ops/NIGHTLY_GREEN_BATCH_REPORT_20260606.md)
+Estado real:
 
-### Contratos y plantillas
-- [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md)
-- [`docs/template_ar_excel.md`](/docs/template_ar_excel.md), [`docs/template_les_excel.md`](/docs/template_les_excel.md), [`docs/template_prebiologico_excel.md`](/docs/template_prebiologico_excel.md), [`docs/template_sjogren_excel.md`](/docs/template_sjogren_excel.md), [`docs/template_solicitud_fh.md`](/docs/template_solicitud_fh.md)
-- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md)
-- [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
-- `docs/contratos/` (solo en rama `work/hermes/wo-002-contratos-minimos`; exploratorio/pausado; no disponible en el árbol actual)
-
-### Auditorías
-- [`docs/AUDITORIA_EXCEL_MAESTRO_V2.md`](/docs/AUDITORIA_EXCEL_MAESTRO_V2.md)
-- [`docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md`](/docs/AUDITORIA_FUENTES_DATO_REUMA_V2.md)
-- [`docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md`](/docs/ops/AUDITORIA_RIESGOS_TECNICOS_REUMA_V2_20260606.md)
-- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_POST_PR20_20260714.md) — auditoría técnica pantalla a pantalla de Farmacia post-PR20; fuente histórica preservada para la reconciliación técnica + Sil, no autoriza implementación o piloto.
-- [`docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md`](/docs/ops/audits/FARMACIA_SCREEN_REVIEW_SIL_POST_PR20_20260714.md) — revisión funcional/manual de Sil post-PR20 de pantallas Farmacia; complementa y no sustituye la auditoría técnica, y no autoriza implementación ni piloto.
-- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md) — reconciliación técnica + criterio Sil con seguimiento post-PR29 (`reviewed_with_partial_implementation_followup`): FH-R01 resuelto; FH-R02 y FH-R03 resueltos en alcance mínimo de demo; FH-R04 y FH-R09-FH-R11 parcialmente resueltos; FH-R05, FH-R06 y FH-R08 pendientes; FH-R07 requiere diagnóstico; FH-R12 y FH-R13 diferidos deliberadamente; FH-R14 solo documentado, no implementado. No autoriza piloto, backlog ni contratos clínicos.
-- [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_CLAUDE_20260606.md)
-- [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md`](/docs/ops/audits/FARMACIA_VISUAL_AUDIT_GLOBAL_CLAUDE_20260606.md)
+- CIMA oficial puede permanecer versionado en GitHub.
+- El snapshot Cáceres usa el artefacto de junio de 2026.
+- No existe todavía una Action mensual activa.
+- La futura Action debe extraer, validar, generar diff y abrir PR revisable.
+- El catálogo local especial no se sobrescribe al actualizar CIMA.
 
 ---
 
-## 5. Documentos archivados / legacy (no son fuentes actuales)
+## 12. Backend, Control Plane e interoperabilidad
 
-> Estos documentos se conservan como evidencia histórica. No deben usarse como fuentes de verdad actuales.
+- [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md)
+- [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md)
+- [`ARCHITECTURE.md`](/ARCHITECTURE.md) — útil, pero desactualizado respecto a recovery.
 
-| Documento | Ubicación de archivo | Motivo |
-|---|---|---|
-| Changelog legacy | [`docs/archive/CHANGELOG_20260307.md`](/docs/archive/CHANGELOG_20260307.md) | Duplicado y obsoleto frente a [`CHANGELOG.md`](/CHANGELOG.md). |
-| Estado de implementación legacy | [`docs/archive/ESTADO_IMPLEMENTACION_20260307.md`](/docs/archive/ESTADO_IMPLEMENTACION_20260307.md) | Obsoleto (2026-03-07); no refleja Reuma v2, LES, Sjögren, prebiológico, FH ni Farmacia. |
-| Contrato de datos unificado legacy | [`docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md`](/docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md) | Reemplazado para Reuma por [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md). |
+Fronteras:
 
----
-
-## 6. Documentos operativos extensos (logs y evidencia, no lectura inicial)
-
-> Estos documentos son valiosos para trazabilidad operativa, pero no son el punto de entrada para nuevos colaboradores.
-
-- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — manifiesto histórico completo de ramas, WOs y evolución Farmacia hasta la etapa preview.
-- Documentos `docs/ops/FARMACIA_V0_3_*` — evolución post-demo v0.3.
-- Documentos `docs/ops/FARMACIA_V0_4_*` — evolución v0.4.
-- [`docs/ops/FARMACIA_V0_5_PROGRAMMING_MODEL_REFACTOR_20260611.md`](/docs/ops/FARMACIA_V0_5_PROGRAMMING_MODEL_REFACTOR_20260611.md) — refactor v0.5.
-- [`docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md`](/docs/ops/NIGHTLY_FARMACIA_IMPLEMENTATION_REPORT_20260606.md) — reporte nocturno de implementación.
-- [`docs/ops/audits/FARMACIA_VISUAL_AUDIT_*`](/docs/ops/audits/) — auditorías visuales de la demo.
-- [`docs/ops/PROMUEVE_HUB_FARMACIA_*`](/docs/ops/) — continuación, prompts y cierres de bloque.
+- Excel Bridge: datos clínico-operativos por hospital.
+- Supabase: configuración no-paciente.
+- Identity Plane: servidor local futuro.
+- FHIR/openEHR: adaptadores del modelo canónico, no conversión directa del Excel.
+- V5: diferida.
 
 ---
 
-## 7. Decisiones pendientes
+## 13. Deuda documental abierta
 
-| Tema | Estado | Dónde se documentará / decide |
-|---|---|---|
-| Integración de Farmacia en rama regional publicada | **Resuelta para `recovery`** | [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md). No equivale a merge en `main` ni integración con Reuma v2. |
-| Promoción de nuevas versiones Cáceres | Pendiente de cada ciclo de feedback | Requiere nuevo SHA regional aprobado y regeneración explícita del snapshot. |
-| Tags DEC-002 (`legacy-v1-main-antes-reuma-v2`, `v2.0.0-*`) | Pendiente | Decisión de Sil/Cora; requiere WO específica. |
-| Nomenclatura externa (framework, piloto, módulos) | Propuesta / pendiente validación | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 2. |
-| Versionado unificado producto / técnico | Propuesta / pendiente | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md), sección 6. |
-| Control plane federado y configuración no-paciente | HOLD / propuesta derivada de `origin/docs/promueve-fh-control-plane-federado-20260713` | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md); no es arquitectura aprobada ni implementada. |
-| PROM Capture Gateway con QR permanente | Exploratorio avanzado / pendiente de validación | [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md); no autoriza datos reales, producción ni despliegue sin validación institucional/STIC/DPO. |
-| Identity Plane local y Nursing Readiness Gateway | Exploratorio avanzado / pendiente de validación | [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md) + roadmap post-SES. No autoriza datos reales, producción ni despliegue sin validación institucional/STIC/DPO. |
-| Treatment Lifecycle Engine y renovaciones | Exploratorio avanzado / pendiente validación | Arquitectura por línea de tratamiento, fechas confirmadas/estimadas, reglas configurables, roles y scheduler futuro. No autoriza automatización productiva ni datos reales. |
-| Destino del HOLD `origin/docs/promueve-fh-control-plane-federado-20260713` | Pendiente | Decisión humana: integrar, descartar o redefinir. No mergear sin WO. |
+Requiere WO posterior, sin mezclarla con quick wins clínicos:
+
+| Documento | Deuda |
+|---|---|
+| `README.md` | Presenta Farmacia como no implementada |
+| `ARCHITECTURE.md` | Baseline, ramas y persistencia Farmacia desactualizados |
+| `CHANGELOG.md` | No recoge la línea recovery reciente |
+| `AGENTS.md` | Metadata/rama base histórica; verificar arnés real antes de editar |
+| `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
+| `opencode.jsonc` | No existe en recovery; verificar entorno VPS antes de afirmar el arnés efectivo |
 
 ---
 
-*Índice actualizado en el contexto de `WO-DOC-FH-RECOVERY-CACERES-RECONCILIATION-01` (issue #178). No autoriza cambios de código, datos reales, piloto ni producción.*
+## 14. Documentos históricos / no usar como estado vivo
+
+- [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) — fotografía 0.1.
+- [`docs/archive/CHANGELOG_20260307.md`](/docs/archive/CHANGELOG_20260307.md)
+- [`docs/archive/ESTADO_IMPLEMENTACION_20260307.md`](/docs/archive/ESTADO_IMPLEMENTACION_20260307.md)
+- [`docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md`](/docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md)
+- ramas nocturnas/demo antiguas sin merge.
+
+---
+
+## 15. Decisiones pendientes
+
+| Tema | Estado |
+|---|---|
+| Formato Presalud | Solicitado, pendiente |
+| Diccionario regional de patologías | Solicitado, pendiente |
+| Formulario Digestivo | Pendiente |
+| Consenso SEFH/PROs | Preparación por Silvia |
+| Trigger HTML Power Automate | Pendiente de PoC |
+| Servidor local por hospital | Disponibilidad comunicada en Badajoz/Mérida; diseño pendiente |
+| Identity Plane físico | Diferido hasta servidor/PROM Gateway automatizado |
+| Auth/permisos | Pendiente institucional |
+| Arquitectura FHIR/openEHR SES | Pendiente institucional |
+| Nomenclatura externa PROMueve Nexus/FarmaNEXus | Provisional |
+
+---
+
+*Edición asociada a `WO-DOC-FH-V4-VACATION-PLAN-ARCHITECTURE-20260731` (issue #190). No autoriza código, datos reales, piloto, producción, FHIR/openEHR ni Identity Plane operativo.*
