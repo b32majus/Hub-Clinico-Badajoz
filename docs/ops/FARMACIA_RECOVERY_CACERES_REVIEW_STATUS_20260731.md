@@ -1,4 +1,4 @@
-# Estado actual — Farmacia recovery, Cáceres 0.2 y apertura del ciclo V4
+# Estado actual — Farmacia recovery, Cáceres 0.2 y quick wins regionales
 
 | Metadato | Valor |
 |---|---|
@@ -6,8 +6,8 @@
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado de la rama | `accac670ba216d8c291ee849d2198742d02bb3f0` |
-| Último SHA funcional regional | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| HEAD publicado de la rama | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
+| Último SHA funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
 | SHA funcional fuente del snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
 | Merge de promoción | `accac670ba216d8c291ee849d2198742d02bb3f0` |
@@ -27,7 +27,8 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la comprobación humana del recorrido en GitHub Pages;
 - la promoción reproducible a `CÁCERES-REVIEW-0.2`;
 - la reunión de feedback con Farmacia Hospitalaria del 2026-07-30;
-- la apertura del plan de trabajo V4 para el periodo 2026-07-31 a 2026-08-15.
+- la apertura del plan de trabajo V4 para el periodo 2026-07-31 a 2026-08-15;
+- la fusión regional de los quick wins de Validación mediante PR #193, todavía pendiente de QA humana específica y de promoción a Cáceres.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -38,8 +39,8 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| HEAD publicado | `accac670ba216d8c291ee849d2198742d02bb3f0` | Incluye la promoción Cáceres 0.2 |
-| Último bundle funcional regional | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` | Autocomplete manual demostrado por interacción humana |
+| HEAD publicado | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | Incluye PR #191 y los quick wins regionales de PR #193 |
+| Último bundle funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` | Quick wins implementados y con CI verde; QA humana regional específica pendiente |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.2` | QA humana pública: PASS |
@@ -76,7 +77,7 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 
 ---
 
-## 4. Trazabilidad del cierre P0 y de la promoción
+## 4. Trazabilidad del cierre P0, la promoción y los quick wins
 
 | Issue / WO | PR | Merge | Adjudicación real |
 |---|---:|---|---|
@@ -84,12 +85,14 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #184 — minifix manual solicitado | #185 | `5e70afa53a309186e54f812459d6f7521641c8d3` | Fusionada, pero no corrigió el defecto en la QA humana pública; superseded por #187 |
 | #186 — clone del autocomplete funcional | #187 | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` | Corrección definitiva; QA humana regional PASS |
 | #188 — promoción Cáceres 0.2 | #189 | `accac670ba216d8c291ee849d2198742d02bb3f0` | Snapshot regenerado, publicado y QA humana Cáceres PASS |
+| #190 — estado, plan de vacaciones y arquitectura V4 | #191 | `9725bf60917ea07dc53162e700e86a1743537d3d` | Documentación viva publicada; no añadió capacidad funcional |
+| #192 — quick wins de Validación Farmacia | #193 | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | `Cada 3 semanas`, separación de observaciones, comorbilidades trivalentes y guard de CIP; CI verde, QA humana regional pendiente |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
 ---
 
-## 5. Estado funcional demostrado
+## 5. Estado funcional y evidencia disponible
 
 ### 5.1 Regional
 
@@ -108,7 +111,23 @@ La PR #185 permanece en la historia Git, pero no debe presentarse como la correc
 | Exportación estructurada | Sí | Parcial | Sí | Sí | Pendiente de contrato definitivo |
 | Persistencia longitudinal externa | No cerrada | No | No | No | No |
 
-### 5.2 Cáceres 0.2
+### 5.2 Quick wins regionales fusionados en PR #193
+
+Estado real de la entrega:
+
+- implementada en código y fusionada en `recovery`;
+- CI `smoke-check`: PASS;
+- un commit y ocho rutas verificadas;
+- `Cada 3 semanas` incorporada al catálogo, normalización y exportaciones;
+- justificación clínica, observaciones de Farmacia Hospitalaria y otras observaciones del acto separadas;
+- cuatro comorbilidades comunes con valores `No informado / Sí / No`;
+- CIP sintético literal no vacío obligatorio para JARA, CSV y Excel, sin fallback ni regex;
+- paridad JARA/CSV/Excel y contrato Excel de 61 columnas conservado;
+- QA humana regional específica: pendiente;
+- promoción a `CÁCERES-REVIEW-0.3`: no realizada;
+- aptitud para piloto real: no acreditada.
+
+### 5.3 Cáceres 0.2
 
 Demostrado mediante interacción soportada y comprobación humana en la URL pública:
 
@@ -138,6 +157,8 @@ Evidencia técnica de promoción:
 ---
 
 ## 6. Feedback confirmado por Farmacia el 2026-07-30
+
+Los cuatro puntos ejecutables sin dependencia externa de esta sección quedaron implementados en la rama regional mediante PR #193. Permanecen pendientes la QA humana regional específica y una promoción explícita posterior a Cáceres.
 
 ### Ejecutable sin dependencia externa
 

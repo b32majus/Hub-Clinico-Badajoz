@@ -5,9 +5,9 @@
 | Última actualización | 2026-07-31 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado Farmacia | `accac670ba216d8c291ee849d2198742d02bb3f0` |
+| HEAD publicado Farmacia | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.2` |
-| Rama documental de esta edición | `docs/fh-v4-vacation-plan-architecture-20260731` |
+| Rama documental de esta edición | `work/doc-fh-caceres-quick-wins-reconciliation-20260731` |
 
 > Este índice orienta. La verdad funcional procede del código publicado, el manifest del despliegue, el estado vivo y los contratos relacionados. No convierte propuestas arquitectónicas en capacidades implementadas.
 
@@ -65,14 +65,16 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD | `accac670ba216d8c291ee849d2198742d02bb3f0` |
-| Último SHA funcional regional | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| HEAD | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
+| Último SHA funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
 | Fuente funcional del snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
-| QA humana regional | PASS |
+| QA humana regional del HEAD actual | Pendiente para los quick wins de PR #193; último PASS confirmado en `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
 | QA humana Cáceres | PASS |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
+
+> PR #193 fusionó los quick wins funcionales en `recovery` con CI verde. Están implementados y publicados en la rama regional, pero todavía no cuentan con QA humana regional específica ni forman parte del snapshot estable `CÁCERES-REVIEW-0.2`.
 
 Documento vivo: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
 
@@ -160,7 +162,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 
 ### Contratos
 
-- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — pautas; debe ampliarse con `Cada 3 semanas` mediante WO.
+- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; todavía no promovido a `CÁCERES-REVIEW-0.3`.
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
 - [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md)
 - [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md)
