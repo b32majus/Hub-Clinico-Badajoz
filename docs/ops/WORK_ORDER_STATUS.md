@@ -11,11 +11,11 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado | `accac670ba216d8c291ee849d2198742d02bb3f0` |
-| Último SHA funcional regional | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| HEAD publicado | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
+| Último SHA funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
 | SHA fuente snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
-| QA humana regional | PASS |
+| QA humana regional del HEAD actual | Pendiente para PR #193; último PASS confirmado en `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -93,11 +93,12 @@
 | **WO-FH-VALIDATION-MANUAL-REQUESTED-CIMA-MINIFIX-01** | Minifix del autocomplete manual | 🔄 Superseded | `work/fh-validation-manual-requested-cima-minifix-20260730` | merge `5e70afa5...` (PR #185, issue #184) | Fusionada, pero FAIL en QA humana pública; sustituida por PR #187 |
 | **WO-FH-VALIDATION-MANUAL-REQUESTED-CLONE-WORKING-AUTOCOMPLETE-P0-03** | Clonar autocomplete validado | ✅ Merged | `work/fh-validation-manual-requested-clone-p0-20260730` | merge `54f6bb2c...` (PR #187, issue #186) | Corrección definitiva; QA humana regional PASS |
 | **WO-FH-CACERES-REVIEW-02-PROMOTION-01** | Promover Cáceres 0.2 | ✅ Merged | `work/fh-caceres-review-02-promotion-20260730` | merge `accac670...` (PR #189, issue #188) | Snapshot generado; QA humana Cáceres PASS |
-| **WO-DOC-FH-V4-VACATION-PLAN-ARCHITECTURE-20260731** | Estado, plan de vacaciones y arquitectura V4 | 📋 Ready for review | `docs/fh-v4-vacation-plan-architecture-20260731` | PR #191, issue #190 | Seis rutas documentales; sin código, merge o datos reales |
+| **WO-DOC-FH-V4-VACATION-PLAN-ARCHITECTURE-20260731** | Estado, plan de vacaciones y arquitectura V4 | ✅ Merged | `docs/fh-v4-vacation-plan-architecture-20260731` | merge `9725bf60...` (PR #191, issue #190) | Seis rutas documentales; sin código ni datos reales |
+| **WO-FH-CACERES-QUICK-WINS-03-01** | Quick wins de Validación Farmacia | ✅ Merged | `work/fh-caceres-quick-wins-03-01-20260731` | merge `4801e9aa...` (PR #193, issue #192) | CI verde; QA humana regional específica pendiente; no promovida a `CÁCERES-REVIEW-0.3` |
 
 ### Deuda administrativa de issues
 
-A 2026-07-31, los issues #184, #186 y #188 siguen abiertos en GitHub aunque sus PR estén fusionadas. Su cierre administrativo queda pendiente de una acción explícita separada. Este documento no los cierra.
+A 2026-07-31, los issues #184, #186, #188, #190 y #192 siguen abiertos en GitHub aunque sus PR están fusionadas. Su cierre administrativo queda pendiente de una acción explícita separada. Este documento no los cierra.
 
 ---
 
@@ -143,8 +144,8 @@ A 2026-07-31, los issues #184, #186 y #188 siguen abiertos en GitHub aunque sus 
 
 | Estado | Cantidad |
 |---|---:|
-| ✅ Merged | 45 |
-| 📋 Ready for review | 19 |
+| ✅ Merged | 47 |
+| 📋 Ready for review | 18 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
 | 🔄 Superseded | 3 |
