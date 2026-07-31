@@ -10,6 +10,7 @@
     { pauta_codigo: "CADA_48_HORAS", pauta_label: "Cada 48 horas", pauta_intervalo_dias: 2, pauta_unidad: "dias", pauta_otro_texto: "" },
     { pauta_codigo: "SEMANAL", pauta_label: "Semanal", pauta_intervalo_dias: 7, pauta_unidad: "semanas", pauta_otro_texto: "" },
     { pauta_codigo: "CADA_2_SEMANAS", pauta_label: "Cada 2 semanas", pauta_intervalo_dias: 14, pauta_unidad: "semanas", pauta_otro_texto: "" },
+    { pauta_codigo: "CADA_3_SEMANAS", pauta_label: "Cada 3 semanas", pauta_intervalo_dias: 21, pauta_unidad: "semanas", pauta_otro_texto: "" },
     { pauta_codigo: "CADA_4_SEMANAS", pauta_label: "Cada 4 semanas", pauta_intervalo_dias: 28, pauta_unidad: "semanas", pauta_otro_texto: "" },
     { pauta_codigo: "MENSUAL", pauta_label: "Mensual", pauta_intervalo_dias: 30, pauta_unidad: "meses", pauta_otro_texto: "" },
     { pauta_codigo: "CADA_6_SEMANAS", pauta_label: "Cada 6 semanas", pauta_intervalo_dias: 42, pauta_unidad: "semanas", pauta_otro_texto: "" },
@@ -72,6 +73,10 @@
     {
       codigo: "CADA_2_SEMANAS",
       regex: [/\bcada\s+2\s+semanas\b/, /\bc\s*2\s*sem(?:anas)?\b/]
+    },
+    {
+      codigo: "CADA_3_SEMANAS",
+      regex: [/\bcada\s+3\s+semanas\b/, /\bc\s*3\s*sem(?:anas)?\b/]
     },
     {
       codigo: "CADA_4_SEMANAS",

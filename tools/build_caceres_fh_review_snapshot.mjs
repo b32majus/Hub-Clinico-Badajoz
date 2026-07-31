@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'previews/caceres-fh');
-const SOURCE_SHA = '54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c';
+const SOURCE_SHA = '815e16f9564c82f469a95745c5c6917593a8c3f0';
 const SOURCE_BRANCH = 'recovery/farmacia-pr-replay-20260727';
-const VERSION = 'CÁCERES-REVIEW-0.2';
+const VERSION = 'CÁCERES-REVIEW-0.3';
 const PROFILE = 'Profesional FH — Entorno de evaluación';
 const SOURCE_PROVENANCE = 'Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2';
 const REVIEW_PROVENANCE = `Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · ${VERSION}`;
