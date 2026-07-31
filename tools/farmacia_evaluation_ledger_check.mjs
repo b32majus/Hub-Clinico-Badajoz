@@ -77,6 +77,27 @@ assert.match(patientA, /^SYN-PAT-[0-9A-F]{8}$/);
 assert.equal(patientA, ledger.patientIdForCip('CIP-FICTICIO-01'), 'patient_id is stable and case-insensitive');
 assert.equal(ledger.patientIdForCip(''), '', 'empty CIP does not invent a patient_id');
 
+function dynamicRadio(checked) {
+  return {
+    id: '', name: 'dlqi_q1', tagName: 'INPUT', type: 'radio', value: 'on', checked,
+    disabled: false,
+    closest() { return null; },
+    dispatchEvent() { return true; }
+  };
+}
+const dlqiRadios = [dynamicRadio(false), dynamicRadio(false), dynamicRadio(true), dynamicRadio(false)];
+const dlqiRoot = {
+  querySelectorAll(selector) {
+    if (selector === 'input, select, textarea' || selector === '[name]') return dlqiRadios;
+    return [];
+  }
+};
+const dlqiState = ledger.captureFormState(dlqiRoot);
+assert.deepEqual(dlqiState.map(entry => entry.name_index), [0, 1, 2, 3], 'same-name dynamic radios receive stable ordinal identities');
+dlqiRadios.forEach(radio => { radio.checked = false; });
+await ledger.restoreFormState(dlqiState, dlqiRoot);
+assert.deepEqual(dlqiRadios.map(radio => radio.checked), [false, false, true, false], 'radio restoration preserves the exact selected option even when every HTML value is on');
+
 assert.throws(() => ledger.saveEvent({
   synthetic_cip: 'CIP-FICTICIO-01',
   event_type: 'pharmacy_validation'

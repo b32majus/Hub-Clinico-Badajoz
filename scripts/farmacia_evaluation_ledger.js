@@ -242,11 +242,12 @@
 
     function captureFormState(root) {
         var scope = root || document.querySelector("main.main-content") || document;
-        var controls = Array.from(scope.querySelectorAll("input, select, textarea"));
-        return controls.filter(function (control) {
+        var controls = Array.from(scope.querySelectorAll("input, select, textarea")).filter(function (control) {
             var type = String(control.type || "").toLowerCase();
             return controlKey(control) && type !== "file" && type !== "button" && type !== "submit" && type !== "reset" && !control.closest("[data-ledger-ignore]");
-        }).map(function (control) {
+        });
+        var nameOrdinals = {};
+        return controls.map(function (control) {
             var key = controlKey(control);
             var type = String(control.type || "").toLowerCase();
             var entry = {
@@ -257,6 +258,10 @@
                 disabled: Boolean(control.disabled),
                 visible: !Boolean(control.closest(".hidden"))
             };
+            if (key.kind === "name") {
+                entry.name_index = nameOrdinals[key.value] || 0;
+                nameOrdinals[key.value] = entry.name_index + 1;
+            }
             if (type === "checkbox" || type === "radio") {
                 entry.value = control.value;
                 entry.checked = Boolean(control.checked);
@@ -275,8 +280,13 @@
             var byId = document.getElementById(entry.key);
             return byId ? [byId] : [];
         }
-        return Array.from(scope.querySelectorAll("[name]")).filter(function (control) {
-            if (control.name !== entry.key) return false;
+        var namedControls = Array.from(scope.querySelectorAll("[name]")).filter(function (control) {
+            return control.name === entry.key;
+        });
+        if (Number.isInteger(entry.name_index) && entry.name_index >= 0 && namedControls[entry.name_index]) {
+            return [namedControls[entry.name_index]];
+        }
+        return namedControls.filter(function (control) {
             var type = String(control.type || "").toLowerCase();
             if ((type === "checkbox" || type === "radio") && entry.value !== undefined) return String(control.value) === String(entry.value);
             return true;

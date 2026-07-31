@@ -87,9 +87,26 @@ try {
   await page.locator('#fhPvServicio').selectOption({ label: 'Dermatología' });
   await page.locator('#fhPvPatologia').selectOption({ label: 'Hidradenitis supurativa' });
   await page.locator('#fhPvFecha').fill('2026-08-02');
+  await page.locator('#fhPvProms').selectOption({ label: 'Sí' });
+  await page.locator('#fhPvPromsExpanded').waitFor({ state: 'visible' });
+  const dlqiQuestionOne = page.locator('input[name="dlqi_q1"]');
+  assert.ok(await dlqiQuestionOne.count() >= 4, 'DLQI question 1 renders same-name dynamic radios');
+  await dlqiQuestionOne.nth(2).locator('xpath=..').click();
+  assert.equal(await dlqiQuestionOne.nth(2).isChecked(), true, 'DLQI option is selected through its visible label');
+  assert.equal(await dlqiQuestionOne.nth(2).inputValue(), 'on', 'dynamic DLQI radios retain the browser default value used by the regression');
   await page.locator('#fhEvaluationLedgerSyntheticConfirm').check();
   await page.locator('#fhEvaluationLedgerSave').click();
   assert.equal(await page.evaluate(() => FarmaciaEvaluationLedger.listEvents().length), 2);
+
+  await page.goto(new URL('farmacia_index.html', BASE_URL).href, { waitUntil: 'domcontentloaded' });
+  const firstVisitLink = page.locator('.evaluation-ledger-event__link[href^="farmacia_primera_visita.html"]').first();
+  await firstVisitLink.waitFor({ state: 'visible' });
+  await firstVisitLink.click();
+  await page.locator('#fhEvaluationLedgerStatus').waitFor({ state: 'visible' });
+  await page.waitForTimeout(500);
+  const restoredDlqiQuestionOne = page.locator('input[name="dlqi_q1"]');
+  assert.equal(await restoredDlqiQuestionOne.nth(2).isChecked(), true, 'DLQI restores the exact selected same-name radio');
+  assert.equal(await restoredDlqiQuestionOne.nth(0).isChecked(), false, 'DLQI does not move selection to another radio with value on');
 
   await page.goto(new URL('farmacia_seguimiento.html', BASE_URL).href, { waitUntil: 'domcontentloaded' });
   await page.locator('#fhEvaluationLedgerPanel').waitFor({ state: 'visible' });
