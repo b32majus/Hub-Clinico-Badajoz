@@ -135,7 +135,11 @@ try {
   await page.waitForTimeout(500);
   assert.deepEqual(await readRequested(), initialized, 'initialization does not erase, select, or infer values after 500 ms');
 
-  await pauta.selectOption('CADA_4_SEMANAS');
+  await page.locator('#fhManualCip').fill('');
+  assert.ok(await page.locator('#fhValExportTxt').isDisabled(), 'empty visible CIP disables JARA export');
+  assert.ok(await page.locator('#fhValExportCsv').isDisabled(), 'empty visible CIP disables CSV export');
+  assert.ok(await page.locator('#fhValExcelExportBtn').isDisabled(), 'empty visible CIP disables Excel export');
+  await pauta.selectOption('CADA_3_SEMANAS');
   await induccion.selectOption('si');
 
   const copyRequestedSummary = async () => {
@@ -213,10 +217,10 @@ try {
 
     await first.locator(childSelector).click();
     const immediate = await readRequested();
-    const summaryImmediate = await copyRequestedSummary();
+    const summaryImmediate = cip ? await copyRequestedSummary() : null;
     await page.waitForTimeout(500);
     const delayed = await readRequested();
-    const summaryDelayed = await copyRequestedSummary();
+    const summaryDelayed = cip ? await copyRequestedSummary() : null;
     const clickEvents = await page.evaluate((start) => window.__fhCimaRuntime.events.slice(start), eventStart);
 
     observations.push(`${label}: immediate=${JSON.stringify(immediate)}`);
@@ -226,13 +230,20 @@ try {
     assertAssociatedFields(immediate, expected, `${label}: immediately after click`);
     assert.deepEqual(delayed, immediate, `${label}: values stable after 500 ms`);
     assertAssociatedFields(delayed, expected, `${label}: after 500 ms`);
-    assert.equal(immediate.pauta, 'CADA_4_SEMANAS', `${label}: pauta preserved`);
+    assert.equal(immediate.pauta, 'CADA_3_SEMANAS', `${label}: pauta preserved`);
     assert.equal(immediate.induccion, 'si', `${label}: induccion preserved`);
-    const sectionImmediate = requestedSection(summaryImmediate);
-    const sectionDelayed = requestedSection(summaryDelayed);
-    assertRequestedSummary(sectionImmediate, expected, `${label}: immediately after click`);
-    assertRequestedSummary(sectionDelayed, expected, `${label}: after 500 ms`);
-    assert.equal(sectionDelayed, sectionImmediate, `${label}: requested summary stable after 500 ms`);
+    if (cip) {
+      const sectionImmediate = requestedSection(summaryImmediate);
+      const sectionDelayed = requestedSection(summaryDelayed);
+      assertRequestedSummary(sectionImmediate, expected, `${label}: immediately after click`);
+      assertRequestedSummary(sectionDelayed, expected, `${label}: after 500 ms`);
+      assert.match(sectionDelayed, /Pauta: Cada 3 semanas/, `${label}: JARA exports Cada 3 semanas`);
+      assert.equal(sectionDelayed, sectionImmediate, `${label}: requested summary stable after 500 ms`);
+    } else {
+      assert.ok(await page.locator('#fhValExportTxt').isDisabled(), `${label}: empty CIP keeps JARA disabled`);
+      assert.ok(await page.locator('#fhValExportCsv').isDisabled(), `${label}: empty CIP keeps CSV disabled`);
+      assert.ok(await page.locator('#fhValExcelExportBtn').isDisabled(), `${label}: empty CIP keeps Excel disabled`);
+    }
     return { expected, expectedName, clickEvents };
   };
 
@@ -271,7 +282,7 @@ try {
   assert.equal(professionalImmediate.principioActivo, professionalExpected.principioActivo, 'explicit selection replaces preloaded active ingredient');
   assert.equal(professionalImmediate.dosis, professionalValues.dosis, 'explicit selection preserves professional dose');
   assert.equal(professionalImmediate.via, professionalValues.via, 'explicit selection preserves professional route');
-  assert.equal(professionalImmediate.pauta, 'CADA_4_SEMANAS', 'explicit selection preserves professional pauta');
+  assert.equal(professionalImmediate.pauta, 'CADA_3_SEMANAS', 'explicit selection preserves professional pauta');
   assert.equal(professionalImmediate.induccion, 'si', 'explicit selection preserves professional induction');
   assert.deepEqual(professionalDelayed, professionalImmediate, 'professional values remain stable after 500 ms');
   assert.deepEqual(await snapshotRegistry(), registryBeforeProfessionalSelection, 'empty-CIP professional selection does not persist a snapshot');
@@ -295,7 +306,7 @@ try {
   observations.push(`empty CIP second distinct product: after500ms=${JSON.stringify(emptySecondDelayed)}`);
   assertAssociatedFields(emptySecondImmediate, emptySecondExpected, 'empty CIP second distinct product');
   assert.deepEqual(emptySecondDelayed, emptySecondImmediate, 'empty CIP second distinct product remains stable after 500 ms');
-  assert.equal(emptySecondImmediate.pauta, 'CADA_4_SEMANAS', 'empty CIP second product preserves pauta');
+  assert.equal(emptySecondImmediate.pauta, 'CADA_3_SEMANAS', 'empty CIP second product preserves pauta');
   assert.equal(emptySecondImmediate.induccion, 'si', 'empty CIP second product preserves induction');
   assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP second product still creates no snapshot');
   const transientProfessionalEdit = { dosis: '888 mg edición profesional', via: 'Oral' };
@@ -318,7 +329,7 @@ try {
   assert.equal(emptyEditedThirdImmediate.principioActivo, emptyEditedThirdExpected.principioActivo, 'empty CIP later selection replaces active ingredient after professional edit');
   assert.equal(emptyEditedThirdImmediate.dosis, transientProfessionalEdit.dosis, 'empty CIP later selection preserves professionally edited dose');
   assert.equal(emptyEditedThirdImmediate.via, transientProfessionalEdit.via, 'empty CIP later selection preserves professionally edited route');
-  assert.equal(emptyEditedThirdImmediate.pauta, 'CADA_4_SEMANAS', 'empty CIP later selection preserves pauta after professional edit');
+  assert.equal(emptyEditedThirdImmediate.pauta, 'CADA_3_SEMANAS', 'empty CIP later selection preserves pauta after professional edit');
   assert.equal(emptyEditedThirdImmediate.induccion, 'si', 'empty CIP later selection preserves induction after professional edit');
   assert.deepEqual(emptyEditedThirdDelayed, emptyEditedThirdImmediate, 'empty CIP professional edits remain stable after 500 ms');
   assert.deepEqual(await snapshotRegistry(), registryBeforeEmpty, 'empty CIP professional-edit selection creates no snapshot');
@@ -343,7 +354,7 @@ try {
   observations.push(`empty CIP to new synthetic context: after500ms=${JSON.stringify(transitionDelayed)}`);
   assertAssociatedFields(transitionImmediate, transitionExpected, 'new synthetic CIP uses transient proposals for distinct selection');
   assert.deepEqual(transitionDelayed, transitionImmediate, 'new synthetic CIP distinct selection remains stable after 500 ms');
-  assert.equal(transitionImmediate.pauta, 'CADA_4_SEMANAS', 'new synthetic CIP transition preserves pauta');
+  assert.equal(transitionImmediate.pauta, 'CADA_3_SEMANAS', 'new synthetic CIP transition preserves pauta');
   assert.equal(transitionImmediate.induccion, 'si', 'new synthetic CIP transition preserves induction');
   const transitionRegistry = await snapshotRegistry();
   const transitionSnapshots = Object.values(transitionRegistry.snapshots).filter((snapshot) => snapshot.context?.slot === 'validacion.solicitado' && snapshot.context?.cip === transitionSyntheticCip);
@@ -384,6 +395,14 @@ try {
     observaciones: page.locator('#fhManualObservaciones')
   };
   await clinicalControls.estado.selectOption('pending');
+  assert.ok(!(await page.locator('#fhValExportTxt').isDisabled()), 'non-empty synthetic CIP enables JARA export');
+  assert.ok(!(await page.locator('#fhValExportCsv').isDisabled()), 'non-empty synthetic CIP enables CSV export');
+  assert.ok(!(await page.locator('#fhValExcelExportBtn').isDisabled()), 'non-empty synthetic CIP plus status enables Excel export');
+  await page.locator('#fhValidadoJustificacion').fill('Observación FH sintética navegador');
+  await page.locator('#fhValObservaciones').fill('Otra observación del acto sintética navegador');
+  const separatedObservationsReport = await copyRequestedSummary();
+  assert.match(separatedObservationsReport, /Observaciones de Farmacia Hospitalaria: Observación FH sintética navegador/, 'JARA labels the visible FH observation');
+  assert.match(separatedObservationsReport, /Otras observaciones del acto de validación: Otra observación del acto sintética navegador/, 'JARA keeps other act observations separate');
   await clinicalControls.peso.fill('71 kg sintéticos');
   await clinicalControls.justificacion.fill('Justificación profesional preservada');
   await clinicalControls.observaciones.fill('Observación profesional preservada');
@@ -470,7 +489,7 @@ try {
   assertAssociatedFields(secondImmediate, secondExpected, 'second product immediately after rerender click');
   assert.deepEqual(secondDelayed, secondImmediate, 'second product stable after 500 ms');
   assertAssociatedFields(secondDelayed, secondExpected, 'second product after rerender and 500 ms');
-  assert.equal(secondImmediate.pauta, 'CADA_4_SEMANAS', 'second product preserves pauta');
+  assert.equal(secondImmediate.pauta, 'CADA_3_SEMANAS', 'second product preserves pauta');
   assert.equal(secondImmediate.induccion, 'si', 'second product preserves induccion');
   const secondSectionImmediate = requestedSection(secondSummaryImmediate);
   const secondSectionDelayed = requestedSection(secondSummaryDelayed);

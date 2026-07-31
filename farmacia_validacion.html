@@ -148,7 +148,7 @@
 <section class="dashboard-card hidden" id="formManualSolicitud">
     <h2 class="section-title"><i class="fas fa-edit"></i> Datos de solicitud — entrada manual</h2>
     <div class="form-grid">
-        <div class="form-group"><label for="fhManualCip">CIP</label><input type="text" class="form-control" id="fhManualCip" placeholder="CIP-DEMO-FH-..."></div>
+        <div class="form-group"><label for="fhManualCip">CIP <span class="required">*</span></label><input type="text" class="form-control" id="fhManualCip" placeholder="CIP-DEMO-FH-..." required></div>
         <div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhManualServicioDisplay" value="Seleccione servicio arriba" readonly></div>
     </div>
     <div class="form-grid">
@@ -187,7 +187,7 @@
 
 <section class="dashboard-card hidden" id="formDerma">
     <h2 class="section-title"><i class="fas fa-disease"></i> Datos de solicitud — Dermatología</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhDermaCip">CIP</label><input type="text" class="form-control" id="fhDermaCip" placeholder="CIP-DEMO-FH-..."></div><div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDermaServicioOrigen" value="Dermatología" readonly></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaCip">CIP <span class="required">*</span></label><input type="text" class="form-control" id="fhDermaCip" placeholder="CIP-DEMO-FH-..." required></div><div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDermaServicioOrigen" value="Dermatología" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaPatologia">Patología</label><select class="form-select" id="fhDermaPatologia"><option value="">Seleccionar...</option><option>Hidradenitis supurativa</option><option>Psoriasis</option><option>Dermatitis atópica</option><option>Vitíligo</option><option>Alopecia areata</option></select></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaFecha">Fecha solicitud</label><input type="date" class="form-control" id="fhDermaFecha"></div></div>
 
@@ -251,6 +251,8 @@
     <div class="form-grid"><div class="form-group"><label for="fhHSComorbImc">IMC</label><input type="text" class="form-control" id="fhHSComorbImc" placeholder="XX kg/m²"></div><div class="form-group"><label for="fhHSComorbTabaquismo">Tabaquismo</label><select class="form-select" id="fhHSComorbTabaquismo"><option value="">Seleccionar...</option><option value="Activo">Activo</option><option value="Exfumador">Exfumador</option><option value="No fumador">No fumador</option></select></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhHSComorbPaquetes">Paquetes/año (si activo)</label><input type="text" class="form-control" id="fhHSComorbPaquetes" placeholder="Ej. 15"></div><div class="form-group"><label for="fhHSComorbDiabetes">Diabetes</label><select class="form-select" id="fhHSComorbDiabetes"><option value="">No informado</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhHSComorbHba1c">HbA1c (si diabetes)</label><input type="text" class="form-control" id="fhHSComorbHba1c" placeholder="%"></div><div class="form-group"><label for="fhHSComorbSdMetabolico">Síndrome metabólico</label><select class="form-select" id="fhHSComorbSdMetabolico"><option value="">No informado</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaComorbInfeccionesRecurrentes">Infecciones recurrentes</label><select class="form-select" id="fhDermaComorbInfeccionesRecurrentes"><option value="">No informado</option><option value="si">Sí</option><option value="no">No</option></select></div><div class="form-group"><label for="fhDermaComorbRiesgoCardiovascular">Riesgo o antecedentes cardiovasculares</label><select class="form-select" id="fhDermaComorbRiesgoCardiovascular"><option value="">No informado</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaComorbAlteracionesNeurologicas">Alteraciones neurológicas</label><select class="form-select" id="fhDermaComorbAlteracionesNeurologicas"><option value="">No informado</option><option value="si">Sí</option><option value="no">No</option></select></div><div class="form-group"><label for="fhDermaComorbRiesgoNeoplasia">Antecedentes o riesgo de neoplasia</label><select class="form-select" id="fhDermaComorbRiesgoNeoplasia"><option value="">No informado</option><option value="si">Sí</option><option value="no">No</option></select></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhHSComorbOtras">Otras comorbilidades relevantes</label><textarea class="form-textarea" id="fhHSComorbOtras" rows="2" placeholder="Describir otras comorbilidades relevantes..."></textarea></div></div>
     <div class="form-group hidden"><label for="fhHSComorbilidades">Comorbilidades (compat)</label><textarea class="form-textarea" id="fhHSComorbilidades" rows="2"></textarea></div>
 </section>
@@ -290,7 +292,7 @@
 <section class="dashboard-card hidden" id="formDigestivo">
     <h2 class="section-title"><i class="fas fa-stomach"></i> Datos de solicitud — Digestivo</h2>
     <div class="form-grid">
-        <div class="form-group"><label for="fhDigCip">CIP</label><input type="text" class="form-control" id="fhDigCip" placeholder="CIP del paciente"></div>
+        <div class="form-group"><label for="fhDigCip">CIP <span class="required">*</span></label><input type="text" class="form-control" id="fhDigCip" placeholder="CIP del paciente" required></div>
         <div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDigServicioOrigen" value="Digestivo" readonly></div>
     </div>
     <div class="form-grid">
@@ -380,8 +382,8 @@
         </div>
         <div class="form-grid form-grid--full">
             <div class="form-group">
-                <label for="fhValidadoJustificacion">Justificacion farmaceutica</label>
-                <textarea class="form-textarea" id="fhValidadoJustificacion" rows="2" placeholder="Justificacion de la validacion..."></textarea>
+                <label for="fhValidadoJustificacion">Observaciones de Farmacia Hospitalaria</label>
+                <textarea class="form-textarea" id="fhValidadoJustificacion" rows="2" placeholder="Observaciones de Farmacia Hospitalaria sobre el tratamiento validado..."></textarea>
             </div>
         </div>
     </section>
@@ -551,14 +553,14 @@
 
     <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
     <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
-    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Observaciones farmacoterapéuticas</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
+    <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Otras observaciones del acto de validación</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
     <!-- WO8.1c.12: módulos-nav eliminado -->
 
     <div class="validation-meta-line"><span class="validation-meta-label">Responsable mostrado:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH demo — identidad no nominal. No constituye firma electrónica ni controla permisos.</span></div>
     <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables. Copia manual; no integración automática.</span></div>
     <section class="validation-module" id="modExportacion">
         <h3 class="card-title"><i class="fas fa-file-export"></i> Copia manual para sistemas externos</h3>
-        <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt" title="Copiar texto JARA"><i class="fas fa-file-alt"></i> Copiar texto para JARA</button><button type="button" class="btn btn-outline hidden" id="fhValExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhValExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+        <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt" title="Copiar texto JARA" disabled><i class="fas fa-file-alt"></i> Copiar texto para JARA</button><button type="button" class="btn btn-outline hidden" id="fhValExportCsv" disabled><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhValExcelExportBtn" disabled><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
     </section>
 </section>
                 </main>

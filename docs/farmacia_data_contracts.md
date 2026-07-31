@@ -42,7 +42,7 @@ Quedan fuera de este contrato: fármacos concomitantes/adicionales en seguimient
 }
 ```
 
-### Catálogo oficial (12 códigos)
+### Catálogo oficial (13 códigos)
 
 | Código | Label | Días | Unidad |
 |---|---|---|---|
@@ -50,6 +50,7 @@ Quedan fuera de este contrato: fármacos concomitantes/adicionales en seguimient
 | CADA_48_HORAS | Cada 48 horas | 2 | dias |
 | SEMANAL | Semanal | 7 | semanas |
 | CADA_2_SEMANAS | Cada 2 semanas | 14 | semanas |
+| CADA_3_SEMANAS | Cada 3 semanas | 21 | semanas |
 | CADA_4_SEMANAS | Cada 4 semanas | 28 | semanas |
 | MENSUAL | Mensual | 30 | meses |
 | CADA_6_SEMANAS | Cada 6 semanas | 42 | semanas |
@@ -73,7 +74,7 @@ Quedan fuera de este contrato: fármacos concomitantes/adicionales en seguimient
 
 ### Implementación de referencia
 
-El catálogo se define en `scripts/farmacia_pautas_catalog.js` como la constante `PAUTAS_CATALOG` (array de 12 objetos). Se expone al resto del sistema mediante `window.FarmaciaPautasCatalog`.
+El catálogo se define en `scripts/farmacia_pautas_catalog.js` como la constante `PAUTAS_CATALOG` (array de 13 objetos). Se expone al resto del sistema mediante `window.FarmaciaPautasCatalog`.
 
 ---
 
@@ -90,7 +91,7 @@ El catálogo se define en `scripts/farmacia_pautas_catalog.js` como la constante
 4. Si no hay coincidencia → OTRO + pauta_otro_texto = texto original
 ```
 
-### Tabla de casos de normalización (30 casos)
+### Tabla de casos de normalización (33 casos)
 
 | # | Texto de entrada | pauta_codigo | pauta_label | pauta_intervalo_dias | pauta_unidad | pauta_otro_texto |
 |---|---|---|---|---|---|---|
@@ -105,25 +106,28 @@ El catálogo se define en `scripts/farmacia_pautas_catalog.js` como la constante
 | 9 | `"Cada 2 semanas"` | `CADA_2_SEMANAS` | Cada 2 semanas | 14 | semanas | |
 | 10 | `"SC / cada 2 semanas"` | `CADA_2_SEMANAS` | Cada 2 semanas | 14 | semanas | |
 | 11 | `"c/2 sem"` | `CADA_2_SEMANAS` | Cada 2 semanas | 14 | semanas | |
-| 12 | `"Cada 4 semanas"` | `CADA_4_SEMANAS` | Cada 4 semanas | 28 | semanas | |
-| 13 | `"SC / cada 4 semanas"` | `CADA_4_SEMANAS` | Cada 4 semanas | 28 | semanas | |
-| 14 | `"c/4 sem"` | `CADA_4_SEMANAS` | Cada 4 semanas | 28 | semanas | |
-| 15 | `"Mensual"` | `MENSUAL` | Mensual | 30 | meses | |
-| 16 | `"cada mes"` | `MENSUAL` | Mensual | 30 | meses | |
-| 17 | `"SC / cada 6 semanas"` | `CADA_6_SEMANAS` | Cada 6 semanas | 42 | semanas | |
-| 18 | `"c/6 sem"` | `CADA_6_SEMANAS` | Cada 6 semanas | 42 | semanas | |
-| 19 | `"SC / cada 8 semanas"` | `CADA_8_SEMANAS` | Cada 8 semanas | 56 | semanas | |
-| 20 | `"IV cada 8 semanas"` | `CADA_8_SEMANAS` | Cada 8 semanas | 56 | semanas | |
-| 21 | `"c/8 sem"` | `CADA_8_SEMANAS` | Cada 8 semanas | 56 | semanas | |
-| 22 | `"SC / cada 12 semanas"` | `CADA_12_SEMANAS` | Cada 12 semanas | 84 | semanas | |
-| 23 | `"c/12 sem"` | `CADA_12_SEMANAS` | Cada 12 semanas | 84 | semanas | |
-| 24 | `"cada 6 meses"` | `SEMESTRAL` | Semestral | 180 | meses | |
-| 25 | `"Dias 1 y 15 cada 6 meses"` | `SEMESTRAL` | Semestral | 180 | meses | |
-| 26 | `"según fase"` / `"segun fase"` | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
-| 27 | `"inducción mantenimiento"` / `"induccion mantenimiento"` | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
-| 28 | `"SC / semanal según fase"` | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
-| 29 | `"L2 semanal + L3 semestral"` (múltiples pautas) | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
-| 30 | `"Texto inventado"` (no reconocido) | `OTRO` | Otra pauta | 0 | texto_libre | "Texto inventado" |
+| 12 | `"Cada 3 semanas"` | `CADA_3_SEMANAS` | Cada 3 semanas | 21 | semanas | |
+| 13 | `"SC / cada 3 semanas"` | `CADA_3_SEMANAS` | Cada 3 semanas | 21 | semanas | |
+| 14 | `"c/3 sem"` | `CADA_3_SEMANAS` | Cada 3 semanas | 21 | semanas | |
+| 15 | `"Cada 4 semanas"` | `CADA_4_SEMANAS` | Cada 4 semanas | 28 | semanas | |
+| 16 | `"SC / cada 4 semanas"` | `CADA_4_SEMANAS` | Cada 4 semanas | 28 | semanas | |
+| 17 | `"c/4 sem"` | `CADA_4_SEMANAS` | Cada 4 semanas | 28 | semanas | |
+| 18 | `"Mensual"` | `MENSUAL` | Mensual | 30 | meses | |
+| 19 | `"cada mes"` | `MENSUAL` | Mensual | 30 | meses | |
+| 20 | `"SC / cada 6 semanas"` | `CADA_6_SEMANAS` | Cada 6 semanas | 42 | semanas | |
+| 21 | `"c/6 sem"` | `CADA_6_SEMANAS` | Cada 6 semanas | 42 | semanas | |
+| 22 | `"SC / cada 8 semanas"` | `CADA_8_SEMANAS` | Cada 8 semanas | 56 | semanas | |
+| 23 | `"IV cada 8 semanas"` | `CADA_8_SEMANAS` | Cada 8 semanas | 56 | semanas | |
+| 24 | `"c/8 sem"` | `CADA_8_SEMANAS` | Cada 8 semanas | 56 | semanas | |
+| 25 | `"SC / cada 12 semanas"` | `CADA_12_SEMANAS` | Cada 12 semanas | 84 | semanas | |
+| 26 | `"c/12 sem"` | `CADA_12_SEMANAS` | Cada 12 semanas | 84 | semanas | |
+| 27 | `"cada 6 meses"` | `SEMESTRAL` | Semestral | 180 | meses | |
+| 28 | `"Dias 1 y 15 cada 6 meses"` | `SEMESTRAL` | Semestral | 180 | meses | |
+| 29 | `"según fase"` / `"segun fase"` | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
+| 30 | `"inducción mantenimiento"` / `"induccion mantenimiento"` | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
+| 31 | `"SC / semanal según fase"` | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
+| 32 | `"L2 semanal + L3 semestral"` (múltiples pautas) | `SEGUN_FASE` | Según fase / inducción-mantenimiento | 0 | variable | |
+| 33 | `"Texto inventado"` (no reconocido) | `OTRO` | Otra pauta | 0 | texto_libre | "Texto inventado" |
 
 ### Reglas detalladas de normalización
 
@@ -144,6 +148,7 @@ El catálogo se define en `scripts/farmacia_pautas_catalog.js` como la constante
 | CADA_48_HORAS | `\bcada\s+48\s*(horas\|h)\b`, `\b48\s*h\b` |
 | SEMANAL | `\bsemanal\b`, `\b1\s+vez\s+por\s+semana\b` |
 | CADA_2_SEMANAS | `\bcada\s+2\s+semanas\b`, `\bc\s*2\s*sem(?:anas)?\b` |
+| CADA_3_SEMANAS | `\bcada\s+3\s+semanas\b`, `\bc\s*3\s*sem(?:anas)?\b` |
 | CADA_4_SEMANAS | `\bcada\s+4\s+semanas\b`, `\bc\s*4\s*sem(?:anas)?\b` |
 | CADA_6_SEMANAS | `\bcada\s+6\s+semanas\b`, `\bc\s*6\s*sem(?:anas)?\b` |
 | CADA_8_SEMANAS | `\bcada\s+8\s+semanas\b`, `\bc\s*8\s*sem(?:anas)?\b`, `\biv\s+cada\s+8\s+semanas\b` |
@@ -215,6 +220,16 @@ Al exportar datos, los campos de pauta se incluyen como columnas planas:
 
 La columna legacy `Pauta` se mantiene para no romper exportaciones existentes. Las columnas nuevas se añaden a continuación.
 
+### Validación: separación semántica y mapeo sin ampliar las 61 columnas Excel
+
+- El CIP se toma siempre del control visible del flujo activo. No existe fallback inventado: JARA, CSV y Excel quedan bloqueados si está vacío; cualquier literal sintético no vacío es válido.
+- `Justificación clínica` pertenece al tratamiento solicitado: JARA y CSV la mantienen como campo propio; Excel la incorpora etiquetada como `Justificación clínica solicitada` en `observaciones_generales`, separada del resto de observaciones y del resumen clínico.
+- `Observaciones de Farmacia Hospitalaria` pertenece al tratamiento validado. JARA usa esa denominación, CSV usa `ObservacionesFarmaciaHospitalaria` y Excel la mapea a la columna existente `observaciones_validacion`.
+- `Otras observaciones del acto de validación` (`fhValObservaciones`) no se reutiliza como observación FH. JARA y CSV la exportan con nombre propio; Excel la incorpora etiquetada en `observaciones_generales`.
+- Las cuatro comorbilidades comunes usan `""` = `No informado`, `si` = `Sí`, `no` = `No`. JARA y CSV las incluyen en el resumen común. Excel conserva el contrato de 61 columnas y guarda ese mismo resumen etiquetado en `observaciones_generales`.
+- Excel exporta en la línea terapéutica existente el tratamiento validado visible cuando contiene datos explícitos; si está vacío, exporta el solicitado visible. Los campos de pauta existentes (`pauta_codigo`, `pauta_label`, `pauta_otro_texto`) conservan `CADA_3_SEMANAS` sin ampliar columnas.
+- En el modo Digestivo, JARA, CSV y Excel resuelven servicio, fecha, patología y tratamiento solicitado desde los controles `fhDig*`; `fhDigPauta` usa el catálogo común, incluido `CADA_3_SEMANAS`.
+
 ---
 
 ## 8. Storage
@@ -255,7 +270,7 @@ Quedan fuera del alcance de WO6 y de este contrato:
 
 | Test | Archivo | Descripción |
 |---|---|---|
-| Pautas catalog check | `tools/farmacia_pautas_catalog_check.mjs` | Verifica catálogo (12 elementos, propiedades, códigos únicos, 6 funciones expuestas, 27+ casos de normalización) |
+| Pautas catalog check | `tools/farmacia_pautas_catalog_check.mjs` | Verifica catálogo (13 elementos, propiedades, códigos únicos, 6 funciones expuestas y casos de normalización) |
 | Common check | `tools/farmacia_common_check.mjs` | Verifica `buildImportedPatientCandidate` con casos A (pauta reconocible), B (texto libre), C (vacío) y campos planos |
 | Storage policy check | `tools/farmacia_storage_policy_check.mjs` | Verifica uso de sessionStorage (no localStorage), existencia de safeGet/Set/RemoveSessionStorage, fallback memoria, normalización de pautas |
 | Syntax check | `node --check scripts/farmacia_pautas_catalog.js` | Verifica sintaxis JS del catálogo |
