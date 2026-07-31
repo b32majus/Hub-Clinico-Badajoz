@@ -51,6 +51,7 @@ Revertir exclusivamente el commit de esta WO. El registro local utiliza una clav
 
 - `docs/ops/WO-FH-SYNTHETIC-EVALUATION-LEDGER-01.md`
 - `scripts/farmacia_evaluation_ledger.js`
+- `scripts/farmacia_seguimiento.js`
 - `farmacia_index.html`
 - `farmacia_validacion.html`
 - `farmacia_primera_visita.html`
@@ -66,6 +67,8 @@ Revertir exclusivamente el commit de esta WO. El registro local utiliza una clav
 - [ ] Validación, Primera Visita y Seguimiento persisten actos distintos.
 - [ ] Los actos sobreviven a recarga y reapertura del navegador.
 - [ ] Un acto se reabre y restaura mediante URL soportada.
+- [ ] Seguimiento restaura también visita, líneas, tratamientos relacionados, efecto adverso y causalidad capturados.
+- [ ] Si `localStorage` está bloqueado o falla al escribir, el guardado temporal en memoria sigue disponible con advertencia explícita.
 - [ ] Se preservan valores vacíos, `0`, `false`, radios y checkboxes.
 - [ ] Inicio Farmacia muestra pacientes, tipos de acto y fecha de última actualización.
 - [ ] El usuario puede eliminar un paciente ficticio o vaciar todo el registro.

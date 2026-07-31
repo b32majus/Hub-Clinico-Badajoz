@@ -5,6 +5,8 @@
     var SCHEMA_VERSION = "1.0.0";
     var MAX_STORAGE_CHARS = 4500000;
     var memoryLedger = null;
+    var memoryFallbackActive = false;
+    var lastPersistenceMode = "uninitialized";
     var restoredEvent = null;
     var activeSourceEventId = "";
     var activePatientId = "";
@@ -48,13 +50,24 @@
     }
 
     function loadLedger() {
+        if (memoryFallbackActive) {
+            lastPersistenceMode = "memory_fallback";
+            return normalizeLedger(memoryLedger || emptyLedger());
+        }
         var storage = safeStorage();
-        if (!storage) return normalizeLedger(memoryLedger || emptyLedger());
+        if (!storage) {
+            memoryFallbackActive = true;
+            lastPersistenceMode = "memory_fallback";
+            return normalizeLedger(memoryLedger || emptyLedger());
+        }
         try {
             var raw = storage.getItem(STORAGE_KEY);
+            lastPersistenceMode = "browser_local_storage";
             return normalizeLedger(raw ? JSON.parse(raw) : emptyLedger());
         } catch (error) {
-            return emptyLedger();
+            memoryFallbackActive = true;
+            lastPersistenceMode = "memory_fallback";
+            return normalizeLedger(memoryLedger || emptyLedger());
         }
     }
 
@@ -65,13 +78,27 @@
         if (serialized.length > MAX_STORAGE_CHARS) {
             throw new Error("El registro local ha alcanzado su límite. Descarga el libro de evaluación y elimina actos antiguos antes de continuar.");
         }
-        var storage = safeStorage();
-        if (storage) storage.setItem(STORAGE_KEY, serialized);
-        else memoryLedger = clone(normalized);
+        var storage = memoryFallbackActive ? null : safeStorage();
+        var persistent = false;
+        if (storage) {
+            try {
+                storage.setItem(STORAGE_KEY, serialized);
+                persistent = true;
+                lastPersistenceMode = "browser_local_storage";
+            } catch (error) {
+                memoryFallbackActive = true;
+                memoryLedger = clone(normalized);
+                lastPersistenceMode = "memory_fallback";
+            }
+        } else {
+            memoryFallbackActive = true;
+            memoryLedger = clone(normalized);
+            lastPersistenceMode = "memory_fallback";
+        }
         document.dispatchEvent(new CustomEvent("farmacia:evaluation-ledger-changed", {
-            detail: { event_count: normalized.events.length, persistent: Boolean(storage) }
+            detail: { event_count: normalized.events.length, persistent: persistent, persistence_mode: lastPersistenceMode }
         }));
-        return clone(normalized);
+        return { ledger: clone(normalized), persistent: persistent, persistence_mode: lastPersistenceMode };
     }
 
     function text(value) {
@@ -168,8 +195,18 @@
         };
         if (existingIndex >= 0) ledger.events[existingIndex] = event;
         else ledger.events.push(event);
-        persistLedger(ledger);
-        return { event: clone(event), created: existingIndex < 0 };
+        var persistence = persistLedger(ledger);
+        event.provenance.storage = persistence.persistence_mode;
+        if (!persistence.persistent && memoryLedger) {
+            var memoryEvent = memoryLedger.events.find(function (item) { return item.event_id === event.event_id; });
+            if (memoryEvent && memoryEvent.provenance) memoryEvent.provenance.storage = persistence.persistence_mode;
+        }
+        return {
+            event: clone(event),
+            created: existingIndex < 0,
+            persistent: persistence.persistent,
+            persistence_mode: persistence.persistence_mode
+        };
     }
 
     function removeEvent(eventId) {
@@ -343,7 +380,10 @@
             return {
                 current_visit: safeCall(followUp.getCurrentVisit, null),
                 selected_line: safeCall(followUp.getSelectedLine, null),
-                canonical_lines: safeCall(function () { return followUp.getCanonicalLinesForPatient ? followUp.getCanonicalLinesForPatient({ cip: cip }) : []; }, []),
+                canonical_lines: safeCall(function () {
+                    if (followUp.getCurrentCanonicalLines) return followUp.getCurrentCanonicalLines();
+                    return followUp.getCanonicalLinesForPatient ? followUp.getCanonicalLinesForPatient({ cip: cip }) : [];
+                }, []),
                 related_treatments: safeCall(followUp.getFollowupOtherDrugs, []),
                 adverse_event: safeCall(followUp.captureCommonAdverseEvent, null)
             };
@@ -355,8 +395,8 @@
         var result = [];
         function add(value) { var normalized = text(value); if (normalized && result.indexOf(normalized) === -1) result.push(normalized); }
         if (domain && domain.primary_treatment) add(domain.primary_treatment.line_id);
-        if (domain && domain.selected_line) add(domain.selected_line.line_id || domain.selected_line.id);
-        if (domain && Array.isArray(domain.canonical_lines)) domain.canonical_lines.forEach(function (line) { add(line && (line.line_id || line.id)); });
+        if (domain && domain.selected_line) add(domain.selected_line.linea_id || domain.selected_line.line_id || domain.selected_line.id);
+        if (domain && Array.isArray(domain.canonical_lines)) domain.canonical_lines.forEach(function (line) { add(line && (line.linea_id || line.line_id || line.id)); });
         return result;
     }
 
@@ -430,7 +470,7 @@
         var persistentStorage = Boolean(safeStorage());
         var status = createElement("p", "evaluation-ledger-status", persistentStorage
             ? "Pendiente de confirmación."
-            : "Este navegador bloquea el almacenamiento local; no es posible conservar actos entre páginas.");
+            : "Este navegador bloquea el almacenamiento local. Podrás guardar temporalmente en esta página, pero el acto se perderá al recargar o navegar.");
         status.id = "fhEvaluationLedgerStatus";
         status.setAttribute("role", "status");
         if (!persistentStorage) status.classList.add("evaluation-ledger-status--error");
@@ -441,7 +481,7 @@
 
         function refreshAvailability() {
             var cipControl = firstControl(config.cip);
-            save.disabled = !persistentStorage || !consent.checked || !cipControl || !normalizeCip(cipControl.value);
+            save.disabled = !consent.checked || !cipControl || !normalizeCip(cipControl.value);
         }
         consent.addEventListener("change", refreshAvailability);
         main.addEventListener("input", refreshAvailability);
@@ -480,7 +520,9 @@
                     app_context: document.querySelector(".sidebar-footer") ? document.querySelector(".sidebar-footer").textContent : "",
                     payload: { form_state: captureFormState(main), domain: domain }
                 });
-                setStatus(status, result.created ? "Acto ficticio guardado en este navegador." : "Acto ficticio actualizado sin crear un duplicado.", "success");
+                var savedMessage = result.created ? "Acto ficticio guardado en este navegador." : "Acto ficticio actualizado sin crear un duplicado.";
+                if (!result.persistent) savedMessage = "Acto guardado solo de forma temporal en esta página; se perderá al recargar o navegar.";
+                setStatus(status, savedMessage, result.persistent ? "success" : "error");
             } catch (error) {
                 setStatus(status, error.message || String(error), "error");
             }
@@ -583,6 +625,13 @@
         panel.appendChild(list);
     }
 
+    function restoreDomainState(event) {
+        if (!event || event.event_type !== "pharmacy_follow_up") return;
+        var api = window.FarmaciaSeguimiento;
+        var domain = event.payload && event.payload.domain;
+        if (api && typeof api.restoreEvaluationState === "function") api.restoreEvaluationState(domain || {});
+    }
+
     function restoreRequestedEvent(config) {
         var eventId = new URLSearchParams(location.search).get("ledger_event_id");
         if (!eventId) return;
@@ -596,6 +645,7 @@
         activeSourceEventId = event.source_event_id;
         activePatientId = event.patient_id;
         restoreFormState(event.payload && event.payload.form_state, document.querySelector("main.main-content")).then(function () {
+            restoreDomainState(event);
             if (status) setStatus(status, "Acto ficticio restaurado. Revisa los campos antes de guardar una actualización.", "success");
         });
     }

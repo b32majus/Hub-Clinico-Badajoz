@@ -2574,6 +2574,85 @@
         return lines;
     }
 
+    function cloneEvaluationState(value, fallback) {
+        try { return JSON.parse(JSON.stringify(value)); }
+        catch (error) { return JSON.parse(JSON.stringify(fallback)); }
+    }
+
+    function restoreEvaluationState(snapshot) {
+        var state = snapshot && typeof snapshot === 'object' ? snapshot : {};
+        var restoredVisit = cloneEvaluationState(state.current_visit, null);
+        var cip = String((restoredVisit && restoredVisit.cip) || fv('fhSegCip') || '').trim();
+        currentSegPatient = cip ? { cip: cip } : null;
+
+        var adverseDefaults = {
+            present: 'no_consta', severity: '', resolved: 'no_consta', corrected: 'no_consta',
+            observations: '', suspect_ids: [], causality_editing_id: ''
+        };
+        var visitDefaults = {
+            cip: cip,
+            visit_id: '',
+            created_at: '',
+            selected_line_ids: [],
+            dispensed_line_ids: [],
+            editing_line_id: '',
+            line_state: {},
+            adverse_event: Object.assign({}, adverseDefaults),
+            causality_by_suspect: {}
+        };
+        currentFollowupVisit = Object.assign(visitDefaults, restoredVisit || {});
+        currentFollowupVisit.cip = cip;
+        currentFollowupVisit.selected_line_ids = Array.isArray(currentFollowupVisit.selected_line_ids) ? currentFollowupVisit.selected_line_ids.slice() : [];
+        currentFollowupVisit.dispensed_line_ids = Array.isArray(currentFollowupVisit.dispensed_line_ids) ? currentFollowupVisit.dispensed_line_ids.slice() : [];
+        currentFollowupVisit.line_state = currentFollowupVisit.line_state && typeof currentFollowupVisit.line_state === 'object' ? cloneEvaluationState(currentFollowupVisit.line_state, {}) : {};
+        currentFollowupVisit.adverse_event = Object.assign({}, adverseDefaults, currentFollowupVisit.adverse_event || {}, state.adverse_event || {});
+        currentFollowupVisit.adverse_event.suspect_ids = Array.isArray(currentFollowupVisit.adverse_event.suspect_ids) ? currentFollowupVisit.adverse_event.suspect_ids.slice() : [];
+        currentFollowupVisit.causality_by_suspect = currentFollowupVisit.causality_by_suspect && typeof currentFollowupVisit.causality_by_suspect === 'object'
+            ? cloneEvaluationState(currentFollowupVisit.causality_by_suspect, {}) : {};
+
+        var restoredLines = Array.isArray(state.canonical_lines) ? cloneEvaluationState(state.canonical_lines, []) : [];
+        var selectedLine = state.selected_line && typeof state.selected_line === 'object' ? cloneEvaluationState(state.selected_line, null) : null;
+        if (selectedLine) {
+            var selectedId = selectedLine.linea_id || selectedLine.line_id || selectedLine.id || '';
+            if (selectedId && !restoredLines.some(function (line) { return (line.linea_id || line.line_id || line.id) === selectedId; })) restoredLines.push(selectedLine);
+        }
+        currentBiologicLines = restoredLines.map(function (line, index) {
+            var restored = line && typeof line === 'object' ? line : {};
+            restored.linea_id = restored.linea_id || restored.line_id || restored.id || ('SYN-RESTORED-LINE-' + (index + 1));
+            restored.estado_linea = restored.estado_linea || 'active';
+            return restored;
+        });
+        followupOtherDrugs = Array.isArray(state.related_treatments) ? cloneEvaluationState(state.related_treatments, []) : [];
+
+        renderFollowupOtherDrugs();
+        renderBiologicLineCards();
+        syncEditorOptions();
+        restoreEditingLineState();
+        applySelectedBiologicLine();
+
+        var adverse = currentFollowupVisit.adverse_event;
+        var adverseControls = {
+            fhSeguimientoEaPresente: adverse.present || 'no_consta',
+            fhSeguimientoEaGravedad: adverse.severity || '',
+            fhSeguimientoEaResuelto: adverse.resolved || 'no_consta',
+            fhSeguimientoEaCorregido: adverse.corrected || 'no_consta',
+            fhSeguimientoEaObservaciones: adverse.observations || ''
+        };
+        Object.keys(adverseControls).forEach(function (id) {
+            var control = byId(id);
+            if (control) control.value = adverseControls[id];
+        });
+        toggleFollowupEaFlow();
+        updateSuspectDrugSelector();
+        restoreCausalityEditor();
+        updateExportInterlock();
+        return cloneEvaluationState({
+            current_visit: currentFollowupVisit,
+            canonical_lines: currentBiologicLines,
+            related_treatments: followupOtherDrugs
+        }, {});
+    }
+
     window.FarmaciaSeguimiento = {
         searchCIP: searchCIP,
         initCipSearch: initCipSearch,
@@ -2591,8 +2670,15 @@
         mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
         mapRelatedTreatmentToContract: mapOtherDrugToContract,
         getCanonicalLinesForPatient: function (patient) { return getPatientBiologicLines(patient).map(function (line) { return Object.assign({}, line); }); },
+        getCurrentCanonicalLines: function () { return cloneEvaluationState(currentBiologicLines, []); },
         getSelectedLine: function () { var line = getCurrentSelectedLine(); return line ? Object.assign({}, line) : null; },
-        getCurrentVisit: function () { return currentFollowupVisit ? JSON.parse(JSON.stringify(currentFollowupVisit)) : null; },
+        getCurrentVisit: function () {
+            captureEditingLineState();
+            captureCommonAdverseEvent();
+            captureCausalityEditor();
+            return currentFollowupVisit ? cloneEvaluationState(currentFollowupVisit, null) : null;
+        },
+        restoreEvaluationState: restoreEvaluationState,
         selectLineById: selectBiologicLineById,
         toggleLineSelection: toggleBiologicLineSelection,
         setLineDispensed: setLineDispensed,

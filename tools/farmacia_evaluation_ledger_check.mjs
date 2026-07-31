@@ -18,7 +18,7 @@ function createStorage(shared = new Map()) {
   };
 }
 
-function createContext(sharedStorage) {
+function createContext(sharedStorage, storageOverride = null) {
   const listeners = new Map();
   const document = {
     addEventListener(type, handler) { listeners.set(type, handler); },
@@ -30,7 +30,7 @@ function createContext(sharedStorage) {
     createTextNode() { throw new Error('DOM creation not expected in unit check'); }
   };
   const window = {
-    localStorage: createStorage(sharedStorage),
+    localStorage: storageOverride || createStorage(sharedStorage),
     crypto: { randomUUID: () => '00000000-0000-4000-8000-000000000001' },
     setTimeout,
     clearTimeout,
@@ -140,6 +140,28 @@ assert.match(reloaded.eventUrl(reloaded.listEvents()[0]), /^farmacia_.*ledger_ev
 
 assert.equal(reloaded.removePatient(patientA), 3, 'patient deletion removes all its synthetic acts');
 assert.equal(reloaded.listEvents().length, 0);
+
+const blockedStorage = {
+  getItem() { throw new Error('blocked'); },
+  setItem() { throw new Error('blocked'); },
+  removeItem() { throw new Error('blocked'); }
+};
+const memoryOnlyLedger = createContext(new Map(), blockedStorage);
+const memoryOnly = memoryOnlyLedger.saveEvent({
+  synthetic_acknowledged: true,
+  synthetic_cip: 'CIP-MEMORY-ONLY',
+  event_type: 'pharmacy_validation',
+  source_event_id: 'pharmacy_validation:memory-only'
+});
+assert.equal(memoryOnly.persistent, false, 'blocked localStorage falls back to memory');
+assert.equal(memoryOnly.persistence_mode, 'memory_fallback');
+assert.equal(memoryOnlyLedger.listEvents().length, 1, 'memory fallback remains usable in the current page context');
+
+const followupSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_seguimiento.js'), 'utf8');
+assert.match(source, /restoreDomainState\(event\)/, 'ledger restores follow-up dynamic domain after form controls');
+assert.match(followupSource, /function restoreEvaluationState\(snapshot\)/, 'follow-up exposes dynamic state restoration');
+assert.match(followupSource, /getCurrentCanonicalLines:/, 'follow-up exposes the currently edited line set');
+assert.match(followupSource, /captureEditingLineState\(\);[\s\S]*captureCommonAdverseEvent\(\);[\s\S]*captureCausalityEditor\(\);/, 'follow-up snapshot captures visible line and causality edits');
 
 for (const htmlName of ['farmacia_index.html', 'farmacia_validacion.html', 'farmacia_primera_visita.html', 'farmacia_seguimiento.html']) {
   const html = fs.readFileSync(path.join(ROOT, htmlName), 'utf8');
