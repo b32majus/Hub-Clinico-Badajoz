@@ -5999,3 +5999,53 @@
     color: var(--text-muted, #666);
     margin-top: 4px;
 }
+
+/* WO-FH-SYNTHETIC-EVALUATION-LEDGER-01 */
+.evaluation-ledger-card,
+.evaluation-ledger-index {
+    border: 2px solid #b7791f;
+    background: #fffaf0;
+}
+
+.evaluation-ledger-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin: 1rem 0;
+    font-weight: 600;
+    color: #6b4600;
+}
+
+.evaluation-ledger-consent input { margin-top: 0.2rem; }
+
+.evaluation-ledger-actions,
+.evaluation-ledger-index__header,
+.evaluation-ledger-patient__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.evaluation-ledger-status {
+    margin: 0.8rem 0 0;
+    font-weight: 600;
+}
+
+.evaluation-ledger-status--success { color: #176b3a; }
+.evaluation-ledger-status--error { color: #a61b1b; }
+.evaluation-ledger-summary { font-weight: 700; margin: 0.5rem 0 1rem; }
+.evaluation-ledger-patients { display: grid; gap: 0.8rem; }
+.evaluation-ledger-patient { border: 1px solid #d8c49f; border-radius: 8px; background: #fff; padding: 0.9rem; }
+.evaluation-ledger-patient__cip { display: block; font-size: 1.05rem; }
+.evaluation-ledger-patient__meta { display: block; margin-top: 0.2rem; color: #5f6368; font-size: 0.88rem; }
+.evaluation-ledger-events { margin: 0.75rem 0 0; padding-left: 1.2rem; }
+.evaluation-ledger-event { margin: 0.25rem 0; }
+.evaluation-ledger-event__link { color: #17556f; font-weight: 600; }
+
+@media (max-width: 720px) {
+    .evaluation-ledger-index__header,
+    .evaluation-ledger-patient__header { align-items: stretch; flex-direction: column; }
+    .evaluation-ledger-actions { justify-content: flex-start; }
+}
