@@ -41,7 +41,15 @@ page.on('pageerror', (error) => pageErrors.push(error.message));
 
 try {
   await page.goto(new URL('farmacia_index.html', BASE_URL).href, { waitUntil: 'domcontentloaded' });
+  assert.equal(await page.evaluate(() => typeof window.FarmaciaEvaluationLedger), 'undefined', 'normal Inicio does not load the ledger');
+  assert.equal(await page.evaluate(() => typeof window.FarmaciaEvaluationWorkbook), 'undefined', 'normal Inicio does not load the workbook module');
+  assert.equal(await page.locator('#fhEvaluationWorkbookDownload').count(), 0, 'normal Inicio has no workbook UI');
+  assert.equal(await page.evaluate(() => Boolean(window.XLSX)), true, 'SheetJS remains loaded for normal Excel imports');
+
+  await page.addScriptTag({ url: new URL('scripts/farmacia_evaluation_ledger.js', BASE_URL).href });
+  await page.addScriptTag({ url: new URL('scripts/farmacia_evaluation_workbook.js', BASE_URL).href });
   await page.waitForFunction(() => window.FarmaciaEvaluationLedger && window.FarmaciaEvaluationWorkbook && window.XLSX);
+  assert.equal(await page.locator('#fhEvaluationWorkbookDownload').count(), 0, 'explicit technical module load does not create normal UI without a ledger panel');
   await page.evaluate(() => {
     const ledger = window.FarmaciaEvaluationLedger;
     ledger.clearAll();
@@ -112,11 +120,6 @@ try {
     });
   });
 
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('#fhEvaluationWorkbookDownload').waitFor({ state: 'visible' });
-  assert.equal(await page.locator('#fhEvaluationWorkbookDownload').isDisabled(), false, 'download is enabled with saved acts');
-  assert.match(await page.locator('#fhEvaluationWorkbookStatus').textContent(), /3 actos ficticios/);
-
   const inspection = await page.evaluate(() => {
     const ledger = window.FarmaciaEvaluationLedger.load();
     const built = window.FarmaciaEvaluationWorkbook.buildWorkbook(ledger.events, ledger);
@@ -158,19 +161,18 @@ try {
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.locator('#fhEvaluationWorkbookDownload').click(),
+    page.evaluate(() => window.FarmaciaEvaluationWorkbook.download()),
   ]);
   const suggested = download.suggestedFilename();
   assert.match(suggested, /^PROMueve_FH_evaluacion_ficticia_\d{4}-\d{2}-\d{2}\.xlsx$/);
-  const target = path.join('/tmp', suggested);
+  const target = path.join('/tmp/opencode', suggested);
   await download.saveAs(target);
   assert.ok(statSync(target).size > 10000, 'downloaded workbook has non-trivial size');
-  assert.match(await page.locator('#fhEvaluationWorkbookStatus').textContent(), /Libro generado/);
 
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join(' | ')}`);
   assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join(' | ')}`);
   console.log('farmacia_evaluation_workbook_browser_check: PASSED');
-  console.log('3 acts; 11 sheets; complete payload; labels; lines; adverse events; formula guard; real XLSX download; console/pageerror 0.');
+  console.log('no normal UI/runtime workbook; explicit modules; 3 acts; 11 sheets; complete payload; real XLSX download; console/pageerror 0.');
 } finally {
   await browser.close();
 }

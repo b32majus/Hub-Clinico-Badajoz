@@ -76,7 +76,7 @@
         normalized.updated_at = new Date().toISOString();
         var serialized = JSON.stringify(normalized);
         if (serialized.length > MAX_STORAGE_CHARS) {
-            throw new Error("El registro local ha alcanzado su límite. Descarga el libro de evaluación y elimina actos antiguos antes de continuar.");
+            throw new Error("El almacenamiento local ha alcanzado su límite. Este acto no podrá conservarse al recargar.");
         }
         var storage = memoryFallbackActive ? null : safeStorage();
         var persistent = false;
@@ -374,15 +374,16 @@
             service: ["#fhServicioManual", "#fhDermaServicioOrigen", "#fhDigServicioOrigen"],
             pathology: ["#fhPatologiaManual", "#fhDermaPatologia", "#fhDigPatologia", "#fhReumaPatologia"],
             occurred: ["#fhManualFecha", "#fhDermaFecha", "#fhDigFecha", "#fhReumaFecha"],
-            notice: "#fhValDemoNotice"
+            notice: "#fhValDemoNotice",
+            outputs: ["fhValExportTxt", "fhValExcelExportBtn"]
         };
         if (page === "farmacia_primera_visita.html") return {
-            event_type: "pharmacy_first_visit",
-            cip: ["#fhPvCip"], service: ["#fhPvServicio"], pathology: ["#fhPvPatologia"], occurred: ["#fhPvFecha"], notice: "#fhPvDemoNotice"
+            event_type: "pharmacy_first_visit", cip: ["#fhPvCip"], service: ["#fhPvServicio"], pathology: ["#fhPvPatologia"],
+            occurred: ["#fhPvFecha"], notice: "#fhPvDemoNotice", outputs: ["fhPvExportTxt", "fhPvExcelExportBtn"]
         };
         if (page === "farmacia_seguimiento.html") return {
-            event_type: "pharmacy_follow_up",
-            cip: ["#fhSegCip"], service: ["#fhSegServicio"], pathology: ["#fhSegPatologia"], occurred: ["#fhSegFecha"], notice: "#fhSegDemoNotice"
+            event_type: "pharmacy_follow_up", cip: ["#fhSegCip"], service: ["#fhSegServicio"], pathology: ["#fhSegPatologia"],
+            occurred: ["#fhSegFecha"], notice: "#fhSegDemoNotice", outputs: ["fhSegExportTxt", "fhSegExportCsv", "fhSegExcelExportBtn"]
         };
         if (page === "farmacia_index.html" || page === "index.html" || page === "") return { event_type: "index" };
         return null;
@@ -434,12 +435,6 @@
         return "recorded";
     }
 
-    function sourceEventId(config, patientId, occurredOn, domain) {
-        var suffix = occurredOn;
-        if (domain && domain.current_visit && domain.current_visit.visit_id) suffix = domain.current_visit.visit_id;
-        return [config.event_type, patientId, suffix || "undated"].join(":");
-    }
-
     function eventPage(event) {
         if (event.event_type === "pharmacy_validation") return "farmacia_validacion.html";
         if (event.event_type === "pharmacy_first_visit") return "farmacia_primera_visita.html";
@@ -464,191 +459,90 @@
     }
 
     function setStatus(node, message, kind) {
+        if (!node) return;
         node.textContent = message;
         node.className = "evaluation-ledger-status" + (kind ? " evaluation-ledger-status--" + kind : "");
     }
 
-    function injectWorkflowPanel(config) {
+    function ensureFeedbackArea(config) {
         var main = document.querySelector("main.main-content");
-        if (!main || document.getElementById("fhEvaluationLedgerPanel")) return;
-        var panel = createElement("section", "dashboard-card evaluation-ledger-card");
-        panel.id = "fhEvaluationLedgerPanel";
-        panel.setAttribute("data-ledger-ignore", "true");
-        panel.appendChild(createElement("h2", "section-title", "Registro local de evaluación ficticia"));
-        panel.appendChild(createElement("p", "hero-description", "Guarda este acto en este navegador para recuperarlo después. No se sincroniza, no es persistencia clínica y puede perderse al borrar los datos del navegador."));
-        var consentLabel = createElement("label", "evaluation-ledger-consent");
-        var consent = document.createElement("input");
-        consent.type = "checkbox";
-        consent.id = "fhEvaluationLedgerSyntheticConfirm";
-        consentLabel.appendChild(consent);
-        consentLabel.appendChild(document.createTextNode(" Confirmo que este registro contiene exclusivamente datos ficticios."));
-        panel.appendChild(consentLabel);
-        var actions = createElement("div", "evaluation-ledger-actions");
-        var save = createElement("button", "btn btn-primary", "Guardar acto ficticio");
-        save.type = "button";
-        save.id = "fhEvaluationLedgerSave";
-        save.disabled = true;
-        actions.appendChild(save);
-        var back = createElement("a", "btn btn-outline", "Ver cohorte ficticia local");
-        back.href = "farmacia_index.html#fhEvaluationLedgerIndex";
-        actions.appendChild(back);
-        panel.appendChild(actions);
-        var persistentStorage = Boolean(safeStorage());
-        var status = createElement("p", "evaluation-ledger-status", persistentStorage
-            ? "Pendiente de confirmación."
-            : "Este navegador bloquea el almacenamiento local. Podrás guardar temporalmente en esta página, pero el acto se perderá al recargar o navegar.");
+        if (!main) return null;
+        var existing = document.getElementById("fhEvaluationLedgerFeedback");
+        if (existing) return existing;
+        var feedback = createElement("div", "evaluation-ledger-feedback");
+        feedback.id = "fhEvaluationLedgerFeedback";
+        feedback.setAttribute("data-ledger-ignore", "true");
+        var status = createElement("p", "evaluation-ledger-status", "");
         status.id = "fhEvaluationLedgerStatus";
         status.setAttribute("role", "status");
-        if (!persistentStorage) status.classList.add("evaluation-ledger-status--error");
-        panel.appendChild(status);
-        var hero = main.querySelector(".patient-header-card");
-        if (hero && hero.parentNode) hero.parentNode.insertBefore(panel, hero.nextSibling);
-        else main.appendChild(panel);
-
-        function refreshAvailability() {
-            var cipControl = firstControl(config.cip);
-            save.disabled = !consent.checked || !cipControl || !normalizeCip(cipControl.value);
-        }
-        consent.addEventListener("change", refreshAvailability);
-        main.addEventListener("input", refreshAvailability);
-        main.addEventListener("change", refreshAvailability);
-        refreshAvailability();
-
-        save.addEventListener("click", function () {
-            try {
-                var cipPair = valueAndLabel(config.cip);
-                var service = valueAndLabel(config.service);
-                var pathology = valueAndLabel(config.pathology);
-                var occurred = valueAndLabel(config.occurred);
-                var patientId = patientIdForCip(cipPair.value);
-                var domain = collectDomainPayload(config, cipPair.value);
-                var sourceId = restoredEvent && restoredEvent.event_type === config.event_type && normalizeCip(restoredEvent.synthetic_cip) === normalizeCip(cipPair.value)
-                    ? restoredEvent.source_event_id
-                    : (activePatientId === patientId ? activeSourceEventId : "");
-                if (!sourceId) sourceId = [config.event_type, patientId, randomId("SYN-SRC")].join(":");
-                activeSourceEventId = sourceId;
-                activePatientId = patientId;
-                var result = saveEvent({
-                    synthetic_acknowledged: consent.checked,
-                    event_type: config.event_type,
-                    patient_id: patientId,
-                    synthetic_cip: cipPair.value,
-                    occurred_on: occurred.value,
-                    service_code: service.value,
-                    service_label: service.label,
-                    pathology_code: pathology.value,
-                    pathology_label: pathology.label,
-                    visit_id: domain && domain.current_visit ? domain.current_visit.visit_id : "",
-                    line_ids: extractLineIds(domain),
-                    source_event_id: sourceId,
-                    source_page: location.pathname.split("/").pop(),
-                    record_status: recordStatus(config, domain),
-                    app_context: document.querySelector(".sidebar-footer") ? document.querySelector(".sidebar-footer").textContent : "",
-                    payload: { form_state: captureFormState(main), domain: domain }
-                });
-                var savedMessage = result.created ? "Acto ficticio guardado en este navegador." : "Acto ficticio actualizado sin crear un duplicado.";
-                if (!result.persistent) savedMessage = "Acto guardado solo de forma temporal en esta página; se perderá al recargar o navegar.";
-                setStatus(status, savedMessage, result.persistent ? "success" : "error");
-            } catch (error) {
-                setStatus(status, error.message || String(error), "error");
-            }
-        });
+        feedback.appendChild(status);
+        var notice = document.querySelector(config.notice);
+        if (notice && notice.parentNode) notice.parentNode.insertBefore(feedback, notice.nextSibling);
+        else main.appendChild(feedback);
+        return feedback;
     }
 
-    function patientGroups() {
-        var groups = {};
-        listEvents().forEach(function (event) {
-            if (!groups[event.patient_id]) groups[event.patient_id] = { patient_id: event.patient_id, synthetic_cip: event.synthetic_cip, events: [] };
-            groups[event.patient_id].events.push(event);
-        });
-        return Object.keys(groups).map(function (key) {
-            groups[key].events.sort(eventSort);
-            groups[key].last = groups[key].events[0];
-            return groups[key];
-        }).sort(function (a, b) { return eventSort(a.last, b.last); });
+    function replaceEventIdInUrl(event) {
+        if (!event || !window.history || typeof window.history.replaceState !== "function") return;
+        var url = new URL(window.location.href);
+        url.searchParams.set("ledger_event_id", event.event_id);
+        window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
     }
 
-    function eventTypeLabel(type) {
-        if (type === "pharmacy_validation") return "Validación";
-        if (type === "pharmacy_first_visit") return "Primera Visita";
-        return "Seguimiento";
+    function isVisibleEnabled(control) {
+        if (!control || control.disabled || control.hidden || control.getAttribute("aria-hidden") === "true" || control.closest(".hidden")) return false;
+        if (typeof window.getComputedStyle !== "function") return true;
+        var style = window.getComputedStyle(control);
+        return style.display !== "none" && style.visibility !== "hidden";
     }
 
-    function recordedLabel(value) {
-        var normalized = text(value);
-        return normalized ? normalized.replace("T", " ").slice(0, 16) : "sin fecha";
-    }
-
-    function renderIndexPanel() {
+    function buildCurrentEvent(config) {
         var main = document.querySelector("main.main-content");
-        if (!main) return;
-        var panel = document.getElementById("fhEvaluationLedgerIndex");
-        if (!panel) {
-            panel = createElement("section", "dashboard-card evaluation-ledger-index");
-            panel.id = "fhEvaluationLedgerIndex";
-            panel.setAttribute("data-ledger-ignore", "true");
-            var searchCard = main.querySelector(".search-card");
-            if (searchCard && searchCard.parentNode) searchCard.parentNode.insertBefore(panel, searchCard.nextSibling);
-            else main.appendChild(panel);
+        var cipPair = valueAndLabel(config.cip);
+        var patientId = patientIdForCip(cipPair.value);
+        if (!patientId) throw new Error("No se ha conservado el acto local porque no hay un CIP disponible.");
+        var service = valueAndLabel(config.service);
+        var pathology = valueAndLabel(config.pathology);
+        var occurred = valueAndLabel(config.occurred);
+        var domain = collectDomainPayload(config, cipPair.value);
+        var sourceId = restoredEvent && restoredEvent.event_type === config.event_type && normalizeCip(restoredEvent.synthetic_cip) === normalizeCip(cipPair.value)
+            ? restoredEvent.source_event_id
+            : (activePatientId === patientId ? activeSourceEventId : "");
+        if (!sourceId) sourceId = [config.event_type, patientId, randomId("SYN-SRC")].join(":");
+        activeSourceEventId = sourceId;
+        activePatientId = patientId;
+        return {
+            synthetic_acknowledged: true,
+            event_type: config.event_type,
+            patient_id: patientId,
+            synthetic_cip: cipPair.value,
+            occurred_on: occurred.value,
+            service_code: service.value,
+            service_label: service.label,
+            pathology_code: pathology.value,
+            pathology_label: pathology.label,
+            visit_id: domain && domain.current_visit ? domain.current_visit.visit_id : "",
+            line_ids: extractLineIds(domain),
+            source_event_id: sourceId,
+            source_page: location.pathname.split("/").pop(),
+            record_status: recordStatus(config, domain),
+            app_context: document.querySelector(".sidebar-footer") ? document.querySelector(".sidebar-footer").textContent : "",
+            payload: { form_state: captureFormState(main), domain: domain }
+        };
+    }
+
+    function persistAfterNormalOutput(config) {
+        var status = document.getElementById("fhEvaluationLedgerStatus");
+        try {
+            var result = saveEvent(buildCurrentEvent(config));
+            restoredEvent = result.event;
+            if (result.persistent) replaceEventIdInUrl(result.event);
+            setStatus(status, result.persistent
+                ? "Acto conservado localmente en este navegador."
+                : "Retención temporal en memoria; el acto no se conservará al recargar.", result.persistent ? "success" : "error");
+        } catch (error) {
+            setStatus(status, "No se ha retenido el acto localmente. La salida normal ha continuado.", "error");
         }
-        while (panel.firstChild) panel.removeChild(panel.firstChild);
-        var header = createElement("div", "evaluation-ledger-index__header");
-        var titleWrap = createElement("div");
-        titleWrap.appendChild(createElement("h2", "section-title", "Cohorte ficticia local"));
-        titleWrap.appendChild(createElement("p", "hero-description", "Actos guardados únicamente en este navegador. No usar datos reales ni interpretar esta lista como historia clínica."));
-        header.appendChild(titleWrap);
-        var clear = createElement("button", "btn btn-outline", "Vaciar cohorte ficticia");
-        clear.type = "button";
-        clear.id = "fhEvaluationLedgerClearAll";
-        clear.addEventListener("click", function () {
-            if (!window.confirm("¿Eliminar todos los actos ficticios guardados en este navegador?")) return;
-            clearAll();
-            renderIndexPanel();
-        });
-        header.appendChild(clear);
-        panel.appendChild(header);
-        var groups = patientGroups();
-        var summary = createElement("p", "evaluation-ledger-summary", groups.length + " pacientes ficticios · " + listEvents().length + " actos guardados");
-        panel.appendChild(summary);
-        if (!groups.length) {
-            panel.appendChild(createElement("div", "empty-state", "Todavía no hay actos ficticios guardados en este navegador."));
-            clear.disabled = true;
-            return;
-        }
-        var list = createElement("div", "evaluation-ledger-patients");
-        groups.forEach(function (group) {
-            var card = createElement("article", "evaluation-ledger-patient");
-            var cardHeader = createElement("div", "evaluation-ledger-patient__header");
-            var identity = createElement("div");
-            identity.appendChild(createElement("strong", "evaluation-ledger-patient__cip", group.synthetic_cip));
-            identity.appendChild(createElement("span", "evaluation-ledger-patient__meta", group.patient_id + " · " + group.events.length + " actos · última actualización: " + recordedLabel(group.last.recorded_at)));
-            cardHeader.appendChild(identity);
-            var actions = createElement("div", "evaluation-ledger-actions");
-            var open = createElement("a", "btn btn-sm btn-primary", "Abrir último acto");
-            open.href = eventUrl(group.last);
-            actions.appendChild(open);
-            var remove = createElement("button", "btn btn-sm btn-outline", "Eliminar paciente ficticio");
-            remove.type = "button";
-            remove.addEventListener("click", function () {
-                if (!window.confirm("¿Eliminar los actos ficticios de " + group.synthetic_cip + "?")) return;
-                removePatient(group.patient_id);
-                renderIndexPanel();
-            });
-            actions.appendChild(remove);
-            cardHeader.appendChild(actions);
-            card.appendChild(cardHeader);
-            var events = createElement("ul", "evaluation-ledger-events");
-            group.events.forEach(function (event) {
-                var item = createElement("li", "evaluation-ledger-event");
-                var link = createElement("a", "evaluation-ledger-event__link", eventTypeLabel(event.event_type) + " · " + (event.occurred_on || "sin fecha") + " · " + (event.record_status || "draft"));
-                link.href = eventUrl(event);
-                item.appendChild(link);
-                events.appendChild(item);
-            });
-            card.appendChild(events);
-            list.appendChild(card);
-        });
-        panel.appendChild(list);
     }
 
     function restoreDomainState(event) {
@@ -658,34 +552,114 @@
         if (api && typeof api.restoreEvaluationState === "function") api.restoreEvaluationState(domain || {});
     }
 
-    function restoreRequestedEvent(config) {
-        var eventId = new URLSearchParams(location.search).get("ledger_event_id");
-        if (!eventId) return;
-        var event = getEvent(eventId);
+    function restoreSpecificEvent(config, event, restoredMessage) {
         var status = document.getElementById("fhEvaluationLedgerStatus");
         if (!event || event.event_type !== config.event_type) {
-            if (status) setStatus(status, "No se ha encontrado un acto compatible para restaurar.", "error");
-            return;
+            setStatus(status, "No se ha encontrado un acto compatible para restaurar.", "error");
+            return Promise.resolve(false);
         }
         restoredEvent = event;
         activeSourceEventId = event.source_event_id;
         activePatientId = event.patient_id;
-        restoreFormState(event.payload && event.payload.form_state, document.querySelector("main.main-content")).then(function () {
+        return restoreFormState(event.payload && event.payload.form_state, document.querySelector("main.main-content")).then(function () {
             restoreDomainState(event);
-            if (status) setStatus(status, "Acto ficticio restaurado. Revisa los campos antes de guardar una actualización.", "success");
+            replaceEventIdInUrl(event);
+            setStatus(status, restoredMessage || "Acto local restaurado. Revise los datos antes de volver a exportar.", "success");
+            return true;
         });
+    }
+
+    function restoreRequestedEvent(config) {
+        var eventId = new URLSearchParams(location.search).get("ledger_event_id");
+        if (!eventId) return false;
+        restoreSpecificEvent(config, getEvent(eventId));
+        return true;
+    }
+
+    function bindNormalOutputs(config) {
+        (config.outputs || []).forEach(function (id) {
+            var control = document.getElementById(id);
+            if (!control) return;
+            control.addEventListener("click", function () {
+                var eligibleAtActivation = isVisibleEnabled(control);
+                if (!eligibleAtActivation) return;
+                persistAfterNormalOutput(config);
+            }, true);
+        });
+    }
+
+    function initPreviousActPrompt(config) {
+        if (new URLSearchParams(location.search).has("ledger_event_id")) return;
+        var main = document.querySelector("main.main-content");
+        var feedback = document.getElementById("fhEvaluationLedgerFeedback");
+        if (!main || !feedback) return;
+        var promptedEventId = "";
+        var dismissedPatientKey = "";
+        var timer = null;
+
+        function removePrompt() {
+            var current = document.getElementById("fhEvaluationLedgerPrevious");
+            if (current && current.parentNode) current.parentNode.removeChild(current);
+        }
+
+        function evaluateCurrentPatient() {
+            timer = null;
+            if (new URLSearchParams(location.search).has("ledger_event_id")) { removePrompt(); return; }
+            var cip = valueAndLabel(config.cip).value;
+            var patientId = patientIdForCip(cip);
+            var patientKey = config.event_type + ":" + patientId;
+            if (!patientId || patientKey === dismissedPatientKey) { removePrompt(); return; }
+            var latest = listEvents({ patient_id: patientId, event_type: config.event_type })[0];
+            if (!latest) { promptedEventId = ""; removePrompt(); return; }
+            if (promptedEventId === latest.event_id && document.getElementById("fhEvaluationLedgerPrevious")) return;
+            promptedEventId = latest.event_id;
+            removePrompt();
+            var notice = createElement("div", "evaluation-ledger-previous-notice");
+            notice.id = "fhEvaluationLedgerPrevious";
+            notice.setAttribute("data-ledger-ignore", "true");
+            notice.appendChild(createElement("p", "", "Existe un acto local anterior de este tipo para este paciente."));
+            var actions = createElement("div", "evaluation-ledger-actions");
+            var recover = createElement("button", "btn btn-sm btn-outline", "Recuperar último acto");
+            recover.type = "button";
+            recover.id = "fhEvaluationLedgerRecoverLatest";
+            recover.addEventListener("click", function () {
+                removePrompt();
+                restoreSpecificEvent(config, latest);
+            });
+            var continueNew = createElement("button", "btn btn-sm btn-outline", "Continuar con un acto nuevo");
+            continueNew.type = "button";
+            continueNew.id = "fhEvaluationLedgerContinueNew";
+            continueNew.addEventListener("click", function () {
+                dismissedPatientKey = patientKey;
+                restoredEvent = null;
+                activeSourceEventId = "";
+                activePatientId = "";
+                removePrompt();
+            });
+            actions.appendChild(recover);
+            actions.appendChild(continueNew);
+            notice.appendChild(actions);
+            feedback.appendChild(notice);
+        }
+
+        function scheduleEvaluation() {
+            if (timer) window.clearTimeout(timer);
+            timer = window.setTimeout(evaluateCurrentPatient, 80);
+        }
+        main.addEventListener("input", scheduleEvaluation);
+        main.addEventListener("change", scheduleEvaluation);
+        if (typeof window.MutationObserver === "function") {
+            new window.MutationObserver(scheduleEvaluation).observe(main, { childList: true, subtree: true, characterData: true });
+        }
+        [150, 500, 1200, 2500].forEach(function (delay) { window.setTimeout(scheduleEvaluation, delay); });
     }
 
     function init() {
         var config = pageConfig();
-        if (!config) return;
-        if (config.event_type === "index") {
-            renderIndexPanel();
-            document.addEventListener("farmacia:evaluation-ledger-changed", renderIndexPanel);
-            return;
-        }
-        injectWorkflowPanel(config);
-        restoreRequestedEvent(config);
+        if (!config || config.event_type === "index") return;
+        ensureFeedbackArea(config);
+        bindNormalOutputs(config);
+        if (!restoreRequestedEvent(config)) initPreviousActPrompt(config);
     }
 
     window.FarmaciaEvaluationLedger = Object.freeze({
