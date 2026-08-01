@@ -2,12 +2,12 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-07-31 |
+| Última actualización | 2026-08-01 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado Farmacia | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
-| Snapshot estable Cáceres | `CÁCERES-REVIEW-0.2` |
-| Rama documental de esta edición | `work/doc-fh-caceres-quick-wins-reconciliation-20260731` |
+| HEAD publicado Farmacia | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3` |
+| Rama documental de esta edición | `work/fh-export-contract-v2-reconciliation-01-20260801` |
 
 > Este índice orienta. La verdad funcional procede del código publicado, el manifest del despliegue, el estado vivo y los contratos relacionados. No convierte propuestas arquitectónicas en capacidades implementadas.
 
@@ -45,7 +45,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
 | `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia** | Código Farmacia y snapshots hospitalarios | Piloto, producción o datos reales |
-| `previews/caceres-fh/` | **Snapshot estable 0.2** | Evaluación Pharmacy-only Cáceres | Evolución regional automática |
+| `previews/caceres-fh/` | **Snapshot estable 0.3** | Evaluación Pharmacy-only Cáceres | Evolución regional automática |
 | `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
 | `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
@@ -65,18 +65,18 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
-| Último SHA funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
-| Fuente funcional del snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
-| QA humana regional del HEAD actual | Pendiente para los quick wins de PR #193; último PASS confirmado en `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| HEAD | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
+| Fuente funcional del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
+| QA pública regional del HEAD actual | PASS focal para realineación del flujo y Excel de Primera Visita; no equivale a QA integral de piloto |
 | QA humana Cáceres | PASS |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
-> PR #193 fusionó los quick wins funcionales en `recovery` con CI verde. Están implementados y publicados en la rama regional, pero todavía no cuentan con QA humana regional específica ni forman parte del snapshot estable `CÁCERES-REVIEW-0.2`.
+> Desde PR #193 se publicaron la reconciliación y promoción de Cáceres 0.3, el ledger/workbook técnico de evaluación, la realineación del flujo y la corrección P0 del Excel de Primera Visita. El HEAD regional actual tiene QA pública focal, pero continúa sin acreditación para piloto real.
 
-Documento vivo: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
+Documento vivo reconciliado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
 
 El documento [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) queda histórico y superseded como estado vivo; conserva la fotografía de `CÁCERES-REVIEW-0.1`.
 
@@ -115,7 +115,7 @@ Decisiones principales:
 - Supabase solo para configuración no-paciente;
 - CIMA oficial versionado en GitHub;
 - Identity Plane físico diferido hasta servidor/PROM Gateway automatizado;
-- una fila/evento por acto;
+- un acto canónico puede proyectarse en 1..N filas; Seguimiento v2 usa visita × línea activa;
 - modelo canónico como fuente de Excel, JARA, FHIR y openEHR;
 - V5 agnóstica diferida.
 
@@ -156,16 +156,15 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 
 - [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md)
 - [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
-- [`docs/ops/PLAN_RECUPERACION_FARMACIA_PR_REPLAY_20260727.md`](/docs/ops/PLAN_RECUPERACION_FARMACIA_PR_REPLAY_20260727.md)
-- [`docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md`](/docs/ops/PLAN_MAESTRO_RESCATE_FARMACIA_V4_20260724.md)
+- Los planes históricos de recuperación PR replay y rescate V4 citados en ediciones previas no están publicados en la rama `recovery`; no se usan como estado vivo.
 - [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md)
 
 ### Contratos
 
-- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; todavía no promovido a `CÁCERES-REVIEW-0.3`.
+- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; incluido en la fuente funcional promovida a `CÁCERES-REVIEW-0.3`.
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
-- [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md)
-- [`docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md`](/docs/contratos/CONTRATO_ESCENARIOS_FARMACIA_V4.md)
+- [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
+- El contrato de escenarios Farmacia V4 citado en ediciones previas no está publicado en `recovery`; su incorporación formal permanece pendiente.
 
 ### Historia y auditoría
 
@@ -244,6 +243,8 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 | `AGENTS.md` | Metadata/rama base histórica; verificar arnés real antes de editar |
 | `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
 | `opencode.jsonc` | No existe en recovery; verificar entorno VPS antes de afirmar el arnés efectivo |
+| Planes históricos PR replay/rescate V4 | Referenciados previamente, pero sus archivos no están publicados en recovery |
+| Contrato de escenarios Farmacia V4 | Referenciado previamente, pero no publicado en recovery |
 
 ---
 
@@ -274,4 +275,4 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 ---
 
-*Edición asociada a `WO-DOC-FH-V4-VACATION-PLAN-ARCHITECTURE-20260731` (issue #190). No autoriza código, datos reales, piloto, producción, FHIR/openEHR ni Identity Plane operativo.*
+*Edición reconciliada por `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`. No autoriza código, datos reales, piloto, producción, FHIR/openEHR ni Identity Plane operativo.*

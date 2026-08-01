@@ -1,16 +1,16 @@
-# Estado actual — Farmacia recovery, Cáceres 0.2 y quick wins regionales
+# Estado actual — Farmacia recovery, Cáceres 0.3 y evolución regional
 
 | Metadato | Valor |
 |---|---|
-| Fecha | 2026-07-31 |
+| Fecha de reconciliación | 2026-08-01 |
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado de la rama | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
-| Último SHA funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
-| SHA funcional fuente del snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
-| Merge de promoción | `accac670ba216d8c291ee849d2198742d02bb3f0` |
+| HEAD publicado de la rama | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
+| SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
+| Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
 | Uso autorizado por este documento | Evaluación con datos exclusivamente sintéticos |
 | Piloto real / producción | No acreditados |
 
@@ -25,10 +25,13 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la recuperación del núcleo regional;
 - la corrección definitiva del autocomplete CIMA en la entrada manual de Validación;
 - la comprobación humana del recorrido en GitHub Pages;
-- la promoción reproducible a `CÁCERES-REVIEW-0.2`;
+- las promociones reproducibles a `CÁCERES-REVIEW-0.2` y `CÁCERES-REVIEW-0.3`;
 - la reunión de feedback con Farmacia Hospitalaria del 2026-07-30;
 - la apertura del plan de trabajo V4 para el periodo 2026-07-31 a 2026-08-15;
-- la fusión regional de los quick wins de Validación mediante PR #193, todavía pendiente de QA humana específica y de promoción a Cáceres.
+- la fusión de los quick wins de Validación mediante PR #193;
+- la reconciliación documental y promoción a `CÁCERES-REVIEW-0.3` mediante PR #195/#197;
+- la incorporación y posterior realineación del ledger/workbook sintético mediante PR #199/#201/#203;
+- la corrección P0 de la verdad Excel de Primera Visita mediante PR #205.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -39,11 +42,11 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| HEAD publicado | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | Incluye PR #191 y los quick wins regionales de PR #193 |
-| Último bundle funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` | Quick wins implementados y con CI verde; QA humana regional específica pendiente |
+| HEAD publicado | `68b5383762f3ae747f567d49df2e80118c38fe16` | Incluye PR #195 a #205 |
+| Último bundle funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` | QA pública focal de flujo y Excel Primera Visita: PASS |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
-| Versión estable Cáceres | `CÁCERES-REVIEW-0.2` | QA humana pública: PASS |
+| Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
 | Plan vivo del siguiente ciclo | `FARMACIA_PLAN_VACACIONES_20260731.md` | Prioridad y secuencia operativa |
 | Arquitectura objetivo | `../architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md` | Dirección V4; no aprobación institucional |
 | Índice documental | `../INDEX.md` | Navegación documental |
@@ -86,7 +89,13 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #186 — clone del autocomplete funcional | #187 | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` | Corrección definitiva; QA humana regional PASS |
 | #188 — promoción Cáceres 0.2 | #189 | `accac670ba216d8c291ee849d2198742d02bb3f0` | Snapshot regenerado, publicado y QA humana Cáceres PASS |
 | #190 — estado, plan de vacaciones y arquitectura V4 | #191 | `9725bf60917ea07dc53162e700e86a1743537d3d` | Documentación viva publicada; no añadió capacidad funcional |
-| #192 — quick wins de Validación Farmacia | #193 | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | `Cada 3 semanas`, separación de observaciones, comorbilidades trivalentes y guard de CIP; CI verde, QA humana regional pendiente |
+| #192 — quick wins de Validación Farmacia | #193 | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | `Cada 3 semanas`, separación de observaciones, comorbilidades trivalentes y guard de CIP; en ese merge la promoción seguía pendiente |
+| #194 — reconciliación documental de quick wins | #195 | `815e16f9564c82f469a95745c5c6917593a8c3f0` | Cierra el estado regional previo a promoción 0.3 |
+| #196 — promoción Cáceres 0.3 | #197 | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` | Snapshot `CÁCERES-REVIEW-0.3`, fuente `815e16f9...` |
+| #198 — ledger sintético | #199 | `ac93575da6c07d9bf861baa5f1aa7a566d3877fd` | Persistencia local técnica; no piloto |
+| #200 — workbook técnico | #201 | `25c751657f18f5825ad92144c3140a8736d6664f` | Workbook de 11 hojas; no Excel Bridge operativo |
+| #202 — realineación de flujo | #203 | `6dcedff4c1b4ac60b79d0e7d3951aaebe9f6ae5e` | Flujo normal sin cohorte ficticia visible; QA pública PASS |
+| #204 — Excel Primera Visita | #205 | `68b5383762f3ae747f567d49df2e80118c38fe16` | CIP y acto visible correctos; QA pública focal PASS |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -123,15 +132,15 @@ Estado real de la entrega:
 - cuatro comorbilidades comunes con valores `No informado / Sí / No`;
 - CIP sintético literal no vacío obligatorio para JARA, CSV y Excel, sin fallback ni regex;
 - paridad JARA/CSV/Excel y contrato Excel de 61 columnas conservado;
-- QA humana regional específica: pendiente;
-- promoción a `CÁCERES-REVIEW-0.3`: no realizada;
+- la promoción a `CÁCERES-REVIEW-0.3` fue realizada por PR #197 desde la fuente `815e16f9...`;
+- el HEAD regional posterior incorpora cambios que no se promocionan automáticamente al snapshot;
 - aptitud para piloto real: no acreditada.
 
-### 5.3 Cáceres 0.2
+### 5.3 Cáceres 0.3
 
 Demostrado mediante interacción soportada y comprobación humana en la URL pública:
 
-- versión `CÁCERES-REVIEW-0.2` visible;
+- versión `CÁCERES-REVIEW-0.3` visible;
 - entrada directa;
 - búsqueda y navegación real;
 - Validación → Entrada manual → Fármaco solicitado;
@@ -153,6 +162,17 @@ Evidencia técnica de promoción:
 - regresiones Enfermería/precargas: 95/95 + 45/45 + 94/94;
 - manifest con SHA y versión exactos;
 - snapshot generado, no editado manualmente.
+
+---
+
+### 5.4 Evolución regional posterior al snapshot Cáceres
+
+- El ledger y workbook técnico existen en código regional, pero la interfaz de cohorte ficticia fue retirada por PR #203.
+- El flujo público vuelve a ser Paciente → acto → salidas normales, con persistencia local subordinada y discreta.
+- Primera Visita exporta el CIP y el acto visibles; no usa fallback demo.
+- Seguimiento continúa exportando hoy una fila por línea dispensada. La evolución a fila por línea activa está aprobada documentalmente, pero no implementada.
+- La fila común de 61 columnas sigue vigente en runtime y debe evolucionar a v2 antes del Excel Bridge operativo.
+- Ninguno de estos cambios acredita piloto real.
 
 ---
 
