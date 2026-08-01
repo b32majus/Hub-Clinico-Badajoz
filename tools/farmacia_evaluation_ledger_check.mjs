@@ -18,6 +18,8 @@ function createStorage(shared = new Map()) {
   };
 }
 
+let uuidCounter = 0;
+
 function createContext(sharedStorage, storageOverride = null) {
   const listeners = new Map();
   const document = {
@@ -31,7 +33,7 @@ function createContext(sharedStorage, storageOverride = null) {
   };
   const window = {
     localStorage: storageOverride || createStorage(sharedStorage),
-    crypto: { randomUUID: () => '00000000-0000-4000-8000-000000000001' },
+    crypto: { randomUUID: () => `00000000-0000-4000-8000-${String(++uuidCounter).padStart(12, '0')}` },
     setTimeout,
     clearTimeout,
     confirm: () => true
@@ -159,7 +161,18 @@ assert.equal(reloaded.listEvents().length, 3, 'events survive a module reload th
 assert.equal(reloaded.listEvents({ synthetic_cip: 'cip-ficticio-01' }).length, 3);
 assert.match(reloaded.eventUrl(reloaded.listEvents()[0]), /^farmacia_.*ledger_event_id=/);
 
-assert.equal(reloaded.removePatient(patientA), 3, 'patient deletion removes all its synthetic acts');
+const continuedAsNew = reloaded.saveEvent({
+  synthetic_acknowledged: true,
+  synthetic_cip: 'CIP-FICTICIO-01',
+  event_type: 'pharmacy_validation',
+  source_event_id: 'pharmacy_validation:test:DISTINCT-SOURCE',
+  occurred_on: '2026-08-01',
+  payload: { form_state: [] }
+});
+assert.equal(continuedAsNew.created, true, 'a distinct source identity creates a new act for the same patient and type');
+assert.notEqual(continuedAsNew.event.event_id, first.event.event_id, 'continuing as new cannot overwrite the previous event');
+
+assert.equal(reloaded.removePatient(patientA), 4, 'patient deletion removes all its synthetic acts');
 assert.equal(reloaded.listEvents().length, 0);
 
 const blockedStorage = {
@@ -179,23 +192,46 @@ assert.equal(memoryOnly.persistence_mode, 'memory_fallback');
 assert.equal(memoryOnlyLedger.listEvents().length, 1, 'memory fallback remains usable in the current page context');
 
 const followupSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_seguimiento.js'), 'utf8');
-assert.match(source, /restoreDomainState\(event\)/, 'ledger restores follow-up dynamic domain after form controls');
+assert.match(source, /restoreFormState\([^;]+\)\.then\(function \(\) \{\s*restoreDomainState\(event\);/, 'ledger strictly restores form state before the follow-up dynamic domain');
 assert.match(followupSource, /function restoreEvaluationState\(snapshot\)/, 'follow-up exposes dynamic state restoration');
 assert.match(followupSource, /getCurrentCanonicalLines:/, 'follow-up exposes the currently edited line set');
 assert.match(followupSource, /captureEditingLineState\(\);[\s\S]*captureCommonAdverseEvent\(\);[\s\S]*captureCausalityEditor\(\);/, 'follow-up snapshot captures visible line and causality edits');
 
-for (const htmlName of ['farmacia_index.html', 'farmacia_validacion.html', 'farmacia_primera_visita.html', 'farmacia_seguimiento.html']) {
+const indexHtml = fs.readFileSync(path.join(ROOT, 'farmacia_index.html'), 'utf8');
+assert.doesNotMatch(indexHtml, /farmacia_evaluation_(ledger|workbook)\.js/, 'Inicio loads neither ledger nor workbook module');
+assert.match(indexHtml, /vendor\/sheetjs\/xlsx\.full\.min\.js/, 'Inicio retains SheetJS for normal Excel imports');
+
+const clinicalPages = [
+  ['farmacia_validacion.html', 'scripts/farmacia_validacion.js', ['fhValExportTxt', 'fhValExcelExportBtn']],
+  ['farmacia_primera_visita.html', 'scripts/farmacia_primera_visita.js', ['fhPvExportTxt', 'fhPvExcelExportBtn']],
+  ['farmacia_seguimiento.html', 'scripts/farmacia_seguimiento.js', ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn']]
+];
+for (const [htmlName, pageScript, outputIds] of clinicalPages) {
   const html = fs.readFileSync(path.join(ROOT, htmlName), 'utf8');
-  assert.match(html, /scripts\/farmacia_evaluation_ledger\.js\?v=20260801-ledger-01/, `${htmlName} loads the ledger after its page script`);
+  assert.ok(html.indexOf(pageScript) < html.indexOf('scripts/farmacia_evaluation_ledger.js'), `${htmlName} loads ledger after its page script`);
+  assert.match(html, /Demo con datos sintéticos/, `${htmlName} retains the general demo/synthetic warning`);
+  for (const outputId of outputIds) assert.match(source, new RegExp(`"${outputId}"`), `${outputId} is bound by the ledger`);
+  assert.doesNotMatch(html, /Guardar acto ficticio|Cohorte ficticia local|fhEvaluationLedgerSyntheticConfirm|fhEvaluationLedgerSave/, `${htmlName} has no synthetic save/cohort UI`);
 }
-for (const htmlName of ['farmacia_validacion.html', 'farmacia_primera_visita.html', 'farmacia_seguimiento.html']) {
-  const html = fs.readFileSync(path.join(ROOT, htmlName), 'utf8');
-  assert.match(html, /persistencia local exclusivamente ficticia/, `${htmlName} explains the local synthetic boundary`);
-}
+assert.doesNotMatch(source, /fhValExportCsv|fhPvExportCsv/, 'hidden Validation and First Visit CSV controls are not bound');
+assert.doesNotMatch(source, /Descarga el libro de evaluación/, 'storage-limit guidance does not instruct users to download the evaluation workbook');
+assert.doesNotMatch(source, /elimina actos antiguos/, 'storage-limit guidance does not instruct users to delete old acts');
+assert.doesNotMatch(source, /preventDefault|stopPropagation|stopImmediatePropagation|copyTextToClipboard|downloadFile|writeFile/, 'ledger does not intercept or mutate normal outputs');
+assert.match(source, /eligibleAtActivation = isVisibleEnabled\(control\)/, 'persistence requires a visible enabled output at activation');
+assert.match(source, /persistAfterNormalOutput\(config\);\s*\}, true\);/, 'capture-phase binding persists before existing bubble output handlers');
+assert.doesNotMatch(source, /setTimeout\([^)]*persistAfterNormalOutput/, 'normal-output persistence is not deferred until after exporter normalization');
+assert.doesNotMatch(source, /injectWorkflowPanel|renderIndexPanel|fhEvaluationLedgerPanel|fhEvaluationLedgerSyntheticConfirm|fhEvaluationLedgerSave|Guardar acto ficticio|Cohorte ficticia local/, 'parallel cohort, consent and fake-save runtime are removed');
+assert.match(source, /history\.replaceState/, 'persistent saves and restores adopt ledger_event_id without navigation');
+assert.match(source, /Acto local restaurado\. Revise los datos antes de volver a exportar\./, 'direct URL restoration gives the required compact review warning');
+assert.match(source, /Existe un acto local anterior de este tipo para este paciente\./, 'same-patient/type reopening is explicit');
+assert.match(source, /Recuperar último acto/, 'explicit latest-act recovery is available');
+assert.match(source, /Continuar con un acto nuevo/, 'explicit continue-as-new action is available');
+assert.match(source, /Retención temporal en memoria; el acto no se conservará al recargar\./, 'fallback status truthfully states that reload retention is unavailable');
+assert.doesNotMatch(source.match(/function restoreSpecificEvent[\s\S]*?function restoreRequestedEvent/)[0], /persistAfterNormalOutput|\.click\(/, 'direct restoration neither persists nor triggers an export');
 
 const previewManifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'previews/caceres-fh/deployment-manifest.json'), 'utf8'));
 assert.equal(previewManifest.version, 'CÁCERES-REVIEW-0.3', 'current Cáceres snapshot remains unchanged');
 assert.equal(fs.readFileSync(path.join(ROOT, 'previews/caceres-fh/farmacia_index.html'), 'utf8').includes('farmacia_evaluation_ledger.js'), false, 'this WO does not modify the stable snapshot');
 
 console.log('farmacia_evaluation_ledger_check: PASSED');
-console.log('3 act types; stable patient_id; idempotent update; reload; delete; DOM wiring; snapshot untouched.');
+console.log('normal-output wiring; stable schema/API; exact radios; URL restore; explicit recover/continue; fallback; snapshot untouched.');
