@@ -162,18 +162,18 @@ Incluye las superficies profesionales:
 
 ### 7.1 Unidad de persistencia
 
-Una fila o evento representa **un acto concreto**, no toda la vida del paciente.
+Un **evento canónico** representa un acto concreto, no toda la vida del paciente. Su proyección Excel puede generar una o varias filas nativas bajo el mismo `event_id` y `source_event_id`.
 
 ```text
 Paciente X
-├── evento 1: solicitud / validación
-├── evento 2: Primera Visita
-├── evento 3: Seguimiento
-├── evento 4: Seguimiento con varias líneas
-└── evento 5: renovación confirmada
+├── evento 1: solicitud / validación → 1..N filas
+├── evento 2: Primera Visita → 1..N filas
+├── evento 3: Seguimiento → N filas por líneas activas
+├── evento 4: renovación confirmada → 1..N filas
+└── historia longitudinal reconstruida por IDs y fechas
 ```
 
-La historia longitudinal se reconstruye mediante identificadores y fechas estables.
+En Seguimiento v2, el grano objetivo es `visit_id × line_id` para cada línea activa en la fecha de visita. Dispensación y revisión específica son estados independientes. La historia longitudinal y los dashboards deben deduplicar por identificadores, no contar filas sin contexto.
 
 ### 7.2 Envelope común
 
@@ -205,6 +205,8 @@ Todo acto canónico debe incluir, como mínimo:
 | `patient_id` | Identificador técnico opaco del Hub |
 | `event_id` | Identidad del acto persistido |
 | `source_event_id` | Clave idempotente del origen/exportación |
+| `row_id` | Identidad única de cada fila nativa proyectada |
+| `row_index` / `row_count` | Posición y cardinalidad del conjunto, si se aprueban en v2 |
 | `request_id` | Solicitud clínica |
 | `validation_id` | Acto de validación FH |
 | `treatment_id` | Identidad conceptual de tratamiento |
@@ -225,6 +227,8 @@ No se inventan identidades por posición, nombre del fármaco, primera coinciden
 - `TreatmentMovement`
 - `PharmacyVisit`
 - `VisitLine`
+- `DispensationStatus`
+- `SpecificLineReview`
 - `Observation`
 - `Score`
 - `QuestionnaireResponseRef`
@@ -347,17 +351,27 @@ Hub
 Responsabilidades:
 
 1. Detectar filas `PENDIENTE`.
-2. Validar `schema_version`.
-3. Validar `source_event_id`.
-4. Rechazar duplicados de forma idempotente.
-5. Conservar la fila nativa.
-6. Descomponer en tablas relacionadas.
-7. No corregir ni inferir clínica.
-8. Marcar `PROCESADA` o `ERROR`.
-9. Registrar el error sin destruir la entrada.
-10. Generar vistas `APP_*` para lectura del Hub.
+2. Validar `schema_version`, `source_event_id`, `event_id` y `row_id`.
+3. Rechazar duplicados de forma idempotente.
+4. Conservar la fila nativa.
+5. Agrupar las filas pertenecientes al mismo acto.
+6. Validar coherencia de los datos comunes repetidos.
+7. Descomponer en tablas relacionadas.
+8. En Seguimiento, generar un `VISITS` por `visit_id` y un `VISIT_LINES` por línea activa.
+9. No corregir ni inferir clínica.
+10. Marcar `PROCESADA` o `ERROR`.
+11. Registrar el error sin destruir la entrada.
+12. Generar vistas `APP_*` para lectura del Hub.
 
-### 9.6 Roundtrip
+### 9.6 Componentes deterministas
+
+- **Office Script Processor:** fila nativa → tablas relacionadas.
+- **Excel Read Adapter:** vistas `APP_*` → reconstrucción del Hub.
+- **PostgreSQL Migrator:** Excel Bridge → servidor local futuro.
+
+El parser Excel → modelo relacional descrito históricamente como WO8.1b no se implementó. La misma etiqueta fue reutilizada para el exportador de 61 columnas. La arquitectura V4 utiliza los nombres anteriores para evitar ambigüedad.
+
+### 9.7 Roundtrip
 
 ```text
 Hub crea actos

@@ -9,6 +9,8 @@
 | Rama publicada de partida | `recovery/farmacia-pr-replay-20260727` |
 | HEAD inicial | `accac670ba216d8c291ee849d2198742d02bb3f0` |
 | Snapshot estable inicial | `CÁCERES-REVIEW-0.2` |
+| HEAD publicado al reconciliar | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Snapshot estable actual | `CÁCERES-REVIEW-0.3` |
 | Disponibilidad humana | 3–4 horas diarias |
 | Trabajo asíncrono | Una WO atómica puede ejecutarse mientras Silvia no está delante |
 | Datos | Exclusivamente sintéticos |
@@ -81,12 +83,22 @@ Presalud y renovaciones son parte del objetivo si llega el texto exacto a tiempo
 
 - El Hub siempre genera la información.
 - La profesional no crea el paciente escribiendo una fila Excel.
-- Un único esquema de evento/fila cubre Validación, Primera Visita y Seguimiento.
-- Una fila representa un acto concreto.
-- Varias filas del mismo paciente construyen longitudinalidad.
+- Un único esquema de fila común cubre Validación, Primera Visita y Seguimiento.
+- Un acto canónico puede generar una o varias filas bajo la misma identidad.
+- En Seguimiento v2 se genera una fila por cada línea activa en la fecha de visita.
+- Dispensación y revisión específica son estados independientes.
+- Varias filas del mismo paciente construyen longitudinalidad mediante identificadores estables.
 - Los bloques que no aplican permanecen vacíos.
 - Un libro independiente por hospital.
 - Sin consolidación regional automática.
+
+### 3.2.1 Brecha publicada que debe resolver v2
+
+- El exportador actual usa 61 columnas.
+- En Seguimiento, Excel y CSV generan hoy una fila por cada línea dispensada y repiten el contexto común.
+- Las líneas evaluadas no dispensadas no generan fila Excel/CSV.
+- El objetivo aprobado es una fila por línea activa, se dispense o no y se revise específicamente o no.
+- El cambio se implementará solo tras cerrar contrato, ejemplos y mapeo de compatibilidad.
 
 ### 3.3 Hospitales y branding
 
@@ -205,7 +217,7 @@ Entregar a la farmacéutica una versión estable que incorpore su feedback y le 
 7. Exportación del acto.
 8. Conservación de fixtures demo.
 9. QA navegador y regresiones.
-10. Promoción separada a `CÁCERES-REVIEW-0.3` solo después de QA regional humana.
+10. Promoción separada a `CÁCERES-REVIEW-0.3`, completada mediante PR #197; los cambios regionales posteriores no se promocionan automáticamente.
 
 ### No promete para el lunes
 
@@ -225,7 +237,7 @@ Entregar a la farmacéutica una versión estable que incorpore su feedback y le 
 
 ### Bloque A — Reconciliación documental
 
-- estado regional y Cáceres 0.2;
+- estado regional y Cáceres 0.3;
 - plan de vacaciones;
 - arquitectura objetivo V4;
 - índice y tablero de WOs;
@@ -277,7 +289,8 @@ Definir:
 - ejemplos sintéticos de Validación, Primera Visita y Seguimiento;
 - diccionario de variables v0.1;
 - política de compatibilidad y versionado;
-- mapa desde las 61 columnas actuales.
+- mapa de compatibilidad desde las 61 columnas actuales hacia la fila común v2;
+- definición explícita de acto, filas nativas y grano `visit_id × line_id`.
 
 ### Criterio de salida
 
@@ -296,15 +309,17 @@ Definir:
 - mantener Excel compatible;
 - incluir `schema_version` y `source_event_id`;
 - soportar Validación, Primera Visita y Seguimiento;
-- soportar seguimiento multilínea sin inventar dispensación;
-- tests de paridad con salidas existentes.
+- soportar Seguimiento con una fila por línea activa;
+- registrar dispensación y revisión específica de forma independiente;
+- mantener solicitado, validado, iniciado y dispensado separados;
+- tests de paridad y migración desde las 61 columnas existentes.
 
 ### Criterio de salida
 
 ```text
 Evento canónico
-→ TXT JARA
-→ fila Excel
+├── TXT JARA
+└── 1..N filas Excel comunes
 ```
 
 con misma identidad y verdad clínica.
@@ -337,9 +352,10 @@ Crear el libro con:
 
 ### Criterio de salida
 
-- una fila pegada se procesa una sola vez;
+- cada `row_id` se procesa una sola vez;
+- varias filas del mismo acto generan una sola entidad común y N detalles de línea;
 - reejecutar no duplica;
-- un error no destruye la fila;
+- un error o discrepancia no destruye la fila;
 - no existe inferencia clínica.
 
 ---

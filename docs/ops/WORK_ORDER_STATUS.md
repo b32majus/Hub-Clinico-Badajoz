@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-07-31  
+**Última actualización:** 2026-08-01
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas  
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,11 +11,11 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` |
-| Último SHA funcional regional | `0b4218d77b1b581875d08fb89f26a4150bbc70c2` |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.2` |
-| SHA fuente snapshot | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
-| QA humana regional del HEAD actual | Pendiente para PR #193; último PASS confirmado en `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` |
+| HEAD publicado | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
+| SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
+| QA pública regional del HEAD actual | PASS focal de realineación y Excel Primera Visita; no QA integral de piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -94,11 +94,17 @@
 | **WO-FH-VALIDATION-MANUAL-REQUESTED-CLONE-WORKING-AUTOCOMPLETE-P0-03** | Clonar autocomplete validado | ✅ Merged | `work/fh-validation-manual-requested-clone-p0-20260730` | merge `54f6bb2c...` (PR #187, issue #186) | Corrección definitiva; QA humana regional PASS |
 | **WO-FH-CACERES-REVIEW-02-PROMOTION-01** | Promover Cáceres 0.2 | ✅ Merged | `work/fh-caceres-review-02-promotion-20260730` | merge `accac670...` (PR #189, issue #188) | Snapshot generado; QA humana Cáceres PASS |
 | **WO-DOC-FH-V4-VACATION-PLAN-ARCHITECTURE-20260731** | Estado, plan de vacaciones y arquitectura V4 | ✅ Merged | `docs/fh-v4-vacation-plan-architecture-20260731` | merge `9725bf60...` (PR #191, issue #190) | Seis rutas documentales; sin código ni datos reales |
-| **WO-FH-CACERES-QUICK-WINS-03-01** | Quick wins de Validación Farmacia | ✅ Merged | `work/fh-caceres-quick-wins-03-01-20260731` | merge `4801e9aa...` (PR #193, issue #192) | CI verde; QA humana regional específica pendiente; no promovida a `CÁCERES-REVIEW-0.3` |
+| **WO-FH-CACERES-QUICK-WINS-03-01** | Quick wins de Validación Farmacia | ✅ Merged | `work/fh-caceres-quick-wins-03-01-20260731` | merge `4801e9aa...` (PR #193, issue #192) | En ese merge: CI verde y promoción pendiente; promovida después mediante PR #197 |
+| **WO-DOC-FH-CACERES-QUICK-WINS-RECONCILIATION-20260731** | Reconciliar publicación de quick wins | ✅ Merged | `work/doc-fh-caceres-quick-wins-reconciliation-20260731` | merge `815e16f9...` (PR #195, issue #194) | Estado documental y QA reconciliados |
+| **WO-FH-CACERES-REVIEW-03-PROMOTION-01** | Promover Cáceres 0.3 | ✅ Merged | `work/fh-caceres-review-03-promotion-20260731` | merge `96a4cb0b...` (PR #197, issue #196) | Snapshot 0.3; fuente funcional `815e16f9...` |
+| **WO-FH-SYNTHETIC-EVALUATION-LEDGER-01** | Ledger local de evaluación sintética | ✅ Merged | `work/fh-synthetic-evaluation-ledger-01-20260801` | merge `ac93575d...` (PR #199, issue #198) | Persistencia local técnica; no piloto real |
+| **WO-FH-SYNTHETIC-EVALUATION-WORKBOOK-01** | Workbook técnico de evaluación | ✅ Merged | `work/fh-synthetic-evaluation-workbook-01-20260801` | merge `25c75165...` (PR #201, issue #200) | 11 hojas técnicas; no Excel operativo definitivo |
+| **WO-FH-EVALUATION-FLOW-REALIGN-01** | Realinear persistencia con el flujo asistencial | ✅ Merged | `work/fh-evaluation-flow-realign-01-20260801` | merge `6dcedff4...` (PR #203, issue #202) | Retira cohorte ficticia visible; QA pública PASS |
+| **WO-FH-FIRST-VISIT-EXCEL-TRUTH-P0-01** | Verdad del Excel de Primera Visita | ✅ Merged | `work/fh-first-visit-excel-truth-p0-01-20260801` | merge `68b53837...` (PR #205, issue #204) | CIP/acto visible; 61 columnas; QA pública PASS |
 
 ### Deuda administrativa de issues
 
-A 2026-07-31, los issues #184, #186, #188, #190 y #192 siguen abiertos en GitHub aunque sus PR están fusionadas. Su cierre administrativo queda pendiente de una acción explícita separada. Este documento no los cierra.
+A 2026-08-01, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202 y #204 están cerrados como `completed`. Este documento no modifica issues.
 
 ---
 

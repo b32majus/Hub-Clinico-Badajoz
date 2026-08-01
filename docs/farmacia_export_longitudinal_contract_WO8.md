@@ -1,10 +1,63 @@
 # WO8 — Contrato de exportación longitudinal Farmacia Hospitalaria
 
-**Versión:** 2.0  
-**Fecha:** 2026-06-14  
-**WO asociada:** WO8.0 (documental) + WO8.0.2 (rediseño operativo)  
-**Estado:** `pending_review`  
-**Rama:** `work/farmacia-post-demo-wo7g2-dashboard-timeline-20260614`  
+**Versión:** 3.0 — reconciliación V4
+**Fecha:** 2026-08-01
+**WO asociada:** WO8.0 + WO8.0.2 + `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`
+**Estado:** `reconciliado_v4`
+**Base publicada verificada:** `recovery/farmacia-pr-replay-20260727` @ `68b5383762f3ae747f567d49df2e80118c38fe16`
+
+---
+
+## 0. Reconciliación V4 — decisiones vigentes
+
+Esta sección prevalece sobre cualquier formulación histórica incompatible del resto del documento.
+
+### 0.1 Estado actual y evolución requerida
+
+- El esquema común implementado contiene **61 columnas** y se utiliza en Validación, Primera Visita y Seguimiento.
+- Las 61 columnas son la versión v1 publicada, no un contrato suficiente ni definitivo.
+- El siguiente contrato será una **fila común v2** completa para todos los actos y servicios. El número final de columnas se derivará del contenido clínico y operativo aprobado.
+- La salida v1 se mantendrá solo durante la transición y no podrá seguir perdiendo información disponible en los formularios.
+
+### 0.2 Acto canónico y filas nativas
+
+Un acto canónico tiene una identidad estable (`event_id`, `source_event_id`) y puede producir **una o varias filas nativas**. Cada fila conserva el contexto común del acto y una identidad propia (`row_id`). La duplicación del contexto es intencionada para la explotación longitudinal y por medicamento.
+
+La frase histórica `una fila = un acto` queda sustituida por:
+
+> **Un acto genera 1..N filas bajo la misma identidad; cada fila representa una proyección farmacoterapéutica exportable del acto.**
+
+### 0.3 Seguimiento multilínea
+
+Comportamiento publicado actual:
+
+- Excel y CSV generan una fila por cada línea **dispensada explícitamente**;
+- los datos comunes de la visita se repiten;
+- las líneas evaluadas no dispensadas permanecen en TXT JARA y en el modelo de visita, pero no generan fila Excel/CSV.
+
+Objetivo v2 aprobado:
+
+```text
+una visita × cada línea terapéutica activa en esa fecha = una fila por línea activa
+```
+
+La existencia de la fila no depende de dispensación ni de revisión específica. Se registran por separado:
+
+- `active_at_visit`;
+- `dispensation_status`;
+- `specific_review_status`.
+
+No registrar una revisión específica no equivale a eficacia, seguridad, adherencia ni ausencia de problemas.
+
+### 0.4 Validación
+
+El bloque **solicitado** y el bloque **validado por Farmacia** permanecen separados. El tratamiento solicitado nunca completa automáticamente el validado ni crea por sí mismo una línea activa. Los datos terapéuticos ausentes quedan vacíos.
+
+### 0.5 Excel Bridge y futuro servidor
+
+La fila común se conserva íntegra en la hoja operativa del servicio. El **Office Script Processor** la valida y descompone de forma idempotente en hojas relacionales. El **Excel Read Adapter** permite reconstruir el Hub desde vistas `APP_*`. El futuro **PostgreSQL Migrator** trasladará el Excel Bridge acumulado al servidor local.
+
+El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el procesador cotidiano vigente. La denominación WO8.1b terminó reutilizándose para el exportador de fila de 61 columnas.
 
 ---
 
@@ -47,7 +100,7 @@ Ambas capas coexisten en este contrato. La capa operativa es la interfaz tempora
 
 2. **El Excel operativo se organiza por servicio, no por tabla normalizada.** Las hojas son Derma, Reuma, Digestivo, Onco — no pacientes, líneas, visitas separadas.
 
-3. **Una fila = un acto farmacéutico.** Cada fila representa un hecho clínico discreto relacionado con un paciente y, si aplica, una línea terapéutica.
+3. **Un acto genera una o varias filas.** Todas comparten la identidad del acto; cada fila representa una proyección farmacoterapéutica exportable y dispone de identidad propia.
 
 4. **Mismo esquema de columnas en todas las hojas de servicio.** DERMA = REUMA = DIGESTIVO = ONCO. El servicio es una partición humana de trabajo, no un modelo de datos distinto.
 
@@ -61,7 +114,7 @@ Ambas capas coexisten en este contrato. La capa operativa es la interfaz tempora
 
 9. **El dashboard es proyección, no fuente.** La exportación se alimenta de datos de captura (validación, primera visita, seguimiento).
 
-10. **Estructura migrable a base de datos.** Cuando se implemente, cada acto farmacéutico de las hojas operativas debe poder descomponerse en las entidades relacionales definidas.
+10. **Estructura migrable a base de datos.** Las filas nativas de cada acto deben agruparse por identificadores estables y descomponerse sin pérdida en las entidades relacionales definidas.
 
 ---
 
@@ -76,7 +129,7 @@ Ambas capas coexisten en este contrato. La capa operativa es la interfaz tempora
 | `03_DIGESTIVO` | Actos farmacéuticos de pacientes de Digestivo |
 | `04_ONCO` | Actos farmacéuticos de pacientes de Oncología |
 | `05_CATALOGOS` | Listas desplegables, valores controlados, fármacos especiales |
-| `99_CONFIG_EXPORT_MAP` | (Opcional técnica) Mapa de exportación para parser interno |
+| `99_CONFIG_EXPORT_MAP` | (Opcional técnica) Mapa técnico de columnas hacia entidades del Excel Bridge |
 
 ### 4.2 Modelo lógico interno (capas futuras)
 
@@ -93,7 +146,7 @@ Ambas capas coexisten en este contrato. La capa operativa es la interfaz tempora
 | `CatalogoFarmacos` | Catálogo de fármacos especiales | Soporte |
 | `CatalogoPautas` | Catálogo de pautas normalizadas | Soporte |
 
-**Regla:** El modelo lógico no es una hoja manual del Excel. Es la estructura que el Hub podrá derivar internamente desde las hojas operativas (vía parser), y que servirá como esquema de migración a base de datos.
+**Regla:** El modelo lógico no es una hoja manual. El Office Script Processor lo deriva desde las filas nativas; las vistas `APP_*` permiten lectura posterior y el mismo modelo sirve como referencia de migración a PostgreSQL.
 
 ---
 
@@ -106,17 +159,19 @@ Ambas capas coexisten en este contrato. La capa operativa es la interfaz tempora
 | 03 | `03_DIGESTIVO` | Actos farmacéuticos de Digestivo | Sí |
 | 04 | `04_ONCO` | Actos farmacéuticos de Oncología | Sí |
 | 05 | `05_CATALOGOS` | Listas controladas y fármacos especiales | Sí |
-| 99 | `99_CONFIG_EXPORT_MAP` | Mapa técnico para parser interno | No (técnica) |
+| 99 | `99_CONFIG_EXPORT_MAP` | Mapa técnico de descomposición del Excel Bridge | No (técnica) |
 
 ### Justificación
 
-No se incluyen hojas separadas por dominio de datos (pacientes, líneas, visitas) porque el Excel operativo está diseñado para ser **rellenado manualmente por Farmacia**. La partición por servicio clínico refleja la organización real del trabajo: un farmacéutico revisa pacientes de un servicio concreto. Cada fila contiene toda la información del acto farmacéutico en un formato longitudinal.
+Las hojas visibles se organizan por servicio porque reflejan la organización real del trabajo. El Hub genera la fila completa y la profesional la pega en la primera fila libre; no crea ni completa manualmente al paciente en Excel.
 
-Las hojas separadas del modelo lógico se derivarán internamente mediante parser cuando se implemente WO8.1b.
+El Office Script Processor conserva la fila nativa y genera las hojas técnicas relacionadas. El antiguo parser de WO8.1b no fue implementado y esa denominación terminó reutilizándose para el exportador de 61 columnas.
 
 ---
 
-## 6. Estructura de las hojas de servicio
+## 6. Estructura v1 publicada de las hojas de servicio
+
+> Las 61 columnas descritas a continuación documentan la implementación actual. No limitan la futura fila común v2 y quedan subordinadas a la reconciliación de la sección 0.
 
 ### Mismo esquema en todas
 
@@ -177,30 +232,46 @@ Las columnas se organizan en **8 bloques** (A-H). Cada bloque agrupa campos rela
 | `pauta_label` | string | No | Etiqueta visible de pauta |
 | `pauta_otro_texto` | string | No | Texto libre (si la pauta no es normalizable) |
 
-### E. Validación farmacoterapéutica
+### E. Solicitud y validación farmacoterapéutica
 
-| Columna | Tipo | Obligatorio | Descripción |
-|---|---|---|---|
-| `tipo_validacion` | string | No | `inicial`, `cambio`, `adicion`, `renovacion` |
-| `resultado_validacion` | string | No | `validado`, `pendiente`, `rechazado`, `no_aplica` |
-| `requiere_prebiologico` | boolean | No | True si requiere evaluación prebiológica |
-| `tb_estado` | string | No | Resultado de TB |
-| `serologias_estado` | string | No | Resultado de serologías |
-| `vacunas_estado` | string | No | Estado de vacunación |
-| `bloqueantes_validacion` | string | No | Bloqueante activo si aplica |
-| `observaciones_validacion` | string | No | Observaciones de la validación |
+La versión v2 deberá contener dos bloques separados. Los nombres físicos de columnas se cerrarán en la WO de contrato v2.
 
-### F. Seguimiento
+**Solicitud clínica:**
 
-| Columna | Tipo | Obligatorio | Descripción |
-|---|---|---|---|
-| `adherencia_morisky` | string | No | `Alta`, `Media`, `Baja` |
-| `haq` | number | No | HAQ score (0-3) |
-| `eva_dolor` | number | No | EVA dolor (0-10) |
-| `dlqi` | number | No | DLQI score (0-30) |
-| `respuesta_clinica` | string | No | Valoración de respuesta al tratamiento |
-| `incidencias` | string | No | Incidencias detectadas |
-| `observaciones_seguimiento` | string | No | Observaciones generales de seguimiento |
+- `request_id`;
+- tratamiento solicitado: nombre, principio activo, presentación/dosis, vía, pauta e inducción cuando estén explícitos;
+- justificación clínica;
+- fecha y procedencia de la solicitud.
+
+**Validación de Farmacia:**
+
+- `validation_id`;
+- resultado explícito de validación;
+- tratamiento validado: nombre, principio activo, presentación/dosis, vía, pauta e inducción cuando estén explícitos;
+- observaciones de Farmacia;
+- motivo explícito de pendiente o rechazo;
+- estado prebiológico y bloqueantes cuando correspondan.
+
+El solicitado no rellena el validado. Una solicitud no crea por sí misma una línea activa.
+
+### F. Primera visita y Seguimiento
+
+La versión v1 contiene PROMs, adherencia y observaciones, pero no representa suficientemente el grano multilínea.
+
+Para Seguimiento v2, cada línea activa en la fecha de visita genera una fila y registra por separado:
+
+- `visit_id` y contexto común de la visita;
+- `line_id` y `treatment_id`;
+- `active_at_visit`;
+- `dispensation_status`;
+- `specific_review_status`;
+- motivo y detalle de la revisión específica, solo cuando exista;
+- cambios explícitos de dosis, pauta o suspensión;
+- observaciones de línea;
+- adherencia específica si se recoge;
+- PROMs comunes de visita sin convertir cada fila en una nueva medición.
+
+Los datos comunes se repiten de forma deliberada. Los dashboards deben deduplicar visitas y PROMs por identificador.
 
 ### G. Seguridad / EA
 
@@ -308,313 +379,145 @@ La hoja `05_CATALOGOS` incluirá una sección de pautas disponibles como lista d
 
 ---
 
-## 9. Modelo lógico interno / Export analítico derivado
+## 9. Modelo relacional V4 y Excel Bridge
 
-Este modelo **no es una hoja manual del Excel operativo**. Es la capa normalizada que el Hub podrá derivar internamente desde las hojas de servicio, y que servirá como referencia de migración a base de datos.
+### 9.1 Entidades objetivo
 
-### 9.1 Entidades normalizadas
+| Hoja/entidad | Grano | Regla principal |
+|---|---|---|
+| `PATIENTS` | un paciente técnico | No duplicar por fila exportada |
+| `REQUESTS` | una solicitud | Solicitado separado de validado |
+| `VALIDATIONS` | un acto de validación | Resultado y tratamiento validado explícitos |
+| `TREATMENTS` | una identidad de tratamiento | No inferir desde nombre o catálogo |
+| `TREATMENT_LINES` | una línea terapéutica | Estado y fechas explícitos |
+| `TREATMENT_MOVEMENTS` | un cambio confirmado | Inicio, cambio, suspensión u optimización explícitos |
+| `VISITS` | una visita | Una por `visit_id`, aunque existan varias filas nativas |
+| `VISIT_LINES` | visita × línea | Una por `visit_id + line_id` |
+| `OBSERVATIONS` | observación común o de línea | Mantener ámbito y procedencia |
+| `PROMS` | visita × instrumento/medición | No multiplicar por número de líneas |
+| `ADVERSE_EVENTS` | un EA explícito | No inferir por incidencia genérica |
+| `CAUSALITY` | EA × sospechoso | Una valoración por sospechoso cuando exista |
+| `IMPORT_ERRORS` | un error de procesamiento | No destruir la fila nativa |
+| `APP_PATIENTS_SNAPSHOT` | vista de lectura | Proyección para el Hub |
+| `APP_LONGITUDINAL` | vista longitudinal | Proyección para dashboards y roundtrip |
 
+### 9.2 Procesamiento cotidiano
+
+```text
+Hub
+→ genera 1..N filas nativas del acto
+→ la profesional pega en la hoja del servicio
+→ Office Script Processor
+    ├── conserva entrada
+    ├── valida schema/event/row IDs
+    ├── rechaza duplicados
+    ├── agrupa filas del mismo acto
+    ├── descompone en entidades
+    ├── registra errores
+    └── genera APP_*
 ```
 
-Paciente (1) ───< LineaTratamiento (N)
-Paciente (1) ───< VisitaSeguimiento (N)
-LineaTratamiento (1) ───< EventoTratamiento (N)
-VisitaSeguimiento (1) ───< EfectoAdverso (N)
-VisitaSeguimiento (1) ───< FarmacoConcomitante (N)
-VisitaSeguimiento (1) ───< PromsAdherencia (1)
-Paciente (1) ───< PrebiologicoValidacion (N)
+Para Seguimiento, N filas con el mismo `visit_id` producen un único `VISITS` y N `VISIT_LINES`. Si los campos comunes de esas filas discrepan, se registra error; el script no elige un valor.
 
-```
+### 9.3 Lectura y migración
 
-### 9.2 Mapeo desde hoja operativa a entidades
-
-Cada fila de una hoja de servicio (DERMA, REUMA, etc.) puede descomponerse en:
-
-| Entidad destino | Cómo se deriva |
-|---|---|
-| `Paciente` | Bloque A (identificación) — datos demográficos |
-| `LineaTratamiento` | Bloque C (medicamento) + `linea_id` + `tratamiento_id` |
-| `VisitaSeguimiento` | Bloque B (acto) cuando `tipo_acto_fh` es `seguimiento` o `primera_visita` |
-| `EventoTratamiento` | Bloque B (acto) + Bloque C cuando hay cambio de estado |
-| `EfectoAdverso` | Bloque G (seguridad/EA) cuando `hay_efecto_adverso = TRUE` |
-| `FarmacoConcomitante` | Bloque C cuando `tipo_relacion` es concomitante/adicional/exposición |
-| `PrebiologicoValidacion` | Bloque E (validación) cuando aplica |
-| `PromsAdherencia` | Bloque F (seguimiento) |
-
-### 9.3 Tablas del modelo relacional
-
-#### pacientes
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `patient_id` | PK | Clave primaria |
-| `cip_demo_o_hash` | string | CIP o hash |
-| `nombre` | string | Nombre (demo o anonimizado) |
-| `fecha_nacimiento` | date | Fecha de nacimiento |
-| `sexo` | string | Sexo |
-| `servicio_origen` | string | Servicio clínico |
-| `patologia_indicacion` | string | Patología principal |
-| `demo_flag` | boolean | Flag de datos demo |
-
-#### lineas_tratamiento
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `tratamiento_id` | PK | ID del tratamiento |
-| `patient_id` | FK | FK a pacientes |
-| `linea_id` | string | ID de línea biológica |
-| `orden` | number | Orden de la línea |
-| `marca_comercial` | string | Nombre principal |
-| `principio_activo` | string | Principio activo |
-| `codigo_nacional` | string | Código nacional |
-| `dosis` | string | Dosis y presentación |
-| `via` | string | Vía |
-| `pauta_codigo` | string | Código de pauta |
-| `pauta_label` | string | Etiqueta de pauta |
-| `tipo_relacion` | string | Tipo de relación |
-| `estado_linea` | string | Estado de la línea |
-| `tipo_movimiento` | string | Tipo de movimiento |
-| `es_principal` | boolean | Es línea principal |
-| `fecha_inicio` | date | Fecha de inicio |
-| `fecha_fin` | date | Fecha de fin |
-| `motivo` | string | Motivo del cambio |
-
-#### visitas_seguimiento
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `visita_id` | PK | ID de visita |
-| `patient_id` | FK | FK a pacientes |
-| `fecha_visita` | date | Fecha de la visita |
-| `tipo_acto_fh` | string | Tipo de acto |
-| `profesional_fh` | string | Farmacéutico responsable |
-| `linea_seleccionada_id` | string | Línea activa en la visita |
-| `observaciones` | string | Observaciones |
-
-#### eventos_tratamiento
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `evento_id` | PK | ID del evento |
-| `patient_id` | FK | FK a pacientes |
-| `tratamiento_id` | FK | FK a línea de tratamiento |
-| `fecha_evento` | date | Fecha del evento |
-| `tipo_evento` | string | Tipo de evento |
-| `marca_comercial` | string | Marca asociada |
-| `descripcion` | string | Descripción |
-
-#### efectos_adversos
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `ea_id` | PK | ID del EA |
-| `patient_id` | FK | FK a pacientes |
-| `visita_id` | FK | FK a visita |
-| `fecha_ea` | date | Fecha del EA |
-| `ea_descripcion` | string | Descripción |
-| `ea_gravedad` | string | Gravedad |
-| `farmaco_sospechoso_id` | string | Ref. al fármaco |
-| `farmaco_sospechoso_nombre` | string | Nombre del fármaco |
-| `causalidad_naranjo` | string | Naranjo |
-| `causalidad_karch` | string | Karch-Lasagna |
-
-#### farmacos_concomitantes
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `uid_concomitante` | PK | ID del registro |
-| `patient_id` | FK | FK a pacientes |
-| `visita_id` | FK | FK a visita |
-| `farmaco_nombre` | string | Nombre del fármaco |
-| `principio_activo` | string | Principio activo |
-| `tipo_relacion` | string | Tipo de relación |
-| `sospechoso_ea` | boolean | Es sospechoso de EA |
-
-#### prebiologico_validacion
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `prebio_id` | PK | ID |
-| `patient_id` | FK | FK a pacientes |
-| `tb_estado` | string | TB |
-| `serologias_estado` | string | Serologías |
-| `vacunas_estado` | string | Vacunas |
-| `bloqueante` | string | Bloqueante |
-| `prebiologico_estado` | string | Estado global |
-
-#### proms_adherencia
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `prom_id` | PK | ID |
-| `patient_id` | FK | FK a pacientes |
-| `fecha_prom` | date | Fecha de medición |
-| `dlqi` | number | DLQI |
-| `eva_dolor` | number | EVA dolor |
-| `haq` | number | HAQ |
-| `morisky_green` | string | Adherencia |
+- **Excel Read Adapter:** lee `APP_PATIENTS_SNAPSHOT` y `APP_LONGITUDINAL` para reconstruir el Hub mientras Excel sea backend.
+- **PostgreSQL Migrator:** valida y traslada las entidades del Excel Bridge al servidor local cuando exista infraestructura autorizada.
+- El migrador no forma parte del procesamiento cotidiano y no se confunde con el parser de órdenes clínicas o Presalud.
 
 ---
 
-## 10. Preguntas y respuestas
+## 10. Preguntas y respuestas vigentes
 
 | Pregunta | Respuesta |
 |---|---|
-| **¿Excel único o varias hojas?** | Excel único. Hojas operativas por servicio (DERMA, REUMA, DIGESTIVO, ONCO) + CATALOGOS. El modelo normalizado no es hoja manual. |
-| **¿Qué hoja es fuente maestra de líneas terapéuticas?** | Las hojas de servicio, columna `linea_id`. El modelo relacional `lineas_tratamiento` se deriva internamente. |
-| **¿Cómo representar varios biológicos activos?** | Múltiples filas en la hoja de servicio, cada una con su `linea_id` y `tipo_relacion`. La columna `es_principal` distingue la línea principal. |
-| **¿Cómo representar cambio terapéutico?** | `tipo_acto_fh = nueva_validacion_cambio` + `tipo_movimiento = cambio_terapeutico`. La línea anterior se marca como histórica. |
-| **¿Cómo conservar histórico?** | Las líneas con `estado_linea = historico` o `finalizado` se conservan en las hojas de servicio. No se filtran ni eliminan. |
-| **¿Cómo evitar duplicados por marca/principio activo?** | `tratamiento_id` como identificador único estable. `linea_id` como agrupación lógica. |
-| **¿Cómo exportar concomitantes?** | En la misma hoja de servicio, con `tipo_relacion = concomitante`. Una fila por fármaco concomitante. |
-| **¿Cómo exportar sospechoso de EA?** | Bloque G. `hay_efecto_adverso = TRUE` + `farmaco_sospechoso_id` + `causalidad_naranjo`. |
-| **¿Cómo exportar pauta normalizada?** | `pauta_codigo` + `pauta_label` + `pauta_otro_texto` (fallback a texto libre). |
-| **¿Qué queda fuera de WO8.1?** | Parser del Excel operativo al modelo relacional (WO8.1b). Export analítico normalizado (WO8.1c). Catálogo de pautas completo (depende de WO6). |
+| **¿Excel único o varias hojas?** | Un libro por hospital, con hojas operativas por servicio y hojas técnicas relacionales. |
+| **¿Todas las hojas de servicio usan el mismo esquema?** | Sí. La fila común v2 será idéntica en DERMA, REUMA, DIGESTIVO y ONCO. |
+| **¿Las 61 columnas son definitivas?** | No. Son la v1 implementada y deben evolucionar sin pérdida clínica. |
+| **¿Una fila equivale siempre a un acto?** | No. Un acto genera 1..N filas con la misma identidad común. |
+| **¿Cuál es el grano de Seguimiento v2?** | Una fila por línea terapéutica activa en la fecha de la visita. |
+| **¿Dispensada equivale a evaluada?** | No. Presencia activa, dispensación y revisión específica son dimensiones independientes. |
+| **¿Cómo se cuentan visitas?** | Por `COUNT DISTINCT visit_id`, no por número de filas. |
+| **¿Cómo se conservan PROMs comunes?** | Una medición por visita/instrumento; las filas nativas pueden repetirla, pero el modelo relacional la deduplica. |
+| **¿Cómo se representan solicitado y validado?** | En bloques separados. Nunca se copia automáticamente uno al otro. |
+| **¿Cómo se procesan las filas?** | Mediante Office Script Processor idempotente, no mediante un parser cotidiano del Hub. |
+| **¿Para qué servirá un parser/migrador futuro?** | Para leer vistas `APP_*` o migrar el Excel Bridge a PostgreSQL, no para decidir clínica. |
+| **¿Cómo se representan tratamientos relacionados y varios sospechosos?** | El modelo relacional exige cardinalidad 1:N; la representación física en la fila v2 sigue pendiente de diseño. |
 
 ---
 
-## 11. Reglas de exportación/import Excel
+## 11. Reglas de exportación y procesamiento
 
-### Formato
-
-- **Formato único para import/export**: Excel (.xlsx) con hojas por servicio.
-- Codificación: UTF-8 con BOM.
-- Fechas en formato ISO (YYYY-MM-DD).
-- Valores vacíos como celdas vacías, no como "null" o "-".
-- Booleanos como TRUE/FALSE.
-- Listas desplegables en `05_CATALOGOS` para valores controlados.
-
-### Comportamiento de import
-
-1. El parser lee cada hoja de servicio y descompone cada fila en las entidades del modelo lógico.
-2. Valida que `tipo_acto_fh` sea un valor de la lista controlada.
-3. Valida que `marca_comercial` no esté vacía para actos que involucren medicación.
-4. Si `demo_flag = TRUE`, marca los datos como demo.
-5. Ignora hojas que no estén en el mapa (p.ej., hojas temporales).
-6. La hoja `99_CONFIG_EXPORT_MAP` define el mapeo columnas → entidades (opcional, para personalización).
-
-### Reglas de importación clínica
-
-1. **No perder líneas históricas**: si una línea ya existe con `estado_linea = historico`, no se sobrescribe.
-2. **No convertir suspensión en alta**: si `tipo_acto_fh = suspension`, la línea debe quedar como histórica.
-3. **Validación obligatoria para fármacos nuevos**: si aparece un `tratamiento_id` nuevo con `tipo_relacion = principal`, debe existir un acto de `validacion_inicial` o `nueva_validacion_adicion` asociado.
-4. **Marca comercial requerida**: no se puede importar una línea de tratamiento sin `marca_comercial`.
+- Fechas ISO cuando estén disponibles.
+- Valores ausentes como celdas vacías, no `null`, guiones ni valores inferidos.
+- Booleanos preservan `TRUE`, `FALSE` y ausencia.
+- `schema_version`, `source_event_id`, `event_id` y `row_id` serán obligatorios en v2.
+- La fila nativa se conserva append-only.
+- La reejecución del Office Script no duplica registros.
+- Una discrepancia entre filas del mismo acto produce error, no corrección automática.
+- `demo_flag = TRUE` identifica datos de evaluación sintética.
+- Ningún componente decide dosis, vía, pauta, presentación, inducción, duración, validación, switch, add-on, renovación o causalidad.
 
 ---
 
 ## 12. Reglas para evitar pérdida de información
 
-1. **No truncar histórico**: las líneas históricas o finalizadas se conservan. No se filtran.
-
-2. **No colapsar multibiológico**: N líneas activas = N filas separadas. No concatenar.
-
-3. **Texto libre + código**: si hay pauta normalizada, se registra código y texto. Si no, solo texto. Nunca se pierde el texto original.
-
-4. **Causalidad completa**: el resultado de Naranjo debe exportarse siempre que exista.
-
-5. **PROMs sin fecha**: si no hay fecha, la fila se exporta igual con la fecha vacía.
-
-6. **Concomitantes incompletos**: se exporta el fármaco aunque no tenga pauta normalizada.
-
-7. **Demo flag**: todos los datos de demostración llevan `demo_flag = TRUE`.
+1. No truncar histórico ni convertir una línea histórica en activa.
+2. No colapsar líneas activas, sospechosos, causalidades ni tratamientos relacionados en una única conclusión clínica.
+3. Preservar texto original además de códigos normalizados.
+4. Preservar `0`, `false` y ausencia.
+5. No multiplicar visitas, PROMs o EA comunes al descomponer varias filas del mismo acto.
+6. No crear una dispensación porque la línea esté activa o evaluada.
+7. No crear una revisión específica porque la línea se haya dispensado.
+8. No crear una línea validada desde el tratamiento solicitado.
+9. Un error de proceso no destruye la entrada nativa.
 
 ---
 
-## 13. Compatibilidad futura con base de datos
+## 13. Compatibilidad futura con PostgreSQL
 
-### Principio
+Las hojas relacionales son una representación transitoria compatible con el futuro servidor local:
 
-El modelo relacional definido en §9.3 está diseñado para que cada entidad se convierta en tabla SQL con:
+- claves primarias y foráneas estables;
+- relaciones 1:N explícitas;
+- tipos asignables a SQL;
+- listas controladas convertibles en dominios o `CHECK`;
+- ausencia de celdas multivalor en las tablas relacionales.
 
-- Clave primaria (PK) UUID por fila.
-- Claves foráneas (FK) con integridad referencial.
-- Tipos directamente asignables (TEXT, INTEGER, REAL, DATE, BOOLEAN).
-- Sin celdas con múltiples valores.
-
-### Migración desde Excel a BD
-
-1. El parser lee las hojas operativas y las descompone en el modelo relacional.
-2. Desde el modelo relacional, la migración a SQL es directa: cada entidad es una tabla.
-3. Las relaciones 1:N se mantienen mediante FK.
-4. Las listas controladas (tipos de acto, estados, etc.) se convierten en tablas de dominio o CHECK constraints.
+La migración se realizará desde las entidades validadas del Excel Bridge mediante un PostgreSQL Migrator específico. No se diseñará el esquema SQL copiando sin más las columnas anchas de la fila nativa.
 
 ---
 
-## 14. Campos P0/P1/P2
+## 14. Decisiones abiertas para la fila v2
 
-### P0 — Imprescindibles en WO8.1
+- columnas y nombres físicos definitivos;
+- enums de dispensación y revisión;
+- `row_index` y `row_count`;
+- tratamientos relacionados 1:N;
+- múltiples sospechosos y causalidades;
+- suspensión durante la propia visita;
+- actos de Validación/Primera Visita con varias líneas;
+- transición y retirada de las 61 columnas.
 
-- `patient_id`, `cip_demo_o_hash`, `servicio_origen`, `patologia_indicacion`
-- `fecha_acto`, `tipo_acto_fh`, `profesional_fh`
-- `marca_comercial`, `principio_activo`, `dosis_presentacion`, `via`
-- `tipo_relacion`, `estado_linea`, `es_principal`, `fecha_inicio`, `fecha_fin`
-- `hay_efecto_adverso`, `ea_gravedad`, `farmaco_sospechoso_nombre`, `causalidad_naranjo`
-- `demo_flag`, `created_at`
-
-### P1 — Deseables en WO8.1, obligatorios en WO8.2
-
-- `codigo_nacional`, `numero_registro`, `source_type`
-- `pauta_codigo`, `pauta_label`, `pauta_intervalo_dias`, `pauta_otro_texto`
-- `motivo_inicio_cambio_suspension`
-- `tb_estado`, `serologias_estado`, `vacunas_estado`, `bloqueantes_validacion`
-- `adherencia_morisky`, `haq`, `eva_dolor`, `dlqi`
-- `causalidad_karch`
-- `nhc_o_codigo_interno`
-
-### P2 — Futuro
-
-- `created_at`, `updated_at` completos
-- Catálogo completo de pautas
-- Categoría de fármaco detallada
-- Dosis estructurada (valor + unidad)
+Estas decisiones requieren contrato y ejemplos sintéticos antes de implementar.
 
 ---
 
-## 15. Recomendación de implementación WO8.1
+## 15. Secuencia de implementación vigente
 
-### WO8.1a — Plantilla Excel operativa
+1. Reconciliar documentación y contrato — esta WO.
+2. Diseñar evento canónico y fila común v2 con ejemplos de los tres actos.
+3. Mapear las 61 columnas actuales hacia v2 y definir compatibilidad temporal.
+4. Implementar Export Manager v2 desde el evento canónico.
+5. Construir Excel Bridge y Office Script Processor.
+6. Construir vistas `APP_*` y Excel Read Adapter.
+7. Validar roundtrip sintético.
+8. Diseñar PostgreSQL Migrator cuando exista servidor local autorizado.
 
-Crear la plantilla Excel (.xlsx) con:
+### Aclaración histórica de WO8.1b
 
-- Hojas `01_DERMA`, `02_REUMA`, `03_DIGESTIVO`, `04_ONCO` con el esquema de columnas A-H.
-- Hoja `05_CATALOGOS` con listas desplegables y fármacos especiales.
-- Hoja `99_CONFIG_EXPORT_MAP` (opcional técnica).
-- Validaciones de datos y listas desplegables integradas.
-
-### WO8.1b — Parser/interpretador del Excel
-
-Implementar función en el Hub que:
-
-1. Lee el Excel subido.
-2. Valida estructura contra el contrato.
-3. Descompone cada fila en el modelo lógico interno.
-4. Almacena en memoria o exporta a JSON/CSV analítico.
-
-### WO8.1c — Export analítico normalizado
-
-Generar, desde el parser:
-
-- Export en formato normalizado (10 hojas del modelo relacional).
-- CSV/Excel analítico desacoplado del formato operativo.
-
-### Prioridad
-
-**WO8.1a primero.** La plantilla Excel es la base operativa. El parser y el export analítico dependen de que la plantilla esté definida y validada por Farmacia.
-
-### Archivos a tocar
-
-| Fase | Archivos |
-|---|---|
-| WO8.1a | `scripts/farmacia_export_plantilla.js` (nuevo), `tools/farmacia_export_plantilla_check.mjs` (nuevo) |
-| WO8.1b | `scripts/farmacia_parser_excel.js` (nuevo), `tools/farmacia_parser_excel_check.mjs` (nuevo) |
-| WO8.1c | `scripts/farmacia_export_analitic.js` (nuevo), o reutilizar estructura de WO8.0 original |
-
-### No tocar
-
-- `main`, rama demo, `FarmaciaTratamiento`, `FarmaciaPautasCatalog`.
-- Datos demo JSON.
-- Pantallas de captura (seguimiento, PV, validación).
+En la versión 2.0 del contrato, WO8.1b se describió como parser Excel → modelo relacional. Ese parser no se implementó. En el manifiesto de rama, la misma etiqueta WO8.1b se reutilizó después para el exportador de fila operativa de 61 columnas. La arquitectura vigente abandona esa ambigüedad y usa los nombres Office Script Processor, Excel Read Adapter y PostgreSQL Migrator.
 
 ---
 
-**Status:** `pending_review`
+**Status:** `reconciliado_v4`
