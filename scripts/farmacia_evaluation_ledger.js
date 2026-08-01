@@ -240,6 +240,21 @@
         return null;
     }
 
+    function controlLabel(control) {
+        if (!control) return "";
+        var label = null;
+        if (control.id) {
+            label = Array.from(document.querySelectorAll("label[for]")).find(function (candidate) {
+                return candidate.getAttribute("for") === control.id;
+            }) || null;
+        }
+        if (!label && control.closest) {
+            var group = control.closest(".form-group");
+            if (group) label = group.querySelector("label");
+        }
+        return text(label ? label.textContent : "");
+    }
+
     function captureFormState(root) {
         var scope = root || document.querySelector("main.main-content") || document;
         var controls = Array.from(scope.querySelectorAll("input, select, textarea")).filter(function (control) {
@@ -255,6 +270,7 @@
                 key: key.value,
                 tag: control.tagName,
                 type: type,
+                label: controlLabel(control),
                 disabled: Boolean(control.disabled),
                 visible: !Boolean(control.closest(".hidden"))
             };
