@@ -196,16 +196,8 @@ try {
   assert.ok(firstVisitTextOutput.ledgerEventId);
 
   const firstVisitExcelExpected = await page.evaluate(() => {
-    const exp = FarmaciaExcelRowExport;
-    const query = FarmaciaDemo.getQueryContext();
-    const treatment = FarmaciaPrimeraVisita.getCurrentPrimaryTreatment();
-    const opts = {
-      tipoActo: 'primera_visita', visitaId: '<dynamic>', lineaActual: treatment,
-      fechaActo: new Date().toISOString().substring(0, 10),
-      proms: { morisky_green: '', haq: '', eva_dolor: '', dlqi: '' }, demoFlag: true
-    };
-    const built = exp.buildContextFromPrimeraVisita(query.patient, opts);
-    return { row: exp.buildExcelRowArray(exp.buildExcelRowObject(built)), columns: exp.WO8_COLUMNS, sheetName: exp.getServiceSheetName(query.patient.servicio || '') || 'hoja correspondiente' };
+    const built = FarmaciaPrimeraVisita.buildFirstVisitExcelExport();
+    return { row: built.rowArray, columns: FarmaciaExcelRowExport.WO8_COLUMNS, sheetName: built.sheetName };
   });
   await resetOutputCapture(page);
   await page.locator('#fhPvExcelExportBtn').click();

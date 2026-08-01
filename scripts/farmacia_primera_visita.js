@@ -1105,9 +1105,95 @@
         return { servicioMap: servicioMap, populatePatologia: populatePatologia };
     }
 
+    function normalizeCipForComparison(value) {
+        return String(value == null ? '' : value).trim().toUpperCase();
+    }
+
+    function safeString(value) {
+        return value === null || value === undefined ? '' : String(value);
+    }
+
+    function resolveVisibleOtherValue(selectId, otherId, otherLiteral) {
+        var selected = fv(selectId);
+        if (selected !== otherLiteral) return selected;
+        return fv(otherId) || selected;
+    }
+
+    function buildFirstVisitExcelExport() {
+        var cipVisible = fv('fhPvCip');
+        if (!cipVisible) {
+            return {
+                canCopy: false,
+                reason: 'Introduce un CIP antes de copiar la fila Excel FH.',
+                rowObject: null,
+                rowArray: null,
+                sheetName: ''
+            };
+        }
+
+        var canonicalVisibleCip = normalizeCipForComparison(cipVisible);
+        var matchingPatient = null;
+        var foundPatient = typeof F.findPatientByCip === 'function' ? F.findPatientByCip(cipVisible) : null;
+        if (foundPatient && normalizeCipForComparison(foundPatient.cip) === canonicalVisibleCip) {
+            matchingPatient = foundPatient;
+        } else {
+            var currentCtx = getCurrentContext();
+            var contextPatient = currentCtx && currentCtx.patient;
+            if (contextPatient && normalizeCipForComparison(contextPatient.cip) === canonicalVisibleCip) {
+                matchingPatient = contextPatient;
+            }
+        }
+
+        var serviceVisible = resolveVisibleOtherValue('fhPvServicio', 'fhPvServicioOtro', 'Otro');
+        var pathologyVisible = resolveVisibleOtherValue('fhPvPatologia', 'fhPvPatologiaOtro', 'Otra');
+        var patient = {
+            cip: cipVisible,
+            servicio: serviceVisible,
+            patologia: pathologyVisible,
+            edad: matchingPatient && matchingPatient.edad != null ? matchingPatient.edad : '',
+            sexo: matchingPatient && matchingPatient.sexo != null ? matchingPatient.sexo : ''
+        };
+        var treatment = getCurrentPrimaryTreatment({ cip: cipVisible, patient: patient });
+        var promsActive = getPromsBasal() === 'Sí' && isPromsExpandedVisible();
+        var dlqi = promsActive ? safeString(getDLQITotal()) : '';
+        var evaDolor = promsActive ? safeString(getEVADolor()) : '';
+        var visibleDate = fv('fhPvFecha');
+        var notes = fv('fhPvNotas');
+        var exp = window.FarmaciaExcelRowExport;
+        var context = exp.buildContextFromPrimeraVisita(patient, {
+            visitaId: 'PV-' + Date.now().toString(36).toUpperCase(),
+            lineaActual: treatment,
+            fechaActo: visibleDate,
+            proms: { morisky_green: '', haq: '', dlqi: dlqi, eva_dolor: evaDolor },
+            demoFlag: true
+        });
+        context.obsSeguimiento = notes;
+        var rowObject = exp.buildExcelRowObject(context);
+        rowObject.patient_id = cipVisible;
+        rowObject.cip_demo_o_hash = cipVisible;
+        rowObject.fecha_nacimiento_o_edad = safeString(patient.edad);
+        rowObject.sexo = safeString(patient.sexo);
+        rowObject.servicio_origen = serviceVisible;
+        rowObject.patologia_indicacion = pathologyVisible;
+        rowObject.fecha_acto = visibleDate;
+        rowObject.dlqi = dlqi;
+        rowObject.eva_dolor = evaDolor;
+        rowObject.observaciones_seguimiento = notes;
+        var rowArray = exp.buildExcelRowArray(rowObject);
+        var sheetName = exp.getServiceSheetName(serviceVisible) || 'hoja correspondiente';
+        return {
+            canCopy: true,
+            reason: '',
+            rowObject: rowObject,
+            rowArray: rowArray,
+            sheetName: sheetName
+        };
+    }
+
     window.FarmaciaPrimeraVisita = {
         buildPrimaryTreatmentFromContext: buildPrimaryTreatmentFromContext,
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
+        buildFirstVisitExcelExport: buildFirstVisitExcelExport,
         getCurrentPrimaryTreatment: getCurrentPrimaryTreatment,
         searchCIP: searchCIP,
         initDrugAutocomplete: initDrugAutocomplete,
@@ -1167,20 +1253,9 @@
             btn.addEventListener('click', function () {
                 var exp = window.FarmaciaExcelRowExport;
                 if (!exp) return;
-                var patient = ctx && ctx.patient ? ctx.patient : (window.F && F.patients ? F.patients['CIP-DEMO-FH-001'] : null);
-                if (!patient) { alert('No hay paciente seleccionado.'); return; }
-                var treatment = typeof getCurrentPrimaryTreatment === 'function' ? getCurrentPrimaryTreatment() : {};
-                var opts = {
-                    tipoActo: 'primera_visita', visitaId: 'PV-' + Date.now().toString(36).toUpperCase(),
-                    lineaActual: treatment, fechaActo: new Date().toISOString().substring(0, 10),
-                    proms: { morisky_green: '', haq: '', eva_dolor: fv('fhPvEvaDolor') || '', dlqi: '' },
-                    demoFlag: true,
-                };
-                var context = exp.buildContextFromPrimeraVisita(patient, opts);
-                var rowObj = exp.buildExcelRowObject(context);
-                var rowArr = exp.buildExcelRowArray(rowObj);
-                var sheetName = exp.getServiceSheetName(patient.servicio || '') || 'hoja correspondiente';
-                exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
+                var result = window.FarmaciaPrimeraVisita.buildFirstVisitExcelExport();
+                if (!result.canCopy) { alert(result.reason); return; }
+                exp.copyTSVRowToClipboard(result.rowArray, { sheetName: result.sheetName });
             });
         })();
     });
