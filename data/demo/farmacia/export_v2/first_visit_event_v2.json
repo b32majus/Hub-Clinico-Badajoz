@@ -1,0 +1,35 @@
+{
+  "fixture_version": "1.0.0",
+  "event": {
+    "event_schema_version": "2.0.0-draft.1",
+    "event_id": "evt-demo-first-visit-001",
+    "source_event_id": "src-demo-first-visit-001",
+    "event_type": "pharmacy_first_visit",
+    "event_status": "recorded",
+    "occurred_at": "2026-07-08",
+    "recorded_at": "2026-07-08T11:30:00Z",
+    "demo_flag": true,
+    "patient_id": "patient-synthetic-002",
+    "hospital_code": "HOSPITAL_DEMO",
+    "service_code": "DERMA_DEMO",
+    "first_visit_id": "first-visit-demo-001",
+    "first_visit_date": "2026-07-08",
+    "induction_performed_status": "no",
+    "baseline_proms_collection_status": "yes",
+    "pharmacy_visit_notes": "Primera visita contractual sintética.",
+    "proms_json": [{"instrument": "PROM_DEMO", "value": 0, "complete": false}]
+  },
+  "rowPayloads": [
+    {
+      "rowKey": "line-demo-first-001",
+      "treatment_id": "treatment-demo-first-001",
+      "line_id": "line-demo-first-001",
+      "line_role": "primary",
+      "is_primary_line": true,
+      "line_status_at_event": "active",
+      "active_at_event": true,
+      "line_drug_name": "Fármaco sintético A",
+      "line_dose_text": "Dosis documentada sintética"
+    }
+  ]
+}

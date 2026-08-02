@@ -10,7 +10,7 @@
 **Base de ejecución:** resolver y registrar el HEAD remoto exacto después de fusionar la documentación de secuencia; debe incluir esta WO y descender de `2f54c4ec...`
 **Rama propuesta:** `work/fh-export-v2-canonical-core-01-20260802`
 **Intent:** `canonical_contract_core`
-**Estado:** `ready_for_authorization`
+**Estado:** `ready_for_cora_review`
 
 ## 1. Objetivo y contexto
 
@@ -579,3 +579,31 @@ WO2 no comienza hasta que:
 2. cualquier bloqueo del core esté resuelto;
 3. el commit y merge de WO1 estén autorizados y verificados;
 4. el HEAD publicado nuevo sea la base explícita del stack WO2–WO4.
+
+## 12. Reporte de ejecución — 2026-08-02
+
+```text
+WO: WO-FH-EXPORT-V2-CANONICAL-CORE-01
+BASE_BRANCH: origin/recovery/farmacia-pr-replay-20260727
+BASE_SHA: 5e9b59ba36dc7760f4529deece33248922ce0b9a
+WORK_BRANCH: work/fh-export-v2-canonical-core-01-20260802
+HEAD_LOCAL: 5e9b59ba36dc7760f4529deece33248922ce0b9a
+ROUTES_CHANGED: scripts/farmacia_export_v2_core.js; schemas/farmacia_export_event_v2.schema.json; schemas/farmacia_export_row_v2.schema.json; docs/contracts/FARMACIA_EXPORT_V2_CORE_CONTRACT.md; tools/farmacia_export_v2_core_check.mjs; data/demo/farmacia/export_v2/validation_event_v2.json; data/demo/farmacia/export_v2/first_visit_event_v2.json; data/demo/farmacia/export_v2/followup_event_v2.json; docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md (estado y reporte)
+CORE_API: PASS — 16 nombres públicos exactos en window.FarmaciaExportV2Core; proyección Bridge fijada a PENDIENTE y campos Bridge rechazados en payload
+EVENT_SCHEMA_VERSION: 2.0.0-draft.1
+ROW_SCHEMA_VERSION: 2.0.0-draft.1
+COLUMN_COUNT: 152 únicas y en el orden aprobado
+SCHEMA_PARITY: PASS — x-column-order, properties, ROW_COLUMNS y FIELD_DEFINITIONS; paridad de enums prebiológicos corregida para TB, HBV/HCV/HIV y vacunación, con preventive_medicine_status string|null
+TSV_ROUNDTRIP: PASS — tipado, 0/false/null/cadena vacía, Unicode, multilinea, barras, comillas, prefijos de fórmula y JSON 1:N
+EXAMPLES: PASS — Validación 1 fila; Primera Visita 1 fila; Seguimiento 2 filas con contexto común, adverse_event_id compartido e identidades de línea distintas
+V1_REGRESSION: PASS — farmacia_excel_row_export_check, farmacia_smoke_check, farmacia_common_check y farmacia_tratamiento_common_check
+BROWSER_QA: N/A — no integration
+INDEPENDENT_REVIEW: APTO — revisión independiente fresca posterior a las correcciones de Cora, sin findings; higiene de las nueve rutas PASS (CRLF-only, sin espacios o tabuladores finales y con exactamente un CRLF final)
+KNOWN_EXCEPTIONS: QA en la aplicación Excel N/A por no existir integración; format de JSON Schema depende del validador consumidor y la validación runtime semántica es autoritativa
+CLINICAL_NONINFERENCE: PASS — no genera IDs/timestamps/demo_flag, no copia solicitado a validado y no crea tratamiento o línea desde nombres
+COMMIT: NOT_CREATED
+PUSH: NOT_DONE
+PR: NOT_CREATED
+MERGE: NOT_DONE
+FINAL_STATUS: READY_FOR_CORA_REVIEW
+```

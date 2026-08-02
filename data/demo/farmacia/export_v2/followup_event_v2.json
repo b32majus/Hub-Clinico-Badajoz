@@ -1,0 +1,72 @@
+{
+  "fixture_version": "1.0.0",
+  "event": {
+    "event_schema_version": "2.0.0-draft.1",
+    "event_id": "evt-demo-followup-001",
+    "source_event_id": "src-demo-followup-001",
+    "event_type": "pharmacy_followup",
+    "event_status": "recorded",
+    "occurred_at": "2026-07-15T10:00:00Z",
+    "recorded_at": "2026-07-15T10:40:00Z",
+    "demo_flag": true,
+    "patient_id": "patient-synthetic-003",
+    "hospital_code": "HOSPITAL_DEMO",
+    "service_code": "REUMA_DEMO",
+    "visit_id": "visit-demo-followup-001",
+    "adverse_event_id": "adverse-event-demo-followup-001",
+    "visit_date": "2026-07-15",
+    "stratification_review_status": "not_recorded",
+    "followup_proms_collection_status": "yes",
+    "visit_general_observations": "Visita sintética común; Unicode: Cáceres Ω.",
+    "proms_json": {"measurements": [{"instrument": "PROM_DEMO", "value": 0, "answered": false}]},
+    "adverse_event_status": "present",
+    "adverse_event_suspects_json": [
+      {"suspect_ref": "line-demo-followup-a", "reported": true},
+      {"suspect_ref": "line-demo-followup-b", "reported": false}
+    ],
+    "causality_assessments_json": [
+      {"suspect_ref": "line-demo-followup-a", "method": "DEMO_A", "score": 0},
+      {"suspect_ref": "line-demo-followup-b", "method": "DEMO_B", "result": null}
+    ]
+  },
+  "rowPayloads": [
+    {
+      "rowKey": "line-demo-followup-a",
+      "treatment_id": "treatment-demo-followup-a",
+      "line_id": "line-demo-followup-a",
+      "line_role": "primary",
+      "is_primary_line": true,
+      "line_status_at_event": "active",
+      "active_at_event": true,
+      "line_drug_name": "Fármaco sintético A",
+      "dispensation_status": "dispensed",
+      "specific_review_status": "not_performed",
+      "specific_review_reason": "not_recorded",
+      "therapeutic_movement_type": "no_change_recorded",
+      "adherence_collection_status": "not_recorded"
+    },
+    {
+      "rowKey": "line-demo-followup-b",
+      "treatment_id": "treatment-demo-followup-b",
+      "line_id": "line-demo-followup-b",
+      "line_role": "additional",
+      "is_primary_line": false,
+      "line_status_at_event": "active",
+      "active_at_event": true,
+      "line_drug_name": "Fármaco sintético B",
+      "dispensation_status": "not_dispensed",
+      "dispensation_observations": "No dispensada; estado explícito sintético.",
+      "specific_review_status": "performed",
+      "specific_review_reason": "dose_or_schedule_change",
+      "therapeutic_movement_type": "schedule_change",
+      "new_schedule_code": "DEMO_EVERY_14_DAYS",
+      "new_schedule_label": "Cada 14 días (demo)",
+      "movement_reason": "Cambio de pauta explícito sintético",
+      "movement_effective_date": "2026-07-16",
+      "adherence_collection_status": "yes",
+      "adherence_instrument": "DEMO_SCALE",
+      "adherence_result": "0",
+      "adherence_answers_json": [{"question": "q1", "answer": false}, {"question": "q2", "answer": 0}]
+    }
+  ]
+}
