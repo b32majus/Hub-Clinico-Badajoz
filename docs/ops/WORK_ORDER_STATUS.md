@@ -1,7 +1,7 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
 **Última actualización:** 2026-08-02
-**Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas  
+**Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
 ---
@@ -11,11 +11,11 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| Base Git de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
-| Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Base Git de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
+| Último SHA funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PASS focal de realineación y Excel Primera Visita; no QA integral de piloto |
+| QA pública regional del HEAD actual | PASS focal de realineación y Excel Primera Visita; core v2 con tests contractuales PASS, sin QA de navegador/Excel ni piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -102,12 +102,13 @@
 | **WO-FH-EVALUATION-FLOW-REALIGN-01** | Realinear persistencia con el flujo asistencial | ✅ Merged | `work/fh-evaluation-flow-realign-01-20260801` | merge `6dcedff4...` (PR #203, issue #202) | Retira cohorte ficticia visible; QA pública PASS |
 | **WO-FH-FIRST-VISIT-EXCEL-TRUTH-P0-01** | Verdad del Excel de Primera Visita | ✅ Merged | `work/fh-first-visit-excel-truth-p0-01-20260801` | merge `68b53837...` (PR #205, issue #204) | CIP/acto visible; 61 columnas; QA pública PASS |
 | **WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01** | Reconciliar contrato export v2 | ✅ Merged | `work/fh-export-contract-v2-reconciliation-01-20260801` | merge `2f54c4ec...` (PR #207, issue #206) | Fila común v2, grano por línea activa y componentes del Bridge documentados |
-| **WO-DOC-FH-EXPORT-V2-SEQUENCE-WO1-01** | Secuencia WO1–WO9 y WO1 técnica | 📋 Ready for review | `work/fh-export-v2-sequence-wo1-docs-20260802` | commit/PR pendiente | Siete rutas documentales; no implementa código |
-| **WO-FH-EXPORT-V2-CANONICAL-CORE-01** | Núcleo canónico fila v2 | 📋 Draft | `work/fh-export-v2-canonical-core-01-20260802` | no ejecutada | Candidate de 152 columnas; no activa salidas públicas |
+| **WO-DOC-FH-EXPORT-V2-SEQUENCE-WO1-01** | Secuencia WO1–WO9 y WO1 técnica | ✅ Merged | `work/fh-export-v2-sequence-wo1-docs-20260802` | merge `5e9b59ba...` (PR #209, issue #208) | Siete rutas documentales; no añadió capacidad funcional |
+| **WO-FH-EXPORT-V2-CANONICAL-CORE-01** | Núcleo canónico fila v2 | ✅ Merged | `work/fh-export-v2-canonical-core-01-20260802` | commit `7109b5f1...`, merge `6ac041f8...` (PR #211, issue #210) | 152 columnas candidate y roundtrip TSV; existe en código, no está cableado |
+| **WO-DOC-FH-EXPORT-V2-CORE-MERGE-RECONCILIATION-01** | Reconciliar publicación de WO1 | 📋 Ready for review | `work/doc-fh-export-v2-core-merge-reconciliation-01-20260802` | commit/PR pendiente | Cinco rutas documentales; prepara el HEAD del stack WO2–WO4 |
 
 ### Deuda administrativa de issues
 
-A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204 y #206 están cerrados como `completed`. Este documento no modifica issues.
+A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208 y #210 están cerrados como `completed`. Esta WO documental no modifica issues históricos.
 
 ---
 
@@ -153,9 +154,9 @@ A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 
 | Estado | Cantidad |
 |---|---:|
-| ✅ Merged | 54 |
+| ✅ Merged | 56 |
 | 📋 Ready for review | 19 |
-| 📋 Draft | 2 |
+| 📋 Draft | 1 |
 | 🟢 Validated | 1 |
 | 🔄 Superseded | 3 |
 | ✅ Completada | 1 |
@@ -163,6 +164,6 @@ A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 81 work orders / preflights gestionadas.
+**Total:** 82 work orders / preflights gestionadas.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.
