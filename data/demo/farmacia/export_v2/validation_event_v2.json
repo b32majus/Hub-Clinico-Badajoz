@@ -1,0 +1,44 @@
+{
+  "fixture_version": "1.0.0",
+  "event": {
+    "event_schema_version": "2.0.0-draft.1",
+    "event_id": "evt-demo-validation-001",
+    "source_event_id": "src-demo-validation-001",
+    "event_type": "pharmacy_validation",
+    "event_status": "recorded",
+    "occurred_at": "2026-07-01T09:15:00Z",
+    "recorded_at": "2026-07-01T09:20:00Z",
+    "demo_flag": true,
+    "patient_id": "patient-synthetic-001",
+    "hospital_code": "HOSPITAL_DEMO",
+    "service_code": "REUMA_DEMO",
+    "request_id": "request-demo-001",
+    "validation_id": "validation-demo-001",
+    "requested_drug_name": "Medicamento solicitado sintético",
+    "requested_dose_text": "0 mg (escenario técnico)",
+    "requested_justification": "Texto sintético con tabulador\tcomillas \"demo\", barra \\ y línea\nnueva — Ω.",
+    "request_source_observations": "",
+    "validation_result": "pending",
+    "validation_pending_reason": "Pendiente técnico explícito en fixture sintético",
+    "validated_treatment_relation": "not_recorded",
+    "line_creation_status": "not_created",
+    "prebiologic_required": "not_recorded",
+    "hemogram_verified": false,
+    "biochemistry_verified": false,
+    "tb_status": "pending",
+    "hbv_status": "negative",
+    "hcv_status": "positive",
+    "hiv_status": "pending",
+    "vaccination_status": "pending",
+    "preventive_medicine_status": "synthetic_review_scheduled",
+    "validation_blockers_json": [],
+    "clinical_observations_json": {"score_zero": 0, "confirmed": false, "empty_text": "", "absent": null},
+    "related_treatments_json": [
+      {"treatment_ref": "related-demo-a", "relationship": "synthetic"},
+      {"treatment_ref": "related-demo-b", "relationship": "synthetic"}
+    ]
+  },
+  "rowPayloads": [
+    {"rowKey": "validation-main"}
+  ]
+}
