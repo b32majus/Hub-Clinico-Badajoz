@@ -42,13 +42,14 @@ const page = await context.newPage();
 const consoleErrors = [];
 const pageErrors = [];
 const observations = [];
+let dialogAction = 'dismiss';
 
 page.on('console', (message) => {
   observations.push(`console.${message.type()}: ${message.text()}`);
   if (message.type() === 'error') consoleErrors.push(message.text());
 });
 page.on('pageerror', (error) => pageErrors.push(error.message));
-page.on('dialog', (dialog) => dialog.dismiss());
+page.on('dialog', (dialog) => dialogAction === 'accept' ? dialog.accept() : dialog.dismiss());
 
 try {
   const validationSource = readFileSync(path.join(ROOT, 'scripts', 'farmacia_validacion.js'), 'utf8');
@@ -126,10 +127,42 @@ try {
   const readRequested = async () => Object.fromEntries(await Promise.all(
     Object.entries(requestedFields).map(async ([key, locator]) => [key, await locator.inputValue()])
   ));
+  const validatedFields = {
+    farmaco: page.locator('#fhValidadoFarmaco'),
+    principioActivo: page.locator('#fhValidadoPrincipioActivo'),
+    presentacion: page.locator('#fhValidadoPresentacion'),
+    dosis: page.locator('#fhValidadoDosis'),
+    via: page.locator('#fhValidadoVia'),
+    pauta: page.locator('#fhValidadoPauta'),
+    pautaOtro: page.locator('#fhValidadoPautaOtro'),
+    induccion: page.locator('#fhValidadoInduccion')
+  };
+  const readValidated = async () => Object.fromEntries(await Promise.all(
+    Object.entries(validatedFields).map(async ([key, locator]) => [key, await locator.inputValue()])
+  ));
   const initialized = await readRequested();
   assert.deepEqual(initialized, {
-    farmaco: '', principioActivo: '', dosis: '', via: '', pauta: '', induccion: 'no'
+    farmaco: '', principioActivo: '', dosis: '', via: '', pauta: '', induccion: ''
   }, 'initialization leaves manual requested controls at their declared preload values');
+  assert.deepEqual({
+    manual: await page.locator('#fhManualInduccion').inputValue(),
+    derma: await page.locator('#fhDermaInduccion').inputValue(),
+    validated: await page.locator('#fhValidadoInduccion').inputValue()
+  }, { manual: '', derma: '', validated: '' }, 'all three induction controls start with empty value');
+  for (const id of ['fhManualInduccion', 'fhDermaInduccion', 'fhValidadoInduccion']) {
+    assert.equal((await page.locator(`#${id} option:checked`).textContent()).trim(), 'No informado', `${id} starts visibly as No informado`);
+  }
+  assert.deepEqual(await readValidated(), {
+    farmaco: '', principioActivo: '', presentacion: '', dosis: '', via: '', pauta: '', pautaOtro: '', induccion: ''
+  }, 'validated treatment starts empty');
+  await page.locator('#fhValEstado').selectOption('pending');
+  assert.ok(await page.locator('#fhValPendingReasonRow').isVisible(), 'pending shows its pending-reason row');
+  assert.ok(await page.locator('#fhValMotivoRow').isHidden(), 'pending hides denial reason');
+  await page.locator('#fhValEstado').selectOption('denied');
+  assert.ok(await page.locator('#fhValPendingReasonRow').isHidden(), 'denied hides pending reason');
+  assert.ok(await page.locator('#fhValMotivoRow').isVisible(), 'denied shows denial reason');
+  await page.locator('#fhValEstado').selectOption('pending');
+  assert.equal(await page.locator('button[id*="v2" i], a[id*="v2" i], a[download][href*="v2" i]').count(), 0, 'no public v2 button or download exists');
   assert.equal(await dropdown.locator('.autocomplete-item').count(), 0, 'initialization does not search or create suggestions');
   assert.ok(await dropdown.isHidden(), 'initialization keeps the dropdown closed');
   await page.waitForTimeout(500);
@@ -286,6 +319,9 @@ try {
   assert.equal(professionalImmediate.induccion, 'si', 'explicit selection preserves professional induction');
   assert.deepEqual(professionalDelayed, professionalImmediate, 'professional values remain stable after 500 ms');
   assert.deepEqual(await snapshotRegistry(), registryBeforeProfessionalSelection, 'empty-CIP professional selection does not persist a snapshot');
+  assert.deepEqual(await readValidated(), {
+    farmaco: '', principioActivo: '', presentacion: '', dosis: '', via: '', pauta: '', pautaOtro: '', induccion: ''
+  }, 'selecting requested treatment does not populate any validated field');
 
   const registryBeforeEmpty = await snapshotRegistry();
   const emptyCip = await chooseFirst({ cip: '', childSelector: '.autocomplete-item-name', label: 'empty CIP / first result name' });
@@ -498,6 +534,8 @@ try {
   assert.equal(secondSectionDelayed, secondSectionImmediate, 'second product requested summary stable after 500 ms');
 
   const validated = page.locator('#fhValidadoFarmaco');
+  await validatedFields.pauta.selectOption('CADA_3_SEMANAS');
+  await validatedFields.induccion.selectOption('no');
   await validated.fill('');
   await validated.fill(SEARCH_QUERY);
   const validatedDropdown = page.locator('#autocompleteValidadoDropdown');
@@ -517,6 +555,128 @@ try {
   assert.equal(emptyCip.expectedName, validatedExpected, 'empty-CIP requested and validated first result match');
   assert.equal(keyedTag.expectedName, validatedExpected, 'CIMA-tag requested and validated first result match');
   assert.equal(keyedDetail.expectedName, validatedExpected, 'detail requested and validated first result match');
+  assert.equal(await validatedFields.pauta.inputValue(), 'CADA_3_SEMANAS', 'validated catalog selection preserves professional schedule');
+  assert.equal(await validatedFields.induccion.inputValue(), 'no', 'validated catalog selection preserves professional induction');
+
+  await page.locator('#fhValEstado').selectOption('validated');
+  const validatedBeforeExplicitCopy = await readValidated();
+  const relationBeforeExplicitCopy = await page.locator('#fhValidatedTreatmentRelation').inputValue();
+  const validationObservationBeforeCopy = await page.locator('#fhValidadoJustificacion').inputValue();
+  const requestedSnapshotForCopy = await requestedSnapshot(syntheticCip);
+  assert.ok(requestedSnapshotForCopy, 'explicit copy has an exact requested-slot snapshot for the visible CIP');
+  dialogAction = 'dismiss';
+  await page.locator('#btnValidateRequestedSame').click();
+  assert.deepEqual(await readValidated(), validatedBeforeExplicitCopy, 'cancelled visible explicit-copy action mutates no validated field');
+  assert.equal(await page.locator('#fhValidatedTreatmentRelation').inputValue(), relationBeforeExplicitCopy, 'cancelled visible action preserves relation');
+  dialogAction = 'accept';
+  await page.locator('#btnValidateRequestedSame').click();
+  dialogAction = 'dismiss';
+  assert.equal(await page.locator('#fhValidatedTreatmentRelation').inputValue(), 'same_as_requested', 'explicit copy sets canonical relation');
+  assert.equal(await page.locator('#fhValidadoFarmaco').inputValue(), await requested.inputValue(), 'explicit copy aligns visible drug');
+  assert.equal(await page.locator('#fhValidadoPrincipioActivo').inputValue(), await requestedFields.principioActivo.inputValue(), 'explicit copy aligns active ingredient');
+  assert.equal(await page.locator('#fhValidadoDosis').inputValue(), await requestedFields.dosis.inputValue(), 'explicit copy aligns dose');
+  assert.equal(await page.locator('#fhValidadoVia').inputValue(), await requestedFields.via.inputValue(), 'explicit copy aligns route');
+  assert.equal(await page.locator('#fhValidadoPauta').inputValue(), await requestedFields.pauta.inputValue(), 'explicit copy aligns schedule code');
+  assert.equal(await page.locator('#fhValidadoInduccion').inputValue(), await requestedFields.induccion.inputValue(), 'explicit copy aligns explicit induction');
+  assert.equal(await page.locator('#fhValidadoPautaOtro').inputValue(), '', 'explicit copy leaves absent free-text schedule absent');
+  assert.equal(await page.locator('#fhValidadoPresentacion').inputValue(), requestedSnapshotForCopy.presentacion_snapshot, 'explicit copy transfers presentation only from the exact requested snapshot');
+  assert.equal(await page.locator('#fhValidadoJustificacion').inputValue(), validationObservationBeforeCopy, 'explicit treatment copy does not alter unrelated validation observations');
+
+  await page.locator('#btnAddOtherDrug').click();
+  await page.locator('#btnAddOtherDrug').click();
+  await page.locator('#btnAddOtherDrug').click();
+  const relatedCards = page.locator('.other-drug-card');
+  await relatedCards.nth(0).locator('input[type="text"]').nth(0).fill('Relacionado sintético A');
+  await relatedCards.nth(1).locator('input[type="text"]').nth(1).fill('Activo relacionado sintético B');
+  const relatedV2 = await page.evaluate(() => window.FarmaciaValidacion.buildValidationRelatedTreatmentsV2());
+  assert.equal(relatedV2.length, 2, 'related-treatment builder preserves 1:N and omits relation/uid-only card');
+  assert.ok(relatedV2.every((row) => row.source_row_uid && !('selected_drug_id' in row) && !('line_id' in row)), 'related treatments contain source UID but no catalog/line IDs');
+
+  const internalProjection = await page.evaluate(() => window.FarmaciaValidacion.buildValidationV2Projection({
+    eventId: 'evt-browser-synthetic', sourceEventId: 'src-browser-synthetic', rowKey: 'validation-main', validationId: 'val-browser-synthetic',
+    patientId: 'patient-browser-synthetic', occurredAt: '2026-08-02', recordedAt: '2026-08-02T12:00:00Z', demoFlag: true,
+    eventStatus: 'draft', lineCreationStatus: 'not_created'
+  }));
+  assert.equal(internalProjection.rows.length, 1, 'DOM builder delegates one-row projection');
+  assert.equal(internalProjection.event.validation_result, 'validated', 'same-as-requested projection uses the supported validated result');
+  assert.equal(internalProjection.row.bridge_status, 'PENDIENTE', 'DOM projection keeps core bridge boundary');
+  assert.equal(internalProjection.row.requested_drug_name, internalProjection.row.validated_drug_name, 'same-as-requested projection remains separated but equal');
+  const validatedDoseSnapshot = await page.locator('#fhValidadoDosis').inputValue();
+  await requestedFields.dosis.fill('Cambio solicitado posterior sintético');
+  assert.equal(await page.locator('#fhValidadoDosis').inputValue(), validatedDoseSnapshot, 'later requested edits do not synchronize into validated controls');
+  const validatedBeforeModifiedRelation = await readValidated();
+  await page.locator('#fhValidatedTreatmentRelation').selectOption('modified_from_requested');
+  assert.deepEqual(await readValidated(), validatedBeforeModifiedRelation, 'selecting modified_from_requested copies no treatment field');
+
+  await page.locator('#fhValidatedTreatmentRelation').selectOption('');
+  await page.locator('#fhValEstado').selectOption('pending');
+  const excelSentinel = `FH-EXCEL-SENTINEL-${Date.now()}-${Math.random()}`;
+  await page.evaluate((value) => navigator.clipboard.writeText(value), excelSentinel);
+  await page.locator('#fhValExcelExportBtn').click();
+  const excelDeadline = Date.now() + 5_000;
+  let excelTsv = excelSentinel;
+  while (Date.now() < excelDeadline && excelTsv === excelSentinel) {
+    excelTsv = await page.evaluate(() => navigator.clipboard.readText());
+    if (excelTsv === excelSentinel) await page.waitForTimeout(50);
+  }
+  assert.notEqual(excelTsv, excelSentinel, 'visible public Excel button writes clipboard TSV');
+  assert.equal(excelTsv.split('\t').length, 61, 'public Excel clipboard row contains exactly 61 TSV cells');
+  assert.equal(await page.getByRole('button', { name: /v2/i }).count(), 0, 'no public button is labelled as v2');
+
+  const reumaPage = await context.newPage();
+  reumaPage.on('console', (message) => {
+    observations.push(`reuma.console.${message.type()}: ${message.text()}`);
+    if (message.type() === 'error') consoleErrors.push(`reuma: ${message.text()}`);
+  });
+  reumaPage.on('pageerror', (error) => pageErrors.push(`reuma: ${error.message}`));
+  reumaPage.on('dialog', (dialog) => dialog.accept());
+  await reumaPage.addInitScript(() => {
+    let farmaciaDemo;
+    Object.defineProperty(window, 'FarmaciaDemo', {
+      configurable: true,
+      get() { return farmaciaDemo; },
+      set(value) {
+        farmaciaDemo = value;
+        if (!value || !value.patients) return;
+        value.patients['CIP-REUMA-SCHEDULE-BROWSER-SYN'] = {
+          cip: 'CIP-REUMA-SCHEDULE-BROWSER-SYN',
+          nombre: 'Paciente sintético pauta Reuma',
+          servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR',
+          farmaco_solicitado: 'Tratamiento solicitado sintético', principioActivo: 'Activo sintético',
+          dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas',
+          estado: 'pending', origen_solicitud: 'enfermeria',
+          tipo_origen: 'enfermeria_inicio_biologico', source_type: 'ENFERMERIA'
+        };
+      }
+    });
+  });
+  const reumaUrl = new URL(TARGET_URL);
+  reumaUrl.searchParams.set('cip', 'CIP-REUMA-SCHEDULE-BROWSER-SYN');
+  reumaUrl.searchParams.set('servicio', 'reuma');
+  reumaUrl.searchParams.set('patologia', 'AR');
+  reumaUrl.searchParams.set('entrada', 'validacion');
+  await reumaPage.goto(reumaUrl.toString(), { waitUntil: 'domcontentloaded' });
+  await reumaPage.locator('#formReuma').waitFor({ state: 'visible' });
+  await reumaPage.locator('#validationBlock').waitFor({ state: 'visible' });
+  assert.equal((await reumaPage.locator('#fhReumaPauta').textContent()).trim(), 'Cada 2 semanas', 'reachable Enfermería/Reuma fixture exposes explicit requested schedule label');
+  assert.equal(await reumaPage.locator('#fhValidadoPauta').inputValue(), '', 'Reuma validated schedule starts empty');
+  await reumaPage.locator('#fhValEstado').selectOption('validated');
+  await reumaPage.locator('#btnValidateRequestedSame').click();
+  assert.equal(await reumaPage.locator('#fhValidatedTreatmentRelation').inputValue(), 'same_as_requested', 'visible Reuma action sets same_as_requested');
+  assert.equal(await reumaPage.locator('#fhValidadoPauta').inputValue(), 'CADA_2_SEMANAS', 'visible Reuma action copies canonical schedule code');
+  assert.equal((await reumaPage.locator('#fhValidadoPauta option:checked').textContent()).trim(), 'Cada 2 semanas', 'visible Reuma action preserves canonical schedule label');
+  assert.equal(await reumaPage.locator('#fhValidadoPautaOtro').inputValue(), '', 'recognized Reuma schedule keeps other text empty');
+  const reumaProjection = await reumaPage.evaluate(() => window.FarmaciaValidacion.buildValidationV2Projection({
+    eventId: 'evt-reuma-schedule-browser-syn', sourceEventId: 'src-reuma-schedule-browser-syn', rowKey: 'validation-main',
+    validationId: 'val-reuma-schedule-browser-syn', patientId: 'patient-reuma-schedule-browser-syn',
+    occurredAt: '2026-08-02', recordedAt: '2026-08-02T13:00:00Z', demoFlag: true,
+    eventStatus: 'draft', lineCreationStatus: 'not_created'
+  }));
+  assert.equal(reumaProjection.row.requested_schedule_code, 'CADA_2_SEMANAS', 'Reuma projection preserves requested schedule code');
+  assert.equal(reumaProjection.row.requested_schedule_label, 'Cada 2 semanas', 'Reuma projection preserves requested schedule label');
+  assert.equal(reumaProjection.row.validated_schedule_code, 'CADA_2_SEMANAS', 'Reuma projection preserves validated schedule code');
+  assert.equal(reumaProjection.row.validated_schedule_label, 'Cada 2 semanas', 'Reuma same-as-requested projection validates without schedule mismatch');
+  await reumaPage.close();
 
   const requestedSelectionEvents = [
     ...professionalClickEvents,

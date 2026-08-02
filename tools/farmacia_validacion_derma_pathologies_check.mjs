@@ -84,6 +84,10 @@ console.log('\n=== Dermatología multipatología — matriz issue #174 ===');
 let summary = activate('Hidradenitis supurativa');
 check(onlyVisible('formHS') && commonVisible(), '1. HS visible; otras cuatro ocultas; comorbilidades visibles');
 check(summary.summary.includes('Doxiciclina / Clindamicina: No informado') && !summary.summary.includes('Doxiciclina / Clindamicina: No;'), '7. checkbox HS sin marcar = No informado, nunca No');
+set('fhHSIhs4', '0'); el('fhHSTtoDoxiClinda').checked = true;
+let v2Observations = validation.buildValidationClinicalObservationsV2();
+check(v2Observations.some((item) => item.code === 'hs_ihs4' && item.value === '0') && v2Observations.some((item) => item.code === 'hs_previous_doxycycline_clindamycin' && item.value === 'yes'), 'v2 preserva 0 y codifica tratamientos previos como observaciones');
+check(v2Observations.every((item) => item.source === 'validation_origin_form' && item.pathology_label === 'Hidradenitis supurativa' && item.value !== 'No informado'), 'v2 omite placeholders y conserva provenance/patología');
 
 set('fhPsPasi', '14.2'); set('fhPsBsa', '18 %'); set('fhPsDlqi', '16'); set('fhPsPga', '4');
 select('fhPsSistemicoPrevio', 'si', 'Sí'); set('fhPsSistemicoFarmaco', 'Fármaco previo sintético'); set('fhPsSistemicoDuracion', '8 meses'); set('fhPsSistemicoMotivo', 'Respuesta insuficiente');
@@ -149,13 +153,17 @@ set('fhManualObservaciones', 'Observación origen manual explícita');
 const mergedManual = validation.buildExcelGeneralObservations({ observaciones: '' }, summary.summary);
 const mergedManualRow = excel.buildExcelRowObject({ observaciones: mergedManual });
 check(mergedManual.includes('Observación origen manual explícita') && mergedManual.includes(summary.summary) && mergedManual.indexOf('Observación origen manual explícita') === mergedManual.lastIndexOf('Observación origen manual explícita') && mergedManualRow.observaciones_generales, 'Excel manual Dermatología preserva observación explícita y resumen sin duplicar');
+const activeDermaV2 = validation.buildValidationV2Input({});
+check(activeDermaV2.comorbidities.recurrentInfectionsStatus === 'si' && activeDermaV2.comorbidities.cardiovascularRiskStatus === 'no' && activeDermaV2.comorbidities.neurologicDisorderStatus === null && activeDermaV2.comorbidities.neoplasiaHistoryOrRiskStatus === 'si', 'v2 incluye comorbilidades comunes solo con patología Dermatología activa');
 
 for (const service of ['reuma', 'digestivo']) {
   select('fhServicioManual', service, service); select('fhPatologiaManual', service === 'reuma' ? 'AR' : 'Crohn');
   validation.updateDermaPathologyVisibility();
   const data = validation.buildValidationExcelExportData();
   const rows = validation.buildCsvRows();
-  check(validation.buildDermaClinicalSummary().summary === '' && data.dermaClinicalSummary === '' && rows[1].at(-1) === '' && el('formDermaComorbilidades').classList.contains('hidden'), '11. ' + service + ' queda sin resumen Dermatología y oculta comunes');
+  check(validation.buildDermaClinicalSummary().summary === '' && validation.buildValidationClinicalObservationsV2() === null && data.dermaClinicalSummary === '' && rows[1].at(-1) === '' && el('formDermaComorbilidades').classList.contains('hidden'), '11. ' + service + ' queda sin observaciones/resumen Dermatología y oculta comunes');
+  const nonDermaV2 = validation.buildValidationV2Input({});
+  check(Object.values(nonDermaV2.comorbidities).every((value) => value === null), 'v2 ' + service + ' no filtra comorbilidades Dermatología residuales ocultas');
 }
 select('fhOrigenEntrada', 'digestivo', 'Digestivo'); set('fhDigObservaciones', 'Observación Digestivo explícita');
 let general = validation.buildExcelGeneralObservations({ observaciones: '' }, '');

@@ -169,7 +169,7 @@
         <div class="form-group"><label for="fhManualPauta">Intervalo / pauta</label><select class="form-select" id="fhManualPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhManualPautaOtro" placeholder="Especificar otra pauta"></div>
     </div>
     <div class="form-grid">
-        <div class="form-group"><label for="fhManualInduccion">Inducción solicitada</label><select class="form-select" id="fhManualInduccion"><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div class="form-group"><label for="fhManualInduccion">Inducción solicitada</label><select class="form-select" id="fhManualInduccion"><option value="">No informado</option><option value="no">No</option><option value="si">Sí</option></select></div>
         <div class="form-group"><label for="fhManualPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhManualPeso" placeholder="Ej. 72 kg"></div>
     </div>
     <div class="form-grid form-grid--full">
@@ -197,7 +197,7 @@
     <div class="no-find-drug-row hidden" id="noFindDrugRow"><button type="button" class="btn btn-outline" id="btnNoFindDrug">No encuentro el fármaco</button></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaPrincipioActivo">Principio activo / molécula (opcional)</label><input type="text" class="form-control" id="fhDermaPrincipioActivo" placeholder="Ej. Secukinumab, Adalimumab..."></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaVia">Vía de administración</label><select class="form-select" id="fhDermaVia"><option value="">Seleccionar…</option><option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option></select></div><div class="form-group"><label for="fhDermaPauta">Intervalo / pauta</label><select class="form-select" id="fhDermaPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhDermaPautaOtro" placeholder="Especificar otra pauta"></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhDermaInduccion">Inducción solicitada</label><select class="form-select" id="fhDermaInduccion"><option value="no">No</option><option value="si" selected>Sí</option></select><div class="search-card__hint">No realizar inducción puede implicar uso fuera de ficha técnica según fármaco/indicación.</div></div><div class="form-group"><label for="fhDermaPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhDermaPeso" placeholder="Ej. 72 kg"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaInduccion">Inducción solicitada</label><select class="form-select" id="fhDermaInduccion"><option value="">No informado</option><option value="no">No</option><option value="si">Sí</option></select><div class="search-card__hint">No realizar inducción puede implicar uso fuera de ficha técnica según fármaco/indicación.</div></div><div class="form-group"><label for="fhDermaPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhDermaPeso" placeholder="Ej. 72 kg"></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaJustificacion">Justificación clínica</label><textarea class="form-textarea" id="fhDermaJustificacion" rows="3"></textarea></div><div class="form-group"><label for="fhDermaObservaciones">Observaciones del servicio origen</label><textarea class="form-textarea" id="fhDermaObservaciones" rows="2"></textarea></div><div class="form-group hidden"><label for="fhDermaAnalitica">Analítica / vacunación (compat)</label><textarea class="form-textarea" id="fhDermaAnalitica" rows="2"></textarea></div></div>
 </section>
 
@@ -329,8 +329,23 @@
 
     <section class="validation-module" id="modTratamientoValidado">
         <h3 class="card-title"><i class="fas fa-check-circle"></i> Tratamiento validado por Farmacia</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhValidatedTreatmentRelation">Relación con el tratamiento solicitado</label>
+                <select class="form-select" id="fhValidatedTreatmentRelation">
+                    <option value="">No informado</option>
+                    <option value="same_as_requested">Igual al solicitado</option>
+                    <option value="modified_from_requested">Modificado respecto al solicitado</option>
+                    <option value="no_treatment_validated">No se valida tratamiento</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Acción explícita</label>
+                <button type="button" class="btn btn-outline" id="btnValidateRequestedSame">Validar tratamiento solicitado sin cambios</button>
+            </div>
+        </div>
         <div class="catalog-note-badge">
-            <i class="fas fa-info-circle"></i> Precargado desde catalogo - editable por Farmacia
+            <i class="fas fa-info-circle"></i> Selección de catálogo con propuesta regulatoria editable por Farmacia
         </div>
         <div class="form-grid">
             <div class="form-group">
@@ -369,6 +384,7 @@
             <div class="form-group">
                 <label for="fhValidadoInduccion">Induccion</label>
                 <select class="form-select" id="fhValidadoInduccion">
+                    <option value="">No informado</option>
                     <option value="no">No</option>
                     <option value="si">Si</option>
                 </select>
@@ -552,7 +568,8 @@
     </section>
 
     <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
-    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
+    <div class="form-grid form-grid--full hidden" id="fhValPendingReasonRow"><div class="form-group"><label for="fhValPendingReason">Motivo / información pendiente</label><textarea class="form-textarea" id="fhValPendingReason" rows="2"></textarea></div></div>
+    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación</label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Otras observaciones del acto de validación</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
     <!-- WO8.1c.12: módulos-nav eliminado -->
 
@@ -570,7 +587,9 @@
             <script src="scripts/farmacia_common.js?v=20260730-cima-contextless-p0"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
             <script src="scripts/farmacia_validacion_model.js?v=20260612-data-import-a"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260730-validation-manual-requested-clone-p0"></script>
+    <script src="scripts/farmacia_export_v2_core.js?v=2.0.0-draft.1"></script>
+    <script src="scripts/farmacia_export_v2_validation_adapter.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260802-export-v2-validation-adapter-01"></script>
     <script src="scripts/farmacia_evaluation_ledger.js?v=20260801-ledger-01"></script>
         </body>
         </html>
