@@ -6,7 +6,7 @@
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado de la rama | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Base Git publicada de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
 | Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
@@ -42,7 +42,7 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| HEAD publicado | `68b5383762f3ae747f567d49df2e80118c38fe16` | Incluye PR #195 a #205 |
+| Base Git publicada de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` | Incluye PR #195 a #207; PR #207 es documental |
 | Último bundle funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` | QA pública focal de flujo y Excel Primera Visita: PASS |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
@@ -96,6 +96,7 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #200 — workbook técnico | #201 | `25c751657f18f5825ad92144c3140a8736d6664f` | Workbook de 11 hojas; no Excel Bridge operativo |
 | #202 — realineación de flujo | #203 | `6dcedff4c1b4ac60b79d0e7d3951aaebe9f6ae5e` | Flujo normal sin cohorte ficticia visible; QA pública PASS |
 | #204 — Excel Primera Visita | #205 | `68b5383762f3ae747f567d49df2e80118c38fe16` | CIP y acto visible correctos; QA pública focal PASS |
+| #206 — reconciliación del contrato export v2 | #207 | `2f54c4ec80ed201a4026b374b711eb7572faa367` | Documentación de fila común v2 y Excel Bridge; sin cambio funcional |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -172,6 +173,7 @@ Evidencia técnica de promoción:
 - Primera Visita exporta el CIP y el acto visibles; no usa fallback demo.
 - Seguimiento continúa exportando hoy una fila por línea dispensada. La evolución a fila por línea activa está aprobada documentalmente, pero no implementada.
 - La fila común de 61 columnas sigue vigente en runtime y debe evolucionar a v2 antes del Excel Bridge operativo.
+- La secuencia WO1–WO9 y la primera WO técnica se documentan en la edición de 2026-08-02; todavía no están implementadas.
 - Ninguno de estos cambios acredita piloto real.
 
 ---

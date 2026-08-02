@@ -2,14 +2,16 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-08-01 |
+| Última actualización | 2026-08-02 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado Farmacia | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Base Git publicada de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3` |
-| Rama documental de esta edición | `work/fh-export-contract-v2-reconciliation-01-20260801` |
+| Rama documental de esta edición | `work/fh-export-v2-sequence-wo1-docs-20260802` |
 
 > Este índice orienta. La verdad funcional procede del código publicado, el manifest del despliegue, el estado vivo y los contratos relacionados. No convierte propuestas arquitectónicas en capacidades implementadas.
+
+> La PR que publique esta edición generará un merge SHA posterior. Por ello se registra la base Git de la edición y, por separado, el último SHA que modificó código funcional; el HEAD actual se verifica siempre en GitHub.
 
 ---
 
@@ -17,9 +19,11 @@
 
 1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — estado publicado actual, trazabilidad, QA y feedback de Farmacia.
 2. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan operativo 2026-07-31 a 2026-08-15.
-3. [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md) — arquitectura objetivo V4 por planos.
-4. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — roadmap post-SES y relación V4/V4.5/V5.
-5. [`AGENTS.md`](/AGENTS.md) — reglas operativas de agentes y Git.
+3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia WO1–WO9 y gates de revisión.
+4. [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — primera WO técnica, todavía no ejecutada.
+5. [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md) — arquitectura objetivo V4 por planos.
+6. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — roadmap post-SES y relación V4/V4.5/V5.
+7. [`AGENTS.md`](/AGENTS.md) — reglas operativas de agentes y Git.
 
 Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md).
 
@@ -65,7 +69,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Base Git de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
 | Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | Fuente funcional del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
@@ -164,6 +168,8 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; incluido en la fuente funcional promovida a `CÁCERES-REVIEW-0.3`.
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
 - [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
+- [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — orden exacto WO1–WO9
+- [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1`; no implementado
 - El contrato de escenarios Farmacia V4 citado en ediciones previas no está publicado en `recovery`; su incorporación formal permanece pendiente.
 
 ### Historia y auditoría
@@ -275,4 +281,4 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 ---
 
-*Edición reconciliada por `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`. No autoriza código, datos reales, piloto, producción, FHIR/openEHR ni Identity Plane operativo.*
+*Edición ampliada por `WO-DOC-FH-EXPORT-V2-SEQUENCE-WO1-01`. La documentación de una WO no autoriza su ejecución, ni datos reales, piloto, producción, FHIR/openEHR o Identity Plane operativo.*
