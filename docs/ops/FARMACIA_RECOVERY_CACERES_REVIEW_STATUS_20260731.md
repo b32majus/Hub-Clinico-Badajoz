@@ -2,12 +2,12 @@
 
 | Metadato | Valor |
 |---|---|
-| Fecha de reconciliación | 2026-08-01 |
+| Fecha de reconciliación | 2026-08-02 |
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| Base Git publicada de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
-| Último SHA funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Base Git publicada de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
+| Último SHA funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
@@ -31,7 +31,9 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la fusión de los quick wins de Validación mediante PR #193;
 - la reconciliación documental y promoción a `CÁCERES-REVIEW-0.3` mediante PR #195/#197;
 - la incorporación y posterior realineación del ledger/workbook sintético mediante PR #199/#201/#203;
-- la corrección P0 de la verdad Excel de Primera Visita mediante PR #205.
+- la corrección P0 de la verdad Excel de Primera Visita mediante PR #205;
+- la publicación de la secuencia WO1–WO9 mediante PR #209;
+- la publicación del núcleo canónico Export v2 mediante PR #211.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -42,8 +44,8 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| Base Git publicada de esta edición | `2f54c4ec80ed201a4026b374b711eb7572faa367` | Incluye PR #195 a #207; PR #207 es documental |
-| Último bundle funcional regional | `68b5383762f3ae747f567d49df2e80118c38fe16` | QA pública focal de flujo y Excel Primera Visita: PASS |
+| Base Git publicada de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Incluye PR #195 a #211; PR #209 es documental y PR #211 publica el core no cableado |
+| Último bundle funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Core Export v2 con tests contractuales PASS; sin integración HTML, navegador o Excel |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
@@ -97,6 +99,8 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #202 — realineación de flujo | #203 | `6dcedff4c1b4ac60b79d0e7d3951aaebe9f6ae5e` | Flujo normal sin cohorte ficticia visible; QA pública PASS |
 | #204 — Excel Primera Visita | #205 | `68b5383762f3ae747f567d49df2e80118c38fe16` | CIP y acto visible correctos; QA pública focal PASS |
 | #206 — reconciliación del contrato export v2 | #207 | `2f54c4ec80ed201a4026b374b711eb7572faa367` | Documentación de fila común v2 y Excel Bridge; sin cambio funcional |
+| #208 — secuencia Export v2 y WO1 | #209 | `5e9b59ba36dc7760f4529deece33248922ce0b9a` | Secuencia WO1–WO9 publicada; sin cambio funcional |
+| #210 — núcleo canónico Export v2 | #211 | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Core candidate `2.0.0-draft.1`, 152 columnas y roundtrip TSV; no cableado |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -172,9 +176,11 @@ Evidencia técnica de promoción:
 - El flujo público vuelve a ser Paciente → acto → salidas normales, con persistencia local subordinada y discreta.
 - Primera Visita exporta el CIP y el acto visibles; no usa fallback demo.
 - Seguimiento continúa exportando hoy una fila por línea dispensada. La evolución a fila por línea activa está aprobada documentalmente, pero no implementada.
-- La fila común de 61 columnas sigue vigente en runtime y debe evolucionar a v2 antes del Excel Bridge operativo.
-- La secuencia WO1–WO9 y la primera WO técnica se documentan en la edición de 2026-08-02; todavía no están implementadas.
-- Ninguno de estos cambios acredita piloto real.
+- La fila común de 61 columnas sigue vigente como única salida pública del runtime.
+- El core Export v2 candidate `2.0.0-draft.1` existe en código y está publicado desde PR #211, con 152 columnas, schemas y roundtrip TSV contractual.
+- El core no está referenciado por HTML ni conectado a Validación, Primera Visita, Seguimiento, CSV, TXT JARA o Excel.
+- La secuencia WO1–WO9 está publicada; WO2–WO4 permanecen pendientes de implementación.
+- Ninguno de estos cambios acredita QA de navegador/Excel, piloto real o producción.
 
 ---
 

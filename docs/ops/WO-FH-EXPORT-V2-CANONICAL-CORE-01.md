@@ -5,12 +5,12 @@
 **Prioridad:** P1 estructural previa al Export Manager v2
 **Riesgo:** 🟡 Amarillo
 **Base remota:** `origin/recovery/farmacia-pr-replay-20260727`
-**Base Git publicada verificada al redactar:** `2f54c4ec80ed201a4026b374b711eb7572faa367`
-**Último SHA con cambio funcional:** `68b5383762f3ae747f567d49df2e80118c38fe16`
-**Base de ejecución:** resolver y registrar el HEAD remoto exacto después de fusionar la documentación de secuencia; debe incluir esta WO y descender de `2f54c4ec...`
+**Base de ejecución efectiva:** `5e9b59ba36dc7760f4529deece33248922ce0b9a`
+**Commit funcional:** `7109b5f1a9411793666e1e1f239e3ac25ce9437e`
+**Merge publicado:** `6ac041f8d5faa445140b32a7daccd3724dac3529`
 **Rama propuesta:** `work/fh-export-v2-canonical-core-01-20260802`
 **Intent:** `canonical_contract_core`
-**Estado:** `ready_for_cora_review`
+**Estado:** `merged_not_wired`
 
 ## 1. Objetivo y contexto
 
@@ -601,9 +601,21 @@ BROWSER_QA: N/A — no integration
 INDEPENDENT_REVIEW: APTO — revisión independiente fresca posterior a las correcciones de Cora, sin findings; higiene de las nueve rutas PASS (CRLF-only, sin espacios o tabuladores finales y con exactamente un CRLF final)
 KNOWN_EXCEPTIONS: QA en la aplicación Excel N/A por no existir integración; format de JSON Schema depende del validador consumidor y la validación runtime semántica es autoritativa
 CLINICAL_NONINFERENCE: PASS — no genera IDs/timestamps/demo_flag, no copia solicitado a validado y no crea tratamiento o línea desde nombres
-COMMIT: NOT_CREATED
-PUSH: NOT_DONE
-PR: NOT_CREATED
-MERGE: NOT_DONE
-FINAL_STATUS: READY_FOR_CORA_REVIEW
+COMMIT: 7109b5f1a9411793666e1e1f239e3ac25ce9437e
+PUSH: DONE — work/fh-export-v2-canonical-core-01-20260802
+ISSUE: #210 — CLOSED / COMPLETED
+PR: #211 — MERGED
+MERGE: 6ac041f8d5faa445140b32a7daccd3724dac3529
+PAGES: 30754082136 — SUCCESS
+FINAL_STATUS: MERGED_NOT_WIRED
 ```
+
+## 13. Estado publicado reconciliado — 2026-08-02
+
+- El core candidate `2.0.0-draft.1` existe en código y está publicado en `recovery/farmacia-pr-replay-20260727`.
+- La API, schemas, 152 columnas, fixtures y checker están fusionados mediante PR #211.
+- El core no está cargado por ningún HTML ni conectado a los actos clínicos.
+- Las 61 columnas v1 permanecen como única salida pública.
+- Browser QA y Excel QA continúan como `N/A` para WO1.
+- La aptitud para piloto o producción no está acreditada.
+- El siguiente bloque autorizado es el stack secuencial WO2–WO4, con base en el HEAD que publique la reconciliación documental posterior a WO1.
