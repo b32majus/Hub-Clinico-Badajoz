@@ -4,7 +4,8 @@
 **Fecha:** 2026-08-01
 **WO asociada:** WO8.0 + WO8.0.2 + `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`
 **Estado:** `reconciliado_v4`
-**Base publicada verificada:** `recovery/farmacia-pr-replay-20260727` @ `68b5383762f3ae747f567d49df2e80118c38fe16`
+**Base Git publicada de esta edición:** `recovery/farmacia-pr-replay-20260727` @ `2f54c4ec80ed201a4026b374b711eb7572faa367`
+**Último SHA con cambio funcional:** `68b5383762f3ae747f567d49df2e80118c38fe16`
 
 ---
 
@@ -488,31 +489,42 @@ La migración se realizará desde las entidades validadas del Excel Bridge media
 
 ---
 
-## 14. Decisiones abiertas para la fila v2
+## 14. Decisiones de diseño y gates para la fila v2
 
-- columnas y nombres físicos definitivos;
-- enums de dispensación y revisión;
-- `row_index` y `row_count`;
-- tratamientos relacionados 1:N;
-- múltiples sospechosos y causalidades;
-- suspensión durante la propia visita;
-- actos de Validación/Primera Visita con varias líneas;
-- transición y retirada de las 61 columnas.
+Decisiones funcionales cerradas:
 
-Estas decisiones requieren contrato y ejemplos sintéticos antes de implementar.
+- event schema y row schema tienen versiones independientes;
+- un evento genera `1..N` filas con `row_id` propio;
+- Validación conserva solicitado y validado por separado;
+- Primera Visita usa una única fecha canónica;
+- Seguimiento usa `visita × línea activa`;
+- dispensación y revisión específica son dimensiones independientes;
+- los campos clínicos binarios usan triestado;
+- dominios 1:N se conservarán estructurados y deberán superar un roundtrip TSV sin pérdida.
+
+WO1 fija una candidate técnica `2.0.0-draft.1` de 152 columnas. La candidate no es salida pública ni contrato final hasta superar tests y revisión. Permanecen para WOs posteriores:
+
+- mapeo exacto desde cada formulario;
+- política de compatibilidad y retirada de v1;
+- comportamiento UI de confirmación `same_as_requested`;
+- representación operativa final en el libro Excel;
+- Office Script, vistas `APP_*` y migración PostgreSQL.
 
 ---
 
 ## 15. Secuencia de implementación vigente
 
-1. Reconciliar documentación y contrato — esta WO.
-2. Diseñar evento canónico y fila común v2 con ejemplos de los tres actos.
-3. Mapear las 61 columnas actuales hacia v2 y definir compatibilidad temporal.
-4. Implementar Export Manager v2 desde el evento canónico.
-5. Construir Excel Bridge y Office Script Processor.
-6. Construir vistas `APP_*` y Excel Read Adapter.
-7. Validar roundtrip sintético.
-8. Diseñar PostgreSQL Migrator cuando exista servidor local autorizado.
+1. `WO-FH-EXPORT-V2-CANONICAL-CORE-01` — core, schemas, 152 columnas candidate y roundtrip TSV.
+2. `WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01` — Validación v2 sin cutover.
+3. `WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01` — Primera Visita v2 sin cutover.
+4. `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` — Seguimiento v2 sin cutover.
+5. `WO-FH-EXPORT-V2-CUTOVER-01` — activación pública y compatibilidad.
+6. `WO-FH-EXCEL-BRIDGE-WORKBOOK-01` — libro por hospital.
+7. `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` — procesamiento relacional.
+8. `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` — vistas y roundtrip.
+9. `WO-FH-POSTGRESQL-MIGRATOR-01` — condicionado a servidor autorizado.
+
+WO1 se revisa sola. WO2–WO4 pueden ejecutarse secuencialmente en un mismo worktree con tres commits atómicos y revisión conjunta. WO5 no comienza hasta aprobar el stack. La secuencia detallada vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`.
 
 ### Aclaración histórica de WO8.1b
 
