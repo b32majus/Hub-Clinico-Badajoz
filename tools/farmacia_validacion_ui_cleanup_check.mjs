@@ -62,6 +62,22 @@ check(elementById('fhValExcelExportBtn').includes('Copiar fila Excel FH'), 'Bot�
 check(html.includes('Copia manual; no integración automática'), 'Exportación aclara que no existe integración automática');
 check(js.includes('byId("fhValExportTxt").addEventListener("click"'), 'Handler JARA se conserva');
 check(/fhValExcelExportBtn["'][\s\S]{0,120}addEventListener\(["']click["']/.test(js), 'Handler Excel se conserva');
+check(elementById('btnValidateRequestedSame').includes('Validar tratamiento solicitado sin cambios'), 'Copia solicitado→validado usa el texto operativo exacto');
+check(/id=["']fhValidatedTreatmentRelation["'][\s\S]*value=["']same_as_requested["'][\s\S]*value=["']modified_from_requested["'][\s\S]*value=["']no_treatment_validated["']/.test(html), 'Relación validada ofrece los tres valores canónicos');
+check(elementById('fhValidatedTreatmentRelation').includes('<option value="no_treatment_validated">No se valida tratamiento</option>'), 'No tratamiento validado usa el texto exacto');
+check(html.includes('<label for="fhValPendingReason">Motivo / información pendiente</label>'), 'Motivo pendiente usa la etiqueta exacta y separada');
+const denialReasonRow = elementById('fhValMotivoRow');
+check(tagById('fhValMotivo') !== '', 'Motivo de denegación conserva fhValMotivo');
+check(denialReasonRow.includes('<label for="fhValMotivo">Motivo de denegación</label>'), 'Motivo de denegación conserva la etiqueta exacta');
+check(!/\brequired\b/i.test(denialReasonRow), 'Motivo de denegación no se presenta como obligatorio');
+check(html.includes('Selección de catálogo con propuesta regulatoria editable por Farmacia') && !html.includes('Precargado desde catalogo'), 'Badge describe selección/propuesta editable sin afirmar precarga');
+check(!js.includes('function updateValidadoSummary'), 'No existe precarga automática de tratamiento validado');
+for (const id of ['fhManualInduccion', 'fhDermaInduccion', 'fhValidadoInduccion']) {
+  const markup = (html.match(new RegExp('<select[^>]+id=["\\\']' + id + '["\\\'][^>]*>[\\s\\S]*?<\\/select>', 'i')) || [''])[0];
+  check(/<option value=["']?["']>No informado<\/option>/.test(markup), id + ' comienza sin valor clínico por defecto');
+}
+check(/farmacia_export_v2_core\.js\?v=2\.0\.0-draft\.1[\s\S]*farmacia_export_v2_validation_adapter\.js\?v=1\.0\.0-draft\.1[\s\S]*farmacia_validacion\.js/.test(html), 'Core y adaptador v2 cargan antes del controlador DOM');
+check(!/id=["'][^"']*(?:Export|Download)[^"']*v2/i.test(html), 'No se activa botón o descarga pública v2');
 
 check(/fhReumaFarmaco["'], explicitRequestedDrug\(patient\)/.test(js), 'Vista Reuma usa solo fármaco solicitado explícito');
 const requestedSummary = js.match(/function requestedTreatmentSummary\(\)[\s\S]*?\n    \}/);

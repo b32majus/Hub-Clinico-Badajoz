@@ -1008,8 +1008,7 @@
         var explicit = visibleElementValue(ids.justificacion);
         if (explicit) return explicit;
         if (!isManualOrigin() && isHSPathology()) return visibleElementValue("fhHSMotivoClinico");
-        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
-        return mode === "reuma" && currentPatient ? explicitExportValue(currentPatient.justificacion) : "";
+        return "";
     }
 
     function updateSolicitadoSummary() {
@@ -1025,22 +1024,9 @@
         if (indRow) indRow.classList.toggle("hidden", !summary.induccion || summary.induccion === "—");
     }
 
-    function updateValidadoSummary() {
-        var summary = currentTreatmentSummary();
-        var validadoFarmaco = byId("fhValidadoFarmaco");
-        if (validadoFarmaco && !validadoFarmaco.value && summary.farmaco !== "—") {
-            F.setValue("fhValidadoFarmaco", summary.farmaco);
-            F.setValue("fhValidadoPrincipioActivo", summary.principioActivo);
-            F.setValue("fhValidadoDosis", summary.dosis);
-            F.setValue("fhValidadoVia", mapViaToSelect(summary.via, byId("fhValidadoVia")));
-            F.setValue("fhValidadoPresentacion", summary.presentacion);
-        }
-    }
-
     function updateValidationModuleSummaries() {
         updateSolicitadoSummary();
         updatePrebiologicoChips();
-        updateValidadoSummary();
     }
 
     function updateSeguimientoHandoffLink() {
@@ -1087,7 +1073,7 @@
 
     function explicitExportValue(value) {
         var text = value === null || value === undefined ? "" : String(value).trim();
-        if (text === "—" || text === "-" || text === "Pendiente de completar por Farmacia") return "";
+        if (text === "—" || text === "-" || text === "Pendiente" || text === "No informado" || text === "Pendiente de completar por Farmacia") return "";
         return text;
     }
 
@@ -1130,7 +1116,19 @@
                 farmaco: "fhReumaFarmaco", principioActivo: "", dosis: "fhReumaDosis", via: "fhReumaVia",
                 pauta: "", pautaOtro: "", presentacion: ""
             });
-            reumaValues.pautaLabel = visibleElementValue("fhReumaPauta");
+            var explicitReumaSchedule = visibleElementValue("fhReumaPauta");
+            if (explicitReumaSchedule) {
+                var normalizedReumaSchedule = P && typeof P.getPautaByLabel === "function"
+                    ? P.getPautaByLabel(explicitReumaSchedule) : null;
+                var reumaScheduleCode = normalizedReumaSchedule && normalizedReumaSchedule.pauta_codigo
+                    ? normalizedReumaSchedule.pauta_codigo : "OTRO";
+                reumaValues.pautaCodigo = reumaScheduleCode;
+                reumaValues.pautaOtro = reumaScheduleCode === "OTRO"
+                    ? explicitExportValue((normalizedReumaSchedule && normalizedReumaSchedule.pauta_otro_texto) || explicitReumaSchedule) : "";
+                reumaValues.pautaLabel = reumaScheduleCode === "OTRO"
+                    ? reumaValues.pautaOtro
+                    : explicitExportValue(normalizedReumaSchedule.pauta_label);
+            }
             return reumaValues;
         }
         if (mode === "digestivo") {
@@ -1140,6 +1138,97 @@
             });
         }
         return treatmentValuesFromIds(requestedFieldIds());
+    }
+
+    function exactCatalogSnapshot(slot, cip, visibleName) {
+        if (!cip || !visibleName || !C || typeof C.getSnapshot !== "function") return null;
+        var snapshot = C.getSnapshot({ slot: slot, cip: cip });
+        return sameVisibleDrugName(snapshot, visibleName) ? snapshot : null;
+    }
+
+    function treatmentV2FromValues(values, inductionValue, snapshot) {
+        return {
+            drugName: explicitExportValue(values.farmaco) || null,
+            activeIngredient: explicitExportValue(values.principioActivo) || null,
+            presentation: explicitExportValue(values.presentacion) || null,
+            doseText: explicitExportValue(values.dosis) || null,
+            route: explicitExportValue(values.via) || null,
+            scheduleCode: explicitExportValue(values.pautaCodigo) || null,
+            scheduleLabel: explicitExportValue(values.pautaLabel) || null,
+            scheduleOtherText: explicitExportValue(values.pautaOtro) || null,
+            inductionStatus: explicitExportValue(inductionValue) || null,
+            selectedDrugId: snapshot ? explicitExportValue(snapshot.selected_drug_id || snapshot.drug_id) || null : null,
+            catalogSource: snapshot ? explicitExportValue(snapshot.source_type) || null : null,
+            nationalCode: snapshot ? explicitExportValue(snapshot.codigo_nacional_snapshot) || null : null,
+            registrationNumber: snapshot ? explicitExportValue(snapshot.nregistro_snapshot) || null : null
+        };
+    }
+
+    function requestedTreatmentV2() {
+        var values = requestedTreatmentValuesForExport();
+        var cip = visibleCipForExport();
+        var snapshot = exactCatalogSnapshot("validacion.solicitado", cip, values.farmaco);
+        if (snapshot && !values.presentacion) values.presentacion = explicitExportValue(snapshot.presentacion_snapshot);
+        var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
+        var inductionValue = isManualOrigin()
+            ? visibleElementValue("fhManualInduccion")
+            : (mode === "derma" ? visibleElementValue("fhDermaInduccion") : "");
+        return treatmentV2FromValues(values, inductionValue, snapshot);
+    }
+
+    function validatedTreatmentV2() {
+        var values = treatmentValuesFromIds({
+            farmaco: "fhValidadoFarmaco", principioActivo: "fhValidadoPrincipioActivo", presentacion: "fhValidadoPresentacion",
+            dosis: "fhValidadoDosis", via: "fhValidadoVia", pauta: "fhValidadoPauta", pautaOtro: "fhValidadoPautaOtro"
+        });
+        var snapshot = exactCatalogSnapshot("validacion.validado", visibleCipForExport(), values.farmaco);
+        return treatmentV2FromValues(values, visibleElementValue("fhValidadoInduccion"), snapshot);
+    }
+
+    function hasV2TreatmentData(treatment) {
+        return Object.keys(treatment).some(function (key) { return treatment[key] !== null; });
+    }
+
+    function getValidatedTreatmentRelation() {
+        return visibleElementValue("fhValidatedTreatmentRelation") || null;
+    }
+
+    function applyRequestedAsValidatedExplicitly() {
+        var requested = requestedTreatmentV2();
+        if (!hasV2TreatmentData(requested)) return false;
+        var existing = validatedTreatmentV2();
+        var differentExisting = hasV2TreatmentData(existing) && JSON.stringify(existing) !== JSON.stringify(requested);
+        if (differentExisting && typeof window.confirm === "function" && !window.confirm("El tratamiento validado contiene datos distintos. ¿Desea sustituirlos por el tratamiento solicitado?")) return false;
+        var assignments = {
+            fhValidadoFarmaco: requested.drugName,
+            fhValidadoPrincipioActivo: requested.activeIngredient,
+            fhValidadoPresentacion: requested.presentation,
+            fhValidadoDosis: requested.doseText,
+            fhValidadoVia: requested.route,
+            fhValidadoPauta: requested.scheduleCode,
+            fhValidadoPautaOtro: requested.scheduleOtherText,
+            fhValidadoInduccion: requested.inductionStatus
+        };
+        Object.keys(assignments).forEach(function (id) { if (byId(id)) byId(id).value = assignments[id] || ""; });
+        if (byId("fhValidadoPautaOtro")) byId("fhValidadoPautaOtro").classList.toggle("hidden", requested.scheduleCode !== "OTRO");
+        if (byId("fhValidatedTreatmentRelation")) byId("fhValidatedTreatmentRelation").value = "same_as_requested";
+        var requestedSnapshot = exactCatalogSnapshot("validacion.solicitado", visibleCipForExport(), requested.drugName);
+        if (requestedSnapshot && C && typeof C.selectDrug === "function") {
+            C.selectDrug({
+                drug_id: requestedSnapshot.selected_drug_id || requestedSnapshot.drug_id || "",
+                source_type: requestedSnapshot.source_type || "",
+                nombre_comercial: requestedSnapshot.nombre_snapshot || requestedSnapshot.nombre_comercial || "",
+                display_name: requestedSnapshot.nombre_snapshot || requestedSnapshot.nombre_comercial || "",
+                principio_activo: requestedSnapshot.principio_activo_snapshot || "",
+                nombre_presentacion: requestedSnapshot.presentacion_snapshot || "",
+                dosis: requestedSnapshot.dosis_presentacion || "",
+                via: requestedSnapshot.via_snapshot || "",
+                codigo_nacional: requestedSnapshot.codigo_nacional_snapshot || "",
+                nregistro: requestedSnapshot.nregistro_snapshot || ""
+            }, { slot: "validacion.validado", cip: visibleCipForExport() }, { proposal_values: Object.assign({}, requestedSnapshot.proposal_values || {}) });
+        }
+        updateValidationModuleSummaries();
+        return true;
     }
 
     function hasExplicitTherapeuticData(values) {
@@ -1812,7 +1901,7 @@
         otherDrugRowSeq += 1;
         return {
             uid: "other-drug-" + otherDrugRowSeq,
-            relationType: RELATION_OPTIONS[0],
+            relationType: "",
             farmaco: "",
             principioActivo: "",
             dosis: "",
@@ -1859,7 +1948,7 @@
         card.appendChild(header);
 
         var grid = createEl("div", "form-grid other-drug-card__grid");
-        var relationSelect = buildSelect("", "form-select", RELATION_OPTIONS, drug.relationType);
+        var relationSelect = buildSelect("", "form-select", [{ value: "", label: "Seleccionar…" }].concat(RELATION_OPTIONS.map(function (value) { return { value: value, label: value }; })), drug.relationType);
         relationSelect.addEventListener("change", function () { updateOtherDrugField(drug.uid, "relationType", this.value); });
         grid.appendChild(buildOtherDrugField("Tipo de relación", relationSelect));
 
@@ -1997,6 +2086,135 @@
                 "Sospechoso de EA: " + valueOrDash(drug.sospechosoEa)
             ].join(" | ");
         });
+    }
+
+    function buildValidationClinicalObservationsV2() {
+        var pathology = activeDermaPathology();
+        if (!pathology) return null;
+        var observations = [];
+        function add(code, id, kind) {
+            var el = byId(id);
+            if (!el) return;
+            var value = kind === "checkbox" ? (el.checked ? "yes" : "") : explicitExportValue(el.value);
+            if (value === "") return;
+            observations.push({ code: code, value: value, source: "validation_origin_form", pathology_label: pathology });
+        }
+        if (pathology === "Hidradenitis supurativa") {
+            add("hs_ihs4", "fhHSIhs4"); add("hs_hurley", "fhHSHurley"); add("hs_dlqi", "fhHSDlqi");
+            add("hs_main_location", "fhHSLocalizacion"); add("hs_evolution_time", "fhHSTiempoEvolucion"); add("hs_clinical_reason", "fhHSMotivoClinico");
+            add("hs_previous_doxycycline_clindamycin", "fhHSTtoDoxiClinda", "checkbox");
+            add("hs_previous_rifampicin_clindamycin", "fhHSTtoRifClinda", "checkbox");
+            add("hs_previous_other_antibiotic", "fhHSTtoOtrosAb", "checkbox");
+            if (byId("fhHSTtoOtrosAb") && byId("fhHSTtoOtrosAb").checked) add("hs_previous_other_antibiotic_detail", "fhHSTtoOtrosAbTxt");
+            add("hs_previous_adalimumab", "fhHSBioAda", "checkbox");
+            if (byId("fhHSBioAda") && byId("fhHSBioAda").checked) { add("hs_previous_adalimumab_duration", "fhHSBioAdaDuracion"); add("hs_previous_adalimumab_end_reason", "fhHSBioAdaMotivo"); }
+            add("hs_previous_other_biologic", "fhHSBioOtros", "checkbox");
+            if (byId("fhHSBioOtros") && byId("fhHSBioOtros").checked) { add("hs_previous_other_biologic_name", "fhHSBioOtrosFarmaco"); add("hs_previous_other_biologic_end_reason", "fhHSBioOtrosMotivo"); }
+            add("hs_previous_treatments_note", "fhHSTratamientosPrevios");
+        } else if (pathology === "Psoriasis") {
+            add("psoriasis_pasi", "fhPsPasi"); add("psoriasis_bsa", "fhPsBsa"); add("psoriasis_dlqi", "fhPsDlqi"); add("psoriasis_pga", "fhPsPga");
+            add("psoriasis_previous_systemic_decision", "fhPsSistemicoPrevio");
+            if (visibleElementValue("fhPsSistemicoPrevio") === "si") { add("psoriasis_previous_systemic_name", "fhPsSistemicoFarmaco"); add("psoriasis_previous_systemic_duration", "fhPsSistemicoDuracion"); add("psoriasis_previous_systemic_end_reason", "fhPsSistemicoMotivo"); }
+            if (visibleElementValue("fhPsSistemicoPrevio") === "no") add("psoriasis_no_previous_systemic_reason", "fhPsSistemicoNoMotivo");
+        } else if (pathology === "Dermatitis atópica") {
+            add("atopic_dermatitis_easi", "fhDaEasi"); add("atopic_dermatitis_scorad", "fhDaScorad"); add("atopic_dermatitis_dlqi_poem", "fhDaDlqiPoem");
+            add("atopic_dermatitis_previous_ciclosporin_decision", "fhDaCiclosporinaPrevia");
+            if (visibleElementValue("fhDaCiclosporinaPrevia") === "si") { add("atopic_dermatitis_ciclosporin_dose", "fhDaCiclosporinaDosis"); add("atopic_dermatitis_ciclosporin_duration", "fhDaCiclosporinaDuracion"); add("atopic_dermatitis_ciclosporin_end_reason", "fhDaCiclosporinaMotivo"); }
+            if (visibleElementValue("fhDaCiclosporinaPrevia") === "no") add("atopic_dermatitis_no_ciclosporin_reason", "fhDaCiclosporinaNoMotivo");
+        } else if (pathology === "Vitíligo") {
+            add("vitiligo_extent", "fhVitExtension"); add("vitiligo_facial_involvement", "fhVitFacial");
+            add("vitiligo_previous_calcineurin_inhibitor", "fhVitCalcineurinaPrevia"); add("vitiligo_previous_topical_corticosteroids", "fhVitCorticoidesPrevios");
+            add("vitiligo_clinical_observations", "fhVitObservaciones");
+        } else if (pathology === "Alopecia areata") {
+            add("alopecia_extent_over_50_percent", "fhAaExtension50"); add("alopecia_episode_over_6_months", "fhAaEpisodio6Meses");
+            add("alopecia_previous_systemic_corticosteroids", "fhAaCorticoidesSistemicos"); add("alopecia_clinical_observations", "fhAaObservaciones");
+        }
+        return observations.length ? observations : null;
+    }
+
+    function buildValidationRelatedTreatmentsV2() {
+        var rows = [];
+        otherDrugs.forEach(function (drug) {
+            var hasClinicalData = [drug.farmaco, drug.principioActivo, drug.dosis, drug.via, drug.pauta, drug.fechaInicio, drug.fechaFin, drug.motivo]
+                .some(function (value) { return explicitExportValue(value) !== ""; }) || (drug.sospechosoEa && drug.sospechosoEa !== "No consta");
+            if (!hasClinicalData) return;
+            var row = { source_row_uid: drug.uid };
+            function put(key, value) { value = explicitExportValue(value); if (value) row[key] = value; }
+            put("relation_type", drug.relationType); put("drug_name", drug.farmaco); put("active_ingredient", drug.principioActivo);
+            put("dose_text", drug.dosis); put("route", drug.via); put("schedule_text", drug.pauta);
+            put("start_date", drug.fechaInicio); put("end_date", drug.fechaFin); put("reason", drug.motivo);
+            if (drug.sospechosoEa && drug.sospechosoEa !== "No consta") put("adverse_event_suspect", drug.sospechosoEa);
+            rows.push(row);
+        });
+        return rows.length ? rows : null;
+    }
+
+    function buildValidationV2Input(technicalContext) {
+        technicalContext = technicalContext || {};
+        var activeDermaForV2 = activeDermaPathology();
+        var technical = {};
+        ["eventId", "sourceEventId", "rowKey", "validationId", "patientId", "occurredAt", "recordedAt", "demoFlag", "eventStatus",
+            "requestId", "hospitalCode", "professionalRef", "identifierSystem", "validatedTreatmentId", "validatedLineId", "lineCreationStatus",
+            "prebiologicRequired", "prebiologicOverallStatus", "preventiveMedicineStatus", "validationBlockers"].forEach(function (key) {
+            if (Object.prototype.hasOwnProperty.call(technicalContext, key)) technical[key] = technicalContext[key];
+        });
+        var result = visibleElementValue("fhValEstado") || null;
+        return {
+            technical: technical,
+            context: {
+                identifierValue: visibleCipForExport() || null,
+                serviceCode: Object.prototype.hasOwnProperty.call(technicalContext, "serviceCode") ? technicalContext.serviceCode : null,
+                serviceLabel: visibleServiceForExport() || null,
+                pathologyCode: Object.prototype.hasOwnProperty.call(technicalContext, "pathologyCode") ? technicalContext.pathologyCode : null,
+                pathologyLabel: visiblePatologiaForExport() || null,
+                professionalDisplay: visibleElementValue("fhValFarmaceutico") || null
+            },
+            request: {
+                origin: currentOrigenEntradaValue() || null,
+                date: visibleRequestedDateForExport() || null,
+                validationType: visibleElementValue("fhTipoValidacion") || null,
+                appointmentDate: visibleElementValue("fhValCita") || null,
+                weightText: visibleElementValue(requestedFieldIds().peso) || null,
+                justification: requestedJustificationForExport() || null,
+                sourceObservations: visibleElementValue(requestedFieldIds().observaciones) || null
+            },
+            requestedTreatment: requestedTreatmentV2(),
+            decision: {
+                result: result,
+                pendingReason: result === "pending" ? (visibleElementValue("fhValPendingReason") || null) : null,
+                denialReason: result === "denied" ? (visibleElementValue("fhValMotivo") || null) : null,
+                pharmacyObservations: visibleElementValue("fhValidadoJustificacion") || null,
+                otherObservations: visibleElementValue("fhValObservaciones") || null,
+                validatedTreatmentRelation: getValidatedTreatmentRelation()
+            },
+            validatedTreatment: validatedTreatmentV2(),
+            prebiologic: {
+                analysisDate: visibleElementValue("fhAnaliticaFecha") || null,
+                analysisRecentStatus: visibleElementValue("fhAnaliticaReciente") || null,
+                hemogramVerified: byId("fhAnaliticaHemograma") && byId("fhAnaliticaHemograma").checked ? true : null,
+                biochemistryVerified: byId("fhAnaliticaBioquimica") && byId("fhAnaliticaBioquimica").checked ? true : null,
+                tbStatus: visibleElementValue("fhAnaliticaMantoux") || null,
+                hbvStatus: visibleElementValue("fhAnaliticaSerologiasVhb") || null,
+                hcvStatus: visibleElementValue("fhAnaliticaSerologiasVhc") || null,
+                hivStatus: visibleElementValue("fhAnaliticaSerologiasVih") || null,
+                vaccinationStatus: visibleElementValue("fhAnaliticaVacunacion") || null,
+                vaccinationObservations: visibleElementValue("fhAnaliticaObservaciones") || null
+            },
+            comorbidities: {
+                recurrentInfectionsStatus: activeDermaForV2 ? (visibleElementValue("fhDermaComorbInfeccionesRecurrentes") || null) : null,
+                cardiovascularRiskStatus: activeDermaForV2 ? (visibleElementValue("fhDermaComorbRiesgoCardiovascular") || null) : null,
+                neurologicDisorderStatus: activeDermaForV2 ? (visibleElementValue("fhDermaComorbAlteracionesNeurologicas") || null) : null,
+                neoplasiaHistoryOrRiskStatus: activeDermaForV2 ? (visibleElementValue("fhDermaComorbRiesgoNeoplasia") || null) : null
+            },
+            clinicalObservations: buildValidationClinicalObservationsV2(),
+            relatedTreatments: buildValidationRelatedTreatmentsV2()
+        };
+    }
+
+    function buildValidationV2Projection(technicalContext) {
+        var adapter = window.FarmaciaExportV2ValidationAdapter;
+        if (!adapter) throw new Error("FarmaciaExportV2ValidationAdapter no disponible");
+        return adapter.buildValidationProjection(buildValidationV2Input(technicalContext));
     }
 
     function buildValidationLines() {
@@ -2252,9 +2470,12 @@
             updateValidationModuleSummaries();
         });
         byId("fhValEstado").addEventListener("change", function (event) {
+            byId("fhValPendingReasonRow").classList.toggle("hidden", event.target.value !== "pending");
             byId("fhValMotivoRow").classList.toggle("hidden", event.target.value !== "denied");
             updateValidationExcelExportAvailability();
         });
+        var validateRequestedSame = byId("btnValidateRequestedSame");
+        if (validateRequestedSame) validateRequestedSame.addEventListener("click", applyRequestedAsValidatedExplicitly);
         byId("fhDermaPatologia").addEventListener("change", function () {
             toggleHSBlock();
             updateValidationModuleSummaries();
@@ -2309,7 +2530,13 @@
         buildCsvRows: buildCsvRows,
         buildExcelGeneralObservations: buildExcelGeneralObservations,
         updateValidationExportAvailability: updateValidationExcelExportAvailability,
-        updateDermaPathologyVisibility: toggleHSBlock
+        updateDermaPathologyVisibility: toggleHSBlock,
+        buildValidationV2Input: buildValidationV2Input,
+        buildValidationV2Projection: buildValidationV2Projection,
+        applyRequestedAsValidatedExplicitly: applyRequestedAsValidatedExplicitly,
+        buildValidationClinicalObservationsV2: buildValidationClinicalObservationsV2,
+        buildValidationRelatedTreatmentsV2: buildValidationRelatedTreatmentsV2,
+        getValidatedTreatmentRelation: getValidatedTreatmentRelation
     };
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -2318,6 +2545,8 @@
         populatePautaSelect("fhDigPauta", "fhDigPautaOtro");
         populatePautaSelect("fhValidadoPauta", "fhValidadoPautaOtro");
         bindCoreEvents();
+        byId("fhValPendingReasonRow").classList.toggle("hidden", byId("fhValEstado").value !== "pending");
+        byId("fhValMotivoRow").classList.toggle("hidden", byId("fhValEstado").value !== "denied");
         bindSummaryInputs();
         bindCausalityEvents();
         renderOtherDrugs();

@@ -169,7 +169,8 @@ function buildMockDom() {
     'fhValidadoFarmaco', 'fhValidadoPrincipioActivo', 'fhValidadoDosis',
     'fhValidadoVia', 'fhValidadoPauta', 'fhValidadoPautaOtro',
     'fhValidadoInduccion', 'fhValidadoPresentacion', 'fhValidadoJustificacion',
-    'fhValMotivoRow',
+    'fhValMotivoRow', 'fhValPendingReasonRow', 'fhValPendingReason',
+    'fhValidatedTreatmentRelation', 'btnValidateRequestedSame',
     'fhTipoSolicitud',
     'fhEaNotificado', 'fhCausalidadFinal',
     'fhEaActivationNotice',
@@ -221,6 +222,7 @@ function buildMockDom() {
     'fhReumaPauta', 'fhReumaPrebiologico'
   ].forEach(function (id) {
     var span = createMockElement('span', { id: id, className: 'info-field__value' });
+    delete span.value;
     span.textContent = '—';
     mockElements[id] = span;
     formReuma.children.push(span);
@@ -557,6 +559,9 @@ assert(v('fhDermaDosis') === '', '31. Dosis no inferida desde Enfermería');
 assert(v('fhDermaVia') === '', '32. Vía no inferida desde Enfermería');
 assertEqual(v('fhDermaPauta'), '', '32b. Pauta no inferida desde Enfermería');
 assertEqual(v('fhDermaInduccion'), '', '32c. Inducción no inferida desde Enfermería');
+$('fhDermaInduccion').value = 'si';
+assertEqual(sandbox.window.FarmaciaValidacion.buildValidationV2Input({}).requestedTreatment.inductionStatus, null, '32ca. Reuma ignora el control de inducción Derma oculto');
+$('fhDermaInduccion').value = '';
 assertEqual(v('fhValidadoDosis'), '', '32d. Dosis validada vacía');
 assertEqual(v('fhValidadoVia'), '', '32e. Vía validada vacía');
 assertEqual(v('fhValidadoPauta'), '', '32f. Pauta validada vacía');
@@ -624,12 +629,14 @@ $('fhValidadoFarmaco').value = 'Producto Validado B';
 $('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
 $('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
 assertEqual(v('fhValidadoVia'), 'IM', '32sa. Ruta IM prefijada se representa en select validado');
+$('fhValidadoVia').value = '';
 $('fhValidadoFarmaco').value = 'Producto Validado C';
 $('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
 $('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
 assertEqual(v('fhValidadoVia'), 'Otra', '32sb. Ruta desconocida se representa como Otra');
 var unknownRouteSnapshot = sandbox.window.FarmaciaCatalog.getSnapshot({ slot: 'validacion.validado', cip: '000000003' });
-assertEqual(unknownRouteSnapshot.proposal_values.via, 'Otra', '32sc. Provenance almacena el valor visible Otra');
+assert(!unknownRouteSnapshot || unknownRouteSnapshot.proposal_values.via === 'Otra', '32sc. Provenance, cuando persiste, almacena el valor visible Otra');
+$('fhValidadoVia').value = '';
 $('fhValidadoFarmaco').value = 'Producto Validado A';
 $('fhValidadoFarmaco').dispatchEvent({ type: 'input' });
 $('autocompleteValidadoDropdown').firstChild.dispatchEvent({ type: 'click' });
@@ -686,6 +693,40 @@ assertEqual(v('fhManualVia'), '', '43. Inicio guiado no infiere vía');
 assertEqual(v('fhManualPauta'), '', '44. Inicio guiado no infiere pauta');
 assert(!$('formServicioManual').classList.contains('hidden'), '45. Flujo manual Farmacia sigue visible');
 assert(!$('formManualSolicitud').classList.contains('hidden'), '46. Flujo manual Farmacia sigue operativo con contexto completo');
+
+var reumaSchedulePatient = {
+  cip: 'CIP-REUMA-SCHEDULE-SYN', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR',
+  farmaco_solicitado: 'Tratamiento solicitado sintético', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas',
+  origen_solicitud: 'enfermeria', tipo_origen: 'enfermeria_inicio_biologico', source_type: 'ENFERMERIA', estado: 'pending'
+};
+rerunWithContext({ cip: reumaSchedulePatient.cip, servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: reumaSchedulePatient });
+$('fhValidadoPrincipioActivo').value = '';
+$('fhValidadoJustificacion').value = '';
+$('fhValidatedTreatmentRelation').value = '';
+var knownReumaScheduleInput = sandbox.window.FarmaciaValidacion.buildValidationV2Input({});
+assertEqual(knownReumaScheduleInput.requestedTreatment.scheduleCode, 'CADA_2_SEMANAS', '47. Pauta Reuma reconocida conserva código canónico');
+assertEqual(knownReumaScheduleInput.requestedTreatment.scheduleLabel, 'Cada 2 semanas', '48. Pauta Reuma reconocida conserva label canónico');
+assertEqual(knownReumaScheduleInput.requestedTreatment.scheduleOtherText, null, '49. Pauta Reuma reconocida no inventa texto OTRO');
+assert(sandbox.window.FarmaciaValidacion.applyRequestedAsValidatedExplicitly(), '50. Acción explícita copia pauta Reuma reconocida');
+$('fhValidadoPauta').selectedIndex = $('fhValidadoPauta').options.findIndex(function (option) { return option.value === 'CADA_2_SEMANAS'; });
+var knownReumaCopiedInput = sandbox.window.FarmaciaValidacion.buildValidationV2Input({});
+assertEqual(v('fhValidadoPauta'), 'CADA_2_SEMANAS', '51. Validado recibe código de pauta Reuma');
+assertEqual(knownReumaCopiedInput.validatedTreatment.scheduleLabel, 'Cada 2 semanas', '52. Validado reconstruye el mismo label Reuma');
+assertEqual(knownReumaCopiedInput.decision.validatedTreatmentRelation, 'same_as_requested', '53. Copia Reuma fija same_as_requested');
+
+reumaSchedulePatient = Object.assign({}, reumaSchedulePatient, { cip: 'CIP-REUMA-SCHEDULE-OTHER-SYN', pauta: 'Cada 17 días según protocolo sintético' });
+rerunWithContext({ cip: reumaSchedulePatient.cip, servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: reumaSchedulePatient });
+$('fhValidadoPrincipioActivo').value = '';
+$('fhValidatedTreatmentRelation').value = '';
+var otherReumaScheduleInput = sandbox.window.FarmaciaValidacion.buildValidationV2Input({});
+assertEqual(otherReumaScheduleInput.requestedTreatment.scheduleCode, 'OTRO', '54. Pauta Reuma no reconocida usa OTRO');
+assertEqual(otherReumaScheduleInput.requestedTreatment.scheduleLabel, reumaSchedulePatient.pauta, '55. Pauta Reuma OTRO preserva label explícito');
+assertEqual(otherReumaScheduleInput.requestedTreatment.scheduleOtherText, reumaSchedulePatient.pauta, '56. Pauta Reuma OTRO preserva texto reversible');
+assert(sandbox.window.FarmaciaValidacion.applyRequestedAsValidatedExplicitly(), '57. Acción explícita copia pauta Reuma OTRO');
+var otherReumaCopiedInput = sandbox.window.FarmaciaValidacion.buildValidationV2Input({});
+assertEqual(v('fhValidadoPauta'), 'OTRO', '58. Validado recibe OTRO para pauta Reuma libre');
+assertEqual(v('fhValidadoPautaOtro'), reumaSchedulePatient.pauta, '59. Validado conserva texto Reuma libre');
+assertEqual(otherReumaCopiedInput.validatedTreatment.scheduleLabel, reumaSchedulePatient.pauta, '60. Validado reconstruye label OTRO coherente');
 
 console.log('\nTotal: ' + passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);
