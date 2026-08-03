@@ -610,11 +610,11 @@ PAGES: 30754082136 — SUCCESS
 FINAL_STATUS: MERGED_NOT_WIRED
 ```
 
-## 13. Estado publicado reconciliado — 2026-08-03
+## 13. Estado publicado reconciliado — 2026-08-04
 
 - El core candidate `2.0.0-draft.1` existe en código y está publicado en `recovery/farmacia-pr-replay-20260727`.
 - La API, schemas, 152 columnas, fixtures y checker están fusionados mediante PR #211.
-- El core está integrado en recovery y es consumido internamente por los adaptadores de Validación (PR #215) y Primera Visita (PR #217), cargados antes del bridge DOM.
+- El core está integrado en recovery y es consumido internamente por los adaptadores de Validación (PR #215), Primera Visita (PR #217) y Seguimiento (PR #221), cargados antes del bridge DOM.
 - No existe salida pública v2 ni cutover; las 61 columnas v1 permanecen como única salida pública preservada.
 - Browser QA y Excel QA continúan como `N/A` para WO1.
 - La aptitud para piloto o producción no está acreditada: el core por sí solo no constituye un circuito v2 completo apto para piloto real.

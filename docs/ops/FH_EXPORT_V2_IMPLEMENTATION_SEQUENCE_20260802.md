@@ -6,9 +6,9 @@
 | Estado | `approved_functional_sequence` |
 | Rama base | `recovery/farmacia-pr-replay-20260727` |
 | Base Git publicada al aprobar | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
-| Último SHA con cambio funcional | `c42eeceffa7a3a9b751576d3338d11132f10b3f0` |
+| Último SHA con cambio funcional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` |
 | Contrato previo | `docs/farmacia_export_longitudinal_contract_WO8.md` v3 |
-| Reconciliación documental | 2026-08-03 — `WO-FH-EXPORT-V2-ADAPTERS-DOC-RECONCILIATION-01` |
+| Reconciliación documental | 2026-08-03 — `WO-FH-EXPORT-V2-ADAPTERS-DOC-RECONCILIATION-01`; 2026-08-04 — `WO-FH-EXPORT-V2-FOLLOWUP-DOC-RECONCILIATION-01` |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
@@ -41,17 +41,17 @@ La secuencia diferencia:
 | 8 | `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` | Vistas `APP_*`, lectura y roundtrip sintético | E2E independiente |
 | 9 | `WO-FH-POSTGRESQL-MIGRATOR-01` | Migración Excel Bridge → PostgreSQL local | Condicionada a servidor autorizado |
 
-## 2bis. Estado publicado — 2026-08-03
+## 2bis. Estado publicado — 2026-08-04
 
 | Orden | Work Order | Estado | Trazabilidad |
 |---:|---|---|---|
 | 1 | `WO-FH-EXPORT-V2-CANONICAL-CORE-01` | Integrada en recovery | PR #211, commit `7109b5f1...`, merge `6ac041f8...` |
 | 2 | `WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01` | `MERGED_AND_VERIFIED` | PR #215, commit `1fcd9e4a...`, merge `17426f60...` |
 | 3 | `WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01` | `MERGED_AND_VERIFIED` | PR #217, commit `c42eecef...`, merge `c45b7d13...` |
-| 4 | `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` | Futura, no iniciada | — |
+| 4 | `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` | `MERGED_AND_VERIFIED` | PR #221, commit `8b7372ac...`, merge `b9f27e96...` |
 | 5–9 | `WO-FH-EXPORT-V2-CUTOVER-01` a `WO-FH-POSTGRESQL-MIGRATOR-01` | Futuras, no iniciadas | — |
 
-Los adaptadores de Validación y Primera Visita están integrados como infraestructura interna: no existe salida pública v2 ni cutover, y la salida pública v1 de 61 columnas permanece preservada. WO4 y las siguientes permanecen futuras y no iniciadas; esta sección no redefine su alcance, prioridad ni diseño.
+Los adaptadores de Validación, Primera Visita y Seguimiento están integrados como infraestructura interna mediante las PR #215, #217 y #221: no existe salida pública v2 ni cutover, y la salida pública v1 de 61 columnas permanece preservada. WO5 y las siguientes permanecen futuras y no iniciadas; esta sección no redefine su alcance, prioridad ni diseño.
 
 ## 3. Frontera de WO1
 
@@ -103,6 +103,8 @@ WO5 solo puede comenzar cuando estén demostrados:
 - bloques 1:N serializados y recuperados sin pérdida;
 - ninguna inferencia desde nombres, catálogo o ausencia;
 - salidas v1 todavía intactas durante WO2–WO4.
+
+WO2–WO4 están integradas y verificadas individualmente. Antes de iniciar WO5 debe cerrarse explícitamente el gate conjunto previo al cutover y aprobarse una WO5 ejecutable; la fusión de las tres WOs no declara por sí sola cerrado ese gate.
 
 ## 6. Decisiones funcionales ya cerradas
 
@@ -168,4 +170,4 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 
 ## 8. Próxima acción
 
-WO1–WO3 ya están integradas en recovery (ver sección 2bis); no existe en este documento una instrucción vigente de ejecutar WO1. WO4 y las siguientes permanecen futuras y no iniciadas; su alcance se definirá en su WO autorizada, sin redefinirlo aquí.
+WO1–WO4 ya están integradas en recovery (ver sección 2bis); no existe en este documento una instrucción vigente de ejecutar WO1. WO5 (`WO-FH-EXPORT-V2-CUTOVER-01`) y las siguientes permanecen futuras y no iniciadas, sin manifest ni autorización de ejecución; su alcance se definirá en su WO autorizada, sin redefinirlo aquí.
