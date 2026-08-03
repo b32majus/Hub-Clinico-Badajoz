@@ -67,6 +67,16 @@ const treatmentSectionPos = html.indexOf('Tratamiento validado por Farmacia');
 const farmacoPos = html.indexOf('id="fhPvFarmaco"');
 assert(treatmentSectionPos !== -1 && farmacoPos > treatmentSectionPos, 'el bloque editable de tratamiento está en la tarjeta de tratamiento validado');
 assert(html.includes('scripts/farmacia_tratamiento_common.js'), 'Primera visita carga FarmaciaTratamiento');
+assert(countMatches(html, /<input[^>]+type="date"/g) === 1, 'Primera visita mantiene un único control de fecha canónica');
+for (const id of ['fhPvInduccionRealizada', 'fhPvEstratificacion', 'fhPvProms']) {
+  const markup = (html.match(new RegExp(`<select[^>]+id="${id}"[\\s\\S]*?<\\/select>`)) || [''])[0];
+  assert(/<option value="">No informado<\/option>/.test(markup), `${id} comienza en No informado`);
+}
+const coreScriptPos = html.indexOf('scripts/farmacia_export_v2_core.js');
+const adapterScriptPos = html.indexOf('scripts/farmacia_export_v2_first_visit_adapter.js');
+const pageScriptPos = html.indexOf('scripts/farmacia_primera_visita.js');
+assert(coreScriptPos !== -1 && coreScriptPos < adapterScriptPos && adapterScriptPos < pageScriptPos, 'core y adaptador v2 cargan antes del bridge de Primera Visita');
+assert(!/<button[^>]*>[^<]*v2/i.test(html) && !/download[^>]*v2/i.test(html), 'Primera visita no publica botón ni descarga v2');
 
 // WO7D.1: no debe existir tarjeta azul informativa
 assert(!html.includes('fhPvTreatmentNotice'), 'no existe la tarjeta azul informativa');
@@ -128,6 +138,7 @@ vm.runInContext(js, sandbox);
 const api = sandbox.window.FarmaciaPrimeraVisita;
 assert(api && typeof api.buildPrimaryTreatmentFromContext === 'function', 'FarmaciaPrimeraVisita expone API de tratamiento');
 assert(api && typeof api.buildFirstVisitExcelExport === 'function', 'FarmaciaPrimeraVisita expone el adaptador público Excel de primera visita');
+assert(api && ['buildFirstVisitV2Input', 'buildFirstVisitV2Projection', 'buildFirstVisitPromsV2', 'buildFirstVisitVisibleLineV2'].every((name) => typeof api[name] === 'function'), 'FarmaciaPrimeraVisita expone los cuatro builders internos v2');
 assert(api && typeof api.searchCIP === 'function' && typeof api.setActivePatientCip === 'function', 'Primera visita exposes testable guarded CIP search');
 assert(sandbox.window.FarmaciaTratamiento, 'FarmaciaTratamiento está disponible en el entorno cargado');
 if (api && typeof api.searchCIP === 'function') {

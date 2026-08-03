@@ -5,6 +5,8 @@
     var P = window.FarmaciaPautasCatalog;
     var pvAutocompleteActiveIndex = -1;
     var activePatientCip = '';
+    var evaDolorInteractedV2 = false;
+    var evaPruritoInteractedV2 = false;
     var SWITCH_MESSAGE = 'Vas a cambiar de paciente. Se limpiarán los datos no guardados de esta pantalla. ¿Quieres continuar?';
 
     function isTruthyRobust(value) {
@@ -616,11 +618,13 @@
         var pruritoValue = document.getElementById('fhPvEvaPruritoValue');
         if (dolorRange && dolorValue) {
             dolorRange.addEventListener('input', function () {
+                evaDolorInteractedV2 = true;
                 dolorValue.textContent = this.value;
             });
         }
         if (pruritoRange && pruritoValue) {
             pruritoRange.addEventListener('input', function () {
+                evaPruritoInteractedV2 = true;
                 pruritoValue.textContent = this.value;
             });
         }
@@ -782,6 +786,8 @@
         F.setValue('fhPvCip', requestedCip);
         ['fhPvServicioOtro', 'fhPvPatologiaOtro', 'fhPvPautaOtro', 'fhPvPromsExpanded'].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.add('hidden'); });
         ['fhPvEvaDolorRange', 'fhPvEvaPruritoRange'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = '0'; });
+        evaDolorInteractedV2 = false;
+        evaPruritoInteractedV2 = false;
         F.setText && F.setText('fhPvEvaDolorValue', '0');
         F.setText && F.setText('fhPvEvaPruritoValue', '0');
         F.setText && F.setText('fhPvDlqiTotal', '—');
@@ -908,7 +914,18 @@
         var context = firstVisitCatalogContext();
         var contextValid = typeof C.snapshotContextKey !== 'function' || Boolean(C.snapshotContextKey(context));
         var previous = contextValid && typeof C.getSnapshot === 'function' ? C.getSnapshot(context) : null;
-        var current = getCurrentPrimaryTreatment();
+        var current = normalizePrimaryTreatment({
+            paciente_cip: fv('fhPvCip'),
+            farmaco_nombre: fv('fhPvFarmaco'),
+            nombre_comercial: fv('fhPvFarmaco'),
+            dosis_texto: fv('fhPvDosis'),
+            presentacion: fv('fhPvDosis'),
+            via: fv('fhPvVia'),
+            pauta: getPautaLabelForExport(),
+            tipo_relacion: resolvePrimaryRelation(getCurrentContext()),
+            es_principal: true,
+            fuente: 'primera_visita'
+        }, { paciente_cip: fv('fhPvCip'), fuente: 'primera_visita' });
         var reconciled = helper && typeof helper.reconcileCatalogSelection === 'function'
             ? helper.reconcileCatalogSelection(current, previous, drug, context.slot)
             : { values: buildPrimaryTreatmentFromSelection(drug), proposal_values: {} };
@@ -925,7 +942,9 @@
         }), { paciente_cip: context.cip, fuente: 'primera_visita' });
         setTreatmentForm(treatment);
         applyTratamientoValidado(getCurrentContext());
-        if (contextValid && typeof C.selectDrug === 'function') C.selectDrug(drug, context, reconciled);
+        if (contextValid && typeof C.selectDrug === 'function') {
+            C.selectDrug(assignObjects({}, drug, { nombre_comercial: fv('fhPvFarmaco') }), context, reconciled);
+        }
 
         clearDrugAutocompleteDropdown();
     }
@@ -1190,10 +1209,142 @@
         };
     }
 
+    function visibleSelectLabel(id) {
+        var select = document.getElementById(id);
+        if (!select || !select.value) return null;
+        var option = select.options && select.options[select.selectedIndex];
+        return option ? String(option.textContent || option.text || '').trim() || null : null;
+    }
+
+    function explicitV2Value(value) {
+        if (value === null || value === undefined) return null;
+        var text = String(value).trim();
+        return text && text !== '—' && text !== 'No informado' ? text : null;
+    }
+
+    function exactVisibleCatalogSnapshotV2() {
+        var catalog = getCatalog();
+        var cip = fv('fhPvCip');
+        var visibleName = fv('fhPvFarmaco');
+        if (!catalog || !cip || !visibleName || typeof catalog.getSnapshot !== 'function') return null;
+        var expectedContext = { slot: 'primera_visita.tratamiento', cip: cip };
+        var snapshot = catalog.getSnapshot(expectedContext);
+        if (!snapshot || !snapshot.context) return null;
+        if (snapshot.context.slot !== expectedContext.slot || normalizeCipForComparison(snapshot.context.cip) !== normalizeCipForComparison(cip)) return null;
+        var snapshotName = explicitV2Value(snapshot.nombre_snapshot || snapshot.nombre_comercial);
+        return snapshotName === visibleName ? snapshot : null;
+    }
+
+    function buildFirstVisitPromsV2() {
+        var adapter = window.FarmaciaExportV2FirstVisitAdapter;
+        var status = adapter.normalizeTriState(fv('fhPvProms'));
+        if (status !== 'yes') return null;
+        var proms = [];
+        var answers = [];
+        var dlqiTotal = 0;
+        DLQI_QUESTIONS.forEach(function (question) {
+            var answer = getDLQIAnswer(question);
+            if (!answer) return;
+            var score = Number(answer.score);
+            answers.push({ item: question.id, score: score, response: answer.text });
+            dlqiTotal += score;
+        });
+        if (answers.length) {
+            proms.push({ instrument: 'DLQI', value: dlqiTotal, complete: answers.length === DLQI_QUESTIONS.length, answeredCount: answers.length, answers: answers });
+        }
+        if (evaDolorInteractedV2) {
+            proms.push({ instrument: 'EVA_DOLOR', value: Number(fv('fhPvEvaDolorRange')), complete: true, answeredCount: 1, answers: null });
+        }
+        if (evaPruritoInteractedV2) {
+            proms.push({ instrument: 'EVA_PRURITO', value: Number(fv('fhPvEvaPruritoRange')), complete: true, answeredCount: 1, answers: null });
+        }
+        return proms;
+    }
+
+    function buildFirstVisitVisibleLineV2(lineContext) {
+        if (!lineContext || Object.prototype.toString.call(lineContext) !== '[object Object]' || Array.isArray(lineContext)) {
+            throw new Error('Primera Visita v2 requiere exactamente un lineContext para la línea visible.');
+        }
+        var allowedLineContext = ['rowKey', 'treatmentId', 'lineId', 'lineRole', 'isPrimaryLine', 'lineStatusAtEvent', 'activeAtEvent'];
+        var unknownLineContext = Object.keys(lineContext).filter(function (field) { return allowedLineContext.indexOf(field) === -1; });
+        if (unknownLineContext.length) throw new Error('lineContext contiene campos no admitidos: ' + unknownLineContext.join(', ') + '.');
+        var visiblePresentationDose = explicitV2Value(fv('fhPvDosis'));
+        var snapshot = exactVisibleCatalogSnapshotV2();
+        var snapshotPresentation = snapshot ? explicitV2Value(snapshot.presentacion_snapshot) : null;
+        var isExactPresentation = Boolean(snapshotPresentation && visiblePresentationDose === snapshotPresentation);
+        var scheduleCode = explicitV2Value(fv('fhPvPauta'));
+        return {
+            rowKey: lineContext.rowKey,
+            treatmentId: lineContext.treatmentId,
+            lineId: lineContext.lineId,
+            lineRole: lineContext.lineRole,
+            isPrimaryLine: lineContext.isPrimaryLine,
+            lineStatusAtEvent: lineContext.lineStatusAtEvent,
+            activeAtEvent: lineContext.activeAtEvent,
+            drugName: explicitV2Value(fv('fhPvFarmaco')),
+            activeIngredient: snapshot ? explicitV2Value(snapshot.principio_activo_snapshot) : null,
+            presentation: isExactPresentation ? snapshotPresentation : null,
+            doseText: visiblePresentationDose && !isExactPresentation ? visiblePresentationDose : null,
+            route: explicitV2Value(fv('fhPvVia')),
+            scheduleCode: scheduleCode,
+            scheduleLabel: scheduleCode ? explicitV2Value(visibleSelectLabel('fhPvPauta')) : null,
+            scheduleOtherText: scheduleCode === 'OTRO' ? explicitV2Value(fv('fhPvPautaOtro')) : null,
+            selectedDrugId: snapshot ? explicitV2Value(snapshot.selected_drug_id || snapshot.drug_id) : null,
+            catalogSource: snapshot ? explicitV2Value(snapshot.source_type) : null,
+            nationalCode: snapshot ? explicitV2Value(snapshot.codigo_nacional_snapshot) : null,
+            registrationNumber: snapshot ? explicitV2Value(snapshot.nregistro_snapshot) : null
+        };
+    }
+
+    function buildFirstVisitV2Input(technicalContext) {
+        if (!technicalContext || Object.prototype.toString.call(technicalContext) !== '[object Object]' || Array.isArray(technicalContext)) {
+            throw new Error('Primera Visita v2 requiere contexto técnico explícito.');
+        }
+        if (!Object.prototype.hasOwnProperty.call(technicalContext, 'lineContext') || !technicalContext.lineContext || Array.isArray(technicalContext.lineContext)) {
+            throw new Error('Primera Visita v2 requiere exactamente un lineContext; no se admiten cero ni múltiples líneas DOM.');
+        }
+        var allowedTechnicalContext = ['eventId', 'sourceEventId', 'firstVisitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus', 'hospitalCode', 'professionalRef', 'identifierSystem', 'lineContext'];
+        var unknownTechnicalContext = Object.keys(technicalContext).filter(function (field) { return allowedTechnicalContext.indexOf(field) === -1; });
+        if (unknownTechnicalContext.length) throw new Error('El contexto técnico de Primera Visita v2 contiene campos no admitidos: ' + unknownTechnicalContext.join(', ') + '.');
+        var technical = {};
+        ['eventId', 'sourceEventId', 'firstVisitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus', 'hospitalCode', 'professionalRef', 'identifierSystem'].forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(technicalContext, field)) technical[field] = technicalContext[field];
+        });
+        var adapter = window.FarmaciaExportV2FirstVisitAdapter;
+        return {
+            technical: technical,
+            context: {
+                identifierValue: explicitV2Value(fv('fhPvCip')),
+                serviceCode: null,
+                serviceLabel: explicitV2Value(resolveVisibleOtherValue('fhPvServicio', 'fhPvServicioOtro', 'Otro')),
+                pathologyCode: null,
+                pathologyLabel: explicitV2Value(resolveVisibleOtherValue('fhPvPatologia', 'fhPvPatologiaOtro', 'Otra')),
+                professionalDisplay: explicitV2Value(document.getElementById('currentProfessional') && document.getElementById('currentProfessional').textContent)
+            },
+            visit: {
+                firstVisitDate: explicitV2Value(fv('fhPvFecha')),
+                inductionPerformedStatus: adapter.normalizeTriState(fv('fhPvInduccionRealizada')),
+                stratificationLevel: explicitV2Value(fv('fhPvEstratificacion')),
+                baselinePromsCollectionStatus: adapter.normalizeTriState(fv('fhPvProms')),
+                pharmacyVisitNotes: explicitV2Value(fv('fhPvNotas'))
+            },
+            proms: buildFirstVisitPromsV2(),
+            lines: [buildFirstVisitVisibleLineV2(technicalContext.lineContext)]
+        };
+    }
+
+    function buildFirstVisitV2Projection(technicalContext) {
+        return window.FarmaciaExportV2FirstVisitAdapter.buildFirstVisitProjection(buildFirstVisitV2Input(technicalContext));
+    }
+
     window.FarmaciaPrimeraVisita = {
         buildPrimaryTreatmentFromContext: buildPrimaryTreatmentFromContext,
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
         buildFirstVisitExcelExport: buildFirstVisitExcelExport,
+        buildFirstVisitV2Input: buildFirstVisitV2Input,
+        buildFirstVisitV2Projection: buildFirstVisitV2Projection,
+        buildFirstVisitPromsV2: buildFirstVisitPromsV2,
+        buildFirstVisitVisibleLineV2: buildFirstVisitVisibleLineV2,
         getCurrentPrimaryTreatment: getCurrentPrimaryTreatment,
         searchCIP: searchCIP,
         initDrugAutocomplete: initDrugAutocomplete,

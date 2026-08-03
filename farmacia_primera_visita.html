@@ -134,8 +134,8 @@
         <div class="info-grid" id="fhPvTratamientoGrid"></div>
     </section>
 <section class="dashboard-card"><h2 class="section-title"><i class="fas fa-notes-medical"></i> Registro de primera visita</h2>
-    <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / administración</label><input type="date" class="form-control" id="fhPvFecha"></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option>No</option><option>Sí</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvFecha">Fecha primera visita / inicio / primera dispensación o administración</label><input type="date" class="form-control" id="fhPvFecha"><small>Fecha canónica única del circuito de Primera Visita.</small></div><div class="form-group"><label for="fhPvInduccionRealizada">¿Se realiza inducción?</label><select class="form-select" id="fhPvInduccionRealizada"><option value="">No informado</option><option>Sí</option><option>No</option></select></div><div class="form-group"><label for="fhPvEstratificacion">Estratificación</label><select class="form-select" id="fhPvEstratificacion"><option value="">No informado</option><option>Nivel 1</option><option>Nivel 2</option><option>Nivel 3</option></select></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhPvProms">PROMs basales</label><select class="form-select" id="fhPvProms"><option value="">No informado</option><option>No</option><option>Sí</option></select></div></div>
 <div id="fhPvPromsExpanded" class="hidden">
     <h3 class="card-title card-title--tight"><i class="fas fa-clipboard-list"></i> PROMs — DLQI y EVA basal</h3>
     <div class="proms-block" id="fhPvDlqiBlock">
@@ -178,6 +178,8 @@
             <script src="scripts/farmacia_common.js?v=20260730-cima-contextless-p0"></script>
             <script src="scripts/farmacia_tratamiento_common.js?v=20260614-wo7c2"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
+    <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
+    <script src="scripts/farmacia_export_v2_first_visit_adapter.js?v=20260803-first-visit-adapter"></script>
     <script src="scripts/farmacia_primera_visita.js?v=20260730-cima-contextless-p0"></script>
     <script src="scripts/farmacia_evaluation_ledger.js?v=20260801-ledger-01"></script>
         </body>
