@@ -1,5 +1,16 @@
 # WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01 — reporte de implementación
 
+## Estado publicado
+
+- **Estado:** `MERGED_AND_VERIFIED`
+- **Issue:** #214 — CLOSED
+- **PR:** #215 — MERGED
+- **Commit funcional:** `1fcd9e4a32dda768c84f7c1fd9952fd2df19641d`
+- **Merge SHA:** `17426f608400bf80bbb593dc6778993849069d80`
+- **Rama base:** `recovery/farmacia-pr-replay-20260727`
+
+El adaptador está integrado en la rama recovery como infraestructura interna sobre el core `2.0.0-draft.1`. Los tests y la QA descritos en este reporte corresponden al candidate publicado por la PR #215 (smoke-check GitHub: SUCCESS). La integración no constituye despliegue, uso clínico real ni validación en piloto: no existe salida pública v2, no hay cutover y el circuito v2 completo no es apto todavía para piloto real.
+
 ## Resultado implementado
 
 - Adaptador puro de Validación v2 `1.0.0-draft.1` sobre el core `2.0.0-draft.1`.
@@ -21,7 +32,7 @@ Sobre el candidate previo `DIFF_SHA256 072abdd093437a77cbef65d15b78ac0cc579c0919
 - `created|updated`, solo bajo `validated`, exigen ambos IDs; los estados sin creación siguen permitidos sin IDs.
 - El checker cubre explícitamente combinaciones válidas e inválidas de cada fila de la matriz, incluida la no-identificación por dosis/metadatos.
 
-Esta sección registra una **corrección derivada de la revisión Cora**. No afirma revisión final, conformidad `APTO` ni promoción del candidate; quedan pendientes de la evidencia de ejecución y de la revisión final correspondiente.
+Esta sección registra una **corrección derivada de la revisión Cora** aplicada al candidate publicado por la PR #215. No afirma despliegue, uso clínico real ni validación en piloto; la integración permanece como infraestructura interna sin salida pública v2 ni cutover.
 
 ## Límites deliberados
 

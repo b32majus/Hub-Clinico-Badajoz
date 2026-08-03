@@ -6,9 +6,13 @@
 - **SHA base/HEAD inicial:** `17426f608400bf80bbb593dc6778993849069d80`
 - **Rama:** `work/fh-export-v2-first-visit-adapter-01-20260803`
 - **Riesgo:** P1 ámbar, clínico-estructural
-- **Estado de entrega:** `READY_FOR_CORA_REVIEW`
+- **Estado:** `MERGED_AND_VERIFIED`
+- **Issue:** #216 — CLOSED
+- **PR:** #217 — MERGED
+- **Commit funcional:** `c42eeceffa7a3a9b751576d3338d11132f10b3f0`
+- **Merge SHA:** `c45b7d13d4de7d145087333b2c11d3e9d2135dd3`
 
-La base, rama, worktree limpio y manifest autorizado se verificaron antes de editar. No se realizó stage, commit, push, issue, PR, merge, publicación ni despliegue.
+La base, rama, worktree limpio y manifest autorizado se verificaron antes de editar. En la fase candidate no se realizó stage, commit, push, issue, PR ni merge; la publicación posterior se realizó mediante la PR #217 (issue #216). Los tests y la QA descritos en este reporte corresponden al candidate publicado (smoke-check GitHub: SUCCESS). La integración es infraestructura interna: no existe salida pública v2, no hay cutover y no constituye despliegue, uso clínico real ni validación en piloto.
 
 ## Implementado
 
@@ -54,11 +58,11 @@ Chromium real con servidor HTTP efímero y datos sintéticos cubre los 14 criter
 
 Solo se intercepta la frontera de portapapeles Excel para inspeccionar la salida. No se fabrican estados DOM imposibles.
 
-## No publicado y limitaciones
+## Sin salida pública y limitaciones
 
 - Sin cutover: ningún botón, descarga o salida pública consume v2.
 - La UI sigue representando una sola línea; el soporte `1..N` está en el adaptador puro y sus fixtures sintéticos.
-- No apto para piloto real. Requiere revisión Cora y una WO posterior de publicación/cutover.
+- No apto para piloto real como circuito v2 completo. La salida pública v1 de 61 columnas permanece preservada; la publicación/cutover v2 requerirá una WO posterior.
 - No se modificaron core, schemas, helpers comunes, catálogo, exportador v1, storage, manifests, índices ni estados.
 
 ## Reversión
