@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-08-02
+**Última actualización:** 2026-08-03
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,11 +11,11 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| Base Git de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
-| Último SHA funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
+| Base Git de esta edición | `c45b7d13d4de7d145087333b2c11d3e9d2135dd3` |
+| Último SHA funcional regional | `c42eeceffa7a3a9b751576d3338d11132f10b3f0` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PASS focal de realineación y Excel Primera Visita; core v2 con tests contractuales PASS, sin QA de navegador/Excel ni piloto |
+| QA pública regional del HEAD actual | PASS focal de realineación y Excel de Primera Visita; core y adaptadores internos con tests contractuales y smoke-check PASS (PR #215/#217); WO3 con QA Chromium y regresión v1 de 61 columnas PASS; sin salida pública v2, cutover, QA integral del circuito v2 ni validación en piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -28,6 +28,7 @@
 | Símbolo | Estado |
 |---|---|
 | ✅ Merged | Incorporada a la rama base |
+| ✅ MERGED_AND_VERIFIED | Fusionada en recovery y verificada (issue cerrado, PR fusionada, checks PASS); infraestructura interna sin salida pública v2 |
 | 📋 Ready for review | Publicada en rama de trabajo y pendiente de revisión/merge |
 | 🔄 Superseded | Sustituida funcional o documentalmente por otra WO |
 | 🟢 Validated | Validada en una candidata histórica no integrada |
@@ -103,12 +104,14 @@
 | **WO-FH-FIRST-VISIT-EXCEL-TRUTH-P0-01** | Verdad del Excel de Primera Visita | ✅ Merged | `work/fh-first-visit-excel-truth-p0-01-20260801` | merge `68b53837...` (PR #205, issue #204) | CIP/acto visible; 61 columnas; QA pública PASS |
 | **WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01** | Reconciliar contrato export v2 | ✅ Merged | `work/fh-export-contract-v2-reconciliation-01-20260801` | merge `2f54c4ec...` (PR #207, issue #206) | Fila común v2, grano por línea activa y componentes del Bridge documentados |
 | **WO-DOC-FH-EXPORT-V2-SEQUENCE-WO1-01** | Secuencia WO1–WO9 y WO1 técnica | ✅ Merged | `work/fh-export-v2-sequence-wo1-docs-20260802` | merge `5e9b59ba...` (PR #209, issue #208) | Siete rutas documentales; no añadió capacidad funcional |
-| **WO-FH-EXPORT-V2-CANONICAL-CORE-01** | Núcleo canónico fila v2 | ✅ Merged | `work/fh-export-v2-canonical-core-01-20260802` | commit `7109b5f1...`, merge `6ac041f8...` (PR #211, issue #210) | 152 columnas candidate y roundtrip TSV; existe en código, no está cableado |
-| **WO-DOC-FH-EXPORT-V2-CORE-MERGE-RECONCILIATION-01** | Reconciliar publicación de WO1 | 📋 Ready for review | `work/doc-fh-export-v2-core-merge-reconciliation-01-20260802` | commit/PR pendiente | Cinco rutas documentales; prepara el HEAD del stack WO2–WO4 |
+| **WO-FH-EXPORT-V2-CANONICAL-CORE-01** | Núcleo canónico fila v2 | ✅ Merged | `work/fh-export-v2-canonical-core-01-20260802` | commit `7109b5f1...`, merge `6ac041f8...` (PR #211, issue #210) | 152 columnas candidate y roundtrip TSV; integrado en recovery y consumido internamente por los adaptadores; sin salida pública v2 |
+| **WO-DOC-FH-EXPORT-V2-CORE-MERGE-RECONCILIATION-01** | Reconciliar publicación de WO1 | ✅ Merged | `work/doc-fh-export-v2-core-merge-reconciliation-01-20260802` | commit `ed1cb13a...`, merge `f46d99a0...` (PR #213, issue #212) | Cinco rutas documentales; reconcilió la publicación del core; superada como estado actual por la reconciliación de adaptadores de 2026-08-03 |
+| **WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01** | Adaptador interno de Validación v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-adapters-stack-01-20260802` | commit `1fcd9e4a...`, merge `17426f60...` (PR #215, issue #214) | Infraestructura interna sobre el core; smoke-check PASS; sin salida pública v2 ni cutover |
+| **WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01** | Adaptador interno de Primera Visita v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-first-visit-adapter-01-20260803` | commit `c42eecef...`, merge `c45b7d13...` (PR #217, issue #216) | Infraestructura interna sobre el core; smoke-check PASS; sin salida pública v2 ni cutover |
 
 ### Deuda administrativa de issues
 
-A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208 y #210 están cerrados como `completed`. Esta WO documental no modifica issues históricos.
+A 2026-08-03, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214 y #216 están cerrados como `completed`. Esta WO documental no modifica issues históricos.
 
 ---
 
@@ -154,8 +157,9 @@ A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 
 | Estado | Cantidad |
 |---|---:|
-| ✅ Merged | 56 |
-| 📋 Ready for review | 19 |
+| ✅ Merged | 57 |
+| ✅ MERGED_AND_VERIFIED | 2 |
+| 📋 Ready for review | 18 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
 | 🔄 Superseded | 3 |
@@ -164,6 +168,8 @@ A 2026-08-02, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 82 work orders / preflights gestionadas.
+**Total:** 84 work orders / preflights gestionadas.
+
+Comprobación aritmética de las filas de tabla: 57 + 2 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 84, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.

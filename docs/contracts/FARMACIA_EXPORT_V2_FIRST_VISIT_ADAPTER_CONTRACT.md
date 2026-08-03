@@ -1,6 +1,6 @@
 # Contrato del adaptador Export v2 — Primera Visita de Farmacia
 
-**Estado:** candidato interno, no publicado  
+**Estado:** integrado en la rama recovery como infraestructura interna; sin cutover ni salida pública v2.
 **Adaptador:** `1.0.0-draft.1`  
 **Core requerido:** `FarmaciaExportV2Core` `2.0.0-draft.1`
 

@@ -10,7 +10,7 @@
 **Merge publicado:** `6ac041f8d5faa445140b32a7daccd3724dac3529`
 **Rama propuesta:** `work/fh-export-v2-canonical-core-01-20260802`
 **Intent:** `canonical_contract_core`
-**Estado:** `merged_not_wired`
+**Estado:** integrado en la rama recovery como infraestructura interna; sin cutover ni salida pública v2
 
 ## 1. Objetivo y contexto
 
@@ -610,12 +610,11 @@ PAGES: 30754082136 — SUCCESS
 FINAL_STATUS: MERGED_NOT_WIRED
 ```
 
-## 13. Estado publicado reconciliado — 2026-08-02
+## 13. Estado publicado reconciliado — 2026-08-03
 
 - El core candidate `2.0.0-draft.1` existe en código y está publicado en `recovery/farmacia-pr-replay-20260727`.
 - La API, schemas, 152 columnas, fixtures y checker están fusionados mediante PR #211.
-- El core no está cargado por ningún HTML ni conectado a los actos clínicos.
-- Las 61 columnas v1 permanecen como única salida pública.
+- El core está integrado en recovery y es consumido internamente por los adaptadores de Validación (PR #215) y Primera Visita (PR #217), cargados antes del bridge DOM.
+- No existe salida pública v2 ni cutover; las 61 columnas v1 permanecen como única salida pública preservada.
 - Browser QA y Excel QA continúan como `N/A` para WO1.
-- La aptitud para piloto o producción no está acreditada.
-- El siguiente bloque autorizado es el stack secuencial WO2–WO4, con base en el HEAD que publique la reconciliación documental posterior a WO1.
+- La aptitud para piloto o producción no está acreditada: el core por sí solo no constituye un circuito v2 completo apto para piloto real.

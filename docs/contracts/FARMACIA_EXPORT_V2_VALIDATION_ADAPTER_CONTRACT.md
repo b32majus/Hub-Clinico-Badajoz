@@ -2,7 +2,7 @@
 
 **Adaptador:** `1.0.0-draft.1`
 **Core requerido:** `2.0.0-draft.1`
-**Estado:** integración interna candidata, sin cutover ni salida pública v2.
+**Estado:** integrado en la rama recovery como infraestructura interna; sin cutover ni salida pública v2.
 
 ## Límite
 

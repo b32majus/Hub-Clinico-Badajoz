@@ -6,8 +6,9 @@
 | Estado | `approved_functional_sequence` |
 | Rama base | `recovery/farmacia-pr-replay-20260727` |
 | Base Git publicada al aprobar | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
-| Último SHA con cambio funcional | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| Último SHA con cambio funcional | `c42eeceffa7a3a9b751576d3338d11132f10b3f0` |
 | Contrato previo | `docs/farmacia_export_longitudinal_contract_WO8.md` v3 |
+| Reconciliación documental | 2026-08-03 — `WO-FH-EXPORT-V2-ADAPTERS-DOC-RECONCILIATION-01` |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
@@ -26,6 +27,8 @@ La secuencia diferencia:
 
 ## 2. Secuencia aprobada
 
+> Información histórica (2026-08-02), conservada como aprobación original y superada como estado actual por la sección 2bis.
+
 | Orden | Work Order | Resultado | Revisión |
 |---:|---|---|---|
 | 1 | `WO-FH-EXPORT-V2-CANONICAL-CORE-01` | Schemas, registro de columnas, serialización TSV reversible y validadores comunes | Se revisa sola antes de continuar |
@@ -37,6 +40,18 @@ La secuencia diferencia:
 | 7 | `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` | Office Script Processor idempotente | Revisión propia + QA en Excel |
 | 8 | `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` | Vistas `APP_*`, lectura y roundtrip sintético | E2E independiente |
 | 9 | `WO-FH-POSTGRESQL-MIGRATOR-01` | Migración Excel Bridge → PostgreSQL local | Condicionada a servidor autorizado |
+
+## 2bis. Estado publicado — 2026-08-03
+
+| Orden | Work Order | Estado | Trazabilidad |
+|---:|---|---|---|
+| 1 | `WO-FH-EXPORT-V2-CANONICAL-CORE-01` | Integrada en recovery | PR #211, commit `7109b5f1...`, merge `6ac041f8...` |
+| 2 | `WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01` | `MERGED_AND_VERIFIED` | PR #215, commit `1fcd9e4a...`, merge `17426f60...` |
+| 3 | `WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01` | `MERGED_AND_VERIFIED` | PR #217, commit `c42eecef...`, merge `c45b7d13...` |
+| 4 | `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` | Futura, no iniciada | — |
+| 5–9 | `WO-FH-EXPORT-V2-CUTOVER-01` a `WO-FH-POSTGRESQL-MIGRATOR-01` | Futuras, no iniciadas | — |
+
+Los adaptadores de Validación y Primera Visita están integrados como infraestructura interna: no existe salida pública v2 ni cutover, y la salida pública v1 de 61 columnas permanece preservada. WO4 y las siguientes permanecen futuras y no iniciadas; esta sección no redefine su alcance, prioridad ni diseño.
 
 ## 3. Frontera de WO1
 
@@ -52,7 +67,9 @@ WO1 construye infraestructura pura y no modifica:
 
 WO1 debe demostrar que el contrato es técnicamente viable antes de mapear datos clínicos reales del runtime.
 
-## 4. Ejecución del stack WO2–WO4
+## 4. Ejecución del stack WO2–WO4 — superada
+
+> Información histórica: describe el plan aprobado (2026-08-02) antes de su ejecución y queda **superada como instrucción vigente**. La instrucción «no se hace push, issue ni PR durante la ejecución» correspondía a la fase candidate del stack y ya no es instrucción vigente: WO2 y WO3 se publicaron posteriormente mediante las PR #215 y #217.
 
 Tras fusionar y revisar WO1:
 
@@ -151,4 +168,4 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 
 ## 8. Próxima acción
 
-Ejecutar `WO-FH-EXPORT-V2-CANONICAL-CORE-01` desde el HEAD remoto exacto que incluya esta documentación. No usar un SHA recordado ni comenzar los adaptadores antes de revisar WO1.
+WO1–WO3 ya están integradas en recovery (ver sección 2bis); no existe en este documento una instrucción vigente de ejecutar WO1. WO4 y las siguientes permanecen futuras y no iniciadas; su alcance se definirá en su WO autorizada, sin redefinirlo aquí.

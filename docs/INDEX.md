@@ -2,12 +2,12 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-08-02 |
+| Última actualización | 2026-08-03 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Base Git publicada de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
+| Base Git publicada de esta edición | `c45b7d13d4de7d145087333b2c11d3e9d2135dd3` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3` |
-| Rama documental de esta edición | `work/doc-fh-export-v2-core-merge-reconciliation-01-20260802` |
+| Rama documental de esta edición | `work/fh-export-v2-adapters-doc-reconciliation-01-20260803` |
 
 > Este índice orienta. La verdad funcional procede del código publicado, el manifest del despliegue, el estado vivo y los contratos relacionados. No convierte propuestas arquitectónicas en capacidades implementadas.
 
@@ -20,10 +20,12 @@
 1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — estado publicado actual, trazabilidad, QA y feedback de Farmacia.
 2. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan operativo 2026-07-31 a 2026-08-15.
 3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia WO1–WO9 y gates de revisión.
-4. [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` implementado y publicado; aún no cableado a los actos ni a Excel.
-5. [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md) — arquitectura objetivo V4 por planos.
-6. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — roadmap post-SES y relación V4/V4.5/V5.
-7. [`AGENTS.md`](/AGENTS.md) — reglas operativas de agentes y Git.
+4. [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado en recovery; consumido internamente por los adaptadores de Validación y Primera Visita; sin salida pública v2 ni cutover.
+5. [`docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md) — adaptador interno de Validación v2 integrado mediante PR #215.
+6. [`docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md) — adaptador interno de Primera Visita v2 integrado mediante PR #217.
+7. [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md) — arquitectura objetivo V4 por planos.
+8. [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) — roadmap post-SES y relación V4/V4.5/V5.
+9. [`AGENTS.md`](/AGENTS.md) — reglas operativas de agentes y Git.
 
 Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md).
 
@@ -69,16 +71,24 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| Base Git de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
-| Último SHA funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
+| Base Git de esta edición | `c45b7d13d4de7d145087333b2c11d3e9d2135dd3` |
+| Último SHA funcional regional | `c42eeceffa7a3a9b751576d3338d11132f10b3f0` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | Fuente funcional del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PASS focal para realineación del flujo y Excel de Primera Visita; no equivale a QA integral de piloto |
+| QA pública regional del HEAD actual | PASS focal para realineación del flujo y Excel de Primera Visita; core v2 y adaptadores internos con smoke-check PASS en PR #215/#217; no equivale a QA integral de piloto |
 | QA humana Cáceres | PASS |
+| Core Export v2 | Integrado en recovery; consumido internamente por los adaptadores |
+| Validación v2 | Integrada internamente mediante PR #215; sin salida pública v2 |
+| Primera Visita v2 | Integrada internamente mediante PR #217; sin salida pública v2 |
+| Salida pública v2 / cutover | No |
+| Salida pública v1 | Preservada (61 columnas) |
+| `main` | No modificada |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
 > Desde PR #193 se publicaron la reconciliación y promoción de Cáceres 0.3, el ledger/workbook técnico de evaluación, la realineación del flujo y la corrección P0 del Excel de Primera Visita. El HEAD regional actual tiene QA pública focal, pero continúa sin acreditación para piloto real.
+
+> Desde PR #215 y PR #217, los adaptadores internos de Validación y Primera Visita v2 están integrados en recovery sobre el core (PR #211). No existe salida pública v2 ni cutover; la salida Excel v1 de 61 columnas permanece preservada y `main` no ha sido modificada. El circuito v2 completo no está apto todavía para piloto real.
 
 Documento vivo reconciliado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
 
@@ -160,6 +170,8 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 
 - [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md)
 - [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
+- [`docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md) — reporte operativo de WO2 (Validación v2)
+- [`docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md) — reporte operativo de WO3 (Primera Visita v2)
 - Los planes históricos de recuperación PR replay y rescate V4 citados en ediciones previas no están publicados en la rama `recovery`; no se usan como estado vivo.
 - [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md)
 
@@ -169,7 +181,9 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
 - [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
 - [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — orden exacto WO1–WO9
-- [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` implementado en código y publicado; no conectado al runtime clínico
+- [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado en recovery; consumido internamente por los adaptadores de Validación y Primera Visita; sin salida pública v2 ni cutover
+- [`docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Validación v2; integrado mediante PR #215
+- [`docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Primera Visita v2; integrado mediante PR #217
 - El contrato de escenarios Farmacia V4 citado en ediciones previas no está publicado en `recovery`; su incorporación formal permanece pendiente.
 
 ### Historia y auditoría
@@ -281,4 +295,4 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 ---
 
-*Edición reconciliada por `WO-DOC-FH-EXPORT-V2-CORE-MERGE-RECONCILIATION-01`. El core Export v2 está publicado pero no está cableado; no autoriza datos reales, piloto, producción, FHIR/openEHR o Identity Plane operativo.*
+*Edición reconciliada por `WO-FH-EXPORT-V2-ADAPTERS-DOC-RECONCILIATION-01`. Core Export v2, Validación v2 y Primera Visita v2 están integrados internamente en recovery (PR #211, #215 y #217); no existe salida pública v2 ni cutover; la salida pública v1 permanece preservada y `main` no ha sido modificada. El circuito v2 completo no está apto todavía para piloto real; tampoco autoriza datos reales, producción, FHIR/openEHR o Identity Plane operativo.*
