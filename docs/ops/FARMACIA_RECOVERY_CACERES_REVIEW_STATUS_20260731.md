@@ -2,12 +2,12 @@
 
 | Metadato | Valor |
 |---|---|
-| Fecha de reconciliación | 2026-08-02 |
+| Fecha de reconciliación | 2026-08-04 |
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| Base Git publicada de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
-| Último SHA funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` |
+| Base Git publicada de esta edición | `b9f27e96f90f5bb20017ba805bb68f823b4df00f` |
+| Último SHA funcional regional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
@@ -33,7 +33,8 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la incorporación y posterior realineación del ledger/workbook sintético mediante PR #199/#201/#203;
 - la corrección P0 de la verdad Excel de Primera Visita mediante PR #205;
 - la publicación de la secuencia WO1–WO9 mediante PR #209;
-- la publicación del núcleo canónico Export v2 mediante PR #211.
+- la publicación del núcleo canónico Export v2 mediante PR #211;
+- la publicación de los adaptadores internos de Validación, Primera Visita y Seguimiento v2 mediante PR #215, #217 y #221.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -44,8 +45,8 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| Base Git publicada de esta edición | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Incluye PR #195 a #211; PR #209 es documental y PR #211 publica el core no cableado |
-| Último bundle funcional regional | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Core Export v2 con tests contractuales PASS; sin integración HTML, navegador o Excel |
+| Base Git publicada de esta edición | `b9f27e96f90f5bb20017ba805bb68f823b4df00f` | Incluye PR #195 a #221; PR #209 es documental; PR #211 publica el core; PR #215/#217/#221 publican los adaptadores internos sin activación pública |
+| Último bundle funcional regional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` | Core y adaptadores internos v2 (Validación, Primera Visita y Seguimiento) con tests contractuales PASS y WO4 con QA Chromium; sin salida pública v2 ni cutover |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
@@ -175,12 +176,12 @@ Evidencia técnica de promoción:
 - El ledger y workbook técnico existen en código regional, pero la interfaz de cohorte ficticia fue retirada por PR #203.
 - El flujo público vuelve a ser Paciente → acto → salidas normales, con persistencia local subordinada y discreta.
 - Primera Visita exporta el CIP y el acto visibles; no usa fallback demo.
-- Seguimiento continúa exportando hoy una fila por línea dispensada. La evolución a fila por línea activa está aprobada documentalmente, pero no implementada.
+- Seguimiento continúa exportando hoy, en la salida pública, una fila por línea dispensada. La fila por línea activa está integrada internamente mediante el adaptador v2 (PR #221), sin salida pública ni cutover.
 - La fila común de 61 columnas sigue vigente como única salida pública del runtime.
 - El core Export v2 candidate `2.0.0-draft.1` existe en código y está publicado desde PR #211, con 152 columnas, schemas y roundtrip TSV contractual.
-- El core no está referenciado por HTML ni conectado a Validación, Primera Visita, Seguimiento, CSV, TXT JARA o Excel.
-- La secuencia WO1–WO9 está publicada; WO2–WO4 permanecen pendientes de implementación.
-- Ninguno de estos cambios acredita QA de navegador/Excel, piloto real o producción.
+- El core es consumido internamente por los adaptadores de Validación, Primera Visita y Seguimiento (PR #215, #217 y #221), cargados antes del bridge DOM; no está conectado a ninguna salida pública (CSV, TXT JARA o Excel) y no existe cutover.
+- La secuencia WO1–WO9 está publicada; WO2–WO4 están integradas y verificadas individualmente como infraestructura interna; WO5 (`WO-FH-EXPORT-V2-CUTOVER-01`) permanece futura y no iniciada, pendiente del cierre explícito del gate conjunto previo al cutover y de una WO5 ejecutable aprobada.
+- Ninguno de estos cambios acredita QA integral de navegador/Excel público, piloto real o producción; el QA Chromium de WO4 cubre únicamente la infraestructura interna v2.
 
 ---
 

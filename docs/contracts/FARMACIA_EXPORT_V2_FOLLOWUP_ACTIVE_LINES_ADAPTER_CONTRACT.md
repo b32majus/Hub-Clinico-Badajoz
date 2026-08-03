@@ -1,6 +1,6 @@
 # Contrato del adaptador Export v2 — Seguimiento de Farmacia por líneas activas
 
-**Estado:** implementado en la rama `work/fh-export-v2-followup-active-lines-01-20260803` como infraestructura interna; sin cutover ni salida pública v2.
+**Estado:** integrado en la rama `recovery` como infraestructura interna mediante PR #221; sin cutover ni salida pública v2.
 **Adaptador:** `1.0.0-draft.1`  
 **Core requerido:** `FarmaciaExportV2Core` `2.0.0-draft.1`  
 **Granularidad:** un evento `pharmacy_followup` por visita y una fila `followup_line` por línea de tratamiento **explícitamente activa** incluida en `activeLines`.

@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-08-03
+**Última actualización:** 2026-08-04
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,11 +11,11 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| Base Git de esta edición | `c45b7d13d4de7d145087333b2c11d3e9d2135dd3` |
-| Último SHA funcional regional | `c42eeceffa7a3a9b751576d3338d11132f10b3f0` |
+| Base Git de esta edición | `b9f27e96f90f5bb20017ba805bb68f823b4df00f` |
+| Último SHA funcional regional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PASS focal de realineación y Excel de Primera Visita; core y adaptadores internos con tests contractuales y smoke-check PASS (PR #215/#217); WO3 con QA Chromium y regresión v1 de 61 columnas PASS; sin salida pública v2, cutover, QA integral del circuito v2 ni validación en piloto |
+| QA pública regional del HEAD actual | PASS focal de realineación y Excel de Primera Visita; core y adaptadores internos con tests contractuales y smoke-check PASS (PR #215/#217/#221); WO3 y WO4 con QA Chromium y regresión v1 de 61 columnas PASS; sin salida pública v2, cutover, QA integral del circuito v2 ni validación en piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -108,10 +108,11 @@
 | **WO-DOC-FH-EXPORT-V2-CORE-MERGE-RECONCILIATION-01** | Reconciliar publicación de WO1 | ✅ Merged | `work/doc-fh-export-v2-core-merge-reconciliation-01-20260802` | commit `ed1cb13a...`, merge `f46d99a0...` (PR #213, issue #212) | Cinco rutas documentales; reconcilió la publicación del core; superada como estado actual por la reconciliación de adaptadores de 2026-08-03 |
 | **WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01** | Adaptador interno de Validación v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-adapters-stack-01-20260802` | commit `1fcd9e4a...`, merge `17426f60...` (PR #215, issue #214) | Infraestructura interna sobre el core; smoke-check PASS; sin salida pública v2 ni cutover |
 | **WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01** | Adaptador interno de Primera Visita v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-first-visit-adapter-01-20260803` | commit `c42eecef...`, merge `c45b7d13...` (PR #217, issue #216) | Infraestructura interna sobre el core; smoke-check PASS; sin salida pública v2 ni cutover |
+| **WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01** | Adaptador interno de Seguimiento v2 por líneas activas | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-followup-active-lines-01-20260803` | commit `8b7372ac...`, merge `b9f27e96...` (PR #221, issue #220) | Infraestructura interna sobre el core; una fila por línea explícitamente activa con `activeLines` como fuente técnica; guards de contexto; QA Chromium PASS y regresión JARA/CSV/Excel v1 PASS; sin salida pública v2 ni cutover |
 
 ### Deuda administrativa de issues
 
-A 2026-08-03, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214 y #216 están cerrados como `completed`. Esta WO documental no modifica issues históricos.
+A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216 y #220 están cerrados como `completed`. Esta WO documental no modifica issues históricos.
 
 ---
 
@@ -158,7 +159,7 @@ A 2026-08-03, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | Estado | Cantidad |
 |---|---:|
 | ✅ Merged | 57 |
-| ✅ MERGED_AND_VERIFIED | 2 |
+| ✅ MERGED_AND_VERIFIED | 3 |
 | 📋 Ready for review | 18 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
@@ -168,8 +169,8 @@ A 2026-08-03, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 84 work orders / preflights gestionadas.
+**Total:** 85 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 57 + 2 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 84, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 57 + 3 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 85, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.

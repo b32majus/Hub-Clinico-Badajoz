@@ -6,9 +6,21 @@
 - **SHA base/HEAD inicial:** `3710409b90bb4ec589327ab9049ea29d01d6d3d9` (merge de PR #219)
 - **Rama:** `work/fh-export-v2-followup-active-lines-01-20260803`
 - **Riesgo:** P1 ámbar, clínico-estructural
-- **Estado de entrega:** `READY_FOR_CORA_REVIEW`
+- **Estado de entrega:** `MERGED_AND_VERIFIED`
+- **Estado candidate previo:** `READY_FOR_CORA_REVIEW` (2026-08-03, antes de la publicación)
 
-La base, la rama y el worktree limpio se verificaron antes de editar (`git fetch origin --prune` confirmó `c45b7d1..3710409` en remoto y local). No se realizó stage, commit, push, issue, PR, merge, publicación ni despliegue.
+Durante la fase candidate se verificaron la base, la rama y el worktree limpio (`git fetch origin --prune` confirmó `c45b7d1..3710409` en remoto y local) y no se realizó stage, commit, push, issue, PR, merge, publicación ni despliegue. La publicación posterior consta en la sección «Publicación».
+
+## Publicación — 2026-08-04
+
+- **Issue:** #220 — CLOSED.
+- **PR:** #221 — MERGED, base `recovery/farmacia-pr-replay-20260727`.
+- **Commit funcional:** `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea`.
+- **Merge SHA / HEAD recovery:** `b9f27e96f90f5bb20017ba805bb68f823b4df00f`.
+- **Checks push y pull_request:** SUCCESS.
+- `main` no modificada.
+- El candidate publicado permanece como **infraestructura interna**: sin cutover ni salida pública v2, sin despliegue clínico y no apto para piloto real; la salida pública v1 de 61 columnas permanece preservada.
+- Los tests contractuales, la regresión v1 y el QA Chromium descritos abajo corresponden al candidate publicado.
 
 ## Corrección de revisión Cora (vocabulario de rol)
 
@@ -76,11 +88,11 @@ La excepción `tools/farmacia_export_clipboard_check.mjs` es baseline preexisten
 
 Chromium real con servidor HTTP efímero y datos sintéticos: 1 tarjeta con auto-selección y fecha DOM contrastada contra `visitDate` técnico; 2 tarjetas sin auto-selección y proyección de 2 filas con orden preservado (`row_index [1,2]`, `row_count [2,2]`, roles `[principal,additional]`); proyección parcial sin incorporar línea extra visible; `BRIDGE_LINE_NOT_VISIBLE` para línea inexistente y para línea de otro paciente; no mutación; dispensado → JARA/CSV v1 y Excel FH de 61 columnas (frontera de portapapeles interceptada); sin botones ni descargas v2; CIP sin líneas → `BRIDGE_CIP_MISMATCH` (contexto stale) / `BRIDGE_EMPTY_ACTIVE_LINES`; CIP manual → autocomplete de catálogo visible y cero tarjetas; consola y page errors vacíos.
 
-## No publicado y limitaciones
+## No activado públicamente y limitaciones
 
 - Sin cutover: ningún botón, descarga o salida pública consume v2.
 - La detección de líneas activas del QA usa fixtures sintéticos y guard del bridge; no se fabrican estados DOM imposibles.
-- No apto para piloto real. Requiere revisión Cora y una WO posterior de publicación/cutover.
+- No apto para piloto real. Requiere el cierre explícito del gate conjunto WO2–WO4 y la WO posterior de publicación/cutover (`WO-FH-EXPORT-V2-CUTOVER-01`), aún no iniciada.
 - No se modificaron core, schemas, helpers comunes, catálogo, exportador v1, ledger, storage, manifests, índices ni estados.
 
 ## Reversión
