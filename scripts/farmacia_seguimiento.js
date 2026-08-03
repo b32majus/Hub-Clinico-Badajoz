@@ -2653,6 +2653,107 @@
         }, {});
     }
 
+    var FOLLOWUP_V2_TECHNICAL_CONTEXT_FIELDS = [
+        'eventId', 'sourceEventId', 'visitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus',
+        'hospitalCode', 'professionalRef', 'identifierSystem', 'serviceCode', 'serviceLabel', 'pathologyCode',
+        'pathologyLabel', 'professionalDisplay', 'identifierValue', 'visitDate', 'activeLines'
+    ];
+
+    function FollowupV2BridgeError(code, message, details) {
+        this.name = 'FarmaciaSeguimientoV2BridgeError';
+        this.code = code;
+        this.message = message;
+        this.details = details || null;
+    }
+    FollowupV2BridgeError.prototype = Object.create(Error.prototype);
+    FollowupV2BridgeError.prototype.constructor = FollowupV2BridgeError;
+
+    function failFollowupV2Bridge(code, message, details) {
+        throw new FollowupV2BridgeError(code, message, details);
+    }
+
+    function followupV2NullableString(value) {
+        if (value === null || value === undefined) return null;
+        if (typeof value === 'string' && value.trim() === '') return null;
+        return value;
+    }
+
+    function visibleFollowupCip() {
+        var cipEl = byId('fhSegCip');
+        return cipEl ? String(cipEl.value || '').trim() : '';
+    }
+
+    function visibleFollowupLineCounts() {
+        var counts = Object.create(null);
+        currentBiologicLines.forEach(function (line) {
+            var id = line.linea_id;
+            counts[id] = (counts[id] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function guardFollowupV2TechnicalContext(technicalContext) {
+        if (!technicalContext || Object.prototype.toString.call(technicalContext) !== '[object Object]' || Array.isArray(technicalContext)) {
+            failFollowupV2Bridge('BRIDGE_INVALID_TECHNICAL_CONTEXT', 'Seguimiento v2 requiere contexto técnico explícito.');
+        }
+        var unknown = Object.keys(technicalContext).filter(function (field) { return FOLLOWUP_V2_TECHNICAL_CONTEXT_FIELDS.indexOf(field) === -1; });
+        if (unknown.length) {
+            failFollowupV2Bridge('BRIDGE_INVALID_TECHNICAL_CONTEXT', 'El contexto técnico de Seguimiento v2 contiene campos no admitidos: ' + unknown.join(', ') + '.');
+        }
+        if (!Array.isArray(technicalContext.activeLines) || technicalContext.activeLines.length < 1) {
+            failFollowupV2Bridge('BRIDGE_EMPTY_ACTIVE_LINES', 'Seguimiento v2 requiere al menos una línea activa explícita.');
+        }
+        if (String(technicalContext.identifierValue || '').trim() !== visibleFollowupCip()) {
+            failFollowupV2Bridge('BRIDGE_CIP_MISMATCH', 'El CIP visible no coincide con el identifierValue técnico; no se mezclan pacientes.');
+        }
+        var counts = visibleFollowupLineCounts();
+        technicalContext.activeLines.forEach(function (entry, index) {
+            var lineId = entry && typeof entry === 'object' ? entry.lineId : null;
+            if (typeof lineId !== 'string' || !lineId.trim()) {
+                failFollowupV2Bridge('BRIDGE_INVALID_ACTIVE_LINE', 'La línea activa técnica ' + index + ' no tiene lineId explícito.');
+            }
+            var count = counts[lineId] || 0;
+            if (count === 0) {
+                failFollowupV2Bridge('BRIDGE_LINE_NOT_VISIBLE', 'La línea técnica ' + lineId + ' no tiene correspondencia visible para el paciente actual.', { lineId: lineId });
+            }
+            if (count > 1) {
+                failFollowupV2Bridge('BRIDGE_AMBIGUOUS_LINE', 'La línea técnica ' + lineId + ' tiene más de una correspondencia visible.', { lineId: lineId });
+            }
+        });
+    }
+
+    function buildFollowupV2Input(technicalContext) {
+        guardFollowupV2TechnicalContext(technicalContext);
+        var technical = {};
+        ['eventId', 'sourceEventId', 'visitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus'].forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(technicalContext, field)) technical[field] = technicalContext[field];
+        });
+        ['hospitalCode', 'professionalRef', 'identifierSystem'].forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(technicalContext, field)) technical[field] = followupV2NullableString(technicalContext[field]);
+        });
+        return {
+            technical: technical,
+            context: {
+                identifierValue: technicalContext.identifierValue,
+                serviceCode: followupV2NullableString(technicalContext.serviceCode),
+                serviceLabel: followupV2NullableString(technicalContext.serviceLabel),
+                pathologyCode: followupV2NullableString(technicalContext.pathologyCode),
+                pathologyLabel: followupV2NullableString(technicalContext.pathologyLabel),
+                professionalDisplay: followupV2NullableString(technicalContext.professionalDisplay)
+            },
+            visit: { visitDate: technicalContext.visitDate },
+            activeLines: technicalContext.activeLines
+        };
+    }
+
+    function buildFollowupV2Projection(technicalContext) {
+        var adapter = window.FarmaciaExportV2FollowupActiveLinesAdapter;
+        if (!adapter) {
+            failFollowupV2Bridge('BRIDGE_ADAPTER_UNAVAILABLE', 'FarmaciaExportV2FollowupActiveLinesAdapter no está cargado.');
+        }
+        return adapter.buildFollowupProjection(buildFollowupV2Input(technicalContext));
+    }
+
     window.FarmaciaSeguimiento = {
         searchCIP: searchCIP,
         initCipSearch: initCipSearch,
@@ -2695,7 +2796,9 @@
         buildFollowupVisitExportModel: buildFollowupVisitExportModel,
         buildFollowupExcelRows: buildFollowupExcelRows,
         buildFollowupCsv: buildFollowupCsv,
-        buildSegLines: buildSegLines
+        buildSegLines: buildSegLines,
+        buildFollowupV2Input: buildFollowupV2Input,
+        buildFollowupV2Projection: buildFollowupV2Projection
     };
 
     document.addEventListener('DOMContentLoaded', () => {
