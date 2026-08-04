@@ -739,6 +739,7 @@
         var decision = F.resolvePatientContextSwitch(activePatientCip, cip, hasContext);
         if (decision.action === 'same') {
             cipInput.value = activePatientCip || cip;
+            updateFirstVisitV2ExportAvailability();
             return;
         }
         if (decision.action === 'confirm') {
@@ -746,6 +747,7 @@
         }
         if (decision.action === 'cancel') {
             cipInput.value = activePatientCip;
+            updateFirstVisitV2ExportAvailability();
             return;
         }
 
@@ -757,6 +759,7 @@
             activePatientCip = cip;
             showDrugAutocomplete();
             showCipNotice('Paciente no encontrado en demo. Puede completar los datos manualmente.', 'warning');
+            updateFirstVisitV2ExportAvailability();
             return;
         }
 
@@ -772,6 +775,7 @@
 
         var banner = document.getElementById('fhPvNoCipBanner');
         if (banner) banner.parentNode.removeChild(banner);
+        updateFirstVisitV2ExportAvailability();
     }
 
     function hasPatientBoundData() {
@@ -1379,6 +1383,79 @@
         return buildFirstVisitV2Projection(getFirstVisitV2TechnicalContext());
     }
 
+    var firstVisitV2CopyInFlight = false;
+
+    async function copyFirstVisitV2TsvExact(tsv) {
+        if (typeof tsv !== 'string') throw new Error('La proyección v2 no contiene un TSV válido.');
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(tsv);
+                return;
+            } catch (error) {
+                // Continue with the local fallback when Clipboard API access is denied.
+            }
+        }
+        var textarea = document.createElement('textarea');
+        textarea.value = tsv;
+        textarea.setAttribute('readonly', '');
+        textarea.setAttribute('aria-hidden', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        var copied = false;
+        try {
+            copied = typeof document.execCommand === 'function' && document.execCommand('copy') === true;
+        } catch (error) {
+            copied = false;
+        } finally {
+            document.body.removeChild(textarea);
+        }
+        if (!copied) throw new Error('No se pudo confirmar la copia local al portapapeles.');
+    }
+
+    function updateFirstVisitV2ExportAvailability() {
+        var button = document.getElementById('fhPvExportV2Btn');
+        var status = document.getElementById('fhPvExportV2Status');
+        if (!button) return;
+        try {
+            getFirstVisitV2TechnicalContext();
+            button.disabled = firstVisitV2CopyInFlight;
+            if (status && status.textContent.indexOf('Export v2 demo no disponible:') === 0) status.textContent = '';
+        } catch (error) {
+            button.disabled = true;
+            if (status) status.textContent = 'Export v2 demo no disponible: ' + (error.message || 'contexto técnico no disponible') + '.';
+        }
+    }
+
+    async function handleFirstVisitV2Export() {
+        if (firstVisitV2CopyInFlight) return;
+        var button = document.getElementById('fhPvExportV2Btn');
+        var status = document.getElementById('fhPvExportV2Status');
+        firstVisitV2CopyInFlight = true;
+        if (button) button.disabled = true;
+        if (status) status.textContent = 'Copiando Export v2 demo...';
+        try {
+            var projection = window.FarmaciaPrimeraVisita.buildFirstVisitV2ProjectionFromCurrentContext();
+            await copyFirstVisitV2TsvExact(projection.tsv);
+            var rowCount = projection.rows.length;
+            var success = 'Export v2 demo copiado: ' + rowCount + ' fila(s) × 152 columnas.';
+            if (status) {
+                status.textContent = success;
+                window.setTimeout(function () {
+                    if (status.textContent === success) status.textContent = '';
+                }, 3000);
+            }
+        } catch (error) {
+            if (status) status.textContent = 'No se pudo copiar Export v2 demo: ' + (error.message || 'error desconocido') + '.';
+        } finally {
+            firstVisitV2CopyInFlight = false;
+            updateFirstVisitV2ExportAvailability();
+        }
+    }
+
     window.FarmaciaPrimeraVisita = {
         buildPrimaryTreatmentFromContext: buildPrimaryTreatmentFromContext,
         buildPrimaryTreatmentFromSelection: buildPrimaryTreatmentFromSelection,
@@ -1407,6 +1484,14 @@
         var servicioSync = initServicioPatologiaSync();
         applyContext(ctx);
         activePatientCip = ctx.patient ? (ctx.patient.cip || ctx.cip || '') : (ctx.cip || '');
+        var v2Cip = document.getElementById('fhPvCip');
+        if (v2Cip) {
+            v2Cip.addEventListener('input', updateFirstVisitV2ExportAvailability);
+            v2Cip.addEventListener('change', updateFirstVisitV2ExportAvailability);
+        }
+        updateFirstVisitV2ExportAvailability();
+        var exportV2 = document.getElementById('fhPvExportV2Btn');
+        if (exportV2) exportV2.addEventListener('click', handleFirstVisitV2Export);
         applyTratamientoValidado(ctx);
         renderDLQI();
         setupEVASliders();

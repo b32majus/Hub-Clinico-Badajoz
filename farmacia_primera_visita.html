@@ -171,6 +171,9 @@
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhPvNotas">Notas farmacoterapéuticas</label><textarea class="form-textarea" id="fhPvNotas" rows="4"></textarea></div></div>
     <div id="fhPvDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo con datos sintéticos. No es un entorno clínico ni multiusuario. Revise las salidas antes de utilizarlas.</span></div>
     <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhPvExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline hidden" id="fhPvExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhPvExcelExportBtn"><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+    <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhPvExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar Export v2 demo · 152 columnas</button></div>
+    <p class="search-card__hint">Export v2 técnico, local y sin cabecera. No apto para piloto real.</p>
+    <p id="fhPvExportV2Status" role="status" aria-live="polite"></p>
 </section>
                 </main>
             </div>
@@ -181,7 +184,7 @@
     <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
     <script src="scripts/farmacia_export_v2_first_visit_adapter.js?v=20260803-first-visit-adapter"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
-    <script src="scripts/farmacia_primera_visita.js?v=20260730-cima-contextless-p0"></script>
+    <script src="scripts/farmacia_primera_visita.js?v=20260804-export-v2-parallel-activation-01"></script>
     <script src="scripts/farmacia_evaluation_ledger.js?v=20260801-ledger-01"></script>
         </body>
         </html>
