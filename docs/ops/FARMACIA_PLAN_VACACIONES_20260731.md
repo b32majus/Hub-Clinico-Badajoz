@@ -9,7 +9,7 @@
 | Rama publicada de partida | `recovery/farmacia-pr-replay-20260727` |
 | HEAD inicial | `accac670ba216d8c291ee849d2198742d02bb3f0` |
 | Snapshot estable inicial | `CÁCERES-REVIEW-0.2` |
-| HEAD publicado al reconciliar | `68b5383762f3ae747f567d49df2e80118c38fe16` |
+| HEAD publicado al reconciliar | `f86f72f8e09e29708ebd0b977c2451300002e989` |
 | Snapshot estable actual | `CÁCERES-REVIEW-0.3` |
 | Disponibilidad humana | 3–4 horas diarias |
 | Trabajo asíncrono | Una WO atómica puede ejecutarse mientras Silvia no está delante |
@@ -17,6 +17,8 @@
 | Documento arquitectónico | `../architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md` |
 
 > Este plan ordena trabajo. No autoriza automáticamente sus WOs, merges, datos reales, piloto, backend institucional ni integraciones.
+
+> Estado post-PR #227: Export v2 demo está visible en paralelo con 152 columnas por fila y varias filas en Seguimiento. JARA, CSV y Excel v1 de 61 columnas permanecen intactos. No existe cutover completo, retirada v1, promoción a `2.0.0`, Excel Bridge operativo ni roundtrip. La decisión vigente se concentra en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ---
 
@@ -84,7 +86,8 @@ Presalud y renovaciones son parte del objetivo si llega el texto exacto a tiempo
 - El Hub siempre genera la información.
 - La profesional no crea el paciente escribiendo una fila Excel.
 - Un único esquema de fila común cubre Validación, Primera Visita y Seguimiento.
-- Un acto canónico puede generar una o varias filas bajo la misma identidad.
+- Validación genera exactamente una fila por acto.
+- Primera Visita genera `1..N` filas por líneas terapéuticas explícitamente presentes; el adaptador conserva esa capacidad aunque la UI actual pueda mostrar una sola línea.
 - En Seguimiento v2 se genera una fila por cada línea activa en la fecha de visita.
 - Dispensación y revisión específica son estados independientes.
 - Varias filas del mismo paciente construyen longitudinalidad mediante identificadores estables.
@@ -92,13 +95,24 @@ Presalud y renovaciones son parte del objetivo si llega el texto exacto a tiempo
 - Un libro independiente por hospital.
 - Sin consolidación regional automática.
 
-### 3.2.1 Brecha publicada que debe resolver v2
+El Excel Bridge por hospital es la persistencia provisional V4. El Hub genera el TSV y la profesional pega la salida completa una sola vez en la hoja operativa del servicio de procedencia: Dermatología, Reumatología, Digestivo, Oncología u otros servicios aprobados. Cada fila queda íntegra y append-only. El Office Script valida versiones, IDs y cardinalidad, conserva y agrupa el acto, bloquea duplicados, registra errores, descompone y genera `APP_*`; el Read Adapter reconstruye el Hub. El futuro PostgreSQL Migrator migra entidades validadas, no copia ciegamente 152 columnas. Estas piezas siguen pendientes.
 
-- El exportador actual usa 61 columnas.
-- En Seguimiento, Excel y CSV generan hoy una fila por cada línea dispensada y repiten el contexto común.
+### 3.2.1 Browser storage
+
+- El ledger clínico de PR #199/#203 persiste actualmente en `localStorage`.
+- Imports y snapshots ligados al contexto utilizan actualmente `sessionStorage`.
+- Se conserva la historia de PR #199/#201/#203, pero browser storage no es arquitectura objetivo ni fuente de verdad.
+- La decisión vigente es no conservar datos clínicos, de paciente o de acto en `localStorage` ni `sessionStorage`, ni sustituirlos por almacenamiento oculto.
+- La retirada técnica no está implementada y requiere una WO atómica alineada con el Excel Bridge.
+
+### 3.2.2 Brecha publicada que debe resolver v2
+
+- Excel v1 usa 61 columnas y permanece publicado sin cambios.
+- Export v2 demo paralelo usa 152 columnas por fila; en Seguimiento puede producir varias filas por líneas activas.
+- En Seguimiento, Excel y CSV v1 generan una fila por cada línea dispensada y repiten el contexto común.
 - Las líneas evaluadas no dispensadas no generan fila Excel/CSV.
 - El objetivo aprobado es una fila por línea activa, se dispense o no y se revise específicamente o no.
-- El cambio se implementará solo tras cerrar contrato, ejemplos y mapeo de compatibilidad.
+- La activación paralela de PR #227 no equivale a cutover, retirada v1 ni cierre de compatibilidad.
 
 ### 3.3 Hospitales y branding
 
@@ -115,6 +129,22 @@ Presalud y renovaciones son parte del objetivo si llega el texto exacto a tiempo
 - No se crea otro Excel ni una doble alta manual.
 - Sí se reserva `patient_id` opaco y la interfaz futura `IdentityRepository`.
 - El Identity Plane se activa cuando exista servidor/PROM Gateway y pueda funcionar de forma invisible.
+- CIP/`identifier_value` no equivale a `patient_id`; no se derivará mediante hash, transformación o concatenación.
+- No se decide todavía el mecanismo productivo de creación o custodia.
+
+### 3.4.1 Dynamic Patient
+
+```text
+CIP ficticio arbitrario
+→ flujo normal
+→ Validación / Primera Visita / Seguimiento
+→ evento canónico
+→ Export v2
+→ Excel Bridge
+→ lectura y roundtrip
+```
+
+No es una clase especial de paciente ni se resuelve mediante el ledger del navegador. El proveedor técnico actual sigue cerrado a FH-001/FH-004; el mecanismo final para CIP arbitrario sin browser storage está pendiente de WO y el roundtrip no está demostrado.
 
 ### 3.5 CIMA
 
@@ -308,7 +338,7 @@ Definir:
 - mantener TXT JARA;
 - mantener Excel compatible;
 - incluir `schema_version` y `source_event_id`;
-- soportar Validación, Primera Visita y Seguimiento;
+- soportar Validación con una fila, Primera Visita `1..N` y Seguimiento `1..N` según líneas explícitas;
 - soportar Seguimiento con una fila por línea activa;
 - registrar dispensación y revisión específica de forma independiente;
 - mantener solicitado, validado, iniciado y dispensado separados;
@@ -319,7 +349,7 @@ Definir:
 ```text
 Evento canónico
 ├── TXT JARA
-└── 1..N filas Excel comunes
+└── TSV común de 152 columnas: 1 fila en Validación; 1..N en Primera Visita/Seguimiento
 ```
 
 con misma identidad y verdad clínica.
@@ -353,7 +383,10 @@ Crear el libro con:
 ### Criterio de salida
 
 - cada `row_id` se procesa una sola vez;
-- varias filas del mismo acto generan una sola entidad común y N detalles de línea;
+- Primera Visita: N filas generan un acto lógico, N líneas y PROMs comunes deduplicados;
+- Seguimiento: N filas generan un `VISITS`, N `VISIT_LINES` y datos comunes deduplicados por identidad/ámbito;
+- sospechosos y causalidades conservan cardinalidad explícita;
+- datos comunes discrepantes producen error sin selección, corrección o inferencia;
 - reejecutar no duplica;
 - un error o discrepancia no destruye la fila;
 - no existe inferencia clínica.
@@ -701,6 +734,10 @@ No iniciar una V5 agnóstica completa.
 13. Matriz FHIR/openEHR.
 14. Paquete para solicitar/usar servidor.
 15. Backlog del ciclo siguiente.
+
+### Gate del paquete longitudinal final
+
+No preparar URL definitiva, guía final, paquete final ni retirada v1 hasta demostrar CIP arbitrario en flujo normal, workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub. Puede existir una evaluación de formularios con alcance inferior solo tras decisión humana específica y comunicación explícita de que no es la versión longitudinal final ni un piloto.
 
 ---
 

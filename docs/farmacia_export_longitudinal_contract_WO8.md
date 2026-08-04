@@ -4,8 +4,7 @@
 **Fecha:** 2026-08-01
 **WO asociada:** WO8.0 + WO8.0.2 + `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`
 **Estado:** `reconciliado_v4`
-**Base Git publicada de esta edición:** `recovery/farmacia-pr-replay-20260727` @ `2f54c4ec80ed201a4026b374b711eb7572faa367`
-**Último SHA con cambio funcional:** `68b5383762f3ae747f567d49df2e80118c38fe16`
+**HEAD publicado reconciliado:** `recovery/farmacia-pr-replay-20260727` @ `f86f72f8e09e29708ebd0b977c2451300002e989`
 
 ---
 
@@ -15,22 +14,19 @@ Esta sección prevalece sobre cualquier formulación histórica incompatible del
 
 ### 0.1 Estado actual y evolución requerida
 
-- El esquema común implementado contiene **61 columnas** y se utiliza en Validación, Primera Visita y Seguimiento.
-- Las 61 columnas son la versión v1 publicada, no un contrato suficiente ni definitivo.
-- El siguiente contrato será una **fila común v2** completa para todos los actos y servicios. El número final de columnas se derivará del contenido clínico y operativo aprobado.
-- La salida v1 se mantendrá solo durante la transición y no podrá seguir perdiendo información disponible en los formularios.
+- Excel v1 implementado contiene **61 columnas** y permanece intacto en Validación, Primera Visita y Seguimiento.
+- Export v2 demo paralelo está visible desde PR #227 con un esquema TSV común de **152 columnas**: Validación produce exactamente una fila; Primera Visita y Seguimiento soportan `1..N` filas según líneas explícitas.
+- El proveedor técnico de PR #225 está cerrado a FH-001/FH-004 y un contexto `unknown/stale` bloquea exclusivamente v2.
+- Las versiones permanecen en `draft`; no existe promoción a `2.0.0`.
+- La activación paralela no es cutover completo ni retirada gobernada de v1.
 
 ### 0.2 Acto canónico y filas nativas
 
-Un acto canónico tiene una identidad estable (`event_id`, `source_event_id`) y puede producir **una o varias filas nativas**. Cada fila conserva el contexto común del acto y una identidad propia (`row_id`). La duplicación del contexto es intencionada para la explotación longitudinal y por medicamento.
-
-La frase histórica `una fila = un acto` queda sustituida por:
-
-> **Un acto genera 1..N filas bajo la misma identidad; cada fila representa una proyección farmacoterapéutica exportable del acto.**
+Un acto canónico tiene identidad estable (`event_id`, `source_event_id`) y su cardinalidad depende del tipo: Validación genera exactamente una fila; Primera Visita genera `1..N` por líneas explícitamente presentes; Seguimiento genera `1..N` por líneas explícitamente activas. Cada fila conserva contexto común e identidad propia (`row_id`); los campos no aplicables quedan vacíos.
 
 ### 0.3 Seguimiento multilínea
 
-Comportamiento publicado actual:
+Comportamiento publicado v1:
 
 - Excel y CSV generan una fila por cada línea **dispensada explícitamente**;
 - los datos comunes de la visita se repiten;
@@ -50,15 +46,37 @@ La existencia de la fila no depende de dispensación ni de revisión específica
 
 No registrar una revisión específica no equivale a eficacia, seguridad, adherencia ni ausencia de problemas.
 
+Estado v2 visible: PR #227 permite copiar varias filas de 152 columnas para Seguimiento cuando el proveedor técnico cerrado dispone de contexto. Esto no modifica el comportamiento Excel/CSV v1 ni demuestra CIP arbitrario o roundtrip.
+
 ### 0.4 Validación
 
-El bloque **solicitado** y el bloque **validado por Farmacia** permanecen separados. El tratamiento solicitado nunca completa automáticamente el validado ni crea por sí mismo una línea activa. Los datos terapéuticos ausentes quedan vacíos.
+Validación genera exactamente una fila por acto con los campos aplicables de contexto, solicitud, decisión, tratamiento validado, prebiológico, comorbilidades y observaciones. El bloque **solicitado** y el bloque **validado por Farmacia** permanecen separados. El tratamiento solicitado nunca completa automáticamente el validado; pendiente o denegado no crean línea terapéutica. Los datos no aplicables o ausentes quedan vacíos.
+
+### 0.4bis Primera Visita
+
+Primera Visita genera `1..N` filas, una por cada línea terapéutica explícitamente presente. Todas comparten `event_id`, `source_event_id`, `first_visit_id`, `patient_id`, fecha, contexto y PROMs comunes; cada una conserva `row_id`, `row_key`, `treatment_id`, `line_id`, rol y snapshot explícito. El soporte contractual cubre escenarios comunicados por Farmacia con más de una línea biológica iniciada desde Primera Visita, aunque la UI actual pueda mostrar una sola. No se crea otra línea desde tratamiento previo, catálogo, solicitud, nombre de medicamento o ausencia.
 
 ### 0.5 Excel Bridge y futuro servidor
 
-La fila común se conserva íntegra en la hoja operativa del servicio. El **Office Script Processor** la valida y descompone de forma idempotente en hojas relacionales. El **Excel Read Adapter** permite reconstruir el Hub desde vistas `APP_*`. El futuro **PostgreSQL Migrator** trasladará el Excel Bridge acumulado al servidor local.
+El TSV completo de `1..N` filas se pega una sola vez en la hoja operativa del servicio de procedencia: Dermatología, Reumatología, Digestivo, Oncología u otros servicios aprobados en el futuro. Cada fila nativa se conserva íntegra y append-only. El **Office Script Processor** valida versiones, IDs y cardinalidad, conserva la entrada, agrupa el acto, bloquea duplicados, registra errores, descompone en hojas relacionales y genera `APP_*`. El **Excel Read Adapter** reconstruye el Hub desde esas vistas. El futuro **PostgreSQL Migrator** trasladará entidades relacionales validadas, sin copiar ciegamente las 152 columnas a una tabla SQL.
+
+El Excel Bridge por hospital es la persistencia provisional V4 decidida. El Hub genera la información y la profesional pega la salida una vez en la hoja del servicio. CIP/identificador, servicio, patología, tipo de acto, evento e IDs se conservan en la fila. No existe consolidación regional automática.
+
+Estado actual: workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip no están implementados.
 
 El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el procesador cotidiano vigente. La denominación WO8.1b terminó reutilizándose para el exportador de fila de 61 columnas.
+
+### 0.6 Identidad y evaluación
+
+- La profesional introduce un CIP inventado y usa los formularios e interacciones normales; no existe modo, botón, alta especial ni formulario reducido.
+- CIP/`identifier_value` no equivale a `patient_id`; `patient_id` es técnico y opaco.
+- `patient_id` no se deriva del CIP mediante hash, transformación o concatenación.
+- El Identity Plane físico, su mecanismo productivo y su custodia permanecen diferidos; no se añade Excel de correspondencia ni alta técnica manual.
+- Los fixtures siguen disponibles para demo/regresión, pero no deben ser requisito del funcionamiento.
+
+### 0.7 Browser storage
+
+El ledger clínico de PR #199/#203 persiste actualmente en `localStorage`; imports y snapshots ligados al contexto utilizan `sessionStorage`. Es estado técnico existente, no arquitectura objetivo ni fuente de verdad. La decisión vigente es no conservar datos clínicos, de paciente o de acto en browser storage. La retirada todavía no está implementada y requiere una WO atómica alineada con el Excel Bridge, sin reescribir la historia de PR #199/#201/#203.
 
 ---
 
@@ -101,7 +119,7 @@ Ambas capas coexisten en este contrato. La capa operativa es la interfaz tempora
 
 2. **El Excel operativo se organiza por servicio, no por tabla normalizada.** Las hojas son Derma, Reuma, Digestivo, Onco — no pacientes, líneas, visitas separadas.
 
-3. **Un acto genera una o varias filas.** Todas comparten la identidad del acto; cada fila representa una proyección farmacoterapéutica exportable y dispone de identidad propia.
+3. **La cardinalidad depende del acto.** Validación genera exactamente una fila; Primera Visita y Seguimiento generan `1..N` por líneas explícitas. Las filas de un mismo acto comparten identidad común y cada una dispone de identidad propia.
 
 4. **Mismo esquema de columnas en todas las hojas de servicio.** DERMA = REUMA = DIGESTIVO = ONCO. El servicio es una partición humana de trabajo, no un modelo de datos distinto.
 
@@ -274,6 +292,8 @@ Para Seguimiento v2, cada línea activa en la fecha de visita genera una fila y 
 
 Los datos comunes se repiten de forma deliberada. Los dashboards deben deduplicar visitas y PROMs por identificador.
 
+Para Primera Visita v2, cada línea explícitamente presente genera una fila. N filas del mismo acto comparten la identidad y los datos comunes indicados en la sección 0.4bis; producen un registro lógico de Primera Visita, N líneas asociadas y PROMs deduplicados por identidad de acto/instrumento.
+
 ### G. Seguridad / EA
 
 | Columna | Tipo | Obligatorio | Descripción |
@@ -406,11 +426,11 @@ La hoja `05_CATALOGOS` incluirá una sección de pautas disponibles como lista d
 
 ```text
 Hub
-→ genera 1..N filas nativas del acto
-→ la profesional pega en la hoja del servicio
+→ genera el TSV de 1..N filas según la cardinalidad del acto
+→ la profesional pega la salida una sola vez en la hoja operativa del servicio
 → Office Script Processor
-    ├── conserva entrada
-    ├── valida schema/event/row IDs
+    ├── conserva cada fila íntegra y append-only
+    ├── valida versiones, IDs y cardinalidad
     ├── rechaza duplicados
     ├── agrupa filas del mismo acto
     ├── descompone en entidades
@@ -419,6 +439,8 @@ Hub
 ```
 
 Para Seguimiento, N filas con el mismo `visit_id` producen un único `VISITS` y N `VISIT_LINES`. Si los campos comunes de esas filas discrepan, se registra error; el script no elige un valor.
+
+Para Primera Visita, N filas del mismo acto producen un registro lógico de Primera Visita, N registros de líneas asociadas y PROMs comunes deduplicados por acto/instrumento. Para Seguimiento, PROMs, adherencia y EA comunes se deduplican según identificadores y ámbito; causalidades y sospechosos conservan cardinalidad explícita. Toda discrepancia en datos comunes produce error, nunca selección, corrección o inferencia del Office Script.
 
 ### 9.3 Lectura y migración
 
@@ -435,11 +457,11 @@ Para Seguimiento, N filas con el mismo `visit_id` producen un único `VISITS` y 
 | **¿Excel único o varias hojas?** | Un libro por hospital, con hojas operativas por servicio y hojas técnicas relacionales. |
 | **¿Todas las hojas de servicio usan el mismo esquema?** | Sí. La fila común v2 será idéntica en DERMA, REUMA, DIGESTIVO y ONCO. |
 | **¿Las 61 columnas son definitivas?** | No. Son la v1 implementada y deben evolucionar sin pérdida clínica. |
-| **¿Una fila equivale siempre a un acto?** | No. Un acto genera 1..N filas con la misma identidad común. |
+| **¿Una fila equivale siempre a un acto?** | Validación sí genera exactamente una; Primera Visita y Seguimiento generan `1..N` según líneas explícitas. |
 | **¿Cuál es el grano de Seguimiento v2?** | Una fila por línea terapéutica activa en la fecha de la visita. |
 | **¿Dispensada equivale a evaluada?** | No. Presencia activa, dispensación y revisión específica son dimensiones independientes. |
 | **¿Cómo se cuentan visitas?** | Por `COUNT DISTINCT visit_id`, no por número de filas. |
-| **¿Cómo se conservan PROMs comunes?** | Una medición por visita/instrumento; las filas nativas pueden repetirla, pero el modelo relacional la deduplica. |
+| **¿Cómo se conservan PROMs comunes?** | Una medición por acto/instrumento; las filas nativas pueden repetirla, pero el modelo relacional la deduplica. |
 | **¿Cómo se representan solicitado y validado?** | En bloques separados. Nunca se copia automáticamente uno al otro. |
 | **¿Cómo se procesan las filas?** | Mediante Office Script Processor idempotente, no mediante un parser cotidiano del Hub. |
 | **¿Para qué servirá un parser/migrador futuro?** | Para leer vistas `APP_*` o migrar el Excel Bridge a PostgreSQL, no para decidir clínica. |
@@ -494,15 +516,14 @@ La migración se realizará desde las entidades validadas del Excel Bridge media
 Decisiones funcionales cerradas:
 
 - event schema y row schema tienen versiones independientes;
-- un evento genera `1..N` filas con `row_id` propio;
-- Validación conserva solicitado y validado por separado;
-- Primera Visita usa una única fecha canónica;
+- Validación genera exactamente una fila y conserva solicitado y validado por separado;
+- Primera Visita genera `1..N` filas por líneas explícitas y usa una única fecha canónica;
 - Seguimiento usa `visita × línea activa`;
 - dispensación y revisión específica son dimensiones independientes;
 - los campos clínicos binarios usan triestado;
 - dominios 1:N se conservarán estructurados y deberán superar un roundtrip TSV sin pérdida.
 
-WO1 fija una candidate técnica `2.0.0-draft.1` de 152 columnas. La candidate no es salida pública ni contrato final hasta superar tests y revisión. Permanecen para WOs posteriores:
+WO1 fija una candidate técnica `2.0.0-draft.1` de 152 columnas. PR #227 la expone como Export v2 demo paralelo para contextos técnicos registrados; sigue sin ser contrato final, cutover ni versión `2.0.0`. Permanecen para WOs posteriores:
 
 - mapeo exacto desde cada formulario;
 - política de compatibilidad y retirada de v1;
@@ -518,13 +539,15 @@ WO1 fija una candidate técnica `2.0.0-draft.1` de 152 columnas. La candidate no
 2. `WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01` — Validación v2 sin cutover.
 3. `WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01` — Primera Visita v2 sin cutover.
 4. `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` — Seguimiento v2 sin cutover.
-5. `WO-FH-EXPORT-V2-CUTOVER-01` — activación pública y compatibilidad.
+5. `WO-FH-EXPORT-V2-CUTOVER-01` — parcialmente satisfecha por las unidades menores PR #225/#227; alcance restante diferido.
 6. `WO-FH-EXCEL-BRIDGE-WORKBOOK-01` — libro por hospital.
 7. `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` — procesamiento relacional.
 8. `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` — vistas y roundtrip.
 9. `WO-FH-POSTGRESQL-MIGRATOR-01` — condicionado a servidor autorizado.
 
-WO1 se revisa sola. WO2–WO4 pueden ejecutarse secuencialmente en un mismo worktree con tres commits atómicos y revisión conjunta. WO5 no comienza hasta aprobar el stack. La secuencia detallada vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`.
+WO1–WO4 están integradas. La adjudicación de WO5 es `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: no se reabre como megadesarrollo ni se declara completamente cerrada; retirada v1 y promoción de versiones `draft` quedan aplazadas. La secuencia detallada vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`.
+
+No se prepara URL, guía o paquete longitudinal final ni retirada v1 hasta demostrar CIP arbitrario en flujo normal, workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub. Ver [`DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ### Aclaración histórica de WO8.1b
 
