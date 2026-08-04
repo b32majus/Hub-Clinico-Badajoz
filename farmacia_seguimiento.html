@@ -315,6 +315,9 @@
     <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo con datos sintéticos. No es un entorno clínico ni multiusuario. Revise las salidas antes de utilizarlas.</span></div>
     <div id="fhSegDispenseExportNotice" class="notice-box notice-box--warning hidden" role="status"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Marque al menos una línea como dispensada en esta visita para generar filas CSV o Excel.</span></div>
     <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn"><i class="fas fa-table"></i> Copiar filas Excel FH</button></div>
+    <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhSegExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar Export v2 demo · 152 columnas</button></div>
+    <p class="search-card__hint">Export v2 técnico, local y sin cabecera. No apto para piloto real.</p>
+    <p id="fhSegExportV2Status" role="status" aria-live="polite"></p>
 </section>
                 </main>
             </div>
@@ -326,7 +329,7 @@
     <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
     <script src="scripts/farmacia_export_v2_followup_active_lines_adapter.js?v=20260803-followup-active-lines-adapter"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
-    <script src="scripts/farmacia_seguimiento.js?v=20260730-cima-contextless-p0"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260804-export-v2-parallel-activation-01"></script>
     <script src="scripts/farmacia_evaluation_ledger.js?v=20260801-ledger-01"></script>
         </body>
         </html>
