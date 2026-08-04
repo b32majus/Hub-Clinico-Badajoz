@@ -2213,8 +2213,44 @@
 
     function buildValidationV2Projection(technicalContext) {
         var adapter = window.FarmaciaExportV2ValidationAdapter;
-        if (!adapter) throw new Error("FarmaciaExportV2ValidationAdapter no disponible");
+        if (!adapter) throw new ValidationV2ContextError("V2_ADAPTER_UNAVAILABLE", "FarmaciaExportV2ValidationAdapter no disponible.");
         return adapter.buildValidationProjection(buildValidationV2Input(technicalContext));
+    }
+
+    function ValidationV2ContextError(code, message, details) {
+        this.name = "FarmaciaValidacionV2ContextError";
+        this.code = code;
+        this.message = message;
+        this.details = details || null;
+    }
+    ValidationV2ContextError.prototype = Object.create(Error.prototype);
+    ValidationV2ContextError.prototype.constructor = ValidationV2ContextError;
+
+    function normalizeValidationV2Cip(value) {
+        return String(value == null ? "" : value).trim().toUpperCase();
+    }
+
+    function getValidationV2TechnicalContext() {
+        var visibleCip = selectedCip();
+        if (currentPatient && currentPatient.cip && normalizeValidationV2Cip(currentPatient.cip) !== normalizeValidationV2Cip(visibleCip)) {
+            throw new ValidationV2ContextError("V2_CONTEXT_STALE", "El CIP visible no coincide con el paciente enlazado en Validación.");
+        }
+        var provider = window.FarmaciaExportV2TechnicalContext;
+        if (!provider || provider.PROVIDER_VERSION !== "1.0.0-draft.1" || typeof provider.getContext !== "function") {
+            throw new ValidationV2ContextError("V2_CONTEXT_PROVIDER_UNAVAILABLE", "El proveedor de contexto técnico v2 no está disponible.");
+        }
+        var context = provider.getContext("validation", visibleCip);
+        if (!context) throw new ValidationV2ContextError("V2_CONTEXT_UNAVAILABLE", "No existe contexto técnico sintético de Validación para el CIP visible.");
+        var required = ["eventId", "sourceEventId", "rowKey", "validationId", "patientId", "occurredAt", "recordedAt", "demoFlag", "eventStatus"];
+        var missing = required.filter(function (field) {
+            return !Object.prototype.hasOwnProperty.call(context, field) || (field === "demoFlag" ? context[field] !== true : typeof context[field] !== "string" || !context[field]);
+        });
+        if (missing.length) throw new ValidationV2ContextError("V2_CONTEXT_INCOMPLETE", "El contexto técnico de Validación está incompleto.", { fields: missing });
+        return context;
+    }
+
+    function buildValidationV2ProjectionFromCurrentContext() {
+        return buildValidationV2Projection(getValidationV2TechnicalContext());
     }
 
     function buildValidationLines() {
@@ -2533,6 +2569,8 @@
         updateDermaPathologyVisibility: toggleHSBlock,
         buildValidationV2Input: buildValidationV2Input,
         buildValidationV2Projection: buildValidationV2Projection,
+        getValidationV2TechnicalContext: getValidationV2TechnicalContext,
+        buildValidationV2ProjectionFromCurrentContext: buildValidationV2ProjectionFromCurrentContext,
         applyRequestedAsValidatedExplicitly: applyRequestedAsValidatedExplicitly,
         buildValidationClinicalObservationsV2: buildValidationClinicalObservationsV2,
         buildValidationRelatedTreatmentsV2: buildValidationRelatedTreatmentsV2,

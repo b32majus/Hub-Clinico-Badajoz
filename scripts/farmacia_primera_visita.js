@@ -1334,7 +1334,49 @@
     }
 
     function buildFirstVisitV2Projection(technicalContext) {
-        return window.FarmaciaExportV2FirstVisitAdapter.buildFirstVisitProjection(buildFirstVisitV2Input(technicalContext));
+        var adapter = window.FarmaciaExportV2FirstVisitAdapter;
+        if (!adapter) throw new FirstVisitV2ContextError('V2_ADAPTER_UNAVAILABLE', 'FarmaciaExportV2FirstVisitAdapter no está disponible.');
+        return adapter.buildFirstVisitProjection(buildFirstVisitV2Input(technicalContext));
+    }
+
+    function FirstVisitV2ContextError(code, message, details) {
+        this.name = 'FarmaciaPrimeraVisitaV2ContextError';
+        this.code = code;
+        this.message = message;
+        this.details = details || null;
+    }
+    FirstVisitV2ContextError.prototype = Object.create(Error.prototype);
+    FirstVisitV2ContextError.prototype.constructor = FirstVisitV2ContextError;
+
+    function getFirstVisitV2TechnicalContext() {
+        var visibleCip = explicitV2Value(fv('fhPvCip')) || '';
+        if (normalizeCipForComparison(activePatientCip) && normalizeCipForComparison(activePatientCip) !== normalizeCipForComparison(visibleCip)) {
+            throw new FirstVisitV2ContextError('V2_CONTEXT_STALE', 'El CIP visible no coincide con el paciente activo en Primera Visita.');
+        }
+        var provider = window.FarmaciaExportV2TechnicalContext;
+        if (!provider || provider.PROVIDER_VERSION !== '1.0.0-draft.1' || typeof provider.getContext !== 'function') {
+            throw new FirstVisitV2ContextError('V2_CONTEXT_PROVIDER_UNAVAILABLE', 'El proveedor de contexto técnico v2 no está disponible.');
+        }
+        var context = provider.getContext('firstVisit', visibleCip);
+        if (!context) throw new FirstVisitV2ContextError('V2_CONTEXT_UNAVAILABLE', 'No existe contexto técnico sintético de Primera Visita para el CIP visible.');
+        var required = ['eventId', 'sourceEventId', 'firstVisitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus'];
+        var lineRequired = ['rowKey', 'treatmentId', 'lineId', 'lineRole', 'isPrimaryLine', 'lineStatusAtEvent', 'activeAtEvent'];
+        var missing = required.filter(function (field) {
+            return !Object.prototype.hasOwnProperty.call(context, field) || (field === 'demoFlag' ? context[field] !== true : typeof context[field] !== 'string' || !context[field]);
+        });
+        if (!context.lineContext || Object.prototype.toString.call(context.lineContext) !== '[object Object]' || Array.isArray(context.lineContext)) {
+            missing.push('lineContext');
+        } else {
+            lineRequired.forEach(function (field) {
+                if (!Object.prototype.hasOwnProperty.call(context.lineContext, field) || (field === 'isPrimaryLine' || field === 'activeAtEvent' ? typeof context.lineContext[field] !== 'boolean' : typeof context.lineContext[field] !== 'string' || !context.lineContext[field])) missing.push('lineContext.' + field);
+            });
+        }
+        if (missing.length) throw new FirstVisitV2ContextError('V2_CONTEXT_INCOMPLETE', 'El contexto técnico de Primera Visita está incompleto.', { fields: missing });
+        return context;
+    }
+
+    function buildFirstVisitV2ProjectionFromCurrentContext() {
+        return buildFirstVisitV2Projection(getFirstVisitV2TechnicalContext());
     }
 
     window.FarmaciaPrimeraVisita = {
@@ -1343,6 +1385,8 @@
         buildFirstVisitExcelExport: buildFirstVisitExcelExport,
         buildFirstVisitV2Input: buildFirstVisitV2Input,
         buildFirstVisitV2Projection: buildFirstVisitV2Projection,
+        getFirstVisitV2TechnicalContext: getFirstVisitV2TechnicalContext,
+        buildFirstVisitV2ProjectionFromCurrentContext: buildFirstVisitV2ProjectionFromCurrentContext,
         buildFirstVisitPromsV2: buildFirstVisitPromsV2,
         buildFirstVisitVisibleLineV2: buildFirstVisitVisibleLineV2,
         getCurrentPrimaryTreatment: getCurrentPrimaryTreatment,
