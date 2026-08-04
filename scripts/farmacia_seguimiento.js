@@ -2754,6 +2754,51 @@
         return adapter.buildFollowupProjection(buildFollowupV2Input(technicalContext));
     }
 
+    function getFollowupV2TechnicalContext() {
+        var provider = window.FarmaciaExportV2TechnicalContext;
+        if (!provider || provider.PROVIDER_VERSION !== '1.0.0-draft.1' || typeof provider.getContext !== 'function') {
+            failFollowupV2Bridge('V2_CONTEXT_PROVIDER_UNAVAILABLE', 'El proveedor de contexto técnico v2 no está disponible.');
+        }
+        var context = provider.getContext('followup', visibleFollowupCip());
+        if (!context) failFollowupV2Bridge('V2_CONTEXT_UNAVAILABLE', 'No existe contexto técnico sintético de Seguimiento para el CIP visible.');
+        var requiredStrings = ['eventId', 'sourceEventId', 'visitId', 'patientId', 'occurredAt', 'recordedAt', 'visitDate', 'eventStatus', 'identifierValue'];
+        var lineRequiredStrings = ['rowKey', 'treatmentId', 'lineId', 'lineRole', 'lineStatusAtEvent'];
+        var lineNullableStrings = ['drugName', 'activeIngredient', 'presentation', 'doseText', 'route', 'scheduleCode', 'scheduleLabel', 'scheduleOtherText', 'selectedDrugId', 'catalogSource', 'nationalCode', 'registrationNumber'];
+        var missing = requiredStrings.filter(function (field) {
+            return !Object.prototype.hasOwnProperty.call(context, field) || typeof context[field] !== 'string' || !context[field].trim();
+        });
+        if (!Object.prototype.hasOwnProperty.call(context, 'demoFlag') || context.demoFlag !== true) missing.push('demoFlag');
+        if (!Array.isArray(context.activeLines) || !context.activeLines.length) {
+            missing.push('activeLines');
+        } else {
+            context.activeLines.forEach(function (line, index) {
+                var path = 'activeLines[' + index + ']';
+                if (!line || Object.prototype.toString.call(line) !== '[object Object]' || Array.isArray(line)) {
+                    missing.push(path);
+                    return;
+                }
+                lineRequiredStrings.forEach(function (field) {
+                    if (!Object.prototype.hasOwnProperty.call(line, field) || typeof line[field] !== 'string' || !line[field].trim()) missing.push(path + '.' + field);
+                });
+                ['isPrimaryLine', 'activeAtEvent'].forEach(function (field) {
+                    if (!Object.prototype.hasOwnProperty.call(line, field) || typeof line[field] !== 'boolean') missing.push(path + '.' + field);
+                });
+                lineNullableStrings.forEach(function (field) {
+                    if (!Object.prototype.hasOwnProperty.call(line, field) || (line[field] !== null && typeof line[field] !== 'string')) missing.push(path + '.' + field);
+                });
+            });
+        }
+        if (missing.length) failFollowupV2Bridge('V2_CONTEXT_INCOMPLETE', 'El contexto técnico de Seguimiento está incompleto.', { fields: missing });
+        return context;
+    }
+
+    function buildFollowupV2ProjectionFromCurrentContext() {
+        if (!window.FarmaciaExportV2FollowupActiveLinesAdapter) {
+            failFollowupV2Bridge('V2_ADAPTER_UNAVAILABLE', 'FarmaciaExportV2FollowupActiveLinesAdapter no está cargado para el wrapper de contexto actual.');
+        }
+        return buildFollowupV2Projection(getFollowupV2TechnicalContext());
+    }
+
     window.FarmaciaSeguimiento = {
         searchCIP: searchCIP,
         initCipSearch: initCipSearch,
@@ -2798,7 +2843,9 @@
         buildFollowupCsv: buildFollowupCsv,
         buildSegLines: buildSegLines,
         buildFollowupV2Input: buildFollowupV2Input,
-        buildFollowupV2Projection: buildFollowupV2Projection
+        buildFollowupV2Projection: buildFollowupV2Projection,
+        getFollowupV2TechnicalContext: getFollowupV2TechnicalContext,
+        buildFollowupV2ProjectionFromCurrentContext: buildFollowupV2ProjectionFromCurrentContext
     };
 
     document.addEventListener('DOMContentLoaded', () => {
