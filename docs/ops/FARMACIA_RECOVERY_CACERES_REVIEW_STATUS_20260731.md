@@ -2,12 +2,14 @@
 
 | Metadato | Valor |
 |---|---|
-| Fecha de reconciliación | 2026-08-04 |
+| Fecha de reconciliación | 2026-08-05 |
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `f86f72f8e09e29708ebd0b977c2451300002e989` |
+| HEAD regional publicado verificado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` |
+| Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` / merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
+| Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` / merge `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
@@ -24,20 +26,16 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 
 - la recuperación del núcleo regional;
 - la corrección definitiva del autocomplete CIMA en la entrada manual de Validación;
-- la comprobación humana del recorrido en GitHub Pages;
 - las promociones reproducibles a `CÁCERES-REVIEW-0.2` y `CÁCERES-REVIEW-0.3`;
-- la reunión de feedback con Farmacia Hospitalaria del 2026-07-30;
-- la apertura del plan de trabajo V4 para el periodo 2026-07-31 a 2026-08-15;
 - la fusión de los quick wins de Validación mediante PR #193;
-- la reconciliación documental y promoción a `CÁCERES-REVIEW-0.3` mediante PR #195/#197;
 - la incorporación y posterior realineación del ledger/workbook sintético mediante PR #199/#201/#203;
 - la corrección P0 de la verdad Excel de Primera Visita mediante PR #205;
-- la publicación de la secuencia WO1–WO9 mediante PR #209;
-- la publicación del núcleo canónico Export v2 mediante PR #211;
-- la publicación de los adaptadores internos de Validación, Primera Visita y Seguimiento v2 mediante PR #215, #217 y #221;
-- la reconciliación documental post-Seguimiento v2 mediante PR #223;
+- la publicación del núcleo canónico y los adaptadores Export v2 mediante PR #211/#215/#217/#221;
+- la reconciliación post-Seguimiento mediante PR #223;
 - el proveedor técnico sintético cerrado mediante PR #225;
-- la activación visible y paralela de Export v2 demo mediante PR #227.
+- la activación visible y paralela de Export v2 demo mediante PR #227;
+- la retirada del ledger clínico del runtime soportado mediante PR #231;
+- la publicación y QA manual del workbook operativo del Excel Bridge mediante PR #233.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -48,13 +46,16 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| HEAD regional publicado | `f86f72f8e09e29708ebd0b977c2451300002e989` | Merge de PR #227; incluye PR #223/#225/#227 |
-| Último bundle funcional regional | `fe84d83c7d3574840696c9fed70f98e581ec8916` | Export v2 demo visible en paralelo; Chromium conjunto y smoke 48/48 PASS; v1 preservada |
-| Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
-| Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
+| HEAD regional publicado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` | Merge de PR #233; incluye PR #231/#233 |
+| Activación Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` | Salida visible en paralelo; v1 preservada |
+| Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` | Ledger fuera de Validación, Primera Visita y Seguimiento; sin persistencia alternativa |
+| Workbook operativo | `templates/PROMueve_FH_Caceres_Bridge_DEMO.xlsx` | Contenedor del TSV publicado; Office Script y lectura aún pendientes |
+| Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable; no incorpora automáticamente el HEAD regional posterior |
+| Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes del snapshot |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
 | Plan vivo del siguiente ciclo | `FARMACIA_PLAN_VACACIONES_20260731.md` | Prioridad y secuencia operativa |
-| Arquitectura objetivo | `../architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md` | Dirección V4; no aprobación institucional |
+| Secuencia vigente | `FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md` | WO6 cerrada; WO7 siguiente y WO8 después |
+| Decisión de persistencia | `../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md` | Dirección vigente reconciliada |
 | Índice documental | `../INDEX.md` | Navegación documental |
 | Tablero de WOs | `WORK_ORDER_STATUS.md` | Trazabilidad de ejecución |
 
@@ -68,9 +69,9 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 
 `https://b32majus.github.io/Hub-Clinico-Badajoz/farmacia_index.html`
 
-- sigue la rama regional publicada;
-- puede evolucionar tras PRs aprobadas;
+- sigue la rama que publique GitHub Pages según su configuración efectiva;
 - sirve para QA y evaluación con datos sintéticos;
+- no se presume que cada merge regional esté desplegado sin comprobar la publicación;
 - no es producción ni piloto real.
 
 ### Cáceres estable
@@ -86,25 +87,33 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 
 ---
 
-## 4. Trazabilidad del cierre P0, la promoción y los quick wins
+## 4. Trazabilidad publicada relevante
 
 | Issue / WO | PR | Merge | Adjudicación real |
 |---|---:|---|---|
 | #182 — selección CIMA sin contexto | #183 | `ee1abd88cd52a298d9c1e63d93bdddd08b3e3a7e` | Restauró consumidores sin contexto y añadió regresiones |
-| #184 — minifix manual solicitado | #185 | `5e70afa53a309186e54f812459d6f7521641c8d3` | Fusionada, pero no corrigió el defecto en la QA humana pública; superseded por #187 |
+| #184 — minifix manual solicitado | #185 | `5e70afa53a309186e54f812459d6f7521641c8d3` | Fusionada, pero no corrigió el defecto en QA humana; superseded por #187 |
 | #186 — clone del autocomplete funcional | #187 | `54f6bb2cc5cb9c46b4121e8148c00a065f1bca6c` | Corrección definitiva; QA humana regional PASS |
-| #188 — promoción Cáceres 0.2 | #189 | `accac670ba216d8c291ee849d2198742d02bb3f0` | Snapshot regenerado, publicado y QA humana Cáceres PASS |
-| #190 — estado, plan de vacaciones y arquitectura V4 | #191 | `9725bf60917ea07dc53162e700e86a1743537d3d` | Documentación viva publicada; no añadió capacidad funcional |
-| #192 — quick wins de Validación Farmacia | #193 | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | `Cada 3 semanas`, separación de observaciones, comorbilidades trivalentes y guard de CIP; en ese merge la promoción seguía pendiente |
-| #194 — reconciliación documental de quick wins | #195 | `815e16f9564c82f469a95745c5c6917593a8c3f0` | Cierra el estado regional previo a promoción 0.3 |
-| #196 — promoción Cáceres 0.3 | #197 | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` | Snapshot `CÁCERES-REVIEW-0.3`, fuente `815e16f9...` |
-| #198 — ledger sintético | #199 | `ac93575da6c07d9bf861baa5f1aa7a566d3877fd` | Persistencia local técnica; no piloto |
-| #200 — workbook técnico | #201 | `25c751657f18f5825ad92144c3140a8736d6664f` | Workbook de 11 hojas; no Excel Bridge operativo |
-| #202 — realineación de flujo | #203 | `6dcedff4c1b4ac60b79d0e7d3951aaebe9f6ae5e` | Flujo normal sin cohorte ficticia visible; QA pública PASS |
-| #204 — Excel Primera Visita | #205 | `68b5383762f3ae747f567d49df2e80118c38fe16` | CIP y acto visible correctos; QA pública focal PASS |
-| #206 — reconciliación del contrato export v2 | #207 | `2f54c4ec80ed201a4026b374b711eb7572faa367` | Documentación de fila común v2 y Excel Bridge; sin cambio funcional |
-| #208 — secuencia Export v2 y WO1 | #209 | `5e9b59ba36dc7760f4529deece33248922ce0b9a` | Secuencia WO1–WO9 publicada; sin cambio funcional |
-| #210 — núcleo canónico Export v2 | #211 | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Core candidate `2.0.0-draft.1`, 152 columnas y roundtrip TSV; no cableado |
+| #188 — promoción Cáceres 0.2 | #189 | `accac670ba216d8c291ee849d2198742d02bb3f0` | Snapshot regenerado y QA humana Cáceres PASS |
+| #190 — estado, plan y arquitectura V4 | #191 | `9725bf60917ea07dc53162e700e86a1743537d3d` | Documentación viva; no añadió capacidad funcional |
+| #192 — quick wins Validación | #193 | `4801e9aafaea5e0b56106e9ca38d8bbb1a84b91e` | Pauta, observaciones, comorbilidades y guard de CIP |
+| #194 — reconciliación quick wins | #195 | `815e16f9564c82f469a95745c5c6917593a8c3f0` | Estado regional previo a promoción 0.3 |
+| #196 — promoción Cáceres 0.3 | #197 | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` | Snapshot `CÁCERES-REVIEW-0.3` |
+| #198 — ledger sintético | #199 | `ac93575da6c07d9bf861baa5f1aa7a566d3877fd` | Persistencia local histórica; retirada del runtime después por #231 |
+| #200 — workbook técnico | #201 | `25c751657f18f5825ad92144c3140a8736d6664f` | Artefacto técnico histórico de 11 hojas; no Bridge operativo |
+| #202 — realineación de flujo | #203 | `6dcedff4c1b4ac60b79d0e7d3951aaebe9f6ae5e` | Flujo normal sin cohorte ficticia visible |
+| #204 — Excel Primera Visita | #205 | `68b5383762f3ae747f567d49df2e80118c38fe16` | CIP y acto visible correctos; Excel v1 preservado |
+| #206 — contrato export v2 | #207 | `2f54c4ec80ed201a4026b374b711eb7572faa367` | Fila común v2 y arquitectura del Bridge documentadas |
+| #208 — secuencia WO1–WO9 | #209 | `5e9b59ba36dc7760f4529deece33248922ce0b9a` | Secuencia publicada; sin cambio funcional |
+| #210 — núcleo canónico v2 | #211 | `6ac041f8d5faa445140b32a7daccd3724dac3529` | Core candidate, 152 columnas y roundtrip TSV |
+| #214 — adaptador Validación | #215 | `17426f60...` | Una fila; solicitado y validado separados |
+| #216 — adaptador Primera Visita | #217 | `c45b7d13...` | `1..N` líneas explícitas |
+| #220 — adaptador Seguimiento | #221 | `b9f27e96...` | `1..N` líneas explícitamente activas |
+| #222 — reconciliación Seguimiento | #223 | `dfbbf76b...` | Estado documental post-WO4 |
+| #224 — contexto técnico | #225 | `e2f2c663...` | Proveedor cerrado a FH-001/FH-004; no Identity Plane |
+| #226 — activación paralela | #227 | `f86f72f8...` | Export v2 visible; v1 intacta |
+| #230 — retirada ledger runtime | #231 | `19867ef16127548d0b596482360d8e5cbe6e54e5` | Ledger no cargado en las tres pantallas; sin restauración ni alternativa |
+| #232 — workbook Excel Bridge | #233 | `a94a42f1d603e4259aece09c14b18ae19a74fefc` | Workbook operativo publicado; QA Microsoft Excel PASS |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -114,111 +123,84 @@ La PR #185 permanece en la historia Git, pero no debe presentarse como la correc
 
 ### 5.1 Regional
 
-| Capacidad | Existe en código | Cableada | Visible | Interacción soportada | QA humana pública |
+| Capacidad | Existe en código/artefacto | Cableada | Visible | Interacción soportada | QA disponible |
 |---|---:|---:|---:|---:|---:|
-| Inicio Farmacia y búsqueda por CIP | Sí | Sí | Sí | Sí | Sí |
-| Validación farmacoterapéutica | Sí | Sí | Sí | Sí | Sí |
-| Entrada manual de solicitud | Sí | Sí | Sí | Sí | Sí |
-| Autocomplete CIMA manual solicitado | Sí | Sí | Sí | Sí | **PASS** |
-| Dermatología multipatología | Sí | Sí | Sí | Sí | Sí, en alcance evaluado |
-| Primera Visita | Sí | Sí | Sí | Sí | Sí |
-| Seguimiento multilínea | Sí | Sí | Sí | Sí | Sí |
-| EA y causalidad por sospechoso | Sí | Sí | Sí | Sí | Sí, alcance demo |
-| Dashboard longitudinal `visit_id + line_id` | Sí | Sí | Sí | Sí | Sí |
-| TXT JARA | Sí | Sí | Sí | Sí | Sí, salida provisional |
-| Exportación estructurada | Sí | Parcial | Sí | Sí | Pendiente de contrato definitivo |
-| Export v2 demo paralelo | Sí | Sí, limitado | Sí | Sí, para contextos técnicos registrados | 152 columnas: Validación 1 fila; Primera Visita/Seguimiento `1..N` por líneas explícitas; no piloto |
-| Persistencia longitudinal externa | No cerrada | No | No | No | No |
+| Inicio Farmacia y búsqueda por CIP | Sí | Sí | Sí | Sí | QA previa regional |
+| Validación farmacoterapéutica | Sí | Sí | Sí | Sí | QA previa regional |
+| Entrada manual y autocomplete CIMA | Sí | Sí | Sí | Sí | QA humana PASS |
+| Dermatología multipatología | Sí | Sí | Sí | Sí | Alcance evaluado |
+| Primera Visita | Sí | Sí | Sí | Sí | QA previa regional |
+| Seguimiento multilínea | Sí | Sí | Sí | Sí | QA previa regional |
+| EA y causalidad por sospechoso | Sí | Sí | Sí | Sí | Alcance demo |
+| Dashboard longitudinal `visit_id + line_id` | Sí | Sí | Sí | Sí | Alcance demo, no persistencia externa |
+| TXT JARA | Sí | Sí | Sí | Sí | Salida provisional |
+| Export v2 demo paralelo | Sí | Sí, limitado | Sí | Sí, para contextos técnicos registrados | 152 columnas; cardinalidad aprobada |
+| Ledger clínico histórico | Sí, versionado | **No en runtime soportado** | No | No | PR #231 demuestra desacoplamiento |
+| Workbook Excel Bridge | Sí | No conectado al Hub para lectura | No es UI web | Pegado manual soportado en Excel | QA manual Microsoft Excel PASS |
+| Office Script y tablas relacionales | No | No | No | No | Pendiente WO7 |
+| `APP_*`, Read Adapter y roundtrip | No | No | No | No | Pendiente WO8 |
+| Persistencia longitudinal externa completa | No | No | No | No | No acreditada |
 
-### 5.2 Quick wins regionales fusionados en PR #193
+### 5.2 Export v2 y workbook publicados
 
-Estado real de la entrega:
-
-- implementada en código y fusionada en `recovery`;
-- CI `smoke-check`: PASS;
-- un commit y ocho rutas verificadas;
-- `Cada 3 semanas` incorporada al catálogo, normalización y exportaciones;
-- justificación clínica, observaciones de Farmacia Hospitalaria y otras observaciones del acto separadas;
-- cuatro comorbilidades comunes con valores `No informado / Sí / No`;
-- CIP sintético literal no vacío obligatorio para JARA, CSV y Excel, sin fallback ni regex;
-- paridad JARA/CSV/Excel y contrato Excel de 61 columnas conservado;
-- la promoción a `CÁCERES-REVIEW-0.3` fue realizada por PR #197 desde la fuente `815e16f9...`;
-- el HEAD regional posterior incorpora cambios que no se promocionan automáticamente al snapshot;
-- aptitud para piloto real: no acreditada.
+- core y adaptadores usan una fila común de 152 columnas;
+- Validación produce exactamente una fila;
+- Primera Visita produce `1..N` por líneas explícitamente presentes;
+- Seguimiento produce `1..N` por líneas explícitamente activas;
+- `0`, `false`, vacíos, Unicode y JSON se preservan en el TSV canónico;
+- la salida v1 de 61 columnas, CSV y JARA permanecen intactos;
+- el workbook publicado contiene `01_DERMA`, `03_DIGESTIVO` y 16 shells técnicos ocultos;
+- las dos tablas reciben las mismas 152 cabeceras canónicas;
+- QA manual en Microsoft Excel demostró apertura sin reparación, expansión hasta seis filas sintéticas, roundtrip exacto de 5.830 bytes y neutralidad de `=`, `+`, `-` y `@`;
+- las hojas técnicas permanecen vacías: no existe todavía descomposición relacional.
 
 ### 5.3 Cáceres 0.3
 
-Demostrado mediante interacción soportada y comprobación humana en la URL pública:
+Demostrado mediante interacción soportada y comprobación humana en la URL pública del snapshot:
 
 - versión `CÁCERES-REVIEW-0.3` visible;
-- entrada directa;
-- búsqueda y navegación real;
-- Validación → Entrada manual → Fármaco solicitado;
-- escritura de `secu` y clic real en una presentación CIMA;
-- valores estables y editables;
-- pauta e inducción no alteradas;
-- Primera Visita y Seguimiento accesibles;
+- entrada directa y flujo Farmacia;
+- búsqueda, Validación, Primera Visita y Seguimiento accesibles;
+- selección CIMA manual estable y editable;
 - dashboard de `CIP-DEMO-FH-004`;
-- recarga directa de páginas internas;
 - ausencia de navegación Reumatología;
 - aviso de datos sintéticos;
 - consola y `pageerror` sin errores en las pruebas ejecutadas.
 
-Evidencia técnica de promoción:
+El snapshot 0.3 no se actualiza automáticamente con PR #231 o PR #233. Esas capacidades están publicadas en la rama regional y solo llegarían al snapshot mediante promoción explícita posterior.
 
-- snapshot check: 14/14;
-- smoke: 48/48;
-- autocomplete dentro del snapshot: PASS;
-- regresiones Enfermería/precargas: 95/95 + 45/45 + 94/94;
-- manifest con SHA y versión exactos;
-- snapshot generado, no editado manualmente.
+### 5.4 Persistencia y evolución regional posterior al snapshot
 
----
-
-### 5.4 Evolución regional posterior al snapshot Cáceres
-
-- El ledger clínico existe en código por PR #199/#203 y persiste actualmente en `localStorage`; imports y snapshots de contexto usan `sessionStorage`. Ese estado técnico no es arquitectura objetivo ni fuente de verdad, y su retirada aún no está implementada.
-- El workbook técnico de PR #201 se conserva fuera del runtime normal; no es el workbook operativo del Excel Bridge.
-- El flujo visible es Paciente → acto → salidas normales. No existe modo, botón, alta ni formulario reducido para paciente sintético.
-- Primera Visita exporta el CIP y el acto visibles; no usa fallback demo.
-- Seguimiento mantiene Excel/CSV v1 por línea dispensada y, en paralelo, Export v2 demo puede copiar varias filas por líneas activas.
-- Excel v1 de 61 columnas, CSV y JARA permanecen intactos.
-- El core Export v2 candidate `2.0.0-draft.1` existe en código y está publicado desde PR #211, con 152 columnas, schemas y roundtrip TSV contractual.
-- PR #225 añadió un proveedor técnico sintético cerrado a FH-001/FH-004; CIP manual desconocido no obtiene contexto v2.
-- PR #227 activó Export v2 demo visible con esquema común de 152 columnas: Validación produce una fila; Primera Visita y Seguimiento soportan `1..N` según líneas explícitas. La UI actual de Primera Visita puede mostrar una sola línea sin limitar el contrato del adaptador. `unknown/stale` bloquea exclusivamente v2.
+- PR #231 retiró el ledger clínico del runtime soportado de Validación, Primera Visita y Seguimiento.
+- No existe restauración tras recarga ni recuperación al regresar a un CIP; no se lee, escribe ni elimina la clave legacy.
+- El módulo `farmacia_evaluation_ledger.js` y el workbook técnico de PR #201 permanecen versionados como historia, pero no se cargan en el flujo normal.
+- Imports y snapshots de contexto continúan utilizando `sessionStorage`; su retirada permanece pendiente y necesita el reemplazo de lectura del Bridge.
+- PR #233 publicó el workbook operativo del Bridge, pero todavía no lo conecta al Hub para reconstrucción longitudinal.
+- La profesional puede pegar una salida TSV completa en las hojas operativas; todavía no existe Office Script que valide, deduplique y descomponga las filas.
+- No existen tablas relacionales pobladas, vistas `APP_*`, Excel Read Adapter ni roundtrip.
+- El proveedor técnico v2 permanece cerrado a FH-001/FH-004; CIP manual desconocido no obtiene contexto técnico v2.
 - No existe cutover completo, retirada v1 ni promoción de `draft` a `2.0.0`.
-- WO5 queda `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: PR #225/#227 cubren parte del alcance; no se reabre como megadesarrollo ni se declara cerrada por completo.
-- Workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip permanecen pendientes.
+- WO5 permanece `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`.
 - Ninguno de estos cambios acredita QA integral, piloto real o producción.
 
 ---
 
 ## 6. Feedback confirmado por Farmacia el 2026-07-30
 
-Los cuatro puntos ejecutables sin dependencia externa de esta sección quedaron implementados en la rama regional mediante PR #193. Permanecen pendientes la QA humana regional específica y una promoción explícita posterior a Cáceres.
+Los cuatro puntos ejecutables sin dependencia externa quedaron implementados mediante PR #193:
 
-### Ejecutable sin dependencia externa
+1. pauta **Cada 3 semanas**;
+2. **Observaciones de Farmacia Hospitalaria** separadas de la justificación clínica;
+3. coherencia de la denominación en interfaz y salidas;
+4. comorbilidades comunes: infecciones recurrentes, riesgo cardiovascular, alteraciones neurológicas y antecedentes/riesgo de neoplasia.
 
-1. Añadir la pauta **Cada 3 semanas** al catálogo común, su normalización, exportación y regresiones.
-2. Sustituir el campo farmacéutico visible **Justificación** por **Observaciones de Farmacia Hospitalaria**.
-3. Reflejar esa denominación en:
-   - interfaz;
-   - TXT JARA;
-   - Excel/exportación estructurada;
-   - documentación y diccionario.
-4. Incorporar estas comorbilidades comunes:
-   - infecciones recurrentes;
-   - riesgo o antecedentes cardiovasculares;
-   - alteraciones neurológicas;
-   - antecedentes o riesgo de neoplasia.
-
-### Dependencias externas abiertas
+Dependencias externas abiertas:
 
 | Dependencia | Estado | Regla |
 |---|---|---|
 | Texto exacto copiado desde Presalud | Solicitado, pendiente | No crear parser con formato inventado |
-| Diccionario regional de patologías de Farmacia | Solicitado, pendiente | No codificar contenido provisional como regional |
-| Formularios previos de Digestivo | Pendiente de Farmacia | No implementar el circuito definitivo hasta recibirlos |
+| Diccionario regional de patologías | Solicitado, pendiente | No codificar contenido provisional como regional |
+| Formularios previos de Digestivo | Pendiente de Farmacia | No implementar circuito definitivo sin recibirlos |
 | Consenso SEFH y PROs | Preparación por Silvia | Incorporar tras revisión explícita |
 
 ---
@@ -227,30 +209,25 @@ Los cuatro puntos ejecutables sin dependencia externa de esta sección quedaron 
 
 - Dermatología puede crear Presalud inicialmente solo para una parte de los pacientes.
 - Cuando no existe, Farmacia debe crearlo al recibir la orden clínica.
-- Por tanto, los pacientes terminan pasando por Presalud, pero el registro puede no existir al iniciar la validación.
 - La orden clínica y Presalud son entradas complementarias.
-- Presalud es una fuente operativa especialmente relevante para fechas de validez/renovación si estas se reciben explícitamente.
-- No existe todavía parser publicado porque falta la cadena exacta del portapapeles.
+- Presalud es especialmente relevante para fechas de validez/renovación cuando se reciben explícitamente.
+- No existe parser publicado porque falta la cadena exacta del portapapeles.
 - Pharmatool queda fuera de este frente: registra dispensación, pero no ofrece una exportación útil para construir este flujo.
 
 ---
 
-## 8. Decisiones de producto para el siguiente ciclo
+## 8. Decisiones de producto vigentes
 
-1. No existe un modo ni un botón `Nuevo paciente sintético`.
+1. No existe modo ni botón `Nuevo paciente sintético`.
 2. La evaluadora usa el flujo normal con un CIP y datos inventados.
-3. Los fixtures hardcodeados se conservan para demo y regresión.
-4. La herramienta debe dejar de depender exclusivamente de esos fixtures.
-5. La información se genera siempre desde el Hub; la profesional no crea el paciente escribiendo una fila Excel.
-6. Cada hospital tendrá un libro independiente.
-7. No existe consolidación regional automática.
-8. Código, modelo, contratos y scripts serán comunes.
-9. El branding será configurable por hospital: Cáceres, Badajoz y Mérida.
-10. Nombre paraguas provisional interno: **PROMueve Nexus**.
-11. Módulo de Farmacia: **FarmaNEXus**.
-12. Cáceres inicia con Dermatología y Digestivo; Digestivo permanece condicionado a su formulario.
-
-La decisión vigente y sus límites se detallan en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md). CIP/`identifier_value` no equivale a `patient_id`: este último es técnico y opaco y no se derivará del CIP mediante hash, transformación o concatenación. El Identity Plane físico y su mecanismo productivo de custodia permanecen diferidos.
+3. Los fixtures se conservan para demo y regresión, pero no deben gobernar el funcionamiento final.
+4. La información se genera siempre desde el Hub; la profesional no crea un paciente escribiendo una fila Excel.
+5. Cada hospital tendrá un libro independiente; no existe consolidación regional automática.
+6. Código, modelo, contratos y scripts serán comunes.
+7. Cáceres inicia el Bridge con Dermatología y Digestivo; la definición clínica definitiva de Digestivo sigue condicionada a su formulario.
+8. CIP/`identifier_value` no equivale a `patient_id`; `patient_id` es opaco y no se deriva del CIP.
+9. El Identity Plane físico permanece diferido.
+10. Orden técnico fijo: WO7 Office Script → WO8 `APP_*`/Read Adapter/roundtrip → identidad/CIP arbitrario → retirada restante de `sessionStorage`.
 
 ---
 
@@ -258,27 +235,36 @@ La decisión vigente y sus límites se detallan en [`../DECISION_FH_V4_PERSISTEN
 
 ### Apto actualmente para
 
-- demo funcional;
-- evaluación de flujo y usabilidad con datos sintéticos;
+- demo funcional y evaluación de formularios con datos sintéticos;
 - revisión de campos y textos por profesionales;
-- QA del modelo multilínea y de las exportaciones provisionales;
-- preparación técnica del Excel Bridge y del modelo canónico.
+- QA de la cardinalidad Export v2;
+- generación y pegado manual del TSV en el workbook;
+- validación técnica del contenedor Excel Bridge.
 
 ### No apto todavía para
 
 - introducir datos reales;
 - asistencia clínica real;
+- persistencia longitudinal completa;
 - uso persistente multiusuario;
-- autenticación y autorización reales;
-- auditoría productiva;
-- integración automática con JARA, Presalud, Farmatool o sistemas SES;
+- autenticación, autorización y auditoría productivas;
+- integración automática con sistemas SES;
 - captura externa de PROMs reales;
 - piloto operativo;
 - producción.
 
 ### Gate de paquete longitudinal final
 
-No preparar URL, guía o paquete final ni retirar v1 hasta demostrar conjuntamente CIP arbitrario en flujo normal, workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub. Una evaluación de formularios de alcance inferior requiere decisión humana específica y etiquetado explícito como evaluación, no piloto.
+El workbook operativo ya está demostrado. No preparar URL, guía o paquete longitudinal final ni retirar v1 hasta demostrar también:
+
+- CIP arbitrario mediante flujo normal;
+- Office Script;
+- tablas relacionales y vistas `APP_*`;
+- Excel Read Adapter;
+- roundtrip Hub → Excel → Hub;
+- retirada de `sessionStorage` con reemplazo.
+
+Una evaluación de formularios de alcance inferior requiere decisión humana específica y etiquetado explícito como evaluación, no piloto.
 
 ---
 
@@ -291,20 +277,7 @@ No preparar URL, guía o paquete final ni retirar v1 hasta demostrar conjuntamen
 - Un segundo tratamiento no demuestra switch ni add-on.
 - Ausencia de acción no demuestra renovación.
 - CIMA identifica y propone datos editables tras selección explícita; no decide tratamiento.
-- Nunca inferir desde nombre, catálogo, etiqueta o dato ausente:
-  - dosis;
-  - vía;
-  - pauta;
-  - presentación no seleccionada;
-  - inducción;
-  - duración;
-  - resultado de validación;
-  - inicio;
-  - switch;
-  - add-on;
-  - dispensación;
-  - renovación;
-  - causalidad.
+- Nunca inferir desde nombre, catálogo, etiqueta o dato ausente dosis, vía, pauta, presentación, inducción, duración, resultado de validación, inicio, switch, add-on, dispensación, renovación o causalidad.
 - Los datos ausentes permanecen vacíos, desconocidos o pendientes.
 
 ---
@@ -330,9 +303,10 @@ Rama work aislada
 
 ## 12. Siguiente referencia operativa
 
-El orden, arquitectura, dependencias y WOs del ciclo 2026-07-31 a 2026-08-15 se definen en:
+La siguiente unidad es `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01`, definida por la secuencia publicada:
 
-- [`FARMACIA_PLAN_VACACIONES_20260731.md`](FARMACIA_PLAN_VACACIONES_20260731.md)
+- [`FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md)
+- [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md)
 - [`../architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](../architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md)
 
-Ninguna WO futura queda autorizada automáticamente por esos documentos.
+WO7 deberá partir del workbook publicado, conservar la fila raw, definir y poblar las tablas relacionales, bloquear duplicados y discrepancias, registrar errores y demostrar idempotencia en Microsoft Excel. Ninguna WO futura queda autorizada automáticamente por este documento.

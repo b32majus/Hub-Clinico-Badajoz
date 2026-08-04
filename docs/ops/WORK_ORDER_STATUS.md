@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-08-04
+**Última actualización:** 2026-08-05
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,11 +11,13 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `f86f72f8e09e29708ebd0b977c2451300002e989` |
+| HEAD regional publicado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` (PR #227) |
+| Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` (PR #231), merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
+| Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` (PR #233), merge/HEAD `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PR #227: Chromium conjunto y smoke 48/48 PASS; Export v2 demo paralelo visible, 152 columnas por fila y varias filas en Seguimiento; JARA, CSV y Excel v1 de 61 columnas intactos; sin cutover, retirada v1 ni validación en piloto |
+| QA pública regional del HEAD actual | PR #231: ledger ausente del runtime soportado, sin restauración ni acceso a clave legacy; PR #233: smoke PASS, 18 hojas, 152 columnas, QA manual Microsoft Excel y controles negativos PASS; v1 intacta; sin Office Script, roundtrip ni piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -98,9 +100,9 @@
 | **WO-FH-CACERES-QUICK-WINS-03-01** | Quick wins de Validación Farmacia | ✅ Merged | `work/fh-caceres-quick-wins-03-01-20260731` | merge `4801e9aa...` (PR #193, issue #192) | En ese merge: CI verde y promoción pendiente; promovida después mediante PR #197 |
 | **WO-DOC-FH-CACERES-QUICK-WINS-RECONCILIATION-20260731** | Reconciliar publicación de quick wins | ✅ Merged | `work/doc-fh-caceres-quick-wins-reconciliation-20260731` | merge `815e16f9...` (PR #195, issue #194) | Estado documental y QA reconciliados |
 | **WO-FH-CACERES-REVIEW-03-PROMOTION-01** | Promover Cáceres 0.3 | ✅ Merged | `work/fh-caceres-review-03-promotion-20260731` | merge `96a4cb0b...` (PR #197, issue #196) | Snapshot 0.3; fuente funcional `815e16f9...` |
-| **WO-FH-SYNTHETIC-EVALUATION-LEDGER-01** | Ledger local de evaluación sintética | ✅ Merged | `work/fh-synthetic-evaluation-ledger-01-20260801` | merge `ac93575d...` (PR #199, issue #198) | Persistencia local técnica; no piloto real |
-| **WO-FH-SYNTHETIC-EVALUATION-WORKBOOK-01** | Workbook técnico de evaluación | ✅ Merged | `work/fh-synthetic-evaluation-workbook-01-20260801` | merge `25c75165...` (PR #201, issue #200) | 11 hojas técnicas; no Excel operativo definitivo |
-| **WO-FH-EVALUATION-FLOW-REALIGN-01** | Realinear persistencia con el flujo asistencial | ✅ Merged | `work/fh-evaluation-flow-realign-01-20260801` | merge `6dcedff4...` (PR #203, issue #202) | Retira cohorte ficticia visible; QA pública PASS |
+| **WO-FH-SYNTHETIC-EVALUATION-LEDGER-01** | Ledger local de evaluación sintética | ✅ Merged | `work/fh-synthetic-evaluation-ledger-01-20260801` | merge `ac93575d...` (PR #199, issue #198) | Histórico en runtime: módulo aún versionado, pero desacoplado de las tres pantallas por PR #231 |
+| **WO-FH-SYNTHETIC-EVALUATION-WORKBOOK-01** | Workbook técnico de evaluación | ✅ Merged | `work/fh-synthetic-evaluation-workbook-01-20260801` | merge `25c75165...` (PR #201, issue #200) | 11 hojas técnicas; artefacto histórico, no workbook operativo definitivo |
+| **WO-FH-EVALUATION-FLOW-REALIGN-01** | Realinear persistencia con el flujo asistencial | ✅ Merged | `work/fh-evaluation-flow-realign-01-20260801` | merge `6dcedff4...` (PR #203, issue #202) | Retira cohorte ficticia visible; QA pública PASS; persistencia ledger retirada después por PR #231 |
 | **WO-FH-FIRST-VISIT-EXCEL-TRUTH-P0-01** | Verdad del Excel de Primera Visita | ✅ Merged | `work/fh-first-visit-excel-truth-p0-01-20260801` | merge `68b53837...` (PR #205, issue #204) | CIP/acto visible; 61 columnas; QA pública PASS |
 | **WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01** | Reconciliar contrato export v2 | ✅ Merged | `work/fh-export-contract-v2-reconciliation-01-20260801` | merge `2f54c4ec...` (PR #207, issue #206) | Fila común v2, grano por línea activa y componentes del Bridge documentados |
 | **WO-DOC-FH-EXPORT-V2-SEQUENCE-WO1-01** | Secuencia WO1–WO9 y WO1 técnica | ✅ Merged | `work/fh-export-v2-sequence-wo1-docs-20260802` | merge `5e9b59ba...` (PR #209, issue #208) | Siete rutas documentales; no añadió capacidad funcional |
@@ -112,6 +114,8 @@
 | **WO-FH-EXPORT-V2-FOLLOWUP-DOC-RECONCILIATION-01** | Reconciliar publicación de Seguimiento v2 | ✅ Merged | `work/fh-export-v2-followup-doc-reconciliation-01-20260804` | commit `b803b4c7...`, merge `dfbbf76b...` (PR #223, issue #222) | Reconciliación documental post-Seguimiento v2; histórica tras PR #227 |
 | **WO-FH-EXPORT-V2-TECHNICAL-CONTEXT-01** | Proveedor técnico sintético cerrado | ✅ Merged | `work/fh-export-v2-technical-context-01-20260804` | commit `00e5c8a6...`, merge `e2f2c663...` (PR #225, issue #224) | Registro cerrado a FH-001/FH-004; identidad técnica explícita y separada del CIP; sin storage ni salida pública propia |
 | **WO-FH-EXPORT-V2-PARALLEL-ACTIVATION-01** | Activar Export v2 demo en paralelo | ✅ Merged | `work/fh-export-v2-parallel-activation-01-20260804` | commit `fe84d83c...`, merge `f86f72f8...` (PR #227, issue #226) | TSV común de 152 columnas: Validación 1 fila; Primera Visita/Seguimiento `1..N` según líneas explícitas; v1 intacta |
+| **WO-FH-EVALUATION-LEDGER-RUNTIME-RETIREMENT-01** | Retirar ledger clínico del runtime soportado | ✅ Merged | `work/fh-evaluation-ledger-runtime-retirement-01-20260804` | commit `b1ee11e0...`, merge `19867ef1...` (PR #231, issue #230) | Tres pantallas sin carga del ledger; sin restauración, contaminación entre CIP ni acceso a la clave legacy; no añade persistencia alternativa; `sessionStorage` fuera de alcance |
+| **WO-FH-EXCEL-BRIDGE-WORKBOOK-01** | Workbook operativo Excel Bridge Cáceres | ✅ MERGED_AND_VERIFIED | `work/fh-excel-bridge-workbook-01-20260804` | commit `c286afab...`, merge `a94a42f1...` (PR #233, issue #232) | 18 hojas, 152 columnas, `01_DERMA`/`03_DIGESTIVO`, 16 shells técnicos; QA manual Microsoft Excel y controles negativos PASS; sin Office Script ni `APP_*` |
 
 ### Adjudicación de WO5 Export v2
 
@@ -119,15 +123,15 @@ El alcance original de `WO-FH-EXPORT-V2-CUTOVER-01` incluía activación públic
 
 Para esta reconciliación, **WO5A** nombra retrospectivamente `WO-FH-EXPORT-V2-TECHNICAL-CONTEXT-01` (issue #224, PR #225). Aporta fixtures de contexto técnico sintético con `patient_id`, IDs de acto, `treatment_id` y `line_id` explícitos, estables y predeclarados. El proveedor no genera esos IDs, no deriva ni transforma el CIP en identidad técnica y falla cerrado para cualquier contexto no registrado; no es un `IdentityRepository` ni añade salida pública propia. **WO5B** nombra retrospectivamente `WO-FH-EXPORT-V2-PARALLEL-ACTIVATION-01` (issue #226, PR #227). No son títulos oficiales originales. No existe WO5C ejecutada ni se declarará sin issue, manifest, PR y evidencia publicada.
 
-Quedan aplazadas la retirada de v1 y la promoción de versiones `draft`. Workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip no están implementados. La decisión completa vive en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+Quedan aplazadas la retirada de v1 y la promoción de versiones `draft`. El workbook operativo está implementado y verificado desde PR #233. Office Script, tablas relacionales pobladas, vistas `APP_*`, Excel Read Adapter y roundtrip no están implementados. La decisión completa vive en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ### Estado técnico de persistencia en navegador
 
-PR #199/#203 dejaron en código un ledger clínico persistido en `localStorage`; imports y snapshots ligados al contexto usan `sessionStorage`. Se conserva la trazabilidad de PR #199/#201/#203, pero browser storage queda superseded como dirección: no es fuente de verdad ni arquitectura objetivo y su retirada técnica aún está pendiente de una WO atómica alineada con el Excel Bridge.
+PR #231 retiró de Validación, Primera Visita y Seguimiento la carga del ledger clínico basado en `localStorage`. El módulo y el workbook sintético históricos permanecen versionados para trazabilidad, pero no están cableados al runtime soportado; no existe restauración tras recarga ni recuperación al volver a un CIP, y la clave legacy no se lee, escribe ni elimina. Imports y snapshots ligados al contexto continúan utilizando `sessionStorage`; esa retirada permanece pendiente y no debe ejecutarse sin un reemplazo alineado con el Bridge/Read Adapter.
 
 ### Deuda administrativa de issues
 
-A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224 y #226 están cerrados. Esta WO documental no modifica issues históricos.
+A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224, #226, #230 y #232 están cerrados. Esta WO documental no modifica issues históricos.
 
 ---
 
@@ -173,8 +177,8 @@ A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 
 | Estado | Cantidad |
 |---|---:|
-| ✅ Merged | 60 |
-| ✅ MERGED_AND_VERIFIED | 3 |
+| ✅ Merged | 61 |
+| ✅ MERGED_AND_VERIFIED | 4 |
 | 📋 Ready for review | 18 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
@@ -184,8 +188,8 @@ A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 88 work orders / preflights gestionadas.
+**Total:** 90 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 60 + 3 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 88, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 61 + 4 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 90, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.
