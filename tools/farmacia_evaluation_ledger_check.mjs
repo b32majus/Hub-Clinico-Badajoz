@@ -191,47 +191,27 @@ assert.equal(memoryOnly.persistent, false, 'blocked localStorage falls back to m
 assert.equal(memoryOnly.persistence_mode, 'memory_fallback');
 assert.equal(memoryOnlyLedger.listEvents().length, 1, 'memory fallback remains usable in the current page context');
 
-const followupSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_seguimiento.js'), 'utf8');
-assert.match(source, /restoreFormState\([^;]+\)\.then\(function \(\) \{\s*restoreDomainState\(event\);/, 'ledger strictly restores form state before the follow-up dynamic domain');
-assert.match(followupSource, /function restoreEvaluationState\(snapshot\)/, 'follow-up exposes dynamic state restoration');
-assert.match(followupSource, /getCurrentCanonicalLines:/, 'follow-up exposes the currently edited line set');
-assert.match(followupSource, /captureEditingLineState\(\);[\s\S]*captureCommonAdverseEvent\(\);[\s\S]*captureCausalityEditor\(\);/, 'follow-up snapshot captures visible line and causality edits');
-
 const indexHtml = fs.readFileSync(path.join(ROOT, 'farmacia_index.html'), 'utf8');
 assert.doesNotMatch(indexHtml, /farmacia_evaluation_(ledger|workbook)\.js/, 'Inicio loads neither ledger nor workbook module');
 assert.match(indexHtml, /vendor\/sheetjs\/xlsx\.full\.min\.js/, 'Inicio retains SheetJS for normal Excel imports');
 
 const clinicalPages = [
-  ['farmacia_validacion.html', 'scripts/farmacia_validacion.js', ['fhValExportTxt', 'fhValExcelExportBtn']],
-  ['farmacia_primera_visita.html', 'scripts/farmacia_primera_visita.js', ['fhPvExportTxt', 'fhPvExcelExportBtn']],
-  ['farmacia_seguimiento.html', 'scripts/farmacia_seguimiento.js', ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn']]
+  ['farmacia_validacion.html', 'scripts/farmacia_validacion.js', ['fhValExportTxt', 'fhValExcelExportBtn', 'fhValExportV2Btn']],
+  ['farmacia_primera_visita.html', 'scripts/farmacia_primera_visita.js', ['fhPvExportTxt', 'fhPvExcelExportBtn', 'fhPvExportV2Btn']],
+  ['farmacia_seguimiento.html', 'scripts/farmacia_seguimiento.js', ['fhSegExportTxt', 'fhSegExportCsv', 'fhSegExcelExportBtn', 'fhSegExportV2Btn']]
 ];
 for (const [htmlName, pageScript, outputIds] of clinicalPages) {
   const html = fs.readFileSync(path.join(ROOT, htmlName), 'utf8');
-  assert.ok(html.indexOf(pageScript) < html.indexOf('scripts/farmacia_evaluation_ledger.js'), `${htmlName} loads ledger after its page script`);
+  assert.match(html, new RegExp(pageScript.replaceAll('.', '\\.')), `${htmlName} retains its normal page runtime`);
+  assert.doesNotMatch(html, /farmacia_evaluation_(ledger|workbook)\.js/, `${htmlName} loads neither retired runtime`);
   assert.match(html, /Demo con datos sintéticos/, `${htmlName} retains the general demo/synthetic warning`);
-  for (const outputId of outputIds) assert.match(source, new RegExp(`"${outputId}"`), `${outputId} is bound by the ledger`);
+  for (const outputId of outputIds) assert.match(html, new RegExp(`id="${outputId}"`), `${outputId} remains available`);
   assert.doesNotMatch(html, /Guardar acto ficticio|Cohorte ficticia local|fhEvaluationLedgerSyntheticConfirm|fhEvaluationLedgerSave/, `${htmlName} has no synthetic save/cohort UI`);
 }
-assert.doesNotMatch(source, /fhValExportCsv|fhPvExportCsv/, 'hidden Validation and First Visit CSV controls are not bound');
-assert.doesNotMatch(source, /Descarga el libro de evaluación/, 'storage-limit guidance does not instruct users to download the evaluation workbook');
-assert.doesNotMatch(source, /elimina actos antiguos/, 'storage-limit guidance does not instruct users to delete old acts');
-assert.doesNotMatch(source, /preventDefault|stopPropagation|stopImmediatePropagation|copyTextToClipboard|downloadFile|writeFile/, 'ledger does not intercept or mutate normal outputs');
-assert.match(source, /eligibleAtActivation = isVisibleEnabled\(control\)/, 'persistence requires a visible enabled output at activation');
-assert.match(source, /persistAfterNormalOutput\(config\);\s*\}, true\);/, 'capture-phase binding persists before existing bubble output handlers');
-assert.doesNotMatch(source, /setTimeout\([^)]*persistAfterNormalOutput/, 'normal-output persistence is not deferred until after exporter normalization');
-assert.doesNotMatch(source, /injectWorkflowPanel|renderIndexPanel|fhEvaluationLedgerPanel|fhEvaluationLedgerSyntheticConfirm|fhEvaluationLedgerSave|Guardar acto ficticio|Cohorte ficticia local/, 'parallel cohort, consent and fake-save runtime are removed');
-assert.match(source, /history\.replaceState/, 'persistent saves and restores adopt ledger_event_id without navigation');
-assert.match(source, /Acto local restaurado\. Revise los datos antes de volver a exportar\./, 'direct URL restoration gives the required compact review warning');
-assert.match(source, /Existe un acto local anterior de este tipo para este paciente\./, 'same-patient/type reopening is explicit');
-assert.match(source, /Recuperar último acto/, 'explicit latest-act recovery is available');
-assert.match(source, /Continuar con un acto nuevo/, 'explicit continue-as-new action is available');
-assert.match(source, /Retención temporal en memoria; el acto no se conservará al recargar\./, 'fallback status truthfully states that reload retention is unavailable');
-assert.doesNotMatch(source.match(/function restoreSpecificEvent[\s\S]*?function restoreRequestedEvent/)[0], /persistAfterNormalOutput|\.click\(/, 'direct restoration neither persists nor triggers an export');
 
 const previewManifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'previews/caceres-fh/deployment-manifest.json'), 'utf8'));
 assert.equal(previewManifest.version, 'CÁCERES-REVIEW-0.3', 'current Cáceres snapshot remains unchanged');
 assert.equal(fs.readFileSync(path.join(ROOT, 'previews/caceres-fh/farmacia_index.html'), 'utf8').includes('farmacia_evaluation_ledger.js'), false, 'this WO does not modify the stable snapshot');
 
 console.log('farmacia_evaluation_ledger_check: PASSED');
-console.log('normal-output wiring; stable schema/API; exact radios; URL restore; explicit recover/continue; fallback; snapshot untouched.');
+console.log('retired runtime disconnected; normal outputs retained; historical module and Cáceres snapshot untouched.');
