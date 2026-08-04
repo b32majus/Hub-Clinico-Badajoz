@@ -6,8 +6,8 @@
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| Base Git publicada de esta edición | `b9f27e96f90f5bb20017ba805bb68f823b4df00f` |
-| Último SHA funcional regional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` |
+| HEAD regional publicado verificado | `f86f72f8e09e29708ebd0b977c2451300002e989` |
+| Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
@@ -34,7 +34,10 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la corrección P0 de la verdad Excel de Primera Visita mediante PR #205;
 - la publicación de la secuencia WO1–WO9 mediante PR #209;
 - la publicación del núcleo canónico Export v2 mediante PR #211;
-- la publicación de los adaptadores internos de Validación, Primera Visita y Seguimiento v2 mediante PR #215, #217 y #221.
+- la publicación de los adaptadores internos de Validación, Primera Visita y Seguimiento v2 mediante PR #215, #217 y #221;
+- la reconciliación documental post-Seguimiento v2 mediante PR #223;
+- el proveedor técnico sintético cerrado mediante PR #225;
+- la activación visible y paralela de Export v2 demo mediante PR #227.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -45,8 +48,8 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| Base Git publicada de esta edición | `b9f27e96f90f5bb20017ba805bb68f823b4df00f` | Incluye PR #195 a #221; PR #209 es documental; PR #211 publica el core; PR #215/#217/#221 publican los adaptadores internos sin activación pública |
-| Último bundle funcional regional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` | Core y adaptadores internos v2 (Validación, Primera Visita y Seguimiento) con tests contractuales PASS y WO4 con QA Chromium; sin salida pública v2 ni cutover |
+| HEAD regional publicado | `f86f72f8e09e29708ebd0b977c2451300002e989` | Merge de PR #227; incluye PR #223/#225/#227 |
+| Último bundle funcional regional | `fe84d83c7d3574840696c9fed70f98e581ec8916` | Export v2 demo visible en paralelo; Chromium conjunto y smoke 48/48 PASS; v1 preservada |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
@@ -124,6 +127,7 @@ La PR #185 permanece en la historia Git, pero no debe presentarse como la correc
 | Dashboard longitudinal `visit_id + line_id` | Sí | Sí | Sí | Sí | Sí |
 | TXT JARA | Sí | Sí | Sí | Sí | Sí, salida provisional |
 | Exportación estructurada | Sí | Parcial | Sí | Sí | Pendiente de contrato definitivo |
+| Export v2 demo paralelo | Sí | Sí, limitado | Sí | Sí, para contextos técnicos registrados | 152 columnas: Validación 1 fila; Primera Visita/Seguimiento `1..N` por líneas explícitas; no piloto |
 | Persistencia longitudinal externa | No cerrada | No | No | No | No |
 
 ### 5.2 Quick wins regionales fusionados en PR #193
@@ -173,15 +177,19 @@ Evidencia técnica de promoción:
 
 ### 5.4 Evolución regional posterior al snapshot Cáceres
 
-- El ledger y workbook técnico existen en código regional, pero la interfaz de cohorte ficticia fue retirada por PR #203.
-- El flujo público vuelve a ser Paciente → acto → salidas normales, con persistencia local subordinada y discreta.
+- El ledger clínico existe en código por PR #199/#203 y persiste actualmente en `localStorage`; imports y snapshots de contexto usan `sessionStorage`. Ese estado técnico no es arquitectura objetivo ni fuente de verdad, y su retirada aún no está implementada.
+- El workbook técnico de PR #201 se conserva fuera del runtime normal; no es el workbook operativo del Excel Bridge.
+- El flujo visible es Paciente → acto → salidas normales. No existe modo, botón, alta ni formulario reducido para paciente sintético.
 - Primera Visita exporta el CIP y el acto visibles; no usa fallback demo.
-- Seguimiento continúa exportando hoy, en la salida pública, una fila por línea dispensada. La fila por línea activa está integrada internamente mediante el adaptador v2 (PR #221), sin salida pública ni cutover.
-- La fila común de 61 columnas sigue vigente como única salida pública del runtime.
+- Seguimiento mantiene Excel/CSV v1 por línea dispensada y, en paralelo, Export v2 demo puede copiar varias filas por líneas activas.
+- Excel v1 de 61 columnas, CSV y JARA permanecen intactos.
 - El core Export v2 candidate `2.0.0-draft.1` existe en código y está publicado desde PR #211, con 152 columnas, schemas y roundtrip TSV contractual.
-- El core es consumido internamente por los adaptadores de Validación, Primera Visita y Seguimiento (PR #215, #217 y #221), cargados antes del bridge DOM; no está conectado a ninguna salida pública (CSV, TXT JARA o Excel) y no existe cutover.
-- La secuencia WO1–WO9 está publicada; WO2–WO4 están integradas y verificadas individualmente como infraestructura interna; WO5 (`WO-FH-EXPORT-V2-CUTOVER-01`) permanece futura y no iniciada, pendiente del cierre explícito del gate conjunto previo al cutover y de una WO5 ejecutable aprobada.
-- Ninguno de estos cambios acredita QA integral de navegador/Excel público, piloto real o producción; el QA Chromium de WO4 cubre únicamente la infraestructura interna v2.
+- PR #225 añadió un proveedor técnico sintético cerrado a FH-001/FH-004; CIP manual desconocido no obtiene contexto v2.
+- PR #227 activó Export v2 demo visible con esquema común de 152 columnas: Validación produce una fila; Primera Visita y Seguimiento soportan `1..N` según líneas explícitas. La UI actual de Primera Visita puede mostrar una sola línea sin limitar el contrato del adaptador. `unknown/stale` bloquea exclusivamente v2.
+- No existe cutover completo, retirada v1 ni promoción de `draft` a `2.0.0`.
+- WO5 queda `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: PR #225/#227 cubren parte del alcance; no se reabre como megadesarrollo ni se declara cerrada por completo.
+- Workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip permanecen pendientes.
+- Ninguno de estos cambios acredita QA integral, piloto real o producción.
 
 ---
 
@@ -242,6 +250,8 @@ Los cuatro puntos ejecutables sin dependencia externa de esta sección quedaron 
 11. Módulo de Farmacia: **FarmaNEXus**.
 12. Cáceres inicia con Dermatología y Digestivo; Digestivo permanece condicionado a su formulario.
 
+La decisión vigente y sus límites se detallan en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md). CIP/`identifier_value` no equivale a `patient_id`: este último es técnico y opaco y no se derivará del CIP mediante hash, transformación o concatenación. El Identity Plane físico y su mecanismo productivo de custodia permanecen diferidos.
+
 ---
 
 ## 9. Frontera demo, evaluación, piloto y producto futuro
@@ -265,6 +275,10 @@ Los cuatro puntos ejecutables sin dependencia externa de esta sección quedaron 
 - captura externa de PROMs reales;
 - piloto operativo;
 - producción.
+
+### Gate de paquete longitudinal final
+
+No preparar URL, guía o paquete final ni retirar v1 hasta demostrar conjuntamente CIP arbitrario en flujo normal, workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub. Una evaluación de formularios de alcance inferior requiere decisión humana específica y etiquetado explícito como evaluación, no piloto.
 
 ---
 

@@ -7,11 +7,14 @@
 | Aprobación institucional | No |
 | Implementación completa | No |
 | Base publicada | `recovery/farmacia-pr-replay-20260727` @ `accac670ba216d8c291ee849d2198742d02bb3f0` |
+| Estado publicado reconciliado | `f86f72f8e09e29708ebd0b977c2451300002e989` (PR #227) |
 | Ámbito inicial | Farmacia Hospitalaria, comenzando por Cáceres |
 | Datos reales | No autorizados por este documento |
 | Relación | Roadmap post-SES, control plane federado, Treatment Lifecycle, PROM Gateway e Identity Plane |
 
 > Este documento fija la dirección técnica y funcional de V4. No autoriza un backend productivo, uso asistencial, integración institucional, migraciones con datos reales ni la V5 agnóstica completa.
+
+> Reconciliación 2026-08-04: Export v2 demo está visible en paralelo, limitado a contextos técnicos sintéticos registrados. No existe cutover completo, retirada v1, Excel Bridge operativo ni roundtrip. Las decisiones vigentes de persistencia y evaluación se concentran en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ---
 
@@ -156,24 +159,38 @@ Incluye las superficies profesionales:
 - Los fixtures demo se conservan para regresión, pero no son requisito del funcionamiento.
 - Las pantallas consumen casos de uso/repositorios, no hojas Excel directamente cuando se complete la transición.
 
+### Dynamic Patient objetivo
+
+```text
+CIP ficticio arbitrario
+→ flujo normal
+→ Validación / Primera Visita / Seguimiento
+→ evento canónico
+→ Export v2
+→ Excel Bridge
+→ lectura y roundtrip
+```
+
+No es una clase especial de paciente y no se resuelve mediante el ledger del navegador. El proveedor técnico actual de PR #225 sigue cerrado a FH-001/FH-004. El mecanismo final para CIP arbitrario sin browser storage requiere una WO posterior y el roundtrip no está demostrado.
+
 ---
 
 ## 7. Modelo canónico y eventos
 
 ### 7.1 Unidad de persistencia
 
-Un **evento canónico** representa un acto concreto, no toda la vida del paciente. Su proyección Excel puede generar una o varias filas nativas bajo el mismo `event_id` y `source_event_id`.
+Un **evento canónico** representa un acto concreto, no toda la vida del paciente. La cardinalidad de su proyección Excel depende del tipo de acto y no se atribuye `1..N` de forma indiscriminada.
 
 ```text
 Paciente X
-├── evento 1: solicitud / validación → 1..N filas
+├── evento 1: solicitud / validación → exactamente 1 fila
 ├── evento 2: Primera Visita → 1..N filas
 ├── evento 3: Seguimiento → N filas por líneas activas
-├── evento 4: renovación confirmada → 1..N filas
+├── evento 4: renovación confirmada → cardinalidad pendiente de su contrato
 └── historia longitudinal reconstruida por IDs y fechas
 ```
 
-En Seguimiento v2, el grano objetivo es `visit_id × line_id` para cada línea activa en la fecha de visita. Dispensación y revisión específica son estados independientes. La historia longitudinal y los dashboards deben deduplicar por identificadores, no contar filas sin contexto.
+Validación produce exactamente una fila con los bloques aplicables; solicitado no equivale a validado y pendiente/denegado no crean línea. Primera Visita produce `1..N` filas por líneas explícitamente presentes: el adaptador mantiene esta capacidad aunque la UI actual pueda mostrar una única línea. Seguimiento usa `visit_id × line_id` para cada línea explícitamente activa. Actividad, dispensación y revisión específica son dimensiones independientes. La historia longitudinal y los dashboards deduplican por identificadores, no cuentan filas sin contexto.
 
 ### 7.2 Envelope común
 
@@ -217,6 +234,8 @@ Todo acto canónico debe incluir, como mínimo:
 | `renewal_cycle_id` | Ciclo de renovación por línea |
 
 No se inventan identidades por posición, nombre del fármaco, primera coincidencia o índice de array.
+
+CIP/`identifier_value` no equivale a `patient_id`. El identificador técnico no se deriva del CIP mediante hash, transformación o concatenación.
 
 ### 7.4 Entidades V4
 
@@ -264,7 +283,7 @@ Durante el ciclo de vacaciones no se creará:
 - política de no duplicado y recuperación de identidad;
 - costura para `hub_patient_key`.
 
-En evaluación sintética, el Hub puede generar automáticamente `patient_id` a partir del acto, sin pedir trabajo adicional al usuario.
+La experiencia futura debe crear o recuperar `patient_id` automáticamente y sin trabajo adicional para la profesional. El mecanismo productivo de creación, correspondencia y custodia no se decide en este ciclo.
 
 ### 8.3 Gate de activación
 
@@ -307,12 +326,21 @@ Primer libro:
 
 `PROMueve_FH_Caceres_Bridge_DEMO.xlsx`
 
-### 9.2 Hojas visibles/nativas Cáceres
+### 9.2 Capacidad general de hojas operativas
+
+- `01_DERMA`
+- `02_REUMA`
+- `03_DIGESTIVO`
+- `04_ONCO`
+
+Estas hojas representan capacidad general prevista del patrón Excel Bridge V4. Todas usan el mismo esquema común de 152 columnas y no constituyen modelos clínicos diferentes. Cada fila nativa conserva íntegramente y de forma append-only la proyección exportada por el Hub. Podrán añadirse otros servicios solo tras aprobación.
+
+### 9.2.1 Alcance inicial del primer libro Cáceres
 
 - `01_DERMA`
 - `03_DIGESTIVO`
 
-Cada fila nativa conserva exactamente el evento exportado por el Hub.
+El primer gate implementable y objeto de QA para Cáceres queda limitado a Dermatología y Digestivo. `02_REUMA` y `04_ONCO` permanecen como capacidad general prevista: no forman parte del primer alcance operativo Cáceres, no se declaran implementadas, probadas ni aptas para evaluación y requerirán habilitación/configuración y QA propios. Su incorporación futura no exige cambiar el esquema común de 152 columnas.
 
 ### 9.3 Hojas técnicas
 
@@ -341,8 +369,9 @@ La lista puede ajustarse al contrato real; no debe convertirse en proliferación
 
 ```text
 Hub
-→ Copiar fila del acto
-→ Pegar una vez en la hoja del servicio
+→ generar TSV de 1..N filas según el acto
+→ copiar la salida completa
+→ pegar una vez en la hoja operativa del servicio de procedencia
 → Procesar pendientes
 ```
 
@@ -351,23 +380,25 @@ Hub
 Responsabilidades:
 
 1. Detectar filas `PENDIENTE`.
-2. Validar `schema_version`, `source_event_id`, `event_id` y `row_id`.
+2. Validar versiones, IDs y cardinalidad del acto.
 3. Rechazar duplicados de forma idempotente.
 4. Conservar la fila nativa.
 5. Agrupar las filas pertenecientes al mismo acto.
 6. Validar coherencia de los datos comunes repetidos.
 7. Descomponer en tablas relacionadas.
-8. En Seguimiento, generar un `VISITS` por `visit_id` y un `VISIT_LINES` por línea activa.
-9. No corregir ni inferir clínica.
-10. Marcar `PROCESADA` o `ERROR`.
-11. Registrar el error sin destruir la entrada.
-12. Generar vistas `APP_*` para lectura del Hub.
+8. En Primera Visita, generar un registro lógico del acto, N líneas asociadas y PROMs comunes deduplicados por acto/instrumento.
+9. En Seguimiento, generar un `VISITS`, N `VISIT_LINES`, deduplicar PROMs/adherencia/EA comunes por identidad y ámbito, y conservar sospechosos/causalidades con cardinalidad explícita.
+10. Convertir discrepancias comunes entre filas del mismo acto en error, sin elegir valores.
+11. No corregir ni inferir clínica.
+12. Marcar `PROCESADA` o `ERROR`.
+13. Registrar el error sin destruir la entrada.
+14. Generar vistas `APP_*` para lectura del Hub.
 
 ### 9.6 Componentes deterministas
 
 - **Office Script Processor:** fila nativa → tablas relacionadas.
 - **Excel Read Adapter:** vistas `APP_*` → reconstrucción del Hub.
-- **PostgreSQL Migrator:** Excel Bridge → servidor local futuro.
+- **PostgreSQL Migrator:** entidades relacionales validadas del Excel Bridge → servidor local futuro; nunca copia ciegamente 152 columnas a una tabla SQL.
 
 El parser Excel → modelo relacional descrito históricamente como WO8.1b no se implementó. La misma etiqueta fue reutilizada para el exportador de 61 columnas. La arquitectura V4 utiliza los nombres anteriores para evitar ambigüedad.
 
@@ -382,6 +413,12 @@ Hub crea actos
 ```
 
 El roundtrip se demostrará con datos sintéticos antes de solicitar servidor.
+
+### 9.8 Estado de implementación y browser storage
+
+El Excel Bridge es la persistencia provisional V4 decidida, pero workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip aún no están implementados.
+
+El código publicado conserva un ledger clínico en `localStorage` por PR #199/#203 e imports/snapshots ligados al contexto en `sessionStorage`. Estas capacidades son estado técnico actual, no arquitectura objetivo ni fuente de verdad. La decisión vigente es no conservar datos clínicos, de paciente o de acto en browser storage, no ampliarlo ni sustituirlo por almacenamiento oculto. Su retirada técnica sigue pendiente de una WO atómica alineada con el Excel Bridge; la historia de PR #199/#201/#203 se conserva.
 
 ---
 
@@ -876,6 +913,8 @@ La arquitectura estará demostrada en laboratorio cuando:
 12. Un acto pueda proyectarse a Excel/JARA/FHIR/openEHR candidato.
 13. Tests y QA navegador sean verdes.
 14. La documentación distinga implementado, demostrado, pendiente y no apto para piloto.
+
+Hasta cumplir conjuntamente los puntos 1, 4 y 5 con workbook, Office Script, vistas `APP_*` y Excel Read Adapter, no se preparan URL, guía o paquete longitudinal final ni retirada v1. Una evaluación de formularios de alcance inferior solo puede existir por decisión humana específica y con etiqueta explícita de evaluación.
 
 ---
 

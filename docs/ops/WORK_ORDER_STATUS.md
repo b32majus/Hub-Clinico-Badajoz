@@ -11,11 +11,11 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| Base Git de esta edición | `b9f27e96f90f5bb20017ba805bb68f823b4df00f` |
-| Último SHA funcional regional | `8b7372ac398fd8aa6049d26c0ee067e219f6b2ea` |
+| HEAD regional publicado | `f86f72f8e09e29708ebd0b977c2451300002e989` |
+| Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` (PR #227) |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PASS focal de realineación y Excel de Primera Visita; core y adaptadores internos con tests contractuales y smoke-check PASS (PR #215/#217/#221); WO3 y WO4 con QA Chromium y regresión v1 de 61 columnas PASS; sin salida pública v2, cutover, QA integral del circuito v2 ni validación en piloto |
+| QA pública regional del HEAD actual | PR #227: Chromium conjunto y smoke 48/48 PASS; Export v2 demo paralelo visible, 152 columnas por fila y varias filas en Seguimiento; JARA, CSV y Excel v1 de 61 columnas intactos; sin cutover, retirada v1 ni validación en piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -28,7 +28,7 @@
 | Símbolo | Estado |
 |---|---|
 | ✅ Merged | Incorporada a la rama base |
-| ✅ MERGED_AND_VERIFIED | Fusionada en recovery y verificada (issue cerrado, PR fusionada, checks PASS); infraestructura interna sin salida pública v2 |
+| ✅ MERGED_AND_VERIFIED | Fusionada en recovery y verificada en el alcance de su WO; la visibilidad vigente se consulta en el estado publicado superior |
 | 📋 Ready for review | Publicada en rama de trabajo y pendiente de revisión/merge |
 | 🔄 Superseded | Sustituida funcional o documentalmente por otra WO |
 | 🟢 Validated | Validada en una candidata histórica no integrada |
@@ -104,15 +104,30 @@
 | **WO-FH-FIRST-VISIT-EXCEL-TRUTH-P0-01** | Verdad del Excel de Primera Visita | ✅ Merged | `work/fh-first-visit-excel-truth-p0-01-20260801` | merge `68b53837...` (PR #205, issue #204) | CIP/acto visible; 61 columnas; QA pública PASS |
 | **WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01** | Reconciliar contrato export v2 | ✅ Merged | `work/fh-export-contract-v2-reconciliation-01-20260801` | merge `2f54c4ec...` (PR #207, issue #206) | Fila común v2, grano por línea activa y componentes del Bridge documentados |
 | **WO-DOC-FH-EXPORT-V2-SEQUENCE-WO1-01** | Secuencia WO1–WO9 y WO1 técnica | ✅ Merged | `work/fh-export-v2-sequence-wo1-docs-20260802` | merge `5e9b59ba...` (PR #209, issue #208) | Siete rutas documentales; no añadió capacidad funcional |
-| **WO-FH-EXPORT-V2-CANONICAL-CORE-01** | Núcleo canónico fila v2 | ✅ Merged | `work/fh-export-v2-canonical-core-01-20260802` | commit `7109b5f1...`, merge `6ac041f8...` (PR #211, issue #210) | 152 columnas candidate y roundtrip TSV; integrado en recovery y consumido internamente por los adaptadores; sin salida pública v2 |
+| **WO-FH-EXPORT-V2-CANONICAL-CORE-01** | Núcleo canónico fila v2 | ✅ Merged | `work/fh-export-v2-canonical-core-01-20260802` | commit `7109b5f1...`, merge `6ac041f8...` (PR #211, issue #210) | Estado histórico al merge: 152 columnas candidate y roundtrip TSV, sin salida pública v2; visibilidad añadida después por PR #227 |
 | **WO-DOC-FH-EXPORT-V2-CORE-MERGE-RECONCILIATION-01** | Reconciliar publicación de WO1 | ✅ Merged | `work/doc-fh-export-v2-core-merge-reconciliation-01-20260802` | commit `ed1cb13a...`, merge `f46d99a0...` (PR #213, issue #212) | Cinco rutas documentales; reconcilió la publicación del core; superada como estado actual por la reconciliación de adaptadores de 2026-08-03 |
-| **WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01** | Adaptador interno de Validación v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-adapters-stack-01-20260802` | commit `1fcd9e4a...`, merge `17426f60...` (PR #215, issue #214) | Infraestructura interna sobre el core; smoke-check PASS; sin salida pública v2 ni cutover |
-| **WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01** | Adaptador interno de Primera Visita v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-first-visit-adapter-01-20260803` | commit `c42eecef...`, merge `c45b7d13...` (PR #217, issue #216) | Infraestructura interna sobre el core; smoke-check PASS; sin salida pública v2 ni cutover |
-| **WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01** | Adaptador interno de Seguimiento v2 por líneas activas | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-followup-active-lines-01-20260803` | commit `8b7372ac...`, merge `b9f27e96...` (PR #221, issue #220) | Infraestructura interna sobre el core; una fila por línea explícitamente activa con `activeLines` como fuente técnica; guards de contexto; QA Chromium PASS y regresión JARA/CSV/Excel v1 PASS; sin salida pública v2 ni cutover |
+| **WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01** | Adaptador interno de Validación v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-adapters-stack-01-20260802` | commit `1fcd9e4a...`, merge `17426f60...` (PR #215, issue #214) | Estado histórico al merge: infraestructura interna sin salida pública v2 ni cutover; visibilidad añadida por PR #227 |
+| **WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01** | Adaptador interno de Primera Visita v2 | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-first-visit-adapter-01-20260803` | commit `c42eecef...`, merge `c45b7d13...` (PR #217, issue #216) | Estado histórico al merge: infraestructura interna sin salida pública v2 ni cutover; visibilidad añadida por PR #227 |
+| **WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01** | Adaptador interno de Seguimiento v2 por líneas activas | ✅ MERGED_AND_VERIFIED | `work/fh-export-v2-followup-active-lines-01-20260803` | commit `8b7372ac...`, merge `b9f27e96...` (PR #221, issue #220) | Estado histórico al merge: infraestructura interna sin salida pública v2 ni cutover; `activeLines`, guards y QA PASS; visibilidad añadida por PR #227 |
+| **WO-FH-EXPORT-V2-FOLLOWUP-DOC-RECONCILIATION-01** | Reconciliar publicación de Seguimiento v2 | ✅ Merged | `work/fh-export-v2-followup-doc-reconciliation-01-20260804` | commit `b803b4c7...`, merge `dfbbf76b...` (PR #223, issue #222) | Reconciliación documental post-Seguimiento v2; histórica tras PR #227 |
+| **WO-FH-EXPORT-V2-TECHNICAL-CONTEXT-01** | Proveedor técnico sintético cerrado | ✅ Merged | `work/fh-export-v2-technical-context-01-20260804` | commit `00e5c8a6...`, merge `e2f2c663...` (PR #225, issue #224) | Registro cerrado a FH-001/FH-004; identidad técnica explícita y separada del CIP; sin storage ni salida pública propia |
+| **WO-FH-EXPORT-V2-PARALLEL-ACTIVATION-01** | Activar Export v2 demo en paralelo | ✅ Merged | `work/fh-export-v2-parallel-activation-01-20260804` | commit `fe84d83c...`, merge `f86f72f8...` (PR #227, issue #226) | TSV común de 152 columnas: Validación 1 fila; Primera Visita/Seguimiento `1..N` según líneas explícitas; v1 intacta |
+
+### Adjudicación de WO5 Export v2
+
+El alcance original de `WO-FH-EXPORT-V2-CUTOVER-01` incluía activación pública, compatibilidad y retirada gobernada de v1. PR #225 y PR #227 satisfacen una parte mediante unidades menores. Su adjudicación descriptiva es `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: no se añade un estado nuevo a la leyenda, no se reabre WO5 como megadesarrollo y tampoco se declara completamente cerrada.
+
+Para esta reconciliación, **WO5A** nombra retrospectivamente `WO-FH-EXPORT-V2-TECHNICAL-CONTEXT-01` (issue #224, PR #225). Aporta fixtures de contexto técnico sintético con `patient_id`, IDs de acto, `treatment_id` y `line_id` explícitos, estables y predeclarados. El proveedor no genera esos IDs, no deriva ni transforma el CIP en identidad técnica y falla cerrado para cualquier contexto no registrado; no es un `IdentityRepository` ni añade salida pública propia. **WO5B** nombra retrospectivamente `WO-FH-EXPORT-V2-PARALLEL-ACTIVATION-01` (issue #226, PR #227). No son títulos oficiales originales. No existe WO5C ejecutada ni se declarará sin issue, manifest, PR y evidencia publicada.
+
+Quedan aplazadas la retirada de v1 y la promoción de versiones `draft`. Workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip no están implementados. La decisión completa vive en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+
+### Estado técnico de persistencia en navegador
+
+PR #199/#203 dejaron en código un ledger clínico persistido en `localStorage`; imports y snapshots ligados al contexto usan `sessionStorage`. Se conserva la trazabilidad de PR #199/#201/#203, pero browser storage queda superseded como dirección: no es fuente de verdad ni arquitectura objetivo y su retirada técnica aún está pendiente de una WO atómica alineada con el Excel Bridge.
 
 ### Deuda administrativa de issues
 
-A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216 y #220 están cerrados como `completed`. Esta WO documental no modifica issues históricos.
+A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224 y #226 están cerrados. Esta WO documental no modifica issues históricos.
 
 ---
 
@@ -158,7 +173,7 @@ A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 
 | Estado | Cantidad |
 |---|---:|
-| ✅ Merged | 57 |
+| ✅ Merged | 60 |
 | ✅ MERGED_AND_VERIFIED | 3 |
 | 📋 Ready for review | 18 |
 | 📋 Draft | 1 |
@@ -169,8 +184,8 @@ A 2026-08-04, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 85 work orders / preflights gestionadas.
+**Total:** 88 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 57 + 3 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 85, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 60 + 3 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 88, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.
