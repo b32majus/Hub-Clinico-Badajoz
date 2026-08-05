@@ -142,7 +142,7 @@
                 window.removeEventListener('message', receivePayload);
                 status.textContent = 'El handoff Bridge ha caducado. Vuelva a Inicio Farmacia y abra de nuevo el dashboard.';
             }
-        }, 1500);
+        }, handoff.sessionTtlMs);
         return true;
     }
     function timelineItem(date, title, description) {

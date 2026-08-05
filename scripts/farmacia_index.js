@@ -29,7 +29,7 @@
             showBridgeHandoffNotice('No se pudo generar una sesión Bridge segura.');
             return;
         }
-        var session = { nonce: nonce, childWindow: null, payload: { search_context: searchContext, quick_view: quickView }, expiresAt: Date.now() + 45000, sent: false };
+        var session = { nonce: nonce, childWindow: null, payload: { search_context: searchContext, quick_view: quickView }, expiresAt: Date.now() + handoff.sessionTtlMs, sent: false };
         var url = 'farmacia_dashboard_paciente.html' + handoff.buildFragment(nonce);
         session.childWindow = window.open(url, '_blank');
         if (!session.childWindow) {
@@ -39,7 +39,7 @@
         bridgeHandoffSessions.push(session);
         window.setTimeout(function () {
             if (bridgeHandoffSessions.indexOf(session) !== -1 && Date.now() >= session.expiresAt) removeBridgeSession(session);
-        }, 46000);
+        }, handoff.sessionTtlMs + 1000);
         if (trigger) trigger.focus();
     }
 
@@ -582,7 +582,7 @@
         pendingLabel.textContent = 'Consumidores pendientes';
         var pendingText = document.createElement('p');
         pendingText.className = 'validation-note-block__value';
-        pendingText.textContent = 'El dashboard y los formularios todavía no están conectados al workbook Bridge activo. Esta vista es de lectura y permanece solo en esta página.';
+         pendingText.textContent = 'El dashboard Bridge está disponible como lectura temporal en una nueva ventana. Validación, Primera Visita, Seguimiento y el resto de consumidores todavía no están conectados al workbook Bridge. No persiste, no transporta el workbook completo y no habilita acciones clínicas.';
         pendingNotice.append(pendingLabel, pendingText);
          mount.content.appendChild(pendingNotice);
 
