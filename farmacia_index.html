@@ -89,13 +89,32 @@
             <p class="hero-description">Entrada única por CIP para abrir Quick View o alta guiada.</p>
         </div>
     </div>
-</section><section class="search-card">
+</section><section class="search-card" id="fhLegacySearchPanel">
     <span class="search-card__label"><i class="fas fa-search" aria-hidden="true"></i> Búsqueda por CIP</span>
     <div class="search-card__row">
         <input type="text" id="fhCipInput" class="search-card__input" placeholder="Ej. CIP-DEMO-FH-001" maxlength="24" autocomplete="off" spellcheck="false">
         <button type="button" class="btn btn-primary" id="fhSearchBtn"><i class="fas fa-search" aria-hidden="true"></i> Buscar paciente</button>
     </div>
     <p class="search-card__hint">Demo: <strong>CIP-DEMO-FH-001</strong> (HS en seguimiento) · <strong>CIP-DEMO-FH-002</strong> (HS pendiente validación) · <strong>CIP-DEMO-FH-003</strong> (Reuma validado) · <strong>CIP-DEMO-FH-004</strong> (Multibiológico LES/Sjögren). Un CIP nuevo abre alta guiada.</p>
+</section>
+
+<section class="search-card hidden" id="fhBridgeModePanel" aria-labelledby="fhBridgeModeTitle">
+    <span class="search-card__label" id="fhBridgeModeTitle"><i class="fas fa-file-excel" aria-hidden="true"></i> Bridge v2 activo</span>
+    <p class="search-card__hint">Búsqueda exclusiva en el workbook cargado. El identificador operativo requiere sistema y valor explícitos.</p>
+    <div class="search-card__row">
+        <div class="form-group">
+            <label for="fhBridgeIdentifierSystem">Sistema de identificador</label>
+            <select class="form-select" id="fhBridgeIdentifierSystem">
+                <option value="">Seleccionar sistema...</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="fhBridgeIdentifierValue">Valor del identificador</label>
+            <input type="text" id="fhBridgeIdentifierValue" class="search-card__input" placeholder="Introduzca el valor exacto" autocomplete="off" spellcheck="false">
+        </div>
+        <button type="button" class="btn btn-primary" id="fhBridgeSearchBtn"><i class="fas fa-search" aria-hidden="true"></i> Buscar en Bridge</button>
+    </div>
+    <p class="search-card__hint" id="fhBridgeStatus" role="status" aria-live="polite">Seleccione un sistema e introduzca el valor exacto.</p>
 </section>
 
 <section class="dashboard-card demo-case-card" id="demoCaseFh004">
@@ -182,7 +201,16 @@
     <div class="pending-validation-grid" id="pendingValidationCards" aria-live="polite"></div>
 </section>
 
+<section class="dashboard-card hidden" id="fhBridgeBoardNotice" role="note">
+    <h2 class="section-title"><i class="fas fa-info-circle" aria-hidden="true"></i> Bandeja general no conectada</h2>
+    <p class="validation-module__intro">La bandeja general demo/legacy no representa el workbook Bridge activo. Enfermería permanece visible e independiente.</p>
+</section>
+
 <h2 class="section-title">Accesos rápidos</h2>
+<div class="validation-note-block hidden" id="fhBridgeNavigationNotice" role="note">
+    <span class="validation-note-block__label">Bridge v2</span>
+    <p class="validation-note-block__value">Estos accesos son navegación demo/legacy y no transportan el workbook Bridge activo.</p>
+</div>
 <section class="action-grid">
     <a href="farmacia_validacion.html" class="action-card"><i class="fas fa-check-double action-card__icon"></i><span class="action-card__title">Validación</span><span class="action-card__desc">Evaluar solicitudes farmacoterapéuticas pendientes.</span></a>
     <a href="farmacia_primera_visita.html" class="action-card"><i class="fas fa-plus-circle action-card__icon"></i><span class="action-card__title">Primera Visita</span><span class="action-card__desc">Registrar inicio del seguimiento farmacoterapéutico.</span></a>
@@ -199,8 +227,9 @@
             <script src="scripts/farmacia_export_v2_core.js?v=20260805-bridge-reader"></script>
             <script src="scripts/farmacia_bridge_v2_reader.js?v=20260805-bridge-reader-r1"></script>
             <script src="scripts/farmacia_common.js?v=20260805-bridge-reader-r1"></script>
+            <script src="scripts/farmacia_bridge_v2_patient_selectors.js?v=20260805-bridge-selectors-qv-r1"></script>
     <script src="scripts/farmacia_prebiologico.js?v=20260614-wo4-a"></script>
-    <script src="scripts/farmacia_index.js?v=20260614-wo4-a"></script>
+    <script src="scripts/farmacia_index.js?v=20260805-bridge-selectors-qv-r1"></script>
     <script src="vendor/sheetjs/xlsx.full.min.js"></script>
         </body>
         </html>
