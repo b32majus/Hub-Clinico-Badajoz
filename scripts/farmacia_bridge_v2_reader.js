@@ -243,6 +243,10 @@
         }
     }
 
+    function isIdentifierAbsent(value) {
+        return value === null || value === '';
+    }
+
     function buildReadModel(entries, metadata, core) {
         var groups = Object.create(null);
         var groupOrder = [];
@@ -326,6 +330,20 @@
                 rows: traceRows
             };
             if (group.entries.some(function (entry) { return entry.canonical_row.bridge_status === 'ERROR'; })) {
+                group.entries.forEach(function (entry) {
+                    var row = entry.canonical_row;
+                    if (row.bridge_status !== 'ERROR') return;
+                    model.source_errors.push({
+                        source_event_id: row.source_event_id,
+                        event_id: row.event_id,
+                        row_id: row.row_id,
+                        source_sheet: entry.source_sheet,
+                        source_table: entry.source_table,
+                        physical_row_number: entry.physical_row_number,
+                        bridge_error_code: row.bridge_error_code,
+                        bridge_error_detail: row.bridge_error_detail
+                    });
+                });
                 eventRecord.exclusion_code = 'BRIDGE_EVENT_STATUS_ERROR';
                 model.excluded_events.push(eventRecord);
                 return;
@@ -334,10 +352,12 @@
             var system = first.identifier_system;
             var value = first.identifier_value;
             var patientId = first.patient_id;
-            if ((system === null) !== (value === null)) {
+            var systemAbsent = isIdentifierAbsent(system);
+            var valueAbsent = isIdentifierAbsent(value);
+            if (systemAbsent !== valueAbsent) {
                 model.warnings.push({ code: 'IDENTIFIER_PAIR_INCOMPLETE', source_event_id: sourceEventId, patient_id: patientId });
             }
-            if (system !== null && value !== null) {
+            if (!systemAbsent && !valueAbsent) {
                 var pairKey = JSON.stringify([system, value]);
                 if (identifierOwners[pairKey] && identifierOwners[pairKey] !== patientId) {
                     errors.push({ code: 'IDENTIFIER_MAPPING_CONFLICT', identifier_system: system, identifier_value: value, patient_ids: [identifierOwners[pairKey], patientId] });
@@ -355,7 +375,7 @@
                 model.patients[patientId] = { patient_id: patientId, identifiers: [], source_event_ids: [] };
                 model.indexes.by_patient_id[patientId] = [];
             }
-            if (system !== null && value !== null && !model.patients[patientId].identifiers.some(function (identifier) {
+            if (!systemAbsent && !valueAbsent && !model.patients[patientId].identifiers.some(function (identifier) {
                 return identifier.identifier_system === system && identifier.identifier_value === value;
             })) {
                 var identifier = { identifier_system: system, identifier_value: value };
@@ -364,7 +384,7 @@
             }
             model.patients[patientId].source_event_ids.push(sourceEventId);
             model.indexes.by_patient_id[patientId].push(sourceEventId);
-            if (system !== null && value !== null) addIdentifierIndex(model.indexes.by_identifier, system, value, patientId, sourceEventId);
+            if (!systemAbsent && !valueAbsent) addIdentifierIndex(model.indexes.by_identifier, system, value, patientId, sourceEventId);
             model.events.push(eventRecord);
         });
         if (errors.length) throwErrors(errors);

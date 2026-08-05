@@ -16,10 +16,15 @@ const core = global.FarmaciaExportV2Core;
 const reader = global.FarmaciaBridgeV2Reader;
 const C = Object.fromEntries(core.ROW_COLUMNS.map((name, index) => [name, index]));
 const tests = [];
+const asyncTests = [];
 
 function test(name, callback) {
     callback();
     tests.push(name);
+}
+
+function testAsync(name, callback) {
+    asyncTests.push({ name, callback });
 }
 
 function fixture(name) {
@@ -123,14 +128,23 @@ function bridgeState(model) {
 }
 
 function loadCommonWithStoredStates(states) {
-    const values = {};
+    const sessionValues = {};
+    const localValues = {};
+    const sessionWrites = [];
+    const localWrites = [];
+    const sessionRemovals = [];
     Object.keys(states || {}).forEach(kind => {
-        values[`farmaciaDemo.${kind}Import`] = JSON.stringify(states[kind]);
+        sessionValues[`farmaciaDemo.${kind}Import`] = JSON.stringify(states[kind]);
     });
-    const storage = {
-        getItem(key) { return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null; },
-        setItem(key, value) { values[key] = String(value); },
-        removeItem(key) { delete values[key]; }
+    const sessionStorage = {
+        getItem(key) { return Object.prototype.hasOwnProperty.call(sessionValues, key) ? sessionValues[key] : null; },
+        setItem(key, value) { sessionWrites.push(key); sessionValues[key] = String(value); },
+        removeItem(key) { sessionRemovals.push(key); delete sessionValues[key]; }
+    };
+    const localStorage = {
+        getItem(key) { return Object.prototype.hasOwnProperty.call(localValues, key) ? localValues[key] : null; },
+        setItem(key, value) { localWrites.push(key); localValues[key] = String(value); },
+        removeItem(key) { delete localValues[key]; }
     };
     const document = {
         addEventListener() {},
@@ -141,21 +155,27 @@ function loadCommonWithStoredStates(states) {
     };
     const window = {
         document,
-        sessionStorage: storage,
-        localStorage: storage,
+        sessionStorage,
+        localStorage,
         location: { href: '', search: '' },
         addEventListener() {},
         dispatchEvent() {},
         FarmaciaExportV2Core: core,
         FarmaciaBridgeV2Reader: reader
     };
+    function FileReader() {}
+    FileReader.prototype.readAsArrayBuffer = function (file) {
+        this.onload({ target: { result: file.arrayBufferData } });
+    };
     const sandbox = {
         window,
         document,
-        sessionStorage: storage,
-        localStorage: storage,
+        sessionStorage,
+        localStorage,
         console: { log() {}, warn() {}, error() {} },
         CustomEvent: function CustomEvent(type, init) { this.type = type; this.detail = init && init.detail; },
+        FileReader,
+        XLSX,
         URLSearchParams,
         Date,
         setTimeout() {},
@@ -163,7 +183,9 @@ function loadCommonWithStoredStates(states) {
     };
     vm.createContext(sandbox);
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'scripts/farmacia_common.js'), 'utf8'), sandbox);
-    return sandbox.window.FarmaciaDataImports;
+    const imports = sandbox.window.FarmaciaDataImports;
+    imports.__testStorage = { sessionValues, localValues, sessionWrites, localWrites, sessionRemovals };
+    return imports;
 }
 
 const rows = projectFixtures();
@@ -188,6 +210,7 @@ test('valid two-sheet Bridge preserves 1..N, states, JSON and identity', () => {
     assert.strictEqual(model.indexes.by_identifier['urn:promueve:demo']['DEMO-001'].patient_id, 'patient-synthetic-001');
     assert.strictEqual(model.patients['patient-synthetic-002'].identifiers.length, 0);
     assert.strictEqual(model.warnings.length, 0);
+    assert.strictEqual(model.source_errors.length, 0);
     assert.strictEqual(JSON.stringify(JSON.parse(JSON.stringify(model))), JSON.stringify(model));
 });
 
@@ -284,12 +307,35 @@ test('event_id conflicts and duplicate event identities are rejected', () => {
 
 test('ERROR in one multiline row excludes the complete act', () => {
     const changed = rows.followup.map(row => Object.assign({}, row));
-    changed[1] = overrideRow(changed[1], { bridge_status: 'ERROR', bridge_error_code: 'SYNTHETIC_ERROR' });
+    changed[1] = overrideRow(changed[1], { bridge_status: 'ERROR', bridge_error_code: 'SYNTHETIC_ERROR', bridge_error_detail: 'Synthetic detail' });
     const model = read(workbookWith([], changed));
     assert.strictEqual(model.events.length, 0);
     assert.strictEqual(model.excluded_events.length, 1);
     assert.strictEqual(model.excluded_events[0].rows.length, 2);
     assert.strictEqual(model.metadata.patient_count, 0);
+    assert.deepStrictEqual(model.source_errors, [{
+        source_event_id: changed[1].source_event_id,
+        event_id: changed[1].event_id,
+        row_id: changed[1].row_id,
+        source_sheet: '03_DIGESTIVO',
+        source_table: 'tblBridgeDigestivoInput',
+        physical_row_number: 3,
+        bridge_error_code: 'SYNTHETIC_ERROR',
+        bridge_error_detail: 'Synthetic detail'
+    }]);
+});
+
+test('empty clinical cells remain absent data and never become source errors', () => {
+    const changed = [overrideRow(rows.validation[0], {
+        request_source_observations: '',
+        pharmacy_observations: null,
+        bridge_error_code: null,
+        bridge_error_detail: ''
+    })];
+    const model = read(workbookWith(changed, []));
+    assert.strictEqual(model.events[0].rows[0].canonical_row.request_source_observations, '');
+    assert.strictEqual(model.events[0].rows[0].canonical_row.pharmacy_observations, null);
+    assert.deepStrictEqual(model.source_errors, []);
 });
 
 test('incomplete explicit identifier warns and does not index', () => {
@@ -299,6 +345,18 @@ test('incomplete explicit identifier warns and does not index', () => {
     assert.strictEqual(model.warnings[0].code, 'IDENTIFIER_PAIR_INCOMPLETE');
     assert.strictEqual(Object.keys(model.indexes.by_identifier).length, 0);
     assert(model.patients['patient-synthetic-001']);
+});
+
+test('null and empty identifier components share absent semantics', () => {
+    const bothEmpty = read(workbookWith([overrideRow(rows.validation[0], { identifier_system: '', identifier_value: '' })], []));
+    assert.strictEqual(bothEmpty.warnings.length, 0);
+    assert.strictEqual(bothEmpty.patients['patient-synthetic-001'].identifiers.length, 0);
+    assert.strictEqual(Object.keys(bothEmpty.indexes.by_identifier).length, 0);
+
+    const emptyPartial = read(workbookWith([overrideRow(rows.validation[0], { identifier_system: '', identifier_value: 'EXACT-VALUE' })], []));
+    assert.strictEqual(emptyPartial.warnings.length, 1);
+    assert.strictEqual(emptyPartial.warnings[0].code, 'IDENTIFIER_PAIR_INCOMPLETE');
+    assert.strictEqual(Object.keys(emptyPartial.indexes.by_identifier).length, 0);
 });
 
 test('later explicit identifier enriches an initially unidentified patient', () => {
@@ -348,17 +406,19 @@ test('prototype-like valid identities remain serializable and indexed', () => {
     assert.strictEqual(JSON.parse(JSON.stringify(model)).patients.constructor.patient_id, 'constructor');
 });
 
-test('FarmaciaDataImports restores Bridge without flattening it and preserves legacy adapters', () => {
+test('FarmaciaDataImports removes stored Bridge while preserving legacy adapters', () => {
     const model = read(workbookWith(rows.validation, []));
     const enfermeria = {
         kind: 'enfermeria', sourceLabel: 'Enfermería', mappedFields: { cip: 'cip_demo_o_hash' },
         rows: [{ cip_demo_o_hash: 'CIP-DEMO-NURSING' }]
     };
     const imports = loadCommonWithStoredStates({ farmacia: bridgeState(model), enfermeria });
-    assert.strictEqual(imports.getBridgeReadModel().metadata.event_count, 1);
+    assert.strictEqual(imports.getBridgeReadModel(), null);
     assert.strictEqual(imports.getImportedPatients().length, 1);
     assert.strictEqual(imports.getImportedPatients()[0].cip, 'CIP-DEMO-NURSING');
-    assert(imports.formatImportStatus('farmacia').includes('1 filas · 1 actos · 1 pacientes'));
+    assert.strictEqual(imports.formatImportStatus('farmacia'), 'No se ha cargado Excel de Farmacia');
+    assert.strictEqual(imports.__testStorage.sessionValues['farmaciaDemo.farmaciaImport'], undefined);
+    assert(imports.__testStorage.sessionRemovals.includes('farmaciaDemo.farmaciaImport'));
 
     const legacyFarmacia = {
         kind: 'farmacia', sourceLabel: 'Farmacia', mappedFields: { cip: 'CIP' }, rows: [{ CIP: 'CIP-DEMO-LEGACY' }]
@@ -369,29 +429,76 @@ test('FarmaciaDataImports restores Bridge without flattening it and preserves le
     assert.strictEqual(legacyImports.getImportedPatients()[0].cip, 'CIP-DEMO-LEGACY');
 });
 
-test('integration source keeps session and memory_only paths without localStorage Bridge persistence', () => {
+test('integration source keeps Bridge in runtime memory and makes rejection state explicit', () => {
     const source = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_common.js'), 'utf8');
-    const bridgeStart = source.indexOf("if (kind === 'farmacia')");
+    const parseWorkbookStart = source.indexOf('function parseWorkbook');
+    const bridgeStart = source.indexOf("if (kind === 'farmacia')", parseWorkbookStart);
     const genericStart = source.indexOf('// Generic import', bridgeStart);
     const bridgeBlock = source.slice(bridgeStart, genericStart);
-    assert(bridgeBlock.includes("storage: 'session'"));
-    assert(bridgeBlock.includes("bridgeState.storage = 'memory_only'"));
-    assert(bridgeBlock.includes('safeSetSessionStorage'));
+    assert(bridgeBlock.includes("storage: 'runtime_memory'"));
+    assert(!bridgeBlock.includes('safeSetSessionStorage'));
+    assert(!bridgeBlock.includes('SESSION_STORAGE_FALLBACK'));
     assert(!bridgeBlock.includes('localStorage'));
+    assert(source.includes('Nuevo archivo rechazado: '));
+    assert(source.includes('Sigue activo el Excel anterior: '));
+    assert(source.includes('Read model disponible en esta página. Al recargar deberá volver a seleccionar el Excel.'));
     assert(source.includes("emitImportEvent(kind, { format: bridgeState.format, state: bridgeState })"));
 });
 
-const fixtureOutputArg = process.argv.indexOf('--emit-browser-fixtures');
-if (fixtureOutputArg !== -1) {
-    const outputDirectory = process.argv[fixtureOutputArg + 1];
-    assert(outputDirectory, '--emit-browser-fixtures requires an output directory');
+test('cache busters identify the repaired reader and common scripts', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'farmacia_index.html'), 'utf8');
+    assert(html.includes('scripts/farmacia_bridge_v2_reader.js?v=20260805-bridge-reader-r1'));
+    assert(html.includes('scripts/farmacia_common.js?v=20260805-bridge-reader-r1'));
+    assert(!html.includes('scripts/farmacia_common.js?v=20260614-wo6-b'));
+});
+
+testAsync('runtime Bridge import never persists and failed replacement preserves active model', async () => {
+    const imports = loadCommonWithStoredStates({});
     const validWorkbook = workbookWith(rows.validation.concat(rows.firstVisit), rows.followup);
-    const damagedWorkbook = workbookWith(rows.validation.concat(rows.firstVisit), rows.followup);
+    const validBytes = XLSX.write(validWorkbook, { type: 'array', bookType: 'xlsx' });
+    const state = await imports.importFile('farmacia', { name: 'bridge-A.xlsx', arrayBufferData: validBytes });
+    assert.strictEqual(state.storage, 'runtime_memory');
+    assert.strictEqual(imports.getBridgeReadModel().metadata.event_count, 3);
+    assert.strictEqual(imports.__testStorage.sessionValues['farmaciaDemo.farmaciaImport'], undefined);
+    assert(!imports.__testStorage.sessionWrites.includes('farmaciaDemo.farmaciaImport'));
+    assert(!imports.__testStorage.localWrites.includes('farmaciaDemo.farmaciaImport'));
+
+    const activeModel = imports.getBridgeReadModel();
+    const damagedWorkbook = workbookWith(rows.validation, []);
     setPhysicalCell(damagedWorkbook, '01_DERMA', 2, 'requested_drug_name', { t: 'n', v: 2, f: '1+1' });
-    fs.writeFileSync(path.join(outputDirectory, 'farmacia_bridge_v2_browser_valid.xlsx'), XLSX.write(validWorkbook, { type: 'buffer', bookType: 'xlsx' }));
-    fs.writeFileSync(path.join(outputDirectory, 'farmacia_bridge_v2_browser_damaged.xlsx'), XLSX.write(damagedWorkbook, { type: 'buffer', bookType: 'xlsx' }));
-    console.log(`browser_fixtures=${outputDirectory}`);
+    const damagedBytes = XLSX.write(damagedWorkbook, { type: 'array', bookType: 'xlsx' });
+    await assert.rejects(imports.importFile('farmacia', { name: 'bridge-B.xlsx', arrayBufferData: damagedBytes }), /BRIDGE_FORMULA_DETECTED/);
+    assert.strictEqual(imports.getBridgeReadModel(), activeModel);
+    assert.strictEqual(imports.getState('farmacia').fileName, 'bridge-A.xlsx');
+
+    const reloadedImports = loadCommonWithStoredStates({});
+    assert.strictEqual(reloadedImports.getBridgeReadModel(), null);
+    const emptyImports = loadCommonWithStoredStates({});
+    await assert.rejects(emptyImports.importFile('farmacia', { name: 'bridge-B.xlsx', arrayBufferData: damagedBytes }), /BRIDGE_FORMULA_DETECTED/);
+    assert.strictEqual(emptyImports.getBridgeReadModel(), null);
+});
+
+async function finish() {
+    for (const item of asyncTests) {
+        await item.callback();
+        tests.push(item.name);
+    }
+    const fixtureOutputArg = process.argv.indexOf('--emit-browser-fixtures');
+    if (fixtureOutputArg !== -1) {
+        const outputDirectory = process.argv[fixtureOutputArg + 1];
+        assert(outputDirectory, '--emit-browser-fixtures requires an output directory');
+        const validWorkbook = workbookWith(rows.validation.concat(rows.firstVisit), rows.followup);
+        const damagedWorkbook = workbookWith(rows.validation.concat(rows.firstVisit), rows.followup);
+        setPhysicalCell(damagedWorkbook, '01_DERMA', 2, 'requested_drug_name', { t: 'n', v: 2, f: '1+1' });
+        fs.writeFileSync(path.join(outputDirectory, 'farmacia_bridge_v2_browser_valid.xlsx'), XLSX.write(validWorkbook, { type: 'buffer', bookType: 'xlsx' }));
+        fs.writeFileSync(path.join(outputDirectory, 'farmacia_bridge_v2_browser_damaged.xlsx'), XLSX.write(damagedWorkbook, { type: 'buffer', bookType: 'xlsx' }));
+        console.log(`browser_fixtures=${outputDirectory}`);
+    }
+    console.log(`farmacia_bridge_v2_reader_check: PASS (${tests.length} cases)`);
+    tests.forEach(name => console.log(`PASS ${name}`));
 }
 
-console.log(`farmacia_bridge_v2_reader_check: PASS (${tests.length} cases)`);
-tests.forEach(name => console.log(`PASS ${name}`));
+finish().catch(error => {
+    console.error(error.stack || error);
+    process.exitCode = 1;
+});
