@@ -35,3 +35,18 @@ jobs:
 
       - name: Syntax check farmacia_dashboard_paciente.js
         run: node --check scripts/farmacia_dashboard_paciente.js
+
+      - name: Syntax check Bridge dashboard handoff
+        run: node --check scripts/farmacia_bridge_v2_dashboard_handoff.js
+
+      - name: Syntax check Bridge handoff checker
+        run: node --check tools/farmacia_bridge_v2_dashboard_handoff_check.js
+
+      - name: Bridge dashboard handoff checker
+        run: node tools/farmacia_bridge_v2_dashboard_handoff_check.js
+
+      - name: Bridge patient selector checker
+        run: node tools/farmacia_bridge_v2_patient_selectors_check.js
+
+      - name: Bridge raw reader checker
+        run: node tools/farmacia_bridge_v2_reader_check.js
