@@ -1,6 +1,6 @@
 # Estado actual — Farmacia recovery, Cáceres 0.3 y evolución regional
 
-> **Reconciliación post-PR #242 (2026-08-05).** El HEAD regional publicado es `e2c54583ccc5876058403c34a675496cab897972`. PR #242 integra WO8A-2A-1 (`MERGED_AND_VERIFIED`) sobre PR #238: el botón `Cargar Excel de Farmacia` activa el Bridge raw v2 y, dentro de `farmacia_index.html`, permite seleccionar `identifier_system`, introducir `identifier_value`, resolver `patient_id` técnico y abrir la Quick View Bridge v2 mediante interacción soportada. La búsqueda exige sistema y valor explícitos; no equivale a CIP, no usa fallback a pacientes demo y un identificador ausente no abre alta guiada. La vista conserva actos `1..N`, solicitud y validación separadas, agrupa líneas solo por `line_id` explícito y preserva `true`, `false`, `0`, `""` y `null`; no infiere datos terapéuticos, actividad, causalidad o adherencia. Enfermería sigue siendo independiente. El lector/read model y la Quick View viven solo en memoria de página, desaparecen al recargar y no se transportan a otro HTML. Dashboard, formularios, handoff, `APP_*`, descomposición relacional y roundtrip siguen pendientes. P1: `IDENTIFIER_COMPONENT_EMPTY`, `IDENTIFIER_COMPONENT_TYPE`, `NORMALIZED_IDENTIFIER_COLLISION`, `IDENTIFIER_NOT_INDEXED`, `IDENTIFIER_INDEX_PATIENT_MISMATCH`, coherencia bidireccional pacientes ↔ índice, tabla privada `Object.create(null)`, lookup directo, mayúsculas preservadas, pacientes sin identificador permitidos pero no buscables y read model no mutado. Evidencia: selector checker 82, reader 21, smoke 48, Actions SUCCESS, QA navegador/focal PASS, consola limpia, `pageerror = 0`, revisión independiente APTO. WO7 permanece pausada; el snapshot Cáceres no incorpora automáticamente estos cambios.
+> **Reconciliación post-PR #246 (2026-08-05).** El HEAD regional publicado es `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6`. PR #246 integra WO8A-2A-2 (`MERGED_AND_VERIFIED`) sobre PR #238/#242: `Cargar Excel de Farmacia` → búsqueda por `identifier_system + identifier_value` → Quick View Bridge → `Abrir dashboard Bridge` → ventana hija same-origin → READY → payload one-shot → dashboard Bridge de solo lectura. El dashboard está cableado, visible y demostrado mediante interacción soportada; recibe solo `search_context` y la proyección Quick View, no el workbook ni el read model completos. El protocolo verifica `origin`, `source`, nonce y versión, espera READY y aplica un TTL único de 45 segundos; la URL contiene solo el nonce técnico. Varias ventanas permanecen aisladas, y recarga o acceso directo fallan cerrado sin paciente demo. No hay datos Bridge en browser storage. El renderer Bridge está separado del dashboard legacy, no adapta a paciente plano, no interpreta PROMs/adherencia ni infiere causalidad, tratamiento o datos clínicos. Validación, Primera Visita, Seguimiento, exportaciones, Estadísticas y Actividad no están conectados al Bridge. Evidencia final: handoff 37, selector 82, reader 21, smoke 48 y dashboard legacy 37 PASS; Actions SUCCESS; QA navegador, padding E2E, dos ventanas, popup bloqueado, fail-closed, Farmacia legacy y Enfermería PASS; storage vacío, consola limpia, `pageerror = 0`; revisión independiente y final APTO; fingerprint `651291d5094ef402ae0f16578f6a213add6e4d4fc5372f40d9763c615dfa83fb`. El snapshot Cáceres no incorpora automáticamente PR #246.
 
 | Metadato | Valor |
 |---|---|
@@ -8,12 +8,13 @@
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `e2c54583ccc5876058403c34a675496cab897972` |
+| HEAD regional publicado verificado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` / merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
 | Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` / PR #233 |
 | Lector raw v2 / read model | PR #238; head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`; `MERGED_AND_VERIFIED` |
-| Selectores + Quick View Bridge | PR #242; commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`; merge/HEAD `e2c54583ccc5876058403c34a675496cab897972`; `MERGED_AND_VERIFIED` |
+| Selectores + Quick View Bridge | PR #242; commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`; merge histórico `e2c54583ccc5876058403c34a675496cab897972`; `MERGED_AND_VERIFIED` |
+| Handoff + dashboard Bridge | Issue #245; PR #246; commits `fe28f21feb7cb58d57c639a7d52d85856b247108` + `7ebc482629e1e818a6227c8e8946cddd12ee113a`; merge/HEAD `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6`; `MERGED_AND_VERIFIED` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
@@ -40,6 +41,7 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la activación visible y paralela de Export v2 demo mediante PR #227;
 - la retirada del ledger clínico del runtime soportado mediante PR #231;
 - la publicación y QA manual del workbook operativo del Excel Bridge mediante PR #233.
+- la integración del lector raw, la Quick View y el handoff/dashboard Bridge mediante PR #238/#242/#246.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -50,7 +52,7 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| HEAD regional publicado | `e2c54583ccc5876058403c34a675496cab897972` | Merge de PR #242; incluye PR #231/#233/#238/#242 |
+| HEAD regional publicado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` | Merge de PR #246; incluye PR #231/#233/#238/#242/#246 |
 | Activación Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` | Salida visible en paralelo; v1 preservada |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` | Ledger fuera de Validación, Primera Visita y Seguimiento; sin persistencia alternativa |
 | Workbook operativo | `templates/PROMueve_FH_Caceres_Bridge_DEMO.xlsx` | Contenedor publicado; lector raw v2 integrado por PR #238; Office Script y lectura relacional aún pendientes |
@@ -58,7 +60,7 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes del snapshot |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
 | Plan vivo del siguiente ciclo | `FARMACIA_PLAN_VACACIONES_20260731.md` | Prioridad y secuencia operativa |
-| Secuencia vigente | `FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md` | WO6 integrada; WO7 candidate pausada; WO8A-1 raw reader y WO8A-2A-1 Quick View integradas; handoff y consumidores posteriores pendientes |
+| Secuencia vigente | `FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md` | WO6, WO8A-1, WO8A-2A-1 y WO8A-2A-2 integradas; WO7 candidate pausada; formularios y consumidores posteriores pendientes |
 | Decisión de persistencia | `../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md` | Dirección vigente reconciliada |
 | Índice documental | `../INDEX.md` | Navegación documental |
 | Tablero de WOs | `WORK_ORDER_STATUS.md` | Trazabilidad de ejecución |
@@ -120,6 +122,7 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #232 — workbook Excel Bridge | #233 | `a94a42f1d603e4259aece09c14b18ae19a74fefc` | Workbook operativo publicado; QA Microsoft Excel PASS |
 | #237 — raw reader/read model | #238 | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` (merge histórico, no HEAD vigente) | Head técnico `7da866b2...`; lector raw v2 y read model; candidate SHA-256 `2b7b2eed0f4310156e701c6357505442f47d13e7492869fcfbc1e9dedf564af4`; `MERGED_AND_VERIFIED` |
 | #241 — selectores y Quick View Bridge | #242 | `e2c54583ccc5876058403c34a675496cab897972` | Commits `3da3d450...` + `94cd4468...`; `MERGED_AND_VERIFIED`; Quick View dentro de `farmacia_index.html`, P1 de identidad y evidencia publicada |
+| #245 — handoff y dashboard Bridge | #246 | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` | Commits `fe28f21f...` + `7ebc4826...`; `MERGED_AND_VERIFIED`; handoff efímero y dashboard Bridge de solo lectura |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -146,7 +149,9 @@ La PR #185 permanece en la historia Git, pero no debe presentarse como la correc
 | Lector raw v2 / read model | Sí | Sí, en memoria de página | Estado de importación Bridge | Carga raw soportada | Node 21 casos y QA navegador PASS |
 | Selector Bridge por identidad explícita | Sí | Sí, dentro de `farmacia_index.html` | Sí | Sí, sistema + valor explícitos | 82 casos y QA focal PASS |
 | Quick View Bridge | Sí | Sí, dentro de `farmacia_index.html` | Sí | Sí, mediante botón y búsqueda soportados | QA navegador PASS; consola limpia; `pageerror = 0` |
-| Handoff Bridge a otros HTML, dashboard y formularios | No | No | No | No | Pendiente |
+| Handoff efímero | Sí | Sí | Visible mediante botón | Interacción soportada | Handoff checker 37 y QA navegador PASS |
+| Dashboard Bridge | Sí | Sí | Sí | Interacción soportada | Renderer de lectura separado; QA navegador PASS |
+| Formularios Bridge | No | No | No | No | Validación, Primera Visita y Seguimiento pendientes |
 | Office Script y tablas relacionales | Candidate, no integrado | No | No | No | Gate real pendiente |
 | `APP_*`, Read Adapter y roundtrip | No | No | No | No | Pendientes |
 | Persistencia longitudinal externa completa | No | No | No | No | No acreditada |
@@ -177,7 +182,7 @@ Demostrado mediante interacción soportada y comprobación humana en la URL púb
 - aviso de datos sintéticos;
 - consola y `pageerror` sin errores en las pruebas ejecutadas.
 
-El snapshot 0.3 no se actualiza automáticamente con PR #231, PR #233, PR #238 o PR #242. Esas capacidades están publicadas en la rama regional y solo llegarían al snapshot mediante promoción explícita posterior.
+El snapshot 0.3 no se actualiza automáticamente con PR #231, PR #233, PR #238, PR #242 o PR #246. Esas capacidades están publicadas en la rama regional y solo llegarían al snapshot mediante promoción explícita posterior.
 
 ### 5.4 Persistencia y evolución regional posterior al snapshot
 
@@ -187,6 +192,8 @@ El snapshot 0.3 no se actualiza automáticamente con PR #231, PR #233, PR #238 o
 - El ledger `localStorage` está retirado del runtime soportado por PR #231. El Bridge raw v2 no usa `sessionStorage` ni `localStorage` y vive solo en memoria; tras recarga o navegación completa hay que volver a seleccionar el Excel.
 - Imports legacy y snapshots anteriores pueden seguir usando `sessionStorage`; es deuda separada y no persistencia longitudinal resuelta.
 - PR #233 publicó el workbook operativo y PR #238 conectó el botón existente al lector raw v2, pero aún no hay reconstrucción longitudinal desde `APP_*`.
+- PR #246 añadió un transporte `postMessage` efímero y one-shot hacia el dashboard Bridge; no es persistencia, y recargar el dashboard obliga a volver a Inicio Farmacia.
+- El handoff no guarda datos clínicos en URL ni browser storage; el fragmento contiene exclusivamente un nonce técnico.
 - La profesional puede pegar una salida TSV completa en las hojas operativas; el lector raw v2 valida y construye read model, pero todavía no existe Office Script integrado que valide, deduplique y descomponga las filas en tablas.
 - No existen tablas relacionales pobladas, vistas `APP_*`, Excel Read Adapter ni roundtrip.
 - El proveedor técnico v2 permanece cerrado a FH-001/FH-004; CIP manual desconocido no obtiene contexto técnico v2.
@@ -238,7 +245,7 @@ Dependencias externas abiertas:
 7. Cáceres inicia el Bridge con Dermatología y Digestivo; la definición clínica definitiva de Digestivo sigue condicionada a su formulario.
 8. CIP/`identifier_value` no equivale a `patient_id`; `patient_id` es opaco y no se deriva del CIP.
 9. El Identity Plane físico permanece diferido.
-10. Orden técnico vigente: WO7 candidate pausado por gate real; WO8A-1 raw reader y WO8A-2A-1 Quick View integrados; handoff a otros HTML, dashboard/formularios Bridge, `APP_*`, descomposición, Read Adapter y roundtrip pendientes; identidad/CIP arbitrario y retirada legacy de `sessionStorage` posteriores.
+10. Orden técnico vigente: WO7 candidate pausado por gate real; WO8A-1 raw reader, WO8A-2A-1 Quick View y WO8A-2A-2 handoff/dashboard integrados; formularios Bridge, Estadísticas, Actividad, `APP_*`, descomposición, Read Adapter y roundtrip pendientes; identidad/CIP arbitrario y retirada legacy de `sessionStorage` posteriores.
 
 ---
 

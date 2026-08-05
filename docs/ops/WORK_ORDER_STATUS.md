@@ -11,15 +11,16 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `e2c54583ccc5876058403c34a675496cab897972` |
+| HEAD regional publicado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` (PR #227) |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` (PR #231), merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
 | Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` (PR #233) |
 | WO8A-1 raw reader/read model | `7da866b205e509120bb2c7abc0a4efdf7341e659` (PR #238), `MERGED_AND_VERIFIED` |
-| WO8A-2A-1 selectores + Quick View Bridge | PR #242, commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`, merge/HEAD `e2c54583ccc5876058403c34a675496cab897972`, `MERGED_AND_VERIFIED` |
+| WO8A-2A-1 selectores + Quick View Bridge | PR #242, commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`, merge histórico `e2c54583ccc5876058403c34a675496cab897972`, `MERGED_AND_VERIFIED` |
+| WO8A-2A-2 handoff efímero + dashboard Bridge | Issue #245, PR #246, commits `fe28f21feb7cb58d57c639a7d52d85856b247108` + `7ebc482629e1e818a6227c8e8946cddd12ee113a`, merge/HEAD `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6`, `MERGED_AND_VERIFIED` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PR #231: ledger ausente del runtime soportado; PR #233: smoke PASS, 18 hojas, 152 columnas y QA manual Microsoft Excel; PR #238: Node 21 casos, workbook/openpyxl, navegador, legacy, Enfermería y smoke CI PASS; v1 intacta; sin Office Script integrado, roundtrip ni piloto |
+| QA pública regional del HEAD actual | PR #246: handoff 37, selector 82, reader 21, smoke 48 y dashboard legacy 37 PASS; Actions SUCCESS; QA navegador, padding E2E, dos ventanas, popup bloqueado, fail-closed, legacy y Enfermería PASS; storage Bridge vacío, consola limpia, `pageerror = 0`; revisiones APTO; fingerprint `651291d5094ef402ae0f16578f6a213add6e4d4fc5372f40d9763c615dfa83fb` |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
@@ -120,6 +121,9 @@
 | **WO-FH-EXCEL-BRIDGE-WORKBOOK-01** | Workbook operativo Excel Bridge Cáceres | ✅ MERGED_AND_VERIFIED | `work/fh-excel-bridge-workbook-01-20260804` | commit `c286afab...` (PR #233, issue #232) | 18 hojas, 152 columnas, `01_DERMA`/`03_DIGESTIVO`, 16 shells técnicos; QA manual Microsoft Excel y controles negativos PASS; sin Office Script ni `APP_*` |
 | **WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01** | Lector raw v2 y read model | ✅ MERGED_AND_VERIFIED | `work/fh-excel-bridge-raw-read-model-01-20260805` | commit `7da866b2...`, merge histórico `92c00eb7...` (PR #238, issue #237) | Workbook Bridge, botón `Cargar Excel de Farmacia`, dos hojas raw, 152 columnas, cardinalidad `1..N`; read model solo en memoria; candidate SHA-256 `2b7b2eed0f4310156e701c6357505442f47d13e7492869fcfbc1e9dedf564af4`; QA Node 21 casos, workbook/openpyxl, navegador, legacy, Enfermería y smoke CI PASS |
 | **WO-FH-BRIDGE-V2-PATIENT-SELECTORS-QUICK-VIEW-01** | Selectores de paciente y Quick View Bridge v2 | ✅ MERGED_AND_VERIFIED | `work/fh-bridge-v2-patient-selectors-quick-view-01-20260805` | issue #241; PR #242; commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`; merge `e2c54583ccc5876058403c34a675496cab897972` | Búsqueda por sistema + valor explícitos, `patient_id` técnico, Quick View visible dentro de `farmacia_index.html`, sin fallback demo ni alta guiada con Bridge activo; selector checker 82 casos, reader checker 21, smoke 48, Actions SUCCESS, QA navegador/focal PASS, consola limpia, `pageerror = 0`, revisión independiente APTO; no declara piloto, deploy ni persistencia longitudinal |
+| **WO-FH-BRIDGE-V2-RUNTIME-HANDOFF-DASHBOARD-01** | Handoff efímero y dashboard Bridge de solo lectura | ✅ MERGED_AND_VERIFIED | `work/fh-bridge-v2-runtime-handoff-dashboard-01-20260805` | issue #245; PR #246; commits `fe28f21feb7cb58d57c639a7d52d85856b247108` + `7ebc482629e1e818a6227c8e8946cddd12ee113a`; merge `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` | Dashboard Bridge conectado, visible y demostrado mediante interacción soportada; `search_context` + Quick View únicamente, READY y payload one-shot, `origin`/`source`/nonce/versión verificados, TTL 45 s, URL solo con nonce, sin browser storage, reload/direct URL fail-closed y ventanas aisladas; renderer separado del dashboard legacy, sin adaptación a paciente plano ni inferencias; handoff 37, selector 82, reader 21, smoke 48 y legacy 37 PASS; Actions, QA navegador, padding, popup, aislamiento, Farmacia/Enfermería y revisiones APTO; fingerprint `651291d5094ef402ae0f16578f6a213add6e4d4fc5372f40d9763c615dfa83fb`; no declara persistencia, piloto ni deploy |
+
+Correcciones P1 publicadas en `7ebc482629e1e818a6227c8e8946cddd12ee113a`: normalización simétrica mediante `trim()` para contexto e identificadores almacenados; padding almacenado soportado; componentes whitespace-only rechazados con `HANDOFF_IDENTIFIER_COMPONENT_EMPTY`; sensibilidad a mayúsculas preservada; payload original no mutado; TTL único `sessionTtlMs = 45000`; timeout funcional de 1500 ms retirado; y mensaje de Quick View actualizado para declarar el dashboard como lectura temporal y mantener formularios/demás consumidores pendientes.
 
 ### Adjudicación de WO5 Export v2
 
@@ -127,15 +131,15 @@ El alcance original de `WO-FH-EXPORT-V2-CUTOVER-01` incluía activación públic
 
 Para esta reconciliación, **WO5A** nombra retrospectivamente `WO-FH-EXPORT-V2-TECHNICAL-CONTEXT-01` (issue #224, PR #225). Aporta fixtures de contexto técnico sintético con `patient_id`, IDs de acto, `treatment_id` y `line_id` explícitos, estables y predeclarados. El proveedor no genera esos IDs, no deriva ni transforma el CIP en identidad técnica y falla cerrado para cualquier contexto no registrado; no es un `IdentityRepository` ni añade salida pública propia. **WO5B** nombra retrospectivamente `WO-FH-EXPORT-V2-PARALLEL-ACTIVATION-01` (issue #226, PR #227). No son títulos oficiales originales. No existe WO5C ejecutada ni se declarará sin issue, manifest, PR y evidencia publicada.
 
-Quedan aplazadas la retirada de v1 y la promoción de versiones `draft`. El workbook operativo está implementado y verificado desde PR #233; el lector raw v2/read model está integrado por PR #238, solo en memoria. Office Script, tablas relacionales pobladas, vistas `APP_*`, handoff entre HTML, dashboard/formularios Bridge, Excel Read Adapter y roundtrip no están implementados. La Quick View de lectura en la página actual sí es un consumidor UI; la decisión completa vive en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+Quedan aplazadas la retirada de v1 y la promoción de versiones `draft`. El workbook operativo está implementado y verificado desde PR #233; el lector raw v2/read model está integrado por PR #238, solo en memoria. PR #246 conecta la Quick View con un dashboard Bridge de solo lectura mediante handoff efímero; este dashboard es distinto del dashboard legacy y no constituye persistencia. Office Script integrado, tablas relacionales pobladas, vistas `APP_*`, formularios Bridge, Excel Read Adapter y roundtrip no están implementados. La decisión completa vive en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ### Estado técnico de persistencia en navegador
 
-PR #231 retiró del runtime soportado el ledger clínico basado en `localStorage`. El Bridge raw v2 integrado por PR #238 y consumido por la Quick View de PR #242 no usa `localStorage` ni `sessionStorage` y vive solo en memoria de la página actual; tras recarga o navegación completa se debe volver a seleccionar el Excel. Imports legacy y snapshots antiguos pueden seguir usando `sessionStorage` como deuda separada; no hay persistencia longitudinal resuelta.
+PR #231 retiró del runtime soportado el ledger clínico basado en `localStorage`. El Bridge raw v2 integrado por PR #238 y sus consumidores UI de PR #242/#246 no usan `localStorage` ni `sessionStorage`: el handoff usa `postMessage` como transporte efímero, one-shot y sin storage. La recarga del dashboard exige volver a Inicio Farmacia y abrirlo de nuevo; la recarga completa de Inicio exige volver a seleccionar el Excel. Imports legacy y snapshots antiguos pueden seguir usando `sessionStorage` como deuda separada; no hay persistencia longitudinal resuelta.
 
 ### Deuda administrativa de issues
 
-A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224, #226, #230 y #232 están cerrados. Esta WO documental no modifica issues históricos.
+A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224, #226, #230, #232 y #245 están cerrados. Esta WO documental no modifica issues históricos.
 
 ---
 
@@ -182,7 +186,7 @@ A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | Estado | Cantidad |
 |---|---:|
 | ✅ Merged | 61 |
-| ✅ MERGED_AND_VERIFIED | 4 |
+| ✅ MERGED_AND_VERIFIED | 5 |
 | 📋 Ready for review | 18 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
@@ -192,8 +196,8 @@ A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 90 work orders / preflights gestionadas.
+**Total:** 91 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 61 + 4 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 90, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 61 + 5 + 18 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 91, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.

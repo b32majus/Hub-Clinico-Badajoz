@@ -1,6 +1,6 @@
 # Decisión Farmacia V4 — persistencia y flujo de evaluación
 
-> **Reconciliación vigente 2026-08-05.** El HEAD regional publicado es `e2c54583ccc5876058403c34a675496cab897972`. PR #238 integra `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` y PR #242 integra los selectores y la Quick View Bridge v2 (`MERGED_AND_VERIFIED`), con workbook Bridge publicado, botón `Cargar Excel de Farmacia` cableado y consumidor UI de lectura dentro de `farmacia_index.html`. Lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas y preserva cardinalidad `1..N`; no convierte el Bridge en pacientes planos. La búsqueda exige `identifier_system` + `identifier_value`, resuelve `patient_id` técnico, no usa fallback demo ni alta guiada con Bridge activo y mantiene Enfermería independiente. Solicitud y validación permanecen separadas, las líneas solo se agrupan por `line_id` explícito y `true`, `false`, `0`, `""` y `null` se preservan. El read model no usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y no se transporta a otros HTML. Handoff, dashboard, formularios, `APP_*`, descomposición relacional y roundtrip siguen pendientes. WO7 Office Script es solo un candidate pausado por gate Microsoft Office Scripts real; no está integrado. WO8A-2A-2, WO8A-2B y WO8A-3 no están ejecutadas. Esta nota prevalece sobre formulaciones anteriores del documento.
+> **Reconciliación vigente 2026-08-05.** El HEAD regional publicado es `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6`. PR #238 integra el lector raw/read model, PR #242 los selectores y la Quick View, y PR #246 el handoff efímero y dashboard Bridge de solo lectura (`MERGED_AND_VERIFIED`). El flujo soportado carga el Excel, busca por `identifier_system + identifier_value`, abre la Quick View y, mediante botón, una ventana hija same-origin que espera READY y recibe una sola vez `search_context` y la proyección Quick View. No recibe el workbook ni el read model completos. El protocolo verifica `origin`, `source`, nonce y versión, usa TTL único de 45 segundos y solo incluye el nonce técnico en la URL. Recarga y acceso directo fallan cerrado sin paciente demo; varias ventanas permanecen aisladas. El renderer Bridge está separado del dashboard legacy, no adapta a paciente plano, no interpreta PROMs/adherencia y no infiere causalidad, tratamiento ni datos clínicos. `postMessage` es transporte efímero, no persistencia, y no hay datos clínicos Bridge en URL o browser storage. Formularios, Office Script, tablas relacionales, `APP_*`, Read Adapter y roundtrip siguen pendientes. Esta nota prevalece sobre formulaciones anteriores del documento.
 
 | Metadato | Valor |
 |---|---|
@@ -8,11 +8,11 @@
 | Última reconciliación | 2026-08-05 |
 | Estado | `current_product_and_architecture_decision` |
 | Rama publicada verificada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado verificado | `e2c54583ccc5876058403c34a675496cab897972` |
+| HEAD publicado verificado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` |
 | Datos autorizados | Exclusivamente inventados/sintéticos |
 | Piloto / producción | No acreditados |
 
-> Esta decisión prevalece como dirección vigente sobre propuestas incompatibles, conserva la historia de PR #199/#201/#203 y se reconcilia con dos cambios posteriores: PR #231 retiró el ledger clínico del runtime soportado y PR #233 publicó el workbook operativo del Excel Bridge. No autoriza datos reales, piloto, producción o promoción de Cáceres.
+> Esta decisión prevalece como dirección vigente sobre propuestas incompatibles, conserva la historia de PR #199/#201/#203 y se reconcilia con los cambios posteriores: PR #231 retiró el ledger clínico del runtime soportado, PR #233 publicó el workbook operativo, PR #238 integró el lector raw/read model, PR #242 integró la Quick View y PR #246 integró el handoff/dashboard Bridge. No autoriza datos reales, piloto, producción o promoción de Cáceres.
 
 ## 1. Estado publicado que motiva la decisión
 
@@ -24,6 +24,7 @@
 - PR #231 retiró de las tres pantallas soportadas la carga del ledger clínico basado en `localStorage`, sin introducir persistencia alternativa.
 - PR #233 publicó el workbook operativo de Cáceres como contenedor del TSV y superó QA automatizada y manual en Microsoft Excel.
 - PR #238 integró el lector raw v2 y read model con checker Node PASS (21 casos), checker workbook/openpyxl PASS, QA navegador PASS, Farmacia legacy PASS, Enfermería PASS y smoke CI PASS.
+- PR #246 integró el handoff y dashboard Bridge con handoff checker 37, selector 82, reader 21, smoke 48 y dashboard legacy 37 PASS; Actions SUCCESS; QA navegador, padding E2E, aislamiento, popup bloqueado y fail-closed PASS; storage vacío, consola limpia, `pageerror = 0` y revisiones APTO.
 - JARA, CSV y Excel v1 permanecen intactos; Excel v1 conserva 61 columnas.
 - Las versiones continúan en `draft`. No existe promoción a `2.0.0`.
 
@@ -53,7 +54,8 @@ Estado real por tramos:
 - workbook del Excel Bridge: implementado y publicado como contenedor del TSV;
 - lector raw v2/read model: integrado independientemente; dos hojas raw, 152 columnas, `1..N`, errores seguros y solo memoria de página;
 - selectores y Quick View Bridge: integrados por PR #242 dentro de `farmacia_index.html`; consumidor UI de lectura visible mediante interacción soportada;
-- handoff a otros HTML, dashboard, formularios, Office Script, tablas relacionales, `APP_*`, Read Adapter y roundtrip: pendientes;
+- handoff efímero y dashboard Bridge: integrados por PR #246; consumidor UI de lectura conectado, visible y demostrado mediante interacción soportada;
+- formularios Bridge, Office Script, tablas relacionales, `APP_*`, Read Adapter y roundtrip: pendientes;
 - CIP arbitrario sin browser storage clínico: pendiente.
 
 Decisiones cerradas:
@@ -65,7 +67,7 @@ Decisiones cerradas:
 - la diferencia se limita a los datos inventados y al aviso del entorno;
 - los fixtures se conservan para demo y regresión, pero no deben ser requisito del funcionamiento.
 
-El proveedor técnico publicado por PR #225 sigue cerrado a FH-001/FH-004. El mecanismo técnico final que permitirá un CIP arbitrario sin almacenamiento clínico en navegador requiere una WO atómica posterior, basada en la evidencia real del Bridge y su lectura. No se declara demostrado el roundtrip.
+El proveedor técnico publicado por PR #225 sigue cerrado a FH-001/FH-004. El handoff integrado no amplía esa identidad: no constituye un Identity Plane productivo ni permite CIP arbitrario. El mecanismo técnico final requiere una WO atómica posterior, basada en la evidencia real del Bridge y su lectura. No se declara demostrado el roundtrip.
 
 ## 3. Persistencia provisional V4
 
@@ -79,7 +81,7 @@ El proveedor técnico publicado por PR #225 sigue cerrado a FH-001/FH-004. El me
 
 ### 3.2 Flujo y descomposición
 
-El **Excel Bridge por hospital** es el contenedor/objetivo de persistencia provisional V4; el raw reader y la Quick View integrados aún solo construyen/consumen memoria de ejecución y no resuelven persistencia longitudinal:
+El **Excel Bridge por hospital** es el contenedor/objetivo de persistencia provisional V4; el raw reader, la Quick View y el dashboard Bridge integrados solo construyen/consumen memoria de ejecución y no resuelven persistencia longitudinal:
 
 ```text
 Hub genera el TSV de 1..N filas según la cardinalidad del acto
@@ -128,6 +130,8 @@ Esto demuestra el **contenedor del Bridge**, no el procesamiento longitudinal. L
 - La clave legacy de `localStorage` permanece opaca: no se lee, escribe ni elimina.
 - El módulo del ledger y el workbook técnico histórico permanecen versionados por trazabilidad, pero desacoplados del runtime normal.
 - El Bridge raw v2 no usa `sessionStorage` ni `localStorage`; imports legacy y snapshots anteriores aún pueden usar `sessionStorage` como deuda separada.
+- El dashboard Bridge recibe datos por `postMessage` same-origin, one-shot y tras READY; este transporte no persiste datos ni sobrevive a recarga.
+- La URL Bridge solo contiene un nonce técnico. No contiene CIP, `identifier_value`, `patient_id`, fichero ni datos clínicos, y no se usan cookies, IndexedDB, `window.name` o `BroadcastChannel` para conservar el payload.
 
 ### 4.2 Decisión vigente
 
@@ -137,6 +141,7 @@ Esto demuestra el **contenedor del Bridge**, no el procesamiento longitudinal. L
 - tampoco se sustituirá por otro mecanismo oculto en el navegador;
 - la retirada del ledger `localStorage` del runtime soportado está implementada;
 - el Bridge raw v2 vive solo en memoria de ejecución; recarga o navegación completa exige volver a seleccionar el Excel;
+- el dashboard Bridge vive solo en memoria de su ventana; al recargar o abrir directamente debe fallar cerrado y exigir volver a Inicio Farmacia;
 - la retirada de `sessionStorage` legacy todavía no está implementada y exige reemplazo real mediante Bridge/Read Adapter;
 - no se presenta la retirada parcial como persistencia longitudinal resuelta.
 
@@ -177,6 +182,7 @@ Significa:
 - la retirada de v1 queda aplazada;
 - la promoción de versiones `draft` queda aplazada;
 - el workbook operativo está implementado y verificado por PR #233;
+- la Quick View, el handoff efímero y el dashboard Bridge de solo lectura están integrados por PR #242/#246;
 - Office Script, tablas relacionales pobladas, vistas `APP_*`, Excel Read Adapter y roundtrip siguen pendientes;
 - cualquier alcance restante se ejecutará, si se autoriza, en WOs atómicas.
 
@@ -219,10 +225,10 @@ Puede autorizarse una evaluación de formularios con alcance inferior solo media
 
 | Clasificación | Estado |
 |---|---|
-| Implementado y publicado | Core/adaptadores v2, proveedor técnico cerrado, Export v2 demo paralelo, v1 preservada, retirada del ledger del runtime soportado y workbook operativo del Bridge |
-| Visible mediante interacción soportada | Botón/salida Export v2 demo en los tres actos para contextos técnicos admitidos; varias filas en Seguimiento |
+| Implementado y publicado | Core/adaptadores v2, proveedor técnico cerrado, Export v2 demo paralelo, v1 preservada, retirada del ledger, workbook operativo, lector raw/read model, Quick View, handoff efímero y dashboard Bridge de solo lectura |
+| Visible mediante interacción soportada | Export v2 demo; Quick View; botón `Abrir dashboard Bridge`; dashboard Bridge en ventana hija same-origin |
 | Verificado fuera del navegador | Workbook Cáceres abierto, pegado y guardado en Microsoft Excel con roundtrip exacto del TSV sintético |
 | Limitado a demo/evaluación | Datos inventados, FH-001/FH-004 para proveedor v2, sin aptitud para piloto |
-| Pendiente | CIP arbitrario sin browser storage, Office Script, tablas relacionales, `APP_*`, Read Adapter, roundtrip y retirada de `sessionStorage` |
+| Pendiente | Validación/Primera Visita/Seguimiento Bridge, exportaciones desde Bridge, Estadísticas, Actividad del servicio, CIP arbitrario productivo, Office Script, tablas relacionales, `APP_*`, persistencia longitudinal, Read Adapter, roundtrip y retirada completa de `sessionStorage` legacy |
 | Superseded como dirección | Browser storage como persistencia, cohorte sintética especial y WO5 como megadesarrollo único |
 | Histórico conservado | Ledger y workbook técnico de PR #199/#201/#203, todavía versionados pero fuera del runtime soportado |
