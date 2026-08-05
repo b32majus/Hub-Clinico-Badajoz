@@ -1,15 +1,18 @@
 # Estado actual — Farmacia recovery, Cáceres 0.3 y evolución regional
 
+> **Reconciliación post-PR #238 (2026-08-05).** El HEAD regional publicado es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` está `MERGED_AND_VERIFIED` mediante PR #238, con head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`. El workbook Bridge está publicado; el botón `Cargar Excel de Farmacia` está cableado; el lector raw v2 lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas, agrupa por `source_event_id`, preserva `1..N` y construye un read model raw solo en memoria. Fórmulas, coerciones, codec incorrecto, cardinalidad o identidad incoherentes se rechazan de forma segura; filas `ERROR` quedan en `source_errors` y excluyen el acto completo; `null` y `""` son ausencia válida sin defaults ni inferencias clínicas. Farmacia legacy y Enfermería siguen funcionales. No usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y no alimenta aún Quick View, dashboard, Validación, Primera Visita, Seguimiento, Estadísticas ni Actividad del servicio. `APP_*`, descomposición relacional y roundtrip siguen pendientes. WO7 Office Script permanece como candidate publicado y pausado por gate real, no integrado. El snapshot Cáceres no incorpora automáticamente estos cambios.
+
 | Metadato | Valor |
 |---|---|
 | Fecha de reconciliación | 2026-08-05 |
 | Estado documental | `current_published_evaluation_state` |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| HEAD regional publicado verificado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` / merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
-| Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` / merge `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` / PR #233 |
+| Lector raw v2 / read model | PR #238; head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`; merge/HEAD `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`; `MERGED_AND_VERIFIED` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | SHA funcional fuente del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | Merge de promoción | `96a4cb0b6df775dc5b391a05e87a313adb30a23f` |
@@ -46,15 +49,15 @@ No sustituye contratos clínicos definitivos, no autoriza datos reales y no conv
 | Elemento | Fuente de verdad | Estado |
 |---|---|---|
 | Código regional de Farmacia | `recovery/farmacia-pr-replay-20260727` | Publicado para evolución y evaluación |
-| HEAD regional publicado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` | Merge de PR #233; incluye PR #231/#233 |
+| HEAD regional publicado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` | Merge de PR #238; incluye PR #231/#233/#238 |
 | Activación Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` | Salida visible en paralelo; v1 preservada |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` | Ledger fuera de Validación, Primera Visita y Seguimiento; sin persistencia alternativa |
-| Workbook operativo | `templates/PROMueve_FH_Caceres_Bridge_DEMO.xlsx` | Contenedor del TSV publicado; Office Script y lectura aún pendientes |
+| Workbook operativo | `templates/PROMueve_FH_Caceres_Bridge_DEMO.xlsx` | Contenedor publicado; lector raw v2 integrado por PR #238; Office Script y lectura relacional aún pendientes |
 | Snapshot Cáceres | `previews/caceres-fh/` | Salida generada y estable; no incorpora automáticamente el HEAD regional posterior |
 | Manifest | `previews/caceres-fh/deployment-manifest.json` | Fuente de versión, SHA, allowlist y hashes del snapshot |
 | Versión estable Cáceres | `CÁCERES-REVIEW-0.3` | Snapshot explícitamente promovido; fuente `815e16f9...` |
 | Plan vivo del siguiente ciclo | `FARMACIA_PLAN_VACACIONES_20260731.md` | Prioridad y secuencia operativa |
-| Secuencia vigente | `FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md` | WO6 cerrada; WO7 siguiente y WO8 después |
+| Secuencia vigente | `FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md` | WO6 integrada; WO7 candidate pausada; WO8A-1 raw reader integrada; consumidores pendientes |
 | Decisión de persistencia | `../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md` | Dirección vigente reconciliada |
 | Índice documental | `../INDEX.md` | Navegación documental |
 | Tablero de WOs | `WORK_ORDER_STATUS.md` | Trazabilidad de ejecución |
@@ -114,6 +117,7 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #226 — activación paralela | #227 | `f86f72f8...` | Export v2 visible; v1 intacta |
 | #230 — retirada ledger runtime | #231 | `19867ef16127548d0b596482360d8e5cbe6e54e5` | Ledger no cargado en las tres pantallas; sin restauración ni alternativa |
 | #232 — workbook Excel Bridge | #233 | `a94a42f1d603e4259aece09c14b18ae19a74fefc` | Workbook operativo publicado; QA Microsoft Excel PASS |
+| #237 — raw reader/read model | #238 | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` | Head técnico `7da866b2...`; lector raw v2 y read model; candidate SHA-256 `2b7b2eed0f4310156e701c6357505442f47d13e7492869fcfbc1e9dedf564af4`; `MERGED_AND_VERIFIED` |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -136,9 +140,10 @@ La PR #185 permanece en la historia Git, pero no debe presentarse como la correc
 | TXT JARA | Sí | Sí | Sí | Sí | Salida provisional |
 | Export v2 demo paralelo | Sí | Sí, limitado | Sí | Sí, para contextos técnicos registrados | 152 columnas; cardinalidad aprobada |
 | Ledger clínico histórico | Sí, versionado | **No en runtime soportado** | No | No | PR #231 demuestra desacoplamiento |
-| Workbook Excel Bridge | Sí | No conectado al Hub para lectura | No es UI web | Pegado manual soportado en Excel | QA manual Microsoft Excel PASS |
-| Office Script y tablas relacionales | No | No | No | No | Pendiente WO7 |
-| `APP_*`, Read Adapter y roundtrip | No | No | No | No | Pendiente WO8 |
+| Workbook Excel Bridge | Sí | Conectado al botón de carga para lectura raw | No es UI web | Selección de Excel soportada | QA manual Microsoft Excel PASS |
+| Lector raw v2 / read model | Sí | Sí, en memoria de página | Estado de importación Bridge | Carga raw soportada | Node 21 casos y QA navegador PASS |
+| Office Script y tablas relacionales | Candidate, no integrado | No | No | No | Gate real pendiente |
+| `APP_*`, Read Adapter y roundtrip | No | No | No | No | Pendientes |
 | Persistencia longitudinal externa completa | No | No | No | No | No acreditada |
 
 ### 5.2 Export v2 y workbook publicados
@@ -174,9 +179,10 @@ El snapshot 0.3 no se actualiza automáticamente con PR #231 o PR #233. Esas cap
 - PR #231 retiró el ledger clínico del runtime soportado de Validación, Primera Visita y Seguimiento.
 - No existe restauración tras recarga ni recuperación al regresar a un CIP; no se lee, escribe ni elimina la clave legacy.
 - El módulo `farmacia_evaluation_ledger.js` y el workbook técnico de PR #201 permanecen versionados como historia, pero no se cargan en el flujo normal.
-- Imports y snapshots de contexto continúan utilizando `sessionStorage`; su retirada permanece pendiente y necesita el reemplazo de lectura del Bridge.
-- PR #233 publicó el workbook operativo del Bridge, pero todavía no lo conecta al Hub para reconstrucción longitudinal.
-- La profesional puede pegar una salida TSV completa en las hojas operativas; todavía no existe Office Script que valide, deduplique y descomponga las filas.
+- El ledger `localStorage` está retirado del runtime soportado por PR #231. El Bridge raw v2 no usa `sessionStorage` ni `localStorage` y vive solo en memoria; tras recarga o navegación completa hay que volver a seleccionar el Excel.
+- Imports legacy y snapshots anteriores pueden seguir usando `sessionStorage`; es deuda separada y no persistencia longitudinal resuelta.
+- PR #233 publicó el workbook operativo y PR #238 conectó el botón existente al lector raw v2, pero aún no hay reconstrucción longitudinal desde `APP_*`.
+- La profesional puede pegar una salida TSV completa en las hojas operativas; el lector raw v2 valida y construye read model, pero todavía no existe Office Script integrado que valide, deduplique y descomponga las filas en tablas.
 - No existen tablas relacionales pobladas, vistas `APP_*`, Excel Read Adapter ni roundtrip.
 - El proveedor técnico v2 permanece cerrado a FH-001/FH-004; CIP manual desconocido no obtiene contexto técnico v2.
 - No existe cutover completo, retirada v1 ni promoción de `draft` a `2.0.0`.
@@ -227,7 +233,7 @@ Dependencias externas abiertas:
 7. Cáceres inicia el Bridge con Dermatología y Digestivo; la definición clínica definitiva de Digestivo sigue condicionada a su formulario.
 8. CIP/`identifier_value` no equivale a `patient_id`; `patient_id` es opaco y no se deriva del CIP.
 9. El Identity Plane físico permanece diferido.
-10. Orden técnico fijo: WO7 Office Script → WO8 `APP_*`/Read Adapter/roundtrip → identidad/CIP arbitrario → retirada restante de `sessionStorage`.
+10. Orden técnico vigente: WO7 candidate pausado por gate real; WO8A-1 raw reader integrado; consumidores UI, `APP_*`, descomposición, Read Adapter y roundtrip pendientes; identidad/CIP arbitrario y retirada legacy de `sessionStorage` posteriores.
 
 ---
 

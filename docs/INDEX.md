@@ -5,9 +5,9 @@
 | Última actualización | 2026-08-05 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| HEAD regional publicado verificado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3` |
-| Rama documental de esta edición | `work/doc-fh-post-ledger-workbook-reconciliation-01-20260805` |
+| Rama documental de esta edición | `work/doc-fh-post-raw-read-model-reconciliation-01-20260805` |
 
 > Este índice orienta. La verdad funcional procede del código publicado, el manifest del despliegue, el estado vivo y los contratos relacionados. No convierte propuestas arquitectónicas en capacidades implementadas.
 
@@ -17,9 +17,9 @@
 
 ## 1. Lectura recomendada actual
 
-1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — estado publicado actual, incluida la retirada del ledger del runtime soportado y el workbook Excel Bridge publicado.
+1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — estado publicado actual, incluida la retirada del ledger, el workbook y el lector raw Bridge v2.
 2. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan operativo 2026-07-31 a 2026-08-15.
-3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia WO1–WO9; WO6 fusionada y verificada, WO7 siguiente.
+3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia vigente: WO6 integrada, WO7 candidate pausada y WO8A-1 raw reader integrada.
 4. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión vigente reconciliada con ledger retirado del runtime, workbook implementado y procesamiento longitudinal aún pendiente.
 5. [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado en recovery y visible desde PR #227 mediante Export v2 demo paralelo; no equivale a cutover.
 6. [`docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md) — adaptador interno de Validación v2 integrado mediante PR #215.
@@ -74,10 +74,11 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| HEAD regional publicado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` (PR #227) |
 | Retirada del ledger del runtime soportado | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` (PR #231), merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
-| Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` (PR #233), merge/HEAD `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` (PR #233), publicado en la historia regional |
+| WO8A-1 raw reader/read model | `7da866b205e509120bb2c7abc0a4efdf7341e659` (PR #238), merge/HEAD `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`, `MERGED_AND_VERIFIED` |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
 | Fuente funcional del snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
 | QA pública regional del HEAD actual | PR #231: ledger ausente del runtime soportado, sin restauración ni acceso a la clave legacy; PR #233: smoke PASS y QA manual Microsoft Excel PASS; no equivale a QA integral ni piloto |
@@ -88,19 +89,20 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Seguimiento v2 | Export v2 demo paralelo visible; `1..N`, una fila por línea explícitamente activa |
 | Export v2 demo paralelo | TSV común de 152 columnas: Validación 1 fila; Primera Visita/Seguimiento `1..N`; `unknown/stale` bloquea solo v2 |
 | Ledger clínico en runtime | Retirado de Validación, Primera Visita y Seguimiento; módulo histórico permanece versionado y desacoplado |
-| `sessionStorage` | Imports y snapshots de contexto aún lo utilizan; retirada pendiente con reemplazo |
+| `sessionStorage` | El Bridge raw v2 no lo usa; imports legacy y snapshots anteriores aún pueden usarlo como deuda separada |
 | Excel Bridge | Workbook operativo creado y verificado: `01_DERMA`, `03_DIGESTIVO`, 152 columnas y 16 shells técnicos vacíos |
-| Office Script / tablas relacionales | Pendiente — siguiente WO aprobada en la secuencia |
-| `APP_*` / Read Adapter / roundtrip | Pendientes después de WO7 |
+| Lector raw v2 / read model | Integrado; lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas y preserva `1..N` solo en memoria de la página |
+| Office Script / tablas relacionales | Candidate de WO7 publicado y pausado por gate Microsoft Office Scripts real; no integrado |
+| `APP_*` / Read Adapter / roundtrip | Pendientes; no son consumidores del read model todavía |
 | Cutover completo / retirada v1 | No; aplazados |
 | Salida pública v1 | Preservada (61 columnas) |
 | `main` | No modificada |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
-> Desde PR #193 se publicaron la reconciliación y promoción de Cáceres 0.3, el ledger/workbook técnico de evaluación, la realineación del flujo y la corrección P0 del Excel de Primera Visita. PR #231 retiró el ledger del runtime soportado sin introducir persistencia alternativa. El HEAD regional actual tiene QA pública focal, pero continúa sin acreditación para piloto real.
+> Reconciliación post-PR #238: el HEAD regional publicado es `92c00eb7...`. WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01 está `MERGED_AND_VERIFIED` con PR #238, incluyendo workbook Bridge, lector raw v2 y read model en memoria de ejecución. El Bridge no usa browser storage ni sobrevive a recarga o navegación completa; los consumidores UI, `APP_*`, descomposición relacional y roundtrip siguen pendientes.
 
-> PR #223 reconcilió Seguimiento v2; PR #225 publicó el proveedor técnico cerrado a FH-001/FH-004; PR #227 activó Export v2 demo visible en paralelo; PR #233 publicó el workbook operativo del Bridge. No existe cutover completo ni retirada v1: JARA, CSV y Excel v1 de 61 columnas permanecen intactos, las versiones siguen en `draft` y el circuito longitudinal todavía carece de Office Script, `APP_*`, Read Adapter y roundtrip.
+> PR #223 reconcilió Seguimiento v2; PR #225 publicó el proveedor técnico cerrado a FH-001/FH-004; PR #227 activó Export v2 demo visible en paralelo; PR #233 publicó el workbook operativo; PR #238 integró el lector raw v2/read model. WO7 Office Script sigue como candidate pausado por gate real. No existe cutover completo ni retirada v1: JARA, CSV y Excel v1 de 61 columnas permanecen intactos, las versiones siguen en `draft` y el circuito longitudinal todavía carece de `APP_*`, descomposición relacional, roundtrip y consumidores UI.
 
 Documento vivo reconciliado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
 
@@ -194,7 +196,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; incluido en la fuente funcional promovida a `CÁCERES-REVIEW-0.3`.
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
 - [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
-- [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — orden exacto WO1–WO9; WO6 publicada y WO7 siguiente
+- [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia WO1–WO9 reconciliada; WO6 integrada, WO7 candidate pausada y WO8A-1 integrada
 - [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado; Export v2 demo paralelo visible desde PR #227, sin cutover ni retirada v1
 - [`docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Validación v2; integrado mediante PR #215
 - [`docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Primera Visita v2; integrado mediante PR #217
@@ -310,4 +312,4 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 ---
 
-*Edición reconciliada post-PR #231/#233. Export v2 demo sigue visible en paralelo con 152 columnas por fila; el ledger ya no se carga en el runtime soportado y el workbook operativo del Excel Bridge está publicado y probado en Microsoft Excel. No existe todavía Office Script, tablas relacionales pobladas, `APP_*`, Read Adapter, roundtrip, cutover completo, retirada v1 ni promoción a `2.0.0`. JARA, CSV y Excel v1 de 61 columnas permanecen preservados. No autoriza piloto, datos reales, producción, FHIR/openEHR o Identity Plane operativo.*
+*Edición reconciliada post-PR #238. Export v2 demo sigue visible en paralelo con 152 columnas por fila; el ledger ya no se carga en el runtime soportado, el workbook está publicado y el lector raw v2/read model está integrado solo en memoria. El candidato Office Script permanece pausado por gate real. No existen todavía tablas relacionales pobladas, `APP_*`, Read Adapter, roundtrip, consumidores UI, cutover completo, retirada v1 ni promoción a `2.0.0`. JARA, CSV y Excel v1 de 61 columnas permanecen preservados. No autoriza piloto, datos reales, producción, FHIR/openEHR o Identity Plane operativo.*

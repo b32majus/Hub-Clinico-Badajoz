@@ -6,9 +6,9 @@
 | Estado | `approved_functional_sequence` |
 | Rama base | `recovery/farmacia-pr-replay-20260727` |
 | Base Git publicada al aprobar | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
-| HEAD regional publicado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| HEAD regional publicado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
 | Contrato previo | `docs/farmacia_export_longitudinal_contract_WO8.md` v3 |
-| Reconciliación documental | 2026-08-03 — `WO-FH-EXPORT-V2-ADAPTERS-DOC-RECONCILIATION-01`; 2026-08-04 — `WO-FH-EXPORT-V2-FOLLOWUP-DOC-RECONCILIATION-01`; 2026-08-05 — `WO-DOC-FH-POST-LEDGER-WORKBOOK-RECONCILIATION-01` |
+| Reconciliación documental | 2026-08-03 — adaptadores; 2026-08-04 — Seguimiento; 2026-08-05 — `WO-DOC-FH-POST-RAW-READ-MODEL-RECONCILIATION-01` |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
@@ -52,16 +52,17 @@ La secuencia diferencia:
 | WO5A retrospectiva | `WO-FH-EXPORT-V2-TECHNICAL-CONTEXT-01` | Integrada; fixtures técnicos con identidades explícitas y predeclaradas, sin generación ni derivación desde CIP y sin salida pública propia | Issue #224; PR #225; commit `00e5c8a6...`; merge `e2f2c663...` |
 | WO5B retrospectiva | `WO-FH-EXPORT-V2-PARALLEL-ACTIVATION-01` | Integrada; Export v2 visible en paralelo, 152 columnas, varias filas soportadas y v1 preservada | Issue #226; PR #227; commit `fe84d83c...`; merge `f86f72f8...` |
 | Alineación previa a WO6 | `WO-FH-EVALUATION-LEDGER-RUNTIME-RETIREMENT-01` | Integrada; ledger `localStorage` retirado del runtime soportado sin persistencia alternativa; `sessionStorage` queda pendiente | Issue #230; PR #231; commit `b1ee11e0...`; merge `19867ef1...` |
-| 6 | `WO-FH-EXCEL-BRIDGE-WORKBOOK-01` | `MERGED_AND_VERIFIED` | Issue #232; PR #233; commit `c286afab...`; merge/HEAD `a94a42f1...`; QA manual Microsoft Excel PASS |
-| 7 | `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` | **Siguiente unidad** | Pendiente de issue, manifest, candidate, QA en Excel y autorización |
-| 8 | `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` | Pendiente después de WO7 | No iniciar antes de validar el procesador y las tablas relacionales reales |
+| 6 | `WO-FH-EXCEL-BRIDGE-WORKBOOK-01` | `MERGED_AND_VERIFIED` | Issue #232; PR #233; commit `c286afab...`; QA manual Microsoft Excel PASS |
+| 7 | `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` | **Candidate pausado** | Rama `work/fh-excel-bridge-office-script-01-20260805`, commit `95565e1698dc4b8333daec0b4d342e298d5d9cfa`, QA PASS/APTO; gate Microsoft Office Scripts real diferido; sin PR/merge |
+| 8A-1 | `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` | `MERGED_AND_VERIFIED` | Issue #237; PR #238; head técnico `7da866b2...`; merge/HEAD `92c00eb7...`; lector raw v2 y read model integrados independientemente |
+| 8A-2A/2B/3 | Consumidores UI, `APP_*`, descomposición y roundtrip | **Pendientes / no ejecutadas** | Posibles WOs futuras sujetas a aprobación |
 | 9 | `WO-FH-POSTGRESQL-MIGRATOR-01` | Condicionada | No iniciar sin servidor local, custodia y autorización institucional |
 
 PR #223 reconcilió documentalmente Seguimiento v2. PR #225 cerró el proveedor técnico sintético a FH-001/FH-004 y PR #227 activó Export v2 demo visible en paralelo con un TSV común de 152 columnas: Validación genera una fila y Primera Visita/Seguimiento soportan `1..N` según líneas explícitas. `unknown/stale` solo bloquea v2; JARA, CSV y Excel v1 de 61 columnas permanecen intactos.
 
-PR #231 retiró el ledger clínico basado en `localStorage` de las tres pantallas soportadas. El módulo histórico permanece versionado, pero no se carga, no restaura actos y no accede a la clave legacy. Imports y snapshots de contexto ligados a `sessionStorage` permanecen fuera de ese alcance y requieren reemplazo antes de su retirada.
+PR #231 retiró el ledger clínico basado en `localStorage` de las tres pantallas soportadas. PR #238 integra un Bridge raw v2 que no usa `localStorage` ni `sessionStorage` y conserva el read model solo en memoria de la página actual. Imports legacy y snapshots anteriores pueden seguir usando `sessionStorage` como deuda separada; recarga o navegación completa exige volver a seleccionar el Excel.
 
-PR #233 publicó el workbook operativo de Cáceres como contenedor del TSV: `01_DERMA` y `03_DIGESTIVO`, 152 columnas canónicas y 16 hojas técnicas ocultas y vacías. La QA manual en Microsoft Excel demostró apertura sin reparación, pegado y expansión de ambas tablas, roundtrip exacto y neutralidad frente a fórmulas. Esto no implementa Office Script, tablas relacionales pobladas, `APP_*`, Read Adapter ni roundtrip del Hub.
+PR #233 publicó el workbook operativo de Cáceres como contenedor del TSV: `01_DERMA` y `03_DIGESTIVO`, 152 columnas canónicas y 16 hojas técnicas ocultas y vacías. PR #238 añadió el lector raw v2 y read model: ambas hojas se leen, se valida el contrato y se preserva `1..N` sin aplanar pacientes. Esto no implementa Office Script, tablas relacionales pobladas, `APP_*`, consumidores UI, Read Adapter ni roundtrip del Hub.
 
 WO5A aporta `patient_id`, IDs de acto, `treatment_id` y `line_id` explícitos, estables y predeclarados. El proveedor no los genera, no deriva ni transforma el CIP en identidad técnica y cualquier contexto no registrado falla cerrado. Es un proveedor de fixtures técnicos, no un `IdentityRepository`.
 
@@ -194,8 +195,8 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 - WO9 no se inicia sin servidor local, custodia y autorización institucional.
 - Ninguna fase declara piloto real por tener tests verdes.
 
-## 8. Próxima acción
+## 8. Estado actual y próximas unidades
 
-La siguiente unidad es `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01`. Debe partir del workbook publicado, definir y poblar las tablas relacionales, conservar la entrada raw append-only, bloquear duplicados y discrepancias, registrar errores y demostrar idempotencia mediante QA real en Microsoft Excel.
+WO7 Office Script es un candidate publicado y pausado: debe superar el gate real de Microsoft Office Scripts antes de considerarse integrada. La lectura raw v2 ya está integrada independientemente por WO8A-1.
 
-Después, y no antes, corresponde `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` para `APP_*`, lectura y roundtrip Hub → Excel → Hub. Mantener el gate del paquete longitudinal final: no preparar URL, guía o paquete final ni retirar v1 hasta demostrar CIP arbitrario en flujo normal, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip completo. La decisión vigente vive en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+Quedan pendientes los consumidores UI del read model, `APP_*`, descomposición relacional, Excel Read Adapter y roundtrip Hub → Excel → Hub. WO8A-2A, WO8A-2B y WO8A-3 no se declaran ejecutadas y solo podrán aprobarse como unidades futuras. Mantener el gate del paquete longitudinal final: no preparar URL, guía o paquete final ni retirar v1 hasta demostrar CIP arbitrario, Office Script, `APP_*`, Read Adapter y roundtrip completo.
