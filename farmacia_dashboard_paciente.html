@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style.css?v=20260608-dashboard-e">
     <link rel="stylesheet" href="farmacia_style.css?v=20260608-dashboard-e">
 </head>
-        <body>
+<body>
             <div class="hub-shell">
         <aside class="sidebar">
     <div class="sidebar-header">
@@ -79,6 +79,11 @@
     <div class="sidebar-footer">Demo Farmacia v0.2</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--dashboard">
+        <section id="fhBridgeDashboardRoot" class="dashboard-card hidden" aria-live="polite" aria-labelledby="fhBridgeDashboardTitle">
+            <h1 class="card-title" id="fhBridgeDashboardTitle">Dashboard Bridge v2</h1>
+            <p id="fhBridgeDashboardStatus" class="validation-module__intro"></p>
+            <div id="fhBridgeDashboardContent"></div>
+        </section>
         <div class="demo-banner" role="note">
     <i class="fas fa-flask" aria-hidden="true"></i>
     <span><strong>Demo Farmacia v0.2 — Datos sintéticos.</strong> Prototipo funcional sin datos reales, sin integración JARA/SES/Farmatool y sin seguridad productiva.</span>
@@ -153,11 +158,12 @@
 
                 </main>
             </div>
+            <script src="scripts/farmacia_bridge_v2_dashboard_handoff.js?v=20260805-handoff-r1"></script>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
+    <script src="scripts/farmacia_dashboard_paciente.js?v=20260805-bridge-handoff-r1"></script>
             <script src="scripts/farmacia_common.js?v=20260614-wo6-b"></script>
     <script src="scripts/farmacia_tratamiento_common.js?v=20260614-wo7c2"></script>
     <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
     <script src="scripts/farmacia_longitudinal_normalizer.js?v=20260728-pr57e"></script>
-    <script src="scripts/farmacia_dashboard_paciente.js?v=20260728-pr57e"></script>
         </body>
         </html>

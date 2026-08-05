@@ -5,6 +5,58 @@
     let farmaciaOverlayMount = null;
     let bridgeModeActive = false;
     let bridgeSelectors = null;
+    const bridgeHandoffSessions = [];
+
+    function removeBridgeSession(session) {
+        var index = bridgeHandoffSessions.indexOf(session);
+        if (index !== -1) bridgeHandoffSessions.splice(index, 1);
+    }
+
+    function showBridgeHandoffNotice(message) {
+        setBridgeStatus(message);
+    }
+
+    function openBridgeDashboard(quickView, searchContext, trigger) {
+        var handoff = window.FarmaciaBridgeV2DashboardHandoff;
+        if (!handoff) {
+            showBridgeHandoffNotice('El protocolo Bridge no está disponible.');
+            return;
+        }
+        var nonce;
+        try {
+            nonce = handoff.generateNonce();
+        } catch (error) {
+            showBridgeHandoffNotice('No se pudo generar una sesión Bridge segura.');
+            return;
+        }
+        var session = { nonce: nonce, childWindow: null, payload: { search_context: searchContext, quick_view: quickView }, expiresAt: Date.now() + handoff.sessionTtlMs, sent: false };
+        var url = 'farmacia_dashboard_paciente.html' + handoff.buildFragment(nonce);
+        session.childWindow = window.open(url, '_blank');
+        if (!session.childWindow) {
+            showBridgeHandoffNotice('El navegador bloqueó la ventana Bridge. El paciente seleccionado sigue activo; permita ventanas emergentes y vuelva a intentarlo.');
+            return;
+        }
+        bridgeHandoffSessions.push(session);
+        window.setTimeout(function () {
+            if (bridgeHandoffSessions.indexOf(session) !== -1 && Date.now() >= session.expiresAt) removeBridgeSession(session);
+        }, handoff.sessionTtlMs + 1000);
+        if (trigger) trigger.focus();
+    }
+
+    function bindBridgeHandoffMessages() {
+        window.addEventListener('message', function (event) {
+            var handoff = window.FarmaciaBridgeV2DashboardHandoff;
+            if (!handoff || event.origin !== window.location.origin) return;
+            var session = bridgeHandoffSessions.find(function (candidate) {
+                return candidate.childWindow === event.source && Date.now() < candidate.expiresAt;
+            });
+            if (!session || !handoff.validateEnvelope(event.data, handoff.readyType, session.nonce) || session.sent) return;
+            var envelope = handoff.createPayload(session.nonce, session.payload);
+            session.sent = true;
+            event.source.postMessage(envelope, window.location.origin);
+            removeBridgeSession(session);
+        });
+    }
 
     function createOverlay() {
         const overlay = document.createElement('div');
@@ -530,11 +582,26 @@
         pendingLabel.textContent = 'Consumidores pendientes';
         var pendingText = document.createElement('p');
         pendingText.className = 'validation-note-block__value';
-        pendingText.textContent = 'El dashboard y los formularios todavía no están conectados al workbook Bridge activo. Esta vista es de lectura y permanece solo en esta página.';
+         pendingText.textContent = 'El dashboard Bridge está disponible como lectura temporal en una nueva ventana. Validación, Primera Visita, Seguimiento y el resto de consumidores todavía no están conectados al workbook Bridge. No persiste, no transporta el workbook completo y no habilita acciones clínicas.';
         pendingNotice.append(pendingLabel, pendingText);
-        mount.content.appendChild(pendingNotice);
+         mount.content.appendChild(pendingNotice);
 
-        mount.open(document.getElementById('fhBridgeSearchBtn'));
+         var dashboardButton = document.createElement('button');
+         dashboardButton.type = 'button';
+         dashboardButton.className = 'btn btn-primary';
+         dashboardButton.textContent = 'Abrir dashboard Bridge';
+         dashboardButton.addEventListener('click', function () {
+             openBridgeDashboard(quickView, {
+                 identifier_system: searchContext.identifier_system,
+                 identifier_value: searchContext.identifier_value
+             }, dashboardButton);
+         });
+         var dashboardActions = document.createElement('div');
+         dashboardActions.className = 'fh-overlay-card__actions';
+         dashboardActions.appendChild(dashboardButton);
+         mount.content.appendChild(dashboardActions);
+
+         mount.open(document.getElementById('fhBridgeSearchBtn'));
     }
 
     function renderPatientView(patient) {
@@ -1240,7 +1307,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        ensureOverlay();
+         ensureOverlay();
+        bindBridgeHandoffMessages();
         var searchBtn = document.getElementById('fhSearchBtn');
         var cipInput = document.getElementById('fhCipInput');
         if (searchBtn) searchBtn.addEventListener('click', search);
