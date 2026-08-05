@@ -1,5 +1,7 @@
 # Plan maestro de trabajo — FarmaNEXus / PROMueve Nexus V4
 
+> **Reconciliación del estado real 2026-08-05.** El HEAD regional publicado es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. El workbook Bridge y el lector raw v2 están demostrados; PR #238 (`WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01`, head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`) está `MERGED_AND_VERIFIED`. El botón `Cargar Excel de Farmacia` lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas, preserva `1..N` y construye un read model raw solo en memoria de la página. No usa `sessionStorage` ni `localStorage`; recarga o navegación completa exige volver a seleccionar el Excel. Imports legacy y snapshots anteriores pueden conservar `sessionStorage` como deuda separada. WO7 Office Script es candidate pausado por gate Microsoft Office Scripts real, no integrado. Consumidores UI, `APP_*`, descomposición relacional y roundtrip siguen pendientes; no se declara cumplido el resultado mínimo longitudinal ni piloto/producción.
+
 | Metadato | Valor |
 |---|---|
 | Ventana | 2026-07-31 a 2026-08-15 |
@@ -9,7 +11,7 @@
 | Rama publicada de partida | `recovery/farmacia-pr-replay-20260727` |
 | HEAD inicial | `accac670ba216d8c291ee849d2198742d02bb3f0` |
 | Snapshot estable inicial | `CÁCERES-REVIEW-0.2` |
-| HEAD publicado al reconciliar | `f86f72f8e09e29708ebd0b977c2451300002e989` |
+| HEAD publicado al reconciliar | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
 | Snapshot estable actual | `CÁCERES-REVIEW-0.3` |
 | Disponibilidad humana | 3–4 horas diarias |
 | Trabajo asíncrono | Una WO atómica puede ejecutarse mientras Silvia no está delante |
@@ -18,7 +20,7 @@
 
 > Este plan ordena trabajo. No autoriza automáticamente sus WOs, merges, datos reales, piloto, backend institucional ni integraciones.
 
-> Estado post-PR #227: Export v2 demo está visible en paralelo con 152 columnas por fila y varias filas en Seguimiento. JARA, CSV y Excel v1 de 61 columnas permanecen intactos. No existe cutover completo, retirada v1, promoción a `2.0.0`, Excel Bridge operativo ni roundtrip. La decisión vigente se concentra en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+> Estado post-PR #238: Export v2 demo permanece visible en paralelo con 152 columnas por fila y varias filas en Seguimiento. JARA, CSV y Excel v1 de 61 columnas permanecen intactos. El workbook Bridge y el lector raw v2 están integrados; no existe cutover completo, retirada v1, promoción a `2.0.0`, Office Script integrado, `APP_*`, descomposición relacional, consumidores UI ni roundtrip. La decisión vigente se concentra en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ---
 
@@ -95,15 +97,16 @@ Presalud y renovaciones son parte del objetivo si llega el texto exacto a tiempo
 - Un libro independiente por hospital.
 - Sin consolidación regional automática.
 
-El Excel Bridge por hospital es la persistencia provisional V4. El Hub genera el TSV y la profesional pega la salida completa una sola vez en la hoja operativa del servicio de procedencia: Dermatología, Reumatología, Digestivo, Oncología u otros servicios aprobados. Cada fila queda íntegra y append-only. El Office Script valida versiones, IDs y cardinalidad, conserva y agrupa el acto, bloquea duplicados, registra errores, descompone y genera `APP_*`; el Read Adapter reconstruye el Hub. El futuro PostgreSQL Migrator migra entidades validadas, no copia ciegamente 152 columnas. Estas piezas siguen pendientes.
+El Excel Bridge por hospital es el contenedor/objetivo de persistencia provisional V4; el raw reader integrado aún solo construye memoria de ejecución y no resuelve persistencia longitudinal. El Hub genera el TSV y la profesional pega la salida completa una sola vez en la hoja operativa del servicio de procedencia: Dermatología, Reumatología, Digestivo, Oncología u otros servicios aprobados. Cada fila queda íntegra y append-only. El Office Script valida versiones, IDs y cardinalidad, conserva y agrupa el acto, bloquea duplicados, registra errores, descompone y genera `APP_*`; el Read Adapter reconstruye el Hub. El futuro PostgreSQL Migrator migra entidades validadas, no copia ciegamente 152 columnas. Estas piezas siguen pendientes.
 
-### 3.2.1 Browser storage
+### 3.2.1 Browser storage reconciliado
 
-- El ledger clínico de PR #199/#203 persiste actualmente en `localStorage`.
-- Imports y snapshots ligados al contexto utilizan actualmente `sessionStorage`.
+- El ledger clínico fue retirado del runtime soportado por PR #231; no se presenta como activo.
+- El Bridge raw v2 no usa `sessionStorage` ni `localStorage` y solo vive en memoria de la página actual.
+- Imports legacy y snapshots anteriores pueden usar `sessionStorage`; es deuda separada.
 - Se conserva la historia de PR #199/#201/#203, pero browser storage no es arquitectura objetivo ni fuente de verdad.
 - La decisión vigente es no conservar datos clínicos, de paciente o de acto en `localStorage` ni `sessionStorage`, ni sustituirlos por almacenamiento oculto.
-- La retirada técnica no está implementada y requiere una WO atómica alineada con el Excel Bridge.
+- La retirada del ledger sí está implementada; la memoria del Bridge no es persistencia longitudinal y se pierde al recargar o navegar completamente.
 
 ### 3.2.2 Brecha publicada que debe resolver v2
 
@@ -564,6 +567,16 @@ Solo se ejecutan si no ponen en riesgo los hitos principales.
 ---
 
 ## 8. Secuencia de WOs
+
+### Estado publicado que prevalece sobre la cola histórica
+
+1. WO6 workbook: integrada y verificada.
+2. WO7 Office Script: candidate publicado, QA automatizada PASS y revisión APTO; pausada por gate real de Microsoft Office Scripts; sin PR ni merge.
+3. WO8A-1 raw reader/read model: integrada y verificada independientemente mediante PR #238.
+4. Consumidores UI del read model, `APP_*`, descomposición relacional y roundtrip: pendientes mediante WOs posteriores.
+5. PostgreSQL Migrator: condicionado a servidor y autorización institucional.
+
+No se declaran ejecutadas WO8A-2A, WO8A-2B ni WO8A-3. La Actividad del servicio continúa fuera de prioridad funcional y no se rediseña.
 
 Las siguientes WOs son una cola orientativa. Cada una necesita autorización concreta.
 

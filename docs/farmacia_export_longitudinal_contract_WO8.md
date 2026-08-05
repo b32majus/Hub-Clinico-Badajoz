@@ -1,10 +1,12 @@
 # WO8 — Contrato de exportación longitudinal Farmacia Hospitalaria
 
+> **Reconciliación superior vigente 2026-08-05.** El HEAD regional es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. PR #238 integra `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` (`MERGED_AND_VERIFIED`), con head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`: workbook Bridge publicado, botón `Cargar Excel de Farmacia` cableado, lector raw v2 integrado, hojas `01_DERMA` y `03_DIGESTIVO` leídas, 152 columnas validadas, `source_event_id` y cardinalidad `1..N` preservados, read model construido solo en memoria y errores seguros. El Bridge no usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y no se convierte en pacientes planos. Quick View, dashboard, Validación, Primera Visita, Seguimiento, Estadísticas, Actividad del servicio, `APP_*`, descomposición relacional y roundtrip aún no son consumidores/capacidades integradas. WO7 Office Script es candidate pausado por gate real; WO8A-2A, WO8A-2B y WO8A-3 no están ejecutadas.
+
 **Versión:** 3.0 — reconciliación V4
 **Fecha:** 2026-08-01
 **WO asociada:** WO8.0 + WO8.0.2 + `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`
 **Estado:** `reconciliado_v4`
-**HEAD publicado reconciliado:** `recovery/farmacia-pr-replay-20260727` @ `f86f72f8e09e29708ebd0b977c2451300002e989`
+**HEAD publicado reconciliado:** `recovery/farmacia-pr-replay-20260727` @ `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`
 
 ---
 
@@ -60,9 +62,9 @@ Primera Visita genera `1..N` filas, una por cada línea terapéutica explícitam
 
 El TSV completo de `1..N` filas se pega una sola vez en la hoja operativa del servicio de procedencia: Dermatología, Reumatología, Digestivo, Oncología u otros servicios aprobados en el futuro. Cada fila nativa se conserva íntegra y append-only. El **Office Script Processor** valida versiones, IDs y cardinalidad, conserva la entrada, agrupa el acto, bloquea duplicados, registra errores, descompone en hojas relacionales y genera `APP_*`. El **Excel Read Adapter** reconstruye el Hub desde esas vistas. El futuro **PostgreSQL Migrator** trasladará entidades relacionales validadas, sin copiar ciegamente las 152 columnas a una tabla SQL.
 
-El Excel Bridge por hospital es la persistencia provisional V4 decidida. El Hub genera la información y la profesional pega la salida una vez en la hoja del servicio. CIP/identificador, servicio, patología, tipo de acto, evento e IDs se conservan en la fila. No existe consolidación regional automática.
+El Excel Bridge por hospital es el contenedor provisional V4 decidido; el workbook y el raw reader están publicados, pero el read model solo vive en memoria de la página y no constituye persistencia longitudinal resuelta. El Hub genera la información y la profesional pega la salida una vez en la hoja del servicio. CIP/identificador, servicio, patología, tipo de acto, evento e IDs se conservan en la fila. No existe consolidación regional automática.
 
-Estado actual: workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip no están implementados.
+Estado actual: workbook y raw reader/read model integrados; Office Script, vistas `APP_*`, consumidores UI, Excel Read Adapter, descomposición relacional y roundtrip no están implementados.
 
 El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el procesador cotidiano vigente. La denominación WO8.1b terminó reutilizándose para el exportador de fila de 61 columnas.
 
@@ -74,9 +76,9 @@ El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el proc
 - El Identity Plane físico, su mecanismo productivo y su custodia permanecen diferidos; no se añade Excel de correspondencia ni alta técnica manual.
 - Los fixtures siguen disponibles para demo/regresión, pero no deben ser requisito del funcionamiento.
 
-### 0.7 Browser storage
+### 0.7 Browser storage reconciliado
 
-El ledger clínico de PR #199/#203 persiste actualmente en `localStorage`; imports y snapshots ligados al contexto utilizan `sessionStorage`. Es estado técnico existente, no arquitectura objetivo ni fuente de verdad. La decisión vigente es no conservar datos clínicos, de paciente o de acto en browser storage. La retirada todavía no está implementada y requiere una WO atómica alineada con el Excel Bridge, sin reescribir la historia de PR #199/#201/#203.
+El ledger clínico de PR #199/#203 fue retirado del runtime soportado por PR #231. El Bridge raw v2 integrado por PR #238 no usa `sessionStorage` ni `localStorage`: su read model vive solo en memoria de ejecución de la página y se pierde al recargar o navegar completamente. Imports legacy y snapshots anteriores pueden usar `sessionStorage` como deuda separada. No se presenta esta memoria runtime como persistencia longitudinal resuelta ni se reescribe la historia de PR #199/#201/#203.
 
 ---
 
@@ -541,9 +543,10 @@ WO1 fija una candidate técnica `2.0.0-draft.1` de 152 columnas. PR #227 la expo
 4. `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` — Seguimiento v2 sin cutover.
 5. `WO-FH-EXPORT-V2-CUTOVER-01` — parcialmente satisfecha por las unidades menores PR #225/#227; alcance restante diferido.
 6. `WO-FH-EXCEL-BRIDGE-WORKBOOK-01` — libro por hospital.
-7. `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` — procesamiento relacional.
-8. `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` — vistas y roundtrip.
-9. `WO-FH-POSTGRESQL-MIGRATOR-01` — condicionado a servidor autorizado.
+7. `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` — candidate pausado; gate real pendiente.
+8. `WO8A-1` — raw reader/read model, integrada por PR #238.
+9. Consumidores UI, `APP_*`, descomposición relacional y roundtrip — pendientes, no ejecutados.
+10. `WO-FH-POSTGRESQL-MIGRATOR-01` — condicionado a servidor autorizado.
 
 WO1–WO4 están integradas. La adjudicación de WO5 es `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: no se reabre como megadesarrollo ni se declara completamente cerrada; retirada v1 y promoción de versiones `draft` quedan aplazadas. La secuencia detallada vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`.
 

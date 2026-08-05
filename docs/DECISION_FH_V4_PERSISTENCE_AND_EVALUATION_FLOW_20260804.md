@@ -1,12 +1,14 @@
 # Decisión Farmacia V4 — persistencia y flujo de evaluación
 
+> **Reconciliación vigente 2026-08-05.** El HEAD regional publicado es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. PR #238 integra `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` (`MERGED_AND_VERIFIED`), con workbook Bridge publicado, botón `Cargar Excel de Farmacia` cableado, lector raw v2 y read model en memoria. Lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas y preserva cardinalidad `1..N`; no convierte el Bridge en pacientes planos. No usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y todavía no tiene consumidores UI, `APP_*`, descomposición relacional ni roundtrip. WO7 Office Script es solo un candidate pausado por gate Microsoft Office Scripts real; no está integrado. `WO8A-2A`, `WO8A-2B` y `WO8A-3` no están ejecutadas. Esta nota prevalece sobre formulaciones anteriores del documento.
+
 | Metadato | Valor |
 |---|---|
 | Fecha | 2026-08-04 |
 | Última reconciliación | 2026-08-05 |
 | Estado | `current_product_and_architecture_decision` |
 | Rama publicada verificada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado verificado | `a94a42f1d603e4259aece09c14b18ae19a74fefc` |
+| HEAD publicado verificado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
 | Datos autorizados | Exclusivamente inventados/sintéticos |
 | Piloto / producción | No acreditados |
 
@@ -21,6 +23,7 @@
 - Un contexto `unknown/stale` bloquea exclusivamente Export v2.
 - PR #231 retiró de las tres pantallas soportadas la carga del ledger clínico basado en `localStorage`, sin introducir persistencia alternativa.
 - PR #233 publicó el workbook operativo de Cáceres como contenedor del TSV y superó QA automatizada y manual en Microsoft Excel.
+- PR #238 integró el lector raw v2 y read model con checker Node PASS (21 casos), checker workbook/openpyxl PASS, QA navegador PASS, Farmacia legacy PASS, Enfermería PASS y smoke CI PASS.
 - JARA, CSV y Excel v1 permanecen intactos; Excel v1 conserva 61 columnas.
 - Las versiones continúan en `draft`. No existe promoción a `2.0.0`.
 
@@ -48,7 +51,8 @@ Estado real por tramos:
 - flujo normal y formularios: implementados para la evaluación actual;
 - Export v2 demo: visible en paralelo para los contextos técnicos registrados;
 - workbook del Excel Bridge: implementado y publicado como contenedor del TSV;
-- Office Script, tablas relacionales, `APP_*`, Read Adapter y roundtrip: pendientes;
+- lector raw v2/read model: integrado independientemente; dos hojas raw, 152 columnas, `1..N`, errores seguros y solo memoria de página;
+- Office Script, tablas relacionales, `APP_*`, consumidores UI, Read Adapter y roundtrip: pendientes;
 - CIP arbitrario sin browser storage clínico: pendiente.
 
 Decisiones cerradas:
@@ -74,7 +78,7 @@ El proveedor técnico publicado por PR #225 sigue cerrado a FH-001/FH-004. El me
 
 ### 3.2 Flujo y descomposición
 
-El **Excel Bridge por hospital** es la persistencia provisional V4:
+El **Excel Bridge por hospital** es el contenedor/objetivo de persistencia provisional V4; el raw reader integrado aún solo construye memoria de ejecución y no resuelve persistencia longitudinal:
 
 ```text
 Hub genera el TSV de 1..N filas según la cardinalidad del acto
@@ -122,7 +126,7 @@ Esto demuestra el **contenedor del Bridge**, no el procesamiento longitudinal. L
 - No existe restauración del formulario tras recarga ni recuperación al cambiar de CIP y volver al anterior.
 - La clave legacy de `localStorage` permanece opaca: no se lee, escribe ni elimina.
 - El módulo del ledger y el workbook técnico histórico permanecen versionados por trazabilidad, pero desacoplados del runtime normal.
-- Imports y snapshots ligados al contexto continúan utilizando `sessionStorage`.
+- El Bridge raw v2 no usa `sessionStorage` ni `localStorage`; imports legacy y snapshots anteriores aún pueden usar `sessionStorage` como deuda separada.
 
 ### 4.2 Decisión vigente
 
@@ -131,7 +135,8 @@ Esto demuestra el **contenedor del Bridge**, no el procesamiento longitudinal. L
 - no se ampliará ni reutilizará ese almacenamiento;
 - tampoco se sustituirá por otro mecanismo oculto en el navegador;
 - la retirada del ledger `localStorage` del runtime soportado está implementada;
-- la retirada de `sessionStorage` todavía no está implementada y exige reemplazo real mediante Bridge/Read Adapter;
+- el Bridge raw v2 vive solo en memoria de ejecución; recarga o navegación completa exige volver a seleccionar el Excel;
+- la retirada de `sessionStorage` legacy todavía no está implementada y exige reemplazo real mediante Bridge/Read Adapter;
 - no se presenta la retirada parcial como persistencia longitudinal resuelta.
 
 Los documentos y PR históricos #199/#201/#203 se conservan por trazabilidad; describen decisiones y capacidades de su momento, no la dirección vigente ni el runtime soportado actual.
