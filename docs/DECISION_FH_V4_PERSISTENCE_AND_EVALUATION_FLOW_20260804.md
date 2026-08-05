@@ -1,6 +1,6 @@
 # Decisión Farmacia V4 — persistencia y flujo de evaluación
 
-> **Reconciliación vigente 2026-08-05.** El HEAD regional publicado es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. PR #238 integra `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` (`MERGED_AND_VERIFIED`), con workbook Bridge publicado, botón `Cargar Excel de Farmacia` cableado, lector raw v2 y read model en memoria. Lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas y preserva cardinalidad `1..N`; no convierte el Bridge en pacientes planos. No usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y todavía no tiene consumidores UI, `APP_*`, descomposición relacional ni roundtrip. WO7 Office Script es solo un candidate pausado por gate Microsoft Office Scripts real; no está integrado. `WO8A-2A`, `WO8A-2B` y `WO8A-3` no están ejecutadas. Esta nota prevalece sobre formulaciones anteriores del documento.
+> **Reconciliación vigente 2026-08-05.** El HEAD regional publicado es `e2c54583ccc5876058403c34a675496cab897972`. PR #238 integra `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` y PR #242 integra los selectores y la Quick View Bridge v2 (`MERGED_AND_VERIFIED`), con workbook Bridge publicado, botón `Cargar Excel de Farmacia` cableado y consumidor UI de lectura dentro de `farmacia_index.html`. Lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas y preserva cardinalidad `1..N`; no convierte el Bridge en pacientes planos. La búsqueda exige `identifier_system` + `identifier_value`, resuelve `patient_id` técnico, no usa fallback demo ni alta guiada con Bridge activo y mantiene Enfermería independiente. Solicitud y validación permanecen separadas, las líneas solo se agrupan por `line_id` explícito y `true`, `false`, `0`, `""` y `null` se preservan. El read model no usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y no se transporta a otros HTML. Handoff, dashboard, formularios, `APP_*`, descomposición relacional y roundtrip siguen pendientes. WO7 Office Script es solo un candidate pausado por gate Microsoft Office Scripts real; no está integrado. WO8A-2A-2, WO8A-2B y WO8A-3 no están ejecutadas. Esta nota prevalece sobre formulaciones anteriores del documento.
 
 | Metadato | Valor |
 |---|---|
@@ -8,7 +8,7 @@
 | Última reconciliación | 2026-08-05 |
 | Estado | `current_product_and_architecture_decision` |
 | Rama publicada verificada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado verificado | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
+| HEAD publicado verificado | `e2c54583ccc5876058403c34a675496cab897972` |
 | Datos autorizados | Exclusivamente inventados/sintéticos |
 | Piloto / producción | No acreditados |
 
@@ -52,7 +52,8 @@ Estado real por tramos:
 - Export v2 demo: visible en paralelo para los contextos técnicos registrados;
 - workbook del Excel Bridge: implementado y publicado como contenedor del TSV;
 - lector raw v2/read model: integrado independientemente; dos hojas raw, 152 columnas, `1..N`, errores seguros y solo memoria de página;
-- Office Script, tablas relacionales, `APP_*`, consumidores UI, Read Adapter y roundtrip: pendientes;
+- selectores y Quick View Bridge: integrados por PR #242 dentro de `farmacia_index.html`; consumidor UI de lectura visible mediante interacción soportada;
+- handoff a otros HTML, dashboard, formularios, Office Script, tablas relacionales, `APP_*`, Read Adapter y roundtrip: pendientes;
 - CIP arbitrario sin browser storage clínico: pendiente.
 
 Decisiones cerradas:
@@ -78,7 +79,7 @@ El proveedor técnico publicado por PR #225 sigue cerrado a FH-001/FH-004. El me
 
 ### 3.2 Flujo y descomposición
 
-El **Excel Bridge por hospital** es el contenedor/objetivo de persistencia provisional V4; el raw reader integrado aún solo construye memoria de ejecución y no resuelve persistencia longitudinal:
+El **Excel Bridge por hospital** es el contenedor/objetivo de persistencia provisional V4; el raw reader y la Quick View integrados aún solo construyen/consumen memoria de ejecución y no resuelven persistencia longitudinal:
 
 ```text
 Hub genera el TSV de 1..N filas según la cardinalidad del acto
@@ -151,6 +152,8 @@ Los documentos y PR históricos #199/#201/#203 se conservan por trazabilidad; de
 - La capacidad futura deberá crear o recuperar identidad de forma automática e invisible cuando exista servidor o gateway autorizado.
 
 No se decide todavía el mecanismo productivo de creación, correspondencia, custodia, retención o recuperación de identidad. La resolución de CIP arbitrario se abordará después de validar WO7 y WO8, no mediante una identidad inventada en memoria o browser storage.
+
+El guard P1 de identidad normalizada rechaza `IDENTIFIER_COMPONENT_EMPTY`, `IDENTIFIER_COMPONENT_TYPE`, `NORMALIZED_IDENTIFIER_COLLISION`, `IDENTIFIER_NOT_INDEXED` e `IDENTIFIER_INDEX_PATIENT_MISMATCH`; exige coherencia bidireccional pacientes ↔ índice, usa lookup directo sobre tabla privada `Object.create(null)`, conserva mayúsculas, permite pacientes sin identificador pero no buscables operativamente y no muta el read model. La evidencia publicada es selector checker 82 casos, reader checker 21, smoke 48, Actions SUCCESS, QA navegador/focal PASS, consola limpia, `pageerror = 0` y revisión independiente APTO.
 
 ## 6. Adjudicación de WO5 y secuencia vigente
 
