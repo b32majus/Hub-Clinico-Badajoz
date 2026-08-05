@@ -1709,6 +1709,9 @@
 
         function formatImportStatus(kind) {
             var state = importStates[kind];
+            if (state && state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel) {
+                return 'Excel Farmacia Bridge cargado · ' + state.rowCount + ' filas · ' + state.eventCount + ' actos · ' + state.patientCount + ' pacientes';
+            }
             if (!state || !Array.isArray(state.rows) || !state.rows.length) {
                 return 'No se ha cargado Excel de ' + getKindLabel(kind);
             }
@@ -1717,7 +1720,7 @@
 
         function hasImportData(kind) {
             var state = importStates[kind];
-            return !!(state && Array.isArray(state.rows) && state.rows.length);
+            return !!(state && ((Array.isArray(state.rows) && state.rows.length) || (state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel)));
         }
 
         function updateDbStatusIndicator() {
@@ -1748,8 +1751,12 @@
             var state = importStates[kind];
             if (statusEl) statusEl.textContent = formatImportStatus(kind);
             if (detailsEl) {
-                if (!state || !Array.isArray(state.rows) || !state.rows.length) {
+                if (!hasImportData(kind)) {
                     detailsEl.textContent = 'Sin importación local almacenada.';
+                } else if (state.format === 'farmacia_bridge_v2_raw') {
+                    detailsEl.textContent = state.storage === 'session'
+                        ? 'Read model raw disponible durante esta sesión del navegador.'
+                        : 'Aviso: read model solo en memoria; no sobrevivirá a navegación o recarga.';
                 } else {
                     detailsEl.textContent = '';
                 }
@@ -1806,6 +1813,39 @@
                 updateAllImportUi();
                 emitImportEvent(kind, { state: state });
                 return state;
+            }
+
+            if (kind === 'farmacia') {
+                if (!window.FarmaciaBridgeV2Reader || typeof window.FarmaciaBridgeV2Reader.readWorkbook !== 'function') {
+                    throw new Error('FarmaciaBridgeV2Reader no está disponible.');
+                }
+                var importedAt = new Date().toISOString();
+                var bridgeReadModel = window.FarmaciaBridgeV2Reader.readWorkbook(workbook, {
+                    fileName: fileName || '',
+                    importedAt: importedAt
+                });
+                if (bridgeReadModel) {
+                    var bridgeState = {
+                        kind: 'farmacia',
+                        format: 'farmacia_bridge_v2_raw',
+                        sourceLabel: 'Farmacia',
+                        fileName: fileName || '',
+                        importedAt: importedAt,
+                        rowCount: bridgeReadModel.metadata.row_count,
+                        eventCount: bridgeReadModel.metadata.event_count,
+                        patientCount: bridgeReadModel.metadata.patient_count,
+                        bridgeReadModel: bridgeReadModel,
+                        storage: 'session'
+                    };
+                    importStates[kind] = bridgeState;
+                    if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(bridgeState))) {
+                        bridgeState.storage = 'memory_only';
+                        SESSION_STORAGE_FALLBACK[kind] = bridgeState;
+                    }
+                    updateAllImportUi();
+                    emitImportEvent(kind, { format: bridgeState.format, state: bridgeState });
+                    return bridgeState;
+                }
             }
 
             // Generic import (Farmacia u otros)
@@ -1896,6 +1936,7 @@
             var items = [];
             Object.keys(importStates).forEach(function (kind) {
                 var state = importStates[kind];
+                if (state && state.format === 'farmacia_bridge_v2_raw') return;
                 if (!state || !Array.isArray(state.rows)) return;
                 state.rows.forEach(function (row, index) {
                     var candidate = buildImportedPatientCandidate(row, state.mappedFields || {}, state.sourceLabel || getKindLabel(kind), index);
@@ -1914,6 +1955,11 @@
             return null;
         }
 
+        function getBridgeReadModel() {
+            var state = importStates.farmacia;
+            return state && state.format === 'farmacia_bridge_v2_raw' ? state.bridgeReadModel || null : null;
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             initImportPanel();
         });
@@ -1921,6 +1967,7 @@
         return {
             getState: function (kind) { return importStates[kind] || null; },
             getImportedPatients: getImportedPatients,
+            getBridgeReadModel: getBridgeReadModel,
             findImportedPatientByCip: findImportedPatientByCip,
             importFile: importFile,
             formatImportStatus: formatImportStatus
