@@ -25,6 +25,16 @@ function test(name, callback) {
     }
 }
 
+function expectTypeErrorCode(code, callback) {
+    assert.throws(callback, error => error instanceof TypeError && new RegExp(code).test(error.message));
+}
+
+function reorderedObject(object, keys) {
+    const result = {};
+    keys.forEach(key => { result[key] = object[key]; });
+    return result;
+}
+
 function row(overrides = {}) {
     return Object.assign({
         row_id: `row-${overrides.row_index || 1}`,
@@ -377,5 +387,126 @@ test('source errors never enter clinical timeline', () => assert(!selectors.getP
 test('equal-date ordering is stable across calls', () => assert.deepStrictEqual(selectors.getPatientEvents('patient-a').map(item => item.source_event_id), selectors.getPatientEvents('patient-a').map(item => item.source_event_id)));
 test('unknown technical patient returns null', () => assert.strictEqual(selectors.findByPatientId('missing'), null));
 test('unknown quick view returns null', () => assert.strictEqual(selectors.getPatientQuickView('missing'), null));
+
+test('stored identifier with outer padding resolves normalized query', () => {
+    const padded = fixture();
+    padded.patients['patient-a'].identifiers = [{ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' }];
+    padded.indexes.by_identifier = { ' urn:cip:demo ': { ' SAME-VALUE ': { patient_id: 'patient-a' } }, 'urn:nhc:demo': padded.indexes.by_identifier['urn:nhc:demo'], 'urn:cip:demo': { 'ZZZ-VALUE': padded.indexes.by_identifier['urn:cip:demo']['ZZZ-VALUE'] } };
+    assert.strictEqual(selectorsModule.create(padded).findByIdentifier('urn:cip:demo', 'SAME-VALUE').patient_id, 'patient-a');
+});
+test('padded stored identifier also accepts padded query', () => {
+    const padded = fixture();
+    padded.patients['patient-a'].identifiers = [{ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' }];
+    padded.indexes.by_identifier[' urn:cip:demo '] = { ' SAME-VALUE ': padded.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'] };
+    delete padded.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'];
+    assert.strictEqual(selectorsModule.create(padded).findByIdentifier(' urn:cip:demo ', ' SAME-VALUE ').patient_id, 'patient-a');
+});
+test('normalized index construction does not mutate padded model', () => {
+    const padded = fixture();
+    padded.patients['patient-a'].identifiers = [{ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' }];
+    padded.indexes.by_identifier[' urn:cip:demo '] = { ' SAME-VALUE ': padded.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'] };
+    delete padded.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'];
+    const before = clone(padded);
+    selectorsModule.create(padded);
+    assert.deepStrictEqual(padded, before);
+});
+test('duplicate normalized patient declarations for same patient are accepted', () => {
+    const duplicate = fixture();
+    duplicate.patients['patient-a'].identifiers.push({ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' });
+    duplicate.indexes.by_identifier[' urn:cip:demo '] = { ' SAME-VALUE ': { patient_id: 'patient-a' } };
+    assert.strictEqual(selectorsModule.create(duplicate).findByIdentifier('urn:cip:demo', 'SAME-VALUE').patient_id, 'patient-a');
+});
+test('duplicate normalized index mappings for same patient are accepted', () => {
+    const duplicate = fixture();
+    duplicate.indexes.by_identifier[' urn:cip:demo '] = { ' SAME-VALUE ': { patient_id: 'patient-a' } };
+    assert.strictEqual(selectorsModule.create(duplicate).findByIdentifier('urn:cip:demo', 'SAME-VALUE').patient_id, 'patient-a');
+});
+test('patient without identifiers remains valid', () => {
+    const unidentified = fixture();
+    unidentified.patients['patient-c'].identifiers = [];
+    delete unidentified.indexes.by_identifier['urn:cip:demo']['ZZZ-VALUE'];
+    assert(selectorsModule.create(unidentified));
+});
+test('patient without identifiers is not operationally searchable', () => {
+    const unidentified = fixture();
+    unidentified.patients['patient-c'].identifiers = [];
+    delete unidentified.indexes.by_identifier['urn:cip:demo']['ZZZ-VALUE'];
+    assert.strictEqual(selectorsModule.create(unidentified).findByIdentifier('urn:cip:demo', 'ZZZ-VALUE'), null);
+});
+test('patient without identifiers remains technically searchable', () => {
+    const unidentified = fixture();
+    unidentified.patients['patient-c'].identifiers = [];
+    delete unidentified.indexes.by_identifier['urn:cip:demo']['ZZZ-VALUE'];
+    assert.strictEqual(selectorsModule.create(unidentified).findByPatientId('patient-c').patient_id, 'patient-c');
+});
+test('whitespace-only patient identifier system is rejected', () => {
+    const invalid = fixture(); invalid.patients['patient-a'].identifiers[0].identifier_system = '   ';
+    expectTypeErrorCode('IDENTIFIER_COMPONENT_EMPTY', () => selectorsModule.create(invalid));
+});
+test('whitespace-only patient identifier value is rejected', () => {
+    const invalid = fixture(); invalid.patients['patient-a'].identifiers[0].identifier_value = '   ';
+    expectTypeErrorCode('IDENTIFIER_COMPONENT_EMPTY', () => selectorsModule.create(invalid));
+});
+test('whitespace-only identifier index system is rejected', () => {
+    const invalid = fixture(); invalid.indexes.by_identifier['   '] = {};
+    expectTypeErrorCode('IDENTIFIER_COMPONENT_EMPTY', () => selectorsModule.create(invalid));
+});
+test('whitespace-only identifier index value is rejected', () => {
+    const invalid = fixture(); invalid.indexes.by_identifier['urn:cip:demo']['   '] = { patient_id: 'patient-a' };
+    expectTypeErrorCode('IDENTIFIER_COMPONENT_EMPTY', () => selectorsModule.create(invalid));
+});
+test('normalized collision between patient declarations is rejected', () => {
+    const invalid = fixture(); invalid.patients['patient-b'].identifiers = [{ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' }];
+    expectTypeErrorCode('NORMALIZED_IDENTIFIER_COLLISION', () => selectorsModule.create(invalid));
+});
+test('patient collision is independent of patient insertion order', () => {
+    const invalid = fixture();
+    invalid.patients['patient-b'].identifiers = [{ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' }];
+    invalid.patients = reorderedObject(invalid.patients, ['patient-b', 'patient-c', 'patient-a']);
+    expectTypeErrorCode('NORMALIZED_IDENTIFIER_COLLISION', () => selectorsModule.create(invalid));
+});
+test('normalized collision between index mappings is rejected', () => {
+    const invalid = fixture(); invalid.indexes.by_identifier[' urn:cip:demo '] = { ' SAME-VALUE ': { patient_id: 'patient-b' } };
+    expectTypeErrorCode('NORMALIZED_IDENTIFIER_COLLISION', () => selectorsModule.create(invalid));
+});
+test('index collision is independent of index insertion order', () => {
+    const invalid = fixture();
+    invalid.indexes.by_identifier = { ' urn:cip:demo ': { ' SAME-VALUE ': { patient_id: 'patient-b' } }, 'urn:nhc:demo': invalid.indexes.by_identifier['urn:nhc:demo'], 'urn:cip:demo': invalid.indexes.by_identifier['urn:cip:demo'] };
+    expectTypeErrorCode('NORMALIZED_IDENTIFIER_COLLISION', () => selectorsModule.create(invalid));
+});
+test('patient identifier absent from index is rejected', () => {
+    const invalid = fixture(); delete invalid.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'];
+    expectTypeErrorCode('IDENTIFIER_NOT_INDEXED', () => selectorsModule.create(invalid));
+});
+test('index identifier absent from patient declarations is rejected', () => {
+    const invalid = fixture(); invalid.indexes.by_identifier['urn:cip:demo']['UNDECLARED'] = { patient_id: 'patient-a' };
+    expectTypeErrorCode('IDENTIFIER_INDEX_PATIENT_MISMATCH', () => selectorsModule.create(invalid));
+});
+test('normalized index owner different from patient declaration is rejected', () => {
+    const invalid = fixture(); invalid.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'].patient_id = 'patient-b';
+    expectTypeErrorCode('IDENTIFIER_INDEX_PATIENT_MISMATCH', () => selectorsModule.create(invalid));
+});
+test('ambiguous model fails before any first-match lookup can occur', () => {
+    const invalid = fixture(); invalid.patients['patient-b'].identifiers = [{ identifier_system: ' urn:cip:demo ', identifier_value: ' SAME-VALUE ' }];
+    expectTypeErrorCode('NORMALIZED_IDENTIFIER_COLLISION', () => selectorsModule.create(invalid).findByIdentifier('urn:cip:demo', 'SAME-VALUE'));
+});
+test('non-string patient identifier system is rejected', () => {
+    const invalid = fixture(); invalid.patients['patient-a'].identifiers[0].identifier_system = 1;
+    expectTypeErrorCode('IDENTIFIER_COMPONENT_TYPE', () => selectorsModule.create(invalid));
+});
+test('non-string patient identifier value is rejected', () => {
+    const invalid = fixture(); invalid.patients['patient-a'].identifiers[0].identifier_value = false;
+    expectTypeErrorCode('IDENTIFIER_COMPONENT_TYPE', () => selectorsModule.create(invalid));
+});
+test('prototype-like normalized identifier uses null-prototype lookup safely', () => {
+    const special = fixture();
+    special.patients['patient-c'].identifiers = [{ identifier_system: '__proto__', identifier_value: 'constructor' }];
+    delete special.indexes.by_identifier['urn:cip:demo']['ZZZ-VALUE'];
+    const specialIndex = Object.create(null);
+    Object.keys(special.indexes.by_identifier).forEach(system => { specialIndex[system] = special.indexes.by_identifier[system]; });
+    specialIndex.__proto__ = { constructor: { patient_id: 'patient-c' } };
+    special.indexes.by_identifier = specialIndex;
+    assert.strictEqual(selectorsModule.create(special).findByIdentifier('__proto__', 'constructor').patient_id, 'patient-c');
+});
 
 console.log(`farmacia_bridge_v2_patient_selectors_check: PASS (${passed} cases)`);

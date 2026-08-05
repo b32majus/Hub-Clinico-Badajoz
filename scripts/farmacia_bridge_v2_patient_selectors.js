@@ -43,6 +43,28 @@
         return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
     }
 
+    function normalizeStoredIdentifierComponent(value, field, context) {
+        if (typeof value !== 'string') {
+            throw new TypeError('IDENTIFIER_COMPONENT_TYPE: ' + field + ' debe ser string (' + context + ').');
+        }
+        var normalized = value.trim();
+        if (!normalized) {
+            throw new TypeError('IDENTIFIER_COMPONENT_EMPTY: componente vacío tras trim: ' + field + ' (' + context + ').');
+        }
+        return normalized;
+    }
+
+    function normalizedIdentifierKey(system, value) {
+        return JSON.stringify([system, value]);
+    }
+
+    function registerNormalizedOwner(owners, key, patientId) {
+        if (own(owners, key) && owners[key] !== patientId) {
+            throw new TypeError('NORMALIZED_IDENTIFIER_COLLISION: normalized identifier maps to ' + owners[key] + ' and ' + patientId + '.');
+        }
+        owners[key] = patientId;
+    }
+
     function compareText(left, right) {
         var a = String(left);
         var b = String(right);
@@ -109,7 +131,7 @@
                 throw new TypeError('Estructura mínima de paciente Bridge v2 no compatible.');
             }
             patient.identifiers.forEach(function (identifier) {
-                if (!isObject(identifier) || typeof identifier.identifier_system !== 'string' || typeof identifier.identifier_value !== 'string') {
+                if (!isObject(identifier)) {
                     throw new TypeError('Identificador Bridge v2 no compatible.');
                 }
             });
@@ -140,8 +162,58 @@
         });
     }
 
+    function buildNormalizedIdentifierOwners(readModel) {
+        var patientOwners = Object.create(null);
+        var indexOwners = Object.create(null);
+        var patientDeclarations = Object.create(null);
+        var indexEntries = [];
+
+        Object.keys(readModel.patients).sort(compareText).forEach(function (patientId) {
+            var declarations = Object.create(null);
+            patientDeclarations[patientId] = declarations;
+            readModel.patients[patientId].identifiers.forEach(function (identifier, identifierIndex) {
+                var context = 'patients[' + patientId + '].identifiers[' + identifierIndex + ']';
+                var system = normalizeStoredIdentifierComponent(identifier.identifier_system, 'identifier_system', context);
+                var value = normalizeStoredIdentifierComponent(identifier.identifier_value, 'identifier_value', context);
+                var key = normalizedIdentifierKey(system, value);
+                registerNormalizedOwner(patientOwners, key, patientId);
+                declarations[key] = true;
+            });
+        });
+
+        Object.keys(readModel.indexes.by_identifier).sort(compareText).forEach(function (storedSystem) {
+            var system = normalizeStoredIdentifierComponent(storedSystem, 'identifier_system', 'indexes.by_identifier');
+            var values = readModel.indexes.by_identifier[storedSystem];
+            Object.keys(values).sort(compareText).forEach(function (storedValue) {
+                var value = normalizeStoredIdentifierComponent(storedValue, 'identifier_value', 'indexes.by_identifier[' + storedSystem + ']');
+                var patientId = values[storedValue].patient_id;
+                var key = normalizedIdentifierKey(system, value);
+                registerNormalizedOwner(indexOwners, key, patientId);
+                indexEntries.push({ key: key, patient_id: patientId });
+            });
+        });
+
+        indexEntries.forEach(function (entry) {
+            if (!own(patientDeclarations[entry.patient_id], entry.key)) {
+                throw new TypeError('IDENTIFIER_INDEX_PATIENT_MISMATCH: indexed normalized identifier for ' + entry.patient_id + ' is not declared by that patient.');
+            }
+        });
+
+        Object.keys(patientOwners).sort(compareText).forEach(function (key) {
+            if (!own(indexOwners, key)) {
+                throw new TypeError('IDENTIFIER_NOT_INDEXED: normalized identifier declared by ' + patientOwners[key] + ' is absent from indexes.by_identifier.');
+            }
+            if (indexOwners[key] !== patientOwners[key]) {
+                throw new TypeError('IDENTIFIER_INDEX_PATIENT_MISMATCH: normalized identifier maps to ' + patientOwners[key] + ' in patients and ' + indexOwners[key] + ' in the index.');
+            }
+        });
+
+        return patientOwners;
+    }
+
     function create(readModel) {
         validateReadModel(readModel);
+        var normalizedIdentifierOwners = buildNormalizedIdentifierOwners(readModel);
 
         var sortedEntries = readModel.events.map(function (event, position) {
             return { event: event, position: position };
@@ -187,19 +259,9 @@
             var system = identifierSystem.trim();
             var value = identifierValue.trim();
             if (!system || !value) return null;
-            var systems = Object.keys(readModel.indexes.by_identifier);
-            for (var systemIndex = 0; systemIndex < systems.length; systemIndex++) {
-                var storedSystem = systems[systemIndex];
-                if (storedSystem.trim() !== system) continue;
-                var values = readModel.indexes.by_identifier[storedSystem];
-                var storedValues = Object.keys(values);
-                for (var valueIndex = 0; valueIndex < storedValues.length; valueIndex++) {
-                    var storedValue = storedValues[valueIndex];
-                    if (storedValue.trim() !== value) continue;
-                    return summaryFor(values[storedValue].patient_id);
-                }
-            }
-            return null;
+            var key = normalizedIdentifierKey(system, value);
+            if (!own(normalizedIdentifierOwners, key)) return null;
+            return summaryFor(normalizedIdentifierOwners[key]);
         }
 
         function findByPatientId(patientId) {
