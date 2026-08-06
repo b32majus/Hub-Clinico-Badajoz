@@ -68,7 +68,7 @@ function rawWorkbookBuffer() {
     requested_active_ingredient: 'Principio solicitado A',
     requested_dose_text: '10 mg solicitados',
     requested_route: 'SC',
-    requested_induction_status: null,
+    requested_induction_status: 'yes',
     validation_result: 'validated',
     validation_pending_reason: null,
     validated_treatment_relation: 'modified_from_requested',
@@ -76,12 +76,25 @@ function rawWorkbookBuffer() {
     validated_active_ingredient: 'Principio validado A',
     validated_dose_text: null,
     validated_route: 'SC',
-    validated_induction_status: null,
-    line_creation_status: 'not_created'
+    validated_induction_status: 'no',
+    line_creation_status: 'not_created',
+    analysis_date: '2026-08-03',
+    analysis_recent_status: 'yes',
+    hemogram_verified: true,
+    biochemistry_verified: false,
+    tb_status: 'negative',
+    hbv_status: 'pending',
+    hcv_status: 'negative',
+    hiv_status: 'negative',
+    vaccination_status: 'no',
+    vaccination_observations: 'PREBIO-EXPLICITO-A'
   });
 
   const firstVisit = fixture('first_visit_event_v2.json');
   firstVisit.event = identify(firstVisit.event, 'patient-raw-a', CIP_A, 'raw-a');
+  firstVisit.event.proms_json = {
+    measurements: [{ instrument: 'RAW_PROM_A', value: 0, date: '2026-08-04', answered: false }]
+  };
   firstVisit.rowPayloads[0] = {
     ...firstVisit.rowPayloads[0],
     rowKey: 'line-raw-a',
@@ -95,13 +108,47 @@ function rawWorkbookBuffer() {
     line_schedule_other_text: null
   };
 
-  const followup = fixture('followup_event_v2.json');
-  followup.event = identify(followup.event, 'patient-raw-b', CIP_B, 'raw-b');
-  followup.event.adverse_event_status = 'not_recorded';
-  followup.event.adverse_event_id = null;
-  followup.event.adverse_event_suspects_json = null;
-  followup.event.causality_assessments_json = null;
-  followup.rowPayloads = followup.rowPayloads.map((payload, index) => ({
+  const followupA = fixture('followup_event_v2.json');
+  followupA.event = identify(followupA.event, 'patient-raw-a', CIP_A, 'raw-a');
+  Object.assign(followupA.event, {
+    visit_date: '2026-08-05',
+    proms_json: null,
+    adverse_event_id: 'ea-raw-a',
+    adverse_event_status: 'present',
+    adverse_event_description: 'EA EXPLÍCITO A',
+    adverse_event_severity: 'leve',
+    adverse_event_resolution_status: 'not_recorded',
+    adverse_event_action: 'OBSERVACIÓN EXPLÍCITA A',
+    adverse_event_suspects_json: [{ suspect_ref: 'line-raw-a', reported: true }],
+    causality_assessments_json: [{ suspect_ref: 'line-raw-a', method: 'MÉTODO EXPLÍCITO A', score: 0, assessed: false }]
+  });
+  followupA.rowPayloads = [{
+    ...followupA.rowPayloads[0],
+    rowKey: 'line-raw-a',
+    treatment_id: 'treatment-raw-a',
+    line_id: 'line-raw-a',
+    line_role: 'primary',
+    is_primary_line: true,
+    line_status_at_event: 'active',
+    active_at_event: true,
+    line_drug_name: 'Activo RAW A',
+    line_active_ingredient: 'Principio activo RAW A',
+    line_dose_text: '',
+    line_route: null,
+    line_schedule_label: null,
+    adherence_collection_status: 'yes',
+    adherence_instrument: 'ESCALA EXPLÍCITA A',
+    adherence_result: '0',
+    adherence_answers_json: [{ question: 'q1', answer: false }]
+  }];
+
+  const followupB = fixture('followup_event_v2.json');
+  followupB.event = identify(followupB.event, 'patient-raw-b', CIP_B, 'raw-b');
+  followupB.event.adverse_event_status = 'not_recorded';
+  followupB.event.adverse_event_id = null;
+  followupB.event.adverse_event_suspects_json = null;
+  followupB.event.causality_assessments_json = null;
+  followupB.rowPayloads = followupB.rowPayloads.map((payload, index) => ({
     ...payload,
     rowKey: `line-raw-b-${index + 1}`,
     treatment_id: `treatment-raw-b-${index + 1}`,
@@ -122,7 +169,8 @@ function rawWorkbookBuffer() {
   const rows = [
     ...core.projectEventRows(validation.event, validation.rowPayloads),
     ...core.projectEventRows(firstVisit.event, firstVisit.rowPayloads),
-    ...core.projectEventRows(followup.event, followup.rowPayloads)
+    ...core.projectEventRows(followupA.event, followupA.rowPayloads),
+    ...core.projectEventRows(followupB.event, followupB.rowPayloads)
   ];
   const toCells = row => core.serializeRowToTsv(row).split('\t');
   const workbook = XLSX.utils.book_new();
@@ -228,13 +276,29 @@ try {
   assert.match(dashboardSummary, /Solicitado RAW A/);
   assert.match(dashboardSummary, /Validado RAW A/);
   assert.match(dashboardSummary, /Activo RAW A/);
+  assert.match(dashboardSummary, /RAW_PROM_A: 0 · 2026-08-04/);
+  assert.match(dashboardSummary, /Última adherencia\s*0/i);
+  assert.equal((await page.locator('#patientName').textContent()).trim(), 'Paciente actual');
+  assert.match(await page.locator('.fh-dashboard-checks-wrapper').innerText(), /PREBIO-EXPLICITO-A/);
+  assert.doesNotMatch(await page.locator('.fh-dashboard-checks-wrapper').innerText(), /Demo/);
+  assert.match(await page.locator('#promsDashboardContainer').innerText(), /RAW_PROM_A[\s\S]*0[\s\S]*2026-08-04/);
+  const adverseDashboard = await page.locator('#adverseEventsContainer').innerText();
+  assert.match(adverseDashboard, /EA EXPLÍCITO A/);
+  assert.match(adverseDashboard, /MÉTODO EXPLÍCITO A/);
+  assert.match(adverseDashboard, /score: 0/);
+  assert.doesNotMatch(await page.locator('body').innerText(), /farmacia_raw/);
   await assertNoRetiredUi();
 
   const longitudinalHref = await page.locator('#longitudinalStandaloneLink').getAttribute('href');
   assert(longitudinalHref && longitudinalHref.includes('generation='));
   await page.goto(new URL(longitudinalHref, BASE).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(cip => document.querySelector('#longitudinalPatientSelect')?.value === cip, CIP_A);
-  assert.match(await page.locator('#longitudinalPatientSummary').innerText(), new RegExp(CIP_A));
+  const longitudinalSummary = await page.locator('#longitudinalPatientSummary').innerText();
+  assert.match(longitudinalSummary, new RegExp(CIP_A));
+  assert.match(longitudinalSummary, /Paciente actual cargado desde Excel Farmacia/);
+  assert.match(longitudinalSummary, /Adherencia\s*0/i);
+  assert.match(longitudinalSummary, /MÉTODO EXPLÍCITO A/);
+  assert.match(await page.locator('#longitudinalPromChart').innerText(), /RAW_PROM_A[\s\S]*0/);
   await assertNoRetiredUi();
 
   await clickLink('Dashboard Paciente');
@@ -242,8 +306,8 @@ try {
   await page.waitForSelector('#fhDermaFarmaco');
   assert.equal(await page.locator('#fhDermaFarmaco').inputValue(), 'Solicitado RAW A');
   assert.equal(await page.locator('#fhValidadoFarmaco').inputValue(), 'Validado RAW A');
-  assert.equal(await page.locator('#fhDermaInduccion').inputValue(), '');
-  assert.equal(await page.locator('#fhValidadoInduccion').inputValue(), '');
+  assert.equal(await page.locator('#fhDermaInduccion').inputValue(), 'si');
+  assert.equal(await page.locator('#fhValidadoInduccion').inputValue(), 'no');
   await page.waitForFunction(() => window.FarmaciaCatalog?.loaded && !document.querySelector('#fhDermaFarmaco')?.disabled);
   await page.locator('#fhDermaFarmaco').fill('adalimumab');
   await page.locator('#autocompleteDropdown .autocomplete-item').first().waitFor();
@@ -251,6 +315,17 @@ try {
   assert.notEqual(await page.locator('#fhDermaFarmaco').inputValue(), '');
   await page.locator('#fhDermaDosis').fill('25 mg edición profesional');
   assert.equal(await page.locator('#fhDermaDosis').inputValue(), '25 mg edición profesional');
+  let validationContinueDialog = null;
+  page.once('dialog', async dialog => {
+    validationContinueDialog = dialog.message();
+    await dialog.accept();
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert.match(validationContinueDialog || '', /continuar|empezar de cero/i);
+  assert.equal(await page.locator('#fhDermaDosis').inputValue(), '25 mg edición profesional', 'continue restores the validation draft');
+  const validationDraftState = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), SESSION_KEY);
+  assert.equal(validationDraftState.dirty, true);
+  assert.equal(validationDraftState.drafts.validacion.controls.fhDermaDosis.value, '25 mg edición profesional');
   for (const selector of ['#fhValExportTxt', '#fhValExportCsv', '#fhValExcelExportBtn', '#fhValExportV2Btn']) {
     assert.equal(await page.locator(selector).count(), 1, `${selector} remains available`);
   }
@@ -259,6 +334,9 @@ try {
   await clickLink('Primera Visita');
   assert.equal(await page.locator('#fhPvCip').inputValue(), CIP_A);
   assert.equal(await page.locator('#fhPvFarmaco').inputValue(), 'Validado RAW A');
+  const firstVisitTreatment = await page.locator('#fhPvTratamientoGrid').innerText();
+  assert.match(firstVisitTreatment, /Inducción solicitada\s*Sí/i);
+  assert.match(firstVisitTreatment, /Inducción validada\s*No/i);
   assert.equal(await page.locator('#fhPvInduccionRealizada').inputValue(), 'No');
   await page.locator('#fhPvFarmaco').fill('Edición profesional primera visita');
   assert.equal(await page.locator('#fhPvFarmaco').inputValue(), 'Edición profesional primera visita');
@@ -286,6 +364,20 @@ try {
   await upload('#inputExcelFarmacia', 'farmacia-raw-sintetico.xlsx', rawBuffer);
   await page.waitForFunction(() => window.FarmaciaPatientFlowRuntime?.getDataPort());
   await page.locator('#fhCipInput').fill(CIP_B);
+  let discardDialog = null;
+  page.once('dialog', async dialog => {
+    discardDialog = dialog.message();
+    await dialog.dismiss();
+  });
+  await page.locator('#fhSearchBtn').click();
+  await page.waitForFunction(() => document.querySelector('#fhSearchStatus')?.textContent.includes('cancelado'));
+  assert.match(discardDialog || '', /cambios no exportados[\s\S]*descartarlos/i);
+  const cancelledState = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), SESSION_KEY);
+  assert.equal(cancelledState.identifier.identifier_value, CIP_A);
+  assert.equal(cancelledState.drafts.validacion.controls.fhDermaDosis.value, '25 mg edición profesional');
+  assert.equal(await page.locator('#fhQuickViewOverlay:not(.hidden)').count(), 0, 'B is not rendered after cancelling the switch');
+
+  page.once('dialog', async dialog => dialog.accept());
   await page.locator('#fhSearchBtn').click();
   await page.locator('#fhQuickViewOverlay:not(.hidden)').waitFor();
   const domAfterSwitch = await page.locator('body').innerText();
@@ -295,6 +387,9 @@ try {
   assert.equal(storageAfterSwitch.includes(CIP_A), false, 'patient A is absent from sessionStorage after selecting B');
   assert.equal(patientAfterSwitch.observaciones_prebiologico, 'NURSE-EXPLICIT-B', 'B keeps its explicit nursing fields');
   assert.deepEqual(patientAfterSwitch.eventos_adversos, [], 'not_recorded does not materialize an adverse event');
+  const cleanBState = await page.evaluate(key => JSON.parse(sessionStorage.getItem(key)), SESSION_KEY);
+  assert.equal(cleanBState.dirty, false);
+  assert.deepEqual(cleanBState.drafts, {});
   await assertNoRetiredUi();
 
   await clickQuickViewLink('Seguimiento');
@@ -302,6 +397,7 @@ try {
   assert.equal(await page.locator('#fhSegLineCards input').count(), 2);
   assert.equal(await page.locator('#fhSegLineCards input:checked').count(), 0, 'two active lines are not autoselected');
   assert.equal(await page.locator('#fhSegLineaPrincipal').inputValue(), '');
+  await page.locator('#fhSegProms').selectOption({ label: 'Sí, recoger DLQI + EVA dolor/prurito' });
 
   let continueDialog = null;
   page.once('dialog', async dialog => {
@@ -311,6 +407,7 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.match(continueDialog || '', /continuar|empezar de cero/i);
   assert.equal(await page.locator('#fhSegCip').inputValue(), CIP_B);
+  assert.equal(await page.locator('#fhSegProms').inputValue(), 'Sí, recoger DLQI + EVA dolor/prurito');
 
   let restartDialog = null;
   page.once('dialog', async dialog => {
@@ -320,12 +417,13 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.match(restartDialog || '', /continuar|empezar de cero/i);
   assert.equal(await page.locator('#fhSegCip').inputValue(), '');
+  assert.equal(await page.locator('#fhSegProms').inputValue(), 'No recogido');
   assert.equal(await page.evaluate(key => sessionStorage.getItem(key), SESSION_KEY), null);
 
   assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
   assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
   console.log('farmacia_patient_flow_cutover_browser_check: PASS');
-  console.log('QA console.error=0 pageerror=0; raw load/search/Quick View/pages/CIMA/edit/nursing/one-line/two-line/A-to-B/reload verified');
+  console.log('QA console.error=0 pageerror=0; raw domains/drafts/dirty switch/induction/one-line/two-line/reload verified');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));

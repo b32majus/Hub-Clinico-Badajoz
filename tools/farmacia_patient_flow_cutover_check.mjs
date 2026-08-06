@@ -140,6 +140,19 @@ function harness(sharedStorage = storage(), search = '', confirm = () => true, d
   return { runtime, storage: sharedStorage, location: loc };
 }
 
+function control(id, { tagName = 'INPUT', type = 'text', value = '', checked = false, readOnly = false } = {}) {
+  return { id, tagName, type, value, checked, readOnly, closest: () => null };
+}
+
+function draftScope(controls) {
+  const listeners = { input: [], change: [] };
+  return {
+    querySelectorAll: () => controls,
+    addEventListener(type, listener) { listeners[type].push(listener); },
+    emit(type, target) { listeners[type].forEach(listener => listener({ target })); }
+  };
+}
+
 test('requested, validated and active treatment remain separate', () => {
   const { runtime } = harness();
   const result = runtime.selectByCip('CIP-C');
@@ -157,6 +170,14 @@ test('one explicitly active line is selected and zero is preserved', () => {
   assert.equal(patient.farmaco, 'Activo A');
   assert.equal(patient.dosis, 0);
   assert.equal(patient.induccion_solicitada, '');
+});
+
+test('raw patient name and visible treatment records contain no invented provenance', () => {
+  const { runtime } = harness();
+  const patient = runtime.selectByCip('CIP-A').patient;
+  assert.equal(patient.nombre, '');
+  assert.equal(Object.hasOwn(patient.biologicos[0], 'fuente'), false);
+  assert.equal(Object.hasOwn(patient.tratamientoValidado, 'fuente'), false);
 });
 
 test('multiple active lines never autoselect a current treatment', () => {
@@ -203,6 +224,114 @@ test('A to B purges A before storing B and leaves no A residue', () => {
   const removeIndex = shared.operations.findIndex(operation => operation.startsWith('remove:'));
   const finalSetIndex = shared.operations.map((operation, index) => [operation, index]).filter(([operation]) => operation === `set:${sessionModule.STORAGE_KEY}`).at(-1)[1];
   assert(removeIndex !== -1 && removeIndex < finalSetIndex);
+});
+
+test('dirty A to B requires explicit discard and preserves A when cancelled', () => {
+  const shared = storage();
+  const observedPort = port();
+  let loadedB = false;
+  const originalProjection = observedPort.getPatientProjection;
+  observedPort.getPatientProjection = patientId => {
+    if (patientId === 'patient-b') loadedB = true;
+    return originalProjection(patientId);
+  };
+  const { runtime } = harness(shared, '', () => true, observedPort);
+  const selectedA = runtime.selectByCip('CIP-A');
+  const generationA = selectedA.envelope.generation;
+  const note = control('draft-note', { value: 'A draft' });
+  const checkbox = control('draft-check', { type: 'checkbox', checked: false });
+  const file = control('draft-file', { type: 'file', value: 'ignored.xlsx' });
+  const readonly = control('draft-readonly', { value: 'original', readOnly: true });
+  const scope = draftScope([note, checkbox, file, readonly]);
+  assert.equal(runtime.bindPageDraft('validacion', scope), true);
+  checkbox.checked = true;
+  scope.emit('change', checkbox);
+  const pending = runtime.selectByCip('CIP-B');
+  assert.equal(pending.status, 'pending_changes');
+  assert.equal(loadedB, false, 'B is not read before discard confirmation');
+  assert.equal(runtime.getCurrentPatient().cip, 'CIP-A');
+  assert.equal(runtime.getCurrentEnvelope().generation, generationA);
+  assert.equal(runtime.getPageDraft('validacion').controls['draft-note'].value, 'A draft');
+  assert.equal(Object.hasOwn(runtime.getPageDraft('validacion').controls, 'draft-file'), false);
+
+  note.value = '';
+  checkbox.checked = false;
+  readonly.value = 'changed';
+  assert.equal(runtime.restorePageDraft('validacion', scope), true);
+  assert.equal(note.value, 'A draft');
+  assert.equal(checkbox.checked, true);
+  assert.equal(readonly.value, 'changed', 'readonly controls are not manipulated during restore');
+
+  const selectedB = runtime.selectByCip('CIP-B', { discardPendingChanges: true });
+  assert.equal(selectedB.status, 'selected');
+  assert.equal(loadedB, true);
+  assert.equal(runtime.getCurrentPatient().cip, 'CIP-B');
+  assert.equal(JSON.stringify([...shared.values.values()]).includes('CIP-A'), false);
+  assert.equal(runtime.getPageDraft('validacion'), null);
+});
+
+test('same CIP keeps generation and page draft', () => {
+  const { runtime } = harness();
+  const first = runtime.selectByCip('CIP-A');
+  const scope = draftScope([control('same-cip-note', { value: 'keep me' })]);
+  runtime.savePageDraft('seguimiento', scope);
+  const second = runtime.selectByCip(' cip-a ');
+  assert.equal(second.envelope.generation, first.envelope.generation);
+  assert.equal(runtime.getPageDraft('seguimiento').controls['same-cip-note'].value, 'keep me');
+  assert.equal(runtime.markCurrentClean().dirty, false);
+});
+
+test('explicit induction, prebiologic, PROM, adherence, adverse event and causality remain separate', () => {
+  const explicitPort = port();
+  explicitPort.getLatestRequestValidation = () => ({
+    latest_request: { requested_drug_name: 'Requested explicit', requested_induction_status: 'yes' },
+    latest_validation: {
+      validation_result: 'validated', validated_treatment_relation: 'modified_from_requested',
+      validated_drug_name: 'Validated explicit', validated_induction_status: 'no'
+    }
+  });
+  explicitPort.getPatientEvents = patientId => [event(patientId, 'pharmacy_validation', {
+    analysis_date: '2026-08-04', analysis_recent_status: 'not_recorded', hemogram_verified: false,
+    biochemistry_verified: true, tb_status: 'negative', hbv_status: 'pending', hcv_status: 'negative',
+    hiv_status: 'negative', vaccination_status: 'no', vaccination_observations: 'Explicit observation'
+  })];
+  explicitPort.getProms = () => [{ values: { proms_json: { measurements: [{ instrument: 'RAW_PROM', value: 0, date: '2026-08-04' }] } } }];
+  explicitPort.getAdherence = () => [{ values: { adherence_result: '0', adherence_answers_json: { answer: false } } }];
+  explicitPort.getAdverseEventsAndCausality = () => ({
+    adverse_events: [{ source_event_id: 'followup-a', values: {
+      adverse_event_id: 'ea-a', adverse_event_status: 'present', adverse_event_description: 'Explicit AE',
+      adverse_event_severity: 'mild', adverse_event_resolution_status: 'not_recorded',
+      adverse_event_action: 'Observed', adverse_event_suspects_json: [{ suspect_ref: 'line-a' }]
+    } }],
+    causality_assessments: [{ source_event_id: 'followup-a', values: {
+      causality_assessments_json: [{ suspect_ref: 'line-a', method: 'EXPLICIT_METHOD', score: 0, assessed: false }]
+    } }]
+  });
+  const patient = harness(storage(), '', () => true, explicitPort).runtime.selectByCip('CIP-A').patient;
+  assert.equal(patient.induccion_solicitada, 'yes');
+  assert.equal(patient.tratamientoValidado.induccion, 'no');
+  assert.deepEqual(patient.analiticaEstruct, {
+    fecha: '2026-08-04', reciente: 'not_recorded', hemograma: false, bioquimica: true,
+    mantoux: 'negative', serologiasVhb: 'pending', serologiasVhc: 'negative',
+    serologiasVih: 'negative', vacunacion: 'no', observaciones: 'Explicit observation'
+  });
+  assert.deepEqual(patient.proms, [{ tipo_prom: 'RAW_PROM', valor: 0, fecha: '2026-08-04' }]);
+  assert.equal(patient.adherencia, '0');
+  assert.equal(patient.eventos_adversos.length, 1);
+  assert.equal(patient.eventos_adversos[0].tipo, 'Explicit AE');
+  assert.equal(patient.eventos_adversos[0].evaluaciones_causalidad[0].score, 0);
+  assert.equal(patient.eventos_adversos[0].evaluaciones_causalidad[0].assessed, false);
+});
+
+test('not_recorded adverse event never materializes an event', () => {
+  const explicitPort = port();
+  explicitPort.getAdverseEventsAndCausality = () => ({
+    adverse_events: [{ source_event_id: 'followup-empty', values: { adverse_event_status: 'not_recorded' } }],
+    causality_assessments: []
+  });
+  const patient = harness(storage(), '', () => true, explicitPort).runtime.selectByCip('CIP-A').patient;
+  assert.equal(patient.eventos_adversos.length, 0);
+  assert.equal(patient.efectosAdversos, 'No registrado');
 });
 
 test('storage contains only the current-patient projection and no source containers', () => {
@@ -267,8 +396,23 @@ test('all normal pages load the shared runtime and no retired UI remains', () =>
   }
   const indexSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_index.js'), 'utf8');
   const dashboardSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_dashboard_paciente.js'), 'utf8');
+  const longitudinalSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_dashboard_longitudinal.js'), 'utf8');
+  const validationSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_validacion.js'), 'utf8');
+  const firstVisitSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_primera_visita.js'), 'utf8');
+  const followupSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_seguimiento.js'), 'utf8');
+  const runtimeSource = fs.readFileSync(path.join(ROOT, 'scripts/farmacia_patient_flow_runtime.js'), 'utf8');
   assert.doesNotMatch(indexSource, /openBridgeDashboard|window\.open\(/);
   assert.doesNotMatch(dashboardSource, /initializeBridgeDashboard|window\.opener|postMessage/);
+  assert.match(indexSource, /discardPendingChanges:\s*true/);
+  assert.doesNotMatch(runtimeSource, /nombre:\s*['"]Paciente ['"]\s*\+/);
+  assert.doesNotMatch(runtimeSource, /fuente:\s*['"]farmacia_raw['"]/);
+  assert.match(firstVisitSource, /solicitud\s*&&\s*ctx\.patient\.solicitud\.requested_induction_status/);
+  assert.doesNotMatch(firstVisitSource, /tratamientoValidado\s*&&\s*ctx\.patient\.tratamientoValidado\.induccion/);
+  assert.match(longitudinalSource, /proms:\s*patient\.proms\s*\|\|\s*\[\]/);
+  for (const [source, pageKey] of [[validationSource, 'validacion'], [firstVisitSource, 'primera_visita'], [followupSource, 'seguimiento']]) {
+    assert.match(source, new RegExp(`restorePageDraft\\('${pageKey}'`));
+    assert.match(source, new RegExp(`bindPageDraft\\('${pageKey}'`));
+  }
 });
 
 console.log(`farmacia_patient_flow_cutover_check: PASS (${passed} cases)`);

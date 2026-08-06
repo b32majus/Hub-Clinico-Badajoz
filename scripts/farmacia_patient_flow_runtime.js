@@ -57,6 +57,95 @@
         return typeof value === 'string' ? value : JSON.stringify(value);
     }
 
+    function prebiologicContext(context) {
+        var source = context || {};
+        var fieldMap = {
+            analysis_date: 'fecha',
+            analysis_recent_status: 'reciente',
+            hemogram_verified: 'hemograma',
+            biochemistry_verified: 'bioquimica',
+            tb_status: 'mantoux',
+            hbv_status: 'serologiasVhb',
+            hcv_status: 'serologiasVhc',
+            hiv_status: 'serologiasVih',
+            vaccination_status: 'vacunacion',
+            vaccination_observations: 'observaciones'
+        };
+        var mapped = {};
+        Object.keys(fieldMap).forEach(function (key) {
+            if (own(source, key)) mapped[fieldMap[key]] = clone(source[key]);
+        });
+        return mapped;
+    }
+
+    function jsonItems(value) {
+        if (Array.isArray(value)) return value;
+        if (value && Array.isArray(value.measurements)) return value.measurements;
+        return value && typeof value === 'object' ? [value] : [];
+    }
+
+    function structuredProms(records) {
+        var result = [];
+        (records || []).forEach(function (record) {
+            jsonItems(record && record.values && record.values.proms_json).forEach(function (item) {
+                if (!item || typeof item !== 'object') return;
+                var instrument = firstPresent(item.instrument, item.type);
+                if (!present(instrument)) return;
+                var prom = { tipo_prom: instrument };
+                if (own(item, 'value')) prom.valor = clone(item.value);
+                if (present(item.date)) prom.fecha = item.date;
+                result.push(prom);
+            });
+        });
+        return result;
+    }
+
+    function causalityAssessments(records) {
+        var result = [];
+        var seen = {};
+        (records || []).forEach(function (record) {
+            jsonItems(record && record.values && record.values.causality_assessments_json).forEach(function (item) {
+                if (!item || typeof item !== 'object') return;
+                var assessment = clone(item);
+                assessment.source_event_id = record.source_event_id;
+                var key = record.source_event_id + '\u0000' + JSON.stringify(item);
+                if (seen[key]) return;
+                seen[key] = true;
+                result.push(assessment);
+            });
+        });
+        return result;
+    }
+
+    function adverseEvents(records, assessments, followupDate) {
+        var result = [];
+        var seen = {};
+        (records || []).forEach(function (record) {
+            var values = record && record.values || {};
+            if (values.adverse_event_status !== 'present') return;
+            var key = firstPresent(values.adverse_event_id, record.source_event_id);
+            if (seen[key]) return;
+            seen[key] = true;
+            var suspects = Array.isArray(values.adverse_event_suspects_json) ? values.adverse_event_suspects_json : [];
+            var suspectRefs = suspects.map(function (suspect) { return suspect && suspect.suspect_ref; }).filter(present);
+            var linkedAssessments = (assessments || []).filter(function (assessment) {
+                return assessment.source_event_id === record.source_event_id
+                    && (!present(assessment.suspect_ref) || suspectRefs.indexOf(assessment.suspect_ref) !== -1);
+            });
+            result.push({
+                ea_id: values.adverse_event_id || '',
+                tipo: values.adverse_event_description || '',
+                gravedad: values.adverse_event_severity || '',
+                resultado: values.adverse_event_resolution_status || '',
+                accion_tomada: values.adverse_event_action || '',
+                fecha: followupDate || '',
+                sospechosos: suspectRefs.map(function (reference) { return { linea_id: reference }; }),
+                evaluaciones_causalidad: clone(linkedAssessments)
+            });
+        });
+        return result;
+    }
+
     function lineFromSnapshot(entry) {
         var snapshot = entry && entry.snapshot || {};
         var explicitlyActive = snapshot.active_at_event === true;
@@ -86,8 +175,7 @@
             source_type: snapshot.line_catalog_source || '',
             codigo_nacional: snapshot.line_national_code || '',
             nregistro: snapshot.line_registration_number || '',
-            candidate_explicit: true,
-            fuente: 'farmacia_raw'
+            candidate_explicit: true
         };
     }
 
@@ -125,11 +213,10 @@
             codigo_nacional: validation.validated_national_code || '',
             nregistro: validation.validated_registration_number || '',
             tipo_relacion: validation.validated_treatment_relation || '',
-            es_validado_farmacia: true,
-            fuente: 'farmacia_raw'
+            es_validado_farmacia: true
         };
         return Object.keys(treatment).some(function (key) {
-            return key !== 'es_validado_farmacia' && key !== 'fuente' && present(treatment[key]);
+            return key !== 'es_validado_farmacia' && present(treatment[key]);
         }) ? treatment : null;
     }
 
@@ -145,7 +232,8 @@
         var treatment = validatedTreatment(validation);
         var adherence = latestRecord(explicit.adherence);
         var adverse = latestRecord(explicit.safety && explicit.safety.adverse_events);
-        var latestProm = latestRecord(explicit.proms);
+        var proms = structuredProms(explicit.proms);
+        var causality = causalityAssessments(explicit.safety && explicit.safety.causality_assessments);
         var status = visits.latest_followup ? 'followup'
             : (validation.validation_result === 'validated' ? 'validated'
                 : (validation.validation_result === 'denied' ? 'denied'
@@ -157,7 +245,7 @@
         return {
             __farmaciaRawPatient: true,
             patient_id: projection.patient_id,
-            nombre: 'Paciente ' + identifier.identifier_value,
+            nombre: '',
             cip: identifier.identifier_value,
             edad: '',
             sexo: '',
@@ -198,26 +286,23 @@
             primeraVisita: firstVisitDate,
             ultimaVisita: followupDate || firstVisitDate,
             seguimiento: visits.latest_followup ? 'Seguimiento registrado' : '',
-            adherencia: firstPresent(adherence.adherence_result),
-            efectosAdversos: adverse.adverse_event_status === 'absent' ? 'Ausencia registrada' : (adverse.adverse_event_description || ''),
-            proms: jsonText(latestProm.proms_json),
-            analiticaEstruct: clone(explicit.validation_context),
+            adherencia: own(adherence, 'adherence_result') ? clone(adherence.adherence_result) : '',
+            efectosAdversos: adverse.adverse_event_status === 'present'
+                ? firstPresent(adverse.adverse_event_description, 'Presente')
+                : (adverse.adverse_event_status === 'absent' ? 'Ausencia registrada' : 'No registrado'),
+            adverse_event_status: adverse.adverse_event_status || '',
+            proms: proms,
+            analiticaEstruct: prebiologicContext(explicit.validation_context),
             analitica: '',
             visitas_fh: [visits.latest_first_visit, visits.latest_followup].filter(Boolean).map(function (event) {
                 var row = rowFromEvent(event);
                 return { fecha: row.first_visit_date || row.visit_date || '', tipo: event.event_type, line_id: row.line_id || '' };
             }),
-            eventos_adversos: adverse.adverse_event_status === 'present' ? [{
-                tipo: adverse.adverse_event_description || '',
-                gravedad: adverse.adverse_event_severity || '',
-                relacion_tratamiento: '',
-                accion_tomada: adverse.adverse_event_action || '',
-                fecha: followupDate
-            }] : [],
+            eventos_adversos: adverseEvents(explicit.safety && explicit.safety.adverse_events, causality, followupDate),
             structured_proms: clone(explicit.proms),
             adherence_records: clone(explicit.adherence),
             adverse_event_records: clone(explicit.safety && explicit.safety.adverse_events || []),
-            causality_records: clone(explicit.safety && explicit.safety.causality_assessments || [])
+            causality_records: causality
         };
     }
 
@@ -387,10 +472,19 @@
             return { status: 'selected', patient: clone(patient), envelope: clone(activeEnvelope), previousCip: previousCip };
         }
 
-        function selectByCip(cip) {
+        function selectByCip(cip, options) {
             if (!dataPort || typeof dataPort.listPatients !== 'function') return { status: 'unavailable' };
             var target = String(cip || '').trim().toUpperCase();
             if (!target) return { status: 'empty_query' };
+            var current = currentEnvelope();
+            if (current && String(current.identifier.identifier_value).trim().toUpperCase() === target) {
+                return {
+                    status: 'selected',
+                    patient: clone(current.patient_projection.patient),
+                    envelope: clone(current),
+                    previousCip: current.identifier.identifier_value
+                };
+            }
             var matches = [];
             dataPort.listPatients().forEach(function (summary) {
                 (summary.identifiers || []).forEach(function (identifier) {
@@ -401,7 +495,87 @@
             });
             if (!matches.length) return { status: 'not_found' };
             if (matches.length !== 1) return { status: 'ambiguous', matches: clone(matches.map(function (match) { return match.identifier; })) };
+            if (current && current.dirty && !(options && options.discardPendingChanges === true)) {
+                return { status: 'pending_changes', patient_id: current.patient_id, cip: current.identifier.identifier_value };
+            }
             return persistSelection(matches[0].summary, matches[0].identifier);
+        }
+
+        function draftScope(scope) {
+            if (typeof scope === 'string') return root.document && root.document.querySelector(scope);
+            return scope;
+        }
+
+        function draftControls(scope) {
+            var container = draftScope(scope);
+            if (!container || typeof container.querySelectorAll !== 'function') return [];
+            return Array.prototype.filter.call(container.querySelectorAll('input[id], select[id], textarea[id]'), function (control) {
+                return !(control.tagName === 'INPUT' && String(control.type || '').toLowerCase() === 'file')
+                    && !(control.closest && control.closest('.autocomplete-dropdown'));
+            });
+        }
+
+        function savePageDraft(pageKey, scope) {
+            var envelope = currentEnvelope();
+            if (!envelope) return null;
+            var controls = {};
+            draftControls(scope).forEach(function (control) {
+                var type = String(control.type || control.tagName || '').toLowerCase();
+                var value = { type: type, value: control.value };
+                if (type === 'checkbox' || type === 'radio') value.checked = control.checked === true;
+                controls[control.id] = value;
+            });
+            var draft = {
+                pageKey: pageKey,
+                cip: envelope.identifier.identifier_value,
+                patient_id: envelope.patient_id,
+                generation: envelope.generation,
+                controls: controls
+            };
+            activeEnvelope = session.saveDraft(pageKey, draft, true);
+            return clone(draft);
+        }
+
+        function getPageDraft(pageKey) {
+            var envelope = currentEnvelope();
+            if (!envelope) return null;
+            var draft = session.getDraft(pageKey);
+            if (!draft || draft.pageKey !== pageKey
+                || draft.cip !== envelope.identifier.identifier_value
+                || draft.patient_id !== envelope.patient_id
+                || draft.generation !== envelope.generation) return null;
+            return clone(draft);
+        }
+
+        function restorePageDraft(pageKey, scope) {
+            var draft = getPageDraft(pageKey);
+            if (!draft) return false;
+            draftControls(scope).forEach(function (control) {
+                var saved = draft.controls[control.id];
+                if (!saved || control.readOnly) return;
+                if (saved.type === 'checkbox' || saved.type === 'radio') control.checked = saved.checked === true;
+                else control.value = saved.value;
+            });
+            return true;
+        }
+
+        function bindPageDraft(pageKey, scope) {
+            var container = draftScope(scope);
+            if (!container || typeof container.addEventListener !== 'function') return false;
+            var save = function (event) {
+                var control = event && event.target;
+                if (!control || !control.id || draftControls(container).indexOf(control) === -1) return;
+                savePageDraft(pageKey, container);
+            };
+            container.addEventListener('input', save);
+            container.addEventListener('change', save);
+            return true;
+        }
+
+        function markCurrentClean() {
+            if (!currentEnvelope()) return null;
+            activeEnvelope = session.updateCurrent({ dirty: false });
+            return clone(activeEnvelope);
         }
 
         function enrichCurrentPatient(patient) {
@@ -464,6 +638,11 @@
             getCurrentEnvelope: function () { return clone(currentEnvelope()); },
             getResolutionStatus: function () { bootstrap(); return resolutionStatus; },
             enrichCurrentPatient: enrichCurrentPatient,
+            savePageDraft: savePageDraft,
+            getPageDraft: getPageDraft,
+            restorePageDraft: restorePageDraft,
+            bindPageDraft: bindPageDraft,
+            markCurrentClean: markCurrentClean,
             makeContextUrl: contextUrl,
             decorateLinks: decorateLinks,
             clear: function () { session.clear(); activeEnvelope = null; bootstrapped = true; resolutionStatus = 'restarted'; removeTechnicalContext(true); return { status: 'empty' }; }
@@ -482,11 +661,16 @@
         setDataPort: function (port) { return current().setDataPort(port); },
         getDataPort: function () { return current().getDataPort(); },
         bootstrap: function () { return current().bootstrap(); },
-        selectByCip: function (cip) { return current().selectByCip(cip); },
+        selectByCip: function (cip, options) { return current().selectByCip(cip, options); },
         getCurrentPatient: function () { return current().getCurrentPatient(); },
         getCurrentEnvelope: function () { return current().getCurrentEnvelope(); },
         getResolutionStatus: function () { return current().getResolutionStatus(); },
         enrichCurrentPatient: function (patient) { return current().enrichCurrentPatient(patient); },
+        savePageDraft: function (pageKey, scope) { return current().savePageDraft(pageKey, scope); },
+        getPageDraft: function (pageKey) { return current().getPageDraft(pageKey); },
+        restorePageDraft: function (pageKey, scope) { return current().restorePageDraft(pageKey, scope); },
+        bindPageDraft: function (pageKey, scope) { return current().bindPageDraft(pageKey, scope); },
+        markCurrentClean: function () { return current().markCurrentClean(); },
         makeContextUrl: function (base, context) { return current().makeContextUrl(base, context); },
         decorateLinks: function (scope) { return current().decorateLinks(scope); },
         clear: function () { return current().clear(); }

@@ -2,6 +2,13 @@
 
 (function () {
     let F = window.FarmaciaDemo;
+    function hasExplicit(value) {
+        return value !== undefined && value !== null && value !== '';
+    }
+    function explicitText(value, fallback) {
+        if (!hasExplicit(value) || value === 'not_recorded') return fallback || 'No registrado';
+        return String(value);
+    }
     function timelineItem(date, title, description) {
         const item = document.createElement('div');
         item.className = 'timeline-item';
@@ -22,40 +29,53 @@
     function evalCheckStatus(patient, type) {
         var est = patient.analiticaEstruct;
         var txt = (patient.analitica || '').toLowerCase();
+        var raw = patient.__farmaciaRawPatient === true;
+
+        function rawStatus(value, okValues, pendingValues) {
+            if (!hasExplicit(value) || value === 'not_recorded') return 'missing';
+            if (value === true || okValues.indexOf(String(value).toLowerCase()) !== -1) return 'ok';
+            if (value === false || pendingValues.indexOf(String(value).toLowerCase()) !== -1) return 'pending';
+            return 'review';
+        }
 
         if (type === 'analitica') {
             if (est) {
-                if (est.reciente === 'si' && est.hemograma === true && est.bioquimica === true) return 'ok';
-                if (est.reciente === 'no' || est.hemograma === false || est.bioquimica === false) return 'pending';
+                var recentStatus = rawStatus(est.reciente, ['yes', 'si', 'sí'], ['no']);
+                var hemogramStatus = rawStatus(est.hemograma, [], []);
+                var biochemistryStatus = rawStatus(est.bioquimica, [], []);
+                if (recentStatus === 'missing' && hemogramStatus === 'missing' && biochemistryStatus === 'missing') return raw ? 'missing' : 'demo';
+                if (recentStatus === 'ok' && hemogramStatus === 'ok' && biochemistryStatus === 'ok') return 'ok';
+                if (recentStatus === 'pending' || hemogramStatus === 'pending' || biochemistryStatus === 'pending') return 'pending';
                 return 'review';
             }
             if (/(?:analítica|analitica).*(?:completa|apto|ok)|prebiológico.*apto/i.test(txt)) return 'ok';
             if (/(?:analítica|analitica).*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
         if (type === 'mantoux') {
-            if (est && est.mantoux) {
-                var m = est.mantoux.toLowerCase();
-                if (/negativo|ok|apto/.test(m)) return 'ok';
-                if (/pendiente/.test(m)) return 'pending';
-                if (/positivo|revisar/.test(m)) return 'review';
+            if (est && hasExplicit(est.mantoux)) {
+                var m = String(est.mantoux).toLowerCase();
+                if (m === 'not_recorded') return 'missing';
+                if (/negative|negativo|ok|apto|positive_treated/.test(m)) return 'ok';
+                if (/pending|pendiente/.test(m)) return 'pending';
+                if (/positive|positivo|revisar/.test(m)) return 'review';
             }
             if (/(?:mantoux|igra|tubercul).*(?:negativo|ok|apto)/i.test(txt)) return 'ok';
             if (/(?:mantoux|igra|tubercul).*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
         if (type === 'serologias') {
             if (est) {
                 var sValues = [est.serologias, est.serologiasVhb, est.serologiasVhc, est.serologiasVih].filter(function(v) { return v !== undefined && v !== null && v !== ''; });
-                if (sValues.length === 0) return 'demo';
+                if (sValues.length === 0 || sValues.every(function (value) { return value === 'not_recorded'; })) return raw ? 'missing' : 'demo';
                 var anyPending = false;
                 var anyReview = false;
                 sValues.forEach(function(s) {
                     var sl = s.toLowerCase();
-                    if (/pendiente/.test(sl)) anyPending = true;
-                    if (/positivo|revisar/.test(sl)) anyReview = true;
+                    if (/pending|pendiente/.test(sl)) anyPending = true;
+                    if (/positive|positivo|revisar/.test(sl)) anyReview = true;
                 });
                 if (anyReview) return 'review';
                 if (anyPending) return 'pending';
@@ -63,22 +83,23 @@
             }
             if (/(?:serolog|vih|vhb|vhc).*(?:negativo|ok|apto)/i.test(txt)) return 'ok';
             if (/(?:serolog|vih|vhb|vhc).*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
         if (type === 'vacunacion') {
             if (est && est.vacunacion !== undefined && est.vacunacion !== null && est.vacunacion !== '') {
-                var v = est.vacunacion.toLowerCase();
-                if (v === 'si' || /completa|al día|apto/.test(v)) return 'ok';
-                if (v === 'no' || /pendiente/.test(v)) return 'pending';
+                var v = String(est.vacunacion).toLowerCase();
+                if (v === 'not_recorded') return 'missing';
+                if (v === 'yes' || v === 'si' || /completa|al día|apto/.test(v)) return 'ok';
+                if (v === 'no' || /pending|pendiente/.test(v)) return 'pending';
                 if (/revisar/.test(v)) return 'review';
             }
             if (/vacuna.*(?:completa|al día|apto)/i.test(txt)) return 'ok';
             if (/vacuna.*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
-        return 'demo';
+        return raw ? 'missing' : 'demo';
     }
 
     function createChecksVisualBlock(patient) {
@@ -100,11 +121,12 @@
             { type: 'vacunacion', label: 'Vacunación' }
         ];
 
-        var statusLabels = { ok: 'OK', pending: 'Pendiente', review: 'Revisar', demo: 'Demo' };
+        var statusLabels = { ok: 'OK', pending: 'Pendiente', review: 'Revisar', missing: 'No registrado', demo: 'Demo' };
         var iconsByStatus = {
             ok: 'fa-check-circle',
             pending: 'fa-clock',
             review: 'fa-exclamation-circle',
+            missing: 'fa-question-circle',
             demo: 'fa-question-circle'
         };
 
@@ -130,6 +152,15 @@
         });
 
         wrapper.appendChild(row);
+        if (patient.__farmaciaRawPatient && patient.analiticaEstruct) {
+            var meta = document.createElement('div');
+            meta.className = 'fh-dashboard-checks__meta';
+            var details = [];
+            if (hasExplicit(patient.analiticaEstruct.fecha)) details.push('Fecha: ' + patient.analiticaEstruct.fecha);
+            if (hasExplicit(patient.analiticaEstruct.observaciones)) details.push('Observaciones: ' + patient.analiticaEstruct.observaciones);
+            meta.textContent = details.length ? details.join(' · ') : 'No registrado';
+            wrapper.appendChild(meta);
+        }
         return wrapper;
     }
 
@@ -145,7 +176,7 @@
             emptyIcon.className = 'fas fa-info-circle';
             emptyIcon.setAttribute('aria-hidden', 'true');
             emptyEl.appendChild(emptyIcon);
-            emptyEl.appendChild(document.createTextNode('Sin datos de actividad cl\u00EDnica'));
+            emptyEl.appendChild(document.createTextNode(patient.__farmaciaRawPatient ? 'No registrado' : 'Sin datos de actividad cl\u00EDnica'));
             container.appendChild(emptyEl);
             return;
         }
@@ -323,7 +354,14 @@
         }
         var grid = document.createElement('div');
         grid.className = 'proms-card-grid';
-        var expectedTypes = ['DLQI', 'EVA dolor', 'EVA prurito'];
+        var expectedTypes = patient.__farmaciaRawPatient ? Object.keys(grouped).sort() : ['DLQI', 'EVA dolor', 'EVA prurito'];
+        if (expectedTypes.length === 0) {
+            var emptyProms = document.createElement('div');
+            emptyProms.className = 'empty-state';
+            emptyProms.textContent = 'No registrado';
+            container.appendChild(emptyProms);
+            return;
+        }
         for (var et = 0; et < expectedTypes.length; et++) {
             var tipo = expectedTypes[et];
             var items = grouped[tipo] || [];
@@ -338,13 +376,15 @@
                 var latest = items[items.length - 1];
                 var pValueEl = document.createElement('div');
                 pValueEl.className = 'prom-card__value';
-                var unit = (tipo === 'DLQI') ? '/30' : '/10';
+                var unit = patient.__farmaciaRawPatient ? '' : ((tipo === 'DLQI') ? '/30' : '/10');
                 var latestValue = latest.valor !== undefined && latest.valor !== null && latest.valor !== '' ? latest.valor : '—';
-                pValueEl.textContent = latestValue + ' ' + unit;
+                pValueEl.textContent = String(latestValue) + (unit ? ' ' + unit : '');
                 tile.appendChild(pValueEl);
                 var sourceEl = document.createElement('div');
                 sourceEl.className = 'prom-card__source';
-                var sourceLabel = (latest.fuente || '').toLowerCase().indexOf('remoto') !== -1 ? 'Paciente remoto' : 'Farmacia';
+                var sourceLabel = patient.__farmaciaRawPatient
+                    ? (latest.fecha ? 'Fecha: ' + latest.fecha : 'Fecha no registrada')
+                    : ((latest.fuente || '').toLowerCase().indexOf('remoto') !== -1 ? 'Paciente remoto' : 'Farmacia');
                 sourceEl.textContent = sourceLabel;
                 tile.appendChild(sourceEl);
                 var statusEl = document.createElement('span');
@@ -533,10 +573,11 @@
             var emptyEl = document.createElement('div');
             emptyEl.className = 'empty-state';
             var emptyIcon = document.createElement('i');
-            emptyIcon.className = 'fas fa-check-circle';
+            emptyIcon.className = 'fas fa-info-circle';
             emptyIcon.setAttribute('aria-hidden', 'true');
             emptyEl.appendChild(emptyIcon);
-            emptyEl.appendChild(document.createTextNode('Sin eventos adversos registrados'));
+            emptyEl.appendChild(document.createTextNode(patient.__farmaciaRawPatient && patient.adverse_event_status === 'absent'
+                ? 'Ausencia registrada' : (patient.__farmaciaRawPatient ? 'No registrado' : 'Sin eventos adversos registrados')));
             container.appendChild(emptyEl);
             return;
         }
@@ -572,13 +613,17 @@
             var sospechosos = (ev.sospechosos || []).map(function (item) {
                 return item.nombre_linea || item.linea_id || item.tratamiento_id || 'Biologico';
             }).join(' | ');
-            var causality = ev.causalidad && ev.causalidad.algoritmos ? (ev.causalidad.algoritmos[ev.causalidad.algoritmo_principal] || null) : null;
+            var causality = (ev.evaluaciones_causalidad || []).map(function (assessment) {
+                return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {
+                    return key + ': ' + explicitText(assessment[key]);
+                }).join(' · ');
+            }).join(' | ');
             var fields = [
-                { label: 'Relación con tratamiento', value: ev.relacion_tratamiento || '—' },
-                { label: 'Biológicos sospechosos', value: sospechosos || '—' },
-                { label: 'Acción tomada', value: ev.accion_tomada || '—' },
-                { label: 'Resultado', value: ev.resuelto ? 'Resuelto' : 'No resuelto' },
-                { label: 'Causalidad', value: causality ? ((causality.categoria || '—') + (causality.puntuacion !== undefined ? ' (' + causality.puntuacion + ')' : '')) : '—' }
+                { label: 'Relación con tratamiento', value: explicitText(ev.relacion_tratamiento) },
+                { label: 'Biológicos sospechosos', value: sospechosos || 'No registrado' },
+                { label: 'Acción tomada', value: explicitText(ev.accion_tomada) },
+                { label: 'Resultado', value: explicitText(ev.resultado) },
+                { label: 'Causalidad', value: causality || 'No registrado' }
             ];
             for (var fi = 0; fi < fields.length; fi++) {
                 var fieldRow = document.createElement('div');
@@ -616,7 +661,7 @@
             emptyIcon.className = 'fas fa-info-circle';
             emptyIcon.setAttribute('aria-hidden', 'true');
             emptyEl.appendChild(emptyIcon);
-            emptyEl.appendChild(document.createTextNode('Sin comorbilidades registradas'));
+            emptyEl.appendChild(document.createTextNode(patient.__farmaciaRawPatient ? 'No registrado' : 'Sin comorbilidades registradas'));
             container.appendChild(emptyEl);
             return;
         }
@@ -678,25 +723,11 @@
 
     function renderExtendedBlocks(patient) {
         if (patient.__farmaciaRawPatient) {
-            var rawProms = [];
-            (patient.structured_proms || []).forEach(function (record) {
-                var value = record && record.values && record.values.proms_json;
-                var items = Array.isArray(value) ? value : (value && Array.isArray(value.measurements) ? value.measurements : (value ? [value] : []));
-                items.forEach(function (item) {
-                    if (!item || typeof item !== 'object') return;
-                    rawProms.push({
-                        tipo_prom: item.instrument || item.type || 'PROM',
-                        valor: Object.prototype.hasOwnProperty.call(item, 'value') ? item.value : '',
-                        fecha: item.date || '',
-                        fuente: 'Excel Farmacia'
-                    });
-                });
-            });
-            patient.proms = rawProms;
+            patient.proms = Array.isArray(patient.proms) ? patient.proms : [];
         }
         // Buscar datos extendidos del paciente en longDataset
         var extData = null;
-        if (longDataset && longDataset.pacientes) {
+        if (!patient.__farmaciaRawPatient && longDataset && longDataset.pacientes) {
             for (var ei = 0; ei < longDataset.pacientes.length; ei++) {
                 if (longDataset.pacientes[ei].cip === patient.cip) {
                     extData = longDataset.pacientes[ei];
@@ -781,7 +812,7 @@
 
     function renderDashboard(patient) {
         F.setText('patientIdBadge', patient.cip);
-        F.setText('patientName', patient.nombre);
+        F.setText('patientName', patient.nombre || (patient.__farmaciaRawPatient ? 'Paciente actual' : ''));
         F.setText('patientDiagnosis', patient.patologia);
         F.setText('patientService', patient.servicio);
         F.setText('patientLastVisit', patient.ultimaVisita);
@@ -823,9 +854,14 @@
             summaryFields.push({ label: patient.__farmaciaRawPatient ? 'Líneas activas sin autoselección' : 'Otras líneas activas', value: otherNames });
         }
         summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });
-        summaryFields.push({ label: 'Última adherencia', value: patient.adherencia });
-        summaryFields.push({ label: 'Efectos adversos', value: patient.efectosAdversos });
-        summaryFields.push({ label: 'Últimos PROMs Farmacia', value: patient.proms });
+        summaryFields.push({ label: 'Última adherencia', value: explicitText(patient.adherencia) });
+        summaryFields.push({ label: 'Efectos adversos', value: explicitText(patient.efectosAdversos) });
+        summaryFields.push({
+            label: 'Últimos PROMs Farmacia',
+            value: (patient.proms || []).map(function (prom) {
+                return prom.tipo_prom + ': ' + explicitText(prom.valor) + (prom.fecha ? ' · ' + prom.fecha : '');
+            }).join(' | ') || 'No registrado'
+        });
         F.renderFields(document.getElementById('dashboardSummaryGrid'), summaryFields);
         document.getElementById('dashboardSummaryGrid').appendChild(createChecksVisualBlock(patient));
 

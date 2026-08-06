@@ -2758,5 +2758,12 @@
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('validacion', draftScope);
+            updateValidationModuleSummaries();
+            runtime.bindPageDraft('validacion', draftScope);
+        }
     });
 })();

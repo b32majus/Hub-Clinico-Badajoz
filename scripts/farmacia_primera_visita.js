@@ -306,8 +306,12 @@
         if (ctx.patient) {
             var rawPatient = ctx.patient.__farmaciaRawPatient;
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
+            var requestedInduction = ctx.patient.solicitud && ctx.patient.solicitud.requested_induction_status;
+            if (requestedInduction === undefined || requestedInduction === null || requestedInduction === '') {
+                requestedInduction = ctx.patient.induccion_solicitada;
+            }
             F.setValue('fhPvInduccionSolicitada', rawPatient
-                ? (ctx.patient.tratamientoValidado && ctx.patient.tratamientoValidado.induccion || '')
+                ? (requestedInduction === 'yes' ? 'Sí' : (requestedInduction === 'no' ? 'No' : ''))
                 : (ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No'));
             F.setValue('fhPvAnalitica', ctx.patient.analitica);
             setTreatmentForm(buildPrimaryTreatmentFromContext(ctx));
@@ -323,6 +327,10 @@
             clearTreatmentForm();
         }
         if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhPvNoCipBanner');
+    }
+
+    function inductionLabel(value) {
+        return value === 'yes' ? 'Sí' : (value === 'no' ? 'No' : '');
     }
 
     function applyTratamientoValidado(ctx) {
@@ -357,6 +365,13 @@
             { label: 'Presentación / dosis', value: treatment.dosis_texto || treatment.presentacion || '—' },
             { label: 'Vía', value: treatment.via || '—' },
             { label: 'Pauta / intervalo', value: treatment.pauta || '—' },
+            { label: 'Inducción solicitada', value: ctx.patient && ctx.patient.__farmaciaRawPatient
+                ? (inductionLabel(ctx.patient.solicitud && ctx.patient.solicitud.requested_induction_status)
+                    || inductionLabel(ctx.patient.induccion_solicitada) || 'No registrado')
+                : '—' },
+            { label: 'Inducción validada', value: ctx.patient && ctx.patient.__farmaciaRawPatient
+                ? (inductionLabel(treatment.induccion) || 'No registrado')
+                : '—' },
             { label: 'Relación terapéutica', value: treatment.tipo_relacion || '—' },
             { label: 'Origen catálogo', value: origen },
             { label: 'Código nacional / n.º registro', value: codigo },
@@ -1554,5 +1569,11 @@
                 exp.copyTSVRowToClipboard(result.rowArray, { sheetName: result.sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('primera_visita', draftScope);
+            runtime.bindPageDraft('primera_visita', draftScope);
+        }
     });
 })();

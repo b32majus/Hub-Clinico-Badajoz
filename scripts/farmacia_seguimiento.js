@@ -1443,7 +1443,10 @@
             F.setValue('fhSegVia', mapRouteToSelect(ctx.patient.via));
             F.setValue('fhSegFechaInicio', ctx.patient.primeraVisita);
             F.setValue('fhSegUltimaAdherencia', ctx.patient.adherencia);
-            F.setValue('fhSegUltimosProms', ctx.patient.proms);
+            F.setValue('fhSegUltimosProms', Array.isArray(ctx.patient.proms) ? ctx.patient.proms.map(function (prom) {
+                var value = prom.valor === undefined || prom.valor === null || prom.valor === '' ? 'No registrado' : String(prom.valor);
+                return (prom.tipo_prom || 'PROM') + ': ' + value + (prom.fecha ? ' · ' + prom.fecha : '');
+            }).join(' | ') : ctx.patient.proms);
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
 
             F.setValue('fhSegPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '');
@@ -3059,5 +3062,11 @@
                 exp.copyTSVRowsToClipboard(rows, { sheetName: sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('seguimiento', draftScope);
+            runtime.bindPageDraft('seguimiento', draftScope);
+        }
     });
 })();

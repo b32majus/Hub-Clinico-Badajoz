@@ -450,6 +450,14 @@
             setSearchStatus('Identificador ambiguo entre varios sistemas. No se ha seleccionado ningún paciente.');
             return;
         }
+        if (result.status === 'pending_changes') {
+            var discard = window.confirm('Hay cambios no exportados del paciente actual.\n¿Desea descartarlos y cambiar de paciente?');
+            if (!discard) {
+                setSearchStatus('Cambio de paciente cancelado.');
+                return;
+            }
+            result = runtime.selectByCip(cip, { discardPendingChanges: true });
+        }
         if (result.status === 'selected') {
             var selected = F.findPatientByCip(cip) || result.patient;
             if (result.previousCip && String(result.previousCip).toUpperCase() !== String(cip).toUpperCase()

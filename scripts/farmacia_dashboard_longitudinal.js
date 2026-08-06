@@ -175,8 +175,9 @@
 
     function rawLongitudinalPatient(patient) {
         return {
+            __farmaciaRawPatient: true,
             cip: patient.cip,
-            nombre_demo: patient.nombre || patient.cip,
+            nombre_demo: patient.nombre || '',
             servicios_origen: patient.servicio ? [patient.servicio] : [],
             patologias: patient.patologia ? [patient.patologia] : [],
             tratamientos: (patient.biologicos || []).map(function (line) {
@@ -194,7 +195,10 @@
                 return treatment;
             }),
             visitas_fh: patient.visitas_fh || [],
-            proms: [],
+            proms: patient.proms || [],
+            adherencia: patient.adherencia,
+            causality_records: patient.causality_records || [],
+            adverse_event_status: patient.adverse_event_status || '',
             actividad_clinica: [],
             eventos_adversos: patient.eventos_adversos || [],
             comorbilidades_relevantes: []
@@ -220,7 +224,9 @@
                 dataset = data;
                 if (statusEl) {
                     var count = (dataset.pacientes && dataset.pacientes.length) ? dataset.pacientes.length : 0;
-                    statusEl.textContent = 'Dataset cargado — ' + count + ' paciente(s) demo';
+                    statusEl.textContent = context.patient && context.patient.__farmaciaRawPatient
+                        ? 'Paciente actual cargado desde Excel Farmacia'
+                        : 'Dataset cargado — ' + count + ' paciente(s) demo';
                 }
                 if (typeof callback === 'function') { callback(true); }
             })
@@ -244,7 +250,7 @@
             var p = dataset.pacientes[i];
             var opt = el('option');
             opt.value = p.cip;
-            opt.textContent = (p.nombre_demo || p.cip) + ' (' + p.cip + ')';
+            opt.textContent = (p.nombre_demo || (p.__farmaciaRawPatient ? 'Paciente actual' : p.cip)) + ' (' + p.cip + ')';
             sel.appendChild(opt);
         }
     }
@@ -269,15 +275,24 @@
         }
         comorbText = comorbParts.join(', ');
 
+        var raw = patient.__farmaciaRawPatient === true;
+        var causalityText = (patient.causality_records || []).map(function (assessment) {
+            return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {
+                var value = assessment[key];
+                return key + ': ' + (value === undefined || value === null || value === '' ? 'No registrado' : String(value));
+            }).join(' · ');
+        }).join(' | ');
         var fields = [
             { l: 'CIP', v: patient.cip },
-            { l: 'Nombre demo', v: patient.nombre_demo },
+            { l: raw ? 'Paciente' : 'Nombre demo', v: patient.nombre_demo || (raw ? 'Paciente actual' : '') },
             { l: 'Sexo', v: patient.sexo },
             { l: 'Edad', v: patient.edad != null ? String(patient.edad) : '' },
             { l: 'Servicio(s)', v: servicios },
             { l: 'Patología(s)', v: patologias },
-            { l: 'Comorbilidades', v: comorbText || 'Ninguna registrada' },
-            { l: 'Status', v: 'pending_review / demo — datos sintéticos' }
+            { l: 'Comorbilidades', v: comorbText || (raw ? 'No registrado' : 'Ninguna registrada') },
+            { l: 'Adherencia', v: patient.adherencia === undefined || patient.adherencia === null || patient.adherencia === '' ? 'No registrado' : String(patient.adherencia) },
+            { l: 'Causalidad', v: causalityText || 'No registrado' },
+            { l: 'Status', v: raw ? 'Paciente actual cargado desde Excel Farmacia' : 'pending_review / demo — datos sintéticos' }
         ];
 
         for (var j = 0; j < fields.length; j++) {
@@ -299,7 +314,7 @@
 
         var hasAnyData = treatments.length > 0 || changes.length > 0 || events.length > 0 || fhVisits.length > 0;
         if (!hasAnyData) {
-            var emptyMsg = pEl('Sin tratamientos registrados en el dataset demo.', 'longitudinal-empty');
+            var emptyMsg = pEl(patient.__farmaciaRawPatient ? 'No registrado' : 'Sin tratamientos registrados en el dataset demo.', 'longitudinal-empty');
             container.appendChild(emptyMsg);
             return;
         }
@@ -338,7 +353,7 @@
         }
 
         if (allDates.length === 0) {
-            var noDateMsg = pEl('Sin fechas validas en el dataset demo.', 'longitudinal-empty');
+            var noDateMsg = pEl(patient.__farmaciaRawPatient ? 'Fechas no registradas' : 'Sin fechas validas en el dataset demo.', 'longitudinal-empty');
             container.appendChild(noDateMsg);
             return;
         }
@@ -535,7 +550,8 @@
         var events = patient.eventos_adversos || [];
 
         if (events.length === 0) {
-            var emptyMsg = pEl('Sin eventos adversos registrados en el dataset demo.', 'longitudinal-empty');
+            var emptyMsg = pEl(patient.__farmaciaRawPatient && patient.adverse_event_status === 'absent'
+                ? 'Ausencia registrada' : (patient.__farmaciaRawPatient ? 'No registrado' : 'Sin eventos adversos registrados en el dataset demo.'), 'longitudinal-empty');
             container.appendChild(emptyMsg);
             return;
         }
@@ -568,7 +584,14 @@
             details.appendChild(span('Tipo: ' + (ev.tipo || '—'), 'longitudinal-ae-detail'));
             details.appendChild(span('Relación con tratamiento: ' + (ev.relacion_tratamiento || '—'), 'longitudinal-ae-detail'));
             details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || '—'), 'longitudinal-ae-detail'));
-            details.appendChild(span('Resuelto: ' + (ev.resuelto ? 'Sí' : 'No'), 'longitudinal-ae-detail'));
+            details.appendChild(span('Resultado: ' + (ev.resultado || 'No registrado'), 'longitudinal-ae-detail'));
+            var causality = (ev.evaluaciones_causalidad || []).map(function (assessment) {
+                return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {
+                    var value = assessment[key];
+                    return key + ': ' + (value === undefined || value === null || value === '' ? 'No registrado' : String(value));
+                }).join(' · ');
+            }).join(' | ');
+            details.appendChild(span('Causalidad: ' + (causality || 'No registrado'), 'longitudinal-ae-detail'));
             card.appendChild(details);
 
             var tooltipParts = [];
@@ -577,7 +600,7 @@
             tooltipParts.push('Gravedad: ' + gravLabel);
             if (ev.relacion_tratamiento) { tooltipParts.push('Relación: ' + ev.relacion_tratamiento); }
             if (ev.accion_tomada) { tooltipParts.push('Acción: ' + ev.accion_tomada); }
-            tooltipParts.push('Resuelto: ' + (ev.resuelto ? 'Sí' : 'No'));
+            tooltipParts.push('Resultado: ' + (ev.resultado || 'No registrado'));
             if (ev.descripcion_corta) { tooltipParts.push(ev.descripcion_corta); }
             card.setAttribute('title', tooltipParts.join('\n'));
 
@@ -631,15 +654,19 @@
             var info = divEl('longitudinal-bar-info');
             info.appendChild(span(prom.fecha || '—', 'longitudinal-bar-date'));
             info.appendChild(span(displayedValue + ' (' + mappedType + ')', 'longitudinal-bar-value'));
-            info.appendChild(span('Fuente: ' + (prom.fuente || '—'), 'longitudinal-bar-source'));
+            info.appendChild(span(patient.__farmaciaRawPatient
+                ? (prom.fecha ? 'Fecha: ' + prom.fecha : 'Fecha no registrada')
+                : 'Fuente: ' + (prom.fuente || '—'), 'longitudinal-bar-source'));
             row.appendChild(info);
 
             var barWrapper = divEl('longitudinal-bar-wrapper');
             var bar = divEl('longitudinal-bar');
             var numericVal = parseFloat(prom.valor);
-            var sevInfo = getSeverityInfo(mappedType, numericVal);
+            var sevInfo = patient.__farmaciaRawPatient
+                ? { label: 'Valor explícito', cssClass: 'threshold-no-data' }
+                : getSeverityInfo(mappedType, numericVal);
             bar.className = 'longitudinal-bar ' + sevInfo.cssClass;
-            if (!isNaN(numericVal)) {
+            if (!patient.__farmaciaRawPatient && !isNaN(numericVal)) {
                 var pct = Math.min(100, (numericVal / maxVal) * 100);
                 bar.style.width = pct + '%';
             } else {
@@ -806,7 +833,7 @@
         } else {
             for (var j = 0; j < uniqueTypes.length; j++) {
                 var displayName = uniqueTypes[j];
-                var selectValue = PROM_REVERSE[displayName] || displayName.toLowerCase().replace(/ /g, '_');
+                var selectValue = PROM_REVERSE[displayName] || displayName;
                 var opt = el('option');
                 opt.value = selectValue;
                 opt.textContent = displayName;
@@ -884,7 +911,8 @@
 
         renderPromChart(patient, promType);
         renderClinicalChart(patient, clinicalType);
-        renderLegend();
+        if (patient.__farmaciaRawPatient) clear($('longitudinalLegend'));
+        else renderLegend();
     }
 
     function onPatientChange() {
