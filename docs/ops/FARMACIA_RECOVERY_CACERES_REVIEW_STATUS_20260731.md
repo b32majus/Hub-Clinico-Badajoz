@@ -1,6 +1,6 @@
 # Estado actual — Farmacia recovery, Cáceres 0.3 y evolución regional
 
-> **Reconciliación post patient-flow (2026-08-06).** El HEAD regional publicado es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora PR #250/#251 y PR #252/#253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. La sesión usa `sessionStorage` solo para el envelope temporal versionado del paciente actual; Farmacia raw tiene precedencia y Excel Enfermería solo enriquece huecos explícitos. Estadísticas conserva el dashboard diseñado y espera cutover raw/CSV; Actividad sigue demo y diferida. PR #238/#242/#246 queda como trazabilidad histórica.
+> **Reconciliación post patient-flow (2026-08-06).** El HEAD regional publicado es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora el issue #250 y la PR #251, junto con el issue #252 y la PR #253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. La sesión usa `sessionStorage` solo para el envelope temporal versionado del paciente actual; Farmacia raw tiene precedencia y Excel Enfermería solo enriquece huecos explícitos. Estadísticas conserva el dashboard diseñado y espera cutover raw/CSV; Actividad sigue demo y diferida. PR #238/#242/#246 queda como trazabilidad histórica.
 
 | Metadato | Valor |
 |---|---|
@@ -9,7 +9,7 @@
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama regional publicada | `recovery/farmacia-pr-replay-20260727` |
 | HEAD regional publicado verificado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` |
-| Patient-flow/Data Port | PR #250/#251 y #252/#253; flujo normal sin modo Bridge visible |
+| Patient-flow/Data Port | issue #250 / PR #251 y issue #252 / PR #253; flujo normal sin modo Bridge visible |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` / merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
 | Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` / PR #233 |
@@ -40,13 +40,16 @@ Excel raw
 → Seguimiento
 ```
 
-- PR #250/#251 integran el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; PR #252/#253 publican el flujo normal.
+- El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal.
 - No existe un modo Bridge visible soportado. `Bridge` identifica piezas técnicas históricas del reader/selectors, no una experiencia separada para la profesional.
 - `sessionStorage` solo contiene el envelope `promueve.fh.currentPatientSession.v1` del paciente actual: versión, identificador, `patient_id`, generación, proyección, datos explícitos, provenance, borradores y `dirty`.
 - El envelope excluye workbook, bytes, read model completo, población, cohorte y otros pacientes. Cambiar de CIP purga el contexto anterior; la sesión no es persistencia longitudinal definitiva.
 - Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
 - Estadísticas ya tiene dashboard diseñado; la siguiente WO sustituye el JSON/demo por fuente raw y habilita el CSV completo de la cohorte filtrada.
 - Actividad del servicio permanece demo, con contenido funcional no decidido, y está fuera de la siguiente WO técnica.
+- Sin workbook raw: demo separada y claramente etiquetada; puede usar el JSON demo.
+- Con workbook raw: únicamente la cohorte raw; sin JSON demo, sin `generateSyntheticPatients()`, sin 28 pacientes generados y sin mezcla raw/demo.
+- El CSV exporta toda la cohorte filtrada, no solo la página visible; su esquema exacto queda pendiente de `WO-FH-RAW-STATISTICS-CUTOVER-01`.
 
 ### Secuencia inmediata
 
@@ -76,7 +79,7 @@ Fijar la situación publicada del módulo de Farmacia Hospitalaria después de:
 - la activación visible y paralela de Export v2 demo mediante PR #227;
 - la retirada del ledger clínico del runtime soportado mediante PR #231;
 - la publicación y QA manual del workbook operativo del Excel Bridge mediante PR #233.
-- la integración del lector raw, la Quick View y el handoff/dashboard Bridge mediante PR #238/#242/#246.
+- la integración histórica del lector raw, la Quick View y el handoff/dashboard Bridge mediante PR #238/#242/#246.
 
 No sustituye contratos clínicos definitivos, no autoriza datos reales y no convierte la evaluación en piloto asistencial.
 
@@ -153,11 +156,13 @@ La rama histórica `preview/demo-lunes-wo4-20260614` continúa como evidencia. N
 | #222 — reconciliación Seguimiento | #223 | `dfbbf76b...` | Estado documental post-WO4 |
 | #224 — contexto técnico | #225 | `e2f2c663...` | Proveedor cerrado a FH-001/FH-004; no Identity Plane |
 | #226 — activación paralela | #227 | `f86f72f8...` | Export v2 visible; v1 intacta |
-| #230 — retirada ledger runtime | #231 | `19867ef16127548d0b596482360d8e5cbe6e54e5` | Ledger no cargado en las tres pantallas; sin restauración ni alternativa |
+| #230 — retirada ledger runtime | #231 | `19867ef16127548d0b596482360d8e5cbe6e54e5` | En aquel merge, ledger no cargado en las tres pantallas, sin restauración ni alternativa; superseded después por issue #250 / PR #251 y issue #252 / PR #253 |
 | #232 — workbook Excel Bridge | #233 | `a94a42f1d603e4259aece09c14b18ae19a74fefc` | Workbook operativo publicado; QA Microsoft Excel PASS |
 | #237 — raw reader/read model | #238 | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` (merge histórico, no HEAD vigente) | Head técnico `7da866b2...`; lector raw v2 y read model; candidate SHA-256 `2b7b2eed0f4310156e701c6357505442f47d13e7492869fcfbc1e9dedf564af4`; `MERGED_AND_VERIFIED` |
 | #241 — selectores y Quick View Bridge | #242 | `e2c54583ccc5876058403c34a675496cab897972` | Commits `3da3d450...` + `94cd4468...`; `MERGED_AND_VERIFIED`; Quick View dentro de `farmacia_index.html`, P1 de identidad y evidencia publicada |
 | #245 — handoff y dashboard Bridge | #246 | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` | Commits `fe28f21f...` + `7ebc4826...`; `MERGED_AND_VERIFIED`; handoff efímero y dashboard Bridge de solo lectura |
+| #250 — raw Excel current patient session | #251 | `de830803e84bc5e89446084bbf5a0313d15426a0` | Data Port, `RawExcelDataSource` y `CurrentPatientSession`; `MERGED_AND_VERIFIED` |
+| #252 — raw Excel patient-flow cutover | #253 | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` | Cutover del flujo normal; `MERGED_AND_VERIFIED` |
 
 La PR #185 permanece en la historia Git, pero no debe presentarse como la corrección vigente.
 
@@ -185,8 +190,8 @@ La PR #185 permanece en la historia Git, pero no debe presentarse como la correc
 | Selector por identidad explícita | Sí | Sí, mediante Data Port | Sí, en búsqueda normal | Sí, sistema + valor explícitos | Evidencia histórica de selector 82 casos |
 | Quick View | Sí | Sí, en flujo normal | Sí | Sí, mediante búsqueda soportada | Evidencia regional previa; no modo Bridge visible |
 | Handoff Bridge | Histórico | No en el flujo soportado actual | No | No | PR #246 conservada como trazabilidad |
-| Dashboard longitudinal normal | Sí | Sí | Sí | Sí | Flujo publicado por PR #252/#253 |
-| Formularios Bridge | No | No | No | No | Validación, Primera Visita y Seguimiento pendientes |
+| Dashboard longitudinal normal | Sí | Sí | Sí | Sí | Flujo publicado por issue #252 / PR #253 |
+| Formularios normales | Sí | Sí | Sí | Sí | Validación, Primera Visita y Seguimiento integrados |
 | Office Script y tablas relacionales | Candidate, no integrado | No | No | No | Gate real pendiente |
 | `APP_*`, Read Adapter y roundtrip | No | No | No | No | Pendientes |
 | Persistencia longitudinal externa completa | No | No | No | No | No acreditada |
@@ -224,7 +229,7 @@ El snapshot 0.3 no se actualiza automáticamente con PR #231, PR #233, PR #238, 
 - PR #231 retiró el ledger clínico del runtime soportado de Validación, Primera Visita y Seguimiento.
 - La sesión actual permite continuar o reiniciar el paciente actual tras recarga; cambiar de CIP purga el contexto anterior. No es persistencia longitudinal definitiva.
 - El módulo `farmacia_evaluation_ledger.js` y el workbook técnico de PR #201 permanecen versionados como historia, pero no se cargan en el flujo normal.
-- El ledger `localStorage` está retirado del runtime soportado por PR #231. PR #250/#251 publican el envelope de `sessionStorage` limitado al paciente actual.
+- El ledger `localStorage` está retirado del runtime soportado por PR #231. El issue #250 y la PR #251 publican el envelope de `sessionStorage` limitado al paciente actual.
 - El envelope contiene versión, identificador explícito, `patient_id`, generación, proyección, datos explícitos, provenance, borradores y `dirty`; excluye workbook, bytes, read model completo, población, cohorte y otros pacientes.
 - Farmacia raw tiene precedencia; Excel Enfermería solo enriquece huecos explícitos.
 - PR #233 publicó el workbook operativo y el reader/Data Port construyen la proyección; aún no hay reconstrucción longitudinal desde `APP_*`.
@@ -234,7 +239,7 @@ El snapshot 0.3 no se actualiza automáticamente con PR #231, PR #233, PR #238, 
 - La sesión del paciente actual se resuelve por identificador explícito mediante Data Port; no constituye un Identity Plane productivo.
 - No existe cutover completo, retirada v1 ni promoción de `draft` a `2.0.0`.
 - WO5 permanece `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`.
-- Estadísticas mantiene el dashboard diseñado, pero su fuente raw y el CSV de cohorte filtrada siguen pendientes. Actividad permanece demo y diferida.
+- Estadísticas mantiene el dashboard diseñado, pero su fuente raw y el CSV de cohorte filtrada siguen pendientes. Sin workbook raw se mantiene una demo separada y etiquetada; con workbook raw solo se usa la cohorte raw, sin JSON demo ni mezcla. El CSV cubre toda la cohorte filtrada. Actividad permanece demo, con definición funcional pendiente, no se cablea ahora y no bloquea el paquete de evaluación.
 - Ninguno de estos cambios acredita QA integral, piloto real o producción.
 
 ---
@@ -311,7 +316,7 @@ Dependencias externas abiertas:
 
 El workbook operativo ya está demostrado. No preparar URL, guía o paquete longitudinal final ni retirar v1 hasta demostrar también:
 
-- CIP arbitrario mediante flujo normal;
+- CIP explícito presente en workbook raw mediante flujo normal;
 - Office Script;
 - tablas relacionales y vistas `APP_*`;
 - Excel Read Adapter;

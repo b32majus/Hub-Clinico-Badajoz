@@ -5,12 +5,12 @@
 | Última actualización | 2026-08-06 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` (merge PR #253) |
+| HEAD regional publicado verificado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` (merge issue #252 / PR #253) |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073` |
 | Rama documental de esta edición | `work/doc-fh-post-patient-flow-reconciliation-01-20260806` |
 
-> Este índice orienta. Para Farmacia, la verdad funcional de esta edición es #254, el código publicado en `3f7bf9bb...`, PR #250/#251, PR #252/#253 y el estado post patient-flow. Los documentos históricos no convierten propuestas arquitectónicas en capacidades implementadas.
+> Este índice orienta. Para Farmacia, la verdad funcional de esta edición es #254, el código publicado en `3f7bf9bb...`, el issue #250 y la PR #251, el issue #252 y la PR #253, y el estado post patient-flow. Los documentos históricos no convierten propuestas arquitectónicas en capacidades implementadas.
 
 > La PR que publique esta edición generará un merge SHA posterior. Por ello se registra la base Git de la edición y, por separado, el último SHA que modificó código funcional; el HEAD actual se verifica siempre en GitHub.
 
@@ -18,11 +18,11 @@
 
 ## 1. Lectura recomendada actual
 
-1. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado reconciliado después de #250/#252 y PR #251/#253.
+1. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado reconciliado después del issue #250 / PR #251 y del issue #252 / PR #253.
 2. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — publicación regional, evaluación sintética y snapshot Cáceres sin promoción automática.
 3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia inmediata post patient-flow.
-4. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación, reconciliada con #250/#251 y #252/#253.
-5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs y PRs, con #250/#251 y #252/#253 cerradas/publicadas.
+4. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación, reconciliada con issue #250 / PR #251 e issue #252 / PR #253.
+5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs y PRs, con issue #250 / PR #251 e issue #252 / PR #253 cerradas/publicadas.
 6. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan anterior subordinado a la secuencia post patient-flow.
 7. [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — contrato histórico y referencia secundaria para la evolución longitudinal.
 
@@ -33,7 +33,7 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 ## 2. Orden de verdad
 
 1. Issue/WO actual; en esta edición, #254.
-2. GitHub: código publicado en `3f7bf9bb...` y estado real de PR #250/#251 y #252/#253.
+2. GitHub: código publicado en `3f7bf9bb...` y estado real del issue #250 / PR #251 y del issue #252 / PR #253.
 3. Decisiones vinculantes de #250/#252.
 4. Este índice reconciliado.
 5. `docs/ops/WORK_ORDER_STATUS.md` reconciliado.
@@ -72,8 +72,8 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
 | HEAD regional publicado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` (merge PR #253) |
-| #250/#251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; PR #251 mergeada en `de830803...` |
-| #252/#253 | Cutover del flujo normal publicado; PR #253 mergeada con CI verde |
+| issue #250 / PR #251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; merge `de830803...` |
+| issue #252 / PR #253 | Cutover del flujo normal publicado; merge `3f7bf9bb...` con CI verde |
 | Flujo clínico | Excel raw 152 columnas → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento |
 | Modo Bridge visible | No existe como experiencia soportada; Bridge queda como nombre técnico de reader/selectors históricos |
 | `sessionStorage` | Solo envelope versionado del paciente actual; no workbook, bytes, read model completo, población, cohorte ni otros pacientes |
@@ -84,7 +84,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
 
-> Los SHA de PR #238/#242/#246 que aparecen en secciones históricas no son el HEAD actual. El estado actual de Farmacia se verifica contra `3f7bf9bb...`, que contiene #250/#251 y #252/#253.
+> Los SHA de PR #238/#242/#246 que aparecen en secciones históricas no son el HEAD actual. El estado actual de Farmacia se verifica contra `3f7bf9bb...`, que contiene el issue #250 / PR #251 y el issue #252 / PR #253.
 
 > El guard P1 rechaza `IDENTIFIER_COMPONENT_EMPTY`, `IDENTIFIER_COMPONENT_TYPE`, `NORMALIZED_IDENTIFIER_COLLISION`, `IDENTIFIER_NOT_INDEXED` e `IDENTIFIER_INDEX_PATIENT_MISMATCH`, comprueba coherencia bidireccional pacientes ↔ índice, usa lookup directo sobre tabla privada `Object.create(null)`, conserva sensibilidad a mayúsculas, permite pacientes sin identificador pero no buscables operativamente y no muta el read model. Evidencia publicada: selector checker 82 casos, reader checker 21 casos, smoke 48 checks, GitHub Actions SUCCESS, QA navegador y focal PASS, consola limpia, `pageerror = 0` y revisión independiente APTO.
 
@@ -105,7 +105,7 @@ El documento [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/F
 
 ### Estadísticas y Actividad
 
-Estadísticas ya dispone de filtros, KPIs, gráficos, tabla de pacientes, paginación, estados vacíos, selección de subpoblación y requisito funcional de exportar la cohorte filtrada completa a CSV. La recovery actual carga un JSON demo, genera 28 pacientes sintéticos en JavaScript y mezcla ambos conjuntos; no consume todavía la cohorte raw completa ni tiene operativa la exportación CSV final. La siguiente WO cambia la fuente, no rediseña la pantalla. Actividad del servicio permanece demo, con contenido funcional no decidido, sin cableado a población raw y fuera de la siguiente WO técnica.
+Estadísticas ya dispone de filtros, KPIs, gráficos, tabla de pacientes, paginación, estados vacíos, selección de subpoblación y requisito funcional de exportar la cohorte filtrada completa a CSV. Sin workbook raw se mantiene una demo separada y claramente etiquetada que puede usar el JSON demo. Con workbook raw se usa únicamente la cohorte raw: sin JSON demo, sin `generateSyntheticPatients()`, sin 28 pacientes generados y sin mezcla raw/demo. El CSV cubre toda la cohorte filtrada, no solo la página visible; su esquema exacto queda pendiente de `WO-FH-RAW-STATISTICS-CUTOVER-01`. Actividad del servicio permanece demo, con definición funcional pendiente, no se cablea ahora y no bloquea el paquete de evaluación.
 
 ### Secuencia vigente post patient-flow
 
@@ -205,7 +205,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; incluido en la fuente funcional promovida a `CÁCERES-REVIEW-0.3`.
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
 - [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
-- [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia WO1–WO9 reconciliada; WO6, WO8A-1, WO8A-2A-1 Quick View y WO8A-2A-2 dashboard/handoff integradas; WO7 candidate pausada; formularios Bridge, `APP_*`, descomposición y roundtrip pendientes
+- [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia histórica y estado post patient-flow; flujo normal integrado; WO7 candidate pausada; Estadísticas raw/CSV, `APP_*`, descomposición, Processor y roundtrip pendientes
 - [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado; Export v2 demo paralelo visible desde PR #227, sin cutover ni retirada v1
 - [`docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Validación v2; integrado mediante PR #215
 - [`docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Primera Visita v2; integrado mediante PR #217

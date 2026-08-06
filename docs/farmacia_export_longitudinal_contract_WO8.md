@@ -1,6 +1,6 @@
 # WO8 — Contrato de exportación longitudinal Farmacia Hospitalaria
 
-> **Reconciliación superior vigente 2026-08-06.** El HEAD regional es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora PR #250/#251 y PR #252/#253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. `sessionStorage` solo conserva el envelope temporal del paciente actual; Farmacia raw tiene precedencia; Estadísticas espera cutover raw/CSV; Actividad permanece demo y diferida. PR #238/#242/#246 queda como trazabilidad histórica.
+> **Reconciliación superior vigente 2026-08-06.** El HEAD regional es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora el issue #250 y la PR #251, junto con el issue #252 y la PR #253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. `sessionStorage` solo conserva el envelope temporal del paciente actual; Farmacia raw tiene precedencia; Estadísticas espera cutover raw/CSV; Actividad permanece demo y diferida. PR #238/#242/#246 queda como trazabilidad histórica.
 
 **Versión:** 3.0 — reconciliación V4
 **Fecha:** 2026-08-01
@@ -18,7 +18,7 @@ Esta sección prevalece sobre cualquier formulación histórica incompatible del
 
 - Excel v1 implementado contiene **61 columnas** y permanece intacto en Validación, Primera Visita y Seguimiento.
 - Export v2 demo paralelo está visible desde PR #227 con un esquema TSV común de **152 columnas**: Validación produce exactamente una fila; Primera Visita y Seguimiento soportan `1..N` filas según líneas explícitas.
-- El proveedor técnico de PR #225 está cerrado a FH-001/FH-004 y un contexto `unknown/stale` bloquea exclusivamente v2.
+- El proveedor técnico histórico de PR #225 permanece limitado a FH-001/FH-004 para regresión; un contexto `unknown/stale` bloquea exclusivamente ese fixture v2.
 - Las versiones permanecen en `draft`; no existe promoción a `2.0.0`.
 - La activación paralela no es cutover completo ni retirada gobernada de v1.
 
@@ -48,7 +48,7 @@ La existencia de la fila no depende de dispensación ni de revisión específica
 
 No registrar una revisión específica no equivale a eficacia, seguridad, adherencia ni ausencia de problemas.
 
-Estado v2 visible: PR #227 permite copiar varias filas de 152 columnas para Seguimiento cuando el proveedor técnico cerrado dispone de contexto. Esto no modifica el comportamiento Excel/CSV v1 ni demuestra CIP arbitrario o roundtrip.
+Estado v2 visible: PR #227 permite copiar varias filas de 152 columnas para Seguimiento cuando el fixture técnico histórico dispone de contexto. Esto no modifica el comportamiento Excel/CSV v1 ni demuestra un CIP desconocido sin registro raw ni roundtrip.
 
 ### 0.4 Validación
 
@@ -62,15 +62,16 @@ Primera Visita genera `1..N` filas, una por cada línea terapéutica explícitam
 
 El TSV completo de `1..N` filas se pega una sola vez en la hoja operativa del servicio de procedencia: Dermatología, Reumatología, Digestivo, Oncología u otros servicios aprobados en el futuro. Cada fila nativa se conserva íntegra y append-only. El **Office Script Processor** valida versiones, IDs y cardinalidad, conserva la entrada, agrupa el acto, bloquea duplicados, registra errores, descompone en hojas relacionales y genera `APP_*`. El **Excel Read Adapter** reconstruye el Hub desde esas vistas. El futuro **PostgreSQL Migrator** trasladará entidades relacionales validadas, sin copiar ciegamente las 152 columnas a una tabla SQL.
 
-El Excel Bridge por hospital es el contenedor provisional V4 decidido; el workbook y el raw reader están publicados, pero el read model solo vive en memoria de la página y no constituye persistencia longitudinal resuelta. El Hub genera la información y la profesional pega la salida una vez en la hoja del servicio. CIP/identificador, servicio, patología, tipo de acto, evento e IDs se conservan en la fila. No existe consolidación regional automática.
+El Excel Bridge por hospital es el contenedor provisional V4 decidido para la fase relacional posterior. El workbook y el raw reader están publicados, pero el read model solo vive en memoria de la página y no constituye persistencia longitudinal resuelta. El flujo actual consume el Excel raw mediante Data Port y la sesión del paciente actual; la profesional puede seleccionar cualquier CIP explícitamente presente en el workbook raw cargado. No se crea un paciente desconocido ni existe consolidación regional automática.
 
-Estado actual: workbook y raw reader/read model integrados; Office Script, vistas `APP_*`, consumidores UI, Excel Read Adapter, descomposición relacional y roundtrip no están implementados.
+Estado actual: Data Port y sesión del paciente actual integrados; Inicio/Quick View, dashboards, Validación, Primera Visita y Seguimiento integrados; Estadísticas raw/CSV pendientes; Actividad demo/diferida; Office Script, `APP_*`, `RelationalExcelDataSource` y roundtrip pendientes.
 
 El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el procesador cotidiano vigente. La denominación WO8.1b terminó reutilizándose para el exportador de fila de 61 columnas.
 
 ### 0.6 Identidad y evaluación
 
-- La profesional introduce un CIP inventado y usa los formularios e interacciones normales; no existe modo, botón, alta especial ni formulario reducido.
+- La evaluación selecciona un CIP inventado explícitamente presente en el Excel raw cargado y usa los formularios e interacciones normales; no existe modo, botón, alta especial ni formulario reducido.
+- El proveedor de PR #225 es un fixture técnico histórico de Export v2 paralelo, no el proveedor vigente del patient-flow raw.
 - CIP/`identifier_value` no equivale a `patient_id`; `patient_id` es técnico y opaco.
 - `patient_id` no se deriva del CIP mediante hash, transformación o concatenación.
 - El Identity Plane físico, su mecanismo productivo y su custodia permanecen diferidos; no se añade Excel de correspondencia ni alta técnica manual.
@@ -78,11 +79,11 @@ El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el proc
 
 ### 0.7 Browser storage reconciliado
 
-El ledger clínico de PR #199/#203 fue retirado del runtime soportado por PR #231. El flujo posterior de PR #250/#251 usa `sessionStorage` solo para el envelope versionado del paciente actual; no contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes. Cambiar de CIP purga el contexto anterior. No se presenta esta sesión temporal como persistencia longitudinal resuelta ni se reescribe la historia de PR #199/#201/#203.
+El ledger clínico de PR #199/#203 fue retirado del runtime soportado por PR #231. El issue #250 y la PR #251 incorporan `sessionStorage` solo para el envelope versionado del paciente actual; no contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes. Reload permite continuar o empezar de cero; continuar conserva generación, paciente y borradores; reiniciar purga sesión y borradores; cambiar de CIP exige resolver `dirty` y purga segura. El issue #252 y la PR #253 publican este flujo normal. No se presenta esta sesión temporal como persistencia longitudinal resuelta.
 
 ### 0.8 Reconciliación post patient-flow
 
-PR #250/#251 integran el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; PR #252/#253 publican el flujo normal sin modo Bridge visible.
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible.
 
 ```text
 Excel raw
@@ -99,7 +100,10 @@ Excel raw
 - `sessionStorage` contiene solo `version`, identificador explícito, `patient_id`, `generation`, proyección, datos explícitos, provenance, borradores y `dirty`.
 - Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
 - Estadísticas conserva el dashboard diseñado; `WO-FH-RAW-STATISTICS-CUTOVER-01` debe conectar la fuente raw y el CSV completo de la cohorte filtrada.
-- Actividad permanece demo y diferida, fuera de esa WO técnica.
+- Actividad permanece demo, con definición funcional pendiente, no se cablea ahora y no bloquea el paquete de evaluación; queda diferida fuera de esa WO técnica.
+- Sin workbook raw: demo separada y claramente etiquetada; puede usar el JSON demo.
+- Con workbook raw: únicamente la cohorte raw; sin JSON demo, sin `generateSyntheticPatients()`, sin 28 pacientes generados y sin mezcla raw/demo.
+- El CSV exporta toda la cohorte filtrada, no solo la página visible; su esquema exacto queda pendiente de `WO-FH-RAW-STATISTICS-CUTOVER-01`.
 - Secuencia inmediata: `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01` → `WO-FH-RAW-STATISTICS-CUTOVER-01` → `WO-FH-EVALUATION-PACKAGE-01` → `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip → PostgreSQL/servidor local mediante el mismo Data Port.
 
 ---
@@ -571,7 +575,7 @@ La secuencia histórica del core, adaptadores, workbook y reader se conserva en 
 
 WO1–WO4 están integradas. La adjudicación de WO5 es `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: no se reabre como megadesarrollo ni se declara completamente cerrada; retirada v1 y promoción de versiones `draft` quedan aplazadas. La secuencia histórica vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`; la secuencia inmediata está en la sección 0.8 y aquí arriba.
 
-No se prepara URL, guía o paquete longitudinal final ni retirada v1 hasta demostrar CIP arbitrario en flujo normal, workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub. Ver [`DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+No se presenta la evaluación como paquete longitudinal final, piloto o producción. El CIP de evaluación debe estar explícitamente presente en el Excel raw cargado; un CIP desconocido sin registro raw queda fuera de alcance. Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub siguen pendientes. Ver [`DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
 ### Aclaración histórica de WO8.1b
 

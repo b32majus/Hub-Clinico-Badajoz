@@ -64,7 +64,7 @@ La secuencia diferencia:
 
 ## 2ter. Estado vigente post patient-flow — 2026-08-06
 
-PR #250/#251 integran el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; PR #252/#253 publican el flujo normal. No existe un modo Bridge visible soportado.
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal. No existe un modo Bridge visible soportado.
 
 ```text
 Excel raw
@@ -82,7 +82,11 @@ Excel raw
 - El envelope no contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes. Cambiar de CIP purga el contexto anterior; no es persistencia longitudinal definitiva.
 - Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
 - Estadísticas mantiene el dashboard diseñado; la siguiente WO sustituye el JSON/demo por raw y habilita el CSV completo de la cohorte filtrada.
-- Actividad del servicio permanece demo y diferida, fuera de la siguiente WO técnica.
+- Actividad del servicio permanece demo, con definición funcional pendiente, no se cablea ahora, no bloquea el paquete de evaluación y queda diferida fuera de la siguiente WO técnica.
+- Inicio/Quick View, dashboards y Validación, Primera Visita y Seguimiento normales están integrados.
+- Sin workbook raw: demo separada y claramente etiquetada; puede usar el JSON demo.
+- Con workbook raw: únicamente la cohorte raw; sin JSON demo, sin `generateSyntheticPatients()`, sin 28 pacientes generados y sin mezcla raw/demo.
+- El CSV exporta toda la cohorte filtrada, no solo la página visible; el esquema exacto queda pendiente de `WO-FH-RAW-STATISTICS-CUTOVER-01`.
 
 Secuencia inmediata:
 
@@ -224,7 +228,7 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 ## 7. Fronteras posteriores
 
 - La activación paralela de PR #227 no implementa Office Script ni retira v1.
-- PR #231 no introduce persistencia alternativa; el envelope temporal del paciente actual se publica posteriormente por PR #250/#251.
+- PR #231 no introduce persistencia alternativa; el envelope temporal del paciente actual se publica posteriormente por issue #250 / PR #251.
 - WO6 no decide clínica y ya está cerrada como contenedor del Bridge.
 - WO7 no corrige, completa ni infiere campos clínicos; conserva la fila nativa, valida y descompone.
 - WO8 no convierte las vistas `APP_*` en fuente conceptual del dominio.
@@ -233,6 +237,6 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 
 ## 8. Estado actual y próximas unidades
 
-WO7 Office Script es un candidate publicado y pausado: debe superar el gate real de Microsoft Office Scripts antes de considerarse integrada. La lectura raw v2, los selectores y el Bridge histórico se conservan como capacidades técnicas; el flujo soportado actual usa Data Port, sesión temporal del paciente y páginas normales tras PR #250/#251 y #252/#253.
+WO7 Office Script es un candidate publicado y pausado: debe superar el gate real de Microsoft Office Scripts antes de considerarse integrada. La lectura raw v2, los selectores y el Bridge histórico se conservan como capacidades técnicas; el flujo soportado actual usa Data Port, sesión temporal del paciente y páginas normales tras el issue #250 / PR #251 y el issue #252 / PR #253.
 
 La siguiente unidad documental es `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01`; después siguen `WO-FH-RAW-STATISTICS-CUTOVER-01` y `WO-FH-EVALUATION-PACKAGE-01`. Quedan pendientes `APP_*`, `RelationalExcelDataSource`, `Processor`, roundtrip y PostgreSQL/servidor local. Estadísticas espera el cutover de raw/CSV; Actividad permanece demo y diferida. Mantener el gate del paquete longitudinal final y no presentarlo como piloto o producción.
