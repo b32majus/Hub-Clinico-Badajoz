@@ -6,9 +6,9 @@
 | Estado | `approved_functional_sequence` |
 | Rama base | `recovery/farmacia-pr-replay-20260727` |
 | Base Git publicada al aprobar | `2f54c4ec80ed201a4026b374b711eb7572faa367` |
-| HEAD regional publicado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` |
+| HEAD regional publicado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` |
 | Contrato previo | `docs/farmacia_export_longitudinal_contract_WO8.md` v3 |
-| Reconciliación documental | 2026-08-03 — adaptadores; 2026-08-04 — Seguimiento; 2026-08-05 — raw reader, Quick View y handoff/dashboard Bridge |
+| Reconciliación documental | 2026-08-03 — adaptadores; 2026-08-04 — Seguimiento; 2026-08-05 — raw reader/Bridge histórico; 2026-08-06 — patient-flow, Data Port y sesión actual |
 | Datos | Exclusivamente sintéticos |
 | Piloto real | No |
 
@@ -41,7 +41,7 @@ La secuencia diferencia:
 | 8 | `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01` | Vistas `APP_*`, lectura y roundtrip sintético | E2E independiente |
 | 9 | `WO-FH-POSTGRESQL-MIGRATOR-01` | Migración Excel Bridge → PostgreSQL local | Condicionada a servidor autorizado |
 
-## 2bis. Estado publicado — 2026-08-05
+## 2bis. Estado publicado histórico — 2026-08-05
 
 | Orden | Work Order | Estado | Trazabilidad |
 |---:|---|---|---|
@@ -56,17 +56,53 @@ La secuencia diferencia:
 | 7 | `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` | **Candidate pausado** | Rama `work/fh-excel-bridge-office-script-01-20260805`, commit `95565e1698dc4b8333daec0b4d342e298d5d9cfa`, QA PASS/APTO; gate Microsoft Office Scripts real diferido; sin PR/merge |
 | 8A-1 | `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` | `MERGED_AND_VERIFIED` | Issue #237; PR #238; head técnico `7da866b2...`; merge histórico `92c00eb7...`; lector raw v2 y read model integrados independientemente; no es el HEAD vigente |
 | 8A-2A-1 | `WO-FH-BRIDGE-V2-PATIENT-SELECTORS-QUICK-VIEW-01` | `MERGED_AND_VERIFIED` | Issue #241; PR #242; commits `3da3d450...` + `94cd4468...`; merge histórico `e2c54583...`; Quick View dentro de `farmacia_index.html` |
-| 8A-2A-2 | `WO-FH-BRIDGE-V2-RUNTIME-HANDOFF-DASHBOARD-01` | `MERGED_AND_VERIFIED` | Issue #245; PR #246; commits `fe28f21f...` + `7ebc4826...`; merge/HEAD `ee749658...`; handoff efímero + dashboard Bridge de solo lectura |
+| 8A-2A-2 | `WO-FH-BRIDGE-V2-RUNTIME-HANDOFF-DASHBOARD-01` | `MERGED_AND_VERIFIED` histórico | Issue #245; PR #246; commits `fe28f21f...` + `7ebc4826...`; merge histórico `ee749658...`; handoff efímero + dashboard Bridge de solo lectura; no es el HEAD vigente |
 | 8A-2B | Hidratación segura de formularios | **PENDIENTE** | No alimentar formularios desde Bridge |
 | 8A-3 | Estadísticas/población | **PENDIENTE** | No consumir todavía el read model para estadísticas |
 | Actividad del servicio | Actividad del servicio | **DIFERIDA** | Fuera de la integración actual |
 | 9 | `WO-FH-POSTGRESQL-MIGRATOR-01` | Condicionada | No iniciar sin servidor local, custodia y autorización institucional |
 
+## 2ter. Estado vigente post patient-flow — 2026-08-06
+
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal. No existe un modo Bridge visible soportado.
+
+```text
+Excel raw
+→ reader/selectors
+→ Data Port
+→ sesión del paciente actual
+→ Inicio/Quick View
+→ dashboards
+→ Validación
+→ Primera Visita
+→ Seguimiento
+```
+
+- `sessionStorage` solo contiene el envelope versionado del paciente actual: identificador, `patient_id`, generación, proyección, datos explícitos, provenance, borradores y `dirty`.
+- El envelope no contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes. Cambiar de CIP purga el contexto anterior; no es persistencia longitudinal definitiva.
+- Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
+- Estadísticas mantiene el dashboard diseñado; la siguiente WO sustituye el JSON/demo por raw y habilita el CSV completo de la cohorte filtrada.
+- Actividad del servicio permanece demo, con definición funcional pendiente, no se cablea ahora, no bloquea el paquete de evaluación y queda diferida fuera de la siguiente WO técnica.
+- Inicio/Quick View, dashboards y Validación, Primera Visita y Seguimiento normales están integrados.
+- Sin workbook raw: demo separada y claramente etiquetada; puede usar el JSON demo.
+- Con workbook raw: únicamente la cohorte raw; sin JSON demo, sin `generateSyntheticPatients()`, sin 28 pacientes generados y sin mezcla raw/demo.
+- El CSV exporta toda la cohorte filtrada, no solo la página visible; el esquema exacto queda pendiente de `WO-FH-RAW-STATISTICS-CUTOVER-01`.
+
+Secuencia inmediata:
+
+1. `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01`;
+2. `WO-FH-RAW-STATISTICS-CUTOVER-01`;
+3. `WO-FH-EVALUATION-PACKAGE-01`;
+4. `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip;
+5. PostgreSQL/servidor local mediante el mismo Data Port.
+
+Office Script, Identity Plane y refactor general no se anteponen a esta secuencia.
+
 PR #223 reconcilió documentalmente Seguimiento v2. PR #225 cerró el proveedor técnico sintético a FH-001/FH-004 y PR #227 activó Export v2 demo visible en paralelo con un TSV común de 152 columnas: Validación genera una fila y Primera Visita/Seguimiento soportan `1..N` según líneas explícitas. `unknown/stale` solo bloquea v2; JARA, CSV y Excel v1 de 61 columnas permanecen intactos.
 
-PR #231 retiró el ledger clínico basado en `localStorage` de las tres pantallas soportadas. PR #238 integra un Bridge raw v2, PR #242 añade su consumidor UI Quick View y PR #246 conecta un dashboard Bridge de solo lectura mediante handoff efímero. No usan `localStorage` ni `sessionStorage`: `postMessage` transporta una sola vez `search_context` y la proyección Quick View después de READY, con `origin`, `source`, nonce y versión verificados y TTL único de 45 segundos. Imports legacy y snapshots anteriores pueden seguir usando `sessionStorage` como deuda separada.
+El párrafo siguiente conserva el estado histórico pre patient-flow de PR #231/#238/#242/#246. El estado vigente es el bloque 2ter: la sesión actual sí usa `sessionStorage` dentro del alcance cerrado del envelope del paciente actual.
 
-PR #233 publicó el workbook operativo de Cáceres como contenedor del TSV: `01_DERMA` y `03_DIGESTIVO`, 152 columnas canónicas y 16 hojas técnicas ocultas y vacías. PR #238 añadió el lector raw v2/read model, PR #242 los selectores y la Quick View, y PR #246 el handoff y dashboard Bridge. El dashboard recibe una proyección mínima, usa renderer separado del legacy, no adapta a paciente plano ni infiere datos clínicos; recarga/acceso directo fallan cerrado y la URL solo contiene un nonce. Esto no implementa formularios Bridge, Office Script, tablas relacionales pobladas, `APP_*`, Read Adapter ni roundtrip del Hub.
+PR #233 publicó el workbook operativo de Cáceres como contenedor del TSV: `01_DERMA` y `03_DIGESTIVO`, 152 columnas canónicas y 16 hojas técnicas ocultas y vacías. PR #238/#242/#246 se conservan como trazabilidad del reader y del Bridge histórico. El flujo actual consume la misma lectura mediante Data Port, sesión del paciente actual y páginas normales; esto no implementa todavía `APP_*`, Processor, roundtrip ni migración a servidor.
 
 WO5A aporta `patient_id`, IDs de acto, `treatment_id` y `line_id` explícitos, estables y predeclarados. El proveedor no los genera, no deriva ni transforma el CIP en identidad técnica y cualquier contexto no registrado falla cerrado. Es un proveedor de fixtures técnicos, no un `IdentityRepository`.
 
@@ -192,7 +228,7 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 ## 7. Fronteras posteriores
 
 - La activación paralela de PR #227 no implementa Office Script ni retira v1.
-- PR #231 no introduce persistencia alternativa y no retira todavía `sessionStorage`.
+- PR #231 no introduce persistencia alternativa; el envelope temporal del paciente actual se publica posteriormente por issue #250 / PR #251.
 - WO6 no decide clínica y ya está cerrada como contenedor del Bridge.
 - WO7 no corrige, completa ni infiere campos clínicos; conserva la fila nativa, valida y descompone.
 - WO8 no convierte las vistas `APP_*` en fuente conceptual del dominio.
@@ -201,6 +237,6 @@ Los campos clínicos binarios no comienzan preseleccionados. Deben distinguir:
 
 ## 8. Estado actual y próximas unidades
 
-WO7 Office Script es un candidate publicado y pausado: debe superar el gate real de Microsoft Office Scripts antes de considerarse integrada. La lectura raw v2 está integrada por WO8A-1, la Quick View por WO8A-2A-1 y el handoff/dashboard Bridge por WO8A-2A-2.
+WO7 Office Script es un candidate publicado y pausado: debe superar el gate real de Microsoft Office Scripts antes de considerarse integrada. La lectura raw v2, los selectores y el Bridge histórico se conservan como capacidades técnicas; el flujo soportado actual usa Data Port, sesión temporal del paciente y páginas normales tras el issue #250 / PR #251 y el issue #252 / PR #253.
 
-La Quick View, el handoff efímero y el dashboard Bridge de solo lectura están integrados. Quedan pendientes WO8A-2B (hidratación segura de Validación, Primera Visita y Seguimiento), WO8A-3 (Estadísticas/población), Actividad del servicio, exportaciones desde Bridge, Office Script, tablas relacionales, `APP_*`, persistencia longitudinal, Excel Read Adapter y roundtrip Hub → Excel → Hub. Mantener el gate del paquete longitudinal final: no preparar URL, guía o paquete final ni retirar v1 hasta demostrar CIP arbitrario, Office Script, `APP_*`, Read Adapter y roundtrip completo.
+La siguiente unidad documental es `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01`; después siguen `WO-FH-RAW-STATISTICS-CUTOVER-01` y `WO-FH-EVALUATION-PACKAGE-01`. Quedan pendientes `APP_*`, `RelationalExcelDataSource`, `Processor`, roundtrip y PostgreSQL/servidor local. Estadísticas espera el cutover de raw/CSV; Actividad permanece demo y diferida. Mantener el gate del paquete longitudinal final y no presentarlo como piloto o producción.

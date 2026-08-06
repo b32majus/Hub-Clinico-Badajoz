@@ -1,6 +1,6 @@
 # Plan maestro de trabajo — FarmaNEXus / PROMueve Nexus V4
 
-> **Reconciliación del estado real 2026-08-05.** El HEAD regional publicado es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. El workbook Bridge y el lector raw v2 están demostrados; PR #238 (`WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01`, head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`) está `MERGED_AND_VERIFIED`. El botón `Cargar Excel de Farmacia` lee `01_DERMA` y `03_DIGESTIVO`, valida 152 columnas, preserva `1..N` y construye un read model raw solo en memoria de la página. No usa `sessionStorage` ni `localStorage`; recarga o navegación completa exige volver a seleccionar el Excel. Imports legacy y snapshots anteriores pueden conservar `sessionStorage` como deuda separada. WO7 Office Script es candidate pausado por gate Microsoft Office Scripts real, no integrado. Consumidores UI, `APP_*`, descomposición relacional y roundtrip siguen pendientes; no se declara cumplido el resultado mínimo longitudinal ni piloto/producción.
+> **Reconciliación del estado real 2026-08-06.** El HEAD regional publicado es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora el issue #250 y la PR #251, junto con el issue #252 y la PR #253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. La sesión usa `sessionStorage` solo para el envelope temporal del paciente actual; Farmacia raw tiene precedencia, Estadísticas espera cutover raw/CSV y Actividad permanece demo/diferida.
 
 | Metadato | Valor |
 |---|---|
@@ -11,7 +11,7 @@
 | Rama publicada de partida | `recovery/farmacia-pr-replay-20260727` |
 | HEAD inicial | `accac670ba216d8c291ee849d2198742d02bb3f0` |
 | Snapshot estable inicial | `CÁCERES-REVIEW-0.2` |
-| HEAD publicado al reconciliar | `92c00eb7f0c778e3351cf6f37e3a415a2c7da694` |
+| HEAD publicado al reconciliar | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` |
 | Snapshot estable actual | `CÁCERES-REVIEW-0.3` |
 | Disponibilidad humana | 3–4 horas diarias |
 | Trabajo asíncrono | Una WO atómica puede ejecutarse mientras Silvia no está delante |
@@ -20,7 +20,45 @@
 
 > Este plan ordena trabajo. No autoriza automáticamente sus WOs, merges, datos reales, piloto, backend institucional ni integraciones.
 
-> Estado post-PR #238: Export v2 demo permanece visible en paralelo con 152 columnas por fila y varias filas en Seguimiento. JARA, CSV y Excel v1 de 61 columnas permanecen intactos. El workbook Bridge y el lector raw v2 están integrados; no existe cutover completo, retirada v1, promoción a `2.0.0`, Office Script integrado, `APP_*`, descomposición relacional, consumidores UI ni roundtrip. La decisión vigente se concentra en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+> El plan original y su cola histórica se conservan como contexto. El estado post patient-flow prevalece: Data Port y sesión temporal del paciente actual publicados; no existe modo Bridge visible; Estadísticas raw/CSV y el paquete de evaluación son las siguientes unidades. La decisión vigente se concentra en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
+
+## 0. Estado vigente post patient-flow
+
+### Cadena funcional
+
+```text
+Excel raw
+→ reader/selectors
+→ Data Port
+→ sesión del paciente actual
+→ Inicio/Quick View
+→ dashboards
+→ Validación
+→ Primera Visita
+→ Seguimiento
+```
+
+- El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible.
+- `sessionStorage` solo contiene el envelope versionado del paciente actual: `version`, identificador, `patient_id`, `generation`, proyección, datos explícitos, provenance, borradores y `dirty`.
+- No contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes. Cambiar de CIP purga el contexto anterior; no es persistencia longitudinal definitiva.
+- Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
+- Estadísticas conserva el dashboard diseñado; la siguiente WO sustituye la carga JSON/demo por fuente raw y habilita el CSV completo de la cohorte filtrada.
+- Actividad permanece demo, con definición funcional pendiente, no se cablea ahora, no bloquea el paquete de evaluación y está fuera de la siguiente WO técnica.
+- Sin workbook raw: demo separada y claramente etiquetada; puede usar el JSON demo.
+- Con workbook raw: únicamente la cohorte raw; sin JSON demo, sin `generateSyntheticPatients()`, sin 28 pacientes generados y sin mezcla raw/demo.
+- El CSV exporta toda la cohorte filtrada, no solo la página visible; su esquema exacto queda pendiente de `WO-FH-RAW-STATISTICS-CUTOVER-01`.
+
+### Secuencia inmediata
+
+1. `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01`;
+2. `WO-FH-RAW-STATISTICS-CUTOVER-01`;
+3. `WO-FH-EVALUATION-PACKAGE-01`;
+4. `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip;
+5. PostgreSQL/servidor local mediante el mismo Data Port.
+
+Office Script, Identity Plane, Supabase, Actividad y refactor general no se anteponen a esta secuencia.
+
+> **Bloque histórico subordinado.** Las secciones siguientes conservan el plan original del 31 de julio para trazabilidad. Sus objetivos, cronograma, P0/P1/P2 y “resultado mínimo de éxito” no constituyen la cola vigente cuando contradicen la sección 0. La secuencia inmediata vigente es exclusivamente: documentación → Estadísticas raw/CSV → paquete de evaluación → persistencia relacional posterior → servidor local.
 
 ---
 
@@ -78,7 +116,7 @@ Presalud y renovaciones son parte del objetivo si llega el texto exacto a tiempo
 ### 3.1 Pacientes de evaluación
 
 - No existe un botón `Nuevo paciente sintético`.
-- La profesional introduce un CIP inventado y trabaja como si fuera un paciente normal.
+- La profesional selecciona un CIP inventado explícitamente presente en el workbook raw y trabaja como si fuera un paciente normal.
 - Los formularios exigen los campos aprobados para cada acto; no existe un alta sintética reducida.
 - Los fixtures existentes permanecen para demo y regresión.
 - El funcionamiento debe dejar de depender exclusivamente de ellos.
@@ -102,11 +140,11 @@ El Excel Bridge por hospital es el contenedor/objetivo de persistencia provision
 ### 3.2.1 Browser storage reconciliado
 
 - El ledger clínico fue retirado del runtime soportado por PR #231; no se presenta como activo.
-- El Bridge raw v2 no usa `sessionStorage` ni `localStorage` y solo vive en memoria de la página actual.
-- Imports legacy y snapshots anteriores pueden usar `sessionStorage`; es deuda separada.
-- Se conserva la historia de PR #199/#201/#203, pero browser storage no es arquitectura objetivo ni fuente de verdad.
-- La decisión vigente es no conservar datos clínicos, de paciente o de acto en `localStorage` ni `sessionStorage`, ni sustituirlos por almacenamiento oculto.
-- La retirada del ledger sí está implementada; la memoria del Bridge no es persistencia longitudinal y se pierde al recargar o navegar completamente.
+- La sesión actual usa `sessionStorage` solo para el envelope versionado del paciente actual.
+- El envelope contiene identificador, `patient_id`, generación, proyección, datos explícitos, provenance, borradores y `dirty`.
+- No contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes; al cambiar de CIP se purga el contexto anterior.
+- Se conserva la historia de PR #199/#201/#203, pero browser storage no es fuente de verdad poblacional ni persistencia longitudinal definitiva.
+- La retirada del ledger `localStorage` está implementada; `localStorage` e IndexedDB no son almacenamiento clínico soportado.
 
 ### 3.2.2 Brecha publicada que debe resolver v2
 
@@ -138,7 +176,7 @@ El Excel Bridge por hospital es el contenedor/objetivo de persistencia provision
 ### 3.4.1 Dynamic Patient
 
 ```text
-CIP ficticio arbitrario
+CIP explícito presente en el workbook raw
 → flujo normal
 → Validación / Primera Visita / Seguimiento
 → evento canónico
@@ -147,7 +185,7 @@ CIP ficticio arbitrario
 → lectura y roundtrip
 ```
 
-No es una clase especial de paciente ni se resuelve mediante el ledger del navegador. El proveedor técnico actual sigue cerrado a FH-001/FH-004; el mecanismo final para CIP arbitrario sin browser storage está pendiente de WO y el roundtrip no está demostrado.
+No es una clase especial de paciente ni se resuelve mediante el ledger del navegador. El flujo actual selecciona un CIP explícitamente presente en el workbook raw y no depende del proveedor histórico FH-001/FH-004. No crea una identidad productiva ni un paciente desconocido. Roundtrip, Supabase, parsers, FHIR/openEHR y renovaciones permanecen como objetivos históricos/futuros, no como gates de la versión de evaluación.
 
 ### 3.5 CIMA
 
@@ -568,17 +606,23 @@ Solo se ejecutan si no ponen en riesgo los hitos principales.
 
 ## 8. Secuencia de WOs
 
-### Estado publicado que prevalece sobre la cola histórica
+### Estado publicado post patient-flow
 
-1. WO6 workbook: integrada y verificada.
-2. WO7 Office Script: candidate publicado, QA automatizada PASS y revisión APTO; pausada por gate real de Microsoft Office Scripts; sin PR ni merge.
-3. WO8A-1 raw reader/read model: integrada y verificada independientemente mediante PR #238.
-4. Consumidores UI del read model, `APP_*`, descomposición relacional y roundtrip: pendientes mediante WOs posteriores.
-5. PostgreSQL Migrator: condicionado a servidor y autorización institucional.
+1. El issue #250 y la PR #251: Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados.
+2. El issue #252 y la PR #253: flujo normal publicado sin modo Bridge visible.
+3. Estadísticas: dashboard diseñado; fuente raw y CSV de cohorte filtrada pendientes.
+4. Actividad del servicio: demo y diferida.
+5. `APP_*`, `RelationalExcelDataSource`, `Processor`, roundtrip y PostgreSQL/servidor local: pendientes.
 
-No se declaran ejecutadas WO8A-2A, WO8A-2B ni WO8A-3. La Actividad del servicio continúa fuera de prioridad funcional y no se rediseña.
+Secuencia inmediata, que sustituye la cola histórica como prioridad:
 
-Las siguientes WOs son una cola orientativa. Cada una necesita autorización concreta.
+1. `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01`;
+2. `WO-FH-RAW-STATISTICS-CUTOVER-01`;
+3. `WO-FH-EVALUATION-PACKAGE-01`;
+4. `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip;
+5. PostgreSQL/servidor local mediante el mismo Data Port.
+
+La tabla siguiente es backlog histórico orientativo. Cada unidad necesita autorización concreta y no se antepone a la secuencia inmediata.
 
 | Orden | WO | Objetivo | Condición |
 |---:|---|---|---|
