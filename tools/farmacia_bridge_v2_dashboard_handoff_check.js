@@ -51,15 +51,44 @@ test('incompatible workbook rejected', () => rejects(() => H.validatePayload(pay
 test('function and cycle rejected', () => { const p = payload(); p.quick_view.bad = () => {}; rejects(() => H.validatePayload(p), 'HANDOFF_NON_SERIALIZABLE'); const q = payload(); q.quick_view.cycle = q; rejects(() => H.validatePayload(q), 'HANDOFF_NON_SERIALIZABLE'); });
 test('invalid origin/source envelope is rejected by helpers', () => { const n = H.generateNonce(); assert(!H.validateEnvelope(H.createReady(n), H.readyType, H.generateNonce())); });
 test('fragment without nonce rejected', () => { assert.strictEqual(H.parseFragment('#bridge-handoff='), null); assert(H.hasFragmentMarker('#bridge-handoff=')); });
-test('consumers use module TTL and no 1500 timeout', () => {
-    const index = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'farmacia_index.js'), 'utf8');
-    const dashboard = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'farmacia_dashboard_paciente.js'), 'utf8');
-    assert(index.includes('handoff.sessionTtlMs') && dashboard.includes('handoff.sessionTtlMs'));
-    assert(!index.includes('45000') && !dashboard.includes('45000') && !dashboard.includes('1500'));
+test('retired handoff is not wired into supported patient pages', () => {
+    const indexJs = fs.readFileSync(
+        path.join(__dirname, '..', 'scripts', 'farmacia_index.js'),
+        'utf8'
+    );
+    const dashboardJs = fs.readFileSync(
+        path.join(__dirname, '..', 'scripts', 'farmacia_dashboard_paciente.js'),
+        'utf8'
+    );
+    const indexHtml = fs.readFileSync(
+        path.join(__dirname, '..', 'farmacia_index.html'),
+        'utf8'
+    );
+    const dashboardHtml = fs.readFileSync(
+        path.join(__dirname, '..', 'farmacia_dashboard_paciente.html'),
+        'utf8'
+    );
+
+    assert(!indexJs.includes('FarmaciaBridgeV2DashboardHandoff'));
+    assert(!dashboardJs.includes('FarmaciaBridgeV2DashboardHandoff'));
+    assert(!indexJs.includes('handoff.sessionTtlMs'));
+    assert(!dashboardJs.includes('handoff.sessionTtlMs'));
+
+    assert(!indexHtml.includes('farmacia_bridge_v2_dashboard_handoff.js'));
+    assert(!dashboardHtml.includes('farmacia_bridge_v2_dashboard_handoff.js'));
 });
-test('Quick View message says dashboard is available', () => {
-    const index = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'farmacia_index.js'), 'utf8');
-    assert(index.includes('El dashboard Bridge está disponible como lectura temporal'));
-    assert(!index.includes('El dashboard y los formularios todavía no están conectados'));
+
+test('retired public Bridge messages remain absent', () => {
+    const indexJs = fs.readFileSync(
+        path.join(__dirname, '..', 'scripts', 'farmacia_index.js'),
+        'utf8'
+    );
+
+    assert(!indexJs.includes(
+        'El dashboard Bridge está disponible como lectura temporal'
+    ));
+    assert(!indexJs.includes(
+        'El dashboard y los formularios todavía no están conectados'
+    ));
 });
 console.log(`farmacia_bridge_v2_dashboard_handoff_check: PASS (${passed} cases)`);
