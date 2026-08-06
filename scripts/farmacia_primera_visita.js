@@ -586,6 +586,7 @@
         var input = document.createElement('input');
         input.type = 'radio';
         input.name = 'dlqi_q' + qId + (suffix ? '_' + suffix : '');
+        input.id = 'fhPvDlqiQ' + qId + (suffix ? suffix.toUpperCase() : '') + 'V' + (value === null ? 'trigger' : String(value));
         input.setAttribute('data-dlqi-q', String(qId));
         if (typeof value === 'number') input.setAttribute('data-dlqi-val', String(value));
         if (isQ7Trigger) input.setAttribute('data-dlqi-q7-trigger', '');
@@ -661,20 +662,36 @@
         }
     }
 
-    function setupPromsToggle() {
+    function syncFirstVisitVisualState() {
         var promsSelect = document.getElementById('fhPvProms');
         var expanded = document.getElementById('fhPvPromsExpanded');
-        if (!promsSelect || !expanded) return;
-        function toggle() {
-            if (promsSelect.value === 'Sí') {
-                expanded.classList.remove('hidden');
-                calculateDLQI();
-            } else {
-                expanded.classList.add('hidden');
-            }
+        if (promsSelect && expanded) {
+            expanded.classList.toggle('hidden', promsSelect.value !== 'Sí');
+            var q7Followup = expanded.querySelector('.dlqi-card__followup');
+            var q7Trigger = expanded.querySelector('input[data-dlqi-q7-trigger]:checked');
+            if (q7Followup) q7Followup.classList.toggle('hidden', !q7Trigger);
+            var dolorRange = document.getElementById('fhPvEvaDolorRange');
+            var dolorValue = document.getElementById('fhPvEvaDolorValue');
+            var pruritoRange = document.getElementById('fhPvEvaPruritoRange');
+            var pruritoValue = document.getElementById('fhPvEvaPruritoValue');
+            if (dolorRange && dolorValue) dolorValue.textContent = dolorRange.value;
+            if (pruritoRange && pruritoValue) pruritoValue.textContent = pruritoRange.value;
+            if (promsSelect.value === 'Sí') calculateDLQI();
         }
-        promsSelect.addEventListener('change', toggle);
-        toggle();
+        [['fhPvPauta', 'fhPvPautaOtro', 'OTRO'], ['fhPvServicio', 'fhPvServicioOtro', 'Otro'],
+            ['fhPvPatologia', 'fhPvPatologiaOtro', 'Otra']].forEach(function (ids) {
+                var select = document.getElementById(ids[0]);
+                var other = document.getElementById(ids[1]);
+                if (select && other) other.classList.toggle('hidden', select.value !== ids[2]);
+            });
+        applyTratamientoValidado(getCurrentContext());
+    }
+
+    function setupPromsToggle() {
+        var promsSelect = document.getElementById('fhPvProms');
+        if (!promsSelect) return;
+        promsSelect.addEventListener('change', syncFirstVisitVisualState);
+        syncFirstVisitVisualState();
     }
 
     function getEVADolor() {
@@ -1573,6 +1590,7 @@
         var draftScope = document.querySelector('main.main-content');
         if (runtime && draftScope) {
             runtime.restorePageDraft('primera_visita', draftScope);
+            syncFirstVisitVisualState();
             runtime.bindPageDraft('primera_visita', draftScope);
         }
     });

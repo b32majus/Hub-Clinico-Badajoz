@@ -189,7 +189,9 @@
                     pauta: line.pauta || '',
                     via: line.via || '',
                     fecha_inicio: line.fecha_inicio || '',
-                    fecha_fin: line.fecha_fin || ''
+                    fecha_fin: line.fecha_fin || '',
+                    estado_linea: line.estado_linea || 'unknown',
+                    tipo_relacion: line.tipo_relacion || 'unknown'
                 };
                 if (line.active_at_event === true || line.active_at_event === false) treatment.activo = line.active_at_event;
                 return treatment;
@@ -336,6 +338,23 @@
             container.appendChild(visitField);
         }
 
+        if (patient.__farmaciaRawPatient) {
+            treatments.filter(function (treatment) { return !parseDate(treatment.fecha_inicio); }).forEach(function (treatment) {
+                var state = String(treatment.estado_linea || 'unknown').toLowerCase();
+                var stateLabel = state === 'active' ? 'Activo'
+                    : (state === 'completed' || state === 'historical' || state === 'historico' ? 'Finalizado'
+                        : (state === 'suspended' ? 'Suspendido'
+                            : (state === 'validated_not_started' ? 'Validado, pendiente de inicio' : 'No registrado')));
+                var relation = String(treatment.tipo_relacion || 'unknown').toLowerCase();
+                var relationLabel = relation === 'primary' || relation === 'principal' || relation === 'base' ? 'Principal'
+                    : (relation === 'additional' || relation === 'adicional' ? 'Adicional' : 'Relación no registrada');
+                container.appendChild(buildInfoField(
+                    treatment.nombre_comercial || treatment.principio_activo || treatment.linea_id || 'Línea',
+                    'Fecha no registrada · ' + stateLabel + ' · ' + relationLabel
+                ));
+            });
+        }
+
         var allDates = [];
         for (var i = 0; i < treatments.length; i++) {
             var td = parseDate(treatments[i].fecha_inicio);
@@ -390,13 +409,14 @@
         for (var bi = 0; bi < treatments.length; bi++) {
             var t = treatments[bi];
             var activityKnown = Object.prototype.hasOwnProperty.call(t, 'activo');
+            var isActive = patient.__farmaciaRawPatient ? t.activo === true : !!t.activo;
             var startDate = parseDate(t.fecha_inicio);
             if (!startDate) { continue; }
 
             var endDate;
             if (t.fecha_fin) {
                 endDate = parseDate(t.fecha_fin);
-            } else if (t.activo) {
+            } else if (isActive) {
                 endDate = maxDate;
             } else {
                 endDate = startDate;
@@ -406,9 +426,9 @@
             var bandRow = divEl('longitudinal-treatment-band-row');
 
             var statusClass = activityKnown ? 'longitudinal-treatment-band--previous' : 'longitudinal-treatment-band--unknown';
-            if (t.activo && !t.fecha_fin) {
+            if (isActive && !t.fecha_fin) {
                 statusClass = 'longitudinal-treatment-band--active';
-            } else if (!t.activo && t.motivo_suspension) {
+            } else if (!isActive && t.motivo_suspension) {
                 statusClass = 'longitudinal-treatment-band--suspended';
             }
 
@@ -447,7 +467,7 @@
 
             var dates = divEl('longitudinal-treatment-band__dates');
             dates.appendChild(span('Inicio: ' + (t.fecha_inicio || '—'), 'longitudinal-treatment-band__date'));
-            var endLabel = t.fecha_fin ? t.fecha_fin : (t.activo === true ? 'Activo' : (activityKnown ? 'No activo' : 'No registrado'));
+            var endLabel = t.fecha_fin ? t.fecha_fin : (isActive ? 'Activo' : (activityKnown ? 'No activo' : 'No registrado'));
             dates.appendChild(span('Fin: ' + endLabel, 'longitudinal-treatment-band__date'));
             band.appendChild(dates);
 

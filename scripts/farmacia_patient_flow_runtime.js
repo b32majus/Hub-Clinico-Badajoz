@@ -17,7 +17,7 @@
         'tb_status', 'hbv_status', 'hcv_status', 'hiv_status', 'vaccination_status',
         'vaccination_observations', 'preventive_medicine_status', 'validation_blockers_json',
         'recurrent_infections_status', 'cardiovascular_risk_status',
-        'neurologic_disorder_status', 'malignancy_risk_status'
+        'neurologic_disorder_status', 'neoplasia_history_or_risk_status'
     ];
 
     function own(object, key) {
@@ -69,7 +69,14 @@
             hcv_status: 'serologiasVhc',
             hiv_status: 'serologiasVih',
             vaccination_status: 'vacunacion',
-            vaccination_observations: 'observaciones'
+            vaccination_observations: 'observaciones',
+            recurrent_infections_status: 'infeccionesRecurrentes',
+            cardiovascular_risk_status: 'riesgoCardiovascular',
+            neurologic_disorder_status: 'alteracionesNeurologicas',
+            neoplasia_history_or_risk_status: 'riesgoNeoplasia',
+            prebiologic_overall_status: 'estadoGlobalPrebiologico',
+            preventive_medicine_status: 'medicinaPreventiva',
+            validation_blockers_json: 'bloqueosPrebiologicos'
         };
         var mapped = {};
         Object.keys(fieldMap).forEach(function (key) {
@@ -84,13 +91,27 @@
         return value && typeof value === 'object' ? [value] : [];
     }
 
+    function canonicalJson(value) {
+        if (Array.isArray(value)) return '[' + value.map(canonicalJson).join(',') + ']';
+        if (value && typeof value === 'object') {
+            return '{' + Object.keys(value).sort().map(function (key) {
+                return JSON.stringify(key) + ':' + canonicalJson(value[key]);
+            }).join(',') + '}';
+        }
+        return JSON.stringify(value);
+    }
+
     function structuredProms(records) {
         var result = [];
+        var seen = {};
         (records || []).forEach(function (record) {
             jsonItems(record && record.values && record.values.proms_json).forEach(function (item) {
                 if (!item || typeof item !== 'object') return;
                 var instrument = firstPresent(item.instrument, item.type);
                 if (!present(instrument)) return;
+                var key = String(record.source_event_id || '') + '\u0000' + canonicalJson(item);
+                if (seen[key]) return;
+                seen[key] = true;
                 var prom = { tipo_prom: instrument };
                 if (own(item, 'value')) prom.valor = clone(item.value);
                 if (present(item.date)) prom.fecha = item.date;
@@ -117,33 +138,33 @@
         return result;
     }
 
-    function adverseEvents(records, assessments, followupDate) {
-        var result = [];
-        var seen = {};
+    function adverseEvents(records, assessments, metadata) {
+        var byId = {};
+        var order = [];
         (records || []).forEach(function (record) {
             var values = record && record.values || {};
             if (values.adverse_event_status !== 'present') return;
             var key = firstPresent(values.adverse_event_id, record.source_event_id);
-            if (seen[key]) return;
-            seen[key] = true;
+            if (!own(byId, key)) order.push(key);
             var suspects = Array.isArray(values.adverse_event_suspects_json) ? values.adverse_event_suspects_json : [];
             var suspectRefs = suspects.map(function (suspect) { return suspect && suspect.suspect_ref; }).filter(present);
             var linkedAssessments = (assessments || []).filter(function (assessment) {
                 return assessment.source_event_id === record.source_event_id
                     && (!present(assessment.suspect_ref) || suspectRefs.indexOf(assessment.suspect_ref) !== -1);
             });
-            result.push({
+            var eventMetadata = metadata && metadata[record.source_event_id] || {};
+            byId[key] = {
                 ea_id: values.adverse_event_id || '',
                 tipo: values.adverse_event_description || '',
                 gravedad: values.adverse_event_severity || '',
                 resultado: values.adverse_event_resolution_status || '',
                 accion_tomada: values.adverse_event_action || '',
-                fecha: followupDate || '',
+                fecha: firstPresent(eventMetadata.visit_date, eventMetadata.occurred_at),
                 sospechosos: suspectRefs.map(function (reference) { return { linea_id: reference }; }),
                 evaluaciones_causalidad: clone(linkedAssessments)
-            });
+            };
         });
-        return result;
+        return order.map(function (key) { return byId[key]; });
     }
 
     function lineFromSnapshot(entry) {
@@ -185,8 +206,22 @@
             if (event.event_type !== 'pharmacy_validation') return;
             var row = rowFromEvent(event);
             VALIDATION_CONTEXT_FIELDS.forEach(function (field) {
-                if (own(row, field)) result[field] = clone(row[field]);
+                if (own(row, field) && present(row[field])) result[field] = clone(row[field]);
             });
+        });
+        return result;
+    }
+
+    function eventMetadata(events) {
+        var result = {};
+        (events || []).forEach(function (event) {
+            if (!event || !present(event.source_event_id)) return;
+            var row = rowFromEvent(event);
+            result[event.source_event_id] = {
+                visit_date: own(row, 'visit_date') && present(row.visit_date) ? clone(row.visit_date) : '',
+                occurred_at: firstPresent(event.occurred_at, row.occurred_at),
+                recorded_at: firstPresent(event.recorded_at, row.recorded_at)
+            };
         });
         return result;
     }
@@ -298,7 +333,7 @@
                 var row = rowFromEvent(event);
                 return { fecha: row.first_visit_date || row.visit_date || '', tipo: event.event_type, line_id: row.line_id || '' };
             }),
-            eventos_adversos: adverseEvents(explicit.safety && explicit.safety.adverse_events, causality, followupDate),
+            eventos_adversos: adverseEvents(explicit.safety && explicit.safety.adverse_events, causality, explicit.event_metadata),
             structured_proms: clone(explicit.proms),
             adherence_records: clone(explicit.adherence),
             adverse_event_records: clone(explicit.safety && explicit.safety.adverse_events || []),
@@ -433,7 +468,8 @@
                 proms: dataPort.getProms(patientId) || [],
                 adherence: dataPort.getAdherence(patientId) || [],
                 safety: dataPort.getAdverseEventsAndCausality(patientId) || { adverse_events: [], causality_assessments: [] },
-                validation_context: validationContext(events)
+                validation_context: validationContext(events),
+                event_metadata: eventMetadata(events)
             };
         }
 

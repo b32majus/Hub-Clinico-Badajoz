@@ -293,9 +293,15 @@ test('explicit induction, prebiologic, PROM, adherence, adverse event and causal
   explicitPort.getPatientEvents = patientId => [event(patientId, 'pharmacy_validation', {
     analysis_date: '2026-08-04', analysis_recent_status: 'not_recorded', hemogram_verified: false,
     biochemistry_verified: true, tb_status: 'negative', hbv_status: 'pending', hcv_status: 'negative',
-    hiv_status: 'negative', vaccination_status: 'no', vaccination_observations: 'Explicit observation'
+    hiv_status: 'negative', vaccination_status: 'no', vaccination_observations: 'Explicit observation',
+    recurrent_infections_status: 'yes', cardiovascular_risk_status: 'no',
+    neurologic_disorder_status: 'not_recorded', neoplasia_history_or_risk_status: 'yes',
+    preventive_medicine_status: 'pending', validation_blockers_json: { blocked: false }
   })];
-  explicitPort.getProms = () => [{ values: { proms_json: { measurements: [{ instrument: 'RAW_PROM', value: 0, date: '2026-08-04' }] } } }];
+  explicitPort.getProms = () => [
+    { source_event_id: 'prom-event', values: { proms_json: { measurements: [{ instrument: 'RAW_PROM', value: 0, date: '2026-08-04' }, { instrument: 'RAW_FALSE', value: false }] } } },
+    { source_event_id: 'prom-event', values: { proms_json: { measurements: [{ instrument: 'RAW_PROM', value: 0, date: '2026-08-04' }, { instrument: 'RAW_FALSE', value: false }] } } }
+  ];
   explicitPort.getAdherence = () => [{ values: { adherence_result: '0', adherence_answers_json: { answer: false } } }];
   explicitPort.getAdverseEventsAndCausality = () => ({
     adverse_events: [{ source_event_id: 'followup-a', values: {
@@ -313,14 +319,51 @@ test('explicit induction, prebiologic, PROM, adherence, adverse event and causal
   assert.deepEqual(patient.analiticaEstruct, {
     fecha: '2026-08-04', reciente: 'not_recorded', hemograma: false, bioquimica: true,
     mantoux: 'negative', serologiasVhb: 'pending', serologiasVhc: 'negative',
-    serologiasVih: 'negative', vacunacion: 'no', observaciones: 'Explicit observation'
+    serologiasVih: 'negative', vacunacion: 'no', observaciones: 'Explicit observation',
+    infeccionesRecurrentes: 'yes', riesgoCardiovascular: 'no', alteracionesNeurologicas: 'not_recorded',
+    riesgoNeoplasia: 'yes', medicinaPreventiva: 'pending', bloqueosPrebiologicos: { blocked: false }
   });
-  assert.deepEqual(patient.proms, [{ tipo_prom: 'RAW_PROM', valor: 0, fecha: '2026-08-04' }]);
+  assert.deepEqual(patient.proms, [
+    { tipo_prom: 'RAW_PROM', valor: 0, fecha: '2026-08-04' },
+    { tipo_prom: 'RAW_FALSE', valor: false }
+  ]);
   assert.equal(patient.adherencia, '0');
   assert.equal(patient.eventos_adversos.length, 1);
   assert.equal(patient.eventos_adversos[0].tipo, 'Explicit AE');
   assert.equal(patient.eventos_adversos[0].evaluaciones_causalidad[0].score, 0);
   assert.equal(patient.eventos_adversos[0].evaluaciones_causalidad[0].assessed, false);
+});
+
+test('adverse event updates keep latest explicit act date and matching causality', () => {
+  const explicitPort = port();
+  const datedEvent = (sourceEventId, visitDate, occurredAt) => ({
+    patient_id: 'patient-a', event_type: 'pharmacy_followup', source_event_id: sourceEventId,
+    occurred_at: occurredAt, recorded_at: `${occurredAt.slice(0, 10)}T12:00:00Z`,
+    rows: [{ canonical_row: { patient_id: 'patient-a', event_type: 'pharmacy_followup', visit_date: visitDate } }]
+  });
+  explicitPort.getPatientEvents = () => [
+    datedEvent('ea-old-source', '2026-08-05', '2026-08-05T10:00:00Z'),
+    datedEvent('ea-new-source', '2026-08-07', '2026-08-07T10:00:00Z'),
+    datedEvent('ea-other-source', '2026-08-09', '2026-08-09T10:00:00Z')
+  ];
+  explicitPort.getAdverseEventsAndCausality = () => ({
+    adverse_events: [
+      { source_event_id: 'ea-old-source', values: { adverse_event_id: 'ea-shared', adverse_event_status: 'present', adverse_event_description: 'Old AE', adverse_event_suspects_json: [{ suspect_ref: 'line-a' }] } },
+      { source_event_id: 'ea-new-source', values: { adverse_event_id: 'ea-shared', adverse_event_status: 'present', adverse_event_description: 'Updated AE', adverse_event_suspects_json: [{ suspect_ref: 'line-a' }] } },
+      { source_event_id: 'ea-other-source', values: { adverse_event_id: 'ea-other', adverse_event_status: 'present', adverse_event_description: 'Other AE', adverse_event_suspects_json: [] } }
+    ],
+    causality_assessments: [
+      { source_event_id: 'ea-old-source', values: { causality_assessments_json: [{ suspect_ref: 'line-a', method: 'OLD' }] } },
+      { source_event_id: 'ea-new-source', values: { causality_assessments_json: [{ suspect_ref: 'line-a', method: 'LATEST' }] } }
+    ]
+  });
+  const patient = harness(storage(), '', () => true, explicitPort).runtime.selectByCip('CIP-A').patient;
+  assert.equal(patient.eventos_adversos.length, 2);
+  assert.equal(patient.eventos_adversos[0].tipo, 'Updated AE');
+  assert.equal(patient.eventos_adversos[0].fecha, '2026-08-07');
+  assert.equal(patient.eventos_adversos[0].evaluaciones_causalidad.length, 1);
+  assert.equal(patient.eventos_adversos[0].evaluaciones_causalidad[0].method, 'LATEST');
+  assert.equal(patient.eventos_adversos[1].fecha, '2026-08-09');
 });
 
 test('not_recorded adverse event never materializes an event', () => {
@@ -406,11 +449,22 @@ test('all normal pages load the shared runtime and no retired UI remains', () =>
   assert.match(indexSource, /discardPendingChanges:\s*true/);
   assert.doesNotMatch(runtimeSource, /nombre:\s*['"]Paciente ['"]\s*\+/);
   assert.doesNotMatch(runtimeSource, /fuente:\s*['"]farmacia_raw['"]/);
+  assert.doesNotMatch(runtimeSource, /malignancy_risk_status/);
+  assert.match(runtimeSource, /neoplasia_history_or_risk_status/);
   assert.match(firstVisitSource, /solicitud\s*&&\s*ctx\.patient\.solicitud\.requested_induction_status/);
   assert.doesNotMatch(firstVisitSource, /tratamientoValidado\s*&&\s*ctx\.patient\.tratamientoValidado\.induccion/);
   assert.match(longitudinalSource, /proms:\s*patient\.proms\s*\|\|\s*\[\]/);
-  for (const [source, pageKey] of [[validationSource, 'validacion'], [firstVisitSource, 'primera_visita'], [followupSource, 'seguimiento']]) {
+  assert.match(longitudinalSource, /patient\.__farmaciaRawPatient\s*\?\s*t\.activo\s*===\s*true/);
+  assert.match(longitudinalSource, /Fecha no registrada/);
+  assert.match(dashboardSource, /validated_not_started/);
+  assert.match(dashboardSource, /Relación no registrada/);
+  for (const [source, pageKey, syncName] of [
+    [validationSource, 'validacion', 'syncValidationVisualState'],
+    [firstVisitSource, 'primera_visita', 'syncFirstVisitVisualState'],
+    [followupSource, 'seguimiento', 'syncFollowupVisualState']
+  ]) {
     assert.match(source, new RegExp(`restorePageDraft\\('${pageKey}'`));
+    assert.match(source, new RegExp(`restorePageDraft\\('${pageKey}'[\\s\\S]*${syncName}\\(\\)[\\s\\S]*bindPageDraft\\('${pageKey}'`));
     assert.match(source, new RegExp(`bindPageDraft\\('${pageKey}'`));
   }
 });

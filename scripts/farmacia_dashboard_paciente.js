@@ -9,6 +9,13 @@
         if (!hasExplicit(value) || value === 'not_recorded') return fallback || 'No registrado';
         return String(value);
     }
+    function prebiologicText(value) {
+        if (!hasExplicit(value) || value === 'not_recorded') return 'No registrado';
+        if (value === true || value === 'yes') return 'Sí';
+        if (value === false || value === 'no') return 'No';
+        if (value === 'pending') return 'Pendiente';
+        return typeof value === 'object' ? JSON.stringify(value) : String(value);
+    }
     function timelineItem(date, title, description) {
         const item = document.createElement('div');
         item.className = 'timeline-item';
@@ -158,6 +165,13 @@
             var details = [];
             if (hasExplicit(patient.analiticaEstruct.fecha)) details.push('Fecha: ' + patient.analiticaEstruct.fecha);
             if (hasExplicit(patient.analiticaEstruct.observaciones)) details.push('Observaciones: ' + patient.analiticaEstruct.observaciones);
+            details.push('Infecciones recurrentes: ' + prebiologicText(patient.analiticaEstruct.infeccionesRecurrentes));
+            details.push('Riesgo cardiovascular: ' + prebiologicText(patient.analiticaEstruct.riesgoCardiovascular));
+            details.push('Alteraciones neurológicas: ' + prebiologicText(patient.analiticaEstruct.alteracionesNeurologicas));
+            details.push('Neoplasia: ' + prebiologicText(patient.analiticaEstruct.riesgoNeoplasia));
+            details.push('Medicina Preventiva: ' + prebiologicText(patient.analiticaEstruct.medicinaPreventiva));
+            details.push('Estado prebiológico: ' + prebiologicText(patient.analiticaEstruct.estadoGlobalPrebiologico));
+            details.push('Bloqueos: ' + prebiologicText(patient.analiticaEstruct.bloqueosPrebiologicos));
             meta.textContent = details.length ? details.join(' · ') : 'No registrado';
             wrapper.appendChild(meta);
         }
@@ -280,19 +294,26 @@
         });
     }
 
-    function biologicStateLabel(state) {
-        if (state === 'activo') return 'Activo';
-        if (state === 'anadido' || state === 'añadido') return 'Añadido';
-        if (state === 'suspendido') return 'Suspendido';
-        if (state === 'historico') return 'Histórico';
-        return 'Sin clasificar';
+    function biologicStateLabel(state, raw) {
+        var value = String(state || '').toLowerCase().trim();
+        if (value === 'active' || value === 'activo') return 'Activo';
+        if (value === 'completed' || value === 'finalizado') return 'Finalizado';
+        if (value === 'historical' || value === 'historico') return 'Histórico';
+        if (value === 'suspended' || value === 'suspendido') return 'Suspendido';
+        if (value === 'validated_not_started') return 'Validado, pendiente de inicio';
+        if (value === 'unknown' || !value) return 'No registrado';
+        if (value === 'anadido' || value === 'añadido') return 'Añadido';
+        return raw ? 'No registrado' : 'Sin clasificar';
     }
 
-    function biologicRelationLabel(type) {
-        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
-        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
-        if (type === 'base') return 'Línea terapéutica base';
-        return 'Seguimiento';
+    function biologicRelationLabel(type, raw) {
+        var value = String(type || '').toLowerCase().trim();
+        if (value === 'primary' || value === 'principal' || value === 'base') return 'Principal';
+        if (value === 'additional' || value === 'adicional') return 'Adicional';
+        if (value === 'unknown' || !value) return 'Relación no registrada';
+        if (value === 'cambio_terapeutico' || value === 'cambio_farmaco') return 'Switch terapéutico';
+        if (value === 'tratamiento_anadido' || value === 'tratamiento_añadido') return 'Add-on terapéutico';
+        return raw ? 'Relación no registrada' : 'Seguimiento';
     }
 
     function renderBiologicLines(patient) {
@@ -316,8 +337,12 @@
             var label = document.createElement('span');
             label.className = 'info-field__label';
             var labelParts = ['L' + (line.orden || '?')];
-            if (line.estado_linea) labelParts.push(biologicStateLabel(line.estado_linea));
-            if (line.tipo_relacion) labelParts.push(biologicRelationLabel(line.tipo_relacion));
+            if (line.estado_linea || patient.__farmaciaRawPatient) {
+                labelParts.push(patient.__farmaciaRawPatient ? biologicStateLabel(line.estado_linea, true) : biologicStateLabel(line.estado_linea));
+            }
+            if (line.tipo_relacion || patient.__farmaciaRawPatient) {
+                labelParts.push(patient.__farmaciaRawPatient ? biologicRelationLabel(line.tipo_relacion, true) : biologicRelationLabel(line.tipo_relacion));
+            }
             label.textContent = labelParts.join(' · ');
             var value = document.createElement('span');
             value.className = 'info-field__value';

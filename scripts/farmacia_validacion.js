@@ -694,6 +694,17 @@
                 }
                 if (an.vacunacion) F.setValue('fhAnaliticaVacunacion', an.vacunacion);
                 if (an.observaciones) F.setValue('fhAnaliticaObservaciones', an.observaciones);
+                var triStateControls = {
+                    infeccionesRecurrentes: 'fhDermaComorbInfeccionesRecurrentes',
+                    riesgoCardiovascular: 'fhDermaComorbRiesgoCardiovascular',
+                    alteracionesNeurologicas: 'fhDermaComorbAlteracionesNeurologicas',
+                    riesgoNeoplasia: 'fhDermaComorbRiesgoNeoplasia'
+                };
+                Object.keys(triStateControls).forEach(function (key) {
+                    if (!Object.prototype.hasOwnProperty.call(an, key)) return;
+                    var value = an[key] === 'yes' ? 'si' : (an[key] === 'no' ? 'no' : '');
+                    F.setValue(triStateControls[key], value);
+                });
             }
 
             if (p.comorbilidades) {
@@ -767,7 +778,7 @@
     }
 
     function normalizePbValue(rawValue, key) {
-        var v = String(rawValue || '').trim();
+        var v = rawValue === null || rawValue === undefined ? '' : String(rawValue).trim();
         var upper = v.toUpperCase();
         if (!v || v === '—') return { text: 'No informado', estado: 'no_informado' };
 
@@ -778,7 +789,7 @@
         };
 
         if (key === 'analiticaReciente') {
-            if (/^(SI|SÍ|OK)$/.test(upper)) return { text: 'OK', estado: 'ok' };
+            if (/^(SI|SÍ|YES|OK)$/.test(upper)) return { text: 'OK', estado: 'ok' };
             if (/^NO$/.test(upper)) return { text: 'Pendiente', estado: 'pendiente' };
             return { text: 'No informado', estado: 'no_informado' };
         }
@@ -788,17 +799,17 @@
             return { text: 'No informado', estado: 'no_informado' };
         }
         if (key === 'mantoux' || key === 'vhb' || key === 'vhc' || key === 'vih') {
-            if (upper.indexOf('NEGATIVO') !== -1) return { text: 'Negativo', estado: 'ok' };
+            if (upper.indexOf('NEGATIVO') !== -1 || upper === 'NEGATIVE' || upper === 'POSITIVE_TREATED') return { text: 'Negativo', estado: 'ok' };
             if (/^(POSITIVO|POSITIVA|ALTERADO|ALTERADA|REACTIVO|REACTIVA)$/.test(upper) || upper.indexOf('POSITIV') !== -1) return { text: 'Positivo/alterado', estado: 'alerta' };
-            if (upper.indexOf('PENDIENTE') !== -1) return { text: 'Pendiente', estado: 'pendiente' };
+            if (upper.indexOf('PENDIENTE') !== -1 || upper === 'PENDING') return { text: 'Pendiente', estado: 'pendiente' };
             if (/^(NO PRECISA|NO_PRECISA|NO APLICA|N\/A|NA)$/.test(upper)) return { text: 'No precisa', estado: 'no_precisa' };
             return { text: 'No informado', estado: 'no_informado' };
         }
         if (key === 'vacunacion') {
-            if (/^(SI|SÍ|OK|COMPLETO|COMPLETADA|COMPLETADO)$/.test(upper)) return { text: 'OK', estado: 'ok' };
+            if (/^(SI|SÍ|YES|OK|COMPLETO|COMPLETADA|COMPLETADO)$/.test(upper)) return { text: 'OK', estado: 'ok' };
             if (/^(NO PRECISA|NO_PRECISA|NO APLICA|N\/A|NA)$/.test(upper)) return { text: 'No precisa', estado: 'no_precisa' };
             if (/^NO$/.test(upper)) return { text: 'No informado', estado: 'no_informado' };
-            if (upper.indexOf('PENDIENTE') !== -1) return { text: 'Pendiente', estado: 'pendiente' };
+            if (upper.indexOf('PENDIENTE') !== -1 || upper === 'PENDING') return { text: 'Pendiente', estado: 'pendiente' };
             return { text: 'No informado', estado: 'no_informado' };
         }
         return { text: v, estado: 'no_informado' };
@@ -838,7 +849,7 @@
         setPbChip('pbChipVhc', normalizePbValue(an ? (an.serologiasVhc || '') : (enf ? enf.vhc_estado : byId('fhAnaliticaSerologiasVhc').value), 'vhc'));
         setPbChip('pbChipVih', normalizePbValue(an ? (an.serologiasVih || '') : (enf ? enf.vih_estado : byId('fhAnaliticaSerologiasVih').value), 'vih'));
         setPbChip('pbChipVacunacion', normalizePbValue(an ? an.vacunacion : (enf ? enf.medicina_preventiva_estado : byId('fhAnaliticaVacunacion').value), 'vacunacion'));
-        setPbChip('pbChipMedPreventiva', normalizePbValue(enf ? enf.medicina_preventiva_estado : (an ? an.vacunacion : ''), 'vacunacion'));
+        setPbChip('pbChipMedPreventiva', normalizePbValue(enf ? enf.medicina_preventiva_estado : (an ? an.medicinaPreventiva : ''), 'vacunacion'));
         /* Mirror upper section chips */
         var upperChipIds = [
             'upperPbChipAnaliticaReciente', 'upperPbChipMantoux', 'upperPbChipIgra',
@@ -2599,6 +2610,40 @@
         byId("btnApplyKl").addEventListener("click", applyKarchLasagnaToFinal);
     }
 
+    function syncValidationVisualState() {
+        var origin = currentOrigenEntradaValue();
+        if (origin === 'manual_farmacia') {
+            var restoredPathology = byId('fhPatologiaManual') ? byId('fhPatologiaManual').value : '';
+            onServicioManualChange();
+            if (restoredPathology && byId('fhPatologiaManual')) byId('fhPatologiaManual').value = restoredPathology;
+            onPatologiaManualChange();
+        } else {
+            mostrarFormulario(origin);
+        }
+        toggleHSBlock();
+        toggleDermaConditionalDetails();
+        toggleBioAdaDetalle();
+        toggleBioOtrosDetalle();
+        toggleOtrosAtbDetalle();
+        byId('fhValPendingReasonRow').classList.toggle('hidden', byId('fhValEstado').value !== 'pending');
+        byId('fhValMotivoRow').classList.toggle('hidden', byId('fhValEstado').value !== 'denied');
+        [['fhManualPauta', 'fhManualPautaOtro'], ['fhDermaPauta', 'fhDermaPautaOtro'],
+            ['fhDigPauta', 'fhDigPautaOtro'], ['fhValidadoPauta', 'fhValidadoPautaOtro']]
+            .forEach(function (ids) {
+                var select = byId(ids[0]);
+                var other = byId(ids[1]);
+                if (select && other) other.classList.toggle('hidden', select.value !== 'OTRO');
+            });
+        document.querySelectorAll('[data-chip-target]').forEach(function (group) {
+            var hidden = byId(group.getAttribute('data-chip-target'));
+            if (hidden) syncRadioGroup(group, hidden.value);
+        });
+        updateValidationModuleSummaries();
+        toggleCausalityModules();
+        updateValidationExcelExportAvailability();
+        updateValidationV2ExportAvailability();
+    }
+
     function bindCoreEvents() {
         var origenSel = byId("fhOrigenEntrada");
         if (origenSel) origenSel.addEventListener("change", function () {
@@ -2762,7 +2807,7 @@
         var draftScope = document.querySelector('main.main-content');
         if (runtime && draftScope) {
             runtime.restorePageDraft('validacion', draftScope);
-            updateValidationModuleSummaries();
+            syncValidationVisualState();
             runtime.bindPageDraft('validacion', draftScope);
         }
     });

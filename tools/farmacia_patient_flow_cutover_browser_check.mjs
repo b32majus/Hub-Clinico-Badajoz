@@ -87,7 +87,14 @@ function rawWorkbookBuffer() {
     hcv_status: 'negative',
     hiv_status: 'negative',
     vaccination_status: 'no',
-    vaccination_observations: 'PREBIO-EXPLICITO-A'
+    vaccination_observations: 'PREBIO-EXPLICITO-A',
+    preventive_medicine_status: 'pending',
+    prebiologic_overall_status: 'pending',
+    validation_blockers_json: ['BLOQUEO RAW A'],
+    recurrent_infections_status: 'yes',
+    cardiovascular_risk_status: 'no',
+    neurologic_disorder_status: 'not_recorded',
+    neoplasia_history_or_risk_status: 'yes'
   });
 
   const firstVisit = fixture('first_visit_event_v2.json');
@@ -108,42 +115,55 @@ function rawWorkbookBuffer() {
     line_schedule_other_text: null
   };
 
-  const followupA = fixture('followup_event_v2.json');
-  followupA.event = identify(followupA.event, 'patient-raw-a', CIP_A, 'raw-a');
-  Object.assign(followupA.event, {
-    visit_date: '2026-08-05',
-    proms_json: null,
-    adverse_event_id: 'ea-raw-a',
-    adverse_event_status: 'present',
-    adverse_event_description: 'EA EXPLÍCITO A',
-    adverse_event_severity: 'leve',
-    adverse_event_resolution_status: 'not_recorded',
-    adverse_event_action: 'OBSERVACIÓN EXPLÍCITA A',
-    adverse_event_suspects_json: [{ suspect_ref: 'line-raw-a', reported: true }],
-    causality_assessments_json: [{ suspect_ref: 'line-raw-a', method: 'MÉTODO EXPLÍCITO A', score: 0, assessed: false }]
-  });
-  followupA.rowPayloads = [{
-    ...followupA.rowPayloads[0],
-    rowKey: 'line-raw-a',
-    treatment_id: 'treatment-raw-a',
-    line_id: 'line-raw-a',
-    line_role: 'primary',
-    is_primary_line: true,
-    line_status_at_event: 'active',
-    active_at_event: true,
-    line_drug_name: 'Activo RAW A',
-    line_active_ingredient: 'Principio activo RAW A',
-    line_dose_text: '',
-    line_route: null,
-    line_schedule_label: null,
-    adherence_collection_status: 'yes',
-    adherence_instrument: 'ESCALA EXPLÍCITA A',
-    adherence_result: '0',
-    adherence_answers_json: [{ question: 'q1', answer: false }]
-  }];
+  function followupA(suffix, date, adverseId, description, action, method) {
+    const followup = fixture('followup_event_v2.json');
+    followup.event = identify(followup.event, 'patient-raw-a', CIP_A, suffix);
+    Object.assign(followup.event, {
+      occurred_at: `${date}T10:00:00Z`,
+      recorded_at: `${date}T10:40:00Z`,
+      visit_id: `visit-${suffix}`,
+      visit_date: date,
+      proms_json: null,
+      adverse_event_id: adverseId,
+      adverse_event_status: 'present',
+      adverse_event_description: description,
+      adverse_event_severity: 'leve',
+      adverse_event_resolution_status: 'not_recorded',
+      adverse_event_action: action,
+      adverse_event_suspects_json: [{ suspect_ref: 'line-raw-a', reported: true }],
+      causality_assessments_json: [{ suspect_ref: 'line-raw-a', method, score: 0, assessed: false }]
+    });
+    followup.rowPayloads = [{
+      ...followup.rowPayloads[0],
+      rowKey: 'line-raw-a',
+      treatment_id: 'treatment-raw-a',
+      line_id: 'line-raw-a',
+      line_role: 'primary',
+      is_primary_line: true,
+      line_status_at_event: 'active',
+      active_at_event: true,
+      line_drug_name: 'Activo RAW A',
+      line_active_ingredient: 'Principio activo RAW A',
+      line_dose_text: '',
+      line_route: null,
+      line_schedule_label: null,
+      adherence_collection_status: 'yes',
+      adherence_instrument: 'ESCALA EXPLÍCITA A',
+      adherence_result: '0',
+      adherence_answers_json: [{ question: 'q1', answer: false }]
+    }];
+    return followup;
+  }
+
+  const followupAOld = followupA('raw-a-old', '2026-08-05', 'ea-raw-a', 'EA ANTIGUO A', 'ACCIÓN ANTIGUA A', 'MÉTODO ANTIGUO A');
+  const followupANew = followupA('raw-a-new', '2026-08-06', 'ea-raw-a', 'EA ACTUALIZADO A', 'ACCIÓN ACTUALIZADA A', 'MÉTODO ACTUALIZADO A');
+  const followupAOther = followupA('raw-a-other', '2026-08-07', 'ea-raw-a-other', 'EA INDEPENDIENTE A', 'ACCIÓN INDEPENDIENTE A', 'MÉTODO INDEPENDIENTE A');
 
   const followupB = fixture('followup_event_v2.json');
   followupB.event = identify(followupB.event, 'patient-raw-b', CIP_B, 'raw-b');
+  followupB.event.proms_json = {
+    measurements: [{ instrument: 'RAW_PROM_MULTI', value: false, date: '2026-08-08', answered: false }]
+  };
   followupB.event.adverse_event_status = 'not_recorded';
   followupB.event.adverse_event_id = null;
   followupB.event.adverse_event_suspects_json = null;
@@ -153,7 +173,11 @@ function rawWorkbookBuffer() {
     rowKey: `line-raw-b-${index + 1}`,
     treatment_id: `treatment-raw-b-${index + 1}`,
     line_id: `line-raw-b-${index + 1}`,
-    line_drug_name: `Activo RAW B${index + 1}`,
+    line_role: index === 0 ? 'primary' : 'unknown',
+    is_primary_line: index === 0 ? true : null,
+    line_status_at_event: index === 0 ? 'active' : 'unknown',
+    active_at_event: index === 0 ? true : null,
+    line_drug_name: index === 0 ? 'Activo RAW B1' : 'Línea RAW B2',
     line_active_ingredient: `Principio activo RAW B${index + 1}`,
     line_dose_text: null,
     line_route: null,
@@ -169,7 +193,9 @@ function rawWorkbookBuffer() {
   const rows = [
     ...core.projectEventRows(validation.event, validation.rowPayloads),
     ...core.projectEventRows(firstVisit.event, firstVisit.rowPayloads),
-    ...core.projectEventRows(followupA.event, followupA.rowPayloads),
+    ...core.projectEventRows(followupAOld.event, followupAOld.rowPayloads),
+    ...core.projectEventRows(followupANew.event, followupANew.rowPayloads),
+    ...core.projectEventRows(followupAOther.event, followupAOther.rowPayloads),
     ...core.projectEventRows(followupB.event, followupB.rowPayloads)
   ];
   const toCells = row => core.serializeRowToTsv(row).split('\t');
@@ -279,12 +305,25 @@ try {
   assert.match(dashboardSummary, /RAW_PROM_A: 0 · 2026-08-04/);
   assert.match(dashboardSummary, /Última adherencia\s*0/i);
   assert.equal((await page.locator('#patientName').textContent()).trim(), 'Paciente actual');
-  assert.match(await page.locator('.fh-dashboard-checks-wrapper').innerText(), /PREBIO-EXPLICITO-A/);
-  assert.doesNotMatch(await page.locator('.fh-dashboard-checks-wrapper').innerText(), /Demo/);
+  const prebiologicDashboard = await page.locator('.fh-dashboard-checks-wrapper').innerText();
+  assert.match(prebiologicDashboard, /PREBIO-EXPLICITO-A/);
+  assert.match(prebiologicDashboard, /Infecciones recurrentes: Sí/);
+  assert.match(prebiologicDashboard, /Riesgo cardiovascular: No/);
+  assert.match(prebiologicDashboard, /Alteraciones neurológicas: No registrado/);
+  assert.match(prebiologicDashboard, /Neoplasia: Sí/);
+  assert.match(prebiologicDashboard, /Medicina Preventiva: Pendiente/);
+  assert.match(prebiologicDashboard, /Estado prebiológico: Pendiente/);
+  assert.match(prebiologicDashboard, /BLOQUEO RAW A/);
+  assert.doesNotMatch(prebiologicDashboard, /Demo/);
   assert.match(await page.locator('#promsDashboardContainer').innerText(), /RAW_PROM_A[\s\S]*0[\s\S]*2026-08-04/);
   const adverseDashboard = await page.locator('#adverseEventsContainer').innerText();
-  assert.match(adverseDashboard, /EA EXPLÍCITO A/);
-  assert.match(adverseDashboard, /MÉTODO EXPLÍCITO A/);
+  assert.equal(await page.locator('#adverseEventsContainer .adverse-event-card').count(), 2);
+  assert.match(adverseDashboard, /EA ACTUALIZADO A — 2026-08-06/);
+  assert.match(adverseDashboard, /ACCIÓN ACTUALIZADA A/);
+  assert.match(adverseDashboard, /MÉTODO ACTUALIZADO A/);
+  assert.match(adverseDashboard, /EA INDEPENDIENTE A — 2026-08-07/);
+  assert.match(adverseDashboard, /MÉTODO INDEPENDIENTE A/);
+  assert.doesNotMatch(adverseDashboard, /EA ANTIGUO A|ACCIÓN ANTIGUA A|MÉTODO ANTIGUO A/);
   assert.match(adverseDashboard, /score: 0/);
   assert.doesNotMatch(await page.locator('body').innerText(), /farmacia_raw/);
   await assertNoRetiredUi();
@@ -297,7 +336,7 @@ try {
   assert.match(longitudinalSummary, new RegExp(CIP_A));
   assert.match(longitudinalSummary, /Paciente actual cargado desde Excel Farmacia/);
   assert.match(longitudinalSummary, /Adherencia\s*0/i);
-  assert.match(longitudinalSummary, /MÉTODO EXPLÍCITO A/);
+  assert.match(longitudinalSummary, /MÉTODO ACTUALIZADO A/);
   assert.match(await page.locator('#longitudinalPromChart').innerText(), /RAW_PROM_A[\s\S]*0/);
   await assertNoRetiredUi();
 
@@ -308,6 +347,11 @@ try {
   assert.equal(await page.locator('#fhValidadoFarmaco').inputValue(), 'Validado RAW A');
   assert.equal(await page.locator('#fhDermaInduccion').inputValue(), 'si');
   assert.equal(await page.locator('#fhValidadoInduccion').inputValue(), 'no');
+  assert.equal(await page.locator('#fhDermaComorbInfeccionesRecurrentes').inputValue(), 'si');
+  assert.equal(await page.locator('#fhDermaComorbRiesgoCardiovascular').inputValue(), 'no');
+  assert.equal(await page.locator('#fhDermaComorbAlteracionesNeurologicas').inputValue(), '');
+  assert.equal(await page.locator('#fhDermaComorbRiesgoNeoplasia').inputValue(), 'si');
+  assert.match(await page.locator('#pbChipMedPreventiva').innerText(), /Pendiente/);
   await page.waitForFunction(() => window.FarmaciaCatalog?.loaded && !document.querySelector('#fhDermaFarmaco')?.disabled);
   await page.locator('#fhDermaFarmaco').fill('adalimumab');
   await page.locator('#autocompleteDropdown .autocomplete-item').first().waitFor();
@@ -392,12 +436,43 @@ try {
   assert.deepEqual(cleanBState.drafts, {});
   await assertNoRetiredUi();
 
-  await clickQuickViewLink('Seguimiento');
+  await clickQuickViewLink('Dashboard');
+  await page.waitForSelector('#patientIdBadge');
+  assert.equal((await page.locator('#patientIdBadge').textContent()).trim(), CIP_B);
+  const activeLineCard = page.locator('#biologicLinesContainer .info-field').filter({ hasText: 'Activo RAW B1' });
+  const unknownLineCard = page.locator('#biologicLinesContainer .info-field').filter({ hasText: 'Línea RAW B2' });
+  assert.match(await activeLineCard.innerText(), /Activo · Principal/i);
+  assert.match(await unknownLineCard.innerText(), /No registrado · Relación no registrada/i);
+  const multiPromCard = page.locator('#promsDashboardContainer .prom-card').filter({ hasText: 'RAW_PROM_MULTI' });
+  assert.equal(await multiPromCard.count(), 1, 'the PROM repeated across event rows is rendered once');
+  assert.match(await multiPromCard.innerText(), /RAW_PROM_MULTI[\s\S]*false[\s\S]*2026-08-08/);
+
+  const longitudinalBHref = await page.locator('#longitudinalStandaloneLink').getAttribute('href');
+  assert(longitudinalBHref && longitudinalBHref.includes('generation='));
+  await page.goto(new URL(longitudinalBHref, BASE).href, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(cip => document.querySelector('#longitudinalPatientSelect')?.value === cip, CIP_B);
+  const activeLongitudinalLine = page.locator('#longitudinalTreatmentTimeline .info-field').filter({ hasText: 'Activo RAW B1' });
+  const unknownLongitudinalLine = page.locator('#longitudinalTreatmentTimeline .info-field').filter({ hasText: 'Línea RAW B2' });
+  assert.match(await activeLongitudinalLine.innerText(), /Fecha no registrada · Activo · Principal/);
+  assert.match(await unknownLongitudinalLine.innerText(), /Fecha no registrada · No registrado · Relación no registrada/);
+  await assertNoRetiredUi();
+
+  await clickLink('Dashboard Paciente');
+  await clickLink('Seguimiento');
   assert.equal(await page.locator('#fhSegCip').inputValue(), CIP_B);
   assert.equal(await page.locator('#fhSegLineCards input').count(), 2);
-  assert.equal(await page.locator('#fhSegLineCards input:checked').count(), 0, 'two active lines are not autoselected');
-  assert.equal(await page.locator('#fhSegLineaPrincipal').inputValue(), '');
+  assert.equal(await page.locator('#fhSegLineCards input:checked').count(), 1, 'the single explicitly active line is autoselected');
+  assert.equal(await page.locator('#fhSegLineaPrincipal').inputValue(), 'line-raw-b-1');
+  assert.match(await page.locator('#fhSegLineCards [data-line-id="line-raw-b-1"]').innerText(), /Principal · Activo/);
+  assert.match(await page.locator('#fhSegLineCards [data-line-id="line-raw-b-2"]').innerText(), /Relación no registrada · No registrado/);
+  assert.equal(await page.locator('#fhSegLineCards [data-line-id="line-raw-b-2"] input').isDisabled(), true);
   await page.locator('#fhSegProms').selectOption({ label: 'Sí, recoger DLQI + EVA dolor/prurito' });
+  assert.equal(await page.locator('#fhSegPromsExpanded').isVisible(), true);
+  await page.locator('#fhSegDlqiQ1V3').check();
+  assert.equal((await page.locator('#fhSegDlqiTotal').textContent()).trim(), '3');
+  const followupPromModel = await page.evaluate(() => window.FarmaciaSeguimiento.buildFollowupVisitExportModel().common_visit);
+  assert.equal(followupPromModel.proms_selection, 'Sí, recoger DLQI + EVA dolor/prurito');
+  assert.equal(followupPromModel.dlqi, '3');
 
   let continueDialog = null;
   page.once('dialog', async dialog => {
@@ -408,6 +483,11 @@ try {
   assert.match(continueDialog || '', /continuar|empezar de cero/i);
   assert.equal(await page.locator('#fhSegCip').inputValue(), CIP_B);
   assert.equal(await page.locator('#fhSegProms').inputValue(), 'Sí, recoger DLQI + EVA dolor/prurito');
+  assert.equal(await page.locator('#fhSegPromsExpanded').isVisible(), true);
+  assert.equal(await page.locator('#fhSegDlqiQ1V3').isChecked(), true);
+  assert.equal((await page.locator('#fhSegDlqiTotal').textContent()).trim(), '3');
+  const restoredPromModel = await page.evaluate(() => window.FarmaciaSeguimiento.buildFollowupVisitExportModel().common_visit);
+  assert.equal(restoredPromModel.dlqi, '3', 'the restored visible PROM answer remains exportable');
 
   let restartDialog = null;
   page.once('dialog', async dialog => {
@@ -423,7 +503,7 @@ try {
   assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
   assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
   console.log('farmacia_patient_flow_cutover_browser_check: PASS');
-  console.log('QA console.error=0 pageerror=0; raw domains/drafts/dirty switch/induction/one-line/two-line/reload verified');
+  console.log('QA console.error=0 pageerror=0; raw prebiologic/PROM/adverse chronology/line status/drafts/reload verified');
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));
