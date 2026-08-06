@@ -144,7 +144,7 @@
         if (s === 'suspendido' || s === 'suspended') return 'Suspendido';
         if (s === 'finalizado' || s === 'finished' || s === 'completed') return 'Finalizado';
         if (s === 'validado_pendiente_inicio' || s === 'validated_not_started') return 'Validado, pendiente de inicio';
-        if (s === 'desconocido' || s === 'unknown') return 'Desconocido';
+        if (s === 'desconocido' || s === 'unknown') return 'No registrado';
         if (s === 'historico' || s === 'historical' || s === 'previo') return 'Histórico';
         if (s === 'validado' || s === 'validated') return 'Validado';
         if (s === 'no_aplica' || s === 'n/a') return 'No aplica';
@@ -153,13 +153,12 @@
     }
 
     function biologicRelationLabel(type) {
-        if (type === 'primary') return 'Principal';
-        if (type === 'additional') return 'Adicional';
-        if (type === 'unknown') return 'Desconocida';
+        if (type === 'primary' || type === 'principal' || type === 'base') return 'Principal';
+        if (type === 'additional' || type === 'adicional') return 'Adicional';
+        if (type === 'unknown' || !type) return 'Relación no registrada';
         if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
         if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
         if (type === 'revision_linea') return 'Revisión de línea';
-        if (type === 'base') return 'Línea terapéutica base';
         return 'Sin cambios';
     }
 
@@ -236,7 +235,7 @@
         var normalized = String(value || '').toLowerCase().trim();
         if (normalized === 'active' || normalized === 'activo') return 'active';
         if (normalized === 'suspended' || normalized === 'suspendido') return 'suspended';
-        if (normalized === 'completed' || normalized === 'finalizado') return 'completed';
+        if (normalized === 'completed' || normalized === 'finalizado' || normalized === 'historical' || normalized === 'historico') return 'completed';
         if (normalized === 'validated_not_started' || normalized === 'validado_pendiente_inicio') return 'validated_not_started';
         if (normalized === 'unknown' || normalized === 'desconocido') return 'unknown';
         return 'unknown';
@@ -1202,6 +1201,17 @@
         byId('resumenKl').textContent = byId('klCategoria').textContent;
     }
 
+    function syncFollowupEaVisualState() {
+        var active = byId('fhSeguimientoEaPresente').value === 'si';
+        ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
+            var row = byId(id);
+            if (row) row.classList.toggle('hidden', !active);
+        });
+        byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
+        byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
+        updateFollowupCausalitySummary();
+    }
+
     function toggleFollowupEaFlow() {
         var value = byId('fhSeguimientoEaPresente').value;
         var adverse = currentFollowupVisit && currentFollowupVisit.adverse_event;
@@ -1210,13 +1220,7 @@
             adverse.suspect_ids = []; adverse.causality_editing_id = ''; currentFollowupVisit.causality_by_suspect = {};
         }
         captureCommonAdverseEvent();
-        var active = value === 'si';
-        ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
-            var row = byId(id);
-            if (row) row.classList.toggle('hidden', !active);
-        });
-        byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
-        byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
+        syncFollowupEaVisualState();
         updateSuspectDrugSelector();
         restoreCausalityEditor();
         updateFollowupCausalitySummary();
@@ -1443,7 +1447,10 @@
             F.setValue('fhSegVia', mapRouteToSelect(ctx.patient.via));
             F.setValue('fhSegFechaInicio', ctx.patient.primeraVisita);
             F.setValue('fhSegUltimaAdherencia', ctx.patient.adherencia);
-            F.setValue('fhSegUltimosProms', ctx.patient.proms);
+            F.setValue('fhSegUltimosProms', Array.isArray(ctx.patient.proms) ? ctx.patient.proms.map(function (prom) {
+                var value = prom.valor === undefined || prom.valor === null || prom.valor === '' ? 'No registrado' : String(prom.valor);
+                return (prom.tipo_prom || 'PROM') + ': ' + value + (prom.fecha ? ' · ' + prom.fecha : '');
+            }).join(' | ') : ctx.patient.proms);
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
 
             F.setValue('fhSegPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '');
@@ -1467,7 +1474,7 @@
             var sourceType = snap ? (snap.source_type || '').toString().toUpperCase() : '';
             var label;
             if (!snap) {
-                label = 'Demo';
+                label = ctx.patient && ctx.patient.__farmaciaRawPatient ? '' : 'Demo';
             } else if (sourceType === 'CIMA') {
                 label = 'CIMA';
             } else if (sourceType === 'LOCAL') {
@@ -2198,6 +2205,7 @@
         var input = document.createElement('input');
         input.type = 'radio';
         input.name = 'dlqi_q' + qId + (suffix ? '_' + suffix : '');
+        input.id = 'fhSegDlqiQ' + qId + (suffix ? suffix.toUpperCase() : '') + 'V' + (value === null ? 'trigger' : String(value));
         input.setAttribute('data-dlqi-q', String(qId));
         if (typeof value === 'number') input.setAttribute('data-dlqi-val', String(value));
         if (isQ7Trigger) input.setAttribute('data-dlqi-q7-trigger', '');
@@ -2271,20 +2279,46 @@
         }
     }
 
-    function setupPromsToggle() {
+    function syncFollowupPromsVisualState() {
         var promsSelect = document.getElementById('fhSegProms');
         var expanded = document.getElementById('fhSegPromsExpanded');
         if (!promsSelect || !expanded) return;
-        function toggle() {
-            if (promsSelect.value === 'Sí, recoger DLQI + EVA dolor/prurito') {
-                expanded.classList.remove('hidden');
-                calculateDLQI();
-            } else {
-                expanded.classList.add('hidden');
-            }
-        }
-        promsSelect.addEventListener('change', toggle);
-        toggle();
+        expanded.classList.toggle('hidden', promsSelect.value !== 'Sí, recoger DLQI + EVA dolor/prurito');
+        var q7Followup = expanded.querySelector('.dlqi-card__followup');
+        var q7Trigger = expanded.querySelector('input[data-dlqi-q7-trigger]:checked');
+        if (q7Followup) q7Followup.classList.toggle('hidden', !q7Trigger);
+        var dolorRange = document.getElementById('fhSegEvaDolorRange');
+        var dolorValue = document.getElementById('fhSegEvaDolorValue');
+        var pruritoRange = document.getElementById('fhSegEvaPruritoRange');
+        var pruritoValue = document.getElementById('fhSegEvaPruritoValue');
+        if (dolorRange && dolorValue) dolorValue.textContent = dolorRange.value;
+        if (pruritoRange && pruritoValue) pruritoValue.textContent = pruritoRange.value;
+        if (promsSelect.value === 'Sí, recoger DLQI + EVA dolor/prurito') calculateDLQI();
+    }
+
+    function setupPromsToggle() {
+        var promsSelect = document.getElementById('fhSegProms');
+        if (!promsSelect) return;
+        promsSelect.addEventListener('change', syncFollowupPromsVisualState);
+        syncFollowupPromsVisualState();
+    }
+
+    function syncFollowupVisualState() {
+        syncFollowupPromsVisualState();
+        var cambiaNivel = byId('fhSegCambiaNivel');
+        var optimiza = byId('fhSegOptimiza');
+        var suspension = byId('fhSegSuspension');
+        toggleField('fhSegNuevoNivel', !!cambiaNivel && cambiaNivel.value === 'Sí');
+        var showOptimization = !!optimiza && optimiza.value === 'Sí';
+        ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegMotivoOpt'].forEach(function (id) { toggleField(id, showOptimization); });
+        var newSchedule = byId('fhSegNuevaPauta');
+        var newOther = byId('fhSegNuevaPautaOtro');
+        if (newSchedule && newOther) newOther.classList.toggle('hidden', !showOptimization || newSchedule.value !== 'OTRO');
+        toggleField('fhSegMotivoSusp', !!suspension && suspension.value === 'Sí');
+        var currentSchedule = byId('fhSegPautaActual');
+        var currentOther = byId('fhSegPautaActualOtro');
+        if (currentSchedule && currentOther) currentOther.classList.toggle('hidden', currentSchedule.value !== 'OTRO');
+        syncFollowupEaVisualState();
     }
 
     function getEVADolor() {
@@ -2922,6 +2956,8 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
+        populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
         applyContext();
         var v2Cip = byId('fhSegCip');
         if (v2Cip) {
@@ -2934,8 +2970,6 @@
         initCipSearch();
         initSegServicioPatologiaSync();
         initSegDrugAutocomplete();
-        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
-        populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
 
         var demoCtx = F.getQueryContext();
         if (demoCtx.cip === "CIP-DEMO-FH-004") {
@@ -2951,10 +2985,10 @@
         var ctxNav = F.getQueryContext();
         if (ctxNav.cip) {
             var navDash = document.getElementById("navToDashboardPaciente");
-            if (navDash) navDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip) + "&entrada=dashboard";
+            if (navDash) navDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
 
             var sidebarDash = document.querySelector('.sidebar-nav-area .nav-link[href*="farmacia_dashboard_paciente.html"]');
-            if (sidebarDash) sidebarDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip);
+            if (sidebarDash) sidebarDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
         }
 
         syncSegDrugAutocompleteVisibility();
@@ -3059,5 +3093,12 @@
                 exp.copyTSVRowsToClipboard(rows, { sheetName: sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('seguimiento', draftScope);
+            syncFollowupVisualState();
+            runtime.bindPageDraft('seguimiento', draftScope);
+        }
     });
 })();

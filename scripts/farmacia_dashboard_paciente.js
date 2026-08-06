@@ -2,148 +2,19 @@
 
 (function () {
     let F = window.FarmaciaDemo;
-
-    function bridgeValue(value) {
-        if (value === undefined) return 'No registrado';
-        if (value === null) return 'null';
-        if (value === '') return 'Texto vacío registrado';
-        if (value === true) return 'true';
-        if (value === false) return 'false';
-        if (typeof value === 'object') return JSON.stringify(value, null, 2);
+    function hasExplicit(value) {
+        return value !== undefined && value !== null && value !== '';
+    }
+    function explicitText(value, fallback) {
+        if (!hasExplicit(value) || value === 'not_recorded') return fallback || 'No registrado';
         return String(value);
     }
-
-    function bridgeField(label, value) {
-        var field = document.createElement('div');
-        field.className = 'info-field';
-        var labelEl = document.createElement('span');
-        labelEl.className = 'info-field__label';
-        labelEl.textContent = label;
-        var valueEl = document.createElement(typeof value === 'object' && value !== null ? 'pre' : 'span');
-        valueEl.className = 'info-field__value';
-        valueEl.textContent = bridgeValue(value);
-        field.append(labelEl, valueEl);
-        return field;
-    }
-
-    function bridgeSection(title) {
-        var section = document.createElement('section');
-        section.className = 'dashboard-card';
-        var heading = document.createElement('h2');
-        heading.className = 'card-title';
-        heading.textContent = title;
-        var grid = document.createElement('div');
-        grid.className = 'info-grid';
-        section.append(heading, grid);
-        return { section: section, grid: grid };
-    }
-
-    function bridgeFields(section, object) {
-        var keys = Object.keys(object || {});
-        if (!keys.length) section.grid.appendChild(bridgeField('Estado', null));
-        keys.forEach(function (key) { section.grid.appendChild(bridgeField(key, object[key])); });
-    }
-
-    function hideLegacyForBridge() {
-        var main = document.querySelector('main.main-content');
-        if (main) Array.prototype.forEach.call(main.children, function (child) {
-            if (child.id !== 'fhBridgeDashboardRoot') child.classList.add('hidden');
-        });
-        var root = document.getElementById('fhBridgeDashboardRoot');
-        if (root) root.classList.remove('hidden');
-        document.querySelectorAll('.patient-header-actions, .sidebar .search-container').forEach(function (node) { node.classList.add('hidden'); });
-        document.querySelectorAll('.sidebar a').forEach(function (link) {
-            if (link.getAttribute('href') !== 'farmacia_index.html') {
-                link.setAttribute('aria-disabled', 'true');
-                link.addEventListener('click', function (event) { event.preventDefault(); });
-            }
-        });
-    }
-
-    function renderBridgeDashboard(payload) {
-        var root = document.getElementById('fhBridgeDashboardRoot');
-        var content = document.getElementById('fhBridgeDashboardContent');
-        var status = document.getElementById('fhBridgeDashboardStatus');
-        var view = payload.quick_view;
-        if (!root || !content || !status) return;
-        F.clearChildren(content);
-        status.textContent = 'Datos sintéticos/demo. Lectura temporal recibida desde Inicio Farmacia; no persiste ni sobrevive a recarga. Formularios, acciones clínicas y exportaciones no están conectados.';
-
-        var identity = bridgeSection('Identidad técnica y origen');
-        bridgeFields(identity, {
-            'Sistema buscado': payload.search_context.identifier_system,
-            'Valor buscado': payload.search_context.identifier_value,
-            'ID técnico (patient_id)': view.patient_id,
-            'Identificadores explícitos': view.identifiers,
-            'Fichero': view.workbook.file_name,
-            'Fecha de importación': view.workbook.imported_at,
-            'Versión': view.workbook.read_model_version,
-            'Actos': view.valid_event_count,
-            'Warnings': view.warnings && view.warnings.length,
-            'Errores source': view.source_error_count,
-            'Excluidos': view.excluded_event_count
-        });
-        content.appendChild(identity.section);
-
-        var contexts = bridgeSection('Servicios y patologías explícitos');
-        bridgeFields(contexts, { servicios: view.services, patologías: view.pathologies });
-        content.appendChild(contexts.section);
-
-        var timeline = bridgeSection('Timeline de actos válidos');
-        (view.timeline || []).forEach(function (event, index) {
-            timeline.grid.appendChild(bridgeField('Acto ' + (index + 1), {
-                event_type: event.event_type, source_event_id: event.source_event_id, event_id: event.event_id,
-                occurred_at: event.rows && event.rows[0] && event.rows[0].canonical_row.occurred_at,
-                recorded_at: event.rows && event.rows[0] && event.rows[0].canonical_row.recorded_at,
-                hoja: event.source_sheet, cardinalidad_física: event.rows ? event.rows.length : null
-            }));
-        });
-        if (!(view.timeline || []).length) timeline.grid.appendChild(bridgeField('Estado', null));
-        content.appendChild(timeline.section);
-
-        var request = bridgeSection('Última solicitud'); bridgeFields(request, view.latest_request); content.appendChild(request.section);
-        var validation = bridgeSection('Última validación'); bridgeFields(validation, view.latest_validation); content.appendChild(validation.section);
-        var lines = bridgeSection('Líneas explícitas, último snapshot por line_id'); bridgeFields(lines, view.lines); content.appendChild(lines.section);
-        var proms = bridgeSection('PROMs estructurados, sin interpretación'); bridgeFields(proms, view.structured_proms); content.appendChild(proms.section);
-        var adherence = bridgeSection('Adherencia explícita, sin interpretación'); bridgeFields(adherence, view.adherence); content.appendChild(adherence.section);
-        var adverse = bridgeSection('Efectos adversos explícitos'); bridgeFields(adverse, view.adverse_events); content.appendChild(adverse.section);
-        var causality = bridgeSection('Causalidad explícita'); bridgeFields(causality, view.causality_assessments); content.appendChild(causality.section);
-        var warnings = bridgeSection('Warnings atribuibles'); bridgeFields(warnings, view.warnings); content.appendChild(warnings.section);
-    }
-
-    function initializeBridgeDashboard() {
-        var handoff = window.FarmaciaBridgeV2DashboardHandoff;
-        var hasMarker = handoff && handoff.hasFragmentMarker(window.location.hash);
-        if (!hasMarker) return false;
-        var nonce = handoff.parseFragment(window.location.hash);
-        hideLegacyForBridge();
-        var status = document.getElementById('fhBridgeDashboardStatus');
-        if (!nonce || !window.opener) {
-            status.textContent = 'El handoff Bridge ha caducado. Vuelva a Inicio Farmacia y abra de nuevo el dashboard.';
-            return true;
-        }
-        var accepted = false;
-        var expired = false;
-        var receivePayload = function (event) {
-            if (accepted || expired || event.origin !== window.location.origin || event.source !== window.opener) return;
-            if (!handoff.validateEnvelope(event.data, handoff.payloadType, nonce)) return;
-            var payload;
-            try { payload = handoff.validatePayload(event.data.payload); } catch (error) { return; }
-            accepted = true;
-            renderBridgeDashboard(payload);
-            window.opener = null;
-            window.removeEventListener('message', receivePayload);
-        };
-        window.addEventListener('message', receivePayload);
-        window.opener.postMessage(handoff.createReady(nonce), window.location.origin);
-        window.setTimeout(function () {
-            if (!accepted) {
-                expired = true;
-                window.removeEventListener('message', receivePayload);
-                status.textContent = 'El handoff Bridge ha caducado. Vuelva a Inicio Farmacia y abra de nuevo el dashboard.';
-            }
-        }, handoff.sessionTtlMs);
-        return true;
+    function prebiologicText(value) {
+        if (!hasExplicit(value) || value === 'not_recorded') return 'No registrado';
+        if (value === true || value === 'yes') return 'Sí';
+        if (value === false || value === 'no') return 'No';
+        if (value === 'pending') return 'Pendiente';
+        return typeof value === 'object' ? JSON.stringify(value) : String(value);
     }
     function timelineItem(date, title, description) {
         const item = document.createElement('div');
@@ -165,40 +36,53 @@
     function evalCheckStatus(patient, type) {
         var est = patient.analiticaEstruct;
         var txt = (patient.analitica || '').toLowerCase();
+        var raw = patient.__farmaciaRawPatient === true;
+
+        function rawStatus(value, okValues, pendingValues) {
+            if (!hasExplicit(value) || value === 'not_recorded') return 'missing';
+            if (value === true || okValues.indexOf(String(value).toLowerCase()) !== -1) return 'ok';
+            if (value === false || pendingValues.indexOf(String(value).toLowerCase()) !== -1) return 'pending';
+            return 'review';
+        }
 
         if (type === 'analitica') {
             if (est) {
-                if (est.reciente === 'si' && est.hemograma === true && est.bioquimica === true) return 'ok';
-                if (est.reciente === 'no' || est.hemograma === false || est.bioquimica === false) return 'pending';
+                var recentStatus = rawStatus(est.reciente, ['yes', 'si', 'sí'], ['no']);
+                var hemogramStatus = rawStatus(est.hemograma, [], []);
+                var biochemistryStatus = rawStatus(est.bioquimica, [], []);
+                if (recentStatus === 'missing' && hemogramStatus === 'missing' && biochemistryStatus === 'missing') return raw ? 'missing' : 'demo';
+                if (recentStatus === 'ok' && hemogramStatus === 'ok' && biochemistryStatus === 'ok') return 'ok';
+                if (recentStatus === 'pending' || hemogramStatus === 'pending' || biochemistryStatus === 'pending') return 'pending';
                 return 'review';
             }
             if (/(?:analítica|analitica).*(?:completa|apto|ok)|prebiológico.*apto/i.test(txt)) return 'ok';
             if (/(?:analítica|analitica).*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
         if (type === 'mantoux') {
-            if (est && est.mantoux) {
-                var m = est.mantoux.toLowerCase();
-                if (/negativo|ok|apto/.test(m)) return 'ok';
-                if (/pendiente/.test(m)) return 'pending';
-                if (/positivo|revisar/.test(m)) return 'review';
+            if (est && hasExplicit(est.mantoux)) {
+                var m = String(est.mantoux).toLowerCase();
+                if (m === 'not_recorded') return 'missing';
+                if (/negative|negativo|ok|apto|positive_treated/.test(m)) return 'ok';
+                if (/pending|pendiente/.test(m)) return 'pending';
+                if (/positive|positivo|revisar/.test(m)) return 'review';
             }
             if (/(?:mantoux|igra|tubercul).*(?:negativo|ok|apto)/i.test(txt)) return 'ok';
             if (/(?:mantoux|igra|tubercul).*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
         if (type === 'serologias') {
             if (est) {
                 var sValues = [est.serologias, est.serologiasVhb, est.serologiasVhc, est.serologiasVih].filter(function(v) { return v !== undefined && v !== null && v !== ''; });
-                if (sValues.length === 0) return 'demo';
+                if (sValues.length === 0 || sValues.every(function (value) { return value === 'not_recorded'; })) return raw ? 'missing' : 'demo';
                 var anyPending = false;
                 var anyReview = false;
                 sValues.forEach(function(s) {
                     var sl = s.toLowerCase();
-                    if (/pendiente/.test(sl)) anyPending = true;
-                    if (/positivo|revisar/.test(sl)) anyReview = true;
+                    if (/pending|pendiente/.test(sl)) anyPending = true;
+                    if (/positive|positivo|revisar/.test(sl)) anyReview = true;
                 });
                 if (anyReview) return 'review';
                 if (anyPending) return 'pending';
@@ -206,22 +90,23 @@
             }
             if (/(?:serolog|vih|vhb|vhc).*(?:negativo|ok|apto)/i.test(txt)) return 'ok';
             if (/(?:serolog|vih|vhb|vhc).*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
         if (type === 'vacunacion') {
             if (est && est.vacunacion !== undefined && est.vacunacion !== null && est.vacunacion !== '') {
-                var v = est.vacunacion.toLowerCase();
-                if (v === 'si' || /completa|al día|apto/.test(v)) return 'ok';
-                if (v === 'no' || /pendiente/.test(v)) return 'pending';
+                var v = String(est.vacunacion).toLowerCase();
+                if (v === 'not_recorded') return 'missing';
+                if (v === 'yes' || v === 'si' || /completa|al día|apto/.test(v)) return 'ok';
+                if (v === 'no' || /pending|pendiente/.test(v)) return 'pending';
                 if (/revisar/.test(v)) return 'review';
             }
             if (/vacuna.*(?:completa|al día|apto)/i.test(txt)) return 'ok';
             if (/vacuna.*pendiente/i.test(txt)) return 'pending';
-            return 'demo';
+            return raw ? 'missing' : 'demo';
         }
 
-        return 'demo';
+        return raw ? 'missing' : 'demo';
     }
 
     function createChecksVisualBlock(patient) {
@@ -243,11 +128,12 @@
             { type: 'vacunacion', label: 'Vacunación' }
         ];
 
-        var statusLabels = { ok: 'OK', pending: 'Pendiente', review: 'Revisar', demo: 'Demo' };
+        var statusLabels = { ok: 'OK', pending: 'Pendiente', review: 'Revisar', missing: 'No registrado', demo: 'Demo' };
         var iconsByStatus = {
             ok: 'fa-check-circle',
             pending: 'fa-clock',
             review: 'fa-exclamation-circle',
+            missing: 'fa-question-circle',
             demo: 'fa-question-circle'
         };
 
@@ -273,6 +159,22 @@
         });
 
         wrapper.appendChild(row);
+        if (patient.__farmaciaRawPatient && patient.analiticaEstruct) {
+            var meta = document.createElement('div');
+            meta.className = 'fh-dashboard-checks__meta';
+            var details = [];
+            if (hasExplicit(patient.analiticaEstruct.fecha)) details.push('Fecha: ' + patient.analiticaEstruct.fecha);
+            if (hasExplicit(patient.analiticaEstruct.observaciones)) details.push('Observaciones: ' + patient.analiticaEstruct.observaciones);
+            details.push('Infecciones recurrentes: ' + prebiologicText(patient.analiticaEstruct.infeccionesRecurrentes));
+            details.push('Riesgo cardiovascular: ' + prebiologicText(patient.analiticaEstruct.riesgoCardiovascular));
+            details.push('Alteraciones neurológicas: ' + prebiologicText(patient.analiticaEstruct.alteracionesNeurologicas));
+            details.push('Neoplasia: ' + prebiologicText(patient.analiticaEstruct.riesgoNeoplasia));
+            details.push('Medicina Preventiva: ' + prebiologicText(patient.analiticaEstruct.medicinaPreventiva));
+            details.push('Estado prebiológico: ' + prebiologicText(patient.analiticaEstruct.estadoGlobalPrebiologico));
+            details.push('Bloqueos: ' + prebiologicText(patient.analiticaEstruct.bloqueosPrebiologicos));
+            meta.textContent = details.length ? details.join(' · ') : 'No registrado';
+            wrapper.appendChild(meta);
+        }
         return wrapper;
     }
 
@@ -288,7 +190,7 @@
             emptyIcon.className = 'fas fa-info-circle';
             emptyIcon.setAttribute('aria-hidden', 'true');
             emptyEl.appendChild(emptyIcon);
-            emptyEl.appendChild(document.createTextNode('Sin datos de actividad cl\u00EDnica'));
+            emptyEl.appendChild(document.createTextNode(patient.__farmaciaRawPatient ? 'No registrado' : 'Sin datos de actividad cl\u00EDnica'));
             container.appendChild(emptyEl);
             return;
         }
@@ -349,6 +251,7 @@
 
     function getPatientBiologicLines(patient) {
         if (!patient) return [];
+        if (patient.__farmaciaRawPatient && Array.isArray(patient.biologicos)) return patient.biologicos;
         var helper = window.FarmaciaTratamiento;
         if (helper && typeof helper.buildTreatmentFromPatient === 'function') {
             var result = helper.buildTreatmentFromPatient(patient, { returnArray: true, fuente: 'dashboard_adapter' });
@@ -391,19 +294,26 @@
         });
     }
 
-    function biologicStateLabel(state) {
-        if (state === 'activo') return 'Activo';
-        if (state === 'anadido' || state === 'añadido') return 'Añadido';
-        if (state === 'suspendido') return 'Suspendido';
-        if (state === 'historico') return 'Histórico';
-        return 'Sin clasificar';
+    function biologicStateLabel(state, raw) {
+        var value = String(state || '').toLowerCase().trim();
+        if (value === 'active' || value === 'activo') return 'Activo';
+        if (value === 'completed' || value === 'finalizado') return 'Finalizado';
+        if (value === 'historical' || value === 'historico') return 'Histórico';
+        if (value === 'suspended' || value === 'suspendido') return 'Suspendido';
+        if (value === 'validated_not_started') return 'Validado, pendiente de inicio';
+        if (value === 'unknown' || !value) return 'No registrado';
+        if (value === 'anadido' || value === 'añadido') return 'Añadido';
+        return raw ? 'No registrado' : 'Sin clasificar';
     }
 
-    function biologicRelationLabel(type) {
-        if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
-        if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
-        if (type === 'base') return 'Línea terapéutica base';
-        return 'Seguimiento';
+    function biologicRelationLabel(type, raw) {
+        var value = String(type || '').toLowerCase().trim();
+        if (value === 'primary' || value === 'principal' || value === 'base') return 'Principal';
+        if (value === 'additional' || value === 'adicional') return 'Adicional';
+        if (value === 'unknown' || !value) return 'Relación no registrada';
+        if (value === 'cambio_terapeutico' || value === 'cambio_farmaco') return 'Switch terapéutico';
+        if (value === 'tratamiento_anadido' || value === 'tratamiento_añadido') return 'Add-on terapéutico';
+        return raw ? 'Relación no registrada' : 'Seguimiento';
     }
 
     function renderBiologicLines(patient) {
@@ -427,8 +337,12 @@
             var label = document.createElement('span');
             label.className = 'info-field__label';
             var labelParts = ['L' + (line.orden || '?')];
-            if (line.estado_linea) labelParts.push(biologicStateLabel(line.estado_linea));
-            if (line.tipo_relacion) labelParts.push(biologicRelationLabel(line.tipo_relacion));
+            if (line.estado_linea || patient.__farmaciaRawPatient) {
+                labelParts.push(patient.__farmaciaRawPatient ? biologicStateLabel(line.estado_linea, true) : biologicStateLabel(line.estado_linea));
+            }
+            if (line.tipo_relacion || patient.__farmaciaRawPatient) {
+                labelParts.push(patient.__farmaciaRawPatient ? biologicRelationLabel(line.tipo_relacion, true) : biologicRelationLabel(line.tipo_relacion));
+            }
             label.textContent = labelParts.join(' · ');
             var value = document.createElement('span');
             value.className = 'info-field__value';
@@ -465,7 +379,14 @@
         }
         var grid = document.createElement('div');
         grid.className = 'proms-card-grid';
-        var expectedTypes = ['DLQI', 'EVA dolor', 'EVA prurito'];
+        var expectedTypes = patient.__farmaciaRawPatient ? Object.keys(grouped).sort() : ['DLQI', 'EVA dolor', 'EVA prurito'];
+        if (expectedTypes.length === 0) {
+            var emptyProms = document.createElement('div');
+            emptyProms.className = 'empty-state';
+            emptyProms.textContent = 'No registrado';
+            container.appendChild(emptyProms);
+            return;
+        }
         for (var et = 0; et < expectedTypes.length; et++) {
             var tipo = expectedTypes[et];
             var items = grouped[tipo] || [];
@@ -480,13 +401,15 @@
                 var latest = items[items.length - 1];
                 var pValueEl = document.createElement('div');
                 pValueEl.className = 'prom-card__value';
-                var unit = (tipo === 'DLQI') ? '/30' : '/10';
+                var unit = patient.__farmaciaRawPatient ? '' : ((tipo === 'DLQI') ? '/30' : '/10');
                 var latestValue = latest.valor !== undefined && latest.valor !== null && latest.valor !== '' ? latest.valor : '—';
-                pValueEl.textContent = latestValue + ' ' + unit;
+                pValueEl.textContent = String(latestValue) + (unit ? ' ' + unit : '');
                 tile.appendChild(pValueEl);
                 var sourceEl = document.createElement('div');
                 sourceEl.className = 'prom-card__source';
-                var sourceLabel = (latest.fuente || '').toLowerCase().indexOf('remoto') !== -1 ? 'Paciente remoto' : 'Farmacia';
+                var sourceLabel = patient.__farmaciaRawPatient
+                    ? (latest.fecha ? 'Fecha: ' + latest.fecha : 'Fecha no registrada')
+                    : ((latest.fuente || '').toLowerCase().indexOf('remoto') !== -1 ? 'Paciente remoto' : 'Farmacia');
                 sourceEl.textContent = sourceLabel;
                 tile.appendChild(sourceEl);
                 var statusEl = document.createElement('span');
@@ -675,10 +598,11 @@
             var emptyEl = document.createElement('div');
             emptyEl.className = 'empty-state';
             var emptyIcon = document.createElement('i');
-            emptyIcon.className = 'fas fa-check-circle';
+            emptyIcon.className = 'fas fa-info-circle';
             emptyIcon.setAttribute('aria-hidden', 'true');
             emptyEl.appendChild(emptyIcon);
-            emptyEl.appendChild(document.createTextNode('Sin eventos adversos registrados'));
+            emptyEl.appendChild(document.createTextNode(patient.__farmaciaRawPatient && patient.adverse_event_status === 'absent'
+                ? 'Ausencia registrada' : (patient.__farmaciaRawPatient ? 'No registrado' : 'Sin eventos adversos registrados')));
             container.appendChild(emptyEl);
             return;
         }
@@ -714,13 +638,17 @@
             var sospechosos = (ev.sospechosos || []).map(function (item) {
                 return item.nombre_linea || item.linea_id || item.tratamiento_id || 'Biologico';
             }).join(' | ');
-            var causality = ev.causalidad && ev.causalidad.algoritmos ? (ev.causalidad.algoritmos[ev.causalidad.algoritmo_principal] || null) : null;
+            var causality = (ev.evaluaciones_causalidad || []).map(function (assessment) {
+                return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {
+                    return key + ': ' + explicitText(assessment[key]);
+                }).join(' · ');
+            }).join(' | ');
             var fields = [
-                { label: 'Relación con tratamiento', value: ev.relacion_tratamiento || '—' },
-                { label: 'Biológicos sospechosos', value: sospechosos || '—' },
-                { label: 'Acción tomada', value: ev.accion_tomada || '—' },
-                { label: 'Resultado', value: ev.resuelto ? 'Resuelto' : 'No resuelto' },
-                { label: 'Causalidad', value: causality ? ((causality.categoria || '—') + (causality.puntuacion !== undefined ? ' (' + causality.puntuacion + ')' : '')) : '—' }
+                { label: 'Relación con tratamiento', value: explicitText(ev.relacion_tratamiento) },
+                { label: 'Biológicos sospechosos', value: sospechosos || 'No registrado' },
+                { label: 'Acción tomada', value: explicitText(ev.accion_tomada) },
+                { label: 'Resultado', value: explicitText(ev.resultado) },
+                { label: 'Causalidad', value: causality || 'No registrado' }
             ];
             for (var fi = 0; fi < fields.length; fi++) {
                 var fieldRow = document.createElement('div');
@@ -758,7 +686,7 @@
             emptyIcon.className = 'fas fa-info-circle';
             emptyIcon.setAttribute('aria-hidden', 'true');
             emptyEl.appendChild(emptyIcon);
-            emptyEl.appendChild(document.createTextNode('Sin comorbilidades registradas'));
+            emptyEl.appendChild(document.createTextNode(patient.__farmaciaRawPatient ? 'No registrado' : 'Sin comorbilidades registradas'));
             container.appendChild(emptyEl);
             return;
         }
@@ -819,9 +747,12 @@
     }
 
     function renderExtendedBlocks(patient) {
+        if (patient.__farmaciaRawPatient) {
+            patient.proms = Array.isArray(patient.proms) ? patient.proms : [];
+        }
         // Buscar datos extendidos del paciente en longDataset
         var extData = null;
-        if (longDataset && longDataset.pacientes) {
+        if (!patient.__farmaciaRawPatient && longDataset && longDataset.pacientes) {
             for (var ei = 0; ei < longDataset.pacientes.length; ei++) {
                 if (longDataset.pacientes[ei].cip === patient.cip) {
                     extData = longDataset.pacientes[ei];
@@ -906,7 +837,7 @@
 
     function renderDashboard(patient) {
         F.setText('patientIdBadge', patient.cip);
-        F.setText('patientName', patient.nombre);
+        F.setText('patientName', patient.nombre || (patient.__farmaciaRawPatient ? 'Paciente actual' : ''));
         F.setText('patientDiagnosis', patient.patologia);
         F.setText('patientService', patient.servicio);
         F.setText('patientLastVisit', patient.ultimaVisita);
@@ -918,17 +849,25 @@
         var bioLines = getPatientBiologicLines(patient);
         var primaryLine = null;
         var otherLines = [];
-        bioLines.forEach(function (line) {
-            if (line.es_principal || line.tipo_relacion === 'principal' || (!primaryLine && line.estado_linea !== 'historico')) {
-                primaryLine = line;
-            } else if (line.estado_linea !== 'historico') {
-                otherLines.push(line);
-            }
-        });
-        if (!primaryLine && bioLines.length) {
-            primaryLine = bioLines[0];
+        if (patient.__farmaciaRawPatient) {
+            var explicitActiveLines = bioLines.filter(function (line) { return line.active_at_event === true; });
+            if (explicitActiveLines.length === 1) primaryLine = explicitActiveLines[0];
+            else otherLines = explicitActiveLines;
+        } else {
+            bioLines.forEach(function (line) {
+                if (line.es_principal || line.tipo_relacion === 'principal' || (!primaryLine && line.estado_linea !== 'historico')) {
+                    primaryLine = line;
+                } else if (line.estado_linea !== 'historico') {
+                    otherLines.push(line);
+                }
+            });
+            if (!primaryLine && bioLines.length) primaryLine = bioLines[0];
         }
         var summaryFields = [];
+        if (patient.__farmaciaRawPatient) {
+            summaryFields.push({ label: 'Tratamiento solicitado', value: patient.solicitud && patient.solicitud.requested_drug_name });
+            summaryFields.push({ label: 'Tratamiento validado', value: patient.validacion && patient.validacion.validated_drug_name });
+        }
         if (primaryLine) {
             var primaryName = primaryLine.nombre_linea || primaryLine.farmaco_nombre || primaryLine.principio_activo || primaryLine.nombre_comercial || patient.farmaco || '—';
             summaryFields.push({ label: 'Tratamiento principal', value: primaryName });
@@ -937,12 +876,17 @@
         }
         if (otherLines.length) {
             var otherNames = otherLines.map(function (l) { return l.nombre_linea || l.farmaco_nombre || l.principio_activo || l.nombre_comercial || '—'; }).join(', ');
-            summaryFields.push({ label: 'Otras líneas activas', value: otherNames });
+            summaryFields.push({ label: patient.__farmaciaRawPatient ? 'Líneas activas sin autoselección' : 'Otras líneas activas', value: otherNames });
         }
         summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });
-        summaryFields.push({ label: 'Última adherencia', value: patient.adherencia });
-        summaryFields.push({ label: 'Efectos adversos', value: patient.efectosAdversos });
-        summaryFields.push({ label: 'Últimos PROMs Farmacia', value: patient.proms });
+        summaryFields.push({ label: 'Última adherencia', value: explicitText(patient.adherencia) });
+        summaryFields.push({ label: 'Efectos adversos', value: explicitText(patient.efectosAdversos) });
+        summaryFields.push({
+            label: 'Últimos PROMs Farmacia',
+            value: (patient.proms || []).map(function (prom) {
+                return prom.tipo_prom + ': ' + explicitText(prom.valor) + (prom.fecha ? ' · ' + prom.fecha : '');
+            }).join(' | ') || 'No registrado'
+        });
         F.renderFields(document.getElementById('dashboardSummaryGrid'), summaryFields);
         document.getElementById('dashboardSummaryGrid').appendChild(createChecksVisualBlock(patient));
 
@@ -961,7 +905,7 @@
         // Actualizar enlaces de navegación con CIP actual
         var navSeg = document.getElementById("navToSeguimiento");
         if (navSeg && patient.cip) {
-            navSeg.href = "farmacia_seguimiento.html?cip=" + encodeURIComponent(patient.cip) + "&entrada=seguimiento";
+            navSeg.href = F.makeContextUrl('farmacia_seguimiento.html', { cip: patient.cip, entrada: 'seguimiento' });
         }
 
         renderLongitudinalForCip(patient.cip);
@@ -1823,7 +1767,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         F = window.FarmaciaDemo || F;
-        if (initializeBridgeDashboard()) return;
         bindLongitudinalEvents();
         initLongitudinalSection();
         const ctx = F.getQueryContext();
@@ -1846,7 +1789,7 @@
                 var opts = {
                     tipoActo: 'seguimiento',
                     visitaId: 'DASH-' + Date.now().toString(36).toUpperCase(),
-                    lineaActual: Array.isArray(lines) && lines.length ? lines[0] : null,
+                    lineaActual: Array.isArray(lines) && lines.length === 1 ? lines[0] : null,
                     fechaActo: new Date().toISOString().substring(0, 10),
                     proms: patient.proms || null,
                     demoFlag: true,

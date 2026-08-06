@@ -798,8 +798,8 @@
         } else {
             dataset = safeParseJson(raw);
         }
+        if (raw) safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
         if (kind === 'farmacia' && dataset && dataset.format === 'farmacia_bridge_v2_raw') {
-            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
             delete SESSION_STORAGE_FALLBACK[kind];
             return null;
         }
@@ -899,6 +899,21 @@
                 mergedByCip[cip] = mergePatientRecord(normalized, existing);
             }
         });
+
+        var runtimePatient = window.FarmaciaPatientFlowRuntime
+            && typeof window.FarmaciaPatientFlowRuntime.getCurrentPatient === 'function'
+            ? window.FarmaciaPatientFlowRuntime.getCurrentPatient() : null;
+        if (runtimePatient && runtimePatient.cip) {
+            var runtimeCip = String(runtimePatient.cip).trim();
+            var runtimeExisting = mergedByCip[runtimeCip];
+            var runtimeRecord = mergePatientRecord({}, runtimePatient);
+            if (!runtimeExisting) {
+                mergedByCip[runtimeCip] = runtimeRecord;
+                ordered.push(runtimeRecord);
+            } else {
+                mergedByCip[runtimeCip] = mergePatientRecord(runtimeExisting, runtimeRecord);
+            }
+        }
 
         return ordered.map(function (patient) {
             return mergedByCip[String(patient.cip).trim()] || patient;
@@ -1052,16 +1067,19 @@
 
     function getQueryContext() {
         var params = new URLSearchParams(window.location.search);
-        var cip = (params.get('cip') || params.get('id') || '').trim();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var runtimePatient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
+        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
         var hasExplicitCip = !!cip;
         var patient = cip ? findAvailablePatientByCip(cip) : null;
         var patientFound = !!patient;
         return {
             cip: cip,
-            servicio: params.get('servicio') || (patientFound ? patient.servicio : '') || '',
-            servicioSlug: params.get('servicio') || (patientFound ? patient.servicioSlug : '') || '',
-            patologia: params.get('patologia') || (patientFound ? patient.patologia : '') || '',
-            entrada: params.get('entrada') || '',
+            servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
+            servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
+            patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
+            entrada: restarted ? '' : (params.get('entrada') || ''),
             patient: patient,
             hasExplicitCip: hasExplicitCip,
             patientNotFound: hasExplicitCip && !patientFound,
@@ -1070,6 +1088,9 @@
     }
 
     function makeContextUrl(base, context = {}) {
+        if (window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.makeContextUrl === 'function') {
+            return window.FarmaciaPatientFlowRuntime.makeContextUrl(base, context);
+        }
         const params = new URLSearchParams();
         if (context.cip) params.set('cip', context.cip);
         if (context.servicio) params.set('servicio', context.servicio);
@@ -1718,7 +1739,7 @@
         function formatImportStatus(kind) {
             var state = importStates[kind];
             if (state && state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel) {
-                return 'Excel Farmacia Bridge cargado · ' + state.rowCount + ' filas · ' + state.eventCount + ' actos · ' + state.patientCount + ' pacientes';
+                return 'Excel Farmacia cargado · ' + state.rowCount + ' filas · ' + state.eventCount + ' actos · ' + state.patientCount + ' pacientes';
             }
             if (!state || !Array.isArray(state.rows) || !state.rows.length) {
                 return 'No se ha cargado Excel de ' + getKindLabel(kind);
@@ -1812,10 +1833,9 @@
                     rows: allCandidates
                 };
                 importStates[kind] = state;
-                if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
-                    SESSION_STORAGE_FALLBACK[kind] = state;
-                    state.storage = 'memory_only';
-                }
+                safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+                SESSION_STORAGE_FALLBACK[kind] = state;
+                state.storage = 'memory_only';
                 updateAllImportUi();
                 emitImportEvent(kind, { state: state });
                 return state;
@@ -1831,6 +1851,12 @@
                     importedAt: importedAt
                 });
                 if (bridgeReadModel) {
+                    var dataPort = null;
+                    if (window.FarmaciaRawExcelDataSource && typeof window.FarmaciaRawExcelDataSource.create === 'function'
+                        && window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.setDataPort === 'function') {
+                        dataPort = window.FarmaciaRawExcelDataSource.create(bridgeReadModel);
+                        window.FarmaciaPatientFlowRuntime.setDataPort(dataPort);
+                    }
                     var bridgeState = {
                         kind: 'farmacia',
                         format: 'farmacia_bridge_v2_raw',
@@ -1841,6 +1867,7 @@
                         eventCount: bridgeReadModel.metadata.event_count,
                         patientCount: bridgeReadModel.metadata.patient_count,
                         bridgeReadModel: bridgeReadModel,
+                        dataPort: dataPort,
                         storage: 'runtime_memory'
                     };
                     safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
@@ -1870,10 +1897,9 @@
                 rows: rows
             };
             importStates[kind] = state;
-            if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
-                SESSION_STORAGE_FALLBACK[kind] = state;
-                state.storage = 'memory_only';
-            }
+            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+            SESSION_STORAGE_FALLBACK[kind] = state;
+            state.storage = 'memory_only';
             updateAllImportUi();
             emitImportEvent(kind, { state: state });
             return state;
@@ -1970,14 +1996,25 @@
             return state && state.format === 'farmacia_bridge_v2_raw' ? state.bridgeReadModel || null : null;
         }
 
+        function clearTransientPatientImports() {
+            importStates.enfermeria = null;
+            delete SESSION_STORAGE_FALLBACK.enfermeria;
+            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS.enfermeria);
+            updateAllImportUi();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             initImportPanel();
+            if (window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.decorateLinks === 'function') {
+                window.FarmaciaPatientFlowRuntime.decorateLinks(document);
+            }
         });
 
         return {
             getState: function (kind) { return importStates[kind] || null; },
             getImportedPatients: getImportedPatients,
             getBridgeReadModel: getBridgeReadModel,
+            clearTransientPatientImports: clearTransientPatientImports,
             findImportedPatientByCip: findImportedPatientByCip,
             importFile: importFile,
             formatImportStatus: formatImportStatus

@@ -72,6 +72,9 @@
     }
 
     function resolvePrimaryRelation(ctx) {
+        if (ctx && ctx.patient && ctx.patient.__farmaciaRawPatient) {
+            return ctx.patient.tratamientoValidado ? 'validado' : 'principal';
+        }
         if (ctx && ctx.patient) return 'validado';
         return 'principal';
     }
@@ -155,18 +158,20 @@
     function buildPrimaryTreatmentFromContext(ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var patient = sourceCtx.patient || null;
+        var patientTreatment = patient && patient.__farmaciaRawPatient
+            ? (patient.tratamientoValidado || patient.lineaActiva) : patient;
         var snapshot = getCurrentSnapshot();
         var relation = resolvePrimaryRelation(sourceCtx);
         var treatmentHelper = getTreatmentHelper();
         var treatment = normalizePrimaryTreatment({
             paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
-            farmaco_nombre: patient && patient.farmaco || '',
-            nombre_comercial: patient && patient.farmaco || '',
-            principio_activo: patient && (patient.principioActivo || patient.farmaco) || '',
-            dosis_texto: patient && patient.dosis || '',
-            presentacion: patient && patient.dosis || '',
-            via: patient && patient.via || '',
-            pauta: patient && patient.pauta || '',
+            farmaco_nombre: patientTreatment && (patientTreatment.farmaco_nombre || patientTreatment.farmaco) || '',
+            nombre_comercial: patientTreatment && (patientTreatment.nombre_comercial || patientTreatment.farmaco) || '',
+            principio_activo: patientTreatment && (patientTreatment.principio_activo || patientTreatment.principioActivo || patientTreatment.farmaco) || '',
+            dosis_texto: patientTreatment && (patientTreatment.dosis_texto || patientTreatment.dosis) || '',
+            presentacion: patientTreatment && (patientTreatment.presentacion || patientTreatment.dosis) || '',
+            via: patientTreatment && patientTreatment.via || '',
+            pauta: patientTreatment && patientTreatment.pauta || '',
             fecha_inicio: fv('fhPvFecha') || '',
             tipo_relacion: relation,
             es_principal: true,
@@ -299,14 +304,33 @@
         }
         F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
         if (ctx.patient) {
+            var rawPatient = ctx.patient.__farmaciaRawPatient;
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
-            F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
+            var requestedInduction = ctx.patient.solicitud && ctx.patient.solicitud.requested_induction_status;
+            if (requestedInduction === undefined || requestedInduction === null || requestedInduction === '') {
+                requestedInduction = ctx.patient.induccion_solicitada;
+            }
+            F.setValue('fhPvInduccionSolicitada', rawPatient
+                ? (requestedInduction === 'yes' ? 'Sí' : (requestedInduction === 'no' ? 'No' : ''))
+                : (ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No'));
             F.setValue('fhPvAnalitica', ctx.patient.analitica);
             setTreatmentForm(buildPrimaryTreatmentFromContext(ctx));
+            if (rawPatient && ctx.patient.firstVisitData) {
+                var visit = ctx.patient.firstVisitData;
+                F.setValue('fhPvFecha', visit.first_visit_date);
+                F.setValue('fhPvInduccionRealizada', visit.induction_performed_status === 'yes' ? 'Sí' : (visit.induction_performed_status === 'no' ? 'No' : ''));
+                F.setValue('fhPvEstratificacion', visit.stratification_level);
+                F.setValue('fhPvProms', visit.baseline_proms_collection_status === 'yes' ? 'Sí' : (visit.baseline_proms_collection_status === 'no' ? 'No' : ''));
+                F.setValue('fhPvNotas', visit.pharmacy_visit_notes);
+            }
         } else {
             clearTreatmentForm();
         }
         if (!ctx.cip && !ctx.patient) F.insertNoCipBanner('fhPvNoCipBanner');
+    }
+
+    function inductionLabel(value) {
+        return value === 'yes' ? 'Sí' : (value === 'no' ? 'No' : '');
     }
 
     function applyTratamientoValidado(ctx) {
@@ -341,6 +365,13 @@
             { label: 'Presentación / dosis', value: treatment.dosis_texto || treatment.presentacion || '—' },
             { label: 'Vía', value: treatment.via || '—' },
             { label: 'Pauta / intervalo', value: treatment.pauta || '—' },
+            { label: 'Inducción solicitada', value: ctx.patient && ctx.patient.__farmaciaRawPatient
+                ? (inductionLabel(ctx.patient.solicitud && ctx.patient.solicitud.requested_induction_status)
+                    || inductionLabel(ctx.patient.induccion_solicitada) || 'No registrado')
+                : '—' },
+            { label: 'Inducción validada', value: ctx.patient && ctx.patient.__farmaciaRawPatient
+                ? (inductionLabel(treatment.induccion) || 'No registrado')
+                : '—' },
             { label: 'Relación terapéutica', value: treatment.tipo_relacion || '—' },
             { label: 'Origen catálogo', value: origen },
             { label: 'Código nacional / n.º registro', value: codigo },
@@ -555,6 +586,7 @@
         var input = document.createElement('input');
         input.type = 'radio';
         input.name = 'dlqi_q' + qId + (suffix ? '_' + suffix : '');
+        input.id = 'fhPvDlqiQ' + qId + (suffix ? suffix.toUpperCase() : '') + 'V' + (value === null ? 'trigger' : String(value));
         input.setAttribute('data-dlqi-q', String(qId));
         if (typeof value === 'number') input.setAttribute('data-dlqi-val', String(value));
         if (isQ7Trigger) input.setAttribute('data-dlqi-q7-trigger', '');
@@ -630,20 +662,36 @@
         }
     }
 
-    function setupPromsToggle() {
+    function syncFirstVisitVisualState() {
         var promsSelect = document.getElementById('fhPvProms');
         var expanded = document.getElementById('fhPvPromsExpanded');
-        if (!promsSelect || !expanded) return;
-        function toggle() {
-            if (promsSelect.value === 'Sí') {
-                expanded.classList.remove('hidden');
-                calculateDLQI();
-            } else {
-                expanded.classList.add('hidden');
-            }
+        if (promsSelect && expanded) {
+            expanded.classList.toggle('hidden', promsSelect.value !== 'Sí');
+            var q7Followup = expanded.querySelector('.dlqi-card__followup');
+            var q7Trigger = expanded.querySelector('input[data-dlqi-q7-trigger]:checked');
+            if (q7Followup) q7Followup.classList.toggle('hidden', !q7Trigger);
+            var dolorRange = document.getElementById('fhPvEvaDolorRange');
+            var dolorValue = document.getElementById('fhPvEvaDolorValue');
+            var pruritoRange = document.getElementById('fhPvEvaPruritoRange');
+            var pruritoValue = document.getElementById('fhPvEvaPruritoValue');
+            if (dolorRange && dolorValue) dolorValue.textContent = dolorRange.value;
+            if (pruritoRange && pruritoValue) pruritoValue.textContent = pruritoRange.value;
+            if (promsSelect.value === 'Sí') calculateDLQI();
         }
-        promsSelect.addEventListener('change', toggle);
-        toggle();
+        [['fhPvPauta', 'fhPvPautaOtro', 'OTRO'], ['fhPvServicio', 'fhPvServicioOtro', 'Otro'],
+            ['fhPvPatologia', 'fhPvPatologiaOtro', 'Otra']].forEach(function (ids) {
+                var select = document.getElementById(ids[0]);
+                var other = document.getElementById(ids[1]);
+                if (select && other) other.classList.toggle('hidden', select.value !== ids[2]);
+            });
+        applyTratamientoValidado(getCurrentContext());
+    }
+
+    function setupPromsToggle() {
+        var promsSelect = document.getElementById('fhPvProms');
+        if (!promsSelect) return;
+        promsSelect.addEventListener('change', syncFirstVisitVisualState);
+        syncFirstVisitVisualState();
     }
 
     function getEVADolor() {
@@ -1538,5 +1586,12 @@
                 exp.copyTSVRowToClipboard(result.rowArray, { sheetName: result.sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('primera_visita', draftScope);
+            syncFirstVisitVisualState();
+            runtime.bindPageDraft('primera_visita', draftScope);
+        }
     });
 })();

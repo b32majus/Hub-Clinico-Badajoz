@@ -482,7 +482,9 @@
 
     function explicitRequestedDrug(patient) {
         if (!patient) return "";
-        return patient.farmaco_solicitado || (patient.rawImport && patient.rawImport.farmaco_solicitado) || "";
+        return patient.farmaco_solicitado
+            || (patient.solicitud && patient.solicitud.requested_drug_name)
+            || (patient.rawImport && patient.rawImport.farmaco_solicitado) || "";
     }
 
     function hydrateReumaForm(patient) {
@@ -503,6 +505,9 @@
         }
         if (context.patient && context.patient.cip && String(context.patient.cip).indexOf('CIP-DEMO-FH') !== -1) {
             return 'demo_formacion';
+        }
+        if (context.patient && context.patient.__farmaciaRawPatient) {
+            return mapServiceToken(context.servicioSlug || context.servicio) || 'manual_farmacia';
         }
         if (context.cip || context.servicio || context.patologia) {
             return 'manual_farmacia';
@@ -598,10 +603,15 @@
             && F.isEnfermeriaPatient(currentPatient);
         if (context.patient) {
             var p = context.patient;
-            if (!isEnfPatient) F.setValue('fhDermaFarmaco', p.farmaco);
-            if (!isEnfPatient) F.setValue('fhDermaDosis', p.dosis);
-            if (!isEnfPatient && p.pauta) {
-                var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(p.pauta) : null;
+            var rawRequest = p.__farmaciaRawPatient ? (p.solicitud || {}) : null;
+            var requestedDrug = rawRequest ? rawRequest.requested_drug_name : p.farmaco;
+            var requestedDose = rawRequest ? rawRequest.requested_dose_text : p.dosis;
+            var requestedSchedule = rawRequest ? (rawRequest.requested_schedule_label || rawRequest.requested_schedule_other_text) : p.pauta;
+            var requestedRoute = rawRequest ? rawRequest.requested_route : p.via;
+            if (!isEnfPatient) F.setValue('fhDermaFarmaco', requestedDrug);
+            if (!isEnfPatient) F.setValue('fhDermaDosis', requestedDose);
+            if (!isEnfPatient && requestedSchedule) {
+                var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(requestedSchedule) : null;
                 F.setValue('fhDermaPauta', pautaObj ? pautaObj.pauta_codigo : '');
                 if (pautaObj && pautaObj.pauta_codigo === 'OTRO' && pautaObj.pauta_otro_texto) {
                     F.setValue('fhDermaPautaOtro', pautaObj.pauta_otro_texto);
@@ -611,7 +621,15 @@
                     byId('fhDermaPautaOtro').classList.add('hidden');
                 }
             }
-            if (!isEnfPatient) F.setValue('fhDermaVia', mapViaToSelect(p.via, byId('fhDermaVia')));
+            if (!isEnfPatient) F.setValue('fhDermaVia', mapViaToSelect(requestedRoute, byId('fhDermaVia')));
+            if (rawRequest) {
+                F.setValue('fhDermaFecha', rawRequest.request_date);
+                F.setValue('fhDermaPrincipioActivo', rawRequest.requested_active_ingredient);
+                F.setValue('fhDermaPeso', rawRequest.requested_weight_text);
+                F.setValue('fhDermaJustificacion', rawRequest.requested_justification);
+                F.setValue('fhDermaObservaciones', rawRequest.request_source_observations);
+                F.setValue('fhDermaInduccion', rawRequest.requested_induction_status === 'yes' ? 'si' : (rawRequest.requested_induction_status === 'no' ? 'no' : ''));
+            }
             F.setValue('fhDermaAnalitica', p.analitica);
             if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
             if (p.estado === 'validated') F.setValue('fhValEstado', 'validated');
@@ -623,6 +641,22 @@
             if (p.tratamientosPrevios) F.setValue('fhHSTratamientosPrevios', p.tratamientosPrevios);
             if (p.motivoClinico) F.setValue('fhHSMotivoClinico', p.motivoClinico);
             if (!isEnfPatient && p.principioActivo) F.setValue('fhDermaPrincipioActivo', p.principioActivo);
+
+            if (p.__farmaciaRawPatient && p.validacion) {
+                var rawValidation = p.validacion;
+                F.setValue('fhValEstado', rawValidation.validation_result === 'validated' ? 'validated' : (rawValidation.validation_result === 'denied' ? 'denied' : (rawValidation.validation_result === 'pending' ? 'pending' : '')));
+                F.setValue('fhValPendingReason', rawValidation.validation_pending_reason);
+                F.setValue('fhValMotivo', rawValidation.validation_denial_reason);
+                F.setValue('fhValidadoFarmaco', rawValidation.validated_drug_name);
+                F.setValue('fhValidadoPrincipioActivo', rawValidation.validated_active_ingredient);
+                F.setValue('fhValidadoPresentacion', rawValidation.validated_presentation);
+                F.setValue('fhValidadoDosis', rawValidation.validated_dose_text);
+                F.setValue('fhValidadoVia', mapViaToSelect(rawValidation.validated_route, byId('fhValidadoVia')));
+                F.setValue('fhValidadoPauta', rawValidation.validated_schedule_code);
+                F.setValue('fhValidadoPautaOtro', rawValidation.validated_schedule_other_text);
+                F.setValue('fhValidadoInduccion', rawValidation.validated_induction_status === 'yes' ? 'si' : (rawValidation.validated_induction_status === 'no' ? 'no' : ''));
+                F.setValue('fhValidatedTreatmentRelation', rawValidation.validated_treatment_relation);
+            }
 
             if (p.tratamientosPreviosHS) {
                 var hsTto = p.tratamientosPreviosHS;
@@ -660,6 +694,17 @@
                 }
                 if (an.vacunacion) F.setValue('fhAnaliticaVacunacion', an.vacunacion);
                 if (an.observaciones) F.setValue('fhAnaliticaObservaciones', an.observaciones);
+                var triStateControls = {
+                    infeccionesRecurrentes: 'fhDermaComorbInfeccionesRecurrentes',
+                    riesgoCardiovascular: 'fhDermaComorbRiesgoCardiovascular',
+                    alteracionesNeurologicas: 'fhDermaComorbAlteracionesNeurologicas',
+                    riesgoNeoplasia: 'fhDermaComorbRiesgoNeoplasia'
+                };
+                Object.keys(triStateControls).forEach(function (key) {
+                    if (!Object.prototype.hasOwnProperty.call(an, key)) return;
+                    var value = an[key] === 'yes' ? 'si' : (an[key] === 'no' ? 'no' : '');
+                    F.setValue(triStateControls[key], value);
+                });
             }
 
             if (p.comorbilidades) {
@@ -733,7 +778,7 @@
     }
 
     function normalizePbValue(rawValue, key) {
-        var v = String(rawValue || '').trim();
+        var v = rawValue === null || rawValue === undefined ? '' : String(rawValue).trim();
         var upper = v.toUpperCase();
         if (!v || v === '—') return { text: 'No informado', estado: 'no_informado' };
 
@@ -744,7 +789,7 @@
         };
 
         if (key === 'analiticaReciente') {
-            if (/^(SI|SÍ|OK)$/.test(upper)) return { text: 'OK', estado: 'ok' };
+            if (/^(SI|SÍ|YES|OK)$/.test(upper)) return { text: 'OK', estado: 'ok' };
             if (/^NO$/.test(upper)) return { text: 'Pendiente', estado: 'pendiente' };
             return { text: 'No informado', estado: 'no_informado' };
         }
@@ -754,17 +799,17 @@
             return { text: 'No informado', estado: 'no_informado' };
         }
         if (key === 'mantoux' || key === 'vhb' || key === 'vhc' || key === 'vih') {
-            if (upper.indexOf('NEGATIVO') !== -1) return { text: 'Negativo', estado: 'ok' };
+            if (upper.indexOf('NEGATIVO') !== -1 || upper === 'NEGATIVE' || upper === 'POSITIVE_TREATED') return { text: 'Negativo', estado: 'ok' };
             if (/^(POSITIVO|POSITIVA|ALTERADO|ALTERADA|REACTIVO|REACTIVA)$/.test(upper) || upper.indexOf('POSITIV') !== -1) return { text: 'Positivo/alterado', estado: 'alerta' };
-            if (upper.indexOf('PENDIENTE') !== -1) return { text: 'Pendiente', estado: 'pendiente' };
+            if (upper.indexOf('PENDIENTE') !== -1 || upper === 'PENDING') return { text: 'Pendiente', estado: 'pendiente' };
             if (/^(NO PRECISA|NO_PRECISA|NO APLICA|N\/A|NA)$/.test(upper)) return { text: 'No precisa', estado: 'no_precisa' };
             return { text: 'No informado', estado: 'no_informado' };
         }
         if (key === 'vacunacion') {
-            if (/^(SI|SÍ|OK|COMPLETO|COMPLETADA|COMPLETADO)$/.test(upper)) return { text: 'OK', estado: 'ok' };
+            if (/^(SI|SÍ|YES|OK|COMPLETO|COMPLETADA|COMPLETADO)$/.test(upper)) return { text: 'OK', estado: 'ok' };
             if (/^(NO PRECISA|NO_PRECISA|NO APLICA|N\/A|NA)$/.test(upper)) return { text: 'No precisa', estado: 'no_precisa' };
             if (/^NO$/.test(upper)) return { text: 'No informado', estado: 'no_informado' };
-            if (upper.indexOf('PENDIENTE') !== -1) return { text: 'Pendiente', estado: 'pendiente' };
+            if (upper.indexOf('PENDIENTE') !== -1 || upper === 'PENDING') return { text: 'Pendiente', estado: 'pendiente' };
             return { text: 'No informado', estado: 'no_informado' };
         }
         return { text: v, estado: 'no_informado' };
@@ -804,7 +849,7 @@
         setPbChip('pbChipVhc', normalizePbValue(an ? (an.serologiasVhc || '') : (enf ? enf.vhc_estado : byId('fhAnaliticaSerologiasVhc').value), 'vhc'));
         setPbChip('pbChipVih', normalizePbValue(an ? (an.serologiasVih || '') : (enf ? enf.vih_estado : byId('fhAnaliticaSerologiasVih').value), 'vih'));
         setPbChip('pbChipVacunacion', normalizePbValue(an ? an.vacunacion : (enf ? enf.medicina_preventiva_estado : byId('fhAnaliticaVacunacion').value), 'vacunacion'));
-        setPbChip('pbChipMedPreventiva', normalizePbValue(enf ? enf.medicina_preventiva_estado : (an ? an.vacunacion : ''), 'vacunacion'));
+        setPbChip('pbChipMedPreventiva', normalizePbValue(enf ? enf.medicina_preventiva_estado : (an ? an.medicinaPreventiva : ''), 'vacunacion'));
         /* Mirror upper section chips */
         var upperChipIds = [
             'upperPbChipAnaliticaReciente', 'upperPbChipMantoux', 'upperPbChipIgra',
@@ -2565,6 +2610,40 @@
         byId("btnApplyKl").addEventListener("click", applyKarchLasagnaToFinal);
     }
 
+    function syncValidationVisualState() {
+        var origin = currentOrigenEntradaValue();
+        if (origin === 'manual_farmacia') {
+            var restoredPathology = byId('fhPatologiaManual') ? byId('fhPatologiaManual').value : '';
+            onServicioManualChange();
+            if (restoredPathology && byId('fhPatologiaManual')) byId('fhPatologiaManual').value = restoredPathology;
+            onPatologiaManualChange();
+        } else {
+            mostrarFormulario(origin);
+        }
+        toggleHSBlock();
+        toggleDermaConditionalDetails();
+        toggleBioAdaDetalle();
+        toggleBioOtrosDetalle();
+        toggleOtrosAtbDetalle();
+        byId('fhValPendingReasonRow').classList.toggle('hidden', byId('fhValEstado').value !== 'pending');
+        byId('fhValMotivoRow').classList.toggle('hidden', byId('fhValEstado').value !== 'denied');
+        [['fhManualPauta', 'fhManualPautaOtro'], ['fhDermaPauta', 'fhDermaPautaOtro'],
+            ['fhDigPauta', 'fhDigPautaOtro'], ['fhValidadoPauta', 'fhValidadoPautaOtro']]
+            .forEach(function (ids) {
+                var select = byId(ids[0]);
+                var other = byId(ids[1]);
+                if (select && other) other.classList.toggle('hidden', select.value !== 'OTRO');
+            });
+        document.querySelectorAll('[data-chip-target]').forEach(function (group) {
+            var hidden = byId(group.getAttribute('data-chip-target'));
+            if (hidden) syncRadioGroup(group, hidden.value);
+        });
+        updateValidationModuleSummaries();
+        toggleCausalityModules();
+        updateValidationExcelExportAvailability();
+        updateValidationV2ExportAvailability();
+    }
+
     function bindCoreEvents() {
         var origenSel = byId("fhOrigenEntrada");
         if (origenSel) origenSel.addEventListener("change", function () {
@@ -2724,5 +2803,12 @@
                 exp.copyTSVRowToClipboard(rowArr, { sheetName: sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('validacion', draftScope);
+            syncValidationVisualState();
+            runtime.bindPageDraft('validacion', draftScope);
+        }
     });
 })();

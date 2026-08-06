@@ -3,60 +3,6 @@
 (function () {
     const F = window.FarmaciaDemo;
     let farmaciaOverlayMount = null;
-    let bridgeModeActive = false;
-    let bridgeSelectors = null;
-    const bridgeHandoffSessions = [];
-
-    function removeBridgeSession(session) {
-        var index = bridgeHandoffSessions.indexOf(session);
-        if (index !== -1) bridgeHandoffSessions.splice(index, 1);
-    }
-
-    function showBridgeHandoffNotice(message) {
-        setBridgeStatus(message);
-    }
-
-    function openBridgeDashboard(quickView, searchContext, trigger) {
-        var handoff = window.FarmaciaBridgeV2DashboardHandoff;
-        if (!handoff) {
-            showBridgeHandoffNotice('El protocolo Bridge no está disponible.');
-            return;
-        }
-        var nonce;
-        try {
-            nonce = handoff.generateNonce();
-        } catch (error) {
-            showBridgeHandoffNotice('No se pudo generar una sesión Bridge segura.');
-            return;
-        }
-        var session = { nonce: nonce, childWindow: null, payload: { search_context: searchContext, quick_view: quickView }, expiresAt: Date.now() + handoff.sessionTtlMs, sent: false };
-        var url = 'farmacia_dashboard_paciente.html' + handoff.buildFragment(nonce);
-        session.childWindow = window.open(url, '_blank');
-        if (!session.childWindow) {
-            showBridgeHandoffNotice('El navegador bloqueó la ventana Bridge. El paciente seleccionado sigue activo; permita ventanas emergentes y vuelva a intentarlo.');
-            return;
-        }
-        bridgeHandoffSessions.push(session);
-        window.setTimeout(function () {
-            if (bridgeHandoffSessions.indexOf(session) !== -1 && Date.now() >= session.expiresAt) removeBridgeSession(session);
-        }, handoff.sessionTtlMs + 1000);
-        if (trigger) trigger.focus();
-    }
-
-    function bindBridgeHandoffMessages() {
-        window.addEventListener('message', function (event) {
-            var handoff = window.FarmaciaBridgeV2DashboardHandoff;
-            if (!handoff || event.origin !== window.location.origin) return;
-            var session = bridgeHandoffSessions.find(function (candidate) {
-                return candidate.childWindow === event.source && Date.now() < candidate.expiresAt;
-            });
-            if (!session || !handoff.validateEnvelope(event.data, handoff.readyType, session.nonce) || session.sent) return;
-            var envelope = handoff.createPayload(session.nonce, session.payload);
-            session.sent = true;
-            event.source.postMessage(envelope, window.location.origin);
-            removeBridgeSession(session);
-        });
-    }
 
     function createOverlay() {
         const overlay = document.createElement('div');
@@ -147,7 +93,7 @@
     }
 
     function actionDefinitions(patient) {
-        if (patient.estado === 'pending') {
+        if (patient.estado === 'pending' || patient.estado === 'denied' || patient.estado === 'not_recorded') {
             return [
                 { label: 'Validaci\u00f3n', icon: 'fa-check-double', href: 'farmacia_validacion.html', entrada: 'validacion', cls: 'btn-primary' },
                 { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
@@ -371,6 +317,20 @@
 
     function renderFhQuickViewFields(grid, patient) {
         F.clearChildren(grid);
+        if (patient.__farmaciaRawPatient) {
+            var request = patient.solicitud || {};
+            var validation = patient.validacion || {};
+            grid.appendChild(F.createField('Última solicitud FH', patient.ultimaSolicitud));
+            grid.appendChild(F.createField('Tratamiento solicitado', request.requested_drug_name));
+            grid.appendChild(F.createField('Resultado de validación', validation.validation_result));
+            grid.appendChild(F.createField('Tratamiento validado', validation.validated_drug_name));
+            grid.appendChild(F.createField('Tratamiento actual', patient.lineaActiva && patient.lineaActiva.nombre_linea));
+            grid.appendChild(F.createField('Líneas activas explícitas', patient.lineasActivas && patient.lineasActivas.length));
+            grid.appendChild(F.createField('Última adherencia', patient.adherencia));
+            grid.appendChild(F.createField('Efectos adversos activos', patient.efectosAdversos));
+            grid.appendChild(F.createField('Últimos PROMs Farmacia', patient.proms));
+            return;
+        }
         grid.appendChild(F.createField('\u00daltima solicitud FH', patient.ultimaSolicitud));
         grid.appendChild(createFarmacoGroup(patient));
         grid.appendChild(createAnaliticaChecklist(patient));
@@ -384,224 +344,6 @@
         for (var pi = 0; pi < proms.length; pi++) {
             grid.appendChild(createPromCard(proms[pi]));
         }
-    }
-
-    function bridgeDisplayValue(value) {
-        if (value === null || value === undefined) return 'No registrado';
-        if (value === '') return 'Texto vacío registrado';
-        if (value === true) return 'Sí';
-        if (value === false) return 'No';
-        if (typeof value === 'object') return JSON.stringify(value, null, 2);
-        return String(value);
-    }
-
-    function createBridgeField(label, value) {
-        var field = document.createElement('div');
-        field.className = 'info-field';
-        var labelEl = document.createElement('span');
-        labelEl.className = 'info-field__label';
-        labelEl.textContent = label;
-        var valueEl = document.createElement(typeof value === 'object' && value !== null ? 'pre' : 'span');
-        valueEl.className = 'info-field__value';
-        valueEl.textContent = bridgeDisplayValue(value);
-        if (valueEl.tagName === 'PRE') valueEl.style.whiteSpace = 'pre-wrap';
-        field.append(labelEl, valueEl);
-        return field;
-    }
-
-    function createBridgeSection(title) {
-        var section = document.createElement('section');
-        section.className = 'fh-overlay-card';
-        var heading = document.createElement('h3');
-        heading.className = 'section-title';
-        heading.textContent = title;
-        section.appendChild(heading);
-        return section;
-    }
-
-    function appendBridgeObjectSection(container, title, object, fields) {
-        var section = createBridgeSection(title);
-        var grid = document.createElement('div');
-        grid.className = 'info-grid';
-        var keys = fields || Object.keys(object || {});
-        if (!object) {
-            grid.appendChild(createBridgeField('Estado', null));
-        } else {
-            keys.forEach(function (key) {
-                grid.appendChild(createBridgeField(key, Object.prototype.hasOwnProperty.call(object, key) ? object[key] : null));
-            });
-        }
-        section.appendChild(grid);
-        container.appendChild(section);
-    }
-
-    function bridgeEventDate(event, field) {
-        if (!event || !event.rows || !event.rows.length) return null;
-        return event.rows[0].canonical_row[field];
-    }
-
-    function appendBridgeEventSection(container, title, event, fieldPrefixes) {
-        var section = createBridgeSection(title);
-        if (!event) {
-            section.appendChild(createBridgeField('Estado', null));
-            container.appendChild(section);
-            return;
-        }
-        var eventGrid = document.createElement('div');
-        eventGrid.className = 'info-grid';
-        eventGrid.appendChild(createBridgeField('source_event_id', event.source_event_id));
-        eventGrid.appendChild(createBridgeField('event_id', event.event_id));
-        eventGrid.appendChild(createBridgeField('occurred_at', bridgeEventDate(event, 'occurred_at')));
-        eventGrid.appendChild(createBridgeField('recorded_at', bridgeEventDate(event, 'recorded_at')));
-        eventGrid.appendChild(createBridgeField('Filas del acto', event.rows.length));
-        section.appendChild(eventGrid);
-        event.rows.forEach(function (physicalRow) {
-            var explicit = {};
-            Object.keys(physicalRow.canonical_row).forEach(function (key) {
-                if (!fieldPrefixes.some(function (prefix) { return key === prefix || key.indexOf(prefix) === 0; })) return;
-                explicit[key] = physicalRow.canonical_row[key];
-            });
-            var rowTitle = document.createElement('h4');
-            rowTitle.textContent = 'Fila ' + bridgeDisplayValue(physicalRow.canonical_row.row_index);
-            section.appendChild(rowTitle);
-            section.appendChild(createBridgeField('Campos explícitos del bloque', explicit));
-        });
-        container.appendChild(section);
-    }
-
-    function appendBridgeRecordsSection(container, title, records) {
-        var section = createBridgeSection(title);
-        if (!records || !records.length) {
-            section.appendChild(createBridgeField('Estado', null));
-        } else {
-            records.forEach(function (record) {
-                var grid = document.createElement('div');
-                grid.className = 'info-grid';
-                grid.appendChild(createBridgeField('source_event_id', record.source_event_id));
-                grid.appendChild(createBridgeField('row_index', record.row_index));
-                grid.appendChild(createBridgeField('Valores explícitos', record.values));
-                section.appendChild(grid);
-            });
-        }
-        container.appendChild(section);
-    }
-
-    function renderBridgePatientView(quickView, searchContext) {
-        var mount = ensureOverlay();
-        F.clearChildren(mount.content);
-        mount.title.textContent = 'Vista Bridge v2';
-        mount.subtitle.textContent = searchContext.identifier_system + ' · ' + searchContext.identifier_value;
-
-        var notice = document.createElement('div');
-        notice.className = 'validation-note-block';
-        var noticeLabel = document.createElement('span');
-        noticeLabel.className = 'validation-note-block__label';
-        noticeLabel.textContent = 'Lectura Bridge';
-        var noticeText = document.createElement('p');
-        noticeText.className = 'validation-note-block__value';
-        noticeText.textContent = 'Datos sintéticos/demo. Solo memoria de esta página; tras recargar deberá volver a seleccionar el Excel.';
-        notice.append(noticeLabel, noticeText);
-        mount.content.appendChild(notice);
-
-        var summary = {
-            'Nombre': null,
-            'Edad': null,
-            'Sexo': null,
-            'Nombre de fichero': quickView.workbook.file_name,
-            'Sistema de identificador': searchContext.identifier_system,
-            'Valor del identificador': searchContext.identifier_value,
-            'ID técnico (patient_id)': quickView.patient_id,
-            'Servicios': quickView.services,
-            'Patologías': quickView.pathologies,
-            'Actos válidos': quickView.valid_event_count,
-            'Warnings': quickView.warnings.length,
-            'Errores source': quickView.source_error_count,
-            'Actos excluidos': quickView.excluded_event_count,
-            'Importado': quickView.workbook.imported_at,
-            'Filas del workbook': quickView.workbook.row_count,
-            'Pacientes del workbook': quickView.workbook.patient_count,
-            'Versión read model': quickView.workbook.read_model_version,
-            'Almacenamiento': quickView.workbook.storage
-        };
-        appendBridgeObjectSection(mount.content, 'Paciente y workbook', summary);
-        appendBridgeObjectSection(mount.content, 'Warnings atribuibles', { warnings: quickView.warnings });
-
-        var timelineSection = createBridgeSection('Timeline de actos válidos');
-        if (!quickView.timeline.length) timelineSection.appendChild(createBridgeField('Estado', null));
-        quickView.timeline.forEach(function (event) {
-            var grid = document.createElement('div');
-            grid.className = 'info-grid';
-            grid.appendChild(createBridgeField('Tipo de acto', event.event_type));
-            grid.appendChild(createBridgeField('source_event_id', event.source_event_id));
-            grid.appendChild(createBridgeField('event_id', event.event_id));
-            grid.appendChild(createBridgeField('occurred_at', bridgeEventDate(event, 'occurred_at')));
-            grid.appendChild(createBridgeField('recorded_at', bridgeEventDate(event, 'recorded_at')));
-            grid.appendChild(createBridgeField('Hoja', event.source_sheet));
-            grid.appendChild(createBridgeField('Filas / cardinalidad original', event.rows.length));
-            grid.appendChild(createBridgeField('Filas físicas', event.physical_row_numbers));
-            timelineSection.appendChild(grid);
-        });
-        mount.content.appendChild(timelineSection);
-
-        appendBridgeObjectSection(mount.content, 'Última solicitud', quickView.latest_request);
-        appendBridgeObjectSection(mount.content, 'Última validación', quickView.latest_validation);
-        appendBridgeEventSection(mount.content, 'Última Primera Visita', quickView.latest_first_visit, ['first_visit_', 'induction_', 'stratification_', 'baseline_proms_', 'pharmacy_visit_notes', 'proms_json']);
-        appendBridgeEventSection(mount.content, 'Último Seguimiento', quickView.latest_followup, ['visit_', 'stratification_', 'previous_', 'new_stratification_', 'followup_', 'dispensation_', 'specific_review_', 'therapeutic_', 'new_', 'movement_', 'suspension_', 'line_observations']);
-
-        var linesSection = createBridgeSection('Líneas explícitas: último snapshot por line_id');
-        if (!quickView.lines.length) linesSection.appendChild(createBridgeField('Estado', null));
-        quickView.lines.forEach(function (line) {
-            var snapshot = line.snapshot;
-            var grid = document.createElement('div');
-            grid.className = 'info-grid';
-            [
-                ['line_id', line.line_id], ['treatment_id', line.treatment_id],
-                ['source_event_id', line.source_event_id], ['event_type', line.event_type],
-                ['active_at_event', snapshot.active_at_event], ['line_role', snapshot.line_role],
-                ['is_primary_line', snapshot.is_primary_line], ['line_status_at_event', snapshot.line_status_at_event],
-                ['line_drug_name', snapshot.line_drug_name], ['line_active_ingredient', snapshot.line_active_ingredient],
-                ['line_presentation', snapshot.line_presentation], ['line_dose_text', snapshot.line_dose_text],
-                ['line_route', snapshot.line_route], ['line_schedule_code', snapshot.line_schedule_code],
-                ['line_schedule_label', snapshot.line_schedule_label], ['line_schedule_other_text', snapshot.line_schedule_other_text],
-                ['line_selected_drug_id', snapshot.line_selected_drug_id], ['line_catalog_source', snapshot.line_catalog_source],
-                ['line_national_code', snapshot.line_national_code], ['line_registration_number', snapshot.line_registration_number]
-            ].forEach(function (entry) { grid.appendChild(createBridgeField(entry[0], entry[1])); });
-            linesSection.appendChild(grid);
-        });
-        mount.content.appendChild(linesSection);
-
-        appendBridgeRecordsSection(mount.content, 'PROMs estructurados, sin interpretación', quickView.structured_proms);
-        appendBridgeRecordsSection(mount.content, 'Adherencia explícita, sin interpretación', quickView.adherence);
-        appendBridgeRecordsSection(mount.content, 'Efectos adversos explícitos', quickView.adverse_events);
-        appendBridgeRecordsSection(mount.content, 'Causalidad explícita', quickView.causality_assessments);
-
-        var pendingNotice = document.createElement('div');
-        pendingNotice.className = 'validation-note-block';
-        var pendingLabel = document.createElement('span');
-        pendingLabel.className = 'validation-note-block__label';
-        pendingLabel.textContent = 'Consumidores pendientes';
-        var pendingText = document.createElement('p');
-        pendingText.className = 'validation-note-block__value';
-         pendingText.textContent = 'El dashboard Bridge está disponible como lectura temporal en una nueva ventana. Validación, Primera Visita, Seguimiento y el resto de consumidores todavía no están conectados al workbook Bridge. No persiste, no transporta el workbook completo y no habilita acciones clínicas.';
-        pendingNotice.append(pendingLabel, pendingText);
-         mount.content.appendChild(pendingNotice);
-
-         var dashboardButton = document.createElement('button');
-         dashboardButton.type = 'button';
-         dashboardButton.className = 'btn btn-primary';
-         dashboardButton.textContent = 'Abrir dashboard Bridge';
-         dashboardButton.addEventListener('click', function () {
-             openBridgeDashboard(quickView, {
-                 identifier_system: searchContext.identifier_system,
-                 identifier_value: searchContext.identifier_value
-             }, dashboardButton);
-         });
-         var dashboardActions = document.createElement('div');
-         dashboardActions.className = 'fh-overlay-card__actions';
-         dashboardActions.appendChild(dashboardButton);
-         mount.content.appendChild(dashboardActions);
-
-         mount.open(document.getElementById('fhBridgeSearchBtn'));
     }
 
     function renderPatientView(patient) {
@@ -626,7 +368,7 @@
 
         var idBadge = document.createElement('div');
         idBadge.className = 'patient-id-badge';
-        idBadge.textContent = 'Paciente demo';
+        idBadge.textContent = patient.__farmaciaRawPatient ? 'Paciente actual' : 'Paciente demo';
 
         var nameEl = document.createElement('h3');
         nameEl.className = 'patient-name';
@@ -694,136 +436,48 @@
         if (mainEl) mainEl.classList.add('fh-intake-active');
     }
 
-    function setBridgeStatus(message) {
-        var status = document.getElementById('fhBridgeStatus');
-        if (status) status.textContent = message;
-    }
-
-    function setBridgeElementVisible(id, visible) {
-        var element = document.getElementById(id);
-        if (element) element.classList.toggle('hidden', !visible);
-    }
-
-    function syncBridgeMode() {
-        var readModel = window.FarmaciaDataImports && typeof window.FarmaciaDataImports.getBridgeReadModel === 'function'
-            ? window.FarmaciaDataImports.getBridgeReadModel()
-            : null;
-        bridgeModeActive = !!readModel;
-        bridgeSelectors = null;
-
-        setBridgeElementVisible('fhBridgeModePanel', bridgeModeActive);
-        setBridgeElementVisible('fhLegacySearchPanel', !bridgeModeActive);
-        setBridgeElementVisible('demoCaseFh004', !bridgeModeActive);
-        setBridgeElementVisible('pendingValidationBoard', !bridgeModeActive);
-        setBridgeElementVisible('fhBridgeBoardNotice', bridgeModeActive);
-        setBridgeElementVisible('fhBridgeNavigationNotice', bridgeModeActive);
-
-        var sidebarSearch = document.getElementById('patientSearch');
-        if (sidebarSearch) {
-            sidebarSearch.disabled = bridgeModeActive;
-            sidebarSearch.placeholder = bridgeModeActive ? 'Use el buscador Bridge de esta página' : 'Buscar paciente por CIP...';
-            sidebarSearch.setAttribute('aria-label', bridgeModeActive ? 'Buscador legacy desactivado mientras Bridge v2 está activo' : 'Buscar paciente por CIP');
-        }
-        var heroDescription = document.querySelector('.module-hero .hero-description');
-        if (heroDescription) {
-            heroDescription.textContent = bridgeModeActive
-                ? 'Búsqueda por sistema y valor explícitos dentro del workbook Bridge activo.'
-                : 'Entrada única por CIP para abrir Quick View o alta guiada.';
-        }
-        if (!bridgeModeActive) {
-            setBridgeStatus('Seleccione un sistema e introduzca el valor exacto.');
-            return;
-        }
-
-        var guidedPanel = document.getElementById('guidedIntakePanel');
-        if (guidedPanel) guidedPanel.classList.add('hidden');
-        var mainEl = document.querySelector('main.main-content');
-        if (mainEl) mainEl.classList.remove('fh-intake-active');
-
-        if (!window.FarmaciaBridgeV2PatientSelectors || typeof window.FarmaciaBridgeV2PatientSelectors.create !== 'function') {
-            setBridgeStatus('No se pudo activar el selector Bridge v2.');
-            return;
-        }
-        try {
-            bridgeSelectors = window.FarmaciaBridgeV2PatientSelectors.create(readModel);
-            var systems = [];
-            bridgeSelectors.listPatientSummaries().forEach(function (patient) {
-                patient.identifiers.forEach(function (identifier) {
-                    if (systems.indexOf(identifier.identifier_system) === -1) systems.push(identifier.identifier_system);
-                });
-            });
-            systems.sort();
-            var select = document.getElementById('fhBridgeIdentifierSystem');
-            if (select) {
-                var previous = select.value;
-                F.clearChildren(select);
-                var placeholder = document.createElement('option');
-                placeholder.value = '';
-                placeholder.textContent = 'Seleccionar sistema...';
-                select.appendChild(placeholder);
-                systems.forEach(function (system) {
-                    var option = document.createElement('option');
-                    option.value = system;
-                    option.textContent = system;
-                    select.appendChild(option);
-                });
-                if (systems.indexOf(previous) !== -1) select.value = previous;
-            }
-            setBridgeStatus('Bridge v2 activo: ' + readModel.metadata.patient_count + ' pacientes y ' + systems.length + ' sistemas disponibles.');
-        } catch (error) {
-            setBridgeStatus('Read model Bridge v2 no compatible: ' + (error.message || error));
-        }
-    }
-
-    function searchBridge() {
-        var system = document.getElementById('fhBridgeIdentifierSystem').value.trim();
-        var value = document.getElementById('fhBridgeIdentifierValue').value.trim();
-        if (!system) {
-            setBridgeStatus('Seleccione un sistema de identificador.');
-            return;
-        }
-        if (!value) {
-            setBridgeStatus('Introduzca el valor del identificador.');
-            return;
-        }
-        var readModel = window.FarmaciaDataImports && window.FarmaciaDataImports.getBridgeReadModel
-            ? window.FarmaciaDataImports.getBridgeReadModel()
-            : null;
-        if (!readModel || !window.FarmaciaBridgeV2PatientSelectors) {
-            syncBridgeMode();
-            setBridgeStatus('El workbook Bridge ya no está activo. Vuelva a seleccionar el Excel.');
-            return;
-        }
-        try {
-            bridgeSelectors = window.FarmaciaBridgeV2PatientSelectors.create(readModel);
-        } catch (error) {
-            setBridgeStatus('Read model Bridge v2 no compatible: ' + (error.message || error));
-            return;
-        }
-        var patient = bridgeSelectors.findByIdentifier(system, value);
-        if (!patient) {
-            setBridgeStatus('No encontrado en el workbook Bridge activo.');
-            return;
-        }
-        var quickView = bridgeSelectors.getPatientQuickView(patient.patient_id);
-        setBridgeStatus('Paciente encontrado en el workbook Bridge activo.');
-        renderBridgePatientView(quickView, { identifier_system: system, identifier_value: value });
-    }
-
-    function searchLegacy() {
-        var cip = document.getElementById('fhCipInput').value.trim();
-        if (!cip) return;
-        var patient = F.findPatientByCip(cip);
-        if (patient) renderPatientView(patient);
-        else showGuidedIntake(cip);
+    function setSearchStatus(message) {
+        var status = document.getElementById('fhSearchStatus');
+        if (status) status.textContent = message || '';
     }
 
     function search() {
-        if (bridgeModeActive) {
-            searchBridge();
+        var cip = document.getElementById('fhCipInput').value.trim();
+        if (!cip) return;
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var result = runtime && typeof runtime.selectByCip === 'function' ? runtime.selectByCip(cip) : { status: 'unavailable' };
+        if (result.status === 'ambiguous') {
+            setSearchStatus('Identificador ambiguo entre varios sistemas. No se ha seleccionado ningún paciente.');
             return;
         }
-        searchLegacy();
+        if (result.status === 'pending_changes') {
+            var discard = window.confirm('Hay cambios no exportados del paciente actual.\n¿Desea descartarlos y cambiar de paciente?');
+            if (!discard) {
+                setSearchStatus('Cambio de paciente cancelado.');
+                return;
+            }
+            result = runtime.selectByCip(cip, { discardPendingChanges: true });
+        }
+        if (result.status === 'selected') {
+            var selected = F.findPatientByCip(cip) || result.patient;
+            if (result.previousCip && String(result.previousCip).toUpperCase() !== String(cip).toUpperCase()
+                && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
+                window.FarmaciaDataImports.clearTransientPatientImports();
+                renderEnfermeriaBoard();
+            }
+            runtime.enrichCurrentPatient(selected);
+            setSearchStatus('Paciente encontrado.');
+            renderPatientView(F.findPatientByCip(cip) || selected);
+            return;
+        }
+        var patient = F.findPatientByCip(cip);
+        if (patient) {
+            setSearchStatus('Paciente encontrado.');
+            renderPatientView(patient);
+        } else {
+            setSearchStatus('Paciente no encontrado.');
+            showGuidedIntake(cip);
+        }
     }
 
     function initGuidedIntake() {
@@ -1308,7 +962,6 @@
 
     document.addEventListener('DOMContentLoaded', function () {
          ensureOverlay();
-        bindBridgeHandoffMessages();
         var searchBtn = document.getElementById('fhSearchBtn');
         var cipInput = document.getElementById('fhCipInput');
         if (searchBtn) searchBtn.addEventListener('click', search);
@@ -1318,21 +971,16 @@
                 search();
             }
         });
-        var bridgeSearchBtn = document.getElementById('fhBridgeSearchBtn');
-        var bridgeIdentifierValue = document.getElementById('fhBridgeIdentifierValue');
-        if (bridgeSearchBtn) bridgeSearchBtn.addEventListener('click', search);
-        if (bridgeIdentifierValue) bridgeIdentifierValue.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                search();
-            }
-        });
         initGuidedIntake();
-        syncBridgeMode();
         renderEnfermeriaBoard();
         renderPendingValidationBoard();
         document.addEventListener('farmacia:data-imported', function () {
-            syncBridgeMode();
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            var current = runtime && runtime.getCurrentPatient ? runtime.getCurrentPatient() : null;
+            if (current) {
+                var merged = F.findPatientByCip(current.cip);
+                if (merged) runtime.enrichCurrentPatient(merged);
+            }
             renderEnfermeriaBoard();
             renderPendingValidationBoard();
         });
