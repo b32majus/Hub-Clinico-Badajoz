@@ -30,7 +30,9 @@ const events = {
   p1Old: event('patient-1', 'p1-old', 'pharmacy_followup', '2026-01-03', [{ visit_date: '2026-01-03', therapeutic_movement_type: 'no_change_recorded' }]),
   p1New: event('patient-1', 'p1-new', 'pharmacy_followup', '2026-01-04', [
     { visit_date: '2026-01-04', line_id: 'line-active-a', treatment_id: 'treatment-a', therapeutic_movement_type: 'schedule_change', new_schedule_code: 'Q14D', new_schedule_label: 'Cada 14 días', movement_effective_date: '2026-01-04' },
-    { visit_date: '2026-01-04', line_id: 'line-active-b', treatment_id: 'treatment-b', therapeutic_movement_type: 'not_recorded', suspension_status: 'yes', suspension_effective_date: '2026-01-04' }
+    { visit_date: '2026-01-04', line_id: 'line-active-b', treatment_id: 'treatment-b', therapeutic_movement_type: 'not_recorded', suspension_status: 'yes', suspension_reason: 'Motivo explícito de suspensión', suspension_effective_date: '2026-01-05' },
+    { visit_date: '2026-01-04', line_id: 'line-susp-explicita', treatment_id: 'treatment-e', therapeutic_movement_type: 'suspension', suspension_reason: 'Suspensión por type explícito', suspension_effective_date: '2026-01-06' },
+    { visit_date: '2026-01-04', line_id: 'line-inactive', treatment_id: 'treatment-f', active_at_event: false, line_status_at_event: 'inactive', line_drug_name: 'Inactivo sin suspensión explícita' }
   ]),
   p2Validation: event('patient-2', 'p2-validation', 'pharmacy_validation', '2026-02-01', [{ request_date: '2026-02-01' }]),
   p3Validation: event('patient-3', 'p3-validation', 'pharmacy_validation', '2026-03-01', [{ request_date: '2026-03-01' }]),
@@ -177,8 +179,26 @@ assert.equal(p1.name, '');
 assert.equal(p1.age, '');
 assert.equal(p1.sex, '');
 assert.deepEqual(cohort.map(patient => patient.patient_id), ['patient-1', 'patient-4', 'patient-2', 'patient-3'], 'deterministic primary identifier then patient_id ordering');
-assert.deepEqual(p1.therapeutic_movements.map(movement => movement.type), ['schedule_change', 'suspension'], 'explicit movement and structured suspension retained');
-assert.equal(p1.therapeutic_movements.some(movement => movement.type === 'no_change_recorded'), false, 'explicit absence of change is not a movement');
+const p1Movements = p1.therapeutic_movements;
+assert.deepEqual(p1Movements.map(movement => movement.type), ['schedule_change', 'suspension', 'suspension'], 'explicit movement and structured suspensions retained');
+assert.equal(p1Movements.some(movement => movement.type === 'no_change_recorded'), false, 'explicit absence of change is not a movement');
+const suspensionByStatus = p1Movements.find(movement => movement.suspension_status === 'yes');
+assert(suspensionByStatus, 'suspension driven by suspension_status "yes" is retained as a movement');
+assert.equal(suspensionByStatus.type, 'suspension');
+assert.equal(suspensionByStatus.suspension_reason, 'Motivo explícito de suspensión', 'explicit suspension reason preserved');
+assert.equal(suspensionByStatus.suspension_effective_date, '2026-01-05', 'explicit suspension effective date preserved');
+assert.equal(suspensionByStatus.event_date, '2026-01-05', 'suspension event_date uses the explicit suspension_effective_date');
+const suspensionByType = p1Movements.find(movement => movement.line_id === 'line-susp-explicita');
+assert(suspensionByType, 'suspension driven by explicit therapeutic_movement_type is retained');
+assert.equal(suspensionByType.type, 'suspension');
+assert.equal(suspensionByType.suspension_reason, 'Suspensión por type explícito', 'suspension by explicit type preserves reason');
+assert.equal(suspensionByType.event_date, '2026-01-06', 'explicit suspension by type uses its effective date');
+const scheduleChange = p1Movements.find(movement => movement.type === 'schedule_change');
+assert.equal(scheduleChange.event_date, '2026-01-04', 'non-suspension movement keeps its movement_effective_date');
+assert.equal(scheduleChange.suspension_status, '', 'non-suspension movement carries no suspension status');
+assert.equal(scheduleChange.suspension_reason, '', 'non-suspension movement carries no suspension reason');
+assert.equal(scheduleChange.suspension_effective_date, '', 'non-suspension movement carries no suspension effective date');
+assert.equal(p1Movements.some(movement => movement.line_id === 'line-inactive'), false, 'inactive line without explicit suspension generates no suspension movement');
 
 const csvRows = Cohort.buildCsvRows(cohort);
 assert.equal(Cohort.CSV_COLUMNS.length, 37);
@@ -205,6 +225,9 @@ JSON.parse(csvRows[0].proms_json);
 JSON.parse(csvRows[0].adverse_events_json);
 JSON.parse(csvRows[0].causality_assessments_json);
 JSON.parse(csvRows[0].provenance_json);
+const csvMovements = JSON.parse(csvRows[0].therapeutic_movements_json);
+assert.equal(csvMovements.length, 3, 'therapeutic_movements_json travels through the CSV');
+assert.equal(csvMovements.find(movement => movement.suspension_status === 'yes').suspension_reason, 'Motivo explícito de suspensión', 'suspension reason survives the CSV export');
 
 const demoDataset = JSON.parse(readFileSync(path.join(ROOT, 'data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json'), 'utf8'));
 const demo = Cohort.buildDemoCohort(demoDataset, { fileName: 'farmacia_longitudinal_demo_v0_3.json', importedAt: '' });

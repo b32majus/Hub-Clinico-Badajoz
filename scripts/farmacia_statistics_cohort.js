@@ -408,13 +408,17 @@
                 var type = row.therapeutic_movement_type;
                 if (type === 'suspension' || row.suspension_status === 'yes') type = 'suspension';
                 if (!present(type) || type === 'not_recorded' || type === 'no_change_recorded') return;
+                var isSuspension = type === 'suspension';
                 var movement = {
                     source_event_id: event.source_event_id || '',
                     event_id: event.event_id || '',
-                    event_date: firstPresent(type === 'suspension' ? row.suspension_effective_date : '', row.movement_effective_date, row.visit_date, row.occurred_at, event.occurred_at),
+                    event_date: firstPresent(isSuspension ? row.suspension_effective_date : '', row.movement_effective_date, row.visit_date, row.occurred_at, event.occurred_at),
                     line_id: row.line_id || '',
                     treatment_id: row.treatment_id || '',
                     type: type,
+                    suspension_status: isSuspension ? (present(row.suspension_status) ? row.suspension_status : '') : '',
+                    suspension_reason: isSuspension ? (present(row.suspension_reason) ? row.suspension_reason : '') : '',
+                    suspension_effective_date: isSuspension ? (present(row.suspension_effective_date) ? row.suspension_effective_date : '') : '',
                     new_dose_text: row.new_dose_text || '',
                     new_schedule_code: row.new_schedule_code || '',
                     new_schedule_label: firstPresent(row.new_schedule_label, row.new_schedule_other_text),
