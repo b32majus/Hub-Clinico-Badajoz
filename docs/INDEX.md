@@ -2,15 +2,15 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-08-06 |
+| Última actualización | 2026-08-07 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `a9d6d4645cb90818bbb432d33d07fe2db19f52ee` (merge issue #257 / PR #258) |
+| HEAD regional publicado verificado | `f2b827fed26728e2103a9ebca1f4c524d28dfac3` (merge issue #261 / PR #262) |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073` |
-| Rama documental de esta edición | `work/doc-fh-post-stats-reconciliation-01-20260806` |
+| Rama documental de esta edición | `work/doc-fh-post-quickview-reconciliation-01-20260807` |
 
-> Este índice orienta. Para Farmacia, la verdad funcional de esta edición es el código publicado en `a9d6d464...`, el issue #257 y la PR #258, junto con los issues/PR previos que integraron el flujo de paciente. Los documentos históricos no convierten propuestas arquitectónicas en capacidades implementadas.
+> Este índice orienta. Para Farmacia, la verdad funcional de esta edición es el código publicado en `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, el issue #261 y la PR #262, junto con el merge previo de Estadísticas del issue #257 / PR #258 y los issues/PR anteriores que integraron el flujo de paciente. Los documentos históricos no convierten propuestas arquitectónicas en capacidades implementadas.
 
 > La PR que publique esta edición generará un merge SHA posterior. Por ello se registra la base Git de la edición y, por separado, el último SHA que modificó código funcional; el HEAD actual se verifica siempre en GitHub.
 
@@ -18,11 +18,11 @@
 
 ## 1. Lectura recomendada actual
 
-1. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado reconciliado después del issue #250 / PR #251, del issue #252 / PR #253 y del issue #257 / PR #258.
+1. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado reconciliado después del issue #250 / PR #251, del issue #252 / PR #253, del issue #257 / PR #258 y del issue #261 / PR #262.
 2. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — publicación regional, evaluación sintética y snapshot Cáceres sin promoción automática.
-3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia histórica post patient-flow, subordinada al estado post-#258.
-4. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación; el estado publicado actual se concreta en #257/#258 y en este estado post-stats.
-5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs y PRs, con issue #250 / PR #251, issue #252 / PR #253 e issue #257 / PR #258 cerradas/publicadas.
+3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia histórica post patient-flow, subordinada al estado publicado post-#261/#262.
+4. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación; el estado publicado actual se concreta en #261/#262 y en este estado post-Quick View.
+5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs y PRs, con issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258 e issue #261 / PR #262 cerradas/publicadas.
 6. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan anterior subordinado a la secuencia post patient-flow.
 7. [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — contrato histórico y referencia secundaria para la evolución longitudinal.
 
@@ -32,9 +32,9 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 
 ## 2. Orden de verdad
 
-1. Issue/WO actual; en esta edición, issue #257 / PR #258.
-2. GitHub: código publicado en `a9d6d464...` y estado real del issue #257 / PR #258, sobre el flujo integrado por #250/#251 y #252/#253.
-3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #257/#258.
+1. Issue/WO actual; en esta edición, issue #263 y `WO-DOC-FH-POST-QUICKVIEW-RECONCILIATION-01`.
+2. GitHub: código publicado en `f2b827fed26728e2103a9ebca1f4c524d28dfac3` y estado real del issue #261 / PR #262, sobre el flujo integrado por #250/#251, #252/#253 y #257/#258.
+3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #261/#262.
 4. Este índice reconciliado.
 5. `docs/ops/WORK_ORDER_STATUS.md` reconciliado.
 6. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md).
@@ -50,7 +50,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 |---|---|---|---|
 | `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**, HEAD `a9d6d464...` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**, HEAD `f2b827fed26728e2103a9ebca1f4c524d28dfac3` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
 | `previews/caceres-fh/` | **Snapshot estable 0.3**, tree `81740136...` | Evaluación Pharmacy-only Cáceres | Evolución regional automática |
 | `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
@@ -66,57 +66,61 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 
 ---
 
-## 4. Estado vivo de Farmacia post patient-flow
+## 4. Estado vivo de Farmacia post Quick View
 
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `a9d6d4645cb90818bbb432d33d07fe2db19f52ee` (merge issue #257 / PR #258) |
+| HEAD regional publicado | `f2b827fed26728e2103a9ebca1f4c524d28dfac3` (merge issue #261 / PR #262) |
 | issue #250 / PR #251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; merge `de830803...` |
-| issue #252 / PR #253 | Cutover del flujo normal publicado; merge histórico `3f7bf9bb...` con CI verde, superseded como HEAD regional por #257/#258 |
-| issue #257 / PR #258 | Issue CLOSED; PR MERGED_AND_VERIFIED; Estadísticas raw publicadas para evaluación sintética; merge `a9d6d464...`; candidate `5a7ad559...` |
+| issue #252 / PR #253 | Cutover del flujo normal publicado; merge histórico `3f7bf9bb...` con CI verde, superseded como HEAD regional por #257/#258 y posteriormente #261/#262 |
+| issue #257 / PR #258 | Issue CLOSED; PR MERGED_AND_VERIFIED; Estadísticas raw publicadas para evaluación sintética en el merge histórico previo `a9d6d464...`; candidate `5a7ad559...` |
+| issue #261 / PR #262 | Issue CLOSED; PR MERGED_AND_VERIFIED; Quick View raw PROMs implementado, publicado y demostrado para evaluación sintética; merge `f2b827fed26728e2103a9ebca1f4c524d28dfac3`; candidate `13963f89a28cd590e01ed0acaea160c93a9ec848` |
 | Flujo clínico | Excel raw 152 columnas → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento |
 | Modo Bridge visible | No existe como experiencia soportada; Bridge queda como nombre técnico de reader/selectors históricos |
 | `sessionStorage` | Solo envelope versionado del paciente actual; no workbook, bytes, read model completo, población, cohorte ni otros pacientes |
 | Excel Enfermería | Solo enriquece huecos explícitos; Farmacia raw mantiene precedencia |
 | Estadísticas | RAW publicado para evaluación sintética; cohorte desde Data Port, handoff efímero y CSV completo de 37 columnas |
-| Deuda post-checkpoint | `PREEXISTING_QUICKVIEW_P2` y `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED`; pendientes, preexistentes y no regresiones de #258 |
+| Quick View raw PROMs | Renderer estructurado publicado y demostrado; preserva `0` y `false`, muestra fecha solo si existe y representa ausencias como `No registrado`; sin thresholds ni interpretación clínica |
+| Deuda post-checkpoint | `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED`; `PREEXISTING_QUICKVIEW_P2` queda resuelto/publicado por #261/#262 |
 | Actividad del servicio | Demo, contenido funcional no decidido y fuera de la siguiente WO técnica |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073`; intacto y sin promoción de PR #258 |
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
 
-> Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El estado actual de Farmacia se verifica contra `a9d6d464...`, merge del issue #257 / PR #258, que conserva el flujo integrado por #250/#251 y #252/#253.
+> Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el estado actual de Farmacia se verifica contra `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, merge del issue #261 / PR #262, que conserva el flujo integrado por #250/#251, #252/#253 y #257/#258.
 
-> El guard P1 rechaza `IDENTIFIER_COMPONENT_EMPTY`, `IDENTIFIER_COMPONENT_TYPE`, `NORMALIZED_IDENTIFIER_COLLISION`, `IDENTIFIER_NOT_INDEXED` e `IDENTIFIER_INDEX_PATIENT_MISMATCH`, comprueba coherencia bidireccional pacientes ↔ índice, usa lookup directo sobre tabla privada `Object.create(null)`, conserva sensibilidad a mayúsculas, permite pacientes sin identificador pero no buscables operativamente y no muta el read model. Para el candidate de #258, integrado en `a9d6d464...`, la evidencia es `LOCAL_CI_EQUIVALENT_PASS` sobre archive inmutable del SHA exacto: smoke 48/48, dashboard handoff 37/37, Selectors 82/82, Reader 21/21, Data Port 11/11, patient-flow 17/17, cohorte/CSV/handoff 30 escenarios, Chromium patient-flow y Estadísticas PASS, `console.error = 0`, `pageerror = 0` y `git diff --check = PASS`. GitHub Actions no despachó un run sobre el SHA final durante la incidencia externa.
+> El guard P1 rechaza `IDENTIFIER_COMPONENT_EMPTY`, `IDENTIFIER_COMPONENT_TYPE`, `NORMALIZED_IDENTIFIER_COLLISION`, `IDENTIFIER_NOT_INDEXED` e `IDENTIFIER_INDEX_PATIENT_MISMATCH`, comprueba coherencia bidireccional pacientes ↔ índice, usa lookup directo sobre tabla privada `Object.create(null)`, conserva sensibilidad a mayúsculas, permite pacientes sin identificador pero no buscables operativamente y no muta el read model. Para el candidate de #258, integrado en el merge histórico `a9d6d464...`, la evidencia es `LOCAL_CI_EQUIVALENT_PASS` sobre archive inmutable del SHA exacto: smoke 48/48, dashboard handoff 37/37, Selectors 82/82, Reader 21/21, Data Port 11/11, patient-flow 17/17, cohorte/CSV/handoff 30 escenarios, Chromium patient-flow y Estadísticas PASS, `console.error = 0`, `pageerror = 0` y `git diff --check = PASS`. GitHub Actions no despachó un run sobre el SHA final durante la incidencia externa.
 
 > PR #246 queda como referencia técnica histórica del handoff. #252/#253 retiraron esa experiencia Bridge visible del flujo soportado y trasladaron la navegación al buscador CIP, Quick View y páginas clínicas normales.
 
-> El runtime publicado conserva la no inferencia clínica: lo ausente permanece vacío, pendiente o no registrado; no se infieren principio activo, dosis, vía, pauta, tratamiento activo, adherencia, causalidad ni ausencia de EA. JARA, CSV y Excel v1 permanecen intactos; no existe deploy, promoción de Cáceres por #258, piloto ni producción.
+> El runtime publicado conserva la no inferencia clínica: lo ausente permanece vacío, pendiente o no registrado; no se infieren principio activo, dosis, vía, pauta, tratamiento activo, adherencia, causalidad ni ausencia de EA. Quick View raw PROMs solo estructura y presenta valores explícitos, sin thresholds ni interpretación clínica. JARA, CSV y Excel v1 permanecen intactos; no existe deploy, promoción de Cáceres por #258/#261, piloto ni producción.
 
 Documento vivo reconciliado: [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md).
 
 El documento [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) queda histórico y superseded como estado vivo; conserva la fotografía de `CÁCERES-REVIEW-0.1`.
 
-### Reconciliación común post patient-flow
+### Reconciliación común post patient-flow y Quick View
 
 - La sesión temporal usa `sessionStorage` únicamente para el envelope versionado del paciente actual: identificador explícito, `patient_id`, generación, proyección actual, provenance, borradores y `dirty`.
 - Nunca se guardan en ese envelope el workbook, bytes, read model completo, población, cohorte ni otros pacientes. `localStorage` e IndexedDB no son almacenamiento clínico soportado y la sesión no es persistencia longitudinal definitiva.
 - El reload permite continuar o empezar de cero; los borradores pertenecen solo al paciente actual y el cambio de CIP purga el contexto anterior antes de cargar otro.
 - Excel Enfermería solo enriquece huecos explícitos. Farmacia raw conserva precedencia; la ausencia queda vacía, pendiente o no registrada y no se infiere información terapéutica.
 
-### Estadísticas y Actividad
+### Estadísticas, Quick View y Actividad
 
-Estadísticas está publicada para evaluación sintética mediante el issue #257 / PR #258: el Excel de Farmacia se carga una sola vez en Inicio, la cohorte raw se construye desde el Data Port y se entrega mediante handoff efímero same-origin. La cohorte raw sustituye completamente la demo; el acceso directo o la recarga usa únicamente los 3 pacientes demo versionados. Filtros, KPIs, gráficos, tabla y paginación usan la cohorte activa. El CSV exporta la cohorte filtrada completa, con 37 columnas; las líneas activas usan solo `active_at_event === true`, `unknown` se separa de `false`, `no_change_recorded` no se presenta como movimiento, una suspensión explícita conserva estado, motivo y fecha efectiva, y el PROM del último acto conserva todas las mediciones simultáneas. No se almacena una cohorte clínica en storage. Actividad del servicio permanece demo, con definición funcional pendiente, no se cablea ahora y no bloquea el paquete de evaluación.
+Estadísticas está publicada para evaluación sintética mediante el issue #257 / PR #258, en el merge histórico `a9d6d464...`: el Excel de Farmacia se carga una sola vez en Inicio, la cohorte raw se construye desde el Data Port y se entrega mediante handoff efímero same-origin. La cohorte raw sustituye completamente la demo; el acceso directo o la recarga usa únicamente los 3 pacientes demo versionados. Filtros, KPIs, gráficos, tabla y paginación usan la cohorte activa. El CSV exporta la cohorte filtrada completa, con 37 columnas; las líneas activas usan solo `active_at_event === true`, `unknown` se separa de `false`, `no_change_recorded` no se presenta como movimiento, una suspensión explícita conserva estado, motivo y fecha efectiva, y el PROM del último acto conserva todas las mediciones simultáneas. No se almacena una cohorte clínica en storage.
 
-### Secuencia vigente post patient-flow
+Quick View raw PROMs está implementado, publicado y demostrado mediante el issue #261 / PR #262, merge `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, para evaluación exclusivamente sintética. El renderer estructura los PROMs sin `[object Object]`, preserva `0` y `false`, muestra fecha solo cuando existe explícitamente y representa el valor ausente como `No registrado`; no aplica thresholds ni interpretación clínica. La demo permanece intacta y el cambio de CIP no mezcla PROMs. La evidencia publicada incluye Reader 21/21 PASS, Selectors 82/82 PASS, Data Port 11/11 PASS, patient-flow 17/17 PASS, smoke 48/48 PASS, Patient-flow Chromium PASS, Quick View PROM Chromium PASS, cohorte de Estadísticas con 30 escenarios PASS, Estadísticas Chromium PASS (raw 55 / CSV 55x37), `console.error = 0`, `pageerror = 0` y `git diff --check = PASS`. La revisión independiente read-only no encontró findings de producto ni scope drift.
 
-1. `WO-DOC-FH-POST-STATS-RECONCILIATION-01`
-2. `WO-FH-RAW-QUICKVIEW-PROMS-01`
-3. `WO-FH-RAW-PATIENT-LONGITUDINAL-CUTOVER-01`
-4. `WO-FH-EVALUATION-PACKAGE-01`
-5. Evaluación con farmacéuticas
-6. Solo después, decidir evolución según feedback
+Actividad del servicio permanece demo, con definición funcional pendiente, no se cablea ahora y no bloquea el paquete de evaluación.
+
+### Secuencia vigente post Quick View
+
+1. `WO-FH-RAW-PATIENT-LONGITUDINAL-CUTOVER-01`
+2. `WO-FH-EVALUATION-PACKAGE-01`
+3. Evaluación con farmacéuticas
+4. Solo después, decidir evolución según feedback
 
 Actividad del servicio continúa demo y no bloquea esta secuencia. No se anteponen Office Script, `APP_*`, PostgreSQL, Supabase, Identity Plane, V5 ni refactor general.
 
@@ -291,7 +295,7 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 | `CHANGELOG.md` | No recoge la línea recovery reciente |
 | `AGENTS.md` | Metadata/rama base histórica; verificar arnés real antes de editar |
 | `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
-| `opencode.jsonc` | No existe en recovery; verificar entorno VPS antes de afirmar el arnés efectivo |
+| `opencode.jsonc` | No existe en recovery; ausencia esperada y no bloqueante para esta edición documental |
 | Planes históricos PR replay/rescate V4 | Referenciados previamente, pero sus archivos no están publicados en recovery |
 | Contrato de escenarios Farmacia V4 | Referenciado previamente, pero no publicado en recovery |
 
@@ -315,7 +319,7 @@ Para el estado actual de Farmacia también son memoria histórica o referencia s
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
-Cuando contradigan el merge #257/#258, el código publicado, este índice, `WORK_ORDER_STATUS.md` o el estado post-stats, prevalece esa cadena actual. La documentación histórica no se reescribe en esta WO.
+Cuando contradigan el merge #261/#262, el código publicado en `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, este índice, `WORK_ORDER_STATUS.md` o el estado post-Quick View, prevalece esa cadena actual. La documentación histórica no se reescribe en esta WO.
 
 ---
 
@@ -336,4 +340,4 @@ Cuando contradigan el merge #257/#258, el código publicado, este índice, `WORK
 
 ---
 
-*Edición reconciliada post patient-flow y post-#257/#258. El HEAD regional publicado es `a9d6d464...`; Estadísticas raw usa la cohorte del Data Port mediante handoff efímero y exporta CSV completo de 37 columnas para evaluación sintética. Quick View PROM raw y la historia longitudinal completa permanecen como deudas separadas; `CÁCERES-REVIEW-0.3` conserva su tree `81740136...`; no se autorizan datos reales, piloto, producción, promoción ni deploy.*
+*Edición reconciliada post patient-flow, post-#257/#258 y post-#261/#262. El HEAD regional publicado es `f2b827fed26728e2103a9ebca1f4c524d28dfac3`; Estadísticas raw usa la cohorte del Data Port mediante handoff efímero y exporta CSV completo de 37 columnas para evaluación sintética. Quick View PROM raw está implementado/publicado/demostrado para evaluación sintética; `PREEXISTING_QUICKVIEW_P2` queda resuelto. `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED` permanece pendiente; `CÁCERES-REVIEW-0.3` conserva su tree `81740136...`; no se autorizan datos reales, piloto, producción, promoción ni deploy.*
