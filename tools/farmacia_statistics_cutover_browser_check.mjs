@@ -64,7 +64,9 @@ function workbookBuffer() {
       recorded_at: `2026-07-${String((number % 27) + 1).padStart(2, '0')}T10:30:00Z`,
       visit_id: `visit-stat-${suffix}`,
       visit_date: `2026-07-${String((number % 27) + 1).padStart(2, '0')}`,
-      proms_json: { measurements: [{ instrument: number === 1 ? 'PROM-CERO' : 'PROM-EXPLÍCITO', value: number === 1 ? 0 : number, answered: number !== 1 }] },
+      proms_json: { measurements: number === 1
+        ? [{ instrument: 'PROM-CERO', value: 0, answered: false }, { instrument: 'PROM-FALSO', value: false, answered: true }]
+        : [{ instrument: 'PROM-EXPLÍCITO', value: number, answered: true }] },
       adverse_event_id: number === 1 ? 'ea-stat-001' : null,
       adverse_event_status: number === 1 ? 'present' : (number === 2 ? 'absent' : 'not_recorded'),
       adverse_event_description: number === 1 ? 'EA sintético explícito' : null,
@@ -100,12 +102,39 @@ function workbookBuffer() {
         new_schedule_code: number === 1 && index === 0 ? 'Q21D' : null,
         new_schedule_label: number === 1 && index === 0 ? 'Cada 21 días' : null,
         movement_effective_date: number === 1 && index === 0 ? '2026-07-10' : null,
+        suspension_status: number === 1 && index === 1 ? 'yes' : 'not_recorded',
+        suspension_reason: number === 1 && index === 1 ? 'Suspensión sintética explícita' : null,
+        suspension_effective_date: number === 1 && index === 1 ? '2026-07-11' : null,
         adherence_collection_status: number <= 2 ? 'yes' : 'not_recorded',
         adherence_instrument: number === 1 ? `Instrumento ${lineSuffix.toUpperCase()}` : (number === 2 ? 'Instrumento único' : null),
         adherence_result: number === 1 ? `resultado-${lineSuffix}` : (number === 2 ? 'resultado-único' : null),
         adherence_answers_json: number === 1 ? [{ answer: index === 0 ? 0 : false }] : null
       };
     });
+    if (number === 1) {
+      const historicalEvent = {
+        ...followup.event,
+        event_id: 'event-stat-001-historical',
+        source_event_id: 'source-stat-001-historical',
+        occurred_at: '2026-06-01T10:00:00Z',
+        recorded_at: '2026-06-01T10:30:00Z',
+        visit_id: 'visit-stat-001-historical',
+        visit_date: '2026-06-01',
+        proms_json: { measurements: [{ instrument: 'PROM-HISTÓRICO', value: 9, answered: true }] }
+      };
+      const historicalPayload = {
+        ...followup.rowPayloads[0],
+        rowKey: 'line-stat-001-historical',
+        therapeutic_movement_type: 'no_change_recorded',
+        new_schedule_code: null,
+        new_schedule_label: null,
+        movement_effective_date: null,
+        suspension_status: 'no',
+        suspension_reason: null,
+        suspension_effective_date: null
+      };
+      rows.push(...core.projectEventRows(historicalEvent, [historicalPayload]));
+    }
     rows.push(...core.projectEventRows(followup.event, followup.rowPayloads));
   }
 
@@ -247,7 +276,7 @@ try {
 
   const child = await openStatistics(parent);
   assert.equal((await child.locator('#dbStatusLabel').textContent()).trim(), 'Cohorte raw recibida');
-  assert.match(await child.locator('#dbStatusTime').textContent(), /stats-raw-sintetico\.xlsx.*55 pacientes.*56 eventos/);
+  assert.match(await child.locator('#dbStatusTime').textContent(), /stats-raw-sintetico\.xlsx.*55 pacientes.*57 eventos/);
   assert.equal(new URL(child.url()).searchParams.has('fh_stats_handoff'), false, 'technical marker removed after bootstrap');
   assert.equal(await child.locator('#patients-table tbody tr').count(), 50, 'table page is capped at 50');
   assert.match(await child.locator('#table-pagination').innerText(), /Página 1 de 2 \(55 pacientes\)/);
@@ -256,6 +285,8 @@ try {
   assert.match(bodyText, /Activo múltiple A/);
   assert.match(bodyText, /Activo múltiple B/, 'all explicitly active lines are displayed');
   const pendingValidationRow = child.locator('#patients-table tbody tr').filter({ hasText: 'CIP-STAT-001' });
+  assert.match(await pendingValidationRow.innerText(), /PROM-CERO 0[\s\S]*PROM-FALSO false/, 'table displays every PROM from the latest act');
+  assert.doesNotMatch(await pendingValidationRow.innerText(), /PROM-HISTÓRICO/, 'table excludes historical PROMs from the latest-act cell');
   assert.match(await pendingValidationRow.innerText(), /Pendiente/, 'explicit validation remains visible despite historical followup');
   const unknownRow = child.locator('#patients-table tbody tr').filter({ hasText: 'CIP-STAT-002' });
   assert.match(await unknownRow.innerText(), /No registrado/, 'unknown line is not displayed as active or suspended');
@@ -264,6 +295,10 @@ try {
   assert.match(await child.locator('#kpi-grid').innerText(), /PROM registrado/);
   assert.equal(await child.locator('#charts-grid .stats-chart-block').count(), 4);
   assert.match(await child.locator('#chart-evolucion-content').innerText(), /Último PROM registrado/);
+  assert.match(await child.locator('#chart-evolucion-content').innerText(), /PROM-CERO[\s\S]*PROM-FALSO/, 'PROM chart includes all latest-act instruments');
+  assert.doesNotMatch(await child.locator('#chart-evolucion-content').innerText(), /PROM-HISTÓRICO/, 'PROM chart excludes historical instruments');
+  assert.match(await child.locator('#chart-tratamiento-content').innerText(), /schedule_change[\s\S]*suspension/, 'movement chart retains explicit changes and structured suspension');
+  assert.doesNotMatch(await child.locator('#chart-tratamiento-content').innerText(), /no_change_recorded/, 'movement chart excludes explicit absence of change');
   assert.match(await child.locator('#chart-riesgos-content').innerText(), /present \/ absent \/ not_recorded/);
   assert.deepEqual(await child.locator('#qf-ea option').evaluateAll(options => options.slice(1).map(option => option.value).sort()), ['absent', 'not_recorded', 'present']);
   assert((await child.locator('#qf-adherencia option').evaluateAll(options => options.slice(1).map(option => option.value))).includes('multiple'));

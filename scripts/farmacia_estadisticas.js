@@ -50,6 +50,7 @@
         var lines = patient.lines || [];
         var activeLines = lines.filter(function (line) { return line.active_at_event === true; });
         var adherence = patient.adherence_summary || { result: 'not_recorded' };
+        var latestProms = patient.latest_proms || [];
         return {
             identifier: patient.primary_identifier_value || '',
             services: contextValues(patient.services),
@@ -62,7 +63,7 @@
             validationResult: patient.latest_validation && patient.latest_validation.validation_result || 'not_recorded',
             adherenceResult: present(adherence.result) ? String(adherence.result) : 'not_recorded',
             adverseStatus: patient.adverse_event_overall_status || 'not_recorded',
-            promInstruments: unique((patient.proms || []).map(function (prom) { return prom.instrument; })),
+            promInstruments: unique(latestProms.map(function (prom) { return prom.instrument; })),
             movementTypes: unique((patient.therapeutic_movements || []).map(function (movement) { return movement.type; })),
             adverseSeverities: unique((patient.adverse_events || []).filter(function (event) {
                 return event.status === 'present';
@@ -474,6 +475,13 @@
             || patient.latest_first_visit && patient.latest_first_visit.event_date || 'No registrado';
     }
 
+    function latestPromText(proms) {
+        if (!proms || !proms.length) return 'No registrado';
+        return proms.map(function (prom) {
+            return text(prom.instrument) + ' ' + text(prom.value, '');
+        }).join(' | ');
+    }
+
     function badge(value, className) {
         return el('span', 'stats-badge ' + (className || 'stats-badge--pendiente'), value);
     }
@@ -497,8 +505,7 @@
             row.appendChild(el('td', '', text(profile.identifier)));
             row.appendChild(el('td', '', text(profile.services.join(', '), 'No registrado') + ' / ' + text(profile.pathologies.join(', '), 'No registrado')));
             row.appendChild(el('td', '', activeLineText(profile.activeLines)));
-            var latestProm = patient.latest_prom;
-            row.appendChild(el('td', '', latestProm ? text(latestProm.instrument) + ' ' + text(latestProm.value, '') : 'No registrado'));
+            row.appendChild(el('td', '', latestPromText(patient.latest_proms)));
             row.appendChild(el('td', '', patient.clinical_activity
                 ? text(patient.clinical_activity.instrument) + ' ' + text(patient.clinical_activity.value, '') : 'No registrado'));
             var adherenceClass = profile.adherenceResult === 'not_recorded' ? 'stats-badge--pendiente' : 'stats-badge--bajo';

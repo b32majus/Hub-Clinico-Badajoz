@@ -221,10 +221,12 @@
                 var key = String(record.source_event_id || '') + '\u0000' + canonicalJson(item);
                 if (seen[key]) return;
                 seen[key] = true;
+                var chronology = dates[record.source_event_id] || {};
                 var normalized = {
                     source_event_id: record.source_event_id || '',
                     event_id: record.event_id || '',
-                    event_date: present(item.date) ? item.date : (dates[record.source_event_id] && dates[record.source_event_id].date || ''),
+                    event_date: present(item.date) ? item.date : (chronology.date || ''),
+                    event_position: Number.isInteger(chronology.position) ? chronology.position : -1,
                     instrument: firstPresent(item.instrument, item.type, item.tipo_prom),
                     content: clone(item)
                 };
@@ -234,10 +236,20 @@
             });
         });
         return result.sort(function (left, right) {
-            return compareText(left.event_date, right.event_date)
+            return left.event_position - right.event_position
                 || compareText(left.source_event_id, right.source_event_id)
+                || compareText(left.event_date, right.event_date)
                 || compareText(canonicalJson(left.content), canonicalJson(right.content));
         });
+    }
+
+    function latestActProms(proms) {
+        if (!proms || !proms.length) return [];
+        var latest = proms[proms.length - 1];
+        return proms.filter(function (prom) {
+            return prom.event_position === latest.event_position
+                && prom.source_event_id === latest.source_event_id;
+        }).map(clone);
     }
 
     function normalizeAdherence(records, dates) {
@@ -394,11 +406,12 @@
             (event.rows || []).forEach(function (physicalRow) {
                 var row = physicalRow.canonical_row || {};
                 var type = row.therapeutic_movement_type;
-                if (!present(type) || type === 'not_recorded') return;
+                if (type === 'suspension' || row.suspension_status === 'yes') type = 'suspension';
+                if (!present(type) || type === 'not_recorded' || type === 'no_change_recorded') return;
                 var movement = {
                     source_event_id: event.source_event_id || '',
                     event_id: event.event_id || '',
-                    event_date: firstPresent(row.movement_effective_date, row.visit_date, row.occurred_at, event.occurred_at),
+                    event_date: firstPresent(type === 'suspension' ? row.suspension_effective_date : '', row.movement_effective_date, row.visit_date, row.occurred_at, event.occurred_at),
                     line_id: row.line_id || '',
                     treatment_id: row.treatment_id || '',
                     type: type,
@@ -473,7 +486,7 @@
             care_status: careStatus(latestValidation, visits.latest_followup),
             lines: lines,
             proms: proms,
-            latest_prom: proms.length ? clone(proms[proms.length - 1]) : null,
+            latest_proms: latestActProms(proms),
             clinical_activity: null,
             adherence: adherence,
             adherence_summary: adherenceSummary(adherence),
@@ -548,6 +561,9 @@
             };
         }).sort(function (left, right) {
             return compareText(left.event_date, right.event_date) || compareText(left.source_event_id, right.source_event_id);
+        }).map(function (prom, index) {
+            prom.event_position = index;
+            return prom;
         });
     }
 
@@ -626,7 +642,7 @@
             latest_request: normalizeRequest(null), latest_validation: normalizeValidation({ validation_result: validationResult }),
             latest_first_visit: latestFirstVisit, latest_followup: latestFollowup,
             care_status: latestFollowup ? 'followup' : validationResult,
-            lines: lines, proms: proms, latest_prom: proms.length ? clone(proms[proms.length - 1]) : null,
+            lines: lines, proms: proms, latest_proms: latestActProms(proms),
             clinical_activity: activity.length ? {
                 instrument: activity[activity.length - 1].tipo_indice || '',
                 value: own(activity[activity.length - 1], 'valor') ? clone(activity[activity.length - 1].valor) : null,

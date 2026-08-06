@@ -27,10 +27,10 @@ const event = (patientId, sourceId, type, date, rows = [{}]) => ({
 const events = {
   p1Validation: event('patient-1', 'p1-validation', 'pharmacy_validation', '2026-01-01', [{ request_date: '2026-01-01' }]),
   p1First: event('patient-1', 'p1-first', 'pharmacy_first_visit', '2026-01-02', [{ first_visit_date: '2026-01-02' }]),
-  p1Old: event('patient-1', 'p1-old', 'pharmacy_followup', '2026-01-03', [{ visit_date: '2026-01-03' }]),
+  p1Old: event('patient-1', 'p1-old', 'pharmacy_followup', '2026-01-03', [{ visit_date: '2026-01-03', therapeutic_movement_type: 'no_change_recorded' }]),
   p1New: event('patient-1', 'p1-new', 'pharmacy_followup', '2026-01-04', [
     { visit_date: '2026-01-04', line_id: 'line-active-a', treatment_id: 'treatment-a', therapeutic_movement_type: 'schedule_change', new_schedule_code: 'Q14D', new_schedule_label: 'Cada 14 días', movement_effective_date: '2026-01-04' },
-    { visit_date: '2026-01-04', line_id: 'line-active-b', treatment_id: 'treatment-b', therapeutic_movement_type: 'not_recorded' }
+    { visit_date: '2026-01-04', line_id: 'line-active-b', treatment_id: 'treatment-b', therapeutic_movement_type: 'not_recorded', suspension_status: 'yes', suspension_effective_date: '2026-01-04' }
   ]),
   p2Validation: event('patient-2', 'p2-validation', 'pharmacy_validation', '2026-02-01', [{ request_date: '2026-02-01' }]),
   p3Validation: event('patient-3', 'p3-validation', 'pharmacy_validation', '2026-03-01', [{ request_date: '2026-03-01' }]),
@@ -84,9 +84,9 @@ const store = {
   },
   proms: {
     'patient-1': [
-      { source_event_id: 'p1-new', event_id: 'p1-new-event', row_index: 0, values: { proms_json: { measurements: [{ instrument: 'PROM-0', value: 0, answered: false }] } } },
-      { source_event_id: 'p1-new', event_id: 'p1-new-event', row_index: 1, values: { proms_json: { measurements: [{ instrument: 'PROM-0', value: 0, answered: false }] } } },
-      { source_event_id: 'p1-old', event_id: 'p1-old-event', row_index: 0, values: { proms_json: { measurements: [{ instrument: 'PROM-0', value: 0, answered: false }] } } }
+      { source_event_id: 'p1-new', event_id: 'p1-new-event', row_index: 0, values: { proms_json: { measurements: [{ instrument: 'PROM-LATEST-A', value: 0, answered: false }, { instrument: 'PROM-LATEST-B', value: false, answered: true }] } } },
+      { source_event_id: 'p1-new', event_id: 'p1-new-event', row_index: 1, values: { proms_json: { measurements: [{ instrument: 'PROM-LATEST-A', value: 0, answered: false }, { instrument: 'PROM-LATEST-B', value: false, answered: true }] } } },
+      { source_event_id: 'p1-old', event_id: 'p1-old-event', row_index: 0, values: { proms_json: { measurements: [{ instrument: 'PROM-HISTORICAL', value: 9, answered: true }] } } }
     ],
     'patient-2': [], 'patient-3': [], 'patient-4': []
   },
@@ -155,9 +155,12 @@ assert.equal(p1.latest_validation.validation_result, 'validated');
 assert.equal(p3.latest_validation.validation_result, 'denied');
 assert.equal(p1.latest_first_visit.event_date, '2026-01-02');
 assert.equal(p1.latest_followup.event_date, '2026-01-04');
-assert.equal(p1.proms.length, 2, 'PROM repeated across lines is deduplicated, explicit different event retained');
-assert.equal(p1.proms[1].value, 0, 'PROM zero preserved');
-assert.equal(p1.proms[1].content.answered, false, 'PROM false preserved');
+assert.equal(p1.proms.length, 3, 'PROMs repeated across lines are deduplicated and history is retained');
+assert.deepEqual(p1.latest_proms.map(prom => prom.instrument), ['PROM-LATEST-A', 'PROM-LATEST-B'], 'all measurements from the latest stable act are retained');
+assert.equal(p1.latest_proms[0].value, 0, 'PROM zero preserved');
+assert.equal(p1.latest_proms[0].content.answered, false, 'PROM false preserved');
+assert.equal(p1.latest_proms[1].value, false, 'second explicit latest-act PROM preserved');
+assert.equal(p1.latest_proms.some(prom => prom.instrument === 'PROM-HISTORICAL'), false, 'historical PROM excluded from latest act without removing history');
 assert.equal(p1.adherence_summary.result, 'multiple', 'different explicit adherence results remain multiple');
 assert.equal(p2.adherence_summary.result, 0, 'single adherence result including zero preserved');
 assert.equal(p2.adherence_summary.instrument, 'Único', 'latest adherence act supersedes historical results');
@@ -174,7 +177,8 @@ assert.equal(p1.name, '');
 assert.equal(p1.age, '');
 assert.equal(p1.sex, '');
 assert.deepEqual(cohort.map(patient => patient.patient_id), ['patient-1', 'patient-4', 'patient-2', 'patient-3'], 'deterministic primary identifier then patient_id ordering');
-assert.equal(p1.therapeutic_movements.length, 1, 'only explicit movement retained');
+assert.deepEqual(p1.therapeutic_movements.map(movement => movement.type), ['schedule_change', 'suspension'], 'explicit movement and structured suspension retained');
+assert.equal(p1.therapeutic_movements.some(movement => movement.type === 'no_change_recorded'), false, 'explicit absence of change is not a movement');
 
 const csvRows = Cohort.buildCsvRows(cohort);
 assert.equal(Cohort.CSV_COLUMNS.length, 37);
