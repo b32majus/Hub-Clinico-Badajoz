@@ -2,149 +2,6 @@
 
 (function () {
     let F = window.FarmaciaDemo;
-
-    function bridgeValue(value) {
-        if (value === undefined) return 'No registrado';
-        if (value === null) return 'null';
-        if (value === '') return 'Texto vacío registrado';
-        if (value === true) return 'true';
-        if (value === false) return 'false';
-        if (typeof value === 'object') return JSON.stringify(value, null, 2);
-        return String(value);
-    }
-
-    function bridgeField(label, value) {
-        var field = document.createElement('div');
-        field.className = 'info-field';
-        var labelEl = document.createElement('span');
-        labelEl.className = 'info-field__label';
-        labelEl.textContent = label;
-        var valueEl = document.createElement(typeof value === 'object' && value !== null ? 'pre' : 'span');
-        valueEl.className = 'info-field__value';
-        valueEl.textContent = bridgeValue(value);
-        field.append(labelEl, valueEl);
-        return field;
-    }
-
-    function bridgeSection(title) {
-        var section = document.createElement('section');
-        section.className = 'dashboard-card';
-        var heading = document.createElement('h2');
-        heading.className = 'card-title';
-        heading.textContent = title;
-        var grid = document.createElement('div');
-        grid.className = 'info-grid';
-        section.append(heading, grid);
-        return { section: section, grid: grid };
-    }
-
-    function bridgeFields(section, object) {
-        var keys = Object.keys(object || {});
-        if (!keys.length) section.grid.appendChild(bridgeField('Estado', null));
-        keys.forEach(function (key) { section.grid.appendChild(bridgeField(key, object[key])); });
-    }
-
-    function hideLegacyForBridge() {
-        var main = document.querySelector('main.main-content');
-        if (main) Array.prototype.forEach.call(main.children, function (child) {
-            if (child.id !== 'fhBridgeDashboardRoot') child.classList.add('hidden');
-        });
-        var root = document.getElementById('fhBridgeDashboardRoot');
-        if (root) root.classList.remove('hidden');
-        document.querySelectorAll('.patient-header-actions, .sidebar .search-container').forEach(function (node) { node.classList.add('hidden'); });
-        document.querySelectorAll('.sidebar a').forEach(function (link) {
-            if (link.getAttribute('href') !== 'farmacia_index.html') {
-                link.setAttribute('aria-disabled', 'true');
-                link.addEventListener('click', function (event) { event.preventDefault(); });
-            }
-        });
-    }
-
-    function renderBridgeDashboard(payload) {
-        var root = document.getElementById('fhBridgeDashboardRoot');
-        var content = document.getElementById('fhBridgeDashboardContent');
-        var status = document.getElementById('fhBridgeDashboardStatus');
-        var view = payload.quick_view;
-        if (!root || !content || !status) return;
-        F.clearChildren(content);
-        status.textContent = 'Datos sintéticos/demo. Lectura temporal recibida desde Inicio Farmacia; no persiste ni sobrevive a recarga. Formularios, acciones clínicas y exportaciones no están conectados.';
-
-        var identity = bridgeSection('Identidad técnica y origen');
-        bridgeFields(identity, {
-            'Sistema buscado': payload.search_context.identifier_system,
-            'Valor buscado': payload.search_context.identifier_value,
-            'ID técnico (patient_id)': view.patient_id,
-            'Identificadores explícitos': view.identifiers,
-            'Fichero': view.workbook.file_name,
-            'Fecha de importación': view.workbook.imported_at,
-            'Versión': view.workbook.read_model_version,
-            'Actos': view.valid_event_count,
-            'Warnings': view.warnings && view.warnings.length,
-            'Errores source': view.source_error_count,
-            'Excluidos': view.excluded_event_count
-        });
-        content.appendChild(identity.section);
-
-        var contexts = bridgeSection('Servicios y patologías explícitos');
-        bridgeFields(contexts, { servicios: view.services, patologías: view.pathologies });
-        content.appendChild(contexts.section);
-
-        var timeline = bridgeSection('Timeline de actos válidos');
-        (view.timeline || []).forEach(function (event, index) {
-            timeline.grid.appendChild(bridgeField('Acto ' + (index + 1), {
-                event_type: event.event_type, source_event_id: event.source_event_id, event_id: event.event_id,
-                occurred_at: event.rows && event.rows[0] && event.rows[0].canonical_row.occurred_at,
-                recorded_at: event.rows && event.rows[0] && event.rows[0].canonical_row.recorded_at,
-                hoja: event.source_sheet, cardinalidad_física: event.rows ? event.rows.length : null
-            }));
-        });
-        if (!(view.timeline || []).length) timeline.grid.appendChild(bridgeField('Estado', null));
-        content.appendChild(timeline.section);
-
-        var request = bridgeSection('Última solicitud'); bridgeFields(request, view.latest_request); content.appendChild(request.section);
-        var validation = bridgeSection('Última validación'); bridgeFields(validation, view.latest_validation); content.appendChild(validation.section);
-        var lines = bridgeSection('Líneas explícitas, último snapshot por line_id'); bridgeFields(lines, view.lines); content.appendChild(lines.section);
-        var proms = bridgeSection('PROMs estructurados, sin interpretación'); bridgeFields(proms, view.structured_proms); content.appendChild(proms.section);
-        var adherence = bridgeSection('Adherencia explícita, sin interpretación'); bridgeFields(adherence, view.adherence); content.appendChild(adherence.section);
-        var adverse = bridgeSection('Efectos adversos explícitos'); bridgeFields(adverse, view.adverse_events); content.appendChild(adverse.section);
-        var causality = bridgeSection('Causalidad explícita'); bridgeFields(causality, view.causality_assessments); content.appendChild(causality.section);
-        var warnings = bridgeSection('Warnings atribuibles'); bridgeFields(warnings, view.warnings); content.appendChild(warnings.section);
-    }
-
-    function initializeBridgeDashboard() {
-        var handoff = window.FarmaciaBridgeV2DashboardHandoff;
-        var hasMarker = handoff && handoff.hasFragmentMarker(window.location.hash);
-        if (!hasMarker) return false;
-        var nonce = handoff.parseFragment(window.location.hash);
-        hideLegacyForBridge();
-        var status = document.getElementById('fhBridgeDashboardStatus');
-        if (!nonce || !window.opener) {
-            status.textContent = 'El handoff Bridge ha caducado. Vuelva a Inicio Farmacia y abra de nuevo el dashboard.';
-            return true;
-        }
-        var accepted = false;
-        var expired = false;
-        var receivePayload = function (event) {
-            if (accepted || expired || event.origin !== window.location.origin || event.source !== window.opener) return;
-            if (!handoff.validateEnvelope(event.data, handoff.payloadType, nonce)) return;
-            var payload;
-            try { payload = handoff.validatePayload(event.data.payload); } catch (error) { return; }
-            accepted = true;
-            renderBridgeDashboard(payload);
-            window.opener = null;
-            window.removeEventListener('message', receivePayload);
-        };
-        window.addEventListener('message', receivePayload);
-        window.opener.postMessage(handoff.createReady(nonce), window.location.origin);
-        window.setTimeout(function () {
-            if (!accepted) {
-                expired = true;
-                window.removeEventListener('message', receivePayload);
-                status.textContent = 'El handoff Bridge ha caducado. Vuelva a Inicio Farmacia y abra de nuevo el dashboard.';
-            }
-        }, handoff.sessionTtlMs);
-        return true;
-    }
     function timelineItem(date, title, description) {
         const item = document.createElement('div');
         item.className = 'timeline-item';
@@ -349,6 +206,7 @@
 
     function getPatientBiologicLines(patient) {
         if (!patient) return [];
+        if (patient.__farmaciaRawPatient && Array.isArray(patient.biologicos)) return patient.biologicos;
         var helper = window.FarmaciaTratamiento;
         if (helper && typeof helper.buildTreatmentFromPatient === 'function') {
             var result = helper.buildTreatmentFromPatient(patient, { returnArray: true, fuente: 'dashboard_adapter' });
@@ -819,6 +677,23 @@
     }
 
     function renderExtendedBlocks(patient) {
+        if (patient.__farmaciaRawPatient) {
+            var rawProms = [];
+            (patient.structured_proms || []).forEach(function (record) {
+                var value = record && record.values && record.values.proms_json;
+                var items = Array.isArray(value) ? value : (value && Array.isArray(value.measurements) ? value.measurements : (value ? [value] : []));
+                items.forEach(function (item) {
+                    if (!item || typeof item !== 'object') return;
+                    rawProms.push({
+                        tipo_prom: item.instrument || item.type || 'PROM',
+                        valor: Object.prototype.hasOwnProperty.call(item, 'value') ? item.value : '',
+                        fecha: item.date || '',
+                        fuente: 'Excel Farmacia'
+                    });
+                });
+            });
+            patient.proms = rawProms;
+        }
         // Buscar datos extendidos del paciente en longDataset
         var extData = null;
         if (longDataset && longDataset.pacientes) {
@@ -918,17 +793,25 @@
         var bioLines = getPatientBiologicLines(patient);
         var primaryLine = null;
         var otherLines = [];
-        bioLines.forEach(function (line) {
-            if (line.es_principal || line.tipo_relacion === 'principal' || (!primaryLine && line.estado_linea !== 'historico')) {
-                primaryLine = line;
-            } else if (line.estado_linea !== 'historico') {
-                otherLines.push(line);
-            }
-        });
-        if (!primaryLine && bioLines.length) {
-            primaryLine = bioLines[0];
+        if (patient.__farmaciaRawPatient) {
+            var explicitActiveLines = bioLines.filter(function (line) { return line.active_at_event === true; });
+            if (explicitActiveLines.length === 1) primaryLine = explicitActiveLines[0];
+            else otherLines = explicitActiveLines;
+        } else {
+            bioLines.forEach(function (line) {
+                if (line.es_principal || line.tipo_relacion === 'principal' || (!primaryLine && line.estado_linea !== 'historico')) {
+                    primaryLine = line;
+                } else if (line.estado_linea !== 'historico') {
+                    otherLines.push(line);
+                }
+            });
+            if (!primaryLine && bioLines.length) primaryLine = bioLines[0];
         }
         var summaryFields = [];
+        if (patient.__farmaciaRawPatient) {
+            summaryFields.push({ label: 'Tratamiento solicitado', value: patient.solicitud && patient.solicitud.requested_drug_name });
+            summaryFields.push({ label: 'Tratamiento validado', value: patient.validacion && patient.validacion.validated_drug_name });
+        }
         if (primaryLine) {
             var primaryName = primaryLine.nombre_linea || primaryLine.farmaco_nombre || primaryLine.principio_activo || primaryLine.nombre_comercial || patient.farmaco || '—';
             summaryFields.push({ label: 'Tratamiento principal', value: primaryName });
@@ -937,7 +820,7 @@
         }
         if (otherLines.length) {
             var otherNames = otherLines.map(function (l) { return l.nombre_linea || l.farmaco_nombre || l.principio_activo || l.nombre_comercial || '—'; }).join(', ');
-            summaryFields.push({ label: 'Otras líneas activas', value: otherNames });
+            summaryFields.push({ label: patient.__farmaciaRawPatient ? 'Líneas activas sin autoselección' : 'Otras líneas activas', value: otherNames });
         }
         summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });
         summaryFields.push({ label: 'Última adherencia', value: patient.adherencia });
@@ -961,7 +844,7 @@
         // Actualizar enlaces de navegación con CIP actual
         var navSeg = document.getElementById("navToSeguimiento");
         if (navSeg && patient.cip) {
-            navSeg.href = "farmacia_seguimiento.html?cip=" + encodeURIComponent(patient.cip) + "&entrada=seguimiento";
+            navSeg.href = F.makeContextUrl('farmacia_seguimiento.html', { cip: patient.cip, entrada: 'seguimiento' });
         }
 
         renderLongitudinalForCip(patient.cip);
@@ -1823,7 +1706,6 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         F = window.FarmaciaDemo || F;
-        if (initializeBridgeDashboard()) return;
         bindLongitudinalEvents();
         initLongitudinalSection();
         const ctx = F.getQueryContext();
@@ -1846,7 +1728,7 @@
                 var opts = {
                     tipoActo: 'seguimiento',
                     visitaId: 'DASH-' + Date.now().toString(36).toUpperCase(),
-                    lineaActual: Array.isArray(lines) && lines.length ? lines[0] : null,
+                    lineaActual: Array.isArray(lines) && lines.length === 1 ? lines[0] : null,
                     fechaActo: new Date().toISOString().substring(0, 10),
                     proms: patient.proms || null,
                     demoFlag: true,

@@ -162,7 +162,26 @@ try {
   assert.ok(await page.locator('#fhValPendingReasonRow').isHidden(), 'denied hides pending reason');
   assert.ok(await page.locator('#fhValMotivoRow').isVisible(), 'denied shows denial reason');
   await page.locator('#fhValEstado').selectOption('pending');
-  assert.equal(await page.locator('button[id*="v2" i], a[id*="v2" i], a[download][href*="v2" i]').count(), 0, 'no public v2 button or download exists');
+  const approvedV2Control = page.locator(
+    '[data-export-version="v2"] #fhValExportV2Btn'
+  );
+
+  assert.equal(
+    await approvedV2Control.count(),
+    1,
+    'exactly one approved public Export v2 control exists'
+  );
+
+  assert.ok(
+    await approvedV2Control.isVisible(),
+    'approved Export v2 control is visible'
+  );
+
+  assert.equal(
+    await page.locator('a[download][href*="v2" i]').count(),
+    0,
+    'no unapproved v2 download link exists'
+  );
   assert.equal(await dropdown.locator('.autocomplete-item').count(), 0, 'initialization does not search or create suggestions');
   assert.ok(await dropdown.isHidden(), 'initialization keeps the dropdown closed');
   await page.waitForTimeout(500);
@@ -621,7 +640,13 @@ try {
   }
   assert.notEqual(excelTsv, excelSentinel, 'visible public Excel button writes clipboard TSV');
   assert.equal(excelTsv.split('\t').length, 61, 'public Excel clipboard row contains exactly 61 TSV cells');
-  assert.equal(await page.getByRole('button', { name: /v2/i }).count(), 0, 'no public button is labelled as v2');
+  assert.equal(
+    await page.getByRole('button', {
+      name: /Copiar Export v2 demo · 152 columnas/i
+    }).count(),
+    1,
+    'exactly one approved public Export v2 button is labelled as v2'
+  );
 
   const reumaPage = await context.newPage();
   reumaPage.on('console', (message) => {

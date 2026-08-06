@@ -482,7 +482,9 @@
 
     function explicitRequestedDrug(patient) {
         if (!patient) return "";
-        return patient.farmaco_solicitado || (patient.rawImport && patient.rawImport.farmaco_solicitado) || "";
+        return patient.farmaco_solicitado
+            || (patient.solicitud && patient.solicitud.requested_drug_name)
+            || (patient.rawImport && patient.rawImport.farmaco_solicitado) || "";
     }
 
     function hydrateReumaForm(patient) {
@@ -503,6 +505,9 @@
         }
         if (context.patient && context.patient.cip && String(context.patient.cip).indexOf('CIP-DEMO-FH') !== -1) {
             return 'demo_formacion';
+        }
+        if (context.patient && context.patient.__farmaciaRawPatient) {
+            return mapServiceToken(context.servicioSlug || context.servicio) || 'manual_farmacia';
         }
         if (context.cip || context.servicio || context.patologia) {
             return 'manual_farmacia';
@@ -598,10 +603,15 @@
             && F.isEnfermeriaPatient(currentPatient);
         if (context.patient) {
             var p = context.patient;
-            if (!isEnfPatient) F.setValue('fhDermaFarmaco', p.farmaco);
-            if (!isEnfPatient) F.setValue('fhDermaDosis', p.dosis);
-            if (!isEnfPatient && p.pauta) {
-                var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(p.pauta) : null;
+            var rawRequest = p.__farmaciaRawPatient ? (p.solicitud || {}) : null;
+            var requestedDrug = rawRequest ? rawRequest.requested_drug_name : p.farmaco;
+            var requestedDose = rawRequest ? rawRequest.requested_dose_text : p.dosis;
+            var requestedSchedule = rawRequest ? (rawRequest.requested_schedule_label || rawRequest.requested_schedule_other_text) : p.pauta;
+            var requestedRoute = rawRequest ? rawRequest.requested_route : p.via;
+            if (!isEnfPatient) F.setValue('fhDermaFarmaco', requestedDrug);
+            if (!isEnfPatient) F.setValue('fhDermaDosis', requestedDose);
+            if (!isEnfPatient && requestedSchedule) {
+                var pautaObj = P && typeof P.normalizePautaLabel === 'function' ? P.normalizePautaLabel(requestedSchedule) : null;
                 F.setValue('fhDermaPauta', pautaObj ? pautaObj.pauta_codigo : '');
                 if (pautaObj && pautaObj.pauta_codigo === 'OTRO' && pautaObj.pauta_otro_texto) {
                     F.setValue('fhDermaPautaOtro', pautaObj.pauta_otro_texto);
@@ -611,7 +621,15 @@
                     byId('fhDermaPautaOtro').classList.add('hidden');
                 }
             }
-            if (!isEnfPatient) F.setValue('fhDermaVia', mapViaToSelect(p.via, byId('fhDermaVia')));
+            if (!isEnfPatient) F.setValue('fhDermaVia', mapViaToSelect(requestedRoute, byId('fhDermaVia')));
+            if (rawRequest) {
+                F.setValue('fhDermaFecha', rawRequest.request_date);
+                F.setValue('fhDermaPrincipioActivo', rawRequest.requested_active_ingredient);
+                F.setValue('fhDermaPeso', rawRequest.requested_weight_text);
+                F.setValue('fhDermaJustificacion', rawRequest.requested_justification);
+                F.setValue('fhDermaObservaciones', rawRequest.request_source_observations);
+                F.setValue('fhDermaInduccion', rawRequest.requested_induction_status === 'yes' ? 'si' : (rawRequest.requested_induction_status === 'no' ? 'no' : ''));
+            }
             F.setValue('fhDermaAnalitica', p.analitica);
             if (p.estado === 'pending') F.setValue('fhValEstado', 'pending');
             if (p.estado === 'validated') F.setValue('fhValEstado', 'validated');
@@ -623,6 +641,22 @@
             if (p.tratamientosPrevios) F.setValue('fhHSTratamientosPrevios', p.tratamientosPrevios);
             if (p.motivoClinico) F.setValue('fhHSMotivoClinico', p.motivoClinico);
             if (!isEnfPatient && p.principioActivo) F.setValue('fhDermaPrincipioActivo', p.principioActivo);
+
+            if (p.__farmaciaRawPatient && p.validacion) {
+                var rawValidation = p.validacion;
+                F.setValue('fhValEstado', rawValidation.validation_result === 'validated' ? 'validated' : (rawValidation.validation_result === 'denied' ? 'denied' : (rawValidation.validation_result === 'pending' ? 'pending' : '')));
+                F.setValue('fhValPendingReason', rawValidation.validation_pending_reason);
+                F.setValue('fhValMotivo', rawValidation.validation_denial_reason);
+                F.setValue('fhValidadoFarmaco', rawValidation.validated_drug_name);
+                F.setValue('fhValidadoPrincipioActivo', rawValidation.validated_active_ingredient);
+                F.setValue('fhValidadoPresentacion', rawValidation.validated_presentation);
+                F.setValue('fhValidadoDosis', rawValidation.validated_dose_text);
+                F.setValue('fhValidadoVia', mapViaToSelect(rawValidation.validated_route, byId('fhValidadoVia')));
+                F.setValue('fhValidadoPauta', rawValidation.validated_schedule_code);
+                F.setValue('fhValidadoPautaOtro', rawValidation.validated_schedule_other_text);
+                F.setValue('fhValidadoInduccion', rawValidation.validated_induction_status === 'yes' ? 'si' : (rawValidation.validated_induction_status === 'no' ? 'no' : ''));
+                F.setValue('fhValidatedTreatmentRelation', rawValidation.validated_treatment_relation);
+            }
 
             if (p.tratamientosPreviosHS) {
                 var hsTto = p.tratamientosPreviosHS;

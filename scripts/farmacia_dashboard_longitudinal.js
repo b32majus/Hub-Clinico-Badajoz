@@ -173,6 +173,34 @@
         }
     }
 
+    function rawLongitudinalPatient(patient) {
+        return {
+            cip: patient.cip,
+            nombre_demo: patient.nombre || patient.cip,
+            servicios_origen: patient.servicio ? [patient.servicio] : [],
+            patologias: patient.patologia ? [patient.patologia] : [],
+            tratamientos: (patient.biologicos || []).map(function (line) {
+                var treatment = {
+                    id: line.tratamiento_id_principal || line.linea_id,
+                    linea_id: line.linea_id,
+                    principio_activo: line.principio_activo || line.nombre_linea || '',
+                    nombre_comercial: line.nombre_comercial || '',
+                    pauta: line.pauta || '',
+                    via: line.via || '',
+                    fecha_inicio: line.fecha_inicio || '',
+                    fecha_fin: line.fecha_fin || ''
+                };
+                if (line.active_at_event === true || line.active_at_event === false) treatment.activo = line.active_at_event;
+                return treatment;
+            }),
+            visitas_fh: patient.visitas_fh || [],
+            proms: [],
+            actividad_clinica: [],
+            eventos_adversos: patient.eventos_adversos || [],
+            comorbilidades_relevantes: []
+        };
+    }
+
     function fetchDataset(callback) {
         var statusEl = $('longitudinalDataStatus');
         fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
@@ -182,7 +210,13 @@
             })
             .then(function (data) {
                 var normalize = window.FarmaciaLongitudinal.normalizePatient;
-                data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
+                var context = window.FarmaciaDemo && window.FarmaciaDemo.getQueryContext
+                    ? window.FarmaciaDemo.getQueryContext() : {};
+                if (context.patient && context.patient.__farmaciaRawPatient) {
+                    data.pacientes = [normalize(rawLongitudinalPatient(context.patient))];
+                } else {
+                    data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
+                }
                 dataset = data;
                 if (statusEl) {
                     var count = (dataset.pacientes && dataset.pacientes.length) ? dataset.pacientes.length : 0;
@@ -340,6 +374,7 @@
 
         for (var bi = 0; bi < treatments.length; bi++) {
             var t = treatments[bi];
+            var activityKnown = Object.prototype.hasOwnProperty.call(t, 'activo');
             var startDate = parseDate(t.fecha_inicio);
             if (!startDate) { continue; }
 
@@ -355,7 +390,7 @@
 
             var bandRow = divEl('longitudinal-treatment-band-row');
 
-            var statusClass = 'longitudinal-treatment-band--previous';
+            var statusClass = activityKnown ? 'longitudinal-treatment-band--previous' : 'longitudinal-treatment-band--unknown';
             if (t.activo && !t.fecha_fin) {
                 statusClass = 'longitudinal-treatment-band--active';
             } else if (!t.activo && t.motivo_suspension) {
@@ -397,18 +432,20 @@
 
             var dates = divEl('longitudinal-treatment-band__dates');
             dates.appendChild(span('Inicio: ' + (t.fecha_inicio || '—'), 'longitudinal-treatment-band__date'));
-            var endLabel = t.fecha_fin ? t.fecha_fin : 'Activo';
+            var endLabel = t.fecha_fin ? t.fecha_fin : (t.activo === true ? 'Activo' : (activityKnown ? 'No activo' : 'No registrado'));
             dates.appendChild(span('Fin: ' + endLabel, 'longitudinal-treatment-band__date'));
             band.appendChild(dates);
 
             var statusLabels = {
                 'longitudinal-treatment-band--active': 'Activo',
                 'longitudinal-treatment-band--suspended': 'Suspendido',
-                'longitudinal-treatment-band--previous': 'Previo'
+                'longitudinal-treatment-band--previous': 'Previo',
+                'longitudinal-treatment-band--unknown': 'No registrado'
             };
-            var statusText = statusLabels[statusClass] || 'Previo';
+            var statusText = statusLabels[statusClass] || 'No registrado';
             var badgeClassSuffix = statusClass === 'longitudinal-treatment-band--active' ? 'active' :
-                (statusClass === 'longitudinal-treatment-band--suspended' ? 'suspended' : 'previous');
+                (statusClass === 'longitudinal-treatment-band--suspended' ? 'suspended'
+                    : (statusClass === 'longitudinal-treatment-band--unknown' ? 'unknown' : 'previous'));
             var badge = span(statusText, 'longitudinal-treatment-band__status longitudinal-treatment-band__status--' + badgeClassSuffix);
             band.appendChild(badge);
 

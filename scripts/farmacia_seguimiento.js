@@ -1467,7 +1467,7 @@
             var sourceType = snap ? (snap.source_type || '').toString().toUpperCase() : '';
             var label;
             if (!snap) {
-                label = 'Demo';
+                label = ctx.patient && ctx.patient.__farmaciaRawPatient ? '' : 'Demo';
             } else if (sourceType === 'CIMA') {
                 label = 'CIMA';
             } else if (sourceType === 'LOCAL') {
@@ -2922,6 +2922,8 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
+        populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
         applyContext();
         var v2Cip = byId('fhSegCip');
         if (v2Cip) {
@@ -2934,8 +2936,6 @@
         initCipSearch();
         initSegServicioPatologiaSync();
         initSegDrugAutocomplete();
-        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
-        populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
 
         var demoCtx = F.getQueryContext();
         if (demoCtx.cip === "CIP-DEMO-FH-004") {
@@ -2951,10 +2951,10 @@
         var ctxNav = F.getQueryContext();
         if (ctxNav.cip) {
             var navDash = document.getElementById("navToDashboardPaciente");
-            if (navDash) navDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip) + "&entrada=dashboard";
+            if (navDash) navDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
 
             var sidebarDash = document.querySelector('.sidebar-nav-area .nav-link[href*="farmacia_dashboard_paciente.html"]');
-            if (sidebarDash) sidebarDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip);
+            if (sidebarDash) sidebarDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
         }
 
         syncSegDrugAutocompleteVisibility();

@@ -72,6 +72,9 @@
     }
 
     function resolvePrimaryRelation(ctx) {
+        if (ctx && ctx.patient && ctx.patient.__farmaciaRawPatient) {
+            return ctx.patient.tratamientoValidado ? 'validado' : 'principal';
+        }
         if (ctx && ctx.patient) return 'validado';
         return 'principal';
     }
@@ -155,18 +158,20 @@
     function buildPrimaryTreatmentFromContext(ctx) {
         var sourceCtx = ctx || getCurrentContext() || {};
         var patient = sourceCtx.patient || null;
+        var patientTreatment = patient && patient.__farmaciaRawPatient
+            ? (patient.tratamientoValidado || patient.lineaActiva) : patient;
         var snapshot = getCurrentSnapshot();
         var relation = resolvePrimaryRelation(sourceCtx);
         var treatmentHelper = getTreatmentHelper();
         var treatment = normalizePrimaryTreatment({
             paciente_cip: firstNonEmpty(sourceCtx.cip, patient && patient.cip, fv('fhPvCip')),
-            farmaco_nombre: patient && patient.farmaco || '',
-            nombre_comercial: patient && patient.farmaco || '',
-            principio_activo: patient && (patient.principioActivo || patient.farmaco) || '',
-            dosis_texto: patient && patient.dosis || '',
-            presentacion: patient && patient.dosis || '',
-            via: patient && patient.via || '',
-            pauta: patient && patient.pauta || '',
+            farmaco_nombre: patientTreatment && (patientTreatment.farmaco_nombre || patientTreatment.farmaco) || '',
+            nombre_comercial: patientTreatment && (patientTreatment.nombre_comercial || patientTreatment.farmaco) || '',
+            principio_activo: patientTreatment && (patientTreatment.principio_activo || patientTreatment.principioActivo || patientTreatment.farmaco) || '',
+            dosis_texto: patientTreatment && (patientTreatment.dosis_texto || patientTreatment.dosis) || '',
+            presentacion: patientTreatment && (patientTreatment.presentacion || patientTreatment.dosis) || '',
+            via: patientTreatment && patientTreatment.via || '',
+            pauta: patientTreatment && patientTreatment.pauta || '',
             fecha_inicio: fv('fhPvFecha') || '',
             tipo_relacion: relation,
             es_principal: true,
@@ -299,10 +304,21 @@
         }
         F.setValue('fhPvPatologia', ctx.patologia || ctx.patient?.patologia);
         if (ctx.patient) {
+            var rawPatient = ctx.patient.__farmaciaRawPatient;
             F.setValue('fhPvFechaValidacion', ctx.patient.fechaSolicitud);
-            F.setValue('fhPvInduccionSolicitada', ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No');
+            F.setValue('fhPvInduccionSolicitada', rawPatient
+                ? (ctx.patient.tratamientoValidado && ctx.patient.tratamientoValidado.induccion || '')
+                : (ctx.patient.estado === 'pending' ? 'Pendiente de confirmar' : 'No'));
             F.setValue('fhPvAnalitica', ctx.patient.analitica);
             setTreatmentForm(buildPrimaryTreatmentFromContext(ctx));
+            if (rawPatient && ctx.patient.firstVisitData) {
+                var visit = ctx.patient.firstVisitData;
+                F.setValue('fhPvFecha', visit.first_visit_date);
+                F.setValue('fhPvInduccionRealizada', visit.induction_performed_status === 'yes' ? 'Sí' : (visit.induction_performed_status === 'no' ? 'No' : ''));
+                F.setValue('fhPvEstratificacion', visit.stratification_level);
+                F.setValue('fhPvProms', visit.baseline_proms_collection_status === 'yes' ? 'Sí' : (visit.baseline_proms_collection_status === 'no' ? 'No' : ''));
+                F.setValue('fhPvNotas', visit.pharmacy_visit_notes);
+            }
         } else {
             clearTreatmentForm();
         }
