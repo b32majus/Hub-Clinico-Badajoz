@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-08-05
+**Última actualización:** 2026-08-06
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,20 +11,37 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` |
+| HEAD regional publicado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` (merge PR #253) |
 | Activación funcional Export v2 demo | `fe84d83c7d3574840696c9fed70f98e581ec8916` (PR #227) |
 | Retirada ledger runtime | `b1ee11e00affa39c4a91626bb03f493fbcdce7d9` (PR #231), merge `19867ef16127548d0b596482360d8e5cbe6e54e5` |
 | Workbook Excel Bridge Cáceres | `c286afab70c0e396f16378212e6e29cf56792064` (PR #233) |
 | WO8A-1 raw reader/read model | `7da866b205e509120bb2c7abc0a4efdf7341e659` (PR #238), `MERGED_AND_VERIFIED` |
-| WO8A-2A-1 selectores + Quick View Bridge | PR #242, commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`, merge histórico `e2c54583ccc5876058403c34a675496cab897972`, `MERGED_AND_VERIFIED` |
-| WO8A-2A-2 handoff efímero + dashboard Bridge | Issue #245, PR #246, commits `fe28f21feb7cb58d57c639a7d52d85856b247108` + `7ebc482629e1e818a6227c8e8946cddd12ee113a`, merge/HEAD `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6`, `MERGED_AND_VERIFIED` |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.3` |
-| SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` |
-| QA pública regional del HEAD actual | PR #246: handoff 37, selector 82, reader 21, smoke 48 y dashboard legacy 37 PASS; Actions SUCCESS; QA navegador, padding E2E, dos ventanas, popup bloqueado, fail-closed, legacy y Enfermería PASS; storage Bridge vacío, consola limpia, `pageerror = 0`; revisiones APTO; fingerprint `651291d5094ef402ae0f16578f6a213add6e4d4fc5372f40d9763c615dfa83fb` |
+| WO8A-2A-1 selectores + Quick View (Bridge histórico) | PR #242, commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`, merge histórico `e2c54583ccc5876058403c34a675496cab897972`, `MERGED_AND_VERIFIED` |
+| WO8A-2A-2 handoff efímero + dashboard Bridge | Issue #245, PR #246; capacidad histórica conservada, no modo visible soportado actual |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073` |
+| SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` (histórico; tree publicado intacto) |
+| QA pública regional del HEAD actual | PR #253 y CI verde; smoke Farmacia `48/48`, sintaxis y checkers focales reportados PASS; no equivale a piloto |
 | QA humana Cáceres | PASS |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
 | Plan vigente | [`FARMACIA_PLAN_VACACIONES_20260731.md`](./FARMACIA_PLAN_VACACIONES_20260731.md) |
+| Estado post patient-flow | [`FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](./FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) |
+
+## Reconciliación post patient-flow
+
+PR #250/#251 integran el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; PR #252/#253 publican el flujo normal sin modo Bridge visible:
+
+```text
+Excel raw → reader/selectors → Data Port → sesión del paciente actual
+→ Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento
+```
+
+- `sessionStorage` solo contiene el envelope versionado del paciente actual: identificador, `patient_id`, generación, proyección, datos explícitos, provenance, borradores y `dirty`.
+- El envelope no contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes; cambiar de CIP purga el contexto anterior.
+- Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
+- Estadísticas mantiene el dashboard diseñado; la fuente raw y el CSV completo de la cohorte filtrada quedan para `WO-FH-RAW-STATISTICS-CUTOVER-01`.
+- Actividad permanece demo y diferida, fuera de la siguiente WO técnica.
+- Secuencia inmediata: `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01` → `WO-FH-RAW-STATISTICS-CUTOVER-01` → `WO-FH-EVALUATION-PACKAGE-01` → `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip → PostgreSQL/servidor local mediante el mismo Data Port.
 
 ---
 
@@ -135,7 +152,7 @@ Quedan aplazadas la retirada de v1 y la promoción de versiones `draft`. El work
 
 ### Estado técnico de persistencia en navegador
 
-PR #231 retiró del runtime soportado el ledger clínico basado en `localStorage`. El Bridge raw v2 integrado por PR #238 y sus consumidores UI de PR #242/#246 no usan `localStorage` ni `sessionStorage`: el handoff usa `postMessage` como transporte efímero, one-shot y sin storage. La recarga del dashboard exige volver a Inicio Farmacia y abrirlo de nuevo; la recarga completa de Inicio exige volver a seleccionar el Excel. Imports legacy y snapshots antiguos pueden seguir usando `sessionStorage` como deuda separada; no hay persistencia longitudinal resuelta.
+PR #231 retiró del runtime soportado el ledger clínico basado en `localStorage`. El estado posterior de PR #250/#251 usa `sessionStorage` solo para el envelope temporal del paciente actual, con claves cerradas y sin workbook, bytes, read model completo, población, cohorte u otros pacientes. Cambiar de CIP purga el contexto anterior. PR #238/#242/#246 se conserva como trazabilidad del Bridge histórico; no define un modo visible actual. No hay persistencia longitudinal definitiva resuelta.
 
 ### Deuda administrativa de issues
 

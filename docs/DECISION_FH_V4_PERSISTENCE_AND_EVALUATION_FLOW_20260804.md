@@ -1,18 +1,29 @@
 # Decisión Farmacia V4 — persistencia y flujo de evaluación
 
-> **Reconciliación vigente 2026-08-05.** El HEAD regional publicado es `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6`. PR #238 integra el lector raw/read model, PR #242 los selectores y la Quick View, y PR #246 el handoff efímero y dashboard Bridge de solo lectura (`MERGED_AND_VERIFIED`). El flujo soportado carga el Excel, busca por `identifier_system + identifier_value`, abre la Quick View y, mediante botón, una ventana hija same-origin que espera READY y recibe una sola vez `search_context` y la proyección Quick View. No recibe el workbook ni el read model completos. El protocolo verifica `origin`, `source`, nonce y versión, usa TTL único de 45 segundos y solo incluye el nonce técnico en la URL. Recarga y acceso directo fallan cerrado sin paciente demo; varias ventanas permanecen aisladas. El renderer Bridge está separado del dashboard legacy, no adapta a paciente plano, no interpreta PROMs/adherencia y no infiere causalidad, tratamiento ni datos clínicos. `postMessage` es transporte efímero, no persistencia, y no hay datos clínicos Bridge en URL o browser storage. Formularios, Office Script, tablas relacionales, `APP_*`, Read Adapter y roundtrip siguen pendientes. Esta nota prevalece sobre formulaciones anteriores del documento.
+> **Reconciliación vigente 2026-08-06.** El HEAD regional publicado es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora PR #250/#251 y PR #252/#253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. La sesión temporal usa solo el envelope versionado del paciente actual; Estadísticas conserva el dashboard diseñado y espera el cutover de fuente raw/CSV; Actividad permanece demo y diferida. Esta nota prevalece sobre formulaciones anteriores del documento.
 
 | Metadato | Valor |
 |---|---|
 | Fecha | 2026-08-04 |
-| Última reconciliación | 2026-08-05 |
+| Última reconciliación | 2026-08-06 |
 | Estado | `current_product_and_architecture_decision` |
 | Rama publicada verificada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado verificado | `ee749658fdd1d64a2dd1f828683c3f31c2a1abd6` |
+| Rama documental de reconciliación | `work/doc-fh-post-patient-flow-reconciliation-01-20260806` |
+| HEAD publicado verificado | `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` |
 | Datos autorizados | Exclusivamente inventados/sintéticos |
 | Piloto / producción | No acreditados |
 
-> Esta decisión prevalece como dirección vigente sobre propuestas incompatibles, conserva la historia de PR #199/#201/#203 y se reconcilia con los cambios posteriores: PR #231 retiró el ledger clínico del runtime soportado, PR #233 publicó el workbook operativo, PR #238 integró el lector raw/read model, PR #242 integró la Quick View y PR #246 integró el handoff/dashboard Bridge. No autoriza datos reales, piloto, producción o promoción de Cáceres.
+> Esta decisión conserva la historia de PR #199/#201/#203 y PR #238/#242/#246. El estado publicado posterior de PR #250/#251 y PR #252/#253 prevalece para el flujo normal y la sesión del paciente actual. No autoriza datos reales, piloto, producción o promoción de Cáceres.
+
+## 0. Reconciliación post patient-flow
+
+1. **Estado publicado:** PR #250/#251 integran el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; PR #252/#253 publican el flujo normal sin modo Bridge visible. El recovery base es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f`.
+2. **Flujo soportado:** `Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento`.
+3. **Sesión temporal:** `sessionStorage` solo guarda el envelope versionado del paciente actual: `version`, `identifier`, `patient_id`, `generation`, `patient_projection`, `explicit_data`, `provenance`, `drafts` y `dirty`. No guarda workbook, bytes, read model completo, población, cohorte ni otros pacientes. Al cambiar de CIP se purga el contexto anterior; no es persistencia longitudinal definitiva.
+4. **Precedencia raw:** Farmacia raw tiene precedencia. Excel Enfermería solo puede enriquecer huecos explícitos y no sustituye valores Farmacia.
+5. **Estadísticas:** el dashboard ya diseñado necesita la siguiente WO para sustituir la carga demo por la fuente raw y habilitar el CSV completo de la cohorte filtrada; no se rediseña en ese cutover.
+6. **Actividad:** sigue siendo demo, con contenido funcional no decidido, y queda fuera de la siguiente WO técnica.
+7. **Secuencia inmediata:** `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01` → `WO-FH-RAW-STATISTICS-CUTOVER-01` → `WO-FH-EVALUATION-PACKAGE-01` → `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip → PostgreSQL/servidor local mediante el mismo Data Port.
 
 ## 1. Estado publicado que motiva la decisión
 
@@ -129,21 +140,23 @@ Esto demuestra el **contenedor del Bridge**, no el procesamiento longitudinal. L
 - No existe restauración del formulario tras recarga ni recuperación al cambiar de CIP y volver al anterior.
 - La clave legacy de `localStorage` permanece opaca: no se lee, escribe ni elimina.
 - El módulo del ledger y el workbook técnico histórico permanecen versionados por trazabilidad, pero desacoplados del runtime normal.
-- El Bridge raw v2 no usa `sessionStorage` ni `localStorage`; imports legacy y snapshots anteriores aún pueden usar `sessionStorage` como deuda separada.
-- El dashboard Bridge recibe datos por `postMessage` same-origin, one-shot y tras READY; este transporte no persiste datos ni sobrevive a recarga.
-- La URL Bridge solo contiene un nonce técnico. No contiene CIP, `identifier_value`, `patient_id`, fichero ni datos clínicos, y no se usan cookies, IndexedDB, `window.name` o `BroadcastChannel` para conservar el payload.
+- El flujo publicado posterior usa `sessionStorage` únicamente para el envelope versionado del paciente actual; no es el almacenamiento del workbook ni del read model completo.
+- El envelope contiene `version`, identificador explícito, `patient_id`, `generation`, proyección del paciente, datos explícitos, provenance, borradores y `dirty`.
+- El envelope rechaza claves de workbook, read model, población, bytes, secretos y credenciales; el cambio de CIP purga el contexto anterior.
+- `localStorage`, IndexedDB, `window.name` y `BroadcastChannel` no son almacenamiento clínico soportado.
+- El handoff/dashboard Bridge de PR #246 queda como trazabilidad histórica; no define un modo Bridge visible del flujo soportado actual.
 
 ### 4.2 Decisión vigente
 
-- `localStorage` y `sessionStorage` no son la arquitectura objetivo ni la fuente de verdad clínica;
-- no se conservarán datos clínicos, datos de paciente o datos de acto en `localStorage` ni `sessionStorage`;
-- no se ampliará ni reutilizará ese almacenamiento;
-- tampoco se sustituirá por otro mecanismo oculto en el navegador;
+- `localStorage` no es la arquitectura objetivo ni la fuente de verdad clínica;
+- `sessionStorage` solo soporta el envelope temporal del paciente actual, con alcance y claves cerradas;
+- no se guardarán workbook, bytes, read model completo, población, cohorte ni otros pacientes;
+- no se sustituirá este alcance por otro mecanismo oculto en el navegador;
 - la retirada del ledger `localStorage` del runtime soportado está implementada;
-- el Bridge raw v2 vive solo en memoria de ejecución; recarga o navegación completa exige volver a seleccionar el Excel;
-- el dashboard Bridge vive solo en memoria de su ventana; al recargar o abrir directamente debe fallar cerrado y exigir volver a Inicio Farmacia;
-- la retirada de `sessionStorage` legacy todavía no está implementada y exige reemplazo real mediante Bridge/Read Adapter;
-- no se presenta la retirada parcial como persistencia longitudinal resuelta.
+- el raw reader y el Data Port construyen la proyección desde el Excel raw, mientras la sesión conserva solo el paciente actual y sus borradores;
+- recarga permite continuar o reiniciar el paciente actual; cambio de CIP purga el contexto anterior;
+- la sesión temporal no equivale a persistencia longitudinal ni a fuente de verdad poblacional;
+- no se presenta la sesión actual como persistencia longitudinal resuelta.
 
 Los documentos y PR históricos #199/#201/#203 se conservan por trazabilidad; describen decisiones y capacidades de su momento, no la dirección vigente ni el runtime soportado actual.
 
@@ -186,13 +199,15 @@ Significa:
 - Office Script, tablas relacionales pobladas, vistas `APP_*`, Excel Read Adapter y roundtrip siguen pendientes;
 - cualquier alcance restante se ejecutará, si se autoriza, en WOs atómicas.
 
-Secuencia fija siguiente:
+Secuencia inmediata post patient-flow:
 
-1. `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01`;
-2. `WO-FH-EXCEL-BRIDGE-READ-ADAPTER-ROUNDTRIP-01`;
-3. resolución de CIP arbitrario/identidad basada en el Bridge real;
-4. retirada de `sessionStorage` con reemplazo;
-5. QA y paquete final.
+1. `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01`;
+2. `WO-FH-RAW-STATISTICS-CUTOVER-01`;
+3. `WO-FH-EVALUATION-PACKAGE-01`;
+4. `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip;
+5. PostgreSQL/servidor local mediante el mismo Data Port.
+
+Office Script, `APP_*`, Read Adapter, PostgreSQL, Identity Plane y refactor general no se anteponen a esa secuencia. Actividad queda diferida.
 
 ## 7. Límites de evaluación y gate de paquete
 
@@ -225,10 +240,10 @@ Puede autorizarse una evaluación de formularios con alcance inferior solo media
 
 | Clasificación | Estado |
 |---|---|
-| Implementado y publicado | Core/adaptadores v2, proveedor técnico cerrado, Export v2 demo paralelo, v1 preservada, retirada del ledger, workbook operativo, lector raw/read model, Quick View, handoff efímero y dashboard Bridge de solo lectura |
-| Visible mediante interacción soportada | Export v2 demo; Quick View; botón `Abrir dashboard Bridge`; dashboard Bridge en ventana hija same-origin |
+| Implementado y publicado | Core/adaptadores v2, proveedor técnico cerrado, Export v2 demo paralelo, v1 preservada, retirada del ledger, workbook operativo, lector raw/read model, Data Port y sesión temporal del paciente actual |
+| Visible mediante interacción soportada | Export v2 demo y flujo normal de búsqueda/Quick View; no existe modo Bridge visible soportado |
 | Verificado fuera del navegador | Workbook Cáceres abierto, pegado y guardado en Microsoft Excel con roundtrip exacto del TSV sintético |
 | Limitado a demo/evaluación | Datos inventados, FH-001/FH-004 para proveedor v2, sin aptitud para piloto |
-| Pendiente | Validación/Primera Visita/Seguimiento Bridge, exportaciones desde Bridge, Estadísticas, Actividad del servicio, CIP arbitrario productivo, Office Script, tablas relacionales, `APP_*`, persistencia longitudinal, Read Adapter, roundtrip y retirada completa de `sessionStorage` legacy |
+| Pendiente | Estadísticas desde raw y CSV de cohorte filtrada, paquete de evaluación, `APP_*`, `RelationalExcelDataSource`, `Processor`, roundtrip, PostgreSQL/servidor local y persistencia longitudinal definitiva |
 | Superseded como dirección | Browser storage como persistencia, cohorte sintética especial y WO5 como megadesarrollo único |
 | Histórico conservado | Ledger y workbook técnico de PR #199/#201/#203, todavía versionados pero fuera del runtime soportado |

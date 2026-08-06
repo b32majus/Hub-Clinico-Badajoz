@@ -1,12 +1,12 @@
 # WO8 — Contrato de exportación longitudinal Farmacia Hospitalaria
 
-> **Reconciliación superior vigente 2026-08-05.** El HEAD regional es `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`. PR #238 integra `WO-FH-EXCEL-BRIDGE-RAW-READ-MODEL-01` (`MERGED_AND_VERIFIED`), con head técnico `7da866b205e509120bb2c7abc0a4efdf7341e659`: workbook Bridge publicado, botón `Cargar Excel de Farmacia` cableado, lector raw v2 integrado, hojas `01_DERMA` y `03_DIGESTIVO` leídas, 152 columnas validadas, `source_event_id` y cardinalidad `1..N` preservados, read model construido solo en memoria y errores seguros. El Bridge no usa `sessionStorage` ni `localStorage`, no sobrevive a recarga/navegación completa y no se convierte en pacientes planos. Quick View, dashboard, Validación, Primera Visita, Seguimiento, Estadísticas, Actividad del servicio, `APP_*`, descomposición relacional y roundtrip aún no son consumidores/capacidades integradas. WO7 Office Script es candidate pausado por gate real; WO8A-2A, WO8A-2B y WO8A-3 no están ejecutadas.
+> **Reconciliación superior vigente 2026-08-06.** El HEAD regional es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f` e incorpora PR #250/#251 y PR #252/#253. El flujo soportado es normal: Excel raw → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento. No existe un modo Bridge visible soportado. `sessionStorage` solo conserva el envelope temporal del paciente actual; Farmacia raw tiene precedencia; Estadísticas espera cutover raw/CSV; Actividad permanece demo y diferida. PR #238/#242/#246 queda como trazabilidad histórica.
 
 **Versión:** 3.0 — reconciliación V4
 **Fecha:** 2026-08-01
 **WO asociada:** WO8.0 + WO8.0.2 + `WO-FH-EXPORT-CONTRACT-V2-RECONCILIATION-01`
 **Estado:** `reconciliado_v4`
-**HEAD publicado reconciliado:** `recovery/farmacia-pr-replay-20260727` @ `92c00eb7f0c778e3351cf6f37e3a415a2c7da694`
+**HEAD publicado reconciliado:** `recovery/farmacia-pr-replay-20260727` @ `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f`
 
 ---
 
@@ -78,7 +78,29 @@ El antiguo `parser del Hub` descrito en WO8.1b no se implementó y no es el proc
 
 ### 0.7 Browser storage reconciliado
 
-El ledger clínico de PR #199/#203 fue retirado del runtime soportado por PR #231. El Bridge raw v2 integrado por PR #238 no usa `sessionStorage` ni `localStorage`: su read model vive solo en memoria de ejecución de la página y se pierde al recargar o navegar completamente. Imports legacy y snapshots anteriores pueden usar `sessionStorage` como deuda separada. No se presenta esta memoria runtime como persistencia longitudinal resuelta ni se reescribe la historia de PR #199/#201/#203.
+El ledger clínico de PR #199/#203 fue retirado del runtime soportado por PR #231. El flujo posterior de PR #250/#251 usa `sessionStorage` solo para el envelope versionado del paciente actual; no contiene workbook, bytes, read model completo, población, cohorte ni otros pacientes. Cambiar de CIP purga el contexto anterior. No se presenta esta sesión temporal como persistencia longitudinal resuelta ni se reescribe la historia de PR #199/#201/#203.
+
+### 0.8 Reconciliación post patient-flow
+
+PR #250/#251 integran el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; PR #252/#253 publican el flujo normal sin modo Bridge visible.
+
+```text
+Excel raw
+→ reader/selectors
+→ Data Port
+→ sesión del paciente actual
+→ Inicio/Quick View
+→ dashboards
+→ Validación
+→ Primera Visita
+→ Seguimiento
+```
+
+- `sessionStorage` contiene solo `version`, identificador explícito, `patient_id`, `generation`, proyección, datos explícitos, provenance, borradores y `dirty`.
+- Farmacia raw tiene precedencia. Excel Enfermería solo enriquece huecos explícitos.
+- Estadísticas conserva el dashboard diseñado; `WO-FH-RAW-STATISTICS-CUTOVER-01` debe conectar la fuente raw y el CSV completo de la cohorte filtrada.
+- Actividad permanece demo y diferida, fuera de esa WO técnica.
+- Secuencia inmediata: `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01` → `WO-FH-RAW-STATISTICS-CUTOVER-01` → `WO-FH-EVALUATION-PACKAGE-01` → `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip → PostgreSQL/servidor local mediante el mismo Data Port.
 
 ---
 
@@ -537,18 +559,17 @@ WO1 fija una candidate técnica `2.0.0-draft.1` de 152 columnas. PR #227 la expo
 
 ## 15. Secuencia de implementación vigente
 
-1. `WO-FH-EXPORT-V2-CANONICAL-CORE-01` — core, schemas, 152 columnas candidate y roundtrip TSV.
-2. `WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01` — Validación v2 sin cutover.
-3. `WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01` — Primera Visita v2 sin cutover.
-4. `WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01` — Seguimiento v2 sin cutover.
-5. `WO-FH-EXPORT-V2-CUTOVER-01` — parcialmente satisfecha por las unidades menores PR #225/#227; alcance restante diferido.
-6. `WO-FH-EXCEL-BRIDGE-WORKBOOK-01` — libro por hospital.
-7. `WO-FH-EXCEL-BRIDGE-OFFICE-SCRIPT-01` — candidate pausado; gate real pendiente.
-8. `WO8A-1` — raw reader/read model, integrada por PR #238.
-9. Consumidores UI, `APP_*`, descomposición relacional y roundtrip — pendientes, no ejecutados.
-10. `WO-FH-POSTGRESQL-MIGRATOR-01` — condicionado a servidor autorizado.
+La secuencia inmediata post patient-flow es:
 
-WO1–WO4 están integradas. La adjudicación de WO5 es `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: no se reabre como megadesarrollo ni se declara completamente cerrada; retirada v1 y promoción de versiones `draft` quedan aplazadas. La secuencia detallada vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`.
+1. `WO-DOC-FH-POST-PATIENT-FLOW-RECONCILIATION-01` — reconciliación documental.
+2. `WO-FH-RAW-STATISTICS-CUTOVER-01` — fuente raw para Estadísticas y CSV completo de cohorte filtrada.
+3. `WO-FH-EVALUATION-PACKAGE-01` — paquete de evaluación sobre el flujo normal.
+4. `APP_*`, `RelationalExcelDataSource`, `Processor` y roundtrip.
+5. PostgreSQL/servidor local mediante el mismo Data Port.
+
+La secuencia histórica del core, adaptadores, workbook y reader se conserva en este contrato. Office Script, Identity Plane, Actividad y refactor general no se anteponen a las cinco unidades anteriores.
+
+WO1–WO4 están integradas. La adjudicación de WO5 es `PARTIALLY_SATISFIED_BY_SMALLER_UNITS / REMAINING_SCOPE_DEFERRED`: no se reabre como megadesarrollo ni se declara completamente cerrada; retirada v1 y promoción de versiones `draft` quedan aplazadas. La secuencia histórica vive en `docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`; la secuencia inmediata está en la sección 0.8 y aquí arriba.
 
 No se prepara URL, guía o paquete longitudinal final ni retirada v1 hasta demostrar CIP arbitrario en flujo normal, workbook operativo, Office Script, vistas `APP_*`, Excel Read Adapter y roundtrip Hub → Excel → Hub. Ver [`DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
