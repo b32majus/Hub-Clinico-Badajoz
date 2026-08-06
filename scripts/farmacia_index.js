@@ -249,6 +249,36 @@
         return card;
     }
 
+    function createRawPromsGroup(proms) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'fh-qv-farmaco-field fh-qv-span-full';
+        wrapper.setAttribute('data-fh-qv-raw-proms', '');
+        var label = document.createElement('span');
+        label.className = 'info-field__label';
+        label.textContent = 'PROMs Farmacia registrados';
+        wrapper.appendChild(label);
+        var group = document.createElement('div');
+        group.className = 'fh-qv-farmaco-group';
+        (Array.isArray(proms) ? proms : []).forEach(function (prom) {
+            if (!prom || typeof prom !== 'object'
+                || !Object.prototype.hasOwnProperty.call(prom, 'tipo_prom')
+                || prom.tipo_prom === null || prom.tipo_prom === undefined) return;
+            var hasValue = Object.prototype.hasOwnProperty.call(prom, 'valor');
+            var valueType = typeof prom.valor;
+            var value = hasValue && (valueType === 'string' || valueType === 'number' || valueType === 'boolean')
+                ? String(prom.valor) : 'No registrado';
+            var hasDate = Object.prototype.hasOwnProperty.call(prom, 'fecha')
+                && prom.fecha !== null && prom.fecha !== undefined && String(prom.fecha).trim() !== '';
+            group.appendChild(createPromCard({
+                name: String(prom.tipo_prom),
+                value: value,
+                interpretation: hasDate ? String(prom.fecha) : ''
+            }));
+        });
+        wrapper.appendChild(group);
+        return wrapper;
+    }
+
     function createFarmacoGroup(patient) {
         var wrapper = document.createElement('div');
         wrapper.className = 'fh-qv-farmaco-field fh-qv-span-full';
@@ -328,7 +358,7 @@
             grid.appendChild(F.createField('Líneas activas explícitas', patient.lineasActivas && patient.lineasActivas.length));
             grid.appendChild(F.createField('Última adherencia', patient.adherencia));
             grid.appendChild(F.createField('Efectos adversos activos', patient.efectosAdversos));
-            grid.appendChild(F.createField('Últimos PROMs Farmacia', patient.proms));
+            grid.appendChild(createRawPromsGroup(patient.proms));
             return;
         }
         grid.appendChild(F.createField('\u00daltima solicitud FH', patient.ultimaSolicitud));
