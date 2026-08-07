@@ -155,7 +155,21 @@
         return field;
     }
 
-    function renderError() {
+    function explicitText(value) {
+        if (value === undefined || value === null || value === '') return 'No registrado';
+        if (typeof value === 'object') return JSON.stringify(value);
+        return String(value);
+    }
+
+    function rawMovementLabel(type) {
+        if (type === 'schedule_change') return 'Cambio de pauta explícito';
+        if (type === 'dose_change') return 'Cambio de dosis explícito';
+        if (type === 'dose_and_schedule_change') return 'Cambio de dosis y pauta explícito';
+        if (type === 'suspension') return 'Suspensión explícita';
+        return 'Movimiento terapéutico explícito';
+    }
+
+    function renderError(rawMode) {
         var blocks = [
             'longitudinalPatientSummary',
             'longitudinalTreatmentTimeline',
@@ -168,47 +182,42 @@
             var blockEl = $(blocks[i]);
             if (!blockEl) { continue; }
             clear(blockEl);
-            var msg = pEl('Error al cargar el dataset demo longitudinal. Verifique la consola para más detalles.', 'longitudinal-error');
+            var msg = pEl(rawMode
+                ? 'No se pudo construir la historia explícita del paciente actual.'
+                : 'Error al cargar el dataset demo longitudinal. Verifique la consola para más detalles.', 'longitudinal-error');
             blockEl.appendChild(msg);
         }
     }
 
-    function rawLongitudinalPatient(patient) {
-        return {
-            __farmaciaRawPatient: true,
-            cip: patient.cip,
-            nombre_demo: patient.nombre || '',
-            servicios_origen: patient.servicio ? [patient.servicio] : [],
-            patologias: patient.patologia ? [patient.patologia] : [],
-            tratamientos: (patient.biologicos || []).map(function (line) {
-                var treatment = {
-                    id: line.tratamiento_id_principal || line.linea_id,
-                    linea_id: line.linea_id,
-                    principio_activo: line.principio_activo || line.nombre_linea || '',
-                    nombre_comercial: line.nombre_comercial || '',
-                    pauta: line.pauta || '',
-                    via: line.via || '',
-                    fecha_inicio: line.fecha_inicio || '',
-                    fecha_fin: line.fecha_fin || '',
-                    estado_linea: line.estado_linea || 'unknown',
-                    tipo_relacion: line.tipo_relacion || 'unknown'
-                };
-                if (line.active_at_event === true || line.active_at_event === false) treatment.activo = line.active_at_event;
-                return treatment;
-            }),
-            visitas_fh: patient.visitas_fh || [],
-            proms: patient.proms || [],
-            adherencia: patient.adherencia,
-            causality_records: patient.causality_records || [],
-            adverse_event_status: patient.adverse_event_status || '',
-            actividad_clinica: [],
-            eventos_adversos: patient.eventos_adversos || [],
-            comorbilidades_relevantes: []
-        };
+    function currentRawPatient() {
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var adapter = window.FarmaciaLongitudinalRawAdapter;
+        var envelope = runtime && typeof runtime.getCurrentEnvelope === 'function'
+            ? runtime.getCurrentEnvelope() : null;
+        if (!envelope) return null;
+        if (!adapter || typeof adapter.buildFromEnvelope !== 'function') {
+            throw new Error('LONGITUDINAL_RAW_ADAPTER_UNAVAILABLE');
+        }
+        var patient = adapter.buildFromEnvelope(envelope);
+        return Object.assign({}, patient, { proms: patient.proms || [] });
     }
 
     function fetchDataset(callback) {
         var statusEl = $('longitudinalDataStatus');
+        try {
+            var rawPatient = currentRawPatient();
+            if (rawPatient) {
+                dataset = { source_mode: 'raw', pacientes: [rawPatient] };
+                if (statusEl) statusEl.textContent = 'Historia explícita del paciente actual cargada desde Excel Farmacia';
+                if (typeof callback === 'function') callback(true);
+                return;
+            }
+        } catch (error) {
+            if (statusEl) statusEl.textContent = 'Error al construir la historia explícita del paciente actual';
+            renderError(true);
+            if (typeof callback === 'function') callback(false);
+            return;
+        }
         fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
             .then(function (response) {
                 if (!response.ok) { throw new Error('Failed to fetch dataset'); }
@@ -216,25 +225,17 @@
             })
             .then(function (data) {
                 var normalize = window.FarmaciaLongitudinal.normalizePatient;
-                var context = window.FarmaciaDemo && window.FarmaciaDemo.getQueryContext
-                    ? window.FarmaciaDemo.getQueryContext() : {};
-                if (context.patient && context.patient.__farmaciaRawPatient) {
-                    data.pacientes = [normalize(rawLongitudinalPatient(context.patient))];
-                } else {
-                    data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
-                }
+                data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
                 dataset = data;
                 if (statusEl) {
                     var count = (dataset.pacientes && dataset.pacientes.length) ? dataset.pacientes.length : 0;
-                    statusEl.textContent = context.patient && context.patient.__farmaciaRawPatient
-                        ? 'Paciente actual cargado desde Excel Farmacia'
-                        : 'Dataset cargado — ' + count + ' paciente(s) demo';
+                    statusEl.textContent = 'Dataset cargado — ' + count + ' paciente(s) demo';
                 }
                 if (typeof callback === 'function') { callback(true); }
             })
             .catch(function () {
                 if (statusEl) { statusEl.textContent = 'Error al cargar dataset demo longitudinal'; }
-                renderError();
+                renderError(false);
                 if (typeof callback === 'function') { callback(false); }
             });
     }
@@ -278,10 +279,12 @@
         comorbText = comorbParts.join(', ');
 
         var raw = patient.__farmaciaRawPatient === true;
-        var causalityText = (patient.causality_records || []).map(function (assessment) {
-            return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {
-                var value = assessment[key];
-                return key + ': ' + (value === undefined || value === null || value === '' ? 'No registrado' : String(value));
+        var causalityText = (patient.causality_records || []).map(function (record) {
+            var assessment = record.assessment || record;
+            return Object.keys(assessment).filter(function (key) {
+                return raw || key !== 'source_event_id';
+            }).map(function (key) {
+                return key + ': ' + explicitText(assessment[key]);
             }).join(' · ');
         }).join(' | ');
         var fields = [
@@ -292,7 +295,9 @@
             { l: 'Servicio(s)', v: servicios },
             { l: 'Patología(s)', v: patologias },
             { l: 'Comorbilidades', v: comorbText || (raw ? 'No registrado' : 'Ninguna registrada') },
-            { l: 'Adherencia', v: patient.adherencia === undefined || patient.adherencia === null || patient.adherencia === '' ? 'No registrado' : String(patient.adherencia) },
+            { l: 'Adherencia', v: explicitText(patient.adherencia)
+                + (raw && patient.adherencia !== undefined && patient.adherencia !== null && patient.adherencia !== ''
+                    ? ' · Último resultado explícito' : '') },
             { l: 'Causalidad', v: causalityText || 'No registrado' },
             { l: 'Status', v: raw ? 'Paciente actual cargado desde Excel Farmacia' : 'pending_review / demo — datos sintéticos' }
         ];
@@ -326,25 +331,64 @@
             var lineParts = (visit.lineas || []).map(function (line) {
                 var parts = [line.line_id || 'Línea sin ID'];
                 if (line.tratamiento !== undefined && line.tratamiento !== null && line.tratamiento !== '') parts.push('Tratamiento: ' + String(line.tratamiento));
-                var lineState = line.estado_linea !== undefined && line.estado_linea !== null && line.estado_linea !== '' ? line.estado_linea : line.estado;
-                if (lineState !== undefined && lineState !== null && lineState !== '') parts.push('Estado: ' + String(lineState));
+                if (patient.__farmaciaRawPatient) {
+                    parts.push('Actividad: ' + (line.active_at_event === true ? 'Activo explícito'
+                        : (line.active_at_event === false ? 'No activo explícito' : 'No registrado')));
+                    if (line.line_status_at_event) parts.push('Estado de línea: ' + line.line_status_at_event);
+                    if (line.dose_text) parts.push('Dosis: ' + line.dose_text);
+                    if (line.schedule_label) parts.push('Pauta: ' + line.schedule_label);
+                } else {
+                    var lineState = line.estado_linea !== undefined && line.estado_linea !== null && line.estado_linea !== '' ? line.estado_linea : line.estado;
+                    if (lineState !== undefined && lineState !== null && lineState !== '') parts.push('Estado: ' + String(lineState));
+                }
                 if (line.evaluated === true) parts.push('Evaluada');
                 else if (line.evaluated === false) parts.push('No evaluada');
                 if (line.dispensed === true) parts.push('Dispensada');
                 else if (line.dispensed === false) parts.push('No dispensada');
                 return parts.join(' · ');
             });
-            var visitField = buildInfoField('Visita FH' + (visit.visit_id ? ' · ' + visit.visit_id : ''), (visit.fecha || 'Fecha no registrada') + ' — ' + lineParts.join(' | '));
+            var actLabel = visit.act_type === 'pharmacy_first_visit' ? 'Primera Visita' : 'Seguimiento';
+            var visitField = buildInfoField((patient.__farmaciaRawPatient ? 'Acto FH · ' + actLabel : 'Visita FH')
+                + (visit.visit_id ? ' · ' + visit.visit_id : ''),
+                (patient.__farmaciaRawPatient ? 'Fecha del acto: ' : '') + (visit.fecha || 'Fecha no registrada') + ' — ' + lineParts.join(' | '));
+            if (patient.__farmaciaRawPatient) {
+                visitField.className = 'longitudinal-ae-details';
+                visitField.setAttribute('data-longitudinal-visit', visit.source_event_id || String(vi));
+            }
             container.appendChild(visitField);
         }
 
         if (patient.__farmaciaRawPatient) {
+            (patient.movimientos_terapeuticos || []).forEach(function (movement, index) {
+                var movementText = [
+                    'Línea: ' + (movement.line_id || 'No registrado'),
+                    movement.new_dose_text ? 'Nueva dosis: ' + movement.new_dose_text : '',
+                    movement.new_schedule_label ? 'Nueva pauta: ' + movement.new_schedule_label : '',
+                    movement.new_route ? 'Nueva vía: ' + movement.new_route : '',
+                    'Motivo: ' + (movement.reason || 'No registrado'),
+                    movement.effective_date ? 'Fecha efectiva: ' + movement.effective_date : 'Fecha efectiva no registrada',
+                    'Fecha del acto: ' + (movement.visit_date || 'No registrada')
+                ].filter(Boolean).join(' · ');
+                var movementField = buildInfoField(rawMovementLabel(movement.type) + ' · ' + movement.type, movementText);
+                movementField.setAttribute('data-longitudinal-movement', movement.type + '-' + index);
+                movementField.setAttribute('title', rawMovementLabel(movement.type)
+                    + '\nTipo: ' + (movement.type || 'No registrado')
+                    + '\nMotivo: ' + (movement.reason || 'No registrado')
+                    + '\nFecha efectiva: ' + (movement.effective_date || 'No registrada')
+                    + '\nFecha del acto: ' + (movement.visit_date || 'No registrada'));
+                container.appendChild(movementField);
+            });
+            (patient.adherencia_historial || []).forEach(function (record, index) {
+                var adherenceField = buildInfoField('Adherencia histórica · registro ' + (index + 1),
+                    'Fecha del acto: ' + (record.visit_date || 'No registrada')
+                    + ' · Instrumento: ' + explicitText(record.instrument)
+                    + ' · Resultado: ' + explicitText(record.result));
+                adherenceField.setAttribute('data-longitudinal-adherence', String(index));
+                container.appendChild(adherenceField);
+            });
             treatments.filter(function (treatment) { return !parseDate(treatment.fecha_inicio); }).forEach(function (treatment) {
-                var state = String(treatment.estado_linea || 'unknown').toLowerCase();
-                var stateLabel = state === 'active' ? 'Activo'
-                    : (state === 'completed' || state === 'historical' || state === 'historico' ? 'Finalizado'
-                        : (state === 'suspended' ? 'Suspendido'
-                            : (state === 'validated_not_started' ? 'Validado, pendiente de inicio' : 'No registrado')));
+                var hasActivity = Object.prototype.hasOwnProperty.call(treatment, 'activo');
+                var stateLabel = hasActivity ? (treatment.activo === true ? 'Activo' : 'No activo') : 'No registrado';
                 var relation = String(treatment.tipo_relacion || 'unknown').toLowerCase();
                 var relationLabel = relation === 'primary' || relation === 'principal' || relation === 'base' ? 'Principal'
                     : (relation === 'additional' || relation === 'adicional' ? 'Adicional' : 'Relación no registrada');
@@ -508,9 +552,18 @@
                 var marker = divEl('longitudinal-timeline-change-marker');
                 marker.style.left = pct(cdDate) + '%';
 
-                var cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—') + '\nMotivo: ' + (c.motivo || '—');
-                if (c.descripcion) { cTooltip += '\n' + c.descripcion; }
-                if (c.estado_validacion_farmacia) { cTooltip += '\nValidacion: ' + c.estado_validacion_farmacia; }
+                var cTooltip;
+                if (patient.__farmaciaRawPatient) {
+                    cTooltip = rawMovementLabel(c.tipo)
+                        + '\nTipo: ' + (c.tipo || 'No registrado')
+                        + '\nMotivo: ' + (c.motivo || 'No registrado')
+                        + '\nFecha efectiva: ' + (c.effective_date || 'No registrada')
+                        + '\nFecha del acto: ' + (c.visit_date || 'No registrada');
+                } else {
+                    cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—') + '\nMotivo: ' + (c.motivo || '—');
+                    if (c.descripcion) { cTooltip += '\n' + c.descripcion; }
+                    if (c.estado_validacion_farmacia) { cTooltip += '\nValidacion: ' + c.estado_validacion_farmacia; }
+                }
                 marker.setAttribute('title', cTooltip);
 
                 markerRow.appendChild(marker);
@@ -522,11 +575,7 @@
                 if (!edDate) { continue; }
 
                 var grav = ev.gravedad || '';
-                var gravClass = 'event-high';
-                if (grav === 'leve') { gravClass = 'event-low'; }
-                else if (grav === 'moderado' || grav === 'moderada') { gravClass = 'event-moderate'; }
-                else if (grav === 'grave') { gravClass = 'event-high'; }
-                else if (grav === 'serio') { gravClass = 'event-serious'; }
+                var gravClass = adSeverityClass(grav, patient.__farmaciaRawPatient);
 
                 var aeMarker = divEl('longitudinal-timeline-ae-marker ' + gravClass);
                 aeMarker.style.left = pct(edDate) + '%';
@@ -544,20 +593,20 @@
         container.appendChild(track);
     }
 
-    function adSeverityClass(grav) {
+    function adSeverityClass(grav, neutralUnknown) {
         if (grav === 'leve') { return 'event-low'; }
         if (grav === 'moderado' || grav === 'moderada') { return 'event-moderate'; }
         if (grav === 'grave') { return 'event-high'; }
         if (grav === 'serio') { return 'event-serious'; }
-        return 'event-high';
+        return neutralUnknown ? 'threshold-no-data' : 'event-high';
     }
 
-    function adSeverityLabel(grav) {
+    function adSeverityLabel(grav, neutralUnknown) {
         if (grav === 'leve') { return 'Leve'; }
         if (grav === 'moderado' || grav === 'moderada') { return 'Moderado'; }
         if (grav === 'grave') { return 'Grave'; }
         if (grav === 'serio') { return 'Serio'; }
-        return grav || 'No especificada';
+        return grav || (neutralUnknown ? 'No registrado' : 'No especificada');
     }
 
     function renderAdverseEvents(patient) {
@@ -579,8 +628,8 @@
         for (var i = 0; i < events.length; i++) {
             var ev = events[i];
             var grav = ev.gravedad || '';
-            var gravClass = adSeverityClass(grav);
-            var gravLabel = adSeverityLabel(grav);
+            var gravClass = adSeverityClass(grav, patient.__farmaciaRawPatient);
+            var gravLabel = adSeverityLabel(grav, patient.__farmaciaRawPatient);
             var severitySuffix = gravClass.replace('event-', '');
 
             var card = divEl('longitudinal-ae-card longitudinal-ae-card--' + severitySuffix);
@@ -600,10 +649,17 @@
             card.appendChild(header);
 
             var details = divEl('longitudinal-ae-details');
-            details.appendChild(span('Fecha: ' + (ev.fecha || '—'), 'longitudinal-ae-detail'));
-            details.appendChild(span('Tipo: ' + (ev.tipo || '—'), 'longitudinal-ae-detail'));
-            details.appendChild(span('Relación con tratamiento: ' + (ev.relacion_tratamiento || '—'), 'longitudinal-ae-detail'));
-            details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || '—'), 'longitudinal-ae-detail'));
+            if (patient.__farmaciaRawPatient) {
+                details.appendChild(span('Fecha del acto: ' + (ev.fecha || 'No registrado'), 'longitudinal-ae-detail'));
+                details.appendChild(span('ID de EA: ' + (ev.ea_id || 'No registrado'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Descripción: ' + (ev.tipo || 'No registrado'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || 'No registrado'), 'longitudinal-ae-detail'));
+            } else {
+                details.appendChild(span('Fecha: ' + (ev.fecha || '—'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Tipo: ' + (ev.tipo || '—'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Relación con tratamiento: ' + (ev.relacion_tratamiento || '—'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || '—'), 'longitudinal-ae-detail'));
+            }
             details.appendChild(span('Resultado: ' + (ev.resultado || 'No registrado'), 'longitudinal-ae-detail'));
             var causality = (ev.evaluaciones_causalidad || []).map(function (assessment) {
                 return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {
@@ -612,6 +668,22 @@
                 }).join(' · ');
             }).join(' | ');
             details.appendChild(span('Causalidad: ' + (causality || 'No registrado'), 'longitudinal-ae-detail'));
+            if (patient.__farmaciaRawPatient) {
+                var updates = ev.actualizaciones || [];
+                details.appendChild(span('Historial: ' + updates.length + ' actualizaciones', 'longitudinal-ae-detail'));
+                updates.forEach(function (update, updateIndex) {
+                    var suspects = (update.suspects || []).map(function (suspect) {
+                        return suspect && suspect.suspect_ref ? suspect.suspect_ref : explicitText(suspect);
+                    }).join(', ');
+                    details.appendChild(span('Actualización ' + (updateIndex + 1)
+                        + ' · Fecha del acto: ' + (update.visit_date || 'No registrado')
+                        + ' · Descripción: ' + (update.description || 'No registrado')
+                        + ' · Severidad: ' + (update.severity || 'No registrado')
+                        + ' · Acción: ' + (update.action || 'No registrado')
+                        + ' · Resolución: ' + (update.resolution_status || 'No registrado')
+                        + ' · Sospechosos: ' + (suspects || 'No registrado'), 'longitudinal-ae-detail'));
+                });
+            }
             card.appendChild(details);
 
             var tooltipParts = [];
@@ -661,14 +733,15 @@
             return;
         }
 
-        proms.sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+        proms.sort(function (a, b) { return String(a.fecha || '').localeCompare(String(b.fecha || '')); });
 
         var maxVal = promMax(mappedType);
         if (maxVal <= 0) { maxVal = 100; }
 
         for (var i = 0; i < proms.length; i++) {
             var prom = proms[i];
-            var displayedValue = prom.valor !== undefined && prom.valor !== null && prom.valor !== '' ? prom.valor : '—';
+            var displayedValue = prom.valor !== undefined && prom.valor !== null && prom.valor !== '' ? prom.valor
+                : (patient.__farmaciaRawPatient ? 'No registrado' : '—');
             var row = divEl('longitudinal-bar-row');
 
             var info = divEl('longitudinal-bar-info');
@@ -683,7 +756,7 @@
             var bar = divEl('longitudinal-bar');
             var numericVal = parseFloat(prom.valor);
             var sevInfo = patient.__farmaciaRawPatient
-                ? { label: 'Valor explícito', cssClass: 'threshold-no-data' }
+                ? { label: 'Valor explícito; sin interpretación clínica automática', cssClass: 'threshold-no-data' }
                 : getSeverityInfo(mappedType, numericVal);
             bar.className = 'longitudinal-bar ' + sevInfo.cssClass;
             if (!patient.__farmaciaRawPatient && !isNaN(numericVal)) {
@@ -692,7 +765,9 @@
             } else {
                 bar.style.width = '0%';
             }
-            bar.setAttribute('aria-label', displayedValue + ' de ' + maxVal + ' m\u00e1ximo (' + mappedType + ')');
+            bar.setAttribute('aria-label', patient.__farmaciaRawPatient
+                ? displayedValue + ' (' + mappedType + '), sin interpretación clínica automática'
+                : displayedValue + ' de ' + maxVal + ' máximo (' + mappedType + ')');
             barWrapper.appendChild(bar);
             row.appendChild(barWrapper);
 
@@ -700,7 +775,7 @@
             sevDiv.appendChild(span(sevInfo.label, 'longitudinal-bar-severity-text'));
             row.appendChild(sevDiv);
 
-            if (prom.interpretacion) {
+            if (!patient.__farmaciaRawPatient && prom.interpretacion) {
                 var interp = divEl('longitudinal-bar-interpretation');
                 interp.appendChild(span(prom.interpretacion, 'longitudinal-bar-interp-text'));
                 row.appendChild(interp);
@@ -829,6 +904,15 @@
         container.appendChild(panel);
     }
 
+    function renderRawLegend() {
+        var container = $('longitudinalLegend');
+        if (!container) return;
+        clear(container);
+        var panel = divEl('longitudinal-legend-panel');
+        panel.appendChild(pEl('Valores explícitos del Excel de Farmacia; sin interpretación clínica automática.', 'longitudinal-legend-note'));
+        container.appendChild(panel);
+    }
+
     function populatePromSelect(patient) {
         var sel = $('longitudinalPromSelect');
         if (!sel || !patient) { return; }
@@ -931,7 +1015,7 @@
 
         renderPromChart(patient, promType);
         renderClinicalChart(patient, clinicalType);
-        if (patient.__farmaciaRawPatient) clear($('longitudinalLegend'));
+        if (patient.__farmaciaRawPatient) renderRawLegend();
         else renderLegend();
     }
 
