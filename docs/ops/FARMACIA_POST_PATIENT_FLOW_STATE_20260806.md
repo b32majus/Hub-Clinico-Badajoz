@@ -1,20 +1,20 @@
-# Farmacia post Quick View — estado vigente
+# Farmacia post Longitudinal — estado vigente
 
-> Documento de estado vivo posterior a la WO #254, actualizado tras el issue #257 / PR #258 y el issue #261 / PR #262. Describe el estado publicado y la secuencia inmediata; no crea un contrato clínico nuevo, no autoriza datos reales y no sustituye la revisión humana.
+> Documento de estado vivo posterior a la WO #254, actualizado tras el issue #257 / PR #258, el issue #261 / PR #262 y el issue #265 / PR #266. Describe el estado publicado y la secuencia inmediata; no crea un contrato clínico nuevo, no autoriza datos reales y no sustituye la revisión humana.
 
 | Metadato | Valor |
 |---|---|
 | Fecha | 2026-08-07 |
-| Issue de origen / actualización | #263 `WO-DOC-FH-POST-QUICKVIEW-RECONCILIATION-01`; issue #261 CLOSED / PR #262 MERGED_AND_VERIFIED |
-| HEAD regional publicado | `f2b827fed26728e2103a9ebca1f4c524d28dfac3` |
-| Cambios funcionales incluidos | issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258 e issue #261 / PR #262 |
+| Issue de origen / actualización | `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`; issue #265 CLOSED / PR #266 MERGED_AND_VERIFIED |
+| HEAD regional publicado | `fb7b70c50c991baf6a375b42112048d190fe0178` |
+| Cambios funcionales incluidos | issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258, issue #261 / PR #262 e issue #265 / PR #266 |
 | Datos autorizados | Exclusivamente sintéticos |
 | Piloto / producción | No acreditados |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073`; intacto, sin promoción de #258 |
 
 ## 1. Estado publicado
 
-El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`. El issue #252 y la PR #253 publicaron la navegación clínica normal posterior. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética, y el issue #261 / PR #262 publicó Quick View raw PROMs corregido. La nomenclatura `Bridge` de PR #238/#242/#246 se conserva para trazabilidad técnica, pero no existe un modo Bridge visible soportado.
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`. El issue #252 y la PR #253 publicaron la navegación clínica normal posterior. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética; el issue #261 / PR #262 publicó Quick View raw PROMs corregido; y el issue #265 / PR #266 publicó Patient Longitudinal raw. La nomenclatura `Bridge` de PR #238/#242/#246 se conserva para trazabilidad técnica, pero no existe un modo Bridge visible soportado.
 
 La cadena funcional vigente es:
 
@@ -95,35 +95,87 @@ La evidencia disponible incluye Reader `21/21 PASS`, Selectors `82/82 PASS`, Dat
 ### Hallazgos post-checkpoint
 
 1. `PREEXISTING_QUICKVIEW_P2`: hallazgo visual preexistente resuelto y publicado mediante #261/#262. Quick View raw usa un renderer estructurado, elimina `[object Object]`, preserva `0` y `false`, muestra fecha solo cuando existe explícitamente y representa ausencias como `No registrado`; no aplica thresholds ni interpretación clínica.
-2. `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED`: el patient-flow no presenta regresión atribuible a #258, pero no está demostrada la reconstrucción completa de todos los seguimientos históricos, movimientos/cambios de tratamiento, cambios de pauta/dosis, fechas históricas completas de línea y actividad clínica raw. Queda para `WO-FH-RAW-PATIENT-LONGITUDINAL-CUTOVER-01`; no se afirma que Longitudinal esté corregido.
+2. `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED`: hallazgo histórico resuelto y publicado mediante #265/#266. El patient-flow no presentaba regresión atribuible a #258; la reconstrucción longitudinal completa quedaba sin demostrar. Tras #265/#266, Patient Longitudinal raw está implementado, publicado y demostrado con datos sintéticos para evaluación funcional sintética; no se acredita para piloto ni producción. La actividad clínica raw permanece `[]` / No registrado porque el contrato actual no la estructura, lo que no es una deuda pendiente de esta capacidad sino un límite contractual vigente.
 
-## 6. Actividad del servicio
+## 6. Patient Longitudinal raw
+
+El issue #265 y la PR #266 publicaron Patient Longitudinal raw, con candidate `a7b8deb7079d46603abcc1a3b1c86763a79bc410` y merge `fb7b70c50c991baf6a375b42112048d190fe0178`. El estado es implementado, publicado y demostrado para evaluación exclusivamente sintética; no está acreditado para piloto ni producción.
+
+Cadena soportada:
+
+```text
+CurrentPatientSession
+→ FarmaciaPatientFlowRuntime.getCurrentEnvelope()
+→ explicit_data
+→ FarmaciaLongitudinalRawAdapter
+→ Dashboard Longitudinal
+```
+
+Comportamiento documentado:
+
+- reconstruye todos los actos disponibles de Primera Visita y Seguimiento;
+- agrupa correctamente los actos multifila;
+- conserva snapshots explícitos por acto;
+- `active_at_event`: `true` = activo explícito, `false` = no activo explícito, otro/ausente = no registrado;
+- muestra únicamente movimientos explícitos relevantes y excluye `no_change_recorded` y `not_recorded`;
+- diferencia `schedule_change` (Cambio de pauta explícito), `dose_change` (Cambio de dosis explícito), `dose_and_schedule_change` (Cambio de dosis y pauta explícito), `suspension` (Suspensión explícita) y `other` (Movimiento terapéutico explícito);
+- no fabrica fechas terapéuticas ni sustituye `movement_effective_date` ausente por la fecha del acto;
+- conserva PROMs históricos y simultáneos, incluyendo `0` y `false`; la fecha PROM solo se muestra si el propio PROM la contiene;
+- conserva la historia explícita de adherencia;
+- agrupa EA `present` por identidad explícita y conserva los updates;
+- `absent`/`not_recorded` NO se interpreta como resolución de un EA previo; la resolución solo se afirma desde campos explícitos de resolución;
+- la causalidad es solo explícita;
+- la actividad clínica raw permanece `[]` / No registrado porque el contrato actual no la estructura;
+- no aplica thresholds ni interpretación clínica automática a raw;
+- raw y demo no se mezclan.
+
+Navegación demostrada como interacción soportada con datos sintéticos:
+
+```text
+Inicio
+→ carga Excel sintético
+→ búsqueda CIP raw
+→ Dashboard Paciente
+→ Vista completa visible
+→ click real
+→ Dashboard Longitudinal raw
+```
+
+No se afirma que esta interacción demuestre piloto ni producción.
+
+Evidencia:
+
+- evidencia local / Chromium del candidate `a7b8deb7079d46603abcc1a3b1c86763a79bc410`: Longitudinal raw Chromium PASS, Reader 21/21 PASS, Selectors 82/82 PASS, Data Port 11/11 PASS, patient-flow 17/17 PASS, smoke 48/48 PASS, Dashboard Paciente 37/37 PASS, patient-flow Chromium PASS, Quick View PROM Chromium PASS, Statistics cohorte 30 escenarios PASS, Statistics Chromium PASS, raw 55 / CSV 55x37, A→B→A isolation PASS, `console.error = 0`, `pageerror = 0`, `git diff --check PASS`, revisión independiente read-only APTO.
+- evidencia hosted post-PR: Farmacia smoke check #914, conclusion SUCCESS, head `a7b8deb7079d46603abcc1a3b1c86763a79bc410`.
+
+La batería completa local/Chromium no se confunde con el smoke hosted #914 de GitHub Actions; son evidencias distintas y así se documentan.
+
+## 7. Actividad del servicio
 
 Actividad continúa siendo una pantalla demo. Lee el conjunto disponible de `FarmaciaDemo`, calcula tarjetas de actividad y puede mostrar etiquetas de fuente combinada, Excel Farmacia, Excel Enfermería o demo. No está cableada a la población raw completa, su definición funcional está pendiente, no se cablea ahora y no bloquea el paquete de evaluación; queda diferida fuera de la siguiente WO técnica.
 
-## 7. Secuencia inmediata
+## 8. Secuencia inmediata
 
-1. `WO-FH-RAW-PATIENT-LONGITUDINAL-CUTOVER-01` — Patient Longitudinal raw.
-2. `WO-FH-EVALUATION-PACKAGE-01` — paquete de evaluación.
-3. Evaluación con farmacéuticas.
-4. Solo después, decidir evolución según feedback.
+1. `WO-FH-EVALUATION-PACKAGE-01` — paquete de evaluación.
+2. Evaluación con farmacéuticas.
+3. Solo después, decidir evolución según feedback.
 
-Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
+Patient Longitudinal está publicado; el paquete de evaluación es el siguiente paso. Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
 
-## 8. Fuentes y precedencia documental
+## 9. Fuentes y precedencia documental
 
 Para el estado actual prevalecen, en este orden:
 
-1. Issue #263 y su work order aprobada, como reconciliación actual.
-2. Código publicado en `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, merge del issue #261 / PR #262.
-3. issue #257 / PR #258, cuyo merge histórico `a9d6d464...` publica Estadísticas, junto con issue #250 / PR #251 e issue #252 / PR #253.
+1. `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01` y su work order aprobada, como reconciliación actual.
+2. Código publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266.
+3. issue #261 / PR #262 (merge histórico `f2b827fa...`), issue #257 / PR #258 (merge histórico `a9d6d464...`), junto con issue #250 / PR #251 e issue #252 / PR #253.
 4. Este documento, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`.
 5. Decisión y contrato reconciliados del ciclo.
 6. PR #238/#242/#246 y documentos anteriores como trazabilidad histórica.
 
 `README.md`, `ARCHITECTURE.md`, `TODO.md`, `CHANGELOG.md`, `AGENTS.md`, documentos V0.3/V0.4 y issues replay antiguos no se reescriben en esta WO y no pueden contradecir silenciosamente este estado.
 
-## 9. Límites
+## 10. Límites
 
 - No introducir datos reales de pacientes.
 - No presentar la sesión temporal como persistencia longitudinal.
