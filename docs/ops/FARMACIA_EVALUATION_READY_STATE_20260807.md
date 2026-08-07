@@ -3,13 +3,15 @@
 | Metadato | Valor |
 |---|---|
 | `PACKAGE_ID` | `PROMUEVE_FH_EVALUATION_20260807` |
-| `CURRENT_GIT_HEAD` | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` |
+| `APP_EVALUATED_GIT_HEAD` | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` |
 | `LAST_FUNCTIONAL_HEAD` | `fb7b70c50c991baf6a375b42112048d190fe0178` |
-| Rama candidate | `work/fh-evaluation-package-01-20260807` |
+| `PACKAGE_BRANCH` | `work/fh-evaluation-package-01-20260807` |
+| Initial candidate commit | `a02654924fe2c8a97891564d698f15e11964c98d` |
 | Fecha de generación | `2026-08-07T04:19:24+02:00` |
 | Datos | `SYNTHETIC_DATA_ONLY = YES` |
 | Uso | Evaluación funcional externa sintética; no piloto, no producción |
-| Estado | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` |
+| `PACKAGE_CANDIDATE_STATE` | `EVALUATION_PACKAGE_CANDIDATE_PASS` |
+| `EXTERNAL_RELEASE_RULE` | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` solo tras merge en recovery, verificación del merge, re-hash de artefactos externos, freeze del `MANIFEST.txt` con SHAs de publicación y aprobación de distribución por la operadora |
 
 ## 1. Trazabilidad funcional
 
@@ -20,7 +22,7 @@
 | Patient Longitudinal raw | issue #265 / PR #266 | Último cambio funcional, merge `fb7b70c50c991baf6a375b42112048d190fe0178` |
 | Reconciliación post-Longitudinal | issue #267 / PR #268 | Merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` |
 
-`CURRENT_GIT_HEAD` incluye documentación posterior. `LAST_FUNCTIONAL_HEAD` identifica el último merge que modificó código funcional. El package no modifica runtime.
+`APP_EVALUATED_GIT_HEAD` identifica el estado Git y de aplicación contra el que se construyó y verificó el package. Ese estado incorpora el merge documental #267/#268, pero no contiene cambios funcionales posteriores a `LAST_FUNCTIONAL_HEAD`. El package no modifica runtime.
 
 ## 2. Seis rutas versionadas
 
@@ -48,7 +50,7 @@ Los artefactos están fuera de Git en `/srv/kairos-lab/outbox/promueve-fh-evalua
 - Source checker Git blob SHA: `e8d98a489070edccb1608f4a1aca348bfdc49dc4`.
 - Construcción: ejecución externa de la función `workbookBuffer()` sin modificar el checker ni su corpus.
 - Corpus: `CIP-LONGITUDINAL-A` y `CIP-LONGITUDINAL-B`, exactamente como los define el checker.
-- `CURRENT_GIT_HEAD = 46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`.
+- `APP_EVALUATED_GIT_HEAD = 46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`.
 - `LAST_FUNCTIONAL_HEAD = fb7b70c50c991baf6a375b42112048d190fe0178`.
 - `SYNTHETIC_DATA_ONLY = YES`.
 
@@ -70,7 +72,7 @@ Los SHA esperados son los registrados en la tabla anterior. La reproducción byt
 - Source checker Git blob SHA: `0af7c6da68acfc56eadea13a62535368a762d404`.
 - Construcción: ejecución externa de la función `workbookBuffer()` sin modificar el checker ni su corpus.
 - Corpus: 55 pacientes (`PATIENT_COUNT = 55`), exactamente como los define el checker.
-- `CURRENT_GIT_HEAD = 46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`.
+- `APP_EVALUATED_GIT_HEAD = 46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`.
 - `LAST_FUNCTIONAL_HEAD = fb7b70c50c991baf6a375b42112048d190fe0178`.
 - `SYNTHETIC_DATA_ONLY = YES`.
 
@@ -110,4 +112,4 @@ Los SHA esperados son los registrados en la tabla anterior. La reproducción byt
 - Los PROMs preservan `0` y `false` y no reciben interpretación automática.
 - `absent` o `not_recorded` no resuelve un EA previo; la causalidad es solo explícita.
 
-Todos los gates están en PASS y la revisión independiente es APTA. El estado del candidate es `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no equivale a piloto, producción ni autorización de publicación.
+Todos los gates técnicos y del paquete candidate están en PASS y la revisión independiente es APTA. El estado pre-merge es `EVALUATION_PACKAGE_CANDIDATE_PASS`. `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` solo podrá declararse después del merge verificado, el re-hash de los artefactos externos, el freeze final del manifest con los SHAs de publicación y la aprobación de distribución por la operadora; no equivale a piloto ni producción.
