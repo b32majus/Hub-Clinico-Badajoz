@@ -86,6 +86,21 @@ Un único workbook sintético complementario de Enfermería, versionado:
 
 Se carga por separado a través del loader visible de Enfermería; no reemplaza ni sobrescribe valores explícitos de Farmacia (Farmacia raw tiene precedencia; Enfermería solo enriquece huecos explícitos).
 
+## Registro final de artefactos distribuidos
+
+| Artefacto | Tamaño (bytes) | SHA-256 |
+|---|---:|---|
+| `PROMueve_FH_EVALUATION_FARMACIA.xlsx` | 172145 | `9e477cdc70a75742d5b02bc03f9f9db53bd0a5307f6abf10f126bde7ae246e96` |
+| `enfermeria_inicio_biologico_PROMueve_sintetico_v1.xlsx` | 43826 | `88e0adf0f0a13d5fae873189cf67b535ff3ddab36197a4ea85415834868f29a9` |
+| `FARMACIA_EVALUATION_GUIDE.md` | 7469 | `8b3b8c91be55f9fb6166b5dc70bdbd23d9d7cf3577a888664752b01283354114` |
+| `FARMACIA_EVALUATION_CHECKLIST.md` | 6586 | `4c8682655a011898910ca9ffe675bac29336dc16d44e335ff80815a5c51f1451` |
+| `MANIFEST.txt` | 1694 | `e7dfd827b32b5f982bbe1cb697d47e134eb2893754a0049985ca6e592aec1829` |
+| `PROMueve_FH_Caceres_Evaluacion_Autonoma_20260807.zip` | 135679 | `f2d3eda693426db8fc3d7ff6323eb73f5c9cd8d544fe72ec5f18b8482bed1d43` |
+
+`PROMueve_FH_EVALUATION_FARMACIA.xlsx` es el único workbook de Farmacia distribuido; el workbook de Enfermería es complementario. `FARMACIA_EVALUATION_GUIDE.md` y `FARMACIA_EVALUATION_CHECKLIST.md` son las copias finales distribuidas. El ZIP contiene exactamente cinco ficheros, incluido `MANIFEST.txt`; no se contiene a sí mismo y su SHA-256 es metadato de distribución. Los workbooks históricos `PROMueve_FH_EVALUATION_PATIENT_FLOW.xlsx` y `PROMueve_FH_EVALUATION_STATISTICS.xlsx` están ausentes.
+
+El paquete permanece `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`: no es piloto y no es producción.
+
 ## 4. Inicio, navegador y acceso autónomo
 
 - Navegador demostrado: Chromium / Chrome.
