@@ -93,7 +93,7 @@
     }
 
     function actionDefinitions(patient) {
-        if (patient.estado === 'pending') {
+        if (patient.estado === 'pending' || patient.estado === 'denied' || patient.estado === 'not_recorded') {
             return [
                 { label: 'Validaci\u00f3n', icon: 'fa-check-double', href: 'farmacia_validacion.html', entrada: 'validacion', cls: 'btn-primary' },
                 { label: 'Dashboard', icon: 'fa-user-circle', href: 'farmacia_dashboard_paciente.html', entrada: 'dashboard', cls: 'btn-secondary' }
@@ -249,6 +249,36 @@
         return card;
     }
 
+    function createRawPromsGroup(proms) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'fh-qv-farmaco-field fh-qv-span-full';
+        wrapper.setAttribute('data-fh-qv-raw-proms', '');
+        var label = document.createElement('span');
+        label.className = 'info-field__label';
+        label.textContent = 'PROMs Farmacia registrados';
+        wrapper.appendChild(label);
+        var group = document.createElement('div');
+        group.className = 'fh-qv-farmaco-group';
+        (Array.isArray(proms) ? proms : []).forEach(function (prom) {
+            if (!prom || typeof prom !== 'object'
+                || !Object.prototype.hasOwnProperty.call(prom, 'tipo_prom')
+                || prom.tipo_prom === null || prom.tipo_prom === undefined) return;
+            var hasValue = Object.prototype.hasOwnProperty.call(prom, 'valor');
+            var valueType = typeof prom.valor;
+            var value = hasValue && (valueType === 'string' || valueType === 'number' || valueType === 'boolean')
+                ? String(prom.valor) : 'No registrado';
+            var hasDate = Object.prototype.hasOwnProperty.call(prom, 'fecha')
+                && prom.fecha !== null && prom.fecha !== undefined && String(prom.fecha).trim() !== '';
+            group.appendChild(createPromCard({
+                name: String(prom.tipo_prom),
+                value: value,
+                interpretation: hasDate ? String(prom.fecha) : ''
+            }));
+        });
+        wrapper.appendChild(group);
+        return wrapper;
+    }
+
     function createFarmacoGroup(patient) {
         var wrapper = document.createElement('div');
         wrapper.className = 'fh-qv-farmaco-field fh-qv-span-full';
@@ -317,6 +347,20 @@
 
     function renderFhQuickViewFields(grid, patient) {
         F.clearChildren(grid);
+        if (patient.__farmaciaRawPatient) {
+            var request = patient.solicitud || {};
+            var validation = patient.validacion || {};
+            grid.appendChild(F.createField('Última solicitud FH', patient.ultimaSolicitud));
+            grid.appendChild(F.createField('Tratamiento solicitado', request.requested_drug_name));
+            grid.appendChild(F.createField('Resultado de validación', validation.validation_result));
+            grid.appendChild(F.createField('Tratamiento validado', validation.validated_drug_name));
+            grid.appendChild(F.createField('Tratamiento actual', patient.lineaActiva && patient.lineaActiva.nombre_linea));
+            grid.appendChild(F.createField('Líneas activas explícitas', patient.lineasActivas && patient.lineasActivas.length));
+            grid.appendChild(F.createField('Última adherencia', patient.adherencia));
+            grid.appendChild(F.createField('Efectos adversos activos', patient.efectosAdversos));
+            grid.appendChild(createRawPromsGroup(patient.proms));
+            return;
+        }
         grid.appendChild(F.createField('\u00daltima solicitud FH', patient.ultimaSolicitud));
         grid.appendChild(createFarmacoGroup(patient));
         grid.appendChild(createAnaliticaChecklist(patient));
@@ -354,7 +398,7 @@
 
         var idBadge = document.createElement('div');
         idBadge.className = 'patient-id-badge';
-        idBadge.textContent = 'Paciente demo';
+        idBadge.textContent = patient.__farmaciaRawPatient ? 'Paciente actual' : 'Paciente demo';
 
         var nameEl = document.createElement('h3');
         nameEl.className = 'patient-name';
@@ -422,12 +466,48 @@
         if (mainEl) mainEl.classList.add('fh-intake-active');
     }
 
+    function setSearchStatus(message) {
+        var status = document.getElementById('fhSearchStatus');
+        if (status) status.textContent = message || '';
+    }
+
     function search() {
         var cip = document.getElementById('fhCipInput').value.trim();
         if (!cip) return;
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var result = runtime && typeof runtime.selectByCip === 'function' ? runtime.selectByCip(cip) : { status: 'unavailable' };
+        if (result.status === 'ambiguous') {
+            setSearchStatus('Identificador ambiguo entre varios sistemas. No se ha seleccionado ningún paciente.');
+            return;
+        }
+        if (result.status === 'pending_changes') {
+            var discard = window.confirm('Hay cambios no exportados del paciente actual.\n¿Desea descartarlos y cambiar de paciente?');
+            if (!discard) {
+                setSearchStatus('Cambio de paciente cancelado.');
+                return;
+            }
+            result = runtime.selectByCip(cip, { discardPendingChanges: true });
+        }
+        if (result.status === 'selected') {
+            var selected = F.findPatientByCip(cip) || result.patient;
+            if (result.previousCip && String(result.previousCip).toUpperCase() !== String(cip).toUpperCase()
+                && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
+                window.FarmaciaDataImports.clearTransientPatientImports();
+                renderEnfermeriaBoard();
+            }
+            runtime.enrichCurrentPatient(selected);
+            setSearchStatus('Paciente encontrado.');
+            renderPatientView(F.findPatientByCip(cip) || selected);
+            return;
+        }
         var patient = F.findPatientByCip(cip);
-        if (patient) renderPatientView(patient);
-        else showGuidedIntake(cip);
+        if (patient) {
+            setSearchStatus('Paciente encontrado.');
+            renderPatientView(patient);
+        } else {
+            setSearchStatus('Paciente no encontrado.');
+            showGuidedIntake(cip);
+        }
     }
 
     function initGuidedIntake() {
@@ -911,7 +991,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        ensureOverlay();
+         ensureOverlay();
         var searchBtn = document.getElementById('fhSearchBtn');
         var cipInput = document.getElementById('fhCipInput');
         if (searchBtn) searchBtn.addEventListener('click', search);
@@ -925,6 +1005,12 @@
         renderEnfermeriaBoard();
         renderPendingValidationBoard();
         document.addEventListener('farmacia:data-imported', function () {
+            var runtime = window.FarmaciaPatientFlowRuntime;
+            var current = runtime && runtime.getCurrentPatient ? runtime.getCurrentPatient() : null;
+            if (current) {
+                var merged = F.findPatientByCip(current.cip);
+                if (merged) runtime.enrichCurrentPatient(merged);
+            }
             renderEnfermeriaBoard();
             renderPendingValidationBoard();
         });

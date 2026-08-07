@@ -10,14 +10,14 @@
     <link rel="stylesheet" href="style.css?v=20260612-visibility-a">
     <link rel="stylesheet" href="farmacia_style.css?v=20260612-visibility-a">
 <style id="caceres-review-style">
-.caceres-review-identity{position:relative;z-index:10000;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
+.caceres-review-identity{position:relative;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
 .caceres-review-identity__meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
 .caceres-review-identity__warning{margin-top:6px;padding:6px 10px;background:#fff3cd;color:#5f4600;border:2px solid #e0a800;border-radius:4px}
 </style>
 </head>
         <body>
 <section class="caceres-review-identity" aria-label="Identidad del entorno de evaluación">
-  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.3</span></div>
+  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.4</span></div>
   <div class="caceres-review-identity__warning" role="alert"><strong>Datos exclusivamente sintéticos.</strong> No usar para asistencia clínica real.</div>
 </section>
             <div class="hub-shell">
@@ -80,7 +80,7 @@
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
     </div>
-    <div class="sidebar-footer">CÁCERES-REVIEW-0.3</div>
+    <div class="sidebar-footer">CÁCERES-REVIEW-0.4</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--validacion">
         <div class="demo-banner" role="note">
@@ -172,7 +172,7 @@
         <div class="form-group"><label for="fhManualPauta">Intervalo / pauta</label><select class="form-select" id="fhManualPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhManualPautaOtro" placeholder="Especificar otra pauta"></div>
     </div>
     <div class="form-grid">
-        <div class="form-group"><label for="fhManualInduccion">Inducción solicitada</label><select class="form-select" id="fhManualInduccion"><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div class="form-group"><label for="fhManualInduccion">Inducción solicitada</label><select class="form-select" id="fhManualInduccion"><option value="">No informado</option><option value="no">No</option><option value="si">Sí</option></select></div>
         <div class="form-group"><label for="fhManualPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhManualPeso" placeholder="Ej. 72 kg"></div>
     </div>
     <div class="form-grid form-grid--full">
@@ -200,7 +200,7 @@
     <div class="no-find-drug-row hidden" id="noFindDrugRow"><button type="button" class="btn btn-outline" id="btnNoFindDrug">No encuentro el fármaco</button></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaPrincipioActivo">Principio activo / molécula (opcional)</label><input type="text" class="form-control" id="fhDermaPrincipioActivo" placeholder="Ej. Secukinumab, Adalimumab..."></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaVia">Vía de administración</label><select class="form-select" id="fhDermaVia"><option value="">Seleccionar…</option><option>SC</option><option>IV</option><option>Oral</option><option>IM</option><option>Otra</option></select></div><div class="form-group"><label for="fhDermaPauta">Intervalo / pauta</label><select class="form-select" id="fhDermaPauta"><option value="">Seleccionar...</option></select><input type="text" class="form-control hidden" id="fhDermaPautaOtro" placeholder="Especificar otra pauta"></div></div>
-    <div class="form-grid"><div class="form-group"><label for="fhDermaInduccion">Inducción solicitada</label><select class="form-select" id="fhDermaInduccion"><option value="no">No</option><option value="si" selected>Sí</option></select><div class="search-card__hint">No realizar inducción puede implicar uso fuera de ficha técnica según fármaco/indicación.</div></div><div class="form-group"><label for="fhDermaPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhDermaPeso" placeholder="Ej. 72 kg"></div></div>
+    <div class="form-grid"><div class="form-group"><label for="fhDermaInduccion">Inducción solicitada</label><select class="form-select" id="fhDermaInduccion"><option value="">No informado</option><option value="no">No</option><option value="si">Sí</option></select><div class="search-card__hint">No realizar inducción puede implicar uso fuera de ficha técnica según fármaco/indicación.</div></div><div class="form-group"><label for="fhDermaPeso">Peso (si aplica)</label><input type="text" class="form-control" id="fhDermaPeso" placeholder="Ej. 72 kg"></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhDermaJustificacion">Justificación clínica</label><textarea class="form-textarea" id="fhDermaJustificacion" rows="3"></textarea></div><div class="form-group"><label for="fhDermaObservaciones">Observaciones del servicio origen</label><textarea class="form-textarea" id="fhDermaObservaciones" rows="2"></textarea></div><div class="form-group hidden"><label for="fhDermaAnalitica">Analítica / vacunación (compat)</label><textarea class="form-textarea" id="fhDermaAnalitica" rows="2"></textarea></div></div>
 </section>
 
@@ -332,8 +332,23 @@
 
     <section class="validation-module" id="modTratamientoValidado">
         <h3 class="card-title"><i class="fas fa-check-circle"></i> Tratamiento validado por Farmacia</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fhValidatedTreatmentRelation">Relación con el tratamiento solicitado</label>
+                <select class="form-select" id="fhValidatedTreatmentRelation">
+                    <option value="">No informado</option>
+                    <option value="same_as_requested">Igual al solicitado</option>
+                    <option value="modified_from_requested">Modificado respecto al solicitado</option>
+                    <option value="no_treatment_validated">No se valida tratamiento</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Acción explícita</label>
+                <button type="button" class="btn btn-outline" id="btnValidateRequestedSame">Validar tratamiento solicitado sin cambios</button>
+            </div>
+        </div>
         <div class="catalog-note-badge">
-            <i class="fas fa-info-circle"></i> Precargado desde catalogo - editable por Farmacia
+            <i class="fas fa-info-circle"></i> Selección de catálogo con propuesta regulatoria editable por Farmacia
         </div>
         <div class="form-grid">
             <div class="form-group">
@@ -372,6 +387,7 @@
             <div class="form-group">
                 <label for="fhValidadoInduccion">Induccion</label>
                 <select class="form-select" id="fhValidadoInduccion">
+                    <option value="">No informado</option>
                     <option value="no">No</option>
                     <option value="si">Si</option>
                 </select>
@@ -555,25 +571,34 @@
     </section>
 
     <div class="form-grid"><div class="form-group"><label for="fhValEstado">Estado</label><select class="form-select" id="fhValEstado"><option value="">Seleccionar...</option><option value="pending">Pendiente</option><option value="validated">Validado</option><option value="denied">Denegado</option></select></div><div class="form-group"><label for="fhValCita">Fecha cita Farmacia</label><input type="date" class="form-control" id="fhValCita"></div></div>
-    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación <span class="required">*</span></label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
+    <div class="form-grid form-grid--full hidden" id="fhValPendingReasonRow"><div class="form-group"><label for="fhValPendingReason">Motivo / información pendiente</label><textarea class="form-textarea" id="fhValPendingReason" rows="2"></textarea></div></div>
+    <div class="form-grid form-grid--full hidden" id="fhValMotivoRow"><div class="form-group"><label for="fhValMotivo">Motivo de denegación</label><textarea class="form-textarea" id="fhValMotivo" rows="2"></textarea></div></div>
     <div class="form-grid form-grid--full"><div class="form-group"><label for="fhValObservaciones">Otras observaciones del acto de validación</label><textarea class="form-textarea" id="fhValObservaciones" rows="3"></textarea></div></div>
     <!-- WO8.1c.12: módulos-nav eliminado -->
 
     <div class="validation-meta-line"><span class="validation-meta-label">Responsable mostrado:</span> <span id="fhValFarmaceutico" class="validation-meta-value">Profesional FH — Entorno de evaluación — identidad no nominal. No constituye firma electrónica ni controla permisos.</span></div>
-    <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables. Copia manual; no integración automática.</span></div>
+    <div id="fhValDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo con datos sintéticos. No es un entorno clínico ni multiusuario. Las salidas son revisables. Copia manual; no integración automática con JARA/SES/Farmatool.</span></div>
     <section class="validation-module" id="modExportacion">
         <h3 class="card-title"><i class="fas fa-file-export"></i> Copia manual para sistemas externos</h3>
         <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhValExportTxt" title="Copiar texto JARA" disabled><i class="fas fa-file-alt"></i> Copiar texto para JARA</button><button type="button" class="btn btn-outline hidden" id="fhValExportCsv" disabled><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhValExcelExportBtn" disabled><i class="fas fa-table"></i> Copiar fila Excel FH</button></div>
+        <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhValExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar Export v2 demo · 152 columnas</button></div>
+        <p class="search-card__hint">Export v2 técnico, local y sin cabecera. No apto para piloto real.</p>
+        <p id="fhValExportV2Status" role="status" aria-live="polite"></p>
     </section>
 </section>
                 </main>
             </div>
             <script src="vendor/sheetjs/xlsx.full.min.js"></script>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
-            <script src="scripts/farmacia_common.js?v=20260730-cima-contextless-p0"></script>
+            <script src="scripts/farmacia_current_patient_session.js?v=20260806-patient-flow-r1"></script>
+            <script src="scripts/farmacia_patient_flow_runtime.js?v=20260806-patient-flow-r1"></script>
+            <script src="scripts/farmacia_common.js?v=20260806-patient-flow-r1"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
             <script src="scripts/farmacia_validacion_model.js?v=20260612-data-import-a"></script>
-    <script src="scripts/farmacia_validacion.js?v=20260730-validation-manual-requested-clone-p0"></script>
+    <script src="scripts/farmacia_export_v2_core.js?v=2.0.0-draft.1"></script>
+    <script src="scripts/farmacia_export_v2_validation_adapter.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_validacion.js?v=20260806-patient-flow-r1"></script>
             <script src="scripts/caceres_review_deployment.js"></script>
 </body>
         </html>

@@ -144,7 +144,7 @@
         if (s === 'suspendido' || s === 'suspended') return 'Suspendido';
         if (s === 'finalizado' || s === 'finished' || s === 'completed') return 'Finalizado';
         if (s === 'validado_pendiente_inicio' || s === 'validated_not_started') return 'Validado, pendiente de inicio';
-        if (s === 'desconocido' || s === 'unknown') return 'Desconocido';
+        if (s === 'desconocido' || s === 'unknown') return 'No registrado';
         if (s === 'historico' || s === 'historical' || s === 'previo') return 'Histórico';
         if (s === 'validado' || s === 'validated') return 'Validado';
         if (s === 'no_aplica' || s === 'n/a') return 'No aplica';
@@ -153,13 +153,12 @@
     }
 
     function biologicRelationLabel(type) {
-        if (type === 'primary') return 'Principal';
-        if (type === 'additional') return 'Adicional';
-        if (type === 'unknown') return 'Desconocida';
+        if (type === 'primary' || type === 'principal' || type === 'base') return 'Principal';
+        if (type === 'additional' || type === 'adicional') return 'Adicional';
+        if (type === 'unknown' || !type) return 'Relación no registrada';
         if (type === 'cambio_terapeutico' || type === 'cambio_farmaco') return 'Switch terapéutico';
         if (type === 'tratamiento_anadido' || type === 'tratamiento_añadido') return 'Add-on terapéutico';
         if (type === 'revision_linea') return 'Revisión de línea';
-        if (type === 'base') return 'Línea terapéutica base';
         return 'Sin cambios';
     }
 
@@ -236,7 +235,7 @@
         var normalized = String(value || '').toLowerCase().trim();
         if (normalized === 'active' || normalized === 'activo') return 'active';
         if (normalized === 'suspended' || normalized === 'suspendido') return 'suspended';
-        if (normalized === 'completed' || normalized === 'finalizado') return 'completed';
+        if (normalized === 'completed' || normalized === 'finalizado' || normalized === 'historical' || normalized === 'historico') return 'completed';
         if (normalized === 'validated_not_started' || normalized === 'validado_pendiente_inicio') return 'validated_not_started';
         if (normalized === 'unknown' || normalized === 'desconocido') return 'unknown';
         return 'unknown';
@@ -1202,6 +1201,17 @@
         byId('resumenKl').textContent = byId('klCategoria').textContent;
     }
 
+    function syncFollowupEaVisualState() {
+        var active = byId('fhSeguimientoEaPresente').value === 'si';
+        ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
+            var row = byId(id);
+            if (row) row.classList.toggle('hidden', !active);
+        });
+        byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
+        byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
+        updateFollowupCausalitySummary();
+    }
+
     function toggleFollowupEaFlow() {
         var value = byId('fhSeguimientoEaPresente').value;
         var adverse = currentFollowupVisit && currentFollowupVisit.adverse_event;
@@ -1210,13 +1220,7 @@
             adverse.suspect_ids = []; adverse.causality_editing_id = ''; currentFollowupVisit.causality_by_suspect = {};
         }
         captureCommonAdverseEvent();
-        var active = value === 'si';
-        ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
-            var row = byId(id);
-            if (row) row.classList.toggle('hidden', !active);
-        });
-        byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
-        byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
+        syncFollowupEaVisualState();
         updateSuspectDrugSelector();
         restoreCausalityEditor();
         updateFollowupCausalitySummary();
@@ -1443,7 +1447,10 @@
             F.setValue('fhSegVia', mapRouteToSelect(ctx.patient.via));
             F.setValue('fhSegFechaInicio', ctx.patient.primeraVisita);
             F.setValue('fhSegUltimaAdherencia', ctx.patient.adherencia);
-            F.setValue('fhSegUltimosProms', ctx.patient.proms);
+            F.setValue('fhSegUltimosProms', Array.isArray(ctx.patient.proms) ? ctx.patient.proms.map(function (prom) {
+                var value = prom.valor === undefined || prom.valor === null || prom.valor === '' ? 'No registrado' : String(prom.valor);
+                return (prom.tipo_prom || 'PROM') + ': ' + value + (prom.fecha ? ' · ' + prom.fecha : '');
+            }).join(' | ') : ctx.patient.proms);
             F.setValue('fhSegEaPrevios', ctx.patient.efectosAdversos);
 
             F.setValue('fhSegPrincipioActivo', snap?.principio_activo_snapshot || ctx.patient.principioActivo || '');
@@ -1467,7 +1474,7 @@
             var sourceType = snap ? (snap.source_type || '').toString().toUpperCase() : '';
             var label;
             if (!snap) {
-                label = 'Demo';
+                label = ctx.patient && ctx.patient.__farmaciaRawPatient ? '' : 'Demo';
             } else if (sourceType === 'CIMA') {
                 label = 'CIMA';
             } else if (sourceType === 'LOCAL') {
@@ -2198,6 +2205,7 @@
         var input = document.createElement('input');
         input.type = 'radio';
         input.name = 'dlqi_q' + qId + (suffix ? '_' + suffix : '');
+        input.id = 'fhSegDlqiQ' + qId + (suffix ? suffix.toUpperCase() : '') + 'V' + (value === null ? 'trigger' : String(value));
         input.setAttribute('data-dlqi-q', String(qId));
         if (typeof value === 'number') input.setAttribute('data-dlqi-val', String(value));
         if (isQ7Trigger) input.setAttribute('data-dlqi-q7-trigger', '');
@@ -2271,20 +2279,46 @@
         }
     }
 
-    function setupPromsToggle() {
+    function syncFollowupPromsVisualState() {
         var promsSelect = document.getElementById('fhSegProms');
         var expanded = document.getElementById('fhSegPromsExpanded');
         if (!promsSelect || !expanded) return;
-        function toggle() {
-            if (promsSelect.value === 'Sí, recoger DLQI + EVA dolor/prurito') {
-                expanded.classList.remove('hidden');
-                calculateDLQI();
-            } else {
-                expanded.classList.add('hidden');
-            }
-        }
-        promsSelect.addEventListener('change', toggle);
-        toggle();
+        expanded.classList.toggle('hidden', promsSelect.value !== 'Sí, recoger DLQI + EVA dolor/prurito');
+        var q7Followup = expanded.querySelector('.dlqi-card__followup');
+        var q7Trigger = expanded.querySelector('input[data-dlqi-q7-trigger]:checked');
+        if (q7Followup) q7Followup.classList.toggle('hidden', !q7Trigger);
+        var dolorRange = document.getElementById('fhSegEvaDolorRange');
+        var dolorValue = document.getElementById('fhSegEvaDolorValue');
+        var pruritoRange = document.getElementById('fhSegEvaPruritoRange');
+        var pruritoValue = document.getElementById('fhSegEvaPruritoValue');
+        if (dolorRange && dolorValue) dolorValue.textContent = dolorRange.value;
+        if (pruritoRange && pruritoValue) pruritoValue.textContent = pruritoRange.value;
+        if (promsSelect.value === 'Sí, recoger DLQI + EVA dolor/prurito') calculateDLQI();
+    }
+
+    function setupPromsToggle() {
+        var promsSelect = document.getElementById('fhSegProms');
+        if (!promsSelect) return;
+        promsSelect.addEventListener('change', syncFollowupPromsVisualState);
+        syncFollowupPromsVisualState();
+    }
+
+    function syncFollowupVisualState() {
+        syncFollowupPromsVisualState();
+        var cambiaNivel = byId('fhSegCambiaNivel');
+        var optimiza = byId('fhSegOptimiza');
+        var suspension = byId('fhSegSuspension');
+        toggleField('fhSegNuevoNivel', !!cambiaNivel && cambiaNivel.value === 'Sí');
+        var showOptimization = !!optimiza && optimiza.value === 'Sí';
+        ['fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegMotivoOpt'].forEach(function (id) { toggleField(id, showOptimization); });
+        var newSchedule = byId('fhSegNuevaPauta');
+        var newOther = byId('fhSegNuevaPautaOtro');
+        if (newSchedule && newOther) newOther.classList.toggle('hidden', !showOptimization || newSchedule.value !== 'OTRO');
+        toggleField('fhSegMotivoSusp', !!suspension && suspension.value === 'Sí');
+        var currentSchedule = byId('fhSegPautaActual');
+        var currentOther = byId('fhSegPautaActualOtro');
+        if (currentSchedule && currentOther) currentOther.classList.toggle('hidden', currentSchedule.value !== 'OTRO');
+        syncFollowupEaVisualState();
     }
 
     function getEVADolor() {
@@ -2569,9 +2603,307 @@
         lines.push('EVA Prurito: ' + textOrDash(model.common_visit.eva_prurito));
         lines.push('');
         lines.push('=== FIN DEL INFORME ===');
-        lines.push('Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.3');
+        lines.push('Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.4');
         lines.push('ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.');
         return lines;
+    }
+
+    function cloneEvaluationState(value, fallback) {
+        try { return JSON.parse(JSON.stringify(value)); }
+        catch (error) { return JSON.parse(JSON.stringify(fallback)); }
+    }
+
+    function restoreEvaluationState(snapshot) {
+        var state = snapshot && typeof snapshot === 'object' ? snapshot : {};
+        var restoredVisit = cloneEvaluationState(state.current_visit, null);
+        var cip = String((restoredVisit && restoredVisit.cip) || fv('fhSegCip') || '').trim();
+        currentSegPatient = cip ? { cip: cip } : null;
+
+        var adverseDefaults = {
+            present: 'no_consta', severity: '', resolved: 'no_consta', corrected: 'no_consta',
+            observations: '', suspect_ids: [], causality_editing_id: ''
+        };
+        var visitDefaults = {
+            cip: cip,
+            visit_id: '',
+            created_at: '',
+            selected_line_ids: [],
+            dispensed_line_ids: [],
+            editing_line_id: '',
+            line_state: {},
+            adverse_event: Object.assign({}, adverseDefaults),
+            causality_by_suspect: {}
+        };
+        currentFollowupVisit = Object.assign(visitDefaults, restoredVisit || {});
+        currentFollowupVisit.cip = cip;
+        currentFollowupVisit.selected_line_ids = Array.isArray(currentFollowupVisit.selected_line_ids) ? currentFollowupVisit.selected_line_ids.slice() : [];
+        currentFollowupVisit.dispensed_line_ids = Array.isArray(currentFollowupVisit.dispensed_line_ids) ? currentFollowupVisit.dispensed_line_ids.slice() : [];
+        currentFollowupVisit.line_state = currentFollowupVisit.line_state && typeof currentFollowupVisit.line_state === 'object' ? cloneEvaluationState(currentFollowupVisit.line_state, {}) : {};
+        currentFollowupVisit.adverse_event = Object.assign({}, adverseDefaults, currentFollowupVisit.adverse_event || {}, state.adverse_event || {});
+        currentFollowupVisit.adverse_event.suspect_ids = Array.isArray(currentFollowupVisit.adverse_event.suspect_ids) ? currentFollowupVisit.adverse_event.suspect_ids.slice() : [];
+        currentFollowupVisit.causality_by_suspect = currentFollowupVisit.causality_by_suspect && typeof currentFollowupVisit.causality_by_suspect === 'object'
+            ? cloneEvaluationState(currentFollowupVisit.causality_by_suspect, {}) : {};
+
+        var restoredLines = Array.isArray(state.canonical_lines) ? cloneEvaluationState(state.canonical_lines, []) : [];
+        var selectedLine = state.selected_line && typeof state.selected_line === 'object' ? cloneEvaluationState(state.selected_line, null) : null;
+        if (selectedLine) {
+            var selectedId = selectedLine.linea_id || selectedLine.line_id || selectedLine.id || '';
+            if (selectedId && !restoredLines.some(function (line) { return (line.linea_id || line.line_id || line.id) === selectedId; })) restoredLines.push(selectedLine);
+        }
+        currentBiologicLines = restoredLines.map(function (line, index) {
+            var restored = line && typeof line === 'object' ? line : {};
+            restored.linea_id = restored.linea_id || restored.line_id || restored.id || ('SYN-RESTORED-LINE-' + (index + 1));
+            restored.estado_linea = restored.estado_linea || 'active';
+            return restored;
+        });
+        followupOtherDrugs = Array.isArray(state.related_treatments) ? cloneEvaluationState(state.related_treatments, []) : [];
+
+        renderFollowupOtherDrugs();
+        renderBiologicLineCards();
+        syncEditorOptions();
+        restoreEditingLineState();
+        applySelectedBiologicLine();
+
+        var adverse = currentFollowupVisit.adverse_event;
+        var adverseControls = {
+            fhSeguimientoEaPresente: adverse.present || 'no_consta',
+            fhSeguimientoEaGravedad: adverse.severity || '',
+            fhSeguimientoEaResuelto: adverse.resolved || 'no_consta',
+            fhSeguimientoEaCorregido: adverse.corrected || 'no_consta',
+            fhSeguimientoEaObservaciones: adverse.observations || ''
+        };
+        Object.keys(adverseControls).forEach(function (id) {
+            var control = byId(id);
+            if (control) control.value = adverseControls[id];
+        });
+        toggleFollowupEaFlow();
+        updateSuspectDrugSelector();
+        restoreCausalityEditor();
+        updateExportInterlock();
+        return cloneEvaluationState({
+            current_visit: currentFollowupVisit,
+            canonical_lines: currentBiologicLines,
+            related_treatments: followupOtherDrugs
+        }, {});
+    }
+
+    var FOLLOWUP_V2_TECHNICAL_CONTEXT_FIELDS = [
+        'eventId', 'sourceEventId', 'visitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus',
+        'hospitalCode', 'professionalRef', 'identifierSystem', 'serviceCode', 'serviceLabel', 'pathologyCode',
+        'pathologyLabel', 'professionalDisplay', 'identifierValue', 'visitDate', 'activeLines'
+    ];
+
+    function FollowupV2BridgeError(code, message, details) {
+        this.name = 'FarmaciaSeguimientoV2BridgeError';
+        this.code = code;
+        this.message = message;
+        this.details = details || null;
+    }
+    FollowupV2BridgeError.prototype = Object.create(Error.prototype);
+    FollowupV2BridgeError.prototype.constructor = FollowupV2BridgeError;
+
+    function failFollowupV2Bridge(code, message, details) {
+        throw new FollowupV2BridgeError(code, message, details);
+    }
+
+    function followupV2NullableString(value) {
+        if (value === null || value === undefined) return null;
+        if (typeof value === 'string' && value.trim() === '') return null;
+        return value;
+    }
+
+    function visibleFollowupCip() {
+        var cipEl = byId('fhSegCip');
+        return cipEl ? String(cipEl.value || '').trim() : '';
+    }
+
+    function visibleFollowupLineCounts() {
+        var counts = Object.create(null);
+        currentBiologicLines.forEach(function (line) {
+            var id = line.linea_id;
+            counts[id] = (counts[id] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function guardFollowupV2TechnicalContext(technicalContext) {
+        if (!technicalContext || Object.prototype.toString.call(technicalContext) !== '[object Object]' || Array.isArray(technicalContext)) {
+            failFollowupV2Bridge('BRIDGE_INVALID_TECHNICAL_CONTEXT', 'Seguimiento v2 requiere contexto técnico explícito.');
+        }
+        var unknown = Object.keys(technicalContext).filter(function (field) { return FOLLOWUP_V2_TECHNICAL_CONTEXT_FIELDS.indexOf(field) === -1; });
+        if (unknown.length) {
+            failFollowupV2Bridge('BRIDGE_INVALID_TECHNICAL_CONTEXT', 'El contexto técnico de Seguimiento v2 contiene campos no admitidos: ' + unknown.join(', ') + '.');
+        }
+        if (!Array.isArray(technicalContext.activeLines) || technicalContext.activeLines.length < 1) {
+            failFollowupV2Bridge('BRIDGE_EMPTY_ACTIVE_LINES', 'Seguimiento v2 requiere al menos una línea activa explícita.');
+        }
+        if (String(technicalContext.identifierValue || '').trim() !== visibleFollowupCip()) {
+            failFollowupV2Bridge('BRIDGE_CIP_MISMATCH', 'El CIP visible no coincide con el identifierValue técnico; no se mezclan pacientes.');
+        }
+        var counts = visibleFollowupLineCounts();
+        technicalContext.activeLines.forEach(function (entry, index) {
+            var lineId = entry && typeof entry === 'object' ? entry.lineId : null;
+            if (typeof lineId !== 'string' || !lineId.trim()) {
+                failFollowupV2Bridge('BRIDGE_INVALID_ACTIVE_LINE', 'La línea activa técnica ' + index + ' no tiene lineId explícito.');
+            }
+            var count = counts[lineId] || 0;
+            if (count === 0) {
+                failFollowupV2Bridge('BRIDGE_LINE_NOT_VISIBLE', 'La línea técnica ' + lineId + ' no tiene correspondencia visible para el paciente actual.', { lineId: lineId });
+            }
+            if (count > 1) {
+                failFollowupV2Bridge('BRIDGE_AMBIGUOUS_LINE', 'La línea técnica ' + lineId + ' tiene más de una correspondencia visible.', { lineId: lineId });
+            }
+        });
+    }
+
+    function buildFollowupV2Input(technicalContext) {
+        guardFollowupV2TechnicalContext(technicalContext);
+        var technical = {};
+        ['eventId', 'sourceEventId', 'visitId', 'patientId', 'occurredAt', 'recordedAt', 'demoFlag', 'eventStatus'].forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(technicalContext, field)) technical[field] = technicalContext[field];
+        });
+        ['hospitalCode', 'professionalRef', 'identifierSystem'].forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(technicalContext, field)) technical[field] = followupV2NullableString(technicalContext[field]);
+        });
+        return {
+            technical: technical,
+            context: {
+                identifierValue: technicalContext.identifierValue,
+                serviceCode: followupV2NullableString(technicalContext.serviceCode),
+                serviceLabel: followupV2NullableString(technicalContext.serviceLabel),
+                pathologyCode: followupV2NullableString(technicalContext.pathologyCode),
+                pathologyLabel: followupV2NullableString(technicalContext.pathologyLabel),
+                professionalDisplay: followupV2NullableString(technicalContext.professionalDisplay)
+            },
+            visit: { visitDate: technicalContext.visitDate },
+            activeLines: technicalContext.activeLines
+        };
+    }
+
+    function buildFollowupV2Projection(technicalContext) {
+        var adapter = window.FarmaciaExportV2FollowupActiveLinesAdapter;
+        if (!adapter) {
+            failFollowupV2Bridge('BRIDGE_ADAPTER_UNAVAILABLE', 'FarmaciaExportV2FollowupActiveLinesAdapter no está cargado.');
+        }
+        return adapter.buildFollowupProjection(buildFollowupV2Input(technicalContext));
+    }
+
+    function getFollowupV2TechnicalContext() {
+        var provider = window.FarmaciaExportV2TechnicalContext;
+        if (!provider || provider.PROVIDER_VERSION !== '1.0.0-draft.1' || typeof provider.getContext !== 'function') {
+            failFollowupV2Bridge('V2_CONTEXT_PROVIDER_UNAVAILABLE', 'El proveedor de contexto técnico v2 no está disponible.');
+        }
+        var context = provider.getContext('followup', visibleFollowupCip());
+        if (!context) failFollowupV2Bridge('V2_CONTEXT_UNAVAILABLE', 'No existe contexto técnico sintético de Seguimiento para el CIP visible.');
+        var requiredStrings = ['eventId', 'sourceEventId', 'visitId', 'patientId', 'occurredAt', 'recordedAt', 'visitDate', 'eventStatus', 'identifierValue'];
+        var lineRequiredStrings = ['rowKey', 'treatmentId', 'lineId', 'lineRole', 'lineStatusAtEvent'];
+        var lineNullableStrings = ['drugName', 'activeIngredient', 'presentation', 'doseText', 'route', 'scheduleCode', 'scheduleLabel', 'scheduleOtherText', 'selectedDrugId', 'catalogSource', 'nationalCode', 'registrationNumber'];
+        var missing = requiredStrings.filter(function (field) {
+            return !Object.prototype.hasOwnProperty.call(context, field) || typeof context[field] !== 'string' || !context[field].trim();
+        });
+        if (!Object.prototype.hasOwnProperty.call(context, 'demoFlag') || context.demoFlag !== true) missing.push('demoFlag');
+        if (!Array.isArray(context.activeLines) || !context.activeLines.length) {
+            missing.push('activeLines');
+        } else {
+            context.activeLines.forEach(function (line, index) {
+                var path = 'activeLines[' + index + ']';
+                if (!line || Object.prototype.toString.call(line) !== '[object Object]' || Array.isArray(line)) {
+                    missing.push(path);
+                    return;
+                }
+                lineRequiredStrings.forEach(function (field) {
+                    if (!Object.prototype.hasOwnProperty.call(line, field) || typeof line[field] !== 'string' || !line[field].trim()) missing.push(path + '.' + field);
+                });
+                ['isPrimaryLine', 'activeAtEvent'].forEach(function (field) {
+                    if (!Object.prototype.hasOwnProperty.call(line, field) || typeof line[field] !== 'boolean') missing.push(path + '.' + field);
+                });
+                lineNullableStrings.forEach(function (field) {
+                    if (!Object.prototype.hasOwnProperty.call(line, field) || (line[field] !== null && typeof line[field] !== 'string')) missing.push(path + '.' + field);
+                });
+            });
+        }
+        if (missing.length) failFollowupV2Bridge('V2_CONTEXT_INCOMPLETE', 'El contexto técnico de Seguimiento está incompleto.', { fields: missing });
+        return context;
+    }
+
+    function buildFollowupV2ProjectionFromCurrentContext() {
+        if (!window.FarmaciaExportV2FollowupActiveLinesAdapter) {
+            failFollowupV2Bridge('V2_ADAPTER_UNAVAILABLE', 'FarmaciaExportV2FollowupActiveLinesAdapter no está cargado para el wrapper de contexto actual.');
+        }
+        return buildFollowupV2Projection(getFollowupV2TechnicalContext());
+    }
+
+    var followupV2CopyInFlight = false;
+
+    async function copyFollowupV2TsvExact(tsv) {
+        if (typeof tsv !== 'string') throw new Error('La proyección v2 no contiene un TSV válido.');
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            try {
+                await navigator.clipboard.writeText(tsv);
+                return;
+            } catch (error) {
+                // Continue with the local fallback when Clipboard API access is denied.
+            }
+        }
+        var textarea = document.createElement('textarea');
+        textarea.value = tsv;
+        textarea.setAttribute('readonly', '');
+        textarea.setAttribute('aria-hidden', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+        var copied = false;
+        try {
+            copied = typeof document.execCommand === 'function' && document.execCommand('copy') === true;
+        } catch (error) {
+            copied = false;
+        } finally {
+            document.body.removeChild(textarea);
+        }
+        if (!copied) throw new Error('No se pudo confirmar la copia local al portapapeles.');
+    }
+
+    function updateFollowupV2ExportAvailability() {
+        var button = byId('fhSegExportV2Btn');
+        var status = byId('fhSegExportV2Status');
+        if (!button) return;
+        try {
+            getFollowupV2TechnicalContext();
+            button.disabled = followupV2CopyInFlight;
+            if (status && status.textContent.indexOf('Export v2 demo no disponible:') === 0) status.textContent = '';
+        } catch (error) {
+            button.disabled = true;
+            if (status) status.textContent = 'Export v2 demo no disponible: ' + (error.message || 'contexto técnico no disponible') + '.';
+        }
+    }
+
+    async function handleFollowupV2Export() {
+        if (followupV2CopyInFlight) return;
+        var button = byId('fhSegExportV2Btn');
+        var status = byId('fhSegExportV2Status');
+        followupV2CopyInFlight = true;
+        if (button) button.disabled = true;
+        if (status) status.textContent = 'Copiando Export v2 demo...';
+        try {
+            var projection = window.FarmaciaSeguimiento.buildFollowupV2ProjectionFromCurrentContext();
+            await copyFollowupV2TsvExact(projection.tsv);
+            var rowCount = projection.rows.length;
+            var success = 'Export v2 demo copiado: ' + rowCount + ' fila(s) × 152 columnas.';
+            if (status) {
+                status.textContent = success;
+                window.setTimeout(function () {
+                    if (status.textContent === success) status.textContent = '';
+                }, 3000);
+            }
+        } catch (error) {
+            if (status) status.textContent = 'No se pudo copiar Export v2 demo: ' + (error.message || 'error desconocido') + '.';
+        } finally {
+            followupV2CopyInFlight = false;
+            updateFollowupV2ExportAvailability();
+        }
     }
 
     window.FarmaciaSeguimiento = {
@@ -2591,8 +2923,15 @@
         mergeRelatedTreatmentCatalogIdentity: mergeRelatedTreatmentCatalogIdentity,
         mapRelatedTreatmentToContract: mapOtherDrugToContract,
         getCanonicalLinesForPatient: function (patient) { return getPatientBiologicLines(patient).map(function (line) { return Object.assign({}, line); }); },
+        getCurrentCanonicalLines: function () { return cloneEvaluationState(currentBiologicLines, []); },
         getSelectedLine: function () { var line = getCurrentSelectedLine(); return line ? Object.assign({}, line) : null; },
-        getCurrentVisit: function () { return currentFollowupVisit ? JSON.parse(JSON.stringify(currentFollowupVisit)) : null; },
+        getCurrentVisit: function () {
+            captureEditingLineState();
+            captureCommonAdverseEvent();
+            captureCausalityEditor();
+            return currentFollowupVisit ? cloneEvaluationState(currentFollowupVisit, null) : null;
+        },
+        restoreEvaluationState: restoreEvaluationState,
         selectLineById: selectBiologicLineById,
         toggleLineSelection: toggleBiologicLineSelection,
         setLineDispensed: setLineDispensed,
@@ -2609,16 +2948,28 @@
         buildFollowupVisitExportModel: buildFollowupVisitExportModel,
         buildFollowupExcelRows: buildFollowupExcelRows,
         buildFollowupCsv: buildFollowupCsv,
-        buildSegLines: buildSegLines
+        buildSegLines: buildSegLines,
+        buildFollowupV2Input: buildFollowupV2Input,
+        buildFollowupV2Projection: buildFollowupV2Projection,
+        getFollowupV2TechnicalContext: getFollowupV2TechnicalContext,
+        buildFollowupV2ProjectionFromCurrentContext: buildFollowupV2ProjectionFromCurrentContext
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
+        populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
         applyContext();
+        var v2Cip = byId('fhSegCip');
+        if (v2Cip) {
+            v2Cip.addEventListener('input', updateFollowupV2ExportAvailability);
+            v2Cip.addEventListener('change', updateFollowupV2ExportAvailability);
+        }
+        updateFollowupV2ExportAvailability();
+        var exportV2 = byId('fhSegExportV2Btn');
+        if (exportV2) exportV2.addEventListener('click', handleFollowupV2Export);
         initCipSearch();
         initSegServicioPatologiaSync();
         initSegDrugAutocomplete();
-        populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
-        populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
 
         var demoCtx = F.getQueryContext();
         if (demoCtx.cip === "CIP-DEMO-FH-004") {
@@ -2634,10 +2985,10 @@
         var ctxNav = F.getQueryContext();
         if (ctxNav.cip) {
             var navDash = document.getElementById("navToDashboardPaciente");
-            if (navDash) navDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip) + "&entrada=dashboard";
+            if (navDash) navDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
 
             var sidebarDash = document.querySelector('.sidebar-nav-area .nav-link[href*="farmacia_dashboard_paciente.html"]');
-            if (sidebarDash) sidebarDash.href = "farmacia_dashboard_paciente.html?cip=" + encodeURIComponent(ctxNav.cip);
+            if (sidebarDash) sidebarDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
         }
 
         syncSegDrugAutocompleteVisibility();
@@ -2742,5 +3093,12 @@
                 exp.copyTSVRowsToClipboard(rows, { sheetName: sheetName });
             });
         })();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var draftScope = document.querySelector('main.main-content');
+        if (runtime && draftScope) {
+            runtime.restorePageDraft('seguimiento', draftScope);
+            syncFollowupVisualState();
+            runtime.bindPageDraft('seguimiento', draftScope);
+        }
     });
 })();
