@@ -11,7 +11,7 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| Estado Git/app evaluado para el package | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Estado publicado pre-freeze documental | `451d02361fc54cc01f493ca2a89192bde52d7fd9` (merge issue #273 / PR #276, integridad de manifest) |
 | Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
 | issue #257 / PR #258 | Issue CLOSED; PR `MERGED_AND_VERIFIED`; Estadísticas raw publicadas en el merge histórico previo `a9d6d464...` |
 | Candidate Estadísticas | `5a7ad559549f6a1a059150c3ddd1ef8436121cb9` |
@@ -28,8 +28,8 @@
 | WO8A-1 raw reader/read model | `7da866b205e509120bb2c7abc0a4efdf7341e659` (PR #238), `MERGED_AND_VERIFIED` |
 | WO8A-2A-1 selectores + Quick View (Bridge histórico) | PR #242, commits `3da3d450890508e7ee11ea7b801ad37ba4052cf5` + `94cd44688b82aea0a10e4778e3182ab300bd6be0`, merge histórico `e2c54583ccc5876058403c34a675496cab897972`, `MERGED_AND_VERIFIED` |
 | WO8A-2A-2 handoff efímero + dashboard Bridge | Issue #245, PR #246; capacidad histórica conservada, no modo visible soportado actual |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073`; intacto, sin promoción de #258 |
-| SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` (histórico; tree publicado intacto) |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.4`, candidate `d9cbd56b515ee75c871bfb5e63f96320c963b1e0`, merge publicación `9125518a74151010eaa2d48b913c5954fa54b8a1` (issue #271 / PR #272); integridad de manifest `963bac71ffac4e2d6d088aeeb4d9abeaf8f5bad1`, merge `451d02361fc54cc01f493ca2a89192bde52d7fd9` (issue #273 / PR #276) |
+| SHA fuente snapshot | `815e16f9564c82f469a95745c5c6917593a8c3f0` (histórico; base funcional del snapshot publicado) |
 | QA pública regional del HEAD actual | `LOCAL_CI_EQUIVALENT_PASS`; Reader `21/21`, Selectors `82/82`, Data Port `11/11`, patient-flow `17/17`, smoke `48/48`, Patient-flow Chromium, Quick View PROM Chromium, Estadísticas Chromium y Longitudinal raw Chromium PASS; cohorte de Estadísticas `30` escenarios PASS, raw `55` / CSV `55x37`; `console.error = 0`, `pageerror = 0`; no equivale a piloto |
 | Excepción de CI de #258 | GitHub Actions no despachó un run sobre el SHA final durante una incidencia externa; se reprodujo localmente el workflow y los checkers focales desde un archive inmutable del candidate, con Node 20 y sin modificar el repo |
 | QA humana Cáceres | PASS |
@@ -37,11 +37,12 @@
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
 | Plan vigente | [`FARMACIA_PLAN_VACACIONES_20260731.md`](./FARMACIA_PLAN_VACACIONES_20260731.md) |
 | Estado post patient-flow | [`FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](./FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) |
-| Evaluation Package candidate | [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md); exclusivamente sintético, sin piloto ni producción |
+| Evaluation Package (issue #269) | [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md); package exclusivamente sintético, sin piloto ni producción |
+| Work order actual | `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01` (issue #277); freeze autónomo candidato; `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`; sin merge ni ZIP final |
 
 ## Reconciliación post patient-flow, post-statistics, post-Quick View y post-Longitudinal
 
-El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética en el merge histórico `a9d6d464...`, desde el candidate `5a7ad559...`. El issue #261 y la PR #262 publicaron Quick View raw PROMs en el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, desde el candidate `13963f89...`. El issue #265 y la PR #266 publicaron Patient Longitudinal raw en el último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178`, desde el candidate `a7b8deb...`; el estado Git/app evaluado para construir el package es el merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`:
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética en el merge histórico `a9d6d464...`, desde el candidate `5a7ad559...`. El issue #261 y la PR #262 publicaron Quick View raw PROMs en el merge histórico `f2b827fe...`, desde el candidate `13963f89...`. El issue #265 y la PR #266 publicaron Patient Longitudinal raw en el último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178`, desde el candidate `a7b8deb...`. El issue #269 y la PR #270 publicaron el paquete de evaluación sintética en el merge `8bfceaaa...` (desde el candidate inicial `a026549...`), el issue #271 y la PR #272 promovieron el snapshot `CÁCERES-REVIEW-0.4` en el merge `9125518a...` (desde el candidate `d9cbd56b...`), y el issue #273 y la PR #276 estabilizaron el manifest del snapshot en el merge `451d02361fc54cc01f493ca2a89192bde52d7fd9`, estado publicado pre-freeze documental:
 
 ```text
 Excel raw → reader/selectors → Data Port → sesión del paciente actual
@@ -63,7 +64,7 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 - Quick View raw PROMs usa un renderer estructurado: elimina `[object Object]`, preserva `0` y `false`, muestra fecha solo cuando existe explícitamente y representa ausencias como `No registrado`; no aplica thresholds ni interpretación clínica. La demo permanece intacta y el cambio de CIP no mezcla PROMs.
 - La evidencia específica de Quick View es `Reader 21/21 PASS`, `Selectors 82/82 PASS`, `Data Port 11/11 PASS`, `patient-flow 17/17 PASS`, smoke `48/48 PASS`, Patient-flow Chromium PASS, Quick View PROM Chromium PASS, `console.error = 0`, `pageerror = 0` y `git diff --check = PASS`. La revisión independiente read-only no encontró findings de producto ni scope drift.
 - Patient Longitudinal raw (issue #265 / PR #266, candidate `a7b8deb...`, merge `fb7b70c...`) está implementado, publicado y demostrado para evaluación sintética. Usa `CurrentPatientSession` → `FarmaciaPatientFlowRuntime.getCurrentEnvelope()` → `explicit_data` → `FarmaciaLongitudinalRawAdapter` → dashboard Longitudinal. Reconstruye todos los actos disponibles de Primera Visita y Seguimiento, agrupa correctamente los actos multifila y conserva los snapshots explícitos por acto. `active_at_event` distingue activo explícito (`true`), no activo explícito (`false`) y no registrado (otro/ausente); muestra únicamente movimientos explícitos relevantes, excluye `no_change_recorded` y `not_recorded`, y diferencia `schedule_change`, `dose_change`, `dose_and_schedule_change`, `suspension` y `other`. No fabrica fechas terapéuticas ni sustituye `movement_effective_date` ausente por la fecha del acto; conserva PROMs históricos y simultáneos (incluidos `0` y `false`; fecha PROM solo si el propio PROM la contiene) y la historia explícita de adherencia; agrupa EA `present` explícito por identidad conservando updates; `absent`/`not_recorded` no se interpreta como resolución de un EA previo (la resolución solo se afirma por campos explícitos) y la causalidad es exclusivamente explícita. La actividad clínica raw permanece `[]` / No registrado porque el contrato actual no la estructura; la vista no aplica thresholds ni interpretación clínica automática y raw y demo no se mezclan. La evidencia de la batería local/Chromium es `LOCAL_CI_EQUIVALENT_PASS` (Longitudinal raw Chromium PASS, Reader 21/21, Selectors 82/82, Data Port 11/11, patient-flow 17/17, smoke 48/48, Dashboard Paciente 37/37, Quick View PROM Chromium PASS, Statistics 30 escenarios). Aparte, la evidencia hosted post-PR es el Farmacia smoke check #914 con conclusion `success`; la batería local/Chromium completa no debe confundirse con ese smoke hosted.
-- Secuencia inmediata: `WO-FH-EVALUATION-PACKAGE-01` → evaluación con farmacéuticas → decidir evolución según feedback. Patient Longitudinal está publicado; el siguiente paso es el paquete de evaluación.
+- Secuencia inmediata: `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01` → freeze autónomo del paquete de evaluación sintética → evaluación externa con farmacéuticas → decidir evolución según feedback. Patient Longitudinal está publicado; el siguiente paso es el freeze autónomo del paquete de evaluación, no una nueva capacidad funcional.
 
 ---
 
@@ -166,7 +167,10 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 | **WO-FH-RAW-STATISTICS-CUTOVER-01** | Estadísticas raw y CSV de cohorte | ✅ MERGED_AND_VERIFIED | `work/fh-raw-statistics-cutover-01-20260806` | issue #257; PR #258; candidate `5a7ad559...`; merge histórico `a9d6d464...` | Raw population statistics; handoff efímero; CSV 37 columnas; QA Chromium; `LOCAL_CI_EQUIVALENT_PASS` por incidencia GitHub; no es el HEAD vigente |
 | **WO-FH-RAW-QUICKVIEW-PROMS-01** | Quick View PROM raw | ✅ MERGED_AND_VERIFIED | `work/fh-raw-quickview-proms-01-20260806` | issue #261; PR #262; candidate `13963f89...`; merge `f2b827fe...` | Renderer estructurado publicado/demostrado para evaluación sintética; `PREEXISTING_QUICKVIEW_P2` resuelto; sin thresholds ni interpretación clínica; Reader 21/21, Selectors 82/82, Quick View PROM Chromium PASS |
 | **WO-FH-RAW-PATIENT-LONGITUDINAL-CUTOVER-01** | Patient Longitudinal raw | ✅ MERGED_AND_VERIFIED | `recovery/farmacia-pr-replay-20260727` | issue #265; PR #266; candidate `a7b8deb...`; merge publicado vigente `fb7b70c...` | Patient Longitudinal raw implementado, publicado y demostrado para evaluación sintética; `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED` resuelto; hosted Farmacia smoke #914 SUCCESS; sin piloto ni producción |
-| **WO-FH-EVALUATION-PACKAGE-01** | Paquete externo de evaluación sintética | 📋 Ready for review | `work/fh-evaluation-package-01-20260807` | Initial candidate `a026549...`; sin merge | Estado pre-merge: candidate validado y publicado en rama de trabajo; `EVALUATION_PACKAGE_CANDIDATE_PASS`, QA verde y revisión independiente del candidate APTO; revisión/integración PR y freeze externo aún no realizados; package exclusivamente sintético, sin cambios funcionales ni autorización de piloto o producción |
+| **WO-FH-EVALUATION-PACKAGE-01** | Paquete externo de evaluación sintética | ✅ Merged | `work/fh-evaluation-package-01-20260807` | issue #269; PR #270; initial candidate `a026549...`; merge `8bfceaaa956199610be9c0e6df40740a04b73699` | Package exclusivamente sintético, sin cambios funcionales ni autorización de piloto o producción; superseded como WO activa del package por el freeze autónomo del issue #277 |
+| **WO-FH-CACERES-EVALUATION-SNAPSHOT-04-01** | Promover snapshot Cáceres 0.4 | ✅ Merged | `work/fh-caceres-evaluation-snapshot-04-20260807` | issue #271; PR #272; candidate `d9cbd56b515ee75c871bfb5e63f96320c963b1e0`; merge `9125518a74151010eaa2d48b913c5954fa54b8a1` | Snapshot `CÁCERES-REVIEW-0.4` publicado; evaluación Pharmacy-only Cáceres |
+| **WO-FH-CACERES-MANIFEST-EOL-INTEGRITY-01** | Estabilizar integridad de manifest | ✅ Merged | `work/fh-caceres-manifest-eol-integrity-01-20260807` | issue #273; PR #276; candidate `963bac71ffac4e2d6d088aeeb4d9abeaf8f5bad1`; merge `451d02361fc54cc01f493ca2a89192bde52d7fd9` | Integridad EOL/line-ending del manifest del snapshot 0.4; estado publicado pre-freeze documental |
+| **WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01** | Freeze autónomo del paquete de evaluación sintética | 📋 Ready for review | `work/fh-evaluation-autonomous-freeze-01-20260807` | issue #277; candidate freeze; sin merge | Work order actual; candidato `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`; seis rutas documentales; no PR/merge/ZIP/issue-close; freeze externo final pendiente de merge y manifest/ZIP |
 
 Correcciones P1 publicadas en `7ebc482629e1e818a6227c8e8946cddd12ee113a`: normalización simétrica mediante `trim()` para contexto e identificadores almacenados; padding almacenado soportado; componentes whitespace-only rechazados con `HANDOFF_IDENTIFIER_COMPONENT_EMPTY`; sensibilidad a mayúsculas preservada; payload original no mutado; TTL único `sessionTtlMs = 45000`; timeout funcional de 1500 ms retirado. El dashboard Bridge y su handoff quedan como historia técnica; los formularios normales publicados se describen en las entradas posteriores de patient-flow.
 
@@ -184,7 +188,7 @@ PR #231 retiró del runtime soportado el ledger clínico basado en `localStorage
 
 ### Deuda administrativa de issues
 
-A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunque sus PR están fusionadas. Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224, #226, #230, #232 y #245 están cerrados. Esta WO documental no modifica issues históricos.
+A 2026-08-07, los issues #184, #186, #188, #190, #192, #269, #271, #273 y #277 continúan abiertos aunque sus PR están fusionadas (excepto #277, cuya PR no existe aún: es la work order de freeze actual). Los issues #194, #196, #198, #200, #202, #204, #206, #208, #210, #212, #214, #216, #220, #222, #224, #226, #230, #232 y #245 están cerrados. Esta WO documental no modifica issues históricos ni cierra #269/#271/#273/#277.
 
 ---
 
@@ -230,7 +234,7 @@ A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 
 | Estado | Cantidad |
 |---|---:|
-| ✅ Merged | 61 |
+| ✅ Merged | 64 |
 | ✅ MERGED_AND_VERIFIED | 8 |
 | 📋 Ready for review | 19 |
 | 📋 Draft | 1 |
@@ -241,8 +245,8 @@ A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 95 work orders / preflights gestionadas.
+**Total:** 98 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 61 + 8 + 19 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 95, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 64 + 8 + 19 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 98, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.

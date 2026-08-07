@@ -1,22 +1,22 @@
 # Farmacia post Longitudinal — estado vigente
 
-> Documento de estado vivo posterior a la WO #254, actualizado tras el issue #257 / PR #258, el issue #261 / PR #262 y el issue #265 / PR #266. Describe el estado publicado y la secuencia inmediata; no crea un contrato clínico nuevo, no autoriza datos reales y no sustituye la revisión humana.
+> Documento de estado vivo posterior a la WO #254, actualizado tras el issue #257 / PR #258, el issue #261 / PR #262, el issue #265 / PR #266, el issue #269 / PR #270, el issue #271 / PR #272 y el issue #273 / PR #276. Describe el estado publicado y la secuencia inmediata; no crea un contrato clínico nuevo, no autoriza datos reales y no sustituye la revisión humana.
 
 | Metadato | Valor |
 |---|---|
 | Fecha | 2026-08-07 |
 | Origen funcional | `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`; issue #267 / PR #268 |
-| Actualización vigente de package | `WO-FH-EVALUATION-PACKAGE-01`; issue #269 |
-| Estado Git/app evaluado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Actualización vigente de package | `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01`; issue #277 |
+| Estado publicado pre-freeze documental | `451d02361fc54cc01f493ca2a89192bde52d7fd9` (merge issue #273 / PR #276) |
 | Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
-| Cambios funcionales incluidos | issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258, issue #261 / PR #262 e issue #265 / PR #266 |
+| Cambios funcionales incluidos | issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258, issue #261 / PR #262, issue #265 / PR #266; paquete de evaluación por issue #269 / PR #270, snapshot 0.4 por issue #271 / PR #272 e integridad de manifest por issue #273 / PR #276 |
 | Datos autorizados | Exclusivamente sintéticos |
 | Piloto / producción | No acreditados |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073`; intacto, sin promoción de #258 |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.4`, candidate `d9cbd56b515ee75c871bfb5e63f96320c963b1e0`, merge `9125518a74151010eaa2d48b913c5954fa54b8a1`; integridad de manifest `963bac71ffac4e2d6d088aeeb4d9abeaf8f5bad1` / merge `451d02361fc54cc01f493ca2a89192bde52d7fd9` |
 
 ## 1. Estado publicado
 
-El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`. El issue #252 y la PR #253 publicaron la navegación clínica normal posterior. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética; el issue #261 / PR #262 publicó Quick View raw PROMs corregido; y el issue #265 / PR #266 publicó Patient Longitudinal raw. La nomenclatura `Bridge` de PR #238/#242/#246 se conserva para trazabilidad técnica, pero no existe un modo Bridge visible soportado.
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`. El issue #252 y la PR #253 publicaron la navegación clínica normal posterior. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética; el issue #261 / PR #262 publicó Quick View raw PROMs corregido; y el issue #265 / PR #266 publicó Patient Longitudinal raw. El issue #269 / PR #270 publicó el paquete de evaluación sintética (candidate `a026549...`, merge `8bfceaaa...`); el issue #271 / PR #272 promovió el snapshot `CÁCERES-REVIEW-0.4` (candidate `d9cbd56b...`, merge `9125518a...`); y el issue #273 / PR #276 estabilizó la integridad del manifest (candidate `963bac71...`, merge `451d0236...`). La nomenclatura `Bridge` de PR #238/#242/#246 se conserva para trazabilidad técnica, pero no existe un modo Bridge visible soportado.
 
 La cadena funcional vigente es:
 
@@ -33,6 +33,8 @@ Excel raw
 ```
 
 El Data Port expone lectura por identificador y por `patient_id`, proyección del paciente, eventos, solicitud/validación, visitas/líneas, PROMs, adherencia, efectos adversos/causalidad y proyección poblacional. Inicio/Quick View, dashboards y Validación, Primera Visita y Seguimiento normales están integrados. La fuente raw construye estas lecturas desde el read model en memoria y no es persistencia longitudinal. El proveedor FH-001/FH-004 de Export v2 paralelo queda como fixture técnico histórico para regresión, no como proveedor del patient-flow actual.
+
+El modelo de evaluación Farmacia es **un único workbook** (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`, 55 pacientes / 93 eventos / 95 filas / 152 columnas, CIP-LONGITUDINAL-A/B incluidos) que alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV; Estadísticas recibe la misma cohorte (55) y el CSV sin filtros es 55 × 37. El smoke hosted del single-workbook es PASS (`console.error = 0`, `pageerror = 0`). El paquete de evaluación es autónomo vía Pages (`https://b32majus.github.io/Hub-Clinico-Badajoz/previews/caceres-fh/`), en freeze candidato bajo el issue #277; los ficheros históricos del flujo de paciente y de Estadísticas quedan retirados como fixtures de QA históricos y no se distribuyen como bases de Farmacia.
 
 ## 2. Sesión temporal del paciente actual
 
@@ -158,22 +160,23 @@ Actividad continúa siendo una pantalla demo. Lee el conjunto disponible de `Far
 
 ## 8. Secuencia inmediata
 
-1. Completar publicación y congelación de `WO-FH-EVALUATION-PACKAGE-01`.
-2. Evaluación con farmacéuticas mediante la guía, checklist y workbooks exclusivamente sintéticos del package aprobado por la operadora.
+1. Completar el freeze autónomo del paquete de evaluación sintética (issue #277 / `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01`); el candidate es `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS` y el freeze externo definitivo queda pendiente de merge + manifest/ZIP final.
+2. Evaluación con farmacéuticas mediante la guía, checklist y el workbook único Farmacia exclusivamente sintéticos del package; Estadísticas usa la misma cohorte y el CSV sin filtros es 55 × 37.
 3. Solo después del feedback, decidir la evolución funcional posterior.
 
-Patient Longitudinal está publicado. El package ha superado QA y revisión independiente, está publicado en su rama de trabajo y continúa en su ciclo de publicación y freeze, sin cambios funcionales. Su manifest canónico es [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md). Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
+Patient Longitudinal está publicado. El paquete de evaluación (issue #269, merge `8bfceaaa...`) ha superado QA y revisión independiente; su snapshot `CÁCERES-REVIEW-0.4` (issue #271 / PR #272) y la integridad de su manifest (issue #273 / PR #276) están publicados en el estado pre-freeze `451d02361fc54cc01f493ca2a89192bde52d7fd9`. La presente WO orquesta el freeze autónomo candidato con seis rutas documentales, sin cambios funcionales. Su manifest canónico es [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md). Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
 
 ## 9. Fuentes y precedencia documental
 
 Para el estado actual prevalecen, en este orden:
 
-1. `WO-FH-EVALUATION-PACKAGE-01` / issue #269, como autoridad actual para el estado del package, el material de evaluación, los gates de publicación/freeze y la preparación de la evaluación externa; no cambia funcionalidad.
-2. `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`, como autoridad para el estado funcional post-Longitudinal reconciliado.
-3. Código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, último HEAD funcional, merge del issue #265 / PR #266.
-4. Cadena funcional previa: issue #261 / PR #262 (merge histórico `f2b827fa...`), issue #257 / PR #258 (merge histórico `a9d6d464...`), issue #250 / PR #251 e issue #252 / PR #253.
-5. Este documento, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`.
-6. Decisiones, contratos, PR #238/#242/#246 y documentos anteriores como trazabilidad secundaria.
+1. `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01` / issue #277, como autoridad actual para el estado del freeze del paquete de evaluación, el material sintético y los gates de publicación/freeze; no cambia funcionalidad.
+2. `WO-FH-EVALUATION-PACKAGE-01` / issue #269 (merge `8bfceaaa...`), como paquete de evaluación publicado; `WO-FH-CACERES-EVALUATION-SNAPSHOT-04-01` / issue #271 / PR #272 y `WO-FH-CACERES-MANIFEST-EOL-INTEGRITY-01` / issue #273 / PR #276 como snapshot y manifest publicados.
+3. `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`, como autoridad para el estado funcional post-Longitudinal reconciliado.
+4. Código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, último HEAD funcional, merge del issue #265 / PR #266.
+5. Cadena funcional previa: issue #261 / PR #262 (merge histórico `f2b827fa...`), issue #257 / PR #258 (merge histórico `a9d6d464...`), issue #250 / PR #251 e issue #252 / PR #253.
+6. Este documento, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`.
+7. Decisiones, contratos, PR #238/#242/#246 y documentos anteriores como trazabilidad secundaria.
 
 `README.md`, `ARCHITECTURE.md`, `TODO.md`, `CHANGELOG.md`, `AGENTS.md`, documentos V0.3/V0.4 y issues replay antiguos no se reescriben en esta WO y no pueden contradecir silenciosamente este estado.
 
