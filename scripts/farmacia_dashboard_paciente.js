@@ -1042,16 +1042,28 @@
         var legendEl = document.getElementById('longitudinal-legend');
         var demoNoteEl = document.getElementById('longitudinal-demo-note');
         var toggleBtn = document.getElementById('toggle-legend');
+        var standaloneLink = document.getElementById('longitudinalStandaloneLink');
 
         if (!patient) {
+            var context = F.getQueryContext();
+            var rawPatient = context.patient && context.patient.__farmaciaRawPatient
+                && context.patient.cip === cip;
+            if (rawPatient) {
+                section.classList.remove('hidden');
+                if (standaloneLink) standaloneLink.href = F.makeContextUrl('farmacia_dashboard_longitudinal.html', { cip: cip });
+                if (chartContainer) F.clearChildren(chartContainer);
+                if (noDataEl) noDataEl.classList.remove('hidden');
+                if (legendEl) legendEl.classList.add('hidden');
+                if (demoNoteEl) demoNoteEl.classList.add('hidden');
+                return;
+            }
             section.classList.add('hidden');
             return;
         }
         section.classList.remove('hidden');
         // Actualizar enlace "Vista completa" con CIP actual
-        var standaloneLink = document.getElementById("longitudinalStandaloneLink");
         if (standaloneLink) {
-            standaloneLink.href = "farmacia_dashboard_longitudinal.html?cip=" + encodeURIComponent(cip);
+            standaloneLink.href = F.makeContextUrl('farmacia_dashboard_longitudinal.html', { cip: cip });
         }
         if (noDataEl) noDataEl.classList.add('hidden');
         if (demoNoteEl) demoNoteEl.classList.remove('hidden');
