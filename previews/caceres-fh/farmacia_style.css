@@ -5999,3 +5999,37 @@
     color: var(--text-muted, #666);
     margin-top: 4px;
 }
+
+/* WO-FH-EVALUATION-FLOW-REALIGN-01 — feedback local subordinado al acto */
+.evaluation-ledger-feedback {
+    margin: 0.65rem 0;
+}
+
+.evaluation-ledger-status,
+.evaluation-ledger-previous-notice {
+    border: 1px solid #c9d7df;
+    border-radius: 6px;
+    background: #f6fafc;
+    color: #334e5c;
+    font-size: 0.88rem;
+    line-height: 1.35;
+    padding: 0.55rem 0.7rem;
+}
+
+.evaluation-ledger-status:empty { display: none; }
+.evaluation-ledger-status--success { border-color: #a8d5b8; background: #f2fbf5; color: #176b3a; }
+.evaluation-ledger-status--error { border-color: #e2b4b4; background: #fff7f7; color: #8b1e1e; }
+
+.evaluation-ledger-previous-notice p { margin: 0 0 0.45rem; }
+.evaluation-ledger-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+@media (max-width: 1024px) {
+    .evaluation-ledger-feedback { width: 100%; }
+    .evaluation-ledger-actions { align-items: stretch; flex-direction: column; }
+    .evaluation-ledger-actions .btn { width: 100%; }
+}

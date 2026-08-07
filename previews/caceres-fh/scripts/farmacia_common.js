@@ -791,11 +791,19 @@
 
     function readImportedDataset(kind) {
         var raw = safeGetSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+        var dataset;
         if (!raw) {
             var fallback = SESSION_STORAGE_FALLBACK[kind];
-            if (fallback) return fallback;
+            if (fallback) dataset = fallback;
+        } else {
+            dataset = safeParseJson(raw);
         }
-        return safeParseJson(raw);
+        if (raw) safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+        if (kind === 'farmacia' && dataset && dataset.format === 'farmacia_bridge_v2_raw') {
+            delete SESSION_STORAGE_FALLBACK[kind];
+            return null;
+        }
+        return dataset || null;
     }
 
     function getImportedPatientByCip(cip) {
@@ -891,6 +899,21 @@
                 mergedByCip[cip] = mergePatientRecord(normalized, existing);
             }
         });
+
+        var runtimePatient = window.FarmaciaPatientFlowRuntime
+            && typeof window.FarmaciaPatientFlowRuntime.getCurrentPatient === 'function'
+            ? window.FarmaciaPatientFlowRuntime.getCurrentPatient() : null;
+        if (runtimePatient && runtimePatient.cip) {
+            var runtimeCip = String(runtimePatient.cip).trim();
+            var runtimeExisting = mergedByCip[runtimeCip];
+            var runtimeRecord = mergePatientRecord({}, runtimePatient);
+            if (!runtimeExisting) {
+                mergedByCip[runtimeCip] = runtimeRecord;
+                ordered.push(runtimeRecord);
+            } else {
+                mergedByCip[runtimeCip] = mergePatientRecord(runtimeExisting, runtimeRecord);
+            }
+        }
 
         return ordered.map(function (patient) {
             return mergedByCip[String(patient.cip).trim()] || patient;
@@ -1044,16 +1067,19 @@
 
     function getQueryContext() {
         var params = new URLSearchParams(window.location.search);
-        var cip = (params.get('cip') || params.get('id') || '').trim();
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var runtimePatient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
+        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
         var hasExplicitCip = !!cip;
         var patient = cip ? findAvailablePatientByCip(cip) : null;
         var patientFound = !!patient;
         return {
             cip: cip,
-            servicio: params.get('servicio') || (patientFound ? patient.servicio : '') || '',
-            servicioSlug: params.get('servicio') || (patientFound ? patient.servicioSlug : '') || '',
-            patologia: params.get('patologia') || (patientFound ? patient.patologia : '') || '',
-            entrada: params.get('entrada') || '',
+            servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
+            servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
+            patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
+            entrada: restarted ? '' : (params.get('entrada') || ''),
             patient: patient,
             hasExplicitCip: hasExplicitCip,
             patientNotFound: hasExplicitCip && !patientFound,
@@ -1062,6 +1088,9 @@
     }
 
     function makeContextUrl(base, context = {}) {
+        if (window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.makeContextUrl === 'function') {
+            return window.FarmaciaPatientFlowRuntime.makeContextUrl(base, context);
+        }
         const params = new URLSearchParams();
         if (context.cip) params.set('cip', context.cip);
         if (context.servicio) params.set('servicio', context.servicio);
@@ -1709,6 +1738,9 @@
 
         function formatImportStatus(kind) {
             var state = importStates[kind];
+            if (state && state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel) {
+                return 'Excel Farmacia cargado · ' + state.rowCount + ' filas · ' + state.eventCount + ' actos · ' + state.patientCount + ' pacientes';
+            }
             if (!state || !Array.isArray(state.rows) || !state.rows.length) {
                 return 'No se ha cargado Excel de ' + getKindLabel(kind);
             }
@@ -1717,7 +1749,7 @@
 
         function hasImportData(kind) {
             var state = importStates[kind];
-            return !!(state && Array.isArray(state.rows) && state.rows.length);
+            return !!(state && ((Array.isArray(state.rows) && state.rows.length) || (state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel)));
         }
 
         function updateDbStatusIndicator() {
@@ -1748,8 +1780,10 @@
             var state = importStates[kind];
             if (statusEl) statusEl.textContent = formatImportStatus(kind);
             if (detailsEl) {
-                if (!state || !Array.isArray(state.rows) || !state.rows.length) {
+                if (!hasImportData(kind)) {
                     detailsEl.textContent = 'Sin importación local almacenada.';
+                } else if (state.format === 'farmacia_bridge_v2_raw') {
+                    detailsEl.textContent = 'Read model disponible en esta página. Al recargar deberá volver a seleccionar el Excel.';
                 } else {
                     detailsEl.textContent = '';
                 }
@@ -1799,13 +1833,49 @@
                     rows: allCandidates
                 };
                 importStates[kind] = state;
-                if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
-                    SESSION_STORAGE_FALLBACK[kind] = state;
-                    state.storage = 'memory_only';
-                }
+                safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+                SESSION_STORAGE_FALLBACK[kind] = state;
+                state.storage = 'memory_only';
                 updateAllImportUi();
                 emitImportEvent(kind, { state: state });
                 return state;
+            }
+
+            if (kind === 'farmacia') {
+                if (!window.FarmaciaBridgeV2Reader || typeof window.FarmaciaBridgeV2Reader.readWorkbook !== 'function') {
+                    throw new Error('FarmaciaBridgeV2Reader no está disponible.');
+                }
+                var importedAt = new Date().toISOString();
+                var bridgeReadModel = window.FarmaciaBridgeV2Reader.readWorkbook(workbook, {
+                    fileName: fileName || '',
+                    importedAt: importedAt
+                });
+                if (bridgeReadModel) {
+                    var dataPort = null;
+                    if (window.FarmaciaRawExcelDataSource && typeof window.FarmaciaRawExcelDataSource.create === 'function'
+                        && window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.setDataPort === 'function') {
+                        dataPort = window.FarmaciaRawExcelDataSource.create(bridgeReadModel);
+                        window.FarmaciaPatientFlowRuntime.setDataPort(dataPort);
+                    }
+                    var bridgeState = {
+                        kind: 'farmacia',
+                        format: 'farmacia_bridge_v2_raw',
+                        sourceLabel: 'Farmacia',
+                        fileName: fileName || '',
+                        importedAt: importedAt,
+                        rowCount: bridgeReadModel.metadata.row_count,
+                        eventCount: bridgeReadModel.metadata.event_count,
+                        patientCount: bridgeReadModel.metadata.patient_count,
+                        bridgeReadModel: bridgeReadModel,
+                        dataPort: dataPort,
+                        storage: 'runtime_memory'
+                    };
+                    safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+                    importStates[kind] = bridgeState;
+                    updateAllImportUi();
+                    emitImportEvent(kind, { format: bridgeState.format, state: bridgeState });
+                    return bridgeState;
+                }
             }
 
             // Generic import (Farmacia u otros)
@@ -1827,10 +1897,9 @@
                 rows: rows
             };
             importStates[kind] = state;
-            if (!safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(state))) {
-                SESSION_STORAGE_FALLBACK[kind] = state;
-                state.storage = 'memory_only';
-            }
+            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+            SESSION_STORAGE_FALLBACK[kind] = state;
+            state.storage = 'memory_only';
             updateAllImportUi();
             emitImportEvent(kind, { state: state });
             return state;
@@ -1878,13 +1947,20 @@
                 input.addEventListener('change', function (event) {
                     var file = event.target.files && event.target.files[0];
                     if (!file) return;
+                    var previousState = importStates[item.kind];
                     importFile(item.kind, file)
                         .then(function () {
                             input.value = '';
                         })
                         .catch(function (err) {
                             var statusEl = document.getElementById(item.kind === 'enfermeria' ? 'estadoCargaEnfermeria' : 'estadoCargaFarmacia');
-                            if (statusEl) statusEl.textContent = 'Error al cargar Excel de ' + getKindLabel(item.kind) + ': ' + (err.message || err);
+                            var errorMessage = err.message || err;
+                            if (statusEl && previousState) {
+                                var separator = /[.!?]$/.test(String(errorMessage)) ? ' ' : '. ';
+                                statusEl.textContent = 'Nuevo archivo rechazado: ' + errorMessage + separator + 'Sigue activo el Excel anterior: ' + (previousState.fileName || 'archivo previamente cargado') + '.';
+                            } else if (statusEl) {
+                                statusEl.textContent = 'Error al cargar Excel de ' + getKindLabel(item.kind) + ': ' + errorMessage;
+                            }
                             input.value = '';
                         });
                 });
@@ -1896,6 +1972,7 @@
             var items = [];
             Object.keys(importStates).forEach(function (kind) {
                 var state = importStates[kind];
+                if (state && state.format === 'farmacia_bridge_v2_raw') return;
                 if (!state || !Array.isArray(state.rows)) return;
                 state.rows.forEach(function (row, index) {
                     var candidate = buildImportedPatientCandidate(row, state.mappedFields || {}, state.sourceLabel || getKindLabel(kind), index);
@@ -1914,13 +1991,30 @@
             return null;
         }
 
+        function getBridgeReadModel() {
+            var state = importStates.farmacia;
+            return state && state.format === 'farmacia_bridge_v2_raw' ? state.bridgeReadModel || null : null;
+        }
+
+        function clearTransientPatientImports() {
+            importStates.enfermeria = null;
+            delete SESSION_STORAGE_FALLBACK.enfermeria;
+            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS.enfermeria);
+            updateAllImportUi();
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             initImportPanel();
+            if (window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.decorateLinks === 'function') {
+                window.FarmaciaPatientFlowRuntime.decorateLinks(document);
+            }
         });
 
         return {
             getState: function (kind) { return importStates[kind] || null; },
             getImportedPatients: getImportedPatients,
+            getBridgeReadModel: getBridgeReadModel,
+            clearTransientPatientImports: clearTransientPatientImports,
             findImportedPatientByCip: findImportedPatientByCip,
             importFile: importFile,
             formatImportStatus: formatImportStatus

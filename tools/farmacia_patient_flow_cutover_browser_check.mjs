@@ -14,6 +14,7 @@ const core = globalThis.FarmaciaExportV2Core;
 const CIP_A = 'CIP-RAW-A';
 const CIP_B = 'CIP-RAW-B';
 const SESSION_KEY = 'promueve.fh.currentPatientSession.v1';
+const APP_PREFIX = String(process.env.FH_APP_PREFIX || '').replace(/^\/+|\/+$/g, '');
 
 function loadPlaywrightFromNpx() {
   for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
@@ -240,6 +241,7 @@ await new Promise((resolve, reject) => {
   server.listen(0, '127.0.0.1', resolve);
 });
 const BASE = `http://127.0.0.1:${server.address().port}/`;
+const appUrl = file => new URL(`${APP_PREFIX ? `${APP_PREFIX}/` : ''}${file}`, BASE).href;
 
 const browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
 const context = await browser.newContext();
@@ -278,7 +280,7 @@ try {
   const rawBuffer = rawWorkbookBuffer();
   const nurseBuffer = nursingWorkbookBuffer();
 
-  await page.goto(new URL('farmacia_index.html', BASE).href, { waitUntil: 'domcontentloaded' });
+  await page.goto(appUrl('farmacia_index.html'), { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaDataImports && window.FarmaciaPatientFlowRuntime);
   await upload('#inputExcelFarmacia', 'farmacia-raw-sintetico.xlsx', rawBuffer);
   await page.waitForFunction(() => document.querySelector('#estadoCargaFarmacia')?.textContent.includes('Excel Farmacia cargado'));
@@ -330,7 +332,7 @@ try {
 
   const longitudinalHref = await page.locator('#longitudinalStandaloneLink').getAttribute('href');
   assert(longitudinalHref && longitudinalHref.includes('generation='));
-  await page.goto(new URL(longitudinalHref, BASE).href, { waitUntil: 'domcontentloaded' });
+  await page.goto(new URL(longitudinalHref, page.url()).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(cip => document.querySelector('#longitudinalPatientSelect')?.value === cip, CIP_A);
   const longitudinalSummary = await page.locator('#longitudinalPatientSummary').innerText();
   assert.match(longitudinalSummary, new RegExp(CIP_A));
@@ -449,7 +451,7 @@ try {
 
   const longitudinalBHref = await page.locator('#longitudinalStandaloneLink').getAttribute('href');
   assert(longitudinalBHref && longitudinalBHref.includes('generation='));
-  await page.goto(new URL(longitudinalBHref, BASE).href, { waitUntil: 'domcontentloaded' });
+  await page.goto(new URL(longitudinalBHref, page.url()).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(cip => document.querySelector('#longitudinalPatientSelect')?.value === cip, CIP_B);
   const activeLongitudinalLine = page.locator('#longitudinalTreatmentTimeline .info-field').filter({ hasText: 'Activo RAW B1' });
   const unknownLongitudinalLine = page.locator('#longitudinalTreatmentTimeline .info-field').filter({ hasText: 'Línea RAW B2' });

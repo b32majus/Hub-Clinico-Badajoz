@@ -10,14 +10,14 @@
     <link rel="stylesheet" href="style.css?v=20260612-data-import-a">
     <link rel="stylesheet" href="farmacia_style.css?v=20260612-data-import-a">
 <style id="caceres-review-style">
-.caceres-review-identity{position:relative;z-index:10000;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
+.caceres-review-identity{position:relative;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
 .caceres-review-identity__meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
 .caceres-review-identity__warning{margin-top:6px;padding:6px 10px;background:#fff3cd;color:#5f4600;border:2px solid #e0a800;border-radius:4px}
 </style>
 </head>
         <body>
 <section class="caceres-review-identity" aria-label="Identidad del entorno de evaluación">
-  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.3</span></div>
+  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.4</span></div>
   <div class="caceres-review-identity__warning" role="alert"><strong>Datos exclusivamente sintéticos.</strong> No usar para asistencia clínica real.</div>
 </section>
             <div class="hub-shell">
@@ -80,7 +80,7 @@
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
     </div>
-    <div class="sidebar-footer">CÁCERES-REVIEW-0.3</div>
+    <div class="sidebar-footer">CÁCERES-REVIEW-0.4</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--seguimiento">
         <div class="demo-banner" role="note">
@@ -315,18 +315,26 @@
 </section>
 <section class="dashboard-card" id="modExportacion">
     <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
-    <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo sin persistencia real. Use Copiar texto JARA o Copiar fila Excel FH para generar salidas revisables.</span></div>
+    <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo con datos sintéticos. No es un entorno clínico ni multiusuario. Revise las salidas antes de utilizarlas.</span></div>
     <div id="fhSegDispenseExportNotice" class="notice-box notice-box--warning hidden" role="status"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Marque al menos una línea como dispensada en esta visita para generar filas CSV o Excel.</span></div>
     <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn"><i class="fas fa-table"></i> Copiar filas Excel FH</button></div>
+    <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhSegExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar Export v2 demo · 152 columnas</button></div>
+    <p class="search-card__hint">Export v2 técnico, local y sin cabecera. No apto para piloto real.</p>
+    <p id="fhSegExportV2Status" role="status" aria-live="polite"></p>
 </section>
                 </main>
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
-            <script src="scripts/farmacia_common.js?v=20260730-cima-contextless-p0"></script>
+            <script src="scripts/farmacia_current_patient_session.js?v=20260806-patient-flow-r1"></script>
+            <script src="scripts/farmacia_patient_flow_runtime.js?v=20260806-patient-flow-r1"></script>
+            <script src="scripts/farmacia_common.js?v=20260806-patient-flow-r1"></script>
             <script src="scripts/farmacia_validacion_model.js?v=20260612-data-import-a"></script>
             <script src="scripts/farmacia_tratamiento_common.js?v=20260614-wo7c2"></script>
             <script src="scripts/farmacia_excel_row_export.js?v=20260614-wo81b"></script>
-    <script src="scripts/farmacia_seguimiento.js?v=20260730-cima-contextless-p0"></script>
+    <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
+    <script src="scripts/farmacia_export_v2_followup_active_lines_adapter.js?v=20260803-followup-active-lines-adapter"></script>
+    <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20260806-patient-flow-r1"></script>
             <script src="scripts/caceres_review_deployment.js"></script>
 </body>
         </html>

@@ -6,9 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'previews/caceres-fh');
-const SOURCE_SHA = '815e16f9564c82f469a95745c5c6917593a8c3f0';
+const SOURCE_SHA = '8bfceaaa956199610be9c0e6df40740a04b73699';
+const LAST_FUNCTIONAL_SHA = 'fb7b70c50c991baf6a375b42112048d190fe0178';
 const SOURCE_BRANCH = 'recovery/farmacia-pr-replay-20260727';
-const VERSION = 'CÁCERES-REVIEW-0.3';
+const VERSION = 'CÁCERES-REVIEW-0.4';
 const PROFILE = 'Profesional FH — Entorno de evaluación';
 const SOURCE_PROVENANCE = 'Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2';
 const REVIEW_PROVENANCE = `Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · ${VERSION}`;
@@ -20,22 +21,50 @@ const htmlFiles = [
   'farmacia_dashboard_longitudinal.html', 'farmacia_actividad_servicio.html',
   'farmacia_estadisticas.html', 'farmacia_farmacos.html', 'farmacia_profesionales.html'
 ];
-const allowlist = [
-  ...htmlFiles, 'style.css', 'farmacia_style.css', 'favicon.svg',
-  'vendor/sheetjs/xlsx.full.min.js',
-  ...[
-    'farmacia_common', 'farmacia_pautas_catalog', 'farmacia_prebiologico', 'farmacia_index',
-    'farmacia_validacion_model', 'farmacia_validacion', 'farmacia_tratamiento_common',
-    'farmacia_excel_row_export', 'farmacia_primera_visita', 'farmacia_seguimiento',
-    'farmacia_longitudinal_normalizer', 'farmacia_dashboard_paciente',
-    'farmacia_dashboard_longitudinal', 'farmacia_actividad_servicio', 'farmacia_estadisticas'
-  ].map((name) => `scripts/${name}.js`),
+const scriptFiles = [
+  'farmacia_pautas_catalog',
+  'farmacia_export_v2_core',
+  'farmacia_bridge_v2_reader',
+  'farmacia_bridge_v2_patient_selectors',
+  'farmacia_application_data_port',
+  'farmacia_raw_excel_data_source',
+  'farmacia_current_patient_session',
+  'farmacia_patient_flow_runtime',
+  'farmacia_common',
+  'farmacia_statistics_cohort',
+  'farmacia_statistics_handoff',
+  'farmacia_prebiologico',
+  'farmacia_index',
+  'farmacia_validacion_model',
+  'farmacia_excel_row_export',
+  'farmacia_export_v2_validation_adapter',
+  'farmacia_export_v2_context',
+  'farmacia_validacion',
+  'farmacia_tratamiento_common',
+  'farmacia_export_v2_first_visit_adapter',
+  'farmacia_primera_visita',
+  'farmacia_export_v2_followup_active_lines_adapter',
+  'farmacia_seguimiento',
+  'farmacia_longitudinal_normalizer',
+  'farmacia_dashboard_paciente',
+  'farmacia_longitudinal_raw_adapter',
+  'farmacia_dashboard_longitudinal',
+  'farmacia_actividad_servicio',
+  'farmacia_estadisticas'
+].map((name) => `scripts/${name}.js`);
+const dynamicAssets = [
   'data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json',
   'data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx'
 ];
+const allowlist = [
+  ...htmlFiles, 'style.css', 'farmacia_style.css', 'favicon.svg',
+  'vendor/sheetjs/xlsx.full.min.js',
+  ...scriptFiles,
+  ...dynamicAssets
+];
 
 const identityStyle = `<style id="caceres-review-style">
-.caceres-review-identity{position:relative;z-index:10000;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
+.caceres-review-identity{position:relative;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
 .caceres-review-identity__meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
 .caceres-review-identity__warning{margin-top:6px;padding:6px 10px;background:#fff3cd;color:#5f4600;border:2px solid #e0a800;border-radius:4px}
 </style>`;
@@ -56,10 +85,15 @@ const layer = `(() => {
   document.addEventListener('DOMContentLoaded', applyProfile);
   window.CACERES_FH_REVIEW = Object.freeze({
     deploymentId: 'caceres-fh-review', sourceSha: '${SOURCE_SHA}',
-    version: '${VERSION}', profile: PROFILE
+    lastFunctionalSha: '${LAST_FUNCTIONAL_SHA}', version: '${VERSION}', profile: PROFILE
   });
 })();
 `;
+
+function localReferences(html) {
+  return [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map((match) => match[1])
+    .filter((ref) => !/^(?:https?:|data:|mailto:|tel:|#)/.test(ref));
+}
 
 function transformHtml(source) {
   let html = source.replace(
@@ -98,6 +132,15 @@ async function main() {
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
   if (head !== SOURCE_SHA) throw new Error(`Source SHA mismatch: expected ${SOURCE_SHA}, got ${head}`);
   for (const file of allowlist) await readFile(path.join(ROOT, file));
+  const generatedFiles = new Set([...allowlist, 'scripts/caceres_review_deployment.js', 'index.html']);
+  for (const file of htmlFiles) {
+    const transformed = transformHtml(await readFile(path.join(ROOT, file), 'utf8'));
+    for (const ref of localReferences(transformed)) {
+      const target = decodeURIComponent(ref.split(/[?#]/)[0]);
+      const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), target));
+      if (!target || !generatedFiles.has(resolved)) throw new Error(`${file}: local dependency outside fixed allowlist: ${ref}`);
+    }
+  }
   await rm(OUT, { recursive: true, force: true });
   for (const file of allowlist) {
     const destination = path.join(OUT, file);
@@ -117,7 +160,9 @@ async function main() {
   const hashes = Object.fromEntries(await Promise.all(inventory.sort().map(async (file) => [file, await sha256(file)])));
   const manifest = {
     deployment_id: 'caceres-fh-review', source_branch: SOURCE_BRANCH, source_sha: SOURCE_SHA,
-    version: VERSION, built_at: new Date().toISOString(), allowlist: allowlist.sort(), hashes
+    last_functional_sha: LAST_FUNCTIONAL_SHA, version: VERSION,
+    built_at: execFileSync('git', ['show', '-s', '--format=%cI', SOURCE_SHA], { cwd: ROOT, encoding: 'utf8' }).trim(),
+    allowlist: allowlist.sort(), hashes
   };
   await writeFile(path.join(OUT, 'deployment-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`Built ${OUT} from ${SOURCE_SHA} (${inventory.length + 1} files).`);

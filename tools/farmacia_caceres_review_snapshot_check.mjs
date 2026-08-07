@@ -6,8 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'previews/caceres-fh');
-const SHA = '815e16f9564c82f469a95745c5c6917593a8c3f0';
-const VERSION = 'CÁCERES-REVIEW-0.3';
+const SHA = '8bfceaaa956199610be9c0e6df40740a04b73699';
+const LAST_FUNCTIONAL_SHA = 'fb7b70c50c991baf6a375b42112048d190fe0178';
+const VERSION = 'CÁCERES-REVIEW-0.4';
 const PROFILE = 'Profesional FH — Entorno de evaluación';
 const REVIEW_PROVENANCE = `Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · ${VERSION}`;
 const htmlNames = [
@@ -17,11 +18,19 @@ const htmlNames = [
   'farmacia_profesionales.html'
 ];
 const scripts = [
-  'farmacia_common', 'farmacia_pautas_catalog', 'farmacia_prebiologico', 'farmacia_index',
-  'farmacia_validacion_model', 'farmacia_validacion', 'farmacia_tratamiento_common',
-  'farmacia_excel_row_export', 'farmacia_primera_visita', 'farmacia_seguimiento',
+  'farmacia_pautas_catalog', 'farmacia_export_v2_core', 'farmacia_bridge_v2_reader',
+  'farmacia_bridge_v2_patient_selectors', 'farmacia_application_data_port',
+  'farmacia_raw_excel_data_source', 'farmacia_current_patient_session',
+  'farmacia_patient_flow_runtime', 'farmacia_common', 'farmacia_statistics_cohort',
+  'farmacia_statistics_handoff', 'farmacia_prebiologico', 'farmacia_index',
+  'farmacia_validacion_model', 'farmacia_excel_row_export',
+  'farmacia_export_v2_validation_adapter', 'farmacia_export_v2_context',
+  'farmacia_validacion', 'farmacia_tratamiento_common',
+  'farmacia_export_v2_first_visit_adapter', 'farmacia_primera_visita',
+  'farmacia_export_v2_followup_active_lines_adapter', 'farmacia_seguimiento',
   'farmacia_longitudinal_normalizer', 'farmacia_dashboard_paciente',
-  'farmacia_dashboard_longitudinal', 'farmacia_actividad_servicio', 'farmacia_estadisticas',
+  'farmacia_longitudinal_raw_adapter', 'farmacia_dashboard_longitudinal',
+  'farmacia_actividad_servicio', 'farmacia_estadisticas',
   'caceres_review_deployment'
 ].map((name) => `scripts/${name}.js`);
 const expected = new Set([
@@ -96,10 +105,12 @@ async function main() {
   assert.equal(manifest.deployment_id, 'caceres-fh-review');
   assert.equal(manifest.source_branch, 'recovery/farmacia-pr-replay-20260727');
   assert.equal(manifest.source_sha, SHA);
+  assert.equal(manifest.last_functional_sha, LAST_FUNCTIONAL_SHA);
   assert.equal(manifest.version, VERSION);
   assert.ok(!Number.isNaN(Date.parse(manifest.built_at)));
   for (const [file, hash] of Object.entries(manifest.hashes)) assert.equal(await sha256(file), hash, `hash mismatch: ${file}`);
-  pass(8, 'manifest provenance and hashes are exact');
+  assert.match(await read('scripts/caceres_review_deployment.js'), new RegExp(`lastFunctionalSha: '${LAST_FUNCTIONAL_SHA}'`));
+  pass(8, 'manifest source/functional provenance and hashes are exact');
 
   const validation = html['farmacia_validacion.html'];
   for (const pathology of ['Hidradenitis supurativa', 'Psoriasis', 'Dermatitis atópica', 'Vitíligo', 'Alopecia areata']) assert.ok(validation.includes(pathology), pathology);
@@ -124,11 +135,33 @@ async function main() {
   for (const script of ['scripts/farmacia_validacion.js', 'scripts/farmacia_primera_visita.js', 'scripts/farmacia_seguimiento.js']) assert.ok((await read(script)).includes(REVIEW_PROVENANCE), `${script}: Cáceres provenance missing`);
   pass(13, 'JARA/CSV/Excel, causality, and optional import surfaces remain');
 
+  const architecture = {
+    'raw Reader': 'scripts/farmacia_bridge_v2_reader.js',
+    'Patient Selectors': 'scripts/farmacia_bridge_v2_patient_selectors.js',
+    'Application Data Port': 'scripts/farmacia_application_data_port.js',
+    RawExcelDataSource: 'scripts/farmacia_raw_excel_data_source.js',
+    CurrentPatientSession: 'scripts/farmacia_current_patient_session.js',
+    PatientFlowRuntime: 'scripts/farmacia_patient_flow_runtime.js',
+    'Statistics cohort': 'scripts/farmacia_statistics_cohort.js',
+    'Statistics handoff': 'scripts/farmacia_statistics_handoff.js',
+    'Longitudinal raw adapter': 'scripts/farmacia_longitudinal_raw_adapter.js'
+  };
+  for (const [capability, file] of Object.entries(architecture)) {
+    assert.ok(expected.has(file), `${capability} missing from fixed allowlist`);
+    assert.ok((await stat(path.join(OUT, file))).size > 0, `${capability} is empty`);
+  }
+  pass(14, 'current raw patient-flow, statistics, and longitudinal architecture is included');
+
+  const activity = html['farmacia_actividad_servicio.html'];
+  assert.match(activity, /Demo Farmacia|datos demo/i);
+  assert.doesNotMatch(activity, /Fuente actual:\s*datos raw|cohorte raw/i);
+  pass(15, 'Activity remains explicitly demo');
+
   assert.ok(!inventory.some((name) => /(^|\/)\.env(?:\.|$)|\.(?:pem|key|p12)$/i.test(name)));
   assert.doesNotMatch(allText, /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|(?:api[_-]?key|password|secret)\s*[:=]\s*["'][^"']{8,}["']/i);
   assert.match(await read('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json'), /DEMO|sint[eé]tic/i);
-  pass(14, 'obvious real-data, .env, and secret artifacts are absent');
-  console.log(`PASS: ${inventory.length} fixed-allowlist files; 14/14 assertions.`);
+  pass(16, 'obvious real-data, .env, and secret artifacts are absent');
+  console.log(`PASS: ${inventory.length} fixed-allowlist files; 16/16 assertions.`);
 }
 
 main().catch((error) => { console.error(`FAIL: ${error.message}`); process.exitCode = 1; });

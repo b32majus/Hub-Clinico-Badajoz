@@ -13,6 +13,7 @@ require(path.join(ROOT, 'scripts/farmacia_export_v2_core.js'));
 const core = globalThis.FarmaciaExportV2Core;
 const CIP_A = 'CIP-LONGITUDINAL-A';
 const CIP_B = 'CIP-LONGITUDINAL-B';
+const APP_PREFIX = String(process.env.FH_APP_PREFIX || '').replace(/^\/+|\/+$/g, '');
 
 function loadPlaywrightFromNpx() {
   for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
@@ -191,6 +192,7 @@ await new Promise((resolve, reject) => {
   server.listen(0, '127.0.0.1', resolve);
 });
 const BASE = `http://127.0.0.1:${server.address().port}/`;
+const appUrl = file => new URL(`${APP_PREFIX ? `${APP_PREFIX}/` : ''}${file}`, BASE).href;
 const browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
 const context = await browser.newContext();
 const page = await context.newPage();
@@ -238,7 +240,7 @@ async function returnToStart() {
 }
 
 try {
-  await page.goto(new URL('farmacia_index.html', BASE).href, { waitUntil: 'domcontentloaded' });
+  await page.goto(appUrl('farmacia_index.html'), { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaDataImports && window.FarmaciaPatientFlowRuntime);
   await upload();
   await openLongitudinal(CIP_A);

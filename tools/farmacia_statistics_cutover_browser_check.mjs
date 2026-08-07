@@ -12,6 +12,7 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
 require(path.join(ROOT, 'scripts/farmacia_export_v2_core.js'));
 const core = globalThis.FarmaciaExportV2Core;
 const PATIENT_COUNT = 55;
+const APP_PREFIX = String(process.env.FH_APP_PREFIX || '').replace(/^\/+|\/+$/g, '');
 
 function loadPlaywrightFromNpx() {
   for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
@@ -212,6 +213,7 @@ await new Promise((resolve, reject) => {
   server.listen(0, '127.0.0.1', resolve);
 });
 const BASE = `http://127.0.0.1:${server.address().port}/`;
+const appUrl = file => new URL(`${APP_PREFIX ? `${APP_PREFIX}/` : ''}${file}`, BASE).href;
 const browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
 const context = await browser.newContext({ acceptDownloads: true });
 const consoleErrors = [];
@@ -254,7 +256,7 @@ async function openStatistics(parent) {
 try {
   const rawBuffer = workbookBuffer();
   const direct = await context.newPage();
-  await direct.goto(new URL('farmacia_estadisticas.html', BASE).href, { waitUntil: 'domcontentloaded' });
+  await direct.goto(appUrl('farmacia_estadisticas.html'), { waitUntil: 'domcontentloaded' });
   await waitForMode(direct, 'demo', 3);
   assert.equal((await direct.locator('#dbStatusLabel').textContent()).trim(), 'Demo sintética');
   assert.equal(await direct.locator('#patients-table tbody tr').count(), 3);
@@ -263,7 +265,7 @@ try {
   assert.equal(await direct.locator('#inputExcelFarmacia, #btnCargarExcelFarmacia').count(), 0, 'statistics has no Farmacia loader');
 
   const parent = await context.newPage();
-  await parent.goto(new URL('farmacia_index.html', BASE).href, { waitUntil: 'domcontentloaded' });
+  await parent.goto(appUrl('farmacia_index.html'), { waitUntil: 'domcontentloaded' });
   await parent.waitForFunction(() => window.FarmaciaDataImports && window.FarmaciaStatisticsHandoff);
   await parent.locator('#inputExcelFarmacia').setInputFiles({
     name: 'stats-raw-sintetico.xlsx',
