@@ -1,4 +1,4 @@
-# Checklist de evaluación funcional PROMueve Farmacia
+# Checklist de evaluación funcional PROMueve Farmacia — autónoma
 
 > **ENTORNO DE EVALUACIÓN CON DATOS SINTÉTICOS. NO PILOTO. NO PRODUCCIÓN.**
 >
@@ -14,16 +14,36 @@ Si marca **INCIDENCIA**, indique severidad: **BLOQUEANTE**, **IMPORTANTE**, **ME
 |---|---|---|---|
 | Datos sintéticos |  |  |  |
 
-## A. Inicio / carga Excel / búsqueda CIP
+## A. Acceso autónomo
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
-| Se entiende qué Excel cargar y dónde |  |  |  |
-| La confirmación de carga es clara |  |  |  |
-| La búsqueda por CIP resulta sencilla |  |  |  |
-| El paciente encontrado queda identificado sin ambigüedad |  |  |  |
+| La URL pública estable abre la Farmacia (Chrome/Chromium) |  |  |  |
+| Se ve la identidad de entorno **CÁCERES-REVIEW-0.4** |  |  |  |
+| Se ve el aviso permanente **«Datos exclusivamente sintéticos»** (no usar para asistencia real) |  |  |  |
+| Las ventanas emergentes para Estadísticas están permitidas |  |  |  |
+| La navegación visible inicia desde **Inicio de Farmacia** (superficie canónica) |  |  |  |
 
-## B. Quick View
+## B. Una única fuente de Farmacia
+
+| Comprobación | Resultado | Severidad | Comentario |
+|---|---|---|---|
+| Se carga **un único** workbook (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`) |  |  |  |
+| Se reconocen **55 pacientes** al cargar |  |  |  |
+| No se pide otro workbook de Farmacia al navegar entre módulos |  |  |  |
+| Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV usan la misma cohorte |  |  |  |
+| La cohorte cargada llega a Estadísticas |  |  |  |
+
+## C. Enfermería complementaria
+
+| Comprobación | Resultado | Severidad | Comentario |
+|---|---|---|---|
+| El loader de Enfermería es visible y separado del de Farmacia |  |  |  |
+| El workbook sintético de Enfermería carga |  |  |  |
+| Se muestran las solicitudes de Enfermería / Inicio biológico |  |  |  |
+| El workbook de Enfermería **no sustituye** los datos explícitos de Farmacia |  |  |  |
+
+## D. Quick View
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
@@ -32,7 +52,7 @@ Si marca **INCIDENCIA**, indique severidad: **BLOQUEANTE**, **IMPORTANTE**, **ME
 | PROMs, `0`, `false` y **No registrado** se muestran con claridad |  |  |  |
 | Las acciones de navegación son comprensibles |  |  |  |
 
-## C. Dashboard Paciente
+## E. Dashboard Paciente
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
@@ -41,18 +61,18 @@ Si marca **INCIDENCIA**, indique severidad: **BLOQUEANTE**, **IMPORTANTE**, **ME
 | Tratamientos, PROMs, adherencia y EA se comprenden |  |  |  |
 | Se localiza fácilmente **Vista completa** |  |  |  |
 
-## D. Patient Longitudinal
+## F. Patient Longitudinal
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
 | Los actos y el acto multifila se comprenden |  |  |  |
-| Activo, no activo y no registrado se distinguen |  |  |  |
+| Activo, no activo y no registrado se diferencian |  |  |  |
 | Cambios de dosis, pauta y suspensión explícita son claros |  |  |  |
 | PROMs y adherencia se entienden en el tiempo |  |  |  |
 | EA, actualizaciones y causalidad explícita son claros |  |  |  |
 | Las ausencias no parecen hechos negativos confirmados |  |  |  |
 
-## E. Validación
+## G. Validación
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
@@ -61,51 +81,50 @@ Si marca **INCIDENCIA**, indique severidad: **BLOQUEANTE**, **IMPORTANTE**, **ME
 | Los estados pendientes o no registrados son claros |  |  |  |
 | La navegación de entrada y salida es coherente |  |  |  |
 
-## F. Primera Visita
+## H. Primera Visita
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
 | Se distingue tratamiento previo de nuevo inicio |  |  |  |
-| La información necesaria está visible y bien ordenada |  |  |  |
+| La información necesaria está visible y ordenada |  |  |  |
 | No parece inferirse dosis, vía o pauta por el fármaco |  |  |  |
 | La navegación sigue el flujo esperado |  |  |  |
 
-## G. Seguimiento
+## I. Seguimiento
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
 | Las líneas y el contexto de seguimiento son claros |  |  |  |
 | PROMs, adherencia y EA se recogen sin ambigüedad |  |  |  |
 | Cambios y suspensión requieren información explícita |  |  |  |
-| Los campos y su orden siguen el trabajo real |  |  |  |
+| Los campos de inserción siguen el trabajo real |  |  |  |
 
-## H. Cambio de paciente
-
-| Comprobación | Resultado | Severidad | Comentario |
-|---|---|---|---|
-| La secuencia A → B → A mantiene el paciente correcto |  |  |  |
-| No aparecen datos del paciente anterior |  |  |  |
-| El cambio y cualquier aviso sobre borradores se entienden |  |  |  |
-
-## I. Estadísticas
+## J. Cambio de paciente
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
-| Se reconoce la cohorte de 55 pacientes sintéticos cargada desde Excel |  |  |  |
+| La secuencia **A → B → A** mantiene el paciente correcto |  |  |  |
+| No aparece información del paciente anterior |  |  |  |
+
+## K. Estadísticas
+
+| Comprobación | Resultado | Severidad | Comentario |
+|---|---|---|---|
+| La cohorte de **55 pacientes** cargada llega desde Inicio (misma fuente) |  |  |  |
 | Filtros y selección de población son comprensibles |  |  |  |
-| KPIs y gráficos son claros y no inducen conclusiones no registradas |  |  |  |
+| KPIs y gráficos son claros y no generan conclusiones no registradas |  |  |  |
 | Tabla y paginación permiten revisar la cohorte |  |  |  |
-| Se entiende que no es una base poblacional persistida |  |  |  |
+| Se entiende que no es una base poblacional persistida ni un segundo workbook |  |  |  |
 
-## J. CSV
+## L. CSV
 
 | Comprobación | Resultado | Severidad | Comentario |
 |---|---|---|---|
 | La acción de exportación se localiza y se entiende |  |  |  |
 | Sin filtros, el CSV contiene 55 pacientes y 37 columnas |  |  |  |
-| Con filtros, exporta toda la cohorte filtrada y no solo la página |  |  |  |
+| Con filtros, exporta la cohorte filtrada completa |  |  |  |
 
-## K. Seguridad clínica / interpretación
+## M. Seguridad clínica / interpretación
 
 | Pregunta crítica | Resultado | Severidad | Comentario |
 |---|---|---|---|
@@ -119,23 +138,23 @@ Si marca **INCIDENCIA**, indique severidad: **BLOQUEANTE**, **IMPORTANTE**, **ME
 | ¿Hay umbrales clínicos o interpretaciones que no deberían aplicarse? |  |  |  |
 | ¿Se entiende cuándo algo está **No registrado**? |  |  |  |
 
-## L. Utilidad global
+## N. Utilidad global y demo
 
 | Pregunta de producto | Respuesta |
 |---|---|
 | ¿Hay pasos innecesarios? |  |
-| ¿Falta un dato imprescindible? |  |
+| ¿Falta un dato indispensable? |  |
 | ¿Hay información repetida? |  |
 | ¿La navegación sigue el flujo real? |  |
 | ¿Qué pantalla eliminarías o cambiarías? |  |
 | ¿Qué parte aporta más valor? |  |
 | ¿Qué parte aporta menos valor? |  |
-| ¿Qué necesitarías antes de piloto? |  |
+
+> **Actividad del servicio permanece demo** y no forma parte de la evaluación de la población raw.
 
 ## Registro de incidencias
 
-| Pantalla | Qué intentaba hacer | Qué esperaba | Qué ocurrió | Severidad | ¿Bloquea? | Captura opcional / comentario |
+| Pantalla | Qué intentaba | Qué esperaba | Qué ocurrió | Severidad | ¿Bloquea? | Captura opcional / comentario |
 |---|---|---|---|---|---|---|
-|  |  |  |  |  |  |  |
 |  |  |  |  |  |  |  |
 |  |  |  |  |  |  |  |

@@ -1,19 +1,25 @@
 # Índice documental maestro — Hub Clínico Badajoz / PROMueve Nexus
 
 | Metadato | Valor |
-|---|---|
+|---|---|---|
 | Última actualización | 2026-08-07 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Estado Git/app evaluado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Estado publicado pre-freeze documental | `451d02361fc54cc01f493ca2a89192bde52d7fd9` (merge issue #273 / PR #276, integridad de manifest) |
 | Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
-| Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073` (intacto) |
-| Rama candidate de esta edición | `work/fh-evaluation-package-01-20260807` (WO-FH-EVALUATION-PACKAGE-01) |
+| Snapshot estable Cáceres | `CÁCERES-REVIEW-0.4` (promovido por issue #271 / PR #272) |
+| Snapshot 0.4 candidate | `d9cbd56b515ee75c871bfb5e63f96320c963b1e0` |
+| Snapshot 0.4 publicación | merge `9125518a74151010eaa2d48b913c5954fa54b8a1` (PR #272) |
+| Integridad manifest 0.4 | merge `451d02361fc54cc01f493ca2a89192bde52d7fd9` (PR #276) |
+| Rama candidate de esta edición | `work/fh-evaluation-autonomous-freeze-01-20260807` (WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01) |
+| Work order actual | issue #277 |
 
-> Este índice orienta. El estado Git/app evaluado para construir el package es el merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`; la verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete candidate solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
+> Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete candidate solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
-> La integración de esta edición generará un merge SHA posterior, que no se anticipa aquí. Por ello se registra el estado Git/app evaluado y, por separado, el último SHA que modificó código funcional; el estado publicado se verifica siempre en GitHub.
+> El modelo de evaluación Farmacia es **un único workbook** (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`) que alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV. Estadísticas usa la misma cohorte (55) y el CSV sin filtros es 55 × 37. El hosted single-workbook es PASS. El paquete de evaluación autónoma está en freeze candidato bajo el issue #277; Activity permanece demo.
+
+> La integración de esta edición generará un merge SHA posterior, que no se anticipa aquí. Por ello se registra el estado publicado y, por separado, el último SHA que modificó código funcional; el estado publicado se verifica siempre en GitHub.
 
 ---
 
@@ -33,8 +39,8 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 
 ## 2. Orden de verdad
 
-1. Work order actual: `WO-FH-EVALUATION-PACKAGE-01`.
-2. GitHub: estado Git/app evaluado `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
+1. Work order actual: `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01` (issue #277).
+2. GitHub: estado publicado pre-freeze documental `451d02361fc54cc01f493ca2a89192bde52d7fd9` (issue #273 / PR #276) y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #265/#266.
 4. Este índice reconciliado.
 5. `docs/ops/WORK_ORDER_STATUS.md` reconciliado.
@@ -51,8 +57,8 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 |---|---|---|---|
 | `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado Git/app evaluado para el package `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`; último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
-| `previews/caceres-fh/` | **Snapshot estable 0.3**, tree `81740136...` | Evaluación Pharmacy-only Cáceres | Evolución regional automática |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado publicado pre-freeze `451d02361fc54cc01f493ca2a89192bde52d7fd9` (issue #273 / PR #276); último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
+| `previews/caceres-fh/` | **Snapshot estable CÁCERES-REVIEW-0.4**; promovido por issue #271 / PR #272; integridad de manifest por issue #273 / PR #276 | Evaluación Pharmacy-only Cáceres autónoma | Evolución regional automática |
 | `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
 | `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
@@ -72,7 +78,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| Estado Git/app evaluado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Estado publicado pre-freeze | `451d02361fc54cc01f493ca2a89192bde52d7fd9` (merge issue #273 / PR #276) |
 | Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
 | issue #250 / PR #251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; merge `de830803...` |
 | issue #252 / PR #253 | Cutover del flujo normal publicado; merge histórico `3f7bf9bb...` con CI verde, superseded como HEAD regional por #257/#258 y posteriormente #261/#262 y #265/#266 |
@@ -88,10 +94,12 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Patient Longitudinal raw | Implementado, publicado y demostrado para evaluación sintética mediante el issue #265 / PR #266; reconstruye actos de Primera Visita y Seguimiento, agrupa multifila, conserva snapshots explícitos por acto y no fabrica fechas ni interpreta clínicamente; detalle en la subsección "Estadísticas, Quick View, Longitudinal y Actividad" |
 | Deuda post-checkpoint | `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED` queda resuelto/publicado por #265/#266; `PREEXISTING_QUICKVIEW_P2` queda resuelto/publicado por #261/#262 |
 | Actividad del servicio | Demo, contenido funcional no decidido y fuera de la siguiente WO técnica |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073`; intacto y sin promoción de PR #258 |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.4`, promovido por issue #271 / PR #272 (candidate `d9cbd56b515ee75c871bfb5e63f96320c963b1e0`, merge publicación `9125518a74151010eaa2d48b913c5954fa54b8a1`); integridad de manifest por issue #273 / PR #276 (merge `451d02361fc54cc01f493ca2a89192bde52d7fd9`) |
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
-| Evaluation Package | Candidate validado y publicado en `work/fh-evaluation-package-01-20260807`, initial candidate `a026549...`; el package está en su ciclo de publicación y freeze; guía, checklist y manifest canónico en [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md); sin cambios funcionales |
+| Modelo de workbook | **Un único workbook** de Farmacia (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`, 55 pacientes / 93 eventos / 95 filas / 152 columnas) alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV; hosted single-workbook PASS |
+| Work order actual | issue #277 — WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01; paquete de evaluación autónoma en freeze candidato; `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`; Activity demo |
+| Evaluation Package | El paquete de evaluación evolucionó a **autónomo**: mismo workbook maestro de Farmacia (55/93/95/152) compartido por todos los módulos y Estadísticas desde la misma cohorte; freeze candidato bajo issue #277 en la rama `work/fh-evaluation-autonomous-freeze-01-20260807`; guía, checklist y manifest canónico en [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md); sin cambios funcionales |
 
 > Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3` corresponde a Quick View del issue #261 / PR #262; el estado actual de Farmacia se verifica contra `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266, que conserva el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 
@@ -287,7 +295,7 @@ Fronteras:
 
 - Excel Bridge: datos clínico-operativos por hospital.
 - Supabase: configuración no-paciente.
-- Identity Plane: servidor local futuro.
+- Identity Plane: backend local futuro.
 - FHIR/openEHR: adaptadores del modelo canónico, no conversión directa del Excel.
 - V5: diferida.
 
@@ -349,4 +357,4 @@ Cuando contradigan el merge #265/#266, el código publicado en `fb7b70c50c991baf
 
 ---
 
-*Edición candidate del Evaluation Package. El estado Git/app evaluado es el merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` y el último HEAD funcional permanece `fb7b70c50c991baf6a375b42112048d190fe0178`. El package ha superado QA y revisión y está en su ciclo de publicación y freeze con artefactos exclusivamente sintéticos; no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*
+*Edición candidate del freeze autónomo del paquete de evaluación sintética (issue #277). El estado publicado pre-freeze documental es `451d02361fc54cc01f493ca2a89192bde52d7fd9` y el último HEAD funcional permanece `fb7b70c50c991baf6a375b42112048d190fe0178`. El paquete es autónomo vía Pages, con un único workbook de Farmacia y freeze candidato `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`; sin merge ni ZIP final, no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*
