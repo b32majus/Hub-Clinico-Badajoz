@@ -5,26 +5,27 @@
 | Última actualización | 2026-08-07 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado verificado | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
+| Estado Git/app evaluado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073` (intacto) |
-| Rama documental de esta edición | `work/doc-fh-post-longitudinal-reconciliation-01-20260807` (WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01) |
+| Rama candidate de esta edición | `work/fh-evaluation-package-01-20260807` (WO-FH-EVALUATION-PACKAGE-01) |
 
-> Este índice orienta. Para Farmacia, la verdad funcional de esta edición es el código publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 (merge histórico `a9d6d464...`) y Quick View PROMs del issue #261 / PR #262 (merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3`). Los documentos históricos no convierten propuestas arquitectónicas en capacidades implementadas.
+> Este índice orienta. El estado Git/app evaluado para construir el package es el merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`; la verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete candidate solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
-> La PR que publique esta edición generará un merge SHA posterior. Por ello se registra la base Git de la edición y, por separado, el último SHA que modificó código funcional; el HEAD actual se verifica siempre en GitHub.
+> La integración de esta edición generará un merge SHA posterior, que no se anticipa aquí. Por ello se registra el estado Git/app evaluado y, por separado, el último SHA que modificó código funcional; el estado publicado se verifica siempre en GitHub.
 
 ---
 
 ## 1. Lectura recomendada actual
 
-1. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado reconciliado después del issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258, issue #261 / PR #262 y, sobre todos, del issue #265 / PR #266 (Patient Longitudinal raw).
-2. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — publicación regional, evaluación sintética y snapshot Cáceres sin promoción automática.
-3. [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia histórica post patient-flow, subordinada al estado publicado post-#261/#262.
-4. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación; el estado publicado actual se concreta en #261/#262, #265/#266 y en este estado post-Longitudinal.
-5. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs y PRs, con issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258 e issue #261 / PR #262 cerradas/publicadas.
-6. [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md) — plan anterior subordinado a la secuencia post patient-flow.
-7. [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — contrato histórico y referencia secundaria para la evolución longitudinal.
+1. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) — recorrido práctico del candidate para farmacéuticas evaluadoras, solo con datos sintéticos.
+2. [`docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — recogida homogénea de feedback clínico y de producto sin datos reales.
+3. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — manifest canónico y gates del Evaluation Package candidate.
+4. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado funcional reconciliado tras Patient Longitudinal raw.
+5. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación.
+6. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, PRs y candidate.
+7. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — publicación regional y snapshot Cáceres sin promoción automática.
 
 Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md).
 
@@ -32,8 +33,8 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 
 ## 2. Orden de verdad
 
-1. Issue/WO actual; en esta edición, `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`.
-2. GitHub: código publicado en `fb7b70c50c991baf6a375b42112048d190fe0178` y estado real del issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
+1. Work order actual: `WO-FH-EVALUATION-PACKAGE-01`.
+2. GitHub: estado Git/app evaluado `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #265/#266.
 4. Este índice reconciliado.
 5. `docs/ops/WORK_ORDER_STATUS.md` reconciliado.
@@ -50,7 +51,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 |---|---|---|---|
 | `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**, HEAD `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado Git/app evaluado para el package `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`; último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
 | `previews/caceres-fh/` | **Snapshot estable 0.3**, tree `81740136...` | Evaluación Pharmacy-only Cáceres | Evolución regional automática |
 | `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
@@ -71,7 +72,8 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
+| Estado Git/app evaluado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
 | issue #250 / PR #251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; merge `de830803...` |
 | issue #252 / PR #253 | Cutover del flujo normal publicado; merge histórico `3f7bf9bb...` con CI verde, superseded como HEAD regional por #257/#258 y posteriormente #261/#262 y #265/#266 |
 | issue #257 / PR #258 | Issue CLOSED; PR MERGED_AND_VERIFIED; Estadísticas raw publicadas para evaluación sintética en el merge histórico previo `a9d6d464...`; candidate `5a7ad559...` |
@@ -89,6 +91,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.3`, tree `81740136ce2b17572ba7851ef8d31dac4940a073`; intacto y sin promoción de PR #258 |
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
+| Evaluation Package | Candidate validado y publicado en `work/fh-evaluation-package-01-20260807`, initial candidate `a026549...`; el package está en su ciclo de publicación y freeze; guía, checklist y manifest canónico en [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md); sin cambios funcionales |
 
 > Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3` corresponde a Quick View del issue #261 / PR #262; el estado actual de Farmacia se verifica contra `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266, que conserva el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 
@@ -121,11 +124,11 @@ Patient Longitudinal raw está implementado, publicado y demostrado para evaluac
 
 ### Secuencia vigente post Longitudinal
 
-1. `WO-FH-EVALUATION-PACKAGE-01`
-2. Evaluación con farmacéuticas
-3. Solo después, decidir evolución según feedback
+1. Completar publicación y congelación de `WO-FH-EVALUATION-PACKAGE-01`.
+2. Evaluación con farmacéuticas usando el package sintético aprobado por la operadora.
+3. Solo después, decidir evolución funcional según feedback.
 
-Actividad del servicio continúa demo y no bloquea esta secuencia. No se anteponen Office Script, `APP_*`, PostgreSQL, Supabase, Identity Plane, V5 ni refactor general. El paquete de evaluación es ahora el siguiente paso.
+Actividad del servicio continúa demo y no bloquea esta secuencia. No se anteponen Office Script, `APP_*`, PostgreSQL, Supabase, Identity Plane, V5 ni refactor general. El package ha superado QA y revisión y está en su ciclo de publicación y freeze.
 
 ---
 
@@ -201,6 +204,9 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 
 ### Estado y ejecución
 
+- [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md)
+- [`docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md)
+- [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md)
 - [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md)
 - [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
 - [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md)
@@ -343,4 +349,4 @@ Cuando contradigan el merge #265/#266, el código publicado en `fb7b70c50c991baf
 
 ---
 
-*Edición reconciliada post patient-flow, post-#257/#258, post-#261/#262 y post-#265/#266. El HEAD regional publicado es `fb7b70c50c991baf6a375b42112048d190fe0178`; Estadísticas raw usa la cohorte del Data Port mediante handoff efímero y exporta CSV completo (37 columnas) para evaluación sintética. Quick View PROM raw y Patient Longitudinal raw están implementados/publicados/demostrados para evaluación sintética; `PREEXISTING_QUICKVIEW_P2` y `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED` quedan resueltos/publicados. `CÁCERES-REVIEW-0.3` conserva su tree `81740136...`; no se autorizan datos reales, piloto, producción, promoción ni deploy.*
+*Edición candidate del Evaluation Package. El estado Git/app evaluado es el merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` y el último HEAD funcional permanece `fb7b70c50c991baf6a375b42112048d190fe0178`. El package ha superado QA y revisión y está en su ciclo de publicación y freeze con artefactos exclusivamente sintéticos; no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*

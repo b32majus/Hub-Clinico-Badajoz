@@ -5,8 +5,10 @@
 | Metadato | Valor |
 |---|---|
 | Fecha | 2026-08-07 |
-| Issue de origen / actualización | `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`; issue #265 CLOSED / PR #266 MERGED_AND_VERIFIED |
-| HEAD regional publicado | `fb7b70c50c991baf6a375b42112048d190fe0178` |
+| Origen funcional | `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`; issue #267 / PR #268 |
+| Actualización vigente de package | `WO-FH-EVALUATION-PACKAGE-01`; issue #269 |
+| Estado Git/app evaluado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
 | Cambios funcionales incluidos | issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258, issue #261 / PR #262 e issue #265 / PR #266 |
 | Datos autorizados | Exclusivamente sintéticos |
 | Piloto / producción | No acreditados |
@@ -156,22 +158,22 @@ Actividad continúa siendo una pantalla demo. Lee el conjunto disponible de `Far
 
 ## 8. Secuencia inmediata
 
-1. `WO-FH-EVALUATION-PACKAGE-01` — paquete de evaluación.
-2. Evaluación con farmacéuticas.
-3. Solo después, decidir evolución según feedback.
+1. Completar publicación y congelación de `WO-FH-EVALUATION-PACKAGE-01`.
+2. Evaluación con farmacéuticas mediante la guía, checklist y workbooks exclusivamente sintéticos del package aprobado por la operadora.
+3. Solo después del feedback, decidir la evolución funcional posterior.
 
-Patient Longitudinal está publicado; el paquete de evaluación es el siguiente paso. Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
+Patient Longitudinal está publicado. El package ha superado QA y revisión independiente, está publicado en su rama de trabajo y continúa en su ciclo de publicación y freeze, sin cambios funcionales. Su manifest canónico es [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md). Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
 
 ## 9. Fuentes y precedencia documental
 
 Para el estado actual prevalecen, en este orden:
 
-1. `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01` y su work order aprobada, como reconciliación actual.
-2. Código publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266.
-3. issue #261 / PR #262 (merge histórico `f2b827fa...`), issue #257 / PR #258 (merge histórico `a9d6d464...`), junto con issue #250 / PR #251 e issue #252 / PR #253.
-4. Este documento, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`.
-5. Decisión y contrato reconciliados del ciclo.
-6. PR #238/#242/#246 y documentos anteriores como trazabilidad histórica.
+1. `WO-FH-EVALUATION-PACKAGE-01` / issue #269, como autoridad actual para el estado del package, el material de evaluación, los gates de publicación/freeze y la preparación de la evaluación externa; no cambia funcionalidad.
+2. `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`, como autoridad para el estado funcional post-Longitudinal reconciliado.
+3. Código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, último HEAD funcional, merge del issue #265 / PR #266.
+4. Cadena funcional previa: issue #261 / PR #262 (merge histórico `f2b827fa...`), issue #257 / PR #258 (merge histórico `a9d6d464...`), issue #250 / PR #251 e issue #252 / PR #253.
+5. Este documento, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`.
+6. Decisiones, contratos, PR #238/#242/#246 y documentos anteriores como trazabilidad secundaria.
 
 `README.md`, `ARCHITECTURE.md`, `TODO.md`, `CHANGELOG.md`, `AGENTS.md`, documentos V0.3/V0.4 y issues replay antiguos no se reescriben en esta WO y no pueden contradecir silenciosamente este estado.
 
