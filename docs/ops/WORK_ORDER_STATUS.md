@@ -11,7 +11,8 @@
 | Elemento | Valor |
 |---|---|
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD regional publicado | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
+| HEAD Git regional publicado | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
+| Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
 | issue #257 / PR #258 | Issue CLOSED; PR `MERGED_AND_VERIFIED`; Estadísticas raw publicadas en el merge histórico previo `a9d6d464...` |
 | Candidate Estadísticas | `5a7ad559549f6a1a059150c3ddd1ef8436121cb9` |
 | Merge Estadísticas previo | `a9d6d4645cb90818bbb432d33d07fe2db19f52ee` |
@@ -36,10 +37,11 @@
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) |
 | Plan vigente | [`FARMACIA_PLAN_VACACIONES_20260731.md`](./FARMACIA_PLAN_VACACIONES_20260731.md) |
 | Estado post patient-flow | [`FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](./FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) |
+| Evaluation Package candidate | [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md); exclusivamente sintético, sin piloto ni producción |
 
 ## Reconciliación post patient-flow, post-statistics, post-Quick View y post-Longitudinal
 
-El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética en el merge histórico `a9d6d464...`, desde el candidate `5a7ad559...`. El issue #261 y la PR #262 publicaron Quick View raw PROMs en el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, desde el candidate `13963f89...`. El issue #265 y la PR #266 publicaron Patient Longitudinal raw en el HEAD actual `fb7b70c50c991baf6a375b42112048d190fe0178`, desde el candidate `a7b8deb...`:
+El issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible. El issue #257 y la PR #258 publicaron Estadísticas raw para evaluación sintética en el merge histórico `a9d6d464...`, desde el candidate `5a7ad559...`. El issue #261 y la PR #262 publicaron Quick View raw PROMs en el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3`, desde el candidate `13963f89...`. El issue #265 y la PR #266 publicaron Patient Longitudinal raw en el último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178`, desde el candidate `a7b8deb...`; el HEAD Git actual es el merge documental `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9`:
 
 ```text
 Excel raw → reader/selectors → Data Port → sesión del paciente actual
@@ -164,7 +166,7 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 | **WO-FH-RAW-STATISTICS-CUTOVER-01** | Estadísticas raw y CSV de cohorte | ✅ MERGED_AND_VERIFIED | `work/fh-raw-statistics-cutover-01-20260806` | issue #257; PR #258; candidate `5a7ad559...`; merge histórico `a9d6d464...` | Raw population statistics; handoff efímero; CSV 37 columnas; QA Chromium; `LOCAL_CI_EQUIVALENT_PASS` por incidencia GitHub; no es el HEAD vigente |
 | **WO-FH-RAW-QUICKVIEW-PROMS-01** | Quick View PROM raw | ✅ MERGED_AND_VERIFIED | `work/fh-raw-quickview-proms-01-20260806` | issue #261; PR #262; candidate `13963f89...`; merge `f2b827fe...` | Renderer estructurado publicado/demostrado para evaluación sintética; `PREEXISTING_QUICKVIEW_P2` resuelto; sin thresholds ni interpretación clínica; Reader 21/21, Selectors 82/82, Quick View PROM Chromium PASS |
 | **WO-FH-RAW-PATIENT-LONGITUDINAL-CUTOVER-01** | Patient Longitudinal raw | ✅ MERGED_AND_VERIFIED | `recovery/farmacia-pr-replay-20260727` | issue #265; PR #266; candidate `a7b8deb...`; merge publicado vigente `fb7b70c...` | Patient Longitudinal raw implementado, publicado y demostrado para evaluación sintética; `LONGITUDINAL_FULL_HISTORY_NOT_DEMONSTRATED` resuelto; hosted Farmacia smoke #914 SUCCESS; sin piloto ni producción |
-| **WO-FH-EVALUATION-PACKAGE-01** | Paquete de evaluación | 📋 Draft | — | — | Pendiente/no implementado; siguiente paso de la secuencia |
+| **WO-FH-EVALUATION-PACKAGE-01** | Paquete externo de evaluación sintética | 📋 Ready for review | `work/fh-evaluation-package-01-20260807` | Sin merge / sin commit | Candidate local `EVALUATION_PACKAGE_CANDIDATE_PASS`; QA verde y revisión independiente APTO; guía, checklist, manifest y dos workbooks externos sintéticos; no modifica funcionalidad ni autoriza piloto o producción |
 
 Correcciones P1 publicadas en `7ebc482629e1e818a6227c8e8946cddd12ee113a`: normalización simétrica mediante `trim()` para contexto e identificadores almacenados; padding almacenado soportado; componentes whitespace-only rechazados con `HANDOFF_IDENTIFIER_COMPONENT_EMPTY`; sensibilidad a mayúsculas preservada; payload original no mutado; TTL único `sessionTtlMs = 45000`; timeout funcional de 1500 ms retirado. El dashboard Bridge y su handoff quedan como historia técnica; los formularios normales publicados se describen en las entradas posteriores de patient-flow.
 
@@ -230,8 +232,8 @@ A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 |---|---:|
 | ✅ Merged | 61 |
 | ✅ MERGED_AND_VERIFIED | 8 |
-| 📋 Ready for review | 18 |
-| 📋 Draft | 2 |
+| 📋 Ready for review | 19 |
+| 📋 Draft | 1 |
 | 🟢 Validated | 1 |
 | 🔄 Superseded | 3 |
 | ✅ Completada | 1 |
@@ -241,6 +243,6 @@ A 2026-08-05, los issues #184, #186, #188, #190 y #192 continúan abiertos aunqu
 
 **Total:** 95 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 61 + 8 + 18 + 2 + 1 + 3 + 1 + 1 + 0 + 0 = 95, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 61 + 8 + 19 + 1 + 1 + 3 + 1 + 1 + 0 + 0 = 95, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.

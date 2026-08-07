@@ -7,6 +7,7 @@
 | Fecha | 2026-08-07 |
 | Issue de origen / actualización | `WO-DOC-FH-POST-LONGITUDINAL-RECONCILIATION-01`; issue #265 CLOSED / PR #266 MERGED_AND_VERIFIED |
 | HEAD regional publicado | `fb7b70c50c991baf6a375b42112048d190fe0178` |
+| HEAD Git actual | `46e1f3c5923d5d195bb679d2f31ec56028b8f5f9` (merge documental issue #267 / PR #268) |
 | Cambios funcionales incluidos | issue #250 / PR #251, issue #252 / PR #253, issue #257 / PR #258, issue #261 / PR #262 e issue #265 / PR #266 |
 | Datos autorizados | Exclusivamente sintéticos |
 | Piloto / producción | No acreditados |
@@ -156,11 +157,11 @@ Actividad continúa siendo una pantalla demo. Lee el conjunto disponible de `Far
 
 ## 8. Secuencia inmediata
 
-1. `WO-FH-EVALUATION-PACKAGE-01` — paquete de evaluación.
-2. Evaluación con farmacéuticas.
-3. Solo después, decidir evolución según feedback.
+1. Completar QA y revisión independiente de `WO-FH-EVALUATION-PACKAGE-01`, candidate local en `work/fh-evaluation-package-01-20260807`.
+2. Evaluación con farmacéuticas mediante la guía, checklist y workbooks exclusivamente sintéticos del package aprobado por la operadora.
+3. Solo después del feedback, decidir la evolución funcional posterior.
 
-Patient Longitudinal está publicado; el paquete de evaluación es el siguiente paso. Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
+Patient Longitudinal está publicado y el paquete de evaluación está preparado como candidate, sin cambios funcionales ni publicación. Su manifest canónico es [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](./FARMACIA_EVALUATION_READY_STATE_20260807.md). Actividad continúa demo y no bloquea esta secuencia. Office Script, Identity Plane, Supabase, V5 y refactor general no se anteponen; cada etapa requiere su propia autorización y evidencia.
 
 ## 9. Fuentes y precedencia documental
 
