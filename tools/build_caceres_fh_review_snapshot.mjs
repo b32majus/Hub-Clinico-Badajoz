@@ -95,6 +95,10 @@ function localReferences(html) {
     .filter((ref) => !/^(?:https?:|data:|mailto:|tel:|#)/.test(ref));
 }
 
+function normalizeTextEol(text) {
+  return text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n/g, '\r\n');
+}
+
 function transformHtml(source) {
   let html = source.replace(
     /\s*<div class="nav-section">\s*<h3 class="nav-title">Módulos<\/h3>[\s\S]*?<\/ul>\s*<\/div>/g,
@@ -128,9 +132,25 @@ async function sha256(file) {
   return createHash('sha256').update(await readFile(path.join(OUT, file))).digest('hex');
 }
 
-async function main() {
+function assertGitQuiet(args, errorCode) {
+  try {
+    execFileSync('git', args, { cwd: ROOT, stdio: 'ignore' });
+  } catch {
+    throw new Error(errorCode);
+  }
+}
+
+function assertSourceProvenance() {
   const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim();
-  if (head !== SOURCE_SHA) throw new Error(`Source SHA mismatch: expected ${SOURCE_SHA}, got ${head}`);
+  assertGitQuiet(['merge-base', '--is-ancestor', SOURCE_SHA, head], 'SOURCE_PROVENANCE_ANCESTRY_MISMATCH');
+  const sourceInputPaths = ['--', ...allowlist];
+  assertGitQuiet(['diff', '--quiet', SOURCE_SHA, head, ...sourceInputPaths], 'SOURCE_INPUT_COMMITTED_DRIFT');
+  assertGitQuiet(['diff', '--quiet', head, ...sourceInputPaths], 'SOURCE_INPUT_WORKTREE_DRIFT');
+  assertGitQuiet(['diff', '--cached', '--quiet', head, ...sourceInputPaths], 'SOURCE_INPUT_WORKTREE_DRIFT');
+}
+
+async function main() {
+  assertSourceProvenance();
   for (const file of allowlist) await readFile(path.join(ROOT, file));
   const generatedFiles = new Set([...allowlist, 'scripts/caceres_review_deployment.js', 'index.html']);
   for (const file of htmlFiles) {
@@ -145,15 +165,15 @@ async function main() {
   for (const file of allowlist) {
     const destination = path.join(OUT, file);
     await mkdir(path.dirname(destination), { recursive: true });
-    if (htmlFiles.includes(file)) await writeFile(destination, transformHtml(await readFile(path.join(ROOT, file), 'utf8')));
-    else if (provenanceScripts.includes(file)) await writeFile(destination, transformProvenance(await readFile(path.join(ROOT, file), 'utf8'), file));
+    if (htmlFiles.includes(file)) await writeFile(destination, normalizeTextEol(transformHtml(await readFile(path.join(ROOT, file), 'utf8'))));
+    else if (provenanceScripts.includes(file)) await writeFile(destination, normalizeTextEol(transformProvenance(await readFile(path.join(ROOT, file), 'utf8'), file)));
     else await cp(path.join(ROOT, file), destination);
   }
   const commonPath = path.join(OUT, 'scripts/farmacia_common.js');
   const common = (await readFile(commonPath, 'utf8')).replace(/Profesional FH-\d+/g, PROFILE);
-  await writeFile(commonPath, common);
-  await writeFile(path.join(OUT, 'scripts/caceres_review_deployment.js'), layer);
-  await writeFile(path.join(OUT, 'index.html'), await readFile(path.join(OUT, 'farmacia_index.html')));
+  await writeFile(commonPath, normalizeTextEol(common));
+  await writeFile(path.join(OUT, 'scripts/caceres_review_deployment.js'), normalizeTextEol(layer));
+  await writeFile(path.join(OUT, 'index.html'), normalizeTextEol(await readFile(path.join(OUT, 'farmacia_index.html'), 'utf8')));
 
   const inventory = [...allowlist, 'scripts/caceres_review_deployment.js', 'index.html'];
   assertSafeSnapshot(inventory);
@@ -164,7 +184,7 @@ async function main() {
     built_at: execFileSync('git', ['show', '-s', '--format=%cI', SOURCE_SHA], { cwd: ROOT, encoding: 'utf8' }).trim(),
     allowlist: allowlist.sort(), hashes
   };
-  await writeFile(path.join(OUT, 'deployment-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  await writeFile(path.join(OUT, 'deployment-manifest.json'), normalizeTextEol(`${JSON.stringify(manifest, null, 2)}\n`));
   console.log(`Built ${OUT} from ${SOURCE_SHA} (${inventory.length + 1} files).`);
 }
 
