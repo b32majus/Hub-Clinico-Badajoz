@@ -161,6 +161,14 @@
         return String(value);
     }
 
+    function rawMovementLabel(type) {
+        if (type === 'schedule_change') return 'Cambio de pauta explícito';
+        if (type === 'dose_change') return 'Cambio de dosis explícito';
+        if (type === 'dose_and_schedule_change') return 'Cambio de dosis y pauta explícito';
+        if (type === 'suspension') return 'Suspensión explícita';
+        return 'Movimiento terapéutico explícito';
+    }
+
     function renderError(rawMode) {
         var blocks = [
             'longitudinalPatientSummary',
@@ -273,7 +281,9 @@
         var raw = patient.__farmaciaRawPatient === true;
         var causalityText = (patient.causality_records || []).map(function (record) {
             var assessment = record.assessment || record;
-            return Object.keys(assessment).map(function (key) {
+            return Object.keys(assessment).filter(function (key) {
+                return raw || key !== 'source_event_id';
+            }).map(function (key) {
                 return key + ': ' + explicitText(assessment[key]);
             }).join(' · ');
         }).join(' | ');
@@ -359,8 +369,13 @@
                     movement.effective_date ? 'Fecha efectiva: ' + movement.effective_date : 'Fecha efectiva no registrada',
                     'Fecha del acto: ' + (movement.visit_date || 'No registrada')
                 ].filter(Boolean).join(' · ');
-                var movementField = buildInfoField((movement.type === 'suspension' ? 'Suspensión explícita' : 'Movimiento explícito') + ' · ' + movement.type, movementText);
+                var movementField = buildInfoField(rawMovementLabel(movement.type) + ' · ' + movement.type, movementText);
                 movementField.setAttribute('data-longitudinal-movement', movement.type + '-' + index);
+                movementField.setAttribute('title', rawMovementLabel(movement.type)
+                    + '\nTipo: ' + (movement.type || 'No registrado')
+                    + '\nMotivo: ' + (movement.reason || 'No registrado')
+                    + '\nFecha efectiva: ' + (movement.effective_date || 'No registrada')
+                    + '\nFecha del acto: ' + (movement.visit_date || 'No registrada'));
                 container.appendChild(movementField);
             });
             (patient.adherencia_historial || []).forEach(function (record, index) {
@@ -537,9 +552,18 @@
                 var marker = divEl('longitudinal-timeline-change-marker');
                 marker.style.left = pct(cdDate) + '%';
 
-                var cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—') + '\nMotivo: ' + (c.motivo || '—');
-                if (c.descripcion) { cTooltip += '\n' + c.descripcion; }
-                if (c.estado_validacion_farmacia) { cTooltip += '\nValidacion: ' + c.estado_validacion_farmacia; }
+                var cTooltip;
+                if (patient.__farmaciaRawPatient) {
+                    cTooltip = rawMovementLabel(c.tipo)
+                        + '\nTipo: ' + (c.tipo || 'No registrado')
+                        + '\nMotivo: ' + (c.motivo || 'No registrado')
+                        + '\nFecha efectiva: ' + (c.effective_date || 'No registrada')
+                        + '\nFecha del acto: ' + (c.visit_date || 'No registrada');
+                } else {
+                    cTooltip = 'Cambio de pauta — ' + (c.fecha || '') + '\nTipo: ' + (c.tipo || '—') + '\nMotivo: ' + (c.motivo || '—');
+                    if (c.descripcion) { cTooltip += '\n' + c.descripcion; }
+                    if (c.estado_validacion_farmacia) { cTooltip += '\nValidacion: ' + c.estado_validacion_farmacia; }
+                }
                 marker.setAttribute('title', cTooltip);
 
                 markerRow.appendChild(marker);
@@ -625,10 +649,17 @@
             card.appendChild(header);
 
             var details = divEl('longitudinal-ae-details');
-            details.appendChild(span((patient.__farmaciaRawPatient ? 'Fecha del acto: ' : 'Fecha: ') + (ev.fecha || 'No registrado'), 'longitudinal-ae-detail'));
-            details.appendChild(span('ID de EA: ' + (ev.ea_id || 'No registrado'), 'longitudinal-ae-detail'));
-            details.appendChild(span('Descripción: ' + (ev.tipo || 'No registrado'), 'longitudinal-ae-detail'));
-            details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || 'No registrado'), 'longitudinal-ae-detail'));
+            if (patient.__farmaciaRawPatient) {
+                details.appendChild(span('Fecha del acto: ' + (ev.fecha || 'No registrado'), 'longitudinal-ae-detail'));
+                details.appendChild(span('ID de EA: ' + (ev.ea_id || 'No registrado'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Descripción: ' + (ev.tipo || 'No registrado'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || 'No registrado'), 'longitudinal-ae-detail'));
+            } else {
+                details.appendChild(span('Fecha: ' + (ev.fecha || '—'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Tipo: ' + (ev.tipo || '—'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Relación con tratamiento: ' + (ev.relacion_tratamiento || '—'), 'longitudinal-ae-detail'));
+                details.appendChild(span('Acción tomada: ' + (ev.accion_tomada || '—'), 'longitudinal-ae-detail'));
+            }
             details.appendChild(span('Resultado: ' + (ev.resultado || 'No registrado'), 'longitudinal-ae-detail'));
             var causality = (ev.evaluaciones_causalidad || []).map(function (assessment) {
                 return Object.keys(assessment).filter(function (key) { return key !== 'source_event_id'; }).map(function (key) {

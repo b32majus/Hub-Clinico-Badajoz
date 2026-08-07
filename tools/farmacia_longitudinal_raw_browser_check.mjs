@@ -250,11 +250,22 @@ try {
   assert.match(visits.join('\n'), /Activo explícito[\s\S]*No activo explícito[\s\S]*No registrado/);
   const timeline = await page.locator('#longitudinalTreatmentTimeline').innerText();
   assert.doesNotMatch(timeline, /no_change_recorded/);
-  assert.match(timeline, /schedule_change[\s\S]*Cada 21 días[\s\S]*Fecha efectiva: 2026-02-12/i);
+  const schedule = page.locator('[data-longitudinal-movement^="schedule_change-"]');
+  assert.match(await schedule.innerText(), /Cambio de pauta explícito[\s\S]*schedule_change[\s\S]*Cada 21 días[\s\S]*Fecha efectiva: 2026-02-12/i);
   const dose = page.locator('[data-longitudinal-movement^="dose_change-"]');
-  assert.match(await dose.innerText(), /20 mg[\s\S]*Fecha efectiva no registrada[\s\S]*Fecha del acto: 2026-03-10/i);
+  assert.match(await dose.innerText(), /Cambio de dosis explícito[\s\S]*dose_change[\s\S]*20 mg[\s\S]*Fecha efectiva no registrada[\s\S]*Fecha del acto: 2026-03-10/i);
+  assert.doesNotMatch(await dose.innerText(), /Cambio de pauta/i);
   assert.doesNotMatch(await dose.innerText(), /Fecha efectiva:\s*2026-03-10/);
-  assert.match(timeline, /Suspensión explícita[\s\S]*Suspensión explícita por decisión sintética[\s\S]*Fecha efectiva: 2026-04-11/i);
+  const doseTooltip = await dose.getAttribute('title');
+  assert.match(doseTooltip || '', /Cambio de dosis explícito[\s\S]*dose_change[\s\S]*Fecha efectiva: No registrada[\s\S]*Fecha del acto: 2026-03-10/i);
+  assert.doesNotMatch(doseTooltip || '', /Cambio de pauta/i);
+  const suspension = page.locator('[data-longitudinal-movement^="suspension-"]');
+  assert.match(await suspension.innerText(), /Suspensión explícita[\s\S]*suspension[\s\S]*Suspensión explícita por decisión sintética[\s\S]*Fecha efectiva: 2026-04-11/i);
+  assert.doesNotMatch(await suspension.innerText(), /Cambio de pauta/i);
+  const movementTooltips = await page.locator('.longitudinal-timeline-change-marker').evaluateAll(markers => markers.map(marker => marker.title));
+  assert(movementTooltips.some(title => /Cambio de pauta explícito[\s\S]*schedule_change[\s\S]*Fecha efectiva: 2026-02-12[\s\S]*Fecha del acto: 2026-02-10/i.test(title)));
+  assert(movementTooltips.some(title => /Suspensión explícita[\s\S]*suspension[\s\S]*Fecha efectiva: 2026-04-11[\s\S]*Fecha del acto: 2026-04-10/i.test(title)));
+  assert.equal(movementTooltips.some(title => /Cambio de pauta[\s\S]*suspension/i.test(title)), false);
   assert.match(timeline, /Adherencia histórica A1[\s\S]*Adherencia histórica A2/i);
   assert.doesNotMatch(timeline, /Inicio:\s*2026-|Fin:\s*2026-/, 'act dates do not become treatment dates');
 
