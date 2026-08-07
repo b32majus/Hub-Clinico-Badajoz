@@ -1,9 +1,9 @@
-# Farmacia — estado del paquete de evaluación sintética (freeze autónomo candidato)
+# Farmacia — estado del paquete de evaluación sintética (FREEZE FINAL)
 
 | Metadato | Valor |
 |---|---|
 | `PACKAGE_ID` | `PROMUEVE_FH_CACERES_AUTONOMOUS_EVALUATION_20260807` |
-| `CURRENT_PUBLISHED_HEAD_BEFORE_DOC_FREEZE` | `451d02361fc54cc01f493ca2a89192bde52d7fd9` |
+| `CURRENT_PUBLISHED_HEAD` | `827163d8c0d4eafb8af235da9a97aa4338a8141f` |
 | `LAST_FUNCTIONAL_HEAD` | `fb7b70c50c991baf6a375b42112048d190fe0178` |
 | `EVALUATION_PACKAGE_MERGE` | `8bfceaaa956199610be9c0e6df40740a04b73699` |
 | `SNAPSHOT_04_CANDIDATE` | `d9cbd56b515ee75c871bfb5e63f96320c963b1e0` |
@@ -11,17 +11,18 @@
 | `MANIFEST_INTEGRITY_CANDIDATE` | `963bac71ffac4e2d6d088aeeb4d9abeaf8f5bad1` |
 | `MANIFEST_INTEGRITY_MERGE` | `451d02361fc54cc01f493ca2a89192bde52d7fd9` |
 | Snapshot | `CÁCERES-REVIEW-0.4` |
-| Pages hosted | Construida sobre `451d0236`, sin errores |
+| Pages hosted | Construida sobre `827163d8`, sin errores; smoke hosted final PASS |
 | Rama candidate freeze | `work/fh-evaluation-autonomous-freeze-01-20260807` |
-| `PACKAGE_CANDIDATE_STATE` | `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS` |
-| `DOC_FREEZE_CANDIDATE_SHA` | `<after commit>` |
-| `DOC_FREEZE_MERGE_SHA` | `PENDING_OPERATOR_MERGE` |
-| Merge / ZIP final | No realizado aún |
+| `DOC_FREEZE_CANDIDATE_SHA` | `9d95ec997ff7907e6403f5b69de9375052f817c5` |
+| `DOC_FREEZE_MERGE_SHA` | `827163d8c0d4eafb8af235da9a97aa4338a8141f` |
+| `DOC_FREEZE_PR` | `278` |
+| `PACKAGE_STATE` | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` |
+| Merge / ZIP final | Realizado; manifest/ZIP definitivo con SHA-256 y post-extract PASS |
 | Datos | `SYNTHETIC_DATA_ONLY = YES` |
 | Uso | Evaluación funcional externa sintética autónoma; no piloto, no producción |
 | `OPERATOR_DISTRIBUTION_APPROVAL` | `YES` |
 
-> No se declara freeze externo final ni `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` hasta que existan el merge del freeze documental + el manifest/ZIP definitivo con SHAs de publicación. Este documento describe el **candidate** del freeze, no el estado final.
+> Estado **FINAL congelado**. `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` NO equivale a `READY_FOR_PILOT` ni a `READY_FOR_PRODUCTION`. El freeze externo definitivo queda registrado con el merge documental PR #278 y el manifest/ZIP definitivo con SHAs de publicación.
 
 ## 1. Trazabilidad funcional
 
@@ -30,7 +31,7 @@
 | Paquete de evaluación sintética | issue #269 / PR #270 | Merge `8bfceaaa956199610be9c0e6df40740a04b73699` |
 | Snapshot Cáceres 0.4 | issue #271 / PR #272 | Candidato `d9cbd56b515ee75c871bfb5e63f96320c963b1e0`; merge publicación `9125518a74151010eaa2d48b913c5954fa54b8a1` |
 | Integridad de manifest EOL | issue #273 / PR #276 | Candidato `963bac71ffac4e2d6d088aeeb4d9abeaf8f5bad1`; merge `451d02361fc54cc01f493ca2a89192bde52d7fd9` |
-| Freeze autónomo de evaluación sintética | issue #277 / WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01 | Candidate de este freeze; sin merge aún |
+| Freeze autónomo de evaluación sintética | issue #277 / PR #278 / WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01 | Merge `827163d8c0d4eafb8af235da9a97aa4338a8141f`; freeze FINAL |
 
 La cadena funcional evaluada permanece en `fb7b70c50c991baf6a375b42112048d190fe0178` (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258, #261/#262 y #265/#266. El paquete no modifica runtime.
 
@@ -93,16 +94,18 @@ Se carga por separado a través del loader visible de Enfermería; no reemplaza 
 - La navegación visible de Estadísticas se inicia desde la superficie canónica `farmacia_index.html` para recibir la cohorte efímera de Farmacia.
 - La actividad del servicio permanece demo.
 
-## 5. QA del candidato
+## 5. QA del freeze final
 
 | Gate | Resultado |
 |---|---|
 | Scope exacto de seis rutas | PASS |
 | Workbook maestro (152/95/93/55, CIP-A/B) | PASS; SHA verificado |
 | Workbook Enfermería sintético + loader visible compatible | PASS |
-| Smoke público final del candidato (hosted) | PASS |
+| Smoke público final (hosted) | PASS |
 | `console.error` / `pageerror` | PASS (`0` / `0`) |
 | Sin datos reales | PASS |
+| Pages construida sobre `827163d8` | PASS; sin errores |
+| Manifest/ZIP definitivo y post-extract | PASS |
 | Revisión independiente read-only | APTO |
 
 ## 6. Límites vinculantes
@@ -118,4 +121,4 @@ Se carga por separado a través del loader visible de Enfermería; no reemplaza 
 - Los PROMs preservan `0` y `false` y no reciben interpretación automática.
 - `absent` o `not_recorded` no resuelve un EA previo; la causalidad es solo explícita.
 
-Candidato: `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`. El freeze externo definitivo solo se declarará tras merge verificado, manifest/ZIP final existente y aprobación de distribución humana. No equivale a piloto ni producción.
+Estado: `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` (FINAL). No equivale a piloto ni producción.

@@ -1,33 +1,36 @@
 # Índice documental maestro — Hub Clínico Badajoz / PROMueve Nexus
 
 | Metadato | Valor |
-|---|---|---|
+|---|---|
 | Última actualización | 2026-08-07 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Estado publicado pre-freeze documental | `451d02361fc54cc01f493ca2a89192bde52d7fd9` (merge issue #273 / PR #276, integridad de manifest) |
+| Estado publicado | `827163d8c0d4eafb8af235da9a97aa4338a8141f` |
 | Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.4` (promovido por issue #271 / PR #272) |
 | Snapshot 0.4 candidate | `d9cbd56b515ee75c871bfb5e63f96320c963b1e0` |
 | Snapshot 0.4 publicación | merge `9125518a74151010eaa2d48b913c5954fa54b8a1` (PR #272) |
 | Integridad manifest 0.4 | merge `451d02361fc54cc01f493ca2a89192bde52d7fd9` (PR #276) |
-| Rama candidate de esta edición | `work/fh-evaluation-autonomous-freeze-01-20260807` (WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01) |
-| Work order actual | issue #277 |
+| Freeze documental | PR #278 mergeado; snapshot `CÁCERES-REVIEW-0.4`; un único workbook de Farmacia + workbook complementario de Enfermería |
+| Paquete final | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` |
+| Actividad del servicio | Demo |
+| Alcance | Sin piloto / sin producción |
+| Work order actual | issue #279 |
 
-> Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete candidate solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
+> Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete final solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
-> El modelo de evaluación Farmacia es **un único workbook** (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`) que alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV. Estadísticas usa la misma cohorte (55) y el CSV sin filtros es 55 × 37. El hosted single-workbook es PASS. El paquete de evaluación autónoma está en freeze candidato bajo el issue #277; Activity permanece demo.
+> El modelo de evaluación Farmacia es **un único workbook** (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`) que alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV, complementado por un workbook de Enfermería. Estadísticas usa la misma cohorte (55) y el CSV sin filtros es 55 × 37. El hosted single-workbook es PASS. El paquete de evaluación sintética está en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` (PR #278); Activity permanece demo.
 
-> La integración de esta edición generará un merge SHA posterior, que no se anticipa aquí. Por ello se registra el estado publicado y, por separado, el último SHA que modificó código funcional; el estado publicado se verifica siempre en GitHub.
+> El estado publicado de Farmacia es `827163d8c0d4eafb8af235da9a97aa4338a8141f`; el último SHA que modificó código funcional es `fb7b70c50c991baf6a375b42112048d190fe0178`. El estado publicado se verifica siempre en GitHub.
 
 ---
 
 ## 1. Lectura recomendada actual
 
-1. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) — recorrido práctico del candidate para farmacéuticas evaluadoras, solo con datos sintéticos.
+1. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) — recorrido práctico del paquete final para farmacéuticas evaluadoras, solo con datos sintéticos.
 2. [`docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — recogida homogénea de feedback clínico y de producto sin datos reales.
-3. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — manifest canónico y gates del Evaluation Package candidate.
+3. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — manifest canónico y gates del paquete final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`.
 4. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado funcional reconciliado tras Patient Longitudinal raw.
 5. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación.
 6. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, PRs y candidate.
@@ -39,8 +42,8 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 
 ## 2. Orden de verdad
 
-1. Work order actual: `WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01` (issue #277).
-2. GitHub: estado publicado pre-freeze documental `451d02361fc54cc01f493ca2a89192bde52d7fd9` (issue #273 / PR #276) y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
+1. Work order actual: `WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01` (issue #279).
+2. GitHub: estado publicado `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278) y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #265/#266.
 4. Este índice reconciliado.
 5. `docs/ops/WORK_ORDER_STATUS.md` reconciliado.
@@ -57,7 +60,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 |---|---|---|---|
 | `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado publicado pre-freeze `451d02361fc54cc01f493ca2a89192bde52d7fd9` (issue #273 / PR #276); último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado publicado `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278); último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
 | `previews/caceres-fh/` | **Snapshot estable CÁCERES-REVIEW-0.4**; promovido por issue #271 / PR #272; integridad de manifest por issue #273 / PR #276 | Evaluación Pharmacy-only Cáceres autónoma | Evolución regional automática |
 | `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
@@ -78,7 +81,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 |---|---|
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| Estado publicado pre-freeze | `451d02361fc54cc01f493ca2a89192bde52d7fd9` (merge issue #273 / PR #276) |
+| Estado publicado | `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278) |
 | Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
 | issue #250 / PR #251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; merge `de830803...` |
 | issue #252 / PR #253 | Cutover del flujo normal publicado; merge histórico `3f7bf9bb...` con CI verde, superseded como HEAD regional por #257/#258 y posteriormente #261/#262 y #265/#266 |
@@ -98,8 +101,8 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
 | Modelo de workbook | **Un único workbook** de Farmacia (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`, 55 pacientes / 93 eventos / 95 filas / 152 columnas) alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV; hosted single-workbook PASS |
-| Work order actual | issue #277 — WO-FH-EVALUATION-AUTONOMOUS-FREEZE-01; paquete de evaluación autónoma en freeze candidato; `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`; Activity demo |
-| Evaluation Package | El paquete de evaluación evolucionó a **autónomo**: mismo workbook maestro de Farmacia (55/93/95/152) compartido por todos los módulos y Estadísticas desde la misma cohorte; freeze candidato bajo issue #277 en la rama `work/fh-evaluation-autonomous-freeze-01-20260807`; guía, checklist y manifest canónico en [`FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md); sin cambios funcionales |
+| Work order actual | issue #279 — WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01; paquete de evaluación sintética en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; Activity demo |
+| Evaluation Package | El paquete de evaluación evolucionó a **autónomo**: mismo workbook maestro de Farmacia (55/93/95/152) compartido por todos los módulos y Estadísticas desde la misma cohorte, con un workbook complementario de Enfermería; estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` tras el merge del freeze documental PR #278; sin cambios funcionales |
 
 > Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3` corresponde a Quick View del issue #261 / PR #262; el estado actual de Farmacia se verifica contra `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266, que conserva el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 
@@ -132,11 +135,11 @@ Patient Longitudinal raw está implementado, publicado y demostrado para evaluac
 
 ### Secuencia vigente post Longitudinal
 
-1. Completar publicación y congelación de `WO-FH-EVALUATION-PACKAGE-01`.
+1. Paquete de evaluación sintética publicado y congelado: estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` (issue #277 / PR #278).
 2. Evaluación con farmacéuticas usando el package sintético aprobado por la operadora.
 3. Solo después, decidir evolución funcional según feedback.
 
-Actividad del servicio continúa demo y no bloquea esta secuencia. No se anteponen Office Script, `APP_*`, PostgreSQL, Supabase, Identity Plane, V5 ni refactor general. El package ha superado QA y revisión y está en su ciclo de publicación y freeze.
+Actividad del servicio continúa demo y no bloquea esta secuencia. No se anteponen Office Script, `APP_*`, PostgreSQL, Supabase, Identity Plane, V5 ni refactor general. El package ha superado QA y revisión y está en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`.
 
 ---
 
@@ -357,4 +360,4 @@ Cuando contradigan el merge #265/#266, el código publicado en `fb7b70c50c991baf
 
 ---
 
-*Edición candidate del freeze autónomo del paquete de evaluación sintética (issue #277). El estado publicado pre-freeze documental es `451d02361fc54cc01f493ca2a89192bde52d7fd9` y el último HEAD funcional permanece `fb7b70c50c991baf6a375b42112048d190fe0178`. El paquete es autónomo vía Pages, con un único workbook de Farmacia y freeze candidato `FH_EVALUATION_AUTONOMOUS_FREEZE_CANDIDATE_PASS`; sin merge ni ZIP final, no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*
+*Edición final de la reconciliación documental (issue #279). El estado publicado de Farmacia es `827163d8c0d4eafb8af235da9a97aa4338a8141f`, tras el merge del freeze documental del issue #277 / PR #278, y el último HEAD funcional permanece `fb7b70c50c991baf6a375b42112048d190fe0178`. El paquete es autónomo vía Pages, con un único workbook de Farmacia + workbook complementario de Enfermería y estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*
