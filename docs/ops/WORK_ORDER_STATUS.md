@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-08-07
+**Última actualización:** 2026-09-04
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -71,6 +71,43 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 - Patient Longitudinal raw (issue #265 / PR #266, candidate `a7b8deb...`, merge `fb7b70c...`) está implementado, publicado y demostrado para evaluación sintética. Usa `CurrentPatientSession` → `FarmaciaPatientFlowRuntime.getCurrentEnvelope()` → `explicit_data` → `FarmaciaLongitudinalRawAdapter` → dashboard Longitudinal. Reconstruye todos los actos disponibles de Primera Visita y Seguimiento, agrupa correctamente los actos multifila y conserva los snapshots explícitos por acto. `active_at_event` distingue activo explícito (`true`), no activo explícito (`false`) y no registrado (otro/ausente); muestra únicamente movimientos explícitos relevantes, excluye `no_change_recorded` y `not_recorded`, y diferencia `schedule_change`, `dose_change`, `dose_and_schedule_change`, `suspension` y `other`. No fabrica fechas terapéuticas ni sustituye `movement_effective_date` ausente por la fecha del acto; conserva PROMs históricos y simultáneos (incluidos `0` y `false`; fecha PROM solo si el propio PROM la contiene) y la historia explícita de adherencia; agrupa EA `present` explícito por identidad conservando updates; `absent`/`not_recorded` no se interpreta como resolución de un EA previo (la resolución solo se afirma por campos explícitos) y la causalidad es exclusivamente explícita. La actividad clínica raw permanece `[]` / No registrado porque el contrato actual no la estructura; la vista no aplica thresholds ni interpretación clínica automática y raw y demo no se mezclan. La evidencia de la batería local/Chromium es `LOCAL_CI_EQUIVALENT_PASS` (Longitudinal raw Chromium PASS, Reader 21/21, Selectors 82/82, Data Port 11/11, patient-flow 17/17, smoke 48/48, Dashboard Paciente 37/37, Quick View PROM Chromium PASS, Statistics 30 escenarios). Aparte, la evidencia hosted post-PR es el Farmacia smoke check #914 con conclusion `success`; la batería local/Chromium completa no debe confundirse con ese smoke hosted.
 - El freeze documental del paquete de evaluación sintética (issue #277 / PR #278) quedó `MERGED_AND_VERIFIED` dentro del alcance documental/freeze en el merge `827163d8c0d4eafb8af235da9a97aa4338a8141f`, estado publicado actual. El paquete es final: `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`. Es un **único workbook** de Farmacia (55 pacientes / 93 eventos / 95 filas / 152 columnas), Estadísticas usa el mismo Data Port (55) y Activity permanece demo. No equivale a piloto ni producción.
 - Secuencia inmediata: el paquete de evaluación sintética está en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` → evaluación externa con farmacéuticas → decidir evolución según feedback. Patient Longitudinal está publicado; no se abre una nueva capacidad funcional en esta etapa.
+
+---
+
+## FH_UNIFIED_CLINICAL_INTAKE_V0 — candidato de ticket train (NO ejecutable)
+
+> Registrado 2026-09-04. Los tickets candidatos existen en GitHub únicamente como
+> material de la auditoría independiente TICKET/HANDOFF (pipeline Atenea:
+> `to-spec → SPEC audit → to-tickets → TICKET/HANDOFF audit → ready-for-agent`).
+> Su existencia NO autoriza ejecución. Este registro vive en la rama de trabajo
+> `work/hermes/fh-unified-clinical-intake-brief`; NO representa implementación,
+> publicación en recovery, ni estado demo/pilot-ready.
+
+| Elemento | Valor |
+|---|---|
+| Parent spec | [`../specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](../specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) |
+| Spec checkpoint | `dff7489931cc41ce658de90b1616c2852204b5da` (rama `work/hermes/fh-unified-clinical-intake-brief`; tree `2d8c6bf6a9b077ee0e6191f7724cf983e4fc60ae`) |
+| Parent issue | [#292 — PLAN-FH-UNIFIED_CLINICAL_INTAKE-V0](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/292) |
+| Ticket train | T1 #293 · T2 #294 · T3 #295 · T4 #296 · T5 #297 · T6 #298 · T7 #299 · T8 #300 · T9 #301 · T10 #302 |
+| Estado spec | `PASS` — `SPEC_REPAIR=PASS`; rechecks independientes Omen `PASS`, Muse `PASS`; `SPEC_CONTENT=CLOSED` |
+| Handoff audit | `PENDING` (auditoría independiente clean-context TICKET/HANDOFF) |
+| Technical handoff | `NOT_YET_AUDITED` |
+| Autoridad | #283 = subset PreSalud solamente; el train completo = `PENDING OPERATOR APPROVAL` |
+| Ejecución | `NOT_EXECUTION_READY`; `READY_FOR_AGENT=NO`; sin etiquetas `ready-for-agent` ni `status:approved` |
+| Estado clínico | Desarrollo sintético/demo únicamente; NO PILOTO; NO PRODUCCIÓN |
+
+Notas de autoridad del train:
+
+- T4 = `SCOPE_COVERED_BY_283_BUT_EXECUTION_BLOCKED_PENDING_T2_AUTHORITY` (#283
+  cubre el alcance del parser PreSalud, pero T4 no puede ejecutarse hasta que su
+  dependencia T2 tenga autoridad válida y checkpoint remoto aceptado).
+- T1, T2, T3, T5–T10 = `REQUIRES_NEW_OR_AMENDED_AUTHORITY`.
+- Los 10 tickets están enlazados como sub-issues nativos de #292; el grafo de
+  blockers vive en los cuerpos de los issues (T1 root, T2 root, T3←T2, T4←T2,
+  T5←T3+T4, T6←T5, T7←T6, T8←T7, T9←T7, T10←T1+T8+T9); GitHub no ofrece
+  relación nativa `blocked-by` para repos regulares.
+- Cierre de dependencia según semántica Atenea D-024: checkpoint remoto duradero
+  aceptado, no merge obligatorio por ticket.
 
 ---
 
