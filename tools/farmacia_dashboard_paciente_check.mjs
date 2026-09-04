@@ -140,6 +140,51 @@ assert(tlBody.includes('patient.cambios_pauta || []'), 'Timeline conserva cambio
 assert(html.indexOf(forbidden) === -1, 'HTML dashboard no usa innerHTML');
 assert(js.indexOf(forbidden) === -1, 'JS dashboard no usa innerHTML');
 
+// --- WO-FH-DASHBOARD-PROMS-SHAPE-P1-01 (Issue #288 / F-01-F-04) ---
+// Contrato de forma: ARRAY estructurado intacto; STRING legacy solo contexto demo.
+
+// 24. F-01: el resumen no invoca .map sobre una forma string/desconocida
+assert(!js.includes('(patient.proms || []).map('), 'Summary no hace .map directo sobre patient.proms');
+
+// 25. Normalización de acceso a proms por forma (no muta string a array)
+assert(js.includes('function getStructuredProms(patient)'), 'Existe helper getStructuredProms');
+assert(js.includes('function getLegacyPromsText(patient)'), 'Existe helper getLegacyPromsText (string legacy literal)');
+assert(js.includes('Array.isArray(patient.proms)'), 'El acceso a proms estructuradas valida Array.isArray');
+assert(js.includes('typeof proms === \'string\''), 'La forma legacy se reconoce solo como string');
+
+// 26. F-04: renderProms no itera una string como colección de PROMs
+var renderPromsBody = js.match(/function renderProms[\s\S]*?^    \}/m);
+assert(!!renderPromsBody, 'renderProms presente');
+assert(renderPromsBody[0].includes("!Array.isArray(patient.proms)"),
+    'renderProms deriva strings/desconocidos al branch legacy seguro antes de iterar');
+assert(renderPromsBody[0].includes('renderLegacyPromsText'),
+    'renderProms usa renderLegacyPromsText para la forma string');
+
+// 27. F-01/F-04: renderExtendedBlocks no colapsa string a array vacío (fin del undefined tile)
+assert(!/patient\.proms = Array\.isArray\(patient\.proms\) \? patient\.proms : \[\]/.test(js),
+    'renderExtendedBlocks ya no normaliza string legacy a array vacío');
+// 27b. El fallback cuando el dataset longitudinal existe sin array de proms
+//      conserva el valor ORIGINAL de patient.proms (string/null/desconocido intactos).
+assert(js.includes('var originalProms = patient.proms;'),
+    'renderExtendedBlocks captura patient.proms original antes de fusionar');
+assert(js.includes('Array.isArray(extData.proms) ? extData.proms : originalProms'),
+    'Fusión longitudinal conserva el valor original (string/null/desconocido) cuando el dataset no aporta array');
+assert(!js.includes('extData.proms : structuredProms'),
+    'El fallback de fusión no reemplaza string/null por array vacío (getStructuredProms)');
+
+// 28. El renderer estructurado actual se conserva para arrays raw
+assert(renderPromsBody[0].includes('proms-card-grid'), 'renderProms conserva el grid estructurado');
+assert(renderPromsBody[0].includes('grouped[pt].push(pItem)'), 'renderProms conserva el agrupado por tipo');
+assert(renderPromsBody[0].includes('prom-card__status--registered'), 'renderProms conserva tarjetas de valor registrado');
+
+// 29. Longitudinales: acceso a proms estructuradas a través del helper (sin .map sobre string)
+assert(js.includes('var promItems = getStructuredProms(patient);'), 'populateLongSelectors usa getStructuredProms');
+assert(js.includes('promKey ? getStructuredProms(patient).filter'), 'renderLongDataSeries usa getStructuredProms');
+
+// 30. F-01: ausente/null/string derivan a 'No registrado' o texto legacy explícito
+assert(js.includes("return 'No registrado';"), 'getDashboardSummaryPromsText fallback a No registrado');
+assert(js.includes("'PROMs demo (contexto): ' + legacy"), 'getDashboardSummaryPromsText etiqueta el texto legacy como contexto demo');
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 
 if (failed > 0) process.exit(1);
