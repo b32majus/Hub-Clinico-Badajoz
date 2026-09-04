@@ -90,13 +90,12 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 | Parent issue | [#292 — PLAN-FH-UNIFIED_CLINICAL_INTAKE-V0](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/292) |
 | Ticket train | T1 #293 · T2 #294 · T3 #295 · T4 #296 · T5 #297 · T6 #298 · T7 #299 · T8 #300 · T9 #301 · T10 #302 |
 | Estado spec | `PASS` — `SPEC_REPAIR=PASS`; rechecks independientes Omen `PASS`, Muse `PASS`; `SPEC_CONTENT=CLOSED` |
-| Handoff audit | `BLOCK` — Muse independent clean-context TICKET/HANDOFF audit |
-| Findings | `F-001` + `F-002` (una única causa raíz) |
-| Root cause | T7 sin enforcement explícito del gate D5 en el primer boundary de escritura |
-| Repair owner | [#299](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/299) |
-| Repair | `APPLIED_PENDING_FOCAL_RECHECK` (2026-09-04; recheck focal independiente pendiente) |
-| Technical handoff | `BLOCK` pending focal recheck |
-| Autoridad | `BLOCK` — #292 not approved; #283 = subset PreSalud solamente; el train completo = `PENDING OPERATOR APPROVAL` |
+| Handoff audit | `BLOCK` — Muse independent clean-context TICKET/HANDOFF audit (inicial) |
+| Repair | `PASS` — [#299](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/299) (2026-09-04) |
+| Focal recheck | `PASS` — independent clean-context focal recheck |
+| Findings | `F-001 = CLOSED`; `F-002 = CLOSED` |
+| Technical handoff | `PASS` |
+| Authority consistency | `BLOCK` — awaiting explicit operator approval of #292 |
 | Ejecución | `NOT_EXECUTION_READY`; `READY_FOR_AGENT=NO`; sin etiquetas `ready-for-agent` ni `status:approved` |
 | Estado clínico | Desarrollo sintético/demo únicamente; NO PILOTO; NO PRODUCCIÓN |
 

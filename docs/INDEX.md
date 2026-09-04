@@ -17,7 +17,7 @@
 | Actividad del servicio | Demo |
 | Alcance | Sin piloto / sin producción |
 | Work order actual | issue #279 |
-| Candidato en auditoría (NO ejecutable) | Unified Clinical Intake V0 — spec + ticket train en `TICKET/HANDOFF AUDIT` (parent issue #292; detalle en [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md)); `NOT_EXECUTION_READY` |
+| Candidato NO ejecutable | Unified Clinical Intake V0 — spec + ticket train: technical handoff PASS / authority pending (parent issue #292; detalle en [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md)); `NOT_EXECUTION_READY` |
 
 > Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete final solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
