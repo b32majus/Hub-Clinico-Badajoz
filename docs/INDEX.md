@@ -1,12 +1,12 @@
 # Índice documental maestro — Hub Clínico Badajoz / PROMueve Nexus
 
 | Metadato | Valor |
-|---|---|
-| Última actualización | 2026-08-07 |
+| --- | --- |
+| Última actualización | 2026-09-04 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Estado publicado | `827163d8c0d4eafb8af235da9a97aa4338a8141f` |
-| Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge funcional issue #265 / PR #266) |
+| Estado publicado | `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge issue #288 / PR #289 — fix P1 F-01/F-04 Dashboard PROMs) |
+| Último HEAD funcional | `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge funcional issue #288 / PR #289); previo `fb7b70c50c991baf6a375b42112048d190fe0178` (issue #265 / PR #266) |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.4` (promovido por issue #271 / PR #272) |
 | Snapshot 0.4 candidate | `d9cbd56b515ee75c871bfb5e63f96320c963b1e0` |
@@ -16,13 +16,15 @@
 | Paquete final | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` |
 | Actividad del servicio | Demo |
 | Alcance | Sin piloto / sin producción |
-| Work order actual | issue #279 |
+| Work order actual | issue #290 — WO-DOC-FH-P1-POSTMERGE-RECONCILIATION-01 |
 
-> Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete final solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
+> Este índice orienta. La verdad publicada actual de Farmacia permanece en `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb`, merge del issue #288 / PR #289 (fix P1 F-01/F-04 del Dashboard demo), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258, Quick View PROMs del issue #261 / PR #262 y Patient Longitudinal raw del issue #265 / PR #266 (`fb7b70c50c991baf6a375b42112048d190fe0178`, HEAD funcional previo). El paquete final solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
 > El modelo de evaluación Farmacia es **un único workbook** (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`) que alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV, complementado por un workbook de Enfermería. Estadísticas usa la misma cohorte (55) y el CSV sin filtros es 55 × 37. El hosted single-workbook es PASS. El paquete de evaluación sintética está en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` (PR #278); Activity permanece demo.
 
-> El estado publicado de Farmacia es `827163d8c0d4eafb8af235da9a97aa4338a8141f`; el último SHA que modificó código funcional es `fb7b70c50c991baf6a375b42112048d190fe0178`. El estado publicado se verifica siempre en GitHub.
+> El estado publicado de Farmacia es `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge del issue #288 / PR #289 que resolvió el P1 F-01/F-04 del Dashboard demo); el último SHA funcional previo era `fb7b70c50c991baf6a375b42112048d190fe0178` (issue #265 / PR #266). El estado publicado se verifica siempre en GitHub.
+
+> **Recovery actualizado ≠ snapshot refrozen ≠ package refrozen.** El merge #289 actualizó la rama regional `recovery` (código del fix P1); **no** refrozen el snapshot `CÁCERES-REVIEW-0.4` (`previews/caceres-fh/**`), ni el evaluation package / manifest / ZIP. Ambos permanecen como artefactos previos no modificados por #288/#289 ni por la WO documental #290.
 
 ---
 
@@ -42,9 +44,9 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 
 ## 2. Orden de verdad
 
-1. Work order actual: `WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01` (issue #279).
-2. GitHub: estado publicado `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278) y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
-3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #265/#266.
+1. Work order actual: `WO-DOC-FH-P1-POSTMERGE-RECONCILIATION-01` (issue #290).
+2. GitHub: estado publicado `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge issue #288 / PR #289 — fix P1 F-01/F-04) y código funcional publicado en `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (issue #288 / PR #289), sobre la cadena previa integrada por #250/#251, #252/#253, #257/#258, #261/#262 y #265/#266.
+3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #288/#289.
 4. Este índice reconciliado.
 5. `docs/ops/WORK_ORDER_STATUS.md` reconciliado.
 6. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md).
@@ -57,10 +59,10 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 ## 3. Ramas y referencias
 
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `origin/main` | Legacy / congelada | Historia previa a Reuma v2 | Estado actual |
 | `origin/feature/reuma-v2-prebiologico-fh-les-sjogren` | Base canónica Reuma v2 | Reumatología y contrato Excel v2 | Farmacia recovery |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado publicado `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278); último HEAD funcional `fb7b70c50c991baf6a375b42112048d190fe0178` | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; estado publicado `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge issue #288 / PR #289); snapshot `CÁCERES-REVIEW-0.4` y evaluation package no refrozen por #288/#289 | Código Farmacia y evaluación sintética | Piloto, producción o datos reales |
 | `previews/caceres-fh/` | **Snapshot estable CÁCERES-REVIEW-0.4**; promovido por issue #271 / PR #272; integridad de manifest por issue #273 / PR #276 | Evaluación Pharmacy-only Cáceres autónoma | Evolución regional automática |
 | `origin/preview/demo-lunes-wo4-20260614` | Histórico | Evidencia post-demo y documentación de origen | Desarrollo publicado vigente |
 | `origin/docs/promueve-fh-control-plane-federado-20260713` | HOLD | Cantera histórica del concepto Control Plane | Arquitectura aprobada o rama a mergear |
@@ -79,15 +81,16 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 ## 4. Estado vivo de Farmacia post Longitudinal
 
 | Elemento | Estado actual |
-|---|---|
+| --- | --- |
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| Estado publicado | `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278) |
-| Último HEAD funcional | `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
+| Estado publicado | `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge issue #288 / PR #289 — fix P1 F-01/F-04 Dashboard PROMs) |
+| Último HEAD funcional | `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge issue #288 / PR #289); previo `fb7b70c50c991baf6a375b42112048d190fe0178` (merge issue #265 / PR #266) |
 | issue #250 / PR #251 | Data Port, `RawExcelDataSource` y `CurrentPatientSession` integrados; merge `de830803...` |
 | issue #252 / PR #253 | Cutover del flujo normal publicado; merge histórico `3f7bf9bb...` con CI verde, superseded como HEAD regional por #257/#258 y posteriormente #261/#262 y #265/#266 |
 | issue #257 / PR #258 | Issue CLOSED; PR MERGED_AND_VERIFIED; Estadísticas raw publicadas para evaluación sintética en el merge histórico previo `a9d6d464...`; candidate `5a7ad559...` |
 | issue #261 / PR #262 | Issue CLOSED; PR MERGED_AND_VERIFIED; Quick View raw PROMs implementado, publicado y demostrado para evaluación sintética; merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3`; candidate `13963f89a28cd590e01ed0acaea160c93a9ec848` |
-| issue #265 / PR #266 | Issue CLOSED / completed; PR `MERGED_AND_VERIFIED`; Patient Longitudinal raw restaurado, publicado y demostrado para evaluación sintética; merge vigente `fb7b70c50c991baf6a375b42112048d190fe0178`; candidate `a7b8deb7079d46603abcc1a3b1c86763a79bc410` |
+| issue #265 / PR #266 | Issue CLOSED / completed; PR `MERGED_AND_VERIFIED`; Patient Longitudinal raw restaurado, publicado y demostrado para evaluación sintética; merge `fb7b70c50c991baf6a375b42112048d190fe0178` (histórico; superado como HEAD publicado por #288/#289); candidate `a7b8deb7079d46603abcc1a3b1c86763a79bc410` |
+| issue #288 / PR #289 | Issue CLOSED / completed; PR `MERGED_AND_VERIFIED`; fix P1 F-01/F-04 Dashboard PROMs publicado en recovery; merge publicado actual `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb`; QA pre-merge Chromium supported-route PASS y hosted post-merge Farmacia smoke check #943 `success`; sin refreeze de snapshot ni package |
 | Flujo clínico | Excel raw 152 columnas → reader/selectors → Data Port → sesión del paciente actual → Inicio/Quick View → dashboards → Validación → Primera Visita → Seguimiento |
 | Modo Bridge visible | No existe como experiencia soportada; Bridge queda como nombre técnico de reader/selectors históricos |
 | `sessionStorage` | Solo envelope versionado del paciente actual; no workbook, bytes, read model completo, población, cohorte ni otros pacientes |
@@ -101,10 +104,10 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
 | Modelo de workbook | **Un único workbook** de Farmacia (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`, 55 pacientes / 93 eventos / 95 filas / 152 columnas) alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV; hosted single-workbook PASS |
-| Work order actual | issue #279 — WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01; paquete de evaluación sintética en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; Activity demo |
+| Work order actual | issue #290 — WO-DOC-FH-P1-POSTMERGE-RECONCILIATION-01; reconciliación documental viva post-merge #289; snapshot y package sin refreeze |
 | Evaluation Package | El paquete de evaluación evolucionó a **autónomo**: mismo workbook maestro de Farmacia (55/93/95/152) compartido por todos los módulos y Estadísticas desde la misma cohorte, con un workbook complementario de Enfermería; estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` tras el merge del freeze documental PR #278; sin cambios funcionales |
 
-> Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3` corresponde a Quick View del issue #261 / PR #262; el estado actual de Farmacia se verifica contra `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266, que conserva el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
+> Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3` corresponde a Quick View del issue #261 / PR #262; el estado publicado actual de Farmacia se verifica contra `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb`, merge del issue #288 / PR #289, que conserva el flujo integrado por #250/#251, #252/#253, #257/#258, #261/#262 y #265/#266.
 
 > El guard P1 rechaza `IDENTIFIER_COMPONENT_EMPTY`, `IDENTIFIER_COMPONENT_TYPE`, `NORMALIZED_IDENTIFIER_COLLISION`, `IDENTIFIER_NOT_INDEXED` e `IDENTIFIER_INDEX_PATIENT_MISMATCH`, comprueba coherencia bidireccional pacientes ↔ índice, usa lookup directo sobre tabla privada `Object.create(null)`, conserva sensibilidad a mayúsculas, permite pacientes sin identificador pero no buscables operativamente y no muta el read model. Para el candidate de #258, integrado en el merge histórico `a9d6d464...`, la evidencia es `LOCAL_CI_EQUIVALENT_PASS` sobre archive inmutable del SHA exacto: smoke 48/48, dashboard handoff 37/37, Selectors 82/82, Reader 21/21, Data Port 11/11, patient-flow 17/17, cohorte/CSV/handoff 30 escenarios, Chromium patient-flow y Estadísticas PASS, `console.error = 0`, `pageerror = 0` y `git diff --check = PASS`. GitHub Actions no despachó un run sobre el SHA final durante la incidencia externa.
 
@@ -185,7 +188,7 @@ Decisiones principales:
 ## 6. Documentos canónicos generales
 
 | Documento | Estado | Uso |
-|---|---|---|
+| --- | --- | --- |
 | [`AGENTS.md`](/AGENTS.md) | Vigente con metadata histórica pendiente de alinear | Gobernanza operativa |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica + addendum 2026-07-31 | Evolución post-SES |
@@ -243,6 +246,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 
 - [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — inventario histórico extenso.
 - [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md)
+- [`docs/audits/FARMACIA_BASELINE_AUDIT_V1_20260904.md`](/docs/audits/FARMACIA_BASELINE_AUDIT_V1_20260904.md) — auditoría baseline Farmacia V1 (issue #285 / PR #287), histórica sobre `097396a1...`; su P1 F-01/F-04 fue resuelto posteriormente por #288/#289 (merge `9fd6888b...`) según el postscript §13 añadido por la WO #290
 - `docs/ops/FARMACIA_V0_3_*`, `FARMACIA_V0_4_*`, `FARMACIA_V0_5_*` — exploración histórica, no estado vivo.
 
 ---
@@ -309,7 +313,7 @@ Fronteras:
 Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 | Documento | Deuda |
-|---|---|
+| --- | --- |
 | `README.md` | Presenta Farmacia como no implementada |
 | `ARCHITECTURE.md` | Baseline, ramas y persistencia Farmacia desactualizados |
 | `CHANGELOG.md` | No recoge la línea recovery reciente |
@@ -339,14 +343,14 @@ Para el estado actual de Farmacia también son memoria histórica o referencia s
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
-Cuando contradigan el merge #265/#266, el código publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, este índice, `WORK_ORDER_STATUS.md` o el estado post-Longitudinal, prevalece esa cadena actual. La documentación histórica no se reescribe en esta WO.
+Cuando contradigan el merge #288/#289 (`9fd6888b...`) o el estado publicado de Farmacia en `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb`, el código publicado allí, este índice, `WORK_ORDER_STATUS.md` o el estado post-Longitudinal, prevalece esa cadena actual. La documentación histórica no se reescribe en esta WO.
 
 ---
 
 ## 15. Decisiones pendientes
 
 | Tema | Estado |
-|---|---|
+| --- | --- |
 | Formato Presalud | Solicitado, pendiente |
 | Diccionario regional de patologías | Solicitado, pendiente |
 | Formulario Digestivo | Pendiente |
@@ -360,4 +364,4 @@ Cuando contradigan el merge #265/#266, el código publicado en `fb7b70c50c991baf
 
 ---
 
-*Edición final de la reconciliación documental (issue #279). El estado publicado de Farmacia es `827163d8c0d4eafb8af235da9a97aa4338a8141f`, tras el merge del freeze documental del issue #277 / PR #278, y el último HEAD funcional permanece `fb7b70c50c991baf6a375b42112048d190fe0178`. El paquete es autónomo vía Pages, con un único workbook de Farmacia + workbook complementario de Enfermería y estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*
+*Edición de la WO documental #290 (reconciliación post-merge #289). El estado publicado de Farmacia es `9fd6888b662c5d2b38275e3aa459e5dd2e54b5cb` (merge del issue #288 / PR #289 que resolvió el P1 F-01/F-04 del Dashboard demo). Ediciones previas: freeze documental issue #277 / PR #278 en `827163d8...`; Patient Longitudinal raw issue #265 / PR #266 en `fb7b70c50c991baf6a375b42112048d190fe0178`. El snapshot `CÁCERES-REVIEW-0.4` y el evaluation package / manifest / ZIP permanecen **sin refreeze** por #288/#289 y por esta WO. El paquete es autónomo vía Pages, con un único workbook de Farmacia + workbook complementario de Enfermería y estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no añade funcionalidad, no altera Actividad demo y no autoriza datos reales, piloto, producción, promoción ni deploy.*
