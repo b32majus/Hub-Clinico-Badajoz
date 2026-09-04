@@ -32,6 +32,7 @@ import {
     SOURCE_EORDEN,
     SOURCE_PRESALUD,
     SOURCE_UNKNOWN,
+    UNIT_STATE_RECOGNIZED,
     UNIT_STATE_SEGMENTATION_BLOCKED,
     KIND_EORDEN_UNIT,
     KIND_PRESALUD_UNIT,
@@ -84,8 +85,7 @@ const EORDEN_FIXTURE =
     '• Inducción solicitada: NO\n' +
     'PROGRAMA SES\n' +
     '• Código: SES_PSOR\n' +
-    '• Denominación: PSORIASIS\n' +
-    EORDEN_SEP;
+    '• Denominación: PSORIASIS';
 
 // Demo PreSalud raw (D9: Estado;Medicamento;Vía;Dosis;Pauta;Días). Estado and
 // Días may be empty (WO-D NO_VALUE semantics); the medication field carries
@@ -277,27 +277,27 @@ console.log('\n[WO-B] Criterio 7b — input completamente desconocido → result
     assertEqual(r.unrecognized_fragments[0].raw, UNKNOWN_TEXT, 'desconocido: raw conservado lossless');
 }
 
-console.log('\n[WO-B] Criterio 7c — caso de ownership ambiguo → bloqueo de la unidad afectada sin romper la app');
+console.log('\n[WO-B] Criterio 7c — caso de ownership ambiguo → dos unidades PreSalud + fragment (T2 no bloquea multi-record)');
 
 {
-    // Dos registros PreSalud separados por texto desconocido con límites
-    // inseguros → la pertenencia de las líneas es ambigua → la unidad PreSalud
-    // afectada queda bloqueada de forma determinista (D9 multi-record /
-    // D13), sin excepción y con la app operativa.
+    // Dos registros PreSalud separados por texto desconocido: T2 no adjudica
+    // multi-record (F-CODE-02). Cada registro es una unidad PreSalud independiente;
+    // el texto intermedio es unknown fragment. T2 no bloquea.
     const ambiguous =
         ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;\n' +
         'texto intermedio ambiguo\n' +
         'Activo;BENEPALI (BENEPALI 45MG);SC;45 MG;CADA 28 DIAS;28';
     const r = segmentClinicalIntake(ambiguous);
     assertEnvelope(r, 'ownership ambiguo');
-    assertEqual(blockingStates(r).join(','), BLOCK_MULTI_RECORD_PRESALUD, 'ownership ambiguo: estado determinista');
-    assertEqual(r.recognized_units.length, 1, 'ownership ambiguo: unidad bloqueada presente');
-    assertEqual(r.recognized_units[0].state, UNIT_STATE_SEGMENTATION_BLOCKED, 'ownership ambiguo: estado bloqueado');
+    assertEqual(blockingStates(r).length, 0, 'ownership ambiguo: sin bloqueos T2');
+    assertEqual(unitKinds(r).filter((k) => k === KIND_PRESALUD_UNIT).length, 2, 'ownership ambiguo: dos unidades PreSalud');
+    assertEqual(fragmentCount(r), 1, 'ownership ambiguo: texto intermedio como fragmento');
     assertEqual(r.errors.length, 0, 'ownership ambiguo: sin errores (app no rota)');
     assertEqual(r.can_preview, true, 'ownership ambiguo: can_preview true');
+    assertEqual(r.can_apply, false, 'ownership ambiguo: can_apply false');
 }
 
-console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden independiente');
+console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden independiente (F-CODE-02: T2 no bloquea)');
 
 {
     const recA = ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
@@ -305,15 +305,14 @@ console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden i
     const raw = recA + '\n\n' + recB + '\n\n' + EORDEN_FIXTURE;
     const r = segmentClinicalIntake(raw);
     assertEnvelope(r, 'multi-record + e-orden');
-    assertEqual(blockingStates(r).join(','), BLOCK_MULTI_RECORD_PRESALUD, 'multi-record + e-orden: estado');
-    // e-Orden unit intact (proportional: local ambiguity blocks local source)
+    assertEqual(blockingStates(r).length, 0, 'multi-record + e-orden: sin bloqueos T2');
     assertEqual(unitSources(r).filter((s) => s === SOURCE_EORDEN).length, 1, 'multi-record + e-orden: e-orden intacta');
-    // PreSalud records deterministically blocked (zero proposals on them)
-    const blocked = r.recognized_units.filter((u) => u.source === SOURCE_PRESALUD);
-    assertEqual(blocked.length, 2, 'multi-record + e-orden: dos unidades PreSalud bloqueadas');
-    assert(blocked.every((u) => u.state === UNIT_STATE_SEGMENTATION_BLOCKED), 'multi-record + e-orden: PreSalud bloqueadas');
+    const pres = r.recognized_units.filter((u) => u.source === SOURCE_PRESALUD);
+    assertEqual(pres.length, 2, 'multi-record + e-orden: dos unidades PreSalud');
+    assert(pres.every((u) => u.state === UNIT_STATE_RECOGNIZED), 'multi-record + e-orden: PreSalud reconocidas (no bloqueadas en T2)');
     assertEqual(r.errors.length, 0, 'multi-record + e-orden: sin errores');
     assertEqual(r.raw_input, raw, 'multi-record + e-orden: raw_input conservado');
+    assertEqual(r.can_apply, false, 'multi-record + e-orden: can_apply false');
 }
 
 {
@@ -321,10 +320,11 @@ console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden i
     const raw = recA + '\n\n' + EORDEN_FIXTURE + '\n\n' + recA;
     const r = segmentClinicalIntake(raw);
     assertEnvelope(r, 'record-eorden-record');
-    assertEqual(blockingStates(r).join(','), BLOCK_MULTI_RECORD_PRESALUD, 'record-eorden-record: estado');
+    assertEqual(blockingStates(r).length, 0, 'record-eorden-record: sin bloqueos T2');
     assertEqual(unitSources(r).filter((s) => s === SOURCE_EORDEN).length, 1, 'record-eorden-record: e-orden intacta');
-    assertEqual(r.recognized_units.filter((u) => u.source === SOURCE_PRESALUD).length, 2, 'record-eorden-record: PreSalud bloqueadas');
+    assertEqual(r.recognized_units.filter((u) => u.source === SOURCE_PRESALUD).length, 2, 'record-eorden-record: dos PreSalud');
     assertEqual(r.errors.length, 0, 'record-eorden-record: sin errores');
+    assertEqual(r.can_apply, false, 'record-eorden-record: can_apply false');
 }
 
 console.log('\n[WO-B] Proporcionalidad D13 — dos e-Orden seguidas de PreSalud → whole import bloqueado');
@@ -343,13 +343,15 @@ console.log('\n[WO-B] Regresión estructural — header inválido, header-like y
 
 {
     // Header-like line sin cuerpo D17 válido entre dos registros PreSalud:
-    // los dos registros son multi-record → bloqueo determinista (el header
-    // inválido no cuenta como unidad e-Orden).
+    // T2 no bloquea multi-record (F-CODE-02): dos PreSalud + fragment header-like.
     const recA = ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
     const raw = recA + '\nSOLICITUD DERMATOLOGÍA → FARMACIA - X\n' + recA;
     const r = segmentClinicalIntake(raw);
-    assertEqual(blockingStates(r).join(','), BLOCK_MULTI_RECORD_PRESALUD, 'header-like entre records: estado');
+    assertEqual(blockingStates(r).length, 0, 'header-like entre records: sin bloqueos T2');
+    assertEqual(unitSources(r).filter((s) => s === SOURCE_PRESALUD).length, 2, 'header-like entre records: dos PreSalud');
+    assertEqual(fragmentCount(r), 1, 'header-like entre records: header-like como fragment');
     assertEqual(r.errors.length, 0, 'header-like entre records: sin errores');
+    assertEqual(r.can_apply, false, 'header-like entre records: can_apply false');
 }
 
 {
@@ -410,10 +412,13 @@ console.log('\n[WO-B] Anti-fuzzy estructural (sin parsing de contenido de campo)
     assertEqual(fragmentCount(r), 1, '7 campos: fragmento unknown');
 }
 {
-    // Segundo grupo parentizado en Medicamento (D10) → no es registro D9
+    // Segundo grupo parentizado en Medicamento (D10) → T2 NO valida subgramática (F-CODE-02):
+    // el material estructuralmente identificable debe llegar a T4 como PreSalud.
     const r = segmentClinicalIntake('Activo;HYRIMOZ (HYRIMOZ) EXTRA (40);SC;40 MG;CADA 14;28');
-    assertEqual(unitKinds(r).length, 0, 'segundo paréntesis: cero unidades');
-    assertEqual(fragmentCount(r), 1, 'segundo paréntesis: fragmento unknown');
+    assertEqual(unitKinds(r).length, 1, 'segundo paréntesis: una unidad PreSalud (T2 no valida paréntesis)');
+    assertEqual(unitKinds(r)[0], KIND_PRESALUD_UNIT, 'segundo paréntesis: tipo presalud_unit');
+    assertEqual(fragmentCount(r), 0, 'segundo paréntesis: cero fragmentos');
+    assertEqual(r.can_apply, false, 'segundo paréntesis: can_apply false');
 }
 {
     // Vía vacía → registro incompleto → no es registro D9
@@ -470,6 +475,126 @@ console.log('\n[WO-B] Determinismo — mismas entradas → mismas salidas');
         const a = JSON.stringify(segmentClinicalIntake(raw));
         const b = JSON.stringify(segmentClinicalIntake(raw));
         assertEqual(a === b, true, `determinista (${raw.slice(0, 20)}…)`);
+    }
+}
+
+console.log('\n[WO-B] Regresiones F-CODE-01..05 — falsificación de findings');
+
+// F-CODE-01: D17 exact shape no closing separator — unit runs header through final Denominación, no closing ═ required
+{
+    const r = segmentClinicalIntake(EORDEN_FIXTURE);
+    assertEqual(unitKinds(r).length, 1, 'F-CODE-01: D17 sin closing ═ → una unidad e-orden');
+    assertEqual(unitKinds(r)[0], KIND_EORDEN_UNIT, 'F-CODE-01: kind eorden_unit');
+    assert(r.recognized_units[0].raw.endsWith('• Denominación: PSORIASIS'), 'F-CODE-01: raw termina en Denominación (no closing)');
+    assert(!r.recognized_units[0].raw.endsWith(EORDEN_SEP), 'F-CODE-01: raw no termina en separador closing');
+    // Closing separator after a valid unit must be skippable, not part of unit, not causing invalid
+    const withClosing = EORDEN_FIXTURE + '\n' + EORDEN_SEP;
+    const rc = segmentClinicalIntake(withClosing);
+    assertEqual(unitKinds(rc).length, 1, 'F-CODE-01: closing separador extra es skippable, sigue 1 unidad');
+    assertEqual(fragmentCount(rc), 0, 'F-CODE-01: closing extra no crea fragment');
+    assertEqual(rc.blocking_states.length, 0, 'F-CODE-01: closing extra no bloquea');
+}
+
+// F-CODE-02: T4 ownership leakage — T4-invalid meds still reach T4 as PreSalud, no subgrammar validation in T2
+{
+    const t4Invalid = 'Activo;HYRIMOZ (HYRIMOZ) EXTRA (40);SC;40 MG;CADA 14;28';
+    const r = segmentClinicalIntake(t4Invalid);
+    assertEqual(unitKinds(r).length, 1, 'F-CODE-02: T4-invalid con segundo paréntesis llega a T4 como PreSalud');
+    assertEqual(unitKinds(r)[0], KIND_PRESALUD_UNIT, 'F-CODE-02: kind presalud_unit');
+    assertEqual(r.recognized_units[0].raw, t4Invalid, 'F-CODE-02: raw preservado exacto para T4');
+    assertEqual(r.can_apply, false, 'F-CODE-02: can_apply false');
+}
+// F-CODE-02: no multi-record rejection in T2
+{
+    const recA = ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
+    const recB = 'Activo;BENEPALI (BENEPALI 45MG);SC;45 MG;CADA 28 DIAS;28';
+    const raw = recA + '\n' + recB;
+    const r = segmentClinicalIntake(raw);
+    assertEqual(unitKinds(r).filter((k) => k === KIND_PRESALUD_UNIT).length, 2, 'F-CODE-02: multi-record no bloqueado en T2 → dos unidades PreSalud');
+    assertEqual(r.blocking_states.length, 0, 'F-CODE-02: multi-record sin blocking_states en T2');
+    assertEqual(r.can_apply, false, 'F-CODE-02: can_apply false con multi-record');
+    // Incluso con e-Orden intercalada, T2 no adjudica MULTI_RECORD
+    const rawMixed = recA + '\n\n' + EORDEN_FIXTURE + '\n\n' + recB;
+    const rm = segmentClinicalIntake(rawMixed);
+    assertEqual(rm.blocking_states.length, 0, 'F-CODE-02: multi-record mixto sin blocking T2');
+    assertEqual(unitSources(rm).filter((s) => s === SOURCE_PRESALUD).length, 2, 'F-CODE-02: mixto multi-record conserva dos PreSalud');
+}
+
+// F-CODE-03: raw preservation incl CRLF/Unicode
+{
+    const rawCRLF = EORDEN_FIXTURE.replace(/\n/g, '\r\n');
+    const r = segmentClinicalIntake(rawCRLF);
+    assertEqual(r.raw_input, rawCRLF, 'F-CODE-03: raw_input preserva CRLF byte-exact');
+    assertEqual(r.recognized_units[0].raw, rawCRLF, 'F-CODE-03: unit.raw preserva CRLF (single unit)');
+    // Mixto CRLF
+    const rawMixedCRLF = (EORDEN_FIXTURE + '\n' + ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;').replace(/\n/g, '\r\n');
+    const rm = segmentClinicalIntake(rawMixedCRLF);
+    assertEqual(rm.raw_input, rawMixedCRLF, 'F-CODE-03: mixto raw_input CRLF preservado');
+    for (const u of [...rm.recognized_units, ...rm.unrecognized_fragments]) {
+        assert(rm.raw_input.includes(u.raw), `F-CODE-03: fragment raw substring exacta (${u.kind})`);
+    }
+    // Unicode bytes preserved: raw with accent and arrow
+    const unicodeRaw = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PRUEBA\n' + EORDEN_SEP + '\n• CIP: 1\n• Marca comercial solicitada: X\n• Dosis solicitada: 40 MG\n• Vía solicitada: SC\n• Pauta: CADA 14 DIAS\n• Inducción solicitada: NO\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS';
+    const ru = segmentClinicalIntake(unicodeRaw);
+    assertEqual(ru.raw_input, unicodeRaw, 'F-CODE-03: Unicode bytes preservados');
+    assertEqual(ru.recognized_units[0].raw, unicodeRaw, 'F-CODE-03: unit Unicode preservado');
+}
+
+// F-CODE-04: remove 40-line threshold — >40 blank/sep lines must NOT trigger invented parser error
+{
+    const manyBlanks = EORDEN_FIXTURE + '\n' + '\n'.repeat(50) + ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
+    const r = segmentClinicalIntake(manyBlanks);
+    assertEqual(r.errors.length, 0, 'F-CODE-04: >40 blank lines sin parser error inventado');
+    assertEqual(unitKinds(r).filter((k) => k === KIND_EORDEN_UNIT).length, 1, 'F-CODE-04: e-orden intacta con >40 blanks');
+    assertEqual(unitKinds(r).filter((k) => k === KIND_PRESALUD_UNIT).length, 1, 'F-CODE-04: PreSalud intacta con >40 blanks');
+    const onlyBlanks = '\n'.repeat(45);
+    const rb = segmentClinicalIntake(onlyBlanks);
+    assertEqual(rb.recognized_units.length, 0, 'F-CODE-04: solo blanks → cero unidades (no error)');
+    assertEqual(rb.errors.length, 0, 'F-CODE-04: solo blanks sin error');
+    const manySeps = EORDEN_SEP + '\n' + (EORDEN_SEP + '\n').repeat(45);
+    const rs = segmentClinicalIntake(manySeps);
+    assertEqual(rs.errors.length, 0, 'F-CODE-04: many separators sin error');
+}
+
+// F-CODE-05: NFC-compare-only + exact D17 header grammar, no fuzzy
+{
+    // Exact header grammar: prefix lookalike must NOT be recognized
+    const bogus = 'SOLICITUD DERMATOLOGÍA → FARMACIA_BOGUS - PSORIASIS\n' + EORDEN_SEP + '\n• CIP: 1\n• Marca comercial solicitada: X\n• Dosis solicitada: 40 MG\n• Vía solicitada: SC\n• Pauta: CADA 14 DIAS\n• Inducción solicitada: NO\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS';
+    const rb = segmentClinicalIntake(bogus);
+    assertEqual(unitKinds(rb).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-CODE-05: FARMACIA_BOGUS no reconocido como e-orden');
+    // Bogus header block is split by opening separator into two unknown fragments (header + body)
+    assert(fragmentCount(rb) >= 1, 'F-CODE-05: bogus header como fragment unknown');
+    // Missing " - <TÍTULO>" part
+    const noTitle = 'SOLICITUD DERMATOLOGÍA → FARMACIA\n' + EORDEN_SEP + '\n• CIP: 1\n';
+    const rn = segmentClinicalIntake(noTitle);
+    assertEqual(unitKinds(rn).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-CODE-05: header sin " - título" no reconocido');
+    // NFC compare-only: decomposed form (NFD) should be recognized as same header, but raw preserved
+    const nfdHeader = 'SOLICITUD DERMATOLOGI\u0301A → FARMACIA - PSORIASIS'; // Í decomposed
+    const nfdRaw = nfdHeader + '\n' + EORDEN_SEP + '\n• CIP: 1\n• Marca comercial solicitada: X\n• Dosis solicitada: 40 MG\n• Vía solicitada: SC\n• Pauta: CADA 14 DIAS\n• Inducción solicitada: NO\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS';
+    const rnfd = segmentClinicalIntake(nfdRaw);
+    assertEqual(unitKinds(rnfd).filter((k) => k === KIND_EORDEN_UNIT).length, 1, 'F-CODE-05: NFC header NFD reconocido comparación');
+    assertEqual(rnfd.raw_input, nfdRaw, 'F-CODE-05: NFC raw preservado byte-exact (NFD no normalizado en raw)');
+    assertEqual(rnfd.recognized_units[0].raw, nfdRaw, 'F-CODE-05: unit raw NFD preservado');
+    // Fuzzy not allowed: case-folding, accent-folding, alias
+    const lower = 'solicitud dermatología → farmacia - psoriasis\n' + EORDEN_SEP + '\n• CIP: 1\n';
+    const rl = segmentClinicalIntake(lower);
+    assertEqual(unitKinds(rl).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-CODE-05: case-folding no reconocido');
+}
+
+console.log('\n[WO-B] F-CODE-05 adicional — malformed D17 reject y can_apply=false throughout');
+{
+    // Malformed D17: header correct but missing opening separator
+    const malformed = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n• CIP: 1\n• Marca comercial solicitada: X\n';
+    const r = segmentClinicalIntake(malformed);
+    assertEqual(unitKinds(r).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'malformed D17 sin separador no es e-orden');
+    assertEqual(fragmentCount(r), 1, 'malformed D17 como unknown fragment');
+    // can_apply false throughout all states
+    for (const raw of ['', 'texto', EORDEN_FIXTURE, ';A;B;C;D;E;F', manyBlanksTest()]) {
+        const rr = segmentClinicalIntake(raw);
+        assertEqual(rr.can_apply, false, `can_apply false (${raw.slice(0,10)}…)`);
+    }
+    function manyBlanksTest() {
+        return EORDEN_FIXTURE + '\n' + '\n'.repeat(30) + ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
     }
 }
 

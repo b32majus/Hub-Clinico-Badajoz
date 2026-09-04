@@ -1,4 +1,4 @@
-'use strict';
+
 /**
  * WO-B (issue #294) — Pure clinical intake detector/segmenter.
  *
@@ -7,16 +7,21 @@
  * extraction, no hydration, no patient association, no fuzzy recovery).
  *
  * Structural grammars (normative contracts, spec D17 / D9):
- *   - e-Orden unit : D17 serialization: anchored header line
- *       `SOLICITUD DERMATOLOGÍA → FARMACIA - <título>` followed inside the
- *       unit body by a `═` separator block (U+2550). Body lines must be
- *       blank, `═` separator, `•` bullet, `PROGRAMA SES`, or `- ` continuation.
+ *   - e-Orden unit : D17 serialization: exact header line
+ *       `SOLICITUD DERMATOLOGÍA → FARMACIA - <título>` followed by ONE opening
+ *       `═` separator block (U+2550) and body lines that are blank, `•` bullet,
+ *       `PROGRAMA SES`, or `- ` continuation. There is NO closing separator;
+ *       the unit runs from the exact header through the final `• Denominación:`
+ *       line. Body lines must be blank, `•` bullet, `PROGRAMA SES`, or
+ *       `- ` continuation (opening separator is outside the body).
  *   - PreSalud unit : D9 serialization: a contiguous run of lines, each a
  *       single `Estado;Medicamento;Vía;Dosis;Pauta;Días` record — exactly six
  *       `;`-delimited fields; `Estado` (field 1) and `Días` (field 6) may be
  *       empty (WO-D `NO_VALUE` semantics); fields 2..5 must be non-empty and
  *       free of stray `;`. One record = one unit (V0). PreSalud never
- *       appears as an inline fragment inside another source.
+ *       appears as an inline fragment inside another source. T2 does NOT
+ *       validate medication subgrammar (parentheses) nor multi-record policy;
+ *       structurally identifiable PreSalud material must reach T4.
  *
  * Safety rules (see D3/D4/D13 and the ticket's invariants):
  *   - The partition is structural only; membership must be unique or the
@@ -25,18 +30,16 @@
  *     e-Orden are both valid when the partition is unique (D4).
  *   - Two e-Orden units in one input are never partitionable (D17 gives no
  *     safe boundary rule) → whole import `SEGMENTATION_BLOCKED`.
- *   - An e-Orden header whose block is not a valid D17 unit (no `═`
+ *   - An e-Orden header whose block is not a valid D17 unit (no opening `═`
  *     separator, or body with non-contractual content) cannot be claimed by
  *     any grammar: the region stays an unknown fragment. A PreSalud
  *     record-shaped line inside an e-Orden body span makes source ownership
  *     ambiguous → whole import `SEGMENTATION_BLOCKED` (mixed input without
  *     unique partition, D13).
- *   - PreSalud multi-record (D9): more than one record line in the input →
- *     deterministic `PRESALUD_MULTI_RECORD_UNSUPPORTED_V0` for the PreSalud
- *     content; an independent e-Orden unit of the same input stays intact
- *     (proportional blocking, D13).
  *   - Unknown text is NEVER dropped or misclassified: it surfaces as an
  *     `unknown` fragment with safe boundaries (D4).
+ *   - T2 owns source-boundary ambiguity only; multi-record and medication
+ *     subgrammar adjudication belong to T4.
  *
  * Output follows the fail-safe envelope of D3: `can_apply` is ALWAYS false.
  * Empty and fully-unknown inputs are valid results with zero units and zero
@@ -66,7 +69,6 @@ export const BLOCK_MULTI_RECORD_PRESALUD = 'PRESALUD_MULTI_RECORD_UNSUPPORTED_V0
 
 // ─── Static structural tables / patterns (never mutated) ─────────────────────
 
-const EORDEN_HEADER_PREFIX = 'SOLICITUD DERMATOLOGÍA → FARMACIA';
 const EORDEN_SES_SECTION_LINE = 'PROGRAMA SES';
 const EORDEN_BULLET = '•';
 const EORDEN_FIELD_LABEL_PREFIXES = [
@@ -79,28 +81,31 @@ const EORDEN_FIELD_LABEL_PREFIXES = [
     '• Código:',
     '• Denominación:',
 ];
-const EORDEN_HEADER_RE = /^SOLICITUD DERMATOLOGÍA → FARMACIA/;
+// Exact D17 header grammar: `SOLICITUD DERMATOLOGÍA → FARMACIA - <TÍTULO>`
+// Title after " - " must be non-empty (after NFC + trim). No prefix lookalikes.
+const EORDEN_HEADER_RE = /^SOLICITUD DERMATOLOGÍA → FARMACIA - .+$/;
 const LINE_IS_SEPARATOR_RE = /^[ \t]*═+[ \t]*$/;
 const CONTINUATION_LINE_RE = /^-[ \t]/;
 
 const PRESALUD_FIELDS = 6;
-// Structural guard: a pathological number of blank/separator lines makes any
-// partition ambiguous; abort deterministically instead of guessing.
-const MAX_BLANK_OR_SEPARATOR_LINES = 40;
 
-const CRLF_RE = /\r\n?/g;
 const TRAILING_WS_RE = /[ \t\u00A0]+$/;
 
 // ─── Transport normalization (D17): comparison only; raw is never rewritten ──
 
+function toNFC(str) {
+    return typeof str.normalize === 'function' ? str.normalize('NFC') : str;
+}
+
 /**
  * Classification-only view of a line (no terminator, no trailing/peripheral
- * whitespace). Used for structural decisions; never stored.
+ * whitespace). Used for structural decisions; never stored. NFC-normalized
+ * for comparison only; raw is preserved byte-exact.
  * @param {string} line
  * @returns {string}
  */
 function cleanLine(line) {
-    return line.replace(TRAILING_WS_RE, '').trim();
+    return toNFC(line).replace(TRAILING_WS_RE, '').trim();
 }
 
 /**
@@ -117,6 +122,7 @@ function isSeparatorOnlyLine(line) {
  * exactly six `;`-delimited fields on a single line; `Estado` (field 1) and
  * `Días` (field 6) may be empty (WO-D `NO_VALUE` semantics); fields 2..5 must
  * be non-empty; no stray `;` inside any field (field count is exact).
+ * T2 does NOT validate medication subgrammar (parentheses) — that belongs to T4.
  * @param {string} line
  * @returns {boolean}
  */
@@ -131,29 +137,7 @@ function isPresaludRecordLine(line) {
     for (let i = 1; i < 5; i += 1) {
         if (fields[i].trim() === '') return false;
     }
-
-    // D10 structural constraint on the medication field (field index 1): at
-    // most ONE parenthesized group. A second group is contractually invalid
-    // and the line is not a valid D9 record (never force-recognized).
-    const medication = fields[1];
-    const openCount = (medication.match(/\(/g) || []).length;
-    const closeCount = (medication.match(/\)/g) || []).length;
-    if (openCount !== closeCount) return false;
-    if (openCount > 1) return false;
     return true;
-}
-
-/**
- * @param {string} raw
- * @returns {number} count of blank or `═`-separator-only lines
- */
-function countBlankOrSeparatorLines(raw) {
-    let count = 0;
-    for (const line of raw.split('\n')) {
-        const c = cleanLine(line);
-        if (c === '' || LINE_IS_SEPARATOR_RE.test(c)) count += 1;
-    }
-    return count;
 }
 
 // ─── e-Orden structural recognition ──────────────────────────────────────────
@@ -180,15 +164,16 @@ function countEOrdenFieldLines(lines) {
 
 /**
  * True when every non-blank body line is structurally allowed inside a D17
- * e-Orden unit (`═` separator, `•` bullet, `PROGRAMA SES`, `- ` continuation).
- * @param {string[]} bodyLines lines after the header line
+ * e-Orden unit (`•` bullet, `PROGRAMA SES`, `- ` continuation). Separator
+ * lines are NOT allowed inside the body (only the single opening separator
+ * before the body). Blank lines are allowed (transport).
+ * @param {string[]} bodyLines lines after the opening separator
  * @returns {boolean}
  */
 function isEOrdenBodyClean(bodyLines) {
     for (const line of bodyLines) {
         const c = cleanLine(line);
         if (c === '') continue;
-        if (LINE_IS_SEPARATOR_RE.test(c)) continue;
         if (c.startsWith(EORDEN_BULLET)) continue;
         if (c === EORDEN_SES_SECTION_LINE) continue;
         if (CONTINUATION_LINE_RE.test(c)) continue;
@@ -197,32 +182,57 @@ function isEOrdenBodyClean(bodyLines) {
     return true;
 }
 
-// ─── Item builders (pure, deterministic) ─────────────────────────────────────
+// ─── Raw preservation helpers ────────────────────────────────────────────────
 
 /**
- * @param {string[]} lines working lines
- * @param {number}   start inclusive line index
- * @param {number}   end   exclusive line index
- * @returns {string} exact slice of the working text
+ * Split rawInput into lines while preserving original byte offsets for
+ * lossless raw slicing (CRLF/LF/CR preserved exactly).
+ * @param {string} raw
+ * @returns {{lines:string[], starts:number[], ends:number[]}}
  */
-function sliceRaw(lines, start, end) {
-    return lines.slice(start, end).join('\n');
+function splitLinesWithOffsets(raw) {
+    const lines = [];
+    const starts = [];
+    const ends = [];
+    const re = /\r\n|\n|\r/g;
+    let last = 0;
+    let m;
+    while ((m = re.exec(raw)) !== null) {
+        lines.push(raw.slice(last, m.index));
+        starts.push(last);
+        ends.push(m.index);
+        last = m.index + m[0].length;
+    }
+    lines.push(raw.slice(last));
+    starts.push(last);
+    ends.push(raw.length);
+    return { lines, starts, ends };
 }
 
 /**
- * e-Orden recognized unit item.
- * @param {string[]} lines
+ * Exact raw slice for line range [start, end) using original offsets.
+ * Includes original CRLF/LF bytes between lines, no normalization.
+ * @param {number[]} starts
+ * @param {number[]} ends
+ * @param {string} raw
  * @param {number} start
  * @param {number} end
- * @returns {Object}
+ * @returns {string}
  */
-function eOrdenUnitItem(lines, start, end) {
+function sliceRawByOffsets(raw, starts, ends, start, end) {
+    if (start >= end) return '';
+    return raw.slice(starts[start], ends[end - 1]);
+}
+
+// ─── Item builders (pure, deterministic) ─────────────────────────────────────
+
+function eOrdenUnitItem(raw, starts, ends, lines, start, end) {
     const unitLines = lines.slice(start, end);
     return {
         kind: KIND_EORDEN_UNIT,
         source: SOURCE_EORDEN,
         state: UNIT_STATE_RECOGNIZED,
-        raw: sliceRaw(lines, start, end),
+        raw: sliceRawByOffsets(raw, starts, ends, start, end),
         structural_type: 'e-orden',
         recognized_fields: countEOrdenFieldLines(unitLines),
         start_line: start,
@@ -233,20 +243,13 @@ function eOrdenUnitItem(lines, start, end) {
     };
 }
 
-/**
- * PreSalud recognized unit item.
- * @param {string[]} lines
- * @param {number} start
- * @param {number} end
- * @returns {Object}
- */
-function presaludUnitItem(lines, start, end) {
+function presaludUnitItem(raw, starts, ends, lines, start, end) {
     const recordLines = lines.slice(start, end);
     return {
         kind: KIND_PRESALUD_UNIT,
         source: SOURCE_PRESALUD,
         state: UNIT_STATE_RECOGNIZED,
-        raw: sliceRaw(lines, start, end),
+        raw: sliceRawByOffsets(raw, starts, ends, start, end),
         structural_type: 'pre-salud',
         record_count: recordLines.length,
         recognized_fields: { 'pre-salud-record': recordLines.length },
@@ -258,19 +261,12 @@ function presaludUnitItem(lines, start, end) {
     };
 }
 
-/**
- * Unknown fragment item (lossless raw preservation).
- * @param {string[]} lines
- * @param {number} start
- * @param {number} end
- * @returns {Object}
- */
-function unknownFragmentItem(lines, start, end) {
+function unknownFragmentItem(raw, starts, ends, start, end) {
     return {
         kind: KIND_UNKNOWN_FRAGMENT,
         source: SOURCE_UNKNOWN,
         state: UNIT_STATE_RECOGNIZED,
-        raw: sliceRaw(lines, start, end),
+        raw: sliceRawByOffsets(raw, starts, ends, start, end),
         structural_type: 'unknown',
         recognized_fields: {},
         start_line: start,
@@ -281,21 +277,12 @@ function unknownFragmentItem(lines, start, end) {
     };
 }
 
-/**
- * Blocked unit item (state SEGMENTATION_BLOCKED; raw preserved).
- * @param {string[]} lines
- * @param {number} start
- * @param {number} end
- * @param {string} source
- * @param {string} reason
- * @returns {Object}
- */
-function blockedUnitItem(lines, start, end, source, reason) {
+function blockedUnitItem(raw, starts, ends, start, end, source, reason) {
     return {
         kind: KIND_BLOCKED_UNIT,
         source,
         state: UNIT_STATE_SEGMENTATION_BLOCKED,
-        raw: sliceRaw(lines, start, end),
+        raw: sliceRawByOffsets(raw, starts, ends, start, end),
         structural_type: 'blocked',
         recognized_fields: {},
         start_line: start,
@@ -309,25 +296,11 @@ function blockedUnitItem(lines, start, end, source, reason) {
 
 // ─── Envelope assembly ───────────────────────────────────────────────────────
 
-/**
- * Validate the partition over the working lines:
- *   1. items are sorted by line range, with no overlap and no inversion;
- *   2. every NON-BLANK / NON-SEPARATOR line is covered by exactly one item
- *      (semantic content is never dropped; blank and `═`-separator-only lines
- *      are transport-level separators and may be inside an item span or
- *      between items);
- *   3. every item's `raw` equals its exact line slice (byte-exact).
- * @param {string[]} lines
- * @param {Object[]} recognizedUnits
- * @param {Object[]} unknownFragments
- * @returns {{ok: boolean, reason: string}}
- */
-function validateLossless(lines, recognizedUnits, unknownFragments) {
+function validateLossless(raw, lines, starts, ends, recognizedUnits, unknownFragments) {
     const all = [...recognizedUnits, ...unknownFragments].sort(
         (a, b) => a.start_line - b.start_line || a.end_line - b.end_line
     );
 
-    // 1 — no overlap / no inversion between consecutive items.
     let prevEnd = -1;
     for (const item of all) {
         if (item.end_line < item.start_line) {
@@ -339,7 +312,6 @@ function validateLossless(lines, recognizedUnits, unknownFragments) {
         prevEnd = item.end_line;
     }
 
-    // 2 — semantic coverage: each non-blank, non-separator line is covered.
     for (let i = 0; i < lines.length; i += 1) {
         if (isSkippableLine(lines[i])) continue;
         const covered = all.filter((item) => item.start_line <= i && i < item.end_line);
@@ -351,38 +323,22 @@ function validateLossless(lines, recognizedUnits, unknownFragments) {
         }
     }
 
-    // 3 — byte-exact raw: item.raw equals its exact line slice.
     for (const item of all) {
-        const slice = lines.slice(item.start_line, item.end_line).join('\n');
-        if (item.raw !== slice) {
+        const expected = sliceRawByOffsets(raw, starts, ends, item.start_line, item.end_line);
+        if (item.raw !== expected) {
             return { ok: false, reason: `item ${item.kind} raw not byte-exact` };
         }
     }
     return { ok: true, reason: '' };
 }
 
-/**
- * @param {string} line
- * @returns {boolean} true when the line is a transport-level separator (blank
- *   or `═`-separator-only) that carries no structural content
- */
 function isSkippableLine(line) {
     const c = cleanLine(line);
     return c === '' || LINE_IS_SEPARATOR_RE.test(c);
 }
 
-/**
- * Finalize a valid result: assign unit indexes, compute detected sources.
- * @param {string} rawInput
- * @param {string[]} lines
- * @param {Object[]} recognizedUnits
- * @param {Object[]} unknownFragments
- * @param {Array}  [blockingStates]
- * @param {Array}  [warnings]
- * @returns {Object} D3 envelope
- */
-function resultEnvelope(rawInput, lines, recognizedUnits, unknownFragments, blockingStates = [], warnings = []) {
-    const validation = validateLossless(lines, recognizedUnits, unknownFragments);
+function resultEnvelope(rawInput, lines, starts, ends, recognizedUnits, unknownFragments, blockingStates = [], warnings = []) {
+    const validation = validateLossless(rawInput, lines, starts, ends, recognizedUnits, unknownFragments);
     if (!validation.ok) {
         return parserErrorEnvelope(rawInput, 'SEGMENTER_PARTITION_VIOLATION', validation.reason);
     }
@@ -411,14 +367,6 @@ function resultEnvelope(rawInput, lines, recognizedUnits, unknownFragments, bloc
     };
 }
 
-/**
- * Deterministic PARSER_ERROR-shaped envelope (D3): preserves raw, blocks
- * everything, never throws.
- * @param {string} rawInput
- * @param {string} code
- * @param {string} message
- * @returns {Object}
- */
 function parserErrorEnvelope(rawInput, code, message) {
     return {
         raw_input: rawInput,
@@ -435,11 +383,6 @@ function parserErrorEnvelope(rawInput, code, message) {
     };
 }
 
-/**
- * Empty-input envelope (D3: valid result, zero units, zero proposals).
- * @param {string} rawInput
- * @returns {Object}
- */
 function emptyEnvelope(rawInput) {
     return {
         raw_input: rawInput,
@@ -458,21 +401,6 @@ function emptyEnvelope(rawInput) {
 
 // ─── Region scanning (PreSalud / unknown) ────────────────────────────────────
 
-/**
- * Split a line range into single-class runs of lines that are NOT blank and
- * NOT `═`-separator-only (those act as breaks). A run is classified 'prs' when
- * every line is a valid D9 record, else 'unk'.
- *
- * Valid e-Orden unit spans are excluded from the scanned ranges by the caller,
- * so any e-Orden header-like line encountered here is an invalid/truncated
- * header: it is classified by the ordinary line rules (it has no `;`, so it
- * is 'unk') and NEVER swallows subsequent record-shaped lines — a record line
- * that follows an invalid header is still scanned independently.
- * @param {string[]} lines
- * @param {number} start
- * @param {number} end
- * @returns {Array} runs [{start, end, cls}]
- */
 function splitRuns(lines, start, end) {
     const runs = [];
     let i = start;
@@ -484,6 +412,12 @@ function splitRuns(lines, start, end) {
         }
         const cls = isPresaludRecordLine(lines[i]) ? 'prs' : 'unk';
         const runStart = i;
+        // PreSalud: one record = one unit, so each prs line is its own run
+        if (cls === 'prs') {
+            runs.push({ start: runStart, end: runStart + 1, cls });
+            i = runStart + 1;
+            continue;
+        }
         i += 1;
         while (i < end) {
             const ci = cleanLine(lines[i]);
@@ -497,104 +431,118 @@ function splitRuns(lines, start, end) {
     return runs;
 }
 
-/**
- * Find the structural end of an e-Orden unit whose header is at `headerIdx`.
- *
- * The unit spans from the header through the LAST `═` separator line of its
- * trailing separator block. If the header is immediately followed by a
- * separator, that is the unit's opening `═` block; the unit then extends
- * through the body until the NEXT separator block (its closing one) or EOF.
- * Without an opening separator the unit is invalid, but a deterministic scan
- * end is still returned (up to the next separator/header/EOF).
- *
- * @param {string[]} lines
- * @param {number} headerIdx
- * @param {number} lineCount
- * @returns {{sepIndex: number, scanEnd: number}}
- */
-function findEOrdenUnitEnd(lines, headerIdx, lineCount) {
-    let lastSepIndex = -1;
-    for (let j = headerIdx + 1; j < lineCount; j += 1) {
-        if (isSeparatorOnlyLine(lines[j])) lastSepIndex = j;
-        else break;
-    }
-    if (lastSepIndex !== -1) {
-        for (let j = lastSepIndex + 1; j < lineCount; j += 1) {
-            const cj = cleanLine(lines[j]);
-            if (cj === '') continue;
-            if (isSeparatorOnlyLine(lines[j])) {
-                lastSepIndex = j;
-                break;
-            }
-            if (cj.startsWith(EORDEN_HEADER_PREFIX)) break;
-        }
-    } else {
-        for (let j = headerIdx + 1; j < lineCount; j += 1) {
-            if (isSeparatorOnlyLine(lines[j])) {
-                lastSepIndex = j;
-                break;
-            }
-            if (cleanLine(lines[j]).startsWith(EORDEN_HEADER_PREFIX)) break;
-        }
-    }
-    const scanEnd = lastSepIndex === -1 ? lineCount : lastSepIndex + 1;
-    return { sepIndex: lastSepIndex, scanEnd };
-}
-
 // ─── Core segmentation ───────────────────────────────────────────────────────
 
-/**
- * @param {string} rawInput
- * @returns {Object} D3 envelope
- */
 function runSegmentation(rawInput) {
-    // Working lines are RAW lines (with line terminators removed but content
-    // untouched). Normalization is applied only for per-line classification,
-    // so item raws tile the input byte-exact.
-    const trimmedInput = rawInput.replace(CRLF_RE, '\n');
-    if (trimmedInput.replace(TRAILING_WS_RE, '').trim() === '') {
+    const { lines, starts, ends } = splitLinesWithOffsets(rawInput);
+    const lineCount = lines.length;
+
+    // Empty check: all lines are blank after NFC+trim (D3: valid empty result)
+    let hasSemantic = false;
+    for (const l of lines) {
+        if (cleanLine(l) !== '' && !LINE_IS_SEPARATOR_RE.test(cleanLine(l))) {
+            // Check if there's any non-skippable content? Actually empty is all skippable.
+            // We consider semantic if any line is not skippable OR is a record/header candidate?
+            // Simpler: if any line has cleanLine !== '' then not empty.
+            // But separator-only lines alone are skippable and should be considered empty.
+            // So check if any line is not skippable.
+            hasSemantic = true;
+            break;
+        }
+        // Even if line is separator-only, that's skippable -> still empty
+        // Only if cleanLine !== '' and not separator would be semantic, but we already checked
+        // Actually we need to see if any line has content that is not blank/separator
+        // The loop above already: if cleanLine === '' or separator => skip, otherwise semantic.
+    }
+    // More precise: determine if all lines are skippable (blank or separator)
+    let allSkippable = true;
+    for (const l of lines) {
+        if (!isSkippableLine(l)) {
+            // Has semantic line, but need to also ensure not all lines are empty?
+            // If there's at least one non-skippable line, not empty.
+            allSkippable = false;
+            break;
+        }
+    }
+    // Also handle case where raw is empty string: lines = [''] -> skippable true
+    if (allSkippable) {
+        // Check if raw trimmed is empty (including separators considered empty for emptyEnvelope)
+        // Spec: empty input valid. Separator-only input with no semantic should be empty as well.
+        // But we treat separator-only as empty for now (no units).
+        // Verify: if raw contains only separators/blanks, return empty envelope preserving raw.
         return emptyEnvelope(rawInput);
     }
 
-    const blankSeparatorCount = countBlankOrSeparatorLines(trimmedInput);
-    if (blankSeparatorCount > MAX_BLANK_OR_SEPARATOR_LINES) {
-        return parserErrorEnvelope(
-            rawInput,
-            'SEGMENTER_TOO_MANY_SEPARATOR_LINES',
-            'Input contains an excessive number of blank/separator lines; no ' +
-            'safe structural partition is possible.'
-        );
+    // Find header candidates using exact D17 header grammar (NFC-normalized cleanLine)
+    const candidateHeaders = [];
+    for (let i = 0; i < lineCount; i += 1) {
+        const c = cleanLine(lines[i]);
+        if (c !== '' && EORDEN_HEADER_RE.test(c)) {
+            candidateHeaders.push(i);
+        }
     }
 
-    const lines = trimmedInput.split('\n');
-    // Peripheral empty lines (leading/trailing, D17 trim semantics) carry no
-    // structural content and are excluded from the partition: the envelope
-    // still preserves the exact original raw input, and items tile the
-    // semantic content losslessly.
-    while (lines.length > 0 && cleanLine(lines[0]) === '') lines.shift();
-    while (lines.length > 0 && cleanLine(lines[lines.length - 1]) === '') lines.pop();
-    const lineCount = lines.length;
+    // Helper to find next header index after given index
+    function nextHeaderAfter(idx) {
+        for (const h of candidateHeaders) {
+            if (h > idx) return h;
+        }
+        return lineCount;
+    }
 
-    // Find every e-Orden header candidate. A header that forms a VALID
-    // complete D17 unit (header + body-clean + `═` separator, no PreSalud
-    // record-shaped line inside its span) counts as an e-Orden unit for the
-    // multi-unit rule; only multiple VALID units trigger
-    // MULTI_EORDEN_NOT_PARTITIONABLE. A header with a record-shaped line
-    // inside its span is a mixed-input candidate (handled as
-    // BLOCK_MIXED_NO_UNIQUE_PARTITION below); an invalid/truncated header
-    // (no separator or non-contractual body) is unknown text.
-    const candidateHeaders = [];
+    // Helper to find next separator after opening (for closing detection, not included)
+    function nextSeparatorAfter(idx) {
+        for (let j = idx + 1; j < lineCount; j += 1) {
+            if (isSeparatorOnlyLine(lines[j])) return j;
+            if (candidateHeaders.includes(j)) return j;
+        }
+        return lineCount;
+    }
+
+    // Determine valid e-Orden units: must have opening separator immediately after header,
+    // body clean (no separator inside body), non-empty body. ScanEnd is first non-allowed line
+    // after opening (blank/bullet/PROGRAMA SES/continuation allowed). Record inside body makes
+    // ownership ambiguous only when interleaved (record between bullets), not when record is a
+    // separate unit after a clear boundary.
     const validHeaders = [];
-    for (let i = 0; i < lineCount; i += 1) {
-        if (!EORDEN_HEADER_RE.test(cleanLine(lines[i]))) continue;
-        candidateHeaders.push(i);
-        const end = findEOrdenUnitEnd(lines, i, lineCount);
-        const sepIndex = end.sepIndex;
-        const bodyEnd = sepIndex === -1 ? end.scanEnd : sepIndex;
-        const body = lines.slice(i + 1, bodyEnd);
-        const recordInside = lines.slice(i + 1, bodyEnd).some((l) => isPresaludRecordLine(l));
-        const valid = sepIndex !== -1 && isEOrdenBodyClean(body) && !recordInside;
-        if (valid) validHeaders.push(i);
+    const headerSpan = new Map(); // headerIdx -> {scanEnd, blockEnd, valid, recordInsideBlock, interleaved}
+    for (const h of candidateHeaders) {
+        const nextH = nextHeaderAfter(h);
+        const openingSep = h + 1 < lineCount && isSeparatorOnlyLine(lines[h + 1]);
+        if (!openingSep) {
+            const scanEnd = nextH;
+            headerSpan.set(h, { scanEnd, blockEnd: nextH, valid: false, recordInsideBlock: false, interleaved: false, openingSep: false });
+            continue;
+        }
+        let scanEndValid = h + 2;
+        while (scanEndValid < lineCount) {
+            if (candidateHeaders.includes(scanEndValid)) break;
+            if (isSeparatorOnlyLine(lines[scanEndValid])) break;
+            const c = cleanLine(lines[scanEndValid]);
+            if (c === '') { scanEndValid += 1; continue; }
+            if (c.startsWith(EORDEN_BULLET) || c === EORDEN_SES_SECTION_LINE || CONTINUATION_LINE_RE.test(c)) { scanEndValid += 1; continue; }
+            break;
+        }
+        const blockEnd = nextH;
+        const bodyValid = lines.slice(h + 2, scanEndValid);
+        const bodyClean = bodyValid.length > 0 ? isEOrdenBodyClean(bodyValid) : false;
+        const blockSlice = lines.slice(h + 2, blockEnd);
+        const recordInsideBlock = blockSlice.some((l) => isPresaludRecordLine(l));
+        let interleaved = false;
+        for (let idx = 0; idx < blockSlice.length; idx += 1) {
+            if (isPresaludRecordLine(blockSlice[idx])) {
+                for (let j = idx + 1; j < blockSlice.length; j += 1) {
+                    const cj = cleanLine(blockSlice[j]);
+                    if (cj === '' || isSeparatorOnlyLine(blockSlice[j])) continue;
+                    if (cj.startsWith(EORDEN_BULLET) || cj === EORDEN_SES_SECTION_LINE) { interleaved = true; break; }
+                    break;
+                }
+                if (interleaved) break;
+            }
+        }
+        const finalValid = openingSep && bodyClean && !interleaved;
+        headerSpan.set(h, { scanEnd: scanEndValid, blockEnd, valid: finalValid, recordInsideBlock, interleaved, openingSep });
+        if (finalValid) validHeaders.push(h);
     }
 
     // Rule D17/D13: two or more VALID e-Orden units are never partitionable.
@@ -602,6 +550,8 @@ function runSegmentation(rawInput) {
         return blockedWholeImportEnvelope(
             rawInput,
             lines,
+            starts,
+            ends,
             SOURCE_EORDEN,
             BLOCK_MULTI_EORDEN,
             'Two or more e-Orden units detected in one raw input; D17/D13 ' +
@@ -609,25 +559,19 @@ function runSegmentation(rawInput) {
         );
     }
 
-    // A single valid e-Orden unit.
-    const headerLines = validHeaders;
-    // Mixed-input candidates: any header whose span is NOT body-clean but DOES
-    // contain a record-shaped line. A record-shaped line inside an e-Orden
-    // span makes source ownership ambiguous and no unique partition exists,
-    // regardless of other valid units — this check takes precedence over the
-    // single-valid-unit path below.
-    const mixedCandidates = candidateHeaders.filter((i) => {
-        if (validHeaders.includes(i)) return false;
-        const end = findEOrdenUnitEnd(lines, i, lineCount);
-        const sepIndex = end.sepIndex;
-        if (sepIndex === -1) return false;
-        const bodyEnd = sepIndex;
-        return lines.slice(i + 1, bodyEnd).some((l) => isPresaludRecordLine(l));
+    // Mixed-input candidates: interleaved record inside e-Orden block (record between bullets)
+    const mixedCandidates = candidateHeaders.filter((h) => {
+        if (validHeaders.includes(h)) return false;
+        const span = headerSpan.get(h);
+        if (!span || !span.openingSep) return false;
+        return span.interleaved;
     });
     if (mixedCandidates.length >= 1) {
         return blockedWholeImportEnvelope(
             rawInput,
             lines,
+            starts,
+            ends,
             SOURCE_UNKNOWN,
             BLOCK_MIXED_NO_UNIQUE_PARTITION,
             'Input mixes e-Orden text with a PreSalud record-shaped line ' +
@@ -638,55 +582,19 @@ function runSegmentation(rawInput) {
     const recognizedUnits = [];
     const unknownFragments = [];
 
-    // ── single valid e-Orden unit ────────────────────────────────────────────
-    // (mixedCandidates.length >= 1 already returned above.)
     let eoStart = -1;
-    let eoEnd = -1; // exclusive
-    if (headerLines.length === 1) {
-        const eoHeader = headerLines[0];
-        const { sepIndex, scanEnd } = findEOrdenUnitEnd(lines, eoHeader, lineCount);
-        const spanEnd = scanEnd;
-        const bodyEnd = sepIndex === -1 ? scanEnd : sepIndex;
-        const body = lines.slice(eoHeader + 1, bodyEnd);
-        const bodyClean = isEOrdenBodyClean(body);
-
-        // A PreSalud record-shaped line inside the e-Orden span makes source
-        // ownership ambiguous: it could be e-Orden body content or an
-        // independent PreSalud paste. No unique partition exists (D4/D13).
-        let recordInside = false;
-        for (let j = eoHeader + 1; j < bodyEnd; j += 1) {
-            if (isPresaludRecordLine(lines[j])) {
-                recordInside = true;
-                break;
-            }
-        }
-
-        if (bodyClean && sepIndex !== -1) {
-            // Valid D17 e-Orden unit.
-            eoStart = eoHeader;
-            eoEnd = spanEnd;
-            recognizedUnits.push(eOrdenUnitItem(lines, eoStart, eoEnd));
-        } else if (sepIndex !== -1 && recordInside) {
-            // Defensive (already handled by mixedCandidates): dirty body caused
-            // by a PreSalud-shaped line → whole import blocked.
-            return blockedWholeImportEnvelope(
-                rawInput,
-                lines,
-                SOURCE_UNKNOWN,
-                BLOCK_MIXED_NO_UNIQUE_PARTITION,
-                'Input mixes e-Orden text with a PreSalud record-shaped line ' +
-                'inside the e-Orden span; no unique structural partition exists.'
-            );
-        } else {
-            // Header present but the block is not a valid e-Orden unit (no
-            // separator, or body contains non-contractual junk). The header
-            // line cannot be claimed by any grammar and is left to the
-            // ordinary line scanner below: it has no `;`, so it is classified
-            // as unknown text and NEVER swallows subsequent record-shaped
-            // lines (they are scanned independently after it).
-            eoStart = -1;
-            eoEnd = -1;
-        }
+    let eoEnd = -1;
+    if (validHeaders.length === 1) {
+        const eh = validHeaders[0];
+        const span = headerSpan.get(eh);
+        eoStart = eh;
+        eoEnd = span.scanEnd;
+        recognizedUnits.push(eOrdenUnitItem(rawInput, starts, ends, lines, eoStart, eoEnd));
+    } else if (candidateHeaders.length === 1 && validHeaders.length === 0) {
+        // Single invalid header: check if it recordInside already handled as mixed (blocked whole import)
+        // Otherwise it will be treated as unknown via remainingRanges scanning; do not create eo unit.
+        eoStart = -1;
+        eoEnd = -1;
     }
 
     // ── scan remaining regions (PreSalud / unknown) ─────────────────────────
@@ -699,113 +607,28 @@ function runSegmentation(rawInput) {
     }
 
     const allRuns = [];
-    let totalRecordLines = 0;
     for (const [rangeStart, rangeEnd] of remainingRanges) {
         const runs = splitRuns(lines, rangeStart, rangeEnd);
         for (const run of runs) {
             allRuns.push(run);
-            if (run.cls === 'prs') totalRecordLines += run.end - run.start;
         }
     }
 
-    // Multi-record rule (D9): when the input carries more than one PreSalud
-    // record line, every record-shaped run is deterministically blocked with
-    // `PRESALUD_MULTI_RECORD_UNSUPPORTED_V0` (raw preserved, zero proposals,
-    // apply blocked). An independent e-Orden unit of the same input stays
-    // intact (proportional blocking, D13). Blank/separator lines between runs
-    // carry no content; unknown runs between blocked runs surface as
-    // fragments with safe boundaries — nothing is guessed.
-    const hasEOrden = recognizedUnits.some((u) => u.source === SOURCE_EORDEN);
-    if (totalRecordLines >= 2) {
-        // Replace every prs run with a blocked unit (contiguous record lines).
-        const prsRuns = allRuns.filter((r) => r.cls === 'prs');
-        const blockedRuns = prsRuns.map((run) =>
-            blockedUnitItem(
-                lines,
-                run.start,
-                run.end,
-                SOURCE_PRESALUD,
-                'PreSalud input contains more than one record; multi-record ' +
-                'composition is NOT_SUPPORTED_V0 (D9). Raw preserved; zero ' +
-                'proposals; apply blocked.'
-            )
-        );
-
-        if (hasEOrden) {
-            // Proportional blocking: recognized e-Orden unit stays intact;
-            // every PreSalud record run is a blocked unit; unknown runs stay
-            // isolated fragments (never dropped, never guessed).
-            const fragItems = [];
-            for (const run of allRuns) {
-                if (run.cls === 'unk') {
-                    fragItems.push(unknownFragmentItem(lines, run.start, run.end));
-                }
-            }
-            unknownFragments.length = 0;
-            for (const f of fragItems) unknownFragments.push(f);
-            const allItems = [...recognizedUnits, ...blockedRuns];
-            allItems.sort((a, b) => a.start_line - b.start_line);
-            recognizedUnits.length = 0;
-            for (const u of allItems) recognizedUnits.push(u);
-            return resultEnvelope(
-                rawInput,
-                lines,
-                recognizedUnits,
-                unknownFragments,
-                [BLOCK_MULTI_RECORD_PRESALUD]
-            );
-        }
-
-        // Pure PreSalud multi-record (no independent source): whole import
-        // blocked deterministically with zero proposals; raw preserved.
-        const wholeBlock = blockedWholeImportEnvelope(
-            rawInput,
-            lines,
-            SOURCE_PRESALUD,
-            BLOCK_MULTI_RECORD_PRESALUD,
-            'PreSalud input contains more than one record; multi-record ' +
-            'composition is NOT_SUPPORTED_V0 (D9). Whole import blocked with ' +
-            'zero proposals; raw preserved.'
-        );
-        wholeBlock.blocking_reason =
-            'PRESALUD_MULTI_RECORD_UNSUPPORTED_V0: PreSalud input contains ' +
-            'more than one record; multi-record composition is NOT_SUPPORTED_V0 ' +
-            '(D9). Whole import blocked with zero proposals; raw preserved.';
-        return wholeBlock;
-    }
-
-    // ── per-run classification (single record or none) ──────────────────────
-    let prsRunSeen = false;
+    // Per-run classification: each contiguous prs run is a PreSalud unit (T2 does NOT block multi-record).
+    // Each unk run is an unknown fragment. No multi-record adjudication in T2.
     for (const run of allRuns) {
         if (run.cls === 'prs') {
-            if (prsRunSeen) {
-                // Two independent single-record regions (defensive; only
-                // reachable if a record line was miscounted above).
-                unknownFragments.push(unknownFragmentItem(lines, run.start, run.end));
-                continue;
-            }
-            prsRunSeen = true;
-            recognizedUnits.push(presaludUnitItem(lines, run.start, run.end));
+            recognizedUnits.push(presaludUnitItem(rawInput, starts, ends, lines, run.start, run.end));
         } else {
-            unknownFragments.push(unknownFragmentItem(lines, run.start, run.end));
+            unknownFragments.push(unknownFragmentItem(rawInput, starts, ends, run.start, run.end));
         }
     }
 
-    return resultEnvelope(rawInput, lines, recognizedUnits, unknownFragments);
+    return resultEnvelope(rawInput, lines, starts, ends, recognizedUnits, unknownFragments);
 }
 
-/**
- * Build a whole-import blocked envelope with a single blocked unit spanning
- * the full working text (lossless by construction).
- * @param {string} rawInput
- * @param {string[]} lines
- * @param {string} source
- * @param {string} code
- * @param {string} reason
- * @returns {Object}
- */
-function blockedWholeImportEnvelope(rawInput, lines, source, code, reason) {
-    const blocked = blockedUnitItem(lines, 0, lines.length, source, reason);
+function blockedWholeImportEnvelope(rawInput, lines, starts, ends, source, code, reason) {
+    const blocked = blockedUnitItem(rawInput, starts, ends, 0, lines.length, source, reason);
     blocked.blocking_reason = `${code}: ${reason}`;
     return {
         raw_input: rawInput,
@@ -824,12 +647,6 @@ function blockedWholeImportEnvelope(rawInput, lines, source, code, reason) {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
-/**
- * WO-B pure entry point (D3 envelope). Never throws: unexpected failures are
- * returned as a PARSER_ERROR-shaped envelope preserving the raw input.
- * @param {string} rawInput
- * @returns {Object}
- */
 export function segmentClinicalIntake(rawInput) {
     if (typeof rawInput !== 'string') {
         return parserErrorEnvelope(
@@ -849,11 +666,6 @@ export function segmentClinicalIntake(rawInput) {
     }
 }
 
-/**
- * Alias of segmentClinicalIntake (readability for consumers).
- * @param {string} rawInput
- * @returns {Object}
- */
 export function segmentRawInput(rawInput) {
     return segmentClinicalIntake(rawInput);
 }
