@@ -7,7 +7,9 @@
  * ticket.
  *
  * Acceptance criteria exercised (issue #296 ACCEPTANCE_CRITERIA):
- *   1. Demo valid raw -> marca (HYRIMOZ-class), vía, dosis, pauta + raw Días;
+ *   1. Demo valid raw -> marca (HYRIMOZ-class), vía, dosis + raw Días;
+ *      pauta preserved explicit with target NONE / NO_PROPOSAL (D7: WO-E
+ *      maps professionally, never WO-D AUTO_PROPOSABLE);
  *      empty Estado -> NO_VALUE / PENDING_EXTERNAL_CONFIRMATION / target NONE.
  *   2. Marca without remaining description, and without spaces around the
  *      parenthesized group, both match the subgrammar.
@@ -103,7 +105,7 @@ console.log('\n[WO-D] 1. Demo raw -> marca/vía/dosis/pauta + Estado/Días raw p
     const dosis = contributionOf(r, 'requested_dose');
     assert(dosis && dosis.value === '40 MG' && dosis.target === 'fhDermaDosis', 'dosis = 40 MG (target fhDermaDosis)');
     const pauta = contributionOf(r, 'requested_schedule');
-    assert(pauta && pauta.value === 'CADA 14 DIAS' && pauta.target === 'fhDermaPauta', 'pauta = CADA 14 DIAS (target fhDermaPauta)');
+    assert(pauta && pauta.value === 'CADA 14 DIAS' && pauta.target === TARGET_NONE && pauta.proposal_status === PROPOSAL_NO_PROPOSAL, 'pauta = CADA 14 DIAS preserved, target NONE / NO_PROPOSAL (D7: WO-E maps professionally)');
 
     const estado = contributionOf(r, 'estado');
     assert(estado && estado.value === null && estado.target === TARGET_NONE && estado.proposal_status === PROPOSAL_NO_PROPOSAL, 'empty Estado -> target NONE / NO_PROPOSAL');
@@ -321,6 +323,66 @@ console.log('\n[WO-D] 10. Anti-fuzzy second-record line with a label prefix cann
     assert(r.contributions.filter((c) => c.concept === 'commercial_name').length === 1, 'only one clean record contributes a brand');
     assert(r.unrecognized_fragments.some((f) => f.raw.includes('Vía:')), 'label-shaped line preserved as unknown');
     assert(!r.warnings.some((w) => w.code === 'MULTIPLE_SOURCE_VALUES'), 'no fabricated selection');
+}
+
+console.log('\n[WO-D] 11. Leading whitespace before a label must NOT bypass the exact-label grammar (fail-closed)');
+{
+// Transport authorizes trailing whitespace only; a label prefix stays a
+// label even when indented. Each indented-label line is NOT a D9 record:
+// UNRECOGNIZED, raw preserved, zero proposals.
+const cases = [
+['leading-space Via label (field 3)', 'Activo;HYRIMOZ (HYRIMOZ); Via: SC;40 MG;CADA 14 DIAS;28'],
+['leading-space Dias label (field 6)', 'Activo;HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS; Dias: 28'],
+['leading-space Medicamento label (field 2)', 'Activo; Medicamento: HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;28'],
+['tab-indented Pauta label (field 5)', 'Activo;HYRIMOZ (HYRIMOZ);SC;40 MG;\tPauta: CADA 14 DIAS;28'],
+];
+for (const [label, raw] of cases) {
+const r = parsePreSaludRaw(raw);
+assert(r.unit_state === UNIT_STATE_UNRECOGNIZED, `${label}: unit UNRECOGNIZED (fail-closed)`);
+assert(!r.contributions.some((c) => c.proposal_status === PROPOSAL_AUTO_PROPOSABLE), `${label}: zero proposals`);
+assert(r.raw_input === raw, `${label}: raw preserved`);
+assert(r.can_apply === false, `${label}: can_apply false`);
+assert(r.unrecognized_fragments.length >= 1, `${label}: preserved as fragment`);
+}
+// Triangulation: a valid exact record still passes; the same label
+// without indentation was already UNRECOGNIZED (section 6).
+const valid = parsePreSaludRaw('Activo;HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;28');
+assert(valid.unit_state === UNIT_STATE_RECOGNIZED && contributionOf(valid, 'commercial_name')?.value === 'HYRIMOZ', 'valid exact record still RECOGNIZED');
+}
+
+console.log('\n[WO-D] 12. requested_schedule / Pauta preserved with provenance but target NONE / NO_PROPOSAL (D7; no WO-D hydration)');
+{
+const r = parsePreSaludRaw(DEMO_EMPTY_STATE);
+const pauta = contributionOf(r, 'requested_schedule');
+assert(pauta && pauta.value === 'CADA 14 DIAS', 'pauta explicit value preserved');
+assert(pauta.target === TARGET_NONE, 'pauta target NONE');
+assert(pauta.proposal_status === PROPOSAL_NO_PROPOSAL, 'pauta NO_PROPOSAL');
+assert(pauta.source_value === 'CADA 14 DIAS', 'pauta source_value preserved');
+assert(pauta.semantic_status === PROVENANCE_ONLY, 'pauta provenance-only semantic status');
+assert(pauta.provenance && pauta.provenance.raw !== undefined, 'pauta carries provenance');
+assert(!r.contributions.some((c) => c.target === 'fhDermaPauta' || c.target === 'fhDermaPautaOtro'), 'no WO-D hydration into fhDermaPauta/fhDermaPautaOtro');
+// Triangulation: route/dose allowlist behavior unchanged.
+assert(contributionOf(r, 'requested_route')?.target === 'fhDermaVia', 'route exact equivalence still fhDermaVia');
+assert(contributionOf(r, 'requested_dose')?.target === 'fhDermaDosis', 'dose still fhDermaDosis');
+}
+
+console.log('\n[WO-D] 13. medicamento_raw preserves the exact source value up to the field delimiter');
+{
+// Peripheral trim is authorized only for internal subgrammar components;
+// the source evidence (value/source_value/provenance) is never rewritten.
+const raw = 'Activo; HYRIMOZ (HYRIMOZ) ;SC;40 MG;CADA 14 DIAS;28';
+const r = parsePreSaludRaw(raw);
+const marca = contributionOf(r, 'commercial_name');
+assert(marca && marca.source_value === ' HYRIMOZ (HYRIMOZ) ', 'commercial_name source_value is the exact field slice');
+assert(marca.value === 'HYRIMOZ', 'brand value still the trimmed subgrammar component (internal use)');
+const principio = contributionOf(r, 'principio_activo_raw');
+assert(principio && principio.source_value === ' HYRIMOZ (HYRIMOZ) ', 'principio_activo_raw provenance keeps exact source slice');
+assert(principio.value === 'HYRIMOZ', 'principio component trimmed internally only');
+const rawUnmatched = 'Activo; HYRIMOZ ;SC;40 MG;CADA 14 DIAS;28';
+const ru = parsePreSaludRaw(rawUnmatched);
+const med = contributionOf(ru, 'medicamento');
+assert(med && med.value === ' HYRIMOZ ' && med.source_value === ' HYRIMOZ ', 'unmatched medicamento preserves exact slice, never rewritten');
+assert(!contributionOf(ru, 'commercial_name'), 'still zero brand proposal on unmatched subgrammar');
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────────────

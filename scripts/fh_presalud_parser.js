@@ -185,10 +185,12 @@ function provenancePendingContribution(result, concept, rawValue, raw, lineIndex
 }
 
 /**
- * Vía/Dosis/Pauta explicit positional value. Non-empty values are surfaced
+ * Vía/Dosis explicit positional value. Non-empty values are surfaced
  * with the exact D7 target as AUTO_PROPOSABLE; an empty field in 2..5 is a
  * D9 omitted-field violation and is rejected at the record level before this
- * helper is reached (it remains here only as a defensive path).
+ * helper is reached (it remains here only as a defensive path). Pauta is
+ * NOT routed here: D7 keeps requested_schedule at target NONE / NO_PROPOSAL
+ * in WO-D (see parseSingleRecord).
  */
 function explicitValueContribution(result, concept, target, rawValue, raw, lineIndex) {
     const present = rawValue.trim() !== '';
@@ -270,7 +272,12 @@ function isRecordLine(content) {
     const fields = view.split(';');
     if (fields.length !== RECORD_FIELDS) return false;
     for (let i = 0; i < fields.length; i += 1) {
-        if (PRESALUD_LABEL_PREFIX_RE.test(fields[i])) return false;
+        // Fail-closed on indented labels: transport authorizes trailing
+        // whitespace only, so a label prefix stays a label even when the
+        // field carries leading whitespace. Testing the trimmed field
+        // never trims a label into validity — it rejects it.
+        const fieldView = fields[i].replace(/^[ \t\u00a0]+/, '');
+        if (PRESALUD_LABEL_PREFIX_RE.test(fieldView)) return false;
     }
     for (let i = 1; i < 5; i += 1) {
         if (fields[i].trim() === '') return false;
@@ -298,7 +305,13 @@ function countRecords(recordLines) {
 function parseSingleRecord(result, raw, lineIndex) {
     const view = recordView(raw);
     const fields = view.split(';').map((f) => f.replace(/^[ \t\u00a0]+/, ''));
+    // Exact source slices up to the field delimiter: raw is never rewritten
+    // for evidence. D10 authorizes peripheral trim only for internal
+    // subgrammar components (parseMedicamento trims its own view).
+    const exactFields = raw.split(';');
+    const medicamentoExact = exactFields.length === RECORD_FIELDS ? exactFields[1] : fields[1];
     const [estadoRaw, medicamentoRaw, viaRaw, dosisRaw, pautaRaw, diasRaw] = fields;
+    void medicamentoRaw;
 
     // Estado / Días: provenance-only, never clinical.
     provenancePendingContribution(result, 'estado', estadoRaw, raw, lineIndex);
@@ -308,9 +321,9 @@ function parseSingleRecord(result, raw, lineIndex) {
     // record's identity anchor is not established: the record yields zero
     // proposals (only provenance-only contributions), the raw is preserved,
     // and no partial rescue occurs.
-    const sub = parseMedicamento(medicamentoRaw);
+    const sub = parseMedicamento(medicamentoExact);
     if (!sub.matched) {
-        contribution(result, 'medicamento', TARGET_NONE, PROPOSAL_NO_PROPOSAL, medicamentoRaw, medicamentoRaw, raw, lineIndex, {
+        contribution(result, 'medicamento', TARGET_NONE, PROPOSAL_NO_PROPOSAL, medicamentoExact, medicamentoExact, raw, lineIndex, {
             semantic_status: MEDICATION_SUBGRAMMAR_UNMATCHED,
             blocking: true,
             reason: { code: MEDICATION_SUBGRAMMAR_UNMATCHED, message: 'Medicamento does not fully match PRESALUD_MEDICAMENTO_V0.' },
@@ -327,11 +340,12 @@ function parseSingleRecord(result, raw, lineIndex) {
     }
 
     // principio_activo_raw: provenance-only (D10). No proposal, no comparison.
-    contribution(result, 'principio_activo_raw', TARGET_NONE, PROPOSAL_NO_PROPOSAL, sub.principio_activo_raw, medicamentoRaw, raw, lineIndex, {
+    // The component value is trimmed internally; the source evidence stays exact.
+    contribution(result, 'principio_activo_raw', TARGET_NONE, PROPOSAL_NO_PROPOSAL, sub.principio_activo_raw, medicamentoExact, raw, lineIndex, {
         semantic_status: PROVENANCE_ONLY,
     });
     // Only a full exact subgrammar match authorizes commercial_name (D10/D7).
-    contribution(result, 'commercial_name', 'fhDermaFarmaco', PROPOSAL_AUTO_PROPOSABLE, sub.marca_comercial_raw, medicamentoRaw, raw, lineIndex, {
+    contribution(result, 'commercial_name', 'fhDermaFarmaco', PROPOSAL_AUTO_PROPOSABLE, sub.marca_comercial_raw, medicamentoExact, raw, lineIndex, {
         semantic_status: 'RECOGNIZED',
         marca_comercial_explicit: sub.marca_comercial_raw,
         principio_activo_raw: sub.principio_activo_raw,
@@ -354,7 +368,12 @@ function parseSingleRecord(result, raw, lineIndex) {
         }
     }
     explicitValueContribution(result, 'requested_dose', 'fhDermaDosis', dosisRaw, raw, lineIndex);
-    explicitValueContribution(result, 'requested_schedule', 'fhDermaPauta', pautaRaw, raw, lineIndex);
+    // Pauta (D7): the explicit positional value is preserved with
+    // provenance, but WO-D never hydrates it — always target NONE /
+    // NO_PROPOSAL. Mapping to an exact fhDermaPauta option or to OTRO +
+    // fhDermaPautaOtro is a WO-E explicit professional decision, never an
+    // AUTO_PROPOSABLE parser proposal.
+    provenanceOnlyContribution(result, 'requested_schedule', pautaRaw, raw, lineIndex);
 }
 
 /**
