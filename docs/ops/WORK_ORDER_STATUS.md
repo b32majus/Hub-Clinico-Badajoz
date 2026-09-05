@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-04
+**Última actualización:** 2026-09-05
 **Propósito:** Tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -76,7 +76,7 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 
 ## FH_UNIFIED_CLINICAL_INTAKE_V0 — ticket train aprobado para ejecución (dependency-gated)
 
-> Registrado 2026-09-04. El spec y el ticket train completaron SPEC audit, TICKET/HANDOFF audit, reparación focal y recheck focal independiente. El parent #292 está aprobado explícitamente por la operadora para ejecutar el tren auditado. Los tickets #293–#302 están `status:approved` + `ready-for-agent`; T1 #293 y T2 #294 son roots actualmente desbloqueadas y T3–T10 permanecen dependency-gated hasta sus checkpoints predecesores. Este registro vive en `work/hermes/fh-unified-clinical-intake-brief`; NO representa implementación, publicación en recovery, demo/pilot-ready ni autorización de merge.
+> Registrado 2026-09-04 y reconciliado 2026-09-05. El parent #292 está aprobado explícitamente para ejecutar el tren auditado. T2 #294 está completado en su rama de trabajo con checkpoint remoto aceptado `2c6ec5741ce61373c8ed0ade6601b86d3df83228`; T1 #293 sigue root ejecutable y T3 #295 / T4 #296 quedan desbloqueados por el checkpoint de T2. T5–T10 permanecen dependency-gated. Nada de esto representa merge en recovery, demo/pilot-ready ni autorización de merge.
 
 | Elemento | Valor |
 |---|---|
@@ -91,7 +91,8 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 | Findings | `F-001 = CLOSED`; `F-002 = CLOSED` |
 | Technical handoff | `PASS` |
 | Authority consistency | `PASS` — #292 operator-approved for execution of the audited train |
-| Ejecución | `READY_FOR_AGENT=YES`; T1 #293 + T2 #294 = root frontier desbloqueada; T3–T10 = dependency-gated; `IMPLEMENTATION_STARTED=NO` en este checkpoint; `MERGE_AUTHORIZED=NO` |
+| Ejecución | T2 #294 = `COMPLETED_REMOTE_CHECKPOINT`; T1 #293 + T3 #295 + T4 #296 = frontier ejecutable; T5–T10 = dependency-gated; `MERGE_AUTHORIZED=NO` |
+| T2 #294 checkpoint | `2c6ec5741ce61373c8ed0ade6601b86d3df83228` en `work/hermes/fh-t2-segmenter-294`; deterministic `380/380 PASS`; Cora spec/adversarial audit `PASS`; `git diff --check PASS`; Gentle `PARTIAL_3_OF_4_TRANSPORT_BLOCKED`, `ACK_BURN=NO`, readability unavailable por transporte; entrega aceptada por decisión explícita de mantenedor bajo política ordinaria; sin PR/merge |
 | Estado clínico | Desarrollo sintético/demo únicamente; NO PILOTO; NO PRODUCCIÓN |
 
 Notas de autoridad del train:
