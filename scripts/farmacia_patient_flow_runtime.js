@@ -542,13 +542,16 @@
             return scope;
         }
 
+        function isDraftEligibleControl(control) {
+            return !(control.tagName === 'INPUT' && String(control.type || '').toLowerCase() === 'file')
+                && !(control.closest && control.closest('.autocomplete-dropdown'))
+                && !(control.closest && control.closest('[data-fh-transient]'));
+        }
+
         function draftControls(scope) {
             var container = draftScope(scope);
             if (!container || typeof container.querySelectorAll !== 'function') return [];
-            return Array.prototype.filter.call(container.querySelectorAll('input[id], select[id], textarea[id]'), function (control) {
-                return !(control.tagName === 'INPUT' && String(control.type || '').toLowerCase() === 'file')
-                    && !(control.closest && control.closest('.autocomplete-dropdown'));
-            });
+            return Array.prototype.filter.call(container.querySelectorAll('input[id], select[id], textarea[id]'), isDraftEligibleControl);
         }
 
         function savePageDraft(pageKey, scope) {
