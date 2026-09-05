@@ -296,7 +296,7 @@ console.log('\n[WO-B] Criterio 7c — caso de ownership ambiguo → dos unidades
     assertEqual(r.can_apply, false, 'ownership ambiguo: can_apply false');
 }
 
-console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden independiente (F-CODE-02: T2 no bloquea)');
+console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden independiente (Repair A: una unidad PreSalud, T2 no bloquea)');
 
 {
     const recA = ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
@@ -307,7 +307,9 @@ console.log('\n[WO-B] Proporcionalidad D13 — multi-record PreSalud + e-Orden i
     assertEqual(blockingStates(r).length, 0, 'multi-record + e-orden: sin bloqueos T2');
     assertEqual(unitSources(r).filter((s) => s === SOURCE_EORDEN).length, 1, 'multi-record + e-orden: e-orden intacta');
     const pres = r.recognized_units.filter((u) => u.source === SOURCE_PRESALUD);
-    assertEqual(pres.length, 2, 'multi-record + e-orden: dos unidades PreSalud');
+    assertEqual(pres.length, 1, 'multi-record + e-orden: una unidad PreSalud (Repair A)');
+    assertEqual(pres[0].record_count, 2, 'multi-record + e-orden: record_count 2');
+    assertEqual(pres[0].raw, recA + '\n\n' + recB, 'multi-record + e-orden: raw multi-record preservado exacto');
     assert(pres.every((u) => u.state === UNIT_STATE_RECOGNIZED), 'multi-record + e-orden: PreSalud reconocidas (no bloqueadas en T2)');
     assertEqual(r.errors.length, 0, 'multi-record + e-orden: sin errores');
     assertEqual(r.raw_input, raw, 'multi-record + e-orden: raw_input conservado');
@@ -506,20 +508,73 @@ console.log('\n[WO-B] Regresiones F-CODE-01..05 — falsificación de findings')
     assertEqual(r.recognized_units[0].raw, t4Invalid, 'F-CODE-02: raw preservado exacto para T4');
     assertEqual(r.can_apply, false, 'F-CODE-02: can_apply false');
 }
-// F-CODE-02: no multi-record rejection in T2
+// F-CODE-02 (actualizado por Repair A, issue #303): no multi-record
+// rejection in T2 — contiguous records stay ONE structural unit for T4.
 {
     const recA = ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
     const recB = 'Activo;BENEPALI (BENEPALI 45MG);SC;45 MG;CADA 28 DIAS;28';
     const raw = recA + '\n' + recB;
     const r = segmentClinicalIntake(raw);
-    assertEqual(unitKinds(r).filter((k) => k === KIND_PRESALUD_UNIT).length, 2, 'F-CODE-02: multi-record no bloqueado en T2 → dos unidades PreSalud');
+    assertEqual(unitKinds(r).filter((k) => k === KIND_PRESALUD_UNIT).length, 1, 'F-CODE-02/Repair A: multi-record contiguo → una unidad PreSalud');
+    assertEqual(r.recognized_units[0].record_count, 2, 'F-CODE-02/Repair A: record_count 2');
+    assertEqual(r.recognized_units[0].raw, raw, 'F-CODE-02/Repair A: raw multi-record preservado exacto para T4');
     assertEqual(r.blocking_states.length, 0, 'F-CODE-02: multi-record sin blocking_states en T2');
     assertEqual(r.can_apply, false, 'F-CODE-02: can_apply false con multi-record');
-    // Incluso con e-Orden intercalada, T2 no adjudica MULTI_RECORD
+    // Con e-Orden intercalada, cada región PreSalud es su propia unidad y
+    // T2 no adjudica MULTI_RECORD.
     const rawMixed = recA + '\n\n' + EORDEN_FIXTURE + '\n\n' + recB;
     const rm = segmentClinicalIntake(rawMixed);
     assertEqual(rm.blocking_states.length, 0, 'F-CODE-02: multi-record mixto sin blocking T2');
-    assertEqual(unitSources(rm).filter((s) => s === SOURCE_PRESALUD).length, 2, 'F-CODE-02: mixto multi-record conserva dos PreSalud');
+    assertEqual(unitSources(rm).filter((s) => s === SOURCE_PRESALUD).length, 2, 'F-CODE-02: mixto con e-Orden intercalada conserva dos PreSalud (regiones distintas)');
+}
+
+console.log('\n[Repair A #303] — PreSalud multi-record contiguo → una unidad estructural');
+
+{
+    const recA = ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
+    const recB = 'Activo;BENEPALI (BENEPALI 45MG);SC;45 MG;CADA 28 DIAS;28';
+    const recC = ';ADALIMUMAB (HULIO 40MG);SC;40 MG;CADA 14 DIAS;14';
+    // Dos registros contiguos: una unidad, record_count=2, raw exacto.
+    const raw2 = recA + '\n' + recB;
+    const r2 = segmentClinicalIntake(raw2);
+    assertEnvelope(r2, 'repair-A dos contiguos');
+    assertEqual(unitKinds(r2).length, 1, 'repair-A: dos contiguos → una unidad');
+    assertEqual(unitKinds(r2)[0], KIND_PRESALUD_UNIT, 'repair-A: tipo presalud_unit');
+    assertEqual(r2.recognized_units[0].record_count, 2, 'repair-A: record_count 2');
+    assertEqual(r2.recognized_units[0].raw, raw2, 'repair-A: raw byte-exact para T4');
+    assertEqual(fragmentCount(r2), 0, 'repair-A: cero fragmentos');
+    assertEqual(blockingStates(r2).length, 0, 'repair-A: T2 no bloquea (T4 adjudica)');
+    // Tres registros contiguos: una unidad, record_count=3.
+    const raw3 = recA + '\n' + recB + '\n' + recC;
+    const r3 = segmentClinicalIntake(raw3);
+    assertEqual(unitKinds(r3).length, 1, 'repair-A: tres contiguos → una unidad');
+    assertEqual(r3.recognized_units[0].record_count, 3, 'repair-A: record_count 3');
+    assertEqual(r3.recognized_units[0].raw, raw3, 'repair-A: raw de tres preservado exacto');
+    // Registros separados solo por líneas en blanco de transporte: misma región.
+    const rawBlank = recA + '\n\n' + recB;
+    const rb = segmentClinicalIntake(rawBlank);
+    assertEqual(unitKinds(rb).length, 1, 'repair-A: separados por blank → una unidad');
+    assertEqual(rb.recognized_units[0].record_count, 2, 'repair-A: blank intermedio no cuenta como registro');
+    assertEqual(rb.recognized_units[0].raw, rawBlank, 'repair-A: blank intermedio preservado en raw');
+    // Un solo registro sigue siendo una unidad con record_count=1.
+    const r1 = segmentClinicalIntake(recA);
+    assertEqual(unitKinds(r1).length, 1, 'repair-A: un registro → una unidad');
+    assertEqual(r1.recognized_units[0].record_count, 1, 'repair-A: record_count 1');
+    // Contiguos en CRLF: una unidad, CRLF preservado.
+    const rawCRLF = (recA + '\n' + recB).replace(/\n/g, '\r\n');
+    const rc = segmentClinicalIntake(rawCRLF);
+    assertEqual(unitKinds(rc).length, 1, 'repair-A CRLF: una unidad');
+    assertEqual(rc.recognized_units[0].record_count, 2, 'repair-A CRLF: record_count 2');
+    assertEqual(rc.recognized_units[0].raw, rawCRLF, 'repair-A CRLF: raw CRLF byte-exact');
+    // Registros separados por texto unknown: regiones distintas → dos unidades.
+    const rawSplit = recA + '\nnota intermedia\n' + recB;
+    const rs = segmentClinicalIntake(rawSplit);
+    assertEqual(unitKinds(rs).filter((k) => k === KIND_PRESALUD_UNIT).length, 2, 'repair-A: unknown intermedio → dos unidades');
+    assertEqual(fragmentCount(rs), 1, 'repair-A: unknown intermedio como fragmento');
+    for (const r of [r2, r3, rb, r1, rc, rs]) {
+assertEqual(r.can_apply, false, 'repair-A: can_apply false');
+assertEqual(r.errors.length, 0, 'repair-A: sin errores');
+    }
 }
 
 // F-CODE-03: raw preservation incl CRLF/Unicode
