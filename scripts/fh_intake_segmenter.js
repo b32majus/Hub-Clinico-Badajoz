@@ -65,7 +65,6 @@ export const KIND_BLOCKED_UNIT = 'blocked_unit';
 // Envelope-level blocking state codes (D3 / D13 / D9 / D17).
 export const BLOCK_MULTI_EORDEN = 'MULTI_EORDEN_NOT_PARTITIONABLE';
 export const BLOCK_MIXED_NO_UNIQUE_PARTITION = 'MIXED_INPUT_NO_UNIQUE_PARTITION';
-export const BLOCK_MULTI_RECORD_PRESALUD = 'PRESALUD_MULTI_RECORD_UNSUPPORTED_V0';
 
 // ─── Static structural tables / patterns (never mutated) ─────────────────────
 
@@ -84,7 +83,9 @@ const EORDEN_FIELD_LABEL_PREFIXES = [
 // Exact D17 header grammar: `SOLICITUD DERMATOLOGÍA → FARMACIA - <TÍTULO>`
 // Title after " - " must be non-empty (after NFC + trim). No prefix lookalikes.
 const EORDEN_HEADER_RE = /^SOLICITUD DERMATOLOGÍA → FARMACIA - .+$/;
-const LINE_IS_SEPARATOR_RE = /^[ \t]*═+[ \t]*$/;
+// Normative D17 opening separator: exactly 55× U+2550 (no shorter/longer variant).
+const EORDEN_SEPARATOR_NORMATIVE = '═══════════════════════════════════════════════════════';
+const LINE_IS_SEPARATOR_LIKE_RE = /^[ \t]*═+[ \t]*$/;
 const CONTINUATION_LINE_RE = /^-[ \t]/;
 
 const PRESALUD_FIELDS = 6;
@@ -98,23 +99,42 @@ function toNFC(str) {
 }
 
 /**
- * Classification-only view of a line (no terminator, no trailing/peripheral
- * whitespace). Used for structural decisions; never stored. NFC-normalized
- * for comparison only; raw is preserved byte-exact.
+ * Classification-only view of a line (no terminator, trailing whitespace
+ * stripped). Used for structural decisions; never stored. NFC-normalized
+ * for comparison only; raw is preserved byte-exact. D17 authorizes
+ * peripheral trim of the whole input and trailing whitespace per line only:
+ * leading whitespace of an internal line is preserved here so a malformed
+ * header, bullet label, PROGRAMA SES, or separator is never silently
+ * normalized into a valid one.
  * @param {string} line
  * @returns {string}
  */
 function cleanLine(line) {
-    return toNFC(line).replace(TRAILING_WS_RE, '').trim();
+    return toNFC(line).replace(TRAILING_WS_RE, '');
 }
 
 /**
+ * True only for the single normative D17 opening separator (exactly 55× ═,
+ * trailing whitespace already stripped for comparison; leading whitespace
+ * NOT tolerated).
  * @param {string} line
- * @returns {boolean} true when the line is exactly a `═` separator block
+ * @returns {boolean}
  */
-function isSeparatorOnlyLine(line) {
+function isNormativeSeparatorLine(line) {
+    return cleanLine(line) === EORDEN_SEPARATOR_NORMATIVE;
+}
+
+/**
+ * True for any separator-like ═-only line (any length, optional surrounding
+ * spaces/tabs). Used only to terminate an e-Orden body span so the stray
+ * line survives as unknown content; only isNormativeSeparatorLine() can
+ * satisfy the contractual opening position.
+ * @param {string} line
+ * @returns {boolean}
+ */
+function isSeparatorLikeLine(line) {
     const content = cleanLine(line);
-    return content !== '' && LINE_IS_SEPARATOR_RE.test(content);
+    return content !== '' && LINE_IS_SEPARATOR_LIKE_RE.test(content);
 }
 
 /**
@@ -333,8 +353,11 @@ function validateLossless(raw, lines, starts, ends, recognizedUnits, unknownFrag
 }
 
 function isSkippableLine(line) {
-    const c = cleanLine(line);
-    return c === '' || LINE_IS_SEPARATOR_RE.test(c);
+    // D17 authorizes blank/transport whitespace only. Separator-like lines
+    // are never skippable: the normative separator is structural only in
+    // the exact contractual position (header+1); every other ═ line must
+    // survive as unknown content or trigger proportional BLOCKED.
+    return cleanLine(line) === '';
 }
 
 function resultEnvelope(rawInput, lines, starts, ends, recognizedUnits, unknownFragments, blockingStates = [], warnings = []) {
@@ -405,8 +428,10 @@ function splitRuns(lines, start, end) {
     const runs = [];
     let i = start;
     while (i < end) {
-        const c = cleanLine(lines[i]);
-        if (c === '' || isSeparatorOnlyLine(lines[i])) {
+        // Only blank/transport whitespace is skippable. Separator-like
+        // lines are content (unknown) unless consumed as the contractual
+        // D17 opening separator inside an e-Orden unit range.
+        if (cleanLine(lines[i]) === '') {
             i += 1;
             continue;
         }
@@ -420,8 +445,7 @@ function splitRuns(lines, start, end) {
         }
         i += 1;
         while (i < end) {
-            const ci = cleanLine(lines[i]);
-            if (ci === '' || isSeparatorOnlyLine(lines[i])) break;
+            if (cleanLine(lines[i]) === '') break;
             const nextCls = isPresaludRecordLine(lines[i]) ? 'prs' : 'unk';
             if (nextCls !== cls) break;
             i += 1;
@@ -437,48 +461,40 @@ function runSegmentation(rawInput) {
     const { lines, starts, ends } = splitLinesWithOffsets(rawInput);
     const lineCount = lines.length;
 
-    // Empty check: all lines are blank after NFC+trim (D3: valid empty result)
-    let hasSemantic = false;
-    for (const l of lines) {
-        if (cleanLine(l) !== '' && !LINE_IS_SEPARATOR_RE.test(cleanLine(l))) {
-            // Check if there's any non-skippable content? Actually empty is all skippable.
-            // We consider semantic if any line is not skippable OR is a record/header candidate?
-            // Simpler: if any line has cleanLine !== '' then not empty.
-            // But separator-only lines alone are skippable and should be considered empty.
-            // So check if any line is not skippable.
-            hasSemantic = true;
-            break;
-        }
-        // Even if line is separator-only, that's skippable -> still empty
-        // Only if cleanLine !== '' and not separator would be semantic, but we already checked
-        // Actually we need to see if any line has content that is not blank/separator
-        // The loop above already: if cleanLine === '' or separator => skip, otherwise semantic.
-    }
-    // More precise: determine if all lines are skippable (blank or separator)
+    // Empty check: every line blank after NFC + trailing-WS strip
+    // (D3: valid empty result). Separator-like lines are content, never
+    // empty: a separator-only input must surface as unknown, not empty.
     let allSkippable = true;
     for (const l of lines) {
         if (!isSkippableLine(l)) {
-            // Has semantic line, but need to also ensure not all lines are empty?
-            // If there's at least one non-skippable line, not empty.
             allSkippable = false;
             break;
         }
     }
-    // Also handle case where raw is empty string: lines = [''] -> skippable true
     if (allSkippable) {
-        // Check if raw trimmed is empty (including separators considered empty for emptyEnvelope)
-        // Spec: empty input valid. Separator-only input with no semantic should be empty as well.
-        // But we treat separator-only as empty for now (no units).
-        // Verify: if raw contains only separators/blanks, return empty envelope preserving raw.
         return emptyEnvelope(rawInput);
     }
 
-    // Find header candidates using exact D17 header grammar (NFC-normalized cleanLine)
+    // Find header candidates using exact D17 header grammar (NFC-normalized cleanLine,
+    // leading whitespace preserved). Sole exception: leading spaces/tabs on the
+    // header line are ignorable ONLY when they belong to the absolute leading
+    // peripheral whitespace of the whole input (D17 peripheral trim for
+    // comparison; raw stays byte-exact). Any header preceded by non-whitespace
+    // source text keeps its leading whitespace significant and stays invalid.
     const candidateHeaders = [];
     for (let i = 0; i < lineCount; i += 1) {
         const c = cleanLine(lines[i]);
         if (c !== '' && EORDEN_HEADER_RE.test(c)) {
             candidateHeaders.push(i);
+            continue;
+        }
+        const stripped = c.replace(/^[ \t\u00A0]+/, '');
+        if (stripped !== '' && stripped !== c && EORDEN_HEADER_RE.test(stripped)) {
+            const rawLeadingMatch = /^[ \t\u00A0]*/.exec(lines[i]);
+            const rawLeadingLen = rawLeadingMatch ? rawLeadingMatch[0].length : 0;
+            if (rawLeadingLen > 0 && /^[\s\u00A0]*$/.test(rawInput.slice(0, starts[i] + rawLeadingLen))) {
+                candidateHeaders.push(i);
+            }
         }
     }
 
@@ -490,16 +506,7 @@ function runSegmentation(rawInput) {
         return lineCount;
     }
 
-    // Helper to find next separator after opening (for closing detection, not included)
-    function nextSeparatorAfter(idx) {
-        for (let j = idx + 1; j < lineCount; j += 1) {
-            if (isSeparatorOnlyLine(lines[j])) return j;
-            if (candidateHeaders.includes(j)) return j;
-        }
-        return lineCount;
-    }
-
-    // Determine valid e-Orden units: must have opening separator immediately after header,
+    // Determine valid e-Orden units: must have the single normative opening
     // body clean (no separator inside body), non-empty body. ScanEnd is first non-allowed line
     // after opening (blank/bullet/PROGRAMA SES/continuation allowed). Record inside body makes
     // ownership ambiguous only when interleaved (record between bullets), not when record is a
@@ -508,7 +515,7 @@ function runSegmentation(rawInput) {
     const headerSpan = new Map(); // headerIdx -> {scanEnd, blockEnd, valid, recordInsideBlock, interleaved}
     for (const h of candidateHeaders) {
         const nextH = nextHeaderAfter(h);
-        const openingSep = h + 1 < lineCount && isSeparatorOnlyLine(lines[h + 1]);
+        const openingSep = h + 1 < lineCount && isNormativeSeparatorLine(lines[h + 1]);
         if (!openingSep) {
             const scanEnd = nextH;
             headerSpan.set(h, { scanEnd, blockEnd: nextH, valid: false, recordInsideBlock: false, interleaved: false, openingSep: false });
@@ -517,7 +524,7 @@ function runSegmentation(rawInput) {
         let scanEndValid = h + 2;
         while (scanEndValid < lineCount) {
             if (candidateHeaders.includes(scanEndValid)) break;
-            if (isSeparatorOnlyLine(lines[scanEndValid])) break;
+            if (isSeparatorLikeLine(lines[scanEndValid])) break;
             const c = cleanLine(lines[scanEndValid]);
             if (c === '') { scanEndValid += 1; continue; }
             if (c.startsWith(EORDEN_BULLET) || c === EORDEN_SES_SECTION_LINE || CONTINUATION_LINE_RE.test(c)) { scanEndValid += 1; continue; }
@@ -533,7 +540,7 @@ function runSegmentation(rawInput) {
             if (isPresaludRecordLine(blockSlice[idx])) {
                 for (let j = idx + 1; j < blockSlice.length; j += 1) {
                     const cj = cleanLine(blockSlice[j]);
-                    if (cj === '' || isSeparatorOnlyLine(blockSlice[j])) continue;
+                    if (cj === '' || isSeparatorLikeLine(blockSlice[j])) continue;
                     if (cj.startsWith(EORDEN_BULLET) || cj === EORDEN_SES_SECTION_LINE) { interleaved = true; break; }
                     break;
                 }

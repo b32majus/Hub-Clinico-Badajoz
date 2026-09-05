@@ -40,7 +40,6 @@ import {
     KIND_BLOCKED_UNIT,
     BLOCK_MULTI_EORDEN,
     BLOCK_MIXED_NO_UNIQUE_PARTITION,
-    BLOCK_MULTI_RECORD_PRESALUD,
 } from '../scripts/fh_intake_segmenter.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -487,12 +486,15 @@ console.log('\n[WO-B] Regresiones F-CODE-01..05 — falsificación de findings')
     assertEqual(unitKinds(r)[0], KIND_EORDEN_UNIT, 'F-CODE-01: kind eorden_unit');
     assert(r.recognized_units[0].raw.endsWith('• Denominación: PSORIASIS'), 'F-CODE-01: raw termina en Denominación (no closing)');
     assert(!r.recognized_units[0].raw.endsWith(EORDEN_SEP), 'F-CODE-01: raw no termina en separador closing');
-    // Closing separator after a valid unit must be skippable, not part of unit, not causing invalid
+    // F-AUDIT-06: an extra closing separator after an otherwise valid D17
+    // unit is non-contractual and must NOT silently disappear: it survives
+    // as an isolable unknown fragment (no block, raw preserved).
     const withClosing = EORDEN_FIXTURE + '\n' + EORDEN_SEP;
     const rc = segmentClinicalIntake(withClosing);
-    assertEqual(unitKinds(rc).length, 1, 'F-CODE-01: closing separador extra es skippable, sigue 1 unidad');
-    assertEqual(fragmentCount(rc), 0, 'F-CODE-01: closing extra no crea fragment');
-    assertEqual(rc.blocking_states.length, 0, 'F-CODE-01: closing extra no bloquea');
+    assertEqual(unitKinds(rc).length, 1, 'F-CODE-01/F-AUDIT-06: closing extra no forma parte de la unidad (sigue 1 unidad)');
+    assertEqual(fragmentCount(rc), 1, 'F-AUDIT-06: closing extra sobrevive como un fragmento unknown');
+    assertEqual(rc.unrecognized_fragments[0].raw, EORDEN_SEP, 'F-AUDIT-06: closing extra raw byte-exact');
+    assertEqual(rc.blocking_states.length, 0, 'F-AUDIT-06: closing extra aislable no bloquea');
 }
 
 // F-CODE-02: T4 ownership leakage — T4-invalid meds still reach T4 as PreSalud, no subgrammar validation in T2
@@ -554,6 +556,8 @@ console.log('\n[WO-B] Regresiones F-CODE-01..05 — falsificación de findings')
     const manySeps = EORDEN_SEP + '\n' + (EORDEN_SEP + '\n').repeat(45);
     const rs = segmentClinicalIntake(manySeps);
     assertEqual(rs.errors.length, 0, 'F-CODE-04: many separators sin error');
+    assertEqual(unitKinds(rs).length, 0, 'F-AUDIT-06: many separators → cero unidades');
+    assert(fragmentCount(rs) >= 1, 'F-AUDIT-06: many separators sobreviven como fragments (no vaciado)');
 }
 
 // F-CODE-05: NFC-compare-only + exact D17 header grammar, no fuzzy
@@ -596,6 +600,151 @@ console.log('\n[WO-B] F-CODE-05 adicional — malformed D17 reject y can_apply=f
     function manyBlanksTest() {
         return EORDEN_FIXTURE + '\n' + '\n'.repeat(30) + ';HYRIMOZ (HYRIMOZ);SC;40 MG;CADA 14 DIAS;';
     }
+}
+
+console.log('\n[WO-B] Regresiones F-AUDIT-06 — separadores no contractuales no desaparecen');
+
+{
+    // Separator-only input is NOT empty input: it survives as unknown.
+    const r1 = segmentClinicalIntake(EORDEN_SEP);
+    assertEnvelope(r1, 'F-AUDIT-06 separator-only');
+    assertEqual(unitKinds(r1).length, 0, 'F-AUDIT-06: separator-only → cero unidades');
+    assertEqual(fragmentCount(r1), 1, 'F-AUDIT-06: separator-only → un fragmento unknown (no vacío)');
+    assertEqual(r1.errors.length, 0, 'F-AUDIT-06: separator-only sin errores');
+    assertEqual(r1.blocking_states.length, 0, 'F-AUDIT-06: separator-only aislable no bloquea');
+    assertEqual(r1.unrecognized_fragments[0].raw, EORDEN_SEP, 'F-AUDIT-06: separator-only raw byte-exact');
+    assertEqual(r1.can_apply, false, 'F-AUDIT-06: separator-only can_apply false');
+
+    const r2 = segmentClinicalIntake(EORDEN_SEP + '\n' + EORDEN_SEP);
+    assertEqual(unitKinds(r2).length, 0, 'F-AUDIT-06: dos separadores → cero unidades');
+    assert(fragmentCount(r2) >= 1, 'F-AUDIT-06: dos separadores sobreviven como fragments');
+    assertEqual(r2.errors.length, 0, 'F-AUDIT-06: dos separadores sin errores');
+
+    // Blank-only input REMAINS empty (authorized transport whitespace).
+    const rb = segmentClinicalIntake('   \n\t\n');
+    assertEqual(unitKinds(rb).length, 0, 'F-AUDIT-06: solo blanks → cero unidades');
+    assertEqual(fragmentCount(rb), 0, 'F-AUDIT-06: solo blanks → cero fragmentos (vacío válido)');
+    assertEqual(rb.errors.length, 0, 'F-AUDIT-06: solo blanks sin errores');
+
+    // Stray short separator between isolable texts is preserved, not dropped.
+    const stray = 'nota previa aislable\n═\nnota posterior aislable';
+    const rs = segmentClinicalIntake(stray);
+    assertEqual(unitKinds(rs).length, 0, 'F-AUDIT-06: stray ═ corto → cero unidades');
+    assert(fragmentCount(rs) >= 1, 'F-AUDIT-06: stray ═ corto sobrevive en fragments');
+    assert(rs.unrecognized_fragments.some((f) => f.raw.includes('═')), 'F-AUDIT-06: stray ═ corto presente en raw de fragments');
+    assertEqual(rs.blocking_states.length, 0, 'F-AUDIT-06: stray aislable no bloquea');
+
+    // Extra closing separator after a valid unit + trailing record: separator
+    // stays visible between the two safe units.
+    const rawClose = EORDEN_FIXTURE + '\n' + EORDEN_SEP + '\n' + PRESALUD_FIXTURE_EMPTY_STATE;
+    const rc = segmentClinicalIntake(rawClose);
+    assertEqual(unitKinds(rc).filter((k) => k === KIND_EORDEN_UNIT).length, 1, 'F-AUDIT-06: closing + record → e-orden intacta');
+    assertEqual(unitKinds(rc).filter((k) => k === KIND_PRESALUD_UNIT).length, 1, 'F-AUDIT-06: closing + record → PreSalud intacta');
+    assertEqual(fragmentCount(rc), 1, 'F-AUDIT-06: closing + record → closing como fragment intermedio');
+    assertEqual(rc.unrecognized_fragments[0].raw, EORDEN_SEP, 'F-AUDIT-06: closing intermedio raw byte-exact');
+    assertEqual(rc.blocking_states.length, 0, 'F-AUDIT-06: closing aislable no bloquea');
+    assertEqual(rc.can_apply, false, 'F-AUDIT-06: closing + record can_apply false');
+}
+
+console.log('\n[WO-B] Regresiones F-AUDIT-07 — separador D17 estrictamente normativo (55× ═)');
+
+{
+    const bodyTail =
+        '• CIP: CIP-SINT-0001\n' +
+        '• Marca comercial solicitada: HYRIMOZ\n' +
+        '• Dosis solicitada: 40 MG\n' +
+        '• Vía solicitada: SC\n' +
+        '• Pauta: CADA 14 DIAS\n' +
+        '• Inducción solicitada: NO\n' +
+        'PROGRAMA SES\n' +
+        '• Código: SES_PSOR\n' +
+        '• Denominación: PSORIASIS';
+    const header = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n';
+    // One-character separator: must NOT satisfy the D17 opening.
+    const rShort1 = segmentClinicalIntake(header + '═\n' + bodyTail);
+    assertEqual(unitKinds(rShort1).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-07: separador de 1× ═ no abre unidad');
+    assert(fragmentCount(rShort1) >= 1, 'F-AUDIT-07: separador 1× ═ sobrevive como fragment');
+    // One-short (54×) and one-long (56×) variants: must NOT satisfy opening.
+    const sep54 = '═'.repeat(55 - 1);
+    const rShort54 = segmentClinicalIntake(header + sep54 + '\n' + bodyTail);
+    assertEqual(unitKinds(rShort54).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-07: separador 54× ═ no abre unidad');
+    assert(rShort54.unrecognized_fragments.some((f) => f.raw.includes(sep54)), 'F-AUDIT-07: separador 54× ═ preservado en fragments');
+    const sep56 = '═'.repeat(55 + 1);
+    const rLong56 = segmentClinicalIntake(header + sep56 + '\n' + bodyTail);
+    assertEqual(unitKinds(rLong56).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-07: separador 56× ═ no abre unidad');
+    assert(rLong56.unrecognized_fragments.some((f) => f.raw.includes(sep56)), 'F-AUDIT-07: separador 56× ═ preservado en fragments');
+    // Authorized transport only: trailing spaces after the normative 55× ═
+    // still open a valid unit; raw stays byte-exact.
+    const rTrail = segmentClinicalIntake(header + EORDEN_SEP + '   \n' + bodyTail);
+    assertEqual(unitKinds(rTrail).filter((k) => k === KIND_EORDEN_UNIT).length, 1, 'F-AUDIT-07: 55× ═ + trailing spaces sí abre unidad');
+    assertEqual(rTrail.blocking_states.length, 0, 'F-AUDIT-07: trailing autorizado no bloquea');
+}
+
+console.log('\n[WO-B] Regresiones F-AUDIT-08 — leading whitespace interno no se normaliza');
+
+{
+    const bodyTail =
+        '• CIP: CIP-SINT-0001\n' +
+        '• Marca comercial solicitada: HYRIMOZ\n' +
+        '• Dosis solicitada: 40 MG\n' +
+        '• Vía solicitada: SC\n' +
+        '• Pauta: CADA 14 DIAS\n' +
+        '• Inducción solicitada: NO\n' +
+        'PROGRAMA SES\n' +
+        '• Código: SES_PSOR\n' +
+        '• Denominación: PSORIASIS';
+    // Leading whitespace before the D17 header when NOT merely whole-input
+    // peripheral whitespace: preceded by isolable content, so the indent is
+    // internal and must not be stripped to fabricate a valid header.
+    const rHead = segmentClinicalIntake('nota previa aislable\n  SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n' + bodyTail);
+    assertEqual(unitKinds(rHead).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-08: header indentado (no periférico) no es e-orden');
+    assert(fragmentCount(rHead) >= 1, 'F-AUDIT-08: header indentado sobrevive como fragment');
+    // Leading whitespace before a required bullet label invalidates the body.
+    const rBullet = segmentClinicalIntake('SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n  • CIP: CIP-SINT-0001\n' + bodyTail.split('\n').slice(1).join('\n'));
+    assertEqual(unitKinds(rBullet).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-08: bullet indentado no valida cuerpo D17');
+    assert(fragmentCount(rBullet) >= 1, 'F-AUDIT-08: bullet indentado sobrevive como fragment');
+    // Leading whitespace before PROGRAMA SES: the SES line is not valid.
+    const rSes = segmentClinicalIntake('SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n• CIP: CIP-SINT-0001\n  PROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS');
+    assert(!rSes.recognized_units.some((u) => u.kind === KIND_EORDEN_UNIT && u.raw.includes('  PROGRAMA SES')), 'F-AUDIT-08: SES indentado no normalizado dentro de unidad');
+    assert(rSes.unrecognized_fragments.some((f) => f.raw.includes('  PROGRAMA SES')) || rSes.recognized_units.length === 0, 'F-AUDIT-08: SES indentado preservado fuera de unidad válida');
+    // Leading whitespace before the opening separator: not the normative role.
+    const rSep = segmentClinicalIntake('SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n  ' + EORDEN_SEP + '\n' + bodyTail);
+    assertEqual(unitKinds(rSep).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-08: separador indentado no abre unidad');
+    assert(rSep.unrecognized_fragments.some((f) => f.raw.includes(EORDEN_SEP)), 'F-AUDIT-08: separador indentado preservado como fragment');
+    for (const r of [rHead, rBullet, rSes, rSep]) {
+        assertEqual(r.can_apply, false, 'F-AUDIT-08: can_apply false');
+        assertEqual(r.errors.length, 0, 'F-AUDIT-08: sin errores');
+    }
+}
+
+console.log('\n[WO-B] Regresiones F-AUDIT-09 — prefijo periférico absoluto sí tolerado');
+
+{
+    // Spaces directly before the normative header at absolute input start:
+    // whole-input peripheral whitespace, accepted for comparison, raw exact.
+    const rawLead = '   SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n' + EORDEN_FIXTURE.split('\n').slice(2).join('\n');
+    const rLead = segmentClinicalIntake(rawLead);
+    assertEnvelope(rLead, 'F-AUDIT-09 leading spaces');
+    assertEqual(unitKinds(rLead).filter((k) => k === KIND_EORDEN_UNIT).length, 1, 'F-AUDIT-09: spaces en prefijo periférico absoluto → una e-orden');
+    assertEqual(rLead.blocking_states.length, 0, 'F-AUDIT-09: prefijo periférico no bloquea');
+    assertEqual(rLead.raw_input, rawLead, 'F-AUDIT-09: raw_input byte-exact con prefijo');
+    assertEqual(rLead.recognized_units[0].raw, rawLead, 'F-AUDIT-09: unit raw incluye prefijo periférico byte-exact');
+    assertEqual(rLead.can_apply, false, 'F-AUDIT-09: can_apply false');
+
+    // Tabs/spaces/newlines forming only the whole-input leading peripheral
+    // prefix before the normative header: also accepted, raw exact.
+    const rawMixed = '  \n\t  \n  SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n' + EORDEN_FIXTURE.split('\n').slice(2).join('\n');
+    const rMixed = segmentClinicalIntake(rawMixed);
+    assertEqual(unitKinds(rMixed).filter((k) => k === KIND_EORDEN_UNIT).length, 1, 'F-AUDIT-09: tabs/spaces/newlines periféricos → una e-orden');
+    assertEqual(rMixed.raw_input, rawMixed, 'F-AUDIT-09: raw_input mixto byte-exact');
+    assertEqual(rMixed.recognized_units[0].raw, '  SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n' + EORDEN_FIXTURE.split('\n').slice(2).join('\n'), 'F-AUDIT-09: unit raw desde header con su indent periférico byte-exact (blanks previos skippables)');
+    assertEqual(rMixed.blocking_states.length, 0, 'F-AUDIT-09: prefijo mixto no bloquea');
+    assertEqual(rMixed.can_apply, false, 'F-AUDIT-09: mixto can_apply false');
+
+    // Guard: internal leading whitespace still invalid (F-AUDIT-08 intact).
+    const rInternal = segmentClinicalIntake('nota previa aislable\n   SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n' + EORDEN_SEP + '\n' + EORDEN_FIXTURE.split('\n').slice(2).join('\n'));
+    assertEqual(unitKinds(rInternal).filter((k) => k === KIND_EORDEN_UNIT).length, 0, 'F-AUDIT-09: indent interno tras contenido no es e-orden');
+    assertEqual(rInternal.can_apply, false, 'F-AUDIT-09: interno can_apply false');
 }
 
 // ─── Summary ─────────────────────────────────────────────────────────────────
