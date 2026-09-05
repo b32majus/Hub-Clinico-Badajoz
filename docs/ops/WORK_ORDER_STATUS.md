@@ -74,25 +74,32 @@ Excel raw → reader/selectors → Data Port → sesión del paciente actual
 
 ---
 
-## FH_UNIFIED_CLINICAL_INTAKE_V0 — train aprobado, actualmente repair-gated
+## FH_UNIFIED_CLINICAL_INTAKE_V0 — ticket train aprobado para ejecución (dependency-gated)
 
-> Registrado 2026-09-04 y reconciliado de nuevo 2026-09-05 tras el primer overnight real. El parent #292 sigue aprobado, pero publicación remota NO equivale a aceptación: T1 #293 (`4a9bc4d`), T3 #295 (`fb486bf`) y T4 #296 (`55df984`) fueron publicados en ramas de trabajo; la auditoría Cora posterior detectó deuda contractual/P1 que impide aceptarlos como predecesores. La reconciliación D17 añade Justificación clínica y obliga también a reparar T2 #294. Por tanto T1–T4 están `REPAIR_REQUIRED`; T5–T10 permanecen bloqueados. Nada de esto representa merge en recovery, demo/pilot-ready ni autorización de merge.
+> Registrado 2026-09-04 y reconciliado 2026-09-05. El parent #292 está aprobado explícitamente para ejecutar el tren auditado. T1 #293, T2 #294 (con Repair A #303), T3 #295, T4 #296 y T5 #297 tienen checkpoints remotos duraderos aceptados. El primer candidato T5 `13d759e…` fue rechazado por auditoría independiente pese a tests/RDD verdes; los repairs atómicos #303/#304 cerraron los defects y la qualification final aceptó `5ae810a…`. Por cierre de dependencias T6 #298 pasa a frontier ejecutable; T7–T10 permanecen dependency-gated. Nada de esto representa merge en recovery, demo/pilot-ready ni autorización de merge.
 
 | Elemento | Valor |
 |---|---|
 | Parent spec | [`../specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](../specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) |
-| Spec checkpoint pre-repair | `ca124ac910f006fa0e31e54383d7c69fed3a68b2` en `work/hermes/fh-intake-pre-repair-hardening-20260905`; reconciliación de D3/D5/D7/D9/D17, todavía sin merge |
+| Spec checkpoint | `dff7489931cc41ce658de90b1616c2852204b5da` (rama `work/hermes/fh-unified-clinical-intake-brief`; tree `2d8c6bf6a9b077ee0e6191f7724cf983e4fc60ae`) |
 | Parent issue | [#292 — PLAN-FH-UNIFIED_CLINICAL_INTAKE-V0](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/292) — `status:approved`; `MERGE AUTHORIZED = NO` |
 | Ticket train | T1 #293 · T2 #294 · T3 #295 · T4 #296 · T5 #297 · T6 #298 · T7 #299 · T8 #300 · T9 #301 · T10 #302 |
-| Estado spec | `RECONCILED_PRE_REPAIR` — contradicciones detectadas por la autopsia cerradas en `ca124ac...`; aceptación de repairs y field qualification todavía pendientes |
-| Handoff histórico | audit inicial `BLOCK` → repair/recheck `PASS`; el nuevo hardening exige además oracle principal congelado pre-builder antes de reejecutar T1–T4 |
-| Governance pre-repair | `736b13bcaebde22889c05a27cb26153f6afc6e48` — `AGENTS.md` + `CODING_STANDARDS.md` alineados con Atenea actual; sin merge |
-| Oracle freeze | `PENDING` — T1/T2/T3/T4 no vuelven a builder hasta que sus acceptance oracles independientes estén creados y congelados |
-| Overnight audit | T1 código/QA básicamente correcto pero D17 incompleto; T3 `BLOCK`; T4 `BLOCK`; Omen no queda cualificado como gate unattended por los falsos PASS observados |
-| Overnight publication | T1 `4a9bc4d` · T3 `fb486bf` · T4 `55df984`; publicación correcta en ramas de trabajo, sin PR/merge/cierre de issues |
-| Authority consistency | `LOCAL_RECONCILIATION_PASS` en `ca124ac...`; publicación/aceptación de este hardening todavía pendiente |
-| Ejecución | T1 #293 + T2 #294 + T3 #295 + T4 #296 = `REPAIR_REQUIRED`; T5–T10 = `BLOCKED_BY_ACCEPTED_PREDECESSOR`; `MERGE_AUTHORIZED=NO` |
-| T2 #294 checkpoint previo | `2c6ec5741ce61373c8ed0ade6601b86d3df83228` conserva evidencia `380/380` + Cora PASS bajo el D17 anterior; Gentle `PARTIAL_3_OF_4_TRANSPORT_BLOCKED`, sin ack/burn. El cambio contractual `ca124ac...` (Justificación clínica en D17) lo deja `REPAIR_REQUIRED` antes de poder volver a ser predecesor aceptado |
+| Estado spec | `PASS` — `SPEC_REPAIR=PASS`; rechecks independientes Omen `PASS`, Muse `PASS`; `SPEC_CONTENT=CLOSED` |
+| Handoff audit | `BLOCK` — Muse independent clean-context TICKET/HANDOFF audit (inicial) |
+| Repair | `PASS` — [#299](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/299) (2026-09-04) |
+| Focal recheck | `PASS` — independent clean-context focal recheck |
+| Findings | `F-001 = CLOSED`; `F-002 = CLOSED` |
+| Technical handoff | `PASS` |
+| Authority consistency | `PASS` — #292 operator-approved for execution of the audited train |
+| Ejecución | T1 #293 + T2 #294/Repair A #303 + T3 #295 + T4 #296 + T5 #297 = `ACCEPTED_DURABLE_REMOTE_CHECKPOINT`; T6 #298 = frontier ejecutable; T7–T10 = dependency-gated; `MERGE_AUTHORIZED=NO` |
+| T1 #293 checkpoint | `876afbb3d2e5f6cfb3bafef25403846bc45d4889` en `work/hermes/fh-t1-delivery-repair-20260905`; reparación D17 de `Justificación clínica`; oracle focal `18/18 PASS`; browser sintético `3/3 PASS`; checkpoint remoto aceptado; sin PR/merge |
+| T2 #294 checkpoint | `2c6ec5741ce61373c8ed0ade6601b86d3df83228` en `work/hermes/fh-t2-segmenter-294`; deterministic `380/380 PASS`; Cora spec/adversarial audit `PASS`; `git diff --check PASS`; Gentle `PARTIAL_3_OF_4_TRANSPORT_BLOCKED`, `ACK_BURN=NO`, readability unavailable por transporte; entrega aceptada por decisión explícita de mantenedor bajo política ordinaria; sin PR/merge |
+| Repair A #303 — T2 multi-record | `c25425ef6b78494fcfec1656f8094c826104749f` en `work/hermes/fh-t2-multirecord-repair-20260905`; T2 `422/422 PASS`; auditoría cross-seam independiente T2→T4 = una unidad PreSalud estructural con `record_count=2` → `MULTI_RECORD_UNSUPPORTED_V0`, zero proposals, `can_apply=false`; Gentle RDD APPROVED/ack-burn; remoto reconciliado; repair efectivo para composición T5; sin PR/merge |
+| T3 #295 checkpoint | `b560dd5d88a13b41a643a6e053f647f40f83ced9` (tree `3805897ff52d01ce5740b334c69e5dc4bcb37610`) en `work/hermes/fh-t3-delivery-repair-20260905`; checker `71/71 PASS`; oracle sintético `22/22 PASS`; auditoría adversarial Cora `13/13 PASS`; `node --check PASS`; Gentle RDD `APPROVED → acknowledged → burned`; checkpoint remoto aceptado; sin PR/merge |
+| T4 #296 checkpoint | `d5e71247aaa4c57bb4b066313e679ab21ceb6d1e` (tree `7d1e2b418493f9d3128f24e549fb2eb8ba880d05`) en `work/hermes/fh-t4-delivery-repair-20260905`; checker `169/169 PASS`; auditoría adversarial Cora `14/14 PASS`; `node --check PASS`; Gentle RDD `APPROVED → acknowledged → burned`; publicación normal no-force y remoto reconciliado; checkpoint remoto aceptado; sin PR/merge |
+| T5 #297 primer candidato | `13d759ec1b45a9b32a9519429c9bf473a272d2b6` en `work/hermes/fh-t5-pipeline-reconciliation-20260905`; worker battery verde + RDD APPROVED/ack-burn + publicación normal, pero `PRODUCT_ACCEPTANCE=FAIL`: auditoría independiente detectó seam T2↔T4 multi-record y violaciones D6; candidato publicado solo como rechazado, NO checkpoint aceptado y NO desbloqueó T6 |
+| Repair B #304 — T5 D6 | `5ae810aee2ec1cf832aff74aed888ec04c3c6bee` en `work/hermes/fh-t5-d6-repair-20260905`; T5 `157/157 PASS`; predecessors T2 `422/422`, T3 `71/71` + oracle `22/22`, T4 `169/169`; adversarial Cora `16/16 PASS`; closed `comparison_status`, origin separado, `principio_activo_raw=NOT_COMPARABLE/NO_PROPOSAL`, multi-record fail-closed; Gentle RDD APPROVED/ack-burn; remoto reconciliado |
+| T5 #297 accepted checkpoint | `5ae810aee2ec1cf832aff74aed888ec04c3c6bee` publicado también como `work/hermes/fh-t5-final-qualification-20260905`; qualification fresca read-only: T2 `422/422`, T3 `71/71`, oracle `22/22`, T4 `169/169`, T5 `157/157`, syntax/diff PASS, T3/T4 blobs idénticos, rango exacto 4 paths; native Gentle RDD high-risk 4/4 `APPROVED → acknowledged → burned`; auditoría adversarial Cora sobre el mismo SHA `16/16 PASS` (Repair B, sin mutación posterior); árbol limpio; local=remote; #298 verificado como siguiente ticket ejecutable por dependencia T5; sin PR/merge |
 | Estado clínico | Desarrollo sintético/demo únicamente; NO PILOTO; NO PRODUCCIÓN |
 
 Notas de autoridad del train:

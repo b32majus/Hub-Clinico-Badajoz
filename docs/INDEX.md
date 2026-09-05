@@ -16,8 +16,8 @@
 | Paquete final | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` |
 | Actividad del servicio | Demo |
 | Alcance | Sin piloto / sin producción |
-| Work order actual | issue #279 |
-| Unified Clinical Intake V0 | parent #292 aprobado; overnight publicó T1 #293 `4a9bc4d`, T3 #295 `fb486bf` y T4 #296 `55df984`, pero la auditoría Cora 2026-09-05 NO los acepta aún como checkpoints predecesores: T3/T4 tienen P1 contractuales y T1 requiere reconciliación D17. Hardening pre-repair local: governance `736b13bcaebde22889c05a27cb26153f6afc6e48`, spec `ca124ac910f006fa0e31e54383d7c69fed3a68b2`; el nuevo D17 obliga también a reparar T2 #294, cuyo `2c6ec5741ce61373c8ed0ade6601b86d3df83228` queda como evidencia válida del contrato anterior pero superseded para este train. T1–T4 = `REPAIR_REQUIRED`; T5–T10 = `BLOCKED_BY_ACCEPTED_PREDECESSOR`; merge NO autorizado; detalle en [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) |
+| Work order actual | parent #292; siguiente ticket ejecutable T6 #298 |
+| Unified Clinical Intake V0 | parent #292 aprobado; checkpoints duraderos aceptados: T1 #293 `876afbb3…`, T2 #294 `2c6ec574…` + Repair A #303 `c25425e…`, T3 #295 `b560dd5…`, T4 #296 `d5e7124…`, T5 #297 `5ae810a…`; T5 final qualification = deterministic PASS + native RDD APPROVED/ack-burn + Cora adversarial PASS + local/remoto reconciliado; T6 #298 es el frontier ejecutable; T7–T10 siguen dependency-gated; merge NO autorizado; detalle en [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) |
 
 > Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete final solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
