@@ -58,7 +58,7 @@ try {
   await page.locator('input[name="analitica_recente"][value="SÍ"]').check();
   await page.locator('input[name="vacunacion"][value="SÍ"]').check();
   await page.locator('.export-button').click();
-  const expected = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n═══════════════════════════════════════════════════════\n• CIP: CIP-SINTETICO-PSO\n• Marca comercial solicitada: Marca PSO\n• Dosis solicitada: 300 mg\n• Vía solicitada: SC\n• Pauta: Cada 14 días\n• Inducción solicitada: SÍ\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS';
+  const expected = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n═══════════════════════════════════════════════════════\n• CIP: CIP-SINTETICO-PSO\n• Marca comercial solicitada: Marca PSO\n• Dosis solicitada: 300 mg\n• Vía solicitada: SC\n• Pauta: Cada 14 días\n• Inducción solicitada: SÍ\n• Justificación clínica: Justificación sintética\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS';
   check(await page.evaluate(() => window.__lastExportText) === expected, 'browser export matches exact PSORIASIS D17 fixture');
   await page.evaluate(() => { window.__lastExportText = null; });
   await page.locator('#marca_comercial').fill(''); await page.locator('.export-button').click();

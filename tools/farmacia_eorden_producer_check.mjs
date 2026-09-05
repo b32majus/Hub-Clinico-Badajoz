@@ -25,7 +25,7 @@ class FakeClassList {
 }
 class FakeElement {
   constructor(id = '') {
-    this.id = id; this.value = ''; this.checked = false; this.innerHTML = 'Exportar';
+    this.id = id; this.value = ''; this.checked = false; this.textContent = 'Exportar';
     this.style = {}; this.classList = new FakeClassList(); this.options = []; this.selectedIndex = 0;
   }
   focus() { document.activeElement = this; }
@@ -78,18 +78,18 @@ function fill(overrides = {}) {
   set('programa_ses', 'SES_HS'); setRadio('analitica_recente', 'SÍ'); setRadio('vacunacion', 'SÍ'); setRadio('induccion', 'SÍ');
   for (const [id, value] of Object.entries(overrides)) set(id, value);
 }
-function expected(title, cip, brand, dose, route, pauta, induction, code) {
-  return `SOLICITUD DERMATOLOGÍA → FARMACIA - ${title}\n${separator}\n• CIP: ${cip}\n• Marca comercial solicitada: ${brand}\n• Dosis solicitada: ${dose}\n• Vía solicitada: ${route}\n• Pauta: ${pauta}\n• Inducción solicitada: ${induction}\nPROGRAMA SES\n• Código: ${code}\n• Denominación: ${sesLabels[code]}`;
+function expected(title, cip, brand, dose, route, pauta, induction, justification, code) {
+  return `SOLICITUD DERMATOLOGÍA → FARMACIA - ${title}\n${separator}\n• CIP: ${cip}\n• Marca comercial solicitada: ${brand}\n• Dosis solicitada: ${dose}\n• Vía solicitada: ${route}\n• Pauta: ${pauta}\n• Inducción solicitada: ${induction}\n• Justificación clínica: ${justification}\nPROGRAMA SES\n• Código: ${code}\n• Denominación: ${sesLabels[code]}`;
 }
 function exportAndRead() { sandbox.exportSolicitud(); return copied.at(-1); }
 
 console.log('\n[T1] D17 e-Orden producer');
 check(!html.includes('Principio activo'), 'identity field removed from HTML');
 fill();
-check(exportAndRead() === expected('HIDRADENITIS SUPURATIVA', 'CIP-SINTETICO-HS', 'Marca Demo®', '40 mg', 'SC', 'Cada 14 días', 'SÍ', 'SES_HS'), 'HS fixture matches exact D17 bytes');
-fill({ patologia: 'pso', cip: 'CIP-SINTETICO-PSO', marca_comercial: 'Marca PSO', dosis_solicitada: '300 mg', via_solicitada: 'Oral', pauta: 'Cada 7 días', induccion: 'NO', programa_ses: 'SES_PSOR' });
+check(exportAndRead() === expected('HIDRADENITIS SUPURATIVA', 'CIP-SINTETICO-HS', 'Marca Demo®', '40 mg', 'SC', 'Cada 14 días', 'SÍ', 'Justificación sintética', 'SES_HS'), 'HS fixture matches exact D17 bytes');
+fill({ patologia: 'pso', cip: 'CIP-SINTETICO-PSO', marca_comercial: 'Marca PSO', dosis_solicitada: '300 mg', via_solicitada: 'Oral', pauta: 'Cada 7 días', induccion: 'NO', justificacion: 'Justificación PSO', programa_ses: 'SES_PSOR' });
 setRadio('induccion', 'NO');
-check(exportAndRead() === expected('PSORIASIS', 'CIP-SINTETICO-PSO', 'Marca PSO', '300 mg', 'Oral', 'Cada 7 días', 'NO', 'SES_PSOR'), 'PSORIASIS fixture matches exact D17 bytes');
+check(exportAndRead() === expected('PSORIASIS', 'CIP-SINTETICO-PSO', 'Marca PSO', '300 mg', 'Oral', 'Cada 7 días', 'NO', 'Justificación PSO', 'SES_PSOR'), 'PSORIASIS fixture matches exact D17 bytes');
 
 fill({ marca_comercial: '   ' }); const before = copied.length; sandbox.exportSolicitud();
 check(alerts.at(-1) === '⚠️ Falta: Marca comercial del fármaco solicitado' && copied.length === before, 'blank brand blocks without partial export');
@@ -99,6 +99,10 @@ fill({ via_solicitada: 'Otra', via_otra_espec: 'intradérmica' });
 check(exportAndRead().includes('• Vía solicitada: Otra — intradérmica'), 'Otra exports em dash and specification');
 fill({ dosis_solicitada: 'No informado', via_solicitada: 'No informado' });
 check(exportAndRead().includes('• Dosis solicitada: No informado\n• Vía solicitada: No informado'), 'No informado dose and route are exported verbatim');
+fill({ justificacion: '   ' }); const beforeJust = copied.length; sandbox.exportSolicitud();
+check(alerts.at(-1) === '⚠️ Falta: Justificación clínica' && copied.length === beforeJust, 'blank justificación blocks without export');
+fill({ justificacion: 'Justificación libre con acentos y 123' });
+check(exportAndRead().includes('• Justificación clínica: Justificación libre con acentos y 123'), 'justificación exported verbatim');
 
 for (const code of Object.keys(sesLabels)) {
   fill({ programa_ses: code });

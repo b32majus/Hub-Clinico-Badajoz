@@ -901,6 +901,7 @@
                 '• Vía solicitada: ' + viaExportada + '\n' +
                 '• Pauta: ' + pauta + '\n' +
                 '• Inducción solicitada: ' + induccion + '\n' +
+                '• Justificación clínica: ' + getVal('justificacion').trim() + '\n' +
                 'PROGRAMA SES\n' +
                 '• Código: ' + sesCode + '\n' +
                 '• Denominación: ' + sesPrograms[sesCode];
@@ -915,12 +916,15 @@
             try {
                 document.execCommand('copy');
                 var button = document.querySelector('.export-button');
-                var originalHTML = button.innerHTML;
-                
-                button.innerHTML = '<i class="fas fa-check-circle"></i> ¡Datos Copiados!';
+                var originalChildren = Array.from(button.childNodes).map(function(n) { return n.cloneNode(true); });
+                button.replaceChildren();
+                var okIcon = document.createElement('i');
+                okIcon.className = 'fas fa-check-circle';
+                button.appendChild(okIcon);
+                button.appendChild(document.createTextNode(' ¡Datos Copiados!'));
                 button.classList.add('copied');
                 setTimeout(function() {
-                    button.innerHTML = originalHTML;
+                    button.replaceChildren.apply(button, originalChildren.map(function(n) { return n.cloneNode(true); }));
                     button.classList.remove('copied');
                 }, 2000);
             } catch (err) {
