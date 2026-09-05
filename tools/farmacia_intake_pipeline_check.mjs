@@ -8,14 +8,22 @@
  * `scripts/fh_intake_pipeline.js` and verifies the D6 closed matrix:
  *
  *   A. single usable value + exact target + empty current -> AUTO_PROPOSABLE
+ *      with comparison NOT_APPLICABLE (no peer) + origin ONLY_EORDEN/ONLY_PRESALUD
  *   B. equivalent explicit values -> EQUIVALENT (CORROBORATED)
  *   C. comparable-and-different -> DIFFERENT -> CONFLICT -> REQUIRES_SELECTION
  *      scoped to fhDermaFarmaco only, no winner
  *   D. principio_activo_raw vs commercial_name is NOT_COMPARABLE by structure,
- *      never CONFLICT
+ *      never CONFLICT (Repair B #304: strict NOT_COMPARABLE, target NONE,
+ *      NO_PROPOSAL)
  *   E. NOT_APPLICABLE / NO_PROPOSAL where no target applies
- *   F. repeated distinct values in one safe unit/source -> MULTIPLE_SOURCE_VALUES
- *      + REQUIRES_SELECTION; single-source -> ONLY_EORDEN / ONLY_PRESALUD
+ *   F. same-source multiplicity -> comparison NOT_COMPARABLE + REQUIRES_SELECTION
+ *      with resolution MULTIPLE_SOURCE_VALUES (never a comparison enum value);
+ *      PreSalud V0 multi-record (contiguous or separated regions) -> zero usable
+ *      proposals, no cross-record choices (Repair B #304)
+ *
+ * Closed-enum invariant (Repair B #304): every emitted comparison_status
+ * belongs to EQUIVALENT | DIFFERENT | NOT_COMPARABLE | NOT_APPLICABLE; origin
+ * lives independently in ONLY_EORDEN | ONLY_PRESALUD | BOTH | NONE.
  *
  * Proportional lifecycle: an invalid-SES e-Orden unit is blocked with its
  * reason while an independent valid PreSalud unit stays fully usable.
@@ -74,7 +82,8 @@ console.log('\n[T5-A] Single usable value + exact target + empty current');
 {
     const r = runUnifiedIntake(eordenRaw());
     const c = conceptOf(r, 'commercial_name');
-    assert(c?.comparison_status === COMPARISON_ONLY_EORDEN, 'e-Orden alone: ONLY_EORDEN');
+    assert(c?.comparison_status === COMPARISON_NOT_APPLICABLE, 'e-Orden alone: NOT_APPLICABLE (no comparison peer)');
+    assert(c?.origin === COMPARISON_ONLY_EORDEN, 'e-Orden alone: origin ONLY_EORDEN');
     assert(c?.proposal_status === PROPOSAL_AUTO_PROPOSABLE, 'e-Orden alone: AUTO_PROPOSABLE');
     assert(c?.target === 'fhDermaFarmaco', 'e-Orden brand targets fhDermaFarmaco');
     assert(c?.value === 'HYRIMOZ', 'e-Orden brand value preserved');
@@ -83,7 +92,8 @@ console.log('\n[T5-A] Single usable value + exact target + empty current');
 {
     const r = runUnifiedIntake(presaludRaw());
     const c = conceptOf(r, 'commercial_name');
-    assert(c?.comparison_status === COMPARISON_ONLY_PRESALUD, 'PreSalud alone: ONLY_PRESALUD');
+    assert(c?.comparison_status === COMPARISON_NOT_APPLICABLE, 'PreSalud alone: NOT_APPLICABLE (no comparison peer)');
+    assert(c?.origin === COMPARISON_ONLY_PRESALUD, 'PreSalud alone: origin ONLY_PRESALUD');
     assert(c?.proposal_status === PROPOSAL_AUTO_PROPOSABLE, 'PreSalud alone: AUTO_PROPOSABLE');
     assert(c?.value === 'HYRIMOZ', 'PreSalud marca value preserved');
 }
@@ -129,7 +139,7 @@ console.log('\n[T5-D] Principio activo is structure-only, never a rival');
     const mixed = `${eordenRaw({ brand: 'HYRIMOZ' })}\n${presaludRaw(';ADALIMUMAB (HYRIMOZ);SC;40 MG;CADA 14 DIAS;')}`;
     const r = runUnifiedIntake(mixed);
     const principio = conceptOf(r, 'principio_activo_raw');
-    assert(principio?.comparison_status === COMPARISON_NOT_APPLICABLE || principio?.comparison_status === COMPARISON_NOT_COMPARABLE, 'principio_activo_raw is NOT_APPLICABLE/NOT_COMPARABLE by structure');
+    assert(principio?.comparison_status === COMPARISON_NOT_COMPARABLE, 'principio_activo_raw is structural NOT_COMPARABLE (Repair B #304)');
     assert(principio?.proposal_status === PROPOSAL_NO_PROPOSAL, 'principio_activo_raw never proposed');
     assert(principio?.target === 'NONE', 'principio_activo_raw keeps target NONE');
     const brand = conceptOf(r, 'commercial_name');
@@ -151,19 +161,37 @@ console.log('\n[T5-E] No-target concepts stay provenance-only');
     }
 }
 
-// ─── F. multiplicity + single-source origin ───────────────────────────────────
-console.log('\n[T5-F] Multiplicity needs selection; single source keeps origin');
+// ─── F. multi-record fails closed; single-source keeps origin ─────────────────
+console.log('\n[T5-F] PreSalud multi-record fails closed; single source keeps origin');
 {
+    // Contiguous two-record input stays ONE structural unit (Repair A #303)
+    // so T4 blocks it deterministically: raw preserved, zero proposals,
+    // SC/Oral/40MG/80MG never surfaced as choices (Repair B #304).
     const twoRecords = ';ADALIMUMAB (HYRIMOZ);SC;40 MG;CADA 14 DIAS;\n;ETANERCEPT (BENEPALI);Oral;80 MG;CADA 28 DIAS;28';
     const r = runUnifiedIntake(twoRecords);
-    const dose = conceptOf(r, 'requested_dose');
-    assert(dose?.comparison_status === COMPARISON_MULTIPLE_SOURCE_VALUES, 'distinct doses across safe PreSalud units: MULTIPLE_SOURCE_VALUES');
-    assert(dose?.proposal_status === PROPOSAL_REQUIRES_SELECTION, 'multiplicity: REQUIRES_SELECTION');
-    assert(dose?.value === null || dose?.value === undefined, 'multiplicity picks no first/last winner');
+    assert((r?.blocking_states ?? []).includes('MULTI_RECORD_UNSUPPORTED_V0'), 'contiguous multi-record surfaces MULTI_RECORD_UNSUPPORTED_V0');
+    const usable = Object.values(r?.reconciled?.concepts ?? {}).filter((c) => c?.proposal_status !== PROPOSAL_NO_PROPOSAL);
+    assert(usable.length === 0, 'contiguous multi-record yields zero usable proposals');
+    const leaked = Object.values(r?.reconciled?.concepts ?? {}).flatMap((c) => c?.candidates ?? []).filter((v) => ['SC', 'Oral', '40 MG', '80 MG'].includes(String(v)));
+    assert(leaked.length === 0, 'SC/Oral/40MG/80MG never presented as choices');
+}
+{
+    // Separated PreSalud regions segment as two units; the pipeline blocks
+    // them with the same code: zero usable proposals, no cross-record
+    // choices (Repair B #304, D9/D14).
+    const separated = `${presaludRaw()}\nLINEA DESCONOCIDA INTERMEDIA\n;ETANERCEPT (BENEPALI);Oral;80 MG;CADA 28 DIAS;28`;
+    const r = runUnifiedIntake(separated);
+    assert((r?.blocking_states ?? []).includes('MULTI_RECORD_UNSUPPORTED_V0'), 'separated regions surface MULTI_RECORD_UNSUPPORTED_V0');
+    const usable = Object.values(r?.reconciled?.concepts ?? {}).filter((c) => c?.proposal_status !== PROPOSAL_NO_PROPOSAL);
+    assert(usable.length === 0, 'separated regions yield zero usable proposals');
+    const leaked = Object.values(r?.reconciled?.concepts ?? {}).flatMap((c) => c?.candidates ?? []).filter((v) => ['SC', 'Oral', '40 MG', '80 MG'].includes(String(v)));
+    assert(leaked.length === 0, 'separated SC/Oral/40MG/80MG never presented as choices');
 }
 {
     const r = runUnifiedIntake(eordenRaw());
-    assert(conceptOf(r, 'requested_induction')?.comparison_status === COMPARISON_ONLY_EORDEN, 'e-Orden-only concept keeps ONLY_EORDEN');
+    const c = conceptOf(r, 'requested_induction');
+    assert(c?.comparison_status === COMPARISON_NOT_APPLICABLE, 'e-Orden-only concept: NOT_APPLICABLE');
+    assert(c?.origin === COMPARISON_ONLY_EORDEN, 'e-Orden-only concept keeps origin ONLY_EORDEN');
 }
 
 // ─── Proportional lifecycle: invalid SES blocks one unit only ────────────────
@@ -174,7 +202,7 @@ console.log('\n[T5-G] Invalid-SES e-Orden blocked, valid PreSalud usable');
     const sesBlocked = (r?.blocking_states ?? []).some((s) => String(s).includes('SES')) || (r?.units ?? []).some((u) => (u?.parser?.blocking_states ?? []).length > 0);
     assert(sesBlocked, 'invalid SES surfaces its blocking reason');
     const brand = conceptOf(r, 'commercial_name');
-    assert(brand?.comparison_status === COMPARISON_ONLY_PRESALUD, 'blocked e-Orden brand does not poison PreSalud: ONLY_PRESALUD');
+    assert(brand?.comparison_status === COMPARISON_NOT_APPLICABLE && brand?.origin === COMPARISON_ONLY_PRESALUD, 'blocked e-Orden brand does not poison PreSalud: NOT_APPLICABLE + origin ONLY_PRESALUD');
     assert(brand?.proposal_status === PROPOSAL_AUTO_PROPOSABLE && brand?.value === 'HYRIMOZ', 'valid PreSalud unit stays fully usable');
     assert((r?.units ?? []).some((u) => u.source === 'pre-salud' && u?.parser?.unit_state !== 'UNRECOGNIZED'), 'PreSalud unit keeps its own lifecycle');
 }
@@ -214,20 +242,45 @@ console.log('\n[T5-T] Triangulation (no fuzzy, no overwrite, no rescue, order-fr
     // Non-empty differing current is never silently overwritten (T7 owns apply).
     const r = runUnifiedIntake(eordenRaw({ brand: 'HYRIMOZ' }), { currentFormValues: { fhDermaFarmaco: 'BENEPALI' } });
     const c = conceptOf(r, 'commercial_name');
-    assert(c?.comparison_status === COMPARISON_ONLY_EORDEN && c?.proposal_status === PROPOSAL_REQUIRES_SELECTION, 'occupied current degrades single usable to REQUIRES_SELECTION');
+    assert(c?.comparison_status === COMPARISON_NOT_APPLICABLE && c?.origin === COMPARISON_ONLY_EORDEN && c?.proposal_status === PROPOSAL_REQUIRES_SELECTION, 'occupied current degrades single usable to REQUIRES_SELECTION (NOT_APPLICABLE + origin)');
     assert(c?.value === 'HYRIMOZ', 'proposed value preserved, current untouched');
 }
 {
     // Unmatched medicamento: no partial rescue leaks a brand; e-Orden stays usable.
     const r = runUnifiedIntake(`${eordenRaw({ brand: 'HYRIMOZ' })}\nActivo;HYRIMOZ;SC;40 MG;CADA 14 DIAS;28`);
     const brand = conceptOf(r, 'commercial_name');
-    assert(brand?.comparison_status === COMPARISON_ONLY_EORDEN && brand?.value === 'HYRIMOZ', 'unmatched PreSalud medicamento contributes zero brand');
+    assert(brand?.comparison_status === COMPARISON_NOT_APPLICABLE && brand?.origin === COMPARISON_ONLY_EORDEN && brand?.value === 'HYRIMOZ', 'unmatched PreSalud medicamento contributes zero brand');
     assert(conceptOf(r, 'medicamento')?.proposal_status === PROPOSAL_NO_PROPOSAL, 'broken medicamento identity stays NO_PROPOSAL');
 }
 {
     // Source order is irrelevant when the partition is unique (D4).
     const r = runUnifiedIntake(`${presaludRaw()}\n${eordenRaw()}`);
     assert(conceptOf(r, 'commercial_name')?.comparison_status === COMPARISON_EQUIVALENT, 'PreSalud-before-e-Orden still EQUIVALENT');
+}
+
+// ─── Closed D6 enum + origin separation sweep (Repair B #304) ───────────────
+console.log('\n[T5-I] Closed comparison enum and independent origin axis');
+{
+const CLOSED = new Set([COMPARISON_EQUIVALENT, COMPARISON_DIFFERENT, COMPARISON_NOT_COMPARABLE, COMPARISON_NOT_APPLICABLE]);
+const ORIGINS = new Set([COMPARISON_ONLY_EORDEN, COMPARISON_ONLY_PRESALUD, 'BOTH', 'NONE']);
+const fixtures = [
+eordenRaw(),
+presaludRaw(),
+`${eordenRaw()}\n${presaludRaw()}`,
+`${eordenRaw({ brand: 'HYRIMOZ' })}\n${presaludRaw(';ADALIMUMAB (BENEPALI);SC;40 MG;CADA 14 DIAS;')}`,
+';ADALIMUMAB (HYRIMOZ);SC;40 MG;CADA 14 DIAS;\n;ETANERCEPT (BENEPALI);Oral;80 MG;CADA 28 DIAS;28',
+`${presaludRaw()}\nLINEA DESCONOCIDA INTERMEDIA\n;ETANERCEPT (BENEPALI);Oral;80 MG;CADA 28 DIAS;28`,
+];
+for (const fixture of fixtures) {
+const r = runUnifiedIntake(fixture);
+for (const [name, c] of Object.entries(r?.reconciled?.concepts ?? {})) {
+assert(CLOSED.has(c?.comparison_status), `${name}: comparison ${c?.comparison_status} is in the closed 4-value enum`);
+assert(ORIGINS.has(c?.origin), `${name}: origin ${c?.origin} is independent`);
+if (c?.resolution === COMPARISON_MULTIPLE_SOURCE_VALUES) {
+assert(c?.comparison_status === COMPARISON_NOT_COMPARABLE && c?.proposal_status === PROPOSAL_REQUIRES_SELECTION, `${name}: MULTIPLE_SOURCE_VALUES is resolution-only, paired with REQUIRES_SELECTION`);
+}
+}
+}
 }
 
 console.log(`\n════════════════════════════════════════════════════════════════`);

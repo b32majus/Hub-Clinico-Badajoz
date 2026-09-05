@@ -15,17 +15,21 @@
  * no automatic winner. `can_apply` is ALWAYS false. Requested-treatment
  * semantics only (REQUESTED_TREATMENT, never VALIDATED_TREATMENT).
  *
- * D6 closed matrix (two independent axes + origin/resolution signals):
+ * D6 closed matrix (two independent axes + separate origin/resolution signals):
  *   comparison_status: EQUIVALENT | DIFFERENT | NOT_COMPARABLE |
- *                      NOT_APPLICABLE | ONLY_EORDEN | ONLY_PRESALUD |
- *                      MULTIPLE_SOURCE_VALUES
+ *                      NOT_APPLICABLE (CLOSED — Repair B #304).
  *   proposal_status:   AUTO_PROPOSABLE | REQUIRES_SELECTION | NO_PROPOSAL
+ *   origin:            ONLY_EORDEN | ONLY_PRESALUD | BOTH | NONE — lives in
+ *                      its own field, NEVER encoded into comparison_status.
  *   resolution/display:CORROBORATED (EQUIVALENT) | CONFLICT (DIFFERENT) |
- *                      otherwise echoes the comparison_status
- *   origin:            ONLY_EORDEN | ONLY_PRESALUD | BOTH | NONE
+ *                      MULTIPLE_SOURCE_VALUES (same-source multiplicity
+ *                      reason, always paired with REQUIRES_SELECTION) |
+ *                      otherwise echoes comparison_status / origin.
  *
  * Rules:
- * - A. single usable value + exact target + empty current -> AUTO_PROPOSABLE.
+ * - A. single usable value + exact target + empty current -> AUTO_PROPOSABLE
+ *      with comparison_status NOT_APPLICABLE (no comparison peer) and
+ *      origin ONLY_EORDEN / ONLY_PRESALUD.
  * - B. explicitly equivalent values across sources (authorized normalization:
  *      NFC + peripheral trim only; case/accent-sensitive, no fuzzy) ->
  *      EQUIVALENT / CORROBORATED.
@@ -35,16 +39,19 @@
  * - D. structurally distinct concepts are never rivals: reconciliation only
  *      ever compares contributions sharing one concept key. PreSalud
  *      `principio_activo_raw` (provenance-only, target NONE) never meets
- *      `commercial_name`; it stays NOT_APPLICABLE / NO_PROPOSAL and no
- *      CONFLICT is produced from it.
+ *      `commercial_name`; it stays NOT_COMPARABLE (structural) / NO_PROPOSAL
+ *      and no CONFLICT is produced from it.
  * - E. concepts with no usable contribution (provenance-only / gate material /
  *      NO_VALUE) -> NOT_APPLICABLE / NO_PROPOSAL, raw preserved.
- * - F. two or more distinct usable values from one source (across safe units
- *      or repeated inside one safe unit) -> MULTIPLE_SOURCE_VALUES +
- *      REQUIRES_SELECTION; never first/last wins. Same-source identical
- *      values across units are likewise never grouped into one choice
- *      (V0 has no cross-record composition): MULTIPLE_SOURCE_VALUES.
- * - Single-source usable concept -> ONLY_EORDEN / ONLY_PRESALUD.
+ * - F. two or more distinct usable values from one source inside one safe
+ *      unit -> comparison NOT_COMPARABLE + REQUIRES_SELECTION with resolution
+ *      MULTIPLE_SOURCE_VALUES; never first/last wins. PreSalud V0 never
+ *      reaches F across records: contiguous multi-record is blocked by T4
+ *      (MULTI_RECORD_UNSUPPORTED_V0, zero contributions) and separated
+ *      PreSalud regions are blocked here at pipeline level (same code, zero
+ *      usable PreSalud proposals, no cross-record choices).
+ * - Single-source usable concept -> origin ONLY_EORDEN / ONLY_PRESALUD with
+ *      comparison_status NOT_APPLICABLE.
  * - Proportional lifecycle: a unit whose parser reports a blocking state
  *      (e.g. invalid SES program) contributes zero usable values — its raw
  *      and reason are preserved and surfaced — while independent valid units
@@ -54,7 +61,7 @@
 
 import { segmentClinicalIntake } from './fh_intake_segmenter.js';
 import { parseDermaEOrdenUnit } from './fh_eorden_parser.js';
-import { parsePreSaludUnit } from './fh_presalud_parser.js';
+import { parsePreSaludUnit, BLOCK_MULTI_RECORD_UNSUPPORTED } from './fh_presalud_parser.js';
 
 export const SOURCE_EORDEN = 'e-orden';
 export const SOURCE_PRESALUD = 'pre-salud';
@@ -63,9 +70,21 @@ export const COMPARISON_EQUIVALENT = 'EQUIVALENT';
 export const COMPARISON_DIFFERENT = 'DIFFERENT';
 export const COMPARISON_NOT_COMPARABLE = 'NOT_COMPARABLE';
 export const COMPARISON_NOT_APPLICABLE = 'NOT_APPLICABLE';
+// Legacy comparison-slot aliases (Repair B #304): origin and multiplicity no
+// longer extend comparison_status. Kept exported so existing importers keep
+// resolving; the pipeline NEVER emits them as comparison_status.
 export const COMPARISON_ONLY_EORDEN = 'ONLY_EORDEN';
 export const COMPARISON_ONLY_PRESALUD = 'ONLY_PRESALUD';
 export const COMPARISON_MULTIPLE_SOURCE_VALUES = 'MULTIPLE_SOURCE_VALUES';
+
+export const ORIGIN_ONLY_EORDEN = 'ONLY_EORDEN';
+export const ORIGIN_ONLY_PRESALUD = 'ONLY_PRESALUD';
+export const ORIGIN_BOTH = 'BOTH';
+export const ORIGIN_NONE = 'NONE';
+
+export const RESOLUTION_CORROBORATED = 'CORROBORATED';
+export const RESOLUTION_CONFLICT = 'CONFLICT';
+export const RESOLUTION_MULTIPLE_SOURCE_VALUES = 'MULTIPLE_SOURCE_VALUES';
 
 export const PROPOSAL_AUTO_PROPOSABLE = 'AUTO_PROPOSABLE';
 export const PROPOSAL_REQUIRES_SELECTION = 'REQUIRES_SELECTION';
@@ -102,6 +121,14 @@ function unitSesBlocked(parserResult) {
     return false;
 }
 
+function originOf(contributions) {
+    const sources = new Set(contributions.map((c) => c?.provenance?.source ?? c?.source ?? 'unknown'));
+    if (sources.size >= 2) return ORIGIN_BOTH;
+    if (sources.has(SOURCE_PRESALUD)) return ORIGIN_ONLY_PRESALUD;
+    if (sources.has(SOURCE_EORDEN)) return ORIGIN_ONLY_EORDEN;
+    return ORIGIN_NONE;
+}
+
 function reconcileConcept(concept, allContributions, currentFormValues) {
     const usable = allContributions.filter(isUsableContribution);
     const exactTargets = [...new Set(allContributions.map((c) => c?.target).filter((t) => t != null && t !== 'NONE'))];
@@ -110,13 +137,28 @@ function reconcileConcept(concept, allContributions, currentFormValues) {
     const base = { concept, target, contributions: allContributions };
 
     if (usable.length === 0) {
+        // D10 structural case: principio_activo_raw is provenance-only but its
+        // structural relation is NOT_COMPARABLE (never a rival of
+        // commercial_name, never a false CONFLICT, never classified).
+        if (concept === 'principio_activo_raw') {
+            return {
+                ...base,
+                comparison_status: COMPARISON_NOT_COMPARABLE,
+                proposal_status: PROPOSAL_NO_PROPOSAL,
+                resolution: COMPARISON_NOT_COMPARABLE,
+                display: COMPARISON_NOT_COMPARABLE,
+                origin: originOf(allContributions),
+                value: null,
+                candidates: [],
+            };
+        }
         return {
             ...base,
             comparison_status: COMPARISON_NOT_APPLICABLE,
             proposal_status: PROPOSAL_NO_PROPOSAL,
             resolution: COMPARISON_NOT_APPLICABLE,
             display: COMPARISON_NOT_APPLICABLE,
-            origin: 'NONE',
+            origin: originOf(allContributions),
             value: null,
             candidates: [],
         };
@@ -125,14 +167,14 @@ function reconcileConcept(concept, allContributions, currentFormValues) {
     if (usable.length === 1) {
         const single = usable[0];
         const originSource = single?.provenance?.source ?? single?.source ?? null;
-        const origin = originSource === SOURCE_PRESALUD ? COMPARISON_ONLY_PRESALUD : COMPARISON_ONLY_EORDEN;
+        const origin = originSource === SOURCE_PRESALUD ? ORIGIN_ONLY_PRESALUD : ORIGIN_ONLY_EORDEN;
         const currentRaw = currentFormValues?.[target];
         const currentEmpty = currentRaw === undefined || currentRaw === null || String(currentRaw).trim() === '';
         const matchesCurrent = !currentEmpty && normalizeValue(currentRaw) === normalizeValue(single.value);
         const proposal = (currentEmpty || matchesCurrent) ? PROPOSAL_AUTO_PROPOSABLE : PROPOSAL_REQUIRES_SELECTION;
         return {
             ...base,
-            comparison_status: origin,
+            comparison_status: COMPARISON_NOT_APPLICABLE,
             proposal_status: proposal,
             resolution: origin,
             display: origin,
@@ -145,7 +187,7 @@ function reconcileConcept(concept, allContributions, currentFormValues) {
     const distinct = [...new Map(usable.map((c) => [normalizeValue(c.value), c.value])).entries()];
     const distinctKeys = distinct.map(([key]) => key);
     const sources = new Set(usable.map((c) => c?.provenance?.source ?? c?.source ?? 'unknown'));
-    const origin = sources.size >= 2 ? 'BOTH' : (sources.has(SOURCE_PRESALUD) ? COMPARISON_ONLY_PRESALUD : COMPARISON_ONLY_EORDEN);
+    const origin = originOf(usable);
     const currentRaw = currentFormValues?.[target];
     const currentEmpty = currentRaw === undefined || currentRaw === null || String(currentRaw).trim() === '';
 
@@ -155,19 +197,19 @@ function reconcileConcept(concept, allContributions, currentFormValues) {
                 ...base,
                 comparison_status: COMPARISON_EQUIVALENT,
                 proposal_status: currentEmpty ? PROPOSAL_AUTO_PROPOSABLE : PROPOSAL_REQUIRES_SELECTION,
-                resolution: 'CORROBORATED',
-                display: 'CORROBORATED',
-                origin: 'BOTH',
+                resolution: RESOLUTION_CORROBORATED,
+                display: RESOLUTION_CORROBORATED,
+                origin: ORIGIN_BOTH,
                 value: distinct[0][1],
                 candidates: [distinct[0][1]],
             };
         }
         return {
             ...base,
-            comparison_status: COMPARISON_MULTIPLE_SOURCE_VALUES,
+            comparison_status: COMPARISON_NOT_COMPARABLE,
             proposal_status: PROPOSAL_REQUIRES_SELECTION,
-            resolution: COMPARISON_MULTIPLE_SOURCE_VALUES,
-            display: COMPARISON_MULTIPLE_SOURCE_VALUES,
+            resolution: RESOLUTION_MULTIPLE_SOURCE_VALUES,
+            display: RESOLUTION_MULTIPLE_SOURCE_VALUES,
             origin,
             value: null,
             candidates: [distinct[0][1]],
@@ -180,19 +222,19 @@ function reconcileConcept(concept, allContributions, currentFormValues) {
             ...base,
             comparison_status: COMPARISON_DIFFERENT,
             proposal_status: PROPOSAL_REQUIRES_SELECTION,
-            resolution: 'CONFLICT',
-            display: 'CONFLICT',
-            origin: 'BOTH',
+            resolution: RESOLUTION_CONFLICT,
+            display: RESOLUTION_CONFLICT,
+            origin: ORIGIN_BOTH,
             value: null,
             candidates: distinct.map(([, value]) => value),
         };
     }
     return {
         ...base,
-        comparison_status: COMPARISON_MULTIPLE_SOURCE_VALUES,
+        comparison_status: COMPARISON_NOT_COMPARABLE,
         proposal_status: PROPOSAL_REQUIRES_SELECTION,
-        resolution: COMPARISON_MULTIPLE_SOURCE_VALUES,
-        display: COMPARISON_MULTIPLE_SOURCE_VALUES,
+        resolution: RESOLUTION_MULTIPLE_SOURCE_VALUES,
+        display: RESOLUTION_MULTIPLE_SOURCE_VALUES,
         origin,
         value: null,
         candidates: distinct.map(([, value]) => value),
@@ -245,11 +287,22 @@ export function runUnifiedIntake(rawInput, options = {}) {
 
     const recognizedUnits = Array.isArray(segmentation.recognized_units) ? segmentation.recognized_units : [];
     const wholeImportBlocked = recognizedUnits.some((u) => u?.kind === 'blocked_unit' || u?.state === 'SEGMENTATION_BLOCKED');
+    // Repair B #304 / D9-D14: V0 has no cross-record composition. Repair A
+    // keeps CONTIGUOUS records in one presalud_unit so T4 blocks them with
+    // MULTI_RECORD_UNSUPPORTED_V0, but SEPARATED PreSalud regions segment as
+    // two or more presalud_units. Every such variant must fail closed here:
+    // zero usable PreSalud proposals, no cross-record candidate choices.
+    // An independent e-Orden unit keeps its own lifecycle (proportional).
+    const presaludSeparatedMultiRecord = recognizedUnits.filter((u) => u?.kind === 'presalud_unit').length >= 2;
 
     const units = [];
     const warnings = [...(segmentation.warnings ?? [])];
     const errors = [...(segmentation.errors ?? [])];
     const blockingStates = [...(segmentation.blocking_states ?? [])];
+    if (presaludSeparatedMultiRecord && !wholeImportBlocked) {
+        if (!blockingStates.includes(BLOCK_MULTI_RECORD_UNSUPPORTED)) blockingStates.push(BLOCK_MULTI_RECORD_UNSUPPORTED);
+        errors.push({ code: BLOCK_MULTI_RECORD_UNSUPPORTED, message: 'PreSalud input contains separated record regions; V0 does not support multi-record composition.', blocking: true });
+    }
 
     if (wholeImportBlocked) {
         for (const unit of recognizedUnits) {
@@ -297,16 +350,21 @@ export function runUnifiedIntake(rawInput, options = {}) {
                 can_apply: false,
             };
         }
-        const blocked = parser !== null && unitSesBlocked(parser);
-        units.push({
-            unit_index: unit?.unit_index ?? index,
-            source: unit?.source ?? 'unknown',
-            kind: unit?.kind ?? 'unknown',
-            raw: unit?.raw ?? '',
-            parser,
-            blocked,
-            blocking_reason: blocked ? (parser?.contributions?.find((c) => c?.concept === 'ses_program')?.reason ?? parser?.blocking_states?.[0] ?? null) : null,
-        });
+            const sesBlocked = parser !== null && unitSesBlocked(parser);
+            const presaludMultiBlocked = unit?.kind === 'presalud_unit' && presaludSeparatedMultiRecord;
+            const blocked = sesBlocked || presaludMultiBlocked;
+            let blockingReason = null;
+            if (presaludMultiBlocked) blockingReason = BLOCK_MULTI_RECORD_UNSUPPORTED;
+            else if (blocked) blockingReason = parser?.contributions?.find((c) => c?.concept === 'ses_program')?.reason ?? parser?.blocking_states?.[0] ?? null;
+            units.push({
+                unit_index: unit?.unit_index ?? index,
+                source: unit?.source ?? 'unknown',
+                kind: unit?.kind ?? 'unknown',
+                raw: unit?.raw ?? '',
+                parser,
+                blocked,
+                blocking_reason: blockingReason,
+            });
         if (parser !== null) {
             for (const warning of parser.warnings ?? []) warnings.push(warning);
             for (const error of parser.errors ?? []) errors.push(error);
