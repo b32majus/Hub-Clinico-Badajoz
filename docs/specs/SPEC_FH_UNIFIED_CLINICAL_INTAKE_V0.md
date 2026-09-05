@@ -332,7 +332,21 @@ Ningún parser queda escondido dentro de "preview".
 
 ### D3 — Contrato fail-safe del parser (WO-C, WO-D y su integración)
 
-Cada parser expone una función pura cuyo resultado es una estructura:
+Cada parser **unitario** expone una función pura cuyo resultado mínimo es:
+
+```text
+raw_input
+source
+unit_state
+concepts/contributions
+warnings
+errors
+blocking_states
+can_preview
+can_apply = false
+```
+
+La **integración/pipeline agregado** (WO-E) añade sobre las salidas unitarias:
 
 ```text
 raw_input
@@ -346,6 +360,10 @@ blocking_states
 can_preview
 can_apply = false
 ```
+
+`detected_sources`, `recognized_units` y `unrecognized_fragments` son, por tanto,
+responsabilidad del agregado y NO campos obligatorios duplicados en cada parser
+unitario WO-C/WO-D.
 
 Estados de resultado por unidad/fuente:
 
@@ -493,6 +511,14 @@ Matriz mínima de cierre (adjudicación post-auditoría):
   (`MULTIPLE_SOURCE_VALUES`); sin first/last wins. Nunca se crea una nueva
   precedencia de fuentes.
 
+En **PreSalud V0**, F NO es un criterio ejecutable de WO-D: D9 representa un
+único valor posicional por concepto en exactamente seis campos. Un séptimo
+campo/duplicación rompe la gramática del registro → `UNRECOGNIZED`, raw
+preservado, zero proposals. WO-D no sintetiza `MULTIPLE_SOURCE_VALUES` para una
+estructura que la gramática V0 no puede expresar. F queda reservada para
+fuentes/formatos futuros que definan explícitamente valores repetibles dentro
+de un mismo registro.
+
 Caso estructural marca vs principio activo (cierre sin clasificación
 farmacológica): en la subgramática PreSalud, `principio_activo_raw` es un
 componente estructural/provenance-only del `medicamento_raw` (D10). No es un
@@ -574,15 +600,23 @@ Dosis                    -> requested_dose     -> fhDermaDosis
 Vía                      -> requested_route    -> fhDermaVia (solo equivalencia exacta autorizada;
                                                  no convertir automáticamente un valor
                                                  desconocido a "Otra")
-Pauta                    -> requested_schedule -> fhDermaPauta si representación exacta;
-                                                  si no, fhDermaPauta = OTRO con texto
-                                                  explícito completo en fhDermaPautaOtro
+Pauta                    -> requested_schedule -> WO-D parser: target NONE / NO_PROPOSAL;
+                                                  WO-E: mapping profesional explícito;
+                                                  opción exacta existente -> fhDermaPauta;
+                                                  si no, fhDermaPauta = OTRO + texto
+                                                  completo en fhDermaPautaOtro
 Estado                   -> NONE
 Días                     -> NONE
 ```
 
 - `Estado` y `Días` mantienen `semantic_status = PENDING_EXTERNAL_CONFIRMATION`
   y `target = NONE`.
+- `requested_schedule` PreSalud es explícita/provenance, pero WO-D NO decide por
+  sí solo que el texto sea una representación exacta de `fhDermaPauta`: siempre
+  sale del parser con `target = NONE` y `proposal_status = NO_PROPOSAL`. WO-E
+  puede mapearla solo mediante decisión profesional explícita a una opción
+  brownfield exacta o a `OTRO` + `fhDermaPautaOtro`; nunca AUTO_PROPOSABLE por
+  la mera cadena de Pauta.
 - No extraer de `medicamento_raw`: dosis, vía, pauta, presentación,
   dispositivos, duración.
 - No CIMA para hydration.
@@ -668,10 +702,11 @@ PRESALUD_MULTI_RECORD_V0:
   multirregistro; no se intenta chronology, current-vs-history, record
   selection, cross-record composition, dedup ni first/last record wins.
 
-  REPEATED LABEL RULE: `MULTIPLE_SOURCE_VALUES + REQUIRES_SELECTION` solo puede
-  utilizarse para múltiples valores explícitos dentro de UNA unidad / UN
-  registro cuyo límite sea seguro. Nunca autoriza combinar campos procedentes
-  de registros PreSalud diferentes.
+  EXTRA/REPEATED FIELD RULE: PreSalud V0 NO define labels repetibles dentro de
+  un registro; define exactamente seis valores posicionales. Un valor/campo
+  adicional o duplicado rompe la gramática del registro → `UNRECOGNIZED`, raw
+  preservado, zero proposals. `MULTIPLE_SOURCE_VALUES` NO es criterio de
+  aceptación de WO-D V0. Nunca se combinan campos de registros diferentes.
 
 ### D10 — Subgramática PRESALUD_MEDICAMENTO_V0 (WO-D)
 
@@ -856,9 +891,13 @@ demuestre que un global apply aplica un concepto seguro y NO toca un
 
 ### D17 — Contrato textual productor ↔ parser (serialización normativa)
 
-Contrato determinista: UNA forma normativa por campo, usada coherentemente en
-spec, productor (WO-A) y parser (WO-C). No existen variantes "o equivalentes"
-dentro del contrato parser.
+Contrato determinista: UNA forma normativa por campo y etiquetas exactas. El
+producer WO-A emite una única forma canónica (`D17_CANONICAL_PRODUCER`) con CIP
+no vacío. El parser WO-C reconoce exactamente dos envelopes estructurales
+explícitos: la forma canónica y `D17_CIPLESS_SOURCE`, idéntica salvo porque la
+línea `• CIP:` está completamente ausente. Esta segunda forma existe solo para
+el gate defensivo D5; WO-A nunca la emite. No existen otras variantes "o
+equivalentes" ni recuperación fuzzy.
 
 Etiquetas normativas e-Orden (bullet `• ` + separador `: ` obligatorios; su
 presencia/ausencia queda definida, no implícita):
@@ -873,10 +912,24 @@ SOLICITUD DERMATOLOGÍA → FARMACIA - <TÍTULO>
 • Pauta: <valor>
 • Inducción solicitada: SÍ           (o bien)
 • Inducción solicitada: NO
+• Justificación clínica: <valor>
 PROGRAMA SES
 • Código: <SES_PROGRAM_CODE>
 • Denominación: <SES_PROGRAM_LABEL>
 ```
+
+Reglas estructurales cerradas:
+
+- `D17_CANONICAL_PRODUCER`: la línea CIP existe y `<cip>` es no vacío; WO-A
+  bloquea export si falta.
+- `D17_CIPLESS_SOURCE`: la línea CIP se omite por completo; WO-C puede reconocer
+  el resto del envelope exacto y D5 mantiene la fuente `UNBOUND` hasta
+  confirmación source-aware. Una línea CIP presente pero vacía NO equivale a
+  esta variante.
+- `Justificación clínica` y el bloque completo `PROGRAMA SES` son obligatorios
+  en ambos envelopes. Ausencia/incompletitud → la unidad no puede terminar
+  `RECOGNIZED` con propuestas clínicas.
+- No se permiten líneas vacías internas entre campos/bloques.
 
 Normalización de transporte PERMITIDA (solo transformaciones explícitas que no
 cambian significado):
@@ -892,6 +945,7 @@ PROHIBIDO en el contrato parser:
 - case folding de labels;
 - accent folding (p. ej. `Via`/`Dias` NO reconocen `Vía`/`Días`);
 - aliases de labels;
+- eliminar/tolerar líneas vacías internas para fabricar una forma canónica;
 - fuzzy; corrección de typos; semantic repair.
 
 PRESALUD: se mantiene el contrato estricto V0 ya adjudicado (D9/D10):
@@ -937,7 +991,15 @@ WO-B — detector/segmenter:
 
 WO-C — DermaEOrdenParser:
 
-- e-Orden completa válida (todas las etiquetas nuevas de D17).
+- e-Orden completa válida (incluye Justificación clínica y todas las etiquetas
+  obligatorias de `D17_CANONICAL_PRODUCER`).
+- `D17_CIPLESS_SOURCE` exacta → conceptos seguros reconocibles, identidad
+  `UNBOUND`; nunca inventa/selecciona paciente.
+- Línea CIP presente pero vacía → NO se acepta como variante CIP-less.
+- Falta `Justificación clínica` o falta el bloque `PROGRAMA SES` → la unidad NO
+  termina `RECOGNIZED` con propuestas; raw preservado, fail-safe.
+- Línea vacía interna entre campos/bloques → no es D17 canónica/CIP-less válida;
+  no se elimina silenciosamente para reconocer.
 - `PROGRAMA SES` válido: code+label coherentes con la allowlist (p. ej.
   `SES_HS` + `HIDRADENITIS SUPURATIVA`) → concepto `ses_program` completo
   (code + label juntos).
@@ -974,10 +1036,15 @@ WO-D — PreSaludParser:
   preservado, sin propuesta de marca.
 - Marca vacía `()` → sin match.
 - Segundo grupo parentizado → sin match.
-- Etiqueta repetida con valores equivalentes → agrupación visual conservando
-  provenance (tras normalización autorizada).
-- Etiqueta repetida con valores distintos dentro del MISMO registro (límite
-  seguro) → `MULTIPLE_SOURCE_VALUES` + `REQUIRES_SELECTION`.
+- Séptimo valor/campo o duplicación posicional dentro del mismo registro →
+  `UNRECOGNIZED`, raw preservado, zero proposals; WO-D V0 no fabrica
+  `MULTIPLE_SOURCE_VALUES`.
+- Prefijo no contractual dentro de `Medicamento`, incluso precedido por
+  whitespace (p. ej. ` Medicamento: ...`) → `MEDICATION_SUBGRAMMAR_UNMATCHED`;
+  ningún `trimStart()` puede convertir una etiqueta no normativa en medicamento
+  válido.
+- Pauta PreSalud arbitraria → `requested_schedule` preservada con `target = NONE`
+  y `NO_PROPOSAL` en WO-D; el parser nunca la declara AUTO_PROPOSABLE por sí solo.
 - Multi-record detectado de forma determinista → fixture explícito:
   ```text
   record 1: Vía = SC ; Dosis = 40 MG
