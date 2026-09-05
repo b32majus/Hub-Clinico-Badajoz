@@ -19,17 +19,17 @@ Do not use remembered SHAs, branches, priorities or PR states as authority.
 
 The accepted unattended path is:
 
-`human → Herdr → interactive Pi supervisor → visible headless OpenCode worker → Gentle native RDD → ordinary repository delivery`
+`human authorization → human or Cora/DC mechanical launch → plain Pi supervisor → Herdr → separate Pi + Gentle Pi implementation worker → Gentle native RDD → ordinary repository delivery`
 
-Pi is a non-implementing supervisor. OpenCode is the implementation runtime. Gentle owns exact-candidate review lineage, proportional review, bounded correction, acknowledgement/burn and mutation invalidation.
+The supervisor is non-implementing, runs without Gentle Pi, and is event-driven through pi-intercom. It does not own or invoke the Gentle lifecycle, review mode, provider transitions, acknowledgement/burn or implementation. The separate Pi + Gentle Pi worker owns implementation and the full Gentle/RDD lifecycle. OpenCode is retained only as a historical/alternative runtime, not as a dependency of the normal unattended path.
 
 For normal execution, dispatch from the current issue/spec rather than rewriting them into a second Agent Brief. Keep operator prompts bounded. Do not introduce SDD, custom runners, daemons, launchers, headless controllers or new orchestration layers unless explicitly requested.
 
-Runtime model routing is operational configuration, not repository truth. Verify effective models when it matters; do not hard-code provider/model assumptions in this file.
+Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; bounded writers must receive the applicable project constraints in their handoff. Runtime model routing is operational configuration, not repository truth. Verify effective models when it matters; do not hard-code provider/model assumptions in this file.
 
 ## Engineering standards
 
-Read `CODING_STANDARDS.md` before code changes. Repository standards supplement the global OpenCode standards and current WO.
+Read `CODING_STANDARDS.md` before code changes. Repository standards supplement the active Atenea harness contract and current WO.
 
 For semantic/domain/clinical/parser/state-transition work, the principal acceptance oracle must be derived from accepted authority and frozen before the implementation context receives write authority. The builder may run the oracle but must not weaken or replace it. Material oracle changes return the work to shaping/re-freeze.
 
