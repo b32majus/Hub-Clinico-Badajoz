@@ -6107,3 +6107,51 @@
     .fh-intake-concept { grid-template-columns: 1fr; }
     .fh-intake-source__heading { align-items: flex-start; flex-direction: column; }
 }
+
+/* T7 #299 — per-concept explicit apply decisions (D11/D16). */
+.fh-intake-decision__title {
+    margin: 4px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid #E2E8F0;
+    color: #0F172A;
+}
+.fh-intake-decision {
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid #CBD5E1;
+    border-left: 4px solid #64748B;
+    border-radius: 10px;
+    background: #FFFFFF;
+}
+.fh-intake-decision__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.fh-intake-decision__heading strong { color: #0F172A; }
+.fh-intake-decision__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 0 0 8px;
+    color: #334155;
+    overflow-wrap: anywhere;
+}
+.fh-intake-decision__note {
+    margin: 4px 0 8px;
+    color: #475569;
+    overflow-wrap: anywhere;
+}
+.fh-intake-decision__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+.fh-intake-decision .fh-intake-provenance { margin: 2px 0 0; }
+
+@media (max-width: 640px) {
+    .fh-intake-decision__heading { align-items: flex-start; flex-direction: column; }
+}
