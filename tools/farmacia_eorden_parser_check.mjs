@@ -16,7 +16,8 @@ const body = (title = 'PSORIASIS', ses = ['SES_PSOR', 'PSORIASIS'], overrides = 
     const lines = [`SOLICITUD DERMATOLOGÍA → FARMACIA - ${title}`, SEP,
         `• CIP: ${overrides.cip ?? 'CIP-SINT-0001'}`, `• Marca comercial solicitada: ${overrides.brand ?? 'HYRIMOZ'}`,
         `• Dosis solicitada: ${overrides.dose ?? '40 MG'}`, `• Vía solicitada: ${overrides.route ?? 'SC'}`,
-        `• Pauta: ${overrides.schedule ?? 'CADA 14 DIAS'}`, `• Inducción solicitada: ${overrides.induction ?? 'NO'}`];
+        `• Pauta: ${overrides.schedule ?? 'CADA 14 DIAS'}`, `• Inducción solicitada: ${overrides.induction ?? 'NO'}`,
+        `• Justificación clínica: ${overrides.justification ?? 'Justificación sintética.'}`];
     if (ses !== null) { lines.push('PROGRAMA SES'); if (ses[0] !== undefined) lines.push(`• Código: ${ses[0]}`); if (ses[1] !== undefined) lines.push(`• Denominación: ${ses[1]}`); }
     return lines.join('\n');
 };
@@ -25,7 +26,7 @@ function resultForSes(code, label, section = true) { return parseDermaEOrdenRaw(
 console.log('\n[WO-C] Complete D17 unit and envelope');
 const complete = body(); const r = parseDermaEOrdenRaw(complete);
 assert(r.unit_state === UNIT_STATE_RECOGNIZED, 'complete unit is RECOGNIZED');
-assert(['commercial_name', 'requested_dose', 'requested_route', 'requested_schedule', 'requested_induction', 'ses_program', 'pathology', 'cip'].every((x) => r.contributions.some((c) => c.concept === x)), 'complete concept set present');
+assert(['commercial_name', 'requested_dose', 'requested_route', 'requested_schedule', 'requested_induction', 'requested_justification', 'ses_program', 'pathology', 'cip'].every((x) => r.contributions.some((c) => c.concept === x)), 'complete concept set present');
 assert(r.raw_input === complete && r.can_preview === true && r.can_apply === false, 'raw and gates preserved');
 assert(r.contributions.every((c) => c.raw), 'contribution provenance raw present');
 
@@ -99,6 +100,33 @@ for (const variant of [
 }
 const repeated = body() + '\n• Marca comercial solicitada: SECOND'; const rr = parseDermaEOrdenRaw(repeated);
 assert(rr.unit_state === UNIT_STATE_UNRECOGNIZED && rr.contributions.length === 0, 'repeated label rejected');
+
+console.log('\n[WO-C] T3 repair pins: justification, CIP-less, empty CIP, required SES, blank lines');
+// (1) Justificación clínica required and preserved.
+const just = parseDermaEOrdenRaw(body('PSORIASIS', ['SES_PSOR', 'PSORIASIS'], { justification: 'Fracaso de tópico, Hurley II.' }));
+const justConcept = just.contributions.find((c) => c.concept === 'requested_justification');
+assert(justConcept?.target === 'fhDermaJustificacion' && justConcept?.proposal_status === 'AUTO_PROPOSABLE' && justConcept?.value === 'Fracaso de tópico, Hurley II.', 'justification preserved to fhDermaJustificacion');
+const noJust = parseDermaEOrdenRaw(body().split('\n').filter((l) => !l.startsWith('• Justificación clínica:')).join('\n'));
+assert(noJust.unit_state === UNIT_STATE_UNRECOGNIZED && noJust.contributions.length === 0, 'missing justification is not recognized with proposals');
+// (2) Exact CIP-less source variant accepted as UNBOUND.
+const cipless = parseDermaEOrdenRaw(body().split('\n').filter((l) => !l.startsWith('• CIP:')).join('\n'));
+const ciplessCip = cipless.contributions.find((c) => c.concept === 'cip');
+assert(cipless.unit_state === UNIT_STATE_RECOGNIZED, 'exact CIP-less envelope is recognized');
+assert(ciplessCip?.semantic_status === 'UNBOUND' && ciplessCip?.value === null && ciplessCip?.target === 'NONE' && ciplessCip?.proposal_status === 'NO_PROPOSAL', 'absent CIP is explicitly UNBOUND');
+// (3) Present-but-empty CIP rejected (never CIP-less).
+for (const empty of ['• CIP:', '• CIP:   ']) {
+const x = parseDermaEOrdenRaw(body().replace('• CIP: CIP-SINT-0001', empty));
+assert(x.unit_state === UNIT_STATE_UNRECOGNIZED && x.contributions.length === 0 && x.errors.some((e) => e.code === 'CIP_PRESENT_BUT_EMPTY'), `present-but-empty CIP ${JSON.stringify(empty)} rejected explicitly`);
+}
+// (4) PROGRAMA SES required/coherent.
+const noSes = parseDermaEOrdenRaw(body().split('\n').filter((l) => l !== 'PROGRAMA SES' && !l.startsWith('• Código:') && !l.startsWith('• Denominación:')).join('\n'));
+assert(noSes.unit_state === UNIT_STATE_UNRECOGNIZED && noSes.contributions.length === 0, 'missing SES block is not recognized with proposals');
+// (5) Internal blank lines rejected, peripheral blank lines tolerated.
+const blankLines = body().split('\n');
+const innerBlank = parseDermaEOrdenRaw([...blankLines.slice(0, 5), '', ...blankLines.slice(5)].join('\n'));
+assert(innerBlank.unit_state === UNIT_STATE_UNRECOGNIZED && innerBlank.contributions.length === 0 && innerBlank.errors.some((e) => e.code === 'INTERNAL_BLANK_LINE'), 'internal blank line rejected explicitly');
+const periBlank = parseDermaEOrdenRaw(`\n\n${body()}\n\n`);
+assert(periBlank.unit_state === UNIT_STATE_RECOGNIZED, 'peripheral blank lines tolerated');
 
 console.log('\n[WO-C] Empty, malformed input, unit kinds, and exception safety');
 for (const raw of ['', '   ', '\n', '\t\n']) assert(parseDermaEOrdenRaw(raw).can_apply === false, `empty input ${JSON.stringify(raw)} is safe`);
