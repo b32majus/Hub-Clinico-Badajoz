@@ -18,10 +18,15 @@
  *       single `Estado;Medicamento;Vía;Dosis;Pauta;Días` record — exactly six
  *       `;`-delimited fields; `Estado` (field 1) and `Días` (field 6) may be
  *       empty (WO-D `NO_VALUE` semantics); fields 2..5 must be non-empty and
- *       free of stray `;`. One record = one unit (V0). PreSalud never
- *       appears as an inline fragment inside another source. T2 does NOT
- *       validate medication subgrammar (parentheses) nor multi-record policy;
- *       structurally identifiable PreSalud material must reach T4.
+ *       free of stray `;`. Two or more contiguous record-shaped lines in the
+ *       same PreSalud source region stay ONE unit (Repair A, issue #303):
+ *       raw byte/text slice preserved, `record_count` = number of records,
+ *       so downstream T4 sees the complete multi-record raw and emits
+ *       `MULTI_RECORD_UNSUPPORTED_V0`. PreSalud never appears as an inline
+ *       fragment inside another source. T2 does NOT validate medication
+ *       subgrammar (parentheses), does NOT parse clinical fields and does
+ *       NOT adjudicate multi-record policy; structurally identifiable
+ *       PreSalud material must reach T4.
  *
  * Safety rules (see D3/D4/D13 and the ticket's invariants):
  *   - The partition is structural only; membership must be unique or the
@@ -264,15 +269,21 @@ function eOrdenUnitItem(raw, starts, ends, lines, start, end) {
 }
 
 function presaludUnitItem(raw, starts, ends, lines, start, end) {
-    const recordLines = lines.slice(start, end);
+    // record_count counts structurally valid record-shaped lines only:
+    // interior blank/transport lines belong to the raw slice but are not
+    // records. T2 stays structural-only (no clinical field parsing).
+    let recordCount = 0;
+    for (let i = start; i < end; i += 1) {
+        if (isPresaludRecordLine(lines[i])) recordCount += 1;
+    }
     return {
         kind: KIND_PRESALUD_UNIT,
         source: SOURCE_PRESALUD,
         state: UNIT_STATE_RECOGNIZED,
         raw: sliceRawByOffsets(raw, starts, ends, start, end),
         structural_type: 'pre-salud',
-        record_count: recordLines.length,
-        recognized_fields: { 'pre-salud-record': recordLines.length },
+        record_count: recordCount,
+        recognized_fields: { 'pre-salud-record': recordCount },
         start_line: start,
         end_line: end,
         unit_index: -1,
@@ -435,14 +446,26 @@ function splitRuns(lines, start, end) {
             i += 1;
             continue;
         }
-        const cls = isPresaludRecordLine(lines[i]) ? 'prs' : 'unk';
-        const runStart = i;
-        // PreSalud: one record = one unit, so each prs line is its own run
-        if (cls === 'prs') {
-            runs.push({ start: runStart, end: runStart + 1, cls });
-            i = runStart + 1;
-            continue;
-        }
+            const cls = isPresaludRecordLine(lines[i]) ? 'prs' : 'unk';
+            const runStart = i;
+            // PreSalud (Repair A, issue #303): contiguous record-shaped lines
+            // in the same source region stay ONE structural unit so T4 can
+            // deterministically emit MULTI_RECORD_UNSUPPORTED_V0. Only
+            // blank/transport lines may sit inside the run (preserved lossless
+            // in raw, never counted as records); any other content breaks the
+            // region into separate runs.
+            if (cls === 'prs') {
+                let j = i + 1;
+                let runEnd = i + 1;
+                while (j < end) {
+                    if (cleanLine(lines[j]) === '') { j += 1; continue; }
+                    if (isPresaludRecordLine(lines[j])) { j += 1; runEnd = j; continue; }
+                    break;
+                }
+                runs.push({ start: runStart, end: runEnd, cls });
+                i = j;
+                continue;
+            }
         i += 1;
         while (i < end) {
             if (cleanLine(lines[i]) === '') break;
@@ -621,7 +644,8 @@ function runSegmentation(rawInput) {
         }
     }
 
-    // Per-run classification: each contiguous prs run is a PreSalud unit (T2 does NOT block multi-record).
+    // Per-run classification: each contiguous prs run is ONE PreSalud unit
+    // (record_count = number of records; T2 does NOT block multi-record).
     // Each unk run is an unknown fragment. No multi-record adjudication in T2.
     for (const run of allRuns) {
         if (run.cls === 'prs') {
