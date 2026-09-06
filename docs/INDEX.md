@@ -2,7 +2,7 @@
 
 | Metadato | Valor |
 |---|---|
-| Última actualización | 2026-09-05 |
+| Última actualización | 2026-09-06 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
 | Estado publicado | `827163d8c0d4eafb8af235da9a97aa4338a8141f` |
@@ -16,8 +16,8 @@
 | Paquete final | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` |
 | Actividad del servicio | Demo |
 | Alcance | Sin piloto / sin producción |
-| Work order actual | parent #292; siguiente ticket ejecutable T6 #298 |
-| Unified Clinical Intake V0 | parent #292 aprobado; checkpoints duraderos aceptados: T1 #293 `876afbb3…`, T2 #294 `2c6ec574…` + Repair A #303 `c25425e…`, T3 #295 `b560dd5…`, T4 #296 `d5e7124…`, T5 #297 `5ae810a…`; T5 final qualification = deterministic PASS + native RDD APPROVED/ack-burn + Cora adversarial PASS + local/remoto reconciliado; T6 #298 es el frontier ejecutable; T7–T10 siguen dependency-gated; merge NO autorizado; detalle en [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) |
+| Work order actual | issue #315 — reconciliación final del train Unified Clinical Intake V0 completado; sin PR/merge |
+| Unified Clinical Intake V0 | parent #292 `CLOSED/completed` (10/10); checkpoints aceptados T1 `876afbb3…`, T2 `2c6ec574…` + Repair A `c25425e…`, T3 `b560dd5…`, T4 `d5e7124…`, T5 `5ae810a…`, T6 `82fd585…`, T7 `37c45a5…`, T8 `08703a6…`, T9/T10 `fbaaef0…`; final gate independiente `14/14 PASS`; train unattended T8→T10 `PASS`; `MERGE_AUTHORIZED=NO`; auditoría: [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) |
 
 > Este índice orienta. La verdad funcional permanece en `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266 (Patient Longitudinal raw), sobre la cadena previa que integró el flujo de paciente: issue #250 / PR #251, issue #252 / PR #253, Estadísticas del issue #257 / PR #258 y Quick View PROMs del issue #261 / PR #262. El paquete final solo añade documentación y artefactos sintéticos externos; no modifica funcionalidad.
 
@@ -34,8 +34,9 @@
 3. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — manifest canónico y gates del paquete final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`.
 4. [`docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md`](/docs/ops/FARMACIA_POST_PATIENT_FLOW_STATE_20260806.md) — estado funcional reconciliado tras Patient Longitudinal raw.
 5. [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md) — decisión de persistencia temporal y evaluación.
-6. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, PRs y candidate.
-7. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — publicación regional y snapshot Cáceres sin promoción automática.
+6. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría final del train Unified Clinical Intake V0, tiempos/routing/RDD y gate E2E.
+7. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, PRs y candidate.
+8. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md) — publicación regional y snapshot Cáceres sin promoción automática.
 
 Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md).
 
@@ -43,7 +44,7 @@ Para ejecución y merges: [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER
 
 ## 2. Orden de verdad
 
-1. Work order actual: `WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01` (issue #279).
+1. Work order actual: `WO-DOC-FH-UNIFIED-INTAKE-FINAL-RECONCILIATION-01` (issue #315).
 2. GitHub: estado publicado `827163d8c0d4eafb8af235da9a97aa4338a8141f` (merge freeze documental issue #277 / PR #278) y código funcional publicado en `fb7b70c50c991baf6a375b42112048d190fe0178`, issue #265 / PR #266 (Patient Longitudinal raw), sobre el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
 3. Decisiones vinculantes del ciclo, subordinadas al estado publicado de #265/#266.
 4. Este índice reconciliado.
@@ -102,7 +103,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; intacta |
 | Datos / uso | Exclusivamente sintéticos; evaluación/demo funcional, no piloto ni producción |
 | Modelo de workbook | **Un único workbook** de Farmacia (`PROMueve_FH_EVALUATION_FARMACIA.xlsx`, 55 pacientes / 93 eventos / 95 filas / 152 columnas) alimenta Inicio, Quick View, Dashboard, Longitudinal, Validación, Primera Visita, Seguimiento, Estadísticas y CSV; hosted single-workbook PASS |
-| Work order actual | issue #279 — WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01; paquete de evaluación sintética en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; Activity demo |
+| WO freeze evaluación | issue #279 — WO-DOC-FH-EVALUATION-FINAL-RECONCILIATION-01; paquete de evaluación sintética en estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; Activity demo |
 | Evaluation Package | El paquete de evaluación evolucionó a **autónomo**: mismo workbook maestro de Farmacia (55/93/95/152) compartido por todos los módulos y Estadísticas desde la misma cohorte, con un workbook complementario de Enfermería; estado final `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION` tras el merge del freeze documental PR #278; sin cambios funcionales |
 
 > Los SHA de PR #238/#242/#246 y del merge previo de PR #253 que aparecen en secciones históricas no son el HEAD actual. El merge histórico `a9d6d464...` corresponde a Estadísticas del issue #257 / PR #258; el merge histórico `f2b827fed26728e2103a9ebca1f4c524d28dfac3` corresponde a Quick View del issue #261 / PR #262; el estado actual de Farmacia se verifica contra `fb7b70c50c991baf6a375b42112048d190fe0178`, merge del issue #265 / PR #266, que conserva el flujo integrado por #250/#251, #252/#253, #257/#258 y #261/#262.
