@@ -8,10 +8,18 @@ import {
   STATE_NO_PROPOSAL,
   HYDRATABLE_CONCEPTS,
   targetForConcept,
-  decisionState,
   writeEligibility,
   applyConcept,
 } from './fh_intake_apply.js';
+import {
+  STATE_MANUALLY_EDITED_AFTER_APPLY,
+  ACTION_REAPPLY_IMPORTED,
+  ACTION_CONFIRM_FOR_GLOBAL,
+  createReviewContext,
+  continueParseRun,
+  reviewRowState,
+  globalExecutableConcepts,
+} from './fh_intake_review_lifecycle.js';
 
 const STATE_VERIFIED = 'VERIFIED_EXPLICIT_CIP';
 const STATE_CONFIRMED = 'MANUALLY_CONFIRMED_SELECTED_PATIENT';
@@ -172,7 +180,7 @@ function renderSource(unit, association, confirmed, rerender, selectedPatient) {
 }
 
 /* ------------------------------------------------------------------ *
- * T7 per-concept decision surface (D11 / D16, issue #299).           *
+ * T7/T8 per-concept decision surface (D11 / D16, issues #299/#300).  *
  * ------------------------------------------------------------------ */
 
 function targetControl(target) {
@@ -267,6 +275,86 @@ function contributionAssociations(review, conceptName, selectedPatient) {
   return states;
 }
 
+/**
+ * D16/T8 global apply EXECUTOR ("Aplicar confirmados"). Executes exactly the
+ * subset of concepts that already received an explicit staged professional
+ * decision AND are still eligible against the LIVE current value and LIVE D5
+ * association states at execution time. It never decides, never bulk-replaces,
+ * never blanket-confirms and never touches PROTECTED_EXISTING without an
+ * explicit replace, CONFLICT, REQUIRES_SELECTION, NO_PROPOSAL,
+ * ALREADY_MATCHES_CURRENT or a manual edit after apply (that lifecycle path
+ * requires the explicit per-concept REAPPLY_IMPORTED action).
+ */
+function executeGlobalApply(review, selectedPatient) {
+  const executable = globalExecutableConcepts(
+    review,
+    review.result.reconciled?.concepts ?? {},
+    (conceptName) => currentFormValues()[targetForConcept(conceptName)],
+    (conceptName) => contributionAssociations(review, conceptName, selectedPatient),
+  );
+  const results = [];
+  for (const item of executable) {
+    const reconciled = review.result.reconciled?.concepts?.[item.concept];
+    if (!reconciled) continue;
+    const target = targetForConcept(reconciled.concept);
+    const applied = applyConcept({
+      reconciled,
+      currentValue: currentFormValues()[target],
+      associationStates: contributionAssociations(review, item.concept, selectedPatient),
+      action: item.action,
+      write: writeTarget,
+    });
+    if (applied.applied) {
+      review.applied[item.concept] = applied.appliedValue;
+      delete review.staged?.[item.concept];
+      results.push({ concept: item.concept, ok: true, value: applied.appliedValue });
+    } else {
+      results.push({ concept: item.concept, ok: false, reason: applied.reason });
+    }
+  }
+  return results;
+}
+
+function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
+  const stagedCount = Object.keys(review.staged ?? {}).length;
+  const box = element('section', 'fh-intake-global-apply');
+  box.appendChild(element('h4', '', 'Aplicar confirmados (global)'));
+  box.appendChild(element('p', 'fh-intake-decision__note',
+    'Ejecutor únicamente: aplica solo los conceptos con propuesta aplicable que ya recibieron una decisión profesional explícita y siguen siendo elegibles ahora. Nunca decide, nunca reemplaza en bloque y nunca toca PROTECTED_EXISTING sin reemplazo explícito, CONFLICT, REQUIRES_SELECTION, NO_PROPOSAL ni ediciones manuales tras apply.'));
+  if (stagedCount) {
+    const stagedList = element('ul', 'fh-intake-global-staged');
+    for (const concept of Object.keys(review.staged ?? {})) {
+      stagedList.appendChild(element('li', '', `${CONCEPT_LABELS[concept] || concept} (${review.staged[concept]})`));
+    }
+    box.appendChild(stagedList);
+  }
+  const actions = element('div', 'fh-intake-decision__actions');
+  const applyButton = element('button', 'btn btn-primary', 'Aplicar confirmados');
+  applyButton.type = 'button';
+  applyButton.dataset.fhIntakeGlobalApply = '';
+  applyButton.disabled = stagedCount === 0;
+  applyButton.setAttribute('aria-disabled', String(applyButton.disabled));
+  applyButton.addEventListener('click', () => {
+    const results = executeGlobalApply(review, selectedPatient);
+    rerender();
+    const ok = results.filter(r => r.ok);
+    const failed = results.filter(r => !r.ok);
+    if (statusHost) {
+      statusHost.appendChild(element('p', 'fh-intake-global-result',
+        ok.length
+          ? `Aplicados por el ejecutor global: ${ok.map(r => CONCEPT_LABELS[r.concept] || r.concept).join(', ')}.`
+          : 'No se aplicó ningún concepto: ninguno seguía siendo elegible en el momento de ejecución.'));
+      if (failed.length) {
+        statusHost.appendChild(element('p', 'fh-intake-global-result',
+          `Omitidos en la ejecución (dejaron de ser elegibles): ${failed.map(r => CONCEPT_LABELS[r.concept] || r.concept).join(', ')}.`));
+      }
+    }
+  });
+  actions.appendChild(applyButton);
+  box.appendChild(actions);
+  return box;
+}
+
 function renderConcept(review, conceptName, selectedPatient, rerender) {
   const reconciled = review.result.reconciled?.concepts?.[conceptName];
   if (!reconciled) return null;
@@ -275,7 +363,11 @@ function renderConcept(review, conceptName, selectedPatient, rerender) {
   if (review.cancelled[conceptName]) return null;
 
   const current = currentFormValues()[target];
-  const state = decisionState(reconciled, current);
+  // D11: the row state is the D16 per-concept protection state, extended with
+  // the manual-edit-after-apply signal when this review applied the concept and
+  // the live current value no longer equals the recorded applied value.
+  const state = reviewRowState(review, reconciled, conceptName, current);
+  const manualEdit = state === STATE_MANUALLY_EDITED_AFTER_APPLY;
 
   const row = element('article', 'fh-intake-decision');
   row.dataset.fhConcept = conceptName;
@@ -284,7 +376,11 @@ function renderConcept(review, conceptName, selectedPatient, rerender) {
   row.dataset.fhAppliedValue = review.applied[conceptName] === undefined ? '' : displayValue(review.applied[conceptName], '');
 
   const heading = element('div', 'fh-intake-decision__heading');
-  heading.append(element('strong', '', CONCEPT_LABELS[conceptName] || conceptName), element('span', 'status-badge', state));
+  heading.append(element('strong', '', CONCEPT_LABELS[conceptName] || conceptName));
+  // A manual edit after apply is surfaced as its own lifecycle badge alongside
+  // the underlying D16 PROTECTED_EXISTING state, so the row states both facts.
+  const badges = manualEdit ? [STATE_MANUALLY_EDITED_AFTER_APPLY, STATE_PROTECTED_EXISTING] : [state];
+  for (const badge of badges) heading.append(element('span', 'status-badge', badge));
   row.appendChild(heading);
   const meta = element('p', 'fh-intake-decision__meta');
   meta.append(
@@ -320,10 +416,33 @@ function renderConcept(review, conceptName, selectedPatient, rerender) {
   const associations = contributionAssociations(review, conceptName, selectedPatient);
   const eligibility = writeEligibility(reconciled, current, associations);
   const decisions = [];
-  if (state === STATE_CURRENT_EMPTY) {
+  if (manualEdit) {
+    // D11: only the explicit professional action REAPPLY_IMPORTED may restore
+    // the imported value over a manual edit; prior authorization is never
+    // inherited. The action records a NEW authorization.
+    row.appendChild(element('p', 'fh-intake-decision__note',
+      'Edición manual tras apply: el valor actual difiere del aplicado en esta revisión. Nada se sobrescribe sin una acción profesional explícita.'));
+    row.appendChild(element('p', 'fh-intake-decision__note',
+      'Acción profesional explícita requerida: REAPPLY_IMPORTED. La autorización previa no se hereda.'));
+    decisions.push({
+      kind: ACTION_REAPPLY_IMPORTED,
+      label: 'Reaplicar valor importado (nueva autorización)',
+      enabled: eligibility.writable,
+    });
+  } else if (state === STATE_CURRENT_EMPTY) {
     decisions.push({ kind: 'confirm', label: 'Confirmar y aplicar', enabled: eligibility.writable });
+    decisions.push({
+      kind: ACTION_CONFIRM_FOR_GLOBAL,
+      label: 'Preparar para Aplicar confirmados (no escribe todavía)',
+      enabled: eligibility.writable && !review.staged?.[conceptName],
+    });
   } else if (state === STATE_PROTECTED_EXISTING) {
     decisions.push({ kind: 'replace', label: 'Reemplazar explícitamente', enabled: eligibility.writable });
+    decisions.push({
+      kind: ACTION_CONFIRM_FOR_GLOBAL,
+      label: 'Preparar reemplazo para Aplicar confirmados (no escribe todavía)',
+      enabled: eligibility.writable && !review.staged?.[conceptName],
+    });
   }
   decisions.push({ kind: 'cancel', label: 'Cancelar', enabled: true });
   if (!eligibility.writable) {
@@ -339,17 +458,34 @@ function renderConcept(review, conceptName, selectedPatient, rerender) {
     button.addEventListener('click', () => {
       if (item.kind === 'cancel') {
         review.cancelled[conceptName] = true;
+        delete review.staged?.[conceptName];
         rerender();
         return;
       }
+      if (item.kind === ACTION_CONFIRM_FOR_GLOBAL) {
+        // Staging records the explicit professional decision only; the global
+        // executor (never this button) performs the write.
+        review.staged = review.staged ?? {};
+        review.staged[conceptName] = state === STATE_PROTECTED_EXISTING ? 'replace' : 'confirm';
+        rerender();
+        return;
+      }
+      const liveCurrent = currentFormValues()[target];
+      const liveAssociations = contributionAssociations(review, conceptName, selectedPatient);
+      // REAPPLY_IMPORTED writes the imported proposal value as a NEW explicit
+      // authorization over a manual edit; it is executed as the D16 replace
+      // decision on the protected state.
       const result = applyConcept({
         reconciled,
-        currentValue: currentFormValues()[target],
-        associationStates: contributionAssociations(review, conceptName, selectedPatient),
-        action: item.kind,
+        currentValue: liveCurrent,
+        associationStates: liveAssociations,
+        action: item.kind === ACTION_REAPPLY_IMPORTED ? 'replace' : item.kind,
         write: writeTarget,
       });
-      if (result.applied) review.applied[conceptName] = result.appliedValue;
+      if (result.applied) {
+        review.applied[conceptName] = result.appliedValue;
+        delete review.staged?.[conceptName];
+      }
       rerender();
     });
     actions.appendChild(button);
@@ -372,7 +508,7 @@ function initIntakeReview() {
   patientStatus.textContent = selectedPatient ? `Paciente seleccionado: ${selectedPatient}` : 'Sin paciente de Farmacia seleccionado';
   applyButton.disabled = true;
   applyButton.setAttribute('aria-disabled', 'true');
-  applyButton.title = 'T7 aplica únicamente mediante decisiones explícitas por concepto';
+  applyButton.title = 'T8 aplica mediante decisiones explícitas por concepto; el control global ejecuta solo lo ya confirmado';
 
   // No-patient preview seam: keep the requested-treatment comparison surface
   // visible and editable so a review can show that every decision stays
@@ -392,6 +528,13 @@ function initIntakeReview() {
     panel.replaceChildren();
     if (!review) { panel.hidden = true; return; }
     panel.hidden = false;
+    // T8 lifecycle identity: one intake_review_id per review session; every
+    // parse execution (including reparses of the same input) carries a fresh
+    // parse_run_id. Reparse never re-applies by itself (D11).
+    panel.dataset.fhIntakeReviewId = review.intake_review_id;
+    panel.dataset.fhParseRunId = review.parse_run_id;
+    panel.appendChild(element('p', 'fh-intake-lifecycle',
+      `Revisión ${review.intake_review_id} · Ejecución de análisis ${review.parse_run_id}`));
     panel.appendChild(element('p', 'notice-box notice-box--info',
       'Vista previa con aplicación explícita por concepto. Asociar o confirmar una fuente no valida el tratamiento; el tratamiento validado permanece intacto.'));
     for (const unit of review.result.units ?? []) {
@@ -413,6 +556,10 @@ function initIntakeReview() {
         const row = renderConcept(review, concept, selectedPatient, render);
         if (row) panel.appendChild(row);
       }
+      // D16: global apply is an EXECUTOR ONLY over already explicitly staged
+      // professional decisions. It never decides, never bulk-replaces, never
+      // blanket-confirms and never touches protected/manual-edit concepts.
+      panel.appendChild(renderGlobalApply(review, selectedPatient, render, panel));
     }
     for (const fragment of review.result.unrecognized_fragments ?? []) {
       renderRaw(panel, 'Fragmento sin fuente segura', fragment.raw, 'UNRECOGNIZED_FRAGMENT', true);
@@ -429,21 +576,33 @@ function initIntakeReview() {
 
   function discard(clearInput) {
     review = null;
+    delete panel.dataset.fhIntakeReviewId;
+    delete panel.dataset.fhParseRunId;
     if (clearInput) input.value = '';
     render();
   }
 
+  // D11/T8 lifecycle: a new preview is either the start of a brand-new review
+  // (fresh intake_review_id + zero inherited confirmations/applied history) or
+  // a NEW parse run inside the existing review. Re-interpreting the same input
+  // NEVER re-applies: it re-evaluates every concept against the live current
+  // form, which is how MANUALLY_EDITED_AFTER_APPLY is detected after the user
+  // edited an applied field.
   previewButton.addEventListener('click', () => {
     preparePreviewForm();
-    review = {
-      result: runUnifiedIntake(input.value, { currentFormValues: currentFormValues() }),
-      confirmations: { 'e-orden': false, presalud: false },
-      applied: {},
-      cancelled: {},
-    };
+    const raw = input.value;
+    if (!review) {
+      review = createReviewContext(raw);
+    } else {
+      continueParseRun(review, raw);
+    }
+    review.result = runUnifiedIntake(raw, { currentFormValues: currentFormValues() });
     render();
   });
-  input.addEventListener('input', () => { if (review) discard(false); });
+  // D11: the editable form is NOT the review's own surface. Editing a field
+  // after apply must NOT discard the review: the applied history is the only
+  // way to detect MANUALLY_EDITED_AFTER_APPLY on the next parse. The review is
+  // discarded only by an explicit reset/abandon.
   resetButton?.addEventListener('click', () => discard(true));
 }
 
