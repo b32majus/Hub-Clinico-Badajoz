@@ -282,18 +282,23 @@ function writeSesProgramSet(resolved) {
   const pathology = targetControl(SES_PATHOLOGY_CONTROL);
   const codeField = targetControl(SES_CODE_CONTROL);
   const labelField = targetControl(SES_LABEL_CONTROL);
-  const options = pathology && pathology.options ? Array.from(pathology.options) : [];
+  if (!pathology || !codeField || !labelField) {
+    return { written: false, reason: 'SES_WRITE_TARGET_MISSING' };
+  }
+  const options = pathology.options ? Array.from(pathology.options) : [];
   const option = options.find(candidate => candidate.textContent === resolved.visible && candidate.value !== '');
+  if (!option) {
+    return { written: false, reason: 'SES_VISIBLE_OPTION_MISSING' };
+  }
   const write = (el, value) => {
-if (!el) return;
-el.value = value;
-el.dispatchEvent(new Event('input', { bubbles: true }));
-el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.value = value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
   };
-  if (option && pathology) pathology.value = option.value;
-  if (pathology) write(pathology, option ? option.value : '');
+  write(pathology, option.value);
   write(codeField, resolved.code);
   write(labelField, resolved.label);
+  return { written: true };
 }
 
 /**
@@ -521,7 +526,17 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
           if (!stillEligible) { rerender(); return; }
           if (liveState === STATE_ALREADY_MATCHES_CURRENT) { rerender(); return; }
           if (item.kind === 'replace' && liveState !== STATE_PROTECTED_EXISTING) { rerender(); return; }
-          writeSesProgramSet(resolvedLive);
+          const writeResult = writeSesProgramSet(resolvedLive);
+          if (!writeResult.written) {
+            row.querySelector('[data-fh-ses-write-failure]')?.remove();
+            const message = writeResult.reason === 'SES_VISIBLE_OPTION_MISSING'
+              ? 'Escritura bloqueada de forma segura: falta la opción visible declarada del Programa SES.'
+              : 'Escritura bloqueada de forma segura: falta un destino declarado del Programa SES.';
+            const note = element('p', 'fh-intake-decision__note', message);
+            note.dataset.fhSesWriteFailure = writeResult.reason;
+            row.appendChild(note);
+            return;
+          }
           review.applied[SES_PROGRAM_TARGET] = `${resolvedLive.code} · ${resolvedLive.label}`;
           rerender();
         });
