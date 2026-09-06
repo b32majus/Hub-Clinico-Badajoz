@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
  * Issue #318 — independent negative-boundary oracle for atomic SES Program DOM writes.
- * Synthetic data only. Faults are injected by the local fixture server before page load;
- * they are NOT presented as supported user interactions.
+ * Synthetic data only. Faults target the local brownfield boundary; most are
+ * injected before page load, while missing-pathology is removed after bootstrap
+ * so unrelated page initialization remains valid. They are NOT supported flows.
  */
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -117,12 +118,15 @@ async function selectedPage(fault = null) {
   await page.locator('#fhSearchBtn').click();
   await page.locator('#fhQuickViewOverlay:not(.hidden)').waitFor();
   const link = page.locator('#fhQvActions').getByRole('link', { name: 'Validación', exact: true });
-  activeFault = fault;
+  activeFault = fault === 'missing-pathology' ? null : fault;
   try {
     await Promise.all([page.waitForLoadState('domcontentloaded'), link.click()]);
     await page.waitForSelector('#fhUnifiedIntake');
   } finally {
     activeFault = null;
+  }
+  if (fault === 'missing-pathology') {
+    await page.locator('#fhDermaPatologia').evaluate(element => element.remove());
   }
   return { context, page };
 }
