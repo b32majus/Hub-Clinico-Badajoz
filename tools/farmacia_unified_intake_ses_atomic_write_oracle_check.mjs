@@ -176,7 +176,7 @@ try {
   }
   await runFault('missing-label'); console.log('OK 2 missing label => zero mutation'); passed++;
   await runFault('missing-code'); console.log('OK 3 missing code => zero mutation'); passed++;
-  await runFault('missing-pathology'); console.log('OK 4 missing pathology => zero mutation'); passed++;
+  await runFault('missing-pathology', null); console.log('OK 4 missing pathology => zero mutation'); passed++;
   await runFault('drift-option', 'Psoriasis'); console.log('OK 5 drifted exact option => zero mutation / no fuzzy fallback'); passed++;
   console.log(`T9 SES ATOMIC WRITE ORACLE PASS ${passed} scenario groups`);
 } catch (error) {
