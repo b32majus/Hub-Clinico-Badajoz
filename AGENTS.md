@@ -1,199 +1,105 @@
 # AGENTS.md — Hub Clínico Badajoz / PROMueve Extremadura
 
-**Versión:** 1.0  
-**Fecha:** 2026-06-05  
-**Repo:** `b32majus/Hub-Clinico-Badajoz`  
-**Rama base viva:** `feature/reuma-v2-prebiologico-fh-les-sjogren`  
-**Documento marco:** `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`  
-**Gobernanza operativa:** `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md`
+## Authority and operating mode
 
----
+This repository is a clinical product. Safety, functional coherence and assistive usefulness outrank aesthetics, speed or speculative expansion.
 
-## 1. Identidad y alcance
+Before diagnosing, implementing, reviewing or changing status:
+1. Verify current GitHub issue/branch/HEAD/PR/merge state.
+2. Read `docs/INDEX.md`.
+3. Read `docs/ops/WORK_ORDER_STATUS.md`.
+4. Read the current live spec/audit/plan linked from those documents.
+5. Treat library, Engram and conversational memory as auxiliary evidence only.
 
-Este archivo define las reglas de obligado cumplimiento para cualquier agente (Hermes, OpenCode, Claude Code) que trabaje dentro de este repositorio.
+Truth order: current approved WO/instruction → published GitHub code/docs → `docs/INDEX.md` → `docs/ops/WORK_ORDER_STATUS.md` → latest related live document → auxiliary memory.
 
-El proyecto es **Hub Clínico Badajoz / PROMueve Extremadura**, un sistema de apoyo a la toma de decisiones en reumatología, enfermería y farmacia hospitalaria, actualmente en fase MVP.
+Do not use remembered SHAs, branches, priorities or PR states as authority.
 
-**Regla madre:** Los agentes ejecutan planes, no redefinen el producto. Toda decisión clínica, funcional o arquitectónica debe estar documentada o escalarse a Sil/Cora.
+## Execution architecture
 
----
+The accepted unattended path is:
 
-## 2. Pipeline de ejecución
+`human authorization → human or Cora/DC mechanical launch → plain Pi supervisor → Herdr → separate Pi + Gentle Pi implementation worker → Gentle native RDD → ordinary repository delivery`
 
-```
-Sil + Cora → Work Order detallada → Hermes PM → OpenCode Builder → auditoría Hermes → commit/push → revisión humana → merge manual
-```
+The supervisor is non-implementing, runs without Gentle Pi, and is event-driven through pi-intercom. It does not own or invoke the Gentle lifecycle, review mode, provider transitions, acknowledgement/burn or implementation. The separate Pi + Gentle Pi worker owns implementation and the full Gentle/RDD lifecycle. OpenCode is retained only as a historical/alternative runtime, not as a dependency of the normal unattended path.
 
-### Responsabilidades
+For normal execution, dispatch from the current issue/spec rather than rewriting them into a second Agent Brief. Keep operator prompts bounded. Do not introduce SDD, custom runners, daemons, launchers, headless controllers or new orchestration layers unless explicitly requested.
 
-| Rol | Responsabilidad |
-|---|---|
-| **Hermes PM** | Lee contexto, fragmenta work orders, delega a OpenCode Builder, audita resultados, pide correcciones, genera commits/push y reporta. |
-| **OpenCode Builder** | Implementa subtareas acotadas. No decide arquitectura ni alcance. |
-| **Claude Code** | Agente especialista opcional solo si la work order lo autoriza. |
+Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; bounded writers must receive the applicable project constraints in their handoff. Runtime model routing is operational configuration, not repository truth. Verify effective models when it matters; do not hard-code provider/model assumptions in this file.
 
----
+## Engineering standards
 
-## 3. Ramas y protección
+Read `CODING_STANDARDS.md` before code changes. Repository standards supplement the active Atenea harness contract and current WO.
 
-| Rama | Uso | Escritura agente |
-|---|---|---|
-| `main` | Producción/releases | ❌ Prohibida |
-| `release/*` | Releases | ❌ Prohibida |
-| `feature/reuma-v2-prebiologico-fh-les-sjogren` | Base viva del MVP | ❌ Prohibida como escritura directa |
-| `work/hermes/<paquete>-<descripcion>` | Ejecución de work orders | ✅ Permitida |
+For semantic/domain/clinical/parser/state-transition work, the principal acceptance oracle must be derived from accepted authority and frozen before the implementation context receives write authority. The builder may run the oracle but must not weaken or replace it. Material oracle changes return the work to shaping/re-freeze.
 
-Los agentes pueden:
-- ✅ Crear ramas `work/hermes/*`
-- ✅ Modificar archivos dentro del alcance de la work order
-- ✅ Commitear y pushear
-- ✅ Crear PRs solo si la work order lo indica
+Use fresh independent context where independence matters: oracle author, implementation worker and semantic/spec-compliance review must not inherit each other's reasoning transcript.
 
-Los agentes NO pueden:
-- ❌ Mergear ramas
-- ❌ Hacer force push
-- ❌ Borrar ramas
-- ❌ Cerrar PRs
-- ❌ Reescribir historia git
+Passing tests is evidence, not proof of product correctness. Oracles must be able to disagree with implementation.
 
----
+## Clinical safety — Farmacia Hospitalaria
 
-## 4. Datos prohibidos
+Never infer from drug name, CIMA, catalogue, prior treatment, label, tray or missing data:
+- dose, route, schedule, presentation, induction or duration;
+- renewal, switch or add-on;
+- causality, validation outcome or therapeutic line.
 
-Nunca incluir en el repo, commits o ramas:
+The catalogue may identify/select; it does not decide therapeutic data. Requested treatment is not validated treatment. Prior treatment is not a new initiation. Missing data stays blank/unknown/pending.
 
-- ❌ Datos reales de pacientes
-- ❌ Exports clínicos reales
-- ❌ Identificadores reales (nombre, DNI, NHC, email, teléfono)
-- ❌ Datos personales sanitarios
-- ❌ Credenciales, tokens, secretos
-- ❌ `.env` con claves reales
-- ❌ Ficheros descargados de sistemas clínicos
+Do not introduce real patient data, identifiers, clinical exports, secrets or credentials into repositories, commits or external tools. Use synthetic/demo data unless an explicitly authorized environment says otherwise.
 
-Sí permitidos:
-- ✅ Código
-- ✅ Documentación
-- ✅ Plantillas
-- ✅ Datos sintéticos / datasets demo artificiales
-- ✅ Reports y work orders
+## Git and delivery
 
----
+- Never edit `main` directly without explicit authorization.
+- Verify repo, branch, HEAD and worktree before writing.
+- Work in an isolated branch/worktree.
+- Preserve unrelated/unknown changes; no broad reset, clean, restore or destructive cleanup.
+- No force-push, hidden rebase/history rewrite, branch/worktree deletion or merge unless explicitly authorized.
+- A local commit is not published.
+- Push, PR, issue mutation and merge require the current authorization boundary.
+- Before publication, revalidate the current GitHub authority and exact candidate SHA.
 
-## 5. Política de commits
+## Work orders
 
-- **Un commit = un cambio atómico revisable.**
-- Formato: `tipo: mensaje descriptivo en inglés`
-- Tipos válidos: `docs`, `feat`, `fix`, `refactor`, `chore`, `test`, `style`
-- Ejemplos:
-  ```
-  docs: add work order template
-  feat: add role selector scaffold
-  fix: normalize longitudinal event date
-  ```
-- ❌ Evitar: `update`, `changes`, `fix stuff`, `final version`
+Every modification is executed as an atomic WO. Keep objective, base, preflight, rollback, scope/NO TOCA, verification/QA, acceptance criteria, delivery boundary and final report explicit enough that the task is auditable without recovering the original chat.
 
----
+Do not combine urgent clinical fixes with broad refactors, future architecture, aesthetics or unrelated documentation cleanup.
 
-## 6. Work orders
+Near a demo/delivery: fix P0, close essential P1, document remaining debt, avoid broad refactors.
 
-Toda tarea debe llegar como work order estructurada con:
-- Objetivo, contexto, rama base y rama de trabajo
-- Documentos obligatorios y alcance
-- Archivos permitidos y prohibidos
-- Criterios de aceptación verificables
-- Política de commit/push y condiciones de parada
-- Formato de reporte final esperado
+## QA and acceptance
 
-No se permiten tareas abiertas tipo "haz el módulo entero".
+Distinguish:
+- exists in code;
+- wired;
+- visible;
+- works through supported interaction;
+- published on the correct branch;
+- demo-ready;
+- pilot-ready;
+- future-product-ready.
 
----
+For UI work, supported browser interaction is required where the WO calls for it. DOM manipulation, changing readonly state, impossible fixtures or unsupported routes do not demonstrate a fix.
 
-## 7. Criterios de escalado a Sil/Cora
+Where relevant verify loading/navigation, supported interaction, persistence/restoration, empty states, console/page errors, synthetic fail-safe behavior, cache/versioning and published branch identity.
 
-Hermes debe **detenerse y escalar** si aparece cualquiera de estos casos:
+Tests green != manual/browser QA green.
 
-1. Ambigüedad clínica o funcional no documentada
-2. Duda de privacidad o protección de datos
-3. Cambio arquitectónico no previsto
-4. Dependencia nueva no autorizada
-5. Conflicto Git no trivial
-6. Modificación de contrato de datos (`docs/CONTRATO_DATOS_*`)
-7. Toque en ramas protegidas
-8. Fallo repetido (2 intentos de corrección superados)
-9. Impacto en fecha crítica (ej. demo 8 de julio)
-10. Decisión de producto no documentada en `docs/DECISIONES_*`
+## Review/runtime failure policy
 
----
+A provider/runtime/reviewer transport failure consumes zero product repairs. Follow the exact provider-issued recovery/status transition. If the same exact reviewer slot is reoffered after one bounded retry and fails again without authority progress, STOP and report. Never loop indefinitely, fabricate PASS, drop a required lens or mutate product code to compensate for transport.
 
-## 8. Definición de done (DoD)
+A semantic/spec-compliance reviewer must fail closed on material issue/spec/oracle contradictions. It may not silently choose which authority probably meant what.
 
-Una tarea está completada cuando:
+## Documentation and memory
 
-- ✅ Todos los archivos previstos existen y están en la ruta correcta
-- ✅ El contenido cumple los criterios de aceptación de la work order
-- ✅ No hay cambios fuera del alcance autorizado
-- ✅ No hay datos reales, secretos ni credenciales
-- ✅ `git status --short` muestra solo los archivos esperados
-- ✅ Se ha hecho commit con mensaje claro y formato convenido
-- ✅ La rama se ha pusheado al remoto (si la WO lo indica)
-- ✅ Se ha generado el reporte de ejecución
+When a WO, product decision or accepted checkpoint changes real project state, reconcile `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` and the affected live document within scope or through a separate documentation WO.
 
----
+Engram is auxiliary experiential memory. Save stable lessons, defect patterns and qualification outcomes; do not treat current HEAD, branch, PR state, execution frontier or temporary priority as durable truth. Revalidate memory against GitHub/repository authority before reuse.
 
-## 9. Niveles de riesgo
+## Product horizon
 
-| Nivel | Tipo de cambio | Supervisión |
-|---|---|---|
-| 🟢 Verde | Documentación, plantillas, **contratos exploratorios/documentales**, validaciones simples | Autonomía con reporte |
-| 🟡 Amarillo | Cambios multiarchivo limitados, funcionalidad acotada | Revisión humana antes de merge |
-| 🔴 Rojo | Migraciones, backend, cambios de arquitectura, ramas protegidas, **contratos clínicos definitivos** | Autorización explícita de Sil |
+V4: local-first, backend-ready, usable progressively for real pilot when explicitly qualified.
+V5: configurable agnostic hub by service/pathology/visit/role/form/clinical variable.
 
-**Matiz sobre contratos:** Los contratos exploratorios (borradores, maquetas, referencias) pueden ser verde o amarillo según alcance. Los **contratos clínicos definitivos** (los que definen campos, validaciones, reglas de negocio que impactan en la app) son siempre **rojo** y requieren autorización de Sil/Cora antes de tocar.
-
----
-
-## 10. Política de modelos y delegación
-
-### Modelos y nivel de autonomía
-
-| Modelo | Nivel | Tareas permitidas | Delegación |
-|--------|-------|------------------|------------|
-| **DeepSeek v4 Flash** (Hermes brain) | 🟢 Verde | Documentación, índices, inventarios, checklists, reportes, lectura de código sin modificación, cambios Markdown de bajo riesgo, work orders documentales acotadas | Ejecución directa |
-| **DeepSeek v4 Pro** (OpenCode Builder) | 🟡 Amarillo | Código funcional acotado, refactor localizado, carga multiarchivo, normalización de datos, pruebas automatizadas, cambios multiarchivo limitados | Delegar a OpenCode |
-| **GPT/Codex PM** o **Sil/Cora** | 🔴 Rojo | Arquitectura, backend, migración React, contratos definitivos, decisiones clínicas, seguridad, datos, cambios en ramas protegidas | Escalar siempre |
-
-### Reglas
-
-- DeepSeek v4 Flash **NO debe usarse** para decidir arquitectura, diseñar formularios clínicos, crear contratos definitivos, tocar código funcional complejo, cambiar Excel/contratos o introducir dependencias.
-- DeepSeek v4 Pro / OpenCode Builder debe usarse para tareas amarillas de código que requieran implementación técnica acotada.
-- GPT/Codex PM o Sil/Cora deben intervenir en toda tarea roja.
-- **El buen resultado del lote nocturno documental no autoriza a Flash a ejecutar tareas funcionales o clínicas fuera de alcance.**
-- Hermes puede ejecutar directamente tareas verdes documentales si están perfectamente acotadas; debe delegar o escalar tareas amarillas/rojas.
-- Si hay duda sobre el nivel de riesgo de una tarea, escalar a Sil/Cora antes de ejecutar.
-
----
-
-## 11. Ejecución nocturna
-
-### Nota operativa: cambios en configuración de Hermes
-
-Los cambios en `~/.hermes/config.yaml` (modelo, provider, delegación) no son efectivos hasta que se reinicia el gateway de Hermes:
-
-```bash
-sudo systemctl restart hermes-gateway.service
-```
-
-Sin reinicio, el gateway en memoria arrastra la configuración anterior. Esto aplica especialmente a `delegation.model` y `delegation.provider`.
-
----
-
-Permitida solo con work orders cerradas de riesgo verde/amarillo.
-
-Reglas:
-- Ejecución secuencial, una tarea cada vez
-- Máximo 2 intentos de corrección por tarea
-- Si falla 2 veces → marcar `blocked/pending_review`
-- No cambios rojos sin aprobación
-- No merge
-- Reporte matinal obligatorio al día siguiente
+Do not mix V5 expansion into urgent V4 demo/pilot repairs.
