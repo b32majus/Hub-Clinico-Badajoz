@@ -111,10 +111,12 @@ export function createReviewContext(rawInput) {
 /**
  * Record one NEW parse run inside the SAME review. The review id is preserved;
  * only the parse-run identity advances. Per D11 this never re-applies anything
- * and never inherits prior authorization by itself.
+ * and pending staged global-apply authorization expires at this boundary; a
+ * fresh parse run requires a fresh explicit stage.
  */
 export function continueParseRun(review, rawInput) {
   if (!review || typeof review !== 'object') return review;
+  review.staged = {};
   review.raw_input = String(rawInput ?? '');
   review.parse_run_count += 1;
   review.parse_run_id = generateParseRunId();
