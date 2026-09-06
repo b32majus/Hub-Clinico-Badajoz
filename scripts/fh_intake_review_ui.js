@@ -20,6 +20,13 @@ import {
   reviewRowState,
   globalExecutableConcepts,
 } from './fh_intake_review_lifecycle.js';
+import {
+  SES_PROGRAM_CODE_CONTROL,
+  SES_PROGRAM_LABEL_CONTROL,
+  SES_PROGRAM_PATHOLOGY_CONTROL,
+  SES_PROGRAM_TARGET,
+  resolveSesProgramWrite,
+} from './fh_intake_ses_program.js';
 
 const STATE_VERIFIED = 'VERIFIED_EXPLICIT_CIP';
 const STATE_CONFIRMED = 'MANUALLY_CONFIRMED_SELECTED_PATIENT';
@@ -28,6 +35,12 @@ const STATE_ASSOCIATION_CONFLICT = 'CONFLICT';
 const PRESALUD_CONFIRM = 'Confirmo que estos datos PreSalud corresponden al paciente seleccionado.';
 const EORDEN_CONFIRM = 'Asociar esta e-Orden sin CIP al paciente seleccionado.';
 const PROPOSAL_AUTO_PROPOSABLE = 'AUTO_PROPOSABLE';
+
+/** T9 adjudicated normal-form SES program write target (brownfield). */
+const SES_TARGET = 'ses_program';
+const SES_CODE_CONTROL = SES_PROGRAM_CODE_CONTROL;
+const SES_LABEL_CONTROL = SES_PROGRAM_LABEL_CONTROL;
+const SES_PATHOLOGY_CONTROL = SES_PROGRAM_PATHOLOGY_CONTROL;
 
 const CONCEPT_LABELS = {
   commercial_name: 'Fármaco solicitado (marca comercial)',
@@ -254,6 +267,36 @@ function writeTarget(target, appliedText) {
 }
 
 /**
+ * T9 SES Program normal-form write setter (D1a/D7/D12). Called by the
+ * ses_program decision row ONLY after a coherent allowlist pair passed
+ * `resolveSesProgramWrite`. It writes:
+ *   - the declared visible brownfield value into fhDermaPatologia;
+ *   - the verbatim canonical code/label into the adjudicated normal-form
+ *     controls fhDermaSesProgramCode / fhDermaSesProgramLabel.
+ * The three writes fire input+change so the existing page-draft binder
+ * (bindPageDraft on main.main-content) persists them under the existing
+ * draft contract (the controls are id-bearing draft-eligible inputs).
+ * @param {{code:string,label:string,visible:string}} resolved coherent pair
+ */
+function writeSesProgramSet(resolved) {
+  const pathology = targetControl(SES_PATHOLOGY_CONTROL);
+  const codeField = targetControl(SES_CODE_CONTROL);
+  const labelField = targetControl(SES_LABEL_CONTROL);
+  const options = pathology && pathology.options ? Array.from(pathology.options) : [];
+  const option = options.find(candidate => candidate.textContent === resolved.visible && candidate.value !== '');
+  const write = (el, value) => {
+if (!el) return;
+el.value = value;
+el.dispatchEvent(new Event('input', { bubbles: true }));
+el.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+  if (option && pathology) pathology.value = option.value;
+  if (pathology) write(pathology, option ? option.value : '');
+  write(codeField, resolved.code);
+  write(labelField, resolved.label);
+}
+
+/**
  * D5 write gate: map every safe proposal contribution of a concept to the
  * association state of its OWN source unit. Each source passes its own gate;
  * an associated source never authorizes another source (mixed input, D5).
@@ -261,9 +304,9 @@ function writeTarget(target, appliedText) {
 function contributionAssociations(review, conceptName, selectedPatient) {
   const reconciled = review.result.reconciled?.concepts?.[conceptName];
   if (!reconciled) return [];
-  const target = targetForConcept(reconciled.concept);
   const proposals = (reconciled.contributions ?? []).filter(item =>
-    item?.target === target && item?.proposal_status === PROPOSAL_AUTO_PROPOSABLE
+    item?.proposal_status === PROPOSAL_AUTO_PROPOSABLE
+    && item?.target === (conceptName === SES_PROGRAM_TARGET ? SES_TARGET : targetForConcept(reconciled.concept))
   );
   const states = [];
   for (const contribution of proposals) {
@@ -355,8 +398,156 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
   return box;
 }
 
-function renderConcept(review, conceptName, selectedPatient, rerender) {
-  const reconciled = review.result.reconciled?.concepts?.[conceptName];
+    function renderConcept(review, conceptName, selectedPatient, rerender) {
+      if (conceptName === SES_PROGRAM_TARGET) return renderSesProgramConcept(review, selectedPatient, rerender);
+      return renderRegularConcept(review, conceptName, selectedPatient, rerender);
+    }
+
+    /**
+     * T9 SES Program decision row (D1a / #301). Rendered through the same
+     * per-concept lifecycle surface as the T7/T8 rows:
+     *   - coherent allowlist pair (AUTO_PROPOSABLE proposal): shows code+label
+     *     together; a single explicit professional confirm (CURRENT_EMPTY) or
+     *     replace (PROTECTED_EXISTING) writes the declared visible value into
+     *     fhDermaPatologia AND the canonical code/label into the adjudicated
+     *     normal-form controls;
+     *   - invalid pair (unknown / out-of-allowlist / mismatched / incomplete):
+     *     the write boundary is closed — no writable action is offered, the
+     *     structured SES_* reason is visible, and nothing is written.
+     */
+    function renderSesProgramConcept(review, selectedPatient, rerender) {
+      const reconciled = review.result.reconciled?.concepts?.[SES_PROGRAM_TARGET];
+      if (!reconciled) return null;
+      if (review.cancelled[SES_PROGRAM_TARGET]) return null;
+      const proposalValue = reconciled.value ?? (reconciled.contributions ?? [])
+        .find(item => item?.value && typeof item.value === 'object')?.value ?? null;
+      const resolved = resolveSesProgramWrite(proposalValue);
+
+      const row = element('article', 'fh-intake-decision');
+      row.dataset.fhConcept = SES_PROGRAM_TARGET;
+      row.dataset.fhSourceValue = proposalValue && typeof proposalValue === 'object'
+        ? [proposalValue.code, proposalValue.label].filter(Boolean).join(' · ')
+        : displayValue(proposalValue, '');
+      row.dataset.fhAppliedValue = review.applied[SES_PROGRAM_TARGET] === undefined
+        ? '' : displayValue(review.applied[SES_PROGRAM_TARGET], '');
+
+      const heading = element('div', 'fh-intake-decision__heading');
+      heading.append(element('strong', '', 'Programa SES'));
+      const proposalText = proposalValue && typeof proposalValue === 'object'
+        ? [proposalValue.code, proposalValue.label].filter(Boolean).join(' · ')
+        : '';
+      if (!resolved.writable) {
+        heading.append(element('span', 'status-badge', STATE_NO_PROPOSAL));
+        row.appendChild(heading);
+        row.appendChild(element('p', 'fh-intake-decision__note',
+          `Programa SES no aplicable: ${resolved.reason}. No se escribe ningún valor.`));
+        if (proposalText) {
+          row.appendChild(element('p', 'fh-intake-decision__note', `Origen: ${proposalText}`));
+        }
+        return row;
+      }
+
+      const codeControl = targetControl(SES_CODE_CONTROL);
+      const current = codeControl && codeControl.value ? codeControl.value : '';
+      const state = resolved.code && current === resolved.code
+        ? STATE_ALREADY_MATCHES_CURRENT
+        : (isEmptySesCurrent(current) ? STATE_CURRENT_EMPTY : STATE_PROTECTED_EXISTING);
+      const manualEdit = state === STATE_PROTECTED_EXISTING
+        && hasReviewAppliedSes(review)
+        && !sesAppliedMatchesLive(review, current);
+
+      const badges = manualEdit
+        ? [STATE_MANUALLY_EDITED_AFTER_APPLY, STATE_PROTECTED_EXISTING]
+        : [state];
+      for (const badge of badges) heading.append(element('span', 'status-badge', badge));
+      row.appendChild(heading);
+      const meta = element('p', 'fh-intake-decision__meta');
+      meta.append(
+        element('span', '', `Propuesta: ${proposalText}`),
+        element('span', '', `Destino: ${SES_PROGRAM_TARGET} (visible + normal-form code/label)`),
+      );
+      row.appendChild(meta);
+      for (const contribution of reconciled.contributions ?? []) {
+        const provenance = element('small', 'fh-intake-provenance',
+          `Origen ${contribution.provenance?.source || contribution.source || 'desconocido'} · ${contribution.semantic_status || 'SIN_ESTADO'}`);
+        provenance.dataset.fhProvenance = '';
+        row.appendChild(provenance);
+      }
+
+      if (state === STATE_ALREADY_MATCHES_CURRENT) {
+        row.appendChild(element('p', 'fh-intake-decision__note',
+          'El Programa SES actual ya coincide con la propuesta; no se reescribe nada.'));
+        return row;
+      }
+
+      const associations = contributionAssociations(review, SES_PROGRAM_TARGET, selectedPatient);
+      const eligible = associations.length > 0 && associations.every(a =>
+        a && (a.state === STATE_VERIFIED || a.state === STATE_CONFIRMED));
+      const decisionKind = state === STATE_CURRENT_EMPTY ? 'confirm' : 'replace';
+      const actions = element('div', 'fh-intake-decision__actions');
+      if (!eligible) {
+        row.appendChild(element('p', 'fh-intake-decision__note',
+          'Escritura bloqueada por gate D5: no hay una asociación de fuente elegible.'));
+      }
+      if (manualEdit) {
+        row.appendChild(element('p', 'fh-intake-decision__note',
+          'Edición manual tras apply: nada se sobrescribe sin una acción profesional explícita.'));
+      }
+      for (const item of [
+        { kind: decisionKind, label: decisionKind === 'replace'
+            ? 'Reemplazar explícitamente' : 'Confirmar y aplicar', enabled: eligible },
+        { kind: 'cancel', label: 'Cancelar', enabled: true },
+      ]) {
+        const button = element('button', 'btn btn-outline', item.label);
+        button.type = 'button';
+        button.dataset.fhConceptAction = item.kind;
+        button.disabled = !item.enabled;
+        button.setAttribute('aria-disabled', String(button.disabled));
+        button.addEventListener('click', () => {
+          if (item.kind === 'cancel') {
+            review.cancelled[SES_PROGRAM_TARGET] = true;
+            rerender();
+            return;
+          }
+          const resolvedLive = resolveSesProgramWrite(proposalValue);
+          const liveCode = targetControl(SES_CODE_CONTROL);
+          const liveCurrent = liveCode && liveCode.value ? liveCode.value : '';
+          const liveAssociations = contributionAssociations(review, SES_PROGRAM_TARGET, selectedPatient);
+          const stillEligible = resolvedLive.writable && liveAssociations.length > 0
+            && liveAssociations.every(a => a && (a.state === STATE_VERIFIED || a.state === STATE_CONFIRMED));
+          const liveState = resolvedLive.code && liveCurrent === resolvedLive.code
+            ? STATE_ALREADY_MATCHES_CURRENT
+            : (isEmptySesCurrent(liveCurrent) ? STATE_CURRENT_EMPTY : STATE_PROTECTED_EXISTING);
+          if (!stillEligible) { rerender(); return; }
+          if (liveState === STATE_ALREADY_MATCHES_CURRENT) { rerender(); return; }
+          if (item.kind === 'replace' && liveState !== STATE_PROTECTED_EXISTING) { rerender(); return; }
+          writeSesProgramSet(resolvedLive);
+          review.applied[SES_PROGRAM_TARGET] = `${resolvedLive.code} · ${resolvedLive.label}`;
+          rerender();
+        });
+        actions.appendChild(button);
+      }
+      row.appendChild(actions);
+      return row;
+    }
+
+    function isEmptySesCurrent(value) {
+      return value === undefined || value === null || String(value).trim() === '';
+    }
+
+    function hasReviewAppliedSes(review) {
+      return Boolean(review && typeof review === 'object'
+        && Object.prototype.hasOwnProperty.call(review.applied ?? {}, SES_PROGRAM_TARGET));
+    }
+
+    function sesAppliedMatchesLive(review, currentCode) {
+      const applied = review.applied?.[SES_PROGRAM_TARGET];
+      if (typeof applied !== 'string' || !currentCode) return false;
+      return applied.split(' · ')[0] === currentCode;
+    }
+
+    function renderRegularConcept(review, conceptName, selectedPatient, rerender) {
+      const reconciled = review.result.reconciled?.concepts?.[conceptName];
   if (!reconciled) return null;
   const target = targetForConcept(reconciled.concept);
   if (target === 'NONE' && conceptName !== 'principio_activo_raw') return null;
@@ -548,7 +739,7 @@ function initIntakeReview() {
     }
     const concepts = review.result.reconciled?.concepts ?? {};
     const decisionConcepts = Object.keys(concepts).filter(concept =>
-      HYDRATABLE_CONCEPTS.includes(concept) || concept === 'principio_activo_raw'
+      HYDRATABLE_CONCEPTS.includes(concept) || concept === 'principio_activo_raw' || concept === SES_PROGRAM_TARGET
     );
     if (decisionConcepts.length) {
       panel.appendChild(element('h3', 'fh-intake-decision__title', 'Decisiones por concepto'));

@@ -203,6 +203,9 @@
     <h2 class="section-title"><i class="fas fa-disease"></i> Datos de solicitud — Dermatología</h2>
     <div class="form-grid"><div class="form-group"><label for="fhDermaCip">CIP <span class="required">*</span></label><input type="text" class="form-control" id="fhDermaCip" placeholder="CIP-DEMO-FH-..." required></div><div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDermaServicioOrigen" value="Dermatología" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaPatologia">Patología</label><select class="form-select" id="fhDermaPatologia"><option value="">Seleccionar...</option><option>Hidradenitis supurativa</option><option>Psoriasis</option><option>Dermatitis atópica</option><option>Vitíligo</option><option>Alopecia areata</option></select></div></div>
+    <!-- T9 #301: SES Program normal-form controls (adjudicated brownfield carrying mechanism, D1a/D12). Hidden inputs carry the allowlisted code/label verbatim and follow the existing draft/persistence contract as normal form values after apply. -->
+    <input type="hidden" id="fhDermaSesProgramCode" autocomplete="off" aria-hidden="true">
+    <input type="hidden" id="fhDermaSesProgramLabel" autocomplete="off" aria-hidden="true">
     <div class="form-grid"><div class="form-group"><label for="fhDermaFecha">Fecha solicitud</label><input type="date" class="form-control" id="fhDermaFecha"></div></div>
 
     <h3 class="card-title card-title--tight"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
@@ -610,6 +613,6 @@
     <script src="scripts/farmacia_export_v2_validation_adapter.js?v=1.0.0-draft.1"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
     <script src="scripts/farmacia_validacion.js?v=20260806-patient-flow-r1"></script>
-    <script type="module" src="scripts/fh_intake_review_ui.js?v=20260906-t8"></script>
+    <script type="module" src="scripts/fh_intake_review_ui.js?v=20260906-t9"></script>
         </body>
         </html>
