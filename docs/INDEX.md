@@ -5,10 +5,11 @@
 | Última actualización | 2026-09-08 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado recovery | `19d10c9abefb7b25130b4b17e3289d54a17315ee` (merge issue #345 / PR #346 — promoción `CÁCERES-REVIEW-0.6`) |
+| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
+| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` (merge issue #345 / PR #346 — promoción `CÁCERES-REVIEW-0.6`) |
 | HEAD clínico funcional congelado | `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341; `source_sha`/`last_functional_sha` del snapshot 0.6) |
 | Candidate Train C | `e5e52e2bc8f94805b4771ec40aa19820bb6be02f` |
-| Post-merge smoke | Farmacia smoke #1025 — `success` sobre `19d10c9abefb7b25130b4b17e3289d54a17315ee` |
+| CI del último HEAD de producto | Farmacia smoke #1025 — `success` sobre `19d10c9abefb7b25130b4b17e3289d54a17315ee`; Pages #219 `success` |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.6` (issue #345 / PR #346; manifest source `e1120ba85817a1807cea8c1e938867ad778921f4`) |
 | Snapshot 0.6 candidate | `749c82409a415e800500b39018027b189fd6a131` |
@@ -16,10 +17,10 @@
 | Paquete externo | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no refrozen por PR #333/#335/#337/#341/#346 |
 | Actividad del servicio | Demo |
 | Alcance | Evaluación con datos sintéticos; sin piloto / sin producción |
-| Work order actual | issue #347 — WO-DOC-FH-POST-CACERES-0.6-RECONCILIATION-01 |
+| Work order actual | issue #349 — WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY-01 |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
-> **Estado vivo:** `recovery/farmacia-pr-replay-20260727` está publicado en `19d10c9abefb7b25130b4b17e3289d54a17315ee` tras PR #346. El HEAD clínico funcional congelado por el snapshot es `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341). `CÁCERES-REVIEW-0.6` incorpora A + B + Train C y está publicado en el enlace estable de Cáceres.
+> **Estado vivo:** el tip Git de `recovery/farmacia-pr-replay-20260727` es deliberadamente volátil y se verifica live en GitHub. El último HEAD que cambió producto/snapshot es `19d10c9abefb7b25130b4b17e3289d54a17315ee` (PR #346); el HEAD clínico funcional congelado por 0.6 es `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341). `CÁCERES-REVIEW-0.6` incorpora A + B + Train C y está publicado en el enlace estable de Cáceres.
 
 > **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
 
@@ -40,8 +41,8 @@
 
 ## 2. Orden de verdad
 
-1. WO/instrucción actual: issue #347 para esta reconciliación documental.
-2. GitHub/código publicado: `recovery/farmacia-pr-replay-20260727` @ `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
+1. WO/instrucción actual: issue #349 para esta convención documental.
+2. GitHub live para el tip de `recovery`; último HEAD de producto publicado: `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
 3. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` una vez reconciliados.
 4. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
 5. Spec Unified Clinical Intake V0 y documentos vivos relacionados.
@@ -56,10 +57,17 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
 | --- | --- | --- | --- |
 | `origin/main` | Legacy / congelada; verificado `a25cccb8...` | Historia previa | Estado Farmacia actual |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; HEAD publicado `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional `e1120ba85817a1807cea8c1e938867ad778921f4` | Código Farmacia / superficie regional genérica | Piloto o producción |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; tip Git volátil (consultar live); último HEAD de producto `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional `e1120ba85817a1807cea8c1e938867ad778921f4` | Código Farmacia / superficie regional genérica | Piloto o producción |
 | `previews/caceres-fh/` | **Snapshot estable `CÁCERES-REVIEW-0.6`**; manifest source/last-functional `e1120ba85817a1807cea8c1e938867ad778921f4` | Evaluación Pharmacy-only Cáceres con datos sintéticos | Piloto, producción o espejo automático de futuros merges |
 | `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
 | `origin/backup/*` y tags demo | Retorno/historia | Recuperación de estados | Desarrollo activo |
+
+### Convención de SHAs de publicación
+
+- **Tip Git de `recovery`**: último commit de la rama, incluya producto o solo documentación/administración. Es volátil y se consulta live en GitHub; no se mantiene como SHA canónico estático en los documentos.
+- **Último HEAD de producto publicado**: último commit/merge que cambió código funcional o un snapshot distribuible. Solo cambia cuando cambia producto/snapshot.
+- **HEAD clínico funcional congelado**: SHA funcional que un snapshot declara en `source_sha` / `last_functional_sha`; puede ser anterior al HEAD de producto si la promoción del snapshot añade solo artefactos de publicación.
+- Un merge `documentation-only` puede mover el tip Git sin cambiar el HEAD de producto ni el HEAD clínico funcional. **No abrir una nueva reconciliación solo porque haya cambiado el tip por documentación.**
 
 ### Reglas
 
@@ -75,9 +83,10 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 | --- | --- |
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado recovery | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 |
+| Tip Git de recovery | Volátil; consultar GitHub live. Último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd` |
+| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; congelado por 0.6 |
-| Post-merge CI | Farmacia smoke #1025 `success`; Pages #219 `success` |
+| CI del último HEAD de producto | Farmacia smoke #1025 `success`; Pages #219 `success` |
 | Baseline Unified Intake | #323 / PR #324 → `bff76ff7095fb568948b1bfbc6288df551971add`; histórico, preservado en la cadena actual |
 | Cáceres 0.6 | #345 / PR #346 → candidate `749c82409a415e800500b39018027b189fd6a131`, merge `19d10c9abefb7b25130b4b17e3289d54a17315ee`; manifest source/last-functional `e1120ba85817a1807cea8c1e938867ad778921f4` |
 | A — auto-reveal | #334 / PR #335 → candidate `ad4088c...`, merge `7b99eda50e9f7b92cf921d0d6e1bd2090ca917f7`; presentación Dermatología/patología sin preescritura clínica |
@@ -295,7 +304,7 @@ Para el estado actual de Farmacia también son memoria histórica o referencia s
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
-Cuando contradigan el estado vivo publicado en GitHub (`recovery/farmacia-pr-replay-20260727` @ `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional `e1120ba85817a1807cea8c1e938867ad778921f4`), prevalecen GitHub/código publicado, este índice, `WORK_ORDER_STATUS.md` y el estado vivo 20260908. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
+Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recovery`, el último HEAD de producto publicado (`19d10c9abefb7b25130b4b17e3289d54a17315ee`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y el estado vivo 20260908. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
 
 ---
 
@@ -316,4 +325,4 @@ Cuando contradigan el estado vivo publicado en GitHub (`recovery/farmacia-pr-rep
 
 ---
 
-*Reconciliación post-Cáceres 0.6 — issue #347. Recovery publicado: `19d10c9abefb7b25130b4b17e3289d54a17315ee` (PR #346); HEAD clínico funcional congelado: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` es el snapshot estable vigente; paquete externo/workbooks sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
+*Convención de estado post-0.6 — issue #349. El tip Git de recovery es volátil y se consulta live; último HEAD de producto publicado: `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional congelado: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` sigue siendo el snapshot estable vigente; paquete externo/workbooks sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
