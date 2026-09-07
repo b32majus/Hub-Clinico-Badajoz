@@ -8,6 +8,11 @@ import {
   STATE_NO_PROPOSAL,
   HYDRATABLE_CONCEPTS,
   ASSOCIATION_TRANSIENT_NEW_REQUEST,
+  D17_EXT_HYDRATABLE_CONCEPTS,
+  D17_EXT_CHECKBOX_TARGETS,
+  adaptD17ExtControlValue,
+  d17ExtGate,
+  parentConditionFor,
   targetForConcept,
   writeEligibility,
   applyConcept,
@@ -55,6 +60,46 @@ const CONCEPT_LABELS = {
   requested_induction: 'Inducción solicitada',
   requested_justification: 'Justificación clínica',
   principio_activo_raw: 'Principio activo (solo origen)',
+  // C1 (issue #339): D17_EXT_V1 protected clinical concepts.
+  derma_hs_ihs4: 'IHS4 (Hidradenitis supurativa)',
+  derma_hs_hurley: 'Hurley (Hidradenitis supurativa)',
+  derma_hs_evolution_time: 'Tiempo de evolución (Hidradenitis supurativa)',
+  derma_hs_location: 'Localización (Hidradenitis supurativa)',
+  derma_hs_prior_doxy_clinda: 'Doxiciclina / Clindamicina previa',
+  derma_hs_prior_rif_clinda: 'Rifampicina + Clindamicina previa',
+  derma_hs_prior_other_antibiotics: 'Otros ATB previos',
+  derma_hs_prior_other_antibiotics_detail: 'Otros ATB previos — detalle',
+  derma_hs_prior_adalimumab: 'Adalimumab previo',
+  derma_hs_prior_adalimumab_duration: 'Adalimumab previo — duración',
+  derma_hs_prior_adalimumab_end_reason: 'Adalimumab previo — motivo de fin',
+  derma_hs_prior_other_biologics: 'Otros biológicos previos',
+  derma_psoriasis_pasi: 'PASI (Psoriasis)',
+  derma_psoriasis_bsa: 'BSA (Psoriasis)',
+  derma_psoriasis_dlqi: 'DLQI (Psoriasis)',
+  derma_psoriasis_pga: 'PGA (Psoriasis)',
+  derma_psoriasis_prior_systemic: 'Tratamiento sistémico previo (Psoriasis)',
+  derma_psoriasis_no_systemic_reason: 'Motivo de no tratamiento sistémico (Psoriasis)',
+  derma_ad_easi: 'EASI (Dermatitis atópica)',
+  derma_ad_scorad: 'SCORAD (Dermatitis atópica)',
+  derma_ad_dlqi_poem: 'DLQI / POEM (Dermatitis atópica)',
+  derma_ad_prior_cyclosporine: 'Ciclosporina previa (Dermatitis atópica)',
+  derma_ad_no_cyclosporine_reason: 'Motivo de no ciclosporina (Dermatitis atópica)',
+  derma_vitiligo_extent: 'Extensión afectada (Vitíligo)',
+  derma_vitiligo_facial: 'Afectación facial (Vitíligo)',
+  derma_vitiligo_prior_topical_calcineurin: 'Inhibidor tópico de calcineurina previo (Vitíligo)',
+  derma_vitiligo_prior_topical_steroids: 'Corticoides tópicos previos (Vitíligo)',
+  derma_vitiligo_observations: 'Observaciones clínicas (Vitíligo)',
+  derma_aa_extent_gt50: 'Extensión > 50 % del cuero cabelludo (Alopecia areata)',
+  derma_aa_episode_gt6m: 'Episodio actual > 6 meses (Alopecia areata)',
+  derma_aa_systemic_corticosteroids: 'Corticoesteroides orales sistémicos (Alopecia areata)',
+  derma_aa_observations: 'Observaciones clínicas (Alopecia areata)',
+  derma_comorb_bmi: 'IMC (comorbilidades)',
+  derma_comorb_smoking_status: 'Tabaquismo (comorbilidades)',
+  derma_comorb_pack_years: 'Paquetes/año (comorbilidades)',
+  derma_comorb_diabetes: 'Diabetes (comorbilidades)',
+  derma_comorb_hba1c: 'HbA1c (comorbilidades)',
+  derma_comorb_metabolic_syndrome: 'Síndrome metabólico (comorbilidades)',
+  derma_comorb_other: 'Otras comorbilidades (comorbilidades)',
 };
 
 /** Requested-treatment controls that stay editable after an apply (D11). */
@@ -333,23 +378,34 @@ function targetControl(target) {
   return document.getElementById(target);
 }
 
-function inductionDisplay(selectValue) {
-  if (selectValue === 'si') return 'SÍ';
-  if (selectValue === 'no') return 'NO';
-  return '';
-}
+    function inductionDisplay(selectValue) {
+      if (selectValue === 'si') return 'SÍ';
+      if (selectValue === 'no') return 'NO';
+      return '';
+    }
 
-/** Live DOM values expressed in the same space as reconciled proposals. */
-function currentFormValues() {
-  const values = {};
-  const read = (target) => {
-    const field = targetControl(target);
-    return field && field.value !== undefined ? field.value : '';
-  };
-  for (const concept of HYDRATABLE_CONCEPTS) {
-    const target = targetForConcept(concept);
-    if (target && target !== 'NONE') values[target] = read(target);
-  }
+    const CHECKBOX_TRUE_TARGET_SET = new Set(D17_EXT_CHECKBOX_TARGETS);
+
+    /**
+     * C1 (issue #339): checkbox destinations are compared in the proposal space.
+     * An explicit checkbox destination is 'SÍ' while checked and EMPTY while
+     * unchecked; the closed adapter never writes a boolean false and absence of
+     * source never unchecks.
+     */
+    function currentFormValueForTarget(target) {
+      const field = targetControl(target);
+      if (!field || field.value === undefined) return '';
+      if (CHECKBOX_TRUE_TARGET_SET.has(target)) return field.checked ? 'SÍ' : '';
+      return field.value;
+    }
+
+    /** Live DOM values expressed in the same space as reconciled proposals. */
+    function currentFormValues() {
+      const values = {};
+      for (const concept of HYDRATABLE_CONCEPTS) {
+        const target = targetForConcept(concept);
+        if (target && target !== 'NONE') values[target] = currentFormValueForTarget(target);
+      }
   const pauta = targetControl('fhDermaPauta');
   const pautaOtro = targetControl('fhDermaPautaOtro');
   if (pauta && pauta.value) {
@@ -374,6 +430,13 @@ function currentFormValues() {
 function writeTarget(target, appliedText) {
   const field = targetControl(target);
   if (!field) return;
+  // C1 (issue #339): checkbox destinations accept only the explicit SÍ —
+  // an explicit professional decision writes checked=true; the adapter
+  // never writes false and never unchecks (absence never clears).
+  if (CHECKBOX_TRUE_TARGET_SET.has(target)) {
+field.checked = true;
+return;
+  }
   if (target === 'fhDermaPauta') {
     const catalog = window.FarmaciaPautasCatalog;
     const pauta = catalog && typeof catalog.normalizePautaLabel === 'function'
@@ -399,8 +462,8 @@ function writeTarget(target, appliedText) {
   field.value = String(appliedText ?? '');
 }
 
-/**
- * T9 SES Program normal-form write setter (D1a/D7/D12). Called by the
+    /**
+     * T9 SES Program normal-form write setter (D1a/D7/D12). Called by the
  * ses_program decision row ONLY after a coherent allowlist pair passed
  * `resolveSesProgramWrite`. It writes:
  *   - the declared visible brownfield value into fhDermaPatologia;
@@ -456,8 +519,28 @@ function contributionAssociations(review, conceptName, selectedPatient) {
   return states;
 }
 
-/**
- * D16/T8 global apply EXECUTOR ("Aplicar confirmados"). Executes exactly the
+    /**
+     * C1 (issue #339): LIVE clinical-gate context for one concept. The accepted
+     * pathology is the LIVE #fhDermaPatologia value; the parent condition is the
+     * LIVE current value of the parent target in the same proposal space used by
+     * the D16 comparison (checkbox parents read as 'SÍ'/'').
+     */
+    function d17ExtGateContext(conceptName) {
+      const parent = parentConditionFor(conceptName);
+      return {
+        pathologyValue: targetControl('fhDermaPatologia')?.value ?? '',
+        parentValue: parent ? currentFormValueForTarget(targetForConcept(parent.concept)) : undefined,
+      };
+    }
+
+    /** C1 clinical gate for a concept, or null when the concept is not C1/gated. */
+    function liveD17ExtGate(conceptName) {
+      if (!D17_EXT_HYDRATABLE_CONCEPTS.includes(conceptName)) return null;
+      return d17ExtGate(conceptName, d17ExtGateContext(conceptName));
+    }
+
+    /**
+     * D16/T8 global apply EXECUTOR ("Aplicar confirmados"). Executes exactly the
  * subset of concepts that already received an explicit staged professional
  * decision AND are still eligible against the LIVE current value and LIVE D5
  * association states at execution time. It never decides, never bulk-replaces,
@@ -473,10 +556,22 @@ function executeGlobalApply(review, selectedPatient) {
     (conceptName) => currentFormValues()[targetForConcept(conceptName)],
     (conceptName) => contributionAssociations(review, conceptName, selectedPatient),
   );
+  // C1 (issue #339): parents execute before children so a coherently staged
+  // parent+child pair applies within one explicit execution pass; a child
+  // whose parent is not satisfied at its LIVE execution moment is skipped
+  // (stale/denied parent blocks child). sort() is stable in JavaScript.
+  const parentDepth = (conceptName) => (parentConditionFor(conceptName) ? 1 : 0);
+  executable.sort((a, b) => parentDepth(a.concept) - parentDepth(b.concept));
   const results = [];
   for (const item of executable) {
     const reconciled = review.result.reconciled?.concepts?.[item.concept];
     if (!reconciled) continue;
+    // C1 closed clinical gates, re-checked live at execution time.
+    const liveGate = liveD17ExtGate(item.concept);
+    if (liveGate) {
+      results.push({ concept: item.concept, ok: false, reason: liveGate.code });
+      continue;
+    }
     const target = targetForConcept(reconciled.concept);
     const applied = applyConcept({
       reconciled,
@@ -700,17 +795,29 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
   if (target === 'NONE' && conceptName !== 'principio_activo_raw') return null;
   if (review.cancelled[conceptName]) return null;
 
-  const current = currentFormValues()[target];
-  // D11: the row state is the D16 per-concept protection state, extended with
-  // the manual-edit-after-apply signal when this review applied the concept and
-  // the live current value no longer equals the recorded applied value.
-  const state = reviewRowState(review, reconciled, conceptName, current);
-  const manualEdit = state === STATE_MANUALLY_EDITED_AFTER_APPLY;
+      const current = currentFormValues()[target];
+      // D11: the row state is the D16 per-concept protection state, extended with
+      // the manual-edit-after-apply signal when this review applied the concept and
+      // the live current value no longer equals the recorded applied value.
+      const state = reviewRowState(review, reconciled, conceptName, current);
+      const manualEdit = state === STATE_MANUALLY_EDITED_AFTER_APPLY;
+      // C1 (issue #339): closed clinical gates (pathology coherence + parent
+      // condition) are evaluated against the LIVE form at render time and
+      // re-checked live at click/execution time.
+      const gate = liveD17ExtGate(conceptName);
 
   const row = element('article', 'fh-intake-decision');
   row.dataset.fhConcept = conceptName;
-  const proposal = reconciled.value ?? (reconciled.contributions ?? []).find(item => item?.value !== null && item?.value !== undefined)?.value;
-  row.dataset.fhSourceValue = displayValue(proposal, '');
+      const proposal = reconciled.value ?? (reconciled.contributions ?? []).find(item => item?.value !== null && item?.value !== undefined)?.value;
+      // C1 closed-adapter rejection: the proposal value exists but the closed
+      // destination adapter rejects it (non-strict numeric text, non-contract
+      // enum, non-explicit checkbox value). Nothing is written or coerced; the
+      // row stays visible with the write boundary closed.
+      const adapterBlock = state === STATE_NO_PROPOSAL
+        && D17_EXT_HYDRATABLE_CONCEPTS.includes(conceptName)
+        && proposal !== null && proposal !== undefined
+        && !adaptD17ExtControlValue(conceptName, displayValue(proposal, '')).ok;
+      row.dataset.fhSourceValue = displayValue(proposal, '');
   row.dataset.fhAppliedValue = review.applied[conceptName] === undefined ? '' : displayValue(review.applied[conceptName], '');
 
   const heading = element('div', 'fh-intake-decision__heading');
@@ -746,13 +853,35 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
     row.appendChild(element('p', 'fh-intake-decision__note', 'Requiere selección explícita: nunca se elige un valor automáticamente.'));
     return row;
   }
-  if (state === STATE_NO_PROPOSAL) {
-    row.appendChild(element('p', 'fh-intake-decision__note', 'Sin propuesta aplicable: no se escribe nada.'));
-    return row;
-  }
+      if (state === STATE_NO_PROPOSAL) {
+        row.appendChild(element('p', 'fh-intake-decision__note', 'Sin propuesta aplicable: no se escribe nada.'));
+        if (adapterBlock) {
+          row.appendChild(element('p', 'fh-intake-decision__note',
+            'Cierre C1: el valor de la fuente no es compatible con el destino cerrado (sin conversión de coma a punto, sin unidades, sin redondeo ni umbral). Nada se escribe.'));
+          const blockedActions = element('div', 'fh-intake-decision__actions');
+          const blockedConfirm = element('button', 'btn btn-outline', 'Confirmar y aplicar');
+          blockedConfirm.type = 'button';
+          blockedConfirm.dataset.fhConceptAction = 'confirm';
+          blockedConfirm.disabled = true;
+          blockedConfirm.setAttribute('aria-disabled', 'true');
+          blockedActions.appendChild(blockedConfirm);
+          const blockedCancel = element('button', 'btn btn-outline', 'Cancelar');
+          blockedCancel.type = 'button';
+          blockedCancel.dataset.fhConceptAction = 'cancel';
+          blockedCancel.addEventListener('click', () => {
+            review.cancelled[conceptName] = true;
+            rerender();
+          });
+          blockedActions.appendChild(blockedCancel);
+          row.appendChild(blockedActions);
+        }
+        return row;
+      }
 
   const associations = contributionAssociations(review, conceptName, selectedPatient);
   const eligibility = writeEligibility(reconciled, current, associations);
+  // C1 (issue #339): the closed clinical gates AND into every writable action.
+  const writableWithGates = eligibility.writable && !gate;
   const decisions = [];
   if (manualEdit) {
     // D11: only the explicit professional action REAPPLY_IMPORTED may restore
@@ -765,26 +894,29 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
     decisions.push({
       kind: ACTION_REAPPLY_IMPORTED,
       label: 'Reaplicar valor importado (nueva autorización)',
-      enabled: eligibility.writable,
+      enabled: writableWithGates,
     });
   } else if (state === STATE_CURRENT_EMPTY) {
-    decisions.push({ kind: 'confirm', label: 'Confirmar y aplicar', enabled: eligibility.writable });
+    decisions.push({ kind: 'confirm', label: 'Confirmar y aplicar', enabled: writableWithGates });
     decisions.push({
       kind: ACTION_CONFIRM_FOR_GLOBAL,
       label: 'Preparar para Aplicar confirmados (no escribe todavía)',
-      enabled: eligibility.writable && !review.staged?.[conceptName],
+      enabled: writableWithGates && !review.staged?.[conceptName],
     });
   } else if (state === STATE_PROTECTED_EXISTING) {
-    decisions.push({ kind: 'replace', label: 'Reemplazar explícitamente', enabled: eligibility.writable });
+    decisions.push({ kind: 'replace', label: 'Reemplazar explícitamente', enabled: writableWithGates });
     decisions.push({
       kind: ACTION_CONFIRM_FOR_GLOBAL,
       label: 'Preparar reemplazo para Aplicar confirmados (no escribe todavía)',
-      enabled: eligibility.writable && !review.staged?.[conceptName],
+      enabled: writableWithGates && !review.staged?.[conceptName],
     });
   }
   decisions.push({ kind: 'cancel', label: 'Cancelar', enabled: true });
   if (!eligibility.writable) {
     row.appendChild(element('p', 'fh-intake-decision__note', `Escritura bloqueada por gate D5/D16: ${eligibility.reason}`));
+  }
+  if (gate) {
+    row.appendChild(element('p', 'fh-intake-decision__note', `Escritura bloqueada por gate clínico C1 (${gate.code}): ${gate.message}`));
   }
   const actions = element('div', 'fh-intake-decision__actions');
   for (const item of decisions) {
@@ -810,6 +942,10 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
       }
       const liveCurrent = currentFormValues()[target];
       const liveAssociations = contributionAssociations(review, conceptName, selectedPatient);
+      // C1 (issue #339): clinical gates re-checked LIVE at execution time —
+      // a stale or denied pathology/parent never authorizes the child write.
+      const liveGate = liveD17ExtGate(conceptName);
+      if (liveGate) { rerender(); return; }
       // REAPPLY_IMPORTED writes the imported proposal value as a NEW explicit
       // authorization over a manual edit; it is executed as the D16 replace
       // decision on the protected state.

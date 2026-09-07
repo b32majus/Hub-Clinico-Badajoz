@@ -33,9 +33,21 @@
  *   per-concept professional decisions; it never creates, selects, associates
  *   or persists a patient and never touches validated treatment.
  *
+ * C1 (issue #339) adds the D17_EXT_V1 protected clinical hydration layer on
+ * top of the same D5 x D16 machinery: exactly the 39 DIRECT_FUTURE_TARGET /
+ * NORMALIZATION_REQUIRED concepts of the frozen B contract receive exact
+ * targets and closed destination adapters (literal text, exact si/no select
+ * values, explicit checkbox SÍ -> checked=true, exact Hurley I|II|III, strict
+ * control-compatible numeric text). Composite provenance-only concepts and the
+ * analítica/vacunación common concepts stay target NONE / NO_PROPOSAL. C1
+ * clinical gates (pathology coherence, parent condition) are pure functions
+ * here and are enforced by the review UI at render, click and global-executor
+ * time against LIVE form values. Pasting/importing never equals clinical
+ * validation; existing non-empty destinations stay protected.
+ *
  * NO_TOCA: no global apply, no reparse/reapply machinery (T8), no SES write
  * target (T9), no validated-treatment surface, no deletion paths, no
- * parser/reconciliation changes. ses_program stays preview-only here.
+ * parser/reconciliation grammar changes. ses_program stays preview-only here.
  */
 
 export const STATE_CURRENT_EMPTY = 'CURRENT_EMPTY';
@@ -72,7 +84,61 @@ export const ASSOCIATION_CONFLICT = 'CONFLICT';
 export const ASSOCIATION_TRANSIENT_NEW_REQUEST = 'TRANSIENT_NEW_REQUEST';
 
 /**
- * T7 regular hydratable requested-treatment concepts only.
+ * C1 (issue #339): the 39 D17_EXT_V1 concepts with a real Farmacia destination
+ * (frozen B contract `contract-336-d17-ext-v1.json`, classes
+ * DIRECT_FUTURE_TARGET / NORMALIZATION_REQUIRED). Composite provenance-only
+ * concepts (`derma_psoriasis_prior_systemic_detail`,
+ * `derma_ad_prior_cyclosporine_detail`, `derma_hs_prior_other_biologics_detail`)
+ * and the NO_CURRENT_STRUCTURED_TARGET analítica/vacunación concepts are
+ * deliberately absent: they never become writable in C1.
+ */
+export const D17_EXT_HYDRATABLE_CONCEPTS = Object.freeze([
+  'derma_hs_ihs4',
+  'derma_hs_hurley',
+  'derma_hs_evolution_time',
+  'derma_hs_location',
+  'derma_hs_prior_doxy_clinda',
+  'derma_hs_prior_rif_clinda',
+  'derma_hs_prior_other_antibiotics',
+  'derma_hs_prior_other_antibiotics_detail',
+  'derma_hs_prior_adalimumab',
+  'derma_hs_prior_adalimumab_duration',
+  'derma_hs_prior_adalimumab_end_reason',
+  'derma_hs_prior_other_biologics',
+  'derma_psoriasis_pasi',
+  'derma_psoriasis_bsa',
+  'derma_psoriasis_dlqi',
+  'derma_psoriasis_pga',
+  'derma_psoriasis_prior_systemic',
+  'derma_psoriasis_no_systemic_reason',
+  'derma_ad_easi',
+  'derma_ad_scorad',
+  'derma_ad_dlqi_poem',
+  'derma_ad_prior_cyclosporine',
+  'derma_ad_no_cyclosporine_reason',
+  'derma_vitiligo_extent',
+  'derma_vitiligo_facial',
+  'derma_vitiligo_prior_topical_calcineurin',
+  'derma_vitiligo_prior_topical_steroids',
+  'derma_vitiligo_observations',
+  'derma_aa_extent_gt50',
+  'derma_aa_episode_gt6m',
+  'derma_aa_systemic_corticosteroids',
+  'derma_aa_observations',
+  'derma_comorb_bmi',
+  'derma_comorb_smoking_status',
+  'derma_comorb_pack_years',
+  'derma_comorb_diabetes',
+  'derma_comorb_hba1c',
+  'derma_comorb_metabolic_syndrome',
+  'derma_comorb_other',
+]);
+
+const D17_EXT_HYDRATABLE_SET = new Set(D17_EXT_HYDRATABLE_CONCEPTS);
+
+/**
+ * Hydratable concepts: the T7 regular requested-treatment concepts plus the C1
+ * D17_EXT_V1 protected clinical concepts.
  * (fhDermaPautaOtro is reached through fhDermaPauta=OTRO; it is not an
  * independently proposed concept.)
  */
@@ -83,6 +149,7 @@ export const HYDRATABLE_CONCEPTS = Object.freeze([
   'requested_schedule',
   'requested_induction',
   'requested_justification',
+  ...D17_EXT_HYDRATABLE_CONCEPTS,
 ]);
 
 const CONCEPT_TARGETS = Object.freeze({
@@ -102,6 +169,47 @@ const CONCEPT_TARGETS = Object.freeze({
   via: 'NONE',
   dosis: 'NONE',
   pauta: 'NONE',
+  // C1 (issue #339): exact D17_EXT_V1 destination mapping (frozen C1
+  // oracle authority). One concept -> one exact brownfield control.
+  derma_hs_ihs4: 'fhHSIhs4',
+  derma_hs_hurley: 'fhHSHurley',
+  derma_hs_evolution_time: 'fhHSTiempoEvolucion',
+  derma_hs_location: 'fhHSLocalizacion',
+  derma_hs_prior_doxy_clinda: 'fhHSTtoDoxiClinda',
+  derma_hs_prior_rif_clinda: 'fhHSTtoRifClinda',
+  derma_hs_prior_other_antibiotics: 'fhHSTtoOtrosAb',
+  derma_hs_prior_other_antibiotics_detail: 'fhHSTtoOtrosAbTxt',
+  derma_hs_prior_adalimumab: 'fhHSBioAda',
+  derma_hs_prior_adalimumab_duration: 'fhHSBioAdaDuracion',
+  derma_hs_prior_adalimumab_end_reason: 'fhHSBioAdaMotivo',
+  derma_hs_prior_other_biologics: 'fhHSBioOtros',
+  derma_psoriasis_pasi: 'fhPsPasi',
+  derma_psoriasis_bsa: 'fhPsBsa',
+  derma_psoriasis_dlqi: 'fhPsDlqi',
+  derma_psoriasis_pga: 'fhPsPga',
+  derma_psoriasis_prior_systemic: 'fhPsSistemicoPrevio',
+  derma_psoriasis_no_systemic_reason: 'fhPsSistemicoNoMotivo',
+  derma_ad_easi: 'fhDaEasi',
+  derma_ad_scorad: 'fhDaScorad',
+  derma_ad_dlqi_poem: 'fhDaDlqiPoem',
+  derma_ad_prior_cyclosporine: 'fhDaCiclosporinaPrevia',
+  derma_ad_no_cyclosporine_reason: 'fhDaCiclosporinaNoMotivo',
+  derma_vitiligo_extent: 'fhVitExtension',
+  derma_vitiligo_facial: 'fhVitFacial',
+  derma_vitiligo_prior_topical_calcineurin: 'fhVitCalcineurinaPrevia',
+  derma_vitiligo_prior_topical_steroids: 'fhVitCorticoidesPrevios',
+  derma_vitiligo_observations: 'fhVitObservaciones',
+  derma_aa_extent_gt50: 'fhAaExtension50',
+  derma_aa_episode_gt6m: 'fhAaEpisodio6Meses',
+  derma_aa_systemic_corticosteroids: 'fhAaCorticoidesSistemicos',
+  derma_aa_observations: 'fhAaObservaciones',
+  derma_comorb_bmi: 'fhHSComorbImc',
+  derma_comorb_smoking_status: 'fhHSComorbTabaquismo',
+  derma_comorb_pack_years: 'fhHSComorbPaquetes',
+  derma_comorb_diabetes: 'fhHSComorbDiabetes',
+  derma_comorb_hba1c: 'fhHSComorbHba1c',
+  derma_comorb_metabolic_syndrome: 'fhHSComorbSdMetabolico',
+  derma_comorb_other: 'fhHSComorbOtras',
 });
 
 /** Exact target for a reconciled concept key (NONE when no writable target). */
@@ -134,6 +242,189 @@ function displayString(value) {
   return String(value);
 }
 
+/* ------------------------------------------------------------------ *
+ * C1 (issue #339) — closed destination adapters and clinical gates.   *
+ * ------------------------------------------------------------------ *
+ * Every adapter is CLOSED: it maps only exact contract values into the
+ * exact brownfield control value space and rejects everything else
+ * (no comma-to-dot, no units, no rounding, no thresholding, no other
+ * coercion). It never invents a value and never writes a boolean false.
+ */
+
+/** D17_EXT_V1 concepts whose brownfield destination is a checkbox (checkbox_true). */
+export const D17_EXT_CHECKBOX_TARGETS = Object.freeze([
+  'fhHSTtoDoxiClinda', 'fhHSTtoRifClinda', 'fhHSTtoOtrosAb', 'fhHSBioAda', 'fhHSBioOtros',
+]);
+
+const D17_EXT_CHECKBOX_CONCEPTS = new Set([
+  'derma_hs_prior_doxy_clinda', 'derma_hs_prior_rif_clinda', 'derma_hs_prior_other_antibiotics',
+  'derma_hs_prior_adalimumab', 'derma_hs_prior_other_biologics',
+]);
+
+const D17_EXT_SELECT_SI_NO_CONCEPTS = new Set([
+  'derma_psoriasis_prior_systemic', 'derma_ad_prior_cyclosporine', 'derma_vitiligo_facial',
+  'derma_vitiligo_prior_topical_calcineurin', 'derma_vitiligo_prior_topical_steroids',
+  'derma_aa_extent_gt50', 'derma_aa_episode_gt6m', 'derma_aa_systemic_corticosteroids',
+  'derma_comorb_diabetes', 'derma_comorb_metabolic_syndrome',
+]);
+
+const D17_EXT_SMOKING_CONCEPTS = new Set(['derma_comorb_smoking_status']);
+const D17_EXT_HURLEY_CONCEPTS = new Set(['derma_hs_hurley']);
+
+/**
+ * Numeric concepts map to `input[type=number]` brownfield controls. Their
+ * adapter accepts ONLY strict control-compatible numeric text: canonical
+ * dot-decimal digits (no comma-to-dot conversion, no sign, no units, no
+ * rounding) that satisfy the live control's min/max/step compatibility.
+ * Out-of-range or step-mismatched values are rejected, never clamped.
+ */
+const D17_EXT_NUMERIC_CONCEPTS = new Set([
+  'derma_hs_ihs4', 'derma_psoriasis_pasi', 'derma_psoriasis_dlqi', 'derma_ad_easi', 'derma_ad_scorad',
+]);
+
+const D17_EXT_NUMERIC_CONTROL_COMPATIBILITY = Object.freeze({
+  derma_hs_ihs4: { min: 0, step: 0.1 },
+  derma_psoriasis_pasi: { min: 0, step: 0.1 },
+  derma_psoriasis_dlqi: { min: 0, max: 30 },
+  derma_ad_easi: { min: 0, step: 0.1 },
+  derma_ad_scorad: { min: 0, step: 0.1 },
+});
+
+const HURLEY_CONTROL_VALUES = Object.freeze({ I: 'Hurley I', II: 'Hurley II', III: 'Hurley III' });
+const SMOKING_CONTROL_VALUES = Object.freeze(['Activo', 'Exfumador', 'No fumador']);
+const STRICT_NUMERIC_TEXT = /^[0-9]+(?:\.[0-9]+)?$/;
+const STEP_EPSILON = 1e-9;
+
+/**
+ * Pathology gate (C1): pathology-specific concepts are non-writable while the
+ * current/accepted pathology is empty, incoherent or conflicted. Common
+ * comorbidity concepts carry no pathology family and are never gated here.
+ */
+const D17_EXT_PATHOLOGY_FAMILIES = Object.freeze([
+  ['derma_hs_', 'Hidradenitis supurativa'],
+  ['derma_psoriasis_', 'Psoriasis'],
+  ['derma_ad_', 'Dermatitis atópica'],
+  ['derma_vitiligo_', 'Vitíligo'],
+  ['derma_aa_', 'Alopecia areata'],
+]);
+
+/**
+ * Parent/child gate (C1): conditional detail may write only when its parent is
+ * already satisfied in the LIVE form. Values are expressed in the control value
+ * space: checkbox parents are satisfied by the checked representation 'SÍ';
+ * si/no select parents by the exact control values 'si' / 'no'; the smoking
+ * select by its exact 'Activo' value.
+ */
+const D17_EXT_PARENT_CONDITIONS = Object.freeze({
+  derma_hs_prior_other_antibiotics_detail: { concept: 'derma_hs_prior_other_antibiotics', value: 'SÍ' },
+  derma_hs_prior_adalimumab_duration: { concept: 'derma_hs_prior_adalimumab', value: 'SÍ' },
+  derma_hs_prior_adalimumab_end_reason: { concept: 'derma_hs_prior_adalimumab', value: 'SÍ' },
+  derma_psoriasis_no_systemic_reason: { concept: 'derma_psoriasis_prior_systemic', value: 'no' },
+  derma_ad_no_cyclosporine_reason: { concept: 'derma_ad_prior_cyclosporine', value: 'no' },
+  derma_comorb_pack_years: { concept: 'derma_comorb_smoking_status', value: 'Activo' },
+  derma_comorb_hba1c: { concept: 'derma_comorb_diabetes', value: 'si' },
+});
+
+export function isD17ExtHydratableConcept(concept) {
+  return D17_EXT_HYDRATABLE_SET.has(concept);
+}
+
+/** Pathology family (accepted #fhDermaPatologia value) a concept belongs to, or null. */
+export function pathologyFamilyFor(concept) {
+  for (const [prefix, family] of D17_EXT_PATHOLOGY_FAMILIES) {
+    if (String(concept || '').startsWith(prefix)) return family;
+  }
+  return null;
+}
+
+/** Parent condition ({ concept, value }) for a conditional detail concept, or null. */
+export function parentConditionFor(concept) {
+  return Object.prototype.hasOwnProperty.call(D17_EXT_PARENT_CONDITIONS, concept)
+    ? D17_EXT_PARENT_CONDITIONS[concept]
+    : null;
+}
+
+/**
+ * Closed C1 adapter: maps one explicit source value of a D17_EXT_V1 concept
+ * into its brownfield control value space, or rejects it. The returned text is
+ * exactly what would be written/compared against the control. Authorization
+ * normalization is NFC + peripheral trim only (same axis as D6 comparison).
+ */
+export function adaptD17ExtControlValue(concept, value) {
+  const raw = typeof value === 'string' ? value.normalize('NFC').trim() : displayString(value).trim();
+  if (D17_EXT_CHECKBOX_CONCEPTS.has(concept)) {
+    return raw === 'SÍ'
+      ? { ok: true, text: 'SÍ' }
+      : { ok: false, reason: 'CHECKBOX_REQUIRES_EXPLICIT_SI' };
+  }
+  if (D17_EXT_SELECT_SI_NO_CONCEPTS.has(concept)) {
+    if (raw === 'SÍ') return { ok: true, text: 'si' };
+    if (raw === 'NO') return { ok: true, text: 'no' };
+    return { ok: false, reason: 'SI_NO_SELECT_REQUIRES_EXPLICIT_CONTRACT_VALUE' };
+  }
+  if (D17_EXT_HURLEY_CONCEPTS.has(concept)) {
+    return Object.prototype.hasOwnProperty.call(HURLEY_CONTROL_VALUES, raw)
+      ? { ok: true, text: HURLEY_CONTROL_VALUES[raw] }
+      : { ok: false, reason: 'HURLEY_ENUM_REQUIRES_CONTRACT_VALUE' };
+  }
+  if (D17_EXT_SMOKING_CONCEPTS.has(concept)) {
+    return SMOKING_CONTROL_VALUES.includes(raw)
+      ? { ok: true, text: raw }
+      : { ok: false, reason: 'SMOKING_ENUM_REQUIRES_CONTRACT_VALUE' };
+  }
+  if (D17_EXT_NUMERIC_CONCEPTS.has(concept)) {
+    if (!STRICT_NUMERIC_TEXT.test(raw)) return { ok: false, reason: 'NUMERIC_TEXT_NOT_CONTROL_COMPATIBLE' };
+    const numeric = Number(raw);
+    const compatibility = D17_EXT_NUMERIC_CONTROL_COMPATIBILITY[concept];
+    if (compatibility) {
+      if (compatibility.min !== undefined && numeric < compatibility.min) {
+        return { ok: false, reason: 'NUMERIC_TEXT_NOT_CONTROL_COMPATIBLE' };
+      }
+      if (compatibility.max !== undefined && numeric > compatibility.max) {
+        return { ok: false, reason: 'NUMERIC_TEXT_NOT_CONTROL_COMPATIBLE' };
+      }
+      if (compatibility.step !== undefined) {
+        const units = (numeric - (compatibility.min ?? 0)) / compatibility.step;
+        if (Math.abs(units - Math.round(units)) > STEP_EPSILON) {
+          return { ok: false, reason: 'NUMERIC_TEXT_NOT_CONTROL_COMPATIBLE' };
+        }
+      }
+    }
+    return { ok: true, text: raw };
+  }
+  // Literal text / textarea destinations: verbatim peripheral-trimmed text.
+  return raw === '' ? { ok: false, reason: 'TEXT_VALUE_EMPTY' } : { ok: true, text: raw };
+}
+
+/**
+ * C1 closed clinical gate for one concept against LIVE form context.
+ * Returns null when no C1 gate blocks the concept, or a deterministic blocking
+ * reason. Numeric adapter rejection is NOT a gate (it already fails inside the
+ * proposal space); gates here are only the pathology and parent conditions.
+ * @param {string} concept
+ * @param {{ pathologyValue?: string, parentValue?: string }} context live form values
+ */
+export function d17ExtGate(concept, context = {}) {
+  const family = pathologyFamilyFor(concept);
+  if (family) {
+    const accepted = typeof context.pathologyValue === 'string' ? context.pathologyValue.trim() : '';
+    if (accepted === '') {
+      return { code: 'PATHOLOGY_NOT_ACCEPTED', message: 'No hay una patología aceptada coherente para escribir este concepto específico de patología.' };
+    }
+    if (normalizeValue(accepted) !== normalizeValue(family)) {
+      return { code: 'PATHOLOGY_MISMATCH', message: `La patología aceptada (${accepted}) no es coherente con el destino de este concepto (${family}).` };
+    }
+  }
+  const parent = parentConditionFor(concept);
+  if (parent) {
+    const parentCurrent = typeof context.parentValue === 'string' ? context.parentValue.trim() : '';
+    if (normalizeValue(parentCurrent) !== normalizeValue(parent.value)) {
+      return { code: 'PARENT_CONDITION_NOT_SATISFIED', message: `El concepto condicional requiere su condición padre satisfecha (${parent.concept} = ${parent.value}).` };
+    }
+  }
+  return null;
+}
+
 /**
  * A safe write proposal exists when the reconciled concept carries an exact
  * writable target and one explicit non-empty value. AUTO_PROPOSABLE vs
@@ -151,6 +442,15 @@ function safeProposalValue(reconciled) {
   if (value === null || value === undefined) return { value: null, ok: false };
   const text = displayString(value);
   if (text.trim() === '') return { value: null, ok: false };
+  // C1 (issue #339): D17_EXT_V1 concepts pass through their closed destination
+  // adapter. A value the adapter rejects (non-contract enum, non-strict numeric
+  // text, non-explicit checkbox value) is not a safe proposal at all: nothing
+  // is written, nothing is coerced.
+  if (D17_EXT_HYDRATABLE_SET.has(reconciled.concept)) {
+    const adapted = adaptD17ExtControlValue(reconciled.concept, text);
+    if (!adapted.ok) return { value: null, ok: false };
+    return { value: adapted.text, text: adapted.text, ok: true };
+  }
   return { value, text: displayString(value), ok: true };
 }
 

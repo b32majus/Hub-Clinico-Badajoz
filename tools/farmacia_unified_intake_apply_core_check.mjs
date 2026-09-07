@@ -14,6 +14,7 @@ import {
   STATE_REQUIRES_SELECTION,
   STATE_NO_PROPOSAL,
   HYDRATABLE_CONCEPTS,
+  D17_EXT_HYDRATABLE_CONCEPTS,
   targetForConcept,
   decisionState,
   writeEligibility,
@@ -65,10 +66,13 @@ check('requested_schedule target', targetForConcept('requested_schedule'), 'fhDe
 check('requested_induction target', targetForConcept('requested_induction'), 'fhDermaInduccion');
 check('requested_justification target', targetForConcept('requested_justification'), 'fhDermaJustificacion');
 check('ses_program has no T7 writable target mapping', targetForConcept('ses_program'), 'ses_program');
-ok('T7 scope is exactly the six regular hydratable concepts', JSON.stringify(HYDRATABLE_CONCEPTS) === JSON.stringify([
-  'commercial_name', 'requested_dose', 'requested_route', 'requested_schedule',
-  'requested_induction', 'requested_justification'
-]));
+ok('T7 scope is exactly the six regular hydratable concepts followed by the 39 C1 D17_EXT_V1 concepts',
+  JSON.stringify(HYDRATABLE_CONCEPTS.slice(0, 6)) === JSON.stringify([
+    'commercial_name', 'requested_dose', 'requested_route', 'requested_schedule',
+    'requested_induction', 'requested_justification'
+  ])
+  && HYDRATABLE_CONCEPTS.length === 6 + D17_EXT_HYDRATABLE_CONCEPTS.length
+  && D17_EXT_HYDRATABLE_CONCEPTS.every((concept) => HYDRATABLE_CONCEPTS.includes(concept)));
 
 // -- D16 per-concept decision matrix on a single-source e-Orden (VERIFIED).
 const single = conceptOf(eorden(), 'requested_dose');

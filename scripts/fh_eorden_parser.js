@@ -30,6 +30,8 @@
  *   contribution/fragment back to its original line.
  */
 
+import { targetForConcept } from './fh_intake_apply.js';
+
 export const SOURCE_EORDEN = 'e-orden';
 export const UNIT_STATE_RECOGNIZED = 'RECOGNIZED';
 export const UNIT_STATE_PARTIALLY_RECOGNIZED = 'PARTIALLY_RECOGNIZED';
@@ -79,8 +81,14 @@ const TRAILING = /[ \t\u00a0]+$/;
 // least one explicit field, and every label is matched exactly (no aliases,
 // no fuzzy matching, no silent reorder, no duplicate collapse).
 //
-// B boundary (WO #336): extended concepts are parser/provenance only —
-// target='NONE', proposal_status='NO_PROPOSAL'. No hydration/apply until WO C.
+// B boundary (WO #336) updated by C1 (issue #339): the 39
+// DIRECT_FUTURE_TARGET / NORMALIZATION_REQUIRED concepts now carry their
+// exact brownfield target and AUTO_PROPOSABLE proposal eligibility through
+// the single C1 mapping in fh_intake_apply.js (targetForConcept). Composite
+// provenance-only concepts and the NO_CURRENT_STRUCTURED_TARGET
+// analítica/vacunación concepts stay target='NONE',
+// proposal_status='NO_PROPOSAL'. Parser transport (labels/values/grammar)
+// is unchanged: no broadened values, no new aliases.
 
 const EXT_MARKER = 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
 const EXT_TERMINATOR = 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
@@ -493,7 +501,13 @@ function ses(result, parsed) {
                 result.warnings.push({ code: 'EXT_VALUE_UNRECOGNIZED', message: `D17_EXT_V1 value is not a contract value for ${field.label}.` });
                 continue;
             }
-            contribution(result, field.concept, 'NONE', 'NO_PROPOSAL', value, value, item.line, item.index,
+            // C1 (issue #339): exact target + proposal eligibility come from the
+            // single C1 mapping (fh_intake_apply.targetForConcept). Composite
+            // provenance-only and analítica/vacunación concepts resolve to 'NONE'
+            // and stay NO_PROPOSAL; the 39 target concepts become AUTO_PROPOSABLE
+            // proposals for the D16/D5 machinery.
+            const target = targetForConcept(field.concept);
+            contribution(result, field.concept, target, target === 'NONE' ? 'NO_PROPOSAL' : 'AUTO_PROPOSABLE', value, value, item.line, item.index,
                 { semantic_status: 'RECOGNIZED' });
         }
     }
