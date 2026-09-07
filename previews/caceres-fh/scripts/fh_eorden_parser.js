@@ -30,6 +30,8 @@
  *   contribution/fragment back to its original line.
  */
 
+import { targetForConcept } from './fh_intake_apply.js';
+
 export const SOURCE_EORDEN = 'e-orden';
 export const UNIT_STATE_RECOGNIZED = 'RECOGNIZED';
 export const UNIT_STATE_PARTIALLY_RECOGNIZED = 'PARTIALLY_RECOGNIZED';
@@ -71,6 +73,147 @@ const LABELS = Object.freeze([
 const HEADER = /^SOLICITUD DERMATOLOGÍA → FARMACIA - .+$/;
 const TRAILING = /[ \t\u00a0]+$/;
 
+// ─── D17_EXT_V1 versioned extension (issue #336) ────────────────────────
+//
+// Exact contract labels/concepts/values (frozen acceptance package
+// contract-336-d17-ext-v1.json). The extension is versioned transport: an
+// exact marker declares ownership, sections serialize only when they carry at
+// least one explicit field, and every label is matched exactly (no aliases,
+// no fuzzy matching, no silent reorder, no duplicate collapse).
+//
+// B boundary (WO #336) updated by C1 (issue #339): the 39
+// DIRECT_FUTURE_TARGET / NORMALIZATION_REQUIRED concepts now carry their
+// exact brownfield target and AUTO_PROPOSABLE proposal eligibility through
+// the single C1 mapping in fh_intake_apply.js (targetForConcept). Updated
+// by C2 (issue #340): exactly the 7 safe analítica/vacunación common
+// concepts also resolve through that same single mapping; the composite
+// provenance-only concepts and the combined derma_viral_serologies concept
+// stay target='NONE', proposal_status='NO_PROPOSAL' (combined VHB/VHC/VIH
+// never splits). Parser transport (labels/values/grammar) is unchanged: no
+// broadened values, no new aliases.
+
+const EXT_MARKER = 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+const EXT_TERMINATOR = 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+const EXT_SECTION_ANALITICA = 'ANALÍTICA Y VACUNACIÓN';
+const EXT_SECTION_COMORBILIDADES = 'COMORBILIDADES';
+const EXT_SECTION_PATHOLOGY_PREFIX = 'DATOS CLÍNICOS — ';
+const EXT_BULLET = '• ';
+
+function extField(label, concept, kind, extra = {}) {
+    return Object.freeze({ label, concept, kind, ...extra });
+}
+
+const EXT_PATHOLOGY_FIELDS = Object.freeze({
+    'HIDRADENITIS SUPURATIVA': Object.freeze([
+        extField('IHS4', 'derma_hs_ihs4', 'text'),
+        extField('Hurley', 'derma_hs_hurley', 'enum', { values: ['I', 'II', 'III'] }),
+        extField('Tiempo evolución', 'derma_hs_evolution_time', 'text'),
+        extField('Localización', 'derma_hs_location', 'text'),
+        extField('Doxiciclina / Clindamicina previa', 'derma_hs_prior_doxy_clinda', 'checkbox_true', { values: ['SÍ'] }),
+        extField('Rifampicina + Clindamicina previa', 'derma_hs_prior_rif_clinda', 'checkbox_true', { values: ['SÍ'] }),
+        extField('Otros ATB previos', 'derma_hs_prior_other_antibiotics', 'checkbox_true', { values: ['SÍ'] }),
+        extField('Otros ATB — detalle', 'derma_hs_prior_other_antibiotics_detail', 'text',
+            { parent: { concept: 'derma_hs_prior_other_antibiotics', value: 'SÍ' } }),
+        extField('Adalimumab previo', 'derma_hs_prior_adalimumab', 'checkbox_true', { values: ['SÍ'] }),
+        extField('Adalimumab — duración', 'derma_hs_prior_adalimumab_duration', 'text',
+            { parent: { concept: 'derma_hs_prior_adalimumab', value: 'SÍ' } }),
+        extField('Adalimumab — motivo fin', 'derma_hs_prior_adalimumab_end_reason', 'text',
+            { parent: { concept: 'derma_hs_prior_adalimumab', value: 'SÍ' } }),
+        extField('Otros biológicos previos', 'derma_hs_prior_other_biologics', 'checkbox_true', { values: ['SÍ'] }),
+        extField('Otros biológicos — detalle', 'derma_hs_prior_other_biologics_detail', 'text',
+            { parent: { concept: 'derma_hs_prior_other_biologics', value: 'SÍ' } }),
+    ]),
+    PSORIASIS: Object.freeze([
+        extField('PASI', 'derma_psoriasis_pasi', 'text'),
+        extField('BSA', 'derma_psoriasis_bsa', 'text'),
+        extField('DLQI', 'derma_psoriasis_dlqi', 'text'),
+        extField('PGA', 'derma_psoriasis_pga', 'text'),
+        extField('Tratamiento sistémico previo', 'derma_psoriasis_prior_systemic', 'enum', { values: ['SÍ', 'NO'] }),
+        // One explicit composite concept: NEVER split into drug/duration/reason.
+        extField('Tratamiento sistémico previo — detalle', 'derma_psoriasis_prior_systemic_detail', 'text',
+            { parent: { concept: 'derma_psoriasis_prior_systemic', value: 'SÍ' } }),
+        extField('Motivo no tratamiento sistémico', 'derma_psoriasis_no_systemic_reason', 'text',
+            { parent: { concept: 'derma_psoriasis_prior_systemic', value: 'NO' } }),
+    ]),
+    'DERMATITIS ATÓPICA': Object.freeze([
+        extField('EASI', 'derma_ad_easi', 'text'),
+        extField('SCORAD', 'derma_ad_scorad', 'text'),
+        extField('DLQI / POEM', 'derma_ad_dlqi_poem', 'text'),
+        extField('Ciclosporina previa', 'derma_ad_prior_cyclosporine', 'enum', { values: ['SÍ', 'NO'] }),
+        // One explicit composite concept: NEVER split into dose/duration/reason.
+        extField('Ciclosporina previa — detalle', 'derma_ad_prior_cyclosporine_detail', 'text',
+            { parent: { concept: 'derma_ad_prior_cyclosporine', value: 'SÍ' } }),
+        extField('Motivo no ciclosporina', 'derma_ad_no_cyclosporine_reason', 'text',
+            { parent: { concept: 'derma_ad_prior_cyclosporine', value: 'NO' } }),
+    ]),
+    'VITÍLIGO': Object.freeze([
+        extField('Extensión afectada', 'derma_vitiligo_extent', 'text'),
+        extField('Afectación facial', 'derma_vitiligo_facial', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Inhibidor tópico de calcineurina previo', 'derma_vitiligo_prior_topical_calcineurin', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Corticoides tópicos previos', 'derma_vitiligo_prior_topical_steroids', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Observaciones clínicas', 'derma_vitiligo_observations', 'text'),
+    ]),
+    'ALOPECIA AREATA': Object.freeze([
+        extField('Extensión >50% cuero cabelludo', 'derma_aa_extent_gt50', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Episodio actual >6 meses', 'derma_aa_episode_gt6m', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Corticoesteroides orales sistémicos', 'derma_aa_systemic_corticosteroids', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Observaciones clínicas', 'derma_aa_observations', 'text'),
+    ]),
+});
+
+const EXT_COMMON_FIELDS = Object.freeze({
+    [EXT_SECTION_ANALITICA]: Object.freeze([
+        extField('Fecha analítica', 'derma_lab_date', 'date'),
+        extField('Analítica completa <3 meses', 'derma_lab_complete_lt3m', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Hemograma verificado', 'derma_cbc_verified', 'checkbox_true', { values: ['SÍ'] }),
+        extField('Bioquímica verificada', 'derma_biochemistry_verified', 'checkbox_true', { values: ['SÍ'] }),
+        // The parent gate (checkbox checked) is implied by the line's own
+        // presence: the producer emits it only while the checkbox holds.
+        extField('Mantoux/IGRA', 'derma_tb_screening', 'enum', { values: ['Negativo', 'Positivo - tratado', 'Pendiente'] }),
+        extField('VHB/VHC/VIH', 'derma_viral_serologies', 'enum', { values: ['Negativo', 'Positivo', 'Pendiente'] }),
+        extField('Vacunación completa/revisada', 'derma_vaccination_review', 'enum', { values: ['SÍ', 'NO', 'Pendiente'] }),
+        extField('Observaciones vacunación', 'derma_vaccination_observations', 'text'),
+    ]),
+    [EXT_SECTION_COMORBILIDADES]: Object.freeze([
+        extField('IMC', 'derma_comorb_bmi', 'text'),
+        extField('Tabaquismo', 'derma_comorb_smoking_status', 'enum', { values: ['Activo', 'Exfumador', 'No fumador'] }),
+        extField('Paquetes/año', 'derma_comorb_pack_years', 'text',
+            { parent: { concept: 'derma_comorb_smoking_status', value: 'Activo' } }),
+        extField('Diabetes', 'derma_comorb_diabetes', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('HbA1c', 'derma_comorb_hba1c', 'text',
+            { parent: { concept: 'derma_comorb_diabetes', value: 'SÍ' } }),
+        extField('Síndrome metabólico', 'derma_comorb_metabolic_syndrome', 'enum', { values: ['SÍ', 'NO'] }),
+        extField('Otras comorbilidades', 'derma_comorb_other', 'text'),
+    ]),
+});
+
+// Canonical section order: pathology → analítica → comorbilidades. Sections
+// serialize only with explicit content, so present sections must form a
+// duplicate-free subsequence of this order.
+const EXT_CANONICAL_SECTIONS = Object.freeze(['PATHOLOGY', EXT_SECTION_ANALITICA, EXT_SECTION_COMORBILIDADES]);
+
+// Farmacia-only controls without a Dermatology source: intentionally absent
+// from the contract and never fabricated by the producer or the parser
+// (explicit_non_source_targets in the frozen contract).
+export const EXT_EXPLICIT_NON_SOURCE_TARGETS = Object.freeze([
+    'fhHSDlqi', 'fhDermaComorbInfeccionesRecurrentes', 'fhDermaComorbRiesgoCardiovascular',
+    'fhDermaComorbAlteracionesNeurologicas', 'fhDermaComorbRiesgoNeoplasia',
+]);
+
+// Blocking-state codes for extension-level violations (fail closed: legacy
+// contributions stay usable, extended fields contribute nothing fabricated).
+export const EXT_MALFORMED_MARKER = 'EXT_MALFORMED_MARKER';
+export const EXT_MALFORMED_TERMINATOR = 'EXT_MALFORMED_TERMINATOR';
+export const EXT_UNKNOWN_SECTION = 'EXT_UNKNOWN_SECTION';
+export const EXT_SECTION_ORDER_INVALID = 'EXT_SECTION_ORDER_INVALID';
+export const EXT_EMPTY_BLOCK = 'EXT_EMPTY_BLOCK';
+export const EXT_EMPTY_SECTION = 'EXT_EMPTY_SECTION';
+export const EXT_PATHOLOGY_SECTION_INCOHERENT = 'EXT_PATHOLOGY_SECTION_INCOHERENT';
+export const EXT_UNKNOWN_LABEL = 'EXT_UNKNOWN_LABEL';
+export const EXT_REPEATED_LABEL = 'EXT_REPEATED_LABEL';
+export const EXT_LABEL_OUT_OF_ORDER = 'EXT_LABEL_OUT_OF_ORDER';
+export const EXT_PARENT_CONDITION_NOT_SATISFIED = 'EXT_PARENT_CONDITION_NOT_SATISFIED';
+
 function nfc(value) { return value.normalize('NFC'); }
 function lineView(value) { return nfc(value).replace(TRAILING, ''); }
 function splitLines(raw) { return raw.split(/\r\n|\n|\r/); }
@@ -110,15 +253,30 @@ function serialization(lines) {
     const title = headerLine.slice(headerLine.indexOf(' - ') + 3);
     const body = nonblank.slice(1);
     if (!body.length || body[0].line !== SEP) return { ok: false, all: nonblank, title };
-    const entries = body.slice(1);
-    const parsed = [];
-    for (const item of entries) {
-        if (item.line === 'PROGRAMA SES') { parsed.push({ ...item, kind: 'section' }); continue; }
-        const labelIndex = LABELS.findIndex((label) => item.line.startsWith(label));
-        if (labelIndex < 0) return { ok: false, all: nonblank, title };
-        parsed.push({ ...item, kind: labelIndex });
-    }
-    // Canonical D17 stream (reconciled D17: one normative serialization, no variants):
+        const entries = body.slice(1);
+        const parsed = [];
+        for (const item of entries) {
+            if (item.line === 'PROGRAMA SES') { parsed.push({ ...item, kind: 'section' }); continue; }
+            if (item.line === EXT_MARKER) { parsed.push({ ...item, kind: 'EXT_MARKER' }); continue; }
+            if (item.line === EXT_TERMINATOR) { parsed.push({ ...item, kind: 'EXT_TERMINATOR' }); continue; }
+            if (item.line === EXT_SECTION_ANALITICA || item.line === EXT_SECTION_COMORBILIDADES
+                || (item.line.startsWith(EXT_SECTION_PATHOLOGY_PREFIX)
+                    && item.line.length > EXT_SECTION_PATHOLOGY_PREFIX.length)) {
+                parsed.push({ ...item, kind: 'EXT_SECTION' }); continue;
+            }
+            const labelIndex = LABELS.findIndex((label) => item.line.startsWith(label));
+            if (labelIndex >= 0) { parsed.push({ ...item, kind: labelIndex }); continue; }
+            if (item.line.startsWith(EXT_BULLET)) { parsed.push({ ...item, kind: 'EXT_FIELD' }); continue; }
+            return { ok: false, all: nonblank, title };
+        }
+        // D17_EXT_V1 versioned extension: recognized only through its exact
+        // marker. Without the marker, any extension-shaped line (section
+        // header, terminator, unknown bullet) is non-normative legacy content
+        // and the whole unit is rejected exactly as before.
+        const hasMarker = parsed.some((item) => item.kind === 'EXT_MARKER');
+        const hasExtensionLines = parsed.some((item) => typeof item.kind === 'string' && item.kind.startsWith('EXT_'));
+        if (!hasMarker && hasExtensionLines) return { ok: false, all: nonblank, title };
+        // Canonical D17 stream (reconciled D17: one normative serialization, no variants):
     //   (• CIP:)? → • Marca → • Dosis → • Vía → • Pauta → • Inducción
     //   → • Justificación clínica → PROGRAMA SES → • Código → • Denominación
     // A repeated, inverted, interleaved or misplaced label is non-normative and
@@ -129,13 +287,14 @@ function serialization(lines) {
     // non-normative. When PROGRAMA SES is present, Código and/or
     // Denominación may be absent so the SES pair validator can surface
     // the deterministic incomplete-pair blocking state.
-    const seq = parsed.map((item) => (item.kind === 'section' ? 'S' : item.kind));
+    const legacy = parsed.filter((item) => typeof item.kind === 'number' || item.kind === 'section');
+    const seq = legacy.map((item) => (item.kind === 'section' ? 'S' : item.kind));
     if (seq.length && seq[0] === 0) seq.shift();
     const head = [1, 2, 3, 4, 5, 6];
     if (seq.length < head.length || head.some((value, i) => seq[i] !== value)) return { ok: false, all: nonblank, title };
     const rest = seq.slice(head.length).join(',');
     if (!['S', 'S,7', 'S,8', 'S,7,8'].includes(rest)) return { ok: false, all: nonblank, title };
-    return { ok: true, title, items: parsed, all: nonblank, hasSes: parsed.some((item) => item.kind === 'section') };
+    return { ok: true, title, items: parsed, all: nonblank, hasSes: parsed.some((item) => item.kind === 'section'), hasExtMarker: hasMarker };
 }
 
 function ses(result, parsed) {
@@ -180,7 +339,184 @@ function ses(result, parsed) {
     result.errors.push({ code: reason, message: messages[reason], blocking: true });
 }
 
-function structuralReject(raw, lines, code, message) {
+    /**
+     * D17_EXT_V1 extension parsing (issue #336, boundary B).
+     *
+     * The exact marker owns the block; sections (pathology → analítica →
+     * comorbilidades) appear only when they carry explicit fields, as a
+     * duplicate-free subsequence of the canonical order. Inside a section every
+     * label matches exactly one schema field, appears at most once, and stays
+     * in canonical schema order; enum/checkbox values validate against the
+     * contract; conditional details require their parent condition to be
+     * explicitly satisfied.
+     *
+     * Fail-closed semantics:
+     * - Structural violations (marker/terminator, section set/order, unknown /
+     *   repeated / reordered labels, incoherent pathology section, parent
+     *   conditions) reject the WHOLE extension block: one blocking error, no
+     *   extended contributions, legacy contributions stay usable →
+     *   PARTIALLY_RECOGNIZED (never fabricates a valid value).
+     * - A present line whose value is empty or invalid for its kind keeps the
+     *   raw visible as UNRECOGNIZED_VALUE (warning, no fabricated value).
+     * - Absent optional labels create no contribution and never degrade the
+     *   unit.
+     */
+    function parseExtension(result, parsed) {
+        const items = parsed.items;
+        const markerIndex = items.findIndex((item) => item.kind === 'EXT_MARKER');
+        const markers = items.filter((item) => item.kind === 'EXT_MARKER');
+        const terminators = items.filter((item) => item.kind === 'EXT_TERMINATOR');
+        let structuralError = null;
+        if (markers.length !== 1) structuralError = { code: EXT_MALFORMED_MARKER, message: 'D17_EXT_V1 extension marker must appear exactly once.' };
+        else if (terminators.length !== 1) structuralError = { code: EXT_MALFORMED_TERMINATOR, message: 'D17_EXT_V1 extension terminator must appear exactly once after the marker.' };
+        else {
+            const terminatorIndex = items.findIndex((item) => item.kind === 'EXT_TERMINATOR');
+            if (terminatorIndex < markerIndex + 2) {
+                structuralError = terminatorIndex === markerIndex + 1
+                    ? { code: EXT_EMPTY_BLOCK, message: 'D17_EXT_V1 extension block between marker and terminator has no sections.' }
+                    : { code: EXT_MALFORMED_TERMINATOR, message: 'D17_EXT_V1 terminator does not close the extension block.' };
+            } else if (items.some((item, index) => index > terminatorIndex)) {
+                structuralError = { code: EXT_MALFORMED_TERMINATOR, message: 'D17_EXT_V1 terminator is not the final line of the unit.' };
+            } else if (items.some((item, index) => index < markerIndex && typeof item.kind === 'string' && item.kind.startsWith('EXT_'))) {
+                structuralError = { code: EXT_MALFORMED_MARKER, message: 'D17_EXT_V1 extension content appears before the marker.' };
+            }
+        }
+        if (structuralError) {
+            result.blocking_states.push(structuralError.code);
+            result.errors.push({ ...structuralError, blocking: true });
+            return;
+        }
+
+        const terminatorIndex = items.findIndex((item) => item.kind === 'EXT_TERMINATOR');
+        const body = items.slice(markerIndex + 1, terminatorIndex);
+        // The extension block may only contain extension items: legacy labels
+        // or PROGRAMA SES inside it mean the marker does not own a coherent
+        // envelope (malformed placement).
+        if (body.some((item) => item.kind !== 'EXT_SECTION' && item.kind !== 'EXT_FIELD')) {
+            structuralError = { code: EXT_MALFORMED_MARKER, message: 'D17_EXT_V1 extension block contains non-extension (legacy) content.' };
+        }
+        // Group body items into sections; fields before any section header are
+        // structurally orphaned.
+        const sections = [];
+        let current = null;
+        for (const item of (!structuralError ? body : [])) {
+            if (item.kind === 'EXT_SECTION') {
+                current = { header: item.line, item, fields: [] };
+                sections.push(current);
+                continue;
+            }
+            if (!current) {
+                structuralError = { code: EXT_UNKNOWN_SECTION, message: 'D17_EXT_V1 extension field outside any known section header.' };
+                break;
+            }
+            current.fields.push(item);
+        }
+        if (!structuralError) {
+            const sectionKey = (header) => {
+                if (header === EXT_SECTION_ANALITICA) return EXT_SECTION_ANALITICA;
+                if (header === EXT_SECTION_COMORBILIDADES) return EXT_SECTION_COMORBILIDADES;
+                if (header.startsWith(EXT_SECTION_PATHOLOGY_PREFIX)) return 'PATHOLOGY';
+                return null;
+            };
+            const keys = sections.map((section) => sectionKey(section.header));
+            if (sections.some((section) => section.fields.length === 0)) {
+                structuralError = { code: EXT_EMPTY_SECTION, message: 'D17_EXT_V1 section header serializes no explicit field.' };
+            } else if (keys.some((key) => key === null)) {
+                structuralError = { code: EXT_UNKNOWN_SECTION, message: 'D17_EXT_V1 section header is not an exact contract section.' };
+            } else if (!keys.length) {
+                structuralError = { code: EXT_EMPTY_BLOCK, message: 'D17_EXT_V1 extension block between marker and terminator has no sections.' };
+            } else {
+                const canonical = EXT_CANONICAL_SECTIONS.filter((key) => keys.includes(key));
+                if (keys.length !== canonical.length || keys.some((key, index) => key !== canonical[index])) {
+                    structuralError = { code: EXT_SECTION_ORDER_INVALID, message: 'D17_EXT_V1 sections are duplicated or outside the canonical order (pathology, analítica, comorbilidades).' };
+                } else if (keys.includes('PATHOLOGY')) {
+                    const pathologySection = sections[keys.indexOf('PATHOLOGY')];
+                    const sectionTitle = pathologySection.header.slice(EXT_SECTION_PATHOLOGY_PREFIX.length);
+                    if (sectionTitle !== parsed.title || !EXT_PATHOLOGY_FIELDS[sectionTitle]) {
+                        structuralError = { code: EXT_PATHOLOGY_SECTION_INCOHERENT, message: 'D17_EXT_V1 pathology section header is incoherent with the unit pathology.' };
+                    }
+                }
+            }
+        }
+        if (structuralError) {
+            result.blocking_states.push(structuralError.code);
+            result.errors.push({ ...structuralError, blocking: true });
+            return;
+        }
+
+        // Validation pass over every section first: any structural violation
+        // (unknown / repeated / reordered label, unsatisfied parent condition)
+        // rejects the WHOLE extension block — no extended contribution is
+        // emitted from a non-normative structure. A present line whose value is
+        // empty or invalid for its kind stays per-field: raw visible as
+        // UNRECOGNIZED_VALUE, no valid value ever fabricated.
+        const violations = [];
+        const parsedFields = [];
+        for (const section of sections) {
+            const isPathology = section.header.startsWith(EXT_SECTION_PATHOLOGY_PREFIX);
+            const schema = isPathology
+                ? EXT_PATHOLOGY_FIELDS[section.header.slice(EXT_SECTION_PATHOLOGY_PREFIX.length)]
+                : EXT_COMMON_FIELDS[section.header];
+            const accepted = new Map(); // concept -> explicit value so far
+            let lastOrder = -1;
+            for (const item of section.fields) {
+                const line = item.line;
+                const matches = schema.filter((field) => line.startsWith(EXT_BULLET + field.label + ': '));
+                if (matches.length !== 1) {
+                    violations.push({ code: EXT_UNKNOWN_LABEL, message: `D17_EXT_V1 label is unknown in section ${section.header}: ${line}` });
+                    continue;
+                }
+                const field = matches[0];
+                const order = schema.indexOf(field);
+                if (accepted.has(field.concept)) {
+                    violations.push({ code: EXT_REPEATED_LABEL, message: `D17_EXT_V1 label is repeated in section ${section.header}: ${line}` });
+                    continue;
+                }
+                if (order <= lastOrder) {
+                    violations.push({ code: EXT_LABEL_OUT_OF_ORDER, message: `D17_EXT_V1 label is outside canonical schema order in section ${section.header}: ${line}` });
+                    continue;
+                }
+                if (field.parent && accepted.get(field.parent.concept) !== field.parent.value) {
+                    violations.push({ code: EXT_PARENT_CONDITION_NOT_SATISFIED, message: `D17_EXT_V1 conditional detail without its explicit parent condition: ${line}` });
+                    continue;
+                }
+                const value = line.slice((EXT_BULLET + field.label + ': ').length);
+                const invalidValue = value === ''
+                    || (field.kind === 'enum' && !field.values.includes(value))
+                    || (field.kind === 'checkbox_true' && !field.values.includes(value));
+                lastOrder = order;
+                if (!invalidValue) accepted.set(field.concept, value);
+                parsedFields.push({ field, item, value, invalidValue });
+            }
+        }
+        if (violations.length) {
+            for (const violation of violations) {
+                result.blocking_states.push(violation.code);
+                result.errors.push({ ...violation, blocking: true });
+            }
+            return;
+        }
+        for (const { field, item, value, invalidValue } of parsedFields) {
+            if (invalidValue) {
+                contribution(result, field.concept, 'NONE', 'NO_PROPOSAL', value || null, value, item.line, item.index,
+                    { semantic_status: 'UNRECOGNIZED_VALUE' });
+                result.warnings.push({ code: 'EXT_VALUE_UNRECOGNIZED', message: `D17_EXT_V1 value is not a contract value for ${field.label}.` });
+                continue;
+            }
+            // C1 (issue #339), updated by C2 (issue #340): exact target +
+            // proposal eligibility come from the single mapping
+            // (fh_intake_apply.targetForConcept). Composite provenance-only
+            // and the combined derma_viral_serologies concepts resolve to
+            // 'NONE' and stay NO_PROPOSAL; the 39 C1 target concepts and the
+            // 7 safe C2 analítica/vacunación concepts become AUTO_PROPOSABLE
+            // proposals for the D16/D5 machinery.
+            const target = targetForConcept(field.concept);
+            contribution(result, field.concept, target, target === 'NONE' ? 'NO_PROPOSAL' : 'AUTO_PROPOSABLE', value, value, item.line, item.index,
+                { semantic_status: 'RECOGNIZED' });
+        }
+    }
+
+    function structuralReject(raw, lines, code, message) {
     const result = base(raw, UNIT_STATE_UNRECOGNIZED);
     for (let index = 0; index < lines.length; index += 1) {
 const view = lineView(lines[index]);
@@ -249,6 +585,7 @@ if (views[index] === '• CIP:') return structuralReject(raw, lines, 'CIP_PRESEN
                 { semantic_status: 'UNBOUND', provenance: { source: SOURCE_EORDEN, raw: null, line_index: null } });
         }
     ses(result, parsed);
+    if (parsed.hasExtMarker) parseExtension(result, parsed);
     // D3 state semantics: RECOGNIZED requires every parsed concept to be safely
     // usable; any NO_VALUE / PROVENANCE_ONLY / UNRECOGNIZED_VALUE / blocked
     // contribution or warning marks the unit PARTIALLY_RECOGNIZED so only safe

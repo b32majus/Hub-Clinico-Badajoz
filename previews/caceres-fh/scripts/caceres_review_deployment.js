@@ -10,7 +10,7 @@
   applyProfile();
   document.addEventListener('DOMContentLoaded', applyProfile);
   window.CACERES_FH_REVIEW = Object.freeze({
-    deploymentId: 'caceres-fh-review', sourceSha: '456454172b67a00ea5ba9583f14999a4be5ff0c2',
-    lastFunctionalSha: '456454172b67a00ea5ba9583f14999a4be5ff0c2', version: 'CÁCERES-REVIEW-0.5', profile: PROFILE
+    deploymentId: 'caceres-fh-review', sourceSha: 'e1120ba85817a1807cea8c1e938867ad778921f4',
+    lastFunctionalSha: 'e1120ba85817a1807cea8c1e938867ad778921f4', version: 'CÁCERES-REVIEW-0.6', profile: PROFILE
   });
 })();
