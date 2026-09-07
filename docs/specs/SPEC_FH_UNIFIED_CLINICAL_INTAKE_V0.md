@@ -1,17 +1,27 @@
 # SPEC — Unified Clinical Intake V0 (Farmacia)
 
-**Estado:**
+**Estado histórico de shaping:**
 
 ```text
 SPEC_REPAIR=PASS
 INDEPENDENT_SPEC_RECHECK_OMEN=PASS
 INDEPENDENT_SPEC_RECHECK_MUSE=PASS
 SPEC_CONTENT=CLOSED
-READY_FOR_TO_TICKETS=YES
 TICKET_DRAFTING=COMPLETE
-TICKET_HANDOFF_AUDIT=PENDING
-READY_FOR_AGENT=NO
-READY_FOR_IMPLEMENTATION=NO
+```
+
+**Estado post-implementación verificado (2026-09-07):**
+
+```text
+BASELINE_UNIFIED_INTAKE_T1_T10=PUBLISHED
+AUTO_REVEAL_A=PUBLISHED
+D17_EXT_V1_B=PUBLISHED
+CLINICAL_HYDRATION_C1=PUBLISHED
+SHARED_ANALYTICS_HYDRATION_C2=PUBLISHED
+PUBLISHED_FUNCTIONAL_HEAD=e1120ba85817a1807cea8c1e938867ad778921f4
+POST_MERGE_FARMACIA_SMOKE_1019=PASS
+EVALUATION_SCOPE=SYNTHETIC_DEMO
+PILOT_PRODUCTION=NO
 ```
 
 **Reparación post-auditoría:** consolidación quirúrgica de los findings
@@ -22,10 +32,12 @@ activo, apply por concepto, matriz comparison/proposal, `can_preview`, contrato
 textual productor↔parser). No reabre shaping ni amplía scope.
 **Autoridad de shaping:** `CONTEXT.md`, `FEATURE_BRIEF_FH_UNIFIED_CLINICAL_INTAKE_V0.md`,
 `docs/work-orders/IMPLEMENTATION_PLAN_FH_UNIFIED_CLINICAL_INTAKE_V0.md`.
-**Publicación:** checkpoint duradero en la rama de trabajo dedicada
-(`work/hermes/fh-unified-clinical-intake-brief`); candidato de ticket train
-registrado; auditoría independiente TICKET/HANDOFF pendiente antes de
-`ready-for-agent`.
+**Publicación actual:** la implementación está publicada en
+`recovery/farmacia-pr-replay-20260727`. La cadena baseline T1–T10/hardening se
+amplió después con A (#334/#335), B D17_EXT_V1 (#336/#337) y Train C
+(#338/#339/#340), promovido mediante #342 / PR #341 al HEAD funcional
+`e1120ba85817a1807cea8c1e938867ad778921f4`. El snapshot Cáceres 0.5 y el
+paquete externo son artefactos separados y no se actualizan automáticamente.
 **Nota de autoridad GitHub:**
 - Rama publicada verificada en el momento de esta revisión:
   `recovery/farmacia-pr-replay-20260727`.
@@ -955,10 +967,14 @@ determinista que transporta los datos clínicos explícitos que la plantilla
 capturaba y el export D17 descartaba (datos específicos de patología,
 tratamientos previos, analítica/vacunación y comorbilidades comunes). El
 prefijo D17 legacy queda INTACTO hasta `PROGRAMA SES / Código / Denominación`;
-la extensión es un bloque adicional al final. **Frontera B (issue #336):** los
-conceptos extendidos son transporte/provenance únicamente — `target='NONE'`,
-`proposal_status='NO_PROPOSAL'` — y NO se hidratan ni aplican en Farmacia; esa
-aplicación corresponde a la WO C posterior con su propio mapping.
+la extensión es un bloque adicional al final. **Frontera B histórica (issue
+#336):** B terminó en transporte/provenance. **Estado publicado post-Train C:**
+C1 (#339) habilita únicamente los 39 conceptos `DIRECT_FUTURE_TARGET` /
+`NORMALIZATION_REQUIRED` con destinos/adapters cerrados y gates clínicos; C2
+(#340) añade únicamente 7 conceptos seguros de analítica/vacunación y una
+superficie compartida. Los compuestos siguen provenance-only y el concepto
+combinado `derma_viral_serologies` permanece `target='NONE'` /
+`proposal_status='NO_PROPOSAL'` sin dividirse en VHB/VHC/VIH.
 
 Serialización normativa (una sola forma, sin variantes ni fuzzy):
 
@@ -1032,21 +1048,25 @@ Semántica del parser (WO-B/WO-C):
 - Valor explícito inválido (enum/checkbox fuera de contrato, o valor vacío):
   `semantic_status='UNRECOGNIZED_VALUE'` + warning, sin fabricar valor válido;
   unidad degradada.
-- Campos extendidos presentes y válidos → contribución con el nombre de concepto
-  exacto del contrato, `target='NONE'`, `proposal_status='NO_PROPOSAL'`,
-  `semantic_status='RECOGNIZED'`, provenance con `raw` y `line_index`.
+- Campos extendidos presentes y válidos conservan el concepto exacto,
+  `semantic_status='RECOGNIZED'`, provenance con `raw` y `line_index`. En B todos
+  terminaban en `NONE/NO_PROPOSAL`; tras C1/C2, solo los mappings aprobados
+  resuelven a target exacto + proposal protegida. Compuestos y serología
+  combinada permanecen `NONE/NO_PROPOSAL`.
 - Ausencia de campos opcionales no degrada la unidad: un D17_EXT_V1 válido con
   opcionales ausentes permanece `RECOGNIZED` (el auto-reveal de #334 sigue
   funcionando); una extensión malformada degrada la unidad y el auto-reveal
   falla cerrado.
 - Invalididad base D17/SES conserva el comportamiento existente.
 
-Clasificación fuente→destino para la WO C (registrada, NO ejecutada en B):
-`DIRECT_FUTURE_TARGET`, `NORMALIZATION_REQUIRED` (p. ej. Hurley `I` →
-`Hurley I`), `PROVENANCE_ONLY/COMPOSITE` (pso_detalle, da_detalle,
-bio_otros_texto), `NO_CURRENT_STRUCTURED_TARGET` (analítica/vacunación). El
-contrato helado `contract-336-d17-ext-v1.json` es la autoridad de etiquetas,
-conceptos, valores, condiciones padre y clasificación futura.
+Clasificación fuente→destino registrada por B y adjudicada por Train C:
+`DIRECT_FUTURE_TARGET` / `NORMALIZATION_REQUIRED` → C1, 39 mappings cerrados;
+`PROVENANCE_ONLY/COMPOSITE` (pso_detalle, da_detalle, bio_otros_texto) → sin
+split; analítica/vacunación → C2 habilita 7 mappings seguros tras extraer la
+superficie compartida; `derma_viral_serologies` continúa provenance-only por
+ser un valor combinado sin destino estructurado equivalente. El contrato
+helado `contract-336-d17-ext-v1.json` sigue siendo autoridad de labels,
+conceptos, valores y condiciones; C1/C2 no amplían la gramática del productor.
 
 PRESALUD: se mantiene el contrato estricto V0 ya adjudicado (D9/D10):
 
