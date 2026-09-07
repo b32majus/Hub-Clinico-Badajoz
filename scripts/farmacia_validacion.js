@@ -494,6 +494,13 @@
         var manualGate = isManual && !presentation;
         byId("formServicioManual").classList.toggle("hidden", !manualGate);
         byId("formManualSolicitud").classList.toggle("hidden", !manualReady);
+        // C2 (issue #340): ONE shared analítica/vacunación surface. Visible
+        // for the manual-ready Farmacia entry AND for a recognized D17_EXT_V1
+        // Dermatology e-Orden presentation context; otherwise hidden. Showing
+        // it never writes anything: visibility only, no hidden/preemptive
+        // clinical write. PreSalud-only, malformed/partial e-Orden, unrelated
+        // service or conflicting context never reveal it (fail closed).
+        byId("formAnaliticaVacunacion").classList.toggle("hidden", !manualReady && !presentation);
         byId("validationBlock").classList.toggle("hidden", manualGate ? !manualReady : false);
         byId("formDerma").classList.toggle("hidden", (manualGate || modoActual !== "derma") && !presentation);
         byId("formReuma").classList.toggle("hidden", manualGate || modoActual !== "reuma");
