@@ -58,8 +58,8 @@ try {
   await page.locator('input[name="analitica_recente"][value="SÍ"]').check();
   await page.locator('input[name="vacunacion"][value="SÍ"]').check();
   await page.locator('.export-button').click();
-  const expected = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n═══════════════════════════════════════════════════════\n• CIP: CIP-SINTETICO-PSO\n• Marca comercial solicitada: Marca PSO\n• Dosis solicitada: 300 mg\n• Vía solicitada: SC\n• Pauta: Cada 14 días\n• Inducción solicitada: SÍ\n• Justificación clínica: Justificación sintética\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS';
-  check(await page.evaluate(() => window.__lastExportText) === expected, 'browser export matches exact PSORIASIS D17 fixture');
+  const expected = 'SOLICITUD DERMATOLOGÍA → FARMACIA - PSORIASIS\n═══════════════════════════════════════════════════════\n• CIP: CIP-SINTETICO-PSO\n• Marca comercial solicitada: Marca PSO\n• Dosis solicitada: 300 mg\n• Vía solicitada: SC\n• Pauta: Cada 14 días\n• Inducción solicitada: SÍ\n• Justificación clínica: Justificación sintética\nPROGRAMA SES\n• Código: SES_PSOR\n• Denominación: PSORIASIS\nEXTENSIÓN CLÍNICA DERMATOLOGÍA V1\nANALÍTICA Y VACUNACIÓN\n• Analítica completa <3 meses: SÍ\n• Vacunación completa/revisada: SÍ\nFIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+  check(await page.evaluate(() => window.__lastExportText) === expected, 'browser export matches exact PSORIASIS D17 + D17_EXT_V1 fixture');
   await page.evaluate(() => { window.__lastExportText = null; });
   await page.locator('#marca_comercial').fill(''); await page.locator('.export-button').click();
   check(alerts.at(-1) === '⚠️ Falta: Marca comercial del fármaco solicitado' && await page.evaluate(() => window.__lastExportText) === null, 'browser blank brand blocks and emits no text');

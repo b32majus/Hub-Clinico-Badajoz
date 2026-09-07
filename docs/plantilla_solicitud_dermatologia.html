@@ -632,14 +632,26 @@
             return el ? el.value : 'No especificado';
         }
 
-        function getCheck(id) {
-            var el = document.getElementById(id);
-            return el && el.checked ? '[X] SÍ' : '[ ] NO';
+        // D17_EXT_V1 field readers: absence is explicit (null = omit line).
+        // Unchecked checkbox / unselected radio NEVER serialize NO or false.
+        function extText(id) {
+            var value = getVal(id).trim();
+            return value !== '' ? value : null;
         }
 
-        function getCheckSimple(id) {
+        function extRadio(name) {
+            var el = document.querySelector('input[name="' + name + '"]:checked');
+            return el ? el.value : null;
+        }
+
+        function extCheck(id) {
             var el = document.getElementById(id);
-            return el && el.checked ? 'SÍ' : 'NO';
+            return el && el.checked ? 'SÍ' : null;
+        }
+
+        function extSelectIfChecked(selectId, checkId) {
+            var el = document.getElementById(checkId);
+            return el && el.checked ? getVal(selectId) : null;
         }
 
         function updateViaOtra() {
@@ -737,152 +749,123 @@
             var nombre = getVal('nombre');
             var cip = getVal('cip');
 
-            var fechaAnalitica = getVal('fecha_analitica');
-            var fechaFormat = fechaAnalitica;
-            if (fechaAnalitica) {
-                var parts = fechaAnalitica.split('-');
-                fechaFormat = parts[2] + '/' + parts[1] + '/' + parts[0];
-            } else {
-                fechaFormat = 'No indicada';
-            }
-            var analiticaReciente = getRadioVal('analitica_recente');
-            var hemoCheck = getCheckSimple('check_hemograma');
-            var bioCheck = getCheckSimple('check_bioquimica');
-            var mantouxCheck = getCheckSimple('check_mantoux');
-            var mantouxRes = getVal('sel_mantoux');
-            var seroCheck = getCheckSimple('check_serologias');
-            var seroRes = getVal('sel_serologias');
-            var vacunacion = getRadioVal('vacunacion');
-            var vacunacionObs = getVal('vacunacion_obs');
+                var pauta = getVal('pauta');
+                var induccion = getRadioVal('induccion');
+                var justificacion = getVal('justificacion');
 
-            var imc = getVal('imc');
-            var tabaco = getRadioVal('tabaco');
-            var paq = getVal('paquetes_ano');
-            var dm = getRadioVal('dm');
-            var hba1c = getVal('hba1c');
-            var sm = getRadioVal('sm');
-            var otrasComorb = getVal('otras_comorbilidades');
-
-            var pauta = getVal('pauta');
-            var induccion = getRadioVal('induccion');
-            var justificacion = getVal('justificacion');
-
-            var datosClinicos = '';
-
-            if (patologia === 'hs') {
-                var ihs4 = getVal('hs_ihs4');
-                var hurley = getRadioVal('hs_hurley');
-                var evolucion = getVal('hs_evolucion');
-                var localizacion = getVal('hs_localizacion');
-
-                var doxCheck = getCheck('check_dox');
-                var rifCheck = getCheck('check_rif');
-                var otrosAtbCheck = getCheck('check_otros_atb');
-                var otrosAtbTexto = getVal('otros_atb_texto');
-
-                var adaCheck = getCheck('check_ada');
-                var adaDur = getVal('ada_duracion');
-                var adaMotivo = getVal('ada_motivo');
-                var otrosBioCheck = getCheck('check_bio_otros');
-                var otrosBioTexto = getVal('bio_otros_texto');
-
-                datosClinicos = 'DATOS CLÍNICOS — HIDRADENITIS SUPURATIVA\n' +
-                    '• IHS4: ' + ihs4 + '\n' +
-                    '• Hurley: ' + hurley + '\n' +
-                    '• Evolución: ' + evolucion + '\n' +
-                    '• Localización: ' + localizacion + '\n' +
-                    '\n' +
-                    'TRATAMIENTOS PREVIOS — HS\n' +
-                    'Antibióticos (Líneas previas fallidas):\n' +
-                    doxCheck + ' Doxiciclina / Clindamicina\n' +
-                    rifCheck + ' Rifampicina + Clindamicina\n' +
-                    otrosAtbCheck + ' Otros: ' + otrosAtbTexto + '\n' +
-                    '\n' +
-                    'Biológicos previos:\n' +
-                    adaCheck + ' Adalimumab | Duración: ' + adaDur + ' | Fin: ' + adaMotivo + '\n' +
-                    otrosBioCheck + ' Otros: ' + otrosBioTexto;
-            }
-
-            if (patologia === 'pso') {
-                var pasi = getVal('pso_pasi');
-                var bsa = getVal('pso_bsa');
-                var dlqi = getVal('pso_dlqi');
-                var pga = getVal('pso_pga');
-                var sistemico = getRadioVal('pso_sistemico');
-                var detalle = getVal('pso_detalle');
-                var motivo = getVal('pso_motivo');
-
-                datosClinicos = 'DATOS CLÍNICOS — PSORIASIS\n' +
-                    '• PASI: ' + pasi + '\n' +
-                    '• BSA: ' + bsa + '\n' +
-                    '• DLQI: ' + dlqi + '\n' +
-                    '• PGA: ' + pga + '\n' +
-                    '• Tratamiento sistémico previo: ' + sistemico;
-                if (sistemico === 'SÍ' && detalle) {
-                    datosClinicos += ' | Detalle: ' + detalle;
+                // D17_EXT_V1 - versioned extension: explicit clinical data the
+                // legacy D17 prefix discarded. Exact contract labels, canonical
+                // order, absence omitted (never NO/false from empty controls);
+                // conditional details only while their parent condition holds,
+                // so stale hidden text cannot leak into the export.
+                function pushField(fields, label, value) {
+                    if (value !== null) fields.push('\u2022 ' + label + ': ' + value);
                 }
-                if (sistemico === 'NO' && motivo) {
-                    datosClinicos += ' | Motivo: ' + motivo;
+
+                var patologiaFields = [];
+                if (patologia === 'hs') {
+                    pushField(patologiaFields, 'IHS4', extText('hs_ihs4'));
+                    pushField(patologiaFields, 'Hurley', extRadio('hs_hurley'));
+                    pushField(patologiaFields, 'Tiempo evoluci\u00f3n', extText('hs_evolucion'));
+                    pushField(patologiaFields, 'Localizaci\u00f3n', extText('hs_localizacion'));
+                    pushField(patologiaFields, 'Doxiciclina / Clindamicina previa', extCheck('check_dox'));
+                    pushField(patologiaFields, 'Rifampicina + Clindamicina previa', extCheck('check_rif'));
+                    pushField(patologiaFields, 'Otros ATB previos', extCheck('check_otros_atb'));
+                    if (document.getElementById('check_otros_atb').checked) {
+                        pushField(patologiaFields, 'Otros ATB \u2014 detalle', extText('otros_atb_texto'));
+                    }
+                    pushField(patologiaFields, 'Adalimumab previo', extCheck('check_ada'));
+                    if (document.getElementById('check_ada').checked) {
+                        pushField(patologiaFields, 'Adalimumab \u2014 duraci\u00f3n', extText('ada_duracion'));
+                        pushField(patologiaFields, 'Adalimumab \u2014 motivo fin', extText('ada_motivo'));
+                    }
+                    pushField(patologiaFields, 'Otros biol\u00f3gicos previos', extCheck('check_bio_otros'));
+                    if (document.getElementById('check_bio_otros').checked) {
+                        pushField(patologiaFields, 'Otros biol\u00f3gicos \u2014 detalle', extText('bio_otros_texto'));
+                    }
                 }
-                datosClinicos += '\n';
-            }
 
-            if (patologia === 'da') {
-                var easi = getVal('da_easi');
-                var scorad = getVal('da_scorad');
-                var dlqiPoem = getVal('da_dlqi_poem');
-                var ciclosporina = getRadioVal('da_ciclosporina');
-                var detalle = getVal('da_detalle');
-                var motivo = getVal('da_motivo');
-
-                datosClinicos = 'DATOS CLÍNICOS — DERMATITIS ATÓPICA\n' +
-                    '• EASI: ' + easi + '\n' +
-                    '• SCORAD: ' + scorad + '\n' +
-                    '• DLQI / POEM: ' + dlqiPoem + '\n' +
-                    '• Tratamiento con ciclosporina: ' + ciclosporina;
-                if (ciclosporina === 'SÍ' && detalle) {
-                    datosClinicos += ' | Detalle: ' + detalle;
+                if (patologia === 'pso') {
+                    pushField(patologiaFields, 'PASI', extText('pso_pasi'));
+                    pushField(patologiaFields, 'BSA', extText('pso_bsa'));
+                    pushField(patologiaFields, 'DLQI', extText('pso_dlqi'));
+                    pushField(patologiaFields, 'PGA', extText('pso_pga'));
+                    var sistemico = extRadio('pso_sistemico');
+                    pushField(patologiaFields, 'Tratamiento sist\u00e9mico previo', sistemico);
+                    if (sistemico === 'S\u00cd') {
+                        // One explicit composite detail; never split into drug/duration/reason.
+                        pushField(patologiaFields, 'Tratamiento sist\u00e9mico previo \u2014 detalle', extText('pso_detalle'));
+                    }
+                    if (sistemico === 'NO') {
+                        pushField(patologiaFields, 'Motivo no tratamiento sist\u00e9mico', extText('pso_motivo'));
+                    }
                 }
-                if (ciclosporina === 'NO' && motivo) {
-                    datosClinicos += ' | Motivo: ' + motivo;
+
+                if (patologia === 'da') {
+                    pushField(patologiaFields, 'EASI', extText('da_easi'));
+                    pushField(patologiaFields, 'SCORAD', extText('da_scorad'));
+                    pushField(patologiaFields, 'DLQI / POEM', extText('da_dlqi_poem'));
+                    var ciclosporina = extRadio('da_ciclosporina');
+                    pushField(patologiaFields, 'Ciclosporina previa', ciclosporina);
+                    if (ciclosporina === 'S\u00cd') {
+                        // One explicit composite detail; never split into dose/duration/reason.
+                        pushField(patologiaFields, 'Ciclosporina previa \u2014 detalle', extText('da_detalle'));
+                    }
+                    if (ciclosporina === 'NO') {
+                        pushField(patologiaFields, 'Motivo no ciclosporina', extText('da_motivo'));
+                    }
                 }
-                datosClinicos += '\n';
-            }
 
-            if (patologia === 'vit') {
-                var extension = getVal('vit_extension');
-                var facial = getRadioVal('vit_facial');
-                var calcineurina = getRadioVal('vit_calcineurina');
-                var corticoides = getRadioVal('vit_corticoides');
-                var observaciones = getVal('vit_observaciones');
-
-                datosClinicos = 'DATOS CLÍNICOS — VITÍLIGO\n' +
-                    '• Extensión afectada: ' + extension + '\n' +
-                    '• Afectación facial: ' + facial + '\n' +
-                    '• Inhibidor calcineurina tópico previo: ' + calcineurina + '\n' +
-                    '• Corticoides tópicos previos: ' + corticoides;
-                if (observaciones) {
-                    datosClinicos += '\n• Observaciones: ' + observaciones;
+                if (patologia === 'vit') {
+                    pushField(patologiaFields, 'Extensi\u00f3n afectada', extText('vit_extension'));
+                    pushField(patologiaFields, 'Afectaci\u00f3n facial', extRadio('vit_facial'));
+                    pushField(patologiaFields, 'Inhibidor t\u00f3pico de calcineurina previo', extRadio('vit_calcineurina'));
+                    pushField(patologiaFields, 'Corticoides t\u00f3picos previos', extRadio('vit_corticoides'));
+                    pushField(patologiaFields, 'Observaciones cl\u00ednicas', extText('vit_observaciones'));
                 }
-                datosClinicos += '\n';
-            }
 
-            if (patologia === 'aa') {
-                var extension = getRadioVal('aa_extension');
-                var duracion = getRadioVal('aa_duracion');
-                var corticoides = getRadioVal('aa_corticoides');
-                var observaciones = getVal('aa_observaciones');
-
-                datosClinicos = 'DATOS CLÍNICOS — ALOPECIA AREATA\n' +
-                    '• Extensión >50% cuero cabelludo: ' + extension + '\n' +
-                    '• Episodio actual >6 meses: ' + duracion + '\n' +
-                    '• Corticoesteroides orales sistémicos: ' + corticoides;
-                if (observaciones) {
-                    datosClinicos += '\n• Observaciones: ' + observaciones;
+                if (patologia === 'aa') {
+                    pushField(patologiaFields, 'Extensi\u00f3n >50% cuero cabelludo', extRadio('aa_extension'));
+                    pushField(patologiaFields, 'Episodio actual >6 meses', extRadio('aa_duracion'));
+                    pushField(patologiaFields, 'Corticoesteroides orales sist\u00e9micos', extRadio('aa_corticoides'));
+                    pushField(patologiaFields, 'Observaciones cl\u00ednicas', extText('aa_observaciones'));
                 }
-                datosClinicos += '\n';
-            }
 
+                var analiticaFields = [];
+                pushField(analiticaFields, 'Fecha anal\u00edtica', extText('fecha_analitica'));
+                pushField(analiticaFields, 'Anal\u00edtica completa <3 meses', extRadio('analitica_recente'));
+                pushField(analiticaFields, 'Hemograma verificado', extCheck('check_hemograma'));
+                pushField(analiticaFields, 'Bioqu\u00edmica verificada', extCheck('check_bioquimica'));
+                pushField(analiticaFields, 'Mantoux/IGRA', extSelectIfChecked('sel_mantoux', 'check_mantoux'));
+                pushField(analiticaFields, 'VHB/VHC/VIH', extSelectIfChecked('sel_serologias', 'check_serologias'));
+                pushField(analiticaFields, 'Vacunaci\u00f3n completa/revisada', extRadio('vacunacion'));
+                pushField(analiticaFields, 'Observaciones vacunaci\u00f3n', extText('vacunacion_obs'));
+
+                var comorbilidadesFields = [];
+                var tabacoValor = extRadio('tabaco');
+                var dmValor = extRadio('dm');
+                pushField(comorbilidadesFields, 'IMC', extText('imc'));
+                pushField(comorbilidadesFields, 'Tabaquismo', tabacoValor);
+                if (tabacoValor === 'Activo') {
+                    pushField(comorbilidadesFields, 'Paquetes/a\u00f1o', extText('paquetes_ano'));
+                }
+                pushField(comorbilidadesFields, 'Diabetes', dmValor);
+                if (dmValor === 'S\u00cd') {
+                    pushField(comorbilidadesFields, 'HbA1c', extText('hba1c'));
+                }
+                pushField(comorbilidadesFields, 'S\u00edndrome metab\u00f3lico', extRadio('sm'));
+                pushField(comorbilidadesFields, 'Otras comorbilidades', extText('otras_comorbilidades'));
+
+                var secciones = [];
+                if (patologiaFields.length) {
+                    secciones.push('DATOS CL\u00cdNICOS \u2014 ' + patologiaNombre.toUpperCase() + '\n' + patologiaFields.join('\n'));
+                }
+                if (analiticaFields.length) {
+                    secciones.push('ANAL\u00cdTICA Y VACUNACI\u00d3N\n' + analiticaFields.join('\n'));
+                }
+                if (comorbilidadesFields.length) {
+                    secciones.push('COMORBILIDADES\n' + comorbilidadesFields.join('\n'));
+                }
             var sesPrograms = {
                 'SES_HS': 'HIDRADENITIS SUPURATIVA',
                 'SES_PSOR': 'PSORIASIS',
@@ -893,18 +876,26 @@
             var sesCode = getVal('programa_ses');
             var viaSolicitada = getVal('via_solicitada');
             var viaExportada = viaSolicitada === 'Otra' ? 'Otra — ' + getVal('via_otra_espec').trim() : viaSolicitada;
-            var texto = 'SOLICITUD DERMATOLOGÍA → FARMACIA - ' + patologiaNombre.toUpperCase() + '\n' +
-                '═══════════════════════════════════════════════════════\n' +
-                '• CIP: ' + cip + '\n' +
-                '• Marca comercial solicitada: ' + getVal('marca_comercial').trim() + '\n' +
-                '• Dosis solicitada: ' + getVal('dosis_solicitada').trim() + '\n' +
-                '• Vía solicitada: ' + viaExportada + '\n' +
-                '• Pauta: ' + pauta + '\n' +
-                '• Inducción solicitada: ' + induccion + '\n' +
-                '• Justificación clínica: ' + getVal('justificacion').trim() + '\n' +
-                'PROGRAMA SES\n' +
-                '• Código: ' + sesCode + '\n' +
-                '• Denominación: ' + sesPrograms[sesCode];
+                var texto = 'SOLICITUD DERMATOLOGÍA → FARMACIA - ' + patologiaNombre.toUpperCase() + '\n' +
+                    '═══════════════════════════════════════════════════════\n' +
+                    '• CIP: ' + cip + '\n' +
+                    '• Marca comercial solicitada: ' + getVal('marca_comercial').trim() + '\n' +
+                    '• Dosis solicitada: ' + getVal('dosis_solicitada').trim() + '\n' +
+                    '• Vía solicitada: ' + viaExportada + '\n' +
+                    '• Pauta: ' + pauta + '\n' +
+                    '• Inducción solicitada: ' + induccion + '\n' +
+                    '• Justificación clínica: ' + getVal('justificacion').trim() + '\n' +
+                    'PROGRAMA SES\n' +
+                    '• Código: ' + sesCode + '\n' +
+                    '• Denominación: ' + sesPrograms[sesCode];
+                // Extension ownership is defined by marker + terminator; only
+                // sections with at least one explicit field are serialized.
+                // Patient name/apellidos are never exported (CIP-only identity).
+                if (secciones.length) {
+                    texto += '\n' + 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1\n' +
+                        secciones.join('\n') + '\n' +
+                        'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+                }
 
             var textarea = document.createElement('textarea');
             textarea.value = texto;

@@ -133,4 +133,51 @@ for (const [name, raw] of NEGATIVES) {
   console.log('PASS negative ambiguous dual pathology');
 }
 
-console.log(`PRESENTATION_CONTEXT_CHECK PASS ${passed} cases`);
+    {
+      // D17_EXT_V1 (issue #336): a valid versioned extended e-Orden keeps the
+      // #334 auto-reveal working. The extension is transport/provenance only
+      // (extended concepts are target NONE / NO_PROPOSAL), so the explicit
+      // pathology still establishes the context and the whole unit stays
+      // RECOGNIZED with optional extended fields simply absent.
+      const extended = eorden('PSORIASIS', 'SES_PSOR', 'PSORIASIS') + '\n' + [
+        'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+        'DATOS CLÍNICOS — PSORIASIS',
+        '• PASI: 10.5',
+        '• Tratamiento sistémico previo: SÍ',
+        '• Tratamiento sistémico previo — detalle: Metotrexato 8 meses, intolerancia',
+        'ANALÍTICA Y VACUNACIÓN',
+        '• Fecha analítica: 2026-09-01',
+        '• Analítica completa <3 meses: SÍ',
+        '• Hemograma verificado: SÍ',
+        'COMORBILIDADES',
+        '• IMC: 27.4',
+        'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+      ].join('\n');
+      const result = runUnifiedIntake(extended);
+      assert.equal(result.units?.[0]?.parser?.unit_state, 'RECOGNIZED',
+        'valid extended e-Orden stays RECOGNIZED with absent optional fields');
+      assert.deepEqual(eOrdenPresentationContext(result), { service: 'derma', pathology: 'Psoriasis' },
+        'valid extended e-Orden keeps #334 auto-reveal');
+      passed++;
+      console.log('PASS context D17_EXT_V1 extended e-Orden');
+    }
+    {
+      // A malformed D17_EXT_V1 extension degrades the unit: auto-reveal fails
+      // closed (no context from a non-normative envelope).
+      const malformed = eorden('PSORIASIS', 'SES_PSOR', 'PSORIASIS') + '\n' + [
+        'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+        'DATOS CLÍNICOS — PSORIASIS',
+        '• PASI: 10.5',
+        '• ETIQUETA DESCONOCIDA: 3',
+        'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+      ].join('\n');
+      const result = runUnifiedIntake(malformed);
+      assert.equal(result.units?.[0]?.parser?.unit_state, 'PARTIALLY_RECOGNIZED',
+        'malformed extension degrades the unit');
+      assert.equal(eOrdenPresentationContext(result), null,
+        'malformed D17_EXT_V1 extension: no auto-reveal context');
+      passed++;
+      console.log('PASS negative malformed D17_EXT_V1 extension');
+    }
+
+    console.log(`PRESENTATION_CONTEXT_CHECK PASS ${passed} cases`);
