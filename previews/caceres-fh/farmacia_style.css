@@ -6033,3 +6033,160 @@
     .evaluation-ledger-actions { align-items: stretch; flex-direction: column; }
     .evaluation-ledger-actions .btn { width: 100%; }
 }
+
+/* T6 #298 — transient unified-intake preview and per-source gates. */
+.fh-intake-review__intro {
+    max-width: 72ch;
+    margin: 0 0 14px;
+    color: #475569;
+    line-height: 1.55;
+}
+.fh-intake-review__patient {
+    display: flex;
+    width: fit-content;
+    margin: 0 0 14px;
+    padding: 7px 11px;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    background: #F8FAFC;
+    color: #334155;
+    font-weight: 700;
+}
+.fh-intake-review textarea {
+    min-height: 12rem;
+    margin-top: 7px;
+    resize: vertical;
+}
+.fh-intake-review__actions { align-items: center; }
+.fh-intake-review__panel {
+    display: grid;
+    gap: 16px;
+    margin-top: 22px;
+}
+.fh-intake-source {
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid #CBD5E1;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+.fh-intake-source__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.fh-intake-source__heading h3 { margin: 0; color: #0F172A; }
+.fh-intake-gate { margin: 10px 0 14px; color: #334155; overflow-wrap: anywhere; }
+.fh-intake-concepts { display: grid; gap: 8px; margin: 0 0 14px; }
+.fh-intake-concept {
+    display: grid;
+    grid-template-columns: minmax(9rem, 0.7fr) minmax(0, 1.3fr);
+    gap: 4px 14px;
+    padding-block: 8px;
+    border-bottom: 1px solid #E2E8F0;
+}
+.fh-intake-concept dt { color: #334155; font-weight: 700; }
+.fh-intake-concept dd { margin: 0; color: #0F172A; overflow-wrap: anywhere; }
+.fh-intake-provenance { grid-column: 1 / -1; color: #475569; overflow-wrap: anywhere; }
+.fh-intake-empty, .fh-intake-global-block { color: #7C2D12; font-weight: 700; }
+.fh-intake-raw { margin-top: 10px; color: #334155; }
+.fh-intake-raw summary { cursor: pointer; font-weight: 700; }
+.fh-intake-raw pre {
+    max-height: 15rem;
+    overflow: auto;
+    padding: 12px;
+    border-radius: 8px;
+    background: #F1F5F9;
+    color: #1E293B;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+    .fh-intake-concept { grid-template-columns: 1fr; }
+    .fh-intake-source__heading { align-items: flex-start; flex-direction: column; }
+}
+
+/* T7 #299 — per-concept explicit apply decisions (D11/D16). */
+.fh-intake-decision__title {
+    margin: 4px 0 0;
+    padding-top: 8px;
+    border-top: 1px solid #E2E8F0;
+    color: #0F172A;
+}
+.fh-intake-decision {
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid #CBD5E1;
+    border-left: 4px solid #64748B;
+    border-radius: 10px;
+    background: #FFFFFF;
+}
+.fh-intake-decision__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+.fh-intake-decision__heading strong { color: #0F172A; }
+.fh-intake-decision__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 0 0 8px;
+    color: #334155;
+    overflow-wrap: anywhere;
+}
+.fh-intake-decision__note {
+    margin: 4px 0 8px;
+    color: #475569;
+    overflow-wrap: anywhere;
+}
+.fh-intake-decision__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+.fh-intake-decision .fh-intake-provenance { margin: 2px 0 0; }
+
+/* T8 #300 — intake-review lifecycle, reparse/reapply and safe global apply (D11/D16). */
+.fh-intake-lifecycle {
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #EFF6FF;
+    color: #1E40AF;
+    font-weight: 600;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+.fh-intake-decision__heading .status-badge + .status-badge { margin-left: 6px; }
+.fh-intake-global-apply {
+    margin-top: 14px;
+    padding: 14px 16px;
+    border: 1px solid #94A3B8;
+    border-left: 4px solid #0369A1;
+    border-radius: 10px;
+    background: #F8FAFC;
+}
+.fh-intake-global-apply h4 { margin: 0 0 6px; color: #0F172A; }
+.fh-intake-global-staged {
+    margin: 8px 0;
+    padding-left: 20px;
+    color: #334155;
+}
+.fh-intake-global-result {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #ECFDF5;
+    color: #065F46;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+    .fh-intake-decision__heading { align-items: flex-start; flex-direction: column; }
+}

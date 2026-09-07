@@ -2478,7 +2478,7 @@
         lines.push("Otras observaciones del acto de validación: " + valueOrDash(byId("fhValObservaciones").value));
         lines.push("");
         lines.push("=== FIN DEL INFORME ===");
-        lines.push("Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.4");
+        lines.push("Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.5");
         lines.push("ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.");
         return lines;
     }
