@@ -11,17 +11,26 @@
 | Elemento | Valor |
 | --- | --- |
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado recovery | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 / promoción Cáceres 0.6 |
+| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd` |
+| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 / promoción Cáceres 0.6 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; source/last-functional de 0.6 |
 | Candidate Train C | `e5e52e2bc8f94805b4771ec40aa19820bb6be02f` |
-| CI post-merge | Farmacia smoke #1025 `success` sobre `19d10c9abefb7b25130b4b17e3289d54a17315ee`; Pages #219 `success` |
+| CI del último HEAD de producto | Farmacia smoke #1025 `success` sobre `19d10c9abefb7b25130b4b17e3289d54a17315ee`; Pages #219 `success` |
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; fuera de esta línea |
 | Snapshot Cáceres | `CÁCERES-REVIEW-0.6`; issue #345 / PR #346; candidate `749c82409a415e800500b39018027b189fd6a131`; merge `19d10c9abefb7b25130b4b17e3289d54a17315ee` |
 | Source/last-functional snapshot 0.6 | `e1120ba85817a1807cea8c1e938867ad778921f4` según `deployment-manifest.json` |
 | Paquete externo | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no refrozen por 0.6 (#345/#346) |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) |
-| Work order documental actual | #347 — `WO-DOC-FH-POST-CACERES-0.6-RECONCILIATION-01` |
+| Work order documental actual | #349 — `WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY-01` |
+
+## Convención operativa de SHAs
+
+- **Tip Git de `recovery`**: se obtiene live de GitHub. Incluye commits de producto, documentación y administración; por tanto puede moverse sin que cambie el producto.
+- **Último HEAD de producto publicado**: último commit/merge que cambia producto funcional o snapshot distribuible. Esta es la referencia estable para afirmar qué entrega está publicada.
+- **HEAD clínico funcional congelado**: SHA que un snapshot fija en `source_sha` / `last_functional_sha`.
+- Un merge `documentation-only` **no** obliga a reconciliar de nuevo los HEADs funcionales. Solo se actualizan si el diff publicado cambia producto/snapshot o si cambia el manifest funcional.
+- Incidencia administrativa al iniciar #349: creación accidental de `__noop__` y eliminación inmediata mediante commit normal. Compare `a7428b...→91e0049...` = 2 commits, `files: []`; cero cambio neto de árbol. Detalle completo en #349.
 
 ## Última evolución — Unified Clinical Intake A/B/Train C
 
@@ -37,7 +46,8 @@
 | Promoción Train C | #342 / PR #341 → `e1120ba85817a1807cea8c1e938867ad778921f4` | MERGED_AND_VERIFIED; #342 CLOSED/completed; smoke post-merge #1019 success |
 | Reconciliación documental post Train C | #343 / PR #344 → `79c9fd37f2a631a4316439013e4b0632268cf90a` | MERGED_AND_VERIFIED; #343 CLOSED/completed; smoke #1022 success |
 | Promoción Cáceres 0.6 | #345 / PR #346 → candidate `749c82409a415e800500b39018027b189fd6a131`, merge `19d10c9abefb7b25130b4b17e3289d54a17315ee` | MERGED_AND_VERIFIED; #345 CLOSED/completed; smoke #1025 success; Pages #219 success |
-| Reconciliación documental post 0.6 | #347 | IN_PROGRESS en rama docs aislada; no cambia producto |
+| Reconciliación documental post 0.6 | #347 / PR #348 → `a7428b0195435477bfa86e779b63ea95955ed723` | MERGED_AND_VERIFIED; #347 CLOSED/completed; smoke #1028 success; documentation-only |
+| Convención HEAD/tip Git | #349 | IN_PROGRESS; documentation-only; establece taxonomía estable y evita reconciliación circular |
 
 ### Garantías clínicas publicadas
 
@@ -96,7 +106,8 @@
 | **WO Train C Promotion (#342)** | Promoción técnica a recovery | ✅ Merged | `work/fh-eorden-clinical-hydration-train-c-338-20260907` | merge `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341) | Smoke #1019 success; snapshot/package no refrozen |
 | **WO-DOC-FH-POST-TRAIN-C (#343)** | Reconciliación documental post Train C | ✅ Merged | `docs/fh-post-train-c-reconciliation-343-20260907` | merge `79c9fd37f2a631a4316439013e4b0632268cf90a` (PR #344) | #343 CLOSED/completed; documentación-only |
 | **WO-FH-CACERES-REVIEW-0.6 (#345)** | Promoción snapshot Cáceres 0.6 | ✅ Merged | `work/fh-caceres-review-0.6-345-20260907` | candidate `749c824...` → merge `19d10c9...` (PR #346) | Manifest `CÁCERES-REVIEW-0.6`, source/last-functional `e1120ba8...`; smoke #1025 + Pages #219 success |
-| **WO-DOC-FH-POST-CACERES-0.6 (#347)** | Reconciliación documental post 0.6 | 📋 Ready for review | `docs/fh-post-caceres-0.6-reconciliation-347-20260908` | pendiente | INDEX/WOS + estado vivo 20260908; sin producto |
+| **WO-DOC-FH-POST-CACERES-0.6 (#347)** | Reconciliación documental post 0.6 | ✅ Merged | `docs/fh-post-caceres-0.6-reconciliation-347-20260908` | merge `a7428b0195435477bfa86e779b63ea95955ed723` (PR #348) | #347 CLOSED/completed; smoke #1028 success; documentación-only |
+| **WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY (#349)** | Convención tip Git / HEAD de producto / HEAD clínico | 📋 Ready for review | `docs/fh-recovery-head-terminology-349-20260908` | pendiente | Solo INDEX/WOS/estado vivo; no cambia producto/snapshot |
 | **Preflight 1** | SSH GitHub + clonado | ✅ Merged | `feature/reuma-v2-prebiologico-fh-les-sjogren` | — | Preflight manual, sin WO formal |
 | **Preflight 2** | Validación post-merge WO-001 | ✅ Merged | `feature/reuma-v2-prebiologico-fh-les-sjogren` | `f7e1083` | Pull `--ff-only` y verificación de gobernanza |
 | **WO-001** | Gobernanza ejecutable | ✅ Merged | `work/hermes/wo-001-agent-governance` → `feature/...` | `f5177f7` → `f7e1083` | PR #2 |

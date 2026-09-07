@@ -4,7 +4,8 @@
 | --- | --- |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada | `recovery/farmacia-pr-replay-20260727` |
-| HEAD publicado recovery | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 |
+| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd` |
+| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; congelado por 0.6 |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.6` |
 | Candidate snapshot | `749c82409a415e800500b39018027b189fd6a131` |
@@ -13,6 +14,16 @@
 | CI post-merge | Farmacia smoke #1025 `success`; Pages #219 `success` |
 | Uso | Evaluación/demo con datos sintéticos |
 | Piloto / producción | No acreditados |
+
+## Convención de estado Git y producto
+
+Este documento distingue tres referencias que no deben colapsarse en un único “HEAD”:
+
+1. **Tip Git de `recovery`**: último commit de la rama. Es volátil y debe consultarse live en GitHub; puede cambiar por documentación o tareas administrativas sin cambio funcional.
+2. **Último HEAD de producto publicado**: último commit/merge que modificó código funcional o snapshot distribuible. En este estado es `19d10c9abefb7b25130b4b17e3289d54a17315ee` (PR #346).
+3. **HEAD clínico funcional congelado**: SHA que el snapshot declara como `source_sha` / `last_functional_sha`. Para Cáceres 0.6 es `e1120ba85817a1807cea8c1e938867ad778921f4`.
+
+**Regla estable:** un merge `documentation-only` puede mover el tip Git, pero no cambia por sí mismo el HEAD de producto ni el HEAD clínico funcional. No debe abrirse una nueva reconciliación documental únicamente para actualizar el tip tras un merge documental.
 
 ## 1. Estado publicado
 
@@ -23,7 +34,7 @@ La línea de Farmacia conserva A + B + Train C y, desde PR #346, el snapshot est
 - **Train C — #338/#339/#340, promovido por #342/#341:** 39 conceptos clínicos/comorbilidades + 7 conceptos seguros de analítica/vacunación, con aplicación profesional protegida.
 - **Cáceres 0.6 — #345 / PR #346:** snapshot reproducible que incorpora A+B+C y se publica en `previews/caceres-fh/`.
 
-`recovery` está ahora en `19d10c9...` porque el merge de promoción del snapshot es posterior a `e1120ba...`. El producto clínico que 0.6 congela sigue siendo `e1120ba...`; no confundir HEAD de publicación con HEAD clínico funcional.
+El tip Git de `recovery` puede ser posterior a `19d10c9...` por merges documentales/administrativos. El último HEAD que cambió producto/snapshot sigue siendo `19d10c9...`, mientras que el producto clínico que 0.6 congela sigue siendo `e1120ba...`. La diferencia es intencional y no representa desalineación funcional.
 
 ## 2. Qué está demostrado
 
