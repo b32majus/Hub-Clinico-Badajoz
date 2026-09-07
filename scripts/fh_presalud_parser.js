@@ -10,12 +10,31 @@
  * input byte-exact in `raw_input`, is previewable, and has `can_apply ===
  * false` (D3).
  *
- * Grammar (normative contract, D9/D10/D17):
+ * Grammar (normative contract, D9/D10/D17 + #327 labeled adjudication):
  *
- *   PRESALUD_RECORD_V0 :=
+ *   PRESALUD_RECORD_POSITIONAL_V0 :=  (legacy D9 positional value stream)
  *     Estado ';' Medicamento ';' Vía ';' Dosis ';' Pauta ';' Días
+ *   PRESALUD_RECORD_LABELED_V0 :=      (#327: the real demonstrated export)
+ *     "Estado:"     Estado
+ *     ";" "Medicamento:" Medicamento
+ *     ";" "Vía:"     Vía
+ *     ";" "Dosis:"    Dosis
+ *     ";" "Pauta:"    Pauta
+ *     ";" "Días:"     Días
  *   PRESALUD_MEDICAMENTO_V0 :=
  *     principio_activo_raw WS* "(" marca_comercial_raw ")" WS* descripcion_restante_raw?
+ *
+ * Both serializations carry the SAME six concepts in the SAME contract order
+ * (`Estado -> Medicamento -> Vía -> Dosis -> Pauta -> Días`). The labeled form
+ * is the exact serialization demonstrated during shaping (six labeled fields
+ * separated by `;`); the positional form is retained as an explicit,
+ * unambiguous compatibility path. The grammar is closed and deterministic:
+ * only the exact contract labels (`Estado`, `Medicamento`, `Vía`, `Dosis`,
+ * `Pauta`, `Días`, accents required) in exact contract order are recognized;
+ * no aliases, no accent folding (`Via`/`Dias` do NOT recognize `Vía`/`Días`),
+ * no alternate orders, no fuzzy recovery, no heuristic reordering. A
+ * partial/hybrid label line (some fields labeled, others not) is not either
+ * normative serialization and fails closed as unrecognized.
  *
  * Semantics implemented:
  * - The record is EXACTLY six `;`-delimited fields in this order. Each value
@@ -24,6 +43,10 @@
  *   non-empty or the line is not a valid D9 record (no omitted-field
  *   tolerance). A line that is not a valid record is preserved as an
  *   unrecognized fragment with zero proposals.
+ * - Labeled-field values are the exact text after `Label:` with transport
+ *   whitespace trimmed peripherally (D17); the labels are grammar, not
+ *   clinical data, and the byte-exact raw line is always preserved in
+ *   `raw_input` and provenance.
  * - The parser NEVER infers from drug text. Only the exact contractual
  *   subgrammar match (one single well-formed parenthesized group, non-empty
  *   principle and non-empty marca) extracts `marca_comercial_explicit`. Any
@@ -38,18 +61,19 @@
  *   `value_state = NO_VALUE`. Neither is ever given clinical meaning in V0 and
  *   neither can ever clear or rewrite a control.
  * - Multi-record: a PreSalud source containing more than one record is
- *   detected deterministically and returns the structured unsupported-V0
- *   state `MULTI_RECORD_UNSUPPORTED_V0`: raw preserved, preview raw, zero
- *   proposals, apply blocked. This is NOT `SEGMENTATION_BLOCKED` (D9). No
- *   chronology, record selection, cross-record composition, dedup, grouping,
- *   or first/last-record wins — even when records carry identical values.
+ *   detected deterministically (across either serialization) and returns the
+ *   structured unsupported-V0 state `MULTI_RECORD_UNSUPPORTED_V0`: raw
+ *   preserved, preview raw, zero proposals, apply blocked. This is NOT
+ *   `SEGMENTATION_BLOCKED` (D9). No chronology, record selection, cross-record
+ *   composition, dedup, grouping, or first/last-record wins — even when
+ *   records carry identical values.
  * - REPEATED LABEL RULE (D9): `MULTIPLE_SOURCE_VALUES` +
  *   `REQUIRES_SELECTION` only for multiple explicit values within ONE
  *   record/unit whose boundaries are safe — never across records. Because the
- *   D9 positional record contains exactly one value per concept, this parser
- *   never fabricates a repeated label from one record; the enforceable V0
- *   guarantee is that cross-record values (identical or distinct) are never
- *   selectable and never grouped.
+ *   D9 record (positional or labeled) contains exactly one value per concept,
+ *   this parser never fabricates a repeated label from one record; the
+ *   enforceable V0 guarantee is that cross-record values (identical or
+ *   distinct) are never selectable and never grouped.
  * - Unknown text inside the unit is preserved. Unexpected internal failure is
  *   returned as a unit-contained `PARSER_ERROR` preserving the affected raw.
  */
@@ -82,13 +106,28 @@ export const WARN_ROUTE_VALUE_UNRECOGNIZED = 'ROUTE_VALUE_UNRECOGNIZED';
 // proposed (no converting an unknown value into a route target).
 export const PRESALUD_ROUTE_EXACT_ALLOWLIST = Object.freeze(['SC', 'IV', 'Oral', 'IM']);
 
-// Label-prefix guard: the D9 PreSalud record is a POSITIONAL value stream with
-// NO labels, headers, aliases, or accent variants. A field that starts with
-// one of these label prefixes (exact, unaccented, or alias form followed by
-// `:`) marks the line as a NON-normative serialization: the parser must not
-// recognize a labeled/aliased/reordered-label serialization as the D9 grammar
-// (D17 anti-fuzzy contract: no aliases, no accent folding `Via`/`Dias`, no
-// alternate orders). Such a line is preserved as unknown with zero proposals.
+// Contract labels of the real demonstrated PreSalud export (issue #327): six
+// labeled fields in exact contract order, accents required. This is the
+// normative labeled grammar, NOT a negative. Only these exact tokens (after
+// transport leading whitespace) followed by `:` are recognized; any alias
+// (`Marca`, `Fármaco`, ...), unaccented form (`Via`, `Dias`), or reordered
+// label is not the grammar and fails closed.
+const PRESALUD_CONTRACT_LABELS = ['Estado', 'Medicamento', 'Vía', 'Dosis', 'Pauta', 'Días'];
+// One labeled field: optional transport leading whitespace, the exact
+// contract label, optional transport whitespace, `:`, then the raw value
+// through end of field (may be empty, e.g. `Estado: ;`).
+const PRESALUD_LABELED_FIELD_RE = new RegExp(
+    `^[ \\t\\u00a0]*(${PRESALUD_CONTRACT_LABELS.join('|')})[ \\t\\u00a0]*:([\\s\\S]*)$`
+);
+
+// Label-prefix guard for the POSITIONAL serialization only: the legacy D9
+// positional record is a value stream with NO labels. A field that starts
+// with any known label prefix (contract, unaccented, or alias form followed
+// by `:`) marks the line as NOT a positional record — such a line is only a
+// valid record when it matches the exact labeled grammar above (full six
+// contract labels in order); otherwise it is preserved as unknown with zero
+// proposals (D17 anti-fuzzy: no aliases, no accent folding `Via`/`Dias`, no
+// alternate orders).
 const PRESALUD_LABEL_PREFIX_RE =
     /^(?:Estado|Medicamento|Marca comercial|Marca|Principio activo|Vía|Via|Dosis|Pauta|Días|Dias|Fármaco|Farmaco)\s*:/;
 
@@ -262,28 +301,75 @@ function parseMedicamento(rawValue) {
     };
 }
 
-/** A D9 record-shaped line: exactly six fields, fields 2..5 non-empty. */
-function isRecordLine(content) {
-    const view = recordView(content);
-    if (view === '') return false;
-    // Anti-fuzzy: a labeled / aliased / accent-variant / reordered-label
-    // serialization is NOT a D9 positional record (D17). A label prefix on
-    // any field marks the whole line as non-normative.
-    const fields = view.split(';');
-    if (fields.length !== RECORD_FIELDS) return false;
-    for (let i = 0; i < fields.length; i += 1) {
-        // Fail-closed on indented labels: transport authorizes trailing
-        // whitespace only, so a label prefix stays a label even when the
-        // field carries leading whitespace. Testing the trimmed field
-        // never trims a label into validity — it rejects it.
-        const fieldView = fields[i].replace(/^[ \t\u00a0]+/, '');
-        if (PRESALUD_LABEL_PREFIX_RE.test(fieldView)) return false;
+    /**
+     * Detect the exact labeled serialization (#327): six `;`-delimited fields
+     * where EVERY field begins with its exact contract label (`Estado:`, ...
+     * `Días:`) in contract order. Transport leading whitespace before a label is
+     * tolerated for reading; the labels are grammar. Returns the per-field
+     * labeled view (label stripped) or null when the line is not the full exact
+     * labeled grammar (alias, unaccented, reordered, partial/hybrid).
+     */
+    function labeledRecordView(content) {
+        const view = recordView(content);
+        if (view === '') return null;
+        const fields = view.split(';');
+        if (fields.length !== RECORD_FIELDS) return null;
+        const values = [];
+        for (let i = 0; i < RECORD_FIELDS; i += 1) {
+            const field = fields[i];
+            const m = PRESALUD_LABELED_FIELD_RE.exec(field.replace(/^[ \t\u00a0]+/, ''));
+            if (!m) return null;
+            // The label must be the EXACT contract label for this position
+            // (order is part of the grammar; reordered labels fail closed).
+            if (m[1] !== PRESALUD_CONTRACT_LABELS[i]) return null;
+            values.push(m[2]);
+        }
+        return values;
     }
-    for (let i = 1; i < 5; i += 1) {
-        if (fields[i].trim() === '') return false;
+
+    /**
+     * A record-shaped line in either normative serialization: the exact labeled
+     * grammar (#327) or the legacy positional value stream (D9).
+     * - Labeled: exactly six fields, every field an exact contract label in
+     *   order. `Estado` (field 1) and `Días` (field 6) may be empty; fields 2..5
+     *   must be non-empty (no omitted-field tolerance) or the line is not valid.
+     * - Positional: exactly six fields; fields 2..5 non-empty; NO field may
+     *   start with a label prefix (contract, unaccented, or alias) — a labeled /
+     *   aliased / accent-variant / reordered-label serialization is NOT the
+     *   positional grammar (D17).
+     * A line matching neither grammar is not a record (preserved as unknown).
+     */
+    function isRecordLine(content) {
+        const view = recordView(content);
+        if (view === '') return false;
+        const fields = view.split(';');
+        if (fields.length !== RECORD_FIELDS) return false;
+
+        // Labeled grammar (#327): all six fields must carry their exact contract
+        // label in contract order. Empty `Estado`/`Días` values are valid;
+        // empty Medicamento/Vía/Dosis/Pauta break the record.
+        const labeled = labeledRecordView(content);
+        if (labeled !== null) {
+            for (let i = 1; i < 5; i += 1) {
+                if (labeled[i].trim() === '') return false;
+            }
+            return true;
+        }
+
+        // Legacy positional grammar: no field may be a label prefix of any kind.
+        for (let i = 0; i < fields.length; i += 1) {
+            // Fail-closed on indented labels: transport authorizes trailing
+            // whitespace only, so a label prefix stays a label even when the
+            // field carries leading whitespace. Testing the trimmed field
+            // never trims a label into validity — it rejects it.
+            const fieldView = fields[i].replace(/^[ \t\u00a0]+/, '');
+            if (PRESALUD_LABEL_PREFIX_RE.test(fieldView)) return false;
+        }
+        for (let i = 1; i < 5; i += 1) {
+            if (fields[i].trim() === '') return false;
+        }
+        return true;
     }
-    return true;
-}
 
 /**
  * Deterministically count how many PreSalud records this source contains
@@ -300,17 +386,33 @@ function countRecords(recordLines) {
 
 /**
  * Parse exactly one already-delimited D9 record line into concept
- * contributions. Callers guarantee the line is record-shaped.
+ * contributions. Callers guarantee the line is record-shaped (positional D9
+ * or #327 exact labeled grammar). Both serializations carry the SAME six
+ * concepts in contract order and produce identical semantic contributions;
+ * the original byte-exact raw line is preserved for evidence.
  */
 function parseSingleRecord(result, raw, lineIndex) {
     const view = recordView(raw);
-    const fields = view.split(';').map((f) => f.replace(/^[ \t\u00a0]+/, ''));
-    // Exact source slices up to the field delimiter: raw is never rewritten
-    // for evidence. D10 authorizes peripheral trim only for internal
-    // subgrammar components (parseMedicamento trims its own view).
-    const exactFields = raw.split(';');
-    const medicamentoExact = exactFields.length === RECORD_FIELDS ? exactFields[1] : fields[1];
-    const [estadoRaw, medicamentoRaw, viaRaw, dosisRaw, pautaRaw, diasRaw] = fields;
+    // #327 exact labeled grammar: semantic field = text after `Label:` with
+    // transport whitespace trimmed peripherally for reading (D17).
+    // Legacy positional grammar: field = value with transport leading
+    // whitespace stripped (behavior unchanged).
+    const labeledView = labeledRecordView(raw);
+    const rawFields = raw.split(';');
+    let semanticFields;
+    let medicamentoEvidence;
+    if (labeledView !== null) {
+        semanticFields = labeledView.map((value) => value.trim());
+        medicamentoEvidence = semanticFields[1];
+    } else {
+        semanticFields = view.split(';').map((f) => f.replace(/^[ \t\u00a0]+/, ''));
+        // Exact source slices up to the field delimiter: raw is never
+        // rewritten for evidence. D10 authorizes peripheral trim only for
+        // internal subgrammar components (parseMedicamento trims its own
+        // view).
+        medicamentoEvidence = rawFields.length === RECORD_FIELDS ? rawFields[1] : semanticFields[1];
+    }
+    const [estadoRaw, medicamentoRaw, viaRaw, dosisRaw, pautaRaw, diasRaw] = semanticFields;
     void medicamentoRaw;
 
     // Estado / Días: provenance-only, never clinical.
@@ -321,9 +423,9 @@ function parseSingleRecord(result, raw, lineIndex) {
     // record's identity anchor is not established: the record yields zero
     // proposals (only provenance-only contributions), the raw is preserved,
     // and no partial rescue occurs.
-    const sub = parseMedicamento(medicamentoExact);
+    const sub = parseMedicamento(medicamentoEvidence);
     if (!sub.matched) {
-        contribution(result, 'medicamento', TARGET_NONE, PROPOSAL_NO_PROPOSAL, medicamentoExact, medicamentoExact, raw, lineIndex, {
+        contribution(result, 'medicamento', TARGET_NONE, PROPOSAL_NO_PROPOSAL, medicamentoEvidence, medicamentoEvidence, raw, lineIndex, {
             semantic_status: MEDICATION_SUBGRAMMAR_UNMATCHED,
             blocking: true,
             reason: { code: MEDICATION_SUBGRAMMAR_UNMATCHED, message: 'Medicamento does not fully match PRESALUD_MEDICAMENTO_V0.' },
@@ -341,11 +443,11 @@ function parseSingleRecord(result, raw, lineIndex) {
 
     // principio_activo_raw: provenance-only (D10). No proposal, no comparison.
     // The component value is trimmed internally; the source evidence stays exact.
-    contribution(result, 'principio_activo_raw', TARGET_NONE, PROPOSAL_NO_PROPOSAL, sub.principio_activo_raw, medicamentoExact, raw, lineIndex, {
+    contribution(result, 'principio_activo_raw', TARGET_NONE, PROPOSAL_NO_PROPOSAL, sub.principio_activo_raw, medicamentoEvidence, raw, lineIndex, {
         semantic_status: PROVENANCE_ONLY,
     });
     // Only a full exact subgrammar match authorizes commercial_name (D10/D7).
-    contribution(result, 'commercial_name', 'fhDermaFarmaco', PROPOSAL_AUTO_PROPOSABLE, sub.marca_comercial_raw, medicamentoExact, raw, lineIndex, {
+    contribution(result, 'commercial_name', 'fhDermaFarmaco', PROPOSAL_AUTO_PROPOSABLE, sub.marca_comercial_raw, medicamentoEvidence, raw, lineIndex, {
         semantic_status: 'RECOGNIZED',
         marca_comercial_explicit: sub.marca_comercial_raw,
         principio_activo_raw: sub.principio_activo_raw,
