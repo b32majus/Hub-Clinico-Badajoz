@@ -9,6 +9,12 @@
     var autocompleteActiveIndex = -1;
     var manualRequestedAutocompleteActiveIndex = -1;
     var manualRequestedTransientProposal = null;
+    // WO #334 — transient e-Orden PRESENTATION context (issue #334). Set only
+    // by the Unified Intake review for a NEW REQUEST without a selected
+    // Farmacia patient, from explicit recognized e-Orden material. It drives
+    // block VISIBILITY ONLY: it never writes clinical controls, never
+    // associates a patient and never touches treatment validation.
+    var eOrdenPresentation = null;
     var currentPatient = null;
     var otherDrugs = [];
     var otherDrugRowSeq = 0;
@@ -230,6 +236,19 @@
         });
     }
 
+    function activeEOrdenPresentation() {
+        return eOrdenPresentation && eOrdenPresentation.service === "derma"
+            && eOrdenPresentation.pathology && !currentPatient ? eOrdenPresentation : null;
+    }
+
+    function setEOrdenPresentation(context) {
+        eOrdenPresentation = context && context.service === "derma"
+            && typeof context.pathology === "string" && context.pathology.trim() !== ""
+            ? { service: "derma", pathology: context.pathology }
+            : null;
+        mostrarFormulario();
+    }
+
     function activeDermaPathology() {
         if (isManualOrigin()) return currentManualService() === "derma" ? currentManualPatologia() : "";
         if ((modoActual || resolveModoFromOrigen(currentOrigenEntradaValue())) !== "derma") return "";
@@ -267,7 +286,17 @@
     }
 
     function toggleHSBlock() {
-        var pathology = activeDermaPathology();
+        // WO #334: transient presentation context reveals the matching
+        // pathology block without pre-writing the fhDermaPatologia control;
+        // an explicitly selected pathology always takes precedence.
+        var presentation = activeEOrdenPresentation();
+        var pathology;
+        if (presentation) {
+            var explicit = byId("fhDermaPatologia");
+            pathology = (explicit && explicit.value) ? explicit.value : presentation.pathology;
+        } else {
+            pathology = activeDermaPathology();
+        }
         var blocks = {
             "Hidradenitis supurativa": "formHS",
             "Psoriasis": "formPsoriasis",
@@ -457,12 +486,25 @@
         modoActual = resolveModoFromOrigen(origen);
         var isManual = origen === "manual_farmacia";
         var manualReady = isManual && manualSelectionReady();
-        byId("formServicioManual").classList.toggle("hidden", !isManual);
+        // WO #334: while the transient e-Orden presentation context is active
+        // the redundant manual service/pathology gate is hidden and the
+        // Dermatology request form is shown directly; visibility only.
+        var presentation = activeEOrdenPresentation();
+        if (presentation) modoActual = "derma";
+        var manualGate = isManual && !presentation;
+        byId("formServicioManual").classList.toggle("hidden", !manualGate);
         byId("formManualSolicitud").classList.toggle("hidden", !manualReady);
-        byId("validationBlock").classList.toggle("hidden", isManual ? !manualReady : false);
-        byId("formDerma").classList.toggle("hidden", isManual || modoActual !== "derma");
-        byId("formReuma").classList.toggle("hidden", isManual || modoActual !== "reuma");
-        byId("formDigestivo").classList.toggle("hidden", isManual || modoActual !== "digestivo");
+        // C2 (issue #340): ONE shared analítica/vacunación surface. Visible
+        // for the manual-ready Farmacia entry AND for a recognized D17_EXT_V1
+        // Dermatology e-Orden presentation context; otherwise hidden. Showing
+        // it never writes anything: visibility only, no hidden/preemptive
+        // clinical write. PreSalud-only, malformed/partial e-Orden, unrelated
+        // service or conflicting context never reveal it (fail closed).
+        byId("formAnaliticaVacunacion").classList.toggle("hidden", !manualReady && !presentation);
+        byId("validationBlock").classList.toggle("hidden", manualGate ? !manualReady : false);
+        byId("formDerma").classList.toggle("hidden", (manualGate || modoActual !== "derma") && !presentation);
+        byId("formReuma").classList.toggle("hidden", manualGate || modoActual !== "reuma");
+        byId("formDigestivo").classList.toggle("hidden", manualGate || modoActual !== "digestivo");
         if (isManual && manualReady && !byId("fhManualFecha").value) {
             byId("fhManualFecha").value = new Date().toISOString().slice(0, 10);
         }
@@ -472,7 +514,7 @@
         if (!isManual && modoActual === "digestivo" && !byId("fhDigFecha").value) {
             byId("fhDigFecha").value = new Date().toISOString().slice(0, 10);
         }
-        setDermaFormReadonly(isManual);
+        setDermaFormReadonly(manualGate);
         setManualContextDisplay();
         toggleHSBlock();
         updateValidationModuleSummaries();
@@ -2478,7 +2520,7 @@
         lines.push("Otras observaciones del acto de validación: " + valueOrDash(byId("fhValObservaciones").value));
         lines.push("");
         lines.push("=== FIN DEL INFORME ===");
-        lines.push("Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.5");
+        lines.push("Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · CÁCERES-REVIEW-0.6");
         lines.push("ATENCIÓN: Datos sintéticos. No usar para decisiones clínicas reales.");
         return lines;
     }
@@ -2721,6 +2763,7 @@
         buildExcelGeneralObservations: buildExcelGeneralObservations,
         updateValidationExportAvailability: updateValidationExcelExportAvailability,
         updateDermaPathologyVisibility: toggleHSBlock,
+        setEOrdenPresentation: setEOrdenPresentation,
         buildValidationV2Input: buildValidationV2Input,
         buildValidationV2Projection: buildValidationV2Projection,
         getValidationV2TechnicalContext: getValidationV2TechnicalContext,

@@ -6,9 +6,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'previews/caceres-fh');
-const SHA = '456454172b67a00ea5ba9583f14999a4be5ff0c2';
-const LAST_FUNCTIONAL_SHA = '456454172b67a00ea5ba9583f14999a4be5ff0c2';
-const VERSION = 'CÁCERES-REVIEW-0.5';
+const SHA = 'e1120ba85817a1807cea8c1e938867ad778921f4';
+const LAST_FUNCTIONAL_SHA = 'e1120ba85817a1807cea8c1e938867ad778921f4';
+const VERSION = 'CÁCERES-REVIEW-0.6';
 const PROFILE = 'Profesional FH — Entorno de evaluación';
 const REVIEW_PROVENANCE = `Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · ${VERSION}`;
 const htmlNames = [
@@ -27,7 +27,7 @@ const scripts = [
   'farmacia_export_v2_validation_adapter', 'farmacia_export_v2_context',
   'farmacia_validacion', 'fh_intake_segmenter', 'fh_eorden_parser', 'fh_presalud_parser',
   'fh_intake_pipeline', 'fh_intake_apply', 'fh_intake_review_lifecycle',
-  'fh_intake_ses_program', 'fh_intake_review_ui', 'farmacia_tratamiento_common',
+  'fh_intake_ses_program', 'fh_intake_presentation_context', 'fh_intake_review_ui', 'farmacia_tratamiento_common',
   'farmacia_export_v2_first_visit_adapter', 'farmacia_primera_visita',
   'farmacia_export_v2_followup_active_lines_adapter', 'farmacia_seguimiento',
   'farmacia_longitudinal_normalizer', 'farmacia_dashboard_paciente',
@@ -158,7 +158,7 @@ async function main() {
     'scripts/fh_intake_segmenter.js', 'scripts/fh_eorden_parser.js', 'scripts/fh_presalud_parser.js',
     'scripts/fh_intake_pipeline.js', 'scripts/fh_intake_apply.js',
     'scripts/fh_intake_review_lifecycle.js', 'scripts/fh_intake_ses_program.js',
-    'scripts/fh_intake_review_ui.js'
+    'scripts/fh_intake_presentation_context.js', 'scripts/fh_intake_review_ui.js'
   ]) {
     assert.ok(expected.has(file), `Unified Intake dependency missing from fixed allowlist: ${file}`);
     assert.ok((await stat(path.join(OUT, file))).size > 0, `Unified Intake dependency is empty: ${file}`);

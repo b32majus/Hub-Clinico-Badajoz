@@ -6,14 +6,21 @@
  * grammar (no DOM, no side effects, no field-content parsing, no concept
  * extraction, no hydration, no patient association, no fuzzy recovery).
  *
- * Structural grammars (normative contracts, spec D17 / D9):
+ * Structural grammars (normative contracts, spec D17 / D9 / D17_EXT_V1):
  *   - e-Orden unit : D17 serialization: exact header line
  *       `SOLICITUD DERMATOLOGÍA → FARMACIA - <título>` followed by ONE opening
  *       `═` separator block (U+2550) and body lines that are blank, `•` bullet,
- *       `PROGRAMA SES`, or `- ` continuation. There is NO closing separator;
- *       the unit runs from the exact header through the final `• Denominación:`
- *       line. Body lines must be blank, `•` bullet, `PROGRAMA SES`, or
- *       `- ` continuation (opening separator is outside the body).
+ *       `PROGRAMA SES`, `- ` continuation, or an exact D17_EXT_V1 structural
+ *       line (extension marker `EXTENSIÓN CLÍNICA DERMATOLOGÍA V1`, its
+ *       terminator `FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1`, or an extension
+ *       section header: `DATOS CLÍNICOS — <título>`, `ANALÍTICA Y
+ *       VACUNACIÓN`, `COMORBILIDADES`; extension field lines are `•`
+ *       bullets). There is NO closing `═` separator; a D17_EXT_V1 unit runs
+ *       from the exact header through its `FIN EXTENSIÓN CLÍNICA
+ *       DERMATOLOGÍA V1` line, so the whole versioned envelope stays ONE
+ *       complete eorden_unit. Extension section content, order and marker
+ *       coherence are NEVER adjudicated here — T4 owns them; T2 stays
+ *       structural-only.
  *   - PreSalud unit : D9 serialization: a contiguous run of lines, each a
  *       single `Estado;Medicamento;Vía;Dosis;Pauta;Días` record — exactly six
  *       `;`-delimited fields; `Estado` (field 1) and `Días` (field 6) may be
@@ -75,6 +82,11 @@ export const BLOCK_MIXED_NO_UNIQUE_PARTITION = 'MIXED_INPUT_NO_UNIQUE_PARTITION'
 
 const EORDEN_SES_SECTION_LINE = 'PROGRAMA SES';
 const EORDEN_BULLET = '•';
+const EORDEN_EXT_MARKER = 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+const EORDEN_EXT_TERMINATOR = 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+const EORDEN_EXT_SECTION_ANALITICA = 'ANALÍTICA Y VACUNACIÓN';
+const EORDEN_EXT_SECTION_COMORBILIDADES = 'COMORBILIDADES';
+const EORDEN_EXT_SECTION_PATHOLOGY_PREFIX = 'DATOS CLÍNICOS — ';
 const EORDEN_FIELD_LABEL_PREFIXES = [
     '• CIP:',
     '• Marca comercial solicitada:',
@@ -188,10 +200,27 @@ function countEOrdenFieldLines(lines) {
 }
 
 /**
+ * True for the exact D17_EXT_V1 structural lines (extension marker,
+ * terminator, or extension section header). Field lines inside the
+ * extension are `•` bullets and are already allowed. These lines are
+ * structural transport only: T2 never validates their content, position
+ * or section order — semantic adjudication belongs to T4 (D17_EXT_V1).
+ * @param {string} c cleanLine() view of a body line
+ * @returns {boolean}
+ */
+function isEOrdenExtensionLine(c) {
+    if (c === EORDEN_EXT_MARKER || c === EORDEN_EXT_TERMINATOR) return true;
+    if (c === EORDEN_EXT_SECTION_ANALITICA || c === EORDEN_EXT_SECTION_COMORBILIDADES) return true;
+    return c.startsWith(EORDEN_EXT_SECTION_PATHOLOGY_PREFIX)
+        && c.length > EORDEN_EXT_SECTION_PATHOLOGY_PREFIX.length;
+}
+
+/**
  * True when every non-blank body line is structurally allowed inside a D17
- * e-Orden unit (`•` bullet, `PROGRAMA SES`, `- ` continuation). Separator
- * lines are NOT allowed inside the body (only the single opening separator
- * before the body). Blank lines are allowed (transport).
+ * e-Orden unit (`•` bullet, `PROGRAMA SES`, `- ` continuation, or an exact
+ * D17_EXT_V1 structural line: marker, terminator, section header).
+ * Separator lines are NOT allowed inside the body (only the single opening
+ * separator before the body). Blank lines are allowed (transport).
  * @param {string[]} bodyLines lines after the opening separator
  * @returns {boolean}
  */
@@ -202,6 +231,7 @@ function isEOrdenBodyClean(bodyLines) {
         if (c.startsWith(EORDEN_BULLET)) continue;
         if (c === EORDEN_SES_SECTION_LINE) continue;
         if (CONTINUATION_LINE_RE.test(c)) continue;
+        if (isEOrdenExtensionLine(c)) continue;
         return false;
     }
     return true;
@@ -550,7 +580,7 @@ function runSegmentation(rawInput) {
             if (isSeparatorLikeLine(lines[scanEndValid])) break;
             const c = cleanLine(lines[scanEndValid]);
             if (c === '') { scanEndValid += 1; continue; }
-            if (c.startsWith(EORDEN_BULLET) || c === EORDEN_SES_SECTION_LINE || CONTINUATION_LINE_RE.test(c)) { scanEndValid += 1; continue; }
+            if (c.startsWith(EORDEN_BULLET) || c === EORDEN_SES_SECTION_LINE || CONTINUATION_LINE_RE.test(c) || isEOrdenExtensionLine(c)) { scanEndValid += 1; continue; }
             break;
         }
         const blockEnd = nextH;
