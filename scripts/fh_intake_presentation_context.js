@@ -70,7 +70,11 @@ export function eOrdenPresentationContext(result) {
         const unit = units.find(candidate => candidate?.unit_index === contribution.unit_index);
         if (!unit || unit.blocked || unit?.source !== 'e-orden') return null;
         const state = unit?.parser?.unit_state;
-        if (state !== 'RECOGNIZED' && state !== 'PARTIALLY_RECOGNIZED') return null;
+        // WO #334 is intentionally stricter than generic reconciliation:
+        // auto-reveal requires a fully RECOGNIZED e-Orden unit. A partial
+        // unit may expose safe individual concepts for review, but it must
+        // not establish presentation context automatically.
+        if (state !== 'RECOGNIZED') return null;
         // Explicit internal coherence: the SES program (Código/Denominación) is
         // the other explicit pathology carrier inside the same e-Orden. When it
         // names a different pathology the source is conflicting → no context.

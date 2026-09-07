@@ -88,6 +88,21 @@ for (const [name, raw] of NEGATIVES) {
 }
 
 {
+  // PARTIALLY_RECOGNIZED is deliberately insufficient for auto-reveal.
+  // Safe individual concepts may still preview/reconcile, but the WO #334
+  // presentation gate requires the whole e-Orden unit to be RECOGNIZED.
+  const partial = eorden('PSORIASIS', 'SES_PSOR', 'PSORIASIS')
+    .replace('• Vía solicitada: SC', '• Vía solicitada: VIA-INVALIDA');
+  const result = runUnifiedIntake(partial);
+  assert.equal(result.units?.[0]?.parser?.unit_state, 'PARTIALLY_RECOGNIZED',
+    'fixture must exercise PARTIALLY_RECOGNIZED');
+  assert.equal(eOrdenPresentationContext(result), null,
+    'PARTIALLY_RECOGNIZED e-Orden: no presentation context');
+  passed++;
+  console.log('PASS negative partially-recognized e-Orden');
+}
+
+{
   // SES-blocked e-Orden (unknown/out-of-allowlist program) contributes zero
   // usable values: no presentation context.
   const blocked = eorden('PSORIASIS', 'SES_UCE', 'UCE');
