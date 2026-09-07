@@ -38,8 +38,12 @@
  * NORMALIZATION_REQUIRED concepts of the frozen B contract receive exact
  * targets and closed destination adapters (literal text, exact si/no select
  * values, explicit checkbox SÍ -> checked=true, exact Hurley I|II|III, strict
- * control-compatible numeric text). Composite provenance-only concepts and the
- * analítica/vacunación common concepts stay target NONE / NO_PROPOSAL. C1
+ * control-compatible numeric text). C2 (issue #340) extends the same layer
+ * with exactly the 7 safe analítica/vacunación common concepts (exact valid
+ * ISO date, closed si/no select, explicit checkbox SÍ, closed Mantoux enum,
+ * exact SÍ/NO/Pendiente vaccination mapping, literal observations text) —
+ * while the combined VHB/VHC/VIH serology concept stays provenance-only and
+ * MUST NEVER be split into the three separate Farmacia controls. C1
  * clinical gates (pathology coherence, parent condition) are pure functions
  * here and are enforced by the review UI at render, click and global-executor
  * time against LIVE form values. Pasting/importing never equals clinical
@@ -86,11 +90,14 @@ export const ASSOCIATION_TRANSIENT_NEW_REQUEST = 'TRANSIENT_NEW_REQUEST';
 /**
  * C1 (issue #339): the 39 D17_EXT_V1 concepts with a real Farmacia destination
  * (frozen B contract `contract-336-d17-ext-v1.json`, classes
- * DIRECT_FUTURE_TARGET / NORMALIZATION_REQUIRED). Composite provenance-only
- * concepts (`derma_psoriasis_prior_systemic_detail`,
+ * DIRECT_FUTURE_TARGET / NORMALIZATION_REQUIRED). C2 (issue #340) adds exactly
+ * the 7 safe analítica/vacunación common concepts through the same protected
+ * lifecycle. Composite provenance-only concepts
+ * (`derma_psoriasis_prior_systemic_detail`,
  * `derma_ad_prior_cyclosporine_detail`, `derma_hs_prior_other_biologics_detail`)
- * and the NO_CURRENT_STRUCTURED_TARGET analítica/vacunación concepts are
- * deliberately absent: they never become writable in C1.
+ * and the combined `derma_viral_serologies` concept remain deliberately absent:
+ * the combined serology carries VHB/VHC/VIH as ONE value while Farmacia exposes
+ * three separate controls, so it never becomes writable and never splits.
  */
 export const D17_EXT_HYDRATABLE_CONCEPTS = Object.freeze([
   'derma_hs_ihs4',
@@ -132,6 +139,16 @@ export const D17_EXT_HYDRATABLE_CONCEPTS = Object.freeze([
   'derma_comorb_hba1c',
   'derma_comorb_metabolic_syndrome',
   'derma_comorb_other',
+  // C2 (issue #340): exactly the 7 safe analítica/vacunación common concepts.
+  // The combined derma_viral_serologies stays provenance-only (NEVER split
+  // into fhAnaliticaSerologiasVhb/Vhc/Vih) and the composite details stay out.
+  'derma_lab_date',
+  'derma_lab_complete_lt3m',
+  'derma_cbc_verified',
+  'derma_biochemistry_verified',
+  'derma_tb_screening',
+  'derma_vaccination_review',
+  'derma_vaccination_observations',
 ]);
 
 const D17_EXT_HYDRATABLE_SET = new Set(D17_EXT_HYDRATABLE_CONCEPTS);
@@ -210,6 +227,16 @@ const CONCEPT_TARGETS = Object.freeze({
   derma_comorb_hba1c: 'fhHSComorbHba1c',
   derma_comorb_metabolic_syndrome: 'fhHSComorbSdMetabolico',
   derma_comorb_other: 'fhHSComorbOtras',
+  // C2 (issue #340): the 7 safe analítica/vacunación common concepts.
+  // derma_viral_serologies is deliberately absent: combined VHB/VHC/VIH has
+  // NO structured write target (provenance-only) and never splits.
+  derma_lab_date: 'fhAnaliticaFecha',
+  derma_lab_complete_lt3m: 'fhAnaliticaReciente',
+  derma_cbc_verified: 'fhAnaliticaHemograma',
+  derma_biochemistry_verified: 'fhAnaliticaBioquimica',
+  derma_tb_screening: 'fhAnaliticaMantoux',
+  derma_vaccination_review: 'fhAnaliticaVacunacion',
+  derma_vaccination_observations: 'fhAnaliticaObservaciones',
 });
 
 /** Exact target for a reconciled concept key (NONE when no writable target). */
@@ -254,11 +281,16 @@ function displayString(value) {
 /** D17_EXT_V1 concepts whose brownfield destination is a checkbox (checkbox_true). */
 export const D17_EXT_CHECKBOX_TARGETS = Object.freeze([
   'fhHSTtoDoxiClinda', 'fhHSTtoRifClinda', 'fhHSTtoOtrosAb', 'fhHSBioAda', 'fhHSBioOtros',
+  // C2 (issue #340): verified hemogram/biochemistry chips. Explicit SÍ only;
+  // absence of source never unchecks (the adapter never writes a boolean false).
+  'fhAnaliticaHemograma', 'fhAnaliticaBioquimica',
 ]);
 
 const D17_EXT_CHECKBOX_CONCEPTS = new Set([
   'derma_hs_prior_doxy_clinda', 'derma_hs_prior_rif_clinda', 'derma_hs_prior_other_antibiotics',
   'derma_hs_prior_adalimumab', 'derma_hs_prior_other_biologics',
+  // C2 (issue #340): verified analítica chips (explicit SÍ only, never unchecks).
+  'derma_cbc_verified', 'derma_biochemistry_verified',
 ]);
 
 const D17_EXT_SELECT_SI_NO_CONCEPTS = new Set([
@@ -266,7 +298,35 @@ const D17_EXT_SELECT_SI_NO_CONCEPTS = new Set([
   'derma_vitiligo_prior_topical_calcineurin', 'derma_vitiligo_prior_topical_steroids',
   'derma_aa_extent_gt50', 'derma_aa_episode_gt6m', 'derma_aa_systemic_corticosteroids',
   'derma_comorb_diabetes', 'derma_comorb_metabolic_syndrome',
+  // C2 (issue #340): "Analítica <3 meses" select uses the same closed si/no values.
+  'derma_lab_complete_lt3m',
 ]);
+
+/**
+ * C2 (issue #340): closed analítica/vacunación value adapters.
+ * - derma_lab_date accepts ONLY an exact valid ISO `YYYY-MM-DD` calendar date
+ *   (no DD/MM/YYYY, no partial dates, no whitespace variants, no coercion).
+ * - derma_tb_screening maps verbatim: the Mantoux/IGRA hidden carrier and its
+ *   chip/radio group share the exact same closed value space.
+ * - derma_vaccination_review maps the exact contract values SÍ/NO/Pendiente
+ *   into the existing control values si/no/pendiente (hidden carrier + chip).
+ * Any other value is rejected, never coerced.
+ */
+const C2_DATE_CONCEPTS = new Set(['derma_lab_date']);
+const C2_VERBATIM_ENUM_CONCEPTS = new Set(['derma_tb_screening']);
+const C2_VACCINATION_REVIEW_VALUES = Object.freeze({ SÍ: 'si', NO: 'no', Pendiente: 'pendiente' });
+const C2_MANTOUX_VALUES = Object.freeze(['Negativo', 'Positivo - tratado', 'Pendiente']);
+const ISO_DATE_TEXT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
+
+/** True only for an exact, real calendar `YYYY-MM-DD` date (UTC round-trip). */
+function isValidIsoCalendarDate(raw) {
+  if (!ISO_DATE_TEXT.test(raw)) return false;
+  const year = Number(raw.slice(0, 4));
+  const month = Number(raw.slice(5, 7));
+  const day = Number(raw.slice(8, 10));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
 
 const D17_EXT_SMOKING_CONCEPTS = new Set(['derma_comorb_smoking_status']);
 const D17_EXT_HURLEY_CONCEPTS = new Set(['derma_hs_hurley']);
@@ -357,11 +417,27 @@ export function adaptD17ExtControlValue(concept, value) {
       ? { ok: true, text: 'SÍ' }
       : { ok: false, reason: 'CHECKBOX_REQUIRES_EXPLICIT_SI' };
   }
-  if (D17_EXT_SELECT_SI_NO_CONCEPTS.has(concept)) {
-    if (raw === 'SÍ') return { ok: true, text: 'si' };
-    if (raw === 'NO') return { ok: true, text: 'no' };
-    return { ok: false, reason: 'SI_NO_SELECT_REQUIRES_EXPLICIT_CONTRACT_VALUE' };
-  }
+      if (D17_EXT_SELECT_SI_NO_CONCEPTS.has(concept)) {
+        if (raw === 'SÍ') return { ok: true, text: 'si' };
+        if (raw === 'NO') return { ok: true, text: 'no' };
+        return { ok: false, reason: 'SI_NO_SELECT_REQUIRES_EXPLICIT_CONTRACT_VALUE' };
+      }
+      if (C2_DATE_CONCEPTS.has(concept)) {
+        return isValidIsoCalendarDate(raw)
+          ? { ok: true, text: raw }
+          : { ok: false, reason: 'DATE_REQUIRES_EXACT_VALID_ISO_YYYY_MM_DD' };
+      }
+      if (C2_VERBATIM_ENUM_CONCEPTS.has(concept)) {
+        return C2_MANTOUX_VALUES.includes(raw)
+          ? { ok: true, text: raw }
+          : { ok: false, reason: 'MANTOUX_ENUM_REQUIRES_CONTRACT_VALUE' };
+      }
+      if (Object.prototype.hasOwnProperty.call(C2_VACCINATION_REVIEW_VALUES, raw)) {
+        return { ok: true, text: C2_VACCINATION_REVIEW_VALUES[raw] };
+      }
+      if (concept === 'derma_vaccination_review') {
+        return { ok: false, reason: 'VACCINATION_REVIEW_REQUIRES_EXACT_CONTRACT_VALUE' };
+      }
   if (D17_EXT_HURLEY_CONCEPTS.has(concept)) {
     return Object.prototype.hasOwnProperty.call(HURLEY_CONTROL_VALUES, raw)
       ? { ok: true, text: HURLEY_CONTROL_VALUES[raw] }

@@ -171,17 +171,22 @@ assert(extResult.unit_state === UNIT_STATE_RECOGNIZED, 'valid D17_EXT_V1 unit is
 assert(extResult.raw_input === extendedRaw && extResult.can_apply === false, 'D17_EXT_V1 raw byte-exact, apply always false');
     const extContribs = extResult.contributions.filter((c) => c.concept.startsWith('derma_'));
     assert(extContribs.length === 21, 'every present extended field contributes exactly once');
-    // C1 boundary (issue #339): the target concepts of this fixture (PASI, BSA,
-    // DLQI, PGA, prior_systemic, IMC, Tabaquismo, Paquetes/año, Diabetes, HbA1c,
-    // Síndrome metabólico, Otras comorbilidades) carry their exact brownfield
-    // target and AUTO_PROPOSABLE proposal eligibility; the composite
-    // provenance-only concept and the analítica/vacunación concepts stay
-    // target NONE / NO_PROPOSAL. Transport (values, grammar, labels) unchanged.
+    // C1 boundary (issue #339), updated by C2 (issue #340): the target
+    // concepts of this fixture (PASI, BSA, DLQI, PGA, prior_systemic, IMC,
+    // Tabaquismo, Paquetes/año, Diabetes, HbA1c, Síndrome metabólico, Otras
+    // comorbilidades) plus the 7 safe analítica/vacunación common concepts
+    // carry their exact brownfield target and AUTO_PROPOSABLE proposal
+    // eligibility; the composite provenance-only concept and the combined
+    // derma_viral_serologies concept stay target NONE / NO_PROPOSAL (never
+    // split). Transport (values, grammar, labels) unchanged.
     const C1_TARGETED_FIXTURE_CONCEPTS = new Set([
       'derma_psoriasis_pasi', 'derma_psoriasis_bsa', 'derma_psoriasis_dlqi', 'derma_psoriasis_pga',
       'derma_psoriasis_prior_systemic', 'derma_comorb_bmi', 'derma_comorb_smoking_status',
       'derma_comorb_pack_years', 'derma_comorb_diabetes', 'derma_comorb_hba1c',
       'derma_comorb_metabolic_syndrome', 'derma_comorb_other',
+      // C2 (issue #340): safe analítica/vacunación common concepts.
+      'derma_lab_date', 'derma_lab_complete_lt3m', 'derma_cbc_verified', 'derma_biochemistry_verified',
+      'derma_tb_screening', 'derma_vaccination_review', 'derma_vaccination_observations',
     ]);
     assert(extContribs.every((c) => C1_TARGETED_FIXTURE_CONCEPTS.has(c.concept)
       ? c.semantic_status === 'RECOGNIZED' && c.target !== 'NONE' && c.proposal_status === 'AUTO_PROPOSABLE'

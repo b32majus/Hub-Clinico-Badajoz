@@ -100,6 +100,14 @@ const CONCEPT_LABELS = {
   derma_comorb_hba1c: 'HbA1c (comorbilidades)',
   derma_comorb_metabolic_syndrome: 'Síndrome metabólico (comorbilidades)',
   derma_comorb_other: 'Otras comorbilidades (comorbilidades)',
+  // C2 (issue #340): shared analítica/vacunación concepts.
+  derma_lab_date: 'Fecha analítica',
+  derma_lab_complete_lt3m: 'Analítica <3 meses',
+  derma_cbc_verified: 'Hemograma completo (Verificado)',
+  derma_biochemistry_verified: 'Bioquímica (Verificado)',
+  derma_tb_screening: 'Mantoux/IGRA',
+  derma_vaccination_review: 'Vacunación completa/revisada',
+  derma_vaccination_observations: 'Observaciones vacunación',
 };
 
 /** Requested-treatment controls that stay editable after an apply (D11). */
@@ -387,6 +395,15 @@ function targetControl(target) {
     const CHECKBOX_TRUE_TARGET_SET = new Set(D17_EXT_CHECKBOX_TARGETS);
 
     /**
+     * C2 (issue #340): chip/radio brownfield destinations (hidden carrier + its
+     * own `..._rb` radio group). The write below synchronizes the exact supported
+     * UI state: the hidden carrier only moves together with its exact declared
+     * radio option; without that exact option nothing is written (fail closed,
+     * zero partial clinical mutation).
+     */
+    const CHIP_RADIO_TARGETS = new Set(['fhAnaliticaMantoux', 'fhAnaliticaVacunacion']);
+
+    /**
      * C1 (issue #339): checkbox destinations are compared in the proposal space.
      * An explicit checkbox destination is 'SÍ' while checked and EMPTY while
      * unchecked; the closed adapter never writes a boolean false and absence of
@@ -430,6 +447,17 @@ function targetControl(target) {
 function writeTarget(target, appliedText) {
   const field = targetControl(target);
   if (!field) return;
+      // C2 (issue #340): chip/radio destinations write the hidden carrier AND its
+      // exact supported radio option together; an unsupported destination/value
+      // mismatch fails closed with zero partial clinical mutation.
+      if (CHIP_RADIO_TARGETS.has(target)) {
+        const radio = document.querySelector(
+          `input[name="${target}_rb"][value="${String(appliedText).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"]`);
+        if (!radio) return;
+        field.value = String(appliedText ?? '');
+        radio.checked = true;
+        return;
+      }
   // C1 (issue #339): checkbox destinations accept only the explicit SÍ —
   // an explicit professional decision writes checked=true; the adapter
   // never writes false and never unchecks (absence never clears).

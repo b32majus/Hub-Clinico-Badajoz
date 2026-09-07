@@ -86,8 +86,18 @@ const EXPECTED_TARGETS = Object.freeze({
   derma_aa_extent_gt50: 'fhAaExtension50', derma_aa_episode_gt6m: 'fhAaEpisodio6Meses', derma_aa_systemic_corticosteroids: 'fhAaCorticoidesSistemicos', derma_aa_observations: 'fhAaObservaciones',
   derma_comorb_bmi: 'fhHSComorbImc', derma_comorb_smoking_status: 'fhHSComorbTabaquismo', derma_comorb_pack_years: 'fhHSComorbPaquetes', derma_comorb_diabetes: 'fhHSComorbDiabetes', derma_comorb_hba1c: 'fhHSComorbHba1c', derma_comorb_metabolic_syndrome: 'fhHSComorbSdMetabolico', derma_comorb_other: 'fhHSComorbOtras',
 });
-ok('frozen C1 mapping count is exactly 39', Object.keys(EXPECTED_TARGETS).length === 39);
-ok('D17_EXT_HYDRATABLE_CONCEPTS is exactly the frozen 39', JSON.stringify([...D17_EXT_HYDRATABLE_CONCEPTS]) === JSON.stringify(Object.keys(EXPECTED_TARGETS)));
+    ok('frozen C1 mapping count is exactly 39', Object.keys(EXPECTED_TARGETS).length === 39);
+    // C2 (issue #340) supersedes the C1-only hydratable-set membership: the 7
+    // safe analítica/vacunación common concepts join the D17_EXT_V1 hydratable
+    // set (39 C1 + 7 C2 = 46). Their exact targets are owned by the C2 battery.
+    // The combined derma_viral_serologies stays OUT (never splits).
+    ok('D17_EXT_HYDRATABLE_CONCEPTS is the frozen 39 C1 + 7 C2 (supersession #340) and excludes provenance-only',
+      D17_EXT_HYDRATABLE_CONCEPTS.length === 46
+      && Object.keys(EXPECTED_TARGETS).every((concept) => D17_EXT_HYDRATABLE_CONCEPTS.includes(concept))
+      && !D17_EXT_HYDRATABLE_CONCEPTS.includes('derma_viral_serologies')
+      && !D17_EXT_HYDRATABLE_CONCEPTS.includes('derma_psoriasis_prior_systemic_detail')
+      && !D17_EXT_HYDRATABLE_CONCEPTS.includes('derma_ad_prior_cyclosporine_detail')
+      && !D17_EXT_HYDRATABLE_CONCEPTS.includes('derma_hs_prior_other_biologics_detail'));
 for (const [concept, target] of Object.entries(EXPECTED_TARGETS)) {
   ok(`${concept}: exact target ${target} + hydratable`, targetForConcept(concept) === target && HYDRATABLE_CONCEPTS.includes(concept));
 }
@@ -97,11 +107,13 @@ ok('legacy six requested-treatment targets unchanged',
 ok('pathology target unchanged', targetForConcept('pathology') === 'fhDermaPatologia' && targetForConcept('ses_program') === 'ses_program');
 
 // ─── 2. Non-writable concepts stay non-writable ───────────────────────────
-console.log('\n[C1] Composite provenance-only + analítica/vacunación stay non-writable');
+console.log('\n[C1] Composite provenance-only + combined serology stay non-writable');
+// C2 (issue #340) supersedes the C1 non-writable status of the 7 safe
+// analítica/vacunación common concepts; their exact writable contract is
+// owned by the C2 battery. Here only what C2 did NOT make writable:
 const NON_WRITABLE_CONCEPTS = [
   'derma_psoriasis_prior_systemic_detail', 'derma_ad_prior_cyclosporine_detail', 'derma_hs_prior_other_biologics_detail',
-  'derma_lab_date', 'derma_lab_complete_lt3m', 'derma_cbc_verified', 'derma_biochemistry_verified',
-  'derma_tb_screening', 'derma_viral_serologies', 'derma_vaccination_review', 'derma_vaccination_observations',
+  'derma_viral_serologies',
 ];
 for (const concept of NON_WRITABLE_CONCEPTS) {
   ok(`${concept}: target NONE + not hydratable`, targetForConcept(concept) === 'NONE' && !HYDRATABLE_CONCEPTS.includes(concept));
