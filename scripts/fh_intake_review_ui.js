@@ -28,6 +28,7 @@ import {
   SES_PROGRAM_TARGET,
   resolveSesProgramWrite,
 } from './fh_intake_ses_program.js';
+import { eOrdenPresentationContext } from './fh_intake_presentation_context.js';
 
 const STATE_VERIFIED = 'VERIFIED_EXPLICIT_CIP';
 const STATE_CONFIRMED = 'MANUALLY_CONFIRMED_SELECTED_PATIENT';
@@ -863,6 +864,23 @@ function initIntakeReview() {
     }
   };
 
+  // WO #334: transient e-Orden presentation context (issue #334). For a NEW
+  // REQUEST without a selected Farmacia patient, one safe explicit
+  // Dermatology pathology recognized from the e-Orden source reveals the
+  // matching clinical form blocks WITHOUT pre-writing fhDermaPatologia.
+  // PRESENTATION ONLY: never patient association, persistence, validation
+  // or any clinical write. With a selected patient the D5/D6 patient gates
+  // stay untouched and no override is applied. Anything unsafe (PreSalud
+  // only, malformed, ambiguous, conflicting, blocked) clears the context
+  // and restores the ordinary brownfield visibility state.
+  const applyPresentationContext = (result) => {
+    const bridge = window.FarmaciaValidacion;
+    if (!bridge || typeof bridge.setEOrdenPresentation !== 'function') return;
+    const context = selectedPatient ? null : eOrdenPresentationContext(result);
+    bridge.setEOrdenPresentation(context ?? null);
+    if (!context && !selectedPatient) preparePreviewForm();
+  };
+
   function render() {
     panel.replaceChildren();
     if (!review) { panel.hidden = true; return; }
@@ -921,6 +939,12 @@ function initIntakeReview() {
     review = null;
     delete panel.dataset.fhIntakeReviewId;
     delete panel.dataset.fhParseRunId;
+    // WO #334: reset/abandon clears the transient e-Orden presentation
+    // context and restores the ordinary brownfield/manual visibility state.
+    if (window.FarmaciaValidacion && typeof window.FarmaciaValidacion.setEOrdenPresentation === 'function') {
+      window.FarmaciaValidacion.setEOrdenPresentation(null);
+    }
+    if (!selectedPatient) preparePreviewForm();
     if (clearInput) input.value = '';
     render();
   }
@@ -941,6 +965,7 @@ function initIntakeReview() {
     }
     review.result = runUnifiedIntake(raw, { currentFormValues: currentFormValues() });
     render();
+    applyPresentationContext(review.result);
   });
   // D11: the editable form is NOT the review's own surface. Editing a field
   // after apply must NOT discard the review: the applied history is the only
