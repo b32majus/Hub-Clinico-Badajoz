@@ -38,7 +38,11 @@ function check(label, actual, expected) {
   passed += 1;
 }
 
-check('no selected patient never verifies', state(eorden(), 'e-orden', null), 'UNBOUND');
+check('no selected patient with explicit CIP is transient new-request, never patient-verified', state(eorden(), 'e-orden', null), 'TRANSIENT_NEW_REQUEST');
+check('no selected patient CIP-less e-Orden stays unbound', state(eorden({ includeCip: false }), 'e-orden', null), 'UNBOUND');
+check('no selected patient multiple CIP stays unbound', state(eorden({ extraCip: 'CIP-DEMO-FH-002' }), 'e-orden', null), 'UNBOUND');
+check('no selected patient whitespace-only CIP stays unbound', state(eorden({ cip: '   ' }), 'e-orden', null), 'UNBOUND');
+check('no selected patient PreSalud explicit concepts are transient (no CIP invented)', state(presalud, 'pre-salud', null), 'TRANSIENT_NEW_REQUEST');
 check('exact CIP verifies', state(eorden(), 'e-orden', SELECTED), 'VERIFIED_EXPLICIT_CIP');
 check('symmetric peripheral trim verifies', state(eorden({ cip: `  ${SELECTED}  ` }), 'e-orden', ` ${SELECTED} `), 'VERIFIED_EXPLICIT_CIP');
 for (const value of ['CIP-DEMO-FH-002', 'cip-demo-fh-001', 'CIP-DEMO-FH-001X']) {

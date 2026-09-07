@@ -7,6 +7,7 @@ import {
   STATE_REQUIRES_SELECTION,
   STATE_NO_PROPOSAL,
   HYDRATABLE_CONCEPTS,
+  ASSOCIATION_TRANSIENT_NEW_REQUEST,
   targetForConcept,
   writeEligibility,
   applyConcept,
@@ -32,6 +33,9 @@ const STATE_VERIFIED = 'VERIFIED_EXPLICIT_CIP';
 const STATE_CONFIRMED = 'MANUALLY_CONFIRMED_SELECTED_PATIENT';
 const STATE_UNBOUND = 'UNBOUND';
 const STATE_ASSOCIATION_CONFLICT = 'CONFLICT';
+const STATE_TRANSIENT_NEW_REQUEST = ASSOCIATION_TRANSIENT_NEW_REQUEST;
+/** Brownfield CIP target of the transient new-request form (issue #328). */
+const TRANSIENT_CIP_TARGET = 'fhDermaCip';
 const PRESALUD_CONFIRM = 'Confirmo que estos datos PreSalud corresponden al paciente seleccionado.';
 const EORDEN_CONFIRM = 'Asociar esta e-Orden sin CIP al paciente seleccionado.';
 const PROPOSAL_AUTO_PROPOSABLE = 'AUTO_PROPOSABLE';
@@ -74,11 +78,41 @@ function cipContributions(unit) {
   return (unit?.parser?.contributions ?? []).filter(item => item?.concept === 'cip');
 }
 
-/** Compute D5 association independently from parsing and clinical validity. */
+/** Compute D5 association independently from parsing and clinical validity.
+ *
+ * With a selected Farmacia patient the verdicts are exactly the pre-#328 ones
+ * (VERIFIED / CONFIRMED / CONFLICT / UNBOUND). Without a selected patient the
+ * review is a transient NEW request: a source qualifies on its own explicit
+ * data only — one explicit e-Orden CIP, or PreSalud explicit concepts (which
+ * never carry a CIP) — and yields TRANSIENT_NEW_REQUEST; anything weaker
+ * (CIP-less e-Orden, multiple/ambiguous/whitespace CIP, unattributed source)
+ * stays UNBOUND and non-writable. The transient state never creates, selects
+ * or persists a patient.
+ */
 export function associationForSource(unit, selectedIdentifier, confirmed = false) {
   const selected = normalizedIdentifier(selectedIdentifier);
-  if (!selected) return { state: STATE_UNBOUND, reason: 'NO_SELECTED_PATIENT' };
   const key = sourceKey(unit);
+  if (!selected) {
+    // #328 transient new-request mode: per-concept explicit professional
+    // decisions remain the only write path; no source-level confirmation is
+    // offered or required here because there is no patient to confirm against.
+    if (key === 'unknown') return { state: STATE_UNBOUND, reason: 'SOURCE_OWNERSHIP_UNRESOLVED' };
+    if (key === 'presalud') {
+      return { state: STATE_TRANSIENT_NEW_REQUEST, reason: 'PRESALUD_EXPLICIT_CONCEPTS_NEW_REQUEST' };
+    }
+    const cips = cipContributions(unit)
+      .map(item => normalizedIdentifier(item?.value))
+      .filter(Boolean);
+    const hasCipLabel = String(unit?.raw ?? '').split(/\r?\n/)
+      .some(line => /^\s*• CIP:/.test(line));
+    if (cips.length !== 1 && hasCipLabel) {
+      return { state: STATE_UNBOUND, reason: 'CIP_INVALID_MULTIPLE_OR_AMBIGUOUS' };
+    }
+    if (cips.length === 1) {
+      return { state: STATE_TRANSIENT_NEW_REQUEST, reason: 'EXPLICIT_CIP_NEW_REQUEST' };
+    }
+    return { state: STATE_UNBOUND, reason: 'CIPLESS_EORDEN_REQUIRES_SELECTED_PATIENT' };
+  }
   if (key === 'unknown') return { state: STATE_UNBOUND, reason: 'SOURCE_OWNERSHIP_UNRESOLVED' };
   if (key === 'presalud') {
     return confirmed
@@ -190,6 +224,104 @@ function renderSource(unit, association, confirmed, rerender, selectedPatient) {
     article.appendChild(button);
   }
   return article;
+}
+
+/**
+ * D5 write verdict for one association state (single shared predicate so the
+ * SES row, the regular rows and the global executor can never disagree).
+ * VERIFIED and CONFIRMED are the selected-patient verdicts; TRANSIENT_NEW_REQUEST
+ * is emitted only by the T6 computation when no Farmacia patient is selected
+ * (issue #328) and authorizes the same explicit per-concept decisions against
+ * the transient new-request form, never a patient association.
+ */
+function associationAllowsWrite(association) {
+  return Boolean(association && (
+    association.state === STATE_VERIFIED
+    || association.state === STATE_CONFIRMED
+    || association.state === STATE_TRANSIENT_NEW_REQUEST));
+}
+
+/**
+ * #328 source-CIP decision row for the transient new-request mode. Rendered
+ * ONLY when no Farmacia patient is selected and exactly one unblocked e-Orden
+ * unit carries one explicit CIP contribution. The explicit source CIP is
+ * handled strictly as source data for the transient request: when the
+ * brownfield target (#fhDermaCip) exists, an explicit professional decision
+ * (confirm on empty / replace on a different value) may hydrate it; without a
+ * brownfield target the CIP stays source-data only. It never creates, selects
+ * or persists a patient, and PreSalud never reaches this row (no CIP
+ * contributions, nothing is invented).
+ */
+function renderTransientRequestCip(review, selectedPatient, rerender) {
+  if (selectedPatient) return null;
+  const source = (review.result.units ?? []).find(unit =>
+    !unit.blocked && sourceKey(unit) === 'e-orden'
+    && cipContributions(unit).length === 1
+    && Boolean(normalizedIdentifier(cipContributions(unit)[0]?.value)));
+  if (!source) return null;
+  const cipValue = normalizedIdentifier(cipContributions(source)[0]?.value);
+  const target = targetControl(TRANSIENT_CIP_TARGET);
+
+  const row = element('article', 'fh-intake-decision');
+  row.dataset.fhConcept = 'cip';
+  row.dataset.fhSourceValue = cipValue;
+  row.dataset.fhAppliedValue = review.applied?.cip === undefined ? '' : displayValue(review.applied.cip, '');
+  const heading = element('div', 'fh-intake-decision__heading');
+  heading.append(element('strong', '', 'CIP de la solicitud nueva (desde la fuente e-Orden)'));
+  row.appendChild(heading);
+  const meta = element('p', 'fh-intake-decision__meta');
+  meta.append(
+    element('span', '', `Propuesta: ${cipValue}`),
+    element('span', '', target ? `Destino: ${TRANSIENT_CIP_TARGET}` : 'Destino: no disponible'),
+  );
+  row.appendChild(meta);
+  const provenance = element('small', 'fh-intake-provenance',
+    'Origen e-Orden · CIP explícito de la fuente · dato de origen de la solicitud nueva, nunca una asociación de paciente');
+  provenance.dataset.fhProvenance = '';
+  row.appendChild(provenance);
+
+  if (!target) {
+    row.appendChild(element('p', 'fh-intake-decision__note',
+      'El formulario de solicitud nueva no expone un destino CIP brownfield: el CIP permanece como dato de origen y no se escribe.'));
+    return row;
+  }
+
+  const current = normalizedIdentifier(target.value);
+  if (current === cipValue) {
+    row.appendChild(element('p', 'fh-intake-decision__note', 'El CIP actual ya coincide con la fuente; no se reescribe nada.'));
+    return row;
+  }
+  const kind = current ? 'replace' : 'confirm';
+  const actions = element('div', 'fh-intake-decision__actions');
+  const writeButton = element('button', 'btn btn-outline',
+    kind === 'confirm' ? 'Confirmar y aplicar' : 'Reemplazar explícitamente');
+  writeButton.type = 'button';
+  writeButton.dataset.fhConceptAction = kind;
+  writeButton.disabled = false;
+  writeButton.setAttribute('aria-disabled', 'false');
+  writeButton.addEventListener('click', () => {
+    // Live re-check at execution time: the decision always acts on the LIVE
+    // current value, never on a stale render.
+    const liveCurrent = normalizedIdentifier(targetControl(TRANSIENT_CIP_TARGET)?.value);
+    if (liveCurrent === cipValue) { rerender(); return; }
+    if (liveCurrent && kind !== 'replace') { rerender(); return; }
+    writeTarget(TRANSIENT_CIP_TARGET, cipValue);
+    review.applied = review.applied ?? {};
+    review.applied.cip = cipValue;
+    rerender();
+  });
+  actions.appendChild(writeButton);
+  const cancelButton = element('button', 'btn btn-outline', 'Cancelar');
+  cancelButton.type = 'button';
+  cancelButton.dataset.fhConceptAction = 'cancel';
+  cancelButton.addEventListener('click', () => {
+    review.cancelled = review.cancelled ?? {};
+    review.cancelled.cip = true;
+    rerender();
+  });
+  actions.appendChild(cancelButton);
+  row.appendChild(actions);
+  return row;
 }
 
 /* ------------------------------------------------------------------ *
@@ -486,8 +618,7 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
       }
 
       const associations = contributionAssociations(review, SES_PROGRAM_TARGET, selectedPatient);
-      const eligible = associations.length > 0 && associations.every(a =>
-        a && (a.state === STATE_VERIFIED || a.state === STATE_CONFIRMED));
+      const eligible = associations.length > 0 && associations.every(associationAllowsWrite);
       const decisionKind = state === STATE_CURRENT_EMPTY ? 'confirm' : 'replace';
       const actions = element('div', 'fh-intake-decision__actions');
       if (!eligible) {
@@ -519,7 +650,7 @@ function renderGlobalApply(review, selectedPatient, rerender, statusHost) {
           const liveCurrent = liveCode && liveCode.value ? liveCode.value : '';
           const liveAssociations = contributionAssociations(review, SES_PROGRAM_TARGET, selectedPatient);
           const stillEligible = resolvedLive.writable && liveAssociations.length > 0
-            && liveAssociations.every(a => a && (a.state === STATE_VERIFIED || a.state === STATE_CONFIRMED));
+            && liveAssociations.every(associationAllowsWrite);
           const liveState = resolvedLive.code && liveCurrent === resolvedLive.code
             ? STATE_ALREADY_MATCHES_CURRENT
             : (isEmptySesCurrent(liveCurrent) ? STATE_CURRENT_EMPTY : STATE_PROTECTED_EXISTING);
@@ -709,9 +840,11 @@ function initIntakeReview() {
   const applyButton = document.querySelector('[data-fh-intake-apply]');
   if (!input || !previewButton || !panel || !patientStatus || !applyButton) return;
 
-  let review = null;
-  const selectedPatient = selectedPatientIdentifier();
-  patientStatus.textContent = selectedPatient ? `Paciente seleccionado: ${selectedPatient}` : 'Sin paciente de Farmacia seleccionado';
+      let review = null;
+      const selectedPatient = selectedPatientIdentifier();
+      patientStatus.textContent = selectedPatient
+        ? `Paciente seleccionado: ${selectedPatient}`
+        : 'Sin paciente de Farmacia seleccionado · solicitud nueva transitoria (la hidratación explícita no crea, selecciona ni persiste pacientes)';
   applyButton.disabled = true;
   applyButton.setAttribute('aria-disabled', 'true');
   applyButton.title = 'T8 aplica mediante decisiones explícitas por concepto; el control global ejecuta solo lo ya confirmado';
@@ -742,7 +875,7 @@ function initIntakeReview() {
     panel.appendChild(element('p', 'fh-intake-lifecycle',
       `Revisión ${review.intake_review_id} · Ejecución de análisis ${review.parse_run_id}`));
     panel.appendChild(element('p', 'notice-box notice-box--info',
-      'Vista previa con aplicación explícita por concepto. Asociar o confirmar una fuente no valida el tratamiento; el tratamiento validado permanece intacto.'));
+      'Vista previa con aplicación explícita por concepto. Asociar o confirmar una fuente no valida el tratamiento; el tratamiento validado permanece intacto. Sin paciente seleccionado la revisión opera como solicitud nueva transitoria: no crea, selecciona ni persiste pacientes.'));
     for (const unit of review.result.units ?? []) {
       const key = sourceKey(unit);
       const confirmed = Boolean(review.confirmations[key]);
@@ -751,6 +884,10 @@ function initIntakeReview() {
         review.confirmations[key] = true;
         render();
       }, selectedPatient));
+    }
+    if (!review.cancelled?.cip) {
+      const transientCipRow = renderTransientRequestCip(review, selectedPatient, render);
+      if (transientCipRow) panel.appendChild(transientCipRow);
     }
     const concepts = review.result.reconciled?.concepts ?? {};
     const decisionConcepts = Object.keys(concepts).filter(concept =>

@@ -206,9 +206,10 @@ async function withScenario(name, url, fn) {
 const browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
 let passed = 0;
 try {
-  await withScenario('1 no selected patient previews but never verifies/applies', noPatientUrl(), async page => {
+  await withScenario('1 no selected patient previews in transient new-request mode without ever verifying a patient', noPatientUrl(), async page => {
     await pasteAndPreview(page, eordenRaw(), 'no-patient');
     await assertNotVisibleState(page, 'e-orden', 'VERIFIED_EXPLICIT_CIP', 'no-patient');
+    await assertVisibleState(page, 'e-orden', 'TRANSIENT_NEW_REQUEST', 'no-patient');
   }); passed++;
 
   await withScenario('2 exact e-Orden CIP verifies with provenance', selectedUrl(), async page => {

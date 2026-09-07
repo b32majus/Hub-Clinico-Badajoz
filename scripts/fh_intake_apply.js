@@ -23,11 +23,15 @@
  *     Cancel                 -> zero mutation.
  *     Validated treatment    -> untouched (never a write target here).
  * - Write eligibility needs BOTH the D16 per-concept rule AND a D5-eligible
- *   source association (VERIFIED_EXPLICIT_CIP or
- *   MANUALLY_CONFIRMED_SELECTED_PATIENT). An UNBOUND or association-CONFLICT
+ *   source association (VERIFIED_EXPLICIT_CIP, MANUALLY_CONFIRMED_SELECTED_PATIENT,
+ *   or — only when the T6 computation established that NO Farmacia patient is
+ *   selected — TRANSIENT_NEW_REQUEST). An UNBOUND or association-CONFLICT
  *   source can never write. Each contribution is associated through its own
  *   source unit: e-Orden association never authorizes PreSalud and vice
- *   versa (D5 independence).
+ *   versa (D5 independence). The transient new-request state authorizes
+ *   hydration of the transient new-request form only through the same explicit
+ *   per-concept professional decisions; it never creates, selects, associates
+ *   or persists a patient and never touches validated treatment.
  *
  * NO_TOCA: no global apply, no reparse/reapply machinery (T8), no SES write
  * target (T9), no validated-treatment surface, no deletion paths, no
@@ -53,6 +57,19 @@ export const ASSOCIATION_VERIFIED = 'VERIFIED_EXPLICIT_CIP';
 export const ASSOCIATION_CONFIRMED = 'MANUALLY_CONFIRMED_SELECTED_PATIENT';
 export const ASSOCIATION_UNBOUND = 'UNBOUND';
 export const ASSOCIATION_CONFLICT = 'CONFLICT';
+
+/**
+ * No-patient transient new-request association (issue #328). Returned by the
+ * T6 association computation ONLY when no Farmacia patient is selected and the
+ * source itself qualifies on its own explicit data (one explicit e-Orden CIP,
+ * or PreSalud explicit concepts — which never carry a CIP). It enables the
+ * same explicit per-concept D16 decisions to hydrate the transient
+ * new-request form controls. It is never emitted when a patient IS selected,
+ * so the existing selected-patient D5 gates (VERIFIED / CONFIRMED / CONFLICT /
+ * UNBOUND) are untouched; it never creates or selects a patient, never writes
+ * a patient_id/session, and never touches validated treatment.
+ */
+export const ASSOCIATION_TRANSIENT_NEW_REQUEST = 'TRANSIENT_NEW_REQUEST';
 
 /**
  * T7 regular hydratable requested-treatment concepts only.
@@ -184,8 +201,11 @@ export function decisionState(reconciled, currentFormValue) {
  * contributing source of the proposal has passed its own D5 gate.
  *
  * Association states are consumed as computed (T6 owns computation); this
- * module never recomputes or weakens them. Association CONFLICT (D5) and
- * reconciliation CONFLICT (D6) stay distinct blocking reasons.
+ * module never recomputes or weakens them. TRANSIENT_NEW_REQUEST reaches
+ * this matrix only when T6 established that no patient is selected; the
+ * selected-patient D5 verdicts remain exactly as before. Association
+ * CONFLICT (D5) and reconciliation CONFLICT (D6) stay distinct blocking
+ * reasons.
  */
 export function writeEligibility(reconciled, currentFormValue, associationStates) {
   const state = decisionState(reconciled, currentFormValue);
@@ -196,8 +216,10 @@ export function writeEligibility(reconciled, currentFormValue, associationStates
   if (!Array.isArray(associationStates) || associationStates.length === 0) {
     return { writable: false, reason: 'NO_ELIGIBLE_SOURCE_ASSOCIATION' };
   }
-  for (const association of associationStates) {
-    if (!association || (association.state !== ASSOCIATION_VERIFIED && association.state !== ASSOCIATION_CONFIRMED)) {
+      for (const association of associationStates) {
+        if (!association || (association.state !== ASSOCIATION_VERIFIED
+          && association.state !== ASSOCIATION_CONFIRMED
+          && association.state !== ASSOCIATION_TRANSIENT_NEW_REQUEST)) {
       const reason = association && association.state === ASSOCIATION_CONFLICT
         ? 'SOURCE_ASSOCIATION_CONFLICT_BLOCKS_WRITE'
         : 'SOURCE_ASSOCIATION_NOT_ELIGIBLE';

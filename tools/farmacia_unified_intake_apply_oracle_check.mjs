@@ -97,8 +97,34 @@ try {
     const r=row(page); assert.equal(await r.getAttribute('data-fh-source-value'),'40 MG','source_value preserved'); assert.equal(await r.getAttribute('data-fh-applied-value'),'40 MG','applied_value recorded');
   }); passed++;
 
-  await withScenario('2 no selected patient blocks the same candidate write',noPatientUrl(),async page => {
-    const dose=page.locator('#fhDermaDosis'); await dose.fill(''); await preview(page,eordenRaw()); assert.equal(await actionAvailable(page,'confirm'),false,'no-patient: concept must not be writable'); assert.equal(await dose.inputValue(),'','no-patient: value unchanged');
+  await withScenario('2 no selected patient hydrates the transient new-request form via explicit per-concept decision (no session, no patient_id, source CIP as source data)',noPatientUrl(),async page => {
+    const dose=page.locator('#fhDermaDosis'); await dose.fill(''); await preview(page,eordenRaw());
+    assert.equal(await actionAvailable(page,'confirm'),true,'transient new-request: explicit per-concept confirm must be available');
+    await clickAction(page,'confirm'); assert.equal(await dose.inputValue(),'40 MG','transient hydration wrote requested dose');
+    const cipRow=page.locator('[data-fh-concept="cip"]'); assert.equal(await cipRow.count(),1,'transient source-CIP decision row missing');
+    const cipConfirm=cipRow.locator('[data-fh-concept-action="confirm"]'); assert.equal(await cipConfirm.count(),1,'source-CIP confirm action missing');
+    await cipConfirm.click();
+    assert.equal(await page.locator('#fhDermaCip').inputValue(),'CIP-DEMO-FH-001','explicit source CIP hydrated as transient-request source data after its own explicit decision');
+    assert.equal(await page.evaluate(()=>window.sessionStorage.getItem('promueve.fh.currentPatientSession.v1')),null,'no CurrentPatientSession may be created');
+    assert.equal(await page.evaluate(()=>window.localStorage.getItem('promueve.fh.currentPatientSession.v1')),null,'no persisted patient session may be created');
+    assert.equal(new URL(page.url()).searchParams.get('patient_id'),null,'no patient_id may appear in the URL');
+  }); passed++;
+
+  await withScenario('2b no-patient PreSalud hydrates explicit concepts and never fabricates a CIP',noPatientUrl(),async page => {
+    const dose=page.locator('#fhDermaDosis'); await dose.fill(''); await preview(page,presalud());
+    assert.equal(await actionAvailable(page,'confirm'),true,'no-patient PreSalud explicit concepts must be hydratable');
+    await clickAction(page,'confirm'); assert.equal(await dose.inputValue(),'40 MG','no-patient PreSalud explicit concept hydrated');
+    assert.equal(await page.locator('#fhDermaCip').inputValue(),'','PreSalud must never fabricate a CIP');
+    assert.equal(await page.evaluate(()=>window.sessionStorage.getItem('promueve.fh.currentPatientSession.v1')),null,'no CurrentPatientSession may be created');
+    assert.equal(new URL(page.url()).searchParams.get('patient_id'),null,'no patient_id may appear in the URL');
+  }); passed++;
+
+  await withScenario('2c no-patient CIP-less e-Orden stays blocked with zero write',noPatientUrl(),async page => {
+    const dose=page.locator('#fhDermaDosis'); await dose.fill(''); await preview(page,eordenRaw({includeCip:false}));
+    assert.equal(await actionAvailable(page,'confirm'),false,'CIP-less e-Orden without selected patient must not be writable');
+    assert.equal(await dose.inputValue(),'','value unchanged for blocked CIP-less e-Orden');
+    assert.equal(await page.locator('#fhDermaCip').inputValue(),'','no CIP invented for CIP-less e-Orden');
+    assert.equal(await page.evaluate(()=>window.sessionStorage.getItem('promueve.fh.currentPatientSession.v1')),null,'no CurrentPatientSession may be created');
   }); passed++;
 
   await withScenario('3 PreSalud UNBOUND blocks write; explicit source association then allows explicit concept confirm',selectedUrl(),async page => {
