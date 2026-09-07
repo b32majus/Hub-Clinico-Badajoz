@@ -948,6 +948,106 @@ PROHIBIDO en el contrato parser:
 - eliminar/tolerar líneas vacías internas para fabricar una forma canónica;
 - fuzzy; corrección de typos; semantic repair.
 
+### D17_EXT_V1 — Extensión clínica versionada del contrato e-Orden (issue #336)
+
+WO-FH-EORDEN-DERMA-EXTENDED-CONTRACT-01 añade un envelope versionado y
+determinista que transporta los datos clínicos explícitos que la plantilla
+capturaba y el export D17 descartaba (datos específicos de patología,
+tratamientos previos, analítica/vacunación y comorbilidades comunes). El
+prefijo D17 legacy queda INTACTO hasta `PROGRAMA SES / Código / Denominación`;
+la extensión es un bloque adicional al final. **Frontera B (issue #336):** los
+conceptos extendidos son transporte/provenance únicamente — `target='NONE'`,
+`proposal_status='NO_PROPOSAL'` — y NO se hidratan ni aplican en Farmacia; esa
+aplicación corresponde a la WO C posterior con su propio mapping.
+
+Serialización normativa (una sola forma, sin variantes ni fuzzy):
+
+```text
+<prefijo D17 legacy intacto>
+EXTENSIÓN CLÍNICA DERMATOLOGÍA V1
+DATOS CLÍNICOS — <TÍTULO DE PATOLOGÍA>     (solo con contenido explícito)
+• <etiqueta exacta>: <valor>               (orden canónico del schema)
+ANALÍTICA Y VACUNACIÓN                      (solo con contenido explícito)
+• <etiqueta exacta>: <valor>
+COMORBILIDADES                              (solo con contenido explícito)
+• <etiqueta exacta>: <valor>
+FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1
+```
+
+Reglas estructurales cerradas:
+
+- Marcador y terminador EXACTOS: `EXTENSIÓN CLÍNICA DERMATOLOGÍA V1` /
+  `FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1`. El marcador declara la propiedad del
+  envelope; solo se serializa cuando existe al menos una sección con contenido
+  explícito (los dos radios comunes obligatorios garantizan contenido en toda
+  exportación válida del productor).
+- Orden canónico de secciones: sección de patología (`DATOS CLÍNICOS — <título>`,
+  coherente con el título del header D17), luego `ANALÍTICA Y VACUNACIÓN`,
+  luego `COMORBILIDADES`. Solo se serializan secciones con al menos un campo
+  explícito; las presentes forman una subsecuencia sin duplicados del orden
+  canónico.
+- Etiquetas exactas del schema de cada patología/sección (contrato helado
+  `contract-336-d17-ext-v1.json`), máximo una vez, en orden canónico. Sin
+  fuzzy matching, alias, reordenación silenciosa ni colapso de duplicados.
+- Línea vacía interna sigue PROHIBIDA (misma regla que D17); la extensión es
+  contigua y el terminador es la última línea de la unidad.
+
+Regla de ausencia / explicitud (productor y parser):
+
+- Texto/fecha vacíos: la línea se omite (nunca valor fabricado).
+- Radio sin selección: la línea se omite (nunca `No especificado`).
+- Checkbox desmarcado: se omite; NUNCA serializa `NO`/`false`.
+- Checkbox marcado (`kind=checkbox_true`): serializa `SÍ` explícito.
+- Detalle condicional solo cuando la condición padre está explícitamente
+  satisfecha; texto oculto obsoleto nunca se filtra al export.
+- Nunca se añade nombre/apellidos al export; la identidad sigue siendo CIP
+  únicamente.
+- Compuestos explícitos que NO se trocean: `pso_detalle`
+  (`derma_psoriasis_prior_systemic_detail`), `da_detalle`
+  (`derma_ad_prior_cyclosporine_detail`) y `bio_otros_texto`
+  (`derma_hs_prior_other_biologics_detail`).
+- Exclusiones explícitas del contrato: HS no captura DLQI (no se añade);
+  los controles Farmacia sin fuente Dermatología (infecciones recurrentes,
+  riesgo CV, alteraciones neurológicas, neoplasia; targets
+  `fhHSDlqi`, `fhDermaComorbInfeccionesRecurrentes`,
+  `fhDermaComorbRiesgoCardiovascular`, `fhDermaComorbAlteracionesNeurologicas`,
+  `fhDermaComorbRiesgoNeoplasia`) permanecen ausentes.
+
+Semántica del parser (WO-B/WO-C):
+
+- Segmentación: un D17_EXT_V1 completo es UNA `eorden_unit` desde el header
+  hasta la línea FIN (el segmenter reconoce estructuralmente marcador,
+  terminador y headers de sección exactos; nunca adjudica contenido).
+- Legacy D17 sigue parseando exactamente como antes; los fixtures legacy
+  permanecen válidos. Sin marcador, cualquier línea con forma de extensión es
+  contenido no normativo → unidad `UNRECOGNIZED` (raw preservado, cero
+  propuestas), igual que cualquier texto desconocido.
+- Con marcador presente: violación estructural (marcador/terminador malformado
+  o duplicado, contenido tras el terminador, sección desconocida/duplicada/fuera
+  de orden, sección incoherente con la patología, etiqueta desconocida/repetida/
+  reordenada, detalle sin condición padre, sección vacía) → fail closed: error
+  bloqueante, bloque de extensión completo rechazado (cero contribuciones
+  extendidas, nada fabricado), contribuciones legacy intactas → unidad
+  `PARTIALLY_RECOGNIZED`; raw byte-exacto visible.
+- Valor explícito inválido (enum/checkbox fuera de contrato, o valor vacío):
+  `semantic_status='UNRECOGNIZED_VALUE'` + warning, sin fabricar valor válido;
+  unidad degradada.
+- Campos extendidos presentes y válidos → contribución con el nombre de concepto
+  exacto del contrato, `target='NONE'`, `proposal_status='NO_PROPOSAL'`,
+  `semantic_status='RECOGNIZED'`, provenance con `raw` y `line_index`.
+- Ausencia de campos opcionales no degrada la unidad: un D17_EXT_V1 válido con
+  opcionales ausentes permanece `RECOGNIZED` (el auto-reveal de #334 sigue
+  funcionando); una extensión malformada degrada la unidad y el auto-reveal
+  falla cerrado.
+- Invalididad base D17/SES conserva el comportamiento existente.
+
+Clasificación fuente→destino para la WO C (registrada, NO ejecutada en B):
+`DIRECT_FUTURE_TARGET`, `NORMALIZATION_REQUIRED` (p. ej. Hurley `I` →
+`Hurley I`), `PROVENANCE_ONLY/COMPOSITE` (pso_detalle, da_detalle,
+bio_otros_texto), `NO_CURRENT_STRUCTURED_TARGET` (analítica/vacunación). El
+contrato helado `contract-336-d17-ext-v1.json` es la autoridad de etiquetas,
+conceptos, valores, condiciones padre y clasificación futura.
+
 PRESALUD: se mantiene el contrato estricto V0 ya adjudicado (D9/D10):
 
 ```text

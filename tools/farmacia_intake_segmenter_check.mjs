@@ -802,6 +802,62 @@ console.log('\n[WO-B] Regresiones F-AUDIT-09 — prefijo periférico absoluto s�
     assertEqual(rInternal.can_apply, false, 'F-AUDIT-09: interno can_apply false');
 }
 
+// ─── D17_EXT_V1 (issue #336): one complete eorden_unit through the FIN marker ─
+
+{
+const extended = EORDEN_FIXTURE + '\n' + [
+'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+'DATOS CLÍNICOS — PSORIASIS',
+'• PASI: 10.5',
+'• BSA: 14%',
+'• Tratamiento sistémico previo: SÍ',
+'• Tratamiento sistémico previo — detalle: Metotrexato 8 meses, intolerancia',
+'ANALÍTICA Y VACUNACIÓN',
+'• Fecha analítica: 2026-09-01',
+'• Analítica completa <3 meses: SÍ',
+'• Hemograma verificado: SÍ',
+'COMORBILIDADES',
+'• IMC: 27.4',
+'• Tabaquismo: Activo',
+'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+].join('\n');
+const r = segmentClinicalIntake(extended);
+assertEqual(unitKinds(r)[0], KIND_EORDEN_UNIT, 'D17_EXT_V1: tipo eorden_unit completo');
+assert(r.recognized_units[0].raw.startsWith('SOLICITUD DERMATOLOGÍA'), 'D17_EXT_V1: unidad desde header');
+assert(r.recognized_units[0].raw.endsWith('FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'), 'D17_EXT_V1: unidad incluye marcador FIN');
+assert(r.recognized_units[0].raw === extended, 'D17_EXT_V1: raw byte-exacto del envelope completo');
+assertEqual(r.blocking_states.length, 0, 'D17_EXT_V1: sin bloqueo de segmentación');
+
+// Mixed safe partition: PreSalud record after the FIN marker.
+const mixedAfter = extended + '\n\n' + PRESALUD_FIXTURE_FULL;
+const rm = segmentClinicalIntake(mixedAfter);
+assertEqual(unitKinds(rm).join(','), KIND_EORDEN_UNIT + ',' + KIND_PRESALUD_UNIT, 'D17_EXT_V1 mixto tras FIN: partición única');
+assert(rm.recognized_units[1].raw === PRESALUD_FIXTURE_FULL, 'D17_EXT_V1 mixto: PreSalud byte-exacto');
+assertEqual(rm.blocking_states.length, 0, 'D17_EXT_V1 mixto: sin bloqueo');
+
+// PreSalud before the extended unit.
+const mixedBefore = PRESALUD_FIXTURE_FULL + '\n\n' + extended;
+const rm2 = segmentClinicalIntake(mixedBefore);
+assertEqual(unitKinds(rm2).join(','), KIND_EORDEN_UNIT + ',' + KIND_PRESALUD_UNIT, 'D17_EXT_V1 mixto antes: partición única');
+
+// Unknown text between FIN and PreSalud stays a separate fragment.
+const rm3 = segmentClinicalIntake(extended + '\nnota suelta\n\n' + PRESALUD_FIXTURE_FULL);
+assertEqual(unitKinds(rm3).join(','), KIND_EORDEN_UNIT + ',' + KIND_PRESALUD_UNIT, 'D17_EXT_V1 mixto con unknown: partición única');
+assert(rm3.unrecognized_fragments.some((f) => f.raw === 'nota suelta'), 'D17_EXT_V1 mixto: unknown preservado como fragmento');
+
+// A malformed marker variant (missing accent) is NOT an allowed body
+// line: the unit ends before it and the malformed line survives as an
+// unknown fragment (raw visible, nothing fabricated).
+const malformed = EORDEN_FIXTURE + '\nEXTENSIÓN CLINICA DERMATOLOGÍA V1\nDATOS CLÍNICOS — PSORIASIS\n• PASI: 10.5\nFIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1';
+const rmf = segmentClinicalIntake(malformed);
+assert(rmf.recognized_units[0].raw === EORDEN_FIXTURE, 'marcador malformado: unidad legacy intacta');
+assert(rmf.unrecognized_fragments.length >= 1, 'marcador malformado: sobra visible como fragmento');
+
+// Two extended e-Orden units remain non-partitionable.
+const two = extended + '\n\n' + extended;
+assertEqual(blockingStates(segmentClinicalIntake(two)).join(','), BLOCK_MULTI_EORDEN, 'dos D17_EXT_V1: no particionable');
+}
+
 // ─── Summary ─────────────────────────────────────────────────────────────────
 
 console.log('\n' + '═'.repeat(64));

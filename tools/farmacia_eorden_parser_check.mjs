@@ -6,6 +6,11 @@ import {
     UNIT_STATE_SEGMENTATION_BLOCKED, UNIT_STATE_PARSER_ERROR,
     SES_UNKNOWN_CODE, SES_OUT_OF_ALLOWLIST, SES_LABEL_CODE_MISMATCH,
     SES_CODE_WITHOUT_LABEL, SES_LABEL_WITHOUT_CODE, SES_PAIR_MISSING,
+    EXT_MALFORMED_MARKER, EXT_MALFORMED_TERMINATOR, EXT_UNKNOWN_SECTION,
+    EXT_SECTION_ORDER_INVALID, EXT_EMPTY_BLOCK, EXT_EMPTY_SECTION,
+    EXT_PATHOLOGY_SECTION_INCOHERENT, EXT_UNKNOWN_LABEL, EXT_REPEATED_LABEL,
+    EXT_LABEL_OUT_OF_ORDER, EXT_PARENT_CONDITION_NOT_SATISFIED,
+    EXT_EXPLICIT_NON_SOURCE_TARGETS,
 } from '../scripts/fh_eorden_parser.js';
 
 let passed = 0; let failed = 0;
@@ -138,6 +143,159 @@ assert(parseDermaEOrdenUnit({ raw: 42 }).errors[0].code === 'EORDEN_PARSER_INPUT
 assert(parseDermaEOrdenUnit({ kind: 'blocked_unit', raw: complete }).unit_state === UNIT_STATE_SEGMENTATION_BLOCKED, 'blocked unit is segmentation blocked');
 const throwing = {}; Object.defineProperty(throwing, 'raw', { get() { throw new Error('synthetic'); } }); const thrown = parseDermaEOrdenUnit(throwing);
 assert(thrown.unit_state === UNIT_STATE_PARSER_ERROR && thrown.errors[0].code === 'EORDEN_PARSER_INTERNAL_ERROR' && thrown.can_apply === false, 'throwing raw getter is contained');
+
+console.log('\n[WO-C #336] D17_EXT_V1 versioned extension');
+// Full valid extended unit: legacy prefix + versioned envelope. Extended
+// concepts are transport/provenance only (target NONE, NO_PROPOSAL, semantic
+// RECOGNIZED); no hydration/apply until WO C.
+const extHeader = [...body().split('\n'), 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'];
+const extSections = [
+    'DATOS CLÍNICOS — PSORIASIS',
+    '• PASI: 10.5', '• BSA: 14%', '• DLQI: 18', '• PGA: 3',
+    '• Tratamiento sistémico previo: SÍ',
+    '• Tratamiento sistémico previo — detalle: Metotrexato 8 meses, intolerancia',
+    'ANALÍTICA Y VACUNACIÓN',
+    '• Fecha analítica: 2026-09-01', '• Analítica completa <3 meses: SÍ',
+    '• Hemograma verificado: SÍ', '• Bioquímica verificada: SÍ',
+    '• Mantoux/IGRA: Negativo', '• VHB/VHC/VIH: Pendiente',
+    '• Vacunación completa/revisada: Pendiente', '• Observaciones vacunación: Vacuna sintética pendiente',
+    'COMORBILIDADES',
+    '• IMC: 27.4', '• Tabaquismo: Activo', '• Paquetes/año: 10',
+    '• Diabetes: SÍ', '• HbA1c: 6.8', '• Síndrome metabólico: NO',
+    '• Otras comorbilidades: Comorbilidad sintética',
+    'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1',
+];
+const extendedRaw = [...extHeader, ...extSections].join('\n');
+const extResult = parseDermaEOrdenRaw(extendedRaw);
+assert(extResult.unit_state === UNIT_STATE_RECOGNIZED, 'valid D17_EXT_V1 unit is RECOGNIZED');
+assert(extResult.raw_input === extendedRaw && extResult.can_apply === false, 'D17_EXT_V1 raw byte-exact, apply always false');
+const extContribs = extResult.contributions.filter((c) => c.concept.startsWith('derma_'));
+assert(extContribs.length === 21, 'every present extended field contributes exactly once');
+assert(extContribs.every((c) => c.target === 'NONE' && c.proposal_status === 'NO_PROPOSAL' && c.semantic_status === 'RECOGNIZED'), 'extended concepts are transport/provenance only (B boundary)');
+assert(extContribs.every((c) => typeof c.line_index === 'number' && c.raw), 'extended provenance carries line_index and raw');
+assert(extContribs.find((c) => c.concept === 'derma_psoriasis_prior_systemic_detail')?.value === 'Metotrexato 8 meses, intolerancia', 'pso_detalle stays ONE explicit composite concept (never split)');
+assert(!extContribs.some((c) => ['derma_psoriasis_prior_drug', 'derma_psoriasis_prior_duration', 'derma_psoriasis_prior_reason'].includes(c.concept)), 'no fabricated split concepts for pso_detalle');
+assert(extContribs.find((c) => c.concept === 'derma_lab_date')?.value === '2026-09-01', 'lab date transported verbatim');
+assert(!extContribs.some((c) => ['derma_hs_ihs4', 'derma_ad_easi', 'derma_vitiligo_extent'].includes(c.concept)), 'no cross-pathology concepts in a PSORIASIS unit');
+assert(!extResult.contributions.some((c) => c.concept === 'derma_hs_dlqi'), 'HS DLQI is never fabricated: source has no DLQI');
+assert(EXT_EXPLICIT_NON_SOURCE_TARGETS.includes('fhHSDlqi') && EXT_EXPLICIT_NON_SOURCE_TARGETS.includes('fhDermaComorbRiesgoNeoplasia'), 'Farmacia-only controls stay explicit non-source targets');
+
+// Optional absence never degrades the unit (#334 auto-reveal keeps working).
+const minimalExtendedRaw = [...extHeader, 'DATOS CLÍNICOS — PSORIASIS', '• PASI: 10.5', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+const minimalExt = parseDermaEOrdenRaw(minimalExtendedRaw);
+assert(minimalExt.unit_state === UNIT_STATE_RECOGNIZED && minimalExt.raw_input === minimalExtendedRaw, 'D17_EXT_V1 with absent optional fields stays RECOGNIZED');
+assert(!minimalExt.contributions.some((c) => c.concept.startsWith('derma_') && c.concept !== 'derma_psoriasis_pasi'), 'absent optional labels create no contribution');
+const gapExtendedRaw = [...extHeader, 'DATOS CLÍNICOS — PSORIASIS', '• PASI: 10.5', '• DLQI: 18', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+const gapExt = parseDermaEOrdenRaw(gapExtendedRaw);
+assert(gapExt.unit_state === UNIT_STATE_RECOGNIZED, 'gaps in optional schema keep RECOGNIZED');
+assert(gapExt.contributions.filter((c) => c.concept.startsWith('derma_')).length === 2, 'only present fields contribute');
+const commonOnlyRaw = [...extHeader, 'ANALÍTICA Y VACUNACIÓN', '• Analítica completa <3 meses: SÍ', 'COMORBILIDADES', '• IMC: 27.4', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+const commonOnly = parseDermaEOrdenRaw(commonOnlyRaw);
+assert(commonOnly.unit_state === UNIT_STATE_RECOGNIZED, 'common-only extension sections are valid');
+
+// Negative matrix: structural violations are loud, raw-preserving and reject
+// the whole extension block (legacy contributions stay usable).
+function negativeExtended(name, extLines, expectedCode, { state = UNIT_STATE_PARTIALLY_RECOGNIZED, legacyKept = true } = {}) {
+    const raw = [...extHeader, ...extLines].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    assert(x.unit_state === state, `${name}: unit state ${x.unit_state}`);
+    assert(x.raw_input === raw && x.can_apply === false, `${name}: raw preserved, apply blocked`);
+    if (expectedCode !== null) {
+        assert(x.blocking_states.includes(expectedCode) && x.errors.some((e) => e.code === expectedCode), `${name}: ${expectedCode} surfaced`);
+    }
+    assert(x.contributions.filter((c) => c.concept.startsWith('derma_')).every((c) => c.semantic_status === 'UNRECOGNIZED_VALUE'), `${name}: no fabricated usable extended value`);
+    assert(!legacyKept || x.contributions.some((c) => c.concept === 'ses_program'), `${name}: legacy contributions stay usable`);
+}
+negativeExtended('unknown label', ['DATOS CLÍNICOS — PSORIASIS', '• PASI: 10.5', '• PASI2: 3', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_UNKNOWN_LABEL);
+negativeExtended('repeated label', ['DATOS CLÍNICOS — PSORIASIS', '• PASI: 10.5', '• PASI: 9', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_REPEATED_LABEL);
+negativeExtended('reordered labels', ['DATOS CLÍNICOS — PSORIASIS', '• BSA: 14%', '• PASI: 10.5', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_LABEL_OUT_OF_ORDER);
+negativeExtended('cross-pathology section', ['DATOS CLÍNICOS — HIDRADENITIS SUPURATIVA', '• IHS4: 12', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_PATHOLOGY_SECTION_INCOHERENT);
+negativeExtended('section order violation', ['ANALÍTICA Y VACUNACIÓN', '• Analítica completa <3 meses: SÍ', 'DATOS CLÍNICOS — PSORIASIS', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_SECTION_ORDER_INVALID);
+negativeExtended('duplicated section', ['DATOS CLÍNICOS — PSORIASIS', '• PASI: 1', 'DATOS CLÍNICOS — PSORIASIS', '• BSA: 2', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_SECTION_ORDER_INVALID);
+negativeExtended('empty section header', ['DATOS CLÍNICOS — PSORIASIS', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_EMPTY_SECTION);
+negativeExtended('empty extension block', ['FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_EMPTY_BLOCK);
+negativeExtended('missing terminator', ['DATOS CLÍNICOS — PSORIASIS', '• PASI: 10.5'], EXT_MALFORMED_TERMINATOR);
+negativeExtended('duplicate marker', ['EXTENSIÓN CLÍNICA DERMATOLOGÍA V1', 'DATOS CLÍNICOS — PSORIASIS', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_MALFORMED_MARKER);
+negativeExtended('duplicate terminator', ['DATOS CLÍNICOS — PSORIASIS', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_MALFORMED_TERMINATOR);
+negativeExtended('content after terminator', ['DATOS CLÍNICOS — PSORIASIS', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1', '• PGA: 3'], EXT_MALFORMED_TERMINATOR);
+negativeExtended('field before section header', ['• PASI: 1', 'DATOS CLÍNICOS — PSORIASIS', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_UNKNOWN_SECTION);
+negativeExtended('unknown section header', ['SECCIÓN DESCONOCIDA', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], null, { state: UNIT_STATE_UNRECOGNIZED, legacyKept: false });
+negativeExtended('parent condition unsatisfied', ['DATOS CLÍNICOS — PSORIASIS', '• Tratamiento sistémico previo — detalle: X sin padre', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_PARENT_CONDITION_NOT_SATISFIED);
+negativeExtended('parent condition wrong value', ['DATOS CLÍNICOS — PSORIASIS', '• Tratamiento sistémico previo: NO', '• Tratamiento sistémico previo — detalle: X', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'], EXT_PARENT_CONDITION_NOT_SATISFIED);
+{
+    // Invalid enum value: per-field UNRECOGNIZED_VALUE with a warning, valid
+    // siblings stay recognized, nothing fabricated.
+    const raw = [...extHeader, 'DATOS CLÍNICOS — PSORIASIS', '• PASI: 10.5', '• BSA: 14%', '• DLQI: 18', '• PGA: 3', '• Tratamiento sistémico previo: QUIZÁ', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    const bad = x.contributions.find((c) => c.concept === 'derma_psoriasis_prior_systemic');
+    assert(x.unit_state === UNIT_STATE_PARTIALLY_RECOGNIZED && x.warnings.some((w) => w.code === 'EXT_VALUE_UNRECOGNIZED'), 'invalid enum value degrades unit with warning');
+    assert(bad.semantic_status === 'UNRECOGNIZED_VALUE' && bad.target === 'NONE' && bad.proposal_status === 'NO_PROPOSAL', 'invalid enum value is not fabricated as usable');
+    assert(x.contributions.find((c) => c.concept === 'derma_psoriasis_pasi')?.semantic_status === 'RECOGNIZED', 'valid siblings of an invalid enum value stay recognized');
+}
+{
+    // Checkbox_true with an explicit NO is an unrecognized value, never a
+    // silent false, and never fabricated into SÍ.
+    const raw = [...extHeader, 'ANALÍTICA Y VACUNACIÓN', '• Hemograma verificado: NO', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    const bad = x.contributions.find((c) => c.concept === 'derma_cbc_verified');
+    assert(x.unit_state === UNIT_STATE_PARTIALLY_RECOGNIZED && x.warnings.some((w) => w.code === 'EXT_VALUE_UNRECOGNIZED'), 'checkbox NO is an unrecognized explicit value');
+    assert(bad.semantic_status === 'UNRECOGNIZED_VALUE' && bad.value === 'NO', 'checkbox NO raw stays visible without proposal');
+}
+{
+    // Marker interleaved into the legacy block is malformed placement.
+    const lines = body().split('\n');
+    lines.splice(lines.findIndex((l) => l === 'PROGRAMA SES'), 0, 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1');
+    lines.push('DATOS CLÍNICOS — PSORIASIS', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1');
+    const x = parseDermaEOrdenRaw(lines.join('\n'));
+    assert(x.unit_state === UNIT_STATE_PARTIALLY_RECOGNIZED && x.blocking_states.includes(EXT_MALFORMED_MARKER), 'marker inside the legacy block is malformed placement');
+}
+{
+    // Terminator without marker: no extension ownership → legacy strictness.
+    const raw = [...body().split('\n'), 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    assert(x.unit_state === UNIT_STATE_UNRECOGNIZED && x.contributions.length === 0, 'terminator without marker is non-normative legacy content');
+}
+{
+    // Unrecognized header title with its own pathology section: no contract
+    // schema → fail closed.
+    const raw = [...body('ECZEMA', ['SES_PSOR', 'PSORIASIS']).split('\n'), 'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1', 'DATOS CLÍNICOS — ECZEMA', '• PASI: 1', 'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    assert(x.unit_state === UNIT_STATE_PARTIALLY_RECOGNIZED && x.blocking_states.includes(EXT_PATHOLOGY_SECTION_INCOHERENT), 'extension pathology section without a contract schema fails closed');
+}
+// Full HS extension: composite bio_otros_texto stays ONE explicit concept.
+{
+    const raw = ['SOLICITUD DERMATOLOGÍA → FARMACIA - HIDRADENITIS SUPURATIVA', SEP,
+        '• CIP: CIP-SINT-0001', '• Marca comercial solicitada: HYRIMOZ', '• Dosis solicitada: 40 MG',
+        '• Vía solicitada: SC', '• Pauta: CADA 14 DIAS', '• Inducción solicitada: NO',
+        '• Justificación clínica: Justificación sintética.', 'PROGRAMA SES', '• Código: SES_HS', '• Denominación: HIDRADENITIS SUPURATIVA',
+        'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1', 'DATOS CLÍNICOS — HIDRADENITIS SUPURATIVA',
+        '• IHS4: 12', '• Hurley: II', '• Tiempo evolución: 5 años', '• Localización: Axila bilateral',
+        '• Otros ATB previos: SÍ', '• Otros ATB — detalle: Tetraciclina tópica',
+        '• Adalimumab previo: SÍ', '• Adalimumab — duración: 12 meses', '• Adalimumab — motivo fin: Fallo secundario',
+        '• Otros biológicos previos: SÍ', '• Otros biológicos — detalle: Detalle sintético biológico',
+        'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    assert(x.unit_state === UNIT_STATE_RECOGNIZED, 'full HS extension is RECOGNIZED');
+    const bioDetail = x.contributions.find((c) => c.concept === 'derma_hs_prior_other_biologics_detail');
+    assert(bioDetail?.value === 'Detalle sintético biológico' && bioDetail.target === 'NONE' && bioDetail.proposal_status === 'NO_PROPOSAL', 'HS bio_otros_texto stays ONE composite concept (never split)');
+    assert(x.contributions.filter((c) => c.concept.startsWith('derma_hs_')).length === 11, 'all present HS fields contribute once');
+}
+// DA composite detail (da_detalle) stays ONE explicit concept.
+{
+    const raw = ['SOLICITUD DERMATOLOGÍA → FARMACIA - DERMATITIS ATÓPICA', SEP,
+        '• CIP: CIP-SINT-0001', '• Marca comercial solicitada: HYRIMOZ', '• Dosis solicitada: 40 MG',
+        '• Vía solicitada: SC', '• Pauta: CADA 14 DIAS', '• Inducción solicitada: NO',
+        '• Justificación clínica: Justificación sintética.', 'PROGRAMA SES', '• Código: SES_DA', '• Denominación: DERMATITIS ATOPICA',
+        'EXTENSIÓN CLÍNICA DERMATOLOGÍA V1', 'DATOS CLÍNICOS — DERMATITIS ATÓPICA',
+        '• EASI: 22', '• SCORAD: 45', '• DLQI / POEM: DLQI 16',
+        '• Ciclosporina previa: SÍ', '• Ciclosporina previa — detalle: Detalle sintético ciclosporina',
+        'FIN EXTENSIÓN CLÍNICA DERMATOLOGÍA V1'].join('\n');
+    const x = parseDermaEOrdenRaw(raw);
+    assert(x.unit_state === UNIT_STATE_RECOGNIZED, 'full DA extension is RECOGNIZED');
+    const detail = x.contributions.find((c) => c.concept === 'derma_ad_prior_cyclosporine_detail');
+    assert(detail?.value === 'Detalle sintético ciclosporina' && detail.target === 'NONE' && detail.proposal_status === 'NO_PROPOSAL', 'DA da_detalle stays ONE composite concept (never split)');
+    assert(!x.contributions.some((c) => ['derma_ad_prior_dose', 'derma_ad_prior_duration', 'derma_ad_prior_reason'].includes(c.concept)), 'no fabricated split concepts for da_detalle');
+}
 
 console.log(`\nRESULTADO: ${passed} OK / ${failed} FALLIDO`);
 console.log(failed === 0 ? '✓ WO-C DermaEOrdenParser fixture battery PASSED' : '✗ WO-C DermaEOrdenParser fixture battery FAILED');
