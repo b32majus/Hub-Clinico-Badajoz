@@ -8,7 +8,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260612-visibility-a">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260612-visibility-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20260906-intake-t8">
 <style id="caceres-review-style">
 .caceres-review-identity{position:relative;background:#173f56;color:#fff;padding:10px 18px;font:600 14px/1.45 system-ui,sans-serif;box-shadow:0 2px 8px #0003}
 .caceres-review-identity__meta{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center}
@@ -17,7 +17,7 @@
 </head>
         <body>
 <section class="caceres-review-identity" aria-label="Identidad del entorno de evaluación">
-  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.4</span></div>
+  <div class="caceres-review-identity__meta"><strong>Hub Clínico — Farmacia Hospitalaria</strong><span>Hospital Universitario de Cáceres</span><span>Área de Salud de Cáceres</span><span>FH · EVALUACIÓN</span><span>Profesional FH — Entorno de evaluación</span><span>CÁCERES-REVIEW-0.5</span></div>
   <div class="caceres-review-identity__warning" role="alert"><strong>Datos exclusivamente sintéticos.</strong> No usar para asistencia clínica real.</div>
 </section>
             <div class="hub-shell">
@@ -80,7 +80,7 @@
         <button type="button" id="sidebarLoadCatalog" class="btn btn-sm btn-outline catalog-sidebar-btn hidden" aria-hidden="true" tabindex="-1"><i class="fas fa-upload"></i> Cargar catálogo</button>
         <input type="file" id="sidebarFileCatalog" class="hidden" accept=".xlsx,.xls">
     </div>
-    <div class="sidebar-footer">CÁCERES-REVIEW-0.4</div>
+    <div class="sidebar-footer">CÁCERES-REVIEW-0.5</div>
 </aside>
                 <main class="main-content farmacia-paciente farmacia-paciente--validacion">
         <div class="demo-banner" role="note">
@@ -93,7 +93,21 @@
             <p class="hero-description">Revise la solicitud del servicio origen y emita Pendiente, Validado o Denegado.</p>
         </div>
     </div>
-</section><section class="dashboard-card" id="origenEntradaCard">
+</section>
+<section class="dashboard-card fh-intake-review" aria-labelledby="fhIntakeTitle" data-fh-transient="true">
+    <h2 class="section-title" id="fhIntakeTitle"><i class="fas fa-file-medical-alt"></i> Revisar texto clínico de origen</h2>
+    <p class="fh-intake-review__intro">Pegue una e-Orden, un registro PreSalud o ambos. La vista previa conserva cada origen y no modifica el formulario clínico.</p>
+    <p class="fh-intake-review__patient" data-fh-intake-patient role="status"></p>
+    <label for="fhUnifiedIntake">Texto de origen</label>
+    <textarea id="fhUnifiedIntake" class="form-textarea" rows="9" data-fh-intake-source spellcheck="false" placeholder="Pegue aquí el texto sintético de e-Orden y/o PreSalud…"></textarea>
+    <div class="form-actions fh-intake-review__actions">
+        <button type="button" class="btn btn-primary" data-fh-intake-preview><i class="fas fa-eye" aria-hidden="true"></i> Generar vista previa</button>
+        <button type="button" class="btn btn-outline" data-fh-intake-reset>Descartar revisión</button>
+        <button type="button" class="btn btn-secondary" data-fh-intake-apply disabled aria-disabled="true" title="T8 aplica mediante decisiones explícitas por concepto; el control global ejecuta solo lo ya confirmado">Aplicar confirmados — ejecutor seguro</button>
+    </div>
+    <div class="fh-intake-review__panel" data-fh-intake-preview-panel aria-live="polite" hidden></div>
+</section>
+<section class="dashboard-card" id="origenEntradaCard">
     <h2 class="section-title"><i class="fas fa-door-open"></i> Origen de entrada</h2>
     <div class="form-grid">
         <div class="form-group">
@@ -192,6 +206,9 @@
     <h2 class="section-title"><i class="fas fa-disease"></i> Datos de solicitud — Dermatología</h2>
     <div class="form-grid"><div class="form-group"><label for="fhDermaCip">CIP <span class="required">*</span></label><input type="text" class="form-control" id="fhDermaCip" placeholder="CIP-DEMO-FH-..." required></div><div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhDermaServicioOrigen" value="Dermatología" readonly></div></div>
     <div class="form-grid"><div class="form-group"><label for="fhDermaPatologia">Patología</label><select class="form-select" id="fhDermaPatologia"><option value="">Seleccionar...</option><option>Hidradenitis supurativa</option><option>Psoriasis</option><option>Dermatitis atópica</option><option>Vitíligo</option><option>Alopecia areata</option></select></div></div>
+    <!-- T9 #301: SES Program normal-form controls (adjudicated brownfield carrying mechanism, D1a/D12). Hidden inputs carry the allowlisted code/label verbatim and follow the existing draft/persistence contract as normal form values after apply. -->
+    <input type="hidden" id="fhDermaSesProgramCode" autocomplete="off" aria-hidden="true">
+    <input type="hidden" id="fhDermaSesProgramLabel" autocomplete="off" aria-hidden="true">
     <div class="form-grid"><div class="form-group"><label for="fhDermaFecha">Fecha solicitud</label><input type="date" class="form-control" id="fhDermaFecha"></div></div>
 
     <h3 class="card-title card-title--tight"><i class="fas fa-prescription-bottle-alt"></i> Tratamiento solicitado</h3>
@@ -599,6 +616,7 @@
     <script src="scripts/farmacia_export_v2_validation_adapter.js?v=1.0.0-draft.1"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
     <script src="scripts/farmacia_validacion.js?v=20260806-patient-flow-r1"></script>
+    <script type="module" src="scripts/fh_intake_review_ui.js?v=20260906-t9"></script>
             <script src="scripts/caceres_review_deployment.js"></script>
 </body>
         </html>

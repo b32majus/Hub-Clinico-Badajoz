@@ -16,6 +16,45 @@
         if (value === 'pending') return 'Pendiente';
         return typeof value === 'object' ? JSON.stringify(value) : String(value);
     }
+    // Contrato de forma de `proms` (WO-FH-DASHBOARD-PROMS-SHAPE-P1-01 / F-01-F-04):
+    //   ARRAY  -> PROMs estructurados (flujo raw actual). Renderer estructurado intacto.
+    //   STRING -> texto legacy literal de la demo; contexto demo únicamente.
+    //             No se convierte en objetos PROM ni se extraen DLQI/EVA/HAQ.
+    //   null/ausente/desconocido -> fail safe a 'No registrado'.
+    function getStructuredProms(patient) {
+        if (patient && Array.isArray(patient.proms)) return patient.proms;
+        return [];
+    }
+    function getLegacyPromsText(patient) {
+        var proms = patient && patient.proms;
+        return (typeof proms === 'string' && String(proms).trim() !== '') ? String(proms) : '';
+    }
+    function getDashboardSummaryPromsText(patient) {
+        var items = getStructuredProms(patient);
+        if (items.length > 0) {
+            return items.map(function (prom) {
+                return prom.tipo_prom + ': ' + explicitText(prom.valor) + (prom.fecha ? ' · ' + prom.fecha : '');
+            }).join(' | ');
+        }
+        var legacy = getLegacyPromsText(patient);
+        if (legacy) return 'PROMs demo (contexto): ' + legacy;
+        return 'No registrado';
+    }
+    function renderLegacyPromsText(container, text) {
+        F.clearChildren(container);
+        if (!text) {
+            var emptyEl = document.createElement('div');
+            emptyEl.className = 'empty-state';
+            emptyEl.textContent = 'No registrado';
+            container.appendChild(emptyEl);
+            return;
+        }
+        var note = document.createElement('div');
+        note.className = 'empty-state';
+        var noteText = document.createTextNode('Contexto demo: ' + text);
+        note.appendChild(noteText);
+        container.appendChild(note);
+    }
     function timelineItem(date, title, description) {
         const item = document.createElement('div');
         item.className = 'timeline-item';
@@ -369,7 +408,13 @@
         var container = document.getElementById('promsDashboardContainer');
         if (!container) return;
         F.clearChildren(container);
-        var proms = patient.proms || [];
+        // Forma legacy (STRING de la demo): contexto demo literal, sin interpretación
+        // estructurada ni iteración de caracteres como PROMs.
+        if (!patient || !Array.isArray(patient.proms)) {
+            renderLegacyPromsText(container, getLegacyPromsText(patient));
+            return;
+        }
+        var proms = patient.proms;
         var grouped = {};
         for (var pi = 0; pi < proms.length; pi++) {
             var pItem = proms[pi];
@@ -747,9 +792,10 @@
     }
 
     function renderExtendedBlocks(patient) {
-        if (patient.__farmaciaRawPatient) {
-            patient.proms = Array.isArray(patient.proms) ? patient.proms : [];
-        }
+        // Las formas no-array (STRING legacy demo / null / desconocido) nunca se
+        // convierten en array de PROMs: renderProms decide por la forma.
+        // Se conserva el valor original de patient.proms para el fallback.
+        var originalProms = patient.proms;
         // Buscar datos extendidos del paciente en longDataset
         var extData = null;
         if (!patient.__farmaciaRawPatient && longDataset && longDataset.pacientes) {
@@ -765,22 +811,24 @@
             patient.episodios_asistenciales = extData.episodios_asistenciales || [];
             patient.tratamientos = extData.tratamientos || [];
             patient.cambios_pauta = extData.cambios_pauta || [];
-            patient.proms = extData.proms || [];
             patient.actividad_clinica = extData.actividad_clinica || [];
             patient.eventos_adversos = extData.eventos_adversos || [];
             patient.comorbilidades_relevantes = extData.comorbilidades_relevantes || [];
             patient.biologicos = extData.biologicos || patient.biologicos || [];
             patient.visitas_fh = extData.visitas_fh || [];
+            // Proms estructurados del dataset longitudinal cuando existen;
+            // en caso contrario se preserva el valor original (STRING incluida).
+            patient.proms = Array.isArray(extData.proms) ? extData.proms : originalProms;
         } else {
             patient.episodios_asistenciales = patient.episodios_asistenciales || [];
             patient.tratamientos = patient.tratamientos || [];
             patient.cambios_pauta = patient.cambios_pauta || [];
-            patient.proms = patient.proms || [];
             patient.actividad_clinica = patient.actividad_clinica || [];
             patient.eventos_adversos = patient.eventos_adversos || [];
             patient.comorbilidades_relevantes = patient.comorbilidades_relevantes || [];
             patient.biologicos = patient.biologicos || [];
             patient.visitas_fh = patient.visitas_fh || [];
+            // No se muta patient.proms: se conserva la forma original (array/string/null).
         }
 
         renderClinicalActivity(patient);
@@ -881,12 +929,7 @@
         summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });
         summaryFields.push({ label: 'Última adherencia', value: explicitText(patient.adherencia) });
         summaryFields.push({ label: 'Efectos adversos', value: explicitText(patient.efectosAdversos) });
-        summaryFields.push({
-            label: 'Últimos PROMs Farmacia',
-            value: (patient.proms || []).map(function (prom) {
-                return prom.tipo_prom + ': ' + explicitText(prom.valor) + (prom.fecha ? ' · ' + prom.fecha : '');
-            }).join(' | ') || 'No registrado'
-        });
+        summaryFields.push({ label: 'Últimos PROMs Farmacia', value: getDashboardSummaryPromsText(patient) });
         F.renderFields(document.getElementById('dashboardSummaryGrid'), summaryFields);
         document.getElementById('dashboardSummaryGrid').appendChild(createChecksVisualBlock(patient));
 
@@ -1118,7 +1161,7 @@
             placeholderP.textContent = 'PROM';
             promSel.appendChild(placeholderP);
             var promTypes = {};
-            var promItems = patient.proms || [];
+            var promItems = getStructuredProms(patient);
             for (var m = 0; m < promItems.length; m++) {
                 if (promItems[m].tipo_prom) promTypes[promItems[m].tipo_prom] = true;
             }
@@ -1426,7 +1469,7 @@
         var promType = promKey ? (LONG_PROM_MAP[promKey] || promKey) : null;
 
         var clinicalItems = clinicalKey ? (patient.actividad_clinica || []).filter(function (a) { return a.tipo_indice === clinicalType; }) : [];
-        var promItems = promKey ? (patient.proms || []).filter(function (p) { return p.tipo_prom === promType; }) : [];
+        var promItems = promKey ? getStructuredProms(patient).filter(function (p) { return p.tipo_prom === promType; }) : [];
 
         if (!clinicalKey && !promKey) {
             var hint = document.createElement('div');

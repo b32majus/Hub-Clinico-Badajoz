@@ -6,10 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'previews/caceres-fh');
-const SOURCE_SHA = '8bfceaaa956199610be9c0e6df40740a04b73699';
-const LAST_FUNCTIONAL_SHA = 'fb7b70c50c991baf6a375b42112048d190fe0178';
+const SOURCE_SHA = '456454172b67a00ea5ba9583f14999a4be5ff0c2';
+const LAST_FUNCTIONAL_SHA = '456454172b67a00ea5ba9583f14999a4be5ff0c2';
 const SOURCE_BRANCH = 'recovery/farmacia-pr-replay-20260727';
-const VERSION = 'CÁCERES-REVIEW-0.4';
+const VERSION = 'CÁCERES-REVIEW-0.5';
 const PROFILE = 'Profesional FH — Entorno de evaluación';
 const SOURCE_PROVENANCE = 'Generado por: Hub Clínico Badajoz — Demo Farmacia v0.2';
 const REVIEW_PROVENANCE = `Generado por: Hub Clínico — Farmacia Hospitalaria · Hospital Universitario de Cáceres · Área de Salud de Cáceres · ${VERSION}`;
@@ -40,6 +40,14 @@ const scriptFiles = [
   'farmacia_export_v2_validation_adapter',
   'farmacia_export_v2_context',
   'farmacia_validacion',
+  'fh_intake_segmenter',
+  'fh_eorden_parser',
+  'fh_presalud_parser',
+  'fh_intake_pipeline',
+  'fh_intake_apply',
+  'fh_intake_review_lifecycle',
+  'fh_intake_ses_program',
+  'fh_intake_review_ui',
   'farmacia_tratamiento_common',
   'farmacia_export_v2_first_visit_adapter',
   'farmacia_primera_visita',
