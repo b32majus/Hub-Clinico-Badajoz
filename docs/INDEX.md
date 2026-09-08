@@ -17,7 +17,7 @@
 | Paquete externo | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no refrozen por PR #333/#335/#337/#341/#346 |
 | Actividad del servicio | Demo |
 | Alcance | Evaluación con datos sintéticos; sin piloto / sin producción |
-| Work order actual | issue #349 — WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY-01 |
+| WO / instrucción vigente | Consultar GitHub live; no se fija una WO “actual” estática en este índice |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
 > **Estado vivo:** el tip Git de `recovery/farmacia-pr-replay-20260727` es deliberadamente volátil y se verifica live en GitHub. El último HEAD que cambió producto/snapshot es `19d10c9abefb7b25130b4b17e3289d54a17315ee` (PR #346); el HEAD clínico funcional congelado por 0.6 es `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341). `CÁCERES-REVIEW-0.6` incorpora A + B + Train C y está publicado en el enlace estable de Cáceres.
@@ -41,7 +41,7 @@
 
 ## 2. Orden de verdad
 
-1. WO/instrucción actual: issue #349 para esta convención documental.
+1. WO/instrucción vigente: consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales.
 2. GitHub live para el tip de `recovery`; último HEAD de producto publicado: `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
 3. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` una vez reconciliados.
 4. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
