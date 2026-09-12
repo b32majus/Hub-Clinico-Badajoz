@@ -7,11 +7,14 @@
 **Base verificada:** `5150eab2e02ac029aff0cec021b35722725ff318`
 **Último HEAD de producto publicado:** `19d10c9abefb7b25130b4b17e3289d54a17315ee`
 **HEAD clínico funcional congelado:** `e1120ba85817a1807cea8c1e938867ad778921f4`
-**Snapshot externo estable:** `CÁCERES-REVIEW-0.6`
+**Superficie genérica publicada para auditoría:** `https://b32majus.github.io/Hub-Clinico-Badajoz/farmacia_index.html`
+**Snapshot externo estable en revisión:** `CÁCERES-REVIEW-0.6`
 
 ## 1. Contexto
 
-Las farmacéuticas están revisando actualmente `CÁCERES-REVIEW-0.6`. La versión distribuida no se modificará durante esa revisión. El trabajo interno puede continuar en ramas aisladas, pero ningún cambio se promoverá a la URL estable sin feedback y autorización explícita.
+Las farmacéuticas están revisando actualmente `CÁCERES-REVIEW-0.6`. Esa vertical es un snapshot/customización hospitalaria de evaluación y permanecerá congelada durante la revisión. **No es la baseline funcional de las auditorías internas.**
+
+La autoridad de producto para Track A y Track B es la superficie genérica publicada desde `recovery/farmacia-pr-replay-20260727`, servida por Pages en `https://b32majus.github.io/Hub-Clinico-Badajoz/farmacia_index.html`. El 2026-09-12 se verificó HTTP 200 y equivalencia de contenido con `farmacia_index.html` de recovery tras normalización EOL. Cualquier discrepancia futura entre superficie genérica y snapshot Cáceres se tratará como hallazgo; la rama genérica canónica prevalece para evolución del producto.
 
 La funcionalidad clínica central está suficientemente avanzada para desplazar temporalmente el foco desde nuevas expansiones clínicas hacia calidad de producto, reducción de fricción, retirada progresiva de residuos demo y cierre de decisiones de arquitectura V4.
 
@@ -19,12 +22,13 @@ Este plan organiza tres auditorías read-only que deben preceder a nuevas WOs de
 
 ## 2. Reglas de coordinación
 
-1. `CÁCERES-REVIEW-0.6` permanece congelada mientras dure la revisión externa.
-2. No se considera una issue abierta histórica como backlog funcional por el mero hecho de seguir OPEN.
-3. Tests verdes, presencia en código y QA manual son evidencias distintas.
-4. Los datos sintéticos útiles para QA se conservan; lo que debe desaparecer es su acoplamiento al runtime operativo.
-5. UX, limpieza runtime, arquitectura de persistencia y funcionalidad clínica no se mezclarán en una macro-WO.
-6. Ninguna decisión futura de V4.5/V5 se adelantará por comodidad si no resuelve una necesidad demostrada de V4.
+1. La baseline de auditoría/evolución es `recovery/farmacia-pr-replay-20260727` + su superficie genérica publicada en Pages; no `CÁCERES-REVIEW-0.6`.
+2. `CÁCERES-REVIEW-0.6` permanece congelada exclusivamente como snapshot hospitalario de evaluación mientras dure la revisión externa.
+3. No se considera una issue abierta histórica como backlog funcional por el mero hecho de seguir OPEN.
+4. Tests verdes, presencia en código y QA manual son evidencias distintas.
+5. Los datos sintéticos útiles para QA se conservan; lo que debe desaparecer es su acoplamiento al runtime operativo.
+6. UX, limpieza runtime, arquitectura de persistencia y funcionalidad clínica no se mezclarán en una macro-WO.
+7. Ninguna decisión futura de V4.5/V5 se adelantará por comodidad si no resuelve una necesidad demostrada de V4.
 ## 3. Track A — Reconciliación de backlog y roadmap
 
 **Objetivo:** convertir documentación histórica, issues y estado publicado en un backlog vivo limpio.
@@ -78,7 +82,7 @@ La auditoría debe distinguir explícitamente entre entrada clínica, propuesta 
 
 ### 4.4 Revisión manual de Sil
 
-Tras el baseline de Cora, Sil recibirá una checklist dirigida con hallazgos y preguntas concretas. La revisión manual se realizará sobre la 0.6 congelada mediante interacción soportada y servirá para confirmar, rechazar o matizar los hallazgos UX.
+Tras el baseline de Cora, Sil recibirá una checklist dirigida con hallazgos y preguntas concretas. La revisión manual interna se realizará sobre la **superficie genérica publicada** mediante interacción soportada y servirá para confirmar, rechazar o matizar los hallazgos UX. `CÁCERES-REVIEW-0.6` queda reservada para la evaluación externa de las farmacéuticas; no se usa como autoridad para decidir evolución del producto.
 
 **Salida:** informe reconciliado Cora + Sil antes de abrir WOs de implementación.
 ## 5. Track C — Microsoft V4 readiness antes del 2026-09-15
@@ -116,7 +120,7 @@ Completar Track A y baseline del Track B. No pedir a Sil una auditoría manual a
 
 ### Fase 2 — Trabajo en paralelo
 
-- Sil: revisión manual UX/UI de `CÁCERES-REVIEW-0.6` con la checklist dirigida.
+- Sil: revisión manual UX/UI de la superficie genérica publicada con la checklist dirigida.
 - Cora: Track C, revisión de arquitectura Microsoft publicada y preparación de preguntas/pruebas para 2026-09-15.
 
 ### Fase 3 — Reconciliación
@@ -131,7 +135,7 @@ Abrir WOs pequeñas y separadas. Posibles familias: UX/fricción, retirada de ru
 
 Este plan no autoriza cambios funcionales, promoción 0.7, cambios en `main`, datos reales, implementación de backend, Supabase/Neon/PostgreSQL, Office Script, Power Automate, SharePoint Lists ni V5.
 
-No se tocará la URL de evaluación de Cáceres mientras las farmacéuticas estén revisando 0.6.
+No se tocará la URL de evaluación de Cáceres mientras las farmacéuticas estén revisando 0.6. Las auditorías internas y cualquier futura corrección se basarán primero en la rama/superficie genérica publicada; solo una promoción hospitalaria posterior y explícita podrá trasladar cambios a Cáceres.
 
 ## 8. Entregables previstos
 
