@@ -135,6 +135,17 @@ if (common) {
     }
 }
 
+// ─── CHECK 7b: solicitud explícita del caso pendiente FH-002 ──────────────────
+console.log('\n[7b] FH-002 conserva fármaco solicitado explícito');
+if (common) {
+    const fh002 = common.match(/'CIP-DEMO-FH-002':[\s\S]*?estado:\s*'pending'/);
+    if (fh002 && /farmaco_solicitado:\s*'Adalimumab 80\/40 mg'/.test(fh002[0])) {
+        ok('FH-002 → farmaco_solicitado explícito');
+    } else {
+        fail('FH-002 pendiente no declara farmaco_solicitado explícito');
+    }
+}
+
 // ─── CHECK 8: Cada HTML referencia su script correcto ─────────────────────────
 console.log('\n[8] Referencias de scripts en HTMLs');
 const htmlScriptMap = {
