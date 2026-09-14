@@ -360,6 +360,20 @@
     padding: 0 24px 24px;
 }
 
+/* Issue #356 R3: keep the Quick View action row fully visible at open on
+   desktop. When the panel content is taller than the visible scroll area,
+   the actions stick to the bottom of the Quick View scroll area instead of
+   being partially clipped by the panel edge. Same actions, same order,
+   same destinations; layout/ergonomics only. */
+@media (min-width: 769px) {
+    #fhQvActions {
+        position: sticky;
+        bottom: 0;
+        background: #FFFFFF;
+        padding: 8px 0;
+    }
+}
+
 .fh-overlay-card {
     background: #FFFFFF;
     border-radius: 14px;
