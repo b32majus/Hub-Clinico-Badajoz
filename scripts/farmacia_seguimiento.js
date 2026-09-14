@@ -2103,14 +2103,14 @@
         { label: 'Bastante', value: 2 },
         { label: 'Un poco', value: 1 },
         { label: 'Nada', value: 0 },
-        { label: 'Sin relación', value: 0 }
+        { label: 'Sin relación', value: 0, idToken: 'NR' }
     ];
 
     var DLQI_Q7_FOLLOWUP = [
         { label: 'Bastante', value: 2 },
         { label: 'Un poco', value: 1 },
         { label: 'Nada', value: 0 },
-        { label: 'Sin relación', value: 0 }
+        { label: 'Sin relación', value: 0, idToken: 'NR' }
     ];
 
     function getDLQIInterpretation(total) {
@@ -2199,13 +2199,13 @@
         calculateDLQI();
     }
 
-    function createDLQIOption(qId, suffix, label, value, isQ7Trigger) {
+    function createDLQIOption(qId, suffix, label, value, isQ7Trigger, idToken) {
         var wrapper = document.createElement('label');
         wrapper.className = 'dlqi-option';
         var input = document.createElement('input');
         input.type = 'radio';
         input.name = 'dlqi_q' + qId + (suffix ? '_' + suffix : '');
-        input.id = 'fhSegDlqiQ' + qId + (suffix ? suffix.toUpperCase() : '') + 'V' + (value === null ? 'trigger' : String(value));
+        input.id = 'fhSegDlqiQ' + qId + (suffix ? suffix.toUpperCase() : '') + 'V' + (value === null ? 'trigger' : String(value) + (idToken || ''));
         input.setAttribute('data-dlqi-q', String(qId));
         if (typeof value === 'number') input.setAttribute('data-dlqi-val', String(value));
         if (isQ7Trigger) input.setAttribute('data-dlqi-q7-trigger', '');
@@ -2247,14 +2247,14 @@
                 var fuOptions = document.createElement('div');
                 fuOptions.className = 'dlqi-card__options dlqi-card__options--followup';
                 DLQI_Q7_FOLLOWUP.forEach(function (opt) {
-                    fuOptions.appendChild(createDLQIOption(7, 'b', opt.label, opt.value, false));
+                    fuOptions.appendChild(createDLQIOption(7, 'b', opt.label, opt.value, false, opt.idToken));
                 });
                 followUp.appendChild(fuOptions);
                 card.appendChild(followUp);
             } else {
                 var opts = q.sinRelacion ? DLQI_OPTIONS_WITH_NR : DLQI_STANDARD_OPTIONS;
                 opts.forEach(function (opt) {
-                    optionsRow.appendChild(createDLQIOption(q.id, null, opt.label, opt.value, false));
+                    optionsRow.appendChild(createDLQIOption(q.id, null, opt.label, opt.value, false, opt.idToken));
                 });
                 card.appendChild(optionsRow);
             }
