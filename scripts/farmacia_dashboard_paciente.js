@@ -927,7 +927,8 @@
             summaryFields.push({ label: patient.__farmaciaRawPatient ? 'Líneas activas sin autoselección' : 'Otras líneas activas', value: otherNames });
         }
         summaryFields.push({ label: 'Estado validación', value: patient.estadoLabel });
-        summaryFields.push({ label: 'Última adherencia', value: explicitText(patient.adherencia) });
+        var adherenceText = window.FarmaciaAdherencePresentation.adherenceDisplayText(patient.adherencia);
+        summaryFields.push({ label: 'Última adherencia', value: adherenceText === null || adherenceText === 'not_recorded' ? 'No registrado' : adherenceText });
         summaryFields.push({ label: 'Efectos adversos', value: explicitText(patient.efectosAdversos) });
         summaryFields.push({ label: 'Últimos PROMs Farmacia', value: getDashboardSummaryPromsText(patient) });
         F.renderFields(document.getElementById('dashboardSummaryGrid'), summaryFields);

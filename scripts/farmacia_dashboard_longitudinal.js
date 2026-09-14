@@ -295,7 +295,7 @@
             { l: 'Servicio(s)', v: servicios },
             { l: 'Patología(s)', v: patologias },
             { l: 'Comorbilidades', v: comorbText || (raw ? 'No registrado' : 'Ninguna registrada') },
-            { l: 'Adherencia', v: explicitText(patient.adherencia)
+            { l: 'Adherencia', v: (window.FarmaciaAdherencePresentation.adherenceDisplayText(patient.adherencia) || 'No registrado')
                 + (raw && patient.adherencia !== undefined && patient.adherencia !== null && patient.adherencia !== ''
                     ? ' · Último resultado explícito' : '') },
             { l: 'Causalidad', v: causalityText || 'No registrado' },
@@ -379,10 +379,11 @@
                 container.appendChild(movementField);
             });
             (patient.adherencia_historial || []).forEach(function (record, index) {
+                var presentation = window.FarmaciaAdherencePresentation;
                 var adherenceField = buildInfoField('Adherencia histórica · registro ' + (index + 1),
                     'Fecha del acto: ' + (record.visit_date || 'No registrada')
-                    + ' · Instrumento: ' + explicitText(record.instrument)
-                    + ' · Resultado: ' + explicitText(record.result));
+                    + ' · Instrumento: ' + (presentation.adherenceFieldText(record.instrument) || 'No registrado')
+                    + ' · Resultado: ' + (presentation.adherenceFieldText(record.result) || 'No registrado'));
                 adherenceField.setAttribute('data-longitudinal-adherence', String(index));
                 container.appendChild(adherenceField);
             });
