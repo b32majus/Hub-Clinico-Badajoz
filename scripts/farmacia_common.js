@@ -2348,6 +2348,26 @@
             return kind === 'enfermeria' ? 'Enfermería' : 'Farmacia';
         }
 
+        /* N5 (issue #368): an import that needs cross-page persistence cannot
+           be declared active until that persistence is confirmed. The
+           candidate is written to sessionStorage BEFORE it becomes the active
+           source. On a write failure the import is rejected before any state
+           mutation: no importStates entry, no in-memory fallback, no
+           "Excel cargado" UI, no import event, and the previous valid source
+           (if any) stays byte-for-byte intact. The caller surfaces the
+           rejection message. Bridge v2 raw keeps its runtime_memory contract
+           and never reaches this path (persistImportedDataset skips that
+           format by design). */
+        function activatePersistedImportState(kind, candidate) {
+            candidate.storage = 'session_storage';
+            if (!persistImportedDataset(kind, candidate)) {
+                throw new Error('El navegador no pudo conservar el Excel cargado en el almacenamiento de sesión, necesario para mantener los datos al navegar entre pantallas. La importación se rechazó: no se ha activado ningún Excel nuevo.');
+            }
+            importStates[kind] = candidate;
+            SESSION_STORAGE_FALLBACK[kind] = candidate;
+            return candidate;
+        }
+
         function formatImportStatus(kind) {
             var state = importStates[kind];
             if (state && state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel) {
@@ -2446,10 +2466,7 @@
                     unrecognizedHeaders: [],
                     rows: v6Candidates
                 };
-                importStates[kind] = v6State;
-                SESSION_STORAGE_FALLBACK[kind] = v6State;
-                v6State.storage = 'session_storage';
-                persistImportedDataset(kind, v6State);
+                activatePersistedImportState(kind, v6State);
                 updateAllImportUi();
                 emitImportEvent(kind, { state: v6State });
                 return v6State;
@@ -2489,10 +2506,7 @@
                     unrecognizedHeaders: [],
                     rows: allCandidates
                 };
-                importStates[kind] = state;
-                SESSION_STORAGE_FALLBACK[kind] = state;
-                state.storage = 'session_storage';
-                persistImportedDataset(kind, state);
+                activatePersistedImportState(kind, state);
                 updateAllImportUi();
                 emitImportEvent(kind, { state: state });
                 return state;
@@ -2583,10 +2597,7 @@
                 unrecognizedHeaders: inferred.unrecognizedHeaders,
                 rows: rows
             };
-            importStates[kind] = state;
-            SESSION_STORAGE_FALLBACK[kind] = state;
-            state.storage = 'session_storage';
-            persistImportedDataset(kind, state);
+            activatePersistedImportState(kind, state);
             updateAllImportUi();
             emitImportEvent(kind, { state: state });
             return state;
