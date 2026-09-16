@@ -279,7 +279,7 @@ if (api && typeof api.searchCIP === 'function') {
   assertEqual(visibleExport.rowObject.adherencia_morisky, '', 'Excel deja Morisky vacío aunque exista en paciente');
   assertEqual(visibleExport.rowObject.haq, '', 'Excel deja HAQ vacío aunque exista en paciente');
   assertEqual(visibleExport.rowObject.observaciones_seguimiento, 'Nota visible actual', 'Excel mapea notas visibles a observaciones de seguimiento');
-  assertEqual(visibleExport.rowArray.length, 61, 'Excel construye exactamente 61 columnas');
+  assertEqual(visibleExport.rowArray.length, 62, 'Excel construye exactamente 62 columnas (issue #366)');
   assertEqual(visibleExport.sheetName, '02_REUMA', 'Excel resuelve hoja desde el servicio visible');
 
   elements.fhPvServicio.value = 'Otro';

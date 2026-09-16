@@ -224,7 +224,7 @@ assert(generalObservations === 'Observación de origen sintética\n\nJustificaci
 const realExcelContext = exporter.buildContextFromValidacion(null, { cip: 'CIP-SINTETICO-158', resultado: data.resultadoValidacion, obsValidacion: data.obsValidacion });
 realExcelContext.observaciones = validation.buildExcelGeneralObservations(realExcelContext, 'Resumen clínico sintético');
 const realExcelRow = exporter.buildExcelRowObject(realExcelContext);
-assert(exporter.buildExcelRowArray(realExcelRow).length === 61 && realExcelRow.observaciones_validacion === 'Observación FH sintética' && realExcelRow.observaciones_generales.includes('Justificación clínica solicitada: Justificación clínica solicitada sintética') && realExcelRow.observaciones_generales.includes('Resumen clínico sintético'), 'fila Excel real conserva 61 columnas, FH exclusiva y bloques generales separados');
+assert(exporter.buildExcelRowArray(realExcelRow).length === 62 && realExcelRow.observaciones_validacion === 'Observación FH sintética' && realExcelRow.observaciones_generales.includes('Justificación clínica solicitada: Justificación clínica solicitada sintética') && realExcelRow.observaciones_generales.includes('Resumen clínico sintético'), 'fila Excel real conserva 62 columnas, FH exclusiva y bloques generales separados');
 const csv = validation.buildCsvRows();
 const csvHeaders = csv[0];
 const csvValues = csv[1];

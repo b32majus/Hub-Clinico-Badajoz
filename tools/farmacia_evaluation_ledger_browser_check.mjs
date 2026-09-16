@@ -129,7 +129,7 @@ try {
   await page.locator('#fhValExportTxt').click();
   assert.match(await page.evaluate(() => window.__normalOutputs.text), /VALIDATION-NOT-PERSISTED/);
   await page.locator('#fhValExcelExportBtn').click();
-  assert.equal((await page.evaluate(() => window.__normalOutputs.excelRow.row)).length, 61, 'Validation v1 Excel remains 61 columns');
+  assert.equal((await page.evaluate(() => window.__normalOutputs.excelRow.row)).length, 62, 'Validation v1 Excel remains 62 columns');
   await assertRetiredRuntime(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaValidacion);
@@ -154,7 +154,7 @@ try {
   await page.locator('#fhPvExportTxt').click();
   assert.match(await page.evaluate(() => window.__normalOutputs.text), /FIRST-VISIT-NOT-PERSISTED/);
   await page.locator('#fhPvExcelExportBtn').click();
-  assert.equal((await page.evaluate(() => window.__normalOutputs.excelRow.row)).length, 61, 'First Visit v1 Excel remains 61 columns');
+  assert.equal((await page.evaluate(() => window.__normalOutputs.excelRow.row)).length, 62, 'First Visit v1 Excel remains 62 columns');
   await assertRetiredRuntime(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita);
@@ -183,7 +183,7 @@ try {
   await page.locator('#fhSegExportCsv').click();
   assert.match((await page.evaluate(() => window.__normalOutputs.download)).mime, /text\/csv/);
   await page.locator('#fhSegExcelExportBtn').click();
-  assert.ok((await page.evaluate(() => window.__normalOutputs.excelRows.rows)).every(row => row.length === 61), 'Follow-up v1 Excel rows remain 61 columns');
+  assert.ok((await page.evaluate(() => window.__normalOutputs.excelRows.rows)).every(row => row.length === 62), 'Follow-up v1 Excel rows remain 62 columns');
   await assertRetiredRuntime(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaSeguimiento && document.querySelectorAll('input[name="fhSegLineCardSelection"]:not(:disabled)').length === 2);

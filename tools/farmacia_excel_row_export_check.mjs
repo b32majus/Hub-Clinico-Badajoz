@@ -22,13 +22,14 @@ const jsPath = path.join(ROOT, 'scripts', 'farmacia_excel_row_export.js');
 const js = fs.readFileSync(jsPath, 'utf8');
 const forbidden = 'inner' + 'HTML';
 
-// 1. WO8_COLUMNS tiene 61 columnas
+// 1. WO8_COLUMNS tiene 62 columnas (issue #366: solicitud_id appended)
 var colMatch = js.match(/WO8_COLUMNS\s*=\s*\[([\s\S]*?)\];/);
 assert(colMatch !== null, 'WO8_COLUMNS definido');
 if (colMatch) {
   var colsStr = colMatch[1];
-  var colCount = (colsStr.match(/'([^']+)'/g) || []).length;
-  assert(colCount === 61, 'WO8_COLUMNS tiene 61 columnas (encontradas ' + colCount + ')');
+  var colNamesEarly = colsStr.match(/'([^']+)'/g) || [];
+  assert(colNamesEarly.length === 62, 'WO8_COLUMNS tiene 62 columnas (encontradas ' + colNamesEarly.length + ')');
+  assert(colNamesEarly[colNamesEarly.length - 1] === "'solicitud_id'", 'solicitud_id es la última columna WO8 (issue #366)');
 }
 
 // 2. Columnas P0 en orden canónico
@@ -133,9 +134,9 @@ vm.createContext(sandbox);
 vm.runInContext(js, sandbox);
 const exp = sandbox.FarmaciaExcelRowExport;
 const blankArray = exp.buildExcelRowArray(exp.buildExcelRowObject({ fechaActo: '2026-07-27' }));
-assert(blankArray.length === 61, 'fila funcional conserva 61 columnas en orden WO8');
-assert(exp.WO8_COLUMNS[0] === 'patient_id' && exp.WO8_COLUMNS[60] === 'observaciones_generales', 'extremos del orden canónico WO8 preservados');
-assert(!/[\r\n]/.test(exp.toTSVRow(blankArray)) && exp.toTSVRow(blankArray).split('\t').length === 61, 'TSV funcional es una línea de 61 campos');
+    assert(blankArray.length === 62, 'fila funcional conserva 62 columnas en orden WO8');
+    assert(exp.WO8_COLUMNS[0] === 'patient_id' && exp.WO8_COLUMNS[60] === 'observaciones_generales' && exp.WO8_COLUMNS[61] === 'solicitud_id', 'extremos del orden canónico WO8 preservados (solicitud_id appended)');
+    assert(!/[\r\n]/.test(exp.toTSVRow(blankArray)) && exp.toTSVRow(blankArray).split('\t').length === 62, 'TSV funcional es una línea de 62 campos');
 assert(exp.getServiceSheetName('Dermatología') === '01_DERMA', 'Dermatología con tilde mapea a 01_DERMA');
 assert(exp.getServiceSheetName('Reumatología') === '02_REUMA', 'Reumatología con tilde mapea a 02_REUMA');
 assert(exp.getServiceSheetName('Digestivo') === '03_DIGESTIVO', 'Digestivo mapea a 03_DIGESTIVO');

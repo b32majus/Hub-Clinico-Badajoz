@@ -224,7 +224,13 @@ for (const sheet of expectedSheets) {
 // 4. Cada hoja de servicio tiene 61 columnas
 const serviceNames = Object.keys(serviceCols).filter(s => s.startsWith('0') && s !== '05_CATALOGOS' && s !== '99_CONFIG_EXPORT_MAP');
 for (const s of serviceNames) {
-  assert(serviceCols[s].length === 61, `Hoja "${s}" tiene ${serviceCols[s].length} columnas (61 esperadas)`);
+  assert(serviceCols[s].length === 62, `Hoja "${s}" tiene ${serviceCols[s].length} columnas (62 esperadas, issue #366 solicitud_id)`);
+}
+
+// 4b. Issue #366: solicitud_id appended as last column on every service sheet
+for (const s of serviceNames) {
+  const headers = serviceCols[s] || [];
+  assert(headers[headers.length - 1] === 'solicitud_id', `Hoja "${s}" cierra con solicitud_id (issue #366)`);
 }
 
 // 5. Las 4 hojas de servicio tienen columnas idénticas

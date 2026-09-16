@@ -221,6 +221,9 @@
         estadoLinea: ['estado_linea', 'estado linea', 'estadoLinea'],
         tipoRelacion: ['tipo_relacion', 'tipo relacion', 'tipoRelacion'],
         marcaComercial: ['marca_comercial', 'marca comercial', 'marcaComercial', 'nombre comercial', 'nombre_comercial'],
+        /* Issue #366: external legacy identity name. Mapping only;
+           never a new v2 semantic concept. */
+        solicitudId: ['solicitud_id', 'solicitud id', 'solicitudId'],
     };
 
     function safeGetLocalStorage(key) {
@@ -939,6 +942,10 @@
             }
             // Marcar tipo_acto_fh en el paciente si fue reconocido
             if (tipoActo) candidate.tipo_acto_fh = tipoActo;
+            /* Issue #366 read-side compatibility: legacy explicit value
+               "rechazado" is accepted ONLY as an alias of "denegado";
+               no new category, no inference from estado_registro. */
+            if (valResultado === 'rechazado') valResultado = 'denegado';
             if (valResultado) candidate.resultado_validacion = valResultado;
             if (estReg) candidate.estado_registro = estReg;
             if (estLinea) candidate.estado_linea = estLinea;
@@ -952,6 +959,12 @@
                 candidate.estado = 'completado';
                 candidate.estadoLabel = 'Concomitante';
             }
+            /* Issue #366: preserve the external request identity and the
+               service/sheet provenance exactly as read. Identity only:
+               reading never implies resolution (N3 gates on validation
+               rows via tipo_acto_fh). */
+            if (row.solicitud_id) candidate.solicitud_id = String(row.solicitud_id).trim();
+            if (row.servicio_hoja) candidate.servicio_hoja = String(row.servicio_hoja).trim();
         } else if (esEnfermeria) {
             // Enfermería: conservar estado prebiológico del adaptador
             // El adaptador ya estableció estado (OK FARMACIA, EN VIGILANCIA, BLOQUEADO)
@@ -2193,10 +2206,40 @@
             }
 
             // Generic import (Farmacia u otros)
+            /* Issue #366 multisheet FH reading: the legacy Farmacia path
+               must not stay limited to the first sheet. Relevant records
+               from 01_DERMA / 02_REUMA / 03_DIGESTIVO are collected with
+               their service/sheet provenance. 04_ONCO is NOT new scope:
+               it is not read here (existing compatibility preserved).
+               Workbooks without these service sheets keep the legacy
+               first-sheet behavior unchanged. */
+            var FARMACIA_SERVICE_SHEET_NAMES = ['01_DERMA', '02_REUMA', '03_DIGESTIVO'];
+            var farmaciaServiceSheets = kind === 'farmacia'
+                ? (workbook.SheetNames || []).filter(function (name) {
+                    return FARMACIA_SERVICE_SHEET_NAMES.indexOf(String(name)) !== -1;
+                })
+                : [];
             var firstSheetName = workbook.SheetNames[0];
-            var sheet = workbook.Sheets[firstSheetName];
-            var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-            var headers = rows.length ? Object.keys(rows[0]) : [];
+            var rows = [];
+            var headers = [];
+            if (farmaciaServiceSheets.length) {
+                firstSheetName = farmaciaServiceSheets.join(', ');
+                farmaciaServiceSheets.forEach(function (farmaciaSheetName) {
+                    var farmaciaSheet = workbook.Sheets[farmaciaSheetName];
+                    var farmaciaSheetRows = XLSX.utils.sheet_to_json(farmaciaSheet, { defval: '' });
+                    farmaciaSheetRows.forEach(function (farmaciaRow) {
+                        if (farmaciaRow && typeof farmaciaRow === 'object') {
+                            farmaciaRow.servicio_hoja = farmaciaSheetName;
+                        }
+                        rows.push(farmaciaRow);
+                    });
+                });
+                headers = rows.length ? Object.keys(rows[0]) : [];
+            } else {
+                var sheet = workbook.Sheets[firstSheetName];
+                rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                headers = rows.length ? Object.keys(rows[0]) : [];
+            }
             var inferred = inferFieldMapping(headers);
             var state = {
                 kind: kind,
