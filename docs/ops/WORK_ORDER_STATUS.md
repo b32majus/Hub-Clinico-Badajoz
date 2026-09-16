@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-08
+**Última actualización:** 2026-09-17
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,18 +11,18 @@
 | Elemento | Valor |
 | --- | --- |
 | Rama regional | `recovery/farmacia-pr-replay-20260727` |
-| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd` |
-| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 / promoción Cáceres 0.6 |
+| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado tras merge #370 y antes de #371: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
+| Último HEAD de producto publicado | `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` — merge PR #370 / Enfermería v6 + reconciliación `solicitud_id` |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; source/last-functional de 0.6 |
 | Candidate Train C | `e5e52e2bc8f94805b4771ec40aa19820bb6be02f` |
-| CI del último HEAD de producto | Farmacia smoke #1025 `success` sobre `19d10c9abefb7b25130b4b17e3289d54a17315ee`; Pages #219 `success` |
+| CI del último HEAD de producto | Farmacia smoke #1050 `success`; Pages build/deployment `success` sobre `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
 | `origin/main` | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68`; fuera de esta línea |
-| Snapshot Cáceres | `CÁCERES-REVIEW-0.6`; issue #345 / PR #346; candidate `749c82409a415e800500b39018027b189fd6a131`; merge `19d10c9abefb7b25130b4b17e3289d54a17315ee` |
+| Snapshot Cáceres | `CÁCERES-REVIEW-0.6`; issue #345 / PR #346; sigue congelado en source `e1120ba...` y no incorpora automáticamente #363/#370 |
 | Source/last-functional snapshot 0.6 | `e1120ba85817a1807cea8c1e938867ad778921f4` según `deployment-manifest.json` |
 | Paquete externo | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no refrozen por 0.6 (#345/#346) |
 | Estado asistencial | Evaluación con datos sintéticos; no piloto ni producción |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) |
-| Work order documental actual | #349 — `WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY-01` |
+| WO documental vigente | Consultar GitHub live; no se fija una WO “actual” estática en este tablero |
 
 ## Convención operativa de SHAs
 
@@ -47,7 +47,11 @@
 | Reconciliación documental post Train C | #343 / PR #344 → `79c9fd37f2a631a4316439013e4b0632268cf90a` | MERGED_AND_VERIFIED; #343 CLOSED/completed; smoke #1022 success |
 | Promoción Cáceres 0.6 | #345 / PR #346 → candidate `749c82409a415e800500b39018027b189fd6a131`, merge `19d10c9abefb7b25130b4b17e3289d54a17315ee` | MERGED_AND_VERIFIED; #345 CLOSED/completed; smoke #1025 success; Pages #219 success |
 | Reconciliación documental post 0.6 | #347 / PR #348 → `a7428b0195435477bfa86e779b63ea95955ed723` | MERGED_AND_VERIFIED; #347 CLOSED/completed; smoke #1028 success; documentation-only |
-| Convención HEAD/tip Git | #349 | IN_PROGRESS; documentation-only; establece taxonomía estable y evita reconciliación circular |
+| Convención HEAD/tip Git | #349 / PR #350 → merge `5150eab2e02ac029aff0cec021b35722725ff318` | MERGED_AND_VERIFIED; #349 CLOSED/completed; taxonomía estable publicada |
+| Acceso estratificación SEFH | #362 / PR #363 → merge `6c36ce5d1126b3032937e8e3627b045e1e2ea081` | MERGED_AND_VERIFIED; link SEFH en Primera Visita/Seguimiento; smoke post-merge success |
+| Train Enfermería v6 | #364; N1 #365 `6f0cbae`; N2 #366 `7a61421`; N3 #367 `79a1385`; N4 `731211e`; N5 #368 source `4a68006` | COMPLETED_AND_PUBLISHED vía promoción limpia #369 / PR #370 |
+| Promoción Enfermería v6 | #369 / PR #370 → candidate `a4b49ca62c90307529a935cbcadcf740af49d345`, merge `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` | MERGED_AND_VERIFIED; smoke #1050 + Pages success; `main`/Cáceres intactos |
+| Reconciliación documental + deuda | #371 | WO que produce esta edición; estado de publicación se consulta live en GitHub para evitar autorreferencia circular |
 
 ### Garantías clínicas publicadas
 
@@ -58,6 +62,7 @@
 - C2 aplica únicamente 7 conceptos seguros; `derma_viral_serologies` combinado sigue `NONE/NO_PROPOSAL` y no se reparte a VHB/VHC/VIH.
 - No inferencia desde nombre de fármaco, CIMA, catálogo, historial o dato ausente.
 - Intake no crea/selecciona paciente ni escribe tratamiento validado.
+- Enfermería v6: matching exclusivamente por `solicitud_id`; `OK FARMACIA` no valida; `validado`/`denegado` terminales solo desde acto FH explícito; misma CIP con IDs distintos no se colapsa.
 
 ### Evidencia vigente
 
@@ -66,6 +71,7 @@
 - PR #341 head smoke #1018 `success`; post-merge recovery smoke #1019 `success`.
 - QA manual humana sobre recovery con plantilla D17_EXT_V1 correcta confirmó auto-reveal + hidratación C1/C2.
 - Promoción 0.6: builder reproducible, checker 16/16, `BADAJOZ_ZERO`, oracle integrado sobre snapshot PASS, T10 snapshot 14/14, PR #346 head smoke #1024 `success`, post-merge smoke #1025 `success` y Pages #219 `success`.
+- PR #370: persistence 57/0, handoff browser 22/0, reconciliación 75/0 + browser 70/0, smoke 49/0; post-merge smoke #1050 success y Pages success; fixtures sintéticos, sin datos reales.
 - Todo lo anterior usa fixtures/datos sintéticos; no acredita piloto ni producción.
 
 ### Snapshot y paquete
@@ -107,7 +113,16 @@
 | **WO-DOC-FH-POST-TRAIN-C (#343)** | Reconciliación documental post Train C | ✅ Merged | `docs/fh-post-train-c-reconciliation-343-20260907` | merge `79c9fd37f2a631a4316439013e4b0632268cf90a` (PR #344) | #343 CLOSED/completed; documentación-only |
 | **WO-FH-CACERES-REVIEW-0.6 (#345)** | Promoción snapshot Cáceres 0.6 | ✅ Merged | `work/fh-caceres-review-0.6-345-20260907` | candidate `749c824...` → merge `19d10c9...` (PR #346) | Manifest `CÁCERES-REVIEW-0.6`, source/last-functional `e1120ba8...`; smoke #1025 + Pages #219 success |
 | **WO-DOC-FH-POST-CACERES-0.6 (#347)** | Reconciliación documental post 0.6 | ✅ Merged | `docs/fh-post-caceres-0.6-reconciliation-347-20260908` | merge `a7428b0195435477bfa86e779b63ea95955ed723` (PR #348) | #347 CLOSED/completed; smoke #1028 success; documentación-only |
-| **WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY (#349)** | Convención tip Git / HEAD de producto / HEAD clínico | 📋 Ready for review | `docs/fh-recovery-head-terminology-349-20260908` | pendiente | Solo INDEX/WOS/estado vivo; no cambia producto/snapshot |
+| **WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY (#349)** | Convención tip Git / HEAD de producto / HEAD clínico | ✅ Merged | `docs/fh-recovery-head-terminology-349-20260908` | merge `5150eab2e02ac029aff0cec021b35722725ff318` (PR #350) | #349 CLOSED/completed; solo documentación |
+| **WO-FH-ESTRATIFICACION-SEFH (#362)** | Acceso herramienta estratificación SEFH | ✅ MERGED_AND_VERIFIED | `work/fh-estratificacion-sefh-20260916` | `96028d6...` → merge `6c36ce5...` (PR #363) | Primera Visita/Seguimiento; sin inferencia clínica |
+| **TRAIN-FH-ENFERMERIA-V6 (#364)** | Adaptación v6 + identidad/reconciliación | ✅ MERGED_AND_VERIFIED | `work/fh-enfermeria-v6-request-reconciliation-train-20260916` | N1→N5 publicados por PR #370 | Train local preservado como evidencia; promoción limpia separada |
+| **N1 (#365)** | Importador Enfermería v6 multihoja + `solicitud_id` | ✅ Completada | Train #364 | `6f0cbae...` | DER/REU/DIG + legacy preservado |
+| **N2 (#366)** | Transporte `solicitud_id` a Validación/Excel FH | ✅ Completada | Train #364 | `7a61421...` | Sin fallback por CIP/fármaco; `rechazado` read-alias de `denegado` |
+| **N3 (#367)** | Reconciliación Enfermería↔FH por identidad exacta | ✅ Completada | Train #364 | `79a1385...` | Estados fail-closed y same-CIP multi-request independiente |
+| **N4** | Handoff Inicio→Validación + hardening identidad | ✅ Completada | Train #364 | `731211e...` | Corrección Cora; allowlist acto FH + coherencia hoja/Servicio |
+| **N5 (#368)** | Fail-closed si no puede persistirse importación | ✅ Completada | Train #364 | source `4a68006...` → promotion `a4b49ca...` | Fuente previa preservada en replacement failure; Bridge v2 runtime_memory intacto |
+| **PROMOTION (#369)** | Promoción limpia Enfermería v6 | ✅ MERGED_AND_VERIFIED | `review/fh-enfermeria-v6-reconciliation-20260917` | candidate `a4b49ca...` → merge `e058f0d...` (PR #370) | 6 commits limpios; runtime-noise pair excluido; smoke #1050 + Pages success |
+| **WO-DOC POST #370 (#371)** | Reconciliación documental + registro vivo de deuda | ℹ️ Estado live | `docs/fh-post-enfermeria-v6-debt-reconciliation-20260917` | consultar GitHub | Esta misma WO produce el tablero; su estado final no se autoescribe para evitar una nueva reconciliación circular |
 | **Preflight 1** | SSH GitHub + clonado | ✅ Merged | `feature/reuma-v2-prebiologico-fh-les-sjogren` | — | Preflight manual, sin WO formal |
 | **Preflight 2** | Validación post-merge WO-001 | ✅ Merged | `feature/reuma-v2-prebiologico-fh-les-sjogren` | `f7e1083` | Pull `--ff-only` y verificación de gobernanza |
 | **WO-001** | Gobernanza ejecutable | ✅ Merged | `work/hermes/wo-001-agent-governance` → `feature/...` | `f5177f7` → `f7e1083` | PR #2 |
