@@ -1,17 +1,17 @@
-# Estado vivo — Farmacia recovery y Cáceres 0.6 — 2026-09-08
+# Estado vivo — Farmacia recovery y Cáceres 0.6 — actualizado 2026-09-17
 
 | Metadato | Valor |
 | --- | --- |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada | `recovery/farmacia-pr-replay-20260727` |
-| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd` |
-| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 |
+| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado tras merge #370 y antes de #371: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
+| Último HEAD de producto publicado | `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` — merge PR #370 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; congelado por 0.6 |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.6` |
 | Candidate snapshot | `749c82409a415e800500b39018027b189fd6a131` |
 | Source / last-functional snapshot | `e1120ba85817a1807cea8c1e938867ad778921f4` |
 | Promoción snapshot | issue #345 / PR #346 |
-| CI post-merge | Farmacia smoke #1025 `success`; Pages #219 `success` |
+| CI post-merge | Farmacia smoke #1050 `success`; Pages build/deployment `success` sobre `e058f0d...` |
 | Uso | Evaluación/demo con datos sintéticos |
 | Piloto / producción | No acreditados |
 
@@ -20,21 +20,23 @@
 Este documento distingue tres referencias que no deben colapsarse en un único “HEAD”:
 
 1. **Tip Git de `recovery`**: último commit de la rama. Es volátil y debe consultarse live en GitHub; puede cambiar por documentación o tareas administrativas sin cambio funcional.
-2. **Último HEAD de producto publicado**: último commit/merge que modificó código funcional o snapshot distribuible. En este estado es `19d10c9abefb7b25130b4b17e3289d54a17315ee` (PR #346).
+2. **Último HEAD de producto publicado**: último commit/merge que modificó código funcional o snapshot distribuible. En este estado es `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` (PR #370).
 3. **HEAD clínico funcional congelado**: SHA que el snapshot declara como `source_sha` / `last_functional_sha`. Para Cáceres 0.6 es `e1120ba85817a1807cea8c1e938867ad778921f4`.
 
 **Regla estable:** un merge `documentation-only` puede mover el tip Git, pero no cambia por sí mismo el HEAD de producto ni el HEAD clínico funcional. No debe abrirse una nueva reconciliación documental únicamente para actualizar el tip tras un merge documental.
 
 ## 1. Estado publicado
 
-La línea de Farmacia conserva A + B + Train C y, desde PR #346, el snapshot estable de Cáceres ya representa ese producto funcional.
+La línea regional de Farmacia conserva A + B + Train C y ha avanzado además con acceso SEFH y con Enfermería v6/reconciliación por `solicitud_id`. `CÁCERES-REVIEW-0.6` sigue congelado en el producto anterior y ya no representa automáticamente el HEAD regional actual.
 
 - **A — #334 / PR #335:** auto-reveal de Dermatología/patología desde e-Orden reconocida, sin preescritura clínica.
 - **B — #336 / PR #337:** `D17_EXT_V1` transporta de forma versionada y fail-closed la información clínica explícita de Dermatología.
 - **Train C — #338/#339/#340, promovido por #342/#341:** 39 conceptos clínicos/comorbilidades + 7 conceptos seguros de analítica/vacunación, con aplicación profesional protegida.
 - **Cáceres 0.6 — #345 / PR #346:** snapshot reproducible que incorpora A+B+C y se publica en `previews/caceres-fh/`.
+- **SEFH — #362 / PR #363:** acceso externo a herramienta de estratificación desde Primera Visita y Seguimiento; merge `6c36ce5...`.
+- **Enfermería v6 — #364–#370:** importación multihoja, `solicitud_id`, transporte a Validación/Excel FH, reconciliación exacta, handoff Inicio→Validación y persistencia fail-closed; merge PR #370 `e058f0d...`.
 
-El tip Git de `recovery` puede ser posterior a `19d10c9...` por merges documentales/administrativos. El último HEAD que cambió producto/snapshot sigue siendo `19d10c9...`, mientras que el producto clínico que 0.6 congela sigue siendo `e1120ba...`. La diferencia es intencional y no representa desalineación funcional.
+El último HEAD de producto regional es `e058f0d...`. El producto clínico que 0.6 congela sigue siendo `e1120ba...`; esta diferencia es ahora una **desalineación deliberada de artefactos**, no un error: recovery avanza y Cáceres solo cambia mediante promoción/refreeze explícito.
 
 ## 2. Qué está demostrado
 
@@ -45,6 +47,8 @@ El tip Git de `recovery` puede ser posterior a `19d10c9...` por merges documenta
 - Oracle integrado ejecutado contra el propio snapshot 0.6: productor real → preview → auto-reveal → C1/C2 → apply soportado = PASS.
 - T10 sobre root temporal del snapshot: `14/14 PASS`; el fixture de test requerido por D12 se añadió solo al root temporal de QA y no forma parte del snapshot distribuible.
 - PR #346 head smoke #1024 `success`; post-merge smoke #1025 `success`; Pages #219 `success`.
+- PR #370 candidate: persistence 57/0, handoff browser 22/0, reconciliación 75/0 + browser 70/0, smoke 49/0, console/page errors 0; post-merge smoke #1050 y Pages build/deployment `success`.
+- Pages genérica post-merge respondió HTTP 200 y sirve código con `ENFERMERIA_V6_CLINICAL_SHEETS` y `RECONCILIATION_CONFLICT`.
 - El enlace estable de Cáceres responde 200 y sirve `CÁCERES-REVIEW-0.6`.
 
 ## 3. Garantías clínicas vigentes
@@ -56,6 +60,7 @@ El tip Git de `recovery` puede ser posterior a `19d10c9...` por merges documenta
 - Los compuestos de psoriasis/DA/otros biológicos no se trocean por inferencia.
 - `derma_viral_serologies` combinado permanece no escribible y no se reparte a VHB/VHC/VIH.
 - Intake no crea/selecciona paciente ni convierte el paste en persistencia clínica.
+- Enfermería v6: `OK FARMACIA` no equivale a validado; matching exclusivamente por `solicitud_id`; un mismo CIP con IDs distintos permanece independiente; ausencia de identidad nunca se sustituye por heurística.
 
 ## 4. Cáceres 0.6
 
@@ -68,7 +73,7 @@ El manifest publicado de `previews/caceres-fh/deployment-manifest.json` declara:
 - candidate: `749c82409a415e800500b39018027b189fd6a131`;
 - merge de publicación: `19d10c9abefb7b25130b4b17e3289d54a17315ee`.
 
-0.6 es el snapshot estable vigente para evaluación sintética en Cáceres. No es un espejo automático de futuros merges de recovery: cualquier 0.7 o cambio posterior requiere nueva promoción explícita.
+0.6 es el snapshot estable vigente para evaluación sintética en Cáceres. No es un espejo automático de recovery y **no contiene** por defecto SEFH #363 ni Enfermería v6 #370; cualquier 0.7 o cambio posterior requiere nueva promoción explícita.
 
 ## 5. Paquete externo
 
@@ -76,13 +81,14 @@ El evaluation package/workbooks/manifest/ZIP permanece en su freeze sintético a
 
 ## 6. Siguiente frontera
 
-1. Continuar evaluación humana con `CÁCERES-REVIEW-0.6` y datos sintéticos.
-2. Registrar cualquier defecto reproducible del flujo soportado como nueva WO atómica; no reabrir A/B/C por defecto.
-3. Decidir por separado si se necesita refreeze del paquete externo/workbooks.
-4. Cualquier piloto real o producción requiere autorización, gobernanza y validación específicas; 0.6 no los acredita.
+1. Continuar evaluación humana con `CÁCERES-REVIEW-0.6` y datos sintéticos, sabiendo que permanece congelado respecto a recovery.
+2. Usar [`FARMACIA_DEBT_REGISTER.md`](./FARMACIA_DEBT_REGISTER.md) como registro vivo de deuda aceptada; resolver R1 antes de piloto y R2/R3 en una WO pequeña de robustez del adaptador v6.
+3. Registrar cualquier nuevo defecto reproducible del flujo soportado como WO atómica y, si se acepta como deuda, añadirlo al registro vivo.
+4. Decidir por separado si se necesita refreeze de Cáceres o del paquete externo/workbooks.
+5. Cualquier piloto real o producción requiere autorización, gobernanza y validación específicas; recovery actual no los acredita.
 
 ## 7. Históricos
 
 `FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260907.md` pasa a ser histórico: describe correctamente el estado previo a la promoción 0.6, cuando Cáceres 0.5 seguía congelado. También se conservan los estados de 20260731 y freezes anteriores como trazabilidad.
 
-Cuando exista contradicción sobre el estado vivo, prevalecen la WO/instrucción actual, GitHub publicado, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y este documento 20260908.
+Cuando exista contradicción sobre el estado vivo, prevalecen la WO/instrucción vigente, GitHub publicado, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y esta edición actualizada del documento.

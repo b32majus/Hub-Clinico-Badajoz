@@ -2,14 +2,14 @@
 
 | Metadato | Valor |
 | --- | --- |
-| Última actualización | 2026-09-08 |
+| Última actualización | 2026-09-17 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
-| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` (merge issue #345 / PR #346 — promoción `CÁCERES-REVIEW-0.6`) |
+| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado tras merge #370 y antes de WO #371: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
+| Último HEAD de producto publicado | `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` (merge PR #370 — Enfermería v6 / reconciliación por `solicitud_id`) |
 | HEAD clínico funcional congelado | `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341; `source_sha`/`last_functional_sha` del snapshot 0.6) |
 | Candidate Train C | `e5e52e2bc8f94805b4771ec40aa19820bb6be02f` |
-| CI del último HEAD de producto | Farmacia smoke #1025 — `success` sobre `19d10c9abefb7b25130b4b17e3289d54a17315ee`; Pages #219 `success` |
+| CI del último HEAD de producto | Farmacia smoke #1050 `success` y Pages build/deployment `success` sobre `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.6` (issue #345 / PR #346; manifest source `e1120ba85817a1807cea8c1e938867ad778921f4`) |
 | Snapshot 0.6 candidate | `749c82409a415e800500b39018027b189fd6a131` |
@@ -17,32 +17,33 @@
 | Paquete externo | `READY_FOR_EXTERNAL_SYNTHETIC_EVALUATION`; no refrozen por PR #333/#335/#337/#341/#346 |
 | Actividad del servicio | Demo |
 | Alcance | Evaluación con datos sintéticos; sin piloto / sin producción |
-| Work order actual | issue #349 — WO-DOC-FH-RECOVERY-HEAD-TERMINOLOGY-01 |
+| WO / instrucción vigente | Consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
-> **Estado vivo:** el tip Git de `recovery/farmacia-pr-replay-20260727` es deliberadamente volátil y se verifica live en GitHub. El último HEAD que cambió producto/snapshot es `19d10c9abefb7b25130b4b17e3289d54a17315ee` (PR #346); el HEAD clínico funcional congelado por 0.6 es `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341). `CÁCERES-REVIEW-0.6` incorpora A + B + Train C y está publicado en el enlace estable de Cáceres.
+> **Estado vivo:** el tip Git de `recovery/farmacia-pr-replay-20260727` es deliberadamente volátil y se verifica live en GitHub. El último HEAD de producto publicado es `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` (PR #370). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370.
 
 > **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
 
-> **Recovery publicado y snapshot Cáceres están ahora alineados funcionalmente, pero siguen siendo artefactos distintos.** `CÁCERES-REVIEW-0.6` fue regenerado explícitamente por #345/#346 y su manifest congela `source_sha`/`last_functional_sha = e1120ba85817a1807cea8c1e938867ad778921f4`. El paquete externo/workbooks no se refrozen por #346.
+> **Recovery publicado y snapshot Cáceres son artefactos distintos y ya no están alineados funcionalmente.** `recovery` avanzó con acceso SEFH (#362/#363) y Enfermería v6/reconciliación por `solicitud_id` (#364–#370), mientras `CÁCERES-REVIEW-0.6` conserva su manifest con `source_sha`/`last_functional_sha = e1120ba85817a1807cea8c1e938867ad778921f4`. El paquete externo/workbooks tampoco se ha refrozen.
 
 ---
 
 ## 1. Lectura recomendada actual
 
-1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) — estado vivo post publicación de `CÁCERES-REVIEW-0.6`.
+1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) — estado vivo de recovery y relación con el snapshot Cáceres 0.6, actualizado 2026-09-17.
 2. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, candidates, PRs y merges.
-3. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
-4. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo 2026-09-08.
-5. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
-6. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
+3. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada/no bloqueante pendiente de WO; no sustituye backlog ni decisiones futuras.
+4. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
+5. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
+6. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
+7. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
 
 ---
 
 ## 2. Orden de verdad
 
-1. WO/instrucción actual: issue #349 para esta convención documental.
-2. GitHub live para el tip de `recovery`; último HEAD de producto publicado: `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
+1. WO/instrucción vigente: consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales.
+2. GitHub live para el tip de `recovery`; último HEAD de producto publicado: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
 3. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` una vez reconciliados.
 4. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
 5. Spec Unified Clinical Intake V0 y documentos vivos relacionados.
@@ -57,7 +58,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
 | --- | --- | --- | --- |
 | `origin/main` | Legacy / congelada; verificado `a25cccb8...` | Historia previa | Estado Farmacia actual |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; tip Git volátil (consultar live); último HEAD de producto `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional `e1120ba85817a1807cea8c1e938867ad778921f4` | Código Farmacia / superficie regional genérica | Piloto o producción |
+| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; tip Git volátil (consultar live); último HEAD de producto `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`; HEAD clínico congelado por Cáceres 0.6 `e1120ba85817a1807cea8c1e938867ad778921f4` | Código Farmacia / superficie regional genérica | Piloto o producción |
 | `previews/caceres-fh/` | **Snapshot estable `CÁCERES-REVIEW-0.6`**; manifest source/last-functional `e1120ba85817a1807cea8c1e938867ad778921f4` | Evaluación Pharmacy-only Cáceres con datos sintéticos | Piloto, producción o espejo automático de futuros merges |
 | `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
 | `origin/backup/*` y tags demo | Retorno/historia | Recuperación de estados | Desarrollo activo |
@@ -83,25 +84,28 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 | --- | --- |
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| Tip Git de recovery | Volátil; consultar GitHub live. Último verificado al iniciar #349: `91e0049b2bf44b4862e7172f4e6d1cbe92a8efbd` |
-| Último HEAD de producto publicado | `19d10c9abefb7b25130b4b17e3289d54a17315ee` — merge PR #346 |
+| Tip Git de recovery | Volátil; consultar GitHub live. Último verificado tras merge #370 y antes de #371: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
+| Último HEAD de producto publicado | `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` — merge PR #370 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; congelado por 0.6 |
-| CI del último HEAD de producto | Farmacia smoke #1025 `success`; Pages #219 `success` |
+| CI del último HEAD de producto | Farmacia smoke #1050 `success`; Pages build/deployment `success` |
 | Baseline Unified Intake | #323 / PR #324 → `bff76ff7095fb568948b1bfbc6288df551971add`; histórico, preservado en la cadena actual |
 | Cáceres 0.6 | #345 / PR #346 → candidate `749c82409a415e800500b39018027b189fd6a131`, merge `19d10c9abefb7b25130b4b17e3289d54a17315ee`; manifest source/last-functional `e1120ba85817a1807cea8c1e938867ad778921f4` |
 | A — auto-reveal | #334 / PR #335 → candidate `ad4088c...`, merge `7b99eda50e9f7b92cf921d0d6e1bd2090ca917f7`; presentación Dermatología/patología sin preescritura clínica |
 | B — D17_EXT_V1 | #336 / PR #337 → candidate `773f66f...`, merge `775a8c08c00d3b678838d71b958775bba726009b`; transporte clínico versionado y fail-closed |
 | Train C | #338 completado; C1 #339 `bbf898bc789840c0b4bc7635636b81d740afe60e`; C2 #340 `e5e52e2bc8f94805b4771ec40aa19820bb6be02f`; verifier final PASS |
 | Promoción Train C | #342 / PR #341 → merge `e1120ba85817a1807cea8c1e938867ad778921f4` |
+| Acceso estratificación SEFH | #362 / PR #363 → merge `6c36ce5d1126b3032937e8e3627b045e1e2ea081` |
+| Enfermería v6 / `solicitud_id` | train #364; N1 #365, N2 #366, N3 #367, N4 correctiva, N5 #368; promoción #369 / PR #370 → merge `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
+| Deuda aceptada post #370 | [`FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md): R1/R2/R3 no bloqueantes; R1 debe adjudicarse antes de piloto real |
 | C1 | 39 conceptos explícitos de patología/comorbilidades pasan por proposals + D5/D16; adapters cerrados; gates patología y parent/child |
 | C2 | 7 conceptos seguros de analítica/vacunación + superficie compartida única `formAnaliticaVacunacion` |
 | Serologías combinadas | `derma_viral_serologies` permanece `NONE/NO_PROPOSAL`; nunca se divide en VHB/VHC/VIH |
 | Tratamiento validado | Separado e intacto por el intake; requested/imported nunca equivale a validated |
 | Patient/session | Intake no crea/selecciona paciente ni persiste una sesión por pegar/importar |
 | QA Train C | final oracle PASS; T10 14/14 ejecutado una vez al final del Train; auditoría post-Train C1 147/147, C2 134/134, C2 browser 5/5, final oracle PASS; `git diff --check` PASS |
-| Snapshot/package | `CÁCERES-REVIEW-0.6` publicado por #345/#346; package externo/workbooks siguen sin refreeze |
+| Snapshot/package | `CÁCERES-REVIEW-0.6` sigue congelado en source `e1120ba...` y NO incorpora automáticamente #363/#370; package externo/workbooks siguen sin refreeze |
 | Estado asistencial | Evaluación/demo sintética; no piloto ni producción |
-| Siguiente frontera | Evaluación humana de `CÁCERES-REVIEW-0.6`; cualquier piloto real, refreeze del paquete externo o evolución posterior requiere decisión/WO separada |
+| Siguiente frontera | Mantener evaluación sintética; resolver la deuda registrada R1–R3 por WOs pequeñas antes del piloto cuando corresponda; cualquier refreeze Cáceres/paquete requiere decisión separada |
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) |
 
 > Los estados documentales previos a 2026-09-08 conservan trazabilidad histórica. Cuando describan Cáceres 0.4/0.5 o un recovery anterior como estado vivo, quedan superseded por GitHub, este índice, WOS y el estado vivo 20260908.
@@ -181,6 +185,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md)
 - [`docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md)
 - [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md)
+- [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — registro vivo de deuda aceptada/no bloqueante
 - [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md)
 - [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
 - [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md)
@@ -220,6 +225,8 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md)
 
 Decisión 2026-07-31: el Identity Plane físico no se implementa durante el ciclo de vacaciones. Se reservan identificadores e interfaz, pero se evita todo doble registro manual hasta disponer de servidor/PROM Gateway automatizado.
+
+Desde PR #370, el Hub soporta el workbook Enfermería v6 multihoja (`DERMATOLOGÍA`, `REUMATOLOGÍA`, `DIGESTIVO`) y reconcilia solicitudes con Farmacia exclusivamente por `solicitud_id`. `OK FARMACIA` sigue significando lista para tramitación, no validada; `validado`/`denegado` requieren acto FH explícito con el mismo ID; misma CIP con IDs distintos permanece independiente. El handoff Inicio→Validación y el fallo de persistencia están cubiertos de forma fail-closed.
 
 ---
 
@@ -271,6 +278,8 @@ Fronteras:
 
 ## 13. Deuda documental abierta
 
+La deuda funcional/técnica aceptada de producto se registra separadamente en [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md). Esta sección conserva únicamente deuda documental.
+
 Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 | Documento | Deuda |
@@ -304,7 +313,7 @@ Para el estado actual de Farmacia también son memoria histórica o referencia s
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
-Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recovery`, el último HEAD de producto publicado (`19d10c9abefb7b25130b4b17e3289d54a17315ee`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y el estado vivo 20260908. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
+Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recovery`, el último HEAD de producto publicado (`e058f0d25a1856ace4a8bec63dfca53584e8a9cb`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y el estado vivo actualizado en `FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
 
 ---
 
@@ -325,4 +334,4 @@ Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recove
 
 ---
 
-*Convención de estado post-0.6 — issue #349. El tip Git de recovery es volátil y se consulta live; último HEAD de producto publicado: `19d10c9abefb7b25130b4b17e3289d54a17315ee`; HEAD clínico funcional congelado: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` sigue siendo el snapshot estable vigente; paquete externo/workbooks sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
+*Estado reconciliado por issue #371 tras PR #370. El tip Git de recovery es volátil y se consulta live; último HEAD de producto publicado: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`; HEAD clínico funcional congelado por Cáceres 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` y el paquete externo siguen sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
