@@ -275,6 +275,13 @@
     margin-bottom: 16px;
 }
 .form-grid--full { grid-template-columns: 1fr; }
+.form-grid--align-end { align-items: end; }
+.form-hint {
+    display: block;
+    margin: -10px 0 16px;
+    color: #64748B;
+    font-size: 0.82rem;
+}
 .form-group label,
 .form-label {
     display: block;
