@@ -35,3 +35,5 @@ nul
 !Hub_Clinico_Maestro.xlsx
 !create_excel.py
 !generate_mock_data.py
+# Local Pi runtime state
+.atl/

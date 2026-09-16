@@ -607,6 +607,268 @@
         return result;
     }
 
+    /* ── Enfermería v6 multisheet (WO-FH-ENFERMERIA-V6-N1) ───────────── */
+
+    /**
+     * Hojas clínicas del workbook Enfermería v6 (headers congelados en el
+     * oracle: acceptance_contract_v1.json, bloque n1). El prefijo del
+     * solicitud_id debe corresponder a la hoja/servicio. Hojas auxiliares
+     * PANEL_ENFERMERIA / LISTAS / INSTRUCCIONES nunca son fuente clínica.
+     */
+    var ENFERMERIA_V6_CLINICAL_SHEETS = [
+        { name: 'DERMATOLOGÍA', idPattern: /^SOL-DER-[0-9]{6}$/ },
+        { name: 'REUMATOLOGÍA', idPattern: /^SOL-REU-[0-9]{6}$/ },
+        { name: 'DIGESTIVO', idPattern: /^SOL-DIG-[0-9]{6}$/ }
+    ];
+
+    var ENFERMERIA_V6_REQUIRED_HEADERS = [
+        'CIP', 'Patología', 'Fármaco', 'Fecha alta', 'Analítica', 'Mantoux', 'IGRA', 'VHB', 'VHC', 'VIH',
+        'Med. Preventiva', 'Apto para iniciar desde', 'Estado', 'Fecha OK', 'Observación prebiológico',
+        'Servicio', 'solicitud_id'
+    ];
+
+    function enfermeriaV6Token(value) {
+        return String(value || '')
+            .trim()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '');
+    }
+
+    /**
+     * Devuelve la definición de hoja clínica v6 para un nombre de hoja,
+     * o null si la hoja no es clínica v6.
+     */
+    function getEnfermeriaV6SheetDefinition(sheetName) {
+        var token = enfermeriaV6Token(sheetName);
+        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
+            if (enfermeriaV6Token(ENFERMERIA_V6_CLINICAL_SHEETS[i].name) === token) {
+                return ENFERMERIA_V6_CLINICAL_SHEETS[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Reconoce un workbook Enfermería v6: debe contener las tres hojas
+     * clínicas DERMATOLOGÍA, REUMATOLOGÍA y DIGESTIVO.
+     */
+    function isEnfermeriaV6Workbook(workbook) {
+        if (!workbook || !workbook.SheetNames) return false;
+        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
+            var found = false;
+            for (var j = 0; j < workbook.SheetNames.length; j++) {
+                if (getEnfermeriaV6SheetDefinition(workbook.SheetNames[j]) === ENFERMERIA_V6_CLINICAL_SHEETS[i]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
+    }
+
+    function getEnfermeriaV6ClinicalSheetNames() {
+        return ENFERMERIA_V6_CLINICAL_SHEETS.map(function (sheet) { return sheet.name; });
+    }
+
+    /**
+     * Encuentra la fila de cabecera de una hoja clínica v6 (misma regla
+     * legacy: primera fila que contiene una celda exacta "CIP").
+     */
+    function findEnfermeriaV6HeaderRow(rows) {
+        return findEnfermeriaHeaderRow(rows);
+    }
+
+    /**
+     * Devuelve los headers congelados ausentes en la fila de cabecera de una
+     * hoja clínica v6.
+     */
+    function missingEnfermeriaV6RequiredHeaders(headerRow) {
+        if (!Array.isArray(headerRow)) return ENFERMERIA_V6_REQUIRED_HEADERS.slice();
+        var tokens = {};
+        for (var i = 0; i < headerRow.length; i++) {
+            var token = enfermeriaV6Token(headerRow[i]);
+            if (token) tokens[token] = true;
+        }
+        return ENFERMERIA_V6_REQUIRED_HEADERS.filter(function (header) {
+            return !tokens[enfermeriaV6Token(header)];
+        });
+    }
+
+    /**
+     * Construye el header map v6. Requiere CIP y solicitud_id; los demás
+     * headers congelados se validan aparte.
+     */
+    function buildEnfermeriaV6HeaderMap(headerRow) {
+        if (!Array.isArray(headerRow)) return null;
+        var map = {};
+        for (var i = 0; i < headerRow.length; i++) {
+            var t = enfermeriaV6Token(headerRow[i]);
+            if (t === 'CIP') map.cip = i;
+            else if (t === 'PACIENTE') map.paciente = i;
+            else if (t === 'SERVICIO') map.servicio = i;
+            else if (t === 'PATOLOGIA') map.patologia = i;
+            else if (t === 'FARMACO') map.farmaco = i;
+            else if (t === 'FECHAALTA') map.fechaAlta = i;
+            else if (t === 'ANALITICA') map.analitica = i;
+            else if (t === 'MANTOUX') map.mantoux = i;
+            else if (t === 'IGRA') map.igra = i;
+            else if (t === 'VHB') map.vhb = i;
+            else if (t === 'VHC') map.vhc = i;
+            else if (t === 'VIH') map.vih = i;
+            else if (t === 'MEDPREVENTIVA' || t === 'MEDICINAPREVENTIVA') map.medPreventiva = i;
+            else if (t === 'APTOPARAINICIARDESDE') map.aptoDesde = i;
+            else if (t === 'ESTADO') map.estado = i;
+            else if (t === 'FECHAOK') map.fechaOk = i;
+            else if (t === 'OBSERVACIONPREBIOLOGICO') map.observacion = i;
+            else if (t === 'SOLICITUDID') map.solicitudId = i;
+        }
+        if (map.cip === undefined || map.solicitudId === undefined) return null;
+        return map;
+    }
+
+    /**
+     * Normaliza una fila clínica v6. Devuelve null para filas sin CIP
+     * (no clínicas/vacías: no crean solicitudes aunque contengan fórmulas o
+     * formatos).
+     */
+    function normalizeEnfermeriaV6Row(cells, headerMap, sheetDefinition) {
+        if (typeof sheetDefinition === 'string') sheetDefinition = getEnfermeriaV6SheetDefinition(sheetDefinition);
+        if (!Array.isArray(cells) || !headerMap || !sheetDefinition) return null;
+        var cip = String(cells[headerMap.cip] || '').trim();
+        if (!cip) return null;
+
+        var cellValue = function (key) {
+            return headerMap[key] !== undefined ? String(cells[headerMap[key]] || '').trim() : '';
+        };
+
+        return {
+            solicitud_id: cellValue('solicitudId'),
+            cip_demo_o_hash: cip,
+            paciente_nombre: cellValue('paciente'),
+            servicio_origen: cellValue('servicio') || sheetDefinition.name,
+            servicio_hoja: sheetDefinition.name,
+            patologia_indicacion: cellValue('patologia'),
+            farmaco_solicitado: cellValue('farmaco'),
+            fecha_alta: cellValue('fechaAlta'),
+            analitica_estado: cellValue('analitica'),
+            mantoux_estado: cellValue('mantoux'),
+            igra_estado: cellValue('igra'),
+            vhb_estado: cellValue('vhb'),
+            vhc_estado: cellValue('vhc'),
+            vih_estado: cellValue('vih'),
+            medicina_preventiva_estado: cellValue('medPreventiva'),
+            apto_iniciar_desde: cellValue('aptoDesde'),
+            estado_prebiologico_enfermeria: cellValue('estado'),
+            fecha_ok_farmacia: cellValue('fechaOk'),
+            observaciones_prebiologico: cellValue('observacion'),
+            estado: cellValue('estado'),
+            source_type: 'ENFERMERIA',
+            origen_solicitud: 'enfermeria',
+            tipo_origen: 'enfermeria_v6_multisheet'
+        };
+    }
+
+    /**
+     * Parsea una hoja clínica v6 (Dermatología / Reumatología / Digestivo).
+     * Cualquier otra hoja (incluidas PANEL_ENFERMERIA, LISTAS,
+     * INSTRUCCIONES) devuelve []. La validación de identidad (solicitud_id)
+     * se realiza a nivel de workbook en collectEnfermeriaV6Candidates.
+     */
+    function parseEnfermeriaV6Sheet(rows, sheetName) {
+        var sheetDefinition = getEnfermeriaV6SheetDefinition(sheetName);
+        if (!sheetDefinition) return [];
+
+        var headerIdx = findEnfermeriaV6HeaderRow(rows);
+        if (headerIdx < 0) return [];
+
+        var headerMap = buildEnfermeriaV6HeaderMap(rows[headerIdx]);
+        if (!headerMap) return [];
+
+        var result = [];
+        for (var i = headerIdx + 1; i < rows.length; i++) {
+            var cells = rows[i];
+            if (!Array.isArray(cells)) continue;
+            var hasData = false;
+            for (var j = 0; j < cells.length; j++) {
+                if (String(cells[j] || '').trim()) { hasData = true; break; }
+            }
+            if (!hasData) continue;
+
+            var normalized = normalizeEnfermeriaV6Row(cells, headerMap, sheetDefinition);
+            if (normalized) result.push(normalized);
+        }
+        return result;
+    }
+
+    /**
+     * Une y valida las tres hojas clínicas v6.
+     * sheetsRaw: [{ name, rows }] (filas tipo array por hoja).
+     * Devuelve { ok: true, rows } o { ok: false, reason }.
+     * Cualquier fila clínica (CIP no vacío) con solicitud_id ausente,
+     * malformado o con prefijo incorrecto, o cualquier solicitud_id
+     * duplicado entre hojas, rechaza la importación completa.
+     */
+    function collectEnfermeriaV6Candidates(sheetsRaw) {
+        var rows = [];
+        var seenIds = {};
+        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
+            var sheetDefinition = ENFERMERIA_V6_CLINICAL_SHEETS[i];
+            var sheetRaw = null;
+            for (var j = 0; sheetsRaw && j < sheetsRaw.length; j++) {
+                if (getEnfermeriaV6SheetDefinition(sheetsRaw[j] && sheetsRaw[j].name) === sheetDefinition) {
+                    sheetRaw = sheetsRaw[j];
+                    break;
+                }
+            }
+            if (!sheetRaw) {
+                return { ok: false, reason: 'Falta la hoja clínica "' + sheetDefinition.name + '".' };
+            }
+
+            var headerIdx = findEnfermeriaV6HeaderRow(sheetRaw.rows);
+            if (headerIdx < 0) {
+                return { ok: false, reason: 'La hoja "' + sheetDefinition.name + '" no contiene cabecera (se esperaba columna CIP).' };
+            }
+
+            var missingHeaders = missingEnfermeriaV6RequiredHeaders(sheetRaw.rows[headerIdx]);
+            if (missingHeaders.length > 0) {
+                return { ok: false, reason: 'La hoja "' + sheetDefinition.name + '" no contiene los encabezados congelados; faltan: ' + missingHeaders.join(', ') + '.' };
+            }
+
+            var headerMap = buildEnfermeriaV6HeaderMap(sheetRaw.rows[headerIdx]);
+            if (!headerMap) {
+                return { ok: false, reason: 'La hoja "' + sheetDefinition.name + '" no contiene solicitud_id.' };
+            }
+
+            for (var k = headerIdx + 1; k < sheetRaw.rows.length; k++) {
+                var cells = sheetRaw.rows[k];
+                if (!Array.isArray(cells)) continue;
+                var hasData = false;
+                for (var c = 0; c < cells.length; c++) {
+                    if (String(cells[c] || '').trim()) { hasData = true; break; }
+                }
+                if (!hasData) continue;
+
+                var normalized = normalizeEnfermeriaV6Row(cells, headerMap, sheetDefinition);
+                // Fila sin CIP: no clínica/vacía, no crea solicitud.
+                if (!normalized) continue;
+
+                var solicitudId = normalized.solicitud_id;
+                if (!solicitudId || typeof solicitudId !== 'string' || !sheetDefinition.idPattern.test(solicitudId)) {
+                    return { ok: false, reason: 'SOLICITUD_ID ausente, malformado o con prefijo incorrecto en hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + ': se esperaba un identificador que cumpla ' + sheetDefinition.idPattern.toString() + '.' };
+                }
+                if (seenIds.hasOwnProperty(solicitudId)) {
+                    return { ok: false, reason: 'SOLICITUD_ID duplicado "' + solicitudId + '" (hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + '). Ningún solicitud_id puede repetirse entre las hojas clínicas.' };
+                }
+                seenIds[solicitudId] = true;
+                rows.push(normalized);
+            }
+        }
+        return { ok: true, rows: rows };
+    }
+
     function buildImportedPatientCandidate(row, mapping, sourceLabel, rowIndex) {
         if (!row || !mapping || !mapping.cip) return null;
         var cip = String(row[mapping.cip] || '').trim();
@@ -723,6 +985,13 @@
             if (row.estado_prebiologico_enfermeria) candidate.estado_prebiologico_enfermeria = row.estado_prebiologico_enfermeria;
             if (row.fecha_ok_farmacia) candidate.fecha_ok_farmacia = row.fecha_ok_farmacia;
             if (row.observaciones_prebiologico) candidate.observaciones_prebiologico = row.observaciones_prebiologico;
+            // Enfermería v6: identidad técnica y campos adicionales
+            if (row.solicitud_id) candidate.solicitud_id = String(row.solicitud_id).trim();
+            if (row.fecha_alta) candidate.fecha_alta = String(row.fecha_alta).trim();
+            if (row.apto_iniciar_desde) candidate.apto_iniciar_desde = String(row.apto_iniciar_desde).trim();
+            if (row.servicio_hoja) candidate.servicio_hoja = String(row.servicio_hoja).trim();
+            if (row.tipo_origen === 'enfermeria_v6_multisheet') candidate.tipo_origen = 'enfermeria_v6_multisheet';
+
         } else {
             // Enfermería u otro origen: comportamiento legacy (pending por defecto)
             candidate.estado = 'pending';
@@ -1797,6 +2066,51 @@
         }
 
         function parseWorkbook(kind, workbook, fileName) {
+            if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaV6Workbook === 'function'
+                && window.FarmaciaDemo.isEnfermeriaV6Workbook(workbook)) {
+                // Enfermería v6 multisheet: validar todo antes de tocar el estado previo.
+                // Un workbook inválido se rechaza con error y conserva el Excel activo anterior.
+                var v6SheetNames = window.FarmaciaDemo.getEnfermeriaV6ClinicalSheetNames();
+                var v6SheetsRaw = [];
+                for (var v6i = 0; v6i < v6SheetNames.length; v6i++) {
+                    var v6Sheet = workbook.Sheets[v6SheetNames[v6i]];
+                    if (!v6Sheet) continue;
+                    v6SheetsRaw.push({ name: v6SheetNames[v6i], rows: XLSX.utils.sheet_to_json(v6Sheet, { header: 1, defval: '' }) });
+                }
+                var v6Collected = window.FarmaciaDemo.collectEnfermeriaV6Candidates(v6SheetsRaw);
+                if (!v6Collected || !v6Collected.ok) {
+                    throw new Error('Excel Enfermería v6 rechazado: ' + (v6Collected && v6Collected.reason ? v6Collected.reason : 'estructura no válida.'));
+                }
+                var v6Candidates = v6Collected.rows;
+                var v6MappedFields = {
+                    cip: 'cip_demo_o_hash',
+                    nombre: 'paciente_nombre',
+                    servicio: 'servicio_origen',
+                    patologia: 'patologia_indicacion',
+                    farmaco: 'farmaco_solicitado',
+                    fecha: 'fecha_alta'
+                };
+                var v6State = {
+                    kind: kind,
+                    format: 'enfermeria_v6_multisheet',
+                    sourceLabel: 'Enfermería',
+                    fileName: fileName || '',
+                    importedAt: new Date().toISOString(),
+                    sheetName: 'ENFERMERIA_V6_MULTISHEET',
+                    rowCount: v6Candidates.length,
+                    headers: v6Candidates.length ? Object.keys(v6Candidates[0]) : [],
+                    mappedFields: v6MappedFields,
+                    unrecognizedHeaders: [],
+                    rows: v6Candidates
+                };
+                importStates[kind] = v6State;
+                safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+                SESSION_STORAGE_FALLBACK[kind] = v6State;
+                v6State.storage = 'memory_only';
+                updateAllImportUi();
+                emitImportEvent(kind, { state: v6State });
+                return v6State;
+            }
             if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook === 'function'
                 && window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook(workbook)) {
                 // Enfermería: usar adaptador específico
@@ -2016,6 +2330,7 @@
             getBridgeReadModel: getBridgeReadModel,
             clearTransientPatientImports: clearTransientPatientImports,
             findImportedPatientByCip: findImportedPatientByCip,
+            parseWorkbook: parseWorkbook,
             importFile: importFile,
             formatImportStatus: formatImportStatus
         };
@@ -2152,6 +2467,16 @@
         shouldAppearInValidationInbox: shouldAppearInValidationInbox,
         /* Enfermería / Inicio Biológico WO8.1c.3 */
         isEnfermeriaInicioBiologicoWorkbook: isEnfermeriaInicioBiologicoWorkbook,
+
+        /* Enfermería v6 multisheet WO-FH-ENFERMERIA-V6-N1 */
+        isEnfermeriaV6Workbook: isEnfermeriaV6Workbook,
+        getEnfermeriaV6ClinicalSheetNames: getEnfermeriaV6ClinicalSheetNames,
+        findEnfermeriaV6HeaderRow: findEnfermeriaV6HeaderRow,
+        buildEnfermeriaV6HeaderMap: buildEnfermeriaV6HeaderMap,
+        missingEnfermeriaV6RequiredHeaders: missingEnfermeriaV6RequiredHeaders,
+        normalizeEnfermeriaV6Row: normalizeEnfermeriaV6Row,
+        parseEnfermeriaV6Sheet: parseEnfermeriaV6Sheet,
+        collectEnfermeriaV6Candidates: collectEnfermeriaV6Candidates,
         findEnfermeriaHeaderRow: findEnfermeriaHeaderRow,
         normalizeEnfermeriaInicioBiologicoRow: normalizeEnfermeriaInicioBiologicoRow,
         parseEnfermeriaInicioBiologicoSheet: parseEnfermeriaInicioBiologicoSheet,
