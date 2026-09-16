@@ -514,17 +514,40 @@
             .replace(/[̀-ͯ]/g, '');
     }
 
+    /* N4: allowlist EXACTA de tipo_acto_fh que declara un acto de
+       Validación FH. Derivada del contrato FH autoritativo, lista
+       controlada §6.1 de tipo_acto_fh
+       (docs/farmacia_export_longitudinal_contract_WO8.md):
+       validacion_inicial | primera_visita | seguimiento |
+       nueva_validacion_cambio | nueva_validacion_adicion | suspension |
+       cambio_pauta | efecto_adverso | renovacion_continuidad | otro.
+       De esa lista, solo los tres valores abajo son actos de validación;
+       el resto, cualquier valor desconocido y el valor vacío NUNCA son un
+       acto de validación. Coincidencia por igualdad EXACTA del token
+       normalizado, nunca por subcadena ("*validacion*" ya no basta). */
+    var FH_VALIDATION_ACT_TYPES = [
+        'validacion_inicial',
+        'nueva_validacion_cambio',
+        'nueva_validacion_adicion'
+    ];
+
     /**
      * Un acto de Farmacia es un "acto de Validación FH" SOLO si
-     * tipo_acto_fh lo declara explícitamente (validacion_inicial,
+     * tipo_acto_fh está en la allowlist EXACTA (validacion_inicial,
      * nueva_validacion_cambio, nueva_validacion_adicion). Los actos no
-     * validación (primera_visita, seguimiento, suspensión) nunca resuelven
-     * una solicitud, tengan o no resultado_validacion.
+     * validación (primera_visita, seguimiento, suspension, cambio_pauta,
+     * efecto_adverso, renovacion_continuidad, otro), los valores
+     * desconocidos y el valor vacío nunca resuelven una solicitud, tengan
+     * o no resultado_validacion.
      */
     function isFHValidationActCandidate(candidate) {
         if (!candidate || !isPharmacyAct(candidate)) return false;
         var tipo = fhActoToken(candidate.tipo_acto_fh);
-        return tipo.indexOf('validacion') !== -1;
+        return FH_VALIDATION_ACT_TYPES.indexOf(tipo) !== -1;
+    }
+
+    function fhValidationActTypes() {
+        return FH_VALIDATION_ACT_TYPES.slice();
     }
 
     /* Resultados terminales explícitos del acto de Validación FH.
@@ -942,11 +965,15 @@
             return headerMap[key] !== undefined ? String(cells[headerMap[key]] || '').trim() : '';
         };
 
+        /* N4: el Servicio se lee tal cual de la columna congelada. Ya NO se
+           sustituye por el nombre de la hoja: la coherencia hoja/Servicio se
+           valida fail-closed en collectEnfermeriaV6Candidates y la ausencia
+           nunca se autocorrige. */
         return {
             solicitud_id: cellValue('solicitudId'),
             cip_demo_o_hash: cip,
             paciente_nombre: cellValue('paciente'),
-            servicio_origen: cellValue('servicio') || sheetDefinition.name,
+            servicio_origen: cellValue('servicio'),
             servicio_hoja: sheetDefinition.name,
             patologia_indicacion: cellValue('patologia'),
             farmaco_solicitado: cellValue('farmaco'),
@@ -1056,6 +1083,15 @@
                 var solicitudId = normalized.solicitud_id;
                 if (!solicitudId || typeof solicitudId !== 'string' || !sheetDefinition.idPattern.test(solicitudId)) {
                     return { ok: false, reason: 'SOLICITUD_ID ausente, malformado o con prefijo incorrecto en hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + ': se esperaba un identificador que cumpla ' + sheetDefinition.idPattern.toString() + '.' };
+                }
+                /* N4: coherencia hoja/Servicio fail-closed. La columna
+                   Servicio congelada debe nombrar la misma hoja clínica de
+                   procedencia; ausente o incoherente rechaza la importación
+                   completa (sin autocorrección). El prefijo del solicitud_id
+                   ya se valida contra la hoja arriba (oracle n1: id_patterns). */
+                var servicioCell = headerMap.servicio !== undefined ? String(cells[headerMap.servicio] || '').trim() : '';
+                if (!servicioCell || enfermeriaV6Token(servicioCell) !== enfermeriaV6Token(sheetDefinition.name)) {
+                    return { ok: false, reason: 'SERVICIO ausente o incoherente con la hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + ': se leyó "' + (servicioCell || '(vacío)') + '", se esperaba el servicio de la hoja clínica de procedencia; no se autocorrige.' };
                 }
                 if (seenIds.hasOwnProperty(solicitudId)) {
                     return { ok: false, reason: 'SOLICITUD_ID duplicado "' + solicitudId + '" (hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + '). Ningún solicitud_id puede repetirse entre las hojas clínicas.' };
@@ -1266,6 +1302,22 @@
         return candidate;
     }
 
+    /* N4: el dataset importado deja de ser un handoff de un solo uso. Se
+       conserva en sessionStorage (clave por tipo) durante la sesión de la
+       pestaña para que la página destino (Inicio → Validación) resuelva el
+       paciente importado con su identidad completa. La sobreescritura ocurre
+       al importar otro Excel y el descarte explícito sigue en
+       clearTransientPatientImports. El formato bridge_v2_raw NO se persiste:
+       sigue siendo runtime_memory con su regla existente. */
+    function persistImportedDataset(kind, dataset) {
+        if (!dataset || dataset.format === 'farmacia_bridge_v2_raw') return false;
+        try {
+            return safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(dataset));
+        } catch (err) {
+            return false;
+        }
+    }
+
     function readImportedDataset(kind) {
         var raw = safeGetSessionStorage(IMPORT_STORAGE_KEYS[kind]);
         var dataset;
@@ -1275,8 +1327,14 @@
         } else {
             dataset = safeParseJson(raw);
         }
-        if (raw) safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+        /* N4: la clave ya NO se borra tras la primera lectura. Un dataset
+           persistido resuelve de nuevo en la página destino; sin dataset
+           persistido no hay resolución (falla cerrado, sin heurísticas).
+           Excepción bridge_v2_raw: ese formato nunca persiste ni resucita
+           (runtime memory con regla existente), así que su clave residual se
+           elimina igual que antes. */
         if (kind === 'farmacia' && dataset && dataset.format === 'farmacia_bridge_v2_raw') {
+            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
             delete SESSION_STORAGE_FALLBACK[kind];
             return null;
         }
@@ -1572,6 +1630,26 @@
         return null;
     }
 
+    /* N4: resolución de la solicitud Enfermería por su identidad EXACTA
+       (solicitud_id). Solo registros importados de Enfermería (la puerta de
+       importación v6 ya rechaza IDs duplicados). Prohibido cualquier fallback
+       por CIP, fármaco, servicio o fecha: si el identificador no resuelve a
+       un único registro de Enfermería, el contexto queda sin paciente
+       (fail closed). */
+    function findAvailablePatientBySolicitudId(solicitudId) {
+        var target = String(solicitudId || '').trim();
+        if (!target) return null;
+        var available = getAvailablePatients();
+        var matches = [];
+        for (var i = 0; i < available.length; i++) {
+            if (String(available[i].solicitud_id || '').trim() === target
+                && isEnfermeriaImportCandidate(available[i])) {
+                matches.push(available[i]);
+            }
+        }
+        return matches.length === 1 ? matches[0] : null;
+    }
+
     function getQueryContext() {
         var params = new URLSearchParams(window.location.search);
         var runtime = window.FarmaciaPatientFlowRuntime;
@@ -1579,10 +1657,24 @@
         var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
         var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
         var hasExplicitCip = !!cip;
-        var patient = cip ? findAvailablePatientByCip(cip) : null;
+        var sid = restarted ? '' : String(params.get('solicitud_id') || '').trim();
+        var patient = null;
+        if (sid) {
+            /* N4: una solicitud_id explícita resuelve SU PROPIO registro. Si
+               no resuelve, o el CIP transportado no coincide con el registro
+               de la solicitud, el contexto NO resuelve paciente ni hace
+               fallback por CIP (nunca otra solicitud del mismo CIP). */
+            patient = findAvailablePatientBySolicitudId(sid);
+            if (patient && cip && String(patient.cip || '').trim().toUpperCase() !== String(cip).trim().toUpperCase()) {
+                patient = null;
+            }
+        } else if (cip) {
+            patient = findAvailablePatientByCip(cip);
+        }
         var patientFound = !!patient;
         return {
             cip: cip,
+            solicitud_id: sid,
             servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
             servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
             patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
@@ -1594,15 +1686,28 @@
         };
     }
 
+    function appendSolicitudIdParam(url, solicitudId) {
+        if (!solicitudId) return url;
+        var separator = String(url).indexOf('?') !== -1 ? '&' : '?';
+        return url + separator + 'solicitud_id=' + encodeURIComponent(String(solicitudId));
+    }
+
     function makeContextUrl(base, context = {}) {
         if (window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.makeContextUrl === 'function') {
-            return window.FarmaciaPatientFlowRuntime.makeContextUrl(base, context);
+            var runtimeUrl = window.FarmaciaPatientFlowRuntime.makeContextUrl(base, context);
+            /* N4: el runtime reconstruye la URL técnica; la identidad de la
+               solicitud debe sobrevivir también en esa ruta. */
+            if (context && context.solicitud_id && String(runtimeUrl).indexOf('solicitud_id=') === -1) {
+                return appendSolicitudIdParam(runtimeUrl, context.solicitud_id);
+            }
+            return runtimeUrl;
         }
         const params = new URLSearchParams();
         if (context.cip) params.set('cip', context.cip);
         if (context.servicio) params.set('servicio', context.servicio);
         if (context.patologia) params.set('patologia', context.patologia);
         if (context.entrada) params.set('entrada', context.entrada);
+        if (context.solicitud_id) params.set('solicitud_id', context.solicitud_id);
         const query = params.toString();
         return query ? `${base}?${query}` : base;
     }
@@ -2342,9 +2447,9 @@
                     rows: v6Candidates
                 };
                 importStates[kind] = v6State;
-                safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
                 SESSION_STORAGE_FALLBACK[kind] = v6State;
-                v6State.storage = 'memory_only';
+                v6State.storage = 'session_storage';
+                persistImportedDataset(kind, v6State);
                 updateAllImportUi();
                 emitImportEvent(kind, { state: v6State });
                 return v6State;
@@ -2385,9 +2490,9 @@
                     rows: allCandidates
                 };
                 importStates[kind] = state;
-                safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
                 SESSION_STORAGE_FALLBACK[kind] = state;
-                state.storage = 'memory_only';
+                state.storage = 'session_storage';
+                persistImportedDataset(kind, state);
                 updateAllImportUi();
                 emitImportEvent(kind, { state: state });
                 return state;
@@ -2479,9 +2584,9 @@
                 rows: rows
             };
             importStates[kind] = state;
-            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
             SESSION_STORAGE_FALLBACK[kind] = state;
-            state.storage = 'memory_only';
+            state.storage = 'session_storage';
+            persistImportedDataset(kind, state);
             updateAllImportUi();
             emitImportEvent(kind, { state: state });
             return state;
@@ -2750,6 +2855,10 @@
         reconcileEnfermeriaSolicitudes: reconcileEnfermeriaSolicitudes,
         collectFHValidationActsBySolicitudId: collectFHValidationActsBySolicitudId,
         isFHValidationActCandidate: isFHValidationActCandidate,
+        /* N4: allowlist exacta de actos de Validación FH (contrato §6.1) */
+        fhValidationActTypes: fhValidationActTypes,
+        /* N4: resolución de solicitud Enfermería por identidad exacta */
+        findAvailablePatientBySolicitudId: findAvailablePatientBySolicitudId,
         isEnfermeriaImportCandidate: isEnfermeriaImportCandidate,
         findEnfermeriaHeaderRow: findEnfermeriaHeaderRow,
         normalizeEnfermeriaInicioBiologicoRow: normalizeEnfermeriaInicioBiologicoRow,

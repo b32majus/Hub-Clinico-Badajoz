@@ -335,6 +335,46 @@ if (fs.existsSync(legacyTemplatePath)) {
   console.log('  ~ plantilla legacy no encontrada; skip e2e legacy');
 }
 
+
+    // ─── 9b. N4: coherencia hoja/Servicio/prefijo fail-closed ────────────────────
+    console.log('\n[Section 9b] N4 sheet/Servicio/prefix coherence (fail closed, no autocorrection)');
+    // El Servicio se lee tal cual: la ausencia ya no se autocorrige con el
+    // nombre de la hoja.
+    const rowServicioVacio = F.normalizeEnfermeriaV6Row(
+      v6RowCells.map(function (c, idx) { return idx === 16 ? '' : c; }),
+      v6HeaderMap, derSheet
+    );
+    assertTruthy(rowServicioVacio, 'Fila con Servicio vacío se normaliza (la validación es de workbook)');
+    assertEqual(rowServicioVacio.servicio_origen, '', 'Servicio vacío NO se autocorrige con el nombre de la hoja');
+    assertEqual(rowServicioVacio.servicio_hoja, 'DERMATOLOGÍA', 'servicio_hoja conserva la procedencia real de la hoja');
+    function collectVariantN4(mutator) {
+      const sheets = [
+        { name: 'DERMATOLOGÍA', rows: JSON.parse(JSON.stringify(derRows)) },
+        { name: 'REUMATOLOGÍA', rows: JSON.parse(JSON.stringify(reuRows)) },
+        { name: 'DIGESTIVO', rows: JSON.parse(JSON.stringify(digRows)) }
+      ];
+      mutator(sheets);
+      return F.collectEnfermeriaV6Candidates(sheets);
+    }
+    const servicioVacio = collectVariantN4(function (sheets) { sheets[0].rows[1][16] = ''; });
+    assert(servicioVacio.ok === false, 'N4.S1 Servicio vacío con CIP → import rechazado (fail closed)');
+    assert(String(servicioVacio.reason || '').indexOf('SERVICIO') !== -1, 'N4.S1b motivo menciona SERVICIO');
+    const servicioOtraHoja = collectVariantN4(function (sheets) { sheets[0].rows[1][16] = 'Reumatología'; });
+    assert(servicioOtraHoja.ok === false, 'N4.S2 Servicio incoherente con la hoja → import rechazado');
+    assert(String(servicioOtraHoja.reason || '').indexOf('Reumatología') !== -1 && String(servicioOtraHoja.reason || '').indexOf('DERMATOLOGÍA') !== -1, 'N4.S2b motivo nombra hoja esperada y Servicio leído');
+    const servicioBasura = collectVariantN4(function (sheets) { sheets[2].rows[1][16] = 'Cardiología'; });
+    assert(servicioBasura.ok === false, 'N4.S3 Servicio de otro servicio clínico → import rechazado');
+    const servicioVariante = collectVariantN4(function (sheets) { sheets[0].rows[1][16] = 'DERMATOLOGIA'; });
+    assert(servicioVariante.ok === true, 'N4.S4 Servicio equivalente (mayúsculas/sin acento) del MISMO servicio → aceptado');
+    const servicioEspacios = collectVariantN4(function (sheets) { sheets[1].rows[1][16] = '  Reumatología  '; });
+    assert(servicioEspacios.ok === true, 'N4.S5 Servicio con espacios periféricos → aceptado');
+    // La coherencia no debilita las validaciones existentes: prefijo cruzado sigue rechazado
+    const prefijoCruzadoN4 = collectVariantN4(function (sheets) { sheets[1].rows[1][17] = 'SOL-DER-900001'; });
+    assert(prefijoCruzadoN4.ok === false, 'N4.S6 prefijo de solicitud_id cruzado con la hoja sigue rechazado');
+    // Combinación coherente pero duplicada sigue rechazada
+    const duplicadoN4 = collectVariantN4(function (sheets) { sheets[0].rows[2] = JSON.parse(JSON.stringify(derRows[1])); sheets[0].rows[2][17] = 'SOL-DER-000001'; });
+    assert(duplicadoN4.ok === false, 'N4.S7 duplicado dentro de hoja sigue rechazado');
+
 // ─── 10. innerHTML check ─────────────────────────────────────────────────────
 const innerMatches = commonSrc.match(/innerHTML/g);
 const innerCount = innerMatches ? innerMatches.length : 0;

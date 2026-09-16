@@ -644,7 +644,10 @@
                 cip: patient.cip,
                 servicio: patient.servicioSlug || patient.servicio,
                 patologia: patient.patologia,
-                entrada: 'validacion'
+                entrada: 'validacion',
+                /* N4: identidad exacta de la solicitud en la navegación
+                   soportada hacia Validación. */
+                solicitud_id: patient.solicitud_id || ''
             });
             F.appendIconText(link, 'fa-check-double', 'Abrir validación');
             actions.appendChild(link);
@@ -939,7 +942,11 @@
                 cip: patient.cip,
                 servicio: patient.servicioSlug || patient.servicio || patient.servicio_origen,
                 patologia: patient.patologia || patient.patologia_indicacion,
-                entrada: 'validacion'
+                entrada: 'validacion',
+                /* Issue #367 N4: la solicitud_id exacta viaja en la URL
+                   técnica para que Validación resuelva ESTA solicitud, no
+                   otra del mismo CIP. */
+                solicitud_id: patient.solicitud_id || ''
             });
             F.appendIconText(link, 'fa-check-double', 'Abrir validación');
             link.setAttribute('data-enf-action', 'validar');

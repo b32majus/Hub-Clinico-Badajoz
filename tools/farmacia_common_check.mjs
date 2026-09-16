@@ -392,6 +392,45 @@ const candidateI = buildImportedPatientCandidate(
 assertEqual(candidateI.estado, 'completado', 'Farmacia concomitante → estado=completado');
 assertEqual(candidateI.estadoLabel, 'Concomitante', 'Farmacia concomitante → label=Concomitante');
 
+// ─── N4: allowlist EXACTA de tipo_acto_fh para actos de Validación FH ───────
+// Derivación autoritativa: lista controlada §6.1 de tipo_acto_fh en
+// docs/farmacia_export_longitudinal_contract_WO8.md. Solo validacion_inicial,
+// nueva_validacion_cambio y nueva_validacion_adicion son actos de validación;
+// coincidencia por igualdad exacta (nunca subcadena), desconocido/vacío
+// nunca es acto de validación.
+console.log('\n[N4] Allowlist exacta tipo_acto_fh (isFHValidationActCandidate)');
+function assertN4(condition, label) { if (condition) ok(label); else fail(label); }
+const fhValidationActTypesN4 = sandbox.window.FarmaciaDemo.fhValidationActTypes;
+const isFHValidationActCandidateN4 = sandbox.window.FarmaciaDemo.isFHValidationActCandidate;
+assertN4(Array.isArray(fhValidationActTypesN4()), 'N4.0 fhValidationActTypes expuesto como lista');
+assertEqual(fhValidationActTypesN4().join('|'), 'validacion_inicial|nueva_validacion_cambio|nueva_validacion_adicion',
+    'N4.0b allowlist exacta = 3 valores del contrato §6.1');
+
+function fhActoCandidate(tipoActo) {
+    return {
+        cip: 'CIP-N4-ACTO',
+        importSource: 'Excel Farmacia',
+        tipo_acto_fh: tipoActo,
+        resultado_validacion: 'validado',
+        solicitud_id: 'SOL-DER-900001'
+    };
+}
+const N4_VALID = ['validacion_inicial', 'nueva_validacion_cambio', 'nueva_validacion_adicion'];
+const N4_INVALID = ['primera_visita', 'seguimiento', 'suspension', 'cambio_pauta', 'efecto_adverso',
+    'renovacion_continuidad', 'otro', '', 'acto_validacion', 'revalidacion',
+    'validacion_fantasma', 'xvalidacionx', 'nueva_validacion', 'validacion', 'otro_acto', '  '];
+for (const v of N4_VALID.concat(['VALIDACION_INICIAL'])) {
+    assertN4(isFHValidationActCandidateN4(fhActoCandidate(v)), 'N4.1 tipo_acto_fh="' + v + '" ES acto de validación');
+}
+for (const v of N4_INVALID) {
+    assertN4(!isFHValidationActCandidateN4(fhActoCandidate(v)), 'N4.2 tipo_acto_fh="' + (v === '' ? '(vacío)' : v) + '" NO es acto de validación (sin subcadena)');
+}
+assertN4(!isFHValidationActCandidateN4(fhActoCandidate(undefined)), 'N4.3 tipo_acto_fh indefinido NO es acto de validación');
+assertN4(!isFHValidationActCandidateN4(null), 'N4.4 candidato null NO es acto de validación');
+assertN4(!isFHValidationActCandidateN4({ cip: 'X', tipo_acto_fh: 'validacion_inicial' }), 'N4.5 no-Farmacia (importSource no Farmacia) NO es acto de validación');
+// acentos/normalización: token normalizado del valor canónico sigue entrando
+assertN4(isFHValidationActCandidateN4(fhActoCandidate('validacion_inicial ')), 'N4.6 valor canónico con espacios se normaliza al token exacto');
+
 // ─── FINAL ────────────────────────────────────────────────────────────────────
 
 console.log(`\n┌──────────────────────────────────────────────┐`);

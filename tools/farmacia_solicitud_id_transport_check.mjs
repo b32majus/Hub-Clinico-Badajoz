@@ -442,7 +442,7 @@ var sandbox = {
       var parts = pair.split('=');
       if (parts[0]) params[decodeURIComponent(parts[0])] = decodeURIComponent(parts.slice(1).join('=') || '');
     });
-    return { get: function (k) { return params[k] || null; }, has: function (k) { return params[k] !== undefined; } };
+    return { get: function (k) { return params[k] || null; }, has: function (k) { return params[k] !== undefined; }, set: function (k, v) { params[k] = String(v); }, toString: function () { return Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&'); } };
   },
   XLSX: { utils: { sheet_to_json: function () { return []; } } },
   CustomEvent: globalThis.CustomEvent || function() { return {}; },
@@ -602,6 +602,131 @@ assert(!generatorSrc.includes('"rechazado"'), '4.3 generador ya no ofrece rechaz
 const sinteticoSrc = fs.readFileSync(path.join(ROOT, 'tools', 'generate_farmacia_excel_sintetico.py'), 'utf8');
 assert(sinteticoSrc.includes('"solicitud_id"'), '4.4 generador sintético incluye solicitud_id');
 assert(sinteticoSrc.includes('sol_id,'), '4.5 generador sintético reserva la columna en cada fila');
+
+// ─── Section 5: N4 — Inicio→Validación solicitud_id handoff ───────────────
+// Issue #367 N4 of train #364: the imported dataset survives navigation
+// (no longer a single-use handoff), the supported context URL carries the
+// exact solicitud_id, and the Validación page resolves THAT request —
+// same CIP with two distinct requests never collapses. Fail closed:
+// unknown ID or CIP mismatch resolves NO patient and never falls back
+// by CIP. All data synthetic.
+console.log('\n[Section 5] N4 — handoff Inicio→Validación (persistence + exact resolution)');
+
+const N4_HEADERS = ['CIP', 'Paciente', 'Patología', 'Fármaco', 'Fecha alta', 'Analítica', 'Mantoux', 'IGRA',
+    'VHB', 'VHC', 'VIH', 'Med. Preventiva', 'Apto para iniciar desde', 'Estado', 'Fecha OK',
+    'Observación prebiológico', 'Servicio', 'solicitud_id'];
+function n4Row(cip, nombre, sid, estado, servicio) {
+    return [cip, nombre, 'Hidradenitis supurativa', 'Adalimumab', '2026-09-01', 'OK', 'NEGATIVO', 'NO PRECISA',
+        'NEGATIVO', 'NEGATIVO', 'NEGATIVO', 'OK', '2026-09-10', estado, '2026-09-10', 'Demo N4 handoff',
+        servicio, sid];
+}
+const N4_SHARED_CIP = 'CIP-SYN-402-SHARED';
+const N4_ID_A = 'SOL-DER-000201';
+const N4_ID_B = 'SOL-DER-000202';
+const handoffWb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(handoffWb, XLSX.utils.aoa_to_sheet([N4_HEADERS,
+    n4Row(N4_SHARED_CIP, 'Paciente Sintético A', N4_ID_A, 'OK FARMACIA', 'Dermatología'),
+    n4Row(N4_SHARED_CIP, 'Paciente Sintético B', N4_ID_B, 'OK FARMACIA', 'Dermatología')]), 'DERMATOLOGÍA');
+XLSX.utils.book_append_sheet(handoffWb, XLSX.utils.aoa_to_sheet([N4_HEADERS,
+    n4Row('CIP-SYN-402-R1', 'Paciente Sintético R', 'SOL-REU-000201', 'EN VIGILANCIA', 'Reumatología')]), 'REUMATOLOGÍA');
+XLSX.utils.book_append_sheet(handoffWb, XLSX.utils.aoa_to_sheet([N4_HEADERS,
+    n4Row('CIP-SYN-402-G1', 'Paciente Sintético G', 'SOL-DIG-000201', 'BLOQUEADO', 'Digestivo')]), 'DIGESTIVO');
+
+const handoffState = sandbox.window.FarmaciaDataImports.parseWorkbook('enfermeria', handoffWb, 'handoff_v6_402.xlsx');
+assertTruthy(handoffState, '5.1 parseWorkbook acepta el workbook v6 del handoff');
+assertEqual(handoffState.rowCount, 4, '5.2 cuatro registros v6 (2 DER misma CIP + 1 REU + 1 DIG)');
+
+// Dataset persisted in sessionStorage (no longer single-use)
+const persistedRaw = sandbox.window.sessionStorage.getItem('farmaciaDemo.enfermeriaImport');
+assertTruthy(persistedRaw, '5.3 dataset v6 persistido en sessionStorage (ya no se borra tras la primera lectura)');
+const persisted = JSON.parse(persistedRaw || 'null');
+assertTruthy(persisted && Array.isArray(persisted.rows), '5.3b snapshot persistido parseable con rows');
+const persistedIds = (persisted && persisted.rows ? persisted.rows : []).map(function (r) { return r.solicitud_id; });
+assert(persistedIds.indexOf(N4_ID_A) !== -1 && persistedIds.indexOf(N4_ID_B) !== -1, '5.3c ambas solicitudes del mismo CIP persistidas con su identidad');
+
+// Second page load (fresh VM = nueva página) over the SAME session storage:
+// the persisted dataset resolves the patient on the destination page.
+const sandbox2 = {
+    window: Object.assign({
+        localStorage: makeStorageMock(),
+        sessionStorage: sandbox.window.sessionStorage,
+        location: { search: '' },
+        setTimeout: globalThis.setTimeout
+    }, dom.doc),
+    console: console,
+    document: dom.doc,
+    setTimeout: globalThis.setTimeout,
+    location: { search: '' },
+    URLSearchParams: function (qs) {
+        var params = {};
+        var s2 = String(qs || '').replace(/^\?/, '');
+        s2.split('&').forEach(function (pair) {
+            var parts = pair.split('=');
+            if (parts[0]) params[decodeURIComponent(parts[0])] = decodeURIComponent(parts.slice(1).join('=') || '');
+        });
+        return { get: function (k) { return params[k] || null; }, has: function (k) { return params[k] !== undefined; }, set: function (k, v) { params[k] = String(v); }, toString: function () { return Object.keys(params).map(function (k) { return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]); }).join('&'); } };
+    },
+    XLSX: { utils: { sheet_to_json: function () { return []; } } },
+    CustomEvent: globalThis.CustomEvent || function () { return {}; },
+    Event: function Event(type, options) { this.type = type; this.bubbles = !!(options && options.bubbles); }
+};
+vm.createContext(sandbox2);
+sandbox2.window.FarmaciaCatalog = { search: function () { return []; }, selectDrug: function () {}, getSnapshot: function () { return {}; }, loaded: true };
+sandbox2.window.FarmaciaBridgeV2Reader = { readWorkbook: function () { return null; } };
+vm.runInContext(fs.readFileSync(catalogPath, 'utf8'), sandbox2);
+vm.runInContext(fs.readFileSync(commonPath, 'utf8'), sandbox2);
+const F2 = sandbox2.window.FarmaciaDemo;
+const Imports2 = sandbox2.window.FarmaciaDataImports;
+assertTruthy(Imports2.getState('enfermeria'), '5.4 segunda página resuelve el dataset persistido (handoff Inicio→Validación)');
+assertEqual(Imports2.getState('enfermeria').rows.length, 4, '5.4b las cuatro solicitudes v6 siguen activas en la página destino');
+
+function ctx2With(query) {
+    sandbox2.location.search = query;
+    sandbox2.window.location.search = query;
+    return F2.getQueryContext();
+}
+
+const ctxA = ctx2With('?cip=' + N4_SHARED_CIP + '&solicitud_id=' + N4_ID_A);
+assertTruthy(ctxA.patient, '5.5 solicitud A del mismo CIP resuelve paciente en la página destino');
+assertEqual(ctxA.patient.solicitud_id, N4_ID_A, '5.5b la solicitud A resuelve SU PROPIO registro');
+assertEqual(ctxA.solicitud_id, N4_ID_A, '5.5c el contexto transporta la solicitud_id explícita');
+
+const ctxB = ctx2With('?cip=' + N4_SHARED_CIP + '&solicitud_id=' + N4_ID_B);
+assertTruthy(ctxB.patient, '5.6 solicitud B del mismo CIP resuelve paciente');
+assertEqual(ctxB.patient.solicitud_id, N4_ID_B, '5.6b la solicitud B resuelve SU PROPIO registro (nunca el de la A)');
+
+const ctxUnknown = ctx2With('?cip=' + N4_SHARED_CIP + '&solicitud_id=SOL-DER-999999');
+assertEqual(ctxUnknown.patient, null, '5.7 solicitud_id desconocida → SIN paciente (fail closed, sin fallback por CIP)');
+assertEqual(ctxUnknown.status, 'not_found', '5.7b estado del contexto not_found');
+
+const ctxMismatch = ctx2With('?cip=CIP-OTRO-SINTETICO&solicitud_id=' + N4_ID_A);
+assertEqual(ctxMismatch.patient, null, '5.8 CIP transportado incoherente con la solicitud → SIN paciente (fail closed)');
+
+// Legacy behavior intact: no solicitud_id in URL → CIP resolution unchanged
+const ctxLegacy = ctx2With('?cip=' + N4_SHARED_CIP);
+assertTruthy(ctxLegacy.patient, '5.9 sin solicitud_id la resolución por CIP se conserva (comportamiento legacy)');
+assert(ctxLegacy.patient.solicitud_id === N4_ID_A || ctxLegacy.patient.solicitud_id === N4_ID_B, '5.9b por CIP resuelve una de las solicitudes (compatibilidad legacy documentada)');
+
+// makeContextUrl transports the request identity (runtime absent in sandbox)
+const urlA = F2.makeContextUrl('farmacia_validacion.html', { cip: N4_SHARED_CIP, entrada: 'validacion', solicitud_id: N4_ID_A });
+assert(String(urlA).indexOf('farmacia_validacion.html') === 0 && urlA.indexOf('solicitud_id=' + encodeURIComponent(N4_ID_A)) !== -1, '5.10 makeContextUrl transporta solicitud_id: ' + urlA);
+const urlNoSid = F2.makeContextUrl('farmacia_validacion.html', { cip: N4_SHARED_CIP, entrada: 'validacion' });
+assert(String(urlNoSid).indexOf('solicitud_id=') === -1, '5.11 sin solicitud_id el parámetro no se emite (no hay inferencia): ' + urlNoSid);
+const urlAIndex = sandbox.window.FarmaciaDemo.makeContextUrl('farmacia_validacion.html', { cip: N4_SHARED_CIP, solicitud_id: N4_ID_B });
+assert(String(urlAIndex).indexOf('solicitud_id=' + encodeURIComponent(N4_ID_B)) !== -1, '5.12 makeContextUrl (página Inicio) transporta la solicitud_id');
+
+// Identity-only resolution with FH acts loaded: the Farmacia act with the
+// same ID never shadows the Enfermería request record.
+const fhHandoffHeaders = ['cip', 'tipo_acto_fh', 'resultado_validacion', 'estado_registro', 'solicitud_id'];
+const fhHandoffWb = XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(fhHandoffWb, XLSX.utils.aoa_to_sheet([fhHandoffHeaders,
+    [N4_SHARED_CIP, 'validacion_inicial', 'pendiente', 'pendiente_revision', N4_ID_A]]), 'Datos');
+const fhHandoffState = sandbox2.window.FarmaciaDataImports.parseWorkbook('farmacia', fhHandoffWb, 'handoff_fh_402.xlsx');
+assertTruthy(fhHandoffState, '5.13 acto Farmacia pendiente cargado en la página destino');
+const ctxAWithAct = ctx2With('?cip=' + N4_SHARED_CIP + '&solicitud_id=' + N4_ID_A);
+assertTruthy(ctxAWithAct.patient, '5.14 con acto FH cargado la solicitud sigue resolviendo');
+assertEqual(ctxAWithAct.patient.solicitud_id, N4_ID_A, '5.13b el acto Farmacia NO sustituye al registro Enfermería de la solicitud');
+assert(!ctxAWithAct.patient.tipo_acto_fh, '5.13c el registro resuelto es la solicitud Enfermería (no un acto Farmacia)');
 
 console.log('\nTotal: ' + passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);

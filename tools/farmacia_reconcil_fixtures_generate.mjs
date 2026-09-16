@@ -207,3 +207,49 @@ writeWorkbook([
   { name: '02_REUMA', rows: [FH_HEADERS].concat(reuFH) },
   { name: '03_DIGESTIVO', rows: [FH_HEADERS].concat(digFH) }
 ], path.join(ROOT, 'tools', 'fixtures', 'farmacia_reconcil_fh_sintetico_v1.xlsx'));
+
+// ── N4 handoff fixtures (issue #367, train #364 N4) ──────────────────────
+// One shared CIP with TWO distinct openable requests (both PENDING_FH) so the
+// supported Abrir validación navigation resolves the exact request per click.
+// Shared CIP uses REUMATOLOGÍA requests: the supported Validación export path
+// for excel_enfermeria origin resolves through the reuma form, so the
+// handoff is exercised end-to-end without touching readonly UI state.
+const handoffDerRows = [
+  row('CIP-RECON-HANDOFF', 'Paciente Handoff A', 'Artritis Reumatoide (AR)', 'Abatacept', '2026-09-21', 'OK FARMACIA', '2026-09-21', 'Demo N4: misma CIP, solicitud 000901', 'Reumatología', 'SOL-REU-000901'),
+  row('CIP-RECON-HANDOFF', 'Paciente Handoff B', 'Artritis Reumatoide (AR)', 'Etanercept', '2026-09-22', 'OK FARMACIA', '2026-09-22', 'Demo N4: misma CIP, solicitud 000902', 'Reumatología', 'SOL-REU-000902'),
+  row('CIP-RECON-HANDOFF-D', 'Paciente Handoff D', 'Hidradenitis supurativa', 'Adalimumab', '2026-09-23', 'EN VIGILANCIA', '', 'Demo N4: vigilancia', 'Dermatología', 'SOL-DER-000901'),
+  row('CIP-RECON-HANDOFF-G', 'Paciente Handoff G', 'Colitis ulcerosa', 'Vedolizumab', '2026-09-24', 'BLOQUEADO', '', 'Demo N4: bloqueado', 'Digestivo', 'SOL-DIG-000901')
+];
+const handoffDerFH = [
+  // Pending validation act tied to request A: both shared-CIP requests stay openable.
+  fhRow({
+    patient_id: 'FH-SYN-HANDOFF-001', cip_demo_o_hash: 'CIP-RECON-HANDOFF',
+    servicio_origen: 'Reumatología', patologia_indicacion: 'Artritis Reumatoide (AR)', marca_comercial: 'Orencia',
+    fecha_acto: '2026-09-25', tipo_acto_fh: 'validacion_inicial', tipo_validacion: 'inicial',
+    resultado_validacion: 'pendiente', estado_registro: 'pendiente_revision',
+    observaciones_validacion: 'Demo N4: validación pendiente de la solicitud 000901',
+    solicitud_id: 'SOL-REU-000901'
+  }),
+  // Anti-heuristic decoy: terminal validado with the same CIP but WITHOUT
+  // solicitud_id — must not close any request during the handoff.
+  fhRow({
+    patient_id: 'FH-SYN-HANDOFF-002', cip_demo_o_hash: 'CIP-RECON-HANDOFF',
+    servicio_origen: 'Reumatología', patologia_indicacion: 'Artritis Reumatoide (AR)', marca_comercial: 'Orencia',
+    fecha_acto: '2026-09-26', tipo_acto_fh: 'validacion_inicial', tipo_validacion: 'inicial',
+    resultado_validacion: 'validado',
+    observaciones_validacion: 'Demo N4: decoy sin identidad de solicitud',
+    solicitud_id: ''
+  })
+];
+writeWorkbook([
+  { name: 'REUMATOLOGÍA', rows: [V6_HEADERS].concat(handoffDerRows.slice(0, 2)) },
+  { name: 'DERMATOLOGÍA', rows: [V6_HEADERS].concat([handoffDerRows[2]]) },
+  { name: 'DIGESTIVO', rows: [V6_HEADERS].concat([handoffDerRows[3]]) },
+  { name: 'PANEL_ENFERMERIA', rows: [['Panel auxiliar sin datos clínicos']] },
+  { name: 'LISTAS', rows: [['Listas auxiliares']] },
+  { name: 'INSTRUCCIONES', rows: [['Instrucciones']] }
+], path.join(ROOT, 'tools', 'fixtures', 'farmacia_reconcil_handoff_enfermeria_v6_sintetico_v1.xlsx'));
+
+writeWorkbook([
+  { name: '01_DERMA', rows: [FH_HEADERS].concat(handoffDerFH) }
+], path.join(ROOT, 'tools', 'fixtures', 'farmacia_reconcil_handoff_fh_sintetico_v1.xlsx'));

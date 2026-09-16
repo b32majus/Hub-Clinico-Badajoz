@@ -8,9 +8,10 @@
 //     citar / denegado / conflicto;
 //  4) confirm only PENDING_FH offers "Abrir validación";
 //  5) verify the pending card link keeps its supported context (cip/servicio)
-//     — cross-page solicitud_id conservation is unit-verified in
-//     tools/farmacia_solicitud_id_transport_check.mjs (documented limitation:
-//     imported datasets are a single-use handoff consumed by the loading page);
+//     — cross-page solicitud_id conservation (N4) is unit-verified in
+//     tools/farmacia_solicitud_id_transport_check.mjs and exercised with real
+//     navigation in tools/farmacia_reconcil_handoff_browser_check.mjs (the
+//     former single-use dataset handoff limitation was fixed in N4);
 //  6) same CIP with two solicitudes does not mix;
 //  7) repeat with reversed load order (Farmacia first);
 //  8) console.error = 0, pageerror = 0.
