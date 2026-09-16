@@ -483,8 +483,203 @@
     function shouldEnfermeriaRowAppearInValidationInbox(row) {
         if (!row) return false;
         var estado = String(row.estado_prebiologico_enfermeria || row.estado || '').trim().toUpperCase();
+        var esOkFarmacia = estado === 'OK FARMACIA' || estado === 'OK_FARMACIA';
+        if (!esOkFarmacia) return false;
+        /* Issue #367 (N3): si la fila v6 ya fue reconciliada por
+           solicitud_id exacto, la bandeja la representa por su resolución,
+           no por el estado Enfermería crudo. READY_TO_CITE /
+           DENIED_DO_NOT_CITE / RECONCILIATION_CONFLICT dejan de estar
+           "pendientes de validar"; PENDING_FH sigue. Sin reconciliación
+           aplicable (legacy sin ID, demo) el comportamiento existente se
+           conserva intacto. */
+        var rec = row.reconciliacion_fh;
+        if (rec && rec.reconciliable) {
+            return rec.estado === 'PENDING_FH';
+        }
         // Solo OK FARMACIA → pendiente de validación farmacoterapéutica
-        return estado === 'OK FARMACIA' || estado === 'OK_FARMACIA';
+        return true;
+    }
+
+    /* ── Reconciliación por solicitud_id (WO-FH-ENFERMERIA-V6-N3, issue #367) ── */
+
+    /**
+     * Normaliza un tipo de acto FH quitando acentos, para reconocer
+     * validacion_inicial / nueva_validacion_* de forma estable.
+     */
+    function fhActoToken(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '');
+    }
+
+    /**
+     * Un acto de Farmacia es un "acto de Validación FH" SOLO si
+     * tipo_acto_fh lo declara explícitamente (validacion_inicial,
+     * nueva_validacion_cambio, nueva_validacion_adicion). Los actos no
+     * validación (primera_visita, seguimiento, suspensión) nunca resuelven
+     * una solicitud, tengan o no resultado_validacion.
+     */
+    function isFHValidationActCandidate(candidate) {
+        if (!candidate || !isPharmacyAct(candidate)) return false;
+        var tipo = fhActoToken(candidate.tipo_acto_fh);
+        return tipo.indexOf('validacion') !== -1;
+    }
+
+    /* Resultados terminales explícitos del acto de Validación FH.
+       'rechazado' llega ya normalizado a 'denegado' por el adaptador
+       (#366); aquí solo se aceptan valores canónicos explícitos. */
+    var FH_TERMINAL_RESULTS = ['validado', 'denegado'];
+
+    /**
+     * Agrupa actos de Validación FH por solicitud_id EXACTO (mayúsculas).
+     * - Un acto FH sin solicitud_id NO participa en la reconciliación por
+     *   identidad: nunca se empareja por CIP, fármaco, fecha o servicio.
+     * - resultado 'pendiente' se cuenta; valores no canónicos se ignoran
+     *   (no se infiere resolución).
+     */
+    function collectFHValidationActsBySolicitudId(pharmacyRows) {
+        var byId = {};
+        (Array.isArray(pharmacyRows) ? pharmacyRows : []).forEach(function (row) {
+            if (!row) return;
+            var sid = String(row.solicitud_id || '').trim();
+            if (!sid) return;
+            var key = sid.toUpperCase();
+            if (!byId[key]) {
+                byId[key] = { solicitud_id: sid, terminales: [], pendientes: 0, actos_validacion: 0, actos_no_validacion: 0 };
+            }
+            if (isFHValidationActCandidate(row)) {
+                byId[key].actos_validacion += 1;
+                var resultado = String(row.resultado_validacion || '').trim().toLowerCase();
+                if (resultado === 'pendiente') {
+                    byId[key].pendientes += 1;
+                } else if (FH_TERMINAL_RESULTS.indexOf(resultado) !== -1 && byId[key].terminales.indexOf(resultado) === -1) {
+                    byId[key].terminales.push(resultado);
+                }
+            } else {
+                byId[key].actos_no_validacion += 1;
+            }
+        });
+        return byId;
+    }
+
+    /**
+     * Resuelve el estado de reconciliación de UNA solicitud Enfermería.
+     * Matching EXCLUSIVO por solicitud_id exacto. PROHIBIDO cualquier
+     * fallback por CIP, fármaco, principio activo, servicio, fecha,
+     * tratamiento previo, catálogo/CIMA o heurística combinada.
+     *
+     * Estados de salida (issue #367):
+     * - OK FARMACIA + sin actos de Validación FH con el ID → PENDING_FH
+     * - OK FARMACIA + validación explícita pendiente           → PENDING_FH
+     * - OK FARMACIA + validación explícita validado             → READY_TO_CITE
+     * - OK FARMACIA + validación explícita denegado             → DENIED_DO_NOT_CITE
+     * - OK FARMACIA + terminales incompatibles                  → RECONCILIATION_CONFLICT (fail closed)
+     * - EN VIGILANCIA → NURSING_SURVEILLANCE (solo lectura, nunca recalculado)
+     * - BLOQUEADO     → NURSING_BLOCKED (solo lectura, nunca recalculado)
+     * - otros estados → NURSING_UNCLASSIFIED
+     * - sin solicitud_id → LEGACY_NO_ID (comportamiento legacy intacto,
+     *   distinguible como no reconciliable por identidad)
+     *
+     * Decisión documentada (#367): terminales duplicados con el MISMO valor
+     * (p. ej. validado + validado) son semánticamente UNA resolución
+     * explícita y no producen falso conflicto; 'pendiente' no es terminal y no
+     * compite con el terminal existente. Solo la coexistencia de terminales
+     * INCOMPATIBLES (validado + denegado) es conflicto, independientemente
+     * del orden de filas.
+     *
+     * Si existe validación FH terminal para un ID cuyo registro Enfermería
+     * ya no está OK FARMACIA, NO se convierte en listo para citar: se marca
+     * inconsistencia de reconciliación (fail closed, no accionable).
+     */
+    function reconcileEnfermeriaSolicitud(nursingRow, actsById) {
+        if (!nursingRow) return null;
+        var estadoEnf = String(nursingRow.estado_prebiologico_enfermeria || nursingRow.estado || '')
+            .trim().toUpperCase().replace(/\s+/g, '_');
+        var sid = String(nursingRow.solicitud_id || '').trim();
+        var acts = sid && actsById ? (actsById[sid.toUpperCase()] || null) : null;
+
+        var result = {
+            solicitud_id: sid,
+            reconciliable: !!sid,
+            estado_nursing: estadoEnf,
+            estado: '',
+            terminales: acts ? acts.terminales.slice() : [],
+            actos_validacion: acts ? acts.actos_validacion : 0,
+            actos_no_validacion: acts ? acts.actos_no_validacion : 0,
+            inconsistencia: false,
+            motivo: ''
+        };
+
+        if (!sid) {
+            result.estado = 'LEGACY_NO_ID';
+            result.motivo = 'Sin solicitud_id: no reconciliable por identidad (comportamiento legacy).';
+            return result;
+        }
+
+        if (estadoEnf === 'OK_FARMACIA') {
+            if (!acts || acts.actos_validacion === 0) {
+                result.estado = 'PENDING_FH';
+                result.motivo = 'OK FARMACIA sin actos de Validación FH con este solicitud_id.';
+                return result;
+            }
+            if (acts.terminales.length > 1) {
+                result.estado = 'RECONCILIATION_CONFLICT';
+                result.motivo = 'Terminales incompatibles (' + acts.terminales.join(' + ') + ') con el mismo solicitud_id: no accionable, no se resuelve por orden de filas.';
+                return result;
+            }
+            if (acts.terminales.length === 1) {
+                result.estado = acts.terminales[0] === 'validado' ? 'READY_TO_CITE' : 'DENIED_DO_NOT_CITE';
+                result.motivo = 'Validación FH explícita "' + acts.terminales[0] + '" con el mismo solicitud_id.';
+                return result;
+            }
+            result.estado = 'PENDING_FH';
+            result.motivo = 'Solo actos de validación pendientes o no terminales con este solicitud_id.';
+            return result;
+        }
+
+        if (estadoEnf === 'EN_VIGILANCIA' || estadoEnf === 'BLOQUEADO') {
+            result.estado = estadoEnf === 'EN_VIGILANCIA' ? 'NURSING_SURVEILLANCE' : 'NURSING_BLOCKED';
+            if (acts && acts.terminales.length > 0) {
+                result.inconsistencia = true;
+                result.motivo = 'Incidencia de reconciliación: validación FH terminal (' + acts.terminales.join(' + ') + ') con Enfermería ' + estadoEnf + '. No accionable, no se marca lista para citar.';
+            } else {
+                result.motivo = 'Estado Enfermería ' + estadoEnf + ' (solo lectura, no recalculado).';
+            }
+            return result;
+        }
+
+        result.estado = 'NURSING_UNCLASSIFIED';
+        result.motivo = 'Estado Enfermería sin clasificación.';
+        return result;
+    }
+
+    /**
+     * Reconcilia un conjunto de solicitudes Enfermería contra los actos FH de
+     * Farmacia. Función PURA y determinista: el resultado depende solo de los
+     * contenidos de las dos fuentes activas, nunca del orden de carga, del
+     * orden de filas ni de estado visual previo.
+     */
+    function reconcileEnfermeriaSolicitudes(nursingRows, pharmacyRows) {
+        var actsById = collectFHValidationActsBySolicitudId(pharmacyRows);
+        return (Array.isArray(nursingRows) ? nursingRows : [])
+            .map(function (row) {
+                return reconcileEnfermeriaSolicitud(row, actsById);
+            })
+            .filter(Boolean);
+    }
+
+    /**
+     * Indica si un candidato importado es una solicitud Enfermería
+     * (cualquier formato, incluido legacy) para el conjunto de entrada de la
+     * reconciliación.
+     */
+    function isEnfermeriaImportCandidate(patient) {
+        if (!patient) return false;
+        if (patient.origen_solicitud === 'enfermeria') return true;
+        if (patient.source_type === 'ENFERMERIA') return true;
+        return String(patient.importSource || '').toLowerCase().indexOf('enfermer') !== -1;
     }
 
     /**
@@ -1153,11 +1348,13 @@
     function getAvailablePatients() {
         var mergedByCip = {};
         var ordered = [];
+        var orderedMergeKeys = [];
 
         Object.keys(patients).forEach(function (cip) {
             var base = mergePatientRecord({}, Object.assign({ importSource: 'demo' }, patients[cip]));
             mergedByCip[cip] = base;
             ordered.push(base);
+            orderedMergeKeys.push(cip);
         });
 
         var importedPatients = [];
@@ -1165,14 +1362,38 @@
             importedPatients = window.FarmaciaDataImports.getImportedPatients();
         }
 
+        /* Issue #367 (N3): reconciliación determinista por solicitud_id entre
+           las dos fuentes activas. Se recalcula en cada lectura a partir de
+           los candidatos importados actuales: order-independent y sin estado
+           visual stale. */
+        var reconciliationBySid = {};
+        reconcileEnfermeriaSolicitudes(
+            importedPatients.filter(isEnfermeriaImportCandidate),
+            importedPatients.filter(isPharmacyAct)
+        ).forEach(function (item) {
+            if (item && item.solicitud_id) {
+                reconciliationBySid[item.solicitud_id.toUpperCase()] = item;
+            }
+        });
+
         importedPatients.forEach(function (patient) {
             if (!patient || !patient.cip) return;
             var cip = String(patient.cip).trim();
             var normalized = mergePatientRecord({}, patient);
+            /* Issue #367: una solicitud v6 con solicitud_id válido se mantiene
+               independiente por identidad: misma CIP con solicitudes distintas
+               NO se fusiona ni colapsa. */
+            var v6Sid = patient.tipo_origen === 'enfermeria_v6_multisheet' && patient.solicitud_id
+                ? String(patient.solicitud_id).trim() : '';
+            if (v6Sid) {
+                normalized.reconciliacion_fh = reconciliationBySid[v6Sid.toUpperCase()] || null;
+                cip = 'SID:' + v6Sid.toUpperCase();
+            }
             var existing = mergedByCip[cip];
             if (!existing) {
                 mergedByCip[cip] = normalized;
                 ordered.push(normalized);
+                orderedMergeKeys.push(cip);
                 return;
             }
             if (patientSourcePriority(normalized) >= patientSourcePriority(existing)) {
@@ -1192,17 +1413,21 @@
             if (!runtimeExisting) {
                 mergedByCip[runtimeCip] = runtimeRecord;
                 ordered.push(runtimeRecord);
+                orderedMergeKeys.push(runtimeCip);
             } else {
                 mergedByCip[runtimeCip] = mergePatientRecord(runtimeExisting, runtimeRecord);
             }
         }
 
-        return ordered.map(function (patient) {
-            return mergedByCip[String(patient.cip).trim()] || patient;
-        }).filter(function (patient, index, list) {
-            return patient && patient.cip && list.findIndex(function (candidate) {
-                return candidate && String(candidate.cip).trim() === String(patient.cip).trim();
-            }) === index;
+        /* La deduplicación se hace por clave de fusión (CIP, o identidad
+           SID: para solicitudes v6 reconciliables), no solo por CIP, para no
+           descartar solicitudes distintas del mismo CIP. */
+        return orderedMergeKeys.filter(function (key, index) {
+            return orderedMergeKeys.indexOf(key) === index;
+        }).map(function (key) {
+            return mergedByCip[key];
+        }).filter(function (patient) {
+            return patient && patient.cip;
         });
     }
 
@@ -2520,6 +2745,12 @@
         normalizeEnfermeriaV6Row: normalizeEnfermeriaV6Row,
         parseEnfermeriaV6Sheet: parseEnfermeriaV6Sheet,
         collectEnfermeriaV6Candidates: collectEnfermeriaV6Candidates,
+        /* Reconciliación por solicitud_id issue #367 (N3) */
+        reconcileEnfermeriaSolicitud: reconcileEnfermeriaSolicitud,
+        reconcileEnfermeriaSolicitudes: reconcileEnfermeriaSolicitudes,
+        collectFHValidationActsBySolicitudId: collectFHValidationActsBySolicitudId,
+        isFHValidationActCandidate: isFHValidationActCandidate,
+        isEnfermeriaImportCandidate: isEnfermeriaImportCandidate,
         findEnfermeriaHeaderRow: findEnfermeriaHeaderRow,
         normalizeEnfermeriaInicioBiologicoRow: normalizeEnfermeriaInicioBiologicoRow,
         parseEnfermeriaInicioBiologicoSheet: parseEnfermeriaInicioBiologicoSheet,
