@@ -1379,6 +1379,22 @@
         return visibleElementValue("fhDermaPatologia");
     }
 
+        /* Issue #366: identidad de la solicitud Enfermeria v6 que origina el
+           acto de Validacion. Se transporta SOLO si llega explicita con el
+           contexto soportado (paciente importado con solicitud_id). Nunca se
+           deriva de CIP, farmaco o fecha, y el origen manual de Farmacia
+           siempre exporta vacio (la ausencia no se sustituye por heuristica). */
+        function visibleSolicitudIdForExport() {
+            if (isManualOrigin()) return "";
+            var patient = currentPatient;
+            var explicit = patient
+                ? (patient.solicitud_id
+                    || (patient.rawImport && patient.rawImport.solicitud_id)
+                    || "")
+                : "";
+            return explicitExportValue(explicit);
+        }
+
     function visibleRequestedDateForExport() {
         if (isManualOrigin()) return visibleElementValue("fhManualFecha");
         var mode = modoActual || resolveModoFromOrigen(currentOrigenEntradaValue());
@@ -1427,7 +1443,9 @@
             otrasObservacionesActo: visibleElementValue("fhValObservaciones"),
             dermaClinicalSummary: buildDermaClinicalSummary().summary,
             slot: slot,
-            lineaActual: treatmentLineForExport(values, slot, cip)
+            lineaActual: treatmentLineForExport(values, slot, cip),
+            /* Issue #366: exact request identity ("" when absent). */
+            solicitudId: visibleSolicitudIdForExport()
         };
     }
 
@@ -2245,6 +2263,13 @@
             "prebiologicRequired", "prebiologicOverallStatus", "preventiveMedicineStatus", "validationBlockers"].forEach(function (key) {
             if (Object.prototype.hasOwnProperty.call(technicalContext, key)) technical[key] = technicalContext[key];
         });
+        /* Issue #366: solicitud_id (external legacy name) maps explicitly onto
+           the canonical v2 request_id when crossing that frontier. No new
+           parallel identity concept is introduced; absence stays null (never
+           derived from CIP/drug/fecha). */
+        if (!Object.prototype.hasOwnProperty.call(technical, "requestId")) {
+            technical.requestId = visibleSolicitudIdForExport() || null;
+        }
         var result = visibleElementValue("fhValEstado") || null;
         return {
             technical: technical,
@@ -2836,6 +2861,7 @@
                     profesional: exportData.profesional,
                     motivo: exportData.motivo,
                     obsValidacion: exportData.obsValidacion,
+                    solicitudId: exportData.solicitudId,
                     demoFlag: true
                 };
                 var context = exp.buildContextFromValidacion(patient, opts);

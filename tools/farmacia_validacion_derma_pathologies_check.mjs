@@ -131,7 +131,7 @@ check(jara.includes(summary.summary) && csvSummary === summary.summary && row.ob
 check(['Infecciones recurrentes: Sí', 'Riesgo o antecedentes cardiovasculares: No', 'Alteraciones neurológicas: No informado', 'Antecedentes o riesgo de neoplasia: Sí'].every((value) => summary.summary.includes(value)), 'cuatro comorbilidades trivalentes entran en el resumen común');
 check(csvRows[1][csvRows[0].indexOf('InfeccionesRecurrentes')] === 'Sí' && csvRows[1][csvRows[0].indexOf('RiesgoOAntecedentesCardiovasculares')] === 'No' && csvRows[1][csvRows[0].indexOf('AlteracionesNeurologicas')] === 'No informado' && csvRows[1][csvRows[0].indexOf('AntecedentesORiesgoNeoplasia')] === 'Sí', 'CSV conserva valores trivalentes de las cuatro comorbilidades');
 check(csvRows[0].at(-1) === 'ResumenClinicoDermatologia' && csvRows.length === 2 && csvRows[0].length === csvRows[1].length, 'CSV añade exactamente una columna final y conserva una fila');
-check(excel.WO8_COLUMNS.length === 61 && excel.buildExcelRowArray(row).length === 61 && row.observaciones_generales.includes('Infecciones recurrentes: Sí') && !row.observaciones_validacion, '10. Excel conserva 61 columnas y usa observaciones_generales para el resumen común');
+check(excel.WO8_COLUMNS.length === 62 && excel.buildExcelRowArray(row).length === 62 && row.observaciones_generales.includes('Infecciones recurrentes: Sí') && !row.observaciones_validacion, '10. Excel conserva 62 columnas (issue #366) y usa observaciones_generales para el resumen común');
 
 select('fhOrigenEntrada', 'demo_formacion', 'Demo / Formación'); select('fhDermaPatologia', 'Vitíligo', 'Vitíligo'); set('fhDermaCip', 'CIP-SINTETICO-NONMANUAL');
 validation.updateDermaPathologyVisibility();

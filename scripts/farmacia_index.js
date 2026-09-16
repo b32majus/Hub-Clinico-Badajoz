@@ -644,7 +644,10 @@
                 cip: patient.cip,
                 servicio: patient.servicioSlug || patient.servicio,
                 patologia: patient.patologia,
-                entrada: 'validacion'
+                entrada: 'validacion',
+                /* N4: identidad exacta de la solicitud en la navegación
+                   soportada hacia Validación. */
+                solicitud_id: patient.solicitud_id || ''
             });
             F.appendIconText(link, 'fa-check-double', 'Abrir validación');
             actions.appendChild(link);
@@ -760,14 +763,31 @@
 
     /* ── Board de solicitudes Enfermería WO8.1c.8 ────────────────── */
 
+    /* Issue #367 (N3): grupos de reconciliación por solicitud_id. Reutilizan
+       el patrón de grupos/badges existente; no es un rediseño general. */
     var ENFERMERIA_GROUP_CONFIG = {
         ok_farmacia: { label: 'Listos para validación', icon: 'fa-check-circle', cls: 'enf-group--ok' },
+        listo_para_citar: { label: 'Listo para citar', icon: 'fa-check-double', cls: 'enf-group--ok' },
+        denegado: { label: 'Validación denegada · No citar', icon: 'fa-ban', cls: 'enf-group--blocked' },
+        conflicto: { label: 'Conflicto de reconciliación', icon: 'fa-exclamation-circle', cls: 'enf-group--blocked' },
         en_vigilancia: { label: 'En vigilancia prebiológica', icon: 'fa-hourglass-half', cls: 'enf-group--vigilance' },
         bloqueado: { label: 'Bloqueados', icon: 'fa-exclamation-triangle', cls: 'enf-group--blocked' },
         sin_clasificar: { label: 'Estado pendiente de clasificación', icon: 'fa-question-circle', cls: '' }
     };
 
     function classifyEnfermeriaState(patient) {
+        /* Issue #367 (N3): la resolución de reconciliación por solicitud_id
+           gana sobre el estado Enfermería crudo solo cuando existe identidad
+           y un terminal FH explícito. PENDING_FH y LEGACY_NO_ID mantienen el
+           grupo pendiente existente. EN VIGILANCIA / BLOQUEADO se leen del
+           Excel y el Hub nunca los recalcula (una incidencia de reconciliación
+           se muestra dentro del grupo propio, nunca como validada). */
+        var rec = patient && patient.reconciliacion_fh;
+        if (rec && rec.reconciliable) {
+            if (rec.estado === 'READY_TO_CITE') return 'listo_para_citar';
+            if (rec.estado === 'DENIED_DO_NOT_CITE') return 'denegado';
+            if (rec.estado === 'RECONCILIATION_CONFLICT') return 'conflicto';
+        }
         var hasPrebiologicoState = patient && Object.prototype.hasOwnProperty.call(patient, 'estado_prebiologico_enfermeria');
         var explicitState = hasPrebiologicoState ? patient.estado_prebiologico_enfermeria : (patient && patient.estado);
         var normalized = String(explicitState || '').trim().toUpperCase().replace(/\s+/g, '_');
@@ -786,6 +806,9 @@
         card.className = 'pending-validation-card';
         card.setAttribute('data-enf-cip', patient.cip);
         card.setAttribute('data-enf-estado', groupKey);
+        if (patient.solicitud_id) {
+            card.setAttribute('data-enf-solicitud', patient.solicitud_id);
+        }
 
         // Header: CIP + nombre + badge estado
         var header = document.createElement('div');
@@ -799,11 +822,20 @@
         subtitle.className = 'pending-validation-card__subtitle';
         subtitle.textContent = textOrDash(patient.nombre || patient.paciente_nombre);
         titleWrap.append(title, subtitle);
+        /* Issue #367: badge por resolución reconciliada, reutilizando las
+           clases de badge existentes (ok verde positivo / blocked rojo). */
+        var resolvedBadge = groupKey === 'listo_para_citar'
+            ? { cls: 'ok', text: ENFERMERIA_GROUP_CONFIG.listo_para_citar.label }
+            : groupKey === 'denegado'
+                ? { cls: 'blocked', text: ENFERMERIA_GROUP_CONFIG.denegado.label }
+                : groupKey === 'conflicto'
+                    ? { cls: 'blocked', text: ENFERMERIA_GROUP_CONFIG.conflicto.label }
+                    : null;
         var badge = document.createElement('span');
-        badge.className = 'status-badge status-badge--' + (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending');
-        badge.textContent = groupKey === 'sin_clasificar'
+        badge.className = 'status-badge status-badge--' + (resolvedBadge ? resolvedBadge.cls : (groupKey === 'ok_farmacia' ? 'ok' : groupKey === 'bloqueado' ? 'blocked' : groupKey === 'en_vigilancia' ? 'vigilance' : 'pending'));
+        badge.textContent = resolvedBadge ? resolvedBadge.text : (groupKey === 'sin_clasificar'
             ? ENFERMERIA_GROUP_CONFIG.sin_clasificar.label
-            : (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—');
+            : (patient.estadoLabel || patient.estado_prebiologico_enfermeria || '—'));
         header.append(titleWrap, badge);
         card.appendChild(header);
 
@@ -816,6 +848,22 @@
         body.appendChild(buildPendingMeta('fa-database', 'Origen: Excel Enfermería'));
         if (patient.fecha_ok_farmacia) {
             body.appendChild(buildPendingMeta('fa-calendar-check', 'Fecha OK Farmacia: ' + patient.fecha_ok_farmacia));
+        }
+        /* Issue #367: identidad técnica visible y resolución de reconciliación
+           con detalles explícitos (terminales FH leídos del Excel Farmacia). */
+        if (patient.solicitud_id) {
+            body.appendChild(buildPendingMeta('fa-fingerprint', 'solicitud_id: ' + patient.solicitud_id));
+        }
+        var rec = patient.reconciliacion_fh;
+        if (rec && rec.reconciliable && rec.estado === 'READY_TO_CITE') {
+            body.appendChild(buildPendingMeta('fa-check-double', 'Validación FH: ' + rec.terminales.join(' + ') + ' · ' + rec.solicitud_id));
+        } else if (rec && rec.reconciliable && rec.estado === 'DENIED_DO_NOT_CITE') {
+            body.appendChild(buildPendingMeta('fa-ban', 'Validación FH denegada · No citar · ' + rec.solicitud_id));
+        } else if (rec && rec.reconciliable && rec.estado === 'RECONCILIATION_CONFLICT') {
+            body.appendChild(buildPendingMeta('fa-exclamation-circle', 'Terminales incompatibles: ' + rec.terminales.join(' + ') + ' · ' + rec.solicitud_id + ' · No accionable'));
+        }
+        if (rec && rec.inconsistencia) {
+            body.appendChild(buildPendingMeta('fa-exclamation-triangle', 'Incidencia de reconciliación: validación FH terminal con Enfermería no OK FARMACIA · No accionable'));
         }
         card.appendChild(body);
 
@@ -845,7 +893,9 @@
         // ── Detail panel: todos los ítems prebiológicos ────────────
         var detailPanel = document.createElement('div');
         detailPanel.className = 'enfermeria-detail-panel';
-        detailPanel.id = 'enfDetail_' + (patient.cip || '0');
+        /* Issue #367: el id usa la identidad de la solicitud para no colisionar
+           cuando la misma CIP tiene varias solicitudes. */
+        detailPanel.id = 'enfDetail_' + (patient.solicitud_id || patient.cip || '0');
 
         var detailTitle = document.createElement('h4');
         detailTitle.className = 'enfermeria-detail-panel__title';
@@ -892,7 +942,11 @@
                 cip: patient.cip,
                 servicio: patient.servicioSlug || patient.servicio || patient.servicio_origen,
                 patologia: patient.patologia || patient.patologia_indicacion,
-                entrada: 'validacion'
+                entrada: 'validacion',
+                /* Issue #367 N4: la solicitud_id exacta viaja en la URL
+                   técnica para que Validación resuelva ESTA solicitud, no
+                   otra del mismo CIP. */
+                solicitud_id: patient.solicitud_id || ''
             });
             F.appendIconText(link, 'fa-check-double', 'Abrir validación');
             link.setAttribute('data-enf-action', 'validar');
@@ -907,6 +961,10 @@
                 F.appendIconText(toggleBtn, 'fa-exclamation-triangle', 'Ver bloqueantes');
             } else if (groupKey === 'sin_clasificar') {
                 F.appendIconText(toggleBtn, 'fa-info-circle', 'Ver detalle');
+            } else if (groupKey === 'listo_para_citar' || groupKey === 'denegado' || groupKey === 'conflicto') {
+                /* Issue #367: resueltas/conflicto NO ofrecen Abrir validación
+                   pendiente; solo detalles explícitos no accionables. */
+                F.appendIconText(toggleBtn, 'fa-info-circle', 'Ver detalle');
             } else {
                 F.appendIconText(toggleBtn, 'fa-hourglass-half', 'Ver pendientes prebiológicos');
             }
@@ -914,9 +972,10 @@
                 return function () {
                     panel.classList.toggle('open');
                     var isOpen = panel.classList.contains('open');
+                    var isResolvedGroup = groupKey === 'listo_para_citar' || groupKey === 'denegado' || groupKey === 'conflicto';
                     var btnText = groupKey === 'bloqueado'
                         ? (isOpen ? 'Ocultar bloqueantes' : 'Ver bloqueantes')
-                        : (groupKey === 'sin_clasificar'
+                        : (groupKey === 'sin_clasificar' || isResolvedGroup
                             ? (isOpen ? 'Ocultar detalle' : 'Ver detalle')
                             : (isOpen ? 'Ocultar detalle prebiológico' : 'Ver pendientes prebiológicos'));
                     // Update button text keeping icon
@@ -956,12 +1015,12 @@
         empty.classList.toggle('hidden', patients.length > 0);
         if (!patients.length) return;
 
-        var groups = { ok_farmacia: [], en_vigilancia: [], bloqueado: [], sin_clasificar: [] };
+        var groups = { ok_farmacia: [], listo_para_citar: [], denegado: [], conflicto: [], en_vigilancia: [], bloqueado: [], sin_clasificar: [] };
         patients.forEach(function (p) {
             groups[classifyEnfermeriaState(p)].push(p);
         });
 
-        var order = ['ok_farmacia', 'en_vigilancia', 'bloqueado', 'sin_clasificar'];
+        var order = ['ok_farmacia', 'listo_para_citar', 'denegado', 'conflicto', 'en_vigilancia', 'bloqueado', 'sin_clasificar'];
         for (var gi = 0; gi < order.length; gi++) {
             var gk = order[gi];
             var g = groups[gk];

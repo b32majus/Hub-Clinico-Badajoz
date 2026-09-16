@@ -79,6 +79,9 @@ SERVICE_COLS = [
     ("updated_at", "H", "datetime", False),
     ("demo_flag", "H", "boolean", True),
     ("observaciones_generales", "H", "string", False),
+    # Issue #366: external request identity (Enfermería v6 solicitud_id).
+    # Appended; optional, never mandatory manual entry in Farmacia.
+    ("solicitud_id", "H", "string", False),
 ]
 
 HEADER_FONT = Font(name="Calibri", bold=True, size=10, color="FFFFFF")
@@ -142,7 +145,7 @@ LISTS = {
     "tipo_movimiento": ["sin_cambios", "cambio_terapeutico", "tratamiento_anadido", "suspension", "cambio_pauta"],
     "via": ["SC", "IV", "VO", "IM", "Tópica", "Intraarticular", "Otra"],
     "tipo_validacion": ["inicial", "cambio", "adicion", "renovacion"],
-    "resultado_validacion": ["validado", "pendiente", "rechazado", "no_aplica"],
+    "resultado_validacion": ["validado", "pendiente", "denegado"],
     "requiere_prebiologico": ["TRUE", "FALSE"],
     "tb_estado": ["Negativo", "Positivo", "Pendiente", "No realizado", "No aplica"],
     "serologias_estado": ["Negativo", "Positivo", "Pendiente", "No realizado", "No aplica"],
@@ -187,7 +190,7 @@ def build_service_sheet(ws, service_name, service_label):
         34: 16, 35: 16, 36: 14, 37: 12, 38: 12, 39: 12, 40: 18, 41: 24,  # E
         42: 16, 43: 8, 44: 8, 45: 8, 46: 20, 47: 22, 48: 24,  # F
         49: 14, 50: 14, 51: 24, 52: 12, 53: 18, 54: 22, 55: 16, 56: 14, 57: 22,  # G
-        58: 18, 59: 18, 60: 10, 61: 28,  # H
+        58: 18, 59: 18, 60: 10, 61: 28, 62: 20,  # H
     }
     for col_num, width in col_widths.items():
         ws.column_dimensions[get_column_letter(col_num)].width = width

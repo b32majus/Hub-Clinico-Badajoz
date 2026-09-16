@@ -78,6 +78,9 @@
     'updated_at',
     'demo_flag',
     'observaciones_generales',
+    /* Identidad de solicitud Enfermeria (issue #366): appended, existing
+       order is untouched. Transported only by Validation acts. */
+    'solicitud_id',
   ];
 
   /* ---- Mapa de servicio → hoja ---- */
@@ -229,6 +232,10 @@
       updated_at: cleanValue(context.updatedAt || context.createdAt || isoNow),
       demo_flag: cleanValue(context.demoFlag !== undefined ? (context.demoFlag ? 'TRUE' : 'FALSE') : 'TRUE'),
       observaciones_generales: cleanValue(context.observaciones || ''),
+      /* Identidad de solicitud: solo actos de Validacion transportan el
+         solicitud_id explicito recibido por contexto. Nunca se deriva de
+         CIP/farmaco/fecha y los actos no-validacion no lo transportan. */
+      solicitud_id: (isValidationAct ? cleanValue(context.solicitudId || '') : ''),
     };
 
     return row;
@@ -371,6 +378,11 @@
       estadoRegistro: validationResult.estadoRegistro,
       obsValidacion: opts.obsValidacion || '',
       motivo: opts.motivo || '',
+      /* Identidad exacta de la solicitud Enfermeria que origino el acto:
+         sin transformacion ni regeneracion; vacio si no llego explicita. */
+      solicitudId: opts.solicitudId !== undefined && opts.solicitudId !== null
+        ? String(opts.solicitudId).trim()
+        : '',
     };
   }
 

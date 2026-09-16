@@ -221,6 +221,9 @@
         estadoLinea: ['estado_linea', 'estado linea', 'estadoLinea'],
         tipoRelacion: ['tipo_relacion', 'tipo relacion', 'tipoRelacion'],
         marcaComercial: ['marca_comercial', 'marca comercial', 'marcaComercial', 'nombre comercial', 'nombre_comercial'],
+        /* Issue #366: external legacy identity name. Mapping only;
+           never a new v2 semantic concept. */
+        solicitudId: ['solicitud_id', 'solicitud id', 'solicitudId'],
     };
 
     function safeGetLocalStorage(key) {
@@ -480,8 +483,226 @@
     function shouldEnfermeriaRowAppearInValidationInbox(row) {
         if (!row) return false;
         var estado = String(row.estado_prebiologico_enfermeria || row.estado || '').trim().toUpperCase();
+        var esOkFarmacia = estado === 'OK FARMACIA' || estado === 'OK_FARMACIA';
+        if (!esOkFarmacia) return false;
+        /* Issue #367 (N3): si la fila v6 ya fue reconciliada por
+           solicitud_id exacto, la bandeja la representa por su resolución,
+           no por el estado Enfermería crudo. READY_TO_CITE /
+           DENIED_DO_NOT_CITE / RECONCILIATION_CONFLICT dejan de estar
+           "pendientes de validar"; PENDING_FH sigue. Sin reconciliación
+           aplicable (legacy sin ID, demo) el comportamiento existente se
+           conserva intacto. */
+        var rec = row.reconciliacion_fh;
+        if (rec && rec.reconciliable) {
+            return rec.estado === 'PENDING_FH';
+        }
         // Solo OK FARMACIA → pendiente de validación farmacoterapéutica
-        return estado === 'OK FARMACIA' || estado === 'OK_FARMACIA';
+        return true;
+    }
+
+    /* ── Reconciliación por solicitud_id (WO-FH-ENFERMERIA-V6-N3, issue #367) ── */
+
+    /**
+     * Normaliza un tipo de acto FH quitando acentos, para reconocer
+     * validacion_inicial / nueva_validacion_* de forma estable.
+     */
+    function fhActoToken(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '');
+    }
+
+    /* N4: allowlist EXACTA de tipo_acto_fh que declara un acto de
+       Validación FH. Derivada del contrato FH autoritativo, lista
+       controlada §6.1 de tipo_acto_fh
+       (docs/farmacia_export_longitudinal_contract_WO8.md):
+       validacion_inicial | primera_visita | seguimiento |
+       nueva_validacion_cambio | nueva_validacion_adicion | suspension |
+       cambio_pauta | efecto_adverso | renovacion_continuidad | otro.
+       De esa lista, solo los tres valores abajo son actos de validación;
+       el resto, cualquier valor desconocido y el valor vacío NUNCA son un
+       acto de validación. Coincidencia por igualdad EXACTA del token
+       normalizado, nunca por subcadena ("*validacion*" ya no basta). */
+    var FH_VALIDATION_ACT_TYPES = [
+        'validacion_inicial',
+        'nueva_validacion_cambio',
+        'nueva_validacion_adicion'
+    ];
+
+    /**
+     * Un acto de Farmacia es un "acto de Validación FH" SOLO si
+     * tipo_acto_fh está en la allowlist EXACTA (validacion_inicial,
+     * nueva_validacion_cambio, nueva_validacion_adicion). Los actos no
+     * validación (primera_visita, seguimiento, suspension, cambio_pauta,
+     * efecto_adverso, renovacion_continuidad, otro), los valores
+     * desconocidos y el valor vacío nunca resuelven una solicitud, tengan
+     * o no resultado_validacion.
+     */
+    function isFHValidationActCandidate(candidate) {
+        if (!candidate || !isPharmacyAct(candidate)) return false;
+        var tipo = fhActoToken(candidate.tipo_acto_fh);
+        return FH_VALIDATION_ACT_TYPES.indexOf(tipo) !== -1;
+    }
+
+    function fhValidationActTypes() {
+        return FH_VALIDATION_ACT_TYPES.slice();
+    }
+
+    /* Resultados terminales explícitos del acto de Validación FH.
+       'rechazado' llega ya normalizado a 'denegado' por el adaptador
+       (#366); aquí solo se aceptan valores canónicos explícitos. */
+    var FH_TERMINAL_RESULTS = ['validado', 'denegado'];
+
+    /**
+     * Agrupa actos de Validación FH por solicitud_id EXACTO (mayúsculas).
+     * - Un acto FH sin solicitud_id NO participa en la reconciliación por
+     *   identidad: nunca se empareja por CIP, fármaco, fecha o servicio.
+     * - resultado 'pendiente' se cuenta; valores no canónicos se ignoran
+     *   (no se infiere resolución).
+     */
+    function collectFHValidationActsBySolicitudId(pharmacyRows) {
+        var byId = {};
+        (Array.isArray(pharmacyRows) ? pharmacyRows : []).forEach(function (row) {
+            if (!row) return;
+            var sid = String(row.solicitud_id || '').trim();
+            if (!sid) return;
+            var key = sid.toUpperCase();
+            if (!byId[key]) {
+                byId[key] = { solicitud_id: sid, terminales: [], pendientes: 0, actos_validacion: 0, actos_no_validacion: 0 };
+            }
+            if (isFHValidationActCandidate(row)) {
+                byId[key].actos_validacion += 1;
+                var resultado = String(row.resultado_validacion || '').trim().toLowerCase();
+                if (resultado === 'pendiente') {
+                    byId[key].pendientes += 1;
+                } else if (FH_TERMINAL_RESULTS.indexOf(resultado) !== -1 && byId[key].terminales.indexOf(resultado) === -1) {
+                    byId[key].terminales.push(resultado);
+                }
+            } else {
+                byId[key].actos_no_validacion += 1;
+            }
+        });
+        return byId;
+    }
+
+    /**
+     * Resuelve el estado de reconciliación de UNA solicitud Enfermería.
+     * Matching EXCLUSIVO por solicitud_id exacto. PROHIBIDO cualquier
+     * fallback por CIP, fármaco, principio activo, servicio, fecha,
+     * tratamiento previo, catálogo/CIMA o heurística combinada.
+     *
+     * Estados de salida (issue #367):
+     * - OK FARMACIA + sin actos de Validación FH con el ID → PENDING_FH
+     * - OK FARMACIA + validación explícita pendiente           → PENDING_FH
+     * - OK FARMACIA + validación explícita validado             → READY_TO_CITE
+     * - OK FARMACIA + validación explícita denegado             → DENIED_DO_NOT_CITE
+     * - OK FARMACIA + terminales incompatibles                  → RECONCILIATION_CONFLICT (fail closed)
+     * - EN VIGILANCIA → NURSING_SURVEILLANCE (solo lectura, nunca recalculado)
+     * - BLOQUEADO     → NURSING_BLOCKED (solo lectura, nunca recalculado)
+     * - otros estados → NURSING_UNCLASSIFIED
+     * - sin solicitud_id → LEGACY_NO_ID (comportamiento legacy intacto,
+     *   distinguible como no reconciliable por identidad)
+     *
+     * Decisión documentada (#367): terminales duplicados con el MISMO valor
+     * (p. ej. validado + validado) son semánticamente UNA resolución
+     * explícita y no producen falso conflicto; 'pendiente' no es terminal y no
+     * compite con el terminal existente. Solo la coexistencia de terminales
+     * INCOMPATIBLES (validado + denegado) es conflicto, independientemente
+     * del orden de filas.
+     *
+     * Si existe validación FH terminal para un ID cuyo registro Enfermería
+     * ya no está OK FARMACIA, NO se convierte en listo para citar: se marca
+     * inconsistencia de reconciliación (fail closed, no accionable).
+     */
+    function reconcileEnfermeriaSolicitud(nursingRow, actsById) {
+        if (!nursingRow) return null;
+        var estadoEnf = String(nursingRow.estado_prebiologico_enfermeria || nursingRow.estado || '')
+            .trim().toUpperCase().replace(/\s+/g, '_');
+        var sid = String(nursingRow.solicitud_id || '').trim();
+        var acts = sid && actsById ? (actsById[sid.toUpperCase()] || null) : null;
+
+        var result = {
+            solicitud_id: sid,
+            reconciliable: !!sid,
+            estado_nursing: estadoEnf,
+            estado: '',
+            terminales: acts ? acts.terminales.slice() : [],
+            actos_validacion: acts ? acts.actos_validacion : 0,
+            actos_no_validacion: acts ? acts.actos_no_validacion : 0,
+            inconsistencia: false,
+            motivo: ''
+        };
+
+        if (!sid) {
+            result.estado = 'LEGACY_NO_ID';
+            result.motivo = 'Sin solicitud_id: no reconciliable por identidad (comportamiento legacy).';
+            return result;
+        }
+
+        if (estadoEnf === 'OK_FARMACIA') {
+            if (!acts || acts.actos_validacion === 0) {
+                result.estado = 'PENDING_FH';
+                result.motivo = 'OK FARMACIA sin actos de Validación FH con este solicitud_id.';
+                return result;
+            }
+            if (acts.terminales.length > 1) {
+                result.estado = 'RECONCILIATION_CONFLICT';
+                result.motivo = 'Terminales incompatibles (' + acts.terminales.join(' + ') + ') con el mismo solicitud_id: no accionable, no se resuelve por orden de filas.';
+                return result;
+            }
+            if (acts.terminales.length === 1) {
+                result.estado = acts.terminales[0] === 'validado' ? 'READY_TO_CITE' : 'DENIED_DO_NOT_CITE';
+                result.motivo = 'Validación FH explícita "' + acts.terminales[0] + '" con el mismo solicitud_id.';
+                return result;
+            }
+            result.estado = 'PENDING_FH';
+            result.motivo = 'Solo actos de validación pendientes o no terminales con este solicitud_id.';
+            return result;
+        }
+
+        if (estadoEnf === 'EN_VIGILANCIA' || estadoEnf === 'BLOQUEADO') {
+            result.estado = estadoEnf === 'EN_VIGILANCIA' ? 'NURSING_SURVEILLANCE' : 'NURSING_BLOCKED';
+            if (acts && acts.terminales.length > 0) {
+                result.inconsistencia = true;
+                result.motivo = 'Incidencia de reconciliación: validación FH terminal (' + acts.terminales.join(' + ') + ') con Enfermería ' + estadoEnf + '. No accionable, no se marca lista para citar.';
+            } else {
+                result.motivo = 'Estado Enfermería ' + estadoEnf + ' (solo lectura, no recalculado).';
+            }
+            return result;
+        }
+
+        result.estado = 'NURSING_UNCLASSIFIED';
+        result.motivo = 'Estado Enfermería sin clasificación.';
+        return result;
+    }
+
+    /**
+     * Reconcilia un conjunto de solicitudes Enfermería contra los actos FH de
+     * Farmacia. Función PURA y determinista: el resultado depende solo de los
+     * contenidos de las dos fuentes activas, nunca del orden de carga, del
+     * orden de filas ni de estado visual previo.
+     */
+    function reconcileEnfermeriaSolicitudes(nursingRows, pharmacyRows) {
+        var actsById = collectFHValidationActsBySolicitudId(pharmacyRows);
+        return (Array.isArray(nursingRows) ? nursingRows : [])
+            .map(function (row) {
+                return reconcileEnfermeriaSolicitud(row, actsById);
+            })
+            .filter(Boolean);
+    }
+
+    /**
+     * Indica si un candidato importado es una solicitud Enfermería
+     * (cualquier formato, incluido legacy) para el conjunto de entrada de la
+     * reconciliación.
+     */
+    function isEnfermeriaImportCandidate(patient) {
+        if (!patient) return false;
+        if (patient.origen_solicitud === 'enfermeria') return true;
+        if (patient.source_type === 'ENFERMERIA') return true;
+        return String(patient.importSource || '').toLowerCase().indexOf('enfermer') !== -1;
     }
 
     /**
@@ -607,6 +828,281 @@
         return result;
     }
 
+    /* ── Enfermería v6 multisheet (WO-FH-ENFERMERIA-V6-N1) ───────────── */
+
+    /**
+     * Hojas clínicas del workbook Enfermería v6 (headers congelados en el
+     * oracle: acceptance_contract_v1.json, bloque n1). El prefijo del
+     * solicitud_id debe corresponder a la hoja/servicio. Hojas auxiliares
+     * PANEL_ENFERMERIA / LISTAS / INSTRUCCIONES nunca son fuente clínica.
+     */
+    var ENFERMERIA_V6_CLINICAL_SHEETS = [
+        { name: 'DERMATOLOGÍA', idPattern: /^SOL-DER-[0-9]{6}$/ },
+        { name: 'REUMATOLOGÍA', idPattern: /^SOL-REU-[0-9]{6}$/ },
+        { name: 'DIGESTIVO', idPattern: /^SOL-DIG-[0-9]{6}$/ }
+    ];
+
+    var ENFERMERIA_V6_REQUIRED_HEADERS = [
+        'CIP', 'Patología', 'Fármaco', 'Fecha alta', 'Analítica', 'Mantoux', 'IGRA', 'VHB', 'VHC', 'VIH',
+        'Med. Preventiva', 'Apto para iniciar desde', 'Estado', 'Fecha OK', 'Observación prebiológico',
+        'Servicio', 'solicitud_id'
+    ];
+
+    function enfermeriaV6Token(value) {
+        return String(value || '')
+            .trim()
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '');
+    }
+
+    /**
+     * Devuelve la definición de hoja clínica v6 para un nombre de hoja,
+     * o null si la hoja no es clínica v6.
+     */
+    function getEnfermeriaV6SheetDefinition(sheetName) {
+        var token = enfermeriaV6Token(sheetName);
+        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
+            if (enfermeriaV6Token(ENFERMERIA_V6_CLINICAL_SHEETS[i].name) === token) {
+                return ENFERMERIA_V6_CLINICAL_SHEETS[i];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Reconoce un workbook Enfermería v6: debe contener las tres hojas
+     * clínicas DERMATOLOGÍA, REUMATOLOGÍA y DIGESTIVO.
+     */
+    function isEnfermeriaV6Workbook(workbook) {
+        if (!workbook || !workbook.SheetNames) return false;
+        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
+            var found = false;
+            for (var j = 0; j < workbook.SheetNames.length; j++) {
+                if (getEnfermeriaV6SheetDefinition(workbook.SheetNames[j]) === ENFERMERIA_V6_CLINICAL_SHEETS[i]) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
+    }
+
+    function getEnfermeriaV6ClinicalSheetNames() {
+        return ENFERMERIA_V6_CLINICAL_SHEETS.map(function (sheet) { return sheet.name; });
+    }
+
+    /**
+     * Encuentra la fila de cabecera de una hoja clínica v6 (misma regla
+     * legacy: primera fila que contiene una celda exacta "CIP").
+     */
+    function findEnfermeriaV6HeaderRow(rows) {
+        return findEnfermeriaHeaderRow(rows);
+    }
+
+    /**
+     * Devuelve los headers congelados ausentes en la fila de cabecera de una
+     * hoja clínica v6.
+     */
+    function missingEnfermeriaV6RequiredHeaders(headerRow) {
+        if (!Array.isArray(headerRow)) return ENFERMERIA_V6_REQUIRED_HEADERS.slice();
+        var tokens = {};
+        for (var i = 0; i < headerRow.length; i++) {
+            var token = enfermeriaV6Token(headerRow[i]);
+            if (token) tokens[token] = true;
+        }
+        return ENFERMERIA_V6_REQUIRED_HEADERS.filter(function (header) {
+            return !tokens[enfermeriaV6Token(header)];
+        });
+    }
+
+    /**
+     * Construye el header map v6. Requiere CIP y solicitud_id; los demás
+     * headers congelados se validan aparte.
+     */
+    function buildEnfermeriaV6HeaderMap(headerRow) {
+        if (!Array.isArray(headerRow)) return null;
+        var map = {};
+        for (var i = 0; i < headerRow.length; i++) {
+            var t = enfermeriaV6Token(headerRow[i]);
+            if (t === 'CIP') map.cip = i;
+            else if (t === 'PACIENTE') map.paciente = i;
+            else if (t === 'SERVICIO') map.servicio = i;
+            else if (t === 'PATOLOGIA') map.patologia = i;
+            else if (t === 'FARMACO') map.farmaco = i;
+            else if (t === 'FECHAALTA') map.fechaAlta = i;
+            else if (t === 'ANALITICA') map.analitica = i;
+            else if (t === 'MANTOUX') map.mantoux = i;
+            else if (t === 'IGRA') map.igra = i;
+            else if (t === 'VHB') map.vhb = i;
+            else if (t === 'VHC') map.vhc = i;
+            else if (t === 'VIH') map.vih = i;
+            else if (t === 'MEDPREVENTIVA' || t === 'MEDICINAPREVENTIVA') map.medPreventiva = i;
+            else if (t === 'APTOPARAINICIARDESDE') map.aptoDesde = i;
+            else if (t === 'ESTADO') map.estado = i;
+            else if (t === 'FECHAOK') map.fechaOk = i;
+            else if (t === 'OBSERVACIONPREBIOLOGICO') map.observacion = i;
+            else if (t === 'SOLICITUDID') map.solicitudId = i;
+        }
+        if (map.cip === undefined || map.solicitudId === undefined) return null;
+        return map;
+    }
+
+    /**
+     * Normaliza una fila clínica v6. Devuelve null para filas sin CIP
+     * (no clínicas/vacías: no crean solicitudes aunque contengan fórmulas o
+     * formatos).
+     */
+    function normalizeEnfermeriaV6Row(cells, headerMap, sheetDefinition) {
+        if (typeof sheetDefinition === 'string') sheetDefinition = getEnfermeriaV6SheetDefinition(sheetDefinition);
+        if (!Array.isArray(cells) || !headerMap || !sheetDefinition) return null;
+        var cip = String(cells[headerMap.cip] || '').trim();
+        if (!cip) return null;
+
+        var cellValue = function (key) {
+            return headerMap[key] !== undefined ? String(cells[headerMap[key]] || '').trim() : '';
+        };
+
+        /* N4: el Servicio se lee tal cual de la columna congelada. Ya NO se
+           sustituye por el nombre de la hoja: la coherencia hoja/Servicio se
+           valida fail-closed en collectEnfermeriaV6Candidates y la ausencia
+           nunca se autocorrige. */
+        return {
+            solicitud_id: cellValue('solicitudId'),
+            cip_demo_o_hash: cip,
+            paciente_nombre: cellValue('paciente'),
+            servicio_origen: cellValue('servicio'),
+            servicio_hoja: sheetDefinition.name,
+            patologia_indicacion: cellValue('patologia'),
+            farmaco_solicitado: cellValue('farmaco'),
+            fecha_alta: cellValue('fechaAlta'),
+            analitica_estado: cellValue('analitica'),
+            mantoux_estado: cellValue('mantoux'),
+            igra_estado: cellValue('igra'),
+            vhb_estado: cellValue('vhb'),
+            vhc_estado: cellValue('vhc'),
+            vih_estado: cellValue('vih'),
+            medicina_preventiva_estado: cellValue('medPreventiva'),
+            apto_iniciar_desde: cellValue('aptoDesde'),
+            estado_prebiologico_enfermeria: cellValue('estado'),
+            fecha_ok_farmacia: cellValue('fechaOk'),
+            observaciones_prebiologico: cellValue('observacion'),
+            estado: cellValue('estado'),
+            source_type: 'ENFERMERIA',
+            origen_solicitud: 'enfermeria',
+            tipo_origen: 'enfermeria_v6_multisheet'
+        };
+    }
+
+    /**
+     * Parsea una hoja clínica v6 (Dermatología / Reumatología / Digestivo).
+     * Cualquier otra hoja (incluidas PANEL_ENFERMERIA, LISTAS,
+     * INSTRUCCIONES) devuelve []. La validación de identidad (solicitud_id)
+     * se realiza a nivel de workbook en collectEnfermeriaV6Candidates.
+     */
+    function parseEnfermeriaV6Sheet(rows, sheetName) {
+        var sheetDefinition = getEnfermeriaV6SheetDefinition(sheetName);
+        if (!sheetDefinition) return [];
+
+        var headerIdx = findEnfermeriaV6HeaderRow(rows);
+        if (headerIdx < 0) return [];
+
+        var headerMap = buildEnfermeriaV6HeaderMap(rows[headerIdx]);
+        if (!headerMap) return [];
+
+        var result = [];
+        for (var i = headerIdx + 1; i < rows.length; i++) {
+            var cells = rows[i];
+            if (!Array.isArray(cells)) continue;
+            var hasData = false;
+            for (var j = 0; j < cells.length; j++) {
+                if (String(cells[j] || '').trim()) { hasData = true; break; }
+            }
+            if (!hasData) continue;
+
+            var normalized = normalizeEnfermeriaV6Row(cells, headerMap, sheetDefinition);
+            if (normalized) result.push(normalized);
+        }
+        return result;
+    }
+
+    /**
+     * Une y valida las tres hojas clínicas v6.
+     * sheetsRaw: [{ name, rows }] (filas tipo array por hoja).
+     * Devuelve { ok: true, rows } o { ok: false, reason }.
+     * Cualquier fila clínica (CIP no vacío) con solicitud_id ausente,
+     * malformado o con prefijo incorrecto, o cualquier solicitud_id
+     * duplicado entre hojas, rechaza la importación completa.
+     */
+    function collectEnfermeriaV6Candidates(sheetsRaw) {
+        var rows = [];
+        var seenIds = {};
+        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
+            var sheetDefinition = ENFERMERIA_V6_CLINICAL_SHEETS[i];
+            var sheetRaw = null;
+            for (var j = 0; sheetsRaw && j < sheetsRaw.length; j++) {
+                if (getEnfermeriaV6SheetDefinition(sheetsRaw[j] && sheetsRaw[j].name) === sheetDefinition) {
+                    sheetRaw = sheetsRaw[j];
+                    break;
+                }
+            }
+            if (!sheetRaw) {
+                return { ok: false, reason: 'Falta la hoja clínica "' + sheetDefinition.name + '".' };
+            }
+
+            var headerIdx = findEnfermeriaV6HeaderRow(sheetRaw.rows);
+            if (headerIdx < 0) {
+                return { ok: false, reason: 'La hoja "' + sheetDefinition.name + '" no contiene cabecera (se esperaba columna CIP).' };
+            }
+
+            var missingHeaders = missingEnfermeriaV6RequiredHeaders(sheetRaw.rows[headerIdx]);
+            if (missingHeaders.length > 0) {
+                return { ok: false, reason: 'La hoja "' + sheetDefinition.name + '" no contiene los encabezados congelados; faltan: ' + missingHeaders.join(', ') + '.' };
+            }
+
+            var headerMap = buildEnfermeriaV6HeaderMap(sheetRaw.rows[headerIdx]);
+            if (!headerMap) {
+                return { ok: false, reason: 'La hoja "' + sheetDefinition.name + '" no contiene solicitud_id.' };
+            }
+
+            for (var k = headerIdx + 1; k < sheetRaw.rows.length; k++) {
+                var cells = sheetRaw.rows[k];
+                if (!Array.isArray(cells)) continue;
+                var hasData = false;
+                for (var c = 0; c < cells.length; c++) {
+                    if (String(cells[c] || '').trim()) { hasData = true; break; }
+                }
+                if (!hasData) continue;
+
+                var normalized = normalizeEnfermeriaV6Row(cells, headerMap, sheetDefinition);
+                // Fila sin CIP: no clínica/vacía, no crea solicitud.
+                if (!normalized) continue;
+
+                var solicitudId = normalized.solicitud_id;
+                if (!solicitudId || typeof solicitudId !== 'string' || !sheetDefinition.idPattern.test(solicitudId)) {
+                    return { ok: false, reason: 'SOLICITUD_ID ausente, malformado o con prefijo incorrecto en hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + ': se esperaba un identificador que cumpla ' + sheetDefinition.idPattern.toString() + '.' };
+                }
+                /* N4: coherencia hoja/Servicio fail-closed. La columna
+                   Servicio congelada debe nombrar la misma hoja clínica de
+                   procedencia; ausente o incoherente rechaza la importación
+                   completa (sin autocorrección). El prefijo del solicitud_id
+                   ya se valida contra la hoja arriba (oracle n1: id_patterns). */
+                var servicioCell = headerMap.servicio !== undefined ? String(cells[headerMap.servicio] || '').trim() : '';
+                if (!servicioCell || enfermeriaV6Token(servicioCell) !== enfermeriaV6Token(sheetDefinition.name)) {
+                    return { ok: false, reason: 'SERVICIO ausente o incoherente con la hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + ': se leyó "' + (servicioCell || '(vacío)') + '", se esperaba el servicio de la hoja clínica de procedencia; no se autocorrige.' };
+                }
+                if (seenIds.hasOwnProperty(solicitudId)) {
+                    return { ok: false, reason: 'SOLICITUD_ID duplicado "' + solicitudId + '" (hoja "' + sheetDefinition.name + '", fila ' + (k + 1) + '). Ningún solicitud_id puede repetirse entre las hojas clínicas.' };
+                }
+                seenIds[solicitudId] = true;
+                rows.push(normalized);
+            }
+        }
+        return { ok: true, rows: rows };
+    }
+
     function buildImportedPatientCandidate(row, mapping, sourceLabel, rowIndex) {
         if (!row || !mapping || !mapping.cip) return null;
         var cip = String(row[mapping.cip] || '').trim();
@@ -677,6 +1173,10 @@
             }
             // Marcar tipo_acto_fh en el paciente si fue reconocido
             if (tipoActo) candidate.tipo_acto_fh = tipoActo;
+            /* Issue #366 read-side compatibility: legacy explicit value
+               "rechazado" is accepted ONLY as an alias of "denegado";
+               no new category, no inference from estado_registro. */
+            if (valResultado === 'rechazado') valResultado = 'denegado';
             if (valResultado) candidate.resultado_validacion = valResultado;
             if (estReg) candidate.estado_registro = estReg;
             if (estLinea) candidate.estado_linea = estLinea;
@@ -690,6 +1190,12 @@
                 candidate.estado = 'completado';
                 candidate.estadoLabel = 'Concomitante';
             }
+            /* Issue #366: preserve the external request identity and the
+               service/sheet provenance exactly as read. Identity only:
+               reading never implies resolution (N3 gates on validation
+               rows via tipo_acto_fh). */
+            if (row.solicitud_id) candidate.solicitud_id = String(row.solicitud_id).trim();
+            if (row.servicio_hoja) candidate.servicio_hoja = String(row.servicio_hoja).trim();
         } else if (esEnfermeria) {
             // Enfermería: conservar estado prebiológico del adaptador
             // El adaptador ya estableció estado (OK FARMACIA, EN VIGILANCIA, BLOQUEADO)
@@ -723,6 +1229,13 @@
             if (row.estado_prebiologico_enfermeria) candidate.estado_prebiologico_enfermeria = row.estado_prebiologico_enfermeria;
             if (row.fecha_ok_farmacia) candidate.fecha_ok_farmacia = row.fecha_ok_farmacia;
             if (row.observaciones_prebiologico) candidate.observaciones_prebiologico = row.observaciones_prebiologico;
+            // Enfermería v6: identidad técnica y campos adicionales
+            if (row.solicitud_id) candidate.solicitud_id = String(row.solicitud_id).trim();
+            if (row.fecha_alta) candidate.fecha_alta = String(row.fecha_alta).trim();
+            if (row.apto_iniciar_desde) candidate.apto_iniciar_desde = String(row.apto_iniciar_desde).trim();
+            if (row.servicio_hoja) candidate.servicio_hoja = String(row.servicio_hoja).trim();
+            if (row.tipo_origen === 'enfermeria_v6_multisheet') candidate.tipo_origen = 'enfermeria_v6_multisheet';
+
         } else {
             // Enfermería u otro origen: comportamiento legacy (pending por defecto)
             candidate.estado = 'pending';
@@ -789,6 +1302,22 @@
         return candidate;
     }
 
+    /* N4: el dataset importado deja de ser un handoff de un solo uso. Se
+       conserva en sessionStorage (clave por tipo) durante la sesión de la
+       pestaña para que la página destino (Inicio → Validación) resuelva el
+       paciente importado con su identidad completa. La sobreescritura ocurre
+       al importar otro Excel y el descarte explícito sigue en
+       clearTransientPatientImports. El formato bridge_v2_raw NO se persiste:
+       sigue siendo runtime_memory con su regla existente. */
+    function persistImportedDataset(kind, dataset) {
+        if (!dataset || dataset.format === 'farmacia_bridge_v2_raw') return false;
+        try {
+            return safeSetSessionStorage(IMPORT_STORAGE_KEYS[kind], JSON.stringify(dataset));
+        } catch (err) {
+            return false;
+        }
+    }
+
     function readImportedDataset(kind) {
         var raw = safeGetSessionStorage(IMPORT_STORAGE_KEYS[kind]);
         var dataset;
@@ -798,8 +1327,14 @@
         } else {
             dataset = safeParseJson(raw);
         }
-        if (raw) safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
+        /* N4: la clave ya NO se borra tras la primera lectura. Un dataset
+           persistido resuelve de nuevo en la página destino; sin dataset
+           persistido no hay resolución (falla cerrado, sin heurísticas).
+           Excepción bridge_v2_raw: ese formato nunca persiste ni resucita
+           (runtime memory con regla existente), así que su clave residual se
+           elimina igual que antes. */
         if (kind === 'farmacia' && dataset && dataset.format === 'farmacia_bridge_v2_raw') {
+            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
             delete SESSION_STORAGE_FALLBACK[kind];
             return null;
         }
@@ -871,11 +1406,13 @@
     function getAvailablePatients() {
         var mergedByCip = {};
         var ordered = [];
+        var orderedMergeKeys = [];
 
         Object.keys(patients).forEach(function (cip) {
             var base = mergePatientRecord({}, Object.assign({ importSource: 'demo' }, patients[cip]));
             mergedByCip[cip] = base;
             ordered.push(base);
+            orderedMergeKeys.push(cip);
         });
 
         var importedPatients = [];
@@ -883,14 +1420,38 @@
             importedPatients = window.FarmaciaDataImports.getImportedPatients();
         }
 
+        /* Issue #367 (N3): reconciliación determinista por solicitud_id entre
+           las dos fuentes activas. Se recalcula en cada lectura a partir de
+           los candidatos importados actuales: order-independent y sin estado
+           visual stale. */
+        var reconciliationBySid = {};
+        reconcileEnfermeriaSolicitudes(
+            importedPatients.filter(isEnfermeriaImportCandidate),
+            importedPatients.filter(isPharmacyAct)
+        ).forEach(function (item) {
+            if (item && item.solicitud_id) {
+                reconciliationBySid[item.solicitud_id.toUpperCase()] = item;
+            }
+        });
+
         importedPatients.forEach(function (patient) {
             if (!patient || !patient.cip) return;
             var cip = String(patient.cip).trim();
             var normalized = mergePatientRecord({}, patient);
+            /* Issue #367: una solicitud v6 con solicitud_id válido se mantiene
+               independiente por identidad: misma CIP con solicitudes distintas
+               NO se fusiona ni colapsa. */
+            var v6Sid = patient.tipo_origen === 'enfermeria_v6_multisheet' && patient.solicitud_id
+                ? String(patient.solicitud_id).trim() : '';
+            if (v6Sid) {
+                normalized.reconciliacion_fh = reconciliationBySid[v6Sid.toUpperCase()] || null;
+                cip = 'SID:' + v6Sid.toUpperCase();
+            }
             var existing = mergedByCip[cip];
             if (!existing) {
                 mergedByCip[cip] = normalized;
                 ordered.push(normalized);
+                orderedMergeKeys.push(cip);
                 return;
             }
             if (patientSourcePriority(normalized) >= patientSourcePriority(existing)) {
@@ -910,17 +1471,21 @@
             if (!runtimeExisting) {
                 mergedByCip[runtimeCip] = runtimeRecord;
                 ordered.push(runtimeRecord);
+                orderedMergeKeys.push(runtimeCip);
             } else {
                 mergedByCip[runtimeCip] = mergePatientRecord(runtimeExisting, runtimeRecord);
             }
         }
 
-        return ordered.map(function (patient) {
-            return mergedByCip[String(patient.cip).trim()] || patient;
-        }).filter(function (patient, index, list) {
-            return patient && patient.cip && list.findIndex(function (candidate) {
-                return candidate && String(candidate.cip).trim() === String(patient.cip).trim();
-            }) === index;
+        /* La deduplicación se hace por clave de fusión (CIP, o identidad
+           SID: para solicitudes v6 reconciliables), no solo por CIP, para no
+           descartar solicitudes distintas del mismo CIP. */
+        return orderedMergeKeys.filter(function (key, index) {
+            return orderedMergeKeys.indexOf(key) === index;
+        }).map(function (key) {
+            return mergedByCip[key];
+        }).filter(function (patient) {
+            return patient && patient.cip;
         });
     }
 
@@ -1065,6 +1630,26 @@
         return null;
     }
 
+    /* N4: resolución de la solicitud Enfermería por su identidad EXACTA
+       (solicitud_id). Solo registros importados de Enfermería (la puerta de
+       importación v6 ya rechaza IDs duplicados). Prohibido cualquier fallback
+       por CIP, fármaco, servicio o fecha: si el identificador no resuelve a
+       un único registro de Enfermería, el contexto queda sin paciente
+       (fail closed). */
+    function findAvailablePatientBySolicitudId(solicitudId) {
+        var target = String(solicitudId || '').trim();
+        if (!target) return null;
+        var available = getAvailablePatients();
+        var matches = [];
+        for (var i = 0; i < available.length; i++) {
+            if (String(available[i].solicitud_id || '').trim() === target
+                && isEnfermeriaImportCandidate(available[i])) {
+                matches.push(available[i]);
+            }
+        }
+        return matches.length === 1 ? matches[0] : null;
+    }
+
     function getQueryContext() {
         var params = new URLSearchParams(window.location.search);
         var runtime = window.FarmaciaPatientFlowRuntime;
@@ -1072,10 +1657,24 @@
         var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
         var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
         var hasExplicitCip = !!cip;
-        var patient = cip ? findAvailablePatientByCip(cip) : null;
+        var sid = restarted ? '' : String(params.get('solicitud_id') || '').trim();
+        var patient = null;
+        if (sid) {
+            /* N4: una solicitud_id explícita resuelve SU PROPIO registro. Si
+               no resuelve, o el CIP transportado no coincide con el registro
+               de la solicitud, el contexto NO resuelve paciente ni hace
+               fallback por CIP (nunca otra solicitud del mismo CIP). */
+            patient = findAvailablePatientBySolicitudId(sid);
+            if (patient && cip && String(patient.cip || '').trim().toUpperCase() !== String(cip).trim().toUpperCase()) {
+                patient = null;
+            }
+        } else if (cip) {
+            patient = findAvailablePatientByCip(cip);
+        }
         var patientFound = !!patient;
         return {
             cip: cip,
+            solicitud_id: sid,
             servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
             servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
             patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
@@ -1087,15 +1686,28 @@
         };
     }
 
+    function appendSolicitudIdParam(url, solicitudId) {
+        if (!solicitudId) return url;
+        var separator = String(url).indexOf('?') !== -1 ? '&' : '?';
+        return url + separator + 'solicitud_id=' + encodeURIComponent(String(solicitudId));
+    }
+
     function makeContextUrl(base, context = {}) {
         if (window.FarmaciaPatientFlowRuntime && typeof window.FarmaciaPatientFlowRuntime.makeContextUrl === 'function') {
-            return window.FarmaciaPatientFlowRuntime.makeContextUrl(base, context);
+            var runtimeUrl = window.FarmaciaPatientFlowRuntime.makeContextUrl(base, context);
+            /* N4: el runtime reconstruye la URL técnica; la identidad de la
+               solicitud debe sobrevivir también en esa ruta. */
+            if (context && context.solicitud_id && String(runtimeUrl).indexOf('solicitud_id=') === -1) {
+                return appendSolicitudIdParam(runtimeUrl, context.solicitud_id);
+            }
+            return runtimeUrl;
         }
         const params = new URLSearchParams();
         if (context.cip) params.set('cip', context.cip);
         if (context.servicio) params.set('servicio', context.servicio);
         if (context.patologia) params.set('patologia', context.patologia);
         if (context.entrada) params.set('entrada', context.entrada);
+        if (context.solicitud_id) params.set('solicitud_id', context.solicitud_id);
         const query = params.toString();
         return query ? `${base}?${query}` : base;
     }
@@ -1736,6 +2348,26 @@
             return kind === 'enfermeria' ? 'Enfermería' : 'Farmacia';
         }
 
+        /* N5 (issue #368): an import that needs cross-page persistence cannot
+           be declared active until that persistence is confirmed. The
+           candidate is written to sessionStorage BEFORE it becomes the active
+           source. On a write failure the import is rejected before any state
+           mutation: no importStates entry, no in-memory fallback, no
+           "Excel cargado" UI, no import event, and the previous valid source
+           (if any) stays byte-for-byte intact. The caller surfaces the
+           rejection message. Bridge v2 raw keeps its runtime_memory contract
+           and never reaches this path (persistImportedDataset skips that
+           format by design). */
+        function activatePersistedImportState(kind, candidate) {
+            candidate.storage = 'session_storage';
+            if (!persistImportedDataset(kind, candidate)) {
+                throw new Error('El navegador no pudo conservar el Excel cargado en el almacenamiento de sesión, necesario para mantener los datos al navegar entre pantallas. La importación se rechazó: no se ha activado ningún Excel nuevo.');
+            }
+            importStates[kind] = candidate;
+            SESSION_STORAGE_FALLBACK[kind] = candidate;
+            return candidate;
+        }
+
         function formatImportStatus(kind) {
             var state = importStates[kind];
             if (state && state.format === 'farmacia_bridge_v2_raw' && state.bridgeReadModel) {
@@ -1797,6 +2429,48 @@
         }
 
         function parseWorkbook(kind, workbook, fileName) {
+            if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaV6Workbook === 'function'
+                && window.FarmaciaDemo.isEnfermeriaV6Workbook(workbook)) {
+                // Enfermería v6 multisheet: validar todo antes de tocar el estado previo.
+                // Un workbook inválido se rechaza con error y conserva el Excel activo anterior.
+                var v6SheetNames = window.FarmaciaDemo.getEnfermeriaV6ClinicalSheetNames();
+                var v6SheetsRaw = [];
+                for (var v6i = 0; v6i < v6SheetNames.length; v6i++) {
+                    var v6Sheet = workbook.Sheets[v6SheetNames[v6i]];
+                    if (!v6Sheet) continue;
+                    v6SheetsRaw.push({ name: v6SheetNames[v6i], rows: XLSX.utils.sheet_to_json(v6Sheet, { header: 1, defval: '' }) });
+                }
+                var v6Collected = window.FarmaciaDemo.collectEnfermeriaV6Candidates(v6SheetsRaw);
+                if (!v6Collected || !v6Collected.ok) {
+                    throw new Error('Excel Enfermería v6 rechazado: ' + (v6Collected && v6Collected.reason ? v6Collected.reason : 'estructura no válida.'));
+                }
+                var v6Candidates = v6Collected.rows;
+                var v6MappedFields = {
+                    cip: 'cip_demo_o_hash',
+                    nombre: 'paciente_nombre',
+                    servicio: 'servicio_origen',
+                    patologia: 'patologia_indicacion',
+                    farmaco: 'farmaco_solicitado',
+                    fecha: 'fecha_alta'
+                };
+                var v6State = {
+                    kind: kind,
+                    format: 'enfermeria_v6_multisheet',
+                    sourceLabel: 'Enfermería',
+                    fileName: fileName || '',
+                    importedAt: new Date().toISOString(),
+                    sheetName: 'ENFERMERIA_V6_MULTISHEET',
+                    rowCount: v6Candidates.length,
+                    headers: v6Candidates.length ? Object.keys(v6Candidates[0]) : [],
+                    mappedFields: v6MappedFields,
+                    unrecognizedHeaders: [],
+                    rows: v6Candidates
+                };
+                activatePersistedImportState(kind, v6State);
+                updateAllImportUi();
+                emitImportEvent(kind, { state: v6State });
+                return v6State;
+            }
             if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook === 'function'
                 && window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook(workbook)) {
                 // Enfermería: usar adaptador específico
@@ -1832,10 +2506,7 @@
                     unrecognizedHeaders: [],
                     rows: allCandidates
                 };
-                importStates[kind] = state;
-                safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
-                SESSION_STORAGE_FALLBACK[kind] = state;
-                state.storage = 'memory_only';
+                activatePersistedImportState(kind, state);
                 updateAllImportUi();
                 emitImportEvent(kind, { state: state });
                 return state;
@@ -1879,10 +2550,40 @@
             }
 
             // Generic import (Farmacia u otros)
+            /* Issue #366 multisheet FH reading: the legacy Farmacia path
+               must not stay limited to the first sheet. Relevant records
+               from 01_DERMA / 02_REUMA / 03_DIGESTIVO are collected with
+               their service/sheet provenance. 04_ONCO is NOT new scope:
+               it is not read here (existing compatibility preserved).
+               Workbooks without these service sheets keep the legacy
+               first-sheet behavior unchanged. */
+            var FARMACIA_SERVICE_SHEET_NAMES = ['01_DERMA', '02_REUMA', '03_DIGESTIVO'];
+            var farmaciaServiceSheets = kind === 'farmacia'
+                ? (workbook.SheetNames || []).filter(function (name) {
+                    return FARMACIA_SERVICE_SHEET_NAMES.indexOf(String(name)) !== -1;
+                })
+                : [];
             var firstSheetName = workbook.SheetNames[0];
-            var sheet = workbook.Sheets[firstSheetName];
-            var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-            var headers = rows.length ? Object.keys(rows[0]) : [];
+            var rows = [];
+            var headers = [];
+            if (farmaciaServiceSheets.length) {
+                firstSheetName = farmaciaServiceSheets.join(', ');
+                farmaciaServiceSheets.forEach(function (farmaciaSheetName) {
+                    var farmaciaSheet = workbook.Sheets[farmaciaSheetName];
+                    var farmaciaSheetRows = XLSX.utils.sheet_to_json(farmaciaSheet, { defval: '' });
+                    farmaciaSheetRows.forEach(function (farmaciaRow) {
+                        if (farmaciaRow && typeof farmaciaRow === 'object') {
+                            farmaciaRow.servicio_hoja = farmaciaSheetName;
+                        }
+                        rows.push(farmaciaRow);
+                    });
+                });
+                headers = rows.length ? Object.keys(rows[0]) : [];
+            } else {
+                var sheet = workbook.Sheets[firstSheetName];
+                rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                headers = rows.length ? Object.keys(rows[0]) : [];
+            }
             var inferred = inferFieldMapping(headers);
             var state = {
                 kind: kind,
@@ -1896,10 +2597,7 @@
                 unrecognizedHeaders: inferred.unrecognizedHeaders,
                 rows: rows
             };
-            importStates[kind] = state;
-            safeRemoveSessionStorage(IMPORT_STORAGE_KEYS[kind]);
-            SESSION_STORAGE_FALLBACK[kind] = state;
-            state.storage = 'memory_only';
+            activatePersistedImportState(kind, state);
             updateAllImportUi();
             emitImportEvent(kind, { state: state });
             return state;
@@ -2016,6 +2714,7 @@
             getBridgeReadModel: getBridgeReadModel,
             clearTransientPatientImports: clearTransientPatientImports,
             findImportedPatientByCip: findImportedPatientByCip,
+            parseWorkbook: parseWorkbook,
             importFile: importFile,
             formatImportStatus: formatImportStatus
         };
@@ -2152,6 +2851,26 @@
         shouldAppearInValidationInbox: shouldAppearInValidationInbox,
         /* Enfermería / Inicio Biológico WO8.1c.3 */
         isEnfermeriaInicioBiologicoWorkbook: isEnfermeriaInicioBiologicoWorkbook,
+
+        /* Enfermería v6 multisheet WO-FH-ENFERMERIA-V6-N1 */
+        isEnfermeriaV6Workbook: isEnfermeriaV6Workbook,
+        getEnfermeriaV6ClinicalSheetNames: getEnfermeriaV6ClinicalSheetNames,
+        findEnfermeriaV6HeaderRow: findEnfermeriaV6HeaderRow,
+        buildEnfermeriaV6HeaderMap: buildEnfermeriaV6HeaderMap,
+        missingEnfermeriaV6RequiredHeaders: missingEnfermeriaV6RequiredHeaders,
+        normalizeEnfermeriaV6Row: normalizeEnfermeriaV6Row,
+        parseEnfermeriaV6Sheet: parseEnfermeriaV6Sheet,
+        collectEnfermeriaV6Candidates: collectEnfermeriaV6Candidates,
+        /* Reconciliación por solicitud_id issue #367 (N3) */
+        reconcileEnfermeriaSolicitud: reconcileEnfermeriaSolicitud,
+        reconcileEnfermeriaSolicitudes: reconcileEnfermeriaSolicitudes,
+        collectFHValidationActsBySolicitudId: collectFHValidationActsBySolicitudId,
+        isFHValidationActCandidate: isFHValidationActCandidate,
+        /* N4: allowlist exacta de actos de Validación FH (contrato §6.1) */
+        fhValidationActTypes: fhValidationActTypes,
+        /* N4: resolución de solicitud Enfermería por identidad exacta */
+        findAvailablePatientBySolicitudId: findAvailablePatientBySolicitudId,
+        isEnfermeriaImportCandidate: isEnfermeriaImportCandidate,
         findEnfermeriaHeaderRow: findEnfermeriaHeaderRow,
         normalizeEnfermeriaInicioBiologicoRow: normalizeEnfermeriaInicioBiologicoRow,
         parseEnfermeriaInicioBiologicoSheet: parseEnfermeriaInicioBiologicoSheet,

@@ -155,5 +155,12 @@ if (serviceNames.length > 0) {
   assert(refHeaders.length > 50, `Hojas de servicio tienen ${refHeaders.length} columnas (> 50)`);
 }
 
+// 10. Issue #366: solicitud_id appended a las hojas de servicio
+if (serviceNames.length > 0) {
+  const refHeaders = serviceCols[serviceNames[0]] || [];
+  assert(refHeaders.length === 62, `Hojas de servicio tienen 62 columnas (issue #366, recibidas ${refHeaders.length})`);
+  assert(refHeaders[refHeaders.length - 1] === 'solicitud_id', 'solicitud_id es la última columna de las hojas de servicio (issue #366)');
+}
+
 console.log(`\n Total: ${passed} passed, ${failed} failed${errors.length ? ' (' + errors.length + ' errores)' : ''}`);
 if (failed > 0) process.exit(1);

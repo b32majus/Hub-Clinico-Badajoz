@@ -86,7 +86,7 @@ const setVisible = (values) => Object.entries(values).forEach(([id, value]) => {
 const rows = () => api.buildFollowupExcelRows(api.buildFollowupVisitExportModel());
 const modelSource = (js.match(/function buildFollowupVisitExportModel[\s\S]*?function lineControl/) || [''])[0];
 check(modelSource.includes('captureEditingLineState();') && !/setEditingLine|setCausalityEditor|click\(/.test(modelSource), 'static: export captures the visible editors without traversing hidden state');
-check(columns.length === 61 && js.includes('return [exp.WO8_COLUMNS].concat(buildFollowupExcelRows(model))'), 'static: canonical WO8 columns and shared CSV row builder remain');
+check(columns.length === 62 && js.includes('return [exp.WO8_COLUMNS].concat(buildFollowupExcelRows(model))'), 'static: canonical WO8 columns (issue #366 solicitud_id appended) and shared CSV row builder remain');
 
 const patient = { cip: 'CIP-SYNTHETIC-170', servicio: 'Reumatología', patologia: 'LES', biologicos: [
   { linea_id: 'LINE-A', nombre_comercial: 'Demo A', dosis: '10 mg', via: 'SC', pauta_codigo: 'DIARIA', pauta_label: 'Diaria', estado_linea: 'activo', tipo_relacion: 'principal' },

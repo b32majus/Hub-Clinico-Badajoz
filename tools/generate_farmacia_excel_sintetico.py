@@ -172,6 +172,7 @@ def make_row(service, sidx, tipo_acto, extra=None):
     karch = extra.get("causalidad_karch", "")
     acc_ea = extra.get("accion_ea", "")
     obs_gen = extra.get("observaciones_generales", "")
+    sol_id = extra.get("solicitud_id", "")
 
     row = [
         pat_id, cip, nhc, str(random.randint(25, 75)), sexo,
@@ -186,6 +187,7 @@ def make_row(service, sidx, tipo_acto, extra=None):
         adherencia, haq, eva, dlqi, resp_clin, incidencias, obs_seg,
         hay_ea, ea_id, ea_desc, ea_grav, fs_id, fs_nom, naranjo, karch, acc_ea,
         ISO_NOW, ISO_NOW, "TRUE", obs_gen,
+        sol_id,
     ]
     return row
 

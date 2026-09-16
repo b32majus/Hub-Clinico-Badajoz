@@ -130,6 +130,10 @@ function buildMockDom() {
   mockElements['formManualSolicitud'] = formManualSolicitud;
   var formDigestivo = createMockElement('section', { id: 'formDigestivo', className: 'dashboard-card hidden' });
   mockElements['formDigestivo'] = formDigestivo;
+  // Issue #340 mock repair (issue #366 prerequisite): the shared analítica/
+  // vacunación surface exists in the real page; mostrarFormulario toggles it.
+  var formAnaliticaVacunacion = createMockElement('section', { id: 'formAnaliticaVacunacion', className: 'dashboard-card hidden' });
+  mockElements['formAnaliticaVacunacion'] = formAnaliticaVacunacion;
   var validationBlock = createMockElement('section', { id: 'validationBlock', className: 'dashboard-card hidden' });
   mockElements['validationBlock'] = validationBlock;
 
