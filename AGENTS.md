@@ -17,19 +17,19 @@ Do not use remembered SHAs, branches, priorities or PR states as authority.
 
 ## Execution architecture
 
-The accepted unattended path is:
+The default execution path is upstream-native:
 
-`human authorization → human or Cora/DC mechanical launch → plain Pi supervisor → Herdr → separate Pi + Gentle Pi implementation worker → Gentle native RDD → ordinary repository delivery`
+`human intent / current WO → Pi + native Gentle Shell → ODD / native delegation → Gentle native RDD → ordinary repository delivery`
 
-The supervisor is non-implementing, runs without Gentle Pi, and is event-driven through pi-intercom. It does not own or invoke the Gentle lifecycle, review mode, provider transitions, acknowledgement/burn or implementation. The separate Pi + Gentle Pi worker owns implementation and the full Gentle/RDD lifecycle. OpenCode is retained only as a historical/alternative runtime, not as a dependency of the normal unattended path.
+Herdr remains the terminal workspace/session host for interactive Pi work. Gentle owns its lifecycle, delegation, review mode, provider transitions and acknowledgement/burn inside that hosted Pi session. Do not turn Herdr into a second supervisor or use pi-intercom relays, custom reviewer authority or Atenea runtime bridges around capabilities that current Gentle already owns. A separate orchestration layer requires a demonstrated unsupported seam and explicit authorization.
 
-For normal execution, dispatch from the current issue/spec rather than rewriting them into a second Agent Brief. Keep operator prompts bounded. Do not introduce SDD, custom runners, daemons, launchers, headless controllers or new orchestration layers unless explicitly requested.
+For normal execution, dispatch from the current issue/spec rather than rewriting it into a second Agent Brief. Keep operator prompts bounded. Let native ODD decide execution decomposition. Use SDD/OpenSpec only when the current task explicitly selects that supported path or evidence shows it is preferable; do not impose a second pre-execution workcard hierarchy by default.
 
 Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; bounded writers must receive the applicable project constraints in their handoff. Runtime model routing is operational configuration, not repository truth. Verify effective models when it matters; do not hard-code provider/model assumptions in this file.
 
 ## Engineering standards
 
-Read `CODING_STANDARDS.md` before code changes. Repository standards supplement the active Atenea harness contract and current WO.
+Read `CODING_STANDARDS.md` before code changes. Repository standards and the current WO are the repo-local engineering authority; they do not define a second runtime lifecycle.
 
 For semantic/domain/clinical/parser/state-transition work, the principal acceptance oracle must be derived from accepted authority and frozen before the implementation context receives write authority. The builder may run the oracle but must not weaken or replace it. Material oracle changes return the work to shaping/re-freeze.
 

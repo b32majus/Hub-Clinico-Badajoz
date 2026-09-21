@@ -1,8 +1,8 @@
-# Atenea Coding Standards
+# Engineering Coding Standards
 
-This file contains Atenea's stable repo-local horizontal engineering guardrails.
+This file contains the repository's stable horizontal engineering guardrails.
 
-It does **not** define an execution sequence. Task-specific engineering methods are owned by the upstream Matt Pocock skills and should be used when their own triggers apply. Machine-decidable rules belong in deterministic repo tooling. Gentle native RDD remains the final exact-candidate review authority on the unattended Atenea path.
+It does **not** define an execution sequence. Task-specific engineering methods may be supplied by approved upstream skills when their own triggers apply; they are optional methods, not a second orchestration lifecycle. Machine-decidable rules belong in deterministic repo tooling. Gentle native RDD remains the final exact-candidate review authority for native Gentle execution.
 
 ## 1. Keep changes scoped
 
@@ -102,7 +102,7 @@ Optimize when requirements, measurements or credible load characteristics justif
 
 Do not pre-emptively introduce caches, queues, sharding, microservices, distributed coordination or generic scalability abstractions.
 
-For Atenea, "scalable" means the software can be understood, modified, tested, operated and extended without each change multiplying fragility.
+Here, "scalable" means the software can be understood, modified, tested, operated and extended without each change multiplying fragility.
 
 ## Review interpretation
 
