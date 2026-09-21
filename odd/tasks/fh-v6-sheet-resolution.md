@@ -35,11 +35,27 @@ Derived only from the debt register closure criteria (FH-DEBT-002 / FH-DEBT-003)
 - [x] T2 Explore seam: `isEnfermeriaV6Workbook` / `enfermeriaV6Token` / `parseWorkbook`
       split-brain confirmed (scripts/farmacia_common.js ~840-960, ~1000-1130, ~2431-2445).
 - [x] T3 Freeze acceptance oracle `tools/farmacia_v6_sheet_resolution_check.mjs`; run RED.
-- [ ] T4 Implement single-resolution mapping in scripts/farmacia_common.js (delegated
+- [x] T4 Implement single-resolution mapping in scripts/farmacia_common.js (delegated
       writer, surface = scripts/farmacia_common.js only); run oracle GREEN + regression suites.
-- [ ] T5 Deterministic suites (v6 import, common, validacion/enfermeria imports,
+- [x] T5 Deterministic suites (v6 import, common, validacion/enfermeria imports,
       reconciliation, persistence) + documented justification for browser scope.
 - [ ] T6 Work-unit commit(s) on feature branch (Conventional Commits).
 - [ ] T7 Native Gentle RDD review through approved + acknowledgement/burn.
 - [ ] T8 Close: report SHA, tests, lineage/outcome, remaining concerns. Debt register
       stays OPEN (no publication).
+
+## Evidence log (updated 2026-09-21)
+
+- Oracle frozen RED at 6dfd365 (demonstrated split-brain: detection accepts
+  variant workbook, parseWorkbook rejects with 'Falta la hoja clínica
+  DERMATOLOGÍA').
+- Implementation delegated to gentle-ai-worker; only scripts/farmacia_common.js
+  touched (+64/-18): new resolveEnfermeriaV6ClinicalSheets (single resolution +
+  closed alias policy), isEnfermeriaV6Workbook reuses it, parseWorkbook
+  fail-closed on 'ambiguous', legacy fall-through preserved on 'incomplete'.
+- Independent verification (gentle-ai-verify): 8/8 suites green, 718 checks:
+  oracle 65/0, v6 import 111/0, enfermeria 95/0, validacion 109/0, reconcil
+  75/0, transport 79/0, persistence 57/0, common 127/0; git diff --check clean.
+- Browser check justification: no UI/DOM code changed; deterministic suites
+  exercise the same browser entry point (FarmaciaDataImports.parseWorkbook)
+  with real vendor XLSX; no independent oracle would be added.
