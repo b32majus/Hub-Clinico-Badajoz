@@ -2,10 +2,10 @@
 
 | Metadato | Valor |
 | --- | --- |
-| Última actualización | 2026-09-17 |
+| Última actualización | 2026-09-24 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Tip Git de recovery (volátil) | Consultar GitHub live; último verificado tras merge #370 y antes de WO #371: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
+| Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras la reconciliación documental PR #372: `92c378b858fc13730130c1e0c8f5bc6d2fd685b9`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
 | Último HEAD de producto publicado | `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` (merge PR #370 — Enfermería v6 / reconciliación por `solicitud_id`) |
 | HEAD clínico funcional congelado | `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341; `source_sha`/`last_functional_sha` del snapshot 0.6) |
 | Candidate Train C | `e5e52e2bc8f94805b4771ec40aa19820bb6be02f` |
@@ -84,7 +84,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Elemento | Estado actual |
 | --- | --- |
 | Rama | `recovery/farmacia-pr-replay-20260727` |
-| Tip Git de recovery | Volátil; consultar GitHub live. Último verificado tras merge #370 y antes de #371: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` |
+| Tip Git de recovery | Volátil; consultar GitHub live. Verificado 2026-09-24 tras PR #372: `92c378b858fc13730130c1e0c8f5bc6d2fd685b9` |
 | Último HEAD de producto publicado | `e058f0d25a1856ace4a8bec63dfca53584e8a9cb` — merge PR #370 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; congelado por 0.6 |
 | CI del último HEAD de producto | Farmacia smoke #1050 `success`; Pages build/deployment `success` |
@@ -153,7 +153,7 @@ Decisiones principales:
 
 | Documento | Estado | Uso |
 | --- | --- | --- |
-| [`AGENTS.md`](/AGENTS.md) | Vigente con metadata histórica pendiente de alinear | Gobernanza operativa |
+| [`AGENTS.md`](/AGENTS.md) | Vigente — ejecución Pi + Gentle nativo | Gobernanza operativa |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica + addendum 2026-07-31 | Evolución post-SES |
 | [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente | Separación Reuma/Farmacia |
@@ -284,10 +284,10 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 | Documento | Deuda |
 | --- | --- |
-| `README.md` | Presenta Farmacia como no implementada |
-| `ARCHITECTURE.md` | Baseline, ramas y persistencia Farmacia desactualizados |
+| `README.md` | Reconciliado 2026-09-24; mantenerlo como front door y evitar estado volátil duplicado |
+| `ARCHITECTURE.md` | Marcado como referencia histórica; la arquitectura/estado actuales se resuelven desde este índice y documentos vivos |
 | `CHANGELOG.md` | No recoge la línea recovery reciente |
-| `AGENTS.md` | Metadata/rama base histórica; verificar arnés real antes de editar |
+| `AGENTS.md` | Reconciliado 2026-09-24; sin deuda activa de runtime |
 | `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
 | `opencode.jsonc` | No existe en recovery; ausencia esperada y no bloqueante para esta edición documental |
 | Planes históricos PR replay/rescate V4 | Referenciados previamente, pero sus archivos no están publicados en recovery |
@@ -305,11 +305,9 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 
 Para el estado actual de Farmacia también son memoria histórica o referencia secundaria, no fuente de estado vivo:
 
-- `README.md`;
-- `ARCHITECTURE.md`;
-- `TODO.md`;
-- `CHANGELOG.md`;
-- `AGENTS.md`;
+- `ARCHITECTURE.md` — referencia histórica explícitamente marcada;
+- `TODO.md` — navegación, no backlog vivo;
+- `CHANGELOG.md` — historia, no estado vivo;
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
@@ -334,4 +332,4 @@ Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recove
 
 ---
 
-*Estado reconciliado por issue #371 tras PR #370. El tip Git de recovery es volátil y se consulta live; último HEAD de producto publicado: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`; HEAD clínico funcional congelado por Cáceres 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` y el paquete externo siguen sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
+*Estado reconciliado por issue #371 / PR #372 tras PR #370; tip Git verificado 2026-09-24 en `92c378b...`. El tip Git de recovery es volátil y se consulta live; último HEAD de producto publicado: `e058f0d25a1856ace4a8bec63dfca53584e8a9cb`; HEAD clínico funcional congelado por Cáceres 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` y el paquete externo siguen sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
