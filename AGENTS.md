@@ -11,25 +11,25 @@ Before diagnosing, implementing, reviewing or changing status:
 4. Read the current live spec/audit/plan linked from those documents.
 5. Treat library, Engram and conversational memory as auxiliary evidence only.
 
-Truth order: current approved WO/instruction → published GitHub code/docs → `docs/INDEX.md` → `docs/ops/WORK_ORDER_STATUS.md` → latest related live document → auxiliary memory.
+Truth order: current accepted issue / WO / spec / explicit instruction → published GitHub code/docs → `docs/INDEX.md` → `docs/ops/WORK_ORDER_STATUS.md` → latest related live document → auxiliary memory.
 
 Do not use remembered SHAs, branches, priorities or PR states as authority.
 
 ## Execution architecture
 
-The accepted unattended path is:
+The default execution path is upstream-native:
 
-`human authorization → human or Cora/DC mechanical launch → plain Pi supervisor → Herdr → separate Pi + Gentle Pi implementation worker → Gentle native RDD → ordinary repository delivery`
+`human intent / current accepted task → Pi + native Gentle Shell → ODD / native delegation → Gentle native RDD → ordinary repository delivery`
 
-The supervisor is non-implementing, runs without Gentle Pi, and is event-driven through pi-intercom. It does not own or invoke the Gentle lifecycle, review mode, provider transitions, acknowledgement/burn or implementation. The separate Pi + Gentle Pi worker owns implementation and the full Gentle/RDD lifecycle. OpenCode is retained only as a historical/alternative runtime, not as a dependency of the normal unattended path.
+Herdr remains the terminal workspace/session host for interactive Pi work. Gentle owns its lifecycle, delegation, review mode, provider transitions and acknowledgement/burn inside that hosted Pi session. Do not turn Herdr into a second supervisor or use pi-intercom relays, custom reviewer authority or Atenea runtime bridges around capabilities that current Gentle already owns. A separate orchestration layer requires a demonstrated unsupported seam and explicit authorization.
 
-For normal execution, dispatch from the current issue/spec rather than rewriting them into a second Agent Brief. Keep operator prompts bounded. Do not introduce SDD, custom runners, daemons, launchers, headless controllers or new orchestration layers unless explicitly requested.
+For normal execution, dispatch from the current issue/spec rather than rewriting it into a second Agent Brief. Keep operator prompts bounded. Let native ODD decide execution decomposition. Use SDD/OpenSpec only when the current task explicitly selects that supported path or evidence shows it is preferable; do not impose a second pre-execution workcard hierarchy by default.
 
 Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; bounded writers must receive the applicable project constraints in their handoff. Runtime model routing is operational configuration, not repository truth. Verify effective models when it matters; do not hard-code provider/model assumptions in this file.
 
 ## Engineering standards
 
-Read `CODING_STANDARDS.md` before code changes. Repository standards supplement the active Atenea harness contract and current WO.
+Read `CODING_STANDARDS.md` before code changes. Repository standards and the current accepted task authority are the repo-local engineering authority; they do not define a second runtime lifecycle.
 
 For semantic/domain/clinical/parser/state-transition work, the principal acceptance oracle must be derived from accepted authority and frozen before the implementation context receives write authority. The builder may run the oracle but must not weaken or replace it. Material oracle changes return the work to shaping/re-freeze.
 
@@ -59,9 +59,9 @@ Do not introduce real patient data, identifiers, clinical exports, secrets or cr
 - Push, PR, issue mutation and merge require the current authorization boundary.
 - Before publication, revalidate the current GitHub authority and exact candidate SHA.
 
-## Work orders
+## Execution authority
 
-Every modification is executed as an atomic WO. Keep objective, base, preflight, rollback, scope/NO TOCA, verification/QA, acceptance criteria, delivery boundary and final report explicit enough that the task is auditable without recovering the original chat.
+Every modification must have one durable accepted execution authority: an issue, WO, spec or explicit bounded instruction. Do not manufacture a second WO when the current authority is already executable. When a WO is used, keep objective, base, preflight, rollback, scope/NO TOCA, verification/QA, acceptance criteria, delivery boundary and final report explicit enough that the task is auditable without recovering the original chat.
 
 Do not combine urgent clinical fixes with broad refactors, future architecture, aesthetics or unrelated documentation cleanup.
 
@@ -79,7 +79,7 @@ Distinguish:
 - pilot-ready;
 - future-product-ready.
 
-For UI work, supported browser interaction is required where the WO calls for it. DOM manipulation, changing readonly state, impossible fixtures or unsupported routes do not demonstrate a fix.
+For UI work, supported browser interaction is required where the accepted task calls for it. DOM manipulation, changing readonly state, impossible fixtures or unsupported routes do not demonstrate a fix.
 
 Where relevant verify loading/navigation, supported interaction, persistence/restoration, empty states, console/page errors, synthetic fail-safe behavior, cache/versioning and published branch identity.
 
@@ -93,9 +93,19 @@ A semantic/spec-compliance reviewer must fail closed on material issue/spec/orac
 
 ## Documentation and memory
 
-When a WO, product decision or accepted checkpoint changes real project state, reconcile `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` and the affected live document within scope or through a separate documentation WO.
+When an accepted issue/WO/spec, product decision or accepted checkpoint changes real project state, reconcile `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` and the affected live document within scope or through a separate documentation task.
 
 Engram is auxiliary experiential memory. Save stable lessons, defect patterns and qualification outcomes; do not treat current HEAD, branch, PR state, execution frontier or temporary priority as durable truth. Revalidate memory against GitHub/repository authority before reuse.
+
+## Project-local skills
+
+Project-specific skills live in `.agents/skills/` and contain domain/UI/QA context only. They do not replace Gentle lifecycle skills.
+
+- `promueve-farmacia-context` — Farmacia authority and clinical boundaries.
+- `promueve-vanilla-ui` — current vanilla UI constraints.
+- `promueve-visual-qa` — supported browser/visual QA conventions.
+
+Do not depend on hidden global PROMueve/KairOS skills for project behavior; durable project-specific guidance belongs in this repository.
 
 ## Product horizon
 

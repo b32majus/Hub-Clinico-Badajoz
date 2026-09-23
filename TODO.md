@@ -1,36 +1,25 @@
-# TODO — Hub Clínico Badajoz
+# TODO — navegación, no backlog vivo
 
-## Estado actual
+**Estado:** reconciliado 2026-09-24.
 
-La fase principal de deuda técnica quedó cerrada el 2026-03-07.
+Este archivo no mantiene una lista estática de “lo siguiente”. En un proyecto activo, issues/PRs y ramas avanzan más rápido que un TODO manual.
 
-### Cierres relevantes
-- Codificación y finales de línea saneados en la documentación viva y en los módulos/scripts trabajados durante la fase.
-- Normalización canónica extendida a `dataManager`, dashboard, seguimiento y estadísticas.
-- Indicador persistente de estado de BD implementado y validado.
-- Catálogo de `Fármacos` corregido y validado en formularios.
-- Checklist técnico pre-release disponible en `scripts/check_pre_release.js`.
-- Checklist E2E operativo disponible en `docs/CHECKLIST_E2E_CLINICO.md`.
-- Validación real con Playwright en WSL completada: carga de Excel, sesión profesional, primera visita AR y seguimiento AR con selects de tratamiento poblados.
+## Fuente de trabajo actual
 
-## Pendientes no bloqueantes
+Antes de empezar una tarea:
 
-### 1. Ampliar cobertura E2E manual por patología
-- **Dónde**: `docs/CHECKLIST_E2E_CLINICO.md`
-- **Qué hacer**: Ejecutar y registrar tandas completas para `ESPA`, `APS` y exportación con buffer de pendientes.
-- **Estado**: Existe checklist y smoke base validada; falta ampliar trazabilidad si se quiere cobertura más exhaustiva.
-- **Prioridad**: Media.
+1. consultar GitHub live;
+2. leer `docs/INDEX.md`;
+3. leer `docs/ops/WORK_ORDER_STATUS.md`;
+4. para Farmacia, consultar `docs/ops/FARMACIA_DEBT_REGISTER.md`;
+5. resolver la spec/issue/instrucción aceptada de la tarea concreta.
 
-### 2. Pulido incremental de quick view y dashboard
-- **Dónde**: `script.js`, `scripts/script_dashboard.js`
-- **Qué hacer**: Seguir reduciendo HTML generado inline, ajustar mejoras visuales puntuales y corregir el error residual de Chart.js `Invalid scale configuration for scale: y1` en `dashboard_paciente.html`.
-- **Estado**: No bloqueante; detectado en smoke Playwright del dashboard paciente.
-- **Prioridad**: Baja-media.
+No convertir entradas históricas de este archivo en trabajo vigente sin revalidación.
 
-### 3. Mejoras funcionales futuras
-- **Dónde**: vistas de gestión y workflows por rol.
-- **Qué hacer**: mejoras de usabilidad, vistas específicas y automatizaciones no críticas.
-- **Estado**: backlog evolutivo, no deuda urgente.
-- **Prioridad**: Baja.
+## Farmacia — deuda conocida
 
-Última revisión: 2026-03-07.
+`FH-DEBT-001` permanece abierto y debe resolverse antes de piloto real: frontera de persistencia/seguridad para datos clínicos importados.
+
+`FH-DEBT-002` y `FH-DEBT-003` tienen ya una implementación candidate preservada en `work/fh-v6-sheet-resolution-native-gentle-20260921` (`2015897...`), pendiente de promoción/revisión contra `recovery`; no deben reimplementarse desde cero.
+
+La autoridad exacta de esas entradas está en `docs/ops/FARMACIA_DEBT_REGISTER.md`.
