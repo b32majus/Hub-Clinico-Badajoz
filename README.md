@@ -1,114 +1,68 @@
-﻿# Hub Clínico Reumatología — Badajoz / PROMueve Extremadura
+# Hub Clínico Badajoz / PROMueve Nexus
 
-Aplicación web **local-first** para captura estructurada de datos clínicos en Reumatología, sin instalación y sin backend remoto.
+Aplicación clínica local-first para flujos de Reumatología, Enfermería y Farmacia Hospitalaria. El repositorio contiene una línea histórica de Reumatología y una línea Farmacia activa y publicada para evaluación con datos sintéticos.
 
----
+## Estado actual
 
-## Estado actual (rama viva)
+**Repositorio:** `b32majus/Hub-Clinico-Badajoz`
 
-La rama `feature/reuma-v2-prebiologico-fh-les-sjogren` contiene la versión funcional avanzada del Hub, que sustituye a la `main` legacy.
+**Autoridad Farmacia:** `recovery/farmacia-pr-replay-20260727`. Su tip es volátil y debe verificarse en GitHub antes de trabajar; no copiar un SHA recordado desde chats o sesiones antiguas.
 
-**Patologías activas:** `AR`, `EspA`, `APs`, `LES`, `Sjögren`.
+**`main`:** línea legacy/histórica. No es la autoridad del producto Farmacia actual.
 
-**Entorno objetivo:** Hospital de Badajoz (restricciones STIC).  
-**Base de datos local:** `Hub_Clinico_Maestro.xlsx` (Excel compartido).  
-**Flujo de persistencia:** exportar CSV (1 fila) y pegar manualmente en Excel.  
-**Caché operativa:** por sesión de navegador (`sessionStorage`), no persistente al cerrar la ventana.
+**Uso asistencial actual:** demo/evaluación con datos sintéticos. No implica piloto ni producción con datos reales.
 
----
+**Cáceres:** `previews/caceres-fh/` es un snapshot estable separado (`CÁCERES-REVIEW-0.6`). No se actualiza automáticamente cuando avanza `recovery`.
 
-## Qué hace actualmente
+El estado vivo, los HEADs publicados y las fronteras entre recovery, snapshot Cáceres y paquete externo se documentan en [`docs/INDEX.md`](docs/INDEX.md).
 
-1. **Registro multipatología** de primera visita y seguimiento para AR, EspA, APs, LES y Sjögren.
-2. **Cálculo automático de índices clínicos** específicos por patología (DAS28, CDAI, SDAI, BASDAI, ASDAS-CRP, DAPSA, SLEDAI-2K, SLICC, ESSPRI, ESSDAI).
-3. **Bloque prebiológico/vacunación** embebido por visita (estado: SI/NO/NA/Pendiente).
-4. **Solicitud FH** (Farmacia Hospitalaria) generada como texto estructurado derivado.
-5. **Eventos terapéuticos** derivados del historial de visitas (cambios de tratamiento, scores).
-6. **Dashboard de paciente** con métricas por patología, evolución longitudinal y timeline de eventos.
-7. **Dashboard de estadísticas poblacionales** con filtros por cohorte y gráficos multipatología.
-8. **Búsqueda de pacientes** con vista rápida (quick view) y navegación al dashboard.
-9. **Exportación dual:** TXT para historia clínica y CSV estructurado para base de datos (Excel).
-10. **Recarga de BD** desde cualquier pantalla mediante badge lateral de estado.
-11. **Gestión visual unificada** de catálogos de fármacos y profesionales.
-12. **Demo sintética** poblacional integrada para demostraciones.
+## Stack actual
 
----
+- HTML, CSS y JavaScript vanilla.
+- Sin `package.json`, bundler ni framework obligatorio.
+- Arquitectura local-first y backend-ready; Excel sigue siendo parte de varios flujos operativos/provisionales.
+- Verificación mediante checkers deterministas `tools/*`, smoke checks y pruebas browser/Playwright específicas.
+- Datos reales de pacientes, identificadores, exports clínicos reales y secretos están fuera del repositorio.
+## Cómo entrar al proyecto
 
-## Arquitectura
+Antes de modificar producto:
 
-- **HTML/CSS/JS vanilla** (sin npm, bundlers, ni build system).
-- **Sin backend remoto.** Toda la ejecución es local en el navegador.
-- **Sin autenticación ni seguridad real.** Los perfiles funcionales futuros (Reumatología, Enfermería, Farmacia) controlan interfaz, no equivalen a autenticación/autorización.
-- **Excel como fuente MVP.** No es la solución definitiva; es el mecanismo de persistencia del piloto.
-- **Lectura cruzada sí; escritura cruzada no.** Cada perfil escribirá en su propia fuente física.
-- **3 dependencias CDN:** SheetJS (lectura Excel), Chart.js (gráficos), jsPDF (generación PDF).
+1. Verificar GitHub live: issue/instrucción vigente, rama, HEAD y PRs relacionados.
+2. Leer `AGENTS.md` y `CODING_STANDARDS.md`.
+3. Leer `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`.
+4. Leer la spec, deuda o documento vivo que gobierne la tarea concreta.
+5. Tratar Engram y memoria conversacional como evidencia auxiliar, nunca como autoridad de estado.
 
-Ver `ARCHITECTURE.md` para detalle técnico completo.
+La entrada normal de ejecución es `pi`. Pi + Gentle nativo poseen ODD, delegación, verificación, work-unit commits y RDD. Herdr puede mantener una sesión visible/persistente, pero no es supervisor ni autoridad de producto o review.
 
----
+No crear una segunda WO, brief o lifecycle por ritual cuando un issue/spec/instrucción aceptada ya sea ejecutable.
 
-## Estructura de datos (alto nivel)
+## Líneas funcionales
 
-**Archivo maestro:** `Hub_Clinico_Maestro.xlsx`
+### Farmacia Hospitalaria
 
-**Hojas clínicas:** `AR`, `ESPA`, `APS`, `LES`, `SJOGREN` (497 columnas por hoja).
+La línea activa evoluciona en `recovery/farmacia-pr-replay-20260727`. Incluye Validación, Primera Visita, Seguimiento, dashboards, Export v2, Unified Clinical Intake, integración con Enfermería y los contratos/fail-closed documentados en `docs/INDEX.md`.
 
-**Hojas de soporte:** `Fármacos`, `Profesionales`
+### Reumatología
 
----
+El repositorio conserva la aplicación Reuma multipatología y sus contratos/documentación. Para cualquier reanudación de Reuma, resolver primero la autoridad actual desde `docs/INDEX.md`, documentos Reuma y GitHub; no reutilizar automáticamente decisiones Farmacia.
+## Autoridades y navegación
 
-## Gobernanza de agentes
+- [`docs/INDEX.md`](docs/INDEX.md) — front door documental y estado vivo.
+- [`docs/ops/WORK_ORDER_STATUS.md`](docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs/issues/PRs.
+- [`docs/ops/FARMACIA_DEBT_REGISTER.md`](docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda Farmacia aceptada.
+- [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Clinical Intake.
+- [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md) — arquitectura objetivo V4.
+- [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md) — referencia funcional Reuma.
 
-El proyecto utiliza un pipeline Hermes PM → OpenCode Builder para tareas de documentación y desarrollo acotado.
+`ARCHITECTURE.md`, `TODO.md` y documentación histórica conservan provenance, pero no sustituyen el estado vivo anterior.
 
-Ver:
-- `AGENTS.md` — reglas para agentes del proyecto
-- `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` — marco operativo completo
+## Reglas clínicas transversales
 
----
+- tratamiento solicitado/importado no equivale a tratamiento validado;
+- ausencia o desconocido no autorizan inferencia ni limpieza de datos existentes;
+- el catálogo/CIMA ayuda a identificar o seleccionar, no decide dosis, vía, pauta, causalidad ni validación;
+- parsing/preview no autorizan aplicación clínica;
+- cualquier uso de datos reales requiere una frontera institucional y de seguridad explícitamente autorizada.
 
-## Módulos futuros (en diseño funcional)
-
-| Módulo | Estado |
-|--------|--------|
-| **Enfermería Reuma** | 🟡 Diseño funcional — no implementado. Canvas en `docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md` |
-| **Farmacia Hospitalaria** | 🟡 Diseño funcional — no implementado. Canvas en mismo documento |
-| **Contratos interservicios (WO-002)** | ⏸️ **Pausada.** Borradores en `docs/contratos/`. Pendientes de validación con Sil/Cora. No usar como fuente definitiva |
-
----
-
-## Documentación de referencia
-
-- Arquitectura e implementación: `ARCHITECTURE.md`
-- Arquitectura funcional v2.1: `docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`
-- Índice documental completo: `docs/INDEX.md`
-- Decisiones de evolución: `docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`
-- Contrato de datos Reuma v2: `docs/CONTRATO_DATOS_REUMA_V2.md`
-- Changelog: `docs/CHANGELOG.md`
-- Estado de implementación: `docs/ESTADO_IMPLEMENTACION.md`
-- Work order status: `docs/ops/WORK_ORDER_STATUS.md`
-- Manual de usuario (PDF): `docs/Manual_Usuario_Hub_Clinico_Badajoz.pdf`
-- Manual de usuario (MD): `docs/manual_usuario.md`
-- Plantillas Excel por patología en `docs/`
-
----
-
-## Limitaciones conocidas (diseño intencional)
-
-- Sin backend remoto ni auto-sync por restricciones del entorno STIC.
-- Escritura en BD por pegado manual de CSV.
-- Dependencia de disciplina operativa para recarga de BD y calidad de nomenclatura.
-- Sin tests automatizados (validación manual).
-- Dependencias CDN: no funciona offline sin carga previa.
-- `sessionStorage` como caché: límite ~5-10 MB, se borra al cerrar pestaña.
-
----
-
-## Mantenimiento
-
-Cuando se cambie formulario, exportación o lectura de BD, actualizar siempre:
-1. Código (`formController`, `exportManager`, `dataManager`, scripts de página).
-2. Contrato de datos (`docs/CONTRATO_DATOS_REUMA_V2.md`).
-3. Plantillas/cabeceras Excel.
-4. Estado funcional (`docs/ESTADO_IMPLEMENTACION.md`).
-5. Documentación afectada.
+Para detalles y excepciones, seguir siempre la autoridad clínica vigente de la tarea.

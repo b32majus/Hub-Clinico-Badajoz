@@ -1,5 +1,8 @@
 # Hub Clínico Badajoz — Arquitectura e Implementación
 
+> **Estado 2026-09-24 — REFERENCIA TÉCNICA HISTÓRICA, NO AUTORIDAD DE ESTADO ACTUAL.**
+> Este documento conserva la evolución arquitectónica del Hub. Para el estado vivo de producto, rama, Farmacia, snapshots y trabajo vigente, usar `docs/INDEX.md`, GitHub live y los documentos canónicos enlazados allí. Para la arquitectura objetivo V4 usar `docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`. Las afirmaciones inferiores sobre ramas preview o Farmacia "futura" requieren revalidación antes de reutilizarse.
+
 **Documento de memoria técnica** para entender cómo está codificada la app, qué módulos existen, cómo fluye la información y cómo se ha versionado el proyecto.
 
 > **Estado post-SES (2026-07-10)**
