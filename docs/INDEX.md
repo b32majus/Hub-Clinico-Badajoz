@@ -5,6 +5,7 @@
 | Última actualización | 2026-09-24 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
+| Rama canónica candidate Nexus | `origin/promueve/nexus-v4` — **CANDIDATE**, nacida del SHA fuente `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta; recovery sigue ACTIVE hasta merge autorizado de F0.2 (#380). Detalle: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
 | Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras PR #374: `771fb80c5081aa974b86d6a0119ab30059970a25`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
 | Último HEAD de producto publicado | `771fb80c5081aa974b86d6a0119ab30059970a25` (merge PR #374 — robustez de resolución de hojas Enfermería v6 / FH-DEBT-002/003) |
 | HEAD clínico funcional congelado | `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341; `source_sha`/`last_functional_sha` del snapshot 0.6) |
@@ -29,7 +30,9 @@ La dirección futura de plataforma queda adjudicada en:
 - [`ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`](ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md) — dependencias, WOs candidatas y lanes de ejecución;
 - [`architecture/reviews/`](architecture/reviews/) — baseline, revisión adversarial, alignment y revisión final de completitud preservados como evidencia, no como autoridad automática.
 
-**Este freeze no cambia por sí mismo la autoridad Git ni el estado asistencial.** `recovery/farmacia-pr-replay-20260727` continúa como rama publicada hasta una WO separada de transición; `main` y snapshots congelados no cambian. PROMueve sigue en evaluación sintética, no piloto/producción.
+**Este freeze no cambia por sí mismo la autoridad Git ni el estado asistencial.** `recovery/farmacia-pr-replay-20260727` continúa como rama publicada hasta que la WO separada de transición se fusione; `main` y snapshots congelados no cambian. PROMueve sigue en evaluación sintética, no piloto/producción.
+
+**Transición Git F0.2 (#380) ejecutada:** `promueve/nexus-v4` existe como rama **CANDIDATE** creada desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada (mismo commit, mismo tree, diff vacío, cero cherry-pick/rewrite). Hasta el merge autorizado de la PR F0.2, recovery permanece **ACTIVE**; después, `promueve/nexus-v4` pasará a **ACTIVE** y recovery quedará **HISTORICAL** para nuevo desarrollo. Detalle en [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
 
 Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista conflicto con documentos históricos: monolito modular; Home hospitalaria sin carga clínica; site fijo por deployment; qualification hospital×módulo; configuración mínima y gobernada por propiedad; Read Ports por módulo mediante strangler; acto completo independiente de Excel; Excel como adapter soportado con garantías explícitas; no paciente universal/V5 genérica ahora.
 

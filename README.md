@@ -8,6 +8,8 @@ Aplicación clínica local-first para flujos de Reumatología, Enfermería y Far
 
 **Autoridad Farmacia:** `recovery/farmacia-pr-replay-20260727`. Su tip es volátil y debe verificarse en GitHub antes de trabajar; no copiar un SHA recordado desde chats o sesiones antiguas.
 
+**Línea canónica candidate Nexus:** `promueve/nexus-v4` existe como **CANDIDATE** (F0.2, issue #380), nacida del SHA live de recovery con equivalencia inicial exacta. No es autoridad de producto hasta el merge autorizado de la transición; entonces pasará a ACTIVE y recovery quedará como referencia histórica. Detalle en [`docs/ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](docs/ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
+
 **`main`:** línea legacy/histórica. No es la autoridad del producto Farmacia actual.
 
 **Uso asistencial actual:** demo/evaluación con datos sintéticos. No implica piloto ni producción con datos reales.

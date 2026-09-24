@@ -10,7 +10,8 @@
 
 | Elemento | Valor |
 | --- | --- |
-| Rama regional | `recovery/farmacia-pr-replay-20260727` |
+| Rama regional | `recovery/farmacia-pr-replay-20260727` — **ACTIVE** |
+| Rama canónica candidate | `promueve/nexus-v4` — **CANDIDATE**; creada desde `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta (F0.2 #380); ACTIVE solo tras merge autorizado |
 | Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras PR #374: `771fb80c5081aa974b86d6a0119ab30059970a25` |
 | Último HEAD de producto publicado | `771fb80c5081aa974b86d6a0119ab30059970a25` — merge PR #374 / robustez de resolución de hojas Enfermería v6 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; source/last-functional de 0.6 |
@@ -38,6 +39,22 @@
 | Estado asistencial | sin cambio: sintético/evaluación, no piloto/producción |
 
 El freeze define la dirección de ingeniería futura, no declara implementados los seams ni crea una nueva línea canónica. El cambio efectivo de autoridad Git se ejecutará, si se aprueba, mediante una WO posterior con SHA live, equivalencia inicial y activación explícita.
+
+## Git Canonical Transition F0.2 — 2026-09-24
+
+| Elemento | Estado |
+| --- | --- |
+| Issue | #380 — `WO-NEXUS-F0.2-GIT-CANONICAL-TRANSITION` (`status:approved`) |
+| Base verificada al iniciar | `recovery/farmacia-pr-replay-20260727` @ `a8cec03522017a1f4b68e18b92c944601659c84f` (merge PR #379) |
+| Alcance | Transición Git y documentación únicamente; cero runtime/clínica |
+| Rama canónica creada | `promueve/nexus-v4` @ `a8cec03522017a1f4b68e18b92c944601659c84f`, publicada como **CANDIDATE** |
+| Equivalencia inicial | mismo commit y tree `82e019bbcfb4959c0e31d6a6575edc88363587e3`; diff vacío; 0 commits de diferencia; cero cherry-pick/rewrite |
+| Semántica | pre-merge: recovery **ACTIVE** / nexus-v4 **CANDIDATE**; post-merge autorizado: nexus-v4 **ACTIVE** / recovery **HISTORICAL** |
+| Entregables | documento de transición + reconciliación INDEX/WOS/ADR-001/train plan/README |
+| Autoridad Git | **sin cambio** hasta merge; recovery sigue ACTIVE |
+| `main` / Cáceres 0.6 / asistencial | intactos / fuera de alcance |
+| Delivery boundary de #380 | rama + commit + push + PR contra `promueve/nexus-v4`; **MERGE NO autorizado** |
+| Detalle | [`PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](./PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
 
 ## Convención operativa de SHAs
 

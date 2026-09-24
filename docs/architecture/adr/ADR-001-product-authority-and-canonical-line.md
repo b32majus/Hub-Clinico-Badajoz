@@ -28,6 +28,10 @@ PROMueve conserva `main` legacy, una línea publicada `recovery/farmacia-pr-repl
 - activar la nueva autoridad;
 - congelar recovery como referencia histórica para nuevo desarrollo.
 
+## Ejecución (2026-09-24)
+
+El procedimiento anterior se ejecutó mediante F0.2 (#380): `promueve/nexus-v4` fue creada desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` de recovery con equivalencia inicial demostrada (mismo commit, mismo tree, diff vacío, cero cherry-pick/rewrite) y publicada como **CANDIDATE**. La activación queda pendiente del merge autorizado de la PR F0.2; hasta entonces recovery conserva su autoridad publicada. Detalle: [`../../ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](../../ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
+
 ## Alternativas rechazadas
 
 - repo nuevo por limpieza: coste y doble autoridad sin frontera organizativa real;
