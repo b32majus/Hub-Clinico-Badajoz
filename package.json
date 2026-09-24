@@ -1,0 +1,16 @@
+{
+  "name": "hub-clinico-badajoz",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PROMueve Nexus reproducible tooling baseline (dev/CI only). The static delivery to the hospital has no Node dependency.",
+  "engines": {
+    "node": ">=20.0.0 <21"
+  },
+  "scripts": {
+    "smoke": "node tools/farmacia_smoke_check.mjs",
+    "check:syntax": "node --check scripts/farmacia_common.js && node --check scripts/farmacia_index.js && node --check scripts/farmacia_validacion.js && node --check scripts/farmacia_primera_visita.js && node --check scripts/farmacia_seguimiento.js && node --check scripts/farmacia_dashboard_paciente.js && node --check scripts/farmacia_bridge_v2_dashboard_handoff.js && node --check tools/farmacia_bridge_v2_dashboard_handoff_check.js",
+    "check:bridge": "node tools/farmacia_bridge_v2_dashboard_handoff_check.js && node tools/farmacia_bridge_v2_patient_selectors_check.js && node tools/farmacia_bridge_v2_reader_check.js",
+    "verify": "npm run smoke && npm run check:syntax && npm run check:bridge",
+    "check:pre-release": "node scripts/check_pre_release.js"
+  }
+}
