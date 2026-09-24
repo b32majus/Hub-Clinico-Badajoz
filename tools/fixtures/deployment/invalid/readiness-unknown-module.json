@@ -1,0 +1,8 @@
+{
+  "readinessVersion": "1",
+  "deploymentId": "bad-synthetic-demo-01",
+  "siteId": "BAD",
+  "modules": [
+    { "moduleId": "derma", "label": "Derma", "route": "plantilla_solicitud_dermatologia.html", "available": true, "qualificationState": "QUALIFIED_FOR_SITE", "readiness": "demonstrated", "platformCapabilities": ["static-delivery"], "release": "0.1.0" }
+  ]
+}

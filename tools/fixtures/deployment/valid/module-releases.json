@@ -1,0 +1,15 @@
+{
+  "releaseMapVersion": "1",
+  "modules": [
+    {
+      "moduleId": "farmacia",
+      "release": "0.6.0",
+      "readiness": "demonstrated"
+    },
+    {
+      "moduleId": "reuma",
+      "release": "0.6.0",
+      "readiness": "demonstrated"
+    }
+  ]
+}

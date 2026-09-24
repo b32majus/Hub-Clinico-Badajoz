@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promueve.example/schemas/deployment/module-readiness.schema.json",
+  "title": "PROMueve Nexus module readiness & navigation view v0",
+  "description": "Technical view the Nexus shell may consume for navigation and readiness. Derived only from a validated deployment manifest plus the module release map. It never carries patient identifiers, clinical data, active datasets, credentials or clinical rules; unknown properties fail closed.",
+  "type": "object",
+  "properties": {
+    "readinessVersion": { "const": "1" },
+    "deploymentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{3,39}$"
+    },
+    "siteId": {
+      "enum": ["CAC", "BAD", "MER"]
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/readinessModule" }
+    }
+  },
+  "required": ["readinessVersion", "deploymentId", "siteId", "modules"],
+  "additionalProperties": false,
+  "$defs": {
+    "readinessModule": {
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,39}$"
+        },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "route": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._/-]*\\.html$",
+          "maxLength": 120
+        },
+        "available": {
+          "type": "boolean",
+          "description": "Mirrors the resolved deployment manifest availability; a module not enabled and qualified for the site can never be available."
+        },
+        "qualificationState": {
+          "enum": [
+            "NOT_IMPLEMENTED",
+            "IMPLEMENTED_NOT_QUALIFIED",
+            "QUALIFIED_FOR_SITE",
+            "DISABLED_BY_DEPLOYMENT"
+          ]
+        },
+        "readiness": {
+          "enum": ["code", "wired", "visible", "demonstrated"],
+          "description": "Technical readiness summary from the product documentation maturity taxonomy; never implies clinical validity, persistence or authorization."
+        },
+        "platformCapabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "static-delivery",
+              "session-scoped-state",
+              "offline-capable"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "release": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$",
+          "description": "Technical release/version identifier required for navigation and diagnosis."
+        }
+      },
+      "required": ["moduleId", "label", "route", "available", "qualificationState", "readiness", "platformCapabilities", "release"],
+      "additionalProperties": false
+    }
+  }
+}
