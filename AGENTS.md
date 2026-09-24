@@ -93,6 +93,8 @@ A semantic/spec-compliance reviewer must fail closed on material issue/spec/orac
 
 ## Documentation and memory
 
+The product documentation and handover standard is `docs/engineering/PRODUCT_DOCUMENTATION_STANDARD.md`; the project-local skill `promueve-product-documentation` helps apply it. Material product/engineering changes must evaluate documentation impact and reconcile affected live documents within scope or through a separate documentation task.
+
 When an accepted issue/WO/spec, product decision or accepted checkpoint changes real project state, reconcile `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` and the affected live document within scope or through a separate documentation task.
 
 Engram is auxiliary experiential memory. Save stable lessons, defect patterns and qualification outcomes; do not treat current HEAD, branch, PR state, execution frontier or temporary priority as durable truth. Revalidate memory against GitHub/repository authority before reuse.
@@ -104,6 +106,7 @@ Project-specific skills live in `.agents/skills/` and contain domain/UI/QA conte
 - `promueve-farmacia-context` — Farmacia authority and clinical boundaries.
 - `promueve-vanilla-ui` — current vanilla UI constraints.
 - `promueve-visual-qa` — supported browser/visual QA conventions.
+- `promueve-product-documentation` — applies the product documentation & handover standard; normative authority stays in `docs/engineering/PRODUCT_DOCUMENTATION_STANDARD.md`.
 
 Do not depend on hidden global PROMueve/KairOS skills for project behavior; durable project-specific guidance belongs in this repository.
 
