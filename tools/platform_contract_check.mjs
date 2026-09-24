@@ -2,7 +2,8 @@
 'use strict';
 /**
  * Deterministic checker for the PROMueve Nexus ConfigurationRepository /
- * EffectiveDeployment contract (F3.1 WU-A).
+ * EffectiveDeployment contract (F3.1 WU-A) and the PlatformContext query
+ * facade over that snapshot (F3.1 WU-B).
  *
  * Verifies that the platform seam:
  *  - loads the valid packaged deployment into a deep-frozen
@@ -11,7 +12,10 @@
  *  - transports zero patient/dataset/clinical data (ADR-002);
  *  - fails closed with the exact stable error code on invalid configuration;
  *  - invents nothing: modules not enabled+qualified stay present but
- *    available=false; no module is dropped or invented.
+ *    available=false; no module is dropped or invented (WU-A);
+ *  - exposes the frozen snapshot only through read-only PlatformContext
+ *    queries that fail closed on unknown/unavailable modules and on
+ *    non-conforming snapshots (WU-B, ADR-002/ADR-003).
  *
  * All fixtures are 100% synthetic; Node-only deterministic verification (no
  * browser QA). Exit codes: 0 = all cases PASS, 1 = at least one case FAIL.
@@ -20,6 +24,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 import { loadPlatformFixtures, loadConfiguration } from './platform_test_harness.mjs';
@@ -40,6 +45,40 @@ function loadJson(file) {
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+// Loads modules/platform/platform-context.js unmodified in a minimal Node
+// vm sandbox, exactly like the harness does for the repository module.
+const PLATFORM_CONTEXT_FILE = path.join(ROOT, 'modules', 'platform', 'platform-context.js');
+
+function loadPlatformContext() {
+  const sandbox = { console: { log() {}, warn() {}, error() {} } };
+  sandbox.globalThis = sandbox;
+  sandbox.self = sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(PLATFORM_CONTEXT_FILE, 'utf8'), sandbox, {
+    filename: 'modules/platform/platform-context.js',
+  });
+  return sandbox.PromuevePlatform;
+}
+
+function deepFreeze(value) {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    Object.keys(value).forEach((key) => deepFreeze(value[key]));
+  }
+  return value;
+}
+
+// Captures a thrown error without letting the checker itself fail: returns
+// the error or null when the call succeeded.
+function captureError(fn) {
+  try {
+    fn();
+    return null;
+  } catch (error) {
+    return error;
+  }
 }
 
 // Forbidden keys for the platform seam (ADR-002): no clinical transport.
@@ -253,6 +292,169 @@ function main() {
     snapshot.modules.length === 2 &&
       snapshot.modules.every((m) => m.enabled === true && m.qualificationState === 'IMPLEMENTED_NOT_QUALIFIED' && m.available === false),
     'a module was invented, dropped or presented as available without qualification'
+  );
+
+  // 6. PlatformContext facade (F3.1 WU-B): read-only queries over the
+  // ALREADY-VALIDATED snapshot; unknown/unavailable ids fail closed.
+  console.log('');
+  console.log('PlatformContext facade (F3.1 WU-B)');
+  const platform = loadPlatformContext();
+  const context = platform.PlatformContext.fromSnapshot(snapshot);
+
+  record(
+    'facade exposes expected deploymentId/siteId/persistenceMode/branding/provenance from the snapshot',
+    context.getDeploymentId() === snapshot.deploymentId &&
+      context.getSiteId() === snapshot.siteId &&
+      context.getPersistenceMode() === snapshot.persistenceMode &&
+      JSON.stringify(context.getBranding()) === JSON.stringify(snapshot.display) &&
+      JSON.stringify(context.getProvenance()) === JSON.stringify(snapshot.provenance),
+    'a facade query returned a value that does not match the snapshot'
+  );
+
+  const modulesFromFacade = context.getModules();
+  record(
+    'facade getModules lists all snapshot modules in order and getModule returns the exact descriptors',
+    modulesFromFacade === snapshot.modules &&
+      JSON.stringify(modulesFromFacade.map((m) => m.moduleId)) === JSON.stringify(['farmacia', 'reuma']) &&
+      context.getModule('farmacia') === snapshot.modules[0] &&
+      context.getModule('reuma') === snapshot.modules[1] &&
+      context.getModule('farmacia').available === false &&
+      context.getModule('reuma').available === false,
+    'facade modules/descriptors diverge from the snapshot authority'
+  );
+
+  // Synthetic fixture has no available module; a synthetic in-memory
+  // snapshot with one available module must expose only that one.
+  const availableSnapshot = deepFreeze({
+    snapshotVersion: '1',
+    deploymentId: 'synthetic-available-01',
+    siteId: 'BAD',
+    display: { productName: 'Synthetic Hub', siteLabel: 'BAD synthetic' },
+    persistenceMode: 'session-only',
+    provenance: { generator: 'platform_contract_check', generatedAt: '2026-01-01T00:00:00Z' },
+    modules: [
+      { moduleId: 'farmacia', label: 'Farmacia', route: 'farmacia_index.html', enabled: true, qualificationState: 'QUALIFIED_FOR_SITE', available: true, platformCapabilities: [], readiness: 'demonstrated', release: '0.6.0' },
+      { moduleId: 'reuma', label: 'Reuma', route: 'index.html', enabled: true, qualificationState: 'IMPLEMENTED_NOT_QUALIFIED', available: false, platformCapabilities: [], readiness: 'demonstrated', release: '0.6.0' },
+    ],
+  });
+  const availableContext = platform.PlatformContext.fromSnapshot(availableSnapshot);
+  record(
+    'facade getNavigableModules is empty with no available module and returns only available modules in order otherwise',
+    context.getNavigableModules().length === 0 &&
+      JSON.stringify(availableContext.getNavigableModules().map((m) => m.moduleId)) === JSON.stringify(['farmacia']),
+    'navigable list included unqualified/disabled modules or invented/dropped entries'
+  );
+
+  const unknownQueries = [
+    ['getModule', () => context.getModule('ghost')],
+    ['isModuleAvailable', () => context.isModuleAvailable('ghost')],
+    ['getModuleRoute', () => context.getModuleRoute('ghost')],
+    ['getModuleReadiness', () => context.getModuleReadiness('ghost')],
+  ];
+  const unknownFailures = unknownQueries
+    .map(([name, fn]) => ({ name, error: captureError(fn) }))
+    .filter((r) => !r.error || r.error.name !== 'PlatformContextError' || r.error.code !== 'MODULE_UNKNOWN');
+  record(
+    'MODULE_UNKNOWN: getModule/isModuleAvailable/getModuleRoute/getModuleReadiness with an unknown id all throw code MODULE_UNKNOWN',
+    unknownFailures.length === 0,
+    unknownFailures.length === 0 ? 'unexpected' : `non-conforming failures: ${unknownFailures.map((f) => f.name).join(', ')}`
+  );
+
+  const routeUnavailableError = captureError(() => context.getModuleRoute('farmacia'));
+  record(
+    'MODULE_NOT_AVAILABLE: getModuleRoute for a known but unavailable module throws MODULE_NOT_AVAILABLE while getModuleReadiness succeeds',
+    routeUnavailableError && routeUnavailableError.name === 'PlatformContextError' && routeUnavailableError.code === 'MODULE_NOT_AVAILABLE' &&
+      context.getModuleReadiness('farmacia') === snapshot.modules[0].readiness,
+    routeUnavailableError ? `got ${routeUnavailableError.code}` : 'getModuleRoute was accepted but must fail closed'
+  );
+
+  const snapshotVersionTwo = deepFreeze({ ...deepClone(snapshot), snapshotVersion: '2' });
+  const notFrozenSnapshot = deepClone(snapshot);
+  const invalidInputs = [
+    ['fromSnapshot(null)', null],
+    ['fromSnapshot({})', {}],
+    ['fromSnapshot with snapshotVersion "2"', snapshotVersionTwo],
+    ['fromSnapshot with a non-frozen object', notFrozenSnapshot],
+  ];
+  const invalidFailures = invalidInputs
+    .map(([name, input]) => ({ name, error: captureError(() => platform.PlatformContext.fromSnapshot(input)) }))
+    .filter((r) => !r.error || r.error.name !== 'PlatformContextError' || r.error.code !== 'SNAPSHOT_INVALID');
+  record(
+    'SNAPSHOT_INVALID: null, empty object, snapshotVersion "2" and non-frozen snapshots all throw SNAPSHOT_INVALID',
+    invalidFailures.length === 0,
+    invalidFailures.length === 0 ? 'unexpected' : `non-conforming failures: ${invalidFailures.map((f) => f.name).join(', ')}`
+  );
+
+  // Facade immutability: frozen snapshot rejects writes; the frozen facade
+  // rejects redefinition and carries no writable state-bearing property.
+  let snapshotMutationBlocked = true;
+  try { snapshot.deploymentId = 'mutated-deployment-id'; snapshotMutationBlocked = false; } catch { /* frozen */ }
+  try { snapshot.modules.push({ moduleId: 'invented' }); snapshotMutationBlocked = false; } catch { /* frozen */ }
+  let facadeRedefinitionBlocked = true;
+  try { context.getDeploymentId = () => 'fake-deployment-id'; facadeRedefinitionBlocked = false; } catch { /* frozen facade */ }
+  try { Object.defineProperty(context, 'getModule', { value: () => null }); facadeRedefinitionBlocked = false; } catch { /* frozen facade */ }
+  const expectedQueryNames = [
+    'getDeploymentId', 'getSiteId', 'getPersistenceMode', 'getBranding', 'getProvenance',
+    'getModules', 'getModule', 'isModuleAvailable', 'getNavigableModules',
+    'getModuleRoute', 'getModuleReadiness',
+  ];
+  const facadeDescriptors = expectedQueryNames.map((name) => Object.getOwnPropertyDescriptor(context, name));
+  const facadePropertiesClean =
+    JSON.stringify(Object.getOwnPropertyNames(context).sort()) === JSON.stringify([...expectedQueryNames].sort()) &&
+    facadeDescriptors.every((d) => d && typeof d.value === 'function' && d.writable === false && d.configurable === false);
+  record(
+    'facade immutability: snapshot and facade mutations/redefinitions are rejected and the facade has only read-only query properties',
+    snapshotMutationBlocked && facadeRedefinitionBlocked && facadePropertiesClean &&
+      context.getDeploymentId() === snapshot.deploymentId &&
+      context.getModules().length === 2 &&
+      typeof context.getModule === 'function',
+    'a mutation or redefinition attempt was accepted, or the facade carries writable state'
+  );
+
+  // Zero patient/dataset keys across every facade query output (ADR-002).
+  const facadeOutputs = {
+    deploymentId: context.getDeploymentId(),
+    siteId: context.getSiteId(),
+    persistenceMode: context.getPersistenceMode(),
+    branding: context.getBranding(),
+    provenance: context.getProvenance(),
+    modules: context.getModules(),
+    navigableModules: context.getNavigableModules(),
+    routes: ['farmacia', 'reuma', 'ghost'].map((id) => {
+      let outcome;
+      try {
+        outcome = context.getModuleRoute(id);
+      } catch (error) {
+        outcome = error.code;
+      }
+      return outcome;
+    }),
+    readiness: ['farmacia', 'reuma'].map((id) => context.getModuleReadiness(id)),
+    availableSnapshot: {
+      deploymentId: availableContext.getDeploymentId(),
+      siteId: availableContext.getSiteId(),
+      persistenceMode: availableContext.getPersistenceMode(),
+      branding: availableContext.getBranding(),
+      provenance: availableContext.getProvenance(),
+      modules: availableContext.getModules(),
+      navigableModules: availableContext.getNavigableModules(),
+      routes: ['farmacia', 'reuma'].map((id) => {
+        let outcome;
+        try {
+          outcome = availableContext.getModuleRoute(id);
+        } catch (error) {
+          outcome = error.code;
+        }
+        return outcome;
+      }),
+      readiness: ['farmacia', 'reuma'].map((id) => availableContext.getModuleReadiness(id)),
+    },
+  };
+  const leakedInFacade = containsForbiddenKey(JSON.stringify(facadeOutputs));
+  record(
+    'facade query outputs carry zero patient/dataset keys',
+    leakedInFacade.length === 0,
+    leakedInFacade.length === 0 ? 'unexpected' : `forbidden keys found: ${leakedInFacade.join(', ')}`
   );
 
   finish();
