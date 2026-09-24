@@ -6,7 +6,9 @@ Aplicación clínica local-first para flujos de Reumatología, Enfermería y Far
 
 **Repositorio:** `b32majus/Hub-Clinico-Badajoz`
 
-**Autoridad Farmacia:** `recovery/farmacia-pr-replay-20260727`. Su tip es volátil y debe verificarse en GitHub antes de trabajar; no copiar un SHA recordado desde chats o sesiones antiguas.
+**Autoridad canónica de desarrollo (transición F0.2):** se resuelve por el estado GitHub de la PR #381. Mientras #381 permanezca sin merge, `recovery/farmacia-pr-replay-20260727` = **ACTIVE** y `promueve/nexus-v4` = **CANDIDATE**. Desde el merge autorizado de #381, `promueve/nexus-v4` = **ACTIVE** para nuevo desarrollo Nexus y recovery = **HISTORICAL**. Ver [`docs/ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](docs/ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
+
+**Procedencia Farmacia:** la historia funcional publicada hasta F0.2 procede de `recovery/farmacia-pr-replay-20260727`. La transición de autoridad no cambia por sí misma el último HEAD de producto ni el snapshot Cáceres.
 
 **`main`:** línea legacy/histórica. No es la autoridad del producto Farmacia actual.
 
@@ -41,7 +43,7 @@ No crear una segunda WO, brief o lifecycle por ritual cuando un issue/spec/instr
 
 ### Farmacia Hospitalaria
 
-La línea activa evoluciona en `recovery/farmacia-pr-replay-20260727`. Incluye Validación, Primera Visita, Seguimiento, dashboards, Export v2, Unified Clinical Intake, integración con Enfermería y los contratos/fail-closed documentados en `docs/INDEX.md`.
+El producto Farmacia publicado hasta F0.2 procede de `recovery/farmacia-pr-replay-20260727`. Para nuevo desarrollo se aplica la regla de autoridad de PR #381: recovery mientras permanezca sin merge; `promueve/nexus-v4` desde su merge autorizado. La línea incluye Validación, Primera Visita, Seguimiento, dashboards, Export v2, Unified Clinical Intake, integración con Enfermería y los contratos/fail-closed documentados en `docs/INDEX.md`.
 
 ### Reumatología
 
