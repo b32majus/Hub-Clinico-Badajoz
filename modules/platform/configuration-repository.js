@@ -166,11 +166,37 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     }
   }
 
-  // --- step 5: manifest completeness vs profile ---
+  // --- step 5: manifest completeness vs profile and registry ---
+  //
+  // Cross-artifact authority hardening (#398-C): the manifest transports
+  // availability but never decides it; it cannot elevate a module the
+  // profile did not enable/qualify. Fail closed, no fallback, first
+  // mismatch wins, in this fixed order:
+  //   1. once, before the module loops: manifest<->profile identity
+  //      (deploymentId, siteId, persistenceMode);
+  //   2. per manifest module: duplicate id, registry lookup, registry
+  //      label/entryPath/platformCapabilities identity, profile resolution,
+  //      available coherence, enabled equality, qualificationState equality;
+  //   3. profile coverage (every profile module present in the manifest).
 
-  function validateManifestCompleteness(manifest, profile) {
-    var profileIds = {};
-    for (var p = 0; p < profile.modules.length; p++) profileIds[profile.modules[p].moduleId] = true;
+  function validateManifestCompleteness(manifest, profile, registry) {
+    if (manifest.deploymentId !== profile.deploymentId) {
+      fail('MANIFEST_PROFILE_DEPLOYMENT_ID_MISMATCH', 'manifest deploymentId "' + manifest.deploymentId + '" does not match profile deploymentId "' + profile.deploymentId + '"');
+    }
+    if (manifest.siteId !== profile.siteId) {
+      fail('MANIFEST_PROFILE_SITE_ID_MISMATCH', 'manifest siteId "' + manifest.siteId + '" does not match profile siteId "' + profile.siteId + '"');
+    }
+    if (manifest.persistenceMode !== profile.persistenceMode) {
+      fail('MANIFEST_PROFILE_PERSISTENCE_MODE_MISMATCH', 'manifest persistenceMode "' + manifest.persistenceMode + '" does not match profile persistenceMode "' + profile.persistenceMode + '"');
+    }
+    var registryById = {};
+    for (var r = 0; r < registry.modules.length; r++) {
+      registryById[registry.modules[r].moduleId] = registry.modules[r];
+    }
+    var profileById = {};
+    for (var p = 0; p < profile.modules.length; p++) {
+      profileById[profile.modules[p].moduleId] = profile.modules[p];
+    }
     var manifestIds = {};
     for (var i = 0; i < manifest.modules.length; i++) {
       var mod = manifest.modules[i];
@@ -178,12 +204,32 @@ root.PromuevePlatform = root.PromuevePlatform || {};
         fail('MANIFEST_DUPLICATE_MODULE', 'duplicate moduleId in manifest: "' + mod.moduleId + '"');
       }
       manifestIds[mod.moduleId] = true;
-      if (!profileIds[mod.moduleId]) {
+      var registryEntry = registryById[mod.moduleId];
+      if (!registryEntry) {
+        fail('MANIFEST_REGISTRY_MODULE_UNKNOWN', 'manifest module "' + mod.moduleId + '" is not registered in the module registry');
+      }
+      if (mod.label !== registryEntry.label) {
+        fail('MANIFEST_REGISTRY_LABEL_MISMATCH', 'module "' + mod.moduleId + '": manifest label "' + mod.label + '" does not match registry label "' + registryEntry.label + '"');
+      }
+      if (mod.entryPath !== registryEntry.entryPath) {
+        fail('MANIFEST_REGISTRY_ENTRY_PATH_MISMATCH', 'module "' + mod.moduleId + '": manifest entryPath "' + mod.entryPath + '" does not match registry entryPath "' + registryEntry.entryPath + '"');
+      }
+      if (JSON.stringify(mod.platformCapabilities) !== JSON.stringify(registryEntry.platformCapabilities)) {
+        fail('MANIFEST_REGISTRY_CAPABILITIES_MISMATCH', 'module "' + mod.moduleId + '": manifest platformCapabilities do not match the registry entry');
+      }
+      var profileModule = profileById[mod.moduleId];
+      if (!profileModule) {
         fail('MANIFEST_MODULE_NOT_IN_PROFILE', 'manifest module "' + mod.moduleId + '" is not resolved by the deployment profile');
       }
       var expectedAvailable = mod.enabled === true && mod.qualificationState === 'QUALIFIED_FOR_SITE';
       if (mod.available !== expectedAvailable) {
         fail('MANIFEST_AVAILABLE_CONTRADICTION', 'module "' + mod.moduleId + '": available=' + mod.available + ' contradicts enabled=' + mod.enabled + ' and qualificationState="' + mod.qualificationState + '"');
+      }
+      if (mod.enabled !== profileModule.enabled) {
+        fail('MANIFEST_PROFILE_ENABLED_MISMATCH', 'module "' + mod.moduleId + '": manifest enabled=' + mod.enabled + ' does not match profile enabled=' + profileModule.enabled + '; the manifest cannot enable a module the profile disabled');
+      }
+      if (mod.qualificationState !== profileModule.qualificationState) {
+        fail('MANIFEST_PROFILE_QUALIFICATION_MISMATCH', 'module "' + mod.moduleId + '": manifest qualificationState "' + mod.qualificationState + '" does not match profile qualificationState "' + profileModule.qualificationState + '"; the manifest cannot elevate qualification');
       }
     }
     for (var q = 0; q < profile.modules.length; q++) {
@@ -195,8 +241,17 @@ root.PromuevePlatform = root.PromuevePlatform || {};
   }
 
   // --- step 6: readiness vs manifest ---
+  //
+  // Readiness<->manifest identity coherence is checked once, before the
+  // module loops, continuing the fixed #398-C order started in step 5.
 
   function validateReadinessAgainstManifest(readiness, manifest) {
+    if (readiness.deploymentId !== manifest.deploymentId) {
+      fail('READINESS_DEPLOYMENT_ID_MISMATCH', 'readiness deploymentId "' + readiness.deploymentId + '" does not match manifest deploymentId "' + manifest.deploymentId + '"');
+    }
+    if (readiness.siteId !== manifest.siteId) {
+      fail('READINESS_SITE_ID_MISMATCH', 'readiness siteId "' + readiness.siteId + '" does not match manifest siteId "' + manifest.siteId + '"');
+    }
     var manifestById = {};
     for (var m = 0; m < manifest.modules.length; m++) {
       manifestById[manifest.modules[m].moduleId] = manifest.modules[m];
@@ -272,7 +327,7 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     validateSchemas(input, schemaValidators);
     validateRegistrySemantics(input.registry);
     validateProfileSemantics(input.profile, input.registry);
-    validateManifestCompleteness(input.manifest, input.profile);
+    validateManifestCompleteness(input.manifest, input.profile, input.registry);
     validateReadinessAgainstManifest(input.readiness, input.manifest);
     return buildSnapshot(input);
   }

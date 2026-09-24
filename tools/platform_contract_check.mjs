@@ -457,6 +457,106 @@ function main() {
     leakedInFacade.length === 0 ? 'unexpected' : `forbidden keys found: ${leakedInFacade.join(', ')}`
   );
 
+  // 7. Cross-artifact authority hardening (#398-C): the manifest transports
+  // availability but never decides it. Planted in-memory mutations of the
+  // valid packaged artifacts must fail closed with the exact stable code.
+  console.log('');
+  console.log('Cross-artifact authority hardening (#398-C)');
+  const hardeningCases = [
+    {
+      name: 'manifest enabled-only elevation vs the profile -> MANIFEST_PROFILE_ENABLED_MISMATCH',
+      mutate: (input) => {
+        input.profile.modules[0].enabled = false;
+        input.profile.modules[0].qualificationState = 'NOT_IMPLEMENTED';
+      },
+      expect: 'MANIFEST_PROFILE_ENABLED_MISMATCH',
+    },
+    {
+      name: 'manifest qualificationState-only elevation vs the profile -> MANIFEST_PROFILE_QUALIFICATION_MISMATCH',
+      mutate: (input) => {
+        input.manifest.modules[0].qualificationState = 'QUALIFIED_FOR_SITE';
+        input.manifest.modules[0].available = true;
+      },
+      expect: 'MANIFEST_PROFILE_QUALIFICATION_MISMATCH',
+    },
+    {
+      name: 'manifest deploymentId mismatch vs the profile -> MANIFEST_PROFILE_DEPLOYMENT_ID_MISMATCH',
+      mutate: (input) => { input.manifest.deploymentId = 'cac-synthetic-demo-02'; },
+      expect: 'MANIFEST_PROFILE_DEPLOYMENT_ID_MISMATCH',
+    },
+    {
+      name: 'manifest siteId mismatch vs the profile -> MANIFEST_PROFILE_SITE_ID_MISMATCH',
+      mutate: (input) => { input.manifest.siteId = 'CAC'; },
+      expect: 'MANIFEST_PROFILE_SITE_ID_MISMATCH',
+    },
+    {
+      name: 'manifest persistenceMode mismatch vs the profile -> MANIFEST_PROFILE_PERSISTENCE_MODE_MISMATCH',
+      mutate: (input) => { input.manifest.persistenceMode = 'none'; },
+      expect: 'MANIFEST_PROFILE_PERSISTENCE_MODE_MISMATCH',
+    },
+    {
+      name: 'readiness deploymentId mismatch vs the manifest -> READINESS_DEPLOYMENT_ID_MISMATCH',
+      mutate: (input) => { input.readiness.deploymentId = 'cac-synthetic-demo-02'; },
+      expect: 'READINESS_DEPLOYMENT_ID_MISMATCH',
+    },
+    {
+      name: 'readiness siteId mismatch vs the manifest -> READINESS_SITE_ID_MISMATCH',
+      mutate: (input) => { input.readiness.siteId = 'CAC'; },
+      expect: 'READINESS_SITE_ID_MISMATCH',
+    },
+    {
+      name: 'manifest label tampered vs the registry -> MANIFEST_REGISTRY_LABEL_MISMATCH',
+      mutate: (input) => { input.manifest.modules[0].label = 'Farmacia Tampered'; },
+      expect: 'MANIFEST_REGISTRY_LABEL_MISMATCH',
+    },
+    {
+      name: 'manifest entryPath tampered vs the registry -> MANIFEST_REGISTRY_ENTRY_PATH_MISMATCH',
+      mutate: (input) => { input.manifest.modules[0].entryPath = 'tampered.html'; },
+      expect: 'MANIFEST_REGISTRY_ENTRY_PATH_MISMATCH',
+    },
+    {
+      name: 'manifest platformCapabilities tampered vs the registry -> MANIFEST_REGISTRY_CAPABILITIES_MISMATCH',
+      mutate: (input) => { input.manifest.modules[0].platformCapabilities = ['static-delivery']; },
+      expect: 'MANIFEST_REGISTRY_CAPABILITIES_MISMATCH',
+    },
+    {
+      name: 'manifest moduleId absent from the registry -> MANIFEST_REGISTRY_MODULE_UNKNOWN',
+      mutate: (input) => {
+        input.registry.modules.splice(1, 1);
+        input.profile.modules.splice(1, 1);
+      },
+      expect: 'MANIFEST_REGISTRY_MODULE_UNKNOWN',
+    },
+  ];
+  for (const c of hardeningCases) {
+    // Reattach the live validator functions: JSON deep-clone would drop them.
+    const planted = deepClone({ registry: fixtures.registry, profile: fixtures.profile, manifest: fixtures.manifest, readiness: fixtures.readiness });
+    planted.schemaValidators = fixtures.schemaValidators;
+    c.mutate(planted);
+    const failed = loadConfiguration(planted);
+    record(
+      c.name,
+      !failed.ok && failed.error && failed.error.code === c.expect,
+      failed.ok ? 'was accepted but must fail closed' : `got code=${failed.error ? failed.error.code : 'unknown'}`
+    );
+  }
+
+  const hardeningLoad = loadConfiguration(fixtures);
+  record(
+    '#398-C: the valid packaged deployment still loads after the cross-artifact hardening',
+    hardeningLoad.ok,
+    hardeningLoad.ok ? 'unexpected' : `${hardeningLoad.error.code}: ${hardeningLoad.error.message}`
+  );
+  const profileDerivedAvailability = fixtures.profile.modules.map((m) => m.enabled === true && m.qualificationState === 'QUALIFIED_FOR_SITE');
+  record(
+    '#398-C no-elevation invariant: snapshot availability equals the profile-derived value (false/false), never a manifest-only elevation',
+    hardeningLoad.ok &&
+      JSON.stringify(hardeningLoad.snapshot.modules.map((m) => m.available)) === JSON.stringify(profileDerivedAvailability) &&
+      JSON.stringify(profileDerivedAvailability) === JSON.stringify([false, false]) &&
+      hardeningLoad.snapshot.modules.every((m) => m.qualificationState === 'IMPLEMENTED_NOT_QUALIFIED'),
+    `snapshot=[${hardeningLoad.ok ? hardeningLoad.snapshot.modules.map((m) => m.available) : 'n/a'}] profile-derived=[${profileDerivedAvailability}]`
+  );
+
   finish();
 }
 

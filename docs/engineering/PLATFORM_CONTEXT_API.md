@@ -89,6 +89,17 @@ stable `code` and fail closed; nothing is guessed or silently defaulted.
 | CONFIGURATION | `PROFILE_INCOHERENT_ENABLED` | `enabled` contradicts `qualificationState` |
 | CONFIGURATION | `PROFILE_QUALIFICATION_EVIDENCE_REQUIRED` | `QUALIFIED_FOR_SITE` without evidence |
 | CONFIGURATION | `MANIFEST_DUPLICATE_MODULE` / `MANIFEST_MODULE_NOT_IN_PROFILE` / `MANIFEST_MISSING_MODULE` / `MANIFEST_AVAILABLE_CONTRADICTION` | Manifest vs profile incoherence |
+| CONFIGURATION | `MANIFEST_PROFILE_ENABLED_MISMATCH` | Manifest `enabled` differs from the profile's; the manifest cannot enable a module the profile disabled |
+| CONFIGURATION | `MANIFEST_PROFILE_QUALIFICATION_MISMATCH` | Manifest `qualificationState` differs from the profile's; the manifest cannot elevate qualification |
+| CONFIGURATION | `MANIFEST_PROFILE_DEPLOYMENT_ID_MISMATCH` | Manifest `deploymentId` differs from the profile's |
+| CONFIGURATION | `MANIFEST_PROFILE_SITE_ID_MISMATCH` | Manifest `siteId` differs from the profile's |
+| CONFIGURATION | `MANIFEST_PROFILE_PERSISTENCE_MODE_MISMATCH` | Manifest `persistenceMode` differs from the profile's |
+| CONFIGURATION | `MANIFEST_REGISTRY_MODULE_UNKNOWN` | Manifest moduleId is not registered in the module registry |
+| CONFIGURATION | `MANIFEST_REGISTRY_LABEL_MISMATCH` | Manifest `label` differs from the registry entry |
+| CONFIGURATION | `MANIFEST_REGISTRY_ENTRY_PATH_MISMATCH` | Manifest `entryPath` differs from the registry entry |
+| CONFIGURATION | `MANIFEST_REGISTRY_CAPABILITIES_MISMATCH` | Manifest `platformCapabilities` differ from the registry entry |
+| CONFIGURATION | `READINESS_DEPLOYMENT_ID_MISMATCH` | Readiness `deploymentId` differs from the manifest's |
+| CONFIGURATION | `READINESS_SITE_ID_MISMATCH` | Readiness `siteId` differs from the manifest's |
 | CONFIGURATION | `READINESS_UNKNOWN_MODULE` / `READINESS_MISSING_MODULE` / `READINESS_AVAILABLE_CONTRADICTION` / `READINESS_ROUTE_MISMATCH` / `READINESS_QUALIFICATION_STATE_MISMATCH` | Readiness vs manifest incoherence |
 | CONTEXT | `SNAPSHOT_INVALID` | Input is not the frozen `snapshotVersion '1'` snapshot |
 | CONTEXT | `MODULE_UNKNOWN` | moduleId is not part of the snapshot |
@@ -102,6 +113,17 @@ as registered descriptors via `getModules`/`getModule` with
 excludes them and `getModuleRoute` fails explicitly for them. Readiness stays
 queryable for them because it is technical status, not navigation.
 
+## Cross-artifact authority invariant (#398-C)
+
+The manifest transports availability but never decides it. `load` fails closed, in a fixed
+deterministic order with no fallback and no auto-repair, when: the manifest's `deploymentId`,
+`siteId` or `persistenceMode` diverge from the profile; a manifest module's `enabled` or
+`qualificationState` diverge from the profile (so qualification elevation by the manifest is
+impossible, together with `MANIFEST_AVAILABLE_CONTRADICTION`); a manifest module is absent from
+the registry or its technical identity (label, entryPath, platformCapabilities) diverges from the
+registry; or the readiness `deploymentId`/`siteId` diverge from the manifest. First mismatch wins;
+the snapshot is only built when every artifact agrees.
+
 ## Non-goals
 
 - No patient/dataset transport of any kind (ADR-002): no identifiers, no
@@ -112,5 +134,5 @@ queryable for them because it is technical status, not navigation.
 - No navigation execution: the facade returns route strings; rendering and
   routing belong to the F3.2 Home shell.
 
-Contract verification: `node tools/platform_contract_check.mjs` (25 WU-A
-cases + 8 WU-B facade cases, all synthetic).
+Contract verification: `node tools/platform_contract_check.mjs` (33 original WU-A/WU-B
+cases + 13 cross-artifact authority hardening cases from #398-C, all synthetic).
