@@ -91,6 +91,23 @@ Timing recomendado:
 
 El timing es un gate, no una fecha prometida.
 
+## Reconciliación con Architecture Decision Freeze — 2026-09-24
+
+El backlog sigue preservando el origen y detalle de las ideas. Para ejecución futura, las decisiones adjudicadas en `docs/architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md` y ADR-001…008 prevalecen donde haya conflicto.
+
+| Entrada | Adjudicación 2026-09-24 |
+| --- | --- |
+| PROM-ARCH-001 Read Port | **APPROVED_DIRECTION / MODIFY** — Ports por módulo sí; DTO deben dejar de filtrar Excel y evolucionar async por strangler |
+| PROM-ARCH-002 Write/Event Port | **APPROVED_DIRECTION / MODIFY** — registrar acto sí; `commit(event)` público se rechaza; casos de uso específicos + acto completo + delivery/result común |
+| PROM-ARCH-003 Reuma Read Port | **APPROVED_DIRECTION** — wrapper sobre legacy después de oráculos aceptados |
+| PROM-ARCH-004 Reuma Write/Event | **APPROVED_DIRECTION / MODIFY** — encapsular 497 y extraer acto; defectos semánticos no se esconden en refactor neutral |
+| PROM-ARCH-005 Excel first-class | **DECIDED** — adapter soportado con capabilities y límites explícitos |
+| PROM-QUAL-001 contract tests | **DECIDED** — oráculos/paridad preceden a refactors correspondientes |
+| PROM-ARCH-006 persistence mode | **DECIDED / NARROWED** — selección por deployment/composición; sin panel hot-swap |
+| PROM-ARCH-007 domain/transport/storage | **DECIDED** — reforzado por contrato de acto completo |
+
+Las formulaciones antiguas se conservan por trazabilidad, incluyendo `commit(event)` como idea explorada; no deben citarse como decisión vigente si contradicen el freeze.
+
 ## Evidencia de entorno SES — 2026-09-17
 
 Estas pruebas son **evidencia técnica/operativa**, no decisiones de arquitectura aprobadas ni autorización para datos reales:

@@ -16,6 +16,23 @@
 
 > Este roadmap sustituye como orientación viva a la versión fechada el 2026-07-10. La evolución histórica permanece trazable en Git. No autoriza producción, piloto, datos reales, contratos clínicos definitivos ni integración institucional.
 
+## Reconciliación de dirección — Architecture Freeze 2026-09-24
+
+El roadmap de julio sigue siendo historia y contexto de evolución, pero la arquitectura futura ha sido refinada por [`architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md).
+
+Para planificación futura:
+
+- **PROMueve Nexus** es la plataforma modular; Farmacia/Reuma conservan dominio propio.
+- no se crean forks por hospital ni repo nuevo por limpieza;
+- una futura línea canónica de plataforma se activará mediante transición Git separada; recovery sigue siendo autoridad publicada hasta entonces;
+- Excel no se define ya como una etapa necesariamente provisional a retirar, sino como adapter soportado con capabilities explícitas;
+- servidor/API son otros adapters cuando exista infraestructura/autorización;
+- configuración inicial no-paciente será mínima y empaquetada (registry/profile/manifest), con autoridad por propiedad;
+- la Home hospitalaria es un hito temprano, independiente de la carga de datos clínicos;
+- V5 agnóstica completa sigue diferida.
+
+Las afirmaciones históricas de este roadmap sobre ramas, SHAs, snapshot o estado de implementación no sustituyen INDEX/WOS/GitHub live.
+
 ---
 
 ## 1. Fuentes actuales relacionadas

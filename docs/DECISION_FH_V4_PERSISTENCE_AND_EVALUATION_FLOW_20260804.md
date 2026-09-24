@@ -15,6 +15,21 @@
 
 > Esta decisión conserva la historia de PR #199/#201/#203 y PR #238/#242/#246. El issue #250 y la PR #251, junto con el issue #252 y la PR #253, prevalecen para el flujo normal y la sesión del paciente actual. No autoriza datos reales, piloto, producción o promoción de Cáceres.
 
+## Reconciliación arquitectónica 2026-09-24 — transporte, acto y persistencia
+
+Este documento sigue siendo autoridad histórica/operativa para el flujo Farmacia publicado descrito aquí. Para la evolución Foundation, `docs/architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`, ADR-005 y ADR-006 refinan la semántica futura:
+
+- las 152 columnas y el Bridge son **representaciones/adapters**, no el contrato conceptual del acto;
+- el acto persistible futuro contiene toda la información explícita necesaria, incluidas líneas cuando corresponden, antes de proyectarse a Excel/API;
+- Validación, Primera Visita y Seguimiento son casos de uso independientes; no forman una cadena obligatoria;
+- `commit(event)` no se adopta como API pública genérica;
+- `prepared_for_transfer` y `persisted` son estados distintos;
+- incorporar el acto completo al Bridge **y confirmar guardado duradero** puede acreditar persistencia en ese Bridge, pero no registro oficial SES;
+- reimport/roundtrip confirma la copia observada, no unicidad/latest ni ausencia de concurrencia;
+- Excel permanece adapter soportado, no etapa obligatoriamente desechable.
+
+Nada de lo anterior modifica por esta WO el runtime, el workbook, Office Script o flujo soportado actual.
+
 ## 0. Reconciliación post patient-flow
 
 1. **Estado publicado:** el issue #250 y la PR #251 integraron el Data Port, `RawExcelDataSource` y `CurrentPatientSession`; el issue #252 y la PR #253 publicaron el flujo normal sin modo Bridge visible. El recovery base es `3f7bf9bb8a2f007bc1f12888d0b6d6f27709333f`.

@@ -20,6 +20,19 @@
 | WO / instrucción vigente | Consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
+## Architecture Decision Freeze — 2026-09-24
+
+La dirección futura de plataforma queda adjudicada en:
+
+- [`architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md) — autoridad de arquitectura de ingeniería para el Foundation de PROMueve Nexus;
+- [`architecture/adr/`](architecture/adr/) — ADR-001…ADR-008;
+- [`ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`](ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md) — dependencias, WOs candidatas y lanes de ejecución;
+- [`architecture/reviews/`](architecture/reviews/) — baseline, revisión adversarial, alignment y revisión final de completitud preservados como evidencia, no como autoridad automática.
+
+**Este freeze no cambia por sí mismo la autoridad Git ni el estado asistencial.** `recovery/farmacia-pr-replay-20260727` continúa como rama publicada hasta una WO separada de transición; `main` y snapshots congelados no cambian. PROMueve sigue en evaluación sintética, no piloto/producción.
+
+Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista conflicto con documentos históricos: monolito modular; Home hospitalaria sin carga clínica; site fijo por deployment; qualification hospital×módulo; configuración mínima y gobernada por propiedad; Read Ports por módulo mediante strangler; acto completo independiente de Excel; Excel como adapter soportado con garantías explícitas; no paciente universal/V5 genérica ahora.
+
 > **Estado vivo:** el tip Git de `recovery/farmacia-pr-replay-20260727` es deliberadamente volátil y se verifica live en GitHub. El último HEAD de producto publicado es `771fb80c5081aa974b86d6a0119ab30059970a25` (PR #374). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370.
 
 > **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
@@ -112,11 +125,13 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 
 ## 5. Plan y arquitectura V4
 
-### Plan operativo
+### Plan operativo histórico
 
 [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
 
-Define:
+Este plan conserva objetivos, dependencias y aprendizaje de julio, pero **ya no gobierna la secuencia de Foundation**. Para el trabajo Nexus actual prevalece [`docs/ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`](/docs/ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md) bajo el Architecture Decision Freeze. Supabase, calendarios y WOs históricos del plan no se interpretan como compromisos vigentes salvo reconciliación explícita.
+
+Históricamente definía:
 
 - entrega rápida del 2026-08-03;
 - modelo canónico;
@@ -159,7 +174,7 @@ Decisiones principales:
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica + addendum 2026-07-31 | Evolución post-SES |
 | [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente | Separación Reuma/Farmacia |
 | [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Vigente | Discovery Badajoz/Mérida |
-| [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Vigente para DEC-001..019 | Decisiones históricas Reuma |
+| [`docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md`](/docs/DECISIONES_EVOLUCION_HUB_CLINICO_REUMA_20260604.md) | Vigencia parcial / histórica; subordinada al Architecture Decision Freeze | Principios clínicos conservables; integración por CIP y stack histórico no gobiernan Foundation |
 | [`docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md`](/docs/ops/PLAN_FORMACION_Y_DECISIONES_HUB_CLINICO_20260606.md) | Vigente | Aprendizaje y decisiones por fases |
 
 ---
@@ -235,14 +250,15 @@ Desde PR #370, el Hub soporta el workbook Enfermería v6 multihoja (`DERMATOLOG�
 
 - [`docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`](/docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md)
 
-Reglas vigentes:
+Principios conservados bajo el Architecture Decision Freeze (el documento original sigue siendo exploratorio y no constituye un contrato de configuración aprobado):
 
 - renovación por línea;
 - fechas confirmadas, verificadas y estimadas separadas;
-- JSON define reglas, no las ejecuta;
+- la configuración no introduce lógica clínica arbitraria: solo puede seleccionar políticas implementadas, versionadas, probadas y autorizadas;
 - tareas, alertas y notificaciones son conceptos distintos;
 - no marcar renovado por silencio;
-- Presalud solo alimentará el motor desde campos reales verificados.
+- Presalud solo alimentará el motor desde campos reales verificados;
+- la necesidad de lifecycle e interoperabilidad se conserva como evolución futura sin activar automáticamente el mecanismo histórico propuesto.
 
 ---
 

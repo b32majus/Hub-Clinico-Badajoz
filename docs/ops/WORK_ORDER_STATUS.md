@@ -24,6 +24,21 @@
 | Documento vivo | [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](./FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) |
 | WO documental vigente | Consultar GitHub live; no se fija una WO “actual” estática en este tablero |
 
+## Architecture Decision Freeze / Foundation — 2026-09-24
+
+| Elemento | Estado |
+| --- | --- |
+| Issue | #378 — `WO-DOC-PROMUEVE-ARCHITECTURE-DECISION-FREEZE-20260924` |
+| Base verificada al iniciar | `recovery/farmacia-pr-replay-20260727` @ `ea8b03a0e6895495dff1ec0b9abb2e368c259443` |
+| Alcance | Documentación/arquitectura únicamente; cero runtime |
+| Entregables | baseline + review Round 1 + alignment Round 2 + final completeness review + master freeze + ADR-001…008 + Foundation plan |
+| Autoridad Git | **sin cambio**; recovery sigue siendo rama publicada hasta WO de transición separada |
+| `main` / Cáceres 0.6 | intactos / fuera de alcance |
+| Delivery boundary de #378 | rama + commit + push + PR contra recovery; **MERGE NO autorizado** |
+| Estado asistencial | sin cambio: sintético/evaluación, no piloto/producción |
+
+El freeze define la dirección de ingeniería futura, no declara implementados los seams ni crea una nueva línea canónica. El cambio efectivo de autoridad Git se ejecutará, si se aprueba, mediante una WO posterior con SHA live, equivalencia inicial y activación explícita.
+
 ## Convención operativa de SHAs
 
 - **Tip Git de `recovery`**: se obtiene live de GitHub. Incluye commits de producto, documentación y administración; por tanto puede moverse sin que cambie el producto.

@@ -6,6 +6,18 @@
 **Estado de esta decisión:** Revisable únicamente tras discovery con equipos clínicos de Badajoz/Mérida
 **Rama de trabajo:** `work/hermes/WO-DOC-DECISION-DISCOVERY-REUMA-FH-POST-SES-01-20260710`
 
+## Reconciliación 2026-09-24 — principio vigente, topología histórica parcialmente superseded
+
+Esta decisión de 2026-07-10 se conserva como evidencia de contención correcta antes de conocer el circuito real. Tras el crecimiento del proyecto y la revisión arquitectónica 2026-09-24:
+
+- **permanece vigente** el principio funcional: Reuma y Farmacia son dominios distintos; una solicitud no se convierte en validación/acto de Farmacia y el Hub no sustituye al profesional responsable;
+- **permanece vigente** `main` como legacy fuera de alcance salvo decisión explícita;
+- queda **superseded para arquitectura futura** la idea de mantener Reuma y Farmacia como líneas canónicas de producto separadas de forma permanente;
+- la dirección aprobada es un **monolito modular en el mismo repo**, con workspaces/Ports propios y shell común;
+- esta reconciliación **no ejecuta** el cambio de autoridad Git: `recovery/farmacia-pr-replay-20260727` sigue siendo autoridad publicada hasta una WO específica de transición.
+
+Autoridad nueva: [`architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md), especialmente ADR-001 y ADR-002.
+
 ---
 
 ## 1. Resumen ejecutivo

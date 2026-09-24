@@ -16,6 +16,22 @@
 
 > Reconciliación 2026-08-04: Export v2 demo está visible en paralelo, limitado a contextos técnicos sintéticos registrados. No existe cutover completo, retirada v1, Excel Bridge operativo ni roundtrip. Las decisiones vigentes de persistencia y evaluación se concentran en [`../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](../DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md).
 
+## Reconciliación arquitectónica 2026-09-24
+
+Este documento conserva la arquitectura objetivo de julio y su contexto histórico. Para trabajo futuro, cuando exista conflicto, prevalecen [`PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](./PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md) y ADR-001…008.
+
+Cambios principales de dirección:
+
+- V4 evoluciona como **PROMueve Nexus monolito modular**; Reuma/Farmacia no son un único dominio.
+- La Home hospitalaria puede existir antes de los nuevos Ports y no carga datos clínicos.
+- site/hospital se fija por deployment y cada combinación hospital×módulo requiere qualification.
+- el Control Plane inicial se reduce a registry/profile/manifest empaquetados; no se construye todavía un motor general de formularios/reglas/widgets ni una jerarquía universal de overrides.
+- Export v2/filas canónicas permanecen como transporte/compatibilidad; el contrato persistible futuro es un **acto completo por dominio**, no `commit(event)` genérico.
+- Excel se conserva como adapter de primera clase con capabilities honestas; no se presupone su retirada obligatoria.
+- V5 universal, paciente transversal e identidad clínica común permanecen diferidos.
+
+Esta reconciliación no cambia el runtime publicado, no autoriza backend/datos reales/piloto y no ejecuta la futura transición de rama canónica.
+
 ---
 
 ## 1. Decisión resumida
