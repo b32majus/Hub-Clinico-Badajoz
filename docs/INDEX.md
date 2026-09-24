@@ -20,6 +20,19 @@
 | WO / instrucción vigente | Consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
+## Architecture Decision Freeze — 2026-09-24
+
+La dirección futura de plataforma queda adjudicada en:
+
+- [`architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md) — autoridad de arquitectura de ingeniería para el Foundation de PROMueve Nexus;
+- [`architecture/adr/`](architecture/adr/) — ADR-001…ADR-008;
+- [`ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`](ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md) — dependencias, WOs candidatas y lanes de ejecución;
+- [`architecture/reviews/`](architecture/reviews/) — baseline y dos rondas de revisión independiente preservadas como evidencia, no como autoridad automática.
+
+**Este freeze no cambia por sí mismo la autoridad Git ni el estado asistencial.** `recovery/farmacia-pr-replay-20260727` continúa como rama publicada hasta una WO separada de transición; `main` y snapshots congelados no cambian. PROMueve sigue en evaluación sintética, no piloto/producción.
+
+Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista conflicto con documentos históricos: monolito modular; Home hospitalaria sin carga clínica; site fijo por deployment; qualification hospital×módulo; configuración mínima y gobernada por propiedad; Read Ports por módulo mediante strangler; acto completo independiente de Excel; Excel como adapter soportado con garantías explícitas; no paciente universal/V5 genérica ahora.
+
 > **Estado vivo:** el tip Git de `recovery/farmacia-pr-replay-20260727` es deliberadamente volátil y se verifica live en GitHub. El último HEAD de producto publicado es `771fb80c5081aa974b86d6a0119ab30059970a25` (PR #374). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370.
 
 > **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
