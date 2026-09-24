@@ -38,3 +38,4 @@ nul
 
 # Pi / Gentle repo-local runtime state
 .atl/
+node_modules/

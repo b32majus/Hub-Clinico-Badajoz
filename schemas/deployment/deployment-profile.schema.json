@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promueve.example/schemas/deployment/deployment-profile.schema.json",
+  "title": "PROMueve Nexus deployment profile v0",
+  "description": "Fixed deployment configuration for one hospital site. No clinical logic, no security roles, no runtime-mutable values; unknown properties fail closed.",
+  "type": "object",
+  "properties": {
+    "profileVersion": { "const": "1" },
+    "deploymentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{3,39}$"
+    },
+    "siteId": {
+      "enum": ["CAC", "BAD", "MER"]
+    },
+    "display": {
+      "type": "object",
+      "properties": {
+        "productName": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "siteName": { "type": "string", "minLength": 1, "maxLength": 80 }
+      },
+      "required": ["productName", "siteName"],
+      "additionalProperties": false
+    },
+    "persistenceMode": {
+      "description": "Only persistence modes actually demonstrated by the platform are allowed here.",
+      "enum": ["none", "session-only"]
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/profileModule" }
+    }
+  },
+  "required": ["profileVersion", "deploymentId", "siteId", "display", "persistenceMode", "modules"],
+  "additionalProperties": false,
+  "$defs": {
+    "profileModule": {
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,39}$"
+        },
+        "enabled": { "type": "boolean" },
+        "qualificationState": {
+          "enum": [
+            "NOT_IMPLEMENTED",
+            "IMPLEMENTED_NOT_QUALIFIED",
+            "QUALIFIED_FOR_SITE",
+            "DISABLED_BY_DEPLOYMENT"
+          ]
+        },
+        "qualificationEvidence": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 120,
+          "description": "Reference to the hospital-by-module qualification evidence (issue/WO/audit). Required when qualificationState is QUALIFIED_FOR_SITE."
+        }
+      },
+      "required": ["moduleId", "enabled", "qualificationState"],
+      "additionalProperties": false
+    }
+  }
+}

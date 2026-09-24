@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promueve.example/schemas/deployment/module-registry.schema.json",
+  "title": "PROMueve Nexus module registry v0",
+  "description": "Static technical identity of platform modules. Clinical logic, therapeutic data and patient identifiers are forbidden here; unknown properties fail closed.",
+  "type": "object",
+  "properties": {
+    "registryVersion": { "const": "1" },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/moduleEntry" }
+    }
+  },
+  "required": ["registryVersion", "modules"],
+  "additionalProperties": false,
+  "$defs": {
+    "moduleEntry": {
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,39}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "entryPath": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._/-]*\\.html$",
+          "maxLength": 120
+        },
+        "platformCapabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "static-delivery",
+              "session-scoped-state",
+              "offline-capable"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": ["moduleId", "label", "entryPath", "platformCapabilities"],
+      "additionalProperties": false
+    }
+  }
+}

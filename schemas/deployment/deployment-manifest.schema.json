@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promueve.example/schemas/deployment/deployment-manifest.schema.json",
+  "title": "PROMueve Nexus deployment manifest v0",
+  "description": "Deterministic resolved composition of a module registry and a deployment profile. Generated only by the manifest builder after schema and cross-reference validation. No clinical data, no patient identifiers, no timestamps; unknown properties fail closed.",
+  "type": "object",
+  "properties": {
+    "manifestVersion": { "const": "1" },
+    "deploymentId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{3,39}$"
+    },
+    "siteId": {
+      "enum": ["CAC", "BAD", "MER"]
+    },
+    "display": {
+      "type": "object",
+      "properties": {
+        "productName": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "siteName": { "type": "string", "minLength": 1, "maxLength": 80 }
+      },
+      "required": ["productName", "siteName"],
+      "additionalProperties": false
+    },
+    "persistenceMode": {
+      "enum": ["none", "session-only"]
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/manifestModule" }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "registryVersion": { "const": "1" },
+        "profileVersion": { "const": "1" },
+        "registrySha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profileSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generator": {
+          "type": "string",
+          "const": "tools/deployment_manifest_build.mjs v1"
+        }
+      },
+      "required": ["registryVersion", "profileVersion", "registrySha256", "profileSha256", "generator"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["manifestVersion", "deploymentId", "siteId", "display", "persistenceMode", "modules", "provenance"],
+  "additionalProperties": false,
+  "$defs": {
+    "manifestModule": {
+      "type": "object",
+      "properties": {
+        "moduleId": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{1,39}$"
+        },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "entryPath": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._/-]*\\.html$",
+          "maxLength": 120
+        },
+        "enabled": { "type": "boolean" },
+        "qualificationState": {
+          "enum": [
+            "NOT_IMPLEMENTED",
+            "IMPLEMENTED_NOT_QUALIFIED",
+            "QUALIFIED_FOR_SITE",
+            "DISABLED_BY_DEPLOYMENT"
+          ]
+        },
+        "available": {
+          "type": "boolean",
+          "description": "Technical availability for shell navigation: enabled AND QUALIFIED_FOR_SITE with evidence. Never true for a merely registered module."
+        },
+        "platformCapabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "static-delivery",
+              "session-scoped-state",
+              "offline-capable"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": ["moduleId", "label", "entryPath", "enabled", "qualificationState", "available", "platformCapabilities"],
+      "additionalProperties": false
+    }
+  }
+}

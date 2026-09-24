@@ -1,0 +1,13 @@
+{
+  "profileVersion": "1",
+  "deploymentId": "bad-synthetic-demo-01",
+  "siteId": "BAD",
+  "display": {
+    "productName": "PROMueve Nexus",
+    "siteName": "Deployment sintético BAD (demo)"
+  },
+  "persistenceMode": "session-only",
+  "modules": [
+    { "moduleId": "derma", "enabled": true, "qualificationState": "IMPLEMENTED_NOT_QUALIFIED" }
+  ]
+}
