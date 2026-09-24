@@ -4,13 +4,13 @@
 **WO / Issue:** [`#380`](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/380) — `WO-NEXUS-F0.2-GIT-CANONICAL-TRANSITION` (`status:approved`)
 **Autoridad de arquitectura:** [`PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](../architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md) y [`ADR-001`](../architecture/adr/ADR-001-product-authority-and-canonical-line.md)
 **Plan:** [`PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`](PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md) — fase F0.2
-**Estado de este documento:** ejecución publicada en PR de F0.2; sin cambio de autoridad Git hasta merge autorizado.
+**Estado de este documento:** registro durable de F0.2. La autoridad efectiva se resuelve por el estado GitHub de PR #381: sin merge → recovery ACTIVE / Nexus CANDIDATE; desde merge autorizado → Nexus ACTIVE / recovery HISTORICAL para nuevo desarrollo.
 
 ---
 
 ## 1. Resumen
 
-F0.2 crea la futura línea canónica de PROMueve Nexus, `promueve/nexus-v4`, desde el SHA live cualificado de la autoridad publicada vigente (`recovery/farmacia-pr-replay-20260727`), demuestra equivalencia inicial exacta y define la semántica de activación. **La creación de la rama no cambia la autoridad**: recovery permanece ACTIVE hasta que la PR de F0.2 se fusione mediante autorización explícita.
+F0.2 crea la futura línea canónica de PROMueve Nexus, `promueve/nexus-v4`, desde el SHA live cualificado de la autoridad publicada vigente (`recovery/farmacia-pr-replay-20260727`), demuestra equivalencia inicial exacta y define la semántica de activación. **La creación de la rama no cambia la autoridad**: mientras PR #381 permanezca sin merge, recovery = ACTIVE y Nexus = CANDIDATE; desde el merge autorizado de #381, Nexus = ACTIVE y recovery = HISTORICAL para nuevo desarrollo.
 
 ## 2. Identidad de la transición
 
@@ -42,7 +42,7 @@ Esta equivalencia se conserva porque la PR de F0.2 parte de esa misma base: el d
 
 ## 4. Semántica de autoridad
 
-### 4.1 Antes del merge autorizado de F0.2 (estado actual)
+### 4.1 Mientras PR #381 permanezca sin merge
 
 | Ref | Estado |
 | --- | --- |
@@ -51,7 +51,7 @@ Esta equivalencia se conserva porque la PR de F0.2 parte de esa misma base: el d
 | `main` | legacy/intacto, fuera de la línea |
 | Snapshots (`CÁCERES-REVIEW-0.6`) y paquete externo | autoridad de artefacto propia, congelados, sin cambio |
 
-### 4.2 Después de un merge autorizado de F0.2
+### 4.2 Desde el merge autorizado de PR #381
 
 | Ref | Estado |
 | --- | --- |
@@ -86,13 +86,14 @@ Tras el merge autorizado, `recovery/farmacia-pr-replay-20260727`:
 | Documento | Cambio |
 | --- | --- |
 | `docs/ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md` | nuevo; este documento |
-| `docs/INDEX.md` | registra la línea candidate y su semántica CANDIDATE/ACTIVE |
-| `docs/ops/WORK_ORDER_STATUS.md` | registra la transición F0.2 y la entrega de #380 |
+| `docs/INDEX.md` | registra la regla de autoridad condicionada a PR #381, válida antes y después de activación |
+| `docs/ops/WORK_ORDER_STATUS.md` | registra la transición F0.2 y la autoridad efectiva condicionada a PR #381 |
 | `docs/architecture/adr/ADR-001-product-authority-and-canonical-line.md` | anota la ejecución del procedimiento (rama creada, pendiente de activación) |
-| `docs/ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md` | marca F0.2 como ejecutada, activación pendiente de merge |
-| `README.md` | menciona la línea candidate sin cambiar la autoridad vigente declarada |
+| `docs/ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md` | registra F0.2 y su cambio de estado automático por el merge autorizado de PR #381 |
+| `README.md` | front door transition-aware: recovery/Nexus se resuelven por el estado de PR #381 |
+| `docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md` | conserva el estado funcional Farmacia/recovery y snapshot Cáceres, pero deja de actuar como autoridad de línea canónica Nexus tras activación |
 
-**Deuda documental post-activación (fuera de esta WO):** tras el merge autorizado, los documentos vivos que describen recovery como autoridad actual (`README.md`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`, estado vivo `FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`) deberán reconciliarse para reflejar `promueve/nexus-v4` = ACTIVE y recovery = HISTORICAL. Esta reconciliación no puede anticiparse aquí sin declarar una autoridad que aún no existe.
+**Reconciliación transition-aware:** `README.md`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`, `ADR-001`, el Foundation Train Plan y `FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md` expresan la autoridad de forma condicionada al estado de PR #381. Por tanto, el merge autorizado activa Nexus sin crear por sí mismo deuda documental inmediata en estas superficies; cualquier otra fuente viva que contradiga GitHub/INDEX/WOS deberá reconciliarse cuando se descubra.
 
 ## 8. Verificación y gates
 
@@ -101,7 +102,7 @@ Tras el merge autorizado, `recovery/farmacia-pr-replay-20260727`:
 - Enlaces relativos de los documentos nuevos/editados verificados manualmente.
 - Equivalencia inicial determinista: sección 3.
 - Browser QA: no requerido; F0.2 no cambia UI/runtime.
-- Native Gentle review (RDD): ejecutado sobre el exact candidate de esta PR; resultado registrado en la PR.
+- Native Gentle review (RDD): **intentado** sobre el exact candidate y terminalmente transport-blocked por `lens_context_budget_exceeded` en la ruta `main..HEAD`; no se creó lineage ni verdict/PASS. La variante acotada fue rechazada por `candidate-target-projection-drift`. El bloqueo y la revisión governance/spec externa quedan registrados en PR #381; no se deshabilitó el review switch.
 
 ## 9. Fronteras
 

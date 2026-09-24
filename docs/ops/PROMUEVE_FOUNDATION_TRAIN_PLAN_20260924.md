@@ -114,7 +114,7 @@ Los identificadores siguientes son nombres de planificación, no issues creados.
 
 #### F0.2 Git Canonical Transition
 
-- **Estado:** ejecutada por #380 (2026-09-24): `promueve/nexus-v4` creada y publicada como CANDIDATE desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada; ACTIVE solo tras merge autorizado de la PR F0.2. Detalle: [`PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](./PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
+- **Estado:** ejecutada por #380/#381 (2026-09-24): `promueve/nexus-v4` creada desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada. Estado efectivo: PR #381 sin merge → Nexus CANDIDATE / recovery ACTIVE; desde merge autorizado → Nexus ACTIVE / recovery HISTORICAL para nuevo desarrollo. Detalle: [`PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](./PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
 - **Timing:** después de merge/aprobación del freeze, antes de que Foundation acumule trabajo en dos bases.
 - **Objetivo:** crear/activar futura línea canónica desde SHA live cualificado.
 - **Cambio clínico:** no.

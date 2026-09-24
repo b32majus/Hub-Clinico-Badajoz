@@ -1,9 +1,11 @@
-# Estado vivo — Farmacia recovery y Cáceres 0.6 — actualizado 2026-09-24
+# Estado vivo de producto — Farmacia recovery y Cáceres 0.6 — actualizado 2026-09-24
+
+**Ámbito de autoridad:** este documento mantiene el estado funcional publicado de Farmacia/recovery y la trazabilidad del snapshot `CÁCERES-REVIEW-0.6`; no decide por sí solo la autoridad canónica de nuevo desarrollo Nexus. Durante F0.2, esa autoridad se resuelve por PR #381: sin merge → recovery ACTIVE / Nexus CANDIDATE; desde merge autorizado → Nexus ACTIVE / recovery HISTORICAL para nuevo desarrollo. El snapshot conserva su autoridad de artefacto propia.
 
 | Metadato | Valor |
 | --- | --- |
 | Repositorio | `b32majus/Hub-Clinico-Badajoz` |
-| Rama publicada | `recovery/farmacia-pr-replay-20260727` |
+| Línea Farmacia documentada | `recovery/farmacia-pr-replay-20260727`; conserva la historia funcional publicada y pasa de ACTIVE a HISTORICAL para nuevo desarrollo únicamente cuando PR #381 se mergee de forma autorizada |
 | Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras PR #374: `771fb80c5081aa974b86d6a0119ab30059970a25` |
 | Último HEAD de producto publicado | `771fb80c5081aa974b86d6a0119ab30059970a25` — merge PR #374 |
 | HEAD clínico funcional | `e1120ba85817a1807cea8c1e938867ad778921f4` — merge PR #341; congelado por 0.6 |
@@ -93,4 +95,4 @@ El evaluation package/workbooks/manifest/ZIP permanece en su freeze sintético a
 
 `FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260907.md` pasa a ser histórico: describe correctamente el estado previo a la promoción 0.6, cuando Cáceres 0.5 seguía congelado. También se conservan los estados de 20260731 y freezes anteriores como trazabilidad.
 
-Cuando exista contradicción sobre el estado vivo, prevalecen la WO/instrucción vigente, GitHub publicado, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` y esta edición actualizada del documento.
+Cuando exista contradicción sobre autoridad canónica de desarrollo, prevalecen la WO/instrucción vigente, GitHub live, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`. Este documento sigue siendo autoridad de estado funcional Farmacia/recovery y del snapshot Cáceres dentro de ese ámbito, no de la línea canónica Nexus tras la activación de #381.

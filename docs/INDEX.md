@@ -4,8 +4,8 @@
 | --- | --- |
 | Última actualización | 2026-09-24 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
-| Rama publicada Farmacia | `origin/recovery/farmacia-pr-replay-20260727` |
-| Rama canónica candidate Nexus | `origin/promueve/nexus-v4` — **CANDIDATE**, nacida del SHA fuente `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta; recovery sigue ACTIVE hasta merge autorizado de F0.2 (#380). Detalle: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
+| Línea Farmacia de procedencia | `origin/recovery/farmacia-pr-replay-20260727`; conserva la historia funcional publicada previa a F0.2, pero su condición ACTIVE/HISTORICAL para nuevo desarrollo depende de PR #381 |
+| Autoridad canónica de desarrollo (F0.2) | Resolver por estado GitHub de PR #381: sin merge → recovery **ACTIVE** / `origin/promueve/nexus-v4` **CANDIDATE**; desde merge autorizado → Nexus **ACTIVE** / recovery **HISTORICAL**. Nexus nació de `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta. Detalle: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
 | Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras PR #374: `771fb80c5081aa974b86d6a0119ab30059970a25`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
 | Último HEAD de producto publicado | `771fb80c5081aa974b86d6a0119ab30059970a25` (merge PR #374 — robustez de resolución de hojas Enfermería v6 / FH-DEBT-002/003) |
 | HEAD clínico funcional congelado | `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341; `source_sha`/`last_functional_sha` del snapshot 0.6) |
@@ -32,7 +32,7 @@ La dirección futura de plataforma queda adjudicada en:
 
 **Este freeze no cambia por sí mismo la autoridad Git ni el estado asistencial.** `recovery/farmacia-pr-replay-20260727` continúa como rama publicada hasta que la WO separada de transición se fusione; `main` y snapshots congelados no cambian. PROMueve sigue en evaluación sintética, no piloto/producción.
 
-**Transición Git F0.2 (#380) ejecutada:** `promueve/nexus-v4` existe como rama **CANDIDATE** creada desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada (mismo commit, mismo tree, diff vacío, cero cherry-pick/rewrite). Hasta el merge autorizado de la PR F0.2, recovery permanece **ACTIVE**; después, `promueve/nexus-v4` pasará a **ACTIVE** y recovery quedará **HISTORICAL** para nuevo desarrollo. Detalle en [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
+**Transición Git F0.2 (#380):** `promueve/nexus-v4` fue creada desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada (mismo commit, mismo tree, diff vacío, cero cherry-pick/rewrite). El estado efectivo es deliberadamente condicional a PR #381: mientras esté sin merge, recovery = **ACTIVE** y Nexus = **CANDIDATE**; desde su merge autorizado, Nexus = **ACTIVE** y recovery = **HISTORICAL** para nuevo desarrollo. Detalle en [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
 
 Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista conflicto con documentos históricos: monolito modular; Home hospitalaria sin carga clínica; site fijo por deployment; qualification hospital×módulo; configuración mínima y gobernada por propiedad; Read Ports por módulo mediante strangler; acto completo independiente de Excel; Excel como adapter soportado con garantías explícitas; no paciente universal/V5 genérica ahora.
 
@@ -59,7 +59,7 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 ## 2. Orden de verdad
 
 1. WO/instrucción vigente: consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales.
-2. GitHub live para el tip de `recovery`; último HEAD de producto publicado: `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
+2. GitHub live: el estado de PR #381 determina la autoridad canónica de desarrollo durante F0.2. Para trazabilidad Farmacia, consultar además el tip live de `recovery`; último HEAD de producto publicado: `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
 3. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` una vez reconciliados.
 4. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
 5. Spec Unified Clinical Intake V0 y documentos vivos relacionados.
@@ -74,7 +74,8 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
 | --- | --- | --- | --- |
 | `origin/main` | Legacy / congelada; verificado `a25cccb8...` | Historia previa | Estado Farmacia actual |
-| `origin/recovery/farmacia-pr-replay-20260727` | **Rama regional publicada Farmacia**; tip Git volátil (consultar live); último HEAD de producto `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico congelado por Cáceres 0.6 `e1120ba85817a1807cea8c1e938867ad778921f4` | Código Farmacia / superficie regional genérica | Piloto o producción |
+| `origin/promueve/nexus-v4` | Rama creada por F0.2 desde `a8cec035...`; **CANDIDATE** mientras PR #381 esté sin merge y **ACTIVE** desde su merge autorizado | Nuevo desarrollo Nexus/Foundation cuando ACTIVE | Piloto/producción o cambio automático del snapshot Cáceres |
+| `origin/recovery/farmacia-pr-replay-20260727` | Línea Farmacia de procedencia; **ACTIVE** para nuevo desarrollo mientras PR #381 esté sin merge y **HISTORICAL** desde su merge autorizado; conserva trazabilidad del último producto Farmacia publicado y del snapshot | Historia/código Farmacia y recuperación | Autoridad canónica Nexus tras activación, piloto o producción |
 | `previews/caceres-fh/` | **Snapshot estable `CÁCERES-REVIEW-0.6`**; manifest source/last-functional `e1120ba85817a1807cea8c1e938867ad778921f4` | Evaluación Pharmacy-only Cáceres con datos sintéticos | Piloto, producción o espejo automático de futuros merges |
 | `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
 | `origin/backup/*` y tags demo | Retorno/historia | Recuperación de estados | Desarrollo activo |
