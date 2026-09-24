@@ -25,8 +25,10 @@
  *     A4 synthetic-only: the patientId of every row starts with 'SYN-' and no
  *        documented real-format identifier (Spanish DNI/NIE shapes) appears.
  *
- *   PART B - KNOWN_LEGACY / NON_GOLDEN characterization, printed and recorded
- *   but never asserted as acceptance:
+ *   PART B - KNOWN_LEGACY / NON_GOLDEN characterization, recorded in a
+ *   separate report-only `characterizationResults` collection ([CHAR] when
+ *   the documented legacy behavior is observed, [DRIFT] when it changed)
+ *   and never asserted as acceptance:
  *
  *     (1) production length enforcement is only an in-band console.warn inside
  *         `validateExportRowLength` (it never blocks, never fails, returns
@@ -62,11 +64,23 @@
  *   N4 contamination  - a foreign journey marker injected violates A2
  *   N5 non-synthetic  - a real-format patientId violates A4
  *
+ * Planted gating self-tests (acceptance cases; they gate by design):
+ *   G1 a fabricated acceptance failure (N1-style 496-field row through the
+ *      pure evaluation path) drives the gate to a non-zero exit
+ *   G2 a simulated KNOWN_LEGACY variation (non-empty legacyWarnings in an
+ *      in-memory copy of the harness result; production untouched) is
+ *      recorded as a [DRIFT] characterization observation while the gate
+ *      stays at exit 0
+ *
  * The oracle never modifies production files; it fails closed on doubt.
  *
- * Exit codes: 0 = frozen corpus PASS and every planted negative FAILed as
- *             expected and characterization evidence was observed;
- *             1 = otherwise.
+ * Gating contract: ONLY `acceptanceResults` (PART A) failures can make the
+ * exit code non-zero; `characterizationResults` (PART B), including drifts,
+ * are report-only and never consulted for the exit code.
+ *
+ * Exit codes: 0 = every acceptance case (PART A) PASSed, including the
+ *             planted negatives and the planted gating self-tests;
+ *             1 = otherwise (characterization drifts never contribute).
  * Usage: node tools/reuma_export_acceptance_check.mjs
  */
 
@@ -307,11 +321,17 @@ function makeViolationsFor(authority) {
 // Checker plumbing (same conventions as tools/reuma_export_harness_check.mjs).
 // ---------------------------------------------------------------------------
 
-function makeRecord(sink) {
+function makeRecord(sink, markers = { ok: 'OK ', drift: 'FAIL' }) {
   return (name, pass, detail) => {
     sink.push({ name, pass });
-    console.log(`  [${pass ? 'OK ' : 'FAIL'}] ${name}${pass ? '' : ` -> ${detail}`}`);
+    console.log(`  [${pass ? markers.ok : markers.drift}] ${name}${pass ? '' : ` -> ${detail}`}`);
   };
+}
+
+// Gating contract: the exit code is computed ONLY from acceptance failures.
+// Characterization results (including drifts) never contribute.
+function gateExitCode(acceptanceResults) {
+  return acceptanceResults.some((r) => !r.pass) ? 1 : 0;
 }
 
 function violationsOf(violations, classification) {
@@ -328,8 +348,10 @@ async function main() {
   const authority = deriveExportAuthority();
   const violationsFor = makeViolationsFor(authority);
 
-  const results = [];
-  const record = makeRecord(results);
+  const acceptanceResults = [];
+  const characterizationResults = [];
+  const record = makeRecord(acceptanceResults);
+  const recordChar = makeRecord(characterizationResults, { ok: 'CHAR', drift: 'DRIFT' });
   record(
     'production authority derivable and consistent (LEGACY_BASE=220, HISTORICAL=321, FINAL=497, five exposed header blocks)',
     authority.finalCount === 497 && authority.legacyBase === 220 && authority.historical === 321,
@@ -426,12 +448,28 @@ async function main() {
     `A3 Hemograma_Fecha_Solicitud violations: ${sentinelA3Hits.length}; unrelated journeys changed: ${!otherRowsUnchanged}`
   );
 
+  // --- Planted gating self-test G1: acceptance failure drives the gate ---
+  // Fabricate an acceptance result set containing one failure, built from the
+  // same N1-style 496-field row through the pure evaluation path, and assert
+  // the gate reports failure / would exit non-zero.
+  const fabricatedAcceptanceFailure = {
+    name: 'planted fabricated A1 acceptance violation (496-field row via violationsFor)',
+    pass: violationsOf(n1Violations, 'A1').length === 0,
+    detail: `${violationsOf(n1Violations, 'A1').length} A1 violation(s) from the fabricated row`,
+  };
+  const plantedGateFailure = gateExitCode([...acceptanceResults, fabricatedAcceptanceFailure]);
+  record(
+    'planted gating self-test: a fabricated acceptance violation drives the gate to failure (exit would be 1)',
+    plantedGateFailure === 1,
+    `gate exit for fabricated acceptance failure: ${plantedGateFailure}`
+  );
+
   // --- PART B: KNOWN_LEGACY / NON_GOLDEN characterization (never acceptance) ---
   console.log('');
   console.log('KNOWN_LEGACY / NON_GOLDEN characterization (explicit, not asserted as acceptance):');
 
   const frozenWarningCount = frozen.journeys.reduce((acc, j) => acc + j.legacyWarnings.length, 0);
-  record(
+  recordChar(
     'characterization: frozen corpus rows are silent in production (no legacy warning; the oracle never uses warnings as PASS source)',
     frozenWarningCount === 0,
     `${frozenWarningCount} legacy warning(s) observed`
@@ -444,7 +482,7 @@ async function main() {
   const driftedRow = Array(authority.finalCount - 1).fill('X');
   const validateReturn = probe.sandbox.HubTools.export.validateExportRowLength(driftedRow, 'ar', 'primera');
   const warnLogs = probe.sink.logs.slice(logsBefore).filter((l) => l.level === 'warn');
-  record(
+  recordChar(
     'characterization: production length enforcement is in-band warn-only (validateExportRowLength returns undefined, emits console.warn, never blocks)',
     validateReturn === undefined && warnLogs.length === 1,
     `return=${JSON.stringify(validateReturn)}, warn logs=${warnLogs.length}`
@@ -458,10 +496,34 @@ async function main() {
   const noDolorRun = await runReumaExportHarness({ corpusFile: CORPUS, journeys: noDolor });
   const dolorCollapses =
     noDolorRun.journeys.find((j) => journeyKey(j) === 'ar|primera').row === arPrimera.row;
-  record(
+  recordChar(
     'characterization: dolorNocturno false and missing are indistinguishable in the transport (row byte-identical without the key) - KNOWN_LEGACY, not golden',
     dolorCollapses,
     'rows differ; the fallback does not collapse as expected from the source'
+  );
+
+  // --- Planted gating self-test G2: KNOWN_LEGACY variation does NOT gate ---
+  // Simulate a corrected/changed legacy defect WITHOUT touching production:
+  // an in-memory copy of the frozen harness result where legacyWarnings is
+  // non-empty, i.e. as if production started warning. It must be recorded in
+  // characterizationResults as a report-only drift while the gate remains
+  // success (exit would be 0).
+  const simulatedLegacyDrift = frozen.journeys.map((j) => ({
+    ...j,
+    legacyWarnings: ['planted: simulated production warning (KNOWN_LEGACY variation)'],
+  }));
+  const simulatedWarningCount = simulatedLegacyDrift.reduce((acc, j) => acc + j.legacyWarnings.length, 0);
+  recordChar(
+    'planted KNOWN_LEGACY variation (SIMULATED, no production change): non-empty legacyWarnings recorded as report-only drift',
+    simulatedWarningCount === 0,
+    `${simulatedWarningCount} simulated warning(s) observed - characterization drift, report-only`
+  );
+  const plantedGateSuccess = gateExitCode(acceptanceResults);
+  const driftRecorded = characterizationResults.some((r) => !r.pass);
+  record(
+    'planted gating self-test: the simulated KNOWN_LEGACY drift does NOT fail the gate (exit would be 0)',
+    plantedGateSuccess === 0 && driftRecorded,
+    `gate exit: ${plantedGateSuccess}; drift recorded in characterizationResults: ${driftRecorded}`
   );
 
   console.log('');
@@ -475,10 +537,15 @@ async function main() {
   console.log('  `datos.X || \'\'` reads in EspA/APs generators that would collapse 0/false (no corpus sentinel affected);');
   console.log('  dolorNocturno/mdaCumple false-vs-missing collapse.');
 
-  const failed = results.filter((r) => !r.pass).length;
+  const failedAcceptance = acceptanceResults.filter((r) => !r.pass).length;
+  const failedCharacterization = characterizationResults.filter((r) => !r.pass).length;
   console.log('');
-  console.log(`RESULTADO: ${results.length - failed} OK / ${failed} FALLIDO`);
-  if (failed > 0) {
+  console.log('GATING: only PART A acceptance failures produce exit 1; PART B characterization is report-only (KNOWN_LEGACY never gates).');
+  console.log(
+    `RESULTADO: acceptance ${acceptanceResults.length - failedAcceptance} OK / ${failedAcceptance} FALLIDO; ` +
+    `characterization ${characterizationResults.length - failedCharacterization} CHAR / ${failedCharacterization} DRIFT (report-only)`
+  );
+  if (failedAcceptance > 0) {
     console.error('Reuma export acceptance check FAILED');
     process.exit(1);
   }

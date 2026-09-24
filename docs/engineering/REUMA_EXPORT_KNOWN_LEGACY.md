@@ -93,6 +93,25 @@ N5 non-synthetic id (DNI-shaped id → A4).
    like absent when a non-empty fallback exists; `''` is only preserved where
    the fallback is `''` (e.g. the observation columns asserted in A3).
 
+## Gating semantics
+
+The oracle records two explicitly named collections with distinct gating
+semantics:
+
+- **ACCEPTANCE (PART A, `acceptanceResults`)**: the golden assertions A1-A4,
+  the planted negatives and the planted gating self-tests. Only failures in
+  this collection produce exit code 1.
+- **CHARACTERIZATION (PART B, `characterizationResults`)**: KNOWN_LEGACY /
+  NON_GOLDEN observations, printed with `[CHAR]` when the documented legacy
+  behavior is observed or `[DRIFT]` when it changed. Report-only: drifts are
+  visible in the output and summary but are NEVER consulted for the exit
+  code.
+
+Correcting a legacy defect therefore changes characterization observations
+(it may surface a `[DRIFT]`), never the acceptance gate by itself. Future
+strangler corrections must be adjudicated by new golden acceptance authority,
+not by flipping characterization into a gate.
+
 ## Boundary
 
 None of the KNOWN_LEGACY items above is an acceptance criterion. The golden
