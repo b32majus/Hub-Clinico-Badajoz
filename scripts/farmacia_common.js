@@ -872,22 +872,53 @@
     }
 
     /**
+     * Resuelve en una única pasada las hojas físicas del workbook a los
+     * servicios clínicos canónicos v6 (DERMATOLOGÍA, REUMATOLOGÍA, DIGESTIVO).
+     * Política cerrada de aliases: una hoja física es clínica v6 si y solo si
+     * su token (ver enfermeriaV6Token: mayúsculas/minúsculas, acentos,
+     * espacios y puntuación) coincide con el token del nombre canónico del
+     * servicio; no se aceptan coincidencias por substring, prefijo, sufijo ni
+     * aproximadas. Si dos hojas físicas colapsan en el mismo servicio se
+     * rechaza el workbook (status 'ambiguous'); si falta algún servicio se
+     * devuelve status 'incomplete'; en otro caso devuelve el mapa servicio
+     * canónico -> nombre físico de hoja.
+     */
+    function resolveEnfermeriaV6ClinicalSheets(workbook) {
+        if (!workbook || !Array.isArray(workbook.SheetNames)) {
+            return { ok: false, status: 'incomplete', reason: 'Workbook vacío o sin hojas.' };
+        }
+        var resolved = {};
+        for (var i = 0; i < workbook.SheetNames.length; i++) {
+            var physicalName = workbook.SheetNames[i];
+            var definition = getEnfermeriaV6SheetDefinition(physicalName);
+            if (!definition) continue;
+            var canonical = definition.name;
+            if (resolved[canonical]) {
+                return {
+                    ok: false,
+                    status: 'ambiguous',
+                    reason: 'Dos hojas físicas resuelven al mismo servicio ' + canonical + ': "' + resolved[canonical] + '" y "' + physicalName + '".'
+                };
+            }
+            resolved[canonical] = physicalName;
+        }
+        for (var j = 0; j < ENFERMERIA_V6_CLINICAL_SHEETS.length; j++) {
+            var serviceName = ENFERMERIA_V6_CLINICAL_SHEETS[j].name;
+            if (!resolved[serviceName]) {
+                return { ok: false, status: 'incomplete', reason: 'Falta la hoja clínica ' + serviceName + '.' };
+            }
+        }
+        return { ok: true, sheets: resolved };
+    }
+
+    /**
      * Reconoce un workbook Enfermería v6: debe contener las tres hojas
-     * clínicas DERMATOLOGÍA, REUMATOLOGÍA y DIGESTIVO.
+     * clínicas DERMATOLOGÍA, REUMATOLOGÍA y DIGESTIVO. Usa la misma única
+     * resolución que parseWorkbook (resolveEnfermeriaV6ClinicalSheets), sin
+     * una segunda pasada de matching.
      */
     function isEnfermeriaV6Workbook(workbook) {
-        if (!workbook || !workbook.SheetNames) return false;
-        for (var i = 0; i < ENFERMERIA_V6_CLINICAL_SHEETS.length; i++) {
-            var found = false;
-            for (var j = 0; j < workbook.SheetNames.length; j++) {
-                if (getEnfermeriaV6SheetDefinition(workbook.SheetNames[j]) === ENFERMERIA_V6_CLINICAL_SHEETS[i]) {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) return false;
-        }
-        return true;
+        return resolveEnfermeriaV6ClinicalSheets(workbook).ok;
     }
 
     function getEnfermeriaV6ClinicalSheetNames() {
@@ -2429,14 +2460,27 @@
         }
 
         function parseWorkbook(kind, workbook, fileName) {
-            if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaV6Workbook === 'function'
-                && window.FarmaciaDemo.isEnfermeriaV6Workbook(workbook)) {
-                // Enfermería v6 multisheet: validar todo antes de tocar el estado previo.
-                // Un workbook inválido se rechaza con error y conserva el Excel activo anterior.
+            if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.resolveEnfermeriaV6ClinicalSheets === 'function') {
+                // Enfermería v6 multisheet: resolver las hojas físicas UNA sola
+                // vez (misma resolución que la detección) y validar todo antes
+                // de tocar el estado previo. Un workbook inválido se rechaza con
+                // error y conserva el Excel activo anterior.
+                var v6Resolution = window.FarmaciaDemo.resolveEnfermeriaV6ClinicalSheets(workbook);
+                if (v6Resolution && v6Resolution.status === 'ambiguous') {
+                    // Duplicado de hoja clínica: rechazo fail-closed, nunca se
+                    // ignora una hoja ambigua ni se cae a las ramas legacy.
+                    throw new Error('Excel Enfermería v6 rechazado: ' + (v6Resolution.reason || 'hojas clínicas ambiguas.'));
+                }
+                if (!v6Resolution || !v6Resolution.ok) {
+                    // Conjunto incompleto de servicios: no es v6, se conserva
+                    // la caída a las ramas INICIO_BIOLOGICO / legacy.
+                } else {
                 var v6SheetNames = window.FarmaciaDemo.getEnfermeriaV6ClinicalSheetNames();
                 var v6SheetsRaw = [];
                 for (var v6i = 0; v6i < v6SheetNames.length; v6i++) {
-                    var v6Sheet = workbook.Sheets[v6SheetNames[v6i]];
+                    var v6PhysicalName = v6Resolution.sheets[v6SheetNames[v6i]];
+                    if (!v6PhysicalName) continue;
+                    var v6Sheet = workbook.Sheets[v6PhysicalName];
                     if (!v6Sheet) continue;
                     v6SheetsRaw.push({ name: v6SheetNames[v6i], rows: XLSX.utils.sheet_to_json(v6Sheet, { header: 1, defval: '' }) });
                 }
@@ -2470,6 +2514,7 @@
                 updateAllImportUi();
                 emitImportEvent(kind, { state: v6State });
                 return v6State;
+                }
             }
             if (kind === 'enfermeria' && window.FarmaciaDemo && typeof window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook === 'function'
                 && window.FarmaciaDemo.isEnfermeriaInicioBiologicoWorkbook(workbook)) {
@@ -2854,6 +2899,7 @@
 
         /* Enfermería v6 multisheet WO-FH-ENFERMERIA-V6-N1 */
         isEnfermeriaV6Workbook: isEnfermeriaV6Workbook,
+        resolveEnfermeriaV6ClinicalSheets: resolveEnfermeriaV6ClinicalSheets,
         getEnfermeriaV6ClinicalSheetNames: getEnfermeriaV6ClinicalSheetNames,
         findEnfermeriaV6HeaderRow: findEnfermeriaV6HeaderRow,
         buildEnfermeriaV6HeaderMap: buildEnfermeriaV6HeaderMap,
