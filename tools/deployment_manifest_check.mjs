@@ -96,14 +96,19 @@ function main() {
   const golden = path.join(FIXTURE_DIR, 'valid', 'deployment-manifest.golden.json');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-manifest-'));
 
-  // 1. Golden reproduction.
+  // 1. Golden reproduction + determinism.
+  // The golden fixture is compared with normalized EOLs: Git checkouts apply
+  // eol=crlf to .json files, while the builder always emits LF. Content drift
+  // still fails; only the checkout line-ending artifact is tolerated. The
+  // two-run determinism comparison below remains strictly byte-exact.
   const out1 = path.join(tmp, 'm1.json');
   const ok1 = buildManifest(registry, profile, out1);
+  const normalizeEol = (buf) => Buffer.from(buf.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
   const goldenBytes = fs.readFileSync(golden);
   const built1 = ok1 ? fs.readFileSync(out1) : Buffer.alloc(0);
   record(
     'built manifest reproduces the golden fixture byte-for-byte',
-    ok1 && goldenBytes.equals(built1),
+    ok1 && normalizeEol(goldenBytes).equals(normalizeEol(built1)),
     ok1 ? 'built output differs from golden fixture' : 'builder exited non-zero on valid fixtures'
   );
 
