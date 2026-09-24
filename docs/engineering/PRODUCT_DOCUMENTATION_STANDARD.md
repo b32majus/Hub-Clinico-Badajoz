@@ -87,7 +87,8 @@ Estado asistencial vigente del proyecto: **evaluación con datos sintéticos; no
 
 ## 12. Deuda y riesgos
 
-- La deuda aceptada se registra en el registro vivo de deuda (`docs/ops/FARMACIA_DEBT_REGISTER.md` o su sucesor) con condición de retirada.
+- La deuda transversal de plataforma/Foundation se registra en `docs/ops/NEXUS_DEBT_REGISTER.md`, con condición de retirada y referencia a su evidencia de origen.
+- La deuda específica de módulo se mantiene en su registro propio cuando exista (actualmente `docs/ops/FARMACIA_DEBT_REGISTER.md` para Farmacia); no se mezcla con la deuda transversal para simplificar artificialmente el backlog.
 - Los riesgos abiertos (persistencia, identidad, seguridad) se documentan con su estado (`CONTRACT_PENDING`, `SES_DECISION`, `DEFERRED`).
 
 ## 13. Ownership y extensiones

@@ -50,11 +50,12 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 
 1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) — estado vivo de recovery y relación con el snapshot Cáceres 0.6, actualizado 2026-09-24.
 2. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, candidates, PRs y merges.
-3. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada/no bloqueante pendiente de WO; no sustituye backlog ni decisiones futuras.
-4. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
-5. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
-6. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
-7. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
+3. [`docs/ops/NEXUS_DEBT_REGISTER.md`](/docs/ops/NEXUS_DEBT_REGISTER.md) — registro vivo de deuda transversal de plataforma/Foundation; issues conservan la evidencia detallada.
+4. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada específica del módulo Farmacia; no sustituye backlog ni decisiones futuras.
+5. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
+6. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
+7. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
+8. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
 
 ---
 
