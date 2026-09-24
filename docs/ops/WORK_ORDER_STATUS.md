@@ -139,6 +139,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 
 | WO | Título | Estado | Rama | Merge/Commit | Notas |
 | --- | --- | --- | --- | --- | --- |
+**TRAIN-NEXUS-FOUNDATION-02 (#399)** | Hardening F1.2A/F2.3, PlatformContext F3.1, oracle export Reuma F1.3B, CI F1.2B | 📋 Ready for review (merge NO autorizado) | `work/nexus-foundation-02-399-20260924` | 7 WUs: #394 `87de0c0`, #395 `c9b154e`, #398-A `e9e322d`, #398-B `13108b2`, #396-A `0ca2868`, #396-B `cd2451b`, #397 `aa52b60` + commit documental | Candidate final y PR contra `promueve/nexus-v4` live en GitHub; native review por WU cerrado (approved/burned o under_budget); deuda D1/D2 resuelta; Atenea Promotion Review v1 requerida antes de merge |
 | **WO-FH-CACERES-REVIEW-0.5 (#331)** | Promoción snapshot Cáceres 0.5 | ✅ Merged | `work/fh-caceres-review-0.5-331-20260907` | candidate `59d7b7e...` → merge `2ee9c54...` (PR #333) | Manifest `CÁCERES-REVIEW-0.5`, source `45645417...`; synthetic/demo only |
 | **WO-FH-EORDEN-CONTEXT-AUTO-REVEAL (#334)** | Auto-reveal Dermatología/patología | ✅ Merged | `work/fh-eorden-context-auto-reveal-334-20260907` | `ad4088c...` → `7b99eda...` (PR #335) | Presentation-only; no prewrite de patología |
 | **WO-FH-EORDEN-DERMA-EXTENDED-CONTRACT (#336)** | D17_EXT_V1 | ✅ Merged | `work/fh-eorden-derma-extended-contract-336-20260907` | `773f66f...` → `775a8c08...` (PR #337) | Transporte clínico extendido seguro; legacy D17 preservado |
