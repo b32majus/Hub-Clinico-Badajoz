@@ -20,6 +20,6 @@ No convertir entradas históricas de este archivo en trabajo vigente sin revalid
 
 `FH-DEBT-001` permanece abierto y debe resolverse antes de piloto real: frontera de persistencia/seguridad para datos clínicos importados.
 
-`FH-DEBT-002` y `FH-DEBT-003` tienen ya una implementación candidate preservada en `work/fh-v6-sheet-resolution-native-gentle-20260921` (`2015897...`), pendiente de promoción/revisión contra `recovery`; no deben reimplementarse desde cero.
+`FH-DEBT-002` y `FH-DEBT-003` están `RESOLVED` y publicados desde PR #374 (`771fb80c...`); se conserva su oracle de regresión y no deben reabrirse sin evidencia nueva.
 
 La autoridad exacta de esas entradas está en `docs/ops/FARMACIA_DEBT_REGISTER.md`.
