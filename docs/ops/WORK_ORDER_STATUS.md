@@ -31,7 +31,7 @@
 | Issue | #378 — `WO-DOC-PROMUEVE-ARCHITECTURE-DECISION-FREEZE-20260924` |
 | Base verificada al iniciar | `recovery/farmacia-pr-replay-20260727` @ `ea8b03a0e6895495dff1ec0b9abb2e368c259443` |
 | Alcance | Documentación/arquitectura únicamente; cero runtime |
-| Entregables | baseline + review Round 1 + alignment Round 2 + master freeze + ADR-001…008 + Foundation plan |
+| Entregables | baseline + review Round 1 + alignment Round 2 + final completeness review + master freeze + ADR-001…008 + Foundation plan |
 | Autoridad Git | **sin cambio**; recovery sigue siendo rama publicada hasta WO de transición separada |
 | `main` / Cáceres 0.6 | intactos / fuera de alcance |
 | Delivery boundary de #378 | rama + commit + push + PR contra recovery; **MERGE NO autorizado** |

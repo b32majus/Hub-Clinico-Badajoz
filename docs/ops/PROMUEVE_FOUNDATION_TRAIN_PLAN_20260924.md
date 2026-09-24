@@ -87,7 +87,18 @@ Permite necesidades de la semana próxima si cumplen:
 - no dependen de paciente universal/config engine/backend;
 - se ejecutan en worktree/WO aislados;
 - se rebasan/reintegran contra la autoridad vigente según gobernanza;
-- si tocan una frontera que Foundation está congelando, STOP y coordinar secuencia.
+- si tocan una frontera que Foundation está congelando, se clasifican con la severidad más restrictiva y se coordina la secuencia.
+
+Cada requisito hospitalario declara además **dónde pertenece**, sin convertir el hospital que lo solicita en su clase automática:
+
+| Clase | Responsabilidad esperada |
+| --- | --- |
+| `CORE` | Composición, navegación o capacidad técnica realmente compartida por la plataforma. |
+| `MODULE` | Comportamiento del dominio del módulo, aunque la necesidad aparezca primero en un hospital. |
+| `SITE` | Identidad u operación del deployment dentro de opciones soportadas. |
+| `MODULE×SITE` | Variante acotada de un módulo para un site, con contrato, gobierno, qualification e integración explícitos. |
+
+Una excepción hospitalaria temporal solo es admisible si la WO fija responsable, destino de integración y condición de retirada. No crea una rama permanente por hospital.
 
 ## 5. WOs candidatas — critical path mínimo
 
@@ -107,6 +118,14 @@ Los identificadores siguientes son nombres de planificación, no issues creados.
 - **Objetivo:** crear/activar futura línea canónica desde SHA live cualificado.
 - **Cambio clínico:** no.
 - **NO incluye:** reorganización de código.
+
+#### F0.3 Product Documentation & Handover Standard
+
+- **Timing:** puede ejecutarse en paralelo tras el freeze; no bloquea Home.
+- **Objetivo:** crear `docs/engineering/PRODUCT_DOCUMENTATION_STANDARD.md`, la skill `promueve-product-documentation` y la referencia obligatoria desde `AGENTS.md`.
+- **Contenido:** autoridad/vigencia, estados de madurez, contratos, arquitectura, datos, operación, release/rollback, troubleshooting, QA, seguridad, deuda, ownership y handover SES.
+- **Regla:** la skill aplica el estándar; no crea decisiones ni una segunda autoridad.
+- **Cambio clínico:** no.
 
 ### F1 — Tooling y oráculos mínimos
 
@@ -232,7 +251,16 @@ F2.1 y F2.2 pueden ejecutarse tras el freeze y en paralelo parcial con tooling/o
 - preservar outputs existentes;
 - `persisted` solo donde la evidencia lo permita.
 
-F4.1/F4.4 pueden diseñarse parcialmente en paralelo después de sus oráculos; F4.2 depende de F4.1. F4.5 depende de F4.4.
+#### F4.6 Interoperability readiness mapping v0.1 — documental/sintético
+
+- **Timing:** después de un primer contrato de acto completo revisable (F4.4) y su diccionario mínimo; no bloquea Home.
+- mapear por significado un caso sintético a FHIR candidato y openEHR candidato;
+- registrar campos sin correspondencia, pérdidas, extensiones, ausencia, multilínea, revisión/corrección y versión del mapping;
+- validar técnicamente solo contra los supuestos/modelos declarados;
+- no servidor FHIR, CDR openEHR, perfiles SES ni terminologías institucionales inventadas;
+- no usar Excel como fuente conceptual del mapping.
+
+F4.1/F4.4 pueden diseñarse parcialmente en paralelo después de sus oráculos; F4.2 depende de F4.1. F4.5 y F4.6 dependen conceptualmente de F4.4, pero ninguna bloquea la primera Home sintética.
 
 ### F5 — Reuma strangler
 
@@ -341,7 +369,7 @@ La Home no debe presentar `Derma` por existir `plantilla_solicitud_dermatologia.
 
 ## 8. Clinical parallel lane — cómo no frenar la semana próxima
 
-Mientras se prepara Foundation se permite continuar trabajo clínico necesario en la autoridad vigente, siempre que se clasifique:
+Mientras se prepara Foundation se permite continuar trabajo clínico necesario en la autoridad vigente, siempre que se clasifique. Si un cambio encaja en más de una categoría, prevalece **`ROJO > ÁMBAR > VERDE`**. El color describe interferencia arquitectónica; no sustituye autorización clínica, oráculo, tests ni QA.
 
 ### VERDE — puede avanzar
 
@@ -359,7 +387,7 @@ Mientras se prepara Foundation se permite continuar trabajo clínico necesario e
 - añade hospital/site hardcode;
 - crea nueva entrada/módulo.
 
-Puede hacerse, pero la WO debe declarar cómo encaja con ADRs y evitar trabajo desechable.
+Puede hacerse, pero la WO debe declarar cómo encaja con ADRs, su clase `CORE / MODULE / SITE / MODULE×SITE` y evitar trabajo desechable. Si introduce una excepción temporal local, debe indicar su condición de integración o retirada.
 
 ### ROJO — pausar hasta Foundation/decisión
 
@@ -454,7 +482,8 @@ Un train nocturno ejecuta decisiones cerradas; **no debe convertirse en el lugar
 
 STOP y devolver a adjudicación si:
 
-- GitHub base/authority cambia durante una WO;
+- cambia la **autoridad canónica** o aparece un conflicto material con la base durante una WO;
+- una WO ligada expresamente a un SHA inmutable deja de cumplir esa condición;
 - oráculo contradice spec/decisión;
 - aparece dato real;
 - refactor exige cambiar clínica para pasar tests;
@@ -462,6 +491,8 @@ STOP y devolver a adjudicación si:
 - la Home requiere compartir paciente para funcionar;
 - un adapter necesita mentir sobre persistencia/capabilities;
 - merge/destructive action no está autorizado.
+
+Un avance ordinario y compatible del HEAD dentro de la **misma autoridad** no es STOP automático: antes de integrar se revalida la base live, se reconcilian cambios concurrentes y se repiten los gates afectados. Esta regla no autoriza rebase, merge, overwrite ni reescritura de historia fuera del alcance explícitamente aprobado.
 
 ## 13. Éxito del Foundation
 

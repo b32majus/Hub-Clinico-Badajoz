@@ -18,8 +18,9 @@ Evidencia preservada:
 - [`reviews/PROMUEVE_ARCHITECTURE_BASELINE_20260924.md`](./reviews/PROMUEVE_ARCHITECTURE_BASELINE_20260924.md)
 - [`reviews/PROMUEVE_ASTRA_ARCHITECTURE_REVIEW_20260924.md`](./reviews/PROMUEVE_ASTRA_ARCHITECTURE_REVIEW_20260924.md)
 - [`reviews/PROMUEVE_ASTRA_ALIGNMENT_ROUND2_20260924.md`](./reviews/PROMUEVE_ASTRA_ALIGNMENT_ROUND2_20260924.md)
+- [`reviews/PROMUEVE_ASTRA_FINAL_COMPLETENESS_REVIEW_20260924.md`](./reviews/PROMUEVE_ASTRA_FINAL_COMPLETENESS_REVIEW_20260924.md)
 
-Las revisiones independientes son evidencia y challenge, no autoridad por sí mismas. La adjudicación aprobada internamente está en este freeze y en los ADR asociados.
+Las revisiones independientes son evidencia y challenge, no autoridad por sí mismas. La adjudicación aprobada internamente está en este freeze y en los ADR asociados. La revisión final concluyó `READY_WITH_MINIMAL_AMENDMENTS`; sus dos correcciones de autoridad histórica y lane paralela se incorporan en INDEX/Foundation Plan dentro de esta misma WO.
 
 ## 2. Taxonomía de estado
 
@@ -281,6 +282,33 @@ Nunca se degrada:
 
 Logs/URLs/diagnósticos deben minimizar exposición clínica; observabilidad técnica no equivale a auditoría asistencial.
 
+### 10.1 Interoperabilidad futura — readiness ahora, implementación después
+
+La frontera decidida es **dominio/contratos canónicos → adapters de intercambio**. Excel, JARA, FHIR, HL7 u openEHR no son el modelo interno obligatorio de PROMueve ni se construye FHIR/openEHR traduciendo directamente una fila Excel.
+
+Cuando Foundation extraiga contratos reales, debe preservar solo la semántica que corresponda al caso de uso: IDs estables y con ámbito, identificador/versión de concepto cuando exista, tipo/unidad/precisión, tiempo clínico separado de captura/importación/persistencia, autor/informante/fuente, hospital/servicio/contexto, ausencia/desconocido/negativo/no aplica y provenance de transformaciones. Los bindings terminológicos son opcionales y versionados; no se inventan SNOMED CT/LOINC/ATC ni datos que hoy no se capturan.
+
+Un mapping FHIR/openEHR candidato puede documentarse con datos sintéticos cuando exista un primer contrato completo revisable —por ejemplo, tras Pharmacy Act + diccionario mínimo— para detectar pérdidas y lock-in conceptual. Un Bundle FHIR o COMPOSITION openEHR candidato acredita solo los casos, supuestos y validaciones demostrados; **no** acredita perfil institucional, servidor FHIR, CDR openEHR ni interoperabilidad operativa SES.
+
+Perfiles, endpoints, versiones, arquetipos/templates y terminologías institucionales permanecen `SES_DECISION`.
+
+### 10.2 Documentación y handover — gobernanza a institucionalizar
+
+PROMueve debe disponer de una norma durable de documentación de producto, legible por humanos y apta para handover institucional. La implementación prevista se realizará en una WO documental posterior y no bloquea este freeze:
+
+```text
+docs/engineering/PRODUCT_DOCUMENTATION_STANDARD.md
+        ↑ autoridad durable
+
+.agents/skills/promueve-product-documentation/SKILL.md
+        ↑ procedimiento operativo, sin crear una segunda autoridad
+
+AGENTS.md
+        ↑ referencia obligatoria + evaluación de impacto documental
+```
+
+El estándar deberá cubrir como mínimo autoridad/vigencia, madurez real, trazabilidad cambio→contrato→evidencia→artefacto, arquitectura/contratos, build-test-package-deploy-rollback, fuentes/destinos/migración/recuperación de datos, límites clínicos, troubleshooting, dependencias, QA, seguridad, deuda, ownership y ejemplos sintéticos reproducibles. No exige un documento nuevo por cada PR ni burocracia sin impacto.
+
 ## 11. ADR aprobados en este freeze
 
 1. [`adr/ADR-001-product-authority-and-canonical-line.md`](./adr/ADR-001-product-authority-and-canonical-line.md)
@@ -328,6 +356,7 @@ No se inventan desde ingeniería:
 - concurrencia permitida y single-writer cuando aplique;
 - disponibilidad real de Office Scripts/File System Access en cada entorno;
 - gobierno institucional de metadata/config clínica;
+- perfiles/endpoints/terminologías institucionales FHIR/openEHR/HL7 cuando procedan;
 - soporte, owners, continuidad y autorización de piloto.
 
 Estos puntos condicionan pilot-ready, pero no impiden construir seams que eviten acoplamiento.
