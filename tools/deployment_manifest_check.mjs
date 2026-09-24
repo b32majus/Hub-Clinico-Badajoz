@@ -7,7 +7,8 @@
  *  - produces byte-identical output for the same inputs (determinism);
  *  - reproduces the frozen golden manifest fixture;
  *  - fails closed on invalid registry/profile compositions;
- *  - rejects planted invalid manifests (schema + semantic cross-references).
+ *  - rejects planted invalid manifests (schema + semantic cross-references
+ *    + completeness against the deployment profile).
  *
  * Exit codes: 0 = all cases PASS, 1 = at least one case FAIL.
  * Usage: node tools/deployment_manifest_check.mjs
@@ -80,6 +81,23 @@ function manifestSemanticErrors(manifest, registry) {
   return errors;
 }
 
+function manifestCompletenessErrors(manifest, profile) {
+  const errors = [];
+  const profileIds = new Set(profile.modules.map((m) => m.moduleId));
+  const manifestIds = new Set(manifest.modules.map((m) => m.moduleId));
+  for (const id of profileIds) {
+    if (!manifestIds.has(id)) {
+      errors.push(`manifest is missing module "${id}" resolved by the deployment profile; omission does not pass validation`);
+    }
+  }
+  for (const id of manifestIds) {
+    if (!profileIds.has(id)) {
+      errors.push(`manifest module "${id}" is not resolved by the deployment profile`);
+    }
+  }
+  return errors;
+}
+
 function validateManifestDocument(manifest) {
   const ajv = new Ajv({ allErrors: true, strict: true });
   const validate = ajv.compile(loadJson(SCHEMA));
@@ -139,12 +157,15 @@ function main() {
     { file: 'manifest-unknown-key.json', expect: 'must NOT have additional properties' },
     { file: 'manifest-clinical-property.json', expect: 'must NOT have additional properties' },
     { file: 'manifest-available-not-qualified.json', expect: "contradicts enabled=" },
+    { file: 'manifest-missing-module.json', expect: 'missing module' },
   ];
   const registryDoc = loadJson(registry);
+  const profileDoc = loadJson(profile);
   for (const c of manifestCases) {
     const doc = loadJson(path.join(FIXTURE_DIR, 'invalid', c.file));
     let errors = validateManifestDocument(doc);
     if (errors.length === 0) errors = manifestSemanticErrors(doc, registryDoc);
+    if (errors.length === 0) errors = manifestCompletenessErrors(doc, profileDoc);
     const matched = errors.some((e) => e.includes(c.expect));
     record(
       `invalid/${c.file}`,

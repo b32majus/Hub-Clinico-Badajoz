@@ -9,7 +9,8 @@
  *  - is deterministic across runs;
  *  - fails closed on unknown modules, missing release entries and planted
  *    patient/clinical payloads;
- *  - rejects planted invalid readiness views (schema + cross-reference rules).
+ *  - rejects planted invalid readiness views (schema + cross-reference rules
+ *    + completeness against the deployment manifest).
  *
  * Exit codes: 0 = all cases PASS, 1 = at least one case FAIL.
  * Usage: node tools/deployment_readiness_check.mjs
@@ -87,6 +88,12 @@ function viewSemanticErrors(view, manifest) {
       errors.push(`module "${mod.moduleId}": qualificationState contradicts the resolved deployment manifest`);
     }
   }
+  const viewIds = new Set(view.modules.map((m) => m.moduleId));
+  for (const mod of manifest.modules) {
+    if (!viewIds.has(mod.moduleId)) {
+      errors.push(`readiness view is missing module "${mod.moduleId}" required by the deployment manifest`);
+    }
+  }
   return errors;
 }
 
@@ -136,6 +143,7 @@ function main() {
     { file: 'readiness-unknown-module.json', expect: 'not part of the resolved deployment manifest' },
     { file: 'readiness-bad-qualification-state.json', expect: 'must be equal to one of the allowed values' },
     { file: 'readiness-available-not-qualified.json', expect: 'can never be available' },
+    { file: 'readiness-missing-module.json', expect: 'missing module' },
   ];
   for (const c of viewCases) {
     const doc = loadJson(path.join(FIXTURE_DIR, 'invalid', c.file));
