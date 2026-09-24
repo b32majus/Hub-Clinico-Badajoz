@@ -1,0 +1,45 @@
+{
+  "manifestVersion": "1",
+  "deploymentId": "bad-synthetic-demo-01",
+  "siteId": "BAD",
+  "display": {
+    "productName": "PROMueve Nexus",
+    "siteName": "Deployment sintético BAD (demo)"
+  },
+  "persistenceMode": "session-only",
+  "modules": [
+    {
+      "moduleId": "farmacia",
+      "label": "Farmacia Hospitalaria",
+      "entryPath": "farmacia_index.html",
+      "enabled": true,
+      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED",
+      "available": false,
+      "platformCapabilities": [
+        "static-delivery",
+        "session-scoped-state",
+        "offline-capable"
+      ]
+    },
+    {
+      "moduleId": "reuma",
+      "label": "Hub Clínico Reuma",
+      "entryPath": "index.html",
+      "enabled": true,
+      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED",
+      "available": false,
+      "platformCapabilities": [
+        "static-delivery",
+        "session-scoped-state",
+        "offline-capable"
+      ]
+    }
+  ],
+  "provenance": {
+    "registryVersion": "1",
+    "profileVersion": "1",
+    "registrySha256": "e13847637e54eb50c787b9b90841d0864fdcc24ee8186a5d86715684104c6aea",
+    "profileSha256": "821407594da9edeb97c061119b2b4cf9de8b5e7c2caf743cb695b118eecd8a5c",
+    "generator": "tools/deployment_manifest_build.mjs v1"
+  }
+}
