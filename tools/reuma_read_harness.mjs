@@ -133,7 +133,7 @@ function createFileLike(workbook) {
  * @returns {Promise<object>} characterization-ready read results
  */
 export async function runReumaReadHarness(options) {
-  const corpusFile = path.join(ROOT, options.corpusFile);
+  const corpusFile = path.resolve(ROOT, options.corpusFile);
   const corpus = JSON.parse(fs.readFileSync(corpusFile, 'utf8'));
   const { sandbox, sink } = createLegacySandbox();
 
