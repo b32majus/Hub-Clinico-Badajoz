@@ -12,7 +12,7 @@
 | Runtime | Node.js **major 20** (`.nvmrc` = `20`; `engines` fijado en `package.json`) |
 | Package manager | **npm** con `package-lock.json`; instalación reproducible con `npm ci` |
 | Ámbito | Desarrollo y CI únicamente. El puesto asistencial y la entrega estática al hospital **no** requieren Node |
-| Dependencias | Ninguna por ahora; las dev-dependencies se añaden por presión real (p. ej. validador JSON Schema en F2.1) y quedan en el lockfile |
+| Dependencias | Una única dev-dependencia: `ajv ^8.20.0` (validador JSON Schema, añadida por F2.1/Bootstrap 01); vive en el lockfile (`package-lock.json`) |
 
 ## Comandos estables
 
@@ -26,6 +26,8 @@ npm run check:pre-release  # check transversal auxiliar (no gate CI; ver clasifi
 ```
 
 Estos scripts son **wrappers** de los gates ya existentes; no introducen una nueva fuente de verdad clínica ni cambian resultados.
+
+**Hashes de provenance del deployment manifest (NEXUS-DEBT-001):** `tools/deployment_manifest_build.mjs` calcula los SHA-256 de provenance sobre contenido EOL-canonicalizado (CRLF/CR → LF): JSON lógicamente idéntico produce hashes idénticos en checkouts LF/CRLF.
 
 ## Clasificación de tooling
 

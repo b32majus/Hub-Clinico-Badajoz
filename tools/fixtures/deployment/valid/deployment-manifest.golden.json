@@ -38,8 +38,8 @@
   "provenance": {
     "registryVersion": "1",
     "profileVersion": "1",
-    "registrySha256": "e13847637e54eb50c787b9b90841d0864fdcc24ee8186a5d86715684104c6aea",
-    "profileSha256": "821407594da9edeb97c061119b2b4cf9de8b5e7c2caf743cb695b118eecd8a5c",
+    "registrySha256": "1e0d26210d99176a1de39350729626bc8e95b2bba4ab0790fb5ecf713b3bccd5",
+    "profileSha256": "e0a85d533faf7ccecfce073709f748c4a56332c36db95126c1b98aee07a62bd3",
     "generator": "tools/deployment_manifest_build.mjs v1"
   }
 }

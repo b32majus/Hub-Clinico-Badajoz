@@ -153,6 +153,46 @@ function main() {
     );
   }
 
+  // 5. Provenance EOL invariance (NEXUS-DEBT-001): provenance hashes are
+  // computed over EOL-canonicalized content, so the same logical JSON must
+  // produce the same SHA-256 regardless of LF vs CRLF line endings.
+  const builtManifest = ok1 ? loadJson(out1) : null;
+  const toCrlf = (text) => text.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+  const crlfRegistryFile = path.join(tmp, 'module-registry.crlf.json');
+  const crlfProfileFile = path.join(tmp, 'deployment-profile.crlf.json');
+  fs.writeFileSync(crlfRegistryFile, toCrlf(fs.readFileSync(registry, 'utf8')));
+  fs.writeFileSync(crlfProfileFile, toCrlf(fs.readFileSync(profile, 'utf8')));
+  const crlfManifestFile = path.join(tmp, 'm-crlf.json');
+  const okCrlf = buildManifest(crlfRegistryFile, crlfProfileFile, crlfManifestFile);
+  const crlfManifest = okCrlf ? loadJson(crlfManifestFile) : null;
+  record(
+    'provenance hash is invariant to LF/CRLF line endings',
+    okCrlf &&
+      crlfManifest.provenance.registrySha256 === builtManifest.provenance.registrySha256 &&
+      crlfManifest.provenance.profileSha256 === builtManifest.provenance.profileSha256,
+    okCrlf
+      ? `provenance hashes differ: registry ${crlfManifest.provenance.registrySha256} vs ${builtManifest.provenance.registrySha256}, profile ${crlfManifest.provenance.profileSha256} vs ${builtManifest.provenance.profileSha256}`
+      : 'builder exited non-zero on CRLF fixtures'
+  );
+
+  // 6. Real content drift (a non-EOL change) must still be detected by the
+  // provenance hash.
+  const driftProfileFile = path.join(tmp, 'deployment-profile.drift.json');
+  fs.writeFileSync(
+    driftProfileFile,
+    toCrlf(fs.readFileSync(profile, 'utf8')).replace(/"deploymentId": "([^"]*)"/, '"deploymentId": "drift-$1"')
+  );
+  const driftManifestFile = path.join(tmp, 'm-drift.json');
+  const okDrift = buildManifest(registry, driftProfileFile, driftManifestFile);
+  const driftManifest = okDrift ? loadJson(driftManifestFile) : null;
+  record(
+    'provenance hash still detects real content drift (non-EOL change)',
+    okDrift && driftManifest.provenance.profileSha256 !== builtManifest.provenance.profileSha256,
+    okDrift
+      ? `profileSha256 unchanged despite a real profile content change: ${driftManifest.provenance.profileSha256}`
+      : 'builder exited non-zero on the drifted profile'
+  );
+
   fs.rmSync(tmp, { recursive: true, force: true });
   const failed = results.filter((r) => !r.pass).length;
   console.log('');

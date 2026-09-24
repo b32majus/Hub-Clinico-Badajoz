@@ -7,7 +7,8 @@
  * v0 JSON Schemas plus the semantic coherence and cross-reference rules, and
  * emits the resolved composition as canonical JSON. The same inputs always
  * produce byte-identical output: no timestamps, no environment data, input
- * provenance recorded as SHA-256 of the raw input files.
+ * provenance recorded as SHA-256 of the EOL-canonicalized input files
+ * (NEXUS-DEBT-001).
  *
  * Fail-closed: unknown properties, invalid combinations, unregistered modules
  * or missing qualification evidence abort with a non-zero exit code.
@@ -44,7 +45,11 @@ function loadJson(file) {
 }
 
 function sha256File(file) {
-  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  // Provenance hashes are computed over EOL-canonicalized content (CRLF and
+  // lone CR normalized to LF), so identical logical JSON yields identical
+  // SHA-256 across LF/CRLF checkouts (NEXUS-DEBT-001).
+  const canonical = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  return crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
 function compile(name) {
