@@ -56,6 +56,23 @@ function buildFails(registryFile, profileFile) {
   }
 }
 
+// Like buildFails, but also returns the builder's combined stdout/stderr so a
+// planted negative can assert the failure reason, not just the exit code.
+function buildFailsWithOutput(registryFile, profileFile) {
+  try {
+    const stdout = execFileSync(
+      'node',
+      [path.join(ROOT, 'tools', 'deployment_manifest_build.mjs'), registryFile, profileFile],
+      { stdio: 'pipe' }
+    );
+    return { failed: false, output: stdout.toString('utf8') };
+  } catch (err) {
+    const stdout = err.stdout ? err.stdout.toString('utf8') : '';
+    const stderr = err.stderr ? err.stderr.toString('utf8') : '';
+    return { failed: true, output: `${stdout}${stderr}` };
+  }
+}
+
 function loadJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
 }
@@ -150,6 +167,17 @@ function main() {
     'builder rejects an injected clinical property',
     buildFails(registry, path.join(FIXTURE_DIR, 'invalid', 'profile-clinical-property.json')),
     'builder accepted a clinical property'
+  );
+  const duplicateEntryPath = buildFailsWithOutput(
+    path.join(FIXTURE_DIR, 'invalid', 'registry-duplicate-entry-path.json'),
+    profile
+  );
+  record(
+    'builder rejects a registry whose resolved composition has duplicate entryPath',
+    duplicateEntryPath.failed && duplicateEntryPath.output.includes('duplicate entryPath'),
+    duplicateEntryPath.failed
+      ? `rejected without naming the duplicate entryPath: ${duplicateEntryPath.output.trim()}`
+      : 'builder accepted a composition with duplicate entryPath'
   );
 
   // 4. Planted invalid manifests are rejected for the expected reason.

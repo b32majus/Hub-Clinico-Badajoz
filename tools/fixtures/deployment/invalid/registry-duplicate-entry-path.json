@@ -1,0 +1,17 @@
+{
+  "registryVersion": "1",
+  "modules": [
+    {
+      "moduleId": "farmacia",
+      "label": "Farmacia Hospitalaria",
+      "entryPath": "farmacia_index.html",
+      "platformCapabilities": ["static-delivery", "session-scoped-state", "offline-capable"]
+    },
+    {
+      "moduleId": "reuma",
+      "label": "Hub Clínico Reuma",
+      "entryPath": "farmacia_index.html",
+      "platformCapabilities": ["static-delivery", "session-scoped-state", "offline-capable"]
+    }
+  ]
+}
