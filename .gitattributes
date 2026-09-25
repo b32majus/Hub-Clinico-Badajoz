@@ -16,3 +16,9 @@
 *.jpg binary
 *.jpeg binary
 *.gif binary
+
+# Nexus Home generated/packaged artifacts: canonical LF so fresh checkouts are
+# byte-identical to deterministic rebuilds (NEXUS-DEBT-011, #407/#410).
+modules/home/home-schema-validators.generated.js text eol=lf
+data/platform/home/*.json text eol=lf
+tools/fixtures/home/*.json text eol=lf
