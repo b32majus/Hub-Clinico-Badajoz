@@ -1,0 +1,89 @@
+/*
+ * PROMueve Nexus Home — minimal presentational styles (F3.2 WU-A / WU-B).
+ *
+ * Styles only the frozen Home markers; it carries no product logic and no
+ * domain references. From WU-B every tile is an interactive same-tab
+ * navigation affordance, so hover styling is meaningful.
+ */
+
+:root {
+  color-scheme: light dark;
+  --nexus-home-surface: #f7f8fa;
+  --nexus-home-ink: #1f2430;
+  --nexus-home-muted: #5a6272;
+  --nexus-home-border: #d6dae2;
+  --nexus-home-tile: #ffffff;
+  --nexus-home-danger: #a4262c;
+}
+
+body {
+  margin: 0;
+  background: var(--nexus-home-surface);
+  color: var(--nexus-home-ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.45;
+}
+
+#home-root.nexus-home {
+  display: block;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.nexus-home__header {
+  margin-bottom: 1.75rem;
+}
+
+.nexus-home__product-name {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.nexus-home__site-name {
+  margin: 0.25rem 0 0;
+  color: var(--nexus-home-muted);
+  font-size: 0.95rem;
+}
+
+.nexus-home__modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nexus-home__tile {
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--nexus-home-border);
+  border-radius: 0.625rem;
+  background: var(--nexus-home-tile);
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.nexus-home__tile:hover {
+  border-color: var(--nexus-home-ink);
+  box-shadow: 0 1px 3px rgba(31, 36, 48, 0.18);
+}
+
+.nexus-home__empty {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  border: 1px dashed var(--nexus-home-border);
+  border-radius: 0.625rem;
+  color: var(--nexus-home-muted);
+}
+
+.nexus-home__error {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--nexus-home-danger);
+  border-radius: 0.625rem;
+  color: var(--nexus-home-danger);
+  font-weight: 550;
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PROMueve Nexus — Home</title>
+  <link rel="stylesheet" href="nexus_home.css">
+</head>
+<body>
+  <main id="home-root" class="nexus-home"></main>
+
+  <script src="modules/platform/configuration-repository.js"></script>
+  <script src="modules/platform/platform-context.js"></script>
+  <script src="modules/home/home-schema-validators.generated.js"></script>
+  <script src="modules/home/home-bootstrap.js"></script>
+  <script src="modules/home/home-renderer.js"></script>
+  <script src="modules/home/home-page.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      PromueveHome.Page.start();
+    });
+  </script>
+</body>
+</html>

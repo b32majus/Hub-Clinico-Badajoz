@@ -1,0 +1,23 @@
+{
+  "profileVersion": "1",
+  "deploymentId": "bad-synthetic-demo-home-01",
+  "siteId": "BAD",
+  "display": {
+    "productName": "PROMueve Nexus",
+    "siteName": "Deployment sintético BAD (demo) — Home F3.2"
+  },
+  "persistenceMode": "session-only",
+  "modules": [
+    {
+      "moduleId": "farmacia",
+      "enabled": true,
+      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED"
+    },
+    {
+      "moduleId": "reuma",
+      "enabled": true,
+      "qualificationState": "QUALIFIED_FOR_SITE",
+      "qualificationEvidence": "Synthetic Home demo fixture (issue #403); not a real hospital qualification"
+    }
+  ]
+}
