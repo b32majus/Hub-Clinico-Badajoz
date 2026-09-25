@@ -1,9 +1,12 @@
 # PROMueve Nexus Home — F3.2
 
-**Estado:** `IMPLEMENTED (deterministic) — NOT browser-qualified`
+**Estado:** `MERGED — deterministic functional behavior demonstrated; NOT browser-qualified; EOL reproducibility debt open`
 **Issue / WO:** #403 — `WO-NEXUS-F3.2`
-**Base:** `promueve/nexus-v4` @ `0847cbcc7891aaee7a776ac81d1f2a01bdc63ffe`
-**Rama:** `work/nexus-home-f3-2-403-v4retry-20260925`
+**Base de ejecución:** `promueve/nexus-v4` @ `0847cbcc7891aaee7a776ac81d1f2a01bdc63ffe`
+**Candidate:** `61e6e9ca54a787940dc5dc241f0eb517ce5f264d`
+**Publicación:** PR #404 → merge `e9096e9bda1d20ac50f9c395823152b7f005403c`; tree `c34689308376c28d9d5e3e9330fcc938ad3c9506` idéntico al candidate
+**Rama de trabajo:** `work/nexus-home-f3-2-403-v4retry-20260925`
+**Canary Atenea:** `native-v4-heavy`; probe + WU-A + WU-B observaron `nan/deepseek-v4-flash` / `high`; reviews nativas WU-A/WU-B `APPROVED + burned`
 **ADRs:** [ADR-002](../architecture/adr/ADR-002-modular-monolith-and-module-boundaries.md) · [ADR-003](../architecture/adr/ADR-003-hospital-deployment-and-configuration.md)
 **Contrato de plataforma:** [`PLATFORM_CONTEXT_API.md`](PLATFORM_CONTEXT_API.md)
 
@@ -54,6 +57,25 @@ Ambos checkers incluyen negativos plantados (manifest incoherente, registry
 inválido, fetch fallido, validator ausente, input cerrado, módulo desconocido/
 no disponible) y el check de cero transporte clínico/paciente sobre fuentes,
 fixtures y salida renderizada.
+
+### Verificación post-merge y deuda observada
+
+Sobre un worktree fresco creado desde el merge exacto `e9096e9b...`:
+
+- `nexus_home_navigation_check`: **11/11 PASS**;
+- `npm run verify:nexus`: **PASS**;
+- GitHub Actions `Nexus deterministic gates`, push run `36116079829`: **success**;
+- `nexus_home_check`: **9/11 PASS**. Los únicos fallos son CASO 7 y CASO 8,
+  ambos de reproducibilidad byte-identical. `.gitattributes` materializa JS/JSON
+  como CRLF, mientras los builders escriben LF. Validators, manifest y readiness
+  son byte-idénticos después de normalizar CRLF→LF (`normalized_equal=true`), por
+  lo que no se observó un fallo de lógica/runtime en esta verificación. El gap
+  queda registrado como `NEXUS-DEBT-011` en #407 y debe resolverse antes de
+  activar los checks Home en CI (`NEXUS-DEBT-009`, #405), y no más tarde de F3.4.
+
+La fidelidad futura del subset JSON Schema browser queda registrada como
+`NEXUS-DEBT-010` (#405). Ninguna de estas deudas convierte F3.2 en browser-
+qualified ni autoriza cambios técnicos dentro de esta reconciliación.
 
 ## Límites de madurez
 
