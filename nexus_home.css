@@ -1,9 +1,9 @@
 /*
- * PROMueve Nexus Home — minimal presentational styles (F3.2 WU-A).
+ * PROMueve Nexus Home — minimal presentational styles (F3.2 WU-A / WU-B).
  *
  * Styles only the frozen Home markers; it carries no product logic and no
- * domain references. WU-A tiles are non-interactive (no route yet): hover
- * affordances appear only in WU-B when navigation is authorized.
+ * domain references. From WU-B every tile is an interactive same-tab
+ * navigation affordance, so hover styling is meaningful.
  */
 
 :root {
@@ -63,6 +63,12 @@ body {
   border-radius: 0.625rem;
   background: var(--nexus-home-tile);
   font-weight: 550;
+  cursor: pointer;
+}
+
+.nexus-home__tile:hover {
+  border-color: var(--nexus-home-ink);
+  box-shadow: 0 1px 3px rgba(31, 36, 48, 0.18);
 }
 
 .nexus-home__empty {
