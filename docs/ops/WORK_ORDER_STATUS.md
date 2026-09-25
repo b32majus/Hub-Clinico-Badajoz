@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-24
+**Última actualización:** 2026-09-25
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -139,7 +139,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 
 | WO | Título | Estado | Rama | Merge/Commit | Notas |
 | --- | --- | --- | --- | --- | --- |
-**TRAIN-NEXUS-FOUNDATION-02 (#399)** | Hardening F1.2A/F2.3, PlatformContext F3.1, oracle export Reuma F1.3B, CI F1.2B + correcciones post-Promotion-FAIL | 📋 Ready for review (Promotion Review v1 inicial: FAIL; merge NO autorizado) | `work/nexus-foundation-02-399-20260924` | 7 WUs: #394 `87de0c0`, #395 `c9b154e`, #398-A `e9e322d`, #398-B `13108b2`, #396-A `0ca2868`, #396-B `cd2451b`, #397 `aa52b60`; docs `9e670bf`; corrections: #398-C `109b28d`, #396-C `80fdd08`, F3.1-D `4bebeeb`, F3.1-E `4ee94c2` + doc-commit de reconciliación al push | Promotion Review v1 FAIL sobre `9e670bf` (3 blockers) atendida con #398-C/#396-C; segunda ronda (matriz congelada #398) atendida con F3.1-D/F3.1-E cerrando NEXUS-DEBT-006; native review: approved/burned x6, under_budget x3; nonblocking de PlatformContext preservados en `NEXUS-DEBT-006`; nueva Promotion Review v1 fresca requerida sobre el nuevo HEAD; PR #400 OPEN / NO MERGE |
+**TRAIN-NEXUS-FOUNDATION-02 (#399)** | Hardening F1.2A/F2.3, PlatformContext F3.1, oracle export Reuma F1.3B, CI F1.2B + correcciones post-Promotion-FAIL | 📋 Ready for final Promotion Review (2 FAIL previos atendidos; merge NO autorizado) | `work/nexus-foundation-02-399-20260924` | 7 WUs: #394 `87de0c0`, #395 `c9b154e`, #398-A `e9e322d`, #398-B `13108b2`, #396-A `0ca2868`, #396-B `cd2451b`, #397 `aa52b60`; docs `9e670bf`; corrections #398-C `109b28d`, #396-C `80fdd08`, F3.1-D `4bebeeb`, F3.1-E `4ee94c2`; candidate técnico pre-closeout `0cdd997f23c1a5e8ed0591d463ce0462fa46f11f`; candidate final = HEAD live de PR #400 tras DOC-CLOSEOUT-400 | Promotion Review round 1 FAIL sobre `9e670bf` (3 blockers) atendida con #398-C/#396-C; round 2 FAIL sobre `858681f` (display/site identity + duplicados) atendida mediante matriz congelada #398 y F3.1-D/F3.1-E; `NEXUS-DEBT-006` RESOLVED; RDD nativo cerrado para los candidates materiales, agregado workspace-vs-main terminal `lens_context_budget_exceeded` no reintentable; nueva Promotion Review v1 fresca requerida sobre BASE/HEAD/diff exactos; PR #400 OPEN / NO MERGE |
 | **WO-FH-CACERES-REVIEW-0.5 (#331)** | Promoción snapshot Cáceres 0.5 | ✅ Merged | `work/fh-caceres-review-0.5-331-20260907` | candidate `59d7b7e...` → merge `2ee9c54...` (PR #333) | Manifest `CÁCERES-REVIEW-0.5`, source `45645417...`; synthetic/demo only |
 | **WO-FH-EORDEN-CONTEXT-AUTO-REVEAL (#334)** | Auto-reveal Dermatología/patología | ✅ Merged | `work/fh-eorden-context-auto-reveal-334-20260907` | `ad4088c...` → `7b99eda...` (PR #335) | Presentation-only; no prewrite de patología |
 | **WO-FH-EORDEN-DERMA-EXTENDED-CONTRACT (#336)** | D17_EXT_V1 | ✅ Merged | `work/fh-eorden-derma-extended-contract-336-20260907` | `773f66f...` → `775a8c08...` (PR #337) | Transporte clínico extendido seguro; legacy D17 preservado |

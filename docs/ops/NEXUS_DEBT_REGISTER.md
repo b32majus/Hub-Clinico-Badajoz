@@ -1,6 +1,6 @@
 # Registro vivo de deuda — PROMueve Nexus
 
-**Última actualización:** 2026-09-24
+**Última actualización:** 2026-09-25
 **Estado:** `LIVE / OPERATIVE`
 **Ámbito:** deuda transversal de plataforma, Foundation, tooling, deployment y seams Nexus
 **Issue origen inicial:** #389
@@ -31,4 +31,4 @@ La deuda específica de Farmacia continúa en [`FARMACIA_DEBT_REGISTER.md`](./FA
 
 ## Próximo consumo
 
-`NEXUS-DEBT-001` y `NEXUS-DEBT-002` quedaron cerradas por TRAIN-NEXUS-FOUNDATION-02 (#399), de modo que PlatformContext/Home puede consumir los contratos de deployment/readiness con completitud fail-closed demostrada. La Promotion Review v1 inicial (FAIL) se atendió con las correction WUs #398-C/#396-C; `NEXUS-DEBT-006` (nonblocking de PlatformContext), `NEXUS-DEBT-004` y los subhallazgos restantes de `NEXUS-DEBT-005` permanecen abiertos salvo que una WO futura los adopte explícitamente.
+`NEXUS-DEBT-001`, `NEXUS-DEBT-002` y `NEXUS-DEBT-006` están RESOLVED dentro de TRAIN-NEXUS-FOUNDATION-02 (#399): D6 quedó cerrada por F3.1-E antes de F3.2 mediante provenance de snapshot emitido y test real de aislamiento del input. Permanecen abiertos `NEXUS-DEBT-004` y los subhallazgos restantes de `NEXUS-DEBT-005`; cualquier adopción futura requiere WO explícita y no autoriza ampliar el alcance de F3.1.
