@@ -15,7 +15,11 @@
  *    available=false; no module is dropped or invented (WU-A);
  *  - exposes the frozen snapshot only through read-only PlatformContext
  *    queries that fail closed on unknown/unavailable modules and on
- *    non-conforming snapshots (WU-B, ADR-002/ADR-003).
+ *    non-conforming snapshots (WU-B, ADR-002/ADR-003);
+ *  - accepts only repository-issued EffectiveDeployment snapshots
+ *    (F3.1-E trust boundary, NEXUS-DEBT-006): fabricated frozen lookalikes
+ *    fail with SNAPSHOT_UNTRUSTED_ORIGIN, and mutating the SAME original
+ *    load() input after load returns never alters the issued snapshot.
  *
  * All fixtures are 100% synthetic; Node-only deterministic verification (no
  * browser QA). Exit codes: 0 = all cases PASS, 1 = at least one case FAIL.
@@ -47,15 +51,23 @@ function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-// Loads modules/platform/platform-context.js unmodified in a minimal Node
-// vm sandbox, exactly like the harness does for the repository module.
+// Loads configuration-repository.js + platform-context.js unmodified into
+// ONE minimal Node vm sandbox. Since F3.1-E the facade verifies snapshot
+// origin against the repository's issuance registry, which lives on the
+// shared PromuevePlatform namespace — exactly like the browser, where both
+// classic scripts attach to the same window.PromuevePlatform. Snapshots
+// issued by this sandbox's repository are the only ones the facade accepts.
+const REPOSITORY_FILE = path.join(ROOT, 'modules', 'platform', 'configuration-repository.js');
 const PLATFORM_CONTEXT_FILE = path.join(ROOT, 'modules', 'platform', 'platform-context.js');
 
-function loadPlatformContext() {
+function loadSharedPlatform() {
   const sandbox = { console: { log() {}, warn() {}, error() {} } };
   sandbox.globalThis = sandbox;
   sandbox.self = sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(REPOSITORY_FILE, 'utf8'), sandbox, {
+    filename: 'modules/platform/configuration-repository.js',
+  });
   vm.runInContext(fs.readFileSync(PLATFORM_CONTEXT_FILE, 'utf8'), sandbox, {
     filename: 'modules/platform/platform-context.js',
   });
@@ -93,8 +105,22 @@ function main() {
   console.log('PROMueve Nexus platform contract check (F3.1 WU-A)');
   const fixtures = loadPlatformFixtures();
 
+  // Shared namespace sandbox: the repository and the PlatformContext under
+  // test live in the same PromuevePlatform namespace, so every snapshot
+  // issued below is verifiable by the facade (F3.1-E trust boundary).
+  // Repository-only error cases further down still use the per-call harness
+  // loader; they never touch the facade.
+  const sharedPlatform = loadSharedPlatform();
+  function sharedLoadConfiguration(input) {
+    try {
+      return { ok: true, snapshot: sharedPlatform.ConfigurationRepository.load(input), error: null };
+    } catch (error) {
+      return { ok: false, snapshot: null, error };
+    }
+  }
+
   // 1. Valid packaged deployment loads into a frozen EffectiveDeployment.
-  const load = loadConfiguration(fixtures);
+  const load = sharedLoadConfiguration(fixtures);
   record('valid packaged deployment loads without error', load.ok, load.error ? `${load.error.code}: ${load.error.message}` : 'unexpected failure');
   if (!load.ok) {
     finish();
@@ -135,12 +161,29 @@ function main() {
   record('snapshot and every nested object/array are frozen', frozenEverywhere, 'Object.isFrozen returned false for at least one level');
 
   const inputClone = deepClone({ registry: fixtures.registry, profile: fixtures.profile, manifest: fixtures.manifest, readiness: fixtures.readiness });
+  inputClone.schemaValidators = fixtures.schemaValidators;
+  const isolationLoad = sharedLoadConfiguration(inputClone);
+  const isolationBefore = isolationLoad.ok ? JSON.stringify(isolationLoad.snapshot) : null;
+  // True input isolation proof (F3.1-E): mutate the SAME original input
+  // objects that were passed to load(), AFTER load returned, and assert the
+  // issued snapshot is byte-unchanged. The snapshot is a deep copy and
+  // shares no mutable reference with the input.
+  inputClone.registry.modules[0].label = 'Farmacia Hospitalaria MUTATED';
+  inputClone.profile.modules[0].qualificationState = 'QUALIFIED_FOR_SITE';
+  inputClone.profile.modules[0].qualificationEvidence = 'synthetic post-load evidence';
   inputClone.manifest.modules.push({ moduleId: 'ghost', label: 'Ghost', entryPath: 'ghost.html', enabled: false, qualificationState: 'NOT_IMPLEMENTED', available: false, platformCapabilities: [] });
+  inputClone.manifest.display.siteName = 'Sitio mutado tras load';
+  inputClone.profile.display.siteName = 'Sitio mutado tras load';
   inputClone.profile.deploymentId = 'mutated-deployment-id';
   record(
-    'mutating a copy of the input after load never alters the snapshot',
-    snapshot.modules.length === 2 && snapshot.deploymentId === 'bad-synthetic-demo-01',
-    'snapshot leaked mutable references to the input'
+    'mutating the SAME original load() input after load never alters the issued snapshot',
+    isolationLoad.ok &&
+      isolationBefore !== null &&
+      JSON.stringify(isolationLoad.snapshot) === isolationBefore &&
+      isolationLoad.snapshot.deploymentId === 'bad-synthetic-demo-01' &&
+      isolationLoad.snapshot.modules.length === 2 &&
+      isolationLoad.snapshot.display.siteName === fixtures.profile.display.siteName,
+    'the issued snapshot leaked mutable references to the load() input'
   );
 
   let nestedMutationBlocked = true;
@@ -298,7 +341,7 @@ function main() {
   // ALREADY-VALIDATED snapshot; unknown/unavailable ids fail closed.
   console.log('');
   console.log('PlatformContext facade (F3.1 WU-B)');
-  const platform = loadPlatformContext();
+  const platform = sharedPlatform;
   const context = platform.PlatformContext.fromSnapshot(snapshot);
 
   record(
@@ -323,25 +366,35 @@ function main() {
     'facade modules/descriptors diverge from the snapshot authority'
   );
 
-  // Synthetic fixture has no available module; a synthetic in-memory
-  // snapshot with one available module must expose only that one.
-  const availableSnapshot = deepFreeze({
-    snapshotVersion: '1',
-    deploymentId: 'synthetic-available-01',
-    siteId: 'BAD',
-    display: { productName: 'Synthetic Hub', siteLabel: 'BAD synthetic' },
-    persistenceMode: 'session-only',
-    provenance: { generator: 'platform_contract_check', generatedAt: '2026-01-01T00:00:00Z' },
-    modules: [
-      { moduleId: 'farmacia', label: 'Farmacia', route: 'farmacia_index.html', enabled: true, qualificationState: 'QUALIFIED_FOR_SITE', available: true, platformCapabilities: [], readiness: 'demonstrated', release: '0.6.0' },
-      { moduleId: 'reuma', label: 'Reuma', route: 'index.html', enabled: true, qualificationState: 'IMPLEMENTED_NOT_QUALIFIED', available: false, platformCapabilities: [], readiness: 'demonstrated', release: '0.6.0' },
-    ],
-  });
-  const availableContext = platform.PlatformContext.fromSnapshot(availableSnapshot);
+  // Synthetic fixture has no available module; a navigable-module scenario
+  // must be exercised through a REAL repository load: with the F3.1-E trust
+  // boundary, fabricated snapshot literals are rejected
+  // (SNAPSHOT_UNTRUSTED_ORIGIN), so this in-memory variant of the four
+  // packaged artifacts (deep copies of the valid fixtures, with reuma
+  // enabled + qualified and the manifest/readiness variants updated
+  // coherently) goes through the real schema validators and uses the
+  // ISSUED snapshot to assert the navigable view.
+  const availableArtifacts = deepClone({ registry: fixtures.registry, profile: fixtures.profile, manifest: fixtures.manifest, readiness: fixtures.readiness });
+  availableArtifacts.schemaValidators = fixtures.schemaValidators;
+  const reumaProfile = availableArtifacts.profile.modules.find((m) => m.moduleId === 'reuma');
+  reumaProfile.enabled = true;
+  reumaProfile.qualificationState = 'QUALIFIED_FOR_SITE';
+  reumaProfile.qualificationEvidence = 'synthetic qualification evidence for the contract check';
+  const reumaManifest = availableArtifacts.manifest.modules.find((m) => m.moduleId === 'reuma');
+  reumaManifest.enabled = true;
+  reumaManifest.qualificationState = 'QUALIFIED_FOR_SITE';
+  reumaManifest.available = true;
+  const reumaReadiness = availableArtifacts.readiness.modules.find((m) => m.moduleId === 'reuma');
+  reumaReadiness.available = true;
+  reumaReadiness.qualificationState = 'QUALIFIED_FOR_SITE';
+  const availableLoad = sharedLoadConfiguration(availableArtifacts);
+  const availableContext = availableLoad.ok ? platform.PlatformContext.fromSnapshot(availableLoad.snapshot) : null;
   record(
     'facade getNavigableModules is empty with no available module and returns only available modules in order otherwise',
     context.getNavigableModules().length === 0 &&
-      JSON.stringify(availableContext.getNavigableModules().map((m) => m.moduleId)) === JSON.stringify(['farmacia']),
+      availableLoad.ok && availableContext !== null &&
+      JSON.stringify(availableContext.getNavigableModules().map((m) => m.moduleId)) === JSON.stringify(['reuma']) &&
+      availableContext.getModuleRoute('reuma') === 'index.html',
     'navigable list included unqualified/disabled modules or invented/dropped entries'
   );
 
@@ -430,7 +483,7 @@ function main() {
       return outcome;
     }),
     readiness: ['farmacia', 'reuma'].map((id) => context.getModuleReadiness(id)),
-    availableSnapshot: {
+    availableIssued: {
       deploymentId: availableContext.getDeploymentId(),
       siteId: availableContext.getSiteId(),
       persistenceMode: availableContext.getPersistenceMode(),
@@ -455,6 +508,90 @@ function main() {
     'facade query outputs carry zero patient/dataset keys',
     leakedInFacade.length === 0,
     leakedInFacade.length === 0 ? 'unexpected' : `forbidden keys found: ${leakedInFacade.join(', ')}`
+  );
+
+  // 6b. Snapshot trust boundary (#398 F3.1-E, NEXUS-DEBT-006):
+  // PlatformContext.fromSnapshot consumes ONLY EffectiveDeployment snapshots
+  // issued by ConfigurationRepository.load in the same namespace.
+  console.log('');
+  console.log('Snapshot trust boundary (F3.1-E, NEXUS-DEBT-006)');
+
+  // (a) A deep-frozen structurally-identical lookalike of a real issued
+  // snapshot satisfies the shape check but was never issued: rejected.
+  const lookalike = deepFreeze(deepClone(snapshot));
+  const lookalikeError = captureError(() => platform.PlatformContext.fromSnapshot(lookalike));
+  record(
+    'SNAPSHOT_UNTRUSTED_ORIGIN: a deep-frozen structurally-identical lookalike of a real issued snapshot is rejected',
+    lookalikeError !== null && lookalikeError.name === 'PlatformContextError' && lookalikeError.code === 'SNAPSHOT_UNTRUSTED_ORIGIN',
+    lookalikeError ? `got ${lookalikeError.code}` : 'the lookalike was accepted but must fail closed'
+  );
+
+  // (b) A well-formed frozen object that satisfies the shape but was never
+  // issued by the repository: rejected.
+  const fabricated = deepFreeze({
+    snapshotVersion: '1',
+    deploymentId: 'fabricated-synthetic-01',
+    siteId: 'BAD',
+    display: { productName: 'Fabricated Hub', siteName: 'BAD synthetic' },
+    persistenceMode: 'session-only',
+    provenance: { generator: 'platform_contract_check', generatedAt: '2026-01-01T00:00:00Z' },
+    modules: [
+      { moduleId: 'farmacia', label: 'Farmacia Hospitalaria', route: 'farmacia_index.html', enabled: true, qualificationState: 'QUALIFIED_FOR_SITE', available: true, platformCapabilities: [], readiness: 'demonstrated', release: '0.6.0' },
+    ],
+  });
+  const fabricatedError = captureError(() => platform.PlatformContext.fromSnapshot(fabricated));
+  record(
+    'SNAPSHOT_UNTRUSTED_ORIGIN: a well-formed frozen snapshot-shaped object never issued by the repository is rejected',
+    fabricatedError !== null && fabricatedError.name === 'PlatformContextError' && fabricatedError.code === 'SNAPSHOT_UNTRUSTED_ORIGIN',
+    fabricatedError ? `got ${fabricatedError.code}` : 'the fabricated snapshot was accepted but must fail closed'
+  );
+
+  // (c) A genuinely malformed object: the shape check fails FIRST, so the
+  // code is SNAPSHOT_INVALID, never the origin code (check order contract).
+  const malformed = deepFreeze({ snapshotVersion: '1', deploymentId: 'malformed-synthetic' });
+  const malformedError = captureError(() => platform.PlatformContext.fromSnapshot(malformed));
+  record(
+    'check order: a genuinely malformed frozen object fails with SNAPSHOT_INVALID (shape before origin)',
+    malformedError !== null && malformedError.name === 'PlatformContextError' && malformedError.code === 'SNAPSHOT_INVALID',
+    malformedError ? `got ${malformedError.code}` : 'the malformed object was accepted but must fail closed'
+  );
+
+  // (d) The real issued snapshot still loads a working facade.
+  let issuedFacadeWorks = true;
+  try {
+    const issuedContext = platform.PlatformContext.fromSnapshot(snapshot);
+    issuedFacadeWorks =
+      issuedContext.getDeploymentId() === snapshot.deploymentId &&
+      issuedContext.getSiteId() === snapshot.siteId &&
+      issuedContext.getPersistenceMode() === snapshot.persistenceMode &&
+      issuedContext.getModules() === snapshot.modules &&
+      issuedContext.getNavigableModules().length === 0;
+  } catch (error) {
+    issuedFacadeWorks = false;
+  }
+  record(
+    'the real issued snapshot still loads a working facade',
+    issuedFacadeWorks,
+    'the repository-issued snapshot was rejected by the facade'
+  );
+
+  // (e) The issuance registry is internal and non-enumerable: it does not
+  // leak through Object.keys(PromuevePlatform).
+  const internalRegistryKey = '__issuedEffectiveDeployments';
+  const namespaceKeys = Object.keys(platform);
+  const internalDescriptor = Object.getOwnPropertyDescriptor(platform, internalRegistryKey);
+  const expectedNamespaceKeys = ['ConfigurationRepository', 'PlatformConfigurationError', 'PlatformContext', 'PlatformContextError'].sort();
+  record(
+    'the issuance registry does not leak: PromuevePlatform enumerable keys are unchanged and the WeakSet is non-enumerable',
+    !namespaceKeys.includes(internalRegistryKey) &&
+      JSON.stringify([...namespaceKeys].sort()) === JSON.stringify(expectedNamespaceKeys) &&
+      internalDescriptor !== undefined &&
+      internalDescriptor.enumerable === false &&
+      // Realm-independent WeakSet tag check: the registry is created inside
+      // the sandbox realm, so `instanceof WeakSet` from the Node outer realm
+      // would be a false negative for a correct implementation.
+      Object.prototype.toString.call(internalDescriptor.value) === '[object WeakSet]',
+    'the internal issuance registry leaked onto the enumerable namespace surface'
   );
 
   // 7. Cross-artifact authority hardening (#398-C): the manifest transports

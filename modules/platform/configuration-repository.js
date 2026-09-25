@@ -49,6 +49,15 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     throw new PlatformConfigurationError(code, message);
   }
 
+  // Trust boundary between the repository and PlatformContext (#398 F3.1-E,
+  // NEXUS-DEBT-006): every EffectiveDeployment snapshot successfully issued
+  // by load() is registered here, and PlatformContext.fromSnapshot consumes
+  // only snapshots present in this registry. This is an honest-origin
+  // contract between the two platform modules (ADR-002/003 fail-closed),
+  // NOT a security boundary: a hostile same-origin script could read the
+  // registry reference or replay a legitimately issued snapshot.
+  var ISSUED_SNAPSHOTS = new WeakSet();
+
   function isPlainObject(value) {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
   }
@@ -467,10 +476,24 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     validateProfileSemantics(input.profile, input.registry);
     validateManifestCompleteness(input.manifest, input.profile, input.registry);
     validateReadinessAgainstManifest(input.readiness, input.manifest);
-    return buildSnapshot(input);
+    var snapshot = buildSnapshot(input);
+    // Last step of a successful load: only fully validated, deep-frozen
+    // snapshots are ever issued (and therefore trusted by PlatformContext).
+    ISSUED_SNAPSHOTS.add(snapshot);
+    return snapshot;
   }
 
   exports.ConfigurationRepository = {
     load: load,
   };
+
+  // Internal issuance registry, attached non-enumerably so it is not part of
+  // the documented public API surface (PlatformContext reads it to verify
+  // snapshot origin; see the trust-boundary comment above).
+  Object.defineProperty(exports, '__issuedEffectiveDeployments', {
+    value: ISSUED_SNAPSHOTS,
+    enumerable: false,
+    writable: false,
+    configurable: false,
+  });
 })(root.PromuevePlatform);

@@ -54,9 +54,12 @@ snapshot is the single authority and is never reconstructed or sanitized.
 var context = PromuevePlatform.PlatformContext.fromSnapshot(snapshot);
 ```
 
-The only entry point. `snapshot` must be the frozen EffectiveDeployment
-produced by `ConfigurationRepository.load`; a non-conforming object throws
-`PlatformContextError` with code `SNAPSHOT_INVALID`. The returned facade is a
+The only entry point. `snapshot` must be a frozen EffectiveDeployment issued
+by `ConfigurationRepository.load` in the same namespace: since F3.1-E the
+facade verifies snapshot origin, so a frozen structurally-identical lookalike
+fabricated elsewhere throws `PlatformContextError` with code
+`SNAPSHOT_UNTRUSTED_ORIGIN`, while a non-conforming object throws
+`SNAPSHOT_INVALID`. The returned facade is a
 frozen object exposing only read-only queries; it holds no state, no events
 and no caching beyond the closed-over snapshot.
 
@@ -110,7 +113,8 @@ stable `code` and fail closed; nothing is guessed or silently defaulted.
 | CONFIGURATION | `REGISTRY_DUPLICATE_ENTRY_PATH` | Two registry modules share the same `entryPath` |
 | CONFIGURATION | `MANIFEST_MODULE_ORDER_MISMATCH` | Manifest module order differs from the canonical registry order |
 | CONFIGURATION | `CONFIG_INPUT_UNKNOWN_KEY` | Unknown top-level key in the `load` input |
-| CONTEXT | `SNAPSHOT_INVALID` | Input is not the frozen `snapshotVersion '1'` snapshot |
+| CONTEXT | `SNAPSHOT_INVALID` | Input is not the frozen `snapshotVersion '1'` snapshot (shape check runs before the origin check) |
+| CONTEXT | `SNAPSHOT_UNTRUSTED_ORIGIN` | Well-formed frozen snapshot that `ConfigurationRepository.load` did not issue in this namespace |
 | CONTEXT | `MODULE_UNKNOWN` | moduleId is not part of the snapshot |
 | CONTEXT | `MODULE_NOT_AVAILABLE` | Module registered but not available (e.g. route requested) |
 
@@ -145,6 +149,31 @@ never runtime authorization. Capability equality is set semantics everywhere; ar
 never authority. The `load` input is closed: unknown top-level keys fail with
 `CONFIG_INPUT_UNKNOWN_KEY`.
 
+## Snapshot trust boundary (#398 F3.1-E, NEXUS-DEBT-006)
+
+`PlatformContext.fromSnapshot` consumes only EffectiveDeployment snapshots
+issued by `ConfigurationRepository.load`. The repository registers every
+snapshot it issues, as the last step of a successful `load`, in an internal
+**non-enumerable** issuance registry (a `WeakSet` attached to the shared
+`PromuevePlatform` namespace; not documented public API). The facade verifies
+that origin after the shape check, in this fixed order:
+
+1. Presence/shape first: non-objects and malformed snapshots fail with
+   `SNAPSHOT_INVALID`.
+2. Origin second: a well-formed frozen lookalike that satisfies the shape but
+   was never issued by the repository fails with `SNAPSHOT_UNTRUSTED_ORIGIN`.
+   If the registry is absent or unusable (e.g. the context module loaded
+   without the repository in the same namespace), no snapshot is trusted.
+
+Isolation contract: the issued snapshot is a deep copy of the load input;
+mutating the SAME original input objects passed to `load()` — after `load`
+has returned — never alters the snapshot.
+
+This is an honest-origin contract between the two platform modules
+(ADR-002/003 fail-closed), **not** a security boundary: a hostile
+same-origin script can read the shared namespace or replay a legitimately
+issued snapshot.
+
 ## Non-goals
 
 - No patient/dataset transport of any kind (ADR-002): no identifiers, no
@@ -157,4 +186,4 @@ never authority. The `load` input is closed: unknown top-level keys fail with
 
 Contract verification: `node tools/platform_contract_check.mjs` (33 original WU-A/WU-B
 cases + 13 cross-artifact authority hardening cases from #398-C + 20 F3.1-D invariant closure
-cases, all synthetic).
+cases + 5 F3.1-E trust-boundary/isolation cases, all synthetic).

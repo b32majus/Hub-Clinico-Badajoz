@@ -6,7 +6,9 @@
  * PromuevePlatform.ConfigurationRepository.load (F3.1 WU-A). It never
  * reconstructs, sanitizes or re-validates deployment semantics: the
  * repository owns validation. A snapshot that does not conform to the
- * expected frozen shape fails closed here with SNAPSHOT_INVALID.
+ * expected frozen shape fails closed here with SNAPSHOT_INVALID; a snapshot
+ * that conforms but was not issued by this ConfigurationRepository fails
+ * closed with SNAPSHOT_UNTRUSTED_ORIGIN (F3.1-E trust boundary).
  *
  * ADR-002 boundary: this seam transports NO clinical data — no patient
  * identifiers, no workbooks, no cohorts, no clinical rules. Home (F3.2) is
@@ -70,6 +72,27 @@ root.PromuevePlatform = root.PromuevePlatform || {};
   }
 
   /**
+   * Origin check (#398 F3.1-E, NEXUS-DEBT-006): the snapshot must be one the
+   * ConfigurationRepository actually issued from load(). The repository
+   * registers every issued snapshot in an internal non-enumerable registry
+   * (a WeakSet attached to the shared PromuevePlatform namespace); a frozen
+   * structurally-identical lookalike fabricated elsewhere is rejected here
+   * even though it satisfies the shape above. This is an honest-origin
+   * contract between the two platform modules (ADR-002/003 fail-closed), NOT
+   * a defense against hostile same-origin scripts, which can read the shared
+   * namespace or replay a legitimately issued snapshot.
+   */
+  function validateSnapshotOrigin(snapshot) {
+    var issued = exports.__issuedEffectiveDeployments;
+    // Fail closed: if the registry is absent or unusable (e.g. the context
+    // module is loaded without the repository in the same namespace), no
+    // well-formed snapshot can be verified, so none is trusted.
+    if (!(issued instanceof WeakSet) || !issued.has(snapshot)) {
+      fail('SNAPSHOT_UNTRUSTED_ORIGIN', 'snapshot is not an EffectiveDeployment issued by ConfigurationRepository.load in this namespace');
+    }
+  }
+
+  /**
    * Names of every query on the facade. The returned facade object is
    * frozen, so it carries no writable state-bearing property: consumers can
    * only call these read-only queries over the closed-over snapshot.
@@ -93,7 +116,12 @@ root.PromuevePlatform = root.PromuevePlatform || {};
    * there is no state, no events and no caching beyond that closure.
    */
   function fromSnapshot(snapshot) {
+    // Check order is part of the contract: presence/shape first
+    // (SNAPSHOT_INVALID for non-objects and malformed snapshots), then
+    // origin (SNAPSHOT_UNTRUSTED_ORIGIN for a well-formed frozen lookalike
+    // that the repository never issued).
     validateSnapshotShape(snapshot);
+    validateSnapshotOrigin(snapshot);
 
     function findModule(moduleId, method) {
       if (typeof moduleId !== 'string' || moduleId === '') {
