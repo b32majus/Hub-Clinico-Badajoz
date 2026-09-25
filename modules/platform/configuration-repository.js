@@ -79,6 +79,57 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     return list.indexOf(arr) !== -1;
   }
 
+  // Full deep equality (objects compared by own enumerable keys, arrays
+  // element-wise) used for authority coherence checks.
+  function deepEqual(a, b) {
+    if (a === b) return true;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (!deepEqual(a[i], b[i])) return false;
+      }
+      return true;
+    }
+    if (isPlainObject(a) && isPlainObject(b)) {
+      var aKeys = Object.keys(a);
+      if (aKeys.length !== Object.keys(b).length) return false;
+      for (var j = 0; j < aKeys.length; j++) {
+        var key = aKeys[j];
+        if (!Object.prototype.hasOwnProperty.call(b, key) || !deepEqual(a[key], b[key])) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // Order-insensitive array-set comparison. Artifact schemas enforce
+  // uniqueItems on capability arrays, so element membership plus equal length
+  // is a faithful set comparison here.
+  function sameSet(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (b.indexOf(a[i]) === -1) return false;
+    }
+    return true;
+  }
+
+  // Safe relative .html route (#398 F3.1-D): non-empty string, starts with a
+  // lowercase letter or digit (which also rejects a leading slash), no
+  // protocol separator ("://"), no backslash separator, no '?' query or '#'
+  // fragment, no '.' or '..' path segment, ends with '.html'.
+  function isSafeRelativeHtmlPath(entryPath) {
+    if (typeof entryPath !== 'string' || entryPath.length === 0) return false;
+    if (!/^[a-z0-9]/.test(entryPath)) return false;
+    if (entryPath.indexOf('://') !== -1) return false;
+    if (entryPath.indexOf('\\') !== -1) return false;
+    if (entryPath.indexOf('?') !== -1 || entryPath.indexOf('#') !== -1) return false;
+    var segments = entryPath.split('/');
+    for (var i = 0; i < segments.length; i++) {
+      if (segments[i] === '.' || segments[i] === '..') return false;
+    }
+    return entryPath.slice(-5) === '.html';
+  }
+
   // --- step 1: input presence/shape (fail closed, no defaults) ---
 
   function validateInputShape(input, schemaValidators) {
@@ -106,6 +157,14 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     if (!isPlainObject(input.manifest.display) || !isPlainObject(input.manifest.provenance)) {
       fail('CONFIG_INPUT_INVALID', 'manifest is missing display or provenance');
     }
+    // Closed load input (#398 F3.1-D): exactly these top-level keys, nothing
+    // else. Unknown keys fail closed instead of being ignored.
+    var allowedInputKeys = ['registry', 'profile', 'manifest', 'readiness', 'schemaValidators'];
+    for (var inputKey in input) {
+      if (Object.prototype.hasOwnProperty.call(input, inputKey) && allowedInputKeys.indexOf(inputKey) === -1) {
+        fail('CONFIG_INPUT_UNKNOWN_KEY', 'unknown top-level load input key: "' + inputKey + '"');
+      }
+    }
   }
 
   // --- step 2: schema validation through the injected validators ---
@@ -131,23 +190,42 @@ root.PromuevePlatform = root.PromuevePlatform || {};
   // --- step 3: registry semantics ---
 
   function validateRegistrySemantics(registry) {
-    var seen = {};
+    // Prototype-safe maps (#398 F3.1-D): inherited keys such as 'constructor'
+    // can never satisfy a moduleId or entryPath lookup.
+    var seen = Object.create(null);
+    var entryPaths = Object.create(null);
     for (var i = 0; i < registry.modules.length; i++) {
       var moduleId = registry.modules[i].moduleId;
       if (seen[moduleId]) {
         fail('REGISTRY_DUPLICATE_MODULE', 'duplicate moduleId in registry: "' + moduleId + '"');
       }
       seen[moduleId] = true;
+      // Route safety is a registry authority property: the registry entryPath
+      // is the only route source, so an unsafe path is rejected here, before
+      // any manifest/readiness comparison can trust it.
+      var entryPath = registry.modules[i].entryPath;
+      if (!isSafeRelativeHtmlPath(entryPath)) {
+        fail('REGISTRY_UNSAFE_ENTRY_PATH', 'module "' + moduleId + '": registry entryPath "' + entryPath + '" is not a safe relative .html path');
+      }
+      if (entryPaths[entryPath]) {
+        fail('REGISTRY_DUPLICATE_ENTRY_PATH', 'duplicate entryPath in registry: "' + entryPath + '"');
+      }
+      entryPaths[entryPath] = true;
     }
   }
 
   // --- step 4: profile semantics ---
 
   function validateProfileSemantics(profile, registry) {
-    var registered = {};
+    var registered = Object.create(null);
     for (var r = 0; r < registry.modules.length; r++) registered[registry.modules[r].moduleId] = true;
+    var seen = Object.create(null);
     for (var i = 0; i < profile.modules.length; i++) {
       var mod = profile.modules[i];
+      if (seen[mod.moduleId]) {
+        fail('PROFILE_DUPLICATE_MODULE', 'duplicate moduleId in profile: "' + mod.moduleId + '"');
+      }
+      seen[mod.moduleId] = true;
       if (!registered[mod.moduleId]) {
         fail('PROFILE_UNKNOWN_MODULE', 'profile module "' + mod.moduleId + '" is not registered in the module registry');
       }
@@ -189,15 +267,20 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     if (manifest.persistenceMode !== profile.persistenceMode) {
       fail('MANIFEST_PROFILE_PERSISTENCE_MODE_MISMATCH', 'manifest persistenceMode "' + manifest.persistenceMode + '" does not match profile persistenceMode "' + profile.persistenceMode + '"');
     }
-    var registryById = {};
+    // Display coherence (#398 F3.1-D): the profile is the display authority;
+    // the manifest must carry it verbatim (full deep compare).
+    if (!deepEqual(manifest.display, profile.display)) {
+      fail('MANIFEST_PROFILE_DISPLAY_MISMATCH', 'manifest display does not match the profile display; the profile is the display authority');
+    }
+    var registryById = Object.create(null);
     for (var r = 0; r < registry.modules.length; r++) {
       registryById[registry.modules[r].moduleId] = registry.modules[r];
     }
-    var profileById = {};
+    var profileById = Object.create(null);
     for (var p = 0; p < profile.modules.length; p++) {
       profileById[profile.modules[p].moduleId] = profile.modules[p];
     }
-    var manifestIds = {};
+    var manifestIds = Object.create(null);
     for (var i = 0; i < manifest.modules.length; i++) {
       var mod = manifest.modules[i];
       if (manifestIds[mod.moduleId]) {
@@ -214,7 +297,9 @@ root.PromuevePlatform = root.PromuevePlatform || {};
       if (mod.entryPath !== registryEntry.entryPath) {
         fail('MANIFEST_REGISTRY_ENTRY_PATH_MISMATCH', 'module "' + mod.moduleId + '": manifest entryPath "' + mod.entryPath + '" does not match registry entryPath "' + registryEntry.entryPath + '"');
       }
-      if (JSON.stringify(mod.platformCapabilities) !== JSON.stringify(registryEntry.platformCapabilities)) {
+      // Set equality (order-insensitive): capability content is authority,
+      // not the serialized array order (#398 F3.1-D).
+      if (!sameSet(mod.platformCapabilities, registryEntry.platformCapabilities)) {
         fail('MANIFEST_REGISTRY_CAPABILITIES_MISMATCH', 'module "' + mod.moduleId + '": manifest platformCapabilities do not match the registry entry');
       }
       var profileModule = profileById[mod.moduleId];
@@ -238,6 +323,21 @@ root.PromuevePlatform = root.PromuevePlatform || {};
         fail('MANIFEST_MISSING_MODULE', 'manifest is missing module "' + profileModuleId + '" resolved by the deployment profile');
       }
     }
+    // Canonical order (#398 F3.1-D), checked after set equality: the manifest
+    // moduleId sequence must equal the registry order filtered to the
+    // profile-selected modules. Profile order is never display/navigation
+    // authority.
+    var selected = Object.create(null);
+    for (var s = 0; s < profile.modules.length; s++) selected[profile.modules[s].moduleId] = true;
+    var expectedOrder = [];
+    for (var t = 0; t < registry.modules.length; t++) {
+      if (selected[registry.modules[t].moduleId]) expectedOrder.push(registry.modules[t].moduleId);
+    }
+    var actualOrder = [];
+    for (var u = 0; u < manifest.modules.length; u++) actualOrder.push(manifest.modules[u].moduleId);
+    if (JSON.stringify(actualOrder) !== JSON.stringify(expectedOrder)) {
+      fail('MANIFEST_MODULE_ORDER_MISMATCH', 'manifest module order ' + JSON.stringify(actualOrder) + ' does not match the canonical registry order ' + JSON.stringify(expectedOrder));
+    }
   }
 
   // --- step 6: readiness vs manifest ---
@@ -252,11 +352,21 @@ root.PromuevePlatform = root.PromuevePlatform || {};
     if (readiness.siteId !== manifest.siteId) {
       fail('READINESS_SITE_ID_MISMATCH', 'readiness siteId "' + readiness.siteId + '" does not match manifest siteId "' + manifest.siteId + '"');
     }
-    var manifestById = {};
+    // Duplicate moduleIds are rejected BEFORE per-module resolution (#398
+    // F3.1-D) so a conflicting last-write readiness value can never overwrite
+    // the authority for a module.
+    var readinessIds = Object.create(null);
+    for (var d = 0; d < readiness.modules.length; d++) {
+      var duplicateId = readiness.modules[d].moduleId;
+      if (readinessIds[duplicateId]) {
+        fail('READINESS_DUPLICATE_MODULE', 'duplicate moduleId in readiness: "' + duplicateId + '"');
+      }
+      readinessIds[duplicateId] = true;
+    }
+    var manifestById = Object.create(null);
     for (var m = 0; m < manifest.modules.length; m++) {
       manifestById[manifest.modules[m].moduleId] = manifest.modules[m];
     }
-    var readinessIds = {};
     for (var i = 0; i < readiness.modules.length; i++) {
       var mod = readiness.modules[i];
       var resolved = manifestById[mod.moduleId];
@@ -273,6 +383,14 @@ root.PromuevePlatform = root.PromuevePlatform || {};
       if (mod.qualificationState !== resolved.qualificationState) {
         fail('READINESS_QUALIFICATION_STATE_MISMATCH', 'module "' + mod.moduleId + '": readiness qualificationState "' + mod.qualificationState + '" does not match manifest "' + resolved.qualificationState + '"');
       }
+      // Label and capabilities coherence (#398 F3.1-D): the manifest/registry
+      // entry is the authority; capabilities compare as a set.
+      if (mod.label !== resolved.label) {
+        fail('READINESS_LABEL_MISMATCH', 'module "' + mod.moduleId + '": readiness label "' + mod.label + '" does not match manifest label "' + resolved.label + '"');
+      }
+      if (!sameSet(mod.platformCapabilities, resolved.platformCapabilities)) {
+        fail('READINESS_CAPABILITIES_MISMATCH', 'module "' + mod.moduleId + '": readiness platformCapabilities do not match the manifest entry');
+      }
     }
     for (var k = 0; k < manifest.modules.length; k++) {
       var manifestModuleId = manifest.modules[k].moduleId;
@@ -286,7 +404,7 @@ root.PromuevePlatform = root.PromuevePlatform || {};
 
   function buildSnapshot(input) {
     var manifest = input.manifest;
-    var readinessById = {};
+    var readinessById = Object.create(null);
     for (var r = 0; r < input.readiness.modules.length; r++) {
       readinessById[input.readiness.modules[r].moduleId] = input.readiness.modules[r];
     }
@@ -310,8 +428,12 @@ root.PromuevePlatform = root.PromuevePlatform || {};
       snapshotVersion: '1',
       deploymentId: input.profile.deploymentId,
       siteId: input.profile.siteId,
-      display: deepCopy(manifest.display),
+      // Display authority is the PROFILE (#398 F3.1-D), verified equal to
+      // manifest.display by MANIFEST_PROFILE_DISPLAY_MISMATCH above.
+      display: deepCopy(input.profile.display),
       persistenceMode: input.profile.persistenceMode,
+      // Provenance is diagnostic evidence copied from the manifest; it is
+      // never runtime authorization.
       provenance: deepCopy(manifest.provenance),
       modules: modules,
     });
@@ -321,6 +443,22 @@ root.PromuevePlatform = root.PromuevePlatform || {};
    * Loads, validates and freezes one fixed site deployment. Throws a
    * PlatformConfigurationError (stable `code`) on any invalid input.
    */
+  // Deterministic validation order (#398 F3.1-D). Fail closed on the first
+  // mismatch; no fallback, no auto-repair:
+  //   1. input shape, closed input keys and validator presence
+  //      (CONFIG_INPUT_INVALID / CONFIG_INPUT_UNKNOWN_KEY /
+  //      SCHEMA_VALIDATOR_REQUIRED);
+  //   2. schema validators (per-artifact *_SCHEMA_INVALID);
+  //   3. registry semantics: moduleId duplicates, route safety, entryPath
+  //      uniqueness (the registry is the route authority);
+  //   4. profile semantics: moduleId duplicates, registry membership,
+  //      enabled/qualification coherence, qualification evidence;
+  //   5. manifest coherence: identity vs profile incl. display, set equality
+  //      vs profile, per-module state equality vs profile, registry technical
+  //      identity, canonical registry order;
+  //   6. readiness coherence: identity vs manifest, moduleId duplicates
+  //      (before per-module resolution), per-module equality incl. label and
+  //      capabilities as a set.
   function load(input) {
     var schemaValidators = input ? input.schemaValidators : undefined;
     validateInputShape(input, schemaValidators);

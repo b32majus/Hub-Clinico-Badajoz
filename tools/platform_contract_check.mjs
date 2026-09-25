@@ -557,6 +557,146 @@ function main() {
     `snapshot=[${hardeningLoad.ok ? hardeningLoad.snapshot.modules.map((m) => m.available) : 'n/a'}] profile-derived=[${profileDerivedAvailability}]`
   );
 
+  // 8. F3.1-D invariant closure (#398): display/order/route authority sits
+  // with the profile and registry, the load input is closed, duplicates are
+  // rejected before per-module resolution, lookups are prototype-safe and
+  // capability equality is set semantics. Planted in-memory mutations must
+  // fail closed with the exact stable code.
+  console.log('');
+  console.log('F3.1-D invariant closure');
+
+  function plantF31D() {
+    // Reattach the live validator functions: JSON deep-clone would drop them.
+    const planted = deepClone({ registry: fixtures.registry, profile: fixtures.profile, manifest: fixtures.manifest, readiness: fixtures.readiness });
+    planted.schemaValidators = fixtures.schemaValidators;
+    return planted;
+  }
+
+  const f31dCases = [
+    {
+      name: 'manifest display siteName tampered vs the profile -> MANIFEST_PROFILE_DISPLAY_MISMATCH',
+      mutate: (input) => { input.manifest.display.siteName = 'Sitio manipulado'; },
+      expect: 'MANIFEST_PROFILE_DISPLAY_MISMATCH',
+    },
+    {
+      name: 'duplicate profile moduleId -> PROFILE_DUPLICATE_MODULE',
+      mutate: (input) => { input.profile.modules.push(deepClone(input.profile.modules[0])); },
+      expect: 'PROFILE_DUPLICATE_MODULE',
+    },
+    {
+      name: 'duplicate readiness moduleId with conflicting readiness value -> READINESS_DUPLICATE_MODULE',
+      mutate: (input) => {
+        const duplicate = deepClone(input.readiness.modules[0]);
+        duplicate.readiness = 'code';
+        input.readiness.modules.push(duplicate);
+      },
+      expect: 'READINESS_DUPLICATE_MODULE',
+    },
+    {
+      name: 'readiness label tampered vs the manifest/registry -> READINESS_LABEL_MISMATCH',
+      mutate: (input) => { input.readiness.modules[0].label = 'Farmacia manipulada'; },
+      expect: 'READINESS_LABEL_MISMATCH',
+    },
+    {
+      name: 'readiness platformCapabilities content tampered -> READINESS_CAPABILITIES_MISMATCH',
+      mutate: (input) => { input.readiness.modules[0].platformCapabilities = ['static-delivery']; },
+      expect: 'READINESS_CAPABILITIES_MISMATCH',
+    },
+    {
+      name: 'two registry modules sharing entryPath -> REGISTRY_DUPLICATE_ENTRY_PATH',
+      mutate: (input) => { input.registry.modules[1].entryPath = input.registry.modules[0].entryPath; },
+      expect: 'REGISTRY_DUPLICATE_ENTRY_PATH',
+    },
+    {
+      name: 'manifest modules reordered vs the canonical registry order -> MANIFEST_MODULE_ORDER_MISMATCH',
+      mutate: (input) => {
+        const first = input.manifest.modules[0];
+        input.manifest.modules[0] = input.manifest.modules[1];
+        input.manifest.modules[1] = first;
+      },
+      expect: 'MANIFEST_MODULE_ORDER_MISMATCH',
+    },
+    {
+      name: 'extra top-level load input key -> CONFIG_INPUT_UNKNOWN_KEY',
+      mutate: (input) => { input.deploymentNote = { note: 'unknown extra key' }; },
+      expect: 'CONFIG_INPUT_UNKNOWN_KEY',
+    },
+    {
+      name: "profile module with inherited-key id 'constructor' while the registry lacks it -> PROFILE_UNKNOWN_MODULE",
+      mutate: (input) => { input.profile.modules[0].moduleId = 'constructor'; },
+      expect: 'PROFILE_UNKNOWN_MODULE',
+    },
+  ];
+  for (const c of f31dCases) {
+    const planted = plantF31D();
+    c.mutate(planted);
+    const failed = loadConfiguration(planted);
+    record(
+      c.name,
+      !failed.ok && failed.error && failed.error.code === c.expect,
+      failed.ok ? 'was accepted but must fail closed' : `got code=${failed.error ? failed.error.code : 'unknown'}`
+    );
+  }
+
+  // Route safety at the registry authority. The repo JSON schemas already
+  // reject most unsafe paths at schema-validation time; the repository must
+  // enforce route safety itself (defense in depth), so these cases plant
+  // permissive validators to reach the registry semantics check.
+  const permissiveValidators = { registry: () => [], profile: () => [], manifest: () => [], readiness: () => [] };
+  const unsafeEntryPaths = ['/abs.html', 'http://x/y.html', 'a.html?q=1', 'a.html#f', 'a/../b.html', '.', '..', ''];
+  for (const unsafe of unsafeEntryPaths) {
+    const planted = plantF31D();
+    planted.schemaValidators = permissiveValidators;
+    planted.registry.modules[0].entryPath = unsafe;
+    const failed = loadConfiguration(planted);
+    record(
+      `unsafe registry entryPath ${JSON.stringify(unsafe)} -> REGISTRY_UNSAFE_ENTRY_PATH`,
+      !failed.ok && failed.error && failed.error.code === 'REGISTRY_UNSAFE_ENTRY_PATH',
+      failed.ok ? 'was accepted but must fail closed' : `got code=${failed.error ? failed.error.code : 'unknown'}`
+    );
+  }
+
+  // D21 positive control: a legitimately named 'constructor' module cannot
+  // rely on (nor be satisfied by) inherited prototype keys; it loads fine
+  // when explicitly present in all four artifacts.
+  const constructorInput = plantF31D();
+  constructorInput.registry.modules.push({ moduleId: 'constructor', label: 'Constructor Control', entryPath: 'constructor.html', platformCapabilities: [] });
+  constructorInput.profile.modules.push({ moduleId: 'constructor', enabled: false, qualificationState: 'NOT_IMPLEMENTED' });
+  constructorInput.manifest.modules.push({ moduleId: 'constructor', label: 'Constructor Control', entryPath: 'constructor.html', enabled: false, qualificationState: 'NOT_IMPLEMENTED', available: false, platformCapabilities: [] });
+  constructorInput.readiness.modules.push({ moduleId: 'constructor', label: 'Constructor Control', route: 'constructor.html', available: false, qualificationState: 'NOT_IMPLEMENTED', readiness: 'code', platformCapabilities: [], release: '0.6.0' });
+  const constructorLoad = loadConfiguration(constructorInput);
+  record(
+    "registry/profile/manifest/readiness legitimately containing moduleId 'constructor' load fine (prototype keys never satisfy lookups)",
+    constructorLoad.ok,
+    constructorLoad.ok ? 'unexpected' : `${constructorLoad.error.code}: ${constructorLoad.error.message}`
+  );
+
+  // D14 set semantics positive control: capability ARRAY ORDER is not
+  // authority; only content is. Reordering the manifest capabilities (with
+  // the readiness view still in the original order) must still load.
+  const reorderedCapsInput = plantF31D();
+  reorderedCapsInput.manifest.modules[0].platformCapabilities = [...reorderedCapsInput.manifest.modules[0].platformCapabilities].reverse();
+  const reorderedCapsLoad = loadConfiguration(reorderedCapsInput);
+  record(
+    'manifest platformCapabilities reordered (same content) still load (set semantics, order never authority)',
+    reorderedCapsLoad.ok,
+    reorderedCapsLoad.ok ? 'unexpected' : `${reorderedCapsLoad.error.code}: ${reorderedCapsLoad.error.message}`
+  );
+
+  // Snapshot authority controls: display comes from the PROFILE, module order
+  // from the registry, readiness/release carried through unchanged.
+  const authorityLoad = loadConfiguration(fixtures);
+  record(
+    'snapshot display equals profile.display, modules follow registry order, readiness/release carried through unchanged',
+    authorityLoad.ok &&
+      JSON.stringify(authorityLoad.snapshot.display) === JSON.stringify(fixtures.profile.display) &&
+      JSON.stringify(authorityLoad.snapshot.modules.map((m) => m.moduleId)) ===
+        JSON.stringify(fixtures.registry.modules.map((m) => m.moduleId)) &&
+      JSON.stringify(authorityLoad.snapshot.modules.map((m) => [m.readiness, m.release])) ===
+        JSON.stringify(fixtures.readiness.modules.map((m) => [m.readiness, m.release])),
+    authorityLoad.ok ? 'snapshot diverges from the profile/registry/readiness authority' : `${authorityLoad.error.code}: ${authorityLoad.error.message}`
+  );
+
   finish();
 }
 

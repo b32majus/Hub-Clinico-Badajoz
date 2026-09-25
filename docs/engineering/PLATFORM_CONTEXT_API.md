@@ -101,6 +101,15 @@ stable `code` and fail closed; nothing is guessed or silently defaulted.
 | CONFIGURATION | `READINESS_DEPLOYMENT_ID_MISMATCH` | Readiness `deploymentId` differs from the manifest's |
 | CONFIGURATION | `READINESS_SITE_ID_MISMATCH` | Readiness `siteId` differs from the manifest's |
 | CONFIGURATION | `READINESS_UNKNOWN_MODULE` / `READINESS_MISSING_MODULE` / `READINESS_AVAILABLE_CONTRADICTION` / `READINESS_ROUTE_MISMATCH` / `READINESS_QUALIFICATION_STATE_MISMATCH` | Readiness vs manifest incoherence |
+| CONFIGURATION | `MANIFEST_PROFILE_DISPLAY_MISMATCH` | Manifest `display` differs from the profile's; the profile is the display authority |
+| CONFIGURATION | `PROFILE_DUPLICATE_MODULE` | Duplicate moduleId in the deployment profile |
+| CONFIGURATION | `READINESS_DUPLICATE_MODULE` | Duplicate moduleId in readiness (rejected before per-module resolution) |
+| CONFIGURATION | `READINESS_LABEL_MISMATCH` | Readiness `label` differs from the manifest/registry entry |
+| CONFIGURATION | `READINESS_CAPABILITIES_MISMATCH` | Readiness `platformCapabilities` differ from the manifest entry (compared as a set) |
+| CONFIGURATION | `REGISTRY_UNSAFE_ENTRY_PATH` | Registry `entryPath` is not a safe relative `.html` path |
+| CONFIGURATION | `REGISTRY_DUPLICATE_ENTRY_PATH` | Two registry modules share the same `entryPath` |
+| CONFIGURATION | `MANIFEST_MODULE_ORDER_MISMATCH` | Manifest module order differs from the canonical registry order |
+| CONFIGURATION | `CONFIG_INPUT_UNKNOWN_KEY` | Unknown top-level key in the `load` input |
 | CONTEXT | `SNAPSHOT_INVALID` | Input is not the frozen `snapshotVersion '1'` snapshot |
 | CONTEXT | `MODULE_UNKNOWN` | moduleId is not part of the snapshot |
 | CONTEXT | `MODULE_NOT_AVAILABLE` | Module registered but not available (e.g. route requested) |
@@ -124,6 +133,18 @@ the registry or its technical identity (label, entryPath, platformCapabilities) 
 registry; or the readiness `deploymentId`/`siteId` diverge from the manifest. First mismatch wins;
 the snapshot is only built when every artifact agrees.
 
+## Display, order and route authority (#398 F3.1-D)
+
+`display` is profile-authorized: the snapshot takes it from the profile and the manifest must
+carry it verbatim (`MANIFEST_PROFILE_DISPLAY_MISMATCH`). Module order is registry-authorized:
+the manifest lists the profile-selected modules in registry order
+(`MANIFEST_MODULE_ORDER_MISMATCH`); profile order only selects which modules deploy. Route
+safety is registry-authorized: every registry `entryPath` must be a safe relative `.html` path
+(`REGISTRY_UNSAFE_ENTRY_PATH`, unique per registry). `provenance` is diagnostic evidence only,
+never runtime authorization. Capability equality is set semantics everywhere; array order is
+never authority. The `load` input is closed: unknown top-level keys fail with
+`CONFIG_INPUT_UNKNOWN_KEY`.
+
 ## Non-goals
 
 - No patient/dataset transport of any kind (ADR-002): no identifiers, no
@@ -135,4 +156,5 @@ the snapshot is only built when every artifact agrees.
   routing belong to the F3.2 Home shell.
 
 Contract verification: `node tools/platform_contract_check.mjs` (33 original WU-A/WU-B
-cases + 13 cross-artifact authority hardening cases from #398-C, all synthetic).
+cases + 13 cross-artifact authority hardening cases from #398-C + 20 F3.1-D invariant closure
+cases, all synthetic).

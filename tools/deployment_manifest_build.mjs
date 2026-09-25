@@ -112,21 +112,26 @@ for (const mod of profile.modules) {
   }
 }
 
-// 4. Resolved composition (registry order is authoritative; profile order must
-//    not leak into the manifest).
+// 4. Resolved composition. Registry order is authoritative (#398 F3.1-D):
+//    the manifest lists the profile-selected modules in registry order. The
+//    profile only SELECTS which registered modules are deployed; profile
+//    order is never display/navigation authority.
 const registryByModuleId = new Map(registry.modules.map((m) => [m.moduleId, m]));
-const modules = profile.modules.map((mod) => {
-  const entry = registryByModuleId.get(mod.moduleId);
-  return {
-    moduleId: mod.moduleId,
-    label: entry.label,
-    entryPath: entry.entryPath,
-    enabled: mod.enabled,
-    qualificationState: mod.qualificationState,
-    available: mod.enabled === true && mod.qualificationState === 'QUALIFIED_FOR_SITE',
-    platformCapabilities: entry.platformCapabilities,
-  };
-});
+const profileByModuleId = new Map(profile.modules.map((m) => [m.moduleId, m]));
+const modules = registry.modules
+  .filter((entry) => profileByModuleId.has(entry.moduleId))
+  .map((entry) => {
+    const mod = profileByModuleId.get(entry.moduleId);
+    return {
+      moduleId: entry.moduleId,
+      label: entry.label,
+      entryPath: entry.entryPath,
+      enabled: mod.enabled,
+      qualificationState: mod.qualificationState,
+      available: mod.enabled === true && mod.qualificationState === 'QUALIFIED_FOR_SITE',
+      platformCapabilities: entry.platformCapabilities,
+    };
+  });
 
 const manifest = {
   manifestVersion: '1',
