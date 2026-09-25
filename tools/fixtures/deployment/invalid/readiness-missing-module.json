@@ -1,0 +1,21 @@
+{
+  "readinessVersion": "1",
+  "deploymentId": "bad-synthetic-demo-01",
+  "siteId": "BAD",
+  "modules": [
+    {
+      "moduleId": "farmacia",
+      "label": "Farmacia Hospitalaria",
+      "route": "farmacia_index.html",
+      "available": false,
+      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED",
+      "readiness": "demonstrated",
+      "platformCapabilities": [
+        "static-delivery",
+        "session-scoped-state",
+        "offline-capable"
+      ],
+      "release": "0.6.0"
+    }
+  ]
+}

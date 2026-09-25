@@ -20,19 +20,6 @@
         "session-scoped-state",
         "offline-capable"
       ]
-    },
-    {
-      "moduleId": "reuma",
-      "label": "Hub Clínico Reuma",
-      "entryPath": "index.html",
-      "enabled": true,
-      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED",
-      "available": false,
-      "platformCapabilities": [
-        "static-delivery",
-        "session-scoped-state",
-        "offline-capable"
-      ]
     }
   ],
   "provenance": {

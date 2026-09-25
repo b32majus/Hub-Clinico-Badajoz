@@ -1,6 +1,6 @@
 # Registro vivo de deuda — PROMueve Nexus
 
-**Última actualización:** 2026-09-24
+**Última actualización:** 2026-09-25
 **Estado:** `LIVE / OPERATIVE`
 **Ámbito:** deuda transversal de plataforma, Foundation, tooling, deployment y seams Nexus
 **Issue origen inicial:** #389
@@ -13,11 +13,12 @@ La deuda específica de Farmacia continúa en [`FARMACIA_DEBT_REGISTER.md`](./FA
 
 | ID | Estado | Timing / destino | Origen / evidencia | Riesgo concreto | Criterio de cierre | WO / PR |
 | --- | --- | --- | --- | --- | --- | --- |
-| `NEXUS-DEBT-001` | OPEN | F1.2 tooling hardening | #389 D1; Promotion Review PR #388 | Los hashes de provenance del manifest se calculan sobre bytes crudos; LF/CRLF puede cambiar el hash del mismo contenido lógico y degradar reproducibilidad entre checkouts. | Canonicalizar el contenido que entra al hash o adoptar/documentar una semántica de bytes demostrablemente reproducible; añadir verificación cruzada. | Pendiente |
-| `NEXUS-DEBT-002` | OPEN | Antes de promover manifest/readiness a consumo runtime F3 | #389 D2; Promotion Review PR #388 | Los checkers validan módulos presentes, pero un artefacto manual podría omitir un módulo esperado y pasar la semántica actual. | Manifest debe demostrar completitud respecto al profile y readiness respecto al manifest; negativos plantados prueban omisiones. | Pendiente |
+| `NEXUS-DEBT-001` | RESOLVED | Cerrada en TRAIN-NEXUS-FOUNDATION-02 | #389 D1; Promotion Review PR #388; cierre #394 | Los hashes de provenance del manifest se calculaban sobre bytes crudos; LF/CRLF podía cambiar el hash del mismo contenido lógico y degradar reproducibilidad entre checkouts. | Hashes de provenance calculados sobre contenido EOL-canonicalizado, con verificación plantada de invariancia LF/CRLF y de detección de drift real; phantom-dirty del blob CRLF de TOOLING_BASELINE eliminado. | #394 / PR final de TRAIN-NEXUS-FOUNDATION-02 |
+| `NEXUS-DEBT-002` | RESOLVED | Cerrada en TRAIN-NEXUS-FOUNDATION-02 antes de consumo runtime F3 | #389 D2; Promotion Review PR #388; cierre #395 | Los checkers validaban módulos presentes, pero un artefacto manual podía omitir un módulo esperado y pasar la semántica previa. | Manifest demostrado completo respecto al profile y readiness respecto al manifest (ambas direcciones); negativos plantados `manifest-missing-module` / `readiness-missing-module`. | #395 / PR final de TRAIN-NEXUS-FOUNDATION-02 |
 | `NEXUS-DEBT-003` | RESOLVED | Cerrada post Bootstrap 01 | #389 D3 | INDEX/WOS podían quedar stale tras merge de #388. | Estado publicado reconciliado con candidate y merge separados. | #390 / PR #391 → merge `e6309173...` |
 | `NEXUS-DEBT-004` | OPEN | F2 hardening / F3 integration cuando el release map sea frontera consumida | #389 D4 | `module-releases.json` no tiene schema propio y `readiness: demonstrated` no transporta evidencia explícita; riesgo de inconsistencia al evolucionar la familia de contratos. | Decidir bajo presión real si necesita schema/evidence pointer y verificarlo; no inventar jerarquía antes de uso. | Pendiente |
-| `NEXUS-DEBT-005` | OPEN | Distribuir por WOs futuras; no cleanup amplio | #389 D5 + reviews de #388 | Cobertura/mantenibilidad menor: baseline tooling desactualizado respecto a `ajv`, falta caso booleano `false` en corpus Reuma, comentario de orden incoherente, helper muerto, ROOT inconsistente, newline package, timeout/cuota VM y consola lossy. | Cada subhallazgo queda resuelto, transferido a WO específica o descartado con rationale; no cerrar por barrido oportunista. | Pendiente |
+| `NEXUS-DEBT-005` | OPEN / parcialmente resuelto | Distribuir por WOs futuras; no cleanup amplio | #389 D5 + reviews de #388 | Cobertura/mantenibilidad menor: baseline tooling desactualizado respecto a `ajv` (subhallazgo resuelto por #394), falta caso booleano `false` en corpus Reuma, comentario de orden incoherente, helper muerto, ROOT inconsistente, newline package, timeout/cuota VM y consola lossy. | Cada subhallazgo restante queda resuelto, transferido a WO específica o descartado con rationale; no cerrar por barrido oportunista. | Parcial: #394; resto Pendiente |
+| `NEXUS-DEBT-006` | RESOLVED | Cerrada en F3.1-E antes de F3.2 | Promotion Review v1 PR #400 (nonblocking) | `PlatformContext.fromSnapshot` aceptaba snapshots fabricados que cumplían shape/freeze; el test de aislamiento de input mutaba una copia post-load. | Cerrado por F3.1-E `4ee94c2`: registro de emisión interno no enumerable (WeakSet) + código `SNAPSHOT_UNTRUSTED_ORIGIN` (lookalike fabricado rechazado) y test real de aislamiento que muta el mismo input original tras `load()`. | F3.1-E / PR #400 |
 
 ## Reglas de uso
 
@@ -30,4 +31,4 @@ La deuda específica de Farmacia continúa en [`FARMACIA_DEBT_REGISTER.md`](./FA
 
 ## Próximo consumo
 
-El siguiente Foundation train debe considerar al menos `NEXUS-DEBT-001` en F1.2 y `NEXUS-DEBT-002` antes de que PlatformContext/Home consuman los contratos de deployment/readiness. `NEXUS-DEBT-004` y los subhallazgos de `NEXUS-DEBT-005` permanecen abiertos salvo que una WO futura los adopte explícitamente.
+`NEXUS-DEBT-001`, `NEXUS-DEBT-002` y `NEXUS-DEBT-006` están RESOLVED dentro de TRAIN-NEXUS-FOUNDATION-02 (#399): D6 quedó cerrada por F3.1-E antes de F3.2 mediante provenance de snapshot emitido y test real de aislamiento del input. Permanecen abiertos `NEXUS-DEBT-004` y los subhallazgos restantes de `NEXUS-DEBT-005`; cualquier adopción futura requiere WO explícita y no autoriza ampliar el alcance de F3.1.

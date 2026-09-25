@@ -7,7 +7,8 @@
  *  - produces byte-identical output for the same inputs (determinism);
  *  - reproduces the frozen golden manifest fixture;
  *  - fails closed on invalid registry/profile compositions;
- *  - rejects planted invalid manifests (schema + semantic cross-references).
+ *  - rejects planted invalid manifests (schema + semantic cross-references
+ *    + completeness against the deployment profile).
  *
  * Exit codes: 0 = all cases PASS, 1 = at least one case FAIL.
  * Usage: node tools/deployment_manifest_check.mjs
@@ -80,6 +81,23 @@ function manifestSemanticErrors(manifest, registry) {
   return errors;
 }
 
+function manifestCompletenessErrors(manifest, profile) {
+  const errors = [];
+  const profileIds = new Set(profile.modules.map((m) => m.moduleId));
+  const manifestIds = new Set(manifest.modules.map((m) => m.moduleId));
+  for (const id of profileIds) {
+    if (!manifestIds.has(id)) {
+      errors.push(`manifest is missing module "${id}" resolved by the deployment profile; omission does not pass validation`);
+    }
+  }
+  for (const id of manifestIds) {
+    if (!profileIds.has(id)) {
+      errors.push(`manifest module "${id}" is not resolved by the deployment profile`);
+    }
+  }
+  return errors;
+}
+
 function validateManifestDocument(manifest) {
   const ajv = new Ajv({ allErrors: true, strict: true });
   const validate = ajv.compile(loadJson(SCHEMA));
@@ -139,12 +157,15 @@ function main() {
     { file: 'manifest-unknown-key.json', expect: 'must NOT have additional properties' },
     { file: 'manifest-clinical-property.json', expect: 'must NOT have additional properties' },
     { file: 'manifest-available-not-qualified.json', expect: "contradicts enabled=" },
+    { file: 'manifest-missing-module.json', expect: 'missing module' },
   ];
   const registryDoc = loadJson(registry);
+  const profileDoc = loadJson(profile);
   for (const c of manifestCases) {
     const doc = loadJson(path.join(FIXTURE_DIR, 'invalid', c.file));
     let errors = validateManifestDocument(doc);
     if (errors.length === 0) errors = manifestSemanticErrors(doc, registryDoc);
+    if (errors.length === 0) errors = manifestCompletenessErrors(doc, profileDoc);
     const matched = errors.some((e) => e.includes(c.expect));
     record(
       `invalid/${c.file}`,
@@ -152,6 +173,46 @@ function main() {
       errors.length === 0 ? 'was accepted but must be rejected' : `rejected for an unexpected reason: ${errors.join(' | ')}`
     );
   }
+
+  // 5. Provenance EOL invariance (NEXUS-DEBT-001): provenance hashes are
+  // computed over EOL-canonicalized content, so the same logical JSON must
+  // produce the same SHA-256 regardless of LF vs CRLF line endings.
+  const builtManifest = ok1 ? loadJson(out1) : null;
+  const toCrlf = (text) => text.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
+  const crlfRegistryFile = path.join(tmp, 'module-registry.crlf.json');
+  const crlfProfileFile = path.join(tmp, 'deployment-profile.crlf.json');
+  fs.writeFileSync(crlfRegistryFile, toCrlf(fs.readFileSync(registry, 'utf8')));
+  fs.writeFileSync(crlfProfileFile, toCrlf(fs.readFileSync(profile, 'utf8')));
+  const crlfManifestFile = path.join(tmp, 'm-crlf.json');
+  const okCrlf = buildManifest(crlfRegistryFile, crlfProfileFile, crlfManifestFile);
+  const crlfManifest = okCrlf ? loadJson(crlfManifestFile) : null;
+  record(
+    'provenance hash is invariant to LF/CRLF line endings',
+    okCrlf &&
+      crlfManifest.provenance.registrySha256 === builtManifest.provenance.registrySha256 &&
+      crlfManifest.provenance.profileSha256 === builtManifest.provenance.profileSha256,
+    okCrlf
+      ? `provenance hashes differ: registry ${crlfManifest.provenance.registrySha256} vs ${builtManifest.provenance.registrySha256}, profile ${crlfManifest.provenance.profileSha256} vs ${builtManifest.provenance.profileSha256}`
+      : 'builder exited non-zero on CRLF fixtures'
+  );
+
+  // 6. Real content drift (a non-EOL change) must still be detected by the
+  // provenance hash.
+  const driftProfileFile = path.join(tmp, 'deployment-profile.drift.json');
+  fs.writeFileSync(
+    driftProfileFile,
+    toCrlf(fs.readFileSync(profile, 'utf8')).replace(/"deploymentId": "([^"]*)"/, '"deploymentId": "drift-$1"')
+  );
+  const driftManifestFile = path.join(tmp, 'm-drift.json');
+  const okDrift = buildManifest(registry, driftProfileFile, driftManifestFile);
+  const driftManifest = okDrift ? loadJson(driftManifestFile) : null;
+  record(
+    'provenance hash still detects real content drift (non-EOL change)',
+    okDrift && driftManifest.provenance.profileSha256 !== builtManifest.provenance.profileSha256,
+    okDrift
+      ? `profileSha256 unchanged despite a real profile content change: ${driftManifest.provenance.profileSha256}`
+      : 'builder exited non-zero on the drifted profile'
+  );
 
   fs.rmSync(tmp, { recursive: true, force: true });
   const failed = results.filter((r) => !r.pass).length;

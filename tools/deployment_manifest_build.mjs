@@ -7,7 +7,8 @@
  * v0 JSON Schemas plus the semantic coherence and cross-reference rules, and
  * emits the resolved composition as canonical JSON. The same inputs always
  * produce byte-identical output: no timestamps, no environment data, input
- * provenance recorded as SHA-256 of the raw input files.
+ * provenance recorded as SHA-256 of the EOL-canonicalized input files
+ * (NEXUS-DEBT-001).
  *
  * Fail-closed: unknown properties, invalid combinations, unregistered modules
  * or missing qualification evidence abort with a non-zero exit code.
@@ -44,7 +45,11 @@ function loadJson(file) {
 }
 
 function sha256File(file) {
-  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  // Provenance hashes are computed over EOL-canonicalized content (CRLF and
+  // lone CR normalized to LF), so identical logical JSON yields identical
+  // SHA-256 across LF/CRLF checkouts (NEXUS-DEBT-001).
+  const canonical = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  return crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
 function compile(name) {
@@ -107,21 +112,26 @@ for (const mod of profile.modules) {
   }
 }
 
-// 4. Resolved composition (registry order is authoritative; profile order must
-//    not leak into the manifest).
+// 4. Resolved composition. Registry order is authoritative (#398 F3.1-D):
+//    the manifest lists the profile-selected modules in registry order. The
+//    profile only SELECTS which registered modules are deployed; profile
+//    order is never display/navigation authority.
 const registryByModuleId = new Map(registry.modules.map((m) => [m.moduleId, m]));
-const modules = profile.modules.map((mod) => {
-  const entry = registryByModuleId.get(mod.moduleId);
-  return {
-    moduleId: mod.moduleId,
-    label: entry.label,
-    entryPath: entry.entryPath,
-    enabled: mod.enabled,
-    qualificationState: mod.qualificationState,
-    available: mod.enabled === true && mod.qualificationState === 'QUALIFIED_FOR_SITE',
-    platformCapabilities: entry.platformCapabilities,
-  };
-});
+const profileByModuleId = new Map(profile.modules.map((m) => [m.moduleId, m]));
+const modules = registry.modules
+  .filter((entry) => profileByModuleId.has(entry.moduleId))
+  .map((entry) => {
+    const mod = profileByModuleId.get(entry.moduleId);
+    return {
+      moduleId: entry.moduleId,
+      label: entry.label,
+      entryPath: entry.entryPath,
+      enabled: mod.enabled,
+      qualificationState: mod.qualificationState,
+      available: mod.enabled === true && mod.qualificationState === 'QUALIFIED_FOR_SITE',
+      platformCapabilities: entry.platformCapabilities,
+    };
+  });
 
 const manifest = {
   manifestVersion: '1',

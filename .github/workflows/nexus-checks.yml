@@ -1,0 +1,49 @@
+# Nexus deterministic gates
+#
+# Scope: deterministic repository checks only (Farmacia fast gates + deployment,
+# platform and Reuma acceptance checkers via stable npm scripts).
+#
+# Browser / manual QA is NOT part of these gates: it is documented and executed
+# as a separate gate category (F3.3 / separate QA lane).
+# Passing this suite does NOT accredit pilot or production readiness.
+
+name: Nexus deterministic gates
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  fast-gates:
+    name: Fast gates (PR feedback)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fast gates (smoke + syntax + bridge)
+        run: npm run verify:fast
+        # No npm install: the fast gates have no dependencies.
+
+  deterministic-suite:
+    name: Deterministic suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # npm ci is required: the deployment/platform checkers use the ajv
+      # dev-dependency (present in package-lock.json).
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deterministic suite (fast gates + deployment/platform/Reuma checks)
+        run: npm run verify:nexus
