@@ -419,6 +419,22 @@
     return value !== null && typeof value === 'object' && !Array.isArray(value);
   }
 
+  // JSON Schema minLength/maxLength count Unicode code points, not UTF-16 code
+  // units. Combining a surrogate pair into one count keeps astral characters
+  // (e.g. emoji or mathematical alphanumerics) from being double counted.
+  function codePointLength(value) {
+    var count = 0;
+    for (var i = 0; i < value.length; i++) {
+      var code = value.charCodeAt(i);
+      if (code >= 0xD800 && code <= 0xDBFF && i + 1 < value.length) {
+        var next = value.charCodeAt(i + 1);
+        if (next >= 0xDC00 && next <= 0xDFFF) i += 1;
+      }
+      count += 1;
+    }
+    return count;
+  }
+
   function typeMatches(typeName, value) {
     switch (typeName) {
       case 'object': return isPlainObject(value);
@@ -524,10 +540,10 @@
     }
 
     if (typeof value === 'string') {
-      if (typeof schema.minLength === 'number' && value.length < schema.minLength) {
+      if (typeof schema.minLength === 'number' && codePointLength(value) < schema.minLength) {
         pushError(errors, pointer, 'is shorter than the minimum length');
       }
-      if (typeof schema.maxLength === 'number' && value.length > schema.maxLength) {
+      if (typeof schema.maxLength === 'number' && codePointLength(value) > schema.maxLength) {
         pushError(errors, pointer, 'is longer than the maximum length');
       }
       if (typeof schema.pattern === 'string') {
