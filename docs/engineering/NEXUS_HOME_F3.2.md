@@ -1,6 +1,6 @@
 # PROMueve Nexus Home — F3.2
 
-**Estado:** `MERGED — deterministic functional behavior demonstrated; NOT browser-qualified; EOL reproducibility debt open`
+**Estado:** `MERGED — deterministic functional behavior demonstrated; browser qualification (F3.3) and EOL reproducibility debt resolved by TRAIN-NEXUS-HOME-QUALIFICATION-03 (#409) on its candidate branch (not merged)`
 **Issue / WO:** #403 — `WO-NEXUS-F3.2`
 **Base de ejecución:** `promueve/nexus-v4` @ `0847cbcc7891aaee7a776ac81d1f2a01bdc63ffe`
 **Candidate:** `61e6e9ca54a787940dc5dc241f0eb517ce5f264d`
@@ -76,6 +76,16 @@ Sobre un worktree fresco creado desde el merge exacto `e9096e9b...`:
 La fidelidad futura del subset JSON Schema browser queda registrada como
 `NEXUS-DEBT-010` (#405). Ninguna de estas deudas convierte F3.2 en browser-
 qualified ni autoriza cambios técnicos dentro de esta reconciliación.
+
+**Cierre de deuda (TRAIN-NEXUS-HOME-QUALIFICATION-03, #409):** `NEXUS-DEBT-011`,
+`NEXUS-DEBT-009`, `NEXUS-DEBT-010` y `NEXUS-DEBT-008` quedaron RESOLVED en la rama
+candidata `work/nexus-home-qualification-03-409-20260925` mediante #410 `74f9963`
+(LF canónico acotado por `.gitattributes` con drift byte-strict preservado y
+cableado de `check:home`/`check:home-navigation` en `verify:nexus`), #411 `49deb61`
+(gate fail-closed de keywords y longitudes en code points, hardening checker 14/0)
+y #412 `b32ab74` (el builder rechaza `entryPath` duplicado antes de emitir,
+checker 12/0). El relato anterior conserva su valor histórico: describe el estado
+del merge F3.2 en el momento de su verificación.
 
 ## Límites de madurez
 
