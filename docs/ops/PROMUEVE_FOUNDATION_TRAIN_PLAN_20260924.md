@@ -1,6 +1,6 @@
 # PROMueve Nexus — Foundation Train Plan 2026-09-24
 
-**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4–F7 pending or partial`
+**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4 + F5.1 implemented on the candidate branch of TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426), pending review and not merged; F4.3–F4.6, F5.2–F5.4 and F6–F7 pending`
 **Architecture authority:** `../architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`
 **Issue documental de origen:** #378
 **Objetivo:** convertir la arquitectura congelada en una secuencia de WOs atómicas, paralelizables y verificables, sin frenar innecesariamente necesidades clínicas próximas.
@@ -20,8 +20,8 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 | F3.2 Home | **COMPLETADA/PUBLICADA** | #403 / PR #404. Home funcional/fail-closed y navegación determinista. |
 | F3.3 + F3.4 | **COMPLETADAS Y CUALIFICADAS EN EVALUACIÓN SINTÉTICA** | TRAIN #409 / PR #415: QA Chromium del sitio, release sintético reproducible y QA del artefacto. |
 | Hardening post-F3.4 | **COMPLETADO/PUBLICADO** | TRAIN #419 / PR #422: D012/D013 cerradas; post-merge Fast gates + Deterministic suite `success`. El canary de rollover no se usa como qualification de profile. |
-| F4 Farmacia strangler | **PENDIENTE** | Existen oráculos/legacy valioso, pero la migración por Read Port + Act/Delivery contracts del plan todavía no está ejecutada como Foundation Nexus. |
-| F5 Reuma strangler | **PARCIAL** | Oracle/caracterización basal existe; F5.1–F5.4 (wrapper/migración/writer boundary/act contract) siguen pendientes. |
+| F4 Farmacia strangler | **F4.1/F4.2 IMPLEMENTADAS EN RAMA CANDIDATA — NO PUBLICADAS** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T1 #427 + T2 #428: contrato read DTO V2 con oráculo congelado `a0dad4a`, resolución por valor de identificador en el seam `06fcba2`, facade async con guards de vigencia `6ce61fa`, capacidad de commit de selección delegada `f572ca7` y vertical Inicio/Quick View `36bfcaa`. Madurez `código` + `demostrado` en la rama; PR de train pendiente de revisión y **sin merge**: no `wired`, no publicado. F4.3–F4.6 siguen pendientes. |
+| F5 Reuma strangler | **F5.1 IMPLEMENTADA EN RAMA CANDIDATA — NO PUBLICADA; F5.2–F5.4 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T3 #429: Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre el corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`. Madurez `código` + `demostrado` en la rama; no `wired`. |
 | F6 pre-pilot | **PENDIENTE** | Lifecycle, URL/log exposure y dependency/vendor policy siguen siendo frontera antes de piloto real. |
 | F7 multi-site qualification | **PENDIENTE POR COMBINACIÓN REAL** | La infraestructura de qualification existe, pero cada hospital×módulo necesita su evidencia propia; no se infiere qualification por presencia en repo. |
 

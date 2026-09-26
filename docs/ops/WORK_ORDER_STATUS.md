@@ -18,7 +18,19 @@
 | Madurez | Evaluación sintética; **no piloto / no producción** |
 | Deuda Nexus abierta | D004; subhallazgos restantes D005; D007. No justifican cleanup train amplio por sí solos. |
 | Siguiente frontera del plan | Stranglers F4/F5 y qualification F7 por hospital×módulo; F6 antes de piloto |
+| Train candidato en curso (no publicado) | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426): F4.1/F4.2/F5.1 implementados en la rama `work/nexus-clinical-strangler-05-426-20260926` sobre la base `63819da79e22e2d55146531a3662f06f9ba2584f`; PR de train pendiente de revisión y sin merge. Madurez `código` + `demostrado` en rama; no `wired`. |
 
+
+
+### Train candidato TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) — implementado en rama, sin publicar
+
+| Ticket | Alcance | Commits en la rama candidata | Evidencia principal |
+| --- | --- | --- | --- |
+| T1 #427 | F4.1 contrato read DTO V2 de Farmacia | `a0dad4a` | contrato V2 22/22 y verificador independiente sobre el commit exacto |
+| T2 #428 | F4.2 facade async + vertical Inicio/Quick View | `06fcba2`, `6ce61fa`, `f572ca7`, `36bfcaa` | selectores 92, facade 18, commit explícito 10, cutover 17, session 17, data port 11, QA Chromium de ambos verticales, verificadores independientes |
+| T3 #429 | F5.1 Read Port async de Reuma + vertical búsqueda/historia | `a469ad1`, `966db97`, `ea34105` | puerto Reuma 13/13 con batería de mutaciones, harness Reuma 10/0, acceptance 7/0, QA Chromium del vertical, verificadores independientes |
+
+Madurez: `código` + `demostrado` en la rama candidata; **no** `wired` (fuera de `promueve/nexus-v4`), no publicado, no piloto ni producción. `gentle_review assess` devolvió `risk=unassessable` (#4791) en todas las unidades: se obedeció la ruta fail-closed sin fabricar revisión nativa. El rollover de sesión T1→T2→T3 está validado por evidencia durable; el target económico del rollover #427→#428 quedó **cumplido** (ratio real 0,2419 < 0,25 sobre 243.077 tokens previos).
 
 ## Estado publicado actual de Farmacia
 
