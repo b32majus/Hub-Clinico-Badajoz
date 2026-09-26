@@ -174,7 +174,12 @@ function expectedResolve(index, term) {
     return { status: 'ok', patient: { id: only.id, nombre: only.nombre, patologia: only.patologia } };
   }
   if (matchingByName.length > 1) {
-    return { status: 'ambiguous', candidates: matchingByName.slice(0, 3).map((e) => ({ id: e.id, nombre: e.nombre })) };
+    // Additive contract: `total` is the true match count; `candidates` stays capped at 3 in index order.
+    return {
+      status: 'ambiguous',
+      total: matchingByName.length,
+      candidates: matchingByName.slice(0, 3).map((e) => ({ id: e.id, nombre: e.nombre })),
+    };
   }
   if (ID_SHAPE.test(term)) return { status: 'not_found', reason: 'id_not_found' };
   return { status: 'not_found', reason: 'no_match' };
@@ -338,6 +343,13 @@ const CASES = [
       assert.equal(ambiguous.status, 'ambiguous');
       assert.equal(ambiguous.candidates.length, 3, 'ambiguous must expose at most three examples');
       assert.deepEqual(plain(ambiguous.candidates), index.slice(0, 3).map((e) => ({ id: e.id, nombre: e.nombre })), 'candidates must keep index order');
+      // Additive contract (#429 one-touch): the true match total travels alongside the capped examples.
+      const trueMatches = index.filter((entry) => foldTerm(entry.nombre).includes(foldTerm('Sintetico')));
+      assert.ok(trueMatches.length > 3, `the fixture must exercise more than three matches (got ${trueMatches.length})`);
+      assert.deepEqual(Object.keys(plain(ambiguous)).sort(), ['candidates', 'status', 'total']);
+      assert.equal(ambiguous.total, trueMatches.length, 'ambiguous.total must be the true number of matching index entries');
+      assert.equal(ambiguous.candidates.length, 3, 'candidates must stay capped at three even when total exceeds three');
+      assert.deepEqual(plain(ambiguous.candidates), trueMatches.slice(0, 3).map((e) => ({ id: e.id, nombre: e.nombre })), 'candidates must keep index order when total exceeds three');
       assert.deepEqual(plain(await ctx.port.resolvePatient('ESP-2026-999')), { status: 'not_found', reason: 'id_not_found' });
       assert.deepEqual(plain(await ctx.port.resolvePatient('zzz-sin-coincidencias')), { status: 'not_found', reason: 'no_match' });
       assert.deepEqual(plain(await ctx.port.resolvePatient('   ')), { status: 'error', error_code: 'empty_term' });

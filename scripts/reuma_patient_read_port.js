@@ -211,7 +211,9 @@
                     var candidates = matching.slice(0, 3).map(function (entry) {
                         return { id: entry.id, nombre: entry.nombre };
                     });
-                    resolve(deepFreeze({ status: 'ambiguous', candidates: candidates }));
+                    // `total` is the true number of matching index entries; `candidates`
+                    // keeps the frozen cap of at most 3 examples in index order.
+                    resolve(deepFreeze({ status: 'ambiguous', total: matching.length, candidates: candidates }));
                     return;
                 }
                 if (ID_SHAPE.test(term)) {
