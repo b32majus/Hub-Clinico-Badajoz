@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-26
+**Última actualización:** 2026-09-27
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,26 +11,26 @@
 | Elemento | Valor |
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
-| Tip Nexus publicado verificado | `f46290cd3a368e00427dbe2fb4e5fde00270d6ac` — merge PR #422 |
-| Última entrega | TRAIN-NEXUS-V4-ROLLOVER-CANARY-04 (#419): D012/D013 cerradas por T1 #420 / T2 #421 y publicadas por PR #422 |
-| Verificación post-merge | GitHub Actions `Nexus deterministic gates`: Fast gates `success` + Deterministic suite `success` sobre `f46290c...` |
+| Tip Nexus publicado verificado | `10422f4e5b7578dbbb17af17e3b953b5501eb4b2` — merge PR #430 |
+| Última entrega | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426): F4.1/F4.2 Farmacia + F5.1 Reuma publicadas por PR #430 |
+| Verificación post-merge | Candidate `988c2089...`: GitHub Actions `Nexus deterministic gates` Fast gates `success` + Deterministic suite `success`; merge `10422f4e...`: fresh worktree `npm ci` + `npm run verify:nexus` PASS; tree idéntico al candidate `c0615cb3...`. |
 | Home sintética | F3.2 publicada; F3.3 browser-qualified; F3.4 release sintético reproducible y browser-qualified; D012/D013 hardening publicado |
 | Madurez | Evaluación sintética; **no piloto / no producción** |
 | Deuda Nexus abierta | D004; subhallazgos restantes D005; D007. No justifican cleanup train amplio por sí solos. |
-| Siguiente frontera del plan | Stranglers F4/F5 y qualification F7 por hospital×módulo; F6 antes de piloto |
-| Train candidato en curso (no publicado) | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426): F4.1/F4.2/F5.1 implementados en la rama `work/nexus-clinical-strangler-05-426-20260926` sobre la base `63819da79e22e2d55146531a3662f06f9ba2584f`; PR de train pendiente de revisión y sin merge. Madurez `código` + `demostrado` en rama; no `wired`. |
+| Siguiente frontera del plan | Antes de abrir nueva ejecución, clasificar el informe Core pendiente (`CORE / MODULE / SITE / MODULE×SITE`) si intersecta navegación/contratos; después continuar F4.3+ / F5.2+ según shaping. D007 queda en F5.3/export; F6 antes de piloto y F7 por hospital×módulo cuando exista necesidad real. |
+| Último train clínico publicado | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426): PR #430 `MERGED`, candidate `988c2089...` → merge `10422f4e...`; F4.1/F4.2/F5.1 `wired` + `visible` + `demostrado` en la rama canónica. Evaluación sintética; no piloto/producción. |
 
 
 
-### Train candidato TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) — implementado en rama, sin publicar
+### TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) — publicado por PR #430
 
-| Ticket | Alcance | Commits en la rama candidata | Evidencia principal |
+| Ticket | Alcance | Commits publicados | Evidencia principal |
 | --- | --- | --- | --- |
 | T1 #427 | F4.1 contrato read DTO V2 de Farmacia | `a0dad4a` | contrato V2 22/22 y verificador independiente sobre el commit exacto |
 | T2 #428 | F4.2 facade async + vertical Inicio/Quick View | `06fcba2`, `6ce61fa`, `f572ca7`, `36bfcaa` | selectores 92, facade 18, commit explícito 10, cutover 17, session 17, data port 11, QA Chromium de ambos verticales, verificadores independientes |
 | T3 #429 | F5.1 Read Port async de Reuma + vertical búsqueda/historia | `a469ad1`, `966db97`, `ea34105` | puerto Reuma 13/13 con batería de mutaciones, harness Reuma 10/0, acceptance 7/0, QA Chromium del vertical, verificadores independientes |
 
-Madurez: `código` + `demostrado` en la rama candidata; **no** `wired` (fuera de `promueve/nexus-v4`), no publicado, no piloto ni producción. `gentle_review assess` devolvió `risk=unassessable` (#4791) en todas las unidades: se obedeció la ruta fail-closed sin fabricar revisión nativa. El rollover de sesión T1→T2→T3 está validado por evidencia durable; el target económico del rollover #427→#428 quedó **cumplido** (ratio real 0,2419 < 0,25 sobre 243.077 tokens previos).
+Publicación: PR #430, candidate `988c2089d1dfa34d5bd1d74b606b410e6e79903c` → merge `10422f4e5b7578dbbb17af17e3b953b5501eb4b2`; merge tree `c0615cb301471808e8505e8bd04a078303bb420b` idéntico al candidate. Madurez: `wired` + `visible` + `demostrado` en `promueve/nexus-v4`; evaluación sintética, no `demo` acreditada por este train, no piloto ni producción. `gentle_review assess` devolvió `risk=unassessable` (#4791) en todas las unidades y se obedeció la ruta fail-closed sin fabricar revisión nativa. Rollover: T1→T2 ratio real 0,2419 (objetivo <0,25 cumplido); T2→T3 ratio 0,2520 (objetivo económico no cumplido), sin promover configuración de routing.
 
 ## Estado publicado actual de Farmacia
 

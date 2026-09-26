@@ -1,6 +1,6 @@
 # PROMueve Nexus — Foundation Train Plan 2026-09-24
 
-**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4 + F5.1 implemented on the candidate branch of TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426), pending review and not merged; F4.3–F4.6, F5.2–F5.4 and F6–F7 pending`
+**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4.1/F4.2 + F5.1 published by TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) / PR #430; F4.3–F4.6, F5.2–F5.4 and F6–F7 pending`
 **Architecture authority:** `../architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`
 **Issue documental de origen:** #378
 **Objetivo:** convertir la arquitectura congelada en una secuencia de WOs atómicas, paralelizables y verificables, sin frenar innecesariamente necesidades clínicas próximas.
@@ -20,8 +20,8 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 | F3.2 Home | **COMPLETADA/PUBLICADA** | #403 / PR #404. Home funcional/fail-closed y navegación determinista. |
 | F3.3 + F3.4 | **COMPLETADAS Y CUALIFICADAS EN EVALUACIÓN SINTÉTICA** | TRAIN #409 / PR #415: QA Chromium del sitio, release sintético reproducible y QA del artefacto. |
 | Hardening post-F3.4 | **COMPLETADO/PUBLICADO** | TRAIN #419 / PR #422: D012/D013 cerradas; post-merge Fast gates + Deterministic suite `success`. El canary de rollover no se usa como qualification de profile. |
-| F4 Farmacia strangler | **F4.1/F4.2 IMPLEMENTADAS EN RAMA CANDIDATA — NO PUBLICADAS** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T1 #427 + T2 #428: contrato read DTO V2 con oráculo congelado `a0dad4a`, resolución por valor de identificador en el seam `06fcba2`, facade async con guards de vigencia `6ce61fa`, capacidad de commit de selección delegada `f572ca7` y vertical Inicio/Quick View `36bfcaa`. Madurez `código` + `demostrado` en la rama; PR de train pendiente de revisión y **sin merge**: no `wired`, no publicado. F4.3–F4.6 siguen pendientes. |
-| F5 Reuma strangler | **F5.1 IMPLEMENTADA EN RAMA CANDIDATA — NO PUBLICADA; F5.2–F5.4 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T3 #429: Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre el corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`. Madurez `código` + `demostrado` en la rama; no `wired`. |
+| F4 Farmacia strangler | **F4.1/F4.2 COMPLETADAS/PUBLICADAS; F4.3–F4.6 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T1 #427 + T2 #428, PR #430: contrato read DTO V2 con oráculo congelado `a0dad4a`, resolución por valor de identificador en el seam `06fcba2`, facade async con guards de vigencia `6ce61fa`, capacidad de commit de selección delegada `f572ca7` y vertical Inicio/Quick View `36bfcaa`. Candidate `988c2089...` → merge `10422f4e...`, tree idéntico; madurez `wired` + `visible` + `demostrado` en la rama canónica. |
+| F5 Reuma strangler | **F5.1 COMPLETADA/PUBLICADA; F5.2–F5.4 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T3 #429, PR #430: Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`. Madurez `wired` + `visible` + `demostrado`; D007 no pertenece a F5.1 y queda reservado para F5.3/export. |
 | F6 pre-pilot | **PENDIENTE** | Lifecycle, URL/log exposure y dependency/vendor policy siguen siendo frontera antes de piloto real. |
 | F7 multi-site qualification | **PENDIENTE POR COMBINACIÓN REAL** | La infraestructura de qualification existe, pero cada hospital×módulo necesita su evidencia propia; no se infiere qualification por presencia en repo. |
 
@@ -29,12 +29,12 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 
 **Critical path recomendado desde este checkpoint:**
 
-1. iniciar **F4.1 Farmacia read DTO contract** y después **F4.2 first vertical slice**;
-2. en paralelo o a continuación, **F5.1 Reuma Application Read Port wrapper**, consumiendo `NEXUS-DEBT-007` dentro de ese hardening en vez de abrir un cleanup train;
+1. antes de abrir la siguiente ejecución, revisar el informe Core pendiente y clasificar cada cambio `CORE / MODULE / SITE / MODULE×SITE`; si intersecta navegación o contratos de lectura, revalidar la siguiente WO en vez de absorberlo silenciosamente;
+2. continuar F4.3+ y F5.2+ mediante WOs atómicas según shaping vivo; `NEXUS-DEBT-007` queda reservado para **F5.3/export 497**, no para el read wrapper F5.1 ya publicado;
 3. usar la primera necesidad real para ejecutar **F7 hospital×módulo** sobre la infraestructura ya publicada;
 4. abordar F6 cuando la siguiente frontera sea piloto, no como prerequisito artificial de la integración sintética.
 
-Deuda abierta Nexus no redefine el critical path: D004 espera al consumo real del release map; D005 se distribuye por WOs naturales; D007 entra con Reuma. No se propone un barrido general de deuda.
+Deuda abierta Nexus no redefine el critical path: D004 espera al consumo real del release map; D005 se distribuye por WOs naturales; D007 se trata con F5.3/export. No se propone un barrido general de deuda.
 
 ## 1. Resultado que buscamos
 
@@ -250,11 +250,15 @@ F2.1 y F2.2 pueden ejecutarse tras el freeze y en paralelo parcial con tooling/o
 
 #### F4.1 Farmacia read DTO contract
 
+**Estado 2026-09-27:** `COMPLETADA/PUBLICADA` por #427 / PR #430.
+
 - DTO sin `canonical_row`/detalles físicos;
 - ausencia/error/provenance/completitud;
 - contract tests sobre DataSource local.
 
 #### F4.2 Farmacia async facade + first vertical slice
+
+**Estado 2026-09-27:** `COMPLETADA/PUBLICADA` por #428 / PR #430.
 
 - fachada Promise sobre fuente local;
 - selección/contexto + una pantalla;
@@ -290,11 +294,13 @@ F2.1 y F2.2 pueden ejecutarse tras el freeze y en paralelo parcial con tooling/o
 - no servidor FHIR, CDR openEHR, perfiles SES ni terminologías institucionales inventadas;
 - no usar Excel como fuente conceptual del mapping.
 
-F4.1/F4.4 pueden diseñarse parcialmente en paralelo después de sus oráculos; F4.2 depende de F4.1. F4.5 y F4.6 dependen conceptualmente de F4.4, pero ninguna bloquea la primera Home sintética.
+F4.1 y F4.2 ya están publicadas. La siguiente migración de lectura es F4.3; F4.4 permanece como frontera de acto/escritura separada. F4.5 y F4.6 dependen conceptualmente de F4.4, pero ninguna bloquea la Home sintética ya publicada.
 
 ### F5 — Reuma strangler
 
 #### F5.1 Reuma Application Read Port wrapper
+
+**Estado 2026-09-27:** `COMPLETADA/PUBLICADA` por #429 / PR #430; D007 permanece fuera de F5.1 y reservado para F5.3/export.
 
 - wrapper async sobre `HubTools.data`;
 - sin extraer parser todavía;
