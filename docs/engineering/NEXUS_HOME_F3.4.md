@@ -200,8 +200,14 @@ durante build, verificación ni reversión.
   `NEXUS-DEBT-012` queda RESOLVED en este train: `gates.browser` declara ahora los
   dos ámbitos `site` y `releaseArtifact`, cada uno apuntando a la suite que
   realmente cualifica su alcance, y la validación estructural rechaza cualquier
-  puntero ambiguo, ausente o colgante. `NEXUS-DEBT-013` permanece como deuda
-  abierta. N2 documental quedó reconciliado por #416.
+  puntero ambiguo, ausente o colgante. `NEXUS-DEBT-013` queda RESOLVED en el mismo
+  train (ticket T2 #421): el gate de build `tools/home_validators_build.mjs` es
+  ahora sensible a la forma de `items` y rechaza determinísticamente la forma array
+  (tuple) nombrando schema, puntero y forma, sin escribir artefacto de salida; el
+  hardening checker incorpora el negativo plantado N5 (control prístino, fallo
+  cerrado, ausencia de artefacto, preexistente intacto) y su barrido N4 trata la
+  forma array como no soportada; ningún schema aceptado usa esa forma y el
+  artefacto generado permanece byte-idéntico. N2 documental quedó reconciliado por #416.
 - La ruta real de esa Promotion Review fue `nan/deepseek-v4-flash` high por elección
   explícita de la operadora; el manifest de evidencia heredado conservaba el literal
   `openai-codex/gpt-5.6-sol`. La desviación de metadata se conserva como hecho y la
