@@ -1,11 +1,40 @@
 # PROMueve Nexus — Foundation Train Plan 2026-09-24
 
-**Estado:** `PLANNED / NOT_AUTHORIZED_FOR_IMPLEMENTATION`
+**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4–F7 pending or partial`
 **Architecture authority:** `../architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`
 **Issue documental de origen:** #378
 **Objetivo:** convertir la arquitectura congelada en una secuencia de WOs atómicas, paralelizables y verificables, sin frenar innecesariamente necesidades clínicas próximas.
 
 > Este plan no autoriza ninguna WO técnica por sí mismo. Cada bloque requiere issue/WO propia, preflight, tests/QA y delivery boundary explícitos.
+
+## 0. Reconciliación de ejecución — 2026-09-26
+
+Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza WOs nuevas. La secuencia original de este documento se conserva debajo como plan de referencia.
+
+| Fase | Estado publicado | Evidencia / lectura operativa |
+| --- | --- | --- |
+| F0.1 Freeze | **COMPLETADA/PUBLICADA** | #378 / PR #379. Architecture Decision Freeze y ADR-001…008 publicados. |
+| F0.2 Canonical transition | **COMPLETADA/PUBLICADA** | #380 / PR #381 `MERGED`; `promueve/nexus-v4` es la autoridad **ACTIVE** para nuevo desarrollo; recovery queda **HISTORICAL**. |
+| F0.3 + F1.1 + F2.1 + F2.2 + F1.3A | **COMPLETADAS/PUBLICADAS** | TRAIN-NEXUS-BOOTSTRAP-01 #387 / PR #388. Handover, tooling baseline, deployment/readiness contracts y primer oracle Reuma. |
+| F1.2 + F1.3B + F3.1 | **COMPLETADAS/PUBLICADAS** | TRAIN-NEXUS-FOUNDATION-02 #399 / PR #400. CI/oracles + PlatformContext; Promotion Review final PASS. |
+| F3.2 Home | **COMPLETADA/PUBLICADA** | #403 / PR #404. Home funcional/fail-closed y navegación determinista. |
+| F3.3 + F3.4 | **COMPLETADAS Y CUALIFICADAS EN EVALUACIÓN SINTÉTICA** | TRAIN #409 / PR #415: QA Chromium del sitio, release sintético reproducible y QA del artefacto. |
+| Hardening post-F3.4 | **COMPLETADO/PUBLICADO** | TRAIN #419 / PR #422: D012/D013 cerradas; post-merge Fast gates + Deterministic suite `success`. El canary de rollover no se usa como qualification de profile. |
+| F4 Farmacia strangler | **PENDIENTE** | Existen oráculos/legacy valioso, pero la migración por Read Port + Act/Delivery contracts del plan todavía no está ejecutada como Foundation Nexus. |
+| F5 Reuma strangler | **PARCIAL** | Oracle/caracterización basal existe; F5.1–F5.4 (wrapper/migración/writer boundary/act contract) siguen pendientes. |
+| F6 pre-pilot | **PENDIENTE** | Lifecycle, URL/log exposure y dependency/vendor policy siguen siendo frontera antes de piloto real. |
+| F7 multi-site qualification | **PENDIENTE POR COMBINACIÓN REAL** | La infraestructura de qualification existe, pero cada hospital×módulo necesita su evidencia propia; no se infiere qualification por presencia en repo. |
+
+**Hito visible del plan:** la primera **PROMueve Nexus Home sintética** ya está alcanzada y endurecida. Lo siguiente no es seguir “haciendo Home”, sino llevar módulos clínicos detrás de contratos estables y demostrar la primera configuración/cualificación real hospital×módulo.
+
+**Critical path recomendado desde este checkpoint:**
+
+1. iniciar **F4.1 Farmacia read DTO contract** y después **F4.2 first vertical slice**;
+2. en paralelo o a continuación, **F5.1 Reuma Application Read Port wrapper**, consumiendo `NEXUS-DEBT-007` dentro de ese hardening en vez de abrir un cleanup train;
+3. usar la primera necesidad real para ejecutar **F7 hospital×módulo** sobre la infraestructura ya publicada;
+4. abordar F6 cuando la siguiente frontera sea piloto, no como prerequisito artificial de la integración sintética.
+
+Deuda abierta Nexus no redefine el critical path: D004 espera al consumo real del release map; D005 se distribuye por WOs naturales; D007 entra con Reuma. No se propone un barrido general de deuda.
 
 ## 1. Resultado que buscamos
 
@@ -114,7 +143,7 @@ Los identificadores siguientes son nombres de planificación, no issues creados.
 
 #### F0.2 Git Canonical Transition
 
-- **Estado:** ejecutada por #380/#381 (2026-09-24): `promueve/nexus-v4` creada desde el SHA live `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada. Estado efectivo: PR #381 sin merge → Nexus CANDIDATE / recovery ACTIVE; desde merge autorizado → Nexus ACTIVE / recovery HISTORICAL para nuevo desarrollo. Detalle: [`PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](./PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
+- **Estado:** ejecutada y publicada por #380/#381 (2026-09-24): `promueve/nexus-v4` creada desde `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada; PR #381 `MERGED`, por lo que Nexus está **ACTIVE** y recovery **HISTORICAL** para nuevo desarrollo. Detalle: [`PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](./PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
 - **Timing:** después de merge/aprobación del freeze, antes de que Foundation acumule trabajo en dos bases.
 - **Objetivo:** crear/activar futura línea canónica desde SHA live cualificado.
 - **Cambio clínico:** no.
