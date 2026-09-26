@@ -473,7 +473,10 @@
             };
         }
 
-        function persistSelection(summary, identifier) {
+        // Single commit core shared by the legacy population path and the explicit-identifier
+        // capability (#428 WU-B): both must produce the same envelope and the same write
+        // effects, so the session envelope keeps exactly one construction site.
+        function applySelection(patientId, identifier, discardPendingChanges) {
             var previous = currentEnvelope();
             var previousCip = previous && previous.identifier.identifier_value || '';
             if (previous) {
@@ -481,31 +484,36 @@
                 session.clear();
                 activeEnvelope = null;
             }
-            var projection = dataPort.getPatientProjection(summary.patient_id);
-            var explicit = explicitFor(summary.patient_id);
+            var projection = dataPort.getPatientProjection(patientId);
+            var explicit = explicitFor(patientId);
             var patient = mapPatient(identifier, projection, explicit);
             var input = {
                 identifier: clone(identifier),
-                patient_id: summary.patient_id,
+                patient_id: patientId,
                 generation: generation(settings.crypto),
-                patient_projection: { patient_id: summary.patient_id, patient: patient },
+                patient_projection: { patient_id: patientId, patient: patient },
                 explicit_data: explicit,
-                provenance: typeof dataPort.getInternalProvenance === 'function' ? dataPort.getInternalProvenance(summary.patient_id) : [],
+                provenance: typeof dataPort.getInternalProvenance === 'function' ? dataPort.getInternalProvenance(patientId) : [],
                 drafts: {},
                 dirty: false
             };
-            var result = session.replacePatient(input, true);
+            var result = session.replacePatient(input, discardPendingChanges);
             activeEnvelope = result.envelope;
             bootstrapped = true;
             resolutionStatus = 'selected';
             var params = paramsFromLocation();
             params.set('cip', identifier.identifier_value);
-            params.set('patient_id', summary.patient_id);
+            params.set('patient_id', patientId);
             params.set('identifier_system', identifier.identifier_system);
             params.set('generation', input.generation);
             params.delete(NAV_MARKER);
             replaceParams(params);
-            return { status: 'selected', patient: clone(patient), envelope: clone(activeEnvelope), previousCip: previousCip };
+            return { patient: clone(patient), envelope: clone(activeEnvelope), previousCip: previousCip };
+        }
+
+        function persistSelection(summary, identifier) {
+            var applied = applySelection(summary.patient_id, identifier, true);
+            return { status: 'selected', patient: applied.patient, envelope: applied.envelope, previousCip: applied.previousCip };
         }
 
         function selectByCip(cip, options) {
@@ -535,6 +543,42 @@
                 return { status: 'pending_changes', patient_id: current.patient_id, cip: current.identifier.identifier_value };
             }
             return persistSelection(matches[0].summary, matches[0].identifier);
+        }
+
+        // Explicit-identifier commit consumed by the patient-read facade (#428 WU-B). It reuses
+        // the legacy write effects without reading the population, so coexistence is preserved.
+        // Fail-closed choices where the frozen text is silent: a missing data port or session
+        // answers {status:'unavailable'} and performs no write; the dirty guard answers the
+        // minimal {status:'pending_changes'} before any purge.
+        function commitExplicitSelection(identifier, patientId, options) {
+            if (!dataPort || !session) return { status: 'unavailable' };
+            var discardPendingChanges = !!(options && options.discardPendingChanges === true);
+            var previous = currentEnvelope();
+            if (previous && previous.dirty && !discardPendingChanges) return { status: 'pending_changes' };
+            var applied = applySelection(patientId, identifier, discardPendingChanges);
+            return { status: 'active', patient: applied.patient, envelope: applied.envelope, previousCip: applied.previousCip };
+        }
+
+        // Facade wiring: the local adapter's adjacent identifier lookup supplies the explicit
+        // pair that the F4.1 contract resolves, and the commit capability above owns the write.
+        // Fail closed with null when any collaborator is unavailable, never a partial instance.
+        function createPatientReadFacade() {
+            if (!dataPort || typeof dataPort.findIdentifierCandidatesByValue !== 'function') return null;
+            var contractModule = root.FarmaciaPatientReadContractV2;
+            var facadeModule = root.FarmaciaPatientReadFacadeV2;
+            if (!contractModule || typeof contractModule.create !== 'function') return null;
+            if (!facadeModule || typeof facadeModule.create !== 'function') return null;
+            var contract;
+            try {
+                contract = contractModule.create({ source: dataPort });
+            } catch (error) {
+                return null;
+            }
+            return facadeModule.create({
+                contract: contract,
+                identifierCandidates: function (value) { return dataPort.findIdentifierCandidatesByValue(value); },
+                commitSelection: commitExplicitSelection
+            });
         }
 
         function draftScope(scope) {
@@ -673,6 +717,8 @@
             getDataPort: function () { return dataPort; },
             bootstrap: bootstrap,
             selectByCip: selectByCip,
+            commitExplicitSelection: commitExplicitSelection,
+            createPatientReadFacade: createPatientReadFacade,
             getCurrentPatient: currentPatient,
             getCurrentEnvelope: function () { return clone(currentEnvelope()); },
             getResolutionStatus: function () { bootstrap(); return resolutionStatus; },
@@ -701,6 +747,8 @@
         getDataPort: function () { return current().getDataPort(); },
         bootstrap: function () { return current().bootstrap(); },
         selectByCip: function (cip, options) { return current().selectByCip(cip, options); },
+        commitExplicitSelection: function (identifier, patientId, options) { return current().commitExplicitSelection(identifier, patientId, options); },
+        createPatientReadFacade: function () { return current().createPatientReadFacade(); },
         getCurrentPatient: function () { return current().getCurrentPatient(); },
         getCurrentEnvelope: function () { return current().getCurrentEnvelope(); },
         getResolutionStatus: function () { return current().getResolutionStatus(); },
