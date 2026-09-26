@@ -53,6 +53,10 @@
             });
         }
 
+        function findIdentifierCandidatesByValue(value) {
+            return selectors.findIdentifierCandidatesByValue(value);
+        }
+
         var implementation = {
             listPatients: function () {
                 return selectors.listPatientSummaries();
@@ -104,6 +108,7 @@
         Object.keys(port).forEach(function (key) { source[key] = port[key]; });
         source.data_source_version = DATA_SOURCE_VERSION;
         source.getInternalProvenance = getInternalProvenance;
+        source.findIdentifierCandidatesByValue = findIdentifierCandidatesByValue;
         return Object.freeze(source);
     }
 

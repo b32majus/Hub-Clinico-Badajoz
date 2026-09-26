@@ -211,9 +211,37 @@
         return patientOwners;
     }
 
+    function buildIdentifierCandidateIndex(readModel) {
+        // Fail-closed: index keys empty after trim are impossible here because buildNormalizedIdentifierOwners
+        // already rejected them at create() time. One candidate per stored index entry; no dedupe by patient.
+        var byNormalizedValue = Object.create(null);
+        Object.keys(readModel.indexes.by_identifier).forEach(function (storedSystem) {
+            var values = readModel.indexes.by_identifier[storedSystem];
+            Object.keys(values).forEach(function (storedValue) {
+                var candidate = {
+                    identifier_system: storedSystem.trim(),
+                    identifier_value: storedValue.trim(),
+                    patient_id: values[storedValue].patient_id
+                };
+                var normalizedValue = candidate.identifier_value.toUpperCase();
+                if (!own(byNormalizedValue, normalizedValue)) byNormalizedValue[normalizedValue] = [];
+                byNormalizedValue[normalizedValue].push(candidate);
+            });
+        });
+        Object.keys(byNormalizedValue).forEach(function (normalizedValue) {
+            byNormalizedValue[normalizedValue].sort(function (left, right) {
+                return compareText(left.identifier_system, right.identifier_system)
+                    || compareText(left.identifier_value, right.identifier_value)
+                    || compareText(left.patient_id, right.patient_id);
+            });
+        });
+        return byNormalizedValue;
+    }
+
     function create(readModel) {
         validateReadModel(readModel);
         var normalizedIdentifierOwners = buildNormalizedIdentifierOwners(readModel);
+        var identifierCandidatesByNormalizedValue = buildIdentifierCandidateIndex(readModel);
 
         var sortedEntries = readModel.events.map(function (event, position) {
             return { event: event, position: position };
@@ -251,6 +279,20 @@
                 if (leftIdentifier) return -1;
                 if (rightIdentifier) return 1;
                 return compareText(left.patient_id, right.patient_id);
+            });
+        }
+
+        function findIdentifierCandidatesByValue(value) {
+            if (typeof value !== 'string') return [];
+            var normalizedValue = value.trim().toUpperCase();
+            if (!normalizedValue) return [];
+            if (!own(identifierCandidatesByNormalizedValue, normalizedValue)) return [];
+            return identifierCandidatesByNormalizedValue[normalizedValue].map(function (candidate) {
+                return {
+                    identifier_system: candidate.identifier_system,
+                    identifier_value: candidate.identifier_value,
+                    patient_id: candidate.patient_id
+                };
             });
         }
 
@@ -402,6 +444,7 @@
 
         return Object.freeze({
             listPatientSummaries: listPatientSummaries,
+            findIdentifierCandidatesByValue: findIdentifierCandidatesByValue,
             findByIdentifier: findByIdentifier,
             findByPatientId: findByPatientId,
             getPatientEvents: getPatientEvents,
