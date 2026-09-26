@@ -1,8 +1,10 @@
 # PROMueve Nexus Home — F3.4
 
-**Estado:** `IMPLEMENTED — artefacto de release sintético construido, verificado y cualificado en navegador real; pendiente de commit/review`
-**Issue / WO:** #414 — F3.4 (padre #409), WU Q5b
-**Base de ejecución:** rama `work/nexus-home-qualification-03-409-20260925` @ `2407532` (builder + checker F3.4), sobre F3.3 `7c73f37`
+**Estado:** `PUBLICADO — release Home sintético determinista y browser-qualified; evaluación sintética, no piloto/producción`
+**Fecha:** 2026-09-26
+**Issue / WO:** #414 — F3.4 (padre #409), reconciliación post-merge #416
+**Base de ejecución:** `work/nexus-home-qualification-03-409-20260925`; Q5a `2407532`, Q5b `612bc03`; candidate final `9004b443619bc2eb8002165de6261176e27db8e9`
+**Publicación:** PR #415 → merge `6e6413c4e9cb163f11ee193c24c8f287c9ebdc36` en `promueve/nexus-v4`; tree `1d6834f59c38bd90e883174a773579cd20c474ee` idéntico al candidate; fresh worktree post-merge `npm ci` + `npm run verify:nexus` PASS
 **ADRs:** [ADR-007](../architecture/adr/ADR-007-release-tooling-and-quality.md) · [ADR-003](../architecture/adr/ADR-003-hospital-deployment-and-configuration.md) · [ADR-002](../architecture/adr/ADR-002-modular-monolith-and-module-boundaries.md)
 **Documento previo:** [`NEXUS_HOME_F3.2.md`](NEXUS_HOME_F3.2.md)
 
@@ -157,8 +159,17 @@ durante build, verificación ni reversión.
 - **Los snapshots Cáceres/legacy no se tocan.** El builder, el checker y el
   checker browser no mutan `previews/`, `templates/`, `snapshots/` ni código
   clínico.
-- El checker browser **no entra en `verify:nexus`** (`NEXUS-DEBT-009`): la QA de
-  navegador permanece fuera del gate determinista y se ejecuta explícitamente.
+- El checker browser **no entra en `verify:nexus`**: la QA de navegador permanece
+  fuera del gate determinista y se ejecuta explícitamente. `NEXUS-DEBT-009` sí está
+  RESOLVED porque los checks deterministas Home + navegación están cableados en CI.
 - La cualificación de F3.4 no sustituye la cualificación funcional completa
   (F3.3, ya PASS sobre el sitio completo) ni acredita accesibilidad de teclado,
   que sigue como trabajo posterior.
+- La Promotion Review sobre el candidate exacto terminó PASS y 0 blockers; preservó
+  como deuda material no bloqueante `NEXUS-DEBT-012` (puntero de evidencia browser
+  del release manifest) y `NEXUS-DEBT-013` (forma array de `items` en el validator).
+  N2 documental quedó reconciliado por #416.
+- La ruta real de esa Promotion Review fue `nan/deepseek-v4-flash` high por elección
+  explícita de la operadora; el manifest de evidencia heredado conservaba el literal
+  `openai-codex/gpt-5.6-sol`. La desviación de metadata se conserva como hecho y la
+  review no se repitió por decisión humana.
