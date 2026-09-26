@@ -223,13 +223,23 @@ const tooling = {
   pinnedRuntime: 'node 20 (.nvmrc)',
 };
 
-// Declarative required-gate evidence per ADR-007. Browser-on-artifact
-// qualification is a later WU and is declared here, not executed.
+// Declarative required-gate evidence per ADR-007, expressed as an unambiguous
+// two-scope browser gate (NEXUS-DEBT-012): `site` is the F3.3 qualification
+// over the FULL repository site and `releaseArtifact` is the qualification of
+// the ISOLATED materialized release artifact. Each pointer names the suite that
+// actually qualifies its scope; both are declared here and executed by their
+// own checkers, not by this deterministic builder/checker.
 const gates = {
   deterministic: ['npm run verify:nexus'],
   browser: {
-    suite: 'tools/nexus_home_f33_browser_check.mjs',
-    requirement: 'PASS on the release artifact',
+    site: {
+      suite: 'tools/nexus_home_f33_browser_check.mjs',
+      requirement: 'PASS on the full repository site',
+    },
+    releaseArtifact: {
+      suite: 'tools/nexus_home_release_browser_check.mjs',
+      requirement: 'PASS on the release artifact',
+    },
   },
 };
 

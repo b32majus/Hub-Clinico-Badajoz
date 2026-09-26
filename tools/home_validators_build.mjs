@@ -24,9 +24,12 @@
  * fail-closed keyword gate over the raw schemas before writing anything: any
  * schema keyword outside the explicitly supported set aborts the build with a
  * deterministic error naming the offending schema file and keyword, and no
- * output file is created. This keeps the generated interpreter and the accepted
- * schemas from silently drifting apart. Running the generator twice over the
- * same schemas produces byte-identical output.
+ * output file is created. The gate is also form-aware for `items`: the emitted
+ * interpreter implements `items` only as a single schema, so the array (tuple)
+ * form is rejected with its own deterministic message instead of being
+ * descended into and silently becoming a no-op. This keeps the generated
+ * interpreter and the accepted schemas from silently drifting apart. Running
+ * the generator twice over the same schemas produces byte-identical output.
  */
 
 import fs from 'node:fs';
@@ -68,8 +71,12 @@ function isPlainObject(value) {
 }
 
 // Recursively classify every keyword of every JSON Schema node. Boolean schema
-// nodes are valid; containers (properties, additionalProperties, items,
-// $defs/definitions) are descended into; leaf validation keywords are not.
+// nodes are valid; containers (properties, additionalProperties, single-schema
+// items, $defs/definitions) are descended into; leaf validation keywords are
+// not. An `items` value that is a JSON array is the unsupported tuple form: it
+// is recorded as a problem carrying its form and its elements are NOT
+// descended into, because the runtime treats the whole array as a single
+// (invalid) schema and therefore as a silent no-op.
 function collectUnsupportedKeywords(node, schemaFile, pointer, problems) {
   if (typeof node === 'boolean') return;
   if (node === null || typeof node !== 'object' || Array.isArray(node)) return;
@@ -98,9 +105,9 @@ function collectUnsupportedKeywords(node, schemaFile, pointer, problems) {
     }
     if (key === 'items') {
       if (Array.isArray(value)) {
-        for (let i = 0; i < value.length; i++) {
-          collectUnsupportedKeywords(value[i], schemaFile, `${pointer}/items/${i}`, problems);
-        }
+        // Tuple form: unsupported as a whole. Record the offending form and do
+        // not descend into the elements (they are not separate schema nodes).
+        problems.push({ schemaFile, keyword: key, pointer: `${pointer}/items`, form: 'array' });
       } else {
         collectUnsupportedKeywords(value, schemaFile, `${pointer}/items`, problems);
       }
@@ -128,7 +135,8 @@ function gateSchemas(rawSchemas) {
   problems.sort((a, b) =>
     a.schemaFile.localeCompare(b.schemaFile) ||
     a.pointer.localeCompare(b.pointer) ||
-    a.keyword.localeCompare(b.keyword)
+    a.keyword.localeCompare(b.keyword) ||
+    (a.form || '').localeCompare(b.form || '')
   );
   return problems;
 }
@@ -429,9 +437,15 @@ function main() {
   const problems = gateSchemas(readRawSchemas(schemaDir));
   if (problems.length > 0) {
     for (const problem of problems) {
-      process.stderr.write(
-        `home_validators_build: unsupported schema keyword "${problem.keyword}" in ${problem.schemaFile} at ${problem.pointer}\n`
-      );
+      if (problem.form) {
+        process.stderr.write(
+          `home_validators_build: unsupported schema keyword "${problem.keyword}" form "${problem.form}" in ${problem.schemaFile} at ${problem.pointer}\n`
+        );
+      } else {
+        process.stderr.write(
+          `home_validators_build: unsupported schema keyword "${problem.keyword}" in ${problem.schemaFile} at ${problem.pointer}\n`
+        );
+      }
     }
     process.stderr.write(
       `home_validators_build: ${problems.length} unsupported schema keyword(s); refusing to write ${out}\n`
