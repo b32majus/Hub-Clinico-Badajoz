@@ -133,6 +133,16 @@ const modules = registry.modules
     };
   });
 
+// 4b. Entry-path uniqueness in the resolved composition (NEXUS-DEBT-008):
+//    two modules emitted into the same manifest must never resolve to the
+//    same entry file, so the resolved entryPaths are checked here, on the
+//    modules that will actually be emitted and before any output is written.
+const resolvedEntryPaths = modules.map((m) => m.entryPath);
+const duplicateEntryPaths = resolvedEntryPaths.filter((p, i) => resolvedEntryPaths.indexOf(p) !== i);
+if (duplicateEntryPaths.length > 0) {
+  fail(`duplicate entryPath in resolved manifest: ${[...new Set(duplicateEntryPaths)].join(', ')}`);
+}
+
 const manifest = {
   manifestVersion: '1',
   deploymentId: profile.deploymentId,
