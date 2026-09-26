@@ -53,7 +53,11 @@ Campos del manifest de release (ADR-007): `homeReleaseVersion`, `releaseId`,
 `readiness`), `code` (`files`, `filesSha256`), `config`
 (`registrySha256`, `profileSha256`, `manifestSha256`, `readinessSha256`),
 `contracts` (versiones + `schemaIds`), `tooling` (cadenas estáticas),
-`gates` (`deterministic`, `browser`), `rollback` y `releaseSha256`.
+`gates` (`deterministic`, `browser.site`, `browser.releaseArtifact`), `rollback`
+y `releaseSha256`. Cada ámbito de `browser` declara exactamente
+`{ suite, requirement }`: `site` apunta a la suite que cualifica el sitio
+completo y `releaseArtifact` a la que cualifica el artefacto de release
+materializado; el puntero nunca es ambiguo entre ambos.
 
 ## Cómo construir y verificar
 
@@ -66,7 +70,7 @@ node tools/home_release_build.mjs \
   /tmp/release-manifest.json
 
 # Verificación determinista (Node; entra en verify:nexus)
-node tools/home_release_check.mjs            # 13 OK / 0 FALLIDO
+node tools/home_release_check.mjs            # 15 OK / 0 FALLIDO
 npm run verify:nexus                         # suite Nexus completa
 
 # Cualificación browser del artefacto (Chromium real; NO entra en verify:nexus)
@@ -106,6 +110,14 @@ Sobre el checker determinista (`tools/home_release_check.mjs`):
 5. **Mapa de releases sin un módulo desplegado:** falla cerrado y lo nombra.
 6. **Tooling manipulado / campo desconocido:** rechazado por la validación
    estructural.
+7. **Punteros de evidencia browser defectuosos:** punteros de ámbito
+   intercambiados, un ámbito `site`/`releaseArtifact` ausente, literales de
+   `requirement` intercambiados o la forma plana legacy son rechazados por la
+   validación estructural nombrando el puntero infractor
+   (`gates.browser.<ámbito>.suite|requirement`).
+8. **Puntero de suite colgante:** una ruta de suite sintetizada que no es un
+   fichero real del repositorio falla la validación estructural y nombra la
+   suite ausente.
 
 Sobre el checker browser hay además una garantía de frontera: A0/A0b verifican
 que el artefacto materializado contiene exactamente la unidad declarada, y A3
@@ -117,6 +129,23 @@ F3.3 (`7c73f37`, `tools/nexus_home_f33_browser_check.mjs`) cualificó el Home
 **sobre el sitio completo**: sirviendo la raíz del repositorio, las 8 escenas
 (S1–S8) pasan en Chromium real. F3.4 WU Q5b añade la capa que F3.3 no cubre: la
 cualificación del **artefacto de release declarado**, servido aislado.
+
+El manifest de release declara esa frontera de forma explícita en
+`gates.browser`, con dos ámbitos disjuntos y literales exactos:
+
+- `gates.browser.site = { suite: "tools/nexus_home_f33_browser_check.mjs",
+  requirement: "PASS on the full repository site" }` — cualificación F3.3 sobre
+  el sitio completo del repositorio (8 escenas S1–S8);
+- `gates.browser.releaseArtifact = { suite:
+  "tools/nexus_home_release_browser_check.mjs", requirement: "PASS on the
+  release artifact" }` — cualificación del artefacto materializado y servido
+  aislado (escenas A0/A0b/A1/A2/A3).
+
+`tools/home_release_check.mjs` exige exactamente esa forma de dos ámbitos:
+rechaza la forma plana legacy, un ámbito ausente, un puntero o un literal de
+requisito intercambiados, cualquier clave desconocida bajo `gates.browser` o
+ dentro de un ámbito, y un puntero de suite que no resuelva a un fichero real
+del repositorio (resuelto relativo a la raíz).
 
 Frontera honesta del artefacto:
 
@@ -168,7 +197,11 @@ durante build, verificación ni reversión.
 - La Promotion Review sobre el candidate exacto terminó PASS y 0 blockers; preservó
   como deuda material no bloqueante `NEXUS-DEBT-012` (puntero de evidencia browser
   del release manifest) y `NEXUS-DEBT-013` (forma array de `items` en el validator).
-  N2 documental quedó reconciliado por #416.
+  `NEXUS-DEBT-012` queda RESOLVED en este train: `gates.browser` declara ahora los
+  dos ámbitos `site` y `releaseArtifact`, cada uno apuntando a la suite que
+  realmente cualifica su alcance, y la validación estructural rechaza cualquier
+  puntero ambiguo, ausente o colgante. `NEXUS-DEBT-013` permanece como deuda
+  abierta. N2 documental quedó reconciliado por #416.
 - La ruta real de esa Promotion Review fue `nan/deepseek-v4-flash` high por elección
   explícita de la operadora; el manifest de evidencia heredado conservaba el literal
   `openai-codex/gpt-5.6-sol`. La desviación de metadata se conserva como hecho y la

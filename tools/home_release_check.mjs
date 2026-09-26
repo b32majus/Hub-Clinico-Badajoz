@@ -83,6 +83,23 @@ const EXPECTED_TOOLING = {
   pinnedRuntime: 'node 20 (.nvmrc)',
 };
 
+// Two-scope browser gate (NEXUS-DEBT-012). `site` names the F3.3 suite that
+// qualifies the FULL repository site; `releaseArtifact` names the suite that
+// qualifies the ISOLATED materialized release artifact. The flat legacy shape
+// ({ suite, requirement } directly under gates.browser) is never valid again.
+const EXPECTED_BROWSER_SCOPES = [
+  {
+    key: 'site',
+    suite: 'tools/nexus_home_f33_browser_check.mjs',
+    requirement: 'PASS on the full repository site',
+  },
+  {
+    key: 'releaseArtifact',
+    suite: 'tools/nexus_home_release_browser_check.mjs',
+    requirement: 'PASS on the release artifact',
+  },
+];
+
 const results = [];
 
 function record(name, pass, detail) {
@@ -228,15 +245,75 @@ function structuralErrors(release, manifestDoc) {
     'tooling must contain exactly the static tooling fields'
   );
 
-  // Gates / evidence.
+  // Gates / evidence: two-scope browser gate (NEXUS-DEBT-012). Fail closed on
+  // any wrong pointer, missing/extra key, unknown key or dangling suite path,
+  // always naming the offending pointer.
   const gates = release.gates && typeof release.gates === 'object' ? release.gates : {};
   check(
     Array.isArray(gates.deterministic) && gates.deterministic.includes('npm run verify:nexus'),
     "gates.deterministic must include 'npm run verify:nexus'"
   );
-  const browser = gates.browser && typeof gates.browser === 'object' ? gates.browser : {};
-  check(browser.suite === 'tools/nexus_home_f33_browser_check.mjs', 'gates.browser.suite must be the F3.3 browser checker');
-  check(typeof browser.requirement === 'string' && browser.requirement.length > 0, 'gates.browser.requirement must be non-empty');
+
+  const browser = gates.browser;
+  if (!browser || typeof browser !== 'object' || Array.isArray(browser)) {
+    errors.push('gates.browser must be a two-scope object with "site" and "releaseArtifact" entries');
+  } else {
+    const scopeKeys = EXPECTED_BROWSER_SCOPES.map((s) => s.key);
+
+    // (e) Legacy flat shape must never be emitted again.
+    if (Object.prototype.hasOwnProperty.call(browser, 'suite') || Object.prototype.hasOwnProperty.call(browser, 'requirement')) {
+      errors.push(
+        `gates.browser uses the flat legacy shape; expected the two scopes ${scopeKeys.map((k) => `"${k}"`).join(' and ')} (offending pointers: gates.browser.suite=${JSON.stringify(browser.suite)}, gates.browser.requirement=${JSON.stringify(browser.requirement)})`
+      );
+    }
+
+    // (d) Unknown key under gates.browser.
+    for (const key of Object.keys(browser)) {
+      if (!scopeKeys.includes(key)) {
+        errors.push(`gates.browser has an unknown key "${key}"`);
+      }
+    }
+
+    for (const scope of EXPECTED_BROWSER_SCOPES) {
+      // (b) Missing / empty scope entry.
+      const entry = browser[scope.key];
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        errors.push(`gates.browser.${scope.key} must be an object with "suite" and "requirement" keys`);
+        continue;
+      }
+
+      // (d) Missing/extra key inside a scope entry.
+      for (const key of Object.keys(entry)) {
+        if (key !== 'suite' && key !== 'requirement') {
+          errors.push(`gates.browser.${scope.key} has an unknown key "${key}"`);
+        }
+      }
+      check(typeof entry.suite === 'string' && entry.suite.length > 0, `gates.browser.${scope.key}.suite must be a non-empty string`);
+      check(
+        typeof entry.requirement === 'string' && entry.requirement.length > 0,
+        `gates.browser.${scope.key}.requirement must be a non-empty string`
+      );
+
+      // (a) + (c) Exact pointer and requirement literal, including the swapped
+      // (D012) and swapped-requirement mutations.
+      if (entry.suite !== scope.suite) {
+        errors.push(
+          `gates.browser.${scope.key}.suite must be exactly "${scope.suite}" (offending pointer: gates.browser.${scope.key}.suite="${entry.suite}")`
+        );
+      }
+      if (entry.requirement !== scope.requirement) {
+        errors.push(
+          `gates.browser.${scope.key}.requirement must be exactly "${scope.requirement}" (offending pointer: gates.browser.${scope.key}.requirement="${entry.requirement}")`
+        );
+      }
+
+      // (O3) The declared suite must exist as a real file, resolved
+      // repo-root-relative.
+      if (typeof entry.suite === 'string' && entry.suite.length > 0 && !fs.existsSync(path.resolve(ROOT, entry.suite))) {
+        errors.push(`gates.browser.${scope.key}.suite points at a missing suite: "${entry.suite}"`);
+      }
+    }
+  }
 
   // Rollback reference.
   const rollback = release.rollback && typeof release.rollback === 'object' ? release.rollback : {};
@@ -433,6 +510,61 @@ function main() {
     'tampered generator and unknown tooling field are rejected by structural validation',
     toolingErrs.some((e) => e.includes('tooling.generator')) && unknownToolingErrs.length > 0,
     `generatorErrs=${JSON.stringify(toolingErrs)} unknownFieldErrs=${JSON.stringify(unknownToolingErrs)}`
+  );
+
+  // 4e. Planted browser evidence-pointer defects (NEXUS-DEBT-012): a swapped
+  // scope pointer, a missing scope entry, a swapped requirement literal and the
+  // legacy flat shape must each be rejected by structural validation, naming the
+  // offending pointer. Each mutation starts from a valid two-scope base so the
+  // planted pointer defect is the only structural difference.
+  const validBrowserGate = () =>
+    Object.fromEntries(
+      EXPECTED_BROWSER_SCOPES.map((s) => [s.key, { suite: s.suite, requirement: s.requirement }])
+    );
+  const releaseWithGates = (mutate) => {
+    const clone = JSON.parse(JSON.stringify(release || {}));
+    clone.gates = { deterministic: ['npm run verify:nexus'], browser: validBrowserGate() };
+    mutate(clone);
+    return clone;
+  };
+
+  const swappedSuites = releaseWithGates((r) => {
+    r.gates.browser.site.suite = 'tools/nexus_home_release_browser_check.mjs';
+    r.gates.browser.releaseArtifact.suite = 'tools/nexus_home_f33_browser_check.mjs';
+  });
+  const swappedSuiteErrs = structuralErrors(swappedSuites, manifestDoc);
+  const swappedRequirements = releaseWithGates((r) => {
+    r.gates.browser.site.requirement = 'PASS on the release artifact';
+    r.gates.browser.releaseArtifact.requirement = 'PASS on the full repository site';
+  });
+  const swappedRequirementErrs = structuralErrors(swappedRequirements, manifestDoc);
+  const missingScope = releaseWithGates((r) => {
+    delete r.gates.browser.releaseArtifact;
+  });
+  const missingScopeErrs = structuralErrors(missingScope, manifestDoc);
+  const flatLegacy = releaseWithGates((r) => {
+    r.gates.browser = { suite: 'tools/nexus_home_f33_browser_check.mjs', requirement: 'PASS on the release artifact' };
+  });
+  const flatLegacyErrs = structuralErrors(flatLegacy, manifestDoc);
+  record(
+    'planted browser evidence pointer defects are rejected by structural validation',
+    swappedSuiteErrs.some((e) => e.includes('gates.browser.releaseArtifact.suite') && e.includes('offending pointer')) &&
+      swappedRequirementErrs.some((e) => e.includes('gates.browser.site.requirement') && e.includes('offending pointer')) &&
+      missingScopeErrs.some((e) => e.includes('gates.browser.releaseArtifact')) &&
+      flatLegacyErrs.some((e) => e.includes('flat legacy shape')),
+    `swappedSuite=${JSON.stringify(swappedSuiteErrs)} swappedRequirement=${JSON.stringify(swappedRequirementErrs)} missingScope=${JSON.stringify(missingScopeErrs)} flatLegacy=${JSON.stringify(flatLegacyErrs)}`
+  );
+
+  // 4f. Planted dangling suite pointer: a synthesized suite path that is not a
+  // real repository file must fail structural validation and name the suite.
+  const danglingSuite = releaseWithGates((r) => {
+    r.gates.browser.site.suite = 'tools/nexus_home_missing_browser_check.mjs';
+  });
+  const danglingSuiteErrs = structuralErrors(danglingSuite, manifestDoc);
+  record(
+    'planted dangling browser suite pointer is rejected and names the missing suite',
+    danglingSuiteErrs.some((e) => e.includes('missing suite') && e.includes('tools/nexus_home_missing_browser_check.mjs')),
+    JSON.stringify(danglingSuiteErrs)
   );
 
   // 5. Zero patient/clinical scan (Home sources + release manifest output).
