@@ -2,7 +2,8 @@
 'use strict';
 /**
  * Independent deterministic hardening checker for the offline Home schema
- * validator build gate (NEXUS-DEBT-010, issue #411, parent #409).
+ * validator build gate (NEXUS-DEBT-010, issue #411, parent #409; NEXUS-DEBT-013,
+ * issue #421, parent #419).
  *
  * The generated browser validators
  * (modules/home/home-schema-validators.generated.js) are a deterministic
@@ -22,8 +23,14 @@
  *      an 80-astral-code-point label is accepted, 81 is rejected and a single
  *      astral character satisfies minLength 1.
  *  N4. Exhaustiveness sweep: every key of every JSON Schema node across the four
- *      committed schemas is a recognized annotation or a supported keyword, so
- *      the accepted schemas contain no silently-ignored keyword.
+ *      committed schemas is a recognized annotation or a supported keyword, and
+ *      no node uses the unsupported `items` array (tuple) form, so the accepted
+ *      schemas contain no silently-ignored keyword or form.
+ *  N5. `items` array (tuple) form fails closed: injecting the array form into a
+ *      schema copy whose accepted form is a single schema (the pristine control
+ *      copy still builds) makes the build exit non-zero, emit a message naming
+ *      the schema file, the `items` pointer and the `array` form, and leave the
+ *      output path untouched (no artifact, pre-existing artifact preserved).
  *
  * Node-only, dependency-free, deterministic (no network). Exit codes:
  * 0 = all cases PASS, 1 = at least one case FAIL.
@@ -245,6 +252,7 @@ console.log('PROMueve Nexus Home validator hardening — NEXUS-DEBT-010 checker'
 // --- N4: exhaustiveness sweep over the four committed schemas
 {
   const keys = new Set();
+  const unsupportedForms = [];
   const stats = { nodes: 0 };
   const collect = (node) => {
     if (typeof node === 'boolean') { stats.nodes += 1; return; }
@@ -267,8 +275,10 @@ console.log('PROMueve Nexus Home validator hardening — NEXUS-DEBT-010 checker'
         continue;
       }
       if (key === 'items') {
-        if (Array.isArray(value)) value.forEach((item) => collect(item));
-        else collect(value);
+        // Mirror the build gate: an array value is the unsupported tuple form,
+        // not a set of schema nodes to descend into.
+        if (Array.isArray(value)) { unsupportedForms.push('items array'); continue; }
+        collect(value);
         continue;
       }
     }
@@ -279,13 +289,64 @@ console.log('PROMueve Nexus Home validator hardening — NEXUS-DEBT-010 checker'
     }
     const unsupported = [...keys].filter((key) => !ANNOTATION_KEYS.has(key) && !SUPPORTED_KEYWORDS.has(key));
     record('N4 exhaustiveness sweep: every committed schema keyword is annotation or supported',
-      unsupported.length === 0,
-      `unsupported=${JSON.stringify(unsupported)} keys=${JSON.stringify([...keys].sort())}`);
+      unsupported.length === 0 && unsupportedForms.length === 0,
+      `unsupported=${JSON.stringify(unsupported)} unsupportedForms=${JSON.stringify(unsupportedForms)} keys=${JSON.stringify([...keys].sort())}`);
     record('N4 sweep is non-vacuous (visited many schema nodes and keywords)',
       stats.nodes >= 40 && keys.size >= 15,
       `nodes=${stats.nodes} keyCount=${keys.size}`);
   } catch (err) {
     record('N4 exhaustiveness sweep', false, err.message);
+  }
+}
+
+// --- N5: `items` array (tuple) form -> fail closed, no artifact, names pointer + form
+{
+  const dir = makeSchemaCopyDir('n5');
+  const controlOut = path.join(dir, 'control.js');
+  const injectedOut = path.join(dir, 'injected.js');
+  const preexistingOut = path.join(dir, 'preexisting.js');
+  const targetFile = 'module-registry.schema.json';
+  const itemsPointer = '#/$defs/moduleEntry/properties/platformCapabilities/items';
+  const SENTINEL = 'preexisting-artifact-must-survive\n';
+  try {
+    const control = runBuild(dir, controlOut);
+    record('N5 control: pristine schema copy builds successfully',
+      control.status === 0 && fs.existsSync(controlOut),
+      `status=${control.status} exists=${fs.existsSync(controlOut)} stderr=${JSON.stringify(control.stderr.slice(0, 200))}`);
+
+    mutateSchema(dir, targetFile, (schema) => {
+      const caps = schema.$defs.moduleEntry.properties.platformCapabilities;
+      // Preserve the accepted single schema as the only tuple element, so the
+      // array form is the sole injected defect.
+      caps.items = [caps.items];
+    });
+
+    const injected = runBuild(dir, injectedOut);
+    const noArtifact = !fs.existsSync(injectedOut);
+    const namesFile = injected.stderr.includes(targetFile);
+    const namesPointer = injected.stderr.includes(itemsPointer);
+    const namesForm = injected.stderr.includes('array');
+
+    record('N5 build fails closed on unsupported items array (tuple) form',
+      injected.status !== 0,
+      `status=${injected.status} stderr=${JSON.stringify(injected.stderr.slice(0, 300))}`);
+    record('N5 items array leaves no output artifact',
+      noArtifact,
+      `exists=${fs.existsSync(injectedOut)} status=${injected.status}`);
+    record('N5 failure message names the schema file, the items pointer and the array form',
+      namesFile && namesPointer && namesForm,
+      `file=${namesFile} pointer=${namesPointer} form=${namesForm} stderr=${JSON.stringify(injected.stderr.slice(0, 300))}`);
+
+    fs.writeFileSync(preexistingOut, SENTINEL);
+    const injectedOverExisting = runBuild(dir, preexistingOut);
+    const untouched = fs.existsSync(preexistingOut) && fs.readFileSync(preexistingOut, 'utf8') === SENTINEL;
+    record('N5 items array rejection leaves a pre-existing output artifact untouched',
+      injectedOverExisting.status !== 0 && untouched,
+      `status=${injectedOverExisting.status} untouched=${untouched}`);
+  } catch (err) {
+    record('N5 items array build gate', false, err.message);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 }
 
