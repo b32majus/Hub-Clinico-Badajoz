@@ -509,4 +509,113 @@ test('prototype-like normalized identifier uses null-prototype lookup safely', (
     assert.strictEqual(selectorsModule.create(special).findByIdentifier('__proto__', 'constructor').patient_id, 'patient-c');
 });
 
+// --- findIdentifierCandidatesByValue (ticket #428, operator decision "B corregida") ---
+
+test('findIdentifierCandidatesByValue resolves a single stored identifier', () => {
+    const candidates = selectorsModule.create(fixture()).findIdentifierCandidatesByValue('ZZZ-VALUE');
+    assert.deepStrictEqual(candidates, [
+        { identifier_system: 'urn:cip:demo', identifier_value: 'ZZZ-VALUE', patient_id: 'patient-c' }
+    ]);
+});
+
+test('findIdentifierCandidatesByValue matches trim and case-insensitively keeping stored case', () => {
+    const local = fixture();
+    local.patients['patient-a'].identifiers = [{ identifier_system: 'urn:cip:demo', identifier_value: 'CIP-A' }];
+    delete local.indexes.by_identifier['urn:cip:demo']['SAME-VALUE'];
+    local.indexes.by_identifier['urn:cip:demo']['CIP-A'] = { patient_id: 'patient-a' };
+    const selectors = selectorsModule.create(local);
+    const expected = [{ identifier_system: 'urn:cip:demo', identifier_value: 'CIP-A', patient_id: 'patient-a' }];
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue('cip-a'), expected);
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue('  cip-a  '), expected);
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue('  CIP-A  '), expected);
+});
+
+test('findIdentifierCandidatesByValue preserves cardinality for two patients under two systems', () => {
+    const candidates = selectorsModule.create(fixture()).findIdentifierCandidatesByValue('same-value');
+    assert.deepStrictEqual(candidates, [
+        { identifier_system: 'urn:cip:demo', identifier_value: 'SAME-VALUE', patient_id: 'patient-a' },
+        { identifier_system: 'urn:nhc:demo', identifier_value: 'SAME-VALUE', patient_id: 'patient-b' }
+    ]);
+});
+
+test('findIdentifierCandidatesByValue does not dedupe one patient holding a value under two systems', () => {
+    const local = fixture();
+    local.patients['patient-b'].identifiers = [{ identifier_system: 'urn:nhc:demo', identifier_value: 'OTHER-VALUE' }];
+    local.indexes.by_identifier['urn:nhc:demo'] = { 'OTHER-VALUE': { patient_id: 'patient-b' } };
+    local.patients['patient-a'].identifiers = [
+        { identifier_system: 'urn:cip:demo', identifier_value: 'SAME-VALUE' },
+        { identifier_system: 'urn:nhc:demo', identifier_value: 'SAME-VALUE' }
+    ];
+    local.indexes.by_identifier['urn:nhc:demo']['SAME-VALUE'] = { patient_id: 'patient-a' };
+    const candidates = selectorsModule.create(local).findIdentifierCandidatesByValue('SAME-VALUE');
+    assert.deepStrictEqual(candidates, [
+        { identifier_system: 'urn:cip:demo', identifier_value: 'SAME-VALUE', patient_id: 'patient-a' },
+        { identifier_system: 'urn:nhc:demo', identifier_value: 'SAME-VALUE', patient_id: 'patient-a' }
+    ]);
+});
+
+test('findIdentifierCandidatesByValue returns an empty array for an unknown value', () => {
+    assert.deepStrictEqual(selectorsModule.create(fixture()).findIdentifierCandidatesByValue('ABSENT-VALUE'), []);
+});
+
+test('findIdentifierCandidatesByValue rejects non-string and blank input without throwing', () => {
+    const selectors = selectorsModule.create(fixture());
+    [null, undefined, 0, false, {}].forEach(input => {
+        assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue(input), []);
+    });
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue(''), []);
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue('   '), []);
+});
+
+test('findIdentifierCandidatesByValue entries expose exactly the three allowed keys', () => {
+    const candidates = selectorsModule.create(fixture()).findIdentifierCandidatesByValue('SAME-VALUE');
+    assert(candidates.length > 0);
+    candidates.forEach(candidate => {
+        assert.deepStrictEqual(Object.keys(candidate).sort(), ['identifier_system', 'identifier_value', 'patient_id']);
+    });
+    assert(!candidates.some(candidate => [
+        'rows', 'workbook', 'patient', 'timeline', 'services', 'pathologies', 'warnings'
+    ].some(key => Object.prototype.hasOwnProperty.call(candidate, key))));
+});
+
+test('findIdentifierCandidatesByValue order is deterministic by system then value then patient', () => {
+    const local = fixture();
+    local.patients['patient-a'].identifiers = [{ identifier_system: 'urn:extra:demo', identifier_value: 'DUP-VALUE' }];
+    local.patients['patient-b'].identifiers = [{ identifier_system: 'urn:cip:demo', identifier_value: 'DUP-VALUE' }];
+    local.patients['patient-c'].identifiers = [{ identifier_system: 'urn:nhc:demo', identifier_value: 'DUP-VALUE' }];
+    local.indexes.by_identifier = {
+        'urn:extra:demo': { 'DUP-VALUE': { patient_id: 'patient-a' } },
+        'urn:nhc:demo': { 'DUP-VALUE': { patient_id: 'patient-c' } },
+        'urn:cip:demo': { 'DUP-VALUE': { patient_id: 'patient-b' } }
+    };
+    const selectors = selectorsModule.create(local);
+    const expected = [
+        { identifier_system: 'urn:cip:demo', identifier_value: 'DUP-VALUE', patient_id: 'patient-b' },
+        { identifier_system: 'urn:extra:demo', identifier_value: 'DUP-VALUE', patient_id: 'patient-a' },
+        { identifier_system: 'urn:nhc:demo', identifier_value: 'DUP-VALUE', patient_id: 'patient-c' }
+    ];
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue('DUP-VALUE'), expected);
+    assert.deepStrictEqual(selectors.findIdentifierCandidatesByValue('dup-value'), expected);
+});
+
+test('findIdentifierCandidatesByValue does not mutate the read model', () => {
+    const local = fixture();
+    const before = clone(local);
+    const selectors = selectorsModule.create(local);
+    selectors.findIdentifierCandidatesByValue('SAME-VALUE');
+    assert.deepStrictEqual(local, before);
+});
+
+test('selectors instance exposes only public operations and no internal index', () => {
+    const selectors = selectorsModule.create(fixture());
+    const expectedOperations = [
+        'listPatientSummaries', 'findByIdentifier', 'findIdentifierCandidatesByValue',
+        'findByPatientId', 'getPatientEvents', 'getLatestEventOfType',
+        'getLatestLineSnapshots', 'getPatientQuickView'
+    ];
+    assert.deepStrictEqual(Object.getOwnPropertyNames(selectors).sort(), expectedOperations.slice().sort());
+    assert(!Object.prototype.hasOwnProperty.call(selectors, 'by_identifier'));
+    assert(!Object.prototype.hasOwnProperty.call(selectors, 'identifierIndex'));
+});
+
 console.log(`farmacia_bridge_v2_patient_selectors_check: PASS (${passed} cases)`);

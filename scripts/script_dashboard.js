@@ -124,7 +124,12 @@ function configureDashboardMetricLabels() {
     if (primaryTableHeader) primaryTableHeader.innerHTML = `${primaryLabel} <i class="fas fa-sort"></i>`;
     if (secondaryTableHeader) secondaryTableHeader.innerHTML = `${secondaryLabel} <i class="fas fa-sort"></i>`;
 }
-document.addEventListener('DOMContentLoaded', () => {
+// Frozen fail-closed dashboard copies (PART 5).
+const PENDING_BUNDLE = 'Cargando datos del paciente…';
+const FAIL_CLOSED_UNAVAILABLE = 'No hay datos cargados. Carga el Excel para consultar pacientes.';
+const FAIL_CLOSED_ERROR = 'No se pudo consultar los pacientes. Inténtalo de nuevo.';
+
+document.addEventListener('DOMContentLoaded', async () => {
     const patientId = getPatientIdFromURL();
     console.log(' Iniciando dashboard premium del paciente', patientId);
 
@@ -133,12 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const bundle = loadPatientBundle(patientId);
-    if (!bundle) {
-        showEmptyState(`No se encontró información para el ID ${patientId}.`);
+    showEmptyState(PENDING_BUNDLE);
+
+    const outcome = await loadPatientBundle(patientId);
+    if (outcome.status !== 'ok' || !outcome.bundle) {
+        if (outcome.status === 'not_found') {
+            showEmptyState(`No se encontró información para el ID ${patientId}.`);
+        } else if (outcome.status === 'error') {
+            showEmptyState(FAIL_CLOSED_ERROR);
+        } else {
+            showEmptyState(FAIL_CLOSED_UNAVAILABLE);
+        }
         return;
     }
 
+    const bundle = outcome.bundle;
     window.patientSummary = bundle.summary;
     window.patientHistory = bundle.history;
     window.currentPathology = (window.patientHistory.pathology || window.patientSummary.diagnosticoPrimario || 'espa').toLowerCase();
@@ -201,52 +215,59 @@ function getPatientIdFromURL() {
     return params.get('id');
 }
 
-function loadPatientBundle(patientId) {
-    // Prioritize HubTools data if available and meaningful
-    const hubBundle = loadFromHub(patientId);
-    if (hubBundle && hubBundle.history.allVisits.length > 0) {
-        console.log(' Datos obtenidos desde HubTools / Excel');
-        return hubBundle;
+async function loadPatientBundle(patientId) {
+    // The Reuma read port owns the unavailable vs not_found split; this consumer only maps
+    // the closed result set into the dashboard's presentation contract.
+    const port = (typeof window.ReumaPatientReadPort?.getPort === 'function')
+        ? window.ReumaPatientReadPort.getPort()
+        : null;
+    if (!port) {
+        return { status: 'unavailable' };
     }
 
-    // Fallback to MockPatients
-    const mockBundle = loadFromMock(patientId);
-    if (mockBundle) {
-        console.log(' Datos obtenidos desde MockPatients');
-        return mockBundle;
+    let read;
+    try {
+        read = await port.readPatientBundle(patientId);
+    } catch (error) {
+        return { status: 'error', error_code: 'read_failed' };
     }
 
-    console.warn(' No se encontraron datos ni en HubTools ni en MockPatients');
-    return null;
-}
-
-function loadFromHub(patientId) {
-    if (typeof HubTools.data.findPatientById !== 'function') {
-        return null;
-    }
-
-    const record = HubTools.data.findPatientById(patientId);
-    if (!record) {
-        return null;
-    }
-    const normalizedRecord = normalizeRecord(record);
-
-    let history = null;
-    if (typeof HubTools.data.getPatientHistory === 'function') {
-        try {
-            const fetched = HubTools.data.getPatientHistory(patientId);
-            if (fetched && fetched.allVisits && fetched.allVisits.length) {
-                history = fetched;
-            }
-        } catch (error) {
-            console.warn('loadFromHub: error recuperando historial', error);
+    if (read && read.status === 'ok' && read.patient) {
+        const bundle = buildBundleFromRead(patientId, read.patient.record, read.patient.history);
+        if (bundle) {
+            console.log(' Datos obtenidos desde HubTools / Excel');
+            return { status: 'ok', bundle };
         }
     }
 
-    if (!history || history.allVisits.length === 0) {
+    if (read && read.status === 'not_found') {
+        // The legacy fallback surface stays reachable exactly where it was: a real read that
+        // returned not_found may still try the (dormant) mock, while unavailable/error never do.
+        const mockBundle = loadFromMock(patientId);
+        if (mockBundle) {
+            console.log(' Datos obtenidos desde MockPatients');
+            return { status: 'ok', bundle: mockBundle };
+        }
+        console.warn(' No se encontraron datos ni en HubTools ni en MockPatients');
+        return { status: 'not_found', reason: read.reason };
+    }
+
+    if (read && read.status === 'error') {
+        return { status: 'error', error_code: read.error_code };
+    }
+
+    return { status: 'unavailable' };
+}
+
+// Maps a port read result ({ record, history }) into the dashboard summary/history
+// contract, preserving the legacy normalization exactly. The port owns fetching and DTO
+// isolation; this function owns presentation mapping only.
+function buildBundleFromRead(patientId, record, history) {
+    if (!record || !history || !Array.isArray(history.allVisits) || history.allVisits.length === 0) {
         return null;
     }
 
+    const normalizedRecord = normalizeRecord(record);
     const normalizedVisits = history.allVisits.map(visit => normalizeRecord(visit));
     const latestVisit = history.latestVisit ? normalizeRecord(history.latestVisit) : (normalizedVisits[0] || null);
     const firstVisit = history.firstVisit ? normalizeRecord(history.firstVisit) : (normalizedVisits[normalizedVisits.length - 1] || null);
@@ -264,7 +285,7 @@ function loadFromHub(patientId) {
         fechaNacimiento: normalizedRecord.fechaNacimiento || latestVisit?.fechaNacimiento || ''
     };
 
-    history = {
+    const builtHistory = {
         ...history,
         allVisits: normalizedVisits,
         latestVisit: latestVisit || history.latestVisit,
@@ -272,7 +293,7 @@ function loadFromHub(patientId) {
         pathology: pathology || history.pathology || ''
     };
 
-    return { summary, history };
+    return { summary, history: builtHistory };
 }
 
 function loadFromMock(patientId) {

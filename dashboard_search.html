@@ -71,7 +71,8 @@
 
                     <div class="dashboard-search__form">
                         <label for="dashboardSearchInput">CIP</label>
-                        <input type="text" id="dashboardSearchInput" placeholder="Ej: ESP-2024-007" autocomplete="off">
+                        <input type="text" id="dashboardSearchInput" list="patientIds" placeholder="Ej: ESP-2024-007" autocomplete="off">
+                        <datalist id="patientIds"></datalist>
                         <button id="dashboardSearchButton" type="button" class="primary-btn">
                             <i class="fas fa-chart-line" aria-hidden="true"></i>
                             Ver Dashboard
@@ -79,6 +80,7 @@
                     </div>
 
                     <p id="searchErrorMsg" class="form-error" role="alert" aria-live="polite"></p>
+                    <p id="searchStatusMsg" class="form-status" aria-live="polite"></p>
 
                     <a href="index.html" class="link-back">
                         <i class="fas fa-arrow-left" aria-hidden="true"></i>
@@ -95,6 +97,7 @@
     <script src="modules/mockPatients.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307s"></script>
     <script src="script.js?v=20260307t"></script>
-    <script src="scripts/script_dashboard_search.js?v=20260306l"></script>
+    <script src="scripts/reuma_patient_read_port.js?v=20260926a"></script>
+    <script src="scripts/script_dashboard_search.js?v=20260926a"></script>
 </body>
 </html>

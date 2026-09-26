@@ -2,37 +2,36 @@
     'use strict';
 
     const PATIENT_ID_REGEX = /^(ESP|APS|AR)-\d{4}-\d{3}$/i;
-    const searchIndex = [];
 
-    function normalizePathology(value) {
-        if (typeof HubTools?.normalizer?.normalizePathology === 'function') {
-            return HubTools.normalizer.normalizePathology(value);
-        }
-        return (value || '').toString().trim().toLowerCase();
-    }
+    // Frozen observable copies (PART 5). Pending text lives only in #searchStatusMsg;
+    // every outcome message keeps using #searchErrorMsg with its `visible` class.
+    const PENDING_LISTING = 'Cargando pacientes…';
+    const PENDING_SUBMIT = 'Buscando paciente…';
+    const FAIL_CLOSED_UNAVAILABLE = 'No hay datos cargados. Carga el Excel para consultar pacientes.';
+    const FAIL_CLOSED_ERROR = 'No se pudo consultar los pacientes. Inténtalo de nuevo.';
+    const EMPTY_TERM = 'Introduce un ID o nombre de paciente.';
+    const NO_MATCH = 'No hay coincidencias. Usa el formato ESP/APS/AR-AAAA-### o el nombre completo.';
 
-    function normalizeRecord(record, extra) {
-        if (typeof HubTools?.normalizer?.normalizeRecord === 'function') {
-            return HubTools.normalizer.normalizeRecord(record, extra);
-        }
-        return { ...(record || {}), ...(extra || {}) };
-    }
-
-    function normalize(str) {
-        return (str || '')
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]/g, '');
-    }
+    // Monotonically increasing guards. The submit token is bumped on every submit and
+    // on every edit, so a superseded or late response renders nothing and never navigates.
+    let listingToken = 0;
+    let submitToken = 0;
 
     function getElements() {
         return {
             input: document.getElementById('dashboardSearchInput'),
             button: document.getElementById('dashboardSearchButton'),
             error: document.getElementById('searchErrorMsg'),
+            status: document.getElementById('searchStatusMsg'),
             datalist: document.getElementById('patientIds')
         };
+    }
+
+    function getPort() {
+        if (typeof window.ReumaPatientReadPort?.getPort === 'function') {
+            return window.ReumaPatientReadPort.getPort();
+        }
+        return null;
     }
 
     function showError(message, elements) {
@@ -49,60 +48,39 @@
         }
     }
 
-    function addPatientToIndex(candidate) {
-        const normalizedId = normalize(candidate.id);
-        if (!normalizedId) {
-            return;
-        }
-        if (searchIndex.some(entry => normalize(entry.id) === normalizedId)) {
-            return;
-        }
-        searchIndex.push({
-            id: candidate.id,
-            nombre: candidate.nombre || 'Paciente sin nombre',
-            patologia: normalizePathology(candidate.patologia || candidate.diagnostico) || null
-        });
-    }
-
-    function hydrateIndexFromHubTools() {
-        try {
-            if (typeof HubTools.data.getAllPatients === 'function' && HubTools.data.getAllPatients().length) {
-                const patients = HubTools.data.getAllPatients();
-                patients.forEach(p => {
-                    const normalized = normalizeRecord(p);
-                    const id = normalized.idPaciente || p.ID || p.id;
-                    const nombre = normalized.nombrePaciente || p.Nombre || p.nombre;
-                    const diagnostico = normalized.diagnosticoPrimario || p.Diagnostico;
-                    if (id && nombre) {
-                        addPatientToIndex({ id, nombre, patologia: diagnostico });
-                    }
-                });
-            }
-        } catch (error) {
-            console.warn('dashboard_search: no se pudo hidratar índice desde HubTools', error);
+    function setStatus(message, elements) {
+        if (elements.status) {
+            elements.status.textContent = message || '';
         }
     }
 
-    function hydrateIndexFromMocks() {
-        if (typeof window.MockPatients.list === 'function') {
-            const mockSummaries = window.MockPatients.list();
-            mockSummaries.forEach(summary => {
-                const normalized = normalizeRecord(summary, {
-                    diagnosticoPrimario: summary.pathology || summary.diagnosticoPrimario || ''
-                });
-                addPatientToIndex({
-                    id: normalized.idPaciente,
-                    nombre: normalized.nombrePaciente || summary.nombre,
-                    patologia: normalized.diagnosticoPrimario
-                });
-            });
+    function setBusy(busy, elements) {
+        if (elements.button) {
+            elements.button.disabled = busy;
         }
     }
 
-    function populateDatalist(datalist) {
+    function foldId(value) {
+        return (value || '')
+            .toString()
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]/g, '');
+    }
+
+    function renderDatalist(patients, datalist) {
         if (!datalist) return;
+        const seen = new Set();
+        const unique = [];
+        patients.forEach(entry => {
+            const key = foldId(entry && entry.id);
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            unique.push(entry);
+        });
         datalist.innerHTML = '';
-        searchIndex
+        unique
             .slice()
             .sort((a, b) => a.id.localeCompare(b.id))
             .forEach(entry => {
@@ -113,34 +91,43 @@
             });
     }
 
-    function resolvePatient(term) {
-        const normalizedTerm = normalize(term);
-        if (!normalizedTerm) {
-            return { error: 'Introduce un identificador o nombre de paciente.' };
+    async function hydrateDatalist(elements) {
+        const token = ++listingToken;
+        setStatus(PENDING_LISTING, elements);
+        setBusy(true, elements);
+
+        const port = getPort();
+        let patients = [];
+        if (port) {
+            try {
+                const result = await port.listPatients();
+                if (result && result.status === 'ok' && Array.isArray(result.patients)) {
+                    patients = result.patients;
+                }
+            } catch (error) {
+                patients = [];
+            }
         }
 
-        const exactMatch = searchIndex.find(entry => normalize(entry.id) === normalizedTerm);
-        if (exactMatch) {
-            return { patient: exactMatch };
-        }
+        if (token !== listingToken) return;
+        renderDatalist(patients, elements.datalist);
+        setStatus('', elements);
+        setBusy(false, elements);
+    }
 
-        const matchingByName = searchIndex.filter(entry => normalize(entry.nombre).includes(normalizedTerm));
-        if (matchingByName.length === 1) {
-            return { patient: matchingByName[0] };
+    function resolveNotFoundCopy(term, reason) {
+        if (reason === 'id_not_found' || (reason !== 'no_match' && PATIENT_ID_REGEX.test(term))) {
+            return `No se encontró el paciente ${term}. Verifica el ID.`;
         }
+        return NO_MATCH;
+    }
 
-        if (matchingByName.length > 1) {
-            const options = matchingByName.slice(0, 3).map(p => `${p.id} · ${p.nombre}`).join(', ');
-            return {
-                error: `Se encontraron ${matchingByName.length} pacientes. Especifica el ID. Ejemplos: ${options}`
-            };
-        }
-
-        if (PATIENT_ID_REGEX.test(term)) {
-            return { error: `No se encontró el paciente ${term}. Verifica el ID.` };
-        }
-
-        return { error: 'No hay coincidencias. Usa el formato ESP/APS/AR-AAAA-### o el nombre completo.' };
+    function resolveAmbiguousCopy(total, candidates) {
+        const list = Array.isArray(candidates) ? candidates : [];
+        const options = list.slice(0, 3).map(patient => `${patient.id} · ${patient.nombre}`).join(', ');
+        // The port's `total` is the true match count; candidates stay capped at 3 examples.
+        const count = Number.isFinite(total) ? total : list.length;
+        return `Se encontraron ${count} pacientes. Especifica el ID. Ejemplos: ${options}`;
     }
 
     function navigateToDashboard(patient) {
@@ -151,40 +138,93 @@
         window.location.href = `dashboard_paciente.html?${params.toString()}`;
     }
 
-    function handleSearch() {
-        const { input, error } = getElements();
-        if (!input) return;
-
-        const rawValue = (input.value || '').trim();
-        clearError({ error });
-
-        if (!rawValue) {
-            showError('Introduce un ID o nombre de paciente.', { error });
-            input.focus();
-            return;
-        }
-
-        const { patient, error: resolutionError } = resolvePatient(rawValue);
-        if (patient) {
-            navigateToDashboard(patient);
-            return;
-        }
-
-        showError(resolutionError || 'No se pudo resolver el paciente solicitado.', { error });
+    function focusAndSelect(input) {
         input.focus();
         input.select();
     }
 
+    async function handleSearch() {
+        const elements = getElements();
+        const { input } = elements;
+        if (!input) return;
+
+        const rawValue = (input.value || '').trim();
+        clearError(elements);
+
+        if (!rawValue) {
+            showError(EMPTY_TERM, elements);
+            input.focus();
+            return;
+        }
+
+        const token = ++submitToken;
+        setStatus(PENDING_SUBMIT, elements);
+        setBusy(true, elements);
+
+        const port = getPort();
+        let result;
+        if (!port) {
+            result = { status: 'unavailable' };
+        } else {
+            try {
+                result = await port.resolvePatient(rawValue);
+            } catch (error) {
+                result = { status: 'error' };
+            }
+        }
+
+        if (token !== submitToken) return;
+
+        setStatus('', elements);
+        setBusy(false, elements);
+
+        const status = result && result.status;
+
+        if (status === 'ok' && result.patient) {
+            navigateToDashboard(result.patient);
+            return;
+        }
+
+        if (status === 'ambiguous') {
+            showError(resolveAmbiguousCopy(result.total, result.candidates), elements);
+            focusAndSelect(input);
+            return;
+        }
+
+        if (status === 'not_found') {
+            showError(resolveNotFoundCopy(rawValue, result.reason), elements);
+            focusAndSelect(input);
+            return;
+        }
+
+        if (status === 'error' && result.error_code === 'empty_term') {
+            showError(EMPTY_TERM, elements);
+            input.focus();
+            return;
+        }
+
+        showError(status === 'error' ? FAIL_CLOSED_ERROR : FAIL_CLOSED_UNAVAILABLE, elements);
+        focusAndSelect(input);
+    }
+
+    function invalidatePending(elements) {
+        // Any edit supersedes an in-flight resolution.
+        submitToken += 1;
+        clearError(elements);
+        setStatus('', elements);
+        setBusy(false, elements);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-        const { input, button, error, datalist } = getElements();
+        const elements = getElements();
+        const { input, button, datalist } = elements;
         if (!input || !button) {
             console.error('dashboard_search: elementos del formulario no encontrados.');
             return;
         }
 
-        hydrateIndexFromHubTools();
-        hydrateIndexFromMocks();
-        populateDatalist(datalist);
+        hydrateDatalist(elements);
+        renderDatalist([], datalist);
 
         button.addEventListener('click', handleSearch);
         input.addEventListener('keydown', event => {
@@ -193,10 +233,9 @@
                 handleSearch();
             }
         });
+        input.addEventListener('input', () => invalidatePending(elements));
 
-        clearError({ error });
+        clearError(elements);
         input.focus();
     });
 })();
-
-

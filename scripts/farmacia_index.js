@@ -471,9 +471,62 @@
         if (status) status.textContent = message || '';
     }
 
-    function search() {
-        var cip = document.getElementById('fhCipInput').value.trim();
-        if (!cip) return;
+    // Search/selection migrated to the async patient-read facade (#428 WU-B, Addendum C). When the
+    // facade CANNOT be constructed (no data port / missing modules / it throws) the sanctioned V1
+    // coexistence path runs the exact pre-migration body below, because the `cip` hand-off/restore
+    // on DOMContentLoaded has no data port. When a facade EXISTS the async path owns the behaviour:
+    // only an `ok` selection touches the runtime and the Quick View; `ambiguous`/`unavailable`/
+    // `error` surface a status message and never fall back to legacy population; a superseded
+    // result renders nothing; `not_found` keeps today's branch exactly.
+    var searchPending = 0;
+
+    function setSearchPending(pending) {
+        searchPending = pending ? searchPending + 1 : Math.max(0, searchPending - 1);
+        var button = document.getElementById('fhSearchBtn');
+        if (button) button.disabled = searchPending > 0;
+    }
+
+    function applySearchResult(runtime, cip, result) {
+        if (!result || typeof result !== 'object') {
+            setSearchStatus('No se pudo completar la búsqueda. Inténtelo de nuevo.');
+            return;
+        }
+        if (result.superseded === true) return;
+        if (result.state === 'ok' && result.selected === true) {
+            var selected = F.findPatientByCip(cip) || result.patient;
+            if (result.previousCip && String(result.previousCip).toUpperCase() !== String(cip).toUpperCase()
+                && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
+                window.FarmaciaDataImports.clearTransientPatientImports();
+                renderEnfermeriaBoard();
+            }
+            runtime.enrichCurrentPatient(selected);
+            setSearchStatus('Paciente encontrado.');
+            renderPatientView(F.findPatientByCip(cip) || selected);
+            return;
+        }
+        if (result.state === 'ambiguous') {
+            setSearchStatus('Identificador ambiguo entre varios sistemas. No se ha seleccionado ningún paciente.');
+            return;
+        }
+        if (result.state === 'unavailable' || result.state === 'error') {
+            setSearchStatus('No se pudo recuperar el paciente. Inténtelo de nuevo.');
+            return;
+        }
+        if (result.state === 'not_found') {
+            var patient = F.findPatientByCip(cip);
+            if (patient) {
+                setSearchStatus('Paciente encontrado.');
+                renderPatientView(patient);
+            } else {
+                setSearchStatus('Paciente no encontrado.');
+                showGuidedIntake(cip);
+            }
+        }
+    }
+
+    // Exact pre-migration `search()` body. Used only when no usable facade exists; it traverses
+    // no population because the data port is absent in that situation.
+    function runLegacySearch(cip) {
         var runtime = window.FarmaciaPatientFlowRuntime;
         var result = runtime && typeof runtime.selectByCip === 'function' ? runtime.selectByCip(cip) : { status: 'unavailable' };
         if (result.status === 'ambiguous') {
@@ -508,6 +561,44 @@
             setSearchStatus('Paciente no encontrado.');
             showGuidedIntake(cip);
         }
+    }
+
+    async function search() {
+        var cip = document.getElementById('fhCipInput').value.trim();
+        if (!cip) return;
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var facade = null;
+        try {
+            facade = runtime && typeof runtime.createPatientReadFacade === 'function'
+                ? runtime.createPatientReadFacade()
+                : null;
+        } catch (error) {
+            facade = null;
+        }
+        if (!facade || typeof facade.selectPatientByValue !== 'function') {
+            runLegacySearch(cip);
+            return;
+        }
+        setSearchPending(true);
+        setSearchStatus('Buscando paciente...');
+        var result = null;
+        try {
+            result = await facade.selectPatientByValue(cip);
+            if (result && result.state === 'ok' && result.pendingChanges === true) {
+                var discard = window.confirm('Hay cambios no exportados del paciente actual.\n¿Desea descartarlos y cambiar de paciente?');
+                if (!discard) {
+                    setSearchStatus('Cambio de paciente cancelado.');
+                    return;
+                }
+                setSearchStatus('Buscando paciente...');
+                result = await facade.selectPatientByValue(cip, { discardPendingChanges: true });
+            }
+        } catch (error) {
+            result = { state: 'error' };
+        } finally {
+            setSearchPending(false);
+        }
+        applySearchResult(runtime, cip, result);
     }
 
     function initGuidedIntake() {
