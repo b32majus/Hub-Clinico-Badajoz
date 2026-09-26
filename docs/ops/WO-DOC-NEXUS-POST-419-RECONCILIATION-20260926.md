@@ -1,7 +1,7 @@
 # WO-DOC-NEXUS-POST-419-RECONCILIATION — 2026-09-26
 
 **Tipo:** documentación / reconciliación post-merge
-**Estado:** `AUTHORIZED_FOR_LOCAL_EXECUTION`
+**Estado:** `PUBLISHED / POST-MERGE CLOSEOUT`
 **Autorización humana:** reconciliar el estado post-merge de PR #422 y situar el avance real frente al Foundation Train Plan.
 **Repo:** `b32majus/Hub-Clinico-Badajoz`
 **Issue:** #423 (`status:approved`)
@@ -83,4 +83,4 @@ Mientras no exista publicación, la rama/worktree aislados pueden abandonarse si
 - browser QA: no ejecutada/no requerida por ser cambio exclusivamente documental;
 - no se modificó runtime, clínica, `main`, recovery, snapshots ni workbooks.
 
-**Boundary de publicación:** commit local permitido; push/PR/merge no ejecutados. Si se autoriza la publicación, el closeout administrativo deberá cerrar/reconciliar #420, #421 y #419 con la misma distinción entre producto publicado y canary no promovido.
+**Publicación primaria:** PR #424 `MERGED` → `b57d6a48a8395ab5d94d83e00ed210fb20dd2289` sobre `promueve/nexus-v4`, con workflow `Nexus deterministic gates` del candidate en `success`. Este closeout corrige únicamente el estado autorreferencial de la propia WO/WOS; GitHub live es la autoridad del estado final de #423. Los issues #419/#420/#421 no se cierran aquí porque ese cierre administrativo no formaba parte de la autorización explícita de esta WO.
