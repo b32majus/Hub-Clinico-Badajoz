@@ -17,15 +17,11 @@ Do not use remembered SHAs, branches, priorities or PR states as authority.
 
 ## Execution architecture
 
-The default execution path is upstream-native:
+The external execution harness is governed by the current `b32majus/Atenea` contract, starting at Atenea’s `docs/START_HERE.md`. Resolve current runtime, lifecycle, role/model routing and recovery there; do not copy Atenea runtime internals into this repository.
 
-`human intent / current accepted task → Pi + native Gentle Shell → ODD / native delegation → Gentle native RDD → ordinary repository delivery`
+PROMueve owns product, clinical, architecture, engineering, QA, documentation and delivery constraints. Execute from the current durable issue/spec/instruction rather than rewriting already-executable authority into a second brief or workcard. This repository does not define decomposition/delegation, review ordering, transport, recovery or checkpoint mechanics.
 
-Herdr remains the terminal workspace/session host for interactive Pi work. Gentle owns its lifecycle, delegation, review mode, provider transitions and acknowledgement/burn inside that hosted Pi session. Do not turn Herdr into a second supervisor or use pi-intercom relays, custom reviewer authority or Atenea runtime bridges around capabilities that current Gentle already owns. A separate orchestration layer requires a demonstrated unsupported seam and explicit authorization.
-
-For normal execution, dispatch from the current issue/spec rather than rewriting it into a second Agent Brief. Keep operator prompts bounded. Let native ODD decide execution decomposition. Use SDD/OpenSpec only when the current task explicitly selects that supported path or evidence shows it is preferable; do not impose a second pre-execution workcard hierarchy by default.
-
-Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; bounded writers must receive the applicable project constraints in their handoff. Runtime model routing is operational configuration, not repository truth. Verify effective models when it matters; do not hard-code provider/model assumptions in this file.
+Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; their applicable constraints remain binding regardless of the external harness. Runtime configuration is not repository truth; do not hard-code provider, model or lifecycle assumptions here.
 
 ## Engineering standards
 
@@ -87,7 +83,7 @@ Tests green != manual/browser QA green.
 
 ## Review/runtime failure policy
 
-A provider/runtime/reviewer transport failure consumes zero product repairs. Follow the exact provider-issued recovery/status transition. If the same exact reviewer slot is reoffered after one bounded retry and fails again without authority progress, STOP and report. Never loop indefinitely, fabricate PASS, drop a required lens or mutate product code to compensate for transport.
+A provider/runtime/reviewer transport failure consumes zero product repairs. It does not authorize product-code changes, fabricated PASS, dropped required review evidence, widened scope or indefinite retry loops. Follow the current Atenea/runtime recovery authority; if it cannot make authoritative progress, STOP and report.
 
 A semantic/spec-compliance reviewer must fail closed on material issue/spec/oracle contradictions. It may not silently choose which authority probably meant what.
 
@@ -101,7 +97,7 @@ Engram is auxiliary experiential memory. Save stable lessons, defect patterns an
 
 ## Project-local skills
 
-Project-specific skills live in `.agents/skills/` and contain domain/UI/QA context only. They do not replace Gentle lifecycle skills.
+Project-specific skills live in `.agents/skills/` and contain domain/UI/QA/documentation context only. They do not define execution lifecycle, model routing, review orchestration or transport; the current Atenea contract governs that external harness boundary.
 
 - `promueve-farmacia-context` — Farmacia authority and clinical boundaries.
 - `promueve-vanilla-ui` — current vanilla UI constraints.
