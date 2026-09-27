@@ -58,15 +58,19 @@
  *
  * Planted negatives (each must produce >= 1 violation of the expected class;
  * mutations live in memory only, never in files):
- *   N1 length drift   - a synthetic 496-field row violates A1
+ *   N1 length drift   - all ten valid journeys are kept and ONLY the target
+ *                        row is altered from 497 to 496 fields, so the sole
+ *                        possible A1 source is the length check itself
+ *                        (isolated, non-vacuous; issue #434 / NEXUS-DEBT-007)
  *   N2 journey mix    - two journeys' rows swapped violate A2
  *   N3 value collapse - sentinel '0' rewritten to '' violates A3
  *   N4 contamination  - a foreign journey marker injected violates A2
  *   N5 non-synthetic  - a real-format patientId violates A4
  *
  * Planted gating self-tests (acceptance cases; they gate by design):
- *   G1 a fabricated acceptance failure (N1-style 496-field row through the
- *      pure evaluation path) drives the gate to a non-zero exit
+ *   G1 a fabricated acceptance failure (the same isolated N1 all-journeys
+ *      mutation through the pure evaluation path) drives the gate to a
+ *      non-zero exit
  *   G2 a simulated KNOWN_LEGACY variation (non-empty legacyWarnings in an
  *      in-memory copy of the harness result; production untouched) is
  *      recorded as a [DRIFT] characterization observation while the gate
@@ -242,7 +246,12 @@ const SENTINELS = [
 // PART A: pure acceptance function over the harness output.
 // ---------------------------------------------------------------------------
 
-function makeViolationsFor(authority) {
+// `detectLength` is a test-only seam consumed by the N1 non-vacuity self-test:
+// turning it off suppresses ONLY the A1 row-length comparison so the planted
+// negative can show that removing that exact detection makes it stop firing.
+// The production acceptance path always uses the default (true), so A1
+// semantics are unchanged.
+function makeViolationsFor(authority, { detectLength = true } = {}) {
   return function violationsFor(result) {
     const v = [];
     const journeys = Array.isArray(result?.journeys) ? result.journeys : [];
@@ -257,7 +266,7 @@ function makeViolationsFor(authority) {
 
       // A1: the oracle counts the fields ITSELF from the TSV row.
       const fields = journey.row.split('\t');
-      if (fields.length !== authority.finalCount) {
+      if (detectLength && fields.length !== authority.finalCount) {
         v.push(`A1 ${key}: row has ${fields.length} fields, expected exactly ${authority.finalCount}`);
       }
 
@@ -387,13 +396,37 @@ async function main() {
     throw new Error('frozen harness output missing expected journeys; cannot build planted negatives');
   }
 
-  // N1 length drift: synthetic 496-field row fed to the oracle's evaluation
-  // path must violate A1 (independent of any legacy warning).
-  const n1Row = arPrimera.row.split('\t').slice(0, authority.finalCount - 1).join('\t');
-  const n1Violations = violationsFor({
-    journeys: [{ pathology: 'ar', tipoVisita: 'primera', patientId: arPrimera.patientId, row: n1Row }],
-  });
-  record('N1 length drift detected (496-field row violates A1)', violationsOf(n1Violations, 'A1').length >= 1, `A1 violations: ${violationsOf(n1Violations, 'A1').length}`);
+  // N1 length drift, isolated: keep ALL ten valid journeys and alter ONLY the
+  // target row from 497 to 496 fields. Because no journey is absent, the only
+  // possible A1 source is the length check on the target row (issue #434 /
+  // NEXUS-DEBT-007); the previous single-journey form failed A1 mainly for the
+  // nine absent journeys, not for the declared length falsification.
+  const n1TargetKey = 'ar|primera';
+  const n1Journeys = frozen.journeys.map((j) => ({ ...j }));
+  const n1Target = n1Journeys.find((j) => journeyKey(j) === n1TargetKey);
+  n1Target.row = n1Target.row.split('\t').slice(0, authority.finalCount - 1).join('\t');
+  const n1Violations = violationsFor({ journeys: n1Journeys });
+  const n1A1 = violationsOf(n1Violations, 'A1');
+  const n1Isolated =
+    n1A1.length === 1 &&
+    n1A1[0].startsWith(`A1 ${n1TargetKey}:`) &&
+    n1A1[0].includes(`row has ${authority.finalCount - 1} fields`);
+  record(
+    'N1 length drift isolated (all 10 journeys present; only the target row is 496 fields and only it violates A1)',
+    n1Isolated,
+    `A1 violations: ${n1A1.length} -> ${n1A1.join('; ') || 'none'}`
+  );
+
+  // N1 non-vacuity: with the 496-length detection removed, the SAME isolated
+  // mutation produces zero A1 violations. If it still failed, the planted
+  // negative would be proving something other than the length check.
+  const violationsForWithoutLength = makeViolationsFor(authority, { detectLength: false });
+  const n1WithoutLengthA1 = violationsOf(violationsForWithoutLength({ journeys: n1Journeys }), 'A1');
+  record(
+    'N1 falsification non-vacuous (removing 496-length detection leaves zero A1 violations for the same mutation)',
+    n1WithoutLengthA1.length === 0,
+    `A1 violations with length detection disabled: ${n1WithoutLengthA1.length} -> ${n1WithoutLengthA1.join('; ') || 'none'}`
+  );
 
   // N2 journey mix: swap two journeys' rows, keep metadata.
   const n2Journeys = frozen.journeys.map((j) => ({ ...j }));
@@ -450,10 +483,11 @@ async function main() {
 
   // --- Planted gating self-test G1: acceptance failure drives the gate ---
   // Fabricate an acceptance result set containing one failure, built from the
-  // same N1-style 496-field row through the pure evaluation path, and assert
-  // the gate reports failure / would exit non-zero.
+  // SAME isolated N1 mutation (all ten journeys present, only the target row
+  // at 496 fields) through the pure evaluation path, and assert the gate
+  // reports failure / would exit non-zero.
   const fabricatedAcceptanceFailure = {
-    name: 'planted fabricated A1 acceptance violation (496-field row via violationsFor)',
+    name: 'planted fabricated A1 acceptance violation (isolated 496-field row via violationsFor)',
     pass: violationsOf(n1Violations, 'A1').length === 0,
     detail: `${violationsOf(n1Violations, 'A1').length} A1 violation(s) from the fabricated row`,
   };
