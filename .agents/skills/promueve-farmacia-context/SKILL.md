@@ -9,7 +9,7 @@ Use this skill for work on the active Farmacia line of Hub Clínico Badajoz.
 
 ## Resolve authority first
 
-1. Verify GitHub live: accepted issue/instruction, `recovery/farmacia-pr-replay-20260727` tip and related PRs.
+1. Verify GitHub live: accepted issue/instruction, the active `promueve/nexus-v4` tip and related PRs. Use `recovery/farmacia-pr-replay-20260727` only when historical Farmacia provenance is relevant; it is not current development authority.
 2. Read `AGENTS.md` and `CODING_STANDARDS.md`.
 3. Read `docs/INDEX.md` and `docs/ops/WORK_ORDER_STATUS.md`.
 4. Read the specific live spec/debt/contract governing the task.
@@ -26,7 +26,7 @@ Never use a remembered SHA, old worktree or Engram/session memory as current pro
 - Use synthetic data only unless a separately authorized environment explicitly permits otherwise.
 ## Product surfaces are distinct
 
-- Generic Farmacia recovery is the evolving published regional line.
+- `promueve/nexus-v4` is the active canonical development line; `recovery/farmacia-pr-replay-20260727` is historical provenance for new development.
 - `previews/caceres-fh/` is a separately promoted frozen evaluation snapshot; never hand-edit or silently resync it.
 - External packages/workbooks have their own promotion boundaries.
 - Demo/evaluation evidence does not imply pilot or production readiness.
@@ -37,4 +37,4 @@ Use the focused existing `tools/*_check*` and browser checks for the changed sea
 
 Prefer exact contractual fixtures and supported browser interaction. A passing test is evidence, not permission to override a clinical contract.
 
-Pi + native Gentle own decomposition, workers, verification lifecycle, work-unit commits and RDD. This skill supplies domain context only; it creates no parallel review or execution lifecycle.
+The external execution/review harness is governed by the current Atenea contract. This skill supplies Farmacia domain context only; it does not define decomposition, runtime lifecycle, model routing, review orchestration or transport.

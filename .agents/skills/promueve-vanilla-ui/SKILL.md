@@ -31,4 +31,4 @@ Check relevant responsive widths and horizontal overflow when layout changes. Co
 
 Screenshots are supplementary evidence; deterministic assertions and supported interaction remain primary.
 
-Pi + Gentle own execution/review mechanics. This skill contains only project-specific UI constraints.
+The external execution/review harness is governed by the current Atenea contract. This skill contains only project-specific UI constraints and does not define runtime lifecycle, model routing, review orchestration or transport.

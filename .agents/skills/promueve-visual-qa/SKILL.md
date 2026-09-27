@@ -29,4 +29,4 @@ When layout changes, inspect the widths relevant to the accepted task and check 
 
 Generated snapshots such as `previews/caceres-fh/` are publication artifacts with their own builder/checker contract. Never hand-edit them during ordinary UI QA.
 
-This skill does not create a separate review lifecycle. Native Gentle RDD remains the candidate review mechanism.
+The external execution/review harness is governed by the current Atenea contract. This skill supplies project-specific browser/visual QA constraints only and does not define the candidate review mechanism, runtime lifecycle, model routing or transport.
