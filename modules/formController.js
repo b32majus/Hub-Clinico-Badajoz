@@ -609,50 +609,17 @@ const ESSDAI_DOMAIN_IDS = [
     'essdaiHematological', 'essdaiBiological'
 ];
 
-const PREBIOLOGIC_V2_FIELD_IDS = [
+// Captura prebiológica del contrato vigente (#445): dos bloques independientes
+// con estados explícitos (NO_SOLICITADA | SOLICITADA_PENDIENTE | OK) más los
+// campos transversales que permanecen en captura (fecha de diagnóstico y
+// observaciones globales). El detalle legacy (hemograma, bioquímica,
+// serologías, IGRA/Rx, vacunación) DEJA DE CAPTURARSE: ya no se muestra ni
+// se recoge en el flujo principal; el histórico persistido se conserva.
+// OK nunca se infiere: sólo llega por selección profesional explícita.
+const PREBIOLOGIC_FIELD_IDS = [
     'fechaDiagnostico',
-    'estadoPrebiologicoFinal',
-    'fechaValidacionPrebiologico',
-    'profesionalValidador',
-    'decisionClinicaManual',
-    'hemogramaSolicitado',
-    'hemogramaFechaSolicitud',
-    'hemogramaRecibido',
-    'hemogramaFechaRecepcion',
-    'hemogramaCorrecto',
-    'hemogramaObservaciones',
-    'bioquimicaSolicitada',
-    'bioquimicaFechaSolicitud',
-    'bioquimicaRecibida',
-    'bioquimicaFechaRecepcion',
-    'bioquimicaCorrecta',
-    'bioquimicaObservaciones',
-    'serologiasSolicitadas',
-    'serologiasFechaSolicitud',
-    'serologiasRecibidas',
-    'serologiasFechaRecepcion',
-    'serologiasCorrectas',
-    'serologiasObservaciones',
-    'igraMantouxSolicitado',
-    'igraMantouxTipo',
-    'igraMantouxFechaSolicitud',
-    'igraMantouxRecibido',
-    'igraMantouxFechaRecepcion',
-    'igraMantouxResultado',
-    'igraMantouxObservaciones',
-    'rxToraxSolicitada',
-    'rxToraxFechaSolicitud',
-    'rxToraxRecibida',
-    'rxToraxFechaRecepcion',
-    'rxToraxCorrecta',
-    'rxToraxObservaciones',
-    'vacunacionRevisada',
-    'vacunacionOK',
-    'medicinaPreventivaRequiereDerivacion',
-    'medicinaPreventivaDerivada',
-    'medicinaPreventivaFechaDerivacion',
-    'vacunasPendientes',
-    'vacunacionObservaciones',
+    'estadoPrebiologicoAnalitica',
+    'estadoPrebiologicoMedicinaPreventiva',
     'observacionesPrebiologico'
 ];
 
@@ -676,8 +643,8 @@ function collectSjogrenTraceabilityFields() {
     return collectFieldsByIds(ESSDAI_DOMAIN_IDS, id => getValue(id));
 }
 
-function collectPrebiologicV2Fields() {
-    return collectFieldsByIds(PREBIOLOGIC_V2_FIELD_IDS, id => getValue(id));
+function collectPrebiologicFields() {
+    return collectFieldsByIds(PREBIOLOGIC_FIELD_IDS, id => getSelectValue(id));
 }
 
 function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId) {
@@ -1519,7 +1486,7 @@ function recopilarDatosFormulario() {
     const tratInmunomoduladorDosis = document.getElementById('tratInmunomoduladorDosis')?.value || '';
     const lesTraceabilityFields = collectLesTraceabilityFields();
     const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
-    const prebiologicV2Fields = collectPrebiologicV2Fields();
+    const prebiologicFields = collectPrebiologicFields();
 
     const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
 
@@ -1585,7 +1552,7 @@ function recopilarDatosFormulario() {
         tratInmunomodulador, tratInmunomoduladorDosis,
         ...lesTraceabilityFields,
         ...sjogrenTraceabilityFields,
-        ...prebiologicV2Fields,
+        ...prebiologicFields,
         comentariosAdicionales
     };
 
@@ -1642,6 +1609,20 @@ function prefillSeguimientoForm(visitData) {
             nombreInput.value = visitData.nombrePaciente;
             nombreInput.setAttribute('readonly', 'readonly');
         }
+    }
+
+    // 1b. ESTADO PREBIOLÓGICO POR BLOQUES (#445)
+    // Restauración SOLO de estados explícitos válidos del contrato; sin
+    // inferencia desde detalle legacy y sin sobrescribir valores existentes.
+    if (typeof HubTools !== 'undefined' && HubTools.prebiologic && typeof HubTools.prebiologic.normalizeBlockState === 'function') {
+        ['estadoPrebiologicoAnalitica', 'estadoPrebiologicoMedicinaPreventiva'].forEach(fieldId => {
+            const normalized = HubTools.prebiologic.normalizeBlockState(visitData[fieldId]);
+            if (!normalized) return;
+            const select = document.getElementById(fieldId);
+            if (select && !select.value) {
+                select.value = normalized;
+            }
+        });
     }
 
     // 2. DIAGNÓSTICO Y ADAPTACIÓN DEL FORMULARIO
@@ -2012,7 +1993,7 @@ function recopilarDatosFormularioSeguimiento() {
     const tratInmunomoduladorDosis = getValue('tratInmunomoduladorDosis');
     const lesTraceabilityFields = collectLesTraceabilityFields();
     const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
-    const prebiologicV2Fields = collectPrebiologicV2Fields();
+    const prebiologicFields = collectPrebiologicFields();
 
     const tratamientoData = {
         continuar: {
@@ -2077,7 +2058,7 @@ function recopilarDatosFormularioSeguimiento() {
         tratInmunomodulador, tratInmunomoduladorDosis,
         ...lesTraceabilityFields,
         ...sjogrenTraceabilityFields,
-        ...prebiologicV2Fields,
+        ...prebiologicFields,
         fechaProximaRevision, comentariosAdicionales
     };
 }

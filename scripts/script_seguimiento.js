@@ -138,7 +138,11 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         talla: latestVisit?.talla || normalizedBaseRecord.talla || '',
         imc: latestVisit?.imc || normalizedBaseRecord.imc || '',
         sexoPaciente: latestVisit?.sexoPaciente || normalizedBaseRecord.sexoPaciente || '',
-        fechaNacimiento: latestVisit?.fechaNacimiento || normalizedBaseRecord.fechaNacimiento || ''
+        fechaNacimiento: latestVisit?.fechaNacimiento || normalizedBaseRecord.fechaNacimiento || '',
+        // Estado prebiológico por bloques (#445): sólo valores explícitos del
+        // registro; el detalle legacy no produce ningún estado.
+        estadoPrebiologicoAnalitica: latestVisit?.Estado_Prebiologico_Analitica || latestVisit?.estadoPrebiologicoAnalitica || '',
+        estadoPrebiologicoMedicinaPreventiva: latestVisit?.Estado_Prebiologico_Medicina_Preventiva || latestVisit?.estadoPrebiologicoMedicinaPreventiva || ''
     };
 }
 
@@ -227,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pathologyForForm) {
                 HubTools.form.adaptarFormulario(pathologyForForm);
             }
-            renderPrebiologicBadge(prefillPayload.idPaciente);
+            renderPrebiologicBadge(prefillPayload.idPaciente, prefillPayload);
         } else {
             console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
             const idInput = document.getElementById('idPaciente');
@@ -575,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function renderPrebiologicBadge(cip) {
+function renderPrebiologicBadge(cip, visitData) {
     var container = document.getElementById('prebiologicBadgeContainer');
     if (!container) return;
 
@@ -587,7 +591,7 @@ function renderPrebiologicBadge(cip) {
 
     var badgeHTML = '';
     if (typeof HubTools.prebiologic.getBadgeHTML === 'function') {
-        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip);
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip, visitData || {});
     }
 
     if (badgeHTML) {

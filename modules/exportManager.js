@@ -1980,7 +1980,9 @@ function generarNotaClinica(datos) {
     add('');
 
     addSection('PREBIOLÓGICO / VACUNACIÓN');
-    addLine('Estado prebiológico final', ['estadoPrebiologicoFinal', 'Estado_Prebiologico_Final']);
+    addLine('Estado prebiológico Analítica', ['estadoPrebiologicoAnalitica', 'Estado_Prebiologico_Analitica']);
+    addLine('Estado prebiológico Medicina Preventiva', ['estadoPrebiologicoMedicinaPreventiva', 'Estado_Prebiologico_Medicina_Preventiva']);
+    addLine('Estado prebiológico final (histórico)', ['estadoPrebiologicoFinal', 'Estado_Prebiologico_Final']);
     addLine('Fecha validación prebiológico', ['fechaValidacionPrebiologico', 'Fecha_Validacion_Prebiologico']);
     addLine('Profesional validador', ['profesionalValidador', 'Profesional_Validador']);
     addLine('Decisión clínica manual', ['decisionClinicaManual', 'Decision_Clinica_Manual']);
