@@ -2367,3 +2367,27 @@ body:has(.hub-shell) {
         gap: 20px 30px;
     }
 }
+
+/* Contrato explicito de unidades PCR (#443 / SIL-REV-006) */
+.pcr-unit-select {
+    max-width: 140px;
+}
+
+.pcr-unit-mirror {
+    font-weight: 600;
+    color: #856404;
+}
+
+.pcr-conversion-note {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: #0b5ed7;
+    background-color: #e7f1ff;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+.pcr-conversion-note[hidden] {
+    display: none;
+}

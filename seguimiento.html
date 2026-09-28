@@ -839,8 +839,16 @@
                             <h5><i class="fas fa-flask"></i> Analítica Sanguínea</h5>
                             <div class="form-group-grid">
                                 <div class="form-group">
-                                    <label for="pcrValue">PCR (mg/L):</label>
+                                    <label for="pcrValue">PCR:</label>
                                     <input type="number" id="pcrValue" min="0" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label for="pcrUnit">Unidad PCR:</label>
+                                    <select id="pcrUnit" class="pcr-unit-select">
+                                        <option value="">Sin unidad</option>
+                                        <option value="mg/L" selected>mg/L</option>
+                                        <option value="mg/dL">mg/dL</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="vsgValue">VSG (mm/h):</label>
@@ -1036,7 +1044,7 @@
                                     <input type="number" id="asdasNAT" readonly class="asdas-readonly-input">
                                 </div>
                                 <div class="form-group">
-                                    <label for="asdasPCR">PCR (mg/L):</label>
+                                    <label for="asdasPCR">PCR <span id="asdasPcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
                                     <input type="number" id="asdasPCR" readonly class="asdas-readonly-input">
                                 </div>
                             </div>
@@ -1044,6 +1052,7 @@
                                 <label for="asdasCrpResult">Resultado ASDAS-CRP:</label>
                                 <input type="text" id="asdasCrpResult" readonly class="indice-resultado">
                                 <span id="asdasCrpCategoria" class="indice-categoria"></span>
+                                <div id="asdasPcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
                         </div>
 
@@ -1079,7 +1088,7 @@
                                     <input type="number" id="das28NAT" readonly class="asdas-readonly-input">
                                 </div>
                                 <div class="form-group">
-                                    <label for="das28PCR">PCR (mg/L):</label>
+                                    <label for="das28PCR">PCR <span id="das28PcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
                                     <input type="number" id="das28PCR" readonly class="asdas-readonly-input">
                                 </div>
                                 <div class="form-group">
@@ -1090,6 +1099,7 @@
                             <div class="form-group">
                                 <label for="das28CrpResult">Resultado DAS28-CRP:</label>
                                 <input type="text" id="das28CrpResult" readonly class="indice-resultado">
+                                <div id="das28PcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
                             <div class="form-group">
                                 <label>Categoría:</label>
@@ -1141,9 +1151,12 @@
                         <!-- SDAI (AR) -->
                         <div class="indices-apartado ar-only" id="sdaiSection" style="display: none;">
                             <h5><i class="fas fa-chart-bar"></i> SDAI</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Espera PCR en mg/dL; conversión
+                                automática desde la unidad de origen si procede.</p>
                             <div class="form-group">
                                 <label for="sdaiResult">Resultado SDAI:</label>
                                 <input type="text" id="sdaiResult" readonly class="indice-resultado">
+                                <div id="sdaiPcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
                             <div class="form-group">
                                 <label>Categoría:</label>
@@ -1279,6 +1292,9 @@
 
                         <div class="indices-apartado aps-only" id="dapsaSection" style="display: none;">
                             <h5><i class="fas fa-calculator"></i> DAPSA (Disease Activity in Psoriatic Arthritis)</h5>
+                            <p class="info-note"><i class="fas fa-info-circle"></i> Espera PCR en mg/dL; si la unidad
+                                de origen difiere, la conversión se muestra junto al resultado y el valor fuente se
+                                preserva.</p>
                             <div class="form-group-grid">
                                 <div class="form-group">
                                     <label for="dapsaNAD68">NAD68:</label>
@@ -1297,7 +1313,7 @@
                                     <input type="number" id="dapsaEvaGlobalPaciente" readonly class="asdas-readonly-input">
                                 </div>
                                 <div class="form-group">
-                                    <label for="dapsaPCR">PCR (mg/L):</label>
+                                    <label for="dapsaPCR">PCR <span id="dapsaPcrUnitMirror" class="pcr-unit-mirror">(mg/L)</span>:</label>
                                     <input type="number" id="dapsaPCR" readonly class="asdas-readonly-input">
                                 </div>
                             </div>
@@ -1305,6 +1321,7 @@
                                 <label for="dapsaResult">Resultado DAPSA:</label>
                                 <input type="text" id="dapsaResult" readonly class="indice-resultado">
                                 <span id="dapsaCategoria" class="indice-categoria"></span>
+                                <div id="dapsaPcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
                         </div>
 
@@ -2500,11 +2517,11 @@
     <script src="modules/customSelect.js?v=20260307a"></script>
     <script src="modules/fieldNormalizer.js?v=20260306l"></script>
     <script src="modules/mockPatients.js?v=20260306l"></script>
-    <script src="modules/scoreCalculators.js?v=20260306l"></script>
+    <script src="modules/scoreCalculators.js?v=20260928a"></script>
     <script src="modules/homunculus.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307s"></script>
     <script src="modules/exportManager.js?v=20260306l"></script>
-    <script src="modules/formController.js?v=20260307n"></script>
+    <script src="modules/formController.js?v=20260928a"></script>
     <script src="modules/prebiologicManager.js?v=20260503"></script>
     <script src="modules/pharmacyRequest.js?v=20260503"></script>
 

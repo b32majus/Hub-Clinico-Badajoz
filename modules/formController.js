@@ -1209,6 +1209,7 @@ function recopilarDatosFormulario() {
     const dolorNocturno = document.getElementById('dolorNocturno')?.checked ? 'SI' : 'NO';
 
     const pcr = document.getElementById('pcrValue')?.value || '';
+    const pcrUnit = document.getElementById('pcrUnit')?.value || '';
     const vsg = document.getElementById('vsgValue')?.value || '';
     const otrosHallazgosAnalitica = document.getElementById('otrosHallazgosAnalitica')?.value || '';
     const hallazgosRadiografia = document.getElementById('hallazgosRadiografia')?.value || '';
@@ -1529,7 +1530,7 @@ function recopilarDatosFormulario() {
         sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
         tratamientoActual, fechaInicioTratamiento, fechaProximaRevision,
         evaGlobal, evaDolor, evaFatiga, rigidezMatutinaMin, dolorNocturno,
-        pcr, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
+        pcr, pcrUnit, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
         basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
         asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
         das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
@@ -1829,6 +1830,7 @@ function recopilarDatosFormularioSeguimiento() {
     const evaGlobal = getValue('evaGlobal');
     const evaDolor = getValue('evaDolor');
     const pcr = getValue('pcrValue');
+    const pcrUnit = getValue('pcrUnit');
     const vsg = getValue('vsgValue');
 
     const basdaiP1 = getValue('basdaiP1');
@@ -2027,7 +2029,7 @@ function recopilarDatosFormularioSeguimiento() {
         hlaB27, fr, apcc, ana,
         peso, talla, imc, ta,
         nad, nat, dactilitis,
-        evaGlobal, evaDolor, pcr, vsg,
+        evaGlobal, evaDolor, pcr, pcrUnit, vsg,
         basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
         asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
         pasiScore, bsaPercentage, psoriasisDescripcion,
@@ -2137,6 +2139,37 @@ function initScoreWiring() {
         });
     }
 
+    function actualizarNotaConversionPcr(id, conversion) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (!conversion || conversion.ok === undefined) {
+            el.textContent = '';
+            el.hidden = true;
+            return;
+        }
+        if (conversion.ok === false) {
+            el.textContent = 'PCR sin unidad válida: ' + conversion.calculatorId + ' no se calcula (fallo seguro). Valor fuente preservado.';
+        } else if (conversion.converted) {
+            el.textContent = 'PCR convertida de ' + conversion.sourceUnit + ' a ' + conversion.expectedUnit + ' para ' + conversion.calculatorId + '. Valor fuente preservado.';
+        } else {
+            el.textContent = '';
+        }
+        el.hidden = !el.textContent;
+    }
+
+    function actualizarEspejoUnidadPcr() {
+        var unidad = getFormValue('pcrUnit');
+        var texto = unidad ? '(' + unidad + ')' : '(unidad no informada)';
+        ['asdasPcrUnitMirror', 'das28PcrUnitMirror', 'dapsaPcrUnitMirror'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = texto;
+        });
+    }
+
+    function getPcrSourceUnit() {
+        return getFormValue('pcrUnit');
+    }
+
     function recalcularDAPSA() {
         if (typeof HubTools.scores.calcularDAPSA !== 'function') return;
         syncDapsaSourceFields();
@@ -2146,7 +2179,8 @@ function initScoreWiring() {
             dapsaNAT66: getFormValue('dapsaNAT66'),
             dapsaEvaDolorPaciente: getFormValue('dapsaEvaDolorPaciente'),
             dapsaEvaGlobalPaciente: getFormValue('dapsaEvaGlobalPaciente'),
-            dapsaPCR: getFormValue('dapsaPCR')
+            dapsaPCR: getFormValue('dapsaPCR'),
+            dapsaPCRUnit: getPcrSourceUnit()
         };
         var result = HubTools.scores.calcularDAPSA(datos);
         var dapsaField = document.getElementById('dapsaResult');
@@ -2161,6 +2195,7 @@ function initScoreWiring() {
             dapsaCatEl.style.color = '#6c757d';
             dapsaCatEl.style.fontWeight = '700';
         }
+        actualizarNotaConversionPcr('dapsaPcrConversionNote', result.pcrConversion);
         debugLog('  📊 DAPSA recalculado:', result.total || 'Incompleto');
     }
 
@@ -2178,6 +2213,18 @@ function initScoreWiring() {
             recalcularMDA();
         });
         debugLog('  ✓ PCR → asdasPCR sync');
+    }
+
+    var pcrUnitSelect = document.getElementById('pcrUnit');
+    if (pcrUnitSelect) {
+        pcrUnitSelect.addEventListener('change', function () {
+            actualizarEspejoUnidadPcr();
+            recalcularASDAS();
+            recalcularDAPSA();
+            recalcularDAS28();
+        });
+        actualizarEspejoUnidadPcr();
+        debugLog('  ✓ Unidad PCR wiring');
     }
     if (vsgInput && asdasVSGField) {
         vsgInput.addEventListener('input', function () {
@@ -2230,6 +2277,7 @@ function initScoreWiring() {
             asdasEvaGlobal: getFormValue('asdasEvaGlobal'),
             asdasNAD: getFormValue('asdasNAD'),
             asdasPCR: getFormValue('asdasPCR'),
+            asdasPCRUnit: getPcrSourceUnit(),
             asdasVSG: getFormValue('asdasVSG')
         };
         var result = HubTools.scores.calcularASDAS(datos);
@@ -2245,6 +2293,7 @@ function initScoreWiring() {
             esrField.value = result.asdasESR;
             applyScoreCategory(result.asdasESR, 'asdas', esrField, document.getElementById('asdasEsrCategoria'));
         }
+        actualizarNotaConversionPcr('asdasPcrConversionNote', result.pcrConversion);
         debugLog('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
         recalcularDAPSA();
     }
@@ -2484,6 +2533,7 @@ function initScoreWiring() {
             nad28: getFormValue('das28NAD'),
             nat28: getFormValue('das28NAT'),
             pcr: getFormValue('das28PCR'),
+            pcrUnit: getPcrSourceUnit(),
             vsg: getFormValue('das28VSG'),
             evaGlobal: getFormValue('das28EVA')
         };
@@ -2502,6 +2552,7 @@ function initScoreWiring() {
             esrField.value = result.das28ESR;
             applyScoreCategory(result.das28ESR, 'das28', esrField, esrCatEl);
         }
+        actualizarNotaConversionPcr('das28PcrConversionNote', result.pcrConversion);
         // También recalcular CDAI y SDAI ya que comparten NAD28/NAT28
         recalcularCDAI();
         recalcularSDAI();
@@ -2549,7 +2600,8 @@ function initScoreWiring() {
             nat28: getFormValue('das28NAT'),
             evaPaciente: getFormValue('evaGlobal'),
             evaMedico: getFormValue('evaMedico'),
-            pcr: getFormValue('das28PCR')
+            pcr: getFormValue('das28PCR'),
+            pcrUnit: getPcrSourceUnit()
         };
         var result = HubTools.scores.calcularSDAI(datos);
         var sdaiField = document.getElementById('sdaiResult');
@@ -2559,6 +2611,7 @@ function initScoreWiring() {
             sdaiField.value = result.total ? result.total + ' - ' + result.categoria : result.categoria;
             applyScoreCategory(result.total, 'sdai', sdaiField, sdaiCatEl);
         }
+        actualizarNotaConversionPcr('sdaiPcrConversionNote', result.pcrConversion);
     }
     debugLog('  ✓ SDAI wiring');
 
