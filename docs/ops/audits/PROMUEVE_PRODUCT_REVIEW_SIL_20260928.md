@@ -1,330 +1,272 @@
 # PROMueve — Auditoría manual de producto Sil 2026-09-28 — revisión viva
 
-**Estado:** `IN_PROGRESS` / no autoriza implementación  
-**Ámbito:** PROMueve Extremadura — Farmacia Hospitalaria, Reumatología, Dermatología y capacidades transversales  
-**Origen:** revisión manual de Sil sobre superficies publicadas y decisiones funcionales pendientes  
-**Regla:** cada hallazgo debe clasificarse por alcance (`CORE`, `MODULE`, `SITE`, `MODULE×SITE`), madurez, timing y necesidad de discovery antes de convertirse en backlog aprobado, deuda, issue o WO técnica.
+**Estado:** `IN_PROGRESS / SHAPED_FOR_NEXT_TRAINS` — no acredita implementación  
+**Ámbito:** PROMueve Extremadura — Farmacia Hospitalaria, Reumatología y capacidades transversales; Dermatología queda registrada pero diferida de la ejecución inmediata  
+**Autoridad de desarrollo:** `promueve/nexus-v4`  
+**Base Nexus verificada al reconciliar esta fase:** `b5028ecdd4c0cb5e3385352c6028d9a48ef4b41d`  
+**Issue documental:** #438  
+**PR documental:** #439  
 
-## 0. Principio de trabajo
+## 0. Propósito y reglas
 
-Este documento captura hallazgos, decisiones y propuestas de la revisión manual para no perder contexto. **No convierte por sí solo ninguna propuesta en implementación autorizada.**
-
-Al cerrar la revisión, los elementos aceptados se reconciliarán con `docs/ops/PROMUEVE_BACKLOG.md`, registros de deuda, contratos y planes vivos correspondientes. La deuda Nexus ya aceptada queda fuera de esta revisión salvo que una observación humana demuestre un defecto funcional nuevo.
+Este documento conserva la revisión manual de producto de Sil y su shaping. No convierte por sí solo una propuesta en funcionalidad implementada. La autorización ejecutable se materializa en issues/WOs técnicos separados.
 
 Reglas transversales:
-- distinguir `ya implementado`, `regresión`, `defecto`, `mejora`, `decisión pendiente`, `discovery` y `futuro`;
-- preservar tratamiento solicitado ≠ validado;
-- no inferir dosis, vía, pauta, presentación, inducción, renovación, switch, add-on, causalidad, resultado de validación o línea terapéutica desde nombre de fármaco, catálogo, historial o ausencia;
-- no usar datos reales de pacientes durante esta evaluación;
-- no confundir una capacidad mostrable con una capacidad apta para piloto/producción.
+- distinguir `ya implementado`, `wired`, `visible`, `demostrado`, `defecto`, `mejora`, `discovery`, `futuro`, `piloto` y `producción`;
+- tratamiento solicitado ≠ tratamiento validado;
+- tratamiento previo ≠ nuevo inicio;
+- no inferir dosis, vía, pauta, presentación, inducción, duración, renovación, switch, add-on, causalidad, resultado de validación o línea terapéutica desde nombre de fármaco, CIMA/catálogo, historial, etiqueta o ausencia;
+- datos ausentes permanecen vacíos/desconocidos/pendientes;
+- usar datos sintéticos durante desarrollo/QA;
+- el catálogo identifica/ayuda a seleccionar; nunca decide valores terapéuticos.
 
-## 1. Matriz viva de hallazgos / evoluciones
+## 1. Correcciones y decisiones de autoridad humana — 2026-09-28
 
-| ID | Tema | Tipo | Alcance inicial | Timing | Estado |
+1. La referencia previa a **ASDAS en artritis psoriásica** fue una atribución de patología equivocada durante la revisión. Se retira como requisito/hallazgo ejecutable. No se abre discovery ni WO a partir de esa asociación.
+2. `SIL-REV-007` a `011` (Dermatología) permanecen registrados para no perder contexto, pero quedan **DEFERRED / OUT_OF_CURRENT_EXECUTION**. No forman parte de los próximos trains.
+3. La automatización CIMA/GitHub Actions sigue pendiente y se tratará aparte. **No bloquea** el trabajo de consumo/autocomplete del catálogo publicado actual.
+4. Se acepta como siguiente secuencia: shaping → seguridad PCR/unidades → catálogo/autocomplete Reuma → simplificación prebiológico → contrato de renovaciones → Reuma→Farmacia tras discovery → automatización CIMA.
+5. No se crea documentación adicional por ritual. Cuando el significado/aceptación cabe de forma durable en un issue/WO, el issue es autoridad suficiente. OpenSpec se reserva para contratos/máquinas de estados que deban sobrevivir a un ticket.
+
+## 2. Matriz viva de hallazgos
+
+| ID | Tema | Naturaleza | Alcance | Decisión/timing | Estado |
 |---|---|---|---|---|---|
-| `SIL-REV-001` | Nomenclatura oficial de programas/procesos FH SES | DATA / INTEROPERABILITY | CORE + catálogo global FH | Antes de ampliar procesos/reportes | PROPOSED |
-| `SIL-REV-002` | Presets de informes periódicos en análisis poblacional | FEATURE / CONFIG | CORE + configuración de reporte | Tras contrato de datos mínimo | PROPOSED |
-| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | Global FH; primer preset concreto | Discovery/contrato antes de WO | PROPOSED |
-| `SIL-REV-004` | Simplificación del circuito prebiológico en Reuma | UX / CLINICAL FLOW | MODULE Reumatología, global entre sites | Próxima evolución funcional Reuma | PROPOSED |
-| `SIL-REV-005` | Solicitud Reuma → Farmacia mediante TXT estructurado | INTEROPERABILITY / FEATURE | MODULE Reuma→Farmacia | Tras discovery con Farmacia | PROPOSED |
-| `SIL-REV-006` | Conversión de PCR según unidad bibliográfica de cada calculadora | CLINICAL SAFETY / CORE | CORE + SITE + calculator contract | Antes de usar calculadoras multicentro | PROPOSED |
-| `SIL-REV-007` | Superficie Dermatología global en PROMueve | FEATURE / NAVIGATION | MODULE Dermatología global; SITE futuro | Corto plazo / demo-discovery | PROPOSED |
-| `SIL-REV-008` | Formulario simple Dermatología → Farmacia | INTEROPERABILITY / FEATURE | MODULE Dermatología→FH global | Corto plazo | PROPOSED / fuente disponible |
-| `SIL-REV-009` | Adaptación Hub HS completo como consulta monográfica | FEATURE / DATA | MODULE Dermatología-HS global; SITE futuro | Después de discovery | PROPOSED |
-| `SIL-REV-010` | Adaptación Hub Psoriasis completo | FEATURE / DATA | MODULE Dermatología-PsO global; SITE futuro | Después de auditoría/corrección | PROPOSED |
-| `SIL-REV-011` | Contrato único de solicitud Derma → FH desde superficies simples/completas | INTEROPERABILITY | CORE de integración + MODULE Derma/FH | Antes de integrar botones de solicitud | PROPOSED |
-| `SIL-REV-012` | Alertas de renovación de prescripción | CLINICAL FLOW / FEATURE | Global FH + Enfermería + servicios clínicos | Prioridad funcional; antes de piloto | PROPOSED |
-| `SIL-REV-013` | Handoff de renovaciones FH → Enfermería → servicio → FH | INTEROPERABILITY / DATA | Global; site configurable | Tras fijar contrato/estados | PROPOSED |
-| `SIL-REV-014` | Vista operativa de renovaciones para Enfermería | UX / REPORT | MODULE Enfermería; global inicial | Después del flujo mínimo | DEFERRED/MVP opcional |
-| `SIL-REV-015` | ASDAS referido a APs: necesidad clínica por confirmar | CLINICAL SAFETY / CALCULATOR | MODULE Reumatología | Antes de implementar | NEEDS_CLINICAL_VALIDATION |
-| `SIL-REV-016` | Catálogo farmacológico/autocomplete común en Reuma | DATA / UX / INTEROPERABILITY | CORE catálogo + MODULE Reuma | Próxima evolución Reuma | PROPOSED |
+| `SIL-REV-001` | Nomenclatura oficial de programas/procesos FH SES | DATA / INTEROPERABILITY | CORE + consumo FH | Antes de ampliar reportes | PROPOSED |
+| `SIL-REV-002` | Presets de informes periódicos | FEATURE / CONFIG | CORE | Tras contrato de datos mínimo | PROPOSED |
+| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | Discovery/contrato | PROPOSED |
+| `SIL-REV-004` | Simplificación prebiológico Reuma | CLINICAL FLOW / UX | MODULE Reuma | TRAIN 1 / T3 | APPROVED_FOR_EXECUTION_AUTHORITY |
+| `SIL-REV-005` | Solicitud Reuma→Farmacia TXT | INTEROPERABILITY | MODULE Reuma×FH | TRAIN 3 tras discovery | DISCOVERY_FIRST |
+| `SIL-REV-006` | PCR/unidades por calculadora y site | CLINICAL SAFETY / DATA | CORE + SITE + MODULE/CALCULATOR | TRAIN 1 / T1 | APPROVED_FOR_EXECUTION_AUTHORITY |
+| `SIL-REV-007` | Superficie Dermatología global | FEATURE / NAVIGATION | MODULE Derma | Fuera del train actual | DEFERRED |
+| `SIL-REV-008` | Formulario simple Derma→Farmacia | INTEROPERABILITY | MODULE Derma×FH | Fuera del train actual | DEFERRED |
+| `SIL-REV-009` | Hub HS completo | FEATURE / DATA | MODULE Derma-HS | Fuera del train actual | DEFERRED |
+| `SIL-REV-010` | Hub Psoriasis completo | FEATURE / DATA | MODULE Derma-PsO | Fuera del train actual | DEFERRED |
+| `SIL-REV-011` | Contrato común Derma→FH | INTEROPERABILITY | CORE + MODULE | Fuera del train actual | DEFERRED |
+| `SIL-REV-012` | Alertas de renovación | CLINICAL FLOW | CORE workflow + FH | TRAIN 2 tras N0 | SHAPING_APPROVED |
+| `SIL-REV-013` | Handoff FH→Enfermería→servicio→FH | INTEROPERABILITY / DATA | CORE + MODULE×SITE | TRAIN 2 tras N0 | SHAPING_APPROVED |
+| `SIL-REV-014` | Dashboard renovaciones Enfermería | UX / REPORT | MODULE Enfermería | Después del MVP | DEFERRED |
+| `SIL-REV-015` | ASDAS atribuido a APs | Corrección de revisión | — | Retirado | WITHDRAWN_WRONG_ATTRIBUTION |
+| `SIL-REV-016` | Catálogo/autocomplete común en Reuma | DATA / UX | CORE catalog capability + MODULE Reuma | TRAIN 1 / T2 | APPROVED_FOR_EXECUTION_AUTHORITY |
+| `SIL-REV-017` | Automatización CIMA del catálogo | TOOLING / DATA SUPPLY | CORE tooling | TRAIN 4 | DEFERRED_SEPARATE_CONCERN |
 
----
+## 3. `SIL-REV-001` — nomenclatura SES para procesos FH
 
-## 2. `SIL-REV-001` — Nomenclatura oficial de programas/procesos FH SES
+Sil identifica un catálogo/fuente de nomenclatura de programas/procesos FH utilizado como referencia SES. Dirección propuesta:
+- mantener una referencia global de identificación/nomenclatura para Farmacia;
+- evitar denominaciones locales divergentes cuando exista autoridad acordada;
+- reutilizarla en formularios, filtros, dashboards y reportes sólo tras ingestión/validación de la fuente;
+- no asumir que una denominación FH deba propagarse automáticamente a otros servicios.
 
-### Contexto
-Sil aporta `Programas CHUB 2025 def.xls`, utilizado por Farmacia Hospitalaria como nomenclatura estandarizada/unificada de programas/procesos alineados con SES. Esta nomenclatura ya se utilizó como criterio para corregir denominaciones en Hidradenitis Supurativa y debe extenderse a los procesos cubiertos por el catálogo.
+Pendiente: ingestión/normalización de la fuente y WO separada. No entra en TRAIN 1.
 
-### Dirección propuesta
-- Tratar el catálogo como referencia global de Farmacia Hospitalaria en PROMueve.
-- Evitar denominaciones locales o históricas cuando exista denominación oficial SES.
-- Aplicarlo de forma coherente en formularios, dashboards, filtros, reportes y exportaciones.
-- Evaluar por separado si la misma nomenclatura debe reutilizarse en servicios clínicos; no asumirlo automáticamente.
+## 4. `SIL-REV-002/003` — presets de reporting y reporte trimestral Cosentyx
 
-### Clasificación
-`CORE/DATA` para catálogo y reglas de identificación; consumo global por Farmacia. La posible reutilización por servicios clínicos requiere validación separada.
+Dirección:
+- presets versionados que describan ventana, población, indicación, evento/tratamiento explícito y salida;
+- los presets no infieren eventos clínicos;
+- el dashboard no se convierte en fuente de verdad clínica.
 
-### Pendiente
-Ingestar y revisar el fichero fuente antes de convertirlo en catálogo machine-readable. Preservar el original como referencia. No contiene autorización automática para modificar contratos clínicos.
+Primer caso propuesto, trimestral:
+- psoriasis: nuevos inicios explícitos de Cosentyx dentro del trimestre;
+- artritis psoriásica: nuevos inicios explícitos de Cosentyx dentro del trimestre;
+- HS: inicio explícito de administración q2w durante el trimestre, distinguiendo cuando conste inicio directo q2w de intensificación explícita q4w→q2w.
 
----
+No es un reporte de unidades dispensadas. No inferir intensificación desde el nombre del fármaco, tratamiento actual o ausencia de datos.
 
-## 3. `SIL-REV-002` — Presets de informes periódicos en análisis poblacional
-
-### Contexto
-En el Dashboard/Análisis poblacional se había planteado una capacidad asociada al Control Plane para definir configuraciones versionadas —por ejemplo JSON— que representen filtros/reportes recurrentes. El objetivo es que informes periódicos no dependan de reconstruir manualmente los mismos filtros cada vez.
-
-### Dirección propuesta
-- Capacidad global de `report presets` versionados y gobernados.
-- Un preset describe ventana temporal, población, indicación, tratamiento/evento y salida esperada.
-- Los presets no infieren eventos clínicos; deben apoyarse en actos/eventos explícitos del modelo longitudinal.
-- Ejecutar un preset no convierte el dashboard en fuente de verdad clínica.
-
----
-
-## 4. `SIL-REV-003` — Primer preset: reporte trimestral Cosentyx
-
-### Ventana
-Tres meses correspondientes a un trimestre natural.
-
-### Información requerida
-1. **PSO / psoriasis:** pacientes con nuevo inicio de Cosentyx durante el trimestre.
-2. **PsA / artritis psoriásica:** pacientes con nuevo inicio de Cosentyx durante el trimestre.
-3. **HS / hidradenitis supurativa:** pacientes en los que durante el trimestre se inicia la administración de Cosentyx cada 2 semanas, diferenciando conceptualmente:
-   - inicio directamente con frecuencia q2w;
-   - intensificación explícita desde q4w a q2w.
-
-No es un reporte de unidades dispensadas ni de consumo físico. Para HS tampoco es simplemente “todos los nuevos inicios”: el evento de interés es el inicio de la frecuencia q2w.
-
-### Consecuencia de datos
-El filtro debe identificar eventos dentro de la ventana temporal, no una fotografía del tratamiento actual. No se puede inferir intensificación por ausencia de datos ni por nombre de fármaco.
-
----
-
-## 5. `SIL-REV-004` — Simplificación del circuito prebiológico en Reuma
+## 5. `SIL-REV-004` — simplificación del circuito prebiológico Reuma
 
 ### Problema
-Reuma contiene un circuito prebiológico demasiado detallado que intenta representar múltiples fases intermedias de analítica, Medicina Preventiva/vacunación y readiness. La experiencia posterior de Cáceres demuestra un modelo operativo más simple, liderado por Enfermería.
+La UI/modelo actual expone un circuito muy detallado. En código publicado existe además un estado global `NO_EVALUADO / EN_CURSO / APTO / NO_APTO`, detalle de múltiples pruebas y una inferencia de `EN_CURSO` cuando detecta actividad clínica. La evolución aprobada no debe confundir esa representación histórica con el nuevo flujo mínimo.
 
-### Dirección funcional
-Reuma deja de gestionar el circuito prebiológico detallado. Conserva únicamente el estado mínimo necesario para preparar la solicitud a Farmacia.
+### Contrato funcional aprobado para shaping
+Dos bloques operativos iniciales:
+- **Analítica**;
+- **Medicina Preventiva**.
 
-Propuesta de estado único por bloque para evitar combinaciones incoherentes:
-- `No solicitada`;
-- `Solicitada / pendiente`;
+Cada bloque expone únicamente:
+- `NO_SOLICITADA`;
+- `SOLICITADA_PENDIENTE`;
 - `OK`.
 
-Aplicable inicialmente a:
-- Analítica.
-- Medicina Preventiva.
+Reglas:
+- `OK` sólo por acto profesional explícito o import autorizado;
+- nunca derivar `OK` automáticamente de resultados individuales;
+- el nuevo flujo no borra por defecto datos históricos ya persistidos;
+- separar decisión de **dejar de capturar/mostrar detalle** de decisión de **eliminar datos/modelo histórico**;
+- si existe información legacy incompatible, conservarla de forma segura y no fabricar un estado nuevo.
 
-`OK` debe ser un estado profesional explícito/importado desde una fuente autorizada; Reuma no lo calcula automáticamente a partir de resultados.
+### Evidencia técnica actual
+Superficies de alta probabilidad: `modules/prebiologicManager.js`, `modules/formController.js`, `primera_visita.html`, `seguimiento.html` y contratos/persistencia asociados. El path exacto se vuelve a confirmar en el preflight del ticket.
 
-### Alcance
-Cambio global del módulo Reumatología, no específico de Badajoz/Cáceres/Mérida.
+## 6. `SIL-REV-005` — solicitud Reuma→Farmacia
 
-### Precaución
-Decidir por separado si el detalle histórico deja de mostrarse en el flujo principal o se elimina de captura/modelo. No borrar información histórica útil sin decisión explícita.
+Dirección aceptada, **no contrato todavía**:
+- acción explícita `Solicitar tratamiento a Farmacia`;
+- salida TXT/estructurada siguiendo un contrato acordado con Farmacia;
+- generar/copiar una solicitud no equivale a enviarla, persistirla ni validarla.
 
----
+El conjunto exacto de campos queda bloqueado hasta discovery con Farmacia. No inventar dosis, vía, pauta, presentación, inducción, switch/add-on ni resultado de validación.
 
-## 6. `SIL-REV-005` — Solicitud Reuma → Farmacia en TXT estructurado
+## 7. `SIL-REV-006` — PCR y unidades de calculadoras
 
-### Dirección
-Añadir una acción tipo `Solicitar tratamiento a Farmacia` que genere/copie un TXT estructurado, siguiendo el patrón funcional ya utilizado por Dermatología → Farmacia en Cáceres.
+### Riesgo
+PROMueve debe admitir que el laboratorio/site puede entregar PCR en unidades distintas. La fórmula no puede recibir silenciosamente un número sin saber su unidad.
 
-La acción genera una solicitud; no implica transporte real, envío automático, validación ni persistencia clínica por sí misma.
+### Estado del código publicado observado durante shaping
+`modules/scoreCalculators.js` contiene contratos diferentes por calculadora: ASDAS-CRP y DAS28-CRP trabajan actualmente con PCR en mg/L; DAPSA recibe en la UI/captura actual un valor tratado como mg/L y lo convierte internamente a mg/dL. La UI actual muestra al menos DAPSA como `PCR (mg/L)`. Esto demuestra que el supuesto de unidad está hoy embebido en el módulo/superficie y justifica hacer explícito el contrato antes del uso multicentro.
 
-### Contrato pendiente
-El conjunto exacto de campos debe acordarse con Farmacia en las reuniones de discovery. Como orientación puede incluir identificador de paciente, patología/indicación, antecedentes/información relevante, comorbilidades y tratamiento/posología explícitamente solicitados, pero **no se fija todavía como contrato**.
+### Contrato de diseño aprobado
+`valor original + unidad original + site/configuración explícita` → conversión determinista a la unidad exigida por la calculadora → fórmula de la calculadora sin reescritura oportunista.
 
-No inferir dosis, vía, pauta, presentación, inducción, switch/add-on ni resultado de validación.
-
----
-
-## 7. `SIL-REV-006` — PCR y unidades de las calculadoras clínicas
-
-### Problema multicentro
-- Cáceres y Mérida informan PCR en `mg/L`.
-- Badajoz informa PCR en `mg/dL`.
-
-La misma magnitud no puede entrar sin transformación en fórmulas que esperan una unidad concreta.
-
-### Decisión corregida
-No existe una “unidad canónica regional de PCR” impuesta por PROMueve ni debe asumirse que todas las calculadoras usan la misma unidad. **La unidad esperada forma parte del contrato bibliográfico de cada calculadora.**
-
-Verificación inicial de contratos:
-- ASDAS basado en CRP: PCR en `mg/L`;
-- DAS28-CRP: PCR en `mg/L`;
-- DAPSA: PCR en `mg/dL`.
-
-### Patrón de diseño
-`valor original + unidad original + site` → conversión determinista a la unidad exigida por la calculadora → fórmula oficial intacta.
-
-Si la unidad original o esperada no está definida, el cálculo debe fallar de forma segura y no inferir por magnitud.
-
-### UI
-Cuando exista conversión, mostrarla de forma discreta y verificable, por ejemplo:
-
-`PCR informada: 0,8 mg/dL → utilizada para DAS28: 8 mg/L`
-
-Si no existe conversión, no añadir ruido visual innecesario.
-
-### Datos y trazabilidad
-Conservar siempre valor y unidad originales. Los valores convertidos son derivados para una finalidad/calculadora concreta y no sobrescriben silenciosamente el dato de laboratorio.
-
-Para RWE/multicentro, una eventual unidad homogénea de intercambio debe definirse como contrato de datos independiente y no derivarse accidentalmente de una calculadora concreta.
+Reglas:
+- preservar valor y unidad originales;
+- cada calculadora declara su unidad esperada;
+- no inferir unidad por magnitud;
+- unidad desconocida/no soportada => cálculo no disponible/fallo seguro, nunca cálculo silencioso;
+- conversión `mg/L ↔ mg/dL` determinista y cubierta por pruebas de equivalencia;
+- cuando exista conversión, UI verificable sin sobrescribir el dato original;
+- antes de modificar fórmulas, conservar/confirmar la autoridad bibliográfica ya aceptada para cada índice.
 
 ### Clasificación
-- `CORE`: mecanismo de unidades/conversión determinista;
-- `SITE`: unidad de origen configurada por hospital/laboratorio;
-- `MODULE/CALCULATOR`: unidad bibliográfica exigida por cada índice;
-- `DATA`: trazabilidad de original + derivados;
-- `UI`: indicación de conversión cuando ocurra.
+- `CORE`: primitive/conversor de unidades y contrato fail-closed;
+- `SITE`: unidad origen configurada explícitamente;
+- `MODULE/CALCULATOR`: unidad esperada de cada índice;
+- `DATA`: trazabilidad original/derivado;
+- `UI`: indicación de conversión cuando aplique.
 
----
+### Superficies de alta probabilidad
+`modules/scoreCalculators.js`, `modules/formController.js`, `primera_visita.html`, `seguimiento.html` y tests/harness específicos. El ticket no debe expandirse a arquitectura V5.
 
-## 8. `SIL-REV-007` a `011` — Dermatología global: solicitud simple + herramientas completas
+## 8. `SIL-REV-007` a `011` — Dermatología
 
-### Objetivo global
-Hacer visible Dermatología en PROMueve para los tres hospitales. En esta fase, formularios y capacidades se consideran globales; la localización/configuración por hospital se abordará después con la arquitectura Nexus agnóstica por site/deployment.
+Se conserva el contexto previo: formulario simple Derma→FH, baseline HS, baseline PsO y objetivo futuro de un contrato común Derma→FH.
 
-### Nivel 1 — solicitud simple Dermatología → Farmacia
-Se dispone de una plantilla HTML actualizada aportada por Sil como fuente de trabajo. El formulario se titula `Solicitud Dermatología → Farmacia`, contempla actualmente HS, psoriasis, dermatitis atópica, vitíligo y alopecia areata, e incluye un selector explícito de `Programa SES`, tratamiento solicitado y exportación de texto plano para e-Orden.
+**Decisión actual:** `DEFERRED / OUT_OF_CURRENT_EXECUTION`.
 
-La plantilla actualizada **todavía no se considera integrada en PROMueve** por el hecho de existir como HTML. Debe incorporarse mediante WO propia, preservando el contrato ya acordado entre Dermatología y Farmacia y revisando su comportamiento antes de publicarla como superficie soportada.
+No abrir implementación ni introducir el formulario de Dermatología en TRAIN 1/2/3. Esta deferencia no declara descartada la línea Dermatología; sólo evita mezclarla con el trabajo actual.
 
-### Nivel 2 — herramientas completas de consulta
-Dos prototipos externos sirven de baseline funcional:
-- `b32majus/Hub-Clinico-HS-Canarias` para una consulta monográfica de Hidradenitis Supurativa con seguimiento/base longitudinal;
-- `b32majus/Hub-Clinico-PsO-Valme` para Psoriasis, actualmente con errores conocidos y por tanto no apto para presentarse como funcionalmente cerrado.
+## 9. `SIL-REV-012/013` — renovaciones FH↔Enfermería↔servicios
 
-Dirección propuesta:
-- no clonar ciegamente los repos dentro de PROMueve;
-- utilizarlos como baseline para discovery y localización a Extremadura;
-- hacer visible la existencia de estas capacidades para discusión clínica;
-- distinguir claramente `formulario simple disponible/acordado` de `prototipo completo pendiente de adaptación`.
+### Problema
+Farmacia necesita anticipar prescripciones próximas a caducar y coordinar la renovación con el servicio prescriptor sin confundir una comunicación operativa con una validación FH.
 
-### Contrato único Derma → Farmacia
-A largo plazo, el formulario simple y los módulos completos HS/PsO deben producir la **misma semántica de solicitud a Farmacia**. El módulo completo podrá tener una UI mucho más rica, pero el botón `Solicitar tratamiento a Farmacia` debe generar un contrato equivalente al formulario simple, no una tercera variante incompatible.
+### Autoridad previa útil
+Existe `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`, propuesta avanzada no implementada. Conserva decisiones valiosas: la renovación pertenece a una **línea de tratamiento**, fechas confirmadas/verificadas/estimadas son distintas, switch es explícito y reglas temporales son configurables. N0 debe reconciliar esa arquitectura con el flujo operativo actualmente decidido, no crear una segunda teoría incompatible.
 
-### Alcance
-- global de Dermatología inicialmente;
-- personalización por hospital como configuración futura `SITE`, no forks clínicos independientes desde el principio.
+### Hipótesis a cerrar en N0
+- fecha de referencia que inicia el cómputo;
+- significado de caducidad;
+- duración/default configurable;
+- `warningWindowDays` (60 días es hipótesis inicial, no constante universal);
+- identidad estable de línea/ciclo/renovación;
+- estados y autoridad de transición;
+- contrato de ida y vuelta con Excel Enfermería;
+- idempotencia, duplicados, reimportaciones y filas rechazadas;
+- versionado del contrato.
 
----
+Invariante: **`RENEWED_REPORTED ≠ FH_UPDATED`**. Un check/import desde Enfermería nunca prolonga por sí solo la validación farmacoterapéutica.
 
-## 9. `SIL-REV-012` y `013` — Renovaciones: alerta FH y circuito con Enfermería/servicios
+Dashboard Enfermería queda fuera del MVP hasta que identidad/estados/reconciliación estén demostrados.
 
-### Problema asistencial
-En las Farmacias Hospitalarias de Extremadura se producen situaciones en las que el paciente acude y la prescripción del servicio clínico está caducada. Farmacia no puede renovar esa prescripción y necesita anticipar la gestión con el servicio de origen.
+## 10. `SIL-REV-015` — corrección ASDAS
 
-### Regla funcional inicial a validar
-Como hipótesis operativa aportada por Sil:
-- validez esperada de referencia: 1 año desde la validación/fecha base definida;
-- entrar en estado de alerta cuando resten **60 días** para la fecha prevista de caducidad.
+La asociación previa de ASDAS con APs fue un error de atribución durante la conversación de revisión. Queda **retirada**.
 
-**No codificar esta regla como universal sin validar el contrato real:** duración, fecha base y excepciones deben ser configurables/confirmadas antes de implementación clínica.
+No se mantiene como deuda, requisito, discovery ni ticket. Cuando Sil señale la pantalla/patología realmente afectada, se auditará ese caso concreto desde la autoridad publicada.
 
-### Superficie Farmacia
-Crear una vista operativa de pacientes próximos a renovación, al menos:
-- agrupada/filtrable por servicio clínico de origen;
-- identificador de paciente;
-- tratamiento/línea relevante solo si consta explícitamente;
-- fecha base, fecha prevista de caducidad y días restantes;
-- estado del circuito de renovación.
+## 11. `SIL-REV-016` — catálogo/autocomplete farmacológico Reuma
 
-La alerta identifica necesidad de gestión; **no renueva ni prolonga automáticamente la validación FH**.
+### Decisión
+Consumir desde Reuma el catálogo farmacológico **publicado que funcione en el momento de ejecución**, sin esperar a la automatización CIMA futura.
 
-### Handoff propuesto
-1. Farmacia identifica pacientes que han entrado en ventana de renovación.
-2. Por servicio, Farmacia genera una salida estructurada —inicialmente CSV/filas pegables en Excel— para Enfermería.
-3. El workbook de Enfermería, ya utilizado para inicios biológicos, incorpora una superficie de `Renovaciones` por servicio o estructura equivalente.
-4. Enfermería coordina la renovación con el equipo médico de origen.
-5. Cuando existe evidencia de renovación completada, Enfermería registra explícitamente el estado `renovado`/equivalente.
-6. Farmacia vuelve a importar/reconciliar esa información y ve que existe una renovación reportada.
-7. La actualización/prolongación de la validación en Farmacia sigue requiriendo **acto profesional FH explícito**; un check de Enfermería no equivale a validación farmacoterapéutica.
+Reglas clínicas:
+- el catálogo identifica/selecciona medicamento;
+- seleccionar nombre no escribe ni sobrescribe dosis, vía, pauta, presentación, inducción, duración, línea terapéutica o decisión clínica;
+- no derivar renovación/switch/add-on desde la selección;
+- fallo seguro si la fuente publicada no está disponible;
+- no duplicar otra lista manual si la capacidad común ya puede reutilizarse.
 
-### Identidad y trazabilidad
-No basar reconciliación en heurísticas por nombre o mera coincidencia visual. El circuito debe disponer de un identificador estable de renovación (`renovacion_id` o contrato equivalente), además de la identidad del paciente y servicio.
+### Estado técnico observado
+Reuma posee actualmente lógica de selects que llama a `HubTools.data.getFarmacosPorTipo(...)` y `dataManager.js` expone esa función desde la BD cargada. El repositorio también contiene catálogo farmacológico versionado y documentación CIMA. El ticket debe identificar **qué fuente está realmente cableada y publicada** antes de cambiar UI: la existencia de un fichero de catálogo no demuestra que Reuma lo consuma.
 
-### Estados a diseñar
-Ejemplo provisional, pendiente de discovery:
-- `NO_DUE` / fuera de ventana;
-- `DUE_SOON` / entra en ventana;
-- `REQUESTED_TO_SERVICE` / enviado a Enfermería/servicio;
-- `IN_PROGRESS`;
-- `RENEWED_REPORTED` / Enfermería informa renovación;
-- `FH_REVIEW_PENDING`;
-- `FH_UPDATED` / acto FH explícito completado.
+### Superficies de alta probabilidad
+`modules/formController.js`, `modules/dataManager.js`, `primera_visita.html`, `seguimiento.html`, gestión/carga de catálogo y tests. Si el preflight demuestra que ya existe un port reusable, consumirlo; si no, crear únicamente el seam mínimo necesario y documentar el contrato.
 
-Los nombres finales y transiciones deben cerrarse antes de implementar.
+## 12. `SIL-REV-017` — automatización CIMA
 
-### Alcance
-Capacidad global para Farmacia/Enfermería/servicios clínicos. El transporte inicial puede usar Excel como adaptador soportado; no convierte Excel en autoridad conceptual del flujo.
+Separada del consumidor Reuma.
 
----
+La documentación existente propone un futuro script/Workflow de actualización y control de diff. A fecha de este shaping esa automatización no se considera implementada por el mero hecho de estar documentada.
 
-## 10. `SIL-REV-014` — Vista operativa de renovaciones en Enfermería
+Train futuro:
+`CIMA API → normalización → validación → diff/versionado → PR/revisión humana`.
 
-### Idea
-Si el workbook de Enfermería termina manteniendo una superficie de solicitud/inicio y otra de renovaciones por servicio, puede ser útil una vista-resumen sencilla con recuentos como:
-- renovaciones pendientes;
-- renovaciones en curso;
-- renovaciones completadas/reportadas;
-- otros seguimientos pendientes si existe contrato claro.
+No tocarla durante TRAIN 1.
 
-### Prioridad
-**No es requisito del MVP del circuito.** Primero deben funcionar identidad, estados, ida/vuelta FH↔Enfermería y reconciliación segura. Añadir dashboard solo si mejora realmente la operación y puede derivarse sin ambigüedad de esos estados.
+## 13. Orden de ejecución aprobado
 
----
+### TRAIN 0 — shaping / autoridad — EN CURSO
+- reconciliar la auditoría con `promueve/nexus-v4`;
+- corregir ASDAS y diferir Dermatología;
+- clasificar scope;
+- comprobar seams/path collisions;
+- crear parent train + tickets ejecutables;
+- preparar N0 de renovaciones sin implementar el motor.
 
-## 11. `SIL-REV-015` — ASDAS referido a artritis psoriásica: validar antes de implementar
+### TRAIN 1 — seguridad clínica + Reuma
+Secuencial:
+1. **T1 PCR/unidades**;
+2. **T2 catálogo/autocomplete Reuma**;
+3. **T3 prebiológico mínimo Reuma**.
 
-Sil identifica como posible ausencia una calculadora ASDAS en el contexto de Artritis Psoriásica.
+La inspección actual muestra colisión probable/real en `modules/formController.js` y en las superficies `primera_visita.html` / `seguimiento.html`; por tanto **no se declara ejecución paralela**. El train reutiliza preflight común pero crea checkpoint limpio entre tickets.
 
-### Adjudicación provisional de seguridad
-No implementar todavía como simple “calculadora faltante”. ASDAS es el **Axial Spondyloarthritis Disease Activity Score**, diseñado/validado para actividad de espondiloartritis axial. Si la necesidad real es valorar **afectación axial en un paciente con PsA**, debe definirse explícitamente con Reumatología qué población/indicación y qué instrumento quieren utilizar.
+### TRAIN 2 — renovaciones
+1. N0 contrato/estados/identidad;
+2. N1 FH: `due soon` + bandeja/export;
+3. N2 adaptador Excel Enfermería;
+4. N3 reconciliación de retorno y acto FH explícito;
+5. N4 dashboard sólo si aporta valor después del MVP.
 
-### Acción
-Discovery clínico corto con Reumatología antes de WO:
-- confirmar si se referían a PsA con afectación axial;
-- confirmar si el instrumento deseado es ASDAS u otro;
-- fijar fórmula, inputs, unidad de PCR y bibliografía oficial;
-- no mostrar una calculadora bajo una patología si su interpretación no está clínicamente acordada.
+### TRAIN 3 — Reuma→Farmacia
+`RFH-0 discovery/contrato → RFH-1 salida estructurada → RFH-2 QA E2E`.
 
----
+### TRAIN 4 — CIMA automation
+Implementación separada del refresco de catálogo y GitHub Actions.
 
-## 12. `SIL-REV-016` — Catálogo farmacológico/autocomplete común en Reuma
+## 14. Protocolo Atenea aplicable
 
-### Problema actual percibido
-Reumatología mantiene/selecciona fármacos desde un catálogo propio alimentado manualmente por responsables del servicio. Esto añade mantenimiento local y riesgo de desalineación.
+La autoridad actual de Atenea exige el camino corto:
+- shaping sólo si significado/aceptación no están resueltos;
+- preflight mínimo: repo/worktree/base, autoridad, significado ejecutable, runtime cualificado y frontera de publicación;
+- `atenea-writer` en host `opencode serve` fresco por ticket;
+- checks deterministas;
+- ciclo Gentle nativo cuando corresponda;
+- checkpoint durable;
+- siguiente ticket autorizado o STOP.
 
-### Dirección propuesta
-Reutilizar en Reuma el patrón de catálogo/autocomplete farmacológico centralizado ya utilizado en Farmacia, basado en el catálogo versionado del proyecto y su proceso de actualización desde fuentes regulatorias/locales aprobadas.
+Los hechos train-wide se fijan una vez. No repetir manuales de routing/agentes en cada ticket. `Engram` y `Context7` permanecen OFF por defecto. No usar `gentle-orchestrator` anidado bajo el supervisor Atenea.
 
-Principios:
-- un único catálogo mantenible para identificación/selección;
-- autocomplete en todos los campos de fármaco relevantes de Reuma;
-- no inferir dosis, vía, pauta, presentación, inducción ni decisión terapéutica al seleccionar un nombre;
-- separar catálogo de identificación de contrato terapéutico;
-- fallback/fallo seguro si el catálogo no está disponible;
-- conservar capacidad de catálogo local cuando exista una necesidad institucional explícita, pero no duplicar listas manuales sin necesidad.
+## 15. Matriz de colisión preliminar TRAIN 1
 
-### Alcance
-`CORE/DATA` para la capacidad de catálogo y `MODULE/REUMA` para el consumo UI. Debe reconciliarse con la arquitectura Nexus y con la fuente real vigente del catálogo antes de ejecutar.
+| Ticket | Superficies probables | Relación |
+|---|---|---|
+| T1 PCR/unidades | `scoreCalculators.js`, `formController.js`, primera/seguimiento, tests | toca UI/controller compartidos |
+| T2 autocomplete | `formController.js`, `dataManager.js`, primera/seguimiento, fuente/adapter catálogo, tests | colisiona con UI/controller de T1/T3 |
+| T3 prebiológico | `prebiologicManager.js`, `formController.js`, primera/seguimiento, persistencia/tests | colisiona con UI/controller de T1/T2 |
 
----
+Conclusión: un solo train, **orden secuencial T1→T2→T3**, no tres writers paralelos. La composición se reevalúa sólo si el diff real demuestra una separación mejor.
 
-## 13. Fuentes de trabajo de esta revisión
+## 16. Fuentes vivas consultadas para este shaping
 
-- `Programas CHUB 2025 def.xls` — aportado por Sil; pendiente de ingestión/normalización documental.
-- `plantilla_solicitud_dermatologia(1).html` — versión actualizada aportada por Sil; fuente de trabajo, todavía no integrada en PROMueve.
-- `b32majus/Hub-Clinico-HS-Canarias` — baseline externo para HS completa.
-- `b32majus/Hub-Clinico-PsO-Valme` — baseline externo para Psoriasis completa; errores conocidos pendientes de auditoría/corrección.
-- documentación viva y código publicado de `b32majus/Hub-Clinico-Badajoz`.
+- `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` de `promueve/nexus-v4`;
+- `docs/ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`;
+- `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`;
+- `docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md`;
+- código publicado: `modules/scoreCalculators.js`, `modules/prebiologicManager.js`, `modules/formController.js`, `modules/dataManager.js`, `primera_visita.html`, `seguimiento.html`;
+- Atenea `docs/START_HERE.md`, `EXECUTION_REQUEST_AND_PREFLIGHT_V1.md`, `WORK_UNIT_COMPOSITION_POLICY_V1.md` y `OPERATOR_RUNBOOK_OPENCODE_SERVE_V1.md`.
 
----
+## 17. Madurez
 
-## 14. Próximo uso de este documento
-
-Continuar añadiendo hallazgos de la revisión manual por fases. No implementar durante la captura salvo WO separada y autorización explícita.
-
-Al cerrar la auditoría:
-1. reconciliar cada entrada con código y documentación vivos;
-2. marcar `ya implementado`, `regresión`, `defecto`, `mejora`, `decisión pendiente`, `discovery` o `futuro`;
-3. decidir `CORE / MODULE / SITE / MODULE×SITE` definitivo;
-4. mover solo lo aprobado al backlog vivo o a deuda si existe defecto demostrado;
-5. crear WOs atómicas separadas por naturaleza y riesgo;
-6. preservar la distinción entre demo, evaluación sintética, piloto y producción.
+Nada de este shaping eleva la madurez asistencial. El estado global continúa siendo **evaluación sintética / no piloto / no producción**. Los tickets deberán acreditar por separado código publicado, interacción soportada y QA navegador cuando corresponda.
