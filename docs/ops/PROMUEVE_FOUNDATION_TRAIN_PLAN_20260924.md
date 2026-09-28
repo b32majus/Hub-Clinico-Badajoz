@@ -7,7 +7,7 @@
 
 > Este plan no autoriza ninguna WO técnica por sí mismo. Cada bloque requiere issue/WO propia, preflight, tests/QA y delivery boundary explícitos.
 
-## 0. Reconciliación de ejecución — 2026-09-26
+## 0. Reconciliación de ejecución — 2026-09-28
 
 Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza WOs nuevas. La secuencia original de este documento se conserva debajo como plan de referencia.
 
@@ -21,7 +21,7 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 | F3.3 + F3.4 | **COMPLETADAS Y CUALIFICADAS EN EVALUACIÓN SINTÉTICA** | TRAIN #409 / PR #415: QA Chromium del sitio, release sintético reproducible y QA del artefacto. |
 | Hardening post-F3.4 | **COMPLETADO/PUBLICADO** | TRAIN #419 / PR #422: D012/D013 cerradas; post-merge Fast gates + Deterministic suite `success`. El canary de rollover no se usa como qualification de profile. |
 | F4 Farmacia strangler | **F4.1/F4.2 COMPLETADAS/PUBLICADAS; F4.3–F4.6 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T1 #427 + T2 #428, PR #430: contrato read DTO V2 con oráculo congelado `a0dad4a`, resolución por valor de identificador en el seam `06fcba2`, facade async con guards de vigencia `6ce61fa`, capacidad de commit de selección delegada `f572ca7` y vertical Inicio/Quick View `36bfcaa`. Candidate `988c2089...` → merge `10422f4e...`, tree idéntico; madurez `wired` + `visible` + `demostrado` en la rama canónica. |
-| F5 Reuma strangler | **F5.1 COMPLETADA/PUBLICADA; F5.2–F5.4 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T3 #429, PR #430: Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`. Madurez `wired` + `visible` + `demostrado`; D007 no pertenece a F5.1 y queda reservado para F5.3/export. |
+| F5 Reuma strangler | **F5.1 COMPLETADA/PUBLICADA; F5.2–F5.4 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T3 #429, PR #430: Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`. Madurez `wired` + `visible` + `demostrado`; D007 no pertenece a F5.1 y quedó RESOLVED/PUBLISHED de forma independiente por #434 / PR #435. F5.3 permanece pendiente. |
 | F6 pre-pilot | **PENDIENTE** | Lifecycle, URL/log exposure y dependency/vendor policy siguen siendo frontera antes de piloto real. |
 | F7 multi-site qualification | **PENDIENTE POR COMBINACIÓN REAL** | La infraestructura de qualification existe, pero cada hospital×módulo necesita su evidencia propia; no se infiere qualification por presencia en repo. |
 
@@ -30,11 +30,11 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 **Critical path recomendado desde este checkpoint:**
 
 1. antes de abrir la siguiente ejecución, revisar el informe Core pendiente y clasificar cada cambio `CORE / MODULE / SITE / MODULE×SITE`; si intersecta navegación o contratos de lectura, revalidar la siguiente WO en vez de absorberlo silenciosamente;
-2. continuar F4.3+ y F5.2+ mediante WOs atómicas según shaping vivo; `NEXUS-DEBT-007` queda reservado para **F5.3/export 497**, no para el read wrapper F5.1 ya publicado;
+2. continuar F4.3+ y F5.2+ mediante WOs atómicas según shaping vivo; `NEXUS-DEBT-007` ya está RESOLVED/PUBLISHED por #434 / PR #435 y no satisface ni sustituye F5.3;
 3. usar la primera necesidad real para ejecutar **F7 hospital×módulo** sobre la infraestructura ya publicada;
 4. abordar F6 cuando la siguiente frontera sea piloto, no como prerequisito artificial de la integración sintética.
 
-Deuda abierta Nexus no redefine el critical path: D004 espera al consumo real del release map; D005 se distribuye por WOs naturales; D007 se trata con F5.3/export. No se propone un barrido general de deuda.
+Deuda abierta Nexus no redefine el critical path: D004 espera al consumo real del release map y D005 se distribuye por WOs naturales. D007 ya está cerrada/publicada; F5.3 sigue siendo trabajo futuro separado. No se propone un barrido general de deuda.
 
 ## 1. Resultado que buscamos
 
@@ -300,7 +300,7 @@ F4.1 y F4.2 ya están publicadas. La siguiente migración de lectura es F4.3; F4
 
 #### F5.1 Reuma Application Read Port wrapper
 
-**Estado 2026-09-27:** `COMPLETADA/PUBLICADA` por #429 / PR #430; D007 permanece fuera de F5.1 y reservado para F5.3/export.
+**Estado 2026-09-28:** `COMPLETADA/PUBLICADA` por #429 / PR #430; D007 permanece fuera de F5.1 y fue cerrada/publicada separadamente por #434 / PR #435. F5.3 continúa pendiente.
 
 - wrapper async sobre `HubTools.data`;
 - sin extraer parser todavía;
