@@ -805,7 +805,10 @@ function inicializarEventosTratamientos() {
 
             const container = document.getElementById(containerId);
             if (container) {
-                const newLine = HubTools.form.createTreatmentLine(type, options);
+                // The added line must carry the same explicit category as its
+                // primary control; the category is never guessed from the type.
+                const category = originalSelect ? (originalSelect.dataset.drugCategory || '') : '';
+                const newLine = HubTools.form.createTreatmentLine(type, options, false, category);
                 container.appendChild(newLine);
                 inicializarEventosTratamientos();
             }
@@ -814,7 +817,7 @@ function inicializarEventosTratamientos() {
 }
 
 
-function createTreatmentLine(type, options, improved = false) {
+function createTreatmentLine(type, options, improved = false, category = '') {
     const line = document.createElement('div');
     line.classList.add(improved ? 'treatment-line-improved' : 'treatment-line', 'treatment-extra');
 
@@ -823,6 +826,7 @@ function createTreatmentLine(type, options, improved = false) {
     if (improved) select.classList.add('tratamiento-dropdown');
     select.setAttribute('data-drug-autocomplete', 'true');
     select.setAttribute('data-no-custom-select', 'true');
+    if (category) select.setAttribute('data-drug-category', String(category));
     options.forEach(opt => {
         const option = document.createElement('option');
         option.value = opt;

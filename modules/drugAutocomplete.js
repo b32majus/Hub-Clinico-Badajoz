@@ -8,6 +8,14 @@
  * that select; it never writes dose, route, schedule, presentation, induction,
  * duration, therapeutic line, switch/add-on, renewal or validation outcome.
  *
+ * Every medication control declares its functional category through the
+ * `data-drug-category` attribute (Sistemicos / FAMEs / Biologicos) and the
+ * search is always scoped to that category (`HubTools.catalog.search(query,
+ * category)`). Options from other categories are never offered, the category
+ * is never inferred at runtime, and a missing classification source, an
+ * undeclared category or an empty category disables the field with a visible
+ * fail-safe message — never a fallback to the unrestricted catalogue.
+ *
  * When the catalogue is not loaded the input stays disabled and no option is
  * invented.
  *
@@ -45,6 +53,34 @@
             return 'Catálogo de fármacos no disponible';
         }
         return 'Cargando catálogo de fármacos…';
+    }
+
+    /**
+     * A control is usable only when the catalogue AND its explicit category
+     * classification are available, the category is declared, known and has
+     * members. Anything else fails visibly and safely below.
+     */
+    function isUsable(state) {
+        if (!isReady()) return false;
+        var c = catalog().getState();
+        if (!c.categoriesLoaded) return false;
+        if (!state.category) return false;
+        if (!Object.prototype.hasOwnProperty.call(c.categoryCounts, state.category)) return false;
+        return c.categoryCounts[state.category] > 0;
+    }
+
+    function statusTextFor(state) {
+        if (!isReady()) return statusText();
+        var c = catalog().getState();
+        if (!c.categoriesLoaded) return 'Clasificación de fármacos no disponible';
+        if (!state.category) return 'Campo de fármaco sin categoría configurada';
+        if (!Object.prototype.hasOwnProperty.call(c.categoryCounts, state.category)) {
+            return 'Categoría de fármaco no disponible en la clasificación';
+        }
+        if (!c.categoryCounts[state.category]) {
+            return 'Sin fármacos disponibles para esta categoría';
+        }
+        return '';
     }
 
     function currentLabel(state) {
@@ -162,7 +198,7 @@
 
     function bindEvents(state) {
         state.input.addEventListener('input', function () {
-            if (!isReady()) return;
+            if (!isUsable(state)) return;
             var query = state.input.value.trim();
             if (query.length < (catalog().MIN_QUERY || 2)) {
                 if (!query && state.select.value && state.select.value !== 'No') {
@@ -172,11 +208,11 @@
                 }
                 return;
             }
-            renderResults(state, catalog().search(query));
+            renderResults(state, catalog().search(query, state.category));
         });
 
         state.input.addEventListener('focus', function () {
-            if (!isReady()) return;
+            if (!isUsable(state)) return;
             if (!state.input.value.trim() && state.select.value && state.select.value !== 'No') {
                 renderClear(state);
             }
@@ -216,13 +252,13 @@
     }
 
     function refreshOne(state) {
-        var ready = isReady();
+        var ready = isUsable(state);
         state.input.disabled = !ready;
         if (ready) {
             state.input.placeholder = 'Buscar fármaco…';
             state.input.title = '';
         } else {
-            var status = statusText();
+            var status = statusTextFor(state);
             state.input.placeholder = status;
             state.input.title = status;
             closeList(state);
@@ -264,7 +300,7 @@
         wrapper.appendChild(list);
         wrapper.appendChild(select);
 
-        var state = { select: select, input: input, list: list, results: [], activeIndex: -1 };
+        var state = { select: select, input: input, list: list, results: [], activeIndex: -1, category: (select.dataset.drugCategory || '').trim() };
         select.__drugAutocompleteState = state;
 
         ensureDefaultOption(select);
