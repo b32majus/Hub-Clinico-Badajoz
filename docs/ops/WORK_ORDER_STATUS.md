@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-27
+**Última actualización:** 2026-09-28
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,13 +11,13 @@
 | Elemento | Valor |
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
-| Tip Nexus publicado verificado | `10422f4e5b7578dbbb17af17e3b953b5501eb4b2` — merge PR #430 |
-| Última entrega | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426): F4.1/F4.2 Farmacia + F5.1 Reuma publicadas por PR #430 |
-| Verificación post-merge | Candidate `988c2089...`: GitHub Actions `Nexus deterministic gates` Fast gates `success` + Deterministic suite `success`; merge `10422f4e...`: fresh worktree `npm ci` + `npm run verify:nexus` PASS; tree idéntico al candidate `c0615cb3...`. |
+| Tip Nexus publicado verificado | `e17512384b96fc361668202cdbec5e09022614ff` — merge PR #435 / cierre técnico NEXUS-DEBT-007 |
+| Última entrega | NEXUS-DEBT-007 (#434): hardening del oracle Reuma 497 publicado por PR #435; F5.3 sigue pendiente |
+| Verificación post-merge | PR #435 candidate `6f6edcc18a43fc301337bd6ad688a3ea7479a136`: GitHub Actions `Nexus deterministic gates` run `36394462077` `success`; merge `e17512384b96fc361668202cdbec5e09022614ff` conserva exactamente el tree del candidate `8ee01dab...`. |
 | Home sintética | F3.2 publicada; F3.3 browser-qualified; F3.4 release sintético reproducible y browser-qualified; D012/D013 hardening publicado |
 | Madurez | Evaluación sintética; **no piloto / no producción** |
-| Deuda Nexus abierta | D004; subhallazgos restantes D005; D007. No justifican cleanup train amplio por sí solos. |
-| Siguiente frontera del plan | Antes de abrir nueva ejecución, clasificar el informe Core pendiente (`CORE / MODULE / SITE / MODULE×SITE`) si intersecta navegación/contratos; después continuar F4.3+ / F5.2+ según shaping. D007 queda en F5.3/export; F6 antes de piloto y F7 por hospital×módulo cuando exista necesidad real. |
+| Deuda Nexus abierta | D004; subhallazgos restantes D005. D007 RESOLVED/PUBLISHED por #434 / PR #435. |
+| Siguiente frontera del plan | Antes de abrir nueva ejecución, clasificar el informe Core pendiente (`CORE / MODULE / SITE / MODULE×SITE`) si intersecta navegación/contratos; después continuar F4.3+ / F5.2+ según shaping. D007 ya está cerrada; F5.3 permanece pendiente como frontera de writer/export, F6 antes de piloto y F7 por hospital×módulo cuando exista necesidad real. |
 | Último train clínico publicado | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426): PR #430 `MERGED`, candidate `988c2089...` → merge `10422f4e...`; F4.1/F4.2/F5.1 `wired` + `visible` + `demostrado` en la rama canónica. Evaluación sintética; no piloto/producción. |
 
 
