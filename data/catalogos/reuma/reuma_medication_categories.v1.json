@@ -1,0 +1,101 @@
+{
+  "id": "reuma_medication_categories",
+  "version": "1.0.0",
+  "description": "Explicit, versioned category membership for the ten Reuma medication fields. The three functional categories (Sistemicos / FAMEs / Biologicos) stay real UI and data semantics: each medication control may only offer options explicitly valid for its declared category. Membership is NEVER inferred at runtime from medicine name, dose, route, presentation, treatment context or history; it comes exclusively from this file.",
+  "membership_rule": "A published-catalogue entry (data/catalogos/farmacia/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx) belongs to a category when its normalized commercial/presentation name starts with one of that category's declared catalogue_tokens (normalized exact-prefix key match). catalogue_tokens are declared identity keys joined deterministically at load time; they are not a heuristic. explicit_entries are identity-only medicine names contributed directly by this file for declared members that the published hospital catalogue does not contain (no therapeutic data is attached, ever).",
+  "provenance": "The declared members are the historical explicit Reuma classification previously maintained in the 'Fármacos' sheet (columns Sistemicos / FAMEs / Biologicos) of Hub_Clinico_Maestro_V2_DEMO.xlsx, extracted verbatim and centralized here so the three forms stop maintaining manual per-form lists. Extending or correcting membership happens only by a new version of this file; the future CIMA/GitHub Actions catalogue automation stays decoupled from it.",
+  "coverage_note": "Verified against the published catalogue 2026-09-28: Sistemicos has zero name matches (hospital-oriented catalogue lacks prednisolone/deflazacort presentations), FAMEs matches metotrexato/leflunomida presentations only, Biologicos matches 109 presentations across 44 of 51 declared brands. The uncovered declared members are preserved through explicit_entries so no category is silently emptied and no unrestricted fallback is needed.",
+  "categories": {
+    "Sistemicos": {
+      "label": "Sistémicos",
+      "catalogue_tokens": [
+        "Prednisona",
+        "Metilprednisolona",
+        "Deflazacort"
+      ],
+      "explicit_entries": [
+        "Prednisona",
+        "Metilprednisolona",
+        "Deflazacort"
+      ]
+    },
+    "FAMEs": {
+      "label": "FAMEs",
+      "catalogue_tokens": [
+        "Metotrexato",
+        "Leflunomida",
+        "Sulfasalazina",
+        "Ciclosporina A"
+      ],
+      "explicit_entries": [
+        "Sulfasalazina",
+        "Ciclosporina A"
+      ]
+    },
+    "Biologicos": {
+      "label": "Biológicos",
+      "catalogue_tokens": [
+        "Amgevita",
+        "Benepali",
+        "Benlysta",
+        "Cimzia",
+        "Cosentyx",
+        "Enbrel",
+        "Entyvio",
+        "Erelzi",
+        "Fasenra",
+        "Flixabi",
+        "Hulio",
+        "Humira",
+        "Hymiroz",
+        "Idacio",
+        "Ilaris",
+        "Ilumetri",
+        "Imraldi",
+        "Inflectra",
+        "Jyseleca",
+        "Kevzara",
+        "Kineret",
+        "Kynthenum",
+        "Mabthera",
+        "Nepexto",
+        "Nucala",
+        "Ocrevus",
+        "Olumiant",
+        "Orencia",
+        "Otezla",
+        "Prolia",
+        "Pyzchiva",
+        "Remicade",
+        "Remsina",
+        "Rinvoq",
+        "Rixathon",
+        "Roximyo",
+        "Roactemra",
+        "Ruxience",
+        "Saphnelo",
+        "Simponi",
+        "Skyrizi",
+        "Stelara",
+        "Taltz",
+        "Tremfya",
+        "Truxima",
+        "Tyenne",
+        "Uzpruvo",
+        "Wezenla",
+        "Xeljanz",
+        "Yuflyma",
+        "Zessly"
+      ],
+      "explicit_entries": [
+        "Hymiroz",
+        "Inflectra",
+        "Kynthenum",
+        "Otezla",
+        "Prolia",
+        "Remsina",
+        "Roximyo"
+      ]
+    }
+  }
+}

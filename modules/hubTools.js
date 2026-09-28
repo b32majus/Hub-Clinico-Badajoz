@@ -31,8 +31,14 @@ window.HubTools = {
     // Control de formularios
     form: {},
 
+    // Catálogo farmacológico publicado (búsqueda de solo lectura, sin inferencia)
+    catalog: {},
+
     // Módulo prebiológico (v2)
     prebiologic: {},
+
+    // Interfaz de usuario compartida (custom selects, autocompletado)
+    ui: {},
 
     // Solicitudes a Farmacia Hospitalaria (v2)
     pharmacy: {},

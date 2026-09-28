@@ -609,50 +609,17 @@ const ESSDAI_DOMAIN_IDS = [
     'essdaiHematological', 'essdaiBiological'
 ];
 
-const PREBIOLOGIC_V2_FIELD_IDS = [
+// Captura prebiológica del contrato vigente (#445): dos bloques independientes
+// con estados explícitos (NO_SOLICITADA | SOLICITADA_PENDIENTE | OK) más los
+// campos transversales que permanecen en captura (fecha de diagnóstico y
+// observaciones globales). El detalle legacy (hemograma, bioquímica,
+// serologías, IGRA/Rx, vacunación) DEJA DE CAPTURARSE: ya no se muestra ni
+// se recoge en el flujo principal; el histórico persistido se conserva.
+// OK nunca se infiere: sólo llega por selección profesional explícita.
+const PREBIOLOGIC_FIELD_IDS = [
     'fechaDiagnostico',
-    'estadoPrebiologicoFinal',
-    'fechaValidacionPrebiologico',
-    'profesionalValidador',
-    'decisionClinicaManual',
-    'hemogramaSolicitado',
-    'hemogramaFechaSolicitud',
-    'hemogramaRecibido',
-    'hemogramaFechaRecepcion',
-    'hemogramaCorrecto',
-    'hemogramaObservaciones',
-    'bioquimicaSolicitada',
-    'bioquimicaFechaSolicitud',
-    'bioquimicaRecibida',
-    'bioquimicaFechaRecepcion',
-    'bioquimicaCorrecta',
-    'bioquimicaObservaciones',
-    'serologiasSolicitadas',
-    'serologiasFechaSolicitud',
-    'serologiasRecibidas',
-    'serologiasFechaRecepcion',
-    'serologiasCorrectas',
-    'serologiasObservaciones',
-    'igraMantouxSolicitado',
-    'igraMantouxTipo',
-    'igraMantouxFechaSolicitud',
-    'igraMantouxRecibido',
-    'igraMantouxFechaRecepcion',
-    'igraMantouxResultado',
-    'igraMantouxObservaciones',
-    'rxToraxSolicitada',
-    'rxToraxFechaSolicitud',
-    'rxToraxRecibida',
-    'rxToraxFechaRecepcion',
-    'rxToraxCorrecta',
-    'rxToraxObservaciones',
-    'vacunacionRevisada',
-    'vacunacionOK',
-    'medicinaPreventivaRequiereDerivacion',
-    'medicinaPreventivaDerivada',
-    'medicinaPreventivaFechaDerivacion',
-    'vacunasPendientes',
-    'vacunacionObservaciones',
+    'estadoPrebiologicoAnalitica',
+    'estadoPrebiologicoMedicinaPreventiva',
     'observacionesPrebiologico'
 ];
 
@@ -676,8 +643,8 @@ function collectSjogrenTraceabilityFields() {
     return collectFieldsByIds(ESSDAI_DOMAIN_IDS, id => getValue(id));
 }
 
-function collectPrebiologicV2Fields() {
-    return collectFieldsByIds(PREBIOLOGIC_V2_FIELD_IDS, id => getValue(id));
+function collectPrebiologicFields() {
+    return collectFieldsByIds(PREBIOLOGIC_FIELD_IDS, id => getSelectValue(id));
 }
 
 function collectTreatmentEntries(primarySelectId, primaryDoseId, extrasContainerId) {
@@ -774,6 +741,10 @@ function inicializarEventosTratamientos() {
         const doseInput = container.querySelector('.treatment-dose-input, .treatment-dose-input-improved, .dosis-input');
         if (!doseInput) return;
 
+        if (select.__treatmentChangeHandler) {
+            select.removeEventListener('change', select.__treatmentChangeHandler);
+        }
+
         const handler = () => {
             const value = (select.value || '').toLowerCase();
             const inactive = !select.value || value === 'no';
@@ -790,7 +761,7 @@ function inicializarEventosTratamientos() {
             }
         };
 
-        select.removeEventListener('change', handler);
+        select.__treatmentChangeHandler = handler;
         select.addEventListener('change', handler);
         handler();
     });
@@ -834,7 +805,10 @@ function inicializarEventosTratamientos() {
 
             const container = document.getElementById(containerId);
             if (container) {
-                const newLine = HubTools.form.createTreatmentLine(type, options);
+                // The added line must carry the same explicit category as its
+                // primary control; the category is never guessed from the type.
+                const category = originalSelect ? (originalSelect.dataset.drugCategory || '') : '';
+                const newLine = HubTools.form.createTreatmentLine(type, options, false, category);
                 container.appendChild(newLine);
                 inicializarEventosTratamientos();
             }
@@ -843,13 +817,16 @@ function inicializarEventosTratamientos() {
 }
 
 
-function createTreatmentLine(type, options, improved = false) {
+function createTreatmentLine(type, options, improved = false, category = '') {
     const line = document.createElement('div');
     line.classList.add(improved ? 'treatment-line-improved' : 'treatment-line', 'treatment-extra');
 
     const select = document.createElement('select');
     select.classList.add(improved ? 'treatment-select-improved' : 'treatment-select');
     if (improved) select.classList.add('tratamiento-dropdown');
+    select.setAttribute('data-drug-autocomplete', 'true');
+    select.setAttribute('data-no-custom-select', 'true');
+    if (category) select.setAttribute('data-drug-category', String(category));
     options.forEach(opt => {
         const option = document.createElement('option');
         option.value = opt;
@@ -871,11 +848,6 @@ function createTreatmentLine(type, options, improved = false) {
     removeBtn.innerHTML = '<i class="fas fa-minus-circle"></i>';
     removeBtn.title = 'Eliminar';
 
-    select.addEventListener('change', function () {
-        input.disabled = (this.value === 'No');
-        if (this.value === 'No') input.value = '';
-    });
-
     removeBtn.addEventListener('click', function () {
         line.remove();
     });
@@ -887,6 +859,11 @@ function createTreatmentLine(type, options, improved = false) {
     controls.appendChild(removeBtn);
 
     line.appendChild(controls);
+
+    if (typeof HubTools !== 'undefined' && HubTools.ui && typeof HubTools.ui.initDrugAutocomplete === 'function') {
+        HubTools.ui.initDrugAutocomplete(line);
+    }
+
     return line;
 }
 
@@ -1209,6 +1186,7 @@ function recopilarDatosFormulario() {
     const dolorNocturno = document.getElementById('dolorNocturno')?.checked ? 'SI' : 'NO';
 
     const pcr = document.getElementById('pcrValue')?.value || '';
+    const pcrUnit = document.getElementById('pcrUnit')?.value || '';
     const vsg = document.getElementById('vsgValue')?.value || '';
     const otrosHallazgosAnalitica = document.getElementById('otrosHallazgosAnalitica')?.value || '';
     const hallazgosRadiografia = document.getElementById('hallazgosRadiografia')?.value || '';
@@ -1512,7 +1490,7 @@ function recopilarDatosFormulario() {
     const tratInmunomoduladorDosis = document.getElementById('tratInmunomoduladorDosis')?.value || '';
     const lesTraceabilityFields = collectLesTraceabilityFields();
     const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
-    const prebiologicV2Fields = collectPrebiologicV2Fields();
+    const prebiologicFields = collectPrebiologicFields();
 
     const acrResultadoTexto = document.getElementById('resultadoACREULAR')?.textContent || '';
 
@@ -1529,7 +1507,7 @@ function recopilarDatosFormulario() {
         sistemicoSelect, sistemicoDose, fameSelect, fameDose, biologicoSelect, biologicoDose,
         tratamientoActual, fechaInicioTratamiento, fechaProximaRevision,
         evaGlobal, evaDolor, evaFatiga, rigidezMatutinaMin, dolorNocturno,
-        pcr, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
+        pcr, pcrUnit, vsg, otrosHallazgosAnalitica, hallazgosRadiografia, hallazgosRMN,
         basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
         asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
         das28NAD, das28NAT, das28CrpResult, das28EsrResult, cdaiResult, sdaiResult, evaMedico,
@@ -1578,7 +1556,7 @@ function recopilarDatosFormulario() {
         tratInmunomodulador, tratInmunomoduladorDosis,
         ...lesTraceabilityFields,
         ...sjogrenTraceabilityFields,
-        ...prebiologicV2Fields,
+        ...prebiologicFields,
         comentariosAdicionales
     };
 
@@ -1635,6 +1613,20 @@ function prefillSeguimientoForm(visitData) {
             nombreInput.value = visitData.nombrePaciente;
             nombreInput.setAttribute('readonly', 'readonly');
         }
+    }
+
+    // 1b. ESTADO PREBIOLÓGICO POR BLOQUES (#445)
+    // Restauración SOLO de estados explícitos válidos del contrato; sin
+    // inferencia desde detalle legacy y sin sobrescribir valores existentes.
+    if (typeof HubTools !== 'undefined' && HubTools.prebiologic && typeof HubTools.prebiologic.normalizeBlockState === 'function') {
+        ['estadoPrebiologicoAnalitica', 'estadoPrebiologicoMedicinaPreventiva'].forEach(fieldId => {
+            const normalized = HubTools.prebiologic.normalizeBlockState(visitData[fieldId]);
+            if (!normalized) return;
+            const select = document.getElementById(fieldId);
+            if (select && !select.value) {
+                select.value = normalized;
+            }
+        });
     }
 
     // 2. DIAGNÓSTICO Y ADAPTACIÓN DEL FORMULARIO
@@ -1829,6 +1821,7 @@ function recopilarDatosFormularioSeguimiento() {
     const evaGlobal = getValue('evaGlobal');
     const evaDolor = getValue('evaDolor');
     const pcr = getValue('pcrValue');
+    const pcrUnit = getValue('pcrUnit');
     const vsg = getValue('vsgValue');
 
     const basdaiP1 = getValue('basdaiP1');
@@ -2004,7 +1997,7 @@ function recopilarDatosFormularioSeguimiento() {
     const tratInmunomoduladorDosis = getValue('tratInmunomoduladorDosis');
     const lesTraceabilityFields = collectLesTraceabilityFields();
     const sjogrenTraceabilityFields = collectSjogrenTraceabilityFields();
-    const prebiologicV2Fields = collectPrebiologicV2Fields();
+    const prebiologicFields = collectPrebiologicFields();
 
     const tratamientoData = {
         continuar: {
@@ -2027,7 +2020,7 @@ function recopilarDatosFormularioSeguimiento() {
         hlaB27, fr, apcc, ana,
         peso, talla, imc, ta,
         nad, nat, dactilitis,
-        evaGlobal, evaDolor, pcr, vsg,
+        evaGlobal, evaDolor, pcr, pcrUnit, vsg,
         basdaiP1, basdaiP2, basdaiP3, basdaiP4, basdaiP5, basdaiP6, basdaiResult,
         asdasDolorEspalda, asdasDuracionRigidez, asdasEvaGlobal, asdasCrpResult, asdasEsrResult,
         pasiScore, bsaPercentage, psoriasisDescripcion,
@@ -2069,7 +2062,7 @@ function recopilarDatosFormularioSeguimiento() {
         tratInmunomodulador, tratInmunomoduladorDosis,
         ...lesTraceabilityFields,
         ...sjogrenTraceabilityFields,
-        ...prebiologicV2Fields,
+        ...prebiologicFields,
         fechaProximaRevision, comentariosAdicionales
     };
 }
@@ -2137,6 +2130,37 @@ function initScoreWiring() {
         });
     }
 
+    function actualizarNotaConversionPcr(id, conversion) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (!conversion || conversion.ok === undefined) {
+            el.textContent = '';
+            el.hidden = true;
+            return;
+        }
+        if (conversion.ok === false) {
+            el.textContent = 'PCR sin unidad válida: ' + conversion.calculatorId + ' no se calcula (fallo seguro). Valor fuente preservado.';
+        } else if (conversion.converted) {
+            el.textContent = 'PCR convertida de ' + conversion.sourceUnit + ' a ' + conversion.expectedUnit + ' para ' + conversion.calculatorId + '. Valor fuente preservado.';
+        } else {
+            el.textContent = '';
+        }
+        el.hidden = !el.textContent;
+    }
+
+    function actualizarEspejoUnidadPcr() {
+        var unidad = getFormValue('pcrUnit');
+        var texto = unidad ? '(' + unidad + ')' : '(unidad no informada)';
+        ['asdasPcrUnitMirror', 'das28PcrUnitMirror', 'dapsaPcrUnitMirror'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = texto;
+        });
+    }
+
+    function getPcrSourceUnit() {
+        return getFormValue('pcrUnit');
+    }
+
     function recalcularDAPSA() {
         if (typeof HubTools.scores.calcularDAPSA !== 'function') return;
         syncDapsaSourceFields();
@@ -2146,7 +2170,8 @@ function initScoreWiring() {
             dapsaNAT66: getFormValue('dapsaNAT66'),
             dapsaEvaDolorPaciente: getFormValue('dapsaEvaDolorPaciente'),
             dapsaEvaGlobalPaciente: getFormValue('dapsaEvaGlobalPaciente'),
-            dapsaPCR: getFormValue('dapsaPCR')
+            dapsaPCR: getFormValue('dapsaPCR'),
+            dapsaPCRUnit: getPcrSourceUnit()
         };
         var result = HubTools.scores.calcularDAPSA(datos);
         var dapsaField = document.getElementById('dapsaResult');
@@ -2161,6 +2186,7 @@ function initScoreWiring() {
             dapsaCatEl.style.color = '#6c757d';
             dapsaCatEl.style.fontWeight = '700';
         }
+        actualizarNotaConversionPcr('dapsaPcrConversionNote', result.pcrConversion);
         debugLog('  📊 DAPSA recalculado:', result.total || 'Incompleto');
     }
 
@@ -2178,6 +2204,18 @@ function initScoreWiring() {
             recalcularMDA();
         });
         debugLog('  ✓ PCR → asdasPCR sync');
+    }
+
+    var pcrUnitSelect = document.getElementById('pcrUnit');
+    if (pcrUnitSelect) {
+        pcrUnitSelect.addEventListener('change', function () {
+            actualizarEspejoUnidadPcr();
+            recalcularASDAS();
+            recalcularDAPSA();
+            recalcularDAS28();
+        });
+        actualizarEspejoUnidadPcr();
+        debugLog('  ✓ Unidad PCR wiring');
     }
     if (vsgInput && asdasVSGField) {
         vsgInput.addEventListener('input', function () {
@@ -2230,6 +2268,7 @@ function initScoreWiring() {
             asdasEvaGlobal: getFormValue('asdasEvaGlobal'),
             asdasNAD: getFormValue('asdasNAD'),
             asdasPCR: getFormValue('asdasPCR'),
+            asdasPCRUnit: getPcrSourceUnit(),
             asdasVSG: getFormValue('asdasVSG')
         };
         var result = HubTools.scores.calcularASDAS(datos);
@@ -2245,6 +2284,7 @@ function initScoreWiring() {
             esrField.value = result.asdasESR;
             applyScoreCategory(result.asdasESR, 'asdas', esrField, document.getElementById('asdasEsrCategoria'));
         }
+        actualizarNotaConversionPcr('asdasPcrConversionNote', result.pcrConversion);
         debugLog('  📊 ASDAS recalculado: CRP=' + result.asdasCRP + ', ESR=' + result.asdasESR);
         recalcularDAPSA();
     }
@@ -2484,6 +2524,7 @@ function initScoreWiring() {
             nad28: getFormValue('das28NAD'),
             nat28: getFormValue('das28NAT'),
             pcr: getFormValue('das28PCR'),
+            pcrUnit: getPcrSourceUnit(),
             vsg: getFormValue('das28VSG'),
             evaGlobal: getFormValue('das28EVA')
         };
@@ -2502,6 +2543,7 @@ function initScoreWiring() {
             esrField.value = result.das28ESR;
             applyScoreCategory(result.das28ESR, 'das28', esrField, esrCatEl);
         }
+        actualizarNotaConversionPcr('das28PcrConversionNote', result.pcrConversion);
         // También recalcular CDAI y SDAI ya que comparten NAD28/NAT28
         recalcularCDAI();
         recalcularSDAI();
@@ -2549,7 +2591,8 @@ function initScoreWiring() {
             nat28: getFormValue('das28NAT'),
             evaPaciente: getFormValue('evaGlobal'),
             evaMedico: getFormValue('evaMedico'),
-            pcr: getFormValue('das28PCR')
+            pcr: getFormValue('das28PCR'),
+            pcrUnit: getPcrSourceUnit()
         };
         var result = HubTools.scores.calcularSDAI(datos);
         var sdaiField = document.getElementById('sdaiResult');
@@ -2559,6 +2602,7 @@ function initScoreWiring() {
             sdaiField.value = result.total ? result.total + ' - ' + result.categoria : result.categoria;
             applyScoreCategory(result.total, 'sdai', sdaiField, sdaiCatEl);
         }
+        actualizarNotaConversionPcr('sdaiPcrConversionNote', result.pcrConversion);
     }
     debugLog('  ✓ SDAI wiring');
 

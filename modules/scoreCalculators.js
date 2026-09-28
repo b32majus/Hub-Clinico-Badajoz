@@ -1,6 +1,66 @@
 ﻿// Modulo Score Calculators - Para calculos de puntuaciones medicas
 // Compatible con el patron clasico HubTools.
 
+// ============================================================
+// Contrato explícito de unidades de PCR (SIL-REV-006 / ticket #443)
+// - 1 mg/dL == 10 mg/L (conversión determinista en ambos sentidos).
+// - Cada calculadora declara su unidad esperada (ASDAS-CRP y DAS28-CRP: mg/L;
+//   DAPSA y SDAI: mg/dL).
+// - La unidad de origen se recibe explícita junto al valor; nunca se infiere
+//   por magnitud. Unidad de origen ausente/desconocida => fallo seguro: sin
+//   score silencioso para el componente dependiente de PCR.
+// - El valor derivado (convertido) no sobrescribe nunca el dato de origen.
+// ============================================================
+const PCR_UNIDAD_MG_L = 'mg/L';
+const PCR_UNIDAD_MG_DL = 'mg/dL';
+
+function normalizarUnidadPcr(unit) {
+    if (unit === undefined || unit === null) return null;
+    const raw = String(unit).trim().toLowerCase();
+    if (raw === 'mg/l') return PCR_UNIDAD_MG_L;
+    if (raw === 'mg/dl') return PCR_UNIDAD_MG_DL;
+    return null;
+}
+
+/**
+ * Resuelve la PCR de origen hacia la unidad esperada por la calculadora.
+ * Entrada conceptual: rawValue + rawUnit + unidad esperada + calculatorId.
+ * Devuelve { ok:true, value, converted, sourceUnit, expectedUnit, calculatorId }
+ * o { ok:false, reason, sourceUnit, expectedUnit, calculatorId }. No muta datos.
+ */
+function resolverPcrParaCalculadora(rawValue, rawUnit, expectedUnit, calculatorId) {
+    const id = calculatorId || null;
+    const targetUnit = normalizarUnidadPcr(expectedUnit);
+    if (!targetUnit) {
+        return { ok: false, reason: 'PCR_UNIDAD_ESPERADA_INVALIDA', sourceUnit: rawUnit ?? null, expectedUnit: expectedUnit ?? null, calculatorId: id };
+    }
+    const sourceUnit = normalizarUnidadPcr(rawUnit);
+    if (!sourceUnit) {
+        return { ok: false, reason: 'PCR_UNIDAD_ORIGEN_DESCONOCIDA', sourceUnit: rawUnit ?? null, expectedUnit: targetUnit, calculatorId: id };
+    }
+    const parsed = parseNumberInRange(rawValue, 0, 500);
+    if (!Number.isFinite(parsed)) {
+        return { ok: false, reason: 'PCR_VALOR_INVALIDO', sourceUnit, expectedUnit: targetUnit, calculatorId: id };
+    }
+    if (sourceUnit === targetUnit) {
+        return { ok: true, value: parsed, converted: false, sourceUnit, expectedUnit: targetUnit, calculatorId: id };
+    }
+    const value = sourceUnit === PCR_UNIDAD_MG_DL ? parsed * 10 : parsed / 10;
+    return { ok: true, value, converted: true, sourceUnit, expectedUnit: targetUnit, calculatorId: id };
+}
+
+function resumenConversionPcr(resolucion) {
+    if (!resolucion) return null;
+    return {
+        calculatorId: resolucion.calculatorId,
+        ok: resolucion.ok,
+        converted: resolucion.ok ? resolucion.converted : false,
+        sourceUnit: resolucion.sourceUnit,
+        expectedUnit: resolucion.expectedUnit,
+        reason: resolucion.ok ? null : resolucion.reason
+    };
+}
+
 function parseNumberInRange(value, min, max, options) {
     const config = options || {};
     const fallback = Object.prototype.hasOwnProperty.call(config, 'fallback') ? config.fallback : null;
@@ -83,13 +143,16 @@ function calcularASDAS(datos) {
 
     let asdasCRP = '';
     let asdasESR = '';
+    let pcrConversion = null;
 
     if (datos?.asdasPCR !== undefined && datos?.asdasPCR !== null && datos?.asdasPCR !== '') {
-        // ASDAS-CRP uses CRP/PCR in mg/L. Do not convert to mg/dL.
-        const pcr = parseNumberInRange(datos.asdasPCR, 0, 500);
-        if (Number.isFinite(pcr)) {
+        // ASDAS-CRP usa PCR en mg/L (unidad esperada declarada por la calculadora).
+        // Unidad de origen ausente/desconocida => fallo seguro, sin score silencioso.
+        const resolucion = resolverPcrParaCalculadora(datos.asdasPCR, datos.asdasPCRUnit, PCR_UNIDAD_MG_L, 'ASDAS-CRP');
+        pcrConversion = resumenConversionPcr(resolucion);
+        if (resolucion.ok) {
             asdasCRP = formatFixed(
-                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * nad) + (0.579 * Math.log(pcr + 1)),
+                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * nad) + (0.579 * Math.log(resolucion.value + 1)),
                 2
             );
         }
@@ -105,7 +168,7 @@ function calcularASDAS(datos) {
         }
     }
 
-    return { asdasCRP, asdasESR };
+    return { asdasCRP, asdasESR, pcrConversion };
 }
 
 function calcularHAQ(datos) {
@@ -251,13 +314,19 @@ function calcularDAPSA(datos) {
     const nat66 = parseNumberInRange(datos.dapsaNAT66, 0, 66, { integer: true });
     const evaDolor = parseNumberInRange(datos.dapsaEvaDolorPaciente, 0, 10);
     const evaGlobal = parseNumberInRange(datos.dapsaEvaGlobalPaciente, 0, 10);
-    const pcrMgL = parseNumberInRange(datos.dapsaPCR, 0, 500);
-    if (!allFinite([nad68, nat66, evaDolor, evaGlobal, pcrMgL])) {
-        return { total: '', categoria: 'Incompleto' };
+    const pcrBruto = parseNumberInRange(datos.dapsaPCR, 0, 500);
+    if (!allFinite([nad68, nat66, evaDolor, evaGlobal, pcrBruto])) {
+        return { total: '', categoria: 'Incompleto', pcrConversion: null };
     }
 
-    // DAPSA uses CRP/PCR in mg/dL. Hub captures, stores and displays PCR as mg/L, therefore divide by 10.
-    const pcrMgDl = pcrMgL / 10;
+    // DAPSA usa PCR en mg/dL (unidad esperada declarada). La conversión desde la
+    // unidad de origen es explícita y trazable; el dato fuente no se sobrescribe.
+    const resolucion = resolverPcrParaCalculadora(datos.dapsaPCR, datos.dapsaPCRUnit, PCR_UNIDAD_MG_DL, 'DAPSA');
+    const pcrConversion = resumenConversionPcr(resolucion);
+    if (!resolucion.ok) {
+        return { total: '', categoria: 'Incompleto', pcrConversion };
+    }
+    const pcrMgDl = resolucion.value;
     const dapsa = nad68 + nat66 + evaDolor + evaGlobal + pcrMgDl;
 
     let categoria = 'Remision (<=4)';
@@ -272,8 +341,10 @@ function calcularDAPSA(datos) {
         nat66,
         evaDolor: formatFixed(evaDolor, 1),
         evaGlobal: formatFixed(evaGlobal, 1),
-        pcr: formatFixed(pcrMgL, 1),
-        pcrMgDl: formatFixed(pcrMgDl, 2)
+        pcr: formatFixed(pcrBruto, 1),
+        pcrSourceUnit: resolucion.sourceUnit,
+        pcrMgDl: formatFixed(pcrMgDl, 2),
+        pcrConversion
     };
 }
 
@@ -293,13 +364,17 @@ function calcularDAS28(datos) {
 
     let das28CRP = '';
     let das28ESR = '';
+    let pcrConversion = null;
 
     if (datos?.pcr !== undefined && datos?.pcr !== null && datos?.pcr !== '') {
-        // DAS28-CRP uses CRP/PCR in mg/L. Do not convert to mg/dL.
-        const pcr = parseNumberInRange(datos.pcr, 0, 500);
-        if (Number.isFinite(pcr)) {
+        // DAS28-CRP usa PCR en mg/L (unidad esperada declarada por la calculadora).
+        // Unidad de origen ausente/desconocida => fallo seguro solo del componente
+        // PCR; DAS28-ESR (VSG) no se ve afectado.
+        const resolucion = resolverPcrParaCalculadora(datos.pcr, datos.pcrUnit, PCR_UNIDAD_MG_L, 'DAS28-CRP');
+        pcrConversion = resumenConversionPcr(resolucion);
+        if (resolucion.ok) {
             das28CRP = formatFixed(
-                (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.36 * Math.log(pcr + 1)) + (0.014 * eva) + 0.96,
+                (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.36 * Math.log(resolucion.value + 1)) + (0.014 * eva) + 0.96,
                 2
             );
         }
@@ -315,7 +390,7 @@ function calcularDAS28(datos) {
         }
     }
 
-    return { das28CRP, das28ESR };
+    return { das28CRP, das28ESR, pcrConversion };
 }
 
 function calcularCDAI(datos) {
@@ -351,12 +426,18 @@ function calcularSDAI(datos) {
     const nat28 = parseNumberInRange(datos.nat28, 0, 28, { integer: true });
     const evaPaciente = parseNumberInRange(datos.evaPaciente, 0, 10);
     const evaMedico = parseNumberInRange(datos.evaMedico, 0, 10);
-    const pcrMgL = parseNumberInRange(datos.pcr, 0, 500);
-    if (!allFinite([nad28, nat28, evaPaciente, evaMedico, pcrMgL])) {
-        return { total: '', categoria: 'Incompleto' };
+    const pcrBruto = parseNumberInRange(datos.pcr, 0, 500);
+    if (!allFinite([nad28, nat28, evaPaciente, evaMedico, pcrBruto])) {
+        return { total: '', categoria: 'Incompleto', pcrConversion: null };
     }
-    // SDAI uses CRP/PCR in mg/dL. Hub captures, stores and displays PCR as mg/L, therefore divide by 10.
-    const pcrMgDl = pcrMgL / 10;
+    // SDAI usa PCR en mg/dL (unidad esperada declarada). La conversión desde la
+    // unidad de origen es explícita y trazable; el dato fuente no se sobrescribe.
+    const resolucion = resolverPcrParaCalculadora(datos.pcr, datos.pcrUnit, PCR_UNIDAD_MG_DL, 'SDAI');
+    const pcrConversion = resumenConversionPcr(resolucion);
+    if (!resolucion.ok) {
+        return { total: '', categoria: 'Incompleto', pcrConversion };
+    }
+    const pcrMgDl = resolucion.value;
     const sdai = nad28 + nat28 + evaPaciente + evaMedico + pcrMgDl;
 
     let categoria = 'Remision (<=3.3)';
@@ -364,7 +445,14 @@ function calcularSDAI(datos) {
     else if (sdai > 11) categoria = 'Actividad Moderada (11-26)';
     else if (sdai > 3.3) categoria = 'Actividad Baja (3.3-11)';
 
-    return { total: formatFixed(sdai, 1), categoria };
+    return {
+        total: formatFixed(sdai, 1),
+        categoria,
+        pcr: formatFixed(pcrBruto, 1),
+        pcrSourceUnit: resolucion.sourceUnit,
+        pcrMgDl: formatFixed(pcrMgDl, 2),
+        pcrConversion
+    };
 }
 
 function categorizeScore(valor, scoreType) {
@@ -626,4 +714,7 @@ if (typeof HubTools !== 'undefined') {
     HubTools.scores.calcularESSPRI = calcularESSPRI;
     HubTools.scores.calcularESSDAI = calcularESSDAI;
     HubTools.scores.categorizeScore = categorizeScore;
+    HubTools.scores.resolverPcrParaCalculadora = resolverPcrParaCalculadora;
+    HubTools.scores.normalizarUnidadPcr = normalizarUnidadPcr;
+    HubTools.scores.PCR_UNIDADES_SOPORTADAS = [PCR_UNIDAD_MG_L, PCR_UNIDAD_MG_DL];
 }

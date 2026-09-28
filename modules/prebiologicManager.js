@@ -1,20 +1,31 @@
 /**
  * prebiologicManager.js - Módulo prebiológico transversal
  *
- * Gestión de estados prebiológicos (APTO, EN_CURSO, NO_APTO, NO_EVALUADO)
- * con badge HTML para vistas de paciente.
+ * CONTRATO VIGENTE (WO-NEXUS-REUMA-T3, #445): el circuito prebiológico
+ * principal expone DOS bloques independientes (Analítica y Medicina
+ * Preventiva) y cada bloque admite exactamente tres estados:
+ *   NO_SOLICITADA | SOLICITADA_PENDIENTE | OK
  *
- * Fuente primaria de datos: bloque prebiológico/vacunación embebido
- * en cada hoja de patología/visita del Excel maestro (persistencia real).
+ * Reglas del contrato:
+ *   - OK sólo por selección profesional explícita o importación autorizada.
+ *   - La presencia de resultados, fechas, vacunación, derivación o cualquier
+ *     otro detalle NO convierte automáticamente un bloque en OK ni fabrica
+ *     ningún otro estado.
+ *   - No se sintetiza un estado global APTO aunque ambos bloques estén OK.
+ *   - Estados ausentes/desconocidos permanecen vacíos (fail-safe).
  *
- * sessionStorage: fallback temporal y compatibilidad para sesiones activas.
- * Se pierde al limpiar navegador, pero el dato persiste en la hoja Excel.
+ * LEGADO (preservado, no autoridad para los nuevos estados):
+ *   - El histórico ya persistido (Estado_Prebiologico_Final,
+ *     Fecha_Validacion_Prebiologico y detalle de pruebas) NO se borra ni se
+ *     migra destructivamente; sigue siendo legible mediante
+ *     getPrebiologousStatusFromVisit/resolvePrebiologicStatus cuando exista
+ *     una decisión explícita registrada. No hay mapeo heurístico de
+ *     combinaciones legacy a OK.
+ *   - sessionStorage: fallback temporal y compatibilidad para sesiones
+ *     activas (HubClinico_Prebiologic_<CIP>).
  *
  * Namespace: HubTools.prebiologic
  * Storage key (fallback): HubClinico_Prebiologic_<CIP>
- *
- * Estados permitidos: APTO | EN_CURSO | NO_APTO | NO_EVALUADO
- * Fecha de validación: manual, decidida por el clínico.
  */
 
 (function () {
@@ -30,31 +41,38 @@
         NO_EVALUADO: 'NO_EVALUADO'
     };
 
-    var BADGE_CLASSES = {};
-    BADGE_CLASSES[VALID_STATUSES.APTO] = 'badge-apto';
-    BADGE_CLASSES[VALID_STATUSES.EN_CURSO] = 'badge-en-curso';
-    BADGE_CLASSES[VALID_STATUSES.NO_APTO] = 'badge-no-apto';
-    BADGE_CLASSES[VALID_STATUSES.NO_EVALUADO] = 'badge-no-evaluado';
+    // Estados del contrato vigente por bloque (#445).
+    var BLOCK_STATUSES = {
+        NO_SOLICITADA: 'NO_SOLICITADA',
+        SOLICITADA_PENDIENTE: 'SOLICITADA_PENDIENTE',
+        OK: 'OK'
+    };
+
+    // Clases CSS reutilizadas (solo presentación; no implican validación).
+    var BLOCK_BADGE_CLASSES = {};
+    BLOCK_BADGE_CLASSES[BLOCK_STATUSES.NO_SOLICITADA] = 'badge-no-evaluado';
+    BLOCK_BADGE_CLASSES[BLOCK_STATUSES.SOLICITADA_PENDIENTE] = 'badge-en-curso';
+    BLOCK_BADGE_CLASSES[BLOCK_STATUSES.OK] = 'badge-apto';
+    var BLOCK_BADGE_CLASS_UNKNOWN = 'badge-no-evaluado';
+
+    // Bloques del contrato vigente: lectura EXCLUSIVAMENTE explícita.
+    var BLOCKS = [
+        {
+            key: 'analitica',
+            label: 'Analítica',
+            fieldAliases: ['Estado_Prebiologico_Analitica', 'estadoPrebiologicoAnalitica']
+        },
+        {
+            key: 'medicinaPreventiva',
+            label: 'Medicina Preventiva',
+            fieldAliases: ['Estado_Prebiologico_Medicina_Preventiva', 'estadoPrebiologicoMedicinaPreventiva']
+        }
+    ];
 
     // ── Helpers ───────────────────────────────────────────────────
 
     function isValidStatus(estado) {
         return Object.prototype.hasOwnProperty.call(VALID_STATUSES, estado);
-    }
-
-    function formatShortDate(isoString) {
-        if (!isoString) return '';
-        try {
-            var date = new Date(isoString);
-            if (isNaN(date.getTime())) return '';
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } catch (e) {
-            return '';
-        }
     }
 
     function getStorageKey(cip) {
@@ -102,28 +120,39 @@
         return false;
     }
 
-    function hasClinicalContent(value) {
-        if (value === undefined || value === null) return false;
-        var normalized = value.toString().trim().toUpperCase();
-        if (!normalized) return false;
-        return normalized !== 'ND' && normalized !== 'NA' && normalized !== 'NO_EVALUADO';
+    /**
+     * Normaliza el estado de un bloque. Sólo acepta los tres estados del
+     * contrato; cualquier valor ausente, vacío, ND/NA o no reconocido se
+     * resuelve como cadena vacía (desconocido, fail-safe). Nunca fabrica
+     * un estado a partir de otros campos.
+     */
+    function normalizeBlockState(rawStatus) {
+        if (rawStatus === undefined || rawStatus === null) return '';
+        var normalized = rawStatus.toString().trim().toUpperCase();
+        if (!normalized || normalized === 'ND' || normalized === 'NA') return '';
+        return Object.prototype.hasOwnProperty.call(BLOCK_STATUSES, normalized) ? normalized : '';
     }
 
-    function inferInProgress(details) {
-        if (!details) return false;
-        var keys = [
-            'hemogramaSolicitado', 'hemogramaRecibido', 'hemogramaCorrecto',
-            'bioquimicaSolicitada', 'bioquimicaRecibida', 'bioquimicaCorrecta',
-            'serologiasSolicitadas', 'serologiasRecibidas', 'serologiasCorrectas',
-            'igraMantouxSolicitado', 'igraMantouxRecibido', 'igraMantouxResultado',
-            'rxToraxSolicitada', 'rxToraxRecibida', 'rxToraxCorrecta',
-            'vacunacionRevisada', 'vacunacionOK',
-            'medicinaPreventivaDerivada'
-        ];
-        for (var i = 0; i < keys.length; i++) {
-            if (hasClinicalContent(details[keys[i]])) return true;
-        }
-        return false;
+    /**
+     * Lee los estados de los dos bloques desde una visita/registro.
+     * Sólo campos explícitos del bloque; ningún detalle legacy (resultados,
+     * fechas, vacunación, derivación) puede producir OK o cualquier estado.
+     */
+    function getBlockStatesFromVisit(visit) {
+        var result = {
+            analitica: '',
+            medicinaPreventiva: '',
+            hasExplicitBlockState: false,
+            source: 'none'
+        };
+        if (!visit || typeof visit !== 'object') return result;
+        BLOCKS.forEach(function (block) {
+            var state = normalizeBlockState(getVisitField(visit, block.fieldAliases, ''));
+            result[block.key] = state;
+            if (state) result.hasExplicitBlockState = true;
+        });
+        result.source = result.hasExplicitBlockState ? 'visit' : 'none';
+        return result;
     }
 
     // ── API pública ───────────────────────────────────────────────
@@ -219,11 +248,14 @@
     }
 
     /**
-     * Resuelve estado prebiológico desde una visita clínica persistida.
-     * Prioriza la decisión manual y, si no existe, infiere EN_CURSO si hay actividad.
+     * Resuelve el estado prebiológico LEGADO desde una visita clínica
+     * persistida. Sólo reconoce una decisión explícita registrada
+     * (Estado_Prebiologico_Final); ya NO infiere EN_CURSO a partir de
+     * actividad en campos de detalle. Se conserva como lectura del histórico,
+     * no como autoridad de los estados nuevos por bloque.
      *
      * @param {object} visit - Última visita clínica normalizada.
-     * @returns {{status: string, validationDate: string, vaccinationOk: string, source: string, details: object}}
+     * @returns {{status: string, validationDate: string, vaccinationOk: string, source: string, hasExplicitStatus: boolean, details: object}}
      */
     function getPrebiologicStatusFromVisit(visit) {
         if (!visit || typeof visit !== 'object') {
@@ -264,12 +296,9 @@
         var manualStatus = normalizeStatus(getVisitField(visit, statusAliases, ''));
         var validationDate = getVisitField(visit, ['Fecha_Validacion_Prebiologico', 'fechaValidacionPrebiologico'], '');
         var status = VALID_STATUSES.NO_EVALUADO;
-        var hasClinicalActivity = inferInProgress(details);
 
         if (manualStatus) {
             status = manualStatus;
-        } else if (hasClinicalActivity) {
-            status = VALID_STATUSES.EN_CURSO;
         }
 
         return {
@@ -278,14 +307,13 @@
             vaccinationOk: details.vacunacionOK || '',
             source: 'visit',
             hasExplicitStatus: hasExplicitStatus,
-            hasClinicalActivity: hasClinicalActivity,
             details: details
         };
     }
 
     function resolvePrebiologicStatus(cip, visit) {
         var visitStatus = getPrebiologicStatusFromVisit(visit);
-        if (visitStatus.source === 'visit' && (visitStatus.hasExplicitStatus || visitStatus.hasClinicalActivity)) {
+        if (visitStatus.source === 'visit' && visitStatus.hasExplicitStatus) {
             return visitStatus;
         }
 
@@ -314,24 +342,23 @@
     }
 
     /**
-     * Genera el HTML del badge prebiológico listo para insertar en la UI.
+     * Genera el HTML de los badges prebiológicos del contrato vigente
+     * (#445): un badge por bloque, mostrando únicamente estados explícitos.
+     * No sintetiza ningún estado global (ni APTO) ni inventa validación.
      *
      * @param {string} cip - Identificador CIP del paciente.
-     * @returns {string} - HTML del span con el badge.
+     * @param {object} [visit] - Visita/registro con los campos explícitos de bloque.
+     * @returns {string} - HTML de los badges de bloque.
      */
     function getBadgeHTML(cip, visit) {
-        var resolved = resolvePrebiologicStatus(cip, visit);
-        var estado = resolved.status || VALID_STATUSES.NO_EVALUADO;
-        var fecha = resolved.validationDate || null;
-        var cssClass = BADGE_CLASSES[estado] || BADGE_CLASSES[VALID_STATUSES.NO_EVALUADO];
-
-        var shortDate = formatShortDate(fecha);
-        var text = 'Prebiológico: ' + estado.replace(/_/g, ' ');
-        if (shortDate) {
-            text += ' · ' + shortDate;
-        }
-
-        return '<span class="prebiologic-badge ' + cssClass + '" title="Estado prebiológico: ' + estado + (shortDate ? ' (validado ' + shortDate + ')' : '') + '">' + text + '</span>';
+        var blocks = getBlockStatesFromVisit(visit);
+        return BLOCKS.map(function (block) {
+            var state = blocks[block.key];
+            var cssClass = state ? (BLOCK_BADGE_CLASSES[state] || BLOCK_BADGE_CLASS_UNKNOWN) : BLOCK_BADGE_CLASS_UNKNOWN;
+            var text = block.label + ': ' + (state ? state.replace(/_/g, ' ') : 'sin estado');
+            var title = 'Estado prebiológico ' + block.label + ': ' + (state || 'sin estado explícito');
+            return '<span class="prebiologic-badge ' + cssClass + '" title="' + title + '">' + text + '</span>';
+        }).join(' ');
     }
 
     // ── Exponer en HubTools ───────────────────────────────────────
@@ -347,6 +374,10 @@
     window.HubTools.prebiologic.getBadgeHTML = getBadgeHTML;
     window.HubTools.prebiologic.getPrebiologicStatusFromVisit = getPrebiologicStatusFromVisit;
     window.HubTools.prebiologic.resolvePrebiologicStatus = resolvePrebiologicStatus;
+    window.HubTools.prebiologic.BLOCK_STATUSES = BLOCK_STATUSES;
+    window.HubTools.prebiologic.BLOCKS = BLOCKS;
+    window.HubTools.prebiologic.normalizeBlockState = normalizeBlockState;
+    window.HubTools.prebiologic.getBlockStatesFromVisit = getBlockStatesFromVisit;
     window.HubTools.prebiologic.VALID_STATUSES = VALID_STATUSES;
     window.HubTools.prebiologic.STORAGE_PREFIX = STORAGE_PREFIX;
 

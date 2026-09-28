@@ -138,7 +138,11 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         talla: latestVisit?.talla || normalizedBaseRecord.talla || '',
         imc: latestVisit?.imc || normalizedBaseRecord.imc || '',
         sexoPaciente: latestVisit?.sexoPaciente || normalizedBaseRecord.sexoPaciente || '',
-        fechaNacimiento: latestVisit?.fechaNacimiento || normalizedBaseRecord.fechaNacimiento || ''
+        fechaNacimiento: latestVisit?.fechaNacimiento || normalizedBaseRecord.fechaNacimiento || '',
+        // Estado prebiológico por bloques (#445): sólo valores explícitos del
+        // registro; el detalle legacy no produce ningún estado.
+        estadoPrebiologicoAnalitica: latestVisit?.Estado_Prebiologico_Analitica || latestVisit?.estadoPrebiologicoAnalitica || '',
+        estadoPrebiologicoMedicinaPreventiva: latestVisit?.Estado_Prebiologico_Medicina_Preventiva || latestVisit?.estadoPrebiologicoMedicinaPreventiva || ''
     };
 }
 
@@ -173,42 +177,13 @@ document.addEventListener('DOMContentLoaded', () => {
     formModule.inicializarCollapsibles?.();
     formModule.initScoreWiring?.();
 
-    // --- POBLAR SELECTS DE FÁRMACOS DESDE LA BASE DE DATOS ---
-    // Función para poblar selects (se ejecuta cuando BD está lista)
-    function populateDrugSelects() {
-        console.log('🔄 Iniciando población de selects de fármacos en seguimiento...');
-        console.log('📊 Estado de la base de datos:', window.appState);
-
-        // Verificar disponibilidad de funciones
-        console.log('🔍 Disponibilidad de HubTools.data.getFarmacosPorTipo:', typeof HubTools?.data?.getFarmacosPorTipo);
-        console.log('🔍 Disponibilidad de HubTools.form.populateSelectFromDatabase:', typeof HubTools?.form?.populateSelectFromDatabase);
-
-        HubTools.form.populateSelectFromDatabase('cambioSistemicoSelect', 'Sistemicos');
-        HubTools.form.populateSelectFromDatabase('cambioFameSelect', 'FAMEs');
-        HubTools.form.populateSelectFromDatabase('cambioBiologicoSelect', 'Biologicos');
-        console.log('✓ Selects de cambio de tratamiento poblados desde la base de datos');
-        console.log('Fármacos Sistemicos:', HubTools.data.getFarmacosPorTipo('Sistemicos'));
-        console.log('Fármacos FAMEs:', HubTools.data.getFarmacosPorTipo('FAMEs'));
-        console.log('Fármacos Biologicos:', HubTools.data.getFarmacosPorTipo('Biologicos'));
-
-        // Configurar los eventos dinámicos de tratamientos de inmediato
-        if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.inicializarEventosTratamientos === 'function') {
-            HubTools.form.inicializarEventosTratamientos();
-            console.log('✅ Eventos de tratamientos (activación/añadir) inicializados en seguimiento');
-        }
-    }
-
-    // Poblar inmediatamente si la BD ya está cargada
-    if (window.appState?.isLoaded) {
-        console.log('📊 Base de datos ya está cargada, poblando selects inmediatamente...');
-        populateDrugSelects();
-    } else {
-        console.log('⏳ Base de datos no cargada, esperando evento databaseLoaded...');
-        // Si no está cargada, esperar al evento
-        window.addEventListener('databaseLoaded', () => {
-            console.log('📊 Evento databaseLoaded recibido, poblando selects de fármacos...');
-            populateDrugSelects();
-        });
+    // --- TRATAMIENTOS: eventos de dosis y añadir línea ---
+    // Los campos de fármaco se buscan contra el catálogo farmacológico publicado
+    // mediante modules/drugAutocomplete.js (HubTools.catalog). Ya no se pueblan
+    // desde la hoja manual Frmacos de la base cargada.
+    if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.inicializarEventosTratamientos === 'function') {
+        HubTools.form.inicializarEventosTratamientos();
+        console.log('✅ Eventos de tratamientos (activación/añadir) inicializados en seguimiento');
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -256,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (pathologyForForm) {
                 HubTools.form.adaptarFormulario(pathologyForForm);
             }
-            renderPrebiologicBadge(prefillPayload.idPaciente);
+            renderPrebiologicBadge(prefillPayload.idPaciente, prefillPayload);
         } else {
             console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
             const idInput = document.getElementById('idPaciente');
@@ -604,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function renderPrebiologicBadge(cip) {
+function renderPrebiologicBadge(cip, visitData) {
     var container = document.getElementById('prebiologicBadgeContainer');
     if (!container) return;
 
@@ -616,7 +591,7 @@ function renderPrebiologicBadge(cip) {
 
     var badgeHTML = '';
     if (typeof HubTools.prebiologic.getBadgeHTML === 'function') {
-        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip);
+        badgeHTML = HubTools.prebiologic.getBadgeHTML(cip, visitData || {});
     }
 
     if (badgeHTML) {
