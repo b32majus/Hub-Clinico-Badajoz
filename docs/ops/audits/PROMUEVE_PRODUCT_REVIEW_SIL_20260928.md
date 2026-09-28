@@ -1,16 +1,19 @@
 # PROMueve — Auditoría manual de producto Sil 2026-09-28 — revisión viva
 
-**Estado:** `IN_PROGRESS / PARTIALLY_PUBLISHED` — TRAIN 1 (#442) publicado por PR #449; el resto de hallazgos conserva su estado explícito  
+**Estado:** `IN_PROGRESS / PARTIALLY_PUBLISHED` — TRAIN 1 (#442) publicado por PR #449; revisión manual de Farmacia todavía incompleta y pendiente de feedback Cáceres 0.6  
 **Ámbito:** PROMueve Extremadura — Farmacia Hospitalaria, Reumatología y capacidades transversales; Dermatología queda registrada pero diferida de la ejecución inmediata  
 **Autoridad de desarrollo:** `promueve/nexus-v4`  
 **Último HEAD de producto Nexus verificado para esta reconciliación:** `25e57b250ec3d7cc0fc80a501fa308a40620f902` — merge PR #449; los merges documentales posteriores pueden mover el tip Git sin cambiar este HEAD de producto  
 **Issue documental de origen:** #438  
 **PR documental de origen:** #439 — supersedida para publicación; no mergear su base histórica  
 **Closeout documental vigente:** #451, sobre rama fresca de `promueve/nexus-v4`  
+**Reconciliación de frontera overnight:** #453; TRAIN Reuma Foundation #454 con #455 → #456 → #457  
 
 ## 0. Propósito y reglas
 
 Este documento conserva la revisión manual de producto de Sil, su shaping y la adjudicación de lo que ya se ha publicado. No convierte por sí solo una propuesta en funcionalidad implementada: cada cambio ejecutado conserva su issue/WO, candidate, PR y evidencia.
+
+La revisión manual **no está cerrada**: queda por completar especialmente Farmacia y por incorporar el feedback de la reunión de Cáceres sobre `CÁCERES-REVIEW-0.6`. Hasta entonces, los cambios sensibles a ese feedback se mantienen `AWAIT_FEEDBACK`, no cancelados.
 
 Reglas transversales:
 - distinguir `ya implementado`, `wired`, `visible`, `demostrado`, `defecto`, `mejora`, `discovery`, `futuro`, `piloto` y `producción`;
@@ -21,22 +24,23 @@ Reglas transversales:
 - usar datos sintéticos durante desarrollo/QA;
 - el catálogo identifica/ayuda a seleccionar; nunca decide valores terapéuticos.
 
-## 1. Correcciones y decisiones de autoridad humana — 2026-09-28
+## 1. Correcciones y decisiones de autoridad humana — 2026-09-29
 
 1. La referencia previa a **ASDAS en artritis psoriásica** fue una atribución de patología equivocada durante la revisión. Se retira como requisito/hallazgo ejecutable. No se abre discovery ni WO a partir de esa asociación.
 2. `SIL-REV-007` a `011` (Dermatología) permanecen registrados para no perder contexto, pero quedan **DEFERRED / OUT_OF_CURRENT_EXECUTION**.
 3. La automatización CIMA/GitHub Actions sigue pendiente y se tratará aparte. **No bloqueó** el consumo/autocomplete del catálogo publicado actual por Reuma.
 4. TRAIN 1 se ejecutó y publicó: PCR/unidades (#443) → catálogo/autocomplete (#444) → prebiológico (#445), con correctiva categorial #447 antes de promoción; PR #449 quedó mergeada.
-5. La siguiente secuencia de producto permanece: contrato de renovaciones → Reuma→Farmacia tras discovery → automatización CIMA, salvo nueva adjudicación humana.
-6. No se crea documentación adicional por ritual. Cuando el significado/aceptación cabe de forma durable en un issue/WO, el issue es autoridad suficiente.
+5. La secuencia provisional de producto queda condicionada por evidencia pendiente: Farmacia F4.3–F4.6 y #446 renovaciones pasan temporalmente a **AWAIT_FEEDBACK** hasta completar revisión manual Farmacia + feedback Cáceres 0.6; no se cancelan ni se desautorizan.
+6. Mientras tanto, la lane segura no dependiente de ese feedback es Reuma Foundation: TRAIN #454, #455 → #456 → #457, limitado a F5.2/F5.3. F5.4 queda fuera del overnight y requiere shaping posterior si aparecen decisiones semánticas.
+7. No se crea documentación adicional por ritual. Cuando el significado/aceptación cabe de forma durable en un issue/WO, el issue es autoridad suficiente.
 
 ## 2. Matriz viva de hallazgos
 
 | ID | Tema | Naturaleza | Alcance | Decisión/timing | Estado |
 |---|---|---|---|---|---|
-| `SIL-REV-001` | Nomenclatura oficial de programas/procesos FH SES | DATA / INTEROPERABILITY | CORE + consumo FH | Antes de ampliar reportes | PROPOSED |
-| `SIL-REV-002` | Presets de informes periódicos | FEATURE / CONFIG | CORE | Tras contrato de datos mínimo | PROPOSED |
-| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | Discovery/contrato | PROPOSED |
+| `SIL-REV-001` | Nomenclatura oficial de programas/procesos FH SES | DATA / INTEROPERABILITY | CORE + consumo FH | Antes de ampliar reportes; revisar tras feedback Farmacia | PROPOSED / AWAIT_FEEDBACK |
+| `SIL-REV-002` | Presets de informes periódicos | FEATURE / CONFIG | CORE | Tras contrato de datos mínimo; revisar tras feedback Farmacia | PROPOSED / AWAIT_FEEDBACK |
+| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | Discovery/contrato; revisar tras feedback Farmacia | PROPOSED / AWAIT_FEEDBACK |
 | `SIL-REV-004` | Simplificación prebiológico Reuma | CLINICAL FLOW / UX | MODULE Reuma | #445 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-005` | Solicitud Reuma→Farmacia TXT | INTEROPERABILITY | MODULE Reuma×FH | Discovery primero | DISCOVERY_FIRST |
 | `SIL-REV-006` | PCR/unidades por calculadora | CLINICAL SAFETY / DATA | CORE + MODULE/CALCULATOR; site queda explícito sólo cuando proceda | #443 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
@@ -45,8 +49,8 @@ Reglas transversales:
 | `SIL-REV-009` | Hub HS completo | FEATURE / DATA | MODULE Derma-HS | Fuera de ejecución actual | DEFERRED |
 | `SIL-REV-010` | Hub Psoriasis completo | FEATURE / DATA | MODULE Derma-PsO | Fuera de ejecución actual | DEFERRED |
 | `SIL-REV-011` | Contrato común Derma→FH | INTEROPERABILITY | CORE + MODULE | Fuera de ejecución actual | DEFERRED |
-| `SIL-REV-012` | Alertas de renovación | CLINICAL FLOW | CORE workflow + FH | N0/contrato antes de implementación | SHAPING_APPROVED |
-| `SIL-REV-013` | Handoff FH→Enfermería→servicio→FH | INTEROPERABILITY / DATA | CORE + MODULE×SITE | Tras contrato de renovaciones | SHAPING_APPROVED |
+| `SIL-REV-012` | Alertas de renovación | CLINICAL FLOW | CORE workflow + FH | #446 aprobado; esperar feedback Cáceres/Farmacia antes de ejecutar | SHAPING_APPROVED / AWAIT_FEEDBACK |
+| `SIL-REV-013` | Handoff FH→Enfermería→servicio→FH | INTEROPERABILITY / DATA | CORE + MODULE×SITE | #446 aprobado; esperar feedback Cáceres/Farmacia antes de ejecutar | SHAPING_APPROVED / AWAIT_FEEDBACK |
 | `SIL-REV-014` | Dashboard renovaciones Enfermería | UX / REPORT | MODULE Enfermería | Después del MVP | DEFERRED |
 | `SIL-REV-015` | ASDAS atribuido a APs | Corrección de revisión | — | Retirado | WITHDRAWN_WRONG_ATTRIBUTION |
 | `SIL-REV-016` | Catálogo/autocomplete común en Reuma | DATA / UX | CORE catalog capability + MODULE Reuma | #444 + correctiva #447 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
@@ -60,7 +64,7 @@ Sil identifica un catálogo/fuente de nomenclatura de programas/procesos FH util
 - reutilizarla en formularios, filtros, dashboards y reportes sólo tras ingestión/validación de la fuente;
 - no asumir que una denominación FH deba propagarse automáticamente a otros servicios.
 
-Pendiente: ingestión/normalización de la fuente y WO separada.
+Pendiente: ingestión/normalización de la fuente y WO separada. La ejecución se mantiene `AWAIT_FEEDBACK` hasta completar la revisión manual Farmacia.
 
 ## 4. `SIL-REV-002/003` — presets de reporting y reporte trimestral Cosentyx
 
@@ -74,7 +78,7 @@ Primer caso propuesto, trimestral:
 - artritis psoriásica: nuevos inicios explícitos de Cosentyx dentro del trimestre;
 - HS: inicio explícito de administración q2w durante el trimestre, distinguiendo cuando conste inicio directo q2w de intensificación explícita q4w→q2w.
 
-No es un reporte de unidades dispensadas. No inferir intensificación desde el nombre del fármaco, tratamiento actual o ausencia de datos.
+No es un reporte de unidades dispensadas. No inferir intensificación desde el nombre del fármaco, tratamiento actual o ausencia de datos. La implementación queda `AWAIT_FEEDBACK` mientras no esté completa la revisión Farmacia.
 
 ## 5. `SIL-REV-004` — simplificación del circuito prebiológico Reuma
 
@@ -160,6 +164,8 @@ Invariante: **`RENEWED_REPORTED ≠ FH_UPDATED`**. Un check/import desde Enferme
 
 Dashboard Enfermería queda fuera del MVP hasta que identidad/estados/reconciliación estén demostrados.
 
+**Estado de ejecución 2026-09-29:** #446 permanece `OPEN + status:approved`, pero está temporalmente `AWAIT_FEEDBACK` y fuera del overnight #454. Debe revalidarse tras la reunión de Cáceres y la revisión manual de Farmacia; el HOLD no es cancelación.
+
 ## 10. `SIL-REV-015` — corrección ASDAS
 
 La asociación previa de ASDAS con APs fue un error de atribución durante la conversación de revisión. Queda **retirada**.
@@ -210,26 +216,44 @@ Secuencia ejecutada:
 
 Parent #442 y children #443/#444/#445/#447 están cerrados/completed. PR #449 fue mergeada a `promueve/nexus-v4`: candidate final `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952` → merge de producto `25e57b250ec3d7cc0fc80a501fa308a40620f902`; candidate y merge comparten tree `f8faba3ad0b485f21d27cd14244b37522cc40054`. GitHub Actions post-merge `Nexus deterministic gates` run `36483698667` terminó `success`.
 
-### TRAIN 2 — renovaciones — SIGUIENTE SHAPING, NO IMPLEMENTADO
-Contrato/estados/identidad antes de abrir implementación. #446 conserva el shaping preparado; verificar GitHub live antes de ejecutar.
+### TRAIN 2 — Reuma Foundation F5.2/F5.3 — **NEXT_EXECUTABLE / PREPARED C-078 OVERNIGHT**
+Parent #454, secuencia estricta:
+1. #455 — F5.2A Seguimiento read migration;
+2. #456 — F5.2B Estadísticas population read seam;
+3. #457 — F5.3 legacy 497 writer compatibility boundary.
 
-### TRAIN 3 — Reuma→Farmacia — DISCOVERY_FIRST
+No incluye F5.4. Tras #457: composed verification, delta de shaping F5.4 y STOP. Delivery local-only: `PUSH=NO / PR=NO / MERGE=NO / DEPLOY=NO`.
+
+### LANE Farmacia / renovaciones — **AWAIT_FEEDBACK**
+- F4.3–F4.6: no arrancar antes de completar revisión manual Farmacia + feedback Cáceres 0.6.
+- #446 renovaciones N0: aprobado pero temporalmente en HOLD de ejecución; no cancelado.
+- SIL-REV-001/002/003: propuestas; no implementar antes de cerrar evidencia pendiente.
+
+### Reuma→Farmacia — DISCOVERY_FIRST
 `RFH-0 discovery/contrato → RFH-1 salida estructurada → RFH-2 QA E2E`.
 
-### TRAIN 4 — CIMA automation — DEFERRED_SEPARATE_CONCERN
+### CIMA automation — DEFERRED_SEPARATE_CONCERN
 Implementación separada del consumidor de catálogo.
 
-## 14. Protocolo de ejecución — adjudicación real de TRAIN 1
+### Dermatología — DEFERRED
+SIL-REV-007–011 quedan fuera de la frontera actual.
 
-La sección operativa de la PR draft #439 quedó superada antes de ejecutar. La autoridad efectiva del train fue #442 con Atenea C-077:
+## 14. Protocolo de ejecución — TRAIN 1 histórico y autoridad vigente
+
+La sección operativa de la PR draft #439 quedó superada antes de ejecutar TRAIN 1. La autoridad efectiva de aquel train fue #442 con Atenea C-077.
+
+Para el nuevo overnight #454, la autoridad vigente es **Atenea C-078** (`main @ 3df0efff84576f85ca6e969993673d98e0b649a3`):
 - supervisor Pi limpio con `pi --no-extensions` + Herdr;
-- exactamente un worker Pi de implementación por ticket;
-- perfiles de #442: #443 complex/GLM, #444 production-volume/DeepSeek, #445 complex/GLM; #447 se ejecutó como correctiva shaped sobre el candidate compuesto;
-- checks deterministas y QA navegador soportada por ticket;
-- native Gentle review con OpenCode V1 como transporte, siguiendo las transiciones provider-issued hasta terminal/burn cuando correspondió;
-- checkpoints limpios y publicación separada tras decisión humana.
+- exactamente un worker Pi de implementación por ticket, también `pi --no-extensions`;
+- production-volume = DeepSeek V4 Flash por defecto; complex = GLM 5.3 Flash high sólo por trigger material;
+- `review_due=false` no levanta OpenCode;
+- `review_due=true` sigue el `next_transition` exacto y Gentle decide 0/1/4 lenses;
+- OpenCode review routing siempre per-process vía `OPENCODE_CONFIG_CONTENT`, nunca mutación global;
+- `review-resilience` V4 `opencode_task_output_empty` admite una única recuperación same-lineage Luna high si STATUS reofrece el mismo slot;
+- telemetry disponible es observacional/no bloqueante y no añade llamadas LLM;
+- scope/product/acceptance/oracle/publication material = HUMAN STOP.
 
-No usar el antiguo texto de #439 (`opencode serve` / `atenea-writer`) como autoridad del train ejecutado.
+No usar el antiguo texto de #439 (`opencode serve` / `atenea-writer`) como autoridad.
 
 ## 15. Matriz de colisión TRAIN 1 — adjudicada
 
@@ -244,18 +268,26 @@ La decisión de no usar tres writers paralelos quedó validada por la colisión 
 
 ## 16. Fuentes vivas para esta reconciliación
 
-- GitHub live `promueve/nexus-v4` y PR #449;
+- GitHub live `promueve/nexus-v4` @ `cb748091e19e39ef3db347398a75db13b36f8afc`; último producto PR #449 @ `25e57b250ec3d7cc0fc80a501fa308a40620f902`;
 - issues #442, #443, #444, #445 y #447 cerrados/completed;
-- deudas abiertas #448 y #450;
+- #453 reconciliación del mapa y #454/#455/#456/#457 como frontier overnight preparada;
+- #446 OPEN+approved con HOLD temporal `AWAIT_FEEDBACK`;
+- deudas abiertas #448 y #450, fuera del train actual;
 - `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` de la base canónica;
 - PR draft #439 como fuente de la auditoría/shaping original, no como rama a mergear;
 - `docs/ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`;
+- `docs/engineering/REUMA_READ_CHARACTERIZATION.md`;
+- `docs/engineering/REUMA_EXPORT_KNOWN_LEGACY.md`;
 - `docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`;
 - `docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md`;
-- código/evidencia publicada por #449 en `scoreCalculators.js`, `drugCatalog.js`, `drugAutocomplete.js`, `prebiologicManager.js`, `formController.js`, primera/seguimiento y oráculos asociados.
+- Atenea C-078 current authority @ `3df0efff84576f85ca6e969993673d98e0b649a3`.
 
 ## 17. Madurez
 
 TRAIN 1 está **implementado, cableado, visible en sus superficies soportadas, probado mediante interacción soportada en Chromium y publicado en `promueve/nexus-v4`**. La evidencia usa datos/fixtures sintéticos.
 
-Eso **no acredita piloto ni producción**. Tampoco acredita por extensión los hallazgos aún `PROPOSED`, `DISCOVERY_FIRST`, `SHAPING_APPROVED` o `DEFERRED` de esta auditoría.
+TRAIN #454 está **shaped/approved y preparado para ejecución local C-078**, pero todavía no implementado ni publicado.
+
+Farmacia F4.3–F4.6, #446 y SIL-REV-001/002/003 están **AWAIT_FEEDBACK**, no descartados. El informe manual sigue abierto.
+
+Nada de lo anterior **acredita piloto ni producción**.
