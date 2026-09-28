@@ -8,7 +8,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=20260307v">
-    <link rel="stylesheet" href="style_seguimiento.css?v=20260307m">
+    <link rel="stylesheet" href="style_seguimiento.css?v=20260928b">
 </head>
 
 <body>
@@ -2200,7 +2200,7 @@
                                     <div class="treatment-line">
                                         <div class="treatment-label">Tratamientos sistémicos</div>
                                         <div class="treatment-controls">
-                                            <select id="cambioSistemicoSelect" class="treatment-select">
+                                            <select id="cambioSistemicoSelect" class="treatment-select" data-drug-autocomplete="true" data-no-custom-select="true">
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioSistemicoDose" class="treatment-dose-input"
@@ -2215,7 +2215,7 @@
                                     <div class="treatment-line">
                                         <div class="treatment-label">FAMEs</div>
                                         <div class="treatment-controls">
-                                            <select id="cambioFameSelect" class="treatment-select">
+                                            <select id="cambioFameSelect" class="treatment-select" data-drug-autocomplete="true" data-no-custom-select="true">
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioFameDose" class="treatment-dose-input"
@@ -2229,7 +2229,7 @@
                                     <div class="treatment-line">
                                         <div class="treatment-label">Biológicos</div>
                                         <div class="treatment-controls">
-                                            <select id="cambioBiologicoSelect" class="treatment-select">
+                                            <select id="cambioBiologicoSelect" class="treatment-select" data-drug-autocomplete="true" data-no-custom-select="true">
                                                 <!-- Poblado dinámicamente desde la base de datos -->
                                             </select>
                                             <input type="text" id="cambioBiologicoDose" class="treatment-dose-input"
@@ -2521,7 +2521,9 @@
     <script src="modules/homunculus.js?v=20260306l"></script>
     <script src="modules/dataManager.js?v=20260307s"></script>
     <script src="modules/exportManager.js?v=20260306l"></script>
-    <script src="modules/formController.js?v=20260928a"></script>
+    <script src="modules/formController.js?v=20260928b"></script>
+    <script src="modules/drugCatalog.js?v=20260928b"></script>
+    <script src="modules/drugAutocomplete.js?v=20260928b"></script>
     <script src="modules/prebiologicManager.js?v=20260503"></script>
     <script src="modules/pharmacyRequest.js?v=20260503"></script>
 

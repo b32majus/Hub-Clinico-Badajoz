@@ -774,6 +774,10 @@ function inicializarEventosTratamientos() {
         const doseInput = container.querySelector('.treatment-dose-input, .treatment-dose-input-improved, .dosis-input');
         if (!doseInput) return;
 
+        if (select.__treatmentChangeHandler) {
+            select.removeEventListener('change', select.__treatmentChangeHandler);
+        }
+
         const handler = () => {
             const value = (select.value || '').toLowerCase();
             const inactive = !select.value || value === 'no';
@@ -790,7 +794,7 @@ function inicializarEventosTratamientos() {
             }
         };
 
-        select.removeEventListener('change', handler);
+        select.__treatmentChangeHandler = handler;
         select.addEventListener('change', handler);
         handler();
     });
@@ -850,6 +854,8 @@ function createTreatmentLine(type, options, improved = false) {
     const select = document.createElement('select');
     select.classList.add(improved ? 'treatment-select-improved' : 'treatment-select');
     if (improved) select.classList.add('tratamiento-dropdown');
+    select.setAttribute('data-drug-autocomplete', 'true');
+    select.setAttribute('data-no-custom-select', 'true');
     options.forEach(opt => {
         const option = document.createElement('option');
         option.value = opt;
@@ -871,11 +877,6 @@ function createTreatmentLine(type, options, improved = false) {
     removeBtn.innerHTML = '<i class="fas fa-minus-circle"></i>';
     removeBtn.title = 'Eliminar';
 
-    select.addEventListener('change', function () {
-        input.disabled = (this.value === 'No');
-        if (this.value === 'No') input.value = '';
-    });
-
     removeBtn.addEventListener('click', function () {
         line.remove();
     });
@@ -887,6 +888,11 @@ function createTreatmentLine(type, options, improved = false) {
     controls.appendChild(removeBtn);
 
     line.appendChild(controls);
+
+    if (typeof HubTools !== 'undefined' && HubTools.ui && typeof HubTools.ui.initDrugAutocomplete === 'function') {
+        HubTools.ui.initDrugAutocomplete(line);
+    }
+
     return line;
 }
 

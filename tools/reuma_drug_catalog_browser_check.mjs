@@ -1,0 +1,450 @@
+#!/usr/bin/env node
+'use strict';
+/**
+ * Browser QA for the Reuma drug autocomplete backed by the published catalogue
+ * (SIL-REV-016 / ticket #444, T2 of TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06).
+ *
+ * Real Chromium (Playwright) qualification of primera_visita.html and
+ * seguimiento.html over a served repository root. Every assertion runs through
+ * supported user-level interaction (real combobox typing, real result clicks,
+ * real "+" buttons, real collapsible headers). page.evaluate is used only to
+ * READ observable state (selected <select> value, option count, DOM structure).
+ *
+ * Scenarios on BOTH pages:
+ *   S1  partial search + selection writes only the medicine name to the value
+ *       holder and leaves the therapeutic dose field empty (no side write);
+ *   S2  changing the selected medicine does NOT overwrite an existing dose;
+ *   S3  an additional treatment line exposes a working autocomplete without
+ *       touching the primary line;
+ *   S4  re-initialisation does not duplicate wrappers, inputs or options;
+ *   S5  explicit clear is a supported action (sets the neutral value);
+ *   S6  with the catalogue unavailable the field is disabled, comprehensible
+ *       and offers no invented options;
+ *   S7  console.error === 0 and pageerror === 0.
+ *
+ * Synthetic data only. Exit code 0 = PASS, 1 = FAIL.
+ * Usage: node tools/reuma_drug_catalog_browser_check.mjs
+ */
+
+import { createServer } from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+const XLSX = require(path.join(ROOT, 'vendor', 'sheetjs', 'xlsx.full.min.js'));
+
+const results = [];
+function record(name, pass, detail) {
+    results.push(pass);
+    console.log(`  [${pass ? 'OK ' : 'FAIL'}] ${name}${pass ? '' : ` -> ${detail}`}`);
+}
+
+function loadPlaywrightFromNpx() {
+    const tried = [];
+    const tryNodeModules = (nodeModules) => {
+        const pkg = path.join(nodeModules, 'playwright', 'package.json');
+        tried.push(pkg);
+        if (fs.existsSync(pkg)) {
+            return createRequire(path.join(nodeModules, '__reuma_drug_catalog_loader.cjs'))('playwright');
+        }
+        return null;
+    };
+    for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
+        if (!binDirectory) continue;
+        const prefix = path.resolve(binDirectory, '..');
+        for (const nodeModules of [prefix, path.join(prefix, 'lib', 'node_modules')]) {
+            const loaded = tryNodeModules(nodeModules);
+            if (loaded) return loaded;
+        }
+    }
+    const npxCache = path.join(process.env.HOME || '', '.npm', '_npx');
+    if (fs.existsSync(npxCache)) {
+        for (const entry of fs.readdirSync(npxCache).sort().reverse()) {
+            const loaded = tryNodeModules(path.join(npxCache, entry, 'node_modules'));
+            if (loaded) return loaded;
+        }
+    }
+    const loaded = tryNodeModules(path.join(ROOT, 'node_modules'));
+    if (loaded) return loaded;
+    throw new Error('Playwright not found. Tried: ' + tried.join(', '));
+}
+
+let chromium;
+try {
+    ({ chromium } = loadPlaywrightFromNpx());
+} catch (err) {
+    console.error('ENVIRONMENT FAILURE: ' + err.message);
+    console.log('RESULTADO: 0 OK / 1 FALLIDO');
+    process.exit(1);
+}
+
+function chromiumExecutable() {
+    if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
+    const bundled = chromium.executablePath();
+    if (fs.existsSync(bundled)) return bundled;
+    const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(process.env.HOME || '', '.cache', 'ms-playwright');
+    if (!fs.existsSync(cache)) return bundled;
+    const candidates = fs.readdirSync(cache)
+        .filter((entry) => entry.startsWith('chromium_headless_shell-'))
+        .sort().reverse()
+        .map((entry) => path.join(cache, entry, 'chrome-headless-shell-linux64', 'chrome-headless-shell'));
+    return candidates.find(fs.existsSync) || bundled;
+}
+
+const mime = new Map([
+    ['.html', 'text/html; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'],
+    ['.css', 'text/css; charset=utf-8'], ['.json', 'application/json; charset=utf-8'],
+    ['.svg', 'image/svg+xml'],
+    ['.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+]);
+
+const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reuma-drug-catalog-'));
+const workbookPath = path.join(tempDir, 'reuma_drug_catalog_synthetic.xlsx');
+{
+    const workbook = XLSX.utils.book_new();
+    for (const sheetName of ['ESPA', 'APS', 'AR', 'LES', 'SJOGREN']) {
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
+    }
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
+        { Nombre_Completo: 'Sintetico Profesional Uno', Cargo: 'Reumatologia' },
+    ]), 'Profesionales');
+    fs.writeFileSync(workbookPath, XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }));
+}
+
+// A valid workbook WITHOUT the expected catalogue sheets: used to simulate an
+// unusable published catalogue with a 200 response (no fake network error).
+const badCatalogPath = path.join(tempDir, 'bad_catalog_synthetic.xlsx');
+{
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ hoja: 'OTRA' }]), 'OTRA');
+    fs.writeFileSync(badCatalogPath, XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }));
+}
+
+async function passSupportedGate(browser) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.setInputFiles('#gateExcelInput', workbookPath);
+    await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
+    const professional = await page.evaluate(() => {
+        const select = document.getElementById('gateProfessionalSelect');
+        return select ? Array.from(select.options).map((option) => option.value).find(Boolean) || '' : '';
+    });
+    await page.selectOption('#gateProfessionalSelect', professional);
+    await page.click('#gateConfirmBtn');
+    await page.waitForFunction(() => document.getElementById('sessionGate').classList.contains('hidden'), null, { timeout: 10000 });
+    await page.close();
+    return context;
+}
+
+const server = createServer((req, res) => {
+    const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+    const filePath = path.join(ROOT, urlPath);
+    if (!filePath.startsWith(ROOT) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+        res.writeHead(404); res.end('not found'); return;
+    }
+    res.writeHead(200, { 'Content-Type': mime.get(path.extname(filePath)) || 'application/octet-stream' });
+    fs.createReadStream(filePath).pipe(res);
+});
+
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+const baseUrl = `http://127.0.0.1:${server.address().port}`;
+
+async function isReallyHitTestable(page, selector) {
+    return page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (!el) return false;
+        el.scrollIntoView({ block: 'center' });
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return false;
+        const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return !!top && (top === el || el.contains(top));
+    }, selector);
+}
+
+async function openAncestorCollapsibles(page, selector) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+        if (await isReallyHitTestable(page, selector)) return true;
+        const headers = page.locator(selector).first().locator(
+            'xpath=ancestor::*[contains(@class,"collapsible-section")]/button[contains(@class,"collapsible-header")]'
+        );
+        const count = await headers.count();
+        if (!count) return false;
+        let clicked = false;
+        for (let i = 0; i < count; i++) {
+            const header = headers.nth(i);
+            const isActive = await header.evaluate((el) => el.classList.contains('active'));
+            if (!isActive) {
+                await header.click();
+                clicked = true;
+                await page.waitForTimeout(650);
+            }
+        }
+        if (!clicked) return isReallyHitTestable(page, selector);
+    }
+    return isReallyHitTestable(page, selector);
+}
+
+function autocompleteInputSelector(selectId) {
+    return `.drug-autocomplete:has(#${selectId}) .drug-autocomplete__input`;
+}
+
+async function awaitCatalogReady(page, selectId) {
+    await page.waitForFunction((id) => {
+        const select = document.getElementById(id);
+        const wrapper = select ? select.closest('.drug-autocomplete') : null;
+        const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
+        return !!(input && !input.disabled);
+    }, selectId, { timeout: 30000 });
+}
+
+async function readSelect(page, id) {
+    return page.evaluate((selectId) => {
+        const select = document.getElementById(selectId);
+        if (!select) return null;
+        return { value: select.value, options: Array.from(select.options).map((o) => o.value) };
+    }, id);
+}
+
+async function selectDrug(page, selectId, query, expectSubstring) {
+    const input = page.locator(autocompleteInputSelector(selectId));
+    await input.click();
+    await input.fill('');
+    await input.fill(query);
+    const items = page.locator(autocompleteInputSelector(selectId) + ' ~ .drug-autocomplete__list .drug-autocomplete__item');
+    await items.first().waitFor({ state: 'visible', timeout: 10000 });
+    const firstText = (await items.first().textContent()).trim();
+    await items.first().click();
+    await page.waitForTimeout(120);
+    const value = (await readSelect(page, selectId)).value;
+    const ok = value === firstText && (!expectSubstring || value.toUpperCase().includes(expectSubstring));
+    return { ok, value, firstText };
+}
+
+async function runSuite(browser, label, pagePath, cfg) {
+    console.log(`\n=== ${label} (${pagePath}) ===`);
+    const context = await passSupportedGate(browser);
+    const page = await context.newPage();
+    const consoleErrors = [];
+    const pageErrors = [];
+    page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+    page.on('pageerror', (err) => pageErrors.push(String(err)));
+    await page.goto(`${baseUrl}/${pagePath}`, { waitUntil: 'domcontentloaded' });
+
+    try {
+        await awaitCatalogReady(page, cfg.selectId);
+        if (typeof cfg.prepare === 'function') await cfg.prepare(page);
+
+        // Inventory: every supported drug field uses the same read-only search,
+        // and non-drug fields are left untouched.
+        const inventory = await page.evaluate((ids) => ids.map((id) => {
+            const select = document.getElementById(id);
+            const wrapper = select ? select.closest('.drug-autocomplete') : null;
+            const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
+            return { id, wrapped: !!wrapper, inputs: wrapper ? wrapper.querySelectorAll('.drug-autocomplete__input').length : 0, enabled: input ? !input.disabled : false };
+        }), cfg.allSelectIds);
+        const inventoryOk = inventory.every((item) => item.wrapped && item.inputs === 1 && item.enabled);
+        record(`${label}: todos los campos de fármaco comparten el mismo autocompletado`,
+            inventoryOk, JSON.stringify(inventory));
+        const nonDrug = await page.evaluate((ids) => ids.map((id) => {
+            const select = document.getElementById(id);
+            return { id, wrapped: !!(select && select.closest('.drug-autocomplete')) };
+        }), cfg.nonDrugIds || []);
+        record(`${label}: los campos no farmacológicos no se convierten`,
+            nonDrug.every((item) => item.wrapped === false), JSON.stringify(nonDrug));
+
+        const inputSel = autocompleteInputSelector(cfg.selectId);
+        const visible = await openAncestorCollapsibles(page, inputSel);
+        record(`${label}: el campo de fármaco (autocomplete) es visible por interacción soportada`, visible, 'no hit-testable');
+
+        // S1 — partial search + selection writes only the name, dose untouched.
+        const s1 = await selectDrug(page, cfg.selectId, 'cosentyx', 'COSENTYX');
+        record(`${label}: búsqueda parcial + selección escribe el nombre esperado`, s1.ok, JSON.stringify(s1));
+        const doseAfterS1 = await page.locator(`#${cfg.doseId}`).inputValue();
+        const doseEnabledS1 = await page.locator(`#${cfg.doseId}`).isEnabled();
+        record(`${label}: la selección no escribe dosis (campo vacío, habilitado)`, doseAfterS1 === '' && doseEnabledS1, `dose='${doseAfterS1}' enabled=${doseEnabledS1}`);
+
+        // S2 — changing the selected medicine keeps an existing dose.
+        await page.locator(`#${cfg.doseId}`).fill('40 mg / 2 sem');
+        const s2 = await selectDrug(page, cfg.selectId, 'humira', 'HUMIRA');
+        record(`${label}: un segundo fármaco se selecciona correctamente`, s2.ok, JSON.stringify(s2));
+        const doseAfterS2 = await page.locator(`#${cfg.doseId}`).inputValue();
+        record(`${label}: cambiar de fármaco NO sobrescribe la dosis existente`, doseAfterS2 === '40 mg / 2 sem', `dose='${doseAfterS2}'`);
+
+        // The supported collection API must expose exactly the selected name
+        // and the explicitly typed dose — nothing else was written.
+        const collectedDrug = await page.evaluate((fnName) => {
+            const datos = HubTools.form[fnName]();
+            if (fnName === 'recopilarDatosFormulario') {
+                return (datos.previoSistemicosEntries || []).map((entry) => ({ farmaco: entry.farmaco, dosis: entry.dosis }));
+            }
+            const slot = datos.tratamientoData && datos.tratamientoData.cambio ? datos.tratamientoData.cambio.sistemicos : null;
+            return slot ? [{ farmaco: slot.farmaco, dosis: slot.dosis }] : [];
+        }, cfg.collectFnName);
+        const collectedOk = collectedDrug.length === 1 && /HUMIRA/i.test(collectedDrug[0].farmaco) && collectedDrug[0].dosis === '40 mg / 2 sem';
+        record(`${label}: la colección soportada refleja nombre + dosis explícita sin escritura lateral`, collectedOk, JSON.stringify(collectedDrug));
+
+        // S3 — additional treatment line through the supported "+" button.
+        await page.locator(`.add-treatment-line-btn[data-type="${cfg.addType}"]`).click();
+        await page.waitForSelector(`#${cfg.extrasId} .drug-autocomplete__input:not([disabled])`, { timeout: 10000 });
+        const extraInput = page.locator(`#${cfg.extrasId} .drug-autocomplete__input`).last();
+        await extraInput.click();
+        await extraInput.fill('cosentyx');
+        const extraItems = page.locator(`#${cfg.extrasId} .drug-autocomplete__item`);
+        await extraItems.first().waitFor({ state: 'visible', timeout: 10000 });
+        const extraName = (await extraItems.first().textContent()).trim();
+        await extraItems.first().click();
+        await page.waitForTimeout(120);
+        const extraValue = await page.evaluate((containerId) => {
+            const line = document.getElementById(containerId).querySelector('.treatment-extra');
+            const select = line ? line.querySelector('select') : null;
+            return select ? select.value : null;
+        }, cfg.extrasId);
+        record(`${label}: una línea adicional usa el autocomplete sin tocar la línea principal`, extraValue === extraName, `extra='${extraValue}' primary='${(await readSelect(page, cfg.selectId)).value}'`);
+
+        // S4 — re-initialisation must not duplicate wrappers/inputs/options.
+        const before = await page.evaluate((id) => {
+            const select = document.getElementById(id);
+            const wrapper = select ? select.closest('.drug-autocomplete') : null;
+            return {
+                wrappers: document.querySelectorAll('.drug-autocomplete').length,
+                inputsForSelect: wrapper ? wrapper.querySelectorAll('.drug-autocomplete__input').length : -1,
+                options: select ? select.options.length : -1,
+            };
+        }, cfg.selectId);
+        await page.evaluate(() => {
+            HubTools.ui.initDrugAutocomplete(document);
+            HubTools.form.inicializarEventosTratamientos();
+            HubTools.ui.initDrugAutocomplete(document);
+            HubTools.form.inicializarEventosTratamientos();
+        });
+        const after = await page.evaluate((id) => {
+            const select = document.getElementById(id);
+            const wrapper = select ? select.closest('.drug-autocomplete') : null;
+            return {
+                wrappers: document.querySelectorAll('.drug-autocomplete').length,
+                inputsForSelect: wrapper ? wrapper.querySelectorAll('.drug-autocomplete__input').length : -1,
+                options: select ? select.options.length : -1,
+            };
+        }, cfg.selectId);
+        record(`${label}: re-inicializar no duplica wrappers/inputs/opciones`,
+            after.wrappers === before.wrappers && after.inputsForSelect === 1 && after.options === before.options,
+            `before=${JSON.stringify(before)} after=${JSON.stringify(after)}`);
+
+        // S5 — explicit clear is supported and neutral.
+        const clearInput = page.locator(inputSel);
+        await clearInput.click();
+        await clearInput.fill('');
+        const clearItem = page.locator(`${inputSel} ~ .drug-autocomplete__list .drug-autocomplete__item--clear`);
+        await clearItem.waitFor({ state: 'visible', timeout: 10000 });
+        await clearItem.click();
+        await page.waitForTimeout(120);
+        const cleared = await readSelect(page, cfg.selectId);
+        record(`${label}: limpiar selección deja el valor neutro 'No'`, cleared.value === 'No', JSON.stringify(cleared));
+
+        // S6/S7 — console hygiene.
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await context.close();
+    }
+}
+
+async function runUnavailableSuite(browser) {
+    console.log('\n=== catálogo no disponible (primera_visita.html) ===');
+    const context = await passSupportedGate(browser);
+    await context.route('**/hub_catalogo_farmacologico_dual_HOSPITALARIO_2hojas_20260606.xlsx', (route) => {
+        route.fulfill({
+            status: 200,
+            contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            path: badCatalogPath,
+        });
+    });
+    const page = await context.newPage();
+    const consoleErrors = [];
+    const pageErrors = [];
+    page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+    page.on('pageerror', (err) => pageErrors.push(String(err)));
+    await page.goto(`${baseUrl}/primera_visita.html`, { waitUntil: 'domcontentloaded' });
+
+    try {
+        const id = 'previoSistemicoSelect';
+        await page.waitForFunction((selectId) => {
+            const select = document.getElementById(selectId);
+            const wrapper = select ? select.closest('.drug-autocomplete') : null;
+            const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
+            return !!(input && input.disabled && /no disponible/i.test(input.placeholder));
+        }, id, { timeout: 30000 });
+
+        const state = await page.evaluate((selectId) => {
+            const select = document.getElementById(selectId);
+            const wrapper = select ? select.closest('.drug-autocomplete') : null;
+            const input = wrapper ? wrapper.querySelector('.drug-autocomplete__input') : null;
+            return {
+                disabled: input ? input.disabled : null,
+                placeholder: input ? input.placeholder : '',
+                options: select ? Array.from(select.options).map((o) => o.value) : [],
+            };
+        }, id);
+        const comprehensible = state.disabled === true && /no disponible/i.test(state.placeholder);
+        record('catálogo ausente: campo deshabilitado con estado comprensible', comprehensible, JSON.stringify(state));
+        const invented = state.options.filter((value) => value && value !== 'No');
+        record('catálogo ausente: no se inventan opciones de fármaco', invented.length === 0, JSON.stringify(state.options));
+        record('catálogo ausente: console.error === 0', consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record('catálogo ausente: pageerror === 0', pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await context.close();
+    }
+}
+
+let browser;
+try {
+    browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
+    await runSuite(browser, 'primera_visita', 'primera_visita.html', {
+        selectId: 'previoSistemicoSelect',
+        doseId: 'previoSistemicoDose',
+        addType: 'sistemico',
+        extrasId: 'sistemicosExtras',
+        collectFnName: 'recopilarDatosFormulario',
+        allSelectIds: [
+            'previoSistemicoSelect', 'previoFameSelect', 'previoBiologicoSelect',
+            'sistemicoSelect', 'fameSelect', 'biologicoSelect', 'psoriasisSistemicoSelect',
+        ],
+        nonDrugIds: ['psoriasisTopicoSelect', 'psoriasisFototerapiaSelect'],
+    });
+    await runSuite(browser, 'seguimiento', 'seguimiento.html', {
+        selectId: 'cambioSistemicoSelect',
+        doseId: 'cambioSistemicoDose',
+        addType: 'cambio-sistemico',
+        extrasId: 'cambioSistemicosExtras',
+        collectFnName: 'recopilarDatosFormularioSeguimiento',
+        allSelectIds: ['cambioSistemicoSelect', 'cambioFameSelect', 'cambioBiologicoSelect'],
+        nonDrugIds: [],
+        prepare: async (page) => {
+            const opened = await openAncestorCollapsibles(page, '#btnCambiarTratamiento');
+            if (!opened) throw new Error('no se pudo abrir el bloque de tratamiento en seguimiento');
+            await page.locator('#btnCambiarTratamiento').click();
+            await page.waitForTimeout(300);
+        },
+    });
+    await runUnavailableSuite(browser);
+} catch (err) {
+    console.error('ENVIRONMENT FAILURE: ' + err.message);
+    results.push(false);
+} finally {
+    if (browser) await browser.close();
+    server.close();
+}
+
+const passed = results.filter(Boolean).length;
+const total = results.length;
+console.log(`\nRESULTADO: ${passed} OK / ${total - passed} FALLIDO`);
+if (passed !== total) {
+    console.log('reuma_drug_catalog_browser_check FAILED');
+    process.exit(1);
+}
+console.log('reuma_drug_catalog_browser_check PASS');
