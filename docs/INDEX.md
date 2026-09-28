@@ -5,14 +5,14 @@
 | Última actualización | 2026-09-28 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Línea Farmacia de procedencia | `origin/recovery/farmacia-pr-replay-20260727`; **HISTORICAL** para nuevo desarrollo desde el merge de PR #381; conserva la historia funcional Farmacia y la trazabilidad del snapshot |
-| Autoridad canónica de desarrollo (F0.2) | `origin/promueve/nexus-v4` **ACTIVE** desde el merge autorizado de PR #381 (2026-09-24). Nació de `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta. Tip publicado verificado tras PR #435: `e17512384b96fc361668202cdbec5e09022614ff`. Detalle: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
+| Autoridad canónica de desarrollo (F0.2) | `origin/promueve/nexus-v4` **ACTIVE** desde el merge autorizado de PR #381 (2026-09-24). Nació de `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta. Último HEAD de producto Nexus verificado tras PR #449: `25e57b250ec3d7cc0fc80a501fa308a40620f902`; los merges documentales posteriores pueden mover el tip Git sin cambiar ese HEAD de producto. Detalle de transición: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
 | Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras PR #374: `771fb80c5081aa974b86d6a0119ab30059970a25`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
 | Último HEAD de producto Farmacia en recovery histórico | `771fb80c5081aa974b86d6a0119ab30059970a25` (merge PR #374 — robustez de resolución de hojas Enfermería v6 / FH-DEBT-002/003) |
-| Último HEAD publicado PROMueve Nexus | `e17512384b96fc361668202cdbec5e09022614ff` (merge PR #435 — cierre técnico NEXUS-DEBT-007; F5.3 sigue pendiente) |
+| Último HEAD de producto publicado PROMueve Nexus | `25e57b250ec3d7cc0fc80a501fa308a40620f902` (merge PR #449 — TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06; evaluación sintética) |
 | HEAD clínico funcional congelado | `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341; `source_sha`/`last_functional_sha` del snapshot 0.6) |
 | Candidate Train C | `e5e52e2bc8f94805b4771ec40aa19820bb6be02f` |
 | CI del último HEAD Farmacia histórico | Farmacia smoke run `35936756453` `success` y Pages build/deployment run `35936755598` `success` sobre `771fb80c5081aa974b86d6a0119ab30059970a25` |
-| CI del último HEAD Nexus | PR #435 candidate `6f6edcc18a43fc301337bd6ad688a3ea7479a136`: `Nexus deterministic gates` run `36394462077` `success`; merge `e17512384b96fc361668202cdbec5e09022614ff` conserva exactamente el tree del candidate `8ee01dab...`. |
+| CI del último HEAD Nexus | PR #449 candidate `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952`: `Nexus deterministic gates` run `36482893829` `success`; merge de producto `25e57b250ec3d7cc0fc80a501fa308a40620f902` conserva exactamente el tree del candidate `f8faba3ad0b485f21d27cd14244b37522cc40054`; run post-merge `36483698667` `success`. |
 | `origin/main` verificado | `a25cccb8e5a9b90558c462b3e3b96d823f87cb68` |
 | Snapshot estable Cáceres | `CÁCERES-REVIEW-0.6` (issue #345 / PR #346; manifest source `e1120ba85817a1807cea8c1e938867ad778921f4`) |
 | Snapshot 0.6 candidate | `749c82409a415e800500b39018027b189fd6a131` |
@@ -21,6 +21,7 @@
 | Actividad del servicio | Demo |
 | Alcance | Evaluación con datos sintéticos; sin piloto / sin producción |
 | WO / instrucción vigente | Consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales |
+| Auditoría manual de producto viva | [`ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — shaping + adjudicación de TRAIN 1; hallazgos pendientes conservan su estado explícito |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
 ## Architecture Decision Freeze — 2026-09-24
@@ -49,10 +50,11 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 **Nexus Home hardening / rollover canary 04 (TRAIN-NEXUS-V4-ROLLOVER-CANARY-04, #419):** **PUBLICADO Y VERIFICADO** mediante PR #422, candidate `133c978a951c6f73a8daf09f0beeab67fa070d53` → merge `f46290cd3a368e00427dbe2fb4e5fde00270d6ac` sobre `promueve/nexus-v4`. T1 #420 cerró `NEXUS-DEBT-012` haciendo explícitos y fail-closed los punteros browser `site` y `releaseArtifact`; T2 #421 cerró `NEXUS-DEBT-013` rechazando `items` array antes de generar el validator. Evidencia candidate: validator hardening 19/0, Home 11/0, release 15/0, `verify:nexus` PASS, doble rebuild byte-idéntico e independent verifier O1–O8 PASS. Tras el merge, Fast gates y Deterministic suite de GitHub Actions volvieron a `success`. El canary de rollover T1→T2 sí continuó automáticamente en la misma sesión, pero el target económico `<25% of tokensBefore` **no queda demostrado**: la estimación post-compact fue 21,54%, la medición del primer prompt devolvió `null` y la primera medición fiable al final del turno fue 26,77%. Esta evidencia no promueve `native-v4-heavy`, no cualifica la configuración canónica de routing y no acredita piloto/producción.
 **Train Stranglers Clínicos 05 (TRAIN-NEXUS-CLINICAL-STRANGLER-05, #426):** **PUBLICADO Y VERIFICADO** mediante PR #430, candidate exacto `988c2089d1dfa34d5bd1d74b606b410e6e79903c` → merge `10422f4e5b7578dbbb17af17e3b953b5501eb4b2` sobre `promueve/nexus-v4`, con tree idéntico al candidate (`c0615cb301471808e8505e8bd04a078303bb420b`). Ejecutado en orden estricto T1 → T2 → T3 sobre la base `63819da79e22e2d55146531a3662f06f9ba2584f`. T1 #427 (`a0dad4a`) publica el contrato F4.1 read DTO V2 de Farmacia con oráculo congelado; T2 #428 publica el seam de resolución por valor de identificador (`06fcba2`), la facade async con guards de vigencia y propiedad de commit delegada (`6ce61fa`, `f572ca7`) y el vertical Inicio/Quick View (`36bfcaa`); T3 #429 publica el Read Port async de Reuma como wrapper adyacente sobre `HubTools.data` (`a469ad1`, `966db97`) y el vertical búsqueda/historia (`ea34105`). Evidencia: oráculos deterministas (contrato V2 22, puerto Reuma 13 con batería de mutaciones, selectores 92, facade 18, commit explícito 10, cutover 17, session 17, data port 11), harness Reuma 10/0 y acceptance 7/0, QA Chromium real de ambos verticales con `console.error=0` y `pageerror=0`, CI del candidate `Nexus deterministic gates` en `success`, y fresh worktree del merge con `npm ci` + `npm run verify:nexus` PASS. `gentle_review assess` devolvió `risk=unassessable` (#4791, seam `schema-incompatible`) en todas las unidades y se siguió la ruta fail-closed documentada sin fabricar revisión nativa. Madurez: `wired` + `visible` + `demostrado` y publicado en la rama canónica; sigue siendo **evaluación con datos sintéticos**, no `demo` acreditada por este train, no piloto ni producción.
 
+**Train Seguridad Clínica Reuma 06 (TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06, #442):** **PUBLICADO Y VERIFICADO** mediante PR #449. Secuencia ejecutada #443 PCR/unidades → #444 autocomplete desde catálogo publicado → #445 simplificación prebiológico; la revisión de promoción detectó la regresión semántica de categorías y se corrigió antes de publicar mediante #447. Candidate final `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952` → merge de producto `25e57b250ec3d7cc0fc80a501fa308a40620f902`; tree idéntico `f8faba3ad0b485f21d27cd14244b37522cc40054`. Evidencia final: PCR 27/0 + Chromium 32/0; catálogo #444 15/0; categorías 33/0 + Chromium 46/0; prebiológico 16/0 + Chromium 33/0; `npm run verify:nexus` PASS; CI post-merge run `36483698667` success. Mantiene tres categorías explícitas `Sistémicos / FAMEs / Biológicos`; la selección de fármaco sigue siendo identity-only y no escribe datos terapéuticos. Deuda no bloqueante: #448 (hidratación visual de preselección) y #450 (semántica de búsqueda legacy no categorizada). Detalle y siguientes hallazgos: [`ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md). **Madurez:** interacción soportada y QA Chromium con datos sintéticos; no piloto ni producción.
 
-> **Estado vivo:** la autoridad canónica de nuevo desarrollo es `promueve/nexus-v4`; su tip publicado verificado tras PR #435 es `e17512384b96fc361668202cdbec5e09022614ff`. El tip Git de `recovery/farmacia-pr-replay-20260727` es histórico y deliberadamente volátil. El último HEAD de producto Farmacia publicado en esa línea es `771fb80c5081aa974b86d6a0119ab30059970a25` (PR #374). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370.
+> **Estado vivo:** la autoridad canónica de nuevo desarrollo es `promueve/nexus-v4`; el último HEAD de producto Nexus verificado tras PR #449 es `25e57b250ec3d7cc0fc80a501fa308a40620f902`. El tip Git de la rama canónica puede avanzar por documentación sin cambiar ese HEAD de producto. El tip Git de `recovery/farmacia-pr-replay-20260727` es histórico y deliberadamente volátil. El último HEAD de producto Farmacia publicado en esa línea es `771fb80c5081aa974b86d6a0119ab30059970a25` (PR #374). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370.
 
-> **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
+> **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia terapéutica desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
 
 > **Recovery publicado y snapshot Cáceres son artefactos distintos y ya no están alineados funcionalmente.** `recovery` avanzó con acceso SEFH (#362/#363) y Enfermería v6/reconciliación por `solicitud_id` (#364–#370), mientras `CÁCERES-REVIEW-0.6` conserva su manifest con `source_sha`/`last_functional_sha = e1120ba85817a1807cea8c1e938867ad778921f4`. El paquete externo/workbooks tampoco se ha refrozen.
 
@@ -62,23 +64,25 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 
 1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) — estado vivo de recovery y relación con el snapshot Cáceres 0.6, actualizado 2026-09-24.
 2. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, candidates, PRs y merges.
-3. [`docs/ops/NEXUS_DEBT_REGISTER.md`](/docs/ops/NEXUS_DEBT_REGISTER.md) — registro vivo de deuda transversal de plataforma/Foundation; issues conservan la evidencia detallada.
-4. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada específica del módulo Farmacia; no sustituye backlog ni decisiones futuras.
-5. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
-6. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
-7. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
-8. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
+3. [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — revisión manual viva de producto, adjudicación del Train 06 y shaping pendiente.
+4. [`docs/ops/NEXUS_DEBT_REGISTER.md`](/docs/ops/NEXUS_DEBT_REGISTER.md) — registro vivo de deuda transversal de plataforma/Foundation; issues conservan la evidencia detallada.
+5. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada específica del módulo Farmacia; no sustituye backlog ni decisiones futuras.
+6. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
+7. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
+8. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
+9. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
 
 ---
 
 ## 2. Orden de verdad
 
 1. WO/instrucción vigente: consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales.
-2. GitHub live: `promueve/nexus-v4` es la autoridad canónica activa desde el merge de PR #381; tip Nexus publicado verificado tras PR #435: `e17512384b96fc361668202cdbec5e09022614ff`. Para trazabilidad Farmacia histórica, consultar además `recovery`; último HEAD de producto Farmacia: `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
+2. GitHub live: `promueve/nexus-v4` es la autoridad canónica activa desde el merge de PR #381. El último HEAD de producto Nexus verificado tras PR #449 es `25e57b250ec3d7cc0fc80a501fa308a40620f902`; el tip Git puede moverse por documentación. Para trazabilidad Farmacia histórica, consultar además `recovery`; último HEAD de producto Farmacia: `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
 3. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` una vez reconciliados.
-4. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
-5. Spec Unified Clinical Intake V0 y documentos vivos relacionados.
-6. Documentos históricos y biblioteca.
+4. Documento vivo relacionado, incluida la auditoría de producto [`PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) cuando el trabajo derive de esa revisión.
+5. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
+6. Specs/contratos publicados relacionados.
+7. Documentos históricos y biblioteca.
 
 Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificación.
 
@@ -89,7 +93,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 | Rama / ref | Estado | Fuente de verdad para | No es fuente de verdad para |
 | --- | --- | --- | --- |
 | `origin/main` | Legacy / congelada; verificado `a25cccb8...` | Historia previa | Estado Farmacia actual |
-| `origin/promueve/nexus-v4` | **ACTIVE** desde PR #381; tip publicado verificado tras PR #435 `e175123...` | Nuevo desarrollo Nexus/Foundation | Piloto/producción o cambio automático del snapshot Cáceres |
+| `origin/promueve/nexus-v4` | **ACTIVE** desde PR #381; último HEAD de producto verificado tras PR #449 `25e57b2...`; tip Git consultar live | Nuevo desarrollo Nexus/Foundation | Piloto/producción o cambio automático del snapshot Cáceres |
 | `origin/recovery/farmacia-pr-replay-20260727` | **HISTORICAL** para nuevo desarrollo desde PR #381; conserva trazabilidad del último producto Farmacia publicado y del snapshot | Historia/código Farmacia y recuperación | Autoridad canónica Nexus, piloto o producción |
 | `previews/caceres-fh/` | **Snapshot estable `CÁCERES-REVIEW-0.6`**; manifest source/last-functional `e1120ba85817a1807cea8c1e938867ad778921f4` | Evaluación Pharmacy-only Cáceres con datos sintéticos | Piloto, producción o espejo automático de futuros merges |
 | `origin/work/*`, `origin/docs/*` | Trabajo/revisión | WOs atómicas | Estado publicado sin merge |
@@ -97,7 +101,7 @@ Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificaci�
 
 ### Convención de SHAs de publicación
 
-- **Tip Git de `recovery`**: último commit de la rama, incluya producto o solo documentación/administración. Es volátil y se consulta live en GitHub; no se mantiene como SHA canónico estático en los documentos.
+- **Tip Git de una rama**: último commit, incluya producto o solo documentación/administración. Es volátil y se consulta live.
 - **Último HEAD de producto publicado**: último commit/merge que cambió código funcional o un snapshot distribuible. Solo cambia cuando cambia producto/snapshot.
 - **HEAD clínico funcional congelado**: SHA funcional que un snapshot declara en `source_sha` / `last_functional_sha`; puede ser anterior al HEAD de producto si la promoción del snapshot añade solo artefactos de publicación.
 - Un merge `documentation-only` puede mover el tip Git sin cambiar el HEAD de producto ni el HEAD clínico funcional. **No abrir una nueva reconciliación solo porque haya cambiado el tip por documentación.**
@@ -190,6 +194,7 @@ Decisiones principales:
 | [`AGENTS.md`](/AGENTS.md) | Vigente — ejecución Pi + Gentle nativo | Gobernanza operativa |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
 | [`docs/ops/PROMUEVE_BACKLOG.md`](/docs/ops/PROMUEVE_BACKLOG.md) | Vigente / propuestas no autorizantes | Backlog vivo de producto y arquitectura; separa ideas de deuda y decisiones |
+| [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) | Vigente / revisión viva | Auditoría manual Sil, adjudicación de Train 06 y shaping pendiente |
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica + addendum 2026-07-31 | Evolución post-SES |
 | [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente | Separación Reuma/Farmacia |
 | [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Vigente | Discovery Badajoz/Mérida |
@@ -208,8 +213,9 @@ Fuentes principales:
 - [`docs/RESUMEN_RELEASE_REUMA_V2.md`](/docs/RESUMEN_RELEASE_REUMA_V2.md)
 - [`docs/CHECKLIST_E2E_CLINICO_V2.md`](/docs/CHECKLIST_E2E_CLINICO_V2.md)
 - [`docs/VALIDACION_MANUAL_DEMO_V2.md`](/docs/VALIDACION_MANUAL_DEMO_V2.md)
+- [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — revisión viva y estado de los siguientes trains.
 
-El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 de Farmacia ni normalizarse sin WO específica.
+El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 de Farmacia ni normalizarse sin WO específica. Train 06 ya ha publicado, con datos sintéticos, el contrato explícito de unidades PCR, el autocomplete común con categorías explícitas y la simplificación prebiológica; no extiende por sí solo esa madurez a piloto/producción ni resuelve Reuma→Farmacia.
 
 ---
 
@@ -226,7 +232,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md)
 - [`docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md) — reporte operativo de WO2 (Validación v2)
 - [`docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md) — reporte operativo de WO3 (Primera Visita v2)
-- [`docs/ops/WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01.md`](/docs/ops/WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01.md) — reporte operativo de WO4 (Seguimiento v2)
+- [`docs/ops/WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01.md`](/docs/ops/WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE_LINES_ADAPTER_CONTRACT.md) — reporte operativo de WO4 (Seguimiento v2)
 - Los planes históricos de recuperación PR replay y rescate V4 citados en ediciones previas no están publicados en la rama `recovery`; no se usan como estado vivo.
 - [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md)
 
@@ -289,9 +295,12 @@ Principios conservados bajo el Architecture Decision Freeze (el documento origin
 Estado real:
 
 - CIMA oficial puede permanecer versionado en GitHub.
+- El catálogo hospitalario publicado actual es consumido por Reuma desde Train 06 mediante una capacidad común de solo lectura.
+- Para preservar `Sistémicos / FAMEs / Biológicos`, #447 añadió `data/catalogos/reuma/reuma_medication_categories.v1.json`: clasificación explícita/versionada, no inferida en runtime, con entradas identity-only para miembros declarados no cubiertos por el workbook.
+- La selección de catálogo nunca decide dosis, vía, pauta, presentación, inducción, duración, línea, switch/add-on, renovación ni validación.
 - El snapshot Cáceres usa el artefacto de junio de 2026.
 - No existe todavía una Action mensual activa.
-- La futura Action debe extraer, validar, generar diff y abrir PR revisable.
+- La futura Action debe extraer, validar, generar diff y abrir PR revisable; la fuente categorial de #447 no sustituye esa automatización.
 - El catálogo local especial no se sobrescribe al actualizar CIMA.
 
 ---
@@ -347,7 +356,7 @@ Para el estado actual de Farmacia también son memoria histórica o referencia s
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
-Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recovery`, el último HEAD de producto publicado (`771fb80c5081aa974b86d6a0119ab30059970a25`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y el estado vivo actualizado en `FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
+Cuando contradigan el estado vivo, prevalecen GitHub live, el último HEAD de producto Nexus (`25e57b250ec3d7cc0fc80a501fa308a40620f902` tras PR #449), el último HEAD de producto Farmacia histórico (`771fb80c5081aa974b86d6a0119ab30059970a25`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y los documentos vivos relacionados. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
 
 ---
 
@@ -368,4 +377,4 @@ Cuando contradigan el estado vivo, prevalecen GitHub live para el tip de `recove
 
 ---
 
-*Estado reconciliado 2026-09-24 tras PR #374; tip Git verificado en `771fb80c...`. El tip Git de recovery es volátil y se consulta live; último HEAD de producto publicado: `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por Cáceres 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` y el paquete externo siguen sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
+*Estado reconciliado 2026-09-28 tras PR #449. Último HEAD de producto Nexus: `25e57b250ec3d7cc0fc80a501fa308a40620f902`; el tip Git de `promueve/nexus-v4` se consulta live y puede moverse por documentación. Farmacia recovery histórico mantiene como último HEAD de producto `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por Cáceres 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` y el paquete externo siguen sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
