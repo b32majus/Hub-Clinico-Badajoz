@@ -13,7 +13,7 @@
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
 | Tip Nexus publicado verificado | `e17512384b96fc361668202cdbec5e09022614ff` — merge PR #435 / cierre técnico NEXUS-DEBT-007 |
 | Última entrega | NEXUS-DEBT-007 (#434): hardening del oracle Reuma 497 publicado por PR #435; F5.3 sigue pendiente |
-| Verificación post-merge | Candidate `988c2089...`: GitHub Actions `Nexus deterministic gates` Fast gates `success` + Deterministic suite `success`; merge `10422f4e...`: fresh worktree `npm ci` + `npm run verify:nexus` PASS; tree idéntico al candidate `c0615cb3...`. |
+| Verificación post-merge | PR #435 candidate `6f6edcc18a43fc301337bd6ad688a3ea7479a136`: GitHub Actions `Nexus deterministic gates` run `36394462077` `success`; merge `e17512384b96fc361668202cdbec5e09022614ff` conserva exactamente el tree del candidate `8ee01dab...`. |
 | Home sintética | F3.2 publicada; F3.3 browser-qualified; F3.4 release sintético reproducible y browser-qualified; D012/D013 hardening publicado |
 | Madurez | Evaluación sintética; **no piloto / no producción** |
 | Deuda Nexus abierta | D004; subhallazgos restantes D005. D007 RESOLVED/PUBLISHED por #434 / PR #435. |
