@@ -115,6 +115,55 @@ function getMockSeguimientoBundle(patientId) {
     };
 }
 
+// Reads a patient bundle through the published read port
+// (`scripts/reuma_patient_read_port.js`). Read-only: it never writes appState or
+// sessionStorage and never resolves by name/fármaco/posición. The legacy demo mock
+// (K8) stays reachable ONLY through a real `not_found`; `unavailable` and `error`
+// are returned as explicit, distinct states so the caller can fail closed.
+async function readSeguimientoBundle(patientId) {
+    const port = (typeof window.ReumaPatientReadPort?.getPort === 'function')
+        ? window.ReumaPatientReadPort.getPort()
+        : null;
+    if (!port) {
+        return { status: 'unavailable' };
+    }
+
+    let read;
+    try {
+        read = await port.readPatientBundle(patientId);
+    } catch (error) {
+        return { status: 'error', error_code: 'read_failed' };
+    }
+
+    if (read && read.status === 'ok' && read.patient) {
+        return {
+            status: 'ok',
+            source: 'port',
+            baseRecord: read.patient.record,
+            historyData: read.patient.history
+        };
+    }
+
+    if (read && read.status === 'not_found') {
+        const mockBundle = getMockSeguimientoBundle(patientId);
+        if (mockBundle) {
+            return {
+                status: 'ok',
+                source: 'mock',
+                baseRecord: mockBundle.summary,
+                historyData: mockBundle.history
+            };
+        }
+        return { status: 'not_found', reason: read.reason };
+    }
+
+    if (read && read.status === 'error') {
+        return { status: 'error', error_code: read.error_code };
+    }
+
+    return { status: 'unavailable' };
+}
+
 function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam }) {
     const normalizedBaseRecord = normalizeRecord(baseRecord);
     const latestVisit = normalizeRecord(history?.latestVisit || getLast(history?.allVisits));
@@ -156,7 +205,7 @@ function getHubModule(path, required = true) {
     return value;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     if (typeof HubTools === 'undefined') {
         console.error('❌ HubTools no disponible. Asegúrate de cargar hubTools.js primero.');
         return;
@@ -193,53 +242,47 @@ document.addEventListener('DOMContentLoaded', () => {
     if (patientId) {
         console.log(`🔎 Cargando datos de seguimiento para ${patientId}`);
 
-        let baseRecord = null;
-        let historyData = null;
+        const outcome = await readSeguimientoBundle(patientId);
 
-        if (typeof HubTools.data?.findPatientById === 'function') {
-            baseRecord = HubTools.data.findPatientById(patientId);
-        }
-        if (typeof HubTools.data?.getPatientHistory === 'function') {
-            const history = HubTools.data.getPatientHistory(patientId);
-            if (history && Array.isArray(history.allVisits) && history.allVisits.length > 0) {
-                historyData = history;
-            }
-        }
-
-        if (!baseRecord || !historyData) {
-            const mockBundle = getMockSeguimientoBundle(patientId);
-            if (mockBundle) {
-                historyData = historyData || mockBundle.history;
-                baseRecord = baseRecord || mockBundle.summary;
-            }
-        }
-
-        if (!baseRecord && typeof HubTools.data?.findPatientById !== 'function') {
-            console.warn(`⚠️ No se encontró información del paciente ${patientId}`);
-        }
-
-        const prefillPayload = buildPrefillPayload({
-            patientId,
-            history: historyData,
-            baseRecord,
-            patologiaParam
-        });
-
-        if (prefillPayload && prefillPayload.idPaciente) {
-            HubTools.form.prefillSeguimientoForm(prefillPayload);
-            var pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
-            if (pathologyForForm) {
-                HubTools.form.adaptarFormulario(pathologyForForm);
-            }
-            renderPrebiologicBadge(prefillPayload.idPaciente, prefillPayload);
-        } else {
-            console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
+        if (outcome.status === 'unavailable' || outcome.status === 'error') {
+            // Fail visibly and safely: an unavailable or failed read is never a demo
+            // patient and never becomes a fabricated prefill.
+            const failClosed = outcome.status === 'error'
+                ? 'No se pudo consultar los datos del paciente. Inténtalo de nuevo.'
+                : 'No hay datos cargados. Carga el Excel para consultar pacientes.';
+            console.error('[Seguimiento] ' + failClosed);
+            HubTools.utils?.mostrarNotificacion?.(failClosed, 'error');
             const idInput = document.getElementById('idPaciente');
             if (idInput) {
                 idInput.value = patientId;
             }
             if (patologiaParam) {
                 HubTools.form.adaptarFormulario(patologiaParam);
+            }
+        } else {
+            const prefillPayload = buildPrefillPayload({
+                patientId,
+                history: outcome.historyData,
+                baseRecord: outcome.baseRecord,
+                patologiaParam
+            });
+
+            if (prefillPayload && prefillPayload.idPaciente) {
+                HubTools.form.prefillSeguimientoForm(prefillPayload);
+                var pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
+                if (pathologyForForm) {
+                    HubTools.form.adaptarFormulario(pathologyForForm);
+                }
+                renderPrebiologicBadge(prefillPayload.idPaciente, prefillPayload);
+            } else {
+                console.warn(`⚠️ No se pudo pre-rellenar el formulario para ${patientId}`);
+                const idInput = document.getElementById('idPaciente');
+                if (idInput) {
+                    idInput.value = patientId;
+                }
+                if (patologiaParam) {
+                    HubTools.form.adaptarFormulario(patologiaParam);
+                }
             }
         }
     }
