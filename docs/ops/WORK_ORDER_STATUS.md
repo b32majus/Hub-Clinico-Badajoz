@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-28
+**Última actualización:** 2026-09-29
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,14 +11,14 @@
 | Elemento | Valor |
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
-| Último HEAD de producto Nexus verificado | `25e57b250ec3d7cc0fc80a501fa308a40620f902` — merge PR #449 / TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06; el tip Git puede avanzar por documentación sin cambiar este HEAD de producto |
-| Última entrega | TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06 (#442): PCR/unidades #443 → autocomplete catálogo #444 → simplificación prebiológica #445 + correctiva categorial #447, publicado por PR #449 |
-| Verificación post-merge | PR #449 candidate `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952`; candidate y merge comparten tree `f8faba3ad0b485f21d27cd14244b37522cc40054`; GitHub Actions `Nexus deterministic gates` run post-merge `36483698667` `success`. |
+| Último HEAD de producto Nexus verificado | `3c929f8a95c588fdf9db13c593e1f8462bc561a1` — merge PR #459 / TRAIN-NEXUS-REUMA-FOUNDATION-07; el tip Git puede avanzar por documentación/administración sin cambiar este HEAD de producto |
+| Última entrega | TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454): Seguimiento read migration #455 → Estadísticas read seam #456 → 497 writer compatibility boundary #457, publicado por PR #459 |
+| Verificación post-merge | PR #459 candidate `52cca14a66e1a848b491b8d584d1197d96f3d0c2`; candidate y merge comparten tree `cc1d5e99aa568024cef17768732e7d2507e3abf8`; `npm run verify:nexus` y `git diff --check` PASS en la publicación (#458); GitHub Actions `Nexus deterministic gates` run post-merge `36625029994` `success`. |
 | Home sintética | F3.2 publicada; F3.3 browser-qualified; F3.4 release sintético reproducible y browser-qualified; D012/D013 hardening publicado |
 | Madurez | Evaluación sintética; **no piloto / no producción** |
 | Deuda Nexus abierta | D004; subhallazgos restantes D005; #448 (hidratación visual del medicamento preseleccionado) y #450 (semántica de búsqueda legacy no categorizada) abiertas/no bloqueantes. D007 RESOLVED/PUBLISHED por #434 / PR #435. |
-| Siguiente frontera del plan | La auditoría manual viva deja #446 abierto/`status:approved` para cerrar primero el contrato de renovaciones N0; después Reuma→Farmacia requiere discovery/contrato y la automatización CIMA sigue separada. Las fronteras Foundation F4.3+/F5.2+/F5.3/F6/F7 continúan gobernadas por el Foundation Plan y no quedan sustituidas por este shaping de producto. |
-| Último train clínico publicado | TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06 (#442): PR #449 `MERGED`, candidate `6b8582a...` → merge de producto `25e57b2...`; #443/#444/#445/#447 publicados con QA Chromium soportada y datos sintéticos. |
+| Siguiente frontera del plan | La auditoría manual viva deja #446 abierto/`status:approved` para cerrar primero el contrato de renovaciones N0; después Reuma→Farmacia requiere discovery/contrato y la automatización CIMA sigue separada. Las fronteras Foundation F4.3+ y F5.4/F6/F7 continúan gobernadas por el Foundation Plan; **F5.4 es NEXT SHAPING** mediante la secuencia #461 → #462 → #463 → #464, no implementada. |
+| Último train clínico publicado | TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454): PR #459 `MERGED`, candidate `52cca14a...` → merge de producto `3c929f8a...`; #455/#456/#457 publicados con checks deterministas y QA browser por ticket y datos sintéticos. |
 
 ### TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) — publicado por PR #430
 
@@ -40,6 +40,16 @@ Publicación: PR #430, candidate `988c2089d1dfa34d5bd1d74b606b410e6e79903c` → 
 | T2b #447 | Preservar `Sistémicos / FAMEs / Biológicos` con clasificación explícita/versionada | `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952` | categoría 33/0; Chromium catálogo/categorías 46/0; ausencia/categoría inválida fail-closed |
 
 Publicación: PR #449, candidate final `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952` → merge de producto `25e57b250ec3d7cc0fc80a501fa308a40620f902`; candidate y merge comparten tree `f8faba3ad0b485f21d27cd14244b37522cc40054`. `npm run verify:nexus` PASS; CI pre-merge `36482893829` success y post-merge `36483698667` success. #442/#443/#444/#445/#447 quedaron CLOSED/completed. Deuda no bloqueante preservada: #448 y #450. Madurez: implementado/cableado/visible y demostrado en navegador con fixtures sintéticos; **no piloto ni producción**. Auditoría/shaping vivo: [`audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](./audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md).
+
+### TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) — publicado por PR #459
+
+| Ticket | Alcance | Commit publicado | Evidencia principal |
+| --- | --- | --- | --- |
+| T1 #455 | F5.2 — migrar lecturas de paciente/historia de Seguimiento detrás del Reuma Read Port | `a5d62953a6c41a5fbd05a749dc498cb4f8d33908` | checks de migración y browser de Seguimiento publicados con el commit (`tools/reuma_seguimiento_read_*`) |
+| T2 #456 | F5.2 — migrar lecturas de población de Estadísticas detrás de un seam de lectura Reuma explícito | `07d6caee7d337a1c0fe12019c64821b1c51cbcb1` | seam `scripts/reuma_population_read_port.js` + checks de seam y browser de Estadísticas (`tools/reuma_estadisticas_read_*`) |
+| T3 #457 | F5.3 — encapsular el writer legacy de 497 columnas tras una frontera de compatibilidad fail-closed | `52cca14a66e1a848b491b8d584d1197d96f3d0c2` | frontera `modules/reuma_export_boundary.js` + checks de boundary y browser (`tools/reuma_export_boundary_*`); salida exacta protegida, `KNOWN_LEGACY` preservado sin corrección semántica |
+
+Publicación: PR #459, candidate final `52cca14a66e1a848b491b8d584d1197d96f3d0c2` → merge de producto `3c929f8a95c588fdf9db13c593e1f8462bc561a1`; candidate y merge comparten tree `cc1d5e99aa568024cef17768732e7d2507e3abf8`. `npm run verify:nexus` y `git diff --check` PASS en la publicación (#458); CI post-merge `Nexus deterministic gates` run `36625029994` success. #454/#455/#456/#457/#458 quedaron CLOSED/completed. La desviación de routing de T3 quedó aceptada por la operadora como no bloqueante; provenance del lifecycle Atenea del train: C-078/C-079 (CURRENT para operaciones nuevas: C-080). Tras el merge, el tip Git avanzó a `f49ad6ec...` por dos commits administrativos (alta/baja de un `__noop__`) sin cambio neto de árbol. **F5.4 permanece NEXT SHAPING** (#461 → #462 → #463 → #464), no implementada. Madurez: evaluación con datos sintéticos; **no piloto ni producción**.
 
 ## Estado publicado actual de Farmacia
 
@@ -196,6 +206,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 | **TRAIN-NEXUS-V4-ROLLOVER-CANARY-04 (#419)** | D012/D013 hardening + canary one-touch T1→T2 | ✅ MERGED_AND_VERIFIED (producto) / canary económico no demostrado | `work/nexus-v4-rollover-canary-04-419-20260926` | T1 #420 `9c2b9d6`; T2 #421 `8bad5f9`; docs `133c978`; candidate `133c978a...` → merge `f46290cd...` (PR #422) | D012/D013 publicados; post-merge Fast gates + Deterministic suite success. Rollover automático funcionó en misma sesión; estimación post-compact 21,54%, first-prompt metric no disponible y primer contexto fiable 26,77%; no promover profile/canary. |
 | **WO-DOC-NEXUS-POST-419-RECONCILIATION (#423)** | Reconciliar publicación #422, autoridad Nexus y progreso F0–F7 | ✅ MERGED / reconciled | `docs/nexus-postmerge-reconciliation-419-20260926` | candidate `4944373...` → merge `b57d6a48...` (PR #424) | Solo documentación: INDEX/WOS/Foundation plan/debt register + WO. Closeout administrativo bajo el mismo #423; GitHub live resuelve el estado final del issue. No runtime/clínica/main/recovery/snapshots. |
 | **TRAIN-NEXUS-CLINICAL-SAFETY-REUMA-06 (#442)** | PCR/unidades → autocomplete farmacológico → prebiológico mínimo + correctiva de categorías | ✅ MERGED_AND_VERIFIED | `work/nexus-reuma-train06-20260928` | #443 `636f838...`; #444 `fc598166...`; #445 `4eeaf1f...`; #447 `6b8582a...`; candidate `6b8582a158bdcd6f8e7e425e0e83bc6eb27ca952` → merge `25e57b250ec3d7cc0fc80a501fa308a40620f902` (PR #449) | Oráculos PCR 27/0, catálogo 15/0, categorías 33/0, prebiológico 16/0; Chromium 32/0 + 46/0 + 33/0; `verify:nexus` PASS; CI post-merge success; #448/#450 abiertas no bloqueantes; evaluación sintética, no piloto/producción. |
+| **TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454)** | F5.2 read migration (Seguimiento + Estadísticas) + F5.3 497 writer compatibility boundary | ✅ MERGED_AND_VERIFIED | `work/nexus-reuma-train07-454-20260928` | T1 #455 `a5d6295`; T2 #456 `07d6cae`; T3 #457 `52cca14`; candidate `52cca14a66e1a848b491b8d584d1197d96f3d0c2` → merge `3c929f8a95c588fdf9db13c593e1f8462bc561a1` (PR #459) | Checks deterministas y browser por ticket; `verify:nexus` + `git diff --check` PASS; CI post-merge run `36625029994` success; tree merge = tree candidate `cc1d5e99...`; desviación de routing T3 aceptada; #458 cerró la publicación; F5.4 NEXT SHAPING (#461→#464); evaluación sintética, no piloto/producción. |
 | **WO-FH-CACERES-REVIEW-0.5 (#331)** | Promoción snapshot Cáceres 0.5 | ✅ Merged | `work/fh-caceres-review-0.5-331-20260907` | candidate `59d7b7e...` → merge `2ee9c54...` (PR #333) | Manifest `CÁCERES-REVIEW-0.5`, source `45645417...`; synthetic/demo only |
 | **WO-FH-EORDEN-CONTEXT-AUTO-REVEAL (#334)** | Auto-reveal Dermatología/patología | ✅ Merged | `work/fh-eorden-context-auto-reveal-334-20260907` | `ad4088c...` → `7b99eda...` (PR #335) | Presentation-only; no prewrite de patología |
 | **WO-FH-EORDEN-DERMA-EXTENDED-CONTRACT (#336)** | D17_EXT_V1 | ✅ Merged | `work/fh-eorden-derma-extended-contract-336-20260907` | `773f66f...` → `775a8c08...` (PR #337) | Transporte clínico extendido seguro; legacy D17 preservado |
