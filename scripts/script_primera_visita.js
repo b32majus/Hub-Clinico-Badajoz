@@ -188,16 +188,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (errores.length === 0) {
                     console.log('✓ Formulario válido, recopilando datos...');
 
-                    // Verificar disponibilidad de funciones críticas
+                    // Ruta cutover F5.4C (#464): acto de visita → adapter → transporte.
+                    // Comprobaciones defensivas de las superficies nuevas.
                     if (typeof HubTools?.form?.recopilarDatosFormulario !== 'function') {
-                        console.error('❌ HubTools.form.recopilarDatosFormulario no disponible');
+                        console.error('Error al exportar CSV: HubTools.form.recopilarDatosFormulario no disponible');
                         HubTools.utils?.mostrarNotificacion?.('Error: función de recopilación no disponible', 'error');
                         return;
                     }
 
-                    if (typeof HubTools?.export?.exportarYCopiarCSV !== 'function') {
-                        console.error('❌ HubTools.export.exportarYCopiarCSV no disponible');
-                        HubTools.utils?.mostrarNotificacion?.('Error: función de exportación CSV no disponible', 'error');
+                    if (typeof HubTools?.reumaActContract?.createVisitAct !== 'function') {
+                        console.error('Error al exportar CSV: contrato de acto de visita no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: contrato de acto de visita no disponible', 'error');
+                        return;
+                    }
+
+                    if (typeof HubTools?.reumaLegacyExportAdapter?.projectVisitAct497 !== 'function') {
+                        console.error('Error al exportar CSV: adaptador de exportación no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: adaptador de exportación no disponible', 'error');
+                        return;
+                    }
+
+                    if (typeof HubTools?.export?.exportarAct497 !== 'function') {
+                        console.error('Error al exportar CSV: transporte CSV no disponible');
+                        HubTools.utils?.mostrarNotificacion?.('Error: transporte CSV no disponible', 'error');
                         return;
                     }
 
@@ -208,20 +221,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('🔍 Diagnóstico seleccionado:', diagnostico);
 
                     console.log('📤 Iniciando exportación CSV...');
-                    HubTools.export.exportarYCopiarCSV(datos, 'primera', diagnostico);
+                    const act = HubTools.reumaActContract.createVisitAct({
+                        kind: 'primera_visita',
+                        patientRef: datos.idPaciente,
+                        pathology: diagnostico,
+                        payload: datos
+                    });
+                    if (!act || act.ok !== true) {
+                        HubTools.utils?.mostrarNotificacion?.('Exportación CSV bloqueada: acto de visita inválido', 'error');
+                        return;
+                    }
+
+                    const proyeccion = HubTools.reumaLegacyExportAdapter.projectVisitAct497(act);
+                    if (!proyeccion || proyeccion.ok !== true) {
+                        HubTools.utils?.mostrarNotificacion?.('Exportación CSV bloqueada en la frontera de compatibilidad', 'error');
+                        return;
+                    }
+
+                    HubTools.export.exportarAct497(proyeccion, datos);
                 } else {
                     console.warn('⚠ Errores de validación encontrados');
                     HubTools.utils?.mostrarNotificacion?.(`Faltan campos obligatorios: ${errores.join(', ')}`, 'error');
                 }
             } catch (error) {
-                console.error('❌ Error capturado en exportación CSV:', error);
-                console.error('Stack trace:', error.stack);
+                console.error('Error al exportar CSV:', error);
                 HubTools.utils?.mostrarNotificacion?.(`Error al exportar CSV: ${error.message}`, 'error');
             }
         });
 
     }
-
     // --- EVENTO: Botón Nuevo Paciente ---
     const btnNuevoPaciente = document.getElementById('btnNuevoPaciente');
     if (btnNuevoPaciente) {
