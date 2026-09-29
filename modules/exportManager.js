@@ -1565,62 +1565,32 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
         let csvData = '';
         let hojaExcel = '';
         const diagnosticoNormalizado = normalizePathologyExport(diagnostico, datos);
-        
-        // Determinar qué función especializada usar según el tipo de visita y diagnóstico
-        if (tipoVisita === 'primera') {
-            switch (diagnosticoNormalizado) {
-                case 'espa':
-                    csvData = generarFilaCSV_EspA_PrimeraVisita(datos);
-                    hojaExcel = 'ESPA';
-                    break;
-                case 'aps':
-                    csvData = generarFilaCSV_APs_PrimeraVisita(datos);
-                    hojaExcel = 'APS';
-                    break;
-                case 'ar':
-                    csvData = generarFilaCSV_AR_PrimeraVisita(datos);
-                    hojaExcel = 'AR';
-                    break;
-                case 'les':
-                    csvData = generarFilaCSV_LES_PrimeraVisita(datos);
-                    hojaExcel = 'LES';
-                    break;
-                case 'sjogren':
-                    csvData = generarFilaCSV_SJOGREN_PrimeraVisita(datos);
-                    hojaExcel = 'SJOGREN';
-                    break;
-                default:
-                    throw new Error(`Diagnóstico no reconocido para primera visita: ${diagnostico}`);
-            }
-        } else if (tipoVisita === 'seguimiento') {
-            switch (diagnosticoNormalizado) {
-                case 'espa':
-                    csvData = generarFilaCSV_EspA_Seguimiento(datos);
-                    hojaExcel = 'ESPA';
-                    break;
-                case 'aps':
-                    csvData = generarFilaCSV_APs_Seguimiento(datos);
-                    hojaExcel = 'APS';
-                    break;
-                case 'ar':
-                    csvData = generarFilaCSV_AR_Seguimiento(datos);
-                    hojaExcel = 'AR';
-                    break;
-                case 'les':
-                    csvData = generarFilaCSV_LES_Seguimiento(datos);
-                    hojaExcel = 'LES';
-                    break;
-                case 'sjogren':
-                    csvData = generarFilaCSV_SJOGREN_Seguimiento(datos);
-                    hojaExcel = 'SJOGREN';
-                    break;
-                default:
-                    throw new Error(`Diagnóstico no reconocido para seguimiento: ${diagnostico}`);
-            }
-        } else {
-            throw new Error(`Tipo de visita no reconocido: ${tipoVisita}`);
+
+        // F5.3 (#457): la fila 497 se obtiene EXCLUSIVAMENTE a través de la
+        // frontera de compatibilidad (HubTools.reumaExportBoundary), que
+        // resuelve el generador legacy y valida el shape antes de exponerlo.
+        // Sin frontera disponible o con shape incompatible: fail-closed, no se
+        // trunca, rellena ni copia nada.
+        const boundary = (typeof HubTools !== 'undefined' && HubTools.reumaExportBoundary &&
+            typeof HubTools.reumaExportBoundary.generateLegacyRow497 === 'function')
+            ? HubTools.reumaExportBoundary
+            : null;
+        if (!boundary) {
+            throw new Error('Frontera de compatibilidad del export Reuma (497) no disponible');
         }
-        
+        const boundaryResult = boundary.generateLegacyRow497({ datos: datos, pathology: diagnosticoNormalizado, tipoVisita: tipoVisita });
+        if (!boundaryResult || boundaryResult.ok !== true || typeof boundaryResult.row !== 'string') {
+            const detalle = boundaryResult && boundaryResult.error
+                ? `${boundaryResult.error.code}: ${boundaryResult.error.message}`
+                : 'resultado sin error tipado';
+            throw new Error(`Export v2 rechazado en la frontera de compatibilidad (${detalle})`);
+        }
+        csvData = boundaryResult.row;
+        hojaExcel = (boundaryResult.meta && boundaryResult.meta.sheet) || '';
+        if (!hojaExcel) {
+            throw new Error('Export v2 sin hoja Excel determinada por la frontera de compatibilidad');
+        }
+
         if (!csvData || csvData.trim() === '') {
             throw new Error('No se pudieron generar datos CSV');
         }
