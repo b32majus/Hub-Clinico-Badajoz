@@ -13,6 +13,12 @@ let sortColumn = null;
 let sortDirection = 'asc';
 let activeFilters = {};
 
+// Fail-safe copies for a missing/failed population read: distinct from the
+// "no patients match the filters" empty state so an unavailable source is never
+// rendered as a valid empty cohort.
+const POPULATION_UNAVAILABLE_COPY = 'No hay datos cargados. Carga el Excel para consultar la cohorte.';
+const POPULATION_ERROR_COPY = 'No se pudieron consultar los datos de la cohorte. Inténtalo de nuevo.';
+
 // === PALETA DE COLORES UNIFICADA ===
 const COLORS = {
     // Estados clínicos
@@ -501,7 +507,10 @@ function poblarFiltroFarmacos() {
     if (select.options.length > 1) return;
 
     try {
-        const farmacosData = HubTools?.data?.getFarmsDataFromState?.() || {};
+        const port = getEstadisticasPopulationPort();
+        if (!port) return;
+        const read = port.readDrugFilterOptions();
+        const farmacosData = (read && read.categories) || {};
 
         const categories = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];
         categories.forEach(category => {
@@ -670,25 +679,98 @@ function clearAllFilters() {
 }
 
 // === ACTUALIZAR DASHBOARD ===
-function updateDashboard() {
+// The population reads travel through the read-only Reuma population seam
+// (`scripts/reuma_population_read_port.js`); Estadísticas no longer calls the
+// population reads (`getPoblationalData`/`getFarmsDataFromState`) directly.
+function getEstadisticasPopulationPort() {
+    return (typeof window !== 'undefined' && typeof window.ReumaPopulationReadPort?.getPort === 'function')
+        ? window.ReumaPopulationReadPort.getPort()
+        : null;
+}
+
+async function readEstadisticasPopulation(filters) {
+    const port = getEstadisticasPopulationPort();
+    if (!port) {
+        return { status: 'unavailable' };
+    }
+    try {
+        return await port.readPopulation(filters);
+    } catch (error) {
+        return { status: 'error', error_code: 'read_failed' };
+    }
+}
+
+// A missing/failed population read is never a valid empty cohort: the table keeps a
+// distinct fail-safe message, the KPIs drop to a placeholder and the charts are cleared.
+function renderPopulationFailSafe(status) {
+    currentCohort = [];
+    filteredCohort = [];
+    currentPage = 1;
+
+    const message = status === 'error' ? POPULATION_ERROR_COPY : POPULATION_UNAVAILABLE_COPY;
+    console.error('[Estadísticas] ' + message);
+    HubTools?.utils?.mostrarNotificacion?.(message, 'error');
+
+    const tbody = document.getElementById('cohortTableBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-state" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #B91C1C; margin-bottom: 10px; display: block;"></i>
+                    <span style="color: #B91C1C;">${message}</span>
+                </td>
+            </tr>
+        `;
+    }
+
+    const info = document.getElementById('paginationInfo');
+    if (info) info.textContent = 'Sin datos disponibles';
+    const prev = document.getElementById('prevPageBtn');
+    const next = document.getElementById('nextPageBtn');
+    if (prev) prev.disabled = true;
+    if (next) next.disabled = true;
+    const pageNumbers = document.getElementById('pageNumbers');
+    if (pageNumbers) pageNumbers.innerHTML = '';
+
+    ['kpiTotalPatients', 'kpiRemissionPercent', 'kpiHighActivityPercent', 'kpiBiologicPercent', 'kpiAvgActivity', 'kpiAvgAsdas']
+        .forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = '—';
+        });
+    const additional = document.getElementById('additionalMetrics');
+    if (additional) additional.innerHTML = '';
+
+    Object.keys(chartInstances).forEach(key => {
+        try {
+            chartInstances[key]?.destroy?.();
+        } catch (error) {
+            /* clearing a chart must never mask the read failure */
+        }
+    });
+    chartInstances = {};
+}
+
+async function updateDashboard() {
     console.log('📊 Actualizando dashboard...');
     const filters = getActiveFilters();
 
-    if (HubTools?.data?.getPoblationalData) {
-        const data = HubTools.data.getPoblationalData(filters);
+    const outcome = await readEstadisticasPopulation(filters);
 
-        currentCohort = data.filteredCohort || [];
-        filteredCohort = [...currentCohort];
-        currentPage = 1;
-
-        updateKPIs(data.kpis);
-        renderCharts(data.chartData);
-        renderTablePage();
-
-        console.log('✅ Dashboard actualizado:', currentCohort.length, 'pacientes');
-    } else {
-        console.error('❌ HubTools.data.getPoblationalData no disponible');
+    if (!outcome || outcome.status !== 'ok' || !outcome.payload) {
+        renderPopulationFailSafe(outcome && outcome.status === 'error' ? 'error' : 'unavailable');
+        return;
     }
+
+    const data = outcome.payload;
+    currentCohort = data.filteredCohort || [];
+    filteredCohort = [...currentCohort];
+    currentPage = 1;
+
+    updateKPIs(data.kpis);
+    renderCharts(data.chartData);
+    renderTablePage();
+
+    console.log('✅ Dashboard actualizado:', currentCohort.length, 'pacientes');
 }
 
 // === ACTUALIZAR KPIs ===
