@@ -1530,6 +1530,45 @@ function retryPendingRowCopy(rowId) {
     });
 }
 /**
+ * Entrega compartida de una fila ya proyectada (F5.4C, #464): única ruta de
+ * copia/cola/checklist para `exportarYCopiarCSV` (boundary-direct, #457) y
+ * `exportarAct497` (ruta acto de visita). No decide dominio ni proyecta; solo
+ * materializa el transporte visible (fila pendiente + portapapeles).
+ */
+function entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, tipoVisita) {
+    console.log(`📋 CSV generado para hoja: ${hojaExcel}`);
+
+    // Guardar como fila pendiente por si falla el portapapeles
+    addPendingRow({
+        content: csvData,
+        sheet: hojaExcel,
+        pathology: diagnosticoNormalizado,
+        type: tipoVisita,
+        includeBom: false
+    });
+
+    // Copiar al portapapeles con fallback a modal de copia manual
+    copyTextWithFallback(csvData, {
+        manualText: csvData,
+        modalTitle: 'Copia manual de CSV',
+        modalMessage: 'No se pudo copiar autom\u00e1ticamente. Copie el texto y p\u00e9guelo en la hoja ' + hojaExcel + '.',
+        manualNotification: 'No se pudo copiar autom\u00e1ticamente. Use la ventana de copia manual.'
+    }).then(function(result) {
+        console.log('\u2713 Datos copiados al portapapeles');
+        if (typeof HubTools !== 'undefined' && HubTools.utils && HubTools.utils.mostrarNotificacion) {
+            HubTools.utils.mostrarNotificacion('Datos copiados al portapapeles. Pega en la hoja: ' + hojaExcel, 'success');
+        }
+        mostrarChecklistPostExport(hojaExcel);
+    }).catch(function(err) {
+        console.error('\u274c Error al copiar al portapapeles:', err);
+        if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+            HubTools.utils.mostrarNotificacion('Error al copiar los datos al portapapeles.', 'error');
+        } else {
+            alert('Error al copiar los datos al portapapeles.');
+        }
+    });
+}
+/**
  * Función orquestadora para exportar y copiar datos CSV al portapapeles
  * @param {Object} datos - Datos del formulario
  * @param {string} tipoVisita - Tipo de visita ('primera' o 'seguimiento')
@@ -1595,37 +1634,7 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
             throw new Error('No se pudieron generar datos CSV');
         }
         
-        console.log(`📋 CSV generado para hoja: ${hojaExcel}`);
-        
-        // Guardar como fila pendiente por si falla el portapapeles
-        addPendingRow({
-            content: csvData,
-            sheet: hojaExcel,
-            pathology: diagnosticoNormalizado,
-            type: tipoVisita,
-            includeBom: false
-        });
-
-        // Copiar al portapapeles con fallback a modal de copia manual
-        copyTextWithFallback(csvData, {
-            manualText: csvData,
-            modalTitle: 'Copia manual de CSV',
-            modalMessage: 'No se pudo copiar autom\u00e1ticamente. Copie el texto y p\u00e9guelo en la hoja ' + hojaExcel + '.',
-            manualNotification: 'No se pudo copiar autom\u00e1ticamente. Use la ventana de copia manual.'
-        }).then(function(result) {
-            console.log('\u2713 Datos copiados al portapapeles');
-            if (typeof HubTools !== 'undefined' && HubTools.utils && HubTools.utils.mostrarNotificacion) {
-                HubTools.utils.mostrarNotificacion('Datos copiados al portapapeles. Pega en la hoja: ' + hojaExcel, 'success');
-            }
-            mostrarChecklistPostExport(hojaExcel);
-        }).catch(function(err) {
-            console.error('\u274c Error al copiar al portapapeles:', err);
-            if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
-                HubTools.utils.mostrarNotificacion('Error al copiar los datos al portapapeles.', 'error');
-            } else {
-                alert('Error al copiar los datos al portapapeles.');
-            }
-        });
+        entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, tipoVisita);
         
     } catch (error) {
         console.error('❌ Error en exportarYCopiarCSV:', error);
@@ -1640,6 +1649,43 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
     }
 }
 
+/**
+ * Transporte de la ruta cutover (F5.4C, #464): recibe la proyección ya
+ * resuelta por `HubTools.reumaLegacyExportAdapter.projectVisitAct497` y, una
+ * vez validada (ok, fila string, meta de transporte completa), aplica la misma
+ * compuerta TXT-antes-de-CSV y delega la entrega en el helper compartido. No
+ * invoca la frontera ni generadores legacy, no muta `datos` y no reclama
+ * persistencia.
+ * @param {Object} proyeccion - Resultado de projectVisitAct497
+ * @param {Object} datos - Datos explícitos del journey
+ * @returns {boolean} - true si la proyección válida se entregó; false fail-closed
+ */
+function exportarAct497(proyeccion, datos) {
+    if (!datos || typeof datos !== 'object') {
+        return false;
+    }
+    if (!proyeccion || proyeccion.ok !== true || typeof proyeccion.row !== 'string' ||
+        !proyeccion.meta || !proyeccion.meta.sheet || !proyeccion.meta.pathology || !proyeccion.meta.tipoVisita) {
+        return false;
+    }
+
+    const visitContext = {
+        tipoVisita: proyeccion.meta.tipoVisita,
+        diagnostico: proyeccion.meta.pathology
+    };
+    if (!hasTxtExportDone(datos, visitContext)) {
+        const legalMessage = 'Debe exportar TXT de esta visita antes de exportar CSV.';
+        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+            HubTools.utils.mostrarNotificacion(legalMessage, 'error');
+        } else {
+            alert(legalMessage);
+        }
+        return false;
+    }
+
+    entregarFilaProyectadaCSV(proyeccion.row, proyeccion.meta.sheet, proyeccion.meta.pathology, proyeccion.meta.tipoVisita);
+    return true;
+}
 /**
  * Genera el texto de la nota clínica formateada
  * @param {Object} datos - Datos del formulario
@@ -2239,6 +2285,8 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.generarFilaCSV_SJOGREN_Seguimiento = generarFilaCSV_SJOGREN_Seguimiento;
 
     HubTools.export.exportarYCopiarCSV = exportarYCopiarCSV;
+
+    HubTools.export.exportarAct497 = exportarAct497;
 
     HubTools.export.mostrarChecklistPostExport = mostrarChecklistPostExport;
 
