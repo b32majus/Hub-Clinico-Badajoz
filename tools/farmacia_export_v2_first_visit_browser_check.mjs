@@ -173,7 +173,16 @@ try {
   assert.equal(domProjection.rows[0].line_dose_text, manualDose);
   assert.equal(domProjection.rows[0].bridge_status, 'PENDIENTE');
 
-  assert.equal(await page.getByRole('button', { name: /v2/i }).count(), 0, 'there is no public v2 button');
+  // F4.3E (#477): the published parallel Export v2 demo activation (fe84d83,
+  // PR #227) sanctioned exactly one public v2 demo button per page, separate
+  // from v1 and never a file download. The frozen "zero public v2 controls"
+  // literal predates that publication and is re-bound to the published demo
+  // contract; no behavioral assertion is weakened.
+  const pvV2Button = page.locator('#fhPvExportV2Btn');
+  assert.equal(await pvV2Button.count(), 1, 'exactly one sanctioned public Export v2 demo button');
+  assert.equal((await pvV2Button.textContent()).replace(/\s+/g, ' ').trim(), 'Copiar Export v2 demo · 152 columnas', 'public v2 button keeps the approved demo label');
+  assert.equal(await pvV2Button.evaluate(el => el.closest('.form-actions')?.getAttribute('data-export-version')), 'v2', 'public v2 button is version-marked and separate from v1');
+  assert.equal(await page.locator('#fhPvExcelExportBtn').count(), 1, 'the v1 public Excel export button remains present and separate');
   assert.equal(await page.locator('a[download*="v2"], button[download*="v2"]').count(), 0, 'there is no public v2 download');
   await page.evaluate(() => {
     window.__firstVisitExcelCapture = null;
@@ -185,7 +194,9 @@ try {
   await page.locator('#fhPvExcelExportBtn').click();
   const excelCapture = await page.evaluate(() => window.__firstVisitExcelCapture);
   assert.ok(excelCapture, 'visible v1 Excel action reaches only its output boundary');
-  assert.equal(excelCapture.row.length, 61, 'v1 Excel output remains exactly 61 columns');
+  // F4.3E (#477): 61 WO8 columns + the appended solicitud_id transport column
+  // published by the Enfermería v6 N2 change (#366).
+  assert.equal(excelCapture.row.length, 62, 'v1 Excel output remains exactly 62 columns (61 + solicitud_id per #366)');
 
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join('\n')}`);
   assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join('\n')}`);

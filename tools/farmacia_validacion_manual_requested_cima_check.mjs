@@ -639,7 +639,11 @@ try {
     if (excelTsv === excelSentinel) await page.waitForTimeout(50);
   }
   assert.notEqual(excelTsv, excelSentinel, 'visible public Excel button writes clipboard TSV');
-  assert.equal(excelTsv.split('\t').length, 61, 'public Excel clipboard row contains exactly 61 TSV cells');
+  // F4.3E (#477): the public WO8 row carries 62 cells since the published
+  // Enfermería v6 N2 transport (#366) appended solicitud_id after
+  // observaciones_generales (order untouched). The frozen 61-cell literal
+  // predates that publication; the clinical assertions above are unchanged.
+  assert.equal(excelTsv.split('\t').length, 62, 'public Excel clipboard row contains exactly 62 TSV cells (61 WO8 columns + solicitud_id per #366)');
   assert.equal(
     await page.getByRole('button', {
       name: /Copiar Export v2 demo · 152 columnas/i

@@ -77,7 +77,14 @@ for (const id of ['fhManualInduccion', 'fhDermaInduccion', 'fhValidadoInduccion'
   check(/<option value=["']?["']>No informado<\/option>/.test(markup), id + ' comienza sin valor clínico por defecto');
 }
 check(/farmacia_export_v2_core\.js\?v=2\.0\.0-draft\.1[\s\S]*farmacia_export_v2_validation_adapter\.js\?v=1\.0\.0-draft\.1[\s\S]*farmacia_validacion\.js/.test(html), 'Core y adaptador v2 cargan antes del controlador DOM');
-check(!/id=["'][^"']*(?:Export|Download)[^"']*v2/i.test(html), 'No se activa botón o descarga pública v2');
+// F4.3E (#477): la activación demo paralela publicada (fe84d83, PR #227) sancionó
+// exactamente un botón demo Export v2 por página (fhValExportV2Btn, desactivado
+// por defecto en HTML, sin descarga pública v2). El literal anterior prohibía
+// cualquier id Export/Download+v2 y quedó obsoleto frente a esa publicación;
+// la aserción se re-ancla al contrato demo publicado sin debilitar la intención
+// original (v2 no se activa solo ni sustituye a v1 ni expone descarga pública).
+check(/id=["']fhValExportV2Btn["'][^>]*disabled/.test(html) && !/download=["'][^"']*v2/i.test(html), 'Botón demo v2 permanece desactivado por defecto y sin descarga pública v2');
+check(/data-export-version=["']v2["'][\s\S]{0,200}id=["']fhValExportV2Btn["']/.test(html), 'El botón demo v2 permanece versionado y separado del export v1');
 
 check(/fhReumaFarmaco["'], explicitRequestedDrug\(patient\)/.test(js), 'Vista Reuma usa solo fármaco solicitado explícito');
 const requestedSummary = js.match(/function requestedTreatmentSummary\(\)[\s\S]*?\n    \}/);
