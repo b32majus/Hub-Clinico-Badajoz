@@ -218,11 +218,10 @@
             if (typeof callback === 'function') callback(false);
             return;
         }
-        fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
-            .then(function (response) {
-                if (!response.ok) { throw new Error('Failed to fetch dataset'); }
-                return response.json();
-            })
+        /* F4.3: el dataset demo versionado se carga detrás del seam publicado
+           (FarmaciaCommon.loadLongitudinalDemoDataset); la página no conoce la
+           fuente física. */
+        window.FarmaciaDemo.loadLongitudinalDemoDataset()
             .then(function (data) {
                 var normalize = window.FarmaciaLongitudinal.normalizePatient;
                 data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });

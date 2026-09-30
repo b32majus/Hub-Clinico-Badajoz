@@ -2865,6 +2865,146 @@
         return { action: 'switch', cip: requestedCip };
     }
 
+    /* F4.3 (TRAIN 09 #471): async application read operation for page
+       coordinators. Resolution order is explicit and commit-free:
+       1. current V2 session envelope product (never re-committed, never
+          re-derived);
+       2. legacy coexistence lookup INSIDE this seam (findAvailablePatientByCip
+          already merges the session patient like the published population
+          view);
+       3. fail-closed V2 facade classification when the published read modules
+          and a data port are available — statuses only, never a commit, never
+          a second clinical copy.
+       Missing data stays missing: no heuristic reconciliation by name, no
+       fallback by drug/service/date, and no silent legacy retry after a V2
+       classification. The returned context keeps the published
+       getQueryContext shape so migrated pages render exactly the same
+       visible states; `read_status`/`read_source`/`read_error_code` carry the
+       finer typed statuses for governance and tests. */
+    function readFacadeCapability() {
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        if (!runtime || typeof runtime.getDataPort !== 'function' || typeof runtime.createPatientReadFacade !== 'function') return null;
+        var dataPort = runtime.getDataPort();
+        if (!dataPort || typeof dataPort.findIdentifierCandidatesByValue !== 'function') return null;
+        var facade = null;
+        try {
+            facade = runtime.createPatientReadFacade();
+        } catch (error) {
+            facade = null;
+        }
+        if (!facade || typeof facade.resolvePatient !== 'function') return null;
+        return { dataPort: dataPort, facade: facade };
+    }
+
+    async function classifyUnresolvedCip(cip) {
+        var target = String(cip || '').trim();
+        var notFound = { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
+        var capability = readFacadeCapability();
+        if (!capability) return notFound;
+        var candidates;
+        try {
+            candidates = capability.dataPort.findIdentifierCandidatesByValue(target);
+        } catch (error) {
+            candidates = null;
+        }
+        if (!Array.isArray(candidates) || candidates.length === 0) return notFound;
+        if (candidates.length > 1) {
+            return { status: 'ambiguous', patient: null, source: 'v2_facade', patient_id: null, errorCode: 'IDENTIFIER_AMBIGUOUS' };
+        }
+        var outcome = null;
+        try {
+            outcome = await capability.facade.resolvePatient(candidates[0].identifier_system, candidates[0].identifier_value);
+        } catch (error) {
+            outcome = null;
+        }
+        var state = outcome && outcome.state;
+        if (state === 'unavailable') {
+            return { status: 'unavailable', patient: null, source: 'v2_facade', patient_id: null, errorCode: outcome.errorCode || 'SOURCE_METHOD_UNAVAILABLE' };
+        }
+        if (state === 'ambiguous') {
+            return { status: 'ambiguous', patient: null, source: 'v2_facade', patient_id: null, errorCode: outcome.errorCode || 'IDENTIFIER_AMBIGUOUS' };
+        }
+        /* The V2 source may know the identifier, but the page projection stays
+           session/legacy-only during coexistence: the read operation never
+           commits a patient and never builds a second clinical copy. */
+        return notFound;
+    }
+
+    async function readPatientContext(options) {
+        var settings = options || {};
+        var params = new URLSearchParams(window.location.search);
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var runtimePatient = runtime && typeof runtime.getCurrentPatient === 'function' ? runtime.getCurrentPatient() : null;
+        var restarted = runtime && typeof runtime.getResolutionStatus === 'function' && runtime.getResolutionStatus() === 'restarted';
+        var cip = (restarted ? '' : (params.get('cip') || params.get('id') || (runtimePatient && runtimePatient.cip) || '')).trim();
+        var hasExplicitCip = !!cip;
+        var sid = restarted ? '' : String(params.get('solicitud_id') || '').trim();
+        var resolved = { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null };
+        if (sid) {
+            /* N4 identity rule preserved: a solicitud_id resolves exactly its
+               own record or nothing; the transported CIP must match it. */
+            var sidPatient = findAvailablePatientBySolicitudId(sid);
+            if (sidPatient && cip && String(sidPatient.cip || '').trim().toUpperCase() !== String(cip).trim().toUpperCase()) {
+                sidPatient = null;
+            }
+            resolved = sidPatient
+                ? { status: 'loaded', patient: sidPatient, source: 'legacy_coexistence', patient_id: null, errorCode: null }
+                : { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
+        } else if (cip) {
+            var merged = findAvailablePatientByCip(cip);
+            if (merged) {
+                var envelope = runtime && typeof runtime.getCurrentEnvelope === 'function' ? runtime.getCurrentEnvelope() : null;
+                var sessionPatient = envelope && envelope.patient_projection ? envelope.patient_projection.patient : null;
+                var sessionMatch = sessionPatient && String(sessionPatient.cip || '').trim().toUpperCase() === String(cip).trim().toUpperCase();
+                resolved = {
+                    status: 'loaded',
+                    patient: merged,
+                    source: sessionMatch ? 'current_patient_session' : 'legacy_coexistence',
+                    patient_id: sessionMatch ? envelope.patient_id : null,
+                    errorCode: null
+                };
+            } else {
+                resolved = await classifyUnresolvedCip(cip);
+            }
+        }
+        if (resolved.status === 'no_cip' && settings.demoFallbackCip) {
+            var demoPatient = findAvailablePatientByCip(String(settings.demoFallbackCip));
+            if (demoPatient) {
+                resolved = { status: 'no_cip', patient: demoPatient, source: 'legacy_coexistence', patient_id: null, errorCode: null };
+            }
+        }
+        var patient = resolved.patient;
+        var patientFound = !!patient;
+        return {
+            cip: cip,
+            solicitud_id: sid,
+            servicio: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicio : '') || ''),
+            servicioSlug: restarted ? '' : (params.get('servicio') || (patientFound ? patient.servicioSlug : '') || ''),
+            patologia: restarted ? '' : (params.get('patologia') || (patientFound ? patient.patologia : '') || ''),
+            entrada: restarted ? '' : (params.get('entrada') || ''),
+            patient: patient,
+            hasExplicitCip: hasExplicitCip,
+            patientNotFound: hasExplicitCip && !patientFound,
+            status: resolved.status,
+            source: resolved.source,
+            patient_id: resolved.patient_id,
+            errorCode: resolved.errorCode
+        };
+    }
+
+    /* F4.3 (TRAIN 09 #471): the versioned demo longitudinal dataset is loaded
+       behind this seam only; page coordinators never fetch the source
+       themselves. The promise rejects with DEMO_DATASET_UNAVAILABLE on a
+       non-ok response and never fabricates a dataset. */
+    var LONGITUDINAL_DEMO_DATASET_URL = 'data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json';
+
+    function loadLongitudinalDemoDataset() {
+        return fetch(LONGITUDINAL_DEMO_DATASET_URL).then(function (response) {
+            if (!response.ok) throw new Error('DEMO_DATASET_UNAVAILABLE');
+            return response.json();
+        });
+    }
+
     window.FarmaciaDemo = {
         patients,
         profesionales,
@@ -2872,6 +3012,8 @@
         qs,
         qsa,
         getQueryContext,
+        readPatientContext,
+        loadLongitudinalDemoDataset,
         makeContextUrl,
         setText,
         setValue,
