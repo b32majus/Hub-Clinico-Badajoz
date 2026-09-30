@@ -1,6 +1,6 @@
 # PROMueve Nexus — Foundation Train Plan 2026-09-24
 
-**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4.1/F4.2 + F5.1 published by TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) / PR #430; F5.2 + F5.3 published by TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) / PR #459; F4.3–F4.6 and F5.4–F6–F7 pending (F5.4 = NEXT SHAPING)`
+**Estado:** `LIVE PLAN / PARTIALLY EXECUTED — F0–F3 published; F4.1/F4.2 + F5.1 published by TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) / PR #430; F5.2 + F5.3 published by TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) / PR #459; F5.4 published by TRAIN-NEXUS-REUMA-ACT-CONTRACT-08 (#461) / PR #467 — F5.1–F5.4 PUBLISHED; F4.3–F4.6 and F6–F7 pending`
 **Architecture authority:** `../architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`
 **Issue documental de origen:** #378
 **Objetivo:** convertir la arquitectura congelada en una secuencia de WOs atómicas, paralelizables y verificables, sin frenar innecesariamente necesidades clínicas próximas.
@@ -21,7 +21,7 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 | F3.3 + F3.4 | **COMPLETADAS Y CUALIFICADAS EN EVALUACIÓN SINTÉTICA** | TRAIN #409 / PR #415: QA Chromium del sitio, release sintético reproducible y QA del artefacto. |
 | Hardening post-F3.4 | **COMPLETADO/PUBLICADO** | TRAIN #419 / PR #422: D012/D013 cerradas; post-merge Fast gates + Deterministic suite `success`. El canary de rollover no se usa como qualification de profile. |
 | F4 Farmacia strangler | **F4.1/F4.2 COMPLETADAS/PUBLICADAS; F4.3–F4.6 pendientes** | TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) T1 #427 + T2 #428, PR #430: contrato read DTO V2 con oráculo congelado `a0dad4a`, resolución por valor de identificador en el seam `06fcba2`, facade async con guards de vigencia `6ce61fa`, capacidad de commit de selección delegada `f572ca7` y vertical Inicio/Quick View `36bfcaa`. Candidate `988c2089...` → merge `10422f4e...`, tree idéntico; madurez `wired` + `visible` + `demostrado` en la rama canónica. |
-| F5 Reuma strangler | **F5.1–F5.3 COMPLETADAS/PUBLICADAS; F5.4 PENDIENTE / NEXT SHAPING** | F5.1 publicada por TRAIN 05 (#429 / PR #430): Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`; D007 cerrada de forma independiente por #434 / PR #435. F5.2/F5.3 publicadas por TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) / PR #459: T1 #455 `a5d6295` migró las lecturas de Seguimiento detrás del Read Port, T2 #456 `07d6cae` migró las lecturas de población de Estadísticas detrás de un seam explícito y T3 #457 `52cca14` encapsuló el writer legacy de 497 columnas tras una frontera de compatibilidad fail-closed; candidate `52cca14a...` → merge `3c929f8a...`, tree idéntico `cc1d5e99...`, CI post-merge success. **F5.4 permanece NEXT SHAPING** (#461 → #462 → #463 → #464), no implementada. |
+| F5 Reuma strangler | **F5.1–F5.4 COMPLETADAS/PUBLICADAS** | F5.1 publicada por TRAIN 05 (#429 / PR #430): Read Port async adyacente sobre `HubTools.data` `a469ad1`, total de ambigüedad `966db97` y vertical búsqueda/historia `ea34105`, con paridad sobre corpus sintético y K1–K8 preservados como `KNOWN_LEGACY / NON_GOLDEN`; D007 cerrada de forma independiente por #434 / PR #435. F5.2/F5.3 publicadas por TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) / PR #459: T1 #455 `a5d6295` migró las lecturas de Seguimiento detrás del Read Port, T2 #456 `07d6cae` migró las lecturas de población de Estadísticas detrás de un seam explícito y T3 #457 `52cca14` encapsuló el writer legacy de 497 columnas tras una frontera de compatibilidad fail-closed. F5.4 publicada por TRAIN-NEXUS-REUMA-ACT-CONTRACT-08 (#461) / PR #467 sobre la base `9f1f7179...`: T1 #462 `c2858cf` congeló el contrato Reuma Visit Act v1 independiente del legacy 497 (oráculo `39d2764`, 106/0); T2 #463 `2830744` publicó el adapter act→legacy 497 a través de la frontera F5.3 (oráculo `20940f0`, 51/0; 10 journeys byte-equivalentes); T3 #464 `773ee93` ejecutó el cutover soportado de Primera Visita y Seguimiento al Visit Act v1 (oráculo 58/0 + browser 23/23). Candidate `773ee936...` → merge `e64b65db...` (PR #467), tree idéntico `ec42a55b...`; frontera F5.3 32/0, export harness 9/0, acceptance 15/0; 3 CHAR / 1 DRIFT report-only; Gentle C-080 3/3 reviews terminales approved + burned; `KNOWN_LEGACY` y deuda `pendingRows`/`createdAt` sin corregir. |
 | F6 pre-pilot | **PENDIENTE** | Lifecycle, URL/log exposure y dependency/vendor policy siguen siendo frontera antes de piloto real. |
 | F7 multi-site qualification | **PENDIENTE POR COMBINACIÓN REAL** | La infraestructura de qualification existe, pero cada hospital×módulo necesita su evidencia propia; no se infiere qualification por presencia en repo. |
 
@@ -30,7 +30,7 @@ Este checkpoint actualiza **estado**, no reescribe la arquitectura ni autoriza W
 **Critical path recomendado desde este checkpoint:**
 
 1. antes de abrir la siguiente ejecución, revisar el informe Core pendiente y clasificar cada cambio `CORE / MODULE / SITE / MODULE×SITE`; si intersecta navegación o contratos de lectura, revalidar la siguiente WO en vez de absorberlo silenciosamente;
-2. continuar F4.3+ mediante WOs atómicas según shaping vivo y preparar **F5.4** como siguiente frontera Reuma: F5.2/F5.3 ya están publicadas por #454 / PR #459 y **no satisfacen F5.4**; el shaping de F5.4 vive en la secuencia #461 (train) → #462 → #463 → #464 y no autoriza implementación por sí solo; `NEXUS-DEBT-007` ya está RESOLVED/PUBLISHED por #434 / PR #435 y tampoco satisface F5.3 (ya publicada);
+2. continuar F4.3+ mediante WOs atómicas según shaping vivo: con TRAIN 08 (#461 / PR #467) la frontera Reuma F5.1–F5.4 está completamente publicada y **F5.4 ya no es frontera pendiente**; la siguiente frontera Foundation pendiente del plan es F4.3+ en Farmacia y, cuando la necesidad sea piloto, F6; `NEXUS-DEBT-007` ya está RESOLVED/PUBLISHED por #434 / PR #435;
 3. usar la primera necesidad real para ejecutar **F7 hospital×módulo** sobre la infraestructura ya publicada;
 4. abordar F6 cuando la siguiente frontera sea piloto, no como prerequisito artificial de la integración sintética.
 
@@ -300,7 +300,7 @@ F4.1 y F4.2 ya están publicadas. La siguiente migración de lectura es F4.3; F4
 
 #### F5.1 Reuma Application Read Port wrapper
 
-**Estado 2026-09-28:** `COMPLETADA/PUBLICADA` por #429 / PR #430; D007 permanece fuera de F5.1 y fue cerrada/publicada separadamente por #434 / PR #435. F5.2/F5.3 fueron publicadas después por TRAIN 07 (#454 / PR #459); F5.4 continúa pendiente.
+**Estado 2026-09-28:** `COMPLETADA/PUBLICADA` por #429 / PR #430; D007 permanece fuera de F5.1 y fue cerrada/publicada separadamente por #434 / PR #435. F5.2/F5.3 fueron publicadas después por TRAIN 07 (#454 / PR #459); F5.4 fue publicada después por TRAIN 08 (#461 / PR #467), cerrando F5.1–F5.4.
 
 - wrapper async sobre `HubTools.data`;
 - sin extraer parser todavía;
@@ -325,7 +325,7 @@ F4.1 y F4.2 ya están publicadas. La siguiente migración de lectura es F4.3; F4
 
 #### F5.4 Reuma act/write contract extraction
 
-**Estado 2026-09-29:** `PENDIENTE / NEXT SHAPING — NO IMPLEMENTADA`. Es la siguiente frontera Foundation Reuma; el shaping vive en #461 (train) con #462 → #463 → #464 y requiere decisiones propias sobre el acto conceptual de escritura, no derivables automáticamente de F5.2/F5.3.
+**Estado 2026-09-29:** `COMPLETADA/PUBLICADA` por TRAIN-NEXUS-REUMA-ACT-CONTRACT-08 (#461) / PR #467, merge `e64b65db29e6536c01e4f41e182fb157ac19ce2a`, tree `ec42a55b9c374b3987c7a44bf5ca80da9167d67d` idéntico al candidate. Ejecutada como T1 #462 `c2858cf` (contrato Reuma Visit Act v1 independiente del legacy 497; oráculo congelado `39d2764`, 106/0) → T2 #463 `2830744` (adapter act→legacy 497 vía frontera F5.3; oráculo congelado `20940f0`, 51/0; 10 journeys byte-equivalentes) → T3 #464 `773ee93` (cutover soportado de los journeys de exportación de Primera Visita y Seguimiento; oráculo 58/0 + browser 23/23, oráculo congelado `212bc32`). La frontera F5.3 (32/0), el export harness (9/0) y la acceptance (15/0) se mantienen; 3 `CHAR` / 1 `DRIFT` permanecen report-only; `KNOWN_LEGACY` y la deuda `pendingRows`/`createdAt` no corregidas se preservan sin corrección semántica oportunista. Con esta publicación el acto conceptual de escritura Reuma queda separado de las 497 columnas y las futuras APIs no dependen de columnas.
 
 - acto conceptual separado de 497;
 - adapter legacy genera formato compatible;

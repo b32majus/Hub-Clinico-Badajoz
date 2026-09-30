@@ -1,9 +1,9 @@
 # PROMueve — Auditoría manual de producto Sil 2026-09-28 — revisión viva
 
-**Estado:** `IN_PROGRESS / PARTIALLY_PUBLISHED` — TRAIN 1 (#442) publicado por PR #449; la frontera Foundation Reuma F5.2/F5.3 fue publicada después por TRAIN 07 (#454 / PR #459) sin reinterpretar los hallazgos de producto no relacionados; el resto de hallazgos conserva su estado explícito
+**Estado:** `IN_PROGRESS / PARTIALLY_PUBLISHED` — TRAIN 1 (#442) publicado por PR #449; la frontera Foundation Reuma F5.2/F5.3 fue publicada después por TRAIN 07 (#454 / PR #459) y F5.4 por TRAIN 08 (#461 / PR #467), en ambos casos sin reinterpretar los hallazgos de producto no relacionados; el resto de hallazgos conserva su estado explícito
 **Ámbito:** PROMueve Extremadura — Farmacia Hospitalaria, Reumatología y capacidades transversales; Dermatología queda registrada pero diferida de la ejecución inmediata
 **Autoridad de desarrollo:** `promueve/nexus-v4`
-**Último HEAD de producto Nexus verificado para esta reconciliación:** `3c929f8a95c588fdf9db13c593e1f8462bc561a1` — merge PR #459 (TRAIN-NEXUS-REUMA-FOUNDATION-07 #454); los merges documentales posteriores pueden mover el tip Git sin cambiar este HEAD de producto
+**Último HEAD de producto Nexus verificado para esta reconciliación:** `e64b65db29e6536c01e4f41e182fb157ac19ce2a` — merge PR #467 (TRAIN-NEXUS-REUMA-ACT-CONTRACT-08 #461); los merges documentales posteriores pueden mover el tip Git sin cambiar este HEAD de producto
 **Issue documental de origen:** #438
 **PR documental de origen:** #439 — supersedida para publicación; no mergear su base histórica
 **Closeout documental vigente:** #451, sobre rama fresca de `promueve/nexus-v4`
@@ -29,7 +29,7 @@ Reglas transversales:
 4. TRAIN 1 se ejecutó y publicó: PCR/unidades (#443) → catálogo/autocomplete (#444) → prebiológico (#445), con correctiva categorial #447 antes de promoción; PR #449 quedó mergeada.
 5. La siguiente secuencia de producto permanece: contrato de renovaciones → Reuma→Farmacia tras discovery → automatización CIMA, salvo nueva adjudicación humana.
 6. No se crea documentación adicional por ritual. Cuando el significado/aceptación cabe de forma durable en un issue/WO, el issue es autoridad suficiente.
-7. TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454 / PR #459) publicó la frontera Foundation Reuma **F5.2** (migración de lectura de Seguimiento #455 y Estadísticas #456) y **F5.3** (frontera de compatibilidad fail-closed del writer 497, #457) sobre el merge `3c929f8a...`. Esta publicación es trabajo Foundation de lectura/encapsulación y **no cierra, altera ni interpreta** `SIL-REV-001/002/003`, #446 (renovaciones), Reuma→Farmacia, Dermatología ni CIMA. **F5.4** (acto de escritura Reuma) permanece **NEXT SHAPING** mediante la secuencia #461 → #462 → #463 → #464, no implementada.
+7. TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454 / PR #459) publicó la frontera Foundation Reuma **F5.2** (migración de lectura de Seguimiento #455 y Estadísticas #456) y **F5.3** (frontera de compatibilidad fail-closed del writer 497, #457) sobre el merge `3c929f8a...`. Después, TRAIN-NEXUS-REUMA-ACT-CONTRACT-08 (#461 / PR #467, merge `e64b65db...`) publicó **F5.4** (acto de escritura Reuma: contrato Visit Act v1 #462, adapter act→legacy 497 #463 y cutover soportado de Primera Visita y Seguimiento #464), dejando F5.1–F5.4 en estado PUBLISHED. Ambas publicaciones son trabajo Foundation de lectura/encapsulación/acto de escritura y **no cierran, alteran ni interpretan** `SIL-REV-001/002/003`, #446 (renovaciones), Reuma→Farmacia, Dermatología ni CIMA.
 
 ## 2. Matriz viva de hallazgos
 
@@ -214,8 +214,8 @@ Parent #442 y children #443/#444/#445/#447 están cerrados/completed. PR #449 fu
 ### TRAIN 2 — renovaciones — SIGUIENTE SHAPING, NO IMPLEMENTADO
 Contrato/estados/identidad antes de abrir implementación. #446 conserva el shaping preparado; verificar GitHub live antes de ejecutar.
 
-### TRAIN FOUNDATION 07 — Reuma Foundation F5.2/F5.3 — PUBLICADO (separado de esta auditoría)
-TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) publicó por PR #459 la migración de lectura de Seguimiento/Estadísticas (F5.2, #455/#456) y la frontera de compatibilidad del writer 497 (F5.3, #457); candidate `52cca14a...` → merge de producto `3c929f8a...`, tree `cc1d5e99...` idéntico. Queda registrado aquí como estado de la rama canónica, **no** como cierre de los hallazgos de producto de esta auditoría. F5.4 permanece NEXT SHAPING (#461 → #462 → #463 → #464), no implementada.
+### TRAIN FOUNDATION 07/08 — Reuma Foundation F5.2–F5.4 — PUBLICADO (separado de esta auditoría)
+TRAIN-NEXUS-REUMA-FOUNDATION-07 (#454) publicó por PR #459 la migración de lectura de Seguimiento/Estadísticas (F5.2, #455/#456) y la frontera de compatibilidad del writer 497 (F5.3, #457); candidate `52cca14a...` → merge de producto `3c929f8a...`, tree `cc1d5e99...` idéntico. TRAIN-NEXUS-REUMA-ACT-CONTRACT-08 (#461) publicó después por PR #467 el acto de escritura Reuma (F5.4: contrato Visit Act v1 #462, adapter act→legacy 497 #463 y cutover soportado de Primera Visita y Seguimiento #464); candidate `773ee936...` → merge de producto `e64b65db29e6536c01e4f41e182fb157ac19ce2a`, tree `ec42a55b...` idéntico. Quedan registrados aquí como estado de la rama canónica, **no** como cierre de los hallazgos de producto de esta auditoría: #446/renovaciones conserva su estado y su hold `AWAIT_FEEDBACK`, Reuma→Farmacia sigue `DISCOVERY_FIRST`, Dermatología y CIMA siguen diferidas/separadas.
 
 ### TRAIN 3 — Reuma→Farmacia — DISCOVERY_FIRST
 `RFH-0 discovery/contrato → RFH-1 salida estructurada → RFH-2 QA E2E`.
