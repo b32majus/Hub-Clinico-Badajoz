@@ -72,7 +72,11 @@ if (behaviorApi && typeof behaviorApi.searchCIP === 'function') {
   F.setText = (id, value) => { if (elements[id]) elements[id].textContent = value || ''; };
   F.clearChildren = (el) => { if (el) { el.children = []; el.options = []; } };
   F.renderFields = () => {};
-  F.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', biologicos: [{ linea_id: 'LINE-B', tratamiento_id_principal: 'TRAT-B', nombre_linea: 'Drug B', principio_activo: 'Activo B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', estado_linea: 'activo', tipo_relacion: 'base', es_principal: true }] } : null;
+  /* F4.3 re-binding: the page coordinator consumes the published seam sync
+     read (readPatientByCipSync). The injected double keeps the exact same
+     behavioral contract the findPatientByCip double had. */
+  F.readPatientByCipSync = (cip) => String(cip).trim().toUpperCase() === 'CIP-B'
+    ? { status: 'loaded', source: 'legacy_coexistence', patient: { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', biologicos: [{ linea_id: 'LINE-B', tratamiento_id_principal: 'TRAT-B', nombre_linea: 'Drug B', principio_activo: 'Activo B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas', estado_linea: 'activo', tipo_relacion: 'base', es_principal: true }] } } : { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
   F.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
     if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
     if (hasContext && confirmed === undefined) return { action: 'confirm' };
@@ -333,7 +337,8 @@ const eventF = {
   setValue: (id, value) => { const node = eventIds.get(id); if (node) node.value = value || ''; },
   setText: (id, value) => { const node = eventIds.get(id); if (node) node.textContent = value || ''; },
   renderFields() {},
-  getQueryContext: () => ({ cip: 'CIP-EVENT-SEG' })
+  readQueryContextSync: () => ({ cip: 'CIP-EVENT-SEG' }),
+  readPatientContext: async () => ({ cip: 'CIP-EVENT-SEG' })
 };
 const eventSandbox = { window: { FarmaciaDemo: eventF, FarmaciaCatalog: eventCatalog }, document: eventDocument, console, Event: function Event(type) { this.type = type; }, setTimeout, clearTimeout };
 vm.createContext(eventSandbox);
@@ -372,7 +377,8 @@ const isolatedRows = eventApi.getFollowupOtherDrugs();
 assert(isolatedRows[0].selectedDrugId === 'CIMA-SEG-B' && isolatedRows[1].selectedDrugId === 'CIMA-SEG-A', 'Two related UIDs remain isolated under click selection');
 
 eventF.resolvePatientContextSwitch = () => ({ action: 'switch' });
-eventF.findPatientByCip = () => ({ cip: 'CIP-LINE', farmaco: 'Línea biológica existente', principioActivo: 'Activo existente', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas', biologicos: [{ linea_id: 'LINE-LOCKED', nombre_linea: 'Línea biológica existente', principio_activo: 'Activo existente', dosis: '40 mg', via: 'SC', estado_linea: 'activo', tipo_relacion: 'base', es_principal: true }] });
+/* F4.3 re-binding: same double contract through the seam sync read. */
+eventF.readPatientByCipSync = () => ({ status: 'loaded', source: 'legacy_coexistence', patient: { cip: 'CIP-LINE', farmaco: 'Línea biológica existente', principioActivo: 'Activo existente', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas', biologicos: [{ linea_id: 'LINE-LOCKED', nombre_linea: 'Línea biológica existente', principio_activo: 'Activo existente', dosis: '40 mg', via: 'SC', estado_linea: 'activo', tipo_relacion: 'base', es_principal: true }] } });
 eventIds.get('fhSegCip').value = 'CIP-LINE';
 eventApi.searchCIP();
 eventIds.get('fhSegDrugSearch').value = 'producto';

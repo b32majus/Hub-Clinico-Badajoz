@@ -1402,8 +1402,16 @@
         updateSuspectDrugSelector();
     }
 
-    function applyContext() {
-        const ctx = F.getQueryContext();
+    /* F4.3: contexto resuelto por la operación async publicada durante la
+       carga; los consumidores sync de la página reutilizan esta lectura. */
+    var resolvedPageCtx = {};
+
+    async function applyContext() {
+        /* F4.3: la lectura del paciente pasa por la operación de aplicación
+           async publicada (facade/contrato V2 → sesión → coexistencia legacy
+           dentro del seam). Mismos estados visibles; sin lookup directo. */
+        const ctx = await F.readPatientContext();
+        resolvedPageCtx = ctx;
         currentSegPatient = ctx.patient || (ctx.cip ? { cip: ctx.cip } : null);
         createFollowupVisit(currentSegPatient && currentSegPatient.cip || ctx.cip || '');
 
@@ -1570,7 +1578,11 @@
 
         clearCipNotice();
 
-        var patient = F.findPatientByCip(cip);
+        /* F4.3: la búsqueda por CIP explícito resuelve por la operación sync
+           publicada en el seam; sin resultado, el contexto queda sin paciente
+           (fail closed, aviso manual existente). */
+        var searchResult = F && typeof F.readPatientByCipSync === 'function' ? F.readPatientByCipSync(cip) : null;
+        var patient = searchResult && searchResult.status === 'loaded' ? searchResult.patient : null;
         resetPatientContext(cip);
         if (!patient) {
             currentSegPatient = { cip: cip };
@@ -2955,10 +2967,11 @@
         buildFollowupV2ProjectionFromCurrentContext: buildFollowupV2ProjectionFromCurrentContext
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         populatePautaSelectSeg('fhSegNuevaPauta', 'fhSegNuevaPautaOtro');
         populatePautaSelectSeg('fhSegPautaActual', 'fhSegPautaActualOtro');
-        applyContext();
+        /* F4.3: la lectura del paciente pasa por la operación async publicada. */
+        await applyContext();
         var v2Cip = byId('fhSegCip');
         if (v2Cip) {
             v2Cip.addEventListener('input', updateFollowupV2ExportAvailability);
@@ -2971,7 +2984,10 @@
         initSegServicioPatologiaSync();
         initSegDrugAutocomplete();
 
-        var demoCtx = F.getQueryContext();
+        /* F4.3: el CIP visible de demo/navegación se lee del MISMO contexto
+           ya resuelto por la operación async publicada; sin re-consulta de
+           población en el coordinador. */
+        const demoCtx = resolvedPageCtx;
         if (demoCtx.cip === "CIP-DEMO-FH-004") {
             // Demo FH-004: pre-activar PROMs si el paciente tiene datos registrados
             var promsSelect = document.getElementById('fhSegProms');
@@ -2982,7 +2998,7 @@
         }
 
         // Actualizar enlaces de navegación con CIP actual
-        var ctxNav = F.getQueryContext();
+        const ctxNav = demoCtx;
         if (ctxNav.cip) {
             var navDash = document.getElementById("navToDashboardPaciente");
             if (navDash) navDash.href = F.makeContextUrl('farmacia_dashboard_paciente.html', { cip: ctxNav.cip, entrada: 'dashboard' });
