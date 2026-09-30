@@ -98,13 +98,14 @@ function runIndex(patient = null) {
       select.value = '';
     },
     setText(id, value) { ids[id].textContent = value; },
-    findPatientByCip() { return patient; },
+    readPatientContext() { return Promise.resolve({ cip: '', status: 'no_cip', patient: null, hasExplicitCip: false, patientNotFound: false }); },
+    readPatientByCipSync() { return patient ? { status: 'loaded', patient, source: 'legacy_coexistence', patient_id: null, errorCode: null } : { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null }; },
+    getPendingValidationPatients() { return []; },
     makeContextUrl(base, context) {
       const params = new URLSearchParams(Object.entries(context).filter(([, value]) => value));
       return `${base}?${params}`;
     },
     getQueryContext() { return {}; },
-    getPendingValidationPatients() { return []; },
     getEnfermeriaVisiblePatients() { return []; },
     isEnfermeriaPatient() { return false; },
     createOverlayMount() { return { content: element('content'), title: element('title'), subtitle: element('subtitle'), open() {}, close() {} }; },
@@ -157,13 +158,21 @@ Object.defineProperty(pvElements.fhPvPatologia, 'value', {
   }
 });
 const pvReady = [];
+/* F4.3E (#477): the published F4.3B seam moved the Primera Visita init read to
+   the async readPatientContext operation; the frozen double is re-bound to the
+   published seam operations with behaviorally identical values (same explicit
+   identity, patient: null, no inference). The DOMContentLoaded listener is now
+   async, so the assertions await its completion. */
+const pvContext = { cip: 'CIP-NUEVO-01', servicio: 'Reumatología', patologia: 'Artritis Reumatoide (AR)', patient: null, hasExplicitCip: true, patientNotFound: true, status: 'not_found' };
 const pvSandbox = {
   window: {
     FarmaciaDemo: {
-      getQueryContext: () => ({ cip: 'CIP-NUEVO-01', servicio: 'Reumatología', patologia: 'Artritis Reumatoide (AR)', patient: null }),
+      readPatientContext: () => Promise.resolve(pvContext),
+      readQueryContextSync: () => pvContext,
+      readPatientByCipSync: () => ({ status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null }),
       setValue(id, value) { if (pvElements[id]) pvElements[id].value = value || ''; },
       clearChildren(target) { target.children = []; target.options = []; },
-      renderFields() {}, insertNoCipBanner() {}, findPatientByCip: () => null
+      renderFields() {}, insertNoCipBanner() {}
     },
     FarmaciaCatalog: { clearSnapshot() {}, getSnapshot: () => null }
   },
@@ -180,7 +189,7 @@ const pvSandbox = {
 };
 vm.createContext(pvSandbox);
 vm.runInContext(pvSource, pvSandbox);
-pvReady.forEach((listener) => listener());
+await Promise.all(pvReady.map(async (listener) => { listener(); await new Promise((resolve) => setImmediate(resolve)); }));
 assert(pvElements.fhPvCip.value === 'CIP-NUEVO-01', 'Primera Visita initializes CIP without patient residue');
 assert(pvElements.fhPvServicio.value === 'Reumatología', 'Primera Visita initializes canonical service');
 assert(pvElements.fhPvPatologia.value === 'Artritis Reumatoide (AR)', 'Primera Visita populates options before restoring pathology');

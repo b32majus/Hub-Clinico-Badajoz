@@ -214,7 +214,7 @@ function reasonCode(reason) {
 
 function selectedPatientIdentifier() {
   try {
-    const context = window.FarmaciaDemo?.getQueryContext?.();
+    const context = window.FarmaciaDemo?.readQueryContextSync?.();
     if (!context?.patient) return null;
     return normalizedIdentifier(context.cip || context.patient.cip);
   } catch {
@@ -1143,7 +1143,7 @@ if (typeof document !== 'undefined') {
   else initIntakeReview();
   const revealNoPatientForm = () => {
     try {
-      const context = window.FarmaciaDemo && typeof window.FarmaciaDemo.getQueryContext === 'function' ? window.FarmaciaDemo.getQueryContext() : null;
+      const context = window.FarmaciaDemo && typeof window.FarmaciaDemo.readQueryContextSync === 'function' ? window.FarmaciaDemo.readQueryContextSync() : null;
       if (context && context.patient) return;
     } catch { return; }
     const derma = document.getElementById('formDerma');

@@ -4,11 +4,44 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { createReadStream, statSync } from 'node:fs';
 
-// Local fallback used by the repository's focused browser checks.
-const BASE_URL = process.env.FH_FIRST_VISIT_EXCEL_BASE_URL || 'http://127.0.0.1:48796/';
+// F4.3E (#477): serve the repository itself on a free port by default instead
+// of assuming a long-lived external server on 127.0.0.1:48796; the environment
+// override is kept. Harness-only change: no behavioral assertion is affected.
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const EXTERNAL_BASE_URL = process.env.FH_FIRST_VISIT_EXCEL_BASE_URL || '';
 const INITIAL_CIP = 'CIP-DEMO-FH-001';
 const SYNTHETIC_CIP = 'CIP-SYNTH-FV-EXCEL-901';
+
+const mime = new Map([
+  ['.html', 'text/html; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'],
+  ['.css', 'text/css; charset=utf-8'], ['.json', 'application/json'],
+  ['.svg', 'image/svg+xml']
+]);
+
+const staticServer = createServer((request, response) => {
+  const relative = decodeURIComponent(new URL(request.url || '/', 'http://127.0.0.1').pathname).replace(/^\/+/, '') || 'farmacia_index.html';
+  const file = path.resolve(ROOT, relative);
+  if (file !== ROOT && !file.startsWith(ROOT + path.sep)) return response.writeHead(403).end();
+  try {
+    if (!statSync(file).isFile()) throw new Error('not_file');
+    response.writeHead(200, { 'content-type': mime.get(path.extname(file).toLowerCase()) || 'application/octet-stream', 'cache-control': 'no-store' });
+    createReadStream(file).pipe(response);
+  } catch {
+    response.writeHead(404).end('Not found');
+  }
+});
+
+let BASE_URL = EXTERNAL_BASE_URL;
+if (!BASE_URL) {
+  await new Promise((resolve, reject) => {
+    staticServer.once('error', reject);
+    staticServer.listen(0, '127.0.0.1', resolve);
+  });
+  BASE_URL = `http://127.0.0.1:${staticServer.address().port}/`;
+}
 
 function loadPlaywrightFromNpx() {
   for (const binDirectory of String(process.env.PATH || '').split(path.delimiter)) {
@@ -69,8 +102,8 @@ async function installExcelBoundary(page) {
 async function capturedExcelRow(page) {
   const captured = await page.evaluate(() => window.__fhFirstVisitExcelCapture);
   assert.ok(captured, 'visible Excel action reaches the clipboard output boundary');
-  assert.equal(captured.columns.length, 61, 'public WO8_COLUMNS exposes 61 columns');
-  assert.equal(captured.row.length, 61, 'First Visit export row has exactly 61 values');
+  assert.equal(captured.columns.length, 62, 'public WO8_COLUMNS exposes 62 columns (61 WO8 columns + solicitud_id per #366)');
+  assert.equal(captured.row.length, 62, 'First Visit export row has exactly 62 values');
   return {
     ...captured,
     rowObject: Object.fromEntries(captured.columns.map((column, index) => [column, captured.row[index]]))
@@ -97,7 +130,7 @@ try {
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita && window.FarmaciaExcelRowExport);
 
   const initialContext = await page.evaluate(() => {
-    const query = window.FarmaciaDemo.getQueryContext();
+    const query = window.FarmaciaDemo.readQueryContextSync();
     return { cip: query.cip, patient: query.patient };
   });
   assert.ok(initialContext.patient, 'demo query context includes a patient');
@@ -191,7 +224,8 @@ try {
 
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join('\n')}`);
   assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join('\n')}`);
-  console.log('farmacia_first_visit_excel_truth_browser_check: PASSED — manual CIP switch, 61-column UI export truth, DLQI/EVA values including zero, console/pageerror 0.');
+  console.log('farmacia_first_visit_excel_truth_browser_check: PASSED — manual CIP switch, 62-column UI export truth (61 + solicitud_id #366), DLQI/EVA values including zero, console/pageerror 0.');
 } finally {
   await browser.close();
+  staticServer.close();
 }

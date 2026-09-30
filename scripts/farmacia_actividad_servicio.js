@@ -4,8 +4,11 @@
     var F = window.FarmaciaDemo || null;
 
     function getPatients() {
-        if (!F || !F.getAvailablePatients) return [];
-        return F.getAvailablePatients();
+        /* F4.3 (TRAIN 09.1 #476): population is read through the published
+           seam sync population read; the page coordinator never calls the
+           legacy population helper directly. */
+        if (!F || !F.readAvailablePatientsSync) return [];
+        return F.readAvailablePatientsSync();
     }
 
     function countBy(patientList, fn) {
@@ -200,8 +203,8 @@
         if (!panel) return;
         F.clearChildren(panel);
 
-        var getPendientes = window.FarmaciaDemo && window.FarmaciaDemo.getPendingValidationPatients
-            ? window.FarmaciaDemo.getPendingValidationPatients
+        var getPendientes = window.FarmaciaDemo && window.FarmaciaDemo.readPendingValidationPatientsSync
+            ? window.FarmaciaDemo.readPendingValidationPatientsSync
             : null;
 
         var patients = typeof getPendientes === 'function' ? getPendientes() : [];
