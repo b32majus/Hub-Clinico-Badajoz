@@ -1,6 +1,6 @@
 # PROMueve Nexus — Checkpoint visual post-F4.3 — 2026-09-30
 
-**Estado:** `COMPLETADO CON HALLAZGO PRODUCT_DEFECT_BLOCKING — HUMAN STOP; el checkpoint NO declara salida limpia`
+**Estado:** `COMPLETADO CON HALLAZGO PRODUCT_DEFECT_BLOCKING — HUMAN STOP; el checkpoint NO declara salida limpia` *(reconciliación posterior 2026-09-30: PV-001 `RESOLVED/PUBLISHED` por #482 / PR #484; ver §8. El estado histórico del checkpoint no se reescribe.)*
 **Fecha:** 2026-09-30
 **Issue / WO:** #480 (WO-NEXUS-POST-F43-VISUAL-CHECKPOINT), parte del TRAIN #479 (T1)
 **Base verificada:** `origin/promueve/nexus-v4` @ `91262d8007642aef1d3cbe21e24d20ff369ee19b` (merge PR #478, tree `bd088cc01ef3321e6183041b77dccca213334501`; CI post-merge `Nexus deterministic gates` run `36744075965` = success)
@@ -163,3 +163,26 @@ Existe **un** `PRODUCT_DEFECT_BLOCKING` (PV-001). Recomendación factual:
 3. **F4.4 no debe iniciarse** sobre la semántica observada en PV-001 sin decisión explícita.
 
 **Estado del T1:** `HUMAN_STOP_BLOCKER` (PV-001). Verificación compuesta: `npm run verify:nexus` PASS, `git diff --check` PASS, diff limitado a este documento.
+
+## 8. Reconciliación posterior — 2026-09-30 (post-publicación PV-001)
+
+Esta sección se añade después del checkpoint y **no reescribe** la evidencia histórica de las secciones 1–7: en el momento del checkpoint #480, PV-001 se detectó correctamente y el T1 terminó `HUMAN_STOP_BLOCKER`, sin salida limpia hacia F4.4.
+
+Hechos posteriores publicados:
+
+- PV-001 fue corregido y publicado por WO #482 / PR #484.
+- Candidate final: `75063f25b5cf3de008ab882392b9387f5fdea9c1`.
+- Merge de producto: `a04a0ace25012e5f0ac397844165921dccaebcc3` en `promueve/nexus-v4`.
+- CI post-merge `Nexus deterministic gates` run `36771991874` = `success`.
+- #482 = `CLOSED/completed`.
+
+Evidencia de la corrección:
+
+- oracle `check:fh:pv001` final **40/40** (RED inicial sobre la base; control negativo `followup` solo fail closed);
+- browser QA final **35/0**, con `console.error=0` y `pageerror=0`;
+- requested-only y followup-only fallan cerrado y no prehidratan la captura;
+- se preserva `solicitado != validado`;
+- raw `tratamientoValidado` y legacy `validated` explícito siguen soportados como evidencia de validación;
+- no se infieren dosis, vía, pauta, presentación, inducción, duración, switch, add-on, causalidad ni línea desde fármaco/catálogo/historial/ausencia.
+
+Estado actual del hallazgo: **`RESOLVED/PUBLISHED`**. Esto **no** convierte el checkpoint histórico #480 en un `PASS` retroactivo: en su momento fue un `HUMAN_STOP_BLOCKER` correcto y así se conserva. La madurez sigue siendo evaluación sintética (sin piloto ni producción). Con PV-001 resuelto, F4.4 queda técnicamente desbloqueada; ese desbloqueo técnico no la convierte en prioridad humana automática ni autoriza su ejecución.
