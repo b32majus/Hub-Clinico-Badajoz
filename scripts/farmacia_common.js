@@ -2917,6 +2917,21 @@
         return getQueryContext();
     }
 
+    /* F4.3 (TRAIN 09.1 #476): SYNC population reads for the published sync
+       activity surface whose interaction contract (activity cards + pending
+       panel render) is synchronous. Same legacy coexistence population merge
+       inside the seam, published under the application read seam names; the
+       coordinator never calls the legacy population helpers directly. Commit-
+       free: reading the population never writes the session, never builds a
+       second clinical copy and never fabricates a cohort. */
+    function readAvailablePatientsSync() {
+        return getAvailablePatients();
+    }
+
+    function readPendingValidationPatientsSync() {
+        return getPendingValidationPatients();
+    }
+
     function readPatientByCipSync(cip) {
         var target = String(cip || '').trim();
         if (!target) return { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null };
@@ -3060,6 +3075,8 @@
         qsa,
         getQueryContext,
         readQueryContextSync,
+        readAvailablePatientsSync,
+        readPendingValidationPatientsSync,
         readPatientContext,
         readPatientByCip,
         readPatientByCipSync,

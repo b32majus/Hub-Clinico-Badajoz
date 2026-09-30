@@ -493,7 +493,7 @@
         }
         if (result.superseded === true) return;
         if (result.state === 'ok' && result.selected === true) {
-            var selected = F.findPatientByCip(cip) || result.patient;
+            var selected = seamCipPatient(cip) || result.patient;
             if (result.previousCip && String(result.previousCip).toUpperCase() !== String(cip).toUpperCase()
                 && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
                 window.FarmaciaDataImports.clearTransientPatientImports();
@@ -501,7 +501,7 @@
             }
             runtime.enrichCurrentPatient(selected);
             setSearchStatus('Paciente encontrado.');
-            renderPatientView(F.findPatientByCip(cip) || selected);
+            renderPatientView(seamCipPatient(cip) || selected);
             return;
         }
         if (result.state === 'ambiguous') {
@@ -513,7 +513,7 @@
             return;
         }
         if (result.state === 'not_found') {
-            var patient = F.findPatientByCip(cip);
+            var patient = seamCipPatient(cip);
             if (patient) {
                 setSearchStatus('Paciente encontrado.');
                 renderPatientView(patient);
@@ -522,6 +522,15 @@
                 showGuidedIntake(cip);
             }
         }
+    }
+
+    // Published seam sync CIP read (F4.3): same coexistence lookup the legacy
+    // alias performed, consumed through the published application read op. Used
+    // only inside the synchronous result-application paths of the guarded
+    // in-page CIP search, whose interaction contract is genuinely synchronous.
+    function seamCipPatient(cip) {
+        var resolved = F.readPatientByCipSync(cip);
+        return resolved && resolved.patient ? resolved.patient : null;
     }
 
     // Exact pre-migration `search()` body. Used only when no usable facade exists; it traverses
@@ -542,7 +551,7 @@
             result = runtime.selectByCip(cip, { discardPendingChanges: true });
         }
         if (result.status === 'selected') {
-            var selected = F.findPatientByCip(cip) || result.patient;
+            var selected = seamCipPatient(cip) || result.patient;
             if (result.previousCip && String(result.previousCip).toUpperCase() !== String(cip).toUpperCase()
                 && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
                 window.FarmaciaDataImports.clearTransientPatientImports();
@@ -550,10 +559,10 @@
             }
             runtime.enrichCurrentPatient(selected);
             setSearchStatus('Paciente encontrado.');
-            renderPatientView(F.findPatientByCip(cip) || selected);
+            renderPatientView(seamCipPatient(cip) || selected);
             return;
         }
-        var patient = F.findPatientByCip(cip);
+        var patient = seamCipPatient(cip);
         if (patient) {
             setSearchStatus('Paciente encontrado.');
             renderPatientView(patient);
@@ -1158,16 +1167,19 @@
             var runtime = window.FarmaciaPatientFlowRuntime;
             var current = runtime && runtime.getCurrentPatient ? runtime.getCurrentPatient() : null;
             if (current) {
-                var merged = F.findPatientByCip(current.cip);
+                var merged = seamCipPatient(current.cip);
                 if (merged) runtime.enrichCurrentPatient(merged);
             }
             renderEnfermeriaBoard();
             renderPendingValidationBoard();
         });
-        var context = F.getQueryContext();
-        if (context.cip && cipInput) {
-            cipInput.value = context.cip;
-            search();
-        }
+        // F4.3: the published async application read operation is the init-time
+        // read; only the transported CIP drives the guarded search below.
+        F.readPatientContext().then(function (context) {
+            if (context.cip && cipInput) {
+                cipInput.value = context.cip;
+                search();
+            }
+        });
     });
 })();
