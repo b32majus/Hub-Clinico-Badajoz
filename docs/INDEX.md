@@ -2,7 +2,7 @@
 
 | Metadato | Valor |
 | --- | --- |
-| Última actualización | 2026-09-29 |
+| Última actualización | 2026-09-30 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Línea Farmacia de procedencia | `origin/recovery/farmacia-pr-replay-20260727`; **HISTORICAL** para nuevo desarrollo desde el merge de PR #381; conserva la historia funcional Farmacia y la trazabilidad del snapshot |
 | Autoridad canónica de desarrollo (F0.2) | `origin/promueve/nexus-v4` **ACTIVE** desde el merge autorizado de PR #381 (2026-09-24). Nació de `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta. Último HEAD de producto Nexus verificado tras PR #478: `91262d8007642aef1d3cbe21e24d20ff369ee19b`; los merges documentales posteriores pueden mover el tip Git sin cambiar ese HEAD de producto. Detalle de transición: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
@@ -363,7 +363,7 @@ Para el estado actual de Farmacia también son memoria histórica o referencia s
 - documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
 - issues replay históricos abiertos de julio.
 
-Cuando contradigan el estado vivo, prevalecen GitHub live, el último HEAD de producto Nexus (`e64b65db29e6536c01e4f41e182fb157ac19ce2a` tras PR #467), el último HEAD de producto Farmacia histórico (`771fb80c5081aa974b86d6a0119ab30059970a25`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y los documentos vivos relacionados. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
+Cuando contradigan el estado vivo, prevalecen GitHub live, el último HEAD de producto Nexus (`91262d8007642aef1d3cbe21e24d20ff369ee19b` tras PR #478), el último HEAD de producto Farmacia histórico (`771fb80c5081aa974b86d6a0119ab30059970a25`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y los documentos vivos relacionados. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
 
 ---
 
