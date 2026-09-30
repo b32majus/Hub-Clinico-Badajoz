@@ -139,7 +139,11 @@ try {
   assert.equal(await page.locator('#fhPvCip').inputValue(), INITIAL_CIP);
   assert.notEqual(await page.locator('#fhPvServicio').inputValue(), '', 'demo service context is rendered');
   assert.notEqual(await page.locator('#fhPvPatologia').inputValue(), '', 'demo pathology context is rendered');
-  assert.notEqual(await page.locator('#fhPvFarmaco').inputValue(), '', 'demo treatment context is rendered');
+  /* PV-001 #482 correction cycle: FH-001 es estado 'followup' sin evidencia
+     explícita de validación; la captura terapéutica debe permanecer vacía
+     (fail closed), igual que el tratamiento solicitado de un paciente
+     pending. */
+  assert.equal(await page.locator('#fhPvFarmaco').inputValue(), '', 'followup-only demo patient leaves treatment capture empty (fail closed, PV-001 #482)');
 
   await page.locator('#fhPvCip').fill(SYNTHETIC_CIP);
   let switchDialog = null;

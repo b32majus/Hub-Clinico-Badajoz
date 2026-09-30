@@ -12,8 +12,10 @@
 //
 // R1 — caso blocker CIP-DEMO-FH-002 (pending/requested-only, dataset demo real):
 //      nunca 'validado', nunca es_validado_farmacia=true, captura no prehidratada.
-// R2 — control explícitamente validado (FH-003 estado 'validated'; FH-001
-//      estado 'followup' con tratamiento propio): comportamiento conservado.
+// R2 — control explícitamente validado: legacy estado 'validated' (FH-003)
+//      conserva comportamiento; control NEGATIVO: 'followup' por sí solo NO
+//      es evidencia de validación (estado de seguimiento, no resultado de
+//      acto FH) → fail closed, sin prehidratación (correction cycle #482).
 // R3 — camino V2/raw: raw con tratamientoValidado → 'validado'; raw sin
 //      tratamientoValidado → 'principal' (regresión guardada).
 // R4 — selección profesional: la selección de catálogo no autovalida y la
@@ -171,7 +173,8 @@ assert(fh2 && fh2.estado === 'pending', 'G1: CIP-DEMO-FH-002 es estado pending (
 assert(fh2 && !!fh2.farmaco_solicitado && fh2.farmaco_solicitado === fh2.farmaco,
   'G1b: FH-002 tiene tratamiento solicitado explícito (requested-only, sin acto de validación)');
 assert(fh3 && fh3.estado === 'validated', 'G2: CIP-DEMO-FH-003 es estado validated (evidencia explícita ya publicada)');
-assert(fh1 && fh1.estado === 'followup', 'G3: CIP-DEMO-FH-001 es estado followup (tratamiento propio validado en seguimiento)');
+assert(fh1 && fh1.estado === 'followup' && !fh1.tratamientoValidado && !fh1.farmaco_solicitado,
+  'G3: CIP-DEMO-FH-001 es estado followup sin otra evidencia de validación publicada (control negativo: followup solo)');
 const seamRead = api.readPatientByCipSync('CIP-DEMO-FH-002');
 assert(seamRead && seamRead.status === 'loaded' && seamRead.patient && seamRead.patient.cip === 'CIP-DEMO-FH-002',
   'G4: el seam sync publicado (readPatientByCipSync) resuelve FH-002');
@@ -211,10 +214,16 @@ assertEqual(tValidated.es_validado_farmacia, true, 'R2-B4: FH-003 es_validado_fa
 
 el('fhPvCip').value = 'CIP-DEMO-FH-001';
 PV.searchCIP();
-assertEqual(el('fhPvFarmaco').value, 'Secukinumab 300 mg', 'R2-C1: FH-001 (followup) conserva la prehidratación de su registro propio');
+assertEqual(el('fhPvFarmaco').value, '', 'R2-N1: FH-001 (followup solo) falla cerrado: captura vacía');
+assertEqual(el('fhPvDosis').value, '', 'R2-N2: FH-001 captura de dosis vacía');
+assertEqual(el('fhPvTratamientoGrid').children.length, 0, 'R2-N3: FH-001 rejilla vacía (sin relación ni "Validado")');
+assert(!/validado/i.test(gridText(el('fhPvTratamientoGrid'))), 'R2-N4: FH-001 nunca presenta "validado"');
 const tFollowup = PV.buildPrimaryTreatmentFromContext({ cip: 'CIP-DEMO-FH-001', patient: fh1 });
-assertEqual(tFollowup.tipo_relacion, 'validado', 'R2-C2: FH-001 conserva relación validado (estado explícito followup)');
-assertEqual(tFollowup.es_validado_farmacia, true, 'R2-C3: FH-001 conserva es_validado_farmacia=true');
+assert(tFollowup.tipo_relacion !== 'validado', 'R2-N5: followup solo → tipo_relacion != validado');
+assert(tFollowup.es_validado_farmacia !== true, 'R2-N6: followup solo → es_validado_farmacia != true');
+assertEqual(tFollowup.farmaco_nombre, '', 'R2-N7: followup solo no promociona su registro a tratamiento primario');
+const curFollowup = PV.getCurrentPrimaryTreatment({ cip: 'CIP-DEMO-FH-001', patient: fh1 });
+assert(curFollowup.es_validado_farmacia !== true, 'R2-N8: FH-001 verdad de export es_validado_farmacia != true');
 
 // ---------- R3: camino V2/raw ----------
 console.log('\nR3 — camino V2/raw sin regresión');

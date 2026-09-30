@@ -76,18 +76,20 @@
         };
     }
 
-    /* PV-001 (#482): la relación 'validado' y es_validado_farmacia=true sólo
-       proceden de evidencia explícita ya soportada por el contrato publicado.
-       En el camino legacy coexistence esa evidencia es el estado FH explícito
-       del registro ('validated' = validado por acto FH; 'followup' = en
-       seguimiento de tratamiento validado). La mera existencia de ctx.patient
-       NO implica validado: sin evidencia explícita se falla cerrado a
-       'principal' y el tratamiento solicitado no se promociona ni prehidrata
-       la captura. Sin inferencia desde nombre de fármaco, catálogo, historial
+    /* PV-001 (#482, correction cycle): la relación 'validado' y
+       es_validado_farmacia=true sólo proceden de evidencia explícita ya
+       soportada por el contrato publicado. En el camino legacy coexistence
+       esa evidencia es únicamente el estado FH explícito 'validated'
+       (resultado de un acto de validación publicado). 'followup' es estado
+       de seguimiento, NO evidencia del resultado de validación: por sí solo
+       falla cerrado. La mera existencia de ctx.patient NO implica validado;
+       sin evidencia explícita se falla cerrado a 'principal' y el
+       tratamiento solicitado o previo no se promociona ni prehidrata la
+       captura. Sin inferencia desde nombre de fármaco, catálogo, historial
        o ausencia de datos. */
     function hasLegacyValidatedEvidence(patient) {
         var estado = String((patient && patient.estado) || '').trim().toLowerCase();
-        return estado === 'validated' || estado === 'followup';
+        return estado === 'validated';
     }
 
     function resolvePrimaryRelation(ctx) {
