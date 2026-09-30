@@ -980,6 +980,155 @@ function familyF(builders, degradedDetail) {
 }
 
 // ---------------------------------------------------------------------------
+// P8 — explicit-own blocks/lines/envelope authority (correction cycle PR #490)
+// ---------------------------------------------------------------------------
+
+// Temporarily defines an own enumerable-invisible property on
+// Object.prototype so a canonical-plain input inherits it through the
+// prototype chain; restores the previous descriptor afterwards. This is the
+// only way a canonical-plain object can carry an inherited block/line/metadata
+// key: custom caller prototypes are rejected outright by the hardened
+// isPlainObject, so inherited keys can only arrive from Object.prototype.
+function withTaintedObjectProto(taints, fn) {
+    const saved = [];
+    for (const [key, value] of Object.entries(taints)) {
+        saved.push([key, Object.getOwnPropertyDescriptor(Object.prototype, key)]);
+        Object.defineProperty(Object.prototype, key, { value, writable: true, configurable: true, enumerable: false });
+    }
+    try {
+        return fn();
+    } finally {
+        for (const [key, desc] of saved.reverse()) {
+            if (desc) Object.defineProperty(Object.prototype, key, desc);
+            else delete Object.prototype[key];
+        }
+    }
+}
+
+function familyP8(builders, degradedDetail) {
+    console.log('  P8 — explicit-own authority: inherited blocks/lines/metadata never satisfy explicitness; builder authority survives tainted prototypes');
+    const caseNames = [
+        'P8 required request block inherited via Object.prototype does NOT satisfy MISSING_BLOCK (still MISSING_BLOCK)',
+        'P8 lines inherited via Object.prototype does NOT satisfy the explicit lines requirement (INVALID_LINES)',
+        'P8 optional validation/transversal inherited via Object.prototype never appear in the act payload',
+        'P8 envelope metadata inherited via Object.prototype is never copied into the request (no amendment; inherited siteId not explicit)',
+        'P8 kind/payload inherited via Object.prototype cannot alter the builder authority (act keeps the builder kind/payload)',
+        'P8 payload/blocks/line elements with a custom (shared) caller prototype fail closed (INVALID_PAYLOAD / INVALID_BLOCK / INVALID_LINE_ELEMENT)',
+        'P8 null-prototype envelope/blocks/line elements remain supported and cloned detached',
+    ];
+    if (!builders) {
+        for (const name of caseNames) record(name, false, degradedDetail);
+        plantedSink.length = 0;
+        plantedRecord('planted lie: inherited lines accepted (degraded)', false, 'degraded');
+        record('P8-f planted lie (inherited lines accepted) is detected as false', plantedDetectedAsFalse(), plantedSummary());
+        return;
+    }
+    const build = builders.createValidationAct;
+
+    // (1) Inherited required block: with 'request' reachable only through
+    // Object.prototype, the payload { lines: [] } must still fail with
+    // MISSING_BLOCK — inheritance never satisfies explicitness.
+    const inheritedBlock = withTaintedObjectProto({ request: VALID_REQUEST_BLOCK() },
+        () => safeCall(build, VALID_ENVELOPE(), { lines: [] }));
+    const inheritedBlockCase = isFailureWithCode(inheritedBlock, 'MISSING_BLOCK');
+    record(caseNames[0], inheritedBlockCase,
+        inheritedBlock.threw ? `threw: ${inheritedBlock.threw.message}` : `result=${JSON.stringify(inheritedBlock.result).slice(0, 160)}`);
+
+    // (2) Inherited lines: an inherited array must NOT satisfy the explicit
+    // 'lines' requirement.
+    const inheritedLines = withTaintedObjectProto({ lines: [] },
+        () => safeCall(build, VALID_ENVELOPE(), { request: VALID_REQUEST_BLOCK() }));
+    const inheritedLinesCase = isFailureWithCode(inheritedLines, 'INVALID_LINES');
+    record(caseNames[1], inheritedLinesCase,
+        inheritedLines.threw ? `threw: ${inheritedLines.threw.message}` : `result=${JSON.stringify(inheritedLines.result).slice(0, 160)}`);
+
+    // (3) Optional blocks inherited through Object.prototype must never be
+    // copied into the act payload: absence stays absence.
+    const inheritedOptionals = withTaintedObjectProto(
+        { validation: { result: 'validated-heredado-sintetico' }, transversal: { dato: 'heredado-sintetico' } },
+        () => safeCall(build, VALID_ENVELOPE(), { request: VALID_REQUEST_BLOCK(), lines: [] }));
+    const optionalAct = isOkAct(inheritedOptionals) ? inheritedOptionals.result : null;
+    record(caseNames[2],
+        !!optionalAct
+        && Object.keys(optionalAct.payload).sort().join('|') === 'lines|request'
+        && !('validation' in optionalAct.payload) && !('transversal' in optionalAct.payload)
+        && optionalAct.payload.validation === undefined && optionalAct.payload.transversal === undefined,
+        inheritedOptionals.threw ? `threw: ${inheritedOptionals.threw.message}` : `keys=${optionalAct ? Object.keys(optionalAct.payload).join(',') : 'n/a'}`);
+
+    // (4) Envelope metadata inherited through Object.prototype is never
+    // copied into the assembled request: an inherited amendment must not
+    // appear in the act, and an inherited siteId must not satisfy T1.
+    const inheritedAmendment = withTaintedObjectProto(
+        { amendment: { previousRevision: 1, reason: 'enmienda-heredada-sintetica' } },
+        () => safeCall(build, VALID_ENVELOPE(), VALIDATION_PAYLOAD()));
+    const amendmentAct = isOkAct(inheritedAmendment) ? inheritedAmendment.result : null;
+    const amendmentCase = !!amendmentAct && !('amendment' in amendmentAct);
+    // Envelope missing ONLY siteId as an own property: with a tainted
+    // Object.prototype carrying siteId, an `in`-based copy would leak the
+    // inherited value into the request and create an ok act; own-based
+    // copying must still propagate T1's INVALID_SITE_ID.
+    const envelopeNoSiteId = { ...VALID_ENVELOPE() };
+    delete envelopeNoSiteId.siteId;
+    const inheritedSiteId = withTaintedObjectProto({ siteId: 'SITE-HEREDADO-SYN' },
+        () => safeCall(build, envelopeNoSiteId, VALIDATION_PAYLOAD()));
+    const siteIdCase = isFailureWithCode(inheritedSiteId, 'INVALID_SITE_ID');
+    record(caseNames[3], amendmentCase && siteIdCase,
+        `amendment=${amendmentCase ? 'absent' : 'leaked'} siteId=${siteIdCase ? 'rejected' : 'accepted'}`);
+
+    // (5) Builder authority: inherited kind/payload cannot alter the act —
+    // the builder fixes its own kind and assembles its own payload.
+    const taintedAuthority = withTaintedObjectProto(
+        { kind: 'pharmacy_first_visit', payload: { smuggled: 'SYN-HEREDADO' } },
+        () => safeCall(build, VALID_ENVELOPE(), VALIDATION_PAYLOAD()));
+    const authorityAct = isOkAct(taintedAuthority) ? taintedAuthority.result : null;
+    record(caseNames[4],
+        !!authorityAct
+        && authorityAct.kind === 'pharmacy_validation'
+        && Object.keys(authorityAct.payload).sort().join('|') === 'lines|request'
+        && authorityAct.payload.smuggled === undefined
+        && JSON.stringify(authorityAct.payload) === JSON.stringify({ request: VALID_REQUEST_BLOCK(), lines: [] }),
+        taintedAuthority.threw ? `threw: ${taintedAuthority.threw.message}` : `kind=${authorityAct ? authorityAct.kind : 'n/a'}`);
+
+    // (6) Custom caller prototypes on payload/blocks/line elements fail
+    // closed outright — no shared mutable prototype can enter the act.
+    const sharedProto = { extra: 'MUTABLE-SINTETICO' };
+    const customPayload = Object.create(sharedProto);
+    customPayload.request = VALID_REQUEST_BLOCK();
+    customPayload.lines = [];
+    const customPayloadCase = isFailureWithCode(safeCall(build, VALID_ENVELOPE(), customPayload), 'INVALID_PAYLOAD');
+    const customBlockCase = isFailureWithCode(safeCall(build, VALID_ENVELOPE(), { request: Object.create(sharedProto), lines: [] }), 'INVALID_BLOCK');
+    const customLineCase = isFailureWithCode(safeCall(build, VALID_ENVELOPE(), { request: VALID_REQUEST_BLOCK(), lines: [Object.create(sharedProto)] }), 'INVALID_LINE_ELEMENT');
+    record(caseNames[5], customPayloadCase && customBlockCase && customLineCase,
+        `payload=${customPayloadCase ? 'rejected' : 'accepted'} block=${customBlockCase ? 'rejected' : 'accepted'} line=${customLineCase ? 'rejected' : 'accepted'}`);
+
+    // (7) Null-prototype envelope/blocks/line elements remain first-class
+    // supported inputs, cloned detached (null prototype preserved on copies).
+    const nullEnvelope = Object.create(null);
+    Object.assign(nullEnvelope, VALID_ENVELOPE());
+    const nullBlock = Object.create(null);
+    Object.assign(nullBlock, VALID_REQUEST_BLOCK());
+    const nullLine = Object.create(null);
+    nullLine.lineId = 'LINEA-SYN-NULL-PROTO';
+    const nullOutcome = safeCall(build, nullEnvelope, { request: nullBlock, lines: [nullLine] });
+    const nullAct = isOkAct(nullOutcome) ? nullOutcome.result : null;
+    record(caseNames[6],
+        !!nullAct
+        && Object.getPrototypeOf(nullAct.payload.request) === null
+        && Object.getPrototypeOf(nullAct.payload.lines[0]) === null
+        && nullAct.payload.request !== nullBlock && nullAct.payload.lines[0] !== nullLine
+        && nullAct.payload.lines.length === 1 && nullAct.payload.lines[0].lineId === 'LINEA-SYN-NULL-PROTO',
+        nullOutcome.threw ? `threw: ${nullOutcome.threw.message}` : `result=${JSON.stringify(nullOutcome.result).slice(0, 160)}`);
+
+    // Planted lie: an inherited lines array must never satisfy the explicit
+    // lines requirement.
+    plantedSink.length = 0;
+    plantedRecord('planted lie: inherited lines array satisfies the explicit lines requirement',
+        isOkAct(inheritedLines),
+        'inherited lines are rejected (expected for the planted lie)');
+    record('P8-f planted lie (inherited lines accepted) is detected as false', plantedDetectedAsFalse(), plantedSummary());
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -1010,6 +1159,7 @@ function main() {
     familyP6(builders, degradedDetail);
     familyP7(loadOutcome, degradedDetail);
     familyF(builders, degradedDetail);
+    familyP8(builders, degradedDetail);
 
     const failed = results.filter((r) => !r.pass).length;
     console.log('');

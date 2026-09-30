@@ -44,13 +44,27 @@
  *     no lleva clave 'amendment' (sin placeholder ni default).
  *   - Preservación estricta de centinelas: missing ≠ null ≠ '' ≠ 0 ≠
  *     false ≠ presente-con-undefined; nada colapsa ni se normaliza.
+ *   - La validez de la metadata y de la estructura se evalúa SÓLO sobre
+ *     propiedades PROPIAS (own): una propiedad alcanzable exclusivamente a
+ *     través de la cadena de prototipos nunca cuenta como metadata
+ *     explícita, bloque explícito ni línea explícita. La herencia no
+ *     satisface la exigencia de explicitud ni la autoridad del builder.
+ *   - `payload` y `provenance` (y sus anidados) aceptan únicamente objetos
+ *     planos canónicos (prototipo Object.prototype de cualquier reino) o
+ *     null-prototype. Un objeto cuyo prototipo directo es un prototipo
+ *     custom del llamador falla cerrado: el acto nunca comparte un
+ *     prototipo mutable del llamador.
  *   - Fail-closed: toda entrada inválida (incluidos tipos no soportados y
  *     ciclos dentro de las estructuras) devuelve
  *     { ok: false, error: { code, message } }, nunca lanza y nunca
  *     fabrica un acto parcial.
  *   - El resultado está desconectado (copia profunda) de las entradas:
  *     ninguna referencia del llamador puede mutar el acto, y crear el
- *     acto no muta input/payload/provenance/amendment originales.
+ *     acto no muta input/payload/provenance/amendment originales. La
+ *     copia profunda nunca preserva el prototipo del llamador: objeto
+ *     normal -> objeto plano nuevo; null-prototype -> null-prototype
+ *     nuevo. Mutar el prototipo de una entrada después de crear el acto
+ *     no puede cambiar el acto.
  */
 (function () {
     'use strict';
@@ -116,15 +130,27 @@
         return typeof value === 'number' && isFinite(value) && Math.floor(value) === value && value >= minimum;
     }
 
+    // Propiedad PROPIA: la única forma en que un dato cuenta como
+    // explícito. Una propiedad heredada (cadena de prototipos) nunca
+    // satisface un requisito del contrato ni se copia al acto.
+    function own(obj, key) {
+        return Object.prototype.hasOwnProperty.call(obj, key);
+    }
+
     // Objeto plano, con detección tolerante al reino de ejecución (el
-    // módulo corre también bajo sandbox): prototipo null o un prototipo
-    // cuyo constructor es Object. Instancias de clases, boxed objects y
-    // exóticos (Date, Map, Set...) no son formas soportadas del contrato.
+    // módulo corre también bajo sandbox y recibe fixtures entre reinos):
+    // prototipo null, o un prototipo directo que sea él mismo un
+    // Object.prototype canónico de algún reino. Prototipos custom del
+    // llamador (objetos compartidos mutables, instancias de clase,
+    // prototipos forjados con constructor renombrado incompleto) no son
+    // formas soportadas del contrato y fallan cerrado.
     function isPlainObject(value) {
         if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
         var proto = Object.getPrototypeOf(value);
         if (proto === null) return true;
-        return typeof proto.constructor === 'function' && proto.constructor.name === 'Object';
+        if (proto === Object.prototype) return true;
+        var ctor = proto.constructor;
+        return typeof ctor === 'function' && ctor.name === 'Object' && ctor.prototype === proto;
     }
 
     /**
@@ -164,7 +190,12 @@
                 }
                 return copyArray;
             }
-            var copy = Object.create(Object.getPrototypeOf(value));
+            // La copia NUNCA preserva un prototipo del llamador: objeto
+            // plano canónico -> objeto plano nuevo; null-prototype ->
+            // null-prototype nuevo. (isPlainObject ya garantizó que el
+            // prototipo directo es canónico o null; no hay prototype
+            // compartido con el llamador.)
+            var copy = Object.getPrototypeOf(value) === null ? Object.create(null) : {};
             var keys = Object.keys(value); // incluye claves presentes con undefined
             for (var k = 0; k < keys.length; k++) {
                 copy[keys[k]] = cloneSupported(value[keys[k]], ancestors);
@@ -200,51 +231,57 @@
             return fail('INVALID_REQUEST', 'createAct requiere un objeto de petición explícito con actId, revision, kind, siteId, patientRef, occurredAt, authoredAt, authorRef, attributionAssurance, provenance y payload.');
         }
 
-        if (!isNonEmptyString(request.actId)) {
-            return fail('INVALID_ACT_ID', 'actId debe ser un string explícito no vacío; no se autogenera ni se infiere.');
+        // Toda la metadata se lee SÓLO de propiedades propias: una
+        // propiedad heredada nunca cuenta como explícita (produce el mismo
+        // fallo tipado que una propiedad ausente).
+        if (!own(request, 'actId') || !isNonEmptyString(request.actId)) {
+            return fail('INVALID_ACT_ID', 'actId debe ser un string explícito no vacío; no se autogenera ni se infiere, y una propiedad heredada no cuenta como explícita.');
         }
 
-        if (!isIntegerAtLeast(request.revision, 1)) {
-            return fail('INVALID_REVISION', 'revision debe ser un entero >= 1; se recibió ' + String(request.revision) + '.');
+        if (!own(request, 'revision') || !isIntegerAtLeast(request.revision, 1)) {
+            return fail('INVALID_REVISION', 'revision debe ser un entero >= 1 (propio, no heredado); se recibió ' + String(request.revision) + '.');
         }
 
-        if (!isSupportedKind(request.kind)) {
-            return fail('INVALID_KIND', "kind debe ser exactamente 'pharmacy_validation', 'pharmacy_first_visit' o 'pharmacy_followup'; se recibió " + (typeof request.kind) + ". No se admite normalización ni alias, y los tres casos de uso son independientes.");
+        if (!own(request, 'kind') || !isSupportedKind(request.kind)) {
+            return fail('INVALID_KIND', "kind debe ser exactamente 'pharmacy_validation', 'pharmacy_first_visit' o 'pharmacy_followup' (propio, no heredado); se recibió " + (typeof request.kind) + ". No se admite normalización ni alias, y los tres casos de uso son independientes.");
         }
 
-        if (!isNonEmptyString(request.siteId)) {
-            return fail('INVALID_SITE_ID', 'siteId debe ser un string explícito no vacío; no se autogenera ni se deduce del entorno.');
+        if (!own(request, 'siteId') || !isNonEmptyString(request.siteId)) {
+            return fail('INVALID_SITE_ID', 'siteId debe ser un string explícito no vacío (propio, no heredado); no se autogenera ni se deduce del entorno.');
         }
 
-        if (!isNonEmptyString(request.patientRef)) {
-            return fail('INVALID_PATIENT_REF', 'patientRef debe ser un string explícito no vacío; no se infiere de nombre, fármaco, historial ni posición.');
+        if (!own(request, 'patientRef') || !isNonEmptyString(request.patientRef)) {
+            return fail('INVALID_PATIENT_REF', 'patientRef debe ser un string explícito no vacío (propio, no heredado); no se infiere de nombre, fármaco, historial ni posición.');
         }
 
-        if (!isExplicitIsoDateTime(request.occurredAt)) {
-            return fail('INVALID_OCCURRED_AT', 'occurredAt debe ser un string ISO-8601 fecha-hora explícito y calendariamente válido; no se genera con el reloj.');
+        if (!own(request, 'occurredAt') || !isExplicitIsoDateTime(request.occurredAt)) {
+            return fail('INVALID_OCCURRED_AT', 'occurredAt debe ser un string ISO-8601 fecha-hora explícito y calendariamente válido (propio, no heredado); no se genera con el reloj.');
         }
 
-        if (!isExplicitIsoDateTime(request.authoredAt)) {
-            return fail('INVALID_AUTHORED_AT', 'authoredAt debe ser un string ISO-8601 fecha-hora explícito y calendariamente válido; no se genera con el reloj.');
+        if (!own(request, 'authoredAt') || !isExplicitIsoDateTime(request.authoredAt)) {
+            return fail('INVALID_AUTHORED_AT', 'authoredAt debe ser un string ISO-8601 fecha-hora explícito y calendariamente válido (propio, no heredado); no se genera con el reloj.');
         }
 
-        if (!isNonEmptyString(request.authorRef)) {
-            return fail('INVALID_AUTHOR_REF', 'authorRef debe ser un string explícito no vacío; el actor no se autogenera.');
+        if (!own(request, 'authorRef') || !isNonEmptyString(request.authorRef)) {
+            return fail('INVALID_AUTHOR_REF', 'authorRef debe ser un string explícito no vacío (propio, no heredado); el actor no se autogenera.');
         }
 
-        if (!isNonEmptyString(request.attributionAssurance)) {
-            return fail('INVALID_ATTRIBUTION_ASSURANCE', 'attributionAssurance debe ser un string explícito no vacío; este contrato no enumera el vocabulario de assurance.');
+        if (!own(request, 'attributionAssurance') || !isNonEmptyString(request.attributionAssurance)) {
+            return fail('INVALID_ATTRIBUTION_ASSURANCE', 'attributionAssurance debe ser un string explícito no vacío (propio, no heredado); este contrato no enumera el vocabulario de assurance.');
         }
 
         if (!isPlainObject(request.payload)) {
-            return fail('INVALID_PAYLOAD', 'payload debe ser un objeto explícito no-array (objeto del journey); se recibió ' + (request.payload === null ? 'null' : typeof request.payload) + '.');
+            return fail('INVALID_PAYLOAD', 'payload debe ser un objeto explícito no-array con prototipo canónico o null (objetos con prototipo custom del llamador no se aceptan); se recibió ' + (request.payload === null ? 'null' : typeof request.payload) + '.');
         }
 
         if (!isPlainObject(request.provenance)) {
-            return fail('INVALID_PROVENANCE', 'provenance debe ser un objeto explícito no-array; este contrato no inventa su taxonomía interna.');
+            return fail('INVALID_PROVENANCE', 'provenance debe ser un objeto explícito no-array con prototipo canónico o null; este contrato no inventa su taxonomía interna.');
         }
 
-        var amendmentProvided = request.amendment !== undefined;
+        // amendment: sólo una propiedad PROPIA con valor definido cuenta
+        // como proporcionada (igual semántica D6 que antes: presente con
+        // undefined sigue tratándose como ausente; heredada nunca cuenta).
+        var amendmentProvided = own(request, 'amendment') && request.amendment !== undefined;
         if (amendmentProvided) {
             var amendment = request.amendment;
             if (!isPlainObject(amendment)) {

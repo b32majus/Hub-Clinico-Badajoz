@@ -876,6 +876,157 @@ function familyE(create, sandbox, moduleSource, degradedDetail) {
 }
 
 // ---------------------------------------------------------------------------
+// F — explicit-own metadata & prototype hardening (correction cycle PR #490)
+// ---------------------------------------------------------------------------
+
+function isFailureWithCodeT1(outcome, code) {
+    return !outcome.threw && !!outcome.result
+        && outcome.result.ok === false
+        && outcome.result.error && outcome.result.error.code === code;
+}
+
+function familyF(create, degradedDetail) {
+    console.log('  Family F — explicit-own metadata: inherited properties are never explicit; custom caller prototypes fail closed; no shared prototype survives cloning');
+    const caseNames = [
+        'F inherited required metadata via a custom prototype is NOT explicit (each field fails closed)',
+        'F amendment inherited via a custom prototype is not treated as provided (ok act, NO amendment key)',
+        'F payload/provenance with a custom (shared) caller prototype fail closed (INVALID_PAYLOAD / INVALID_PROVENANCE / UNSUPPORTED_STRUCTURE)',
+        'F mutating the input prototype after createAct never changes the act',
+        'F null-prototype payload/provenance remain supported and are cloned detached as null-prototype objects',
+        'F canonical plain payload/provenance remain supported and are cloned as fresh detached plain objects',
+    ];
+    if (!create) {
+        for (const name of caseNames) record(name, false, degradedDetail);
+        plantedSink.length = 0;
+        plantedRecord('planted lie: inherited metadata is accepted (degraded)', false, 'degraded');
+        record('F-f planted lie (inherited metadata accepted) is detected as false', plantedDetectedAsFalse(), plantedSummary());
+        return;
+    }
+
+    // (1) Each required metadata field inherited through a custom prototype
+    // does NOT satisfy the explicit-input requirement: the same typed
+    // INVALID_* code as a genuinely missing field must be produced.
+    const INHERITED_METADATA_CASES = [
+        ['actId', 'ACT-HEREDADO-SYN', 'INVALID_ACT_ID'],
+        ['revision', 4, 'INVALID_REVISION'],
+        ['kind', 'pharmacy_followup', 'INVALID_KIND'],
+        ['siteId', 'SITE-HEREDADO-SYN', 'INVALID_SITE_ID'],
+        ['patientRef', 'SYN-HEREDADO-0001', 'INVALID_PATIENT_REF'],
+        ['occurredAt', '2026-09-30T10:00:00Z', 'INVALID_OCCURRED_AT'],
+        ['authoredAt', '2026-09-30T12:00:00Z', 'INVALID_AUTHORED_AT'],
+        ['authorRef', 'FH-SYN-AUTOR-HEREDADO', 'INVALID_AUTHOR_REF'],
+        ['attributionAssurance', 'assurance_heredada_sintetica', 'INVALID_ATTRIBUTION_ASSURANCE'],
+    ];
+    let inheritedAllFail = true;
+    let inheritedDetail = '';
+    for (const [field, value, code] of INHERITED_METADATA_CASES) {
+        const request = Object.create({ [field]: value });
+        for (const [k, v] of Object.entries(VALID_REQUEST())) {
+            if (k !== field) request[k] = v;
+        }
+        const outcome = safeCreate(create, request);
+        if (!isFailureWithCodeT1(outcome, code)) {
+            inheritedAllFail = false;
+            inheritedDetail = `${field}: outcome=${outcome.threw ? 'threw' : JSON.stringify(outcome.result).slice(0, 160)}`;
+            break;
+        }
+    }
+    record(caseNames[0], inheritedAllFail, inheritedDetail || 'all 9 fields rejected inherited values with their typed codes');
+
+    // (2) An amendment reachable only through the prototype chain must not
+    // be treated as provided: the ok act carries NO amendment key.
+    const amendBase = { amendment: { previousRevision: 1, reason: 'razon-heredada-sintetica' } };
+    const amendRequest = Object.create(amendBase);
+    Object.assign(amendRequest, { ...VALID_REQUEST(), revision: 2 });
+    const amendOutcome = safeCreate(create, amendRequest);
+    record(caseNames[1],
+        !amendOutcome.threw && amendOutcome.result && amendOutcome.result.ok === true && !('amendment' in amendOutcome.result),
+        amendOutcome.threw ? `threw: ${amendOutcome.threw.message}` : `result=${JSON.stringify(amendOutcome.result).slice(0, 160)}`);
+
+    // (3) payload/provenance whose DIRECT prototype is a caller-controlled
+    // custom object fail closed — even when the custom prototype's
+    // constructor chain resolves to Object. A nested custom-prototype object
+    // inside an otherwise plain payload fails closed too.
+    const sharedProto = { extra: 'MUTABLE-SINTETICO' };
+    const customPayload = Object.create(sharedProto);
+    customPayload.nota = 'SYN';
+    const outcomeCustomPayload = safeCreate(create, { ...VALID_REQUEST(), payload: customPayload });
+    const customPayloadRejected = isFailureWithCodeT1(outcomeCustomPayload, 'INVALID_PAYLOAD');
+    const customProvenance = Object.create(sharedProto);
+    customProvenance.source = 'sintetico';
+    const outcomeCustomProvenance = safeCreate(create, { ...VALID_REQUEST(), provenance: customProvenance });
+    const customProvenanceRejected = isFailureWithCodeT1(outcomeCustomProvenance, 'INVALID_PROVENANCE');
+    const outcomeNestedCustom = safeCreate(create, { ...VALID_REQUEST(), payload: { inner: Object.create(sharedProto) } });
+    const nestedCustomRejected = isFailureWithCodeT1(outcomeNestedCustom, 'UNSUPPORTED_STRUCTURE');
+    record(caseNames[2], customPayloadRejected && customProvenanceRejected && nestedCustomRejected,
+        `payload=${customPayloadRejected ? 'rejected' : JSON.stringify(outcomeCustomPayload.result).slice(0, 120)} provenance=${customProvenanceRejected ? 'rejected' : 'accepted'} nested=${nestedCustomRejected ? 'rejected' : 'accepted'}`);
+
+    // (4) The act is computed from own properties at creation time: mutating
+    // (or extending) the input's prototype afterwards can never reach it.
+    const sharedBase = { crece: 'v1' };
+    const protoRequest = Object.create(sharedBase);
+    Object.assign(protoRequest, VALID_REQUEST());
+    const protoOutcome = safeCreate(create, protoRequest);
+    const protoSnapshot = protoOutcome.threw ? '' : JSON.stringify(protoOutcome.result);
+    if (!protoOutcome.threw && protoOutcome.result && protoOutcome.result.ok === true) {
+        sharedBase.crece = 'v2';
+        sharedBase.nuevaClave = 'fuga-sintetica';
+    }
+    record(caseNames[3],
+        !protoOutcome.threw && protoOutcome.result && protoOutcome.result.ok === true
+        && JSON.stringify(protoOutcome.result) === protoSnapshot
+        && protoOutcome.result.payload.crece === undefined && protoOutcome.result.payload.nuevaClave === undefined,
+        protoOutcome.threw ? `threw: ${protoOutcome.threw.message}` : 'act changed after prototype mutation');
+
+    // (5) Null-prototype payload/provenance remain first-class supported
+    // inputs; the cloned copies are detached null-prototype objects.
+    const nullPayload = Object.create(null);
+    nullPayload.nota = 'SYN';
+    nullPayload.numero = 3;
+    const nullProvenance = Object.create(null);
+    nullProvenance.source = 'sintetico';
+    const nullOutcome = safeCreate(create, { ...VALID_REQUEST(), payload: nullPayload, provenance: nullProvenance });
+    const nullOk = !nullOutcome.threw && nullOutcome.result && nullOutcome.result.ok === true;
+    record(caseNames[4],
+        nullOk
+        && Object.getPrototypeOf(nullOutcome.result.payload) === null
+        && Object.getPrototypeOf(nullOutcome.result.provenance) === null
+        && nullOutcome.result.payload !== nullPayload && nullOutcome.result.provenance !== nullProvenance
+        && nullOutcome.result.payload.nota === 'SYN' && nullOutcome.result.payload.numero === 3
+        && nullOutcome.result.provenance.source === 'sintetico',
+        nullOutcome.threw ? `threw: ${nullOutcome.threw.message}` : `result=${JSON.stringify(nullOutcome.result).slice(0, 160)}`);
+
+    // (6) Canonical plain objects remain supported; clones are fresh plain
+    // objects, never a caller-controlled prototype reference.
+    const plainPayload = { nota: 'SYN' };
+    const plainOutcome = safeCreate(create, { ...VALID_REQUEST(), payload: plainPayload });
+    const plainOk = !plainOutcome.threw && plainOutcome.result && plainOutcome.result.ok === true;
+    const actPayloadProto = plainOk ? Object.getPrototypeOf(plainOutcome.result.payload) : null;
+    const plainProtoCanonical = !!actPayloadProto
+        && typeof actPayloadProto.constructor === 'function'
+        && actPayloadProto.constructor.name === 'Object'
+        && actPayloadProto.constructor.prototype === actPayloadProto;
+    record(caseNames[5],
+        plainOk && plainOutcome.result.payload !== plainPayload
+        && JSON.stringify(plainOutcome.result.payload) === JSON.stringify(plainPayload)
+        && plainProtoCanonical,
+        plainOutcome.threw ? `threw: ${plainOutcome.threw.message}` : `cloneProtoCanonical=${plainProtoCanonical}`);
+
+    // Planted lie: an inherited actId must never satisfy the explicit
+    // metadata requirement.
+    const plantedRequest = Object.create({ actId: 'ACT-HEREDADO-SYN' });
+    for (const [k, v] of Object.entries(VALID_REQUEST())) {
+        if (k !== 'actId') plantedRequest[k] = v;
+    }
+    const plantedOutcome = safeCreate(create, plantedRequest);
+    plantedSink.length = 0;
+    plantedRecord('planted lie: inherited actId satisfies the explicit metadata requirement',
+        !plantedOutcome.threw && plantedOutcome.result && plantedOutcome.result.ok === true,
+        'inherited metadata is rejected (expected for the planted lie)');
+    record('F-f planted lie (inherited metadata accepted) is detected as false', plantedDetectedAsFalse(), plantedSummary());
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -899,6 +1050,7 @@ function main() {
     familyC(create, degradedDetail);
     familyD(create, degradedDetail);
     familyE(create, sandbox, moduleSource, degradedDetail);
+    familyF(create, degradedDetail);
 
     const failed = results.filter((r) => !r.pass).length;
     console.log('');

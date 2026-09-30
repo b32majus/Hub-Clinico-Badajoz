@@ -50,10 +50,21 @@
  *     UNKNOWN_ENVELOPE_KEY, KIND_OWNED_BY_BUILDER, PAYLOAD_OWNED_BY_BUILDER,
  *     INVALID_PAYLOAD, UNKNOWN_PAYLOAD_KEY, MISSING_BLOCK, INVALID_BLOCK,
  *     INVALID_LINES, INVALID_LINE_ELEMENT.
+ *   - La validez de envelope, bloques y líneas se evalúa SÓLO sobre
+ *     propiedades PROPIAS (own): una propiedad alcanzable exclusivamente a
+ *     través de la cadena de prototipos nunca cuenta como bloque explícito,
+ *     líneas explícitas ni metadata de envelope. Un bloque requerido
+ *     heredado sigue produciendo MISSING_BLOCK; un 'lines' heredado sigue
+ *     produciendo INVALID_LINES; un bloque opcional heredado nunca aparece
+ *     en el acto; la metadata heredada nunca se copia al request. El
+ *     builder conserva su autoridad aunque Object.prototype esté
+ *     contaminado con kind/payload: el kind y el payload del acto son
+ *     SIEMPRE los fijados por el builder.
  *   - Ni las entradas ni el resultado comparten referencias: la envelope y
- *     el payload ensamblado llegan a `createAct`, que copia en profundidad;
- *     crear el acto no muta las entradas y mutarlas después no altera el
- *     acto.
+ *     el payload ensamblado llegan a `createAct`, que copia en profundidad
+ *     sin preservar prototipos del llamador;
+ *     crear el acto no muta las entradas y mutarlas (o sus prototipos)
+ *     después no altera el acto.
  *   - Este módulo no lee DOM, almacenamiento, reloj, paciente global,
  *     catálogo ni CIMA; no importa ni usa núcleo de exportación, columnas,
  *     portadores ni destinos: los bloques del payload son datos del dominio
@@ -109,15 +120,26 @@
         return { ok: false, error: { code: code, message: message } };
     }
 
+    // Propiedad PROPIA: la única forma en que un dato cuenta como
+    // explícito. Una propiedad heredada (cadena de prototipos) nunca
+    // satisface un requisito del builder ni se copia al request.
+    function own(obj, key) {
+        return Object.prototype.hasOwnProperty.call(obj, key);
+    }
+
     // Objeto plano, con detección tolerante al reino de ejecución (el
-    // módulo corre también bajo sandbox): prototipo null o un prototipo
-    // cuyo constructor es Object. Instancias de clases, boxed objects y
-    // exóticos no son formas soportadas de un bloque clínico.
+    // módulo corre también bajo sandbox y recibe fixtures entre reinos):
+    // prototipo null, o un prototipo directo que sea él mismo un
+    // Object.prototype canónico de algún reino. Prototipos custom del
+    // llamador (objetos compartidos mutables, instancias de clase) no son
+    // formas soportadas de envelope, bloque o línea y fallan cerrado.
     function isPlainObject(value) {
         if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
         var proto = Object.getPrototypeOf(value);
         if (proto === null) return true;
-        return typeof proto.constructor === 'function' && proto.constructor.name === 'Object';
+        if (proto === Object.prototype) return true;
+        var ctor = proto.constructor;
+        return typeof ctor === 'function' && ctor.name === 'Object' && ctor.prototype === proto;
     }
 
     function validateEnvelope(envelope) {
@@ -161,30 +183,30 @@
 
         for (var r = 0; r < USE_CASES[useCase].requiredBlocks.length; r++) {
             var requiredBlock = USE_CASES[useCase].requiredBlocks[r];
-            if (!(requiredBlock in payloadInput)) {
-                return fail('MISSING_BLOCK', "El payload de " + useCase + " exige el bloque explícito '" + requiredBlock + "'; la ausencia no se rellena desde tratamiento solicitado, previo, historial ni catálogo.");
+            if (!own(payloadInput, requiredBlock)) {
+                return fail('MISSING_BLOCK', "El payload de " + useCase + " exige el bloque explícito '" + requiredBlock + "' (propio, no heredado); la ausencia no se rellena desde tratamiento solicitado, previo, historial ni catálogo.");
             }
         }
 
         var allBlocks = USE_CASES[useCase].requiredBlocks.concat(USE_CASES[useCase].optionalBlocks);
         for (var b = 0; b < allBlocks.length; b++) {
             var blockName = allBlocks[b];
-            if (blockName in payloadInput && !isPlainObject(payloadInput[blockName])) {
-                return fail('INVALID_BLOCK', "El bloque '" + blockName + "' debe ser un objeto explícito; se recibió " + (payloadInput[blockName] === null ? 'null' : Array.isArray(payloadInput[blockName]) ? 'array' : typeof payloadInput[blockName]) + '.');
+            if (own(payloadInput, blockName) && !isPlainObject(payloadInput[blockName])) {
+                return fail('INVALID_BLOCK', "El bloque '" + blockName + "' debe ser un objeto explícito (propio, con prototipo canónico o null); se recibió " + (payloadInput[blockName] === null ? 'null' : Array.isArray(payloadInput[blockName]) ? 'array' : typeof payloadInput[blockName]) + '.');
             }
         }
 
         var payload = {};
         for (var k = 0; k < allBlocks.length; k++) {
             var name = allBlocks[k];
-            if (name in payloadInput) {
+            if (own(payloadInput, name)) {
                 payload[name] = payloadInput[name];
             }
         }
 
         if (USE_CASES[useCase].hasLines) {
-            if (!('lines' in payloadInput) || !Array.isArray(payloadInput.lines)) {
-                return fail('INVALID_LINES', "'lines' debe ser un array EXPLÍCITO del llamador (puede ser vacío); se recibió " + (!('lines' in payloadInput) ? 'ausente' : Array.isArray(payloadInput.lines) ? 'array' : typeof payloadInput.lines) + '.');
+            if (!own(payloadInput, 'lines') || !Array.isArray(payloadInput.lines)) {
+                return fail('INVALID_LINES', "'lines' debe ser un array EXPLÍCITO del llamador (propio, puede ser vacío; un array heredado no cuenta como explícito); se recibió " + (!own(payloadInput, 'lines') ? 'ausente' : Array.isArray(payloadInput.lines) ? 'array' : typeof payloadInput.lines) + '.');
             }
             var lines = payloadInput.lines;
             for (var l = 0; l < lines.length; l++) {
@@ -211,7 +233,7 @@
         var request = {};
         for (var i = 0; i < ENVELOPE_KEYS.length; i++) {
             var key = ENVELOPE_KEYS[i];
-            if (key in envelope) {
+            if (own(envelope, key)) {
                 request[key] = envelope[key];
             }
         }
