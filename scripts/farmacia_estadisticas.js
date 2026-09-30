@@ -587,11 +587,13 @@
     function loadDemo() {
         sourceMode = 'loading';
         setSourceStatus('Demo sintética', 'Cargando JSON versionado…', 'Cargando exclusivamente la demo sintética versionada.');
-        return fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
-            .then(function (response) {
-                if (!response.ok) throw new Error('DEMO_DATASET_UNAVAILABLE');
-                return response.json();
-            })
+        /* F4.3: el dataset demo versionado se carga detrás del seam publicado
+           (FarmaciaCommon.loadLongitudinalDemoDataset); la página no conoce la
+           fuente física. */
+        var loader = window.FarmaciaDemo && typeof window.FarmaciaDemo.loadLongitudinalDemoDataset === 'function'
+            ? window.FarmaciaDemo.loadLongitudinalDemoDataset()
+            : Promise.reject(new Error('DEMO_DATASET_LOADER_UNAVAILABLE'));
+        return loader
             .then(function (dataset) {
                 var cohort = Cohort.buildDemoCohort(dataset, { fileName: 'farmacia_longitudinal_demo_v0_3.json', importedAt: '' });
                 setCohort('demo', cohort, { source_file_name: 'farmacia_longitudinal_demo_v0_3.json', event_count: cohort.reduce(function (sum, patient) { return sum + patient.valid_event_count; }, 0) });

@@ -962,6 +962,10 @@
     var longDataset = null;
     var longCurrentCip = null;
     var longSectionReady = false;
+    /* F4.3: contexto de paciente resuelto por la operación de lectura async
+       publicada (FarmaciaCommon.readPatientContext) durante la carga; los
+       render reutilizan esta proyección en lugar de re-consultar la población. */
+    var currentCtxPatient = null;
 
     var LONG_PROM_MAP = { dlqi: 'DLQI', eva_dolor: 'EVA dolor', eva_prurito: 'EVA prurito', haq: 'HAQ' };
     var LONG_CLINICAL_MAP = { ihs4: 'IHS4', hurley: 'Hurley', das28: 'DAS28', haq: 'HAQ' };
@@ -1040,11 +1044,7 @@
             var timeEl = statusEl.querySelector('.db-status-indicator__time');
             if (timeEl) timeEl.textContent = 'Cargando datos longitudinales...';
         }
-        fetch('data/demo/farmacia/farmacia_longitudinal_demo_v0_3.json')
-            .then(function (response) {
-                if (!response.ok) throw new Error('Failed to fetch longitudinal dataset');
-                return response.json();
-            })
+        F.loadLongitudinalDemoDataset()
             .then(function (data) {
                 var normalize = window.FarmaciaLongitudinal.normalizePatient;
                 data.pacientes = (data.pacientes || []).map(function (patient) { return normalize(patient); });
@@ -1058,13 +1058,13 @@
                     renderLongitudinalForCip(longCurrentCip);
                 }
                 // Re-render secciones extendidas ahora que longDataset está disponible
-                var ctx = F.getQueryContext();
-                if (!ctx.patientNotFound) {
-                    var patient = ctx.patient || F.patients[longCurrentCip || 'CIP-DEMO-FH-001'];
-                    if (patient) {
-                        renderExtendedBlocks(patient);
+                F.readPatientContext({ demoFallbackCip: longCurrentCip || 'CIP-DEMO-FH-001' }).then(function (ctx) {
+                    if (ctx.patientNotFound) return;
+                    if (ctx.patient) {
+                        currentCtxPatient = ctx.patient;
+                        renderExtendedBlocks(ctx.patient);
                     }
-                }
+                });
             })
             .catch(function () {
                 longSectionReady = false;
@@ -1089,9 +1089,8 @@
         var standaloneLink = document.getElementById('longitudinalStandaloneLink');
 
         if (!patient) {
-            var context = F.getQueryContext();
-            var rawPatient = context.patient && context.patient.__farmaciaRawPatient
-                && context.patient.cip === cip;
+            var rawPatient = currentCtxPatient && currentCtxPatient.__farmaciaRawPatient
+                && currentCtxPatient.cip === cip;
             if (rawPatient) {
                 section.classList.remove('hidden');
                 if (standaloneLink) standaloneLink.href = F.makeContextUrl('farmacia_dashboard_longitudinal.html', { cip: cip });
@@ -1825,13 +1824,24 @@
         F = window.FarmaciaDemo || F;
         bindLongitudinalEvents();
         initLongitudinalSection();
-        const ctx = F.getQueryContext();
-        if (ctx.patientNotFound) {
-            renderPatientNotFound(ctx);
-            return;
-        }
-        const patient = ctx.patient || F.patients['CIP-DEMO-FH-001'];
-        renderDashboard(patient);
+        // F4.3: la lectura del paciente pasa por la operación de aplicación
+        // async publicada (facade/contrato V2 → sesión → coexistencia legacy
+        // dentro del seam). Mismos estados visibles; sin lookup directo.
+        F.readPatientContext({ demoFallbackCip: 'CIP-DEMO-FH-001' }).then((ctx) => {
+            if (ctx.patientNotFound) {
+                renderPatientNotFound(ctx);
+                return;
+            }
+            const patient = ctx.patient;
+            if (!patient) return;
+            currentCtxPatient = patient;
+            renderDashboard(patient);
+        }).catch((error) => {
+            if (window.console && typeof window.console.error === 'function') {
+                window.console.error('[Farmacia Dashboard] readPatientContext failed:', error);
+            }
+            renderPatientNotFound({ cip: '' });
+        });
         // WO8.1b — Botón Excel FH
         (function initDashExcelBtn() {
             var btn = document.getElementById('fhDashExcelExportBtn');

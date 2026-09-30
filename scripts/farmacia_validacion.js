@@ -604,8 +604,11 @@
         updateValidationModuleSummaries();
     }
 
-    function applyContext() {
-        var context = F.getQueryContext();
+    async function applyContext() {
+        /* F4.3: la lectura del paciente pasa por la operación de aplicación
+           async publicada (facade/contrato V2 → sesión → coexistencia legacy
+           dentro del seam). Mismos estados visibles; sin lookup directo. */
+        var context = await F.readPatientContext();
         currentPatient = context.patient || null;
         var origen = inferOrigenEntrada(context);
         setOrigenEntrada(origen);
@@ -2799,7 +2802,7 @@
         getValidatedTreatmentRelation: getValidatedTreatmentRelation
     };
 
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", async function () {
         populatePautaSelect("fhManualPauta", "fhManualPautaOtro");
         populatePautaSelect("fhDermaPauta", "fhDermaPautaOtro");
         populatePautaSelect("fhDigPauta", "fhDigPautaOtro");
@@ -2821,7 +2824,8 @@
             enableAutocompleteValidado();
             byId("noFindDrugRow").classList.remove("hidden");
         });
-        applyContext();
+        // F4.3: applyContext resuelve el paciente vía la operación async publicada.
+        await applyContext();
         updateValidationV2ExportAvailability();
         var exportV2 = byId("fhValExportV2Btn");
         if (exportV2) exportV2.addEventListener("click", handleValidationV2Export);
@@ -2831,14 +2835,15 @@
         updateKarchLasagna();
         toggleCausalityModules();
         // WO8.1b — Botón Excel FH
+        // F4.3: la lectura de contexto del export pasa por la operación async publicada.
         (function initValExcelBtn() {
             var btn = document.getElementById('fhValExcelExportBtn');
             if (!btn) return;
             updateValidationExcelExportAvailability();
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
                 var exp = window.FarmaciaExcelRowExport;
                 if (!exp) return;
-                var ctx = F.getQueryContext ? F.getQueryContext() : {};
+                var ctx = F && typeof F.readPatientContext === 'function' ? await F.readPatientContext() : {};
                 var patient = ctx.patient || null;
                 var exportData = buildValidationExcelExportData();
                 if (!exportData.canCopy) {

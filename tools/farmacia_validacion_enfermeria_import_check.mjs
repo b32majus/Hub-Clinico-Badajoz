@@ -466,7 +466,7 @@ if (modelSrc) vm.runInContext(modelSrc, sandbox);
 
 vm.runInContext(validacionSrc, sandbox);
 // Fire DOMContentLoaded
-for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { DOMContentLoadedCallbacks[di](); }
+for (var di = 0; di < DOMContentLoadedCallbacks.length; di++) { await DOMContentLoadedCallbacks[di](); }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 console.log('');
@@ -664,15 +664,19 @@ assertEqual(v('fhValEstado'), 'pending', '32aa. Segunda selección mantiene esta
 var prebioResumen = $('fhEnfermeriaResumen');
 assert(prebioResumen !== null, '33. fhEnfermeriaResumen existe para paciente Enfermería');
 
-function rerunWithContext(context) {
+async function rerunWithContext(context) {
   [
     'fhDermaCip', 'fhDermaPatologia', 'fhDermaFarmaco', 'fhDermaDosis',
     'fhDermaVia', 'fhDermaPauta', 'fhDermaInduccion', 'fhDermaJustificacion',
     'fhValidadoFarmaco', 'fhValidadoDosis', 'fhValidadoVia', 'fhValidadoPauta',
     'fhValidadoInduccion', 'fhValidadoPresentacion', 'fhManualCip'
   ].forEach(function (id) { if ($(id)) $(id).value = ''; });
-  F.getQueryContext = function () { return context; };
-  DOMContentLoadedCallbacks[DOMContentLoadedCallbacks.length - 1]();
+  /* F4.3 re-binding: the page coordinator consumes the published async
+     application read operation (readPatientContext). The injected double
+     keeps the exact same behavioral contract the getQueryContext double
+     had. */
+  F.readPatientContext = async function () { return context; };
+  await DOMContentLoadedCallbacks[DOMContentLoadedCallbacks.length - 1]();
 }
 
 var enfWithoutRequestedDrug = {
@@ -681,11 +685,11 @@ var enfWithoutRequestedDrug = {
   origen_solicitud: 'enfermeria', tipo_origen: 'enfermeria_inicio_biologico',
   source_type: 'ENFERMERIA'
 };
-rerunWithContext({ cip: '000000004', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: enfWithoutRequestedDrug });
+await rerunWithContext({ cip: '000000004', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: enfWithoutRequestedDrug });
 assertEqual(v('fhDermaFarmaco'), '', '34. Enfermería sin fármaco explícito mantiene solicitado vacío');
 assertEqual(v('fhValidadoFarmaco'), '', '35. Enfermería sin fármaco explícito mantiene validado vacío');
 
-rerunWithContext({ cip: 'CIP-GUIADO-001', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', entrada: 'validacion', patient: null });
+await rerunWithContext({ cip: 'CIP-GUIADO-001', servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', entrada: 'validacion', patient: null });
 assertEqual(v('fhManualCip'), 'CIP-GUIADO-001', '36. Inicio guiado conserva CIP');
 assertEqual(v('fhServicioManual'), 'reuma', '37. Inicio guiado conserva servicio');
 assertEqual(v('fhPatologiaManual'), 'AR', '38. Inicio guiado conserva patología');
@@ -703,7 +707,7 @@ var reumaSchedulePatient = {
   farmaco_solicitado: 'Tratamiento solicitado sintético', dosis: '40 mg', via: 'SC', pauta: 'Cada 2 semanas',
   origen_solicitud: 'enfermeria', tipo_origen: 'enfermeria_inicio_biologico', source_type: 'ENFERMERIA', estado: 'pending'
 };
-rerunWithContext({ cip: reumaSchedulePatient.cip, servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: reumaSchedulePatient });
+await rerunWithContext({ cip: reumaSchedulePatient.cip, servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: reumaSchedulePatient });
 $('fhValidadoPrincipioActivo').value = '';
 $('fhValidadoJustificacion').value = '';
 $('fhValidatedTreatmentRelation').value = '';
@@ -719,7 +723,7 @@ assertEqual(knownReumaCopiedInput.validatedTreatment.scheduleLabel, 'Cada 2 sema
 assertEqual(knownReumaCopiedInput.decision.validatedTreatmentRelation, 'same_as_requested', '53. Copia Reuma fija same_as_requested');
 
 reumaSchedulePatient = Object.assign({}, reumaSchedulePatient, { cip: 'CIP-REUMA-SCHEDULE-OTHER-SYN', pauta: 'Cada 17 días según protocolo sintético' });
-rerunWithContext({ cip: reumaSchedulePatient.cip, servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: reumaSchedulePatient });
+await rerunWithContext({ cip: reumaSchedulePatient.cip, servicio: 'Reuma', servicioSlug: 'reumatologia', patologia: 'AR', patient: reumaSchedulePatient });
 $('fhValidadoPrincipioActivo').value = '';
 $('fhValidatedTreatmentRelation').value = '';
 var otherReumaScheduleInput = sandbox.window.FarmaciaValidacion.buildValidationV2Input({});
