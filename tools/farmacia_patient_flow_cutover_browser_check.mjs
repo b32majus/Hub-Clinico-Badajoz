@@ -378,6 +378,10 @@ try {
   await assertNoRetiredUi();
 
   await clickLink('Primera Visita');
+  /* PV-001 #482 harness alignment: el init read de Primera Visita es async
+     desde F4.3B; esperar la resolución del contexto antes de asertar, sin
+     debilitar ninguna aserción posterior. */
+  await page.waitForFunction((cip) => document.getElementById('fhPvCip')?.value === cip, CIP_A);
   assert.equal(await page.locator('#fhPvCip').inputValue(), CIP_A);
   assert.equal(await page.locator('#fhPvFarmaco').inputValue(), 'Validado RAW A');
   const firstVisitTreatment = await page.locator('#fhPvTratamientoGrid').innerText();
@@ -389,6 +393,9 @@ try {
   await assertNoRetiredUi();
 
   await clickLink('Seguimiento');
+  /* PV-001 #482 harness alignment: init read async (F5.2/F4.3); esperar
+     contexto antes de asertar, sin debilitar aserciones. */
+  await page.waitForFunction((cip) => document.getElementById('fhSegCip')?.value === cip, CIP_A);
   assert.equal(await page.locator('#fhSegCip').inputValue(), CIP_A);
   assert.equal(await page.locator('#fhSegLineCards input:checked').count(), 1);
   assert.equal(await page.locator('#fhSegLineaPrincipal').inputValue(), 'line-raw-a');
@@ -461,6 +468,7 @@ try {
 
   await clickLink('Dashboard Paciente');
   await clickLink('Seguimiento');
+  await page.waitForFunction((cip) => document.getElementById('fhSegCip')?.value === cip, CIP_B);
   assert.equal(await page.locator('#fhSegCip').inputValue(), CIP_B);
   assert.equal(await page.locator('#fhSegLineCards input').count(), 2);
   assert.equal(await page.locator('#fhSegLineCards input:checked').count(), 1, 'the single explicitly active line is autoselected');

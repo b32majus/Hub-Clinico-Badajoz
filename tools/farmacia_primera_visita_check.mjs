@@ -157,7 +157,7 @@ if (api && typeof api.searchCIP === 'function') {
      read operation (readPatientByCipSync). The injected double keeps the
      exact same behavioral contract the findPatientByCip double had. */
   sandbox.window.FarmaciaDemo.readPatientByCipSync = (cip) => String(cip).trim().toUpperCase() === 'CIP-B'
-    ? { status: 'loaded', source: 'legacy_coexistence', patient: { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas' } }
+    ? { status: 'loaded', source: 'legacy_coexistence', patient: { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', /* PV-001 #482: el double legacy lleva ahora el estado explícito del contrato demo; sin evidencia de validación la captura no se prehidrata (fail closed). */ estado: 'validated', estadoLabel: 'Validado', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas' } }
     : { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
   sandbox.window.FarmaciaDemo.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
     if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
