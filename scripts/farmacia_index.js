@@ -1153,13 +1153,29 @@
          ensureOverlay();
         var searchBtn = document.getElementById('fhSearchBtn');
         var cipInput = document.getElementById('fhCipInput');
-        if (searchBtn) searchBtn.addEventListener('click', search);
-        if (cipInput) cipInput.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                search();
-            }
+        // Correction cycle (#476): monotonic user-intent generation guard.
+        // Freshness derives purely from interaction ordering (never from
+        // clinical data comparison): every supported user search or edit
+        // supersedes the pending init-time read, so a late init response
+        // becomes a no-op instead of overwriting the user's newer CIP or
+        // launching a stale search. Programmatic value assignment does not
+        // fire 'input', so the init restore cannot supersede itself.
+        var userSearchIntent = 0;
+        function markUserSearchIntent() { userSearchIntent += 1; }
+        if (searchBtn) searchBtn.addEventListener('click', function () {
+            markUserSearchIntent();
+            search();
         });
+        if (cipInput) {
+            cipInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    markUserSearchIntent();
+                    search();
+                }
+            });
+            cipInput.addEventListener('input', markUserSearchIntent);
+        }
         initGuidedIntake();
         renderEnfermeriaBoard();
         renderPendingValidationBoard();
@@ -1175,8 +1191,13 @@
         });
         // F4.3: the published async application read operation is the init-time
         // read; only the transported CIP drives the guarded search below.
+        // Correction cycle (#476): the init generation is captured before the
+        // read; if a supported user interaction superseded init while the read
+        // was in flight, the late response is a no-op (no input overwrite, no
+        // stale search, no session/commit effect).
+        var initGeneration = userSearchIntent;
         F.readPatientContext().then(function (context) {
-            if (context.cip && cipInput) {
+            if (context.cip && cipInput && userSearchIntent === initGeneration) {
                 cipInput.value = context.cip;
                 search();
             }

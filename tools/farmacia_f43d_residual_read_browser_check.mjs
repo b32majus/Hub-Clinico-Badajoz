@@ -225,6 +225,104 @@ function filterRealErrors(consoleErrors) {
     }
 }
 
+// ─── 5. Correction cycle (#476): stale init read must never override a newer
+//        supported user search. The published async init read (readPatientContext)
+//        is wrapped at its own async boundary to be genuinely slow (same test
+//        double as the frozen VM oracle); the user interaction itself is fully
+//        supported (fill + click on the real search button). No DOM state is
+//        fabricated and no product code is altered.
+function withGatedInitRead() {
+    return {
+        initScript: `
+            (() => {
+                let release = null;
+                const gate = new Promise((resolve) => { release = resolve; });
+                window.__fhReleaseInit = () => { if (release) { const r = release; release = null; r(); } };
+                let current = undefined;
+                Object.defineProperty(window, 'FarmaciaDemo', {
+                    configurable: true,
+                    set(value) {
+                        if (value && typeof value.readPatientContext === 'function') {
+                            const original = value.readPatientContext.bind(value);
+                            value.readPatientContext = function (...args) {
+                                return gate.then(() => original(...args));
+                            };
+                        }
+                        current = value;
+                    },
+                    get() { return current; }
+                });
+            })();`,
+        release: (page) => page.evaluate(() => window.__fhReleaseInit())
+    };
+}
+
+{
+    // Scenario 5a: delayed init A → supported user search B → A resolves late.
+    const gate = withGatedInitRead();
+    const { context, page, consoleErrors, pageErrors } = await newPage();
+    await page.addInitScript(gate.initScript);
+    try {
+        await page.goto(base + 'farmacia_index.html?cip=CIP-INIT-A', { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(() => !!window.FarmaciaDemo && typeof window.FarmaciaDemo.readPatientByCipSync === 'function' && !!document.getElementById('fhSearchBtn'), null, { timeout: 15000 });
+        const pendingInput = await page.evaluate(() => (document.getElementById('fhCipInput') || {}).value || '');
+        assert.equal(pendingInput, '', 'init A is still in flight (input untouched)');
+        // Supported interaction: the professional types CIP B and presses search.
+        await page.fill('#fhCipInput', 'CIP-USER-B');
+        await page.click('#fhSearchBtn');
+        await page.waitForFunction(() => (document.getElementById('fhSearchStatus') || {}).textContent === 'Paciente no encontrado.', null, { timeout: 15000 });
+        const beforeLate = await page.evaluate(() => ({
+            input: (document.getElementById('fhCipInput') || {}).value || '',
+            guidedCip: (document.getElementById('guidedCip') || {}).textContent || ''
+        }));
+        assert.equal(beforeLate.input, 'CIP-USER-B', 'user CIP B is the visible search intent');
+        // The delayed init A now resolves.
+        await gate.release(page);
+        await page.waitForTimeout(500);
+        const afterLate = await page.evaluate(() => ({
+            input: (document.getElementById('fhCipInput') || {}).value || '',
+            guidedCip: (document.getElementById('guidedCip') || {}).textContent || '',
+            status: (document.getElementById('fhSearchStatus') || {}).textContent || ''
+        }));
+        assert.equal(afterLate.input, 'CIP-USER-B', 'stale init A never overwrites the newer user CIP B');
+        assert.equal(afterLate.guidedCip, 'CIP-USER-B', 'guided intake keeps the user CIP B (no stale A substitution)');
+        assert.equal(afterLate.status, 'Paciente no encontrado.', 'no stale search for A runs after B (status keeps the user outcome)');
+        const overlayPatient = await page.evaluate(() => (document.querySelector('.fh-overlay-card .patient-name') || { textContent: '' }).textContent.trim());
+        assert.equal(overlayPatient, '', 'stale init A renders no patient quick view after B');
+        assert.deepEqual(pageErrors, [], 'pageerror');
+        assert.deepEqual(filterRealErrors(consoleErrors), [], 'console.error');
+        ok('stale init A never overrides the newer supported user search B (late init is a no-op)');
+    } catch (error) {
+        bad('stale init A never overrides the newer supported user search B (late init is a no-op)', error && error.message);
+    } finally {
+        await context.close();
+    }
+}
+
+{
+    // Scenario 5b (control): delayed init A, no user interaction; normal init
+    // restore and guarded search behave exactly as before the correction.
+    const gate = withGatedInitRead();
+    const { context, page, consoleErrors, pageErrors } = await newPage();
+    await page.addInitScript(gate.initScript);
+    try {
+        await page.goto(base + 'farmacia_index.html?cip=CIP-DEMO-FH-001', { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(() => !!window.FarmaciaDemo && typeof window.FarmaciaDemo.readPatientByCipSync === 'function' && !!document.getElementById('fhSearchBtn'), null, { timeout: 15000 });
+        await gate.release(page);
+        await page.waitForFunction(() => (document.getElementById('fhSearchStatus') || {}).textContent === 'Paciente encontrado.', null, { timeout: 15000 });
+        const input = await page.evaluate(() => (document.getElementById('fhCipInput') || {}).value || '');
+        assert.equal(input, 'CIP-DEMO-FH-001', 'normal init restore still works through the guarded path');
+        await page.waitForFunction(() => !!document.querySelector('.fh-overlay-card .patient-name'), null, { timeout: 10000 });
+        assert.deepEqual(pageErrors, [], 'pageerror');
+        assert.deepEqual(filterRealErrors(consoleErrors), [], 'console.error');
+        ok('delayed init A without user interaction still restores and searches normally');
+    } catch (error) {
+        bad('delayed init A without user interaction still restores and searches normally', error && error.message);
+    } finally {
+        await context.close();
+    }
+}
+
 await browser.close();
 server.close();
 

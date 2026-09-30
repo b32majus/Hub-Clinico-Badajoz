@@ -218,6 +218,145 @@ try {
     fail('readPatientContext init contract executable', error && error.message);
 }
 
+// ─── 5. Correction cycle (#476): stale init read must never override a newer
+//        supported user search. Interaction-ordering invariant, frozen before
+//        the runtime guard is implemented. Deterministic VM harness over the
+//        real farmacia_index.js source with a manually-resolved init read.
+
+function makeIndexElement(id) {
+    const listeners = {};
+    return {
+        id,
+        value: '',
+        textContent: '',
+        disabled: false,
+        children: [],
+        options: [],
+        selectedOptions: [],
+        style: {},
+        classList: {
+            _set: new Set(),
+            add(c) { this._set.add(c); },
+            remove(c) { this._set.delete(c); },
+            contains(c) { return this._set.has(c); },
+            toggle(c, force) { if (force === undefined) { this._set.has(c) ? this._set.delete(c) : this._set.add(c); } else if (force) { this._set.add(c); } else { this._set.delete(c); } }
+        },
+        addEventListener(type, listener) { (listeners[type] = listeners[type] || []).push(listener); },
+        dispatch(type, event) { (listeners[type] || []).forEach((listener) => listener(event || { preventDefault() {} })); },
+        appendChild() {},
+        append() {},
+        focus() {},
+        setAttribute(name, value) { (this.attributes = this.attributes || {})[name] = String(value); },
+        getAttribute(name) { return (this.attributes && this.attributes[name] !== undefined) ? this.attributes[name] : null; }
+    };
+}
+
+function runIndexScenario({ initRead }) {
+    const elements = {};
+    const domReady = [];
+    const cipReads = [];
+    const alerts = [];
+    const location = { href: 'farmacia_index.html', search: '?entrada=derivacion' };
+    const document = {
+        body: makeIndexElement('body'),
+        addEventListener(type, listener) { if (type === 'DOMContentLoaded') domReady.push(listener); },
+        getElementById(id) { return elements[id] || (elements[id] = makeIndexElement(id)); },
+        querySelector() { return null; },
+        querySelectorAll() { return []; },
+        createElement(tag) { const el = makeIndexElement(tag); return el; },
+        createTextNode(text) { return { textContent: text }; }
+    };
+    const F = {
+        patologiaPorServicio: { reumatologia: ['Artritis Reumatoide (AR)'] },
+        populateSelect(select, values, placeholder) {
+            select.options = [{ value: '', textContent: placeholder }, ...values.map((value) => ({ value, textContent: value }))];
+            select.value = '';
+        },
+        setValue(id, value) { if (elements[id]) elements[id].value = value || ''; },
+        setText(id, value) { if (elements[id]) elements[id].textContent = value || ''; },
+        insertNoCipBanner() {},
+        renderFields() {},
+        clearChildren(target) { target.children = []; target.options = []; },
+        readPatientContext: initRead,
+        readPatientByCipSync(cip) { cipReads.push(cip); return { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null }; },
+        getQueryContext() { return {}; },
+        getPendingValidationPatients() { return []; },
+        getEnfermeriaVisiblePatients() { return []; },
+        isEnfermeriaPatient() { return false; },
+        createOverlayMount() { return { content: makeIndexElement('ovContent'), title: makeIndexElement('ovTitle'), subtitle: makeIndexElement('ovSub'), open() {}, close() {} }; },
+        createField() { return makeIndexElement('field'); },
+        appendIconText() {},
+        statusClass() { return '';
+        }
+    };
+    const sandbox = {
+        window: { FarmaciaDemo: F, location, alert: (message) => alerts.push(message), confirm: () => true },
+        document,
+        URLSearchParams,
+        console: { error() {}, log() {}, warn() {} }
+    };
+    sandbox.window.window = sandbox.window;
+    vm.createContext(sandbox);
+    vm.runInContext(indexSrc, sandbox, { filename: 'farmacia_index.js' });
+    domReady.forEach((listener) => listener());
+    return { elements, cipReads, alerts, tick: () => new Promise((resolve) => setImmediate(resolve)) };
+}
+
+function userSearchFor(harness, cip) {
+    // Supported interaction only: the professional types a CIP and presses the
+    // visible search button (fhSearchBtn). No DOM state is fabricated.
+    harness.elements.fhCipInput.value = cip;
+    harness.elements.fhSearchBtn.dispatch('click');
+}
+
+try {
+    // Scenario R1: delayed init read for transported CIP A; supported user
+    // search for CIP B before A resolves; then A resolves.
+    let resolveInit = null;
+    const initRead = () => new Promise((resolve) => { resolveInit = resolve; });
+    const harness = runIndexScenario({ initRead });
+    await harness.tick();
+    userSearchFor(harness, 'CIP-USER-B');
+    await harness.tick();
+    check('correction R1: supported user search B becomes the visible search intent',
+        harness.elements.fhCipInput.value === 'CIP-USER-B'
+            && harness.cipReads.indexOf('CIP-USER-B') !== -1,
+        JSON.stringify({ input: harness.elements.fhCipInput.value, cipReads: harness.cipReads }));
+    resolveInit({ cip: 'CIP-INIT-A', status: 'loaded', patient: { cip: 'CIP-INIT-A', servicio: 'Reumatología', patologia: 'Artritis Reumatoide (AR)' }, hasExplicitCip: true, patientNotFound: false });
+    await harness.tick();
+    await harness.tick();
+    check('correction R1: stale init A never overwrites the newer user CIP B',
+        harness.elements.fhCipInput.value === 'CIP-USER-B',
+        `input=${harness.elements.fhCipInput.value}`);
+    check('correction R1: no search for stale init A occurs after the user search B',
+        harness.cipReads.indexOf('CIP-INIT-A') === -1,
+        JSON.stringify(harness.cipReads));
+    check('correction R1: stale init A causes no patient selection/commit (only B was resolved)',
+        harness.cipReads.filter((cip) => cip === 'CIP-USER-B').length === 1
+            && harness.cipReads.every((cip) => cip === 'CIP-USER-B'),
+        JSON.stringify(harness.cipReads));
+} catch (error) {
+    fail('correction R1 stale-init race scenario executable', error && error.stack);
+}
+
+try {
+    // Scenario R2 (control): delayed init read A, no user interaction; normal
+    // init restore and guarded search must behave exactly as before.
+    let resolveInit = null;
+    const initRead = () => new Promise((resolve) => { resolveInit = resolve; });
+    const harness = runIndexScenario({ initRead });
+    await harness.tick();
+    resolveInit({ cip: 'CIP-INIT-A', status: 'loaded', patient: { cip: 'CIP-INIT-A', servicio: 'Reumatología', patologia: 'Artritis Reumatoide (AR)' }, hasExplicitCip: true, patientNotFound: false });
+    await harness.tick();
+    await harness.tick();
+    check('correction R2 control: transported CIP A is restored and searched when no user interaction supersedes init',
+        harness.elements.fhCipInput.value === 'CIP-INIT-A'
+            && harness.cipReads.indexOf('CIP-INIT-A') !== -1,
+        JSON.stringify({ input: harness.elements.fhCipInput.value, cipReads: harness.cipReads }));
+} catch (error) {
+    fail('correction R2 normal-init control executable', error && error.stack);
+}
+
 // ─── Report ───────────────────────────────────────────────────────────────────
 
 console.log(`\nFARMACIA-F4.3D-RESIDUAL-READ-MIGRATION: ${failed === 0 ? 'PASS' : 'FAIL'} ${passed}/${passed + failed} cases`);
