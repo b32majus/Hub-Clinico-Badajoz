@@ -106,6 +106,9 @@ assert(html.includes('fhPvAutocompleteDropdown'), 'Dropdown autocomplete sigue p
 const sandbox = {
   window: {
     FarmaciaDemo: {
+      readQueryContextSync: () => ({}),
+      readPatientContext: async () => ({}),
+      readPatientByCipSync: () => ({ status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null }),
       getQueryContext: () => ({}),
       clearChildren: () => {},
       renderFields: () => {},
@@ -150,7 +153,12 @@ if (api && typeof api.searchCIP === 'function') {
   sandbox.document.createTextNode = (text) => ({ textContent: text });
   sandbox.window.FarmaciaDemo.setValue = (id, value) => { if (elements[id]) elements[id].value = value || ''; };
   sandbox.window.FarmaciaDemo.clearChildren = (el) => { if (el) el.children = []; };
-  sandbox.window.FarmaciaDemo.findPatientByCip = (cip) => cip.trim().toUpperCase() === 'CIP-B' ? { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas' } : null;
+  /* F4.3 re-binding: the page coordinator now consumes the published seam
+     read operation (readPatientByCipSync). The injected double keeps the
+     exact same behavioral contract the findPatientByCip double had. */
+  sandbox.window.FarmaciaDemo.readPatientByCipSync = (cip) => String(cip).trim().toUpperCase() === 'CIP-B'
+    ? { status: 'loaded', source: 'legacy_coexistence', patient: { cip: 'CIP-B', servicio: 'Reumatología', patologia: 'LES', farmaco: 'Drug B', dosis: '20 mg', via: 'SC', pauta: 'Cada 4 semanas' } }
+    : { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
   sandbox.window.FarmaciaDemo.resolvePatientContextSwitch = (current, requested, hasContext, confirmed) => {
     if (String(current).trim().toUpperCase() === String(requested).trim().toUpperCase()) return { action: 'same' };
     if (hasContext && confirmed === undefined) return { action: 'confirm' };
@@ -241,8 +249,14 @@ if (api && typeof api.searchCIP === 'function') {
   });
   let queryContext = { cip: 'CIP-STALE', patient: { cip: 'CIP-STALE', edad: 99, sexo: 'X', farmaco: 'Tratamiento stale' } };
   let foundPatient = null;
-  sandbox.window.FarmaciaDemo.getQueryContext = () => queryContext;
-  sandbox.window.FarmaciaDemo.findPatientByCip = () => foundPatient;
+  /* F4.3 re-binding: the page coordinator consumes the published seam sync
+     context read (readQueryContextSync) and the typed sync CIP read
+     (readPatientByCipSync). Doubles keep the exact same behavioral contract
+     the getQueryContext/findPatientByCip doubles had. */
+  sandbox.window.FarmaciaDemo.readQueryContextSync = () => queryContext;
+  sandbox.window.FarmaciaDemo.readPatientByCipSync = () => foundPatient
+    ? { status: 'loaded', source: 'legacy_coexistence', patient: foundPatient }
+    : { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
 
   elements.fhPvCip.value = '  Visible-Cip  ';
   elements.fhPvServicio.value = 'Reumatología';

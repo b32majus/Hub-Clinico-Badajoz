@@ -49,9 +49,14 @@
         return value ? 'Otra' : '';
     }
 
+    /* F4.3: los consumidores sync de la página (búsqueda de CIP y verdad de
+       export, contratos publicados síncronos) leen por la operación sync
+       publicada en el seam; la lectura async V2 (readPatientContext) resuelve
+       el contexto de la página durante la carga. Sin lookup directo de
+       población en el coordinador. */
     function getCurrentContext() {
         try {
-            return F.getQueryContext ? F.getQueryContext() : {};
+            return F && typeof F.readQueryContextSync === 'function' ? F.readQueryContextSync() : {};
         } catch (e) {
             return {};
         }
@@ -799,7 +804,11 @@
             return;
         }
 
-        var patient = F.findPatientByCip(cip);
+        /* F4.3: la búsqueda por CIP explícito resuelve por la operación sync
+           publicada en el seam; sin resultado, el contexto queda sin paciente
+           (fail closed, aviso manual existente). */
+        var searchResult = F && typeof F.readPatientByCipSync === 'function' ? F.readPatientByCipSync(cip) : null;
+        var patient = searchResult && searchResult.status === 'loaded' ? searchResult.patient : null;
         clearCipNotice();
         resetPatientContext(cip);
 
@@ -1204,7 +1213,12 @@
 
         var canonicalVisibleCip = normalizeCipForComparison(cipVisible);
         var matchingPatient = null;
-        var foundPatient = typeof F.findPatientByCip === 'function' ? F.findPatientByCip(cipVisible) : null;
+        /* F4.3: la verdad de export resuelve el CIP visible por la operación
+           sync de coexistencia publicada en el seam (mismo outcome
+           loaded/no-loaded que la consulta legacy; la clasificación V2 queda
+           en la lectura async). Solicitado ≠ validado; sin inferencia. */
+        var foundRead = F && typeof F.readPatientByCipSync === 'function' ? F.readPatientByCipSync(cipVisible) : null;
+        var foundPatient = foundRead && foundRead.status === 'loaded' ? foundRead.patient : null;
         if (foundPatient && normalizeCipForComparison(foundPatient.cip) === canonicalVisibleCip) {
             matchingPatient = foundPatient;
         } else {
@@ -1520,8 +1534,11 @@
         setActivePatientCip: function (cip) { activePatientCip = cip || ''; }
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const ctx = F.getQueryContext();
+    document.addEventListener('DOMContentLoaded', async () => {
+        /* F4.3: lectura del paciente vía la operación async publicada
+           (facade/contrato V2 → sesión → coexistencia legacy dentro del
+           seam). */
+        const ctx = F && typeof F.readPatientContext === 'function' ? await F.readPatientContext() : {};
 
         if (!ctx.patient) {
             var C = window.FarmaciaCatalog;

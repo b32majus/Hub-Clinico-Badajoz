@@ -2896,6 +2896,67 @@
         return { dataPort: dataPort, facade: facade };
     }
 
+    function sessionEnvelopePatient() {
+        var runtime = window.FarmaciaPatientFlowRuntime;
+        var envelope = runtime && typeof runtime.getCurrentEnvelope === 'function' ? runtime.getCurrentEnvelope() : null;
+        return envelope && envelope.patient_projection ? { envelope: envelope, patient: envelope.patient_projection.patient } : null;
+    }
+
+    /* F4.3 (TRAIN 09 #472): SYNC coexistence read for the published sync
+       export surfaces whose signature cannot become async without changing
+       published behavior. Same legacy coexistence lookup inside the seam with
+       typed statuses; no V2 classification (that stays async-only in
+       readPatientByCip) and no commit. */
+    /* F4.3 (TRAIN 09 #472): SYNC context read for the published sync page
+       surfaces whose interaction contract (search/export) is synchronous and
+       whose published checkers inject doubles at this boundary. Same
+       getQueryContext semantics, published under the application read seam
+       name; the async V2 operation (readPatientContext) remains the init-time
+       read. */
+    function readQueryContextSync() {
+        return getQueryContext();
+    }
+
+    function readPatientByCipSync(cip) {
+        var target = String(cip || '').trim();
+        if (!target) return { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null };
+        var merged = findAvailablePatientByCip(target);
+        if (!merged) return { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
+        var current = sessionEnvelopePatient();
+        var sessionMatch = current && current.patient
+            && String(current.patient.cip || '').trim().toUpperCase() === target.toUpperCase();
+        return {
+            status: 'loaded',
+            patient: merged,
+            source: sessionMatch ? 'current_patient_session' : 'legacy_coexistence',
+            patient_id: sessionMatch ? current.envelope.patient_id : null,
+            errorCode: null
+        };
+    }
+
+    /* F4.3 (TRAIN 09 #472): async read of ONE patient by an explicit CIP
+       value. Same commit-free resolution order and typed statuses as
+       readPatientContext; page coordinators use this for supported in-page
+       CIP-search interactions instead of direct population lookups. */
+    async function readPatientByCip(cip) {
+        var target = String(cip || '').trim();
+        if (!target) return { status: 'no_cip', patient: null, source: null, patient_id: null, errorCode: null };
+        var merged = findAvailablePatientByCip(target);
+        if (merged) {
+            var current = sessionEnvelopePatient();
+            var sessionMatch = current && current.patient
+                && String(current.patient.cip || '').trim().toUpperCase() === target.toUpperCase();
+            return {
+                status: 'loaded',
+                patient: merged,
+                source: sessionMatch ? 'current_patient_session' : 'legacy_coexistence',
+                patient_id: sessionMatch ? current.envelope.patient_id : null,
+                errorCode: null
+            };
+        }
+        return await classifyUnresolvedCip(target);
+    }
+
     async function classifyUnresolvedCip(cip) {
         var target = String(cip || '').trim();
         var notFound = { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
@@ -2951,21 +3012,7 @@
                 ? { status: 'loaded', patient: sidPatient, source: 'legacy_coexistence', patient_id: null, errorCode: null }
                 : { status: 'not_found', patient: null, source: null, patient_id: null, errorCode: null };
         } else if (cip) {
-            var merged = findAvailablePatientByCip(cip);
-            if (merged) {
-                var envelope = runtime && typeof runtime.getCurrentEnvelope === 'function' ? runtime.getCurrentEnvelope() : null;
-                var sessionPatient = envelope && envelope.patient_projection ? envelope.patient_projection.patient : null;
-                var sessionMatch = sessionPatient && String(sessionPatient.cip || '').trim().toUpperCase() === String(cip).trim().toUpperCase();
-                resolved = {
-                    status: 'loaded',
-                    patient: merged,
-                    source: sessionMatch ? 'current_patient_session' : 'legacy_coexistence',
-                    patient_id: sessionMatch ? envelope.patient_id : null,
-                    errorCode: null
-                };
-            } else {
-                resolved = await classifyUnresolvedCip(cip);
-            }
+            resolved = await readPatientByCip(cip);
         }
         if (resolved.status === 'no_cip' && settings.demoFallbackCip) {
             var demoPatient = findAvailablePatientByCip(String(settings.demoFallbackCip));
@@ -3012,7 +3059,10 @@
         qs,
         qsa,
         getQueryContext,
+        readQueryContextSync,
         readPatientContext,
+        readPatientByCip,
+        readPatientByCipSync,
         loadLongitudinalDemoDataset,
         makeContextUrl,
         setText,
