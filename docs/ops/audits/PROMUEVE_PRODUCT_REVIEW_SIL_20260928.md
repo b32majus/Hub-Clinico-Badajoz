@@ -1,9 +1,9 @@
 # PROMueve — Auditoría manual de producto Sil 2026-09-28 — revisión viva
 
-**Estado:** `IN_PROGRESS / PARTIALLY_PUBLISHED` — TRAIN 1 (#442) publicado por PR #449; la frontera Foundation Reuma F5.2/F5.3 fue publicada después por TRAIN 07 (#454 / PR #459) y F5.4 por TRAIN 08 (#461 / PR #467), y la frontera Foundation Farmacia F4.3 por TRAIN 09 (#470 / PR #474) + TRAIN 09.1 (#475 / PR #478), en todos los casos sin reinterpretar los hallazgos de producto no relacionados; el checkpoint post-F4.3 (#480) registró un `PRODUCT_DEFECT_BLOCKING` (PV-001, follow-up aprobado #482), posteriormente `RESOLVED/PUBLISHED` por #482 / PR #484; el resto de hallazgos conserva su estado explícito
+**Estado:** `REVISION_MANUAL_CERRADA / PARTIALLY_PUBLISHED` — la revisión manual de producto de Sil se cierra el 2026-10-01 con el addendum de la WO #495 (SIL-REV-018/019/020, verificados contra el código y el HEAD de producto `3bf45760a27630823b61b0d19da8b64aeb060693`); **cerrar revisión ≠ cerrar implementación**: los hallazgos no publicados conservan su estado explícito y el cierre no implementa nada por sí mismo. Publicado previamente: TRAIN 1 (#442) publicado por PR #449; la frontera Foundation Reuma F5.2/F5.3 fue publicada después por TRAIN 07 (#454 / PR #459) y F5.4 por TRAIN 08 (#461 / PR #467), y la frontera Foundation Farmacia F4.3 por TRAIN 09 (#470 / PR #474) + TRAIN 09.1 (#475 / PR #478), en todos los casos sin reinterpretar los hallazgos de producto no relacionados; el checkpoint post-F4.3 (#480) registró un `PRODUCT_DEFECT_BLOCKING` (PV-001, follow-up aprobado #482), posteriormente `RESOLVED/PUBLISHED` por #482 / PR #484; el resto de hallazgos conserva su estado explícito
 **Ámbito:** PROMueve Extremadura — Farmacia Hospitalaria, Reumatología y capacidades transversales; Dermatología queda registrada pero diferida de la ejecución inmediata
 **Autoridad de desarrollo:** `promueve/nexus-v4`
-**Último HEAD de producto Nexus verificado para esta reconciliación:** `a04a0ace25012e5f0ac397844165921dccaebcc3` — merge PR #484 (corrección PV-001, WO #482); HEAD de producto anterior `91262d8007642aef1d3cbe21e24d20ff369ee19b` (PR #478 / TRAIN-NEXUS-FARMACIA-F4.3-CLOSEOUT-09.1 #475); los merges documentales posteriores pueden mover el tip Git sin cambiar este HEAD de producto
+**Último HEAD de producto Nexus verificado para esta reconciliación:** `3bf45760a27630823b61b0d19da8b64aeb060693` — merge PR #490 (TRAIN #487, F4.4 Pharmacy Act v1), revalidado para el addendum #495 sobre el tip documental `7939244b02729c90fa52bc39e5f767dd506df65e`; HEAD de producto anterior `a04a0ace25012e5f0ac397844165921dccaebcc3` — merge PR #484 (corrección PV-001, WO #482); HEAD de producto anterior `91262d8007642aef1d3cbe21e24d20ff369ee19b` (PR #478 / TRAIN-NEXUS-FARMACIA-F4.3-CLOSEOUT-09.1 #475); los merges documentales posteriores pueden mover el tip Git sin cambiar este HEAD de producto
 **Issue documental de origen:** #438
 **PR documental de origen:** #439 — supersedida para publicación; no mergear su base histórica
 **Closeout documental vigente:** #451, sobre rama fresca de `promueve/nexus-v4`
@@ -54,6 +54,9 @@ Reglas transversales:
 | `SIL-REV-015` | ASDAS atribuido a APs | Corrección de revisión | — | Retirado | WITHDRAWN_WRONG_ATTRIBUTION |
 | `SIL-REV-016` | Catálogo/autocomplete común en Reuma | DATA / UX | CORE catalog capability + MODULE Reuma | #444 + correctiva #447 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-017` | Automatización CIMA del catálogo | TOOLING / DATA SUPPLY | CORE tooling | Train posterior separado | DEFERRED_SEPARATE_CONCERN |
+| `SIL-REV-018` | Análisis poblacional FH completo / recuperación de filtros perdidos | FEATURE / REPORT + regresión histórica registrada | MODULE FH (estadísticas) + CORE reporting | Recuperación sólo por WO propia con fuente explícita; no levanta #446 | PROPOSED |
+| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | Extiende `SIL-REV-002/003`; tras contrato de datos mínimo | PROPOSED |
+| `SIL-REV-020` | Medicación especial FH (ensayo clínico / uso compasivo / extranjera / registros locales) | DATA / DISCOVERY | MODULE FH + CORE | Requiere fuente explícita/versionada o captura profesional | PROPOSED / DISCOVERY_REQUIRED |
 
 ## 3. `SIL-REV-001` — nomenclatura SES para procesos FH
 
@@ -198,6 +201,78 @@ La dirección futura sigue siendo:
 `CIMA API → normalización → validación → diff/versionado → PR/revisión humana`.
 
 La fuente categorial versionada de #447 no se debe presentar como sustituto definitivo de esa automatización.
+
+## 12-A. `SIL-REV-018` — análisis poblacional FH completo / recuperación de filtros perdidos
+
+Hallazgo registrado por el addendum #495 (2026-10-01) verificando el código vivo de `farmacia_estadisticas.html`, `scripts/farmacia_estadisticas.js` y `scripts/farmacia_statistics_cohort.js`. Clasifica cada dimensión como `PUBLISHED` (ya filtrable y visible), `AVAILABLE_NOT_FILTERABLE` (dato en la proyección/superficie, sin filtro soportado) o `MISSING_FROM_CURRENT_POPULATION_PROJECTION` (requiere ampliar el contrato/proyección y verificar fuente explícita).
+
+### Estado actual demostrado
+
+`PUBLISHED` — la pantalla actual expone y aplica únicamente seis quick filters:
+
+- Servicio
+- Patología
+- Fármaco (dimensión combinada: nombre comercial **o** principio activo, `drugNames` + `activeIngredients`; no los distingue)
+- Estado seguimiento
+- Eventos adversos
+- Adherencia
+
+`AVAILABLE_NOT_FILTERABLE` — la proyección y las superficies actuales consumen y muestran estos datos cuando constan explícitamente, pero no como filtro soportado:
+
+- principio activo como dimensión separada del nombre comercial (líneas y gráfico «Principios activos explícitos»; el filtro de fármaco los mezcla);
+- dosis (`dose_text`/`presentation` de líneas y `new_dose_text` de movimientos; visible en la columna de líneas activas y en la exportación CSV);
+- vía (`route` de líneas y movimientos);
+- pauta/frecuencia (`schedule_label`/`schedule_code` de líneas y `new_schedule_*` de movimientos);
+- PROM por instrumento (gráfico «Último PROM registrado») y valor/rango PROM (`proms[].value` en proyección y CSV);
+- estado de validación (KPI «Validación pendiente explícita»);
+- gravedad de EA (gráfico «Gravedad explícita»);
+- movimientos terapéuticos (gráfico «Movimientos explícitos»);
+- causalidad (`causality_assessments` en proyección y CSV);
+- actividad clínica, sólo según la fuente explícita realmente disponible: presente únicamente en el camino demo (`actividad_clinica` → `clinical_activity`, columna de tabla); en la proyección raw va a `null` (ver MISSING).
+
+`MISSING_FROM_CURRENT_POPULATION_PROJECTION` — no transportadas actualmente por la proyección raw; requieren ampliar el contrato y verificar fuente explícita:
+
+- sexo (`sex: ''` fijo en la proyección raw; sólo existe como campo residual del camino demo, sin filtro ni gráfico);
+- edad / rango de edad (`age: ''` fijo en la proyección raw; mismo residual demo);
+- comorbilidades (ausentes del contrato de cohorte actual en ambos modos);
+- estado clínico / remisión explícita (sin fuente explícita actual; no se clasifica como disponible);
+- actividad clínica en modo raw (`clinical_activity = null`).
+
+No se infiere sexo, edad, comorbilidad, estado clínico, dosis, pauta ni ningún dato ausente; lo ausente permanece vacío/`not_recorded`. La exportación CSV de cohorte filtrada funciona y conserva presentación/dosis/vía/pauta, PROMs, adherencia, EA, causalidad y movimientos; exportar no convierte el dashboard en fuente de verdad clínica.
+
+### Regresión histórica registrada
+
+El commit `df54890b1b1d8816453550ce5389d1648e8be38c` (2026-06-07, realineación v0.3) documentó **12 filtros poblacionales**: servicio de origen, patología, sexo, rango de edad, adherencia, estado de seguimiento, estado de validación, fármaco, PROM, rango/valor PROM, comorbilidades y eventos adversos, aplicados sobre el JSON demo con gráficos de distribución por sexo y edad. El commit `54ba7536b9713eabbfe514b951051fbaba194b3a` (2026-08-06) reescribió la superficie para conectar la cohorte raw (nuevo `farmacia_statistics_cohort.js` + handoff temporal desde Inicio) y redujo el filtrado a los seis quick filters actuales.
+
+Clasificación: **capacidad histórica parcialmente perdida/reducida**. No es prueba de que hoy funcione: sexo, edad, comorbilidades, PROM, rango/valor PROM, validación y principio activo separado del nombre comercial no son filtros soportados en la superficie actual. Su recuperación requerirá una WO propia que amplie proyección y filtros desde fuente explícita; este registro no levanta el hold de #446 ni cambia prioridades de producto.
+
+## 12-B. `SIL-REV-019` — reporting recurrente y presets reutilizables (extiende `SIL-REV-002/003`)
+
+Estado `PROPOSED`. Requisito durable que amplía los presets de `SIL-REV-002` y el reporte trimestral de `SIL-REV-003` sin duplicarlos:
+
+- presets versionados de informes recurrentes y filtros guardados/reutilizables;
+- ventana temporal explícita;
+- población/indicación explícita;
+- fármaco y principio activo explícitos;
+- dosis/pauta/frecuencia sólo cuando consten explícitamente en la fuente;
+- evento terapéutico explícito (inicio, intensificación, switch), nunca inferido;
+- salida/exportación reproducible;
+- el dashboard/reporting no se convierte en fuente de verdad clínica.
+
+Primer caso (se mantiene desde `SIL-REV-003`), Cosentyx trimestral: PsO/PsA con nuevos inicios explícitos dentro del trimestre; HS con q2w explícito, distinguiendo —sólo cuando conste realmente— inicio directo q2w de intensificación explícita q4w→q2w.
+
+Se añade explícitamente: el reporting debe poder distinguir q2w / q4w / otras frecuencias desde la pauta registrada en la fuente, **sin inferirlas desde el nombre del fármaco**, tratamiento actual o ausencia de datos. Si la frecuencia no consta, el caso permanece como desconocido o fuera del conteo según el contrato que se freeze.
+
+## 12-C. `SIL-REV-020` — medicación especial FH
+
+Estado: **`PROPOSED / DISCOVERY_REQUIRED`**. Dimensión de producto aún sin implementar como dimensión de cohorte, filtro ni reporting:
+
+- medicación en ensayo clínico;
+- uso compasivo;
+- medicación extranjera;
+- otros catálogos/registros locales especiales.
+
+La página `farmacia_farmacos.html` actual es un catálogo de referencia para demo (con fallback local) y **no satisface** este requisito. Una futura clasificación de medicación especial sólo puede venir de una fuente explícita y versionada o de captura profesional explícita; nunca se inferirá desde nombre, presentación, CIMA/catálogo, trayectoria o contexto. Requiere discovery antes de cualquier implementación.
 
 ## 13. Orden de ejecución — estado reconciliado
 
