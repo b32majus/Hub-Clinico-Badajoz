@@ -2,7 +2,7 @@
 
 This file contains the repository's stable horizontal engineering guardrails.
 
-It does **not** define an execution sequence. Under Atenea C-083, upstream Matt skills own the applicable implementation/review method when their workflow is invoked; this file supplies repository guardrails rather than a second orchestration lifecycle. Machine-decidable rules belong in deterministic repo tooling. Deterministic evidence is the first-line acceptance signal; semantic review follows the current C-083/Matt path when applicable.
+It does **not** define an execution sequence. Under Atenea C-084, upstream Matt skills own the applicable implementation/review method when their workflow is invoked; this file supplies repository guardrails rather than a second orchestration lifecycle. Machine-decidable rules belong in deterministic repo tooling. Deterministic evidence is the first-line acceptance signal; semantic review follows the current C-084/Matt path when applicable.
 
 ## 1. Keep changes scoped
 
@@ -122,9 +122,9 @@ When a change affects UI, accessibility is part of correctness: prefer semantic 
 
 ## Review interpretation
 
-Under C-083, Matt `code-review` consumes this file as the repository Standards axis whenever that skill applies. Matt owns the review method; this file supplies PROMueve-specific engineering policy and does not restate the workflow.
+Under C-084, Matt `code-review` consumes this file as the repository Standards axis whenever that skill applies. Matt owns the review method; this file supplies PROMueve-specific engineering policy and does not restate the workflow.
 
-Repo standards here override generic preferences where they conflict. C-083/Matt review does not grant push, PR, merge or deploy authority. Material integrated feature/train/PR candidates may additionally receive Cora audit before merge according to current risk and authority.
+Repo standards here override generic preferences where they conflict. C-084/Matt review does not grant push, PR, merge or deploy authority. Material integrated feature/train/PR candidates may additionally receive Cora audit before merge according to current risk and authority.
 
 ## PROMueve clinical/semantic additions
 

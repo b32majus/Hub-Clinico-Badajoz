@@ -200,7 +200,7 @@ Decisiones principales:
 
 | Documento | Estado | Uso |
 | --- | --- | --- |
-| [`AGENTS.md`](/AGENTS.md) | Vigente — Atenea C-083 / OpenCode V2 `--pure` + Matt upstream; routing project-local | Gobernanza operativa |
+| [`AGENTS.md`](/AGENTS.md) | Vigente — Atenea C-084 / OpenCode V2 nativo visible en Herdr + Matt upstream; routing project-local | Gobernanza operativa |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
 | [`docs/ops/PROMUEVE_BACKLOG.md`](/docs/ops/PROMUEVE_BACKLOG.md) | Vigente / propuestas no autorizantes | Backlog vivo de producto y arquitectura; separa ideas de deuda y decisiones |
 | [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) | Vigente / revisión viva | Auditoría manual Sil, adjudicación de Train 06 y shaping pendiente |
@@ -341,9 +341,9 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 | `README.md` | Reconciliado 2026-09-24; mantenerlo como front door y evitar estado volátil duplicado |
 | `ARCHITECTURE.md` | Marcado como referencia histórica; la arquitectura/estado actuales se resuelven desde este índice y documentos vivos |
 | `CHANGELOG.md` | No recoge la línea recovery reciente |
-| `AGENTS.md` | Reconciliado a Atenea C-083 por WO #497; C-077–C-082/Gentle/Pi/RDD/4R quedan históricos |
+| `AGENTS.md` | Reconciliado a Atenea C-084 por WO #499; C-077–C-083/Gentle/Pi/RDD/4R/OpenCode V1 quedan históricos |
 | `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
-| `opencode.json` + `.opencode/agents/` | Superficie project-local C-083; OpenCode V2 se ejecuta con `--pure` y bindings Atenea versionados |
+| `opencode.json` + `.opencode/agents/` | Superficie project-local C-084 nativa V2; `experimental.subagent_depth=2`, agentes `permissions`/`shell`/`subagent`, sin `--pure`; bindings Atenea versionados |
 | Planes históricos PR replay/rescate V4 | Referenciados previamente, pero sus archivos no están publicados en recovery |
 | Contrato de escenarios Farmacia V4 | Referenciado previamente, pero no publicado en recovery |
 
