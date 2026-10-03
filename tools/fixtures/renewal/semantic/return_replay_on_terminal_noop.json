@@ -1,0 +1,13 @@
+{
+  "contract_version": "renewal-handoff/v1",
+  "record_type": "renewal_report_nursing_to_fh",
+  "renewal_id": "REN-SYN-0003",
+  "line_id": "line-syn-rn-003",
+  "patient_id": "patient-syn-rn-003",
+  "service_id": "svc-syn-reu-01",
+  "report_type": "renewal_reported",
+  "reported_at": "2026-10-05T12:00:00Z",
+  "reported_by_role": "nursing",
+  "comment": "Retorno ya aplicado antes de que el ciclo alcanzara el estado terminal FH_UPDATED; su reimportacion exacta es no_op.",
+  "demo_flag": true
+}

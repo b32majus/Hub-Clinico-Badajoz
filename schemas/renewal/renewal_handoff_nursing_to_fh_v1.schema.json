@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promueve.example/schemas/renewal/renewal_handoff_nursing_to_fh_v1.schema.json",
+  "title": "PROMueve renewal report Nursing to FH v1",
+  "description": "Contrato N0 (shaping) del retorno Enfermeria -> Farmacia Hospitalaria del circuito de renovaciones. Envelope versionado renewal-handoff/v1. Solo datos sinteticos. No puede prolongar ni confirmar la validacion farmacoterapeutica: no transporta validez, duracion, dato terapeutico ni estado FH_UPDATED.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "record_type",
+    "renewal_id",
+    "line_id",
+    "patient_id",
+    "service_id",
+    "report_type",
+    "reported_at",
+    "reported_by_role",
+    "demo_flag"
+  ],
+  "properties": {
+    "contract_version": { "type": "string", "const": "renewal-handoff/v1" },
+    "record_type": { "type": "string", "const": "renewal_report_nursing_to_fh" },
+    "renewal_id": { "$ref": "#/$defs/id" },
+    "line_id": { "$ref": "#/$defs/id" },
+    "patient_id": { "$ref": "#/$defs/id" },
+    "service_id": { "$ref": "#/$defs/id" },
+    "report_type": {
+      "type": "string",
+      "enum": ["requested_to_service", "in_progress", "renewal_reported"]
+    },
+    "reported_at": { "$ref": "#/$defs/dateTime" },
+    "reported_by": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },
+    "reported_by_role": { "type": "string", "const": "nursing" },
+    "comment": { "type": ["string", "null"], "maxLength": 1000 },
+    "demo_flag": { "type": "boolean" }
+  },
+  "$defs": {
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{1,9})?(Z|[+-](0\\d|1[0-3]):[0-5]\\d|[+-]14:00)$"
+    },
+    "id": { "type": "string", "minLength": 1 }
+  }
+}

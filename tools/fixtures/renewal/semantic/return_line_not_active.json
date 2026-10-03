@@ -1,0 +1,13 @@
+{
+  "contract_version": "renewal-handoff/v1",
+  "record_type": "renewal_report_nursing_to_fh",
+  "renewal_id": "REN-SYN-0005",
+  "line_id": "line-syn-rn-005",
+  "patient_id": "patient-syn-rn-005",
+  "service_id": "svc-syn-der-01",
+  "report_type": "requested_to_service",
+  "reported_at": "2026-10-06T09:00:00Z",
+  "reported_by_role": "nursing",
+  "comment": "Retorno sobre una linea stopped: LINE_NOT_ACTIVE aunque el target seria alcanzable.",
+  "demo_flag": true
+}

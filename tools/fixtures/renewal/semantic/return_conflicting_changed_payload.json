@@ -1,0 +1,14 @@
+{
+  "contract_version": "renewal-handoff/v1",
+  "record_type": "renewal_report_nursing_to_fh",
+  "renewal_id": "REN-SYN-0002",
+  "line_id": "line-syn-rn-002",
+  "patient_id": "patient-syn-rn-002",
+  "service_id": "svc-syn-der-01",
+  "report_type": "renewal_reported",
+  "reported_at": "2026-10-06T10:00:00Z",
+  "reported_by": "enfermeria-demo",
+  "reported_by_role": "nursing",
+  "comment": "Replay modificado: misma operacion (report_type y reported_at) ya aplicada, payload distinto (comment alterado).",
+  "demo_flag": true
+}

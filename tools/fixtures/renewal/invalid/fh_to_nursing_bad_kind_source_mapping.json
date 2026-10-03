@@ -1,0 +1,18 @@
+{
+  "contract_version": "renewal-handoff/v1",
+  "record_type": "renewal_handoff_fh_to_nursing",
+  "renewal_id": "REN-SYN-0001",
+  "line_id": "line-syn-rn-001",
+  "patient_id": "patient-syn-rn-001",
+  "service_id": "svc-syn-der-01",
+  "lifecycle_state": "OPEN",
+  "window_state": "due_soon",
+  "evaluated_at": "2026-10-04T08:00:00Z",
+  "warning_window_days": 60,
+  "valid_until": "2026-11-15",
+  "valid_until_kind": "estimated",
+  "valid_until_source": "prescription_valid_until_confirmed",
+  "exported_at": "2026-10-04T08:05:00Z",
+  "exported_by_role": "pharmacy",
+  "demo_flag": true
+}

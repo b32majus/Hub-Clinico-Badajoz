@@ -1,0 +1,26 @@
+[
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "renewal_id": "REN-SYN-0002",
+    "line_id": "line-syn-rn-002",
+    "patient_id": "patient-syn-rn-002",
+    "service_id": "svc-syn-der-01",
+    "report_type": "requested_to_service",
+    "reported_at": "2026-10-06T10:00:00Z",
+    "reported_by_role": "nursing",
+    "demo_flag": true
+  },
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "renewal_id": "REN-SYN-0002",
+    "line_id": "line-syn-rn-002",
+    "patient_id": "patient-syn-rn-002",
+    "service_id": "svc-syn-der-01",
+    "report_type": "in_progress",
+    "reported_at": "2026-10-06T10:05:00Z",
+    "reported_by_role": "nursing",
+    "demo_flag": true
+  }
+]
