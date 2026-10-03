@@ -17,14 +17,14 @@ Do not use remembered SHAs, branches, priorities or PR states as authority.
 
 ## Execution architecture
 
-Current execution follows **Atenea C-083**: OpenCode V2 launched with `--pure`, project-local `atenea-volume` by default and `atenea-complex` only when current accepted authority exposes a material C-083 risk trigger. Herdr may keep a persistent visible session, but it is operator infrastructure, not correctness or product authority.
-Legacy global agents may remain installed on the workstation, but they are outside the active route: `--pure` excludes external plugins and the project-local C-083 task allowlists delegate only to named `atenea-*` agents.
+Current execution follows **Atenea C-084**: native OpenCode V2 through the canonical `opencode` command, with project-local `atenea-volume` by default and `atenea-complex` only when current accepted authority exposes a material C-084 risk trigger. Herdr is the already-running, user-owned persistent operator surface; workers must not launch, restart, replace or stop it. Normal visible execution enters the existing Herdr project/worktree pane and runs `opencode .`.
+Global OpenCode configuration supplies provider/runtime capability only. Routing remains project-local in `opencode.json` and `.opencode/agents/`; do not use `--pure`, which belongs to the superseded V1 runtime contract.
 
-Matt Pocock's upstream skills own implementation/task-graph/TDD/code-review/worktree methodology when invoked. PROMueve does not fork or restate those workflows. Project-local `opencode.json` and `.opencode/agents/` bind Matt roles to the current C-083 models; current role/risk semantics remain governed by `b32majus/Atenea` starting at `docs/START_HERE.md` and `docs/CURRENT_EXECUTION_DECISION_C083.md`.
+Matt Pocock's upstream skills own implementation/task-graph/TDD/code-review/worktree methodology when invoked. PROMueve does not fork or restate those workflows. Project-local `opencode.json` and `.opencode/agents/` bind Matt roles to the current C-084 models; current role/risk semantics remain governed by `b32majus/Atenea` starting at `docs/START_HERE.md` and `docs/CURRENT_EXECUTION_DECISION_C084.md`.
 
 PROMueve owns product, clinical, architecture, engineering, QA, documentation and delivery constraints. Execute from the current durable issue/spec/instruction rather than rewriting already-executable authority into a second brief or workcard.
 
-C-077–C-082, Gentle/Pi/RDD/4R/lineage/burn/OpenCode V1 material remains historical provenance only. Do not follow it as current execution authority. No silent model fallback or model carousel is allowed inside an active work unit. C-083 permits at most one fresh correction pass; a remaining blocker or new material issue is a HUMAN STOP.
+C-077–C-083, Gentle/Pi/RDD/4R/lineage/burn/review-host/OpenCode V1 material remains historical provenance only. C-083's role/model architecture survives through C-084, but its V1 qualification and `--pure` launch boundary are superseded. Do not follow historical material as current execution authority. No silent model fallback or model carousel is allowed inside an active work unit. C-084 permits at most one fresh correction pass; a remaining blocker or new material issue is a HUMAN STOP.
 
 Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; their applicable constraints remain binding regardless of the external harness.
 
