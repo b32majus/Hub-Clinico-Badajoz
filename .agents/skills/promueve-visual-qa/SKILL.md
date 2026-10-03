@@ -14,7 +14,7 @@ Use this skill when the task requires browser or visual evidence.
 3. Verify the relevant deterministic checker/smoke alongside browser behavior.
 4. Record the exact command and result for the candidate actually reviewed.
 
-The repo has no mandatory `package.json`; where an existing checker expects Playwright, use its documented/supported invocation rather than introducing a package manifest solely for QA.
+The repo has a reproducible dev/CI `package.json`, while the static hospital delivery has no Node runtime dependency. Reuse the existing documented checker invocation; do not add runtime/build dependencies merely for visual QA.
 
 ## Do not fake the interaction
 

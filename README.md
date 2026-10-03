@@ -35,7 +35,7 @@ Antes de modificar producto:
 4. Leer la spec, deuda o documento vivo que gobierne la tarea concreta.
 5. Tratar Engram y memoria conversacional como evidencia auxiliar, nunca como autoridad de estado.
 
-La entrada normal de ejecución es `pi`. Pi + Gentle nativo poseen ODD, delegación, verificación, work-unit commits y RDD. Herdr puede mantener una sesión visible/persistente, pero no es supervisor ni autoridad de producto o review.
+La entrada actual de ejecución es Atenea C-083 mediante OpenCode V2 `--pure` y los perfiles project-local `atenea-volume` / `atenea-complex`; Matt upstream posee la metodología de implementación/task graph/review cuando se invoca. Herdr puede mantener una sesión visible/persistente, pero no es autoridad de correctness, producto, review ni publicación. Gentle/Pi/RDD/4R/OpenCode V1 quedan como provenance histórica.
 
 No crear una segunda WO, brief o lifecycle por ritual cuando un issue/spec/instrucción aceptada ya sea ejecutable.
 
