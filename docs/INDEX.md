@@ -21,7 +21,8 @@
 | Actividad del servicio | Demo |
 | Alcance | Evaluación con datos sintéticos; sin piloto / sin producción |
 | WO / instrucción vigente | Consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales |
-| Auditoría manual de producto viva | [`ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — shaping + adjudicación de TRAIN 1; hallazgos pendientes conservan su estado explícito |
+| Reconciliación de producto viva | [`ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md`](ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md) — autoridad viva posterior a la reunión Farmacia+Dermatología y revisión manual FH; prioridad pre-Badajoz `UNDER_READJUDICATION` hasta ledger+Q&A Reuma |
+| Auditoría manual anterior | [`ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — revisión septiembre cerrada / `PARTIALLY_PUBLISHED`; conserva trazabilidad y estados explícitos de hallazgos no implementados |
 | Unified Clinical Intake V0 | **PUBLICADO Y VERIFICADO**: baseline T1–T10 + hardening; A auto-reveal (#334/#335); B D17_EXT_V1 (#336/#337); Train C C1/C2 (#338/#339/#340) promovido por #342/#341 |
 
 ## Architecture Decision Freeze — 2026-09-24
@@ -38,6 +39,8 @@ La dirección futura de plataforma queda adjudicada en:
 **Transición Git F0.2 (#380/#381):** `promueve/nexus-v4` fue creada desde `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial demostrada (mismo commit, mismo tree, diff vacío, cero cherry-pick/rewrite). PR #381 se fusionó el 2026-09-24; por tanto Nexus está **ACTIVE** y recovery **HISTORICAL** para nuevo desarrollo. Detalle en [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md).
 
 Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista conflicto con documentos históricos: monolito modular; Home hospitalaria sin carga clínica; site fijo por deployment; qualification hospital×módulo; configuración mínima y gobernada por propiedad; Read Ports por módulo mediante strangler; acto completo independiente de Excel; Excel como adapter soportado con garantías explícitas; no paciente universal/V5 genérica ahora.
+
+**Reconciliación de producto 2026-10-03 (#501):** la reunión Farmacia+Dermatología y la revisión manual FH abren una autoridad viva posterior a septiembre. Dermatología pasa a ser módulo real candidato de Nexus; HS/PsO son las primeras verticales longitudinales previstas; eccema de manos queda `AWAIT_TEAM_INPUT`; Farmacia conserva como decisiones de producto la simplificación de Inicio/Validación, futura superficie `Pendientes`, semántica explícita de `PENDIENTE_RECOGIDA`, separación solicitud clínica por molécula vs selección CIMA en FH, soporte de tratamiento preexistente y revisión del reporting. La prioridad humana previa queda `UNDER_READJUDICATION / PRE-BADAJOZ` hasta reconstruir el ledger Reuma contra Nexus y realizar Q&A manual focalizado. Esto **no** reabre por sí solo el Architecture Freeze, no autoriza V5/Control Plane genérico y no ejecuta #446/F4.5/F4.6.
 
 **Foundation Bootstrap Train (TRAIN-NEXUS-BOOTSTRAP-01, #387):** **PUBLICADO** mediante PR #388, candidate final `38f966033c0f7dc6084bb67d565a07a06d9e2470` y merge `5b47c146b63ae5ab10abe68c4788c649b029fcaa` sobre `promueve/nexus-v4`. Entregó norma documental/handover ([`engineering/PRODUCT_DOCUMENTATION_STANDARD.md`](engineering/PRODUCT_DOCUMENTATION_STANDARD.md)), tooling reproducible Node 20 ([`engineering/TOOLING_BASELINE.md`](engineering/TOOLING_BASELINE.md)), deployment contracts v0 (#384), readiness/navigation contract v0 (#385) y primer oracle de lectura Reuma con clasificación `KNOWN_LEGACY` ([`engineering/REUMA_READ_CHARACTERIZATION.md`](engineering/REUMA_READ_CHARACTERIZATION.md)). Promotion Review v1 independiente: PASS, 0 blocking findings. Deuda no bloqueante preservada en issue #389; desbloquea F1.2/F1.3B y PlatformContext + Home.
 
@@ -56,13 +59,13 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 
 **Train Reuma Act Contract 08 (TRAIN-NEXUS-REUMA-ACT-CONTRACT-08, #461):** **PUBLICADO Y VERIFICADO** mediante PR #467, candidate final `773ee93694f64626dfb1007a069da018a7023a96` → merge `e64b65db29e6536c01e4f41e182fb157ac19ce2a` sobre `promueve/nexus-v4`, con candidate y merge compartiendo tree `ec42a55b9c374b3987c7a44bf5ca80da9167d67d`. Ejecutado en orden estricto T1 → T2 → T3 sobre la base `9f1f7179...`: T1 #462 `c2858cf` congeló el contrato **Reuma Visit Act v1** independiente del legacy 497, con su oráculo de aceptación principal congelado `39d2764` (106/0); T2 #463 `2830744` publicó el adapter act→legacy 497 a través de la frontera F5.3, con oráculo congelado `20940f0` (51/0) y 10 journeys byte-equivalentes; T3 #464 `773ee93` ejecutó el **cutover soportado** de los journeys de exportación de Primera Visita y Seguimiento al Visit Act v1 (oráculo 58/0 + QA browser 23/23; oráculo congelado `212bc32`). La frontera F5.3 (32/0), el harness de export (9/0) y la acceptance (15/0) se mantienen; 3 `CHAR` / 1 `DRIFT` permanecen report-only sin corrección semántica. `KNOWN_LEGACY` y la deuda `pendingRows`/`createdAt` no corregidas se preservan. Gentle C-080: 3/3 reviews nativas terminales approved + burned, sin fallos de reviewer. CI del candidate run `36645555852` y post-merge run `36645661418` `success`. #461/#462/#463/#464 cerrados/completed. Con esta publicación **F5.1–F5.4 quedan PUBLISHED**; **F6** y **F7** permanecen **PENDIENTES** según el Foundation Plan. **Madurez:** evaluación con datos sintéticos; no piloto ni producción. Esta publicación no cierra #446 (renovaciones), no altera Reuma→Farmacia (`DISCOVERY_FIRST`) ni la automatización CIMA (separada/diferida).
 
-**Train Farmacia Read Migration 09 (TRAIN-NEXUS-FARMACIA-READ-MIGRATION-09, #470) y Train 09.1 closeout (TRAIN-NEXUS-FARMACIA-F4.3-CLOSEOUT-09.1, #475):** **F4.3 COMPLETADA/PUBLICADA** en dos publicaciones sobre `promueve/nexus-v4`. Train 09 publicó por PR #474 (merge `bf0cb3dde91965168effb00d6f119624e43bd764`) la parte principal de F4.3: F4.3A dashboard/longitudinal (#471), F4.3B validación/primera visita (#472) y F4.3C seguimiento/estadísticas (#473), migrando las lecturas de paciente detrás del facade/contrato V2. Train 09.1 (#475) cerró la deuda residual por PR #478 (merge `91262d8007642aef1d3cbe21e24d20ff369ee19b`): F4.3D consumidores residuales (#476: Inicio, Actividad del servicio y review de intake detrás de seams sync publicados) y F4.3E cualificación de cinco checkers previos en rojo reparando sólo drift de harness (#477, estado `HARNESS_DRIFT_FIXED`, sin defectos runtime); el correction cycle `f82bd24ce14811627881d184ae37131bbda98ca9` resolvió la stale init-read race de `farmacia_index.js` (init tardío nunca reemplaza la búsqueda soportada del usuario), quedando RESOLVED y sin advisories abiertos. CI post-merge `Nexus deterministic gates` run `36744075965` `success`. **Checkpoint visual post-F4.3 (#480, TRAIN #479 T1):** QA de navegador real con interacciones soportadas sobre la base `91262d8`; 17 observaciones `PASS` y **1 `PRODUCT_DEFECT_BLOCKING` (PV-001)**: Primera Visita presenta el tratamiento solicitado de un paciente demo pendiente como «Relación terapéutica: validado» e hidrata la captura con él (semántica preexistente del camino legacy coexistence, no introducida por F4.3); estado T1 `HUMAN_STOP_BLOCKER`, follow-up técnico aprobado **#482**. PV-001 fue posteriormente corregido y publicado por #482 / PR #484 (candidate `75063f25b5cf3de008ab882392b9387f5fdea9c1` → merge `a04a0ace25012e5f0ac397844165921dccaebcc3`, CI post-merge run `36771991874` success); estado actual del hallazgo = `RESOLVED/PUBLISHED`; F4.4 quedó técnicamente desbloqueada y fue publicada después por TRAIN #487 / PR #490. Detalle: [`ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md`](ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md). **Madurez:** evaluación con datos sintéticos y browser QA focalizada; no piloto ni producción. R3-001 (#448) sigue `CONTRACT_COMPLIANT_DEMO_DEBT`; esta publicación no altera la secuencia de producto #446 renovaciones → Reuma→Farmacia discovery → CIMA.
+**Train Farmacia Read Migration 09 (TRAIN-NEXUS-FARMACIA-READ-MIGRATION-09, #470) y Train 09.1 closeout (TRAIN-NEXUS-FARMACIA-F4.3-CLOSEOUT-09.1, #475):** **F4.3 COMPLETADA/PUBLICADA** en dos publicaciones sobre `promueve/nexus-v4`. Train 09 publicó por PR #474 (merge `bf0cb3dde91965168effb00d6f119624e43bd764`) la parte principal de F4.3: F4.3A dashboard/longitudinal (#471), F4.3B validación/primera visita (#472) y F4.3C seguimiento/estadísticas (#473), migrando las lecturas de paciente detrás del facade/contrato V2. Train 09.1 (#475) cerró la deuda residual por PR #478 (merge `91262d8007642eaf1d3cbe21e24d20ff369ee19b`): F4.3D consumidores residuales (#476: Inicio, Actividad del servicio y review de intake detrás de seams sync publicados) y F4.3E cualificación de cinco checkers previos en rojo reparando sólo drift de harness (#477, estado `HARNESS_DRIFT_FIXED`, sin defectos runtime); el correction cycle `f82bd24ce14811627881d184ae37131bbda98ca9` resolvió la stale init-read race de `farmacia_index.js` (init tardío nunca reemplaza la búsqueda soportada del usuario), quedando RESOLVED y sin advisories abiertos. CI post-merge `Nexus deterministic gates` run `36744075965` `success`. **Checkpoint visual post-F4.3 (#480, TRAIN #479 T1):** QA de navegador real con interacciones soportadas sobre la base `91262d8`; 17 observaciones `PASS` y **1 `PRODUCT_DEFECT_BLOCKING` (PV-001)**: Primera Visita presenta el tratamiento solicitado de un paciente demo pendiente como «Relación terapéutica: validado» e hidrata la captura con él (semántica preexistente del camino legacy coexistence, no introducida por F4.3); estado T1 `HUMAN_STOP_BLOCKER`, follow-up técnico aprobado **#482**. PV-001 fue posteriormente corregido y publicado por #482 / PR #484 (candidate `75063f25b5cf3de008ab882392b9387f5fdea9c1` → merge `a04a0ace25012e5f0ac397844165921dccaebcc3`, CI post-merge run `36771991874` success); estado actual del hallazgo = `RESOLVED/PUBLISHED`; F4.4 quedó técnicamente desbloqueada y fue publicada después por TRAIN #487 / PR #490. Detalle: [`ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md`](ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md). **Madurez:** evaluación con datos sintéticos y browser QA focalizada; no piloto ni producción. R3-001 (#448) sigue `CONTRACT_COMPLIANT_DEMO_DEBT`; esta publicación no altera por sí sola la secuencia de producto previa.
 
 **Train Farmacia Act Contract 11 (TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11, #487):** **PUBLICADO Y VERIFICADO** mediante PR #490, candidate final `535c65567bc8ca0aef7358f97f99d97520b0ff20` → merge `3bf45760a27630823b61b0d19da8b64aeb060693` sobre `promueve/nexus-v4`. Ejecutado en orden estricto T1 → T2 sobre la base `7e30f5d8...`: T1 #488 `98c7aa76b9457f31c17912090e299f0fb62e4c84` congeló el contrato común **Pharmacy Act v1** (`HubTools.farmaciaActContract.createAct`, `contractVersion = pharmacy-act/v1`) independiente de transporte —sin dependencia de Excel/TSV/SharePoint/SQL ni `commit(event)` público—, con envelope explícito común para Validación/Primera Visita/Seguimiento, fail-closed, deep detachment / sin referencias compartidas del caller y oráculo de invariantes congelado **243/0**; T2 #489 `b73e1e7e8a219794be8b778d1ae9c4b6d1a5f7bb` publicó los payloads específicos e independientes por caso de uso (`createValidationAct` / `createFirstVisitAct` / `createFollowupAct`, con `lines[]` explícitas), preservando la cardinalidad de líneas y los invariantes **solicitado ≠ validado**, **previo ≠ nuevo** y **`followup` ≠ validación** (oráculo **145/0**). El correction candidate `535c655` endureció la trust boundary descubierta en auditoría pre-merge: semántica own-property para metadata/bloques/`lines` (la cadena de prototipos no otorga autoridad), prototypes custom del caller fail-closed y deep clone sin preservar prototipo controlado por el caller; sólo cambió los dos módulos de contrato y sus oráculos. Aseguramiento compuesto Gentle C-080 sobre el delta compuesto `98c7aa76..535c655`: review `review-707b45b6c20d35ee` **APPROVED + acknowledged + burned** (transporte primario `atenea-review-host`, 2 WARNING informativos, sin corrección requerida); los recibos históricos fallidos se conservan como evidencia de incidente y no se usan como autoridad. CI del candidate `Nexus deterministic gates` run `36879118233` y post-merge run `36880209718` `success`. #487/#488/#489 cerrados/completed. Sin captura clínica, UI, delivery ni persistencia modificados (contrato puro, sin wiring visible). Con esta publicación **F4.4 queda COMPLETADA/PUBLICADA**; **F4.5 (DeliveryResult / adapter semantics) pasa a ser la siguiente frontera Foundation técnicamente disponible, sin ser prioridad humana automática ni autorización de ejecución**; **F4.6, F6 y F7 permanecen PENDIENTES**. **Madurez:** evaluación con datos sintéticos; no piloto ni producción. Esta publicación no cierra #446 (renovaciones, con su `TEMPORARY EXECUTION HOLD` intacto), no altera Reuma→Farmacia (`DISCOVERY_FIRST`) ni la automatización CIMA (separada/diferida).
 
-> **Estado vivo:** la autoridad canónica de nuevo desarrollo es `promueve/nexus-v4`; el último HEAD de producto Nexus verificado tras PR #490 es `3bf45760a27630823b61b0d19da8b64aeb060693` (F4.4 Pharmacy Act v1, TRAIN #487; candidate `535c655...`; HEAD de producto anterior `a04a0ace25012e5f0ac397844165921dccaebcc3` tras PR #484). El tip Git de la rama canónica puede avanzar por documentación/administración sin cambiar ese HEAD de producto. El tip Git de `recovery/farmacia-pr-replay-20260727` es histórico y deliberadamente volátil. El último HEAD de producto Farmacia publicado en esa línea es `771fb80c5081aa974b86d6a0119ab30059970a25` (PR #374). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370.
+> **Estado vivo:** la autoridad canónica de nuevo desarrollo es `promueve/nexus-v4`; el último HEAD de producto Nexus verificado tras PR #490 es `3bf45760a27630823b61b0d19da8b64aeb060693` (F4.4 Pharmacy Act v1, TRAIN #487; candidate `535c655...`; HEAD de producto anterior `a04a0ace25012e5f0ac397844165921dccaebcc3` tras PR #484). El tip Git de la rama canónica puede avanzar por documentación/administración sin cambiar ese HEAD de producto. El tip Git de `recovery/farmacia-pr-replay-20260727` es histórico y deliberadamente volátil. El último HEAD de producto Farmacia publicado en esa línea es `771fb80c5081aa974b86d6a0119ab30059970a25` (PR #374). El HEAD clínico funcional congelado por `CÁCERES-REVIEW-0.6` sigue siendo `e1120ba85817a1807cea8c1e938867ad778921f4` (PR #341): el snapshot Cáceres permanece congelado y **no** incorpora automáticamente SEFH #362/#363 ni Enfermería v6 #364–#370. La dirección de producto viva posterior a septiembre está en [`PROMUEVE_PRODUCT_RECONCILIATION_20261003.md`](ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md); la prioridad humana pre-Badajoz permanece `UNDER_READJUDICATION` hasta ledger+Q&A Reuma.
 
-> **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia terapéutica desde fármaco/CIMA/catálogo/historial; campos compuestos siguen provenance-only; `VHB/VHC/VIH` combinado no se reparte a tres controles.
+> **Fronteras clínicas:** tratamiento solicitado no equivale a validado; pegar/importar nunca valida; datos ausentes no limpian controles; valores existentes quedan protegidos; no hay inferencia terapéutica desde nombre genérico de fármaco o dato ausente. La reconciliación 2026-10-03 añade una precisión de producto para Farmacia: una **selección explícita de medicamento/presentación CIMA**, con indicación/contexto explícito cuando sea necesario, puede proponer datos de ficha técnica aplicables siempre editables y sin sobrescribir ajustes profesionales.
 
 > **Recovery publicado y snapshot Cáceres son artefactos distintos y ya no están alineados funcionalmente.** `recovery` avanzó con acceso SEFH (#362/#363) y Enfermería v6/reconciliación por `solicitud_id` (#364–#370), mientras `CÁCERES-REVIEW-0.6` conserva su manifest con `source_sha`/`last_functional_sha = e1120ba85817a1807cea8c1e938867ad778921f4`. El paquete externo/workbooks tampoco se ha refrozen.
 
@@ -72,14 +75,15 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 
 1. [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md) — estado vivo de recovery y relación con el snapshot Cáceres 0.6, actualizado 2026-09-24.
 2. [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) — trazabilidad de WOs, candidates, PRs y merges.
-3. [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — revisión manual viva de producto, adjudicación del Train 06 y shaping pendiente.
-4. [`docs/ops/NEXUS_DEBT_REGISTER.md`](/docs/ops/NEXUS_DEBT_REGISTER.md) — registro vivo de deuda transversal de plataforma/Foundation; issues conservan la evidencia detallada.
-5. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada específica del módulo Farmacia; no sustituye backlog ni decisiones futuras.
-6. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
-7. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
-8. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
-9. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
-10. [`docs/ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md`](/docs/ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md) — checkpoint visual post-F4.3 (#480): 17 observaciones PASS y 1 `PRODUCT_DEFECT_BLOCKING` (PV-001, follow-up aprobado #482); PV-001 quedó posteriormente `RESOLVED/PUBLISHED` por #482 / PR #484, por lo que F4.4 quedó técnicamente desbloqueada sin ser prioridad humana automática; F4.4 fue publicada después por TRAIN #487 / PR #490.
+3. [`docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md`](/docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md) — autoridad viva de producto posterior a la reunión Farmacia+Dermatología y revisión manual FH; contiene decisiones, preguntas abiertas y siguiente paso Reuma.
+4. [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — revisión manual de septiembre cerrada/partially-published; conserva shaping e historial de hallazgos.
+5. [`docs/ops/NEXUS_DEBT_REGISTER.md`](/docs/ops/NEXUS_DEBT_REGISTER.md) — registro vivo de deuda transversal de plataforma/Foundation; issues conservan la evidencia detallada.
+6. [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — deuda aceptada específica del módulo Farmacia; no sustituye backlog ni decisiones futuras.
+7. [`docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md`](/docs/specs/SPEC_FH_UNIFIED_CLINICAL_INTAKE_V0.md) — contrato Unified Intake y addendum post-implementación.
+8. [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría histórica del train T8→T10; no sustituye el estado vivo actual.
+9. [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md) y [`FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md) — evaluación sintética.
+10. [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md) — freeze del paquete externo; permanece independiente del recovery actual.
+11. [`docs/ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md`](/docs/ops/audits/PROMUEVE_NEXUS_POST_F43_VISUAL_CHECKPOINT_20260930.md) — checkpoint visual post-F4.3 (#480): 17 observaciones PASS y 1 `PRODUCT_DEFECT_BLOCKING` (PV-001, follow-up aprobado #482); PV-001 quedó posteriormente `RESOLVED/PUBLISHED` por #482 / PR #484, por lo que F4.4 quedó técnicamente desbloqueada sin ser prioridad humana automática; F4.4 fue publicada después por TRAIN #487 / PR #490.
 
 ---
 
@@ -88,10 +92,11 @@ Principios nuevos/reconciliados que prevalecen para trabajo futuro cuando exista
 1. WO/instrucción vigente: consultar GitHub live; este índice no fija una WO “actual” estática para evitar deuda circular tras cierres documentales.
 2. GitHub live: `promueve/nexus-v4` es la autoridad canónica activa desde el merge de PR #381. El último HEAD de producto Nexus verificado tras PR #490 es `3bf45760a27630823b61b0d19da8b64aeb060693`; el tip Git puede moverse por documentación. Para trazabilidad Farmacia histórica, consultar además `recovery`; último HEAD de producto Farmacia: `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`.
 3. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md` una vez reconciliados.
-4. Documento vivo relacionado, incluida la auditoría de producto [`PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) cuando el trabajo derive de esa revisión.
-5. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
-6. Specs/contratos publicados relacionados.
-7. Documentos históricos y biblioteca.
+4. Documento vivo relacionado más reciente: para la readjudicación actual, [`PROMUEVE_PRODUCT_RECONCILIATION_20261003.md`](/docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md).
+5. Auditoría previa [`PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md), conservada como evidencia histórica/partially-published y autoridad de sus hallazgos no supersedidos.
+6. Estado vivo [`FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260908.md).
+7. Specs/contratos publicados relacionados.
+8. Documentos históricos y biblioteca.
 
 Una rama, SHA, prioridad o PR recordados no son fuente de verdad sin verificación.
 
@@ -203,7 +208,8 @@ Decisiones principales:
 | [`AGENTS.md`](/AGENTS.md) | Vigente — Atenea C-084 / OpenCode V2 nativo visible en Herdr + Matt upstream; routing project-local | Gobernanza operativa |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
 | [`docs/ops/PROMUEVE_BACKLOG.md`](/docs/ops/PROMUEVE_BACKLOG.md) | Vigente / propuestas no autorizantes | Backlog vivo de producto y arquitectura; separa ideas de deuda y decisiones |
-| [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) | Vigente / revisión viva | Auditoría manual Sil, adjudicación de Train 06 y shaping pendiente |
+| [`docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md`](/docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md) | **Vigente / autoridad viva posterior** | Reconciliación Farmacia+Dermatología+Nexus, preguntas abiertas y secuencia pre-Badajoz |
+| [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) | Revisión septiembre cerrada / `PARTIALLY_PUBLISHED` | Auditoría manual previa y trazabilidad de hallazgos no supersedidos |
 | [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md) | Propuesta canónica + addendum 2026-07-31 | Evolución post-SES |
 | [`docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md`](/docs/DECISION_NO_MERGE_REUMA_FARMACIA_POST_SES.md) | Vigente | Separación Reuma/Farmacia |
 | [`docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md`](/docs/discovery/GUIA_DISCOVERY_REUMA_FH_BADAJOZ_MERIDA.md) | Vigente | Discovery Badajoz/Mérida |
@@ -218,172 +224,3 @@ Fuentes principales:
 
 - [`docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md`](/docs/ARQUITECTURA_FUNCIONAL_HUB_REUMA_V2_1.md)
 - [`docs/CONTRATO_DATOS_REUMA_V2.md`](/docs/CONTRATO_DATOS_REUMA_V2.md)
-- [`docs/PLAN_IMPLEMENTACION_REUMA_V2.md`](/docs/PLAN_IMPLEMENTACION_REUMA_V2.md)
-- [`docs/RESUMEN_RELEASE_REUMA_V2.md`](/docs/RESUMEN_RELEASE_REUMA_V2.md)
-- [`docs/CHECKLIST_E2E_CLINICO_V2.md`](/docs/CHECKLIST_E2E_CLINICO_V2.md)
-- [`docs/VALIDACION_MANUAL_DEMO_V2.md`](/docs/VALIDACION_MANUAL_DEMO_V2.md)
-- [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) — revisión viva y estado de los siguientes trains.
-
-El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 de Farmacia ni normalizarse sin WO específica. Train 06 ya ha publicado, con datos sintéticos, el contrato explícito de unidades PCR, el autocomplete común con categorías explícitas y la simplificación prebiológica; Train 07 (#454 / PR #459) publicó después la migración de lectura de Seguimiento y Estadísticas (F5.2) y la frontera de compatibilidad del writer 497 (F5.3); Train 08 (#461 / PR #467) publicó el contrato Reuma Visit Act v1, el adapter act→legacy 497 y el cutover soportado de Primera Visita y Seguimiento (F5.4), quedando **F5.1–F5.4 PUBLISHED**. Ninguno de estos trains extiende por sí solo esa madurez a piloto/producción ni resuelve Reuma→Farmacia.
-
----
-
-## 8. Farmacia Hospitalaria
-
-### Estado y ejecución
-
-- [`docs/evaluation/FARMACIA_EVALUATION_GUIDE.md`](/docs/evaluation/FARMACIA_EVALUATION_GUIDE.md)
-- [`docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md`](/docs/evaluation/FARMACIA_EVALUATION_CHECKLIST.md)
-- [`docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md`](/docs/ops/FARMACIA_EVALUATION_READY_STATE_20260807.md)
-- [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md) — registro vivo de deuda aceptada/no bloqueante
-- [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260731.md)
-- [`docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md`](/docs/ops/FARMACIA_PLAN_VACACIONES_20260731.md)
-- [`docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md`](/docs/DECISION_FH_V4_PERSISTENCE_AND_EVALUATION_FLOW_20260804.md)
-- [`docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-VALIDATION-ADAPTER-01.md) — reporte operativo de WO2 (Validación v2)
-- [`docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md`](/docs/ops/WO-FH-EXPORT-V2-FIRST-VISIT-ADAPTER-01.md) — reporte operativo de WO3 (Primera Visita v2)
-- [`docs/ops/WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01.md`](/docs/ops/WO-FH-EXPORT-V2-FOLLOWUP-ACTIVE-LINES-01.md) — reporte operativo de WO4 (Seguimiento v2)
-- Los planes históricos de recuperación PR replay y rescate V4 citados en ediciones previas no están publicados en la rama `recovery`; no se usan como estado vivo.
-- [`docs/farmacia_wo_execution_protocol.md`](/docs/farmacia_wo_execution_protocol.md)
-
-### Contratos
-
-- [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; incluido en la fuente funcional promovida a `CÁCERES-REVIEW-0.3`.
-- [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
-- [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
-- [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia histórica y estado post patient-flow; flujo normal integrado; WO7 candidate pausada; Estadísticas raw/CSV superados como pendientes por #257/#258; `APP_*`, descomposición, Processor y roundtrip pendientes
-- [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado; Export v2 demo paralelo visible desde PR #227, sin cutover ni retirada v1
-- [`docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Validación v2; integrado mediante PR #215
-- [`docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Primera Visita v2; integrado mediante PR #217
-- [`docs/contracts/FARMACIA_EXPORT_V2_FOLLOWUP_ACTIVE_LINES_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FOLLOWUP_ACTIVE_LINES_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Seguimiento v2; integrado mediante PR #221
-- El contrato de escenarios Farmacia V4 citado en ediciones previas no está publicado en `recovery`; su incorporación formal permanece pendiente.
-
-### Historia y auditoría
-
-- [`docs/farmacia_branch_manifest_20260614.md`](/docs/farmacia_branch_manifest_20260614.md) — inventario histórico extenso.
-- [`docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md`](/docs/ops/audits/FARMACIA_SCREEN_AUDIT_RECONCILIADA_POST_PR22_20260715.md)
-- [`docs/audits/FARMACIA_BASELINE_AUDIT_V1_20260904.md`](/docs/audits/FARMACIA_BASELINE_AUDIT_V1_20260904.md) — auditoría baseline Farmacia V1 (issue #285 / PR #287), histórica sobre `097396a1...`; su P1 F-01/F-04 fue resuelto posteriormente por #288/#289 (merge `9fd6888b...`) según el postscript §13 añadido por la WO #290
-- [`docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md`](/docs/ops/FH_UNIFIED_CLINICAL_INTAKE_TRAIN_AUDIT_20260906.md) — auditoría factual del train T8→T10; el addendum §11 registra después Repair C #317, SES hardening #319, composición #322 y publicación #323/#324 sin reescribir la auditoría original.
-- `docs/ops/FARMACIA_V0_3_*`, `FARMACIA_V0_4_*`, `FARMACIA_V0_5_*` — exploración histórica, no estado vivo.
-
----
-
-## 9. Enfermería, PROMs e identidad
-
-- [`docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md`](/docs/ops/CANVAS_DISENO_FORMULARIOS_ENFERMERIA_FARMACIA_20260606.md)
-- [`docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md`](/docs/farmacia_enfermeria_excel_sintetico_gap_WO8.md)
-- [`docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md`](/docs/architecture/PROM_CAPTURE_GATEWAY_QR_SEUDONIMIZADO_20260714.md)
-- [`docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md`](/docs/architecture/IDENTITY_PLANE_Y_NURSING_READINESS_GATEWAY_20260714.md)
-
-Decisión 2026-07-31: el Identity Plane físico no se implementa durante el ciclo de vacaciones. Se reservan identificadores e interfaz, pero se evita todo doble registro manual hasta disponer de servidor/PROM Gateway automatizado.
-
-Desde PR #370, el Hub soporta el workbook Enfermería v6 multihoja (`DERMATOLOGÍA`, `REUMATOLOGÍA`, `DIGESTIVO`) y reconcilia solicitudes con Farmacia exclusivamente por `solicitud_id`. `OK FARMACIA` sigue significando lista para tramitación, no validada; `validado`/`denegado` requieren acto FH explícito con el mismo ID; misma CIP con IDs distintos permanece independiente. El handoff Inicio→Validación y el fallo de persistencia están cubiertos de forma fail-closed.
-
----
-
-## 10. Treatment Lifecycle y renovaciones
-
-- [`docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md`](/docs/architecture/TREATMENT_LIFECYCLE_ENGINE_Y_RENOVACIONES_20260714.md)
-
-Principios conservados bajo el Architecture Decision Freeze (el documento original sigue siendo exploratorio y no constituye un contrato de configuración aprobado):
-
-- renovación por línea;
-- fechas confirmadas, verificadas y estimadas separadas;
-- la configuración no introduce lógica clínica arbitraria: solo puede seleccionar políticas implementadas, versionadas, probadas y autorizadas;
-- tareas, alertas y notificaciones son conceptos distintos;
-- no marcar renovado por silencio;
-- Presalud solo alimentará el motor desde campos reales verificados;
-- la necesidad de lifecycle e interoperabilidad se conserva como evolución futura sin activar automáticamente el mecanismo histórico propuesto.
-
----
-
-## 11. Catálogo CIMA y catálogo local
-
-- [`docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md`](/docs/ops/FARMACIA_V0_3_CIMA_AUTOUPDATE_PLAN_20260607.md)
-- [`docs/deuda-tecnica/cdc-001-cima-auto-update.md`](/docs/deuda-tecnica/cdc-001-cima-auto-update.md)
-
-Estado real:
-
-- CIMA oficial puede permanecer versionado en GitHub.
-- El catálogo hospitalario publicado actual es consumido por Reuma desde Train 06 mediante una capacidad común de solo lectura.
-- Para preservar `Sistémicos / FAMEs / Biológicos`, #447 añadió `data/catalogos/reuma/reuma_medication_categories.v1.json`: clasificación explícita/versionada, no inferida en runtime, con entradas identity-only para miembros declarados no cubiertos por el workbook.
-- La selección de catálogo nunca decide dosis, vía, pauta, presentación, inducción, duración, línea, switch/add-on, renovación ni validación.
-- El snapshot Cáceres usa el artefacto de junio de 2026.
-- No existe todavía una Action mensual activa.
-- La futura Action debe extraer, validar, generar diff y abrir PR revisable; la fuente categorial de #447 no sustituye esa automatización.
-- El catálogo local especial no se sobrescribe al actualizar CIMA.
-
----
-
-## 12. Backend, Control Plane e interoperabilidad
-
-- [`docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md`](/docs/architecture/PROMUEVE_NEXUS_V4_TARGET_ARCHITECTURE_20260731.md)
-- [`docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md`](/docs/ROADMAP_ARQUITECTURA_HUB_PROMUEVE_POST_SES.md)
-- [`ARCHITECTURE.md`](/ARCHITECTURE.md) — útil, pero desactualizado respecto a recovery.
-
-Fronteras:
-
-- Excel Bridge: datos clínico-operativos por hospital.
-- Supabase: configuración no-paciente.
-- Identity Plane: backend local futuro.
-- FHIR/openEHR: adaptadores del modelo canónico, no conversión directa del Excel.
-- V5: diferida.
-
----
-
-## 13. Deuda documental abierta
-
-La deuda funcional/técnica aceptada de producto se registra separadamente en [`docs/ops/FARMACIA_DEBT_REGISTER.md`](/docs/ops/FARMACIA_DEBT_REGISTER.md). Esta sección conserva únicamente deuda documental.
-
-Requiere WO posterior, sin mezclarla con quick wins clínicos:
-
-| Documento | Deuda |
-| --- | --- |
-| `README.md` | Reconciliado 2026-09-24; mantenerlo como front door y evitar estado volátil duplicado |
-| `ARCHITECTURE.md` | Marcado como referencia histórica; la arquitectura/estado actuales se resuelven desde este índice y documentos vivos |
-| `CHANGELOG.md` | No recoge la línea recovery reciente |
-| `AGENTS.md` | Reconciliado a Atenea C-084 por WO #499; C-077–C-083/Gentle/Pi/RDD/4R/OpenCode V1 quedan históricos |
-| `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
-| `opencode.json` + `.opencode/agents/` | Superficie project-local C-084 nativa V2; `experimental.subagent_depth=2`, agentes `permissions`/`shell`/`subagent`, sin `--pure`; bindings Atenea versionados |
-| Planes históricos PR replay/rescate V4 | Referenciados previamente, pero sus archivos no están publicados en recovery |
-| Contrato de escenarios Farmacia V4 | Referenciado previamente, pero no publicado en recovery |
-
----
-
-## 14. Documentos históricos / no usar como estado vivo
-
-- [`docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md`](/docs/ops/FARMACIA_RECOVERY_CACERES_REVIEW_STATUS_20260728.md) — fotografía 0.1.
-- [`docs/archive/CHANGELOG_20260307.md`](/docs/archive/CHANGELOG_20260307.md)
-- [`docs/archive/ESTADO_IMPLEMENTACION_20260307.md`](/docs/archive/ESTADO_IMPLEMENTACION_20260307.md)
-- [`docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md`](/docs/archive/CONTRATO_DATOS_UNIFICADO_LEGACY.md)
-- ramas nocturnas/demo antiguas sin merge.
-
-Para el estado actual de Farmacia también son memoria histórica o referencia secundaria, no fuente de estado vivo:
-
-- `ARCHITECTURE.md` — referencia histórica explícitamente marcada;
-- `TODO.md` — navegación, no backlog vivo;
-- `CHANGELOG.md` — historia, no estado vivo;
-- documentos `FARMACIA_V0_3_*` y `FARMACIA_V0_4_*`;
-- issues replay históricos abiertos de julio.
-
-Cuando contradigan el estado vivo, prevalecen GitHub live, el último HEAD de producto Nexus (`3bf45760a27630823b61b0d19da8b64aeb060693` tras PR #490), el último HEAD de producto Farmacia histórico (`771fb80c5081aa974b86d6a0119ab30059970a25`), el HEAD clínico funcional (`e1120ba85817a1807cea8c1e938867ad778921f4`), este índice, `WORK_ORDER_STATUS.md` y los documentos vivos relacionados. Los documentos de #289, #323/#324, trains previos y freezes 0.4/0.5 conservan valor histórico sin convertirse automáticamente en estado vivo.
-
----
-
-## 15. Decisiones pendientes
-
-| Tema | Estado |
-| --- | --- |
-| Formato PreSalud | Contrato/parser V0 estricto implementado; ampliaciones futuras pendientes |
-| Diccionario regional de patologías | Allowlist SES Dermatología V0 implementada; diccionario regional amplio pendiente |
-| Formulario Digestivo | Pendiente |
-| Consenso SEFH/PROs | Preparación por Silvia |
-| Trigger HTML Power Automate | Pendiente de PoC |
-| Servidor local por hospital | Disponibilidad comunicada en Badajoz/Mérida; diseño pendiente |
-| Identity Plane físico | Diferido hasta servidor/PROM Gateway automatizado |
-| Auth/permisos | Pendiente institucional |
-| Arquitectura FHIR/openEHR SES | Pendiente institucional |
-| Nomenclatura externa PROMueve Nexus/FarmaNEXus | Provisional |
-
----
-
-*Estado reconciliado 2026-10-01 tras la publicación de F4.4 por TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 #487 / PR #490 (candidate `535c655...` → merge `3bf45760a27630823b61b0d19da8b64aeb060693`; CI post-merge run `36880209718` success). Último HEAD de producto Nexus: `3bf45760...` (HEAD de producto anterior `a04a0ace25012e5f0ac397844165921dccaebcc3` tras PR #484); el tip Git de `promueve/nexus-v4` se consulta live y puede moverse por documentación/administración sin cambiar ese HEAD de producto. PV-001 = `RESOLVED/PUBLISHED`. F4.1–F4.4 y F5.1–F5.4 PUBLISHED; F4.5 es la siguiente frontera Foundation técnicamente disponible tras F4.4, sin ser prioridad humana automática ni autorización de ejecución; F4.6/F6/F7 PENDING. Farmacia recovery histórico mantiene como último HEAD de producto `771fb80c5081aa974b86d6a0119ab30059970a25`; HEAD clínico funcional congelado por Cáceres 0.6: `e1120ba85817a1807cea8c1e938867ad778921f4`. `CÁCERES-REVIEW-0.6` y el paquete externo siguen sin refreeze. Uso: evaluación/demo sintética; no piloto ni producción.*
