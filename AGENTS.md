@@ -17,11 +17,18 @@ Do not use remembered SHAs, branches, priorities or PR states as authority.
 
 ## Execution architecture
 
-The external execution harness is governed by the current `b32majus/Atenea` contract, starting at Atenea’s `docs/START_HERE.md`. Resolve current runtime, lifecycle, role/model routing and recovery there; do not copy Atenea runtime internals into this repository.
+Current execution follows **Atenea C-083**: OpenCode V2 launched with `--pure`, project-local `atenea-volume` by default and `atenea-complex` only when current accepted authority exposes a material C-083 risk trigger. Herdr may keep a persistent visible session, but it is operator infrastructure, not correctness or product authority.
+Legacy global agents may remain installed on the workstation, but they are outside the active route: `--pure` excludes external plugins and the project-local C-083 task allowlists delegate only to named `atenea-*` agents.
 
-PROMueve owns product, clinical, architecture, engineering, QA, documentation and delivery constraints. Execute from the current durable issue/spec/instruction rather than rewriting already-executable authority into a second brief or workcard. This repository does not define decomposition/delegation, review ordering, transport, recovery or checkpoint mechanics.
+Matt Pocock's upstream skills own implementation/task-graph/TDD/code-review/worktree methodology when invoked. PROMueve does not fork or restate those workflows. Project-local `opencode.json` and `.opencode/agents/` bind Matt roles to the current C-083 models; current role/risk semantics remain governed by `b32majus/Atenea` starting at `docs/START_HERE.md` and `docs/CURRENT_EXECUTION_DECISION_C083.md`.
 
-Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; their applicable constraints remain binding regardless of the external harness. Runtime configuration is not repository truth; do not hard-code provider, model or lifecycle assumptions here.
+PROMueve owns product, clinical, architecture, engineering, QA, documentation and delivery constraints. Execute from the current durable issue/spec/instruction rather than rewriting already-executable authority into a second brief or workcard.
+
+C-077–C-082, Gentle/Pi/RDD/4R/lineage/burn/OpenCode V1 material remains historical provenance only. Do not follow it as current execution authority. No silent model fallback or model carousel is allowed inside an active work unit. C-083 permits at most one fresh correction pass; a remaining blocker or new material issue is a HUMAN STOP.
+
+Project `AGENTS.md` and `CODING_STANDARDS.md` must be read before product write; their applicable constraints remain binding regardless of the external harness.
+
+Assurance is proportional: repository tests/oracles/type/syntax/build/artifact validators come first; Semgrep and deep OCR are conditional on material risk. Cora audits integrated material feature/train/PR candidates before merge when warranted. Review evidence never grants publication authority.
 
 ## Engineering standards
 
@@ -94,6 +101,12 @@ The product documentation and handover standard is `docs/engineering/PRODUCT_DOC
 When an accepted issue/WO/spec, product decision or accepted checkpoint changes real project state, reconcile `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md` and the affected live document within scope or through a separate documentation task.
 
 Engram is auxiliary experiential memory. Save stable lessons, defect patterns and qualification outcomes; do not treat current HEAD, branch, PR state, execution frontier or temporary priority as durable truth. Revalidate memory against GitHub/repository authority before reuse.
+
+## Agent skills metadata
+
+GitHub is the issue/spec tracker; see `docs/agents/issue-tracker.md`. Matt triage vocabulary mapping is in `docs/agents/triage-labels.md`. Domain-document discovery for this multi-domain clinical repo is in `docs/agents/domain.md`. These files configure upstream skills; they do not replace PROMueve product authority or publication rules.
+
+Upstream Matt skills are project-local and tracked by `skills-lock.json`. Update them only through the owner-supported `npx skills update --project` path; do not hand-fork upstream skill content. PROMueve-specific skills remain additional local context.
 
 ## Project-local skills
 

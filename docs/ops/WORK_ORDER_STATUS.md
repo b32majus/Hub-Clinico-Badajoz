@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-09-30
+**Última actualización:** 2026-10-03
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -280,7 +280,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 | **N5 (#368)** | Fail-closed si no puede persistirse importación | ✅ Completada | Train #364 | source `4a68006...` → promotion `a4b49ca...` | Fuente previa preservada en replacement failure; Bridge v2 runtime_memory intacto |
 | **PROMOTION (#369)** | Promoción limpia Enfermería v6 | ✅ MERGED_AND_VERIFIED | `review/fh-enfermeria-v6-reconciliation-20260917` | candidate `a4b49ca...` → merge `e058f0d...` (PR #370) | 6 commits limpios; runtime-noise pair excluido; smoke #1050 + Pages success |
 | **WO-DOC POST #370 (#371)** | Reconciliación documental + registro vivo de deuda | ✅ Merged | `docs/fh-post-enfermeria-v6-debt-reconciliation-20260917` | merge `92c378b...` (PR #372) | Registro vivo de deuda publicado |
-| **PROMUEVE NATIVE WORKFLOW** | Reconciliar ejecución upstream-native | ✅ Merged | `docs/promueve-vnext-hygiene-20260924` | merge `3aa34825...` (PR #373) | No revive lifecycle Atenea histórico; `pi` + Gentle nativo son runtime |
+| **PROMUEVE NATIVE WORKFLOW (HISTÓRICO)** | Reconciliación upstream-native del epoch previo | ✅ Merged / HISTORICAL | `docs/promueve-vnext-hygiene-20260924` | merge `3aa34825...` (PR #373) | Evidencia histórica C-077–C-082; Pi/Gentle/RDD/4R/OpenCode V1 ya no gobiernan nuevas ejecuciones bajo C-083 |
 | **PROMUEVE ENGRAM IDENTITY** | Fijar identidad canónica Engram | ✅ Merged | rama de PR #375 | merge `b09bbf72...` (PR #375) | Gobernanza/memoria; sin cambio clínico |
 | **FH-DEBT-002/003** | Resolver split-brain y aliases de hojas Enfermería v6 | ✅ MERGED_AND_VERIFIED | `work/fh-v6-sheet-resolution-native-gentle-20260921` | candidate reconciliado `8f35a296...` → merge `771fb80c...` (PR #374) | 718/718; review `review-bf84091b8c28d96d` APPROVED + burned; `odd/tasks` excluido de la superficie final |
 | **TRAIN-NEXUS-BOOTSTRAP-01 (#387)** | Foundation Bootstrap: F0.3 + F1.1 + F2.1 + F2.2 + F1.3A | ✅ MERGED_AND_VERIFIED | `work/nexus-bootstrap-01-387-20260924` | candidate final `38f9660...` → merge `5b47c146...` (PR #388) | 7 work units (#382–#386); gates deterministas PASS; native Gentle lifecycle cerrado; Promotion Review v1 independiente PASS; deuda no bloqueante en #389 |

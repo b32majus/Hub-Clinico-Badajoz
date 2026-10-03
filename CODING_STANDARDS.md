@@ -2,7 +2,7 @@
 
 This file contains the repository's stable horizontal engineering guardrails.
 
-It does **not** define an execution sequence. Task-specific engineering methods may be supplied by approved upstream skills when their own triggers apply; they are optional methods, not a second orchestration lifecycle. Machine-decidable rules belong in deterministic repo tooling. Gentle native RDD remains the final exact-candidate review authority for native Gentle execution.
+It does **not** define an execution sequence. Under Atenea C-083, upstream Matt skills own the applicable implementation/review method when their workflow is invoked; this file supplies repository guardrails rather than a second orchestration lifecycle. Machine-decidable rules belong in deterministic repo tooling. Deterministic evidence is the first-line acceptance signal; semantic review follows the current C-083/Matt path when applicable.
 
 ## 1. Keep changes scoped
 
@@ -68,6 +68,8 @@ Use the upstream TDD method when its trigger applies. Do not force TDD for wirin
 
 Negative and adversarial verification should be proportional to actual risk, especially around authorization, parsing, trust boundaries, migrations, failure/retry behavior, state transitions and destructive operations.
 
+For stateful, temporal, concurrent, cached or idempotent behavior, add at least one regression case that would fail a plausible stale-state, wrong-order, duplicate/retry or repeated-operation implementation when that risk is material. Prefer an executable invariant/interleaving check over another prose warning.
+
 ## 8. Fail explicitly when correctness requires knowledge
 
 Do not hide invariant, authority, persistence or safety failures behind silent fallbacks, guessed defaults or "best effort" success.
@@ -104,21 +106,35 @@ Do not pre-emptively introduce caches, queues, sharding, microservices, distribu
 
 Here, "scalable" means the software can be understood, modified, tested, operated and extended without each change multiplying fragility.
 
+## 12. Validate and canonicalize once at boundaries
+
+Treat imported workbooks, user input, tool output and external payloads as untrusted until they cross an explicit validation boundary. Validate structural and semantic requirements as early as practical, then carry the validated representation forward instead of rematching or renormalizing the same durable fact in multiple layers.
+
+When aliases or identifiers can map to one canonical entity, ambiguous matches fail closed. Preserve source identity/provenance when diagnostics, audit or round-trip behavior requires it.
+
+## 13. Configuration must be reproducible
+
+Behavior-affecting configuration must be explicit, inspectable and reproducible from repository state plus separately supplied credentials. Do not make correctness depend on undocumented global plugins, inherited shell state or hidden home-directory mutations. Required configuration that is stale, incompatible or missing must fail visibly rather than silently selecting another execution mode.
+
+## 14. User-facing changes remain operable and accessible
+
+When a change affects UI, accessibility is part of correctness: prefer semantic controls, keyboard-operable interactions, visible focus and meaningful labels/state communication; do not rely on color alone. Use deterministic accessibility checks when they provide useful evidence, but do not treat them as complete proof.
+
 ## Review interpretation
 
-Upstream Matt `code-review` may consume this file as the repository Standards axis when that skill is explicitly invoked. This does not make Matt `code-review` part of the default autonomous execution lifecycle.
+Under C-083, Matt `code-review` consumes this file as the repository Standards axis whenever that skill applies. Matt owns the review method; this file supplies PROMueve-specific engineering policy and does not restate the workflow.
 
-Repo standards here override generic preferences where they conflict. Gentle native RDD remains the default final candidate review authority; this file is engineering policy, not a second review lifecycle.
+Repo standards here override generic preferences where they conflict. C-083/Matt review does not grant push, PR, merge or deploy authority. Material integrated feature/train/PR candidates may additionally receive Cora audit before merge according to current risk and authority.
 
 ## PROMueve clinical/semantic additions
 
-### 12. Preserve explicit clinical meaning
+### 15. Preserve explicit clinical meaning
 
 Clinical source text, parsed concepts, proposed values, applied values and current editable form values are distinct states. Do not collapse them into one variable when that would erase provenance or professional confirmation boundaries.
 
 Never turn absence, unknown, `NO_VALUE`, `No informado` or parser failure into a therapeutic default. Fail safe and preserve the explicit source/raw evidence required by the current contract.
 
-### 13. Parser and importer discipline
+### 16. Parser and importer discipline
 
 For contractual parsers/importers, prefer explicit table-driven grammar/state rules and named contractual tokens over hidden normalization, positional magic or convenience heuristics. Only normalizations explicitly authorized by the live spec are allowed.
 
@@ -126,7 +142,7 @@ Each contractual exception or negative boundary should have an independent fixtu
 
 The implementation must not author the principal acceptance oracle it is being judged against. Builder-added tests may supplement but never replace the frozen acceptance package.
 
-### 14. Clinical UI/apply boundaries
+### 17. Clinical UI/apply boundaries
 
 Parsing and preview do not authorize apply. Source association does not equal clinical validation. Applying a proposed source value requires the explicit professional confirmation and protection rules defined by the current live contract.
 

@@ -2,7 +2,7 @@
 
 | Metadato | Valor |
 | --- | --- |
-| Última actualización | 2026-09-30 |
+| Última actualización | 2026-10-03 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Línea Farmacia de procedencia | `origin/recovery/farmacia-pr-replay-20260727`; **HISTORICAL** para nuevo desarrollo desde el merge de PR #381; conserva la historia funcional Farmacia y la trazabilidad del snapshot |
 | Autoridad canónica de desarrollo (F0.2) | `origin/promueve/nexus-v4` **ACTIVE** desde el merge autorizado de PR #381 (2026-09-24). Nació de `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta. Último HEAD de producto Nexus verificado tras PR #490: `3bf45760a27630823b61b0d19da8b64aeb060693` (TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 #487 / F4.4 Pharmacy Act v1; candidate `535c65567bc8ca0aef7358f97f99d97520b0ff20`); HEAD de producto anterior: `a04a0ace25012e5f0ac397844165921dccaebcc3` (corrección PV-001, WO #482 / PR #484; candidate `75063f25b5cf3de008ab882392b9387f5fdea9c1`); HEAD anterior a este: `91262d8007642aef1d3cbe21e24d20ff369ee19b` (PR #478); los merges documentales posteriores pueden mover el tip Git sin cambiar ese HEAD de producto. Detalle de transición: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
@@ -200,7 +200,7 @@ Decisiones principales:
 
 | Documento | Estado | Uso |
 | --- | --- | --- |
-| [`AGENTS.md`](/AGENTS.md) | Vigente — ejecución Pi + Gentle nativo | Gobernanza operativa |
+| [`AGENTS.md`](/AGENTS.md) | Vigente — Atenea C-083 / OpenCode V2 `--pure` + Matt upstream; routing project-local | Gobernanza operativa |
 | [`docs/ops/WORK_ORDER_STATUS.md`](/docs/ops/WORK_ORDER_STATUS.md) | Vigente | Trazabilidad de WOs y PRs |
 | [`docs/ops/PROMUEVE_BACKLOG.md`](/docs/ops/PROMUEVE_BACKLOG.md) | Vigente / propuestas no autorizantes | Backlog vivo de producto y arquitectura; separa ideas de deuda y decisiones |
 | [`docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](/docs/ops/audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) | Vigente / revisión viva | Auditoría manual Sil, adjudicación de Train 06 y shaping pendiente |
@@ -341,9 +341,9 @@ Requiere WO posterior, sin mezclarla con quick wins clínicos:
 | `README.md` | Reconciliado 2026-09-24; mantenerlo como front door y evitar estado volátil duplicado |
 | `ARCHITECTURE.md` | Marcado como referencia histórica; la arquitectura/estado actuales se resuelven desde este índice y documentos vivos |
 | `CHANGELOG.md` | No recoge la línea recovery reciente |
-| `AGENTS.md` | Reconciliado 2026-09-24; sin deuda activa de runtime |
+| `AGENTS.md` | Reconciliado a Atenea C-083 por WO #497; C-077–C-082/Gentle/Pi/RDD/4R quedan históricos |
 | `docs/ops/HERMES_AGENT_GOVERNANCE_20260604.md` | Modelo operativo antiguo |
-| `opencode.jsonc` | No existe en recovery; ausencia esperada y no bloqueante para esta edición documental |
+| `opencode.json` + `.opencode/agents/` | Superficie project-local C-083; OpenCode V2 se ejecuta con `--pure` y bindings Atenea versionados |
 | Planes históricos PR replay/rescate V4 | Referenciados previamente, pero sus archivos no están publicados en recovery |
 | Contrato de escenarios Farmacia V4 | Referenciado previamente, pero no publicado en recovery |
 
