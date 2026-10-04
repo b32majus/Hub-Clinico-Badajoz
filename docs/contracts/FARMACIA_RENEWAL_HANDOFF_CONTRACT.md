@@ -6,11 +6,11 @@
 | Fecha | 2026-10-04 |
 | Issue / WO | #446 (shaping) + **#509** (recovery/refreeze) — `WO-RECOVERY-NEXUS-RENEWALS-N0-REFREEZE-20261004` |
 | Autoridad | **HUMAN SHAPING REFREEZE** + auditoría adversarial (#446, 2026-10-04) + #509 |
-| Base (rama / SHA) | `recovery/nexus-renewals-n0-refreeze-509-20261004` desde `d829939cb3622227a7f0810c8d6a5e6944765dbc` (candidato **RECHAZADO**, checkpoint preservado) sobre `promueve/nexus-v4` @ `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` |
+| Base / publicación | Recovery desde `d829939cb3622227a7f0810c8d6a5e6944765dbc` (candidato **RECHAZADO**, checkpoint preservado); candidate final `54ab2c5eced637774ac5d65e32e3bb340e204d94` → PR #510 → merge `aa6401af8ad636dd9d19baad9dcf80876ac780df` en `promueve/nexus-v4` |
 | Madurez | **Contrato únicamente.** Sin runtime, integración, scheduler, UI, persistencia ni piloto/producción. Datos exclusivamente sintéticos. |
 | Autoridad legible por máquina | Schemas [`../../schemas/renewal/`](../../schemas/renewal/) y máquina de estados [`renewal_state_machine_v1.json`](../../schemas/renewal/renewal_state_machine_v1.json) (autoridad única de estados; este documento describe y enlaza, no la duplica) |
 | Verificación | `npm run check:renewal:contract` (`tools/renewal_handoff_contract_check.mjs`) |
-| Delivery boundary | Rama local + commits locales. **STOP antes de push/PR/merge** salvo autorización explícita adicional. |
+| Publicación | **MERGED_AND_VERIFIED** por PR #510; candidate `54ab2c5eced637774ac5d65e32e3bb340e204d94` → merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`; CI PR run `37198098263` y CI post-merge run `37198170542` `success`. N1/N2/N3 requieren WOs propias. |
 
 Esta es la **única autoridad N0** del circuito de renovaciones FH ↔ Enfermería. Es una **recuperación/refreeze**, no una tercera ronda de corrección ni shaping nuevo: toda semántica procede del HUMAN SHAPING REFREEZE (#446) y de #509. El objetivo es que N1/N2/N3 se implementen desde extremos distintos sin inventar semántica.
 
