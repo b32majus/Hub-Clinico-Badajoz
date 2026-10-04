@@ -231,18 +231,18 @@ function freshState(seed) {
       service_id: r.service_id,
       lifecycle_state: r.lifecycle_state,
       line_status: r.line_status,
-      last_return_hash: null,
-      last_return: null
+      applied_returns: []
     };
     if (r.last_applied_return) {
       // A return already applied before the current lifecycle snapshot (used to
       // prove replay/no_op ordering on terminal cycles without inventing a path
-      // from nursing to FH_UPDATED).
-      known[r.renewal_id].last_return_hash = stableStringify(r.last_applied_return);
-      known[r.renewal_id].last_return = {
+      // from nursing to FH_UPDATED). It seeds the per-renewal applied-operation
+      // history: every accepted return is remembered, not only the last one.
+      known[r.renewal_id].applied_returns.push({
         report_type: r.last_applied_return.report_type,
-        reported_at: r.last_applied_return.reported_at
-      };
+        reported_at: r.last_applied_return.reported_at,
+        payload_hash: stableStringify(r.last_applied_return)
+      });
     }
   }
   return { known };
@@ -258,16 +258,18 @@ function findTransition(machine, fromState, toState, actor) {
   );
 }
 
-// Ruled precedence inside applyReturn (contract §8). Steps 1-3 of the contract
-// ordering (UNSUPPORTED_CONTRACT_VERSION, schema validation,
-// DUPLICATE_RENEWAL_ID_IN_BATCH) are batch/parse level and run in importBatch /
-// the fixture runners before this function.
+// Ruled precedence inside applyReturn (contract §8). Step 2 of the contract
+// ordering (schema + calendar validation) is a per-row boundary executed in
+// importBatch before reconciling each row; steps 1 and 3 are batch-wide.
 //
 //   4. UNKNOWN_RENEWAL_ID
 //   5. IDENTITY_MISMATCH
 //   6. LINE_NOT_ACTIVE
-//   7. idempotent replay (exact, deep-equal) first => no_op, even on terminal states
-//   8. STATE_CONFLICT (same operation identity, different payload)
+//   7. idempotent replay of ANY operation in the applied-return history
+//      (same report_type + reported_at + deep-equal payload) => no_op, even on
+//      terminal states
+//   8. STATE_CONFLICT (same operation identity present anywhere in the
+//      applied-return history with a different payload)
 //   9. REPORT_NOT_APPLICABLE (target unreachable, with or without a prior return)
 //  10. otherwise apply the permitted transition (successive report)
 function applyReturn(state, doc, machine) {
@@ -284,19 +286,19 @@ function applyReturn(state, doc, machine) {
     return { outcome: 'rejected', error_code: 'LINE_NOT_ACTIVE', applied: false };
   }
   const hash = stableStringify(doc);
-  if (rec.last_return_hash === hash) {
-    // Exact replay of an already-applied operation: no_op regardless of the
-    // current lifecycle, terminal states included. Must precede any terminal or
-    // reachability check.
+  const prior = rec.applied_returns.find(
+    (op) => op.report_type === doc.report_type && op.reported_at === doc.reported_at
+  );
+  if (prior && prior.payload_hash === hash) {
+    // Exact replay of ANY already-applied operation, not only the last one:
+    // no_op regardless of the current lifecycle, terminal states included.
+    // Must precede any terminal or reachability check.
     return { outcome: 'no_op', applied: false, to: rec.lifecycle_state };
   }
-  if (
-    rec.last_return &&
-    rec.last_return.report_type === doc.report_type &&
-    rec.last_return.reported_at === doc.reported_at
-  ) {
+  if (prior) {
     // Same operation identity (renewal_id + report_type + reported_at) already
-    // applied with a different payload: changed replay, never merged.
+    // applied at any point of the history with a different payload: changed
+    // replay, never merged; FH state is preserved.
     return { outcome: 'rejected', error_code: 'STATE_CONFLICT', applied: false };
   }
   const target = machine.report_type_targets[doc.report_type];
@@ -307,17 +309,22 @@ function applyReturn(state, doc, machine) {
     return { outcome: 'rejected', error_code: 'REPORT_NOT_APPLICABLE', applied: false };
   }
   rec.lifecycle_state = target;
-  rec.last_return_hash = hash;
-  rec.last_return = { report_type: doc.report_type, reported_at: doc.reported_at };
+  rec.applied_returns.push({
+    report_type: doc.report_type,
+    reported_at: doc.reported_at,
+    payload_hash: hash
+  });
   return { outcome: 'accepted', applied: true, to: target };
 }
 
-function importBatch(records, state, machine) {
+function importBatch(records, state, machine, retValidator, opts = {}) {
+  // Contract §8 step 1: batch-wide, full-lot rejection.
   for (const r of records) {
     if (r.contract_version !== CONTRACT_VERSION) {
       return { outcome: 'rejected_batch', error_code: 'UNSUPPORTED_CONTRACT_VERSION', applied: 0 };
     }
   }
+  // Contract §8 step 3: batch-wide, full-lot rejection.
   const ids = records.map((r) => r.renewal_id);
   const dup = ids.find((id, i) => ids.indexOf(id) !== i);
   if (dup) {
@@ -326,6 +333,24 @@ function importBatch(records, state, machine) {
   let applied = 0;
   const rows = [];
   for (const r of records) {
+    // Contract §8 step 2 is a PER-ROW parse/validation boundary: schema +
+    // calendar validation run BEFORE any reconciliation of this row. A row that
+    // fails it is rejected with its typed code, applies nothing, and the rest
+    // of the batch continues (per-row atomicity).
+    if (!opts.skip_row_validation) {
+      const okSchema = retValidator(r);
+      const dateErrors = okSchema ? semanticDateErrors(r) : [];
+      if (!okSchema || dateErrors.length > 0) {
+        rows.push({
+          outcome: 'rejected',
+          error_code: okSchema
+            ? 'INVALID_FIELD'
+            : schemaErrorCode(retValidator.errors, NURSING_TO_FH_RECORD_TYPE),
+          applied: false
+        });
+        continue;
+      }
+    }
     const res = applyReturn(state, r, machine);
     if (res.applied) applied += 1;
     rows.push(res);
@@ -561,52 +586,115 @@ const DATE_SOURCE_PRECEDENCE = [
   'not_recorded'
 ];
 
+// Endpoint-based resolution (contract §4). A candidate is { source, endpoint }
+// where endpoint is the resulting valid_until date string, or null for
+// not_recorded. AGREEMENT between candidates resolves normally; only a
+// disagreement on the RESULTING DATE fails closed:
+//   - unknown source => DATE_SOURCE_CONFLICT;
+//   - two candidates at the same precedence level with different endpoints =>
+//     DATE_SOURCE_CONFLICT;
+//   - two candidates at the same level with equal endpoints => resolve (no false
+//     conflict);
+//   - two `confirmed` sources (levels 1 and 2) with different endpoints =>
+//     DATE_SOURCE_CONFLICT;
+//   - two `confirmed` sources with equal endpoints => resolve to level 1;
+//   - otherwise the highest precedence wins. The result is order-independent.
 function resolveDateSource(candidates) {
   if (!Array.isArray(candidates) || candidates.length === 0) {
     return { status: 'DATE_SOURCE_CONFLICT', reason: 'no candidate source' };
   }
-  let best = null;
+  const byLevel = new Map();
   for (const c of candidates) {
-    const idx = DATE_SOURCE_PRECEDENCE.indexOf(c);
-    if (idx === -1) return { status: 'DATE_SOURCE_CONFLICT', reason: `unknown source ${JSON.stringify(c)}` };
-    if (best === null || idx < best.idx) best = { source: c, idx };
-    else if (idx === best.idx) {
-      return { status: 'DATE_SOURCE_CONFLICT', reason: `same-precedence disagreement: ${best.source} vs ${c}` };
+    const source = c && typeof c === 'object' ? c.source : c;
+    if (typeof source !== 'string' || !DATE_SOURCE_PRECEDENCE.includes(source)) {
+      return { status: 'DATE_SOURCE_CONFLICT', reason: `unknown source ${JSON.stringify(source)}` };
+    }
+    const idx = DATE_SOURCE_PRECEDENCE.indexOf(source);
+    if (!byLevel.has(idx)) byLevel.set(idx, []);
+    const endpoint = c && typeof c === 'object' && c.endpoint !== undefined ? c.endpoint : null;
+    byLevel.get(idx).push(endpoint);
+  }
+  for (const [idx, endpoints] of byLevel) {
+    const distinct = new Set(endpoints.map((e) => JSON.stringify(e)));
+    if (distinct.size > 1) {
+      return {
+        status: 'DATE_SOURCE_CONFLICT',
+        reason: `same-precedence sources disagree on the resulting date: ${DATE_SOURCE_PRECEDENCE[idx]}`
+      };
     }
   }
-  return { status: 'RESOLVED', source: best.source };
+  if (byLevel.has(0) && byLevel.has(1)) {
+    const e1 = byLevel.get(0)[0];
+    const e2 = byLevel.get(1)[0];
+    if (e1 !== e2) {
+      return {
+        status: 'DATE_SOURCE_CONFLICT',
+        reason: 'two confirmed sources disagree on the resulting date'
+      };
+    }
+  }
+  const winner = Math.min(...byLevel.keys());
+  return { status: 'RESOLVED', source: DATE_SOURCE_PRECEDENCE[winner] };
 }
 
 function runDateSourceHierarchy(fhSchema) {
-  console.log('Date-source hierarchy (precedencia de fuentes, fallo cerrado):');
+  console.log('Date-source hierarchy (precedencia de fuentes por endpoint, fallo cerrado):');
   const enumMatches = sameSet(DATE_SOURCE_PRECEDENCE, (fhSchema.properties || {}).valid_until_source?.enum || []);
   record('date-source precedence covers exactly the schema valid_until_source enum', enumMatches,
     enumMatches ? '' : 'precedence list and schema enum drifted apart');
 
-  const r1 = resolveDateSource(['manual_estimate', 'prescription_valid_until_confirmed']);
+  const L1 = DATE_SOURCE_PRECEDENCE[0];
+  const L2 = DATE_SOURCE_PRECEDENCE[1];
+  const L3 = DATE_SOURCE_PRECEDENCE[2];
+  const L5 = DATE_SOURCE_PRECEDENCE[4];
+  const L6 = DATE_SOURCE_PRECEDENCE[5];
+  const L7 = DATE_SOURCE_PRECEDENCE[6];
+
+  const r1 = resolveDateSource([{ source: L6, endpoint: '2026-11-01' }, { source: L1, endpoint: '2026-11-15' }]);
   record('higher precedence prevails (prescription_valid_until_confirmed over manual_estimate)',
-    r1.status === 'RESOLVED' && r1.source === 'prescription_valid_until_confirmed', JSON.stringify(r1));
+    r1.status === 'RESOLVED' && r1.source === L1, JSON.stringify(r1));
 
-  const r2 = resolveDateSource(['circuit_entry_estimate', 'pharmacy_verified_remaining_period']);
+  const r2 = resolveDateSource([{ source: L5, endpoint: '2026-11-20' }, { source: L3, endpoint: '2026-11-25' }]);
   record('higher precedence prevails (pharmacy_verified_remaining_period over circuit_entry_estimate)',
-    r2.status === 'RESOLVED' && r2.source === 'pharmacy_verified_remaining_period', JSON.stringify(r2));
+    r2.status === 'RESOLVED' && r2.source === L3, JSON.stringify(r2));
 
-  const r3 = resolveDateSource(['not_recorded']);
-  record('single candidate resolves to itself', r3.status === 'RESOLVED' && r3.source === 'not_recorded', JSON.stringify(r3));
+  const r3 = resolveDateSource([{ source: L7, endpoint: null }]);
+  record('single candidate resolves to itself', r3.status === 'RESOLVED' && r3.source === L7, JSON.stringify(r3));
 
-  const r4 = resolveDateSource(['circuit_entry_estimate', 'circuit_entry_estimate']);
-  record('same-precedence disagreement fails closed (DATE_SOURCE_CONFLICT)',
-    r4.status === 'DATE_SOURCE_CONFLICT', JSON.stringify(r4));
+  const r4a = resolveDateSource([{ source: L6, endpoint: '2026-11-01' }, { source: L6, endpoint: '2026-12-01' }]);
+  const r4b = resolveDateSource([{ source: L6, endpoint: '2026-12-01' }, { source: L6, endpoint: '2026-11-01' }]);
+  record('same-precedence candidates with DIFFERENT endpoints fail closed (DATE_SOURCE_CONFLICT, both input orders)',
+    r4a.status === 'DATE_SOURCE_CONFLICT' && r4b.status === 'DATE_SOURCE_CONFLICT',
+    `a=${JSON.stringify(r4a)} b=${JSON.stringify(r4b)}`);
 
-  const r5 = resolveDateSource(['prescription_valid_until_confirmed', 'not_a_source']);
+  const r5 = resolveDateSource([{ source: L6, endpoint: '2026-11-01' }, { source: L6, endpoint: '2026-11-01' }]);
+  record('same-precedence candidates with EQUAL endpoints resolve (no false conflict)',
+    r5.status === 'RESOLVED' && r5.source === L6, JSON.stringify(r5));
+
+  const r6a = resolveDateSource([{ source: L1, endpoint: '2026-11-15' }, { source: L2, endpoint: '2026-11-20' }]);
+  const r6b = resolveDateSource([{ source: L2, endpoint: '2026-11-20' }, { source: L1, endpoint: '2026-11-15' }]);
+  record('two confirmed sources with DIFFERENT endpoints fail closed in both input orders (DATE_SOURCE_CONFLICT)',
+    r6a.status === 'DATE_SOURCE_CONFLICT' && r6b.status === 'DATE_SOURCE_CONFLICT',
+    `a=${JSON.stringify(r6a)} b=${JSON.stringify(r6b)}`);
+
+  const r7a = resolveDateSource([{ source: L1, endpoint: '2026-11-15' }, { source: L2, endpoint: '2026-11-15' }]);
+  const r7b = resolveDateSource([{ source: L2, endpoint: '2026-11-15' }, { source: L1, endpoint: '2026-11-15' }]);
+  record('two confirmed sources with EQUAL endpoints resolve to prescription_valid_until_confirmed in both input orders',
+    r7a.status === 'RESOLVED' && r7a.source === L1 && r7b.status === 'RESOLVED' && r7b.source === L1,
+    `a=${JSON.stringify(r7a)} b=${JSON.stringify(r7b)}`);
+
+  const r8 = resolveDateSource([
+    { source: L1, endpoint: '2026-11-15' },
+    { source: 'not_a_source', endpoint: '2026-11-15' }
+  ]);
   record('unknown candidate source fails closed (DATE_SOURCE_CONFLICT)',
-    r5.status === 'DATE_SOURCE_CONFLICT', JSON.stringify(r5));
+    r8.status === 'DATE_SOURCE_CONFLICT', JSON.stringify(r8));
 }
 
 // --- precedence regression checks: plausible stale orderings must disagree
 // with the ruled model, so a reordering regression can never pass silently. ---
 
-function runApplyPrecedenceChecks(machine, scenarios) {
+function runApplyPrecedenceChecks(machine, scenarios, retValidator) {
   console.log('Precedence mutations (stale orderings must be rejected):');
   const load = (rel) => loadJson(path.join(FIXTURE_DIR, rel));
 
@@ -633,6 +721,69 @@ function runApplyPrecedenceChecks(machine, scenarios) {
   record('mutation/removing the LINE_NOT_ACTIVE guard accepts a stopped-line return (ruled order rejects)',
     stoppedRes.outcome === 'rejected' && stoppedRes.error_code === 'LINE_NOT_ACTIVE' && unguardedRes.outcome === 'accepted',
     `current=${JSON.stringify(stoppedRes)} unguarded=${JSON.stringify(unguardedRes)}`);
+
+  // Ruled mutation (i): a model that remembers ONLY the last applied operation
+  // (single-slot memory) must diverge from the ruled outcome on historical
+  // replay: replaying the FIRST of two accepted returns is no_op (ruled) but
+  // reaches reachability in the stale model and answers REPORT_NOT_APPLICABLE;
+  // a modified historical replay is STATE_CONFLICT (ruled) but
+  // REPORT_NOT_APPLICABLE there too.
+  const firstDoc = load('valid/nursing_to_fh_requested_to_service.json');
+  const interveningDoc = load('semantic/return_in_progress_ren_syn_0001.json');
+  const replayIdenticalDoc = load('valid/nursing_to_fh_requested_to_service.json');
+  const replayModifiedDoc = load('semantic/return_replay_modified_ren_syn_0001.json');
+
+  const historyState = freshState(scenarios.seed);
+  const firstRes = applyReturn(historyState, firstDoc, machine);
+  const interveningRes = applyReturn(historyState, interveningDoc, machine);
+  const ruledReplayRes = applyReturn(historyState, replayIdenticalDoc, machine);
+  const historyState2 = freshState(scenarios.seed);
+  applyReturn(historyState2, firstDoc, machine);
+  applyReturn(historyState2, interveningDoc, machine);
+  const ruledModifiedRes = applyReturn(historyState2, replayModifiedDoc, machine);
+
+  const staleState = freshState(scenarios.seed);
+  applyReturn(staleState, firstDoc, machine);
+  applyReturn(staleState, interveningDoc, machine);
+  // Degrade to last-operation-only memory: keep only the most recent entry of
+  // the applied-return history, exactly what a single-slot model retains.
+  for (const rec of Object.values(staleState.known)) {
+    if (Array.isArray(rec.applied_returns) && rec.applied_returns.length > 1) {
+      rec.applied_returns = rec.applied_returns.slice(-1);
+    }
+  }
+  const staleReplayRes = applyReturn(staleState, replayIdenticalDoc, machine);
+  const staleState2 = freshState(scenarios.seed);
+  applyReturn(staleState2, firstDoc, machine);
+  applyReturn(staleState2, interveningDoc, machine);
+  for (const rec of Object.values(staleState2.known)) {
+    if (Array.isArray(rec.applied_returns) && rec.applied_returns.length > 1) {
+      rec.applied_returns = rec.applied_returns.slice(-1);
+    }
+  }
+  const staleModifiedRes = applyReturn(staleState2, replayModifiedDoc, machine);
+
+  record('mutation/last-operation-only memory turns an exact historical replay into REPORT_NOT_APPLICABLE (ruled = no_op)',
+    firstRes.outcome === 'accepted' && interveningRes.outcome === 'accepted' &&
+    ruledReplayRes.outcome === 'no_op' &&
+    staleReplayRes.outcome === 'rejected' && staleReplayRes.error_code === 'REPORT_NOT_APPLICABLE',
+    `ruled=${JSON.stringify(ruledReplayRes)} stale=${JSON.stringify(staleReplayRes)}`);
+  record('mutation/last-operation-only memory turns a modified historical replay into REPORT_NOT_APPLICABLE (ruled = STATE_CONFLICT)',
+    ruledModifiedRes.outcome === 'rejected' && ruledModifiedRes.error_code === 'STATE_CONFLICT' &&
+    staleModifiedRes.outcome === 'rejected' && staleModifiedRes.error_code === 'REPORT_NOT_APPLICABLE',
+    `ruled=${JSON.stringify(ruledModifiedRes)} stale=${JSON.stringify(staleModifiedRes)}`);
+
+  // Ruled mutation (ii): a batch path that skips the per-row step-2 boundary
+  // must accept the forbidden row (divergence detected against the ruled model).
+  const batchRows = load('batch/mixed_invalid_row_batch.json');
+  const ruledBatch = importBatch(batchRows, freshState(scenarios.seed), machine, retValidator);
+  const staleBatch = importBatch(batchRows, freshState(scenarios.seed), machine, retValidator, { skip_row_validation: true });
+  record('mutation/batch path skipping per-row step-2 validation accepts the forbidden row (ruled model rejects per row)',
+    ruledBatch.applied === 1 &&
+    ruledBatch.rows[1].outcome === 'rejected' && ruledBatch.rows[1].error_code === 'FORBIDDEN_FIELD_IN_RETURN' &&
+    ruledBatch.rows[2].outcome === 'rejected' && ruledBatch.rows[2].error_code === 'INVALID_FIELD' &&
+    staleBatch.rows[1].outcome === 'accepted' && staleBatch.rows[2].outcome === 'accepted',
+    `ruled=${JSON.stringify(ruledBatch)} stale=${JSON.stringify(staleBatch)}`);
 }
 
 // --- runs ---
@@ -782,13 +933,44 @@ function runScenarios(fhValidator, retValidator, machine) {
           second.error_code === sc.expect.error_code && preserved === sc.expect.fh_state_preserved;
         detail = `first=${JSON.stringify(first)} second=${JSON.stringify(second)} preserved=${preserved}`;
       } else if (sc.kind === 'batch_import') {
+        const docs = load(sc.fixture);
         const state = freshState(scenarios.seed);
-        const before = stableStringify(state.known);
-        const res = importBatch(load(sc.fixture), state, machine);
-        const preserved = stableStringify(state.known) === before;
+        const res = importBatch(docs, state, machine, retValidator);
         pass = res.outcome === sc.expect.outcome && res.error_code === sc.expect.error_code &&
-          res.applied === sc.expect.applied && preserved;
-        detail = `result=${JSON.stringify(res)} preserved=${preserved}`;
+          res.applied === sc.expect.applied;
+        const parts = [`result=${JSON.stringify(res)}`];
+        if (Array.isArray(sc.expect.rows)) {
+          // Per-row expectations: each declared row must match outcome and, when
+          // declared, its typed error code.
+          const rowsOk = Array.isArray(res.rows) && res.rows.length === sc.expect.rows.length &&
+            sc.expect.rows.every((e, i) =>
+              res.rows[i].outcome === e.outcome &&
+              (e.error_code === undefined || res.rows[i].error_code === e.error_code));
+          pass = pass && rowsOk;
+          if (!rowsOk) parts.push(`rows=${JSON.stringify(res.rows)}`);
+        } else if (res.outcome === sc.expect.outcome && sc.expect.outcome !== 'rejected_batch') {
+          // A processed batch without declared row expectations is not allowed:
+          // row-level outcomes must always be pinned down.
+          pass = false;
+          parts.push('missing expect.rows for a processed batch');
+        }
+        if (pass) {
+          // Per-row atomicity: every row rejected inside a processed batch must
+          // leave the FH state of its renewal exactly as seeded.
+          const pristine = freshState(scenarios.seed);
+          const broken = docs
+            .map((d, i) => ({ rid: d.renewal_id, row: res.rows[i] }))
+            .filter((x) => x.row && x.row.outcome === 'rejected' && x.row.applied === false)
+            .filter((x) => pristine.known[x.rid] !== undefined)
+            .filter((x) => stableStringify(state.known[x.rid]) !== stableStringify(pristine.known[x.rid]));
+          if (broken.length > 0) {
+            pass = false;
+            parts.push(`fh state mutated for rejected rows: ${broken.map((x) => x.rid).join(', ')}`);
+          } else {
+            parts.push('rejected rows left FH state preserved');
+          }
+        }
+        detail = parts.join(' ');
       } else {
         detail = `unknown scenario kind ${sc.kind}`;
       }
@@ -833,7 +1015,7 @@ function main() {
   runInvalidFixtures(fh.validate, ret.validate);
   runScenarios(fh.validate, ret.validate, machine);
   runStateMachine(machine);
-  runApplyPrecedenceChecks(machine, loadJson(path.join(FIXTURE_DIR, 'scenarios_v1.json')));
+  runApplyPrecedenceChecks(machine, loadJson(path.join(FIXTURE_DIR, 'scenarios_v1.json')), ret.validate);
 
   console.log('Closed field sets / no-inference guard:');
   const drift = closedFieldSetErrors(fh.schema, ret.schema, machine);

@@ -13,6 +13,7 @@
   "valid_until_kind": "confirmed",
   "valid_until_source": "prescription_valid_until_confirmed",
   "treatment_id": null,
+  "treatment": null,
   "service_label": null,
   "comment": null,
   "exported_at": "2026-10-04T08:05:00Z",

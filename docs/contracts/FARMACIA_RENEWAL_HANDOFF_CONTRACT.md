@@ -99,7 +99,7 @@ Reglas duras:
   6. `manual_estimate`
   7. `not_recorded`
 
-- Si dos candidatas del **mismo nivel de precedencia** (o dos fuentes `confirmed` que discrepan en la fecha resultante) no coinciden, FH **falla cerrado**: el registro **no se exporta** hasta que un acto FH explícito resuelva la fuente (`DATE_SOURCE_CONFLICT`; código del lado de exportación FH, **no** es un código de retorno de Enfermería). Nunca se elige en silencio, nunca se promedia ni se mezcla. El checker demuestra esta jerarquía con un helper puro de precedencia/conflicto (gana el nivel más alto; colisión en el mismo nivel ⇒ conflicto).
+- Si dos candidatas del **mismo nivel de precedencia** (o dos fuentes `confirmed` que discrepan en la fecha resultante) no coinciden, FH **falla cerrado**: el registro **no se exporta** hasta que un acto FH explícito resuelva la fuente (`DATE_SOURCE_CONFLICT`; código del lado de exportación FH, **no** es un código de retorno de Enfermería). Nunca se elige en silencio, nunca se promedia ni se mezcla. La comparación es por **fecha resultante** (endpoint): dos candidatas que **concuerdan** en la fecha resultante **no** son un conflicto y la jerarquía resuelve con normalidad (gana la de mayor precedencia; en el mismo nivel, esa misma fuente); solo la **discrepancia** en la fecha resultante —mismo nivel o dos `confirmed`— dispara el fallo cerrado. El checker demuestra esta jerarquía con un helper puro de precedencia/conflicto sobre candidatos `{source, endpoint}` (gana el nivel más alto; colisión de endpoints en el mismo nivel o entre dos `confirmed` ⇒ conflicto).
 - Una fuente estimada jamás se convierte en confirmada en silencio (invariante 5).
 - **Validez de calendario:** los patrones de fecha del schema son anotativos; la validación semántica en runtime (días reales del mes, años bisiestos, rangos de hora y offset, sin normalización) es **autoritativa** en el checker — misma postura que `FARMACIA_EXPORT_V2_CORE_CONTRACT.md`. Una fecha imposible (`2026-02-31`) se rechaza con `INVALID_FIELD` aunque el patrón la admita, y el cómputo de ventana solo se ejecuta sobre fechas ya validadas.
 
@@ -154,7 +154,7 @@ Schema: [`renewal_handoff_fh_to_nursing_v1.schema.json`](../../schemas/renewal/r
 
 **Obligatorios:** `contract_version`, `record_type`, `renewal_id`, `line_id`, `patient_id`, `service_id`, `lifecycle_state`, `window_state`, `evaluated_at`, `warning_window_days`, `valid_until`, `valid_until_kind`, `valid_until_source`, `exported_at`, `exported_by_role = "pharmacy"`, `demo_flag`.
 
-**Opcionales:** `treatment_id`, `issue_date`, `validity_days`, `service_label`, `requested_at`, `comment`, y el bloque `treatment` (`line_label`, `drug_display`) **explícitamente display-only**: no es identidad y no autoriza switch/renovación. Ninguna regla cross-field deriva estado desde ese bloque.
+**Opcionales:** `treatment_id`, `issue_date`, `validity_days`, `service_label`, `requested_at`, `comment`, y el bloque `treatment` (`line_label`, `drug_display`) **explícitamente display-only** y **nullable** (`null` explícito = ausencia): no es identidad y no autoriza switch/renovación. Ninguna regla cross-field deriva estado desde ese bloque.
 
 Reglas de presencia: un campo opcional ausente y un `null` explícito significan ambos **ausencia** (los schemas declaran `string|null`/`date|null` para los opcionales, en línea con `farmacia_export_event_v2.schema.json`); la ausencia nunca se convierte en valor. Una fuente que **exige** un campo por regla cross-field (p. ej. `issue_date`/`validity_days` bajo una fuente de duración) falla con `INVALID_FIELD` si el campo está presente pero `null`: el `null` cuenta como ausencia. `valid_until` permanece obligatorio pero nullable (`null` solo legal con `valid_until_source = not_recorded`); `renewal_id`/`line_id`/`patient_id`/`service_id` nunca son null. No se fija ningún dato clínico más allá de lo explícitamente conocido.
 
@@ -188,20 +188,20 @@ Códigos tipados, fail-closed, con atomicidad **por fila**:
 | `SERVICE_CHANGE_REQUIRES_FH_ACT` | Un cambio de `service_id` no puede venir del retorno; exige acto FH. |
 | `FORBIDDEN_FIELD_IN_RETURN` | El retorno porta un campo prohibido (§7). |
 
-Precedencia de aplicación (orden único y exhaustivo; los pasos 1–3 son de lote/parseo, el resto se evalúa por fila):
+Precedencia de aplicación (orden único y exhaustivo; los pasos 1 y 3 son **de lote**, el paso 2 es **de fila** —validación de parseo/schema ejecutada **antes de reconciliar esa fila**—, y los pasos 4–10 son **de fila**):
 
 1. `UNSUPPORTED_CONTRACT_VERSION` — rechaza el **lote completo**, `applied=0`.
-2. `MISSING_REQUIRED_FIELD` | `INVALID_FIELD` | `FORBIDDEN_FIELD_IN_RETURN` — validación de schema.
+2. `MISSING_REQUIRED_FIELD` | `INVALID_FIELD` | `FORBIDDEN_FIELD_IN_RETURN` — validación de schema + calendario **por fila**, ejecutada **antes de reconciliar esa fila**: la fila rechazada **no aplica nada** y el resto del lote continúa (atomicidad por fila).
 3. `DUPLICATE_RENEWAL_ID_IN_BATCH` — lote completo, `applied=0`.
 4. `UNKNOWN_RENEWAL_ID` — el retorno nunca crea renovaciones.
 5. `IDENTITY_MISMATCH` — `patient_id`/`line_id`/`service_id` difieren del registro FH.
 6. `LINE_NOT_ACTIVE` — la línea del ciclo no está `active`.
-7. **Replay idempotente primero**: reimportación **exacta** de un retorno ya aplicado (mismo `renewal_id` + mismo `report_type` + mismo `reported_at` + payload deep-equal) ⇒ **`no_op`**, **independientemente del lifecycle actual, incluidos los estados terminales**.
-8. `STATE_CONFLICT` — misma identidad de operación (`renewal_id` + `report_type` + `reported_at`) ya aplicada con **payload distinto** (replay modificado); el estado FH se preserva, **sin merge**.
+7. **Replay idempotente primero**: reimportación **exacta** de **cualquier** operación ya aplicada para esa renovación —**historial completo de operaciones aceptadas, no solo la última**: mismo `renewal_id` + mismo `report_type` + mismo `reported_at` + payload deep-equal— ⇒ **`no_op`**, **independientemente del lifecycle actual, incluidos los estados terminales**.
+8. `STATE_CONFLICT` — misma identidad de operación (`renewal_id` + `report_type` + `reported_at`) **presente en cualquier punto del historial de operaciones ya aplicadas** con **payload distinto** (replay modificado); el estado FH se preserva, **sin merge**.
 9. `REPORT_NOT_APPLICABLE` — el target no es alcanzable desde el lifecycle actual (estados terminales incluidos, targets regresivos/no alcanzables incluidos, **con o sin retorno previo aplicado**).
-10. En otro caso se aplica la transición permitida: un reporte genuinamente nuevo cuyo target es alcanzable es un **reporte sucesivo** y se acepta (**no** es conflicto).
+10. En otro caso se aplica la transición permitida: un reporte genuinamente nuevo cuyo target es alcanzable es un **reporte sucesivo** y se acepta (**no** es conflicto); la operación aceptada se **añade al historial** de la renovación.
 
-El checker implementa este orden de forma determinista y porta dos mutaciones de precedencia: la ordenación antigua (terminal antes que replay) y la ausencia del guard de línea **deben** discrepar del modelo reglado.
+El checker implementa este orden de forma determinista y porta una batería de mutaciones de precedencia: la ordenación antigua (terminal antes que replay), la ausencia del guard de línea, la memoria **solo de la última operación** (debe discrepar del `no_op`/`STATE_CONFLICT` reglado en el replay histórico) y un camino de lote que **se salta el paso 2** (debe aceptar la fila prohibida) **deben** discrepar del modelo reglado.
 
 Reglas adicionales:
 
@@ -227,6 +227,8 @@ Fixtures: [`tools/fixtures/renewal/`](../../tools/fixtures/renewal/) y bundle [`
 7. **Línea no activa** (`LINE_NOT_ACTIVE`) — retorno sobre `REN-SYN-0005` (`line_status=stopped`, renovación `OPEN`) ⇒ `LINE_NOT_ACTIVE`, aunque `requested_to_service` sería alcanzable (escenario `line_not_active_return_rejected`).
 8. **`renewal_id` desconocido** — `REN-SYN-9999` ⇒ `UNKNOWN_RENEWAL_ID` (el retorno no crea renovaciones).
 9. **Version mismatch** — lote con un registro `renewal-handoff/v2` ⇒ `UNSUPPORTED_CONTRACT_VERSION`, lote completo rechazado, `applied=0`.
+10. **Replay de una operación histórica** — sobre `REN-SYN-0001` se aplican A (`requested_to_service`) y después B (`in_progress`, `semantic/return_in_progress_ren_syn_0001.json`); la reimportación **exacta** de A es `no_op` aunque exista un reporte posterior ya aplicado (escenario `replay_historical_after_intervening_report`), y una A modificada (mismo `report_type` + mismo `reported_at`, otro `comment`: `semantic/return_replay_modified_ren_syn_0001.json`) ⇒ `STATE_CONFLICT` sin merge (escenario `historical_replay_modified_state_conflict`). El modelo reglado recuerda **todas** las operaciones aceptadas por renovación; una memoria solo de la última operación **debe** discrepar (mutación del checker).
+11. **Lote con fila inválida** — `batch/mixed_invalid_row_batch.json`: fila válida (`REN-SYN-0001`, `requested_to_service`) + fila con `valid_until` prohibido (`REN-SYN-0002`) + fila con `reported_at` imposible `2026-02-30` (`REN-SYN-0004`) ⇒ la fila válida se aplica (`applied=1`) y las inválidas se rechazan **por fila** con su código exacto (`FORBIDDEN_FIELD_IN_RETURN` / `INVALID_FIELD`) preservando su estado FH; el paso 2 es una validación **por fila** ejecutada antes de reconciliar esa fila (escenario `batch_invalid_row_rejected_row_level`).
 
 **Demostración de `RENEWED_REPORTED ≠ FH_UPDATED`:** el único camino es
 
@@ -310,6 +312,6 @@ npm run check:renewal:contract
 git diff --check
 ```
 
-El checker valida los dos schemas (draft 2020-12, `additionalProperties: false`), aplica validación semántica estricta de calendario a cada campo `date`/`date-time` (sin normalización: una fecha imposible se rechaza), recomputa la ventana de forma independiente, ejecuta los escenarios del bundle (precedencia 4–10 incluida, con mutaciones de ordenación), verifica los invariantes estructurales de la máquina de estados (con batería de mutaciones), comprueba los conjuntos cerrados de campos (guard de no-inferencia) y demuestra la jerarquía de fuentes de fecha con un helper puro de precedencia/conflicto.
+El checker valida los dos schemas (draft 2020-12, `additionalProperties: false`; el bloque `treatment` admite `null` explícito), aplica validación semántica estricta de calendario a cada campo `date`/`date-time` (sin normalización: una fecha imposible se rechaza), recomputa la ventana de forma independiente, ejecuta los escenarios del bundle —precedencia 4–10 incluida, con el paso 2 validado **por fila** en el camino de lote y el historial de operaciones aplicadas por renovación—, verifica los invariantes estructurales de la máquina de estados y los conjuntos cerrados de campos (guard de no-inferencia), y demuestra la jerarquía de fuentes de fecha con un helper puro de precedencia/conflicto sobre candidatos `{source, endpoint}` (concordancia resuelve, discrepancia de fecha resultante falla cerrado). La batería de mutaciones exige que la ordenación antigua (terminal antes que replay), la ausencia del guard de línea, la memoria solo de la última operación y un camino de lote que se salta el paso 2 **discrepen** del modelo reglado.
 
 **Reversión:** al ser shaping, revertir únicamente este contrato, los schemas, las fixtures, el checker y el enganche de `package.json`. No hay migración, runtime ni persistencia que deshacer.

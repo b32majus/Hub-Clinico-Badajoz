@@ -1,0 +1,44 @@
+[
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "renewal_id": "REN-SYN-0001",
+    "line_id": "line-syn-rn-001",
+    "patient_id": "patient-syn-rn-001",
+    "service_id": "svc-syn-der-01",
+    "report_type": "requested_to_service",
+    "reported_at": "2026-10-05T09:30:00Z",
+    "reported_by": "enfermeria-demo",
+    "reported_by_role": "nursing",
+    "comment": "Solicitud comunicada al servicio prescriptor (sintetico).",
+    "demo_flag": true
+  },
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "renewal_id": "REN-SYN-0002",
+    "line_id": "line-syn-rn-002",
+    "patient_id": "patient-syn-rn-002",
+    "service_id": "svc-syn-der-01",
+    "report_type": "renewal_reported",
+    "reported_at": "2026-10-05T11:00:00Z",
+    "reported_by": "enfermeria-demo",
+    "reported_by_role": "nursing",
+    "comment": "Fila invalida: porta un campo prohibido en el retorno (valid_until), con un objetivo alcanzable para demostrar que el camino sin paso 2 la acepta.",
+    "demo_flag": true,
+    "valid_until": "2026-12-31"
+  },
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "renewal_id": "REN-SYN-0004",
+    "line_id": "line-syn-rn-004",
+    "patient_id": "patient-syn-rn-004",
+    "service_id": "svc-syn-reu-01",
+    "report_type": "in_progress",
+    "reported_at": "2026-02-30T10:00:00Z",
+    "reported_by_role": "nursing",
+    "demo_flag": true,
+    "comment": "Fila invalida: reported_at no es una fecha real (2026-02-30), validacion semantica de calendario."
+  }
+]

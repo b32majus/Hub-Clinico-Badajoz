@@ -72,9 +72,9 @@
     "validity_days": { "type": ["integer", "null"], "minimum": 1 },
     "requested_at": { "$ref": "#/$defs/nullableDateTime" },
     "treatment": {
-      "type": "object",
+      "type": ["object", "null"],
       "additionalProperties": false,
-      "description": "Bloque de presentacion, solo display. No es identidad y no autoriza switch/renovacion.",
+      "description": "Bloque de presentacion, solo display. No es identidad y no autoriza switch/renovacion. Un null explicito equivale a ausencia, igual que el resto de opcionales.",
       "properties": {
         "line_label": { "$ref": "#/$defs/nstring" },
         "drug_display": { "$ref": "#/$defs/nstring" }

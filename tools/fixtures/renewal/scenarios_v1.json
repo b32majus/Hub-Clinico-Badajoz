@@ -1,7 +1,7 @@
 {
   "scenarios_version": "renewal-scenarios/v1",
   "contract_version": "renewal-handoff/v1",
-  "description": "Bundle de escenarios sinteticos del contrato N0 de renovaciones. Cada escenario se evalua contra una copia limpia del seed. El seed declara line_status por linea y, para REN-SYN-0003, el retorno ya aplicado antes de alcanzar el estado terminal (replay exacto = no_op). El checker implementa el modelo de referencia determinista; este archivo es la autoridad legible por maquina de los casos esperados.",
+  "description": "Bundle de escenarios sinteticos del contrato N0 de renovaciones. Cada escenario se evalua contra una copia limpia del seed. El seed declara line_status por linea y, para REN-SYN-0003, el retorno ya aplicado antes de alcanzar el estado terminal (replay exacto = no_op). El checker implementa el modelo de referencia determinista; este archivo es la autoridad legible por maquina de los casos esperados. El retorno mantiene un historial de operaciones aplicadas por renovacion (el replay exacto de CUALQUIER operacion es no_op y el conflicto se evalua contra todo el historial, no solo la ultima). El paso 2 del orden de precedencia es una validacion por fila ejecutada antes de reconciliar esa fila en el camino de lote.",
   "seed": {
     "known_renewals": [
       {
@@ -166,6 +166,53 @@
       "kind": "batch_import",
       "fixture": "batch/duplicate_renewal_id_batch.json",
       "expect": { "outcome": "rejected_batch", "error_code": "DUPLICATE_RENEWAL_ID_IN_BATCH", "applied": 0 }
+    },
+    {
+      "id": "replay_historical_after_intervening_report",
+      "kind": "nursing_to_fh_apply_sequence",
+      "fixtures": [
+        "valid/nursing_to_fh_requested_to_service.json",
+        "semantic/return_in_progress_ren_syn_0001.json",
+        "valid/nursing_to_fh_requested_to_service.json"
+      ],
+      "expect": {
+        "outcome": "no_op"
+      }
+    },
+    {
+      "id": "historical_replay_modified_state_conflict",
+      "kind": "nursing_to_fh_apply_sequence",
+      "fixtures": [
+        "valid/nursing_to_fh_requested_to_service.json",
+        "semantic/return_in_progress_ren_syn_0001.json",
+        "semantic/return_replay_modified_ren_syn_0001.json"
+      ],
+      "expect": {
+        "outcome": "rejected",
+        "error_code": "STATE_CONFLICT"
+      }
+    },
+    {
+      "id": "batch_invalid_row_rejected_row_level",
+      "kind": "batch_import",
+      "fixture": "batch/mixed_invalid_row_batch.json",
+      "expect": {
+        "outcome": "processed",
+        "applied": 1,
+        "rows": [
+          {
+            "outcome": "accepted"
+          },
+          {
+            "outcome": "rejected",
+            "error_code": "FORBIDDEN_FIELD_IN_RETURN"
+          },
+          {
+            "outcome": "rejected",
+            "error_code": "INVALID_FIELD"
+          }
+        ]
+      }
     }
   ]
 }
