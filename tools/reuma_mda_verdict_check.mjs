@@ -186,6 +186,18 @@ function stateOf(result, key) {
   return entry ? entry.estado : undefined;
 }
 
+// D (single authority, C2 #519): recomputación INDEPENDIENTE de la regla de
+// tres valores a partir de `criterioEstados`. No lee `result.veredicto`: sirve
+// para contrastar al productor y al renderer.
+function veredictoIndependiente(criterioEstados) {
+  const estados = Array.isArray(criterioEstados) ? criterioEstados : [];
+  const cumplidosResueltos = estados.filter((c) => c && c.estado === 'cumplido').length;
+  const pendientes = estados.filter((c) => c && c.estado === 'pendiente').length;
+  if (cumplidosResueltos >= 5) return 'alcanzado';
+  if (cumplidosResueltos + pendientes >= 5) return 'pendiente';
+  return 'no_alcanzado';
+}
+
 function benign(overrides) {
   return Object.assign({
     nat: '0', nad: '0', pasiValue: '0', bsaValue: '', lei: '0',
@@ -280,6 +292,53 @@ function fuenteOfSafe(result) {
     incomplete.evaluable === false && Array.isArray(incomplete.criterios) && incomplete.criterios.length === 0 &&
       incomplete.cumplidos === 0 && incomplete.mdaAlcanzado === false && incomplete.categoria === 'Incompleto',
     JSON.stringify({ evaluable: incomplete.evaluable, cumplidos: incomplete.cumplidos, mdaAlcanzado: incomplete.mdaAlcanzado, categoria: incomplete.categoria }));
+}
+
+// D (single authority, C2 #519): el productor único expone el veredicto
+// visible y sus recuentos derivados en AMBOS resultados (completo e
+// incompleto), coherentes con la recomputación independiente de la regla de
+// tres valores a partir de `criterioEstados`.
+{
+  const battery = [
+    ['7/7', benign()],
+    ['6/7', benign({ evaGlobal: '9' })],
+    ['5/7', benign({ evaGlobal: '9', haq: '0.6' })],
+    ['4/7', benign({ evaGlobal: '9', haq: '0.6', nat: '2' })],
+    ['3/7', benign({ evaGlobal: '9', haq: '0.6', nat: '2', nad: '2' })],
+    ['0/7', benign({ evaGlobal: '9', haq: '0.6', nat: '2', nad: '2', lei: '2', evaDolor: '9', pasiValue: '9' })]
+  ];
+  let fieldsOk = true;
+  let iffOk = true;
+  let recomputeOk = true;
+  const bad = [];
+  for (const [label, input] of battery) {
+    const r = calcularMDA(input);
+    const fields = typeof r.cumplidosResueltos === 'number' && typeof r.pendientes === 'number' &&
+      ['alcanzado', 'pendiente', 'no_alcanzado'].includes(r.veredicto);
+    const iff = r.veredicto === 'alcanzado' ? r.mdaAlcanzado === true : r.mdaAlcanzado === false;
+    const recompute = r.veredicto === veredictoIndependiente(r.criterioEstados);
+    if (!fields || !iff || !recompute) {
+      bad.push(`${label}: veredicto=${r.veredicto}, recompute=${veredictoIndependiente(r.criterioEstados)}, mdaAlcanzado=${r.mdaAlcanzado}, campos=${fields}`);
+      if (!fields) fieldsOk = false;
+      if (!iff) iffOk = false;
+      if (!recompute) recomputeOk = false;
+    }
+  }
+  record('D1 campos derivados del veredicto visible presentes en resultados evaluable', fieldsOk, bad.join(' | '));
+  record('D2 veredicto \'alcanzado\' <=> mdaAlcanzado true en toda entrada evaluable de la sección B', iffOk, bad.join(' | '));
+  record('D3 veredicto del productor = recomputación independiente de la regla de tres valores', recomputeOk, bad.join(' | '));
+
+  // El resultado incompleto también lleva los campos derivados, con su
+  // contrato agregado intacto (cumplidos 0 / mdaAlcanzado false / Incompleto).
+  const incomplete = calcularMDA({ nat: '0', nad: '0', evaDolor: '1', evaGlobal: '1' });
+  record('D4 resultado incompleto: campos derivados presentes y veredicto = recomputación independiente',
+    incomplete.evaluable === false &&
+      typeof incomplete.cumplidosResueltos === 'number' && typeof incomplete.pendientes === 'number' &&
+      incomplete.veredicto === veredictoIndependiente(incomplete.criterioEstados),
+    JSON.stringify({ veredicto: incomplete.veredicto, recomputado: veredictoIndependiente(incomplete.criterioEstados) }));
+  record('D5 contrato incompleto sigue intacto con los campos nuevos (cumplidos 0, mdaAlcanzado false, Incompleto)',
+    incomplete.cumplidos === 0 && incomplete.mdaAlcanzado === false && incomplete.categoria === 'Incompleto',
+    JSON.stringify({ cumplidos: incomplete.cumplidos, mdaAlcanzado: incomplete.mdaAlcanzado, categoria: incomplete.categoria }));
 }
 
 // ---------------------------------------------------------------------------
@@ -450,9 +509,20 @@ function loadScenario(page) {
   sandbox.window.console = consoleShim;
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(SCORE_FILE, 'utf8'), sandbox, { filename: 'modules/scoreCalculators.js' });
+  // D (single authority): spy transparente sobre el productor real, instalado
+  // tras el registro de scoreCalculators y antes de que formController lo
+  // consuma. Registra la última entrada y el último resultado con los que el
+  // renderer trabajó, sin alterar el contrato de HubTools.scores.calcularMDA.
+  const calcularCalls = [];
+  const calcularMDAReal = HubTools.scores.calcularMDA;
+  HubTools.scores.calcularMDA = function (datos) {
+    const result = calcularMDAReal.call(this, datos);
+    calcularCalls.push({ datos, result });
+    return result;
+  };
   vm.runInContext(fs.readFileSync(FORM_FILE, 'utf8'), sandbox, { filename: 'modules/formController.js' });
   HubTools.form.initScoreWiring();
-  return { doc, sandbox, consoleErrors };
+  return { doc, sandbox, consoleErrors, calcularCalls };
 }
 
 function fire(doc, id, type) {
@@ -497,7 +567,7 @@ function valueText(doc, id) {
 }
 
 function verdictCase(page, label, build, expect) {
-  const { doc, sandbox, consoleErrors } = loadScenario(page);
+  const { doc, sandbox, consoleErrors, calcularCalls } = loadScenario(page);
   sandbox.HubTools.form.adaptarFormulario('aps');
   build(doc);
   const final = finalText(doc);
@@ -546,9 +616,59 @@ function verdictCase(page, label, build, expect) {
   record(`${label} [${page}]`, pass, detail.join('; ') || JSON.stringify({ final, cumplidos }));
   record(`${label} [${page}] sin console.error`,
     consoleErrors.length === 0, JSON.stringify(consoleErrors.slice(0, 3)));
+
+  // D (single authority, C2 #519): en cada escenario ya cubierto, el
+  // veredicto del productor coincide con la recomputación independiente de la
+  // regla de tres valores a partir de `criterioEstados`, y el texto renderizado
+  // es EXACTAMENTE el mapeo de `result.veredicto` (sin recuento independiente).
+  const lastCall = calcularCalls.length > 0 ? calcularCalls[calcularCalls.length - 1] : null;
+  record(`${label} [${page}] veredicto del productor = recomputación independiente`,
+    !!lastCall && lastCall.result.veredicto === veredictoIndependiente(lastCall.result.criterioEstados),
+    lastCall
+      ? `veredicto=${lastCall.result.veredicto}, recomputado=${veredictoIndependiente(lastCall.result.criterioEstados)}`
+      : 'el renderer no consumió HubTools.scores.calcularMDA');
+  if (lastCall) {
+    const r = lastCall.result;
+    const mappedFinal = r.veredicto === 'alcanzado'
+      ? 'MDA ALCANZADO ✓'
+      : (r.veredicto === 'pendiente'
+        ? 'MDA PENDIENTE — fuentes ausentes: ' + (Array.isArray(r.fuentesPendientes) ? r.fuentesPendientes : []).join(', ')
+        : 'MDA NO ALCANZADO');
+    const mappedCumplidos = r.veredicto === 'pendiente' ? '—' : String(r.cumplidosResueltos);
+    record(`${label} [${page}] texto renderizado = mapeo exacto de result.veredicto`,
+      final === mappedFinal && cumplidos === mappedCumplidos,
+      `final='${final}' (mapeo '${mappedFinal}'), cumplidos='${cumplidos}' (mapeo '${mappedCumplidos}')`);
+  } else {
+    record(`${label} [${page}] texto renderizado = mapeo exacto de result.veredicto`,
+      false, 'el renderer no consumió HubTools.scores.calcularMDA');
+  }
 }
 
 console.log('\nC. Veredicto visible (recalcularMDA, formController real)');
+
+// D (single authority, C2 #519): el renderer no reconuenta el estado por
+// criterio; proyecta `result.veredicto` + `result.cumplidosResueltos` con
+// salvaguarda fail-safe hacia 'pendiente'.
+{
+  const src = fs.readFileSync(FORM_FILE, 'utf8');
+  const start = src.indexOf('function recalcularMDA()');
+  const end = src.indexOf('window.calcularMDALocal', start);
+  const body = start >= 0 && end > start ? src.slice(start, end) : '';
+  // El renderer SÍ debe comparar `criterio.estado` para pintar el glifo y la
+  // etiqueta de cada fila (autoridad T4 #516); lo que NO puede es recontar los
+  // estados ni re-implementar la regla de tres valores: ése es el productor
+  // único (HubTools.scores.calcularMDA). Este D6 falla si se reintroduce un
+  // `.filter`/`.reduce` de recuento o el umbral en el renderer.
+  const recountsStates = /\.filter\s*\(|\.reduce\s*\(/.test(body);
+  const reimplementsRule = body.includes('>= 5') || body.includes('>=5') || body.includes('+ pendientes');
+  record('D6 renderer sin recuento local ni re-implantación de la regla (productor único)',
+    body.length > 0 && !recountsStates && !reimplementsRule,
+    `filter/reduce=${recountsStates}, reglaReimplementada=${reimplementsRule}`);
+  record('D7 renderer proyecta result.veredicto / result.cumplidosResueltos con fail-safe a pendiente',
+    body.includes('result.veredicto') && body.includes('result.cumplidosResueltos') &&
+      body.includes("'pendiente'"),
+    'faltan la proyección o la salvaguarda fail-safe');
+}
 
 for (const page of PAGES) {
   const isSeg = page === 'seguimiento.html';

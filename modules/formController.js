@@ -2521,26 +2521,24 @@ function initScoreWiring() {
         var mdaResultEl = document.getElementById('mdaResultadoFinal');
         var criterioEstados = Array.isArray(result.criterioEstados) ? result.criterioEstados : [];
 
-        // C2 #519: veredicto visible a tres valores derivado del estado por
-        // criterio. La regla clínica NO cambia (mdaAlcanzado = cumplidos >= 5)
-        // y los 7 criterios/umbrales/fuentes siguen intactos. Los pendientes
-        // sólo deciden entre PENDIENTE y NO ALCANZADO: una fuente ausente nunca
-        // se convierte en 0/falso ni produce una conclusión definitiva que los
-        // datos aún podrían cambiar.
-        var cumplidosResueltos = criterioEstados.filter(function (c) {
-            return c.estado === 'cumplido';
-        }).length;
-        var pendientes = criterioEstados.filter(function (c) {
-            return c.estado === 'pendiente';
-        }).length;
-        var verdicto;
-        if (cumplidosResueltos >= 5) {
-            verdicto = 'alcanzado';
-        } else if (cumplidosResueltos + pendientes >= 5) {
-            verdicto = 'pendiente';
-        } else {
-            verdicto = 'no_alcanzado';
-        }
+        // C2 #519: veredicto visible a tres valores con UN ÚNICO PRODUCTOR:
+        // el veredicto lo produce HubTools.scores.calcularMDA
+        // (`result.veredicto`, derivado del estado por criterio) y este
+        // renderer es proyección pura, sin recuento local. Ámbitos no
+        // solapados:
+        //   * `mdaAlcanzado` = regla clínica publicada aplicada al agregado
+        //     evaluable (contrato inalterado; en resultados incompletos el
+        //     contrato agregado sigue `false`);
+        //   * `veredicto` = veredicto visible de certidumbre autorizado por
+        //     #517/#519, derivado del estado por criterio.
+        // Fail-safe: si `result.veredicto` no es uno de los tres valores
+        // conocidos se trata como 'pendiente' — nunca se emite un veredicto
+        // definitivo sin autoridad.
+        var VEREDICTOS_CONOCIDOS = ['alcanzado', 'pendiente', 'no_alcanzado'];
+        var verdicto = VEREDICTOS_CONOCIDOS.indexOf(result.veredicto) >= 0
+            ? result.veredicto
+            : 'pendiente';
+        var cumplidosResueltos = result.cumplidosResueltos;
 
         criterioEstados.forEach(function (criterio, index) {
             var orden = index + 1;

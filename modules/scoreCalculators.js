@@ -282,6 +282,38 @@ function calcularMDA(datos) {
         .filter(criterio => criterio.estado === 'pendiente')
         .map(criterio => criterio.fuente);
 
+    // C2 #519: helpers del veredicto visible de certidumbre autorizado por
+    // #517/#519. Regla humana vinculante: con >= 5 criterios resueltos como
+    // cumplidos el veredicto visible es 'alcanzado'; con < 5 cumplidos pero
+    // >= 5 entre cumplidos y pendientes es 'pendiente' (los datos ausentes aún
+    // podrían cambiar la conclusión); en otro caso 'no_alcanzado'.
+    function contarCriteriosEnEstado(estados, estado) {
+        return estados.filter(criterio => criterio.estado === estado).length;
+    }
+    function veredictoVisibleMDA(estados) {
+        const cumplidosResueltos = contarCriteriosEnEstado(estados, 'cumplido');
+        const pendientes = contarCriteriosEnEstado(estados, 'pendiente');
+        if (cumplidosResueltos >= 5) return 'alcanzado';
+        if (cumplidosResueltos + pendientes >= 5) return 'pendiente';
+        return 'no_alcanzado';
+    }
+    const cumplidosResueltos = contarCriteriosEnEstado(criterioEstados, 'cumplido');
+    const pendientes = contarCriteriosEnEstado(criterioEstados, 'pendiente');
+    const veredicto = veredictoVisibleMDA(criterioEstados);
+
+    // Ámbitos NO solapados (C2 #519): `mdaAlcanzado` es la regla clínica
+    // publicada aplicada al agregado evaluable (contrato inalterado; en
+    // resultados incompletos el contrato agregado sigue `false`), mientras que
+    // `cumplidosResueltos`/`pendientes`/`veredicto` son el veredicto visible de
+    // certidumbre derivado del estado por criterio. Un único productor: el
+    // renderer (formController.recalcularMDA) es proyección pura de estos
+    // campos y no reconuenta nada.
+    const camposVeredictoVisible = {
+        cumplidosResueltos,
+        pendientes,
+        veredicto
+    };
+
     const incompleteResult = {
         nat: '',
         nad: '',
@@ -296,7 +328,8 @@ function calcularMDA(datos) {
         evaluable: false,
         categoria: 'Incompleto',
         criterioEstados,
-        fuentesPendientes
+        fuentesPendientes,
+        ...camposVeredictoVisible
     };
     if (!evaluable) return incompleteResult;
 
@@ -327,7 +360,8 @@ function calcularMDA(datos) {
         evaluable: true,
         categoria: mdaAlcanzado ? 'MDA alcanzado' : 'MDA no alcanzado',
         criterioEstados,
-        fuentesPendientes
+        fuentesPendientes,
+        ...camposVeredictoVisible
     };
 }
 

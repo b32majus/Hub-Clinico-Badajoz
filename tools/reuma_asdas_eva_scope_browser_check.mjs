@@ -202,7 +202,10 @@ async function runPage(browser, pagePath) {
 
   const isSeg = pagePath === 'seguimiento.html';
   const collector = isSeg ? 'recopilarDatosFormularioSeguimiento' : 'recopilarDatosFormulario';
-  const builderSeg = isSeg ? 'generarFilaCSV_APs_Seguimiento' : null;
+  // Spec finding (#517 review): the row producer must follow the CURRENT
+  // pathology, otherwise the EspA export route is never exercised.
+  const visitSuffix = isSeg ? 'Seguimiento' : 'PrimeraVisita';
+  const builderFor = (pathology) => `generarFilaCSV_${pathology}_${visitSuffix}`;
 
   try {
     await page.goto(`${baseUrl}/${pagePath}`, { waitUntil: 'domcontentloaded' });
@@ -242,7 +245,7 @@ async function runPage(browser, pagePath) {
     record(`(2) ${pagePath} APs sin ASDAS computado (CRP '' y ESR '')`,
       crpAps.crp === '' && crpAps.esr === '', JSON.stringify(crpAps));
 
-    const apsRead = await page.evaluate(LEGACY(builderSeg || 'generarFilaCSV_APs_PrimeraVisita', collector));
+    const apsRead = await page.evaluate(LEGACY(builderFor('APs'), collector));
     record(`(3) ${pagePath} APs: recopilado asdasEvaGlobal '' y ${apsRead.len} columnas`,
       apsRead.collected === '' && apsRead.len === 497, JSON.stringify(apsRead));
     record(`(3) ${pagePath} APs: slot legacy ASDAS (cols 156-160) vacío`,
@@ -270,7 +273,7 @@ async function runPage(browser, pagePath) {
     record(`(4) ${pagePath} ASDAS-CRP '${esperado}' alimentado por el espejo reutilizado`,
       crpEspa === esperado, `crp='${crpEspa}', esperado='${esperado}'`);
 
-    const espaRead = await page.evaluate(LEGACY(builderSeg || 'generarFilaCSV_EspA_PrimeraVisita', collector));
+    const espaRead = await page.evaluate(LEGACY(builderFor('EspA'), collector));
     record(`(4) ${pagePath} EspA: recopilado asdasEvaGlobal '4' y ${espaRead.len} columnas`,
       espaRead.collected === '4' && espaRead.len === 497, JSON.stringify(espaRead));
     if (isSeg) {
@@ -287,7 +290,7 @@ async function runPage(browser, pagePath) {
     const mirrorBack = await page.evaluate(() => document.getElementById('asdasEvaGlobal').value);
     record(`(5) ${pagePath} EspA -> APs sin espejo residual (mirror='${mirrorBack}')`,
       mirrorBack === '', `mirror='${mirrorBack}'`);
-    const backRead = await page.evaluate(LEGACY(builderSeg || 'generarFilaCSV_APs_PrimeraVisita', collector));
+    const backRead = await page.evaluate(LEGACY(builderFor('APs'), collector));
     // Slot 158 is the EVA Global mirror (C1 #518). Columns 156/157 hold the
     // ASDAS questionnaire answers the clinician typed while in EspA: T1 #513
     // froze them as user input that is never cleared by the pathology gate,
