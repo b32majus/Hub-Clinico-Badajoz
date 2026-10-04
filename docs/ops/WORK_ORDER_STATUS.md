@@ -51,23 +51,39 @@
 
 **Estado de publicación:** issue #501 `status:approved`; PR #503 es la publicación documental. La operadora autorizó commit/push/PR y merge si diff/checks permanecen correctos.
 
-### WO-SHAPE-NEXUS-RENEWALS-N0 (#446) — shaping N0 completado en local (sin publicar)
+### WO-SHAPE-NEXUS-RENEWALS-N0 (#446) — shaping N0 RECHAZADO en revisión humana; recuperación bajo #509
 
 **Alcance:** shaping/contrato exclusivamente; cero runtime clínico.
 
 **Base verificada:** `promueve/nexus-v4` @ `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge PR #503).
 
-**Rutas:** `docs/contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md`, `schemas/renewal/` (2 schemas + máquina de estados), `tools/fixtures/renewal/`, `tools/renewal_handoff_contract_check.mjs`, `package.json`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`.
+**Rutas:** `docs/contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md`, `schemas/renewal/` (2 schemas + máquina de estados), `tools/fixtures/renewal/`, `tools/renewal_handoff_contract_check.mjs`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`.
 
-**Cierre N0:** identidad (`renewal_id`/`line_id`), fechas/fuentes (`valid_until_kind`, mapping `source → kind`, `warningWindowDays` configurable), estados/transiciones con autoridad de actor, handoff FH→Enfermería y Enfermería→FH, idempotencia/conflictos/version mismatch y errores tipados. Autoridad única de estados en `schemas/renewal/renewal_state_machine_v1.json`.
+**Historial del candidato rechazado:** commit del contrato `61cb081b3ab025127c276c9610c47f6b80beea02`, registro de estado `f9aaf5f`, y candidato de corrección 2 `d829939cb3622227a7f0810c8d6a5e6944765dbc` (rama local `work/nexus-renewals-n0-446-20261004`). El candidato `d829939` fue **RECHAZADO por el HUMAN SHAPING REFREEZE (#446, 2026-10-04)**. La evidencia previa de cierre `70 OK / 0 FAIL` queda **explícitamente invalidada**: era un falso verde con contradicciones de contrato (jerarquía de precedencia de fechas no validada, código de error muerto `SERVICE_CHANGE_REQUIRES_FH_ACT`, precedencia de lote prosa≠código, derivación de duración no exigida, incoherencia de `suspended`, y un checker incapaz de fallar cerrado ante excepción).
 
-**Incógnitas humanas preservadas:** `REN-OPEN-001…008` (`PENDIENTE_EQUIPO`/`CONTRACT_PENDING`), incluidas las de #501 (`OCT-OPEN-001…004` etc.), no resueltas aquí.
-
-**Verificación:** `npm run check:renewal:contract` → 70 OK / 0 FAIL; `git diff --check` PASS.
+**Recuperación:** `WO-RECOVERY-NEXUS-RENEWALS-N0-REFREEZE-20261004` (#509), rama `recovery/nexus-renewals-n0-refreeze-509-20261004` desde `d829939` (checkpoint preservado); ver el bloque dedicado siguiente.
 
 **NO TOCA:** runtime HTML/JS/CSS; scheduler/Actions; CIMA; Reuma; Dermatología; F4.4/F4.5; `main`, recovery, snapshots, Pages/deploy; datos reales.
 
-**Estado de publicación:** rama local `work/nexus-renewals-n0-446-20261004`; commit local del contrato `61cb081b3ab025127c276c9610c47f6b80beea02`, reconciliación de estado y corrección de revisión autorizada en los commits locales posteriores (HEAD local). **STOP antes de push/PR/merge** salvo autorización explícita adicional de Sil.
+**Estado de publicación:** el candidato `d829939` **no se publica**. La recuperación #509 produce commits locales únicamente: **STOP antes de push/PR/merge**.
+
+### WO-RECOVERY-NEXUS-RENEWALS-N0-REFREEZE-20261004 (#509) — recovery/refreeze local (sin publicar)
+
+**Objetivo:** recuperar y refreezar el contrato N0 de renovaciones FH↔Enfermería del candidato rechazado `d829939cb3622227a7f0810c8d6a5e6944765dbc` desde la semántica ya congelada por el HUMAN SHAPING REFREEZE (#446) y #509, sin inventar producto y sin tercera ronda de corrección.
+
+**Base:** `recovery/nexus-renewals-n0-refreeze-509-20261004` desde `d829939` (candidato RECHAZADO, checkpoint preservado) sobre `promueve/nexus-v4` @ `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6`.
+
+**Rutas:** `docs/contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md`, `schemas/renewal/**`, `tools/fixtures/renewal/**`, `tools/renewal_handoff_contract_check.mjs`, `docs/ops/audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md` (solo 4 filas `OCT-OPEN` en §8), `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`.
+
+**Clasificación KEEP/SIMPLIFY/DELETE:** KEEP identidad por línea/ciclo, modelo cerrado de `valid_until`, semántica de ventana, calendario fail-closed, Excel como adapter, synthetic-only; SIMPLIFY lifecycle a 6 tokens españoles, retorno a 3 tokens, orden de lote único, idempotencia de última operación; DELETE jerarquía `DATE_SOURCE_PRECEDENCE`/`DATE_SOURCE_CONFLICT` (`OCT-OPEN-013`), `SERVICE_CHANGE_REQUIRES_FH_ACT`, `lifecycle_state`/`requested_at`/`comment` del envelope de ida, estados `CANCELLED`/`NOT_APPLICABLE`.
+
+**Incógnitas preservadas:** `OCT-OPEN-010..013` (§8 de la reconciliación) + `REN-OPEN-001..008`, todas `PENDIENTE_EQUIPO`/`CONTRACT_PENDING`.
+
+**Verificación (real):** `node tools/renewal_handoff_contract_check.mjs` → **50 OK / 0 FALLIDO** (exit 0); `node tools/renewal_handoff_contract_check.mjs --probe-exception-fail-closed` → **FAIL + exit 1**; `npm run check:renewal:contract` PASS; `npm run verify:nexus` PASS; `git diff --check` PASS.
+
+**Commits locales (sin publicar):** Commit A (artefacto: contrato + schemas + fixtures + checker) `ee34bd56124d02b53dd1632331ad3094259ae23d`; Commit B (esta reconciliación documental).
+
+**Delivery boundary:** commits locales únicamente; **STOP antes de push/PR/merge**; sin runtime; datos exclusivamente sintéticos.
 
 ### TRAIN-NEXUS-CLINICAL-STRANGLER-05 (#426) — publicado por PR #430
 
@@ -299,7 +315,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 
 | WO | Título | Estado | Rama | Merge/Commit | Notas |
 | --- | --- | --- | --- | --- | --- |
-| **WO-SHAPE-NEXUS-RENEWALS-N0 (#446)** | N0 shaping: contrato funcional mínimo del circuito de renovaciones FH↔Enfermería (`renewal-handoff/v1`) + schemas + máquina de estados + checker determinista | 📋 Draft / shaping local · **STOP antes de push/PR/merge** | `work/nexus-renewals-n0-446-20261004` (desde `fca8b7d9`, PR #503) | commit local del contrato `61cb081b3ab025127c276c9610c47f6b80beea02` (sin push/PR/merge) | Solo documentación/contrato: contrato, 2 schemas, máquina de estados, fixtures sintéticas, `check:renewal:contract` (70/0) enganchado a `verify:nexus`; cero runtime/UI; preserva `RENEWED_REPORTED ≠ FH_UPDATED`; no ejecuta F4.5; incógnitas humanas `PENDIENTE_EQUIPO`/`CONTRACT_PENDING`; evaluación sintética, no piloto/producción. |
+| **WO-SHAPE-NEXUS-RENEWALS-N0 (#446)** | N0 shaping: contrato funcional mínimo del circuito de renovaciones FH↔Enfermería (`renewal-handoff/v1`) + schemas + máquina de estados + checker determinista | ⛔ Candidato **RECHAZADO** por HUMAN SHAPING REFREEZE · recuperado bajo #509 (local, STOP) | `work/nexus-renewals-n0-446-20261004` → recuperación en `recovery/nexus-renewals-n0-refreeze-509-20261004` (desde `d829939`) | contrato `61cb081b…`, estado `f9aaf5f`, corrección 2 `d829939cb3622227a7f0810c8d6a5e6944765dbc` (**RECHAZADO**); recuperación #509 en commits locales posteriores | Solo documentación/contrato; el candidato `d829939` fue rechazado (falso verde `70 OK / 0 FALL` — evidencia invalidada); #509 refrozen: detección≠gestión, flujo MVP de 6 tokens, `RENOVACIÓN_COMUNICADA ≠ ACTUALIZADA_POR_FH` / `SUSPENSIÓN_COMUNICADA ≠ TRATAMIENTO_SUSPENDIDO`, 10 códigos de error, checker fail-closed (`50 OK / 0 FALLIDO`); `OCT-OPEN-010..013` y `REN-OPEN-001..008` preservados; cero runtime/UI; no ejecuta F4.5; evaluación sintética, no piloto/producción. |
 | **TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 (#487)** | F4.4 Pharmacy Act v1: contrato común independiente de transporte + payloads independientes Validación/Primera Visita/Seguimiento (sin cutover/UI/delivery/persistencia) | ✅ MERGED_AND_VERIFIED · PR #490 (CI post-merge run `36880209718` success) | `work/nexus-f44-act-contract-487-20260930` | T1 #488 `98c7aa76` (oracle 243/0); T2 #489 `b73e1e7e` (oracle 145/0); correction candidate `535c65567bc8ca0aef7358f97f99d97520b0ff20` (own-property/prototype hardening) → merge de producto `3bf45760a27630823b61b0d19da8b64aeb060693` | Contrato puro: C-080 `review-707b45b6c20d35ee` APPROVED + acknowledged + burned; tree merge = tree candidate `bc8bc378...`; #487/#488/#489 CLOSED/completed; F4.4 COMPLETADA/PUBLICADA; F4.5/F4.6 no ejecutadas; #446 y su hold intactos; evaluación sintética, no piloto/producción. |
 | **TRAIN-NEXUS-F4.3-POSTMERGE-CHECKPOINT-10 (#479)** | Checkpoint visual post-F4.3 + reconciliación documental en modo registro honesto del blocker | ✅ T1/T2 COMPLETED · PR #483 (estado Git: consultar live) | `work/nexus-f43-postmerge-checkpoint10-479-20260930` | T1 #480 `eb0e524` (checkpoint `HUMAN_STOP_BLOCKER` por PV-001, follow-up aprobado #482); T2 #481 `835dda2`; PR #483 | Sólo documentación/evidencia: checkpoint #480 + INDEX/WOS/Foundation Plan/auditoría Sil. Cero runtime. Verificación: `verify:nexus` PASS, `git diff --check` PASS. Estado de merge: consultar GitHub live. PV-001 = `RESOLVED/PUBLISHED` por #482 / PR #484. |
 | **TRAIN-NEXUS-FOUNDATION-02 (#399)** | Hardening F1.2A/F2.3, PlatformContext F3.1, oracle export Reuma F1.3B, CI F1.2B + correcciones post-Promotion-FAIL | ✅ MERGED_AND_VERIFIED | `work/nexus-foundation-02-399-20260924` | candidate final `bcb94f1b35e693d59a5ba0c305bb0ba03e4fd9f3` → merge `f1bc9ce7f4b3c10508ef9f9d5e13366f3192fe4f` (PR #400); WUs #394 `87de0c0`, #395 `c9b154e`, #398-A `e9e322d`, #398-B `13108b2`, #396-A `0ca2868`, #396-B `cd2451b`, #397 `aa52b60`; corrections #398-C `109b28d`, #396-C `80fdd08`, F3.1-D `4bebeeb`, F3.1-E `4ee94c2` | Promotion Review round 1 FAIL sobre `9e670bf` y round 2 FAIL sobre `858681f`, ambas atendidas; Promotion Review v1 final sobre `bcb94f1` **PASS** (Spec/clinical, Standards/maintainability, Adversarial/safety; 0 blockers). Tree del merge = tree del candidate revisado `5e873df0...`; `npm run verify:nexus` post-merge PASS. `NEXUS-DEBT-006` RESOLVED; findings no bloqueantes preservados como `NEXUS-DEBT-007/008`. Sin browser QA ni declaración de piloto/producción. |
