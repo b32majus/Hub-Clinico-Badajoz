@@ -48,7 +48,7 @@ const HOMUNCULUS_DACTILITIS = [
     'dactilitis-dedo1-mano-derecha', 'dactilitis-dedo2-mano-derecha', 'dactilitis-dedo3-mano-derecha', 'dactilitis-dedo4-mano-derecha', 'dactilitis-dedo5-mano-derecha',
     'dactilitis-dedo1-mano-izquierda', 'dactilitis-dedo2-mano-izquierda', 'dactilitis-dedo3-mano-izquierda', 'dactilitis-dedo4-mano-izquierda', 'dactilitis-dedo5-mano-izquierda',
     'dactilitis-dedo1-pie-derecho', 'dactilitis-dedo2-pie-derecho', 'dactilitis-dedo3-pie-derecho', 'dactilitis-dedo4-pie-derecho', 'dactilitis-dedo5-pie-derecho',
-    'dactilitis-dedo1-pie-izquierda', 'dactilitis-dedo2-pie-izquierda', 'dactilitis-dedo3-pie-izquierda', 'dactilitis-dedo4-pie-izquierda', 'dactilitis-dedo5-pie-izquierda',
+    'dactilitis-dedo1-pie-izquierdo', 'dactilitis-dedo2-pie-izquierdo', 'dactilitis-dedo3-pie-izquierdo', 'dactilitis-dedo4-pie-izquierdo', 'dactilitis-dedo5-pie-izquierdo',
     // Añadir más dactilitis según el SVG (mantener lista actualizada)
 ];
 

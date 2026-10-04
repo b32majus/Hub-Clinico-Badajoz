@@ -180,6 +180,12 @@ function mostrarElementosEspA() {
 
     elementosEspecificos.forEach(id => showElement(id, 'block'));
 
+    // T3 #515: EspA admite afectación periférica (dactilitis), así que el
+    // control debe volver al default de la hoja de estilos si una patología
+    // previa (p. ej. AR en mostrarElementosAR) lo ocultó con display inline.
+    const dactilitisBtn = document.querySelector('[data-mode="dactilitis"]');
+    if (dactilitisBtn) dactilitisBtn.style.display = '';
+
     // Inicializar funcionalidad ASAS
     setTimeout(() => initializeASAS(), 100);
 
@@ -208,6 +214,12 @@ function mostrarElementosAPs() {
     ];
 
     elementosAPs.forEach(id => showElement(id, 'block'));
+
+    // T3 #515: APs también admite afectación periférica (dactilitis), así que
+    // el control debe volver al default de la hoja de estilos si una patología
+    // previa (p. ej. AR en mostrarElementosAR) lo ocultó con display inline.
+    const dactilitisBtn = document.querySelector('[data-mode="dactilitis"]');
+    if (dactilitisBtn) dactilitisBtn.style.display = '';
 
     // Inicializar funcionalidad CASPAR
     setTimeout(() => initializeCASPAR(), 100);
