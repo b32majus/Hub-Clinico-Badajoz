@@ -630,15 +630,16 @@ const ESSDAI_DOMAIN_IDS = [
     'essdaiHematological', 'essdaiBiological'
 ];
 
-// Captura prebiológica del contrato vigente (#445): dos bloques independientes
-// con estados explícitos (NO_SOLICITADA | SOLICITADA_PENDIENTE | OK) más los
-// campos transversales que permanecen en captura (fecha de diagnóstico y
-// observaciones globales). El detalle legacy (hemograma, bioquímica,
+// Captura prebiológica del contrato vigente (#445, minimal #525): dos bloques
+// independientes con estados explícitos (NO_SOLICITADA | SOLICITADA_PENDIENTE
+// | OK) más las observaciones globales, que permanecen en captura. La fecha
+// de diagnóstico DEJA DE CAPTURARSE en este bloque (sin inferencia clínica);
+// el histórico persistido se conserva. El detalle legacy (hemograma,
+// bioquímica,
 // serologías, IGRA/Rx, vacunación) DEJA DE CAPTURARSE: ya no se muestra ni
 // se recoge en el flujo principal; el histórico persistido se conserva.
 // OK nunca se infiere: sólo llega por selección profesional explícita.
 const PREBIOLOGIC_FIELD_IDS = [
-    'fechaDiagnostico',
     'estadoPrebiologicoAnalitica',
     'estadoPrebiologicoMedicinaPreventiva',
     'observacionesPrebiologico'

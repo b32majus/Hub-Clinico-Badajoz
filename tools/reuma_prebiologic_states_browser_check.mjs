@@ -30,6 +30,19 @@
  *   P6  empty/fail-safe: no patient -> neutral badge, empty selects;
  *   P7  console.error === 0 and pageerror === 0.
  *
+ * #525 minimal-block additions (WO-NEXUS-REUMA-PREBIO-MINIMAL-13,
+ * Cost policy: go / Risk class: complex; frozen oracle alongside #445):
+ *   M1  #fechaDiagnostico is absent from the page (RED at baseline);
+ *   M2  the block exposes exactly one observacionesPrebiologico textarea,
+ *       not required;
+ *   M3  through SUPPORTED interaction only (real collapsible click + real
+ *       typing, no DOM mutation, no readonly tampering), filling
+ *       Observaciones prebiológico with a synthetic string is returned
+ *       verbatim under observacionesPrebiologico by the supported collect
+ *       API (HubTools.form.recopilarDatosFormulario /
+ *       recopilarDatosFormularioSeguimiento);
+ *   M4  no APTO control/copy inside the prebiologic block.
+ *
  * Synthetic data only. Exit code 0 = PASS, 1 = FAIL.
  * Usage: node tools/reuma_prebiologic_states_browser_check.mjs
  */
@@ -268,6 +281,52 @@ async function runCaptureSuite(browser, label, pagePath) {
         const legacy = await page.evaluate((ids) => ids.map((id) => ({ id, present: !!document.getElementById(id) })), LEGACY_DETAIL_IDS);
         record(`${label}: el estado global legacy y el detalle de pruebas ya no se muestran/capturan en el flujo principal`,
             legacy.every((item) => item.present === false), JSON.stringify(legacy));
+
+        // M1 (#525) — #fechaDiagnostico must be absent from the page (RED at baseline).
+        const fechaDiagPresent = await page.evaluate(() => !!document.getElementById('fechaDiagnostico'));
+        record(`${label}: #fechaDiagnostico ausente de la página (bloque minimal #525)`,
+            fechaDiagPresent === false, fechaDiagPresent ? 'fechaDiagnostico aún presente' : '');
+
+        // M2 (#525) — the block exposes exactly one optional observacionesPrebiologico textarea.
+        const obsInfo = await page.evaluate(() => {
+            const nodes = Array.from(document.querySelectorAll('#observacionesPrebiologico'));
+            const el = document.getElementById('observacionesPrebiologico');
+            return {
+                count: nodes.length,
+                tag: el ? el.tagName : null,
+                required: el ? !!el.required : null,
+                hasAttr: el ? el.hasAttribute('required') : null
+            };
+        });
+        record(`${label}: el bloque expone exactamente un textarea observacionesPrebiologico opcional`,
+            obsInfo.count === 1 && obsInfo.tag === 'TEXTAREA' && obsInfo.required === false && obsInfo.hasAttr === false,
+            JSON.stringify(obsInfo));
+
+        // M3 (#525) — SUPPORTED interaction only: real collapsible click + real
+        // typing; the synthetic string must be collected verbatim by the
+        // supported collect API. No DOM mutation, no readonly tampering.
+        const SYN_OBS_525 = 'SYN-525 nota sintética prebiológico';
+        await openAncestorCollapsibles(page, '#observacionesPrebiologico');
+        await page.fill('#observacionesPrebiologico', SYN_OBS_525);
+        const obsCollected = await page.evaluate((fnName) => {
+            const datos = HubTools.form[fnName]();
+            return { value: datos.observacionesPrebiologico, hasKey: Object.prototype.hasOwnProperty.call(datos, 'observacionesPrebiologico') };
+        }, COLLECT_FN[pagePath]);
+        record(`${label}: Observaciones escrita por interacción soportada se recoge verbatim`,
+            obsCollected.hasKey === true && obsCollected.value === SYN_OBS_525, JSON.stringify(obsCollected));
+
+        // M4 (#525) — no APTO control/copy inside the prebiologic block.
+        const aptoInBlock = await page.evaluate(() => {
+            const sections = Array.from(document.querySelectorAll('.collapsible-section'));
+            const block = sections.find((s) => {
+                const header = s.querySelector('.collapsible-header');
+                return header && header.textContent.includes('Estado prebiológico');
+            });
+            if (!block) return { found: false };
+            return { found: true, hasApto: /\bAPTO\b/i.test(block.innerHTML) };
+        });
+        record(`${label}: sin APTO dentro del bloque prebiológico`,
+            aptoInBlock.found === true && aptoInBlock.hasApto === false, JSON.stringify(aptoInBlock));
 
         // P2 — walk the three states of both blocks via supported selects.
         const walk = {};
