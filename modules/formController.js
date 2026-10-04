@@ -1128,6 +1128,16 @@ function initializeCASPAR() {
     casparInitialized = true;
 }
 
+// C3 #520: sólo el veredicto explícito 'MDA ALCANZADO' (con o sin ✓) produce
+// true. 'MDA NO ALCANZADO', 'MDA PENDIENTE', vacío y cualquier texto no
+// reconocido fallan cerrado en false: el subcadenero 'ALCANZADO' ya no decide.
+// La comparación es exacta sobre el texto canónico (siempre en mayúsculas) que
+// renderiza C2 #519; variantes de caja o texto parcial no se reconocen.
+function esMdaAlcanzado(texto) {
+    var veredicto = String(texto === undefined || texto === null ? '' : texto).trim();
+    return veredicto === 'MDA ALCANZADO' || veredicto === 'MDA ALCANZADO ✓';
+}
+
 function recopilarDatosFormulario() {
     // 1. Leer todos los campos simples del formulario
     const idPaciente = document.getElementById('idPaciente').value;
@@ -1412,7 +1422,7 @@ function recopilarDatosFormulario() {
     const mdaGlobal = document.getElementById('mdaEvaGlobal')?.textContent || '';
     const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
     const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
-    const mdaCumple = (document.getElementById('mdaResultadoFinal')?.textContent || '').toUpperCase().includes('ALCANZADO');
+    const mdaCumple = esMdaAlcanzado(document.getElementById('mdaResultadoFinal')?.textContent);
 
     const maniobrasSacroiliacas = document.getElementById('maniobrasSacroiliacas')?.value || '';
     const comentariosSacroiliacas = document.getElementById('comentariosSacroiliacas')?.value || '';
@@ -1893,7 +1903,7 @@ function recopilarDatosFormularioSeguimiento() {
     const mdaGlobal = document.getElementById('mdaEvaGlobal')?.textContent || '';
     const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
     const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
-    const mdaCumple = (document.getElementById('mdaResultadoFinal')?.textContent || '').toUpperCase().includes('ALCANZADO');
+    const mdaCumple = esMdaAlcanzado(document.getElementById('mdaResultadoFinal')?.textContent);
 
     const das28NAD = getValue('das28NAD');
     const das28NAT = getValue('das28NAT');
