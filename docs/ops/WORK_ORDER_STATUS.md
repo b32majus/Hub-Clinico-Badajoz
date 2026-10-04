@@ -14,11 +14,12 @@
 | Último HEAD de producto Nexus verificado | `3bf45760a27630823b61b0d19da8b64aeb060693` — merge PR #490 / TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 (#487; F4.4 Pharmacy Act v1; candidate `535c65567bc8ca0aef7358f97f99d97520b0ff20`); HEAD de producto anterior `a04a0ace25012e5f0ac397844165921dccaebcc3` (PR #484); el tip Git puede avanzar por documentación/administración sin cambiar este HEAD de producto |
 | Última entrega clínica/contractual | TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 (#487): T1 #488 `98c7aa76b9457f31c17912090e299f0fb62e4c84` (contrato común Pharmacy Act v1 independiente de transporte; oracle 243/0) + T2 #489 `b73e1e7e8a219794be8b778d1ae9c4b6d1a5f7bb` (payloads independientes Validación / Primera Visita / Seguimiento; oracle 145/0), correction candidate `535c65567bc8ca0aef7358f97f99d97520b0ff20` (own-property authority, custom prototypes fail-closed, deep detachment), publicados por PR #490 (merge `3bf45760...`); aseguramiento compuesto C-080 review `review-707b45b6c20d35ee` APPROVED + acknowledged + burned. **F4.4 queda COMPLETADA/PUBLICADA.** Anteriores: WO-NEXUS-FARMACIA-PV-001 (#482): corrección del `PRODUCT_DEFECT_BLOCKING` PV-001 publicada por PR #484 (candidate `75063f25...` → merge `a04a0ace...`); `RESOLVED/PUBLISHED`. TRAIN-NEXUS-FARMACIA-READ-MIGRATION-09 (#470): F4.3A #471 + F4.3B #472 + F4.3C #473 publicados por PR #474 (merge `bf0cb3d...`); TRAIN-NEXUS-FARMACIA-F4.3-CLOSEOUT-09.1 (#475): F4.3D #476 + F4.3E #477 y corrección de stale init-read race `f82bd24` publicados por PR #478 (merge `91262d8...`). F4.3 queda **COMPLETADA/PUBLICADA** |
 | Reconciliación de producto viva | **#501 — PRE-BADAJOZ**: [`audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md`](./audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md). Recoge revisión manual Farmacia + reunión Farmacia/Dermatología + entrada de Dermatología como módulo candidato Nexus + siguiente paso Reuma. Estado humano de prioridad: `UNDER_READJUDICATION / PRE-BADAJOZ`; cerrar/publicar el documento no implementa sus decisiones. |
+| Ledger vivo de estado funcional | **#504 / PR #506** (`docs/nexus-live-product-ledger-504-20261003`): [`PROMUEVE_PRODUCT_STATUS_LEDGER.md`](./PROMUEVE_PRODUCT_STATUS_LEDGER.md) creado y reconciliado contra la adjudicación manual Reuma 2026-10-04 (comentario de #504) y el N0 de renovaciones publicado (#509 → PR #510, reconciliación PR #511). Clasifica `IMPLEMENTADO/VALIDADO_MANUAL`, `DEFECTO_REPRODUCIDO`, `REQUISITO_DECIDIDO_PENDIENTE`, `PENDIENTE_FUENTE/EQUIPO`, `DEFERIDO` y deuda conocida. Rutas: ledger + INDEX + este tablero + `NEXUS_DEBT_REGISTER.md`. Documentación-only; candidato local, STOP antes de push/merge. |
 | Verificación post-merge clínica | PR #490 head `535c65567bc8ca0aef7358f97f99d97520b0ff20` → merge `3bf45760a27630823b61b0d19da8b64aeb060693`; CI post-merge `Nexus deterministic gates` run `36880209718` `success`. Anterior: PR #484 head `75063f25b5cf3de008ab882392b9387f5fdea9c1` → merge `a04a0ace25012e5f0ac397844165921dccaebcc3`; CI post-merge run `36771991874` `success`. Checkpoint visual post-F4.3 (#480, TRAIN #479 T1): QA navegador real con 17 observaciones `PASS` y **1 `PRODUCT_DEFECT_BLOCKING` (PV-001)** que en ese momento terminó `HUMAN_STOP_BLOCKER` con follow-up técnico aprobado #482; PV-001 quedó posteriormente `RESOLVED/PUBLISHED` por #482 / PR #484 |
 | Home sintética | F3.2 publicada; F3.3 browser-qualified; F3.4 release sintético reproducible y browser-qualified; D012/D013 hardening publicado |
 | Madurez | Evaluación sintética; **no piloto / no producción** |
-| Deuda Nexus abierta | D004; subhallazgos restantes D005; #448 (hidratación visual del medicamento preseleccionado) y #450 (semántica de búsqueda legacy no categorizada) abiertas/no bloqueantes. D007 RESOLVED/PUBLISHED por #434 / PR #435. |
-| Siguiente frontera del plan | **Foundation:** tras F4.4 publicada (TRAIN #487 / PR #490), la siguiente frontera pendiente del plan es **F4.5 DeliveryResult / adapter semantics** (F4.6 depende de ella); queda técnicamente disponible, sin ser prioridad humana automática ni autorización de ejecución. **Producto vivo:** la secuencia previa #446 renovaciones → Reuma→Farmacia discovery → CIMA queda `UNDER_READJUDICATION / PRE-BADAJOZ` por #501, sin cancelarse. **Siguiente acción humana/producto:** reconstruir ledger Reuma contra Nexus → checklist/Q&A manual focalizado → cruzar Reuma+Farmacia → adjudicar WOs pre-8. |
+| Deuda Nexus abierta | D004; subhallazgos restantes D005; #448 (hidratación visual del medicamento preseleccionado) y #450 (semántica de búsqueda legacy no categorizada) abiertas/no bloqueantes, ahora también registradas en [`NEXUS_DEBT_REGISTER.md`](./NEXUS_DEBT_REGISTER.md) como deuda de seams Reuma. D007 RESOLVED/PUBLISHED por #434 / PR #435. |
+| Siguiente frontera del plan | **Foundation:** tras F4.4 publicada (TRAIN #487 / PR #490), la siguiente frontera pendiente del plan es **F4.5 DeliveryResult / adapter semantics** (F4.6 depende de ella); queda técnicamente disponible, sin ser prioridad humana automática ni autorización de ejecución. **Producto vivo:** la secuencia previa #446 renovaciones → Reuma→Farmacia discovery → CIMA queda `UNDER_READJUDICATION / PRE-BADAJOZ` por #501, sin cancelarse. **Siguiente acción humana/producto:** el ledger Reuma contra Nexus y el Q&A manual focalizado quedaron completados (#504, adjudicación 2026-10-04) y el cruce documental Reuma+Farmacia+Derma está en el ledger §8; queda **adjudicar las WOs técnicas pre-Badajoz** (defectos reproducidos + requisitos decididos). En renovaciones, N0 es contrato publicado (#509/PR #510) y N1/N2/N3 requieren WOs propias. |
 | Último train clínico publicado | TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 (#487): PR #490 `MERGED`, candidate final `535c655...` → merge de producto `3bf45760...`; F4.4 Pharmacy Act v1 (contrato común + payloads independientes; oracles 243/0 y 145/0; C-080 `review-707b45b6c20d35ee` APPROVED + acknowledged + burned); #487/#488/#489 `CLOSED/completed`; CI post-merge run `36880209718` `success`. Anterior: WO-NEXUS-FARMACIA-PV-001 (#482): PR #484 `MERGED`, candidate `75063f25...` → merge de producto `a04a0ace...`; corrección PV-001 `RESOLVED/PUBLISHED`. |
 
 ### WO-DOC-NEXUS-PRODUCT-RECONCILIATION-20261003 (#501) — reconciliación documental pre-Badajoz
@@ -50,6 +51,27 @@
 **NO TOCA:** runtime HTML/JS/CSS; CIMA tooling; Excel/bridge/adapters; F4.5/F4.6; #446/hold; #448/#450; ADRs/Architecture Freeze; `main`; recovery; snapshots; Pages/deploy; datos reales; implementation backlog de eccema de manos; qualification Atenea.
 
 **Estado de publicación:** issue #501 `status:approved`; PR #503 es la publicación documental. La operadora autorizó commit/push/PR y merge si diff/checks permanecen correctos.
+
+### WO-DOC-NEXUS-LIVE-PRODUCT-LEDGER-20261003 (#504) — PR #506 · reconciliación final
+
+**Alcance:** documentación exclusivamente; cero runtime, cero QA navegador.
+
+**Base verificada al iniciar:** rama `docs/nexus-live-product-ledger-504-20261003` @ `657c74aa106c8141b958571a3ebc36cd6699f333` (PR #506 abierto); autoridad canónica `promueve/nexus-v4` @ `a357be8510f4b81ecc077f518bd197ade940270e` (verificada tras `git fetch`). Rama actualizada con **merge normal no destructivo** de `origin/promueve/nexus-v4` (sin rebase, force-push, reset ni rewrite).
+
+**Rutas (las 4 autorizadas por #504):** `docs/ops/PROMUEVE_PRODUCT_STATUS_LEDGER.md`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`, `docs/ops/NEXUS_DEBT_REGISTER.md`.
+
+**Contenido reconciliado:**
+
+- adjudicación manual Reuma 2026-10-04 (#504) clasificada como `IMPLEMENTADO/VALIDADO_MANUAL`, `DEFECTO_REPRODUCIDO`, `REQUISITO_DECIDIDO_PENDIENTE`, `PENDIENTE_FUENTE/EQUIPO`, `DEFERIDO` y deuda conocida, sin confundir código existente con QA visible;
+- **no** se abre defecto de autocomplete/catálogo Reuma: la interacción soportada fue validada manualmente y respeta `Sistémicos / FAMEs / Biológicos`;
+- renovaciones: N0 reflejado **únicamente como contrato publicado/verificado** (#509 → PR #510, merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`; reconciliación PR #511); **N1/N2/N3 pendientes**;
+- `OCT-OPEN-010..013` y `REN-OPEN-001..008` preservados como no resueltos; LES/Sjögren `PENDIENTE_EQUIPO`; BASFI `PENDIENTE_FUENTE`; QR/PROM y fixture longitudinal `DEFERIDO`;
+- #448/#450 mantenidos como deuda no bloqueante; legacy 497 como compatibilidad contenida, no end-state;
+- cruce Reuma/Farmacia/Dermatología sólo a nivel de estado/prioridad documental.
+
+**NO TOCA:** runtime HTML/JS/CSS; schemas/fixtures/checkers de renovaciones; F4.5/F4.6; CIMA; Processor/Bridge; branding #507/#508; `main`; recovery histórica; snapshots/Pages/deploy; datos reales.
+
+**Estado:** candidato local; `git diff --check` PASS y diff limitado a las 4 rutas autorizadas. **STOP antes de push/merge** para inspección final de Cora, aunque #504 autorice la publicación de la PR.
 
 ### WO-SHAPE-NEXUS-RENEWALS-N0 (#446) — shaping N0 RECHAZADO en revisión humana; recuperación bajo #509
 
@@ -317,6 +339,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 
 | WO | Título | Estado | Rama | Merge/Commit | Notas |
 | --- | --- | --- | --- | --- | --- |
+| **WO-DOC-NEXUS-LIVE-PRODUCT-LEDGER-20261003 (#504)** | Ledger vivo de estado funcional de Nexus: adjudicación manual Reuma 2026-10-04 + N0 de renovaciones publicado, clasificación honesta de estados | 📋 Ready for review · PR #506 (abierto) | `docs/nexus-live-product-ledger-504-20261003` | base `657c74aa106c8141b958571a3ebc36cd6699f333` → merge no destructivo de `origin/promueve/nexus-v4` @ `a357be8510f4b81ecc077f518bd197ade940270e`; candidato local pendiente de commit/publicación | Solo documentación (4 rutas autorizadas); `git diff --check` PASS; STOP antes de push/merge. No abre defecto de autocomplete Reuma; N1/N2/N3 de renovaciones siguen pendientes. |
 | **WO-SHAPE-NEXUS-RENEWALS-N0 (#446)** | N0 shaping: contrato funcional mínimo del circuito de renovaciones FH↔Enfermería (`renewal-handoff/v1`) + schemas + máquina de estados + checker determinista | ✅ Recuperado y **PUBLICADO** bajo #509 · PR #510 | `work/nexus-renewals-n0-446-20261004` → recuperación en `recovery/nexus-renewals-n0-refreeze-509-20261004` (desde `d829939`) | contrato `61cb081b…`, estado `f9aaf5f`, corrección 2 `d829939cb3622227a7f0810c8d6a5e6944765dbc` (**RECHAZADO**); recovery #509 candidate `54ab2c5e` → merge PR #510 `aa6401af` | Solo documentación/contrato; el candidato `d829939` fue rechazado (falso verde `70 OK / 0 FALL` — evidencia invalidada); #509 refrozen y publicado por PR #510: detección≠gestión, flujo MVP de 6 tokens, `RENOVACIÓN_COMUNICADA ≠ ACTUALIZADA_POR_FH` / `SUSPENSIÓN_COMUNICADA ≠ TRATAMIENTO_SUSPENDIDO`, 10 códigos de error, checker fail-closed (`53 OK / 0 FALLIDO`; confirmación Standards+Spec `APPROVED` tras correcciones 2/2, presupuesto agotado; CI PR+post-merge success); `OCT-OPEN-010..013` y `REN-OPEN-001..008` preservados; cero runtime/UI; no ejecuta F4.5; evaluación sintética, no piloto/producción. |
 | **TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 (#487)** | F4.4 Pharmacy Act v1: contrato común independiente de transporte + payloads independientes Validación/Primera Visita/Seguimiento (sin cutover/UI/delivery/persistencia) | ✅ MERGED_AND_VERIFIED · PR #490 (CI post-merge run `36880209718` success) | `work/nexus-f44-act-contract-487-20260930` | T1 #488 `98c7aa76` (oracle 243/0); T2 #489 `b73e1e7e` (oracle 145/0); correction candidate `535c65567bc8ca0aef7358f97f99d97520b0ff20` (own-property/prototype hardening) → merge de producto `3bf45760a27630823b61b0d19da8b64aeb060693` | Contrato puro: C-080 `review-707b45b6c20d35ee` APPROVED + acknowledged + burned; tree merge = tree candidate `bc8bc378...`; #487/#488/#489 CLOSED/completed; F4.4 COMPLETADA/PUBLICADA; F4.5/F4.6 no ejecutadas; #446 y su hold intactos; evaluación sintética, no piloto/producción. |
 | **TRAIN-NEXUS-F4.3-POSTMERGE-CHECKPOINT-10 (#479)** | Checkpoint visual post-F4.3 + reconciliación documental en modo registro honesto del blocker | ✅ T1/T2 COMPLETED · PR #483 (estado Git: consultar live) | `work/nexus-f43-postmerge-checkpoint10-479-20260930` | T1 #480 `eb0e524` (checkpoint `HUMAN_STOP_BLOCKER` por PV-001, follow-up aprobado #482); T2 #481 `835dda2`; PR #483 | Sólo documentación/evidencia: checkpoint #480 + INDEX/WOS/Foundation Plan/auditoría Sil. Cero runtime. Verificación: `verify:nexus` PASS, `git diff --check` PASS. Estado de merge: consultar GitHub live. PV-001 = `RESOLVED/PUBLISHED` por #482 / PR #484. |
@@ -506,7 +529,7 @@ A 2026-08-07, los issues #184, #186, #188, #190, #192, #269, #271, #273 y #277 c
 | --- | ---: |
 | ✅ Merged | 64 |
 | ✅ MERGED_AND_VERIFIED | 16 |
-| 📋 Ready for review | 20 |
+| 📋 Ready for review | 21 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
 | 🔄 Superseded | 4 |
@@ -515,8 +538,8 @@ A 2026-08-07, los issues #184, #186, #188, #190, #192, #269, #271, #273 y #277 c
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 112 work orders / preflights gestionadas.
+**Total:** 113 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 64 + 16 + 20 + 1 + 1 + 4 + 5 + 1 + 0 + 0 = 112, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 64 + 16 + 21 + 1 + 1 + 4 + 5 + 1 + 0 + 0 = 113, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.
