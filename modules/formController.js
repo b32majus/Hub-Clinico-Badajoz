@@ -2511,6 +2511,27 @@ function initScoreWiring() {
         var mdaResultEl = document.getElementById('mdaResultadoFinal');
         var criterioEstados = Array.isArray(result.criterioEstados) ? result.criterioEstados : [];
 
+        // C2 #519: veredicto visible a tres valores derivado del estado por
+        // criterio. La regla clínica NO cambia (mdaAlcanzado = cumplidos >= 5)
+        // y los 7 criterios/umbrales/fuentes siguen intactos. Los pendientes
+        // sólo deciden entre PENDIENTE y NO ALCANZADO: una fuente ausente nunca
+        // se convierte en 0/falso ni produce una conclusión definitiva que los
+        // datos aún podrían cambiar.
+        var cumplidosResueltos = criterioEstados.filter(function (c) {
+            return c.estado === 'cumplido';
+        }).length;
+        var pendientes = criterioEstados.filter(function (c) {
+            return c.estado === 'pendiente';
+        }).length;
+        var verdicto;
+        if (cumplidosResueltos >= 5) {
+            verdicto = 'alcanzado';
+        } else if (cumplidosResueltos + pendientes >= 5) {
+            verdicto = 'pendiente';
+        } else {
+            verdicto = 'no_alcanzado';
+        }
+
         criterioEstados.forEach(function (criterio, index) {
             var orden = index + 1;
             var statusEl = document.getElementById('mdaStatus' + orden);
@@ -2551,19 +2572,21 @@ function initScoreWiring() {
         });
 
         if (mdaCumplidosEl) {
-            mdaCumplidosEl.textContent = result.evaluable ? String(result.cumplidos) : '—';
+            // C2 #519: un veredicto definitivo nunca muestra un recuento
+            // desconocido; mientras el veredicto es PENDIENTE el panel queda '—'.
+            mdaCumplidosEl.textContent = verdicto === 'pendiente' ? '—' : String(cumplidosResueltos);
         }
 
         if (mdaResultEl) {
-            if (!result.evaluable) {
+            if (verdicto === 'alcanzado') {
+                mdaResultEl.textContent = 'MDA ALCANZADO ✓';
+                mdaResultEl.style.color = '#28a745';
+                mdaResultEl.style.fontWeight = 'bold';
+            } else if (verdicto === 'pendiente') {
                 var ausentes = Array.isArray(result.fuentesPendientes) ? result.fuentesPendientes : [];
                 mdaResultEl.textContent = 'MDA PENDIENTE — fuentes ausentes: ' + ausentes.join(', ');
                 mdaResultEl.style.color = '#6c757d';
                 mdaResultEl.style.fontWeight = 'normal';
-            } else if (result.mdaAlcanzado) {
-                mdaResultEl.textContent = 'MDA ALCANZADO ✓';
-                mdaResultEl.style.color = '#28a745';
-                mdaResultEl.style.fontWeight = 'bold';
             } else {
                 mdaResultEl.textContent = 'MDA NO ALCANZADO';
                 mdaResultEl.style.color = '#dc3545';
