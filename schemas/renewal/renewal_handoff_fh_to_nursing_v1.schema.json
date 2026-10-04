@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://promueve.example/schemas/renewal/renewal_handoff_fh_to_nursing_v1.schema.json",
+  "title": "PROMueve renewal handoff FH to Nursing v1 (N0 refreeze)",
+  "description": "Contrato N0 refrozen del handoff Farmacia Hospitalaria -> Enfermeria para el circuito de renovaciones. Envelope versionado renewal-handoff/v1. Solo datos sinteticos. La renovacion pertenece a una linea/ciclo; el retorno de Enfermeria nunca actualiza FH por si mismo. La deteccion (window_state) es independiente de la gestion (lifecycle).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "record_type",
+    "renewal_id",
+    "line_id",
+    "patient_id",
+    "service_id",
+    "window_state",
+    "evaluated_at",
+    "warning_window_days",
+    "valid_until",
+    "valid_until_kind",
+    "valid_until_source",
+    "exported_at",
+    "exported_by_role",
+    "demo_flag"
+  ],
+  "properties": {
+    "contract_version": { "type": "string", "const": "renewal-handoff/v1" },
+    "record_type": { "type": "string", "const": "renewal_handoff_fh_to_nursing" },
+    "renewal_id": { "$ref": "#/$defs/id" },
+    "line_id": { "$ref": "#/$defs/id" },
+    "patient_id": { "$ref": "#/$defs/id" },
+    "service_id": { "$ref": "#/$defs/id" },
+    "service_label": { "$ref": "#/$defs/nstring" },
+    "treatment_id": { "$ref": "#/$defs/nullableId" },
+    "window_state": {
+      "type": "string",
+      "enum": ["outside_window", "due_soon", "expired", "not_evaluable"]
+    },
+    "evaluated_at": { "$ref": "#/$defs/dateTime" },
+    "warning_window_days": { "type": "integer", "minimum": 1 },
+    "valid_until": { "$ref": "#/$defs/nullableDate" },
+    "valid_until_kind": {
+      "type": "string",
+      "enum": ["confirmed", "verified", "estimated", "unknown"]
+    },
+    "valid_until_source": {
+      "type": "string",
+      "enum": [
+        "prescription_valid_until_confirmed",
+        "prescription_issue_date_confirmed_duration_confirmed",
+        "prescription_issue_date_confirmed_duration_configured",
+        "pharmacy_verified_remaining_period",
+        "circuit_entry_estimate",
+        "manual_estimate",
+        "not_recorded"
+      ]
+    },
+    "issue_date": { "$ref": "#/$defs/nullableDate" },
+    "validity_days": { "type": ["integer", "null"], "minimum": 1 },
+    "treatment": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Bloque de presentacion, solo display. No es identidad y no autoriza switch/renovacion. Un null explicito equivale a ausencia, igual que el resto de opcionales.",
+      "properties": {
+        "line_label": { "$ref": "#/$defs/nstring" },
+        "drug_display": { "$ref": "#/$defs/nstring" }
+      }
+    },
+    "exported_at": { "$ref": "#/$defs/dateTime" },
+    "exported_by_role": { "type": "string", "const": "pharmacy" },
+    "demo_flag": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "prescription_valid_until_confirmed" } }, "required": ["valid_until_source"] },
+      "then": { "type": "object", "properties": { "valid_until_kind": { "const": "confirmed" } } }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "prescription_issue_date_confirmed_duration_confirmed" } }, "required": ["valid_until_source"] },
+      "then": { "type": "object", "properties": { "valid_until_kind": { "const": "confirmed" } } }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "prescription_issue_date_confirmed_duration_configured" } }, "required": ["valid_until_source"] },
+      "then": { "type": "object", "properties": { "valid_until_kind": { "const": "estimated" } } }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "pharmacy_verified_remaining_period" } }, "required": ["valid_until_source"] },
+      "then": { "type": "object", "properties": { "valid_until_kind": { "const": "verified" } } }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "circuit_entry_estimate" } }, "required": ["valid_until_source"] },
+      "then": { "type": "object", "properties": { "valid_until_kind": { "const": "estimated" } } }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "manual_estimate" } }, "required": ["valid_until_source"] },
+      "then": { "type": "object", "properties": { "valid_until_kind": { "const": "estimated" } } }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_source": { "const": "not_recorded" } }, "required": ["valid_until_source"] },
+      "then": {
+        "type": "object",
+        "properties": { "valid_until_kind": { "const": "unknown" }, "valid_until": { "type": "null" } }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "valid_until_source": {
+            "enum": [
+              "prescription_issue_date_confirmed_duration_confirmed",
+              "prescription_issue_date_confirmed_duration_configured"
+            ]
+          }
+        },
+        "required": ["valid_until_source"]
+      },
+      "then": {
+        "type": "object",
+        "required": ["issue_date", "validity_days"],
+        "properties": { "issue_date": { "$ref": "#/$defs/date" }, "validity_days": { "type": "integer", "minimum": 1 } }
+      }
+    },
+    {
+      "if": { "type": "object", "properties": { "valid_until_kind": { "const": "unknown" } }, "required": ["valid_until_kind"] },
+      "then": {
+        "type": "object",
+        "properties": { "valid_until": { "type": "null" }, "window_state": { "const": "not_evaluable" } }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "valid_until_kind": { "enum": ["confirmed", "verified", "estimated"] } },
+        "required": ["valid_until_kind"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "valid_until": { "$ref": "#/$defs/date" },
+          "window_state": { "enum": ["outside_window", "due_soon", "expired"] }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d{1,9})?(Z|[+-](0\\d|1[0-3]):[0-5]\\d|[+-]14:00)$"
+    },
+    "nullableDate": { "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] },
+    "nullableId": { "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }] },
+    "nstring": { "type": ["string", "null"] },
+    "id": { "type": "string", "minLength": 1 }
+  }
+}

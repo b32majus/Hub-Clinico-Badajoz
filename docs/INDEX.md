@@ -2,7 +2,7 @@
 
 | Metadato | Valor |
 | --- | --- |
-| Última actualización | 2026-10-03 |
+| Última actualización | 2026-10-04 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
 | Línea Farmacia de procedencia | `origin/recovery/farmacia-pr-replay-20260727`; **HISTORICAL** para nuevo desarrollo desde el merge de PR #381; conserva la historia funcional Farmacia y la trazabilidad del snapshot |
 | Autoridad canónica de desarrollo (F0.2) | `origin/promueve/nexus-v4` **ACTIVE** desde el merge autorizado de PR #381 (2026-09-24). Nació de `a8cec03522017a1f4b68e18b92c944601659c84f` con equivalencia inicial exacta. Último HEAD de producto Nexus verificado tras PR #490: `3bf45760a27630823b61b0d19da8b64aeb060693` (TRAIN-NEXUS-FARMACIA-ACT-CONTRACT-11 #487 / F4.4 Pharmacy Act v1; candidate `535c65567bc8ca0aef7358f97f99d97520b0ff20`); HEAD de producto anterior: `a04a0ace25012e5f0ac397844165921dccaebcc3` (corrección PV-001, WO #482 / PR #484; candidate `75063f25b5cf3de008ab882392b9387f5fdea9c1`); HEAD anterior a este: `91262d8007642aef1d3cbe21e24d20ff369ee19b` (PR #478); los merges documentales posteriores pueden mover el tip Git sin cambiar ese HEAD de producto. Detalle de transición: [`ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md`](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md) |
@@ -262,6 +262,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 - [`docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_VALIDATION_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Validación v2; integrado mediante PR #215
 - [`docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FIRST_VISIT_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Primera Visita v2; integrado mediante PR #217
 - [`docs/contracts/FARMACIA_EXPORT_V2_FOLLOWUP_ACTIVE_LINES_ADAPTER_CONTRACT.md`](/docs/contracts/FARMACIA_EXPORT_V2_FOLLOWUP_ACTIVE_LINES_ADAPTER_CONTRACT.md) — contrato del adaptador interno de Seguimiento v2; integrado mediante PR #221
+- [`docs/contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md`](/docs/contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md) — contrato N0 del circuito de renovaciones FH↔Enfermería (`renewal-handoff/v1`) **refrozen** bajo el HUMAN SHAPING REFREEZE de #446 + recuperación #509; candidato `d829939` **RECHAZADO** (checkpoint preservado); flujo MVP `ENVIADA_A_ENFERMERÍA → SOLICITADA_AL_PRESCRIPTOR → RENOVACIÓN_COMUNICADA|SUSPENSIÓN_COMUNICADA → ACTUALIZADA_POR_FH|TRATAMIENTO_SUSPENDIDO`; `RENOVACIÓN_COMUNICADA ≠ ACTUALIZADA_POR_FH` / `SUSPENSIÓN_COMUNICADA ≠ TRATAMIENTO_SUSPENDIDO`; schemas y máquina de estados en `schemas/renewal/`; checker `check:renewal:contract`; local no publicado: **STOP antes de push/PR/merge**; documentación/contrato únicamente, cero runtime; incógnitas humanas `OCT-OPEN-010..013` y `REN-OPEN-001..008` (`PENDIENTE_EQUIPO`/`CONTRACT_PENDING`)
 - El contrato de escenarios Farmacia V4 citado en ediciones previas no está publicado en `recovery`; su incorporación formal permanece pendiente.
 
 ### Historia y auditoría
