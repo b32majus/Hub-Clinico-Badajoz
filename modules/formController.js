@@ -2139,6 +2139,15 @@ function initScoreWiring() {
         });
     }
 
+    // T2 #514: #evaGlobal es la fuente única de la EVA Global del paciente. El
+    // campo homónimo de ASDAS es un espejo readonly que se sincroniza ANTES de
+    // leerlo, de modo que un espejo obsoleto nunca puede ganar al dato fuente.
+    function syncAsdasEvaGlobalFromSource() {
+        var source = document.getElementById('evaGlobal');
+        var mirrorEl = document.getElementById('asdasEvaGlobal');
+        if (source && mirrorEl) mirrorEl.value = source.value || '';
+    }
+
     function actualizarNotaConversionPcr(id, conversion) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -2260,7 +2269,9 @@ function initScoreWiring() {
     if (basdaiResult) debugLog('  ✓ BASDAI wiring');
 
     // --- 3. AUTO-CÁLCULO ASDAS ---
-    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasEvaGlobal', 'asdasNAD'];
+    // #asdasEvaGlobal ya no está aquí: es readonly y su valor lo gobierna
+    // #evaGlobal (fuente única, T2 #514).
+    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD'];
     asdasInputIds.forEach(function (id) {
         var el = document.getElementById(id);
         if (el) {
@@ -2270,6 +2281,11 @@ function initScoreWiring() {
     // asdasPCR y asdasVSG son readonly, se actualizan desde el sync de arriba
 
     function recalcularASDAS() {
+        // La EVA Global de ASDAS se reutiliza del campo fuente del paciente
+        // (T2 #514). El espejo se actualiza ANTES de leer, en ambas ramas, para
+        // que el valor leído (y el recopilado) nunca quede obsoleto.
+        syncAsdasEvaGlobalFromSource();
+
         var crpField = document.getElementById('asdasCrpResult');
         var esrField = document.getElementById('asdasEsrResult');
 
@@ -2336,6 +2352,9 @@ function initScoreWiring() {
 
     // Exponer para homunculus.js
     window.calcularASDASLocal = recalcularASDAS;
+    // Espejo inicial: si #evaGlobal ya trae valor (p. ej. prefill), el espejo
+    // ASDAS arranca consistente sin exigir reentrada (T2 #514).
+    syncAsdasEvaGlobalFromSource();
     debugLog('  ✓ ASDAS wiring + calcularASDASLocal');
 
     // --- 4. AUTO-CÁLCULO HAQ-DI ---
@@ -2408,6 +2427,8 @@ function initScoreWiring() {
             recalcularMDA();
             recalcularRAPID3();
             recalcularDAPSA();
+            // T2 #514: una sola captura de EVA Global alimenta también ASDAS.
+            recalcularASDAS();
         });
     }
     if (evaDolorInput) {

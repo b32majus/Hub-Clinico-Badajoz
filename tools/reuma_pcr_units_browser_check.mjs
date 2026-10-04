@@ -251,7 +251,9 @@ async function runEspaSuite(label, pagePath) {
     await fill('#pcrValue', '30');
     await fill('#asdasDolorEspalda', '3');
     await fill('#asdasDuracionRigidez', '2');
-    await fill('#asdasEvaGlobal', '4');
+    // T2 #514: #asdasEvaGlobal es readonly; la interacción soportada es capturar
+    // la EVA Global del paciente en su campo fuente.
+    await fill('#evaGlobal', '4');
     const esperado = expectedASDASCRP(3, 2, 4, 1, 30);
     const s1Score = await page.locator('#asdasCrpResult').inputValue();
     record(`S1 ${label}: sin conversión (30 mg/L) => ASDAS-CRP ${esperado}`, s1Score === esperado, `obtenido '${s1Score}'`);
