@@ -2151,13 +2151,22 @@ function initScoreWiring() {
         });
     }
 
-    // T2 #514: #evaGlobal es la fuente única de la EVA Global del paciente. El
-    // campo homónimo de ASDAS es un espejo readonly que se sincroniza ANTES de
-    // leerlo, de modo que un espejo obsoleto nunca puede ganar al dato fuente.
+    // C1 #518 / T2 #514: #evaGlobal es la fuente única de la EVA Global del
+    // paciente, pero el espejo readonly de ASDAS es estado exclusivo de EspA.
+    // Fuera de EspA el espejo se deja/limpia vacío para no materializar estado
+    // ASDAS residual (ni en el DOM, ni en el recopilado, ni en el slot legacy).
+    // Dentro de EspA se sincroniza ANTES de leerlo, de modo que un espejo
+    // obsoleto nunca gana al dato fuente; la ausencia nunca es '0' y un '0'
+    // explícito sí es un valor.
     function syncAsdasEvaGlobalFromSource() {
         var source = document.getElementById('evaGlobal');
         var mirrorEl = document.getElementById('asdasEvaGlobal');
-        if (source && mirrorEl) mirrorEl.value = source.value || '';
+        if (!mirrorEl) return;
+        if (currentPathology !== 'espa') {
+            mirrorEl.value = '';
+            return;
+        }
+        if (source) mirrorEl.value = source.value || '';
     }
 
     function actualizarNotaConversionPcr(id, conversion) {
@@ -2294,8 +2303,9 @@ function initScoreWiring() {
 
     function recalcularASDAS() {
         // La EVA Global de ASDAS se reutiliza del campo fuente del paciente
-        // (T2 #514). El espejo se actualiza ANTES de leer, en ambas ramas, para
-        // que el valor leído (y el recopilado) nunca quede obsoleto.
+        // (T2 #514) sólo en EspA (C1 #518). El espejo se sincroniza ANTES de
+        // leer, tanto al entrar en EspA como al salir: fuera de EspA queda
+        // vacío y el valor leído (y el recopilado) nunca arrastra estado ASDAS.
         syncAsdasEvaGlobalFromSource();
 
         var crpField = document.getElementById('asdasCrpResult');
@@ -2364,8 +2374,9 @@ function initScoreWiring() {
 
     // Exponer para homunculus.js
     window.calcularASDASLocal = recalcularASDAS;
-    // Espejo inicial: si #evaGlobal ya trae valor (p. ej. prefill), el espejo
-    // ASDAS arranca consistente sin exigir reentrada (T2 #514).
+    // Espejo inicial: en EspA, si #evaGlobal ya trae valor (p. ej. prefill), el
+    // espejo ASDAS arranca consistente sin exigir reentrada (T2 #514). Fuera de
+    // EspA (o sin patología fijada) el espejo permanece vacío (C1 #518).
     syncAsdasEvaGlobalFromSource();
     debugLog('  ✓ ASDAS wiring + calcularASDASLocal');
 
