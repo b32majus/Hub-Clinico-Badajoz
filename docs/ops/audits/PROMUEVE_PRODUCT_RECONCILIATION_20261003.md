@@ -456,6 +456,10 @@ Recovery puede seguir sirviendo como referencia/demo histórica si resulta conve
 | OCT-OPEN-007 | Qué variaciones Badajoz/Mérida merecen configuración declarativa | `PENDIENTE_PRESION_REAL` |
 | OCT-OPEN-008 | Alcance futuro de JSON/Control Plane/form-builder | `DEFERRED / NO_APROBADO` |
 | OCT-OPEN-009 | Priorización final de WOs pre-8 | `PENDIENTE_LEDGER_QA_REUMA` |
+| OCT-OPEN-010 | Cierre de renovación: fecha explícita vs duración (12 meses habitual; posibles 6/3) con cálculo/confirmación de nueva validez | `PENDIENTE_EQUIPO` |
+| OCT-OPEN-011 | Suspensión: dato mínimo del acto FH (hipótesis: fecha del acto + observación opcional) y fecha clínica distinta posterior | `PENDIENTE_EQUIPO` |
+| OCT-OPEN-012 | Organización operativa del lote por servicio (cadencia/corte/distribución, evitar duplicar ciclo ya enviado); no condiciona N0 | `PENDIENTE_EQUIPO` |
+| OCT-OPEN-013 | Fuente/precedencia real de `valid_until`; hasta validación: fecha + calidad/origen explícitos y fallo cerrado ante discrepancia material, sin jerarquía universal | `PENDIENTE_EQUIPO` |
 
 ## 9. NO TOCA de esta reconciliación
 

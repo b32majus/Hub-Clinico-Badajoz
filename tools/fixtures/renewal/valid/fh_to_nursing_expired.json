@@ -1,0 +1,23 @@
+{
+  "contract_version": "renewal-handoff/v1",
+  "record_type": "renewal_handoff_fh_to_nursing",
+  "renewal_id": "REN-SYN-0002",
+  "line_id": "line-syn-rn-002",
+  "patient_id": "patient-syn-rn-002",
+  "service_id": "svc-syn-reu-01",
+  "service_label": "Reumatologia (sintetico)",
+  "treatment_id": null,
+  "window_state": "expired",
+  "evaluated_at": "2026-10-04T08:00:00Z",
+  "warning_window_days": 60,
+  "valid_until": "2026-09-30",
+  "valid_until_kind": "confirmed",
+  "valid_until_source": "prescription_valid_until_confirmed",
+  "treatment": {
+    "line_label": "L2 demo sintetica",
+    "drug_display": "Farmaco demo B"
+  },
+  "exported_at": "2026-10-04T08:05:00Z",
+  "exported_by_role": "pharmacy",
+  "demo_flag": true
+}
