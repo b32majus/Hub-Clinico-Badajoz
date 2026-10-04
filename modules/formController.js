@@ -129,6 +129,15 @@ function adaptarFormulario(diagnostico) {
 
     // Recalcular alturas de secciones colapsables abiertas
     refreshOpenCollapsibles();
+
+    // ASDAS es exclusivo de EspA (ledger 3.2 #5). Al cambiar de patología hay
+    // que reevaluar el alcance: en APs/AR/LES/Sjögren se limpian los derivados
+    // ASDAS; en EspA se recalculan. `currentPathology` es la misma fuente que
+    // gobierna la visibilidad en el switch anterior, así que visibilidad y
+    // cómputo nunca pueden discrepar.
+    if (typeof window.calcularASDASLocal === 'function') {
+        window.calcularASDASLocal();
+    }
 }
 
 function ocultarTodosElementosEspecificos() {
@@ -171,6 +180,12 @@ function mostrarElementosEspA() {
 
     elementosEspecificos.forEach(id => showElement(id, 'block'));
 
+    // T3 #515: EspA admite afectación periférica (dactilitis), así que el
+    // control debe volver al default de la hoja de estilos si una patología
+    // previa (p. ej. AR en mostrarElementosAR) lo ocultó con display inline.
+    const dactilitisBtn = document.querySelector('[data-mode="dactilitis"]');
+    if (dactilitisBtn) dactilitisBtn.style.display = '';
+
     // Inicializar funcionalidad ASAS
     setTimeout(() => initializeASAS(), 100);
 
@@ -199,6 +214,12 @@ function mostrarElementosAPs() {
     ];
 
     elementosAPs.forEach(id => showElement(id, 'block'));
+
+    // T3 #515: APs también admite afectación periférica (dactilitis), así que
+    // el control debe volver al default de la hoja de estilos si una patología
+    // previa (p. ej. AR en mostrarElementosAR) lo ocultó con display inline.
+    const dactilitisBtn = document.querySelector('[data-mode="dactilitis"]');
+    if (dactilitisBtn) dactilitisBtn.style.display = '';
 
     // Inicializar funcionalidad CASPAR
     setTimeout(() => initializeCASPAR(), 100);
@@ -1107,6 +1128,16 @@ function initializeCASPAR() {
     casparInitialized = true;
 }
 
+// C3 #520: sólo el veredicto explícito 'MDA ALCANZADO' (con o sin ✓) produce
+// true. 'MDA NO ALCANZADO', 'MDA PENDIENTE', vacío y cualquier texto no
+// reconocido fallan cerrado en false: el subcadenero 'ALCANZADO' ya no decide.
+// La comparación es exacta sobre el texto canónico (siempre en mayúsculas) que
+// renderiza C2 #519; variantes de caja o texto parcial no se reconocen.
+function esMdaAlcanzado(texto) {
+    var veredicto = String(texto === undefined || texto === null ? '' : texto).trim();
+    return veredicto === 'MDA ALCANZADO' || veredicto === 'MDA ALCANZADO ✓';
+}
+
 function recopilarDatosFormulario() {
     // 1. Leer todos los campos simples del formulario
     const idPaciente = document.getElementById('idPaciente').value;
@@ -1391,7 +1422,7 @@ function recopilarDatosFormulario() {
     const mdaGlobal = document.getElementById('mdaEvaGlobal')?.textContent || '';
     const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
     const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
-    const mdaCumple = (document.getElementById('mdaResultadoFinal')?.textContent || '').toUpperCase().includes('ALCANZADO');
+    const mdaCumple = esMdaAlcanzado(document.getElementById('mdaResultadoFinal')?.textContent);
 
     const maniobrasSacroiliacas = document.getElementById('maniobrasSacroiliacas')?.value || '';
     const comentariosSacroiliacas = document.getElementById('comentariosSacroiliacas')?.value || '';
@@ -1872,7 +1903,7 @@ function recopilarDatosFormularioSeguimiento() {
     const mdaGlobal = document.getElementById('mdaEvaGlobal')?.textContent || '';
     const mdaHAQ = document.getElementById('mdaHAQ')?.textContent || '';
     const mdaEntesitis = document.getElementById('mdaLEI')?.textContent || '';
-    const mdaCumple = (document.getElementById('mdaResultadoFinal')?.textContent || '').toUpperCase().includes('ALCANZADO');
+    const mdaCumple = esMdaAlcanzado(document.getElementById('mdaResultadoFinal')?.textContent);
 
     const das28NAD = getValue('das28NAD');
     const das28NAT = getValue('das28NAT');
@@ -2130,6 +2161,24 @@ function initScoreWiring() {
         });
     }
 
+    // C1 #518 / T2 #514: #evaGlobal es la fuente única de la EVA Global del
+    // paciente, pero el espejo readonly de ASDAS es estado exclusivo de EspA.
+    // Fuera de EspA el espejo se deja/limpia vacío para no materializar estado
+    // ASDAS residual (ni en el DOM, ni en el recopilado, ni en el slot legacy).
+    // Dentro de EspA se sincroniza ANTES de leerlo, de modo que un espejo
+    // obsoleto nunca gana al dato fuente; la ausencia nunca es '0' y un '0'
+    // explícito sí es un valor.
+    function syncAsdasEvaGlobalFromSource() {
+        var source = document.getElementById('evaGlobal');
+        var mirrorEl = document.getElementById('asdasEvaGlobal');
+        if (!mirrorEl) return;
+        if (currentPathology !== 'espa') {
+            mirrorEl.value = '';
+            return;
+        }
+        if (source) mirrorEl.value = source.value || '';
+    }
+
     function actualizarNotaConversionPcr(id, conversion) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -2251,7 +2300,9 @@ function initScoreWiring() {
     if (basdaiResult) debugLog('  ✓ BASDAI wiring');
 
     // --- 3. AUTO-CÁLCULO ASDAS ---
-    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasEvaGlobal', 'asdasNAD'];
+    // #asdasEvaGlobal ya no está aquí: es readonly y su valor lo gobierna
+    // #evaGlobal (fuente única, T2 #514).
+    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD'];
     asdasInputIds.forEach(function (id) {
         var el = document.getElementById(id);
         if (el) {
@@ -2261,6 +2312,51 @@ function initScoreWiring() {
     // asdasPCR y asdasVSG son readonly, se actualizan desde el sync de arriba
 
     function recalcularASDAS() {
+        // La EVA Global de ASDAS se reutiliza del campo fuente del paciente
+        // (T2 #514) sólo en EspA (C1 #518). El espejo se sincroniza ANTES de
+        // leer, tanto al entrar en EspA como al salir: fuera de EspA queda
+        // vacío y el valor leído (y el recopilado) nunca arrastra estado ASDAS.
+        syncAsdasEvaGlobalFromSource();
+
+        var crpField = document.getElementById('asdasCrpResult');
+        var esrField = document.getElementById('asdasEsrResult');
+
+        // ASDAS-CRP/ASDAS-ESR son exclusivos de EspA (ledger 3.2 #5). En
+        // cualquier otra patología ni se muestran ni se calculan: se limpian
+        // los derivados (valor, color, fondo, título y categorías) sin tocar
+        // las entradas del usuario. La cascada DAPSA (APs-only) sigue activa.
+        if (currentPathology !== 'espa') {
+            if (crpField) {
+                crpField.value = '';
+                crpField.style.color = '';
+                crpField.style.backgroundColor = '';
+                crpField.title = '';
+            }
+            if (esrField) {
+                esrField.value = '';
+                esrField.style.color = '';
+                esrField.style.backgroundColor = '';
+                esrField.title = '';
+            }
+            var crpCatEl = document.getElementById('asdasCrpCategoria');
+            if (crpCatEl) {
+                crpCatEl.textContent = '';
+                crpCatEl.style.color = '';
+            }
+            var esrCatEl = document.getElementById('asdasEsrCategoria');
+            if (esrCatEl) {
+                esrCatEl.textContent = '';
+                esrCatEl.style.color = '';
+            }
+            var conversionNoteEl = document.getElementById('asdasPcrConversionNote');
+            if (conversionNoteEl) {
+                conversionNoteEl.textContent = '';
+                conversionNoteEl.hidden = true;
+            }
+            recalcularDAPSA();
+            return;
+        }
+
         if (typeof HubTools.scores.calcularASDAS !== 'function') return;
         var datos = {
             asdasDolorEspalda: getFormValue('asdasDolorEspalda'),
@@ -2272,9 +2368,6 @@ function initScoreWiring() {
             asdasVSG: getFormValue('asdasVSG')
         };
         var result = HubTools.scores.calcularASDAS(datos);
-
-        var crpField = document.getElementById('asdasCrpResult');
-        var esrField = document.getElementById('asdasEsrResult');
 
         if (crpField) {
             crpField.value = result.asdasCRP;
@@ -2291,6 +2384,10 @@ function initScoreWiring() {
 
     // Exponer para homunculus.js
     window.calcularASDASLocal = recalcularASDAS;
+    // Espejo inicial: en EspA, si #evaGlobal ya trae valor (p. ej. prefill), el
+    // espejo ASDAS arranca consistente sin exigir reentrada (T2 #514). Fuera de
+    // EspA (o sin patología fijada) el espejo permanece vacío (C1 #518).
+    syncAsdasEvaGlobalFromSource();
     debugLog('  ✓ ASDAS wiring + calcularASDASLocal');
 
     // --- 4. AUTO-CÁLCULO HAQ-DI ---
@@ -2363,6 +2460,8 @@ function initScoreWiring() {
             recalcularMDA();
             recalcularRAPID3();
             recalcularDAPSA();
+            // T2 #514: una sola captura de EVA Global alimenta también ASDAS.
+            recalcularASDAS();
         });
     }
     if (evaDolorInput) {
@@ -2396,48 +2495,106 @@ function initScoreWiring() {
 
         var result = HubTools.scores.calcularMDA(datos);
 
-        // Actualizar UI del MDA
-        var mdaNATEl = document.getElementById('mdaNAT');
-        var mdaNADEl = document.getElementById('mdaNAD');
-        var mdaEvaDEl = document.getElementById('mdaEvaDolor');
-        var mdaEvaGEl = document.getElementById('mdaEvaGlobal');
-        var mdaHAQEl = document.getElementById('mdaHAQ');
-        var mdaLEIEl = document.getElementById('mdaLEI');
-        var mdaPsoriasisEl = document.getElementById('mdaPsoriasis');
+        // Actualizar UI del MDA desde el estado por criterio (T4 #516). Cada
+        // criterio se presenta cumplido/no cumplido/pendiente y, si está
+        // pendiente, se nombra la fuente que falta; una fuente ausente nunca se
+        // pinta como 0/falso.
+        var valuesByKey = {
+            nat: result.nat,
+            nad: result.nad,
+            psoriasis: result.psoriasis,
+            lei: result.lei,
+            evaDolor: result.evaDolor,
+            evaGlobal: result.evaGlobal,
+            haq: result.haq
+        };
+        var valueIdsByKey = {
+            nat: 'mdaNAT',
+            nad: 'mdaNAD',
+            psoriasis: 'mdaPsoriasis',
+            lei: 'mdaLEI',
+            evaDolor: 'mdaEvaDolor',
+            evaGlobal: 'mdaEvaGlobal',
+            haq: 'mdaHAQ'
+        };
         var mdaCumplidosEl = document.getElementById('mdaCumplidos');
         var mdaResultEl = document.getElementById('mdaResultadoFinal');
+        var criterioEstados = Array.isArray(result.criterioEstados) ? result.criterioEstados : [];
 
-        if (mdaNATEl) mdaNATEl.textContent = result.nat;
-        if (mdaNADEl) mdaNADEl.textContent = result.nad;
-        if (mdaEvaDEl) mdaEvaDEl.textContent = result.evaDolor;
-        if (mdaEvaGEl) mdaEvaGEl.textContent = result.evaGlobal;
-        if (mdaHAQEl) mdaHAQEl.textContent = result.haq;
-        if (mdaLEIEl) mdaLEIEl.textContent = result.lei;
-        if (mdaPsoriasisEl) mdaPsoriasisEl.textContent = result.psoriasis;
-        if (mdaCumplidosEl) mdaCumplidosEl.textContent = result.cumplidos;
+        // C2 #519: veredicto visible a tres valores con UN ÚNICO PRODUCTOR:
+        // el veredicto lo produce HubTools.scores.calcularMDA
+        // (`result.veredicto`, derivado del estado por criterio) y este
+        // renderer es proyección pura, sin recuento local. Ámbitos no
+        // solapados:
+        //   * `mdaAlcanzado` = regla clínica publicada aplicada al agregado
+        //     evaluable (contrato inalterado; en resultados incompletos el
+        //     contrato agregado sigue `false`);
+        //   * `veredicto` = veredicto visible de certidumbre autorizado por
+        //     #517/#519, derivado del estado por criterio.
+        // Fail-safe: si `result.veredicto` no es uno de los tres valores
+        // conocidos se trata como 'pendiente' — nunca se emite un veredicto
+        // definitivo sin autoridad.
+        var VEREDICTOS_CONOCIDOS = ['alcanzado', 'pendiente', 'no_alcanzado'];
+        var verdicto = VEREDICTOS_CONOCIDOS.indexOf(result.veredicto) >= 0
+            ? result.veredicto
+            : 'pendiente';
+        var cumplidosResueltos = result.cumplidosResueltos;
 
-        // Actualizar status de cada criterio
-        for (var ci = 0; ci < result.criterios.length; ci++) {
-            var statusEl = document.getElementById('mdaStatus' + (ci + 1));
-            var criterioEl = document.getElementById('mdaCriterio' + (ci + 1));
+        criterioEstados.forEach(function (criterio, index) {
+            var orden = index + 1;
+            var statusEl = document.getElementById('mdaStatus' + orden);
+            var criterioEl = document.getElementById('mdaCriterio' + orden);
+            var valueEl = document.getElementById(valueIdsByKey[criterio.key]);
+            var isPendiente = criterio.estado === 'pendiente';
+            var isCumplido = criterio.estado === 'cumplido';
+
             if (statusEl) {
-                statusEl.textContent = result.criterios[ci] ? '✓' : '✗';
-                statusEl.style.color = result.criterios[ci] ? '#28a745' : '#dc3545';
+                if (isPendiente) {
+                    statusEl.textContent = '—';
+                    statusEl.style.color = '#6c757d';
+                } else if (isCumplido) {
+                    statusEl.textContent = '✓';
+                    statusEl.style.color = '#28a745';
+                } else {
+                    statusEl.textContent = '✗';
+                    statusEl.style.color = '#dc3545';
+                }
+                var estadoLabel = isPendiente
+                    ? 'Pendiente — falta la fuente: ' + criterio.fuente
+                    : (isCumplido ? 'Cumplido' : 'No cumplido');
+                statusEl.setAttribute('data-estado', criterio.estado);
+                statusEl.setAttribute('title', estadoLabel);
+                statusEl.setAttribute('aria-label', estadoLabel);
             }
             if (criterioEl) {
-                criterioEl.style.backgroundColor = result.criterios[ci] ? '#28a74522' : '';
+                criterioEl.style.backgroundColor = isCumplido ? '#28a74522' : '';
             }
+            if (valueEl) {
+                // Corrección #516: los siete spans de valor se recogen verbatim
+                // por recopilarDatosFormulario/...Seguimiento y se exportan al
+                // legacy 497 (columnas 186-192). Un glifo de UI ('—') jamás
+                // puede convertirse en dato clínico exportado: se renderiza el
+                // valor derivado de la fuente cuando existe y '' cuando falta.
+                valueEl.textContent = String(valuesByKey[criterio.key] ?? '');
+            }
+        });
+
+        if (mdaCumplidosEl) {
+            // C2 #519: un veredicto definitivo nunca muestra un recuento
+            // desconocido; mientras el veredicto es PENDIENTE el panel queda '—'.
+            mdaCumplidosEl.textContent = verdicto === 'pendiente' ? '—' : String(cumplidosResueltos);
         }
 
         if (mdaResultEl) {
-            if (!result.evaluable) {
-                mdaResultEl.textContent = 'MDA INCOMPLETO';
-                mdaResultEl.style.color = '#6c757d';
-                mdaResultEl.style.fontWeight = 'normal';
-            } else if (result.mdaAlcanzado) {
+            if (verdicto === 'alcanzado') {
                 mdaResultEl.textContent = 'MDA ALCANZADO ✓';
                 mdaResultEl.style.color = '#28a745';
                 mdaResultEl.style.fontWeight = 'bold';
+            } else if (verdicto === 'pendiente') {
+                var ausentes = Array.isArray(result.fuentesPendientes) ? result.fuentesPendientes : [];
+                mdaResultEl.textContent = 'MDA PENDIENTE — fuentes ausentes: ' + ausentes.join(', ');
+                mdaResultEl.style.color = '#6c757d';
+                mdaResultEl.style.fontWeight = 'normal';
             } else {
                 mdaResultEl.textContent = 'MDA NO ALCANZADO';
                 mdaResultEl.style.color = '#dc3545';
@@ -2449,6 +2606,17 @@ function initScoreWiring() {
     // Exponer para homunculus.js
     window.calcularMDALocal = recalcularMDA;
     debugLog('  ✓ MDA wiring + calcularMDALocal');
+
+    // PASI/BSA son fuente viva del criterio de psoriasis (T4 #516).
+    ['pasiValue', 'bsaValue'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function () {
+                recalcularMDA();
+            });
+        }
+    });
+    debugLog('  ✓ PASI/BSA → MDA wiring');
 
     window.calcularDAPSALocal = recalcularDAPSA;
     debugLog('  ✓ DAPSA wiring + calcularDAPSALocal');
@@ -2671,6 +2839,10 @@ function initScoreWiring() {
             debugLog('  ✓ LES/Sjögren wiring (SLEDAI-2K, SLICC, ESSPRI, ESSDAI)');
         }
     })();
+
+    // Reflejar el estado real de las fuentes desde el arranque, en lugar del
+    // texto estático del HTML (T4 #516).
+    recalcularMDA();
 
     debugLog('✅ Score wiring completado');
 }
