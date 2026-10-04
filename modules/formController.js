@@ -129,6 +129,15 @@ function adaptarFormulario(diagnostico) {
 
     // Recalcular alturas de secciones colapsables abiertas
     refreshOpenCollapsibles();
+
+    // ASDAS es exclusivo de EspA (ledger 3.2 #5). Al cambiar de patología hay
+    // que reevaluar el alcance: en APs/AR/LES/Sjögren se limpian los derivados
+    // ASDAS; en EspA se recalculan. `currentPathology` es la misma fuente que
+    // gobierna la visibilidad en el switch anterior, así que visibilidad y
+    // cómputo nunca pueden discrepar.
+    if (typeof window.calcularASDASLocal === 'function') {
+        window.calcularASDASLocal();
+    }
 }
 
 function ocultarTodosElementosEspecificos() {
@@ -2261,6 +2270,45 @@ function initScoreWiring() {
     // asdasPCR y asdasVSG son readonly, se actualizan desde el sync de arriba
 
     function recalcularASDAS() {
+        var crpField = document.getElementById('asdasCrpResult');
+        var esrField = document.getElementById('asdasEsrResult');
+
+        // ASDAS-CRP/ASDAS-ESR son exclusivos de EspA (ledger 3.2 #5). En
+        // cualquier otra patología ni se muestran ni se calculan: se limpian
+        // los derivados (valor, color, fondo, título y categorías) sin tocar
+        // las entradas del usuario. La cascada DAPSA (APs-only) sigue activa.
+        if (currentPathology !== 'espa') {
+            if (crpField) {
+                crpField.value = '';
+                crpField.style.color = '';
+                crpField.style.backgroundColor = '';
+                crpField.title = '';
+            }
+            if (esrField) {
+                esrField.value = '';
+                esrField.style.color = '';
+                esrField.style.backgroundColor = '';
+                esrField.title = '';
+            }
+            var crpCatEl = document.getElementById('asdasCrpCategoria');
+            if (crpCatEl) {
+                crpCatEl.textContent = '';
+                crpCatEl.style.color = '';
+            }
+            var esrCatEl = document.getElementById('asdasEsrCategoria');
+            if (esrCatEl) {
+                esrCatEl.textContent = '';
+                esrCatEl.style.color = '';
+            }
+            var conversionNoteEl = document.getElementById('asdasPcrConversionNote');
+            if (conversionNoteEl) {
+                conversionNoteEl.textContent = '';
+                conversionNoteEl.hidden = true;
+            }
+            recalcularDAPSA();
+            return;
+        }
+
         if (typeof HubTools.scores.calcularASDAS !== 'function') return;
         var datos = {
             asdasDolorEspalda: getFormValue('asdasDolorEspalda'),
@@ -2272,9 +2320,6 @@ function initScoreWiring() {
             asdasVSG: getFormValue('asdasVSG')
         };
         var result = HubTools.scores.calcularASDAS(datos);
-
-        var crpField = document.getElementById('asdasCrpResult');
-        var esrField = document.getElementById('asdasEsrResult');
 
         if (crpField) {
             crpField.value = result.asdasCRP;

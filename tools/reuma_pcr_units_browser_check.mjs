@@ -11,20 +11,24 @@
  * values, the public HubTools.form collection API and the conversion notes).
  *
  * Scenarios (must PASS on BOTH pages unless stated):
- *   S1 No conversion (source mg/L = ASDAS-CRP expected unit): score computed,
- *      conversion note hidden, unit mirror shows (mg/L).
- *   S2 Conversion (source mg/dL -> ASDAS-CRP mg/L): identical score to S1 for
- *      the equivalent value, note visible naming the conversion, readonly
- *      source field keeps the raw 3 (not the derived 30).
- *   S3 Conversion (DAPSA: source mg/L -> expected mg/dL, homunculus NAD/NAT
- *      through real region clicks): score computed, note visible, readonly
- *      dapsaPCR keeps the raw 30 (not the derived 3).
- *   S4 No conversion (DAPSA with source mg/dL): same score as S3, note hidden.
- *   S5 Unknown unit ("Sin unidad"): every PCR-dependent score clears (fail
- *      safe, no silent numeric) and both notes explain the fail-safe state.
- *   S6 Traceability through the supported collection API: the collected data
- *      keeps the raw source value and the explicit unit (pcr + pcrUnit).
- *   S7 console.error === 0 and pageerror === 0 on both pages.
+ *   EspA pass (ASDAS-CRP is EspA-only, T1 #513):
+ *     S1 No conversion (source mg/L = ASDAS-CRP expected unit): score computed,
+ *        conversion note hidden, unit mirror shows (mg/L).
+ *     S2 Conversion (source mg/dL -> ASDAS-CRP mg/L): identical score to S1 for
+ *        the equivalent value, note visible naming the conversion, readonly
+ *        source field keeps the raw 3 (not the derived 30).
+ *     S5 ASDAS half: unknown unit ("Sin unidad") clears ASDAS-CRP (fail safe)
+ *        and the ASDAS note explains the fail-safe state.
+ *   APs pass (DAPSA is APs-only):
+ *     S3 Conversion (DAPSA: source mg/L -> expected mg/dL, homunculus NAD/NAT
+ *        through real region clicks): score computed, note visible, readonly
+ *        dapsaPCR keeps the raw 30 (not the derived 3).
+ *     S4 No conversion (DAPSA with source mg/dL): same score as S3, note hidden.
+ *     S5 DAPSA half: unknown unit clears DAPSA (fail safe) and the DAPSA note
+ *        explains the fail-safe state.
+ *     S6 Traceability through the supported collection API: the collected data
+ *        keeps the raw source value and the explicit unit (pcr + pcrUnit).
+ *   S7 console.error === 0 and pageerror === 0 on both pages (both passes).
  *
  * Fixtures are synthetic only (no patient data). The only external requests are
  * the page's own CDN assets (cdnjs), which must be reachable.
@@ -217,15 +221,17 @@ async function openAncestorCollapsibles(page, selector) {
   return isReallyHitTestable(page, selector);
 }
 
-async function runPageSuite(label, pagePath, collectFnName) {
-  console.log(`\n=== ${label} (${pagePath}) ===`);
+// EspA pass: ASDAS-CRP is EspA-only (T1 #513 / ledger 3.2 #5), so every ASDAS
+// scenario must run under `espa`. The DAPSA scenarios live in the APs pass.
+async function runEspaSuite(label, pagePath) {
+  console.log(`\n=== ${label} (${pagePath}) — EspA / ASDAS ===`);
   const { context, page, consoleErrors, pageErrors } = await openPage(browser, pagePath);
 
   try {
-    // Supported interaction: adapt the form to APs (ASDAS + DAPSA surfaces).
-    await page.selectOption('#diagnosticoPrimario', 'aps');
+    // Supported interaction: adapt the form to EspA (ASDAS surface).
+    await page.selectOption('#diagnosticoPrimario', 'espa');
     await page.waitForTimeout(300);
-    for (const sel of ['#pcrValue', '#asdasCrpResult', '#dapsaResult', '.homunculus-svg-wrapper']) {
+    for (const sel of ['#pcrValue', '#asdasCrpResult', '.homunculus-svg-wrapper']) {
       const visible = await openAncestorCollapsibles(page, sel);
       if (!visible) throw new Error(`no fue posible hacer visible ${sel} mediante interacción soportada`);
     }
@@ -266,6 +272,52 @@ async function runPageSuite(label, pagePath, collectFnName) {
     const s2Source = await page.locator('#asdasPCR').inputValue();
     record('S2: el campo fuente readonly conserva 3 (no el derivado 30)', s2Source === '3', `obtenido '${s2Source}'`);
 
+    // S5 (ASDAS half) — Unknown unit => fail safe, no silent numeric.
+    await page.selectOption('#pcrUnit', '');
+    await page.waitForTimeout(120);
+    const s5Asdas = await page.locator('#asdasCrpResult').inputValue();
+    record(`S5 ${label}: unidad desconocida => ASDAS-CRP vacío (sin score silencioso)`,
+      s5Asdas === '', `asdas='${s5Asdas}'`);
+    const s5NoteA = await page.locator('#asdasPcrConversionNote').textContent();
+    record('S5: nota ASDAS explica el fallo seguro', s5NoteA.includes('fallo seguro'),
+      `asdas='${s5NoteA}'`);
+    const s5Mirror = await page.locator('#asdasPcrUnitMirror').textContent();
+    record('S5: espejo de unidad muestra estado sin unidad', s5Mirror.includes('unidad no informada'), `mirror='${s5Mirror}'`);
+
+    // S7 — Console/page errors.
+    record(`S7 ${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+    record(`S7 ${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+  } finally {
+    await context.close();
+  }
+}
+
+// APs pass: DAPSA is APs-only, so every DAPSA and PCR-source-traceability
+// scenario must run under `aps`.
+async function runApsSuite(label, pagePath, collectFnName) {
+  console.log(`\n=== ${label} (${pagePath}) — APs / DAPSA ===`);
+  const { context, page, consoleErrors, pageErrors } = await openPage(browser, pagePath);
+
+  try {
+    // Supported interaction: adapt the form to APs (DAPSA surface).
+    await page.selectOption('#diagnosticoPrimario', 'aps');
+    await page.waitForTimeout(300);
+    for (const sel of ['#pcrValue', '#dapsaResult', '.homunculus-svg-wrapper']) {
+      const visible = await openAncestorCollapsibles(page, sel);
+      if (!visible) throw new Error(`no fue posible hacer visible ${sel} mediante interacción soportada`);
+    }
+
+    // Real homunculus clicks: 1 dolorosa (NAD) + 1 tumefacta (NAT).
+    await page.locator('.homunculus-mode-btn[data-mode="nad"]').click();
+    await page.locator('[data-region-id="hombro-derecho"]').first().click();
+    await page.locator('.homunculus-mode-btn[data-mode="nat"]').click();
+    await page.locator('[data-region-id="hombro-izquierdo"]').first().click();
+
+    const fill = async (sel, value) => {
+      await page.locator(sel).first().fill(value);
+      await page.waitForTimeout(80);
+    };
+
     // S3 — DAPSA conversion mg/L -> mg/dL (real NAD/NAT homunculus marks).
     await page.selectOption('#pcrUnit', 'mg/L');
     await fill('#pcrValue', '30');
@@ -289,19 +341,15 @@ async function runPageSuite(label, pagePath, collectFnName) {
     const s4NoteHidden = await page.locator('#dapsaPcrConversionNote').isHidden();
     record('S4: nota de conversión oculta cuando no hay conversión', s4NoteHidden, `visible=${!s4NoteHidden}`);
 
-    // S5 — Unknown unit => fail safe, no silent numeric.
+    // S5 (DAPSA half) — Unknown unit => fail safe, no silent numeric.
     await page.selectOption('#pcrUnit', '');
     await page.waitForTimeout(120);
-    const s5Asdas = await page.locator('#asdasCrpResult').inputValue();
     const s5Dapsa = await page.locator('#dapsaResult').inputValue();
-    record('S5 ${label}: unidad desconocida => ASDAS-CRP y DAPSA vacíos (sin score silencioso)'.replace('${label}', label),
-      s5Asdas === '' && s5Dapsa === '', `asdas='${s5Asdas}', dapsa='${s5Dapsa}'`);
-    const s5NoteA = await page.locator('#asdasPcrConversionNote').textContent();
+    record(`S5 ${label}: unidad desconocida => DAPSA vacío (sin score silencioso)`,
+      s5Dapsa === '', `dapsa='${s5Dapsa}'`);
     const s5NoteD = await page.locator('#dapsaPcrConversionNote').textContent();
-    record('S5: notas explican el fallo seguro', s5NoteA.includes('fallo seguro') && s5NoteD.includes('fallo seguro'),
-      `asdas='${s5NoteA}', dapsa='${s5NoteD}'`);
-    const s5Mirror = await page.locator('#asdasPcrUnitMirror').textContent();
-    record('S5: espejo de unidad muestra estado sin unidad', s5Mirror.includes('unidad no informada'), `mirror='${s5Mirror}'`);
+    record('S5: nota DAPSA explica el fallo seguro', s5NoteD.includes('fallo seguro'),
+      `dapsa='${s5NoteD}'`);
 
     // S6 — Traceability via the supported collection API (read-only evaluate).
     await page.selectOption('#pcrUnit', 'mg/dL');
@@ -325,8 +373,10 @@ async function runPageSuite(label, pagePath, collectFnName) {
 let browser;
 try {
   browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
-  await runPageSuite('primera_visita', 'primera_visita.html', 'recopilarDatosFormulario');
-  await runPageSuite('seguimiento', 'seguimiento.html', 'recopilarDatosFormularioSeguimiento');
+  await runEspaSuite('primera_visita', 'primera_visita.html');
+  await runApsSuite('primera_visita', 'primera_visita.html', 'recopilarDatosFormulario');
+  await runEspaSuite('seguimiento', 'seguimiento.html');
+  await runApsSuite('seguimiento', 'seguimiento.html', 'recopilarDatosFormularioSeguimiento');
 } catch (err) {
   console.error('ENVIRONMENT FAILURE: ' + err.message);
   results.push(false);
