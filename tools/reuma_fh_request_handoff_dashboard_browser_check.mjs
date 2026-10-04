@@ -197,12 +197,15 @@ async function isReallyHitTestable(page, selector) {
 }
 
 // Legacy blacklist: must not appear anywhere in the outgoing artifact
-// (case-insensitive), mirroring the frozen oracle E6 lists.
+// (case-insensitive). It mirrors the frozen oracle E6 lists plus the
+// `Notas clínico` term that issue #531 §6 requires absent; the coverage
+// assertion below fails if any #531 §6 concept loses its BLACKLIST token.
 const BLACKLIST = [
     'ESTADO PREBIOLÓGICO / VACUNACIÓN',
     'Estado prebiológico:',
     'fecha validación',
     'Fuente de datos',
+    'Notas clínico',
     'Observaciones prebiológico',
     'Hemograma',
     'Bioquímica',
@@ -225,6 +228,49 @@ function blacklistHits(text) {
     const lower = text.toLowerCase();
     return BLACKLIST.filter((tok) => lower.includes(tok.toLowerCase()));
 }
+
+// ---------- #531 §6 blacklist coverage (deterministic closure) ----------
+// Literal requirement from issue #531 §QA item 6: the outgoing artifact must
+// not carry legacy global state, validation date, source, `Notas clínico`,
+// prebiologic observations, haemogram, biochemistry, serologies,
+// IGRA/Mantoux, chest X-ray, vaccination, referral nor pending vaccines.
+// Each §6 concept is mapped to the BLACKLIST token(s) that enforce it; the
+// assertion fails if any required token is dropped, and proves blacklistHits
+// (the very matcher used on the real artifacts) detects every required term.
+const ISSUE_531_6_REQUIRED = {
+    'estado global legacy': ['ESTADO PREBIOLÓGICO / VACUNACIÓN', 'Estado prebiológico:'],
+    'fecha validación': ['fecha validación'],
+    'fuente': ['Fuente de datos'],
+    'Notas clínico': ['Notas clínico'],
+    'Observaciones prebiológico': ['Observaciones prebiológico'],
+    'hemograma': ['Hemograma'],
+    'bioquímica': ['Bioquímica'],
+    'serologías': ['Serologías'],
+    'IGRA/Mantoux': ['IGRA', 'Mantoux'],
+    'Rx tórax': ['Rx tórax'],
+    'vacunación': ['Vacunación revisada', 'Vacunación OK'],
+    'derivación': ['Medicina preventiva derivada', 'derivada'],
+    'vacunas pendientes': ['Vacunas pendientes'],
+};
+function assertBlacklistCoverage() {
+    const missing = [];
+    const notCaught = [];
+    for (const [concept, tokens] of Object.entries(ISSUE_531_6_REQUIRED)) {
+        for (const token of tokens) {
+            if (!BLACKLIST.some((entry) => entry.toLowerCase() === token.toLowerCase())) {
+                missing.push(`${concept} => ${token}`);
+            }
+            if (blacklistHits(token).length === 0) {
+                notCaught.push(`${concept} => ${token}`);
+            }
+        }
+    }
+    record(`#531 §6: BLACKLIST cubre los ${Object.keys(ISSUE_531_6_REQUIRED).length} conceptos exigidos`,
+        missing.length === 0, `sin cubrir=${JSON.stringify(missing)}`);
+    record('#531 §6: blacklistHits detecta todo término exigido (incluido Notas clínico)',
+        notCaught.length === 0, `no detectados=${JSON.stringify(notCaught)}`);
+}
+assertBlacklistCoverage();
 
 async function openDashboardPage(browser, patientId) {
     // Supported route: load the synthetic DB through the real session gate
