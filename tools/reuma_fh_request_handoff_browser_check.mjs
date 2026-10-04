@@ -16,10 +16,17 @@
  *   J1  Primera Visita, both block states explicit (OK / SOLICITADA_PENDIENTE):
  *       artifact carries exactly `Analítica: OK` + `Medicina Preventiva:
  *       SOLICITADA_PENDIENTE` and nothing else from the legacy block;
+ *   J1b Primera Visita, exactly one state explicit (Analítica only): the
+ *       explicit line is present, Medicina Preventiva is absent (no
+ *       fabrication), legacy blacklist absent, no console/page error;
  *   J2  Primera Visita, both block states absent (empty default): no
  *       Analítica/Medicina Preventiva line, no fabricated state token;
  *   J3  Seguimiento (?id= synthetic patient), both explicit (NO_SOLICITADA /
  *       OK): artifact carries exactly those two lines;
+ *   J3b Seguimiento (?id= synthetic patient), exactly one state explicit
+ *       (Medicina Preventiva only): the explicit line is present, Analítica is
+ *       absent (no fabrication), legacy blacklist absent, no console/page
+ *       error;
  *   J4  Seguimiento (?id= synthetic patient), both absent: no state lines, no
  *       fabrication.
  *
@@ -373,6 +380,12 @@ async function runJourney(browser, label, urlPath, cip, analitica, preventiva, e
             const missing = expectLines.filter((exp) => !artifact.includes(exp));
             record(`${label}: emite exactamente ${JSON.stringify(expectLines)}`, missing.length === 0 && lines.length === expectLines.length, `faltan=${JSON.stringify(missing)} líneas=${JSON.stringify(lines)}`);
         }
+        if (Array.isArray(expectLines) && expectLines.length === 1) {
+            // Exactly-one-absent journey (F2): the complementary state must not
+            // be fabricated anywhere in the artifact.
+            const absentLabel = expectLines[0].startsWith('Analítica') ? 'Medicina Preventiva' : 'Analítica';
+            record(`${label}: el estado ausente (${absentLabel}) no se fabrica`, !new RegExp(`${absentLabel}\\s*:`).test(artifact), excerptPrebio(artifact));
+        }
 
         await assertBlacklist(label, artifact);
         await assertCommonPreservation(label, artifact);
@@ -399,8 +412,10 @@ let browser;
 try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
     await runJourney(browser, 'J1 primera visita ambos explícitos', '/primera_visita.html', 'CIP-SYN-FH-J1', 'OK', 'SOLICITADA_PENDIENTE', ['Analítica: OK', 'Medicina Preventiva: SOLICITADA_PENDIENTE']);
+    await runJourney(browser, 'J1b primera visita sólo Analítica explícita (Medicina Preventiva ausente)', '/primera_visita.html', 'CIP-SYN-FH-J1B', 'OK', '', ['Analítica: OK']);
     await runJourney(browser, 'J2 primera visita ambos ausentes', '/primera_visita.html', 'CIP-SYN-FH-J2', '', '', null);
     await runJourney(browser, 'J3 seguimiento ambos explícitos', '/seguimiento.html?id=SYN-FH-300', 'SYN-FH-300', 'NO_SOLICITADA', 'OK', ['Analítica: NO_SOLICITADA', 'Medicina Preventiva: OK']);
+    await runJourney(browser, 'J3b seguimiento sólo Medicina Preventiva explícita (Analítica ausente)', '/seguimiento.html?id=SYN-FH-300', 'SYN-FH-300', '', 'OK', ['Medicina Preventiva: OK']);
     await runJourney(browser, 'J4 seguimiento ambos ausentes', '/seguimiento.html?id=SYN-FH-400', 'SYN-FH-400', '', '', null);
 } finally {
     if (browser) await browser.close();

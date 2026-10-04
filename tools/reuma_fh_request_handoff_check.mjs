@@ -165,20 +165,72 @@ const invalidStates = {
 };
 
 // ---------- block extraction ----------
-// Legacy shape: slice from the legacy header to the footer separator.
-// Fixed shape: collect the frozen two-state lines (optional bullet prefix).
+// Legacy shape (left frozen and untouched: it is the pre-#530 baseline shape
+// the oracle was frozen against at T1): slice from the legacy header to the
+// footer separator.
+//
+// Fixed shape (#530): the prebiologic block is DELIMITED STRUCTURALLY from the
+// emitted artifact's fixed section order — verified against
+// `modules/pharmacyRequest.js` generateRequestText AND against real generated
+// artifacts — as the trailing content region between the end of the last
+// explicit clinical section and the trailing footer separator. The region is
+// never derived from the state lines themselves, so state lines emitted in the
+// wrong section (e.g. under DIAGNÓSTICO) cannot false-green (finding F1).
 const LEGACY_HEADER = 'ESTADO PREBIOLÓGICO / VACUNACIÓN';
 const STATE_LINE_RE = /^[-·•\s]*(Analítica|Medicina Preventiva)\s*:\s*(\S+)\s*$/;
+const FIXED_FOOTER_ANCHOR = 'Solicitud generada desde Hub Clínico Reumatología v2';
+const FIXED_SEPARATOR = '════════';
+// Frozen explicit clinical section headers, in the generator's fixed order:
+// header → DIAGNÓSTICO → EVALUACIÓN DE ACTIVIDAD → COMORBILIDADES ACTIVAS /
+// FACTORES RELEVANTES → TRATAMIENTO ACTUAL → DECISIÓN TERAPÉUTICA →
+// prebiologic block → footer separator.
+const FIXED_SECTION_HEADERS = [
+    'DIAGNÓSTICO',
+    'EVALUACIÓN DE ACTIVIDAD',
+    '▓▓▓ COMORBILIDADES ACTIVAS / FACTORES RELEVANTES ▓▓▓',
+    'TRATAMIENTO ACTUAL',
+    'DECISIÓN TERAPÉUTICA'
+];
+function fixedPrebioRegion(text) {
+    const lines = text.split('\n');
+    const footerLineIdx = lines.findIndex((l) => l.includes(FIXED_FOOTER_ANCHOR));
+    if (footerLineIdx === -1) {
+        fail(`estructura FH inesperada: falta el pie ${JSON.stringify(FIXED_FOOTER_ANCHOR)}`);
+    }
+    // The prebiologic region ends at the blank line immediately preceding the
+    // footer's opening separator line (never a partial separator substring).
+    let sepLineIdx = footerLineIdx - 1;
+    while (sepLineIdx >= 0 && lines[sepLineIdx].trim() === '') sepLineIdx--;
+    if (sepLineIdx < 0 || !/^═+$/.test(lines[sepLineIdx].trim())) {
+        fail('estructura FH inesperada: falta el separador de pie antes del bloque prebiológico');
+    }
+    const head = lines.slice(0, sepLineIdx).join('\n');
+    // Sections are emitted blank-line separated; the prebiologic region is
+    // every paragraph after the last frozen explicit clinical section.
+    const paragraphs = head.split(/\n{2,}/);
+    let lastSectionIdx = -1;
+    for (let i = 0; i < paragraphs.length; i++) {
+        const firstLine = paragraphs[i].split('\n')[0].trim();
+        if (FIXED_SECTION_HEADERS.includes(firstLine)) lastSectionIdx = i;
+    }
+    if (lastSectionIdx === -1) {
+        fail('estructura FH inesperada: no se pudo delimitar la última sección clínica antes del bloque prebiológico');
+    }
+    return paragraphs.slice(lastSectionIdx + 1).join('\n\n');
+}
 function extractPrebioBlock(text) {
     const legacyIdx = text.indexOf(LEGACY_HEADER);
     if (legacyIdx !== -1) {
-        const endIdx = text.indexOf('════════', legacyIdx + LEGACY_HEADER.length);
+        const endIdx = text.indexOf(FIXED_SEPARATOR, legacyIdx + LEGACY_HEADER.length);
         return text.slice(legacyIdx, endIdx === -1 ? text.length : endIdx);
     }
-    return text.split('\n').filter((l) => STATE_LINE_RE.test(l.trim())).join('\n');
+    return fixedPrebioRegion(text);
 }
 function stateLines(block) {
     return block.split('\n').map((l) => l.trim()).filter((l) => STATE_LINE_RE.test(l));
+}
+function nonStateRegionLines(block) {
+    return block.split('\n').map((l) => l.trim()).filter((l) => l !== '' && !STATE_LINE_RE.test(l));
 }
 
 // ---------- results ----------
@@ -261,6 +313,22 @@ record('E2.2 ambos explícitos: sólo las dos líneas (Medicina Preventiva: SOLI
     const lines = stateLines(block);
     if (lines.length !== 2) fail(`el bloque debe contener exactamente 2 líneas de estado, hay ${lines.length}: ${JSON.stringify(block.slice(0, 400))}`);
 });
+record('E2.3 ambos explícitos: la región prebiológica contiene sólo las dos líneas de estado (F3)', () => {
+    const block = extractPrebioBlock(generate(bothExplicit));
+    const extra = nonStateRegionLines(block);
+    if (extra.length) fail(`contenido ajeno en la región prebiológica: ${JSON.stringify(extra)}`);
+    const lines = stateLines(block);
+    if (lines.length !== 2) fail(`la región debe contener exactamente 2 líneas de estado, hay ${lines.length}`);
+});
+record('E2.4 ambos explícitos: las dos líneas sólo aparecen dentro de la región prebiológica (F1)', () => {
+    const text = generate(bothExplicit);
+    const region = extractPrebioBlock(text);
+    const allState = text.split('\n').map((l) => l.trim()).filter((l) => STATE_LINE_RE.test(l));
+    const regionState = stateLines(region);
+    if (allState.length !== regionState.length) {
+        fail(`líneas de estado fuera de la región prebiológica: artefacto=${allState.length} región=${regionState.length} ${JSON.stringify(allState)}`);
+    }
+});
 
 // ================= E3 — uno explícito (RED: E3.1) =================
 record('E3.1 un solo estado: emite Analítica: NO_SOLICITADA', () => {
@@ -272,6 +340,16 @@ record('E3.2 un solo estado: Medicina Preventiva permanece ausente (anti-fabrica
     if (/Medicina Preventiva\s*:/.test(block)) fail('Medicina Preventiva fabricada sin estado explícito');
     if (/Medicina Preventiva\s*:\s*(NO_SOLICITADA|SOLICITADA_PENDIENTE|OK)/.test(generate(oneExplicit))) {
         fail('estado fabricado para Medicina Preventiva');
+    }
+});
+record('E3.3 un solo estado: la región prebiológica contiene sólo Analítica: NO_SOLICITADA, sin contenido ajeno (F1/F3)', () => {
+    const text = generate(oneExplicit);
+    const block = extractPrebioBlock(text);
+    const extra = nonStateRegionLines(block);
+    if (extra.length) fail(`contenido ajeno en la región prebiológica: ${JSON.stringify(extra)}`);
+    const allState = text.split('\n').map((l) => l.trim()).filter((l) => STATE_LINE_RE.test(l));
+    if (allState.length !== 1 || !/^[-·•\s]*Analítica\s*:\s*NO_SOLICITADA$/.test(allState[0])) {
+        fail(`la región debe contener sólo "Analítica: NO_SOLICITADA", recibido ${JSON.stringify(allState)}`);
     }
 });
 
@@ -290,6 +368,13 @@ record('E4.2 ambos ausentes: ningún token de estado en el bloque (OK/APTO/NO_SO
 record('E4.3 ambos ausentes: sin ND ni líneas etiquetadas-vacías en el bloque', () => {
     const block = extractPrebioBlock(generate(bothAbsent));
     mustNotContain(block, 'ND', 'ausencia→ND');
+});
+record('E4.4 ambos ausentes: la región prebiológica está vacía y no hay líneas de estado en todo el artefacto (F1/F3)', () => {
+    const text = generate(bothAbsent);
+    const block = extractPrebioBlock(text);
+    if (block.trim() !== '') fail(`la región prebiológica debe estar vacía, recibido ${JSON.stringify(block)}`);
+    const allState = text.split('\n').filter((l) => STATE_LINE_RE.test(l.trim()));
+    if (allState.length) fail(`líneas de estado presentes sin estado explícito: ${JSON.stringify(allState)}`);
 });
 
 // ================= E5 — inválidos/legacy (RED: E5.2) =================
