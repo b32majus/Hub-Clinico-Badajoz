@@ -1,0 +1,36 @@
+[
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "renewal_id": "REN-SYN-0001",
+    "line_id": "line-syn-rn-001",
+    "patient_id": "patient-syn-rn-001",
+    "service_id": "svc-syn-der-01",
+    "report_type": "SOLICITADA_AL_PRESCRIPTOR",
+    "reported_at": "2026-10-05T09:30:00Z",
+    "reported_by_role": "nursing",
+    "demo_flag": true
+  },
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "line_id": "line-syn-rn-001",
+    "patient_id": "patient-syn-rn-001",
+    "service_id": "svc-syn-der-01",
+    "report_type": "SOLICITADA_AL_PRESCRIPTOR",
+    "reported_at": "2026-10-05T10:30:00Z",
+    "reported_by_role": "nursing",
+    "demo_flag": true
+  },
+  {
+    "contract_version": "renewal-handoff/v1",
+    "record_type": "renewal_report_nursing_to_fh",
+    "line_id": "line-syn-rn-001",
+    "patient_id": "patient-syn-rn-001",
+    "service_id": "svc-syn-der-01",
+    "report_type": "SOLICITADA_AL_PRESCRIPTOR",
+    "reported_at": "2026-10-05T11:30:00Z",
+    "reported_by_role": "nursing",
+    "demo_flag": true
+  }
+]

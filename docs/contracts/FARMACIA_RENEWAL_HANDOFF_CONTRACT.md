@@ -57,7 +57,7 @@ Modelo cerrado: `valid_until` (`YYYY-MM-DD`), `valid_until_kind ∈ {confirmed, 
 
 - Una duración **configurada** jamás asciende a `confirmed`. `unknown` nunca materializa fecha (`valid_until = null`, `window_state = not_evaluable`).
 - **Derivación (finding 4, #509):** cuando la fuente declara derivación (`..._duration_confirmed` / `..._duration_configured`) se exige `issue_date` + `validity_days` y se cumple `valid_until == issue_date + validity_days` (por ejemplo 2026-06-01 + 365 = 2027-06-01); una discrepancia ⇒ `INVALID_FIELD`.
-- **Sin jerarquía universal (finding 6 / OCT-OPEN-013):** la jerarquía de precedencia de fuentes y `DATE_SOURCE_CONFLICT` del candidato rechazado quedan **ELIMINADAS**. Hasta validación humana se conserva fecha + calidad/origen explícitos y se falla cerrado ante discrepancia material; la regla de exportación (discrepancia material entre fuentes candidatas ⇒ el registro no se exporta) es **prosa N1, sin código aquí**.
+- **Sin jerarquía universal (OCT-OPEN-013):** la jerarquía de precedencia de fuentes y `DATE_SOURCE_CONFLICT` del candidato rechazado quedan **ELIMINADAS**. Hasta validación humana se conserva fecha + calidad/origen explícitos y se falla cerrado ante discrepancia material; la regla de exportación (discrepancia material entre fuentes candidatas ⇒ el registro no se exporta) es **prosa N1, sin código aquí**.
 - Ventana: `days = valid_until − fecha(evaluated_at)`; `<0` `expired`; `0..warning_window_days` `due_soon`; `> warning_window_days` `outside_window`; `unknown` ⇒ `not_evaluable`. El checker la **recomputa** de forma independiente y rechaza una declaración incoherente.
 - Validación de calendario semántica **autoritativa** en el checker (sin normalización): una fecha imposible (`2026-02-31`) se rechaza `INVALID_FIELD` aunque el patrón la admita.
 
@@ -104,13 +104,13 @@ Schema: [`renewal_handoff_nursing_to_fh_v1.schema.json`](../../schemas/renewal/r
 **Precedencia de lote (una sola secuencia; prosa y código coinciden — finding 2):**
 
 1. **Preflight de versión** — cualquier `contract_version` distinta ⇒ lote completo rechazado `UNSUPPORTED_CONTRACT_VERSION`, `applied=0`.
-2. **Duplicado de `renewal_id` en el lote** — solo cuentan ids string no vacíos; una fila sin `renewal_id` cae a validación de fila ⇒ lote completo `DUPLICATE_RENEWAL_ID_IN_BATCH`, `applied=0`.
+2. **Duplicado de `renewal_id` en el lote** — la puerta de duplicados solo considera **ids string no vacíos repetidos**: solo la repetición de un id así ⇒ lote completo `DUPLICATE_RENEWAL_ID_IN_BATCH`, `applied=0`. Una fila con `renewal_id` ausente/inválido **no** dispara esta puerta: cae al paso 3 y recibe su error tipado de fila (p. ej. `MISSING_REQUIRED_FIELD`), dejando el resto del lote procesándose intacto.
 3. **Validación por fila** — schema + calendario + derivación. Error tipado de fila, **nada se aplica**, el resto del lote continúa (atomicidad por fila).
 4. **Reconciliación por fila.**
 
-**Orden de reconciliación por fila (modelo mínimo):** `UNKNOWN_RENEWAL_ID` → `IDENTITY_MISMATCH` (paciente/línea/servicio difieren; un `service_id` cambiado es solo `IDENTITY_MISMATCH`) → `LINE_NOT_ACTIVE` → replay exacto de la **última operación aplicada** (mismo `renewal_id`+`report_type`+`reported_at`+payload deep-equal) ⇒ `no_op` → misma identidad de operación con payload distinto ⇒ `STATE_CONFLICT` (estado preservado, sin merge) → target inalcanzable/regresivo desde el estado actual por una arista de Enfermería ⇒ `REPORT_NOT_APPLICABLE` → en otro caso se acepta la transición.
+**Orden de reconciliación por fila (requisitos de comportamiento; el modelo mínimo del arnés los demuestra):** `UNKNOWN_RENEWAL_ID` → `IDENTITY_MISMATCH` (paciente/línea/servicio difieren; un `service_id` cambiado es solo `IDENTITY_MISMATCH`) → `LINE_NOT_ACTIVE` → replay exacto de la operación ya aplicada (misma identidad de operación y payload deep-equal) ⇒ `no_op` sin efectos duplicados → misma identidad de operación (mismo `renewal_id`+`report_type`+`reported_at`) con payload distinto ⇒ `STATE_CONFLICT` (estado preservado, sin merge) → target inalcanzable/regresivo desde el estado actual por una arista de Enfermería ⇒ `REPORT_NOT_APPLICABLE` → en otro caso se acepta la transición.
 
-La memoria de idempotencia es **solo la última operación aplicada**; el historial multi-operación y `report_id` quedan explícitamente diferidos a N3 (no congelados aquí).
+Requisitos normativos de idempotencia (independientes del mecanismo): un replay exacto de la operación ya aplicada **no** duplica efectos; un replay en conflicto de la misma identidad de operación (mismo `renewal_id`+`report_type`+`reported_at`, payload distinto) **falla cerrado** (`STATE_CONFLICT`, sin merge); el estado permanece preservado ante cualquier rechazo. El checker demuestra estos requisitos con un **modelo mínimo en memoria que recuerda solo la última operación aplicada**: mecánica del arnés de pruebas N0, **no** la implementación requerida de N3; el historial multi-operación y `report_id` quedan explícitamente diferidos a N3 / `REN-OPEN-003` (no congelados aquí).
 
 **Códigos tipados (conjunto final exacto de 10):**
 
@@ -124,7 +124,7 @@ La memoria de idempotencia es **solo la última operación aplicada**; el histor
 | `UNKNOWN_RENEWAL_ID` | El retorno nunca crea una renovación. |
 | `IDENTITY_MISMATCH` | `patient_id`/`line_id`/`service_id` difieren del registro FH. |
 | `LINE_NOT_ACTIVE` | La línea del ciclo no está `active`. |
-| `STATE_CONFLICT` | Misma identidad de operación (última aplicada) con payload distinto; sin merge. |
+| `STATE_CONFLICT` | Misma identidad de operación (mismo `renewal_id`+`report_type`+`reported_at`) ya aplicada con payload distinto; falla cerrado, sin merge, estado preservado. |
 | `REPORT_NOT_APPLICABLE` | Target inalcanzable/regresivo desde el estado actual. |
 
 `SERVICE_CHANGE_REQUIRES_FH_ACT` queda **eliminado** (código muerto e inalcanzable — finding 3). Ningún error se oculta tras un fallback silencioso: `UNKNOWN ≠ SUCCESS`.
@@ -148,6 +148,7 @@ Fixtures: [`tools/fixtures/renewal/`](../../tools/fixtures/renewal/) y bundle [`
 9. **Identidad** — `service_id` distinto sobre `REN-SYN-0002` ⇒ `IDENTITY_MISMATCH`.
 10. **No aplicable** — retorno sobre `REN-SYN-0003` (ya `RENOVACIÓN_COMUNICADA`) ⇒ `REPORT_NOT_APPLICABLE`; Enfermería no puede avanzar a un terminal.
 11. **Puertas de lote** — `batch/unsupported_version_batch.json` (con duplicado + fila inválida) ⇒ `UNSUPPORTED_CONTRACT_VERSION`; `batch/duplicate_renewal_id_batch.json` (con fila inválida) ⇒ `DUPLICATE_RENEWAL_ID_IN_BATCH`; `batch/mixed_row_batch.json` ⇒ `processed`, `applied=1`, filas `[accepted, FORBIDDEN_FIELD_IN_RETURN, INVALID_FIELD]` con las rechazadas dejando el estado FH intacto.
+12. **Fila sin `renewal_id` en lote** — `batch/missing_id_row_batch.json` (1 fila válida + 2 filas sin la clave `renewal_id`) ⇒ `processed`, `applied=1`, filas `[accepted, MISSING_REQUIRED_FIELD, MISSING_REQUIRED_FIELD]`. Dos filas sin id son esenciales: una puerta de duplicados ingenua sobre valores crudos trataría los dos ausentes como duplicado y rechazaría el lote por error; el resultado `processed` (no `rejected_batch`, no `DUPLICATE_RENEWAL_ID_IN_BATCH`) es la aserción anti-regresión de que la puerta de duplicados solo considera ids string no vacíos repetidos.
 
 ## 12. Registro de incógnitas (no resueltas aquí)
 
@@ -159,7 +160,7 @@ Fixtures: [`tools/fixtures/renewal/`](../../tools/fixtures/renewal/) y bundle [`
 | REN-OPEN-004 | Fuente real de verdad de la validez de prescripción | `PENDIENTE_EQUIPO` |
 | REN-OPEN-005 | Canal/formato operativo con el servicio prescriptor | `FUERA_DE_ALCANCE` (humano/operativo) |
 | REN-OPEN-006 | Validación del equipo de umbrales/duraciones candidatos | `PENDIENTE_EQUIPO` |
-| REN-OPEN-007 | Layout físico de hoja/workbook Excel para N2 | `CONTRACT_PENDING` |
+| REN-OPEN-007 | Layout físico de hoja/workbook Excel para N2 y política de columnas físicas desconocidas/adicionales | `CONTRACT_PENDING` |
 | REN-OPEN-008 | Dashboard Enfermería (N4) | `DEFERRED` tras el MVP |
 | OCT-OPEN-010 | Cierre de renovación: fecha explícita vs duración (12 meses habitual; posibles 6/3) con cálculo/confirmación de nueva validez | `PENDIENTE_EQUIPO` |
 | OCT-OPEN-011 | Suspensión: dato mínimo del acto FH (hipótesis: fecha del acto + observación opcional) y fecha clínica distinta posterior | `PENDIENTE_EQUIPO` |
@@ -171,7 +172,7 @@ Fixtures: [`tools/fixtures/renewal/`](../../tools/fixtures/renewal/) y bundle [`
 Base: **este contrato refrozen** + máquina de estados. Orden de integración **estricto N1 → N2 → N3**. Cada ticket debe congelar su **oráculo de aceptación principal derivado de este contrato antes** de que la implementación reciba autoridad de escritura; el builder puede ejecutar el oráculo pero **no** debilitarlo ni reemplazarlo. Cada ticket aporta fixtures negativos plantados con su código esperado.
 
 - **N1 — FH:** detección `due_soon`/`expired` + bandeja + export FH → Enfermería (acuña `renewal_id`; un ciclo abierto por línea). Negativos exigidos: ventana incoherente, `unknown` con fecha, mapping source/kind inválido, duración configurada ascendida a confirmada, derivación de duración incumplida. **N1 requiere QA de navegador con interacción soportada** cuando aterrice la bandeja.
-- **N2 — Adapter Excel Enfermería:** round-trip canónico ↔ columnas; fail-closed ante columnas requeridas desconocidas/ausentes. Layout físico **no** congelado aquí (`REN-OPEN-007`).
+- **N2 — Adapter Excel Enfermería:** round-trip canónico ↔ columnas. N0 exige solo **fail-closed cuando un dato canónico obligatorio no pueda mapearse**; que las columnas físicas desconocidas/adicionales se acepten o se rechacen **no se decide en N0** — pertenece a N2 / `REN-OPEN-007`. Layout físico **no** congelado aquí (`REN-OPEN-007`).
 - **N3 — Reconciliación del retorno + acto FH explícito:** importar el retorno, aplicar §9, ejecutar el acto FH explícito (`ACTUALIZADA_POR_FH`/`TRATAMIENTO_SUSPENDIDO`); incluye la mecánica de `report_id`/historial si es necesaria (`REN-OPEN-003`). Sin `ACTUALIZADA_POR_FH` automático.
 
 **N0 no requiere QA de navegador** (no hay runtime).
@@ -186,7 +187,7 @@ npm run verify:nexus
 git diff --check
 ```
 
-El checker compila ambos schemas (draft 2020-12, `additionalProperties:false`), aplica calendario semántico estricto sin normalización, **recomputa** la ventana y la **igualdad de derivación** de duración, ejecuta fixtures positivos/negativos y los escenarios (detección, retorno, idempotencia de última operación, conflicto, línea no activa, identidad, no aplicable y puertas de lote), verifica invariantes estructurales de la máquina de estados con una batería de mutaciones etiquetada por invariante, y **falla cerrado ante excepciones** (`runCase` + sonda ejecutable `--probe-exception-fail-closed`).
+El checker compila ambos schemas (draft 2020-12, `additionalProperties:false`), aplica calendario semántico estricto sin normalización, **recomputa** la ventana y la **igualdad de derivación** de duración, ejecuta fixtures positivos/negativos y los escenarios (detección, retorno, idempotencia (modelo mínimo de última operación en el arnés; evidencia, no mecanismo normativo), conflicto, línea no activa, identidad, no aplicable y puertas de lote), verifica invariantes estructurales de la máquina de estados con una batería de mutaciones etiquetada por invariante, y **falla cerrado ante excepciones** (`runCase` + sonda ejecutable `--probe-exception-fail-closed`).
 
 **Reversión:** al ser shaping, revertir únicamente este contrato, los schemas, las fixtures, el checker y el enganche de `package.json`. No hay migración, runtime ni persistencia que deshacer.
 
@@ -195,7 +196,7 @@ El checker compila ambos schemas (draft 2020-12, `additionalProperties:false`), 
 | Disposición | Elementos |
 | --- | --- |
 | **KEEP** | Renovación por línea/ciclo; identidad `renewal_id`/`line_id`/`patient_id`/`service_id`; modelo cerrado `valid_until` + `kind` + mapping `source→kind`; semántica de ventana; calendario fail-closed; `additionalProperties:false`; Excel como adapter; datos sintéticos; actos FH explícitos; atomicidad por fila; enlace a la máquina de estados como autoridad única. |
-| **SIMPLIFY** | Lifecycle de 8 estados ingleses → **6 tokens de flujo españoles**; retorno a **3 tokens**; orden de lote en **una** secuencia; idempotencia reducida a **última operación aplicada**; condición derivada `PRÓXIMA_A_RENOVACIÓN`; guard de campos cerrados; checkers con `runCase` sin verdes enmascarados. |
+| **SIMPLIFY** | Lifecycle de 8 estados ingleses → **6 tokens de flujo españoles**; retorno a **3 tokens**; orden de lote en **una** secuencia; idempotencia demostrada con un **modelo mínimo de última operación aplicada en el arnés** (evidencia, no mecanismo normativo); condición derivada `PRÓXIMA_A_RENOVACIÓN`; guard de campos cerrados; checkers con `runCase` sin verdes enmascarados. |
 | **DELETE** | Jerarquía `DATE_SOURCE_PRECEDENCE`/resolver/`DATE_SOURCE_CONFLICT` (OCT-OPEN-013); `SERVICE_CHANGE_REQUIRES_FH_ACT` (muerto); `lifecycle_state`/`requested_at`/`comment` del envelope FH→Enfermería; estados `CANCELLED`/`NOT_APPLICABLE`; baterías de mutación obsoletas (terminal-antes-que-replay, memoria histórica). |
 
 | Finding #509 | Cómo se cierra |
@@ -205,4 +206,4 @@ El checker compila ambos schemas (draft 2020-12, `additionalProperties:false`), 
 | 3. `SERVICE_CHANGE_REQUIRES_FH_ACT` muerto | Eliminado; conjunto final exacto de 10 códigos. |
 | 4. Derivación de duración no exigida | `valid_until == issue_date + validity_days`; positivo + negativo en checker. |
 | 5. `suspended` incoherente | Vocabulario cerrado de 6 `line_status_values` con `circuit_eligible == ["active"]`, asertado en el checker. |
-| 6. Precedencia de fuentes contradictoria | Jerarquía ELIMINADA; `OCT-OPEN-013` preservado abierto. |
+| 6. N1/N2/N3 sin secuenciar simple / N2 físico congelado en N0 | §13 orden estricto N1→N2→N3; layout y política de columnas de N2 no congelados (`REN-OPEN-007`). |

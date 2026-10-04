@@ -1,7 +1,7 @@
 {
   "scenarios_version": "renewal-scenarios/v1",
   "contract_version": "renewal-handoff/v1",
-  "description": "Bundle slim de escenarios sinteticos del contrato N0 refrozen (HUMAN SHAPING REFREEZE #446 + recuperacion #509). Cada escenario se evalua contra una copia limpia del seed. La deteccion (window_state) no crea ciclo; la gestion empieza con ENVIADA_A_ENFERMERÍA. El modelo de reconciliacion recuerda SOLO la ultima operacion aplicada. Docspec = {fixture+overrides} o {record} inline. Las filas de lote rechazadas dejan el estado FH intacto.",
+  "description": "Bundle slim de escenarios sinteticos del contrato N0 refrozen (HUMAN SHAPING REFREEZE #446 + recuperacion #509). Cada escenario se evalua contra una copia limpia del seed. La deteccion (window_state) no crea ciclo; la gestion empieza con ENVIADA_A_ENFERMERÍA. El modelo de reconciliacion del arnes recuerda SOLO la ultima operacion aplicada (mecanica del arnes, no implementacion requerida N3). Docspec = {fixture+overrides} o {record} inline. Las filas de lote rechazadas dejan el estado FH intacto.",
   "seed": {
     "known_renewals": [
       { "renewal_id": "REN-SYN-0001", "patient_id": "patient-syn-rn-001", "line_id": "line-syn-rn-001", "service_id": "svc-syn-der-01", "lifecycle_state": "ENVIADA_A_ENFERMERÍA", "line_status": "active" },
@@ -93,6 +93,20 @@
           { "outcome": "accepted" },
           { "outcome": "rejected", "error_code": "FORBIDDEN_FIELD_IN_RETURN" },
           { "outcome": "rejected", "error_code": "INVALID_FIELD" }
+        ]
+      }
+    },
+    {
+      "id": "batch_missing_id_row_not_duplicate_gate",
+      "kind": "batch_import",
+      "fixture": "batch/missing_id_row_batch.json",
+      "expect": {
+        "outcome": "processed",
+        "applied": 1,
+        "rows": [
+          { "outcome": "accepted" },
+          { "outcome": "rejected", "error_code": "MISSING_REQUIRED_FIELD" },
+          { "outcome": "rejected", "error_code": "MISSING_REQUIRED_FIELD" }
         ]
       }
     }
