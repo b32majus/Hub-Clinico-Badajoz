@@ -2474,42 +2474,79 @@ function initScoreWiring() {
 
         var result = HubTools.scores.calcularMDA(datos);
 
-        // Actualizar UI del MDA
-        var mdaNATEl = document.getElementById('mdaNAT');
-        var mdaNADEl = document.getElementById('mdaNAD');
-        var mdaEvaDEl = document.getElementById('mdaEvaDolor');
-        var mdaEvaGEl = document.getElementById('mdaEvaGlobal');
-        var mdaHAQEl = document.getElementById('mdaHAQ');
-        var mdaLEIEl = document.getElementById('mdaLEI');
-        var mdaPsoriasisEl = document.getElementById('mdaPsoriasis');
+        // Actualizar UI del MDA desde el estado por criterio (T4 #516). Cada
+        // criterio se presenta cumplido/no cumplido/pendiente y, si está
+        // pendiente, se nombra la fuente que falta; una fuente ausente nunca se
+        // pinta como 0/falso.
+        var valuesByKey = {
+            nat: result.nat,
+            nad: result.nad,
+            psoriasis: result.psoriasis,
+            lei: result.lei,
+            evaDolor: result.evaDolor,
+            evaGlobal: result.evaGlobal,
+            haq: result.haq
+        };
+        var valueIdsByKey = {
+            nat: 'mdaNAT',
+            nad: 'mdaNAD',
+            psoriasis: 'mdaPsoriasis',
+            lei: 'mdaLEI',
+            evaDolor: 'mdaEvaDolor',
+            evaGlobal: 'mdaEvaGlobal',
+            haq: 'mdaHAQ'
+        };
         var mdaCumplidosEl = document.getElementById('mdaCumplidos');
         var mdaResultEl = document.getElementById('mdaResultadoFinal');
+        var criterioEstados = Array.isArray(result.criterioEstados) ? result.criterioEstados : [];
 
-        if (mdaNATEl) mdaNATEl.textContent = result.nat;
-        if (mdaNADEl) mdaNADEl.textContent = result.nad;
-        if (mdaEvaDEl) mdaEvaDEl.textContent = result.evaDolor;
-        if (mdaEvaGEl) mdaEvaGEl.textContent = result.evaGlobal;
-        if (mdaHAQEl) mdaHAQEl.textContent = result.haq;
-        if (mdaLEIEl) mdaLEIEl.textContent = result.lei;
-        if (mdaPsoriasisEl) mdaPsoriasisEl.textContent = result.psoriasis;
-        if (mdaCumplidosEl) mdaCumplidosEl.textContent = result.cumplidos;
+        criterioEstados.forEach(function (criterio, index) {
+            var orden = index + 1;
+            var statusEl = document.getElementById('mdaStatus' + orden);
+            var criterioEl = document.getElementById('mdaCriterio' + orden);
+            var valueEl = document.getElementById(valueIdsByKey[criterio.key]);
+            var isPendiente = criterio.estado === 'pendiente';
+            var isCumplido = criterio.estado === 'cumplido';
 
-        // Actualizar status de cada criterio
-        for (var ci = 0; ci < result.criterios.length; ci++) {
-            var statusEl = document.getElementById('mdaStatus' + (ci + 1));
-            var criterioEl = document.getElementById('mdaCriterio' + (ci + 1));
             if (statusEl) {
-                statusEl.textContent = result.criterios[ci] ? '✓' : '✗';
-                statusEl.style.color = result.criterios[ci] ? '#28a745' : '#dc3545';
+                if (isPendiente) {
+                    statusEl.textContent = '—';
+                    statusEl.style.color = '#6c757d';
+                } else if (isCumplido) {
+                    statusEl.textContent = '✓';
+                    statusEl.style.color = '#28a745';
+                } else {
+                    statusEl.textContent = '✗';
+                    statusEl.style.color = '#dc3545';
+                }
+                var estadoLabel = isPendiente
+                    ? 'Pendiente — falta la fuente: ' + criterio.fuente
+                    : (isCumplido ? 'Cumplido' : 'No cumplido');
+                statusEl.setAttribute('data-estado', criterio.estado);
+                statusEl.setAttribute('title', estadoLabel);
+                statusEl.setAttribute('aria-label', estadoLabel);
             }
             if (criterioEl) {
-                criterioEl.style.backgroundColor = result.criterios[ci] ? '#28a74522' : '';
+                criterioEl.style.backgroundColor = isCumplido ? '#28a74522' : '';
             }
+            if (valueEl) {
+                // Corrección #516: los siete spans de valor se recogen verbatim
+                // por recopilarDatosFormulario/...Seguimiento y se exportan al
+                // legacy 497 (columnas 186-192). Un glifo de UI ('—') jamás
+                // puede convertirse en dato clínico exportado: se renderiza el
+                // valor derivado de la fuente cuando existe y '' cuando falta.
+                valueEl.textContent = String(valuesByKey[criterio.key] ?? '');
+            }
+        });
+
+        if (mdaCumplidosEl) {
+            mdaCumplidosEl.textContent = result.evaluable ? String(result.cumplidos) : '—';
         }
 
         if (mdaResultEl) {
             if (!result.evaluable) {
-                mdaResultEl.textContent = 'MDA INCOMPLETO';
+                var ausentes = Array.isArray(result.fuentesPendientes) ? result.fuentesPendientes : [];
+                mdaResultEl.textContent = 'MDA PENDIENTE — fuentes ausentes: ' + ausentes.join(', ');
                 mdaResultEl.style.color = '#6c757d';
                 mdaResultEl.style.fontWeight = 'normal';
             } else if (result.mdaAlcanzado) {
@@ -2527,6 +2564,17 @@ function initScoreWiring() {
     // Exponer para homunculus.js
     window.calcularMDALocal = recalcularMDA;
     debugLog('  ✓ MDA wiring + calcularMDALocal');
+
+    // PASI/BSA son fuente viva del criterio de psoriasis (T4 #516).
+    ['pasiValue', 'bsaValue'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', function () {
+                recalcularMDA();
+            });
+        }
+    });
+    debugLog('  ✓ PASI/BSA → MDA wiring');
 
     window.calcularDAPSALocal = recalcularDAPSA;
     debugLog('  ✓ DAPSA wiring + calcularDAPSALocal');
@@ -2749,6 +2797,10 @@ function initScoreWiring() {
             debugLog('  ✓ LES/Sjögren wiring (SLEDAI-2K, SLICC, ESSPRI, ESSDAI)');
         }
     })();
+
+    // Reflejar el estado real de las fuentes desde el arranque, en lugar del
+    // texto estático del HTML (T4 #516).
+    recalcularMDA();
 
     debugLog('✅ Score wiring completado');
 }

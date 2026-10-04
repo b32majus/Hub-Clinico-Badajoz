@@ -231,21 +231,6 @@ function calcularRAPID3(datos) {
 }
 
 function calcularMDA(datos) {
-    const incompleteResult = {
-        nat: '',
-        nad: '',
-        psoriasis: '',
-        lei: '',
-        evaDolor: '',
-        evaGlobal: '',
-        haq: '',
-        criterios: [],
-        cumplidos: 0,
-        mdaAlcanzado: false,
-        evaluable: false,
-        categoria: 'Incompleto'
-    };
-
     const nat = parseNumberInRange(datos?.nat, 0, 66, { fallback: null, integer: true });
     const nad = parseNumberInRange(datos?.nad, 0, 68, { fallback: null, integer: true });
     const pasi = parseNumberInRange(datos?.pasiValue, 0, 72, { fallback: null });
@@ -261,14 +246,60 @@ function calcularMDA(datos) {
     const hasPROs = allFinite([evaDolor, evaGlobal]);
     const hasFunction = Number.isFinite(haq);
     const evaluable = hasJointCounts && hasSkin && hasEnthesitis && hasPROs && hasFunction;
+
+    const evaDolorMM = Number.isFinite(evaDolor) ? evaDolor * 10 : null;
+    const evaGlobalMM = Number.isFinite(evaGlobal) ? evaGlobal * 10 : null;
+    const psoriasisCriterion = hasSkin
+        ? [
+            Number.isFinite(pasi) ? pasi <= 1 : false,
+            Number.isFinite(bsa) ? bsa <= 3 : false
+        ].some(Boolean)
+        : null;
+
+    // T4 #516: estado resuelto por criterio con independencia de los demás y de
+    // que el índice completo sea evaluable. Una fuente ausente queda
+    // `pendiente`; nunca se coacciona a 0/falso y nunca se inventa un valor.
+    const criterioEstados = [
+        { key: 'nat', estado: Number.isFinite(nat) ? (nat <= 1 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'NAT' },
+        { key: 'nad', estado: Number.isFinite(nad) ? (nad <= 1 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'NAD' },
+        // Corrección #516 (sólo estado de presentación, no fórmula): la
+        // ausencia de una de las dos fuentes nunca se presenta como negativo.
+        // cumplido si alguna fuente PRESENTE satisface; no_cumplido sólo con
+        // PASI y BSA presentes y ninguno satisfecho; pendiente en el resto
+        // (al menos una fuente ausente, que sigue apareciendo en
+        // fuentesPendientes). El booleano psoriasisCriterion/criterios.psoriasis,
+        // cumplidos y mdaAlcanzado no cambian: un criterio indeterminado no se
+        // acredita en el veredicto agregado (fórmula publicada intacta).
+        { key: 'psoriasis', estado: (Number.isFinite(pasi) && pasi <= 1) || (Number.isFinite(bsa) && bsa <= 3)
+            ? 'cumplido'
+            : (Number.isFinite(pasi) && Number.isFinite(bsa) ? 'no_cumplido' : 'pendiente'), fuente: 'PASI o BSA' },
+        { key: 'lei', estado: Number.isFinite(lei) ? (lei <= 1 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'LEI' },
+        { key: 'evaDolor', estado: Number.isFinite(evaDolor) ? (evaDolorMM <= 15 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'EVA Dolor' },
+        { key: 'evaGlobal', estado: Number.isFinite(evaGlobal) ? (evaGlobalMM <= 20 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'EVA Global' },
+        { key: 'haq', estado: Number.isFinite(haq) ? (haq <= 0.5 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'HAQ' }
+    ];
+    const fuentesPendientes = criterioEstados
+        .filter(criterio => criterio.estado === 'pendiente')
+        .map(criterio => criterio.fuente);
+
+    const incompleteResult = {
+        nat: '',
+        nad: '',
+        psoriasis: '',
+        lei: '',
+        evaDolor: '',
+        evaGlobal: '',
+        haq: '',
+        criterios: [],
+        cumplidos: 0,
+        mdaAlcanzado: false,
+        evaluable: false,
+        categoria: 'Incompleto',
+        criterioEstados,
+        fuentesPendientes
+    };
     if (!evaluable) return incompleteResult;
 
-    const evaDolorMM = evaDolor * 10;
-    const evaGlobalMM = evaGlobal * 10;
-    const psoriasisCriterion = [
-        Number.isFinite(pasi) ? pasi <= 1 : false,
-        Number.isFinite(bsa) ? bsa <= 3 : false
-    ].some(Boolean);
     const criterios = {
         nat: nat <= 1,
         nad: nad <= 1,
@@ -294,7 +325,9 @@ function calcularMDA(datos) {
         cumplidos,
         mdaAlcanzado,
         evaluable: true,
-        categoria: mdaAlcanzado ? 'MDA alcanzado' : 'MDA no alcanzado'
+        categoria: mdaAlcanzado ? 'MDA alcanzado' : 'MDA no alcanzado',
+        criterioEstados,
+        fuentesPendientes
     };
 }
 
