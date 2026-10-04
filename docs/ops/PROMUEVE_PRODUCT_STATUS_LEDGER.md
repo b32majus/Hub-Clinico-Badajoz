@@ -5,10 +5,13 @@
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**HEAD canónico verificado en esta reconciliación:** `a357be8510f4b81ecc077f518bd197ade940270e` (merge PR #511)
-**Último HEAD de producto Nexus verificado:** `3bf45760a27630823b61b0d19da8b64aeb060693` (PR #490, F4.4 Pharmacy Act v1)
+**Base canónica verificada para esta reconciliación:** `1b41724db7f86534880122e0a5263e25206b07ee` (merge PR #526); el merge documental posterior de #522 puede mover el tip Git sin cambiar este HEAD de producto
+**Último HEAD de producto Nexus verificado:** `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525); anterior `ee7379d24ef99633d3bede07c64b31a7038558e4` (PR #521 / #512+#517)
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
+
+**Safety/wiring Reuma:** #512 + #517 **PUBLICADOS Y VERIFICADOS** por PR #521 (merge `ee7379d24ef99633d3bede07c64b31a7038558e4`); #512–#520 cerrados/completed
+**Prebiológico mínimo Reuma:** #525 **PUBLICADO Y VERIFICADO** por PR #526 (merge `1b41724db7f86534880122e0a5263e25206b07ee`); solicitud Reuma→Farmacia permanece pendiente y fuera de ese alcance
 
 ## 1. Propósito
 
@@ -66,7 +69,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Categorías `Sistémicos / FAMEs / Biológicos` | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: respeta las tres categorías | Sí | Sintética | No | #447 / PR #449 | Clasificación explícita/versionada; no inferida en runtime. Evolución CIMA = concern separado. |
 | Hidratación visual de medicamento preseleccionado | `PENDIENTE` (deuda no bloqueante) | Parcial | Parcial | Defecto visible conocido | Finding previo; no reabierto por la pasada manual | Sí | Deuda no bloqueante | No | #448 OPEN | Deuda no bloqueante preservada; el valor autoritativo no se reporta perdido. |
 | Semántica legacy `search(query)` no categorizada | `PENDIENTE` (deuda no bloqueante) | Sí | Ruta legacy no soportada por controles Reuma actuales | No en recorrido soportado | No necesaria para cerrar train | Sí | Deuda API | No | #450 OPEN | Deuda no bloqueante preservada; decidir contrato workbook-only vs union; no mezclar con CIMA ni #448. |
-| Prebiológico simplificado: Analítica + Medicina Preventiva | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: funciona conceptualmente por bloques | Sí | Sintética | No | #445 / PR #449 | Tres estados explícitos por bloque, sin `APTO` global. Requisitos decididos: retirar `Fecha diagnóstico`, conservar Observaciones opcionales (3.2.12) y solicitud a Farmacia con sólo dos estados (3.2.13). |
+| Prebiológico simplificado: Analítica + Medicina Preventiva | `IMPLEMENTADO` | Sí | Sí | Sí | Manual 2026-10-04 + Chromium #525 41/0; `verify:nexus` PASS | Sí | Sintética | No | #445 / PR #449 + #525 / PR #526 | Estados explícitos `NO SOLICITADA / SOLICITADA-PENDIENTE / OK`; una Observaciones opcional; `Fecha diagnóstico` prebiológica retirada; sin `APTO` global. Compatibilidad histórica de fecha general preservada. Solicitud Reuma→Farmacia con dos estados sigue pendiente (3.2.13). |
 | Seguimiento detrás del Reuma Read Port | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: ruta/funcionamiento operativos | Sí | Sintética | No | #455 / PR #459 | Identidad editable + baseline preexistente decididos (3.2.15); persistencia/restauración no quedó adjudicada explícitamente en la pasada. |
 | Estadísticas detrás de seam/Read Port Reuma | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: filtros observados funcionando | Sí | Sintética | No | #456 / PR #459 | `Buscar en tabla` a relegar/retirar (3.2.16). El export se registra como defecto reproducido en la fila siguiente. |
 | Exportar CSV de Estadísticas (cohorte filtrada) | `DEFECTO_REPRODUCIDO` | Sí (export actual) | Sí | Sí | Manual 2026-10-04: exporta población distinta/total, no la cohorte de filtros activos | Sí | Sintética | No | Sin issue aún (candidata) | Corregir para exportar la cohorte resultante de los filtros activos; sin cambio de semántica clínica. |
@@ -75,7 +78,9 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Adapter Visit Act → legacy 497 | `IMPLEMENTADO` | Sí | Sí | Indirecto | 10 journeys byte-equivalentes | Sí | Compatibilidad | No | #463 / PR #467 | Frontera transitoria explícita. |
 | Cutover Primera Visita + Seguimiento → Visit Act v1 | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | 23/23 Train 08; la pasada manual ejercitó ambos formularios sin adjudicar explícitamente guardar→salir→recuperar ni export | Sí | Sintética | No | #464 / PR #467 | Queda una comprobación puntual de persistencia/restauración cuando se abra la WO técnica correspondiente. |
 | DAPSA / PsA | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: cálculo y reutilización observados correctos | Sí | Sintética | No | — | Mantener derivado/read-only; mejorar feedback visual por categoría sin cambiar umbrales (3.2.9). |
-| ASDAS PCR / ASDAS VSG | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | Evidencia técnica previa; el cálculo del índice **no** fue adjudicado en la pasada manual 2026-10-04 | Sí | Revalidar | No | — | Sólo se observó operativa la reutilización de PCR/VSG (frente a la EVA Global que no se arrastra: 3.2.6); ASDAS sólo en EspA y retirada de APs ASDAS decididas (3.2.5). Ausencia nunca equivale a cero. |
+| ASDAS PCR / ASDAS VSG | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | Scope/wiring técnico #512/#517 verificado con oracles + QA Chromium: EspA-only y EVA Global explícita reutilizada; **el cálculo completo del índice no fue adjudicado en la pasada manual humana** | Sí | Revalidar | No | #513/#514/#518 / PR #521 | Alcance/wiring publicados: ASDAS no se muestra/ejecuta en APs; mirror EVA→ASDAS contenido a EspA, sin fuga legacy y ausencia≠0. Fórmula/umbrales no cambiados. Mantener `IMPLEMENTADO_REVALIDAR` hasta revalidación específica del cálculo; PCR default por site sigue pendiente de fuente versionada. |
+| Dactilitis EspA (afectación periférica) | `IMPLEMENTADO` | Sí | Sí | Sí | Reproducción soportada + oracle/Chromium #515; recuento deriva selecciones reales | Sí | Sintética | No | #515 / PR #521 | Control operable en EspA sin manipulación DOM; no fabrica estado ni cambia semántica de otras patologías. |
+| MDA APs derivado/read-only | `IMPLEMENTADO` | Sí | Sí | Sí | Oracles + Chromium #516/#519/#520; tres verdicts `ALCANZADO / NO ALCANZADO / PENDIENTE`; export legacy exacto | Sí | Sintética | No | #516/#519/#520 / PR #521 | Mantiene regla clínica publicada `cumplidos >= 5`, 7 criterios y thresholds; missing permanece pendiente cuando puede cambiar el resultado; sólo `MDA ALCANZADO` explícito produce `mdaCumple=true`. |
 | BASFI para EspA (Primera Visita + Seguimiento) | `PENDIENTE_FUENTE` | No completo | Parcial | No | No implementado con fuente autorizada | Sí (parcial) | No | No | Sin issue (bloqueo humano) | Requiere autoridad clínica/fuente explícita de ítems y cálculo; **no inventar ítems**. BASDAI sí existe. |
 | LES / Sjögren | `PENDIENTE_EQUIPO` | Limitado | Limitado | Limitado | No adjudicado clínicamente | Sí | No | No | — | No ampliar ni corregir semántica clínica por intuición; sólo coherencia visual/tooltips neutrales que no añadan significado clínico. |
 | Tratamientos previos | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | No adjudicado de nuevo tras Foundation | Sí | Revalidar | No | — | Prior/current/requested no pueden convertirse en “previo” sin hecho explícito. |
@@ -84,7 +89,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Delivery/export Reuma end-state común Nexus | `PARCIAL` | Act + boundary publicados | Aún termina en compatibilidad 497 | No como destino nuevo | No | Parcial | Compatibilidad | No | — | Converger con semántica común de delivery/adapters tras F4.5; legacy 497 queda como compatibilidad contenida, no end-state. |
 | Reuma → Processor/Bridge común | `PENDIENTE` | No end-state canónico | No | No | No | No | No | No | — | Pendiente de diseño tras la semántica de delivery/F4.5; no copiar legacy automáticamente. |
 | Reuma → Farmacia | `DISCOVERY` | No contrato final | No | No | No | No | No | No | Sin issue específico vivo verificado | Más allá de la solicitud textual actual, `DISCOVERY_FIRST` donde afecte contrato de integración: definir acto/handoff, autoridad, retorno de estado y ownership antes de WO técnica. |
-| Renovaciones/alertas | `PARCIAL` | Contrato N0 publicado | Sin runtime Nexus | Contrato/schemas/checker publicados | Evidencia determinista del contrato (checker 53/0), sin QA navegador | Sí (contrato) | Sintética | No | #446 OPEN + #509 cerrada | **Sólo contrato N0 publicado**: #509 → PR #510 (merge `aa6401a`) + reconciliación PR #511. N1/N2/N3 requieren WOs propias. `OCT-OPEN-010..013` y `REN-OPEN-001..008` siguen abiertos. No confundir con Reuma→Farmacia. |
+| Renovaciones/alertas | `PARCIAL` | Contrato N0 publicado | Sin runtime Nexus | Contrato/schemas/checker publicados | Evidencia determinista del contrato (checker 53/0), sin QA navegador | Sí (contrato) | Sintética | No | #446 CLOSED/completed + #509 cerrada | **Sólo contrato N0 publicado**: #509 → PR #510 (merge `aa6401a`) + reconciliación PR #511. N1/N2/N3 requieren WOs propias. `OCT-OPEN-010..013` y `REN-OPEN-001..008` siguen abiertos. No confundir con Reuma→Farmacia. |
 | CIMA automática / propuestas estructuradas | `FUTURO` | No automatización actual | No | No | No | No | No | No | — | Línea separada. Selección genérica nunca escribe terapia; en FH la selección explícita de medicamento/presentación + contexto puede **proponer** datos inequívocos, siempre editables y sin sobrescritura silenciosa. |
 
 ### 3.1 Adjudicación manual Reuma 2026-10-04 — cerrada para shaping
@@ -109,22 +114,22 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 | --- | --- | --- | --- |
 | 1 | Home: el placeholder principal debe decir búsqueda por CIP, coherente con sidebar | `REQUISITO_DECIDIDO_PENDIENTE` | Sólo copy; la búsqueda por CIP funciona. |
 | 2 | UX formularios: acortar campos fecha; chips para opciones discretas simples (dolor axial/rigidez/irradiación/manobras) cuando mejoren claridad | `REQUISITO_DECIDIDO_PENDIENTE` | Sin cambio de semántica. |
-| 3 | EspA homúnculo: dactilitis debe estar disponible también en EspA por posible afectación periférica; control/recuento observado no utilizable con infraestructura existente | `DEFECTO_REPRODUCIDO` | Observación manual 2026-10-04; la WO técnica debe reproducirlo por interacción soportada antes de corregir. |
+| 3 | EspA homúnculo: dactilitis debe estar disponible también en EspA por posible afectación periférica; control/recuento observado no utilizable con infraestructura existente | `RESUELTO / PUBLICADO` | #515 / PR #521: reproducido y corregido por interacción soportada; recuento/estado deriva sólo selecciones reales. |
 | 4 | PCR UI por site: retirar `Sin unidad` de la selección soportada + ayuda contextual | `REQUISITO_DECIDIDO_PENDIENTE` (default por site = `PENDIENTE_FUENTE`) | Autoridad humana actual: Badajoz `mg/dL`; Mérida y Cáceres `mg/L`. Verificar contra la autoridad versionada del repo **antes** de fijar cualquier default; nunca inferir por valor/magnitud. |
-| 5 | ASDAS sólo en EspA: retirar ASDAS-CRP/ASDAS-VSG de APs en Primera Visita y Seguimiento | `REQUISITO_DECIDIDO_PENDIENTE` | Decisión humana 2026-10-04; sustituye cualquier ambigüedad histórica sobre APs/ASDAS. |
-| 6 | EVA Global del paciente → ASDAS: reutilizar la ya capturada, sin reentrada manual; observado no arrastrado (PCR/VSG sí) | `DEFECTO_REPRODUCIDO` | Corregir y probar en ambas visitas. |
+| 5 | ASDAS sólo en EspA: retirar ASDAS-CRP/ASDAS-VSG de APs en Primera Visita y Seguimiento | `RESUELTO / PUBLICADO` | #513 / PR #521: APs ya no muestra ni ejecuta ASDAS; EspA lo conserva. |
+| 6 | EVA Global del paciente → ASDAS: reutilizar la ya capturada, sin reentrada manual; observado no arrastrado (PCR/VSG sí) | `RESUELTO / PUBLICADO` | #514 + containment #518 / PR #521: EspA reutiliza EVA Global explícita; fuera de EspA el mirror queda vacío/fail-safe y no contamina legacy. |
 | 7 | BASDAI/BASFI presentes en Primera Visita y Seguimiento para EspA; BASFI falta o no está completo | `PENDIENTE_FUENTE` | Implementar BASFI sólo con autoridad clínica/fuente explícita de ítems y cálculo; no inventar ítems. |
-| 8 | APs MDA: mantener derivado/read-only con wiring desde campos de origen; observado 0/7 incompleto por falta de fuentes | `DEFECTO_REPRODUCIDO` | Mostrar criterio cumplido/no cumplido/pendiente + fuente faltante, sin fabricar datos. |
+| 8 | APs MDA: mantener derivado/read-only con wiring desde campos de origen; observado 0/7 incompleto por falta de fuentes | `RESUELTO / PUBLICADO` | #516 + #519/#520 / PR #521: fuentes cableadas, missing visible como pendiente cuando procede, verdict ternario seguro y `mdaCumple` legacy exacto; regla `>=5` intacta. |
 | 9 | DAPSA: mantener derivado; mejorar feedback visual por categoría | `REQUISITO_DECIDIDO_PENDIENTE` | Cálculo observado correcto; no cambiar umbrales. |
 | 10 | RAPID3: chips sólo si preservan exactamente las opciones; clipping en Primera Visita APs; layout roto en Seguimiento (texto letra/fila) | `DEFECTO_REPRODUCIDO` | Mejorar UX sin cambiar semántica clínica. |
 | 11 | Resultados/categorías: feedback visual coherente con categoría explícita; CASPAR sin verde=bueno/rojo=malo (`Cumple criterios CASPAR` / no cumple, estilo neutral) | `REQUISITO_DECIDIDO_PENDIENTE` | Neutralidad de clasificación, no valoración. |
-| 12 | Prebiológico: retirar `Fecha diagnóstico` del bloque; conservar Observaciones prebiológico opcionales; no sintetizar APTO global | `REQUISITO_DECIDIDO_PENDIENTE` | Mantener sólo estados de Analítica + Medicina Preventiva. |
+| 12 | Prebiológico: retirar `Fecha diagnóstico` del bloque; conservar Observaciones prebiológico opcionales; no sintetizar APTO global | `RESUELTO / PUBLICADO` | #525 / PR #526: bloque mínimo publicado en Primera Visita + Seguimiento; sólo Analítica + Medicina Preventiva + una Observaciones opcional. |
 | 13 | Solicitud Reuma → Farmacia: eliminar el desglose legacy de hemograma/bioquímica/serologías/vacunación; sólo los dos estados resumidos de Analítica y Medicina Preventiva cuando consten explícitamente | `REQUISITO_DECIDIDO_PENDIENTE` | Conservar el resto de solicitud clínica explícita; ningún estado se infiere. |
 | 14 | Toasts export: conservar el mensaje explicativo de siguiente paso; retirar el toast verde duplicado/oculto que queda detrás | `DEFECTO_REPRODUCIDO` | Al estructurar CSV. |
 | 15 | Seguimiento con CIP sin paciente previo: nombre y apellidos editables + capturar tratamiento actual preexistente y fecha de inicio como baseline explícito | `REQUISITO_DECIDIDO_PENDIENTE` | Sin fabricar START/SWITCH/ADD_ON ni validación retrospectiva. |
 | 16 | Estadísticas: `Exportar CSV` debe exportar la cohorte de filtros activos (defecto) y quitar/relegar `Buscar en tabla` (requisito) | `DEFECTO_REPRODUCIDO` + `REQUISITO_DECIDIDO_PENDIENTE` | Los filtros observados funcionan. |
 
-Además, copy CIP (3.2.1), fecha compacta/toasts/feedback visual (3.2.2, 3.2.14, 3.2.9, 3.2.11) y el resto de la lista anterior quedan como trabajo accionable una vez adjudicados.
+Los ítems **3, 5, 6, 8 y 12** quedan resueltos/publicados por PR #521/#526. Permanecen accionables, sujetos a WO/autoridad correspondiente, los ítems **1, 2, 4, 7, 9, 10, 11, 13, 14, 15 y 16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
 
 ### 3.3 Reuma — pendientes, defer y deuda preservada
 
@@ -189,7 +194,7 @@ Además, copy CIP (3.2.1), fecha compacta/toasts/feedback visual (3.2.2, 3.2.14,
 | D004 | `PENDIENTE` deuda | No cierre | No bloqueante actual | Decidir bajo presión real de consumo del release map. |
 | D005 subhallazgos restantes | `PENDIENTE` deuda | Parcial | No cleanup amplio | Distribuir por WOs naturales. |
 | Branding identificable de Nexus | `PENDIENTE` | No en esta WO | Orientación UI | Se ejecuta como WO runtime/branding separada (#507/#508); no mezclar con esta reconciliación documental. |
-| Ledger vivo de estado funcional (#504) | `IMPLEMENTADO` (documental, **candidato sin publicar**) | **No** en `promueve/nexus-v4`: candidato local en rama `docs/nexus-live-product-ledger-504-20261003` (PR #506 abierto) | Documental; sin QA navegador por ser documentación-only | Reconciliado contra QA manual Reuma 2026-10-04 y N0 de renovaciones publicado; STOP antes de push/merge para inspección humana. |
+| Ledger vivo de estado funcional (#504) | `IMPLEMENTADO` (documental, **PUBLICADO**) | Sí: PR #506, merge `b90eef501f958109fc330fe98f659f9698011250` | Documental; sin QA navegador por ser documentación-only | Reconciliado por #522 con publicaciones PR #521/#526; issue #504 CLOSED/completed. |
 
 ## 7. Horizontes
 
@@ -204,10 +209,10 @@ Además, copy CIP (3.2.1), fecha compacta/toasts/feedback visual (3.2.2, 3.2.14,
 
 Cruce **sólo de estado/prioridad**; no define contratos de integración ni semántica de producto futura.
 
-- **Reumatología:** QA manual adjudicado 2026-10-04 y clasificado en este ledger (3.1–3.3). Quedan WOs técnicas candidatas accionables (defectos reproducidos + requisitos decididos) y blockers humanos deliberados (`PENDIENTE_EQUIPO` / `PENDIENTE_FUENTE`) que **no** bloquean esas WOs independientes.
+- **Reumatología:** QA manual adjudicado 2026-10-04; primera ejecución técnica pre-Badajoz ya publicada: #512/#517 por PR #521 y #525 por PR #526. Quedan pendientes los demás ítems de §3.2/§3.3; `PENDIENTE_EQUIPO` / `PENDIENTE_FUENTE` siguen siendo blockers humanos, no defectos a inventar.
 - **Farmacia Hospitalaria:** revisión FH y decisiones #501 ya publicadas; F4.4 publicada; contrato N0 de renovaciones publicado (#509 / PR #510 / PR #511) con N1/N2/N3 pendientes; F4.5/F4.6 siguen sin autorización automática.
 - **Dermatología:** dirección #501 vigente (módulo candidato; HS/PsO primeras verticales; eccema de manos `AWAIT_TEAM_INPUT`); sin implementación Nexus, sin contratos nuevos.
-- **Prioridad:** la secuencia `#446 renovaciones → Reuma→Farmacia discovery → CIMA` sigue `UNDER_READJUDICATION / PRE-BADAJOZ`; el ledger y el Q&A manual Reuma quedaron completados, por lo que el siguiente paso humano es adjudicar las WOs técnicas pre-Badajoz. Publicar este documento no implementa ninguna decisión.
+- **Prioridad:** la ronda `PRE-BADAJOZ` está en ejecución acotada, no cerrada. Publicadas #512/#517/#525; la solicitud Reuma→Farmacia minimal (3.2.13) sigue separada y pendiente, al igual que el resto de WOs no ejecutadas. F4.5/F4.6, CIMA y futuras capacidades no quedan autorizadas por esta reconciliación.
 
 ## 9. Regla para issues
 
@@ -225,7 +230,7 @@ Cruce **sólo de estado/prioridad**; no define contratos de integración ni sem�
 2. ✅ Cada observación se clasificó (`DEFECTO_REPRODUCIDO`, `REQUISITO_DECIDIDO_PENDIENTE`, `PENDIENTE_FUENTE/EQUIPO`, `DEFERIDO`, deuda conocida) en este ledger.
 3. ✅ Este ledger quedó actualizado con evidencia visible real.
 4. ✅ Se cruzaron Reuma + Farmacia + dirección Dermatología a nivel de estado/prioridad (§8).
-5. **Siguiente:** adjudicar las WOs técnicas pre-Badajoz a partir de §3.2 y §3.3 (los blockers humanos deliberados no bloquean las correcciones independientes), y abrir issues sólo donde exista trabajo accionable.
+5. **Siguiente:** continuar adjudicando/ejecutando WOs atómicas de los ítems aún pendientes de §3.2/§3.3; no reabrir los ítems 3/5/6/8/12 ya publicados salvo nueva evidencia soportada. La solicitud Reuma→Farmacia sigue como WO separada; respetar blockers de fuente/equipo.
 
 ---
 
