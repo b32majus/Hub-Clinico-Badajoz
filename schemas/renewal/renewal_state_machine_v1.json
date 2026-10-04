@@ -94,7 +94,13 @@
       "trigger": "explicit_fh_act",
       "trigger_kind": "explicit",
       "requires_explicit_input": true,
-      "notes": "Unico borde hacia ACTUALIZADA_POR_FH. La nueva validez procede solo de un acto FH explicito. Formulario de captura (fecha explicita vs seleccion de duracion 12/6/3 meses) = OCT-OPEN-010, no congelado aqui."
+      "effects": [
+        "explicit_renewal_event_on_line",
+        "new_validity_explicitly_accepted_by_fh",
+        "line_remains_active",
+        "leaves_pending_until_window_reentry"
+      ],
+      "notes": "Unico borde hacia ACTUALIZADA_POR_FH. La nueva validez procede solo de un acto FH explicito. Postcondiciones del cierre refrozen en effects (§6 del contrato). El formulario de captura (fecha explicita vs seleccion de duracion 12/6/3 meses) = OCT-OPEN-010, no congelado aqui."
     },
     {
       "id": "fh_suspend_treatment",
@@ -128,6 +134,6 @@
     "PRÓXIMA_A_RENOVACIÓN es una condicion derivada, no un estado de lifecycle; la gestion empieza con ENVIADA_A_ENFERMERÍA.",
     "Las comunicaciones de Enfermeria nunca modifican valid_until, valid_until_kind, valid_until_source, service_id ni line_status.",
     "Las lineas con line_status distinto de active nunca continuan el circuito; la reactivacion solo ocurre por un evento de linea explicito registrado.",
-    "Un unico ciclo abierto por linea; una correccion reabre identidad con un renewal_id nuevo."
+    "Un unico ciclo abierto por linea; una linea ya enviada pertenece al mismo ciclo hasta su cierre; las reextracciones periodicas no fabrican ciclos nuevos duplicados."
   ]
 }

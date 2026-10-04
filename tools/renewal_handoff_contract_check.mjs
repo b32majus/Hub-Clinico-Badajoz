@@ -43,6 +43,14 @@ const EXP_SOURCES = 'circuit_entry_estimate manual_estimate not_recorded pharmac
 const EXP_REPORT_TYPES = ['SOLICITADA_AL_PRESCRIPTOR', 'RENOVACIÓN_COMUNICADA', 'SUSPENSIÓN_COMUNICADA'];
 const EXP_LINE_STATUSES = 'active stopped switched cancelled completed suspended'.split(' ');
 const EXP_TERMINALS = ['ACTUALIZADA_POR_FH', 'TRATAMIENTO_SUSPENDIDO'];
+// S1 (#509 correction 1): the contractually required terminal set is asserted
+// independently of machine.terminal_states, so removing a terminal from the
+// machine cannot make the closure checks vacuously pass.
+const REQUIRED_TERMINALS = ['ACTUALIZADA_POR_FH', 'TRATAMIENTO_SUSPENDIDO'];
+// P1 (#509 correction 1): refreeze §6 postconditions of the FH renewal-closure
+// act, frozen on fh_update_validity.effects; only the capture mechanism stays
+// open (OCT-OPEN-010).
+const REQUIRED_CLOSURE_EFFECTS = ['explicit_renewal_event_on_line', 'new_validity_explicitly_accepted_by_fh', 'line_remains_active', 'leaves_pending_until_window_reentry'];
 const DURATION_SOURCES = new Set([
   'prescription_issue_date_confirmed_duration_confirmed',
   'prescription_issue_date_confirmed_duration_configured'
@@ -246,6 +254,7 @@ function machineInvariantErrors(machine) {
   const lifecycle = new Set(machine.lifecycle_states || []);
   const windowStates = new Set(machine.window_states || []);
   const terminal = new Set(machine.terminal_states || []);
+  if (!sameSet(machine.terminal_states || [], REQUIRED_TERMINALS)) errors.push(`terminal_states must be exactly the required set ${JSON.stringify([...REQUIRED_TERMINALS].sort())}; got ${JSON.stringify(machine.terminal_states)}`);
   const actors = new Set(machine.actors || []);
   const forbiddenTriggers = new Set(machine.forbidden_triggers || []);
   for (const s of lifecycle) if (windowStates.has(s)) errors.push(`state "${s}" appears in both lifecycle_states and window_states`);
@@ -332,6 +341,9 @@ function machineMutationCases(machine) {
   m = clone();
   m.line_status_values = m.line_status_values.filter((s) => s !== 'suspended');
   cases.push(['[invariant: closed line_status vocabulary incl. suspended] dropping suspended is rejected', has(m, 'line_status_values')]);
+  m = clone();
+  m.terminal_states = m.terminal_states.filter((s) => s !== 'TRATAMIENTO_SUSPENDIDO');
+  cases.push(['[invariant: the required terminal set is fixed] omitting a required terminal is rejected', machineInvariantErrors(m).length > 0]);
   return cases;
 }
 
@@ -486,6 +498,9 @@ function runStateMachine(machine, retSchema) {
   console.log('State machine structural invariants:');
   const errors = machineInvariantErrors(machine);
   record('state machine invariants hold (pharmacy-only terminals, no time triggers, closed terminals, derived condition not a state)', errors.length === 0, errors.join(' | '));
+  const fhUpdate = (machine.transitions || []).find((t) => t.id === 'fh_update_validity') || {};
+  const effects = Array.isArray(fhUpdate.effects) ? fhUpdate.effects : [];
+  record('fh_update_validity.effects freezes exactly the refreeze §6 closure postconditions', sameSet(effects, REQUIRED_CLOSURE_EFFECTS), sameSet(effects, REQUIRED_CLOSURE_EFFECTS) ? '' : `expected ${[...REQUIRED_CLOSURE_EFFECTS].sort().join(',')}; got ${JSON.stringify(effects)}`);
   for (const [name, ok] of machineMutationCases(machine)) record(`mutation/${name}`, ok, ok ? '' : 'detector did not reject the mutation');
   const enumValues = ((retSchema.properties || {}).report_type || {}).enum || [];
   const noFhTerminal = !enumValues.some((t) => EXP_TERMINALS.includes(t));
