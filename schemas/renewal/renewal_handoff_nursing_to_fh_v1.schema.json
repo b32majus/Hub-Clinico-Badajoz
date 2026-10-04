@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://promueve.example/schemas/renewal/renewal_handoff_nursing_to_fh_v1.schema.json",
-  "title": "PROMueve renewal report Nursing to FH v1",
-  "description": "Contrato N0 (shaping) del retorno Enfermeria -> Farmacia Hospitalaria del circuito de renovaciones. Envelope versionado renewal-handoff/v1. Solo datos sinteticos. No puede prolongar ni confirmar la validacion farmacoterapeutica: no transporta validez, duracion, dato terapeutico ni estado FH_UPDATED.",
+  "title": "PROMueve renewal report Nursing to FH v1 (N0 refreeze)",
+  "description": "Contrato N0 refrozen del retorno Enfermeria -> Farmacia Hospitalaria. Envelope versionado renewal-handoff/v1. Solo datos sinteticos. Enfermeria solo puede comunicar estados operativos: SOLICITADA_AL_PRESCRIPTOR, RENOVACIÓN_COMUNICADA o SUSPENSIÓN_COMUNICADA. No transporta validez, duracion, dato terapeutico ni puede nombrar los actos terminales de FH (ACTUALIZADA_POR_FH / TRATAMIENTO_SUSPENDIDO).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -26,7 +26,7 @@
     "service_id": { "$ref": "#/$defs/id" },
     "report_type": {
       "type": "string",
-      "enum": ["requested_to_service", "in_progress", "renewal_reported"]
+      "enum": ["SOLICITADA_AL_PRESCRIPTOR", "RENOVACIÓN_COMUNICADA", "SUSPENSIÓN_COMUNICADA"]
     },
     "reported_at": { "$ref": "#/$defs/dateTime" },
     "reported_by": { "type": ["string", "null"], "minLength": 1, "maxLength": 200 },

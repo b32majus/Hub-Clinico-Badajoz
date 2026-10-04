@@ -4,11 +4,11 @@
   "renewal_id": "REN-SYN-0002",
   "line_id": "line-syn-rn-002",
   "patient_id": "patient-syn-rn-002",
-  "service_id": "svc-syn-der-01",
-  "report_type": "renewal_reported",
+  "service_id": "svc-syn-reu-01",
+  "report_type": "RENOVACIÓN_COMUNICADA",
   "reported_at": "2026-10-06T10:00:00Z",
   "reported_by": "enfermeria-demo",
   "reported_by_role": "nursing",
-  "comment": "Renovacion reportada por Enfermeria; no equivale a validacion FH.",
+  "comment": "Renovacion comunicada por el servicio prescriptor (sintetico). No es validacion FH.",
   "demo_flag": true
 }

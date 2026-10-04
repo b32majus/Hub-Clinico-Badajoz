@@ -4,8 +4,8 @@
   "renewal_id": "REN-SYN-0002",
   "line_id": "line-syn-rn-002",
   "patient_id": "patient-syn-rn-002",
-  "service_id": "svc-syn-der-01",
-  "report_type": "fh_updated",
+  "service_id": "svc-syn-reu-01",
+  "report_type": "ACTUALIZADA_POR_FH",
   "reported_at": "2026-10-06T10:00:00Z",
   "reported_by_role": "nursing",
   "demo_flag": true

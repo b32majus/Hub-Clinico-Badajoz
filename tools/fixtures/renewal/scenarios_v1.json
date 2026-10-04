@@ -1,216 +1,98 @@
 {
   "scenarios_version": "renewal-scenarios/v1",
   "contract_version": "renewal-handoff/v1",
-  "description": "Bundle de escenarios sinteticos del contrato N0 de renovaciones. Cada escenario se evalua contra una copia limpia del seed. El seed declara line_status por linea y, para REN-SYN-0003, el retorno ya aplicado antes de alcanzar el estado terminal (replay exacto = no_op). El checker implementa el modelo de referencia determinista; este archivo es la autoridad legible por maquina de los casos esperados. El retorno mantiene un historial de operaciones aplicadas por renovacion (el replay exacto de CUALQUIER operacion es no_op y el conflicto se evalua contra todo el historial, no solo la ultima). El paso 2 del orden de precedencia es una validacion por fila ejecutada antes de reconciliar esa fila en el camino de lote.",
+  "description": "Bundle slim de escenarios sinteticos del contrato N0 refrozen (HUMAN SHAPING REFREEZE #446 + recuperacion #509). Cada escenario se evalua contra una copia limpia del seed. La deteccion (window_state) no crea ciclo; la gestion empieza con ENVIADA_A_ENFERMERÍA. El modelo de reconciliacion recuerda SOLO la ultima operacion aplicada. Docspec = {fixture+overrides} o {record} inline. Las filas de lote rechazadas dejan el estado FH intacto.",
   "seed": {
     "known_renewals": [
-      {
-        "renewal_id": "REN-SYN-0001",
-        "patient_id": "patient-syn-rn-001",
-        "line_id": "line-syn-rn-001",
-        "service_id": "svc-syn-der-01",
-        "lifecycle_state": "OPEN",
-        "line_status": "active"
-      },
-      {
-        "renewal_id": "REN-SYN-0002",
-        "patient_id": "patient-syn-rn-002",
-        "line_id": "line-syn-rn-002",
-        "service_id": "svc-syn-der-01",
-        "lifecycle_state": "IN_PROGRESS",
-        "line_status": "active"
-      },
-      {
-        "renewal_id": "REN-SYN-0003",
-        "patient_id": "patient-syn-rn-003",
-        "line_id": "line-syn-rn-003",
-        "service_id": "svc-syn-reu-01",
-        "lifecycle_state": "FH_UPDATED",
-        "line_status": "active",
-        "last_applied_return": {
-          "contract_version": "renewal-handoff/v1",
-          "record_type": "renewal_report_nursing_to_fh",
-          "renewal_id": "REN-SYN-0003",
-          "line_id": "line-syn-rn-003",
-          "patient_id": "patient-syn-rn-003",
-          "service_id": "svc-syn-reu-01",
-          "report_type": "renewal_reported",
-          "reported_at": "2026-10-05T12:00:00Z",
-          "reported_by_role": "nursing",
-          "comment": "Retorno ya aplicado antes de que el ciclo alcanzara el estado terminal FH_UPDATED; su reimportacion exacta es no_op.",
-          "demo_flag": true
-        }
-      },
-      {
-        "renewal_id": "REN-SYN-0004",
-        "patient_id": "patient-syn-rn-004",
-        "line_id": "line-syn-rn-004",
-        "service_id": "svc-syn-reu-01",
-        "lifecycle_state": "REQUESTED_TO_SERVICE",
-        "line_status": "active"
-      },
-      {
-        "renewal_id": "REN-SYN-0005",
-        "patient_id": "patient-syn-rn-005",
-        "line_id": "line-syn-rn-005",
-        "service_id": "svc-syn-der-01",
-        "lifecycle_state": "OPEN",
-        "line_status": "stopped"
-      }
+      { "renewal_id": "REN-SYN-0001", "patient_id": "patient-syn-rn-001", "line_id": "line-syn-rn-001", "service_id": "svc-syn-der-01", "lifecycle_state": "ENVIADA_A_ENFERMERÍA", "line_status": "active" },
+      { "renewal_id": "REN-SYN-0002", "patient_id": "patient-syn-rn-002", "line_id": "line-syn-rn-002", "service_id": "svc-syn-reu-01", "lifecycle_state": "SOLICITADA_AL_PRESCRIPTOR", "line_status": "active" },
+      { "renewal_id": "REN-SYN-0003", "patient_id": "patient-syn-rn-003", "line_id": "line-syn-rn-003", "service_id": "svc-syn-reu-01", "lifecycle_state": "RENOVACIÓN_COMUNICADA", "line_status": "active" },
+      { "renewal_id": "REN-SYN-0004", "patient_id": "patient-syn-rn-004", "line_id": "line-syn-rn-004", "service_id": "svc-syn-der-01", "lifecycle_state": "ENVIADA_A_ENFERMERÍA", "line_status": "suspended" }
     ]
   },
   "scenarios": [
+    { "id": "ida_due_soon", "kind": "fh_to_nursing_validate", "fixture": "valid/fh_to_nursing_due_soon.json", "expect": { "outcome": "accepted" } },
+    { "id": "ida_expired", "kind": "fh_to_nursing_validate", "fixture": "valid/fh_to_nursing_expired.json", "expect": { "outcome": "accepted" } },
+    { "id": "ida_duration_derived", "kind": "fh_to_nursing_validate", "fixture": "valid/fh_to_nursing_duration_derived.json", "expect": { "outcome": "accepted" } },
+    { "id": "ida_unknown_not_evaluable", "kind": "fh_to_nursing_validate", "fixture": "valid/fh_to_nursing_unknown_not_evaluable.json", "expect": { "outcome": "accepted" } },
+    { "id": "vuelta_solicitada", "kind": "nursing_to_fh_apply", "fixture": "valid/nursing_to_fh_solicitada_al_prescriptor.json", "expect": { "outcome": "accepted", "to": "SOLICITADA_AL_PRESCRIPTOR" } },
+    { "id": "vuelta_renovacion_comunicada", "kind": "nursing_to_fh_apply", "fixture": "valid/nursing_to_fh_renovacion_comunicada.json", "expect": { "outcome": "accepted", "to": "RENOVACIÓN_COMUNICADA" } },
+    { "id": "vuelta_suspension_comunicada", "kind": "nursing_to_fh_apply", "fixture": "valid/nursing_to_fh_suspension_comunicada.json", "expect": { "outcome": "accepted", "to": "SUSPENSIÓN_COMUNICADA" } },
     {
-      "id": "ida_open_due_soon",
-      "kind": "fh_to_nursing_validate",
-      "fixture": "valid/fh_to_nursing_open_due_soon.json",
-      "expect": { "outcome": "accepted" }
+      "id": "reimport_identical_no_op",
+      "kind": "nursing_to_fh_reimport",
+      "first": { "fixture": "valid/nursing_to_fh_solicitada_al_prescriptor.json" },
+      "second": { "fixture": "valid/nursing_to_fh_solicitada_al_prescriptor.json" },
+      "expect": { "first_outcome": "accepted", "second_outcome": "no_op", "preserved": true }
     },
     {
-      "id": "ida_expired_confirmed",
-      "kind": "fh_to_nursing_validate",
-      "fixture": "valid/fh_to_nursing_expired_confirmed.json",
-      "expect": { "outcome": "accepted" }
+      "id": "reimport_modified_state_conflict",
+      "kind": "nursing_to_fh_reimport",
+      "first": { "fixture": "valid/nursing_to_fh_solicitada_al_prescriptor.json" },
+      "second": { "fixture": "valid/nursing_to_fh_solicitada_al_prescriptor.json", "overrides": { "comment": "payload distinto (sintetico)." } },
+      "expect": { "first_outcome": "accepted", "second_outcome": "rejected", "error_code": "STATE_CONFLICT", "preserved": true }
     },
     {
-      "id": "ida_unknown_not_evaluable",
-      "kind": "fh_to_nursing_validate",
-      "fixture": "valid/fh_to_nursing_unknown_not_evaluable.json",
-      "expect": { "outcome": "accepted" }
-    },
-    {
-      "id": "ida_estimated_configured",
-      "kind": "fh_to_nursing_validate",
-      "fixture": "valid/fh_to_nursing_estimated_configured.json",
-      "expect": { "outcome": "accepted" }
-    },
-    {
-      "id": "vuelta_requested_to_service",
+      "id": "line_not_active_suspended",
       "kind": "nursing_to_fh_apply",
-      "fixture": "valid/nursing_to_fh_requested_to_service.json",
-      "expect": { "outcome": "accepted", "to": "REQUESTED_TO_SERVICE" }
-    },
-    {
-      "id": "vuelta_in_progress",
-      "kind": "nursing_to_fh_apply",
-      "fixture": "valid/nursing_to_fh_in_progress.json",
-      "expect": { "outcome": "accepted", "to": "IN_PROGRESS" }
-    },
-    {
-      "id": "vuelta_renewal_reported",
-      "kind": "nursing_to_fh_apply",
-      "fixture": "valid/nursing_to_fh_renewal_reported.json",
-      "expect": { "outcome": "accepted", "to": "RENEWED_REPORTED" }
-    },
-    {
-      "id": "duplicate_reimport_idempotent",
-      "kind": "nursing_to_fh_reimport_identical",
-      "first": "valid/nursing_to_fh_renewal_reported.json",
-      "second": "valid/nursing_to_fh_renewal_reported.json",
-      "expect": { "outcome": "no_op", "applied": false }
-    },
-    {
-      "id": "conflicting_reimport",
-      "kind": "nursing_to_fh_reimport_conflict",
-      "first": "valid/nursing_to_fh_renewal_reported.json",
-      "second": "semantic/return_conflicting_changed_payload.json",
-      "expect": { "outcome": "rejected", "error_code": "STATE_CONFLICT", "fh_state_preserved": true }
-    },
-    {
-      "id": "regressive_report_not_applicable",
-      "kind": "nursing_to_fh_apply_sequence",
-      "fixtures": [
-        "valid/nursing_to_fh_renewal_reported.json",
-        "semantic/return_conflicting_report_type.json"
-      ],
-      "expect": { "outcome": "rejected", "error_code": "REPORT_NOT_APPLICABLE" }
-    },
-    {
-      "id": "replay_identical_on_terminal_no_op",
-      "kind": "nursing_to_fh_replay_terminal_noop",
-      "fixture": "semantic/return_replay_on_terminal_noop.json",
-      "expect": { "outcome": "no_op", "applied": false }
-    },
-    {
-      "id": "line_not_active_return_rejected",
-      "kind": "nursing_to_fh_apply",
-      "fixture": "semantic/return_line_not_active.json",
-      "expect": { "outcome": "rejected", "error_code": "LINE_NOT_ACTIVE", "applied": false }
+      "fixture": "valid/nursing_to_fh_solicitada_al_prescriptor.json",
+      "overrides": { "renewal_id": "REN-SYN-0004", "line_id": "line-syn-rn-004", "patient_id": "patient-syn-rn-004" },
+      "expect": { "outcome": "rejected", "error_code": "LINE_NOT_ACTIVE", "preserve": true }
     },
     {
       "id": "unknown_renewal_id",
       "kind": "nursing_to_fh_apply",
-      "fixture": "semantic/return_unknown_renewal_id.json",
-      "expect": { "outcome": "rejected", "error_code": "UNKNOWN_RENEWAL_ID", "applied": false }
+      "record": {
+        "contract_version": "renewal-handoff/v1",
+        "record_type": "renewal_report_nursing_to_fh",
+        "renewal_id": "REN-SYN-9999",
+        "line_id": "line-syn-9999",
+        "patient_id": "patient-syn-9999",
+        "service_id": "svc-syn-der-01",
+        "report_type": "SOLICITADA_AL_PRESCRIPTOR",
+        "reported_at": "2026-10-05T09:30:00Z",
+        "reported_by_role": "nursing",
+        "demo_flag": true
+      },
+      "expect": { "outcome": "rejected", "error_code": "UNKNOWN_RENEWAL_ID" }
     },
     {
-      "id": "identity_mismatch",
+      "id": "identity_mismatch_service",
       "kind": "nursing_to_fh_apply",
-      "fixture": "semantic/return_identity_mismatch.json",
-      "expect": { "outcome": "rejected", "error_code": "IDENTITY_MISMATCH", "applied": false }
+      "fixture": "valid/nursing_to_fh_renovacion_comunicada.json",
+      "overrides": { "service_id": "svc-syn-der-01" },
+      "expect": { "outcome": "rejected", "error_code": "IDENTITY_MISMATCH", "preserve": true }
     },
     {
       "id": "report_not_applicable_terminal",
       "kind": "nursing_to_fh_apply",
-      "fixture": "semantic/return_terminal_renewal.json",
-      "expect": { "outcome": "rejected", "error_code": "REPORT_NOT_APPLICABLE", "applied": false }
+      "record": {
+        "contract_version": "renewal-handoff/v1",
+        "record_type": "renewal_report_nursing_to_fh",
+        "renewal_id": "REN-SYN-0003",
+        "line_id": "line-syn-rn-003",
+        "patient_id": "patient-syn-rn-003",
+        "service_id": "svc-syn-reu-01",
+        "report_type": "RENOVACIÓN_COMUNICADA",
+        "reported_at": "2026-10-06T10:00:00Z",
+        "reported_by_role": "nursing",
+        "demo_flag": true
+      },
+      "expect": { "outcome": "rejected", "error_code": "REPORT_NOT_APPLICABLE", "preserve": true }
     },
+    { "id": "batch_unsupported_version", "kind": "batch_import", "fixture": "batch/unsupported_version_batch.json", "expect": { "outcome": "rejected_batch", "error_code": "UNSUPPORTED_CONTRACT_VERSION", "applied": 0 } },
+    { "id": "batch_duplicate_renewal_id", "kind": "batch_import", "fixture": "batch/duplicate_renewal_id_batch.json", "expect": { "outcome": "rejected_batch", "error_code": "DUPLICATE_RENEWAL_ID_IN_BATCH", "applied": 0 } },
     {
-      "id": "unsupported_contract_version_batch",
+      "id": "batch_mixed_invalid_row",
       "kind": "batch_import",
-      "fixture": "batch/unsupported_version_batch.json",
-      "expect": { "outcome": "rejected_batch", "error_code": "UNSUPPORTED_CONTRACT_VERSION", "applied": 0 }
-    },
-    {
-      "id": "duplicate_renewal_id_in_batch",
-      "kind": "batch_import",
-      "fixture": "batch/duplicate_renewal_id_batch.json",
-      "expect": { "outcome": "rejected_batch", "error_code": "DUPLICATE_RENEWAL_ID_IN_BATCH", "applied": 0 }
-    },
-    {
-      "id": "replay_historical_after_intervening_report",
-      "kind": "nursing_to_fh_apply_sequence",
-      "fixtures": [
-        "valid/nursing_to_fh_requested_to_service.json",
-        "semantic/return_in_progress_ren_syn_0001.json",
-        "valid/nursing_to_fh_requested_to_service.json"
-      ],
-      "expect": {
-        "outcome": "no_op"
-      }
-    },
-    {
-      "id": "historical_replay_modified_state_conflict",
-      "kind": "nursing_to_fh_apply_sequence",
-      "fixtures": [
-        "valid/nursing_to_fh_requested_to_service.json",
-        "semantic/return_in_progress_ren_syn_0001.json",
-        "semantic/return_replay_modified_ren_syn_0001.json"
-      ],
-      "expect": {
-        "outcome": "rejected",
-        "error_code": "STATE_CONFLICT"
-      }
-    },
-    {
-      "id": "batch_invalid_row_rejected_row_level",
-      "kind": "batch_import",
-      "fixture": "batch/mixed_invalid_row_batch.json",
+      "fixture": "batch/mixed_row_batch.json",
       "expect": {
         "outcome": "processed",
         "applied": 1,
         "rows": [
-          {
-            "outcome": "accepted"
-          },
-          {
-            "outcome": "rejected",
-            "error_code": "FORBIDDEN_FIELD_IN_RETURN"
-          },
-          {
-            "outcome": "rejected",
-            "error_code": "INVALID_FIELD"
-          }
+          { "outcome": "accepted" },
+          { "outcome": "rejected", "error_code": "FORBIDDEN_FIELD_IN_RETURN" },
+          { "outcome": "rejected", "error_code": "INVALID_FIELD" }
         ]
       }
     }

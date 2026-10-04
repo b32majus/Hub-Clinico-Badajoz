@@ -7,7 +7,6 @@
   "service_id": "svc-syn-der-01",
   "service_label": "Dermatologia (sintetico)",
   "treatment_id": "treatment-syn-rn-001",
-  "lifecycle_state": "OPEN",
   "window_state": "due_soon",
   "evaluated_at": "2026-10-04T08:00:00Z",
   "warning_window_days": 60,
@@ -18,7 +17,6 @@
     "line_label": "L1 demo sintetica",
     "drug_display": "Farmaco demo A"
   },
-  "comment": "Handoff de ida sintetico.",
   "exported_at": "2026-10-04T08:05:00Z",
   "exported_by_role": "pharmacy",
   "demo_flag": true

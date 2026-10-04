@@ -1,30 +1,36 @@
 {
   "state_machine_version": "renewal-state-machine/v1",
   "contract_version": "renewal-handoff/v1",
-  "description": "Autoridad legible por maquina de estados/transiciones del circuito de renovaciones N0. El contrato Markdown describe y enlaza este archivo; no existe una segunda fuente de estados. Solo datos sinteticos.",
+  "description": "Autoridad legible por maquina de estados/transiciones del circuito de renovaciones N0 refrozen (HUMAN SHAPING REFREEZE #446 + recuperacion #509). El contrato Markdown describe y enlaza este archivo; no existe una segunda fuente de estados. Los tokens de medicion temporal (window_states) permanecen en ingles; los tokens de flujo de trabajo son los del refreeze. Solo datos sinteticos.",
   "initial_pseudo_state": "new",
   "lifecycle_states": [
-    "OPEN",
-    "REQUESTED_TO_SERVICE",
-    "IN_PROGRESS",
-    "RENEWED_REPORTED",
-    "PENDING_FH_REVIEW",
-    "FH_UPDATED",
-    "CANCELLED",
-    "NOT_APPLICABLE"
+    "ENVIADA_A_ENFERMERÍA",
+    "SOLICITADA_AL_PRESCRIPTOR",
+    "RENOVACIÓN_COMUNICADA",
+    "SUSPENSIÓN_COMUNICADA",
+    "ACTUALIZADA_POR_FH",
+    "TRATAMIENTO_SUSPENDIDO"
   ],
+  "terminal_states": ["ACTUALIZADA_POR_FH", "TRATAMIENTO_SUSPENDIDO"],
   "window_states": ["outside_window", "due_soon", "expired", "not_evaluable"],
-  "terminal_states": ["FH_UPDATED", "CANCELLED", "NOT_APPLICABLE"],
+  "line_status_values": ["active", "stopped", "switched", "cancelled", "completed", "suspended"],
+  "circuit_eligible": ["active"],
   "actors": ["pharmacy", "nursing", "pharmacy_module"],
   "actor_semantics": {
-    "pharmacy": "acto profesional FH explicito; independiente del transporte; unico actor que puede producir FH_UPDATED",
-    "nursing": "comunicacion operativa a traves del transporte de retorno soportado; nunca produce FH_UPDATED",
-    "pharmacy_module": "comportamiento FH determinista sobre una entrada explicita; nunca se dispara por tiempo, silencio o ausencia"
+    "pharmacy": "acto profesional FH explicito e independiente del transporte; unico actor que puede producir ACTUALIZADA_POR_FH o TRATAMIENTO_SUSPENDIDO",
+    "nursing": "comunicacion operativa por el transporte de retorno soportado; nunca produce los actos terminales de FH",
+    "pharmacy_module": "comportamiento FH determinista de evaluacion de ventana; nunca transita el lifecycle ni se dispara por tiempo, silencio o ausencia"
+  },
+  "derived_condition": {
+    "name": "PRÓXIMA_A_RENOVACIÓN",
+    "is_lifecycle_state": false,
+    "definition": "line_status == active AND window_state in [due_soon, expired]",
+    "management_starts_with": "ENVIADA_A_ENFERMERÍA"
   },
   "report_type_targets": {
-    "requested_to_service": "REQUESTED_TO_SERVICE",
-    "in_progress": "IN_PROGRESS",
-    "renewal_reported": "RENEWED_REPORTED"
+    "SOLICITADA_AL_PRESCRIPTOR": "SOLICITADA_AL_PRESCRIPTOR",
+    "RENOVACIÓN_COMUNICADA": "RENOVACIÓN_COMUNICADA",
+    "SUSPENSIÓN_COMUNICADA": "SUSPENSIÓN_COMUNICADA"
   },
   "window_evaluation": {
     "produces_lifecycle_transition": false,
@@ -38,128 +44,90 @@
     },
     "warning_window_days_default_hypothesis": 60,
     "warning_window_days_is_universal_constant": false,
-    "default_validity_days_is_universal_constant": false,
-    "may_open_cycle_when_window_state_in": ["due_soon", "expired"],
-    "never_opens_cycle_when_window_state_in": ["not_evaluable", "outside_window"],
-    "max_open_cycles_per_line": 1
+    "default_validity_days_is_universal_constant": false
   },
   "transitions": [
     {
-      "id": "open_cycle",
+      "id": "send_to_nursing",
       "from": "new",
-      "to": "OPEN",
-      "actors": ["pharmacy", "pharmacy_module"],
-      "trigger": "explicit_open",
+      "to": "ENVIADA_A_ENFERMERÍA",
+      "actors": ["pharmacy"],
+      "trigger": "explicit_send_act",
       "trigger_kind": "explicit",
       "requires_explicit_input": true,
-      "notes": "pharmacy_module solo abre un unico ciclo OPEN por linea y solo cuando la evaluacion alcanza due_soon/expired; nunca para not_evaluable ni un segundo ciclo."
+      "notes": "Acto FH explicito que acuna renewal_id. Un unico ciclo abierto por linea; una re-extraccion no acuna un ciclo nuevo para una linea con ciclo abierto (misma identidad reenviada hasta el cierre). La evaluacion de ventana nunca abre ciclos."
     },
     {
-      "id": "request_to_service",
-      "from": "OPEN",
-      "to": "REQUESTED_TO_SERVICE",
-      "actors": ["pharmacy", "nursing"],
-      "trigger": "explicit_request",
+      "id": "nursing_requested",
+      "from": "ENVIADA_A_ENFERMERÍA",
+      "to": "SOLICITADA_AL_PRESCRIPTOR",
+      "actors": ["nursing"],
+      "trigger": "explicit_nursing_report",
       "trigger_kind": "explicit",
       "requires_explicit_input": true
     },
     {
-      "id": "service_in_progress",
-      "from": "REQUESTED_TO_SERVICE",
-      "to": "IN_PROGRESS",
-      "actors": ["pharmacy", "nursing"],
-      "trigger": "explicit_progress_report",
-      "trigger_kind": "explicit",
-      "requires_explicit_input": true
-    },
-    {
-      "id": "renewal_reported",
-      "from": "IN_PROGRESS",
-      "to": "RENEWED_REPORTED",
-      "actors": ["pharmacy", "nursing"],
-      "trigger": "explicit_renewal_report",
+      "id": "nursing_renewal_communicated",
+      "from": "SOLICITADA_AL_PRESCRIPTOR",
+      "to": "RENOVACIÓN_COMUNICADA",
+      "actors": ["nursing"],
+      "trigger": "explicit_nursing_report",
       "trigger_kind": "explicit",
       "requires_explicit_input": true,
-      "notes": "RENEWED_REPORTED != FH_UPDATED: es una comunicacion, no una validacion."
+      "notes": "RENOVACIÓN_COMUNICADA != ACTUALIZADA_POR_FH: es una comunicacion operativa, no una validacion farmacoterapeutica."
     },
     {
-      "id": "report_received_for_fh_review",
-      "from": "RENEWED_REPORTED",
-      "to": "PENDING_FH_REVIEW",
-      "actors": ["pharmacy_module"],
-      "trigger": "explicit_report_receipt",
+      "id": "nursing_suspension_communicated",
+      "from": "SOLICITADA_AL_PRESCRIPTOR",
+      "to": "SUSPENSIÓN_COMUNICADA",
+      "actors": ["nursing"],
+      "trigger": "explicit_nursing_report",
       "trigger_kind": "explicit",
       "requires_explicit_input": true,
-      "notes": "Solo por recepcion explicita del reporte; nunca por tiempo, silencio o ausencia."
+      "notes": "SUSPENSIÓN_COMUNICADA != TRATAMIENTO_SUSPENDIDO: Enfermeria comunica, no suspende el tratamiento."
     },
     {
-      "id": "fh_updated",
-      "from": "PENDING_FH_REVIEW",
-      "to": "FH_UPDATED",
+      "id": "fh_update_validity",
+      "from": "RENOVACIÓN_COMUNICADA",
+      "to": "ACTUALIZADA_POR_FH",
       "actors": ["pharmacy"],
       "trigger": "explicit_fh_act",
       "trigger_kind": "explicit",
       "requires_explicit_input": true,
-      "sets": ["renewed_at", "renewed_by"],
-      "notes": "Unico borde hacia FH_UPDATED. La nueva validez procede solo de valores aportados explicitamente por el acto; nunca inferida."
+      "notes": "Unico borde hacia ACTUALIZADA_POR_FH. La nueva validez procede solo de un acto FH explicito. Formulario de captura (fecha explicita vs seleccion de duracion 12/6/3 meses) = OCT-OPEN-010, no congelado aqui."
     },
     {
-      "id": "fh_review_rejected",
-      "from": "PENDING_FH_REVIEW",
-      "to": "IN_PROGRESS",
+      "id": "fh_suspend_treatment",
+      "from": "SUSPENSIÓN_COMUNICADA",
+      "to": "TRATAMIENTO_SUSPENDIDO",
       "actors": ["pharmacy"],
-      "trigger": "explicit_fh_review_rejection",
+      "trigger": "explicit_fh_act",
       "trigger_kind": "explicit",
       "requires_explicit_input": true,
-      "requires_note": true,
-      "notes": "Reporte no confirmado; exige nota operativa no vacia."
-    },
-    {
-      "id": "cancel",
-      "from_any_non_terminal": true,
-      "to": "CANCELLED",
-      "actors": ["pharmacy"],
-      "trigger": "explicit_cancellation",
-      "trigger_kind": "explicit",
-      "requires_explicit_input": true
-    },
-    {
-      "id": "not_applicable",
-      "from_any_non_terminal": true,
-      "to": "NOT_APPLICABLE",
-      "actors": ["pharmacy", "pharmacy_module"],
-      "trigger": "explicit_line_event",
-      "trigger_kind": "explicit",
-      "requires_explicit_input": true,
-      "line_event_enum": ["stopped", "switched", "cancelled", "completed"],
-      "notes": "pharmacy_module solo por evento explicito de linea; nunca por ausencia de datos."
+      "notes": "Unico borde hacia TRATAMIENTO_SUSPENDIDO. Dato minimo del acto = OCT-OPEN-011, no congelado aqui."
     }
   ],
-  "immutable_after_report": {
-    "states": ["RENEWED_REPORTED", "PENDING_FH_REVIEW"],
-    "fields_not_modified_by_report": ["valid_until", "valid_until_kind", "valid_until_source", "service_id", "line_status"]
-  },
   "forbidden_transitions": [
     {
-      "from": "RENEWED_REPORTED",
-      "to": "FH_UPDATED",
-      "reason": "RENEWED_REPORTED != FH_UPDATED; se exige acto FH explicito."
+      "to": "ACTUALIZADA_POR_FH",
+      "forbidden_actors": ["nursing", "pharmacy_module"],
+      "reason": "solo pharmacy puede producir ACTUALIZADA_POR_FH."
     },
     {
-      "from": "PENDING_FH_REVIEW",
-      "to": "FH_UPDATED",
+      "to": "TRATAMIENTO_SUSPENDIDO",
       "forbidden_actors": ["nursing", "pharmacy_module"],
-      "reason": "solo pharmacy puede producir FH_UPDATED."
+      "reason": "solo pharmacy puede producir TRATAMIENTO_SUSPENDIDO."
     }
   ],
   "forbidden_triggers": ["time", "silence", "absence", "timeout", "elapsed", "schedule", "cron"],
   "invariants": [
-    "Todo borde hacia FH_UPDATED tiene conjunto de actores exactamente {pharmacy}.",
-    "Ninguna transicion se dispara por tiempo, silencio o ausencia.",
-    "Los estados terminales no tienen transiciones salientes.",
+    "Todo borde hacia ACTUALIZADA_POR_FH o TRATAMIENTO_SUSPENDIDO tiene conjunto de actores exactamente {pharmacy}.",
+    "Ninguna transicion se dispara por tiempo, silencio o ausencia; la deteccion (evaluacion de ventana) nunca transita el lifecycle.",
+    "Los estados terminales (ACTUALIZADA_POR_FH, TRATAMIENTO_SUSPENDIDO) no tienen transiciones salientes.",
     "window_state y lifecycle_state son conjuntos disjuntos.",
-    "La recomputacion de ventana nunca produce por si misma una transicion de lifecycle.",
-    "RENEWED_REPORTED y PENDING_FH_REVIEW nunca modifican valid_until, valid_until_kind, service_id ni el estado de linea.",
-    "Una correccion abre un ciclo nuevo con nuevo renewal_id; los estados terminales no resucitan."
+    "PRÓXIMA_A_RENOVACIÓN es una condicion derivada, no un estado de lifecycle; la gestion empieza con ENVIADA_A_ENFERMERÍA.",
+    "Las comunicaciones de Enfermeria nunca modifican valid_until, valid_until_kind, valid_until_source, service_id ni line_status.",
+    "Las lineas con line_status distinto de active nunca continuan el circuito; la reactivacion solo ocurre por un evento de linea explicito registrado.",
+    "Un unico ciclo abierto por linea; una correccion reabre identidad con un renewal_id nuevo."
   ]
 }
