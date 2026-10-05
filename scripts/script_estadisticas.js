@@ -350,10 +350,11 @@ function addEventListeners() {
 
     // Exportar CSV
     document.getElementById('exportCohortBtn').addEventListener('click', () => {
-        if (HubTools && HubTools.exportCohortToCSV) {
-            HubTools.exportCohortToCSV(currentCohort);
+        const exportFn = HubTools && HubTools.export && HubTools.export.exportCohortToCSV;
+        if (typeof exportFn === 'function') {
+            exportFn(currentCohort);
         } else {
-            console.error('HubTools.exportCohortToCSV not found');
+            console.error('HubTools.export.exportCohortToCSV not found');
         }
     });
 

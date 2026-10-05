@@ -27,11 +27,13 @@
  *   B7  unavailable (tab without the session corpus) fails visibly/safely
  *   B8  error (planted seam double) fails visibly/safely
  *
- * CSV export is NOT wired today (`#exportCohortBtn` checks `HubTools.exportCohortToCSV`
- * while the exporter publishes `HubTools.export.exportCohortToCSV`), so it cannot be
- * exercised without either fixing that pre-existing defect (out of #456 scope) or
- * freezing it as acceptance. This checker therefore does not probe it; the seam
- * migration does not touch the export path.
+ * CSV export wiring (#537): `Exportar CSV` now resolves the exporter through its
+ * published namespace (`HubTools.export.exportCohortToCSV`) and downloads exactly
+ * the formal filtered cohort. That behavior is qualified by the dedicated
+ * deterministic oracle `tools/reuma_estadisticas_csv_filtered_cohort_check.mjs`
+ * and the download-level browser check
+ * `tools/reuma_estadisticas_csv_filtered_cohort_browser_check.mjs`; this checker
+ * keeps its original seam-migration scope and does not re-probe the export path.
  *
  * Usage: node tools/reuma_estadisticas_read_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
