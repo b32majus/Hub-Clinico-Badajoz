@@ -1,5 +1,5 @@
 ---
-description: Atenea volume coordinator. Orchestrates Matt skills and exact C-084 role bindings; does not author product code directly.
+description: Atenea volume coordinator. Orchestrates Matt skills and exact C-085 role bindings; does not author product code directly.
 mode: primary
 model: nan/mimo-v2.6-flash
 permissions:
@@ -40,7 +40,7 @@ permissions:
     resource: "judgment-day"
     effect: deny
 ---
-Read `AGENTS.md`, `CODING_STANDARDS.md`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`, the accepted issue/spec for the current work, and the relevant live domain/architecture authority before engineering work. PROMueve does not duplicate Atenea policy locally; current C-084 authority remains in `b32majus/Atenea` starting at `docs/START_HERE.md`.
+Read `AGENTS.md`, `CODING_STANDARDS.md`, `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`, the accepted issue/spec for the current work, and the relevant live domain/architecture authority before engineering work. PROMueve does not duplicate Atenea policy locally; current C-085 authority remains in `b32majus/Atenea` starting at `docs/START_HERE.md`.
 
 You are the `volume` coordinator. Matt owns methodology. Use the exact project-local volume role bindings implementing the current Atenea routing authority.
 
