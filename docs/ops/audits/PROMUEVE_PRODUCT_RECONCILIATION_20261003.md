@@ -8,7 +8,7 @@
 
 **Base verificada al iniciar:** `50b48b41d61d94752f5b10edb04b2e5fb1898f08`
 
-**Última reconciliación de estado:** 2026-10-05 (#535), sobre `promueve/nexus-v4 @ 5ed5ff8acacfff87252039a8ee3cc29db71385c5`; último HEAD clínico/producto `03f814875b38409a219f40e3602feece06472f33` (PR #532).
+**Última reconciliación de estado:** 2026-10-05 (#539), sobre `promueve/nexus-v4 @ 05114fcf899a857ca6505c1da7eaef2c82ac6155`; último HEAD clínico/producto `05114fcf899a857ca6505c1da7eaef2c82ac6155` (PR #538 / #537). El merge documental de #539 puede mover después el tip Git sin cambiar este HEAD de producto.
 
 **Ámbito:** Farmacia Hospitalaria, Dermatología, Reumatología y evolución multi-hospital de PROMueve Nexus.
 
@@ -204,6 +204,8 @@ Dirección acordada:
 
 ### 3.11 Estadísticas y reporting — `DECIDIDO COMO DIRECCIÓN`, implementación pendiente
 
+**Publicación acotada posterior (#537 / PR #538):** el botón soportado `Exportar CSV` de Estadísticas queda cableado al exportador publicado y toma `currentCohort`, la cohorte que resulta de los filtros formales. `Buscar en tabla` sigue siendo una copia de presentación local y **no** forma parte de la semántica de exportación. Evidencia sintética publicada: oracle 8/8, browser 6/6 con descargas reales, witness `total > filtered`, zero-result sin fallback y búsqueda local estrechada sin alterar el CSV; merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`, CI PR `37336670618` y post-merge `37336957812` `success`. Esto **no** resuelve el reporting amplio de esta sección, no valida otras columnas CSV ni autoriza piloto/producción. Durante la cualificación se observó deuda preexistente del filtro sexo (`Hombre/Mujer` en UI frente a `M/F` en datos); queda reportada, no corregida ni priorizada automáticamente.
+
 La revisión actual confirma y amplía `SIL-REV-018/019/020` de la auditoría de septiembre.
 
 Necesidades confirmadas:
@@ -398,7 +400,8 @@ La reconstrucción prevista ya se completó y fue adjudicada mediante #504 / PR 
 
 - safety/wiring #512/#517 → PR #521;
 - prebiológico mínimo #525 → PR #526;
-- solicitud textual segura Reuma→Farmacia #528 + #529/#530/#531 → PR #532.
+- solicitud textual segura Reuma→Farmacia #528 + #529/#530/#531 → PR #532;
+- export CSV de Estadísticas desde la cohorte de filtros formales #537 → PR #538.
 
 La pasada manual focalizada de Reuma quedó adjudicada el 2026-10-04. No procede repetir una auditoría general ya concluyente: el trabajo pre-Badajoz continúa sólo mediante WOs atómicas sobre los hallazgos que el ledger mantiene pendientes, con reproducción soportada y QA proporcional.
 
@@ -412,7 +415,8 @@ La secuencia inicial `#446 renovaciones → Reuma→Farmacia discovery → CIMA`
 - safety/wiring Reuma #512/#517 se publicó por PR #521;
 - prebiológico mínimo #525 se publicó por PR #526;
 - la **solicitud textual Reuma→Farmacia** se publicó por #528 + #529/#530/#531 → PR #532;
-- el harness PROMueve se sincronizó después por #533 → PR #534 con Atenea `79f4a40...`, sin cambio clínico de producto.
+- el **CSV de Estadísticas sobre la cohorte de filtros formales** se publicó por #537 → PR #538; `Buscar en tabla` sigue pendiente como requisito separado;
+- el harness PROMueve se sincronizó por #533 → PR #534 con Atenea `79f4a40...`, sin cambio clínico de producto; #537 se ejecutó después con autoridad Atenea vigente `77754c1...` mediante refresh Cora/humano, routing Go sin cambio y sin mutar el harness project-local.
 
 Por tanto, ya no hay `UNDER_READJUDICATION` general ni necesidad de completar de nuevo ledger/Q&A. La ronda pre-Badajoz continúa sólo con los ítems pendientes del ledger. F4.5 sigue **técnicamente disponible**, no prioridad humana automática; CIMA permanece concern separado; Dermatología entra en dirección real de producto sin autorizar un gran train; eccema de manos permanece `AWAIT_TEAM_INPUT`. Una futura integración estructurada Reuma↔Farmacia sigue separada del handoff textual ya publicado.
 
@@ -474,8 +478,8 @@ Recovery puede seguir sirviendo como referencia/demo histórica si resulta conve
 - Estado general de WOs: [`../WORK_ORDER_STATUS.md`](../WORK_ORDER_STATUS.md).
 - Índice maestro: [`../../INDEX.md`](../../INDEX.md).
 - Autoridad documental original de esta reconciliación: issue #501.
-- Ledger vivo y Q&A Reuma: #504 / PR #506; publicaciones posteriores #521, #526 y #532.
-- Harness C-084 vigente en PROMueve tras #533 / PR #534, sincronizado con `b32majus/Atenea@79f4a40d2330b0377d50dbba266762f450090c99`; cambio de gobernanza, no de producto clínico.
-- Reconciliación de estado 2026-10-05: #535.
+- Ledger vivo y Q&A Reuma: #504 / PR #506; publicaciones posteriores #521, #526, #532 y #538.
+- Harness C-084 project-local en PROMueve tras #533 / PR #534: sincronizado con `b32majus/Atenea@79f4a40d2330b0377d50dbba266762f450090c99`; #537 se ejecutó bajo autoridad Atenea actualizada `77754c1d03c6dab20e5b5ee5a658b55efe562174` sin cambio de routing ni sync de harness. Cambio de gobernanza, no de producto clínico.
+- Reconciliación de estado 2026-10-05: #539 (post-PR #538 / WO #537).
 
 Cerrar/publicar esta reconciliación **no significa implementar** las decisiones descritas. Cada cambio técnico requerirá su propia autoridad acotada, tests/QA proporcionales y reconciliación documental cuando cambie el estado real.
