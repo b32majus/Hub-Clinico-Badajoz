@@ -5,14 +5,15 @@
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**Base canónica verificada para esta reconciliación:** `5ed5ff8acacfff87252039a8ee3cc29db71385c5` (tip Git tras PR #534, harness/gobernanza); último HEAD clínico/producto `03f814875b38409a219f40e3602feece06472f33` (PR #532)
-**Último HEAD de producto Nexus verificado:** `03f814875b38409a219f40e3602feece06472f33` (PR #532 / #528+#529/#530/#531); anterior `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525); anterior `ee7379d24ef99633d3bede07c64b31a7038558e4` (PR #521 / #512+#517)
+**Base canónica verificada para esta reconciliación:** `05114fcf899a857ca6505c1da7eaef2c82ac6155` (merge PR #538 y último HEAD clínico/producto); el merge documental posterior de #539 puede mover el tip Git sin cambiar producto
+**Último HEAD de producto Nexus verificado:** `05114fcf899a857ca6505c1da7eaef2c82ac6155` (PR #538 / #537); anterior `03f814875b38409a219f40e3602feece06472f33` (PR #532 / Train 14); anterior `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525)
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
 **Safety/wiring Reuma:** #512 + #517 **PUBLICADOS Y VERIFICADOS** por PR #521 (merge `ee7379d24ef99633d3bede07c64b31a7038558e4`); #512–#520 cerrados/completed
 **Prebiológico mínimo Reuma:** #525 **PUBLICADO Y VERIFICADO** por PR #526 (merge `1b41724db7f86534880122e0a5263e25206b07ee`); esa WO no modificó la solicitud Reuma→Farmacia, publicada después por Train 14
 **Solicitud textual Reuma→Farmacia:** #528 + #529/#530/#531 **PUBLICADOS Y VERIFICADOS** por PR #532 (merge `03f814875b38409a219f40e3602feece06472f33`); oracle 26/0, browser PV+Seguimiento 91/0 y Dashboard 46/0; sólo estados explícitos de Analítica/Medicina Preventiva, sin detalle legacy ni inferencia terapéutica
+**Estadísticas CSV Reuma:** #537 **PUBLICADO Y VERIFICADO** por PR #538 (merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`); oracle 8/8 y browser 6/6 con descargas reales; export formal `currentCohort`; `Buscar en tabla` sigue separado y pendiente
 **Harness C-084:** #533 publicado por PR #534 (tip Git `5ed5ff8acacfff87252039a8ee3cc29db71385c5`) sincroniza a Atenea `79f4a40d2330b0377d50dbba266762f450090c99`; cero cambio clínico de producto
 
 ## 1. Propósito
@@ -73,8 +74,9 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Semántica legacy `search(query)` no categorizada | `PENDIENTE` (deuda no bloqueante) | Sí | Ruta legacy no soportada por controles Reuma actuales | No en recorrido soportado | No necesaria para cerrar train | Sí | Deuda API | No | #450 OPEN | Deuda no bloqueante preservada; decidir contrato workbook-only vs union; no mezclar con CIMA ni #448. |
 | Prebiológico simplificado: Analítica + Medicina Preventiva | `IMPLEMENTADO` | Sí | Sí | Sí | Manual 2026-10-04 + Chromium #525 41/0; `verify:nexus` PASS | Sí | Sintética | No | #445 / PR #449 + #525 / PR #526 | Estados explícitos `NO SOLICITADA / SOLICITADA-PENDIENTE / OK`; una Observaciones opcional; `Fecha diagnóstico` prebiológica retirada; sin `APTO` global. Compatibilidad histórica de fecha general preservada. El handoff FH es una capacidad separada, publicada después por #528 / PR #532. |
 | Seguimiento detrás del Reuma Read Port | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: ruta/funcionamiento operativos | Sí | Sintética | No | #455 / PR #459 | Identidad editable + baseline preexistente decididos (3.2.15); persistencia/restauración no quedó adjudicada explícitamente en la pasada. |
-| Estadísticas detrás de seam/Read Port Reuma | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: filtros observados funcionando | Sí | Sintética | No | #456 / PR #459 | `Buscar en tabla` a relegar/retirar (3.2.16). El export se registra como defecto reproducido en la fila siguiente. |
-| Exportar CSV de Estadísticas (cohorte filtrada) | `DEFECTO_REPRODUCIDO` | Sí (export actual) | Sí | Sí | Manual 2026-10-04: exporta población distinta/total, no la cohorte de filtros activos | Sí | Sintética | No | Sin issue aún (candidata) | Corregir para exportar la cohorte resultante de los filtros activos; sin cambio de semántica clínica. |
+| Estadísticas detrás de seam/Read Port Reuma | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: filtros observados funcionando | Sí | Sintética | No | #456 / PR #459 | `Buscar en tabla` sigue como requisito separado a relegar/retirar (3.2.16). El export CSV ya está resuelto/publicado por #537 / PR #538 en la fila siguiente. |
+| Exportar CSV de Estadísticas (cohorte filtrada) | `IMPLEMENTADO / PUBLICADO` | Sí | Sí | Sí | #537: oracle 8/8 + browser 6/6 con descarga real; `total>filtered`, cero resultado sin fallback y search local adversarial; full-journey console/pageerror 0 | Sí | Sintética | No | #537 / PR #538 | Handler corregido al namespace publicado `HubTools.export.exportCohortToCSV`; exporta `currentCohort`, la cohorte de filtros formales. `Buscar en tabla` NO define export semantics. No se validan por esta WO otras columnas CSV ni se cambia semántica de filtros. |
+
 | Writer legacy 497 tras boundary fail-closed | `IMPLEMENTADO` | Sí | Sí | Indirecto | Evidencia Train 07; no reabierto por la pasada manual | Sí | Compatibilidad | No | #457 / PR #459 | Legacy contenido; **no** es arquitectura final. |
 | Reuma Visit Act v1 independiente de 497 | `IMPLEMENTADO` | Sí | Sí | Indirecto | Oráculos + Train 08 | Sí | Sintética | No | #462 / PR #467 | Contrato de acto publicado. |
 | Adapter Visit Act → legacy 497 | `IMPLEMENTADO` | Sí | Sí | Indirecto | 10 journeys byte-equivalentes | Sí | Compatibilidad | No | #463 / PR #467 | Frontera transitoria explícita. |
@@ -94,6 +96,8 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Integración estructurada Reuma ↔ Farmacia / retorno de estado y ownership | `DISCOVERY` | No contrato end-state | No | No | No | No | No | No | Sin WO autorizada | Train 14 publica el handoff textual; no define por sí mismo acto estructurado, persistencia, retorno de estado, ownership ni integración bidireccional. Requiere shaping/autoridad separada si se prioriza. |
 | Renovaciones/alertas | `PARCIAL` | Contrato N0 publicado | Sin runtime Nexus | Contrato/schemas/checker publicados | Evidencia determinista del contrato (checker 53/0), sin QA navegador | Sí (contrato) | Sintética | No | #446 CLOSED/completed + #509 cerrada | **Sólo contrato N0 publicado**: #509 → PR #510 (merge `aa6401a`) + reconciliación PR #511. N1/N2/N3 requieren WOs propias. `OCT-OPEN-010..013` y `REN-OPEN-001..008` siguen abiertos. No confundir con Reuma→Farmacia. |
 | CIMA automática / propuestas estructuradas | `FUTURO` | No automatización actual | No | No | No | No | No | No | — | Línea separada. Selección genérica nunca escribe terapia; en FH la selección explícita de medicamento/presentación + contexto puede **proponer** datos inequívocos, siempre editables y sin sobrescritura silenciosa. |
+
+> **Observación no resuelta detectada durante #537:** el filtro sexo expone `Hombre/Mujer` mientras el corpus/datos observados usan `M/F`. Es deuda funcional preexistente de semántica de filtro, fuera de #537; no se corrigió ni se convierte aquí en prioridad clínica. El contenido de otras columnas del CSV (p. ej. Edad/Fecha_Nacimiento) tampoco queda validado por #537.
 
 ### 3.1 Adjudicación manual Reuma 2026-10-04 — cerrada para shaping
 
@@ -130,9 +134,9 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 | 13 | Solicitud Reuma → Farmacia: eliminar el desglose legacy de hemograma/bioquímica/serologías/vacunación; sólo los dos estados resumidos de Analítica y Medicina Preventiva cuando consten explícitamente | `RESUELTO / PUBLICADO` | #528 + #529/#530/#531 / PR #532: artefacto soportado cualificado en Primera Visita, Seguimiento y Dashboard; ausencia no fabrica estado; resto clínico explícito preservado; sin inferencia terapéutica. |
 | 14 | Toasts export: conservar el mensaje explicativo de siguiente paso; retirar el toast verde duplicado/oculto que queda detrás | `DEFECTO_REPRODUCIDO` | Al estructurar CSV. |
 | 15 | Seguimiento con CIP sin paciente previo: nombre y apellidos editables + capturar tratamiento actual preexistente y fecha de inicio como baseline explícito | `REQUISITO_DECIDIDO_PENDIENTE` | Sin fabricar START/SWITCH/ADD_ON ni validación retrospectiva. |
-| 16 | Estadísticas: `Exportar CSV` debe exportar la cohorte de filtros activos (defecto) y quitar/relegar `Buscar en tabla` (requisito) | `DEFECTO_REPRODUCIDO` + `REQUISITO_DECIDIDO_PENDIENTE` | Los filtros observados funcionan. |
+| 16 | Estadísticas: `Exportar CSV` debe exportar la cohorte de filtros activos (defecto) y quitar/relegar `Buscar en tabla` (requisito) | `CSV RESUELTO / PUBLICADO` + `Buscar en tabla REQUISITO_DECIDIDO_PENDIENTE` | #537 / PR #538 resuelve sólo el export: filtros formales → `currentCohort` → CSV, con descarga real y witnesses adversariales. La retirada/relegación de `Buscar en tabla` sigue pendiente y no cambia la semántica del export. |
 
-Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/#532. Permanecen accionables, sujetos a WO/autoridad correspondiente, los ítems **1, 2, 4, 7, 9, 10, 11, 14, 15 y 16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
+Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/#532; del ítem **16**, la mitad `Exportar CSV` queda resuelta/publicada por #537 / PR #538 y `Buscar en tabla` sigue pendiente. Permanecen accionables, sujetos a WO/autoridad correspondiente, los ítems **1, 2, 4, 7, 9, 10, 11, 14, 15** y la parte pendiente del **16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
 
 ### 3.3 Reuma — pendientes, defer y deuda preservada
 
@@ -212,10 +216,10 @@ Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/
 
 Cruce **sólo de estado/prioridad**; no define contratos de integración ni semántica de producto futura.
 
-- **Reumatología:** QA manual adjudicado 2026-10-04; primera ejecución técnica pre-Badajoz ya publicada: #512/#517 por PR #521 y #525 por PR #526. Quedan pendientes los demás ítems de §3.2/§3.3; `PENDIENTE_EQUIPO` / `PENDIENTE_FUENTE` siguen siendo blockers humanos, no defectos a inventar.
+- **Reumatología:** QA manual adjudicado 2026-10-04; ejecución técnica pre-Badajoz publicada hasta #537 / PR #538: safety/wiring #512/#517, prebiológico #525, solicitud textual Reuma→Farmacia #528 y CSV Stats #537. Quedan pendientes los demás ítems de §3.2/§3.3; `PENDIENTE_EQUIPO` / `PENDIENTE_FUENTE` siguen siendo blockers humanos, no defectos a inventar.
 - **Farmacia Hospitalaria:** revisión FH y decisiones #501 ya publicadas; F4.4 publicada; contrato N0 de renovaciones publicado (#509 / PR #510 / PR #511) con N1/N2/N3 pendientes; F4.5/F4.6 siguen sin autorización automática.
 - **Dermatología:** dirección #501 vigente (módulo candidato; HS/PsO primeras verticales; eccema de manos `AWAIT_TEAM_INPUT`); sin implementación Nexus, sin contratos nuevos.
-- **Prioridad:** la ronda `PRE-BADAJOZ` está en ejecución acotada, no cerrada. Publicadas #512/#517/#525; la solicitud Reuma→Farmacia minimal (3.2.13) sigue separada y pendiente, al igual que el resto de WOs no ejecutadas. F4.5/F4.6, CIMA y futuras capacidades no quedan autorizadas por esta reconciliación.
+- **Prioridad:** la ronda `PRE-BADAJOZ` está en ejecución acotada, no cerrada. Publicadas #512/#517/#525/#528/#537. En Estadísticas, sólo el CSV de la cohorte formal queda resuelto; `Buscar en tabla` permanece requisito separado, y la observación de filtro sexo `Hombre/Mujer` vs datos `M/F` queda deuda preexistente sin priorización automática. F4.5/F4.6, CIMA y futuras capacidades no quedan autorizadas por esta reconciliación.
 
 ## 9. Regla para issues
 
