@@ -429,67 +429,38 @@
     }
 
     /**
-     * Genera el bloque prebiológico / vacunación.
+     * Genera el bloque prebiológico resumido de la solicitud FH
+     * (TRAIN-NEXUS-REUMA-PHARMACY-REQUEST-SAFETY-14, #528/#530).
+     *
+     * El bloque saliente contiene ÚNICAMENTE los dos estados explícitos
+     * `Analítica` y `Medicina Preventiva`, cada uno emitido sólo cuando
+     * existe un estado explícito válido (NO_SOLICITADA |
+     * SOLICITADA_PENDIENTE | OK) leído mediante
+     * HubTools.prebiologic.getBlockStatesFromVisit. La ausencia o un valor
+     * desconocido/inválido permanece ausente: nunca se fabrica ningún
+     * valor (ni NO_SOLICITADA, ni OK, ni APTO, ni ND, ni línea etiquetada
+     * vacía). Sin cabecera legacy, sin estado global, sin fecha de
+     * validación, sin fuente de datos, sin detalle legacy y sin
+     * observaciones.
      */
     function getPrebiologicBlock(datos) {
-        var cip = getCIP(datos);
-        var resolved = null;
-        var sessionStatus = null;
+        var analitica = '';
+        var medicinaPreventiva = '';
 
         if (
             typeof HubTools !== 'undefined' &&
             HubTools.prebiologic &&
-            typeof HubTools.prebiologic.resolvePrebiologicStatus === 'function'
+            typeof HubTools.prebiologic.getBlockStatesFromVisit === 'function'
         ) {
-            resolved = HubTools.prebiologic.resolvePrebiologicStatus(cip, datos || {});
+            var blocks = HubTools.prebiologic.getBlockStatesFromVisit(datos || {});
+            analitica = blocks.analitica || '';
+            medicinaPreventiva = blocks.medicinaPreventiva || '';
         }
 
-        if (
-            !resolved &&
-            typeof HubTools !== 'undefined' &&
-            HubTools.prebiologic &&
-            typeof HubTools.prebiologic.getStatus === 'function'
-        ) {
-            sessionStatus = HubTools.prebiologic.getStatus(cip);
-            resolved = {
-                status: sessionStatus && sessionStatus.estado ? sessionStatus.estado : 'NO_EVALUADO',
-                validationDate: sessionStatus && sessionStatus.fechaValidacion ? sessionStatus.fechaValidacion : '',
-                source: sessionStatus ? 'sessionStorage' : 'none',
-                details: {}
-            };
-        }
-
-        resolved = resolved || {
-            status: 'NO_EVALUADO',
-            validationDate: '',
-            source: 'none',
-            details: {}
-        };
-
-        var estado = resolved.status || 'NO_EVALUADO';
-        var fechaValidacion = resolved.validationDate || '';
-        var notasClinico = sessionStatus && sessionStatus.notasClinico ? sessionStatus.notasClinico : '';
-
-        var text = 'ESTADO PREBIOLÓGICO / VACUNACIÓN\n';
-        text += '- Estado prebiológico: ' + estado.replace(/_/g, ' ');
-        if (fechaValidacion) {
-            text += ' (fecha validación: ' + formatDateES(fechaValidacion) + ')';
-        }
-        text += '\n';
-        text += '- Fuente de datos: ' + (resolved.source || 'none') + '\n';
-        text += '- Hemograma correcto: ' + displayValue(getField(datos, ['Hemograma_Correcto', 'hemogramaCorrecto'], ''), 'ND') + '\n';
-        text += '- Bioquímica correcta: ' + displayValue(getField(datos, ['Bioquimica_Correcta', 'bioquimicaCorrecta'], ''), 'ND') + '\n';
-        text += '- Serologías correctas: ' + displayValue(getField(datos, ['Serologias_Correctas', 'serologiasCorrectas'], ''), 'ND') + '\n';
-        text += '- IGRA/Mantoux resultado: ' + displayValue(getField(datos, ['IGRA_Mantoux_Resultado', 'igraMantouxResultado'], ''), 'ND') + '\n';
-        text += '- Rx tórax correcta: ' + displayValue(getField(datos, ['Rx_Torax_Correcta', 'rxToraxCorrecta'], ''), 'ND') + '\n';
-        text += '- Vacunación revisada: ' + displayValue(getField(datos, ['Vacunacion_Revisada', 'vacunacionRevisada'], ''), 'ND') + '\n';
-        text += '- Vacunación OK: ' + displayValue(getField(datos, ['Vacunacion_OK', 'vacunacionOK'], ''), 'ND') + '\n';
-        text += '- Medicina preventiva derivada: ' + displayValue(getField(datos, ['Medicina_Preventiva_Derivada', 'medicinaPreventivaDerivada'], ''), 'ND') + '\n';
-        text += '- Vacunas pendientes: ' + displayValue(getField(datos, ['Vacunas_Pendientes', 'vacunasPendientes'], ''), 'ND') + '\n';
-        text += '- Observaciones prebiológico: ' + displayValue(getField(datos, ['Observaciones_Prebiologico', 'observacionesPrebiologico'], ''), 'ND') + '\n';
-        if (notasClinico) {
-            text += '- Notas clínico: ' + notasClinico + '\n';
-        }
+        var text = '';
+        if (analitica) text += '- Analítica: ' + analitica + '\n';
+        if (medicinaPreventiva) text += '- Medicina Preventiva: ' + medicinaPreventiva + '\n';
+        if (!text) return '';
 
         return text + '\n';
     }

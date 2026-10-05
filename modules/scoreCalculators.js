@@ -231,21 +231,6 @@ function calcularRAPID3(datos) {
 }
 
 function calcularMDA(datos) {
-    const incompleteResult = {
-        nat: '',
-        nad: '',
-        psoriasis: '',
-        lei: '',
-        evaDolor: '',
-        evaGlobal: '',
-        haq: '',
-        criterios: [],
-        cumplidos: 0,
-        mdaAlcanzado: false,
-        evaluable: false,
-        categoria: 'Incompleto'
-    };
-
     const nat = parseNumberInRange(datos?.nat, 0, 66, { fallback: null, integer: true });
     const nad = parseNumberInRange(datos?.nad, 0, 68, { fallback: null, integer: true });
     const pasi = parseNumberInRange(datos?.pasiValue, 0, 72, { fallback: null });
@@ -261,14 +246,93 @@ function calcularMDA(datos) {
     const hasPROs = allFinite([evaDolor, evaGlobal]);
     const hasFunction = Number.isFinite(haq);
     const evaluable = hasJointCounts && hasSkin && hasEnthesitis && hasPROs && hasFunction;
+
+    const evaDolorMM = Number.isFinite(evaDolor) ? evaDolor * 10 : null;
+    const evaGlobalMM = Number.isFinite(evaGlobal) ? evaGlobal * 10 : null;
+    const psoriasisCriterion = hasSkin
+        ? [
+            Number.isFinite(pasi) ? pasi <= 1 : false,
+            Number.isFinite(bsa) ? bsa <= 3 : false
+        ].some(Boolean)
+        : null;
+
+    // T4 #516: estado resuelto por criterio con independencia de los demás y de
+    // que el índice completo sea evaluable. Una fuente ausente queda
+    // `pendiente`; nunca se coacciona a 0/falso y nunca se inventa un valor.
+    const criterioEstados = [
+        { key: 'nat', estado: Number.isFinite(nat) ? (nat <= 1 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'NAT' },
+        { key: 'nad', estado: Number.isFinite(nad) ? (nad <= 1 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'NAD' },
+        // Corrección #516 (sólo estado de presentación, no fórmula): la
+        // ausencia de una de las dos fuentes nunca se presenta como negativo.
+        // cumplido si alguna fuente PRESENTE satisface; no_cumplido sólo con
+        // PASI y BSA presentes y ninguno satisfecho; pendiente en el resto
+        // (al menos una fuente ausente, que sigue apareciendo en
+        // fuentesPendientes). El booleano psoriasisCriterion/criterios.psoriasis,
+        // cumplidos y mdaAlcanzado no cambian: un criterio indeterminado no se
+        // acredita en el veredicto agregado (fórmula publicada intacta).
+        { key: 'psoriasis', estado: (Number.isFinite(pasi) && pasi <= 1) || (Number.isFinite(bsa) && bsa <= 3)
+            ? 'cumplido'
+            : (Number.isFinite(pasi) && Number.isFinite(bsa) ? 'no_cumplido' : 'pendiente'), fuente: 'PASI o BSA' },
+        { key: 'lei', estado: Number.isFinite(lei) ? (lei <= 1 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'LEI' },
+        { key: 'evaDolor', estado: Number.isFinite(evaDolor) ? (evaDolorMM <= 15 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'EVA Dolor' },
+        { key: 'evaGlobal', estado: Number.isFinite(evaGlobal) ? (evaGlobalMM <= 20 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'EVA Global' },
+        { key: 'haq', estado: Number.isFinite(haq) ? (haq <= 0.5 ? 'cumplido' : 'no_cumplido') : 'pendiente', fuente: 'HAQ' }
+    ];
+    const fuentesPendientes = criterioEstados
+        .filter(criterio => criterio.estado === 'pendiente')
+        .map(criterio => criterio.fuente);
+
+    // C2 #519: helpers del veredicto visible de certidumbre autorizado por
+    // #517/#519. Regla humana vinculante: con >= 5 criterios resueltos como
+    // cumplidos el veredicto visible es 'alcanzado'; con < 5 cumplidos pero
+    // >= 5 entre cumplidos y pendientes es 'pendiente' (los datos ausentes aún
+    // podrían cambiar la conclusión); en otro caso 'no_alcanzado'.
+    function contarCriteriosEnEstado(estados, estado) {
+        return estados.filter(criterio => criterio.estado === estado).length;
+    }
+    function veredictoVisibleMDA(estados) {
+        const cumplidosResueltos = contarCriteriosEnEstado(estados, 'cumplido');
+        const pendientes = contarCriteriosEnEstado(estados, 'pendiente');
+        if (cumplidosResueltos >= 5) return 'alcanzado';
+        if (cumplidosResueltos + pendientes >= 5) return 'pendiente';
+        return 'no_alcanzado';
+    }
+    const cumplidosResueltos = contarCriteriosEnEstado(criterioEstados, 'cumplido');
+    const pendientes = contarCriteriosEnEstado(criterioEstados, 'pendiente');
+    const veredicto = veredictoVisibleMDA(criterioEstados);
+
+    // Ámbitos NO solapados (C2 #519): `mdaAlcanzado` es la regla clínica
+    // publicada aplicada al agregado evaluable (contrato inalterado; en
+    // resultados incompletos el contrato agregado sigue `false`), mientras que
+    // `cumplidosResueltos`/`pendientes`/`veredicto` son el veredicto visible de
+    // certidumbre derivado del estado por criterio. Un único productor: el
+    // renderer (formController.recalcularMDA) es proyección pura de estos
+    // campos y no reconuenta nada.
+    const camposVeredictoVisible = {
+        cumplidosResueltos,
+        pendientes,
+        veredicto
+    };
+
+    const incompleteResult = {
+        nat: '',
+        nad: '',
+        psoriasis: '',
+        lei: '',
+        evaDolor: '',
+        evaGlobal: '',
+        haq: '',
+        criterios: [],
+        cumplidos: 0,
+        mdaAlcanzado: false,
+        evaluable: false,
+        categoria: 'Incompleto',
+        criterioEstados,
+        fuentesPendientes,
+        ...camposVeredictoVisible
+    };
     if (!evaluable) return incompleteResult;
 
-    const evaDolorMM = evaDolor * 10;
-    const evaGlobalMM = evaGlobal * 10;
-    const psoriasisCriterion = [
-        Number.isFinite(pasi) ? pasi <= 1 : false,
-        Number.isFinite(bsa) ? bsa <= 3 : false
-    ].some(Boolean);
     const criterios = {
         nat: nat <= 1,
         nad: nad <= 1,
@@ -294,7 +358,10 @@ function calcularMDA(datos) {
         cumplidos,
         mdaAlcanzado,
         evaluable: true,
-        categoria: mdaAlcanzado ? 'MDA alcanzado' : 'MDA no alcanzado'
+        categoria: mdaAlcanzado ? 'MDA alcanzado' : 'MDA no alcanzado',
+        criterioEstados,
+        fuentesPendientes,
+        ...camposVeredictoVisible
     };
 }
 
