@@ -1,17 +1,19 @@
 # PROMueve Nexus — Ledger vivo de estado funcional
 
-**Última actualización:** 2026-10-04
+**Última actualización:** 2026-10-05
 **Estado:** `LIVE / PRE-BADAJOZ`
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**Base canónica verificada para esta reconciliación:** `1b41724db7f86534880122e0a5263e25206b07ee` (merge PR #526); el merge documental posterior de #522 puede mover el tip Git sin cambiar este HEAD de producto
-**Último HEAD de producto Nexus verificado:** `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525); anterior `ee7379d24ef99633d3bede07c64b31a7038558e4` (PR #521 / #512+#517)
+**Base canónica verificada para esta reconciliación:** `5ed5ff8acacfff87252039a8ee3cc29db71385c5` (tip Git tras PR #534, harness/gobernanza); último HEAD clínico/producto `03f814875b38409a219f40e3602feece06472f33` (PR #532)
+**Último HEAD de producto Nexus verificado:** `03f814875b38409a219f40e3602feece06472f33` (PR #532 / #528+#529/#530/#531); anterior `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525); anterior `ee7379d24ef99633d3bede07c64b31a7038558e4` (PR #521 / #512+#517)
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
 **Safety/wiring Reuma:** #512 + #517 **PUBLICADOS Y VERIFICADOS** por PR #521 (merge `ee7379d24ef99633d3bede07c64b31a7038558e4`); #512–#520 cerrados/completed
-**Prebiológico mínimo Reuma:** #525 **PUBLICADO Y VERIFICADO** por PR #526 (merge `1b41724db7f86534880122e0a5263e25206b07ee`); solicitud Reuma→Farmacia permanece pendiente y fuera de ese alcance
+**Prebiológico mínimo Reuma:** #525 **PUBLICADO Y VERIFICADO** por PR #526 (merge `1b41724db7f86534880122e0a5263e25206b07ee`); esa WO no modificó la solicitud Reuma→Farmacia, publicada después por Train 14
+**Solicitud textual Reuma→Farmacia:** #528 + #529/#530/#531 **PUBLICADOS Y VERIFICADOS** por PR #532 (merge `03f814875b38409a219f40e3602feece06472f33`); oracle 26/0, browser PV+Seguimiento 91/0 y Dashboard 46/0; sólo estados explícitos de Analítica/Medicina Preventiva, sin detalle legacy ni inferencia terapéutica
+**Harness C-084:** #533 publicado por PR #534 (tip Git `5ed5ff8acacfff87252039a8ee3cc29db71385c5`) sincroniza a Atenea `79f4a40d2330b0377d50dbba266762f450090c99`; cero cambio clínico de producto
 
 ## 1. Propósito
 
@@ -57,7 +59,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 - **QA browser / evidencia:** interacción soportada en navegador, evidencia determinista o **pasada manual humana 2026-10-04**, según la fila.
 - **Publicado:** está en `promueve/nexus-v4`, no sólo en candidate/branch.
 - **Demo:** `Síntética` significa utilizable/evaluable con datos demo/sintéticos; no equivale a piloto.
-- **Piloto:** sólo `Sí` con evidencia y autorización de piloto real. A 2026-10-04 Nexus sigue **sin piloto / sin producción**.
+- **Piloto:** sólo `Sí` con evidencia y autorización de piloto real. A 2026-10-05 Nexus sigue **sin piloto / sin producción**.
 
 ## 3. Reumatología
 
@@ -69,7 +71,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Categorías `Sistémicos / FAMEs / Biológicos` | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: respeta las tres categorías | Sí | Sintética | No | #447 / PR #449 | Clasificación explícita/versionada; no inferida en runtime. Evolución CIMA = concern separado. |
 | Hidratación visual de medicamento preseleccionado | `PENDIENTE` (deuda no bloqueante) | Parcial | Parcial | Defecto visible conocido | Finding previo; no reabierto por la pasada manual | Sí | Deuda no bloqueante | No | #448 OPEN | Deuda no bloqueante preservada; el valor autoritativo no se reporta perdido. |
 | Semántica legacy `search(query)` no categorizada | `PENDIENTE` (deuda no bloqueante) | Sí | Ruta legacy no soportada por controles Reuma actuales | No en recorrido soportado | No necesaria para cerrar train | Sí | Deuda API | No | #450 OPEN | Deuda no bloqueante preservada; decidir contrato workbook-only vs union; no mezclar con CIMA ni #448. |
-| Prebiológico simplificado: Analítica + Medicina Preventiva | `IMPLEMENTADO` | Sí | Sí | Sí | Manual 2026-10-04 + Chromium #525 41/0; `verify:nexus` PASS | Sí | Sintética | No | #445 / PR #449 + #525 / PR #526 | Estados explícitos `NO SOLICITADA / SOLICITADA-PENDIENTE / OK`; una Observaciones opcional; `Fecha diagnóstico` prebiológica retirada; sin `APTO` global. Compatibilidad histórica de fecha general preservada. Solicitud Reuma→Farmacia con dos estados sigue pendiente (3.2.13). |
+| Prebiológico simplificado: Analítica + Medicina Preventiva | `IMPLEMENTADO` | Sí | Sí | Sí | Manual 2026-10-04 + Chromium #525 41/0; `verify:nexus` PASS | Sí | Sintética | No | #445 / PR #449 + #525 / PR #526 | Estados explícitos `NO SOLICITADA / SOLICITADA-PENDIENTE / OK`; una Observaciones opcional; `Fecha diagnóstico` prebiológica retirada; sin `APTO` global. Compatibilidad histórica de fecha general preservada. El handoff FH es una capacidad separada, publicada después por #528 / PR #532. |
 | Seguimiento detrás del Reuma Read Port | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: ruta/funcionamiento operativos | Sí | Sintética | No | #455 / PR #459 | Identidad editable + baseline preexistente decididos (3.2.15); persistencia/restauración no quedó adjudicada explícitamente en la pasada. |
 | Estadísticas detrás de seam/Read Port Reuma | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: filtros observados funcionando | Sí | Sintética | No | #456 / PR #459 | `Buscar en tabla` a relegar/retirar (3.2.16). El export se registra como defecto reproducido en la fila siguiente. |
 | Exportar CSV de Estadísticas (cohorte filtrada) | `DEFECTO_REPRODUCIDO` | Sí (export actual) | Sí | Sí | Manual 2026-10-04: exporta población distinta/total, no la cohorte de filtros activos | Sí | Sintética | No | Sin issue aún (candidata) | Corregir para exportar la cohorte resultante de los filtros activos; sin cambio de semántica clínica. |
@@ -88,7 +90,8 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Dashboard longitudinal de paciente / evolución PROM | `DEFERIDO` | Sí | Sí | Sí | No adjudicado de nuevo tras Foundation | Sí | Revalidar después | No | — | Revalidar tras fixture longitudinal actualizado; **no** declarar defecto sólo por BD demo vieja. |
 | Delivery/export Reuma end-state común Nexus | `PARCIAL` | Act + boundary publicados | Aún termina en compatibilidad 497 | No como destino nuevo | No | Parcial | Compatibilidad | No | — | Converger con semántica común de delivery/adapters tras F4.5; legacy 497 queda como compatibilidad contenida, no end-state. |
 | Reuma → Processor/Bridge común | `PENDIENTE` | No end-state canónico | No | No | No | No | No | No | — | Pendiente de diseño tras la semántica de delivery/F4.5; no copiar legacy automáticamente. |
-| Reuma → Farmacia | `DISCOVERY` | No contrato final | No | No | No | No | No | No | Sin issue específico vivo verificado | Más allá de la solicitud textual actual, `DISCOVERY_FIRST` donde afecte contrato de integración: definir acto/handoff, autoridad, retorno de estado y ownership antes de WO técnica. |
+| Solicitud textual Reuma → Farmacia (acción soportada `Solicitud FH`) | `IMPLEMENTADO` | Sí | Sí: Primera Visita + Seguimiento + Dashboard comparten generador | Sí (acción/artefacto) | Train #528: oracle 26/0; browser PV+Seguimiento 91/0; Dashboard 46/0; console/pageerror sin blockers | Sí | Sintética | No | #528/#529/#530/#531 / PR #532 | Emite sólo `Analítica` y `Medicina Preventiva` cuando existe estado explícito válido; ausencia permanece ausente. No transporta estado global/date/source/Notas/observaciones prebio ni desglose legacy de laboratorio/vacunación. Preserva el resto clínico explícito; sin validación ni START/SWITCH/ADD_ON inferidos. |
+| Integración estructurada Reuma ↔ Farmacia / retorno de estado y ownership | `DISCOVERY` | No contrato end-state | No | No | No | No | No | No | Sin WO autorizada | Train 14 publica el handoff textual; no define por sí mismo acto estructurado, persistencia, retorno de estado, ownership ni integración bidireccional. Requiere shaping/autoridad separada si se prioriza. |
 | Renovaciones/alertas | `PARCIAL` | Contrato N0 publicado | Sin runtime Nexus | Contrato/schemas/checker publicados | Evidencia determinista del contrato (checker 53/0), sin QA navegador | Sí (contrato) | Sintética | No | #446 CLOSED/completed + #509 cerrada | **Sólo contrato N0 publicado**: #509 → PR #510 (merge `aa6401a`) + reconciliación PR #511. N1/N2/N3 requieren WOs propias. `OCT-OPEN-010..013` y `REN-OPEN-001..008` siguen abiertos. No confundir con Reuma→Farmacia. |
 | CIMA automática / propuestas estructuradas | `FUTURO` | No automatización actual | No | No | No | No | No | No | — | Línea separada. Selección genérica nunca escribe terapia; en FH la selección explícita de medicamento/presentación + contexto puede **proponer** datos inequívocos, siempre editables y sin sobrescritura silenciosa. |
 
@@ -124,12 +127,12 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 | 10 | RAPID3: chips sólo si preservan exactamente las opciones; clipping en Primera Visita APs; layout roto en Seguimiento (texto letra/fila) | `DEFECTO_REPRODUCIDO` | Mejorar UX sin cambiar semántica clínica. |
 | 11 | Resultados/categorías: feedback visual coherente con categoría explícita; CASPAR sin verde=bueno/rojo=malo (`Cumple criterios CASPAR` / no cumple, estilo neutral) | `REQUISITO_DECIDIDO_PENDIENTE` | Neutralidad de clasificación, no valoración. |
 | 12 | Prebiológico: retirar `Fecha diagnóstico` del bloque; conservar Observaciones prebiológico opcionales; no sintetizar APTO global | `RESUELTO / PUBLICADO` | #525 / PR #526: bloque mínimo publicado en Primera Visita + Seguimiento; sólo Analítica + Medicina Preventiva + una Observaciones opcional. |
-| 13 | Solicitud Reuma → Farmacia: eliminar el desglose legacy de hemograma/bioquímica/serologías/vacunación; sólo los dos estados resumidos de Analítica y Medicina Preventiva cuando consten explícitamente | `REQUISITO_DECIDIDO_PENDIENTE` | Conservar el resto de solicitud clínica explícita; ningún estado se infiere. |
+| 13 | Solicitud Reuma → Farmacia: eliminar el desglose legacy de hemograma/bioquímica/serologías/vacunación; sólo los dos estados resumidos de Analítica y Medicina Preventiva cuando consten explícitamente | `RESUELTO / PUBLICADO` | #528 + #529/#530/#531 / PR #532: artefacto soportado cualificado en Primera Visita, Seguimiento y Dashboard; ausencia no fabrica estado; resto clínico explícito preservado; sin inferencia terapéutica. |
 | 14 | Toasts export: conservar el mensaje explicativo de siguiente paso; retirar el toast verde duplicado/oculto que queda detrás | `DEFECTO_REPRODUCIDO` | Al estructurar CSV. |
 | 15 | Seguimiento con CIP sin paciente previo: nombre y apellidos editables + capturar tratamiento actual preexistente y fecha de inicio como baseline explícito | `REQUISITO_DECIDIDO_PENDIENTE` | Sin fabricar START/SWITCH/ADD_ON ni validación retrospectiva. |
 | 16 | Estadísticas: `Exportar CSV` debe exportar la cohorte de filtros activos (defecto) y quitar/relegar `Buscar en tabla` (requisito) | `DEFECTO_REPRODUCIDO` + `REQUISITO_DECIDIDO_PENDIENTE` | Los filtros observados funcionan. |
 
-Los ítems **3, 5, 6, 8 y 12** quedan resueltos/publicados por PR #521/#526. Permanecen accionables, sujetos a WO/autoridad correspondiente, los ítems **1, 2, 4, 7, 9, 10, 11, 13, 14, 15 y 16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
+Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/#532. Permanecen accionables, sujetos a WO/autoridad correspondiente, los ítems **1, 2, 4, 7, 9, 10, 11, 14, 15 y 16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
 
 ### 3.3 Reuma — pendientes, defer y deuda preservada
 
@@ -140,7 +143,7 @@ Los ítems **3, 5, 6, 8 y 12** quedan resueltos/publicados por PR #521/#526. Per
 - **CIMA / actualización de Sistémicos y fuente completa:** concern separado; el autocomplete actual no se considera roto.
 - **#448 y #450:** deuda técnica no bloqueante abierta hasta resolución explícita.
 - **Reuma delivery/export → Processor/Bridge común:** pendiente de diseño tras la semántica de delivery/F4.5; el legacy 497 está contenido como compatibilidad, **no** como arquitectura final.
-- **Reuma → Farmacia:** más allá de la solicitud textual actual, `DISCOVERY_FIRST` donde afecte contrato de integración.
+- **Reuma → Farmacia:** la solicitud textual soportada está `IMPLEMENTADA / PUBLICADA` por #528 / PR #532. Cualquier integración estructurada posterior (acto, persistencia, retorno de estado, ownership) permanece `DISCOVERY` y requiere autoridad propia; no confundir ambas fronteras.
 
 ## 4. Farmacia Hospitalaria
 
