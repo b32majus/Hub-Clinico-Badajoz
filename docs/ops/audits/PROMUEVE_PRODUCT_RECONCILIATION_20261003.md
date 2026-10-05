@@ -1,12 +1,14 @@
 # PROMUEVE — Reconciliación de producto pre-Badajoz 2026-10-03
 
-**Estado:** `IN_PROGRESS / PRE-BADAJOZ_RECONCILIATION`
+**Estado:** `LIVE / PRE-BADAJOZ_EXECUTION`
 
 **Autoridad de ejecución documental:** issue #501 — `WO-DOC-NEXUS-PRODUCT-RECONCILIATION-20261003`
 
 **Autoridad de desarrollo:** `promueve/nexus-v4`
 
 **Base verificada al iniciar:** `50b48b41d61d94752f5b10edb04b2e5fb1898f08`
+
+**Última reconciliación de estado:** 2026-10-05 (#535), sobre `promueve/nexus-v4 @ 5ed5ff8acacfff87252039a8ee3cc29db71385c5`; último HEAD clínico/producto `03f814875b38409a219f40e3602feece06472f33` (PR #532).
 
 **Ámbito:** Farmacia Hospitalaria, Dermatología, Reumatología y evolución multi-hospital de PROMueve Nexus.
 
@@ -390,47 +392,29 @@ Dirección:
 
 La revisión de Reumatología está fragmentada entre conversaciones, WOs, issues y migraciones Nexus. Una nueva revisión manual contra una rama legacy produciría falsos positivos porque parte de los hallazgos ya están corregidos/publicados en Nexus.
 
-### 6.2 Ledger que debe reconstruir Cora — `NEXT_ACTION`
+### 6.2 Ledger Reuma + Q&A focalizado — `COMPLETADO / VIVO`
 
-Antes de pedir otra pasada manual a Sil, reconstruir contra `promueve/nexus-v4` un ledger con estados:
+La reconstrucción prevista ya se completó y fue adjudicada mediante #504 / PR #506. El ledger vivo está en [`../PROMUEVE_PRODUCT_STATUS_LEDGER.md`](../PROMUEVE_PRODUCT_STATUS_LEDGER.md) y se ha ido reconciliando con las publicaciones posteriores:
 
-- `RESUELTO`;
-- `PENDIENTE`;
-- `SUPERSEDIDO`;
-- `REVALIDAR`.
+- safety/wiring #512/#517 → PR #521;
+- prebiológico mínimo #525 → PR #526;
+- solicitud textual segura Reuma→Farmacia #528 + #529/#530/#531 → PR #532.
 
-Debe cruzar al menos:
+La pasada manual focalizada de Reuma quedó adjudicada el 2026-10-04. No procede repetir una auditoría general ya concluyente: el trabajo pre-Badajoz continúa sólo mediante WOs atómicas sobre los hallazgos que el ledger mantiene pendientes, con reproducción soportada y QA proporcional.
 
-- revisión histórica de Reuma;
-- issues/WOs correspondientes;
-- código publicado actual;
-- PCR/unidades;
-- catálogo/autocomplete y categorías;
-- simplificación prebiológico;
-- Reuma Read Port;
-- Seguimiento y Estadísticas migrados;
-- frontera legacy 497;
-- Visit Act v1 y cutover de Primera Visita/Seguimiento;
-- deudas abiertas #448 y #450 mientras sigan vivas.
+La solicitud textual Reuma→Farmacia ya no es un requisito pendiente: Train 14 la publica con sólo Analítica + Medicina Preventiva explícitas y ausencia fail-safe. Esto **no** equivale a una integración estructurada bidireccional: acto/persistencia/retorno de estado/ownership siguen siendo una frontera separada si se prioriza en el futuro.
 
-Después, entregar una checklist manual **sobre Nexus**, no una auditoría genérica, para que Sil pueda validar de una sola pasada los journeys/hallazgos que realmente siguen abiertos.
+## 7. Prioridad pre-Badajoz — `EN_EJECUCIÓN_ACOTADA`
 
-## 7. Prioridad pre-Badajoz — `UNDER_READJUDICATION`
+La secuencia inicial `#446 renovaciones → Reuma→Farmacia discovery → CIMA` queda preservada como contexto histórico, pero el estado real ya ha avanzado:
 
-El estado anterior mantenía como secuencia humana:
+- renovaciones N0 se refreezó/publicó por #509 → PR #510 y se reconcilió por PR #511; N1/N2/N3 siguen pendientes;
+- safety/wiring Reuma #512/#517 se publicó por PR #521;
+- prebiológico mínimo #525 se publicó por PR #526;
+- la **solicitud textual Reuma→Farmacia** se publicó por #528 + #529/#530/#531 → PR #532;
+- el harness PROMueve se sincronizó después por #533 → PR #534 con Atenea `79f4a40...`, sin cambio clínico de producto.
 
-`#446 renovaciones → Reuma→Farmacia discovery → CIMA`
-
-La nueva información no cancela automáticamente esa secuencia, pero impide ejecutarla por inercia.
-
-Hasta completar el ledger + Q&A manual Reuma y cruzarlo con la revisión Farmacia:
-
-- F4.5 sigue **técnicamente disponible**, no prioridad humana automática;
-- #446 conserva su estado/hold y no se toca por esta reconciliación;
-- Reuma→Farmacia sigue necesitando discovery;
-- CIMA sigue como concern separado;
-- Dermatología entra en la dirección real de producto, pero no se abre todavía un gran train de implementación;
-- eccema de manos permanece `AWAIT_TEAM_INPUT`.
+Por tanto, ya no hay `UNDER_READJUDICATION` general ni necesidad de completar de nuevo ledger/Q&A. La ronda pre-Badajoz continúa sólo con los ítems pendientes del ledger. F4.5 sigue **técnicamente disponible**, no prioridad humana automática; CIMA permanece concern separado; Dermatología entra en dirección real de producto sin autorizar un gran train; eccema de manos permanece `AWAIT_TEAM_INPUT`. Una futura integración estructurada Reuma↔Farmacia sigue separada del handoff textual ya publicado.
 
 ### Criterio para el 8-oct
 
@@ -455,7 +439,7 @@ Recovery puede seguir sirviendo como referencia/demo histórica si resulta conve
 | OCT-OPEN-006 | Lista vigente de moléculas con biosimilar aplicables a la regla de solicitud por principio activo | `PENDIENTE_FUENTE_EXPLICITA` |
 | OCT-OPEN-007 | Qué variaciones Badajoz/Mérida merecen configuración declarativa | `PENDIENTE_PRESION_REAL` |
 | OCT-OPEN-008 | Alcance futuro de JSON/Control Plane/form-builder | `DEFERRED / NO_APROBADO` |
-| OCT-OPEN-009 | Priorización final de WOs pre-8 | `PENDIENTE_LEDGER_QA_REUMA` |
+| OCT-OPEN-009 | Priorización final de WOs pre-8 | `SUPERSEDED / EN_EJECUCIÓN_ACOTADA` — ledger/Q&A completados; ejecución continúa por WOs atómicas sobre pendientes vivos |
 | OCT-OPEN-010 | Cierre de renovación: fecha explícita vs duración (12 meses habitual; posibles 6/3) con cálculo/confirmación de nueva validez | `PENDIENTE_EQUIPO` |
 | OCT-OPEN-011 | Suspensión: dato mínimo del acto FH (hipótesis: fecha del acto + observación opcional) y fecha clínica distinta posterior | `PENDIENTE_EQUIPO` |
 | OCT-OPEN-012 | Organización operativa del lote por servicio (cadencia/corte/distribución, evitar duplicar ciclo ya enviado); no condiciona N0 | `PENDIENTE_EQUIPO` |
@@ -478,19 +462,20 @@ Recovery puede seguir sirviendo como referencia/demo histórica si resulta conve
 
 ## 10. Siguiente secuencia operativa
 
-1. Publicar esta reconciliación documental.
-2. Reconstruir ledger Reumatología contra Nexus.
-3. Entregar checklist manual Nexus a Sil.
-4. Ejecutar una única revisión manual Reuma centrada en lo todavía relevante.
-5. Cruzar Reuma + revisión Farmacia ya cerrada.
-6. Adjudicar WOs pequeñas pre-8 y backlog posterior.
-7. Sólo después abrir implementación adicional de producto bajo C-084, con tickets muy acotados y sin dejar decisiones materiales a OpenCode.
+1. Continuar sólo con WOs atómicas de los ítems que el ledger mantiene pendientes y que tengan autoridad suficiente.
+2. Priorizar antes de Badajoz seguridad/coherencia funcional y P0/P1 visibles; no abrir refactors amplios ni V5 por presión de fecha.
+3. Mantener `PENDIENTE_FUENTE`, `PENDIENTE_EQUIPO` y `DEFERIDO` sin resolver por intuición.
+4. Tratar una futura integración estructurada Reuma↔Farmacia como frontera separada del handoff textual ya publicado; requiere shaping propio si se prioriza.
+5. Reconciliar documentación al cerrar cada publicación que cambie estado real, sin reabrir auditorías ya concluyentes.
 
 ## 11. Historial y trazabilidad
 
 - Revisión anterior: [`PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md`](PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md).
 - Estado general de WOs: [`../WORK_ORDER_STATUS.md`](../WORK_ORDER_STATUS.md).
 - Índice maestro: [`../../INDEX.md`](../../INDEX.md).
-- Autoridad documental de esta reconciliación: issue #501.
+- Autoridad documental original de esta reconciliación: issue #501.
+- Ledger vivo y Q&A Reuma: #504 / PR #506; publicaciones posteriores #521, #526 y #532.
+- Harness C-084 vigente en PROMueve tras #533 / PR #534, sincronizado con `b32majus/Atenea@79f4a40d2330b0377d50dbba266762f450090c99`; cambio de gobernanza, no de producto clínico.
+- Reconciliación de estado 2026-10-05: #535.
 
 Cerrar/publicar esta reconciliación **no significa implementar** las decisiones descritas. Cada cambio técnico requerirá su propia autoridad acotada, tests/QA proporcionales y reconciliación documental cuando cambie el estado real.
