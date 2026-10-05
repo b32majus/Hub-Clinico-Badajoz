@@ -11,9 +11,9 @@
 | Elemento | Valor |
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
-| Tip Git canónico actual | Base de esta reconciliación `05114fcf899a857ca6505c1da7eaef2c82ac6155` — merge PR #538 y último HEAD de producto. El merge documental posterior de #539 puede mover el tip Git sin cambiar producto. |
-| Harness / Atenea | C-084 project-local sincronizado por #533 / PR #534 con `b32majus/Atenea@79f4a40d2330b0377d50dbba266762f450090c99`: representation narrowing + affected-surface/shared-seam guardrails. Para #537 la autoridad de ejecución se refrescó contra `b32majus/Atenea@77754c1d03c6dab20e5b5ee5a658b55efe562174`, que añade adversarial-property-witness y limita los claims al poder real de falsificación; routing Go sin cambio y sin mutación de harness en #537. |
-| Último HEAD de producto Nexus verificado | `05114fcf899a857ca6505c1da7eaef2c82ac6155` — merge PR #538 / WO #537 (candidate `cccffa433eb7896cbd04a717542e73e257cc1821`). HEAD de producto anterior `03f814875b38409a219f40e3602feece06472f33` (PR #532 / Train 14); anterior `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525). Un merge documental posterior puede mover el tip Git sin cambiar este HEAD de producto. |
+| Tip Git canónico actual | Base de esta reconciliación `bc42b876354dbfb7372b94da9e07cf058cf4d973` — merge PR #508 (FarmaNEXus visual sentinel); candidate `e43d954713b8153a5978125940d7f383fd2894d0`; contiene ya el merge documental PR #540 (`c8989882dcc962714f0f142ae572bf8d00b7aa78`). Un merge documental posterior puede mover el tip Git sin cambiar producto ni entrega clínica. |
+| Harness / Atenea | C-084 project-local sincronizado por #533 / PR #534 con `b32majus/Atenea@79f4a40d2330b0377d50dbba266762f450090c99`: representation narrowing + affected-surface/shared-seam guardrails. Para #537 la autoridad de ejecución se refrescó contra `b32majus/Atenea@77754c1d03c6dab20e5b5ee5a658b55efe562174`, que añade adversarial-property-witness y limita los claims al poder real de falsificación; routing Go sin cambio y sin mutación de harness en #537. Autoridad Atenea externa verificada y auditada para publicación (CURRENT): `b32majus/Atenea@502f6d4e3e635f6a3ed5b94e8d577f7d653ecc77`; el harness project-local puede conservar aún metadata externa anterior, que no debe presentarse como CURRENT. |
+| Último HEAD de producto Nexus verificado | `bc42b876354dbfb7372b94da9e07cf058cf4d973` — merge PR #508 / publicación visual-branding no clínica (candidate `e43d954713b8153a5978125940d7f383fd2894d0`); **última entrega clínica/contractual**: `05114fcf899a857ca6505c1da7eaef2c82ac6155` — merge PR #538 / WO #537 (candidate `cccffa433eb7896cbd04a717542e73e257cc1821`); cadena anterior `03f814875b38409a219f40e3602feece06472f33` (PR #532 / Train 14), `1b41724db7f86534880122e0a5263e25206b07ee` (PR #526 / #525). Un merge documental posterior puede mover el tip Git sin cambiar este HEAD de producto. |
 | Última entrega clínica/contractual | **WO-NEXUS-REUMA-STATS-CSV-FILTERED-COHORT-15 (#537)** publicado por PR #538: candidate `cccffa433eb7896cbd04a717542e73e257cc1821` → merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`. Estadísticas `Exportar CSV` queda cableado al namespace publicado y exporta `currentCohort`, la cohorte de filtros formales; `Buscar en tabla` permanece presentación local y no altera la exportación. Evidencia sintética: oracle 8/8, browser 6/6 con descarga real, full-journey console/pageerror 0, `verify:nexus` PASS, CI PR/post-merge success. **Anterior:** Train 14 / PR #532. |
 | Reconciliación de producto viva | **PRE-BADAJOZ en ejecución acotada**: #501 conserva dirección de producto; #504/PR #506 publicó el ledger vivo; #512/#517 (PR #521), #525 (PR #526), #528 con #529/#530/#531 (PR #532) y #537 (PR #538) ya materializan parte de la adjudicación Reuma. Los ítems restantes mantienen su clasificación en el ledger; una futura integración estructurada Reuma↔Farmacia sigue separada; no se infiere autorización de F4.5/F4.6 ni de futuros. |
 | Ledger vivo de estado funcional | **#504 / PR #506 — PUBLICADO**: [`PROMUEVE_PRODUCT_STATUS_LEDGER.md`](./PROMUEVE_PRODUCT_STATUS_LEDGER.md). Reconciliado ahora contra PR #521/#526/#532/#538; mantiene N0 renovaciones publicado, N1/N2/N3 pendientes, BASFI `PENDIENTE_FUENTE`, LES/Sjögren `PENDIENTE_EQUIPO`, QR/PROM/longitudinal `DEFERIDO`, deuda #448/#450 y separa CSV Stats ya publicado de `Buscar en tabla` aún pendiente. |
@@ -23,6 +23,17 @@
 | Deuda Nexus abierta | D004; subhallazgos restantes D005; #448 (hidratación visual del medicamento preseleccionado) y #450 (semántica de búsqueda legacy no categorizada) abiertas/no bloqueantes, ahora también registradas en [`NEXUS_DEBT_REGISTER.md`](./NEXUS_DEBT_REGISTER.md) como deuda de seams Reuma. D007 RESOLVED/PUBLISHED por #434 / PR #435. |
 | Siguiente frontera del plan | **Producto vivo / pre-Badajoz:** continuar sólo con WOs atómicas de los ítems aún pendientes del ledger. Ya están publicadas #512/#517, #525, #528 y #537. PCR default por site sigue condicionado a fuente versionada; BASFI/LES/Sjögren conservan blockers; RAPID3, retirada/relegación de `Buscar en tabla`, copy/toasts/feedback y la deuda observada del filtro sexo permanecen separadas. Una futura integración estructurada Reuma↔Farmacia (acto/retorno/ownership) sigue separada y requerirá shaping/autoridad propia. **Foundation:** F4.5 DeliveryResult permanece técnicamente disponible, sin prioridad ni autorización automática; F4.6 depende de ella. Renovaciones: sólo N0 publicado; N1/N2/N3 requieren WOs propias. |
 | Última publicación clínica | **#537 / PR #538** `MERGED_AND_VERIFIED`, candidate `cccffa433eb7896cbd04a717542e73e257cc1821` → merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`, CI PR `37336670618` + post-merge `37336957812` success; oracle 8/8 + browser 6/6. **Anterior:** #528 + #529/#530/#531 / PR #532. Sigue en evaluación sintética; no piloto/producción. |
+| Última publicación de producto (branding, no clínica) | **#507 / #542 / PR #508** `MERGED_AND_VERIFIED`: candidate `e43d954713b8153a5978125940d7f383fd2894d0` → merge `bc42b876354dbfb7372b94da9e07cf058cf4d973`; CI PR `37357854344` + post-merge `37359679054` `success`; browser QA 8/8; sentinel FarmaNEXus publicado y browser-qualified; sólo branding/visual, cero cambio clínico, no es rebranding final; evaluación sintética, no piloto/producción. |
+
+### WO-NEXUS-BRANDING-VISUAL-SENTINEL-01 (#507) / WO-RECOVERY-NEXUS-BRANDING-508 (#542) — publicado por PR #508
+
+**Alcance:** branding/visual sentinel exclusivamente; cero cambio clínico y cero runtime fuera del branding.
+
+**Base previa y publicación:** base canónica previa `c8989882dcc962714f0f142ae572bf8d00b7aa78` (merge documental PR #540); candidate reconciliado `e43d954713b8153a5978125940d7f383fd2894d0` → merge PR #508 `bc42b876354dbfb7372b94da9e07cf058cf4d973`; candidate y merge comparten tree `c1a5cceef94ff2de6f8a53c3f0b4715436971c0d`. Diff neto de 3 rutas: `index.html`, `favicon.svg`, `assets/branding/farmanexus-app-icon-64.png`.
+
+**Verificación:** CI PR `Nexus deterministic gates` run `37357854344` `success` y post-merge push run `37359679054` `success` (Fast gates + Deterministic suite); QA de navegador 8/8 sobre `nexus_home.html → Reuma → Primera Visita → Seguimiento → Inicio`, con `console.error=0` / `pageerror=0` en los journeys Reuma; el 404 de `/favicon.ico` desde `nexus_home.html` queda caracterizado como deuda preexistente no causada por #508.
+
+**Estado:** #507 y #542 `CLOSED/completed`; PR #508 `MERGED`. #537 / PR #538 sigue siendo la última entrega clínica/contractual; #541/RAPID3 queda separado; no es rebranding final. **Madurez:** evaluación sintética, no piloto/producción.
 
 ### WO-DOC-NEXUS-PRODUCT-RECONCILIATION-20261003 (#501) — reconciliación documental pre-Badajoz
 
@@ -341,6 +352,7 @@ El freeze define la dirección de ingeniería futura, no declara implementados l
 
 | WO | Título | Estado | Rama | Merge/Commit | Notas |
 | --- | --- | --- | --- | --- | --- |
+| **WO-RECOVERY-NEXUS-BRANDING-508 (#542)** | Recovery branding FarmaNEXus visual sentinel (origen #507), publicado por PR #508 | ✅ MERGED_AND_VERIFIED · PR #508 | `work/nexus-branding-508-recovery-542-20261005` (rama head PR `feat/nexus-branding-sentinel-507-20261003`) | candidate `e43d954713b8153a5978125940d7f383fd2894d0` → merge `bc42b876354dbfb7372b94da9e07cf058cf4d973` | Sólo branding/visual sentinel; browser 8/8; CI `37357854344` + `37359679054` success; #507/#542 CLOSED/completed; clínica intacta; evaluación sintética, no piloto/producción. |
 | **TRAIN-NEXUS-REUMA-SAFETY-WIRING-12 (#512)** | ASDAS EspA-only + EVA Global→ASDAS + dactilitis EspA + MDA derived/read-only | ✅ MERGED_AND_VERIFIED · publicado junto con #517 por PR #521 | `work/nexus-reuma-safety-wiring-12-512-20261004` | T1 #513 `bdcc553`; T2 #514 `18211bb`; T3 #515 `9f4ee85`; T4 #516 `5d028ca`; continuado por #517 | Candidate #512 terminó HUMAN_STOP correctamente; closeout explícito #517 resolvió los blockers y permitió publicación conjunta. #512–#516 CLOSED/completed. |
 | **TRAIN-NEXUS-REUMA-SAFETY-WIRING-12.1 (#517)** | Closeout ASDAS mirror + MDA uncertainty + legacy `mdaCumple` exacto | ✅ MERGED_AND_VERIFIED · PR #521 | `work/nexus-reuma-safety-wiring-12-1-517-20261004` | C1 #518 `b4e75e7`; C2 #519 `5033000`; C3 #520 `8116e7f`; tooling `5ff136a`; correction `1e7b47f` → merge `ee7379d24ef99633d3bede07c64b31a7038558e4` | `verify:nexus` PASS; browser safety+wiring 113/0; Standards+Spec APPROVED; CI PR `37229513878` + post-merge `37229608205` success; #517–#520 CLOSED/completed. |
 | **WO-NEXUS-REUMA-PREBIO-MINIMAL-13 (#525)** | Prebiológico Reuma mínimo sin inferencia: Analítica + Medicina Preventiva + Observaciones opcional | ✅ MERGED_AND_VERIFIED · PR #526 | `work/nexus-reuma-prebio-minimal-525-20261004` | oracle `bd648ee`; implementation `59b47c2`; correction `d20e099b7131887e933b734bcb4bb322c8b8f0e9` → merge `1b41724db7f86534880122e0a5263e25206b07ee` | Primer ticket real `Cost policy: go`, `Risk class: complex`; `ATENEA_GO_MODEL_CHECK=PASS`; `verify:nexus` PASS; Chromium 41/0; CI PR `37235279524` + post-merge `37235367636` success; #525 CLOSED/completed; Reuma→Farmacia NO TOCA. |
@@ -536,7 +548,7 @@ A 2026-08-07, los issues #184, #186, #188, #190, #192, #269, #271, #273 y #277 c
 | Estado | Cantidad |
 | --- | ---: |
 | ✅ Merged | 64 |
-| ✅ MERGED_AND_VERIFIED | 16 |
+| ✅ MERGED_AND_VERIFIED | 17 |
 | 📋 Ready for review | 21 |
 | 📋 Draft | 1 |
 | 🟢 Validated | 1 |
@@ -546,8 +558,8 @@ A 2026-08-07, los issues #184, #186, #188, #190, #192, #269, #271, #273 y #277 c
 | 🔴 Bloqueada | 0 |
 | ❌ Descartada | 0 |
 
-**Total:** 113 work orders / preflights gestionadas.
+**Total:** 114 work orders / preflights gestionadas.
 
-Comprobación aritmética de las filas de tabla: 64 + 16 + 21 + 1 + 1 + 4 + 5 + 1 + 0 + 0 = 113, coherente con el total registrado.
+Comprobación aritmética de las filas de tabla: 64 + 17 + 21 + 1 + 1 + 4 + 5 + 1 + 0 + 0 = 114, coherente con el total registrado.
 
 Los totales incluyen referencias históricas no mergeadas. Ninguna cifra equivale a aptitud para piloto o producción.
