@@ -30,8 +30,13 @@
  *   E5  adversarial local search: formal cohort 6 with `Buscar en tabla`
  *       narrowing the visible rows to 1; the download still carries the 6
  *       formal identities (accepted decision in #537).
- *   E6  console.error === 0 and pageerror === 0 on the whole qualified journey
- *       (the pre-fix `HubTools.exportCohortToCSV not found` error must be gone).
+ *   E6  console.error === 0 and pageerror === 0 counted over the whole
+ *       qualified journey: session gate on index.html through navigation,
+ *       filters, export clicks and real CSV downloads. No error buffer is
+ *       cleared after the gate and the assertion applies to the full-journey
+ *       totals (every `console` message of type `error` plus every
+ *       `pageerror` event from journey start, without per-URL filtering).
+ *       The pre-fix `HubTools.exportCohortToCSV not found` error must be gone.
  *
  * Exit code 0 = every case PASS, 1 = at least one FAIL or environment failure.
  * Usage: node tools/reuma_estadisticas_csv_filtered_cohort_browser_check.mjs
@@ -188,8 +193,13 @@ function trackedPage(page) {
     return { page, consoleErrors, pageErrors };
 }
 
-function estadisticasErrors(entry) {
-    return entry.consoleErrors.filter((message) => message.includes(ESTADISTICAS_PAGE));
+function describeErrorsByPage(entry) {
+    const byPage = {};
+    for (const message of entry.consoleErrors) {
+        const pageUrl = String(message).split(' :: ')[0];
+        byPage[pageUrl] = (byPage[pageUrl] || 0) + 1;
+    }
+    return byPage;
 }
 
 async function passSupportedGate(context) {
@@ -282,9 +292,10 @@ try {
 
     const context = await browser.newContext({ acceptDownloads: true });
     try {
+        // Full-journey error budget: the buffers opened in passSupportedGate()
+        // stay intact for the whole journey (gate included). Nothing is cleared
+        // here; E6 asserts on the totals below.
         const entry = await passSupportedGate(context);
-        entry.consoleErrors.length = 0;
-        entry.pageErrors.length = 0;
 
         await entry.page.goto(`${origin}/${ESTADISTICAS_PAGE}`, { waitUntil: 'load', timeout: 45000 });
         await waitForTotal(entry.page, 6);
@@ -366,13 +377,17 @@ try {
             await entry.page.fill('#tableSearchInput', '');
         }
 
-        // E6 — error budget on the whole qualified journey.
+        // E6 — full-journey error budget: gate through downloads, no reset, no per-URL filtering. Both totals must be zero.
         {
-            const errors = estadisticasErrors(entry);
-            const noLegacyWiringError = !errors.some((message) => message.includes('exportCohortToCSV'));
-            record('E6 console.error === 0 and pageerror === 0 on the qualified CSV journey',
-                errors.length === 0 && entry.pageErrors.length === 0 && noLegacyWiringError,
-                `consoleErrors=${JSON.stringify(errors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
+            const consoleTotal = entry.consoleErrors.length;
+            const pageTotal = entry.pageErrors.length;
+            const noLegacyWiringError = !entry.consoleErrors.some((message) => message.includes('exportCohortToCSV'))
+                && !entry.pageErrors.some((message) => message.includes('exportCohortToCSV'));
+            const breakdown = describeErrorsByPage(entry);
+            record('E6 console.error === 0 and pageerror === 0 over the full journey (gate + estadisticas + exports)',
+                consoleTotal === 0 && pageTotal === 0 && noLegacyWiringError,
+                `consoleErrors=${consoleTotal} pageErrors=${pageTotal} byPage=${JSON.stringify(breakdown)} ` +
+                `consoleSample=${JSON.stringify(entry.consoleErrors.slice(0, 5))} pageSample=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
         }
     } finally {
         await context.close();
