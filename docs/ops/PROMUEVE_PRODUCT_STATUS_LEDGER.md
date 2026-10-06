@@ -50,7 +50,7 @@ Cuando haya contradicción prevalece la autoridad definida en `docs/INDEX.md`: i
 | `SUPERSEDED` | Finding/idea histórica sustituida por evidencia o decisión posterior; no perseguir salvo nueva reproducción soportada. |
 | `BLOQUEADO` | Falta una dependencia o input humano explícito que impide diseñar/ejecutar con seguridad. |
 
-Regla de lectura: **existir en código no equivale a QA visible.** La columna *QA browser / evidencia* y el prefijo `VALIDADO_MANUAL` registran la evidencia real; una fila `IMPLEMENTADO_REVALIDAR` nunca se promueve por presencia de código. La deuda conocida no bloqueante (#448/#450) se marca como tal y no se cierra por esta reconciliación.
+Regla de lectura: **existir en código no equivale a QA visible.** La columna *QA browser / evidencia* y el prefijo `VALIDADO_MANUAL` registran la evidencia real; una fila `IMPLEMENTADO_REVALIDAR` nunca se promueve por presencia de código. #448 queda cerrada por evidencia focal publicada en PR #553; #450 permanece deuda no bloqueante hasta decisión explícita de contrato.
 
 ### Columnas de madurez
 
@@ -70,7 +70,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | PCR con unidad explícita y conversión fail-closed | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: unidades explícitas y conversión operativas | Sí | Sintética | No | #443 / PR #449 | Nunca inferir unidad por magnitud. UI por site (retirar `Sin unidad`, ayuda contextual, default por site) = `REQUISITO_DECIDIDO_PENDIENTE` con verificación previa de fuente versionada (3.2.4). |
 | Catálogo/autocomplete Reuma | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: **funciona; sin defecto de autocomplete** | Sí | Sintética | No | #444 / PR #449 | La carencia aparente en `Sistémicos` fue cobertura/fuente, **no** fallo del autocomplete. No abrir defecto de autocomplete. |
 | Categorías `Sistémicos / FAMEs / Biológicos` | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: respeta las tres categorías | Sí | Sintética | No | #447 / PR #449 | Clasificación explícita/versionada; no inferida en runtime. Evolución CIMA = concern separado. |
-| Hidratación visual de medicamento preseleccionado | `PENDIENTE` (deuda no bloqueante) | Parcial | Parcial | Defecto visible conocido | Finding previo; no reabierto por la pasada manual | Sí | Deuda no bloqueante | No | #448 OPEN | Deuda no bloqueante preservada; el valor autoritativo no se reporta perdido. |
+| Hidratación visual de medicamento preseleccionado | `IMPLEMENTADO / PUBLICADO` | Sí | Sí | Sí | PR #553: browser focal 56/56; preselección visible sin blur; refresh conserva consulta activa y blur resincroniza etiqueta | Sí | Sintética | No | #448 / PR #553 | Cerrada sin cambiar valor autoritativo, categoría ni semántica terapéutica. |
 | Semántica legacy `search(query)` no categorizada | `PENDIENTE` (deuda no bloqueante) | Sí | Ruta legacy no soportada por controles Reuma actuales | No en recorrido soportado | No necesaria para cerrar train | Sí | Deuda API | No | #450 OPEN | Deuda no bloqueante preservada; decidir contrato workbook-only vs union; no mezclar con CIMA ni #448. |
 | Prebiológico simplificado: Analítica + Medicina Preventiva | `IMPLEMENTADO` | Sí | Sí | Sí | Manual 2026-10-04 + Chromium #525 41/0; `verify:nexus` PASS | Sí | Sintética | No | #445 / PR #449 + #525 / PR #526 | Estados explícitos `NO SOLICITADA / SOLICITADA-PENDIENTE / OK`; una Observaciones opcional; `Fecha diagnóstico` prebiológica retirada; sin `APTO` global. Compatibilidad histórica de fecha general preservada. El handoff FH es una capacidad separada, publicada después por #528 / PR #532. |
 | Seguimiento detrás del Reuma Read Port | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: ruta/funcionamiento operativos | Sí | Sintética | No | #455 / PR #459 | Identidad editable + baseline preexistente decididos (3.2.15); persistencia/restauración no quedó adjudicada explícitamente en la pasada. |
@@ -145,7 +145,7 @@ Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/
 - **Dashboard longitudinal / evolución PROM:** `DEFERIDO`. Revalidar después con fixture sintético longitudinal actualizado; no declarar defecto sólo por BD demo vieja.
 - **QR/PROM:** `DEFERIDO`. Diferido; no entra en la ronda pre-Badajoz actual.
 - **CIMA / actualización de Sistémicos y fuente completa:** concern separado; el autocomplete actual no se considera roto.
-- **#448 y #450:** deuda técnica no bloqueante abierta hasta resolución explícita.
+- **#448:** `RESUELTA / PUBLICADA` por PR #553 con evidencia browser focal; **#450:** deuda técnica no bloqueante aún abierta hasta decisión explícita de contrato.
 - **Reuma delivery/export → Processor/Bridge común:** pendiente de diseño tras la semántica de delivery/F4.5; el legacy 497 está contenido como compatibilidad, **no** como arquitectura final.
 - **Reuma → Farmacia:** la solicitud textual soportada está `IMPLEMENTADA / PUBLICADA` por #528 / PR #532. Cualquier integración estructurada posterior (acto, persistencia, retorno de estado, ownership) permanece `DISCOVERY` y requiere autoridad propia; no confundir ambas fronteras.
 
