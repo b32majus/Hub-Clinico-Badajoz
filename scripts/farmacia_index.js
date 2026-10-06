@@ -498,6 +498,7 @@
                 && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
                 window.FarmaciaDataImports.clearTransientPatientImports();
                 renderEnfermeriaBoard();
+                renderInicioResumen();
             }
             runtime.enrichCurrentPatient(selected);
             setSearchStatus('Paciente encontrado.');
@@ -556,6 +557,7 @@
                 && window.FarmaciaDataImports && typeof window.FarmaciaDataImports.clearTransientPatientImports === 'function') {
                 window.FarmaciaDataImports.clearTransientPatientImports();
                 renderEnfermeriaBoard();
+                renderInicioResumen();
             }
             runtime.enrichCurrentPatient(selected);
             setSearchStatus('Paciente encontrado.');
@@ -666,199 +668,6 @@
         row.appendChild(icon);
         row.appendChild(document.createTextNode(' ' + text));
         return row;
-    }
-
-    function pendingSourceLabel(patient) {
-        var source = String((patient && patient.importSource) || 'demo');
-        if (source.toLowerCase().indexOf('farmacia') !== -1) return 'Excel Farmacia';
-        if (source.toLowerCase().indexOf('enfermer') !== -1) return 'Excel Enfermería';
-        return 'demo';
-    }
-
-    function renderPendingValidationBoard() {
-        var board = document.getElementById('pendingValidationBoard');
-        var cards = document.getElementById('pendingValidationCards');
-        var empty = document.getElementById('pendingValidationEmpty');
-        var count = document.getElementById('pendingValidationBoardCount');
-        if (!board || !cards || !empty || !count || !F.getPendingValidationPatients || !F.isEnfermeriaPatient) return;
-        F.clearChildren(cards);
-        var patients = F.getPendingValidationPatients();
-
-        // Detectar si hay datos importados desde Excel (Enfermería o Farmacia)
-        var hasImportedData = false;
-        if (window.FarmaciaDataImports && typeof window.FarmaciaDataImports.getImportedPatients === 'function') {
-            var importedPats = window.FarmaciaDataImports.getImportedPatients();
-            hasImportedData = importedPats && importedPats.length > 0;
-        }
-
-        var filtered = patients.filter(function (p) {
-            if (F.isEnfermeriaPatient(p)) return false;
-            // Si hay datos importados, ocultar fallback demo
-            if (hasImportedData) {
-                var src = String(p.importSource || '').toLowerCase();
-                if (src === 'demo' || src === '') return false;
-            }
-            return true;
-        });
-        count.textContent = String(filtered.length);
-        empty.classList.toggle('hidden', filtered.length > 0);
-        if (!filtered.length) return;
-
-        filtered.forEach(function (patient) {
-            var card = document.createElement('article');
-            card.className = 'pending-validation-card';
-
-            var header = document.createElement('div');
-            header.className = 'pending-validation-card__header';
-            var titleWrap = document.createElement('div');
-            titleWrap.className = 'pending-validation-card__title-wrap';
-            var title = document.createElement('h3');
-            title.className = 'pending-validation-card__title';
-            title.textContent = textOrDash(patient.cip);
-            var subtitle = document.createElement('p');
-            subtitle.className = 'pending-validation-card__subtitle';
-            subtitle.textContent = textOrDash(patient.nombre);
-            titleWrap.append(title, subtitle);
-            var badge = document.createElement('span');
-            badge.className = 'status-badge status-badge--pending';
-            badge.textContent = 'Pendiente de validación';
-            header.append(titleWrap, badge);
-            card.appendChild(header);
-
-            var body = document.createElement('div');
-            body.className = 'pending-validation-card__body';
-            body.appendChild(buildPendingMeta('fa-hospital', 'Servicio origen: ' + textOrDash(patient.servicio)));
-            body.appendChild(buildPendingMeta('fa-stethoscope', 'Patología / indicación: ' + textOrDash(patient.patologia || patient.motivoClinico)));
-            body.appendChild(buildPendingMeta('fa-pills', 'Fármaco / tratamiento: ' + textOrDash(patient.farmaco || patient.principioActivo)));
-            body.appendChild(buildPendingMeta('fa-calendar-alt', 'Fecha solicitud: ' + textOrDash(patient.fechaSolicitud || patient.ultimaSolicitud)));
-            body.appendChild(buildPendingMeta('fa-database', 'Origen de datos: ' + pendingSourceLabel(patient)));
-            card.appendChild(body);
-
-            card.appendChild(renderPrebioBlock(patient));
-
-            var actions = document.createElement('div');
-            actions.className = 'pending-validation-card__actions';
-            var link = document.createElement('a');
-            link.className = 'btn btn-primary';
-            link.href = F.makeContextUrl('farmacia_validacion.html', {
-                cip: patient.cip,
-                servicio: patient.servicioSlug || patient.servicio,
-                patologia: patient.patologia,
-                entrada: 'validacion',
-                /* N4: identidad exacta de la solicitud en la navegación
-                   soportada hacia Validación. */
-                solicitud_id: patient.solicitud_id || ''
-            });
-            F.appendIconText(link, 'fa-check-double', 'Abrir validación');
-            actions.appendChild(link);
-            card.appendChild(actions);
-
-            cards.appendChild(card);
-        });
-    }
-
-    function renderPrebioBlock(patient) {
-        var block = document.createElement('div');
-        block.className = 'pending-validation-card__prebio';
-
-        if (!patient) {
-            block.textContent = 'Prebiológico no evaluable';
-            return block;
-        }
-
-        if (!window.FarmaciaPrebiologico) {
-            console.warn('[Farmacia] FarmaciaPrebiologico no disponible');
-            block.textContent = 'Prebiológico no evaluable';
-            return block;
-        }
-
-        if (typeof window.FarmaciaPrebiologico.evaluatePatientPrebiologico !== 'function') {
-            block.textContent = 'Prebiológico no evaluable';
-            return block;
-        }
-
-        var result = window.FarmaciaPrebiologico.evaluatePatientPrebiologico(patient);
-
-        if (!result || !result.overallStatus) {
-            block.textContent = 'Prebiológico no evaluable';
-            return block;
-        }
-
-        var overallStatus = result.overallStatus;
-        var blockers = result.blockers || [];
-
-        var labelRow = document.createElement('div');
-        labelRow.className = 'pending-validation-card__prebio-label';
-        var icon = document.createElement('i');
-        icon.setAttribute('aria-hidden', 'true');
-        var text = document.createElement('span');
-
-        if (overallStatus === 'complete') {
-            block.className = 'pending-validation-card__prebio prebio-complete pending-validation-card__prebio--ok';
-            icon.className = 'fas fa-check-circle';
-            text.textContent = 'Prebiológico completo · Listo para validación';
-            labelRow.appendChild(icon);
-            labelRow.appendChild(text);
-            block.appendChild(labelRow);
-            return block;
-        }
-
-        if (overallStatus === 'blocked' || overallStatus === 'incomplete') {
-            var statusClass = overallStatus === 'blocked' ? 'prebio-blocked pending-validation-card__prebio--alerta' : 'prebio-incomplete pending-validation-card__prebio--pending';
-            block.className = 'pending-validation-card__prebio ' + statusClass;
-
-            if (overallStatus === 'blocked') {
-                icon.className = 'fas fa-exclamation-triangle';
-                text.textContent = 'Prebiológico bloqueado · ' + blockers.length + ' bloqueo' + (blockers.length === 1 ? '' : 's');
-            } else {
-                icon.className = 'fas fa-hourglass-half';
-                text.textContent = 'Prebiológico incompleto · ' + blockers.length + ' bloqueo' + (blockers.length === 1 ? '' : 's');
-            }
-
-            labelRow.appendChild(icon);
-            labelRow.appendChild(text);
-            block.appendChild(labelRow);
-
-            if (blockers.length > 0) {
-                var priority = { alert: 0, pending: 1, unknown: 2, missing: 3 };
-                var sorted = blockers.slice().sort(function (a, b) {
-                    var pa = priority[a.status] !== undefined ? priority[a.status] : 99;
-                    var pb = priority[b.status] !== undefined ? priority[b.status] : 99;
-                    return pa - pb;
-                });
-
-                var chipsContainer = document.createElement('div');
-                chipsContainer.className = 'pending-validation-card__prebio-chips';
-                var maxShown = 3;
-                var shown = sorted.slice(0, maxShown);
-                var extra = sorted.length - maxShown;
-
-                for (var i = 0; i < shown.length; i++) {
-                    var item = shown[i];
-                    var chip = document.createElement('span');
-                    chip.className = 'prebio-chip status-' + item.status;
-                    chip.textContent = item.label + ': ' + item.status;
-                    if (item.detail) {
-                        chip.setAttribute('title', item.detail);
-                    }
-                    chipsContainer.appendChild(chip);
-                }
-
-                if (extra > 0) {
-                    var moreChip = document.createElement('span');
-                    moreChip.className = 'prebio-chip prebio-chip--more';
-                    moreChip.textContent = '+' + extra + ' más';
-                    chipsContainer.appendChild(moreChip);
-                }
-
-                block.appendChild(chipsContainer);
-            }
-
-            return block;
-        }
-
-        block.textContent = 'Prebiológico no evaluable';
-        return block;
     }
 
     /* ── Board de solicitudes Enfermería WO8.1c.8 ────────────────── */
@@ -1149,6 +958,73 @@
         }
     }
 
+    /* WO #550 (issue #550) — tarjeta compacta `Solicitudes pendientes`
+     * de Inicio. Reutiliza EXACTAMENTE la semantica de cola ya publicada
+     * por #549 (misma union desduplicada por identidad de tray E + tray G
+     * sobre la poblacion publicada, misma frontera tray-E, mismo mapeo
+     * congelado total/listas/vigilancia/bloqueadas). No inventa un segundo
+     * clasificador: consume classifyEnfermeriaState, la clasificacion
+     * publicada de esta misma unidad. Solo escribe conteos y nunca
+     * previsualizaciones de paciente/CIP dentro de la tarjeta. Sin
+     * seams, cuenta ceros (nada que inventar); sin monturas, no hace
+     * nada. */
+    function inicioRecordIdentityKey(patient) {
+        var sid = patient && patient.solicitud_id ? String(patient.solicitud_id).trim().toUpperCase() : '';
+        if (sid) return 'SID:' + sid;
+        return 'CIP:' + String((patient && patient.cip) || '').trim().toUpperCase();
+    }
+
+    function readInicioResumen() {
+        var empty = { total: 0, listas: 0, vigilancia: 0, bloqueadas: 0 };
+        if (!F || typeof F.readAvailablePatientsSync !== 'function' ||
+            typeof F.readPendingValidationPatientsSync !== 'function' ||
+            typeof F.getEnfermeriaVisiblePatients !== 'function') {
+            return empty;
+        }
+        var population = F.readAvailablePatientsSync() || [];
+        var trayEnfermeria = F.getEnfermeriaVisiblePatients() || [];
+        var trayPending = F.readPendingValidationPatientsSync() || [];
+        var trayEKeys = {};
+        for (var i = 0; i < trayEnfermeria.length; i++) {
+            trayEKeys[inicioRecordIdentityKey(trayEnfermeria[i])] = true;
+        }
+        var queueKeys = {};
+        for (var key in trayEKeys) {
+            if (Object.prototype.hasOwnProperty.call(trayEKeys, key)) queueKeys[key] = true;
+        }
+        for (var k = 0; k < trayPending.length; k++) {
+            queueKeys[inicioRecordIdentityKey(trayPending[k])] = true;
+        }
+        var summary = { total: 0, listas: 0, vigilancia: 0, bloqueadas: 0 };
+        for (var j = 0; j < population.length; j++) {
+            var patient = population[j];
+            if (!patient || !queueKeys[inicioRecordIdentityKey(patient)]) continue;
+            summary.total += 1;
+            /* Frontera tray-E en el conteo (#549 congelado): solo una
+               fila tray-E alimenta las tres categorias; el resto de la
+               cola cuenta solo en el total. */
+            if (!trayEKeys[inicioRecordIdentityKey(patient)]) continue;
+            var group = classifyEnfermeriaState(patient);
+            if (group === 'ok_farmacia') summary.listas += 1;
+            else if (group === 'en_vigilancia') summary.vigilancia += 1;
+            else if (group === 'bloqueado') summary.bloqueadas += 1;
+        }
+        return summary;
+    }
+
+    function renderInicioResumen() {
+        var total = document.getElementById('inicioTotalCount');
+        var listas = document.getElementById('inicioListasCount');
+        var vigilancia = document.getElementById('inicioVigilanciaCount');
+        var bloqueadas = document.getElementById('inicioBloqueadasCount');
+        if (!total || !listas || !vigilancia || !bloqueadas) return;
+        var summary = readInicioResumen();
+        total.textContent = String(summary.total);
+        listas.textContent = String(summary.listas);
+        vigilancia.textContent = String(summary.vigilancia);
+        bloqueadas.textContent = String(summary.bloqueadas);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
          ensureOverlay();
         var searchBtn = document.getElementById('fhSearchBtn');
@@ -1177,8 +1053,12 @@
             cipInput.addEventListener('input', markUserSearchIntent);
         }
         initGuidedIntake();
+        /* WO #549: el render Enfermeria se conserva como referencia del
+           oraculo de paridad tools/farmacia_pendientes_queue_check.mjs
+           (inyecta sus propias monturas en vm); en Inicio ya no hay
+           monturas y esta llamada es un no-op. */
         renderEnfermeriaBoard();
-        renderPendingValidationBoard();
+        renderInicioResumen();
         document.addEventListener('farmacia:data-imported', function () {
             var runtime = window.FarmaciaPatientFlowRuntime;
             var current = runtime && runtime.getCurrentPatient ? runtime.getCurrentPatient() : null;
@@ -1187,7 +1067,7 @@
                 if (merged) runtime.enrichCurrentPatient(merged);
             }
             renderEnfermeriaBoard();
-            renderPendingValidationBoard();
+            renderInicioResumen();
         });
         // F4.3: the published async application read operation is the init-time
         // read; only the transported CIP drives the guarded search below.
