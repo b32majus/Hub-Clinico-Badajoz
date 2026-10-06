@@ -1,24 +1,42 @@
 /*
- * PROMueve Nexus Home — minimal presentational styles (F3.2 WU-A / WU-B).
+ * PROMueve Nexus Home — presentational styles (NEXUS_HOME_UX_01).
  *
- * Styles only the frozen Home markers; it carries no product logic and no
- * domain references. From WU-B every tile is an interactive same-tab
- * navigation affordance, so hover styling is meaningful.
+ * Light, clean institutional base with one restrained shared atmosphere for
+ * the whole platform: subtle magenta / purple / blue-cyan / green accents in
+ * borders, glow and focus only. No per-module colour identity, no external
+ * font or CDN dependency. Styles only the frozen Home markers; it carries no
+ * product logic and no domain references.
  */
 
 :root {
-  color-scheme: light dark;
-  --nexus-home-surface: #f7f8fa;
+  color-scheme: light;
+  --nexus-home-surface: #f6f7f9;
   --nexus-home-ink: #1f2430;
   --nexus-home-muted: #5a6272;
+  --nexus-home-faint: #8a93a5;
   --nexus-home-border: #d6dae2;
-  --nexus-home-tile: #ffffff;
+  --nexus-home-card: #ffffff;
+  --nexus-home-card-muted: #eef0f4;
   --nexus-home-danger: #a4262c;
+  --nexus-home-accent-magenta: #b83280;
+  --nexus-home-accent-purple: #6d4fc2;
+  --nexus-home-accent-cyan: #0e8fa8;
+  --nexus-home-accent-green: #1e9e6a;
+  --nexus-home-focus: #0e8fa8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: var(--nexus-home-surface);
+  background:
+    radial-gradient(42rem 20rem at 15% -4rem, rgba(109, 79, 194, 0.08), transparent 60%),
+    radial-gradient(40rem 20rem at 85% -4rem, rgba(14, 143, 168, 0.08), transparent 60%),
+    var(--nexus-home-surface);
   color: var(--nexus-home-ink);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.45;
@@ -26,57 +44,157 @@ body {
 
 #home-root.nexus-home {
   display: block;
-  max-width: 72rem;
+  max-width: 56rem;
   margin: 0 auto;
-  padding: 2rem 1.25rem 3rem;
+  padding: 1.75rem 1.25rem 2.5rem;
 }
 
+/* Centred, compact hero: brand mark + wordmark dominant, one instruction. */
 .nexus-home__header {
-  margin-bottom: 1.75rem;
+  margin: 0 0 1.25rem;
+  text-align: center;
+}
+
+.nexus-home__brand-mark {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 0.5rem;
 }
 
 .nexus-home__product-name {
   margin: 0;
-  font-size: 1.75rem;
-  font-weight: 650;
+  font-size: 2rem;
+  font-weight: 700;
   letter-spacing: -0.01em;
 }
 
+.nexus-home__instruction {
+  margin: 0.375rem 0 0;
+  font-size: 1.0625rem;
+  font-weight: 550;
+}
+
 .nexus-home__site-name {
-  margin: 0.25rem 0 0;
+  margin: 0.375rem 0 0;
   color: var(--nexus-home-muted);
-  font-size: 0.95rem;
+  font-size: 0.8125rem;
 }
 
 .nexus-home__modules {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: 0.875rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.nexus-home__tile {
-  padding: 1rem 1.125rem;
+.nexus-home__module-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  max-width: 100%;
+  padding: 1rem 1.125rem 1.125rem;
   border: 1px solid var(--nexus-home-border);
+  border-top: 3px solid transparent;
+  border-image: linear-gradient(
+    to right,
+    var(--nexus-home-accent-magenta),
+    var(--nexus-home-accent-purple),
+    var(--nexus-home-accent-cyan),
+    var(--nexus-home-accent-green)
+  ) 1;
   border-radius: 0.625rem;
-  background: var(--nexus-home-tile);
-  font-weight: 550;
+  background: var(--nexus-home-card);
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+.nexus-home__module-card--unavailable {
+  background: var(--nexus-home-card-muted);
+  color: var(--nexus-home-muted);
+}
+
+.nexus-home__monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    135deg,
+    rgba(184, 50, 128, 0.14),
+    rgba(109, 79, 194, 0.14),
+    rgba(14, 143, 168, 0.14),
+    rgba(30, 158, 106, 0.14)
+  );
+  border: 1px solid var(--nexus-home-border);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.nexus-home__module-card--unavailable .nexus-home__monogram {
+  background: transparent;
+  color: var(--nexus-home-faint);
+}
+
+.nexus-home__module-name {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 650;
+}
+
+.nexus-home__module-state {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.nexus-home__module-card--available .nexus-home__module-state {
+  color: var(--nexus-home-accent-green);
+  font-weight: 600;
+}
+
+.nexus-home__module-card--unavailable .nexus-home__module-state {
+  color: var(--nexus-home-muted);
+}
+
+/* The only navigable affordance: the native Entrar button. */
+.nexus-home__tile {
+  margin-top: 0.375rem;
+  padding: 0.625rem 1.75rem;
+  min-height: 2.75rem;
+  border: 1px solid var(--nexus-home-accent-purple);
+  border-radius: 9999px;
+  background: var(--nexus-home-accent-purple);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 650;
   cursor: pointer;
 }
 
 .nexus-home__tile:hover {
-  border-color: var(--nexus-home-ink);
-  box-shadow: 0 1px 3px rgba(31, 36, 48, 0.18);
+  background: #5d43ab;
+  border-color: #5d43ab;
+  box-shadow: 0 1px 6px rgba(109, 79, 194, 0.35);
+}
+
+.nexus-home__tile:focus-visible {
+  outline: 3px solid var(--nexus-home-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px rgba(14, 143, 168, 0.25);
 }
 
 .nexus-home__empty {
-  margin: 0;
+  margin: 1rem 0 0;
   padding: 1rem 1.125rem;
   border: 1px dashed var(--nexus-home-border);
   border-radius: 0.625rem;
   color: var(--nexus-home-muted);
+  text-align: center;
 }
 
 .nexus-home__error {
@@ -86,4 +204,13 @@ body {
   border-radius: 0.625rem;
   color: var(--nexus-home-danger);
   font-weight: 550;
+}
+
+/* Narrow viewports stack cards; content never forces horizontal overflow. */
+img,
+p,
+ul,
+li,
+button {
+  max-width: 100%;
 }

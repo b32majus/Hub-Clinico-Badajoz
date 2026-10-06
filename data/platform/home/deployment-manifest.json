@@ -3,8 +3,8 @@
   "deploymentId": "bad-synthetic-demo-home-01",
   "siteId": "BAD",
   "display": {
-    "productName": "PROMueve Nexus",
-    "siteName": "Deployment sintético BAD (demo) — Home F3.2"
+    "productName": "NEXus",
+    "siteName": "Entorno de demostración"
   },
   "persistenceMode": "session-only",
   "modules": [
@@ -39,7 +39,7 @@
     "registryVersion": "1",
     "profileVersion": "1",
     "registrySha256": "1e0d26210d99176a1de39350729626bc8e95b2bba4ab0790fb5ecf713b3bccd5",
-    "profileSha256": "0ad2d479104bc147dbdebe936e19423525023578fb5242319fbbfb2b800e52f5",
+    "profileSha256": "6ccdb101290962e4ee1fd3f0e647683e0cccc78de3f5dc23d4cf79d6245322a0",
     "generator": "tools/deployment_manifest_build.mjs v1"
   }
 }
