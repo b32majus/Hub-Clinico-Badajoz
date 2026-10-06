@@ -51,12 +51,12 @@ const SCHEMA_FILES = {
 const CODE_FILES = [
   'assets/branding/nexus-home-lockup.png',
   'favicon.svg',
+  'modules/home/home-bootstrap.js',
+  'modules/home/home-page.js',
+  'modules/home/home-renderer.js',
+  'modules/home/home-schema-validators.generated.js',
   'modules/platform/configuration-repository.js',
   'modules/platform/platform-context.js',
-  'modules/home/home-bootstrap.js',
-  'modules/home/home-renderer.js',
-  'modules/home/home-page.js',
-  'modules/home/home-schema-validators.generated.js',
   'nexus_home.css',
   'nexus_home.html',
 ];
