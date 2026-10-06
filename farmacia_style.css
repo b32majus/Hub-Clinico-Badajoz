@@ -6211,3 +6211,191 @@
 @media (max-width: 640px) {
     .fh-intake-decision__heading { align-items: flex-start; flex-direction: column; }
 }
+
+/* ============================================================================
+   WO-NEXUS-FARMACIA-INICIO-ATTENTION-VISUAL-01
+   Compact "Requiere atención" block on Farmacia Inicio.
+   Page-scoped: only #inicioResumen / .inicio-* selectors. Generic .dashboard-card
+   and .section-title semantics are reused, never redefined here.
+   ============================================================================ */
+
+.inicio-resumen {
+    position: relative;
+    overflow: hidden;
+    padding: 22px;
+    border-radius: 22px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
+}
+
+.inicio-resumen::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--ses-green);
+}
+
+.inicio-resumen__header {
+    margin: 0 0 16px;
+}
+
+.inicio-resumen__title {
+    margin: 0 0 6px;
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: #0F172A;
+}
+
+.inicio-resumen__copy {
+    margin: 0;
+    color: #64748B;
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+.inicio-resumen__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+
+.inicio-resumen-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 235px;
+    padding: 18px;
+    border-radius: 18px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.inicio-resumen-card .section-title {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+}
+
+.inicio-resumen-card__total {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin: 0 0 14px;
+}
+
+.inicio-resumen-card__total-value {
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 800;
+    color: var(--ses-green-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+.inicio-resumen-card__total-label {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #94A3B8;
+}
+
+.inicio-status-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+}
+
+.inicio-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.inicio-status-row__label {
+    min-width: 0;
+}
+
+.inicio-status-row__value {
+    flex: 0 0 auto;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.inicio-status-row--listas {
+    background: #ECFDF5;
+    border-color: #A7F3D0;
+    color: #065F46;
+}
+
+.inicio-status-row--vigilancia {
+    background: #FFFBEB;
+    border-color: #FDE68A;
+    color: #92400E;
+}
+
+.inicio-status-row--bloqueadas {
+    background: #FEF2F2;
+    border-color: #FECACA;
+    color: #991B1B;
+}
+
+.inicio-resumen-card__cta {
+    align-self: flex-start;
+    margin-top: auto;
+}
+
+.inicio-resumen-card--futura {
+    background: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    box-shadow: none;
+}
+
+.inicio-resumen-card--futura .section-title {
+    color: #64748B;
+}
+
+.inicio-resumen-card--futura .section-title i {
+    color: #94A3B8;
+    background: #F1F5F9;
+}
+
+.inicio-futura__state {
+    margin: auto 0;
+    text-align: center;
+}
+
+.inicio-futura__count {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 800;
+    color: #94A3B8;
+}
+
+.inicio-futura__estado {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #94A3B8;
+}
+
+@media (max-width: 640px) {
+    .inicio-resumen {
+        padding: 18px;
+    }
+
+    .inicio-resumen-card {
+        min-height: 0;
+    }
+}

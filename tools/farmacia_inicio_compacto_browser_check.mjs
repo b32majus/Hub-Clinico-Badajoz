@@ -298,6 +298,138 @@ const BROAD_ONLY_CIP = 'CIP-SINT-INICIO-001';
   }
 }
 
+// ─── 4. Attention block visual composition (desktop row / narrow stack) ──────
+
+async function attentionProbe(width, height) {
+  const context = await browser.newContext({ viewport: { width, height } });
+  const page = await context.newPage();
+  const consoleErrors = [];
+  const pageErrors = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+  page.on('pageerror', (error) => pageErrors.push(String((error && error.message) || error)));
+  await page.goto(base + 'farmacia_index.html', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => !!window.FarmaciaDemo, null, { timeout: 15000 });
+  await page.waitForFunction(() => {
+    const el = document.getElementById('inicioTotalCount');
+    return el && /^\d+$/.test(el.textContent || '');
+  }, null, { timeout: 15000 });
+  await page.locator('#inicioResumen').scrollIntoViewIfNeeded();
+  const probe = await page.evaluate(() => {
+    const computed = (element) => getComputedStyle(element);
+    const cardIds = ['inicioSolicitudesCard', 'inicioRenovacionesCard', 'inicioRecogidasCard'];
+    const cardRects = cardIds.map((id) => {
+      const node = document.getElementById(id);
+      if (!node) return null;
+      const rect = node.getBoundingClientRect();
+      return { x: Math.round(rect.x), y: Math.round(rect.y), w: Math.round(rect.width) };
+    });
+    const statusList = document.querySelector('.inicio-status-list');
+    const rows = [...document.querySelectorAll('.inicio-status-row')].map((row) => {
+      const labelNode = row.querySelector('.inicio-status-row__label');
+      const valueNode = row.querySelector('.inicio-status-row__value');
+      return {
+        label: labelNode.textContent.trim(),
+        value: valueNode.textContent.trim(),
+        modifier: [...row.classList].find((name) => name.startsWith('inicio-status-row--')) || '',
+        paint: `${computed(row).backgroundColor}|${computed(row).borderTopColor}`,
+        gap: Math.round(valueNode.getBoundingClientRect().left - labelNode.getBoundingClientRect().right)
+      };
+    });
+    const future = document.querySelector('#inicioRenovacionesCard');
+    const total = document.getElementById('inicioTotalCount');
+    const grid = document.querySelector('.inicio-resumen__grid');
+    const card = document.querySelector('.inicio-resumen-card');
+    const section = document.getElementById('inicioResumen');
+    return {
+      heading: document.getElementById('inicioResumenTitle')?.textContent.trim() || '',
+      copy: document.querySelector('.inicio-resumen__copy')?.textContent.trim() || '',
+      cardRects,
+      gridColumns: grid ? computed(grid).gridTemplateColumns.split(' ').length : 0,
+      gridGap: grid ? parseFloat(computed(grid).gap) : 0,
+      listStyleType: statusList ? computed(statusList).listStyleType : '',
+      rows,
+      totalText: total?.textContent.trim() || '',
+      totalFontSize: total ? parseFloat(computed(total).fontSize) : 0,
+      outerRadius: section ? parseFloat(computed(section).borderTopLeftRadius) : 0,
+      innerRadius: card ? parseFloat(computed(card).borderTopLeftRadius) : 0,
+      innerPadding: card ? parseFloat(computed(card).paddingLeft) : 0,
+      innerMinHeight: card ? parseFloat(computed(card).minHeight) : 0,
+      futureBorderStyle: future ? computed(future).borderTopStyle : '',
+      futureBackground: future ? computed(future).backgroundColor : '',
+      futureInteractive: document.querySelectorAll(
+        '#inicioRenovacionesCard a, #inicioRenovacionesCard button, #inicioRecogidasCard a, #inicioRecogidasCard button').length,
+      documentOverflow: document.documentElement.scrollWidth > window.innerWidth + 1,
+      innerWidth: window.innerWidth
+    };
+  });
+  return { context, page, consoleErrors, pageErrors, probe };
+}
+
+{
+  let context = null;
+  try {
+    const result = await attentionProbe(1366, 768);
+    context = result.context;
+    const { page, consoleErrors, pageErrors, probe } = result;
+    assert.equal(probe.heading, 'Requiere atención', 'outer attention heading');
+    assert.equal(probe.copy, 'Resumen mínimo de las colas operativas. El trabajo detallado vive fuera de Inicio.', 'helper copy');
+    assert.equal(probe.cardRects.length, 3, 'three attention cards');
+    assert.equal(probe.gridColumns, 3, 'three cards in one row at desktop width');
+    const [first, second, third] = probe.cardRects;
+    assert.ok(Math.abs(first.y - second.y) <= 2 && Math.abs(first.y - third.y) <= 2,
+      `cards share one row: ${JSON.stringify(probe.cardRects.map((rect) => rect.y))}`);
+    assert.ok(second.x > first.x && third.x > second.x, 'cards laid out left to right');
+    assert.equal(probe.listStyleType, 'none', 'status list carries no native bullets');
+    assert.equal(probe.rows.length, 3, 'three status rows');
+    for (const row of probe.rows) {
+      assert.ok(/^\d+$/.test(row.value), `status value is a bare number: ${row.value}`);
+      assert.ok(row.gap >= 8, `count never visually concatenates with label "${row.label}" (gap ${row.gap})`);
+    }
+    assert.equal(new Set(probe.rows.map((row) => row.modifier)).size, 3, 'each status row has a distinct semantic modifier');
+    assert.equal(new Set(probe.rows.map((row) => row.paint)).size, 3, 'status rows are visually distinct');
+    assert.ok(/^\d+$/.test(probe.totalText), `prominent total is numeric: ${probe.totalText}`);
+    assert.ok(probe.totalFontSize >= 30 && probe.totalFontSize <= 34, `total prominent ~30-34px: ${probe.totalFontSize}`);
+    assert.ok(probe.outerRadius >= 20 && probe.outerRadius <= 26, `outer radius ~22px: ${probe.outerRadius}`);
+    assert.ok(probe.innerRadius >= 16 && probe.innerRadius <= 22, `inner radius ~17-20px: ${probe.innerRadius}`);
+    assert.ok(probe.gridGap >= 12 && probe.gridGap <= 18, `inner grid gap ~14px: ${probe.gridGap}`);
+    assert.ok(probe.innerPadding >= 16 && probe.innerPadding <= 24, `inner padding ~18px: ${probe.innerPadding}`);
+    assert.ok(probe.innerMinHeight >= 220, `inner card min-height ~235px: ${probe.innerMinHeight}`);
+    assert.equal(probe.futureBorderStyle, 'dashed', 'future cards are dashed');
+    assert.notEqual(probe.futureBackground, 'rgb(255, 255, 255)', 'future cards are muted');
+    assert.equal(probe.futureInteractive, 0, 'future cards stay non-interactive');
+    assert.equal(probe.documentOverflow, false, 'desktop has no horizontal overflow');
+    assertNoPageFailure(pageErrors, consoleErrors);
+    ok('attention block renders the accepted compact desktop composition');
+  } catch (error) {
+    bad('attention block renders the accepted compact desktop composition', error && error.message);
+  } finally {
+    if (context) await context.close();
+  }
+}
+
+{
+  let context = null;
+  try {
+    const result = await attentionProbe(390, 844);
+    context = result.context;
+    const { page, consoleErrors, pageErrors, probe } = result;
+    assert.equal(probe.gridColumns, 1, 'narrow viewport stacks the attention cards');
+    assert.equal(new Set(probe.cardRects.map((rect) => rect.x)).size, 1, 'stacked cards share one column');
+    const ys = probe.cardRects.map((rect) => rect.y);
+    assert.ok(ys[0] < ys[1] && ys[1] < ys[2], `cards stack in order: ${JSON.stringify(ys)}`);
+    assert.ok(probe.cardRects.every((rect) => rect.x >= 0 && rect.x + rect.w <= probe.innerWidth + 1),
+      'cards stay inside the viewport');
+    assert.equal(probe.documentOverflow, false, 'narrow viewport has no horizontal overflow');
+    assert.equal(probe.listStyleType, 'none', 'status list carries no native bullets when stacked');
+    assertNoPageFailure(pageErrors, consoleErrors);
+    ok('attention block stacks cleanly on a narrow viewport');
+  } catch (error) {
+    bad('attention block stacks cleanly on a narrow viewport', error && error.message);
+  } finally {
+    if (context) await context.close();
+  }
+}
+
 await browser.close();
 server.close();
 
