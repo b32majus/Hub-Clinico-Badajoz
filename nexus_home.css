@@ -3,9 +3,9 @@
  *
  * Light, clean institutional base with one restrained shared atmosphere for
  * the whole platform: subtle magenta / purple / blue-cyan / green accents in
- * borders, glow and focus only. No per-module colour identity, no external
- * font or CDN dependency. Styles only the frozen Home markers; it carries no
- * product logic and no domain references.
+ * a card crown strip, monogram glow and focus only. No per-module colour
+ * identity, no external font or CDN dependency. Styles only the frozen Home
+ * markers; it carries no product logic and no domain references.
  */
 
 :root {
@@ -44,30 +44,38 @@ body {
 
 #home-root.nexus-home {
   display: block;
-  max-width: 56rem;
+  max-width: 60rem;
   margin: 0 auto;
   padding: 1.75rem 1.25rem 2.5rem;
 }
 
-/* Centred, compact hero: brand mark + wordmark dominant, one instruction. */
+/* Centred hero: the full approved lockup is the dominant visible brand, then
+   exactly one instruction, then discreet site context. */
 .nexus-home__header {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.5rem;
   text-align: center;
 }
 
-.nexus-home__brand-mark {
+.nexus-home__brand-lockup {
   display: block;
-  width: 3.5rem;
-  height: 3.5rem;
-  margin: 0 auto 0.5rem;
-  object-fit: contain;
+  width: 13.5rem;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 0.75rem;
 }
 
-.nexus-home__product-name {
-  margin: 0;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+/* Semantic product naming only: keeps "NEXus" in the document and the
+   accessibility tree without duplicating the lockup wordmark on screen. */
+.nexus-home__visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .nexus-home__instruction {
@@ -85,37 +93,92 @@ body {
 .nexus-home__modules {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 0.875rem;
+  gap: 1.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Desktop composition: three cards side by side when space permits. */
+@media (min-width: 54rem) {
+  .nexus-home__modules {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Narrow viewports: cards stack in a single column. */
+@media (max-width: 33.9rem) {
+  .nexus-home__modules {
+    grid-template-columns: 1fr;
+  }
+}
+
 .nexus-home__module-card {
+  --nexus-home-card-pad-top: 1.5rem;
+  --nexus-home-card-pad-x: 1.5rem;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.375rem;
+  gap: 0.625rem;
   max-width: 100%;
-  padding: 1rem 1.125rem 1.125rem;
+  padding: var(--nexus-home-card-pad-top) var(--nexus-home-card-pad-x) 1.75rem;
   border: 1px solid var(--nexus-home-border);
-  border-top: 3px solid transparent;
-  border-image: linear-gradient(
+  border-radius: 1.25rem;
+  background: var(--nexus-home-card);
+  box-shadow:
+    0 1px 2px rgba(31, 36, 48, 0.06),
+    0 8px 24px rgba(109, 79, 194, 0.08);
+  text-align: center;
+  overflow-wrap: break-word;
+}
+
+/* Restrained shared NEXus atmosphere: one multicolour accent strip crowning
+   every card. A pseudo-element (not border-image) so the rounded corners
+   stay visibly round. No per-module colour identity. */
+.nexus-home__module-card::before {
+  content: "";
+  display: block;
+  align-self: stretch;
+  height: 0.375rem;
+  margin: calc(-1 * var(--nexus-home-card-pad-top)) calc(-1 * var(--nexus-home-card-pad-x)) 0.75rem;
+  border-radius: calc(1.25rem - 1px) calc(1.25rem - 1px) 0 0;
+  background: linear-gradient(
     to right,
     var(--nexus-home-accent-magenta),
     var(--nexus-home-accent-purple),
     var(--nexus-home-accent-cyan),
     var(--nexus-home-accent-green)
-  ) 1;
-  border-radius: 0.625rem;
-  background: var(--nexus-home-card);
-  text-align: center;
-  overflow-wrap: break-word;
+  );
 }
 
 .nexus-home__module-card--unavailable {
   background: var(--nexus-home-card-muted);
   color: var(--nexus-home-muted);
+}
+
+/* Presentation-only future card: clearly upcoming, never an unavailable
+   runtime state. Dashed outline + non-interactive pill badge. */
+.nexus-home__module-card--future {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+  color: var(--nexus-home-muted);
+}
+
+.nexus-home__module-card--future::before {
+  opacity: 0.55;
+}
+
+.nexus-home__module-state--future {
+  display: inline-block;
+  padding: 0.25rem 0.875rem;
+  border: 1px solid var(--nexus-home-accent-purple);
+  border-radius: 9999px;
+  background: rgba(109, 79, 194, 0.08);
+  color: var(--nexus-home-accent-purple);
+  font-weight: 650;
+  cursor: default;
 }
 
 .nexus-home__monogram {

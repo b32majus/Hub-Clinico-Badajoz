@@ -3,15 +3,21 @@
 /**
  * Focused UX-01 presentation checker for PROMueve Nexus Home (NEXUS_HOME_UX_01).
  *
- * Proves the new registered-but-unavailable presentation and the frozen
- * human shaping that the historical oracles do not cover:
+ * Proves the visual-fidelity presentation and the frozen human shaping that
+ * the historical oracles do not cover:
  *  - hero carries exactly one primary instruction and no subtitle/pill;
- *  - product wordmark is text-only and the brand mark embeds the existing
- *    isotipo bytes as a local data URI;
- *  - Home-only aliases (ReumaNEXus / FarmaNEXus, no invented Derma);
+ *  - visible brand is the approved full NEXus lockup served as a declared
+ *    local file (never a data URI); the product wordmark stays as a
+ *    visually-hidden semantic h1 so no visible "NEXus" duplicates the lockup;
+ *  - Home-only aliases (ReumaNEXus / FarmaNEXus) plus the human-approved
+ *    PRESENTATION-ONLY future card (DermaNEXus / "Próximamente") that is never
+ *    registered, never availability-checked, never routed and never
+ *    interactive;
  *  - available card: "Disponible" + native keyboard-operable Entrar button;
  *  - unavailable card: visible, muted, "No disponible en este entorno", with
  *    no tile, no listener, no href, and getModuleRoute never called for it;
+ *  - NEXus favicon derived from the approved isotipo (old app-icon bytes
+ *    gone) and explicitly linked from nexus_home.html;
  *  - zero-navigable state keeps unavailable cards visible beside the empty
  *    state;
  *  - getModules() fallback shape for synthetic doubles without getModules().
@@ -182,6 +188,8 @@ function loadHomeSandbox(fetchMap) {
     'modules/home/home-renderer.js',
     'nexus_home.html',
     'nexus_home.css',
+    'assets/branding/nexus-home-lockup.png',
+    'favicon.svg',
     'assets/branding/farmanexus-app-icon-64.png',
     'data/platform/home/deployment-profile.json',
   ];
@@ -211,8 +219,9 @@ const tree = serializeTree(root);
     display.productName === 'NEXus' &&
     display.siteName === 'Entorno de demostración' &&
     products.length === 1 && products[0].textContent === 'NEXus' &&
+    products[0].className.split(/\s+/).includes('nexus-home__visually-hidden') &&
     sites.length === 1 && sites[0].textContent === 'Entorno de demostración';
-  record('P1 branding from profile: NEXus wordmark + discreet demo context', ok,
+  record('P1 branding from profile: NEXus semantic wordmark (visually hidden) + discreet demo context', ok,
     `products=${products.length} sites=${sites.length}`);
 }
 
@@ -228,41 +237,67 @@ const tree = serializeTree(root);
     `instructions=${instructions.length} bannedHits=${JSON.stringify(bannedHits)}`);
 }
 
-// --- P3: product-name is text-only; brand mark embeds the approved faithful
-// isotipo derivative (480x320) as a local data URI (hard oracle by SHA-256)
+// --- P3: visible brand is the approved full lockup served as a declared local
+// file (byte-exact oracle by SHA-256); the renderer embeds zero data URIs.
 {
-  const APPROVED_DERIVATIVE_SHA256 =
-    '76a45e8607c7bf4142e562206d530d86bc9d914f97cde615022d6195e23c9e54';
-  const OLD_APP_ICON_SHA256 =
-    '02bb2e0e1fb9d3b6d2712e1b834bbebcbe3d92cd0ee92347e7fabb51c8d8b301';
-  const DATA_URI_PREFIX = 'data:image/png;base64,';
+  const APPROVED_LOCKUP_DERIVATIVE_SHA256 =
+    '54141a7a57d339953d73e81cb31ce3962e498d9a8e200999b49804c43852943f';
+  const LOCKUP_SRC = 'assets/branding/nexus-home-lockup.png';
   const products = findAllByClass(root, 'nexus-home__product-name');
   let nestedImg = 0;
   walk(products[0], (el) => {
     if (el !== products[0] && el.tagName === 'IMG') nestedImg += 1;
   });
-  const marks = findAllByClass(root, 'nexus-home__brand-mark');
-  const src = marks.length === 1 ? String(marks[0].getAttribute('src') || '') : '';
-  const dataUri = src.startsWith(DATA_URI_PREFIX);
-  const decodedSha = dataUri
-    ? crypto.createHash('sha256')
-        .update(Buffer.from(src.slice(DATA_URI_PREFIX.length), 'base64'))
-        .digest('hex')
-    : '';
-  const markOk = marks.length === 1 && marks[0].tagName === 'IMG' && dataUri &&
-    decodedSha === APPROVED_DERIVATIVE_SHA256 && decodedSha !== OLD_APP_ICON_SHA256;
-  const ok = products.length === 1 && nestedImg === 0 && markOk;
-  record('P3 brand: text-only wordmark + approved faithful isotipo data URI', ok,
-    `nestedImg=${nestedImg} marks=${marks.length} dataUri=${dataUri} sha256=${decodedSha}`);
+  const lockups = findAllByClass(root, 'nexus-home__brand-lockup');
+  const lockupSrc = lockups.length === 1 ? String(lockups[0].getAttribute('src') || '') : '';
+  const lockupAlt = lockups.length === 1 ? String(lockups[0].getAttribute('alt') || '') : '';
+  const lockupOk = lockups.length === 1 && lockups[0].tagName === 'IMG' &&
+    lockupSrc === LOCKUP_SRC && lockupAlt === 'NEXus';
+  const rendererSource = readText('modules/home/home-renderer.js');
+  const noDataUri = !rendererSource.includes('data:image');
+  const derivativeBytes = fs.readFileSync(path.join(ROOT, LOCKUP_SRC));
+  const derivativeSha = crypto.createHash('sha256').update(derivativeBytes).digest('hex');
+  const pngSignature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const derivativeOk = derivativeBytes.subarray(0, 8).equals(pngSignature) &&
+    derivativeSha === APPROVED_LOCKUP_DERIVATIVE_SHA256;
+  const ok = products.length === 1 && nestedImg === 0 && lockupOk && noDataUri && derivativeOk;
+  record('P3 brand: approved full lockup as declared file (no data URI) + hidden semantic wordmark', ok,
+    `nestedImg=${nestedImg} lockups=${lockups.length} src=${JSON.stringify(lockupSrc)} dataUriFree=${noDataUri} sha256=${derivativeSha}`);
 }
 
-// --- P4: aliases — ReumaNEXus / FarmaNEXus visible, DermaNEXus absent
+// --- P4: aliases — ReumaNEXus / FarmaNEXus registered cards plus the
+// PRESENTATION-ONLY future DermaNEXus card ("Próximamente"): explicit future
+// marker (never data-module-id="derma"), no tile, no listener, no href, no
+// button action, never "Disponible"/"No disponible en este entorno".
 {
   const names = findAllByClass(root, 'nexus-home__module-name').map((el) => el.textContent);
-  const ok = names.includes('ReumaNEXus') && names.includes('FarmaNEXus') &&
-    !tree.includes('DermaNEXus') && names.length === 2;
-  record('P4 aliases: ReumaNEXus + FarmaNEXus visible, DermaNEXus absent', ok,
-    `names=${JSON.stringify(names)}`);
+  const cards = findAllByClass(root, 'nexus-home__module-card');
+  const futureCards = cards.filter((c) => c.getAttribute('data-future-module') === 'derma');
+  const registeredDerma = cards.filter((c) => c.getAttribute('data-module-id') === 'derma');
+  let futureTiles = 0;
+  let futureListeners = 0;
+  let futureHrefs = 0;
+  let futureButtons = 0;
+  let futureState = '';
+  walk(futureCards[0], (el) => {
+    if (typeof el.className === 'string') {
+      const classes = el.className.split(/\s+/);
+      if (classes.includes('nexus-home__tile')) futureTiles += 1;
+      if (classes.includes('nexus-home__module-state--future')) futureState = el.textContent;
+    }
+    if (el.__listeners && (el.__listeners.click || el.__listeners.keydown)) futureListeners += 1;
+    if (el.attributes && el.attributes.href) futureHrefs += 1;
+    if (el !== futureCards[0] && (el.tagName === 'BUTTON' || el.tagName === 'A')) futureButtons += 1;
+  });
+  const futureClassOk = futureCards.length === 1 &&
+    String(futureCards[0].className || '').split(/\s+/).includes('nexus-home__module-card--future');
+  const ok = names.length === 3 &&
+    names.includes('ReumaNEXus') && names.includes('FarmaNEXus') && names.includes('DermaNEXus') &&
+    futureCards.length === 1 && futureClassOk && registeredDerma.length === 0 &&
+    futureTiles === 0 && futureListeners === 0 && futureHrefs === 0 && futureButtons === 0 &&
+    futureState === 'Próximamente';
+  record('P4 aliases + future card: Reuma/Farma registered, DermaNEXus future-only "Próximamente", non-interactive', ok,
+    `names=${JSON.stringify(names)} future=${futureCards.length} regDerma=${registeredDerma.length} tiles=${futureTiles} listeners=${futureListeners} hrefs=${futureHrefs} buttons=${futureButtons} state=${JSON.stringify(futureState)}`);
 }
 
 // --- P5: available card — Disponible + native Entrar button, exactly one tile
@@ -278,18 +313,19 @@ const tree = serializeTree(root);
     }
   });
   const button = reumaTile[0];
-  const ok = reumaCards.length === 1 && tiles.length === 1 && reumaTile.length === 1 &&
+  const ok = cards.length === 3 && reumaCards.length === 1 && tiles.length === 1 && reumaTile.length === 1 &&
     stateText === 'Disponible' &&
     button && button.tagName === 'BUTTON' && button.textContent === 'Entrar' &&
     typeof (button.__listeners && button.__listeners.click) === 'function';
-  record('P5 available card: Disponible + native Entrar button (sole tile)', ok,
-    `tiles=${tiles.length} state=${JSON.stringify(stateText)} tag=${button && button.tagName}`);
+  record('P5 available card: Disponible + native Entrar button (sole tile, 3 cards total)', ok,
+    `cards=${cards.length} tiles=${tiles.length} state=${JSON.stringify(stateText)} tag=${button && button.tagName}`);
 }
 
 // --- P6: unavailable card — visible, muted, no tile/listener/href, no route call
 {
   const { Renderer, assignCalls } = loadRendererSandbox();
   const routeCalls = [];
+  const availabilityCalls = [];
   const context = {
     getBranding() {
       return { productName: 'NEXus', siteName: 'Entorno de demostración' };
@@ -301,6 +337,7 @@ const tree = serializeTree(root);
       ];
     },
     isModuleAvailable(id) {
+      availabilityCalls.push(id);
       return id === 'reuma';
     },
     getNavigableModules() {
@@ -328,16 +365,19 @@ const tree = serializeTree(root);
     if (el.__listeners && el.__listeners.click) farmaListeners += 1;
     if (el.attributes && el.attributes.href) farmaHrefs += 1;
   });
-  // Activate the available module: only its route may be resolved.
+  // Activate the available module: only its route may be resolved. The future
+  // Derma card must never consult the facade: no isModuleAvailable("derma"),
+  // no getModuleRoute("derma").
   const tiles = findAllByClass(view, 'nexus-home__tile');
   const click = tiles[0] && tiles[0].__listeners ? tiles[0].__listeners.click : undefined;
   if (typeof click === 'function') click({ type: 'click' });
   const ok = farma.length === 1 && farmaTiles === 0 && farmaListeners === 0 && farmaHrefs === 0 &&
     farmaState === 'No disponible en este entorno' &&
     JSON.stringify(routeCalls) === JSON.stringify(['reuma']) &&
-    JSON.stringify(assignCalls) === JSON.stringify(['route-for-reuma']);
-  record('P6 unavailable card: visible + muted, no tile/listener/href, no route call', ok,
-    `farmaTiles=${farmaTiles} listeners=${farmaListeners} hrefs=${farmaHrefs} state=${JSON.stringify(farmaState)} routeCalls=${JSON.stringify(routeCalls)} assign=${JSON.stringify(assignCalls)}`);
+    JSON.stringify(assignCalls) === JSON.stringify(['route-for-reuma']) &&
+    !availabilityCalls.includes('derma') && !routeCalls.includes('derma');
+  record('P6 unavailable card: visible + muted, no tile/listener/href, no route call, Derma never consults the facade', ok,
+    `farmaTiles=${farmaTiles} listeners=${farmaListeners} hrefs=${farmaHrefs} state=${JSON.stringify(farmaState)} routeCalls=${JSON.stringify(routeCalls)} assign=${JSON.stringify(assignCalls)} availabilityCalls=${JSON.stringify(availabilityCalls)}`);
 }
 
 // --- P7: native button semantics — no custom key handlers, no tabindex hacks
@@ -391,8 +431,8 @@ const tree = serializeTree(root);
   const empty = findAllByClass(view, 'nexus-home__empty');
   const errors = findAllByClass(view, 'nexus-home__error');
   const cards = findAllByClass(view, 'nexus-home__module-card');
-  const ok = tiles.length === 0 && empty.length === 1 && errors.length === 0 && cards.length === 2;
-  record('P8 zero-navigable: empty state + unavailable cards visible, zero tiles', ok,
+  const ok = tiles.length === 0 && empty.length === 1 && errors.length === 0 && cards.length === 3;
+  record('P8 zero-navigable: empty state + unavailable cards visible + future Derma card, zero tiles', ok,
     `tiles=${tiles.length} empty=${empty.length} errors=${errors.length} cards=${cards.length}`);
 }
 
@@ -445,10 +485,11 @@ const tree = serializeTree(root);
   const view = Renderer.renderHome(context, stub);
   const names = findAllByClass(view, 'nexus-home__module-name').map((el) => el.textContent);
   const tiles = findAllByClass(view, 'nexus-home__tile');
-  const ok = names.length === 1 && names[0] === 'Módulo sintético' &&
-    tiles.length === 1 && tiles[0].tagName === 'BUTTON';
-  record('P10 compatibility fallback without getModules() renders the navigable set', ok,
-    `names=${JSON.stringify(names)} tiles=${tiles.length}`);
+  const future = findAllByClass(view, 'nexus-home__module-card--future');
+  const ok = names.includes('Módulo sintético') && names.includes('DermaNEXus') &&
+    future.length === 1 && tiles.length === 1 && tiles[0].tagName === 'BUTTON';
+  record('P10 compatibility fallback without getModules() renders the navigable set + future Derma card', ok,
+    `names=${JSON.stringify(names)} tiles=${tiles.length} future=${future.length}`);
 }
 
 // --- P11: packaged tree hygiene — zero anchors, zero hrefs, no route strings
@@ -467,6 +508,46 @@ const tree = serializeTree(root);
   const ok = anchors === 0 && hrefs === 0 && routeStrings === 0;
   record('P11 tree hygiene: zero anchors, zero hrefs, no route strings', ok,
     `anchors=${anchors} hrefs=${hrefs} routeStrings=${routeStrings}`);
+}
+
+// --- P12: NEXus favicon — explicitly linked from Home, positively pinned to
+// the approved favicon artifact (file SHA-256, same style as the P3 lockup
+// oracle); the embedded raster is a square transparent (RGBA) canvas with no
+// white square and no wordmark, and the obsolete app-icon bytes are gone.
+{
+  const APPROVED_FAVICON_SVG_SHA256 =
+    '78ae0e07d20f49e36635e9920e1a5a66019a44463f4fd0259a7d3734eaa98f6f';
+  const OLD_APP_ICON_SHA256 =
+    '02bb2e0e1fb9d3b6d2712e1b834bbebcbe3d92cd0ee92347e7fabb51c8d8b301';
+  const html = readText('nexus_home.html');
+  const linkOk = html.includes('<link rel="icon" href="favicon.svg" type="image/svg+xml">');
+  const svgText = readText('favicon.svg');
+  const svgBytes = fs.readFileSync(path.join(ROOT, 'favicon.svg'));
+  const faviconFileSha = crypto.createHash('sha256').update(svgBytes).digest('hex');
+  const provenanceOk = faviconFileSha === APPROVED_FAVICON_SVG_SHA256;
+  const dataUriMatch = svgText.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
+  const embedded = dataUriMatch ? Buffer.from(dataUriMatch[1], 'base64') : Buffer.alloc(0);
+  const embeddedSha = embedded.length > 0
+    ? crypto.createHash('sha256').update(embedded).digest('hex')
+    : '';
+  // Minimal IHDR parse: 8-byte signature + width/height/colour-type.
+  const pngSig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const width = embedded.length >= 24 ? embedded.readUInt32BE(16) : 0;
+  const height = embedded.length >= 24 ? embedded.readUInt32BE(20) : 0;
+  const colourType = embedded.length >= 26 ? embedded[25] : -1;
+  const canvasOk = embedded.length > 0 && dataUriMatch &&
+    embedded.subarray(0, 8).equals(pngSig) && width === 64 && height === 64 &&
+    width === height && colourType === 6;
+  const ok = linkOk &&
+    svgText.includes('<svg') && svgText.includes('viewBox="0 0 64 64"') &&
+    !svgText.includes('<rect') && !svgText.includes('<text') &&
+    !/white|#fff/i.test(svgText) &&
+    provenanceOk &&
+    embeddedSha !== '' && embeddedSha !== OLD_APP_ICON_SHA256 &&
+    !svgBytes.includes(Buffer.from(OLD_APP_ICON_SHA256, 'utf8')) &&
+    canvasOk;
+  record('P12 favicon: linked from Home, approved-isotipo bytes, square transparent canvas, old app-icon gone', ok,
+    `link=${linkOk} fileSha=${faviconFileSha} embeddedSha=${embeddedSha} canvas=${width}x${height} colourType=${colourType}`);
 }
 
 const failed = results.filter((r) => !r.pass);

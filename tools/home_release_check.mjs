@@ -49,14 +49,16 @@ const SCHEMA_FILES = {
 
 // Must stay in sync with tools/home_release_build.mjs.
 const CODE_FILES = [
-  'nexus_home.html',
-  'nexus_home.css',
+  'assets/branding/nexus-home-lockup.png',
+  'favicon.svg',
+  'modules/home/home-bootstrap.js',
+  'modules/home/home-page.js',
+  'modules/home/home-renderer.js',
+  'modules/home/home-schema-validators.generated.js',
   'modules/platform/configuration-repository.js',
   'modules/platform/platform-context.js',
-  'modules/home/home-bootstrap.js',
-  'modules/home/home-renderer.js',
-  'modules/home/home-page.js',
-  'modules/home/home-schema-validators.generated.js',
+  'nexus_home.css',
+  'nexus_home.html',
 ];
 
 // Token scope mirrors tools/nexus_home_check.mjs CASO 9: the guarantee is
@@ -114,6 +116,24 @@ function loadJson(file) {
 function sha256CanonicalFile(file) {
   const canonical = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   return crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+}
+
+// Deterministic binary/text hashing contract (must stay identical in
+// tools/home_release_build.mjs): files with a binary extension (`.png`) or a
+// null byte in the first 8192 bytes are hashed over their raw bytes; every
+// other file keeps the EOL-canonicalized text contract above. Config
+// artifacts (JSON) always use the text contract.
+const BINARY_EXTENSIONS = new Set(['.png']);
+function isBinaryReleaseFile(file) {
+  if (BINARY_EXTENSIONS.has(path.extname(file).toLowerCase())) return true;
+  const probe = fs.readFileSync(file).subarray(0, 8192);
+  return probe.includes(0);
+}
+function sha256ReleaseFile(file) {
+  if (isBinaryReleaseFile(file)) {
+    return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  }
+  return sha256CanonicalFile(file);
 }
 
 function canonicalJson(value) {
@@ -334,7 +354,7 @@ function integrityErrors(release, codeRoot) {
       errors.push(`code file missing on disk: ${file}`);
       continue;
     }
-    const actual = sha256CanonicalFile(abs);
+    const actual = sha256ReleaseFile(abs);
     if (map[file] !== actual) {
       errors.push(`code drift detected: ${file} declared ${map[file]} actual ${actual}`);
     }
@@ -412,6 +432,7 @@ function main() {
   copyCodeTree(crlfRoot);
   for (const file of CODE_FILES) {
     const abs = path.join(crlfRoot, file);
+    if (isBinaryReleaseFile(abs)) continue; // raw-byte contract: never rewrite binaries
     const text = fs.readFileSync(abs, 'utf8');
     fs.writeFileSync(abs, text.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n'));
   }
@@ -439,7 +460,7 @@ function main() {
   const driftOut = path.join(tmp, 'release-drift.json');
   const bDrift = runBuilder([MANIFEST_INPUT, READINESS_INPUT, RELEASES_INPUT, driftOut, driftRoot]);
   const driftRelease = bDrift.ok ? loadJson(driftOut) : null;
-  const codeRootHonored = Boolean(driftRelease) && driftRelease.code.filesSha256['nexus_home.css'] === sha256CanonicalFile(driftCss);
+  const codeRootHonored = Boolean(driftRelease) && driftRelease.code.filesSha256['nexus_home.css'] === sha256ReleaseFile(driftCss);
   const driftErrs = driftRelease ? integrityErrors(driftRelease, ROOT) : [];
   record(
     'planted code drift is detected and names the tampered file',
