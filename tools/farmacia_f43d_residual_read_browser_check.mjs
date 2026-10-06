@@ -5,9 +5,9 @@
 //   Inicio (farmacia_index.html): init-time read restores the transported CIP
 //   and runs the guarded search through the seam; supported CIP search finds
 //   the demo patient; unknown CIP opens the guided intake panel.
-//   Actividad del servicio (farmacia_actividad_servicio.html): population
-//   cards render through the published sync population read; pendientes panel
-//   toggle is a supported interaction.
+//   Pendientes (farmacia_actividad_servicio.html): the single Pendientes
+//   queue renders through the published sync population read (summary plus
+//   always-visible queue rows).
 //   Validación (farmacia_validacion.html): the unified intake review module
 //   consumes the published sync context read; reveal behaves per the seam
 //   context (patient present → derma preview stays hidden; no patient →
@@ -193,9 +193,9 @@ function filterRealErrors(consoleErrors) {
         assert.equal(renderedRows, expectedQueue, `rendered queue rows match the published sync queue population: ${renderedRows}`);
         assert.deepEqual(pageErrors, [], 'pageerror');
         assert.deepEqual(filterRealErrors(consoleErrors), [], 'console.error');
-        ok('actividad del servicio population renders through the published sync population read');
+        ok('pendientes queue renders through the published sync population read');
     } catch (error) {
-        bad('actividad del servicio population renders through the published sync population read', error && error.message);
+        bad('pendientes queue renders through the published sync population read', error && error.message);
     } finally {
         await context.close();
     }
