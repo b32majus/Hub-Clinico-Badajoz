@@ -45,7 +45,7 @@
         <div class="nav-section">
             <h3 class="nav-title">Gestión</h3>
             <ul class="nav-list">
-                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link" data-nav-link><i class="fas fa-tasks"></i>Pendientes</a></li>
                 <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
                 <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
                 <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
@@ -143,6 +143,29 @@
     </div>
 </section>
 
+<section class="inicio-resumen" id="inicioResumen" aria-label="Resumen de Farmacia">
+    <article class="dashboard-card inicio-resumen-card" id="inicioSolicitudesCard" aria-labelledby="inicioSolicitudesTitle">
+        <h2 class="section-title" id="inicioSolicitudesTitle"><i class="fas fa-tasks" aria-hidden="true"></i> Solicitudes pendientes</h2>
+        <ul class="inicio-summary-list">
+            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">Total</span><span class="inicio-summary-list__value" id="inicioTotalCount">0</span></li>
+            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">Listas para validación</span><span class="inicio-summary-list__value" id="inicioListasCount">0</span></li>
+            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">En vigilancia</span><span class="inicio-summary-list__value" id="inicioVigilanciaCount">0</span></li>
+            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">Bloqueadas</span><span class="inicio-summary-list__value" id="inicioBloqueadasCount">0</span></li>
+        </ul>
+        <a class="btn btn-primary" id="inicioVerPendientes" href="farmacia_actividad_servicio.html"><i class="fas fa-arrow-right" aria-hidden="true"></i> Ver pendientes</a>
+    </article>
+    <article class="dashboard-card inicio-resumen-card inicio-resumen-card--futura" id="inicioRenovacionesCard" aria-label="Renovaciones de receta, próxima fase">
+        <h2 class="section-title"><i class="fas fa-prescription-bottle-alt" aria-hidden="true"></i> Renovaciones de receta</h2>
+        <p class="inicio-futura__count" id="inicioRenovacionesCount">?</p>
+        <p class="inicio-futura__estado">Próxima fase</p>
+    </article>
+    <article class="dashboard-card inicio-resumen-card inicio-resumen-card--futura" id="inicioRecogidasCard" aria-label="Recogidas pendientes, próxima fase">
+        <h2 class="section-title"><i class="fas fa-shopping-bag" aria-hidden="true"></i> Recogidas pendientes</h2>
+        <p class="inicio-futura__count" id="inicioRecogidasCount">?</p>
+        <p class="inicio-futura__estado">Próxima fase</p>
+    </article>
+</section>
+
 <section class="dashboard-card" id="modCargaDatosProyecto">
     <h2 class="section-title"><i class="fas fa-file-import"></i> Carga de datos del proyecto</h2>
     <p class="validation-module__intro">Cargue manualmente los Excel locales de Enfermería y Farmacia. La población queda solo en memoria y la sesión conserva únicamente el paciente actual. El catálogo CIMA se intenta cargar automáticamente al abrir la app.</p>
@@ -169,31 +192,6 @@
 </section>
 
 
-<section class="dashboard-card" id="enfermeriaBoard">
-    <h2 class="section-title enfermeria-board__heading"><i class="fas fa-user-nurse"></i> Solicitudes Enfermería / Inicio biológico (<span id="enfermeriaBoardCount">0</span>)</h2>
-    <p class="validation-module__intro">Solicitudes procedentes de Enfermería, agrupadas únicamente por su estado prebiológico explícito.</p>
-    <p class="empty-state hidden" id="enfermeriaBoardEmpty">No hay solicitudes de Enfermería / Inicio biológico.</p>
-    <div id="enfermeriaBoardCards" aria-live="polite"></div>
-</section>
-
-<section class="dashboard-card" id="pendingValidationBoard">
-    <h2 class="section-title"><i class="fas fa-user-clock"></i> Solicitudes generales pendientes de validación (<span id="pendingValidationBoardCount">0</span>)</h2>
-    <p class="validation-module__intro">Solicitudes pendientes que no proceden de Enfermería / Inicio biológico.</p>
-    <p class="empty-state hidden" id="pendingValidationEmpty">No hay solicitudes generales pendientes de validación.</p>
-    <div class="pending-validation-grid" id="pendingValidationCards" aria-live="polite"></div>
-</section>
-
-<h2 class="section-title">Accesos rápidos</h2>
-<section class="action-grid">
-    <a href="farmacia_validacion.html" class="action-card"><i class="fas fa-check-double action-card__icon"></i><span class="action-card__title">Validación</span><span class="action-card__desc">Evaluar solicitudes farmacoterapéuticas pendientes.</span></a>
-    <a href="farmacia_primera_visita.html" class="action-card"><i class="fas fa-plus-circle action-card__icon"></i><span class="action-card__title">Primera Visita</span><span class="action-card__desc">Registrar inicio del seguimiento farmacoterapéutico.</span></a>
-    <a href="farmacia_seguimiento.html" class="action-card"><i class="fas fa-clipboard-list action-card__icon"></i><span class="action-card__title">Seguimiento</span><span class="action-card__desc">Adherencia, PROMs, optimización, suspensión y efectos adversos.</span></a>
-    <a href="farmacia_dashboard_paciente.html" class="action-card"><i class="fas fa-user-circle action-card__icon"></i><span class="action-card__title">Dashboard Paciente</span><span class="action-card__desc">Visión longitudinal individual del episodio FH.</span></a>
-    <a href="farmacia_actividad_servicio.html" class="action-card"><i class="fas fa-tasks action-card__icon"></i><span class="action-card__title">Actividad del servicio</span><span class="action-card__desc">Indicadores operativos con datos demo e importados.</span></a>
-    <a href="farmacia_estadisticas.html" class="action-card"><i class="fas fa-chart-bar action-card__icon"></i><span class="action-card__title">Estadísticas del servicio</span><span class="action-card__desc">Dashboard longitudinal de cohorte y seguimiento.</span></a>
-    <a href="farmacia_farmacos.html" class="action-card"><i class="fas fa-pills action-card__icon"></i><span class="action-card__title">Fármacos</span><span class="action-card__desc">Catálogo farmacológico demo con carga automática.</span></a>
-    <a href="farmacia_profesionales.html" class="action-card"><i class="fas fa-users action-card__icon"></i><span class="action-card__title">Profesionales</span><span class="action-card__desc">Vista operativa del equipo de Farmacia.</span></a>
-</section>
                 </main>
             </div>
             <script src="scripts/farmacia_pautas_catalog.js?v=20260614-wo6-b"></script>
@@ -210,7 +208,7 @@
     <script src="scripts/farmacia_prebiologico.js?v=20260614-wo4-a"></script>
     <script src="scripts/farmacia_patient_read_contract_v2.js?v=20260806-patient-read-facade-r1"></script>
     <script src="scripts/farmacia_patient_read_facade_v2.js?v=20260806-patient-read-facade-r1"></script>
-    <script src="scripts/farmacia_index.js?v=20260930-f43d-r1"></script>
+    <script src="scripts/farmacia_index.js?v=20261006-wo2-inicio"></script>
     <script src="vendor/sheetjs/xlsx.full.min.js"></script>
         </body>
         </html>
