@@ -5,6 +5,7 @@
 **Issue / WO:** #414 — F3.4 (padre #409), reconciliación post-merge #416
 **Base de ejecución:** `work/nexus-home-qualification-03-409-20260925`; Q5a `2407532`, Q5b `612bc03`; candidate final `9004b443619bc2eb8002165de6261176e27db8e9`
 **Publicación:** PR #415 → merge `6e6413c4e9cb163f11ee193c24c8f287c9ebdc36` en `promueve/nexus-v4`; tree `1d6834f59c38bd90e883174a773579cd20c474ee` idéntico al candidate; fresh worktree post-merge `npm ci` + `npm run verify:nexus` PASS
+**Reconciliación posterior 2026-10-06:** PR #557 → merge `7ad9c48ad26794c4bdbfaaca13e26d9419357f98` amplía la unidad F3.4 de 8 a 10 `code.files` para incluir el lockup local y `favicon.svg`; el PNG se hashea por bytes raw y los ficheros de texto conservan canonicalización EOL. Esta evolución es visual/release-only y no cambia registry/readiness/routing.
 **ADRs:** [ADR-007](../architecture/adr/ADR-007-release-tooling-and-quality.md) · [ADR-003](../architecture/adr/ADR-003-hospital-deployment-and-configuration.md) · [ADR-002](../architecture/adr/ADR-002-modular-monolith-and-module-boundaries.md)
 **Documento previo:** [`NEXUS_HOME_F3.2.md`](NEXUS_HOME_F3.2.md)
 
@@ -38,14 +39,17 @@ Este documento cubre dos entregables del WU Q5b:
 `code.files` es la lista congelada del release Home; el artefacto bajo prueba
 contiene **exactamente**:
 
-- los ficheros de `code.files`: `nexus_home.html`, `nexus_home.css`,
+- los **10** ficheros de `code.files`: `assets/branding/nexus-home-lockup.png`,
+  `favicon.svg`, `modules/home/home-bootstrap.js`, `modules/home/home-page.js`,
+  `modules/home/home-renderer.js`, `modules/home/home-schema-validators.generated.js`,
   `modules/platform/configuration-repository.js`, `modules/platform/platform-context.js`,
-  `modules/home/home-bootstrap.js`, `modules/home/home-renderer.js`,
-  `modules/home/home-page.js`, `modules/home/home-schema-validators.generated.js`;
+  `nexus_home.css`, `nexus_home.html`;
 - los cuatro artefactos de configuración `data/platform/home/*.json`
   (`module-registry.json`, `deployment-profile.json`, `deployment-manifest.json`,
   `module-readiness.json`);
 - el propio manifest de release (`release-manifest.json`).
+
+Desde PR #557, el builder/checker distinguen binario de texto: el lockup PNG se hashea sobre bytes raw; los ficheros textuales mantienen normalización EOL para reproducibilidad entre checkouts.
 
 Campos del manifest de release (ADR-007): `homeReleaseVersion`, `releaseId`,
 `site` (`deploymentId`, `siteId`, `display`), `modules`
@@ -89,10 +93,10 @@ código de salida distinto de cero ante cualquier fallo.
 - **Doble build byte-idéntico:** dos ejecuciones del builder sobre las mismas
   entradas producen bytes idénticos (JSON canónico: indentación de 2 espacios,
   LF, newline final).
-- **Invariancia CRLF:** todos los SHA-256 se calculan sobre bytes
-  canonicalizados a LF (CRLF y CR sueltos → LF), de forma que un checkout con
-  ficheros CRLF produce el mismo `releaseId` y los mismos hashes
-  (`NEXUS-DEBT-001`).
+- **Invariancia CRLF para texto + hashing binario fiel:** los ficheros textuales se
+  hashean tras canonicalización LF (CRLF y CR sueltos → LF), mientras los binarios
+  declarados —actualmente el lockup PNG— se hashean sobre bytes raw. Así se preserva
+  reproducibilidad entre checkouts sin corromper la identidad del binario (`NEXUS-DEBT-001`).
 - **Sin datos de entorno en runtime:** `tooling` son cadenas estáticas; no hay
   timestamps, ni `process.version`, ni datos de entorno en ninguna parte del
   manifest, por lo que el release es idéntico entre máquinas y ejecuciones.
@@ -156,12 +160,12 @@ Frontera honesta del artefacto:
   aislado responde **404**. El 404 se **adjudica explícitamente** en la salida
   (se imprime estado y cuerpo) y `pageerror` permanece en 0; el `goBack()` real
   re-renderiza el Home con su tile en la misma pestaña.
-- **Recurso browser-level fuera de la unidad:** el artefacto no declara icono,
-  así que Chromium emite su única petición implícita `/favicon.ico`
-  (browser-level, nunca iniciada por Home) en el primer documento del origen.
-  El checker calienta el origen con una navegación previa sin scripting y
-  reinicia los buffers, de modo que el `console.error === 0` de A1 mide el
-  documento Home, y la petición browser-level queda adjudicada e impresa.
+- **Favicon explícito autocontenido:** `nexus_home.html` declara `favicon.svg` y
+  ese fichero forma parte de los 10 `code.files`, por lo que la petición iniciada
+  por Home queda dentro de la unidad de release. Chromium puede seguir emitiendo
+  una petición implícita de origen `/favicon.ico` durante el warm-up previo; el
+  checker la adjudica antes de A1 y reinicia buffers, de modo que el
+  `console.error === 0` de A1 mide sólo el documento Home soportado.
 - **Autocontención (A3):** se recoge cada URL solicitada durante A1/A2; la única
   respuesta no perteneciente al conjunto declarado es el 404 adjudicado de la
   ruta objetivo. No hay fuga a CDN, vendor ni rutas del repositorio.

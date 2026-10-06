@@ -158,8 +158,9 @@ Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/
 | F4.3 lecturas Dashboard/Validación/PV/Seguimiento/Estadísticas/Inicio/Actividad/review detrás de seams | `IMPLEMENTADO` | #470/#475, PR #474/#478 | Completado; PV-001 descubierto después ya está resuelto. |
 | PV-001 solicitado ≠ validado | `IMPLEMENTADO` | #482 / PR #484 | `RESOLVED/PUBLISHED`. |
 | F4.4 Pharmacy Act v1 | `IMPLEMENTADO` | #487/#488/#489 / PR #490 | Contrato puro publicado; no implica delivery/persistencia. |
-| Inicio orientado a “paciente + trabajo pendiente” | `IMPLEMENTADO_REVALIDAR` | UI actual existe; decisión de producto #501 es posterior | Revisión FH ya indicó simplificación: CIP protagonista, Excel secundario, pendientes visibles. Cambios de producto aún no deben darse por implementados sólo por existir pantallas previas. |
-| `Actividad del servicio` → futura `Pendientes` | `PENDIENTE` | Decisión #501 | Categorías candidatas: validaciones pendientes + pendientes de recogida. |
+| Inicio orientado a “paciente + trabajo pendiente” | `IMPLEMENTADO / PUBLICADO` | #550 / PR #555 | Inicio compacto: CIP/búsqueda preservados, importación secundaria y tarjeta `Solicitudes pendientes` con total + Listas para validación + En vigilancia + Bloqueadas; QA determinista/browser compuesta. |
+| `Actividad del servicio` → `Pendientes` | `IMPLEMENTADO / PUBLICADO` | #549 / PR #555 | URL física `farmacia_actividad_servicio.html` preservada; cola única `Solicitudes pendientes`, resumen explícito, provenance Enfermería sin segunda categoría y acciones por estado preservadas. |
+| Inicio — `Renovaciones de receta` / `Recogidas pendientes` | `PRESENTACIÓN_FUTURA` | #550 / PR #555 | Ambas muestran `?` + `Próxima fase`; sin href, handler, destino soportado ni datos fabricados. No implementan renovaciones runtime ni `PENDIENTE_RECOGIDA`. |
 | `PENDIENTE_RECOGIDA` | `DISCOVERY` | Semántica #501 | Ausencia de dispensación esperada; no adherencia/abandono/switch. Sólo dispensación registrada lo resuelve. Ventana/frecuencia/recipient siguen abiertos. |
 | Simplificación Validación / quitar ruido técnico-visible | `PENDIENTE` | Decisión #501 | `manual vs estructurada` no es dato clínico visible salvo dependencia técnica real; origen/patología manual deben ser explícitos/editables. |
 | Export V2 visible | `IMPLEMENTADO_REVALIDAR` | Existe en producto previo; #501 decide mantenerlo | Mantener como explicación de interoperabilidad futura, no como prueba de persistencia/backend. |
@@ -192,7 +193,7 @@ Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/
 | --- | --- | --- | --- | --- |
 | Rama canónica `promueve/nexus-v4` | `IMPLEMENTADO` | Sí, desde PR #381 | Desarrollo activo | Recovery queda histórico para nuevo desarrollo. |
 | PlatformContext + contratos deployment/readiness | `IMPLEMENTADO` | Sí | Sintética | Mantener fail-closed. |
-| Nexus Home | `IMPLEMENTADO` | Sí | Browser-qualified + release sintético | No confundir con piloto. |
+| Nexus Home | `IMPLEMENTADO / PUBLICADO` | Sí: PR #552 + PR #557 | Browser-qualified + release sintético; lockup/favicon NEXus y 3 tarjetas visibles | `DermaNEXus — Próximamente` es capability futura presentacional; no implica registry/readiness/ruta ni implementación Dermatología. No confundir con piloto. |
 | Read stranglers Farmacia/Reuma | `IMPLEMENTADO` en alcances F4.1–4.4 / F5.1–5.4 | Sí | Sintética | No reabrir por estética; sólo por producto/defecto real. |
 | F4.5 | `PENDIENTE` | No | Foundation | DeliveryResult / adapter semantics. |
 | F4.6 | `PENDIENTE` | No | Foundation | Depende de F4.5. |
@@ -200,7 +201,7 @@ Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/
 | F7 hospital×módulo | `PENDIENTE` | Infraestructura base sí, qualification por combinación no | Requiere combinación real | No inferir qualification por presencia en repo. |
 | D004 | `PENDIENTE` deuda | No cierre | No bloqueante actual | Decidir bajo presión real de consumo del release map. |
 | D005 subhallazgos restantes | `PENDIENTE` deuda | Parcial | No cleanup amplio | Distribuir por WOs naturales. |
-| Branding identificable de Nexus | `PENDIENTE` | No en esta WO | Orientación UI | Se ejecuta como WO runtime/branding separada (#507/#508); no mezclar con esta reconciliación documental. |
+| Branding identificable de Nexus | `IMPLEMENTADO / PUBLICADO` | #507/#508 + #551/#552 + #556/#557 | Home NEXus con lockup completo y favicon; FarmaNEXus/ReumaNEXus visibles según contexto | PR #557 es presentación/plataforma; no altera semántica clínica ni cualificación de módulos. |
 | Ledger vivo de estado funcional (#504) | `IMPLEMENTADO` (documental, **PUBLICADO**) | Sí: PR #506, merge `b90eef501f958109fc330fe98f659f9698011250` | Documental; sin QA navegador por ser documentación-only | Reconciliado por #522 con publicaciones PR #521/#526; issue #504 CLOSED/completed. |
 
 ## 7. Horizontes
