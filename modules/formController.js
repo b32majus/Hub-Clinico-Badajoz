@@ -453,6 +453,8 @@ function inicializarCollapsibles() {
         header.setAttribute('data-collapsible-initialized', 'true');
     }
 
+    inicializarCollapsibleHeightSync();
+
     debugLog(`✅ Secciones colapsables inicializadas: ${collapsibleHeaders.length}`);
 }
 
@@ -486,6 +488,65 @@ function refreshOpenCollapsibles() {
         });
         debugLog('Alturas de colapsables abiertos, recalibradas.');
     }, 150); // Delay para esperar el repintado del DOM
+}
+
+// Sincronización de alturas ante crecimiento interno (#545).
+// Garantía general: cuando una interacción soportada hace crecer o encoger el
+// contenido de una sección YA ABIERTA (p. ej. el HAQ-DI anidado dentro de
+// Índices), el contenedor abierto se re-mide para que su contenido siga
+// visible. Solo toca secciones abiertas; las cerradas no se auto-abren.
+function syncOpenCollapsibleHeights() {
+    document.querySelectorAll('.collapsible-header.active').forEach(header => {
+        const content = header.nextElementSibling;
+        if (!content || !content.classList.contains('collapsible-content')) return;
+        const needed = content.scrollHeight;
+        const current = parseInt(content.style.maxHeight) || 0;
+        if (needed !== current) {
+            content.style.maxHeight = needed + "px";
+        }
+    });
+}
+
+var collapsibleHeightSyncTimer = null;
+
+// Re-medición diferida en un solo disparo (sin polling): colapsa ráfagas de
+// mutaciones en una única sincronización y solo escribe si hay diferencia.
+function scheduleOpenCollapsibleSync(delay) {
+    if (collapsibleHeightSyncTimer) return;
+    collapsibleHeightSyncTimer = setTimeout(() => {
+        collapsibleHeightSyncTimer = null;
+        syncOpenCollapsibleHeights();
+    }, delay || 250);
+}
+
+function inicializarCollapsibleHeightSync() {
+    if (!document.body || document.body.hasAttribute('data-collapsible-height-sync')) return;
+    document.body.setAttribute('data-collapsible-height-sync', 'true');
+
+    // Vía animada: expansiones/colapsos con transition max-height 0.4s; al
+    // terminar la transición la altura es final y se re-mide exacto (cubre el
+    // anidado HAQ-DI dentro de Índices, cuya medición intermedia quedaba rancia).
+    document.addEventListener('transitionend', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('collapsible-content')
+            && e.propertyName === 'max-height') {
+            syncOpenCollapsibleHeights();
+        }
+    });
+
+    // Vía no animada: toggles de display, cajas de resultado y detalles que
+    // crecen/encogen una sección abierta sin pasar por open/close.
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function () {
+            scheduleOpenCollapsibleSync(250);
+        });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class'],
+            characterData: true
+        });
+    }
 }
 
 // =====================================
