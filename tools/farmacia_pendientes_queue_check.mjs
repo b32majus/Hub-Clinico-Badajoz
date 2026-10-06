@@ -17,7 +17,7 @@
 //      PUBLISHED classifyEnfermeriaState / ENFERMERIA_GROUP_CONFIG group
 //      counts for the same fixtures. The oracle is independent: it renders
 //      the real scripts/farmacia_index.js boards in a vm sandbox (the way
-//      tools/farmacia_inicio_bandejas_check.mjs does) and compares group
+//      the independent published grouping oracle does) and compares group
 //      headers + per-row data-enf-estado against the candidate surface.
 //      The oracle can disagree with the implementation.
 //   4. Enfermería origin present as card provenance, absent as a
