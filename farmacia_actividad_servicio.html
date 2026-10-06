@@ -45,7 +45,7 @@
         <div class="nav-section">
             <h3 class="nav-title">Gestión</h3>
             <ul class="nav-list">
-                <li><a href="farmacia_actividad_servicio.html" class="nav-link active" data-nav-link><i class="fas fa-tasks"></i>Actividad del servicio</a></li>
+                <li><a href="farmacia_actividad_servicio.html" class="nav-link active" data-nav-link><i class="fas fa-tasks"></i>Pendientes</a></li>
                 <li><a href="farmacia_estadisticas.html" class="nav-link" data-nav-link><i class="fas fa-chart-bar"></i>Estadísticas del servicio</a></li>
                 <li><a href="farmacia_farmacos.html" class="nav-link" data-nav-link><i class="fas fa-pills"></i>Fármacos</a></li>
                 <li><a href="farmacia_profesionales.html" class="nav-link" data-nav-link><i class="fas fa-users"></i>Profesionales</a></li>
@@ -87,10 +87,10 @@
         <div class="patient-avatar"><i class="fas fa-tasks" aria-hidden="true"></i></div>
         <div class="patient-info">
             <h1 class="patient-name">Farmacia Hospitalaria v0.3 post-demo</h1>
-            <p class="hero-description">Actividad operativa del servicio de Farmacia: pendientes, realizadas, seguimiento, fármacos frecuentes y actividad reciente.</p>
+            <p class="hero-description">Solicitudes pendientes de validación farmacéutica: resumen y cola única de trabajo.</p>
         </div>
     </div>
-</section><div class="stats-note" id="statsDemoNote" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Indicadores operativos sobre demo e importaciones disponibles.</div><div class="stats-note stats-note--source" id="actividadSourceNote" role="status">Fuente actual: datos demo</div><div class="action-grid" id="actividadCards"></div><div id="actividadPendientesPanel" class="actividad-panel hidden" role="region" aria-live="polite"></div>
+</section><div class="action-grid" id="actividadCards" role="region" aria-label="Resumen de solicitudes pendientes"></div><section aria-labelledby="solicitudesPendientesTitle"><h2 id="solicitudesPendientesTitle" class="actividad-panel__title">Solicitudes pendientes</h2><div id="actividadPendientesPanel" class="actividad-panel" role="region" aria-live="polite"></div></section>
                 </main>
             </div>
             <script src="scripts/farmacia_prebiologico.js?v=20260614-wo4-a"></script>

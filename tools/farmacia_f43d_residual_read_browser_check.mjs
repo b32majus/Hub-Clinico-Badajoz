@@ -148,7 +148,13 @@ function filterRealErrors(consoleErrors) {
     }
 }
 
-// ─── 3. Actividad del servicio: population renders through the sync read ─────
+// ─── 3. Pendientes (ex Actividad del servicio, WO #549): the single queue ───
+//        renders through the published sync reads. The legacy `Validaciones
+//        pendientes` toggle card and the `actividadSourceNote` indicator note
+//        were removed by WO #549 decision 3 (summary + always-visible queue
+//        replace the KPI cards); the intent — rendering reflects the
+//        published sync population — is now checked against the summary
+//        total and the rendered queue rows instead of the removed note.
 
 {
     const { context, page, consoleErrors, pageErrors } = await newPage();
@@ -158,16 +164,33 @@ function filterRealErrors(consoleErrors) {
         await page.waitForFunction(() => (document.getElementById('actividadCards') || { children: [] }).children.length > 0, null, { timeout: 15000 });
         const population = await page.evaluate(() => window.FarmaciaDemo.readAvailablePatientsSync().length);
         assert.ok(population > 0, `demo population present through the published sync read: ${population}`);
-        const sourceNote = await page.evaluate(() => (document.getElementById('actividadSourceNote') || {}).textContent || '');
-        assert.ok(sourceNote.trim().length > 0, `source summary rendered from the same population: ${JSON.stringify(sourceNote)}`);
-        // Supported interaction: open the pendientes panel.
+        const summaryCount = await page.evaluate(() => document.querySelectorAll('#actividadCards [data-summary]').length);
+        assert.equal(summaryCount, 4, `summary renders its four counters from the same population: ${summaryCount}`);
+        const expectedQueue = await page.evaluate(() => {
+            const F = window.FarmaciaDemo;
+            const keyOf = (p) => {
+                const sid = p && p.solicitud_id ? String(p.solicitud_id).trim().toUpperCase() : '';
+                return sid ? `SID:${sid}` : `CIP:${String((p && p.cip) || '').trim().toUpperCase()}`;
+            };
+            const pendingKeys = {};
+            F.readPendingValidationPatientsSync().forEach((p) => { pendingKeys[keyOf(p)] = true; });
+            return F.readAvailablePatientsSync().filter((p) => F.isEnfermeriaPatient(p) || pendingKeys[keyOf(p)]).length;
+        });
+        const summaryTotal = await page.evaluate(() => {
+            const el = document.querySelector('#actividadCards [data-summary="total"]');
+            return el ? Number(String(el.textContent).replace(/[^0-9]/g, '')) : -1;
+        });
+        assert.equal(summaryTotal, expectedQueue, `summary total matches the published sync queue population: ${summaryTotal}`);
+        // WO #549 removed the pendientes toggle card: the single queue is
+        // always visible, so its absence is asserted and the panel must
+        // render its population rows (or its explicit empty state) directly.
         const toggle = await page.$('#pendientesToggle');
-        if (toggle) {
-            await toggle.click();
-            await page.waitForFunction(() => !(document.getElementById('actividadPendientesPanel') || { classList: { contains: () => true } }).classList.contains('hidden'), null, { timeout: 10000 });
-            const panelText = await page.evaluate(() => (document.getElementById('actividadPendientesPanel') || {}).textContent || '');
-            assert.ok(panelText.trim().length > 0, 'pendientes panel renders its population rows or its explicit empty state');
-        }
+        assert.equal(toggle, null, 'legacy pendientes toggle card is gone (queue always visible)');
+        await page.waitForFunction(() => ((document.getElementById('actividadPendientesPanel') || {}).textContent || '').trim().length > 0, null, { timeout: 10000 });
+        const renderedRows = await page.evaluate(() => document.querySelectorAll('#actividadPendientesPanel .pending-validation-card').length);
+        const panelText = await page.evaluate(() => (document.getElementById('actividadPendientesPanel') || {}).textContent || '');
+        assert.ok(renderedRows > 0 || panelText.indexOf('No hay solicitudes pendientes.') !== -1, 'queue panel renders its population rows or its explicit empty state');
+        assert.equal(renderedRows, expectedQueue, `rendered queue rows match the published sync queue population: ${renderedRows}`);
         assert.deepEqual(pageErrors, [], 'pageerror');
         assert.deepEqual(filterRealErrors(consoleErrors), [], 'console.error');
         ok('actividad del servicio population renders through the published sync population read');
