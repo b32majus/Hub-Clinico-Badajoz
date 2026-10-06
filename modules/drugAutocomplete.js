@@ -260,7 +260,18 @@
         });
     }
 
-    function refreshOne(state) {
+    /**
+     * Refreshes a field's availability and status. Initialization (no options)
+     * always hydrates the visible input from the authoritative selection. A
+     * catalogue state change (`refreshAll`) refreshes every field but must not
+     * clobber the field the user is editing: while the visible input holds
+     * focus the in-progress query is left untouched, and the authoritative
+     * label is projected again once the field is left (the blur handler).
+     * Fields that are not being edited are synchronised, so a selection
+     * restored/initialised before the catalogue became ready still hydrates
+     * without an incidental blur.
+     */
+    function refreshOne(state, options) {
         var ready = isUsable(state);
         state.input.disabled = !ready;
         if (ready) {
@@ -272,14 +283,15 @@
             state.input.title = status;
             closeList(state);
         }
-        syncInputToSelection(state);
+        var editing = !!(options && options.preserveActiveQuery) && document.activeElement === state.input;
+        if (!editing) syncInputToSelection(state);
     }
 
     function refreshAll() {
         if (typeof document === 'undefined') return;
         var selects = document.querySelectorAll(SELECTOR);
         Array.prototype.forEach.call(selects, function (select) {
-            if (select.__drugAutocompleteState) refreshOne(select.__drugAutocompleteState);
+            if (select.__drugAutocompleteState) refreshOne(select.__drugAutocompleteState, { preserveActiveQuery: true });
         });
     }
 
