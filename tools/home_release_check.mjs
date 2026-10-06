@@ -49,14 +49,16 @@ const SCHEMA_FILES = {
 
 // Must stay in sync with tools/home_release_build.mjs.
 const CODE_FILES = [
-  'nexus_home.html',
-  'nexus_home.css',
+  'assets/branding/nexus-home-lockup.png',
+  'favicon.svg',
   'modules/platform/configuration-repository.js',
   'modules/platform/platform-context.js',
   'modules/home/home-bootstrap.js',
   'modules/home/home-renderer.js',
   'modules/home/home-page.js',
   'modules/home/home-schema-validators.generated.js',
+  'nexus_home.css',
+  'nexus_home.html',
 ];
 
 // Token scope mirrors tools/nexus_home_check.mjs CASO 9: the guarantee is
