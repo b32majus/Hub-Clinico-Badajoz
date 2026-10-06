@@ -143,27 +143,40 @@
     </div>
 </section>
 
-<section class="inicio-resumen" id="inicioResumen" aria-label="Resumen de Farmacia">
-    <article class="dashboard-card inicio-resumen-card" id="inicioSolicitudesCard" aria-labelledby="inicioSolicitudesTitle">
-        <h2 class="section-title" id="inicioSolicitudesTitle"><i class="fas fa-tasks" aria-hidden="true"></i> Solicitudes pendientes</h2>
-        <ul class="inicio-summary-list">
-            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">Total</span><span class="inicio-summary-list__value" id="inicioTotalCount">0</span></li>
-            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">Listas para validación</span><span class="inicio-summary-list__value" id="inicioListasCount">0</span></li>
-            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">En vigilancia</span><span class="inicio-summary-list__value" id="inicioVigilanciaCount">0</span></li>
-            <li class="inicio-summary-list__row"><span class="inicio-summary-list__label">Bloqueadas</span><span class="inicio-summary-list__value" id="inicioBloqueadasCount">0</span></li>
-        </ul>
-        <a class="btn btn-primary" id="inicioVerPendientes" href="farmacia_actividad_servicio.html"><i class="fas fa-arrow-right" aria-hidden="true"></i> Ver pendientes</a>
-    </article>
-    <article class="dashboard-card inicio-resumen-card inicio-resumen-card--futura" id="inicioRenovacionesCard" aria-label="Renovaciones de receta, próxima fase">
-        <h2 class="section-title"><i class="fas fa-prescription-bottle-alt" aria-hidden="true"></i> Renovaciones de receta</h2>
-        <p class="inicio-futura__count" id="inicioRenovacionesCount">?</p>
-        <p class="inicio-futura__estado">Próxima fase</p>
-    </article>
-    <article class="dashboard-card inicio-resumen-card inicio-resumen-card--futura" id="inicioRecogidasCard" aria-label="Recogidas pendientes, próxima fase">
-        <h2 class="section-title"><i class="fas fa-shopping-bag" aria-hidden="true"></i> Recogidas pendientes</h2>
-        <p class="inicio-futura__count" id="inicioRecogidasCount">?</p>
-        <p class="inicio-futura__estado">Próxima fase</p>
-    </article>
+<section class="inicio-resumen" id="inicioResumen" aria-labelledby="inicioResumenTitle">
+    <header class="inicio-resumen__header">
+        <h2 class="section-title inicio-resumen__title" id="inicioResumenTitle"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Requiere atención</h2>
+        <p class="inicio-resumen__copy">Resumen mínimo de las colas operativas. El trabajo detallado vive fuera de Inicio.</p>
+    </header>
+    <div class="inicio-resumen__grid">
+        <article class="inicio-resumen-card" id="inicioSolicitudesCard" aria-labelledby="inicioSolicitudesTitle">
+            <h2 class="section-title" id="inicioSolicitudesTitle"><i class="fas fa-tasks" aria-hidden="true"></i> Solicitudes pendientes</h2>
+            <p class="inicio-resumen-card__total">
+                <span class="inicio-resumen-card__total-value" id="inicioTotalCount">0</span>
+                <span class="inicio-resumen-card__total-label">Total</span>
+            </p>
+            <ul class="inicio-status-list">
+                <li class="inicio-status-row inicio-status-row--listas"><span class="inicio-status-row__label">Listas para validación</span><span class="inicio-status-row__value" id="inicioListasCount">0</span></li>
+                <li class="inicio-status-row inicio-status-row--vigilancia"><span class="inicio-status-row__label">En vigilancia</span><span class="inicio-status-row__value" id="inicioVigilanciaCount">0</span></li>
+                <li class="inicio-status-row inicio-status-row--bloqueadas"><span class="inicio-status-row__label">Bloqueadas</span><span class="inicio-status-row__value" id="inicioBloqueadasCount">0</span></li>
+            </ul>
+            <a class="btn btn-primary inicio-resumen-card__cta" id="inicioVerPendientes" href="farmacia_actividad_servicio.html"><i class="fas fa-arrow-right" aria-hidden="true"></i> Ver pendientes</a>
+        </article>
+        <article class="inicio-resumen-card inicio-resumen-card--futura" id="inicioRenovacionesCard" aria-label="Renovaciones de receta, próxima fase">
+            <h2 class="section-title"><i class="fas fa-prescription-bottle-alt" aria-hidden="true"></i> Renovaciones de receta</h2>
+            <div class="inicio-futura__state">
+                <p class="inicio-futura__count" id="inicioRenovacionesCount">?</p>
+                <p class="inicio-futura__estado">Próxima fase</p>
+            </div>
+        </article>
+        <article class="inicio-resumen-card inicio-resumen-card--futura" id="inicioRecogidasCard" aria-label="Recogidas pendientes, próxima fase">
+            <h2 class="section-title"><i class="fas fa-shopping-bag" aria-hidden="true"></i> Recogidas pendientes</h2>
+            <div class="inicio-futura__state">
+                <p class="inicio-futura__count" id="inicioRecogidasCount">?</p>
+                <p class="inicio-futura__estado">Próxima fase</p>
+            </div>
+        </article>
+    </div>
 </section>
 
 <section class="dashboard-card" id="modCargaDatosProyecto">

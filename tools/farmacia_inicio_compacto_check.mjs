@@ -90,6 +90,20 @@ check('card 1 carries exactly the four count mounts plus the CTA',
   check('card 1 CTA reads Ver pendientes',
     card1.indexOf('Ver pendientes') !== -1);
 }
+{
+  const block = indexHtml.slice(
+    indexHtml.indexOf('id="inicioResumen"'),
+    indexHtml.indexOf('id="modCargaDatosProyecto"'));
+  check('attention section carries the published Requiere atención heading and helper copy',
+    block.indexOf('Requiere atención') !== -1
+    && block.indexOf('Resumen mínimo de las colas operativas. El trabajo detallado vive fuera de Inicio.') !== -1);
+  check('card 1 uses a non-bulleted status list with three distinct semantic rows',
+    block.indexOf('inicio-status-list') !== -1
+    && block.indexOf('inicio-summary-list') === -1
+    && block.indexOf('inicio-status-row--listas') !== -1
+    && block.indexOf('inicio-status-row--vigilancia') !== -1
+    && block.indexOf('inicio-status-row--bloqueadas') !== -1);
+}
 check('removed Inicio boards are gone (no mounts, no card markup)',
   indexHtml.indexOf('id="enfermeriaBoard"') === -1
   && indexHtml.indexOf('id="pendingValidationBoard"') === -1
