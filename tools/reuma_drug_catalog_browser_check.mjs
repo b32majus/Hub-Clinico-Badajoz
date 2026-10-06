@@ -29,6 +29,8 @@
  *       with no invented options and no unrestricted fallback;
  *   S9  an empty category fails visibly while other categories keep working;
  *   S10 console.error === 0 and pageerror === 0.
+ *   S11 a field restored with an already-authoritative selection hydrates its
+ *       visible input at initialization, without an incidental blur.
  *
  * Synthetic data only. Exit code 0 = PASS, 1 = FAIL.
  * Usage: node tools/reuma_drug_catalog_browser_check.mjs
@@ -488,6 +490,70 @@ async function runCategoriesUnavailableSuite(browser) {
     }
 }
 
+// S11 — a medication field restored/initialized with an already-authoritative
+// selection must hydrate its VISIBLE input immediately, without waiting for an
+// incidental blur. The fixture only builds the precondition (a real
+// data-drug-autocomplete control whose authoritative option is already
+// selected) and runs the PUBLIC init seam; the assertion READS the visible
+// input and never writes it.
+async function runRestoreHydrationSuite(browser) {
+    console.log('\n=== restauración de medicamento preseleccionado (primera_visita.html) ===');
+    const context = await passSupportedGate(browser);
+    const page = await context.newPage();
+    const consoleErrors = [];
+    const pageErrors = [];
+    page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+    page.on('pageerror', (err) => pageErrors.push(String(err)));
+    await page.goto(`${baseUrl}/primera_visita.html`, { waitUntil: 'domcontentloaded' });
+    try {
+        await awaitCatalogReady(page, 'previoSistemicoSelect');
+        const restored = await page.evaluate(() => {
+            const host = document.createElement('div');
+            host.id = 'restoredMedicationHost';
+            const select = document.createElement('select');
+            select.id = 'restoredMedicationSelect';
+            select.setAttribute('data-drug-autocomplete', 'true');
+            select.setAttribute('data-drug-category', 'Sistemicos');
+            [['No', false], ['Prednisona', true]].forEach(([value, selected]) => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                option.selected = selected;
+                select.appendChild(option);
+            });
+            host.appendChild(select);
+            document.body.appendChild(host);
+
+            // Supported initialization seam, invoked with the field already
+            // carrying its authoritative restored selection.
+            HubTools.ui.initDrugAutocomplete(host);
+
+            const input = host.querySelector('.drug-autocomplete__input');
+            return {
+                wrapperBuilt: !!select.closest('.drug-autocomplete'),
+                visibleInput: input ? input.value : null,
+                focused: document.activeElement === input,
+                authoritativeValue: select.value,
+                authoritativeLabel: select.options[select.selectedIndex]
+                    ? select.options[select.selectedIndex].textContent
+                    : null,
+            };
+        });
+        record('restauración: el input visible hidrata el fármaco preseleccionado sin blur',
+            restored.wrapperBuilt && restored.visibleInput === 'Prednisona'
+            && restored.visibleInput === restored.authoritativeLabel,
+            JSON.stringify(restored));
+        record('restauración: el valor autoritativo del control se preserva',
+            restored.authoritativeValue === 'Prednisona', JSON.stringify(restored));
+        record('restauración: la hidratación no depende de foco ni blur',
+            restored.focused === false, JSON.stringify(restored));
+        record('restauración: console.error === 0', consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record('restauración: pageerror === 0', pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await context.close();
+    }
+}
+
 // A versioned classification source that legitimately declares an empty
 // category: that category fails visibly while the others keep working.
 async function runEmptyCategorySuite(browser) {
@@ -589,6 +655,7 @@ try {
     await runUnavailableSuite(browser);
     await runCategoriesUnavailableSuite(browser);
     await runEmptyCategorySuite(browser);
+    await runRestoreHydrationSuite(browser);
 } catch (err) {
     console.error('ENVIRONMENT FAILURE: ' + err.message);
     results.push(false);

@@ -93,6 +93,17 @@
     }
 
     /**
+     * Projects the authoritative selected medicine into the visible input.
+     * A field that is initialized/restored with an existing selection must show
+     * its label immediately, without waiting for an incidental blur.
+     */
+    function syncInputToSelection(state) {
+        var label = currentLabel(state);
+        var shown = label === 'No' ? '' : label;
+        if (state.input.value.trim() !== shown) state.input.value = shown;
+    }
+
+    /**
      * Replaces the native select value keeping exactly one option for the
      * selected medicine (plus the neutral "No"), so re-selecting or
      * re-initialising never duplicates options.
@@ -244,9 +255,7 @@
             window.setTimeout(function () {
                 if (document.activeElement && state.list.contains(document.activeElement)) return;
                 closeList(state);
-                var label = currentLabel(state);
-                var shown = label === 'No' ? '' : label;
-                if (state.input.value.trim() !== shown) state.input.value = shown;
+                syncInputToSelection(state);
             }, 150);
         });
     }
@@ -263,6 +272,7 @@
             state.input.title = status;
             closeList(state);
         }
+        syncInputToSelection(state);
     }
 
     function refreshAll() {
