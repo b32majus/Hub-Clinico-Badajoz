@@ -510,16 +510,21 @@ const tree = serializeTree(root);
     `anchors=${anchors} hrefs=${hrefs} routeStrings=${routeStrings}`);
 }
 
-// --- P12: NEXus favicon — explicitly linked from Home, derived from the
-// approved isotipo; the obsolete app-icon bytes are gone. The embedded raster
-// is a square transparent (RGBA) canvas with no white square and no wordmark.
+// --- P12: NEXus favicon — explicitly linked from Home, positively pinned to
+// the approved favicon artifact (file SHA-256, same style as the P3 lockup
+// oracle); the embedded raster is a square transparent (RGBA) canvas with no
+// white square and no wordmark, and the obsolete app-icon bytes are gone.
 {
+  const APPROVED_FAVICON_SVG_SHA256 =
+    '78ae0e07d20f49e36635e9920e1a5a66019a44463f4fd0259a7d3734eaa98f6f';
   const OLD_APP_ICON_SHA256 =
     '02bb2e0e1fb9d3b6d2712e1b834bbebcbe3d92cd0ee92347e7fabb51c8d8b301';
   const html = readText('nexus_home.html');
   const linkOk = html.includes('<link rel="icon" href="favicon.svg" type="image/svg+xml">');
   const svgText = readText('favicon.svg');
   const svgBytes = fs.readFileSync(path.join(ROOT, 'favicon.svg'));
+  const faviconFileSha = crypto.createHash('sha256').update(svgBytes).digest('hex');
+  const provenanceOk = faviconFileSha === APPROVED_FAVICON_SVG_SHA256;
   const dataUriMatch = svgText.match(/data:image\/png;base64,([A-Za-z0-9+/=]+)/);
   const embedded = dataUriMatch ? Buffer.from(dataUriMatch[1], 'base64') : Buffer.alloc(0);
   const embeddedSha = embedded.length > 0
@@ -530,16 +535,19 @@ const tree = serializeTree(root);
   const width = embedded.length >= 24 ? embedded.readUInt32BE(16) : 0;
   const height = embedded.length >= 24 ? embedded.readUInt32BE(20) : 0;
   const colourType = embedded.length >= 26 ? embedded[25] : -1;
-  const canvasOk = embedded.subarray(0, 8).equals(pngSig) && width === 64 && height === 64 && colourType === 6;
+  const canvasOk = embedded.length > 0 && dataUriMatch &&
+    embedded.subarray(0, 8).equals(pngSig) && width === 64 && height === 64 &&
+    width === height && colourType === 6;
   const ok = linkOk &&
     svgText.includes('<svg') && svgText.includes('viewBox="0 0 64 64"') &&
     !svgText.includes('<rect') && !svgText.includes('<text') &&
     !/white|#fff/i.test(svgText) &&
+    provenanceOk &&
     embeddedSha !== '' && embeddedSha !== OLD_APP_ICON_SHA256 &&
     !svgBytes.includes(Buffer.from(OLD_APP_ICON_SHA256, 'utf8')) &&
     canvasOk;
   record('P12 favicon: linked from Home, approved-isotipo bytes, square transparent canvas, old app-icon gone', ok,
-    `link=${linkOk} embeddedSha=${embeddedSha} canvas=${width}x${height} colourType=${colourType}`);
+    `link=${linkOk} fileSha=${faviconFileSha} embeddedSha=${embeddedSha} canvas=${width}x${height} colourType=${colourType}`);
 }
 
 const failed = results.filter((r) => !r.pass);

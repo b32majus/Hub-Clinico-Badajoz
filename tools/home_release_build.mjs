@@ -17,8 +17,11 @@
  *    trailing newline.
  *  - Every SHA-256 here is computed over EOL-canonicalized bytes (CRLF and lone
  *    CR normalized to LF) so a fresh checkout with CRLF working-tree files
- *    still yields the same hashes (NEXUS-DEBT-001). This applies to both code
- *    file hashes and config file hashes.
+ *    still yields the same hashes (NEXUS-DEBT-001). This applies to text code
+ *    files and config file hashes. Binary release files (explicit `.png`
+ *    extension, or a null byte in the first 8192 bytes) are hashed over
+ *    their raw bytes with no decoding, so distinct binaries never collapse
+ *    to one value.
  *  - releaseSha256 = SHA-256 of the canonical JSON serialization of the release
  *    object with the `releaseId` and `releaseSha256` fields removed. The
  *    canonical JSON serialization is exactly
@@ -96,10 +99,29 @@ function loadJson(file) {
 
 // EOL-canonicalized file hash (NEXUS-DEBT-001): CRLF and lone CR become LF
 // before hashing, so the same logical content hashes identically across
-// LF/CRLF checkouts.
+// LF/CRLF checkouts. Text files only — binary release files must use
+// sha256ReleaseFile below so the stored hash is a hash of the actual bytes.
 function sha256CanonicalFile(file) {
   const canonical = fs.readFileSync(file, 'utf8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   return crypto.createHash('sha256').update(canonical, 'utf8').digest('hex');
+}
+
+// Deterministic binary/text hashing contract (must stay identical in
+// tools/home_release_check.mjs): files with a binary extension (`.png`) or a
+// null byte in the first 8192 bytes are hashed over their raw bytes; every
+// other file keeps the EOL-canonicalized text contract above. Config
+// artifacts (JSON) always use the text contract.
+const BINARY_EXTENSIONS = new Set(['.png']);
+function isBinaryReleaseFile(file) {
+  if (BINARY_EXTENSIONS.has(path.extname(file).toLowerCase())) return true;
+  const probe = fs.readFileSync(file).subarray(0, 8192);
+  return probe.includes(0);
+}
+function sha256ReleaseFile(file) {
+  if (isBinaryReleaseFile(file)) {
+    return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  }
+  return sha256CanonicalFile(file);
 }
 
 function canonicalJson(value) {
@@ -186,7 +208,7 @@ const filesSha256 = {};
 for (const file of files) {
   const abs = path.join(codeRoot, file);
   if (!fs.existsSync(abs)) fail(`required Home release code file is missing: ${file}`);
-  filesSha256[file] = sha256CanonicalFile(abs);
+  filesSha256[file] = sha256ReleaseFile(abs);
 }
 
 const site = {
