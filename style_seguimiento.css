@@ -1192,8 +1192,7 @@
 }
 
 /*
- * The shared .custom-select wrapper is width: 100%.
- * Constrain it locally so MDHAQ question labels keep readable width.
+ * Shared .custom-select is width: 100%; constrain it locally so MDHAQ labels stay readable.
  */
 .mdhaq-item .custom-select {
     flex: 0 0 auto;
