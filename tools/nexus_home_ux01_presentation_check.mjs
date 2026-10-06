@@ -24,6 +24,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -227,21 +228,32 @@ const tree = serializeTree(root);
     `instructions=${instructions.length} bannedHits=${JSON.stringify(bannedHits)}`);
 }
 
-// --- P3: product-name is text-only; brand mark embeds the existing isotipo bytes
+// --- P3: product-name is text-only; brand mark embeds the approved faithful
+// isotipo derivative (480x320) as a local data URI (hard oracle by SHA-256)
 {
+  const APPROVED_DERIVATIVE_SHA256 =
+    '76a45e8607c7bf4142e562206d530d86bc9d914f97cde615022d6195e23c9e54';
+  const OLD_APP_ICON_SHA256 =
+    '02bb2e0e1fb9d3b6d2712e1b834bbebcbe3d92cd0ee92347e7fabb51c8d8b301';
+  const DATA_URI_PREFIX = 'data:image/png;base64,';
   const products = findAllByClass(root, 'nexus-home__product-name');
   let nestedImg = 0;
   walk(products[0], (el) => {
     if (el !== products[0] && el.tagName === 'IMG') nestedImg += 1;
   });
   const marks = findAllByClass(root, 'nexus-home__brand-mark');
-  const expectedUri = 'data:image/png;base64,' +
-    fs.readFileSync(path.join(ROOT, 'assets/branding/farmanexus-app-icon-64.png')).toString('base64');
-  const markOk = marks.length === 1 && marks[0].tagName === 'IMG' &&
-    marks[0].getAttribute('src') === expectedUri;
+  const src = marks.length === 1 ? String(marks[0].getAttribute('src') || '') : '';
+  const dataUri = src.startsWith(DATA_URI_PREFIX);
+  const decodedSha = dataUri
+    ? crypto.createHash('sha256')
+        .update(Buffer.from(src.slice(DATA_URI_PREFIX.length), 'base64'))
+        .digest('hex')
+    : '';
+  const markOk = marks.length === 1 && marks[0].tagName === 'IMG' && dataUri &&
+    decodedSha === APPROVED_DERIVATIVE_SHA256 && decodedSha !== OLD_APP_ICON_SHA256;
   const ok = products.length === 1 && nestedImg === 0 && markOk;
-  record('P3 brand: text-only wordmark + isotipo data URI from the existing asset', ok,
-    `nestedImg=${nestedImg} marks=${marks.length} uriMatch=${marks.length === 1 && marks[0].getAttribute('src') === expectedUri}`);
+  record('P3 brand: text-only wordmark + approved faithful isotipo data URI', ok,
+    `nestedImg=${nestedImg} marks=${marks.length} dataUri=${dataUri} sha256=${decodedSha}`);
 }
 
 // --- P4: aliases — ReumaNEXus / FarmaNEXus visible, DermaNEXus absent
