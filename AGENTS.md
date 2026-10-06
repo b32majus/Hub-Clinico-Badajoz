@@ -1,6 +1,6 @@
 # AGENTS.md — Hub Clínico Badajoz / PROMueve Extremadura
 
-Status: **CURRENT LOCAL EXECUTION POLICY — Atenea C-086 validation snapshot**
+Status: **CURRENT LOCAL EXECUTION POLICY — Atenea C-087**
 
 This repository is a clinical product. Accepted issue/WO/spec authority and clinical safety outrank speed, aesthetics or speculative expansion. Atenea supplies execution routing; PROMueve remains product/domain authority.
 
@@ -17,13 +17,13 @@ For bounded engineering work:
 
 Do not load historical Gentle/Pi/RDD/4R/OpenCode V1 material or broad product/shaping documents by ritual. Durable repository authority beats remembered SHAs, prior chat and auxiliary memory.
 
-## C-086 execution boundary
+## C-087 execution boundary
 
 Normal execution uses native OpenCode V2 2.0.22 + upstream Matt skills. Standard `volume` writes with DeepSeek V4 Flash; Standard `complex` writes with GLM 5.3 Flash high. Cost policy and risk class are independent. No silent fallback or mid-unit route change.
 
 The primary coordinator owns `/implement`/`/implement-spec`, one canonical Standards + Spec review and any fresh finding-scoped correction dispatch. Implementation workers implement/TDD and return a fixed candidate only. Review start closes the writer. At most two fresh corrections are allowed for the same authorized findings.
 
-Delegate by durable handoff reference. Do not restate the complete handoff, this file or specialized policy prose into child prompts.
+Delegate by child-readable authority: prefer a repo-local handoff readable from the child worktree; otherwise send the compact phase-specific capsule defined by current Atenea. Never make a child verdict depend on `/outbox`, `/tmp`, another worktree or another denied external path, and do not duplicate the complete handoff/policy corpus.
 
 Writers run focused TDD and the smallest relevant deterministic checks. Broad/full suites default to justified integration/publication boundaries, not every writer slice. Correctors close supplied findings with focused evidence and do not perform open-ended sibling audits.
 
