@@ -126,51 +126,104 @@ async function clickHeader(page, text) {
 }
 
 // Reads the open/closed + sizing state of the outer Indices section.
-const READ_INDICES = `(() => {
+// withGeometry=true additionally measures rendered clipping and reachability;
+// those assertions are made on rendered geometry AFTER the transition settles.
+const READ_INDICES_FN = (withGeometry) => {
   const headers = Array.from(document.querySelectorAll('.collapsible-header'));
   const h = headers.find((x) => x.textContent.includes('Índices de Actividad'));
   if (!h) return { found: false };
   const c = h.nextElementSibling;
   const maxH = parseInt(c.style.maxHeight) || 0;
   const rapid = document.getElementById('rapid3Section');
-  const rapidBox = rapid ? rapid.getBoundingClientRect() : null;
   const contentBox = c.getBoundingClientRect();
-  const target = document.getElementById('rapid3Total');
-  let hit = null;
-  if (target) {
-    target.scrollIntoView({ block: 'center' });
-    const r = target.getBoundingClientRect();
-    const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-    hit = !!el && (el === target || target.contains(el));
-  }
-  return {
+  const out = {
     found: true,
     active: h.classList.contains('active'),
     maxH, scrollH: c.scrollHeight,
     stale: c.scrollHeight - maxH,
     overflowY: getComputedStyle(c).overflowY,
+    renderedH: Math.round(contentBox.height),
     rapidDisplay: rapid ? getComputedStyle(rapid).display : 'n/a',
-    rapidClipped: rapidBox ? rapidBox.bottom > contentBox.bottom + 2 : null,
-    rapidResultHit: hit,
   };
-})()`;
+  if (withGeometry) {
+    const rapidBox = rapid ? rapid.getBoundingClientRect() : null;
+    out.rapidClipped = rapidBox ? rapidBox.bottom > contentBox.bottom + 2 : null;
+    const target = document.getElementById('rapid3Total');
+    let hit = null;
+    if (target) {
+      target.scrollIntoView({ block: 'center' });
+      const r = target.getBoundingClientRect();
+      const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      hit = !!el && (el === target || target.contains(el));
+    }
+    out.rapidResultHit = hit;
+  }
+  return out;
+};
 
 const ACTIVE_HEADERS = `Array.from(document.querySelectorAll('.collapsible-header.active')).map((h) => h.textContent.trim().slice(0, 40))`;
 const MDHAQ_HEIGHTS = `Array.from(document.querySelectorAll('#rapid3Section .mdhaq-item')).map((e) => Math.round(e.getBoundingClientRect().height))`;
 
 async function settle(page, ms) { await page.waitForTimeout(ms); }
 
-// Polls until the open Indices container measures exactly (stale === 0) or
-// the deadline expires. Returns the last reading plus time-to-exact.
-async function waitForExact(page, timeoutMs) {
+// The production sync writes the inline maxHeight target immediately, while
+// the .collapsible-content CSS transition animates the rendered box for up to
+// 0.4s and delayed/transitionend re-measures can rewrite the target again
+// (MutationObserver debounce 250ms). Reading only `stale === 0` at the instant
+// the inline target first matches scrollHeight therefore adopted a transient
+// intermediate as the assertion state. Instead, require the inline target,
+// scrollHeight AND rendered box height to be unchanged across a quiet window
+// that exceeds both the debounce and the transition: that is the settled state.
+const QUIET_MS = 500;
+const POLL_MS = 80;
+
+async function waitForSettled(page, timeoutMs = 9000) {
   const start = Date.now();
-  let s = await page.evaluate(READ_INDICES);
-  while (Math.abs(s.stale) > 0 && Date.now() - start < timeoutMs) {
-    await page.waitForTimeout(250);
-    s = await page.evaluate(READ_INDICES);
+  let prev = await page.evaluate(READ_INDICES_FN, false);
+  let last = prev;
+  let stableSince = null;
+  while (Date.now() - start < timeoutMs) {
+    await page.waitForTimeout(POLL_MS);
+    const s = await page.evaluate(READ_INDICES_FN, false);
+    last = s;
+    const stable = s.found && s.maxH === prev.maxH && s.scrollH === prev.scrollH && s.renderedH === prev.renderedH;
+    if (stable && s.stale === 0) {
+      if (stableSince === null) stableSince = Date.now();
+      if (Date.now() - stableSince >= QUIET_MS) { s.settled = true; s.elapsedMs = Date.now() - start; return s; }
+    } else {
+      stableSince = null;
+    }
+    prev = s;
   }
-  s.elapsedMs = Date.now() - start;
-  return s;
+  last.settled = false;
+  last.elapsedMs = Date.now() - start;
+  return last;
+}
+
+// Bounded wait for the outer section to end closed (inline maxHeight 0) with a
+// stable rendered box (border-top leaves ~1px). Same fail-explicitly contract.
+async function waitForClosed(page, timeoutMs = 6000) {
+  const start = Date.now();
+  let prev = null;
+  let last = null;
+  let stableSince = null;
+  while (Date.now() - start < timeoutMs) {
+    await page.waitForTimeout(POLL_MS);
+    const s = await page.evaluate(READ_INDICES_FN, false);
+    last = s;
+    const closed = s.found && !s.active && s.maxH === 0 && s.renderedH <= 2;
+    const same = prev !== null && s.active === prev.active && s.maxH === prev.maxH && s.renderedH === prev.renderedH;
+    if (closed && same) {
+      if (stableSince === null) stableSince = Date.now();
+      if (Date.now() - stableSince >= 300) { s.settled = true; s.elapsedMs = Date.now() - start; return s; }
+    } else {
+      stableSince = null;
+    }
+    prev = s;
+  }
+  last.settled = false;
+  last.elapsedMs = Date.now() - start;
+  return last;
 }
 
 async function visitJourney(pagePath, pathology, tag) {
@@ -186,41 +239,49 @@ async function visitJourney(pagePath, pathology, tag) {
     await page.selectOption('#diagnosticoPrimario', pathology);
     await settle(page, 600);
 
-    // 1. Open outer Indices.
+    // 1. Open outer Indices and wait for the rendered state to settle.
     await clickHeader(page, 'Índices de Actividad');
-    let s = await waitForExact(page, 2000);
-    check(`${tag} Indices opens healthy`, s.found && s.active && s.stale === 0, JSON.stringify(s));
+    let s = await waitForSettled(page, 9000);
+    check(`${tag} Indices opens healthy`, s.found && s.active && s.settled === true && s.stale === 0, JSON.stringify({ active: s.active, settled: s.settled, stale: s.stale, maxH: s.maxH, scrollH: s.scrollH, elapsedMs: s.elapsedMs }));
 
     // 2. Grow: open nested HAQ-DI (the #545 trigger). The nested 0.4s CSS
-    // transition can cascade into a parent re-measure, so wait for the
-    // container to settle exactly (deadline-bounded), then assert.
+    // transition cascades into a parent re-measure, so wait for the container
+    // to SETTLE (bounded; fails explicitly on timeout), then assert the
+    // rendered geometry rather than the transient inline target.
     await clickHeader(page, 'HAQ-DI');
-    s = await waitForExact(page, 4000);
-    check(`${tag} nested HAQ-DI growth: maxHeight settles exact`, s.active && s.stale === 0, JSON.stringify({ maxH: s.maxH, scrollH: s.scrollH, stale: s.stale, elapsedMs: s.elapsedMs }));
-    check(`${tag} RAPID3 block not clipped`, s.rapidClipped === false, JSON.stringify({ rapidClipped: s.rapidClipped }));
-    check(`${tag} RAPID3 result reachable`, s.rapidResultHit === true, JSON.stringify({ hit: s.rapidResultHit }));
-    check(`${tag} no artificial inner scrollbar`, s.overflowY === 'hidden', s.overflowY);
+    s = await waitForSettled(page, 12000);
+    check(`${tag} nested HAQ-DI growth: maxHeight settles exact`, s.active && s.settled === true && s.stale === 0, JSON.stringify({ maxH: s.maxH, scrollH: s.scrollH, stale: s.stale, settled: s.settled, elapsedMs: s.elapsedMs }));
+    const geo = await page.evaluate(READ_INDICES_FN, true);
+    check(`${tag} RAPID3 block not clipped`, geo.rapidClipped === false, JSON.stringify({ rapidClipped: geo.rapidClipped, renderedH: geo.renderedH, maxH: geo.maxH }));
+    check(`${tag} RAPID3 result reachable`, geo.rapidResultHit === true, JSON.stringify({ hit: geo.rapidResultHit }));
+    check(`${tag} no artificial inner scrollbar`, geo.overflowY === 'hidden', geo.overflowY);
     const mdhaq = await page.evaluate(MDHAQ_HEIGHTS);
     check(`${tag} MDHAQ rows laid out (not #541 collapse)`, mdhaq.length >= 10 && mdhaq.every((h) => h > 0), JSON.stringify(mdhaq.slice(0, 4)));
 
-    // 3. Shrink: close nested HAQ-DI, parent must track down exactly.
+    // 3. Shrink: close nested HAQ-DI, parent must track down and settle.
     await clickHeader(page, 'HAQ-DI');
-    s = await waitForExact(page, 4000);
-    check(`${tag} nested close: parent tracks shrink`, s.active && s.stale === 0, JSON.stringify({ maxH: s.maxH, scrollH: s.scrollH, elapsedMs: s.elapsedMs }));
+    s = await waitForSettled(page, 12000);
+    check(`${tag} nested close: parent tracks shrink`, s.active && s.settled === true && s.stale === 0, JSON.stringify({ maxH: s.maxH, scrollH: s.scrollH, settled: s.settled, elapsedMs: s.elapsedMs }));
 
-    // 4. No resize storm: maxHeight stable across idle samples.
+    // 4. No resize storm: after settle, the full sizing signature must be
+    // unchanged across 5 idle samples (~1.5s). A genuine indefinite reflow
+    // loop would keep changing maxH/scrollH/renderedH and fail this, and would
+    // also have failed the settle deadline above.
     const samples = [];
-    for (let i = 0; i < 3; i++) { await settle(page, 400); samples.push((await page.evaluate(READ_INDICES)).maxH); }
-    check(`${tag} maxHeight stable when idle (no storm)`, samples[0] === samples[1] && samples[1] === samples[2], JSON.stringify(samples));
+    for (let i = 0; i < 5; i++) {
+      await settle(page, 300);
+      const r = await page.evaluate(READ_INDICES_FN, false);
+      samples.push(`${r.maxH}/${r.scrollH}/${r.renderedH}`);
+    }
+    check(`${tag} maxHeight stable when idle (no storm)`, samples.every((x) => x === samples[0]), JSON.stringify(samples));
 
     // 5. Close outer; reopen: stable, and untouched sections never auto-opened.
     await clickHeader(page, 'Índices de Actividad');
-    await settle(page, 700);
-    s = await page.evaluate(READ_INDICES);
-    check(`${tag} Indices closes`, !s.active && s.maxH === 0, JSON.stringify({ active: s.active, maxH: s.maxH }));
+    s = await waitForClosed(page, 6000);
+    check(`${tag} Indices closes`, s.settled === true && !s.active && s.maxH === 0, JSON.stringify({ active: s.active, maxH: s.maxH, renderedH: s.renderedH, settled: s.settled }));
     await clickHeader(page, 'Índices de Actividad');
-    s = await waitForExact(page, 2000);
-    check(`${tag} Indices reopens healthy`, s.active && s.stale === 0, JSON.stringify({ maxH: s.maxH, scrollH: s.scrollH }));
+    s = await waitForSettled(page, 9000);
+    check(`${tag} Indices reopens healthy`, s.active && s.settled === true && s.stale === 0, JSON.stringify({ active: s.active, settled: s.settled, stale: s.stale, maxH: s.maxH, scrollH: s.scrollH }));
     const active = await page.evaluate(ACTIVE_HEADERS);
     const autoOpened = active.filter((t) => !t.includes('Índices de Actividad'));
     check(`${tag} no auto-open of untouched sections`, autoOpened.length === 0, JSON.stringify(active));
