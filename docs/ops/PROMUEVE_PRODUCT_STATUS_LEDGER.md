@@ -1,18 +1,19 @@
 # PROMueve Nexus — Ledger vivo de estado funcional
 
-**Última actualización:** 2026-10-07
+**Última actualización:** 2026-10-08
 **Estado:** `LIVE / PRE-BADAJOZ`
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**Base canónica verificada para esta reconciliación:** `9d060f448c6ea1367b09993f232574ff1abd40a5` (merge PR #582, último HEAD de producto verificado); incluye #579 Informe de utilización y dosis — Kisqali sobre #576 Cosentyx y #575 Home NEXus → Farmacia
-**Último HEAD de producto Nexus verificado:** `9d060f448c6ea1367b09993f232574ff1abd40a5` (PR #582 / #579 — Informe de utilización y dosis — Kisqali en `Informes`); candidate `73e67b941913e56b3014a5c617571c6534258108`
+**Base canónica verificada para esta reconciliación:** `06b9dd03b6edf4e44212b0361f787f126d07877a` (PR #588 / Train #586 Reuma) sobre Farmacia #579/PR #582 `9d060f448c6ea1367b09993f232574ff1abd40a5` y #576 Cosentyx.
+**Último HEAD de producto Nexus verificado:** `06b9dd03b6edf4e44212b0361f787f126d07877a` (#586/PR #588); candidate `2cfd1a5910782b6ddbf5aa4fcf1eaebb8fc70993`. Browser Reuma export 24/24 + cuatro `KNOWN_PREEXISTING` (NO PASS funcional), cutover 23/23 y `verify:nexus` PASS. Anterior Farmacia #579/PR #582 `9d060f448c6ea1367b09993f232574ff1abd40a5`.
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
 **Safety/wiring Reuma:** #512 + #517 **PUBLICADOS Y VERIFICADOS** por PR #521 (merge `ee7379d24ef99633d3bede07c64b31a7038558e4`); #512–#520 cerrados/completed
 **Prebiológico mínimo Reuma:** #525 **PUBLICADO Y VERIFICADO** por PR #526 (merge `1b41724db7f86534880122e0a5263e25206b07ee`); esa WO no modificó la solicitud Reuma→Farmacia, publicada después por Train 14
 **Solicitud textual Reuma→Farmacia:** #528 + #529/#530/#531 **PUBLICADOS Y VERIFICADOS** por PR #532 (merge `03f814875b38409a219f40e3602feece06472f33`); oracle 26/0, browser PV+Seguimiento 91/0 y Dashboard 46/0; sólo estados explícitos de Analítica/Medicina Preventiva, sin detalle legacy ni inferencia terapéutica
+**Micro-polish Reuma GO:** #584 CIP, #585 CASPAR neutral, #583 toast duplicado **PUBLICADOS Y VERIFICADOS** por Train #586 / PR #588 (merge `06b9dd03b6edf4e44212b0361f787f126d07877a`). #587 sigue abierto: recuperación de fila no operativa, sin restaurar almacenamiento.
 **Estadísticas CSV Reuma:** #537 **PUBLICADO Y VERIFICADO** por PR #538 (merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`); oracle 8/8 y browser 6/6 con descargas reales; export formal `currentCohort`; `Buscar en tabla` sigue separado y pendiente
 **Farmacia Inicio visual fidelity:** #565 **PUBLICADO Y VERIFICADO** por PR #566 (merge `0d35134b5cda4dafa8ed8e2bbdba47a82f2dadbb`); `Requiere atención` vuelve a la composición compacta aprobada sin modificar lógica de conteos ni futuros `? + Próxima fase`
 **RAPID3 Seguimiento layout:** #541 **PUBLICADO Y VERIFICADO** por PR #567 (merge `6dfe34a15bfa145076ae7c80fbee6aac3b628923`); APs/AR conservan `select 0/1/2/3` y cálculo, con filas MDHAQ legibles. El shared seam de Primera Visita quedó separado en #545 y fue cerrado después por PR #571
@@ -69,7 +70,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 
 | Capacidad | Estado | Código | Cableado | Visible | QA browser / evidencia | Publicado | Demo | Piloto | Issue/WO | Siguiente gate / nota |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Búsqueda + historia de paciente detrás de Reuma Read Port | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04 (carga de BD y búsqueda por CIP operativas) | Sí | Sintética | No | #429 / PR #430 | Copy `Buscar por ID...` → CIP decidido (3.2.1). No reauditar arquitectura. |
+| Búsqueda + historia de paciente detrás de Reuma Read Port | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04 y browser CIP #584/PR #588 7/7 | Sí | Sintética | No | #429/PR #430; #584/PR #588 | Placeholder principal `Buscar por CIP...` publicado, búsqueda intacta. |
 | PCR con unidad explícita y conversión fail-closed | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: unidades explícitas y conversión operativas | Sí | Sintética | No | #443 / PR #449 | Nunca inferir unidad por magnitud. UI por site (retirar `Sin unidad`, ayuda contextual, default por site) = `REQUISITO_DECIDIDO_PENDIENTE` con verificación previa de fuente versionada (3.2.4). |
 | Catálogo/autocomplete Reuma | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: **funciona; sin defecto de autocomplete** | Sí | Sintética | No | #444 / PR #449 | La carencia aparente en `Sistémicos` fue cobertura/fuente, **no** fallo del autocomplete. No abrir defecto de autocomplete. |
 | Categorías `Sistémicos / FAMEs / Biológicos` | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: respeta las tres categorías | Sí | Sintética | No | #447 / PR #449 | Clasificación explícita/versionada; no inferida en runtime. Evolución CIMA = concern separado. |
@@ -83,7 +84,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Writer legacy 497 tras boundary fail-closed | `IMPLEMENTADO` | Sí | Sí | Indirecto | Evidencia Train 07; no reabierto por la pasada manual | Sí | Compatibilidad | No | #457 / PR #459 | Legacy contenido; **no** es arquitectura final. |
 | Reuma Visit Act v1 independiente de 497 | `IMPLEMENTADO` | Sí | Sí | Indirecto | Oráculos + Train 08 | Sí | Sintética | No | #462 / PR #467 | Contrato de acto publicado. |
 | Adapter Visit Act → legacy 497 | `IMPLEMENTADO` | Sí | Sí | Indirecto | 10 journeys byte-equivalentes | Sí | Compatibilidad | No | #463 / PR #467 | Frontera transitoria explícita. |
-| Cutover Primera Visita + Seguimiento → Visit Act v1 | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | 23/23 Train 08; la pasada manual ejercitó ambos formularios sin adjudicar explícitamente guardar→salir→recuperar ni export | Sí | Sintética | No | #464 / PR #467 | Queda una comprobación puntual de persistencia/restauración cuando se abra la WO técnica correspondiente. |
+| Cutover Primera Visita + Seguimiento → Visit Act v1 | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | Browser cutover #586 23/23, export legacy 497 demostrado en sintéticos; recuperación pendiente no operativa #587 | Sí | Sintética | No | #464/PR #467; #586/PR #588 | TXT→CSV/copia no equivalen a persistencia. #587 ya conocido en #464 y no corregido. |
 | DAPSA / PsA | `IMPLEMENTADO / VALIDADO_MANUAL` | Sí | Sí | Sí | Manual 2026-10-04: cálculo y reutilización observados correctos | Sí | Sintética | No | — | Mantener derivado/read-only; mejorar feedback visual por categoría sin cambiar umbrales (3.2.9). |
 | ASDAS PCR / ASDAS VSG | `IMPLEMENTADO_REVALIDAR` | Sí | Sí | Sí | Scope/wiring técnico #512/#517 verificado con oracles + QA Chromium: EspA-only y EVA Global explícita reutilizada; **el cálculo completo del índice no fue adjudicado en la pasada manual humana** | Sí | Revalidar | No | #513/#514/#518 / PR #521 | Alcance/wiring publicados: ASDAS no se muestra/ejecuta en APs; mirror EVA→ASDAS contenido a EspA, sin fuga legacy y ausencia≠0. Fórmula/umbrales no cambiados. Mantener `IMPLEMENTADO_REVALIDAR` hasta revalidación específica del cálculo; PCR default por site sigue pendiente de fuente versionada. |
 | Dactilitis EspA (afectación periférica) | `IMPLEMENTADO` | Sí | Sí | Sí | Reproducción soportada + oracle/Chromium #515; recuento deriva selecciones reales | Sí | Sintética | No | #515 / PR #521 | Control operable en EspA sin manipulación DOM; no fabrica estado ni cambia semántica de otras patologías. |
@@ -109,7 +110,7 @@ La pasada manual soportada de Sil sobre Nexus Reumatología quedó **adjudicada 
 Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 
 1. Home y rutas Nueva Visita / Seguimiento / Cuadro de mando.
-2. Carga de BD y búsqueda por CIP (sólo copy pendiente: `Buscar por ID...` → CIP).
+2. Carga de BD y búsqueda por CIP; placeholder principal `Buscar por CIP...` publicado por #584/PR #588.
 3. Catálogo/autocomplete Reuma con `Sistémicos / FAMEs / Biológicos`; **no hay defecto de autocomplete**.
 4. IMC, homúnculo NAD/NAT, metrología, ASAS/CASPAR/ACR-EULAR observados operativos salvo los hallazgos de 3.2.
 5. PCR con unidades explícitas y conversión; no inferir unidad por magnitud.
@@ -122,7 +123,7 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 
 | # | Hallazgo / requisito | Clasificación | Nota |
 | --- | --- | --- | --- |
-| 1 | Home: el placeholder principal debe decir búsqueda por CIP, coherente con sidebar | `REQUISITO_DECIDIDO_PENDIENTE` | Sólo copy; la búsqueda por CIP funciona. |
+| 1 | Home: el placeholder principal debe decir búsqueda por CIP, coherente con sidebar | `RESUELTO / PUBLICADO` | #584/Train #586/PR #588; copy `Buscar por CIP...`, búsqueda sin cambios. |
 | 2 | UX formularios: acortar campos fecha; chips para opciones discretas simples (dolor axial/rigidez/irradiación/manobras) cuando mejoren claridad | `REQUISITO_DECIDIDO_PENDIENTE` | Sin cambio de semántica. |
 | 3 | EspA homúnculo: dactilitis debe estar disponible también en EspA por posible afectación periférica; control/recuento observado no utilizable con infraestructura existente | `RESUELTO / PUBLICADO` | #515 / PR #521: reproducido y corregido por interacción soportada; recuento/estado deriva sólo selecciones reales. |
 | 4 | PCR UI por site: retirar `Sin unidad` de la selección soportada + ayuda contextual | `REQUISITO_DECIDIDO_PENDIENTE` (default por site = `PENDIENTE_FUENTE`) | Autoridad humana actual: Badajoz `mg/dL`; Mérida y Cáceres `mg/L`. Verificar contra la autoridad versionada del repo **antes** de fijar cualquier default; nunca inferir por valor/magnitud. |
@@ -132,14 +133,16 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 | 8 | APs MDA: mantener derivado/read-only con wiring desde campos de origen; observado 0/7 incompleto por falta de fuentes | `RESUELTO / PUBLICADO` | #516 + #519/#520 / PR #521: fuentes cableadas, missing visible como pendiente cuando procede, verdict ternario seguro y `mdaCumple` legacy exacto; regla `>=5` intacta. |
 | 9 | DAPSA: mantener derivado; mejorar feedback visual por categoría | `REQUISITO_DECIDIDO_PENDIENTE` | Cálculo observado correcto; no cambiar umbrales. |
 | 10 | RAPID3: conservar representación clínica; clipping dinámico en Primera Visita APs/AR; layout de Seguimiento APs/AR | `RESUELTO / PUBLICADO` | **Seguimiento** resuelto por #541 / PR #567: 10 filas MDHAQ legibles con mismos `select 0/1/2/3`. **Shared collapsible / Primera Visita** resuelto por #545 / PR #571: crecimiento/decrecimiento soportado re-mide la sección abierta sin auto-open ni polling nuevo. Fórmula/categorías intactas. |
-| 11 | Resultados/categorías: feedback visual coherente con categoría explícita; CASPAR sin verde=bueno/rojo=malo (`Cumple criterios CASPAR` / no cumple, estilo neutral) | `REQUISITO_DECIDIDO_PENDIENTE` | Neutralidad de clasificación, no valoración. |
+| 11 | Resultados/categorías: feedback por categoría explícita; CASPAR sin verde=bueno/rojo=malo | `RESUELTO / PUBLICADO` (CASPAR) | #585/Train #586/PR #588: `Cumple criterios CASPAR` / `No cumple criterios CASPAR`, aspecto neutral en ambos estados, puntuación/umbral intactos. DAPSA sigue pendiente en #9. |
 | 12 | Prebiológico: retirar `Fecha diagnóstico` del bloque; conservar Observaciones prebiológico opcionales; no sintetizar APTO global | `RESUELTO / PUBLICADO` | #525 / PR #526: bloque mínimo publicado en Primera Visita + Seguimiento; sólo Analítica + Medicina Preventiva + una Observaciones opcional. |
 | 13 | Solicitud Reuma → Farmacia: eliminar el desglose legacy de hemograma/bioquímica/serologías/vacunación; sólo los dos estados resumidos de Analítica y Medicina Preventiva cuando consten explícitamente | `RESUELTO / PUBLICADO` | #528 + #529/#530/#531 / PR #532: artefacto soportado cualificado en Primera Visita, Seguimiento y Dashboard; ausencia no fabrica estado; resto clínico explícito preservado; sin inferencia terapéutica. |
-| 14 | Toasts export: conservar el mensaje explicativo de siguiente paso; retirar el toast verde duplicado/oculto que queda detrás | `DEFECTO_REPRODUCIDO` | Al estructurar CSV. |
+| 14 | Toasts export: mantener siguiente paso y retirar toast verde duplicado | `RESUELTO / PUBLICADO` | #583/Train #586/PR #588: checklist único, sin toast duplicado; CSV 497 en PV/Seguimiento. #587 recuperación distinta y pendiente. |
 | 15 | Seguimiento con CIP sin paciente previo: nombre y apellidos editables + capturar tratamiento actual preexistente y fecha de inicio como baseline explícito | `REQUISITO_DECIDIDO_PENDIENTE` | Sin fabricar START/SWITCH/ADD_ON ni validación retrospectiva. |
 | 16 | Estadísticas: `Exportar CSV` debe exportar la cohorte de filtros activos (defecto) y quitar/relegar `Buscar en tabla` (requisito) | `CSV RESUELTO / PUBLICADO` + `Buscar en tabla REQUISITO_DECIDIDO_PENDIENTE` | #537 / PR #538 resuelve sólo el export: filtros formales → `currentCohort` → CSV, con descarga real y witnesses adversariales. La retirada/relegación de `Buscar en tabla` sigue pendiente y no cambia la semántica del export. |
 
-Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10) se cierra por #541/PR #567 + #545/PR #571, preservando representación y semántica clínica. Del ítem **16**, `Exportar CSV` queda resuelto/publicado por #537 / PR #538 y `Buscar en tabla` sigue pendiente. Permanecen accionables los ítems **1, 2, 4, 7, 9, 11, 14, 15** y la parte pendiente del **16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
+Los ítems **1, 3, 5, 6, 8, 10, 11 (CASPAR), 12, 13 y 14** quedan resueltos/publicados: #1/#11/#14 por Train #586 / PR #588; RAPID3 #10 por #541/#545. Del ítem **16**, `Exportar CSV` queda publicado por #537 / PR #538 y `Buscar en tabla` sigue pendiente. Permanecen accionables los ítems **2, 4, 7, 9 y 15** y la parte pendiente del **16**; no saltar blockers `PENDIENTE_FUENTE/EQUIPO`.
+
+**#587 — Recuperación de filas pendientes (DISCOVERY, sin implementación autorizada):** TXT→CSV copia fila legacy 497 y muestra checklist, pero `addPendingRow` encola sin `createdAt`, `prunePendingRows` elimina la fila y `retryPendingRowCopy` sigue NO OPERATIVO. La cadena `getPendingRows → persistPendingRows → pendingRowsUpdated → updatePendingRowsIndicator` es recursiva. Ambos ya eran deuda conocida en #464; #586 no cambió almacenamiento. #230 retiró deliberadamente el ledger clínico `localStorage` de Farmacia, **no es decisión publicada de Reuma**. Antes de implementar #587 se debe decidir retirada o alternativa sin persistencia insegura; no introducir filas clínicas reales en navegador.
 
 ### 3.3 Reuma — pendientes, defer y deuda preservada
 
@@ -223,10 +226,10 @@ Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10)
 
 Cruce **sólo de estado/prioridad**; no define contratos de integración ni semántica de producto futura.
 
-- **Reumatología:** QA manual adjudicado 2026-10-04; ejecución técnica pre-Badajoz publicada hasta #537 / PR #538: safety/wiring #512/#517, prebiológico #525, solicitud textual Reuma→Farmacia #528 y CSV Stats #537. Quedan pendientes los demás ítems de §3.2/§3.3; `PENDIENTE_EQUIPO` / `PENDIENTE_FUENTE` siguen siendo blockers humanos, no defectos a inventar.
+- **Reumatología:** QA manual adjudicado 2026-10-04; ejecución técnica pre-Badajoz publicada hasta #586 / PR #588: safety/wiring #512/#517, prebiológico #525, solicitud textual Reuma→Farmacia #528, CSV Stats #537 y micro-polish #586. Quedan pendientes los demás ítems de §3.2/§3.3; `PENDIENTE_EQUIPO` / `PENDIENTE_FUENTE` siguen siendo blockers humanos, no defectos a inventar.
 - **Farmacia Hospitalaria:** revisión FH y decisiones #501 ya publicadas; F4.4 publicada; contrato N0 de renovaciones publicado (#509 / PR #510 / PR #511) con N1/N2/N3 pendientes; F4.5/F4.6 siguen sin autorización automática.
 - **Dermatología:** dirección #501 vigente (módulo candidato; HS/PsO primeras verticales; eccema de manos `AWAIT_TEAM_INPUT`); sin implementación Nexus, sin contratos nuevos.
-- **Prioridad:** la ronda `PRE-BADAJOZ` está en ejecución acotada, no cerrada. Publicadas #512/#517/#525/#528/#537. En Estadísticas, sólo el CSV de la cohorte formal queda resuelto; `Buscar en tabla` permanece requisito separado, y la observación de filtro sexo `Hombre/Mujer` vs datos `M/F` queda deuda preexistente sin priorización automática. F4.5/F4.6, CIMA y futuras capacidades no quedan autorizadas por esta reconciliación.
+- **Prioridad:** la ronda `PRE-BADAJOZ` está en ejecución acotada, no cerrada. Publicadas #512/#517/#525/#528/#537/#586; #587 continúa DISCOVERY. En Estadísticas, sólo el CSV de la cohorte formal queda resuelto; `Buscar en tabla` permanece requisito separado, y la observación de filtro sexo `Hombre/Mujer` vs datos `M/F` queda deuda preexistente sin priorización automática. F4.5/F4.6, CIMA y futuras capacidades no quedan autorizadas por esta reconciliación.
 
 ## 9. Regla para issues
 
@@ -244,7 +247,7 @@ Cruce **sólo de estado/prioridad**; no define contratos de integración ni sem�
 2. ✅ Cada observación se clasificó (`DEFECTO_REPRODUCIDO`, `REQUISITO_DECIDIDO_PENDIENTE`, `PENDIENTE_FUENTE/EQUIPO`, `DEFERIDO`, deuda conocida) en este ledger.
 3. ✅ Este ledger quedó actualizado con evidencia visible real.
 4. ✅ Se cruzaron Reuma + Farmacia + dirección Dermatología a nivel de estado/prioridad (§8).
-5. **Siguiente:** RAPID3 (#10) queda cerrado por #541/#545 y no debe reabrirse salvo nueva evidencia soportada. Continuar con WOs atómicas de los demás ítems pendientes de §3.2/§3.3. #570 permanece deuda DISCOVERY separada, sin prioridad ni implementación automática; respetar blockers de fuente/equipo.
+5. **Siguiente:** #586 (CIP/CASPAR/toast) publicado. #587 sigue DISCOVERY sin implementación automática. Abordar mediante WOs atómicas fechas/chips, feedback DAPSA, `Buscar en tabla` y baseline de Seguimiento; #570 separado, preservar blockers de fuente/equipo.
 
 ---
 
