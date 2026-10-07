@@ -453,6 +453,8 @@ function inicializarCollapsibles() {
         header.setAttribute('data-collapsible-initialized', 'true');
     }
 
+    inicializarCollapsibleHeightSync();
+
     debugLog(`✅ Secciones colapsables inicializadas: ${collapsibleHeaders.length}`);
 }
 
@@ -486,6 +488,110 @@ function refreshOpenCollapsibles() {
         });
         debugLog('Alturas de colapsables abiertos, recalibradas.');
     }, 150); // Delay para esperar el repintado del DOM
+}
+
+// Sincronización de alturas ante crecimiento interno (#545).
+// Garantía general: cuando una interacción soportada hace crecer o encoger el
+// contenido de una sección YA ABIERTA (p. ej. el HAQ-DI anidado dentro de
+// Índices), el contenedor abierto se re-mide para que su contenido siga
+// visible. Solo toca secciones abiertas; las cerradas no se auto-abren.
+function syncOpenCollapsibleHeights() {
+    document.querySelectorAll('.collapsible-header.active').forEach(header => {
+        const content = header.nextElementSibling;
+        if (!content || !content.classList.contains('collapsible-content')) return;
+        const needed = content.scrollHeight;
+        const current = parseInt(content.style.maxHeight) || 0;
+        if (needed !== current) {
+            content.style.maxHeight = needed + "px";
+        }
+    });
+}
+
+var collapsibleHeightSyncTimer = null;
+
+// Re-medición diferida en un solo disparo (sin polling): colapsa ráfagas de
+// mutaciones en una única sincronización y solo escribe si hay diferencia.
+function scheduleOpenCollapsibleSync(delay) {
+    if (collapsibleHeightSyncTimer) return;
+    collapsibleHeightSyncTimer = setTimeout(() => {
+        collapsibleHeightSyncTimer = null;
+        syncOpenCollapsibleHeights();
+    }, delay || 250);
+}
+
+// Una mutación solo puede alterar el layout si cambia el valor observable del
+// DOM. Las reescrituras no-op (mismo texto de nodo, misma clase/estilo) no
+// cambian el layout y no deben re-armar la re-medición (#545 F3).
+function mutationCanAffectLayout(m) {
+    if (m.type === 'attributes') {
+        const el = m.target;
+        if (el && typeof el.getAttribute === 'function') {
+            return el.getAttribute(m.attributeName) !== m.oldValue;
+        }
+        return true;
+    }
+    if (m.type === 'childList') {
+        const added = m.addedNodes;
+        const removed = m.removedNodes;
+        // Reescritura pura de un nodo de texto por otro idéntico: el layout no
+        // cambia. (customSelect.js hace esto con label.textContent cada 300 ms.)
+        if (added && removed && added.length === 1 && removed.length === 1
+            && added[0].nodeType === 3 && removed[0].nodeType === 3) {
+            return added[0].data !== removed[0].data;
+        }
+        return true;
+    }
+    if (m.type === 'characterData') {
+        return m.target.data !== m.oldValue;
+    }
+    return true;
+}
+
+function inicializarCollapsibleHeightSync() {
+    if (!document.body || document.body.hasAttribute('data-collapsible-height-sync')) return;
+    document.body.setAttribute('data-collapsible-height-sync', 'true');
+
+    // Vía animada: al terminar CUALQUIER transición de un .collapsible-content
+    // la altura final ya está disponible. No basta con max-height: el contenido
+    // también transiciona padding (0.4s), que forma parte de scrollHeight, y si
+    // solo se re-mide al acabar max-height la sección puede quedar unos px
+    // corta. Se re-mide en max-height, padding y cualquier otra transición del
+    // contenedor (cubre el anidado HAQ-DI dentro de Índices).
+    document.addEventListener('transitionend', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('collapsible-content')) {
+            syncOpenCollapsibleHeights();
+        }
+    });
+
+    // Vía no animada: toggles de display, cajas de resultado y detalles que
+    // crecen/encogen una sección abierta sin pasar por open/close.
+    //
+    // Desacoplamiento (#545 F3): modules/customSelect.js reescribe cada 300 ms
+    // la etiqueta y la clase de sus widgets (deuda preexistente, fuera de este
+    // WO). Esas escrituras son NO-OP (mismo texto / misma clase) y no cambian
+    // el layout, pero un observer de body las veía y re-armaba la re-medición
+    // sin fin. Se descartan las mutaciones que no alteran el valor del DOM:
+    // no pueden cambiar el tamaño y no deben programar una re-medición. Las
+    // mutaciones reales de contenido siguen programándola igual que antes.
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function (mutations) {
+            for (let i = 0; i < mutations.length; i++) {
+                if (mutationCanAffectLayout(mutations[i])) {
+                    scheduleOpenCollapsibleSync(250);
+                    return;
+                }
+            }
+        });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class'],
+            attributeOldValue: true,
+            characterData: true,
+            characterDataOldValue: true
+        });
+    }
 }
 
 // =====================================
