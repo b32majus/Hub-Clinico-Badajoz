@@ -33,6 +33,41 @@
  *       marker and 'espa' token; console.error=0 and same pageerror policy
  *   X4  planted boundary failure (Primera Visita): no post-export checklist,
  *       no 497-field row copied, visible fail-closed error, no pageerror
+ *   X5  T3 #583 Primera Visita notification invariants on normal CSV
+ *       delivery after the TXT gate: exactly one checklist, the generic
+ *       green success toast ABSENT, the unaltered legacy 497-field row
+ *       delivered, checklist dismiss works; console.error=0 and same
+ *       pageerror policy. Queue retention and retry execution are NOT part
+ *       of this gate (see KNOWN_PREEXISTING / #587 below).
+ *   X6  T3 #583 Seguimiento: same notification invariants as X5
+ *   X7  TXT-before-CSV gate preserved on both pages: CSV without prior TXT
+ *       raises the gate error alert with no checklist and no pageerror
+ *   X8  T3 #583 static notification invariants in modules/exportManager.js:
+ *       the shared delivery helper raises no generic green success toast
+ *       while keeping the checklist, the copy-error/fallback/manual-copy
+ *       path and exactly one addPendingRow enqueue attempt per delivery;
+ *       both consumers (exportarYCopiarCSV, exportarAct497) still route
+ *       through the helper and keep the TXT gate; retryPendingRowCopy keeps
+ *       its distinct success feedback (code/message preserved; execution
+ *       NO OPERATIVA EN BASELINE, see below)
+ *
+ * KNOWN_PREEXISTING BASELINE DEBT (#587, DISCOVERY / NO IMPLEMENTATION
+ * AUTHORITY IN #586 — NOT_A_T3_ACCEPTANCE_GATE, never counted as
+ * functional PASS):
+ *   (a) pending-row retention: `entregarFilaProyectadaCSV` calls
+ *       `addPendingRow` once per delivery (enqueue attempt), but the payload
+ *       carries no `createdAt`/`id` while `prunePendingRows` requires
+ *       `item.createdAt`; the enqueued row is therefore pruned immediately
+ *       and `getPendingRows()` observes 0. Verified byte-identical at fixed
+ *       parent 384ec686 (`addPendingRow`/`prunePendingRows`/
+ *       `persistPendingRows`/`getPendingRows` unchanged by this train; the
+ *       only parent..HEAD runtime delta is the T3 toast removal).
+ *   (b) retry UX NO OPERATIVA EN BASELINE: with the queue empty,
+ *       `retryPendingRowCopy` cannot reach its distinct success toast at
+ *       runtime; the retry code and message are preserved statically (X8).
+ * These four observations (X5/X6 pendingRows=0, X5/X6 retryToast=false) are
+ * recorded via `recordKnownPreexisting`, printed and enumerated in the
+ * summary, and excluded from the PASS/FAIL gate and exit code.
  *
  * KNOWN PRE-EXISTING BASELINE PAGEERROR (not introduced and not fixed by
  * #457): every successful CSV export ends in `addPendingRow` ->
@@ -49,7 +84,9 @@
  *
  * Usage: node tools/reuma_export_boundary_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
- * Exit code 0 = every case PASS, 1 = at least one FAIL or environment failure.
+ * Exit code 0 = every functional case PASS (KNOWN_PREEXISTING items are
+ * informational only and never gate the exit code), 1 = at least one
+ * functional FAIL or environment failure.
  */
 
 import { createReadStream, existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
@@ -80,6 +117,16 @@ const results = [];
 function record(name, pass, detail) {
     results.push({ name, pass });
     console.log(`  [${pass ? 'OK ' : 'FAIL'}] ${name}${pass ? '' : ` -> ${detail}`}`);
+}
+
+// KNOWN_PREEXISTING evidence (#587): visible negative/pre-existing runtime
+// observations that are OUTSIDE the T3 acceptance gate. Informational only:
+// printed, enumerated in the summary, never counted as functional PASS and
+// never gating the exit code.
+const knownPreexisting = [];
+function recordKnownPreexisting(name, detail) {
+    knownPreexisting.push({ name, detail });
+    console.log(`  [KNOWN_PREEXISTING] ${name} :: ${detail}`);
 }
 
 // Same documented Playwright resolution as the other browser checkers.
@@ -283,6 +330,48 @@ try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
     const chromiumVersion = browser.version();
 
+    // =====================================================================
+    // X8 — T3 #583 static notification invariants in modules/exportManager.js.
+    // =====================================================================
+    {
+        const source = fs.readFileSync(path.join(ROOT, EXPORT_MANAGER_SCRIPT), 'utf8');
+        const entregarStart = source.indexOf('function entregarFilaProyectadaCSV');
+        const exportarCsvStart = source.indexOf('function exportarYCopiarCSV');
+        const entregarRegion = entregarStart !== -1 && exportarCsvStart > entregarStart ? source.slice(entregarStart, exportarCsvStart) : '';
+        record('X8 static: entregarFilaProyectadaCSV raises no generic green success toast',
+            entregarRegion.length > 0 && !entregarRegion.includes('Datos copiados al portapapeles. Pega en la hoja:'),
+            `region=${entregarRegion.length} chars`);
+        record('X8 static: entregarFilaProyectadaCSV keeps the post-export checklist as the success UX',
+            entregarRegion.includes('mostrarChecklistPostExport(hojaExcel)'),
+            'checklist call missing from the shared delivery helper');
+        record('X8 static: entregarFilaProyectadaCSV keeps the copy-error feedback',
+            entregarRegion.includes('Error al copiar los datos al portapapeles.'),
+            'copy-error feedback missing from the shared delivery helper');
+        const retryStart = source.indexOf('function retryPendingRowCopy');
+        const retryRegion = retryStart !== -1 && entregarStart > retryStart ? source.slice(retryStart, entregarStart) : '';
+        record('X8 static: retryPendingRowCopy keeps its distinct success feedback',
+            retryRegion.includes('Fila pendiente copiada. Pegue en la hoja:'),
+            'retry success feedback missing');
+        record('X8 static: entregarFilaProyectadaCSV performs exactly one enqueue attempt via addPendingRow per delivery',
+            (entregarRegion.match(/addPendingRow\(/g) || []).length === 1,
+            'shared delivery helper must invoke addPendingRow exactly once per delivery (enqueue attempt; retention owned by #587)');
+        record('X8 static: entregarFilaProyectadaCSV keeps the clipboard fallback/manual-copy path',
+            entregarRegion.includes('copyTextWithFallback(csvData') && entregarRegion.includes('Copia manual de CSV'),
+            'clipboard fallback/manual-copy path missing from the shared delivery helper');
+        const exportarActStart = source.indexOf('function exportarAct497');
+        const csvConsumerRegion = exportarCsvStart !== -1 && exportarActStart > exportarCsvStart ? source.slice(exportarCsvStart, exportarActStart) : '';
+        const actConsumerRegion = exportarActStart !== -1 ? source.slice(exportarActStart, exportarActStart + 6000) : '';
+        record('X8 static: exportarYCopiarCSV routes through the shared delivery helper',
+            csvConsumerRegion.includes('entregarFilaProyectadaCSV('),
+            'exportarYCopiarCSV does not call entregarFilaProyectadaCSV');
+        record('X8 static: exportarAct497 routes through the shared delivery helper',
+            actConsumerRegion.includes('entregarFilaProyectadaCSV('),
+            'exportarAct497 does not call entregarFilaProyectadaCSV');
+        record('X8 static: both shared-helper consumers keep the TXT-before-CSV gate error',
+            source.split('Debe exportar TXT de esta visita antes de exportar CSV.').length - 1 >= 2,
+            'TXT-gate error message must stay in both exportarYCopiarCSV and exportarAct497');
+    }
+
     const validateRow = (rowText, { id, marker, token }) => {
         const fields = rowText.split('\t');
         return {
@@ -348,6 +437,155 @@ try {
     }
 
     // =====================================================================
+    // X5 — T3 #583 Primera Visita notification invariants on normal delivery.
+    // Functional gate: exactly one checklist, generic green success toast
+    // ABSENT, unaltered legacy 497-field row delivered, dismiss works,
+    // error policy. Queue retention + retry execution are KNOWN_PREEXISTING
+    // (#587, NO OPERATIVA EN BASELINE) — recorded separately, never PASS.
+    // =====================================================================
+    {
+        const context = await browser.newContext();
+        try {
+            await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin }).catch(() => {});
+            const page = await passSupportedGate(context);
+            const entry = trackedPage(page);
+            await page.goto(`${origin}/${PRIMERA_PAGE}`, { waitUntil: 'load', timeout: 45000 });
+            await exportTxtThenCsv(page, { id: 'SYN-EXP-T3-001', pathology: 'les' });
+            const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
+            const invariants = await page.evaluate(() => {
+                const checklistCount = document.querySelectorAll('#postExportChecklist').length;
+                const genericToastPresent = document.body.innerHTML.includes('Datos copiados al portapapeles. Pega en la hoja:');
+                let pendingRows = -1;
+                try {
+                    if (window.HubTools && HubTools.export && typeof HubTools.export.getPendingRows === 'function') {
+                        pendingRows = HubTools.export.getPendingRows().length;
+                    }
+                } catch (error) { pendingRows = -2; }
+                return { checklistCount, genericToastPresent, pendingRows };
+            });
+            const rowT3 = await readExportedRow(page);
+            const checksT3 = rowT3.source !== 'none'
+                ? validateRow(rowT3.text, { id: 'SYN-EXP-T3-001', marker: 'Primera Visita', token: 'les' })
+                : { fields497: false, identity: false, visitMarker: false, pathologyToken: false };
+            record('X5 Primera Visita success: exactly one checklist, no generic green success toast, unaltered legacy 497-field row delivered',
+                checklistAppeared && invariants.checklistCount === 1 && invariants.genericToastPresent === false &&
+                rowT3.source !== 'none' && checksT3.fields497 && checksT3.identity && checksT3.visitMarker && checksT3.pathologyToken,
+                `checklist=${invariants.checklistCount} genericToast=${invariants.genericToastPresent} source=${rowT3.source} checks=${JSON.stringify(checksT3)}`);
+            recordKnownPreexisting('X5 Primera Visita NOT_A_T3_ACCEPTANCE_GATE (#587): enqueue attempt retains pendingRows=0 in baseline',
+                `pendingRows=${invariants.pendingRows} (payload without createdAt is pruned immediately; byte-identical at parent 384ec68)`);
+            const retryToast = await page.evaluate(async () => {
+                try { await window.HubTools.export.retryPendingRowCopy(); } catch (error) { /* observed below */ }
+                await new Promise((resolve) => setTimeout(resolve, 600));
+                return document.body.innerHTML.includes('Fila pendiente copiada. Pegue en la hoja:');
+            });
+            recordKnownPreexisting('X5 Primera Visita NOT_A_T3_ACCEPTANCE_GATE (#587): retry UX NO OPERATIVA EN BASELINE',
+                `retryToast=${retryToast} (queue empty in baseline; retry code/message preserved per X8 static)`);
+            await page.click('#postExportChecklist .post-export-checklist__dismiss');
+            await page.waitForTimeout(600);
+            const checklistAfterDismiss = await page.locator('#postExportChecklist').count();
+            record('X5 Primera Visita: checklist dismiss removes the checklist',
+                checklistAfterDismiss === 0,
+                `checklistAfterDismiss=${checklistAfterDismiss}`);
+            const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE);
+            const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
+            record('X5 Primera Visita: console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion',
+                pageConsoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+                `consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // X6 — T3 #583 Seguimiento: same notification invariants as X5.
+    // Functional gate: exactly one checklist, generic green success toast
+    // ABSENT, unaltered legacy 497-field row delivered, dismiss works,
+    // error policy. Queue retention + retry execution are KNOWN_PREEXISTING
+    // (#587, NO OPERATIVA EN BASELINE) — recorded separately, never PASS.
+    // =====================================================================
+    {
+        const context = await browser.newContext();
+        try {
+            await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin }).catch(() => {});
+            const page = await passSupportedGate(context);
+            const entry = trackedPage(page);
+            await page.goto(`${origin}/${SEGUIMIENTO_PAGE}`, { waitUntil: 'load', timeout: 45000 });
+            await exportTxtThenCsv(page, { id: 'SYN-EXP-T3-002', pathology: 'espa' });
+            const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
+            const invariants = await page.evaluate(() => {
+                const checklistCount = document.querySelectorAll('#postExportChecklist').length;
+                const genericToastPresent = document.body.innerHTML.includes('Datos copiados al portapapeles. Pega en la hoja:');
+                let pendingRows = -1;
+                try {
+                    if (window.HubTools && HubTools.export && typeof HubTools.export.getPendingRows === 'function') {
+                        pendingRows = HubTools.export.getPendingRows().length;
+                    }
+                } catch (error) { pendingRows = -2; }
+                return { checklistCount, genericToastPresent, pendingRows };
+            });
+            const rowT3 = await readExportedRow(page);
+            const checksT3 = rowT3.source !== 'none'
+                ? validateRow(rowT3.text, { id: 'SYN-EXP-T3-002', marker: 'Seguimiento', token: 'espa' })
+                : { fields497: false, identity: false, visitMarker: false, pathologyToken: false };
+            record('X6 Seguimiento success: exactly one checklist, no generic green success toast, unaltered legacy 497-field row delivered',
+                checklistAppeared && invariants.checklistCount === 1 && invariants.genericToastPresent === false &&
+                rowT3.source !== 'none' && checksT3.fields497 && checksT3.identity && checksT3.visitMarker && checksT3.pathologyToken,
+                `checklist=${invariants.checklistCount} genericToast=${invariants.genericToastPresent} source=${rowT3.source} checks=${JSON.stringify(checksT3)}`);
+            recordKnownPreexisting('X6 Seguimiento NOT_A_T3_ACCEPTANCE_GATE (#587): enqueue attempt retains pendingRows=0 in baseline',
+                `pendingRows=${invariants.pendingRows} (payload without createdAt is pruned immediately; byte-identical at parent 384ec68)`);
+            const retryToast = await page.evaluate(async () => {
+                try { await window.HubTools.export.retryPendingRowCopy(); } catch (error) { /* observed below */ }
+                await new Promise((resolve) => setTimeout(resolve, 600));
+                return document.body.innerHTML.includes('Fila pendiente copiada. Pegue en la hoja:');
+            });
+            recordKnownPreexisting('X6 Seguimiento NOT_A_T3_ACCEPTANCE_GATE (#587): retry UX NO OPERATIVA EN BASELINE',
+                `retryToast=${retryToast} (queue empty in baseline; retry code/message preserved per X8 static)`);
+            await page.click('#postExportChecklist .post-export-checklist__dismiss');
+            await page.waitForTimeout(600);
+            const checklistAfterDismiss = await page.locator('#postExportChecklist').count();
+            record('X6 Seguimiento: checklist dismiss removes the checklist',
+                checklistAfterDismiss === 0,
+                `checklistAfterDismiss=${checklistAfterDismiss}`);
+            const pageConsoleErrors = errorsFor(entry, SEGUIMIENTO_PAGE);
+            const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
+            record('X6 Seguimiento: console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion',
+                pageConsoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+                `consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // X7 — TXT-before-CSV gate preserved on both pages (no TXT -> gate error
+    // alert, no checklist, no pageerror).
+    // =====================================================================
+    for (const [gatePage, gateId, gatePathology] of [[PRIMERA_PAGE, 'SYN-EXP-T3-003', 'les'], [SEGUIMIENTO_PAGE, 'SYN-EXP-T3-004', 'espa']]) {
+        const context = await browser.newContext();
+        try {
+            await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin }).catch(() => {});
+            const page = await passSupportedGate(context);
+            const entry = trackedPage(page);
+            await page.goto(`${origin}/${gatePage}`, { waitUntil: 'load', timeout: 45000 });
+            await page.fill('#idPaciente', gateId);
+            await page.fill('#fechaVisita', '2026-09-28');
+            await page.selectOption('#diagnosticoPrimario', gatePathology);
+            await page.click('#btnEstructurarCSV');
+            await page.waitForTimeout(1500);
+            const gate = await page.evaluate(() => ({
+                checklistCount: document.querySelectorAll('#postExportChecklist').length,
+                gateAlert: Array.from(document.querySelectorAll('[role="alert"]')).some((el) => (el.textContent || '').includes('Debe exportar TXT de esta visita antes de exportar CSV.')),
+            }));
+            const pageConsoleErrors = errorsFor(entry, gatePage);
+            record(`X7 ${gatePage}: TXT gate preserved (gate error alert, no checklist, no new pageerror)`,
+                gate.gateAlert === true && gate.checklistCount === 0 && entry.pageErrors.length === 0 && pageConsoleErrors.length === 0,
+                `gateAlert=${gate.gateAlert} checklist=${gate.checklistCount} consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
     // X4 — planted boundary failure: fail closed, no misleading partial copy.
     // =====================================================================
     {
@@ -394,5 +632,9 @@ if (failed.length > 0) {
     console.log('FAILED CASES:');
     for (const item of failed) console.log(`  - ${item.name}`);
 }
-console.log(`\nREUMA-EXPORT-BOUNDARY-BROWSER: ${failed.length === 0 ? 'PASS' : 'FAIL'} ${results.length - failed.length}/${results.length} cases`);
+if (knownPreexisting.length > 0) {
+    console.log('KNOWN_PREEXISTING (NOT_A_T3_ACCEPTANCE_GATE, owned by #587; NOT counted as functional PASS):');
+    for (const item of knownPreexisting) console.log(`  - ${item.name} :: ${item.detail}`);
+}
+console.log(`\nREUMA-EXPORT-BOUNDARY-BROWSER: ${failed.length === 0 ? 'PASS' : 'FAIL'} ${results.length - failed.length}/${results.length} cases, ${knownPreexisting.length} KNOWN_PREEXISTING`);
 process.exit(failed.length === 0 ? 0 : 1);
