@@ -5,10 +5,13 @@
  * the supported switcher, confirm the default Cosentyx report still works,
  * select Kisqali through the new report selector, walk
  * Mensual → Trimestral → Anual → Histórico with fixture-derived periods,
- * verify KPIs/patients against hand-derived fixture expectations, open
+ * verify KPIs, the rendered patient-table cells and raw expectations against
+ * hand-derived fixture values, open
  * 'Ver ciclos' raw traceability (explicit changes, unknown dose, mid-cycle
- * non-evaluable), download a REAL .xlsx and validate Resumen + Pacientes +
- * Ciclos against the visible UI model, switch back to Cosentyx and run its
+ * non-evaluable), download a REAL .xlsx and validate Resumen + Ciclos against
+ * the hand-derived expectation and the Pacientes sheet against the visible
+ * rendered patient cells (not a fresh model call), switch back to Cosentyx
+ * and run its
  * accepted journey, return to the population analysis and confirm the
  * filtered-cohort CSV export still downloads. Supported interactions only;
  * no DOM tampering; console.error=0 / pageerror=0.
@@ -25,8 +28,6 @@ const require = createRequire(import.meta.url);
 const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
 require(path.join(ROOT, 'scripts/farmacia_kisqali_informe_fixture.js'));
 require(path.join(ROOT, 'scripts/farmacia_kisqali_informe_model.js'));
-const Kisqali = globalThis.FarmaciaKisqaliInforme;
-const KisqaliFixture = globalThis.FarmaciaKisqaliInformeFixture;
 const APP_PREFIX = String(process.env.FH_APP_PREFIX || '').replace(/^\/+|\/+$/g, '');
 
 function loadPlaywrightFromNpx() {
@@ -93,6 +94,42 @@ const EXPECTED_KISQALI = {
     }
 };
 
+/* Hand-derived EXPECTED VISIBLE PATIENT-TABLE CELLS per window (independent
+ * of getState()/model output): each row is the rendered
+ * #kisqali-patients-table row [id, presentation, initial dose, final dose,
+ * explicit changes, observed cycles, evaluable cycles, mean] exactly as the
+ * UI formats it ('X mg' / 'Desconocida'). Derived by hand from the fixture
+ * contract, not from the implementation. */
+const EXPECTED_KISQALI_PATIENT_ROWS = {
+    'mensual|2026-06': [
+        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg'],
+        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '0', '1', '1', '400 mg'],
+        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+    ],
+    'trimestral|2026-Q2': [
+        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '1', '3', '3', '200 mg'],
+        ['KIS-004', 'No registrada', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '0', '2', '2', '500 mg'],
+        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+    ],
+    'anual|2026': [
+        ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '6', '6', '333.33 mg'],
+        ['KIS-004', 'No registrada', '400 mg', 'Desconocida', '0', '2', '1', '400 mg'],
+        ['KIS-005', '200 mg - 21', '300 mg', '300 mg', '0', '2', '2', '300 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '0', '2', '2', '500 mg'],
+        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+    ],
+    'historico|historico': [
+        ['KIS-001', '200 mg - 63', '400 mg', '400 mg', '0', '6', '6', '400 mg'],
+        ['KIS-002', '200 mg - 21', '600 mg', '400 mg', '1', '3', '3', '533.33 mg'],
+        ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '6', '6', '333.33 mg'],
+        ['KIS-004', 'No registrada', '400 mg', 'Desconocida', '0', '2', '1', '400 mg'],
+        ['KIS-005', '200 mg - 21', '300 mg', '300 mg', '0', '2', '2', '300 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '0', '2', '2', '500 mg'],
+        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+    ]
+};
+
 /* Default Cosentyx expectations (#576, unchanged). */
 const EXPECTED_COSENTYX = {
     '2026-Q1': { dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '1', hs_intensification: '0', unique: '2' } },
@@ -152,6 +189,21 @@ async function readKisqaliDomKpis(page) {
             .map(node => [node.dataset.kisqaliKpi, node.querySelector('.informes-kpi-value').textContent.trim()])));
 }
 
+/* The RENDERED patient-table cells, read from the DOM like a user sees them
+ * (first 8 cells of each patient row; the 9th is the 'Ver ciclos' action). */
+async function readKisqaliPatientRows(page) {
+    return page.evaluate(() => [...document.querySelectorAll('#kisqali-patients-table tbody tr[data-kisqali-patient]')]
+        .map(row => [...row.querySelectorAll('td')].slice(0, 8).map(cell => cell.textContent.trim())));
+}
+
+/* Visible cell ('400 mg') → workbook cell (400) per Pacientes column. */
+function visiblePatientRowToSheetRow(cells) {
+    const doseCell = cell => cell === 'Desconocida' ? 'Desconocida' : Number(cell.replace(/ mg$/, ''));
+    const meanCell = cell => cell === 'Desconocida' ? 'Desconocida' : cell.replace(/ mg$/, '');
+    return [cells[0], cells[1], doseCell(cells[2]), doseCell(cells[3]),
+        Number(cells[4]), Number(cells[5]), Number(cells[6]), meanCell(cells[7])];
+}
+
 async function assertKisqaliWindow(page, mode, period) {
     const key = `${mode}|${period === null ? 'historico' : period}`;
     const expected = EXPECTED_KISQALI[key];
@@ -168,6 +220,13 @@ async function assertKisqaliWindow(page, mode, period) {
     assert.equal(state.kisqali.coverage.numerator + '/' + state.kisqali.coverage.denominator
         + ' · ' + state.kisqali.coverage.percentage_display, expected.dom.coverage);
     assert.equal(state.kisqali.patients_with_change_count, Number(expected.dom.patients_with_change));
+    /* Rendered patient-table cells must match the hand-derived expectation
+     * for this window (not just the state object). */
+    const expectedPatients = EXPECTED_KISQALI_PATIENT_ROWS[key];
+    if (expectedPatients) {
+        assert.deepEqual(await readKisqaliPatientRows(page), expectedPatients,
+            `${key} rendered patient-table cells must match the hand-derived fixture expectation`);
+    }
     return { domKpis, state };
 }
 
@@ -285,6 +344,10 @@ try {
     await page.locator('#kisqali-mode-select').selectOption('anual');
     await page.waitForFunction(() => window.FarmaciaEstadisticasInformes.getState().kisqali.period === '2026');
     const anualDom = await readKisqaliDomKpis(page);
+    /* Capture the VISIBLE patient cells for this exact window before
+     * downloading; the workbook must match them, not a fresh model call. */
+    const anualVisiblePatients = await readKisqaliPatientRows(page);
+    assert.deepEqual(anualVisiblePatients, EXPECTED_KISQALI_PATIENT_ROWS['anual|2026']);
     const downloadPromise = page.waitForEvent('download');
     await page.locator('#kisqali-download-xlsx').click();
     const download = await downloadPromise;
@@ -358,13 +421,10 @@ try {
     const kis004UnknownRow = ciclos.find(row => row[0] === 'KIS-004' && row[1] === '2026-04');
     assert.equal(kis004UnknownRow[3], '', 'unknown dose cell stays empty, never 0');
     assert.equal(kis004UnknownRow[4], 'desconocida');
-    /* Workbook matches the model the UI computes from (no second calculation). */
-    const recomputed = Kisqali.computeReport(KisqaliFixture, 'anual', '2026');
-    assert.deepEqual(pacientes.slice(1), recomputed.patients.map(p => normRow([
-        p.patient_id, p.last_presentation_display,
-        p.initial_dose === null ? 'Desconocida' : p.initial_dose,
-        p.final_dose === null ? 'Desconocida' : p.final_dose,
-        p.change_count, p.observed_count, p.evaluable_count, p.mean_display])));
+    /* The workbook Pacientes sheet equals the VISIBLE rendered patient-table
+     * cells of the same window (no second calculation, no fresh model call). */
+    assert.deepEqual(pacientes.slice(1), anualVisiblePatients.map(visiblePatientRowToSheetRow),
+        'downloaded Pacientes sheet must equal the visible patient rows');
 
     /* Switch back to Cosentyx through the report selector; accepted journey. */
     await page.locator('#informes-report-select').selectOption('cosentyx');

@@ -684,6 +684,140 @@ check('engine: recomputing the same window is deterministic and frozen inputs ar
         'Histórico covers all explicit cycles regardless of any period key');
 });
 
+/* 14. Gate 2 + chronology correction witnesses (#579 C-087 corrector).
+ * Each witness below falsifies the pre-correction behaviour:
+ * - chronology: the pre-fix model selected first/last per patient in fixture
+ *   DECLARATION order, so reversing cycles in a clone changed initial/final
+ *   dose, last presentation and the closing bucket;
+ * - Gate 2 collision: the pre-fix projection rendered an explicit
+ *   'No registrada' verbatim and absence as 'No registrada' — identical;
+ * - mid-cycle closing witness: no prior witness covered a non-evaluable
+ *   closing cycle after a KNOWN prior dose (KIS-004 covers unknown-after-
+ *   known; KIS-007 has a single cycle only); a backfilling implementation
+ *   would report final dose 400 and a dose_400 closing bucket. */
+
+const ABSENT_TEXT = 'No registrada';
+const ABSENT_TEXT_EXPLICIT = Informe.ABSENT_PRESENTATION_EXPLICIT_LABEL;
+
+check('chronology: reversing each patient\'s cycles in a clone cannot change initial/final dose, presentation, closing bucket or means', () => {
+    const reversed = cloneFixture();
+    for (const patient of reversed.patients) {
+        patient.cycles = patient.cycles.slice().reverse();
+    }
+    const variant = Informe.computeReport(reversed, 'historico', null);
+    /* Pre-fix, this deepEqual failed: e.g. KIS-002 became initial 400 / final
+     * 600, KIS-004 became initial null / final 400 with presentation
+     * '200 mg - 21' backfilled from its first declared cycle, and KIS-003's
+     * initial became 200. */
+    assert.deepEqual(patientTuples(variant), patientTuples(historico),
+        'first/last patient selection must be chronological, not declaration-order');
+    assert.deepEqual(
+        variant.patients.map(p => [p.patient_id, p.last_presentation, p.last_presentation_display]),
+        historico.patients.map(p => [p.patient_id, p.last_presentation, p.last_presentation_display]),
+        'last presentation must come from the chronologically last cycle');
+    assert.deepEqual(variant.closing_distribution, historico.closing_distribution,
+        'closing bucket must come from the chronologically last cycle');
+    assert.deepEqual(variant.cohort_mean, historico.cohort_mean);
+    assert.deepEqual(variant.coverage, historico.coverage);
+    /* Same invariant on a single-month window. */
+    const variantJune = Informe.computeReport(reversed, 'mensual', '2026-06');
+    assert.deepEqual(rowTuples(variantJune), rowTuples(mensualJune));
+    assert.deepEqual(patientTuples(variantJune), patientTuples(mensualJune));
+    assert.deepEqual(variantJune.closing_distribution, mensualJune.closing_distribution);
+});
+
+check('gate2: explicit presentation text \'No registrada\' stays distinguishable from absence in UI model and workbook, without feeding calculation', () => {
+    const absentVariant = cloneFixture();
+    const collisionVariant = cloneFixture();
+    const absentCycle = absentVariant.patients.find(p => p.patient_id === 'KIS-004')
+        .cycles.find(c => c.cycle_month === '2026-04');
+    const collisionCycle = collisionVariant.patients.find(p => p.patient_id === 'KIS-004')
+        .cycles.find(c => c.cycle_month === '2026-04');
+    assert.equal(absentCycle.presentation_label, null);
+    collisionCycle.presentation_label = ABSENT_TEXT; // explicit literal collision
+    const absentReport = Informe.computeReport(absentVariant, 'historico', null);
+    const collisionReport = Informe.computeReport(collisionVariant, 'historico', null);
+    const absentPatient = absentReport.patients.find(p => p.patient_id === 'KIS-004');
+    const collisionPatient = collisionReport.patients.find(p => p.patient_id === 'KIS-004');
+    /* Model-level presence discriminator (UI-model output). */
+    assert.equal(absentPatient.last_presentation_present, false);
+    assert.equal(collisionPatient.last_presentation_present, true);
+    assert.equal(absentPatient.last_presentation_display, ABSENT_TEXT);
+    assert.notEqual(collisionPatient.last_presentation_display, ABSENT_TEXT,
+        'explicit colliding text must not render identically to absence');
+    assert.equal(collisionPatient.last_presentation_display, ABSENT_TEXT_EXPLICIT);
+    /* Raw level: verbatim label preserved + presence discriminator. */
+    const absentRaw = absentReport.observed_cycles.find(r => r.patient_id === 'KIS-004' && r.cycle_month === '2026-04');
+    const collisionRaw = collisionReport.observed_cycles.find(r => r.patient_id === 'KIS-004' && r.cycle_month === '2026-04');
+    assert.equal(absentRaw.presentation_present, false);
+    assert.equal(collisionRaw.presentation_present, true);
+    assert.equal(collisionRaw.presentation_label, ABSENT_TEXT, 'explicit text preserved verbatim in raw facts');
+    assert.equal(absentRaw.presentation_label, null);
+    /* Workbook Pacientes + Ciclos keep the two states distinguishable. */
+    const absentBook = workbookFor(absentReport).workbook;
+    const collisionBook = workbookFor(collisionReport).workbook;
+    const sheetRows = (book, name) =>
+        XLSX.utils.sheet_to_json(book.Sheets[name], { header: 1, defval: '' }).map(normRow);
+    const absentPaciente = sheetRows(absentBook, 'Pacientes').find(row => row[0] === 'KIS-004');
+    const collisionPaciente = sheetRows(collisionBook, 'Pacientes').find(row => row[0] === 'KIS-004');
+    assert.equal(absentPaciente[1], ABSENT_TEXT);
+    assert.equal(collisionPaciente[1], ABSENT_TEXT_EXPLICIT);
+    const absentCiclo = sheetRows(absentBook, 'Ciclos').find(row => row[0] === 'KIS-004' && row[1] === '2026-04');
+    const collisionCiclo = sheetRows(collisionBook, 'Ciclos').find(row => row[0] === 'KIS-004' && row[1] === '2026-04');
+    assert.equal(absentCiclo[5], ABSENT_TEXT);
+    assert.equal(collisionCiclo[5], ABSENT_TEXT_EXPLICIT);
+    /* Presentation never feeds calculation: dose outputs stay identical. */
+    assert.deepEqual(patientTuples(collisionReport), patientTuples(absentReport));
+    assert.deepEqual(collisionReport.closing_distribution, absentReport.closing_distribution);
+    assert.deepEqual(collisionReport.cohort_mean, absentReport.cohort_mean);
+    assert.deepEqual(collisionReport.coverage, absentReport.coverage);
+});
+
+check('closing: mid-cycle non-evaluable closing cycle after a known dose is not backfilled (checker-local sequence, shared fixture untouched)', () => {
+    const variant = {
+        synthetic: true,
+        fixture_id: Fixture.fixture_id,
+        provenance: Fixture.provenance,
+        patients: [{
+            patient_id: 'KIS-W6',
+            cycles: [
+                { cycle_month: '2026-05', cycle_start: '2026-05-01', dose_mg: 400, presentation_label: '200 mg - 63' },
+                { cycle_month: '2026-06', cycle_start: '2026-06-01', dose_mg: 400, presentation_label: '200 mg - 21',
+                    dose_change: { from_dose_mg: 400, to_dose_mg: 200, effective_at: '2026-06-15' } }
+            ]
+        }]
+    };
+    const report = Informe.computeReport(variant, 'historico', null);
+    const patient = report.patients[0];
+    assert.equal(patient.initial_dose, 400);
+    assert.equal(patient.final_dose, null,
+        'non-evaluable closing cycle must not be backfilled from the prior known 400');
+    /* Evaluable-only averaging unchanged by the non-evaluable closing cycle. */
+    assert.equal(patient.mean.numerator, 400);
+    assert.equal(patient.mean.denominator, 1);
+    assert.equal(patient.mean.value, 400);
+    assert.equal(patient.mean_display, '400');
+    assert.equal(patient.evaluable_count, 1);
+    assert.equal(patient.observed_count, 2);
+    /* Closing bucket otra/desconocida, never dose_400. */
+    assert.deepEqual(report.closing_distribution,
+        { dose_200: 0, dose_400: 0, dose_600: 0, otra_desconocida: 1 });
+    assert.deepEqual([report.coverage.numerator, report.coverage.denominator], [1, 2]);
+    /* Raw facts fully preserved: evaluable=no + explicit mid-cycle reason. */
+    const closingRow = report.observed_cycles.find(row => row.cycle_month === '2026-06');
+    assert.equal(closingRow.evaluable, false);
+    assert.equal(closingRow.change_kind, 'mid_cycle');
+    assert.equal(closingRow.dose_mg, 400, 'raw dose preserved, never prorated or backfilled');
+    assert.equal(closingRow.non_evaluable_reason, Informe.NON_EVALUABLE_MID_CYCLE);
+    assert.deepEqual(closingRow.dose_change,
+        { from_dose_mg: 400, to_dose_mg: 200, effective_at: '2026-06-15' });
+    assert.equal(closingRow.presentation_present, true);
+    /* The known prior cycle stays evaluable and raw. */
+    const priorRow = report.observed_cycles.find(row => row.cycle_month === '2026-05');
+    assert.equal(priorRow.evaluable, true);
+    assert.equal(priorRow.dose_mg, 400);
+});
+
 console.log('');
 if (failures.length) {
     console.log(`farmacia_kisqali_informe_check: FAIL — ${failures.length} failed, ${passed} passed`);

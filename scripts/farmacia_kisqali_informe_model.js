@@ -55,6 +55,7 @@
     var CALCULATION_NOTICE = 'Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados.';
     var UNKNOWN_DOSE_LABEL = 'Desconocida';
     var ABSENT_PRESENTATION_LABEL = 'No registrada';
+    var ABSENT_PRESENTATION_EXPLICIT_LABEL = 'No registrada (texto explícito)';
 
     function fail(message) {
         throw new Error(message);
@@ -182,6 +183,20 @@
         return months.slice().sort();
     }
 
+    /* Chronological order inside one patient's window: cycle_month first (the
+     * authoritative inclusion key), cycle_start as the traceability tie-break.
+     * First/last selection for initial dose, final dose, last presentation and
+     * the closing bucket must never depend on fixture declaration order. */
+    function compareCyclesChronologically(left, right) {
+        if (left.cycle_month !== right.cycle_month) {
+            return left.cycle_month < right.cycle_month ? -1 : 1;
+        }
+        if (left.cycle_start !== right.cycle_start) {
+            return left.cycle_start < right.cycle_start ? -1 : 1;
+        }
+        return 0;
+    }
+
     function allCycleMonths(fixture) {
         var months = [];
         fixture.patients.forEach(function (patient) {
@@ -273,10 +288,17 @@
     /* Shared presentation projection (Gate 2): the ONE formatter used by the
      * UI patient table, the ciclos traceability view and the XLSX builder.
      * Explicit presentation strings stay verbatim; absent/null stays
-     * 'No registrada'. Its output never feeds back into calculation. */
+     * 'No registrada'. An explicit presentation whose literal text collides
+     * with the absent fallback ('No registrada') is displayed with an explicit
+     * marker so absence and explicit text remain distinguishable in BOTH
+     * visible projections (UI + XLSX, patient and raw levels). Its output
+     * never feeds back into calculation. */
     function presentationDisplay(presentationLabel) {
         if (presentationLabel === null || presentationLabel === undefined) {
             return ABSENT_PRESENTATION_LABEL;
+        }
+        if (presentationLabel === ABSENT_PRESENTATION_LABEL) {
+            return ABSENT_PRESENTATION_EXPLICIT_LABEL;
         }
         return presentationLabel;
     }
@@ -304,6 +326,7 @@
             dose_mg: cycle.dose_mg === undefined ? null : cycle.dose_mg,
             dose_state: isExplicitDose(cycle.dose_mg) ? 'explicita' : 'desconocida',
             presentation_label: cycle.presentation_label === undefined ? null : cycle.presentation_label,
+            presentation_present: cycle.presentation_label !== null && cycle.presentation_label !== undefined,
             dose_change: cycle.dose_change
                 ? Object.freeze({
                     from_dose_mg: cycle.dose_change.from_dose_mg,
@@ -339,7 +362,10 @@
                     observed.push(row);
                 }
             });
-            if (rows.length) patientsById[patient.patient_id] = rows;
+            if (rows.length) {
+                rows.sort(compareCyclesChronologically);
+                patientsById[patient.patient_id] = rows;
+            }
         });
 
         observed.sort(function (left, right) {
@@ -418,6 +444,7 @@
             return {
                 patient_id: patientId,
                 last_presentation: last.presentation_label,
+                last_presentation_present: last.presentation_present,
                 last_presentation_display: presentationDisplay(last.presentation_label),
                 initial_dose: initialDose,
                 final_dose: finalDose,
@@ -452,6 +479,7 @@
                 return Object.freeze({
                     patient_id: patient.patient_id,
                     last_presentation: patient.last_presentation,
+                    last_presentation_present: patient.last_presentation_present,
                     last_presentation_display: patient.last_presentation_display,
                     initial_dose: patient.initial_dose,
                     final_dose: patient.final_dose,
@@ -557,6 +585,7 @@
         CALCULATION_NOTICE: CALCULATION_NOTICE,
         UNKNOWN_DOSE_LABEL: UNKNOWN_DOSE_LABEL,
         ABSENT_PRESENTATION_LABEL: ABSENT_PRESENTATION_LABEL,
+        ABSENT_PRESENTATION_EXPLICIT_LABEL: ABSENT_PRESENTATION_EXPLICIT_LABEL,
         listPeriods: listPeriods,
         latestPeriod: latestPeriod,
         monthRange: monthRange,
