@@ -985,6 +985,12 @@ body:has(.hub-shell) {
     color: #e67e22;
 }
 
+/* T2 #585: CASPAR neutral classification — CASPAR-scoped only. Do NOT extend
+   to shared .result-text.high/.low (sibling indices e.g. ASAS rely on them). */
+#resultadoCASPAR.result-text.neutral {
+    color: inherit;
+}
+
 /* CRITERIOS CASPAR (APs) */
 .caspar-info-box {
     background: linear-gradient(135deg, #e3f2fd 0%, #f1f8ff 100%);
