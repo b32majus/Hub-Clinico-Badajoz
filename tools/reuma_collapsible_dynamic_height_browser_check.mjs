@@ -226,6 +226,52 @@ const STOP_STORM_PROBE_FN = () => {
   return true;
 };
 
+// --- Independent idle-coupling observable (finding F3) ----------------------
+// The #545 seam's MutationObserver is registered on document.body. The
+// pre-existing modules/customSelect.js setInterval(300) rewrites
+// .custom-select labels/classes on every tick; those mutations live INSIDE
+// .collapsible-content, so a naive body observer is re-armed ~3x/second and
+// calls syncOpenCollapsibleHeights indefinitely while the page is idle (each
+// call performs a forced-layout scrollHeight read per open section). Counting
+// sizing signatures cannot see this because the dimensions happen to stay
+// constant; the only direct observable is the seam's own invocation count.
+//
+// Instrument the global seam functions from the page (classic-script function
+// declarations resolve through the global object, so the production observer /
+// transitionend callbacks hit these wrappers) and count invocations across a
+// bounded pure-idle window. A correct decoupling must yield 0; the pre-F3
+// candidate yields ~10 in 3s. Instrumentation failure fails explicitly.
+const INSTALL_SEAM_PROBE_FN = () => {
+  const probe = { sync: 0, schedule: 0, installed: false };
+  const wrap = (name, key) => {
+    const orig = window[name];
+    if (typeof orig !== 'function') return false;
+    window[name] = function () { probe[key] += 1; return orig.apply(this, arguments); };
+    return true;
+  };
+  const a = wrap('syncOpenCollapsibleHeights', 'sync');
+  const b = wrap('scheduleOpenCollapsibleSync', 'schedule');
+  probe.installed = a && b;
+  window.__seamProbe = probe;
+  return { installed: probe.installed };
+};
+
+const RESET_SEAM_PROBE_FN = () => {
+  const p = window.__seamProbe;
+  if (!p) return false;
+  p.sync = 0;
+  p.schedule = 0;
+  return true;
+};
+
+const READ_SEAM_PROBE_FN = () => {
+  const p = window.__seamProbe;
+  if (!p) return { installed: false, sync: null, schedule: null };
+  return { installed: p.installed, sync: p.sync, schedule: p.schedule };
+};
+
+const IDLE_COUPLING_MS = 3000;
+
 // The production sync writes the inline maxHeight target immediately, while
 // the .collapsible-content CSS transition animates the rendered box for up to
 // 0.4s and delayed/transitionend re-measures can rewrite the target again
@@ -317,6 +363,20 @@ async function visitJourney(pagePath, pathology, tag) {
     check(`${tag} no artificial inner scrollbar`, geo.overflowY === 'hidden', geo.overflowY);
     const mdhaq = await page.evaluate(MDHAQ_HEIGHTS);
     check(`${tag} MDHAQ rows laid out (not #541 collapse)`, mdhaq.length >= 10 && mdhaq.every((h) => h > 0), JSON.stringify(mdhaq.slice(0, 4)));
+
+    // 2b. Idle decoupling (finding F3). At this point TWO sections are open
+    // (outer Índices + nested HAQ-DI). Install the seam-invocation probe, drain
+    // any in-flight debounce, then hold a bounded pure-idle window with zero
+    // user interaction. The seam must NOT be re-armed by pre-existing
+    // .custom-select polling churn: 0 syncOpenCollapsibleHeights and 0
+    // scheduleOpenCollapsibleSync invocations. Fails explicitly if the probe
+    // cannot instrument the seam or if any invocation occurs.
+    const seamInstall = await page.evaluate(INSTALL_SEAM_PROBE_FN);
+    await settle(page, 400); // drain any in-flight debounce before the window
+    await page.evaluate(RESET_SEAM_PROBE_FN);
+    await settle(page, IDLE_COUPLING_MS);
+    const seamIdle = await page.evaluate(READ_SEAM_PROBE_FN);
+    check(`${tag} idle: seam not re-armed by customSelect churn (0 invocations/3s)`, seamInstall.installed && seamIdle.installed && seamIdle.sync === 0 && seamIdle.schedule === 0, JSON.stringify({ installed: seamInstall.installed, ...seamIdle }));
 
     // 3. Shrink: close nested HAQ-DI, parent must track down and settle.
     await clickHeader(page, 'HAQ-DI');
