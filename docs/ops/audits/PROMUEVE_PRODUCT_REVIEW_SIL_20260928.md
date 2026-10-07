@@ -55,7 +55,7 @@ Reglas transversales:
 | `SIL-REV-016` | Catálogo/autocomplete común en Reuma | DATA / UX | CORE catalog capability + MODULE Reuma | #444 + correctiva #447 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-017` | Automatización CIMA del catálogo | TOOLING / DATA SUPPLY | CORE tooling | Train posterior separado | DEFERRED_SEPARATE_CONCERN |
 | `SIL-REV-018` | Análisis poblacional FH completo / recuperación de filtros perdidos | FEATURE / REPORT + regresión histórica registrada | MODULE FH (estadísticas) + CORE reporting | Recuperación sólo por WO propia con fuente explícita; no levanta #446 | PROPOSED |
-| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | V1 demo: Cosentyx #576 + Kisqali #579; guardado/compartido en V2 | DIRECTION_DECIDED / V2_DEFERRED |
+| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | V1 demo: Cosentyx #576 + Kisqali #579 publicados; guardado/compartido en V2 | **V1_PUBLISHED / V2_DEFERRED** |
 | `SIL-REV-020` | Medicación especial FH (ensayo clínico / uso compasivo / extranjera / registros locales) | DATA / DISCOVERY | MODULE FH + CORE | Requiere fuente explícita/versionada o captura profesional | PROPOSED / DISCOVERY_REQUIRED |
 
 ## 3. `SIL-REV-001` — nomenclatura SES para procesos FH
@@ -79,7 +79,7 @@ Dentro de `Estadísticas del servicio` se separan dos conceptos:
 1. **Análisis poblacional** — filtros/gráficos para explorar la cohorte.
 2. **Informes** — salidas reproducibles con contrato propio.
 
-El primer informe definido, **Informe trimestral Cosentyx** (#576), está **PUBLICADO Y VERIFICADO** por PR #581 (candidate `aea59e23185f9f4d5e2d89aaa1877618ee031406` → merge `c5b29e23a5488b951152051ba5d358d04b480b26`). La decisión humana posterior del mismo 2026-10-07 define un segundo informe real para la demo: **Informe de utilización y dosis — Kisqali** (#579), todavía pendiente y dependiente del shell `Informes` ya publicado. No se crean informes adicionales ficticios sin ejemplos/requisitos reales.
+El primer informe definido, **Informe trimestral Cosentyx** (#576), está **PUBLICADO Y VERIFICADO** por PR #581 (candidate `aea59e23185f9f4d5e2d89aaa1877618ee031406` → merge `c5b29e23a5488b951152051ba5d358d04b480b26`). El segundo informe real de demo, **Informe de utilización y dosis — Kisqali** (#579), está **PUBLICADO Y VERIFICADO** por PR #582 (candidate `73e67b941913e56b3014a5c617571c6534258108` → merge `9d060f448c6ea1367b09993f232574ff1abd40a5`) reutilizando el mismo shell `Informes`. No se crean informes adicionales ficticios sin ejemplos/requisitos reales.
 
 ### Contrato V1
 
@@ -289,9 +289,9 @@ Clasificación: **capacidad histórica parcialmente perdida/reducida**. No es pr
 
 ## 12-B. `SIL-REV-019` — reporting recurrente y presets reutilizables (extiende `SIL-REV-002/003`)
 
-Estado `DIRECTION_DECIDED / V2_DEFERRED`.
+Estado V1: **`PUBLISHED / SYNTHETIC_QA`** para Cosentyx #576 + Kisqali #579. Evolución V2: **`DEFERRED`**.
 
-V1 no es un “reporte intermedio”: entrega informes demo completos y reproducibles para Cosentyx (#576) y Kisqali (#579). La evolución V2 amplía el mismo seam:
+V1 no es un “reporte intermedio”: **ya entrega publicados** los informes demo completos y reproducibles para Cosentyx (#576 / PR #581) y Kisqali (#579 / PR #582). La evolución V2 amplía el mismo seam:
 
 - presets versionados de informes recurrentes;
 - filtros guardados/reutilizables;
