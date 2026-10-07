@@ -228,7 +228,7 @@ Reglas de seguridad:
 - la dimensión `Servicio` debe representar servicio clínico de origen/seguimiento cuando corresponda; Farmacia no debe aparecer artificialmente como servicio propietario universal;
 - medicamentos especiales (ensayo clínico, uso compasivo, medicamento extranjero, registros locales) siguen en discovery y requieren fuente explícita/versionada o captura profesional.
 
-**Decisión humana 2026-10-07 — demo inmediata (#576) — PUBLICADA Y VERIFICADA por PR #581:**
+**Decisión humana 2026-10-07 — demo inmediata (#576 + #579) — AMBOS PUBLICADOS Y VERIFICADOS por PR #581/#582:**
 
 - dentro de Estadísticas se separa `Análisis poblacional` de una sección propia `Informes`;
 - informes demo definidos: **Informe trimestral Cosentyx** (#576) y **Informe de utilización y dosis — Kisqali** (#579);
@@ -239,7 +239,7 @@ Reglas de seguridad:
 - no inferir dispensación, inicio ni intensificación desde visita, tratamiento actual, nombre del fármaco o dato ausente;
 - la proyección raw actual no transporta dispensación explícita; una demo purpose-built puede introducir ese hecho sólo en fixture sintético, sin presentarlo como capacidad de fuente real;
 - HS q4w→q2w exige movimiento explícito y un ancla temporal explícita antes de usar datos no sintéticos;
-- **Kisqali #579:** un único motor Mensual/Trimestral/Anual/Histórico usa ciclos/meses evaluables como unidad de peso, no patient-days; la semana de descanso no es dosis 0. Presentación explícita (p. ej. `200 mg - 21` / `200 mg - 63`) y dosis explícita 200/400/600 son hechos independientes y no se derivan entre sí. Debe mostrar media por paciente/cohorte, distribución al cierre, cambios explícitos, cobertura de dosis y trazabilidad por ciclo; un cambio mid-cycle sin regla aprobada falla cerrado/no se evalúa. El indicador no equivale a consumo real. Fixture sintético dedicado; sin integración CIMA/raw real en V1.
+- **Kisqali #579 — PUBLICADO Y VERIFICADO por PR #582:** un único motor Mensual/Trimestral/Anual/Histórico usa ciclos mensuales observados/evaluables como unidad de peso, no patient-days; la semana de descanso no es dosis 0. Presentación explícita y dosis explícita son hechos independientes y no se derivan entre sí. Muestra media por paciente/cohorte, distribución al cierre, cambios explícitos, cobertura de dosis y trazabilidad por ciclo; un cambio mid-cycle sin regla aprobada falla cerrado/no se evalúa. El indicador no equivale a consumo real. Fixture 100% sintético; sin integración CIMA/raw real en V1. Candidate `73e67b941913e56b3014a5c617571c6534258108` → merge `9d060f448c6ea1367b09993f232574ff1abd40a5`; CI PR `37684084213` success; auditoría Cora: checker 42/42, `verify:nexus` PASS, browser Kisqali/Cosentyx/Statistics PASS, `console.error=0`, `pageerror=0`; merge tree `0197b66847a8fef510eb4acb5ba2c6ae04431940` idéntico al candidate.
 - V2 preserva el seam para presets/filtros guardados, reutilizables y compartibles; futuro Control Plane queda fuera de la demo.
 
 ### 3.12 Excel Bridge — capa de entrada/routing multipatología — `DISCOVERY / EVOLUCIÓN`
