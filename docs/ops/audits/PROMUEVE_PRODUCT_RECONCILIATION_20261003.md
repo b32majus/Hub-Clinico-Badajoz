@@ -231,7 +231,7 @@ Reglas de seguridad:
 **Decisión humana 2026-10-07 — demo inmediata (#576):**
 
 - dentro de Estadísticas se separa `Análisis poblacional` de una sección propia `Informes`;
-- primer y único informe definido: **Informe trimestral Cosentyx**;
+- informes demo definidos: **Informe trimestral Cosentyx** (#576) y **Informe de utilización y dosis — Kisqali** (#579);
 - V1 debe ser completo y demostrable, no una versión intermedia;
 - se permite fixture sintético dedicado, pero los resultados/conteos se calculan realmente y se muestra detalle auditable;
 - XLSX descargable real es salida mínima; PDF es formato adicional si se implementa sin comprometer robustez;
@@ -239,6 +239,7 @@ Reglas de seguridad:
 - no inferir dispensación, inicio ni intensificación desde visita, tratamiento actual, nombre del fármaco o dato ausente;
 - la proyección raw actual no transporta dispensación explícita; una demo purpose-built puede introducir ese hecho sólo en fixture sintético, sin presentarlo como capacidad de fuente real;
 - HS q4w→q2w exige movimiento explícito y un ancla temporal explícita antes de usar datos no sintéticos;
+- **Kisqali #579:** un único motor Mensual/Trimestral/Anual/Histórico usa ciclos/meses evaluables como unidad de peso, no patient-days; la semana de descanso no es dosis 0. Presentación explícita (p. ej. `200 mg - 21` / `200 mg - 63`) y dosis explícita 200/400/600 son hechos independientes y no se derivan entre sí. Debe mostrar media por paciente/cohorte, distribución al cierre, cambios explícitos, cobertura de dosis y trazabilidad por ciclo; un cambio mid-cycle sin regla aprobada falla cerrado/no se evalúa. El indicador no equivale a consumo real. Fixture sintético dedicado; sin integración CIMA/raw real en V1.
 - V2 preserva el seam para presets/filtros guardados, reutilizables y compartibles; futuro Control Plane queda fuera de la demo.
 
 ### 3.12 Excel Bridge — capa de entrada/routing multipatología — `DISCOVERY / EVOLUCIÓN`
