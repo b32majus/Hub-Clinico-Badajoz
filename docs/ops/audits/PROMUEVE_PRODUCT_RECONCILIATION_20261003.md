@@ -393,7 +393,7 @@ No debe preguntar “quién eres” como si existiera un modelo de autenticació
 
 Cuando existan identidad y autorización reales, la Home podrá limitar/mostrar espacios conforme a esa autoridad; no antes.
 
-**Decisión demo 2026-10-07 (#575):** Farmacia debe ser accesible soportadamente desde Home. El registry ya define `farmacia → farmacia_index.html`, pero el deployment sintético live mantiene `IMPLEMENTED_NOT_QUALIFIED / available=false`. La implementación debe pasar por la cualificación explícita del deployment sintético y regenerar sus artefactos; no se permite un enlace/bypass que contradiga readiness. Esto no implica cualificación hospitalaria real, piloto ni producción.
+**Decisión demo 2026-10-07 (#575) — PUBLICADA Y VERIFICADA:** PR #580 publica el acceso soportado Home → Farmacia sobre el deployment sintético. Candidate `ed3e00f97cbc34199b4aa56fcbeb05230d1bf92f` → merge `cdb5b6bd65b9cf2190f4b9d5e04ed68c9c584b3f`; Farmacia queda `QUALIFIED_FOR_SITE / available=true` mediante el contrato de readiness existente y conserva `farmacia_index.html` como ruta. QA browser real demuestra click same-tab + Back; no hubo bypass, cambio de registry ni cualificación hospitalaria. Esto sigue siendo demo/evaluación sintética, no piloto ni producción.
 
 ### 5.2 Badajoz y Mérida — mismo módulo, variación explícita — `DECIDIDO`
 
