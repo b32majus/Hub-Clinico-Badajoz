@@ -38,8 +38,8 @@ Reglas transversales:
 | ID | Tema | Naturaleza | Alcance | Decisión/timing | Estado |
 |---|---|---|---|---|---|
 | `SIL-REV-001` | Nomenclatura oficial de programas/procesos FH SES | DATA / INTEROPERABILITY | CORE + consumo FH | Antes de ampliar reportes | PROPOSED |
-| `SIL-REV-002` | Presets de informes periódicos | FEATURE / CONFIG | CORE | Tras contrato de datos mínimo | PROPOSED |
-| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | Discovery/contrato | PROPOSED |
+| `SIL-REV-002` | Presets de informes periódicos | FEATURE / CONFIG | CORE | V1 fijo/versionado; V2 guardado/compartido | DIRECTION_DECIDED / V2_DEFERRED |
+| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | Demo inmediata; WO propia | REQUIREMENT_DECIDED_PENDING |
 | `SIL-REV-004` | Simplificación prebiológico Reuma | CLINICAL FLOW / UX | MODULE Reuma | #445 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-005` | Solicitud Reuma→Farmacia TXT | INTEROPERABILITY | MODULE Reuma×FH | Discovery primero | DISCOVERY_FIRST |
 | `SIL-REV-006` | PCR/unidades por calculadora | CLINICAL SAFETY / DATA | CORE + MODULE/CALCULATOR; site queda explícito sólo cuando proceda | #443 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
@@ -55,7 +55,7 @@ Reglas transversales:
 | `SIL-REV-016` | Catálogo/autocomplete común en Reuma | DATA / UX | CORE catalog capability + MODULE Reuma | #444 + correctiva #447 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-017` | Automatización CIMA del catálogo | TOOLING / DATA SUPPLY | CORE tooling | Train posterior separado | DEFERRED_SEPARATE_CONCERN |
 | `SIL-REV-018` | Análisis poblacional FH completo / recuperación de filtros perdidos | FEATURE / REPORT + regresión histórica registrada | MODULE FH (estadísticas) + CORE reporting | Recuperación sólo por WO propia con fuente explícita; no levanta #446 | PROPOSED |
-| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | Extiende `SIL-REV-002/003`; tras contrato de datos mínimo | PROPOSED |
+| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | V1 Cosentyx ahora; guardado/compartido en V2 | DIRECTION_DECIDED / V2_DEFERRED |
 | `SIL-REV-020` | Medicación especial FH (ensayo clínico / uso compasivo / extranjera / registros locales) | DATA / DISCOVERY | MODULE FH + CORE | Requiere fuente explícita/versionada o captura profesional | PROPOSED / DISCOVERY_REQUIRED |
 
 ## 3. `SIL-REV-001` — nomenclatura SES para procesos FH
@@ -70,17 +70,44 @@ Pendiente: ingestión/normalización de la fuente y WO separada.
 
 ## 4. `SIL-REV-002/003` — presets de reporting y reporte trimestral Cosentyx
 
-Dirección:
-- presets versionados que describan ventana, población, indicación, evento/tratamiento explícito y salida;
-- los presets no infieren eventos clínicos;
-- el dashboard no se convierte en fuente de verdad clínica.
+**Decisión humana 2026-10-07:** el primer informe deja de ser una idea exploratoria y pasa a `REQUIREMENT_DECIDED_PENDING`. Debe poder enseñarse de principio a fin en la demo con datos sintéticos, sin rebajarlo a una versión intermedia.
 
-Primer caso propuesto, trimestral:
+### Superficie
+
+Dentro de `Estadísticas del servicio` se separan dos conceptos:
+
+1. **Análisis poblacional** — filtros/gráficos para explorar la cohorte.
+2. **Informes** — salidas reproducibles con contrato propio.
+
+El primer y único informe definido por ahora es **Informe trimestral Cosentyx**. No se crean informes ficticios para otros fármacos hasta recibir ejemplos/requisitos reales.
+
+### Contrato V1
+
 - psoriasis: nuevos inicios explícitos de Cosentyx dentro del trimestre;
-- artritis psoriásica: nuevos inicios explícitos de Cosentyx dentro del trimestre;
-- HS: inicio explícito de administración q2w durante el trimestre, distinguiendo cuando conste inicio directo q2w de intensificación explícita q4w→q2w.
+- artritis psoriásica: nuevos inicios explícitos dentro del trimestre;
+- HS: inicio explícito q2w durante el trimestre;
+- distinguir inicio directo q2w de intensificación explícita q4w→q2w sólo cuando conste ese movimiento;
+- vista previa/resumen y detalle auditable de casos incluidos;
+- XLSX descargable real como salida mínima; PDF puede ser segundo formato si es robusto, pero no bloquea Excel;
+- pueden usarse datos/fixture sintético purpose-built para la demo, pero los resultados y conteos se calculan realmente desde esos datos; no se hardcodean los totales.
 
-No es un reporte de unidades dispensadas. No inferir intensificación desde el nombre del fármaco, tratamiento actual o ausencia de datos.
+### Ancla temporal de `nuevo inicio`
+
+La pertenencia del paciente al trimestre se decide por la **primera dispensación explícitamente registrada del tratamiento objeto del informe**, no por la fecha de validación.
+
+Invariantes:
+
+- `VALIDATED != DISPENSED`;
+- una validación sin dispensación posterior no cuenta como nuevo inicio del período;
+- no inferir dispensación desde Primera Visita, tratamiento actual, solicitud, nombre del fármaco ni ausencia de datos;
+- la proyección raw actual no expone una dimensión de dispensación explícita; por tanto la demo puede usar un fixture sintético específico que sí registre este hecho, sin presentarlo como dato disponible hoy en una fuente real;
+- para intensificación q4w→q2w se exige movimiento explícito. El evento/fecha exactos de efectividad/primera dispensación bajo nueva pauta deben quedar explícitos en el contrato antes de usar fuentes no sintéticas.
+
+El informe cuenta pacientes/eventos de inicio según contrato, **no unidades dispensadas**.
+
+### Evolución V2
+
+Los presets versionados siguen siendo la dirección durable. Después de V1 podrán evolucionar a filtros/presets guardados, reutilizables y compartibles. Un futuro Control Plane podría administrarlos, pero no se construye para la demo y nunca debe convertir el reporting en fuente de verdad clínica.
 
 ## 5. `SIL-REV-004` — simplificación del circuito prebiológico Reuma
 
@@ -248,20 +275,22 @@ Clasificación: **capacidad histórica parcialmente perdida/reducida**. No es pr
 
 ## 12-B. `SIL-REV-019` — reporting recurrente y presets reutilizables (extiende `SIL-REV-002/003`)
 
-Estado `PROPOSED`. Requisito durable que amplía los presets de `SIL-REV-002` y el reporte trimestral de `SIL-REV-003` sin duplicarlos:
+Estado `DIRECTION_DECIDED / V2_DEFERRED`.
 
-- presets versionados de informes recurrentes y filtros guardados/reutilizables;
-- ventana temporal explícita;
-- población/indicación explícita;
-- fármaco y principio activo explícitos;
-- dosis/pauta/frecuencia sólo cuando consten explícitamente en la fuente;
+V1 no es un “reporte intermedio”: entrega un informe Cosentyx completo y reproducible. La evolución V2 amplía el mismo seam:
+
+- presets versionados de informes recurrentes;
+- filtros guardados/reutilizables;
+- posibilidad futura de compartir presets entre profesionales/equipo con gobierno explícito;
+- ventana temporal, población/indicación y fármaco/principio activo explícitos;
+- dosis/pauta/frecuencia sólo cuando consten explícitamente;
 - evento terapéutico explícito (inicio, intensificación, switch), nunca inferido;
 - salida/exportación reproducible;
 - el dashboard/reporting no se convierte en fuente de verdad clínica.
 
-Primer caso (se mantiene desde `SIL-REV-003`), Cosentyx trimestral: PsO/PsA con nuevos inicios explícitos dentro del trimestre; HS con q2w explícito, distinguiendo —sólo cuando conste realmente— inicio directo q2w de intensificación explícita q4w→q2w.
+El primer preset continúa siendo Cosentyx trimestral. Para `nuevo inicio`, la ventana se ancla a **primera dispensación explícita**. Para q2w/q4w, la pauta debe constar explícitamente; una intensificación requiere movimiento explícito. Si un hecho requerido no consta, queda desconocido/fuera del conteo según contrato, nunca se fabrica.
 
-Se añade explícitamente: el reporting debe poder distinguir q2w / q4w / otras frecuencias desde la pauta registrada en la fuente, **sin inferirlas desde el nombre del fármaco**, tratamiento actual o ausencia de datos. Si la frecuencia no consta, el caso permanece como desconocido o fuera del conteo según el contrato que se freeze.
+El Control Plane configurable se considera una evolución posterior del almacenamiento/administración de presets, no una dependencia de V1.
 
 ## 12-C. `SIL-REV-020` — medicación especial FH
 
