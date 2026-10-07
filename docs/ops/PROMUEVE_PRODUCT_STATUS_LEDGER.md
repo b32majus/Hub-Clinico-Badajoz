@@ -5,8 +5,8 @@
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**Base canónica verificada para esta reconciliación:** `663df88993365463e42e419067ffdc771c7d0636` (merge PR #571, último HEAD de producto verificado); incluye #541/PR #567 y #545/PR #571 como cierre compuesto RAPID3
-**Último HEAD de producto Nexus verificado:** `663df88993365463e42e419067ffdc771c7d0636` (PR #571 / #545 — shared collapsible dynamic-height); candidate `4fd264a8d67bb534e879cf55e51f86c1219105a1`
+**Base canónica verificada para esta reconciliación:** `cdb5b6bd65b9cf2190f4b9d5e04ed68c9c584b3f` (merge PR #580, último HEAD de producto verificado); incluye #575 Home NEXus → Farmacia y conserva #541/#545 en ancestry
+**Último HEAD de producto Nexus verificado:** `cdb5b6bd65b9cf2190f4b9d5e04ed68c9c584b3f` (PR #580 / #575 — Home NEXus → Farmacia soportado en deployment sintético); candidate `ed3e00f97cbc34199b4aa56fcbeb05230d1bf92f`
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
@@ -157,7 +157,7 @@ Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10)
 
 | Capacidad / decisión | Estado | Evidencia publicada | Siguiente gate / nota |
 | --- | --- | --- | --- |
-| Home Nexus → Farmacia | `REQUISITO_DECIDIDO_PENDIENTE` | #575; registry actual ya apunta a `farmacia_index.html` | El deployment sintético mantiene Farmacia `IMPLEMENTED_NOT_QUALIFIED / available=false`. Gate: cualificación explícita del deployment + navegación browser soportada; no bypass de readiness. |
+| Home Nexus → Farmacia | `RESUELTO / PUBLICADO` | #575 / PR #580; candidate `ed3e00f97...` → merge `cdb5b6bd...` | Deployment sintético: Farmacia `QUALIFIED_FOR_SITE / available=true` con evidencia explícita de demo sintética; navegación soportada Home → `farmacia_index.html`, same-tab + Back demostrados. No cualifica hospital real, piloto ni producción. |
 | F4.1 contrato read DTO V2 | `IMPLEMENTADO` | #427 / PR #430 | Publicado. |
 | F4.2 facade async + vertical Inicio/Quick View | `IMPLEMENTADO` | #428 / PR #430 | Publicado y QA sintético. |
 | F4.3 lecturas Dashboard/Validación/PV/Seguimiento/Estadísticas/Inicio/Actividad/review detrás de seams | `IMPLEMENTADO` | #470/#475, PR #474/#478 | Completado; PV-001 descubierto después ya está resuelto. |
