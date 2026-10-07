@@ -1555,9 +1555,8 @@ function entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, t
         manualNotification: 'No se pudo copiar autom\u00e1ticamente. Use la ventana de copia manual.'
     }).then(function(result) {
         console.log('\u2713 Datos copiados al portapapeles');
-        if (typeof HubTools !== 'undefined' && HubTools.utils && HubTools.utils.mostrarNotificacion) {
-            HubTools.utils.mostrarNotificacion('Datos copiados al portapapeles. Pega en la hoja: ' + hojaExcel, 'success');
-        }
+        // T3 #583: sin toast generico de exito; el checklist post-export es
+        // la UX de exito. Se conservan errores, fallback y reintento.
         mostrarChecklistPostExport(hojaExcel);
     }).catch(function(err) {
         console.error('\u274c Error al copiar al portapapeles:', err);
