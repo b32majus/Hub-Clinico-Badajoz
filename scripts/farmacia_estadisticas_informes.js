@@ -90,7 +90,7 @@
             tr.appendChild(el('td', '', row.pathology));
             tr.appendChild(el('td', '', row.case_type));
             tr.appendChild(el('td', '', row.fact_date));
-            tr.appendChild(el('td', '', row.regime || 'No registrado'));
+            tr.appendChild(el('td', '', Informe.regimeDisplay(row.regime)));
             body.appendChild(tr);
         });
     }

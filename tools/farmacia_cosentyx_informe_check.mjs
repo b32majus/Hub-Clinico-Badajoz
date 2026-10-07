@@ -252,6 +252,79 @@ check('regime: explicitly unknown (null) vs absent field stay non-classifiable a
     }
 });
 
+/* 5c. F1 — Gate 2 presentation projection (shared formatter, UI + XLSX).
+ * Adversarial witness: the SAME included PsO start computed twice, once with
+ * initial_regime = null (explicitly unknown) and once with the field absent.
+ * The checker-local variants never touch the demo fixture population. */
+check('presentation: shared regimeDisplay formatter maps the three model states to three distinct labels', () => {
+    assert.equal(typeof Informe.regimeDisplay, 'function',
+        'the shared formatter must be exposed on the model global');
+    assert.equal(Informe.regimeDisplay('q2w'), 'q2w', 'in-vocabulary explicit string verbatim');
+    assert.equal(Informe.regimeDisplay('q6w'), 'q6w', 'out-of-vocabulary explicit string verbatim');
+    assert.equal(Informe.regimeDisplay(null), 'Desconocido', 'null = explicitly unknown');
+    assert.equal(Informe.regimeDisplay(undefined), 'No registrado', 'undefined = absent fact');
+    assert.notEqual(Informe.regimeDisplay(null), Informe.regimeDisplay(undefined),
+        'unknown and absent must not collapse at presentation time');
+});
+check('presentation F1 witness: null vs absent regime stay distinct through model -> formatter -> XLSX Detalle; counts unchanged', () => {
+    const withNull = cloneFixture();
+    withNull.patients.find(patient => patient.patient_id === 'COS-PSO-001').initial_regime = null;
+    const withAbsent = cloneFixture();
+    delete withAbsent.patients.find(patient => patient.patient_id === 'COS-PSO-001').initial_regime;
+    const nullReport = Informe.computeReport(withNull, '2026-Q1');
+    const absentReport = Informe.computeReport(withAbsent, '2026-Q1');
+    /* Model states remain distinct (null vs undefined) in the detail rows. */
+    const nullRow = nullReport.detail_rows.find(row => row.patient_id === 'COS-PSO-001');
+    const absentRow = absentReport.detail_rows.find(row => row.patient_id === 'COS-PSO-001');
+    assert.ok(nullRow && absentRow, 'the PsO start is included in both variants');
+    assert.equal(nullRow.regime, null);
+    assert.equal(absentRow.regime, undefined);
+    assert.notEqual(nullRow.regime, absentRow.regime, 'model states remain distinguishable');
+    /* The presentation formatter returns different labels for the two states. */
+    const nullLabel = Informe.regimeDisplay(nullRow.regime);
+    const absentLabel = Informe.regimeDisplay(absentRow.regime);
+    assert.equal(nullLabel, 'Desconocido');
+    assert.equal(absentLabel, 'No registrado');
+    assert.notEqual(nullLabel, absentLabel);
+    /* Classification counts are NOT changed by display formatting. */
+    assert.deepEqual(nullReport.counts_by_category, EXPECTED['2026-Q1'].counts);
+    assert.deepEqual(absentReport.counts_by_category, EXPECTED['2026-Q1'].counts);
+    assert.equal(nullReport.unique_patient_count, EXPECTED['2026-Q1'].unique);
+    assert.equal(absentReport.unique_patient_count, EXPECTED['2026-Q1'].unique);
+    /* XLSX Detalle contains the corresponding different labels. */
+    function detalleRowFor(report) {
+        const buffer = Informe.buildWorkbook(report, XLSX);
+        const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+        return rows.find(row => row[0] === 'COS-PSO-001');
+    }
+    const nullCell = detalleRowFor(nullReport);
+    const absentCell = detalleRowFor(absentReport);
+    assert.equal(nullCell[4], 'Desconocido', 'explicitly unknown exported as Desconocido');
+    assert.equal(absentCell[4], 'No registrado', 'absent fact exported as No registrado');
+    assert.notEqual(nullCell[4], absentCell[4], 'XLSX Detalle keeps the states distinct');
+});
+check('presentation F1 witness: explicit q6w stays verbatim in the XLSX Detalle of the real fixture report', () => {
+    const buffer = Informe.buildWorkbook(reports['2026-Q1'], XLSX);
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+    const q6wRow = rows.find(row => row[0] === 'COS-PSO-001');
+    assert.ok(q6wRow, 'COS-PSO-001 is a PsO start in Q1');
+    assert.equal(q6wRow[4], 'q6w', 'out-of-vocabulary explicit regime never collapses to a fallback label');
+});
+check('presentation: single shared formatter — UI and workbook projections must not re-implement a collapsing fallback', () => {
+    const uiSource = readFileSync(path.join(ROOT, 'scripts/farmacia_estadisticas_informes.js'), 'utf8');
+    assert.ok(uiSource.includes('Informe.regimeDisplay('),
+        'the UI detail table must render through the shared formatter');
+    assert.equal(/row\.regime\s*\|\|/.test(uiSource), false,
+        'the UI must not collapse regimes with a || fallback');
+    const modelSource = readFileSync(path.join(ROOT, 'scripts/farmacia_cosentyx_informe_model.js'), 'utf8');
+    assert.equal(/row\.regime\s*\|\|/.test(modelSource), false,
+        'buildWorkbook must not collapse regimes with a || fallback');
+    assert.ok(modelSource.includes('regimeDisplay(row.regime)'),
+        'buildWorkbook must export through the shared formatter');
+});
+
 /* 6. Mandatory negatives never classified. */
 check('negatives: validation-only / current-treatment-only / q4w-without-movement / unknown regime never included', () => {
     for (const quarter of QUARTERS) {

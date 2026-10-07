@@ -15,6 +15,9 @@
  *   'q2w'/'q4w' classify; an explicitly recorded out-of-vocabulary value stays
  *   non-classifiable but must not be collapsed into the unknown label.
  *   null = explicitly unknown regime; omitted field = absent fact.
+ *   regimeDisplay() is the single shared presentation projection for BOTH
+ *   visible projections (UI detail table and XLSX Detalle): explicit strings
+ *   verbatim, null -> 'Desconocido', undefined/absent -> 'No registrado'.
  * - Total unique patients = cardinality of unique patient_id over included
  *   detail rows, never a blind sum of category counts.
  */
@@ -98,6 +101,22 @@
          * out of the {q2w,q4w} vocabulary), null = explicitly unknown, omitted
          * field = absent. Classification below only ever accepts exact 'q2w'. */
         return patient.initial_regime;
+    }
+
+    /* Shared presentation projection (Gate 2, F1): the ONE formatter used by
+     * the UI detail table and the XLSX Detalle, so the two visible projections
+     * cannot drift and can never re-collapse the model's three states.
+     * - explicit string (in or out of vocabulary, e.g. 'q6w') -> verbatim;
+     * - null (explicitly unknown) -> 'Desconocido';
+     * - undefined / omitted field (absent fact) -> 'No registrado'.
+     * Purely presentational: its output never feeds classification. */
+    var REGIME_UNKNOWN_LABEL = 'Desconocido';
+    var REGIME_ABSENT_LABEL = 'No registrado';
+
+    function regimeDisplay(regime) {
+        if (regime === null) return REGIME_UNKNOWN_LABEL;
+        if (regime === undefined) return REGIME_ABSENT_LABEL;
+        return regime;
     }
 
     function computeReport(fixture, quarterKey) {
@@ -218,7 +237,7 @@
                 row.pathology,
                 row.case_type,
                 row.fact_date,
-                row.regime || 'No registrado'
+                regimeDisplay(row.regime)
             ]);
         });
 
@@ -234,6 +253,7 @@
         CATEGORIES: Object.freeze(CATEGORIES.map(function (category) { return Object.freeze(category); })),
         quarterRange: quarterRange,
         listQuarters: listQuarters,
+        regimeDisplay: regimeDisplay,
         computeReport: computeReport,
         buildWorkbook: buildWorkbook
     });
