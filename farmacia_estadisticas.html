@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260612-visibility-a">
-    <link rel="stylesheet" href="farmacia_style.css?v=20260612-visibility-a">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261007-cosentyx-576-r1">
 </head>
 <body>
     <div class="hub-shell">
@@ -85,9 +85,9 @@
             </div>
 
             <!-- 1. Header de página con resumen ejecutivo -->
-            <div class="stats-note" id="statsImportNotice" role="note"><i class="fas fa-info-circle" aria-hidden="true"></i> Demo sintética versionada. Datos inventados para evaluación; no usar en decisiones clínicas.</div>
+            <div class="stats-note stats-population-only" id="statsImportNotice" role="note"><i class="fas fa-info-circle" aria-hidden="true"></i> Demo sintética versionada. Datos inventados para evaluación; no usar en decisiones clínicas.</div>
 
-            <section class="stats-hero-header">
+            <section class="stats-hero-header stats-population-only">
                 <div class="stats-hero-main">
                     <div class="stats-hero-icon">
                         <i class="fas fa-chart-bar" aria-hidden="true"></i>
@@ -119,13 +119,45 @@
                 </div>
             </section>
 
+            <!-- Vistas: análisis poblacional / informes (#576) -->
+            <section class="stats-view-switcher-section" id="stats-view-switcher-section">
+                <div class="stats-view-switcher" role="group" aria-label="Vistas de Estadísticas">
+                    <button type="button" class="btn btn-outline stats-view-btn" id="population-view-btn" aria-pressed="true"><i class="fas fa-users" aria-hidden="true"></i> Análisis poblacional</button>
+                    <button type="button" class="btn btn-outline stats-view-btn" id="informes-view-btn" aria-pressed="false"><i class="fas fa-file-excel" aria-hidden="true"></i> Informes</button>
+                </div>
+            </section>
+
+            <!-- Informes (#576): superficie separada del análisis poblacional.
+                 Informe trimestral Cosentyx calculado desde un fixture sintético dedicado. -->
+            <section id="informes-section" class="dashboard-card informes-section" aria-labelledby="informes-title">
+                <div class="informes-header">
+                    <div>
+                        <h2 class="card-title" id="informes-title"><i class="fas fa-file-excel" aria-hidden="true"></i> Informe trimestral Cosentyx</h2>
+                        <p class="informes-subtitle">Informe de demostración calculado exclusivamente desde un fixture sintético dedicado. La proyección raw actual no contiene hechos de dispensación; este informe no es una capacidad de la fuente real.</p>
+                    </div>
+                    <div class="informes-controls">
+                        <label for="informes-quarter-select" class="informes-quarter-label">Trimestre</label>
+                        <select id="informes-quarter-select" class="informes-quarter-select"></select>
+                        <button type="button" class="btn btn-primary" id="informes-download-xlsx"><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                    </div>
+                </div>
+                <p class="informes-notice" id="informes-synthetic-notice" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Datos sintéticos específicos del informe</p>
+                <div class="informes-kpi-grid" id="informes-kpis"></div>
+                <div class="table-responsive-wrapper">
+                    <table id="informes-detail-table" class="data-table stats-data-table">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
             <!-- 2. 6 KPI cards ejecutivas -->
-            <section class="stats-kpi-section" id="kpi-section">
+            <section class="stats-kpi-section stats-population-only" id="kpi-section">
                 <div class="stats-kpi-grid" id="kpi-grid"></div>
             </section>
 
             <!-- 3. Filtros rápidos (siempre visibles, dropdowns compactos) -->
-            <section class="stats-quick-filters-section" id="quick-filters-section">
+            <section class="stats-quick-filters-section stats-population-only" id="quick-filters-section">
                 <div class="stats-quick-filters-row">
                     <div class="stats-quick-filter-group">
                         <label for="qf-servicio" class="stats-quick-filter-label">Servicio</label>
@@ -167,7 +199,7 @@
             </section>
 
             <!-- 4. Chips de cohorte actual / filtros activos -->
-            <section class="stats-cohort-section" id="cohort-section">
+            <section class="stats-cohort-section stats-population-only" id="cohort-section">
                 <div class="stats-cohort-header">
                     <div class="stats-cohort-label">
                         <i class="fas fa-users"></i> Cohorte actual:
@@ -179,7 +211,7 @@
             </section>
 
             <!-- 6. 4 bloques de gráficos agrupados por pregunta analítica -->
-            <section class="stats-charts-section" id="charts-section">
+            <section class="stats-charts-section stats-population-only" id="charts-section">
                 <div class="stats-charts-grid" id="charts-grid">
                     <div class="stats-chart-block" id="chart-block-quienes">
                         <h3 class="stats-chart-block-title">¿Quiénes son?</h3>
@@ -201,7 +233,7 @@
             </section>
 
             <!-- 9. Estado vacío elegante -->
-            <section id="no-results-message" class="hidden">
+            <section id="no-results-message" class="hidden stats-population-only">
                 <div class="stats-empty-state">
                     <div class="stats-empty-state-icon">
                         <i class="fas fa-search" aria-hidden="true"></i>
@@ -213,7 +245,7 @@
             </section>
 
             <!-- 7. Tabla de pacientes filtrados -->
-            <section id="patients-table-section" class="dashboard-card stats-table-section">
+            <section id="patients-table-section" class="dashboard-card stats-table-section stats-population-only">
                 <div class="stats-table-header">
                     <h2 class="card-title stats-table-title"><i class="fas fa-table"></i> Pacientes incluidos en la cohorte filtrada</h2>
                     <button type="button" class="btn btn-sm btn-outline" id="customizeColumnsBtn"><i class="fas fa-columns"></i> Personalizar columnas</button>
@@ -243,5 +275,9 @@
     <script src="scripts/farmacia_patient_read_contract_v2.js?v=20260806-patient-read-facade-r1"></script>
     <script src="scripts/farmacia_patient_read_facade_v2.js?v=20260806-patient-read-facade-r1"></script>
     <script src="scripts/farmacia_estadisticas.js?v=20260930-f43c-r1"></script>
+    <script src="vendor/sheetjs/xlsx.full.min.js?v=20261007-cosentyx-576-r1"></script>
+    <script src="scripts/farmacia_cosentyx_informe_fixture.js?v=20261007-cosentyx-576-r1"></script>
+    <script src="scripts/farmacia_cosentyx_informe_model.js?v=20261007-cosentyx-576-r1"></script>
+    <script src="scripts/farmacia_estadisticas_informes.js?v=20261007-cosentyx-576-r1"></script>
 </body>
 </html>
