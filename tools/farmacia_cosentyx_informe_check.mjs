@@ -25,12 +25,14 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
 /* Hand-derived expectations from the fixture contract.
  *
  * Fixture witnesses (by construction):
- * - COS-PSO-001 first dispensing 2026-01-05                -> Q1 PsO start
+ * - COS-PSO-001 first dispensing 2026-03-31 (Q1 LAST day, classifiable)     -> Q1 PsO start
+ *   with explicit regime 'q6w' (out of {q2w,q4w}) preserved verbatim, never classifying
  * - COS-PSO-002 first dispensing 2026-04-01 (Q2 boundary)  -> Q2 PsO start
  * - COS-PSO-003 validation 2026-04-05, NO dispensing       -> never a start
  * - COS-PSO-004 first dispensing 2026-07-03                -> Q3 PsO start
  * - COS-PSA-001 first dispensing 2026-04-10                -> Q2 PsA start
- * - COS-PSA-002 current treatment, NO dispensing           -> never a start
+ * - COS-PSA-002 current treatment, NO dispensing; initial_regime omitted (absent)
+ *                                                          -> never a start
  * - COS-HS-001  first dispensing 2026-02-01, regime q2w    -> Q1 HS q2w start
  * - COS-HS-002  first dispensing 2026-03-31 (Q1 boundary) at q4w -> no HS q2w start;
  *               movement q4w->q2w effective 2026-06-30 (Q2 boundary) -> Q2 intensification
@@ -38,14 +40,14 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
  *               movements q2w->q4w 2026-04-20 and q4w->q2w 2026-05-15 -> Q2 intensification
  *               (same patient, two inclusion facts -> blind sum != unique total in Q2)
  * - COS-HS-004  first dispensing 2026-04-03 at q4w, no movement -> never intensification
- * - COS-HS-005  first dispensing 2026-04-07, regime unknown -> non-classifiable
+ * - COS-HS-005  first dispensing 2026-04-07, regime explicitly unknown (null) -> non-classifiable
  */
 const EXPECTED = {
     '2026-Q1': {
         counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 1, hs_intensification: 0 },
         unique: 2,
         rows: [
-            ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-01-05', 'q4w'],
+            ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-03-31', 'q6w'],
             ['COS-HS-001', 'HS', 'HS — nuevo inicio q2w', '2026-02-01', 'q2w']
         ]
     },
@@ -92,6 +94,12 @@ function rowTuples(report) {
         [row.patient_id, row.pathology, row.case_type, row.fact_date, row.regime]);
 }
 
+/* Deep clone for model-level variant probes; JSON keeps explicit nulls and
+ * drops nothing else we rely on (all fixture facts are JSON-representable). */
+function cloneFixture() {
+    return JSON.parse(JSON.stringify(Fixture));
+}
+
 /* 1. Fixture contract: provenance + every mandatory negative witness exists. */
 check('fixture: synthetic provenance', () => {
     assert.equal(Fixture.synthetic, true);
@@ -122,7 +130,7 @@ check('fixture: unknown-regime witness (missing fact stays unknown)', () => {
     const patient = Fixture.patients.find(p => p.patient_id === 'COS-HS-005');
     assert.ok(patient, 'COS-HS-005 must exist');
     assert.equal(typeof patient.first_dispensing_at, 'string');
-    assert.equal(patient.initial_regime, null, 'regime fact is absent, not filled');
+    assert.equal(patient.initial_regime, null, 'null = explicitly unknown regime, not filled from convenience');
 });
 
 /* 2. Quarter selector derived from fixture facts; closed temporal ranges. */
@@ -174,10 +182,13 @@ check('boundary: dispensing on Q2 first day (2026-04-01) belongs to Q2, not Q1',
     assert.ok(row, 'COS-PSO-002 must be included in Q2');
     assert.equal(row.fact_date, '2026-04-01');
 });
-check('boundary: dispensing on Q1 last day (2026-03-31) does not leak into Q2', () => {
-    assert.ok(reports['2026-Q2'].detail_rows.every(row => row.patient_id !== 'COS-HS-001'));
-    assert.ok(reports['2026-Q1'].detail_rows.some(row =>
-        row.patient_id === 'COS-HS-001' && row.fact_date === '2026-02-01'));
+check('boundary: classifiable new start on Q1 last day (2026-03-31) is included in Q1 with fact_date 2026-03-31, not in Q2', () => {
+    const q1Row = reports['2026-Q1'].detail_rows.find(row => row.patient_id === 'COS-PSO-001');
+    assert.ok(q1Row, 'COS-PSO-001 classifiable new start must be included in Q1');
+    assert.equal(q1Row.fact_date, '2026-03-31', 'fact_date is exactly the quarter final day');
+    assert.equal(q1Row.case_type, 'PsO — nuevo inicio');
+    assert.ok(reports['2026-Q2'].detail_rows.every(row => row.patient_id !== 'COS-PSO-001'),
+        'Q1 last-day new start must not leak into the adjacent quarter Q2');
 });
 check('boundary: movement effective on Q2 last day (2026-06-30) is a Q2 intensification, not Q3', () => {
     const q2Row = reports['2026-Q2'].detail_rows.find(row => row.patient_id === 'COS-HS-002');
@@ -188,6 +199,57 @@ check('boundary: movement effective on Q2 last day (2026-06-30) is a Q2 intensif
 });
 check('boundary: q4w start on Q1 last day is NOT an HS q2w start', () => {
     assert.ok(reports['2026-Q1'].detail_rows.every(row => row.patient_id !== 'COS-HS-002'));
+});
+
+/* 5b. Gate 2 — regime evidence representation: recorded values survive
+ * verbatim; null = explicitly unknown and omitted field = absent; both stay
+ * non-classifiable (fail-closed) and both remain distinguishable. */
+check('regime: recorded out-of-vocabulary value survives verbatim into the detail row and never classifies', () => {
+    const q1Row = reports['2026-Q1'].detail_rows.find(row => row.patient_id === 'COS-PSO-001');
+    assert.ok(q1Row, 'COS-PSO-001 is a PsO start regardless of its regime');
+    assert.equal(q1Row.regime, 'q6w', 'explicitly recorded regime preserved verbatim, not collapsed to unknown');
+    assert.equal(rowTuples(reports['2026-Q1']).some(tuple => tuple[4] === 'No registrado'), false,
+        'no recorded value may be erased into the unknown label');
+    /* Classification gate stays closed: an HS dispensing with an explicit
+     * out-of-vocabulary regime is never an HS q2w start nor any other case. */
+    const variant = cloneFixture();
+    variant.patients.find(patient => patient.patient_id === 'COS-HS-001').initial_regime = 'q6w';
+    const q1 = Informe.computeReport(variant, '2026-Q1');
+    assert.ok(q1.detail_rows.every(row => row.patient_id !== 'COS-HS-001'),
+        'out-of-vocabulary explicit regime must not classify as an HS q2w start');
+    assert.equal(q1.counts_by_category.hs_start_q2w, 0);
+});
+check('regime: explicitly unknown (null) vs absent field stay non-classifiable and remain distinguishable', () => {
+    /* Fixture representation keeps both states distinct. */
+    const unknown = Fixture.patients.find(patient => patient.patient_id === 'COS-HS-005');
+    assert.equal(unknown.initial_regime, null, 'null = explicitly unknown regime');
+    const absent = Fixture.patients.find(patient => patient.patient_id === 'COS-PSA-002');
+    assert.ok(!('initial_regime' in absent), 'omitted field = absent, not null');
+    /* Model representation: the detail row preserves null vs undefined. */
+    const withNull = cloneFixture();
+    withNull.patients.find(patient => patient.patient_id === 'COS-PSO-001').initial_regime = null;
+    const withAbsent = cloneFixture();
+    delete withAbsent.patients.find(patient => patient.patient_id === 'COS-PSO-001').initial_regime;
+    const nullRow = Informe.computeReport(withNull, '2026-Q1').detail_rows
+        .find(row => row.patient_id === 'COS-PSO-001');
+    const absentRow = Informe.computeReport(withAbsent, '2026-Q1').detail_rows
+        .find(row => row.patient_id === 'COS-PSO-001');
+    assert.equal(nullRow.regime, null, 'explicitly unknown stays null in the row');
+    assert.equal(absentRow.regime, undefined, 'absent fact stays undefined in the row');
+    assert.notEqual(nullRow.regime, absentRow.regime, 'unknown and absent remain distinguishable');
+    /* Both fail closed: HS with unknown OR absent regime never becomes an HS q2w start. */
+    const mutations = [
+        fixture => { fixture.patients.find(patient => patient.patient_id === 'COS-HS-001').initial_regime = null; },
+        fixture => { delete fixture.patients.find(patient => patient.patient_id === 'COS-HS-001').initial_regime; }
+    ];
+    for (const mutate of mutations) {
+        const variant = cloneFixture();
+        mutate(variant);
+        const report = Informe.computeReport(variant, '2026-Q1');
+        assert.ok(report.detail_rows.every(row => row.patient_id !== 'COS-HS-001'),
+            'unknown/absent regime never classifies as an HS q2w start');
+        assert.equal(report.counts_by_category.hs_start_q2w, 0);
+    }
 });
 
 /* 6. Mandatory negatives never classified. */

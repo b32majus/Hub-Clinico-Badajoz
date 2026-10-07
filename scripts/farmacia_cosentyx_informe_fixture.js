@@ -13,7 +13,9 @@
  * - first_dispensing_at: explicit first Cosentyx dispensing (ISO date-only) or null
  * - validated_at: explicit validation fact when present or null (VALIDATED != DISPENSED)
  * - current_treatment: explicit current-treatment flag (never a dispensing surrogate)
- * - initial_regime: explicit starting regime ('q2w' | 'q4w') or null when unknown
+ * - initial_regime: explicitly recorded starting regime, preserved verbatim.
+ *   Only 'q2w'/'q4w' classify; any other explicit value stays non-classifiable.
+ *   null = explicitly unknown regime; omitted field = absent fact.
  * - regime_movements: explicit movements { from, to, effective_at }
  */
 (function (root) {
@@ -27,10 +29,13 @@
 
     var PATIENTS = [
         /* PsO — nuevos inicios */
+        /* Régimen explícito fuera del vocabulario {q2w,q4w}: se conserva
+           verbatim en la fila y nunca clasifica; inicio en el último día de
+           Q1 (testigo de borde final inclusivo clasificable). */
         {
             patient_id: 'COS-PSO-001', pathology: 'PsO', drug: 'Cosentyx',
-            first_dispensing_at: '2026-01-05', validated_at: null, current_treatment: false,
-            initial_regime: 'q4w', regime_movements: []
+            first_dispensing_at: '2026-03-31', validated_at: null, current_treatment: false,
+            initial_regime: 'q6w', regime_movements: []
         },
         {
             patient_id: 'COS-PSO-002', pathology: 'PsO', drug: 'Cosentyx',
@@ -54,11 +59,12 @@
             first_dispensing_at: '2026-04-10', validated_at: null, current_treatment: false,
             initial_regime: 'q2w', regime_movements: []
         },
-        /* Negativo: tratamiento actual sin primera dispensación explícita -> no es nuevo inicio. */
+        /* Negativo: tratamiento actual sin primera dispensación explícita -> no es nuevo inicio.
+           initial_regime omitido: campo ausente (distinto de null = desconocido explícito). */
         {
             patient_id: 'COS-PSA-002', pathology: 'PsA', drug: 'Cosentyx',
             first_dispensing_at: null, validated_at: null, current_treatment: true,
-            initial_regime: null, regime_movements: []
+            regime_movements: []
         },
         /* HS — nuevos inicios q2w e intensificaciones */
         {

@@ -7,9 +7,14 @@
  * - VALIDATED != DISPENSED: only an explicit first Cosentyx dispensing anchors
  *   a new start; validation-only or current-treatment-only is NOT a new start.
  * - HS q2w start: explicit first dispensing inside the quarter AND explicit
- *   q2w regime at start; an unknown regime stays non-classifiable.
+ *   q2w regime at start; an unknown or absent regime stays non-classifiable.
  * - HS intensification: explicit q4w -> q2w movement with effective_at inside
  *   the quarter.
+ * - Gate 2 (representation narrowing): the recorded regime is evidence and is
+ *   preserved verbatim in the detail row. Only the exact vocabulary values
+ *   'q2w'/'q4w' classify; an explicitly recorded out-of-vocabulary value stays
+ *   non-classifiable but must not be collapsed into the unknown label.
+ *   null = explicitly unknown regime; omitted field = absent fact.
  * - Total unique patients = cardinality of unique patient_id over included
  *   detail rows, never a blind sum of category counts.
  */
@@ -88,8 +93,11 @@
         return Object.keys(seen).sort();
     }
 
-    function explicitRegime(value) {
-        return value === 'q2w' || value === 'q4w' ? value : null;
+    function explicitRegime(patient) {
+        /* Gate 2: preserve the recorded regime verbatim (explicit strings in or
+         * out of the {q2w,q4w} vocabulary), null = explicitly unknown, omitted
+         * field = absent. Classification below only ever accepts exact 'q2w'. */
+        return patient.initial_regime;
     }
 
     function computeReport(fixture, quarterKey) {
@@ -111,7 +119,7 @@
             var firstDispensing = patient.first_dispensing_at
                 ? assertDateOnly(patient.first_dispensing_at, patient.patient_id)
                 : null;
-            var initialRegime = explicitRegime(patient.initial_regime);
+            var initialRegime = explicitRegime(patient);
             var startsInQuarter = !!firstDispensing && inInclusiveRange(firstDispensing, range);
 
             if (startsInQuarter && patient.pathology === 'PsO') {
