@@ -6399,3 +6399,119 @@
         min-height: 0;
     }
 }
+
+/* #576 Informe trimestral Cosentyx — superficie Informes separada del análisis poblacional */
+
+.stats-view-switcher-section {
+    margin: 18px 0 0;
+}
+
+.stats-view-switcher {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.stats-view-btn[aria-pressed="true"] {
+    background: #1D4ED8;
+    border-color: #1D4ED8;
+    color: #FFFFFF;
+}
+
+main.farmacia-informes-mode .stats-population-only {
+    display: none !important;
+}
+
+.informes-section {
+    display: none;
+    margin-top: 18px;
+}
+
+main.farmacia-informes-mode .informes-section {
+    display: block;
+}
+
+.informes-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.informes-subtitle {
+    margin: 6px 0 0;
+    max-width: 640px;
+    color: #64748B;
+    font-size: 0.85rem;
+}
+
+.informes-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.informes-quarter-label {
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.informes-quarter-select {
+    min-width: 130px;
+    padding: 8px 10px;
+    border: 1px solid #CBD5E1;
+    border-radius: 8px;
+    background: #FFFFFF;
+}
+
+.informes-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    border: 1px solid #FCD34D;
+    border-radius: 8px;
+    background: #FFFBEB;
+    color: #92400E;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.informes-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.informes-kpi {
+    padding: 12px 14px;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    background: #F8FAFC;
+}
+
+.informes-kpi-label {
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.informes-kpi-value {
+    margin-top: 4px;
+    color: #0F172A;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.informes-kpi--total {
+    border-color: #C7D2FE;
+    background: #EEF2FF;
+}
