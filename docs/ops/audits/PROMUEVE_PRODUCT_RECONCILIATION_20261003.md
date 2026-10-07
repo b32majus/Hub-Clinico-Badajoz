@@ -252,17 +252,24 @@ Ya existe autoridad previa:
 - #236 describió un Office Script Processor idempotente para transformar raw en tablas relacionadas, pero no un router de entrada;
 - #365 demostró un workbook Enfermería v6 multihoja con servicio/hoja explícitos e identidad estable.
 
-La evolución propuesta (#577) añade **delante** del Processor una capa de routing:
+La aclaración humana posterior del 2026-10-07 corrige el alcance de #577: **no se decide todavía que deba existir una capa de routing física por patología**.
 
-- recibe servicio/patología explícitos desde el formulario/payload;
-- resuelve un mapping versionado a hoja/tabla de destino;
-- escribe sólo en un destino soportado;
-- falla cerrado ante servicio/patología no reconocidos;
-- no deduce el destino desde fármaco, texto clínico, catálogo, tratamiento previo o ausencia;
-- puede usar Office Script en la fase Excel si el shaping lo confirma;
-- el contrato de entrada debe permanecer válido cuando el backend futuro deje de ser Excel y pase a API/DB.
+Hay dos situaciones distintas que deben compararse:
 
-#577 queda en `DISCOVERY / IMPLEMENTATION_AUTHORITY=NO`. No reactiva #236 ni modifica el Architecture Decision Freeze.
+1. **Reumatología:** el workbook inicial 1.0 estaba físicamente separado por patologías (AR, EspA, LES, etc.). Si esa partición sigue siendo necesaria, una entrada única con patología explícita podría resolver la hoja adecuada y reducir el riesgo de escritura manual en la hoja equivocada.
+2. **Farmacia / Excel Bridge V4:** el patrón raw append-only + Processor → tablas relacionales comunes puede hacer innecesario cualquier routing físico por patología. En ese caso, añadir otra capa sería complejidad sin valor.
+
+Por tanto, #577 debe decidir entre **routing físico por patología** y **entrada común + servicio/patología explícitos + procesamiento relacional**, pudiendo la respuesta variar por módulo/site.
+
+Invariantes ya válidos:
+
+- servicio/patología vienen explícitos del formulario/payload cuando sean necesarios;
+- no se infieren desde fármaco, texto clínico, catálogo, tratamiento previo o ausencia;
+- sólo existe mapping a hoja/tabla si el diseño físico realmente lo exige;
+- mapping desconocido falla cerrado;
+- el contrato de entrada debe poder sobrevivir a Excel → API/DB.
+
+#577 queda en `DISCOVERY / IMPLEMENTATION_AUTHORITY=NO`, fuera de la demo inmediata. No reactiva #236 ni modifica el Architecture Decision Freeze.
 
 ## 4. Dermatología — cambio de contexto de producto
 
