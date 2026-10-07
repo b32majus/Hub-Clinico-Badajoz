@@ -1,12 +1,12 @@
 # PROMueve Nexus — Ledger vivo de estado funcional
 
-**Última actualización:** 2026-10-06
+**Última actualización:** 2026-10-07
 **Estado:** `LIVE / PRE-BADAJOZ`
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**Base canónica verificada para esta reconciliación:** `6dfe34a15bfa145076ae7c80fbee6aac3b628923` (merge PR #567, último HEAD de producto verificado); incluye PR #566 / `0d35134b5cda4dafa8ed8e2bbdba47a82f2dadbb` inmediatamente antes
-**Último HEAD de producto Nexus verificado:** `6dfe34a15bfa145076ae7c80fbee6aac3b628923` (PR #567 / #541 — RAPID3 Seguimiento layout); anterior `0d35134b5cda4dafa8ed8e2bbdba47a82f2dadbb` (PR #566 — Farmacia Inicio visual fidelity)
+**Base canónica verificada para esta reconciliación:** `663df88993365463e42e419067ffdc771c7d0636` (merge PR #571, último HEAD de producto verificado); incluye #541/PR #567 y #545/PR #571 como cierre compuesto RAPID3
+**Último HEAD de producto Nexus verificado:** `663df88993365463e42e419067ffdc771c7d0636` (PR #571 / #545 — shared collapsible dynamic-height); candidate `4fd264a8d67bb534e879cf55e51f86c1219105a1`
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
@@ -15,7 +15,8 @@
 **Solicitud textual Reuma→Farmacia:** #528 + #529/#530/#531 **PUBLICADOS Y VERIFICADOS** por PR #532 (merge `03f814875b38409a219f40e3602feece06472f33`); oracle 26/0, browser PV+Seguimiento 91/0 y Dashboard 46/0; sólo estados explícitos de Analítica/Medicina Preventiva, sin detalle legacy ni inferencia terapéutica
 **Estadísticas CSV Reuma:** #537 **PUBLICADO Y VERIFICADO** por PR #538 (merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`); oracle 8/8 y browser 6/6 con descargas reales; export formal `currentCohort`; `Buscar en tabla` sigue separado y pendiente
 **Farmacia Inicio visual fidelity:** #565 **PUBLICADO Y VERIFICADO** por PR #566 (merge `0d35134b5cda4dafa8ed8e2bbdba47a82f2dadbb`); `Requiere atención` vuelve a la composición compacta aprobada sin modificar lógica de conteos ni futuros `? + Próxima fase`
-**RAPID3 Seguimiento layout:** #541 **PUBLICADO Y VERIFICADO** por PR #567 (merge `6dfe34a15bfa145076ae7c80fbee6aac3b628923`); APs/AR conservan `select 0/1/2/3` y cálculo, con filas MDHAQ legibles. #545 sigue separado para clipping dinámico en Primera Visita
+**RAPID3 Seguimiento layout:** #541 **PUBLICADO Y VERIFICADO** por PR #567 (merge `6dfe34a15bfa145076ae7c80fbee6aac3b628923`); APs/AR conservan `select 0/1/2/3` y cálculo, con filas MDHAQ legibles. El shared seam de Primera Visita quedó separado en #545 y fue cerrado después por PR #571
+**RAPID3 shared collapsible dynamic-height:** #545 **PUBLICADO Y VERIFICADO** por PR #571 (candidate `4fd264a8d67bb534e879cf55e51f86c1219105a1` → merge `663df88993365463e42e419067ffdc771c7d0636`); PV APs/AR, Seguimiento APs/AR y Estadísticas cualificados; idle seam 0 invocaciones/3 s tras settle; sin cambio clínico. Polling `customSelect` preexistente separado como deuda #570
 **Harness C-087:** Nexus reconciliado por PR #562 contra Atenea `ddaf9612da67da42eb9bd2c9c03d652b254cc332`; PR #564 añade `docs/PRODUCT_FIDELITY_GATES_V1.md` repo-local para authority transport. Sin cambio clínico de producto
 
 ## 1. Propósito
@@ -130,7 +131,7 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 | 7 | BASDAI/BASFI presentes en Primera Visita y Seguimiento para EspA; BASFI falta o no está completo | `PENDIENTE_FUENTE` | Implementar BASFI sólo con autoridad clínica/fuente explícita de ítems y cálculo; no inventar ítems. |
 | 8 | APs MDA: mantener derivado/read-only con wiring desde campos de origen; observado 0/7 incompleto por falta de fuentes | `RESUELTO / PUBLICADO` | #516 + #519/#520 / PR #521: fuentes cableadas, missing visible como pendiente cuando procede, verdict ternario seguro y `mdaCumple` legacy exacto; regla `>=5` intacta. |
 | 9 | DAPSA: mantener derivado; mejorar feedback visual por categoría | `REQUISITO_DECIDIDO_PENDIENTE` | Cálculo observado correcto; no cambiar umbrales. |
-| 10 | RAPID3: conservar representación clínica; clipping en Primera Visita APs/AR; layout de Seguimiento APs/AR | `PARCIAL` | **Seguimiento RESUELTO/PUBLICADO** por #541 / PR #567: 10 filas MDHAQ legibles, mismos `select` y opciones `0/1/2/3`, cálculo intacto. **Primera Visita sigue DEFECTO_REPRODUCIDO** por clipping/altura dinámica y queda separada en #545. |
+| 10 | RAPID3: conservar representación clínica; clipping dinámico en Primera Visita APs/AR; layout de Seguimiento APs/AR | `RESUELTO / PUBLICADO` | **Seguimiento** resuelto por #541 / PR #567: 10 filas MDHAQ legibles con mismos `select 0/1/2/3`. **Shared collapsible / Primera Visita** resuelto por #545 / PR #571: crecimiento/decrecimiento soportado re-mide la sección abierta sin auto-open ni polling nuevo. Fórmula/categorías intactas. |
 | 11 | Resultados/categorías: feedback visual coherente con categoría explícita; CASPAR sin verde=bueno/rojo=malo (`Cumple criterios CASPAR` / no cumple, estilo neutral) | `REQUISITO_DECIDIDO_PENDIENTE` | Neutralidad de clasificación, no valoración. |
 | 12 | Prebiológico: retirar `Fecha diagnóstico` del bloque; conservar Observaciones prebiológico opcionales; no sintetizar APTO global | `RESUELTO / PUBLICADO` | #525 / PR #526: bloque mínimo publicado en Primera Visita + Seguimiento; sólo Analítica + Medicina Preventiva + una Observaciones opcional. |
 | 13 | Solicitud Reuma → Farmacia: eliminar el desglose legacy de hemograma/bioquímica/serologías/vacunación; sólo los dos estados resumidos de Analítica y Medicina Preventiva cuando consten explícitamente | `RESUELTO / PUBLICADO` | #528 + #529/#530/#531 / PR #532: artefacto soportado cualificado en Primera Visita, Seguimiento y Dashboard; ausencia no fabrica estado; resto clínico explícito preservado; sin inferencia terapéutica. |
@@ -138,7 +139,7 @@ Confirmado funcional (`IMPLEMENTADO / VALIDADO_MANUAL`):
 | 15 | Seguimiento con CIP sin paciente previo: nombre y apellidos editables + capturar tratamiento actual preexistente y fecha de inicio como baseline explícito | `REQUISITO_DECIDIDO_PENDIENTE` | Sin fabricar START/SWITCH/ADD_ON ni validación retrospectiva. |
 | 16 | Estadísticas: `Exportar CSV` debe exportar la cohorte de filtros activos (defecto) y quitar/relegar `Buscar en tabla` (requisito) | `CSV RESUELTO / PUBLICADO` + `Buscar en tabla REQUISITO_DECIDIDO_PENDIENTE` | #537 / PR #538 resuelve sólo el export: filtros formales → `currentCohort` → CSV, con descarga real y witnesses adversariales. La retirada/relegación de `Buscar en tabla` sigue pendiente y no cambia la semántica del export. |
 
-Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/#532. El ítem **10 (RAPID3)** queda **PARCIAL**: Seguimiento APs/AR resuelto por #541/PR #567 y clipping de Primera Visita pendiente en #545. Del ítem **16**, `Exportar CSV` queda resuelto/publicado por #537 / PR #538 y `Buscar en tabla` sigue pendiente. Permanecen accionables los ítems **1, 2, 4, 7, 9, 10 sólo por #545, 11, 14, 15** y la parte pendiente del **16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
+Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10) se cierra por #541/PR #567 + #545/PR #571, preservando representación y semántica clínica. Del ítem **16**, `Exportar CSV` queda resuelto/publicado por #537 / PR #538 y `Buscar en tabla` sigue pendiente. Permanecen accionables los ítems **1, 2, 4, 7, 9, 11, 14, 15** y la parte pendiente del **16**; los blockers `PENDIENTE_FUENTE/EQUIPO` no deben resolverse por intuición.
 
 ### 3.3 Reuma — pendientes, defer y deuda preservada
 
@@ -148,6 +149,7 @@ Los ítems **3, 5, 6, 8, 12 y 13** quedan resueltos/publicados por PR #521/#526/
 - **QR/PROM:** `DEFERIDO`. Diferido; no entra en la ronda pre-Badajoz actual.
 - **CIMA / actualización de Sistémicos y fuente completa:** concern separado; el autocomplete actual no se considera roto.
 - **#448:** `RESUELTA / PUBLICADA` por PR #553 con evidencia browser focal; **#450:** deuda técnica no bloqueante aún abierta hasta decisión explícita de contrato.
+- **#570 customSelect polling:** `DISCOVERY / NO IMPLEMENTATION AUTHORITY`. `modules/customSelect.js` conserva `window.setInterval(syncAllCustomSelects, 300)`; la deuda se identificó al cualificar #545, pero #545 la desacopló del seam de colapsables sin modificar `customSelect.js`. Shaping separado antes de cualquier implementación.
 - **Reuma delivery/export → Processor/Bridge común:** pendiente de diseño tras la semántica de delivery/F4.5; el legacy 497 está contenido como compatibilidad, **no** como arquitectura final.
 - **Reuma → Farmacia:** la solicitud textual soportada está `IMPLEMENTADA / PUBLICADA` por #528 / PR #532. Cualquier integración estructurada posterior (acto, persistencia, retorno de estado, ownership) permanece `DISCOVERY` y requiere autoridad propia; no confundir ambas fronteras.
 
@@ -240,7 +242,7 @@ Cruce **sólo de estado/prioridad**; no define contratos de integración ni sem�
 2. ✅ Cada observación se clasificó (`DEFECTO_REPRODUCIDO`, `REQUISITO_DECIDIDO_PENDIENTE`, `PENDIENTE_FUENTE/EQUIPO`, `DEFERIDO`, deuda conocida) en este ledger.
 3. ✅ Este ledger quedó actualizado con evidencia visible real.
 4. ✅ Se cruzaron Reuma + Farmacia + dirección Dermatología a nivel de estado/prioridad (§8).
-5. **Siguiente:** #545 conserva el defecto RAPID3 restante del shared collapsible seam y debe ejecutarse como WO separada/complex; después continuar con WOs atómicas de los demás ítems pendientes de §3.2/§3.3. No reabrir #541 ni los ítems 3/5/6/8/12 ya publicados salvo nueva evidencia soportada; respetar blockers de fuente/equipo.
+5. **Siguiente:** RAPID3 (#10) queda cerrado por #541/#545 y no debe reabrirse salvo nueva evidencia soportada. Continuar con WOs atómicas de los demás ítems pendientes de §3.2/§3.3. #570 permanece deuda DISCOVERY separada, sin prioridad ni implementación automática; respetar blockers de fuente/equipo.
 
 ---
 
