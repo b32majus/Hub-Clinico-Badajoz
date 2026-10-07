@@ -20,14 +20,16 @@
  *      the declared release unit (code.files + config artifacts + manifest),
  *      no more and no less.
  *   A1 Artifact happy path: branding markers from the served deployment
- *      profile, exactly one tile (reuma), zero error elements, zero
- *      anchors/hrefs in #home-root, console.error === 0 and pageerror === 0.
- *   A2 Authorized route (same tab): a real click on the tile navigates to
- *      exactly <origin>/index.html (no query/hash), only one tab is ever
- *      opened. The route-target document is NOT part of the Home release unit
- *      (it is provided by the site deployment / legacy release), so the 404
- *      body is EXPECTED and adjudicated in the output; pageerror stays 0. A
- *      real page.goBack() then re-renders Home with its tile in the same tab.
+ *      profile, exactly the two available tiles (reuma + farmacia), zero error
+ *      elements, zero anchors/hrefs in #home-root, console.error === 0 and
+ *      pageerror === 0.
+ *   A2 Authorized route (same tab): a real click on the farmacia tile
+ *      navigates to exactly <origin>/farmacia_index.html (no query/hash), only
+ *      one tab is ever opened. The route-target document is NOT part of the
+ *      Home release unit (it is provided by the site deployment / legacy
+ *      release), so the 404 body is EXPECTED and adjudicated in the output;
+ *      pageerror stays 0. A real page.goBack() then re-renders Home with its
+ *      tiles in the same tab.
  *   A3 Artifact self-containment: every observed request is inside the
  *      declared artifact set; the only non-artifact response allowed is the
  *      adjudicated 404 route target. No CDN/vendor/repository leakage.
@@ -168,7 +170,7 @@ let release = null;
 let releaseId = 'unbuilt';
 let materializeError = '';
 const declaredPaths = new Set(['/' + MANIFEST_ARTIFACT]);
-let routeTargetPath = '/index.html';
+let routeTargetPath = '/farmacia_index.html';
 
 try {
   const manifestOut = path.join(tmpRoot, MANIFEST_ARTIFACT);
@@ -190,9 +192,9 @@ try {
   }
   fs.copyFileSync(manifestOut, path.join(artifactDir, MANIFEST_ARTIFACT));
 
-  // Route target derived from the manifest (reuma tile), never hard-coded.
-  const reuma = (release.modules || []).find((m) => m.moduleId === 'reuma');
-  if (reuma && typeof reuma.route === 'string') routeTargetPath = '/' + reuma.route;
+  // Route target derived from the manifest (farmacia tile), never hard-coded.
+  const farmacia = (release.modules || []).find((m) => m.moduleId === 'farmacia');
+  if (farmacia && typeof farmacia.route === 'string') routeTargetPath = '/' + farmacia.route;
 } catch (err) {
   materializeError = err.message;
 }
@@ -335,9 +337,8 @@ try {
       const productName = await page.locator('.nexus-home__product-name').innerText();
       const siteName = await page.locator('.nexus-home__site-name').innerText();
       const tileCount = await page.locator('.nexus-home__tile').count();
-      const tileModuleId = tileCount === 1
-        ? await page.locator('.nexus-home__tile').first().getAttribute('data-module-id')
-        : null;
+      const farmaciaTileCount = await page.locator('.nexus-home__tile[data-module-id="farmacia"]').count();
+      const reumaTileCount = await page.locator('.nexus-home__tile[data-module-id="reuma"]').count();
       const emptyCount = await page.locator('.nexus-home__empty').count();
       const errorCount = await page.locator('.nexus-home__error').count();
       const anchorCount = await page.locator('#home-root a').count();
@@ -354,13 +355,13 @@ try {
       }
       a1 = productName === expectedDisplay.productName &&
         siteName === expectedDisplay.siteName &&
-        tileCount === 1 && tileModuleId === 'reuma' &&
+        tileCount === 2 && farmaciaTileCount === 1 && reumaTileCount === 1 &&
         emptyCount === 0 && errorCount === 0 &&
         anchorCount === 0 && hrefCount === 0 && !homeRootHtml.includes('.html') &&
         homeConsoleErrors.length === 0 && homePageErrors.length === 0 &&
         urlAfterLoad === homeUrl;
       a1Detail = `product=${JSON.stringify(productName)} site=${JSON.stringify(siteName)} ` +
-        `tiles=${tileCount} moduleId=${tileModuleId} empty=${emptyCount} error=${errorCount} ` +
+        `tiles=${tileCount} farmacia=${farmaciaTileCount} reuma=${reumaTileCount} empty=${emptyCount} error=${errorCount} ` +
         `anchors=${anchorCount} href=${hrefCount} routeStrings=${homeRootHtml.includes('.html')} ` +
         `consoleErrors=${homeConsoleErrors.length}${homeConsoleErrors.length ? ` (${JSON.stringify(homeConsoleErrors)})` : ''} ` +
         `pageErrors=${homePageErrors.length} url=${JSON.stringify(urlAfterLoad)}`;
@@ -370,7 +371,7 @@ try {
       await Promise.all([
         page.waitForURL((url) => url.origin === origin && url.pathname === routeTargetPath,
           { waitUntil: 'domcontentloaded', timeout: 30000 }),
-        page.locator('.nexus-home__tile').first().click(),
+        page.locator('.nexus-home__tile[data-module-id="farmacia"]').click(),
       ]);
       const navigatedUrl = page.url();
       await page.waitForTimeout(500);
@@ -402,12 +403,12 @@ try {
         (message) => message.includes(routeTargetPath) && /404/.test(message)
       );
       a2 = navigatedUrl === `${origin}${routeTargetPath}` &&
-        navigated.pathname === '/index.html' &&
+        navigated.pathname === routeTargetPath &&
         navigated.search === '' && navigated.hash === '' &&
         sameTab && routeTargetStatus === 404 &&
         pageErrors.length === 0 &&
         postHomeErrorsAdjudicated &&
-        tilesAfterBack === 1 && urlAfterBack === homeUrl;
+        tilesAfterBack === 2 && urlAfterBack === homeUrl;
       a2Detail = `navigated=${JSON.stringify(navigatedUrl)} expected=${JSON.stringify(`${origin}${routeTargetPath}`)} ` +
         `pathname=${JSON.stringify(navigated.pathname)} search=${JSON.stringify(navigated.search)} hash=${JSON.stringify(navigated.hash)} ` +
         `sameTab=${sameTab} pagesOpened=${pagesOpened.length} tabs=${context.pages().length} ` +
@@ -443,8 +444,8 @@ try {
     } finally {
       if (context) await context.close();
     }
-    record('A1 artifact happy path: branding + exactly one reuma tile + no routes + clean console', a1, a1Detail);
-    record('A2 authorized route <origin>/index.html same-tab (404 target adjudicated) + real Back re-render', a2, a2Detail);
+    record('A1 artifact happy path: branding + exactly two available tiles + no routes + clean console', a1, a1Detail);
+    record('A2 authorized route <origin>/farmacia_index.html same-tab (404 target adjudicated) + real Back re-render', a2, a2Detail);
     record('A3 artifact self-containment: no request outside the declared release unit (except the 404 route target)', a3, a3Detail);
   }
 } catch (err) {

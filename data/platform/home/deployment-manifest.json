@@ -13,8 +13,8 @@
       "label": "Farmacia Hospitalaria",
       "entryPath": "farmacia_index.html",
       "enabled": true,
-      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED",
-      "available": false,
+      "qualificationState": "QUALIFIED_FOR_SITE",
+      "available": true,
       "platformCapabilities": [
         "static-delivery",
         "session-scoped-state",
@@ -39,7 +39,7 @@
     "registryVersion": "1",
     "profileVersion": "1",
     "registrySha256": "1e0d26210d99176a1de39350729626bc8e95b2bba4ab0790fb5ecf713b3bccd5",
-    "profileSha256": "6ccdb101290962e4ee1fd3f0e647683e0cccc78de3f5dc23d4cf79d6245322a0",
+    "profileSha256": "283d2cc83a7fa24a670e2123ccf7cf1b79833305ac866b5a30a3f513930b7629",
     "generator": "tools/deployment_manifest_build.mjs v1"
   }
 }

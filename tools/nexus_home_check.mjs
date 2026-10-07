@@ -286,14 +286,14 @@ console.log('PROMueve Nexus Home F3.2 WU-A — frozen acceptance oracle');
       outcome && outcome.ok === true &&
       products.length === 1 && products[0].textContent === branding.productName &&
       sites.length === 1 && sites[0].textContent === branding.siteName &&
-      tiles.length === 1 && reumaTiles.length === 1 && farmaciaTiles.length === 0 &&
+      tiles.length === 2 && reumaTiles.length === 1 && farmaciaTiles.length === 1 &&
       hrefs === 0 && routeStrings === 0 &&
       findAllByClass(root, 'nexus-home__error').length === 0 &&
       findAllByClass(root, 'nexus-home__empty').length === 0;
-    record('CASO 1 valid start: branding + only-qualified tile + no routes/links', ok,
+    record('CASO 1 valid start: branding + both-qualified tiles + no routes/links', ok,
       `outcome=${JSON.stringify(outcome && outcome.ok)} products=${products.length} sites=${sites.length} tiles=${tiles.length} hrefs=${hrefs} routeStrings=${routeStrings}`);
   } catch (err) {
-    record('CASO 1 valid start: branding + only-qualified tile + no routes/links', false, err.message);
+    record('CASO 1 valid start: branding + both-qualified tiles + no routes/links', false, err.message);
   }
 }
 

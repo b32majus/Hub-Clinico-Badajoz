@@ -300,25 +300,35 @@ const tree = serializeTree(root);
     `names=${JSON.stringify(names)} future=${futureCards.length} regDerma=${registeredDerma.length} tiles=${futureTiles} listeners=${futureListeners} hrefs=${futureHrefs} buttons=${futureButtons} state=${JSON.stringify(futureState)}`);
 }
 
-// --- P5: available card — Disponible + native Entrar button, exactly one tile
+// --- P5: available cards — Disponible + native Entrar button, exactly two tiles
 {
   const cards = findAllByClass(root, 'nexus-home__module-card');
   const tiles = findAllByClass(root, 'nexus-home__tile');
-  const reumaCards = cards.filter((c) => c.getAttribute('data-module-id') === 'reuma');
-  const reumaTile = tiles.filter((t) => t.getAttribute('data-module-id') === 'reuma');
-  let stateText = '';
-  walk(reumaCards[0], (el) => {
-    if (typeof el.className === 'string' && el.className.split(/\s+/).includes('nexus-home__module-state')) {
-      stateText = el.textContent;
+  const availableIds = ['reuma', 'farmacia'];
+  const stateById = {};
+  for (const id of availableIds) {
+    const card = cards.filter((c) => c.getAttribute('data-module-id') === id);
+    if (card.length === 1) {
+      walk(card[0], (el) => {
+        if (typeof el.className === 'string' && el.className.split(/\s+/).includes('nexus-home__module-state')) {
+          stateById[id] = el.textContent;
+        }
+      });
     }
+  }
+  const tileById = Object.fromEntries(
+    availableIds.map((id) => [id, tiles.filter((t) => t.getAttribute('data-module-id') === id)])
+  );
+  const buttonsOk = availableIds.every((id) => {
+    const button = tileById[id][0];
+    return tileById[id].length === 1 && Boolean(button) &&
+      button.tagName === 'BUTTON' && button.textContent === 'Entrar' &&
+      typeof (button.__listeners && button.__listeners.click) === 'function';
   });
-  const button = reumaTile[0];
-  const ok = cards.length === 3 && reumaCards.length === 1 && tiles.length === 1 && reumaTile.length === 1 &&
-    stateText === 'Disponible' &&
-    button && button.tagName === 'BUTTON' && button.textContent === 'Entrar' &&
-    typeof (button.__listeners && button.__listeners.click) === 'function';
-  record('P5 available card: Disponible + native Entrar button (sole tile, 3 cards total)', ok,
-    `cards=${cards.length} tiles=${tiles.length} state=${JSON.stringify(stateText)} tag=${button && button.tagName}`);
+  const ok = cards.length === 3 && tiles.length === 2 &&
+    availableIds.every((id) => stateById[id] === 'Disponible') && buttonsOk;
+  record('P5 available cards: Reuma + Farmacia Disponible + native Entrar buttons (two tiles, 3 cards total)', ok,
+    `cards=${cards.length} tiles=${tiles.length} states=${JSON.stringify(stateById)} buttonsOk=${buttonsOk}`);
 }
 
 // --- P6: unavailable card — visible, muted, no tile/listener/href, no route call
@@ -394,10 +404,10 @@ const tree = serializeTree(root);
   });
   const css = readText('nexus_home.css');
   const focusVisible = css.includes(':focus-visible');
-  const ok = tiles.length === 1 && tiles[0].tagName === 'BUTTON' &&
+  const ok = tiles.length === 2 && tiles.every((t) => t.tagName === 'BUTTON') &&
     keyHandlers === 0 && tabindex === 0 && focusVisible;
-  record('P7 keyboard: native button, no key handlers/tabindex hacks, visible focus', ok,
-    `keyHandlers=${keyHandlers} tabindex=${tabindex} focusVisible=${focusVisible}`);
+  record('P7 keyboard: native buttons, no key handlers/tabindex hacks, visible focus', ok,
+    `tiles=${tiles.length} keyHandlers=${keyHandlers} tabindex=${tabindex} focusVisible=${focusVisible}`);
 }
 
 // --- P8: zero-navigable keeps unavailable cards visible beside the empty state

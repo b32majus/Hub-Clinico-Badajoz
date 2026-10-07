@@ -12,11 +12,14 @@
  * postMessage counter) or seed a synthetic non-clinical draft for S7.
  *
  * Scenarios (all must PASS):
- *   S1 Happy path: branding markers, exactly one tile (reuma), zero error, zero
- *      anchor/href/route in the Home root, console.error === 0, pageerror === 0.
- *   S2 Exact route + same-tab + Back: click the tile, navigation lands exactly on
- *      <origin>/index.html (manifest entryPath, no query/hash), only one tab ever
- *      opened, no pageerror on the legacy page, goBack re-renders Home.
+ *   S1 Happy path: branding markers, exactly the two available tiles (reuma +
+ *      farmacia) both "Disponible", the presentation-only Derma card present
+ *      and non-interactive, zero error, zero anchor/href/route in the Home
+ *      root, console.error === 0, pageerror === 0.
+ *   S2 Exact route + same-tab + Back: click the FarmaNEXus tile, navigation
+ *      lands exactly on <origin>/farmacia_index.html (manifest entryPath, no
+ *      query/hash), only one tab ever opened, no pageerror on the legacy page,
+ *      goBack re-renders Home.
  *   S3 Zero-navigable deployment (built like tools/nexus_home_check.mjs
  *      buildZeroNavigableVariant): explicit empty state, zero tiles, zero error.
  *   S4 Schema-invalid packaged manifest (siteId outside enum): fail closed with a
@@ -291,9 +294,12 @@ try {
       const productName = await page.locator('.nexus-home__product-name').innerText();
       const siteName = await page.locator('.nexus-home__site-name').innerText();
       const tileCount = await page.locator('.nexus-home__tile').count();
-      const tileModuleId = tileCount === 1
-        ? await page.locator('.nexus-home__tile').first().getAttribute('data-module-id')
-        : null;
+      const reumaTiles = await page.locator('.nexus-home__tile[data-module-id="reuma"]').count();
+      const farmaciaTiles = await page.locator('.nexus-home__tile[data-module-id="farmacia"]').count();
+      const reumaState = await page.locator('.nexus-home__module-card[data-module-id="reuma"] .nexus-home__module-state').innerText();
+      const farmaciaState = await page.locator('.nexus-home__module-card[data-module-id="farmacia"] .nexus-home__module-state').innerText();
+      const futureCardCount = await page.locator('[data-future-module="derma"]').count();
+      const futureInteractive = await page.locator('[data-future-module="derma"] button, [data-future-module="derma"] a, [data-future-module="derma"] [href]').count();
       const emptyCount = await page.locator('.nexus-home__empty').count();
       const errorCount = await page.locator('.nexus-home__error').count();
       const anchorCount = await page.locator('#home-root a').count();
@@ -305,36 +311,40 @@ try {
       const homeUrl = page.url();
       s1 = productName === expectedDisplay.productName &&
         siteName === expectedDisplay.siteName &&
-        tileCount === 1 && tileModuleId === 'reuma' &&
+        tileCount === 2 && reumaTiles === 1 && farmaciaTiles === 1 &&
+        reumaState === 'Disponible' && farmaciaState === 'Disponible' &&
+        futureCardCount === 1 && futureInteractive === 0 &&
         emptyCount === 0 && errorCount === 0 &&
         anchorCount === 0 && hrefCount === 0 && !homeRootHtml.includes('.html') &&
         s1ConsoleErrors.length === 0 && s1PageErrors.length === 0 &&
         homeUrl === `${origin}/nexus_home.html`;
       s1Detail = `product=${JSON.stringify(productName)} site=${JSON.stringify(siteName)} ` +
-        `tiles=${tileCount} moduleId=${tileModuleId} empty=${emptyCount} error=${errorCount} ` +
+        `tiles=${tileCount} reuma=${reumaTiles} farmacia=${farmaciaTiles} ` +
+        `reumaState=${JSON.stringify(reumaState)} farmaciaState=${JSON.stringify(farmaciaState)} ` +
+        `future=${futureCardCount} futureInteractive=${futureInteractive} empty=${emptyCount} error=${errorCount} ` +
         `anchors=${anchorCount} href=${hrefCount} routeStrings=${homeRootHtml.includes('.html')} ` +
         `consoleErrors=${s1ConsoleErrors.length} pageErrors=${s1PageErrors.length}`;
 
       // --- S2 exact route + same-tab + Back ---
       await Promise.all([
-        page.waitForURL((url) => url.origin === origin && url.pathname === '/index.html',
+        page.waitForURL((url) => url.origin === origin && url.pathname === '/farmacia_index.html',
           { waitUntil: 'domcontentloaded', timeout: 30000 }),
-        page.locator('.nexus-home__tile').first().click(),
+        page.locator('.nexus-home__tile[data-module-id="farmacia"]').click(),
       ]);
       const navigatedUrl = page.url();
       await page.waitForTimeout(800);
       const sameTab = context.pages().length === 1 && pagesOpened.length === 1;
-      const legacyPageErrors = pageErrors.filter((e) => e.url.includes('/index.html'));
+      const legacyPageErrors = pageErrors.filter((e) => e.url.includes('/farmacia_index.html'));
       const legacyStorage = await page.evaluate(storageSnapshot);
       await page.goBack({ waitUntil: 'domcontentloaded' });
       await page.locator('.nexus-home__tile').first().waitFor({ state: 'visible', timeout: 15000 });
       const tilesAfterBack = await page.locator('.nexus-home__tile').count();
       const homeReturnStorage = await page.evaluate(storageSnapshot);
-      const expectedNavUrl = `${origin}/index.html`;
+      const expectedNavUrl = `${origin}/farmacia_index.html`;
       s2 = navigatedUrl === expectedNavUrl &&
         sameTab &&
         legacyPageErrors.length === 0 &&
-        tilesAfterBack === 1 &&
+        tilesAfterBack === 2 &&
         homeConsoleErrors.length === 0;
       s2Detail = `navigated=${JSON.stringify(navigatedUrl)} expected=${JSON.stringify(expectedNavUrl)} ` +
         `sameTab=${sameTab} pagesOpened=${pagesOpened.length} tabs=${context.pages().length} ` +
@@ -379,8 +389,8 @@ try {
     } finally {
       if (context) await context.close();
     }
-    record('S1 happy path: branding + only-qualified reuma tile + no routes + clean console', s1, s1Detail);
-    record('S2 exact <origin>/index.html same-tab navigation + Back re-render', s2, s2Detail);
+    record('S1 happy path: branding + both available tiles (reuma + farmacia) Disponible + Derma non-interactive + clean console', s1, s1Detail);
+    record('S2 exact <origin>/farmacia_index.html same-tab navigation + Back re-render', s2, s2Detail);
     record('S6 zero patient/dataset transport (requests, storage, cookies, postMessage)', s6, s6Detail);
   }
 
@@ -533,7 +543,7 @@ try {
       await Promise.all([
         page.waitForURL((url) => url.origin === origin && url.pathname === '/index.html',
           { waitUntil: 'domcontentloaded', timeout: 30000 }),
-        page.locator('.nexus-home__tile').first().click(),
+        page.locator('.nexus-home__tile[data-module-id="reuma"]').click(),
       ]);
       await page.waitForTimeout(500);
       await page.goBack({ waitUntil: 'domcontentloaded' });
@@ -548,7 +558,7 @@ try {
       const draftPreserved = after.draftSession === 'draft-v1' && after.draftLocal === 'draft-v1';
       const noHomeKeys = JSON.stringify({ ls: after.ls, ss: after.ss }) ===
         JSON.stringify({ ls: seeded.ls, ss: seeded.ss });
-      pass = tileAtEntry === 1 && draftPreserved && noHomeKeys && pageErrors.length === 0;
+      pass = tileAtEntry === 2 && draftPreserved && noHomeKeys && pageErrors.length === 0;
       detail = `tileAtEntry=${tileAtEntry} draftSession=${JSON.stringify(after.draftSession)} ` +
         `draftLocal=${JSON.stringify(after.draftLocal)} seeded=${JSON.stringify(seeded)} ` +
         `after=${JSON.stringify({ ls: after.ls, ss: after.ss })} ` +

@@ -11,7 +11,8 @@
     {
       "moduleId": "farmacia",
       "enabled": true,
-      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED"
+      "qualificationState": "QUALIFIED_FOR_SITE",
+      "qualificationEvidence": "Synthetic Home demo qualification (issue #575); not a real hospital qualification"
     },
     {
       "moduleId": "reuma",

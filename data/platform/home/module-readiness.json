@@ -7,8 +7,8 @@
       "moduleId": "farmacia",
       "label": "Farmacia Hospitalaria",
       "route": "farmacia_index.html",
-      "available": false,
-      "qualificationState": "IMPLEMENTED_NOT_QUALIFIED",
+      "available": true,
+      "qualificationState": "QUALIFIED_FOR_SITE",
       "readiness": "demonstrated",
       "platformCapabilities": [
         "static-delivery",
