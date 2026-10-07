@@ -6515,3 +6515,47 @@ main.farmacia-informes-mode .informes-section {
     border-color: #C7D2FE;
     background: #EEF2FF;
 }
+
+/* Informes — report selector (#579) */
+.informes-report-controls {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.informes-report-controls[hidden] {
+    display: none !important;
+}
+
+.informes-report-panel[hidden] {
+    display: none !important;
+}
+
+.informes-period-line {
+    margin: 12px 0 0;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.kisqali-ciclos-row > td {
+    background: #F8FAFC;
+}
+
+.kisqali-ciclos-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.kisqali-ciclos-table th,
+.kisqali-ciclos-table td {
+    padding: 6px 8px;
+    border: 1px solid #E2E8F0;
+    text-align: left;
+    vertical-align: top;
+}
+
+.kisqali-ciclos-toggle {
+    white-space: nowrap;
+}

@@ -7,7 +7,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260612-visibility-a">
-    <link rel="stylesheet" href="farmacia_style.css?v=20261007-cosentyx-576-r1">
+    <link rel="stylesheet" href="farmacia_style.css?v=20261007-kisqali-579-r1">
 </head>
 <body>
     <div class="hub-shell">
@@ -127,27 +127,66 @@
                 </div>
             </section>
 
-            <!-- Informes (#576): superficie separada del análisis poblacional.
-                 Informe trimestral Cosentyx calculado desde un fixture sintético dedicado. -->
+            <!-- Informes (#576/#579): superficie separada del análisis poblacional.
+                 Selector de informes: Informe trimestral Cosentyx (por defecto) e
+                 Informe de utilización y dosis — Kisqali, cada uno desde su fixture
+                 sintético dedicado. -->
             <section id="informes-section" class="dashboard-card informes-section" aria-labelledby="informes-title">
                 <div class="informes-header">
                     <div>
-                        <h2 class="card-title" id="informes-title"><i class="fas fa-file-excel" aria-hidden="true"></i> Informe trimestral Cosentyx</h2>
-                        <p class="informes-subtitle">Informe de demostración calculado exclusivamente desde un fixture sintético dedicado. La proyección raw actual no contiene hechos de dispensación; este informe no es una capacidad de la fuente real.</p>
+                        <h2 class="card-title" id="informes-title"><i class="fas fa-file-excel" aria-hidden="true"></i> <span id="informes-title-text">Informe trimestral Cosentyx</span></h2>
+                        <p class="informes-subtitle" id="informes-subtitle">Informe de demostración calculado exclusivamente desde un fixture sintético dedicado. La proyección raw actual no contiene hechos de dispensación; este informe no es una capacidad de la fuente real.</p>
                     </div>
                     <div class="informes-controls">
-                        <label for="informes-quarter-select" class="informes-quarter-label">Trimestre</label>
-                        <select id="informes-quarter-select" class="informes-quarter-select"></select>
-                        <button type="button" class="btn btn-primary" id="informes-download-xlsx"><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                        <label for="informes-report-select" class="informes-quarter-label">Informe</label>
+                        <select id="informes-report-select" class="informes-quarter-select" aria-label="Seleccionar informe">
+                            <option value="cosentyx" selected>Informe trimestral Cosentyx</option>
+                            <option value="kisqali">Informe de utilización y dosis — Kisqali</option>
+                        </select>
+                        <span id="informes-cosentyx-controls" class="informes-report-controls">
+                            <label for="informes-quarter-select" class="informes-quarter-label">Trimestre</label>
+                            <select id="informes-quarter-select" class="informes-quarter-select"></select>
+                            <button type="button" class="btn btn-primary" id="informes-download-xlsx"><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                        </span>
+                        <span id="informes-kisqali-controls" class="informes-report-controls" hidden>
+                            <label for="kisqali-mode-select" class="informes-quarter-label">Ventana</label>
+                            <select id="kisqali-mode-select" class="informes-quarter-select" aria-label="Modo de ventana">
+                                <option value="mensual" selected>Mensual</option>
+                                <option value="trimestral">Trimestral</option>
+                                <option value="anual">Anual</option>
+                                <option value="historico">Histórico</option>
+                            </select>
+                            <label for="kisqali-period-select" class="informes-quarter-label" id="kisqali-period-label">Periodo</label>
+                            <select id="kisqali-period-select" class="informes-quarter-select" aria-label="Periodo seleccionado"></select>
+                            <button type="button" class="btn btn-primary" id="kisqali-download-xlsx"><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                        </span>
                     </div>
                 </div>
                 <p class="informes-notice" id="informes-synthetic-notice" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Datos sintéticos específicos del informe</p>
-                <div class="informes-kpi-grid" id="informes-kpis"></div>
-                <div class="table-responsive-wrapper">
-                    <table id="informes-detail-table" class="data-table stats-data-table">
-                        <thead></thead>
-                        <tbody></tbody>
-                    </table>
+                <!-- Informe trimestral Cosentyx (#576): panel por defecto. -->
+                <div id="informes-cosentyx-panel" class="informes-report-panel">
+                    <div class="informes-kpi-grid" id="informes-kpis"></div>
+                    <div class="table-responsive-wrapper">
+                        <table id="informes-detail-table" class="data-table stats-data-table">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Informe de utilización y dosis — Kisqali (#579): panel de reporte.
+                     Cálculo exclusivamente desde dosis y ciclos explícitamente
+                     registrados en el fixture sintético; no implica consumo,
+                     adherencia ni dispensación real. -->
+                <div id="informes-kisqali-panel" class="informes-report-panel" hidden>
+                    <p class="informes-notice" role="note" id="kisqali-synthetic-notice"><i class="fas fa-flask" aria-hidden="true"></i> <span id="kisqali-provenance-text">Datos sintéticos específicos del informe. Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados. No implica consumo, adherencia ni dispensación real.</span></p>
+                    <p class="informes-period-line">Ventana: <strong id="kisqali-window-label"></strong></p>
+                    <div class="informes-kpi-grid" id="kisqali-kpis"></div>
+                    <div class="table-responsive-wrapper">
+                        <table id="kisqali-patients-table" class="data-table stats-data-table">
+                            <thead></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
@@ -275,9 +314,11 @@
     <script src="scripts/farmacia_patient_read_contract_v2.js?v=20260806-patient-read-facade-r1"></script>
     <script src="scripts/farmacia_patient_read_facade_v2.js?v=20260806-patient-read-facade-r1"></script>
     <script src="scripts/farmacia_estadisticas.js?v=20260930-f43c-r1"></script>
-    <script src="vendor/sheetjs/xlsx.full.min.js?v=20261007-cosentyx-576-r1"></script>
+    <script src="vendor/sheetjs/xlsx.full.min.js?v=20261007-kisqali-579-r1"></script>
     <script src="scripts/farmacia_cosentyx_informe_fixture.js?v=20261007-cosentyx-576-r1"></script>
     <script src="scripts/farmacia_cosentyx_informe_model.js?v=20261007-cosentyx-576-r1"></script>
-    <script src="scripts/farmacia_estadisticas_informes.js?v=20261007-cosentyx-576-r1"></script>
+    <script src="scripts/farmacia_kisqali_informe_fixture.js?v=20261007-kisqali-579-r1"></script>
+    <script src="scripts/farmacia_kisqali_informe_model.js?v=20261007-kisqali-579-r1"></script>
+    <script src="scripts/farmacia_estadisticas_informes.js?v=20261007-kisqali-579-r1"></script>
 </body>
 </html>
