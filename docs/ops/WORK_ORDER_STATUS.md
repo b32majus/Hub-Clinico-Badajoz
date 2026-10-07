@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-06
+**Última actualización:** 2026-10-07
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,25 +11,26 @@
 | Elemento | Valor |
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
-| Tip Git canónico actual | `6dfe34a15bfa145076ae7c80fbee6aac3b628923` — merge PR #567 (RAPID3 Seguimiento layout). Inmediatamente anterior: `0d35134b5cda4dafa8ed8e2bbdba47a82f2dadbb` — PR #566 (Farmacia Inicio visual fidelity). Un merge documental posterior puede mover el tip sin cambiar producto. |
+| Tip Git canónico actual | `663df88993365463e42e419067ffdc771c7d0636` — merge PR #571 (#545 shared collapsible dynamic-height). Un merge documental posterior puede mover el tip sin cambiar producto. |
 | Harness / Atenea | **CURRENT C-087**: autoridad externa `b32majus/Atenea@ddaf9612da67da42eb9bd2c9c03d652b254cc332`; reconciliación Nexus por PR #562 y autoridad repo-local `PRODUCT_FIDELITY_GATES_V1.md` por PR #564. C-086 queda histórico. Lifecycle/model routing se conserva; C-087 añade pre-execution hardening, child-readable authority transport y telemetría post-run read-only. |
-| Último HEAD de producto Nexus verificado | `6dfe34a15bfa145076ae7c80fbee6aac3b628923` — PR #567, reparación local RAPID3/MDHAQ en Seguimiento APs/AR. PR #566 / `0d35134b...` publicó inmediatamente antes la fidelidad visual de Farmacia Inicio. #545 permanece separado para el shared collapsible seam de Primera Visita. |
+| Último HEAD de producto Nexus verificado | `663df88993365463e42e419067ffdc771c7d0636` — PR #571, shared collapsible dynamic-height #545 publicado y verificado. Candidate `4fd264a8d67bb534e879cf55e51f86c1219105a1`; tree `2f43b48b9a6ff6dc1f4a1faa0171121a621b0666`. #541/PR #567 queda en ancestry como reparación local MDHAQ Seguimiento. |
 | Última entrega clínica/contractual | **WO-NEXUS-REUMA-STATS-CSV-FILTERED-COHORT-15 (#537)** publicado por PR #538: candidate `cccffa433eb7896cbd04a717542e73e257cc1821` → merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`. Estadísticas `Exportar CSV` queda cableado al namespace publicado y exporta `currentCohort`, la cohorte de filtros formales; `Buscar en tabla` permanece presentación local y no altera la exportación. Evidencia sintética: oracle 8/8, browser 6/6 con descarga real, full-journey console/pageerror 0, `verify:nexus` PASS, CI PR/post-merge success. **Anterior:** Train 14 / PR #532. |
-| Reconciliación de producto viva | **PRE-BADAJOZ acotada**: #501 mantiene dirección. Farmacia #555/#566 y Home #557 están publicados. En Reuma, #541/#567 resuelve el layout local MDHAQ de Seguimiento; RAPID3 queda sólo parcialmente resuelto porque #545 conserva el clipping dinámico de Primera Visita. |
-| Ledger vivo de estado funcional | [`PROMUEVE_PRODUCT_STATUS_LEDGER.md`](./PROMUEVE_PRODUCT_STATUS_LEDGER.md) reconciliado 2026-10-06 con PR #566/#567; distingue la parte RAPID3 resuelta en Seguimiento del defecto restante #545 en Primera Visita. Evaluación sintética; no piloto/producción. |
+| Reconciliación de producto viva | **PRE-BADAJOZ acotada**: #501 mantiene dirección. RAPID3 queda `RESUELTO / PUBLICADO` en el alcance adjudicado por #541/#567 + #545/#571. El polling preexistente de `customSelect` se separa como deuda DISCOVERY #570 y no autoriza implementación. |
+| Ledger vivo de estado funcional | [`PROMUEVE_PRODUCT_STATUS_LEDGER.md`](./PROMUEVE_PRODUCT_STATUS_LEDGER.md) reconciliado 2026-10-07: #545 cerrado por PR #571; RAPID3 ya no conserva defecto abierto en §3.2.10. #570 queda como deuda técnica separada. Evaluación sintética; no piloto/producción. |
 | Verificación post-merge clínica | PR #538 head `cccffa433eb7896cbd04a717542e73e257cc1821` → merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`; CI PR run `37336670618` y post-merge run `37336957812` `success`; oracle Stats CSV 8/8 y browser 6/6 con descargas reales y full-journey `console.error=0` / `pageerror=0`. Anterior: PR #532 head `21844e52cad03871656833580163b1ae61cc57df` → merge `03f814875b38409a219f40e3602feece06472f33`; CI PR `37266398878` y post-merge `37266501044` `success`. |
 | Home sintética | F3.2/F3.3/F3.4 publicadas; PR #552 humanizó entrada y PR #557 cerró fidelidad visual/favicon/lockup. Release F3.4 declara ahora 10 `code.files`. DermaNEXus visible como `Próximamente` es presentación futura, no módulo registrado ni cualificado. |
 | Madurez | Evaluación sintética; **no piloto / no producción** |
-| Deuda Nexus abierta | D004; subhallazgos restantes D005; #450 (semántica de búsqueda legacy no categorizada) permanece abierta/no bloqueante en [`NEXUS_DEBT_REGISTER.md`](./NEXUS_DEBT_REGISTER.md). #448 (hidratación visual de preselección) queda **RESOLVED/PUBLISHED por PR #553**; D007 RESOLVED/PUBLISHED por #434 / PR #435. |
-| Siguiente frontera del plan | **Producto vivo / pre-Badajoz:** #545 permanece OPEN+approved como defecto RAPID3 restante del shared collapsible seam y requiere shaping/ejecución separada de #541. El resto de ítems pendientes del ledger siguen atómicos; PCR default por site y BASFI/LES/Sjögren conservan blockers de fuente/equipo. F4.5/F4.6 y futuros no quedan autorizados automáticamente. |
+| Deuda Nexus abierta | D004; subhallazgos restantes D005; #450 (semántica de búsqueda legacy no categorizada) y #570 (polling `customSelect` cada 300 ms) permanecen abiertas/no bloqueantes en [`NEXUS_DEBT_REGISTER.md`](./NEXUS_DEBT_REGISTER.md). #570 está en DISCOVERY y no tiene autoridad de implementación. |
+| Siguiente frontera del plan | **Producto vivo / pre-Badajoz:** continuar con WOs atómicas de los ítems pendientes del ledger; #545 ya está cerrado. #570 es deuda DISCOVERY separada y no se promueve automáticamente a prioridad. PCR default por site y BASFI/LES/Sjögren conservan blockers de fuente/equipo. F4.5/F4.6 y futuros no quedan autorizados automáticamente. |
 | Última publicación clínica | **#537 / PR #538** `MERGED_AND_VERIFIED`, candidate `cccffa433eb7896cbd04a717542e73e257cc1821` → merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`, CI PR `37336670618` + post-merge `37336957812` success; oracle 8/8 + browser 6/6. **Anterior:** #528 + #529/#530/#531 / PR #532. Sigue en evaluación sintética; no piloto/producción. |
-| Última publicación de producto | **#541 / PR #567** `MERGED_AND_VERIFIED`: head `93f5bb4651f92e9face539927659cf0fbf705054` → merge `6dfe34a15bfa145076ae7c80fbee6aac3b628923`; CI run `37519154853` success; diff runtime único `style_seguimiento.css`, 11+/1−, sin cambio clínico. **Anterior:** #565 / PR #566 Farmacia Inicio visual fidelity. |
+| Última publicación de producto | **#545 / PR #571** `MERGED_AND_VERIFIED`: candidate `4fd264a8d67bb534e879cf55e51f86c1219105a1` → merge `663df88993365463e42e419067ffdc771c7d0636`; CI run `37607922600` success (Fast + Deterministic); browser checker 60/0 repetido, idle seam 0/3 s, `console.error=0`, `pageerror=0`; sin cambio clínico. **Anterior:** #541 / PR #567. |
 
-### Closeout C-087 — Farmacia visual + Reuma RAPID3 local (2026-10-06)
+### Closeout C-087 — Farmacia visual + Reuma RAPID3 (2026-10-06/07)
 
 - **Farmacia #565 / PR #566:** `CLOSED/completed` / `MERGED` → `0d35134b5cda4dafa8ed8e2bbdba47a82f2dadbb`; `Requiere atención` queda visualmente reconciliado sin cambiar lógica #549/#550.
-- **Reuma #541 / PR #567:** `CLOSED/completed` / `MERGED` → `6dfe34a15bfa145076ae7c80fbee6aac3b628923`; filas MDHAQ de Seguimiento APs/AR legibles, `select 0/1/2/3` y cálculo RAPID3 preservados; CI Fast + Deterministic verde.
-- **Reuma #545:** sigue `OPEN + status:approved`; cubre sólo el clipping/altura dinámica del shared collapsible seam en Primera Visita/siblings. No se resolvió ni absorbió en #541.
+- **Reuma #541 / PR #567:** `CLOSED/completed` / `MERGED` → `6dfe34a15bfa145076ae7c80fbee6aac3b628923`; filas MDHAQ de Seguimiento APs/AR legibles, `select 0/1/2/3` y cálculo RAPID3 preservados.
+- **Reuma #545 / PR #571:** `CLOSED/completed` / `MERGED` → `663df88993365463e42e419067ffdc771c7d0636`; shared collapsible seam re-mide crecimiento/decrecimiento soportado en superficies abiertas, sin auto-open ni polling nuevo. Review C-087 Go/complex Standards+Spec PASS; finding idle-coupling cerrado; CI Fast + Deterministic verde.
+- **Deuda #570:** `OPEN / DISCOVERY / no implementation authority`; `modules/customSelect.js` conserva el polling preexistente cada 300 ms. No forma parte de #545 y no es prioridad automática.
 - **Madurez:** evaluación sintética con browser QA soportado; no piloto/producción.
 
 ### Closeout C-086 — Home + Farmacia (2026-10-06)
