@@ -55,7 +55,7 @@ Reglas transversales:
 | `SIL-REV-016` | Catálogo/autocomplete común en Reuma | DATA / UX | CORE catalog capability + MODULE Reuma | #444 + correctiva #447 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-017` | Automatización CIMA del catálogo | TOOLING / DATA SUPPLY | CORE tooling | Train posterior separado | DEFERRED_SEPARATE_CONCERN |
 | `SIL-REV-018` | Análisis poblacional FH completo / recuperación de filtros perdidos | FEATURE / REPORT + regresión histórica registrada | MODULE FH (estadísticas) + CORE reporting | Recuperación sólo por WO propia con fuente explícita; no levanta #446 | PROPOSED |
-| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | V1 Cosentyx ahora; guardado/compartido en V2 | DIRECTION_DECIDED / V2_DEFERRED |
+| `SIL-REV-019` | Reporting recurrente y presets reutilizables | FEATURE / REPORT | CORE reporting + MODULE FH | V1 demo: Cosentyx #576 + Kisqali #579; guardado/compartido en V2 | DIRECTION_DECIDED / V2_DEFERRED |
 | `SIL-REV-020` | Medicación especial FH (ensayo clínico / uso compasivo / extranjera / registros locales) | DATA / DISCOVERY | MODULE FH + CORE | Requiere fuente explícita/versionada o captura profesional | PROPOSED / DISCOVERY_REQUIRED |
 
 ## 3. `SIL-REV-001` — nomenclatura SES para procesos FH
@@ -79,7 +79,7 @@ Dentro de `Estadísticas del servicio` se separan dos conceptos:
 1. **Análisis poblacional** — filtros/gráficos para explorar la cohorte.
 2. **Informes** — salidas reproducibles con contrato propio.
 
-El primer y único informe definido por ahora es **Informe trimestral Cosentyx**. No se crean informes ficticios para otros fármacos hasta recibir ejemplos/requisitos reales.
+El primer informe definido es **Informe trimestral Cosentyx** (#576). La decisión humana posterior del mismo 2026-10-07 define un segundo informe real para la demo: **Informe de utilización y dosis — Kisqali** (#579). No se crean informes adicionales ficticios sin ejemplos/requisitos reales.
 
 ### Contrato V1
 
@@ -90,6 +90,20 @@ El primer y único informe definido por ahora es **Informe trimestral Cosentyx**
 - vista previa/resumen y detalle auditable de casos incluidos;
 - XLSX descargable real como salida mínima; PDF puede ser segundo formato si es robusto, pero no bloquea Excel;
 - pueden usarse datos/fixture sintético purpose-built para la demo, pero los resultados y conteos se calculan realmente desde esos datos; no se hardcodean los totales.
+
+### Contrato V1 Kisqali (#579)
+
+- un único informe con selector Mensual / Trimestral / Anual / Histórico;
+- unidad de cálculo = **ciclos/meses evaluables**, no patient-days;
+- media por paciente y cohorte ponderada por nº de ciclos con dosis explícita;
+- la semana de descanso no se cuenta como dosis 0;
+- mostrar dosis al cierre, nº de cambios explícitos, media, cobertura de dosis y trazabilidad cruda por paciente/ciclo;
+- presentación y dosis son hechos independientes: etiquetas como `200 mg - 21` / `200 mg - 63` se muestran cuando consten, pero nunca determinan si la dosis es 200/400/600 mg;
+- no inventar presentación `42` ni derivarla de una dosis de 400 mg;
+- los cambios de dosis requieren registro explícito; la demo los modela en límites de ciclo;
+- cambio a mitad de ciclo sin regla aprobada = no evaluable/fail-closed, no prorrateo intuitivo;
+- el indicador es dosis de régimen registrada ponderada por ciclos, **no consumo real de medicamento**;
+- fixture sintético dedicado; CIMA/raw real quedan fuera de V1.
 
 ### Ancla temporal de `nuevo inicio`
 
@@ -277,7 +291,7 @@ Clasificación: **capacidad histórica parcialmente perdida/reducida**. No es pr
 
 Estado `DIRECTION_DECIDED / V2_DEFERRED`.
 
-V1 no es un “reporte intermedio”: entrega un informe Cosentyx completo y reproducible. La evolución V2 amplía el mismo seam:
+V1 no es un “reporte intermedio”: entrega informes demo completos y reproducibles para Cosentyx (#576) y Kisqali (#579). La evolución V2 amplía el mismo seam:
 
 - presets versionados de informes recurrentes;
 - filtros guardados/reutilizables;
@@ -288,7 +302,7 @@ V1 no es un “reporte intermedio”: entrega un informe Cosentyx completo y rep
 - salida/exportación reproducible;
 - el dashboard/reporting no se convierte en fuente de verdad clínica.
 
-El primer preset continúa siendo Cosentyx trimestral. Para `nuevo inicio`, la ventana se ancla a **primera dispensación explícita**. Para q2w/q4w, la pauta debe constar explícitamente; una intensificación requiere movimiento explícito. Si un hecho requerido no consta, queda desconocido/fuera del conteo según contrato, nunca se fabrica.
+Cosentyx trimestral continúa siendo el primer informe/preset fijo: para `nuevo inicio`, la ventana se ancla a **primera dispensación explícita**; para q2w/q4w, la pauta debe constar explícitamente y una intensificación requiere movimiento explícito. Kisqali es el segundo informe fijo de demo: las ventanas Mensual/Trimestral/Anual/Histórico reutilizan un cálculo por ciclos/meses evaluables; presentación y dosis permanecen independientes y no se inventan reglas mid-cycle. Si un hecho requerido no consta, queda desconocido/fuera del cálculo según contrato, nunca se fabrica.
 
 El Control Plane configurable se considera una evolución posterior del almacenamiento/administración de presets, no una dependencia de V1.
 
