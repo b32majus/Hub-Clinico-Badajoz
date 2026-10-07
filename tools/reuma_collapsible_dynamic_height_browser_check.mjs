@@ -166,6 +166,66 @@ const MDHAQ_HEIGHTS = `Array.from(document.querySelectorAll('#rapid3Section .mdh
 
 async function settle(page, ms) { await page.waitForTimeout(ms); }
 
+// --- Independent storm observable (finding F2) ------------------------------
+// The sizing signature (maxH/scrollH/renderedH) proves "the dimensions stop
+// moving"; it CANNOT falsify a page that keeps re-writing style / invalidating
+// layout while those measured dimensions happen to stay constant (e.g. writing
+// a layout-affecting property between two values that parse and render the
+// same). This second, independent observable installs a MutationObserver over
+// the collapsible-content subtrees and counts post-settle style/class attribute
+// writes and childList churn, so such a storm fails even with constant
+// dimensions. (A truly identical style write does not mutate the attribute and
+// does not invalidate layout, so it is correctly not counted.)
+//
+// Mutations whose target lives inside a pre-existing .custom-select widget are
+// bucketed separately: modules/customSelect.js (DO NOT TOUCH) runs a 300ms
+// setInterval that unconditionally rewrites custom-select labels, so that churn
+// is pre-existing and unrelated to the #545 seam. The seam-attributable bucket
+// must be exactly 0 after settle; the pre-existing bucket is reported as
+// evidence, not asserted.
+const INSTALL_STORM_PROBE_FN = () => {
+  const contents = Array.from(document.querySelectorAll('.collapsible-content'));
+  const counts = { style: 0, class: 0, childList: 0, total: 0 };
+  const preExisting = { style: 0, class: 0, childList: 0, total: 0 };
+  const samples = [];
+  const obs = new MutationObserver((muts) => {
+    for (const m of muts) {
+      let kind = null;
+      if (m.type === 'attributes') {
+        if (m.attributeName === 'style') kind = 'style';
+        else if (m.attributeName === 'class') kind = 'class';
+      } else if (m.type === 'childList') {
+        kind = 'childList';
+      }
+      if (!kind) continue;
+      const el = m.target && m.target.nodeType === 1 ? m.target : (m.target && m.target.parentElement);
+      const inCustom = !!(el && el.closest && el.closest('.custom-select'));
+      const bucket = inCustom ? preExisting : counts;
+      bucket[kind] += 1;
+      bucket.total += 1;
+      if (samples.length < 12) samples.push(`${kind}@${(m.target && m.target.className) || (m.target && m.target.nodeName) || '?'}${inCustom ? '#pre-existing-custom-select' : ''}`);
+    }
+  });
+  for (const c of contents) {
+    obs.observe(c, { attributes: true, attributeFilter: ['style', 'class'], childList: true, subtree: true });
+  }
+  window.__stormProbe = { obs, counts, preExisting, samples, observed: contents.length };
+  return { observed: contents.length };
+};
+
+const READ_STORM_PROBE_FN = () => {
+  const p = window.__stormProbe;
+  if (!p) return { installed: false, counts: null, preExisting: null, samples: [] };
+  return { installed: true, observed: p.observed, counts: { ...p.counts }, preExisting: { ...p.preExisting }, samples: p.samples.slice() };
+};
+
+const STOP_STORM_PROBE_FN = () => {
+  const p = window.__stormProbe;
+  if (p && p.obs) p.obs.disconnect();
+  window.__stormProbe = null;
+  return true;
+};
+
 // The production sync writes the inline maxHeight target immediately, while
 // the .collapsible-content CSS transition animates the rendered box for up to
 // 0.4s and delayed/transitionend re-measures can rewrite the target again
@@ -263,17 +323,27 @@ async function visitJourney(pagePath, pathology, tag) {
     s = await waitForSettled(page, 12000);
     check(`${tag} nested close: parent tracks shrink`, s.active && s.settled === true && s.stale === 0, JSON.stringify({ maxH: s.maxH, scrollH: s.scrollH, settled: s.settled, elapsedMs: s.elapsedMs }));
 
-    // 4. No resize storm: after settle, the full sizing signature must be
-    // unchanged across 5 idle samples (~1.5s). A genuine indefinite reflow
-    // loop would keep changing maxH/scrollH/renderedH and fail this, and would
-    // also have failed the settle deadline above.
+    // 4a. No resize storm (sizing): after settle, the full sizing signature
+    // must be unchanged across 5 idle samples (~1.5s). A genuine indefinite
+    // reflow loop that keeps changing maxH/scrollH/renderedH fails this, and
+    // would also have failed the settle deadline above.
     const samples = [];
+    // 4b. No resize/reflow storm (independent observable): install a
+    // MutationObserver over the collapsible-content surfaces BEFORE the idle
+    // window and count post-settle style/class writes and childList churn
+    // during it. This is NOT a restatement of the implementation: constant
+    // dimensions are insufficient, so a same-value write/reflow storm passes
+    // 4a but must fail here. Bounded (fixed idle window); read then disconnect.
+    const stormInstall = await page.evaluate(INSTALL_STORM_PROBE_FN);
     for (let i = 0; i < 5; i++) {
       await settle(page, 300);
       const r = await page.evaluate(READ_INDICES_FN, false);
       samples.push(`${r.maxH}/${r.scrollH}/${r.renderedH}`);
     }
+    const storm = await page.evaluate(READ_STORM_PROBE_FN);
+    await page.evaluate(STOP_STORM_PROBE_FN);
     check(`${tag} maxHeight stable when idle (no storm)`, samples.every((x) => x === samples[0]), JSON.stringify(samples));
+    check(`${tag} no post-settle style/layout writes (storm probe)`, storm.installed && stormInstall.observed > 0 && storm.counts.total === 0, JSON.stringify(storm));
 
     // 5. Close outer; reopen: stable, and untouched sections never auto-opened.
     await clickHeader(page, 'Índices de Actividad');
