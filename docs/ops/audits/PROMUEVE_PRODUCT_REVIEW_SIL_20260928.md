@@ -39,7 +39,7 @@ Reglas transversales:
 |---|---|---|---|---|---|
 | `SIL-REV-001` | Nomenclatura oficial de programas/procesos FH SES | DATA / INTEROPERABILITY | CORE + consumo FH | Antes de ampliar reportes | PROPOSED |
 | `SIL-REV-002` | Presets de informes periódicos | FEATURE / CONFIG | CORE | V1 fijo/versionado; V2 guardado/compartido | DIRECTION_DECIDED / V2_DEFERRED |
-| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | Demo inmediata; WO propia | REQUIREMENT_DECIDED_PENDING |
+| `SIL-REV-003` | Reporte trimestral Cosentyx | FEATURE / REPORT | MODULE FH + CORE reporting | #576 → PR #581 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-004` | Simplificación prebiológico Reuma | CLINICAL FLOW / UX | MODULE Reuma | #445 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
 | `SIL-REV-005` | Solicitud Reuma→Farmacia TXT | INTEROPERABILITY | MODULE Reuma×FH | Discovery primero | DISCOVERY_FIRST |
 | `SIL-REV-006` | PCR/unidades por calculadora | CLINICAL SAFETY / DATA | CORE + MODULE/CALCULATOR; site queda explícito sólo cuando proceda | #443 → PR #449 | **PUBLISHED / SYNTHETIC_QA** |
@@ -70,7 +70,7 @@ Pendiente: ingestión/normalización de la fuente y WO separada.
 
 ## 4. `SIL-REV-002/003` — presets de reporting y reporte trimestral Cosentyx
 
-**Decisión humana 2026-10-07:** el primer informe deja de ser una idea exploratoria y pasa a `REQUIREMENT_DECIDED_PENDING`. Debe poder enseñarse de principio a fin en la demo con datos sintéticos, sin rebajarlo a una versión intermedia.
+**Decisión humana 2026-10-07, reconciliada tras publicación:** el primer informe dejó de ser una idea exploratoria y quedó publicado por #576 / PR #581. Puede enseñarse de principio a fin en la demo con datos sintéticos como informe completo, no como versión intermedia.
 
 ### Superficie
 
@@ -79,7 +79,7 @@ Dentro de `Estadísticas del servicio` se separan dos conceptos:
 1. **Análisis poblacional** — filtros/gráficos para explorar la cohorte.
 2. **Informes** — salidas reproducibles con contrato propio.
 
-El primer informe definido es **Informe trimestral Cosentyx** (#576). La decisión humana posterior del mismo 2026-10-07 define un segundo informe real para la demo: **Informe de utilización y dosis — Kisqali** (#579). No se crean informes adicionales ficticios sin ejemplos/requisitos reales.
+El primer informe definido, **Informe trimestral Cosentyx** (#576), está **PUBLICADO Y VERIFICADO** por PR #581 (candidate `aea59e23185f9f4d5e2d89aaa1877618ee031406` → merge `c5b29e23a5488b951152051ba5d358d04b480b26`). La decisión humana posterior del mismo 2026-10-07 define un segundo informe real para la demo: **Informe de utilización y dosis — Kisqali** (#579), todavía pendiente y dependiente del shell `Informes` ya publicado. No se crean informes adicionales ficticios sin ejemplos/requisitos reales.
 
 ### Contrato V1
 
