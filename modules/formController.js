@@ -1209,13 +1209,13 @@ function initializeCASPAR() {
         puntuacionCASPAR.textContent = totalPuntos;
 
         if (totalPuntos >= 3) {
-            resultadoCASPAR.textContent = 'Criterios CASPAR CUMPLIDOS (≥3 puntos)';
-            resultadoCASPAR.classList.remove('low');
-            resultadoCASPAR.classList.add('high');
+            resultadoCASPAR.textContent = 'Cumple criterios CASPAR';
+            resultadoCASPAR.classList.remove('high', 'low');
+            resultadoCASPAR.classList.add('neutral');
         } else {
-            resultadoCASPAR.textContent = 'Criterios CASPAR NO CUMPLIDOS (requiere ≥3 puntos)';
-            resultadoCASPAR.classList.remove('high');
-            resultadoCASPAR.classList.add('low');
+            resultadoCASPAR.textContent = 'No cumple criterios CASPAR';
+            resultadoCASPAR.classList.remove('high', 'low');
+            resultadoCASPAR.classList.add('neutral');
         }
 
         // Recalcular altura de la sección padre
