@@ -10,18 +10,18 @@
  * packaged data/platform/home corpus in a vm sandbox and asserts, from the
  * observed tree and transport, that:
  *
- *  a. a composed start with the packaged corpus renders exactly one tile
- *     (reuma) and zero farmacia tiles;
- *  b. simulating the reuma tile's click handler calls window.location.assign
- *     EXACTLY ONCE with the EXACT string returned by
- *     PromuevePlatform.PlatformContext.getModuleRoute('reuma') for that
+ *  a. a composed start with the packaged corpus renders exactly the two
+ *     available tiles (reuma + farmacia) and nothing else;
+ *  b. simulating each available tile's click handler calls
+ *     window.location.assign EXACTLY ONCE with the EXACT string returned by
+ *     PromuevePlatform.PlatformContext.getModuleRoute(moduleId) for that
  *     snapshot, which in turn equals the packaged route;
  *  c. navigation is same-tab only: location.assign is used, window.open is
  *     never called and no element carries target="_blank";
  *  d. fail-closed negatives: a handler for an unknown, unavailable or
  *     non-string/empty route performs NO navigation and renders the explicit
- *     nexus-home__error state carrying the platform error code; the
- *     unavailable farmacia module has no tile and no listener; the assigned
+ *     nexus-home__error state carrying the platform error code; both
+ *     available modules are wired and nothing else is; the assigned
  *     route equals the facade value exactly (no prefixing / concatenation /
  *     repair);
  *  e. zero patient/dataset transport: rendered tree, navigation target and
@@ -333,7 +333,7 @@ try {
   packagedOutcome = { ok: false, failure: { code: 'START_THREW', message: err.message } };
 }
 
-// --- CASO 1: packaged start -> exactly one navigable tile (reuma), zero farmacia
+// --- CASO 1: packaged start -> exactly two navigable tiles (reuma + farmacia)
 {
   try {
     const root = packaged.dom.__homeRoot;
@@ -351,39 +351,43 @@ try {
     });
     const ok =
       packagedOutcome && packagedOutcome.ok === true &&
-      tiles.length === 1 && reuma.length === 1 && farmacia.length === 0 &&
+      tiles.length === 2 && reuma.length === 1 && farmacia.length === 1 &&
       hrefs === 0 && targetBlank === 0 && routeStrings === 0;
-    record('CASO 1 composed start: exactly one reuma tile, zero farmacia tiles, no embedded routes', ok,
+    record('CASO 1 composed start: exactly two available tiles (reuma + farmacia), no embedded routes', ok,
       `outcome=${JSON.stringify(packagedOutcome && packagedOutcome.ok)} tiles=${tiles.length} reuma=${reuma.length} farmacia=${farmacia.length} hrefs=${hrefs} targetBlank=${targetBlank} routeStrings=${routeStrings}`);
   } catch (err) {
-    record('CASO 1 composed start: exactly one reuma tile, zero farmacia tiles, no embedded routes', false, err.message);
+    record('CASO 1 composed start: exactly two available tiles (reuma + farmacia), no embedded routes', false, err.message);
   }
 }
 
-// --- CASO 2: reuma click -> assign EXACTLY ONCE with the facade-issued route
+// --- CASO 2: each available tile click -> assign EXACTLY ONCE with the facade route
 {
   try {
     const context = packagedOutcome && packagedOutcome.context;
-    let facadeRoute = null;
-    let facadeError = null;
+    const tiles = findAllByClass(packaged.dom.__homeRoot, 'nexus-home__tile');
+    const tileFor = (id) => tiles.find((t) => t.getAttribute('data-module-id') === id);
+    const reumaTile = tileFor('reuma');
+    const farmaciaTile = tileFor('farmacia');
+    const reumaClick = reumaTile && reumaTile.__listeners ? reumaTile.__listeners.click : undefined;
+    const farmaciaClick = farmaciaTile && farmaciaTile.__listeners ? farmaciaTile.__listeners.click : undefined;
+    const handlerPresent = typeof reumaClick === 'function' && typeof farmaciaClick === 'function';
+    let reumaRoute = null;
+    let farmaciaRoute = null;
     try {
-      facadeRoute = context.getModuleRoute('reuma');
-    } catch (err) {
-      facadeError = err;
-    }
-    const tile = findAllByClass(packaged.dom.__homeRoot, 'nexus-home__tile')[0];
-    const click = tile && tile.__listeners ? tile.__listeners.click : undefined;
-    const handlerPresent = typeof click === 'function';
-    if (handlerPresent) click({ type: 'click' });
+      reumaRoute = context.getModuleRoute('reuma');
+      farmaciaRoute = context.getModuleRoute('farmacia');
+    } catch { /* recorded via null routes below */ }
+    if (typeof reumaClick === 'function') reumaClick({ type: 'click' });
+    if (typeof farmaciaClick === 'function') farmaciaClick({ type: 'click' });
     const calls = packaged.assignCalls;
     const ok =
-      facadeError === null && typeof facadeRoute === 'string' &&
       handlerPresent &&
-      calls.length === 1 && calls[0] === facadeRoute && facadeRoute === 'index.html';
-    record('CASO 2 reuma click: assign called exactly once with the exact facade route', ok,
-      `handlerPresent=${handlerPresent} facadeRoute=${JSON.stringify(facadeRoute)} calls=${JSON.stringify(calls)} assignCount=${calls.length}`);
+      reumaRoute === 'index.html' && farmaciaRoute === 'farmacia_index.html' &&
+      calls.length === 2 && calls[0] === reumaRoute && calls[1] === farmaciaRoute;
+    record('CASO 2 available tile clicks: each assigns exactly once with the exact facade route', ok,
+      `handlerPresent=${handlerPresent} reumaRoute=${JSON.stringify(reumaRoute)} farmaciaRoute=${JSON.stringify(farmaciaRoute)} calls=${JSON.stringify(calls)}`);
   } catch (err) {
-    record('CASO 2 reuma click: assign called exactly once with the exact facade route', false, err.message);
+    record('CASO 2 available tile clicks: each assigns exactly once with the exact facade route', false, err.message);
   }
 }
 
@@ -396,7 +400,7 @@ try {
       if (el.attributes && String(el.attributes.target || '').toLowerCase() === '_blank') targetBlank += 1;
     });
     const ok =
-      packaged.assignCalls.length >= 1 &&
+      packaged.assignCalls.length === 2 &&
       packaged.openCalls.length === 0 &&
       targetBlank === 0 &&
       (packaged.historyCalls || []).length === 0;
@@ -407,20 +411,22 @@ try {
   }
 }
 
-// --- CASO 4: unavailable farmacia has no tile and no listener
+// --- CASO 4: both available modules have a tile and a click listener
 {
   try {
     const root = packaged.dom.__homeRoot;
     const tiles = findAllByClass(root, 'nexus-home__tile');
     const wired = collectClickWiredModuleIds(root);
     const farmaciaTiles = tiles.filter((t) => t.getAttribute('data-module-id') === 'farmacia');
+    const reumaTiles = tiles.filter((t) => t.getAttribute('data-module-id') === 'reuma');
     const ok =
-      farmaciaTiles.length === 0 && wired.length === tiles.length &&
-      wired.length === 1 && wired[0] === 'reuma';
-    record('CASO 4 unavailable farmacia: no tile and no click listener; only reuma is wired', ok,
-      `farmaciaTiles=${farmaciaTiles.length} tiles=${tiles.length} wired=${JSON.stringify(wired)}`);
+      farmaciaTiles.length === 1 && reumaTiles.length === 1 &&
+      wired.length === tiles.length && wired.length === 2 &&
+      JSON.stringify([...wired].sort()) === JSON.stringify(['farmacia', 'reuma']);
+    record('CASO 4 both available modules: tile + click listener, nothing else wired', ok,
+      `farmaciaTiles=${farmaciaTiles.length} reumaTiles=${reumaTiles.length} tiles=${tiles.length} wired=${JSON.stringify(wired)}`);
   } catch (err) {
-    record('CASO 4 unavailable farmacia: no tile and no click listener; only reuma is wired', false, err.message);
+    record('CASO 4 both available modules: tile + click listener, nothing else wired', false, err.message);
   }
 }
 
