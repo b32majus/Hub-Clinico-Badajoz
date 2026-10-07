@@ -157,6 +157,7 @@ Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10)
 
 | Capacidad / decisión | Estado | Evidencia publicada | Siguiente gate / nota |
 | --- | --- | --- | --- |
+| Home Nexus → Farmacia | `REQUISITO_DECIDIDO_PENDIENTE` | #575; registry actual ya apunta a `farmacia_index.html` | El deployment sintético mantiene Farmacia `IMPLEMENTED_NOT_QUALIFIED / available=false`. Gate: cualificación explícita del deployment + navegación browser soportada; no bypass de readiness. |
 | F4.1 contrato read DTO V2 | `IMPLEMENTADO` | #427 / PR #430 | Publicado. |
 | F4.2 facade async + vertical Inicio/Quick View | `IMPLEMENTADO` | #428 / PR #430 | Publicado y QA sintético. |
 | F4.3 lecturas Dashboard/Validación/PV/Seguimiento/Estadísticas/Inicio/Actividad/review detrás de seams | `IMPLEMENTADO` | #470/#475, PR #474/#478 | Completado; PV-001 descubierto después ya está resuelto. |
@@ -171,8 +172,9 @@ Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10)
 | Primera Visita como primer contacto PROMueve | `IMPLEMENTADO_REVALIDAR` | UI/captura existente; semántica #501 | `inducción solicitada ≠ inducción validada`; no exigir historia previa completa. |
 | Tratamiento preexistente como baseline | `PENDIENTE` | Decisión #501 | No fabricar START/SWITCH/ADD_ON retrospectivos. |
 | Add-on tras nueva solicitud+validación | `DISCOVERY` | #501 `PENDIENTE_EQUIPO` | Resolver si primera dispensación del nuevo tratamiento se registra como PV del nuevo tratamiento o dentro de Seguimiento. |
+| Excel Bridge — routing explícito servicio/patología | `DISCOVERY` | #577; reutiliza #232 + arquitectura V4 + #365 | No es duplicado de #236: el Processor histórico procesa raw→relacional. Nueva pieza propuesta: entrada única con servicio/patología explícitos + mapping versionado a hoja/tabla destino, fail-closed y portable a futuro API/DB. No implementación autorizada. |
 | Dashboard: quitar ruido Excel + comorbilidades + revisar “Vista completa” | `PENDIENTE` | #501 | Dashboard sigue siendo read-only longitudinal. |
-| Estadísticas/reporting SIL-REV-018/019/020 | `PENDIENTE` | #501 + auditoría septiembre | Filtros/población/tiempo/movimientos explícitos/comorbilidades/PROM/validación/EA/actividad desde fuente explícita. |
+| Estadísticas/reporting SIL-REV-018/019/020 | `REQUISITO_DECIDIDO_PENDIENTE` | #501 + #574 + #576 | Separar `Análisis poblacional` de una sección propia `Informes`. Primer informe: **Cosentyx trimestral completo**; fixture sintético dedicado permitido, pero conteos/detalle calculados realmente. Para `nuevo inicio`, ancla = **primera dispensación explícita**, no validación. XLSX descargable mínimo; PDF adicional si robusto. V2: presets guardados/compartidos; no Control Plane en demo. |
 | Selección CIMA concreta con propuestas editables | `FUTURO` | Dirección #501 | Sólo tras selección explícita de medicamento/presentación y contexto cuando proceda; nunca sobrescribir ajustes profesionales. |
 | F4.5 DeliveryResult / adapter semantics | `PENDIENTE` | Foundation Plan | Técnicamente disponible tras F4.4; **no prioridad humana automática ni autorización de ejecución**. |
 | F4.6 | `PENDIENTE` | Foundation Plan | Depende de F4.5; no ejecutar por inercia. |
