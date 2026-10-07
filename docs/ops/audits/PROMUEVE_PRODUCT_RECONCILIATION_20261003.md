@@ -228,7 +228,7 @@ Reglas de seguridad:
 - la dimensión `Servicio` debe representar servicio clínico de origen/seguimiento cuando corresponda; Farmacia no debe aparecer artificialmente como servicio propietario universal;
 - medicamentos especiales (ensayo clínico, uso compasivo, medicamento extranjero, registros locales) siguen en discovery y requieren fuente explícita/versionada o captura profesional.
 
-**Decisión humana 2026-10-07 — demo inmediata (#576):**
+**Decisión humana 2026-10-07 — demo inmediata (#576) — PUBLICADA Y VERIFICADA por PR #581:**
 
 - dentro de Estadísticas se separa `Análisis poblacional` de una sección propia `Informes`;
 - informes demo definidos: **Informe trimestral Cosentyx** (#576) y **Informe de utilización y dosis — Kisqali** (#579);
