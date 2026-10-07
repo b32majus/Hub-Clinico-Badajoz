@@ -5,8 +5,8 @@
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
-**Base canónica verificada para esta reconciliación:** `663df88993365463e42e419067ffdc771c7d0636` (merge PR #571, último HEAD de producto verificado); incluye #541/PR #567 y #545/PR #571 como cierre compuesto RAPID3
-**Último HEAD de producto Nexus verificado:** `663df88993365463e42e419067ffdc771c7d0636` (PR #571 / #545 — shared collapsible dynamic-height); candidate `4fd264a8d67bb534e879cf55e51f86c1219105a1`
+**Base canónica verificada para esta reconciliación:** `9d060f448c6ea1367b09993f232574ff1abd40a5` (merge PR #582, último HEAD de producto verificado); incluye #579 Informe de utilización y dosis — Kisqali sobre #576 Cosentyx y #575 Home NEXus → Farmacia
+**Último HEAD de producto Nexus verificado:** `9d060f448c6ea1367b09993f232574ff1abd40a5` (PR #582 / #579 — Informe de utilización y dosis — Kisqali en `Informes`); candidate `73e67b941913e56b3014a5c617571c6534258108`
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
@@ -157,6 +157,7 @@ Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10)
 
 | Capacidad / decisión | Estado | Evidencia publicada | Siguiente gate / nota |
 | --- | --- | --- | --- |
+| Home Nexus → Farmacia | `RESUELTO / PUBLICADO` | #575 / PR #580; candidate `ed3e00f97...` → merge `cdb5b6bd...` | Deployment sintético: Farmacia `QUALIFIED_FOR_SITE / available=true` con evidencia explícita de demo sintética; navegación soportada Home → `farmacia_index.html`, same-tab + Back demostrados. No cualifica hospital real, piloto ni producción. |
 | F4.1 contrato read DTO V2 | `IMPLEMENTADO` | #427 / PR #430 | Publicado. |
 | F4.2 facade async + vertical Inicio/Quick View | `IMPLEMENTADO` | #428 / PR #430 | Publicado y QA sintético. |
 | F4.3 lecturas Dashboard/Validación/PV/Seguimiento/Estadísticas/Inicio/Actividad/review detrás de seams | `IMPLEMENTADO` | #470/#475, PR #474/#478 | Completado; PV-001 descubierto después ya está resuelto. |
@@ -171,8 +172,9 @@ Los ítems **3, 5, 6, 8, 10, 12 y 13** quedan resueltos/publicados: RAPID3 (#10)
 | Primera Visita como primer contacto PROMueve | `IMPLEMENTADO_REVALIDAR` | UI/captura existente; semántica #501 | `inducción solicitada ≠ inducción validada`; no exigir historia previa completa. |
 | Tratamiento preexistente como baseline | `PENDIENTE` | Decisión #501 | No fabricar START/SWITCH/ADD_ON retrospectivos. |
 | Add-on tras nueva solicitud+validación | `DISCOVERY` | #501 `PENDIENTE_EQUIPO` | Resolver si primera dispensación del nuevo tratamiento se registra como PV del nuevo tratamiento o dentro de Seguimiento. |
+| Excel Bridge — decisión de entrada por patología vs Bridge relacional | `DISCOVERY` | #577; reutiliza #232 + arquitectura V4 + #365 | No es duplicado de #236. En Reuma, una entrada única podría resolver la hoja por patología **sólo si** esa partición física sigue vigente. En Farmacia debe compararse con entrada común + patología explícita + Processor raw→relacional, que puede hacer redundante el routing. No implementación autorizada. |
 | Dashboard: quitar ruido Excel + comorbilidades + revisar “Vista completa” | `PENDIENTE` | #501 | Dashboard sigue siendo read-only longitudinal. |
-| Estadísticas/reporting SIL-REV-018/019/020 | `PENDIENTE` | #501 + auditoría septiembre | Filtros/población/tiempo/movimientos explícitos/comorbilidades/PROM/validación/EA/actividad desde fuente explícita. |
+| Estadísticas/reporting SIL-REV-018/019/020 | `PARCIAL — V1 INFORMES DEMO RESUELTOS/PUBLICADOS; ANALÍTICA AMPLIADA/V2 PENDIENTES` | #576 / PR #581 + #579 / PR #582 | `Informes` existe separado de `Análisis poblacional`. **Cosentyx trimestral** (#576) está publicado/verificado con primera dispensación explícita para nuevo inicio, detalle auditable y XLSX real. **Kisqali utilización/dosis** (#579) está publicado/verificado con Mensual/Trimestral/Anual/Histórico por ciclos mensuales observados/evaluables, trazabilidad cruda y XLSX real `Resumen` + `Pacientes` + `Ciclos`; sin inferir consumo/dispensación real. Recuperación de dimensiones poblacionales y V2 de presets/Control Plane siguen pendientes/diferidos. |
 | Selección CIMA concreta con propuestas editables | `FUTURO` | Dirección #501 | Sólo tras selección explícita de medicamento/presentación y contexto cuando proceda; nunca sobrescribir ajustes profesionales. |
 | F4.5 DeliveryResult / adapter semantics | `PENDIENTE` | Foundation Plan | Técnicamente disponible tras F4.4; **no prioridad humana automática ni autorización de ejecución**. |
 | F4.6 | `PENDIENTE` | Foundation Plan | Depende de F4.5; no ejecutar por inercia. |

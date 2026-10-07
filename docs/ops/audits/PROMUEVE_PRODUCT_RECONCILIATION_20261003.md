@@ -202,7 +202,7 @@ Dirección acordada:
 - incorporar comorbilidades al resumen longitudinal cuando exista dato explícito;
 - preservar el dashboard como superficie de lectura longitudinal, no convertirlo en un segundo formulario de edición.
 
-### 3.11 Estadísticas y reporting — `DECIDIDO COMO DIRECCIÓN`, implementación pendiente
+### 3.11 Estadísticas y reporting — `DECIDIDO / REQUISITOS DEMO PENDIENTES`
 
 **Publicación acotada posterior (#537 / PR #538):** el botón soportado `Exportar CSV` de Estadísticas queda cableado al exportador publicado y toma `currentCohort`, la cohorte que resulta de los filtros formales. `Buscar en tabla` sigue siendo una copia de presentación local y **no** forma parte de la semántica de exportación. Evidencia sintética publicada: oracle 8/8, browser 6/6 con descargas reales, witness `total > filtered`, zero-result sin fallback y búsqueda local estrechada sin alterar el CSV; merge `05114fcf899a857ca6505c1da7eaef2c82ac6155`, CI PR `37336670618` y post-merge `37336957812` `success`. Esto **no** resuelve el reporting amplio de esta sección, no valida otras columnas CSV ni autoriza piloto/producción. Durante la cualificación se observó deuda preexistente del filtro sexo (`Hombre/Mujer` en UI frente a `M/F` en datos); queda reportada, no corregida ni priorizada automáticamente.
 
@@ -227,6 +227,50 @@ Reglas de seguridad:
 - `controlado/no controlado` no se sintetiza sin contrato clínico explícito;
 - la dimensión `Servicio` debe representar servicio clínico de origen/seguimiento cuando corresponda; Farmacia no debe aparecer artificialmente como servicio propietario universal;
 - medicamentos especiales (ensayo clínico, uso compasivo, medicamento extranjero, registros locales) siguen en discovery y requieren fuente explícita/versionada o captura profesional.
+
+**Decisión humana 2026-10-07 — demo inmediata (#576 + #579) — AMBOS PUBLICADOS Y VERIFICADOS por PR #581/#582:**
+
+- dentro de Estadísticas se separa `Análisis poblacional` de una sección propia `Informes`;
+- informes demo definidos: **Informe trimestral Cosentyx** (#576) y **Informe de utilización y dosis — Kisqali** (#579);
+- V1 debe ser completo y demostrable, no una versión intermedia;
+- se permite fixture sintético dedicado, pero los resultados/conteos se calculan realmente y se muestra detalle auditable;
+- XLSX descargable real es salida mínima; PDF es formato adicional si se implementa sin comprometer robustez;
+- para `nuevo inicio`, la ventana temporal usa la **primera dispensación explícitamente registrada** del tratamiento. La validación no basta: `VALIDATED != DISPENSED`;
+- no inferir dispensación, inicio ni intensificación desde visita, tratamiento actual, nombre del fármaco o dato ausente;
+- la proyección raw actual no transporta dispensación explícita; una demo purpose-built puede introducir ese hecho sólo en fixture sintético, sin presentarlo como capacidad de fuente real;
+- HS q4w→q2w exige movimiento explícito y un ancla temporal explícita antes de usar datos no sintéticos;
+- **Kisqali #579 — PUBLICADO Y VERIFICADO por PR #582:** un único motor Mensual/Trimestral/Anual/Histórico usa ciclos mensuales observados/evaluables como unidad de peso, no patient-days; la semana de descanso no es dosis 0. Presentación explícita y dosis explícita son hechos independientes y no se derivan entre sí. Muestra media por paciente/cohorte, distribución al cierre, cambios explícitos, cobertura de dosis y trazabilidad por ciclo; un cambio mid-cycle sin regla aprobada falla cerrado/no se evalúa. El indicador no equivale a consumo real. Fixture 100% sintético; sin integración CIMA/raw real en V1. Candidate `73e67b941913e56b3014a5c617571c6534258108` → merge `9d060f448c6ea1367b09993f232574ff1abd40a5`; CI PR `37684084213` success; auditoría Cora: checker 42/42, `verify:nexus` PASS, browser Kisqali/Cosentyx/Statistics PASS, `console.error=0`, `pageerror=0`; merge tree `0197b66847a8fef510eb4acb5ba2c6ae04431940` idéntico al candidate.
+- V2 preserva el seam para presets/filtros guardados, reutilizables y compartibles; futuro Control Plane queda fuera de la demo.
+
+### 3.12 Excel Bridge — capa de entrada/routing multipatología — `DISCOVERY / EVOLUCIÓN`
+
+La idea planteada el 2026-10-07 **no es una duplicación desde cero**.
+
+Ya existe autoridad previa:
+
+- #232 materializó el workbook Bridge con hojas operativas por servicio;
+- la arquitectura V4 define `Hub → TSV → hoja operativa del servicio → Procesar pendientes`;
+- #236 describió un Office Script Processor idempotente para transformar raw en tablas relacionadas, pero no un router de entrada;
+- #365 demostró un workbook Enfermería v6 multihoja con servicio/hoja explícitos e identidad estable.
+
+La aclaración humana posterior del 2026-10-07 corrige el alcance de #577: **no se decide todavía que deba existir una capa de routing física por patología**.
+
+Hay dos situaciones distintas que deben compararse:
+
+1. **Reumatología:** el workbook inicial 1.0 estaba físicamente separado por patologías (AR, EspA, LES, etc.). Si esa partición sigue siendo necesaria, una entrada única con patología explícita podría resolver la hoja adecuada y reducir el riesgo de escritura manual en la hoja equivocada.
+2. **Farmacia / Excel Bridge V4:** el patrón raw append-only + Processor → tablas relacionales comunes puede hacer innecesario cualquier routing físico por patología. En ese caso, añadir otra capa sería complejidad sin valor.
+
+Por tanto, #577 debe decidir entre **routing físico por patología** y **entrada común + servicio/patología explícitos + procesamiento relacional**, pudiendo la respuesta variar por módulo/site.
+
+Invariantes ya válidos:
+
+- servicio/patología vienen explícitos del formulario/payload cuando sean necesarios;
+- no se infieren desde fármaco, texto clínico, catálogo, tratamiento previo o ausencia;
+- sólo existe mapping a hoja/tabla si el diseño físico realmente lo exige;
+- mapping desconocido falla cerrado;
+- el contrato de entrada debe poder sobrevivir a Excel → API/DB.
+
+#577 queda en `DISCOVERY / IMPLEMENTATION_AUTHORITY=NO`, fuera de la demo inmediata. No reactiva #236 ni modifica el Architecture Decision Freeze.
 
 ## 4. Dermatología — cambio de contexto de producto
 
@@ -349,6 +393,8 @@ No debe preguntar “quién eres” como si existiera un modelo de autenticació
 
 Cuando existan identidad y autorización reales, la Home podrá limitar/mostrar espacios conforme a esa autoridad; no antes.
 
+**Decisión demo 2026-10-07 (#575) — PUBLICADA Y VERIFICADA:** PR #580 publica el acceso soportado Home → Farmacia sobre el deployment sintético. Candidate `ed3e00f97cbc34199b4aa56fcbeb05230d1bf92f` → merge `cdb5b6bd65b9cf2190f4b9d5e04ed68c9c584b3f`; Farmacia queda `QUALIFIED_FOR_SITE / available=true` mediante el contrato de readiness existente y conserva `farmacia_index.html` como ruta. QA browser real demuestra click same-tab + Back; no hubo bypass, cambio de registry ni cualificación hospitalaria. Esto sigue siendo demo/evaluación sintética, no piloto ni producción.
+
 ### 5.2 Badajoz y Mérida — mismo módulo, variación explícita — `DECIDIDO`
 
 Hitos humanos conocidos:
@@ -387,6 +433,8 @@ Dirección:
 - extraer sólo las dimensiones que realmente cambian;
 - mantener semántica clínica en contratos/código gobernados donde corresponda;
 - recuperar Control Plane/configuración más potente sólo si Reuma+Derma demuestran presión suficiente.
+
+**Matiz 2026-10-07:** la evolución de reporting aporta una presión real acotada: en V2 se prevén presets/filtros guardados, reutilizables y compartibles. Esto **no** aprueba todavía un Control Plane mutable; únicamente obliga a no hardcodear V1 de forma que impida sustituir después la definición fija por configuración gobernada.
 
 ## 6. Reumatología — reconciliación antes de nueva revisión manual
 
