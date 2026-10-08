@@ -5,6 +5,14 @@
  * name, catalogue, prior treatment, label, tray or absent data, and nothing
  * here represents real dispensing, consumption or adherence.
  *
+ * Visible demo surface (WO-FH-DEMO-KISQALI-FIXTURE-01): every cycle shown
+ * uses an explicitly recorded dose of 200, 400 or 600 mg. The fixture
+ * contains no synthetic 300 mg, no null/absent dose and no mid-cycle change
+ * rows on screen. Adversarial states (explicit 300, unknown dose,
+ * mid-cycle non-evaluable, adjacent doses without an explicit change fact)
+ * stay representable in the general engine and are witnessed ONLY in
+ * isolated checker-local fixtures, never in this visible demo source.
+ *
  * Fact vocabulary per synthetic patient:
  * - patient_id: synthetic identifier
  * - cycles: explicit observed monthly treatment cycles, one row per
@@ -12,11 +20,11 @@
  *   - cycle_month: authoritative inclusion key, exact 'YYYY-MM'
  *   - cycle_start: explicit ISO date-only, used for traceability and
  *     boundary validation; must fall inside cycle_month
- *   - dose_mg: explicit positive numeric dose (200/400/600 are ordinary
- *     explicit doses; any other explicit positive number stays that exact
- *     dose) or null/absent = explicitly unknown dose. Zero is NOT a valid
- *     cycle dose in this demo contract: the Kisqali rest week is never
- *     modeled as 0 mg.
+ *   - dose_mg: explicit positive numeric dose (200/400/600 are the ordinary
+ *     demo doses shown here; any other explicit positive number stays that
+ *     exact dose in the general engine) or null/absent = explicitly unknown
+ *     dose. Zero is NOT a valid cycle dose in this demo contract: the
+ *     Kisqali rest week is never modeled as 0 mg.
  *   - presentation_label: display/traceability only, preserved verbatim when
  *     explicit ('200 mg - 21' / '200 mg - 63'); independent of dose_mg and
  *     never used to derive, confirm or reject a dose.
@@ -51,23 +59,23 @@
         return Object.freeze(row);
     }
 
-    /* Witness map (by construction):
+    /* Witness map (by construction — visible demo only, all 200/400/600):
      * - KIS-001: stable 400 x 6 => patient mean exactly 400.
      * - KIS-002: explicit 600 -> 400 boundary change (effective 2025-09-01 =
      *   cycle_start) => mean 1600/3 = 533.33.
      * - KIS-003: explicit 600 -> 400 -> 200 (boundary changes effective
      *   2026-02-01 and 2026-04-01) => mean 2000/6 = 333.33; spans 2026 months.
-     * - KIS-004: unknown-dose cycle (2026-04) after a known 400 cycle; the
-     *   closing cycle is unknown => proves no backfill for closing dose.
-     * - KIS-005: explicit positive "other" dose (300) with presentation 63
-     *   and 21 => presentation cannot determine dose; 300 is never coerced.
-     * - KIS-006: adjacent doses 600 -> 400 WITHOUT any change fact => 0
-     *   changes counted (no inference from adjacent rows).
-     * - KIS-007: explicit mid-cycle change (400 -> 200 effective 2026-06-15,
-     *   inside the cycle but not at cycle_start) => raw traceability preserved,
-     *   non-evaluable for dose calculation, never prorated.
+     * - KIS-004: explicit 600 -> 400 boundary change (effective 2026-04-01)
+     *   => mean 1000/2 = 500; coherent reduction example, fully evaluable.
+     * - KIS-005: stable 600 x 2 (presentations 63 then 21) => mean 600.
+     * - KIS-006: explicit 600 -> 400 boundary change (effective 2026-06-01)
+     *   => mean 1000/2 = 500; every adjacent dose difference in this
+     *   fixture carries an explicit boundary fact, so no inference is shown.
+     * - KIS-007: single explicit 200 cycle (2026-06) => mean 200.
      * - Months span two calendar years (2025 and 2026) so Mensual, Trimestral,
      *   Anual and Histórico windows do not collapse to the same result.
+     * - Adversarial witnesses (300, unknown dose, mid-cycle, adjacent
+     *   doses without a fact) live ONLY in isolated checker-local fixtures.
      */
     var PATIENTS = [
         {
@@ -103,28 +111,28 @@
         {
             patient_id: 'KIS-004',
             cycles: [
-                cycle('2026-03', '2026-03-01', 400, '200 mg - 21'),
-                cycle('2026-04', '2026-04-01', null, null)
+                cycle('2026-03', '2026-03-01', 600, '200 mg - 63'),
+                cycle('2026-04', '2026-04-01', 400, '200 mg - 21', change(600, 400, '2026-04-01'))
             ]
         },
         {
             patient_id: 'KIS-005',
             cycles: [
-                cycle('2026-02', '2026-02-01', 300, '200 mg - 63'),
-                cycle('2026-03', '2026-03-01', 300, '200 mg - 21')
+                cycle('2026-02', '2026-02-01', 600, '200 mg - 63'),
+                cycle('2026-03', '2026-03-01', 600, '200 mg - 21')
             ]
         },
         {
             patient_id: 'KIS-006',
             cycles: [
                 cycle('2026-05', '2026-05-01', 600, '200 mg - 63'),
-                cycle('2026-06', '2026-06-01', 400, '200 mg - 63')
+                cycle('2026-06', '2026-06-01', 400, '200 mg - 63', change(600, 400, '2026-06-01'))
             ]
         },
         {
             patient_id: 'KIS-007',
             cycles: [
-                cycle('2026-06', '2026-06-01', 400, '200 mg - 21', change(400, 200, '2026-06-15'))
+                cycle('2026-06', '2026-06-01', 200, '200 mg - 21')
             ]
         }
     ];
