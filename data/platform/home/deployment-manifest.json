@@ -24,7 +24,7 @@
     {
       "moduleId": "reuma",
       "label": "Hub Clínico Reuma",
-      "entryPath": "index.html",
+      "entryPath": "reuma_index.html",
       "enabled": true,
       "qualificationState": "QUALIFIED_FOR_SITE",
       "available": true,
@@ -38,7 +38,7 @@
   "provenance": {
     "registryVersion": "1",
     "profileVersion": "1",
-    "registrySha256": "1e0d26210d99176a1de39350729626bc8e95b2bba4ab0790fb5ecf713b3bccd5",
+    "registrySha256": "7d2531e33d9e47fac1a07d11fd81609a5ae8986bf359b74e1a819b7ea86726e5",
     "profileSha256": "283d2cc83a7fa24a670e2123ccf7cf1b79833305ac866b5a30a3f513930b7629",
     "generator": "tools/deployment_manifest_build.mjs v1"
   }

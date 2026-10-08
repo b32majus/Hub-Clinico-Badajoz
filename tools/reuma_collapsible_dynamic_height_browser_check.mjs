@@ -105,7 +105,7 @@ function check(name, pass, detail) {
 async function gate() {
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 900 } });
   const page = await ctx.newPage();
-  await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+  await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
   await page.setInputFiles('#gateExcelInput', workbookPath);
   await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
   const prof = await page.evaluate(() => {
@@ -435,7 +435,7 @@ await visitJourney('seguimiento.html', 'ar', 'SEGUIMIENTO_AR');
 // --- Estadísticas: custom controller must open/close normally ---------------
 console.log('\n=== ESTADISTICAS ===');
 {
-  // Same-tab journey: gate on index.html, then estadisticas.html in the SAME
+  // Same-tab journey: gate on reuma_index.html, then estadisticas.html in the SAME
   // tab so the session corpus persists (supported happy path per
   // reuma_estadisticas_read_browser_check.mjs). A fresh tab would have empty
   // sessionStorage and the page correctly reports console.error 'No hay datos'.
@@ -445,7 +445,7 @@ console.log('\n=== ESTADISTICAS ===');
   page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
   page.on('pageerror', (e) => perrs.push(String(e)));
   try {
-    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
     const prof = await page.evaluate(() => {

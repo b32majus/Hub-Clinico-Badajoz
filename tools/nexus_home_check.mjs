@@ -46,7 +46,7 @@
  *  - nexus_home.html is a NEW distinct entrypoint: it loads exactly the platform
  *    seam scripts, the generated validators, the three Home modules and
  *    nexus_home.css, and provides <element id="home-root">. It never replaces or
- *    mutates the legacy entrypoints (index.html, farmacia_index.html).
+ *    mutates the legacy entrypoints (reuma_index.html, farmacia_index.html).
  *  - Home transports zero patient/clinical data (ADR-002) and never imports the
  *    clinical runtime (HubTools / dataManager / exportManager).
  *
@@ -76,7 +76,7 @@ const FILES = {
   renderer: 'modules/home/home-renderer.js',
   page: 'modules/home/home-page.js',
   validatorsBuild: 'tools/home_validators_build.mjs',
-  legacyReuma: 'index.html',
+  legacyReuma: 'reuma_index.html',
   legacyFarmacia: 'farmacia_index.html',
 };
 

@@ -6,7 +6,7 @@
  * direct `HubTools.data` reads.
  *
  * Follows `tools/reuma_read_vertical_browser_check.mjs`: a real repo-root HTTP server,
- * the real session gate on index.html (file input -> professional select -> confirm),
+ * the real session gate on reuma_index.html (file input -> professional select -> confirm),
  * real navigation, and a synthetic XLSX materialized outside the repository from
  * `tools/fixtures/reuma_read/corpus_v1.json` (ids `SYN-*` only). No DOM/storage
  * cheating: the only `page.addInitScript` use defines the planted read-port double
@@ -169,7 +169,7 @@ function seguimientoErrors(entry) {
 async function passSupportedGate(context) {
     const entry = trackedPage(await context.newPage());
     const { page } = entry;
-    await page.goto(`${origin}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
     const professional = await page.evaluate(() => {

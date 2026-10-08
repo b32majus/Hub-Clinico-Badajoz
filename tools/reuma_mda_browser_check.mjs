@@ -66,7 +66,7 @@ function check(name, pass, detail) {
 async function gate() {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
-  await page.goto(`${baseUrl}/index.html`, { waitUntil:'load', timeout:45000 });
+  await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil:'load', timeout:45000 });
   await page.setInputFiles('#gateExcelInput', workbookPath);
   await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout:20000 });
   const prof = await page.evaluate(()=>{const s=document.getElementById('gateProfessionalSelect');return s?Array.from(s.options).map(o=>o.value).find(Boolean)||'':'';});

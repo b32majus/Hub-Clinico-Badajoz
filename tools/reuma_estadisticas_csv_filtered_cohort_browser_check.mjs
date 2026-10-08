@@ -8,7 +8,7 @@
  * never the total population and never the `Buscar en tabla`-narrowed display.
  *
  * Follows `tools/reuma_estadisticas_read_browser_check.mjs`: a real repo-root
- * HTTP server, the real session gate on index.html (file input -> professional
+ * HTTP server, the real session gate on reuma_index.html (file input -> professional
  * select -> confirm), real navigation and real supported interactions
  * (select/fill/click/export) with `acceptDownloads`. No DOM/storage cheating.
  *
@@ -31,7 +31,7 @@
  *       narrowing the visible rows to 1; the download still carries the 6
  *       formal identities (accepted decision in #537).
  *   E6  console.error === 0 and pageerror === 0 counted over the whole
- *       qualified journey: session gate on index.html through navigation,
+ *       qualified journey: session gate on reuma_index.html through navigation,
  *       filters, export clicks and real CSV downloads. No error buffer is
  *       cleared after the gate and the assertion applies to the full-journey
  *       totals (every `console` message of type `error` plus every
@@ -205,7 +205,7 @@ function describeErrorsByPage(entry) {
 async function passSupportedGate(context) {
     const entry = trackedPage(await context.newPage());
     const { page } = entry;
-    await page.goto(`${origin}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
     const professional = await page.evaluate(() => {

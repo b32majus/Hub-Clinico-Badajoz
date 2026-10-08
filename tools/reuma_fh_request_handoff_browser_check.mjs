@@ -226,7 +226,7 @@ function blacklistHits(text) {
 
 async function openPatientPage(browser, urlPath) {
     // Supported route: load the synthetic DB through the real session gate
-    // (index.html) and then navigate THE SAME TAB to the target page, so the
+    // (reuma_index.html) and then navigate THE SAME TAB to the target page, so the
     // per-tab sessionStorage DB cache is available exactly as in the real flow.
     // A fresh context per journey isolates session/permission state exactly
     // like the established browser-check pattern (one context per page).
@@ -236,7 +236,7 @@ async function openPatientPage(browser, urlPath) {
     const pageErrors = [];
     page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
     page.on('pageerror', (err) => pageErrors.push(String(err)));
-    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.waitForFunction(() => typeof window.HubTools !== 'undefined' && !!document.getElementById('gateExcelInput'), null, { timeout: 15000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     try {
