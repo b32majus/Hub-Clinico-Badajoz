@@ -256,9 +256,9 @@ function initSidebar() {
 
 function checkProfessionalSession() {
     var currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    if (currentPage === 'index.html' || currentPage === 'reuma_index.html') return;
+    if (currentPage === 'reuma_index.html') return;
     if (!localStorage.getItem('hubSelectedProfessional')) {
-        window.location.href = 'index.html';
+        window.location.href = 'reuma_index.html';
     }
 }
 
@@ -354,7 +354,7 @@ function initLogoutBtn() {
     if (!btn) return;
     btn.addEventListener('click', function() {
         localStorage.removeItem('hubSelectedProfessional');
-        window.location.href = 'index.html';
+        window.location.href = 'reuma_index.html';
     });
 }
 
@@ -1050,7 +1050,7 @@ function PatientAutocomplete(inputEl, opts) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('\uD83D\uDE80 Iniciando Hub Cl\u00ednico...');
 
-    // Guardia de sesi\u00f3n: redirige a index.html si no hay profesional seleccionado
+    // Guardia de sesi\u00f3n: redirige a reuma_index.html si no hay profesional seleccionado
     checkProfessionalSession();
 
     // Inicializar sidebar (active link + profesional + BD status)
@@ -1059,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar logout
     initLogoutBtn();
 
-    // Session gate (solo en las portadas Reuma: index.html y reuma_index.html)
+    // Session gate (solo en la portada Reuma: reuma_index.html)
     initSessionGate();
 
     // --- DOM Elements ---
@@ -1110,7 +1110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // --- Event Listeners: CSV/Database Loading (bot\u00f3n de carga manual en index.html) ---
+    // --- Event Listeners: CSV/Database Loading (bot\u00f3n de carga manual en reuma_index.html) ---
     if (csvBtn && csvFileInput) {
         csvBtn.addEventListener('click', function() {
             csvFileInput.value = '';

@@ -30,7 +30,7 @@
  *      no query/hash on the navigation URL.
  *   S7 Dirty-draft non-interference: a seeded synthetic draft key survives the
  *      Home session and Home adds no state keys of its own.
- *   S8 Legacy direct entrypoints: index.html and farmacia_index.html load without
+ *   S8 Legacy direct entrypoints: reuma_index.html and farmacia_index.html load without
  *      pageerror and contain no script/link reference to nexus_home.
  *
  * This is browser QA and stays OUT of the deterministic verify:nexus gate
@@ -528,7 +528,7 @@ try {
       page.on('pageerror', (error) => pageErrors.push(`${page.url()}: ${error.message}`));
 
       // Seed a synthetic non-clinical draft on the origin BEFORE Home loads.
-      await page.goto(`${origin}/index.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
       await page.waitForTimeout(300);
       await page.evaluate(() => {
         sessionStorage.setItem('fh_synthetic_draft', 'draft-v1');
@@ -541,7 +541,7 @@ try {
       await page.locator('.nexus-home__tile').first().waitFor({ state: 'visible', timeout: 15000 });
       const tileAtEntry = await page.locator('.nexus-home__tile').count();
       await Promise.all([
-        page.waitForURL((url) => url.origin === origin && url.pathname === '/index.html',
+        page.waitForURL((url) => url.origin === origin && url.pathname === '/reuma_index.html',
           { waitUntil: 'domcontentloaded', timeout: 30000 }),
         page.locator('.nexus-home__tile[data-module-id="reuma"]').click(),
       ]);
@@ -591,7 +591,7 @@ try {
         if (message.type() === 'error') consoleNoise.push(`${page.url()}: ${message.text()}`);
       });
       const perPage = [];
-      for (const file of ['index.html', 'farmacia_index.html']) {
+      for (const file of ['reuma_index.html', 'farmacia_index.html']) {
         await page.goto(`${origin}/${file}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
         await page.waitForTimeout(800);
         const refs = await page.evaluate(() => Array.from(document.querySelectorAll('script[src], link[href]'))

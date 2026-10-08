@@ -121,7 +121,7 @@ const workbookPath = path.join(tempDir, 'reuma_asdas_eva_synthetic.xlsx');
 async function passSupportedGate(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+  await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
   await page.setInputFiles('#gateExcelInput', workbookPath);
   await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
   const professional = await page.evaluate(() => {

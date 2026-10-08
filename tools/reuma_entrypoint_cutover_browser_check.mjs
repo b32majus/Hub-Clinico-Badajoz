@@ -5,10 +5,12 @@
  * entrypoint is preserved at reuma_index.html while legacy index.html stays
  * byte-identical.
  *
- * Focused T1 evidence only (no open-ended sibling audit):
- *   A. /index.html still opens the legacy Reuma screen and its professional
- *      session gate works (synthetic .xlsx load -> professional select ->
- *      confirm) through supported interactions only.
+ * Focused T1 evidence only (no open-ended sibling audit), re-aimed for the T2
+ * root cutover (issue #605): root index.html is now the real NEXus Home while
+ * the Reuma entrypoint lives at reuma_index.html.
+ *   A. /index.html loads the real Home shell (branding tiles reuma +
+ *      farmacia, zero Reuma session gate, no navigation away) through a real
+ *      page load only.
  *   B. /reuma_index.html opens the real Reuma app with the SAME gate.
  *      Negative (fresh context, no session): no redirect away, the gate is
  *      visible and enforced, and the page never leaves the Reuma surface.
@@ -186,18 +188,23 @@ async function main() {
     const browser = await chromium.launch({ executablePath: chromiumExecutable() });
 
     try {
-        // -- Case A: legacy /index.html gate works through supported flow. --
+        // -- Case A: root /index.html is the real Home (T2), not the Reuma gate. --
         {
             const context = await browser.newContext();
             const page = trackPage(await context.newPage());
-            await page.goto(`${origin}/index.html`, { waitUntil: 'load', timeout: 45000 });
-            const before = await gateState(page);
-            record('A1 legacy index.html renders the professional gate', before.present && before.hidden === false,
-                JSON.stringify(before));
-            const professional = await passSupportedGate(page);
-            const label = await page.textContent('#currentProfessional');
-            record('A2 legacy gate confirms a synthetic professional',
-                (label || '').trim() === professional, `label=${JSON.stringify(label)} professional=${JSON.stringify(professional)}`);
+            await page.goto(`${origin}/index.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            await page.locator('.nexus-home__tile').first().waitFor({ state: 'visible', timeout: 15000 });
+            const tiles = await page.locator('.nexus-home__tile').count();
+            const reumaTiles = await page.locator('.nexus-home__tile[data-module-id="reuma"]').count();
+            const farmaciaTiles = await page.locator('.nexus-home__tile[data-module-id="farmacia"]').count();
+            record('A1 root index.html renders the real Home (reuma + farmacia tiles)',
+                tiles === 2 && reumaTiles === 1 && farmaciaTiles === 1,
+                `tiles=${tiles} reuma=${reumaTiles} farmacia=${farmaciaTiles}`);
+            const gate = await gateState(page);
+            const errors = await page.locator('.nexus-home__error').count();
+            record('A2 root index.html carries no Reuma session gate and no Home error',
+                gate.present === false && errors === 0 && page.url() === `${origin}/index.html`,
+                `gate=${JSON.stringify(gate)} errors=${errors} url=${page.url()}`);
             await context.close();
         }
 

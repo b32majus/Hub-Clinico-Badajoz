@@ -269,7 +269,7 @@ const gates = {
 
 const rollback = {
   strategy:
-    'remove the Home entrypoint (nexus_home.html) and its files; legacy entrypoints index.html and farmacia_index.html remain direct and functional',
+    'remove the Home entrypoint (index.html and nexus_home.html) and its files; module entrypoints reuma_index.html and farmacia_index.html remain direct and functional',
   documentedIn: 'docs/engineering/NEXUS_HOME_F3.4.md',
 };
 

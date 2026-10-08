@@ -239,14 +239,14 @@ const COLLECT_FN = { 'primera_visita.html': 'recopilarDatosFormulario', 'seguimi
 
 async function openPatientPage(browser, urlPath) {
     // Supported route: load the synthetic DB through the real session gate
-    // (index.html) and then navigate THE SAME TAB to the target page, so the
+    // (reuma_index.html) and then navigate THE SAME TAB to the target page, so the
     // per-tab sessionStorage DB cache is available exactly as in the real flow.
     const page = await browser.newPage();
     const consoleErrors = [];
     const pageErrors = [];
     page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
     page.on('pageerror', (err) => pageErrors.push(String(err)));
-    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
     const professional = await page.evaluate(() => {

@@ -115,7 +115,7 @@ const mime = new Map([
 
 // Synthetic session fixture (temporary, outside the repository): a minimal
 // workbook with a Profesionales row and header-only pathology sheets so the
-// REAL session gate on index.html (file input -> professional select ->
+// REAL session gate on reuma_index.html (file input -> professional select ->
 // confirm) can be passed through supported interaction, exactly like
 // tools/reuma_read_vertical_browser_check.mjs. No patient data is used.
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reuma-pcr-units-'));
@@ -133,12 +133,12 @@ const workbookPath = path.join(tempDir, 'reuma_pcr_units_synthetic.xlsx');
   fs.writeFileSync(workbookPath, XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }));
 }
 
-// Real supported gate on index.html: establishes the professional session the
+// Real supported gate on reuma_index.html: establishes the professional session the
 // same way a user does; never writes the storage key directly.
 async function passSupportedGate(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
-  await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+  await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
   await page.setInputFiles('#gateExcelInput', workbookPath);
   await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
   const professional = await page.evaluate(() => {

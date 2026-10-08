@@ -8,7 +8,7 @@
  * dashboard_paciente.html, over a served repository root. Every journey runs
  * through the supported user-level route with no DOM injection, no readonly
  * tampering and no impossible states:
- *   1. open index.html and upload the synthetic workbook through the real
+ *   1. open reuma_index.html and upload the synthetic workbook through the real
  *      gate #gateExcelInput, choose the real professional, confirm;
  *   2. navigate THE SAME TAB to dashboard_paciente.html?id=<synthetic ID> so
  *      the per-tab sessionStorage DB cache is available exactly as in the
@@ -274,7 +274,7 @@ assertBlacklistCoverage();
 
 async function openDashboardPage(browser, patientId) {
     // Supported route: load the synthetic DB through the real session gate
-    // (index.html) and then navigate THE SAME TAB to dashboard_paciente.html,
+    // (reuma_index.html) and then navigate THE SAME TAB to dashboard_paciente.html,
     // so the per-tab sessionStorage DB cache is available exactly as in the
     // real flow. A fresh context per journey isolates session/permission state
     // exactly like the established browser-check pattern (one context per
@@ -285,7 +285,7 @@ async function openDashboardPage(browser, patientId) {
     const pageErrors = [];
     page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
     page.on('pageerror', (err) => pageErrors.push(String(err)));
-    await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.waitForFunction(() => typeof window.HubTools !== 'undefined' && !!document.getElementById('gateExcelInput'), null, { timeout: 15000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     try {

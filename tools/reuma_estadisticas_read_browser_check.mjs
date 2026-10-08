@@ -6,7 +6,7 @@
  * seam (`scripts/reuma_population_read_port.js`) instead of direct `HubTools.data` reads.
  *
  * Follows `tools/reuma_seguimiento_read_browser_check.mjs` / `reuma_read_vertical_browser_check.mjs`:
- * a real repo-root HTTP server, the real session gate on index.html (file input ->
+ * a real repo-root HTTP server, the real session gate on reuma_index.html (file input ->
  * professional select -> confirm), real navigation and real supported interactions
  * (select/fill/click/search/export). No DOM/storage cheating: the only
  * `page.addInitScript` use defines the planted seam double required by the fail-safe
@@ -206,7 +206,7 @@ function estadisticasErrors(entry) {
 async function passSupportedGate(context) {
     const entry = trackedPage(await context.newPage());
     const { page } = entry;
-    await page.goto(`${origin}/index.html`, { waitUntil: 'load', timeout: 45000 });
+    await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
     const professional = await page.evaluate(() => {

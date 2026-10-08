@@ -5,7 +5,7 @@
  * vertical migrated onto the WU-A Reuma Read Port (`scripts/reuma_patient_read_port.js`).
  *
  * Every patient assertion runs through supported user-level interaction on a served
- * repository root: the real session gate on index.html (file input -> professional
+ * repository root: the real session gate on reuma_index.html (file input -> professional
  * select -> confirm), the real search form and the real same-tab navigation. The
  * only `page.addInitScript` use defines the delayed read-port double required by the
  * frozen stale-response probe; it never edits the product pages and never writes a
@@ -14,7 +14,7 @@
  * Fixtures are synthetic only: `tools/fixtures/reuma_read/corpus_v1.json` (ids SYN-*)
  * is materialized into a temporary XLSX outside the repository. A synthetic
  * `Profesionales` row is added to that temporary workbook because the supported
- * session gate on index.html only offers professionals present in the loaded Excel;
+ * session gate on reuma_index.html only offers professionals present in the loaded Excel;
  * it is fixture data for the gate, never a product hook.
  *
  * Frozen expectations (PART 5): search page gains `#searchStatusMsg`
@@ -24,7 +24,7 @@
  * consumers reference no `HubTools.data.<getAllPatients|findPatientById|getPatientHistory>`.
  *
  * The pages are not migrated yet, so a RED result is the expected state today.
- * Runtime dependency: the CDN scripts (XLSX on index.html, Chart.js on
+ * Runtime dependency: the CDN scripts (XLSX on reuma_index.html, Chart.js on
  * dashboard_paciente.html) must be reachable; the probe recorded them reachable here.
  *
  * Usage: node tools/reuma_read_vertical_browser_check.mjs
@@ -176,12 +176,12 @@ async function openPage(context) {
   return trackPage(await context.newPage());
 }
 
-// Supported session gate on index.html: real file input -> real professional select
+// Supported session gate on reuma_index.html: real file input -> real professional select
 // -> real confirm button. Establishes localStorage.hubSelectedProfessional and the
 // sessionStorage corpus cache in the returned tab, without touching any storage key.
 async function passSupportedGate(context) {
   const page = await openPage(context);
-  await page.goto(`${origin}/index.html`, { waitUntil: 'load', timeout: 45000 });
+  await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
   await page.setInputFiles('#gateExcelInput', workbookPath);
   await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
   const professional = await page.evaluate(() => {

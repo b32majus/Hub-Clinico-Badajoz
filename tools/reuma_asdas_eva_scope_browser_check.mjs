@@ -113,7 +113,7 @@ function asdascrp(d, r, e, n, p) {
 async function gate(browser) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
-  await page.goto(`${baseUrl}/index.html`, { waitUntil: 'load', timeout: 45000 });
+  await page.goto(`${baseUrl}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
   await page.setInputFiles('#gateExcelInput', workbookPath);
   await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
   const prof = await page.evaluate(() => {

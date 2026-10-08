@@ -28,7 +28,7 @@
  *     Home sources contain no clinical tokens; no storage, postMessage or
  *     history writes are introduced by Home, and URL/query/hash stay
  *     untouched except the single authorized route;
- *  f. legacy entrypoints (index.html, farmacia_index.html) are intact and do
+ *  f. legacy entrypoints (reuma_index.html, farmacia_index.html) are intact and do
  *     not reference the new Home entrypoint.
  *
  * Exit codes: 0 = all cases PASS, 1 = at least one case FAIL.
@@ -49,7 +49,7 @@ const FILES = {
   bootstrap: 'modules/home/home-bootstrap.js',
   renderer: 'modules/home/home-renderer.js',
   page: 'modules/home/home-page.js',
-  legacyReuma: 'index.html',
+  legacyReuma: 'reuma_index.html',
   legacyFarmacia: 'farmacia_index.html',
 };
 
@@ -382,7 +382,7 @@ try {
     const calls = packaged.assignCalls;
     const ok =
       handlerPresent &&
-      reumaRoute === 'index.html' && farmaciaRoute === 'farmacia_index.html' &&
+      reumaRoute === 'reuma_index.html' && farmaciaRoute === 'farmacia_index.html' &&
       calls.length === 2 && calls[0] === reumaRoute && calls[1] === farmaciaRoute;
     record('CASO 2 available tile clicks: each assigns exactly once with the exact facade route', ok,
       `handlerPresent=${handlerPresent} reumaRoute=${JSON.stringify(reumaRoute)} farmaciaRoute=${JSON.stringify(farmaciaRoute)} calls=${JSON.stringify(calls)}`);

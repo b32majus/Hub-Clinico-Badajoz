@@ -20,7 +20,7 @@
     {
       "moduleId": "reuma",
       "label": "Hub Clínico Reuma",
-      "route": "index.html",
+      "route": "reuma_index.html",
       "available": true,
       "qualificationState": "QUALIFIED_FOR_SITE",
       "readiness": "demonstrated",

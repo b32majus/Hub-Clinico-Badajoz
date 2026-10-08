@@ -10,7 +10,7 @@
     {
       "moduleId": "reuma",
       "label": "Hub Clínico Reuma",
-      "entryPath": "index.html",
+      "entryPath": "reuma_index.html",
       "platformCapabilities": ["static-delivery", "session-scoped-state", "offline-capable"]
     }
   ]
