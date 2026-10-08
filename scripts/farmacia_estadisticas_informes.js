@@ -1,9 +1,22 @@
-/* Informes (#576/#579) — integration of the reports inside the statistics page.
+/* Informes (#576/#579, neutral entry #594) — integration of the reports inside
+ * the statistics page.
  *
  * - Informes is a distinct surface from the population analysis; population
  *   quick filters do NOT govern these reports.
- * - Report selector (#579): 'Informe trimestral Cosentyx' (default, #576
- *   behavior unchanged) and 'Informe de utilización y dosis — Kisqali'.
+ * - Neutral first entry (#594): entering Informes selects/computes nothing.
+ *   No computeReport runs before the professional confirms with «Ver
+ *   reporte»; getState() reports the stable neutral signal { report: null }.
+ * - Progressive selection Fármaco → Tipo de reporte → Período → «Ver
+ *   reporte»: exactly one supported type per drug (Cosentyx → trimestral de
+ *   movimientos clínicos over FarmaciaCosentyxInforme.listQuarters(Fixture);
+ *   Kisqali → utilización y dosis over FarmaciaKisqaliInforme.listPeriods in
+ *   Mensual/Trimestral/Anual/Histórico, Histórico needing no period). Period
+ *   defaults are always the latest fixture-eligible value once drug + type
+ *   (+ mode) are chosen — never the wall clock.
+ * - Changing Fármaco or Tipo hides any shown report, clears the active
+ *   result and the stale XLSX, and requires a fresh «Ver reporte».
+ *   Changing only the validated window/trimestre refreshes the confirmed
+ *   report and its XLSX consistently.
  * - Cosentyx counts/rows come from FarmaciaCosentyxInforme.computeReport over
  *   its dedicated synthetic fixture; Kisqali comes from
  *   FarmaciaKisqaliInforme.computeReport over its own dedicated synthetic
@@ -24,8 +37,21 @@
     var XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     var selectedQuarter = null;
     var currentReport = null;
-    var activeReport = 'cosentyx';
+    /* #594 neutral entry: null means NO confirmed report — nothing computed,
+     * no active result, no enabled XLSX. Never defaults to 'cosentyx'. */
+    var activeReport = null;
     var currentKisqaliReport = null;
+
+    var NEUTRAL_TITLE = 'Reportes farmacéuticos';
+    var NEUTRAL_SUBTITLE = 'Entrada neutral: seleccione fármaco, tipo de reporte y período y pulse «Ver reporte». Informes de demostración calculados exclusivamente desde fixtures sintéticos dedicados.';
+
+    /* Exactly one supported type per drug (#594: no generic builder, no
+     * dynamic drug list). Labels name the single supported report per drug;
+     * period options always come from the live models. */
+    var TYPE_OPTIONS = {
+        cosentyx: [{ value: 'cosentyx', label: 'Trimestral de movimientos clínicos' }],
+        kisqali: [{ value: 'kisqali', label: 'Utilización y dosis' }]
+    };
 
     var REPORT_META = {
         cosentyx: {
@@ -79,11 +105,16 @@
         var select = document.getElementById('informes-quarter-select');
         if (!select) return;
         clearChildren(select);
-        Informe.listQuarters(Fixture).forEach(function (quarterKey) {
+        var quarters = Informe.listQuarters(Fixture);
+        quarters.forEach(function (quarterKey) {
             var option = el('option', '', quarterKey);
             option.value = quarterKey;
             select.appendChild(option);
         });
+        /* Latest fixture-eligible quarter once drug + type are chosen (#594);
+         * never the wall clock. renderQuarterOptions only ever runs after a
+         * type is selected, never on neutral entry. */
+        if (quarters.length) select.value = quarters[quarters.length - 1];
     }
 
     function renderKpis(report) {
@@ -336,7 +367,7 @@
         URL.revokeObjectURL(anchor.href);
     }
 
-    /* ---------- Shared Informes shell ---------- */
+    /* ---------- Shared Informes shell (neutral entry #594) ---------- */
 
     function setReport(report) {
         if (!REPORT_META[report]) fail('Informe desconocido: ' + String(report));
@@ -347,10 +378,154 @@
         setHidden(document.getElementById('informes-kisqali-controls'), report !== 'kisqali');
         setHidden(document.getElementById('informes-cosentyx-panel'), report !== 'cosentyx');
         setHidden(document.getElementById('informes-kisqali-panel'), report !== 'kisqali');
-        if (report === 'kisqali') {
-            renderKisqaliPeriodOptions(true);
-            renderKisqaliReport();
+        /* No compute here: the caller («Ver reporte») or a validated
+         * window/trimestre refresh renders explicitly. */
+    }
+
+    function pendingDrug() {
+        var select = document.getElementById('informes-drug-select');
+        return select ? select.value : '';
+    }
+
+    function pendingType() {
+        var select = document.getElementById('informes-report-select');
+        return select ? select.value : '';
+    }
+
+    /* The pending selection is complete only when drug + its single
+     * supported type agree and the required period is present (Histórico
+     * needs no period). */
+    function pendingComplete() {
+        var drug = pendingDrug();
+        var type = pendingType();
+        if (!drug || !type || type !== drug || !TYPE_OPTIONS[drug]) return false;
+        if (drug === 'cosentyx') {
+            var quarterSelect = document.getElementById('informes-quarter-select');
+            return !!(quarterSelect && quarterSelect.value);
         }
+        var modeSelect = document.getElementById('kisqali-mode-select');
+        var periodSelect = document.getElementById('kisqali-period-select');
+        if (!modeSelect || !modeSelect.value) return false;
+        if (modeSelect.value === 'historico') return true;
+        return !!(periodSelect && periodSelect.value);
+    }
+
+    function updateCta() {
+        var cta = document.getElementById('informes-view-report');
+        if (cta) cta.disabled = !pendingComplete();
+    }
+
+    function setDownloadEnabled(id, enabled) {
+        var button = document.getElementById(id);
+        if (button) button.disabled = !enabled;
+    }
+
+    /* Fármaco/Tipo change while (or before) a report is shown: hide the
+     * prior report, clear the active result and the stale XLSX, require a
+     * fresh «Ver reporte». Pending selectors are left untouched. */
+    function invalidateConfirmation() {
+        activeReport = null;
+        currentReport = null;
+        currentKisqaliReport = null;
+        selectedQuarter = null;
+        setText('informes-title-text', NEUTRAL_TITLE);
+        setText('informes-subtitle', NEUTRAL_SUBTITLE);
+        setHidden(document.getElementById('informes-cosentyx-panel'), true);
+        setHidden(document.getElementById('informes-kisqali-panel'), true);
+        setDownloadEnabled('informes-download-xlsx', false);
+        setDownloadEnabled('kisqali-download-xlsx', false);
+    }
+
+    function renderTypeOptions(drug) {
+        var select = document.getElementById('informes-report-select');
+        if (!select) return;
+        clearChildren(select);
+        var placeholder = el('option', '', 'Seleccionar tipo…');
+        placeholder.value = '';
+        select.appendChild(placeholder);
+        (TYPE_OPTIONS[drug] || []).forEach(function (type) {
+            var option = el('option', '', type.label);
+            option.value = type.value;
+            select.appendChild(option);
+        });
+        select.value = '';
+        select.disabled = !drug;
+    }
+
+    function onDrugChange() {
+        var drug = pendingDrug();
+        renderTypeOptions(drug);
+        setHidden(document.getElementById('informes-cosentyx-controls'), true);
+        setHidden(document.getElementById('informes-kisqali-controls'), true);
+        invalidateConfirmation();
+        updateCta();
+    }
+
+    function onTypeChange() {
+        var type = pendingType();
+        setHidden(document.getElementById('informes-cosentyx-controls'), type !== 'cosentyx');
+        setHidden(document.getElementById('informes-kisqali-controls'), type !== 'kisqali');
+        if (type === 'cosentyx') {
+            /* Quarters enumerated by the live model, defaulting to the
+             * latest fixture-eligible value (#594). */
+            renderQuarterOptions();
+        } else if (type === 'kisqali') {
+            renderKisqaliPeriodOptions(true);
+        }
+        /* Any Tipo change (including re-selecting the shown one from a
+         * fresh pending state) retires a previously shown report: the stale
+         * result and XLSX are cleared until a fresh «Ver reporte». */
+        invalidateConfirmation();
+        updateCta();
+    }
+
+    /* «Ver reporte»: the ONLY path that computes a report before display.
+     * Computes solely the selected drug + type + period. */
+    function confirmSelection() {
+        if (!pendingComplete()) return;
+        var drug = pendingDrug();
+        var type = pendingType();
+        if (type !== drug) fail('Selección de informe incoherente.');
+        setReport(drug);
+        if (drug === 'cosentyx') {
+            renderReport();
+            setDownloadEnabled('informes-download-xlsx', !!currentReport);
+        } else {
+            renderKisqaliReport();
+            setDownloadEnabled('kisqali-download-xlsx', !!currentKisqaliReport);
+        }
+        updateCta();
+    }
+
+    function onQuarterChange() {
+        /* Period-only change over a confirmed Cosentyx report refreshes it
+         * (and its XLSX) consistently; while a new selection is pending no
+         * compute runs. */
+        if (activeReport === 'cosentyx' && currentReport
+            && pendingDrug() === 'cosentyx' && pendingType() === 'cosentyx') {
+            renderReport();
+            setDownloadEnabled('informes-download-xlsx', !!currentReport);
+        }
+        updateCta();
+    }
+
+    function onKisqaliModeChange() {
+        renderKisqaliPeriodOptions(true);
+        if (activeReport === 'kisqali' && currentKisqaliReport
+            && pendingDrug() === 'kisqali' && pendingType() === 'kisqali') {
+            renderKisqaliReport();
+            setDownloadEnabled('kisqali-download-xlsx', !!currentKisqaliReport);
+        }
+        updateCta();
+    }
+
+    function onKisqaliPeriodChange() {
+        if (activeReport === 'kisqali' && currentKisqaliReport
+            && pendingDrug() === 'kisqali' && pendingType() === 'kisqali') {
+            renderKisqaliReport();
+            setDownloadEnabled('kisqali-download-xlsx', !!currentKisqaliReport);
+        }
+        updateCta();
     }
 
     function setMode(showInformes) {
@@ -360,6 +535,9 @@
         var informesButton = document.getElementById('informes-view-btn');
         if (populationButton) populationButton.setAttribute('aria-pressed', showInformes ? 'false' : 'true');
         if (informesButton) informesButton.setAttribute('aria-pressed', showInformes ? 'true' : 'false');
+        /* View switching never resets a confirmed report/selection: initial
+         * entry is neutral by construction (bootstrap), and a confirmed
+         * report survives Análisis poblacional ↔ Reportes on the same page. */
     }
 
     function bootstrap() {
@@ -369,23 +547,23 @@
         if (!Kisqali || !KisqaliFixture) {
             fail('El informe Kisqali no se pudo cargar: faltan el modelo o el fixture sintético dedicado.');
         }
-        renderQuarterOptions();
-        var select = document.getElementById('informes-quarter-select');
-        if (select) select.addEventListener('change', renderReport);
-        var downloadButton = document.getElementById('informes-download-xlsx');
-        if (downloadButton) downloadButton.addEventListener('click', downloadXlsx);
+        /* Neutral entry (#594): selectors start empty, panels hidden,
+         * downloads disabled, CTA disabled — and NO computeReport runs. */
+        var drugSelect = document.getElementById('informes-drug-select');
+        if (drugSelect) drugSelect.addEventListener('change', onDrugChange);
 
         var reportSelect = document.getElementById('informes-report-select');
-        if (reportSelect) reportSelect.addEventListener('change', function () {
-            setReport(reportSelect.value);
-        });
+        if (reportSelect) reportSelect.addEventListener('change', onTypeChange);
+        var cta = document.getElementById('informes-view-report');
+        if (cta) cta.addEventListener('click', confirmSelection);
+        var select = document.getElementById('informes-quarter-select');
+        if (select) select.addEventListener('change', onQuarterChange);
+        var downloadButton = document.getElementById('informes-download-xlsx');
+        if (downloadButton) downloadButton.addEventListener('click', downloadXlsx);
         var kisqaliModeSelect = document.getElementById('kisqali-mode-select');
-        if (kisqaliModeSelect) kisqaliModeSelect.addEventListener('change', function () {
-            renderKisqaliPeriodOptions(true);
-            renderKisqaliReport();
-        });
+        if (kisqaliModeSelect) kisqaliModeSelect.addEventListener('change', onKisqaliModeChange);
         var kisqaliPeriodSelect = document.getElementById('kisqali-period-select');
-        if (kisqaliPeriodSelect) kisqaliPeriodSelect.addEventListener('change', renderKisqaliReport);
+        if (kisqaliPeriodSelect) kisqaliPeriodSelect.addEventListener('change', onKisqaliPeriodChange);
         var kisqaliDownloadButton = document.getElementById('kisqali-download-xlsx');
         if (kisqaliDownloadButton) kisqaliDownloadButton.addEventListener('click', downloadKisqaliXlsx);
         var kisqaliTable = document.getElementById('kisqali-patients-table');
@@ -404,17 +582,29 @@
         if (informesButton) informesButton.addEventListener('click', function () { setMode(true); });
         var populationButton = document.getElementById('population-view-btn');
         if (populationButton) populationButton.addEventListener('click', function () { setMode(false); });
-        renderReport();
-        setReport('cosentyx');
+        /* Neutral landing: titles already neutral in markup; enforce the
+         * neutral shell (hidden panels/controls, disabled downloads/CTA)
+         * and enter on the population surface. No computeReport runs. */
+        setHidden(document.getElementById('informes-cosentyx-controls'), true);
+        setHidden(document.getElementById('informes-kisqali-controls'), true);
+        setHidden(document.getElementById('informes-cosentyx-panel'), true);
+        setHidden(document.getElementById('informes-kisqali-panel'), true);
+        setDownloadEnabled('informes-download-xlsx', false);
+        setDownloadEnabled('kisqali-download-xlsx', false);
+        updateCta();
         setMode(false);
     }
 
     document.addEventListener('DOMContentLoaded', bootstrap);
 
+    /* Neutral-state contract (#594): while no report is confirmed —
+     * initial entry, or after Fármaco/Tipo changed a shown report away —
+     * getState() returns the stable, unambiguous signal { report: null }.
+     * It never leaks a stale currentReport, and no compute has run. */
     window.FarmaciaEstadisticasInformes = Object.freeze({
         getState: function () {
             if (activeReport === 'kisqali') {
-                if (!currentKisqaliReport) return { report: 'kisqali', kisqali: null };
+                if (!currentKisqaliReport) return { report: null };
                 var report = currentKisqaliReport;
                 return {
                     report: 'kisqali',
@@ -454,7 +644,7 @@
                     }
                 };
             }
-            if (!currentReport) return null;
+            if (activeReport !== 'cosentyx' || !currentReport) return { report: null };
             return {
                 report: 'cosentyx',
                 quarter: currentReport.quarter.key,

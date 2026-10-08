@@ -6422,6 +6422,30 @@ main.farmacia-informes-mode .stats-population-only {
     display: none !important;
 }
 
+/* Informes — entrada neutral (#594): las tablas anchas del reporte
+ * (min-width 900px) y la rejilla de KPIs desplazan/refluyen dentro de la
+ * sección sin forzar desbordamiento horizontal de página. */
+main.farmacia-informes-mode {
+    min-width: 0;
+}
+
+main.farmacia-informes-mode #informes-section {
+    min-width: 0;
+}
+
+/* En columna (viewport estrecho) el main se dimensiona por contenido: se
+ * le da ancho definido para que la sección y sus tablas/KPIs encogan al
+ * viewport en lugar de ensanchar la página. */
+@media (max-width: 1024px) {
+    main.farmacia-informes-mode {
+        width: 100%;
+    }
+
+    main.farmacia-informes-mode #informes-section {
+        width: 100%;
+    }
+}
+
 .informes-section {
     display: none;
     margin-top: 18px;
@@ -6530,6 +6554,13 @@ main.farmacia-informes-mode .informes-section {
 
 .informes-report-panel[hidden] {
     display: none !important;
+}
+
+/* Informes — entrada neutral (#594): el CTA solo actúa con la selección
+ * progresiva completa; deshabilitado nunca debe parecer invocable. */
+#informes-view-report:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .informes-period-line {

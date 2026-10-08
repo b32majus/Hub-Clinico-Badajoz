@@ -1,21 +1,25 @@
 #!/usr/bin/env node
-/* #579 Informe de utilización y dosis — Kisqali — supported-browser QA through the real UI.
+/* #579 Informe de utilización y dosis — Kisqali + #594 entrada neutral —
+ * supported-browser QA through the real UI.
  *
  * Journey: open Estadísticas normally (demo session), enter Informes through
- * the supported switcher, confirm the default Cosentyx report still works,
- * select Kisqali through the new report selector, walk
- * Mensual → Trimestral → Anual → Histórico with fixture-derived periods,
- * verify KPIs, the rendered patient-table cells and raw expectations against
- * hand-derived fixture values (normalized demo: only explicit 200/400/600,
- * every cycle evaluable), open
- * 'Ver ciclos' raw traceability (coherent explicit boundary changes, stable
- * explicit doses, presentation independence), download a REAL .xlsx and validate Resumen + Ciclos against
- * the hand-derived expectation and the Pacientes sheet against the visible
+ * the supported switcher and confirm the NEUTRAL landing (no precomputed
+ * Cosentyx, Ver reporte disabled, getState() {report:null}), reach Cosentyx
+ * through Fármaco → Tipo → Período → «Ver reporte» and confirm its accepted
+ * Q1/Q2/Q4 views still work, switch Fármaco to Kisqali (stale Cosentyx
+ * cleared, fresh confirm required), walk Mensual → Trimestral → Anual →
+ * Histórico with fixture-derived periods, verify KPIs, the rendered
+ * patient-table cells and raw expectations against hand-derived fixture
+ * values (normalized demo: only explicit 200/400/600, every cycle
+ * evaluable), open 'Ver ciclos' raw traceability (coherent explicit
+ * boundary changes, stable explicit doses, presentation independence),
+ * download a REAL .xlsx and validate Resumen + Ciclos against the
+ * hand-derived expectation and the Pacientes sheet against the visible
  * rendered patient cells (not a fresh model call), switch back to Cosentyx
- * and run its
- * accepted journey, return to the population analysis and confirm the
- * filtered-cohort CSV export still downloads. Supported interactions only;
- * no DOM tampering; console.error=0 / pageerror=0.
+ * and run its accepted journey, prove view-switch preservation, return to
+ * the population analysis and confirm the filtered-cohort CSV export still
+ * downloads. Supported interactions only; no DOM tampering;
+ * console.error=0 / pageerror=0.
  */
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
@@ -132,7 +136,7 @@ const EXPECTED_KISQALI_PATIENT_ROWS = {
     ]
 };
 
-/* Default Cosentyx expectations (#576 + #593 six categories).
+/* Cosentyx reachability expectations (#576 + #593 six categories).
  *
  * Hand-derived from the explicit synthetic Cosentyx witness list (never from
  * computeReport/listQuarters/DOM):
@@ -248,6 +252,32 @@ async function assertKisqaliWindow(page, mode, period) {
     return { domKpis, state };
 }
 
+/* #594 neutral landing: nothing selected, nothing computed, no enabled
+ * download, stable {report:null} signal. */
+async function assertNeutral(page) {
+    assert.match(await page.locator('#informes-title').innerText(), /Reportes farmacéuticos/);
+    assert.match(await page.locator('#informes-synthetic-notice').innerText(), /Datos sintéticos/);
+    assert.equal(await page.locator('#informes-drug-select').inputValue(), '', 'no drug auto-selected');
+    assert.equal(await page.locator('#informes-report-select').inputValue(), '', 'no type selected');
+    assert.ok(await page.locator('#informes-view-report').isDisabled(), 'Ver reporte disabled until the selection is complete');
+    assert.ok(await page.locator('#informes-download-xlsx').isDisabled(), 'no enabled Cosentyx XLSX while neutral');
+    assert.ok(await page.locator('#kisqali-download-xlsx').isDisabled(), 'no enabled Kisqali XLSX while neutral');
+    assert.ok(await page.locator('#informes-cosentyx-panel').isHidden(), 'no Cosentyx report rendered while neutral');
+    assert.ok(await page.locator('#informes-kisqali-panel').isHidden(), 'no Kisqali report rendered while neutral');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'neutral getState() must not leak stale currentReport data');
+}
+
+async function assertNoPageOverflow(page, label) {
+    const measured = await page.evaluate(() => ({
+        scrollWidth: document.body.scrollWidth,
+        clientWidth: document.documentElement.clientWidth
+    }));
+    assert.ok(measured.scrollWidth <= measured.clientWidth,
+        `${label}: no page-level horizontal overflow (scrollWidth=${measured.scrollWidth} clientWidth=${measured.clientWidth})`);
+    return measured;
+}
+
 try {
     const page = await context.newPage();
     await page.goto(appUrl('farmacia_estadisticas.html'), { waitUntil: 'domcontentloaded' });
@@ -257,31 +287,61 @@ try {
     assert.ok(await page.locator('#kpi-section').isVisible(), 'population analysis visible by default');
     assert.ok(!(await page.locator('#informes-section').isVisible()), 'Informes hidden by default');
 
-    /* Enter Informes through the supported switcher; Cosentyx remains default. */
+    /* Enter Informes through the supported switcher: neutral landing. */
     await page.locator('#informes-view-btn').click();
     await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#informes-section').isVisible(), 'Informes visible after supported switch');
     assert.ok(!(await page.locator('#kpi-section').isVisible()), 'population analysis hidden inside Informes');
-    assert.match(await page.locator('#informes-title').innerText(), /Informe trimestral Cosentyx/);
-    assert.ok(await page.locator('#informes-cosentyx-panel').isVisible(), 'Cosentyx panel visible by default');
-    assert.ok(!(await page.locator('#informes-kisqali-panel').isVisible()), 'Kisqali panel hidden by default');
-    const reportValue = await page.locator('#informes-report-select').inputValue();
-    assert.equal(reportValue, 'cosentyx', 'default report is Cosentyx');
+    await assertNeutral(page);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-view-btn', 'keyboard focus preserved on the view switcher');
+    assert.equal(await page.locator('#informes-view-btn').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#population-view-btn').getAttribute('aria-pressed'), 'false');
+
+    /* Cosentyx remains reachable through the confirm gate (no longer a default). */
+    await page.locator('#informes-drug-select').selectOption('cosentyx');
+    const cosentyxTypeOptions = await page.locator('#informes-report-select option').evaluateAll(options => options.map(option => [option.value, option.textContent]));
+    assert.deepEqual(cosentyxTypeOptions, [['', 'Seleccionar tipo…'], ['cosentyx', 'Trimestral de movimientos clínicos']],
+        'Cosentyx exposes exactly its single supported type');
+    await page.locator('#informes-report-select').selectOption('cosentyx');
     const quarters = await page.locator('#informes-quarter-select option').evaluateAll(options => options.map(option => option.value));
     assert.deepEqual(quarters, ['2026-Q1', '2026-Q2', '2026-Q3', '2026-Q4'], 'Cosentyx quarter selector with the discontinuation-only quarter');
+    assert.equal(await page.locator('#informes-quarter-select').inputValue(), '2026-Q4',
+        'period defaults to the latest fixture-eligible value, never the wall clock');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'no Cosentyx compute before Ver reporte');
+    await page.locator('#informes-view-report').click();
+    assert.match(await page.locator('#informes-title').innerText(), /Informe trimestral Cosentyx/);
+    assert.ok(await page.locator('#informes-cosentyx-panel').isVisible(), 'Cosentyx panel visible after confirmation');
+    assert.ok(!(await page.locator('#informes-kisqali-panel').isVisible()), 'Kisqali panel hidden inside Cosentyx report');
 
-    /* Default Cosentyx still computes its accepted Q1 view (six categories). */
-    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom,
-        'default Cosentyx report still works unchanged');
+    /* Cosentyx accepted views, reached via selection + period refresh. */
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom,
+        'confirmed Cosentyx report computes the default-latest quarter');
+    await page.locator('#informes-quarter-select').selectOption('2026-Q1');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom);
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
     /* The discontinuation-only quarter is selectable with its computed row. */
     await page.locator('#informes-quarter-select').selectOption('2026-Q4');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom);
-    await page.locator('#informes-quarter-select').selectOption('2026-Q1');
 
-    /* Select Kisqali through the new report selector. */
+    /* Fármaco switch to Kisqali: Cosentyx result cleared, fresh confirm required. */
+    await page.locator('#informes-drug-select').selectOption('kisqali');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'switching Fármaco clears the Cosentyx result immediately');
+    assert.ok(await page.locator('#informes-cosentyx-panel').isHidden(), 'Cosentyx panel hidden after the Fármaco switch');
+    assert.ok(await page.locator('#informes-download-xlsx').isDisabled(), 'stale Cosentyx XLSX cleared');
+    assert.ok(await page.locator('#informes-view-report').isDisabled(), 'fresh Ver reporte required after a Fármaco change');
+    const kisqaliTypeOptions = await page.locator('#informes-report-select option').evaluateAll(options => options.map(option => [option.value, option.textContent]));
+    assert.deepEqual(kisqaliTypeOptions, [['', 'Seleccionar tipo…'], ['kisqali', 'Utilización y dosis']],
+        'Kisqali exposes exactly its single supported type');
+
+    /* Select Kisqali through Fármaco → Tipo, then confirm. */
     await page.locator('#informes-report-select').selectOption('kisqali');
+    await page.waitForFunction(() => !document.getElementById('informes-kisqali-controls').hidden);
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'no Kisqali compute before Ver reporte');
+    await page.locator('#informes-view-report').click();
     await page.waitForFunction(() => !document.getElementById('informes-kisqali-panel').hidden);
     assert.match(await page.locator('#informes-title').innerText(), /Informe de utilización y dosis — Kisqali/);
     assert.ok(await page.locator('#informes-kisqali-panel').isVisible(), 'Kisqali panel visible');
@@ -451,18 +511,49 @@ try {
     assert.deepEqual(pacientes.slice(1), anualVisiblePatients.map(visiblePatientRowToSheetRow),
         'downloaded Pacientes sheet must equal the visible patient rows');
 
-    /* Switch back to Cosentyx through the report selector; accepted journey. */
+    /* Switch back to Cosentyx through Fármaco → Tipo; stale Kisqali cleared,
+     * accepted journey unchanged after the Kisqali visit. */
+    await page.locator('#informes-drug-select').selectOption('cosentyx');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'returning to Cosentyx clears the Kisqali result');
+    assert.ok(await page.locator('#informes-kisqali-panel').isHidden());
+    assert.ok(await page.locator('#kisqali-download-xlsx').isDisabled(), 'stale Kisqali XLSX cleared');
     await page.locator('#informes-report-select').selectOption('cosentyx');
+    await page.locator('#informes-view-report').click();
     await page.waitForFunction(() => !document.getElementById('informes-cosentyx-panel').hidden);
     assert.ok(await page.locator('#informes-cosentyx-panel').isVisible());
     assert.ok(!(await page.locator('#informes-kisqali-panel').isVisible()));
-    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom,
-        'Cosentyx report unchanged after Kisqali visit');
-    await page.locator('#informes-quarter-select').selectOption('2026-Q2');
-    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
-    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom,
-        'discontinuation-only quarter unchanged after Kisqali visit');
+        'Cosentyx report unchanged after Kisqali visit (default-latest quarter)');
+    await page.locator('#informes-quarter-select').selectOption('2026-Q1');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom);
+    await page.locator('#informes-quarter-select').selectOption('2026-Q2');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom,
+        'discontinuation-free Q2 unchanged after Kisqali visit');
+
+    /* View switching preserves the confirmed report + selection + focus. */
+    await page.locator('#population-view-btn').click();
+    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.locator('#informes-view-btn').click();
+    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    assert.equal(await page.locator('#informes-drug-select').inputValue(), 'cosentyx');
+    assert.equal(await page.locator('#informes-report-select').inputValue(), 'cosentyx');
+    assert.equal(await page.locator('#informes-quarter-select').inputValue(), '2026-Q2');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-view-btn');
+    assert.equal(await page.locator('#informes-view-btn').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#population-view-btn').getAttribute('aria-pressed'), 'false');
+
+    /* No page-level horizontal overflow on the supported viewports. */
+    for (const width of [1440, 1024, 768]) {
+        await page.setViewportSize({ width, height: 900 });
+        const measured = await assertNoPageOverflow(page, `confirmed Cosentyx Q2 @${width}`);
+        console.log(`viewport ${width}: scrollWidth=${measured.scrollWidth} clientWidth=${measured.clientWidth}`);
+    }
+    await page.setViewportSize({ width: 375, height: 900 });
+    const measured375 = await assertNoPageOverflow(page, 'confirmed Cosentyx Q2 @375');
+    console.log(`viewport 375: scrollWidth=${measured375.scrollWidth} clientWidth=${measured375.clientWidth}`);
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     /* Return to the population analysis through the supported switcher. */
     await page.locator('#population-view-btn').click();
@@ -504,7 +595,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_kisqali_informe_browser_check: PASS');
-    console.log('QA Chromium: Cosentyx default preserved; Kisqali selectable; Mensual/Trimestral/Anual/Histórico windows match hand-derived fixture values; Ver ciclos raw traceability (coherent boundary changes, stable doses, presentation independence) OK; real XLSX Resumen+Pacientes+Ciclos match UI model; population CSV filtered export OK; console.error=0 pageerror=0');
+    console.log('QA Chromium: neutral entry OK (no precomputed report, CTA gated, {report:null}); Cosentyx reachable via confirm gate (Q1/Q2/Q4 incl. discontinuation-only Q4); Fármaco switch clears stale results; Kisqali Mensual/Trimestral/Anual/Histórico windows match hand-derived fixture values; Ver ciclos raw traceability (coherent boundary changes, stable doses, presentation independence) OK; real XLSX Resumen+Pacientes+Ciclos match UI model; back to Cosentyx unchanged; view-switch preserves confirmed selection; population CSV filtered export OK; 1440/1024/768/375 no page overflow; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
