@@ -6842,6 +6842,21 @@ main.farmacia-informes-mode .informes-section {
     min-width: 760px;
 }
 
+/* Gate 4 correction P2-VISUAL-02: los encabezados de la tabla de seis
+ * columnas envuelven (sin truncar ni abreviar el significado) y las dos
+ * columnas de mayor contenido reservan un ancho mínimo, de modo que en
+ * escritorio la última columna «Estado actual» con su «Motivo registrado»
+ * queda legible dentro del contenedor sin desplazamiento horizontal. Se
+ * conservan exactamente las seis columnas: no se añade ni se mueve ninguna. */
+#informes-detail-table th {
+    white-space: normal;
+}
+
+#informes-detail-table .informes-event-cell,
+#informes-detail-table .informes-status-cell {
+    min-width: 170px;
+}
+
 .informes-event-cell .informes-case-type {
     font-weight: 700;
     color: #0F172A;
@@ -6866,4 +6881,22 @@ main.farmacia-informes-mode .informes-section {
     color: #475569;
     font-size: 0.78rem;
     font-weight: 600;
+}
+
+/* Gate 4 correction P2-VISUAL-02: pista de desplazamiento interno de la
+ * tabla de seis columnas. No interactiva (no es botón ni acción) y solo
+ * visible en los anchos donde la tabla excede su contenedor; en escritorio,
+ * donde la tabla cabe, no se muestra ninguna advertencia. */
+.informes-detail-scroll-hint {
+    display: none;
+    margin: 8px 2px 0;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .informes-detail-scroll-hint {
+        display: block;
+    }
 }

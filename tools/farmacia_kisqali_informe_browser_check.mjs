@@ -434,9 +434,29 @@ try {
     assert.match(await page.locator('#informes-title').innerText(), /Informe de utilización y dosis — Kisqali/);
     assert.ok(await page.locator('#informes-kisqali-panel').isVisible(), 'Kisqali panel visible');
     assert.ok(!(await page.locator('#informes-cosentyx-panel').isVisible()), 'Cosentyx panel hidden inside Kisqali report');
-    const provenance = await page.locator('#kisqali-synthetic-notice').innerText();
-    assert.match(provenance, /Datos sintéticos específicos del informe/);
-    assert.match(provenance, /Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados\./);
+    /* P2-VISUAL-01 Gate 4 correction: exactly ONE visible amber synthetic
+     * banner in the confirmed Kisqali report, reusing the shared global
+     * notice. The duplicate in-panel banner (and its unused provenance span)
+     * is removed from the DOM, never merely hidden. The synthetic truth and
+     * the non-consumption/non-dispensing/non-adherence wording stay in
+     * visible copy (global notice + regimen note + window line). */
+    assert.equal(await page.locator('#kisqali-synthetic-notice').count(), 0,
+        'duplicate in-panel Kisqali synthetic banner removed from the DOM');
+    assert.equal(await page.locator('#kisqali-provenance-text').count(), 0,
+        'unused Kisqali provenance span removed with its banner');
+    const visibleNotices = await page.evaluate(() =>
+        [...document.querySelectorAll('.informes-notice')]
+            .filter(node => node.getClientRects().length > 0 && getComputedStyle(node).display !== 'none'
+                && node.getAttribute('aria-hidden') !== 'true')
+            .map(node => node.id));
+    assert.deepEqual(visibleNotices, ['informes-synthetic-notice'],
+        'exactly one visible synthetic banner in the confirmed Kisqali report, and it is the shared global notice');
+    assert.match(await page.locator('#informes-synthetic-notice').innerText(),
+        /Datos sintéticos específicos del informe/);
+    assert.match(await page.locator('#kisqali-regimen-note').innerText(),
+        /no representa consumo, dispensación ni adherencia/);
+    assert.match(await page.locator('#kisqali-window-label').innerText(), /Mensual — 2026-06/,
+        'Kisqali period line preserved');
 
     /* T2 #595 «Ver detalle» collapsed by default: a real keyboard-operable
      * button with aria-expanded + aria-controls governing the panel. */
@@ -738,7 +758,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_kisqali_informe_browser_check: PASS');
-    console.log('QA Chromium: neutral entry OK (no precomputed report, CTA gated, {report:null}); Cosentyx reachable via confirm gate (Q1/Q2/Q4 incl. discontinuation-only Q4); Fármaco switch clears stale results; Kisqali executive composition Mensual/Trimestral/Anual/Histórico matches hand-derived fixture values (2 hero KPIs, 600→400→200 bars congruent and summing to patient_count, otra omitted from chart but kept in model/XLSX, patients_with_change≠event count, collapsed Ver detalle gate + six-column table + keyboard Ver ciclos with focus retained); real XLSX Resumen+Pacientes+Ciclos match UI model on shared columns; fresh confirm re-collapses detail; back to Cosentyx unchanged; view-switch preserves confirmed selection; population CSV filtered export OK; Kisqali Anual + Cosentyx Q2 1440/1024/768/375 no page overflow; console.error=0 pageerror=0');
+    console.log('QA Chromium: neutral entry OK (no precomputed report, CTA gated, {report:null}); Cosentyx reachable via confirm gate (Q1/Q2/Q4 incl. discontinuation-only Q4); Fármaco switch clears stale results; Kisqali executive composition Mensual/Trimestral/Anual/Histórico matches hand-derived fixture values (2 hero KPIs, 600→400→200 bars congruent and summing to patient_count, otra omitted from chart but kept in model/XLSX, patients_with_change≠event count, collapsed Ver detalle gate + six-column table + keyboard Ver ciclos with focus retained); real XLSX Resumen+Pacientes+Ciclos match UI model on shared columns; fresh confirm re-collapses detail; back to Cosentyx unchanged; view-switch preserves confirmed selection; population CSV filtered export OK; Kisqali Anual + Cosentyx Q2 1440/1024/768/375 no page overflow; exactly one visible synthetic banner in the confirmed Kisqali report (shared global notice, duplicate in-panel banner removed from the DOM) with synthetic + non-consumption wording preserved; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

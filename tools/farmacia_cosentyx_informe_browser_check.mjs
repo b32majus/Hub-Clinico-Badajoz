@@ -417,6 +417,123 @@ async function assertNoPageOverflow(page, label) {
     return measured;
 }
 
+/* P2-VISUAL-02 Gate 4 correction: geometry of the six-column detail's last
+ * column («Estado actual» / «Motivo registrado») relative to the wrapper's
+ * visible horizontal bounds. Column width is uniform, so any row measures
+ * the column; when a discontinuation row exists its reason subline measures
+ * the full reason. All values come from the rendered DOM (getBoundingClientRect
+ * / textContent), never from a model call. */
+async function readLastColumnGeometry(page) {
+    return page.evaluate(() => {
+        const wrapper = document.querySelector('.cosentyx-detail-scroll');
+        const headers = [...document.querySelectorAll('#informes-detail-table thead th')];
+        const lastHeader = headers[headers.length - 1];
+        const statusCells = [...document.querySelectorAll('#informes-detail-table tbody tr .informes-status-cell')];
+        const statusCell = statusCells.find(cell => cell.querySelector('.informes-reason-note')) || statusCells[0];
+        const reason = statusCell ? statusCell.querySelector('.informes-reason-note') : null;
+        const wr = wrapper.getBoundingClientRect();
+        const hr = lastHeader ? lastHeader.getBoundingClientRect() : null;
+        const sr = statusCell ? statusCell.getBoundingClientRect() : null;
+        const rr = reason ? reason.getBoundingClientRect() : null;
+        return {
+            scrollLeft: wrapper.scrollLeft,
+            wrapperLeft: wr.left,
+            wrapperRight: wr.right,
+            wrapperClientWidth: wrapper.clientWidth,
+            wrapperScrollWidth: wrapper.scrollWidth,
+            headerText: lastHeader ? lastHeader.textContent.trim() : null,
+            headerRight: hr ? hr.right : null,
+            statusText: statusCell ? statusCell.querySelector('.informes-status-value').textContent.trim() : null,
+            statusLeft: sr ? sr.left : null,
+            statusRight: sr ? sr.right : null,
+            reasonText: reason ? reason.textContent.trim() : null,
+            reasonLeft: rr ? rr.left : null,
+            reasonRight: rr ? rr.right : null,
+            pageScrollWidth: document.documentElement.scrollWidth,
+            pageClientWidth: document.documentElement.clientWidth
+        };
+    });
+}
+
+/* Desktop (1440) proof: the «Estado actual» header and the status/reason text
+ * sit entirely inside the wrapper's visible horizontal bounds at the initial
+ * scrollLeft 0, and the six-column table needs no horizontal scrolling. */
+async function assertLastColumnInsideWithoutScroll(page, label, expectedStatus, expectedReason) {
+    const geo = await readLastColumnGeometry(page);
+    assert.equal(geo.scrollLeft, 0, `${label}: scroller stays at initial scrollLeft 0`);
+    assert.equal(geo.headerText, 'Estado actual', `${label}: last header keeps its exact meaning`);
+    assert.ok(geo.headerRight <= geo.wrapperRight + 0.5,
+        `${label}: 'Estado actual' header inside wrapper (headerRight=${geo.headerRight} wrapperRight=${geo.wrapperRight})`);
+    assert.equal(geo.statusText, expectedStatus, `${label}: last-column status from the displayed cell`);
+    assert.ok(geo.statusRight <= geo.wrapperRight + 0.5,
+        `${label}: status cell inside wrapper (statusRight=${geo.statusRight} wrapperRight=${geo.wrapperRight})`);
+    if (expectedReason) {
+        assert.equal(geo.reasonText, expectedReason, `${label}: registered reason from the displayed cell`);
+        assert.ok(geo.reasonRight <= geo.wrapperRight + 0.5,
+            `${label}: full reason inside wrapper (reasonRight=${geo.reasonRight} wrapperRight=${geo.wrapperRight})`);
+    }
+    assert.ok(geo.wrapperScrollWidth <= geo.wrapperClientWidth + 1,
+        `${label}: six columns fit without horizontal scrolling (scrollWidth=${geo.wrapperScrollWidth} clientWidth=${geo.wrapperClientWidth})`);
+    assert.equal(geo.pageScrollWidth, geo.pageClientWidth,
+        `${label}: no page-level horizontal overflow (scrollWidth=${geo.pageScrollWidth} clientWidth=${geo.pageClientWidth})`);
+    return geo;
+}
+
+/* Narrow proof: the cue is visible, non-interactive and exposed to assistive
+ * technology; the six-column table overflows ONLY inside its wrapper; and a
+ * native horizontal wheel gesture (never a direct DOM scrollLeft assignment)
+ * reveals the full last column with no page-level horizontal overflow. */
+async function assertNarrowDetailScroll(page, label, expectedStatus, expectedReason) {
+    const cue = page.locator('#informes-detail-scroll-hint');
+    assert.ok(await cue.isVisible(), `${label}: internal scroll cue visible`);
+    const cueText = await cue.innerText();
+    assert.match(cueText, /Desplaza la tabla horizontalmente para ver Estado actual y Motivo registrado/,
+        `${label}: cue states the supported gesture`);
+    const cueA11y = await cue.evaluate(node => ({
+        tag: node.tagName,
+        role: node.getAttribute('role'),
+        ariaHidden: node.getAttribute('aria-hidden'),
+        disabled: node.hasAttribute('disabled')
+    }));
+    assert.equal(cueA11y.tag, 'P', `${label}: cue is a non-interactive paragraph`);
+    assert.notEqual(cueA11y.role, 'button', `${label}: cue is not a fake/disabled button`);
+    assert.equal(cueA11y.disabled, false, `${label}: cue exposes no disabled action`);
+    assert.equal(cueA11y.ariaHidden, null, `${label}: cue stays in the accessibility tree`);
+    assert.match(await cue.ariaSnapshot(), /Desplaza la tabla horizontalmente para ver Estado actual y Motivo registrado/,
+        `${label}: cue reachable by assistive technology`);
+
+    const before = await readLastColumnGeometry(page);
+    assert.ok(before.wrapperScrollWidth > before.wrapperClientWidth,
+        `${label}: six columns overflow inside their wrapper (scrollWidth=${before.wrapperScrollWidth} clientWidth=${before.wrapperClientWidth})`);
+    assert.equal(before.pageScrollWidth, before.pageClientWidth,
+        `${label}: no page-level horizontal overflow (scrollWidth=${before.pageScrollWidth} clientWidth=${before.pageClientWidth})`);
+    assert.equal(before.statusText, expectedStatus, `${label}: last-column status before any scrolling`);
+
+    /* NATIVE user gesture: real horizontal wheel over the wrapper. */
+    const scroller = page.locator('.cosentyx-detail-scroll');
+    await scroller.scrollIntoViewIfNeeded();
+    const box = await scroller.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.wheel(900, 0);
+    await page.waitForTimeout(200);
+    const after = await readLastColumnGeometry(page);
+    assert.ok(after.scrollLeft > 0,
+        `${label}: native horizontal wheel scrolled the internal wrapper (scrollLeft=${after.scrollLeft})`);
+    assert.ok(after.statusRight <= after.wrapperRight + 0.5,
+        `${label}: after native scroll the status is fully visible (statusRight=${after.statusRight} wrapperRight=${after.wrapperRight})`);
+    if (expectedReason) {
+        assert.equal(after.reasonText, expectedReason, `${label}: reason text preserved after native scroll`);
+        assert.ok(after.reasonRight <= after.wrapperRight + 0.5,
+            `${label}: after native scroll the full reason is visible (reasonRight=${after.reasonRight} wrapperRight=${after.wrapperRight})`);
+    }
+    assert.equal(after.pageScrollWidth, after.pageClientWidth,
+        `${label}: native scroll never overflows the page (scrollWidth=${after.pageScrollWidth} clientWidth=${after.pageClientWidth})`);
+    /* Return the scroller to its initial position with the same native gesture. */
+    await page.mouse.wheel(-900, 0);
+    await page.waitForTimeout(150);
+    return after;
+}
+
 /* Six ordinary population KPI cards as the professional sees them. */
 async function readPopulationKpis(page) {
     return page.evaluate(() => [...document.querySelectorAll('#kpi-grid .stats-kpi-card')]
@@ -775,6 +892,63 @@ try {
      * composed state (internal table scroll, never page scroll). */
     await assertCosentyxDetail(page, '2026-Q2');
 
+    /* ===== P2-VISUAL-02 Gate 4 correction ===== */
+    /* The disclosure still exposes aria-expanded and retains keyboard focus
+     * after a real keyboard activation. */
+    const disclosureToggle = page.locator('#informes-detail-toggle');
+    assert.equal(await disclosureToggle.getAttribute('aria-expanded'), 'true', 'P2-VISUAL-02: detail still expanded');
+    await disclosureToggle.focus();
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-detail-toggle',
+        'P2-VISUAL-02: disclosure focus retained before the geometry checks');
+
+    /* Desktop 1440: entire «Estado actual» status/reason readable inside the
+     * wrapper at initial scrollLeft 0, without horizontal scrolling, and no
+     * desktop scroll warning. Repeated for Q4/Q3/Q2 so it cannot pass on
+     * one cosmetic quarter. */
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const [quarter, status, reason] of [
+        ['2026-Q4', 'Discontinuado', 'Motivo registrado: Decisión clínica documentada'],
+        ['2026-Q3', 'Discontinuado', 'Motivo registrado: motivo administrativo registrado'],
+        ['2026-Q2', 'q4w', null]
+    ]) {
+        await page.locator('#informes-quarter-select').selectOption(quarter);
+        await page.waitForFunction(label => document.getElementById('informes-period').textContent.trim() === label, quarter);
+        const geo = await assertLastColumnInsideWithoutScroll(page, `1440 ${quarter}`, status, reason);
+        console.log(`P2-VISUAL-02 1440 ${quarter}: statusRight=${geo.statusRight} reasonRight=${geo.reasonRight} wrapperRight=${geo.wrapperRight} wrapperScroll=${geo.wrapperScrollWidth} wrapperClient=${geo.wrapperClientWidth}`);
+    }
+    assert.ok(!(await page.locator('#informes-detail-scroll-hint').isVisible()),
+        'P2-VISUAL-02: no desktop scroll warning while the table fits');
+    assert.equal(await disclosureToggle.getAttribute('aria-expanded'), 'true', 'P2-VISUAL-02: detail expanded through the desktop checks');
+
+    /* Narrow 375: visible/SR cue, internal-only overflow, native wheel
+     * gesture reveals the full last column, page never scrolls horizontally.
+     * Repeated for Q2/Q3/Q4 (including both discontinuation reasons). */
+    await page.setViewportSize({ width: 375, height: 900 });
+    for (const [quarter, status, reason] of [
+        ['2026-Q2', 'q4w', null],
+        ['2026-Q3', 'Discontinuado', 'Motivo registrado: motivo administrativo registrado'],
+        ['2026-Q4', 'Discontinuado', 'Motivo registrado: Decisión clínica documentada']
+    ]) {
+        await page.locator('#informes-quarter-select').selectOption(quarter);
+        await page.waitForFunction(label => document.getElementById('informes-period').textContent.trim() === label, quarter);
+        const geo = await assertNarrowDetailScroll(page, `375 ${quarter}`, status, reason);
+        console.log(`P2-VISUAL-02 375 ${quarter}: cue visible; wrapperScroll=${geo.wrapperScrollWidth} wrapperClient=${geo.wrapperClientWidth} overflow=${geo.wrapperScrollWidth - geo.wrapperClientWidth}; nativeScrollLeft=${Math.round(geo.scrollLeft)} statusRight=${geo.statusRight} reasonRight=${geo.reasonRight} wrapperRight=${geo.wrapperRight} page=${geo.pageScrollWidth}/${geo.pageClientWidth}`);
+    }
+
+    /* Narrow 768: same cue/overflow/native-reveal contract. */
+    await page.setViewportSize({ width: 768, height: 900 });
+    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
+    await page.waitForFunction(label => document.getElementById('informes-period').textContent.trim() === label, '2026-Q4');
+    const geo768 = await assertNarrowDetailScroll(page, '768 2026-Q4', 'Discontinuado', 'Motivo registrado: Decisión clínica documentada');
+    console.log(`P2-VISUAL-02 768 Q4: cue visible; overflow=${geo768.wrapperScrollWidth - geo768.wrapperClientWidth}; nativeScrollLeft=${Math.round(geo768.scrollLeft)} reasonRight=${geo768.reasonRight} wrapperRight=${geo768.wrapperRight} page=${geo768.pageScrollWidth}/${geo768.pageClientWidth}`);
+
+    assert.equal(await disclosureToggle.getAttribute('aria-expanded'), 'true', 'P2-VISUAL-02: detail still expanded after the narrow checks');
+    /* Restore the quarter the surrounding flow expects (Q2, still expanded). */
+    await page.locator('#informes-quarter-select').selectOption('2026-Q2');
+    await page.waitForFunction(label => document.getElementById('informes-period').textContent.trim() === label, '2026-Q2');
+    await assertCosentyxDetail(page, '2026-Q2');
+    await page.setViewportSize({ width: 1440, height: 900 });
+
     /* No page-level horizontal overflow on the supported viewports, with
      * the six-column detail disclosed: the wide table scrolls inside its
      * own container, never the page. */
@@ -847,7 +1021,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_cosentyx_informe_browser_check: PASS');
-    console.log('QA Chromium: neutral entry OK (no precomputed Cosentyx, CTA gated, {report:null}); Cosentyx Q4 default-latest → Ver reporte → Q1/Q2/Q3/Q4 differ from fixture (Q4 discontinuation-only); executive composition (6 categories from model + emphasized unique with event-row copy + period line + collapsed Ver detalle with keyboard focus + exact six-column cells: Q4 Discontinuado + 150 mg + literal Decisión clínica documentada + 2026-10-01, never active); fresh confirm re-collapses while quarter change preserves; real XLSX Q2+Q4 Resumen+Detalle match hand-derived literals and UI model (Q2 unique=8, not blind sum 11; Q4 unique=1); Fármaco switch clears stale results; Kisqali executive composition (heroes + closing bars + Ver detalle gate + six-column table) Mensual + Histórico real XLSX OK; back to Cosentyx Q2/Q4; view-switch preserves confirmed selection; six population KPI values identical before/after + filters + filtered CSV unaffected; 1440/1024/768/375 no page overflow with disclosed detail (internal table scroll only, no clipped KPI labels); console.error=0 pageerror=0');
+    console.log('QA Chromium: neutral entry OK (no precomputed Cosentyx, CTA gated, {report:null}); Cosentyx Q4 default-latest → Ver reporte → Q1/Q2/Q3/Q4 differ from fixture (Q4 discontinuation-only); executive composition (6 categories from model + emphasized unique with event-row copy + period line + collapsed Ver detalle with keyboard focus + exact six-column cells: Q4 Discontinuado + 150 mg + literal Decisión clínica documentada + 2026-10-01, never active); fresh confirm re-collapses while quarter change preserves; real XLSX Q2+Q4 Resumen+Detalle match hand-derived literals and UI model (Q2 unique=8, not blind sum 11; Q4 unique=1); Fármaco switch clears stale results; Kisqali executive composition (heroes + closing bars + Ver detalle gate + six-column table) Mensual + Histórico real XLSX OK; back to Cosentyx Q2/Q4; view-switch preserves confirmed selection; six population KPI values identical before/after + filters + filtered CSV unaffected; 1440/1024/768/375 no page overflow with disclosed detail (internal table scroll only, no clipped KPI labels); P2-VISUAL-02 last «Estado actual»+reason inside the wrapper at 1440 initial scroll for Q2/Q3/Q4, visible noninteractive SR cue + internal-only overflow + native wheel reveal at 375 (Q2/Q3/Q4) and 768; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
