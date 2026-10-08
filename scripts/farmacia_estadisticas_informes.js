@@ -216,28 +216,121 @@
         }
     }
 
+    /* T2 #595 composición ejecutiva: re-proyección visual del MISMO informe
+     * calculado — dos KPI héroes (pacientes + media de cohorte en mg con
+     * criterio de ponderación explícito), barras horizontales de dosis de
+     * cierre 600 → 400 → 200 (+ otra/desconocida sólo cuando > 0) y métrica
+     * secundaria de pacientes con cambio explícito. Sin cálculo nuevo. */
     function renderKisqaliKpis(report) {
         var container = document.getElementById('kisqali-kpis');
+        if (container) {
+            clearChildren(container);
+            var heroes = [
+                {
+                    key: 'patients',
+                    label: KISQALI_KPI_LABELS.patients,
+                    value: String(report.patient_count),
+                    note: null
+                },
+                {
+                    key: 'cohort_mean',
+                    label: KISQALI_KPI_LABELS.cohort_mean,
+                    value: report.cohort_mean.display + ' mg',
+                    note: 'Ponderada por ciclos evaluables'
+                }
+            ];
+            heroes.forEach(function (hero) {
+                var card = el('div', 'informes-kpi kisqali-hero');
+                card.dataset.kisqaliKpi = hero.key;
+                card.appendChild(el('div', 'informes-kpi-label', hero.label));
+                card.appendChild(el('div', 'informes-kpi-value', hero.value));
+                if (hero.note) card.appendChild(el('div', 'kisqali-hero-note', hero.note));
+                container.appendChild(card);
+            });
+        }
+        renderKisqaliClosingBars(report);
+        renderKisqaliSecondary(report);
+    }
+
+    /* Barras de dosis de cierre 600 → 400 → 200 (DOM/CSS nativo, sin
+     * librería): cada barra vale exactamente su bucket de cierre del
+     * informe; la suma de buckets es patient_count. El bucket
+     * otra/desconocida sólo se representa cuando es > 0 (el informe y el
+     * XLSX lo conservan siempre). La dosis de cierre no equivale a la
+     * media de cohorte ni representa dispensación. */
+    function renderKisqaliClosingBars(report) {
+        var container = document.getElementById('kisqali-closing-bars');
+        var note = document.getElementById('kisqali-closing-note');
         if (!container) return;
         clearChildren(container);
-        var values = {
-            patients: String(report.patient_count),
-            closing_200: String(report.closing_distribution.dose_200),
-            closing_400: String(report.closing_distribution.dose_400),
-            closing_600: String(report.closing_distribution.dose_600),
-            closing_otra: String(report.closing_distribution.otra_desconocida),
-            cohort_mean: report.cohort_mean.display + ' mg',
-            patients_with_change: String(report.patients_with_change_count),
-            coverage: report.coverage.numerator + '/' + report.coverage.denominator
-                + ' · ' + report.coverage.percentage_display
-        };
-        Object.keys(KISQALI_KPI_LABELS).forEach(function (key) {
-            var card = el('div', 'informes-kpi');
-            card.dataset.kisqaliKpi = key;
-            card.appendChild(el('div', 'informes-kpi-label', KISQALI_KPI_LABELS[key]));
-            card.appendChild(el('div', 'informes-kpi-value', values[key]));
-            container.appendChild(card);
+        var buckets = [
+            { key: 'dose_600', label: KISQALI_KPI_LABELS.closing_600, count: report.closing_distribution.dose_600 },
+            { key: 'dose_400', label: KISQALI_KPI_LABELS.closing_400, count: report.closing_distribution.dose_400 },
+            { key: 'dose_200', label: KISQALI_KPI_LABELS.closing_200, count: report.closing_distribution.dose_200 }
+        ];
+        /* Misma rama de representación para el bucket agregado: cuando es
+         * > 0 usa el código idéntico al de los buckets visibles; con 0 se
+         * omite del gráfico sin ocultarse del informe ni del XLSX. */
+        if (report.closing_distribution.otra_desconocida > 0) {
+            buckets.push({
+                key: 'otra_desconocida',
+                label: KISQALI_KPI_LABELS.closing_otra,
+                count: report.closing_distribution.otra_desconocida
+            });
+        }
+        var max = buckets.reduce(function (peak, bucket) {
+            return bucket.count > peak ? bucket.count : peak;
+        }, 0);
+        var total = buckets.reduce(function (sum, bucket) { return sum + bucket.count; }, 0);
+        buckets.forEach(function (bucket) {
+            var row = el('div', 'kisqali-bar kisqali-bar--' + bucket.key);
+            row.dataset.kisqaliBar = bucket.key;
+            row.setAttribute('role', 'img');
+            row.setAttribute('aria-label', bucket.label + ': ' + String(bucket.count) + ' pacientes');
+            row.appendChild(el('span', 'kisqali-bar-label', bucket.label));
+            var track = el('span', 'kisqali-bar-track');
+            var fill = el('span', 'kisqali-bar-fill kisqali-bar-fill--' + bucket.key);
+            fill.style.width = (max > 0 ? Math.round((bucket.count / max) * 100) : 0) + '%';
+            track.appendChild(fill);
+            row.appendChild(track);
+            var value = el('span', 'kisqali-bar-value', String(bucket.count));
+            value.dataset.kisqaliBarValue = bucket.key;
+            row.appendChild(value);
+            container.appendChild(row);
         });
+        if (note) {
+            note.textContent = 'Suma ' + String(total) + ' pacientes. '
+                + 'La dosis de cierre no equivale a la media de cohorte ni representa dispensación.';
+        }
+    }
+
+    /* Métrica secundaria: PACIENTES con ≥1 cambio explícito evaluable
+     * (nunca el conteo de eventos change_count). Cobertura y ciclos como
+     * nota de apoyo, sin competir con los dos héroes. */
+    function renderKisqaliSecondary(report) {
+        var container = document.getElementById('kisqali-secondary');
+        if (!container) return;
+        clearChildren(container);
+        container.appendChild(el('strong', 'kisqali-secondary-label', KISQALI_KPI_LABELS.patients_with_change + ': '));
+        var changeValue = el('span', 'kisqali-secondary-value', String(report.patients_with_change_count));
+        changeValue.dataset.kisqaliKpi = 'patients_with_change';
+        container.appendChild(changeValue);
+        container.appendChild(el('span', 'kisqali-secondary-sep', ' · '));
+        container.appendChild(el('span', 'kisqali-secondary-label', KISQALI_KPI_LABELS.coverage + ': '));
+        var coverageValue = el(
+            'span',
+            'kisqali-secondary-value',
+            report.coverage.numerator + '/' + report.coverage.denominator
+                + ' · ' + report.coverage.percentage_display
+        );
+        coverageValue.dataset.kisqaliKpi = 'coverage';
+        container.appendChild(coverageValue);
+        container.appendChild(el(
+            'span',
+            'kisqali-secondary-support',
+            ' (' + String(report.observed_cycle_count) + ' observados, '
+                + String(report.evaluable_cycle_count) + ' evaluables)'
+        ));
     }
 
     function kisqaliDoseCell(row) {
@@ -271,6 +364,14 @@
         return table;
     }
 
+    /* T2 #595 tabla resumen de seis columnas exactas dentro del detalle
+     * progresivo: (1) paciente sintético + botón Ver ciclos en celda,
+     * (2) presentación del ÚLTIMO ciclo observado (nunca derivada de la
+     * dosis), (3) primera dosis evaluable en ventana (u honesta
+     * desconocida), (4) última dosis evaluable en ventana, (5) cambios
+     * explícitos evaluables a nivel de paciente, (6) media de régimen en
+     * ventana ponderada por ciclos evaluables. Las columnas técnicas
+     * (observados/evaluables) viven en el XLSX, no en esta tabla. */
     function renderKisqaliPatients(report) {
         var head = document.querySelector('#kisqali-patients-table thead');
         var body = document.querySelector('#kisqali-patients-table tbody');
@@ -279,8 +380,7 @@
         clearChildren(body);
         var header = el('tr');
         ['Paciente (sintético)', 'Presentación (último ciclo observado)', 'Dosis inicial (ventana)',
-            'Dosis final (ventana)', 'Cambios explícitos', 'Ciclos observados',
-            'Ciclos con dosis evaluable', 'Dosis media (mg)', 'Ciclos']
+            'Dosis final (ventana)', 'Cambios explícitos', 'Dosis media (mg)']
             .forEach(function (column) { header.appendChild(el('th', '', column)); });
         head.appendChild(header);
 
@@ -293,7 +393,7 @@
         if (!report.patients.length) {
             var empty = el('tr');
             var emptyCell = el('td', '', 'Sin ciclos observados en la ventana seleccionada.');
-            emptyCell.colSpan = 9;
+            emptyCell.colSpan = 6;
             empty.appendChild(emptyCell);
             body.appendChild(empty);
             return;
@@ -302,33 +402,32 @@
         report.patients.forEach(function (patient) {
             var tr = el('tr');
             tr.dataset.kisqaliPatient = patient.patient_id;
-            tr.appendChild(el('td', '', patient.patient_id));
+            var patientCell = el('td', 'kisqali-patient-cell');
+            var patientId = el('span', 'kisqali-patient-id', patient.patient_id);
+            patientId.dataset.kisqaliPatientId = patient.patient_id;
+            patientCell.appendChild(patientId);
+            var toggle = el('button', 'btn btn-sm btn-outline kisqali-ciclos-toggle', 'Ver ciclos');
+            toggle.type = 'button';
+            toggle.dataset.kisqaliCiclosToggle = patient.patient_id;
+            toggle.setAttribute('aria-expanded', 'false');
+            toggle.setAttribute('aria-controls', 'kisqali-ciclos-' + patient.patient_id);
+            patientCell.appendChild(toggle);
+            tr.appendChild(patientCell);
             tr.appendChild(el('td', '', patient.last_presentation_display));
             tr.appendChild(el('td', '', patient.initial_dose === null
                 ? Kisqali.UNKNOWN_DOSE_LABEL : String(patient.initial_dose) + ' mg'));
             tr.appendChild(el('td', '', patient.final_dose === null
                 ? Kisqali.UNKNOWN_DOSE_LABEL : String(patient.final_dose) + ' mg'));
             tr.appendChild(el('td', '', String(patient.change_count)));
-            tr.appendChild(el('td', '', String(patient.observed_count)));
-            tr.appendChild(el('td', '', String(patient.evaluable_count)));
             tr.appendChild(el('td', '', patient.mean_display === Kisqali.UNKNOWN_DOSE_LABEL
                 ? patient.mean_display : patient.mean_display + ' mg'));
-
-            var actionCell = el('td');
-            var toggle = el('button', 'btn btn-sm btn-outline kisqali-ciclos-toggle', 'Ver ciclos');
-            toggle.type = 'button';
-            toggle.dataset.kisqaliCiclosToggle = patient.patient_id;
-            toggle.setAttribute('aria-expanded', 'false');
-            toggle.setAttribute('aria-controls', 'kisqali-ciclos-' + patient.patient_id);
-            actionCell.appendChild(toggle);
-            tr.appendChild(actionCell);
             body.appendChild(tr);
 
             var cyclesRow = el('tr', 'kisqali-ciclos-row');
             cyclesRow.id = 'kisqali-ciclos-' + patient.patient_id;
             cyclesRow.hidden = true;
             var cyclesCell = el('td');
-            cyclesCell.colSpan = 9;
+            cyclesCell.colSpan = 6;
             cyclesCell.appendChild(buildKisqaliCiclosTable(cyclesByPatient[patient.patient_id] || []));
             cyclesRow.appendChild(cyclesCell);
             body.appendChild(cyclesRow);
@@ -365,6 +464,23 @@
         anchor.download = 'informe_kisqali_utilizacion_dosis_' + suffix + '.xlsx';
         anchor.click();
         URL.revokeObjectURL(anchor.href);
+    }
+
+    /* T2 #595 «Ver detalle»: botón real colapsado por defecto que gobierna
+     * el panel del resumen de seis columnas. Cambiar de ventana validada
+     * conserva su estado; una confirmación fresca lo repliega. */
+    function setKisqaliDetailExpanded(expanded) {
+        var toggle = document.getElementById('kisqali-detail-toggle');
+        var panel = document.getElementById('kisqali-detail-panel');
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            toggle.textContent = expanded ? 'Ocultar detalle' : 'Ver detalle';
+        }
+        if (panel) panel.hidden = !expanded;
+    }
+
+    function collapseKisqaliDetail() {
+        setKisqaliDetailExpanded(false);
     }
 
     /* ---------- Shared Informes shell (neutral entry #594) ---------- */
@@ -434,6 +550,7 @@
         setHidden(document.getElementById('informes-kisqali-panel'), true);
         setDownloadEnabled('informes-download-xlsx', false);
         setDownloadEnabled('kisqali-download-xlsx', false);
+        collapseKisqaliDetail();
     }
 
     function renderTypeOptions(drug) {
@@ -491,6 +608,7 @@
             renderReport();
             setDownloadEnabled('informes-download-xlsx', !!currentReport);
         } else {
+            collapseKisqaliDetail();
             renderKisqaliReport();
             setDownloadEnabled('kisqali-download-xlsx', !!currentKisqaliReport);
         }
@@ -575,7 +693,13 @@
             if (!cyclesRow) return;
             var expanded = button.getAttribute('aria-expanded') === 'true';
             button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            button.textContent = expanded ? 'Ver ciclos' : 'Ocultar ciclos';
             cyclesRow.hidden = expanded;
+        });
+        var kisqaliDetailToggle = document.getElementById('kisqali-detail-toggle');
+        if (kisqaliDetailToggle) kisqaliDetailToggle.addEventListener('click', function () {
+            var expanded = kisqaliDetailToggle.getAttribute('aria-expanded') === 'true';
+            setKisqaliDetailExpanded(!expanded);
         });
 
         var informesButton = document.getElementById('informes-view-btn');
@@ -591,6 +715,7 @@
         setHidden(document.getElementById('informes-kisqali-panel'), true);
         setDownloadEnabled('informes-download-xlsx', false);
         setDownloadEnabled('kisqali-download-xlsx', false);
+        collapseKisqaliDetail();
         updateCta();
         setMode(false);
     }

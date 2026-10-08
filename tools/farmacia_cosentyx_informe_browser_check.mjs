@@ -211,21 +211,47 @@ async function readDomKpis(page) {
 }
 
 async function readKisqaliDomKpis(page) {
-    return page.evaluate(() => Object.fromEntries(
-        [...document.querySelectorAll('#kisqali-kpis [data-kisqali-kpi]')]
-            .map(node => [node.dataset.kisqaliKpi, node.querySelector('.informes-kpi-value').textContent.trim()])));
+    return page.evaluate(() => {
+        const heroes = Object.fromEntries(
+            [...document.querySelectorAll('#kisqali-kpis [data-kisqali-kpi]')]
+                .map(node => [node.dataset.kisqaliKpi, node.querySelector('.informes-kpi-value').textContent.trim()]));
+        const bars = Object.fromEntries(
+            [...document.querySelectorAll('#kisqali-closing-bars [data-kisqali-bar-value]')]
+                .map(node => [node.dataset.kisqaliBarValue, node.textContent.trim()]));
+        const secondary = Object.fromEntries(
+            [...document.querySelectorAll('#kisqali-secondary [data-kisqali-kpi]')]
+                .map(node => [node.dataset.kisqaliKpi, node.textContent.trim()]));
+        return {
+            patients: heroes.patients,
+            closing_200: bars.dose_200,
+            closing_400: bars.dose_400,
+            closing_600: bars.dose_600,
+            closing_otra: bars.otra_desconocida === undefined ? '0' : bars.otra_desconocida,
+            cohort_mean: heroes.cohort_mean,
+            patients_with_change: secondary.patients_with_change,
+            coverage: secondary.coverage
+        };
+    });
 }
 
 async function readKisqaliPatientRows(page) {
     return page.evaluate(() => [...document.querySelectorAll('#kisqali-patients-table tbody tr[data-kisqali-patient]')]
-        .map(row => [...row.querySelectorAll('td')].slice(0, 8).map(cell => cell.textContent.trim())));
+        .map(row => {
+            const cells = [...row.querySelectorAll('td')];
+            const id = cells[0].querySelector('[data-kisqali-patient-id]').textContent.trim();
+            return [id, ...cells.slice(1, 6).map(cell => cell.textContent.trim())];
+        }));
 }
 
-function visiblePatientRowToSheetRow(cells) {
+function visiblePatientRowToSheetSubset(cells) {
     const doseCell = cell => cell === 'Desconocida' ? 'Desconocida' : Number(cell.replace(/ mg$/, ''));
     const meanCell = cell => cell === 'Desconocida' ? 'Desconocida' : cell.replace(/ mg$/, '');
     return [cells[0], cells[1], doseCell(cells[2]), doseCell(cells[3]),
-        Number(cells[4]), Number(cells[5]), Number(cells[6]), meanCell(cells[7])];
+        Number(cells[4]), meanCell(cells[5])];
+}
+
+function sheetRowToVisibleSubset(row) {
+    return [row[0], row[1], row[2], row[3], row[4], row[7]];
 }
 
 async function assertQuarterView(page, quarter) {
@@ -441,11 +467,18 @@ try {
     assert.deepEqual(await readKisqaliDomKpis(page), EXPECTED_KISQALI_MENSUAL_2026_06.dom,
         'Kisqali Mensual KPIs match the hand-derived fixture expectation');
     assert.equal(await page.locator('#kisqali-window-label').innerText(), EXPECTED_KISQALI_MENSUAL_2026_06.window);
+    /* T2 #595: the six-column summary lives behind the collapsed «Ver
+     * detalle» gate — expand it through the supported button first. */
+    assert.equal(await page.locator('#kisqali-detail-toggle').getAttribute('aria-expanded'), 'false',
+        'detail collapsed by default');
+    await page.locator('#kisqali-detail-toggle').click();
+    await page.waitForFunction(() => !document.getElementById('kisqali-detail-panel').hidden);
+    assert.equal(await page.locator('#kisqali-detail-toggle').getAttribute('aria-expanded'), 'true');
     assert.deepEqual(await readKisqaliPatientRows(page), [
-        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg'],
-        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '1', '1', '1', '400 mg'],
-        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
-    ], 'rendered Kisqali patient cells match the hand-derived expectation');
+        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg'],
+        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '1', '400 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg']
+    ], 'rendered Kisqali six-column cells match the hand-derived expectation');
     assert.ok(await page.locator('#informes-download-xlsx').isDisabled(), 'no stale Cosentyx XLSX beside the Kisqali report');
 
     /* Kisqali Mensual REAL .xlsx against the visible UI + hand literals. */
@@ -472,8 +505,8 @@ try {
     const mensualPacientes = XLSX.utils.sheet_to_json(mensualWorkbook.Sheets['Pacientes'], { header: 1, defval: '' }).map(normRow);
     assert.deepEqual(mensualPacientes.slice(1), EXPECTED_KISQALI_MENSUAL_2026_06.pacientesSheet,
         'Mensual Pacientes sheet matches the hand-derived literals');
-    assert.deepEqual(mensualPacientes.slice(1), mensualVisible.map(visiblePatientRowToSheetRow),
-        'Mensual Pacientes sheet equals the visible patient rows');
+    assert.deepEqual(mensualPacientes.slice(1).map(sheetRowToVisibleSubset), mensualVisible.map(visiblePatientRowToSheetSubset),
+        'Mensual Pacientes sheet equals the visible six-column rows on the shared columns');
     const mensualCiclos = XLSX.utils.sheet_to_json(mensualWorkbook.Sheets['Ciclos'], { header: 1, defval: '' }).map(normRow);
     assert.equal(mensualCiclos.length - 1, 3, 'Mensual Ciclos rows = observed cycles in window');
 
@@ -505,8 +538,8 @@ try {
     assert.equal(historicoValue('Cobertura de dosis explícita — numerador (ciclos)'), 22);
     assert.equal(historicoValue('Cobertura de dosis explícita — denominador (ciclos observados)'), 22);
     const historicoPacientes = XLSX.utils.sheet_to_json(historicoWorkbook.Sheets['Pacientes'], { header: 1, defval: '' }).map(normRow);
-    assert.deepEqual(historicoPacientes.slice(1), historicoVisible.map(visiblePatientRowToSheetRow),
-        'Histórico Pacientes sheet equals the visible patient rows');
+    assert.deepEqual(historicoPacientes.slice(1).map(sheetRowToVisibleSubset), historicoVisible.map(visiblePatientRowToSheetSubset),
+        'Histórico Pacientes sheet equals the visible six-column rows on the shared columns');
     const historicoCiclos = XLSX.utils.sheet_to_json(historicoWorkbook.Sheets['Ciclos'], { header: 1, defval: '' }).map(normRow);
     assert.equal(historicoCiclos.length - 1, 22, 'Histórico Ciclos rows = every explicit cycle');
 
@@ -600,7 +633,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_cosentyx_informe_browser_check: PASS');
-    console.log('QA Chromium: neutral entry OK (no precomputed Cosentyx, CTA gated, {report:null}); Cosentyx Q4 default-latest → Ver reporte → Q1/Q2/Q3/Q4 differ from fixture (Q4 discontinuation-only); 6 categories + unique shown; real XLSX Q2+Q4 Resumen+Detalle match hand-derived literals and UI model (Q2 unique=8, not blind sum 11; Q4 unique=1); Fármaco switch clears stale results; Kisqali Mensual + Histórico real XLSX OK; back to Cosentyx Q2/Q4; view-switch preserves confirmed selection; population filters+CSV unaffected; 1440/1024/768/375 no page overflow; console.error=0 pageerror=0');
+    console.log('QA Chromium: neutral entry OK (no precomputed Cosentyx, CTA gated, {report:null}); Cosentyx Q4 default-latest → Ver reporte → Q1/Q2/Q3/Q4 differ from fixture (Q4 discontinuation-only); 6 categories + unique shown; real XLSX Q2+Q4 Resumen+Detalle match hand-derived literals and UI model (Q2 unique=8, not blind sum 11; Q4 unique=1); Fármaco switch clears stale results; Kisqali executive composition (heroes + closing bars + Ver detalle gate + six-column table) Mensual + Histórico real XLSX OK; back to Cosentyx Q2/Q4; view-switch preserves confirmed selection; population filters+CSV unaffected; 1440/1024/768/375 no page overflow; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

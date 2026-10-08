@@ -188,12 +188,26 @@
                 <div id="informes-kisqali-panel" class="informes-report-panel" hidden>
                     <p class="informes-notice" role="note" id="kisqali-synthetic-notice"><i class="fas fa-flask" aria-hidden="true"></i> <span id="kisqali-provenance-text">Datos sintéticos específicos del informe. Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados. No implica consumo, adherencia ni dispensación real.</span></p>
                     <p class="informes-period-line">Ventana: <strong id="kisqali-window-label"></strong></p>
-                    <div class="informes-kpi-grid" id="kisqali-kpis"></div>
-                    <div class="table-responsive-wrapper">
-                        <table id="kisqali-patients-table" class="data-table stats-data-table">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
+                    <!-- T2 #595 composición ejecutiva: dos KPI héroes + barras
+                         de dosis de cierre + métrica secundaria + detalle
+                         progresivo colapsado. Re-proyección visual del mismo
+                         informe calculado; sin semántica nueva. -->
+                    <div class="kisqali-hero-grid" id="kisqali-kpis" aria-live="polite"></div>
+                    <p class="kisqali-regimen-note" id="kisqali-regimen-note">Estadística de dosis de régimen ponderada por ciclos evaluables (unidad: mg). Calculada exclusivamente a partir de dosis explícitamente registradas; no representa consumo, dispensación ni adherencia.</p>
+                    <section class="kisqali-closing" aria-labelledby="kisqali-closing-title">
+                        <h3 class="kisqali-closing-title" id="kisqali-closing-title">Distribución de dosis de cierre</h3>
+                        <div class="kisqali-bars" id="kisqali-closing-bars"></div>
+                        <p class="kisqali-closing-note" id="kisqali-closing-note"></p>
+                    </section>
+                    <p class="kisqali-secondary" id="kisqali-secondary"></p>
+                    <button type="button" class="btn btn-outline kisqali-detail-toggle" id="kisqali-detail-toggle" aria-expanded="false" aria-controls="kisqali-detail-panel">Ver detalle</button>
+                    <div id="kisqali-detail-panel" hidden>
+                        <div class="table-responsive-wrapper kisqali-detail-scroll">
+                            <table id="kisqali-patients-table" class="data-table stats-data-table">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>
