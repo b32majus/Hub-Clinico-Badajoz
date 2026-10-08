@@ -204,15 +204,19 @@
         /* HS — testigo del trimestre SOLO con discontinuación (Q4): primera
            dispensación Q1 a q4w (no es inicio HS q2w), sin movimientos, y
            discontinuación explícita el primer día de Q4 (borde inicial
-           inclusivo) con régimen en el hecho q2w. Motivo omitido: la ausencia
-           queda ausente, sin causa inventada. Nótese que el régimen inicial
+           inclusivo) con régimen en el hecho q2w. Motivo explícito y ficticio
+           registrado en el propio registro sintético ('Decisión clínica
+           documentada'): hecho demo declarado, no inferencia. La ausencia de
+           motivo se sigue probando solo con una variante local del checker
+           (clon sin reason). Nótese que el régimen inicial
            (q4w) difiere del régimen en el hecho (q2w): el hecho manda. */
         {
             patient_id: 'COS-HS-010', pathology: 'HS', drug: 'Cosentyx',
             first_dispensing_at: '2026-01-20', validated_at: null, current_treatment: false,
             initial_regime: 'q4w', regime_movements: [],
             presentation_label: '150 mg',
-            discontinued_at: '2026-10-01', regime_at_discontinuation: 'q2w'
+            discontinued_at: '2026-10-01', regime_at_discontinuation: 'q2w',
+            reason: 'Decisión clínica documentada'
         },
         /* Negativo: discontinuación SIN fecha (discontinued_at null =
            explícitamente desconocida) -> nunca incluye, aunque el régimen en
