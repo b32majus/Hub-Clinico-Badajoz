@@ -1,21 +1,30 @@
 #!/usr/bin/env node
-/* #579 Informe de utilización y dosis — Kisqali — supported-browser QA through the real UI.
+/* #579 Informe de utilización y dosis — Kisqali + #594 entrada neutral +
+ * T2 #595 composición ejecutiva — supported-browser QA through the real UI.
  *
  * Journey: open Estadísticas normally (demo session), enter Informes through
- * the supported switcher, confirm the default Cosentyx report still works,
- * select Kisqali through the new report selector, walk
- * Mensual → Trimestral → Anual → Histórico with fixture-derived periods,
- * verify KPIs, the rendered patient-table cells and raw expectations against
- * hand-derived fixture values (normalized demo: only explicit 200/400/600,
- * every cycle evaluable), open
- * 'Ver ciclos' raw traceability (coherent explicit boundary changes, stable
- * explicit doses, presentation independence), download a REAL .xlsx and validate Resumen + Ciclos against
- * the hand-derived expectation and the Pacientes sheet against the visible
- * rendered patient cells (not a fresh model call), switch back to Cosentyx
- * and run its
- * accepted journey, return to the population analysis and confirm the
- * filtered-cohort CSV export still downloads. Supported interactions only;
- * no DOM tampering; console.error=0 / pageerror=0.
+ * the supported switcher and confirm the NEUTRAL landing (no precomputed
+ * Cosentyx, Ver reporte disabled, getState() {report:null}), reach Cosentyx
+ * through Fármaco → Tipo → Período → «Ver reporte» and confirm its accepted
+ * Q1/Q2/Q4 views still work, switch Fármaco to Kisqali (stale Cosentyx
+ * cleared, fresh confirm required), walk Mensual → Trimestral → Anual →
+ * Histórico with fixture-derived periods, verify the executive composition
+ * (two hero KPIs, closing-dose bars 600 → 400 → 200 congruent with the
+ * hand-derived closing counts and summing to patient_count, secondary
+ * patients_with_change_count never confused with the event change_count)
+ * and the collapsed-by-default «Ver detalle» gate (real button,
+ * aria-expanded + aria-controls, keyboard expansion with focus retained)
+ * holding the exact six-column summary table, open the in-cell
+ * 'Ver ciclos' raw traceability via keyboard (coherent explicit boundary
+ * changes, stable explicit doses, presentation independence), download a
+ * REAL .xlsx and validate Resumen + Ciclos against the hand-derived
+ * expectation and the Pacientes sheet against the visible rendered patient
+ * cells of the same window (not a fresh model call), prove a fresh «Ver
+ * reporte» re-collapses the detail, switch back to Cosentyx and run its
+ * accepted journey, prove view-switch preservation, return to the
+ * population analysis and confirm the filtered-cohort CSV export still
+ * downloads. Supported interactions only; no DOM tampering;
+ * console.error=0 / pageerror=0.
  */
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, readdirSync, statSync } from 'node:fs';
@@ -97,42 +106,43 @@ const EXPECTED_KISQALI = {
 };
 
 /* Hand-derived EXPECTED VISIBLE PATIENT-TABLE CELLS per window (independent
- * of getState()/model output): each row is the rendered
- * #kisqali-patients-table row [id, presentation, initial dose, final dose,
- * explicit changes, observed cycles, evaluable cycles, mean] exactly as the
- * UI formats it ('X mg' / 'Desconocida'). Derived by hand from the fixture
- * contract, not from the implementation. */
+ * of getState()/model output): each row is the rendered six-column
+ * #kisqali-patients-table row [id, last-cycle presentation, initial dose,
+ * final dose, explicit patient-level changes, window regimen mean] exactly
+ * as the UI formats it ('X mg' / 'Desconocida'). Derived by hand from the
+ * fixture contract, not from the implementation. The technical
+ * observed/evaluable counts are not displayed here; they live in the XLSX. */
 const EXPECTED_KISQALI_PATIENT_ROWS = {
     'mensual|2026-06': [
-        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg'],
-        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '1', '1', '1', '400 mg'],
-        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
+        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg'],
+        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '1', '400 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg']
     ],
     'trimestral|2026-Q2': [
-        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '1', '3', '3', '200 mg'],
-        ['KIS-004', '200 mg - 21', '400 mg', '400 mg', '1', '1', '1', '400 mg'],
-        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
-        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
+        ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '1', '200 mg'],
+        ['KIS-004', '200 mg - 21', '400 mg', '400 mg', '1', '400 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '500 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg']
     ],
     'anual|2026': [
-        ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '6', '6', '333.33 mg'],
-        ['KIS-004', '200 mg - 21', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
-        ['KIS-005', '200 mg - 21', '600 mg', '600 mg', '0', '2', '2', '600 mg'],
-        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
-        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
+        ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '333.33 mg'],
+        ['KIS-004', '200 mg - 21', '600 mg', '400 mg', '1', '500 mg'],
+        ['KIS-005', '200 mg - 21', '600 mg', '600 mg', '0', '600 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '500 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg']
     ],
     'historico|historico': [
-        ['KIS-001', '200 mg - 63', '400 mg', '400 mg', '0', '6', '6', '400 mg'],
-        ['KIS-002', '200 mg - 21', '600 mg', '400 mg', '1', '3', '3', '533.33 mg'],
-        ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '6', '6', '333.33 mg'],
-        ['KIS-004', '200 mg - 21', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
-        ['KIS-005', '200 mg - 21', '600 mg', '600 mg', '0', '2', '2', '600 mg'],
-        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
-        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
+        ['KIS-001', '200 mg - 63', '400 mg', '400 mg', '0', '400 mg'],
+        ['KIS-002', '200 mg - 21', '600 mg', '400 mg', '1', '533.33 mg'],
+        ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '333.33 mg'],
+        ['KIS-004', '200 mg - 21', '600 mg', '400 mg', '1', '500 mg'],
+        ['KIS-005', '200 mg - 21', '600 mg', '600 mg', '0', '600 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '500 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '200 mg']
     ]
 };
 
-/* Default Cosentyx expectations (#576 + #593 six categories).
+/* Cosentyx reachability expectations (#576 + #593 six categories).
  *
  * Hand-derived from the explicit synthetic Cosentyx witness list (never from
  * computeReport/listQuarters/DOM):
@@ -201,25 +211,70 @@ async function readDomKpis(page) {
             .map(node => [node.dataset.informesKpi, node.querySelector('.informes-kpi-value').textContent.trim()])));
 }
 
+/* T2 #595 executive composition readers: the same eight hand-derived KPI
+ * values, read from their composed locations (two hero cards, closing
+ * bars, secondary metric) — never recomputed. */
 async function readKisqaliDomKpis(page) {
-    return page.evaluate(() => Object.fromEntries(
-        [...document.querySelectorAll('#kisqali-kpis [data-kisqali-kpi]')]
-            .map(node => [node.dataset.kisqaliKpi, node.querySelector('.informes-kpi-value').textContent.trim()])));
+    return page.evaluate(() => {
+        const heroes = Object.fromEntries(
+            [...document.querySelectorAll('#kisqali-kpis [data-kisqali-kpi]')]
+                .map(node => [node.dataset.kisqaliKpi, node.querySelector('.informes-kpi-value').textContent.trim()]));
+        const bars = Object.fromEntries(
+            [...document.querySelectorAll('#kisqali-closing-bars [data-kisqali-bar-value]')]
+                .map(node => [node.dataset.kisqaliBarValue, node.textContent.trim()]));
+        const secondary = Object.fromEntries(
+            [...document.querySelectorAll('#kisqali-secondary [data-kisqali-kpi]')]
+                .map(node => [node.dataset.kisqaliKpi, node.textContent.trim()]));
+        return {
+            patients: heroes.patients,
+            closing_200: bars.dose_200,
+            closing_400: bars.dose_400,
+            closing_600: bars.dose_600,
+            closing_otra: bars.otra_desconocida === undefined ? '0' : bars.otra_desconocida,
+            cohort_mean: heroes.cohort_mean,
+            patients_with_change: secondary.patients_with_change,
+            coverage: secondary.coverage
+        };
+    });
 }
 
-/* The RENDERED patient-table cells, read from the DOM like a user sees them
- * (first 8 cells of each patient row; the 9th is the 'Ver ciclos' action). */
+/* Closing bars in DOM order with their numeric values, fill widths and
+ * visibility — order must be 600 → 400 → 200. */
+async function readKisqaliBars(page) {
+    return page.evaluate(() => [...document.querySelectorAll('#kisqali-closing-bars [data-kisqali-bar]')]
+        .map(node => ({
+            key: node.dataset.kisqaliBar,
+            value: node.querySelector('[data-kisqali-bar-value]').textContent.trim(),
+            width: node.querySelector('.kisqali-bar-fill').style.width,
+            label: node.querySelector('.kisqali-bar-label').textContent.trim(),
+            visible: node.offsetParent !== null
+        })));
+}
+
+/* The RENDERED six-column patient-table cells, read from the DOM like a
+ * user sees them: [id (dedicated span beside the in-cell toggle),
+ * last-cycle presentation, initial dose, final dose, explicit changes,
+ * window regimen mean]. */
 async function readKisqaliPatientRows(page) {
     return page.evaluate(() => [...document.querySelectorAll('#kisqali-patients-table tbody tr[data-kisqali-patient]')]
-        .map(row => [...row.querySelectorAll('td')].slice(0, 8).map(cell => cell.textContent.trim())));
+        .map(row => {
+            const cells = [...row.querySelectorAll('td')];
+            const id = cells[0].querySelector('[data-kisqali-patient-id]').textContent.trim();
+            return [id, ...cells.slice(1, 6).map(cell => cell.textContent.trim())];
+        }));
 }
 
-/* Visible cell ('400 mg') → workbook cell (400) per Pacientes column. */
-function visiblePatientRowToSheetRow(cells) {
+/* Visible six-column cell → workbook Pacientes subset (the sheet keeps all
+ * eight technical columns byte-identical; the comparison covers the six
+ * columns the executive table shows). */
+function visiblePatientRowToSheetSubset(cells) {
     const doseCell = cell => cell === 'Desconocida' ? 'Desconocida' : Number(cell.replace(/ mg$/, ''));
     const meanCell = cell => cell === 'Desconocida' ? 'Desconocida' : cell.replace(/ mg$/, '');
     return [cells[0], cells[1], doseCell(cells[2]), doseCell(cells[3]),
-        Number(cells[4]), Number(cells[5]), Number(cells[6]), meanCell(cells[7])];
+        Number(cells[4]), meanCell(cells[5])];
+}
+function sheetRowToVisibleSubset(row) {
+    return [row[0], row[1], row[2], row[3], row[4], row[7]];
 }
 
 async function assertKisqaliWindow(page, mode, period) {
@@ -229,6 +284,37 @@ async function assertKisqaliWindow(page, mode, period) {
     assert.deepEqual(domKpis, expected.dom, `${key} Kisqali KPI values must match the hand-derived fixture expectation`);
     const windowLabel = await page.locator('#kisqali-window-label').innerText();
     assert.equal(windowLabel, expected.window);
+    /* Executive composition: exactly two hero KPIs, protagonists. */
+    assert.equal(await page.evaluate(() => document.querySelectorAll('#kisqali-kpis [data-kisqali-kpi]').length), 2,
+        `${key} shows exactly the two hero KPIs`);
+    assert.match(await page.locator('#kisqali-regimen-note').innerText(),
+        /ponderada por ciclos evaluables.*no representa consumo, dispensación ni adherencia/s);
+    /* Closing bars: DOM order 600 → 400 → 200, values exactly the closing
+     * buckets, widths congruent with the hand-derived counts (scale
+     * 0..max), buckets summing to patient_count, otra/desconocida omitted
+     * from the chart on this fixture (kept in model + XLSX). */
+    const bars = await readKisqaliBars(page);
+    assert.deepEqual(bars.map(bar => bar.key), ['dose_600', 'dose_400', 'dose_200'],
+        `${key} bars keep the 600 → 400 → 200 order`);
+    const counts = [Number(expected.dom.closing_600), Number(expected.dom.closing_400), Number(expected.dom.closing_200)];
+    const max = Math.max(...counts);
+    assert.deepEqual(bars.map(bar => bar.value),
+        [expected.dom.closing_600, expected.dom.closing_400, expected.dom.closing_200],
+        `${key} bars equal the hand-derived closing bucket counts`);
+    assert.deepEqual(bars.map(bar => bar.width),
+        counts.map(count => `${Math.round((count / max) * 100)}%`),
+        `${key} bar widths are congruent with the closing counts`);
+    for (const bar of bars) assert.ok(bar.visible, `${key} bar ${bar.key} numeric label visible`);
+    assert.equal(counts.reduce((sum, n) => sum + n, 0), Number(expected.dom.patients),
+        `${key} closing buckets sum to patient_count`);
+    assert.equal(await page.evaluate(() => document.querySelector('[data-kisqali-bar="otra_desconocida"]')), null,
+        `${key} otra/desconocida omitted from the chart while 0 (never hidden from model/XLSX)`);
+    assert.match(await page.locator('#kisqali-closing-note').innerText(),
+        new RegExp(`Suma ${expected.dom.patients} pacientes\\. La dosis de cierre no equivale`));
+    /* Detail gate stays expanded across validated window changes. */
+    assert.equal(await page.locator('#kisqali-detail-toggle').getAttribute('aria-expanded'), 'true',
+        `${key} detail gate expanded`);
+    assert.ok(await page.locator('#kisqali-detail-panel').isVisible(), `${key} detail panel visible`);
     const state = await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState());
     assert.equal(state.report, 'kisqali');
     assert.equal(state.kisqali.mode, mode);
@@ -238,14 +324,46 @@ async function assertKisqaliWindow(page, mode, period) {
     assert.equal(state.kisqali.coverage.numerator + '/' + state.kisqali.coverage.denominator
         + ' · ' + state.kisqali.coverage.percentage_display, expected.dom.coverage);
     assert.equal(state.kisqali.patients_with_change_count, Number(expected.dom.patients_with_change));
-    /* Rendered patient-table cells must match the hand-derived expectation
-     * for this window (not just the state object). */
+    assert.equal(state.kisqali.closing_distribution.otra_desconocida, 0,
+        'otra/desconocida stays in the computed model even when omitted from the chart');
+    /* Rendered six-column patient-table cells must match the hand-derived
+     * expectation for this window (not just the state object). */
     const expectedPatients = EXPECTED_KISQALI_PATIENT_ROWS[key];
     if (expectedPatients) {
         assert.deepEqual(await readKisqaliPatientRows(page), expectedPatients,
-            `${key} rendered patient-table cells must match the hand-derived fixture expectation`);
+            `${key} rendered six-column cells must match the hand-derived fixture expectation`);
+        const headerCells = await page.locator('#kisqali-patients-table > thead th').evaluateAll(cells => cells.map(cell => cell.textContent.trim()));
+        assert.deepEqual(headerCells, ['Paciente (sintético)', 'Presentación (último ciclo observado)',
+            'Dosis inicial (ventana)', 'Dosis final (ventana)', 'Cambios explícitos', 'Dosis media (mg)'],
+            `${key} summary table has exactly six columns`);
     }
     return { domKpis, state };
+}
+
+/* #594 neutral landing: nothing selected, nothing computed, no enabled
+ * download, stable {report:null} signal. */
+async function assertNeutral(page) {
+    assert.match(await page.locator('#informes-title').innerText(), /Reportes farmacéuticos/);
+    assert.match(await page.locator('#informes-synthetic-notice').innerText(), /Datos sintéticos/);
+    assert.equal(await page.locator('#informes-drug-select').inputValue(), '', 'no drug auto-selected');
+    assert.equal(await page.locator('#informes-report-select').inputValue(), '', 'no type selected');
+    assert.ok(await page.locator('#informes-view-report').isDisabled(), 'Ver reporte disabled until the selection is complete');
+    assert.ok(await page.locator('#informes-download-xlsx').isDisabled(), 'no enabled Cosentyx XLSX while neutral');
+    assert.ok(await page.locator('#kisqali-download-xlsx').isDisabled(), 'no enabled Kisqali XLSX while neutral');
+    assert.ok(await page.locator('#informes-cosentyx-panel').isHidden(), 'no Cosentyx report rendered while neutral');
+    assert.ok(await page.locator('#informes-kisqali-panel').isHidden(), 'no Kisqali report rendered while neutral');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'neutral getState() must not leak stale currentReport data');
+}
+
+async function assertNoPageOverflow(page, label) {
+    const measured = await page.evaluate(() => ({
+        scrollWidth: document.body.scrollWidth,
+        clientWidth: document.documentElement.clientWidth
+    }));
+    assert.ok(measured.scrollWidth <= measured.clientWidth,
+        `${label}: no page-level horizontal overflow (scrollWidth=${measured.scrollWidth} clientWidth=${measured.clientWidth})`);
+    return measured;
 }
 
 try {
@@ -257,38 +375,105 @@ try {
     assert.ok(await page.locator('#kpi-section').isVisible(), 'population analysis visible by default');
     assert.ok(!(await page.locator('#informes-section').isVisible()), 'Informes hidden by default');
 
-    /* Enter Informes through the supported switcher; Cosentyx remains default. */
+    /* Enter Informes through the supported switcher: neutral landing. */
     await page.locator('#informes-view-btn').click();
     await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
     assert.ok(await page.locator('#informes-section').isVisible(), 'Informes visible after supported switch');
     assert.ok(!(await page.locator('#kpi-section').isVisible()), 'population analysis hidden inside Informes');
-    assert.match(await page.locator('#informes-title').innerText(), /Informe trimestral Cosentyx/);
-    assert.ok(await page.locator('#informes-cosentyx-panel').isVisible(), 'Cosentyx panel visible by default');
-    assert.ok(!(await page.locator('#informes-kisqali-panel').isVisible()), 'Kisqali panel hidden by default');
-    const reportValue = await page.locator('#informes-report-select').inputValue();
-    assert.equal(reportValue, 'cosentyx', 'default report is Cosentyx');
+    await assertNeutral(page);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-view-btn', 'keyboard focus preserved on the view switcher');
+    assert.equal(await page.locator('#informes-view-btn').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#population-view-btn').getAttribute('aria-pressed'), 'false');
+
+    /* Cosentyx remains reachable through the confirm gate (no longer a default). */
+    await page.locator('#informes-drug-select').selectOption('cosentyx');
+    const cosentyxTypeOptions = await page.locator('#informes-report-select option').evaluateAll(options => options.map(option => [option.value, option.textContent]));
+    assert.deepEqual(cosentyxTypeOptions, [['', 'Seleccionar tipo…'], ['cosentyx', 'Trimestral de movimientos clínicos']],
+        'Cosentyx exposes exactly its single supported type');
+    await page.locator('#informes-report-select').selectOption('cosentyx');
     const quarters = await page.locator('#informes-quarter-select option').evaluateAll(options => options.map(option => option.value));
     assert.deepEqual(quarters, ['2026-Q1', '2026-Q2', '2026-Q3', '2026-Q4'], 'Cosentyx quarter selector with the discontinuation-only quarter');
+    assert.equal(await page.locator('#informes-quarter-select').inputValue(), '2026-Q4',
+        'period defaults to the latest fixture-eligible value, never the wall clock');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'no Cosentyx compute before Ver reporte');
+    await page.locator('#informes-view-report').click();
+    assert.match(await page.locator('#informes-title').innerText(), /Informe trimestral Cosentyx/);
+    assert.ok(await page.locator('#informes-cosentyx-panel').isVisible(), 'Cosentyx panel visible after confirmation');
+    assert.ok(!(await page.locator('#informes-kisqali-panel').isVisible()), 'Kisqali panel hidden inside Cosentyx report');
 
-    /* Default Cosentyx still computes its accepted Q1 view (six categories). */
-    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom,
-        'default Cosentyx report still works unchanged');
+    /* Cosentyx accepted views, reached via selection + period refresh. */
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom,
+        'confirmed Cosentyx report computes the default-latest quarter');
+    await page.locator('#informes-quarter-select').selectOption('2026-Q1');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom);
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
     /* The discontinuation-only quarter is selectable with its computed row. */
     await page.locator('#informes-quarter-select').selectOption('2026-Q4');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom);
-    await page.locator('#informes-quarter-select').selectOption('2026-Q1');
 
-    /* Select Kisqali through the new report selector. */
+    /* Fármaco switch to Kisqali: Cosentyx result cleared, fresh confirm required. */
+    await page.locator('#informes-drug-select').selectOption('kisqali');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'switching Fármaco clears the Cosentyx result immediately');
+    assert.ok(await page.locator('#informes-cosentyx-panel').isHidden(), 'Cosentyx panel hidden after the Fármaco switch');
+    assert.ok(await page.locator('#informes-download-xlsx').isDisabled(), 'stale Cosentyx XLSX cleared');
+    assert.ok(await page.locator('#informes-view-report').isDisabled(), 'fresh Ver reporte required after a Fármaco change');
+    const kisqaliTypeOptions = await page.locator('#informes-report-select option').evaluateAll(options => options.map(option => [option.value, option.textContent]));
+    assert.deepEqual(kisqaliTypeOptions, [['', 'Seleccionar tipo…'], ['kisqali', 'Utilización y dosis']],
+        'Kisqali exposes exactly its single supported type');
+
+    /* Select Kisqali through Fármaco → Tipo, then confirm. */
     await page.locator('#informes-report-select').selectOption('kisqali');
+    await page.waitForFunction(() => !document.getElementById('informes-kisqali-controls').hidden);
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'no Kisqali compute before Ver reporte');
+    await page.locator('#informes-view-report').click();
     await page.waitForFunction(() => !document.getElementById('informes-kisqali-panel').hidden);
     assert.match(await page.locator('#informes-title').innerText(), /Informe de utilización y dosis — Kisqali/);
     assert.ok(await page.locator('#informes-kisqali-panel').isVisible(), 'Kisqali panel visible');
     assert.ok(!(await page.locator('#informes-cosentyx-panel').isVisible()), 'Cosentyx panel hidden inside Kisqali report');
-    const provenance = await page.locator('#kisqali-synthetic-notice').innerText();
-    assert.match(provenance, /Datos sintéticos específicos del informe/);
-    assert.match(provenance, /Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados\./);
+    /* P2-VISUAL-01 Gate 4 correction: exactly ONE visible amber synthetic
+     * banner in the confirmed Kisqali report, reusing the shared global
+     * notice. The duplicate in-panel banner (and its unused provenance span)
+     * is removed from the DOM, never merely hidden. The synthetic truth and
+     * the non-consumption/non-dispensing/non-adherence wording stay in
+     * visible copy (global notice + regimen note + window line). */
+    assert.equal(await page.locator('#kisqali-synthetic-notice').count(), 0,
+        'duplicate in-panel Kisqali synthetic banner removed from the DOM');
+    assert.equal(await page.locator('#kisqali-provenance-text').count(), 0,
+        'unused Kisqali provenance span removed with its banner');
+    const visibleNotices = await page.evaluate(() =>
+        [...document.querySelectorAll('.informes-notice')]
+            .filter(node => node.getClientRects().length > 0 && getComputedStyle(node).display !== 'none'
+                && node.getAttribute('aria-hidden') !== 'true')
+            .map(node => node.id));
+    assert.deepEqual(visibleNotices, ['informes-synthetic-notice'],
+        'exactly one visible synthetic banner in the confirmed Kisqali report, and it is the shared global notice');
+    assert.match(await page.locator('#informes-synthetic-notice').innerText(),
+        /Datos sintéticos específicos del informe/);
+    assert.match(await page.locator('#kisqali-regimen-note').innerText(),
+        /no representa consumo, dispensación ni adherencia/);
+    assert.match(await page.locator('#kisqali-window-label').innerText(), /Mensual — 2026-06/,
+        'Kisqali period line preserved');
+
+    /* T2 #595 «Ver detalle» collapsed by default: a real keyboard-operable
+     * button with aria-expanded + aria-controls governing the panel. */
+    const detailToggle = page.locator('#kisqali-detail-toggle');
+    assert.equal(await detailToggle.getAttribute('aria-expanded'), 'false', 'detail collapsed by default');
+    assert.equal(await detailToggle.getAttribute('aria-controls'), 'kisqali-detail-panel');
+    assert.equal(await detailToggle.innerText(), 'Ver detalle');
+    assert.ok(await page.locator('#kisqali-detail-panel').isHidden(), 'detail panel hidden by default');
+    /* Keyboard expansion with correct focus behavior (focus retained). */
+    await detailToggle.focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !document.getElementById('kisqali-detail-panel').hidden);
+    assert.equal(await detailToggle.getAttribute('aria-expanded'), 'true');
+    assert.equal(await detailToggle.innerText(), 'Ocultar detalle');
+    assert.ok(await page.locator('#kisqali-detail-panel').isVisible(), 'detail panel visible after keyboard expansion');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'kisqali-detail-toggle',
+        'keyboard focus retained on the detail gate');
 
     /* Mensual (default mode, latest fixture month). */
     assert.deepEqual(await assertKisqaliWindow(page, 'mensual', '2026-06').then(r => r.domKpis),
@@ -306,6 +491,11 @@ try {
     /* Anual (defaults to latest fixture year). */
     await page.locator('#kisqali-mode-select').selectOption('anual');
     const anualState = await assertKisqaliWindow(page, 'anual', '2026');
+    /* Event count and patient count are never interchangeable: Anual 2026
+     * carries 4 explicit evaluable change events across 3 patients. */
+    assert.equal(anualState.state.kisqali.change_count, 4, 'Anual 2026 event count stays 4');
+    assert.equal(anualState.state.kisqali.patients_with_change_count, 3,
+        'secondary metric shows the 3 PATIENTS with change, not the 4 events');
     await page.locator('#kisqali-period-select').selectOption('2025');
     await assertKisqaliWindow(page, 'anual', '2025');
     await page.locator('#kisqali-period-select').selectOption('2026');
@@ -333,9 +523,18 @@ try {
     assert.equal(byId('KIS-007').mean_display, '200');
 
     /* Ver ciclos: raw traceability for coherent explicit boundary changes (no
-     * unknown/mid-cycle/300 rows on the normalized demo surface). */
-    await page.locator('[data-kisqali-ciclos-toggle="KIS-003"]').click();
+     * unknown/mid-cycle/300 rows on the normalized demo surface). The
+     * in-cell toggle is keyboard-operable with aria-expanded/aria-controls
+     * and retains focus. */
+    const kis003Toggle = page.locator('[data-kisqali-ciclos-toggle="KIS-003"]');
+    assert.equal(await kis003Toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(await kis003Toggle.getAttribute('aria-controls'), 'kisqali-ciclos-KIS-003');
+    await kis003Toggle.focus();
+    await page.keyboard.press('Enter');
     await page.waitForFunction(() => !document.getElementById('kisqali-ciclos-KIS-003').hidden);
+    assert.equal(await kis003Toggle.getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.kisqaliCiclosToggle), 'KIS-003',
+        'keyboard focus retained on the in-cell Ver ciclos toggle');
     const kis003Ciclos = await page.locator('#kisqali-ciclos-KIS-003').innerText();
     for (const month of ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06']) {
         assert.ok(kis003Ciclos.includes(month), `KIS-003 ciclos include ${month}`);
@@ -446,23 +645,78 @@ try {
     assert.equal(kis004Row[7], 'Sí');
     const kis006Row = ciclos.find(row => row[0] === 'KIS-006' && row[1] === '2026-06');
     assert.deepEqual(kis006Row.slice(0, 7), ['KIS-006', '2026-06', '2026-06-01', 400, 'explicita', '200 mg - 63', '600 → 400 mg (efectivo 2026-06-01)']);
-    /* The workbook Pacientes sheet equals the VISIBLE rendered patient-table
-     * cells of the same window (no second calculation, no fresh model call). */
-    assert.deepEqual(pacientes.slice(1), anualVisiblePatients.map(visiblePatientRowToSheetRow),
-        'downloaded Pacientes sheet must equal the visible patient rows');
+    /* The workbook Pacientes sheet equals the VISIBLE rendered six-column
+     * patient-table cells of the same window on the shared columns (the
+     * sheet keeps all eight technical columns byte-identical; no second
+     * calculation, no fresh model call). */
+    assert.deepEqual(pacientes.slice(1).map(sheetRowToVisibleSubset),
+        anualVisiblePatients.map(visiblePatientRowToSheetSubset),
+        'downloaded Pacientes sheet must equal the visible six-column rows on the shared columns');
 
-    /* Switch back to Cosentyx through the report selector; accepted journey. */
+    /* Kisqali viewports on the confirmed Anual 2026 view with detail
+     * expanded (worst case): the six-column table scrolls INSIDE its
+     * container only — never page-wide horizontal scroll. */
+    for (const width of [1440, 1024, 768]) {
+        await page.setViewportSize({ width, height: 900 });
+        const measured = await assertNoPageOverflow(page, `confirmed Kisqali Anual 2026 @${width}`);
+        console.log(`kisqali viewport ${width}: scrollWidth=${measured.scrollWidth} clientWidth=${measured.clientWidth}`);
+    }
+    await page.setViewportSize({ width: 375, height: 900 });
+    const kisqali375 = await assertNoPageOverflow(page, 'confirmed Kisqali Anual 2026 @375');
+    console.log(`kisqali viewport 375: scrollWidth=${kisqali375.scrollWidth} clientWidth=${kisqali375.clientWidth}`);
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    /* A fresh «Ver reporte» recomputes the same window and re-collapses
+     * the detail gate to its default. */
+    await page.locator('#informes-view-report').click();
+    await page.waitForFunction(() => document.getElementById('kisqali-detail-toggle').getAttribute('aria-expanded') === 'false');
+    assert.ok(await page.locator('#kisqali-detail-panel').isHidden(), 'fresh confirm re-collapses the detail gate');
+    assert.deepEqual(await readKisqaliDomKpis(page), EXPECTED_KISQALI['anual|2026'].dom,
+        'fresh confirm recomputes the same Anual 2026 window');
+
+    /* Switch back to Cosentyx through Fármaco → Tipo; stale Kisqali cleared,
+     * accepted journey unchanged after the Kisqali visit. */
+    await page.locator('#informes-drug-select').selectOption('cosentyx');
+    assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
+        'returning to Cosentyx clears the Kisqali result');
+    assert.ok(await page.locator('#informes-kisqali-panel').isHidden());
+    assert.ok(await page.locator('#kisqali-download-xlsx').isDisabled(), 'stale Kisqali XLSX cleared');
     await page.locator('#informes-report-select').selectOption('cosentyx');
+    await page.locator('#informes-view-report').click();
     await page.waitForFunction(() => !document.getElementById('informes-cosentyx-panel').hidden);
     assert.ok(await page.locator('#informes-cosentyx-panel').isVisible());
     assert.ok(!(await page.locator('#informes-kisqali-panel').isVisible()));
-    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom,
-        'Cosentyx report unchanged after Kisqali visit');
-    await page.locator('#informes-quarter-select').selectOption('2026-Q2');
-    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
-    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom,
-        'discontinuation-only quarter unchanged after Kisqali visit');
+        'Cosentyx report unchanged after Kisqali visit (default-latest quarter)');
+    await page.locator('#informes-quarter-select').selectOption('2026-Q1');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom);
+    await page.locator('#informes-quarter-select').selectOption('2026-Q2');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom,
+        'discontinuation-free Q2 unchanged after Kisqali visit');
+
+    /* View switching preserves the confirmed report + selection + focus. */
+    await page.locator('#population-view-btn').click();
+    await page.waitForFunction(() => !document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    await page.locator('#informes-view-btn').click();
+    await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
+    assert.equal(await page.locator('#informes-drug-select').inputValue(), 'cosentyx');
+    assert.equal(await page.locator('#informes-report-select').inputValue(), 'cosentyx');
+    assert.equal(await page.locator('#informes-quarter-select').inputValue(), '2026-Q2');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-view-btn');
+    assert.equal(await page.locator('#informes-view-btn').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('#population-view-btn').getAttribute('aria-pressed'), 'false');
+
+    /* No page-level horizontal overflow on the supported viewports. */
+    for (const width of [1440, 1024, 768]) {
+        await page.setViewportSize({ width, height: 900 });
+        const measured = await assertNoPageOverflow(page, `confirmed Cosentyx Q2 @${width}`);
+        console.log(`viewport ${width}: scrollWidth=${measured.scrollWidth} clientWidth=${measured.clientWidth}`);
+    }
+    await page.setViewportSize({ width: 375, height: 900 });
+    const measured375 = await assertNoPageOverflow(page, 'confirmed Cosentyx Q2 @375');
+    console.log(`viewport 375: scrollWidth=${measured375.scrollWidth} clientWidth=${measured375.clientWidth}`);
+    await page.setViewportSize({ width: 1440, height: 900 });
 
     /* Return to the population analysis through the supported switcher. */
     await page.locator('#population-view-btn').click();
@@ -504,7 +758,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_kisqali_informe_browser_check: PASS');
-    console.log('QA Chromium: Cosentyx default preserved; Kisqali selectable; Mensual/Trimestral/Anual/Histórico windows match hand-derived fixture values; Ver ciclos raw traceability (coherent boundary changes, stable doses, presentation independence) OK; real XLSX Resumen+Pacientes+Ciclos match UI model; population CSV filtered export OK; console.error=0 pageerror=0');
+    console.log('QA Chromium: neutral entry OK (no precomputed report, CTA gated, {report:null}); Cosentyx reachable via confirm gate (Q1/Q2/Q4 incl. discontinuation-only Q4); Fármaco switch clears stale results; Kisqali executive composition Mensual/Trimestral/Anual/Histórico matches hand-derived fixture values (2 hero KPIs, 600→400→200 bars congruent and summing to patient_count, otra omitted from chart but kept in model/XLSX, patients_with_change≠event count, collapsed Ver detalle gate + six-column table + keyboard Ver ciclos with focus retained); real XLSX Resumen+Pacientes+Ciclos match UI model on shared columns; fresh confirm re-collapses detail; back to Cosentyx unchanged; view-switch preserves confirmed selection; population CSV filtered export OK; Kisqali Anual + Cosentyx Q2 1440/1024/768/375 no page overflow; exactly one visible synthetic banner in the confirmed Kisqali report (shared global notice, duplicate in-panel banner removed from the DOM) with synthetic + non-consumption wording preserved; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

@@ -127,26 +127,33 @@
                 </div>
             </section>
 
-            <!-- Informes (#576/#579): superficie separada del análisis poblacional.
-                 Selector de informes: Informe trimestral Cosentyx (por defecto) e
-                 Informe de utilización y dosis — Kisqali, cada uno desde su fixture
-                 sintético dedicado. -->
+            <!-- Informes (#576/#579, entrada neutral #594): superficie separada
+                 del análisis poblacional. Entrada neutral — ningún informe
+                 seleccionado ni calculado hasta confirmar con «Ver reporte».
+                 Selección progresiva Fármaco → Tipo de reporte → Período →
+                 «Ver reporte»; cada fármaco expone su único tipo soportado y
+                 los periodos se enumeran desde los modelos vivos. -->
             <section id="informes-section" class="dashboard-card informes-section" aria-labelledby="informes-title">
                 <div class="informes-header">
                     <div>
-                        <h2 class="card-title" id="informes-title"><i class="fas fa-file-excel" aria-hidden="true"></i> <span id="informes-title-text">Informe trimestral Cosentyx</span></h2>
-                        <p class="informes-subtitle" id="informes-subtitle">Informe de demostración calculado exclusivamente desde un fixture sintético dedicado. La proyección raw actual no contiene hechos de dispensación; este informe no es una capacidad de la fuente real.</p>
+                        <h2 class="card-title" id="informes-title"><i class="fas fa-file-excel" aria-hidden="true"></i> <span id="informes-title-text">Reportes farmacéuticos</span></h2>
+                        <p class="informes-subtitle" id="informes-subtitle">Entrada neutral: seleccione fármaco, tipo de reporte y período y pulse «Ver reporte». Informes de demostración calculados exclusivamente desde fixtures sintéticos dedicados.</p>
                     </div>
                     <div class="informes-controls">
-                        <label for="informes-report-select" class="informes-quarter-label">Informe</label>
-                        <select id="informes-report-select" class="informes-quarter-select" aria-label="Seleccionar informe">
-                            <option value="cosentyx" selected>Informe trimestral Cosentyx</option>
-                            <option value="kisqali">Informe de utilización y dosis — Kisqali</option>
+                        <label for="informes-drug-select" class="informes-quarter-label">Fármaco</label>
+                        <select id="informes-drug-select" class="informes-quarter-select" aria-label="Seleccionar fármaco">
+                            <option value="" selected>Seleccionar fármaco…</option>
+                            <option value="cosentyx">Cosentyx</option>
+                            <option value="kisqali">Kisqali</option>
                         </select>
-                        <span id="informes-cosentyx-controls" class="informes-report-controls">
+                        <label for="informes-report-select" class="informes-quarter-label">Tipo de reporte</label>
+                        <select id="informes-report-select" class="informes-quarter-select" aria-label="Seleccionar tipo de reporte" disabled>
+                            <option value="" selected>Seleccionar tipo…</option>
+                        </select>
+                        <span id="informes-cosentyx-controls" class="informes-report-controls" hidden>
                             <label for="informes-quarter-select" class="informes-quarter-label">Trimestre</label>
                             <select id="informes-quarter-select" class="informes-quarter-select"></select>
-                            <button type="button" class="btn btn-primary" id="informes-download-xlsx"><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                            <button type="button" class="btn btn-primary" id="informes-download-xlsx" disabled><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
                         </span>
                         <span id="informes-kisqali-controls" class="informes-report-controls" hidden>
                             <label for="kisqali-mode-select" class="informes-quarter-label">Ventana</label>
@@ -158,19 +165,30 @@
                             </select>
                             <label for="kisqali-period-select" class="informes-quarter-label" id="kisqali-period-label">Periodo</label>
                             <select id="kisqali-period-select" class="informes-quarter-select" aria-label="Periodo seleccionado"></select>
-                            <button type="button" class="btn btn-primary" id="kisqali-download-xlsx"><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
+                            <button type="button" class="btn btn-primary" id="kisqali-download-xlsx" disabled><i class="fas fa-download" aria-hidden="true"></i> Descargar Excel</button>
                         </span>
+                        <button type="button" class="btn btn-primary" id="informes-view-report" disabled>Ver reporte</button>
                     </div>
                 </div>
                 <p class="informes-notice" id="informes-synthetic-notice" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Datos sintéticos específicos del informe</p>
-                <!-- Informe trimestral Cosentyx (#576): panel por defecto. -->
-                <div id="informes-cosentyx-panel" class="informes-report-panel">
-                    <div class="informes-kpi-grid" id="informes-kpis"></div>
-                    <div class="table-responsive-wrapper">
-                        <table id="informes-detail-table" class="data-table stats-data-table">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
+                <!-- Informe trimestral Cosentyx (#576): panel tras confirmar.
+                     T3 #596 composición ejecutiva: seis categorías desde el
+                     modelo + único enfatizado con nota explicativa, línea de
+                     trimestre y detalle progresivo colapsado de seis columnas
+                     exactas. Re-proyección visual del mismo informe calculado;
+                     sin semántica nueva. -->
+                <div id="informes-cosentyx-panel" class="informes-report-panel" hidden>
+                    <p class="informes-period-line">Trimestre: <strong id="informes-period"></strong></p>
+                    <div class="informes-kpi-grid" id="informes-kpis" aria-live="polite"></div>
+                    <button type="button" class="btn btn-outline cosentyx-detail-toggle" id="informes-detail-toggle" aria-expanded="false" aria-controls="informes-detail-panel">Ver detalle</button>
+                    <div id="informes-detail-panel" hidden>
+                        <div class="table-responsive-wrapper cosentyx-detail-scroll">
+                            <table id="informes-detail-table" class="data-table stats-data-table">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <p class="informes-detail-scroll-hint" id="informes-detail-scroll-hint">Desplaza la tabla horizontalmente para ver Estado actual y Motivo registrado →</p>
                     </div>
                 </div>
                 <!-- Informe de utilización y dosis — Kisqali (#579): panel de reporte.
@@ -178,14 +196,27 @@
                      registrados en el fixture sintético; no implica consumo,
                      adherencia ni dispensación real. -->
                 <div id="informes-kisqali-panel" class="informes-report-panel" hidden>
-                    <p class="informes-notice" role="note" id="kisqali-synthetic-notice"><i class="fas fa-flask" aria-hidden="true"></i> <span id="kisqali-provenance-text">Datos sintéticos específicos del informe. Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados. No implica consumo, adherencia ni dispensación real.</span></p>
                     <p class="informes-period-line">Ventana: <strong id="kisqali-window-label"></strong></p>
-                    <div class="informes-kpi-grid" id="kisqali-kpis"></div>
-                    <div class="table-responsive-wrapper">
-                        <table id="kisqali-patients-table" class="data-table stats-data-table">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
+                    <!-- T2 #595 composición ejecutiva: dos KPI héroes + barras
+                         de dosis de cierre + métrica secundaria + detalle
+                         progresivo colapsado. Re-proyección visual del mismo
+                         informe calculado; sin semántica nueva. -->
+                    <div class="kisqali-hero-grid" id="kisqali-kpis" aria-live="polite"></div>
+                    <p class="kisqali-regimen-note" id="kisqali-regimen-note">Estadística de dosis de régimen ponderada por ciclos evaluables (unidad: mg). Calculada exclusivamente a partir de dosis explícitamente registradas; no representa consumo, dispensación ni adherencia.</p>
+                    <section class="kisqali-closing" aria-labelledby="kisqali-closing-title">
+                        <h3 class="kisqali-closing-title" id="kisqali-closing-title">Distribución de dosis de cierre</h3>
+                        <div class="kisqali-bars" id="kisqali-closing-bars"></div>
+                        <p class="kisqali-closing-note" id="kisqali-closing-note"></p>
+                    </section>
+                    <p class="kisqali-secondary" id="kisqali-secondary"></p>
+                    <button type="button" class="btn btn-outline kisqali-detail-toggle" id="kisqali-detail-toggle" aria-expanded="false" aria-controls="kisqali-detail-panel">Ver detalle</button>
+                    <div id="kisqali-detail-panel" hidden>
+                        <div class="table-responsive-wrapper kisqali-detail-scroll">
+                            <table id="kisqali-patients-table" class="data-table stats-data-table">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </section>

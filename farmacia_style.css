@@ -4172,9 +4172,13 @@
     margin-top: 4px;
 }
 
+/* T3 #596: la rejilla de KPIs poblacionales recompone como máximo 3/2/1
+ * columnas según el ancho (3+3 / 2+2+2 / 1): etiquetas legibles sin
+ * desplazamiento horizontal de página. Solo rejilla; números, filtros, CSV
+ * y controlador de población intactos. */
 .stats-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -4817,13 +4821,13 @@
 /* Responsive */
 @media (max-width: 1400px) {
     .stats-kpi-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 1100px) {
     .stats-kpi-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .stats-charts-grid {
@@ -4883,7 +4887,7 @@
     }
 
     .stats-kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .stats-kpi-value {
@@ -4931,7 +4935,7 @@
 
 @media (max-width: 600px) {
     .stats-kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .stats-hero-summary {
@@ -4972,7 +4976,7 @@
 
 @media (max-width: 400px) {
     .stats-kpi-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .stats-kpi-card {
@@ -6422,6 +6426,30 @@ main.farmacia-informes-mode .stats-population-only {
     display: none !important;
 }
 
+/* Informes — entrada neutral (#594): las tablas anchas del reporte
+ * (min-width 900px) y la rejilla de KPIs desplazan/refluyen dentro de la
+ * sección sin forzar desbordamiento horizontal de página. */
+main.farmacia-informes-mode {
+    min-width: 0;
+}
+
+main.farmacia-informes-mode #informes-section {
+    min-width: 0;
+}
+
+/* En columna (viewport estrecho) el main se dimensiona por contenido: se
+ * le da ancho definido para que la sección y sus tablas/KPIs encogan al
+ * viewport en lugar de ensanchar la página. */
+@media (max-width: 1024px) {
+    main.farmacia-informes-mode {
+        width: 100%;
+    }
+
+    main.farmacia-informes-mode #informes-section {
+        width: 100%;
+    }
+}
+
 .informes-section {
     display: none;
     margin-top: 18px;
@@ -6532,6 +6560,13 @@ main.farmacia-informes-mode .informes-section {
     display: none !important;
 }
 
+/* Informes — entrada neutral (#594): el CTA solo actúa con la selección
+ * progresiva completa; deshabilitado nunca debe parecer invocable. */
+#informes-view-report:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .informes-period-line {
     margin: 12px 0 0;
     color: #334155;
@@ -6558,4 +6593,310 @@ main.farmacia-informes-mode .informes-section {
 
 .kisqali-ciclos-toggle {
     white-space: nowrap;
+}
+
+/* T2 #595 — Kisqali composición ejecutiva (page-local, sin rediseño
+ * global): dos KPI héroes en azul profundo/blanco, barras horizontales
+ * de dosis de cierre en DOM/CSS nativo, métrica secundaria contenida y
+ * detalle progresivo colapsado. La tabla de seis columnas desplaza
+ * DENTRO de su contenedor, nunca la página. */
+.kisqali-hero-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0 4px;
+}
+
+.informes-kpi.kisqali-hero {
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    border-top: 4px solid #17335B;
+    border-radius: 12px;
+    padding: 16px 18px;
+    box-shadow: 0 8px 20px rgba(23, 51, 91, 0.08);
+}
+
+.kisqali-hero .informes-kpi-label {
+    color: #17335B;
+    font-size: 0.78rem;
+}
+
+.kisqali-hero .informes-kpi-value {
+    color: #17335B;
+    font-size: 34px;
+}
+
+.kisqali-hero-note {
+    margin-top: 6px;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.kisqali-regimen-note {
+    margin: 8px 0 0;
+    color: #475569;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    max-width: 78ch;
+}
+
+.kisqali-closing {
+    margin: 14px 0 0;
+    padding: 16px 18px;
+    border: 1px solid #CBD5E1;
+    border-radius: 12px;
+    background: #FFFFFF;
+}
+
+.kisqali-closing-title {
+    margin: 0 0 12px;
+    color: #17335B;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.kisqali-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kisqali-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.kisqali-bar-label {
+    flex: 0 0 170px;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.kisqali-bar-track {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 18px;
+    border-radius: 999px;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    overflow: hidden;
+}
+
+.kisqali-bar-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.kisqali-bar-fill--dose_600 { background: #17335B; }
+.kisqali-bar-fill--dose_400 { background: #1D4ED8; }
+.kisqali-bar-fill--dose_200 { background: #008777; }
+.kisqali-bar-fill--otra_desconocida { background: #94A3B8; }
+
+.kisqali-bar-value {
+    flex: 0 0 44px;
+    text-align: right;
+    color: #0F172A;
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.kisqali-closing-note {
+    margin: 12px 0 0;
+    color: #475569;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.kisqali-secondary {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #F0FDFA;
+    border: 1px solid #CFF5E7;
+    color: #134E4A;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.kisqali-secondary-value {
+    font-weight: 800;
+}
+
+.kisqali-secondary-support {
+    color: #475569;
+}
+
+.kisqali-detail-toggle {
+    margin: 14px 0 0;
+}
+
+.kisqali-detail-toggle:focus-visible,
+.kisqali-ciclos-toggle:focus-visible {
+    outline: 3px solid #1D4ED8;
+    outline-offset: 2px;
+}
+
+#kisqali-detail-panel {
+    margin-top: 12px;
+}
+
+#kisqali-detail-panel[hidden] {
+    display: none !important;
+}
+
+/* La tabla de seis columnas desplaza DENTRO de su contenedor. */
+.table-responsive-wrapper.kisqali-detail-scroll {
+    margin: 0;
+    padding: 0 2px 4px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.table-responsive-wrapper.kisqali-detail-scroll .data-table {
+    min-width: 720px;
+}
+
+.kisqali-patient-cell {
+    white-space: nowrap;
+}
+
+.kisqali-patient-id {
+    font-weight: 800;
+    margin-right: 10px;
+}
+
+@media (max-width: 640px) {
+    .kisqali-hero-grid {
+        grid-template-columns: 1fr;
+    }
+    .kisqali-bar {
+        flex-wrap: wrap;
+        gap: 6px 12px;
+    }
+    .kisqali-bar-label {
+        flex: 1 1 100%;
+    }
+    .kisqali-bar-track {
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 768px) {
+    #kisqali-patients-table .kisqali-ciclos-toggle {
+        width: auto;
+    }
+}
+
+/* T3 #596 — Cosentyx composición ejecutiva (page-local, sin rediseño
+ * global): misma jerarquía editorial que el T2 de Kisqali con contenido
+ * clínico distinto (sin barras de dosis). Seis categorías desde el modelo,
+ * tarjeta única separada y enfatizada con nota explicativa, botón real
+ * «Ver detalle» colapsado por defecto y tabla de seis columnas exactas que
+ * desplaza DENTRO de su contenedor, nunca la página. El régimen del hecho
+ * y el motivo registrado viven como sublíneas dentro de su columna: no hay
+ * séptima columna. */
+.informes-kpi--total {
+    border-top: 4px solid #1D4ED8;
+    box-shadow: 0 8px 20px rgba(29, 78, 216, 0.10);
+}
+
+.cosentyx-unique-note {
+    margin-top: 6px;
+    color: #1E3A8A;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.cosentyx-detail-toggle {
+    margin: 4px 0 0;
+}
+
+.cosentyx-detail-toggle:focus-visible,
+#informes-detail-toggle:focus-visible {
+    outline: 3px solid #1D4ED8;
+    outline-offset: 2px;
+}
+
+#informes-detail-panel {
+    margin-top: 12px;
+}
+
+#informes-detail-panel[hidden] {
+    display: none !important;
+}
+
+/* La tabla de seis columnas desplaza DENTRO de su contenedor. */
+.table-responsive-wrapper.cosentyx-detail-scroll {
+    margin: 0;
+    padding: 0 2px 4px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.table-responsive-wrapper.cosentyx-detail-scroll .data-table {
+    min-width: 760px;
+}
+
+/* Gate 4 correction P2-VISUAL-02: los encabezados de la tabla de seis
+ * columnas envuelven (sin truncar ni abreviar el significado) y las dos
+ * columnas de mayor contenido reservan un ancho mínimo, de modo que en
+ * escritorio la última columna «Estado actual» con su «Motivo registrado»
+ * queda legible dentro del contenedor sin desplazamiento horizontal. Se
+ * conservan exactamente las seis columnas: no se añade ni se mueve ninguna. */
+#informes-detail-table th {
+    white-space: normal;
+}
+
+#informes-detail-table .informes-event-cell,
+#informes-detail-table .informes-status-cell {
+    min-width: 170px;
+}
+
+.informes-event-cell .informes-case-type {
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.informes-regime-note {
+    display: block;
+    margin-top: 4px;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.informes-status-cell .informes-status-value {
+    font-weight: 800;
+    color: #0F172A;
+}
+
+.informes-reason-note {
+    display: block;
+    margin-top: 4px;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* Gate 4 correction P2-VISUAL-02: pista de desplazamiento interno de la
+ * tabla de seis columnas. No interactiva (no es botón ni acción) y solo
+ * visible en los anchos donde la tabla excede su contenedor; en escritorio,
+ * donde la tabla cabe, no se muestra ninguna advertencia. */
+.informes-detail-scroll-hint {
+    display: none;
+    margin: 8px 2px 0;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .informes-detail-scroll-hint {
+        display: block;
+    }
 }
