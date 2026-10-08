@@ -63,14 +63,14 @@ const EXPECTED = {
         workbook: { counts: [1, 0, 1, 0], unique: 2 }
     },
     '2026-Q2': {
-        dom: { pso_start: '1', psa_start: '1', hs_start_q2w: '1', hs_intensification: '2', unique: '4' },
-        patients: ['COS-PSO-002', 'COS-PSA-001', 'COS-HS-003', 'COS-HS-002'],
-        workbook: { counts: [1, 1, 1, 2], unique: 4 }
+        dom: { pso_start: '2', psa_start: '2', hs_start_q2w: '2', hs_intensification: '2', unique: '7' },
+        patients: ['COS-PSO-002', 'COS-PSO-005', 'COS-PSA-001', 'COS-PSA-003', 'COS-HS-003', 'COS-HS-006', 'COS-HS-002'],
+        workbook: { counts: [2, 2, 2, 2], unique: 7 }
     },
     '2026-Q3': {
-        dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '0', hs_intensification: '0', unique: '1' },
-        patients: ['COS-PSO-004'],
-        workbook: { counts: [1, 0, 0, 0], unique: 1 }
+        dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '0', hs_intensification: '1', unique: '2' },
+        patients: ['COS-PSO-004', 'COS-HS-007'],
+        workbook: { counts: [1, 0, 0, 1], unique: 2 }
     }
 };
 const NEGATIVE_PATIENTS = ['COS-PSO-003', 'COS-PSA-002', 'COS-HS-004', 'COS-HS-005'];
@@ -211,8 +211,8 @@ try {
     const categoryRows = resumen.slice(headerIndex + 1, headerIndex + 5);
     assert.deepEqual(categoryRows, CATEGORY_LABELS.map((label, index) => [label, EXPECTED['2026-Q2'].workbook.counts[index]]),
         'Resumen counts must match the hand-derived expectation');
-    assert.ok(resumen.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 4),
-        'unique total (4), not the blind sum (5)');
+    assert.ok(resumen.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 7),
+        'unique total (7), not the blind sum (8)');
     /* Same computed result as the visible UI. */
     const domCounts = [q2DomKpis.pso_start, q2DomKpis.psa_start, q2DomKpis.hs_start_q2w, q2DomKpis.hs_intensification].map(Number);
     assert.deepEqual(categoryRows.map(row => row[1]), domCounts, 'workbook counts must equal the visible UI counts');
@@ -220,7 +220,7 @@ try {
 
     const detalle = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
     assert.deepEqual(detalle[0], ['Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye', 'Régimen explícito']);
-    assert.equal(detalle.length - 1, 5, 'Detalle rows justify the counts');
+    assert.equal(detalle.length - 1, 8, 'Detalle rows justify the counts');
     const expectedRows = Informe.computeReport(Fixture, '2026-Q2').detail_rows
         .map(row => [row.patient_id, row.pathology, row.case_type, row.fact_date, row.regime || 'No registrado']);
     assert.deepEqual(detalle.slice(1), expectedRows);
@@ -265,7 +265,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_cosentyx_informe_browser_check: PASS');
-    console.log('QA Chromium: Informes switch OK; quarters Q1/Q2/Q3 differ from fixture; 4 categories shown; real XLSX Resumen+Detalle match UI model (unique=4, not blind sum 5); population CSV filtered export OK; console.error=0 pageerror=0');
+    console.log('QA Chromium: Informes switch OK; quarters Q1/Q2/Q3 differ from fixture; 4 categories shown; real XLSX Resumen+Detalle match UI model (unique=7, not blind sum 8); population CSV filtered export OK; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

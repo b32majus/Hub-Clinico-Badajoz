@@ -26,47 +26,63 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
  *
  * Fixture witnesses (by construction):
  * - COS-PSO-001 first dispensing 2026-03-31 (Q1 LAST day, classifiable)     -> Q1 PsO start
- *   with explicit regime 'q6w' (out of {q2w,q4w}) preserved verbatim, never classifying
- * - COS-PSO-002 first dispensing 2026-04-01 (Q2 boundary)  -> Q2 PsO start
- * - COS-PSO-003 validation 2026-04-05, NO dispensing       -> never a start
- * - COS-PSO-004 first dispensing 2026-07-03                -> Q3 PsO start
- * - COS-PSA-001 first dispensing 2026-04-10                -> Q2 PsA start
- * - COS-PSA-002 current treatment, NO dispensing; initial_regime omitted (absent)
- *                                                          -> never a start
+ *   with explicit regime 'q4w'; presentation '150 mg', current 'q4w'
+ * - COS-PSO-002 first dispensing 2026-04-01 (Q2 FIRST day boundary)          -> Q2 PsO start
+ * - COS-PSO-003 validation 2026-04-05, NO dispensing; NO presentation_label,
+ *   NO current_regime (absent facts)                                        -> never a start
+ * - COS-PSO-004 first dispensing 2026-07-03                                 -> Q3 PsO start
+ * - COS-PSO-005 first dispensing 2026-05-06                                 -> Q2 PsO start (Q2 shows 2 PsO)
+ * - COS-PSA-001 first dispensing 2026-04-10                                 -> Q2 PsA start
+ * - COS-PSA-002 current treatment, NO dispensing; initial_regime omitted (absent),
+ *   NO presentation_label (absent), current_regime null (explicitly unknown) -> never a start
+ * - COS-PSA-003 first dispensing 2026-05-12                                 -> Q2 PsA start (Q2 shows 2 PsA)
  * - COS-HS-001  first dispensing 2026-02-01, regime q2w    -> Q1 HS q2w start
- * - COS-HS-002  first dispensing 2026-03-31 (Q1 boundary) at q4w -> no HS q2w start;
- *               movement q4w->q2w effective 2026-06-30 (Q2 boundary) -> Q2 intensification
+ * - COS-HS-002  first dispensing 2026-03-31 (Q1 LAST day) at q4w -> no HS q2w start;
+ *               movement q4w->q2w effective 2026-06-30 (Q2 LAST day) -> Q2 intensification
  * - COS-HS-003  first dispensing 2026-04-02 at q2w -> Q2 HS q2w start;
  *               movements q2w->q4w 2026-04-20 and q4w->q2w 2026-05-15 -> Q2 intensification
  *               (same patient, two inclusion facts -> blind sum != unique total in Q2)
  * - COS-HS-004  first dispensing 2026-04-03 at q4w, no movement -> never intensification
- * - COS-HS-005  first dispensing 2026-04-07, regime explicitly unknown (null) -> non-classifiable
+ * - COS-HS-005  first dispensing 2026-04-07, regime explicitly unknown (null) -> non-classifiable;
+ *               presentation '150 mg' recorded anyway (presentation never implies regime),
+ *               current_regime null (explicitly unknown)
+ * - COS-HS-006  first dispensing 2026-04-15 at q2w -> Q2 HS q2w start (Q2 shows 2)
+ * - COS-HS-007  first dispensing 2026-07-01 (Q3 FIRST day boundary) at q4w
+ *               -> no HS q2w start; movement q4w->q2w effective 2026-08-20 -> Q3 intensification
+ *
+ * NO q6w anywhere in the visible fixture. The q6w negative witness lives ONLY
+ * as checker-local variants (see section 5b): an out-of-vocabulary explicit
+ * regime stays verbatim and never classifies.
  */
 const EXPECTED = {
     '2026-Q1': {
         counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 1, hs_intensification: 0 },
         unique: 2,
         rows: [
-            ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-03-31', 'q6w'],
+            ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-03-31', 'q4w'],
             ['COS-HS-001', 'HS', 'HS — nuevo inicio q2w', '2026-02-01', 'q2w']
         ]
     },
     '2026-Q2': {
-        counts: { pso_start: 1, psa_start: 1, hs_start_q2w: 1, hs_intensification: 2 },
-        unique: 4,
+        counts: { pso_start: 2, psa_start: 2, hs_start_q2w: 2, hs_intensification: 2 },
+        unique: 7,
         rows: [
             ['COS-PSO-002', 'PsO', 'PsO — nuevo inicio', '2026-04-01', 'q4w'],
-            ['COS-PSA-001', 'PsA', 'PsA — nuevo inicio', '2026-04-10', 'q2w'],
+            ['COS-PSO-005', 'PsO', 'PsO — nuevo inicio', '2026-05-06', 'q4w'],
+            ['COS-PSA-001', 'PsA', 'PsA — nuevo inicio', '2026-04-10', 'q4w'],
+            ['COS-PSA-003', 'PsA', 'PsA — nuevo inicio', '2026-05-12', 'q4w'],
             ['COS-HS-003', 'HS', 'HS — nuevo inicio q2w', '2026-04-02', 'q2w'],
+            ['COS-HS-006', 'HS', 'HS — nuevo inicio q2w', '2026-04-15', 'q2w'],
             ['COS-HS-003', 'HS', 'HS — intensificación q4w → q2w', '2026-05-15', 'q4w → q2w'],
             ['COS-HS-002', 'HS', 'HS — intensificación q4w → q2w', '2026-06-30', 'q4w → q2w']
         ]
     },
     '2026-Q3': {
-        counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 0, hs_intensification: 0 },
-        unique: 1,
+        counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 0, hs_intensification: 1 },
+        unique: 2,
         rows: [
-            ['COS-PSO-004', 'PsO', 'PsO — nuevo inicio', '2026-07-03', 'q2w']
+            ['COS-PSO-004', 'PsO', 'PsO — nuevo inicio', '2026-07-03', 'q4w'],
+            ['COS-HS-007', 'HS', 'HS — intensificación q4w → q2w', '2026-08-20', 'q4w → q2w']
         ]
     }
 };
@@ -131,6 +147,59 @@ check('fixture: unknown-regime witness (missing fact stays unknown)', () => {
     assert.ok(patient, 'COS-HS-005 must exist');
     assert.equal(typeof patient.first_dispensing_at, 'string');
     assert.equal(patient.initial_regime, null, 'null = explicitly unknown regime, not filled from convenience');
+});
+check('fixture: no q6w anywhere in the visible demo fixture', () => {
+    for (const patient of Fixture.patients) {
+        assert.notEqual(patient.initial_regime, 'q6w', `${patient.patient_id} must not carry q6w`);
+        for (const move of (patient.regime_movements || [])) {
+            assert.notEqual(move && move.from, 'q6w', `${patient.patient_id} movement must not come from q6w`);
+            assert.notEqual(move && move.to, 'q6w', `${patient.patient_id} movement must not go to q6w`);
+        }
+    }
+    assert.equal(JSON.stringify(Fixture.patients).includes('q6w'), false,
+        'the visible demo fixture must not mention q6w at all');
+});
+check('fixture: explicit presentation_label facts recorded, never inferred', () => {
+    const PRESENTATIONS = ['150 mg', '300 mg'];
+    const withPresentation = Fixture.patients.filter(p => 'presentation_label' in p);
+    assert.ok(withPresentation.length >= 10, 'most demo records carry an explicit presentation');
+    for (const patient of withPresentation) {
+        assert.ok(PRESENTATIONS.includes(patient.presentation_label),
+            `${patient.patient_id} presentation must be an explicitly recorded 150/300 mg fact`);
+    }
+    /* Spot witnesses: presentation varies independently of regime/pathology. */
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-PSO-001').presentation_label, '150 mg');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-PSO-002').presentation_label, '300 mg');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-004').presentation_label, '150 mg');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-006').presentation_label, '300 mg');
+    /* Presentation recorded even when the regime is unknown: no regime inference. */
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-005').presentation_label, '150 mg');
+    /* Meaningful absence preserved: validation-only record carries no presentation. */
+    assert.ok(!('presentation_label' in Fixture.patients.find(p => p.patient_id === 'COS-PSO-003')),
+        'validation-only COS-PSO-003 keeps presentation absent, not defaulted');
+    assert.ok(!('presentation_label' in Fixture.patients.find(p => p.patient_id === 'COS-PSA-002')),
+        'current-treatment-only COS-PSA-002 keeps presentation absent, not defaulted');
+});
+check('fixture: explicit current_regime facts recorded independently, absence preserved', () => {
+    /* Spot witnesses: current status recorded independently of starting regime. */
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-002').current_regime, 'q2w',
+        'post-intensification current status is recorded, not derived by this checker');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-004').current_regime, 'q4w');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-PSO-005').current_regime, 'q4w');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-007').current_regime, 'q2w');
+    /* Unknown (null) vs absent (omitted) stay distinguishable. */
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-005').current_regime, null,
+        'null = explicitly unknown current status');
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-PSA-002').current_regime, null,
+        'null = explicitly unknown current status');
+    assert.ok(!('current_regime' in Fixture.patients.find(p => p.patient_id === 'COS-PSO-003')),
+        'validation-only COS-PSO-003 keeps current status absent, not defaulted');
+    /* Independence: starting regime and current status are separate facts. */
+    const diverged = Fixture.patients.find(p => p.patient_id === 'COS-HS-002');
+    assert.equal(diverged.initial_regime, 'q4w');
+    assert.equal(diverged.current_regime, 'q2w');
+    assert.notEqual(diverged.initial_regime, diverged.current_regime,
+        'initial and current regimes are independent facts on the same record');
 });
 
 /* 2. Quarter selector derived from fixture facts; closed temporal ranges. */
@@ -200,16 +269,38 @@ check('boundary: movement effective on Q2 last day (2026-06-30) is a Q2 intensif
 check('boundary: q4w start on Q1 last day is NOT an HS q2w start', () => {
     assert.ok(reports['2026-Q1'].detail_rows.every(row => row.patient_id !== 'COS-HS-002'));
 });
+check('boundary: q4w dispensing on Q3 first day (2026-07-01) belongs to Q3 and is NOT an HS q2w start', () => {
+    assert.ok(reports['2026-Q2'].detail_rows.every(row => row.patient_id !== 'COS-HS-007'),
+        'Q3 first-day dispensing must not leak into Q2');
+    assert.ok(reports['2026-Q3'].detail_rows.every(row =>
+        !(row.patient_id === 'COS-HS-007' && row.case_type === 'HS — nuevo inicio q2w')),
+        'a q4w start is never an HS q2w start, even on the quarter first day');
+    const intensification = reports['2026-Q3'].detail_rows.find(row => row.patient_id === 'COS-HS-007');
+    assert.ok(intensification, 'COS-HS-007 intensification must be in Q3');
+    assert.equal(intensification.fact_date, '2026-08-20');
+    assert.equal(intensification.case_type, 'HS — intensificación q4w → q2w');
+});
 
 /* 5b. Gate 2 — regime evidence representation: recorded values survive
  * verbatim; null = explicitly unknown and omitted field = absent; both stay
- * non-classifiable (fail-closed) and both remain distinguishable. */
-check('regime: recorded out-of-vocabulary value survives verbatim into the detail row and never classifies', () => {
-    const q1Row = reports['2026-Q1'].detail_rows.find(row => row.patient_id === 'COS-PSO-001');
-    assert.ok(q1Row, 'COS-PSO-001 is a PsO start regardless of its regime');
-    assert.equal(q1Row.regime, 'q6w', 'explicitly recorded regime preserved verbatim, not collapsed to unknown');
-    assert.equal(rowTuples(reports['2026-Q1']).some(tuple => tuple[4] === 'No registrado'), false,
+ * non-classifiable (fail-closed) and both remain distinguishable.
+ * The out-of-vocabulary witness (q6w) is CHECKER-LOCAL ONLY: the visible
+ * demo fixture carries no q6w (see 'fixture: no q6w anywhere'), and these
+ * variants prove the engine still represents an explicit out-of-vocabulary
+ * regime verbatim without classifying it. Variants never touch the demo
+ * fixture population. */
+check('regime: checker-local q6w witness survives verbatim into the detail row and never classifies', () => {
+    assert.ok(rowTuples(reports['2026-Q1']).every(tuple => tuple[4] !== 'No registrado'),
         'no recorded value may be erased into the unknown label');
+    /* Verbatim retention: a PsO start with a checker-local explicit q6w keeps it. */
+    const verbatim = cloneFixture();
+    verbatim.patients.find(patient => patient.patient_id === 'COS-PSO-002').initial_regime = 'q6w';
+    const verbatimReport = Informe.computeReport(verbatim, '2026-Q2');
+    const verbatimRow = verbatimReport.detail_rows.find(row => row.patient_id === 'COS-PSO-002');
+    assert.ok(verbatimRow, 'COS-PSO-002 is a PsO start regardless of its regime');
+    assert.equal(verbatimRow.regime, 'q6w', 'explicitly recorded regime preserved verbatim, not collapsed to unknown');
+    assert.deepEqual(verbatimReport.counts_by_category, EXPECTED['2026-Q2'].counts,
+        'an out-of-vocabulary PsO regime changes no category count');
     /* Classification gate stays closed: an HS dispensing with an explicit
      * out-of-vocabulary regime is never an HS q2w start nor any other case. */
     const variant = cloneFixture();
@@ -304,12 +395,15 @@ check('presentation F1 witness: null vs absent regime stay distinct through mode
     assert.equal(absentCell[4], 'No registrado', 'absent fact exported as No registrado');
     assert.notEqual(nullCell[4], absentCell[4], 'XLSX Detalle keeps the states distinct');
 });
-check('presentation F1 witness: explicit q6w stays verbatim in the XLSX Detalle of the real fixture report', () => {
-    const buffer = Informe.buildWorkbook(reports['2026-Q1'], XLSX);
+check('presentation F1 witness: checker-local explicit q6w stays verbatim in the XLSX Detalle', () => {
+    const variant = cloneFixture();
+    variant.patients.find(patient => patient.patient_id === 'COS-PSO-002').initial_regime = 'q6w';
+    const report = Informe.computeReport(variant, '2026-Q2');
+    const buffer = Informe.buildWorkbook(report, XLSX);
     const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
     const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
-    const q6wRow = rows.find(row => row[0] === 'COS-PSO-001');
-    assert.ok(q6wRow, 'COS-PSO-001 is a PsO start in Q1');
+    const q6wRow = rows.find(row => row[0] === 'COS-PSO-002');
+    assert.ok(q6wRow, 'COS-PSO-002 is a PsO start in Q2');
     assert.equal(q6wRow[4], 'q6w', 'out-of-vocabulary explicit regime never collapses to a fallback label');
 });
 check('presentation: single shared formatter — UI and workbook projections must not re-implement a collapsing fallback', () => {
@@ -351,11 +445,11 @@ check('unique total: recomputed independently as cardinality over included detai
         assert.equal(reports[quarter].unique_patient_count, derived);
     }
 });
-check('unique total: Q2 blind sum (5) differs from unique total (4) — proves no blind summing', () => {
+check('unique total: Q2 blind sum (8) differs from unique total (7) — proves no blind summing', () => {
     const blindSum = Object.values(reports['2026-Q2'].counts_by_category).reduce((a, b) => a + b, 0);
-    assert.equal(blindSum, 5);
+    assert.equal(blindSum, 8);
     assert.notEqual(blindSum, reports['2026-Q2'].unique_patient_count);
-    assert.equal(reports['2026-Q2'].unique_patient_count, 4);
+    assert.equal(reports['2026-Q2'].unique_patient_count, 7);
     assert.ok(reports['2026-Q2'].detail_rows.length === blindSum,
         'detail rows justify every category count');
 });
@@ -408,23 +502,23 @@ check('xlsx Q2 Resumen: period, category counts and unique total match the hand-
     assert.ok(headerIndex >= 0, 'category table header present');
     const categoryRows = rows.slice(headerIndex + 1, headerIndex + 5);
     assert.deepEqual(categoryRows, [
-        ['PsO — nuevos inicios', 1],
-        ['PsA — nuevos inicios', 1],
-        ['HS — nuevos inicios q2w', 1],
+        ['PsO — nuevos inicios', 2],
+        ['PsA — nuevos inicios', 2],
+        ['HS — nuevos inicios q2w', 2],
         ['HS — intensificaciones q4w → q2w', 2]
     ]);
-    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 4),
-        'unique total (4), not the blind sum (5)');
+    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 7),
+        'unique total (7), not the blind sum (8)');
     assert.ok(rows.some(row => row[0] === 'Procedencia' && row[1] === 'Datos sintéticos específicos del informe'));
 });
 
-check('xlsx Q2 Detalle: rows exactly justify the counts (5 rows, patients + inclusion type)', () => {
+check('xlsx Q2 Detalle: rows exactly justify the counts (8 rows, patients + inclusion type)', () => {
     const { workbook } = resumenRows(reports['2026-Q2']);
     const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
     assert.deepEqual(rows[0], [
         'Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye', 'Régimen explícito'
     ]);
-    assert.equal(rows.length - 1, 5);
+    assert.equal(rows.length - 1, 8);
     assert.deepEqual(rows.slice(1), EXPECTED['2026-Q2'].rows);
 });
 
@@ -441,6 +535,21 @@ check('xlsx Q1 Resumen: counts and unique total from the same computed result', 
     const detalle = XLSX.utils.sheet_to_json(
         resumenRows(reports['2026-Q1']).workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
     assert.equal(detalle.length - 1, 2);
+});
+
+check('xlsx Q3 Resumen: PsO start plus the Q3 intensification from the same computed result', () => {
+    const { rows } = resumenRows(reports['2026-Q3']);
+    const headerIndex = rows.findIndex(row => row[0] === 'Categoría' && row[1] === 'Pacientes');
+    assert.deepEqual(rows.slice(headerIndex + 1, headerIndex + 5), [
+        ['PsO — nuevos inicios', 1],
+        ['PsA — nuevos inicios', 0],
+        ['HS — nuevos inicios q2w', 0],
+        ['HS — intensificaciones q4w → q2w', 1]
+    ]);
+    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 2));
+    const detalle = XLSX.utils.sheet_to_json(
+        resumenRows(reports['2026-Q3']).workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+    assert.deepEqual(detalle.slice(1), EXPECTED['2026-Q3'].rows);
 });
 
 check('xlsx: buildWorkbook rejects a non-computed report explicitly', () => {
