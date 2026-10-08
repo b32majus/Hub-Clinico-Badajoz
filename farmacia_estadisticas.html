@@ -171,14 +171,23 @@
                     </div>
                 </div>
                 <p class="informes-notice" id="informes-synthetic-notice" role="note"><i class="fas fa-flask" aria-hidden="true"></i> Datos sintéticos específicos del informe</p>
-                <!-- Informe trimestral Cosentyx (#576): panel tras confirmar. -->
+                <!-- Informe trimestral Cosentyx (#576): panel tras confirmar.
+                     T3 #596 composición ejecutiva: seis categorías desde el
+                     modelo + único enfatizado con nota explicativa, línea de
+                     trimestre y detalle progresivo colapsado de seis columnas
+                     exactas. Re-proyección visual del mismo informe calculado;
+                     sin semántica nueva. -->
                 <div id="informes-cosentyx-panel" class="informes-report-panel" hidden>
-                    <div class="informes-kpi-grid" id="informes-kpis"></div>
-                    <div class="table-responsive-wrapper">
-                        <table id="informes-detail-table" class="data-table stats-data-table">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
+                    <p class="informes-period-line">Trimestre: <strong id="informes-period"></strong></p>
+                    <div class="informes-kpi-grid" id="informes-kpis" aria-live="polite"></div>
+                    <button type="button" class="btn btn-outline cosentyx-detail-toggle" id="informes-detail-toggle" aria-expanded="false" aria-controls="informes-detail-panel">Ver detalle</button>
+                    <div id="informes-detail-panel" hidden>
+                        <div class="table-responsive-wrapper cosentyx-detail-scroll">
+                            <table id="informes-detail-table" class="data-table stats-data-table">
+                                <thead></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <!-- Informe de utilización y dosis — Kisqali (#579): panel de reporte.

@@ -117,6 +117,11 @@
         if (quarters.length) select.value = quarters[quarters.length - 1];
     }
 
+    /* T3 #596 composición ejecutiva: las seis categorías se renderizan
+     * desde report.categories (nunca recalculadas) y el total único es una
+     * tarjeta separada y enfatizada con nota explicativa computada del
+     * MISMO informe: únicos sobre filas de eventos, nunca la suma ciega de
+     * categorías. Sin cálculo nuevo. */
     function renderKpis(report) {
         var container = document.getElementById('informes-kpis');
         if (!container) return;
@@ -132,9 +137,31 @@
         total.dataset.informesKpi = 'unique';
         total.appendChild(el('div', 'informes-kpi-label', 'Pacientes únicos incluidos'));
         total.appendChild(el('div', 'informes-kpi-value', String(report.unique_patient_count)));
+        var eventRows = report.detail_rows.length;
+        var uniqueNote = el('div', 'cosentyx-unique-note',
+            'Total único: ' + pluralize(report.unique_patient_count, 'paciente', 'pacientes')
+            + ' en ' + pluralize(eventRows, 'fila de evento', 'filas de eventos')
+            + ' — no es la suma de categorías');
+        uniqueNote.dataset.informesUniqueNote = 'true';
+        total.appendChild(uniqueNote);
         container.appendChild(total);
     }
 
+    function pluralize(count, singular, pluralWord) {
+        return String(count) + ' ' + (count === 1 ? singular : pluralWord);
+    }
+
+    /* T3 #596 tabla de seis columnas exactas dentro del detalle progresivo:
+     * (1) ID sintético, (2) patología, (3) presentación explícita
+     * (presentationDisplay verbatim cuando consta, ausencia/desconocido
+     * honesto en otro caso — nunca derivada del régimen), (4) tipo de
+     * evento/movimiento (caseLabel del modelo) con el régimen DEL HECHO
+     * (regimeDisplay) como anotación secundaria en la misma celda,
+     * (5) fecha de hecho, (6) estado actual (statusDisplay: Discontinuado
+     * para filas detenidas, nunca un régimen activo; No registrado ante
+     * ausencia, Desconocido ante null explícito) con el motivo registrado
+     * (reasonDisplay verbatim) en sublínea SÓLO en filas de discontinuación.
+     * Seis columnas, sin séptima. */
     function renderDetail(report) {
         var head = document.querySelector('#informes-detail-table thead');
         var body = document.querySelector('#informes-detail-table tbody');
@@ -142,13 +169,14 @@
         clearChildren(head);
         clearChildren(body);
         var header = el('tr');
-        ['Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye', 'Régimen explícito']
+        ['ID sintético', 'Patología', 'Presentación explícita', 'Tipo de evento/movimiento',
+            'Fecha de hecho', 'Estado actual']
             .forEach(function (column) { header.appendChild(el('th', '', column)); });
         head.appendChild(header);
         if (!report.detail_rows.length) {
             var empty = el('tr');
             var emptyCell = el('td', '', 'Sin casos incluidos en el trimestre seleccionado.');
-            emptyCell.colSpan = 5;
+            emptyCell.colSpan = 6;
             empty.appendChild(emptyCell);
             body.appendChild(empty);
             return;
@@ -157,9 +185,23 @@
             var tr = el('tr');
             tr.appendChild(el('td', '', row.patient_id));
             tr.appendChild(el('td', '', row.pathology));
-            tr.appendChild(el('td', '', row.case_type));
+            tr.appendChild(el('td', '', Informe.presentationDisplay(row.presentation)));
+            var eventCell = el('td', 'informes-event-cell');
+            eventCell.appendChild(el('span', 'informes-case-type', row.case_type));
+            eventCell.appendChild(document.createTextNode(' '));
+            eventCell.appendChild(el('span', 'informes-regime-note',
+                'Régimen del hecho: ' + Informe.regimeDisplay(row.regime)));
+            tr.appendChild(eventCell);
             tr.appendChild(el('td', '', row.fact_date));
-            tr.appendChild(el('td', '', Informe.regimeDisplay(row.regime)));
+            var statusCell = el('td', 'informes-status-cell');
+            statusCell.appendChild(el('span', 'informes-status-value',
+                Informe.statusDisplay(row.discontinued, row.current_regime)));
+            if (row.discontinued === true) {
+                statusCell.appendChild(document.createTextNode(' '));
+                statusCell.appendChild(el('span', 'informes-reason-note',
+                    'Motivo registrado: ' + Informe.reasonDisplay(row.reason)));
+            }
+            tr.appendChild(statusCell);
             body.appendChild(tr);
         });
     }
@@ -186,6 +228,24 @@
         anchor.download = 'informe_trimestral_cosentyx_' + currentReport.quarter.key + '.xlsx';
         anchor.click();
         URL.revokeObjectURL(anchor.href);
+    }
+
+    /* T3 #596 «Ver detalle» Cosentyx: botón real colapsado por defecto
+     * que gobierna el panel de la tabla de seis columnas. Cambiar de
+     * trimestre validado conserva su estado; una confirmación fresca lo
+     * repliega. */
+    function setCosentyxDetailExpanded(expanded) {
+        var toggle = document.getElementById('informes-detail-toggle');
+        var panel = document.getElementById('informes-detail-panel');
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            toggle.textContent = expanded ? 'Ocultar detalle' : 'Ver detalle';
+        }
+        if (panel) panel.hidden = !expanded;
+    }
+
+    function collapseCosentyxDetail() {
+        setCosentyxDetailExpanded(false);
     }
 
     /* ---------- Informe de utilización y dosis — Kisqali (#579) ---------- */
@@ -550,6 +610,7 @@
         setHidden(document.getElementById('informes-kisqali-panel'), true);
         setDownloadEnabled('informes-download-xlsx', false);
         setDownloadEnabled('kisqali-download-xlsx', false);
+        collapseCosentyxDetail();
         collapseKisqaliDetail();
     }
 
@@ -605,6 +666,7 @@
         if (type !== drug) fail('Selección de informe incoherente.');
         setReport(drug);
         if (drug === 'cosentyx') {
+            collapseCosentyxDetail();
             renderReport();
             setDownloadEnabled('informes-download-xlsx', !!currentReport);
         } else {
@@ -617,8 +679,8 @@
 
     function onQuarterChange() {
         /* Period-only change over a confirmed Cosentyx report refreshes it
-         * (and its XLSX) consistently; while a new selection is pending no
-         * compute runs. */
+         * (and its XLSX) consistently, preserving the detail disclosure
+         * state; while a new selection is pending no compute runs. */
         if (activeReport === 'cosentyx' && currentReport
             && pendingDrug() === 'cosentyx' && pendingType() === 'cosentyx') {
             renderReport();
@@ -701,6 +763,11 @@
             var expanded = kisqaliDetailToggle.getAttribute('aria-expanded') === 'true';
             setKisqaliDetailExpanded(!expanded);
         });
+        var cosentyxDetailToggle = document.getElementById('informes-detail-toggle');
+        if (cosentyxDetailToggle) cosentyxDetailToggle.addEventListener('click', function () {
+            var expanded = cosentyxDetailToggle.getAttribute('aria-expanded') === 'true';
+            setCosentyxDetailExpanded(!expanded);
+        });
 
         var informesButton = document.getElementById('informes-view-btn');
         if (informesButton) informesButton.addEventListener('click', function () { setMode(true); });
@@ -715,6 +782,7 @@
         setHidden(document.getElementById('informes-kisqali-panel'), true);
         setDownloadEnabled('informes-download-xlsx', false);
         setDownloadEnabled('kisqali-download-xlsx', false);
+        collapseCosentyxDetail();
         collapseKisqaliDetail();
         updateCta();
         setMode(false);

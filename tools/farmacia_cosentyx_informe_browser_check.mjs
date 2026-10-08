@@ -1,21 +1,31 @@
 #!/usr/bin/env node
 /* #576 Informe trimestral Cosentyx (+ #593 dos hechos HS adicionales) + #594
- * entrada neutral — supported-browser QA through the real UI.
+ * entrada neutral + T3 #596 composición ejecutiva — supported-browser QA
+ * through the real UI.
  *
- * Journey: open Estadísticas normally (demo session), enter Informes through
- * the supported switcher and confirm the NEUTRAL landing (heading 'Reportes
- * farmacéuticos', synthetic badge, no drug/type selected, Ver reporte
- * disabled, no computeReport before confirmation, getState() {report:null}),
- * progress Fármaco → Tipo → Período → «Ver reporte» (quarters from the live
- * model, defaulting to the latest fixture-eligible Q4), verify counts/detail
- * across Q1–Q4 from the synthetic fixture (six categories incl. the
- * discontinuation-only Q4), download REAL .xlsx workbooks (Q4 + Q2) and
+ * Journey: open Estadísticas normally (demo session), snapshot the six
+ * population KPI values, enter Informes through the supported switcher and
+ * confirm the NEUTRAL landing (heading 'Reportes farmacéuticos', synthetic
+ * badge, no drug/type selected, Ver reporte disabled, no computeReport
+ * before confirmation, getState() {report:null}), progress Fármaco → Tipo →
+ * Período → «Ver reporte» (quarters from the live model, defaulting to the
+ * latest fixture-eligible Q4), verify counts/unique-copy/period-line across
+ * Q1–Q4 from the synthetic fixture (six categories incl. the
+ * discontinuation-only Q4), expand the collapsed «Ver detalle» disclosure by
+ * keyboard with focus retained and verify the exact six-column cells
+ * (ID · Patología · Presentación explícita · Tipo de evento/movimiento con
+ * régimen del hecho · Fecha de hecho · Estado actual con motivo registrado;
+ * Q4 Discontinuado + 150 mg + literal 'Decisión clínica documentada' +
+ * 2026-10-01, never active), download REAL .xlsx workbooks (Q4 + Q2) and
  * validate Resumen + Detalle against hand-derived literals and the visible
- * UI model, prove Fármaco switching clears stale results, cross-check
- * Kisqali Mensual + Histórico with real XLSX, return to Cosentyx Q2/Q4,
- * prove view-switch preservation and population-filter independence, return
- * to the population analysis and confirm the existing filtered-cohort CSV
- * export still downloads. No DOM tampering; supported interactions only.
+ * UI model, prove fresh «Ver reporte» re-collapses the detail while a
+ * quarter change preserves it, prove Fármaco switching clears stale
+ * results, cross-check Kisqali Mensual + Histórico with real XLSX, return to
+ * Cosentyx Q2/Q4, prove view-switch preservation and population-filter
+ * independence (six population KPI values identical before/after, filtered
+ * CSV contract intact), return to the population analysis and confirm the
+ * existing filtered-cohort CSV export still downloads. No DOM tampering;
+ * supported interactions only.
  */
 import assert from 'node:assert/strict';
 import { createReadStream, existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
@@ -135,6 +145,61 @@ const CATEGORY_LABELS = [
     'HS — nuevos inicios q2w', 'HS — intensificaciones q4w → q2w',
     'HS — reducción de frecuencia q2w → q4w', 'HS — discontinuaciones q2w'
 ];
+/* T3 #596 unique-patient explanatory copy, computed by the UI from the SAME
+ * report (unique count over event-row count) — hand-derived literals per
+ * quarter: unique patients, never the blind sum of categories. */
+const EXPECTED_UNIQUE_NOTE = {
+    '2026-Q1': 'Total único: 3 pacientes en 3 filas de eventos — no es la suma de categorías',
+    '2026-Q2': 'Total único: 8 pacientes en 11 filas de eventos — no es la suma de categorías',
+    '2026-Q3': 'Total único: 3 pacientes en 3 filas de eventos — no es la suma de categorías',
+    '2026-Q4': 'Total único: 1 paciente en 1 fila de evento — no es la suma de categorías'
+};
+/* T3 #596 exact six-column headers of the progressive detail table. */
+const DETAIL_HEADERS = ['ID sintético', 'Patología', 'Presentación explícita',
+    'Tipo de evento/movimiento', 'Fecha de hecho', 'Estado actual'];
+/* T3 #596 hand-derived six-column UI cells per quarter, verified field by
+ * field against the explicit synthetic fixture facts (never from
+ * computeReport/DOM):
+ * - col3 presentation verbatim when recorded (150/300 mg on every included
+ *   row; the honest absence/unknown branches live in the shared formatter);
+ * - col4 caseLabel of the model + the event regimen as a same-cell
+ *   annotation ('Régimen del hecho: …'), independent from current status;
+ * - col6 current status (statusDisplay): explicit current regime verbatim,
+ *   absent current_regime (COS-HS-009 start) stays 'No registrado', stopped
+ *   rows read exactly 'Discontinuado' (never an active regime) with the
+ *   recorded reason verbatim in a same-cell subline only on discontinuation
+ *   rows ('Decisión clínica documentada' Q4 from #599; 'motivo
+ *   administrativo registrado' Q3 witness).
+ * Row order follows the model projection (categories in order, then fact
+ * date, then patient) and matches the Detalle sheet row order. */
+const EXPECTED_UI = {
+    '2026-Q1': [
+        ['COS-PSO-001', 'PsO', '150 mg', 'PsO — nuevo inicio Régimen del hecho: q4w', '2026-03-31', 'q4w'],
+        ['COS-HS-001', 'HS', '300 mg', 'HS — nuevo inicio q2w Régimen del hecho: q2w', '2026-02-01', 'q2w'],
+        ['COS-HS-009', 'HS', '300 mg', 'HS — nuevo inicio q2w Régimen del hecho: q2w', '2026-02-10', 'No registrado']
+    ],
+    '2026-Q2': [
+        ['COS-PSO-002', 'PsO', '300 mg', 'PsO — nuevo inicio Régimen del hecho: q4w', '2026-04-01', 'q4w'],
+        ['COS-PSO-005', 'PsO', '300 mg', 'PsO — nuevo inicio Régimen del hecho: q4w', '2026-05-06', 'q4w'],
+        ['COS-PSA-001', 'PsA', '150 mg', 'PsA — nuevo inicio Régimen del hecho: q4w', '2026-04-10', 'q4w'],
+        ['COS-PSA-003', 'PsA', '300 mg', 'PsA — nuevo inicio Régimen del hecho: q4w', '2026-05-12', 'q4w'],
+        ['COS-HS-003', 'HS', '300 mg', 'HS — nuevo inicio q2w Régimen del hecho: q2w', '2026-04-02', 'q2w'],
+        ['COS-HS-006', 'HS', '300 mg', 'HS — nuevo inicio q2w Régimen del hecho: q2w', '2026-04-15', 'q2w'],
+        ['COS-HS-008', 'HS', '150 mg', 'HS — nuevo inicio q2w Régimen del hecho: q2w', '2026-05-04', 'q4w'],
+        ['COS-HS-003', 'HS', '300 mg', 'HS — intensificación q4w → q2w Régimen del hecho: q4w → q2w', '2026-05-15', 'q2w'],
+        ['COS-HS-002', 'HS', '150 mg', 'HS — intensificación q4w → q2w Régimen del hecho: q4w → q2w', '2026-06-30', 'q2w'],
+        ['COS-HS-003', 'HS', '300 mg', 'HS — reducción de frecuencia q2w → q4w Régimen del hecho: q2w → q4w', '2026-04-20', 'q2w'],
+        ['COS-HS-008', 'HS', '150 mg', 'HS — reducción de frecuencia q2w → q4w Régimen del hecho: q2w → q4w', '2026-06-10', 'q4w']
+    ],
+    '2026-Q3': [
+        ['COS-PSO-004', 'PsO', '150 mg', 'PsO — nuevo inicio Régimen del hecho: q4w', '2026-07-03', 'q4w'],
+        ['COS-HS-007', 'HS', '150 mg', 'HS — intensificación q4w → q2w Régimen del hecho: q4w → q2w', '2026-08-20', 'q2w'],
+        ['COS-HS-009', 'HS', '300 mg', 'HS — discontinuación q2w Régimen del hecho: q2w', '2026-09-30', 'Discontinuado Motivo registrado: motivo administrativo registrado']
+    ],
+    '2026-Q4': [
+        ['COS-HS-010', 'HS', '150 mg', 'HS — discontinuación q2w Régimen del hecho: q2w', '2026-10-01', 'Discontinuado Motivo registrado: Decisión clínica documentada']
+    ]
+};
 
 /* Hand-derived Kisqali cross-check literals (#579 deterministic oracles,
  * reused here to prove the Fármaco switch reaches the real Kisqali report):
@@ -264,22 +329,63 @@ async function assertQuarterView(page, quarter) {
     assert.equal(state.unique_patient_count, Number(expected.dom.unique));
     const expectedRows = Object.values(expected.rowCounts).reduce((sum, n) => sum + n, 0);
     assert.equal(state.detail_row_count, expectedRows, 'detail rows justify every count');
+    /* T3 #596: period line follows the computed quarter; the emphasized
+     * unique card carries the explanatory copy (unique patients over event
+     * rows, never the blind sum). */
+    assert.equal(await page.locator('#informes-period').innerText(), quarter,
+        'period line follows the computed quarter');
+    assert.equal(await page.locator('[data-informes-unique-note]').innerText(), EXPECTED_UNIQUE_NOTE[quarter],
+        'unique copy states unique patients over event rows, never the blind sum');
+    const categoryLabels = await page.evaluate(() =>
+        [...document.querySelectorAll('#informes-kpis .informes-kpi-label')].map(node => node.textContent.trim()));
+    assert.deepEqual(categoryLabels.slice(0, 6), CATEGORY_LABELS);
+    /* Six KPI cards + the unique total card, rendered by the renderer
+     * looping report.categories. */
+    const cardCount = await page.evaluate(() =>
+        document.querySelectorAll('#informes-kpis [data-informes-kpi]').length);
+    assert.equal(cardCount, 7, 'six category cards plus the unique-patient card');
+    return domKpis;
+}
+
+/* T3 #596 progressive detail readers: the RENDERED six-column cells, read
+ * from the DOM like a user sees them. Expands the collapsed «Ver detalle»
+ * disclosure through the supported control when needed. */
+async function readCosentyxDetailRows(page) {
+    return page.evaluate(() => [...document.querySelectorAll('#informes-detail-table tbody tr')]
+        .map(row => [...row.querySelectorAll('td')].map(cell => cell.textContent.trim())));
+}
+
+async function assertCosentyxDetailCollapsed(page) {
+    assert.equal(await page.locator('#informes-detail-toggle').getAttribute('aria-expanded'), 'false',
+        'detail collapsed by default');
+    assert.equal(await page.locator('#informes-detail-toggle').innerText(), 'Ver detalle');
+    assert.ok(await page.locator('#informes-detail-panel').isHidden(), 'detail panel hidden while collapsed');
+}
+
+async function assertCosentyxDetail(page, quarter) {
+    if (await page.locator('#informes-detail-panel').isHidden()) {
+        await page.locator('#informes-detail-toggle').click();
+        await page.waitForFunction(() => !document.getElementById('informes-detail-panel').hidden);
+    }
+    assert.equal(await page.locator('#informes-detail-toggle').getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.locator('#informes-detail-toggle').innerText(), 'Ocultar detalle');
+    const headers = await page.evaluate(() =>
+        [...document.querySelectorAll('#informes-detail-table thead th')].map(node => node.textContent.trim()));
+    assert.deepEqual(headers, DETAIL_HEADERS, `${quarter} six-column headers, no seventh column`);
+    const rows = await readCosentyxDetailRows(page);
+    for (const row of rows) {
+        assert.equal(row.length, 6, `${quarter}: every detail row has exactly six cells`);
+    }
+    assert.deepEqual(rows, EXPECTED_UI[quarter],
+        `${quarter} six-column cells match the hand-derived fixture expectation`);
     const detailText = await page.locator('#informes-detail-table').innerText();
-    for (const patientId of expected.patients) {
+    for (const patientId of EXPECTED[quarter].patients) {
         assert.ok(detailText.includes(patientId), `${quarter} detail must include ${patientId}`);
     }
     for (const patientId of NEGATIVE_PATIENTS) {
         assert.ok(!detailText.includes(patientId), `${quarter} detail must exclude negative witness ${patientId}`);
     }
-    const categoryLabels = await page.evaluate(() =>
-        [...document.querySelectorAll('#informes-kpis .informes-kpi-label')].map(node => node.textContent.trim()));
-    assert.deepEqual(categoryLabels.slice(0, 6), CATEGORY_LABELS);
-    /* Six KPI cards + the unique total card, rendered by the untouched
-     * renderer looping report.categories. */
-    const cardCount = await page.evaluate(() =>
-        document.querySelectorAll('#informes-kpis [data-informes-kpi]').length);
-    assert.equal(cardCount, 7, 'six category cards plus the unique-patient card');
-    return domKpis;
+    return rows;
 }
 
 /* #594 neutral landing: nothing computed, no enabled download, stable
@@ -311,6 +417,33 @@ async function assertNoPageOverflow(page, label) {
     return measured;
 }
 
+/* Six ordinary population KPI cards as the professional sees them. */
+async function readPopulationKpis(page) {
+    return page.evaluate(() => [...document.querySelectorAll('#kpi-grid .stats-kpi-card')]
+        .map(card => [
+            card.querySelector('.stats-kpi-label').textContent.trim(),
+            card.querySelector('.stats-kpi-value').textContent.trim()
+        ]));
+}
+
+/* T3 #596: six categories + unique visible, disclosure reachable, no
+ * clipped KPI labels at the measured viewport. */
+async function assertInformesLegible(page, label) {
+    assert.equal(await page.locator('#informes-kpis [data-informes-kpi]').count(), 7,
+        `${label}: six categories + unique visible`);
+    for (let index = 0; index < 7; index++) {
+        assert.ok(await page.locator('#informes-kpis [data-informes-kpi]').nth(index).isVisible(),
+            `${label}: KPI card ${index} visible`);
+    }
+    assert.ok(await page.locator('[data-informes-unique-note]').isVisible(), `${label}: unique copy visible`);
+    assert.ok(await page.locator('#informes-detail-toggle').isVisible(), `${label}: disclosure reachable`);
+    const clipped = await page.evaluate(() =>
+        [...document.querySelectorAll('#informes-kpis .informes-kpi-label, #informes-kpis .informes-kpi-value, [data-informes-unique-note]')]
+            .map(node => ({ text: node.textContent.trim(), over: node.scrollWidth - node.clientWidth }))
+            .filter(box => box.over > 1));
+    assert.deepEqual(clipped, [], `${label}: no clipped KPI labels`);
+}
+
 function normRow(row) {
     const copy = row.map(cell => (cell === undefined ? '' : cell));
     while (copy.length && copy[copy.length - 1] === '') copy.pop();
@@ -335,9 +468,12 @@ try {
     await page.goto(appUrl('farmacia_estadisticas.html'), { waitUntil: 'domcontentloaded' });
     await waitForMode(page, 'demo', 3);
 
-    /* Population surface is the default view; Informes hidden. */
+    /* Population surface is the default view; Informes hidden. Snapshot
+     * the six ordinary population KPI values before any report runs. */
     assert.ok(await page.locator('#kpi-section').isVisible(), 'population analysis visible by default');
     assert.ok(!(await page.locator('#informes-section').isVisible()), 'Informes hidden by default');
+    const populationKpisBefore = await readPopulationKpis(page);
+    assert.equal(populationKpisBefore.length, 6, 'six ordinary population KPI cards');
 
     /* Enter Informes through the supported switcher: neutral landing. */
     await page.locator('#informes-view-btn').click();
@@ -375,12 +511,46 @@ try {
     assert.equal(await page.evaluate(() => document.querySelectorAll('#informes-kpis [data-informes-kpi]').length), 0,
         'no KPIs rendered before confirmation');
 
-    /* «Ver reporte»: ONLY the selected report computes (Q4 default). */
+    /* «Ver reporte»: ONLY the selected report computes (Q4 default). The
+     * progressive detail starts collapsed behind its real disclosure. */
     await page.locator('#informes-view-report').click();
     await assertQuarterView(page, '2026-Q4');
+    await assertCosentyxDetailCollapsed(page);
     assert.match(await page.locator('#informes-title').innerText(), /Informe trimestral Cosentyx/);
     assert.ok(!(await page.locator('#informes-download-xlsx').isDisabled()), 'matching XLSX enabled after confirmation');
     assert.ok(await page.locator('#kisqali-download-xlsx').isDisabled(), 'no stale Kisqali XLSX beside the Cosentyx report');
+
+    /* Keyboard-operable disclosure with correct focus: expand by keyboard,
+     * verify the exact six-column Q4 cells, then collapse by keyboard. */
+    await page.locator('#informes-detail-toggle').focus();
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-detail-toggle');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => !document.getElementById('informes-detail-panel').hidden);
+    assert.equal(await page.locator('#informes-detail-toggle').getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'informes-detail-toggle',
+        'focus retained on the disclosure toggle');
+    const q4Rows = await assertCosentyxDetail(page, '2026-Q4');
+    /* Q4 single synthetic discontinuation: exactly Discontinuado, recorded
+     * 150 mg presentation, verbatim fictitious reason, 2026-10-01 — never
+     * active/q2w, no invented cause. */
+    assert.equal(q4Rows.length, 1, 'Q4 holds the single discontinuation case');
+    assert.equal(q4Rows[0][0], 'COS-HS-010');
+    assert.equal(q4Rows[0][2], '150 mg', 'presentation explicitly recorded, never derived');
+    assert.equal(q4Rows[0][4], '2026-10-01');
+    assert.equal(q4Rows[0][5], 'Discontinuado Motivo registrado: Decisión clínica documentada');
+    const q4StatusValue = await page.evaluate(() =>
+        document.querySelector('#informes-detail-table tbody tr .informes-status-value').textContent.trim());
+    assert.equal(q4StatusValue, 'Discontinuado', 'a stopped patient never reads as an active regime');
+    const q4ReasonNote = await page.evaluate(() =>
+        document.querySelector('#informes-detail-table tbody tr .informes-reason-note').textContent.trim());
+    assert.equal(q4ReasonNote, 'Motivo registrado: Decisión clínica documentada',
+        'recorded reason verbatim, never a therapeutic outcome');
+    const q4RegimeNote = await page.evaluate(() =>
+        document.querySelector('#informes-detail-table tbody tr .informes-regime-note').textContent.trim());
+    assert.equal(q4RegimeNote, 'Régimen del hecho: q2w', 'event regimen stays independent from current status');
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.getElementById('informes-detail-panel').hidden);
+    await assertCosentyxDetailCollapsed(page);
 
     /* Q4 REAL .xlsx: the discontinuation-only quarter exports its row. */
     const q4Workbook = await downloadWorkbook(page, '#informes-download-xlsx', /^informe_trimestral_cosentyx_2026-Q4\.xlsx$/);
@@ -400,9 +570,11 @@ try {
     assert.equal(q4Detalle[1][6], 'Discontinuado');
     assert.equal(q4Detalle[1][7], 'Decisión clínica documentada');
 
-    /* Period-only change over the confirmed report refreshes report + XLSX. */
+    /* Period-only change over the confirmed report refreshes report + XLSX
+     * and preserves the collapsed disclosure. */
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     const q2DomKpis = await assertQuarterView(page, '2026-Q2');
+    await assertCosentyxDetailCollapsed(page);
 
     /* Back to Q2: download a REAL .xlsx and validate it against the visible UI model. */
     const workbook = await downloadWorkbook(page, '#informes-download-xlsx', /^informe_trimestral_cosentyx_2026-Q2\.xlsx$/);
@@ -430,12 +602,33 @@ try {
         'Régimen explícito', 'Presentación explícita', 'Estado actual explícito', 'Motivo registrado']);
     assert.equal(detalle.length - 1, 11, 'Detalle rows justify the counts');
     assert.deepEqual(detalle.slice(1), EXPECTED_DETALLE_Q2, 'Detalle matches the hand-derived literals, not a fresh model call');
+    /* Visible six-column UI rows equal the workbook Detalle on the shared
+     * explicit-fact columns (patient, pathology, presentation, date). */
+    const q2UiRows = await assertCosentyxDetail(page, '2026-Q2');
+    assert.deepEqual(q2UiRows.map(row => [row[0], row[1], row[2], row[4]]),
+        detalle.slice(1).map(sheetRow => [sheetRow[0], sheetRow[1], sheetRow[5], sheetRow[3]]),
+        'Q2 UI six-column rows equal the workbook Detalle on the shared columns');
+    /* Q2 unique-vs-rows proof in the visible copy: 8 unique across 11 rows. */
+    assert.ok(q2UiRows.length === 11 && Number(q2DomKpis.unique) === 8);
+    /* A fresh «Ver reporte» re-collapses the progressive detail. */
+    await page.locator('#informes-view-report').click();
+    await assertQuarterView(page, '2026-Q2');
+    await assertCosentyxDetailCollapsed(page);
 
-    /* All six categories demonstrated across periods: Q1/Q3 differ too. */
+    /* All six categories demonstrated across periods: Q1/Q3 differ too. A
+     * quarter change preserves the expanded disclosure. */
+    await page.locator('#informes-detail-toggle').click();
+    await page.waitForFunction(() => !document.getElementById('informes-detail-panel').hidden);
     await page.locator('#informes-quarter-select').selectOption('2026-Q1');
     await assertQuarterView(page, '2026-Q1');
+    assert.equal(await page.locator('#informes-detail-toggle').getAttribute('aria-expanded'), 'true',
+        'quarter change preserves the disclosure state');
+    await assertCosentyxDetail(page, '2026-Q1');
     await page.locator('#informes-quarter-select').selectOption('2026-Q3');
     await assertQuarterView(page, '2026-Q3');
+    await assertCosentyxDetail(page, '2026-Q3');
+    await page.locator('#informes-detail-toggle').click();
+    await page.waitForFunction(() => document.getElementById('informes-detail-panel').hidden);
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
 
     /* Fármaco switch while a report is shown: prior report hidden at once,
@@ -543,7 +736,8 @@ try {
     const historicoCiclos = XLSX.utils.sheet_to_json(historicoWorkbook.Sheets['Ciclos'], { header: 1, defval: '' }).map(normRow);
     assert.equal(historicoCiclos.length - 1, 22, 'Histórico Ciclos rows = every explicit cycle');
 
-    /* Back to Cosentyx: stale Kisqali cleared, fresh confirm, Q2 + Q4 hold. */
+    /* Back to Cosentyx: stale Kisqali cleared, fresh confirm, Q2 + Q4 hold.
+     * Fresh confirmations start collapsed; quarter changes only refresh. */
     await page.locator('#informes-drug-select').selectOption('cosentyx');
     assert.deepEqual(await page.evaluate(() => window.FarmaciaEstadisticasInformes.getState()), { report: null },
         'returning to Cosentyx clears the Kisqali result');
@@ -553,8 +747,11 @@ try {
         'period defaults to the latest fixture value again, not the previously seen Q2');
     await page.locator('#informes-view-report').click();
     await assertQuarterView(page, '2026-Q4');
+    await assertCosentyxDetailCollapsed(page);
+    await assertCosentyxDetail(page, '2026-Q4');
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     await assertQuarterView(page, '2026-Q2');
+    await assertCosentyxDetail(page, '2026-Q2');
 
     /* View switching preserves the confirmed report + selection + focus. */
     await page.locator('#population-view-btn').click();
@@ -574,16 +771,29 @@ try {
     await page.locator('#informes-view-btn').click();
     await page.waitForFunction(() => document.querySelector('main.main-content').classList.contains('farmacia-informes-mode'));
     await assertQuarterView(page, '2026-Q2');
+    /* Disclose the six-column detail so the viewports measure the widest
+     * composed state (internal table scroll, never page scroll). */
+    await assertCosentyxDetail(page, '2026-Q2');
 
-    /* No page-level horizontal overflow on the supported viewports. */
+    /* No page-level horizontal overflow on the supported viewports, with
+     * the six-column detail disclosed: the wide table scrolls inside its
+     * own container, never the page. */
     for (const width of [1440, 1024, 768]) {
         await page.setViewportSize({ width, height: 900 });
-        const measured = await assertNoPageOverflow(page, `confirmed Cosentyx Q2 @${width}`);
+        const measured = await assertNoPageOverflow(page, `disclosed Cosentyx Q2 @${width}`);
         console.log(`viewport ${width}: scrollWidth=${measured.scrollWidth} clientWidth=${measured.clientWidth}`);
+        await assertInformesLegible(page, `disclosed Cosentyx Q2 @${width}`);
     }
     await page.setViewportSize({ width: 375, height: 900 });
-    const measured375 = await assertNoPageOverflow(page, 'confirmed Cosentyx Q2 @375');
+    const measured375 = await assertNoPageOverflow(page, 'disclosed Cosentyx Q2 @375');
     console.log(`viewport 375: scrollWidth=${measured375.scrollWidth} clientWidth=${measured375.clientWidth}`);
+    await assertInformesLegible(page, 'disclosed Cosentyx Q2 @375');
+    const innerScroll = await page.evaluate(() => {
+        const box = document.querySelector('.cosentyx-detail-scroll');
+        return { scrollWidth: box.scrollWidth, clientWidth: box.clientWidth };
+    });
+    assert.ok(innerScroll.scrollWidth > innerScroll.clientWidth,
+        `wide six-column table scrolls inside its container at 375 (scrollWidth=${innerScroll.scrollWidth} clientWidth=${innerScroll.clientWidth})`);
     await page.setViewportSize({ width: 1440, height: 900 });
 
     /* Return to the population analysis through the supported switcher. */
@@ -629,11 +839,15 @@ try {
         'CSV column contract unchanged');
     await page.locator('#clear-quick-filters').click();
     await page.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 3);
+    /* Population untouched by the report journey (layout-only T3): the six
+     * ordinary KPI values are identical before/after the report switch. */
+    assert.deepEqual(await readPopulationKpis(page), populationKpisBefore,
+        'population KPI values identical before/after the report journey');
 
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_cosentyx_informe_browser_check: PASS');
-    console.log('QA Chromium: neutral entry OK (no precomputed Cosentyx, CTA gated, {report:null}); Cosentyx Q4 default-latest → Ver reporte → Q1/Q2/Q3/Q4 differ from fixture (Q4 discontinuation-only); 6 categories + unique shown; real XLSX Q2+Q4 Resumen+Detalle match hand-derived literals and UI model (Q2 unique=8, not blind sum 11; Q4 unique=1); Fármaco switch clears stale results; Kisqali executive composition (heroes + closing bars + Ver detalle gate + six-column table) Mensual + Histórico real XLSX OK; back to Cosentyx Q2/Q4; view-switch preserves confirmed selection; population filters+CSV unaffected; 1440/1024/768/375 no page overflow; console.error=0 pageerror=0');
+    console.log('QA Chromium: neutral entry OK (no precomputed Cosentyx, CTA gated, {report:null}); Cosentyx Q4 default-latest → Ver reporte → Q1/Q2/Q3/Q4 differ from fixture (Q4 discontinuation-only); executive composition (6 categories from model + emphasized unique with event-row copy + period line + collapsed Ver detalle with keyboard focus + exact six-column cells: Q4 Discontinuado + 150 mg + literal Decisión clínica documentada + 2026-10-01, never active); fresh confirm re-collapses while quarter change preserves; real XLSX Q2+Q4 Resumen+Detalle match hand-derived literals and UI model (Q2 unique=8, not blind sum 11; Q4 unique=1); Fármaco switch clears stale results; Kisqali executive composition (heroes + closing bars + Ver detalle gate + six-column table) Mensual + Histórico real XLSX OK; back to Cosentyx Q2/Q4; view-switch preserves confirmed selection; six population KPI values identical before/after + filters + filtered CSV unaffected; 1440/1024/768/375 no page overflow with disclosed detail (internal table scroll only, no clipped KPI labels); console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

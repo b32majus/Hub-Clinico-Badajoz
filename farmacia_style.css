@@ -4172,9 +4172,13 @@
     margin-top: 4px;
 }
 
+/* T3 #596: la rejilla de KPIs poblacionales recompone como máximo 3/2/1
+ * columnas según el ancho (3+3 / 2+2+2 / 1): etiquetas legibles sin
+ * desplazamiento horizontal de página. Solo rejilla; números, filtros, CSV
+ * y controlador de población intactos. */
 .stats-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -4817,13 +4821,13 @@
 /* Responsive */
 @media (max-width: 1400px) {
     .stats-kpi-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 1100px) {
     .stats-kpi-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .stats-charts-grid {
@@ -4883,7 +4887,7 @@
     }
 
     .stats-kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .stats-kpi-value {
@@ -4931,7 +4935,7 @@
 
 @media (max-width: 600px) {
     .stats-kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .stats-hero-summary {
@@ -4972,7 +4976,7 @@
 
 @media (max-width: 400px) {
     .stats-kpi-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .stats-kpi-card {
@@ -6785,4 +6789,81 @@ main.farmacia-informes-mode .informes-section {
     #kisqali-patients-table .kisqali-ciclos-toggle {
         width: auto;
     }
+}
+
+/* T3 #596 — Cosentyx composición ejecutiva (page-local, sin rediseño
+ * global): misma jerarquía editorial que el T2 de Kisqali con contenido
+ * clínico distinto (sin barras de dosis). Seis categorías desde el modelo,
+ * tarjeta única separada y enfatizada con nota explicativa, botón real
+ * «Ver detalle» colapsado por defecto y tabla de seis columnas exactas que
+ * desplaza DENTRO de su contenedor, nunca la página. El régimen del hecho
+ * y el motivo registrado viven como sublíneas dentro de su columna: no hay
+ * séptima columna. */
+.informes-kpi--total {
+    border-top: 4px solid #1D4ED8;
+    box-shadow: 0 8px 20px rgba(29, 78, 216, 0.10);
+}
+
+.cosentyx-unique-note {
+    margin-top: 6px;
+    color: #1E3A8A;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.cosentyx-detail-toggle {
+    margin: 4px 0 0;
+}
+
+.cosentyx-detail-toggle:focus-visible,
+#informes-detail-toggle:focus-visible {
+    outline: 3px solid #1D4ED8;
+    outline-offset: 2px;
+}
+
+#informes-detail-panel {
+    margin-top: 12px;
+}
+
+#informes-detail-panel[hidden] {
+    display: none !important;
+}
+
+/* La tabla de seis columnas desplaza DENTRO de su contenedor. */
+.table-responsive-wrapper.cosentyx-detail-scroll {
+    margin: 0;
+    padding: 0 2px 4px;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.table-responsive-wrapper.cosentyx-detail-scroll .data-table {
+    min-width: 760px;
+}
+
+.informes-event-cell .informes-case-type {
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.informes-regime-note {
+    display: block;
+    margin-top: 4px;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.informes-status-cell .informes-status-value {
+    font-weight: 800;
+    color: #0F172A;
+}
+
+.informes-reason-note {
+    display: block;
+    margin-top: 4px;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
 }
