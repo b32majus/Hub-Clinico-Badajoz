@@ -256,7 +256,7 @@ function initSidebar() {
 
 function checkProfessionalSession() {
     var currentPage = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    if (currentPage === 'index.html') return;
+    if (currentPage === 'index.html' || currentPage === 'reuma_index.html') return;
     if (!localStorage.getItem('hubSelectedProfessional')) {
         window.location.href = 'index.html';
     }
@@ -1059,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar logout
     initLogoutBtn();
 
-    // Session gate (solo en index.html)
+    // Session gate (solo en las portadas Reuma: index.html y reuma_index.html)
     initSessionGate();
 
     // --- DOM Elements ---
