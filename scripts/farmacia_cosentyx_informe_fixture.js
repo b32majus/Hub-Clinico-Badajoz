@@ -30,6 +30,24 @@
  *   unknown current status; omitted field = absent fact. T2 records these
  *   facts only; projection into computeReport/detail_rows/XLSX/UI belongs to
  *   a later ticket.
+ * - discontinued_at: explicit treatment-discontinuation fact (ISO date-only)
+ *   or null (explicitly unknown date); omitted field = no recorded
+ *   discontinuation fact. NEVER deduced from missing cycles/dispensations.
+ *   The event delimits its own quarterly date; listQuarters collects it.
+ * - regime_at_discontinuation: explicitly recorded regimen at the
+ *   discontinuation event. Only exact 'q2w' classifies for the HS
+ *   discontinuation category; it is never guessed from the initial or
+ *   current prescription and may legitimately differ from initial_regime.
+ *   null = explicitly unknown; omitted field = absent fact; any other
+ *   explicit value stays non-classifiable.
+ * - reason: explicitly recorded discontinuation reason (free synthetic
+ *   string) or omitted field = absent fact (no cause invented). Only
+ *   meaningful on a dated discontinuation row; never inferred.
+ * - Status coherence: every patient carrying a dated discontinued_at fact
+ *   records current_treatment: false and no active current regimen, so a
+ *   discontinued patient can never read as active. A patient whose
+ *   discontinuation fact is undated (discontinued_at null) keeps
+ *   current_treatment: true: the undated fact includes nothing.
  */
 (function (root) {
     'use strict';
@@ -158,6 +176,85 @@
             initial_regime: 'q4w',
             regime_movements: [movement('q4w', 'q2w', '2026-08-20')],
             presentation_label: '150 mg', current_regime: 'q2w'
+        },
+        /* HS — reducción de frecuencia q2w -> q4w (positivo): inicio q2w en Q2
+           y movimiento explícito q2w -> q4w dentro de Q2. Mismo paciente con
+           dos hechos en el trimestre (inicio + reducción): el total único lo
+           cuenta una vez. Estado actual q4w registrado, no derivado. */
+        {
+            patient_id: 'COS-HS-008', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-05-04', validated_at: null, current_treatment: true,
+            initial_regime: 'q2w',
+            regime_movements: [movement('q2w', 'q4w', '2026-06-10')],
+            presentation_label: '150 mg', current_regime: 'q4w'
+        },
+        /* HS — inicio q2w en Q1 y discontinuación explícita en el último día
+           de Q3 (borde final inclusivo) con régimen en el hecho q2w y motivo
+           registrado. current_treatment: false y sin régimen actual: un
+           discontinuado nunca se presenta como activo. El régimen en el
+           hecho es explícito, no deducido de la prescripción inicial. */
+        {
+            patient_id: 'COS-HS-009', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-02-10', validated_at: null, current_treatment: false,
+            initial_regime: 'q2w', regime_movements: [],
+            presentation_label: '300 mg',
+            discontinued_at: '2026-09-30', regime_at_discontinuation: 'q2w',
+            reason: 'motivo administrativo registrado'
+        },
+        /* HS — testigo del trimestre SOLO con discontinuación (Q4): primera
+           dispensación Q1 a q4w (no es inicio HS q2w), sin movimientos, y
+           discontinuación explícita el primer día de Q4 (borde inicial
+           inclusivo) con régimen en el hecho q2w. Motivo omitido: la ausencia
+           queda ausente, sin causa inventada. Nótese que el régimen inicial
+           (q4w) difiere del régimen en el hecho (q2w): el hecho manda. */
+        {
+            patient_id: 'COS-HS-010', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-01-20', validated_at: null, current_treatment: false,
+            initial_regime: 'q4w', regime_movements: [],
+            presentation_label: '150 mg',
+            discontinued_at: '2026-10-01', regime_at_discontinuation: 'q2w'
+        },
+        /* Negativo: discontinuación SIN fecha (discontinued_at null =
+           explícitamente desconocida) -> nunca incluye, aunque el régimen en
+           el hecho sea q2w. Sigue en tratamiento actual: el hecho sin fecha
+           no delimita trimestre. */
+        {
+            patient_id: 'COS-HS-011', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-05-18', validated_at: null, current_treatment: true,
+            initial_regime: 'q4w', regime_movements: [],
+            presentation_label: '300 mg', current_regime: 'q4w',
+            discontinued_at: null, regime_at_discontinuation: 'q2w'
+        },
+        /* Negativo: discontinuación con fecha DENTRO del trimestre (2026-06-05,
+           Q2) pero régimen en el hecho q4w (no q2w) -> excluida de la categoría
+           HS. La fecha por sí sola no incluye. Discontinuado registrado como
+           no activo (current_treatment: false). */
+        {
+            patient_id: 'COS-HS-012', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-05-19', validated_at: null, current_treatment: false,
+            initial_regime: 'q4w', regime_movements: [],
+            presentation_label: '150 mg',
+            discontinued_at: '2026-06-05', regime_at_discontinuation: 'q4w',
+            reason: 'motivo administrativo registrado'
+        },
+        /* Negativo: movimiento q2w -> q4w SIN fecha efectiva -> no es
+           reducción. Dispensación Q2 a q4w: tampoco es inicio HS q2w. */
+        {
+            patient_id: 'COS-HS-013', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-04-22', validated_at: null, current_treatment: true,
+            initial_regime: 'q4w',
+            regime_movements: [movement('q2w', 'q4w', null)],
+            presentation_label: '150 mg', current_regime: 'q4w'
+        },
+        /* Negativo: discontinuación con fecha DENTRO del trimestre (2026-06-20,
+           Q2) pero régimen en el hecho ausente (campo omitido) -> no
+           clasificable para esta categoría. Motivo también ausente. */
+        {
+            patient_id: 'COS-HS-014', pathology: 'HS', drug: 'Cosentyx',
+            first_dispensing_at: '2026-06-02', validated_at: null, current_treatment: false,
+            initial_regime: 'q4w', regime_movements: [],
+            presentation_label: '150 mg',
+            discontinued_at: '2026-06-20'
         }
     ];
 

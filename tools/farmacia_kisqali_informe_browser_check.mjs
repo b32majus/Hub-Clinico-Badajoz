@@ -132,10 +132,26 @@ const EXPECTED_KISQALI_PATIENT_ROWS = {
     ]
 };
 
-/* Default Cosentyx expectations (#576, unchanged). */
+/* Default Cosentyx expectations (#576 + #593 six categories).
+ *
+ * Hand-derived from the explicit synthetic Cosentyx witness list (never from
+ * computeReport/listQuarters/DOM):
+ * - Q1: PSO-001 disp 03-31 (pso 1); HS-001 disp 02-01 q2w + HS-009 disp 02-10
+ *   q2w (hs_start 2); no q4w->q2w move, no q2w->q4w move, no dated q2w
+ *   discontinuation in Q1 (int/reduction/disc 0); unique {PSO-001, HS-001,
+ *   HS-009} = 3.
+ * - Q2: PSO-002 + PSO-005 (pso 2); PSA-001 + PSA-003 (psa 2); HS-003 + HS-006
+ *   + HS-008 starts (hs_start 3); HS-003 05-15 + HS-002 06-30 q4w->q2w
+ *   (int 2); HS-003 04-20 + HS-008 06-10 q2w->q4w (red 2); no dated q2w
+ *   discontinuation (disc 0); unique 8.
+ * - Quarter selector: Q1/Q2/Q3 anchored by dispensings/movements plus Q4
+ *   anchored ONLY by the explicit HS-010 discontinued_at 2026-10-01
+ *   (no Q4 dispensing or movement exists).
+ * - Q4: ONLY HS-010 discontinuation (disc 1, everything else 0); unique 1. */
 const EXPECTED_COSENTYX = {
-    '2026-Q1': { dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '1', hs_intensification: '0', unique: '2' } },
-    '2026-Q2': { dom: { pso_start: '1', psa_start: '1', hs_start_q2w: '1', hs_intensification: '2', unique: '4' } }
+    '2026-Q1': { dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '2', hs_intensification: '0', hs_reduction: '0', hs_discontinuation: '0', unique: '3' } },
+    '2026-Q2': { dom: { pso_start: '2', psa_start: '2', hs_start_q2w: '3', hs_intensification: '2', hs_reduction: '2', hs_discontinuation: '0', unique: '8' } },
+    '2026-Q4': { dom: { pso_start: '0', psa_start: '0', hs_start_q2w: '0', hs_intensification: '0', hs_reduction: '0', hs_discontinuation: '1', unique: '1' } }
 };
 
 const mime = new Map([
@@ -252,13 +268,16 @@ try {
     const reportValue = await page.locator('#informes-report-select').inputValue();
     assert.equal(reportValue, 'cosentyx', 'default report is Cosentyx');
     const quarters = await page.locator('#informes-quarter-select option').evaluateAll(options => options.map(option => option.value));
-    assert.deepEqual(quarters, ['2026-Q1', '2026-Q2', '2026-Q3'], 'Cosentyx quarter selector unchanged');
+    assert.deepEqual(quarters, ['2026-Q1', '2026-Q2', '2026-Q3', '2026-Q4'], 'Cosentyx quarter selector with the discontinuation-only quarter');
 
-    /* Default Cosentyx still computes its accepted Q1 view. */
+    /* Default Cosentyx still computes its accepted Q1 view (six categories). */
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom,
         'default Cosentyx report still works unchanged');
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
+    /* The discontinuation-only quarter is selectable with its computed row. */
+    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom);
     await page.locator('#informes-quarter-select').selectOption('2026-Q1');
 
     /* Select Kisqali through the new report selector. */
@@ -441,6 +460,9 @@ try {
         'Cosentyx report unchanged after Kisqali visit');
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
+    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom,
+        'discontinuation-only quarter unchanged after Kisqali visit');
 
     /* Return to the population analysis through the supported switcher. */
     await page.locator('#population-view-btn').click();

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* #576 Informe trimestral Cosentyx — deterministic model checker.
+/* #576 Informe trimestral Cosentyx (+ #593 dos hechos HS adicionales) — deterministic model checker.
  *
  * Independent oracle: the expected results below are hand-derived from the
  * versioned synthetic fixture contract (farmacia_cosentyx_informe_fixture_v1),
@@ -39,55 +39,133 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
  * - COS-HS-001  first dispensing 2026-02-01, regime q2w    -> Q1 HS q2w start
  * - COS-HS-002  first dispensing 2026-03-31 (Q1 LAST day) at q4w -> no HS q2w start;
  *               movement q4w->q2w effective 2026-06-30 (Q2 LAST day) -> Q2 intensification
+ *               (that movement is NOT a reduction: direction q4w->q2w only)
  * - COS-HS-003  first dispensing 2026-04-02 at q2w -> Q2 HS q2w start;
- *               movements q2w->q4w 2026-04-20 and q4w->q2w 2026-05-15 -> Q2 intensification
- *               (same patient, two inclusion facts -> blind sum != unique total in Q2)
- * - COS-HS-004  first dispensing 2026-04-03 at q4w, no movement -> never intensification
+ *               movements q2w->q4w 2026-04-20 (-> Q2 REDUCTION) and q4w->q2w
+ *               2026-05-15 (-> Q2 intensification): same patient, THREE inclusion
+ *               facts in Q2 -> blind sum != unique total in Q2
+ * - COS-HS-004  first dispensing 2026-04-03 at q4w, no movement -> never intensification/reduction
  * - COS-HS-005  first dispensing 2026-04-07, regime explicitly unknown (null) -> non-classifiable;
  *               presentation '150 mg' recorded anyway (presentation never implies regime),
  *               current_regime null (explicitly unknown)
- * - COS-HS-006  first dispensing 2026-04-15 at q2w -> Q2 HS q2w start (Q2 shows 2)
+ * - COS-HS-006  first dispensing 2026-04-15 at q2w -> Q2 HS q2w start (Q2 shows 3)
  * - COS-HS-007  first dispensing 2026-07-01 (Q3 FIRST day boundary) at q4w
  *               -> no HS q2w start; movement q4w->q2w effective 2026-08-20 -> Q3 intensification
+ * - COS-HS-008  first dispensing 2026-05-04 at q2w -> Q2 HS q2w start;
+ *               movement q2w->q4w effective 2026-06-10 -> Q2 REDUCTION (positive
+ *               reduction witness; same patient, two Q2 facts -> counted once);
+ *               presentation '150 mg', current 'q4w' (recorded, not derived)
+ * - COS-HS-009  first dispensing 2026-02-10 at q2w -> Q1 HS q2w start (Q1 shows 2);
+ *               discontinued_at 2026-09-30 (Q3 LAST day boundary) with
+ *               regime_at_discontinuation 'q2w' and recorded reason
+ *               -> Q3 DISCONTINUATION; current_treatment false, no current
+ *               regimen (a discontinued patient is never shown active)
+ * - COS-HS-010  first dispensing 2026-01-20 at q4w -> no HS q2w start anywhere;
+ *               no movements; discontinued_at 2026-10-01 (Q4 FIRST day boundary)
+ *               with regime_at_discontinuation 'q2w', reason OMITTED (absent
+ *               stays absent, no cause invented) -> Q4 DISCONTINUATION, the ONLY
+ *               Q4 fact: Q4 is the discontinuation-only quarter. Note the event
+ *               regimen (q2w) legitimately differs from the initial regime (q4w):
+ *               the explicit event fact governs, never the prescription.
+ * - COS-HS-011  first dispensing 2026-05-18 at q4w -> no start; discontinued_at
+ *               null (explicitly unknown date) with event regimen q2w -> NEVER
+ *               included (no date delimits no quarter); still on current treatment
+ * - COS-HS-012  first dispensing 2026-05-19 at q4w -> no start; discontinued_at
+ *               2026-06-05 (INSIDE Q2) but regime_at_discontinuation 'q4w'
+ *               -> EXCLUDED from the HS q2w category (date alone never includes)
+ * - COS-HS-013  first dispensing 2026-04-22 at q4w -> no start; movement
+ *               q2w->q4w with NO effective date -> NEVER a reduction
+ * - COS-HS-014  first dispensing 2026-06-02 at q4w -> no start; discontinued_at
+ *               2026-06-20 (INSIDE Q2) but regime_at_discontinuation OMITTED
+ *               (absent) -> EXCLUDED (absent event regimen is non-classifiable)
  *
  * NO q6w anywhere in the visible fixture. The q6w negative witness lives ONLY
  * as checker-local variants (see section 5b): an out-of-vocabulary explicit
  * regime stays verbatim and never classifies.
  */
+const REASON_009 = 'motivo administrativo registrado';
 const EXPECTED = {
     '2026-Q1': {
-        counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 1, hs_intensification: 0 },
-        unique: 2,
+        counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 2, hs_intensification: 0, hs_reduction: 0, hs_discontinuation: 0 },
+        unique: 3,
         rows: [
-            ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-03-31', 'q4w'],
-            ['COS-HS-001', 'HS', 'HS — nuevo inicio q2w', '2026-02-01', 'q2w']
+            ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-03-31', 'q4w', '150 mg', 'q4w', false, undefined],
+            ['COS-HS-001', 'HS', 'HS — nuevo inicio q2w', '2026-02-01', 'q2w', '300 mg', 'q2w', false, undefined],
+            ['COS-HS-009', 'HS', 'HS — nuevo inicio q2w', '2026-02-10', 'q2w', '300 mg', undefined, false, undefined]
         ]
     },
     '2026-Q2': {
-        counts: { pso_start: 2, psa_start: 2, hs_start_q2w: 2, hs_intensification: 2 },
-        unique: 7,
+        counts: { pso_start: 2, psa_start: 2, hs_start_q2w: 3, hs_intensification: 2, hs_reduction: 2, hs_discontinuation: 0 },
+        unique: 8,
         rows: [
-            ['COS-PSO-002', 'PsO', 'PsO — nuevo inicio', '2026-04-01', 'q4w'],
-            ['COS-PSO-005', 'PsO', 'PsO — nuevo inicio', '2026-05-06', 'q4w'],
-            ['COS-PSA-001', 'PsA', 'PsA — nuevo inicio', '2026-04-10', 'q4w'],
-            ['COS-PSA-003', 'PsA', 'PsA — nuevo inicio', '2026-05-12', 'q4w'],
-            ['COS-HS-003', 'HS', 'HS — nuevo inicio q2w', '2026-04-02', 'q2w'],
-            ['COS-HS-006', 'HS', 'HS — nuevo inicio q2w', '2026-04-15', 'q2w'],
-            ['COS-HS-003', 'HS', 'HS — intensificación q4w → q2w', '2026-05-15', 'q4w → q2w'],
-            ['COS-HS-002', 'HS', 'HS — intensificación q4w → q2w', '2026-06-30', 'q4w → q2w']
+            ['COS-PSO-002', 'PsO', 'PsO — nuevo inicio', '2026-04-01', 'q4w', '300 mg', 'q4w', false, undefined],
+            ['COS-PSO-005', 'PsO', 'PsO — nuevo inicio', '2026-05-06', 'q4w', '300 mg', 'q4w', false, undefined],
+            ['COS-PSA-001', 'PsA', 'PsA — nuevo inicio', '2026-04-10', 'q4w', '150 mg', 'q4w', false, undefined],
+            ['COS-PSA-003', 'PsA', 'PsA — nuevo inicio', '2026-05-12', 'q4w', '300 mg', 'q4w', false, undefined],
+            ['COS-HS-003', 'HS', 'HS — nuevo inicio q2w', '2026-04-02', 'q2w', '300 mg', 'q2w', false, undefined],
+            ['COS-HS-006', 'HS', 'HS — nuevo inicio q2w', '2026-04-15', 'q2w', '300 mg', 'q2w', false, undefined],
+            ['COS-HS-008', 'HS', 'HS — nuevo inicio q2w', '2026-05-04', 'q2w', '150 mg', 'q4w', false, undefined],
+            ['COS-HS-003', 'HS', 'HS — intensificación q4w → q2w', '2026-05-15', 'q4w → q2w', '300 mg', 'q2w', false, undefined],
+            ['COS-HS-002', 'HS', 'HS — intensificación q4w → q2w', '2026-06-30', 'q4w → q2w', '150 mg', 'q2w', false, undefined],
+            ['COS-HS-003', 'HS', 'HS — reducción de frecuencia q2w → q4w', '2026-04-20', 'q2w → q4w', '300 mg', 'q2w', false, undefined],
+            ['COS-HS-008', 'HS', 'HS — reducción de frecuencia q2w → q4w', '2026-06-10', 'q2w → q4w', '150 mg', 'q4w', false, undefined]
         ]
     },
     '2026-Q3': {
-        counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 0, hs_intensification: 1 },
-        unique: 2,
+        counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 0, hs_intensification: 1, hs_reduction: 0, hs_discontinuation: 1 },
+        unique: 3,
         rows: [
-            ['COS-PSO-004', 'PsO', 'PsO — nuevo inicio', '2026-07-03', 'q4w'],
-            ['COS-HS-007', 'HS', 'HS — intensificación q4w → q2w', '2026-08-20', 'q4w → q2w']
+            ['COS-PSO-004', 'PsO', 'PsO — nuevo inicio', '2026-07-03', 'q4w', '150 mg', 'q4w', false, undefined],
+            ['COS-HS-007', 'HS', 'HS — intensificación q4w → q2w', '2026-08-20', 'q4w → q2w', '150 mg', 'q2w', false, undefined],
+            ['COS-HS-009', 'HS', 'HS — discontinuación q2w', '2026-09-30', 'q2w', '300 mg', undefined, true, REASON_009]
+        ]
+    },
+    '2026-Q4': {
+        counts: { pso_start: 0, psa_start: 0, hs_start_q2w: 0, hs_intensification: 0, hs_reduction: 0, hs_discontinuation: 1 },
+        unique: 1,
+        rows: [
+            ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', undefined, true, undefined]
         ]
     }
 };
+/* Hand-derived XLSX Detalle rows (8 columns) for the representative quarter
+ * Q2, the discontinuation quarters Q3/Q4 and the Q1 projection-absence row:
+ * [Paciente, Patología, Tipo de caso, Fecha, Régimen explícito,
+ *  Presentación explícita, Estado actual explícito, Motivo registrado].
+ * A discontinued row reads 'Discontinuado', never active; an absent reason
+ * reads 'No registrado', never invented; an absent current status reads
+ * 'No registrado', never derived from history. */
+const EXPECTED_DETALLE = {
+    '2026-Q1': [
+        ['COS-PSO-001', 'PsO', 'PsO — nuevo inicio', '2026-03-31', 'q4w', '150 mg', 'q4w', 'No registrado'],
+        ['COS-HS-001', 'HS', 'HS — nuevo inicio q2w', '2026-02-01', 'q2w', '300 mg', 'q2w', 'No registrado'],
+        ['COS-HS-009', 'HS', 'HS — nuevo inicio q2w', '2026-02-10', 'q2w', '300 mg', 'No registrado', 'No registrado']
+    ],
+    '2026-Q2': [
+        ['COS-PSO-002', 'PsO', 'PsO — nuevo inicio', '2026-04-01', 'q4w', '300 mg', 'q4w', 'No registrado'],
+        ['COS-PSO-005', 'PsO', 'PsO — nuevo inicio', '2026-05-06', 'q4w', '300 mg', 'q4w', 'No registrado'],
+        ['COS-PSA-001', 'PsA', 'PsA — nuevo inicio', '2026-04-10', 'q4w', '150 mg', 'q4w', 'No registrado'],
+        ['COS-PSA-003', 'PsA', 'PsA — nuevo inicio', '2026-05-12', 'q4w', '300 mg', 'q4w', 'No registrado'],
+        ['COS-HS-003', 'HS', 'HS — nuevo inicio q2w', '2026-04-02', 'q2w', '300 mg', 'q2w', 'No registrado'],
+        ['COS-HS-006', 'HS', 'HS — nuevo inicio q2w', '2026-04-15', 'q2w', '300 mg', 'q2w', 'No registrado'],
+        ['COS-HS-008', 'HS', 'HS — nuevo inicio q2w', '2026-05-04', 'q2w', '150 mg', 'q4w', 'No registrado'],
+        ['COS-HS-003', 'HS', 'HS — intensificación q4w → q2w', '2026-05-15', 'q4w → q2w', '300 mg', 'q2w', 'No registrado'],
+        ['COS-HS-002', 'HS', 'HS — intensificación q4w → q2w', '2026-06-30', 'q4w → q2w', '150 mg', 'q2w', 'No registrado'],
+        ['COS-HS-003', 'HS', 'HS — reducción de frecuencia q2w → q4w', '2026-04-20', 'q2w → q4w', '300 mg', 'q2w', 'No registrado'],
+        ['COS-HS-008', 'HS', 'HS — reducción de frecuencia q2w → q4w', '2026-06-10', 'q2w → q4w', '150 mg', 'q4w', 'No registrado']
+    ],
+    '2026-Q3': [
+        ['COS-PSO-004', 'PsO', 'PsO — nuevo inicio', '2026-07-03', 'q4w', '150 mg', 'q4w', 'No registrado'],
+        ['COS-HS-007', 'HS', 'HS — intensificación q4w → q2w', '2026-08-20', 'q4w → q2w', '150 mg', 'q2w', 'No registrado'],
+        ['COS-HS-009', 'HS', 'HS — discontinuación q2w', '2026-09-30', 'q2w', '300 mg', 'Discontinuado', REASON_009]
+    ],
+    '2026-Q4': [
+        ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', 'Discontinuado', 'No registrado']
+    ]
+};
 const QUARTERS = Object.keys(EXPECTED);
-const NEGATIVE_PATIENTS = ['COS-PSO-003', 'COS-PSA-002', 'COS-HS-004', 'COS-HS-005'];
+const NEGATIVE_PATIENTS = ['COS-PSO-003', 'COS-PSA-002', 'COS-HS-004', 'COS-HS-005',
+    'COS-HS-011', 'COS-HS-012', 'COS-HS-013', 'COS-HS-014'];
 
 const reports = {};
 for (const quarter of QUARTERS) reports[quarter] = Informe.computeReport(Fixture, quarter);
@@ -107,7 +185,8 @@ function check(name, fn) {
 
 function rowTuples(report) {
     return report.detail_rows.map(row =>
-        [row.patient_id, row.pathology, row.case_type, row.fact_date, row.regime]);
+        [row.patient_id, row.pathology, row.case_type, row.fact_date, row.regime,
+            row.presentation, row.current_regime, row.discontinued, row.reason]);
 }
 
 /* Deep clone for model-level variant probes; JSON keeps explicit nulls and
@@ -201,10 +280,86 @@ check('fixture: explicit current_regime facts recorded independently, absence pr
     assert.notEqual(diverged.initial_regime, diverged.current_regime,
         'initial and current regimes are independent facts on the same record');
 });
+check('fixture: HS reduction positive witnesses (explicit q2w->q4w with date)', () => {
+    const hs008 = Fixture.patients.find(p => p.patient_id === 'COS-HS-008');
+    assert.ok(hs008, 'COS-HS-008 must exist');
+    assert.equal(hs008.first_dispensing_at, '2026-05-04');
+    assert.equal(hs008.initial_regime, 'q2w');
+    assert.deepEqual(hs008.regime_movements.map(m => [m.from, m.to, m.effective_at]),
+        [['q2w', 'q4w', '2026-06-10']]);
+    /* The pre-existing COS-HS-003 q2w->q4w movement is the second reduction fact. */
+    const hs003 = Fixture.patients.find(p => p.patient_id === 'COS-HS-003');
+    assert.ok(hs003.regime_movements.some(m => m.from === 'q2w' && m.to === 'q4w' && m.effective_at === '2026-04-20'),
+        'COS-HS-003 keeps its dated q2w->q4w movement');
+    /* Reduction is never labelled as a clinical benefit/improvement anywhere. */
+    const modelSource = readFileSync(path.join(ROOT, 'scripts/farmacia_cosentyx_informe_model.js'), 'utf8');
+    assert.equal(/optimiz/i.test(modelSource), false, 'no optimization language in the model');
+    assert.equal(/beneficio/i.test(modelSource), false, 'no benefit language in the model');
+});
+check('fixture: HS discontinuation positive witnesses (dated + q2w event regimen)', () => {
+    const hs009 = Fixture.patients.find(p => p.patient_id === 'COS-HS-009');
+    assert.ok(hs009, 'COS-HS-009 must exist');
+    assert.equal(hs009.discontinued_at, '2026-09-30', 'Q3 last-day boundary');
+    assert.equal(hs009.regime_at_discontinuation, 'q2w', 'event regimen explicit, not from prescription');
+    assert.equal(hs009.reason, REASON_009, 'recorded reason is an explicit fact');
+    const hs010 = Fixture.patients.find(p => p.patient_id === 'COS-HS-010');
+    assert.ok(hs010, 'COS-HS-010 must exist');
+    assert.equal(hs010.discontinued_at, '2026-10-01', 'Q4 first-day boundary');
+    assert.equal(hs010.regime_at_discontinuation, 'q2w');
+    assert.ok(!('reason' in hs010), 'absent reason stays absent, never defaulted');
+});
+check('fixture: status coherence — dated discontinuation is recorded NOT active', () => {
+    for (const id of ['COS-HS-009', 'COS-HS-010', 'COS-HS-012', 'COS-HS-014']) {
+        const patient = Fixture.patients.find(p => p.patient_id === id);
+        assert.ok(patient, `${id} must exist`);
+        assert.ok(typeof patient.discontinued_at === 'string', `${id} carries a dated discontinuation fact`);
+        assert.equal(patient.current_treatment, false, `${id} is recorded NOT active`);
+        assert.ok(!('current_regime' in patient) || patient.current_regime === null,
+            `${id} claims no active current regimen`);
+    }
+    /* The undated discontinuation fact keeps the patient on current treatment. */
+    const hs011 = Fixture.patients.find(p => p.patient_id === 'COS-HS-011');
+    assert.equal(hs011.discontinued_at, null, 'null = explicitly unknown discontinuation date');
+    assert.equal(hs011.current_treatment, true, 'an undated fact includes nothing');
+});
+check('fixture: event regimen independent of initial prescription', () => {
+    const hs010 = Fixture.patients.find(p => p.patient_id === 'COS-HS-010');
+    assert.equal(hs010.initial_regime, 'q4w', 'initial prescription regime');
+    assert.equal(hs010.regime_at_discontinuation, 'q2w', 'event regimen differs legitimately');
+    assert.notEqual(hs010.initial_regime, hs010.regime_at_discontinuation,
+        'the event fact governs classification, never the prescription');
+});
+check('fixture: HS discontinuation/reduction negative witnesses exist', () => {
+    const hs011 = Fixture.patients.find(p => p.patient_id === 'COS-HS-011');
+    assert.ok(hs011 && hs011.discontinued_at === null, 'COS-HS-011: discontinuation without date');
+    const hs012 = Fixture.patients.find(p => p.patient_id === 'COS-HS-012');
+    assert.ok(hs012, 'COS-HS-012 must exist');
+    assert.equal(hs012.discontinued_at, '2026-06-05', 'in-quarter date, but non-q2w event regimen');
+    assert.equal(hs012.regime_at_discontinuation, 'q4w');
+    const hs013 = Fixture.patients.find(p => p.patient_id === 'COS-HS-013');
+    assert.ok(hs013, 'COS-HS-013 must exist');
+    assert.equal(hs013.regime_movements.length, 1);
+    assert.equal(hs013.regime_movements[0].effective_at, null, 'movement without effective date');
+    const hs014 = Fixture.patients.find(p => p.patient_id === 'COS-HS-014');
+    assert.ok(hs014, 'COS-HS-014 must exist');
+    assert.equal(hs014.discontinued_at, '2026-06-20', 'in-quarter date, but absent event regimen');
+    assert.ok(!('regime_at_discontinuation' in hs014), 'event regimen field absent');
+});
 
 /* 2. Quarter selector derived from fixture facts; closed temporal ranges. */
 check('quarters: derived from fixture facts', () => {
     assert.deepEqual(Informe.listQuarters(Fixture), QUARTERS);
+});
+check('quarters: Q4 exists ONLY through an explicit discontinuation fact', () => {
+    assert.ok(QUARTERS.includes('2026-Q4'), 'the discontinuation-only quarter is exposed');
+    const q4Range = Informe.quarterRange('2026-Q4');
+    const dispensingOrMovementInQ4 = Fixture.patients.some(patient =>
+        (patient.first_dispensing_at && q4Range.start <= patient.first_dispensing_at && patient.first_dispensing_at <= q4Range.end)
+        || (patient.regime_movements || []).some(movement =>
+            movement && movement.effective_at && q4Range.start <= movement.effective_at && movement.effective_at <= q4Range.end));
+    assert.equal(dispensingOrMovementInQ4, false, 'no start or movement anchors Q4');
+    assert.ok(Fixture.patients.some(patient => patient.discontinued_at === '2026-10-01'),
+        'the explicit discontinued_at fact alone anchors Q4');
 });
 check('quarters: inclusive ISO ranges', () => {
     assert.deepEqual(
@@ -216,12 +371,23 @@ check('quarters: inclusive ISO ranges', () => {
     assert.deepEqual(
         [Informe.quarterRange('2026-Q3').start, Informe.quarterRange('2026-Q3').end],
         ['2026-07-01', '2026-09-30']);
+    assert.deepEqual(
+        [Informe.quarterRange('2026-Q4').start, Informe.quarterRange('2026-Q4').end],
+        ['2026-10-01', '2026-12-31']);
 });
 
 /* 3. Counts, detail rows and unique totals per quarter (hand-derived). */
 for (const quarter of QUARTERS) {
     check(`report ${quarter}: category counts match the fixture facts`, () => {
         assert.deepEqual(reports[quarter].counts_by_category, EXPECTED[quarter].counts);
+    });
+    check(`report ${quarter}: six categories computed dynamically, never hardcoded`, () => {
+        assert.equal(reports[quarter].categories.length, 6);
+        assert.deepEqual(reports[quarter].categories.map(c => c.key),
+            ['pso_start', 'psa_start', 'hs_start_q2w', 'hs_intensification', 'hs_reduction', 'hs_discontinuation']);
+        assert.deepEqual(reports[quarter].categories.map(c => c.count),
+            ['pso_start', 'psa_start', 'hs_start_q2w', 'hs_intensification', 'hs_reduction', 'hs_discontinuation']
+                .map(key => EXPECTED[quarter].counts[key]));
     });
     check(`report ${quarter}: detail rows are exactly the justifying facts`, () => {
         assert.deepEqual(rowTuples(reports[quarter]), EXPECTED[quarter].rows);
@@ -237,6 +403,46 @@ for (const quarter of QUARTERS) {
         }
     });
 }
+
+/* 3b. Projection: every row carries the explicit presentation, the explicitly
+ * recorded current status kept separate from the event regimen, the
+ * discontinuation flag and the recorded reason — absent facts stay absent. */
+check('projection: rows keep presentation, current status, event regimen and reason separate', () => {
+    const q3Disc = reports['2026-Q3'].detail_rows.find(row => row.patient_id === 'COS-HS-009');
+    assert.equal(q3Disc.presentation, '300 mg', 'explicit presentation projected');
+    assert.equal(q3Disc.regime, 'q2w', 'event regimen projected');
+    assert.equal(q3Disc.current_regime, undefined, 'absent current status stays absent, not filled from history');
+    assert.equal(q3Disc.discontinued, true);
+    assert.equal(q3Disc.reason, REASON_009, 'recorded reason projected verbatim');
+    const q4Disc = reports['2026-Q4'].detail_rows[0];
+    assert.equal(q4Disc.presentation, '150 mg');
+    assert.equal(q4Disc.regime, 'q2w');
+    assert.notEqual(q4Disc.regime, q4Disc.current_regime, 'event regimen and current status never collapse');
+    assert.equal(q4Disc.reason, undefined, 'absent reason stays absent, never fabricated');
+    const q2Start = reports['2026-Q2'].detail_rows.find(row => row.patient_id === 'COS-HS-008'
+        && row.case_type === 'HS — nuevo inicio q2w');
+    assert.equal(q2Start.presentation, '150 mg');
+    assert.equal(q2Start.current_regime, 'q4w', 'explicitly recorded current status, independent of the start regimen');
+    assert.equal(q2Start.discontinued, false);
+    assert.equal(q2Start.reason, undefined, 'non-discontinuation rows carry no reason');
+});
+check('projection: shared formatters map explicit/absent states without invention', () => {
+    assert.equal(typeof Informe.presentationDisplay, 'function');
+    assert.equal(typeof Informe.statusDisplay, 'function');
+    assert.equal(typeof Informe.reasonDisplay, 'function');
+    assert.equal(Informe.presentationDisplay('150 mg'), '150 mg', 'explicit presentation verbatim');
+    assert.equal(Informe.presentationDisplay('300 mg'), '300 mg');
+    assert.equal(Informe.presentationDisplay(null), 'Desconocido');
+    assert.equal(Informe.presentationDisplay(undefined), 'No registrado');
+    assert.equal(Informe.statusDisplay(true, 'q2w'), 'Discontinuado', 'a discontinued patient never reads active');
+    assert.equal(Informe.statusDisplay(true, undefined), 'Discontinuado');
+    assert.equal(Informe.statusDisplay(false, 'q4w'), 'q4w', 'recorded current status verbatim');
+    assert.equal(Informe.statusDisplay(false, null), 'Desconocido');
+    assert.equal(Informe.statusDisplay(false, undefined), 'No registrado');
+    assert.equal(Informe.reasonDisplay(REASON_009), REASON_009, 'recorded reason verbatim');
+    assert.equal(Informe.reasonDisplay(null), 'Desconocido');
+    assert.equal(Informe.reasonDisplay(undefined), 'No registrado');
+});
 
 /* 4. At least two quarters produce different computed outputs. */
 check('quarters: computed outputs differ across all exposed quarters', () => {
@@ -280,6 +486,21 @@ check('boundary: q4w dispensing on Q3 first day (2026-07-01) belongs to Q3 and i
     assert.equal(intensification.fact_date, '2026-08-20');
     assert.equal(intensification.case_type, 'HS — intensificación q4w → q2w');
 });
+check('boundary: discontinuation on Q3 last day (2026-09-30) is a Q3 fact, not Q4', () => {
+    const q3Row = reports['2026-Q3'].detail_rows.find(row => row.patient_id === 'COS-HS-009'
+        && row.case_type === 'HS — discontinuación q2w');
+    assert.ok(q3Row, 'COS-HS-009 discontinuation must be in Q3');
+    assert.equal(q3Row.fact_date, '2026-09-30', 'fact_date is exactly the quarter final day');
+    assert.ok(reports['2026-Q4'].detail_rows.every(row => row.patient_id !== 'COS-HS-009'),
+        'Q3 last-day discontinuation must not leak into Q4');
+});
+check('boundary: discontinuation on Q4 first day (2026-10-01) is a Q4 fact, not Q3', () => {
+    const q4Row = reports['2026-Q4'].detail_rows.find(row => row.patient_id === 'COS-HS-010');
+    assert.ok(q4Row, 'COS-HS-010 discontinuation must be in Q4');
+    assert.equal(q4Row.fact_date, '2026-10-01', 'fact_date is exactly the quarter first day');
+    assert.ok(reports['2026-Q3'].detail_rows.every(row => row.patient_id !== 'COS-HS-010'),
+        'Q4 first-day discontinuation must not leak into Q3');
+});
 
 /* 5b. Gate 2 — regime evidence representation: recorded values survive
  * verbatim; null = explicitly unknown and omitted field = absent; both stay
@@ -308,7 +529,11 @@ check('regime: checker-local q6w witness survives verbatim into the detail row a
     const q1 = Informe.computeReport(variant, '2026-Q1');
     assert.ok(q1.detail_rows.every(row => row.patient_id !== 'COS-HS-001'),
         'out-of-vocabulary explicit regime must not classify as an HS q2w start');
-    assert.equal(q1.counts_by_category.hs_start_q2w, 0);
+    /* Q1 keeps the second HS q2w start (COS-HS-009): the gate removes exactly
+     * the mutated witness, nothing else. */
+    assert.equal(q1.counts_by_category.hs_start_q2w, 1);
+    assert.ok(q1.detail_rows.some(row => row.patient_id === 'COS-HS-009'),
+        'the untouched Q1 start witness remains included');
 });
 check('regime: explicitly unknown (null) vs absent field stay non-classifiable and remain distinguishable', () => {
     /* Fixture representation keeps both states distinct. */
@@ -339,7 +564,9 @@ check('regime: explicitly unknown (null) vs absent field stay non-classifiable a
         const report = Informe.computeReport(variant, '2026-Q1');
         assert.ok(report.detail_rows.every(row => row.patient_id !== 'COS-HS-001'),
             'unknown/absent regime never classifies as an HS q2w start');
-        assert.equal(report.counts_by_category.hs_start_q2w, 0);
+        /* Q1 keeps the second HS q2w start (COS-HS-009): fail-closed removes
+         * exactly the mutated witness. */
+        assert.equal(report.counts_by_category.hs_start_q2w, 1);
     }
 });
 
@@ -419,6 +646,53 @@ check('presentation: single shared formatter — UI and workbook projections mus
         'buildWorkbook must export through the shared formatter');
 });
 
+/* 5d. #593 — event direction and discontinuation gates (checker-local variants
+ * prove the trigger contract; variants never touch the demo population). */
+check('reduction gate: only explicit q2w->q4w with an in-quarter date classifies', () => {
+    /* Reverse direction is intensification, never reduction. */
+    assert.ok(reports['2026-Q2'].detail_rows
+        .filter(row => row.patient_id === 'COS-HS-002')
+        .every(row => row.case_type !== 'HS — reducción de frecuencia q2w → q4w'),
+        'a q4w->q2w movement is never a reduction');
+    /* A dateless q2w->q4w movement classifies nowhere. */
+    assert.ok(reports['2026-Q2'].detail_rows.every(row => row.patient_id !== 'COS-HS-013'),
+        'dateless movement witness stays out');
+    /* Checker-local: removing the effective date removes the reduction. */
+    const variant = cloneFixture();
+    variant.patients.find(patient => patient.patient_id === 'COS-HS-008').regime_movements = [];
+    const report = Informe.computeReport(variant, '2026-Q2');
+    assert.equal(report.counts_by_category.hs_reduction, 1, 'only the HS-003 reduction remains');
+    assert.ok(report.detail_rows.every(row => row.patient_id !== 'COS-HS-008'
+        || row.case_type !== 'HS — reducción de frecuencia q2w → q4w'));
+});
+check('discontinuation gate: date + q2w event regimen required; nothing inferred', () => {
+    /* In-quarter dates without a q2w event regimen stay out. */
+    for (const id of ['COS-HS-012', 'COS-HS-014']) {
+        for (const quarter of QUARTERS) {
+            assert.ok(reports[quarter].detail_rows.every(row => row.patient_id !== id),
+                `${id} must not appear in ${quarter} despite its in-quarter fact date`);
+        }
+    }
+    /* Undated discontinuation stays out everywhere. */
+    for (const quarter of QUARTERS) {
+        assert.ok(reports[quarter].detail_rows.every(row => row.patient_id !== 'COS-HS-011'),
+            `COS-HS-011 must not appear in ${quarter}`);
+    }
+    /* Checker-local: clearing the event regimen declassifies a discontinuation. */
+    const variant = cloneFixture();
+    delete variant.patients.find(patient => patient.patient_id === 'COS-HS-009').regime_at_discontinuation;
+    const q3 = Informe.computeReport(variant, '2026-Q3');
+    assert.equal(q3.counts_by_category.hs_discontinuation, 0, 'absent event regimen is non-classifiable');
+    assert.ok(q3.detail_rows.every(row => row.patient_id !== 'COS-HS-009'
+        || row.case_type !== 'HS — discontinuación q2w'));
+    /* Checker-local: moving the date out of quarter removes the row. */
+    const moved = cloneFixture();
+    moved.patients.find(patient => patient.patient_id === 'COS-HS-010').discontinued_at = '2026-09-30';
+    assert.ok(Informe.computeReport(moved, '2026-Q4').detail_rows.every(row => row.patient_id !== 'COS-HS-010'),
+        'an out-of-quarter discontinuation does not leak into Q4');
+    assert.equal(Informe.computeReport(moved, '2026-Q4').counts_by_category.hs_discontinuation, 0);
+});
+
 /* 6. Mandatory negatives never classified. */
 check('negatives: validation-only / current-treatment-only / q4w-without-movement / unknown regime never included', () => {
     for (const quarter of QUARTERS) {
@@ -437,6 +711,20 @@ check('negatives: COS-PSO-003 validation date (2026-04-05) is inside Q2 yet excl
 check('negatives: COS-HS-005 dispensing (2026-04-07) inside Q2 but regime unknown -> not classified', () => {
     assert.ok(reports['2026-Q2'].detail_rows.every(row => row.patient_id !== 'COS-HS-005'));
 });
+check('negatives: positive witnesses stay in their own quarter only', () => {
+    assert.ok(reports['2026-Q2'].detail_rows.every(row => row.patient_id !== 'COS-HS-009'),
+        'COS-HS-009 (Q1 start, Q3 discontinuation) must not leak into Q2');
+    assert.ok(reports['2026-Q4'].detail_rows.every(row => row.patient_id !== 'COS-HS-009'),
+        'COS-HS-009 must not leak into Q4');
+    for (const quarter of ['2026-Q1', '2026-Q3', '2026-Q4']) {
+        assert.ok(reports[quarter].detail_rows.every(row => row.patient_id !== 'COS-HS-008'),
+            `COS-HS-008 must not appear in ${quarter}`);
+    }
+    for (const quarter of ['2026-Q1', '2026-Q2', '2026-Q3']) {
+        assert.ok(reports[quarter].detail_rows.every(row => row.patient_id !== 'COS-HS-010'),
+            `COS-HS-010 (Q4-only discontinuation) must not appear in ${quarter}`);
+    }
+});
 
 /* 7. Unique-patient total is derived from detail rows, never a blind sum. */
 check('unique total: recomputed independently as cardinality over included detail rows', () => {
@@ -445,13 +733,22 @@ check('unique total: recomputed independently as cardinality over included detai
         assert.equal(reports[quarter].unique_patient_count, derived);
     }
 });
-check('unique total: Q2 blind sum (8) differs from unique total (7) — proves no blind summing', () => {
+check('unique total: Q2 blind sum (11) differs from unique total (8) — proves no blind summing', () => {
     const blindSum = Object.values(reports['2026-Q2'].counts_by_category).reduce((a, b) => a + b, 0);
-    assert.equal(blindSum, 8);
+    assert.equal(blindSum, 11);
     assert.notEqual(blindSum, reports['2026-Q2'].unique_patient_count);
-    assert.equal(reports['2026-Q2'].unique_patient_count, 7);
+    assert.equal(reports['2026-Q2'].unique_patient_count, 8);
     assert.ok(reports['2026-Q2'].detail_rows.length === blindSum,
         'detail rows justify every category count');
+});
+check('unique total: same patient with three Q2 events (COS-HS-003) counted once', () => {
+    const hs003Rows = reports['2026-Q2'].detail_rows.filter(row => row.patient_id === 'COS-HS-003');
+    assert.equal(hs003Rows.length, 3, 'start + intensification + reduction');
+    assert.deepEqual(hs003Rows.map(row => row.case_type), [
+        'HS — nuevo inicio q2w',
+        'HS — intensificación q4w → q2w',
+        'HS — reducción de frecuencia q2w → q4w'
+    ]);
 });
 
 /* 8. Temporal purity: no wall-clock dependence. */
@@ -479,6 +776,12 @@ function resumenRows(report) {
     return { buffer, workbook, rows: XLSX.utils.sheet_to_json(workbook.Sheets['Resumen'], { header: 1, defval: '' }).map(normRow) };
 }
 
+function detalleRows(report) {
+    const buffer = Informe.buildWorkbook(report, XLSX);
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+    return XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+}
+
 /* defval:'' pads short rows to the sheet width; compare without trailing padding. */
 function normRow(row) {
     const copy = row.map(cell => (cell === undefined ? '' : cell));
@@ -492,7 +795,7 @@ check('xlsx: real xlsx container (zip magic) and exactly Resumen + Detalle sheet
     assert.deepEqual(workbook.SheetNames, ['Resumen', 'Detalle']);
 });
 
-check('xlsx Q2 Resumen: period, category counts and unique total match the hand-derived expectation', () => {
+check('xlsx Q2 Resumen: period, six category counts and unique total match the hand-derived expectation', () => {
     const { rows } = resumenRows(reports['2026-Q2']);
     assert.deepEqual(rows[0], ['Informe trimestral Cosentyx']);
     assert.deepEqual(rows[1], ['Periodo', '2026-Q2']);
@@ -500,56 +803,83 @@ check('xlsx Q2 Resumen: period, category counts and unique total match the hand-
     assert.deepEqual(rows[3], ['Fin', '2026-06-30']);
     const headerIndex = rows.findIndex(row => row[0] === 'Categoría' && row[1] === 'Pacientes');
     assert.ok(headerIndex >= 0, 'category table header present');
-    const categoryRows = rows.slice(headerIndex + 1, headerIndex + 5);
+    const categoryRows = rows.slice(headerIndex + 1, headerIndex + 7);
     assert.deepEqual(categoryRows, [
         ['PsO — nuevos inicios', 2],
         ['PsA — nuevos inicios', 2],
-        ['HS — nuevos inicios q2w', 2],
-        ['HS — intensificaciones q4w → q2w', 2]
+        ['HS — nuevos inicios q2w', 3],
+        ['HS — intensificaciones q4w → q2w', 2],
+        ['HS — reducción de frecuencia q2w → q4w', 2],
+        ['HS — discontinuaciones q2w', 0]
     ]);
-    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 7),
-        'unique total (7), not the blind sum (8)');
+    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 8),
+        'unique total (8), not the blind sum (11)');
     assert.ok(rows.some(row => row[0] === 'Procedencia' && row[1] === 'Datos sintéticos específicos del informe'));
 });
 
-check('xlsx Q2 Detalle: rows exactly justify the counts (8 rows, patients + inclusion type)', () => {
-    const { workbook } = resumenRows(reports['2026-Q2']);
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+check('xlsx Q2 Detalle: rows exactly justify the counts (11 rows, 8 explicit-fact columns)', () => {
+    const rows = detalleRows(reports['2026-Q2']);
     assert.deepEqual(rows[0], [
-        'Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye', 'Régimen explícito'
+        'Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye',
+        'Régimen explícito', 'Presentación explícita', 'Estado actual explícito', 'Motivo registrado'
     ]);
-    assert.equal(rows.length - 1, 8);
-    assert.deepEqual(rows.slice(1), EXPECTED['2026-Q2'].rows);
+    assert.equal(rows.length - 1, 11);
+    assert.deepEqual(rows.slice(1), EXPECTED_DETALLE['2026-Q2']);
 });
 
 check('xlsx Q1 Resumen: counts and unique total from the same computed result', () => {
     const { rows } = resumenRows(reports['2026-Q1']);
     const headerIndex = rows.findIndex(row => row[0] === 'Categoría' && row[1] === 'Pacientes');
-    assert.deepEqual(rows.slice(headerIndex + 1, headerIndex + 5), [
+    assert.deepEqual(rows.slice(headerIndex + 1, headerIndex + 7), [
         ['PsO — nuevos inicios', 1],
         ['PsA — nuevos inicios', 0],
-        ['HS — nuevos inicios q2w', 1],
-        ['HS — intensificaciones q4w → q2w', 0]
+        ['HS — nuevos inicios q2w', 2],
+        ['HS — intensificaciones q4w → q2w', 0],
+        ['HS — reducción de frecuencia q2w → q4w', 0],
+        ['HS — discontinuaciones q2w', 0]
     ]);
-    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 2));
-    const detalle = XLSX.utils.sheet_to_json(
-        resumenRows(reports['2026-Q1']).workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
-    assert.equal(detalle.length - 1, 2);
+    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 3));
+    assert.deepEqual(detalleRows(reports['2026-Q1']).slice(1), EXPECTED_DETALLE['2026-Q1']);
 });
 
-check('xlsx Q3 Resumen: PsO start plus the Q3 intensification from the same computed result', () => {
+check('xlsx Q3 Resumen: PsO start, Q3 intensification and Q3 discontinuation from the same computed result', () => {
     const { rows } = resumenRows(reports['2026-Q3']);
     const headerIndex = rows.findIndex(row => row[0] === 'Categoría' && row[1] === 'Pacientes');
-    assert.deepEqual(rows.slice(headerIndex + 1, headerIndex + 5), [
+    assert.deepEqual(rows.slice(headerIndex + 1, headerIndex + 7), [
         ['PsO — nuevos inicios', 1],
         ['PsA — nuevos inicios', 0],
         ['HS — nuevos inicios q2w', 0],
-        ['HS — intensificaciones q4w → q2w', 1]
+        ['HS — intensificaciones q4w → q2w', 1],
+        ['HS — reducción de frecuencia q2w → q4w', 0],
+        ['HS — discontinuaciones q2w', 1]
     ]);
-    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 2));
-    const detalle = XLSX.utils.sheet_to_json(
-        resumenRows(reports['2026-Q3']).workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
-    assert.deepEqual(detalle.slice(1), EXPECTED['2026-Q3'].rows);
+    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 3));
+    assert.deepEqual(detalleRows(reports['2026-Q3']).slice(1), EXPECTED_DETALLE['2026-Q3']);
+});
+
+check('xlsx Q4 Resumen/Detalle: discontinuation-only quarter exports its single row, count and unique total', () => {
+    const { rows } = resumenRows(reports['2026-Q4']);
+    assert.deepEqual(rows[1], ['Periodo', '2026-Q4']);
+    assert.deepEqual(rows[2], ['Inicio', '2026-10-01']);
+    assert.deepEqual(rows[3], ['Fin', '2026-12-31']);
+    const headerIndex = rows.findIndex(row => row[0] === 'Categoría' && row[1] === 'Pacientes');
+    assert.deepEqual(rows.slice(headerIndex + 1, headerIndex + 7), [
+        ['PsO — nuevos inicios', 0],
+        ['PsA — nuevos inicios', 0],
+        ['HS — nuevos inicios q2w', 0],
+        ['HS — intensificaciones q4w → q2w', 0],
+        ['HS — reducción de frecuencia q2w → q4w', 0],
+        ['HS — discontinuaciones q2w', 1]
+    ]);
+    assert.ok(rows.some(row => row[0] === 'Total pacientes únicos incluidos' && row[1] === 1));
+    const detalle = detalleRows(reports['2026-Q4']);
+    assert.equal(detalle.length - 1, 1, 'exactly the discontinuation row, no starts/movements');
+    assert.deepEqual(detalle.slice(1), EXPECTED_DETALLE['2026-Q4']);
+    /* Truthfulness: the discontinued row never reads active; the absent
+     * reason is exported as absent, never invented. */
+    assert.equal(detalle[1][6], 'Discontinuado');
+    assert.notEqual(detalle[1][6].toLowerCase().includes('activ'), true, 'no active claim for a stopped patient');
+    assert.equal(detalle[1][7], 'No registrado');
 });
 
 check('xlsx: buildWorkbook rejects a non-computed report explicitly', () => {

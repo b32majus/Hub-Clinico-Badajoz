@@ -1,4 +1,4 @@
-/* Informe trimestral Cosentyx (#576) — pure calculation model, DOM-free.
+/* Informe trimestral Cosentyx (#576, #593) — pure calculation model, DOM-free.
  *
  * Closed temporal contract: ISO date-only YYYY-MM-DD; calendar quarter
  * YYYY-Q1..Q4; start/end boundaries inclusive; no wall-clock dependence.
@@ -9,15 +9,35 @@
  * - HS q2w start: explicit first dispensing inside the quarter AND explicit
  *   q2w regime at start; an unknown or absent regime stays non-classifiable.
  * - HS intensification: explicit q4w -> q2w movement with effective_at inside
- *   the quarter.
+ *   the quarter. Labelled intensification only; no benefit or motive inferred.
+ * - HS reduction of frequency (#593): explicit q2w -> q4w movement with
+ *   effective_at inside the quarter. Labelled reducción de frecuencia only;
+ *   no benefit, causality or motive inferred.
+ * - HS discontinuation (#593): explicit discontinued_at date-only inside the
+ *   quarter AND explicit regime_at_discontinuation === 'q2w' (never guessed
+ *   from the initial/current prescription). An explicitly recorded reason is
+ *   preserved verbatim; an absent reason stays absent (no cause invented).
+ *   Absent/non-q2w event regimen is NOT classifiable for this category.
+ *   Never deduced from missing cycles/dispensations. The event delimits its
+ *   own quarterly date. A discontinued patient is never shown as active.
  * - Gate 2 (representation narrowing): the recorded regime is evidence and is
  *   preserved verbatim in the detail row. Only the exact vocabulary values
  *   'q2w'/'q4w' classify; an explicitly recorded out-of-vocabulary value stays
  *   non-classifiable but must not be collapsed into the unknown label.
  *   null = explicitly unknown regime; omitted field = absent fact.
- *   regimeDisplay() is the single shared presentation projection for BOTH
- *   visible projections (UI detail table and XLSX Detalle): explicit strings
- *   verbatim, null -> 'Desconocido', undefined/absent -> 'No registrado'.
+ *   regimeDisplay() is the single shared presentation projection for the
+ *   event-regimen column of BOTH visible projections (UI detail table and
+ *   XLSX Detalle): explicit strings verbatim, null -> 'Desconocido',
+ *   undefined/absent -> 'No registrado'.
+ * - Projection (#593, T3-owned): each detail row carries the explicit
+ *   presentation (presentation_label verbatim when recorded, absent
+ *   otherwise), the explicitly recorded current status (current_regime
+ *   verbatim when recorded, absent otherwise) kept SEPARATE from the event
+ *   regimen, a discontinued flag derived only from the explicit
+ *   discontinued_at fact, and the explicitly recorded discontinuation reason
+ *   when the row itself is a discontinuation. Presentation, event regimen,
+ *   current status and historic regimen never collapse into each other and
+ *   are never derived from treatments or names.
  * - Total unique patients = cardinality of unique patient_id over included
  *   detail rows, never a blind sum of category counts.
  */
@@ -33,7 +53,9 @@
         { key: 'pso_start', label: 'PsO — nuevos inicios', caseLabel: 'PsO — nuevo inicio' },
         { key: 'psa_start', label: 'PsA — nuevos inicios', caseLabel: 'PsA — nuevo inicio' },
         { key: 'hs_start_q2w', label: 'HS — nuevos inicios q2w', caseLabel: 'HS — nuevo inicio q2w' },
-        { key: 'hs_intensification', label: 'HS — intensificaciones q4w → q2w', caseLabel: 'HS — intensificación q4w → q2w' }
+        { key: 'hs_intensification', label: 'HS — intensificaciones q4w → q2w', caseLabel: 'HS — intensificación q4w → q2w' },
+        { key: 'hs_reduction', label: 'HS — reducción de frecuencia q2w → q4w', caseLabel: 'HS — reducción de frecuencia q2w → q4w' },
+        { key: 'hs_discontinuation', label: 'HS — discontinuaciones q2w', caseLabel: 'HS — discontinuación q2w' }
     ];
 
     function fail(message) {
@@ -92,6 +114,7 @@
             (patient.regime_movements || []).forEach(function (movement) {
                 collect(movement && movement.effective_at);
             });
+            collect(patient.discontinued_at);
         });
         return Object.keys(seen).sort();
     }
@@ -119,18 +142,47 @@
         return regime;
     }
 
+    /* XLSX-only explicit-fact projections (#593). Display-only formatters for
+     * the T3-projected columns; like regimeDisplay they never invent values:
+     * explicit strings verbatim, null -> 'Desconocido', absent -> 'No registrado'.
+     * statusDisplay additionally projects the explicit discontinued_at fact as
+     * 'Discontinuado' so a stopped patient can never read as active. */
+    var DISCONTINUED_LABEL = 'Discontinuado';
+
+    function presentationDisplay(presentation) {
+        if (typeof presentation === 'string') return presentation;
+        if (presentation === null) return REGIME_UNKNOWN_LABEL;
+        return REGIME_ABSENT_LABEL;
+    }
+
+    function statusDisplay(discontinued, currentRegime) {
+        if (discontinued === true) return DISCONTINUED_LABEL;
+        return regimeDisplay(currentRegime);
+    }
+
+    function reasonDisplay(reason) {
+        if (typeof reason === 'string') return reason;
+        if (reason === null) return REGIME_UNKNOWN_LABEL;
+        return REGIME_ABSENT_LABEL;
+    }
+
     function computeReport(fixture, quarterKey) {
         assertFixture(fixture);
         var range = quarterRange(quarterKey);
         var rowsByCategory = {};
         CATEGORIES.forEach(function (category) { rowsByCategory[category.key] = []; });
 
-        function addRow(categoryKey, patient, factDate, regime) {
+        function addRow(categoryKey, patient, factDate, regime, discontinued) {
+            var isDiscontinuation = discontinued === true;
             rowsByCategory[categoryKey].push({
                 patient_id: patient.patient_id,
                 pathology: patient.pathology,
                 fact_date: factDate,
-                regime: regime
+                regime: regime,
+                presentation: patient.presentation_label,
+                current_regime: patient.current_regime,
+                discontinued: isDiscontinuation,
+                reason: isDiscontinuation ? patient.reason : undefined
             });
         }
 
@@ -142,13 +194,13 @@
             var startsInQuarter = !!firstDispensing && inInclusiveRange(firstDispensing, range);
 
             if (startsInQuarter && patient.pathology === 'PsO') {
-                addRow('pso_start', patient, firstDispensing, initialRegime);
+                addRow('pso_start', patient, firstDispensing, initialRegime, false);
             }
             if (startsInQuarter && patient.pathology === 'PsA') {
-                addRow('psa_start', patient, firstDispensing, initialRegime);
+                addRow('psa_start', patient, firstDispensing, initialRegime, false);
             }
             if (startsInQuarter && patient.pathology === 'HS' && initialRegime === 'q2w') {
-                addRow('hs_start_q2w', patient, firstDispensing, initialRegime);
+                addRow('hs_start_q2w', patient, firstDispensing, initialRegime, false);
             }
             (patient.regime_movements || []).forEach(function (movement) {
                 var effective = movement && movement.effective_at
@@ -157,9 +209,27 @@
                 if (patient.pathology === 'HS' && movement
                     && movement.from === 'q4w' && movement.to === 'q2w'
                     && effective && inInclusiveRange(effective, range)) {
-                    addRow('hs_intensification', patient, effective, 'q4w → q2w');
+                    addRow('hs_intensification', patient, effective, 'q4w → q2w', false);
+                }
+                if (patient.pathology === 'HS' && movement
+                    && movement.from === 'q2w' && movement.to === 'q4w'
+                    && effective && inInclusiveRange(effective, range)) {
+                    addRow('hs_reduction', patient, effective, 'q2w → q4w', false);
                 }
             });
+            /* HS discontinuation: the explicit event delimits its own quarterly
+             * date; the regimen at the event is never guessed from the
+             * initial/current prescription; an absent/non-q2w event regimen
+             * stays non-classifiable; nothing is inferred from missing data. */
+            var discontinuedAt = patient.discontinued_at
+                ? assertDateOnly(patient.discontinued_at, patient.patient_id)
+                : null;
+            if (patient.pathology === 'HS'
+                && discontinuedAt && inInclusiveRange(discontinuedAt, range)
+                && patient.regime_at_discontinuation === 'q2w') {
+                addRow('hs_discontinuation', patient, discontinuedAt,
+                    patient.regime_at_discontinuation, true);
+            }
         });
 
         function byFactThenPatient(left, right) {
@@ -179,7 +249,11 @@
                     pathology: row.pathology,
                     case_type: category.caseLabel,
                     fact_date: row.fact_date,
-                    regime: row.regime
+                    regime: row.regime,
+                    presentation: row.presentation,
+                    current_regime: row.current_regime,
+                    discontinued: row.discontinued,
+                    reason: row.reason
                 });
             });
         });
@@ -229,7 +303,8 @@
         resumen.push(['Total pacientes únicos incluidos', report.unique_patient_count]);
 
         var detalle = [
-            ['Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye', 'Régimen explícito']
+            ['Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye',
+                'Régimen explícito', 'Presentación explícita', 'Estado actual explícito', 'Motivo registrado']
         ];
         report.detail_rows.forEach(function (row) {
             detalle.push([
@@ -237,7 +312,10 @@
                 row.pathology,
                 row.case_type,
                 row.fact_date,
-                regimeDisplay(row.regime)
+                regimeDisplay(row.regime),
+                presentationDisplay(row.presentation),
+                statusDisplay(row.discontinued, row.current_regime),
+                row.discontinued ? reasonDisplay(row.reason) : REGIME_ABSENT_LABEL
             ]);
         });
 
@@ -254,6 +332,9 @@
         quarterRange: quarterRange,
         listQuarters: listQuarters,
         regimeDisplay: regimeDisplay,
+        presentationDisplay: presentationDisplay,
+        statusDisplay: statusDisplay,
+        reasonDisplay: reasonDisplay,
         computeReport: computeReport,
         buildWorkbook: buildWorkbook
     });
