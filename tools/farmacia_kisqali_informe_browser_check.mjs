@@ -6,9 +6,10 @@
  * select Kisqali through the new report selector, walk
  * Mensual → Trimestral → Anual → Histórico with fixture-derived periods,
  * verify KPIs, the rendered patient-table cells and raw expectations against
- * hand-derived fixture values, open
- * 'Ver ciclos' raw traceability (explicit changes, unknown dose, mid-cycle
- * non-evaluable), download a REAL .xlsx and validate Resumen + Ciclos against
+ * hand-derived fixture values (normalized demo: only explicit 200/400/600,
+ * every cycle evaluable), open
+ * 'Ver ciclos' raw traceability (coherent explicit boundary changes, stable
+ * explicit doses, presentation independence), download a REAL .xlsx and validate Resumen + Ciclos against
  * the hand-derived expectation and the Pacientes sheet against the visible
  * rendered patient cells (not a fresh model call), switch back to Cosentyx
  * and run its
@@ -62,11 +63,12 @@ function chromiumExecutable() {
 }
 
 /* Hand-derived Kisqali expectations per window (same literals as the
- * deterministic checker's hand arithmetic). */
+ * deterministic checker's hand arithmetic — normalized demo: only
+ * 200/400/600 explicit, every cycle evaluable). */
 const EXPECTED_KISQALI = {
     'mensual|2026-06': {
         window: 'Mensual — 2026-06',
-        dom: { patients: '3', closing_200: '1', closing_400: '1', closing_600: '0', closing_otra: '1', cohort_mean: '300 mg', patients_with_change: '0', coverage: '2/3 · 66.67 %' }
+        dom: { patients: '3', closing_200: '2', closing_400: '1', closing_600: '0', closing_otra: '0', cohort_mean: '266.67 mg', patients_with_change: '1', coverage: '3/3 · 100 %' }
     },
     'mensual|2025-08': {
         window: 'Mensual — 2025-08',
@@ -74,7 +76,7 @@ const EXPECTED_KISQALI = {
     },
     'trimestral|2026-Q2': {
         window: 'Trimestral — 2026-Q2',
-        dom: { patients: '4', closing_200: '1', closing_400: '1', closing_600: '0', closing_otra: '2', cohort_mean: '320 mg', patients_with_change: '1', coverage: '5/7 · 71.43 %' }
+        dom: { patients: '4', closing_200: '2', closing_400: '2', closing_600: '0', closing_otra: '0', cohort_mean: '314.29 mg', patients_with_change: '3', coverage: '7/7 · 100 %' }
     },
     'trimestral|2025-Q3': {
         window: 'Trimestral — 2025-Q3',
@@ -82,7 +84,7 @@ const EXPECTED_KISQALI = {
     },
     'anual|2026': {
         window: 'Anual — 2026',
-        dom: { patients: '5', closing_200: '1', closing_400: '1', closing_600: '0', closing_otra: '3', cohort_mean: '363.64 mg', patients_with_change: '1', coverage: '11/13 · 84.62 %' }
+        dom: { patients: '5', closing_200: '2', closing_400: '2', closing_600: '1', closing_otra: '0', cohort_mean: '415.38 mg', patients_with_change: '3', coverage: '13/13 · 100 %' }
     },
     'anual|2025': {
         window: 'Anual — 2025',
@@ -90,7 +92,7 @@ const EXPECTED_KISQALI = {
     },
     'historico|historico': {
         window: 'Histórico (2025-01 → 2026-06)',
-        dom: { patients: '7', closing_200: '1', closing_400: '3', closing_600: '0', closing_otra: '3', cohort_mean: '400 mg', patients_with_change: '2', coverage: '20/22 · 90.91 %' }
+        dom: { patients: '7', closing_200: '2', closing_400: '4', closing_600: '1', closing_otra: '0', cohort_mean: '427.27 mg', patients_with_change: '4', coverage: '22/22 · 100 %' }
     }
 };
 
@@ -103,37 +105,53 @@ const EXPECTED_KISQALI = {
 const EXPECTED_KISQALI_PATIENT_ROWS = {
     'mensual|2026-06': [
         ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg'],
-        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '0', '1', '1', '400 mg'],
-        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+        ['KIS-006', '200 mg - 63', '400 mg', '400 mg', '1', '1', '1', '400 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
     ],
     'trimestral|2026-Q2': [
         ['KIS-003', '200 mg - 21', '200 mg', '200 mg', '1', '3', '3', '200 mg'],
-        ['KIS-004', 'No registrada', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida'],
-        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '0', '2', '2', '500 mg'],
-        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+        ['KIS-004', '200 mg - 21', '400 mg', '400 mg', '1', '1', '1', '400 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
     ],
     'anual|2026': [
         ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '6', '6', '333.33 mg'],
-        ['KIS-004', 'No registrada', '400 mg', 'Desconocida', '0', '2', '1', '400 mg'],
-        ['KIS-005', '200 mg - 21', '300 mg', '300 mg', '0', '2', '2', '300 mg'],
-        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '0', '2', '2', '500 mg'],
-        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+        ['KIS-004', '200 mg - 21', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
+        ['KIS-005', '200 mg - 21', '600 mg', '600 mg', '0', '2', '2', '600 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
     ],
     'historico|historico': [
         ['KIS-001', '200 mg - 63', '400 mg', '400 mg', '0', '6', '6', '400 mg'],
         ['KIS-002', '200 mg - 21', '600 mg', '400 mg', '1', '3', '3', '533.33 mg'],
         ['KIS-003', '200 mg - 21', '600 mg', '200 mg', '2', '6', '6', '333.33 mg'],
-        ['KIS-004', 'No registrada', '400 mg', 'Desconocida', '0', '2', '1', '400 mg'],
-        ['KIS-005', '200 mg - 21', '300 mg', '300 mg', '0', '2', '2', '300 mg'],
-        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '0', '2', '2', '500 mg'],
-        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', '0', '1', '0', 'Desconocida']
+        ['KIS-004', '200 mg - 21', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
+        ['KIS-005', '200 mg - 21', '600 mg', '600 mg', '0', '2', '2', '600 mg'],
+        ['KIS-006', '200 mg - 63', '600 mg', '400 mg', '1', '2', '2', '500 mg'],
+        ['KIS-007', '200 mg - 21', '200 mg', '200 mg', '0', '1', '1', '200 mg']
     ]
 };
 
-/* Default Cosentyx expectations (#576, unchanged). */
+/* Default Cosentyx expectations (#576 + #593 six categories).
+ *
+ * Hand-derived from the explicit synthetic Cosentyx witness list (never from
+ * computeReport/listQuarters/DOM):
+ * - Q1: PSO-001 disp 03-31 (pso 1); HS-001 disp 02-01 q2w + HS-009 disp 02-10
+ *   q2w (hs_start 2); no q4w->q2w move, no q2w->q4w move, no dated q2w
+ *   discontinuation in Q1 (int/reduction/disc 0); unique {PSO-001, HS-001,
+ *   HS-009} = 3.
+ * - Q2: PSO-002 + PSO-005 (pso 2); PSA-001 + PSA-003 (psa 2); HS-003 + HS-006
+ *   + HS-008 starts (hs_start 3); HS-003 05-15 + HS-002 06-30 q4w->q2w
+ *   (int 2); HS-003 04-20 + HS-008 06-10 q2w->q4w (red 2); no dated q2w
+ *   discontinuation (disc 0); unique 8.
+ * - Quarter selector: Q1/Q2/Q3 anchored by dispensings/movements plus Q4
+ *   anchored ONLY by the explicit HS-010 discontinued_at 2026-10-01
+ *   (no Q4 dispensing or movement exists).
+ * - Q4: ONLY HS-010 discontinuation (disc 1, everything else 0); unique 1. */
 const EXPECTED_COSENTYX = {
-    '2026-Q1': { dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '1', hs_intensification: '0', unique: '2' } },
-    '2026-Q2': { dom: { pso_start: '1', psa_start: '1', hs_start_q2w: '1', hs_intensification: '2', unique: '4' } }
+    '2026-Q1': { dom: { pso_start: '1', psa_start: '0', hs_start_q2w: '2', hs_intensification: '0', hs_reduction: '0', hs_discontinuation: '0', unique: '3' } },
+    '2026-Q2': { dom: { pso_start: '2', psa_start: '2', hs_start_q2w: '3', hs_intensification: '2', hs_reduction: '2', hs_discontinuation: '0', unique: '8' } },
+    '2026-Q4': { dom: { pso_start: '0', psa_start: '0', hs_start_q2w: '0', hs_intensification: '0', hs_reduction: '0', hs_discontinuation: '1', unique: '1' } }
 };
 
 const mime = new Map([
@@ -250,13 +268,16 @@ try {
     const reportValue = await page.locator('#informes-report-select').inputValue();
     assert.equal(reportValue, 'cosentyx', 'default report is Cosentyx');
     const quarters = await page.locator('#informes-quarter-select option').evaluateAll(options => options.map(option => option.value));
-    assert.deepEqual(quarters, ['2026-Q1', '2026-Q2', '2026-Q3'], 'Cosentyx quarter selector unchanged');
+    assert.deepEqual(quarters, ['2026-Q1', '2026-Q2', '2026-Q3', '2026-Q4'], 'Cosentyx quarter selector with the discontinuation-only quarter');
 
-    /* Default Cosentyx still computes its accepted Q1 view. */
+    /* Default Cosentyx still computes its accepted Q1 view (six categories). */
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q1'].dom,
         'default Cosentyx report still works unchanged');
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
+    /* The discontinuation-only quarter is selectable with its computed row. */
+    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom);
     await page.locator('#informes-quarter-select').selectOption('2026-Q1');
 
     /* Select Kisqali through the new report selector. */
@@ -295,9 +316,9 @@ try {
     const historicoState = await assertKisqaliWindow(page, 'historico', null);
     assert.ok(await page.locator('#kisqali-period-select').isHidden(), 'Histórico has no period selector');
     assert.equal(historicoState.state.kisqali.observed_cycle_count, 22);
-    assert.equal(historicoState.state.kisqali.evaluable_cycle_count, 20);
+    assert.equal(historicoState.state.kisqali.evaluable_cycle_count, 22);
 
-    /* Patient detail: window-local semantics without backfill. */
+    /* Patient detail: normalized demo — every cycle explicit 200/400/600, all evaluable. */
     const patientRows = historicoState.state.kisqali.patients;
     assert.deepEqual(patientRows.map(p => p.patient_id),
         ['KIS-001', 'KIS-002', 'KIS-003', 'KIS-004', 'KIS-005', 'KIS-006', 'KIS-007']);
@@ -305,12 +326,14 @@ try {
     assert.equal(byId('KIS-001').mean_display, '400');
     assert.equal(byId('KIS-002').mean_display, '533.33');
     assert.equal(byId('KIS-003').mean_display, '333.33');
-    assert.equal(byId('KIS-004').final_dose, null, 'closing unknown is never backfilled');
-    assert.equal(byId('KIS-005').final_dose, 300);
-    assert.equal(byId('KIS-006').change_count, 0, 'adjacent dose difference without fact is not a change');
-    assert.equal(byId('KIS-007').mean_display, 'Desconocida');
+    assert.equal(byId('KIS-004').final_dose, 400, 'coherent boundary reduction closes at 400');
+    assert.equal(byId('KIS-004').change_count, 1, 'explicit boundary change counted');
+    assert.equal(byId('KIS-005').final_dose, 600, 'stable explicit 600 preserved');
+    assert.equal(byId('KIS-006').change_count, 1, 'explicit 600->400 boundary change counted');
+    assert.equal(byId('KIS-007').mean_display, '200');
 
-    /* Ver ciclos: raw traceability for the patient with explicit changes. */
+    /* Ver ciclos: raw traceability for coherent explicit boundary changes (no
+     * unknown/mid-cycle/300 rows on the normalized demo surface). */
     await page.locator('[data-kisqali-ciclos-toggle="KIS-003"]').click();
     await page.waitForFunction(() => !document.getElementById('kisqali-ciclos-KIS-003').hidden);
     const kis003Ciclos = await page.locator('#kisqali-ciclos-KIS-003').innerText();
@@ -324,18 +347,19 @@ try {
     assert.equal(kis003StateRow.observed_count, 6);
     assert.equal(kis003StateRow.evaluable_count, 6);
 
-    /* Unknown-dose and mid-cycle non-evaluable representation through the UI. */
+    /* Coherent boundary reductions and stable explicit doses through the UI. */
     await page.locator('[data-kisqali-ciclos-toggle="KIS-004"]').click();
     const kis004Ciclos = await page.locator('#kisqali-ciclos-KIS-004').innerText();
-    assert.ok(kis004Ciclos.includes('Desconocida'), 'unknown dose stays unknown in raw traceability');
-    assert.ok(kis004Ciclos.includes('Dosis desconocida'), 'explicit non-evaluable reason shown');
-    await page.locator('[data-kisqali-ciclos-toggle="KIS-007"]').click();
-    const kis007Ciclos = await page.locator('#kisqali-ciclos-KIS-007').innerText();
-    assert.ok(kis007Ciclos.includes('400 mg'), 'mid-cycle raw dose preserved, never prorated');
-    assert.ok(kis007Ciclos.includes('mitad de ciclo'), 'explicit mid-cycle reason shown');
+    assert.ok(kis004Ciclos.includes('600 mg'), 'explicit 600 start preserved in raw traceability');
+    assert.ok(kis004Ciclos.includes('600 → 400 mg (efectivo 2026-04-01)'), 'explicit boundary change shown');
+    assert.ok(!kis004Ciclos.includes('Desconocida'), 'no unknown dose on the normalized demo surface');
+    await page.locator('[data-kisqali-ciclos-toggle="KIS-006"]').click();
+    const kis006Ciclos = await page.locator('#kisqali-ciclos-KIS-006').innerText();
+    assert.ok(kis006Ciclos.includes('600 → 400 mg (efectivo 2026-06-01)'), 'explicit boundary change shown');
     await page.locator('[data-kisqali-ciclos-toggle="KIS-005"]').click();
     const kis005Ciclos = await page.locator('#kisqali-ciclos-KIS-005').innerText();
-    assert.ok(kis005Ciclos.includes('300 mg'), 'explicit other dose preserved verbatim in raw rows');
+    assert.ok(kis005Ciclos.includes('600 mg'), 'stable explicit 600 preserved verbatim in raw rows');
+    assert.ok(!kis005Ciclos.includes('300 mg'), 'no synthetic 300 mg on the normalized demo surface');
     assert.ok(kis005Ciclos.includes('200 mg - 63') && kis005Ciclos.includes('200 mg - 21'),
         'presentations 21/63 preserved verbatim and independent of dose');
 
@@ -376,17 +400,17 @@ try {
         && row[1] === 'Calculada exclusivamente a partir de dosis y ciclos explícitamente registrados.'));
     const resumenValue = label => resumen.find(row => row[0] === label)[1];
     assert.equal(resumenValue('Pacientes con ≥1 ciclo observado'), 5);
-    assert.equal(resumenValue('Cierre 200 mg'), 1);
-    assert.equal(resumenValue('Cierre 400 mg'), 1);
-    assert.equal(resumenValue('Cierre 600 mg'), 0);
-    assert.equal(resumenValue('Cierre otra/desconocida'), 3);
-    assert.equal(resumenValue('Dosis media de régimen (cohorte, ponderada por ciclos con dosis evaluable)'), '363.64');
-    assert.equal(resumenValue('Dosis media — numerador (mg)'), 4000);
-    assert.equal(resumenValue('Dosis media — denominador (ciclos)'), 11);
-    assert.equal(resumenValue('Pacientes con ≥1 cambio de dosis explícito y evaluable'), 1);
-    assert.equal(resumenValue('Cobertura de dosis explícita — numerador (ciclos)'), 11);
+    assert.equal(resumenValue('Cierre 200 mg'), 2);
+    assert.equal(resumenValue('Cierre 400 mg'), 2);
+    assert.equal(resumenValue('Cierre 600 mg'), 1);
+    assert.equal(resumenValue('Cierre otra/desconocida'), 0);
+    assert.equal(resumenValue('Dosis media de régimen (cohorte, ponderada por ciclos con dosis evaluable)'), '415.38');
+    assert.equal(resumenValue('Dosis media — numerador (mg)'), 5400);
+    assert.equal(resumenValue('Dosis media — denominador (ciclos)'), 13);
+    assert.equal(resumenValue('Pacientes con ≥1 cambio de dosis explícito y evaluable'), 3);
+    assert.equal(resumenValue('Cobertura de dosis explícita — numerador (ciclos)'), 13);
     assert.equal(resumenValue('Cobertura de dosis explícita — denominador (ciclos observados)'), 13);
-    assert.equal(resumenValue('Cobertura de dosis explícita — porcentaje'), '84.62 %');
+    assert.equal(resumenValue('Cobertura de dosis explícita — porcentaje'), '100 %');
     /* Workbook equals the SAME computed result shown in the UI. */
     assert.equal(String(resumenValue('Pacientes con ≥1 ciclo observado')), anualDom.patients);
     assert.equal(String(resumenValue('Cierre 200 mg')), anualDom.closing_200);
@@ -407,20 +431,21 @@ try {
     ]);
     assert.deepEqual(pacientes.slice(1), [
         ['KIS-003', '200 mg - 21', 600, 200, 2, 6, 6, '333.33'],
-        ['KIS-004', 'No registrada', 400, 'Desconocida', 0, 2, 1, '400'],
-        ['KIS-005', '200 mg - 21', 300, 300, 0, 2, 2, '300'],
-        ['KIS-006', '200 mg - 63', 600, 400, 0, 2, 2, '500'],
-        ['KIS-007', '200 mg - 21', 'Desconocida', 'Desconocida', 0, 1, 0, 'Desconocida']
+        ['KIS-004', '200 mg - 21', 600, 400, 1, 2, 2, '500'],
+        ['KIS-005', '200 mg - 21', 600, 600, 0, 2, 2, '600'],
+        ['KIS-006', '200 mg - 63', 600, 400, 1, 2, 2, '500'],
+        ['KIS-007', '200 mg - 21', 200, 200, 0, 1, 1, '200']
     ]);
     const ciclos = XLSX.utils.sheet_to_json(workbook.Sheets['Ciclos'], { header: 1, defval: '' }).map(normRow);
     assert.equal(ciclos.length - 1, 13, 'Ciclos rows = observed cycles in window');
     const kis007Row = ciclos.find(row => row[0] === 'KIS-007');
-    assert.deepEqual(kis007Row.slice(0, 5), ['KIS-007', '2026-06', '2026-06-01', 400, 'explicita']);
-    assert.equal(kis007Row[7], 'No');
-    assert.equal(kis007Row[8], 'Cambio de dosis a mitad de ciclo (no evaluable en V1)');
-    const kis004UnknownRow = ciclos.find(row => row[0] === 'KIS-004' && row[1] === '2026-04');
-    assert.equal(kis004UnknownRow[3], '', 'unknown dose cell stays empty, never 0');
-    assert.equal(kis004UnknownRow[4], 'desconocida');
+    assert.deepEqual(kis007Row.slice(0, 5), ['KIS-007', '2026-06', '2026-06-01', 200, 'explicita']);
+    assert.equal(kis007Row[7], 'Sí');
+    const kis004Row = ciclos.find(row => row[0] === 'KIS-004' && row[1] === '2026-04');
+    assert.deepEqual(kis004Row.slice(0, 7), ['KIS-004', '2026-04', '2026-04-01', 400, 'explicita', '200 mg - 21', '600 → 400 mg (efectivo 2026-04-01)']);
+    assert.equal(kis004Row[7], 'Sí');
+    const kis006Row = ciclos.find(row => row[0] === 'KIS-006' && row[1] === '2026-06');
+    assert.deepEqual(kis006Row.slice(0, 7), ['KIS-006', '2026-06', '2026-06-01', 400, 'explicita', '200 mg - 63', '600 → 400 mg (efectivo 2026-06-01)']);
     /* The workbook Pacientes sheet equals the VISIBLE rendered patient-table
      * cells of the same window (no second calculation, no fresh model call). */
     assert.deepEqual(pacientes.slice(1), anualVisiblePatients.map(visiblePatientRowToSheetRow),
@@ -435,6 +460,9 @@ try {
         'Cosentyx report unchanged after Kisqali visit');
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');
     assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q2'].dom);
+    await page.locator('#informes-quarter-select').selectOption('2026-Q4');
+    assert.deepEqual(await readDomKpis(page), EXPECTED_COSENTYX['2026-Q4'].dom,
+        'discontinuation-only quarter unchanged after Kisqali visit');
 
     /* Return to the population analysis through the supported switcher. */
     await page.locator('#population-view-btn').click();
@@ -476,7 +504,7 @@ try {
     assert.deepEqual(consoleErrors, [], `console.error: ${consoleErrors.join(' | ')}`);
     assert.deepEqual(pageErrors, [], `pageerror: ${pageErrors.join(' | ')}`);
     console.log('farmacia_kisqali_informe_browser_check: PASS');
-    console.log('QA Chromium: Cosentyx default preserved; Kisqali selectable; Mensual/Trimestral/Anual/Histórico windows match hand-derived fixture values; Ver ciclos raw traceability (changes, unknown, mid-cycle, other dose) OK; real XLSX Resumen+Pacientes+Ciclos match UI model; population CSV filtered export OK; console.error=0 pageerror=0');
+    console.log('QA Chromium: Cosentyx default preserved; Kisqali selectable; Mensual/Trimestral/Anual/Histórico windows match hand-derived fixture values; Ver ciclos raw traceability (coherent boundary changes, stable doses, presentation independence) OK; real XLSX Resumen+Pacientes+Ciclos match UI model; population CSV filtered export OK; console.error=0 pageerror=0');
 } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
