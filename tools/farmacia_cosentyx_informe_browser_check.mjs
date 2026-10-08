@@ -71,8 +71,10 @@ function chromiumExecutable() {
  *   PSA-003, HS-003, HS-006, HS-002, HS-008} = 8 (blind sum 11).
  * - Q3: PSO-004 disp 07-03 (pso 1); HS-007 move 08-20 q4w->q2w (int 1);
  *   HS-009 discontinued 09-30 event-regimen q2w (disc 1); unique 3.
- * - Q4: ONLY HS-010 discontinued 10-01 event-regimen q2w, reason absent
- *   (disc 1, everything else 0); unique 1. No Q4 dispensing/movement exists.
+ * - Q4: ONLY HS-010 discontinued 10-01 event-regimen q2w, explicit wholly
+ *   fictitious demo reason 'Decisión clínica documentada' on the synthetic
+ *   record (disc 1, everything else 0); unique 1. No Q4
+ *   dispensing/movement exists.
  */
 const EXPECTED = {
     '2026-Q1': {
@@ -116,7 +118,7 @@ const EXPECTED_DETALLE_Q2 = [
     ['COS-HS-008', 'HS', 'HS — reducción de frecuencia q2w → q4w', '2026-06-10', 'q2w → q4w', '150 mg', 'q4w', 'No registrado']
 ];
 const EXPECTED_DETALLE_Q4 = [
-    ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', 'Discontinuado', 'No registrado']
+    ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', 'Discontinuado', 'Decisión clínica documentada']
 ];
 const NEGATIVE_PATIENTS = ['COS-PSO-003', 'COS-PSA-002', 'COS-HS-004', 'COS-HS-005',
     'COS-HS-011', 'COS-HS-012', 'COS-HS-013', 'COS-HS-014'];
@@ -270,10 +272,10 @@ try {
     assert.deepEqual(q4Detalle[0], ['Paciente (sintético)', 'Patología', 'Tipo de caso', 'Fecha del hecho que incluye',
         'Régimen explícito', 'Presentación explícita', 'Estado actual explícito', 'Motivo registrado']);
     assert.deepEqual(q4Detalle.slice(1), EXPECTED_DETALLE_Q4);
-    /* Truthfulness: the discontinued patient never reads active; the absent
-     * reason is exported as absent, never invented. */
+    /* Truthfulness: the discontinued patient never reads active; the
+     * explicit fictitious demo reason is exported verbatim. */
     assert.equal(q4Detalle[1][6], 'Discontinuado');
-    assert.equal(q4Detalle[1][7], 'No registrado');
+    assert.equal(q4Detalle[1][7], 'Decisión clínica documentada');
 
     /* Back to Q2: download a REAL .xlsx and validate it against the visible UI model. */
     await page.locator('#informes-quarter-select').selectOption('2026-Q2');

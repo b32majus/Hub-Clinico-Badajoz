@@ -62,9 +62,13 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
  *               regimen (a discontinued patient is never shown active)
  * - COS-HS-010  first dispensing 2026-01-20 at q4w -> no HS q2w start anywhere;
  *               no movements; discontinued_at 2026-10-01 (Q4 FIRST day boundary)
- *               with regime_at_discontinuation 'q2w', reason OMITTED (absent
- *               stays absent, no cause invented) -> Q4 DISCONTINUATION, the ONLY
- *               Q4 fact: Q4 is the discontinuation-only quarter. Note the event
+ *               with regime_at_discontinuation 'q2w' and the explicit, wholly
+ *               fictitious demo reason 'Decisión clínica documentada' recorded
+ *               on the synthetic record (never an inference, switch or
+ *               causality statement) -> Q4 DISCONTINUATION, the ONLY
+ *               Q4 fact: Q4 is the discontinuation-only quarter. Absence of
+ *               reason is proven ONLY by a checker-local clone with `reason`
+ *               deleted (see the isolated absent-reason check). Note the event
  *               regimen (q2w) legitimately differs from the initial regime (q4w):
  *               the explicit event fact governs, never the prescription.
  * - COS-HS-011  first dispensing 2026-05-18 at q4w -> no start; discontinued_at
@@ -84,6 +88,7 @@ const XLSX = require(path.join(ROOT, 'vendor/sheetjs/xlsx.full.min.js'));
  * regime stays verbatim and never classifies.
  */
 const REASON_009 = 'motivo administrativo registrado';
+const REASON_Q4 = 'Decisión clínica documentada';
 const EXPECTED = {
     '2026-Q1': {
         counts: { pso_start: 1, psa_start: 0, hs_start_q2w: 2, hs_intensification: 0, hs_reduction: 0, hs_discontinuation: 0 },
@@ -124,7 +129,7 @@ const EXPECTED = {
         counts: { pso_start: 0, psa_start: 0, hs_start_q2w: 0, hs_intensification: 0, hs_reduction: 0, hs_discontinuation: 1 },
         unique: 1,
         rows: [
-            ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', undefined, true, undefined]
+            ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', undefined, true, REASON_Q4]
         ]
     }
 };
@@ -132,8 +137,10 @@ const EXPECTED = {
  * Q2, the discontinuation quarters Q3/Q4 and the Q1 projection-absence row:
  * [Paciente, Patología, Tipo de caso, Fecha, Régimen explícito,
  *  Presentación explícita, Estado actual explícito, Motivo registrado].
- * A discontinued row reads 'Discontinuado', never active; an absent reason
- * reads 'No registrado', never invented; an absent current status reads
+ * A discontinued row reads 'Discontinuado', never active; the Q3/Q4
+ * recorded reasons are exported verbatim; an absent reason (proven only by
+ * the checker-local clone variant) reads 'No registrado', never invented;
+ * an absent current status reads
  * 'No registrado', never derived from history. */
 const EXPECTED_DETALLE = {
     '2026-Q1': [
@@ -160,7 +167,7 @@ const EXPECTED_DETALLE = {
         ['COS-HS-009', 'HS', 'HS — discontinuación q2w', '2026-09-30', 'q2w', '300 mg', 'Discontinuado', REASON_009]
     ],
     '2026-Q4': [
-        ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', 'Discontinuado', 'No registrado']
+        ['COS-HS-010', 'HS', 'HS — discontinuación q2w', '2026-10-01', 'q2w', '150 mg', 'Discontinuado', REASON_Q4]
     ]
 };
 const QUARTERS = Object.keys(EXPECTED);
@@ -306,7 +313,7 @@ check('fixture: HS discontinuation positive witnesses (dated + q2w event regimen
     assert.ok(hs010, 'COS-HS-010 must exist');
     assert.equal(hs010.discontinued_at, '2026-10-01', 'Q4 first-day boundary');
     assert.equal(hs010.regime_at_discontinuation, 'q2w');
-    assert.ok(!('reason' in hs010), 'absent reason stays absent, never defaulted');
+    assert.equal(hs010.reason, REASON_Q4, 'explicit fictitious demo reason recorded on the synthetic record');
 });
 check('fixture: status coherence — dated discontinuation is recorded NOT active', () => {
     for (const id of ['COS-HS-009', 'COS-HS-010', 'COS-HS-012', 'COS-HS-014']) {
@@ -418,7 +425,7 @@ check('projection: rows keep presentation, current status, event regimen and rea
     assert.equal(q4Disc.presentation, '150 mg');
     assert.equal(q4Disc.regime, 'q2w');
     assert.notEqual(q4Disc.regime, q4Disc.current_regime, 'event regimen and current status never collapse');
-    assert.equal(q4Disc.reason, undefined, 'absent reason stays absent, never fabricated');
+    assert.equal(q4Disc.reason, REASON_Q4, 'explicit demo reason projected verbatim');
     const q2Start = reports['2026-Q2'].detail_rows.find(row => row.patient_id === 'COS-HS-008'
         && row.case_type === 'HS — nuevo inicio q2w');
     assert.equal(q2Start.presentation, '150 mg');
@@ -440,8 +447,67 @@ check('projection: shared formatters map explicit/absent states without inventio
     assert.equal(Informe.statusDisplay(false, null), 'Desconocido');
     assert.equal(Informe.statusDisplay(false, undefined), 'No registrado');
     assert.equal(Informe.reasonDisplay(REASON_009), REASON_009, 'recorded reason verbatim');
+    assert.equal(Informe.reasonDisplay(REASON_Q4), REASON_Q4, 'Q4 explicit demo reason verbatim');
     assert.equal(Informe.reasonDisplay(null), 'Desconocido');
     assert.equal(Informe.reasonDisplay(undefined), 'No registrado');
+});
+
+/* Absent reason stays absent: TEST-LOCAL cloned fixture only (never visible
+ * in the demo). Deleting `reason` on the COS-HS-010 clone must leave
+ * detail_rows.reason === undefined, reasonDisplay(undefined) ===
+ * 'No registrado' and the cloned Q4 XLSX Detalle reason cell ===
+ * 'No registrado'. It FAILS if the engine ever defaults/fills a reason.
+ * The `null => Desconocido` distinction stays. */
+check('absent reason: checker-local clone without reason stays absent in model and real XLSX', () => {
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-010').reason, REASON_Q4,
+        'visible demo fixture keeps the explicit reason; only the clone deletes it');
+    const variant = cloneFixture();
+    delete variant.patients.find(p => p.patient_id === 'COS-HS-010').reason;
+    assert.ok(!('reason' in variant.patients.find(p => p.patient_id === 'COS-HS-010')),
+        'clone really carries no reason fact');
+    const report = Informe.computeReport(variant, '2026-Q4');
+    assert.equal(report.detail_rows.length, 1, 'the discontinuation still classifies without a reason');
+    assert.equal(report.detail_rows[0].reason, undefined, 'absent reason stays absent, never defaulted');
+    assert.equal(Informe.reasonDisplay(report.detail_rows[0].reason), 'No registrado');
+    assert.equal(Informe.reasonDisplay(undefined), 'No registrado');
+    const buffer = Informe.buildWorkbook(report, XLSX);
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+    assert.equal(rows[1][6], 'Discontinuado', 'the cloned discontinued row never reads active');
+    assert.equal(rows[1][7], 'No registrado', 'the cloned XLSX reason cell exports absence, never an invented reason');
+    assert.equal(Informe.reasonDisplay(null), 'Desconocido', 'null stays Desconocido, distinct from absent');
+});
+
+/* Explicitly unknown reason stays unknown: TEST-LOCAL cloned fixture only
+ * (never visible in the demo, no clinical cause invented). Setting
+ * `reason: null` on the COS-HS-010 clone must keep detail_rows.reason ===
+ * null, reasonDisplay(null) === 'Desconocido' (distinct from absent
+ * 'No registrado') and the cloned Q4 XLSX Detalle reason cell ===
+ * 'Desconocido'. It FAILS if the engine ever defaults/fills a reason. */
+check('explicitly unknown reason: checker-local clone with reason null stays null in model and real XLSX', () => {
+    assert.equal(Fixture.patients.find(p => p.patient_id === 'COS-HS-010').reason, REASON_Q4,
+        'visible demo fixture keeps the explicit reason; only the clone sets null');
+    const variant = cloneFixture();
+    variant.patients.find(p => p.patient_id === 'COS-HS-010').reason = null;
+    assert.equal(variant.patients.find(p => p.patient_id === 'COS-HS-010').reason, null,
+        'clone really carries an explicitly unknown reason fact');
+    const report = Informe.computeReport(variant, '2026-Q4');
+    assert.equal(report.detail_rows.length, 1, 'the discontinuation still classifies with an unknown reason');
+    assert.equal(report.detail_rows[0].reason, null, 'explicitly unknown reason stays null, never defaulted');
+    assert.equal('reason' in report.detail_rows[0], true, 'the null fact is preserved, distinguishable from undefined');
+    assert.equal(Informe.reasonDisplay(report.detail_rows[0].reason), 'Desconocido');
+    assert.equal(Informe.reasonDisplay(null), 'Desconocido');
+    assert.notEqual(Informe.reasonDisplay(null), Informe.reasonDisplay(undefined),
+        'unknown and absent stay distinct');
+    const buffer = Informe.buildWorkbook(report, XLSX);
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets['Detalle'], { header: 1, defval: '' }).map(normRow);
+    assert.equal(rows.length - 1, 1, 'exactly the single Q4 row');
+    assert.equal(rows[1][7], 'Desconocido', 'the cloned XLSX reason cell exports unknown, never an invented reason');
+    assert.notEqual(rows[1][7], REASON_Q4, 'the engine never turns null into the recorded demo reason');
+    assert.notEqual(rows[1][7], 'No registrado', 'unknown never collapses into the absent label');
+    assert.equal(report.counts_by_category.hs_discontinuation, 1);
+    assert.equal(report.unique_patient_count, 1);
 });
 
 /* 4. At least two quarters produce different computed outputs. */
@@ -875,11 +941,12 @@ check('xlsx Q4 Resumen/Detalle: discontinuation-only quarter exports its single 
     const detalle = detalleRows(reports['2026-Q4']);
     assert.equal(detalle.length - 1, 1, 'exactly the discontinuation row, no starts/movements');
     assert.deepEqual(detalle.slice(1), EXPECTED_DETALLE['2026-Q4']);
-    /* Truthfulness: the discontinued row never reads active; the absent
-     * reason is exported as absent, never invented. */
+    /* Truthfulness: the discontinued row never reads active; the explicit
+     * fictitious demo reason is exported verbatim (absence is proven only
+     * by the checker-local clone variant, never by this demo row). */
     assert.equal(detalle[1][6], 'Discontinuado');
     assert.notEqual(detalle[1][6].toLowerCase().includes('activ'), true, 'no active claim for a stopped patient');
-    assert.equal(detalle[1][7], 'No registrado');
+    assert.equal(detalle[1][7], REASON_Q4);
 });
 
 check('xlsx: buildWorkbook rejects a non-computed report explicitly', () => {
