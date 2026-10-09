@@ -502,6 +502,76 @@ body:has(.hub-shell) {
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
 }
 
+/* T2 #611 (Atenea C-087, volume): accessible chips for four discrete PV selects
+   (Dolor Axial, Rigidez Matutina, Irradiación a Nalgas, Maniobras Sacroilíacas).
+   The original <select> remains the single data authority; .pv-chip-native hides
+   it from view while .pv-chips presents the same options, so a single visible
+   control exists per field. Active state is conveyed by background, weight and a
+   check mark (never colour alone), and chips inherit the local toggle vocabulary. */
+.pv-chip-native {
+    display: none !important;
+}
+
+.pv-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    padding: 7px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pv-chip:hover:not(:disabled) {
+    background-color: #e2e6ea;
+    border-color: #a7b7c5;
+}
+
+.pv-chip:focus-visible {
+    outline: 2px solid #008777;
+    outline-offset: 2px;
+    box-shadow: 0 2px 8px rgba(0, 135, 119, 0.3);
+}
+
+.pv-chip[aria-pressed="true"] {
+    background-color: #008777;
+    color: #ffffff;
+    border-color: #008777;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.pv-chip__mark {
+    display: none;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.pv-chip[aria-pressed="true"] .pv-chip__mark {
+    display: inline-block;
+}
+
+.pv-chip[aria-pressed="true"] .pv-chip__mark::before {
+    content: "\2713";
+}
+
+.pv-chip:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 /* Tóxicos */
 .block-label {
     margin-bottom: 15px;
