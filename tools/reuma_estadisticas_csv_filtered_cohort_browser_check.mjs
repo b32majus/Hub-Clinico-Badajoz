@@ -27,9 +27,10 @@
  *       cohort EMPTY while upstream total stays 6; clicking `Exportar CSV`
  *       produces NO download (existing exporter fail-safe: warning, no rows)
  *       and never falls back to total.
- *   E5  adversarial local search: formal cohort 6 with `Buscar en tabla`
- *       narrowing the visible rows to 1; the download still carries the 6
- *       formal identities (accepted decision in #537).
+ *   E5  decided state (#613): the redundant local `Buscar en tabla` control is
+ *       gone, so the display equals the formal 6-patient cohort and the download
+ *       still carries exactly those 6 formal identities (accepted decisions in
+ *       #537 and #613).
  *   E6  console.error === 0 and pageerror === 0 counted over the whole
  *       qualified journey: session gate on reuma_index.html through navigation,
  *       filters, export clicks and real CSV downloads. No error buffer is
@@ -274,7 +275,6 @@ async function resetFormalFilters(page) {
     await page.click('.filter-tab[data-tab="terapeuticos"]').catch(() => {});
     await page.selectOption('#filterTtoType', 'Todos').catch(() => {});
     await page.selectOption('#filterTtoSpecific', 'Todos').catch(() => {});
-    await page.fill('#tableSearchInput', '').catch(() => {});
     await waitForTotal(page, 6);
 }
 
@@ -363,18 +363,39 @@ try {
                 `kpiTotal=${state.kpiTotal} emptyShown=${emptyShown} download=${download ? 'UNEXPECTED' : 'none'}`);
         }
 
-        // E5 — adversarial local search: formal 6, display narrowed to 1 row.
+        // E5 — decided state (#613): the local `Buscar en tabla` control no longer
+        // exists, so the display equals the formal 6-patient cohort and the export
+        // still follows that same formal cohort. `resetFormalFilters` leaves the
+        // formal cohort at 6; the download must mirror it exactly.
         {
             await resetFormalFilters(entry.page);
-            await entry.page.fill('#tableSearchInput', 'SYN-AR');
-            await entry.page.waitForFunction(() => document.querySelectorAll('#cohortTableBody tr').length === 1, null, { timeout: 5000 }).catch(() => {});
-            const searched = await dashboardState(entry.page);
+            const state = await dashboardState(entry.page);
+            const controls = await entry.page.evaluate(() => {
+                const searchInput = document.getElementById('tableSearchInput');
+                const searchWrapper = document.querySelector('.table-search');
+                const container = document.querySelector('.table-controls');
+                const btn = document.getElementById('exportCohortBtn');
+                const rect = btn ? btn.getBoundingClientRect() : null;
+                return {
+                    searchInput: !!searchInput,
+                    searchWrapper: !!searchWrapper,
+                    controlChildren: container ? Array.from(container.children).map((child) => child.id || child.className) : [],
+                    exportVisible: !!rect && rect.width > 0 && rect.height > 0,
+                };
+            });
             const dl = await clickExportExpectDownload(entry.page);
             const ids = dl ? parseDownloadedIds(dl.text) : null;
-            record('E5 adversarial table search narrows display to 1 row while export follows the formal 6-patient cohort',
-                searched.kpiTotal === '6' && searched.tableRows === 1 && ids !== null && multisetEqual(ids, ALL_SIX),
-                `kpiTotal=${searched.kpiTotal} rows=${searched.tableRows} downloaded=${JSON.stringify(ids)}`);
-            await entry.page.fill('#tableSearchInput', '');
+            record('E5 no local table search control exists; display and export both equal the formal 6-patient cohort',
+                controls.searchInput === false && controls.searchWrapper === false &&
+                controls.controlChildren.length === 1 && controls.controlChildren[0] === 'exportCohortBtn' &&
+                controls.exportVisible &&
+                state.kpiTotal === '6' && state.tableRows === ALL_SIX.length &&
+                multisetEqual([...state.tableIds].sort(), ALL_SIX) &&
+                ids !== null && multisetEqual(ids, ALL_SIX),
+                `searchInput=${controls.searchInput ? 'PRESENT' : 'absent'} searchWrapper=${controls.searchWrapper ? 'PRESENT' : 'absent'} ` +
+                `controlChildren=${JSON.stringify(controls.controlChildren)} exportVisible=${controls.exportVisible} ` +
+                `kpiTotal=${state.kpiTotal} rows=${state.tableRows} tableIds=${JSON.stringify(state.tableIds)} ` +
+                `downloaded=${JSON.stringify(ids)}`);
         }
 
         // E6 — full-journey error budget: gate through downloads, no reset, no per-URL filtering. Both totals must be zero.

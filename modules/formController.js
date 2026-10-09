@@ -2317,6 +2317,35 @@ function initScoreWiring() {
         return getFormValue('pcrUnit');
     }
 
+    // T3 #612: DAPSA-scoped accessible feedback. The numeric value, its readonly
+    // character, the thresholds and the exported category are preserved; only the
+    // DAPSA feedback element gets an explicit neutral, non-colour-only treatment
+    // plus a live region, and the non-evaluable state ('Incompleto') stays neutral
+    // instead of being rendered as a computed category. Other indices keep the
+    // shared applyScoreCategory() output untouched.
+    function estadoCategoriaDapsa(result, cat) {
+        if (result && result.categoria === 'Incompleto') return 'incompleto';
+        if (!cat || cat.categoria === 'unknown') return 'no-evaluable';
+        return cat.categoria; // remission | low | moderate | high
+    }
+
+    function aplicarFeedbackCategoriaDapsa(result, cat, fieldEl, categoryEl) {
+        if (!categoryEl) return;
+        var estado = estadoCategoriaDapsa(result, cat);
+        var esIncompleto = estado === 'incompleto';
+        categoryEl.dataset.dapsaEstado = estado;
+        if (esIncompleto) {
+            categoryEl.textContent = 'Incompleto';
+            categoryEl.classList.add('dapsa-categoria--incompleto');
+        } else {
+            categoryEl.classList.remove('dapsa-categoria--incompleto');
+        }
+        // Neutral: the category travels as text (already present) and a uniform
+        // pill; colour no longer encodes a good/bad or therapeutic reading.
+        categoryEl.style.color = '';
+        if (fieldEl) fieldEl.title = categoryEl.textContent;
+    }
+
     function recalcularDAPSA() {
         if (typeof HubTools.scores.calcularDAPSA !== 'function') return;
         syncDapsaSourceFields();
@@ -2333,15 +2362,12 @@ function initScoreWiring() {
         var dapsaField = document.getElementById('dapsaResult');
         var dapsaCatEl = document.getElementById('dapsaCategoria');
 
+        var cat = null;
         if (dapsaField) {
             dapsaField.value = result.total;
-            applyScoreCategory(result.total, 'dapsa', dapsaField, dapsaCatEl);
+            cat = applyScoreCategory(result.total, 'dapsa', dapsaField, dapsaCatEl);
         }
-        if (dapsaCatEl && result.categoria === 'Incompleto') {
-            dapsaCatEl.textContent = 'Incompleto';
-            dapsaCatEl.style.color = '#6c757d';
-            dapsaCatEl.style.fontWeight = '700';
-        }
+        aplicarFeedbackCategoriaDapsa(result, cat, dapsaField, dapsaCatEl);
         actualizarNotaConversionPcr('dapsaPcrConversionNote', result.pcrConversion);
         debugLog('  📊 DAPSA recalculado:', result.total || 'Incompleto');
     }

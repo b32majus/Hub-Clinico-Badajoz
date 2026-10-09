@@ -22,7 +22,7 @@
  *       options in source order) with console.error=0 and pageerror=0
  *   B3  period filter narrows the cohort via a supported date input
  *   B4  pathology + therapeutic filters narrow the cohort via supported selects
- *   B5  table search narrows the rendered rows
+ *   B5  no local table search control exists; rendered rows equal the formal cohort
  *   B6  happy path keeps console.error=0 and pageerror=0
  *   B7  unavailable (tab without the session corpus) fails visibly/safely
  *   B8  error (planted seam double) fails visibly/safely
@@ -334,20 +334,33 @@ try {
                 therapeutic.kpiTotal === String(ESPA_FAME_A_PATIENTS) && therapeutic.tableRows === ESPA_FAME_A_PATIENTS,
                 `espa=${pathology.kpiTotal}/${pathology.tableRows} espa+fameA=${therapeutic.kpiTotal}/${therapeutic.tableRows}`);
 
-            // Table search over the current cohort.
+            // Decided state (#613): the redundant local `Buscar en tabla` control was
+            // removed, so the rendered rows equal the formal cohort and the table
+            // controls hold only the export button (no leftover search slot/gap).
             await entry.page.click('.filter-tab[data-tab="demograficos"]');
             await entry.page.selectOption('#filterPathology', 'Todos');
             await entry.page.click('.filter-tab[data-tab="terapeuticos"]');
             await entry.page.selectOption('#filterTtoSpecific', 'Todos');
             await waitForTotal(entry.page, TOTAL_PATIENTS);
-            await entry.page.fill('#tableSearchInput', 'SYN-AR');
-            await entry.page.waitForFunction(() => document.querySelectorAll('#cohortTableBody tr').length === 1, null, { timeout: 5000 }).catch(() => {});
+            const controls = await entry.page.evaluate(() => {
+                const container = document.querySelector('.table-controls');
+                const btn = document.getElementById('exportCohortBtn');
+                const rect = btn ? btn.getBoundingClientRect() : null;
+                return {
+                    searchInput: !!document.getElementById('tableSearchInput'),
+                    searchWrapper: !!document.querySelector('.table-search'),
+                    controlChildren: container ? Array.from(container.children).map((child) => child.id || child.className) : [],
+                    exportVisible: !!rect && rect.width > 0 && rect.height > 0,
+                };
+            });
             const searched = await dashboardState(entry.page);
-            record('B5 table search narrows the rendered rows through the supported search input',
-                searched.tableRows === 1 && searched.tableText.includes('SYN-AR-001'),
+            record('B5 no local table search control exists and the rendered rows equal the formal cohort',
+                controls.searchInput === false && controls.searchWrapper === false &&
+                controls.controlChildren.length === 1 && controls.controlChildren[0] === 'exportCohortBtn' &&
+                controls.exportVisible && searched.tableRows === TOTAL_PATIENTS,
+                `searchInput=${controls.searchInput ? 'PRESENT' : 'absent'} searchWrapper=${controls.searchWrapper ? 'PRESENT' : 'absent'} ` +
+                `controlChildren=${JSON.stringify(controls.controlChildren)} exportVisible=${controls.exportVisible} ` +
                 `rows=${searched.tableRows} text=${JSON.stringify(searched.tableText)}`);
-            await entry.page.fill('#tableSearchInput', '');
-            await entry.page.waitForFunction((count) => document.querySelectorAll('#cohortTableBody tr').length === count, TOTAL_PATIENTS, { timeout: 5000 }).catch(() => {});
 
             // CSV export is not wired today (see header note), so it is not probed; the
             // migration leaves that path untouched.
