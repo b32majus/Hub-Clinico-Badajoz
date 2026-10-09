@@ -25,24 +25,52 @@
  *   1  EspA + APs: each field has exactly ONE visible control (chips visible, the
  *      native select hidden, no decorated .custom-select wrapper -> no duplicate
  *      dropdown). Chip values/labels/order mirror the select exactly.
- *   2  real mouse: pick every value and return to blank; the select stays the
- *      single authority and recopilarDatosFormulario() returns the same value.
+ *   2  real mouse: pick every non-blank value then RETURN TO BLANK through real
+ *      locator clicks; the select stays the single authority and
+ *      recopilarDatosFormulario() returns the same value at every step.
  *   3  real keyboard: focus + Enter/Space activates a chip (semantic buttons).
  *   4  pathology switch EspA<->APs keeps the chips in sync; the section (and the
  *      conditional duracionRigidezContainer) hides on AR and returns on APs,
  *      i.e. the conditional response is unchanged.
- *   5  restore/hydration: applying a synthetic saved state through the product's
- *      programmatic assignment (select.value = ..., as prefillSeguimientoForm
- *      does) re-syncs the chips without any new polling loop.
- *   6  negative witnesses: blank never becomes "no"; an out-of-set option value
- *      is rejected by the authority and no chip invents it; a disabled authority
- *      renders the chips non-interactive.
+ *   5  [AUTHORITY PROPERTY] restore/hydration re-sync: assigning a synthetic
+ *      saved state directly to select.value (the writer shape used by
+ *      prefillSeguimientoForm) re-syncs the derived chips without any polling
+ *      loop. Primera Visita has NO supported restore path (see below), so this
+ *      is a lower-level contract check, NOT supported browser-interaction proof.
+ *   6a real mouse: clicking every blank chip exports blank and never "no".
+ *   6b [AUTHORITY PROPERTY] an out-of-set option value is rejected by the
+ *      authority and no chip invents it.
+ *   6c [AUTHORITY PROPERTY] a disabled authority renders the chips
+ *      non-interactive.
  *   7  console.error === 0 and pageerror === 0 over every journey.
  *
- * Supported interactions only (session gate, real selectOption, real chip mouse
- * clicks, real keyboard); reads observables via page.evaluate; never tampers the
- * DOM, never mutates readonly state, never injects a second control. Synthetic
- * data only. Not part of `verify:nexus` (browser dependency).
+ * SUPPORTED INTERACTION vs AUTHORITY PROPERTY
+ * -------------------------------------------
+ * Checks tagged [AUTHORITY PROPERTY] (5, 6b, 6c) cannot be produced by any
+ * supported UI in Primera Visita: no supported state disables these four
+ * selects, the UI can never submit an out-of-set value, and there is no product
+ * restore/hydration path that writes these fields. They assign
+ * select.value/.disabled directly inside page.evaluate purely to falsify the
+ * underlying authority contract; they are NOT counted as supported
+ * browser-interaction proof. Every other check (static contract, real mouse,
+ * real keyboard, real pathology switch, real blank-chip clicks, real export
+ * reads via recopilarDatosFormulario) is exercised through supported
+ * interaction.
+ *
+ * RESTORE DEMONSTRATION GAP: Primera Visita has no supported mechanism to
+ * restore/hydrate saved form state. scripts/script_primera_visita.js reads no
+ * query parameter and calls no prefill, primera_visita.html has no inline
+ * restore, and the ?id= links emitted by the shared sidebar quick-view are
+ * ignored by PV. The only product-side programmatic writer,
+ * HubTools.form.prefillSeguimientoForm (modules/formController.js), is wired
+ * solely from scripts/script_seguimiento.js. The required "restore of saved
+ * synthetic form state" is therefore NOT demonstrated through supported
+ * interaction here; only the derived re-sync contract is covered (check 5).
+ *
+ * Reads observables via page.evaluate. Supported-interaction checks never tamper
+ * the DOM or inject a second control; the bounded [AUTHORITY PROPERTY] checks
+ * assign select.value/.disabled directly. Synthetic data only. Not part of
+ * `verify:nexus` (browser dependency).
  *
  * Usage: node tools/reuma_reuma_ux17_chips_browser_check.mjs
  */
@@ -304,13 +332,15 @@ async function journey(browser, code) {
       check(`${tag} chips are semantic buttons`, s.chips.every((c) => c.tag === 'BUTTON' && c.type === 'button'), JSON.stringify(s.chips.map((c) => `${c.tag}/${c.type}`)));
     }
 
-    // 2. real mouse: pick every value then back to blank; export parity per step.
+    // 2. real mouse: pick every non-blank value then RETURN TO BLANK through a
+    //    real locator click; export parity per step.
     for (const id of FIELD_IDS) {
       const spec = CHIP_FIELDS[id];
       const tag = `${label} #${id} mouse`;
       let ok = true; let detail = '';
       await openAncestorCollapsibles(page, `[data-chip-group-for="${id}"]`);
-      for (const value of spec.values) {
+      const sequence = spec.values.filter((v) => v !== '').concat(''); // values..., then blank
+      for (const value of sequence) {
         await page.locator(chipSel(id, value)).click();
         await page.waitForTimeout(60);
         const s = await page.evaluate(READ_FIELDS_FN, FIELD_IDS);
@@ -323,7 +353,7 @@ async function journey(browser, code) {
         const good = ref.selectValue === value && JSON.stringify(pressed) === JSON.stringify([value]) && exported[id] === value;
         if (!good) { ok = false; detail = JSON.stringify({ want: value, select: ref.selectValue, pressed, exported: exported[id] }); break; }
       }
-      check(`${tag} pick/back-to-blank with export parity`, ok, detail);
+      check(`${tag} pick every value + real return-to-blank, export parity`, ok, detail);
     }
 
     // 3. real keyboard activation (semantic buttons, Enter/Space).
@@ -367,10 +397,13 @@ async function journey(browser, code) {
       check(`${tag} duracionRigidezContainer visibility tracks the section`, back.__meta.sectionVisible === back.__meta.durationVisible, JSON.stringify(back.__meta));
     }
 
-    // 5. restore: apply a synthetic saved state through the product's programmatic
-    //    assignment and verify the chips re-sync without any event/polling.
+    // 5. [AUTHORITY PROPERTY — NOT UI proof] restore/hydration re-sync.
+    //    Primera Visita exposes no supported restore path (see header); this
+    //    applies a synthetic saved state through the product-side writer shape
+    //    (select.value = ..., as prefillSeguimientoForm does) directly and
+    //    verifies the derived chips re-sync with no event/polling loop.
     {
-      const tag = `${label} restore`;
+      const tag = `${label} [AUTHORITY PROPERTY] restore`;
       const saved = { dolorAxial: 'inflamatorio', rigidezMatutina: 'no', irradiacionNalgas: 'ambas', maniobrasSacroiliacas: 'dudosas' };
       const res = await page.evaluate((payload) => {
         // Same programmatic assignment the product uses when prefilling
@@ -394,22 +427,32 @@ async function journey(browser, code) {
 
     // 6. negative witnesses.
     {
-      // blank is never "no"
-      const blank = await page.evaluate(() => {
-        for (const id of ['dolorAxial', 'rigidezMatutina', 'irradiacionNalgas', 'maniobrasSacroiliacas']) {
-          document.getElementById(id).value = '';
-        }
+      // 6a. SUPPORTED interaction: click every blank chip through the real mouse,
+      //     then read the export. Blank is a real selectable state; absence is
+      //     never coerced to "no".
+      const tag = `${label} blank`;
+      for (const id of FIELD_IDS) {
+        await openAncestorCollapsibles(page, `[data-chip-group-for="${id}"]`);
+        await page.locator(chipSel(id, '')).click();
+        await page.waitForTimeout(60);
+      }
+      const blank = await page.evaluate((ids) => {
         const datos = HubTools.form.recopilarDatosFormulario();
-        return {
-          dolorAxial: datos.dolorAxial, rigidezMatutina: datos.rigidezMatutina,
-          irradiacionNalgas: datos.irradiacionNalgas, maniobrasSacroiliacas: datos.maniobrasSacroiliacas,
-          pressed: Array.from(document.querySelectorAll('[data-chip-group-for="rigidezMatutina"] .pv-chip'))
-            .filter((c) => c.getAttribute('aria-pressed') === 'true').map((c) => c.value)
-        };
-      });
-      check(`${label} blank/unknown is never "no"`, blank.dolorAxial === '' && blank.rigidezMatutina === '' && blank.irradiacionNalgas === '' && blank.maniobrasSacroiliacas === '' && JSON.stringify(blank.pressed) === JSON.stringify(['']), JSON.stringify(blank));
+        const exported = {}; const pressed = {};
+        for (const id of ids) {
+          exported[id] = datos[id];
+          pressed[id] = Array.from(document.querySelectorAll(`[data-chip-group-for="${id}"] .pv-chip`))
+            .filter((c) => c.getAttribute('aria-pressed') === 'true').map((c) => c.value);
+        }
+        return { exported, pressed };
+      }, FIELD_IDS);
+      const blankExportOk = FIELD_IDS.every((id) => blank.exported[id] === '' && JSON.stringify(blank.pressed[id]) === JSON.stringify(['']));
+      const neverNo = blank.exported.rigidezMatutina !== 'no';
+      const blankDetail = blankExportOk ? (neverNo ? '' : `rigidezMatutina exported ${JSON.stringify(blank.exported.rigidezMatutina)}`) : JSON.stringify(blank);
+      check(`${tag} real blank-chip click -> blank export, never "no"`, blankExportOk && neverNo, blankDetail);
 
-      // out-of-set option rejected by the authority; no chip invents it
+      // 6b. [AUTHORITY PROPERTY — NOT UI proof] an out-of-set option value can
+      //     never be submitted by the UI; falsify the authority contract directly.
       const bogus = await page.evaluate(() => {
         const select = document.getElementById('dolorAxial');
         select.value = '';
@@ -420,9 +463,10 @@ async function journey(browser, code) {
           hasBogusChip: !!document.querySelector('[data-chip-group-for="dolorAxial"] .pv-chip[data-value="valor-inexistente"]')
         };
       });
-      check(`${label} out-of-set value not accepted (fail closed)`, bogus.value === '' && bogus.blankPressed === 'true' && !bogus.hasBogusChip, JSON.stringify(bogus));
+      check(`${label} [AUTHORITY PROPERTY] out-of-set value not accepted (fail closed)`, bogus.value === '' && bogus.blankPressed === 'true' && !bogus.hasBogusChip, JSON.stringify(bogus));
 
-      // disabled authority -> non-interactive chips (real interactivity probe)
+      // 6c. [AUTHORITY PROPERTY — NOT UI proof] no supported state disables these
+      //     four selects in PV; falsify the disabled-mirroring contract directly.
       const disabled = await page.evaluate(() => {
         const select = document.getElementById('maniobrasSacroiliacas');
         select.value = 'positivas';
@@ -437,7 +481,7 @@ async function journey(browser, code) {
       });
       const chipInteractive = await page.locator(chipSel('maniobrasSacroiliacas', 'dudosas')).isEnabled();
       await page.evaluate(() => { document.getElementById('maniobrasSacroiliacas').disabled = false; });
-      check(`${label} disabled authority renders non-interactive chips`, disabled.allDisabled && !chipInteractive && disabled.value === 'positivas', JSON.stringify({ allDisabled: disabled.allDisabled, chipInteractive, value: disabled.value }));
+      check(`${label} [AUTHORITY PROPERTY] disabled authority renders non-interactive chips`, disabled.allDisabled && !chipInteractive && disabled.value === 'positivas', JSON.stringify({ allDisabled: disabled.allDisabled, chipInteractive, value: disabled.value }));
     }
 
     check(`${label} console.error=0 pageerror=0`, errs.length === 0 && perrs.length === 0, JSON.stringify([...errs, ...perrs].slice(0, 5)));
