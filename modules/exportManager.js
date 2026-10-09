@@ -1463,9 +1463,18 @@ function entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, t
         modalMessage: 'No se pudo copiar autom\u00e1ticamente. Copie el texto y p\u00e9guelo en la hoja ' + hojaExcel + '.',
         manualNotification: 'No se pudo copiar autom\u00e1ticamente. Use la ventana de copia manual.'
     }).then(function(result) {
+        // WO-REUMA-EXPORT-SAFETY-18B-c: `copyTextWithFallback` resuelve `false`
+        // exactamente cuando abrió el modal de copia manual (la copia automática
+        // falló). En ese caso la UI no debe afirmar que hubo copia: el checklist
+        // post-export solo se muestra cuando el portapapeles realmente aceptó
+        // el texto (T3 #583: sin toast genérico de éxito; el checklist es la UX
+        // de éxito real). El modal manual y su notificación info son el único
+        // feedback de la ruta de fallback.
+        if (result === false) {
+            console.warn('\u26a0 Copia autom\u00e1tica no disponible; se abri\u00f3 el modal de copia manual.');
+            return;
+        }
         console.log('\u2713 Datos copiados al portapapeles');
-        // T3 #583: sin toast generico de exito; el checklist post-export es
-        // la UX de exito. Se conservan errores y fallback.
         mostrarChecklistPostExport(hojaExcel);
     }).catch(function(err) {
         console.error('\u274c Error al copiar al portapapeles:', err);
