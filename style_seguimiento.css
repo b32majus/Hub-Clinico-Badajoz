@@ -1110,6 +1110,39 @@
     transition: all 0.3s ease;
 }
 
+/* T3 #612: DAPSA-only accessible category feedback. Scoped to DAPSA so shared
+   .indice-categoria / other indices (CASPAR, ASDAS, CDAI, ...) are unchanged.
+   Meaning is carried by the explicit text and a uniform neutral pill; the
+   dashed outline distinguishes the non-evaluable state without relying on
+   colour or implying a good/bad therapeutic reading. */
+.dapsa-categoria-feedback {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.dapsa-categoria-feedback .dapsa-categoria-prefix {
+    margin-right: 6px;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: #343a40;
+}
+
+#dapsaCategoria.dapsa-categoria {
+    margin-top: 0;
+    color: #212529;
+    background-color: #eef1f4;
+    border: 2px solid #6c757d;
+}
+
+#dapsaCategoria.dapsa-categoria[data-dapsa-estado="incompleto"] {
+    color: #495057;
+    background-color: #ffffff;
+    border-color: #adb5bd;
+    border-style: dashed;
+}
+
 /* ========================================
    ACR/EULAR Criteria Groups
    ======================================== */

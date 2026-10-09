@@ -1712,7 +1712,10 @@
                             <div class="form-group">
                                 <label for="dapsaResult">Resultado DAPSA:</label>
                                 <input type="text" id="dapsaResult" readonly class="indice-resultado">
-                                <span id="dapsaCategoria" class="indice-categoria"></span>
+                                <div class="dapsa-categoria-feedback">
+                                    <span class="dapsa-categoria-prefix">Categoría:</span>
+                                    <span id="dapsaCategoria" class="indice-categoria dapsa-categoria" role="status" aria-live="polite"></span>
+                                </div>
                                 <div id="dapsaPcrConversionNote" class="pcr-conversion-note" hidden></div>
                             </div>
                         </div>
