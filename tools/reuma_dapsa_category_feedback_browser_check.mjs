@@ -41,6 +41,12 @@
  *   8  pathology switch: the DAPSA section is APs-only (hidden on EspA/AR,
  *      visible again on APs) and the neutral treatment survives.
  *   9  console.error === 0 and pageerror === 0 over the whole journey.
+ *   10 G4-2 regression: #dapsaResult.indice-resultado (the DAPSA numeric total)
+ *      has a neutral, non-green background/border and legible text at initial
+ *      missing/incomplete AND at every computed category, in BOTH PV and
+ *      Seguimiento; other .indice-resultado fields keep the shared style (the
+ *      DAPSA override did not leak). Nonvacuity: reverting the neutral DAPSA CSS
+ *      makes these computed-style assertions fail.
  *
  * Not part of `verify:nexus` (browser dependency).
  * Usage: node tools/reuma_dapsa_category_feedback_browser_check.mjs
@@ -225,14 +231,47 @@ const EXPECTED = {
 };
 const GOOD_BAD_COLORS = ['rgb(40, 167, 69)', 'rgb(220, 53, 69)', 'rgb(255, 193, 7)'];
 
+function parseRgb(str) {
+  const m = /(\d+),\s*(\d+),\s*(\d+)/.exec(str || '');
+  return m ? { r: +m[1], g: +m[2], b: +m[3] } : null;
+}
+// Green/success when green clearly dominates red and is at least as strong as
+// blue (catches the shared .indice-resultado #d4edda/#28a745 palette).
+function isGreenish(str) {
+  const c = parseRgb(str);
+  return !!c && c.g > c.r + 20 && c.g >= c.b;
+}
+function relLum(str) {
+  const c = parseRgb(str);
+  if (!c) return null;
+  const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+}
+function contrastRatio(a, b) {
+  const la = relLum(a), lb = relLum(b);
+  if (la == null || lb == null) return null;
+  const hi = Math.max(la, lb), lo = Math.min(la, lb);
+  return (hi + 0.05) / (lo + 0.05);
+}
+// A numeric-result surface is neutral when neither its background nor its border
+// is a green/success colour of the shared palette.
+function isNeutralSurface(bg, border) {
+  const greens = ['rgb(40, 167, 69)', 'rgb(212, 237, 218)'];
+  return !isGreenish(bg) && !isGreenish(border) && !greens.includes(bg) && !greens.includes(border);
+}
+
 const READ_FEEDBACK = () => {
   const cat = document.getElementById('dapsaCategoria');
   const res = document.getElementById('dapsaResult');
   const cs = cat ? getComputedStyle(cat) : null;
+  const rcs = res ? getComputedStyle(res) : null;
   const prefix = document.querySelector('.dapsa-categoria-feedback .dapsa-categoria-prefix');
   return {
     resultValue: res ? res.value : null,
     resultReadonly: res ? res.readOnly : null,
+    resultBg: rcs ? rcs.backgroundColor : null,
+    resultBorderColor: rcs ? rcs.borderTopColor : null,
+    resultColor: rcs ? rcs.color : null,
     catText: cat ? cat.textContent : null,
     catEstado: cat ? cat.dataset.dapsaEstado : null,
     catRole: cat ? cat.getAttribute('role') : null,
@@ -274,6 +313,12 @@ async function journey(browser, { file, collectFn, label }) {
       JSON.stringify(initial));
     check(`${label} initial: numeric field empty and readonly`,
       initial.resultValue === '' && initial.resultReadonly === true, JSON.stringify(initial));
+    check(`${label} initial: DAPSA numeric field neutral (no green surface/border)`,
+      isNeutralSurface(initial.resultBg, initial.resultBorderColor),
+      JSON.stringify({ bg: initial.resultBg, border: initial.resultBorderColor }));
+    check(`${label} initial: DAPSA numeric field text legible`,
+      contrastRatio(initial.resultColor, initial.resultBg) >= 4.5,
+      JSON.stringify({ color: initial.resultColor, bg: initial.resultBg, contrast: contrastRatio(initial.resultColor, initial.resultBg) }));
     check(`${label} live region + explicit label present`,
       initial.catRole === 'status' && initial.catLive === 'polite' && initial.prefixText === 'Categoría:',
       JSON.stringify({ role: initial.catRole, live: initial.catLive, prefix: initial.prefixText }));
@@ -305,6 +350,12 @@ async function journey(browser, { file, collectFn, label }) {
       check(`${label} ${estado}: category reads "${w.label}" as text`,
         snap.catText === w.label && snap.catEstado === estado, JSON.stringify({ text: snap.catText, estado: snap.catEstado }));
       check(`${label} ${estado}: numeric field readonly preserved`, snap.resultReadonly === true, String(snap.resultReadonly));
+      check(`${label} ${estado}: DAPSA numeric field neutral (no green surface/border)`,
+        isNeutralSurface(snap.resultBg, snap.resultBorderColor),
+        JSON.stringify({ bg: snap.resultBg, border: snap.resultBorderColor }));
+      check(`${label} ${estado}: DAPSA numeric field text legible`,
+        contrastRatio(snap.resultColor, snap.resultBg) >= 4.5,
+        JSON.stringify({ color: snap.resultColor, bg: snap.resultBg, contrast: contrastRatio(snap.resultColor, snap.resultBg) }));
       check(`${label} ${estado}: non-colour cue (solid outline)`,
         snap.catBorderStyle === 'solid' && parseFloat(snap.catBorderWidth) > 0, JSON.stringify({ style: snap.catBorderStyle, width: snap.catBorderWidth }));
       // export/score parity via the product's own collection API.
@@ -336,6 +387,9 @@ async function journey(browser, { file, collectFn, label }) {
     }, collectFn);
     check(`${label} missing source -> export parity (empty total, "Incompleto")`,
       missingExport.dapsaResult === '' && missingExport.dapsaCategoria === 'Incompleto', JSON.stringify(missingExport));
+    check(`${label} missing source -> DAPSA numeric field neutral (no green)`,
+      isNeutralSurface(missing.resultBg, missing.resultBorderColor),
+      JSON.stringify({ bg: missing.resultBg, border: missing.resultBorderColor }));
 
     // 7. other indices do not receive the DAPSA-scoped class/attributes.
     const others = await page.evaluate(() => {
@@ -355,6 +409,21 @@ async function journey(browser, { file, collectFn, label }) {
     const leaks = others.filter((o) => o.missing || o.hasDapsaClass || o.role || o.live || o.estado);
     check(`${label} other indices untouched by the DAPSA-scoped feedback`,
       leaks.length === 0, JSON.stringify(leaks.length ? leaks : others));
+
+    // 7b. G4-2 scope guard: the neutral override is scoped to #dapsaResult; every
+    //     other numeric .indice-resultado field keeps the shared green style.
+    const otherResultStyles = await page.evaluate(() => {
+      const ids = ['basdaiResult', 'asdasCrpResult', 'asdasEsrResult', 'das28CrpResult', 'das28EsrResult', 'cdaiResult', 'sdaiResult'];
+      return ids.map((id) => {
+        const el = document.getElementById(id);
+        if (!el) return { id, missing: true };
+        const cs = getComputedStyle(el);
+        return { id, bg: cs.backgroundColor, border: cs.borderTopColor };
+      });
+    });
+    const styleLeaks = otherResultStyles.filter((o) => o.missing || o.bg !== 'rgb(212, 237, 218)' || o.border !== 'rgb(40, 167, 69)');
+    check(`${label} other .indice-resultado fields keep the shared style (DAPSA override scoped)`,
+      styleLeaks.length === 0, JSON.stringify(styleLeaks.length ? styleLeaks : otherResultStyles));
 
     // 8. pathology switch: DAPSA remains APs-only; neutral treatment survives.
     await page.selectOption('#diagnosticoPrimario', 'espa');

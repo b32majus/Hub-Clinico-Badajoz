@@ -140,6 +140,16 @@
     cursor: not-allowed;
 }
 
+/* C2 G4-2 (#612): the DAPSA numeric total must not read as a green "good"
+   clinical result. Scoped to #dapsaResult only; the shared .indice-resultado
+   rule above still styles every other index field. Neutral surface, neutral
+   border, legible dark text at blank/Incompleto and at every computed category. */
+#dapsaResult.indice-resultado {
+    background-color: #f1f3f5 !important;
+    border: 2px solid #adb5bd !important;
+    color: #212529 !important;
+}
+
 /* Campos condicionales ocultos por defecto */
 .conditional-field-hidden {
     display: none !important;

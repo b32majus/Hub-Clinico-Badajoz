@@ -43,6 +43,12 @@
  *   6c [AUTHORITY PROPERTY] a disabled authority renders the chips
  *      non-interactive.
  *   7  console.error === 0 and pageerror === 0 over every journey.
+ *   1b G4-1 regression (real mouse clicks, computed styles): the SELECTED BLANK
+ *      chip ([data-value=""][aria-pressed="true"], label "Seleccionar") must be
+ *      visually NEUTRAL - no green/success surface, no greenish border, no white
+ *      "active" text and NO visible checkmark - while a nonblank selected chip
+ *      keeps the supported active surface (#008777) and the checkmark. Nonvacuity:
+ *      reverting the blank-chip CSS makes this block fail.
  *
  * SUPPORTED INTERACTION vs AUTHORITY PROPERTY
  * -------------------------------------------
@@ -92,6 +98,17 @@ const CHIP_FIELDS = {
   maniobrasSacroiliacas: { values: ['', 'positivas', 'negativas', 'dudosas'], labels: ['Seleccionar', 'Positivas', 'Negativas', 'Dudosas'] }
 };
 const FIELD_IDS = Object.keys(CHIP_FIELDS);
+const ACTIVE_GREEN = 'rgb(0, 135, 119)'; // .pv-chip[aria-pressed="true"] surface
+function parseRgb(str) {
+  const m = /(\d+),\s*(\d+),\s*(\d+)/.exec(str || '');
+  return m ? { r: +m[1], g: +m[2], b: +m[3] } : null;
+}
+// A surface reads as green/success when green clearly dominates red and is at
+// least as strong as blue (catches the teal active chip AND the shared green).
+function isGreenish(str) {
+  const c = parseRgb(str);
+  return !!c && c.g > c.r + 20 && c.g >= c.b;
+}
 
 // ---------------------------------------------------------------------------
 // S1/S2 — static inspection (no browser): authored contract + local mechanism.
@@ -294,6 +311,33 @@ const READ_FIELDS_FN = (ids) => {
 
 const chipSel = (id, value) => `[data-chip-group-for="${id}"] .pv-chip[data-value="${value}"]`;
 
+// Read the computed, RENDERED style of every chip in one field (background,
+// border, text colour, and whether the ✓ mark is actually visible). Read-only:
+// no DOM mutation, no injected control.
+const READ_CHIP_DISPLAY = (id) => {
+  const group = document.querySelector(`[data-chip-group-for="${id}"]`);
+  const chips = group ? Array.from(group.querySelectorAll('.pv-chip')) : [];
+  const snap = (c) => {
+    const cs = getComputedStyle(c);
+    const mark = c.querySelector('.pv-chip__mark');
+    const mcs = mark ? getComputedStyle(mark) : null;
+    const rect = mark ? mark.getBoundingClientRect() : null;
+    return {
+      value: c.dataset.value,
+      label: (c.querySelector('.pv-chip__label') || {}).textContent || '',
+      pressed: c.getAttribute('aria-pressed'),
+      bg: cs.backgroundColor,
+      color: cs.color,
+      borderColor: cs.borderTopColor,
+      markDisplay: mcs ? mcs.display : null,
+      markVisible: !!(mark && mcs && mcs.display !== 'none' && rect && rect.width > 0 && rect.height > 0),
+      markContent: mark ? getComputedStyle(mark, '::before').content : null
+    };
+  };
+  const select = document.getElementById(id);
+  return { selectValue: select ? select.value : null, chips: chips.map(snap) };
+};
+
 async function activatePathology(page, code) {
   await page.selectOption('#diagnosticoPrimario', { value: code });
   await page.waitForTimeout(400);
@@ -330,6 +374,40 @@ async function journey(browser, code) {
       check(`${tag} chip values = authored options`, JSON.stringify(chipValues) === JSON.stringify(spec.values), JSON.stringify(chipValues));
       check(`${tag} chip labels = authored labels`, JSON.stringify(chipLabels) === JSON.stringify(spec.labels), JSON.stringify(chipLabels));
       check(`${tag} chips are semantic buttons`, s.chips.every((c) => c.tag === 'BUTTON' && c.type === 'button'), JSON.stringify(s.chips.map((c) => `${c.tag}/${c.type}`)));
+    }
+
+    // 1b. G4-1 (real mouse clicks): the SELECTED BLANK chip must look neutral,
+    //     while a nonblank selected chip keeps its supported active surface/mark.
+    //     The pointer is moved off the chip before reading so :hover does not
+    //     mask the settled active/neutral surface.
+    for (const id of FIELD_IDS) {
+      const spec = CHIP_FIELDS[id];
+      const nonblankValue = spec.values.find((v) => v !== '');
+      const tag = `${label} #${id} G4-1 blank neutral`;
+      await openAncestorCollapsibles(page, `[data-chip-group-for="${id}"]`);
+      await page.locator(chipSel(id, nonblankValue)).click();
+      await page.mouse.move(2, 2);
+      await page.waitForTimeout(350);
+      const nb = await page.evaluate(READ_CHIP_DISPLAY, id);
+      const nbChip = nb.chips.find((c) => c.value === nonblankValue);
+      await page.locator(chipSel(id, '')).click();
+      await page.mouse.move(2, 2);
+      await page.waitForTimeout(350);
+      const bl = await page.evaluate(READ_CHIP_DISPLAY, id);
+      const blank = bl.chips.find((c) => c.value === '');
+      const exported = await page.evaluate((fid) => HubTools.form.recopilarDatosFormulario()[fid], id);
+      check(`${tag}: real click back to blank keeps select blank + label + pressed + export`,
+        bl.selectValue === '' && !!blank && blank.pressed === 'true' && blank.label === 'Seleccionar' && exported === '',
+        JSON.stringify({ selectValue: bl.selectValue, pressed: blank && blank.pressed, label: blank && blank.label, exported }));
+      check(`${tag}: no green/success surface or border on the selected blank chip`,
+        !!blank && !isGreenish(blank.bg) && blank.bg !== ACTIVE_GREEN && !isGreenish(blank.borderColor) && blank.color !== 'rgb(255, 255, 255)',
+        JSON.stringify(blank && { bg: blank.bg, borderColor: blank.borderColor, color: blank.color }));
+      check(`${tag}: no visible checkmark on the selected blank chip`,
+        !!blank && blank.markDisplay === 'none' && blank.markVisible === false,
+        JSON.stringify(blank && { markDisplay: blank.markDisplay, markVisible: blank.markVisible, markContent: blank.markContent }));
+      check(`${tag}: nonblank selected chip keeps active surface + checkmark`,
+        !!nbChip && nbChip.pressed === 'true' && nbChip.bg === ACTIVE_GREEN && nbChip.markVisible === true && String(nbChip.markContent).includes('\u2713'),
+        JSON.stringify(nbChip && { pressed: nbChip.pressed, bg: nbChip.bg, markVisible: nbChip.markVisible, markContent: nbChip.markContent }));
     }
 
     // 2. real mouse: pick every non-blank value then RETURN TO BLANK through a

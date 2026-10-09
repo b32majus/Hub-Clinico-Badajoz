@@ -572,6 +572,22 @@ body:has(.hub-shell) {
     cursor: not-allowed;
 }
 
+/* C2 G4-1 (#611): a SELECTED blank chip (data-value="") is not an affirmative
+   answer. It keeps aria-pressed="true" semantics but must read as neutral: no
+   green/success surface, no white "active" text and no checkmark. Nonblank
+   selected chips keep the active surface/mark above. */
+.pv-chip[data-value=""][aria-pressed="true"] {
+    background-color: #e9ecef;
+    color: #495057;
+    border-color: #ced4da;
+    font-weight: 500;
+    box-shadow: none;
+}
+
+.pv-chip[data-value=""][aria-pressed="true"] .pv-chip__mark {
+    display: none;
+}
+
 /* Tóxicos */
 .block-label {
     margin-bottom: 15px;
@@ -1766,6 +1782,16 @@ body:has(.hub-shell) {
     padding: 8px !important;
     border-radius: 8px;
     cursor: not-allowed;
+}
+
+/* C2 G4-2 (#612): the DAPSA numeric total must not read as a green "good"
+   clinical result. Scoped to #dapsaResult only; the shared .indice-resultado
+   rule above still styles every other index field. Neutral surface, neutral
+   border, legible dark text at blank/Incompleto and at every computed category. */
+#dapsaResult.indice-resultado {
+    background-color: #f1f3f5 !important;
+    border: 2px solid #adb5bd !important;
+    color: #212529 !important;
 }
 
 /* Clases de visibilidad condicional por patología */
