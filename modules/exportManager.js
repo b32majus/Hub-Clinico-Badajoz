@@ -1472,12 +1472,23 @@ function entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, t
         // feedback de la ruta de fallback.
         if (result === false) {
             console.warn('\u26a0 Copia autom\u00e1tica no disponible; se abri\u00f3 el modal de copia manual.');
+            // WO-REUMA-EXPORT-SAFETY-18D-C1 (F1): esta entrega NO copi\u00f3. Si una
+            // entrega anterior dej\u00f3 el checklist de \u00e9xito visible (ventana de 15 s),
+            // ese elemento afirmar\u00eda ahora una copia autom\u00e1tica que no ocurri\u00f3
+            // (WO:20). Sin copia real no puede quedar ning\u00fan checklist visible.
+            var staleChecklist = document.getElementById('postExportChecklist');
+            if (staleChecklist) staleChecklist.remove();
             return;
         }
         console.log('\u2713 Datos copiados al portapapeles');
         mostrarChecklistPostExport(hojaExcel);
     }).catch(function(err) {
         console.error('\u274c Error al copiar al portapapeles:', err);
+        // WO-REUMA-EXPORT-SAFETY-18D-C1 (F1): mismo contrato en la ruta de error
+        // de copia: sin copia real, ning\u00fan checklist de \u00e9xito previo puede
+        // seguir afirmando que se copi\u00f3.
+        var staleChecklist = document.getElementById('postExportChecklist');
+        if (staleChecklist) staleChecklist.remove();
         if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
             HubTools.utils.mostrarNotificacion('Error al copiar los datos al portapapeles.', 'error');
         } else {

@@ -43,7 +43,9 @@
  * Cases:
  *   R1  Primera Visita happy path (les): real fill → TXT export → CSV export;
  *       copied row is a 497-field TSV with identity, 'Primera Visita' marker
- *       and 'les' token; exactly ONE checklist whose header is
+ *       and 'les' token, and is BYTE-IDENTICAL (full string equality, F3) to
+ *       the legacy 497 row recomputed in-page from the same collected payload;
+ *       exactly ONE checklist whose header is
  *       'CSV copiado al portapapeles'; dismiss works; pageerror=0 and
  *       console.error=0 for the page; #pendingRowsIndicator absent and no
  *       'Recuperar última'/'Marcar resuelta' text; the four recovery APIs
@@ -64,6 +66,12 @@
  *       is present, #postExportChecklist is ABSENT, no visible claim that the
  *       CSV was copied; pageerror=0 and any console.error of the controlled
  *       failure explicitly classified (never reported as a clean-route zero).
+ *   R5b Stale-checklist transition (F1, WO-REUMA-EXPORT-SAFETY-18D-C1): a
+ *       successful export leaves the real success checklist visible; a
+ *       SECOND export inside the checklist window whose clipboard write is
+ *       rejected opens the manual modal and the stale 'CSV copiado al
+ *       portapapeles' claim must be GONE (no #postExportChecklist, no
+ *       visible copy claim) while the modal shows the failure; pageerror=0.
  *   R6  Legacy storage TEST fixture (controlled, init-script only): a
  *       sentinel seeded in localStorage['hubPendingRows'] stays byte-
  *       UNCHANGED after a supported export (not read into the UI, not
@@ -85,11 +93,14 @@
  *       with `modules/exportManager.js?v=20261009-export-safety-18-
  *       exportmanager-r1` on the seven pages that load it (not
  *       dashboard_search.html).
- *   W1–W4  negative-witness self-tests (mandatory, repo convention): a real
+ *   W1–W5  negative-witness self-tests (mandatory, repo convention): a real
  *       page dispatch of `pendingRowsUpdated` (W1), a real page write of
- *       `hubPendingRows` (W2), a tampered legacy sentinel (W3) and a
- *       falsified 497 row (W4) must each be detected as FAIL by the
- *       corresponding evaluator, while the clean state passes.
+ *       `hubPendingRows` (W2), a tampered legacy sentinel (W3), a falsified
+ *       497 row including a MIDDLE-field corruption caught by the
+ *       byte-equality evaluator (W4) and a planted 496-field partial
+ *       delivery caught by the fail-closed no-row evaluator (W5) must each
+ *       be detected as FAIL by the corresponding evaluator, while the clean
+ *       state passes.
  *
  * Usage: node tools/reuma_pending_retirement_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
@@ -298,6 +309,32 @@ async function readExportedRow(page) {
     });
 }
 
+/**
+ * F3 byte-equality source: recompute the projected legacy 497 row IN-PAGE for
+ * the same collected payload via the supported re-collection
+ * (`HubTools.form.recopilarDatosFormulario` / `…Seguimiento`) and the real
+ * boundary `HubTools.reumaExportBoundary.generateLegacyRow497`, exactly the
+ * inputs the supported delivery used (WO:48 'copia/portapapeles de 497
+ * valores byte-iguales'). Read-only observation after the supported
+ * interaction; nothing is injected.
+ */
+function recomputeLegacyRow497(page, { kind, pathology }) {
+    return page.evaluate(({ kind, pathology }) => {
+        const collect = kind === 'primera'
+            ? window.HubTools?.form?.recopilarDatosFormulario
+            : window.HubTools?.form?.recopilarDatosFormularioSeguimiento;
+        if (typeof collect !== 'function') return { ok: false, reason: 'supported re-collection function unavailable' };
+        const boundary = window.HubTools?.reumaExportBoundary;
+        if (!boundary || typeof boundary.generateLegacyRow497 !== 'function') return { ok: false, reason: 'boundary unavailable' };
+        let datos;
+        try { datos = collect(); } catch (error) { return { ok: false, reason: 're-collection crashed: ' + error.message }; }
+        let result;
+        try { result = boundary.generateLegacyRow497({ datos: datos, pathology: pathology, tipoVisita: kind }); } catch (error) { return { ok: false, reason: 'boundary crashed: ' + error.message }; }
+        if (!result || result.ok !== true || typeof result.row !== 'string') return { ok: false, reason: 'boundary rejected the re-collection' };
+        return { ok: true, row: result.row };
+    }, { kind, pathology });
+}
+
 // ---------------------------------------------------------------------------
 // Environment conditions / plants (init scripts, self-contained on purpose:
 // Playwright serializes init scripts WITHOUT their closure scope).
@@ -466,8 +503,48 @@ function evaluateRow497(rowText, { id, marker, token }) {
     return { pass: problems.length === 0, problems };
 }
 
+/**
+ * F3 byte-equality evaluator (WO:48 '497 valores byte-iguales'): FULL string
+ * equality between the delivered text and the row recomputed in-page from the
+ * same collected payload. Count/index sampling cannot detect corruption of any
+ * other field; this can. A recompute that is not byte-stable fails closed
+ * here (never forced to pass).
+ */
+function evaluateRowByteEqual(delivered, recomputed) {
+    if (!recomputed || recomputed.ok !== true) {
+        return { pass: false, problems: [`byte-equality source unavailable: ${recomputed ? recomputed.reason : 'no recompute result'}`] };
+    }
+    if (typeof delivered !== 'string' || delivered.length === 0) return { pass: false, problems: ['delivered row is empty'] };
+    if (delivered !== recomputed.row) {
+        const deliveredFields = delivered.split('\t');
+        const expectedFields = recomputed.row.split('\t');
+        const problems = [`byteDiff=true deliveredFields=${deliveredFields.length} expectedFields=${expectedFields.length}`];
+        for (let i = 0; i < Math.min(deliveredFields.length, expectedFields.length); i++) {
+            if (deliveredFields[i] !== expectedFields[i]) { problems.push(`firstDiffField=${i}`); break; }
+        }
+        return { pass: false, problems };
+    }
+    return { pass: true, problems: [] };
+}
+
+/**
+ * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when the
+ * boundary rejects, NO row may be delivered at all — no clipboard TSV and no
+ * manual-modal TSV — regardless of field count (a 496-field partial row is a
+ * violation, never a pass).
+ */
+function evaluateNoRowDelivered(row, { checklistCount, failClosedVisible }) {
+    const problems = [];
+    if (!row || row.source !== 'none' || row.text !== '') {
+        problems.push(`row delivered via ${row ? row.source : 'unknown'} (${row && row.text ? row.text.split('\t').length : 0} fields)`);
+    }
+    if (checklistCount !== 0) problems.push(`checklist=${checklistCount}`);
+    if (failClosedVisible !== true) problems.push('fail-closed alert not visible');
+    return { pass: problems.length === 0, problems };
+}
+
 /** Shared happy-path body for R1 (Primera Visita) and R2 (Seguimiento). */
-async function runHappyPathCase(browser, origin, { label, pageFile, id, pathology, marker }) {
+async function runHappyPathCase(browser, origin, { label, pageFile, id, pathology, marker, kind }) {
     const context = await passSupportedGate(browser, origin);
     try {
         await context.addInitScript(pendingRowsEventObserver);
@@ -488,6 +565,13 @@ async function runHappyPathCase(browser, origin, { label, pageFile, id, patholog
         record(`${label} ${pageFile}: copied row is a 497-field TSV with identity, '${marker}' marker and '${pathology}' token`,
             row.source !== 'none' && rowVerdict.pass,
             `source=${row.source} problems=${JSON.stringify(rowVerdict.problems)} fields=${row.text ? row.text.split('\t').length : 0}`);
+        // F3 byte-equality (WO:48): the delivered text must be byte-identical to
+        // the legacy 497 row recomputed in-page from the same collected payload.
+        const recomputed = await recomputeLegacyRow497(page, { kind, pathology });
+        const byteVerdict = evaluateRowByteEqual(row.source !== 'none' ? row.text : '', recomputed);
+        record(`${label} ${pageFile}: copied row (source=${row.source}) is BYTE-IDENTICAL (full string equality) to the legacy 497 row recomputed in-page from the same collected payload`,
+            row.source !== 'none' && byteVerdict.pass,
+            `source=${row.source} recompute=${recomputed.ok === true ? 'ok' : recomputed.reason} problems=${JSON.stringify(byteVerdict.problems)}`);
         record(`${label} ${pageFile}: exactly one checklist with header '${CHECKLIST_HEADER_TEXT}', dismiss works`,
             checklistAppeared && checklist.count === 1 && checklist.header.includes(CHECKLIST_HEADER_TEXT),
             `appeared=${checklistAppeared} count=${checklist.count} header=${JSON.stringify(checklist.header)}`);
@@ -529,10 +613,10 @@ try {
     // R1 / R2 — happy paths on both journeys (pathology mapping in header).
     // =====================================================================
     await runHappyPathCase(browser, origin, {
-        label: 'R1', pageFile: PAGE_PRIMERA, id: 'SYN-RETIRE-001', pathology: 'les', marker: 'Primera Visita',
+        label: 'R1', pageFile: PAGE_PRIMERA, id: 'SYN-RETIRE-001', pathology: 'les', marker: 'Primera Visita', kind: 'primera',
     });
     await runHappyPathCase(browser, origin, {
-        label: 'R2', pageFile: PAGE_SEGUIMIENTO, id: 'SYN-RETIRE-002', pathology: 'espa', marker: 'Seguimiento',
+        label: 'R2', pageFile: PAGE_SEGUIMIENTO, id: 'SYN-RETIRE-002', pathology: 'espa', marker: 'Seguimiento', kind: 'seguimiento',
     });
 
     // =====================================================================
@@ -591,9 +675,15 @@ try {
             const pageConsoleErrors = errorsFor(entry, PAGE_PRIMERA);
             const unclassifiedErrors = pageConsoleErrors
                 .filter((message) => !EXPECTED_BOUNDARY_ERROR_CLASSES.some((cls) => message.includes(cls)));
-            record('R4 planted boundary failure: fail-closed alert, no checklist, no 497-field row copied',
-                failClosedVisible && state.checklistCount === 0 && rowFields !== 497,
-                `failClosedVisible=${failClosedVisible} checklist=${state.checklistCount} rowSource=${row.source} rowFields=${rowFields} alerts=${JSON.stringify(state.alerts.slice(0, 3))}`);
+            // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
+            // delivered at all — a 496-field partial row is also a violation.
+            const noDeliveryVerdict = evaluateNoRowDelivered(row, {
+                checklistCount: state.checklistCount,
+                failClosedVisible,
+            });
+            record('R4 planted boundary failure: fail-closed alert, no checklist and NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed, never a partial copy)',
+                noDeliveryVerdict.pass,
+                `problems=${JSON.stringify(noDeliveryVerdict.problems)} failClosedVisible=${failClosedVisible} checklist=${state.checklistCount} rowSource=${row.source} rowFields=${rowFields} alerts=${JSON.stringify(state.alerts.slice(0, 3))}`);
             record('R4 planted boundary failure: pageerror=0 and console errors stay within the explicitly classified expected classes',
                 entry.pageErrors.length === 0 && unclassifiedErrors.length === 0,
                 `pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))} unclassifiedConsoleErrors=${JSON.stringify(unclassifiedErrors.slice(0, 5))}`);
@@ -660,6 +750,13 @@ try {
             record(`R5 clipboard rejected: manual modal '${MANUAL_COPY_MODAL_TITLE}' visible with the FULL 497-field row and info text '${MANUAL_COPY_INFO_TEXT}'`,
                 modal.title.includes(MANUAL_COPY_MODAL_TITLE) && modal.message.includes(MANUAL_COPY_INFO_TEXT) && rowVerdict.pass,
                 `title=${JSON.stringify(modal.title)} message=${JSON.stringify(modal.message)} rowProblems=${JSON.stringify(rowVerdict.problems)} fields=${modal.row ? modal.row.split('\t').length : 0}`);
+            // F3 byte-equality on the manual-modal source (WO:48): the modal must
+            // carry the same byte-identical legacy 497 row.
+            const recomputedModal = await recomputeLegacyRow497(page, { kind: 'primera', pathology: 'les' });
+            const byteVerdictModal = evaluateRowByteEqual(modal.row, recomputedModal);
+            record(`R5 clipboard rejected: manual-modal row is BYTE-IDENTICAL (full string equality) to the legacy 497 row recomputed in-page from the same collected payload`,
+                byteVerdictModal.pass,
+                `recompute=${recomputedModal.ok === true ? 'ok' : recomputedModal.reason} problems=${JSON.stringify(byteVerdictModal.problems)} fields=${modal.row ? modal.row.split('\t').length : 0}`);
             record('R5 clipboard rejected: #postExportChecklist ABSENT and no visible claim that the CSV was copied',
                 visibleClaims.checklistCount === 0 && visibleClaims.copiedClaimVisible === false && visibleClaims.infoTextPresent === true,
                 `checklist=${visibleClaims.checklistCount} copiedClaimVisible=${visibleClaims.copiedClaimVisible} infoTextPresent=${visibleClaims.infoTextPresent}`);
@@ -669,6 +766,68 @@ try {
             record('R5 clipboard rejected: pageerror=0 and console errors stay within the explicitly classified expected classes (never a clean-route zero claim)',
                 entry.pageErrors.length === 0 && unclassifiedErrors.length === 0,
                 `pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))} consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} unclassified=${JSON.stringify(unclassifiedErrors.slice(0, 5))}`);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // R5b — F1 stale-checklist transition (WO:20, 18D-C1 runtime fix): a
+    // successful export leaves the success checklist visible (15 s window);
+    // a SECOND export inside that window whose clipboard write is rejected
+    // must NOT keep the stale 'CSV copiado al portapapeles' claim while the
+    // manual modal reports the failure.
+    // =====================================================================
+    {
+        const context = await passSupportedGate(browser, origin);
+        try {
+            await context.addInitScript(pendingRowsEventObserver);
+            await context.addInitScript(clipboardRejectionPlant);
+            const page = await context.newPage();
+            const entry = trackedPage(page);
+            await page.goto(`${origin}/${PAGE_PRIMERA}`, { waitUntil: 'load', timeout: 45000 });
+            await page.fill('#idPaciente', 'SYN-RETIRE-005B');
+            await page.fill('#fechaVisita', '2026-09-30');
+            await page.selectOption('#diagnosticoPrimario', 'les');
+            await page.click('#btnExportarTXT');
+            await page.waitForTimeout(1200);
+            if (await page.locator('#textoModalContainer').count() > 0) {
+                await page.click('#closeModalBtn');
+                await page.waitForTimeout(200);
+            }
+            // First CSV export: clipboard allowed -> real success checklist.
+            await page.click('#btnEstructurarCSV');
+            const firstChecklist = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
+            // Second CSV export INSIDE the checklist window, clipboard rejected.
+            await page.evaluate(() => { window.__rejectClipboardWrite = true; });
+            await page.click('#btnEstructurarCSV');
+            await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 8000 });
+            await page.waitForTimeout(400);
+            const transition = await page.evaluate(() => {
+                const container = document.getElementById('textoModalContainer');
+                const title = container ? container.querySelector('.texto-modal__title') : null;
+                const message = container ? container.querySelector('.texto-modal__message') : null;
+                const textarea = document.getElementById('textoModalTextarea');
+                return {
+                    title: title ? title.textContent.trim() : '',
+                    message: message ? message.textContent.trim() : '',
+                    row: textarea ? textarea.value : '',
+                    checklistCount: document.querySelectorAll('#postExportChecklist').length,
+                    copiedClaimVisible: /csv copiado al portapapeles|datos copiados al portapapeles/i.test(document.body.innerText),
+                };
+            });
+            const transitionRowVerdict = evaluateRow497(transition.row, { id: 'SYN-RETIRE-005B', marker: 'Primera Visita', token: 'les' });
+            const recomputedTransition = await recomputeLegacyRow497(page, { kind: 'primera', pathology: 'les' });
+            const transitionByteVerdict = evaluateRowByteEqual(transition.row, recomputedTransition);
+            record('R5b stale-checklist transition (F1): first export shows the real success checklist and the second export opens the manual modal inside the checklist window',
+                firstChecklist && transition.title.includes(MANUAL_COPY_MODAL_TITLE) && transition.message.includes(MANUAL_COPY_INFO_TEXT),
+                `firstChecklist=${firstChecklist} title=${JSON.stringify(transition.title)} message=${JSON.stringify(transition.message)}`);
+            record('R5b stale-checklist transition (F1): the stale success claim is GONE (no checklist, no visible copy claim) while the modal shows the FULL byte-identical 497-field failure row',
+                transition.checklistCount === 0 && transition.copiedClaimVisible === false && transitionRowVerdict.pass && transitionByteVerdict.pass,
+                `checklist=${transition.checklistCount} copiedClaimVisible=${transition.copiedClaimVisible} rowProblems=${JSON.stringify(transitionRowVerdict.problems)} byteProblems=${JSON.stringify(transitionByteVerdict.problems)} recompute=${recomputedTransition.ok === true ? 'ok' : recomputedTransition.reason}`);
+            record('R5b stale-checklist transition (F1): pageerror=0 for the whole transition',
+                entry.pageErrors.length === 0,
+                `pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))} consoleErrors=${JSON.stringify(errorsFor(entry, PAGE_PRIMERA).slice(0, 5))}`);
         } finally {
             await context.close();
         }
@@ -874,21 +1033,46 @@ try {
             record('W3 witness: a rewritten legacy hubPendingRows sentinel FAILS the byte-unchanged evaluator', false, `crashed: ${error.message}`);
         }
 
-        // W4 — a falsified 497 row (field dropped / field altered) FAILS the
-        // row evaluator; a well-formed synthetic row passes it.
+        // W4 — a falsified 497 row (field dropped / field altered / MIDDLE
+        // field corrupted) FAILS the corresponding evaluator; a well-formed
+        // synthetic row passes it. The byte-equality evaluator is the one that
+        // catches a MIDDLE-field corruption invisible to count/index sampling.
         try {
             const cleanRow = Array.from({ length: 497 }, (_, i) => (i === 0 ? 'SYN-RETIRE-W4' : i === 4 ? 'Primera Visita' : i === 6 ? 'les' : `F${i}`)).join('\t');
             const droppedRow = cleanRow.split('\t').slice(0, 496).join('\t');
             const alteredRow = cleanRow.replace('SYN-RETIRE-W4', 'SYN-TAMPERED-W4');
+            const middleFields = cleanRow.split('\t');
+            middleFields[250] = 'SYN-TAMPERED-MID-250';
+            const middleRow = middleFields.join('\t');
             const expected = { id: 'SYN-RETIRE-W4', marker: 'Primera Visita', token: 'les' };
             const clean = evaluateRow497(cleanRow, expected);
             const drop = evaluateRow497(droppedRow, expected);
             const alter = evaluateRow497(alteredRow, expected);
+            const cleanByte = evaluateRowByteEqual(cleanRow, { ok: true, row: cleanRow });
+            const middleByte = evaluateRowByteEqual(middleRow, { ok: true, row: cleanRow });
             record('W4 witness: a falsified 497 row (field dropped or altered) FAILS the row evaluator',
                 clean.pass === true && drop.pass === false && alter.pass === false,
                 `cleanPass=${clean.pass} dropPass=${drop.pass} alterPass=${alter.pass}`);
+            record('W4 witness: a plant corrupting a MIDDLE field (index 250) is DETECTED as FAIL by the full-string byte-equality evaluator while the clean row passes it',
+                cleanByte.pass === true && middleByte.pass === false,
+                `cleanBytePass=${cleanByte.pass} middleBytePass=${middleByte.pass} middleProblems=${JSON.stringify(middleByte.problems)}`);
         } catch (error) {
             record('W4 witness: a falsified 497 row (field dropped or altered) FAILS the row evaluator', false, `crashed: ${error.message}`);
+        }
+
+        // W5 — F4 partial-copy negative witness: a planted 496-field partial
+        // delivery FAILS the fail-closed no-row evaluator used by R4 (any
+        // delivered row is a violation even when it is not a 497-field row),
+        // while a true no-delivery state passes it.
+        try {
+            const partialRow = { source: 'clipboard', text: Array.from({ length: 496 }, (_, i) => `F${i}`).join('\t') };
+            const plantedPartial = evaluateNoRowDelivered(partialRow, { checklistCount: 0, failClosedVisible: true });
+            const cleanNone = evaluateNoRowDelivered({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
+            record('W5 witness: a planted 496-field partial delivery FAILS the fail-closed no-row evaluator (no partial copy) while a true no-delivery state passes it',
+                plantedPartial.pass === false && cleanNone.pass === true,
+                `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
+        } catch (error) {
+            record('W5 witness: a planted 496-field partial delivery FAILS the fail-closed no-row evaluator', false, `crashed: ${error.message}`);
         }
     }
 

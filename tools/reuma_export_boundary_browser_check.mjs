@@ -34,9 +34,12 @@
  *   X3  Seguimiento happy path (EspA): same contract with the 'Seguimiento'
  *       marker; console.error=0 and pageerror=0
  *   X4  planted boundary failure (Primera Visita): no post-export checklist,
- *       no 497-field row copied, visible fail-closed error, no pageerror;
- *       console.error only within the explicitly classified expected classes
- *       ('Error en exportarYCopiarCSV' / 'Error al exportar CSV')
+ *       NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed,
+ *       never a partial copy; a 496-field delivery would also fail), visible
+ *       fail-closed error, no pageerror; console.error only within the
+ *       explicitly classified expected classes ('Error en exportarYCopiarCSV'
+ *       / 'Error al exportar CSV'); partial-copy negative witness proving a
+ *       planted 496-field delivery FAILS the fail-closed evaluator
  *   X5  T3 #583 Primera Visita notification invariants on normal CSV
  *       delivery after the TXT gate: exactly one checklist, the generic
  *       green success toast ABSENT, the unaltered legacy 497-field row
@@ -428,6 +431,22 @@ try {
         };
     };
 
+    /**
+     * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when
+     * the boundary rejects, NO row may be delivered at all — no clipboard TSV
+     * and no manual-modal TSV — regardless of field count (a 496-field partial
+     * row is a violation, never a pass).
+     */
+    const evaluateFailClosedDelivery = (row, { checklistCount, failClosedVisible }) => {
+        const problems = [];
+        if (!row || row.source !== 'none' || row.text !== '') {
+            problems.push(`row delivered via ${row ? row.source : 'unknown'} (${row && row.text ? row.text.split('\t').length : 0} fields)`);
+        }
+        if (checklistCount !== 0) problems.push(`checklist=${checklistCount}`);
+        if (failClosedVisible !== true) problems.push('fail-closed alert not visible');
+        return { pass: problems.length === 0, problems };
+    };
+
     // =====================================================================
     // X2 — Primera Visita happy path (LES).
     // =====================================================================
@@ -638,10 +657,22 @@ try {
             const failClosedVisible = alerts.some((text) => text.includes('frontera de compatibilidad'));
             const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE)
                 .filter((message) => !message.includes('Error en exportarYCopiarCSV') && !message.includes('Error al exportar CSV'));
-            record('X4 planted boundary failure: fail-closed visible error, no post-export checklist and no 497-field row copied',
-                failClosedVisible && checklistCount === 0 && rowFields !== 497 && entry.pageErrors.length === 0 && pageConsoleErrors.length === 0,
-                `failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} ` +
+            // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
+            // delivered at all — a 496-field partial row is also a violation.
+            const noDeliveryVerdict = evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible });
+            record('X4 planted boundary failure: fail-closed visible error, no post-export checklist and NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed, never a partial copy)',
+                noDeliveryVerdict.pass && entry.pageErrors.length === 0 && pageConsoleErrors.length === 0,
+                `problems=${JSON.stringify(noDeliveryVerdict.problems)} failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} ` +
                 `alerts=${JSON.stringify(alerts)} consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
+            // Partial-copy negative witness (F4): a planted 496-field partial
+            // delivery must FAIL the same fail-closed evaluator used by X4,
+            // while a true no-delivery state passes it.
+            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 496 }, (_, i) => `F${i}`).join('\t') };
+            const plantedPartial = evaluateFailClosedDelivery(partialDelivery, { checklistCount: 0, failClosedVisible: true });
+            const cleanNone = evaluateFailClosedDelivery({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
+            record('X4 partial-copy witness: a planted 496-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
+                plantedPartial.pass === false && cleanNone.pass === true,
+                `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
         } finally {
             await context.close();
         }
