@@ -59,36 +59,6 @@ function normalizeRecord(record, extra) {
     return { ...(record || {}), ...(extra || {}) };
 }
 
-function getPendingRowsSafe() {
-    if (typeof HubTools?.export?.getPendingRows === 'function') {
-        return HubTools.export.getPendingRows();
-    }
-    return [];
-}
-
-function createPendingRowsIndicator() {
-    const existing = document.getElementById('pendingRowsIndicator');
-    if (existing) return existing;
-    const indicator = document.createElement('aside');
-    indicator.id = 'pendingRowsIndicator';
-    indicator.className = 'pending-rows-indicator hidden';
-    indicator.innerHTML = '<div class="pending-rows-indicator__summary"><div><div class="pending-rows-indicator__label">Filas pendientes</div><div class="pending-rows-indicator__count" id="pendingRowsCount">0</div></div><div class="pending-rows-indicator__hint" id="pendingRowsHint">Sin pendientes</div></div><div class="pending-rows-indicator__actions"><button type="button" id="pendingRowsCopyBtn" class="pending-rows-btn">Recuperar última</button><button type="button" id="pendingRowsResolveBtn" class="pending-rows-btn pending-rows-btn--secondary">Marcar resuelta</button></div>';
-    document.body.appendChild(indicator);
-    indicator.querySelector('#pendingRowsCopyBtn')?.addEventListener('click', () => HubTools?.export?.retryPendingRowCopy?.());
-    indicator.querySelector('#pendingRowsResolveBtn')?.addEventListener('click', () => HubTools?.export?.resolvePendingRow?.());
-    return indicator;
-}
-
-function updatePendingRowsIndicator() {
-    const indicator = createPendingRowsIndicator();
-    const rows = getPendingRowsSafe();
-    const countEl = indicator.querySelector('#pendingRowsCount');
-    const hintEl = indicator.querySelector('#pendingRowsHint');
-    if (countEl) countEl.textContent = String(rows.length);
-    if (hintEl) hintEl.textContent = rows.length ? ('Última: ' + rows[0].sheet + ' · ' + ((rows[0].pathology || '').toUpperCase())) : 'Sin pendientes';
-    indicator.classList.toggle('hidden', rows.length === 0);
-}
-
 // === Indicador de estado de BD en sidebar ===
 
 function ensureExcelFileInput() {
@@ -1147,10 +1117,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (centralSearch) {
         new PatientAutocomplete(centralSearch, { mainTheme: true, onSelect: function(id) { showPatientResults(id); } });
     }
-
-    // --- Pending rows indicator ---
-    updatePendingRowsIndicator();
-    window.addEventListener('pendingRowsUpdated', updatePendingRowsIndicator);
 
     console.log('\u2705 Hub Cl\u00ednico inicializado correctamente');
 });

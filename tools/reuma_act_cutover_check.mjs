@@ -46,8 +46,8 @@
  *      classes 'Error en exportarYCopiarCSV' / 'Error al exportar CSV') →
  *      `HubTools.export` transport entry receiving the projection result.
  *   2. `modules/exportManager.js`: the post-projection delivery block
- *      (addPendingRow + copyTextWithFallback + success notification +
- *      post-export checklist) is extracted into ONE shared helper used by
+ *      (copyTextWithFallback with manual-copy fallback + post-export
+ *      checklist) is extracted into ONE shared helper used by
  *      BOTH `exportarYCopiarCSV` (unchanged behavior, still boundary-direct —
  *      frozen C5 requires it; its only remaining real consumer is the frozen
  *      #457 acceptance gate, retirement condition documented for a future
@@ -57,16 +57,28 @@
  *      delivery), runs the same TXT-before-CSV gate with
  *      (datos, {tipoVisita: proyeccion.meta.tipoVisita, diagnostico:
  *      proyeccion.meta.pathology}) and delegates delivery to the shared
- *      helper. NO duplication of copy/download/pending-row logic; NO new
- *      pending-row semantics; NO persisted claims.
+ *      helper. NO duplication of copy/download logic; NO pending-row queue,
+ *      queue storage or queue event (RETIRED contract,
+ *      TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18: the module must stay free of
+ *      addPendingRow / pendingRowsUpdated / hubPendingRows / PENDING_ROWS_);
+ *      NO persisted claims.
  *   3. HTML: both pages load `modules/reuma_act_contract.js?v=<fresh>` and
  *      `modules/reuma_legacy_export_adapter.js?v=<fresh>` AFTER
  *      `modules/reuma_export_boundary.js` and before the page script
  *      (cache-busting tokens).
  *
+ * RETIRED PENDING-ROWS CONTRACT (T4 reconciliation,
+ * TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18 / WO-REUMA-EXPORT-SAFETY-18D): the
+ * pending-rows queue (`hubPendingRows`), the `pendingRowsUpdated` event and
+ * the recovery API are GONE from runtime; the mutual recursion that threw
+ * "Maximum call stack size exceeded" no longer exists. This oracle no longer
+ * tolerates that pageerror and no longer spies the `addPendingRow` seam;
+ * behavioral cases assert ZERO localStorage writes and ZERO dispatched
+ * events on every supported journey.
+ *
  * OUT OF SCOPE (fails closed if "fixed" opportunistically is not asserted,
- * but the oracle must not require any KNOWN_LEGACY correction): pendingRows
- * recursion, createdAt prune, warn-only length, KNOWN_LEGACY value collapses.
+ * but the oracle must not require any KNOWN_LEGACY correction): warn-only
+ * length, KNOWN_LEGACY value collapses.
  *
  * Case families:
  *   W  wired-route static (coordinators): exactly one wired CSV route per
@@ -78,7 +90,10 @@
  *      / reumaExportBoundary / literal 497 anywhere in the coordinator.
  *   X  transport static (exportManager): new `exportarAct497` entry exposed
  *      and delegating delivery to a single shared helper also used by
- *      `exportarYCopiarCSV`; delivery logic exists exactly once;
+ *      `exportarYCopiarCSV`; the shared delivery exists exactly once (one
+ *      `copyTextWithFallback(csvData` call site and one post-export checklist
+ *      call site) and the module is queue-free (zero addPendingRow /
+ *      pendingRowsUpdated / hubPendingRows / PENDING_ROWS_ tokens);
  *      `exportarYCopiarCSV` stays boundary-direct (frozen C5); the new entry
  *      consumes the adapter result only (no boundary/generator/column-count
  *      references) and preserves the TXT gate.
@@ -88,21 +103,33 @@
  *   Z  behavioral (vm sandbox, hubTools+exportManager+boundary+contract+
  *      adapter loaded): for the 10 synthetic corpus journeys the FULL wired
  *      sequence (createVisitAct → projectVisitAct497 → exportarAct497 with
- *      the TXT gate satisfied via `markTxtExportDone`) queues/copies a row
- *      byte-identical to the direct boundary result for the same payload;
+ *      the TXT gate satisfied via `markTxtExportDone`) copies exactly ONE
+ *      clipboard row byte-identical to the direct boundary result for the
+ *      same payload, with ZERO localStorage writes (no key created, modified
+ *      or removed — especially `hubPendingRows`) and ZERO dispatched events;
  *      contract failure, adapter/boundary rejection and unsatisfied TXT gate
- *      deliver nothing; no mutation of datos/act through the wired sequence.
- *      Queueing is observed at the `addPendingRow` delivery seam (in-memory
- *      spy, same convention as the clipboard stub): the KNOWN_LEGACY inert
- *      `createdAt` prune (documented debt, out of #464 scope) means nothing
- *      survives in localStorage, so requiring persisted rows would demand
- *      the forbidden prune fix.
+ *      deliver nothing (no copy, no storage write, no event); no mutation of
+ *      datos/act through the wired sequence. Storage/events are observed with
+ *      a spy that wraps the sandbox localStorage shim (setItem/removeItem/
+ *      clear) and the sandbox window/document dispatchEvent, exactly like
+ *      the clipboard stub — production code is never instrumented.
  *   W-f/X-f/Y-f/Z-f  planted-lie self-tests: synthetic-good cutover shapes
  *      pass each evaluator and planted cutover defects fail the right family
- *      (the checker can disagree with the implementation).
+ *      (the checker can disagree with the implementation). The synthetic-good
+ *      exportManager is queue-free; plants reintroduce an addPendingRow call
+ *      or a hubPendingRows write / pendingRowsUpdated dispatch and must fail
+ *      X3, while the duplicate-delivery, boundary-direct and TXT-gate plants
+ *      stay meaningful.
  *
- * At freeze time (cutover NOT implemented) this checker FAILS CLOSED with
- * per-case FAIL lines. Exit codes: 0 = all cases PASS, 1 = at least one FAIL.
+ * T4 RECONCILIATION (WO-REUMA-EXPORT-SAFETY-18D): assertions that froze the
+ * retired queue/retry/recursion (old X3 addPendingRow site count, old X4
+ * helper derivation from the addPendingRow site, Z addPendingRow queue spy,
+ * synthetic-good queue shape) were REPLACED — not dropped — by stronger
+ * assertions of the approved retired contract above. All other coverage
+ * (W1-W10, X1-X7, Y1-Y2, Z2-Z5, Z-f byte fidelity and every planted-lie
+ * self-test) is preserved.
+ *
+ * Exit codes: 0 = all cases PASS, 1 = at least one FAIL.
  * Usage: node tools/reuma_act_cutover_check.mjs
  */
 
@@ -297,23 +324,30 @@ function evaluateExportManagerX(source) {
         detail: 'HubTools.export.exportarAct497 exposure missing',
     });
 
-    // The delivery block exists exactly once: a single addPendingRow call
-    // site and a single post-export checklist call site in the whole module.
-    const pendingRowCallSites = countOccurrences(source, 'addPendingRow({');
+    // The shared delivery exists exactly once and is queue-free: a single
+    // `copyTextWithFallback(csvData` call site and a single post-export
+    // checklist call site in the whole module, plus ZERO pending-rows
+    // queue/event tokens (retired contract,
+    // TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18).
+    const copyCallSites = countOccurrences(source, 'copyTextWithFallback(csvData');
     const checklistCallSites = countOccurrences(source.replace(/function mostrarChecklistPostExport\s*\(/, 'function mostrarChecklistPostExportExposed('), 'mostrarChecklistPostExport(');
+    const queueTokens = ['addPendingRow', 'pendingRowsUpdated', 'hubPendingRows', 'PENDING_ROWS_']
+        .map((token) => [token, countOccurrences(source, token)])
+        .filter(([, hits]) => hits > 0);
     cases.push({
-        name: 'X3 delivery logic exists exactly once: one addPendingRow call site and one post-export checklist call site',
-        pass: pendingRowCallSites === 1 && checklistCallSites === 1,
-        detail: `addPendingRowCallSites=${pendingRowCallSites} checklistCallSites=${checklistCallSites}`,
+        name: 'X3 shared delivery exists exactly once and the module is queue-free: one copyTextWithFallback(csvData call site, one post-export checklist call site, zero addPendingRow/pendingRowsUpdated/hubPendingRows/PENDING_ROWS_ tokens',
+        pass: copyCallSites === 1 && checklistCallSites === 1 && queueTokens.length === 0,
+        detail: `copyCallSites=${copyCallSites} checklistCallSites=${checklistCallSites} queueTokens=${JSON.stringify(queueTokens)}`,
     });
 
     // Single shared delivery helper: the function containing the unique
-    // addPendingRow call must be called from BOTH transport entries. The
-    // helper is the LAST function declaration preceding the call site (the
-    // innermost enclosing declaration).
+    // `copyTextWithFallback(csvData` call (the unique delivery anchor, which
+    // replaced the removed `addPendingRow({` site) must be called from BOTH
+    // transport entries. The helper is the LAST function declaration
+    // preceding the call site (the innermost enclosing declaration).
     let sharedHelperName = null;
-    if (pendingRowCallSites === 1) {
-        const idx = source.indexOf('addPendingRow({');
+    if (copyCallSites === 1) {
+        const idx = source.indexOf('copyTextWithFallback(csvData');
         const before = source.slice(0, idx);
         const fnRe = /function\s+([A-Za-z_$][\w$]*)\s*\([^()]*\)\s*\{/g;
         let last = null;
@@ -458,36 +492,71 @@ function clipboardWrites(sandbox) {
 }
 
 /**
- * Installs an in-memory spy on the `addPendingRow` delivery seam (a
- * top-level function of the sandboxed exportManager, resolved at call time).
- * This observes the real queueing side effect WITHOUT instrumenting or
- * modifying production code, and WITHOUT requiring the KNOWN_LEGACY inert
- * `createdAt` prune to be fixed (out of #464 scope).
+ * Installs a storage+event spy over the sandbox (the retired-contract seam,
+ * replacing the old `addPendingRow` queue spy): wraps the localStorage shim
+ * methods (setItem/removeItem/clear) and the sandbox window/document
+ * dispatchEvent BEFORE the sequence runs, recording every storage write and
+ * every dispatched event type. Observes real side effects WITHOUT
+ * instrumenting or modifying production code, exactly like the clipboard
+ * stub. `sandbox.window === sandbox`, so wrapping the sandbox covers
+ * window.dispatchEvent too.
  */
-function spyPendingRowQueue(sandbox) {
-    const original = sandbox.addPendingRow;
-    sandbox.__queuedRows = [];
-    sandbox.addPendingRow = (payload) => {
-        sandbox.__queuedRows.push(payload);
-        return original(payload);
+function spyStorageAndEvents(sandbox) {
+    const storageWrites = [];
+    const dispatchedEvents = [];
+    const wrapStorage = (storage) => {
+        if (!storage) return;
+        const originalSetItem = storage.setItem;
+        const originalRemoveItem = storage.removeItem;
+        const originalClear = storage.clear;
+        storage.setItem = (key, value) => {
+            storageWrites.push(`setItem:${String(key)}`);
+            return originalSetItem.call(storage, key, value);
+        };
+        storage.removeItem = (key) => {
+            storageWrites.push(`removeItem:${String(key)}`);
+            return originalRemoveItem.call(storage, key);
+        };
+        storage.clear = () => {
+            storageWrites.push('clear');
+            return originalClear.call(storage);
+        };
     };
+    const wrapDispatch = (target) => {
+        if (!target || typeof target.dispatchEvent !== 'function') return;
+        const originalDispatchEvent = target.dispatchEvent;
+        target.dispatchEvent = (event) => {
+            dispatchedEvents.push(event && event.type ? String(event.type) : String(event));
+            return originalDispatchEvent.call(target, event);
+        };
+    };
+    wrapStorage(sandbox.localStorage);
+    wrapDispatch(sandbox); // sandbox.window === sandbox
+    wrapDispatch(sandbox.document);
+    sandbox.__storageWrites = storageWrites;
+    sandbox.__dispatchedEvents = dispatchedEvents;
 }
 
-function queuedRows(sandbox) {
-    return sandbox.__queuedRows || [];
+function storageWrites(sandbox) {
+    return sandbox.__storageWrites || [];
+}
+
+function dispatchedEvents(sandbox) {
+    return sandbox.__dispatchedEvents || [];
 }
 
 async function evaluateBehaviorZ(journeys, directRows) {
     const cases = [];
 
-    // Z1 — all 10 corpus journeys: the full wired sequence queues/copies a
-    // row byte-identical to the direct boundary result for the same payload.
+    // Z1 — all 10 corpus journeys: the full wired sequence copies exactly ONE
+    // clipboard row byte-identical to the direct boundary result for the same
+    // payload, with ZERO localStorage writes and ZERO dispatched events.
     for (const journey of journeys) {
         const kind = journey.tipoVisita === 'primera' ? 'primera_visita' : 'seguimiento';
         const direct = directRows.get(`${journey.pathology}/${journey.tipoVisita}`);
         try {
             const { sandbox } = createCutoverSandbox();
-            spyPendingRowQueue(sandbox);
+            spyStorageAndEvents(sandbox);
             const datos = structuredClone(journey.datos);
             const run = runWiredSequence(sandbox, {
                 kind,
@@ -498,17 +567,17 @@ async function evaluateBehaviorZ(journeys, directRows) {
             });
             await tick();
             const writes = clipboardWrites(sandbox);
-            const queued = queuedRows(sandbox);
+            const writes2 = storageWrites(sandbox);
+            const events = dispatchedEvents(sandbox);
             const ok = run.act && run.act.ok === true &&
                 run.projection && run.projection.ok === true &&
                 typeof sandbox.HubTools.export.exportarAct497 === 'function' &&
                 writes.length === 1 && writes[0] === direct.row &&
-                queued.length === 1 && queued[0].content === direct.row &&
-                queued[0].sheet === direct.meta.sheet;
-            record(`Z1 journey ${journey.pathology}/${journey.tipoVisita}: full wired sequence queues/copies a row byte-identical to the direct boundary result`, ok,
-                `actOk=${!!(run.act && run.act.ok)} projectionOk=${!!(run.projection && run.projection.ok)} exportarAct497=${typeof sandbox.HubTools.export.exportarAct497} writes=${writes.length} rowEqual=${writes.length === 1 && writes[0] === direct.row} queuedContentEqual=${queued.length === 1 && queued[0].content === direct.row} queuedSheetEqual=${queued.length === 1 && queued[0].sheet === direct.meta.sheet}`);
+                writes2.length === 0 && events.length === 0;
+            record(`Z1 journey ${journey.pathology}/${journey.tipoVisita}: full wired sequence copies exactly ONE clipboard row byte-identical to the direct boundary result with ZERO storage writes and ZERO dispatched events`, ok,
+                `actOk=${!!(run.act && run.act.ok)} projectionOk=${!!(run.projection && run.projection.ok)} exportarAct497=${typeof sandbox.HubTools.export.exportarAct497} writes=${writes.length} rowEqual=${writes.length === 1 && writes[0] === direct.row} storageWrites=${JSON.stringify(writes2)} events=${JSON.stringify(events)}`);
         } catch (error) {
-            record(`Z1 journey ${journey.pathology}/${journey.tipoVisita}: full wired sequence queues/copies a row byte-identical to the direct boundary result`, false, `crashed: ${error.message}`);
+            record(`Z1 journey ${journey.pathology}/${journey.tipoVisita}: full wired sequence copies exactly ONE clipboard row byte-identical to the direct boundary result with ZERO storage writes and ZERO dispatched events`, false, `crashed: ${error.message}`);
         }
     }
 
@@ -519,7 +588,7 @@ async function evaluateBehaviorZ(journeys, directRows) {
         const journey = journeys.find((j) => j.pathology === 'ar' && j.tipoVisita === 'primera');
         try {
             const { sandbox } = createCutoverSandbox();
-            spyPendingRowQueue(sandbox);
+            spyStorageAndEvents(sandbox);
             const journey = journeys.find((j) => j.pathology === 'ar' && j.tipoVisita === 'primera');
             const datos = structuredClone(journey.datos);
             datos.idPaciente = '';
@@ -539,12 +608,12 @@ async function evaluateBehaviorZ(journeys, directRows) {
             const actRejected = act && act.ok === false && act.error && act.error.code === 'INVALID_PATIENT_REF';
             const projectionRejected = projection && projection.ok === false;
             const transportFailClosed = projection && projection.ok === false && transportResult === false;
-            const nothing = clipboardWrites(sandbox).length === 0 && queuedRows(sandbox).length === 0;
-            record('Z2 createVisitAct failure (empty patientRef) fails closed: typed act error, rejected projection, transport delivers nothing',
+            const nothing = clipboardWrites(sandbox).length === 0 && storageWrites(sandbox).length === 0 && dispatchedEvents(sandbox).length === 0;
+            record('Z2 createVisitAct failure (empty patientRef) fails closed: typed act error, rejected projection, transport delivers nothing (no copy, no storage write, no event)',
                 actRejected && projectionRejected && transportFailClosed && nothing,
-                `actCode=${act && act.error && act.error.code} projectionOk=${!!(projection && projection.ok)} transportResult=${JSON.stringify(transportResult)} writes=${clipboardWrites(sandbox).length} queued=${queuedRows(sandbox).length}`);
+                `actCode=${act && act.error && act.error.code} projectionOk=${!!(projection && projection.ok)} transportResult=${JSON.stringify(transportResult)} writes=${clipboardWrites(sandbox).length} storageWrites=${JSON.stringify(storageWrites(sandbox))} events=${JSON.stringify(dispatchedEvents(sandbox))}`);
         } catch (error) {
-            record('Z2 createVisitAct failure (empty patientRef) fails closed: typed act error, rejected projection, transport delivers nothing', false, `crashed: ${error.message}`);
+            record('Z2 createVisitAct failure (empty patientRef) fails closed: typed act error, rejected projection, transport delivers nothing (no copy, no storage write, no event)', false, `crashed: ${error.message}`);
         }
     }
 
@@ -554,7 +623,7 @@ async function evaluateBehaviorZ(journeys, directRows) {
         const journey = journeys.find((j) => j.pathology === 'espa' && j.tipoVisita === 'seguimiento');
         try {
             const { sandbox } = createCutoverSandbox();
-            spyPendingRowQueue(sandbox);
+            spyStorageAndEvents(sandbox);
             sandbox.HubTools.reumaExportBoundary = Object.freeze({
                 generateLegacyRow497: () => Object.freeze({ ok: false, error: Object.freeze({ code: 'ROW_LENGTH_INVALID', message: 'planted boundary rejection (QA)' }) }),
             });
@@ -566,12 +635,12 @@ async function evaluateBehaviorZ(journeys, directRows) {
             await tick();
             const projectionRejected = run.projection && run.projection.ok === false;
             const transportFailClosed = run.projection && run.projection.ok === false && transportResult === false;
-            const nothing = clipboardWrites(sandbox).length === 0 && queuedRows(sandbox).length === 0;
-            record('Z3 adapter/boundary rejection surfaced through the wired sequence: fail-closed transport, no partial row queued/copied',
+            const nothing = clipboardWrites(sandbox).length === 0 && storageWrites(sandbox).length === 0 && dispatchedEvents(sandbox).length === 0;
+            record('Z3 adapter/boundary rejection surfaced through the wired sequence: fail-closed transport, no partial row copied (no copy, no storage write, no event)',
                 projectionRejected && transportFailClosed && nothing,
-                `projectionOk=${!!(run.projection && run.projection.ok)} transportResult=${JSON.stringify(transportResult)} writes=${clipboardWrites(sandbox).length} queued=${queuedRows(sandbox).length}`);
+                `projectionOk=${!!(run.projection && run.projection.ok)} transportResult=${JSON.stringify(transportResult)} writes=${clipboardWrites(sandbox).length} storageWrites=${JSON.stringify(storageWrites(sandbox))} events=${JSON.stringify(dispatchedEvents(sandbox))}`);
         } catch (error) {
-            record('Z3 adapter/boundary rejection surfaced through the wired sequence: fail-closed transport, no partial row queued/copied', false, `crashed: ${error.message}`);
+            record('Z3 adapter/boundary rejection surfaced through the wired sequence: fail-closed transport, no partial row copied (no copy, no storage write, no event)', false, `crashed: ${error.message}`);
         }
     }
 
@@ -580,17 +649,17 @@ async function evaluateBehaviorZ(journeys, directRows) {
         const journey = journeys.find((j) => j.pathology === 'les' && j.tipoVisita === 'primera');
         try {
             const { sandbox } = createCutoverSandbox();
-            spyPendingRowQueue(sandbox);
+            spyStorageAndEvents(sandbox);
             const datos = structuredClone(journey.datos);
             const run = runWiredSequence(sandbox, { kind: 'primera_visita', pathology: 'les', datos, patientRef: datos.idPaciente, gateSatisfied: false });
             await tick();
             const gateBlocked = run.projection && run.projection.ok === true && run.transportResult === false;
-            const nothing = clipboardWrites(sandbox).length === 0 && queuedRows(sandbox).length === 0;
-            record('Z4 TXT gate not satisfied: valid projection is not delivered (gate preserved), nothing queued/copied',
+            const nothing = clipboardWrites(sandbox).length === 0 && storageWrites(sandbox).length === 0 && dispatchedEvents(sandbox).length === 0;
+            record('Z4 TXT gate not satisfied: valid projection is not delivered (gate preserved), nothing copied (no copy, no storage write, no event)',
                 gateBlocked && nothing,
-                `projectionOk=${!!(run.projection && run.projection.ok)} transportResult=${JSON.stringify(run.transportResult)} writes=${clipboardWrites(sandbox).length} queued=${queuedRows(sandbox).length}`);
+                `projectionOk=${!!(run.projection && run.projection.ok)} transportResult=${JSON.stringify(run.transportResult)} writes=${clipboardWrites(sandbox).length} storageWrites=${JSON.stringify(storageWrites(sandbox))} events=${JSON.stringify(dispatchedEvents(sandbox))}`);
         } catch (error) {
-            record('Z4 TXT gate not satisfied: valid projection is not delivered (gate preserved), nothing queued/copied', false, `crashed: ${error.message}`);
+            record('Z4 TXT gate not satisfied: valid projection is not delivered (gate preserved), nothing copied (no copy, no storage write, no event)', false, `crashed: ${error.message}`);
         }
     }
 
@@ -599,7 +668,7 @@ async function evaluateBehaviorZ(journeys, directRows) {
         const journey = journeys.find((j) => j.pathology === 'aps' && j.tipoVisita === 'primera');
         try {
             const { sandbox } = createCutoverSandbox();
-            spyPendingRowQueue(sandbox);
+            spyStorageAndEvents(sandbox);
             const datos = structuredClone(journey.datos);
             const nestedMarker = datos.comorbilidad;
             const snapshotBefore = JSON.stringify(datos);
@@ -624,7 +693,7 @@ async function evaluateBehaviorZ(journeys, directRows) {
         const direct = directRows.get(`ar/primera`);
         try {
             const { sandbox } = createCutoverSandbox();
-            spyPendingRowQueue(sandbox);
+            spyStorageAndEvents(sandbox);
             const tamperedRow = (() => {
                 const fields = direct.row.split('\t');
                 fields[10] = fields[10] + '-TAMPERED';
@@ -739,10 +808,10 @@ function evaluatePlantedCoordinatorLies() {
 function syntheticGoodExportManager() {
     return `
 function hasTxtExportDone(datos, context) { return true; }
-function addPendingRow(payload) { return payload; }
+function copyTextWithFallback(textToCopy, options) { return Promise.resolve(true); }
 function mostrarChecklistPostExport(hojaExcel) {}
 function entregarFilaProyectadaCSV(csvData, hojaExcel, pathology, tipoVisita) {
-    addPendingRow({ content: csvData, sheet: hojaExcel, pathology: pathology, type: tipoVisita, includeBom: false });
+    copyTextWithFallback(csvData, { manualText: csvData, modalTitle: 'Copia manual de CSV' });
     mostrarChecklistPostExport(hojaExcel);
 }
 function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
@@ -771,9 +840,31 @@ function evaluatePlantedExportManagerLies() {
     record('X-f synthetic-good exportManager passes every X case', goodCases.every((c) => c.pass),
         `failing=${JSON.stringify(goodCases.filter((c) => !c.pass).map((c) => c.name))}`);
 
+    // Plant (i): a reintroduced addPendingRow enqueue call inside the shared
+    // helper must fail the queue-free X3 assertion.
+    const addPendingRowPlanted = good.replace(
+        "    copyTextWithFallback(csvData, { manualText: csvData, modalTitle: 'Copia manual de CSV' });",
+        `    addPendingRow({ content: csvData, sheet: hojaExcel, pathology: pathology, type: tipoVisita, includeBom: false });
+    copyTextWithFallback(csvData, { manualText: csvData, modalTitle: 'Copia manual de CSV' });`);
+    const addPendingRowCases = evaluateExportManagerX(addPendingRowPlanted);
+    record('X-f planted lie (reintroduced addPendingRow enqueue call) fails the X family',
+        addPendingRowCases.some((c) => c.name.startsWith('X3') && c.pass === false),
+        `X3 pass=${(addPendingRowCases.find((c) => c.name.startsWith('X3')) || {}).pass}`);
+
+    // Plant (ii): a reintroduced hubPendingRows write + pendingRowsUpdated
+    // dispatch must fail the queue-free X3 assertion.
+    const queueTokensPlanted = good.replace(
+        '    mostrarChecklistPostExport(hojaExcel);',
+        `    try { localStorage.setItem('hubPendingRows', JSON.stringify([{ planted: 'witness-ii' }])); window.dispatchEvent(new CustomEvent('pendingRowsUpdated', { detail: [] })); } catch (e) {}
+    mostrarChecklistPostExport(hojaExcel);`);
+    const queueTokensCases = evaluateExportManagerX(queueTokensPlanted);
+    record('X-f planted lie (reintroduced hubPendingRows write / pendingRowsUpdated dispatch) fails the X family',
+        queueTokensCases.some((c) => c.name.startsWith('X3') && c.pass === false),
+        `X3 pass=${(queueTokensCases.find((c) => c.name.startsWith('X3')) || {}).pass}`);
+
     const duplicatedDeliveryPlanted = good.replace(
         'HubTools.export.exportarAct497 = exportarAct497;',
-        `function exportarAct497Duplicado() { addPendingRow({ content: '', sheet: '', pathology: '', type: '', includeBom: false }); }
+        `function exportarAct497Duplicado() { copyTextWithFallback(csvData, {}); mostrarChecklistPostExport('X'); }
 HubTools.export.exportarAct497 = exportarAct497;`);
     const duplicatedDeliveryCases = evaluateExportManagerX(duplicatedDeliveryPlanted);
     record('X-f planted lie (duplicated delivery block) fails the X family',

@@ -1338,9 +1338,6 @@ function generarFilaCSV_APs_Seguimiento(datos) {
     return finalizeExportRow(valores, datos, 'seguimiento', 'aps');
 }
 
-const PENDING_ROWS_KEY = 'hubPendingRows';
-const PENDING_ROWS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
-const PENDING_ROWS_LIMIT = 20;
 const TXT_EXPORT_GATE_PREFIX = 'HubClinico_TxtExportDone_';
 
 function inferVisitTypeFromContext() {
@@ -1425,57 +1422,6 @@ function hasTxtExportDone(datos, context) {
     }
 }
 
-function readPendingRows() {
-    try {
-        const raw = localStorage.getItem(PENDING_ROWS_KEY);
-        const rows = raw ? JSON.parse(raw) : [];
-        return Array.isArray(rows) ? rows : [];
-    } catch (error) {
-        console.warn('No se pudieron leer las filas pendientes:', error);
-        return [];
-    }
-}
-
-function persistPendingRows(rows) {
-    try {
-        localStorage.setItem(PENDING_ROWS_KEY, JSON.stringify(rows));
-    } catch (error) {
-        console.warn('No se pudieron guardar las filas pendientes:', error);
-    }
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('pendingRowsUpdated', { detail: rows }));
-    }
-}
-
-function prunePendingRows(rows) {
-    const now = Date.now();
-    return (Array.isArray(rows) ? rows : []).filter(item => item && item.createdAt && (now - item.createdAt) <= PENDING_ROWS_MAX_AGE_MS).slice(0, PENDING_ROWS_LIMIT);
-}
-
-function getPendingRows() {
-    const pruned = prunePendingRows(readPendingRows());
-    persistPendingRows(pruned);
-    return pruned;
-}
-
-function addPendingRow(payload) {
-    const next = prunePendingRows([payload, ...readPendingRows()]);
-    persistPendingRows(next);
-    return payload;
-}
-
-function resolvePendingRow(rowId) {
-    const rows = prunePendingRows(readPendingRows());
-    const next = rowId ? rows.filter(item => item.id !== rowId) : rows.slice(1);
-    persistPendingRows(next);
-    return next;
-}
-
-function getLatestPendingRow() {
-    const rows = getPendingRows();
-    return rows.length ? rows[0] : null;
-}
-
 function openManualCopyModal(texto, titulo, mensaje) {
     if (typeof HubTools?.form?.mostrarModalTexto === 'function') {
         HubTools.form.mostrarModalTexto(texto, titulo, mensaje);
@@ -1501,51 +1447,14 @@ function copyTextWithFallback(textToCopy, options) {
     });
 }
 
-function retryPendingRowCopy(rowId) {
-    const row = rowId ? getPendingRows().find(item => item.id === rowId) : getLatestPendingRow();
-    if (!row) {
-        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-            HubTools.utils.mostrarNotificacion('No hay filas pendientes para recuperar.', 'info');
-        }
-        return Promise.resolve(false);
-    }
-
-    const clipboardText = row.includeBom ? ('\uFEFF' + row.content) : row.content;
-    return copyTextWithFallback(clipboardText, {
-        manualText: row.content,
-        modalTitle: 'Fila CSV pendiente - copia manual',
-        modalMessage: `No se pudo copiar automáticamente. Pegue esta fila en la hoja ${row.sheet}.`,
-        manualNotification: 'No se pudo copiar automáticamente. La fila pendiente queda disponible para copia manual.'
-    }).then(result => {
-        if (result !== false && typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-            HubTools.utils.mostrarNotificacion(`Fila pendiente copiada. Pegue en la hoja: ${row.sheet}`, 'success');
-        }
-        return true;
-    }).catch(error => {
-        console.error('Error al recuperar la fila pendiente:', error);
-        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-            HubTools.utils.mostrarNotificacion('No se pudo recuperar la fila pendiente.', 'error');
-        }
-        return false;
-    });
-}
 /**
  * Entrega compartida de una fila ya proyectada (F5.4C, #464): única ruta de
- * copia/cola/checklist para `exportarYCopiarCSV` (boundary-direct, #457) y
+ * copia/checklist para `exportarYCopiarCSV` (boundary-direct, #457) y
  * `exportarAct497` (ruta acto de visita). No decide dominio ni proyecta; solo
- * materializa el transporte visible (fila pendiente + portapapeles).
+ * materializa el transporte visible (portapapeles + modal manual).
  */
 function entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, tipoVisita) {
     console.log(`📋 CSV generado para hoja: ${hojaExcel}`);
-
-    // Guardar como fila pendiente por si falla el portapapeles
-    addPendingRow({
-        content: csvData,
-        sheet: hojaExcel,
-        pathology: diagnosticoNormalizado,
-        type: tipoVisita,
-        includeBom: false
-    });
 
     // Copiar al portapapeles con fallback a modal de copia manual
     copyTextWithFallback(csvData, {
@@ -1554,12 +1463,32 @@ function entregarFilaProyectadaCSV(csvData, hojaExcel, diagnosticoNormalizado, t
         modalMessage: 'No se pudo copiar autom\u00e1ticamente. Copie el texto y p\u00e9guelo en la hoja ' + hojaExcel + '.',
         manualNotification: 'No se pudo copiar autom\u00e1ticamente. Use la ventana de copia manual.'
     }).then(function(result) {
+        // WO-REUMA-EXPORT-SAFETY-18B-c: `copyTextWithFallback` resuelve `false`
+        // exactamente cuando abrió el modal de copia manual (la copia automática
+        // falló). En ese caso la UI no debe afirmar que hubo copia: el checklist
+        // post-export solo se muestra cuando el portapapeles realmente aceptó
+        // el texto (T3 #583: sin toast genérico de éxito; el checklist es la UX
+        // de éxito real). El modal manual y su notificación info son el único
+        // feedback de la ruta de fallback.
+        if (result === false) {
+            console.warn('\u26a0 Copia autom\u00e1tica no disponible; se abri\u00f3 el modal de copia manual.');
+            // WO-REUMA-EXPORT-SAFETY-18D-C1 (F1): esta entrega NO copi\u00f3. Si una
+            // entrega anterior dej\u00f3 el checklist de \u00e9xito visible (ventana de 15 s),
+            // ese elemento afirmar\u00eda ahora una copia autom\u00e1tica que no ocurri\u00f3
+            // (WO:20). Sin copia real no puede quedar ning\u00fan checklist visible.
+            var staleChecklist = document.getElementById('postExportChecklist');
+            if (staleChecklist) staleChecklist.remove();
+            return;
+        }
         console.log('\u2713 Datos copiados al portapapeles');
-        // T3 #583: sin toast generico de exito; el checklist post-export es
-        // la UX de exito. Se conservan errores, fallback y reintento.
         mostrarChecklistPostExport(hojaExcel);
     }).catch(function(err) {
         console.error('\u274c Error al copiar al portapapeles:', err);
+        // WO-REUMA-EXPORT-SAFETY-18D-C1 (F1): mismo contrato en la ruta de error
+        // de copia: sin copia real, ning\u00fan checklist de \u00e9xito previo puede
+        // seguir afirmando que se copi\u00f3.
+        var staleChecklist = document.getElementById('postExportChecklist');
+        if (staleChecklist) staleChecklist.remove();
         if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
             HubTools.utils.mostrarNotificacion('Error al copiar los datos al portapapeles.', 'error');
         } else {
@@ -2304,10 +2233,6 @@ if (typeof HubTools !== 'undefined') {
     HubTools.export.FINAL_V2_EXPORT_HEADERS = FINAL_V2_EXPORT_HEADERS;
     HubTools.export.FINAL_V2_EXPORT_COLUMN_COUNT = FINAL_V2_EXPORT_COLUMN_COUNT;
     HubTools.export.validateExportRowLength = validateExportRowLength;
-    HubTools.export.getPendingRows = getPendingRows;
-    HubTools.export.getLatestPendingRow = getLatestPendingRow;
-    HubTools.export.resolvePendingRow = resolvePendingRow;
-    HubTools.export.retryPendingRowCopy = retryPendingRowCopy;
 
     HubTools.export.copyDrugsListToClipboard = function(drugsData) {
         const headers = ['Tratamientos_Sistemicos', 'FAMEs', 'Biologicos'];

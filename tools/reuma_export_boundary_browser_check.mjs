@@ -11,11 +11,13 @@
  * `tools/reuma_seguimiento_read_browser_check.mjs`: a real repo-root HTTP
  * server, the real session gate on reuma_index.html (file input -> professional
  * select -> confirm), real navigation and real supported interactions (fill,
- * select, click the TXT and CSV export buttons). No DOM/storage cheating: the
- * only `page.addInitScript` use defines the planted boundary double required
- * by the fail-closed probe, exactly like the planted seam double of #456.
- * Clipboard/modal contents are read AFTER the supported interaction as
- * post-state observation; nothing is injected into the page.
+ * select, click the TXT and CSV export buttons). No DOM tampering and no
+ * impossible fixtures as a supported journey: `page.addInitScript` is used
+ * only for environment conditions/plants (the planted boundary double of the
+ * fail-closed probe, the pendingRowsUpdated event observer, and the
+ * controlled legacy hubPendingRows TEST sentinel). Clipboard/modal/storage
+ * contents are read AFTER the supported interaction as post-state
+ * observation; nothing is injected into the page.
  *
  * Fixtures are synthetic only: `tools/fixtures/reuma_read/corpus_v1.json`
  * (ids SYN-*) plus synthetic `Frmacos`/`Profesionales` sheets materialized
@@ -28,65 +30,60 @@
  *   X2  Primera Visita happy path (LES): CSV export succeeds, the copied row
  *       is a 497-field TSV carrying the synthetic identity, the 'Primera
  *       Visita' marker and the 'les' pathology token; console.error=0 and
- *       no pageerror other than the documented PRE-EXISTING one (see below)
+ *       pageerror=0
  *   X3  Seguimiento happy path (EspA): same contract with the 'Seguimiento'
- *       marker and 'espa' token; console.error=0 and same pageerror policy
+ *       marker; console.error=0 and pageerror=0
  *   X4  planted boundary failure (Primera Visita): no post-export checklist,
- *       no 497-field row copied, visible fail-closed error, no pageerror
+ *       NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed,
+ *       never a partial copy; a 496-field delivery would also fail), visible
+ *       fail-closed error, no pageerror; console.error only within the
+ *       explicitly classified expected classes ('Error en exportarYCopiarCSV'
+ *       / 'Error al exportar CSV'); partial-copy negative witness proving a
+ *       planted 496-field delivery FAILS the fail-closed evaluator
  *   X5  T3 #583 Primera Visita notification invariants on normal CSV
  *       delivery after the TXT gate: exactly one checklist, the generic
  *       green success toast ABSENT, the unaltered legacy 497-field row
- *       delivered, checklist dismiss works; console.error=0 and same
- *       pageerror policy. Queue retention and retry execution are NOT part
- *       of this gate (see KNOWN_PREEXISTING / #587 below).
- *   X6  T3 #583 Seguimiento: same notification invariants as X5
+ *       delivered, checklist dismiss works; console.error=0 and pageerror=0.
+ *       Pending-rows retirement measured functionally after the supported
+ *       export: #pendingRowsIndicator absent, the four legacy recovery APIs
+ *       undefined, no hubPendingRows key written (the controlled TEST
+ *       fixture sentinel stays byte-unchanged), no new storage key added and
+ *       no pendingRowsUpdated event observed.
+ *   X6  T3 #583 Seguimiento: same notification invariants as X5 (no seeded
+ *       sentinel in this context: no hubPendingRows key may exist after the
+ *       export)
  *   X7  TXT-before-CSV gate preserved on both pages: CSV without prior TXT
  *       raises the gate error alert with no checklist and no pageerror
  *   X8  T3 #583 static notification invariants in modules/exportManager.js:
  *       the shared delivery helper raises no generic green success toast
  *       while keeping the checklist, the copy-error/fallback/manual-copy
- *       path and exactly one addPendingRow enqueue attempt per delivery;
- *       both consumers (exportarYCopiarCSV, exportarAct497) still route
- *       through the helper and keep the TXT gate; retryPendingRowCopy keeps
- *       its distinct success feedback (code/message preserved; execution
- *       NO OPERATIVA EN BASELINE, see below)
+ *       path; both consumers (exportarYCopiarCSV, exportarAct497) still
+ *       route through the helper and keep the TXT gate; the module is
+ *       queue-free (zero addPendingRow / pendingRowsUpdated / hubPendingRows
+ *       / PENDING_ROWS_ tokens in the helper and the whole module) and the
+ *       legacy recovery API is GONE (no function retryPendingRowCopy /
+ *       getPendingRows / getLatestPendingRow / resolvePendingRow)
  *
- * KNOWN_PREEXISTING BASELINE DEBT (#587, DISCOVERY / NO IMPLEMENTATION
- * AUTHORITY IN #586 — NOT_A_T3_ACCEPTANCE_GATE, never counted as
- * functional PASS):
- *   (a) pending-row retention: `entregarFilaProyectadaCSV` calls
- *       `addPendingRow` once per delivery (enqueue attempt), but the payload
- *       carries no `createdAt`/`id` while `prunePendingRows` requires
- *       `item.createdAt`; the enqueued row is therefore pruned immediately
- *       and `getPendingRows()` observes 0. Verified byte-identical at fixed
- *       parent 384ec686 (`addPendingRow`/`prunePendingRows`/
- *       `persistPendingRows`/`getPendingRows` unchanged by this train; the
- *       only parent..HEAD runtime delta is the T3 toast removal).
- *   (b) retry UX NO OPERATIVA EN BASELINE: with the queue empty,
- *       `retryPendingRowCopy` cannot reach its distinct success toast at
- *       runtime; the retry code and message are preserved statically (X8).
- * These four observations (X5/X6 pendingRows=0, X5/X6 retryToast=false) are
- * recorded via `recordKnownPreexisting`, printed and enumerated in the
- * summary, and excluded from the PASS/FAIL gate and exit code.
- *
- * KNOWN PRE-EXISTING BASELINE PAGEERROR (not introduced and not fixed by
- * #457): every successful CSV export ends in `addPendingRow` ->
- * `persistPendingRows` -> window event 'pendingRowsUpdated' -> script.js
- * `updatePendingRowsIndicator` -> `HubTools.export.getPendingRows()` ->
- * `persistPendingRows` again: an unbounded mutual recursion that throws
- * "Maximum call stack size exceeded" AFTER the row was already copied. This
- * reproduces byte-identically on the unmodified T2 baseline (07d6caee) with
- * the same probe; the boundary is not involved. Fixing it is outside the
- * #457 scope (pending-rows transport, not the 497 writer boundary); it is
- * reported as debt. The happy-path cases therefore tolerate ONLY that exact
- * pageerror message and fail on anything else; the fail-closed case X4 (no
- * pending row written) must have pageerror=0.
+ * RETIRED PENDING-ROWS CONTRACT (T4 reconciliation,
+ * TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18 / WO-REUMA-EXPORT-SAFETY-18D): the
+ * pending-rows queue (`hubPendingRows`), the `pendingRowsUpdated` event, the
+ * `HubTools.export` recovery API (getPendingRows / getLatestPendingRow /
+ * resolvePendingRow / retryPendingRowCopy) and the `pendingRowsIndicator`
+ * UI are GONE from runtime; the mutual recursion that threw "Maximum call
+ * stack size exceeded" after every successful CSV export no longer exists.
+ * The former KNOWN_PREEXISTING baseline tolerances (queue retention,
+ * retry UX, tolerated recursion pageerror) are REMOVED: happy paths now
+ * require console.error=0 and pageerror=0, and the former queue/retry
+ * KNOWN_PREEXISTING observations were replaced by the functional X5/X6
+ * retirement assertions above. Pre-existing legacy hubPendingRows content
+ * is neither read nor cleared by the code under test; when this checker
+ * seeds a sentinel it is a controlled TEST fixture, never a supported
+ * journey input.
  *
  * Usage: node tools/reuma_export_boundary_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
- * Exit code 0 = every functional case PASS (KNOWN_PREEXISTING items are
- * informational only and never gate the exit code), 1 = at least one
- * functional FAIL or environment failure.
+ * Exit code 0 = every case PASS, 1 = at least one FAIL or environment
+ * failure.
  */
 
 import { createReadStream, existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
@@ -117,16 +114,6 @@ const results = [];
 function record(name, pass, detail) {
     results.push({ name, pass });
     console.log(`  [${pass ? 'OK ' : 'FAIL'}] ${name}${pass ? '' : ` -> ${detail}`}`);
-}
-
-// KNOWN_PREEXISTING evidence (#587): visible negative/pre-existing runtime
-// observations that are OUTSIDE the T3 acceptance gate. Informational only:
-// printed, enumerated in the summary, never counted as functional PASS and
-// never gating the exit code.
-const knownPreexisting = [];
-function recordKnownPreexisting(name, detail) {
-    knownPreexisting.push({ name, detail });
-    console.log(`  [KNOWN_PREEXISTING] ${name} :: ${detail}`);
 }
 
 // Same documented Playwright resolution as the other browser checkers.
@@ -283,6 +270,57 @@ async function readExportedRow(page) {
     });
 }
 
+// ---------------------------------------------------------------------------
+// Pending-rows retirement observation (T4, TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18).
+// Event observation only: the init script counts pendingRowsUpdated
+// dispatches through EventTarget. The legacy hubPendingRows sentinel fixture
+// is a controlled TEST seeding via init script, never a supported journey
+// input, and the code under test must leave it byte-unchanged.
+// ---------------------------------------------------------------------------
+
+const LEGACY_HUB_PENDING_ROWS_SENTINEL = JSON.stringify([
+    { id: 'SYN-LEGACY-BROWSER-000', content: 'SYN-LEGACY-ROW', sheet: 'LEGACY', createdAt: 1 },
+]);
+
+const pendingRowsEventObserver = () => {
+    window.__pendingRowsUpdatedEvents = 0;
+    const originalDispatchEvent = EventTarget.prototype.dispatchEvent;
+    EventTarget.prototype.dispatchEvent = function (event) {
+        if (event && event.type === 'pendingRowsUpdated') {
+            window.__pendingRowsUpdatedEvents = (window.__pendingRowsUpdatedEvents || 0) + 1;
+        }
+        return originalDispatchEvent.call(this, event);
+    };
+};
+
+// Self-contained on purpose: Playwright serializes init scripts WITHOUT
+// their closure scope, so the sentinel cannot be captured as a free
+// variable. JSON.stringify is deterministic for this shape in the page.
+const legacySentinelFixture = () => {
+    try {
+        window.localStorage.setItem('hubPendingRows', JSON.stringify([
+            { id: 'SYN-LEGACY-BROWSER-000', content: 'SYN-LEGACY-ROW', sheet: 'LEGACY', createdAt: 1 },
+        ]));
+    } catch (error) { /* the byte-unchanged assertion fails closed on seeding failure */ }
+};
+
+/**
+ * Post-state retirement observation, read AFTER the supported export:
+ * indicator absence, recovery-API absence, storage keys/values and the
+ * pendingRowsUpdated count observed by the init-script observer. A value of
+ * -1 for the event count means the observer was not installed (fail-closed).
+ */
+async function readRetirementState(page) {
+    return page.evaluate(() => ({
+        pendingRowsIndicatorCount: document.querySelectorAll('#pendingRowsIndicator').length,
+        recoveryApis: ['getPendingRows', 'getLatestPendingRow', 'resolvePendingRow', 'retryPendingRowCopy']
+            .filter((name) => typeof window.HubTools?.export?.[name] !== 'undefined'),
+        storageKeys: Object.keys(window.localStorage),
+        hubPendingRowsValue: window.localStorage.getItem('hubPendingRows'),
+        pendingRowsUpdatedEvents: window.__pendingRowsUpdatedEvents === undefined ? -1 : window.__pendingRowsUpdatedEvents,
+    }));
+}
+
 const plantedBoundaryFailure = () => {
     const failureDouble = {
         BOUNDARY_VERSION: 'planted-qa-double',
@@ -331,7 +369,11 @@ try {
     const chromiumVersion = browser.version();
 
     // =====================================================================
-    // X8 — T3 #583 static notification invariants in modules/exportManager.js.
+    // X8 — T3 #583 static notification invariants in modules/exportManager.js,
+    // updated to the retired pending-rows contract (T4,
+    // TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18): queue/event tokens must be absent
+    // from the helper AND the whole module, and the legacy recovery API must
+    // be GONE.
     // =====================================================================
     {
         const source = fs.readFileSync(path.join(ROOT, EXPORT_MANAGER_SCRIPT), 'utf8');
@@ -347,14 +389,21 @@ try {
         record('X8 static: entregarFilaProyectadaCSV keeps the copy-error feedback',
             entregarRegion.includes('Error al copiar los datos al portapapeles.'),
             'copy-error feedback missing from the shared delivery helper');
-        const retryStart = source.indexOf('function retryPendingRowCopy');
-        const retryRegion = retryStart !== -1 && entregarStart > retryStart ? source.slice(retryStart, entregarStart) : '';
-        record('X8 static: retryPendingRowCopy keeps its distinct success feedback',
-            retryRegion.includes('Fila pendiente copiada. Pegue en la hoja:'),
-            'retry success feedback missing');
-        record('X8 static: entregarFilaProyectadaCSV performs exactly one enqueue attempt via addPendingRow per delivery',
-            (entregarRegion.match(/addPendingRow\(/g) || []).length === 1,
-            'shared delivery helper must invoke addPendingRow exactly once per delivery (enqueue attempt; retention owned by #587)');
+        const queueTokens = ['addPendingRow', 'pendingRowsUpdated', 'hubPendingRows', 'PENDING_ROWS_'];
+        const moduleQueueHits = queueTokens
+            .map((token) => [token, source.split(token).length - 1])
+            .filter(([, hits]) => hits > 0);
+        const helperQueueHits = queueTokens.filter((token) => entregarRegion.includes(token));
+        record('X8 static: entregarFilaProyectadaCSV and the whole module are queue-free (zero addPendingRow/pendingRowsUpdated/hubPendingRows/PENDING_ROWS_ tokens)',
+            entregarRegion.length > 0 && helperQueueHits.length === 0 && moduleQueueHits.length === 0,
+            `helperHits=${JSON.stringify(helperQueueHits)} moduleHits=${JSON.stringify(moduleQueueHits)}`);
+        const recoveryApiTokens = ['retryPendingRowCopy', 'getPendingRows', 'getLatestPendingRow', 'resolvePendingRow'];
+        const recoveryApiHits = recoveryApiTokens
+            .map((token) => [token, source.split(token).length - 1])
+            .filter(([, hits]) => hits > 0);
+        record('X8 static: the legacy pending-rows recovery API is GONE (no retryPendingRowCopy/getPendingRows/getLatestPendingRow/resolvePendingRow in the module)',
+            recoveryApiHits.length === 0,
+            `recoveryApiHits=${JSON.stringify(recoveryApiHits)}`);
         record('X8 static: entregarFilaProyectadaCSV keeps the clipboard fallback/manual-copy path',
             entregarRegion.includes('copyTextWithFallback(csvData') && entregarRegion.includes('Copia manual de CSV'),
             'clipboard fallback/manual-copy path missing from the shared delivery helper');
@@ -382,6 +431,22 @@ try {
         };
     };
 
+    /**
+     * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when
+     * the boundary rejects, NO row may be delivered at all — no clipboard TSV
+     * and no manual-modal TSV — regardless of field count (a 496-field partial
+     * row is a violation, never a pass).
+     */
+    const evaluateFailClosedDelivery = (row, { checklistCount, failClosedVisible }) => {
+        const problems = [];
+        if (!row || row.source !== 'none' || row.text !== '') {
+            problems.push(`row delivered via ${row ? row.source : 'unknown'} (${row && row.text ? row.text.split('\t').length : 0} fields)`);
+        }
+        if (checklistCount !== 0) problems.push(`checklist=${checklistCount}`);
+        if (failClosedVisible !== true) problems.push('fail-closed alert not visible');
+        return { pass: problems.length === 0, problems };
+    };
+
     // =====================================================================
     // X2 — Primera Visita happy path (LES).
     // =====================================================================
@@ -400,9 +465,8 @@ try {
                 checklistAppeared && row.source !== 'none' && checks.fields497 && checks.identity && checks.visitMarker && checks.pathologyToken,
                 `checklist=${checklistAppeared} source=${row.source} checks=${JSON.stringify(checks)} fields=${row.text ? row.text.split('\t').length : 0}`);
             const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE);
-            const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
-            record('X2 Primera Visita happy path: console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion',
-                pageConsoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+            record('X2 Primera Visita happy path: console.error=0 and pageerror=0 (retired pending-rows contract: no tolerated recursion)',
+                pageConsoleErrors.length === 0 && entry.pageErrors.length === 0,
                 `consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
         } finally {
             await context.close();
@@ -427,9 +491,8 @@ try {
                 checklistAppeared && row.source !== 'none' && checks.fields497 && checks.identity && checks.visitMarker && checks.pathologyToken,
                 `checklist=${checklistAppeared} source=${row.source} checks=${JSON.stringify(checks)} fields=${row.text ? row.text.split('\t').length : 0}`);
             const pageConsoleErrors = errorsFor(entry, SEGUIMIENTO_PAGE);
-            const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
-            record('X3 Seguimiento happy path: console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion',
-                pageConsoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+            record('X3 Seguimiento happy path: console.error=0 and pageerror=0 (retired pending-rows contract: no tolerated recursion)',
+                pageConsoleErrors.length === 0 && entry.pageErrors.length === 0,
                 `consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
         } finally {
             await context.close();
@@ -440,28 +503,27 @@ try {
     // X5 — T3 #583 Primera Visita notification invariants on normal delivery.
     // Functional gate: exactly one checklist, generic green success toast
     // ABSENT, unaltered legacy 497-field row delivered, dismiss works,
-    // error policy. Queue retention + retry execution are KNOWN_PREEXISTING
-    // (#587, NO OPERATIVA EN BASELINE) — recorded separately, never PASS.
+    // console.error=0 and pageerror=0. Pending-rows retirement is measured
+    // functionally after the supported export (T4): indicator absent,
+    // recovery APIs undefined, no new storage key, sentinel byte-unchanged,
+    // no pendingRowsUpdated event.
     // =====================================================================
     {
         const context = await browser.newContext();
         try {
             await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin }).catch(() => {});
+            await context.addInitScript(pendingRowsEventObserver);
+            await context.addInitScript(legacySentinelFixture);
             const page = await passSupportedGate(context);
             const entry = trackedPage(page);
             await page.goto(`${origin}/${PRIMERA_PAGE}`, { waitUntil: 'load', timeout: 45000 });
+            const keysBeforeExport = await page.evaluate(() => Object.keys(window.localStorage));
             await exportTxtThenCsv(page, { id: 'SYN-EXP-T3-001', pathology: 'les' });
             const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
             const invariants = await page.evaluate(() => {
                 const checklistCount = document.querySelectorAll('#postExportChecklist').length;
                 const genericToastPresent = document.body.innerHTML.includes('Datos copiados al portapapeles. Pega en la hoja:');
-                let pendingRows = -1;
-                try {
-                    if (window.HubTools && HubTools.export && typeof HubTools.export.getPendingRows === 'function') {
-                        pendingRows = HubTools.export.getPendingRows().length;
-                    }
-                } catch (error) { pendingRows = -2; }
-                return { checklistCount, genericToastPresent, pendingRows };
+                return { checklistCount, genericToastPresent };
             });
             const rowT3 = await readExportedRow(page);
             const checksT3 = rowT3.source !== 'none'
@@ -471,15 +533,14 @@ try {
                 checklistAppeared && invariants.checklistCount === 1 && invariants.genericToastPresent === false &&
                 rowT3.source !== 'none' && checksT3.fields497 && checksT3.identity && checksT3.visitMarker && checksT3.pathologyToken,
                 `checklist=${invariants.checklistCount} genericToast=${invariants.genericToastPresent} source=${rowT3.source} checks=${JSON.stringify(checksT3)}`);
-            recordKnownPreexisting('X5 Primera Visita NOT_A_T3_ACCEPTANCE_GATE (#587): enqueue attempt retains pendingRows=0 in baseline',
-                `pendingRows=${invariants.pendingRows} (payload without createdAt is pruned immediately; byte-identical at parent 384ec68)`);
-            const retryToast = await page.evaluate(async () => {
-                try { await window.HubTools.export.retryPendingRowCopy(); } catch (error) { /* observed below */ }
-                await new Promise((resolve) => setTimeout(resolve, 600));
-                return document.body.innerHTML.includes('Fila pendiente copiada. Pegue en la hoja:');
-            });
-            recordKnownPreexisting('X5 Primera Visita NOT_A_T3_ACCEPTANCE_GATE (#587): retry UX NO OPERATIVA EN BASELINE',
-                `retryToast=${retryToast} (queue empty in baseline; retry code/message preserved per X8 static)`);
+            const retirement = await readRetirementState(page);
+            const newStorageKeys = retirement.storageKeys.filter((key) => !keysBeforeExport.includes(key));
+            record('X5 Primera Visita retirement: #pendingRowsIndicator absent, the four legacy recovery APIs undefined, no pendingRowsUpdated event observed',
+                retirement.pendingRowsIndicatorCount === 0 && retirement.recoveryApis.length === 0 && retirement.pendingRowsUpdatedEvents === 0,
+                `indicator=${retirement.pendingRowsIndicatorCount} recoveryApis=${JSON.stringify(retirement.recoveryApis)} pendingRowsUpdatedEvents=${retirement.pendingRowsUpdatedEvents}`);
+            record('X5 Primera Visita retirement: no new storage key written by the export and the controlled legacy hubPendingRows TEST sentinel stays byte-unchanged',
+                newStorageKeys.length === 0 && retirement.hubPendingRowsValue === LEGACY_HUB_PENDING_ROWS_SENTINEL,
+                `newKeys=${JSON.stringify(newStorageKeys)} sentinelUnchanged=${retirement.hubPendingRowsValue === LEGACY_HUB_PENDING_ROWS_SENTINEL}`);
             await page.click('#postExportChecklist .post-export-checklist__dismiss');
             await page.waitForTimeout(600);
             const checklistAfterDismiss = await page.locator('#postExportChecklist').count();
@@ -487,9 +548,8 @@ try {
                 checklistAfterDismiss === 0,
                 `checklistAfterDismiss=${checklistAfterDismiss}`);
             const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE);
-            const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
-            record('X5 Primera Visita: console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion',
-                pageConsoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+            record('X5 Primera Visita: console.error=0 and pageerror=0 (retired pending-rows contract: no tolerated recursion)',
+                pageConsoleErrors.length === 0 && entry.pageErrors.length === 0,
                 `consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
         } finally {
             await context.close();
@@ -497,31 +557,25 @@ try {
     }
 
     // =====================================================================
-    // X6 — T3 #583 Seguimiento: same notification invariants as X5.
-    // Functional gate: exactly one checklist, generic green success toast
-    // ABSENT, unaltered legacy 497-field row delivered, dismiss works,
-    // error policy. Queue retention + retry execution are KNOWN_PREEXISTING
-    // (#587, NO OPERATIVA EN BASELINE) — recorded separately, never PASS.
+    // X6 — T3 #583 Seguimiento: same notification invariants as X5. No
+    // seeded sentinel in this context: no hubPendingRows key may exist after
+    // the export.
     // =====================================================================
     {
         const context = await browser.newContext();
         try {
             await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin }).catch(() => {});
+            await context.addInitScript(pendingRowsEventObserver);
             const page = await passSupportedGate(context);
             const entry = trackedPage(page);
             await page.goto(`${origin}/${SEGUIMIENTO_PAGE}`, { waitUntil: 'load', timeout: 45000 });
+            const keysBeforeExport = await page.evaluate(() => Object.keys(window.localStorage));
             await exportTxtThenCsv(page, { id: 'SYN-EXP-T3-002', pathology: 'espa' });
             const checklistAppeared = await page.waitForSelector('#postExportChecklist', { timeout: 8000 }).then(() => true).catch(() => false);
             const invariants = await page.evaluate(() => {
                 const checklistCount = document.querySelectorAll('#postExportChecklist').length;
                 const genericToastPresent = document.body.innerHTML.includes('Datos copiados al portapapeles. Pega en la hoja:');
-                let pendingRows = -1;
-                try {
-                    if (window.HubTools && HubTools.export && typeof HubTools.export.getPendingRows === 'function') {
-                        pendingRows = HubTools.export.getPendingRows().length;
-                    }
-                } catch (error) { pendingRows = -2; }
-                return { checklistCount, genericToastPresent, pendingRows };
+                return { checklistCount, genericToastPresent };
             });
             const rowT3 = await readExportedRow(page);
             const checksT3 = rowT3.source !== 'none'
@@ -531,15 +585,14 @@ try {
                 checklistAppeared && invariants.checklistCount === 1 && invariants.genericToastPresent === false &&
                 rowT3.source !== 'none' && checksT3.fields497 && checksT3.identity && checksT3.visitMarker && checksT3.pathologyToken,
                 `checklist=${invariants.checklistCount} genericToast=${invariants.genericToastPresent} source=${rowT3.source} checks=${JSON.stringify(checksT3)}`);
-            recordKnownPreexisting('X6 Seguimiento NOT_A_T3_ACCEPTANCE_GATE (#587): enqueue attempt retains pendingRows=0 in baseline',
-                `pendingRows=${invariants.pendingRows} (payload without createdAt is pruned immediately; byte-identical at parent 384ec68)`);
-            const retryToast = await page.evaluate(async () => {
-                try { await window.HubTools.export.retryPendingRowCopy(); } catch (error) { /* observed below */ }
-                await new Promise((resolve) => setTimeout(resolve, 600));
-                return document.body.innerHTML.includes('Fila pendiente copiada. Pegue en la hoja:');
-            });
-            recordKnownPreexisting('X6 Seguimiento NOT_A_T3_ACCEPTANCE_GATE (#587): retry UX NO OPERATIVA EN BASELINE',
-                `retryToast=${retryToast} (queue empty in baseline; retry code/message preserved per X8 static)`);
+            const retirement = await readRetirementState(page);
+            const newStorageKeys = retirement.storageKeys.filter((key) => !keysBeforeExport.includes(key));
+            record('X6 Seguimiento retirement: #pendingRowsIndicator absent, the four legacy recovery APIs undefined, no pendingRowsUpdated event observed',
+                retirement.pendingRowsIndicatorCount === 0 && retirement.recoveryApis.length === 0 && retirement.pendingRowsUpdatedEvents === 0,
+                `indicator=${retirement.pendingRowsIndicatorCount} recoveryApis=${JSON.stringify(retirement.recoveryApis)} pendingRowsUpdatedEvents=${retirement.pendingRowsUpdatedEvents}`);
+            record('X6 Seguimiento retirement: the export writes no storage key and creates no hubPendingRows key at all',
+                newStorageKeys.length === 0 && retirement.storageKeys.includes('hubPendingRows') === false && retirement.hubPendingRowsValue === null,
+                `newKeys=${JSON.stringify(newStorageKeys)} hubPendingRowsPresent=${retirement.storageKeys.includes('hubPendingRows')} hubPendingRowsValue=${JSON.stringify(retirement.hubPendingRowsValue)}`);
             await page.click('#postExportChecklist .post-export-checklist__dismiss');
             await page.waitForTimeout(600);
             const checklistAfterDismiss = await page.locator('#postExportChecklist').count();
@@ -547,9 +600,8 @@ try {
                 checklistAfterDismiss === 0,
                 `checklistAfterDismiss=${checklistAfterDismiss}`);
             const pageConsoleErrors = errorsFor(entry, SEGUIMIENTO_PAGE);
-            const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
-            record('X6 Seguimiento: console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion',
-                pageConsoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+            record('X6 Seguimiento: console.error=0 and pageerror=0 (retired pending-rows contract: no tolerated recursion)',
+                pageConsoleErrors.length === 0 && entry.pageErrors.length === 0,
                 `consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
         } finally {
             await context.close();
@@ -605,10 +657,22 @@ try {
             const failClosedVisible = alerts.some((text) => text.includes('frontera de compatibilidad'));
             const pageConsoleErrors = errorsFor(entry, PRIMERA_PAGE)
                 .filter((message) => !message.includes('Error en exportarYCopiarCSV') && !message.includes('Error al exportar CSV'));
-            record('X4 planted boundary failure: fail-closed visible error, no post-export checklist and no 497-field row copied',
-                failClosedVisible && checklistCount === 0 && rowFields !== 497 && entry.pageErrors.length === 0 && pageConsoleErrors.length === 0,
-                `failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} ` +
+            // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
+            // delivered at all — a 496-field partial row is also a violation.
+            const noDeliveryVerdict = evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible });
+            record('X4 planted boundary failure: fail-closed visible error, no post-export checklist and NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed, never a partial copy)',
+                noDeliveryVerdict.pass && entry.pageErrors.length === 0 && pageConsoleErrors.length === 0,
+                `problems=${JSON.stringify(noDeliveryVerdict.problems)} failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} ` +
                 `alerts=${JSON.stringify(alerts)} consoleErrors=${JSON.stringify(pageConsoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
+            // Partial-copy negative witness (F4): a planted 496-field partial
+            // delivery must FAIL the same fail-closed evaluator used by X4,
+            // while a true no-delivery state passes it.
+            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 496 }, (_, i) => `F${i}`).join('\t') };
+            const plantedPartial = evaluateFailClosedDelivery(partialDelivery, { checklistCount: 0, failClosedVisible: true });
+            const cleanNone = evaluateFailClosedDelivery({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
+            record('X4 partial-copy witness: a planted 496-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
+                plantedPartial.pass === false && cleanNone.pass === true,
+                `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
         } finally {
             await context.close();
         }
@@ -632,9 +696,5 @@ if (failed.length > 0) {
     console.log('FAILED CASES:');
     for (const item of failed) console.log(`  - ${item.name}`);
 }
-if (knownPreexisting.length > 0) {
-    console.log('KNOWN_PREEXISTING (NOT_A_T3_ACCEPTANCE_GATE, owned by #587; NOT counted as functional PASS):');
-    for (const item of knownPreexisting) console.log(`  - ${item.name} :: ${item.detail}`);
-}
-console.log(`\nREUMA-EXPORT-BOUNDARY-BROWSER: ${failed.length === 0 ? 'PASS' : 'FAIL'} ${results.length - failed.length}/${results.length} cases, ${knownPreexisting.length} KNOWN_PREEXISTING`);
+console.log(`\nREUMA-EXPORT-BOUNDARY-BROWSER: ${failed.length === 0 ? 'PASS' : 'FAIL'} ${results.length - failed.length}/${results.length} cases`);
 process.exit(failed.length === 0 ? 0 : 1);

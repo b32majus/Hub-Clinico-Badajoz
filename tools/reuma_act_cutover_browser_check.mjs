@@ -9,8 +9,8 @@
  * `tools/reuma_act_cutover_check.mjs`; it does NOT replace it. The route under
  * test is the real one wired in the page coordinators: `recopilar…()` →
  * `HubTools.reumaActContract.createVisitAct` → `HubTools.reumaLegacyExportAdapter.projectVisitAct497`
- * → `HubTools.export.exportarAct497` → shared delivery (pending row + clipboard
- * + post-export checklist).
+ * → `HubTools.export.exportarAct497` → shared delivery (clipboard with
+ * manual-copy fallback + post-export checklist).
  *
  * Follows the conventions of `tools/reuma_export_boundary_browser_check.mjs` /
  * `tools/reuma_pcr_units_browser_check.mjs`: a real repo-root HTTP server, the
@@ -31,24 +31,27 @@
  *   H1 Primera Visita happy path for the 5 pathologies (espa/aps/ar/les/
  *      sjogren): CSV export succeeds and the copied row is a 497-field TSV
  *      carrying the synthetic identity, the 'Primera Visita' marker and the
- *      pathology token; console.error=0 and the documented pending-rows
- *      pageerror policy
+ *      pathology token; console.error=0 and pageerror=0
  *   H2 Seguimiento happy path for the 5 pathologies: same contract with the
  *      'Seguimiento' marker
  *   F1 planted boundary failure (Primera Visita): no post-export checklist, no
- *      497-field row copied, visible 'frontera de compatibilidad' fail-closed
- *      alert, pageerror=0
+ *      row delivered at all (no clipboard TSV, no modal TSV — fail-closed,
+ *      never a partial copy; a 496-field delivery would also fail), visible
+ *      'frontera de compatibilidad' fail-closed alert, pageerror=0; partial-
+ *      copy negative witness proving a planted 496-field delivery FAILS the
+ *      fail-closed evaluator
  *
- * KNOWN PRE-EXISTING BASELINE PAGEERROR (not introduced and not fixed by #464):
- * every successful CSV export ends in `addPendingRow` → `persistPendingRows` →
- * window event 'pendingRowsUpdated' → script.js `updatePendingRowsIndicator` →
- * `HubTools.export.getPendingRows()` → `persistPendingRows` again: an unbounded
- * mutual recursion that throws "Maximum call stack size exceeded" AFTER the row
- * was already copied. Reproduces on the pre-cutover baseline; fixing it is
- * outside the #464 scope (pending-rows transport, not the act cutover). The
- * happy-path cases therefore tolerate ONLY that exact pageerror message and
- * fail on anything else; the fail-closed case F1 (no pending row written) must
- * have pageerror=0.
+ * RETIRED PENDING-ROWS CONTRACT (T4 reconciliation,
+ * TRAIN-NEXUS-REUMA-EXPORT-SAFETY-18 / WO-REUMA-EXPORT-SAFETY-18D): the
+ * pending-rows queue, the `pendingRowsUpdated` event and the recovery API
+ * are GONE from runtime; the mutual recursion that threw "Maximum call stack
+ * size exceeded" after every successful CSV export no longer exists. The
+ * former tolerance for that exact pageerror is REMOVED: every happy path
+ * (H1/H2) now requires pageerror=0; the fail-closed case F1 keeps its
+ * explicitly classified expected console.error classes and pageerror=0.
+ * The full 5-pathology × 2-journeys matrix covered here by H1/H2 is the
+ * pathology coverage referenced by
+ * `tools/reuma_pending_retirement_browser_check.mjs`.
  *
  * Usage: node tools/reuma_act_cutover_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
@@ -340,6 +343,22 @@ function validateRow(rowText, { id, marker, token }) {
     };
 }
 
+/**
+ * F4 fail-closed delivery evaluator (WO:17 'no copiar fila parcial'): when the
+ * boundary rejects, NO row may be delivered at all — no clipboard TSV and no
+ * manual-modal TSV — regardless of field count (a 496-field partial row is a
+ * violation, never a pass).
+ */
+function evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible }) {
+    const problems = [];
+    if (!row || row.source !== 'none' || row.text !== '') {
+        problems.push(`row delivered via ${row ? row.source : 'unknown'} (${row && row.text ? row.text.split('\t').length : 0} fields)`);
+    }
+    if (checklistCount !== 0) problems.push(`checklist=${checklistCount}`);
+    if (failClosedVisible !== true) problems.push('fail-closed alert not visible');
+    return { pass: problems.length === 0, problems };
+}
+
 // Planted boundary double exactly like the #457 pattern: the real adapter is
 // kept in play and propagates the planted rejection; the coordinator must
 // fail closed with the 'frontera de compatibilidad' notification.
@@ -419,9 +438,8 @@ try {
                     `checklist=${checklistAppeared} source=${row.source} checks=${JSON.stringify(checks)} fields=${row.text ? row.text.split('\t').length : 0} validationErrors=${JSON.stringify(validationErrors)}`);
 
                 const consoleErrors = entry.consoleErrors.filter((message) => message.includes(config.page));
-                const toleratedPageErrors = entry.pageErrors.filter((message) => message.endsWith(':: Maximum call stack size exceeded.'));
-                record(`H${kind === 'primera' ? '1' : '2'} ${pathology} happy path (${config.page}): console.error=0 and no pageerror beyond the documented pre-existing pending-rows recursion`,
-                    consoleErrors.length === 0 && toleratedPageErrors.length === entry.pageErrors.length,
+                record(`H${kind === 'primera' ? '1' : '2'} ${pathology} happy path (${config.page}): console.error=0 and pageerror=0 (retired pending-rows contract: no tolerated recursion)`,
+                    consoleErrors.length === 0 && entry.pageErrors.length === 0,
                     `consoleErrors=${JSON.stringify(consoleErrors.slice(0, 5))} pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))}`);
             } finally {
                 await context.close();
@@ -446,9 +464,21 @@ try {
             const rowFields = row.text ? row.text.split('\t').length : 0;
             const alerts = await page.locator('[role="alert"]').allTextContents();
             const failClosedVisible = alerts.some((text) => text.includes('frontera de compatibilidad'));
-            record('F1 planted boundary failure: fail-closed visible error, no post-export checklist and no 497-field row copied',
-                failClosedVisible && checklistCount === 0 && rowFields !== 497 && entry.pageErrors.length === 0,
-                `failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} alerts=${JSON.stringify(alerts)} pageErrors=${JSON.stringify(entry.pageErrors)}`);
+            // F4 fail-closed (WO:17 'no copiar fila parcial'): NO row may be
+            // delivered at all — a 496-field partial row is also a violation.
+            const noDeliveryVerdict = evaluateFailClosedDelivery(row, { checklistCount, failClosedVisible });
+            record('F1 planted boundary failure: fail-closed visible error, no post-export checklist and NO row delivered at all (no clipboard TSV, no modal TSV — fail-closed, never a partial copy)',
+                noDeliveryVerdict.pass && entry.pageErrors.length === 0,
+                `problems=${JSON.stringify(noDeliveryVerdict.problems)} failClosedVisible=${failClosedVisible} checklist=${checklistCount} rowSource=${row.source} rowFields=${rowFields} alerts=${JSON.stringify(alerts)} pageErrors=${JSON.stringify(entry.pageErrors)}`);
+            // Partial-copy negative witness (F4): a planted 496-field partial
+            // delivery must FAIL the same fail-closed evaluator used by F1,
+            // while a true no-delivery state passes it.
+            const partialDelivery = { source: 'clipboard', text: Array.from({ length: 496 }, (_, i) => `F${i}`).join('\t') };
+            const plantedPartial = evaluateFailClosedDelivery(partialDelivery, { checklistCount: 0, failClosedVisible: true });
+            const cleanNone = evaluateFailClosedDelivery({ source: 'none', text: '' }, { checklistCount: 0, failClosedVisible: true });
+            record('F1 partial-copy witness: a planted 496-field partial delivery FAILS the fail-closed no-row evaluator while a true no-delivery state passes it',
+                plantedPartial.pass === false && cleanNone.pass === true,
+                `plantedPass=${plantedPartial.pass} plantedProblems=${JSON.stringify(plantedPartial.problems)} cleanPass=${cleanNone.pass}`);
         } finally {
             await context.close();
         }
