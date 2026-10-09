@@ -344,6 +344,15 @@ body:has(.hub-shell) {
     background-color: #fff;
 }
 
+/* T1 #610: campos fecha compactos y contenidos (Primera Visita / Seguimiento).
+   Se mantiene width:100% para adaptarse a contenedores estrechos y se acota el
+   ancho máximo para evitar el ancho excesivo en pantallas grandes. */
+.form-group input[type="date"],
+.plan-date-input,
+.plan-date-input-improved {
+    max-width: 200px;
+}
+
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
