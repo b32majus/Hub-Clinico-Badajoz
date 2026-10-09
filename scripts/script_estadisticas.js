@@ -308,14 +308,6 @@ function initializeDatePresets() {
 
 // === CONTROLES DE TABLA ===
 function initializeTableControls() {
-    // Búsqueda en tabla
-    const searchInput = document.getElementById('tableSearchInput');
-    if (searchInput) {
-        searchInput.addEventListener('input', debounce(() => {
-            filterTableBySearch(searchInput.value);
-        }, 300));
-    }
-
     // Ordenamiento por columnas
     const headers = document.querySelectorAll('.data-table th[data-sort]');
     headers.forEach(header => {
@@ -1266,6 +1258,9 @@ function handleSort(column, header) {
     renderTablePage();
 }
 
+// Retained without a visible control (#613): the local cohort search helper stays
+// defined for the deterministic #537 oracle, which drives it directly and asserts
+// it never feeds the CSV export. No UI element invokes it.
 function filterTableBySearch(searchTerm) {
     const term = searchTerm.toLowerCase().trim();
 
