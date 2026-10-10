@@ -615,8 +615,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const datos = HubTools.form.recopilarDatosFormularioSeguimiento();
                     console.log('📊 Datos recopilados para FH:', datos);
 
+                    // T22-02-C: los datos de tratamiento actual son captura de línea base y
+                    // NO forman parte del contrato publicado del artefacto FH. Se pasa una
+                    // COPIA sin esas claves; `datos` no se muta (baseline/TXT/CSV intactos).
+                    const datosFH = Object.assign({}, datos);
+                    delete datosFH.tratamientoActual;
+                    delete datosFH.fechaInicioTratamiento;
+
                     if (typeof HubTools?.pharmacy?.copyRequestToClipboard === 'function') {
-                        HubTools.pharmacy.copyRequestToClipboard(datos);
+                        HubTools.pharmacy.copyRequestToClipboard(datosFH);
                     } else {
                         console.error('❌ HubTools.pharmacy.copyRequestToClipboard no disponible');
                         HubTools.utils?.mostrarNotificacion?.('Módulo de solicitud FH no disponible.', 'error');
