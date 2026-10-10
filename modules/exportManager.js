@@ -2103,8 +2103,17 @@ function exportarTXT(datos) {
         // edición invalidante o una restauración la retira mientras tanto.
         txtGateAttemptInFlight = true;
         
-        // Intentar copiar al portapapeles automáticamente
-        navigator.clipboard.writeText(texto).then(() => {
+        // Intentar copiar al portapapeles automáticamente. T21-01: la
+        // ausencia de Clipboard API (o de writeText) es un FALLO DE TRANSPORTE
+        // que debe alcanzar el MISMO fallback ya aceptado para el rechazo de
+        // la promesa (el modal manual opt-in de copia/atestación), nunca un
+        // TypeError síncrono que aborte el recorrido antes de ofrecer la vía
+        // manual aceptada. No se alteran el intento en vuelo, las
+        // invalidaciones ni los callbacks.
+        const txtClipboardWrite = (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function')
+            ? Promise.reject(new Error('Clipboard API no disponible en este navegador'))
+            : navigator.clipboard.writeText(texto);
+        txtClipboardWrite.then(() => {
             if (txtGateAttemptId !== txtGateCopyAttempt) {
                 // Resultado en vuelo de una generación retirada (TXT más
                 // nuevo, edición invalidante o restauración): sin permiso
