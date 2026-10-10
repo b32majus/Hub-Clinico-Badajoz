@@ -1400,6 +1400,12 @@ function buildVisitExportKey(datos, context) {
 let txtGateMemoryAuthorization = null; // { visitKey, payload } | null
 let txtGateCopyAttempt = 0; // invalida resultados asíncronos en vuelo
 
+// T20-03 (#621): mensaje exacto del spec (historia 8) cuando existe una
+// autorización para ESTA identidad de visita pero el payload exportable
+// actual difiere del instantáneo autorizado por el TXT. Veraz: no declara
+// que se pegó ni que se guardó nada en la historia clínica.
+const TXT_GATE_CHANGED_MESSAGE = 'Los datos de la visita han cambiado desde el TXT. Vuelve a exportarlo y revisa que la historia clínica refleje la versión actual antes de generar el CSV';
+
 function invalidateTxtExportDone() {
     txtGateMemoryAuthorization = null;
 }
@@ -1455,6 +1461,20 @@ function hasTxtExportDone(datos, context) {
     if (!entry || !txtGateMemoryAuthorization) return false;
     if (txtGateMemoryAuthorization.visitKey !== entry.visitKey) return false;
     return txtGateMemoryAuthorization.payload === entry.payload;
+}
+
+/**
+ * T20-03 (#621, historia 8): true EXACTAMENTE cuando existe una
+ * autorización para ESTA identidad de visita (mismo visitKey) pero el
+ * payload exportable actual difiere del instantáneo del TXT confirmado.
+ * Solo distingue el motivo del bloqueo para el mensaje: nunca autoriza,
+ * nunca consulta almacenamiento ni marcadores legacy.
+ */
+function hasTxtExportChangedSinceTxt(datos, context) {
+    const entry = buildTxtGateMemoryEntry(datos, context);
+    if (!entry || !txtGateMemoryAuthorization) return false;
+    if (txtGateMemoryAuthorization.visitKey !== entry.visitKey) return false;
+    return txtGateMemoryAuthorization.payload !== entry.payload;
 }
 
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
@@ -1566,7 +1586,12 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
             diagnostico: diagnostico
         };
         if (!hasTxtExportDone(datos, visitContext)) {
-            const legalMessage = 'Debe exportar TXT de esta visita antes de exportar CSV.';
+            // T20-03: mensaje de discrepancia exacto del spec (historia 8)
+            // cuando el TXT de ESTA visita existe pero el payload cambió;
+            // el mensaje de prerequisito se mantiene cuando no hay TXT.
+            const legalMessage = hasTxtExportChangedSinceTxt(datos, visitContext)
+                ? TXT_GATE_CHANGED_MESSAGE
+                : 'Debe exportar TXT de esta visita antes de exportar CSV.';
             if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion(legalMessage, 'error');
             } else {
@@ -1648,7 +1673,11 @@ function exportarAct497(proyeccion, datos) {
         diagnostico: proyeccion.meta.pathology
     };
     if (!hasTxtExportDone(datos, visitContext)) {
-        const legalMessage = 'Debe exportar TXT de esta visita antes de exportar CSV.';
+        // T20-03: mismo contrato de mensajes que `exportarYCopiarCSV`
+        // (historia 8 del spec): discrepancia exacta vs prerequisito.
+        const legalMessage = hasTxtExportChangedSinceTxt(datos, visitContext)
+            ? TXT_GATE_CHANGED_MESSAGE
+            : 'Debe exportar TXT de esta visita antes de exportar CSV.';
         if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
             HubTools.utils.mostrarNotificacion(legalMessage, 'error');
         } else {
