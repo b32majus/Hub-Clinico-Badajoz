@@ -1312,6 +1312,19 @@ body {
     gap: 10px;
 }
 
+/* T20-02 (#621 C2): ajuste responsivo OPT-IN, acotado al panel del modal de
+   atestación TXT (cuatro acciones). Los modales compartidos de dos acciones
+   (Solicitud FH, CSV manual) no reciben la clase del panel y conservan su
+   layout exacto. */
+.texto-modal__panel--atestacion .texto-modal__header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+
+.texto-modal__panel--atestacion .texto-modal__actions {
+    flex-wrap: wrap;
+}
+
 .texto-modal__btn {
     border: none;
     border-radius: 10px;

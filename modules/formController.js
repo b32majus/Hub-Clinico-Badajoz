@@ -1055,8 +1055,12 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '', o
     const modal = document.createElement('div');
     modal.id = 'textoModalContainer';
     modal.className = 'texto-modal';
+    // T20-02 (#621 C2): clase OPT-IN del panel solo para el modal de
+    // atestación TXT (cuatro acciones) — habilita el ajuste responsivo
+    // acotado en style.css. Los modales compartidos de dos acciones
+    // (Solicitud FH, CSV manual) no reciben la clase ni cambian de layout.
     modal.innerHTML =         '<div class="texto-modal__backdrop" data-texto-modal-close></div>' +
-        '<div class="texto-modal__panel" role="dialog" aria-modal="true" aria-label="' + titulo + '">' +
+        '<div class="texto-modal__panel' + (atestacionTxt ? ' texto-modal__panel--atestacion' : '') + '" role="dialog" aria-modal="true" aria-label="' + titulo + '">' +
             '<div class="texto-modal__header">' +
                 '<h3 class="texto-modal__title"><i class="fas fa-file-alt"></i> ' + titulo + '</h3>' +
                 '<div class="texto-modal__actions">' +
