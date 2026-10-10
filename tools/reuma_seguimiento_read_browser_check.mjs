@@ -87,6 +87,12 @@ const KNOWN_EXPECTED_VISITS = corpus.sheets.ESPA.filter((row) => row.ID_Paciente
 //                display and collector untouched (preservation witness).
 const DATELESS_ID = 'SYN-NODATE-001';
 const ISODATE_ID = 'SYN-ISODATE-001';
+// T22-G2-C2 negatives (TEMP workbook rows only; the frozen corpus fixture is
+// never edited): an impossible calendar date and an out-of-format value must
+// leave the date field and the collector EMPTY — never silently corrected to
+// another day.
+const BADDATE_ID = 'SYN-BADDATE-001';
+const BADFORMAT_ID = 'SYN-BADFMT-001';
 const SYNTHETIC_ESPA_ROWS = [
     {
         ID_Paciente: DATELESS_ID,
@@ -106,6 +112,26 @@ const SYNTHETIC_ESPA_ROWS = [
         Diagnostico_Primario: 'EspA',
         Tratamiento_Actual: 'FAME sintetico IF',
         Fecha_Inicio_Tratamiento: '2026-01-10',
+    },
+    {
+        ID_Paciente: BADDATE_ID,
+        Nombre_Paciente: 'Sintetico Fecha Imposible Uno',
+        Sexo: 'F',
+        Fecha_Visita: '2026-03-11',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'FAME sintetico BAD',
+        Fecha_Inicio_Tratamiento: '31/02/2026',
+    },
+    {
+        ID_Paciente: BADFORMAT_ID,
+        Nombre_Paciente: 'Sintetico Fecha Formato Dos',
+        Sexo: 'M',
+        Fecha_Visita: '2026-03-12',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'FAME sintetico BADFMT',
+        Fecha_Inicio_Tratamiento: '2026/01/10',
     },
 ];
 
@@ -831,18 +857,19 @@ try {
         }
 
         // =================================================================
-        // A7 (T22-02-C2) — found patients WITH an explicit documented start
-        // date: the historical supplied date flows through untouched
-        // (preservation witness; the correction must not alter it). Same
-        // gate-passed tab.
-        //   SYN-ISODATE-001 (ISO explicit date): the field shows exactly that
-        //   value and the collector returns it.
-        //   SYN-ESPA-001 (dd/mm/yyyy contract value 10/01/2026): the
-        //   payload keeps it verbatim (pinned by the migration checker);
-        //   the type=date control's own published sanitization leaves the
-        //   display empty and the collector mirrors the display — pre-existing
-        //   display behavior, unchanged by this correction and out of its
-        //   authorized surface (no date-format transformation is introduced).
+        // A7 (T22-G2-C2) — found patients WITH an explicit documented start
+        // date: the historical supplied date must reach the real readonly
+        // type=date field AND the collector in the HTML-mandated ISO
+        // representation, via strict DD/MM/YYYY -> ISO conversion at the
+        // `script_seguimiento.js` prefill boundary (UI copy only). The
+        // documental payload keeps `10/01/2026` verbatim (pinned by the
+        // migration checker) and no day is ever invented or corrected:
+        //   SYN-ISODATE-001 (ISO explicit date): flows through untouched.
+        //   SYN-ESPA-001 (dd/mm/yyyy contract value 10/01/2026): the field
+        //   and the collector show 2026-01-10 (10/01/2026 => 2026-01-10).
+        //   TEMP negatives — impossible calendar date (31/02/2026) and
+        //   out-of-format value (2026/01/10): field and collector stay
+        //   EMPTY, never silently corrected to another day.
         // =================================================================
         {
             happy.consoleErrors.length = 0;
@@ -860,13 +887,30 @@ try {
             await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
             await happy.page.waitForTimeout(1200);
             const knownState = await happy.page.evaluate(() => ({
+                dateReadonly: document.getElementById('fechaInicioTratamiento')?.readOnly === true,
                 dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
                 collectedFechaInicio: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
             }));
-            record('A7 found patients with explicit start dates: explicit ISO date shows and is collected verbatim; dd/mm/yyyy contract value stays display-empty/collected-empty as published',
+
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${BADDATE_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const badDateState = await happy.page.evaluate(() => ({
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedFechaInicio: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${BADFORMAT_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const badFormatState = await happy.page.evaluate(() => ({
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedFechaInicio: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            record('A7 found patients with explicit start dates: ISO date shows/collects verbatim; dd/mm/yyyy 10/01/2026 reaches the readonly field and collector as 2026-01-10; impossible/out-of-format dates stay empty (never another day)',
                 isoOkPath && isoState.dateValue === '2026-01-10' && isoState.collectedFechaInicio === '2026-01-10' &&
-                knownState.dateValue === '' && knownState.collectedFechaInicio === '',
-                `iso=${JSON.stringify(isoState)} isoOkPath=${isoOkPath} known=${JSON.stringify(knownState)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+                knownState.dateReadonly && knownState.dateValue === '2026-01-10' && knownState.collectedFechaInicio === '2026-01-10' &&
+                badDateState.dateValue === '' && badDateState.collectedFechaInicio === '' &&
+                badFormatState.dateValue === '' && badFormatState.collectedFechaInicio === '',
+                `iso=${JSON.stringify(isoState)} isoOkPath=${isoOkPath} known=${JSON.stringify(knownState)} badDate=${JSON.stringify(badDateState)} badFormat=${JSON.stringify(badFormatState)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
         }
     } finally {
         await context.close();
