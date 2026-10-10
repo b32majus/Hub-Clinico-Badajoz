@@ -22,6 +22,19 @@
  *   S4  unavailable (tab without the session corpus) fails visibly and safely
  *   S5  error (planted double) fails visibly and safely
  *
+ * Train 22 baseline witnesses (Fase A, RED on freeze):
+ *   A1  not_found: `#idPaciente` stays readonly with the queried CIP while
+ *       `#nombrePaciente` accepts a real typed synthetic name (no fabricated
+ *       identity, no demo mock).
+ *   A2  negatives stay protected: `ok` keeps the name prefilled+readonly;
+ *       `unavailable`/`error` keep the name readonly/empty with the existing
+ *       fail-closed messages.
+ *   A3  explicit baseline payload/export on the `not_found` page: typed name +
+ *       treatment + start date reach `HubTools.form.recopilarDatosFormularioSeguimiento()`,
+ *       a cleared date collects as '' (blank, never today), and the real in-page
+ *       route `createVisitAct` -> `projectVisitAct497` keeps the 497 projection
+ *       byte-identical except for exactly the two treatment positions.
+ *
  * Usage: node tools/reuma_seguimiento_read_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
  * Exit code 0 = every case PASS, 1 = at least one FAIL or environment failure.
@@ -326,6 +339,241 @@ try {
                 checks.every(Boolean),
                 `id=${state.id} name=${JSON.stringify(state.name)} alert=${JSON.stringify(state.alert)} ` +
                 `consoleErrors=${JSON.stringify(errors)} pageErrors=${JSON.stringify(errorCase.pageErrors)}`);
+        }
+
+        // =================================================================
+        // A1 (Train 22) — not_found: the CIP stays identified/readonly while
+        // the name becomes really editable through a supported fill(); no
+        // fabricated identity. RED on freeze: #nombrePaciente is readonly.
+        // =================================================================
+        {
+            const SYNTHETIC_NAME = 'Sintetico Notfound Uno';
+            // The real `not_found` read requires the session corpus, which lives in
+            // per-tab sessionStorage: reuse the gate-passed tab exactly like S2/S3
+            // (fresh supported navigation, no DOM tampering, no demo mock).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            const notFoundEditable = happy;
+            await notFoundEditable.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${ABSENT_ID_SHAPED}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await notFoundEditable.page.waitForTimeout(1200);
+            const initial = await formState(notFoundEditable.page);
+            const readonlyState = await notFoundEditable.page.evaluate(() => ({
+                idReadonly: document.getElementById('idPaciente')?.readOnly === true,
+                idValue: document.getElementById('idPaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+            }));
+            const notFoundErrors = seguimientoErrors(notFoundEditable);
+            let fillError = null;
+            try {
+                await notFoundEditable.page.fill('#nombrePaciente', SYNTHETIC_NAME, { timeout: 5000 });
+            } catch (err) {
+                fillError = (err && err.message) || String(err);
+            }
+            const typedName = await notFoundEditable.page.evaluate(() => document.getElementById('nombrePaciente')?.value || '');
+            const checks = [
+                readonlyState.idReadonly,
+                readonlyState.idValue === ABSENT_ID_SHAPED,
+                readonlyState.nameReadonly === false,
+                initial.name === '',
+                !notFoundErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)),
+                fillError === null,
+                typedName === SYNTHETIC_NAME,
+            ];
+            record('A1 not_found keeps the queried CIP readonly and accepts a real typed synthetic name',
+                checks.every(Boolean),
+                `idReadonly=${readonlyState.idReadonly} id=${JSON.stringify(readonlyState.idValue)} ` +
+                `nameReadonly=${readonlyState.nameReadonly} initialName=${JSON.stringify(initial.name)} ` +
+                `consoleErrors=${JSON.stringify(notFoundErrors)} ` +
+                `fillError=${JSON.stringify(fillError)} typedName=${JSON.stringify(typedName)} ` +
+                `pageErrors=${JSON.stringify(notFoundEditable.pageErrors)}`);
+        }
+
+        // =================================================================
+        // A2 (Train 22) — negatives stay protected: ok keeps the name
+        // prefilled+readonly; unavailable/error keep it readonly/empty with
+        // the existing fail-closed messages. Never opens the not_found mode.
+        // =================================================================
+        {
+            // The ok case reuses the gate-passed tab (corpus in per-tab
+            // sessionStorage), exactly like the S2 happy path.
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const okState = await happy.page.evaluate(() => ({
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                name: document.getElementById('nombrePaciente')?.value || '',
+            }));
+            const okErrors = seguimientoErrors(happy);
+
+            const unavailablePage = trackedPage(await context.newPage());
+            await unavailablePage.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await unavailablePage.page.waitForTimeout(1200);
+            const unavailableState = await unavailablePage.page.evaluate(() => ({
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                name: document.getElementById('nombrePaciente')?.value || '',
+            }));
+            const unavailableErrors = seguimientoErrors(unavailablePage);
+
+            const errorPage = trackedPage(await context.newPage());
+            await errorPage.page.addInitScript(plantedErrorDouble);
+            await errorPage.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await errorPage.page.waitForTimeout(1200);
+            const errorState = await errorPage.page.evaluate(() => ({
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                name: document.getElementById('nombrePaciente')?.value || '',
+            }));
+            const errorErrors = seguimientoErrors(errorPage);
+
+            const checks = [
+                okState.nameReadonly, okState.name === KNOWN_NAME,
+                !okErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)),
+                unavailableState.nameReadonly, unavailableState.name === '',
+                unavailableErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE)),
+                errorState.nameReadonly, errorState.name === '',
+                errorErrors.some((message) => message.includes(FAIL_CLOSED_ERROR)),
+            ];
+            record('A2 negatives stay protected: found name prefilled readonly; unavailable/error readonly empty with fail-closed messages',
+                checks.every(Boolean),
+                `ok=${JSON.stringify(okState)} okConsoleErrors=${JSON.stringify(okErrors)} ` +
+                `unavailable=${JSON.stringify(unavailableState)} ` +
+                `unavailableConsoleErrors=${JSON.stringify(unavailableErrors)} error=${JSON.stringify(errorState)} ` +
+                `errorConsoleErrors=${JSON.stringify(errorErrors)}`);
+        }
+
+        // =================================================================
+        // A3 (Train 22) — explicit baseline payload/export on the not_found
+        // page: typed name/treatment/date reach the collector, a cleared date
+        // collects as '' (blank, never today), and the real in-page route
+        // createVisitAct -> projectVisitAct497 keeps the 497 projection
+        // byte-identical except exactly the two treatment positions (no
+        // hardcoded column index: legacy generators use non-uniform absolute
+        // positions; the diff is the contract). RED on freeze: the fields are
+        // readonly and the collector does not return the two fields.
+        // =================================================================
+        {
+            const TYPED_NAME = 'Sintetico Baseline Uno';
+            const TYPED_TREATMENT = 'FAME sintetico baseline A';
+            const TYPED_DATE = '2020-03-04';
+            // Gate-passed tab again: the baseline capture happens on a real
+            // `not_found` read result with the session corpus present, never on
+            // a read failure (fail-closed console guard below pins this).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            const baselinePage = happy;
+            await baselinePage.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${ABSENT_ID_SHAPED}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await baselinePage.page.waitForTimeout(1200);
+            const baselineErrors = seguimientoErrors(baselinePage);
+
+            const fillErrors = {};
+            for (const [selector, value] of [
+                ['#nombrePaciente', TYPED_NAME],
+                ['#tratamientoActual', TYPED_TREATMENT],
+                ['#fechaInicioTratamiento', TYPED_DATE],
+            ]) {
+                try {
+                    await baselinePage.page.fill(selector, value, { timeout: 5000 });
+                } catch (err) {
+                    fillErrors[selector] = (err && err.message) || String(err);
+                }
+            }
+
+            let observed = null;
+            let observeError = null;
+            try {
+                // Read-only observation: no DOM mutation, only published HubTools routes.
+                observed = await baselinePage.page.evaluate(({ typedName, typedTreatment, patientRef }) => {
+                    const datos = HubTools.form.recopilarDatosFormularioSeguimiento();
+                    const act = HubTools.reumaActContract.createVisitAct({
+                        kind: 'seguimiento',
+                        patientRef,
+                        pathology: 'espa',
+                        payload: datos,
+                    });
+                    const projected = HubTools.reumaLegacyExportAdapter.projectVisitAct497(act);
+                    const datosEmpty = JSON.parse(JSON.stringify(datos));
+                    datosEmpty.tratamientoActual = '';
+                    datosEmpty.fechaInicioTratamiento = '';
+                    const actEmpty = HubTools.reumaActContract.createVisitAct({
+                        kind: 'seguimiento',
+                        patientRef,
+                        pathology: 'espa',
+                        payload: datosEmpty,
+                    });
+                    const projectedEmpty = HubTools.reumaLegacyExportAdapter.projectVisitAct497(actEmpty);
+                    const fields = projected && projected.ok === true ? projected.fields : null;
+                    const fieldsEmpty = projectedEmpty && projectedEmpty.ok === true ? projectedEmpty.fields : null;
+                    const diffPositions = [];
+                    if (fields && fieldsEmpty && fields.length === fieldsEmpty.length) {
+                        for (let i = 0; i < fields.length; i++) {
+                            if (fields[i] !== fieldsEmpty[i]) diffPositions.push(i);
+                        }
+                    }
+                    return {
+                        collected: {
+                            nombrePaciente: datos.nombrePaciente,
+                            tratamientoActual: datos.tratamientoActual,
+                            fechaInicioTratamiento: datos.fechaInicioTratamiento,
+                        },
+                        hasTratamientoKey: Object.prototype.hasOwnProperty.call(datos, 'tratamientoActual'),
+                        hasFechaKey: Object.prototype.hasOwnProperty.call(datos, 'fechaInicioTratamiento'),
+                        actOk: act && act.ok === true,
+                        projectionOk: projected && projected.ok === true,
+                        projectionError: projected && projected.ok !== true && projected.error
+                            ? `${projected.error.code}: ${projected.error.message}`
+                            : null,
+                        fieldCount: fields ? fields.length : 0,
+                        position4: fields ? fields[4] : null,
+                        diffPositions,
+                        diffValues: diffPositions.map((i) => fields[i]),
+                    };
+                }, { typedName: TYPED_NAME, typedTreatment: TYPED_TREATMENT, patientRef: ABSENT_ID_SHAPED });
+            } catch (err) {
+                observeError = (err && err.message) || String(err);
+            }
+
+            let clearError = null;
+            try {
+                await baselinePage.page.fill('#fechaInicioTratamiento', '', { timeout: 5000 });
+            } catch (err) {
+                clearError = (err && err.message) || String(err);
+            }
+            let clearedDate = null;
+            try {
+                clearedDate = await baselinePage.page.evaluate(() =>
+                    HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento);
+            } catch (err) {
+                clearedDate = `evaluate_error: ${(err && err.message) || String(err)}`;
+            }
+
+            const checks = observed ? [
+                Object.keys(fillErrors).length === 0,
+                !baselineErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)),
+                observed.collected.nombrePaciente === TYPED_NAME,
+                observed.collected.tratamientoActual === TYPED_TREATMENT,
+                observed.collected.fechaInicioTratamiento === TYPED_DATE,
+                clearError === null,
+                clearedDate === '',
+                observed.actOk === true,
+                observed.projectionOk === true,
+                observed.fieldCount === 497,
+                observed.position4 === 'Seguimiento',
+                observed.diffPositions.length === 2,
+                observed.diffValues.includes(TYPED_TREATMENT) && observed.diffValues.includes(TYPED_DATE),
+            ] : [];
+            record('A3 not_found baseline payload/export: collector returns typed values and the 497 projection differs in exactly the two treatment positions',
+                checks.length > 0 && checks.every(Boolean),
+                `fillErrors=${JSON.stringify(fillErrors)} observeError=${JSON.stringify(observeError)} ` +
+                `consoleErrors=${JSON.stringify(baselineErrors)} ` +
+                `collected=${JSON.stringify(observed ? observed.collected : null)} ` +
+                `hasTratamientoKey=${observed ? observed.hasTratamientoKey : null} hasFechaKey=${observed ? observed.hasFechaKey : null} ` +
+                `clearError=${JSON.stringify(clearError)} clearedDate=${JSON.stringify(clearedDate)} ` +
+                `actOk=${observed ? observed.actOk : null} projectionOk=${observed ? observed.projectionOk : null} ` +
+                `projectionError=${JSON.stringify(observed ? observed.projectionError : null)} ` +
+                `fieldCount=${observed ? observed.fieldCount : null} position4=${JSON.stringify(observed ? observed.position4 : null)} ` +
+                `diffPositions=${JSON.stringify(observed ? observed.diffPositions : null)} ` +
+                `diffValues=${JSON.stringify(observed ? observed.diffValues : null)} ` +
+                `pageErrors=${JSON.stringify(baselinePage.pageErrors)}`);
         }
     } finally {
         await context.close();
