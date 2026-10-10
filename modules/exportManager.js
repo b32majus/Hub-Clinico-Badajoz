@@ -1338,8 +1338,6 @@ function generarFilaCSV_APs_Seguimiento(datos) {
     return finalizeExportRow(valores, datos, 'seguimiento', 'aps');
 }
 
-const TXT_EXPORT_GATE_PREFIX = 'HubClinico_TxtExportDone_';
-
 function inferVisitTypeFromContext() {
     if (typeof window === 'undefined' || !window.location || !window.location.pathname) return '';
     const path = String(window.location.pathname).toLowerCase();
@@ -1389,36 +1387,151 @@ function buildVisitExportKey(datos, context) {
     return `${cip}__${fechaVisita}__${tipoVisita}__${diagnostico}`;
 }
 
-function buildTxtGateStorageKey(visitKey) {
-    return TXT_EXPORT_GATE_PREFIX + visitKey;
+// ---------------------------------------------------------------------
+// T20-01 (#621): puerta TXT→CSV efímera EN MEMORIA, camino automático.
+// Estado privado del módulo: como máximo UNA autorización por instancia
+// activa de página/visita. Sin Web Storage de ningún tipo: recargar,
+// navegar a otra instancia o restaurar la página pierde la autorización
+// por diseño. Los marcadores legacy del prerrequisito TXT y el posible
+// legado histórico de filas pendientes no se leen, no se escriben y no
+// se borran.
+// ---------------------------------------------------------------------
+
+let txtGateMemoryAuthorization = null; // { visitKey, payload } | null
+let txtGateCopyAttempt = 0; // invalida resultados asíncronos en vuelo
+
+let txtGateAttemptInFlight = false; // hay un resultado TXT pendiente de resolver
+
+// C1 (revisión canónica T20-03, F1): retira TODO resultado TXT en vuelo. La
+// edición invalidante, la restauración pageshow.persisted y cada nuevo TXT
+// pasan por aquí: ningún callback tardío (clipboard, «Copiar» del modal,
+// atestación, confirmación de descarga) puede autorizar ni mostrar éxito
+// después. Scoped al intento en vuelo: sin intento pendiente no hay estado
+// que retirar y el contador no se toca. Sin Web Storage.
+function retireInFlightTxtGateResult() {
+    if (!txtGateAttemptInFlight) return;
+    txtGateAttemptInFlight = false;
+    txtGateCopyAttempt += 1;
 }
 
-function markTxtExportDone(datos, context) {
+// T20-03 (#621): mensaje exacto del spec (historia 8) cuando existe una
+// autorización para ESTA identidad de visita pero el payload exportable
+// actual difiere del instantáneo autorizado por el TXT. Veraz: no declara
+// que se pegó ni que se guardó nada en la historia clínica.
+const TXT_GATE_CHANGED_MESSAGE = 'Los datos de la visita han cambiado desde el TXT. Vuelve a exportarlo y revisa que la historia clínica refleje la versión actual antes de generar el CSV';
+
+function invalidateTxtExportDone() {
+    txtGateMemoryAuthorization = null;
+}
+
+function canonicalizeTxtGatePayload(value) {
+    // Serialización canónica (claves ordenadas) del payload exportable
+    // recopilado por el formulario: permite comparar íntegramente sin
+    // depender del orden de construcción del objeto. Nunca se persiste y
+    // nunca se recorta: prohibido ignorar campos clínicos para autorizar.
+    if (value === undefined || typeof value === 'function') return '\u0000no-serializable';
+    if (value === null || typeof value !== 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) {
+        return '[' + value.map(canonicalizeTxtGatePayload).join(',') + ']';
+    }
+    const keys = Object.keys(value).sort();
+    return '{' + keys.map(function (key) {
+        return JSON.stringify(key) + ':' + canonicalizeTxtGatePayload(value[key]);
+    }).join(',') + '}';
+}
+
+function buildTxtGateMemoryEntry(datos, context) {
+    if (!datos || typeof datos !== 'object') return null;
+    const visitKey = buildVisitExportKey(datos, context);
+    if (!visitKey) return null; // contexto de identidad vacío: fail-closed
     try {
-        const visitKey = buildVisitExportKey(datos, context);
-        if (!visitKey || typeof sessionStorage === 'undefined') return false;
-        sessionStorage.setItem(buildTxtGateStorageKey(visitKey), JSON.stringify({
-            completedAt: new Date().toISOString(),
-            visitKey: visitKey
-        }));
-        return true;
+        return { visitKey: visitKey, payload: canonicalizeTxtGatePayload(datos) };
     } catch (error) {
-        console.warn('No se pudo registrar el prerrequisito TXT→CSV:', error);
-        return false;
+        return null;
     }
 }
 
+/**
+ * Registra EN MEMORIA (nunca en Web Storage) que el TXT de esta visita se
+ * copió con éxito por clipboard, asociando la instantánea del payload
+ * exportable actual. Devuelve false si falta el contexto de identidad
+ * (fail-closed).
+ */
+function markTxtExportDone(datos, context) {
+    const entry = buildTxtGateMemoryEntry(datos, context);
+    if (!entry) return false;
+    txtGateMemoryAuthorization = entry;
+    return true;
+}
+
+/**
+ * Autorización válida solo si existe, corresponde a esta instancia de
+ * visita (misma identidad) y el payload exportable actual es idéntico al
+ * del TXT confirmado. Nunca consulta almacenamiento ni marcadores legacy;
+ * un payload distinto jamás se autoriza, ni siquiera transitoriamente.
+ */
 function hasTxtExportDone(datos, context) {
-    try {
-        const visitKey = buildVisitExportKey(datos, context);
-        if (!visitKey || typeof sessionStorage === 'undefined') return false;
-        const raw = sessionStorage.getItem(buildTxtGateStorageKey(visitKey));
-        if (!raw) return false;
-        const parsed = JSON.parse(raw);
-        return !!(parsed && parsed.visitKey === visitKey);
-    } catch (error) {
-        console.warn('No se pudo verificar el prerrequisito TXT→CSV:', error);
-        return false;
+    const entry = buildTxtGateMemoryEntry(datos, context);
+    if (!entry || !txtGateMemoryAuthorization) return false;
+    if (txtGateMemoryAuthorization.visitKey !== entry.visitKey) return false;
+    return txtGateMemoryAuthorization.payload === entry.payload;
+}
+
+/**
+ * T20-03 (#621, historia 8) + C1 (revisión canónica F3): true EXACTAMENTE
+ * cuando existe una autorización para el TXT de ESTA sesión pero los datos
+ * exportables actuales difieren de lo confirmado — en el payload O en los
+ * campos de identidad/contexto que alteran visitKey (CIP, fecha de visita,
+ * tipo, diagnóstico primario). Solo distingue el motivo del bloqueo para el
+ * mensaje: nunca autoriza, nunca consulta almacenamiento ni marcadores
+ * legacy. Sin autorización alguna registrada en esta instancia devuelve
+ * false: ese caso sigue mostrando el mensaje de prerequisito.
+ */
+function hasTxtExportChangedSinceTxt(datos, context) {
+    if (!txtGateMemoryAuthorization) return false; // nunca hubo TXT en esta instancia
+    const entry = buildTxtGateMemoryEntry(datos, context);
+    if (!entry) return true; // identidad actual incompleta frente al TXT autorizado: fail-closed
+    if (txtGateMemoryAuthorization.visitKey !== entry.visitKey) return true;
+    return txtGateMemoryAuthorization.payload !== entry.payload;
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    // Restauración desde bfcache (pageshow.persisted): la página vuelve de
+    // otra instancia de navegación; la autorización efímera se pierde y todo
+    // resultado TXT en vuelo se retira (spec historia 11; C1 F1).
+    window.addEventListener('pageshow', function (event) {
+        if (event && event.persisted === true) {
+            invalidateTxtExportDone();
+            retireInFlightTxtGateResult();
+        }
+    });
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    // C1 (revisión canónica F1): una edición mientras hay un resultado TXT
+    // en vuelo retira ese resultado antes de que resuelva — sin permiso
+    // tardío, sin toast de éxito tardío, sin modal tardío. Escuchadores de
+    // captura en document: cubren cualquier campo del formulario real.
+    // Scoped al intento en vuelo: sin intento pendiente no se toca nada
+    // (los modales de FH/CSV no dependen de este contador y su
+    // comportamiento no cambia; cero Web Storage).
+    document.addEventListener('input', retireInFlightTxtGateResult, true);
+    document.addEventListener('change', retireInFlightTxtGateResult, true);
+}
+
+/**
+ * C1 (revisión canónica F5): despacho compartido del mensaje de bloqueo de
+ * la puerta TXT→CSV. El texto exacto (prerequisito o discrepancia, historia
+ * 8) se elige EN CADA consumidor — la aserción aceptada
+ * `check:reuma:pending-retirement` (C1/C2) fija el literal de prerequisito
+ * dentro del cuerpo de ambas rutas —; este helper solo elimina la
+ * duplicación del despacho de notificación (mostrarNotificacion/alert).
+ */
+function notifyTxtGateBlock(message) {
+    if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+        HubTools.utils.mostrarNotificacion(message, 'error');
+    } else {
+        alert(message);
     }
 }
 
@@ -1520,12 +1633,14 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
             diagnostico: diagnostico
         };
         if (!hasTxtExportDone(datos, visitContext)) {
-            const legalMessage = 'Debe exportar TXT de esta visita antes de exportar CSV.';
-            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-                HubTools.utils.mostrarNotificacion(legalMessage, 'error');
-            } else {
-                alert(legalMessage);
-            }
+            // T20-03 + C1 (F3): mensaje de discrepancia exacto del spec
+            // (historia 8) cuando el TXT de ESTA sesión existe pero los
+            // datos exportables cambiaron — payload O identidad/contexto;
+            // el mensaje de prerequisito se mantiene cuando no hay TXT.
+            const legalMessage = hasTxtExportChangedSinceTxt(datos, visitContext)
+                ? TXT_GATE_CHANGED_MESSAGE
+                : 'Debe exportar TXT de esta visita antes de exportar CSV.';
+            notifyTxtGateBlock(legalMessage);
             return false;
         }
         
@@ -1602,12 +1717,12 @@ function exportarAct497(proyeccion, datos) {
         diagnostico: proyeccion.meta.pathology
     };
     if (!hasTxtExportDone(datos, visitContext)) {
-        const legalMessage = 'Debe exportar TXT de esta visita antes de exportar CSV.';
-        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-            HubTools.utils.mostrarNotificacion(legalMessage, 'error');
-        } else {
-            alert(legalMessage);
-        }
+        // T20-03: mismo contrato de mensajes que `exportarYCopiarCSV`
+        // (historia 8 del spec): discrepancia exacta vs prerequisito.
+        const legalMessage = hasTxtExportChangedSinceTxt(datos, visitContext)
+            ? TXT_GATE_CHANGED_MESSAGE
+            : 'Debe exportar TXT de esta visita antes de exportar CSV.';
+        notifyTxtGateBlock(legalMessage);
         return false;
     }
 
@@ -1979,49 +2094,86 @@ function exportarTXT(datos) {
             throw new Error('No se pudo generar el texto de la historia clínica');
         }
 
-        const notifyTxtGateReady = function(defaultLevel) {
-            const registered = markTxtExportDone(datos);
-            if (registered) {
-                const readyMsg = 'TXT registrado para esta visita; ya puede exportar CSV.';
-                if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-                    HubTools.utils.mostrarNotificacion(readyMsg, 'success');
-                } else {
-                    alert(readyMsg);
-                }
-            } else {
-                const level = defaultLevel || 'info';
-                const fallbackMsg = 'No se pudo registrar el estado TXT→CSV para esta visita.';
-                if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-                    HubTools.utils.mostrarNotificacion(fallbackMsg, level);
-                } else {
-                    alert(fallbackMsg);
-                }
-            }
-        };
+        // T20-01: una nueva exportación TXT invalida cualquier autorización
+        // previa ANTES de iniciar la copia asíncrona; el resultado tardío de
+        // un intento sustituido no autoriza ni muestra éxito (stale Promise).
+        invalidateTxtExportDone();
+        const txtGateAttemptId = ++txtGateCopyAttempt;
+        // C1 (F1): esta generación queda EN VUELO hasta resolverse; una
+        // edición invalidante o una restauración la retira mientras tanto.
+        txtGateAttemptInFlight = true;
         
         // Intentar copiar al portapapeles automáticamente
         navigator.clipboard.writeText(texto).then(() => {
+            if (txtGateAttemptId !== txtGateCopyAttempt) {
+                // Resultado en vuelo de una generación retirada (TXT más
+                // nuevo, edición invalidante o restauración): sin permiso
+                // tardío y sin afirmación de éxito sobre la visita actual.
+                return;
+            }
             console.log('✓ Historia clínica copiada al portapapeles.');
             if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
                 HubTools.utils.mostrarNotificacion('Historia clínica copiada al portapapeles.', 'success');
             } else {
                 alert('Historia clínica copiada al portapapeles.');
             }
-            notifyTxtGateReady('success');
+            // T20-01: solo la copia real confirmada por clipboard autoriza el
+            // CSV de esta instancia (autorización efímera en memoria con la
+            // instantánea del payload exportable; sin Web Storage).
+            markTxtExportDone(datos);
+            txtGateAttemptInFlight = false; // C1 (F1): intento terminal
         }).catch(err => {
             console.error('❌ Error al copiar al portapapeles automáticamente:', err);
-            
+
+            // C1 (revisión canónica F2): un intento sustituido (TXT más
+            // nuevo, edición invalidante o restauración) no realiza NINGÚN
+            // efecto — ni abrir/reemplazar el modal de la visita actual, ni
+            // iniciar descarga, ni notificación, ni autorización.
+            if (txtGateAttemptId !== txtGateCopyAttempt) {
+                return;
+            }
+
             // Fallback: Mostrar en modal para copia manual
             if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.mostrarModalTexto === 'function') {
                 console.warn('⚠ Fallo en copia automática. Mostrando en modal para copia manual.');
                 const tituloModal = "Historia Clínica Generada - Copia Manual";
-                const mensajeModal = "No se pudo copiar automáticamente al portapapeles. Puedes copiar el texto manualmente desde aquí:";
-                HubTools.form.mostrarModalTexto(texto, tituloModal, mensajeModal);
-                
+                const mensajeModal = "No se pudo copiar automáticamente al portapapeles. Puedes copiar el texto manualmente desde aquí, o confirmar con los botones de atestación si ya lo has copiado o guardado por tu cuenta:";
+                // T20-02: controles de la puerta OPT-IN solo para este modal
+                // del TXT Reuma. El éxito real de «Copiar» y las atestaciones
+                // explícitas («He copiado el TXT» / «He guardado el TXT»)
+                // autorizan la puerta efímera para ESTA instantánea del
+                // payload; una exportación TXT más reciente invalida estos
+                // callbacks (sin permiso tardío, sin doble toast). Los demás
+                // consumidores del modal mantienen el contrato de 3 argumentos.
+                const opcionesTxtGate = {
+                    atestacionTxt: {
+                        autorizarAlCopiar: function () {
+                            if (txtGateAttemptId !== txtGateCopyAttempt) return false;
+                            const autorizado = markTxtExportDone(datos);
+                            if (autorizado) txtGateAttemptInFlight = false; // C1 (F1): intento terminal
+                            return autorizado;
+                        },
+                        autorizarAlAtestar: function () {
+                            if (txtGateAttemptId !== txtGateCopyAttempt) return false;
+                            const autorizado = markTxtExportDone(datos);
+                            if (autorizado) txtGateAttemptInFlight = false; // C1 (F1): intento terminal
+                            if (autorizado && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                                HubTools.utils.mostrarNotificacion('TXT confirmado por el profesional.', 'success');
+                            } else if (!autorizado && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                                HubTools.utils.mostrarNotificacion('No se pudo confirmar el TXT de esta visita. El CSV permanece bloqueado.', 'error');
+                            }
+                            return autorizado;
+                        },
+                    },
+                };
+                HubTools.form.mostrarModalTexto(texto, tituloModal, mensajeModal, opcionesTxtGate);
+
                 if (typeof HubTools.utils.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion('No se pudo copiar automáticamente. Puedes copiarla manualmente desde el modal.', 'info');
                 }
-                notifyTxtGateReady('success');
+                // T20-01: abrir el modal de copia manual NO autoriza el CSV;
+                // solo el éxito real de «Copiar» o la atestación explícita
+                // del profesional (T20-02) autorizan.
             } else {
                 // Fallback robusto final: descargar como archivo .txt si el modal tampoco está disponible
                 console.warn('⚠ Ni copia automática ni modal disponibles. Usando fallback de descarga...');
@@ -2047,7 +2199,39 @@ function exportarTXT(datos) {
                 document.body.removeChild(link);
                 
                 setTimeout(() => URL.revokeObjectURL(url), 100);
-                notifyTxtGateReady('success');
+
+                // T20-02 + C1 (F4): la descarga por sí sola NUNCA autoriza el
+                // CSV. Se presenta una confirmación explícita in-flow del
+                // profesional (control nativo del navegador) VERAZ sobre lo
+                // observado: la descarga se ha INICIADO — no se afirma que se
+                // haya completado ni guardado nada; quien atestigua haber
+                // copiado/guardado el archivo es el profesional. Cancelar —o
+                // la ausencia de confirmación— deja la puerta cerrada con
+                // instrucción de reintento. Nunca se afirma que el archivo se
+                // haya pegado, validado o registrado en ningún sistema clínico.
+                const atestacionDescarga = typeof window.confirm === 'function'
+                    ? window.confirm('Se ha iniciado la descarga de la historia clínica como archivo .txt. ¿Confirmas que ya has copiado o guardado este TXT? Sin tu confirmación explícita, el CSV de esta visita sigue bloqueado.')
+                    : false;
+                const notificarResultadoDescarga = (mensaje, tipo) => {
+                    if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                        HubTools.utils.mostrarNotificacion(mensaje, tipo);
+                    } else {
+                        alert(mensaje);
+                    }
+                };
+                if (txtGateAttemptId !== txtGateCopyAttempt) {
+                    // Intento sustituido por una exportación más reciente:
+                    // sin permiso tardío y sin toasts.
+                } else {
+                    // C1 (F1): la confirmación (aceptada o rechazada) cierra
+                    // el intento; nada queda en vuelo para esta generación.
+                    txtGateAttemptInFlight = false;
+                    if (atestacionDescarga && markTxtExportDone(datos)) {
+                        notificarResultadoDescarga('TXT confirmado por el profesional.', 'success');
+                    } else {
+                        notificarResultadoDescarga('No se confirmó la copia o descarga del TXT. El CSV de esta visita sigue bloqueado: repite «Exportar TXT» y confirma.', 'error');
+                    }
+                }
             }
         });
     } catch (error) {
