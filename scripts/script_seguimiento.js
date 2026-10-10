@@ -259,6 +259,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (patologiaParam) {
                 HubTools.form.adaptarFormulario(patologiaParam);
             }
+        } else if (outcome.status === 'not_found') {
+            // Real `not_found` from the read port with no demo mock: the queried CIP
+            // stays identified/readonly, but no patient identity is fabricated and
+            // the name becomes manually editable (unlock lives ONLY here, never
+            // globally and never on ok/unavailable/error outcomes).
+            const idInput = document.getElementById('idPaciente');
+            if (idInput) {
+                idInput.value = patientId;
+                idInput.setAttribute('readonly', 'readonly');
+            }
+            const nombreInput = document.getElementById('nombrePaciente');
+            if (nombreInput) {
+                nombreInput.value = '';
+                nombreInput.removeAttribute('readonly');
+            }
+            if (patologiaParam) {
+                HubTools.form.adaptarFormulario(patologiaParam);
+            }
         } else {
             const prefillPayload = buildPrefillPayload({
                 patientId,
