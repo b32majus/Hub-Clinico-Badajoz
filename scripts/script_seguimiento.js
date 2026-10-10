@@ -200,6 +200,45 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
     };
 }
 
+// T22-G2-C2: conversión ESTRICTA de representación de fecha para controles
+// `<input type="date">` (valor HTML obligatorio `YYYY-MM-DD`), sólo en la
+// copia dirigida a la UI — el payload documental de buildPrefillPayload()
+// sigue devolviendo el valor verbatim (testigo de migración). Reglas:
+//   - ISO `YYYY-MM-DD` válido y gregoriano => sin modificación.
+//   - `DD/MM/YYYY` estrictamente válido (día primero, calendario gregoriano
+//     con bisiestos) => `YYYY-MM-DD` equivalente (10/01/2026 => 2026-01-10).
+//   - Fecha imposible (31/02/2026), fuera de formato (2026/01/10, 10-01-2026,
+//     texto) o ausente => ''. NUNCA se corrige a otro día: sin Date.parse()
+//     permisivo, sin `new Date()` por defecto, sin fecha de visita ni fecha
+//     manufacturada. La conversión de representación no crea eventos
+//     terapéuticos ni validación.
+function isGregorianCalendarDate(year, month, day) {
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
+    if (month < 1 || month > 12 || day < 1) return false;
+    const leapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return day <= daysInMonth[month - 1];
+}
+
+function toIsoDateInputValue(value) {
+    if (typeof value !== 'string') return '';
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (isoMatch) {
+        const year = Number(isoMatch[1]);
+        const month = Number(isoMatch[2]);
+        const day = Number(isoMatch[3]);
+        return isGregorianCalendarDate(year, month, day) ? value : '';
+    }
+    const dmyMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+    if (dmyMatch) {
+        const day = Number(dmyMatch[1]);
+        const month = Number(dmyMatch[2]);
+        const year = Number(dmyMatch[3]);
+        return isGregorianCalendarDate(year, month, day) ? `${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}` : '';
+    }
+    return '';
+}
+
 function getHubModule(path, required = true) {
     const value = path.split('.').reduce((acc, key) => acc && acc[key], typeof HubTools !== 'undefined' ? HubTools : undefined);
     if (!value && required) {
@@ -308,7 +347,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (prefillPayload && prefillPayload.idPaciente) {
-                HubTools.form.prefillSeguimientoForm(prefillPayload);
+                // T22-G2-C2: la conversión de representación vive SOLO en esta
+                // copia dirigida a la UI (el `<input type="date">` exige
+                // `YYYY-MM-DD`); `prefillPayload` documental no se muta y
+                // sigue siendo el testigo verbatim del Read Port.
+                const uiPrefillPayload = {
+                    ...prefillPayload,
+                    fechaInicioTratamiento: toIsoDateInputValue(prefillPayload.fechaInicioTratamiento)
+                };
+                HubTools.form.prefillSeguimientoForm(uiPrefillPayload);
                 var pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
                 if (pathologyForForm) {
                     HubTools.form.adaptarFormulario(pathologyForForm);
