@@ -1085,6 +1085,12 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
             return document.execCommand('copy') === true;
         };
 
+        // Stale in-flight guard: once the attempt is superseded (a newer
+        // attempt took the token) or the modal is gone (manual close or
+        // replacement), a late rejection must perform NO fallback side effect
+        // (no focus/selection steal, no execCommand call) and NO feedback.
+        const attemptIsStale = () => attempt !== copyAttemptToken || !modal.isConnected;
+
         const attemptCopy = () => {
             if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
                 let writePromise;
@@ -1095,6 +1101,7 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
                     return Promise.resolve(false);
                 }
                 return writePromise.then(() => true).catch(() => {
+                    if (attemptIsStale()) return false;
                     try {
                         return fallbackCopy();
                     } catch (error) {
@@ -1112,7 +1119,7 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
         };
 
         attemptCopy().then(succeeded => {
-            if (attempt !== copyAttemptToken || !modal.isConnected) return;
+            if (attemptIsStale()) return;
             if (succeeded) {
                 if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion('Contenido copiado al portapapeles.', 'success');

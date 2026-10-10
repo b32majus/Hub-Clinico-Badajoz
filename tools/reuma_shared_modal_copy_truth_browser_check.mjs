@@ -53,12 +53,28 @@
  *           writeText rejection; attempt B succeeds via the no-API fallback
  *           and closes the modal; A's late rejection lands AFTER the close —
  *           the per-attempt token/isConnected guard must suppress it (no
- *           stale failure toast after a truthful success/close).
+ *           stale failure toast after a truthful success/close). CORRECTION
+ *           C1 (F3, stale fallback side effects): the guard moved BEFORE the
+ *           fallback, so this case now also asserts the stale attempt ran NO
+ *           execCommand call and stole NO focus (execCommandCalls===1, only
+ *           attempt B's success; the pre-correction code showed 2). That is
+ *           a strictly MORE precise observation, never a weaker one.
  *   C15     MANUAL select/copy: with all plants disarmed, a real keyboard
  *           Ctrl+A selects the full original text in the readonly textarea
  *           and a real Ctrl+C copies it to the REAL clipboard (verified by
  *           clipboard.readText) while the modal stays open — the manual copy
  *           path the truthful contract promises on failure.
+ *   C16     CONFIRMED API success (CORRECTION C1, F1a): the modal button's
+ *           writeText is ALLOWED to pass through to the REAL clipboard API
+ *           and RESOLVES — truthful success claim + normal close, with the
+ *           real clipboard read back to prove browser-confirmed delivery
+ *           (pre-correction, the button was never exercised on a resolving
+ *           writeText; 'allow' only covered C15's native keyboard copy).
+ *   C17     execCommand('copy') THROWS (CORRECTION C1, F1b): writeText
+ *           REJECTS and the fallback execCommand call itself throws —
+ *           honest failure feedback, NO success claim, NO auto-close, full
+ *           text preserved (pre-correction only writeText's synchronous
+ *           throw was exercised, in C3).
  *
  * Seam under test (read-only; NO product code is changed by this checker):
  *   modules/formController.js  mostrarModalTexto (~line 1042) and its
@@ -84,9 +100,10 @@
  * conditions/plants go ONLY through `page.addInitScript` (established repo
  * convention, same as train 18): a controlled `navigator.clipboard.writeText`
  * wrapper (pass-through / reject / delayed-reject / sync-throw), a controlled
- * `document.execCommand('copy')` wrapper (armed boolean or pass-through) and
- * a clipboard-availability switch (`navigator.clipboard` -> undefined), all
- * armed/disarmed at runtime through plain flag assignment. Modal/textarea/
+ * `document.execCommand('copy')` wrapper (armed boolean, pass-through or
+ * armed synchronous throw) and a clipboard-availability switch
+ * (`navigator.clipboard` -> undefined), all armed/disarmed at runtime through
+ * plain flag assignment. Modal/textarea/
  * notification state is read AFTER the supported click as post-state
  * observation; nothing is injected into the page. Case C15 explicitly DISARMS
  * all plants before the real keyboard select/copy so the observed clipboard
@@ -409,6 +426,8 @@ const copyTruthPlant = () => {
     window.__copyTruthClipboardSwitchInstalled = false;
     window.__copyTruthExecCommandArmed = false; // false = pass-through to the real execCommand
     window.__copyTruthExecCommandResult = false; // planted boolean when armed
+    window.__copyTruthExecCommandThrow = false; // true = armed 'copy' THROWS synchronously (C17)
+    window.__copyTruthExecCommandThrown = null; // message of the last armed execCommand throw
     window.__copyTruthExecCommandCalls = 0; // armed 'copy' invocations only
     window.__copyTruthExecCommandLastResult = null;
 
@@ -460,13 +479,20 @@ const copyTruthPlant = () => {
     } catch (error) { /* stays installed=false; the case assertion fails closed */ }
 
     // Controlled execCommand('copy') wrapper: counts armed 'copy' calls and
-    // returns the runtime-planted boolean; pass-through otherwise.
+    // returns the runtime-planted boolean (or throws when the throw switch is
+    // armed, C17); pass-through otherwise. Default throw=false preserves the
+    // exact C1-C15/C14b behaviour recorded before the C17 witness existed.
     const originalExecCommand = document.execCommand.bind(document);
     Object.defineProperty(document, 'execCommand', {
         configurable: true,
         value: function (command, showUi, value) {
             if (window.__copyTruthExecCommandArmed === true && String(command).toLowerCase() === 'copy') {
                 window.__copyTruthExecCommandCalls += 1;
+                if (window.__copyTruthExecCommandThrow === true) {
+                    const thrown = new Error('planted execCommand copy throw (QA)');
+                    window.__copyTruthExecCommandThrown = thrown.message;
+                    throw thrown;
+                }
                 window.__copyTruthExecCommandLastResult = window.__copyTruthExecCommandResult === true;
                 return window.__copyTruthExecCommandLastResult;
             }
@@ -522,6 +548,24 @@ async function armDelayedReject(page, delayMs) {
         window.__copyTruthExecCommandResult = false;
     }, delayMs);
 }
+/** C16: CONFIRMED API success — writeText passes through to the REAL async
+ * clipboard API (context permissions already granted by the journey helper)
+ * so the resolution is a genuine, browser-confirmed copy. */
+async function armWriteAllow(page) {
+    await page.evaluate(() => {
+        window.__copyTruthWriteMode = 'allow';
+        window.__copyTruthExecCommandArmed = false;
+    });
+}
+/** C17: writeText REJECTS, then document.execCommand('copy') THROWS. */
+async function armRejectThenExecCommandThrow(page) {
+    await page.evaluate(() => {
+        window.__copyTruthWriteMode = 'reject';
+        window.__copyTruthExecCommandArmed = true;
+        window.__copyTruthExecCommandResult = false;
+        window.__copyTruthExecCommandThrow = true;
+    });
+}
 async function disarmAllPlants(page) {
     // Used ONLY by the manual select/copy case so the observed keyboard copy
     // is the browser's own native path, not a planted one.
@@ -569,6 +613,7 @@ async function readCopyObservation(page) {
             failureFeedbackVisible: document.body.innerText.includes('Error al copiar desde el modal.'),
             writeAttempts: window.__copyTruthWriteAttempts,
             thrownMessage: window.__copyTruthThrown === null ? null : String(window.__copyTruthThrown),
+            execCommandThrownMessage: window.__copyTruthExecCommandThrown === null ? null : String(window.__copyTruthExecCommandThrown),
             clipboardAvailableAtClick: window.__copyTruthClipboardAvailable !== false,
             clipboardSwitchInstalled: window.__copyTruthClipboardSwitchInstalled === true,
             execCommandCalls: window.__copyTruthExecCommandCalls,
@@ -1165,12 +1210,19 @@ try {
             await armClipboardUnavailableThenTrue(page);  // B takes the no-API fallback path
             await page.click('#copyToClipboardModalBtn'); // attempt B: succeeds immediately
             await page.waitForFunction(() => !document.getElementById('textoModalContainer'), null, { timeout: 5000 });
-            await armRejectThenFalse(page); // re-arm FALSE so A's LATE fallback would (if unguarded) toast a false failure
+            await armRejectThenFalse(page); // re-arm FALSE so A's LATE fallback would (if unguarded) call execCommand and toast a false failure
             await page.waitForTimeout(1400); // settle past A's 500ms rejection + fallback
             const after = await readCopyObservation(page);
-            record(`${label} plant active: writeText attempted twice (TXT auto + delayed A); armed execCommand('copy') called twice (B success TRUE + A late FALSE)`,
-                after.writeAttempts === 2 && after.execCommandCalls === 2,
-                `writeAttempts=${after.writeAttempts} execCommandCalls=${after.execCommandCalls}`);
+            const focusState = await page.evaluate(() => ({
+                activeElementConnected: !!document.activeElement && document.activeElement.isConnected,
+                activeIsRemovedTextarea: !!document.activeElement && document.activeElement.id === 'textoModalTextarea',
+            }));
+            record(`${label} plant active: writeText attempted twice (TXT auto + delayed A); armed execCommand('copy') called exactly ONCE (attempt B success TRUE) — attempt A's late fallback is suppressed BEFORE any execCommand side effect`,
+                after.writeAttempts === 2 && after.execCommandCalls === 1 && after.execCommandLastResult === true,
+                `writeAttempts=${after.writeAttempts} execCommandCalls=${after.execCommandCalls} execCommandLastResult=${JSON.stringify(after.execCommandLastResult)} (pre-CORRECTION baseline of the stale guard: execCommandCalls=2, B TRUE + A late FALSE fallback ran)`);
+            record(`${label} no stale fallback SIDE EFFECT: attempt A's late rejection performed no execCommand call and no focus steal (activeElement still attached, never the removed textarea)`,
+                after.execCommandCalls === 1 && focusState.activeElementConnected === true && focusState.activeIsRemovedTextarea === false,
+                `execCommandCalls=${after.execCommandCalls} focusState=${JSON.stringify(focusState)}`);
             record(`${label} truthful contract: attempt B produced the legitimate '${SUCCESS_CLAIM_TEXT}' claim and the modal closed`,
                 after.successClaimVisible === true && after.modalCount === 0,
                 `successClaimVisible=${after.successClaimVisible} modalCount=${after.modalCount}`);
@@ -1236,6 +1288,85 @@ try {
                     `modalCount=${manualCopy.modalCount} preserved=${manualCopy.text === before.text}`);
                 await snap(page, 't3_c15_manual_select_copy_state');
             }
+            recordErrorClassificationAll(label, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // C16 — CONFIRMED API SUCCESS (F1a): writeText passes through to the
+    // REAL async clipboard API ('allow' mode, clipboard-write permission
+    // granted by the journey context) and RESOLVES. The truthful contract
+    // rewards it: one success claim + normal close. This is the missing
+    // CONFIRMED-API-success witness through the changed handler (all
+    // pre-CORRECTION button attempts used rejection/delayed-rejection/
+    // throw/no-API; 'allow' was only exercised by C15's native keyboard
+    // copy, not the modal button). The real clipboard content is read back
+    // to prove the success is browser-confirmed, not merely claimed.
+    // =====================================================================
+    {
+        const label = 'C16 confirmed API success (writeText RESOLVES through the real clipboard):';
+        caseHeader('C16 — Primera Visita TXT modal: real supported Copiar click with writeText allowed to RESOLVE');
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`);
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-ALLOW-001', isSeguimiento: false });
+            const before = await txtExportAwaitModal(page);
+            recordJourney(label, before, 'SYN-ALLOW-001');
+            await armWriteAllow(page);
+            const after = await observeAfterCopyClick(page);
+            record(`${label} plant active: the modal button's writeText call went through to the REAL clipboard API (TXT auto + 'Copiar' click attempted; armed execCommand('copy') NOT called)`,
+                after.writeAttempts === 2 && after.execCommandCalls === 0 && after.clipboardAvailableAtClick === true,
+                `writeAttempts=${after.writeAttempts} execCommandCalls=${after.execCommandCalls} clipboardAvailableAtClick=${after.clipboardAvailableAtClick}`);
+            record(`${label} truthful contract: the CONFIRMED API success earns the '${SUCCESS_CLAIM_TEXT}' claim and the normal modal close`,
+                after.successClaimVisible === true && after.modalCount === 0,
+                `successClaimVisible=${after.successClaimVisible} modalCount=${after.modalCount}`);
+            const clipboardAfter = await page.evaluate(async () => navigator.clipboard.readText());
+            record(`${label} browser-confirmed delivery: the REAL clipboard holds the byte-identical FULL original text (success is a resolution observed by the browser, not a claim)`,
+                clipboardAfter === before.text,
+                `clipboardLength=${clipboardAfter ? clipboardAfter.length : 0} expectedLength=${before.text.length} identical=${clipboardAfter === before.text}`);
+            await snap(page, 'c16_confirmed_api_success_state');
+            recordErrorClassificationAll(label, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // C17 — execCommand('copy') THROWS (F1b): writeText REJECTS, then the
+    // fallback execCommand call itself throws. Truthful contract: honest
+    // failure feedback, NO success claim, NO auto-close, full text
+    // preserved. This is the missing execCommand-throw witness through the
+    // changed handler (pre-CORRECTION only writeText's synchronous throw
+    // was exercised, in C3).
+    // =====================================================================
+    {
+        const label = 'C17 execCommand(\'copy\') THROWS in the fallback:';
+        caseHeader('C17 — Primera Visita TXT modal: writeText REJECTS + document.execCommand(\'copy\') THROWS');
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`);
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-EXECTHROW-001', isSeguimiento: false });
+            const before = await txtExportAwaitModal(page);
+            recordJourney(label, before, 'SYN-EXECTHROW-001');
+            await armRejectThenExecCommandThrow(page);
+            const after = await observeAfterCopyClick(page);
+            record(`${label} plant active: writeText attempted twice and rejected; armed execCommand('copy') called once and THREW ('planted execCommand copy throw (QA)')`,
+                after.writeAttempts === 2 && after.execCommandCalls === 1
+                    && after.execCommandThrownMessage !== null && after.execCommandThrownMessage.includes('planted execCommand copy throw'),
+                `writeAttempts=${after.writeAttempts} execCommandCalls=${after.execCommandCalls} execCommandThrownMessage=${JSON.stringify(after.execCommandThrownMessage)}`);
+            record(`${label} truthful contract: NO '${SUCCESS_CLAIM_TEXT}' claim when the fallback copy throws`,
+                after.successClaimVisible === false,
+                `successClaimVisible=${after.successClaimVisible}`);
+            record(`${label} truthful contract: NO auto-close — modal stays open with the byte-identical FULL original text (retry/select/manual copy preserved)`,
+                after.modalCount === 1 && typeof after.text === 'string' && after.text === before.text,
+                `modalCount=${after.modalCount} textLength=${after.text ? after.text.length : 0} preserved=${after.text === before.text}`);
+            record(`${label} truthful contract: honest failure feedback '${FAILURE_FEEDBACK_TEXT}' shown (no silent failure)`,
+                after.failureFeedbackVisible === true,
+                `failureFeedbackVisible=${after.failureFeedbackVisible}`);
+            record(`${label} no uncaught page error from the thrown fallback (any pageerror is a failure)`,
+                entry.pageErrors.length === 0,
+                `pageErrors=${JSON.stringify(entry.pageErrors.slice(0, 5))} (an unguarded throw would escape the copy chain uncaught)`);
+            await snap(page, 'c17_execcommand_throw_failure_state');
             recordErrorClassificationAll(label, entry);
         } finally {
             await context.close();
