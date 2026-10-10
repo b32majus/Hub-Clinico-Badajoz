@@ -2055,15 +2055,40 @@ function exportarTXT(datos) {
             if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.mostrarModalTexto === 'function') {
                 console.warn('⚠ Fallo en copia automática. Mostrando en modal para copia manual.');
                 const tituloModal = "Historia Clínica Generada - Copia Manual";
-                const mensajeModal = "No se pudo copiar automáticamente al portapapeles. Puedes copiar el texto manualmente desde aquí:";
-                HubTools.form.mostrarModalTexto(texto, tituloModal, mensajeModal);
-                
+                const mensajeModal = "No se pudo copiar automáticamente al portapapeles. Puedes copiar el texto manualmente desde aquí, o confirmar con los botones de atestación si ya lo has copiado o guardado por tu cuenta:";
+                // T20-02: controles de la puerta OPT-IN solo para este modal
+                // del TXT Reuma. El éxito real de «Copiar» y las atestaciones
+                // explícitas («He copiado el TXT» / «He guardado el TXT»)
+                // autorizan la puerta efímera para ESTA instantánea del
+                // payload; una exportación TXT más reciente invalida estos
+                // callbacks (sin permiso tardío, sin doble toast). Los demás
+                // consumidores del modal mantienen el contrato de 3 argumentos.
+                const opcionesTxtGate = {
+                    atestacionTxt: {
+                        autorizarAlCopiar: function () {
+                            if (txtGateAttemptId !== txtGateCopyAttempt) return false;
+                            return markTxtExportDone(datos);
+                        },
+                        autorizarAlAtestar: function () {
+                            if (txtGateAttemptId !== txtGateCopyAttempt) return false;
+                            const autorizado = markTxtExportDone(datos);
+                            if (autorizado && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                                HubTools.utils.mostrarNotificacion('TXT confirmado por el profesional.', 'success');
+                            } else if (!autorizado && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                                HubTools.utils.mostrarNotificacion('No se pudo confirmar el TXT de esta visita. El CSV permanece bloqueado.', 'error');
+                            }
+                            return autorizado;
+                        },
+                    },
+                };
+                HubTools.form.mostrarModalTexto(texto, tituloModal, mensajeModal, opcionesTxtGate);
+
                 if (typeof HubTools.utils.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion('No se pudo copiar automáticamente. Puedes copiarla manualmente desde el modal.', 'info');
                 }
                 // T20-01: abrir el modal de copia manual NO autoriza el CSV;
-                // la confirmación manual/atestación del profesional se
-                // completa en T20-02.
+                // solo el éxito real de «Copiar» o la atestación explícita
+                // del profesional (T20-02) autorizan.
             } else {
                 // Fallback robusto final: descargar como archivo .txt si el modal tampoco está disponible
                 console.warn('⚠ Ni copia automática ni modal disponibles. Usando fallback de descarga...');
@@ -2089,8 +2114,31 @@ function exportarTXT(datos) {
                 document.body.removeChild(link);
                 
                 setTimeout(() => URL.revokeObjectURL(url), 100);
-                // T20-01: la descarga del archivo .txt NO autoriza el CSV;
-                // la confirmación explícita de descarga manual es T20-02.
+
+                // T20-02: la descarga por sí sola NUNCA autoriza el CSV. Se
+                // presenta una confirmación explícita in-flow del profesional
+                // (control nativo del navegador); cancelar —o la ausencia de
+                // confirmación— deja la puerta cerrada con instrucción de
+                // reintento. Nunca se afirma que el archivo se haya pegado,
+                // validado o registrado en ningún sistema clínico.
+                const atestacionDescarga = typeof window.confirm === 'function'
+                    ? window.confirm('Se ha descargado la historia clínica como archivo .txt. ¿Confirmas que ya has copiado o guardado este TXT? Sin tu confirmación explícita, el CSV de esta visita sigue bloqueado.')
+                    : false;
+                const notificarResultadoDescarga = (mensaje, tipo) => {
+                    if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
+                        HubTools.utils.mostrarNotificacion(mensaje, tipo);
+                    } else {
+                        alert(mensaje);
+                    }
+                };
+                if (txtGateAttemptId !== txtGateCopyAttempt) {
+                    // Intento sustituido por una exportación más reciente:
+                    // sin permiso tardío y sin toasts.
+                } else if (atestacionDescarga && markTxtExportDone(datos)) {
+                    notificarResultadoDescarga('TXT confirmado por el profesional.', 'success');
+                } else {
+                    notificarResultadoDescarga('No se confirmó la copia o descarga del TXT. El CSV de esta visita sigue bloqueado: repite «Exportar TXT» y confirma.', 'error');
+                }
             }
         });
     } catch (error) {

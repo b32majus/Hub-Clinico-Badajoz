@@ -1039,7 +1039,14 @@ function mostrarCambio() {
 // EXPORTACIÓN Y GUARDADO
 // =====================================
 
-function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
+function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '', opciones = null) {
+    // T20-02 (#621): extensión OPT-IN — solo la invocación del TXT Reuma pasa
+    // `opciones.atestacionTxt`. El resto de consumidores del modal compartido
+    // (Solicitud FH, CSV manual) mantienen el contrato de 3 argumentos intacto
+    // y nunca reciben controles de la puerta.
+    const atestacionTxt = opciones && typeof opciones === 'object' && opciones.atestacionTxt && typeof opciones.atestacionTxt === 'object'
+        ? opciones.atestacionTxt
+        : null;
     const existing = document.getElementById('textoModalContainer');
     if (existing) {
         existing.remove();
@@ -1054,6 +1061,8 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
                 '<h3 class="texto-modal__title"><i class="fas fa-file-alt"></i> ' + titulo + '</h3>' +
                 '<div class="texto-modal__actions">' +
                     '<button id="copyToClipboardModalBtn" type="button" class="texto-modal__btn texto-modal__btn--primary"><i class="fas fa-copy"></i> Copiar</button>' +
+                    (atestacionTxt ? '<button id="attestTxtCopiadoBtn" type="button" class="texto-modal__btn texto-modal__btn--secondary"><i class="fas fa-clipboard-check"></i> He copiado el TXT</button>' +
+                        '<button id="attestTxtGuardadoBtn" type="button" class="texto-modal__btn texto-modal__btn--secondary"><i class="fas fa-save"></i> He guardado el TXT</button>' : '') +
                     '<button id="closeModalBtn" type="button" class="texto-modal__btn texto-modal__btn--secondary">Cerrar</button>' +
                 '</div>' +
             '</div>' +
@@ -1121,6 +1130,18 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
         attemptCopy().then(succeeded => {
             if (attemptIsStale()) return;
             if (succeeded) {
+                // T20-02: un éxito real de «Copiar» en un modal invocado por el
+                // TXT Reuma autoriza además la puerta efímera mediante el
+                // callback del llamador (guardado stale allí). Silencioso: la
+                // afirmación veraz #620 ya es el feedback; la autorización
+                // nunca genera un segundo toast.
+                if (atestacionTxt && typeof atestacionTxt.autorizarAlCopiar === 'function') {
+                    try {
+                        atestacionTxt.autorizarAlCopiar();
+                    } catch (error) {
+                        // La puerta sigue cerrada; la verdad de la copia #620 no se altera.
+                    }
+                }
                 if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
                     HubTools.utils.mostrarNotificacion('Contenido copiado al portapapeles.', 'success');
                 }
@@ -1132,6 +1153,29 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
             }
         });
     });
+
+    // T20-02: atestación explícita del profesional («He copiado el TXT» /
+    // «He guardado el TXT»). Pulsar uno es una declaración explícita para la
+    // puerta TXT→CSV; NUNCA prueba que se haya pegado o guardado en el
+    // sistema clínico. La autorización y su notificación («TXT confirmado por
+    // el profesional») pertenecen al callback del llamador; un callback stale
+    // o fallido deja el modal abierto y silencioso aquí (sin doble toast, sin
+    // permiso tardío).
+    if (atestacionTxt && typeof atestacionTxt.autorizarAlAtestar === 'function') {
+        const atestar = () => {
+            let autorizado = false;
+            try {
+                autorizado = atestacionTxt.autorizarAlAtestar() === true;
+            } catch (error) {
+                autorizado = false;
+            }
+            if (autorizado) {
+                closeModal();
+            }
+        };
+        document.getElementById('attestTxtCopiadoBtn')?.addEventListener('click', atestar);
+        document.getElementById('attestTxtGuardadoBtn')?.addEventListener('click', atestar);
+    }
 }
 
 // =====================================

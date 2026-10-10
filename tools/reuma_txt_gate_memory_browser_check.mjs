@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * T20-01 focused oracle — ephemeral in-memory TXT→CSV gate (automatic path).
+ * T20-01 + T20-02 focused oracle — ephemeral in-memory TXT→CSV gate.
  * TRAIN 20 / #621. Authority (repo-local, read-only):
  *   docs/handoffs/TRAIN_NEXUS_REUMA_TXT_GATE_20.md            (accepted WO)
  *   docs/handoffs/TRAIN_NEXUS_REUMA_TXT_GATE_20_SPEC.md       (accepted spec)
- *   docs/handoffs/TRAIN_NEXUS_REUMA_TXT_GATE_20_TICKETS/01-memory-gate.md (ticket)
+ *   docs/handoffs/TRAIN_NEXUS_REUMA_TXT_GATE_20_TICKETS/01-memory-gate.md (T20-01)
+ *   docs/handoffs/TRAIN_NEXUS_REUMA_TXT_GATE_20_TICKETS/02-manual-confirmation.md (T20-02)
  *
  * WHAT THIS ORACLE PROVES (T20-01 only):
  *   D0  deterministic: modules/exportManager.js performs ZERO Web Storage
@@ -33,13 +34,46 @@
  *   D12 cross-cutting: pageerror=0 everywhere; console errors only within
  *       the classified controlled-failure classes.
  *
+ * T20-02 EXTENSION (manual copy/download confirmation — explicit attestation):
+ *   E1  story 4  modal «Copiar» real success (writeText reject + armed
+ *       execCommand TRUE) authorizes the gate for the TXT payload snapshot
+ *       and enables the 497 CSV (PV).
+ *   E2  story 4  modal «Copiar» failure keeps CSV blocked with the modal open
+ *       and the byte-identical text, no success claim (PV).
+ *   E3  story 5  real keyboard Ctrl+A/Ctrl+C + clicking the explicit
+ *       «He copiado el TXT» attestation control: CSV enabled and the approved
+ *       wording «TXT confirmado por el profesional» is shown (PV).
+ *   E4  story 5  real manual copy WITHOUT any attestation: CSV blocked, no
+ *       success claim (Seguimiento).
+ *   E5  story 6  clicking «He guardado el TXT» (saved-file path, no clipboard
+ *       copy performed): CSV enabled (Seguimiento).
+ *   E6  story 6  download fallback (clipboard rejects AND modal infrastructure
+ *       unavailable) + explicit download confirmation accepted: CSV enabled
+ *       (PV). `link.click()` alone never authorizes; the confirmation is an
+ *       explicit in-flow user decision (window.confirm, user-agent control).
+ *   E7  story 6/7  download fallback + confirmation dismissed: CSV blocked
+ *       with honest retry feedback and no success claim (PV).
+ *   E8  story 10  two TXT exports: the SUPERSEDED export's late rejection
+ *       (delayed-reject plant) opens the manual modal bound to the stale
+ *       attempt; its attestation callback neither authorizes nor toasts (no
+ *       late permission, no double toast); the current export's resolving
+ *       result does authorize (PV).
+ *
  * RED BASELINE (frozen expectation on HEAD 32f6887f41887cb16f3d00239a6dc3102936f156):
  *   The legacy gate authorizes from sessionStorage markers and from merely
  *   opening the manual modal, and `markTxtExportDone` persists
  *   `HubClinico_TxtExportDone_*`. Expected on baseline:
  *     RED:  D0, D1, D2, D4, D7, D9
  *     PASS: D3, D5, D6, D8, D10, D11, D12
- *   After T20-01 every witness must be PASS.
+ *   After T20-01 every D witness must be PASS.
+ *
+ * T20-02 RED BASELINE (recorded on the T20-01 candidate
+ * 2b123c63e22049ce8bf5f8025b36f0cdbec5bc49 before implementing attestation):
+ *     RED:  E1, E3, E5, E6, E7, E8  (no modal-Copiar authorization, no
+ *           attestation controls, no download confirmation/retry feedback,
+ *           nothing to invalidate)
+ *     PASS: E2, E4 (fail-closed behaviours already correct after T20-01)
+ *   After T20-02 every witness (D + E) must be PASS.
  *
  * Method: only supported public seams (real PV/Seguimiento controls, real
  * shared modal, real clipboard, real notifications). Controlled clipboard
@@ -130,6 +164,16 @@ const D9 = defineWitness('D9', 'story 10', 'stale Promise from a superseded TXT 
 const D10 = defineWitness('D10', 'story 6', 'clipboard unavailable: TXT fails honestly, CSV never authorized (PV)', 'PASS');
 const D11 = defineWitness('D11', 'story 2/13', 'Seguimiento clipboard resolve enables the 497 CSV + same-instance re-export', 'PASS');
 const D12 = defineWitness('D12', 'cross-cutting', 'pageerror=0 and console errors only in classified controlled-failure classes (ALL journeys)', 'PASS');
+
+// T20-02 extension: manual confirmation / explicit attestation.
+const E1 = defineWitness('E1', 'story 4', 'modal \u00abCopiar\u00bb real success (writeText reject + armed execCommand TRUE) enables the 497 CSV (PV)', 'RED');
+const E2 = defineWitness('E2', 'story 4', 'modal \u00abCopiar\u00bb failure: CSV blocked, modal open with byte-identical text, no success claim (PV)', 'PASS');
+const E3 = defineWitness('E3', 'story 5', 'real Ctrl+A/Ctrl+C + \u00abHe copiado el TXT\u00bb attestation: CSV enabled + approved wording \u00abTXT confirmado por el profesional\u00bb (PV)', 'RED');
+const E4 = defineWitness('E4', 'story 5', 'real Ctrl+A/Ctrl+C WITHOUT attestation: CSV blocked, no success claim (Seguimiento)', 'PASS');
+const E5 = defineWitness('E5', 'story 6', '\u00abHe guardado el TXT\u00bb attestation (saved-file path, no clipboard copy): CSV enabled (Seguimiento)', 'RED');
+const E6 = defineWitness('E6', 'story 6', 'download fallback + explicit download confirmation accepted: CSV enabled; link.click() alone never authorizes (PV)', 'RED');
+const E7 = defineWitness('E7', 'story 6/7', 'download fallback + confirmation dismissed: fail closed with honest retry feedback, no success claim (PV)', 'RED');
+const E8 = defineWitness('E8', 'story 10', 'the superseded TXT export\u0027s late-rejection modal attestation neither authorizes nor toasts; the current export result authorizes (PV)', 'RED');
 
 // ---------------------------------------------------------------------------
 // Storage sentinel fixtures (synthetic; planted at document start).
@@ -365,11 +409,22 @@ async function openJourneyPage(browser, origin, urlPath, plantCfg) {
 
 function txtGatePlant(cfg) {
     window.__tg = {
-        writeMode: 'reject', // 'reject' | 'throw' | 'allow' | 'park'
+        writeMode: 'reject', // 'reject' | 'throw' | 'allow' | 'park' | 'delayed-reject'
         writeAttempts: 0,
         parked: [],
+        writeDelayMs: 0, // delay for 'delayed-reject'
         clipboardAvailable: true,
         pageShows: [],
+        // T20-02: controlled execCommand('copy') wrapper (modal Copiar #620
+        // semantics) + modal-infrastructure availability switch (controlled
+        // environment condition for the download-fallback witnesses E6/E7;
+        // the DOM itself is never touched).
+        execArmed: false,
+        execThrow: false,
+        execResult: false,
+        execCalls: 0,
+        execLastResult: null,
+        modalAvailable: true,
     };
 
     // Synthetic legacy sentinels, planted at document start of EVERY page.
@@ -391,6 +446,12 @@ function txtGatePlant(cfg) {
                     window.__tg.writeAttempts += 1;
                     const mode = window.__tg.writeMode;
                     if (mode === 'reject') return Promise.reject(new Error('planted clipboard rejection (QA)'));
+                    if (mode === 'delayed-reject') {
+                        const delay = Number(window.__tg.writeDelayMs) || 300;
+                        return new Promise((resolve, reject) => {
+                            setTimeout(() => reject(new Error('planted delayed clipboard rejection (QA)')), delay);
+                        });
+                    }
                     if (mode === 'throw') throw new Error('planted clipboard throw (QA)');
                     if (mode === 'park') {
                         return new Promise((resolve) => { window.__tg.parked.push(resolve); });
@@ -412,10 +473,35 @@ function txtGatePlant(cfg) {
             });
         }
     } catch (error) { /* stays available; D10 would report it */ }
+
+    // Controlled execCommand('copy') wrapper (same pattern as the frozen
+    // acceptance oracle): counts armed 'copy' calls and returns the
+    // runtime-planted boolean; pass-through otherwise.
+    const originalExecCommand = document.execCommand.bind(document);
+    Object.defineProperty(document, 'execCommand', {
+        configurable: true,
+        value: function (command, showUi, value) {
+            if (window.__tg.execArmed === true && String(command).toLowerCase() === 'copy') {
+                window.__tg.execCalls += 1;
+                if (window.__tg.execThrow === true) {
+                    throw new Error('planted execCommand copy throw (QA)');
+                }
+                window.__tg.execLastResult = window.__tg.execResult === true;
+                return window.__tg.execLastResult;
+            }
+            return originalExecCommand(command, showUi, value);
+        },
+    });
 }
 
 async function armWriteMode(page, mode) {
     await page.evaluate((m) => { window.__tg.writeMode = m; }, mode);
+}
+async function armDelayedReject(page, delayMs) {
+    await page.evaluate((ms) => {
+        window.__tg.writeMode = 'delayed-reject';
+        window.__tg.writeDelayMs = ms;
+    }, delayMs);
 }
 async function resolveParkedPromise(page) {
     return page.evaluate(() => {
@@ -423,6 +509,77 @@ async function resolveParkedPromise(page) {
         if (typeof resolve === 'function') { resolve(); return true; }
         return false;
     });
+}
+
+// T20-02 helpers (same semantics as the frozen acceptance oracle plants).
+async function armRejectThenFalse(page) {
+    await page.evaluate(() => {
+        window.__tg.writeMode = 'reject';
+        window.__tg.execArmed = true;
+        window.__tg.execResult = false;
+    });
+}
+async function armRejectThenTrue(page) {
+    await page.evaluate(() => {
+        window.__tg.writeMode = 'reject';
+        window.__tg.execArmed = true;
+        window.__tg.execResult = true;
+    });
+}
+async function disarmAllPlants(page) {
+    await page.evaluate(() => {
+        window.__tg.writeMode = 'allow';
+        window.__tg.clipboardAvailable = true;
+        window.__tg.execArmed = false;
+    });
+}
+/** Real keyboard manual copy: disarm plants, focus the readonly textarea with
+ * a real click, real Ctrl+A + Ctrl+C, then read the REAL clipboard back. */
+async function realManualCopy(page) {
+    await disarmAllPlants(page);
+    await page.click('#textoModalTextarea');
+    await page.keyboard.press('Control+a');
+    await page.keyboard.press('Control+c');
+    await page.waitForTimeout(300);
+    return readClipboardText(page);
+}
+/** Search the supported DOM for the explicit professional attestation
+ * controls («He copiado el TXT» / «He guardado el TXT»). Post-state read of
+ * real controls only; nothing is injected. */
+async function findAttestationControls(page) {
+    return page.evaluate(() => {
+        const pattern = /he\s+(copiado|guardado)\s+el\s+txt/i;
+        const candidates = Array.from(document.querySelectorAll('button, [role="button"], a, input[type="button"], input[type="submit"], label'));
+        return candidates
+            .map((el) => {
+                const label = `${el.textContent || ''} ${el.getAttribute && el.getAttribute('aria-label') || ''} ${el.title || ''} ${el.value || ''}`;
+                return { el, label };
+            })
+            .filter((entry) => pattern.test(entry.label))
+            .map((entry) => ({
+                tag: entry.el.tagName.toLowerCase(),
+                id: entry.el.id || '',
+                kind: /guardado/i.test(entry.label) ? 'guardado' : 'copiado',
+                label: (entry.el.textContent || entry.el.value || '').trim().slice(0, 120),
+            }));
+    });
+}
+/** Controlled environment condition for E6/E7: wrap the modal-infrastructure
+ * entry point with a plain availability flag (module unavailable == the
+ * download fallback branch). Installed AFTER page load through a real
+ * property descriptor; the modal DOM itself is never touched. */
+async function plantModalAvailabilitySwitch(page) {
+    await page.evaluate(() => {
+        const form = HubTools.form;
+        window.__tg.originalModalFn = form.mostrarModalTexto;
+        Object.defineProperty(form, 'mostrarModalTexto', {
+            configurable: true,
+            get() { return window.__tg.modalAvailable === false ? undefined : window.__tg.originalModalFn; },
+        });
+    });
+}
+async function setModalAvailable(page, available) {
+    await page.evaluate((value) => { window.__tg.modalAvailable = value; }, available);
 }
 
 // ---------------------------------------------------------------------------
@@ -629,7 +786,7 @@ try {
 
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
     console.log(`REUMA-TXT-GATE-MEMORY (chromium ${browser.version()}, node ${process.version})`);
-    console.log(`T20-01 focused oracle. Baseline expectation: RED on D0/D1/D2/D4/D7/D9, PASS on the rest.\n`);
+    console.log(`T20-01 + T20-02 focused oracle. Expected on the T20-01 candidate: RED on E1/E3/E5/E6/E8, PASS on the rest. After T20-02: every witness PASS.\n`);
 
     // =====================================================================
     // J-LEGACY-MARKER (PV): planted matching legacy marker + direct CSV
@@ -908,6 +1065,397 @@ try {
     }
 
     // =====================================================================
+    // J-ATTEST-COPY (PV, T20-02/E1): TXT clipboard reject -> real manual
+    // modal -> «Copiar» real success (writeText reject + armed execCommand
+    // TRUE) -> CSV enabled (story 4, #620 semantics preserved).
+    // =====================================================================
+    {
+        const jl = 'J-ATTEST-COPY';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-ATT-1', isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await checkpoint(page, jl, 'after-fill');
+
+            const modal = await txtExportAwaitModal(page);
+            await armRejectThenTrue(page);
+            await page.click('#copyToClipboardModalBtn');
+            await page.waitForTimeout(900);
+            const copySucceeded = await page.evaluate(() => document.body.innerText.includes('Contenido copiado al portapapeles.'));
+            await closeModal(page);
+            await disarmAllPlants(page);
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (modal.modalCount !== 1 || !copySucceeded) {
+                witnessFail(E1, `harness precondition failed: modal=${modal.modalCount} copySuccessClaim=${copySucceeded}`);
+            } else if (csvDelivered(obs)) {
+                witnessPass(E1, `modal Copiar real success enabled the 497 CSV (via=${csvDeliveredVia(obs)})`);
+            } else {
+                witnessFail(E1, `modal Copiar real success (claim shown) did NOT enable the CSV (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-ATTEST-COPY-FAIL (PV, T20-02/E2): modal «Copiar» failure keeps the
+    // CSV blocked with the modal open and the byte-identical text (story 4).
+    // =====================================================================
+    {
+        const jl = 'J-ATTEST-COPY-FAIL';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-ATT2-1', isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await checkpoint(page, jl, 'after-fill');
+
+            const before = await txtExportAwaitModal(page);
+            await armRejectThenFalse(page);
+            await page.click('#copyToClipboardModalBtn');
+            await page.waitForTimeout(900);
+            const after = await readModalState(page);
+            const preserved = after.modalCount === 1 && after.text === before.text;
+            const bodyAfterFail = await page.evaluate(() => document.body.innerText);
+            const bannedAfterFail = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterFail.includes(token));
+            await closeModal(page);
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (!preserved || csvDelivered(obs) || bannedAfterFail.length > 0) {
+                witnessFail(E2, `modalPreserved=${preserved} delivered=${csvDelivered(obs)} via=${csvDeliveredVia(obs)} banned=${JSON.stringify(bannedAfterFail)}`);
+            } else {
+                witnessPass(E2, `Copiar failure: modal stayed open with the byte-identical text, CSV blocked, no success claim (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-MANUAL-ATTEST (PV, T20-02/E3): real Ctrl+A/Ctrl+C + explicit
+    // attestation control «He copiado el TXT» -> CSV enabled + approved
+    // wording (story 5).
+    // =====================================================================
+    {
+        const jl = 'J-MANUAL-ATTEST';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-MAN-1', isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await checkpoint(page, jl, 'after-fill');
+
+            const modal = await txtExportAwaitModal(page);
+            const clip = await realManualCopy(page);
+            const manualCopyWorked = clip.ok && clip.text === modal.text;
+            const controls = await findAttestationControls(page);
+            const copiado = controls.find((c) => c.kind === 'copiado');
+            let attestationToast = false;
+            let csvOk = false;
+            let obs = null;
+            if (copiado && !copiado.id) {
+                witnessFail(E3, `attestation control found (${copiado.label}) but without an id to perform a supported click on it`);
+            } else if (copiado) {
+                await page.click(`#${copiado.id}`); // supported click on the real control
+                await page.waitForTimeout(500);
+                attestationToast = await page.evaluate(() => document.body.innerText.includes('TXT confirmado por el profesional'));
+                await closeModal(page).catch(async () => { /* the control may close the modal itself */ });
+                // clipboard plants already disarmed by realManualCopy
+                obs = await clickCsvAndObserve(page);
+                csvOk = csvDelivered(obs);
+            }
+            await checkpoint(page, jl, 'after-attest');
+
+            if (!manualCopyWorked) {
+                witnessFail(E3, `precondition failed: real manual Ctrl+A/Ctrl+C did not deliver the modal text to the clipboard (${clip.ok ? 'mismatch' : clip.error})`);
+            } else if (!copiado) {
+                witnessFail(E3, `real manual copy worked (${clip.text.length} chars) but NO explicit «He copiado el TXT» attestation control exists in the flow`);
+            } else if (csvOk && attestationToast) {
+                witnessPass(E3, `manual copy + attestation control (${copiado.label}) enabled the 497 CSV (via=${csvDeliveredVia(obs)}) with the approved wording «TXT confirmado por el profesional»`);
+            } else {
+                witnessFail(E3, `attestation control present (${copiado.label}) but csvOk=${csvOk} attestationToast=${attestationToast} (via=${obs ? csvDeliveredVia(obs) : 'n/a'})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-MANUAL-NO-ATTEST (Seguimiento, T20-02/E4): real manual copy WITHOUT
+    // any attestation must leave the CSV blocked (story 5).
+    // =====================================================================
+    {
+        const jl = 'J-MANUAL-NO-ATTEST';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_SEGUIMIENTO}?id=SYN-SEG-200`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-SEG-200', isSeguimiento: true });
+            await armWriteMode(page, 'reject');
+            await checkpoint(page, jl, 'after-fill');
+
+            const modal = await txtExportAwaitModal(page);
+            const clip = await realManualCopy(page);
+            await closeModal(page);
+            const bodyAfterClose = await page.evaluate(() => document.body.innerText);
+            const bannedAfterClose = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterClose.includes(token));
+            await armWriteMode(page, 'reject');
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (!clip.ok || clip.text !== modal.text) {
+                witnessFail(E4, `precondition failed: real manual copy did not work (${clip.ok ? 'mismatch' : clip.error})`);
+            } else if (csvDelivered(obs) || bannedAfterClose.length > 0) {
+                witnessFail(E4, `CSV delivered after a bare manual copy with NO explicit attestation (via=${csvDeliveredVia(obs)}) and/or success claims=${JSON.stringify(bannedAfterClose)}`);
+            } else {
+                witnessPass(E4, `bare manual copy without attestation keeps CSV blocked on Seguimiento (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-SAVED-ATTEST (Seguimiento, T20-02/E5): clicking «He guardado el TXT»
+    // (saved-file path, no clipboard copy) authorizes the gate (story 6).
+    // =====================================================================
+    {
+        const jl = 'J-SAVED-ATTEST';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_SEGUIMIENTO}?id=SYN-SEG-200`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-SEG-200', isSeguimiento: true });
+            await armWriteMode(page, 'reject');
+            await checkpoint(page, jl, 'after-fill');
+
+            const modal = await txtExportAwaitModal(page);
+            const controls = await findAttestationControls(page);
+            const guardado = controls.find((c) => c.kind === 'guardado');
+            let attestationToast = false;
+            let csvOk = false;
+            let obs = null;
+            if (guardado && !guardado.id) {
+                witnessFail(E5, `«He guardado el TXT» control found (${guardado.label}) but without an id to perform a supported click on it`);
+            } else if (guardado) {
+                await page.click(`#${guardado.id}`); // no clipboard copy is performed: pure professional attestation
+                await page.waitForTimeout(500);
+                attestationToast = await page.evaluate(() => document.body.innerText.includes('TXT confirmado por el profesional'));
+                await closeModal(page).catch(async () => { /* the control may close the modal itself */ });
+                await disarmAllPlants(page);
+                obs = await clickCsvAndObserve(page);
+                csvOk = csvDelivered(obs);
+            }
+            await checkpoint(page, jl, 'after-attest');
+
+            if (modal.modalCount !== 1) {
+                witnessFail(E5, `harness precondition failed: the TXT modal did not open`);
+            } else if (!guardado) {
+                witnessFail(E5, `NO explicit «He guardado el TXT» attestation control exists in the flow (controls=${JSON.stringify(controls.map((c) => c.label))})`);
+            } else if (csvOk && attestationToast) {
+                witnessPass(E5, `saved-file attestation (${guardado.label}) enabled the 497 CSV (via=${csvDeliveredVia(obs)}) with the approved wording «TXT confirmado por el profesional»`);
+            } else {
+                witnessFail(E5, `guardado attestation present but csvOk=${csvOk} attestationToast=${attestationToast} (via=${obs ? csvDeliveredVia(obs) : 'n/a'})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-DOWNLOAD-CONFIRM-OK (PV, T20-02/E6): clipboard rejects AND the modal
+    // infrastructure is unavailable -> download fallback fires -> the explicit
+    // download confirmation is ACCEPTED -> CSV enabled. link.click() alone
+    // never authorizes; the authorization follows the explicit in-flow user
+    // decision (window.confirm dialog, a user-agent control).
+    // =====================================================================
+    {
+        const jl = 'J-DOWNLOAD-CONFIRM-OK';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-DLC-1', isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await plantModalAvailabilitySwitch(page);
+            await checkpoint(page, jl, 'after-fill');
+
+            await setModalAvailable(page, false);
+            await page.on('dialog', (dialog) => dialog.accept()); // explicit professional confirmation
+            await clickTxtAndWait(page);
+            const downloadsAfterTxt = entry.downloads.length;
+            await checkpoint(page, jl, 'after-txt-download-accept');
+
+            await armWriteMode(page, 'allow'); // the CSV delivery path must not be the blocker
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (downloadsAfterTxt < 1) {
+                witnessFail(E6, `harness precondition failed: no download fallback fired (downloads=${downloadsAfterTxt})`);
+            } else if (csvDelivered(obs)) {
+                witnessPass(E6, `download fallback + explicit confirmation accepted enabled the 497 CSV (downloads=${downloadsAfterTxt}, via=${csvDeliveredVia(obs)})`);
+            } else {
+                witnessFail(E6, `download + accepted explicit confirmation did NOT enable the CSV (downloads=${downloadsAfterTxt}, via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-DOWNLOAD-CONFIRM-CANCEL (PV, T20-02/E7): same download fallback, but
+    // the explicit confirmation is DISMISSED -> fail closed with honest retry
+    // feedback, no success claim, CSV blocked (stories 6/7).
+    // =====================================================================
+    {
+        const jl = 'J-DOWNLOAD-CONFIRM-CANCEL';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-DLC2-1', isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await plantModalAvailabilitySwitch(page);
+            await checkpoint(page, jl, 'after-fill');
+
+            await setModalAvailable(page, false);
+            await page.on('dialog', (dialog) => dialog.dismiss()); // no professional confirmation
+            await clickTxtAndWait(page);
+            const bodyAfterDismiss = await page.evaluate(() => document.body.innerText);
+            const bannedAfterDismiss = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterDismiss.includes(token));
+            const honestRetry = /sigue bloqueado|repet[ai]r|repite/i.test(bodyAfterDismiss);
+            await checkpoint(page, jl, 'after-txt-download-dismiss');
+
+            await armWriteMode(page, 'allow'); // the CSV delivery path must not be the blocker
+            await setModalAvailable(page, true);
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (csvDelivered(obs) || bannedAfterDismiss.length > 0 || !honestRetry) {
+                witnessFail(E7, `delivered=${csvDelivered(obs)} via=${csvDeliveredVia(obs)} honestRetry=${honestRetry} banned=${JSON.stringify(bannedAfterDismiss)}`);
+            } else {
+                witnessPass(E7, `dismissed download confirmation fails closed: CSV blocked (via=${csvDeliveredVia(obs)}), honest retry feedback shown, no success claim`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-STALE-MODAL (PV, T20-02/E8): TXT #1 is armed with a DELAYED rejection
+    // (1500 ms); TXT #2 (parked, current export) supersedes it before P1
+    // lands. P1's LATE rejection then opens the manual modal bound to the
+    // superseded attempt: its attestation callback must neither authorize nor
+    // toast (no late permission, no double toast); the CURRENT export's
+    // resolving result does authorize (story 10). Every click is supported:
+    // both TXT clicks happen while no modal is open.
+    // =====================================================================
+    {
+        const jl = 'J-STALE-MODAL';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-STALEM-1', isSeguimiento: false });
+            await armDelayedReject(page, 1500);
+            await checkpoint(page, jl, 'after-fill');
+
+            await clickTxtAndWait(page); // P1: delayed rejection (superseded below before it lands)
+            await armWriteMode(page, 'park');
+            await clickTxtAndWait(page); // P2 parked; current export; gate invalidated
+            const parkedCount = await page.evaluate(() => window.__tg.parked.length);
+            await checkpoint(page, jl, 'after-two-txt');
+
+            // P1's late rejection opens the real manual modal (stale attempt 1).
+            await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 10000 });
+            await page.waitForTimeout(400);
+            const staleModal = await readModalState(page);
+            const controls = await findAttestationControls(page);
+            const copiado = controls.find((c) => c.kind === 'copiado');
+            await checkpoint(page, jl, 'after-stale-modal');
+
+            let staleToast = false;
+            if (copiado && copiado.id) {
+                await page.click(`#${copiado.id}`); // superseded attempt's callback
+                await page.waitForTimeout(500);
+                staleToast = await page.evaluate(() => document.body.innerText.includes('TXT confirmado por el profesional'));
+            }
+            await closeModal(page);
+            await armWriteMode(page, 'reject');
+            const staleObs = await clickCsvAndObserve(page);
+            const staleCsvBlocked = !csvDelivered(staleObs);
+            await checkpoint(page, jl, 'after-stale-csv');
+
+            const r2 = await resolveParkedPromise(page); // CURRENT export result lands
+            await page.waitForTimeout(700);
+            await checkpoint(page, jl, 'after-current-resolution');
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-current-csv');
+
+            if (parkedCount !== 1 || !r2 || staleModal.modalCount !== 1 || !copiado || !copiado.id) {
+                witnessFail(E8, `harness precondition failed: parked=${parkedCount} r2=${r2} staleModal=${staleModal.modalCount} control=${JSON.stringify(copiado)}`);
+            } else if (!staleCsvBlocked) {
+                witnessFail(E8, `the superseded attempt's modal attestation authorized CSV after a newer TXT export started (late permission)`);
+            } else if (staleToast) {
+                witnessFail(E8, `the superseded attempt's modal attestation produced a success toast (double toast)`);
+            } else if (!csvDelivered(obs)) {
+                witnessFail(E8, `precondition inverted: the CURRENT export's resolving result did not enable CSV (via=${csvDeliveredVia(obs)})`);
+            } else {
+                witnessPass(E8, `superseded modal attestation: no late permission, no double toast; the current export result authorized (final via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
     // J-SEG-POS (Seguimiento): clipboard resolve enables CSV; same-instance
     // re-export (stories 2/13).
     // =====================================================================
@@ -975,7 +1523,7 @@ try {
     // =====================================================================
     // Final per-witness table + totals.
     // =====================================================================
-    console.log('\n=== T20-01 MEMORY GATE ORACLE — PER-WITNESS TABLE ===');
+    console.log('\n=== T20-01 + T20-02 MEMORY GATE ORACLE — PER-WITNESS TABLE ===');
     console.log('ID   | baseline | verdict | story            | contract');
     for (const w of witnesses) {
         console.log(`${w.id.padEnd(4)} | ${w.baseline.padEnd(8)} | ${w.verdict.padEnd(7)} | ${w.story.padEnd(16)} | ${w.contract}`);

@@ -126,6 +126,35 @@
  * failure. On the current fixed candidate (T2 applied) the expected result is
  * PASS on all cases; against the pre-T2 baseline the checker reproduces the
  * recorded T1 RED (false-success witnesses fail, recovery witnesses pass).
+ *
+ * T20-02 BOUNDED RECONCILIATION (Train 20 / #621, mandated by the accepted
+ * handoff §3 "Oráculos antiguos que fijan persistencia deben reconciliarse
+ * con nueva autoridad, sin debilitar igualdad 497/no recursión/no storage"):
+ *   The accepted T20-01/T20-02 gate authority (ephemeral, memory-only, zero
+ *   Web Storage; authorization ONLY after a really-confirmed copy or an
+ *   explicit professional attestation) changes the preconditions of three
+ *   gate-dependent witnesses; only those were adapted, every purpose
+ *   preserved:
+ *   - C6: the legacy record asserted `txtGateKeys === 1` (the product
+ *     registering a gate marker on the TXT attempt). That legacy behaviour
+ *     was the DEFECT the new authority removed. The record is now a
+ *     STRENGTHENING: the TXT export attempt must write NO session gate key
+ *     (`txtGateKeys === 0`) even though the auto-copy failed.
+ *   - C9/C10: the gated 497 CSV manual-modal journeys previously relied on
+ *     the legacy defect ("TXT export registers the gate on modal open").
+ *     They now satisfy the gate through the NEW accepted authority — a
+ *     really-confirmed modal «Copiar» success (writeText rejected + armed
+ *     execCommand('copy') TRUE) inside the TXT modal, exactly the #620
+ *     semantics — before the gated CSV journey. The 497 byte-equality,
+ *     truthful-failure, no-success-claim and no-storage purposes are
+ *     unchanged; the plant-count records were re-derived for the extra
+ *     really-confirmed copy (writeAttempts 3→4, execCommandCalls 1→2 in C9)
+ *     — strictly MORE observations, never weaker ones. Every other witness
+ *     (C1-C5, C7, C8, C11-C17) passes unmodified.
+ *   Recorded pre-state on the T20-01 candidate (2b123c63): FAIL 42/43 with
+ *   C6's legacy persistence record failing and C9 aborting at the CSV modal
+ *   wait (C10-C17 unreachable). Post-reconciliation: full run, all records
+ *   PASS.
  */
 
 import { createReadStream, existsSync, mkdtempSync, rmSync, statSync } from 'node:fs';
@@ -622,6 +651,21 @@ async function readCopyObservation(page) {
     });
 }
 
+/** Toast-level observation: mostrarNotificacion renders body-level divs with
+ * role=status/alert. Counting them lets a witness distinguish a FRESH false
+ * success claim from a legitimate lingering toast of an earlier really-
+ * confirmed copy (T20-02 reconciliation: the gate-satisfying Copiar success
+ * legitimately toasts before the CSV failure observation). */
+async function readToastCounts(page) {
+    return page.evaluate(() => {
+        const toasts = Array.from(document.querySelectorAll('body > div[role="status"], body > div[role="alert"]'));
+        return {
+            successToasts: toasts.filter((t) => (t.textContent || '').includes('Contenido copiado al portapapeles.')).length,
+            failureToasts: toasts.filter((t) => (t.textContent || '').includes('Error al copiar desde el modal.')).length,
+        };
+    });
+}
+
 /** Shared journey + payload record for a freshly opened modal. */
 function recordJourney(label, before, id, titleToken) {
     record(`${label} supported journey opened the real manual-copy modal ('${titleToken || MANUAL_COPY_TITLE_TOKEN}' title) and the textarea holds the FULL synthetic payload with '${id}'`,
@@ -869,9 +913,9 @@ try {
             await fillClinicalBase(page, { cip: 'SYN-SEG-200', isSeguimiento: true });
             const before = await txtExportAwaitModal(page);
             recordJourney(label, before, 'SYN-SEG-200');
-            record(`${label} pre-existing TXT gate behaviour observable: the TXT export attempt registered the session gate marker even though the auto-copy failed`,
-                before.txtGateKeys === 1,
-                `txtGateKeys=${before.txtGateKeys}`);
+            record(`${label} T20 gate authority truthful (T20-02 reconciliation, strengthening): the TXT export attempt writes NO session gate key — the authority is ephemeral and memory-only (zero Web Storage) even though the auto-copy failed`,
+                before.txtGateKeys === 0,
+                `txtGateKeys=${before.txtGateKeys} (legacy defect: the gate persisted a HubClinico_TxtExportDone_* marker here)`);
             await armRejectThenFalse(page);
             const after = await observeAfterCopyClick(page);
             record(`${label} plant active: writeText attempted twice (TXT auto-copy + 'Copiar' click) and rejected; armed execCommand('copy') called once returning FALSE`,
@@ -968,7 +1012,7 @@ try {
     // =====================================================================
     {
         const label = 'C9 PV 497-column CSV manual modal (gated TXT→CSV, reject + execCommand FALSE):';
-        caseHeader('C9 — Primera Visita: TXT export (gate registered) -> #btnEstructurarCSV -> 497 CSV manual modal -> truthful Copiar failure');
+        caseHeader('C9 — Primera Visita: TXT export (gate authorized through the accepted T20-02 authority) -> #btnEstructurarCSV -> 497 CSV manual modal -> truthful Copiar failure');
         const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`);
         try {
             await fillClinicalBase(page, { cip: 'SYN-CSV-497-001', isSeguimiento: false });
@@ -976,7 +1020,16 @@ try {
             record(`${label} journey step 1: TXT export opened the real manual modal (auto-copy rejected)`,
                 txtBefore.modalCount === 1 && txtBefore.title.includes(MANUAL_COPY_TITLE_TOKEN),
                 `modalCount=${txtBefore.modalCount} title=${JSON.stringify(txtBefore.title)}`);
-            await closeModal(page);
+            // T20-02 reconciliation: the gate no longer registers on modal
+            // open (that was the legacy defect). Satisfy it through the NEW
+            // accepted authority: a really-confirmed modal «Copiar» success
+            // (writeText rejected + armed execCommand TRUE, #620 semantics).
+            await armRejectThenTrue(page);
+            const gateStep = await observeAfterCopyClick(page);
+            record(`${label} journey step 1b (accepted gate authority): modal «Copiar» real success (writeText rejected + execCommand TRUE) claims the truthful success and closes the modal`,
+                gateStep.writeAttempts === 2 && gateStep.execCommandCalls === 1 && gateStep.execCommandLastResult === true
+                    && gateStep.successClaimVisible === true && gateStep.modalCount === 0,
+                `writeAttempts=${gateStep.writeAttempts} execCommandCalls=${gateStep.execCommandCalls} execCommandLastResult=${JSON.stringify(gateStep.execCommandLastResult)} successClaimVisible=${gateStep.successClaimVisible} modalCount=${gateStep.modalCount}`);
             await page.click('#btnEstructurarCSV');
             await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 10000 });
             await page.waitForTimeout(400);
@@ -987,13 +1040,15 @@ try {
                 `modalCount=${before.modalCount} title=${JSON.stringify(before.title)} fields=${before.textFields} readonly=${before.readonly}`);
             await snap(page, 't3_c9_pv_csv497_modal_open');
             await armRejectThenFalse(page);
+            const toastsBeforeCsvFailure = await readToastCounts(page);
             const after = await observeAfterCopyClick(page);
-            record(`${label} plant active: writeText attempted three times (TXT auto + CSV auto + 'Copiar' click) and rejected; armed execCommand('copy') called once returning FALSE`,
-                after.writeAttempts === 3 && after.execCommandCalls === 1 && after.execCommandLastResult === false,
+            const toastsAfterCsvFailure = await readToastCounts(page);
+            record(`${label} plant active: writeText attempted four times (TXT auto + gate-step Copiar + CSV auto + 'Copiar' click) and rejected; armed execCommand('copy') called twice (gate step TRUE + CSV failure FALSE)`,
+                after.writeAttempts === 4 && after.execCommandCalls === 2 && after.execCommandLastResult === false,
                 `writeAttempts=${after.writeAttempts} execCommandCalls=${after.execCommandCalls} execCommandLastResult=${JSON.stringify(after.execCommandLastResult)}`);
-            record(`${label} truthful contract: NO '${SUCCESS_CLAIM_TEXT}' notification after both copy paths failed on the CSV journey`,
-                after.successClaimVisible === false,
-                `successClaimVisible=${after.successClaimVisible} (FALSE SUCCESS on baseline)`);
+            record(`${label} truthful contract: the FAILED CSV 'Copiar' adds NO fresh '${SUCCESS_CLAIM_TEXT}' toast (toast count unchanged — the lingering one belongs to the gate step's really-confirmed copy) and shows the honest '${FAILURE_FEEDBACK_TEXT}' failure feedback`,
+                toastsAfterCsvFailure.successToasts === toastsBeforeCsvFailure.successToasts && after.failureFeedbackVisible === true,
+                `successToasts ${toastsBeforeCsvFailure.successToasts}->${toastsAfterCsvFailure.successToasts} failureFeedbackVisible=${after.failureFeedbackVisible}`);
             record(`${label} truthful contract: modal stays open with the byte-identical FULL ${CSV_FIELD_COUNT}-field payload (clinical 497 projection not lost/truncated)`,
                 after.modalCount === 1 && after.textFields === CSV_FIELD_COUNT && after.text === before.text,
                 `modalCount=${after.modalCount} fields=${after.textFields} preserved=${after.text === before.text}`);
@@ -1031,7 +1086,15 @@ try {
             record(`${label} journey step 2: TXT export opened the real manual modal (auto-copy rejected)`,
                 txtBefore.modalCount === 1 && txtBefore.title.includes(MANUAL_COPY_TITLE_TOKEN),
                 `modalCount=${txtBefore.modalCount} title=${JSON.stringify(txtBefore.title)}`);
-            await closeModal(page);
+            // T20-02 reconciliation: satisfy the gate through the NEW accepted
+            // authority — a really-confirmed modal «Copiar» success (writeText
+            // rejected + armed execCommand TRUE, #620 semantics) — instead of
+            // the removed legacy "registered on modal open" behaviour.
+            await armRejectThenTrue(page);
+            const gateStep = await observeAfterCopyClick(page);
+            record(`${label} journey step 2b (accepted gate authority): modal «Copiar» real success (writeText rejected + execCommand TRUE) claims the truthful success and closes the modal`,
+                gateStep.execCommandLastResult === true && gateStep.successClaimVisible === true && gateStep.modalCount === 0,
+                `execCommandLastResult=${JSON.stringify(gateStep.execCommandLastResult)} successClaimVisible=${gateStep.successClaimVisible} modalCount=${gateStep.modalCount}`);
             await page.click('#btnEstructurarCSV');
             await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 10000 });
             await page.waitForTimeout(400);
@@ -1042,11 +1105,14 @@ try {
                 `modalCount=${before.modalCount} title=${JSON.stringify(before.title)} fields=${before.textFields} readonly=${before.readonly}`);
             await snap(page, 't3_c10_seg_csv497_modal_open');
             await armRejectThenFalse(page);
+            const toastsBeforeCsvFailure = await readToastCounts(page);
             const after = await observeAfterCopyClick(page);
-            record(`${label} truthful contract: NO '${SUCCESS_CLAIM_TEXT}' notification and modal stays open with the byte-identical FULL ${CSV_FIELD_COUNT}-field payload`,
-                after.successClaimVisible === false && after.modalCount === 1
+            const toastsAfterCsvFailure = await readToastCounts(page);
+            record(`${label} truthful contract: the FAILED CSV 'Copiar' adds NO fresh '${SUCCESS_CLAIM_TEXT}' toast (toast count unchanged — the lingering one belongs to the gate step's really-confirmed copy), shows honest failure feedback, and the modal stays open with the byte-identical FULL ${CSV_FIELD_COUNT}-field payload`,
+                toastsAfterCsvFailure.successToasts === toastsBeforeCsvFailure.successToasts
+                    && after.failureFeedbackVisible === true && after.modalCount === 1
                     && after.textFields === CSV_FIELD_COUNT && after.text === before.text,
-                `successClaimVisible=${after.successClaimVisible} modalCount=${after.modalCount} fields=${after.textFields} preserved=${after.text === before.text}`);
+                `successToasts ${toastsBeforeCsvFailure.successToasts}->${toastsAfterCsvFailure.successToasts} failureFeedbackVisible=${after.failureFeedbackVisible} modalCount=${after.modalCount} fields=${after.textFields} preserved=${after.text === before.text}`);
             recordErrorClassificationAll(label, entry);
         } finally {
             await context.close();
