@@ -1400,6 +1400,20 @@ function buildVisitExportKey(datos, context) {
 let txtGateMemoryAuthorization = null; // { visitKey, payload } | null
 let txtGateCopyAttempt = 0; // invalida resultados asíncronos en vuelo
 
+let txtGateAttemptInFlight = false; // hay un resultado TXT pendiente de resolver
+
+// C1 (revisión canónica T20-03, F1): retira TODO resultado TXT en vuelo. La
+// edición invalidante, la restauración pageshow.persisted y cada nuevo TXT
+// pasan por aquí: ningún callback tardío (clipboard, «Copiar» del modal,
+// atestación, confirmación de descarga) puede autorizar ni mostrar éxito
+// después. Scoped al intento en vuelo: sin intento pendiente no hay estado
+// que retirar y el contador no se toca. Sin Web Storage.
+function retireInFlightTxtGateResult() {
+    if (!txtGateAttemptInFlight) return;
+    txtGateAttemptInFlight = false;
+    txtGateCopyAttempt += 1;
+}
+
 // T20-03 (#621): mensaje exacto del spec (historia 8) cuando existe una
 // autorización para ESTA identidad de visita pero el payload exportable
 // actual difiere del instantáneo autorizado por el TXT. Veraz: no declara
@@ -1464,28 +1478,61 @@ function hasTxtExportDone(datos, context) {
 }
 
 /**
- * T20-03 (#621, historia 8): true EXACTAMENTE cuando existe una
- * autorización para ESTA identidad de visita (mismo visitKey) pero el
- * payload exportable actual difiere del instantáneo del TXT confirmado.
- * Solo distingue el motivo del bloqueo para el mensaje: nunca autoriza,
- * nunca consulta almacenamiento ni marcadores legacy.
+ * T20-03 (#621, historia 8) + C1 (revisión canónica F3): true EXACTAMENTE
+ * cuando existe una autorización para el TXT de ESTA sesión pero los datos
+ * exportables actuales difieren de lo confirmado — en el payload O en los
+ * campos de identidad/contexto que alteran visitKey (CIP, fecha de visita,
+ * tipo, diagnóstico primario). Solo distingue el motivo del bloqueo para el
+ * mensaje: nunca autoriza, nunca consulta almacenamiento ni marcadores
+ * legacy. Sin autorización alguna registrada en esta instancia devuelve
+ * false: ese caso sigue mostrando el mensaje de prerequisito.
  */
 function hasTxtExportChangedSinceTxt(datos, context) {
+    if (!txtGateMemoryAuthorization) return false; // nunca hubo TXT en esta instancia
     const entry = buildTxtGateMemoryEntry(datos, context);
-    if (!entry || !txtGateMemoryAuthorization) return false;
-    if (txtGateMemoryAuthorization.visitKey !== entry.visitKey) return false;
+    if (!entry) return true; // identidad actual incompleta frente al TXT autorizado: fail-closed
+    if (txtGateMemoryAuthorization.visitKey !== entry.visitKey) return true;
     return txtGateMemoryAuthorization.payload !== entry.payload;
 }
 
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     // Restauración desde bfcache (pageshow.persisted): la página vuelve de
-    // otra instancia de navegación; la autorización efímera se pierde
-    // (spec historia 11).
+    // otra instancia de navegación; la autorización efímera se pierde y todo
+    // resultado TXT en vuelo se retira (spec historia 11; C1 F1).
     window.addEventListener('pageshow', function (event) {
         if (event && event.persisted === true) {
             invalidateTxtExportDone();
+            retireInFlightTxtGateResult();
         }
     });
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    // C1 (revisión canónica F1): una edición mientras hay un resultado TXT
+    // en vuelo retira ese resultado antes de que resuelva — sin permiso
+    // tardío, sin toast de éxito tardío, sin modal tardío. Escuchadores de
+    // captura en document: cubren cualquier campo del formulario real.
+    // Scoped al intento en vuelo: sin intento pendiente no se toca nada
+    // (los modales de FH/CSV no dependen de este contador y su
+    // comportamiento no cambia; cero Web Storage).
+    document.addEventListener('input', retireInFlightTxtGateResult, true);
+    document.addEventListener('change', retireInFlightTxtGateResult, true);
+}
+
+/**
+ * C1 (revisión canónica F5): despacho compartido del mensaje de bloqueo de
+ * la puerta TXT→CSV. El texto exacto (prerequisito o discrepancia, historia
+ * 8) se elige EN CADA consumidor — la aserción aceptada
+ * `check:reuma:pending-retirement` (C1/C2) fija el literal de prerequisito
+ * dentro del cuerpo de ambas rutas —; este helper solo elimina la
+ * duplicación del despacho de notificación (mostrarNotificacion/alert).
+ */
+function notifyTxtGateBlock(message) {
+    if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+        HubTools.utils.mostrarNotificacion(message, 'error');
+    } else {
+        alert(message);
+    }
 }
 
 function openManualCopyModal(texto, titulo, mensaje) {
@@ -1586,17 +1633,14 @@ function exportarYCopiarCSV(datos, tipoVisita, diagnostico) {
             diagnostico: diagnostico
         };
         if (!hasTxtExportDone(datos, visitContext)) {
-            // T20-03: mensaje de discrepancia exacto del spec (historia 8)
-            // cuando el TXT de ESTA visita existe pero el payload cambió;
+            // T20-03 + C1 (F3): mensaje de discrepancia exacto del spec
+            // (historia 8) cuando el TXT de ESTA sesión existe pero los
+            // datos exportables cambiaron — payload O identidad/contexto;
             // el mensaje de prerequisito se mantiene cuando no hay TXT.
             const legalMessage = hasTxtExportChangedSinceTxt(datos, visitContext)
                 ? TXT_GATE_CHANGED_MESSAGE
                 : 'Debe exportar TXT de esta visita antes de exportar CSV.';
-            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-                HubTools.utils.mostrarNotificacion(legalMessage, 'error');
-            } else {
-                alert(legalMessage);
-            }
+            notifyTxtGateBlock(legalMessage);
             return false;
         }
         
@@ -1678,11 +1722,7 @@ function exportarAct497(proyeccion, datos) {
         const legalMessage = hasTxtExportChangedSinceTxt(datos, visitContext)
             ? TXT_GATE_CHANGED_MESSAGE
             : 'Debe exportar TXT de esta visita antes de exportar CSV.';
-        if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-            HubTools.utils.mostrarNotificacion(legalMessage, 'error');
-        } else {
-            alert(legalMessage);
-        }
+        notifyTxtGateBlock(legalMessage);
         return false;
     }
 
@@ -2059,11 +2099,15 @@ function exportarTXT(datos) {
         // un intento sustituido no autoriza ni muestra éxito (stale Promise).
         invalidateTxtExportDone();
         const txtGateAttemptId = ++txtGateCopyAttempt;
+        // C1 (F1): esta generación queda EN VUELO hasta resolverse; una
+        // edición invalidante o una restauración la retira mientras tanto.
+        txtGateAttemptInFlight = true;
         
         // Intentar copiar al portapapeles automáticamente
         navigator.clipboard.writeText(texto).then(() => {
             if (txtGateAttemptId !== txtGateCopyAttempt) {
-                // Resultado en vuelo de una exportación anterior: sin permiso
+                // Resultado en vuelo de una generación retirada (TXT más
+                // nuevo, edición invalidante o restauración): sin permiso
                 // tardío y sin afirmación de éxito sobre la visita actual.
                 return;
             }
@@ -2077,9 +2121,18 @@ function exportarTXT(datos) {
             // CSV de esta instancia (autorización efímera en memoria con la
             // instantánea del payload exportable; sin Web Storage).
             markTxtExportDone(datos);
+            txtGateAttemptInFlight = false; // C1 (F1): intento terminal
         }).catch(err => {
             console.error('❌ Error al copiar al portapapeles automáticamente:', err);
-            
+
+            // C1 (revisión canónica F2): un intento sustituido (TXT más
+            // nuevo, edición invalidante o restauración) no realiza NINGÚN
+            // efecto — ni abrir/reemplazar el modal de la visita actual, ni
+            // iniciar descarga, ni notificación, ni autorización.
+            if (txtGateAttemptId !== txtGateCopyAttempt) {
+                return;
+            }
+
             // Fallback: Mostrar en modal para copia manual
             if (typeof HubTools !== 'undefined' && HubTools.form && typeof HubTools.form.mostrarModalTexto === 'function') {
                 console.warn('⚠ Fallo en copia automática. Mostrando en modal para copia manual.');
@@ -2096,11 +2149,14 @@ function exportarTXT(datos) {
                     atestacionTxt: {
                         autorizarAlCopiar: function () {
                             if (txtGateAttemptId !== txtGateCopyAttempt) return false;
-                            return markTxtExportDone(datos);
+                            const autorizado = markTxtExportDone(datos);
+                            if (autorizado) txtGateAttemptInFlight = false; // C1 (F1): intento terminal
+                            return autorizado;
                         },
                         autorizarAlAtestar: function () {
                             if (txtGateAttemptId !== txtGateCopyAttempt) return false;
                             const autorizado = markTxtExportDone(datos);
+                            if (autorizado) txtGateAttemptInFlight = false; // C1 (F1): intento terminal
                             if (autorizado && typeof HubTools.utils.mostrarNotificacion === 'function') {
                                 HubTools.utils.mostrarNotificacion('TXT confirmado por el profesional.', 'success');
                             } else if (!autorizado && typeof HubTools.utils.mostrarNotificacion === 'function') {
@@ -2144,14 +2200,17 @@ function exportarTXT(datos) {
                 
                 setTimeout(() => URL.revokeObjectURL(url), 100);
 
-                // T20-02: la descarga por sí sola NUNCA autoriza el CSV. Se
-                // presenta una confirmación explícita in-flow del profesional
-                // (control nativo del navegador); cancelar —o la ausencia de
-                // confirmación— deja la puerta cerrada con instrucción de
-                // reintento. Nunca se afirma que el archivo se haya pegado,
-                // validado o registrado en ningún sistema clínico.
+                // T20-02 + C1 (F4): la descarga por sí sola NUNCA autoriza el
+                // CSV. Se presenta una confirmación explícita in-flow del
+                // profesional (control nativo del navegador) VERAZ sobre lo
+                // observado: la descarga se ha INICIADO — no se afirma que se
+                // haya completado ni guardado nada; quien atestigua haber
+                // copiado/guardado el archivo es el profesional. Cancelar —o
+                // la ausencia de confirmación— deja la puerta cerrada con
+                // instrucción de reintento. Nunca se afirma que el archivo se
+                // haya pegado, validado o registrado en ningún sistema clínico.
                 const atestacionDescarga = typeof window.confirm === 'function'
-                    ? window.confirm('Se ha descargado la historia clínica como archivo .txt. ¿Confirmas que ya has copiado o guardado este TXT? Sin tu confirmación explícita, el CSV de esta visita sigue bloqueado.')
+                    ? window.confirm('Se ha iniciado la descarga de la historia clínica como archivo .txt. ¿Confirmas que ya has copiado o guardado este TXT? Sin tu confirmación explícita, el CSV de esta visita sigue bloqueado.')
                     : false;
                 const notificarResultadoDescarga = (mensaje, tipo) => {
                     if (typeof HubTools !== 'undefined' && HubTools.utils && typeof HubTools.utils.mostrarNotificacion === 'function') {
@@ -2163,10 +2222,15 @@ function exportarTXT(datos) {
                 if (txtGateAttemptId !== txtGateCopyAttempt) {
                     // Intento sustituido por una exportación más reciente:
                     // sin permiso tardío y sin toasts.
-                } else if (atestacionDescarga && markTxtExportDone(datos)) {
-                    notificarResultadoDescarga('TXT confirmado por el profesional.', 'success');
                 } else {
-                    notificarResultadoDescarga('No se confirmó la copia o descarga del TXT. El CSV de esta visita sigue bloqueado: repite «Exportar TXT» y confirma.', 'error');
+                    // C1 (F1): la confirmación (aceptada o rechazada) cierra
+                    // el intento; nada queda en vuelo para esta generación.
+                    txtGateAttemptInFlight = false;
+                    if (atestacionDescarga && markTxtExportDone(datos)) {
+                        notificarResultadoDescarga('TXT confirmado por el profesional.', 'success');
+                    } else {
+                        notificarResultadoDescarga('No se confirmó la copia o descarga del TXT. El CSV de esta visita sigue bloqueado: repite «Exportar TXT» y confirma.', 'error');
+                    }
                 }
             }
         });

@@ -54,10 +54,37 @@
  *   E7  story 6/7  download fallback + confirmation dismissed: CSV blocked
  *       with honest retry feedback and no success claim (PV).
  *   E8  story 10  two TXT exports: the SUPERSEDED export's late rejection
- *       (delayed-reject plant) opens the manual modal bound to the stale
- *       attempt; its attestation callback neither authorizes nor toasts (no
- *       late permission, no double toast); the current export's resolving
- *       result does authorize (PV).
+ *       (delayed-reject plant) must perform NO side effect at all — no
+ *       modal open/replace, no fallback notification, no authorization; the
+ *       current export's resolving result does authorize (PV).
+ *
+ * T20-03/C1 CORRECTION (canonical review findings F1–F4 on candidate
+ * ec001f69642daae0fe9ef85df669870dbdddc011; E8's former expectation encoded
+ * the defect by accepting the stale modal and has been corrected):
+ *   E8  (corrected) story 10 — see above: NO side effect for the stale
+ *       rejection.
+ *   E9  Impl. decisions (F1) an invalidating edit while a TXT clipboard
+ *       result is in flight retires it — no late success claim, no late
+ *       permission, CSV blocked.
+ *   E10 Impl. decisions (F1) an invalidating edit while a TXT attempt is in
+ *       flight: its late rejection opens NO manual modal and shows NO
+ *       fallback notice.
+ *   E11 story 10 (F2) the superseded attempt's late rejection in the
+ *       download branch: no download initiation, no confirmation dialog,
+ *       no notification.
+ *   E12 story 8 (F3) identity/context field edit (visitKey changes) after
+ *       an authorized TXT blocks CSV with the EXACT discrepancy message —
+ *       not the generic prerequisite message.
+ *   E13 story 6 (F4) the in-flow download confirmation is a truthful
+ *       initiated-download prompt, never a completed-download claim before
+ *       the professional attests; accepting it still enables CSV.
+ *   bfcache note (F1, pageshow.persisted leg): a real bfcache restore
+ *       cannot be produced in this environment — the same declared
+ *       limitation that makes the frozen package skip W22 — so it is NOT
+ *       synthetic-faked here; the pageshow.persisted retirement is
+ *       implemented in modules/exportManager.js
+ *       (retireInFlightTxtGateResult) and the edit/new-TXT legs carry the
+ *       browser evidence in this oracle (E8/E9/E10/E11 + D9).
  *
  * RED BASELINE (frozen expectation on HEAD 32f6887f41887cb16f3d00239a6dc3102936f156):
  *   The legacy gate authorizes from sessionStorage markers and from merely
@@ -74,6 +101,9 @@
  *           nothing to invalidate)
  *     PASS: E2, E4 (fail-closed behaviours already correct after T20-01)
  *   After T20-02 every witness (D + E) must be PASS.
+ *   T20-03/C1 correction: E8's expectation is corrected (stale rejection
+ *   must perform NO side effect) and E9-E13 are added for findings F1-F4;
+ *   after the correction every witness (D + E) must be PASS.
  *
  * Method: only supported public seams (real PV/Seguimiento controls, real
  * shared modal, real clipboard, real notifications). Controlled clipboard
@@ -111,6 +141,9 @@ const TXT_MODAL_TITLE_TOKEN = 'Copia Manual';
 const CSV_MODAL_TITLE_TOKEN = 'Copia manual de CSV';
 const GATE_STORAGE_PREFIX = 'HubClinico_TxtExportDone_';
 const LEGAL_GATE_MESSAGE = 'Debe exportar TXT de esta visita antes de exportar CSV.';
+// T20-03/C1 (F3): exact story-8 discrepancy literal (byte-identical with the
+// module constant TXT_GATE_CHANGED_MESSAGE).
+const TXT_GATE_CHANGED_MSG = 'Los datos de la visita han cambiado desde el TXT. Vuelve a exportarlo y revisa que la historia cl\u00ednica refleje la versi\u00f3n actual antes de generar el CSV';
 
 // Visible text that would claim a TXT copy/registration success without a
 // real clipboard success (stories 3/7/10).
@@ -173,7 +206,14 @@ const E4 = defineWitness('E4', 'story 5', 'real Ctrl+A/Ctrl+C WITHOUT attestatio
 const E5 = defineWitness('E5', 'story 6', '\u00abHe guardado el TXT\u00bb attestation (saved-file path, no clipboard copy): CSV enabled (Seguimiento)', 'RED');
 const E6 = defineWitness('E6', 'story 6', 'download fallback + explicit download confirmation accepted: CSV enabled; link.click() alone never authorizes (PV)', 'RED');
 const E7 = defineWitness('E7', 'story 6/7', 'download fallback + confirmation dismissed: fail closed with honest retry feedback, no success claim (PV)', 'RED');
-const E8 = defineWitness('E8', 'story 10', 'the superseded TXT export\u0027s late-rejection modal attestation neither authorizes nor toasts; the current export result authorizes (PV)', 'RED');
+const E8 = defineWitness('E8', 'story 10', 'the superseded TXT export\u0027s late rejection performs NO side effect (no modal open/replace, no fallback notice, no authorization); the current export result authorizes (PV)', 'RED');
+
+// T20-03/C1 correction extension (canonical review findings F1–F4).
+const E9 = defineWitness('E9', 'Impl. decisions', 'invalidating edit while a TXT clipboard result is in flight retires it: no late success claim, no late authorization, CSV blocked (PV)', 'RED');
+const E10 = defineWitness('E10', 'Impl. decisions', 'invalidating edit while a TXT attempt is in flight: the late rejection opens NO manual modal and shows NO fallback notice (PV)', 'RED');
+const E11 = defineWitness('E11', 'story 10', 'superseded TXT attempt\u0027s late rejection in the download branch: no download initiation, no confirmation dialog, no notification (PV)', 'RED');
+const E12 = defineWitness('E12', 'story 8', 'identity/context field edit after an authorized TXT: CSV blocked fail-closed with the EXACT discrepancy message, not the prerequisite (PV)', 'RED');
+const E13 = defineWitness('E13', 'story 6', 'download confirmation is a truthful initiated-download prompt, never a completed-download claim; accepting it still enables CSV (PV)', 'RED');
 
 // ---------------------------------------------------------------------------
 // Storage sentinel fixtures (synthetic; planted at document start).
@@ -582,6 +622,15 @@ async function setModalAvailable(page, available) {
     await page.evaluate((value) => { window.__tg.modalAvailable = value; }, available);
 }
 
+/** Record native dialogs (window.confirm prompts) while letting the journey
+ * proceed; used by the download-branch witnesses (E11/E13). */
+function recordDialogs(page, sink) {
+    page.on('dialog', (dialog) => {
+        sink.push(dialog.message());
+        dialog.dismiss().catch(() => {});
+    });
+}
+
 // ---------------------------------------------------------------------------
 // Observation helpers (post-state reads only).
 // ---------------------------------------------------------------------------
@@ -786,7 +835,7 @@ try {
 
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
     console.log(`REUMA-TXT-GATE-MEMORY (chromium ${browser.version()}, node ${process.version})`);
-    console.log(`T20-01 + T20-02 focused oracle. Expected on the T20-01 candidate: RED on E1/E3/E5/E6/E8, PASS on the rest. After T20-02: every witness PASS.\n`);
+    console.log(`T20-01 + T20-02 + T20-03/C1 focused oracle. After T20-02 + the C1 correction: every witness (D0-D12, E1-E13) PASS.\n`);
 
     // =====================================================================
     // J-LEGACY-MARKER (PV): planted matching legacy marker + direct CSV
@@ -1384,13 +1433,14 @@ try {
     }
 
     // =====================================================================
-    // J-STALE-MODAL (PV, T20-02/E8): TXT #1 is armed with a DELAYED rejection
-    // (1500 ms); TXT #2 (parked, current export) supersedes it before P1
-    // lands. P1's LATE rejection then opens the manual modal bound to the
-    // superseded attempt: its attestation callback must neither authorize nor
-    // toast (no late permission, no double toast); the CURRENT export's
-    // resolving result does authorize (story 10). Every click is supported:
-    // both TXT clicks happen while no modal is open.
+    // J-STALE-MODAL (PV, story 10 + C1/F2): TXT #1 is armed with a DELAYED
+    // rejection (1500 ms); TXT #2 (parked, current export) supersedes it
+    // before P1 lands. P1's LATE rejection must perform NO side effect at
+    // all: NO modal open/replace, NO fallback notification, NO success
+    // claim, NO authorization (the stale branch must not even reach
+    // mostrarModalTexto). The CURRENT export's resolving result does
+    // authorize (story 10). Every click is supported: both TXT clicks happen
+    // while no modal is open.
     // =====================================================================
     {
         const jl = 'J-STALE-MODAL';
@@ -1410,42 +1460,308 @@ try {
             const parkedCount = await page.evaluate(() => window.__tg.parked.length);
             await checkpoint(page, jl, 'after-two-txt');
 
-            // P1's late rejection opens the real manual modal (stale attempt 1).
-            await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout: 10000 });
-            await page.waitForTimeout(400);
+            // P1's late rejection lands: it must perform NO side effect.
+            await page.waitForTimeout(1600);
             const staleModal = await readModalState(page);
-            const controls = await findAttestationControls(page);
-            const copiado = controls.find((c) => c.kind === 'copiado');
-            await checkpoint(page, jl, 'after-stale-modal');
+            const staleControls = await findAttestationControls(page);
+            const bodyAfterLate = await page.evaluate(() => document.body.innerText);
+            const bannedLate = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterLate.includes(token));
+            const staleFallbackNotice = bodyAfterLate.includes('No se pudo copiar autom\u00e1ticamente');
+            await checkpoint(page, jl, 'after-stale-rejection');
 
-            let staleToast = false;
-            if (copiado && copiado.id) {
-                await page.click(`#${copiado.id}`); // superseded attempt's callback
-                await page.waitForTimeout(500);
-                staleToast = await page.evaluate(() => document.body.innerText.includes('TXT confirmado por el profesional'));
+            if (parkedCount !== 1) {
+                witnessFail(E8, `harness precondition failed: parked=${parkedCount}`);
+            } else if (staleModal.modalCount !== 0) {
+                witnessFail(E8, `the SUPERSEDED attempt's late rejection opened/replaced a modal (modalCount=${staleModal.modalCount}, title=${JSON.stringify(staleModal.title)}) — a stale rejection must perform no side effect`);
+            } else if (staleControls.length > 0) {
+                witnessFail(E8, `attestation controls present after the superseded rejection: ${JSON.stringify(staleControls.map((c) => c.label))}`);
+            } else if (bannedLate.length > 0 || staleFallbackNotice) {
+                witnessFail(E8, `the superseded attempt produced late feedback: banned=${JSON.stringify(bannedLate)} fallbackNotice=${staleFallbackNotice}`);
+            } else {
+                // Close the stale modal through its real close control if one
+                // opened (baseline defect); a no-op when none opened (fix).
+                await closeModal(page).catch(() => {});
+                // CSV still blocked (P2 has not resolved; nothing authorized).
+                await armWriteMode(page, 'reject');
+                const staleObs = await clickCsvAndObserve(page);
+                const staleCsvBlocked = !csvDelivered(staleObs);
+                await checkpoint(page, jl, 'after-stale-csv');
+
+                const r2 = await resolveParkedPromise(page); // CURRENT export result lands
+                await page.waitForTimeout(700);
+                await checkpoint(page, jl, 'after-current-resolution');
+                const obs = await clickCsvAndObserve(page);
+                await checkpoint(page, jl, 'after-current-csv');
+
+                if (!r2) {
+                    witnessFail(E8, `harness precondition failed: the parked current export did not resolve`);
+                } else if (!staleCsvBlocked) {
+                    witnessFail(E8, `CSV was delivered before the current export resolved (via=${csvDeliveredVia(staleObs)})`);
+                } else if (!csvDelivered(obs)) {
+                    witnessFail(E8, `precondition inverted: the CURRENT export's resolving result did not enable CSV (via=${csvDeliveredVia(obs)})`);
+                } else {
+                    witnessPass(E8, `superseded rejection performed NO side effect (no modal, no notice, no claim); the current export result authorized (final via=${csvDeliveredVia(obs)})`);
+                }
             }
-            await closeModal(page);
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-EDIT-INFLIGHT-SUCCESS (PV, Impl. decisions C1/F1): a clipboard result
+    // parked in flight is retired by an invalidating edit: the late success
+    // shows NO toast and authorizes nothing.
+    // =====================================================================
+    {
+        const jl = 'J-EDIT-INFLIGHT-SUCCESS';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-EDFL-1', isSeguimiento: false });
+            await armWriteMode(page, 'park');
+            await checkpoint(page, jl, 'after-fill');
+
+            await clickTxtAndWait(page); // P1 parked, in flight
+            const parkedCount = await page.evaluate(() => window.__tg.parked.length);
+            await openAncestorCollapsibles(page, '#pcrValue');
+            await page.fill('#pcrValue', '9'); // invalidating edit while P1 is in flight (real input event)
+            await checkpoint(page, jl, 'after-edit');
+            const resolved = await resolveParkedPromise(page); // late success lands
+            await page.waitForTimeout(700);
+            const bodyAfterLate = await page.evaluate(() => document.body.innerText);
+            const bannedLate = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterLate.includes(token));
+            await checkpoint(page, jl, 'after-late-resolution');
+
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (parkedCount !== 1 || !resolved) {
+                witnessFail(E9, `harness precondition failed: parked=${parkedCount} resolved=${resolved}`);
+            } else if (bannedLate.length > 0) {
+                witnessFail(E9, `late success claim after the invalidating edit retired the in-flight result: ${JSON.stringify(bannedLate)}`);
+            } else if (csvDelivered(obs)) {
+                witnessFail(E9, `the retired in-flight result authorized CSV after the edit (via=${csvDeliveredVia(obs)})`);
+            } else {
+                witnessPass(E9, `the edit retired the in-flight result: no late success claim, CSV blocked (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-EDIT-INFLIGHT-MODAL (PV, Impl. decisions C1/F1): a clipboard attempt
+    // in flight is retired by an invalidating edit: its LATE rejection opens
+    // NO manual modal and shows NO fallback notice.
+    // =====================================================================
+    {
+        const jl = 'J-EDIT-INFLIGHT-MODAL';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-EDMD-1', isSeguimiento: false });
+            await armDelayedReject(page, 1500);
+            await checkpoint(page, jl, 'after-fill');
+
+            await clickTxtAndWait(page); // P1 in flight (delayed rejection)
+            await openAncestorCollapsibles(page, '#pcrValue');
+            await page.fill('#pcrValue', '9'); // invalidating edit before the rejection lands
+            await checkpoint(page, jl, 'after-edit');
+            await page.waitForTimeout(1300); // P1's late rejection lands
+            const modalAfterLate = await readModalState(page);
+            const controlsAfterLate = await findAttestationControls(page);
+            const bodyAfterLate = await page.evaluate(() => document.body.innerText);
+            const bannedLate = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterLate.includes(token));
+            const fallbackNotice = bodyAfterLate.includes('No se pudo copiar autom\u00e1ticamente');
+            await checkpoint(page, jl, 'after-late-rejection');
+            // Close the late modal through its real close control if one
+            // opened (baseline defect); a no-op when none opened (fix).
+            await closeModal(page).catch(() => {});
+
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            if (modalAfterLate.modalCount !== 0) {
+                witnessFail(E10, `the retired attempt's late rejection opened the manual modal (modalCount=${modalAfterLate.modalCount}, title=${JSON.stringify(modalAfterLate.title)})`);
+            } else if (controlsAfterLate.length > 0) {
+                witnessFail(E10, `attestation controls present after the retired attempt: ${JSON.stringify(controlsAfterLate.map((c) => c.label))}`);
+            } else if (bannedLate.length > 0 || fallbackNotice) {
+                witnessFail(E10, `late feedback from the retired attempt: banned=${JSON.stringify(bannedLate)} fallbackNotice=${fallbackNotice}`);
+            } else if (csvDelivered(obs)) {
+                witnessFail(E10, `CSV delivered although the TXT attempt was retired by the edit (via=${csvDeliveredVia(obs)})`);
+            } else {
+                witnessPass(E10, `the edit retired the in-flight attempt: the late rejection performed no side effect, CSV blocked (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-STALE-DOWNLOAD (PV, story 10 + C1/F2): the SUPERSEDED attempt's late
+    // rejection in the download branch (clipboard rejects AND modal
+    // infrastructure unavailable) must perform NO side effect: NO download
+    // initiation, NO confirmation dialog, NO notification.
+    // =====================================================================
+    {
+        const jl = 'J-STALE-DOWNLOAD';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-STDW-1', isSeguimiento: false });
+            await plantModalAvailabilitySwitch(page);
+            await setModalAvailable(page, false);
+            const dialogs = [];
+            recordDialogs(page, dialogs);
+            await armDelayedReject(page, 1200);
+            await checkpoint(page, jl, 'after-fill');
+
+            await clickTxtAndWait(page); // P1 in flight: delayed rejection, download branch pending
+            await armWriteMode(page, 'park');
+            await clickTxtAndWait(page); // P2 parked; supersedes P1
+            const parkedCount = await page.evaluate(() => window.__tg.parked.length);
+            await page.waitForTimeout(1300); // P1's late rejection lands
+            const bodyAfterLate = await page.evaluate(() => document.body.innerText);
+            const downloadNotice = bodyAfterLate.includes('Se descargar\u00e1');
+            const bannedLate = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterLate.includes(token));
+            await checkpoint(page, jl, 'after-late-rejection');
+
+            // CSV still blocked (P2 parked; nothing authorized).
             await armWriteMode(page, 'reject');
             const staleObs = await clickCsvAndObserve(page);
             const staleCsvBlocked = !csvDelivered(staleObs);
             await checkpoint(page, jl, 'after-stale-csv');
 
-            const r2 = await resolveParkedPromise(page); // CURRENT export result lands
-            await page.waitForTimeout(700);
-            await checkpoint(page, jl, 'after-current-resolution');
-            const obs = await clickCsvAndObserve(page);
-            await checkpoint(page, jl, 'after-current-csv');
-
-            if (parkedCount !== 1 || !r2 || staleModal.modalCount !== 1 || !copiado || !copiado.id) {
-                witnessFail(E8, `harness precondition failed: parked=${parkedCount} r2=${r2} staleModal=${staleModal.modalCount} control=${JSON.stringify(copiado)}`);
+            if (parkedCount !== 1) {
+                witnessFail(E11, `harness precondition failed: parked=${parkedCount}`);
+            } else if (entry.downloads.length > 0) {
+                witnessFail(E11, `the SUPERSEDED attempt initiated a download (downloads=${entry.downloads.length}) — a stale rejection must perform no side effect`);
+            } else if (dialogs.length > 0) {
+                witnessFail(E11, `the SUPERSEDED attempt presented a confirmation dialog: ${JSON.stringify(dialogs.map((m) => m.slice(0, 120)))}`);
+            } else if (downloadNotice || bannedLate.length > 0) {
+                witnessFail(E11, `the superseded attempt produced late feedback: downloadNotice=${downloadNotice} banned=${JSON.stringify(bannedLate)}`);
             } else if (!staleCsvBlocked) {
-                witnessFail(E8, `the superseded attempt's modal attestation authorized CSV after a newer TXT export started (late permission)`);
-            } else if (staleToast) {
-                witnessFail(E8, `the superseded attempt's modal attestation produced a success toast (double toast)`);
-            } else if (!csvDelivered(obs)) {
-                witnessFail(E8, `precondition inverted: the CURRENT export's resolving result did not enable CSV (via=${csvDeliveredVia(obs)})`);
+                witnessFail(E11, `CSV was delivered although nothing was authorized (via=${csvDeliveredVia(staleObs)})`);
             } else {
-                witnessPass(E8, `superseded modal attestation: no late permission, no double toast; the current export result authorized (final via=${csvDeliveredVia(obs)})`);
+                witnessPass(E11, `superseded download-branch rejection performed NO side effect (no download, no dialog, no notice); CSV blocked (via=${csvDeliveredVia(staleObs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-IDENTITY-CHANGED (PV, story 8 + C1/F3): identity/context fields DO
+    // figure in the exportable payload; after an authorized TXT, editing one
+    // (visit date here) alters visitKey and must block CSV with the EXACT
+    // story-8 discrepancy message — not the generic prerequisite message.
+    // =====================================================================
+    {
+        const jl = 'J-IDENTITY-CHANGED';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-IDCH-1', isSeguimiento: false });
+            await armWriteMode(page, 'allow');
+            await checkpoint(page, jl, 'after-fill');
+            await clickTxtAndWait(page); // authorized on the original identity
+            await checkpoint(page, jl, 'after-txt');
+
+            await openAncestorCollapsibles(page, '#fechaVisita');
+            await page.fill('#fechaVisita', '2026-02-11'); // identity/context edit -> visitKey changes
+            await checkpoint(page, jl, 'after-identity-edit');
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            const changedShown = obs.bodyText.includes(TXT_GATE_CHANGED_MSG);
+            const prereqShown = obs.bodyText.includes(LEGAL_GATE_MESSAGE);
+            if (csvDelivered(obs)) {
+                witnessFail(E12, `CSV delivered after an identity-field edit (via=${csvDeliveredVia(obs)}) — authorization must be denied fail-closed`);
+            } else if (!changedShown) {
+                witnessFail(E12, `CSV blocked but the exact story-8 discrepancy message is NOT shown after an identity edit (prerequisite shown=${prereqShown}); body snippet=${JSON.stringify(obs.bodyText.slice(0, 400))}`);
+            } else if (prereqShown) {
+                witnessFail(E12, `the generic prerequisite message was shown instead of the discrepancy message`);
+            } else {
+                witnessPass(E12, `identity-field edit after TXT: CSV blocked fail-closed with the exact discrepancy message (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-DOWNLOAD-TRUTHFUL (PV, story 6 + C1/F4): the in-flow download
+    // confirmation must NOT claim a completed download before the
+    // professional attests; it must be a truthful initiated-download prompt.
+    // Authorization semantics unchanged: accepting still enables CSV.
+    // =====================================================================
+    {
+        const jl = 'J-DOWNLOAD-TRUTHFUL';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip: 'SYN-GATE-DLTR-1', isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await plantModalAvailabilitySwitch(page);
+            await checkpoint(page, jl, 'after-fill');
+
+            const dialogs = [];
+            page.on('dialog', (dialog) => { dialogs.push(dialog.message()); dialog.accept().catch(() => {}); }); // explicit professional confirmation
+            await setModalAvailable(page, false);
+            await clickTxtAndWait(page);
+            const downloadsAfterTxt = entry.downloads.length;
+            await checkpoint(page, jl, 'after-txt-download-accept');
+
+            await armWriteMode(page, 'allow'); // the CSV delivery path must not be the blocker
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            const confirmMessage = dialogs.find((m) => m.includes('TXT')) || '';
+            const claimsCompleted = /Se ha descargado/i.test(confirmMessage);
+            const truthfulPrompt = /Se ha iniciado la descarga/i.test(confirmMessage)
+                && /Confirmas que ya has copiado o guardado este TXT/i.test(confirmMessage);
+
+            if (downloadsAfterTxt < 1 || !confirmMessage) {
+                witnessFail(E13, `harness precondition failed: downloads=${downloadsAfterTxt} dialogs=${dialogs.length}`);
+            } else if (claimsCompleted) {
+                witnessFail(E13, `the download confirmation asserts an unobserved completed download: ${JSON.stringify(confirmMessage.slice(0, 160))}`);
+            } else if (!truthfulPrompt) {
+                witnessFail(E13, `the download confirmation is not the truthful initiated-download prompt: ${JSON.stringify(confirmMessage.slice(0, 160))}`);
+            } else if (!csvDelivered(obs)) {
+                witnessFail(E13, `authorization semantics changed: the accepted explicit confirmation did NOT enable the CSV (via=${csvDeliveredVia(obs)})`);
+            } else {
+                witnessPass(E13, `download confirmation is truthful (initiated, not completed) and accepting it still enables the 497 CSV (via=${csvDeliveredVia(obs)})`);
             }
 
             auditCheckpoints(jl);
