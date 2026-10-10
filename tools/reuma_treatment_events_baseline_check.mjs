@@ -207,6 +207,24 @@ const NO_START_FAMILY = ['treatment_start', 'biologic_start'];
         `types=${JSON.stringify(types)}`);
 }
 
+// =====================================================================
+// Gate 3 consumer wiring — additive source assertions (no hardcode):
+//   W1  dashboard_paciente.html loads modules/treatmentEventsManager.js
+//       with a ?v= cache-busting token (any value).
+//   W2  scripts/script_dashboard.js (real consumer) calls
+//       HubTools.events.extractTreatmentEvents.
+// =====================================================================
+{
+    const dashboardHtml = fs.readFileSync(path.join(ROOT, 'dashboard_paciente.html'), 'utf8');
+    const scriptDashboard = fs.readFileSync(path.join(ROOT, 'scripts/script_dashboard.js'), 'utf8');
+    record('W1 dashboard_paciente.html loads modules/treatmentEventsManager.js with a ?v= token',
+        /<script\s+src="modules\/treatmentEventsManager\.js\?v=[^"]+"/.test(dashboardHtml),
+        'expected <script src="modules/treatmentEventsManager.js?v=..."> in dashboard_paciente.html');
+    record('W2 scripts/script_dashboard.js calls HubTools.events.extractTreatmentEvents',
+        /HubTools\.events\.extractTreatmentEvents\s*\(/.test(scriptDashboard),
+        'expected HubTools.events.extractTreatmentEvents( call in scripts/script_dashboard.js');
+}
+
 const failed = results.filter((result) => !result.pass);
 if (failed.length > 0) {
     console.log('FAILED CASES:');

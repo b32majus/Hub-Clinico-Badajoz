@@ -5,7 +5,7 @@
  * Principio rector: derivar eventos desde datos existentes, sin modelo paralelo.
  *
  * Namespace: HubTools.events
- * Versión: 20260503
+ * Versión: 20261010
  */
 
 (function () {
@@ -58,6 +58,30 @@
         if (text === null || text === undefined) return '';
         if (typeof text !== 'string') return '';
         return text.trim().toLowerCase().replace(/\s{2,}/g, ' ');
+    }
+
+    /**
+     * Determina si la fila de visita declara explícitamente que es un Seguimiento.
+     *
+     * Conjunto de tokens aceptados (decisión cerrada T22-03): exactamente
+     * 'seguimiento' tras trim y lowercase — es decir, 'Seguimiento',
+     * 'seguimiento' y ' SEGUIMIENTO ' son el mismo valor explícito
+     * (precedente del repo: scripts/generate_demo_db.py usa .strip().toLowerCase()).
+     * Cualquier otro valor, o la ausencia de la clave, NUNCA suprime nada
+     * (fail-safe: la supresión solo se activa con el token explícito).
+     *
+     * Fuente del discriminador: la propia fila de visita. Las filas cargadas
+     * del workbook llevan `Tipo_Visita` (valor canónico del writer: 'Seguimiento');
+     * `normalizeRecord` preserva la clave cruda y además expone `tipoVisita`.
+     *
+     * @param {Object|null|undefined} visit
+     * @returns {boolean}
+     */
+    function isExplicitFollowUpVisit(visit) {
+        if (!visit) return false;
+        var raw = visit.Tipo_Visita !== undefined ? visit.Tipo_Visita : visit.tipoVisita;
+        if (raw === null || raw === undefined) return false;
+        return String(raw).trim().toLowerCase() === 'seguimiento';
     }
 
     function parseStrictNumber(value) {
@@ -266,6 +290,10 @@
 
         // Caso 1: primera visita (no hay visita previa)
         if (!previousVisit) {
+            // T22-03: un primer registro histórico de tipo Seguimiento con
+            // Tratamiento_Actual explícito es un baseline preexistente, no un
+            // inicio observado. No se fabrica treatment_start retrospectivo.
+            if (isExplicitFollowUpVisit(currentVisit)) return null;
             return {
                 type: EVENT_TYPES.TREATMENT_START,
                 description: 'Inicio de tratamiento: ' + currentTx,
@@ -380,8 +408,12 @@
         if (currentBio.length === 0 && prevBio.length === 0) return events;
 
         // Biológicos nuevos que no estaban antes → biologic_start
+        // T22-03: en la primera fila histórica, un Seguimiento explícito con
+        // entrada biológica en el plan es baseline preexistente, no inicio
+        // observado → no se fabrica biologic_start retrospectivo.
+        var suppressFirstRowBiologicStart = !previousVisit && isExplicitFollowUpVisit(currentVisit);
         for (var i = 0; i < currentBio.length; i++) {
-            if (prevBio.indexOf(currentBio[i]) === -1) {
+            if (!suppressFirstRowBiologicStart && prevBio.indexOf(currentBio[i]) === -1) {
                 events.push({
                     type: EVENT_TYPES.BIOLOGIC_START,
                     description: 'Inicio de biológico: ' + currentBio[i],
