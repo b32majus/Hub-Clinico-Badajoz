@@ -1073,27 +1073,55 @@ function mostrarModalTexto(texto, titulo = 'Contenido Generado', mensaje = '') {
     modal.querySelector('[data-texto-modal-close]')?.addEventListener('click', closeModal);
     document.getElementById('closeModalBtn')?.addEventListener('click', closeModal);
 
+    let copyAttemptToken = 0;
+
     document.getElementById('copyToClipboardModalBtn')?.addEventListener('click', () => {
         const textToCopy = textarea.value;
+        const attempt = ++copyAttemptToken;
+
         const fallbackCopy = () => {
             textarea.focus();
             textarea.select();
-            document.execCommand('copy');
+            return document.execCommand('copy') === true;
         };
 
-        const copyPromise = navigator.clipboard && typeof navigator.clipboard.writeText === 'function'
-            ? navigator.clipboard.writeText(textToCopy).catch(() => fallbackCopy())
-            : Promise.resolve().then(fallbackCopy);
-
-        Promise.resolve(copyPromise).then(() => {
-            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-                HubTools.utils.mostrarNotificacion('Contenido copiado al portapapeles.', 'success');
+        const attemptCopy = () => {
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                let writePromise;
+                try {
+                    writePromise = navigator.clipboard.writeText(textToCopy);
+                } catch (error) {
+                    console.error('Error al copiar desde el modal:', error);
+                    return Promise.resolve(false);
+                }
+                return writePromise.then(() => true).catch(() => {
+                    try {
+                        return fallbackCopy();
+                    } catch (error) {
+                        console.error('Error al copiar desde el modal:', error);
+                        return false;
+                    }
+                });
             }
-            closeModal();
-        }).catch(error => {
-            console.error('Error al copiar desde el modal:', error);
-            if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
-                HubTools.utils.mostrarNotificacion('Error al copiar desde el modal.', 'error');
+            try {
+                return Promise.resolve(fallbackCopy());
+            } catch (error) {
+                console.error('Error al copiar desde el modal:', error);
+                return Promise.resolve(false);
+            }
+        };
+
+        attemptCopy().then(succeeded => {
+            if (attempt !== copyAttemptToken || !modal.isConnected) return;
+            if (succeeded) {
+                if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                    HubTools.utils.mostrarNotificacion('Contenido copiado al portapapeles.', 'success');
+                }
+                closeModal();
+            } else {
+                if (typeof HubTools?.utils?.mostrarNotificacion === 'function') {
+                    HubTools.utils.mostrarNotificacion('Error al copiar desde el modal.', 'error');
+                }
             }
         });
     });
