@@ -34,6 +34,14 @@
  *       a cleared date collects as '' (blank, never today), and the real in-page
  *       route `createVisitAct` -> `projectVisitAct497` keeps the 497 projection
  *       byte-identical except for exactly the two treatment positions.
+ *   A4  (T22-02) negatives for the two baseline fields: `ok`, `unavailable`
+ *       and `error` keep `#tratamientoActual`/`#fechaInicioTratamiento`
+ *       readonly and empty-or-prefilled as today — the not_found edit mode
+ *       never opens for them.
+ *   A5  (T22-02, Gate 4 narrow) at 390 px and 1280 px, in the real
+ *       `not_found` journey, name/treatment/date are visible on screen,
+ *       focusable and accept effective real typing/clicking through supported
+ *       interaction (the `readonly` attribute is never removed by the test).
  *
  * Usage: node tools/reuma_seguimiento_read_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
@@ -574,6 +582,179 @@ try {
                 `diffPositions=${JSON.stringify(observed ? observed.diffPositions : null)} ` +
                 `diffValues=${JSON.stringify(observed ? observed.diffValues : null)} ` +
                 `pageErrors=${JSON.stringify(baselinePage.pageErrors)}`);
+        }
+
+        // =================================================================
+        // A4 (Train 22 / T22-02) — negatives for the two baseline fields:
+        // `ok`, `unavailable` and `error` keep #tratamientoActual and
+        // #fechaInicioTratamiento readonly and empty-or-prefilled as today —
+        // the not_found edit mode must never open for them. RED state is not
+        // expected for the readonly/empty assertions themselves (they hold on
+        // the base); the case pins the negative so a future global unlock
+        // cannot silently open the edit mode outside the real not_found
+        // journey.
+        // =================================================================
+        {
+            const NEG_TREATMENT = 'X sintetico negativo';
+
+            // ok (port source): the fields stay readonly with today's prefill.
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const okFieldState = await happy.page.evaluate(() => ({
+                txReadonly: document.getElementById('tratamientoActual')?.readOnly === true,
+                txValue: document.getElementById('tratamientoActual')?.value || '',
+                dateReadonly: document.getElementById('fechaInicioTratamiento')?.readOnly === true,
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+            }));
+            let okFillError = null;
+            try {
+                await happy.page.fill('#tratamientoActual', NEG_TREATMENT, { timeout: 3000 });
+            } catch (err) {
+                okFillError = (err && err.message) || String(err);
+            }
+            const okTxAfterFill = await happy.page.evaluate(() => document.getElementById('tratamientoActual')?.value || '');
+            const okErrors = seguimientoErrors(happy);
+
+            // unavailable: readonly and empty, fill rejected.
+            const unavailablePage = trackedPage(await context.newPage());
+            await unavailablePage.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await unavailablePage.page.waitForTimeout(1200);
+            const unavailableFieldState = await unavailablePage.page.evaluate(() => ({
+                txReadonly: document.getElementById('tratamientoActual')?.readOnly === true,
+                txValue: document.getElementById('tratamientoActual')?.value || '',
+                dateReadonly: document.getElementById('fechaInicioTratamiento')?.readOnly === true,
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+            }));
+            let unavailableFillError = null;
+            try {
+                await unavailablePage.page.fill('#tratamientoActual', NEG_TREATMENT, { timeout: 3000 });
+            } catch (err) {
+                unavailableFillError = (err && err.message) || String(err);
+            }
+            const unavailableErrors = seguimientoErrors(unavailablePage);
+
+            // error (planted double): readonly and empty, fill rejected.
+            const errorPage = trackedPage(await context.newPage());
+            await errorPage.page.addInitScript(plantedErrorDouble);
+            await errorPage.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await errorPage.page.waitForTimeout(1200);
+            const errorFieldState = await errorPage.page.evaluate(() => ({
+                txReadonly: document.getElementById('tratamientoActual')?.readOnly === true,
+                txValue: document.getElementById('tratamientoActual')?.value || '',
+                dateReadonly: document.getElementById('fechaInicioTratamiento')?.readOnly === true,
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+            }));
+            let errorFillError = null;
+            try {
+                await errorPage.page.fill('#tratamientoActual', NEG_TREATMENT, { timeout: 3000 });
+            } catch (err) {
+                errorFillError = (err && err.message) || String(err);
+            }
+            const errorErrors = seguimientoErrors(errorPage);
+
+            const checks = [
+                okFieldState.txReadonly,
+                okFieldState.txValue === 'FAME sintetico A', // unchanged prefill (S2)
+                okFieldState.dateReadonly,
+                okFillError !== null,
+                okTxAfterFill === 'FAME sintetico A',
+                !okErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)),
+                unavailableFieldState.txReadonly, unavailableFieldState.txValue === '',
+                unavailableFieldState.dateReadonly, unavailableFieldState.dateValue === '',
+                unavailableFillError !== null,
+                unavailableErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE)),
+                errorFieldState.txReadonly, errorFieldState.txValue === '',
+                errorFieldState.dateReadonly, errorFieldState.dateValue === '',
+                errorFillError !== null,
+                errorErrors.some((message) => message.includes(FAIL_CLOSED_ERROR)),
+            ];
+            record('A4 negatives keep treatment/date readonly and empty-or-prefilled as today: not_found edit mode never opens for ok/unavailable/error',
+                checks.every(Boolean),
+                `ok=${JSON.stringify(okFieldState)} okFillRejected=${okFillError !== null} okTxAfterFill=${JSON.stringify(okTxAfterFill)} ` +
+                `unavailable=${JSON.stringify(unavailableFieldState)} unavailableFillRejected=${unavailableFillError !== null} ` +
+                `error=${JSON.stringify(errorFieldState)} errorFillRejected=${errorFillError !== null} ` +
+                `pageErrors=${JSON.stringify([...happy.pageErrors, ...unavailablePage.pageErrors, ...errorPage.pageErrors])}`);
+        }
+
+        // =================================================================
+        // A5 (Train 22 / T22-02, Gate 4 narrow) — at 390 px and 1280 px, in
+        // the real `not_found` journey, the three identity/baseline controls
+        // (name, treatment, start date) are visible on screen, focusable and
+        // accept effective real typing/clicking through supported
+        // interaction. The readonly attribute is NEVER removed by the test.
+        // RED on freeze: the two baseline fields are readonly, so real typing
+        // is rejected.
+        // =================================================================
+        {
+            const VP_NAME = 'Sintetico VP Uno';
+            const VP_TREATMENT = 'FAME sintetico VP';
+            const VP_DATE = '2021-07-09';
+            const FIELDS = [
+                ['#nombrePaciente', VP_NAME],
+                ['#tratamientoActual', VP_TREATMENT],
+                ['#fechaInicioTratamiento', VP_DATE],
+            ];
+            for (const vp of [
+                { label: '390', width: 390, height: 844 },
+                { label: '1280', width: 1280, height: 800 },
+            ]) {
+                const vpContext = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+                try {
+                    const gateEntry = await passSupportedGate(vpContext);
+                    gateEntry.consoleErrors.length = 0;
+                    gateEntry.pageErrors.length = 0;
+                    await gateEntry.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${ABSENT_ID_SHAPED}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+                    await gateEntry.page.waitForTimeout(1200);
+                    const errors = seguimientoErrors(gateEntry);
+
+                    const observed = {};
+                    for (const [selector, value] of FIELDS) {
+                        const visible = await gateEntry.page.evaluate((sel) => {
+                            const el = document.querySelector(sel);
+                            if (!el) return false;
+                            el.scrollIntoView({ block: 'center' });
+                            const r = el.getBoundingClientRect();
+                            if (r.width === 0 || r.height === 0) return false;
+                            if (r.bottom <= 0 || r.top >= window.innerHeight || r.right <= 0 || r.left >= window.innerWidth) return false;
+                            const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+                            return !!top && (top === el || el.contains(top));
+                        }, selector);
+                        let clickError = null;
+                        try {
+                            await gateEntry.page.click(selector, { timeout: 5000 });
+                        } catch (err) {
+                            clickError = (err && err.message) || String(err);
+                        }
+                        const focusedId = await gateEntry.page.evaluate(() => document.activeElement?.id || '');
+                        let fillError = null;
+                        try {
+                            await gateEntry.page.fill(selector, value, { timeout: 5000 });
+                        } catch (err) {
+                            fillError = (err && err.message) || String(err);
+                        }
+                        const typedValue = await gateEntry.page.evaluate(
+                            (sel) => document.querySelector(sel)?.value || '', selector);
+                        observed[selector] = { visible, clickError, focusedId, fillError, typedValue };
+                    }
+
+                    const checks = FIELDS.every(([selector, value]) => {
+                        const o = observed[selector];
+                        return o.visible
+                            && o.clickError === null
+                            && o.focusedId === selector.slice(1)
+                            && o.fillError === null
+                            && o.typedValue === value;
+                    }) && !errors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR));
+                    record(`A5 Gate4 narrow ${vp.label}px: name/treatment/date visible on screen, focusable and accepting real typing on the not_found journey`,
+                        checks,
+                        `observed=${JSON.stringify(observed)} consoleErrors=${JSON.stringify(errors)} ` +
+                        `pageErrors=${JSON.stringify(gateEntry.pageErrors)}`);
+                } finally {
+                    await vpContext.close();
+                }
+            }
         }
     } finally {
         await context.close();

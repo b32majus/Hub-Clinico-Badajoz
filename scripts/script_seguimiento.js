@@ -274,6 +274,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 nombreInput.value = '';
                 nombreInput.removeAttribute('readonly');
             }
+            // T22-02: the preexisting-treatment baseline fields become manually
+            // editable ONLY in this real `not_found` branch. Both stay OPTIONAL:
+            // they are cleared and never auto-completed with the visit date,
+            // today's date, a catalog drug, a dose, a schedule or any inferred
+            // value; `#fechaInicioTratamiento` is a historical start date supplied
+            // by the professional, not a visit date. Filling them creates NO
+            // therapeutic event and no validation.
+            const tratamientoInput = document.getElementById('tratamientoActual');
+            if (tratamientoInput) {
+                tratamientoInput.value = '';
+                tratamientoInput.removeAttribute('readonly');
+            }
+            const fechaInicioInput = document.getElementById('fechaInicioTratamiento');
+            if (fechaInicioInput) {
+                fechaInicioInput.value = '';
+                fechaInicioInput.removeAttribute('readonly');
+            }
             if (patologiaParam) {
                 HubTools.form.adaptarFormulario(patologiaParam);
             }

@@ -1999,6 +1999,14 @@ function recopilarDatosFormularioSeguimiento() {
 
     const idPaciente = getValue('idPaciente');
     const nombrePaciente = getValue('nombrePaciente');
+    // T22-02: explicit preexisting-treatment baseline keys. Verbatim typed
+    // values; '' when blank/absent (sentinels ''/0/NA/ND never collapse) and
+    // NEVER auto-completed with the visit date, today's date, a catalog drug,
+    // a dose, a schedule or any inferred value. The historical start date is
+    // supplied by the professional, not a visit date; filling these fields
+    // creates no START/SWITCH/ADD_ON event and no validation.
+    const tratamientoActual = getValue('tratamientoActual');
+    const fechaInicioTratamiento = getValue('fechaInicioTratamiento');
     const fechaVisita = getValue('fechaVisita');
     const sexoPaciente = normalizeSexoPacienteValue(getValue('sexoPaciente'));
     const profesional = document.getElementById('currentProfessional')?.textContent || 'No especificado';
@@ -2237,6 +2245,9 @@ function recopilarDatosFormularioSeguimiento() {
 
     return {
         idPaciente, nombrePaciente, fechaVisita, sexoPaciente, profesional,
+        // T22-02: explicit preexisting-treatment baseline (optional; verbatim
+        // typed values or '').
+        tratamientoActual, fechaInicioTratamiento,
         diagnosticoPrimario, diagnosticoSecundario,
         hlaB27, fr, apcc, ana,
         peso, talla, imc, ta,
