@@ -36,7 +36,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
 const XLSX = require(path.join(ROOT, 'vendor', 'sheetjs', 'xlsx.full.min.js'));
 
-const NEW_EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261010-txt-gate-20-exportmanager-r2';
+const NEW_EXPORT_MANAGER_TOKEN = 'modules/exportManager.js?v=20261010-txt-gate-21-csv-noapi-r1';
 const OLD_EXPORT_MANAGER_TOKEN_FRAGMENT = '20261009-export-safety-18-exportmanager-r1';
 const PREREQUISITE_MESSAGE = 'Debe exportar TXT de esta visita antes de exportar CSV.';
 const STORY8_MESSAGE = 'Los datos de la visita han cambiado desde el TXT. Vuelve a exportarlo y revisa que la historia cl\u00ednica refleje la versi\u00f3n actual antes de generar el CSV';

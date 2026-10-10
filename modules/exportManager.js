@@ -1545,10 +1545,13 @@ function openManualCopyModal(texto, titulo, mensaje) {
 
 function copyTextWithFallback(textToCopy, options) {
     const config = options || {};
-    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
-        return Promise.reject(new Error('API de portapapeles no disponible'));
-    }
-    return navigator.clipboard.writeText(textToCopy).catch(error => {
+    // T21-02: fallback manual compartido. El modal existente
+    // (`openManualCopyModal`) es el ÚNICO feedback de esta ruta; sin modal
+    // disponible se re-lanza el fallo veraz (rechazo), nunca un éxito falso.
+    // Misma semántica de resultados que antes: `false` == modal manual
+    // abierto (la copia automática no ocurrió); rechazo == no había vía
+    // manual. No altera el éxito real de la Clipboard API.
+    const openManualFallback = (error) => {
         const manualOpened = openManualCopyModal(config.manualText || textToCopy, config.modalTitle, config.modalMessage);
         if (!manualOpened) {
             throw error;
@@ -1557,7 +1560,16 @@ function copyTextWithFallback(textToCopy, options) {
             HubTools.utils.mostrarNotificacion(config.manualNotification, 'info');
         }
         return false;
-    });
+    };
+    if (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function') {
+        // T21-02: la AUSENCIA de Clipboard API (o de writeText) es un fallo de
+        // transporte que debe ofrecer la MISMA vía manual aceptada que el
+        // rechazo de la promesa — el modal CSV de 497 campos — en lugar de
+        // rechazar sin modal. No autoriza nada: el consumidor ve `false` y no
+        // muestra checklist de copia automática. Sin modal, fallo veraz.
+        return Promise.resolve().then(() => openManualFallback(new Error('API de portapapeles no disponible')));
+    }
+    return navigator.clipboard.writeText(textToCopy).catch(openManualFallback);
 }
 
 /**
@@ -2103,8 +2115,17 @@ function exportarTXT(datos) {
         // edición invalidante o una restauración la retira mientras tanto.
         txtGateAttemptInFlight = true;
         
-        // Intentar copiar al portapapeles automáticamente
-        navigator.clipboard.writeText(texto).then(() => {
+        // Intentar copiar al portapapeles automáticamente. T21-01: la
+        // ausencia de Clipboard API (o de writeText) es un FALLO DE TRANSPORTE
+        // que debe alcanzar el MISMO fallback ya aceptado para el rechazo de
+        // la promesa (el modal manual opt-in de copia/atestación), nunca un
+        // TypeError síncrono que aborte el recorrido antes de ofrecer la vía
+        // manual aceptada. No se alteran el intento en vuelo, las
+        // invalidaciones ni los callbacks.
+        const txtClipboardWrite = (!navigator.clipboard || typeof navigator.clipboard.writeText !== 'function')
+            ? Promise.reject(new Error('Clipboard API no disponible en este navegador'))
+            : navigator.clipboard.writeText(texto);
+        txtClipboardWrite.then(() => {
             if (txtGateAttemptId !== txtGateCopyAttempt) {
                 // Resultado en vuelo de una generación retirada (TXT más
                 // nuevo, edición invalidante o restauración): sin permiso
