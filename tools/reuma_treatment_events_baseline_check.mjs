@@ -11,14 +11,21 @@
  * Clinical invariant under witness: a first historical row registered with
  * `Tipo_Visita = 'Seguimiento'` and an explicit PREEXISTING treatment is a
  * baseline capture, not an observed start. The timeline must never fabricate
- * `treatment_start`, `treatment_change` or `biologic_start` from it. Explicit
+ * `treatment_start` or `treatment_change` from it. Explicit
  * starts (Primera Visita), genuine explicit decisions (cambiar), and rows
  * without the follow-up token keep their published behavior.
  *
  * Cases:
  *   C1  single follow-up row with treatment + plan biologic entry → no
- *       treatment_start, no biologic_start, no treatment_change (RED today:
- *       both start-family events are fabricated from the missing history).
+ *       treatment_start, no treatment_change. The T22-03 adjudication (P1-2)
+ *       narrows the ticket to `treatment_start` ONLY: the biological events
+ *       are OUT of its closed scope, so the PUBLISHED detectBiologicEvent
+ *       behavior is preserved — `biologic_start` IS emitted for a first-row
+ *       Seguimiento carrying a plan entry. That emission is recorded here as
+ *       an explicitly labelled CHARACTERIZATION of residual clinical risk
+ *       (published behavior preserved, NOT clinically endorsed; resolution
+ *       requires an explicit rule distinguishing preexisting baseline /
+ *       requested change / confirmed start).
  *   C2  single 'Primera Visita' row with treatment → treatment_start PRESENT
  *       (green control; must never regress).
  *   C3  first follow-up row with treatment + second follow-up row with an
@@ -133,11 +140,22 @@ function record(name, pass, detail) {
 
 const T1 = '2026-01-10';
 const T2 = '2026-03-10';
-const NO_START_FAMILY = ['treatment_start', 'biologic_start'];
 
 // =====================================================================
 // C1 — baseline follow-up row: preexisting treatment + plan biologic
-//      entry must not fabricate start/change events.
+//      entry. T22-03 adjudication (P1-2): the ticket's closed scope is
+//      `treatment_start` ONLY; biological events are out of scope, so the
+//      PUBLISHED detectBiologicEvent behavior is restored and kept:
+//      `biologic_start` IS emitted for a first-row Seguimiento with a plan
+//      entry.
+//
+//      CHARACTERIZATION of residual clinical risk — published behavior
+//      preserved, NOT clinically endorsed: this emission is derived from a
+//      plan entry on a baseline row without an explicit rule distinguishing
+//      preexisting baseline / requested change / confirmed start. Resolving
+//      that residual risk requires such an explicit rule; nothing is
+//      inferred here from `planBiologicoEntries`, `cambioBiologicoEntries`
+//      or the drug name beyond what the published detector already does.
 // =====================================================================
 {
     const { types, logs } = extractEventTypes([{
@@ -146,10 +164,10 @@ const NO_START_FAMILY = ['treatment_start', 'biologic_start'];
         Tratamiento_Actual: 'FAME sintetico A',
         planBiologicoEntries: [{ farmaco: 'Biologico sintetico X' }],
     }]);
-    const fabricated = NO_START_FAMILY.concat('treatment_change').filter((type) => types.includes(type));
-    record('C1 first Seguimiento row with preexisting treatment fabricates no start/change event',
-        fabricated.length === 0,
-        `types=${JSON.stringify(types)} fabricated=${JSON.stringify(fabricated)} legacyLogs=${JSON.stringify(logs.map((l) => l.message))}`);
+    const fabricated = ['treatment_start', 'treatment_change'].filter((type) => types.includes(type));
+    record('C1 first Seguimiento row: NO treatment_start/treatment_change; published biologic_start preserved (CHARACTERIZATION of residual clinical risk — published behavior preserved, NOT clinically endorsed)',
+        fabricated.length === 0 && types.includes('biologic_start'),
+        `types=${JSON.stringify(types)} fabricated=${JSON.stringify(fabricated)} biologicStartEmitted=${types.includes('biologic_start')} legacyLogs=${JSON.stringify(logs.map((l) => l.message))}`);
 }
 
 // =====================================================================

@@ -408,12 +408,8 @@
         if (currentBio.length === 0 && prevBio.length === 0) return events;
 
         // Biológicos nuevos que no estaban antes → biologic_start
-        // T22-03: en la primera fila histórica, un Seguimiento explícito con
-        // entrada biológica en el plan es baseline preexistente, no inicio
-        // observado → no se fabrica biologic_start retrospectivo.
-        var suppressFirstRowBiologicStart = !previousVisit && isExplicitFollowUpVisit(currentVisit);
         for (var i = 0; i < currentBio.length; i++) {
-            if (!suppressFirstRowBiologicStart && prevBio.indexOf(currentBio[i]) === -1) {
+            if (prevBio.indexOf(currentBio[i]) === -1) {
                 events.push({
                     type: EVENT_TYPES.BIOLOGIC_START,
                     description: 'Inicio de biológico: ' + currentBio[i],
