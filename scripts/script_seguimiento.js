@@ -180,7 +180,12 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         apcc: latestVisit?.apcc || normalizedBaseRecord.apcc || 'no-analizado',
         ana: latestVisit?.ana || normalizedBaseRecord.ana || 'no-analizado',
         tratamientoActual: normalizedBaseRecord.tratamientoActual || latestVisit?.tratamientoActual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
-        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || activeTreatment?.startDate || '',
+        // T22-02-C2: `Fecha_Inicio_Tratamiento` es una fecha de inicio
+        // histórica APORTADA, no una fecha de visita (spec story 4). Sólo el
+        // valor explícito del registro base; si falta, el campo queda en
+        // blanco — nunca la salida manufacturada de extractTreatmentHistory()
+        // (startDate = fecha de visita), ni la fecha de visita, ni hoy.
+        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || '',
         comorbilidades: extractComorbidities(latestVisit),
         manifestacionesExtra: extractManifestations(latestVisit),
         peso: latestVisit?.peso || normalizedBaseRecord.peso || '',

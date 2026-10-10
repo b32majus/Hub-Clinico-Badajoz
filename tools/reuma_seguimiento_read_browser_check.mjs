@@ -76,6 +76,39 @@ const KNOWN_NAME = 'Sintetico Espa Uno';
 // against the first visit's peso 78 / IMC 24.6, so a correct read is observable.
 const KNOWN_EXPECTED_VISITS = corpus.sheets.ESPA.filter((row) => row.ID_Paciente === KNOWN_ID).length;
 
+// T22-02-C2 synthetic found patients appended ONLY to the TEMP workbook
+// (data preparation; the frozen corpus fixture is never edited):
+//   DATELESS_ID  treatment present, NO Fecha_Inicio_Tratamiento. The visit
+//                date is ISO-shaped so the manufactured start date (which
+//                extractTreatmentHistory derives as startDate = visit date)
+//                is actually displayable in the type=date control — that is
+//                what makes the pre-fix RED observable in the browser.
+//   ISODATE_ID   explicit documented start date (ISO) that must flow through
+//                display and collector untouched (preservation witness).
+const DATELESS_ID = 'SYN-NODATE-001';
+const ISODATE_ID = 'SYN-ISODATE-001';
+const SYNTHETIC_ESPA_ROWS = [
+    {
+        ID_Paciente: DATELESS_ID,
+        Nombre_Paciente: 'Sintetico Sin Fecha Uno',
+        Sexo: 'M',
+        Fecha_Visita: '2026-02-10',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'FAME sintetico ND',
+    },
+    {
+        ID_Paciente: ISODATE_ID,
+        Nombre_Paciente: 'Sintetico Con Fecha Uno',
+        Sexo: 'F',
+        Fecha_Visita: '2026-03-10',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'FAME sintetico IF',
+        Fecha_Inicio_Tratamiento: '2026-01-10',
+    },
+];
+
 const results = [];
 function record(name, pass, detail) {
     results.push({ name, pass });
@@ -139,7 +172,9 @@ const workbookPath = path.join(tempDir, 'reuma_seguimiento_synthetic.xlsx');
 {
     const workbook = XLSX.utils.book_new();
     for (const [sheetName, rows] of Object.entries(corpus.sheets)) {
-        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
+        XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(
+            sheetName === 'ESPA' ? rows.concat(SYNTHETIC_ESPA_ROWS) : rows
+        ), sheetName);
     }
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         { Nombre_Completo: 'Sintetico Profesional Uno', Cargo: 'Reumatologia' },
@@ -755,6 +790,83 @@ try {
                     await vpContext.close();
                 }
             }
+        }
+
+        // =================================================================
+        // A6 (T22-02-C2) — found patient with a known treatment but NO
+        // documented start date: after prefill `#fechaInicioTratamiento` is
+        // EMPTY and `HubTools.form.recopilarDatosFormularioSeguimiento()
+        // .fechaInicioTratamiento === ''` (the collector is exactly what
+        // TXT/CSV consume). Spec story 4: the field stays blank, without a
+        // date auto-completed from the visit date, today or
+        // `extractTreatmentHistory()` output. RED on the T22-02 base: the
+        // prefill payload carries the manufactured start date (ISO-shaped
+        // synthetic visit date), so the browser displays and the collector
+        // returns the visit date. The corpus lives in per-tab sessionStorage,
+        // so this reuses the gate-passed tab exactly like the S2/A4 ok cases.
+        // =================================================================
+        {
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${DATELESS_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const datelessState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateReadonly: document.getElementById('fechaInicioTratamiento')?.readOnly === true,
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedFechaInicio: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const datelessErrors = seguimientoErrors(happy);
+            // ok-path proof the read really found the synthetic patient (the
+            // not_found branch would leave the treatment empty instead).
+            const okPath = datelessState.name === 'Sintetico Sin Fecha Uno' && datelessState.nameReadonly &&
+                datelessState.treatment === 'FAME sintetico ND';
+            record('A6 found patient without documented start date: prefill date field and collector stay empty (no manufactured/visit date)',
+                okPath && datelessState.dateReadonly &&
+                datelessState.dateValue === '' && datelessState.collectedFechaInicio === '' &&
+                !datelessErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)),
+                `okPath=${okPath} state=${JSON.stringify(datelessState)} consoleErrors=${JSON.stringify(datelessErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+        }
+
+        // =================================================================
+        // A7 (T22-02-C2) — found patients WITH an explicit documented start
+        // date: the historical supplied date flows through untouched
+        // (preservation witness; the correction must not alter it). Same
+        // gate-passed tab.
+        //   SYN-ISODATE-001 (ISO explicit date): the field shows exactly that
+        //   value and the collector returns it.
+        //   SYN-ESPA-001 (dd/mm/yyyy contract value 10/01/2026): the
+        //   payload keeps it verbatim (pinned by the migration checker);
+        //   the type=date control's own published sanitization leaves the
+        //   display empty and the collector mirrors the display — pre-existing
+        //   display behavior, unchanged by this correction and out of its
+        //   authorized surface (no date-format transformation is introduced).
+        // =================================================================
+        {
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${ISODATE_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const isoState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedFechaInicio: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const isoOkPath = isoState.name === 'Sintetico Con Fecha Uno' && isoState.treatment === 'FAME sintetico IF';
+
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${KNOWN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const knownState = await happy.page.evaluate(() => ({
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedFechaInicio: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            record('A7 found patients with explicit start dates: explicit ISO date shows and is collected verbatim; dd/mm/yyyy contract value stays display-empty/collected-empty as published',
+                isoOkPath && isoState.dateValue === '2026-01-10' && isoState.collectedFechaInicio === '2026-01-10' &&
+                knownState.dateValue === '' && knownState.collectedFechaInicio === '',
+                `iso=${JSON.stringify(isoState)} isoOkPath=${isoOkPath} known=${JSON.stringify(knownState)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
         }
     } finally {
         await context.close();
