@@ -105,6 +105,22 @@
  *   must perform NO side effect) and E9-E13 are added for findings F1-F4;
  *   after the correction every witness (D + E) must be PASS.
  *
+ * T21 NO-CLIPBOARD-API EXTENSION (TRAIN_NEXUS_REUMA_CLIPBOARD_NOAPI_21,
+ * frozen independent acceptance witnesses recorded BEFORE any production
+ * change on base 14d86a8):
+ *   N1  story 1 (T21-01) navigator.clipboard ABSENT: the real Exportar TXT
+ *       opens the real manual TXT modal with the full note and the opt-in
+ *       controls; merely opening/closing it never authorizes the CSV (PV).
+ *       Baseline RED (exportarTXT throws on the missing API before any modal).
+ *   N2  story 5 (T21-02) after a VALID TXT attestation, navigator.clipboard
+ *       ABSENT: the real Exportar CSV opens the 497-column manual CSV modal,
+ *       byte-equal to projectVisitAct497, with NO success checklist/toast (PV).
+ *       Baseline RED (copyTextWithFallback rejects on the missing API without
+ *       opening the modal). The TXT attestation uses the published reject
+ *       path so N2 isolates the CSV seam from T21-01.
+ * Baseline run on 14d86a8: N1 and N2 are RED for the missing modals (not a
+ * harness error); every pre-existing D/E witness stays PASS.
+ *
  * Method: only supported public seams (real PV/Seguimiento controls, real
  * shared modal, real clipboard, real notifications). Controlled clipboard
  * conditions via an init-script environment plant; the DOM is never tampered
@@ -159,6 +175,12 @@ const CLASSIFIED_CONSOLE_ERRORS = [
     'Error al copiar al portapapeles autom\u00e1ticamente',
     'Error al copiar desde el modal',
     'Error al copiar los datos al portapapeles',
+    // T21: the honest fail-closed console.error of the no-Clipboard-API CSV
+    // fallback (`copyTextWithFallback` rejects when the API is absent). It is
+    // the controlled failure class the T21-02 witness observes on baseline;
+    // it disappears once the manual CSV modal is offered (no success is ever
+    // claimed). Classified so D12 keeps measuring the same invariant.
+    'Error al copiar al portapapeles:',
     'Error en exportarTXT',
     'Error al exportar CSV',
 ];
@@ -214,6 +236,17 @@ const E10 = defineWitness('E10', 'Impl. decisions', 'invalidating edit while a T
 const E11 = defineWitness('E11', 'story 10', 'superseded TXT attempt\u0027s late rejection in the download branch: no download initiation, no confirmation dialog, no notification (PV)', 'RED');
 const E12 = defineWitness('E12', 'story 8', 'identity/context field edit after an authorized TXT: CSV blocked fail-closed with the EXACT discrepancy message, not the prerequisite (PV)', 'RED');
 const E13 = defineWitness('E13', 'story 6', 'download confirmation is a truthful initiated-download prompt, never a completed-download claim; accepting it still enables CSV (PV)', 'RED');
+
+// TRAIN 21 (TRAIN_NEXUS_REUMA_CLIPBOARD_NOAPI_21) frozen independent
+// acceptance witnesses — the manual TXT→CSV road when navigator.clipboard
+// (or writeText) is absent. Both are RED on the frozen base (14d86a8) because
+// neither modal is offered without the Clipboard API; N1 turns GREEN with
+// T21-01 (exportarTXT treats API-absence as a transport failure reaching the
+// existing opt-in modal) and N2 with T21-02 (copyTextWithFallback reuses
+// openManualCopyModal). Existing fail-closed/equality/memory witnesses above
+// are untouched.
+const N1 = defineWitness('N1', 'T21-01/story 1', 'clipboard API absent: real Exportar TXT opens the real manual TXT modal with the full note; closing without attestation keeps CSV blocked (PV)', 'RED');
+const N2 = defineWitness('N2', 'T21-02/story 5', 'clipboard API absent after a valid TXT attestation: real Exportar CSV opens the 497 manual CSV modal, never a success checklist/toast (PV)', 'RED');
 
 // ---------------------------------------------------------------------------
 // Storage sentinel fixtures (synthetic; planted at document start).
@@ -785,6 +818,20 @@ async function txtExportAwaitModal(page) {
     return readModalState(page);
 }
 
+/** T21 bounded variant: click the real TXT button and report whether the real
+ * manual modal opened WITHOUT throwing. The strict helper above stays in place
+ * for the journeys that legitimately require the modal; this one is used by
+ * the no-API witness whose baseline (missing modal) must be an honest RED, not
+ * a harness abort. */
+async function tryTxtExportAwaitModal(page, timeout = 8000) {
+    await page.click('#btnExportarTXT');
+    const opened = await page.waitForSelector('#textoModalContainer .texto-modal__title', { timeout })
+        .then(() => true)
+        .catch(() => false);
+    if (opened) await page.waitForTimeout(400);
+    return { opened, state: await readModalState(page) };
+}
+
 async function closeModal(page) {
     const present = await page.evaluate(() => !!document.getElementById('textoModalContainer'));
     if (!present) return;
@@ -835,7 +882,7 @@ try {
 
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
     console.log(`REUMA-TXT-GATE-MEMORY (chromium ${browser.version()}, node ${process.version})`);
-    console.log(`T20-01 + T20-02 + T20-03/C1 focused oracle. After T20-02 + the C1 correction: every witness (D0-D12, E1-E13) PASS.\n`);
+    console.log(`T20-01 + T20-02 + T20-03/C1 focused oracle. After T20-02 + the C1 correction: every witness (D0-D12, E1-E13) PASS. T21 frozen witnesses N1/N2 (no Clipboard API manual road) are RED on base 14d86a8 and turn GREEN with T21-01/T21-02.\n`);
 
     // =====================================================================
     // J-LEGACY-MARKER (PV): planted matching legacy marker + direct CSV
@@ -1104,6 +1151,136 @@ try {
                 witnessFail(D10, `CSV blocked (good) but no honest failure feedback after the TXT attempt`);
             } else {
                 witnessPass(D10, `no CSV authorization without clipboard success (via=${csvDeliveredVia(obs)}, downloads=${entry.downloads.length}, honestFeedback=${honestFeedback})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-NOAPI-TXT (PV, T21-01/story 1 frozen witness N1): navigator.clipboard
+    // is ABSENT — the real Exportar TXT must open the existing manual TXT
+    // modal with the full note; merely opening (or closing) it must NOT
+    // authorize the CSV. Baseline (14d86a8): exportarTXT throws on the missing
+    // API before any modal, so this witness is RED.
+    // =====================================================================
+    {
+        const jl = 'J-NOAPI-TXT';
+        const cip = 'SYN-GATE-NOAPI-T1';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip, isSeguimiento: false });
+            await armWriteMode(page, 'reject');
+            await checkpoint(page, jl, 'after-fill');
+
+            await page.evaluate(() => { window.__tg.clipboardAvailable = false; }); // no Clipboard API
+            const apiAbsent = await page.evaluate(() => !navigator.clipboard);
+
+            const { opened, state } = await tryTxtExportAwaitModal(page);
+            const controls = await findAttestationControls(page);
+            await checkpoint(page, jl, 'after-txt-noapi');
+
+            // Close without attesting; CSV must stay blocked (fail-closed).
+            await closeModal(page).catch(() => {});
+            const bodyAfterClose = await page.evaluate(() => document.body.innerText);
+            const bannedAfterClose = BANNED_SUCCESS_CLAIMS.filter((token) => bodyAfterClose.includes(token));
+            const obs = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv');
+
+            const fullNote = state.modalCount === 1 && typeof state.text === 'string'
+                && state.text.length > 0 && state.text.includes(cip);
+            const hasAttestationControls = controls.some((c) => c.kind === 'copiado') && controls.some((c) => c.kind === 'guardado');
+            if (!apiAbsent) {
+                witnessFail(N1, 'harness precondition failed: navigator.clipboard was NOT absent at the TXT click');
+            } else if (!opened || !fullNote || !state.title.includes(TXT_MODAL_TITLE_TOKEN)) {
+                witnessFail(N1, `clipboard API absent but the real Exportar TXT did NOT open the manual TXT modal with the full note (opened=${opened} modalCount=${state.modalCount} title=${JSON.stringify(state.title)} textLength=${state.text ? state.text.length : 0})`);
+            } else if (!hasAttestationControls) {
+                witnessFail(N1, `TXT modal opened but the opt-in attestation controls are missing (controls=${JSON.stringify(controls.map((c) => c.label))})`);
+            } else if (csvDelivered(obs) || bannedAfterClose.length > 0) {
+                witnessFail(N1, `merely opening/closing the no-API TXT modal authorized the CSV (via=${csvDeliveredVia(obs)}) and/or claimed success=${JSON.stringify(bannedAfterClose)}`);
+            } else {
+                witnessPass(N1, `no-Clipboard-API Exportar TXT opened the real manual TXT modal (${state.title}, ${state.text.length} chars incl. ${cip}) with the opt-in controls; closing without attestation kept CSV blocked (via=${csvDeliveredVia(obs)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-NOAPI-CSV (PV, T21-02/story 5 frozen witness N2): after a VALID TXT
+    // attestation, navigator.clipboard is ABSENT — the real Exportar CSV must
+    // open the 497-column manual CSV modal (byte-equal to
+    // projectVisitAct497) and must NOT show any success checklist/toast.
+    // The TXT attestation itself uses the already-published reject path so
+    // this witness isolates the CSV seam from T21-01. Baseline (14d86a8):
+    // copyTextWithFallback rejects on the missing API without opening the
+    // modal, so this witness is RED.
+    // =====================================================================
+    {
+        const jl = 'J-NOAPI-CSV';
+        const cip = 'SYN-GATE-NOAPI-T2';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_PRIMERA}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip, isSeguimiento: false });
+            await armWriteMode(page, 'reject'); // TXT modal via the published reject path
+            await checkpoint(page, jl, 'after-fill');
+
+            const modal = await txtExportAwaitModal(page);
+            const controls = await findAttestationControls(page);
+            const attestation = controls.find((c) => c.kind === 'guardado') || controls.find((c) => c.kind === 'copiado');
+            let attested = false;
+            let attestationToast = false;
+            if (attestation && attestation.id) {
+                await page.click(`#${attestation.id}`); // supported explicit attestation click
+                await page.waitForTimeout(500);
+                attestationToast = await page.evaluate(() => document.body.innerText.includes('TXT confirmado por el profesional'));
+                await closeModal(page).catch(() => { /* the control may close the modal itself */ });
+                attested = true;
+            }
+            await checkpoint(page, jl, 'after-attest');
+
+            await page.evaluate(() => { window.__tg.clipboardAvailable = false; }); // no Clipboard API for the CSV click
+            const apiAbsent = await page.evaluate(() => !navigator.clipboard);
+            const obs = await clickCsvAndObserve(page);
+            const post = await page.evaluate(() => ({
+                checklistCount: document.querySelectorAll('#postExportChecklist').length,
+            }));
+            await checkpoint(page, jl, 'after-csv');
+
+            const ref = await adapterReferenceRow(page, { kind: 'primera_visita', pathology: 'espa' });
+            const genericSuccessToast = obs.bodyText.includes('Datos copiados al portapapeles. Pega en la hoja:');
+            const csvModal497 = obs.modalTitle.includes(CSV_MODAL_TITLE_TOKEN)
+                && typeof obs.modalText === 'string' && obs.modalText.split('\t').length === CSV_FIELD_COUNT;
+            const byteEqual = ref.ok && csvModal497 && obs.modalText === ref.row;
+
+            if (!attested || !attestationToast) {
+                witnessFail(N2, `harness precondition failed: TXT modal attestation not observed (attested=${attested} toast=${attestationToast} modalCount=${modal.modalCount} controls=${JSON.stringify(controls.map((c) => c.label))})`);
+            } else if (!apiAbsent) {
+                witnessFail(N2, 'harness precondition failed: navigator.clipboard was NOT absent at the CSV click');
+            } else if (!csvModal497) {
+                witnessFail(N2, `clipboard API absent after a valid TXT attestation but Exportar CSV did NOT open the 497 manual CSV modal (modalCount=${obs.modalCount} title=${JSON.stringify(obs.modalTitle)} fields=${obs.modalText ? obs.modalText.split('\t').length : 0})`);
+            } else if (post.checklistCount !== 0 || genericSuccessToast) {
+                witnessFail(N2, `manual CSV modal shown but a false success indicator was present (checklist=${post.checklistCount} genericSuccessToast=${genericSuccessToast})`);
+            } else if (!ref.ok) {
+                witnessFail(N2, `manual CSV modal shown but the projectVisitAct497 reference is unavailable: ${ref.error}`);
+            } else if (!byteEqual) {
+                witnessFail(N2, `manual CSV modal row differs from projectVisitAct497 (modal=${obs.modalText.length} chars, reference=${ref.row.length} chars)`);
+            } else {
+                witnessPass(N2, `no-Clipboard-API Exportar CSV after TXT attestation opened the 497 manual CSV modal byte-equal to projectVisitAct497 with no success checklist/toast (via=${csvDeliveredVia(obs)})`);
             }
 
             auditCheckpoints(jl);
@@ -1839,7 +2016,7 @@ try {
     // =====================================================================
     // Final per-witness table + totals.
     // =====================================================================
-    console.log('\n=== T20-01 + T20-02 MEMORY GATE ORACLE — PER-WITNESS TABLE ===');
+    console.log('\n=== T20-01 + T20-02 + T21 MEMORY GATE ORACLE — PER-WITNESS TABLE ===');
     console.log('ID   | baseline | verdict | story            | contract');
     for (const w of witnesses) {
         console.log(`${w.id.padEnd(4)} | ${w.baseline.padEnd(8)} | ${w.verdict.padEnd(7)} | ${w.story.padEnd(16)} | ${w.contract}`);
