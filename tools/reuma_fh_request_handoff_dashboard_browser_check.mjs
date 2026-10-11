@@ -147,6 +147,14 @@ const SYN_PLAN_DRUG = 'Biologico sintetico X';
 // Train 25 corrector F1 witness drug: synthetic, distinct from SYN_PLAN_DRUG,
 // free of the forbidden claim tokens.
 const SYN_PLAN_SAME = 'Biologico sintetico Y';
+// Train 27 witness drug: accredited actual with an explicit start date,
+// synthetic and free of the forbidden claim tokens.
+const SYN_DATED_ACTUAL = 'Tratamiento sintetico acreditado Z';
+// Train 27 date-provenance witness drug: accredited physical actual whose
+// start date exists ONLY as the camelCase `fechaInicioTratamiento` alias key
+// (unproven provenance; no physical Fecha_Inicio_Tratamiento value).
+// Synthetic and free of the forbidden claim tokens.
+const SYN_ALIAS_DATED_ACTUAL = 'Farmaco sintetico alias V';
 const SYN_DIAG_SEC = 'Lumbalgia inflamatoria sintetica';
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reuma-fh-dashboard-'));
@@ -212,9 +220,54 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
         Tratamiento_Actual: SYN_PLAN_SAME,
         Biologico: SYN_PLAN_SAME
     };
+    // Train 27 witnesses (dashboard treatment truth). Synthetic rows, data
+    // preparation like every other journey (no DOM fabrication).
+    // D8 (accredited actual + explicit start): the physical
+    // Tratamiento_Actual column AND an explicit Fecha_Inicio_Tratamiento
+    // column are both present on the single row.
+    const rowDatedActual = {
+        ...commonRow,
+        ID_Paciente: 'SYN-DASH-D8',
+        Tratamiento_Actual: SYN_DATED_ACTUAL,
+        Fecha_Inicio_Tratamiento: '2026-01-15'
+    };
+    // D9 (literal 'No'): physical Tratamiento_Actual is literally 'No'
+    // with a plan column present; 'No' is the recorded value (not
+    // absence) and the plan must never be substituted for it. The negated
+    // actual keeps 'No' but never reads as active (card without
+    // date/duration, KPI status 'Sin tratamiento activo').
+    const rowLiteralNo = {
+        ...commonRow,
+        ID_Paciente: 'SYN-DASH-D9',
+        Tratamiento_Actual: 'No',
+        Biologico: SYN_PLAN_SAME
+    };
+    // D11 (contradictory date on a negated actual): physical
+    // Tratamiento_Actual is literally 'No' AND a physical
+    // Fecha_Inicio_Tratamiento value is present on the same row. The
+    // negated actual is authoritative: the contradictory date must never
+    // accredit a start date, a duration nor a 'Desde ...' status.
+    const rowNegatedWithDate = {
+        ...commonRow,
+        ID_Paciente: 'SYN-DASH-D11',
+        Tratamiento_Actual: 'No',
+        Fecha_Inicio_Tratamiento: '2026-03-05'
+    };
+    // D10 (date provenance): the physical Tratamiento_Actual column is
+    // present, but the start date exists ONLY as the camelCase
+    // `fechaInicioTratamiento` alias key — there is NO physical
+    // Fecha_Inicio_Tratamiento value on the row. The alias must not
+    // accredit a start date.
+    const rowAliasOnlyDate = {
+        ...commonRow,
+        ID_Paciente: 'SYN-DASH-D10',
+        Tratamiento_Actual: SYN_ALIAS_DATED_ACTUAL,
+        fechaInicioTratamiento: '2026-02-20'
+    };
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
-        rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp, rowF1PlanOnly, rowF1SameText
+        rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp, rowF1PlanOnly, rowF1SameText,
+        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate
     ]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
@@ -739,6 +792,30 @@ async function runBaselinePlanJourney(browser) {
 }
 
 /**
+ * Train 27 presentation read (READ ONLY): captures the three dashboard
+ * representations affected by the treatment-truth defect — active-treatment
+ * card (#activeTreatmentName/#activeTreatmentStartDate/#activeTreatmentDuration),
+ * treatment KPI (#kpiTratamientoValue/#kpiTratamientoStatus) and the visits
+ * table treatment column (last cell of each body row). Never mutates the
+ * DOM, never fabricates fixtures.
+ */
+async function readTreatmentPresentation(page) {
+    return page.evaluate(() => {
+        const text = (selector) => document.querySelector(selector)?.textContent.trim() ?? null;
+        const tableCells = [...document.querySelectorAll('#visitsTableBody tr td:last-child')]
+            .map((cell) => cell.textContent.trim());
+        return {
+            cardName: text('#activeTreatmentName'),
+            cardStart: text('#activeTreatmentStartDate'),
+            cardDuration: text('#activeTreatmentDuration'),
+            kpiValue: text('#kpiTratamientoValue'),
+            kpiStatus: text('#kpiTratamientoStatus'),
+            tableCells
+        };
+    });
+}
+
+/**
  * Train 25 corrector F1 witnesses (browser, real supported route only). Two
  * new journeys over the real import gate + real Read Port + real
  * #btnSolicitudFH + real artifact read (clipboard else fallback modal):
@@ -793,6 +870,190 @@ async function runProvenanceWitnessJourney(browser, mode) {
             fh.artifact.slice(0, 2200));
         record(`${label}: lista negativa legacy ausente del artefacto Solicitud FH`,
             blacklistHits(fh.artifact).length === 0, JSON.stringify(blacklistHits(fh.artifact)));
+        // Train 27: the FH artifact assertions above are untouched; what
+        // follows qualifies the three dashboard representations over the
+        // same real route (supported reads only).
+        if (isPlanOnly) {
+            // D6 (SYN-DASH-D6, plan-only): no representation may present
+            // the plan as active treatment; no date, no duration, never
+            // 'Activo' — neutral placeholders from the existing vocabulary.
+            const shown = await readTreatmentPresentation(page);
+            record(`${label}: tarjeta no presenta el plan como activo (nombre neutro)`,
+                shown.cardName === 'Sin tratamiento asignado' && !shown.cardName.includes(SYN_PLAN_SAME),
+                JSON.stringify(shown));
+            record(`${label}: tarjeta sin fecha ni duración inferidas`,
+                shown.cardStart === 'Sin registrar' && shown.cardDuration === '---',
+                JSON.stringify(shown));
+            record(`${label}: KPI sin activo (valor neutro, estado nunca 'Activo' ni 'Desde ...')`,
+                shown.kpiValue === '---' && shown.kpiStatus !== 'Activo' && !shown.kpiStatus.startsWith('Desde'),
+                JSON.stringify(shown));
+            record(`${label}: tabla de visitas no presenta el plan (celda neutra)`,
+                shown.tableCells.length === 1 && shown.tableCells[0] === '---' &&
+                !shown.tableCells[0].includes(SYN_PLAN_SAME),
+                JSON.stringify(shown.tableCells));
+            const historyText = await page.evaluate(() =>
+                document.querySelector('.dashboard-card--history')?.textContent ?? '');
+            record(`${label}: el plan permanece en su fuente propia (historial, sin borrar información)`,
+                historyText.includes(SYN_PLAN_SAME), historyText.slice(0, 300));
+            // The real CSV export shares the table projection (one
+            // authority); its Tratamiento column must carry the neutral
+            // placeholder, not the plan.
+            const [download] = await Promise.all([
+                page.waitForEvent('download', { timeout: 10000 }),
+                page.click('#exportVisitsBtn')
+            ]);
+            record(`${label}: Exportar visitas real descarga el historial de ${patientId}`,
+                download.suggestedFilename() === `historial_visitas_${patientId}.csv` &&
+                await download.failure() === null,
+                download.suggestedFilename());
+            const csvPath = await download.path();
+            const csv = fs.readFileSync(csvPath, 'utf8');
+            const csvLines = csv.split('\n').filter((line) => line.trim() !== '');
+            const treatmentIndex = csvLines[0].split(';').indexOf('Tratamiento');
+            const csvTreatments = csvLines.slice(1).map((line) => (line.split(';')[treatmentIndex] || '').trim());
+            record(`${label}: CSV "Tratamiento" lleva placeholder neutro, no el plan`,
+                treatmentIndex !== -1 && csvTreatments.length === 1 && csvTreatments[0] === '---' &&
+                !csv.includes(SYN_PLAN_SAME),
+                JSON.stringify(csvTreatments));
+        } else {
+            // D7 (same text, differentiated provenance): the explicit
+            // physical value is shown even though it equals the plan text
+            // (no text-equality dedupe), with no fabricated date/duration.
+            const shown = await readTreatmentPresentation(page);
+            record(`${label}: tarjeta muestra el actual explícito aunque coincida con el plan`,
+                shown.cardName === SYN_PLAN_SAME, JSON.stringify(shown));
+            record(`${label}: tarjeta sin fecha/duración fabricadas desde histórico o visita`,
+                shown.cardStart === 'Sin registrar' && shown.cardDuration === '---',
+                JSON.stringify(shown));
+            record(`${label}: KPI muestra el actual explícito con estado 'Activo' (sin fecha explícita)`,
+                shown.kpiValue === SYN_PLAN_SAME.split(' ')[0] && shown.kpiStatus === 'Activo',
+                JSON.stringify(shown));
+            record(`${label}: tabla de visitas muestra el actual explícito`,
+                shown.tableCells.length === 1 && shown.tableCells[0] === SYN_PLAN_SAME,
+                JSON.stringify(shown.tableCells));
+        }
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
+/**
+ * Train 27 accredited-actual journeys (browser, real supported route only):
+ *   - SYN-DASH-D8: physical Tratamiento_Actual PLUS explicit
+ *     Fecha_Inicio_Tratamiento → the card shows the accredited actual with
+ *     the explicit start date and a computed duration; KPI status 'Desde ...'
+ *     comes from the explicit field.
+ *   - SYN-DASH-D9: physical Tratamiento_Actual literally 'No' with a plan
+ *     column present → 'No' is shown as the recorded value (not equated
+ *     with absence) in card, KPI and table, but never reads as active: the
+ *     card shows no start date/duration and the KPI status is exactly
+ *     'Sin tratamiento activo' (never 'Activo', never 'Desde ...'); the
+ *     plan is never substituted.
+ *   - SYN-DASH-D10: physical Tratamiento_Actual PLUS only the camelCase
+ *     `fechaInicioTratamiento` alias key (no physical
+ *     Fecha_Inicio_Tratamiento value) → the alias does not accredit a start
+ *     date: the card shows no date/duration and the KPI keeps its
+ *     never-'Desde ...' status.
+ *   - SYN-DASH-D11: physical Tratamiento_Actual literally 'No' PLUS a
+ *     physical (contradictory) Fecha_Inicio_Tratamiento on the same row →
+ *     the negated actual is authoritative: 'No' is preserved but the
+ *     contradictory date must never surface as a start date, a duration or
+ *     a 'Desde ...' status anywhere in the projection.
+ */
+async function runAccreditedActualJourney(browser, patientId) {
+    const isDated = patientId === 'SYN-DASH-D8';
+    const isAliasDate = patientId === 'SYN-DASH-D10';
+    const isContradictoryNo = patientId === 'SYN-DASH-D11';
+    const label = isDated
+        ? 'T27 dashboard actual acreditado con fecha explícita'
+        : (isAliasDate
+            ? 'T27 dashboard actual físico con sólo fecha alias camelCase'
+            : (isContradictoryNo
+                ? 'T27 dashboard actual literal «No» con fecha física contradictoria'
+                : 'T27 dashboard actual literal «No» con plan presente'));
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.patientSummary && !!window.patientSummary.idPaciente,
+            null, { timeout: 15000 });
+        const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
+        record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
+        const shown = await readTreatmentPresentation(page);
+        if (isDated) {
+            // Expected rendering is derived in-page from the same pure
+            // formatter the dashboard uses (read only, no fabrication), so
+            // the assertion is timezone-robust.
+            const expected = await page.evaluate(() => ({
+                start: window.formatDate('2026-01-15'),
+                status: 'Desde ' + window.formatDate('2026-01-15').substring(3)
+            }));
+            record(`${label}: tarjeta muestra el actual acreditado con la fecha explícita`,
+                shown.cardName === SYN_DATED_ACTUAL && shown.cardStart === expected.start,
+                JSON.stringify({ shown, expected }));
+            record(`${label}: tarjeta calcula duración desde la fecha explícita (no placeholder)`,
+                !!shown.cardDuration && shown.cardDuration !== '---' && shown.cardDuration !== 'Sin registrar',
+                JSON.stringify(shown));
+            record(`${label}: KPI muestra el actual con estado 'Desde ...' de la fecha explícita`,
+                shown.kpiValue === SYN_DATED_ACTUAL.split(' ')[0] && shown.kpiStatus === expected.status,
+                JSON.stringify({ shown, expected }));
+            record(`${label}: tabla de visitas muestra el actual acreditado`,
+                shown.tableCells.length === 1 && shown.tableCells[0] === SYN_DATED_ACTUAL,
+                JSON.stringify(shown.tableCells));
+        } else if (isAliasDate) {
+            // D10 (date provenance): the physical actual is accredited, but
+            // the only date is the camelCase `fechaInicioTratamiento` alias,
+            // whose provenance is unproven. It must not supply the card
+            // date/duration nor a KPI 'Desde ...' status.
+            record(`${label}: tarjeta muestra el actual físico acreditado`,
+                shown.cardName === SYN_ALIAS_DATED_ACTUAL, JSON.stringify(shown));
+            record(`${label}: tarjeta sin fecha ni duración del alias camelCase (no acreditado)`,
+                shown.cardStart === 'Sin registrar' && shown.cardDuration === '---',
+                JSON.stringify(shown));
+            record(`${label}: KPI nunca 'Desde ...' desde el alias (estado 'Activo')`,
+                shown.kpiValue === SYN_ALIAS_DATED_ACTUAL.split(' ')[0] &&
+                shown.kpiStatus === 'Activo' && !shown.kpiStatus.startsWith('Desde'),
+                JSON.stringify(shown));
+            record(`${label}: tabla de visitas muestra el actual físico acreditado`,
+                shown.tableCells.length === 1 && shown.tableCells[0] === SYN_ALIAS_DATED_ACTUAL,
+                JSON.stringify(shown.tableCells));
+        } else {
+            // D9/D11 (literal 'No', human-authorized rule): the physical
+            // Tratamiento_Actual trimmed value is exactly 'No'. It is a
+            // recorded negation, not absence, so 'No' is preserved as the
+            // value in card, KPI and table — but it never reads as active:
+            // the card shows no start date/duration and the KPI status is
+            // exactly 'Sin tratamiento activo' (never 'Activo', never
+            // 'Desde ...'). D11 additionally carries a contradictory
+            // physical Fecha_Inicio_Tratamiento that the negated actual
+            // must not project.
+            record(`${label}: tarjeta muestra 'No' como valor registrado (no ausencia)`,
+                shown.cardName === 'No', JSON.stringify(shown));
+            record(`${label}: tarjeta sin fecha ni duración para el tratamiento negado`,
+                shown.cardStart === 'Sin registrar' && shown.cardDuration === '---',
+                JSON.stringify(shown));
+            record(`${label}: KPI muestra 'No' con estado exactamente 'Sin tratamiento activo' (nunca 'Activo' ni 'Desde ...')`,
+                shown.kpiValue === 'No' && shown.kpiStatus === 'Sin tratamiento activo' &&
+                shown.kpiStatus !== 'Activo' && !shown.kpiStatus.startsWith('Desde'),
+                JSON.stringify(shown));
+            record(`${label}: tabla muestra 'No'; el plan nunca sustituye al registrado`,
+                shown.tableCells.length === 1 && shown.tableCells[0] === 'No' &&
+                shown.tableCells[0] !== SYN_PLAN_SAME && shown.cardName !== SYN_PLAN_SAME,
+                JSON.stringify(shown.tableCells));
+            if (isContradictoryNo) {
+                // The physical Fecha_Inicio_Tratamiento on the negated row
+                // is a contradictory witness. It must never surface as a
+                // start date, duration or 'Desde ...' status, and the
+                // rendered projection must not contain it at all.
+                const contradictoryDate = await page.evaluate(() => window.formatDate('2026-03-05'));
+                record(`${label}: la fecha física contradictoria no se proyecta (ni fecha, ni duración, ni 'Desde ...')`,
+                    shown.cardStart !== contradictoryDate && shown.cardDuration === '---' &&
+                    !shown.kpiStatus.startsWith('Desde') && !JSON.stringify(shown).includes(contradictoryDate),
+                    JSON.stringify({ shown, contradictoryDate }));
+            }
+        }
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
     } finally {
@@ -811,6 +1072,10 @@ try {
     await runBaselinePlanJourney(browser);
     await runProvenanceWitnessJourney(browser, 'plan-only');
     await runProvenanceWitnessJourney(browser, 'same-text');
+    await runAccreditedActualJourney(browser, 'SYN-DASH-D8');
+    await runAccreditedActualJourney(browser, 'SYN-DASH-D9');
+    await runAccreditedActualJourney(browser, 'SYN-DASH-D10');
+    await runAccreditedActualJourney(browser, 'SYN-DASH-D11');
 } finally {
     if (browser) await browser.close();
     server.close();
