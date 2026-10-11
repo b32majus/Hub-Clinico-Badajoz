@@ -184,6 +184,8 @@ Reglas acordadas:
 - si el paciente cambia de fármaco o añade uno nuevo, debe existir una **nueva solicitud desde el servicio clínico y una nueva validación farmacoterapéutica en Farmacia**;
 - la leyenda actual que menciona sólo “cambio de fármaco” debe abarcar también incorporaciones tipo add-on cuando se implemente la mejora.
 
+**Estado de implementación publicado (2026-10-11; WO #637 / PR #638):** baseline de tratamiento **preexistente** capturado explícitamente en Seguimiento cuando el CIP consultado devuelve `not_found`, junto con nombre y fecha de inicio opcionales; `ok` conserva campos protegidos, `error/unavailable` no simulan ausencia de paciente. Fecha histórica conocida de formato `DD/MM/YYYY` válido se representa `YYYY-MM-DD` en UI/TXT/CSV 497; fecha no documentada permanece vacía. La primera fila `Seguimiento` no genera automáticamente `treatment_start` retrospectivo; no se infieren cambio, add-on ni validación FH. Auditoría sintética Cora 13/13 Read browser, 91/91 Solicitud FH, 6/6 eventos, 6/6 continuidad TXT→CSV; CI PR/postmerge/Pages success sobre merge `9b1812698edcc37beff241bd317fb2ee87985ca1`. **Sin QA clínica interactiva hospedada ni piloto.** La semántica heredada `biologic_start`, fechas derivadas en Dashboard y TypeError de biomarcador numérico NO se consideran corregidas. La decisión de nueva línea/add-on que sigue a continuación permanece `PENDIENTE_EQUIPO`.
+
 #### Decisión que debe volver a Farmacia — `PENDIENTE_EQUIPO`
 
 Cuando un paciente ya en seguimiento incorpora un segundo fármaco tras nueva solicitud + validación:
