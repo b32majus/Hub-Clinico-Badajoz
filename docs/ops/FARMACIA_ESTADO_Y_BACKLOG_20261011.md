@@ -1,0 +1,110 @@
+# PROMueve Nexus — Farmacia Hospitalaria: estado, pendientes y puertas de implementación
+
+**Corte:** 2026-10-11 · **WO documental:** [#647](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/647), `status:approved` · **Base canónica al preparar:** `promueve/nexus-v4@ba38474ea26cd064953b9aa4e8bc9f6448d77400` (Train 26, PR #646). **Estado de este documento:** propuesta de reconciliación en rama documental; no publicado en rama canónica hasta merge autorizado.
+
+**Objeto:** mapa de trabajo práctico, sin reabrir auditorías ni decisiones cerradas. Responde «qué existe, qué funciona, qué está publicado, qué falta, qué lo bloquea y cuál es su siguiente acción». No constituye un contrato clínico nuevo, aprobación de prioridad o autorización de piloto.
+
+## 1. Autoridad y reglas de interpretación
+
+**Orden de verdad:** instrucción/WO vigente → GitHub (rama, commits, PR, issue, código) → [INDEX](../INDEX.md), [WORK_ORDER_STATUS](WORK_ORDER_STATUS.md) → [ledger de producto](PROMUEVE_PRODUCT_STATUS_LEDGER.md) → [auditoría manual Sil 28/09 y adenda 01/10](audits/PROMUEVE_PRODUCT_REVIEW_SIL_20260928.md) (#495), [reconciliación 03/10](audits/PROMUEVE_PRODUCT_RECONCILIATION_20261003.md) (#501), [contrato N0 renovaciones](../contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md) (#509/PR #510), [deuda FH](FARMACIA_DEBT_REGISTER.md) y [backlog transversal](PROMUEVE_BACKLOG.md). Revalidar siempre GitHub live antes de ejecutar: los SHAs son una fotografía, no autoridad futura.
+
+Estados diferentes: **EXISTE EN CÓDIGO**, **CABLEADO**, **VISIBLE**, **DEMOSTRADO por interacción soportada**, **PUBLICADO**, **APTO PARA DEMO SINTÉTICA**, **APTO PARA PILOTO** (no acreditado aquí). `PENDIENTE_DECIDIDO` no equivale a WO autorizada; `PENDIENTE_QA` exige demostrar un defecto antes de tocarlo; `PENDIENTE_EQUIPO / PENDIENTE_FUENTE` no se cierran mediante inferencia técnica; `DEFERIDO` no es siguiente frontier por defecto.
+
+Puertas de preparación: **C-087 directo** solo para un cambio atómico con producto y aceptación ya cerrados; **Matt shaping/spec/tickets** para dividir y formalizar tras fijar contigo la interacción asistencial; **decisión humana/equipo clínico** para semántica abierta; **fuente** para contenido no autorizado; **QA focal** antes de llamar defecto a una observación.
+
+Invariantes: solicitado ≠ validado; validado ≠ dispensado; tratamiento previo ≠ inicio nuevo; plan ≠ tratamiento activo; devolución de Enfermería ≠ renovación actualizada por FH. El catálogo identifica/ayuda: nombre de fármaco, ausencia, tratamiento previo o código CIMA no permiten inferir dosis, vía, pauta, presentación, inducción, duración, switch, add-on, resultado, causalidad o inicio. La propuesta contextual de ficha técnica **solo** puede surgir de una selección explícita de presentación y contexto explícito cuando sea necesario, permaneciendo editable y sin sobrescribir decisión profesional. Sin pacientes reales en repo ni evaluación clínica no autorizada.
+
+## 2. Estado publicado y alcance de lo demostrado
+
+| Producto | Estado y evidencia publicada | Límite |
+| --- | --- | --- |
+| Home → Farmacia | #575/PR #580 `PUBLICADO`, navegación soportada | Readiness de demo sintética, no cualificación hospitalaria |
+| F4.1–F4.3, Read DTO/facade/cutovers FH | PR #430, #474, #478 `PUBLICADOS`; PV-001 solicitado≠validado resuelto #482/PR #484 | Lectura no equivale a escritura/persistencia |
+| F4.4 Pharmacy Act v1 | #487/PR #490 `PUBLICADO` | F4.5 DeliveryResult y F4.6 pendientes |
+| Inicio y Actividad del servicio→«Pendientes» | #549/#550/PR #555; composición #565/PR #566 `PUBLICADOS` | Renovación de receta / recogidas pendientes solo `? + Próxima fase`, no runtime |
+| Validación manual/Excel: claridad de entrada | Train26 #645/PR #646, merge `ba38474e` `PUBLICADO`; **seis textos** | `fhOrigenEntrada` y values/listeners intactos; preselección `demo_formacion` es deuda preexistente fuera del Train |
+| Primera Visita: solicitud/inducción | Capacidad UI existente y PV-001 corregido; `IMPLEMENTADO_PARCIAL / QA POR CASO` | Inducción solicitada ≠ validada; no declarar restauración o piloto sin recorrido soportado |
+| Export V2 técnico | Botones y contrato para demo, 152 columnas, copia técnica | No acredita backend, entrega o persistencia clínica; no ocultar por estética |
+| Estadísticas: análisis poblacional | **Seis** quick filters soportados; export CSV con cohorte formal por motor publicado | La búsqueda local de tabla no es semántica de cohorte; recuperación de otros filtros pendiente |
+| Informes V1 Cosentyx y Kisqali | #576/#579, PR #581/#582 y ampliaciones #598/#599/#602 PR #600/#601/#603: `PUBLICADOS / QA SINTÉTICA`; informes completos con XLSX calculado y detalle | Primera dispensación **explícita** para nuevo inicio; Kisqali ciclos evaluables ≠ consumo; presentación ≠ dosis |
+| Renovaciones | **N0, solo contrato** #509/PR #510 y PR #511 | Sin N1/N2/N3 funcionales; N4 diferido |
+| Solicitud Reuma→Farmacia textual | #528–#531/PR #532 `PUBLICADA` | No equivale a integración estructurada; Train25 corrige procedencia LOCAL, no publicado |
+| Últimos Trains | Train23 #641/PR #642 (merge `fefa7ee`), Train24 #643/PR #644 (merge `38b0a90`), Train26 #645/PR #646 (merge `ba38474e`) | Todas las afirmaciones de madurez limitadas a evidencia sintética y CI. **NO PILOTO** |
+
+**Nota Git y administración:** #643 y #645 siguen **OPEN** administrativamente aunque las PR #644/#646 estén MERGED. También #537 continúa abierto pese a PR #538. No confundir esos estados ni cerrar issues dentro de esta WO.
+
+## 3. Backlog de ejecución: qué necesita cada cosa
+
+### 3.1 Trabajo recortable y compatible con Train25
+
+| Pendiente | Estado probado | Puerta concreta y evidencia proporcional |
+| --- | --- | --- |
+| **`SIL-REV-018-A`: principio activo como filtro poblacional independiente** | `PENDIENTE_DECIDIDO`. `scripts/farmacia_estadisticas.js` usa `drugNames` + `activeIngredients` juntos en `qf-farmaco`; la proyección expone `activeIngredients` | Acordar combinación con filtro de fármaco comercial sin confundir molécula/marca, vacío y presentación; WO atómica en Estadísticas, conservar `currentCohort`, chips, conteos y CSV real filtrado; testigos negativos sintéticos. **Candidato de Train FH**, no autorizado por este documento |
+| **`SIL-REV-018-B`: PROM/instrumento/valor, validación, EA/severidad, causalidad, movimientos** | `AVAILABLE_NOT_FILTERABLE` por dimensión, según fuente; ya existen datos/representaciones parciales | Separar por dimensión. Decidir tipos, rangos y ausentes desde campos explícitos; Matt `to-spec/to-tickets` si hay varias unidades; QA de cohorte y export sin añadir filtros vacíos |
+| **`SIL-REV-018-C`: dosis, vía, pauta/frecuencia** | Atributos de líneas/movimientos visibles o exportables; no filtros soportados | Definir línea activa vs evento histórico, coexistencia de líneas, texto vs valor estructurado; no derivar pauta/dosis desde presentación. Shaping funcional focal → WO |
+| **`SIL-REV-018-D`: ventana temporal y 1/2/3 tratamientos simultáneos** | Requisito decidido; sin filtro publicado equivalente | Definir fecha/ventana y contar **líneas activas simultáneas explícitas**, no fármacos históricos; fijar semántica antes de spec/ticket |
+| **Dashboard FH: «Copiar fila Excel FH», «Vista completa»** | Ambos controles existen; `Vista completa` navega a longitudinal | `PENDIENTE_QA`: probar el recorrido real y preservar acciones útiles/deep-links; decidir retirada solo tras ver utilidad y continuidad |
+| **Dashboard FH: comorbilidades** | HTML y `renderComorbidities` están cableados | `PENDIENTE_QA`: verificar fuentes raw/demo, ausencia, representación y contexto soportado. No implementar un segundo componente sin defecto |
+| **Export V2: lenguaje de uso** | Es visible, pero muestra `Copiar Export v2 demo · 152 columnas` y ayuda técnica | Microcopy/ayuda acotada tras propuesta aceptada; preservar formato y copia; C-087 Volume y QA manual, no tocar exportador |
+| **`FH-DEBT-004`: tablas Cosentyx a 820/1080 px** | `OPEN/P2 PRESENTACIÓN`; desplazamiento horizontal interno sin aviso, sin pérdida de datos | WO visual separada, affordance/reflow y verificación real a 820 y 1080 px; no cambiar cálculos/XLSX |
+
+### 3.2 Trabajo con contrato parcial o decisión clínica material
+
+| Pendiente | Cerrado por autoridad actual | Falta para implementarlo |
+| --- | --- | --- |
+| **`SIL-REV-012/013` Renovaciones N1** | N0 publicado y congelado: `renewal_id/line_id`, `valid_until` con calidad/origen, ventana, estados, envelopes, errores y checker | WO N1 FH (detección+bandeja+export a Enfermería), oráculo negativo independiente, datos explícitos de caducidad y servicio; parámetros/umbrales del equipo; browser de bandeja. Sin fuente real: solo demo sintética con `unknown/not_evaluable` |
+| **Renovaciones N2** | Contrato canónico de ida/vuelta N0 | Layout Excel físico y columnas adicionales (`REN-OPEN-007`), round-trip y rechazo de campos prohibidos, idempotencia; integración después de N1 |
+| **Renovaciones N3** | N0 impide que aviso Enfermería prolongue automáticamente validez; terminales solo FH | `REN-OPEN-003` acto de actualización vs Pharmacy Act, historial/report_id, captura de validez y suspensión (`OCT-OPEN-010/011`), reconciliación posterior a N2 |
+| **N4 Enfermería renovaciones** | Dirección futura | `DEFERIDO` tras N1–N3 y requisitos reales; no ampliar MVP |
+| **`PENDIENTE_RECOGIDA`** | No recogida ≠ abandono/no adherencia/switch; solo dispensación registrada resuelve | `OCT-OPEN-001/002/003` ventana, revisión, destinatario/listado y fuente de dispensación; shaping asistencial atendido |
+| **Primera Visita/Seguimiento FH: tratamiento preexistente, nuevas líneas/add-on** | Baseline previo ≠ START; nueva solicitud y validación antes de nuevo medicamento | QA por ruta y fuente explícita; `OCT-OPEN-004` decide primera dispensación de add-on (PV por nueva línea vs Seguimiento+acto). HUMAN STOP ante modelado sin decisión |
+| **CIMA FH: propuesta contextual editable** | #501 distingue solicitud clínica por molécula de selección FH de medicamento/presentación concreta | Fuente ficha técnica versionada, indicación/contexto explícitos, mapeo inequívoco, no overwrite de edición profesional y no equiparar propuesta a validación. Shaping clínico + Matt specs |
+| **Biosimilares en solicitud clínica** | Principio activo/molécula en solicitud cuando proceda; FH elige marca/presentación | `OCT-OPEN-006` lista/fuente vigente comprobada; Derma→FH aún sin módulo publicado |
+| **`SIL-REV-001` nomenclatura SES** | Dirección: referencia global de programas/procesos FH | Fuente autorizada/versionada y vocabulario `service_id`; no mapear etiquetas por heurística |
+| **`SIL-REV-018-E` sexo, edad, comorbilidades, control/actividad clínica** | Auditoría: en raw `sex/age` vacíos, `clinical_activity` nula y comorbilidades no proyectadas | Fuente/proyección explícita y criterios clínicos; no simular filtros raw con datos de demo |
+| **`SIL-REV-020` medicación especial** | Necesidad registrada (ensayo, uso compasivo, extranjera/local) | DISCOVERY de fuente explícita/versionada o captura profesional; catálogo actual no equivale a clasificación |
+
+### 3.3 Deuda, discovery y evolución no priorizados automáticamente
+
+| Tema | Estado | Dependencia o condición |
+| --- | --- | --- |
+| Presets/recurrentes compartidos V2 `SIL-REV-002/019` | `DEFERIDO`; V1 Cosentyx/Kisqali ya completo | Shaping de propiedad, filtros guardados/versionados y gobierno; no Control Plane antes de necesidad |
+| PDF de informes [#597](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/597) | `OPEN`, no publicado | Elección de motor y QA real; XLSX no bloqueado |
+| CIMA autoactualización `SIL-REV-017` | `DEFERIDO, SEPARADO` | Pipeline API→normalización→diff/versionado→PR/revisión; no mezclarse con catálogo clínico |
+| Excel Bridge [#577](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/577) | `DISCOVERY`; #236 permanece OPEN pero es histórico | Resolver routing físico por patología frente a entrada común y Processor relacional; no reactivar #236 por número/etiqueta |
+| Interoperabilidad estructurada Reuma↔FH | `DISCOVERY_FIRST`, distinta del texto publicado | Contrato de entrega, identidad, retorno, validación, idempotencia; no presuponer escritura PreSalud/Farmatool |
+| F4.5/F4.6 | `PENDIENTE_FOUNDATION`; F4.5 técnicamente disponible | Priorización humana específica. F4.6 depende de F4.5 |
+| **`FH-DEBT-001`:** `sessionStorage` con Excel clínico importado | `OPEN P1 BEFORE_PILOT`, no impide demo sintética | Decidir seguridad/persistencia, mínima exposición, retención, borrado y continuidad Inicio→Validación. Sin piloto real hasta cierre demostrado |
+| Polling customSelect [#570](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/570) | `OPEN DEBT`, no P0/P1 clínico demostrado | Medición/consumidores y fix separado si aporta valor |
+| Búsqueda legacy no categorizada [#450](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/450) | `OPEN DEBT`, fuera de controles soportados | Decidir contrato de `search(query)` workbook-only/union; no mezclar con autocomplete o CIMA |
+| NEXUS-DEBT-004/005 | Abiertas no bloqueantes | Tratar solo ante presión/WO de seam; no limpieza general |
+| Dermatología y solicitud HS/PsO→FH | Dirección aceptada, implementación Nexus pendiente | Shaping clínico/UX propio y fuente biosimilares; no mezclar con Farmacia o V5 |
+
+## 4. Contrato de renovaciones y preguntas que NO están resueltas
+
+La [autoridad única N0](../contracts/FARMACIA_RENEWAL_HANDOFF_CONTRACT.md) es **PUBLICADA** por #509/PR #510 y reconciliada por PR #511; #446 está **CLOSED**. La secuencia de integración es estricta **N1 → N2 → N3**. Los registros `REN-OPEN-001..008` y `OCT-OPEN-010..013` permanecen abiertos según ese contrato: ventana/duraciones, nomenclatura, fuente/precedencia `valid_until`, Excel físico, acto terminal y organización del lote.
+
+La duración **configurada** no puede pasar a confirmada; ausencia de fecha = `not_evaluable`, no fecha inventada. Enfermería no puede escribir `ACTUALIZADA_POR_FH` ni `TRATAMIENTO_SUSPENDIDO`, ni modificar medicación, validez o identidad de línea. `RENEWED_REPORTED ≠ FH_UPDATED`. N1 debe congelar su propio testigo negativo derivado del N0 antes de implementar y demostrar bandeja por interacción soportada cuando exista. No hay otro shaping N0 obligatorio.
+
+## 5. Seguridad, representación y continuidad humana
+
+- El import FH puede persistir dataset clínico en `sessionStorage` (`FH-DEBT-001`). Este P1 es **antes de piloto**: no basta con tests verdes, y no debe «arreglarse» suprimiendo sin diseño el paso Inicio→Validación.
+- Una interacción nueva o modificada requiere comprobar, solo **si hay riesgo material**, `acción → respuesta/estado → siguiente acción → continuidad/cierre`. Si hay riesgo visual espacial real, prueba navegador a la anchura concreta; no imponer una auditoría UX general por defecto.
+- Un filtro poblacional debe operar sobre `currentCohort` y su CSV formal, con filtros combinados, cero resultados y tratamiento explícito de ausentes. `Buscar en tabla` no equivale a filtrar población.
+- Los informes V1 usan fixtures sintéticos y cuentan/calculan desde esos datos; no se publica como indicador de dispensación/consumo real ni se deduce dosis desde presentación.
+- GitHub Pages y CI green no significan QA clínica hospedada, datos reales o piloto. No incluir secretos, identificadores o exportaciones de pacientes.
+
+## 6. Secuencia operativa sugerida compatible con Train25 — **PROPUESTA, NO APROBACIÓN**
+
+1. **Train25 Reuma→FH**: LOCAL en corrección F1/F2/F3. No tocar `modules/pharmacyRequest.js`, `scripts/script_dashboard.js`, HTML/oráculos Reuma, rama o worktree; no usar su HEAD como verdad canónica.
+2. **Candidato Train FH**: `SIL-REV-018-A` filtro principio activo independiente, sobre `promueve/nexus-v4`: superficies `farmacia_estadisticas.html`, `scripts/farmacia_estadisticas.js` y oráculos Estadísticas; preservar contrato de `scripts/farmacia_statistics_cohort.js` salvo necesidad demostrada. **Cerrar con humano** cómo convive con `Fármaco`, y después Cora hardening C-087. El candidato no es todavía `READY_TO_LAUNCH` ni issue creado.
+3. **En paralelo al desarrollo FH**, ticketización N1 desde N0 congelado: shaping solo de las incógnitas materiales, no repetir auditoría ni rediseñar máquina de estados. Ante falta de fuente clínica, HUMAN STOP.
+4. Alternativas acotadas para demo: microcopy de Export V2 o `FH-DEBT-004` visual. Separar estética, reporte, clínica y persistencia.
+
+**Conflictos:** estos límites son compatibles con Train25 por rutas, siempre que no aparezca nuevo seam/consumidor compartido. No tocar `main` ni ramas ajenas. Al publicar cambios sobre una base nueva, componer candidato limpio y reconfirmar HEAD remoto, tests y QA.
+
+## 7. Trazabilidad administrativa y próxima actualización
+
+- #643 (Train24) y #645 (Train26) están **OPEN administrativamente** aunque #644/#646 MERGED. #537 también aparece abierto pese al merge de PR #538. El cierre de issues no está autorizado por esta WO.
+- Este maestro es **agregado navegable**, no reemplazo de hallazgos `SIL-REV`, decisiones #501, N0, deuda FH ni fichas de implementación. El backlog histórico no se «promueve» por copiarlo aquí.
+- Cada futura WO debe declarar decisión aprobada, HEAD/base, preflight, reversión, scope/NO TOCA, criterios, QA y política push/PR/merge; una propuesta no se documenta como publicada. La reconciliación tras publicación se hace en su WO apropiada.
