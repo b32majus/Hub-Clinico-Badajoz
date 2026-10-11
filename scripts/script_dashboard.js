@@ -1915,10 +1915,11 @@ function pickValue(source, keys) {
 }
 
 function formatBiomarker(value) {
-    if (!value) return 'No analizado';
+    if (value === null || value === undefined || value === '') return 'No analizado';
     const normalized = value.toString().toLowerCase();
     if (normalized === 'positivo' || normalized === 'positive') return 'Positivo';
     if (normalized === 'negativo' || normalized === 'negative') return 'Negativo';
+    if (typeof value === 'number') return String(value);
     return capitalizeFirst(value);
 }
 

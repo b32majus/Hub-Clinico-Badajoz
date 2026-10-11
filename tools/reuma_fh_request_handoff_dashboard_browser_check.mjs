@@ -415,6 +415,28 @@ async function runJourney(browser, label, patientId, expectLines) {
                 !dashboard.biomarkerClass.split(/\s+/).some((name) => ['positive', 'negative'].includes(name)),
                 JSON.stringify(dashboard));
             record(`${label}: región de gráficas y acciones siguientes disponibles`, dashboard.chartRegionVisible && dashboard.nextActionsPresent, JSON.stringify(dashboard));
+
+            const formattedValues = await page.evaluate(() => ({
+                zero: window.formatBiomarker(0),
+                nullValue: window.formatBiomarker(null),
+                undefinedValue: window.formatBiomarker(undefined),
+                empty: window.formatBiomarker(''),
+                positive: window.formatBiomarker('Positivo'),
+                negative: window.formatBiomarker('Negativo')
+            }));
+            record(`${label}: negativos de formato (0 literal; ausencia; Positivo/Negativo)`,
+                formattedValues.zero === '0' && formattedValues.nullValue === 'No analizado' &&
+                formattedValues.undefinedValue === 'No analizado' && formattedValues.empty === 'No analizado' &&
+                formattedValues.positive === 'Positivo' && formattedValues.negative === 'Negativo',
+                JSON.stringify(formattedValues));
+        } else {
+            const absentBiomarker = await page.evaluate(() => {
+                const el = document.getElementById('biomarkerFr');
+                return { text: el?.textContent.trim() ?? null, className: el?.className ?? '' };
+            });
+            record(`${label}: FR ausente permanece No analizado`,
+                absentBiomarker.text === 'No analizado' && absentBiomarker.className.split(/\s+/).includes('unknown'),
+                JSON.stringify(absentBiomarker));
         }
 
         const { artifact, via } = await pressSolicitudFHAndReadArtifact(page);
