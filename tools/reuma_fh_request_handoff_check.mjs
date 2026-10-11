@@ -442,6 +442,170 @@ record('E7.3 sin inferencia terapéutica (no START/SWITCH/ADD_ON, no validado)',
     }
 });
 
+// ================= Train 25 — procedencia actual vs plan (A1/A2, RED contra BASE) =================
+// Witness for TRAIN_NEXUS_REUMA_FH_TREATMENT_PROVENANCE_25. Judged on the
+// REAL artifact from the REAL generator. The TRATAMIENTO ACTUAL section is
+// delimited STRUCTURALLY (the paragraph that starts at the fixed
+// `TRATAMIENTO ACTUAL` header line, ended by the next blank-line-separated
+// paragraph boundary), never by matching plan label wording.
+const FORBIDDEN_CLAIM_TOKENS = [
+    'prescrito',
+    'prescripción',
+    'dispensad',
+    'iniciado',
+    'validado',
+    'VALIDADO',
+    'START',
+    'SWITCH',
+    'ADD_ON',
+    'solicitud efectuada',
+];
+// Synthetic explicit current treatment and a DIFFERENT synthetic plan drug.
+// Both fixture strings are free of the forbidden claim tokens above.
+const A1_CURRENT = 'Tratamiento actual sintético A (dato consignado)';
+const A1_PLAN_DRUG = 'PlanFarmaco Sintetico B';
+const A1_PLAN_DOSE = '20 mg';
+const A2_PLAN_DRUG = 'PlanFarmaco Sintetico C';
+const A2_PLAN_DOSE = '25 mg';
+
+const a1Fixture = {
+    ...BASE,
+    tratamientoActual: A1_CURRENT,
+    planBiologicosEntries: [{ farmaco: A1_PLAN_DRUG, dosis: A1_PLAN_DOSE }],
+};
+const a2Fixture = {
+    ...BASE,
+    planBiologicosEntries: [{ farmaco: A2_PLAN_DRUG, dosis: A2_PLAN_DOSE }],
+};
+delete a2Fixture.tratamientoActual;
+delete a2Fixture.Tratamiento_Actual;
+
+function extractTreatmentBlock(text) {
+    const lines = text.split('\n');
+    const start = lines.findIndex((l) => l.trim() === 'TRATAMIENTO ACTUAL');
+    if (start === -1) {
+        fail('estructura FH inesperada: falta la cabecera TRATAMIENTO ACTUAL');
+    }
+    // The section is one paragraph: it ends at the first blank line that
+    // precedes the following paragraph (fixed section order guarantees the
+    // next paragraph is another section or the footer).
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+        if (lines[i].trim() === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') {
+            end = i;
+            break;
+        }
+    }
+    return lines.slice(start, end).join('\n');
+}
+
+record('A1.1 dos fuentes distintas: TRATAMIENTO ACTUAL reproduce el valor explícito verbatim', () => {
+    const block = extractTreatmentBlock(generate(a1Fixture));
+    mustContain(block, A1_CURRENT, 'bloque TRATAMIENTO ACTUAL');
+});
+record('A1.2 dos fuentes distintas: el bloque ACTUAL no contiene el fármaco de plan', () => {
+    const block = extractTreatmentBlock(generate(a1Fixture));
+    mustNotContain(block, A1_PLAN_DRUG, 'bloque TRATAMIENTO ACTUAL');
+});
+record('A1.3 dos fuentes distintas: el plan (fármaco+dosis) permanece en el artefacto FUERA del bloque ACTUAL', () => {
+    const text = generate(a1Fixture);
+    const outside = text.replace(extractTreatmentBlock(text), '');
+    mustContain(outside, A1_PLAN_DRUG, 'plan fuera del bloque ACTUAL');
+    mustContain(outside, A1_PLAN_DOSE, 'dosis de plan fuera del bloque ACTUAL');
+});
+record('A1.4 dos fuentes distintas: el artefacto completo no lleva tokens de afirmación no prescrita', () => {
+    const text = generate(a1Fixture);
+    for (const tok of FORBIDDEN_CLAIM_TOKENS) mustNotContain(text, tok, 'afirmación no prescrita');
+});
+record('A2.1 sólo plan: el bloque ACTUAL no presenta el plan como tratamiento activo', () => {
+    const block = extractTreatmentBlock(generate(a2Fixture));
+    mustNotContain(block, A2_PLAN_DRUG, 'plan presentado como activo');
+});
+record('A2.2 sólo plan: el plan consignado (fármaco+dosis introducida) se conserva fuera del bloque ACTUAL', () => {
+    const text = generate(a2Fixture);
+    const outside = text.replace(extractTreatmentBlock(text), '');
+    mustContain(outside, A2_PLAN_DRUG, 'plan fuera del bloque ACTUAL');
+    mustContain(outside, A2_PLAN_DOSE, 'dosis de plan fuera del bloque ACTUAL');
+});
+record('A2.3 sólo plan: sin tokens de estado/afirmación fabricados', () => {
+    const text = generate(a2Fixture);
+    for (const tok of FORBIDDEN_CLAIM_TOKENS) mustNotContain(text, tok, 'afirmación no prescrita');
+});
+record('A2.4 sólo plan: la ausencia no se convierte en No informado/NO/pendiente', () => {
+    const text = generate(a2Fixture);
+    mustNotContain(text, 'No informado', 'ausencia→No informado');
+    if (/\bNO\b/.test(text)) fail('ausencia→NO fabricado');
+    mustNotContain(text, 'pendiente', 'ausencia→pendiente');
+});
+
+// ================= Train 25 corrector — testigos F2 y F3 (RED primero) =================
+// F2: un `No` explícito consignado en la fuente de tratamiento actual es
+// DATO consignado, no ausencia: se preserva literal en TRATAMIENTO ACTUAL;
+// sólo el campo verdaderamente ausente produce el placeholder fail-safe.
+// Los dos casos no pueden equipararse y de `No` no se deduce ningún estado
+// de dispensación ni validación.
+const T25_F2_NO_CAMEL = { ...BASE, tratamientoActual: 'No' };
+const T25_F2_NO_FISICA = { ...BASE, Tratamiento_Actual: 'no' };
+const T25_F2_AUSENTE = { ...BASE };
+delete T25_F2_AUSENTE.tratamientoActual;
+delete T25_F2_AUSENTE.Tratamiento_Actual;
+
+record('T25-F2.1 No explícito (camelCase): TRATAMIENTO ACTUAL preserva el dato consignado literal', () => {
+    const block = extractTreatmentBlock(generate(T25_F2_NO_CAMEL));
+    if (!/^[-·•\s]*No$/m.test(block)) fail(`el No explícito no se preserva como dato: ${JSON.stringify(block)}`);
+    mustNotContain(block, '(Sin tratamiento activo registrado)', 'No explícito equiparado a ausencia');
+});
+record('T25-F2.2 No explícito (columna física): TRATAMIENTO ACTUAL preserva el dato consignado literal', () => {
+    const block = extractTreatmentBlock(generate(T25_F2_NO_FISICA));
+    if (!/^[-·•\s]*no$/m.test(block)) fail(`el no explícito físico no se preserva como dato: ${JSON.stringify(block)}`);
+    mustNotContain(block, '(Sin tratamiento activo registrado)', 'no explícito equiparado a ausencia');
+});
+record('T25-F2.3 contraste: campo verdaderamente ausente produce el placeholder y nunca el dato No', () => {
+    const block = extractTreatmentBlock(generate(T25_F2_AUSENTE));
+    mustContain(block, '(Sin tratamiento activo registrado)', 'placeholder de ausencia');
+    if (/^[-·•\s]*[Nn]o\s*$/m.test(block)) fail('ausencia fabricada como dato No');
+    for (const text of [generate(T25_F2_NO_CAMEL), generate(T25_F2_NO_FISICA)]) {
+        for (const tok of FORBIDDEN_CLAIM_TOKENS) mustNotContain(text, tok, 'estado deducido desde No');
+    }
+});
+
+// F3: el fallback no puede perder fuentes distintas: todos los elementos
+// válidos no vacíos de la fase fallback seleccionada se conservan (p. ej.
+// Sistemico + FAME juntos, junto a un actual explícito), con sus dosis
+// introducidas expresamente y la precedencia plan*Entries > cambio*Entries >
+// selectores/columnas > tratamientoData.cambio intacta.
+const T25_F3_CURRENT = 'Tratamiento actual sintético F3 (dato consignado)';
+const T25_F3_SISTEMICO = 'Leflunomida sintetica';
+const T25_F3_SISTEMICO_DOSIS = '20 mg';
+const T25_F3_FAME = 'Metotrexato sintetico';
+const T25_F3_FAME_DOSIS = '15 mg';
+const t25F3Fixture = { ...BASE };
+delete t25F3Fixture.planBiologicosEntries;
+t25F3Fixture.tratamientoActual = T25_F3_CURRENT;
+t25F3Fixture.Sistemico = T25_F3_SISTEMICO;
+t25F3Fixture.Sistemico_Dosis = T25_F3_SISTEMICO_DOSIS;
+t25F3Fixture.FAME = T25_F3_FAME;
+t25F3Fixture.FAME_Dosis = T25_F3_FAME_DOSIS;
+
+record('T25-F3.1 fallback: Sistemico y FAME se conservan AMBOS con sus dosis introducidas', () => {
+    const text = generate(t25F3Fixture);
+    const outside = text.replace(extractTreatmentBlock(text), '');
+    mustContain(outside, T25_F3_SISTEMICO, 'Sistemico en fallback');
+    mustContain(outside, T25_F3_SISTEMICO_DOSIS, 'dosis Sistemico introducida');
+    mustContain(outside, T25_F3_FAME, 'FAME en fallback');
+    mustContain(outside, T25_F3_FAME_DOSIS, 'dosis FAME introducida');
+});
+record('T25-F3.2 fallback: el ACTUAL explícito permanece independiente (sin elevación del plan)', () => {
+    const block = extractTreatmentBlock(generate(t25F3Fixture));
+    mustContain(block, T25_F3_CURRENT, 'actual explícito');
+    mustNotContain(block, T25_F3_SISTEMICO, 'fallback elevado a activo');
+    mustNotContain(block, T25_F3_FAME, 'fallback elevado a activo');
+});
+record('T25-F3.3 fallback: sin tokens de afirmación fabricados', () => {
+    const text = generate(t25F3Fixture);
+    for (const tok of FORBIDDEN_CLAIM_TOKENS) mustNotContain(text, tok, 'afirmación no prescrita');
+});
+
 // ================= Observación de alcance (dashboard comparte generador) =================
 record('OBS dashboard_paciente comparte el mismo generador (sin cambio)', () => {
     mustContain(DASH_SRC, 'id="btnSolicitudFH"', 'dashboard botón');

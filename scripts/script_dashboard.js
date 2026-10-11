@@ -184,6 +184,17 @@ function attachDashboardActions(patientId) {
 
             // Construir objeto datos: spread completo para no perder campos,
             // luego override con aliases y campos mínimos normalizados.
+            // Train 25 F1 (procedencia del actual para ESTE payload
+            // exclusivamente): el camelCase tratamientoActual puede ser un
+            // alias sintetizado por el normalizador desde
+            // Biologico/FAME/Sistemico ANTES del Read Port, así que no es un
+            // testigo verificable de tratamiento activo y NO se promueve a
+            // dato explícito. Sólo la columna física Tratamiento_Actual que
+            // el spread del registro conserva acredita el actual consignado;
+            // si no existe, se consigna vacío (el generador mantiene su
+            // placeholder y nunca eleva el plan a activo). Las fuentes de
+            // plan/selección siguen fluyendo íntegras en el spread, también
+            // cuando su texto coincide con el actual.
             var datos = {
                 ...latestVisit,
                 ...summary,
@@ -192,7 +203,7 @@ function attachDashboardActions(patientId) {
                 nombrePaciente: summary.nombre || summary.nombrePaciente || latestVisit.nombrePaciente || latestVisit.Nombre_Paciente || '',
                 diagnosticoPrimario: summary.diagnosticoPrimario || latestVisit.diagnosticoPrimario || latestVisit.Diagnostico_Principal || window.currentPathology || '',
                 diagnosticoSecundario: summary.diagnosticoSecundario || latestVisit.diagnosticoSecundario || latestVisit.Diagnostico_Secundario || '',
-                tratamientoActual: summary.tratamientoActual || latestVisit.tratamientoActual || latestVisit.Tratamiento_Actual || ''
+                tratamientoActual: latestVisit.Tratamiento_Actual || ''
             };
 
             if (typeof HubTools !== 'undefined' && HubTools.pharmacy && typeof HubTools.pharmacy.copyRequestToClipboard === 'function') {

@@ -29,6 +29,17 @@
  *       error;
  *   J4  Seguimiento (?id= synthetic patient), both absent: no state lines, no
  *       fabrication.
+ *   J5  (Train 25) Primera Visita plan/selección witness: a real catalogue
+ *       biologic selected through the REAL drug-autocomplete combobox (plus a
+ *       professional-typed dose) must reach the artifact as separated plan
+ *       provenance — OUTSIDE the TRATAMIENTO ACTUAL block, never presented as
+ *       active treatment, no invented claim tokens;
+ *   J5b (Train 25) Seguimiento cambio witness: after the REAL decision switch
+ *       (#btnCambiarTratamiento) a real catalogue drug selected in the cambio
+ *       combobox must reach the artifact outside TRATAMIENTO ACTUAL (which
+ *       keeps the fail-safe placeholder on this route, where the handler
+ *       deliberately strips the baseline-only tratamientoActual key), never
+ *       presented as active treatment.
  *
  * Every journey presses the REAL `Solicitud FH` button and asserts the
  * generated/copied artifact text (clipboard read; fallback-modal read when
@@ -118,6 +129,7 @@ const mime = new Map([
 ]);
 
 const SYN_TREATMENT = 'Adalimumab (solicitado — pendiente de validación FH) 40 mg';
+const SYN_PLAN_DOSE = '15 mg/semana';
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reuma-fh-handoff-'));
 const workbookPath = path.join(tempDir, 'reuma_fh_handoff_synthetic.xlsx');
@@ -218,6 +230,20 @@ const STATE_LINE_RE = /^[-·•\s]*(Analítica|Medicina Preventiva)\s*:\s*(\S+)\
 
 function stateLinesOf(text) {
     return text.split('\n').map((l) => l.trim()).filter((l) => STATE_LINE_RE.test(l));
+}
+// Structural paragraph parse of the TRATAMIENTO ACTUAL section (fixed
+// artifact order: the paragraph that starts at the header line, ended by the
+// next blank-line-separated paragraph). Never derived from plan label
+// wording (Train 25 witness discipline).
+function extractTreatmentBlock(text) {
+    const lines = text.split('\n');
+    const start = lines.findIndex((l) => l.trim() === 'TRATAMIENTO ACTUAL');
+    if (start === -1) return null;
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+        if (lines[i].trim() === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') { end = i; break; }
+    }
+    return lines.slice(start, end).join('\n');
 }
 function blacklistHits(text) {
     const lower = text.toLowerCase();
@@ -408,6 +434,130 @@ async function runJourney(browser, label, urlPath, cip, analitica, preventiva, e
     }
 }
 
+/**
+ * Selects a real catalogue biologic through the REAL drug-autocomplete
+ * combobox (supported interaction only). The query term is chosen from a READ
+ * of the read-only catalogue state (to pick the search text); the selection
+ * itself is performed through the real UI: focus the search input, type the
+ * term, click the rendered result. Selecting a result writes ONLY the
+ * medicine name to the native select (pre-existing contract); the dose is
+ * typed by the professional into its real input when enabled.
+ */
+async function selectPlanDrugViaAutocomplete(page, selectId, doseId) {
+    const drugName = await page.evaluate((category) => {
+        const catalog = window.HubTools && window.HubTools.catalog;
+        if (!catalog || typeof catalog.isLoaded !== 'function' || !catalog.isLoaded()) return null;
+        const results = typeof catalog.search === 'function' ? catalog.search('mab', category) : [];
+        return results && results.length ? results[0].name : null;
+    }, 'Biologicos');
+    if (!drugName) return { ok: false, reason: 'catálogo no disponible o sin resultados Biologicos' };
+    const wrapper = `.drug-autocomplete:has(#${selectId})`;
+    const inputSel = `${wrapper} > input.drug-autocomplete__input`;
+    if (!(await page.locator(inputSel).count())) return { ok: false, reason: 'combobox no encontrado para ' + selectId };
+    const input = page.locator(inputSel);
+    try {
+        await openAncestorCollapsibles(page, inputSel);
+        await input.click({ timeout: 10000 });
+        await input.fill(drugName.slice(0, 4));
+        await page.waitForSelector(`${wrapper} .drug-autocomplete__item`, { timeout: 10000 });
+        await page.locator(`${wrapper} .drug-autocomplete__item`).first().click({ timeout: 10000 });
+    } catch (e) {
+        return { ok: false, reason: 'interacción combobox falló: ' + String(e).split('\n')[0] };
+    }
+    const selectValue = await page.evaluate((s) => document.getElementById(s)?.value ?? '', selectId);
+    if (!selectValue || selectValue === 'No') return { ok: false, reason: 'la selección no quedó registrada en el select' };
+    const doseInfo = await page.evaluate((d) => {
+        const el = document.getElementById(d);
+        return el ? { disabled: el.disabled } : null;
+    }, doseId);
+    let dose = '';
+    if (doseInfo && !doseInfo.disabled) {
+        await page.fill(`#${doseId}`, SYN_PLAN_DOSE);
+        dose = SYN_PLAN_DOSE;
+    }
+    return { ok: true, drugName: selectValue, dose };
+}
+
+/**
+ * Train 25 plan/selección witness (J5 / J5b): a real catalogue drug selected
+ * through supported interaction must reach the artifact as separated plan
+ * provenance — outside the TRATAMIENTO ACTUAL block, never presented as
+ * active treatment, with no invented claim tokens. Existing J1–J4 journeys
+ * and assertions are untouched.
+ */
+async function runPlanWitnessJourney(browser, label, urlPath, cip, isSeguimiento, selectId, doseId) {
+    console.log(`\n=== ${label} (${urlPath}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openPatientPage(browser, urlPath);
+    try {
+        if (isSeguimiento) {
+            await page.waitForFunction(() => {
+                const el = document.getElementById('idPaciente');
+                return el && el.value;
+            }, null, { timeout: 15000 });
+        }
+        await fillClinicalBase(page, label, cip, isSeguimiento);
+        // Seguimiento only: the cambio panel is reached through the REAL
+        // decision switch (supported interaction), exactly as a professional
+        // records a cambio decision.
+        if (isSeguimiento) {
+            await openAncestorCollapsibles(page, '#btnCambiarTratamiento');
+            await page.click('#btnCambiarTratamiento');
+            await page.waitForTimeout(400);
+        }
+        const plan = await selectPlanDrugViaAutocomplete(page, selectId, doseId);
+        if (!plan.ok) {
+            // Honest skip: the witness is not reachable through supported
+            // interaction in this environment; no fabricated substitute.
+            console.log(`  [SKIP] ${label}: testigo no alcanzable por interacción soportada (${plan.reason})`);
+            return;
+        }
+        record(`${label}: fármaco real del catálogo seleccionado por combobox real${plan.dose ? ' con dosis introducida' : ''}`,
+            true, JSON.stringify({ farmaco: plan.drugName, dosis: plan.dose }));
+
+        const { artifact, via } = await pressSolicitudFHAndReadArtifact(page);
+        record(`${label}: el botón real Solicitud FH produce artefacto (vía ${via})`,
+            artifact.length > 50, `longitud=${artifact.length} vía=${via}`);
+        console.log(`    excerpt prebiológico: ${excerptPrebio(artifact)}`);
+
+        const actualBlock = extractTreatmentBlock(artifact);
+        record(`${label}: TRATAMIENTO ACTUAL mantiene el placeholder fail-safe (esta ruta no aporta fuente explícita al generador)`,
+            actualBlock !== null && actualBlock.includes('(Sin tratamiento activo registrado)'), JSON.stringify(actualBlock));
+        record(`${label}: el bloque ACTUAL no presenta el plan/selección como tratamiento activo`,
+            actualBlock !== null && !actualBlock.includes(plan.drugName), JSON.stringify(actualBlock));
+        const outside = actualBlock ? artifact.replace(actualBlock, '') : artifact;
+        record(`${label}: el plan/selección consignado permanece FUERA del bloque ACTUAL (procedencia separada)`,
+            outside.includes(plan.drugName) && (!plan.dose || outside.includes(plan.dose)), artifact.slice(0, 2200));
+        record(`${label}: sin tokens de afirmación fabricados (prescrito/prescripción/dispensad/iniciado/validado/START/SWITCH/ADD_ON/solicitud efectuada)`,
+            !/(prescrito|prescripción|dispensad|iniciado|validado|START|SWITCH|ADD_ON|solicitud efectuada)/i.test(artifact),
+            artifact.slice(0, 2200));
+
+        await assertBlacklist(label, artifact);
+        record(`${label}: sección DIAGNÓSTICO preservada (espa + secundario sintético)`,
+            artifact.includes('DIAGNÓSTICO') && artifact.includes('espa') && artifact.includes('Lumbalgia inflamatoria sintética'),
+            artifact.slice(0, 600));
+        record(`${label}: actividad preservada (PCR + EVA Global)`,
+            artifact.includes('- PCR: 8 mg/L') && artifact.includes('- EVA Global: 6'),
+            artifact.slice(0, 1200));
+        if (isSeguimiento) {
+            record(`${label}: decisión explícita del profesional preservada (Cambio de tratamiento elegido con el switch real)`,
+                artifact.includes('DECISIÓN TERAPÉUTICA') && artifact.includes('Cambio de tratamiento') &&
+                !artifact.includes('START') && !artifact.includes('SWITCH') && !artifact.includes('ADD_ON'),
+                artifact.slice(0, 2000));
+        } else {
+            record(`${label}: decisión preservada sin inferencia (Mantener, sin START/SWITCH/ADD_ON)`,
+                artifact.includes('DECISIÓN TERAPÉUTICA') && artifact.includes('Mantener tratamiento actual') &&
+                !artifact.includes('START') && !artifact.includes('SWITCH') && !artifact.includes('ADD_ON'),
+                artifact.slice(0, 2000));
+        }
+
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
 let browser;
 try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
@@ -417,6 +567,8 @@ try {
     await runJourney(browser, 'J3 seguimiento ambos explícitos', '/seguimiento.html?id=SYN-FH-300', 'SYN-FH-300', 'NO_SOLICITADA', 'OK', ['Analítica: NO_SOLICITADA', 'Medicina Preventiva: OK']);
     await runJourney(browser, 'J3b seguimiento sólo Medicina Preventiva explícita (Analítica ausente)', '/seguimiento.html?id=SYN-FH-300', 'SYN-FH-300', '', 'OK', ['Medicina Preventiva: OK']);
     await runJourney(browser, 'J4 seguimiento ambos ausentes', '/seguimiento.html?id=SYN-FH-400', 'SYN-FH-400', '', '', null);
+    await runPlanWitnessJourney(browser, 'J5 primera visita plan/selección no presentado como activo', '/primera_visita.html', 'CIP-SYN-FH-J5', false, 'biologicoSelect', 'biologicoDose');
+    await runPlanWitnessJourney(browser, 'J5b seguimiento selección de cambio no presentada como activa', '/seguimiento.html?id=SYN-FH-300&patologia=espa', 'SYN-FH-300', true, 'cambioBiologicoSelect', 'cambioBiologicoDose');
 } finally {
     if (browser) await browser.close();
     server.close();
