@@ -38,9 +38,9 @@ Human/project authority owns cost policy. Cora recommends risk class from accept
 | go | volume | `atenea-go` |
 | go | complex | `atenea-go` |
 
-Free bindings: `docs/ATENEA_FREE_PROFILE_V0.md` + `docs/ATENEA_FREE_MODEL_CATALOG_V0.md`.
+`free_only` is an Atenea upstream cost dimension but is **not bound as local Nexus agents**; the table preserves upstream role names as provenance, not a callable fallback. Adding that route requires separate human-approved configuration.
 
-Go bindings: `docs/ATENEA_GO_PROFILE_V0.md` + `docs/ATENEA_GO_MODEL_CATALOG_V0.md`. Go remains a qualification candidate. Neither profile has silent fallback.
+Go bindings: the **locally readable**, bounded `docs/ATENEA_GO_PROFILE_V0.md` plus the exact `.opencode/agents/*go*.md` frontmatter. Go Volume/Complex are operationally qualified in Atenea C-087 for routine bounded work, **not** a Standard parity claim; no silent fallback.
 
 ## Risk selection
 
@@ -60,13 +60,17 @@ Matt remains upstream-owned. The selected primary coordinator delegates implemen
 
 Review start closes the originating implementer. Findings go to fresh bound correctors; at most two finding-scoped attempts are allowed for the same envelope. No repeated broad review/fix carousel.
 
-Coordinators delegate using a **child-readable authority envelope**: prefer a repo-local durable handoff reference; when required authority is external/inaccessible, inline the compact phase-specific capsule from `CHILD_AUTHORITY_CAPSULE_V1.md`. Never require a child verdict to read `/outbox`, `/tmp`, another worktree or another denied external directory. Full handoff/policy duplication remains forbidden.
+Coordinators delegate using a **child-readable authority envelope**: prefer a repo-local durable handoff reference; when required authority is external/inaccessible, inline a compact phase-specific authority capsule from current Atenea C-087 when the required source is not locally readable. Never require a child verdict to read `/outbox`, `/tmp`, another worktree or another denied external directory. Full handoff/policy duplication remains forbidden.
 
 ## Conditional safeguards
 
-Specialized product/evidence safeguards are activated by the accepted handoff or a concrete review finding. They are not inferred as always-on work from profile/risk class alone. See `docs/PRODUCT_FIDELITY_GATES_V1.md`.
+Specialized product/evidence safeguards are activated by the accepted handoff or a concrete review finding. They are not inferred as always-on work from profile/risk class alone. Reference only the actual named, accessible safeguard in the accepted handoff/finding; if the source is external/inaccessible, transport just its relevant phase-specific capsule, not its entire corpus.
 
 A writer implements the supplied envelope. It does not perform open-ended sibling-consumer auditing. If it discovers a material out-of-envelope impact incidentally, it reports and STOPs.
+
+## PR #143 preparation boundary (Cora-side; not an agent gate)
+
+When the human has approved a bounded task, Cora does not repeat frontier selection, repair unrelated baseline tests in preflight or enlarge a microfix into a strategic Train. Preflight identifies only material launch blockers; the writer performs ordinary implementation/discovery. Preserve risk-proportional proof and clinical safety. This changes neither Matt's internal lifecycle nor the reviewers' responsibilities.
 
 ## Evidence economy
 
@@ -81,7 +85,7 @@ volume  → nan/deepseek-v4-flash
 complex → nan/glm5.3-flash#high
 ```
 
-The OpenCode 2.0.22 runtime uses a 220k effective context budget for both long-running NaN writers with automatic compaction and ~15k recent verbatim retention, making compaction due around ~198k. This is an airbag, not a target context size and not permission to weaken required evidence.
+Native OpenCode V2 2.0.26 is the promoted current runtime (2.0.22 is the historical baseline). The inherited NaN writer context guard uses a 220k effective context budget for both long-running NaN writers with automatic compaction and ~15k recent verbatim retention, making compaction due around ~198k. This is an airbag, not a target context size and not permission to weaken required evidence.
 
 ## No quota router
 

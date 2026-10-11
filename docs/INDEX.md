@@ -4,6 +4,7 @@
 | --- | --- |
 | Última actualización | 2026-10-11 |
 | Repo | `b32majus/Hub-Clinico-Badajoz` |
+| Arnés Atenea C-087 (referencia local) | [Routing de agentes](ATENEA_EXECUTION_ROUTING_V0.md) y [GO legible dentro del worktree](ATENEA_GO_PROFILE_V0.md); preparación ligera PR #143 (Cora-side), con modelos, permisos y garantías clínicas sin cambios. La adopción en Nexus requiere publicación de esta rama; GitHub live prevalece. |
 | Línea Farmacia de procedencia | `origin/recovery/farmacia-pr-replay-20260727`; **HISTORICAL** para nuevo desarrollo desde el merge de PR #381; conserva la historia funcional Farmacia y la trazabilidad del snapshot |
 | Autoridad canónica de desarrollo (F0.2) | `origin/promueve/nexus-v4` ACTIVE desde PR #381. Corte de producto 2026-10-11: `124c12b623f12885347c8e6c79dd965ac570df54` (Train27 #653/PR #654), previo `de65dca6b8939fd9e64207f713a985fe2c9dda60` (Train28 #651/PR #652); anteriores Train25 #649/PR #650 (`8a4c346b`) y Train26 #645/PR #646 (`ba38474e`). GitHub live prevalece. [Transición canónica](ops/PROMUEVE_NEXUS_CANONICAL_TRANSITION_20260924.md). |
 | Tip Git de recovery (volátil) | Consultar GitHub live; verificado 2026-09-24 tras PR #374: `771fb80c5081aa974b86d6a0119ab30059970a25`. Puede avanzar por commits documentales/administrativos sin cambiar producto. |
