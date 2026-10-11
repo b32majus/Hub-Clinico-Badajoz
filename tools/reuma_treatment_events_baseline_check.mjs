@@ -20,12 +20,12 @@
  *       treatment_start, no treatment_change. The T22-03 adjudication (P1-2)
  *       narrows the ticket to `treatment_start` ONLY: the biological events
  *       are OUT of its closed scope, so the PUBLISHED detectBiologicEvent
- *       behavior is preserved — `biologic_start` IS emitted for a first-row
- *       Seguimiento carrying a plan entry. That emission is recorded here as
- *       an explicitly labelled CHARACTERIZATION of residual clinical risk
- *       (published behavior preserved, NOT clinically endorsed; resolution
- *       requires an explicit rule distinguishing preexisting baseline /
- *       requested change / confirmed start).
+ *       behavior WAS preserved in Train22 — `biologic_start` was emitted
+ *       for a first-row Seguimiento carrying a plan entry, as a historical
+ *       CHARACTERIZATION, NOT a clinically endorsed start.
+ *       Train24 changes this one explicit-first-Seguimiento scenario to a
+ *       RED acceptance witness: no invented biologic_start from a plan.
+ *       Prior Train22 witness provenance remains in Git history.
  *   C2  single 'Primera Visita' row with treatment → treatment_start PRESENT
  *       (green control; must never regress).
  *   C3  first follow-up row with treatment + second follow-up row with an
@@ -146,16 +146,11 @@ const T2 = '2026-03-10';
 //      entry. T22-03 adjudication (P1-2): the ticket's closed scope is
 //      `treatment_start` ONLY; biological events are out of scope, so the
 //      PUBLISHED detectBiologicEvent behavior is restored and kept:
-//      `biologic_start` IS emitted for a first-row Seguimiento with a plan
-//      entry.
-//
-//      CHARACTERIZATION of residual clinical risk — published behavior
-//      preserved, NOT clinically endorsed: this emission is derived from a
-//      plan entry on a baseline row without an explicit rule distinguishing
-//      preexisting baseline / requested change / confirmed start. Resolving
-//      that residual risk requires such an explicit rule; nothing is
-//      inferred here from `planBiologicoEntries`, `cambioBiologicoEntries`
-//      or the drug name beyond what the published detector already does.
+//      `biologic_start` WAS emitted for the first historical Seguimiento
+//      carrying a plan entry. This was *characterization*, never approval.
+//      Train24 RED: a first explicit Seguimiento is baseline recording, NOT
+//      proof of new biologic start, irrespective of plan presence. Preserve
+//      prior T22 evidence in Git history and avoid global detector rewrites.
 // =====================================================================
 {
     const { types, logs } = extractEventTypes([{
@@ -164,10 +159,10 @@ const T2 = '2026-03-10';
         Tratamiento_Actual: 'FAME sintetico A',
         planBiologicoEntries: [{ farmaco: 'Biologico sintetico X' }],
     }]);
-    const fabricated = ['treatment_start', 'treatment_change'].filter((type) => types.includes(type));
-    record('C1 first Seguimiento row: NO treatment_start/treatment_change; published biologic_start preserved (CHARACTERIZATION of residual clinical risk — published behavior preserved, NOT clinically endorsed)',
-        fabricated.length === 0 && types.includes('biologic_start'),
-        `types=${JSON.stringify(types)} fabricated=${JSON.stringify(fabricated)} biologicStartEmitted=${types.includes('biologic_start')} legacyLogs=${JSON.stringify(logs.map((l) => l.message))}`);
+    const fabricated = ['treatment_start', 'treatment_change', 'biologic_start'].filter((type) => types.includes(type));
+    record('C1 Train24 RED: primer Seguimiento de baseline con plan NO fabrica treatment_start/treatment_change/biologic_start',
+        fabricated.length === 0,
+        `types=${JSON.stringify(types)} fabricated=${JSON.stringify(fabricated)} legacyLogs=${JSON.stringify(logs.map((l) => l.message))}`);
 }
 
 // =====================================================================
@@ -226,6 +221,32 @@ const T2 = '2026-03-10';
 }
 
 // =====================================================================
+// C5 Train24 RED: same baseline plan persisted on second supported FollowUp.
+// C1 checks the event type, but NOT the real chart-annotation consumer.
+// The current producer also makes a "biologic_start" chart marker on the
+// first baseline date with 2 chart labels; that fabricated marker must go.
+// This is a direct production module witness, not a fake DOM/canvas state.
+// =====================================================================
+{
+    const { sandbox } = createEventsSandbox();
+    const first = {
+        Fecha_Visita: T1, Tipo_Visita: 'Seguimiento',
+        Tratamiento_Actual: 'Tratamiento previo sintetico A',
+        planBiologicoEntries: [{ farmaco: 'Biologico sintetico X' }]
+    };
+    const second = { ...first, Fecha_Visita: T2 };
+    const events = sandbox.HubTools.events.extractTreatmentEvents({
+        allVisits: structuredClone([first, second]), pathology: 'espa'
+    });
+    const chart = sandbox.HubTools.events.buildChartAnnotationsFromEvents(events, [T1, T2]);
+    const starts = events.filter((event) => event && event.type === 'biologic_start');
+    const markers = Object.keys(chart).filter((key) => key.includes('biologic_start'));
+    record('C5 Train24 RED: gráfico longitudinal no anota falso inicio biológico del primer Seguimiento',
+        starts.length === 0 && markers.length === 0,
+        `types=${JSON.stringify(events.map((e) => e.type))} markers=${JSON.stringify(markers)}`);
+}
+
+// =====================================================================
 // Gate 3 consumer wiring — additive source assertions (no hardcode):
 //   W1  dashboard_paciente.html loads modules/treatmentEventsManager.js
 //       with a ?v= cache-busting token (any value).
@@ -241,6 +262,31 @@ const T2 = '2026-03-10';
     record('W2 scripts/script_dashboard.js calls HubTools.events.extractTreatmentEvents',
         /HubTools\.events\.extractTreatmentEvents\s*\(/.test(scriptDashboard),
         'expected HubTools.events.extractTreatmentEvents( call in scripts/script_dashboard.js');
+}
+
+// T24-CORA-01 — keeping treatment does not attest a baseline biologic start.
+{
+    const outcomes = ['mantener', 'Mantener'].map((decision) => {
+        const { sandbox } = createEventsSandbox();
+        const first = {
+            Fecha_Visita: T1, Tipo_Visita: 'Seguimiento',
+            Tratamiento_Actual: 'Tratamiento previo sintetico A',
+            Decision_Terapeutica: decision,
+            planBiologicoEntries: [{ farmaco: 'Biologico sintetico X' }]
+        };
+        const events = sandbox.HubTools.events.extractTreatmentEvents({
+            allVisits: structuredClone([first, { ...first, Fecha_Visita: T2 }]), pathology: 'espa'
+        });
+        const chart = sandbox.HubTools.events.buildChartAnnotationsFromEvents(events, [T1, T2]);
+        return {
+            decision,
+            starts: events.filter((event) => event && event.type === 'biologic_start').length,
+            markers: Object.keys(chart).filter((key) => key.includes('biologic_start'))
+        };
+    });
+    record('C6 T24-CORA-01: mantener/Mantener en baseline Seguimiento no fabrica biologic_start ni anotación',
+        outcomes.every(({ starts, markers }) => starts === 0 && markers.length === 0),
+        JSON.stringify(outcomes));
 }
 
 const failed = results.filter((result) => !result.pass);

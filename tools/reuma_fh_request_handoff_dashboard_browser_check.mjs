@@ -43,13 +43,20 @@
  *   D3  both absent: neither column present. No Analitica/Medicina Preventiva
  *       line, no state token fabricated from absence.
  *
- * Every journey additionally asserts the legacy blacklist absence, the
+ * D1–D4 additionally assert the legacy blacklist absence, the
  * preservation of the unrelated explicit clinical content the dashboard route
  * really carries (diagnostico primario/secundario, actividad PCR/EVA,
  * comorbilidades, Tratamiento_Actual verbatim; requested != validated, no
  * START/SWITCH/ADD_ON, no validado token), and zero console.error /
  * pageerror. Sections the dashboard data does not provide (e.g. decision
  * block) are never asserted into existence.
+ *
+ * D5 (Train24) qualifies only real import of two baseline Seguimientos,
+ * dashboard preservation, absence of fabricated biologic_start annotations,
+ * chart selector/comparison interaction and Dashboard → Seguimiento continuity.
+ * Solicitud FH is NOT qualified for D5: its treatment-line discrepancy (the
+ * Biologico plan printed instead of explicit Tratamiento_Actual) is a
+ * pre-existing independent PILOT BLOCKER, pending a separate specific WO.
  *
  * Exit code 0 = PASS, 1 = FAIL.
  * Usage: node tools/reuma_fh_request_handoff_dashboard_browser_check.mjs
@@ -163,8 +170,17 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
     const rowD2 = { ...commonRow, ID_Paciente: 'SYN-DASH-D2', Estado_Prebiologico_Analitica: 'OK' };
     const rowD3 = { ...commonRow, ID_Paciente: 'SYN-DASH-D3' };
     const rowD4 = { ...commonRow, ID_Paciente: 'SYN-DASH-D4', FR: 2 };
+    // D5 uses the supported Biologico TEXT fallback, not a JSON array cell.
+    // Two physical rows carry the same plan and explicit chart measurements.
+    const rowD5Baseline = {
+        ...commonRow, ID_Paciente: 'SYN-DASH-D5', Fecha_Visita: '2026-01-10',
+        Biologico: 'Biologico sintetico X', BASDAI: 3.5
+    };
+    const rowD5FollowUp = { ...rowD5Baseline, Fecha_Visita: '2026-03-10', BASDAI: 3 };
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([rowD1, rowD2, rowD3, rowD4]), 'ESPA');
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
+        rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp
+    ]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
     }
@@ -513,6 +529,144 @@ async function runJourney(browser, label, patientId, expectLines) {
     }
 }
 
+async function runBaselinePlanJourney(browser) {
+    const label = 'D5 dashboard baseline Seguimiento con plan biológico';
+    const patientId = 'SYN-DASH-D5';
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.activityChartInstance && !!window.patientSummary?.idPaciente,
+            null, { timeout: 15000 });
+        const dashboard = await page.evaluate(() => {
+            const visible = (selector) => {
+                const el = document.querySelector(selector);
+                return !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+            };
+            return {
+                cip: window.patientSummary.idPaciente,
+                visits: window.patientHistory.allVisits.map((visit) => ({
+                    type: visit.Tipo_Visita, plan: visit.Biologico,
+                    treatment: visit.Tratamiento_Actual
+                })),
+                historyRows: document.querySelectorAll('#visitsTable tbody tr').length,
+                regionsVisible: [
+                    '#patientKpis', '.dashboard-card--clinical', '.dashboard-card--biomarkers',
+                    '.dashboard-card--summary', '.dashboard-card--treatment',
+                    '.dashboard-card--history', '.dashboard-card--events', '.dashboard-card--chart'
+                ].every(visible),
+                treatmentText: document.querySelector('.dashboard-card--treatment')?.textContent ?? ''
+            };
+        });
+        record(`${label}: dos Seguimientos físicos del mismo CIP conservan plan textual y tratamiento explícito`,
+            dashboard.cip === patientId && dashboard.visits.length === 2 && dashboard.visits.every((visit) =>
+                visit.type === 'Seguimiento' && visit.plan === 'Biologico sintetico X' && visit.treatment === SYN_TREATMENT),
+            JSON.stringify(dashboard));
+        record(`${label}: paciente, resumen, tratamiento, historial, biomarcadores y eventos siguen visibles`,
+            dashboard.regionsVisible && dashboard.historyRows === 2 && dashboard.treatmentText.includes(SYN_TREATMENT),
+            JSON.stringify(dashboard));
+
+        // Read rendered content, not just card visibility. D5 carries PCR=8;
+        // HLA-B27/FR/aPCC are absent and must not acquire fabricated results.
+        const clinicalContent = await page.evaluate(() => {
+            const read = (id) => {
+                const el = document.getElementById(id);
+                return {
+                    text: el?.innerText.trim() ?? null,
+                    visible: !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden'
+                };
+            };
+            return {
+                diagnosis: read('patientGeneralDiagnosis'),
+                headerDiagnosis: read('patientDiagnosis'),
+                pcr: read('kpiPCRValue'),
+                biomarkers: ['biomarkerHlaB27', 'biomarkerFr', 'biomarkerApcc'].map(read),
+                events: read('keyEventsTimeline'),
+                eventRows: document.querySelectorAll('#keyEventsTimeline .timeline-item').length
+            };
+        });
+        record(`${label}: diagnóstico explícito espa se muestra como Espondiloartritis Axial en ficha y cabecera`,
+            [clinicalContent.diagnosis, clinicalContent.headerDiagnosis].every((value) =>
+                value.visible && value.text === 'Espondiloartritis Axial'), JSON.stringify(clinicalContent));
+        record(`${label}: PCR explícita 8 se muestra como 8.0 en el Dashboard`,
+            clinicalContent.pcr.visible && clinicalContent.pcr.text === '8.0', JSON.stringify(clinicalContent.pcr));
+        record(`${label}: HLA-B27, FR y aPCC ausentes muestran No analizado, sin resultado fabricado`,
+            clinicalContent.biomarkers.every((value) => value.visible && value.text === 'No analizado'),
+            JSON.stringify(clinicalContent.biomarkers));
+        record(`${label}: eventos clínicos muestran estado vacío honesto, sin filas fabricadas`,
+            clinicalContent.events.visible &&
+            clinicalContent.events.text === 'No hay eventos terapéuticos registrados para este paciente.' &&
+            clinicalContent.eventRows === 0, JSON.stringify({ events: clinicalContent.events, rows: clinicalContent.eventRows }));
+
+        // READ only the real Chart.js instance bound to the visible canvas.
+        const readChart = () => page.evaluate(() => {
+            const chart = window.activityChartInstance;
+            const canvas = document.getElementById('activityChart');
+            return {
+                boundToCanvas: chart.canvas === canvas && canvas.getClientRects().length > 0 && !canvas.classList.contains('hidden'),
+                labels: [...chart.data.labels],
+                datasets: chart.data.datasets.map((dataset) => ({ label: dataset.label, data: [...dataset.data] })),
+                annotations: Object.keys(chart.options.plugins.annotation.annotations),
+                eventTypes: (window.currentEvents || []).map((event) => event.type)
+            };
+        });
+        const initial = await readChart();
+        record(`${label}: canvas real contiene dos puntos BASDAI y las dos fechas fuente`,
+            initial.boundToCanvas && JSON.stringify(initial.labels) === '["2026-01-10","2026-03-10"]' &&
+            initial.datasets.length === 1 && initial.datasets[0].label === 'BASDAI' &&
+            JSON.stringify(initial.datasets[0].data) === '[3.5,3]', JSON.stringify(initial));
+        record(`${label}: consumidor real del gráfico no contiene biologic_start ni su marcador`,
+            !initial.eventTypes.includes('biologic_start') && !initial.annotations.some((key) => key.includes('biologic_start')),
+            JSON.stringify(initial));
+        record(`${label}: anotaciones ajenas al falso inicio siguen presentes`,
+            initial.annotations.some((key) => key.startsWith('basdai-')), JSON.stringify(initial.annotations));
+
+        await page.selectOption('#selectActivityIndex', 'pcr');
+        const pcr = await readChart();
+        record(`${label}: selector real cambia a PCR sin perder fechas ni puntos`,
+            pcr.boundToCanvas && pcr.datasets[0].label === 'PCR (mg/L)' &&
+            JSON.stringify(pcr.datasets[0].data) === '[8,8]' && JSON.stringify(pcr.labels) === JSON.stringify(initial.labels),
+            JSON.stringify(pcr));
+        await page.selectOption('#selectActivityIndex', 'basdai');
+        await page.check('#compareActivityCheckbox');
+        await page.selectOption('#compareActivityIndexSelect', 'pcr');
+        const compared = await readChart();
+        record(`${label}: comparación real BASDAI/PCR operable, sin marcador de inicio`,
+            compared.boundToCanvas && compared.datasets.length === 2 &&
+            JSON.stringify(compared.datasets[0].data) === '[3.5,3]' &&
+            compared.datasets[1].label === 'PCR (mg/L)' && JSON.stringify(compared.datasets[1].data) === '[8,8]' &&
+            !compared.annotations.some((key) => key.includes('biologic_start')), JSON.stringify(compared));
+        await page.uncheck('#compareActivityCheckbox');
+        const restored = await readChart();
+        record(`${label}: volver a BASDAI preserva curva y anotaciones restantes sin duplicación`,
+            restored.boundToCanvas && JSON.stringify(restored.datasets) === JSON.stringify(initial.datasets) &&
+            JSON.stringify(restored.labels) === JSON.stringify(initial.labels) &&
+            JSON.stringify(restored.annotations) === JSON.stringify(initial.annotations), JSON.stringify(restored));
+
+        await page.click('#btnSeguimiento');
+        await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+        await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
+        const continuation = await page.evaluate(() => {
+            const value = (id) => document.getElementById(id)?.value ?? null;
+            const visible = (id) => document.getElementById(id)?.getClientRects().length > 0;
+            return {
+                cip: value('idPaciente'), name: value('nombrePaciente'),
+                diagnosis: value('diagnosticoPrimario'), treatment: value('tratamientoActual'),
+                contextVisible: ['idPaciente', 'nombrePaciente', 'diagnosticoPrimario', 'tratamientoActual'].every(visible)
+            };
+        });
+        record(`${label}: Dashboard → Seguimiento conserva CIP, diagnóstico y tratamiento visibles sin nuevo inicio`,
+            continuation.cip === patientId && continuation.name === 'Sintetico Dash' &&
+            continuation.diagnosis === 'espa' && continuation.treatment === SYN_TREATMENT && continuation.contextVisible &&
+            !restored.eventTypes.some((type) => ['treatment_start', 'treatment_change', 'biologic_start'].includes(type)),
+            JSON.stringify(continuation));
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
 let browser;
 try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
@@ -520,6 +674,7 @@ try {
     await runJourney(browser, 'D2 dashboard sólo Analítica explícita (Medicina Preventiva ausente)', 'SYN-DASH-D2', ['Analítica: OK']);
     await runJourney(browser, 'D3 dashboard ambos ausentes', 'SYN-DASH-D3', null);
     await runJourney(browser, 'D4 dashboard FR numérico explícito', 'SYN-DASH-D4', null);
+    await runBaselinePlanJourney(browser);
 } finally {
     if (browser) await browser.close();
     server.close();
