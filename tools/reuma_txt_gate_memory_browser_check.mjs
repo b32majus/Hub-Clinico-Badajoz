@@ -136,6 +136,22 @@
  * Baseline run on 14d86a8: N1 and N2 are RED for the missing modals (not a
  * harness error); every pre-existing D/E witness stays PASS.
  *
+ * TRAIN 22 (T22-02) ADDITIVE WITNESS — G1 (this payload change justifies
+ * exactly one additive witness; no existing D, E or N expectation is modified):
+ *   G1  the Seguimiento payload now carries the explicit preexisting-treatment
+ *       baseline keys (`tratamientoActual` / `fechaInicioTratamiento`) typed by
+ *       the professional on a REAL `not_found` journey (absent CIP, no demo
+ *       mock). Proof: (a) clipboard-confirmed TXT (existing
+ *       `armWriteMode('allow')` helpers) contains `Tratamiento actual: <typed>`
+ *       and `Fecha inicio tratamiento: <typed>`; (b) the delivered CSV is 497
+ *       fields and contains the typed strings; (c) after a REAL edit of
+ *       `#tratamientoActual` the ephemeral TXT→CSV gate blocks the CSV
+ *       fail-closed with the EXISTING changed-data discrepancy message and
+ *       delivers nothing (no authorization survives an edited payload); (d)
+ *       repeating the TXT re-enables the CSV carrying the new value.
+ *       Baseline RED: the two fields are readonly on `not_found`, so the real
+ *       typing precondition fails.
+ *
  * Method: only supported public seams (real PV/Seguimiento controls, real
  * shared modal, real clipboard, real notifications). Controlled clipboard
  * conditions via an init-script environment plant; the DOM is never tampered
@@ -288,6 +304,11 @@ const N8 = defineWitness('N8', 'T21-02/focal/story 6', 'clipboard API absent AND
 // TOCA.
 const N9 = defineWitness('N9', 'T21-02/Gate4-narrow', 'no-API CSV modal (real 497-field row): existing controls (textarea, Copiar, Cerrar) visible and clickable at 390 px (PV)', 'PASS');
 const N10 = defineWitness('N10', 'T21-02/Gate4-narrow', 'no-API CSV modal (real 497-field row): existing controls (textarea, Copiar, Cerrar) visible and clickable at 1280 px (PV)', 'PASS');
+
+// TRAIN 22 (T22-02) additive witness G1 — see the file header. Baseline RED:
+// `#tratamientoActual`/`#fechaInicioTratamiento` are readonly on `not_found`,
+// so the real baseline typing precondition fails before any export step.
+const G1 = defineWitness('G1', 'T22-02/TXT-gate', 'not_found baseline capture: clipboard-confirmed TXT contains the typed treatment/date; CSV 497 delivered with them; a real #tratamientoActual edit blocks CSV fail-closed with the exact discrepancy message; repeating TXT re-enables CSV with the new value (Seguimiento)', 'RED');
 
 // ---------------------------------------------------------------------------
 // Storage sentinel fixtures (synthetic; planted at document start).
@@ -978,7 +999,7 @@ try {
 
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
     console.log(`REUMA-TXT-GATE-MEMORY (chromium ${browser.version()}, node ${process.version})`);
-    console.log(`T20-01 + T20-02 + T20-03/C1 focused oracle. After T20-02 + the C1 correction: every witness (D0-D12, E1-E13) PASS. T21 frozen witnesses N1/N2 (no Clipboard API manual road) are RED on base 14d86a8 and turn GREEN with T21-01/T21-02.\n`);
+    console.log(`T20-01 + T20-02 + T20-03/C1 focused oracle. After T20-02 + the C1 correction: every witness (D0-D12, E1-E13) PASS. T21 frozen witnesses N1/N2 (no Clipboard API manual road) are RED on base 14d86a8 and turn GREEN with T21-01/T21-02. Train 22 / T22-02 additive witness G1 (not_found baseline payload vs the ephemeral TXT gate) is RED on the T22-02 base and GREEN after the unlock.\n`);
 
     // =====================================================================
     // J-LEGACY-MARKER (PV): planted matching legacy marker + direct CSV
@@ -2500,6 +2521,112 @@ try {
                 witnessFail(D11, `Seguimiento clipboard-confirmed TXT -> CSV delivered=${csvDelivered(firstCsv)} (${csvDeliveredVia(firstCsv)}); re-export delivered=${csvDelivered(reCsv)} (${csvDeliveredVia(reCsv)})`);
             } else {
                 witnessPass(D11, `Seguimiento 497 CSV delivered after clipboard-confirmed TXT (${csvDeliveredVia(firstCsv)}) and re-exported without repeating TXT (${csvDeliveredVia(reCsv)})`);
+            }
+
+            auditCheckpoints(jl);
+            classifyJourneyErrors(jl, entry);
+        } finally {
+            await context.close();
+        }
+    }
+
+    // =====================================================================
+    // J-BASELINE-GATE (Seguimiento, Train 22 / T22-02, additive witness G1):
+    // real `not_found` journey (absent CIP, no demo mock) with the explicit
+    // preexisting-treatment baseline capture. The ephemeral TXT→CSV gate must
+    // keep its exact T20 semantics with the new payload keys: (a) TXT carries
+    // the typed values; (b) CSV 497 delivered with them; (c) editing
+    // #tratamientoActual after the authorized TXT blocks the CSV fail-closed
+    // with the EXISTING changed-data discrepancy message; (d) repeating TXT
+    // re-enables the CSV with the new value. Baseline RED: the two fields are
+    // readonly on `not_found`.
+    // =====================================================================
+    {
+        const jl = 'J-BASELINE-GATE';
+        const cip = 'SYN-SEG-ABSENT-G1'; // not in the workbook -> real not_found, no demo mock
+        const TYPED_TREATMENT = 'FAME sintetico baseline G1';
+        const TYPED_DATE = '2020-03-04';
+        const EDITED_TREATMENT = 'FAME sintetico editado G1';
+        const { context, page, entry } = await openJourneyPage(browser, origin, `/${PAGE_SEGUIMIENTO}?id=${cip}`, {
+            otherMarkerKey: SENTINEL_OTHER_KEY, otherMarkerValue: SENTINEL_OTHER_VALUE,
+            pendingKey: SENTINEL_PENDING_KEY, pendingValue: SENTINEL_PENDING_VALUE,
+            matchingMarker: false,
+        });
+        try {
+            await fillClinicalBase(page, { cip, isSeguimiento: true }); // identity set by the real not_found branch
+
+            // Real typing of the baseline values (supported fill; the fields are
+            // unlocked ONLY by the real not_found branch, never globally).
+            const fillErrors = {};
+            for (const [selector, value] of [
+                ['#tratamientoActual', TYPED_TREATMENT],
+                ['#fechaInicioTratamiento', TYPED_DATE],
+            ]) {
+                try {
+                    await page.fill(selector, value, { timeout: 5000 });
+                } catch (err) {
+                    fillErrors[selector] = String(err && err.message || err).split('\n')[0].trim();
+                }
+            }
+            await checkpoint(page, jl, 'after-baseline-fill');
+
+            // (a) clipboard-confirmed TXT with the typed baseline values.
+            await armWriteMode(page, 'allow');
+            await clickTxtAndWait(page);
+            const txtClip = await readClipboardText(page);
+            const txtText = txtClip.ok && typeof txtClip.text === 'string' ? txtClip.text : null;
+            await checkpoint(page, jl, 'after-txt');
+
+            // (b) CSV delivered: 497 fields, contains the typed strings.
+            const obs1 = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv-1');
+            const csv1 = csvDelivered(obs1)
+                ? (typeof obs1.clipboardText === 'string' && obs1.clipboardText.split('\t').length === CSV_FIELD_COUNT
+                    ? obs1.clipboardText
+                    : (typeof obs1.modalText === 'string' && obs1.modalText.split('\t').length === CSV_FIELD_COUNT ? obs1.modalText : null))
+                : null;
+
+            // (c) REAL edit of #tratamientoActual -> authorization must die.
+            let editError = null;
+            try {
+                await page.fill('#tratamientoActual', EDITED_TREATMENT, { timeout: 5000 });
+            } catch (err) {
+                editError = String(err && err.message || err).split('\n').slice(-1)[0].trim();
+            }
+            await checkpoint(page, jl, 'after-edit');
+            await armWriteMode(page, 'reject'); // the delivery transport must not be the blocker
+            const obs2 = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv-2');
+            const changedShown = obs2.bodyText.includes(TXT_GATE_CHANGED_MSG);
+            const prereqShown = obs2.bodyText.includes(LEGAL_GATE_MESSAGE);
+
+            // (d) repeating the TXT re-enables the CSV with the new value.
+            await disarmAllPlants(page);
+            await clickTxtAndWait(page);
+            const obs3 = await clickCsvAndObserve(page);
+            await checkpoint(page, jl, 'after-csv-3');
+            const csv3 = csvDelivered(obs3)
+                ? (typeof obs3.clipboardText === 'string' ? obs3.clipboardText : obs3.modalText)
+                : null;
+
+            if (Object.keys(fillErrors).length > 0) {
+                witnessFail(G1, `the baseline fields are not typable on the real not_found journey (readonly): fillErrors=${JSON.stringify(fillErrors)}`);
+            } else if (!txtText) {
+                witnessFail(G1, `harness precondition failed: TXT clipboard read failed (${txtClip.error})`);
+            } else if (!(txtText.includes(`Tratamiento actual: ${TYPED_TREATMENT}`) && txtText.includes(`Fecha inicio tratamiento: ${TYPED_DATE}`))) {
+                witnessFail(G1, `copied TXT does not carry the typed baseline values (hasTratamientoLine=${txtText.includes(`Tratamiento actual: ${TYPED_TREATMENT}`)} hasFechaLine=${txtText.includes(`Fecha inicio tratamiento: ${TYPED_DATE}`)})`);
+            } else if (!csv1 || !(csv1.includes(TYPED_TREATMENT) && csv1.includes(TYPED_DATE)) || csv1.split('\t').length !== CSV_FIELD_COUNT) {
+                witnessFail(G1, `CSV after the authorized TXT is not a 497-field row carrying the typed values (delivered=${!!csv1} fields=${csv1 ? csv1.split('\t').length : 0})`);
+            } else if (editError) {
+                witnessFail(G1, `the real edit of #tratamientoActual failed: ${editError}`);
+            } else if (csvDelivered(obs2)) {
+                witnessFail(G1, `CSV delivered after an edited payload — no authorization may survive an edited payload (via=${csvDeliveredVia(obs2)})`);
+            } else if (!changedShown || prereqShown) {
+                witnessFail(G1, `CSV blocked after the edit but the fail-closed discrepancy message is wrong (changedShown=${changedShown} prereqShown=${prereqShown})`);
+            } else if (!csv3 || !(csv3.includes(EDITED_TREATMENT)) || csv3.split('\t').length !== CSV_FIELD_COUNT) {
+                witnessFail(G1, `repeating TXT did not re-enable the CSV with the new value (delivered=${!!csv3} fields=${csv3 ? csv3.split('\t').length : 0})`);
+            } else {
+                witnessPass(G1, `baseline TXT/CSV carry the typed treatment/date; the real edit blocked the CSV with the exact discrepancy message; the repeated TXT re-enabled the 497 CSV with the new value`);
             }
 
             auditCheckpoints(jl);

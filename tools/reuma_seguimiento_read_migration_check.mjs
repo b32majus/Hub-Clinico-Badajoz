@@ -84,9 +84,9 @@ function loadModules(sandbox) {
         `${SEGUIMIENTO_RELATIVE} must expose readSeguimientoBundle`);
 }
 
-async function loadCorpusInto(sandbox) {
+async function loadCorpusInto(sandbox, sheets = CORPUS.sheets) {
     const workbook = XLSX.utils.book_new();
-    for (const [sheetName, rows] of Object.entries(CORPUS.sheets)) {
+    for (const [sheetName, rows] of Object.entries(sheets)) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(rows), sheetName);
     }
     const bytes = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
@@ -291,6 +291,61 @@ async function run() {
             checks.every(Boolean),
             `fr=${canonical(outcome.baseRecord?.fr)} apcc=${canonical(outcome.baseRecord?.apcc)} ` +
             `visitFr=${canonical(visit.fr)} visitApcc=${canonical(visit.apcc)} visitPcr=${canonical(visit.pcr)}`);
+    }
+
+    // =====================================================================
+    // 6. (T22-02-C2) `buildPrefillPayload` never manufactures a treatment
+    //    start date for a FOUND patient. Spec story 4: "Si falta tratamiento
+    //    o fecha, queda en blanco ... ni fecha auto-completada" and "«
+    //    Fecha_Inicio_Tratamiento» es fecha de inicio histórica aportada; no
+    //    es fecha de visita". `extractTreatmentHistory()` manufactures
+    //    `startDate = visit date` for a row with a treatment but no
+    //    documented start date; the prefill payload must NEVER propagate it
+    //    (this payload feeds both the display and the TXT/CSV 497 export).
+    //    Synthetic date-less found patient appended to the TEMP in-memory
+    //    workbook; the frozen corpus fixture is untouched.
+    // =====================================================================
+    {
+        const DATELESS_ID = 'SYN-NODATE-001';
+        const sheetsWithDateless = {
+            ...CORPUS.sheets,
+            ESPA: CORPUS.sheets.ESPA.concat([{
+                ID_Paciente: DATELESS_ID,
+                Nombre_Paciente: 'Sintetico Sin Fecha Uno',
+                Sexo: 'M',
+                Fecha_Visita: '10/02/2026',
+                Tipo_Visita: 'Seguimiento',
+                Diagnostico_Primario: 'EspA',
+                Tratamiento_Actual: 'FAME sintetico ND',
+            }]),
+        };
+        const sandbox = freshSandbox();
+        sandbox.MockPatients = { getById: () => null };
+        await loadCorpusInto(sandbox, sheetsWithDateless);
+
+        const outcome = await sandbox.readSeguimientoBundle(DATELESS_ID);
+        const legacyHistory = sandbox.HubTools.data.getPatientHistory(DATELESS_ID);
+        const payload = sandbox.buildPrefillPayload({
+            patientId: DATELESS_ID,
+            history: outcome.historyData,
+            baseRecord: outcome.baseRecord,
+            patologiaParam: 'espa',
+        });
+        const manufactured = legacyHistory.treatmentHistory?.[0]?.startDate;
+        record('T22-02-C2 prefill payload for a found patient without a documented start date stays empty (no manufactured/visit date)',
+            outcome.status === 'ok' && payload.fechaInicioTratamiento === '',
+            `status=${outcome.status} payloadFechaInicio=${JSON.stringify(payload.fechaInicioTratamiento)} manufacturedStartDate=${JSON.stringify(manufactured)}`);
+
+        const okOutcome = await sandbox.readSeguimientoBundle(KNOWN_ID);
+        const okPayload = sandbox.buildPrefillPayload({
+            patientId: KNOWN_ID,
+            history: okOutcome.historyData,
+            baseRecord: okOutcome.baseRecord,
+            patologiaParam: 'espa',
+        });
+        record('T22-02-C2 explicit documented start date stays verbatim in the prefill payload (SYN-ESPA-001 = 10/01/2026)',
+            okOutcome.status === 'ok' && okPayload.fechaInicioTratamiento === '10/01/2026',
+            `status=${okOutcome.status} payloadFechaInicio=${JSON.stringify(okPayload.fechaInicioTratamiento)}`);
     }
 }
 

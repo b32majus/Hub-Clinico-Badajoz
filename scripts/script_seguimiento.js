@@ -180,7 +180,12 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         apcc: latestVisit?.apcc || normalizedBaseRecord.apcc || 'no-analizado',
         ana: latestVisit?.ana || normalizedBaseRecord.ana || 'no-analizado',
         tratamientoActual: normalizedBaseRecord.tratamientoActual || latestVisit?.tratamientoActual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
-        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || activeTreatment?.startDate || '',
+        // T22-02-C2: `Fecha_Inicio_Tratamiento` es una fecha de inicio
+        // histórica APORTADA, no una fecha de visita (spec story 4). Sólo el
+        // valor explícito del registro base; si falta, el campo queda en
+        // blanco — nunca la salida manufacturada de extractTreatmentHistory()
+        // (startDate = fecha de visita), ni la fecha de visita, ni hoy.
+        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || '',
         comorbilidades: extractComorbidities(latestVisit),
         manifestacionesExtra: extractManifestations(latestVisit),
         peso: latestVisit?.peso || normalizedBaseRecord.peso || '',
@@ -193,6 +198,45 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         estadoPrebiologicoAnalitica: latestVisit?.Estado_Prebiologico_Analitica || latestVisit?.estadoPrebiologicoAnalitica || '',
         estadoPrebiologicoMedicinaPreventiva: latestVisit?.Estado_Prebiologico_Medicina_Preventiva || latestVisit?.estadoPrebiologicoMedicinaPreventiva || ''
     };
+}
+
+// T22-G2-C2: conversión ESTRICTA de representación de fecha para controles
+// `<input type="date">` (valor HTML obligatorio `YYYY-MM-DD`), sólo en la
+// copia dirigida a la UI — el payload documental de buildPrefillPayload()
+// sigue devolviendo el valor verbatim (testigo de migración). Reglas:
+//   - ISO `YYYY-MM-DD` válido y gregoriano => sin modificación.
+//   - `DD/MM/YYYY` estrictamente válido (día primero, calendario gregoriano
+//     con bisiestos) => `YYYY-MM-DD` equivalente (10/01/2026 => 2026-01-10).
+//   - Fecha imposible (31/02/2026), fuera de formato (2026/01/10, 10-01-2026,
+//     texto) o ausente => ''. NUNCA se corrige a otro día: sin Date.parse()
+//     permisivo, sin `new Date()` por defecto, sin fecha de visita ni fecha
+//     manufacturada. La conversión de representación no crea eventos
+//     terapéuticos ni validación.
+function isGregorianCalendarDate(year, month, day) {
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) return false;
+    if (month < 1 || month > 12 || day < 1) return false;
+    const leapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return day <= daysInMonth[month - 1];
+}
+
+function toIsoDateInputValue(value) {
+    if (typeof value !== 'string') return '';
+    const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (isoMatch) {
+        const year = Number(isoMatch[1]);
+        const month = Number(isoMatch[2]);
+        const day = Number(isoMatch[3]);
+        return isGregorianCalendarDate(year, month, day) ? value : '';
+    }
+    const dmyMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+    if (dmyMatch) {
+        const day = Number(dmyMatch[1]);
+        const month = Number(dmyMatch[2]);
+        const year = Number(dmyMatch[3]);
+        return isGregorianCalendarDate(year, month, day) ? `${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}` : '';
+    }
+    return '';
 }
 
 function getHubModule(path, required = true) {
@@ -259,6 +303,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (patologiaParam) {
                 HubTools.form.adaptarFormulario(patologiaParam);
             }
+        } else if (outcome.status === 'not_found') {
+            // Real `not_found` from the read port with no demo mock: the queried CIP
+            // stays identified/readonly, but no patient identity is fabricated and
+            // the name becomes manually editable (unlock lives ONLY here, never
+            // globally and never on ok/unavailable/error outcomes).
+            const idInput = document.getElementById('idPaciente');
+            if (idInput) {
+                idInput.value = patientId;
+                idInput.setAttribute('readonly', 'readonly');
+            }
+            const nombreInput = document.getElementById('nombrePaciente');
+            if (nombreInput) {
+                nombreInput.value = '';
+                nombreInput.removeAttribute('readonly');
+            }
+            // T22-02: the preexisting-treatment baseline fields become manually
+            // editable ONLY in this real `not_found` branch. Both stay OPTIONAL:
+            // they are cleared and never auto-completed with the visit date,
+            // today's date, a catalog drug, a dose, a schedule or any inferred
+            // value; `#fechaInicioTratamiento` is a historical start date supplied
+            // by the professional, not a visit date. Filling them creates NO
+            // therapeutic event and no validation.
+            const tratamientoInput = document.getElementById('tratamientoActual');
+            if (tratamientoInput) {
+                tratamientoInput.value = '';
+                tratamientoInput.removeAttribute('readonly');
+            }
+            const fechaInicioInput = document.getElementById('fechaInicioTratamiento');
+            if (fechaInicioInput) {
+                fechaInicioInput.value = '';
+                fechaInicioInput.removeAttribute('readonly');
+            }
+            if (patologiaParam) {
+                HubTools.form.adaptarFormulario(patologiaParam);
+            }
         } else {
             const prefillPayload = buildPrefillPayload({
                 patientId,
@@ -268,7 +347,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (prefillPayload && prefillPayload.idPaciente) {
-                HubTools.form.prefillSeguimientoForm(prefillPayload);
+                // T22-G2-C2: la conversión de representación vive SOLO en esta
+                // copia dirigida a la UI (el `<input type="date">` exige
+                // `YYYY-MM-DD`); `prefillPayload` documental no se muta y
+                // sigue siendo el testigo verbatim del Read Port.
+                const uiPrefillPayload = {
+                    ...prefillPayload,
+                    fechaInicioTratamiento: toIsoDateInputValue(prefillPayload.fechaInicioTratamiento)
+                };
+                HubTools.form.prefillSeguimientoForm(uiPrefillPayload);
                 var pathologyForForm = patologiaParam || prefillPayload.diagnosticoPrimario;
                 if (pathologyForForm) {
                     HubTools.form.adaptarFormulario(pathologyForForm);
@@ -580,8 +667,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const datos = HubTools.form.recopilarDatosFormularioSeguimiento();
                     console.log('📊 Datos recopilados para FH:', datos);
 
+                    // T22-02-C: los datos de tratamiento actual son captura de línea base y
+                    // NO forman parte del contrato publicado del artefacto FH. Se pasa una
+                    // COPIA sin esas claves; `datos` no se muta (baseline/TXT/CSV intactos).
+                    const datosFH = Object.assign({}, datos);
+                    delete datosFH.tratamientoActual;
+                    delete datosFH.fechaInicioTratamiento;
+
                     if (typeof HubTools?.pharmacy?.copyRequestToClipboard === 'function') {
-                        HubTools.pharmacy.copyRequestToClipboard(datos);
+                        HubTools.pharmacy.copyRequestToClipboard(datosFH);
                     } else {
                         console.error('❌ HubTools.pharmacy.copyRequestToClipboard no disponible');
                         HubTools.utils?.mostrarNotificacion?.('Módulo de solicitud FH no disponible.', 'error');
