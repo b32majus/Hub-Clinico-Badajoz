@@ -6,7 +6,8 @@
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
 **Corte canónico para la adenda documental #647/PR #648:** `promueve/nexus-v4@8a4c346babcc2894f2ef36f0468289ae1563c778`, Train25 #649/PR #650 publicado tras Train26 `ba38474ea26cd064953b9aa4e8bc9f6448d77400`, con Trains 23/24 también publicados. GitHub live prevalece.
-**Último HEAD de producto Nexus verificado (2026-10-11):** `124c12b623f12885347c8e6c79dd965ac570df54` (Train27 #653/PR #654, Reuma Dashboard); previo `de65dca6b8939fd9e64207f713a985fe2c9dda60` (Train28 #651/PR #652, filtro FH). Trains 25/26 son cortes históricos; GitHub live prevalece. Datos sintéticos, **NO PILOTO**.
+**Último HEAD de producto Nexus verificado (2026-10-11):** §e2cbc861e6632699c04ebc6bfc3c485796a7c5ac§ (Train30 #659/PR #660, Export V2 microcopy), previo §4fca680a2b35b5b7fa951525c3658b77d595a18a§ (Train29 #657/PR #658, Sexo M/F). HEAD canónico de arnés posterior §a3556b408e91c257c7cd2c829c575ff497c99745§ (PR #662) no es nuevo cambio clínico. Trains 27/28 anteriores publicados; datos sintéticos, **NO PILOTO**.
+**Cierre reciente:** Train29 Reuma Sexo M/F #657/PR #658 y Train30 FH Export V2 #659/PR #660 MERGED con CI y Pages verdes; sincronización de arnés C-087 #661/PR #662 también MERGED. [Cola operativa de shipping](PROMUEVE_SHIPPING_BACKLOG_20261011.md) (WO documental #663) clasifica pendientes sin aprobar ejecución ni reabrir auditoría manual.
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
 **Renovaciones FH ↔ Enfermería:** contrato N0 **PUBLICADO Y VERIFICADO** por #509 → PR #510 (merge `aa6401af8ad636dd9d19baad9dcf80876ac780df`), reconciliado por PR #511; **N1/N2/N3 siguen pendientes**
 
@@ -116,7 +117,7 @@ Regla de lectura: **existir en código no equivale a QA visible.** La columna *Q
 | Renovaciones/alertas | `PARCIAL` | Contrato N0 publicado | Sin runtime Nexus | Contrato/schemas/checker publicados | Evidencia determinista del contrato (checker 53/0), sin QA navegador | Sí (contrato) | Sintética | No | #446 CLOSED/completed + #509 cerrada | **Sólo contrato N0 publicado**: #509 → PR #510 (merge `aa6401a`) + reconciliación PR #511. N1/N2/N3 requieren WOs propias. `OCT-OPEN-010..013` y `REN-OPEN-001..008` siguen abiertos. No confundir con Reuma→Farmacia. |
 | CIMA automática / propuestas estructuradas | `FUTURO` | No automatización actual | No | No | No | No | No | No | — | Línea separada. Selección genérica nunca escribe terapia; en FH la selección explícita de medicamento/presentación + contexto puede **proponer** datos inequívocos, siempre editables y sin sobrescritura silenciosa. |
 
-> **Observación no resuelta detectada durante #537:** el filtro sexo expone `Hombre/Mujer` mientras el corpus/datos observados usan `M/F`. Es deuda funcional preexistente de semántica de filtro, fuera de #537; no se corrigió ni se convierte aquí en prioridad clínica. El contenido de otras columnas del CSV (p. ej. Edad/Fecha_Nacimiento) tampoco queda validado por #537.
+> **Historia reconciliada 2026-10-11:** el filtro Sexo exponía Hombre/Mujer y el corpus M/F en #537, pero **Train29 #657/PR #658 ya lo corrigió y publicó**; el control emite M/F como valores de máquina y conserva etiquetas legibles. No reabrir como defecto pendiente. Las demás columnas CSV (p. ej. Edad/Fecha_Nacimiento) **no** quedan validadas por ese Train.
 
 ### 3.1 Adjudicación manual Reuma 2026-10-04 — cerrada para shaping
 
