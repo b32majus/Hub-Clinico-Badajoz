@@ -407,6 +407,17 @@
         // Si no hay biológicos ni ahora ni antes → nada
         if (currentBio.length === 0 && prevBio.length === 0) return events;
 
+        // T24: el plan del primer Seguimiento es baseline, no un inicio
+        // observado. No reinterpretar decisiones explícitas ni entradas de
+        // cambio; las visitas posteriores conservan su detección publicada.
+        var decision = getDecisionTerapeutica(currentVisit);
+        if (!previousVisit && isExplicitFollowUpVisit(currentVisit) &&
+            (decision === '' || decision === 'continuar' || decision === 'mantener') &&
+            !(Array.isArray(currentVisit.cambioBiologicoEntries) && currentVisit.cambioBiologicoEntries.length > 0) &&
+            !(Array.isArray(currentVisit.cambioBiologicosEntries) && currentVisit.cambioBiologicosEntries.length > 0)) {
+            return events;
+        }
+
         // Biológicos nuevos que no estaban antes → biologic_start
         for (var i = 0; i < currentBio.length; i++) {
             if (prevBio.indexOf(currentBio[i]) === -1) {
