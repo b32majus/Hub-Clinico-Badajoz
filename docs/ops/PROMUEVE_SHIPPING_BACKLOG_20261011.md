@@ -129,6 +129,8 @@ Las filas con issue #663–#672 del primer paquete remiten a `3; aquí figuran a
 
 ## 9. Ampliación: fuentes históricas y las demás unidades pendientes
 
+**ACTUALIZACIÓN POSTERIOR — CANDIDATO LOCAL, NO PUBLICADO:** la fotografía anterior de 77 unidades sin issue es histórica. El [registro de ticketización Matt](PROMUEVE_TICKETIZATION_REGISTER_20261011.md) documenta 61 issues nuevos (#674–#734), seis reutilizados y tres diferidos. Ningún issue de esta fase tiene status:approved ni ready-for-agent.
+
 **Segunda pasada sobre fuentes ya aportadas, dentro de la misma WO:** [requisitos recuperados y trazabilidad](PROMUEVE_REQUIREMENTS_TRACEABILITY_20261011.md) y [paquete de candidatas](PROMUEVE_CANDIDATE_TICKETS_20261011.md), con **77 unidades adicionales clasificadas, ninguna creada como issue**. Las 20 filas FH y 12 Reuma de este documento son **macrocapacidades de inventario**, no necesariamente tickets atómicos ni un total cerrado de requisitos.
 
 Omisiones materiales de la primera cola: seguimiento específico de neoplasias frente a antecedente/riesgo basal; QA multi-línea y causalidad de Seguimiento; acceso externo CMO sin motor nativo; y necesidades del circuito Cáceres (PREMs institucional, QR/email, citas, educación, coordinación Digestivo/Medicina Preventiva y feedback clínico Derma–FH). Son **fuentes históricas de distinta madurez**, varias de operación asistencial y no de software Nexus.

@@ -74,4 +74,6 @@ El `Manual Práctica Avanzada en Enfermería Reumatológica_v5.md` constituye re
 
 ## 7. Salida
 
+**ACTUALIZACIÓN POSTERIOR — CANDIDATO LOCAL, NO PUBLICADO:** la fotografía anterior de 77 unidades sin issue es histórica. El [registro de ticketización Matt](PROMUEVE_TICKETIZATION_REGISTER_20261011.md) documenta 61 issues nuevos (#674–#734), seis reutilizados y tres diferidos. Ningún issue de esta fase tiene status:approved ni ready-for-agent.
+
 [Cola transversal](PROMUEVE_SHIPPING_BACKLOG_20261011.md) = fuente de entrada; [paquete ampliado de unidades candidatas](PROMUEVE_CANDIDATE_TICKETS_20261011.md) = ticketización pendiente. Los issues reales #663–#672 permanecen sin `status:approved` y no se duplican. Sin push/PR/merge ni lanzamiento de OpenCode.
