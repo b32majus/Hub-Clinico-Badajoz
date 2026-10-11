@@ -126,3 +126,11 @@ Las filas con issue #663–#672 del primer paquete remiten a `3; aquí figuran a
 **Condición de éxito de esta cola:** en una nueva conversación, leer GitHub `docs/INDEX.md` → `docs/ops/WORK_ORDER_STATUS.md` → este documento, verificar estado del issue específico y decidir solo la próxima unidad aprobada/desbloqueada. Al cerrar un ticket, actualizar fila/issue/PR por WO documental cuando materialmente cambie; no reinterpretar toda la auditoría. El resultado de QA por navegador debe distinguirse de tests automáticos y de estado publicado.
 
 **Git/política:** DOC-01 #663 prepara este documento en worktree aislado. Ningún issue de lote tiene `status:approved` por creación. No push/PR/merge/deploy sin autorización específica, no pacientes reales y no modificaciones de main ni sesiones ajenas.
+
+## 9. Ampliación: fuentes históricas y las demás unidades pendientes
+
+**Segunda pasada sobre fuentes ya aportadas, dentro de la misma WO:** [requisitos recuperados y trazabilidad](PROMUEVE_REQUIREMENTS_TRACEABILITY_20261011.md) y [paquete de candidatas](PROMUEVE_CANDIDATE_TICKETS_20261011.md), con **77 unidades adicionales clasificadas, ninguna creada como issue**. Las 20 filas FH y 12 Reuma de este documento son **macrocapacidades de inventario**, no necesariamente tickets atómicos ni un total cerrado de requisitos.
+
+Omisiones materiales de la primera cola: seguimiento específico de neoplasias frente a antecedente/riesgo basal; QA multi-línea y causalidad de Seguimiento; acceso externo CMO sin motor nativo; y necesidades del circuito Cáceres (PREMs institucional, QR/email, citas, educación, coordinación Digestivo/Medicina Preventiva y feedback clínico Derma–FH). Son **fuentes históricas de distinta madurez**, varias de operación asistencial y no de software Nexus.
+
+**Siguiente entrada:** comprobar primero issue de alcance correcto (#663–#672 y los ya abiertos #597/#577/#621/#570/#450/#389), después el gate en el [paquete ampliado](PROMUEVE_CANDIDATE_TICKETS_20261011.md). Un item OPS_DECISION o SOURCE_OR_TEAM no se convierte en código sin decisión. El **lote inicial son 10 issues reales**; las 77 unidades adicionales son **propuestas de ticketización**, no 77 Trains ni 77 nuevos issues.

@@ -12,15 +12,16 @@ Dejar una única cola operativa vinculada a GitHub para Reumatología, Farmacia,
 - Trabajo en worktree aislado `/srv/kairos-lab/worktrees/promueve-nexus-shipping-backlog-20261011`; otros intactos.
 
 ## Rutas y NO TOCA
-- Crear `docs/ops/PROMUEVE_SHIPPING_BACKLOG_20261011.md`.
+- Crear `docs/ops/PROMUEVE_SHIPPING_BACKLOG_20261011.md`, `docs/ops/PROMUEVE_REQUIREMENTS_TRACEABILITY_20261011.md` y `docs/ops/PROMUEVE_CANDIDATE_TICKETS_20261011.md`.
 - Actualizar solo referencias y estados vivos en `docs/INDEX.md`, `docs/ops/WORK_ORDER_STATUS.md`, `docs/ops/PROMUEVE_PRODUCT_STATUS_LEDGER.md` y `docs/ops/FARMACIA_ESTADO_Y_BACKLOG_20261011.md`.
-- Este archivo documental cierra el alcance propuesto; issues #663–#672 creados como preparaciones NO aprobadas para ejecución.
+- Este archivo documental cierra el alcance propuesto ampliado; issues #663–#672 creados como preparaciones NO aprobadas para ejecución, y 77 unidades restantes documentadas, no creadas en GitHub.
 - **NO TOCA:** código de producto, modelos, schemas, tests, navegación, seguridad clínica, releases, datos, agentes/permisos, branch `main`, historial, sesiones, worktrees ajenos, issues históricos administrativos, ni orden semántico de contratos.
 
 ## QA / aceptación
-- Diez issues con IDs/rutas únicos y estados reales; inventario completo FH/RE/F4-F7/Derma.
+- Diez issues con IDs/rutas únicos y estados reales; inventario FH/RE/F4-F7/Derma y recuperación de fuentes históricas, sin promover propuestas a decisiones clínicas.
+- 77 unidades adicionales clasificadas en gates de QA, shaping, fuente, dependencia, operativo y diferido: NO crear issues adicionales en esta autorización.
 - Estado publicado de Trains 29/30 y Atenea C-087 coherente con GitHub; ninguna función no implementada presentada como piloto.
-- Markdown/enlaces locales válidos; `git diff --check` y diff solo de seis documentos autorizados.
+- Markdown/enlaces locales válidos; `git diff --check` y diff solo de ocho documentos autorizados.
 - La cola discrimina PENDIENTE_QA, FEATURE, FUENTE, SHAPING, DEFERIDO y ANTES_PILOTO. Ningún issue recibe aprobación implícita.
 - QA documental/estático; no ejecución de agentes, navegador ni pruebas clínicas innecesarias.
 
