@@ -38,6 +38,19 @@
  *       totals (every `console` message of type `error` plus every
  *       `pageerror` event from journey start, without per-URL filtering).
  *       The pre-fix `HubTools.exportCohortToCSV not found` error must be gone.
+ *   S1  sex filter `Hombre` (supported label selection) downloads exactly the
+ *       1-patient M cohort [SYN-ESPA-001]; KPI total is 1, the table carries
+ *       that identity and the chip stays human-readable `Sexo: Hombre`.
+ *   S2  sex filter `Mujer` downloads exactly the 5-patient F cohort; chip
+ *       `Sexo: Mujer`.
+ *   S3  combination `pathology=ESPA + sex=Mujer` downloads only [SYN-ESPA-002].
+ *   S4  chip-remove (`Sexo` chip click) and clear-all (`#clearAllFiltersBtn`)
+ *       restore the wider cohort; `Todos` restores all 6 with a real download.
+ *   S5  sex zero-result negative `pathology=AR + sex=Hombre`: KPI 0, empty
+ *       copy shown, NO download, never falls back to total.
+ *       (Train 29 sex-filter defect: `#filterSex` sent `Hombre`/`Mujer` while
+ *       the corpus carries physical `M`/`F` codes compared for equality, so
+ *       S1/S2/S3/S5 fail on the unfixed base with 0 patients.)
  *
  * Exit code 0 = every case PASS, 1 = at least one FAIL or environment failure.
  * Usage: node tools/reuma_estadisticas_csv_filtered_cohort_browser_check.mjs
@@ -64,6 +77,11 @@ const corpus = JSON.parse(fs.readFileSync(CORPUS_FILE, 'utf8'));
 const ALL_SIX = ['SYN-APS-001', 'SYN-AR-001', 'SYN-ESPA-001', 'SYN-ESPA-002', 'SYN-LES-001', 'SYN-SJO-001'].sort();
 const ESPA_TWO = ['SYN-ESPA-001', 'SYN-ESPA-002'].sort();
 const DATE_FAME_TWO = ['SYN-APS-001', 'SYN-ESPA-001'].sort();
+// Train 29 sex cohorts (unique identities of tools/fixtures/reuma_read/corpus_v1.json:
+// physical codes M/F; visible labels stay Hombre/Mujer).
+const SEX_M_ONE = ['SYN-ESPA-001'];
+const SEX_F_FIVE = ['SYN-APS-001', 'SYN-AR-001', 'SYN-ESPA-002', 'SYN-LES-001', 'SYN-SJO-001'].sort();
+const ESPA_F_ONE = ['SYN-ESPA-002'];
 // Synthetic drug catalogue; FAME sintetico A/B/C match the synthetic cohort treatments
 // so the therapeutic filter is exercised through a real supported interaction.
 const SYNTHETIC_DRUGS = {
@@ -272,10 +290,24 @@ async function resetFormalFilters(page) {
     await page.dispatchEvent('#filterDateTo', 'change').catch(() => {});
     await page.click('.filter-tab[data-tab="demograficos"]').catch(() => {});
     await page.selectOption('#filterPathology', 'Todos').catch(() => {});
+    await page.selectOption('#filterSex', 'Todos').catch(() => {});
     await page.click('.filter-tab[data-tab="terapeuticos"]').catch(() => {});
     await page.selectOption('#filterTtoType', 'Todos').catch(() => {});
     await page.selectOption('#filterTtoSpecific', 'Todos').catch(() => {});
     await waitForTotal(page, 6);
+}
+
+// Train 29: select the sex filter through its supported visible label, so the
+// same interaction works whether the machine value is the label itself (base)
+// or a physical code (fixed candidate).
+async function selectSexByLabel(page, label) {
+    await page.click('.filter-tab[data-tab="demograficos"]').catch(() => {});
+    await page.selectOption('#filterSex', { label });
+}
+
+async function readChips(page) {
+    return page.evaluate(() => Array.from(document.querySelectorAll('#activeFiltersChips .filter-chip'))
+        .map((chip) => (chip.textContent || '').replace(/\s+/g, ' ').trim()));
 }
 
 let browser;
@@ -396,6 +428,99 @@ try {
                 `controlChildren=${JSON.stringify(controls.controlChildren)} exportVisible=${controls.exportVisible} ` +
                 `kpiTotal=${state.kpiTotal} rows=${state.tableRows} tableIds=${JSON.stringify(state.tableIds)} ` +
                 `downloaded=${JSON.stringify(ids)}`);
+        }
+
+        // S1 — Train 29: sex=Hombre through the supported visible label.
+        {
+            await resetFormalFilters(entry.page);
+            await selectSexByLabel(entry.page, 'Hombre');
+            await waitForTotal(entry.page, 1);
+            const state = await dashboardState(entry.page);
+            const dl = await clickExportExpectDownload(entry.page);
+            const ids = dl ? parseDownloadedIds(dl.text) : null;
+            const chips = await readChips(entry.page);
+            record('S1 sex=Hombre downloads exactly the 1-patient M cohort with human chip Sexo: Hombre',
+                state.kpiTotal === '1' && ids !== null && multisetEqual(ids, SEX_M_ONE) &&
+                multisetEqual([...state.tableIds].sort(), SEX_M_ONE) &&
+                chips.some((chip) => chip.includes('Sexo: Hombre')) &&
+                !chips.some((chip) => /Sexo:\s*M($|\s)/.test(chip)),
+                `kpiTotal=${state.kpiTotal} tableIds=${JSON.stringify(state.tableIds)} ` +
+                `downloaded=${JSON.stringify(ids)} chips=${JSON.stringify(chips)}`);
+        }
+
+        // S2 — Train 29: sex=Mujer through the supported visible label.
+        {
+            await resetFormalFilters(entry.page);
+            await selectSexByLabel(entry.page, 'Mujer');
+            await waitForTotal(entry.page, 5);
+            const state = await dashboardState(entry.page);
+            const dl = await clickExportExpectDownload(entry.page);
+            const ids = dl ? parseDownloadedIds(dl.text) : null;
+            const chips = await readChips(entry.page);
+            record('S2 sex=Mujer downloads exactly the 5-patient F cohort with human chip Sexo: Mujer',
+                state.kpiTotal === '5' && ids !== null && multisetEqual(ids, SEX_F_FIVE) &&
+                multisetEqual([...state.tableIds].sort(), SEX_F_FIVE) &&
+                chips.some((chip) => chip.includes('Sexo: Mujer')) &&
+                !chips.some((chip) => /Sexo:\s*F($|\s)/.test(chip)),
+                `kpiTotal=${state.kpiTotal} tableIds=${JSON.stringify(state.tableIds)} ` +
+                `downloaded=${JSON.stringify(ids)} chips=${JSON.stringify(chips)}`);
+        }
+
+        // S3 — Train 29: pathology=ESPA + sex=Mujer narrows to one identity.
+        {
+            await resetFormalFilters(entry.page);
+            await entry.page.click('.filter-tab[data-tab="demograficos"]');
+            await entry.page.selectOption('#filterPathology', 'ESPA');
+            await selectSexByLabel(entry.page, 'Mujer');
+            await waitForTotal(entry.page, 1);
+            const state = await dashboardState(entry.page);
+            const dl = await clickExportExpectDownload(entry.page);
+            const ids = dl ? parseDownloadedIds(dl.text) : null;
+            record('S3 pathology=ESPA + sex=Mujer downloads only SYN-ESPA-002',
+                state.kpiTotal === '1' && ids !== null && multisetEqual(ids, ESPA_F_ONE) &&
+                multisetEqual([...state.tableIds].sort(), ESPA_F_ONE),
+                `kpiTotal=${state.kpiTotal} tableIds=${JSON.stringify(state.tableIds)} downloaded=${JSON.stringify(ids)}`);
+        }
+
+        // S4 — Train 29: supported Sexo chip-remove and clear-all restore wider cohorts.
+        {
+            const chipsBefore = await readChips(entry.page);
+            await entry.page.click('.filter-chip-remove[data-filter="sex"]');
+            await waitForTotal(entry.page, 2);
+            const narrowed = await dashboardState(entry.page);
+            const chipsAfterRemove = await readChips(entry.page);
+            const dlNarrowed = await clickExportExpectDownload(entry.page);
+            const idsNarrowed = dlNarrowed ? parseDownloadedIds(dlNarrowed.text) : null;
+            await entry.page.click('#clearAllFiltersBtn');
+            await waitForTotal(entry.page, 6);
+            const restored = await dashboardState(entry.page);
+            const dlRestored = await clickExportExpectDownload(entry.page);
+            const idsRestored = dlRestored ? parseDownloadedIds(dlRestored.text) : null;
+            record('S4 Sexo chip-remove restores ESPA pair; clear-all restores all 6 with real downloads',
+                chipsBefore.some((chip) => chip.includes('Sexo: Mujer')) &&
+                narrowed.kpiTotal === '2' && idsNarrowed !== null && multisetEqual(idsNarrowed, ESPA_TWO) &&
+                !chipsAfterRemove.some((chip) => chip.includes('Sexo:')) &&
+                restored.kpiTotal === '6' && idsRestored !== null && multisetEqual(idsRestored, ALL_SIX) &&
+                multisetEqual([...restored.tableIds].sort(), ALL_SIX),
+                `chipsBefore=${JSON.stringify(chipsBefore)} narrowed=${narrowed.kpiTotal} ` +
+                `narrowedIds=${JSON.stringify(idsNarrowed)} chipsAfter=${JSON.stringify(chipsAfterRemove)} ` +
+                `restored=${restored.kpiTotal} restoredIds=${JSON.stringify(idsRestored)}`);
+        }
+
+        // S5 — Train 29 sex zero-result negative: no download, no fallback to total.
+        {
+            await resetFormalFilters(entry.page);
+            await entry.page.click('.filter-tab[data-tab="demograficos"]');
+            await entry.page.selectOption('#filterPathology', 'AR');
+            await selectSexByLabel(entry.page, 'Hombre');
+            await waitForTotal(entry.page, 0);
+            await entry.page.waitForTimeout(400);
+            const state = await dashboardState(entry.page);
+            const download = await clickExportExpectNoDownload(entry.page);
+            const emptyShown = state.tableText.includes(FILTER_EMPTY_COPY);
+            record('S5 pathology=AR + sex=Hombre yields zero results with no download and no fallback to total',
+                state.kpiTotal === '0' && emptyShown && download === null,
+                `kpiTotal=${state.kpiTotal} emptyShown=${emptyShown} download=${download ? 'UNEXPECTED' : 'none'}`);
         }
 
         // E6 — full-journey error budget: gate through downloads, no reset, no per-URL filtering. Both totals must be zero.

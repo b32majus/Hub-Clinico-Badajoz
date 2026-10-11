@@ -549,6 +549,10 @@ function getActiveFilters() {
     return filters;
 }
 
+// Physical sex codes carried by #filterSex machine values stay projected to
+// human-readable chip labels. Unknown codes are shown raw, never inferred.
+const SEX_DISPLAY_LABELS = { M: 'Hombre', F: 'Mujer' };
+
 function updateActiveFiltersDisplay() {
     const filters = getActiveFilters();
     const activeFiltersBar = document.getElementById('activeFiltersBar');
@@ -585,11 +589,17 @@ function updateActiveFiltersDisplay() {
             activeCount++;
             tabCounts[config.tab]++;
 
+            // The sex filter travels to the read port as the physical corpus
+            // code (M/F); chips stay human-readable (Hombre/Mujer) and remain
+            // presentation only — they never feed the formal cohort.
+            const displayValue = key === 'adverseEffect'
+                ? 'Sí'
+                : (key === 'sex' ? (SEX_DISPLAY_LABELS[value] || value) : value);
             const chip = document.createElement('span');
             chip.className = 'filter-chip';
             chip.innerHTML = `
                 <span class="filter-chip-label">${config.label}:</span>
-                <span class="filter-chip-value">${key === 'adverseEffect' ? 'Sí' : value}</span>
+                <span class="filter-chip-value">${displayValue}</span>
                 <button class="filter-chip-remove" data-filter="${key}">
                     <i class="fas fa-times"></i>
                 </button>
