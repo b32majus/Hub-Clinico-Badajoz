@@ -181,11 +181,12 @@
     }
 
     function deriveFilterOptions() {
-        var values = { servicio: [], patologia: [], farmaco: [], estado: [], ea: [], adherencia: [] };
+        var values = { servicio: [], patologia: [], farmaco: [], principio: [], estado: [], ea: [], adherencia: [] };
         allPatients.forEach(function (item) {
             values.servicio = values.servicio.concat(item.profile.services);
             values.patologia = values.patologia.concat(item.profile.pathologies);
             values.farmaco = values.farmaco.concat(item.profile.drugNames, item.profile.activeIngredients);
+            values.principio = values.principio.concat(item.profile.activeIngredients);
             values.estado.push(item.profile.careStatus);
             values.ea.push(item.profile.adverseStatus);
             values.adherencia.push(item.profile.adherenceResult);
@@ -213,6 +214,7 @@
         fillSelect('qf-servicio', options.servicio, 'Todos');
         fillSelect('qf-patologia', options.patologia, 'Todas');
         fillSelect('qf-farmaco', options.farmaco, 'Todos');
+        fillSelect('qf-principio', options.principio, 'Todos');
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
         fillSelect('qf-ea', options.ea, 'Todos', adverseLabel);
         fillSelect('qf-adherencia', options.adherencia, 'Todas', function (value) {
@@ -233,6 +235,7 @@
         if (filters.servicio && profile.services.indexOf(filters.servicio) === -1) return false;
         if (filters.patologia && profile.pathologies.indexOf(filters.patologia) === -1) return false;
         if (filters.farmaco && profile.drugNames.indexOf(filters.farmaco) === -1 && profile.activeIngredients.indexOf(filters.farmaco) === -1) return false;
+        if (filters.principio && profile.activeIngredients.indexOf(filters.principio) === -1) return false;
         if (filters.estado && profile.careStatus !== filters.estado) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
@@ -316,7 +319,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
