@@ -160,8 +160,9 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
     };
     const rowD2 = { ...commonRow, ID_Paciente: 'SYN-DASH-D2', Estado_Prebiologico_Analitica: 'OK' };
     const rowD3 = { ...commonRow, ID_Paciente: 'SYN-DASH-D3' };
+    const rowD4 = { ...commonRow, ID_Paciente: 'SYN-DASH-D4', FR: 2 };
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([rowD1, rowD2, rowD3]), 'ESPA');
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([rowD1, rowD2, rowD3, rowD4]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
     }
@@ -387,6 +388,35 @@ async function runJourney(browser, label, patientId, expectLines) {
         const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
         record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
 
+        if (patientId === 'SYN-DASH-D4') {
+            const dashboard = await page.evaluate(() => {
+                const visible = (selector) => {
+                    const el = document.querySelector(selector);
+                    return !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+                };
+                const biomarker = document.getElementById('biomarkerFr');
+                return {
+                    dashboardVisible: visible('#dashboardContent'),
+                    biomarker: biomarker?.textContent.trim() ?? null,
+                    biomarkerClass: biomarker?.className ?? '',
+                    regionsVisible: [
+                        '#patientKpis', '.dashboard-card--clinical', '.dashboard-card--biomarkers',
+                        '.dashboard-card--summary', '.dashboard-card--treatment',
+                        '.dashboard-card--history', '.dashboard-card--events',
+                        '.dashboard-card--chart', '#visitsTable'
+                    ].every(visible),
+                    chartRegionVisible: visible('.dashboard-card--chart'),
+                    nextActionsPresent: ['#btnSolicitudFH', '#btnSeguimiento', '#exportVisitsBtn'].every(visible)
+                };
+            });
+            record(`${label}: pantalla principal completa visible`, dashboard.dashboardVisible && dashboard.regionsVisible, JSON.stringify(dashboard));
+            record(`${label}: FR numérico explícito 2 como texto neutral/unknown, sin veredicto clínico`,
+                dashboard.biomarker === '2' && dashboard.biomarkerClass.split(/\s+/).includes('unknown') &&
+                !dashboard.biomarkerClass.split(/\s+/).some((name) => ['positive', 'negative'].includes(name)),
+                JSON.stringify(dashboard));
+            record(`${label}: región de gráficas y acciones siguientes disponibles`, dashboard.chartRegionVisible && dashboard.nextActionsPresent, JSON.stringify(dashboard));
+        }
+
         const { artifact, via } = await pressSolicitudFHAndReadArtifact(page);
         record(`${label}: el botón real Solicitud FH produce artefacto (vía ${via})`, artifact.length > 50, `longitud=${artifact.length} vía=${via}`);
         console.log(`    excerpt prebiológico: ${excerptPrebio(artifact)}`);
@@ -426,6 +456,7 @@ try {
     await runJourney(browser, 'D1 dashboard ambos explícitos', 'SYN-DASH-D1', ['Analítica: OK', 'Medicina Preventiva: SOLICITADA_PENDIENTE']);
     await runJourney(browser, 'D2 dashboard sólo Analítica explícita (Medicina Preventiva ausente)', 'SYN-DASH-D2', ['Analítica: OK']);
     await runJourney(browser, 'D3 dashboard ambos ausentes', 'SYN-DASH-D3', null);
+    await runJourney(browser, 'D4 dashboard FR numérico explícito', 'SYN-DASH-D4', null);
 } finally {
     if (browser) await browser.close();
     server.close();
