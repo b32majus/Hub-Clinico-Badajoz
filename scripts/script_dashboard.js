@@ -20,6 +20,16 @@ let visitsTableState = {
     data: []
 };
 
+// Train 27 (veracidad del tratamiento actual): provenance of the
+// current-treatment witness used by presentation mapping only.
+// 'read' (default): the camelCase `tratamientoActual` may be a plan alias
+// synthesized by the normalizer from Biologico/FAME/Sistemico BEFORE the
+// read port, so only the physical `Tratamiento_Actual` column retained on
+// the visit record accredits active treatment. 'mock': the
+// MockPatients-authored camelCase summary is the unequivocal demo witness
+// and keeps the legacy mock presentation. Set by the bundle builders below.
+let dashboardTreatmentSource = 'read';
+
 // Colores consistentes con el sistema de diseño
 const COLORS = {
     remission: '#10B981',
@@ -278,6 +288,10 @@ function buildBundleFromRead(patientId, record, history) {
         return null;
     }
 
+    // Train 27: this bundle comes from the read port, so presentation must
+    // accredit the current treatment from the physical column only.
+    dashboardTreatmentSource = 'read';
+
     const normalizedRecord = normalizeRecord(record);
     const normalizedVisits = history.allVisits.map(visit => normalizeRecord(visit));
     const latestVisit = history.latestVisit ? normalizeRecord(history.latestVisit) : (normalizedVisits[0] || null);
@@ -317,6 +331,11 @@ function loadFromMock(patientId) {
         return null;
     }
 
+    // Train 27: this bundle is authored demo data (MockPatients owns its
+    // camelCase summary and its treatmentHistory date semantics), so
+    // presentation keeps the legacy mock mapping below.
+    dashboardTreatmentSource = 'mock';
+
     const sortedVisits = [...(bundle.visits || [])]
         .map(visit => normalizeRecord(visit))
         .sort((a, b) => new Date(getVisitDate(a)) - new Date(getVisitDate(b)));
@@ -340,6 +359,33 @@ function loadFromMock(patientId) {
     };
 
     return { summary, history };
+}
+
+// Train 27 presentation helper (no new domain semantics): reads a physical
+// witness value retained on a normalized visit record by normalizeRecord's
+// spread. The physical key is present exactly when the raw row carried the
+// column; a literal 'No' is a recorded value, not absence. Reused for the
+// `Fecha_Inicio_Tratamiento` witness as well as the `Tratamiento_Actual`
+// witness, so the accredited actual and its start date come from the same
+// physically present row. The camelCase aliases (`tratamientoActual`,
+// `fechaInicioTratamiento`) are never consulted here because their provenance
+// (explicit value vs. plan/alias synthesis) is unproven.
+function physicalTreatmentWitness(value) {
+    if (value === undefined || value === null) return '';
+    return String(value).trim();
+}
+
+// Train 27 negated-actual rule (human-authorized): a physical
+// `Tratamiento_Actual` trimmed value of exactly the case-sensitive literal
+// `No` is a recorded negation, not absence and not an accredited active
+// line. It keeps `No` as the displayed value but never accredits a start
+// date/duration (card) and never reads as active (KPI status
+// 'Sin tratamiento activo'), even when a physical
+// `Fecha_Inicio_Tratamiento` exists on the witness row. This applies only
+// to the explicit physical `Tratamiento_Actual` field; it says nothing
+// about other systemic, FAME or biological sources.
+function isNegatedTreatmentActual(value) {
+    return value === 'No';
 }
 
 function populateDashboard() {
@@ -398,9 +444,31 @@ function populateDashboard() {
         : '<li>Sin manifestaciones registradas</li>';
 
     // Tarjeta 4: Tratamiento Activo
+    // Train 27: on the read route only the physical `Tratamiento_Actual`
+    // retained on the latest visit accredits the current treatment — never
+    // the camelCase alias (possible plan alias) and never the historical
+    // treatmentHistory. Date/duration come only from the physical
+    // `Fecha_Inicio_Tratamiento` column on the SAME witness row (never the
+    // alias-resolved summary.fechaInicioTratamiento, whose provenance is
+    // unproven). A physical `Tratamiento_Actual` of exactly `No` is kept as
+    // the recorded value but is a negation, not an accredited active line:
+    // it never carries a start date or duration, even if a physical
+    // `Fecha_Inicio_Tratamiento` exists. The mock demo bundle keeps its
+    // authored presentation (authored summary name; authored history date
+    // semantics).
     const activeTreatment = getLastItem(window.patientHistory.treatmentHistory) || {};
-    const treatmentName = summary.tratamientoActual || activeTreatment.name || 'Sin tratamiento asignado';
-    const treatmentStartDate = activeTreatment.startDate || summary.fechaInicioTratamiento;
+    let treatmentName;
+    let treatmentStartDate;
+    if (dashboardTreatmentSource === 'mock') {
+        treatmentName = summary.tratamientoActual || activeTreatment.name || 'Sin tratamiento asignado';
+        treatmentStartDate = activeTreatment.startDate || summary.fechaInicioTratamiento;
+    } else {
+        const accreditedActual = physicalTreatmentWitness(latest.Tratamiento_Actual);
+        treatmentName = accreditedActual || 'Sin tratamiento asignado';
+        treatmentStartDate = accreditedActual && !isNegatedTreatmentActual(accreditedActual)
+            ? (physicalTreatmentWitness(latest.Fecha_Inicio_Tratamiento) || undefined)
+            : undefined;
+    }
     document.getElementById('activeTreatmentName').textContent = treatmentName;
     document.getElementById('activeTreatmentStartDate').textContent = formatDate(treatmentStartDate) || 'Sin registrar';
     document.getElementById('activeTreatmentDuration').textContent = calculateTreatmentDuration(treatmentStartDate);
@@ -633,11 +701,37 @@ function populatePatientKPIs(latest, summary, allVisits) {
     if (kpiPCRThreshold) kpiPCRThreshold.textContent = pcrStatus.threshold || '';
     updateKPICardClass('kpiPCR', pcrStatus.class);
 
+    // Train 27: same provenance rule as the card. On the read route an
+    // unaccredited source shows the neutral value with a never-active
+    // status; an accredited actual without an explicitly-present physical
+    // `Fecha_Inicio_Tratamiento` column keeps the pre-existing 'Activo'
+    // text (the alias-resolved summary.fechaInicioTratamiento is never
+    // consulted). A physical `Tratamiento_Actual` of exactly `No` keeps
+    // `No` as the KPI value but never reads as active: its status is the
+    // authorized 'Sin tratamiento activo', never 'Activo' and never
+    // 'Desde ...', even if a physical `Fecha_Inicio_Tratamiento` exists.
+    // The mock demo bundle keeps its authored presentation.
     const activeTreatment = getLastItem(window.patientHistory.treatmentHistory) || {};
-    const treatmentName = summary.tratamientoActual || activeTreatment.name || '---';
+    let treatmentName;
+    let treatmentStatus;
+    if (dashboardTreatmentSource === 'mock') {
+        treatmentName = summary.tratamientoActual || activeTreatment.name || '---';
+        treatmentStatus = activeTreatment.startDate ? `Desde ${formatDate(activeTreatment.startDate).substring(3)}` : 'Activo';
+    } else {
+        const accreditedActual = physicalTreatmentWitness(latest.Tratamiento_Actual);
+        const accreditedStart = physicalTreatmentWitness(latest.Fecha_Inicio_Tratamiento);
+        treatmentName = accreditedActual || '---';
+        treatmentStatus = !accreditedActual
+            ? 'Sin datos'
+            : (isNegatedTreatmentActual(accreditedActual)
+                ? 'Sin tratamiento activo'
+                : (accreditedStart
+                    ? `Desde ${formatDate(accreditedStart).substring(3)}`
+                    : 'Activo'));
+    }
     const shortTreatmentName = treatmentName.split(' ')[0];
     document.getElementById('kpiTratamientoValue').textContent = shortTreatmentName;
-    document.getElementById('kpiTratamientoStatus').textContent = activeTreatment.startDate ? `Desde ${formatDate(activeTreatment.startDate).substring(3)}` : 'Activo';
+    document.getElementById('kpiTratamientoStatus').textContent = treatmentStatus;
 
     const visitCount = allVisits.length;
     document.getElementById('kpiVisitasValue').textContent = visitCount;
@@ -772,7 +866,14 @@ function initVisitsTable(visits) {
         ),
         evaDolor: getVisitMetric(visit, 'evaDolor'),
         pcr: getVisitMetric(visit, 'pcr'),
-        tratamiento: visit.tratamientoActual || visit.Tratamiento_Actual || '---'
+        // Train 27: on the read route each row shows only its physical
+        // `Tratamiento_Actual` witness (never the camelCase plan alias).
+        // This shared field feeds the CSV "Tratamiento" column, so table
+        // and export stay consistent by construction. The mock demo bundle
+        // keeps the legacy mapping.
+        tratamiento: dashboardTreatmentSource === 'mock'
+            ? (visit.tratamientoActual || visit.Tratamiento_Actual || '---')
+            : (physicalTreatmentWitness(visit.Tratamiento_Actual) || '---')
     }));
 
     sortVisitsData('fecha', 'desc');
