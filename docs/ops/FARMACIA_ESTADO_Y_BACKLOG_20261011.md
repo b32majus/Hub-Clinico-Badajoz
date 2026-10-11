@@ -1,6 +1,6 @@
 # PROMueve Nexus — Farmacia Hospitalaria: estado, pendientes y puertas de implementación
 
-**Corte reconciliado:** 2026-10-11 · **WO documental:** [#647](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/647) / [PR #648](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/648). **Base histórica de preparación:** `ba38474ea26cd064953b9aa4e8bc9f6448d77400` (Train26). **Último producto publicado verificado:** `promueve/nexus-v4@8a4c346babcc2894f2ef36f0468289ae1563c778` (Train25 #649/PR #650). Fotografía documental: verificar GitHub live antes de cada nueva WO.
+**Corte reconciliado:** 2026-10-11 · **WO documental:** [#647](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/647) / [PR #648](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/648). **Base histórica de preparación:** `ba38474ea26cd064953b9aa4e8bc9f6448d77400` (Train26). **Último producto publicado verificado:** `promueve/nexus-v4@124c12b623f12885347c8e6c79dd965ac570df54` (Train27 #653/PR #654; previo Train28 #651/PR #652 en `de65dca6b8939fd9e64207f713a985fe2c9dda60`). Fotografía documental: verificar GitHub live antes de cada nueva WO.
 
 **Objeto:** mapa de trabajo práctico, sin reabrir auditorías ni decisiones cerradas. Responde «qué existe, qué funciona, qué está publicado, qué falta, qué lo bloquea y cuál es su siguiente acción». No constituye un contrato clínico nuevo, aprobación de prioridad o autorización de piloto.
 
@@ -25,21 +25,23 @@ Invariantes: solicitado ≠ validado; validado ≠ dispensado; tratamiento previ
 | Validación manual/Excel: claridad de entrada | Train26 #645/PR #646, merge `ba38474e` `PUBLICADO`; **seis textos** | `fhOrigenEntrada` y values/listeners intactos; preselección `demo_formacion` es deuda preexistente fuera del Train |
 | Primera Visita: solicitud/inducción | Capacidad UI existente y PV-001 corregido; `IMPLEMENTADO_PARCIAL / QA POR CASO` | Inducción solicitada ≠ validada; no declarar restauración o piloto sin recorrido soportado |
 | Export V2 técnico | Botones y contrato para demo, 152 columnas, copia técnica | No acredita backend, entrega o persistencia clínica; no ocultar por estética |
-| Estadísticas: análisis poblacional | **Seis** quick filters soportados; export CSV con cohorte formal por motor publicado | La búsqueda local de tabla no es semántica de cohorte; recuperación de otros filtros pendiente |
+| Filtro «Principio activo registrado» (`SIL-REV-018-A`) | Train28 #651/PR #652 `PUBLICADO`, merge `de65dca6b8939fd9e64207f713a985fe2c9dda60`; Chromium 11/11 y CSV 37 columnas verificados | Séptimo selector solo de `activeIngredients` explícitos; combinación AND con «Fármaco» (marca OR molécula), no infiere molécula ni estado activo; B/C/D/E siguen pendientes, sin piloto |
+| Estadísticas: análisis poblacional | **Siete** quick filters soportados (séptimo «Principio activo registrado», #651/PR #652); export CSV con cohorte formal por motor publicado | La búsqueda local de tabla no es semántica de cohorte; recuperación de otros filtros pendiente |
 | Informes V1 Cosentyx y Kisqali | #576/#579, PR #581/#582 y ampliaciones #598/#599/#602 PR #600/#601/#603: `PUBLICADOS / QA SINTÉTICA`; informes completos con XLSX calculado y detalle | Primera dispensación **explícita** para nuevo inicio; Kisqali ciclos evaluables ≠ consumo; presentación ≠ dosis |
 | Renovaciones | **N0, solo contrato** #509/PR #510 y PR #511 | Sin N1/N2/N3 funcionales; N4 diferido |
-| Solicitud Reuma→Farmacia textual | #528–#531/PR #532 **PUBLICADA**; Train25 #649/PR #650 merge `8a4c346babcc2894f2ef36f0468289ae1563c778` **PUBLICADO** | F1: actual físico y plan separados aun con igual nombre; F2: `No` explícito preservado; F3: fallback sin pérdidas. Alias camelCase ambiguo queda vacío en artefacto FH; tarjetas/KPI Dashboard son deuda separada. No integración estructurada ni piloto. |
-| Últimos Trains | Train23 #641/PR #642 (`fefa7ee`), Train24 #643/PR #644 (`38b0a90`), Train26 #645/PR #646 (`ba38474e`), Train25 #649/PR #650 (`8a4c346b`), todos **MERGED** | QA sintética y CI; Pages desplegado, **NO PILOTO** |
+| Solicitud Reuma→Farmacia textual | #528–#531/PR #532 **PUBLICADA**; Train25 #649/PR #650 merge `8a4c346babcc2894f2ef36f0468289ae1563c778` **PUBLICADO** | F1: actual físico y plan separados aun con igual nombre; F2: `No` explícito preservado; F3: fallback sin pérdidas. Alias camelCase ambiguo queda vacío en artefacto FH; tarjetas/KPI Reuma eran deuda distinta, **resuelta posteriormente por Train27 #653/PR #654**. No integración estructurada ni piloto. |
+| Últimos Trains | Train23 #641/PR #642, Train24 #643/PR #644, Train26 #645/PR #646, Train25 #649/PR #650, **Train28 #651/PR #652 (`de65dca6b8939fd9e64207f713a985fe2c9dda60`)** y **Train27 #653/PR #654 (`124c12b623f12885347c8e6c79dd965ac570df54`)**, todos MERGED | QA sintética y CI; Pages desplegado, **NO PILOTO** |
+
+**Adenda de estado 2026-10-11 — Train28/FH y Train27/Reuma:** #651/PR #652 y #653/PR #654 **MERGED/VERIFICADOS**, con Nexus gates y Pages postmerge SUCCESS. Los issues #651/#653 siguen OPEN administrativamente, sin defecto técnico abierto en sus alcances. El nuevo filtro no demuestra tratamiento activo; la corrección Reuma no convierte plan o tratamiento previo en actual. Overflow horizontal de la tabla de Estadísticas a 820/1080 preexistente y fuera de Train28; `SIL-REV-018-B/C/D/E`, FH-DEBT-001 y N1–N3 permanecen pendientes de sus gates. Solo sintético, **NO PILOTO**.
 
 **Nota Git y administración:** #643 y #645 seguían **OPEN** administrativamente pese al merge de #644/#646; #537 aparece OPEN tras PR #538. Train25 #649/PR #650 ya está MERGED y su issue se cierra en el cierre operativo autorizado. No confundir issue abierto con funcionalidad pendiente; los cierres de #643/#645/#537 son independientes de #647.
 
 ## 3. Backlog de ejecución: qué necesita cada cosa
 
-### 3.1 Trabajo recortable de Farmacia tras publicar Train25
+### 3.1 Trabajo recortable de Farmacia tras publicar Train28
 
 | Pendiente | Estado probado | Puerta concreta y evidencia proporcional |
 | --- | --- | --- |
-| **`SIL-REV-018-A`: principio activo como filtro poblacional independiente** | `PENDIENTE_DECIDIDO`. `scripts/farmacia_estadisticas.js` usa `drugNames` + `activeIngredients` juntos en `qf-farmaco`; la proyección expone `activeIngredients` | Acordar combinación con filtro de fármaco comercial sin confundir molécula/marca, vacío y presentación; WO atómica en Estadísticas, conservar `currentCohort`, chips, conteos y CSV real filtrado; testigos negativos sintéticos. **Candidato de Train FH**, no autorizado por este documento |
 | **`SIL-REV-018-B`: PROM/instrumento/valor, validación, EA/severidad, causalidad, movimientos** | `AVAILABLE_NOT_FILTERABLE` por dimensión, según fuente; ya existen datos/representaciones parciales | Separar por dimensión. Decidir tipos, rangos y ausentes desde campos explícitos; Matt `to-spec/to-tickets` si hay varias unidades; QA de cohorte y export sin añadir filtros vacíos |
 | **`SIL-REV-018-C`: dosis, vía, pauta/frecuencia** | Atributos de líneas/movimientos visibles o exportables; no filtros soportados | Definir línea activa vs evento histórico, coexistencia de líneas, texto vs valor estructurado; no derivar pauta/dosis desde presentación. Shaping funcional focal → WO |
 | **`SIL-REV-018-D`: ventana temporal y 1/2/3 tratamientos simultáneos** | Requisito decidido; sin filtro publicado equivalente | Definir fecha/ventana y contar **líneas activas simultáneas explícitas**, no fármacos históricos; fijar semántica antes de spec/ticket |
@@ -94,17 +96,17 @@ La duración **configurada** no puede pasar a confirmada; ausencia de fecha = `n
 - Los informes V1 usan fixtures sintéticos y cuentan/calculan desde esos datos; no se publica como indicador de dispensación/consumo real ni se deduce dosis desde presentación.
 - GitHub Pages y CI green no significan QA clínica hospedada, datos reales o piloto. No incluir secretos, identificadores o exportaciones de pacientes.
 
-## 6. Secuencia operativa sugerida tras Train25 — **PROPUESTA, NO APROBACIÓN**
+## 6. Secuencia operativa sugerida tras Trains 27/28 — **PROPUESTA, NO NUEVA APROBACIÓN**
 
 1. **Train25 Reuma→FH PUBLICADO**: #649/PR #650, merge `8a4c346babcc2894f2ef36f0468289ae1563c778`, F1/F2/F3 auditados y corregidos con CI y Pages postmerge SUCCESS. No reabrir el candidato local; próximas WOs parten de la rama canónica publicada.
-2. **Candidato Train FH**: `SIL-REV-018-A` filtro principio activo independiente, sobre `promueve/nexus-v4`: superficies `farmacia_estadisticas.html`, `scripts/farmacia_estadisticas.js` y oráculos Estadísticas; preservar contrato de `scripts/farmacia_statistics_cohort.js` salvo necesidad demostrada. **Cerrar con humano** cómo convive con `Fármaco`, y después Cora hardening C-087. El candidato no es todavía `READY_TO_LAUNCH` ni issue creado.
+2. **Train28 FH `SIL-REV-018-A` PUBLICADO:** #651/PR #652, merge `de65dca6b8939fd9e64207f713a985fe2c9dda60`; filtro explícito por molécula independiente de «Fármaco», cohorte y CSV de contrato inalterados, Chromium 11/11 y CI/Pages SUCCESS. No queda como candidato. B/C/D/E conservan sus propias puertas.
 3. **En paralelo al desarrollo FH**, ticketización N1 desde N0 congelado: shaping solo de las incógnitas materiales, no repetir auditoría ni rediseñar máquina de estados. Ante falta de fuente clínica, HUMAN STOP.
 4. Alternativas acotadas para demo: microcopy de Export V2 o `FH-DEBT-004` visual. Separar estética, reporte, clínica y persistencia.
 
-**Conflictos:** verificar solapamientos con la rama canónica que ya incorpora Train25; si aparece una superficie o contrato compartido, detenerse y ajustar el hardening y QA al riesgo. No tocar `main` ni ramas ajenas. Antes de publicar, verificar HEAD remoto, cambios autorizados, tests y QA.
+**Conflictos:** verificar solapamientos con la rama canónica que ya incorpora Train27 y Train28; si aparece una superficie o contrato compartido, detenerse y ajustar el hardening y QA al riesgo. No tocar `main` ni ramas ajenas. Antes de publicar, verificar HEAD remoto, cambios autorizados, tests y QA.
 
 ## 7. Trazabilidad administrativa y próxima actualización
 
-- #643 (Train24) y #645 (Train26) están **OPEN administrativamente** aunque #644/#646 MERGED. #537 también aparece abierto pese al merge de PR #538. El cierre de issues no está autorizado por esta WO.
+- #651 (Train28) y #653 (Train27) siguen **OPEN** administrativos pese a PR #652/#654 MERGED. #643, #645 y #537 arrastraban deuda administrativa previa; esta WO **no cierra issues**.
 - Este maestro es **agregado navegable**, no reemplazo de hallazgos `SIL-REV`, decisiones #501, N0, deuda FH ni fichas de implementación. El backlog histórico no se «promueve» por copiarlo aquí.
 - Cada futura WO debe declarar decisión aprobada, HEAD/base, preflight, reversión, scope/NO TOCA, criterios, QA y política push/PR/merge; una propuesta no se documenta como publicada. La reconciliación tras publicación se hace en su WO apropiada.
