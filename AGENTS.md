@@ -19,7 +19,7 @@ Do not load historical Gentle/Pi/RDD/4R/OpenCode V1 material or broad product/sh
 
 ## C-087 execution boundary
 
-Normal execution uses native OpenCode V2 2.0.22 + upstream Matt skills. Standard `volume` writes with DeepSeek V4 Flash; Standard `complex` writes with GLM 5.3 Flash high. Cost policy and risk class are independent. No silent fallback or mid-unit route change.
+Normal execution uses native OpenCode V2 2.0.26 (2.0.22 is a historical baseline) + upstream Matt skills. Standard `volume` writes with DeepSeek V4 Flash; Standard `complex` writes with GLM 5.3 Flash high. Cost policy and risk class are independent. No silent fallback or mid-unit route change.
 
 The primary coordinator owns `/implement`/`/implement-spec`, one canonical Standards + Spec review and any fresh finding-scoped correction dispatch. Implementation workers implement/TDD and return a fixed candidate only. Review start closes the writer. At most two fresh corrections are allowed for the same authorized findings.
 
@@ -27,7 +27,7 @@ Delegate by child-readable authority: prefer a repo-local handoff readable from 
 
 Writers run focused TDD and the smallest relevant deterministic checks. Broad/full suites default to justified integration/publication boundaries, not every writer slice. Correctors close supplied findings with focused evidence and do not perform open-ended sibling audits.
 
-Specialized product/fidelity safeguards are conditional. This validation unit has no unresolved product decision and does not authorize new representation/domain semantics. If implementation discovers a material product/architecture/privacy/clinical/data-semantics choice or material out-of-envelope affected surface, HUMAN STOP.
+Specialized product/fidelity safeguards are conditional on the accepted work and concrete material risk, not routine execution gates. Do not add implementation searches, sibling audits or tests by default. If implementation discovers a material product/architecture/privacy/clinical/data-semantics choice or material out-of-envelope affected surface, HUMAN STOP.
 
 Herdr is user-owned persistent operator infrastructure; do not launch/restart/stop it. Ordinary visible execution is `opencode .`. Do not use `--pure` or V1 configuration.
 
