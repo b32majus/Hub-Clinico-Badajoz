@@ -1,5 +1,7 @@
 # PROMueve — Paquete ampliado de unidades de trabajo preparadas para ticketización
 
+**ACTUALIZACIÓN POSTERIOR — CANDIDATO LOCAL, NO PUBLICADO:** la fotografía anterior de 77 unidades sin issue es histórica. El [registro de ticketización Matt](PROMUEVE_TICKETIZATION_REGISTER_20261011.md) documenta 61 issues nuevos (#674–#734), seis reutilizados y tres diferidos. Ningún issue de esta fase tiene status:approved ni ready-for-agent.
+
 **Estado:** propuestas documentales locales; **NO son issues creados en GitHub ni autorizaciones para implementar**. Corte `promueve/nexus-v4@a3556b408e91c257c7cd2c829c575ff497c99745`, Atenea C-087. Fuente y adjudicación: [trazabilidad](PROMUEVE_REQUIREMENTS_TRACEABILITY_20261011.md), [cola principal](PROMUEVE_SHIPPING_BACKLOG_20261011.md).
 
 ## 1. Regla de apertura
