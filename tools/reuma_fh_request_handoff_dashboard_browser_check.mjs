@@ -24,6 +24,8 @@
  *      shared generateRequestText/getPrebiologicBlock generator);
  *   5. READ the produced artifact (clipboard text, else fallback modal
  *      textarea) and assert on that text.
+ *   6. D4 only: press Exportar visitas to witness its download listener, then
+ *      the real Seguimiento link and read the same patient's populated form.
  * page.evaluate is used ONLY to READ observable state/artifact text; it never
  * mutates the DOM, never sets readonly state, never fabricates fixtures.
  *
@@ -429,6 +431,13 @@ async function runJourney(browser, label, patientId, expectLines) {
                 formattedValues.undefinedValue === 'No analizado' && formattedValues.empty === 'No analizado' &&
                 formattedValues.positive === 'Positivo' && formattedValues.negative === 'Negativo',
                 JSON.stringify(formattedValues));
+            const absentTokens = await page.evaluate(() => ({
+                nan: window.formatBiomarker(NaN),
+                falseValue: window.formatBiomarker(false)
+            }));
+            record(`${label}: negativos NaN y false permanecen No analizado, sin valor literal ni veredicto`,
+                absentTokens.nan === 'No analizado' && absentTokens.falseValue === 'No analizado',
+                JSON.stringify(absentTokens));
         } else {
             const absentBiomarker = await page.evaluate(() => {
                 const el = document.getElementById('biomarkerFr');
@@ -463,6 +472,38 @@ async function runJourney(browser, label, patientId, expectLines) {
 
         await assertBlacklist(label, artifact);
         await assertCommonPreservation(label, artifact, patientId);
+
+        if (patientId === 'SYN-DASH-D4') {
+            // These actions follow the real FH artifact, in the same tab and
+            // imported session. Export has its own listener after population.
+            const [download] = await Promise.all([
+                page.waitForEvent('download', { timeout: 10000 }),
+                page.click('#exportVisitsBtn')
+            ]);
+            record(`${label}: tras Solicitud FH, Exportar visitas real descarga el historial de ${patientId}`,
+                download.suggestedFilename() === `historial_visitas_${patientId}.csv` &&
+                await download.failure() === null,
+                download.suggestedFilename());
+
+            await page.click('#btnSeguimiento');
+            await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+            await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
+            const continuation = await page.evaluate(() => {
+                const value = (id) => document.getElementById(id)?.value ?? null;
+                return {
+                    cip: value('idPaciente'),
+                    name: value('nombrePaciente'),
+                    diagnosis: value('diagnosticoPrimario'),
+                    treatment: value('tratamientoActual'),
+                    patientVisible: document.querySelector('.patient-info-section')?.getClientRects().length > 0
+                };
+            });
+            record(`${label}: Solicitud FH → Seguimiento real conserva ${patientId}, nombre, diagnóstico y tratamiento visibles`,
+                continuation.cip === patientId && continuation.name === 'Sintetico Dash' &&
+                continuation.diagnosis === 'espa' && continuation.treatment === SYN_TREATMENT &&
+                continuation.patientVisible,
+                JSON.stringify(continuation));
+        }
 
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
