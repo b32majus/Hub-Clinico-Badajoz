@@ -105,15 +105,15 @@
     <div class="fh-intake-review__panel" data-fh-intake-preview-panel aria-live="polite" hidden></div>
 </section>
 <section class="dashboard-card" id="origenEntradaCard">
-    <h2 class="section-title"><i class="fas fa-door-open"></i> Origen de entrada</h2>
+    <h2 class="section-title"><i class="fas fa-door-open"></i> Incorporación de la solicitud</h2>
     <div class="form-grid">
         <div class="form-group">
-            <label for="fhOrigenEntrada">Origen de entrada</label>
+            <label for="fhOrigenEntrada">Modo de incorporación</label>
             <select class="form-select" id="fhOrigenEntrada">
                 <option value="">Seleccionar...</option>
-                <option value="manual_farmacia">Entrada manual - Farmacia</option>
+                <option value="manual_farmacia">Captura manual en Farmacia</option>
                 <option value="servicio_clinico_compatible" hidden disabled>Servicio clinico compatible (futuro, no disponible)</option>
-                <option value="excel_enfermeria">Solicitud desde Excel Enfermeria</option>
+                <option value="excel_enfermeria">Solicitud desde Excel Enfermería</option>
                 <option value="demo_formacion" hidden disabled>Demo / Formacion (no disponible)</option>
             </select>
         </div>
@@ -139,7 +139,7 @@
 </section>
 
 <section class="dashboard-card hidden" id="formServicioManual">
-    <h2 class="section-title"><i class="fas fa-hospital-alt"></i> Selección manual — servicio y patología</h2>
+    <h2 class="section-title"><i class="fas fa-hospital-alt"></i> Servicio y patología de la solicitud</h2>
     <div class="form-grid">
         <div class="form-group">
             <label for="fhServicioManual">Servicio</label>
@@ -160,7 +160,7 @@
 </section>
 
 <section class="dashboard-card hidden" id="formManualSolicitud">
-    <h2 class="section-title"><i class="fas fa-edit"></i> Datos de solicitud — entrada manual</h2>
+    <h2 class="section-title"><i class="fas fa-edit"></i> Datos de la solicitud</h2>
     <div class="form-grid">
         <div class="form-group"><label for="fhManualCip">CIP <span class="required">*</span></label><input type="text" class="form-control" id="fhManualCip" placeholder="CIP-DEMO-FH-..." required></div>
         <div class="form-group"><label>Servicio origen</label><input type="text" class="form-control" id="fhManualServicioDisplay" value="Seleccione servicio arriba" readonly></div>
