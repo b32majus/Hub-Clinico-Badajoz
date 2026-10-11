@@ -1,6 +1,6 @@
 # PROMueve Nexus — Farmacia Hospitalaria: estado, pendientes y puertas de implementación
 
-**Corte:** 2026-10-11 · **WO documental:** [#647](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/647), `status:approved` · **Base canónica al preparar:** `promueve/nexus-v4@ba38474ea26cd064953b9aa4e8bc9f6448d77400` (Train 26, PR #646). **Estado de este documento:** propuesta de reconciliación en rama documental; no publicado en rama canónica hasta merge autorizado.
+**Corte reconciliado:** 2026-10-11 · **WO documental:** [#647](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/647) / [PR #648](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/648). **Base histórica de preparación:** `ba38474ea26cd064953b9aa4e8bc9f6448d77400` (Train26). **Último producto publicado verificado:** `promueve/nexus-v4@8a4c346babcc2894f2ef36f0468289ae1563c778` (Train25 #649/PR #650). Fotografía documental: verificar GitHub live antes de cada nueva WO.
 
 **Objeto:** mapa de trabajo práctico, sin reabrir auditorías ni decisiones cerradas. Responde «qué existe, qué funciona, qué está publicado, qué falta, qué lo bloquea y cuál es su siguiente acción». No constituye un contrato clínico nuevo, aprobación de prioridad o autorización de piloto.
 
@@ -28,14 +28,14 @@ Invariantes: solicitado ≠ validado; validado ≠ dispensado; tratamiento previ
 | Estadísticas: análisis poblacional | **Seis** quick filters soportados; export CSV con cohorte formal por motor publicado | La búsqueda local de tabla no es semántica de cohorte; recuperación de otros filtros pendiente |
 | Informes V1 Cosentyx y Kisqali | #576/#579, PR #581/#582 y ampliaciones #598/#599/#602 PR #600/#601/#603: `PUBLICADOS / QA SINTÉTICA`; informes completos con XLSX calculado y detalle | Primera dispensación **explícita** para nuevo inicio; Kisqali ciclos evaluables ≠ consumo; presentación ≠ dosis |
 | Renovaciones | **N0, solo contrato** #509/PR #510 y PR #511 | Sin N1/N2/N3 funcionales; N4 diferido |
-| Solicitud Reuma→Farmacia textual | #528–#531/PR #532 `PUBLICADA` | No equivale a integración estructurada; Train25 corrige procedencia LOCAL, no publicado |
-| Últimos Trains | Train23 #641/PR #642 (merge `fefa7ee`), Train24 #643/PR #644 (merge `38b0a90`), Train26 #645/PR #646 (merge `ba38474e`) | Todas las afirmaciones de madurez limitadas a evidencia sintética y CI. **NO PILOTO** |
+| Solicitud Reuma→Farmacia textual | #528–#531/PR #532 **PUBLICADA**; Train25 #649/PR #650 merge `8a4c346babcc2894f2ef36f0468289ae1563c778` **PUBLICADO** | F1: actual físico y plan separados aun con igual nombre; F2: `No` explícito preservado; F3: fallback sin pérdidas. Alias camelCase ambiguo queda vacío en artefacto FH; tarjetas/KPI Dashboard son deuda separada. No integración estructurada ni piloto. |
+| Últimos Trains | Train23 #641/PR #642 (`fefa7ee`), Train24 #643/PR #644 (`38b0a90`), Train26 #645/PR #646 (`ba38474e`), Train25 #649/PR #650 (`8a4c346b`), todos **MERGED** | QA sintética y CI; Pages desplegado, **NO PILOTO** |
 
-**Nota Git y administración:** #643 y #645 siguen **OPEN** administrativamente aunque las PR #644/#646 estén MERGED. También #537 continúa abierto pese a PR #538. No confundir esos estados ni cerrar issues dentro de esta WO.
+**Nota Git y administración:** #643 y #645 seguían **OPEN** administrativamente pese al merge de #644/#646; #537 aparece OPEN tras PR #538. Train25 #649/PR #650 ya está MERGED y su issue se cierra en el cierre operativo autorizado. No confundir issue abierto con funcionalidad pendiente; los cierres de #643/#645/#537 son independientes de #647.
 
 ## 3. Backlog de ejecución: qué necesita cada cosa
 
-### 3.1 Trabajo recortable y compatible con Train25
+### 3.1 Trabajo recortable de Farmacia tras publicar Train25
 
 | Pendiente | Estado probado | Puerta concreta y evidencia proporcional |
 | --- | --- | --- |
@@ -94,14 +94,14 @@ La duración **configurada** no puede pasar a confirmada; ausencia de fecha = `n
 - Los informes V1 usan fixtures sintéticos y cuentan/calculan desde esos datos; no se publica como indicador de dispensación/consumo real ni se deduce dosis desde presentación.
 - GitHub Pages y CI green no significan QA clínica hospedada, datos reales o piloto. No incluir secretos, identificadores o exportaciones de pacientes.
 
-## 6. Secuencia operativa sugerida compatible con Train25 — **PROPUESTA, NO APROBACIÓN**
+## 6. Secuencia operativa sugerida tras Train25 — **PROPUESTA, NO APROBACIÓN**
 
-1. **Train25 Reuma→FH**: LOCAL en corrección F1/F2/F3. No tocar `modules/pharmacyRequest.js`, `scripts/script_dashboard.js`, HTML/oráculos Reuma, rama o worktree; no usar su HEAD como verdad canónica.
+1. **Train25 Reuma→FH PUBLICADO**: #649/PR #650, merge `8a4c346babcc2894f2ef36f0468289ae1563c778`, F1/F2/F3 auditados y corregidos con CI y Pages postmerge SUCCESS. No reabrir el candidato local; próximas WOs parten de la rama canónica publicada.
 2. **Candidato Train FH**: `SIL-REV-018-A` filtro principio activo independiente, sobre `promueve/nexus-v4`: superficies `farmacia_estadisticas.html`, `scripts/farmacia_estadisticas.js` y oráculos Estadísticas; preservar contrato de `scripts/farmacia_statistics_cohort.js` salvo necesidad demostrada. **Cerrar con humano** cómo convive con `Fármaco`, y después Cora hardening C-087. El candidato no es todavía `READY_TO_LAUNCH` ni issue creado.
 3. **En paralelo al desarrollo FH**, ticketización N1 desde N0 congelado: shaping solo de las incógnitas materiales, no repetir auditoría ni rediseñar máquina de estados. Ante falta de fuente clínica, HUMAN STOP.
 4. Alternativas acotadas para demo: microcopy de Export V2 o `FH-DEBT-004` visual. Separar estética, reporte, clínica y persistencia.
 
-**Conflictos:** estos límites son compatibles con Train25 por rutas, siempre que no aparezca nuevo seam/consumidor compartido. No tocar `main` ni ramas ajenas. Al publicar cambios sobre una base nueva, componer candidato limpio y reconfirmar HEAD remoto, tests y QA.
+**Conflictos:** verificar solapamientos con la rama canónica que ya incorpora Train25; si aparece una superficie o contrato compartido, detenerse y ajustar el hardening y QA al riesgo. No tocar `main` ni ramas ajenas. Antes de publicar, verificar HEAD remoto, cambios autorizados, tests y QA.
 
 ## 7. Trazabilidad administrativa y próxima actualización
 
