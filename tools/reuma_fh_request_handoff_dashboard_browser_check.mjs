@@ -24,6 +24,8 @@
  *      shared generateRequestText/getPrebiologicBlock generator);
  *   5. READ the produced artifact (clipboard text, else fallback modal
  *      textarea) and assert on that text.
+ *   6. D4 only: press Exportar visitas to witness its download listener, then
+ *      the real Seguimiento link and read the same patient's populated form.
  * page.evaluate is used ONLY to READ observable state/artifact text; it never
  * mutates the DOM, never sets readonly state, never fabricates fixtures.
  *
@@ -160,8 +162,9 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
     };
     const rowD2 = { ...commonRow, ID_Paciente: 'SYN-DASH-D2', Estado_Prebiologico_Analitica: 'OK' };
     const rowD3 = { ...commonRow, ID_Paciente: 'SYN-DASH-D3' };
+    const rowD4 = { ...commonRow, ID_Paciente: 'SYN-DASH-D4', FR: 2 };
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([rowD1, rowD2, rowD3]), 'ESPA');
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([rowD1, rowD2, rowD3, rowD4]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
     }
@@ -387,6 +390,64 @@ async function runJourney(browser, label, patientId, expectLines) {
         const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
         record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
 
+        if (patientId === 'SYN-DASH-D4') {
+            const dashboard = await page.evaluate(() => {
+                const visible = (selector) => {
+                    const el = document.querySelector(selector);
+                    return !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+                };
+                const biomarker = document.getElementById('biomarkerFr');
+                return {
+                    dashboardVisible: visible('#dashboardContent'),
+                    biomarker: biomarker?.textContent.trim() ?? null,
+                    biomarkerClass: biomarker?.className ?? '',
+                    regionsVisible: [
+                        '#patientKpis', '.dashboard-card--clinical', '.dashboard-card--biomarkers',
+                        '.dashboard-card--summary', '.dashboard-card--treatment',
+                        '.dashboard-card--history', '.dashboard-card--events',
+                        '.dashboard-card--chart', '#visitsTable'
+                    ].every(visible),
+                    chartRegionVisible: visible('.dashboard-card--chart'),
+                    nextActionsPresent: ['#btnSolicitudFH', '#btnSeguimiento', '#exportVisitsBtn'].every(visible)
+                };
+            });
+            record(`${label}: pantalla principal completa visible`, dashboard.dashboardVisible && dashboard.regionsVisible, JSON.stringify(dashboard));
+            record(`${label}: FR numérico explícito 2 como texto neutral/unknown, sin veredicto clínico`,
+                dashboard.biomarker === '2' && dashboard.biomarkerClass.split(/\s+/).includes('unknown') &&
+                !dashboard.biomarkerClass.split(/\s+/).some((name) => ['positive', 'negative'].includes(name)),
+                JSON.stringify(dashboard));
+            record(`${label}: región de gráficas y acciones siguientes disponibles`, dashboard.chartRegionVisible && dashboard.nextActionsPresent, JSON.stringify(dashboard));
+
+            const formattedValues = await page.evaluate(() => ({
+                zero: window.formatBiomarker(0),
+                nullValue: window.formatBiomarker(null),
+                undefinedValue: window.formatBiomarker(undefined),
+                empty: window.formatBiomarker(''),
+                positive: window.formatBiomarker('Positivo'),
+                negative: window.formatBiomarker('Negativo')
+            }));
+            record(`${label}: negativos de formato (0 literal; ausencia; Positivo/Negativo)`,
+                formattedValues.zero === '0' && formattedValues.nullValue === 'No analizado' &&
+                formattedValues.undefinedValue === 'No analizado' && formattedValues.empty === 'No analizado' &&
+                formattedValues.positive === 'Positivo' && formattedValues.negative === 'Negativo',
+                JSON.stringify(formattedValues));
+            const absentTokens = await page.evaluate(() => ({
+                nan: window.formatBiomarker(NaN),
+                falseValue: window.formatBiomarker(false)
+            }));
+            record(`${label}: negativos NaN y false permanecen No analizado, sin valor literal ni veredicto`,
+                absentTokens.nan === 'No analizado' && absentTokens.falseValue === 'No analizado',
+                JSON.stringify(absentTokens));
+        } else {
+            const absentBiomarker = await page.evaluate(() => {
+                const el = document.getElementById('biomarkerFr');
+                return { text: el?.textContent.trim() ?? null, className: el?.className ?? '' };
+            });
+            record(`${label}: FR ausente permanece No analizado`,
+                absentBiomarker.text === 'No analizado' && absentBiomarker.className.split(/\s+/).includes('unknown'),
+                JSON.stringify(absentBiomarker));
+        }
+
         const { artifact, via } = await pressSolicitudFHAndReadArtifact(page);
         record(`${label}: el botón real Solicitud FH produce artefacto (vía ${via})`, artifact.length > 50, `longitud=${artifact.length} vía=${via}`);
         console.log(`    excerpt prebiológico: ${excerptPrebio(artifact)}`);
@@ -412,6 +473,38 @@ async function runJourney(browser, label, patientId, expectLines) {
         await assertBlacklist(label, artifact);
         await assertCommonPreservation(label, artifact, patientId);
 
+        if (patientId === 'SYN-DASH-D4') {
+            // These actions follow the real FH artifact, in the same tab and
+            // imported session. Export has its own listener after population.
+            const [download] = await Promise.all([
+                page.waitForEvent('download', { timeout: 10000 }),
+                page.click('#exportVisitsBtn')
+            ]);
+            record(`${label}: tras Solicitud FH, Exportar visitas real descarga el historial de ${patientId}`,
+                download.suggestedFilename() === `historial_visitas_${patientId}.csv` &&
+                await download.failure() === null,
+                download.suggestedFilename());
+
+            await page.click('#btnSeguimiento');
+            await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+            await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
+            const continuation = await page.evaluate(() => {
+                const value = (id) => document.getElementById(id)?.value ?? null;
+                return {
+                    cip: value('idPaciente'),
+                    name: value('nombrePaciente'),
+                    diagnosis: value('diagnosticoPrimario'),
+                    treatment: value('tratamientoActual'),
+                    patientVisible: document.querySelector('.patient-info-section')?.getClientRects().length > 0
+                };
+            });
+            record(`${label}: Solicitud FH → Seguimiento real conserva ${patientId}, nombre, diagnóstico y tratamiento visibles`,
+                continuation.cip === patientId && continuation.name === 'Sintetico Dash' &&
+                continuation.diagnosis === 'espa' && continuation.treatment === SYN_TREATMENT &&
+                continuation.patientVisible,
+                JSON.stringify(continuation));
+        }
+
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
     } finally {
@@ -426,6 +519,7 @@ try {
     await runJourney(browser, 'D1 dashboard ambos explícitos', 'SYN-DASH-D1', ['Analítica: OK', 'Medicina Preventiva: SOLICITADA_PENDIENTE']);
     await runJourney(browser, 'D2 dashboard sólo Analítica explícita (Medicina Preventiva ausente)', 'SYN-DASH-D2', ['Analítica: OK']);
     await runJourney(browser, 'D3 dashboard ambos ausentes', 'SYN-DASH-D3', null);
+    await runJourney(browser, 'D4 dashboard FR numérico explícito', 'SYN-DASH-D4', null);
 } finally {
     if (browser) await browser.close();
     server.close();
