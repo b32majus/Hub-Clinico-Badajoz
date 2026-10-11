@@ -54,9 +54,13 @@
  * D5 (Train24) qualifies only real import of two baseline Seguimientos,
  * dashboard preservation, absence of fabricated biologic_start annotations,
  * chart selector/comparison interaction and Dashboard → Seguimiento continuity.
- * Solicitud FH is NOT qualified for D5: its treatment-line discrepancy (the
- * Biologico plan printed instead of explicit Tratamiento_Actual) is a
- * pre-existing independent PILOT BLOCKER, pending a separate specific WO.
+ * D5 (Train 25) additionally qualifies the real Solicitud FH artifact for the
+ * baseline-plan route (previously out of qualification because the Biologico
+ * plan was printed as TRATAMIENTO ACTUAL): pressing the real #btnSolicitudFH
+ * and reading the real artifact must show the explicit Tratamiento_Actual
+ * verbatim inside TRATAMIENTO ACTUAL, the Biologico plan preserved outside
+ * that block (separated provenance), no invented state/claim tokens and the
+ * legacy blacklist absent.
  *
  * Exit code 0 = PASS, 1 = FAIL.
  * Usage: node tools/reuma_fh_request_handoff_dashboard_browser_check.mjs
@@ -139,6 +143,10 @@ const mime = new Map([
 ]);
 
 const SYN_TREATMENT = 'Adalimumab (solicitado pendiente FH) 40 mg';
+const SYN_PLAN_DRUG = 'Biologico sintetico X';
+// Train 25 corrector F1 witness drug: synthetic, distinct from SYN_PLAN_DRUG,
+// free of the forbidden claim tokens.
+const SYN_PLAN_SAME = 'Biologico sintetico Y';
 const SYN_DIAG_SEC = 'Lumbalgia inflamatoria sintetica';
 
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reuma-fh-dashboard-'));
@@ -177,9 +185,36 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
         Biologico: 'Biologico sintetico X', BASDAI: 3.5
     };
     const rowD5FollowUp = { ...rowD5Baseline, Fecha_Visita: '2026-03-10', BASDAI: 3 };
+    // Train 25 corrector witnesses (F1). SYN_PLAN_SAME is a synthetic plan
+    // drug free of the forbidden claim tokens.
+    // D6 (plan-only): ONLY the physical Biologico plan column; the explicit
+    // Tratamiento_Actual column is ABSENT — the artifact must NOT present the
+    // plan as active treatment and must keep the honest placeholder.
+    const rowF1PlanOnly = {
+        Nombre_Paciente: 'Sintetico Dash',
+        Fecha_Visita: '2026-02-01',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Principal: 'espa',
+        Diagnostico_Secundario: SYN_DIAG_SEC,
+        PCR: '8',
+        EVA_Global: '6',
+        comorbilidades: 'hta',
+        ID_Paciente: 'SYN-DASH-D6',
+        Biologico: SYN_PLAN_SAME
+    };
+    // D7 (two explicit physical sources with the SAME text): the explicit
+    // Tratamiento_Actual column and the Biologico plan column carry the same
+    // string; both facts must survive under their own differentiated
+    // provenance (same name != same clinical fact, no text-based dedupe).
+    const rowF1SameText = {
+        ...commonRow,
+        ID_Paciente: 'SYN-DASH-D7',
+        Tratamiento_Actual: SYN_PLAN_SAME,
+        Biologico: SYN_PLAN_SAME
+    };
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
-        rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp
+        rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp, rowF1PlanOnly, rowF1SameText
     ]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
@@ -242,6 +277,20 @@ const STATE_LINE_RE = /^[-·•\s]*(Analítica|Medicina Preventiva)\s*:\s*(\S+)\
 
 function stateLinesOf(text) {
     return text.split('\n').map((l) => l.trim()).filter((l) => STATE_LINE_RE.test(l));
+}
+// Structural paragraph parse of the TRATAMIENTO ACTUAL section (fixed
+// artifact order: the paragraph that starts at the header line, ended by the
+// next blank-line-separated paragraph). Never derived from plan label
+// wording (Train 25 witness discipline).
+function extractTreatmentBlock(text) {
+    const lines = text.split('\n');
+    const start = lines.findIndex((l) => l.trim() === 'TRATAMIENTO ACTUAL');
+    if (start === -1) return null;
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+        if (lines[i].trim() === '' && i + 1 < lines.length && lines[i + 1].trim() !== '') { end = i; break; }
+    }
+    return lines.slice(start, end).join('\n');
 }
 function blacklistHits(text) {
     const lower = text.toLowerCase();
@@ -642,6 +691,28 @@ async function runBaselinePlanJourney(browser) {
             JSON.stringify(restored.labels) === JSON.stringify(initial.labels) &&
             JSON.stringify(restored.annotations) === JSON.stringify(initial.annotations), JSON.stringify(restored));
 
+        // Train 25: qualify the real Solicitud FH artifact for the D5
+        // baseline-plan route through the REAL button and the REAL artifact
+        // read (clipboard else fallback modal), with the same structural
+        // provenance parsing as the frozen oracle witness.
+        const fh = await pressSolicitudFHAndReadArtifact(page);
+        record(`${label}: el botón real Solicitud FH produce artefacto (vía ${fh.via})`,
+            fh.artifact.length > 50, `longitud=${fh.artifact.length} vía=${fh.via}`);
+        const fhActualBlock = extractTreatmentBlock(fh.artifact);
+        record(`${label}: TRATAMIENTO ACTUAL reproduce el Tratamiento_Actual explícito verbatim`,
+            fhActualBlock !== null && fhActualBlock.includes(`- ${SYN_TREATMENT}`), JSON.stringify(fhActualBlock));
+        record(`${label}: el bloque ACTUAL no presenta el plan biológico como tratamiento activo`,
+            fhActualBlock !== null && !fhActualBlock.includes(SYN_PLAN_DRUG), JSON.stringify(fhActualBlock));
+        const fhOutside = fhActualBlock ? fh.artifact.replace(fhActualBlock, '') : '';
+        record(`${label}: el plan biológico permanece en el artefacto FUERA del bloque ACTUAL (procedencia separada)`,
+            fhOutside.includes(SYN_PLAN_DRUG), fh.artifact.slice(0, 2200));
+        record(`${label}: sin tokens de afirmación fabricados (prescrito/prescripción/dispensad/iniciado/validado/START/SWITCH/ADD_ON/solicitud efectuada)`,
+            !/(prescrito|prescripción|dispensad|iniciado|validado|START|SWITCH|ADD_ON|solicitud efectuada)/i.test(fh.artifact),
+            fh.artifact.slice(0, 2200));
+        record(`${label}: lista negativa legacy ausente del artefacto Solicitud FH`,
+            blacklistHits(fh.artifact).length === 0, JSON.stringify(blacklistHits(fh.artifact)));
+        console.log(`    excerpt prebiológico: ${excerptPrebio(fh.artifact)}`);
+
         await page.click('#btnSeguimiento');
         await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
         await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
@@ -667,6 +738,69 @@ async function runBaselinePlanJourney(browser) {
     }
 }
 
+/**
+ * Train 25 corrector F1 witnesses (browser, real supported route only). Two
+ * new journeys over the real import gate + real Read Port + real
+ * #btnSolicitudFH + real artifact read (clipboard else fallback modal):
+ *   - mode 'plan-only' (SYN-DASH-D6): the physical Biologico plan column is
+ *     the ONLY treatment source; the explicit Tratamiento_Actual column is
+ *     ABSENT. ACTUAL must NOT present the plan drug and must keep the honest
+ *     placeholder; the plan must survive outside ACTUAL.
+ *   - mode 'same-text' (SYN-DASH-D7): the explicit Tratamiento_Actual column
+ *     and the Biologico plan column carry the SAME string. Both facts must be
+ *     rendered, each under its own differentiated provenance (same name is
+ *     not the same clinical fact; no name-based dedupe).
+ * Existing D1–D5 journeys and assertions are untouched.
+ */
+async function runProvenanceWitnessJourney(browser, mode) {
+    const isPlanOnly = mode === 'plan-only';
+    const label = isPlanOnly
+        ? 'F1 dashboard sólo plan (Biologico sin Tratamiento_Actual)'
+        : 'F1 dashboard dos fuentes físicas explícitas de MISMO texto';
+    const patientId = isPlanOnly ? 'SYN-DASH-D6' : 'SYN-DASH-D7';
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.patientSummary && !!window.patientSummary.idPaciente,
+            null, { timeout: 15000 });
+        const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
+        record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
+
+        const fh = await pressSolicitudFHAndReadArtifact(page);
+        record(`${label}: el botón real Solicitud FH produce artefacto (vía ${fh.via})`,
+            fh.artifact.length > 50, `longitud=${fh.artifact.length} vía=${fh.via}`);
+        console.log(`    excerpt prebiológico: ${excerptPrebio(fh.artifact)}`);
+
+        const actualBlock = extractTreatmentBlock(fh.artifact);
+        if (isPlanOnly) {
+            record(`${label}: ACTUAL no presenta el plan como tratamiento activo`,
+                actualBlock !== null && !actualBlock.includes(SYN_PLAN_SAME), JSON.stringify(actualBlock));
+            record(`${label}: ACTUAL mantiene el placeholder honesto de ausencia (sin dato fabricado)`,
+                actualBlock !== null && actualBlock.includes('(Sin tratamiento activo registrado)'), JSON.stringify(actualBlock));
+        } else {
+            record(`${label}: ACTUAL reproduce la columna física Tratamiento_Actual verbatim`,
+                actualBlock !== null && actualBlock.includes(`- ${SYN_PLAN_SAME}`), JSON.stringify(actualBlock));
+        }
+        const outside = actualBlock ? fh.artifact.replace(actualBlock, '') : '';
+        record(`${label}: el plan consignado permanece FUERA del bloque ACTUAL bajo su propia fuente (sin dedupe por texto)`,
+            outside.includes(SYN_PLAN_SAME), fh.artifact.slice(0, 2200));
+        if (!isPlanOnly) {
+            record(`${label}: el plan se emite bajo el rótulo veraz de plan/selección registrada`,
+                outside.includes('PLAN / SELECCIÓN REGISTRADA'), fh.artifact.slice(0, 2200));
+        }
+        record(`${label}: sin tokens de afirmación fabricados (prescrito/prescripción/dispensad/iniciado/validado/START/SWITCH/ADD_ON/solicitud efectuada)`,
+            !/(prescrito|prescripción|dispensad|iniciado|validado|START|SWITCH|ADD_ON|solicitud efectuada)/i.test(fh.artifact),
+            fh.artifact.slice(0, 2200));
+        record(`${label}: lista negativa legacy ausente del artefacto Solicitud FH`,
+            blacklistHits(fh.artifact).length === 0, JSON.stringify(blacklistHits(fh.artifact)));
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
 let browser;
 try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
@@ -675,6 +809,8 @@ try {
     await runJourney(browser, 'D3 dashboard ambos ausentes', 'SYN-DASH-D3', null);
     await runJourney(browser, 'D4 dashboard FR numérico explícito', 'SYN-DASH-D4', null);
     await runBaselinePlanJourney(browser);
+    await runProvenanceWitnessJourney(browser, 'plan-only');
+    await runProvenanceWitnessJourney(browser, 'same-text');
 } finally {
     if (browser) await browser.close();
     server.close();

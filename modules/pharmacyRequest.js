@@ -292,13 +292,46 @@
     }
 
     /**
-     * Genera el bloque de tratamiento actual.
-     * Recorre plan*Entries y hace fallback a *Select/*Dose.
+     * Valor explícito de tratamiento actual (dato de origen consignado).
+     * Sólo `tratamientoActual` / `Tratamiento_Actual` acreditan tratamiento
+     * activo (Train 25 A1): las fuentes de plan/selección nunca lo
+     * sustituyen ni desplazan. Ausencia se mantiene ausente (A2): nunca se
+     * fabrica ni se convierte en No informado/NO/pendiente.
+     * Train 25 F2: un `No`/`no` explícito consignado es DATO, no ausencia —
+     * se preserva literal; sólo el campo verdaderamente ausente/vacío
+     * devuelve ''. De ese `No` no se deduce ningún estado de dispensación
+     * ni validación.
      */
-    function getTreatmentBlock(datos) {
+    function getExplicitCurrentTreatment(datos) {
+        if (!datos) return '';
+        var candidates = [datos.tratamientoActual, datos.Tratamiento_Actual];
+        for (var i = 0; i < candidates.length; i++) {
+            var value = candidates[i];
+            if (value !== undefined && value !== null && typeof value !== 'object') {
+                var text = value.toString().trim();
+                if (text) {
+                    return text;
+                }
+            }
+        }
+        return '';
+    }
+
+    /**
+     * Recolecta los valores de plan/selección registrados (Train 25 A3), en
+     * la precedencia existente: plan*Entries → cambio*Entries → selectores
+     * con dosis → tratamientoData.cambio. Cada fuente acredita sólo el valor
+     * consignado: nunca una línea, un inicio, un cambio, el tratamiento
+     * actual, una prescripción, una dispensación, una solicitud efectuada ni
+     * una validación.
+     * Train 25 F3: dentro de la fase fallback seleccionada se conservan
+     * TODOS los elementos válidos no vacíos (p. ej. Sistemico + FAME
+     * juntos), con las dosis introducidas expresamente; la precedencia entre
+     * fases sigue gobernada por los guardas de fase externos.
+     */
+    function collectPlanSelectionItems(datos) {
         var items = [];
 
-        // Recolectar de plan entries (arrays {farmaco, dosis})
         var addEntries = function(entries) {
             if (Array.isArray(entries)) {
                 entries.forEach(function(entry) {
@@ -312,19 +345,16 @@
             }
         };
 
+        var addFallback = function(select, dose) {
+            var farmaco = (select || '').toString().trim();
+            if (farmaco && farmaco.toLowerCase() !== 'no') {
+                items.push({ farmaco: farmaco, dosis: (dose || '').toString().trim() });
+            }
+        };
+
         addEntries(datos.planSistemicosEntries);
         addEntries(datos.planFamesEntries);
         addEntries(datos.planBiologicosEntries);
-
-        // Fallback a campos individuales si no hay entries
-        var addFallback = function(select, dose) {
-            if (items.length === 0) {
-                var farmaco = (select || '').toString().trim();
-                if (farmaco && farmaco.toLowerCase() !== 'no') {
-                    items.push({ farmaco: farmaco, dosis: (dose || '').toString().trim() });
-                }
-            }
-        };
 
         // También revisar cambio*Entries (formulario seguimiento)
         if (items.length === 0) {
@@ -357,31 +387,55 @@
             );
         }
 
-        // Si todavía no hay items, intentar parsear tratamientoActual como texto
-        if (items.length === 0 && datos.tratamientoActual) {
-            var ta = datos.tratamientoActual.toString().trim();
-            if (ta && ta.toLowerCase() !== 'no') {
-                items.push({ farmaco: ta, dosis: '' });
-            }
-        }
+        return items;
+    }
 
-        // Si items sigue vacío, usar los fallback individuales (incluso "No")
-        if (items.length === 0) {
-            addFallback(getField(datos, ['sistemicoSelect', 'Sistemico'], ''), getField(datos, ['sistemicoDose', 'Sistemico_Dosis'], ''));
-            addFallback(getField(datos, ['fameSelect', 'FAME'], ''), getField(datos, ['fameDose', 'FAME_Dosis'], ''));
-            addFallback(getField(datos, ['biologicoSelect', 'Biologico'], ''), getField(datos, ['biologicoDose', 'Biologico_Dosis'], ''));
-        }
+    /**
+     * Genera el bloque de tratamiento actual.
+     * Reproduce verbatim el valor explícito consignado
+     * (tratamientoActual/Tratamiento_Actual) como dato de origen, sin
+     * añadir dosis, vía ni estado deducidos, y sin sustituirlo por contenido
+     * de plan/selección (Train 25 A1). Sin fuente explícita permanece el
+     * placeholder fail-safe existente; la ausencia no se fabrica.
+     */
+    function getTreatmentBlock(datos) {
+        var explicitCurrent = getExplicitCurrentTreatment(datos);
 
         var text = 'TRATAMIENTO ACTUAL\n';
-        if (items.length === 0) {
-            text += '(Sin tratamiento activo registrado)\n';
+        if (explicitCurrent) {
+            text += '- ' + explicitCurrent + '\n';
         } else {
-            items.forEach(function(item) {
-                text += '- ' + item.farmaco;
-                if (item.dosis) text += ' ' + item.dosis;
-                text += '\n';
-            });
+            text += '(Sin tratamiento activo registrado)\n';
         }
+        return text + '\n';
+    }
+
+    /**
+     * Genera el bloque de plan/selección registrada (Train 25 A1/A2/A3).
+     *
+     * Se emite sólo cuando existe alguna fuente de plan/selección, siempre
+     * FUERA del bloque TRATAMIENTO ACTUAL y antes de DECISIÓN TERAPÉUTICA.
+     * Presenta únicamente el valor consignado (nombre y dosis tal como se
+     * introdujeron), sin proponer nada y sin afirmar prescripción, inicio,
+     * dispensación, solicitud efectuada ni validación. El oráculo congela
+     * esos tokens de afirmación como prohibidos en todo el artefacto, por
+     * eso el rótulo veraz no puede enumerarlos literalmente: la separación
+     * de procedencia es el criterio de aceptación, no el rótulo.
+     * Train 25 F1: no se deduplica globalmente entre actual explícito y
+     * plan/selección por comparación de cadenas — el mismo nombre NO
+     * equivale al mismo hecho clínico; ambos hechos se presentan bajo sus
+     * rótulos diferenciados incluso con cadena idéntica.
+     */
+    function getPlanSelectionBlock(datos) {
+        var items = collectPlanSelectionItems(datos);
+        if (items.length === 0) return '';
+
+        var text = 'PLAN / SELECCIÓN REGISTRADA (valor consignado como plan; no tratamiento activo)\n';
+        items.forEach(function(item) {
+            text += '- ' + item.farmaco;
+            if (item.dosis) text += ' ' + item.dosis;
+            text += '\n';
+        });
         return text + '\n';
     }
 
@@ -611,6 +665,7 @@
         text += getActivityBlock(datos);
         text += getComorbiditiesBlock(datos);
         text += getTreatmentBlock(datos);
+        text += getPlanSelectionBlock(datos);
         text += getDecisionBlock(datos);
         text += getPrebiologicBlock(datos);
         text += getFooterBlock();
