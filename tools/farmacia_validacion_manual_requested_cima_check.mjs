@@ -646,7 +646,7 @@ try {
   assert.equal(excelTsv.split('\t').length, 62, 'public Excel clipboard row contains exactly 62 TSV cells (61 WO8 columns + solicitud_id per #366)');
   assert.equal(
     await page.getByRole('button', {
-      name: /Copiar Export v2 demo · 152 columnas/i
+      name: /Copiar datos estructurados \(demo\)/i
     }).count(),
     1,
     'exactly one approved public Export v2 button is labelled as v2'

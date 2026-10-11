@@ -2885,10 +2885,10 @@
         try {
             getFollowupV2TechnicalContext();
             button.disabled = followupV2CopyInFlight;
-            if (status && status.textContent.indexOf('Export v2 demo no disponible:') === 0) status.textContent = '';
+            if (status && status.textContent.indexOf('Copia no disponible:') === 0) status.textContent = '';
         } catch (error) {
             button.disabled = true;
-            if (status) status.textContent = 'Export v2 demo no disponible: ' + (error.message || 'contexto técnico no disponible') + '.';
+            if (status) status.textContent = 'Copia no disponible: revise que el paciente y los datos de la visita estén completos.';
         }
     }
 
@@ -2898,12 +2898,12 @@
         var status = byId('fhSegExportV2Status');
         followupV2CopyInFlight = true;
         if (button) button.disabled = true;
-        if (status) status.textContent = 'Copiando Export v2 demo...';
+        if (status) status.textContent = 'Copiando...';
         try {
             var projection = window.FarmaciaSeguimiento.buildFollowupV2ProjectionFromCurrentContext();
             await copyFollowupV2TsvExact(projection.tsv);
             var rowCount = projection.rows.length;
-            var success = 'Export v2 demo copiado: ' + rowCount + ' fila(s) × 152 columnas.';
+            var success = 'Copiado al portapapeles: ' + rowCount + ' fila(s).';
             if (status) {
                 status.textContent = success;
                 window.setTimeout(function () {
@@ -2911,7 +2911,7 @@
                 }, 3000);
             }
         } catch (error) {
-            if (status) status.textContent = 'No se pudo copiar Export v2 demo: ' + (error.message || 'error desconocido') + '.';
+            if (status) status.textContent = 'No se pudo copiar: revise los datos de la visita.';
         } finally {
             followupV2CopyInFlight = false;
             updateFollowupV2ExportAvailability();

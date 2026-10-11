@@ -180,7 +180,7 @@ try {
   // contract; no behavioral assertion is weakened.
   const pvV2Button = page.locator('#fhPvExportV2Btn');
   assert.equal(await pvV2Button.count(), 1, 'exactly one sanctioned public Export v2 demo button');
-  assert.equal((await pvV2Button.textContent()).replace(/\s+/g, ' ').trim(), 'Copiar Export v2 demo · 152 columnas', 'public v2 button keeps the approved demo label');
+  assert.equal((await pvV2Button.textContent()).replace(/\s+/g, ' ').trim(), 'Copiar datos estructurados (demo)', 'public v2 button keeps the approved demo label');
   assert.equal(await pvV2Button.evaluate(el => el.closest('.form-actions')?.getAttribute('data-export-version')), 'v2', 'public v2 button is version-marked and separate from v1');
   assert.equal(await page.locator('#fhPvExcelExportBtn').count(), 1, 'the v1 public Excel export button remains present and separate');
   assert.equal(await page.locator('a[download*="v2"], button[download*="v2"]').count(), 0, 'there is no public v2 download');

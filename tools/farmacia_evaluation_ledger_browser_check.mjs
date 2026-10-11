@@ -69,10 +69,10 @@ async function assertV2Clipboard(page, button, status, expectedRows) {
   await page.locator(button).click();
   await page.waitForFunction(selector => {
     const text = document.querySelector(selector)?.textContent || '';
-    return text.includes('Export v2 demo copiado:') || text.includes('No se pudo copiar Export v2 demo:');
+    return text.includes('Copiado al portapapeles:') || text.includes('No se pudo copiar:');
   }, status);
   const statusText = await page.locator(status).textContent();
-  assert.match(statusText, /Export v2 demo copiado:/, `${button} completes through its supported handler: ${statusText}`);
+  assert.match(statusText, /Copiado al portapapeles:/, `${button} completes through its supported handler: ${statusText}`);
   const tsv = await page.evaluate(() => navigator.clipboard.readText());
   assert.notEqual(tsv, '__EMPTY__', `${button} writes through its own clipboard boundary`);
   const rows = tsv.split('\n');

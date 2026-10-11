@@ -78,7 +78,7 @@ page.on('pageerror', error => pageErrors.push(error.message));
 async function assertParallelUi({ button, status, v1 }) {
   const v2 = page.locator(button);
   await v2.waitFor({ state: 'visible' });
-  assert.equal((await v2.textContent()).replace(/\s+/g, ' ').trim(), 'Copiar Export v2 demo · 152 columnas');
+  assert.equal((await v2.textContent()).replace(/\s+/g, ' ').trim(), 'Copiar datos estructurados (demo)');
   assert.equal(await v2.evaluate(element => element.closest('.form-actions')?.getAttribute('data-export-version')), 'v2');
   for (const selector of v1) {
     const control = page.locator(selector);
@@ -87,7 +87,7 @@ async function assertParallelUi({ button, status, v1 }) {
   }
   assert.equal(await page.locator(status).getAttribute('role'), 'status');
   assert.equal(await page.locator(status).getAttribute('aria-live'), 'polite');
-  assert.equal(await page.getByText('Export v2 técnico, local y sin cabecera. No apto para piloto real.', { exact: true }).count(), 1);
+  assert.equal(await page.getByText('Prepara una copia de los datos para demostrar futuras integraciones. Esta acción no envía información a otros sistemas ni la guarda automáticamente. Uso exclusivo con datos sintéticos.', { exact: true }).count(), 1);
 }
 
 async function installProjectionCapture(apiName, wrapperName) {
@@ -115,7 +115,7 @@ async function copyAndAssertExact({ button, status, expectedRows, expectedLineId
   } else {
     await page.locator(button).click();
   }
-  await page.waitForFunction(selector => document.querySelector(selector)?.textContent.includes('Export v2 demo copiado:'), status);
+  await page.waitForFunction(selector => document.querySelector(selector)?.textContent.includes('Copiado al portapapeles:'), status);
   const clipboard = await page.evaluate(() => navigator.clipboard.readText());
   const capture = await page.evaluate(() => ({ ...window.__v2ActivationCapture }));
   assert.equal(capture.calls, 1, 'one gesture invokes the FromCurrentContext wrapper exactly once');
@@ -163,6 +163,7 @@ try {
   await page.goto(new URL('farmacia_primera_visita.html?cip=CIP-DEMO-FH-001', BASE).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita && !document.getElementById('fhPvExportV2Btn')?.disabled);
   await page.locator('#fhPvFecha').fill('2026-08-04');
+  await page.locator('#fhPvFarmaco').fill('Farmaco sintetico explicito para prueba');
   await assertParallelUi({ button: '#fhPvExportV2Btn', status: '#fhPvExportV2Status', v1: firstVisitV1 });
   const firstVisitV1Before = await disabledStates(firstVisitV1);
   await installProjectionCapture('FarmaciaPrimeraVisita', 'buildFirstVisitV2ProjectionFromCurrentContext');
@@ -179,7 +180,7 @@ try {
     };
   });
   await page.locator('#fhPvExcelExportBtn').click();
-  assert.equal((await page.evaluate(() => window.__parallelExcelCapture))?.length, 61, 'v1 Excel remains exactly 61 columns');
+  assert.equal((await page.evaluate(() => window.__parallelExcelCapture))?.length, 62, 'v1 Excel remains exactly 62 columns (61 + solicitud_id per #366)');
 
   const followupV1 = ['#fhSegExportTxt', '#fhSegExportCsv', '#fhSegExcelExportBtn'];
   await page.goto(new URL('farmacia_seguimiento.html?cip=CIP-DEMO-FH-001', BASE).href, { waitUntil: 'domcontentloaded' });
@@ -214,14 +215,14 @@ try {
   await page.locator('#fhPvCip').fill('CIP-SYN-UNKNOWN-V2');
   page.once('dialog', dialog => dialog.accept());
   await page.locator('#fhPvCipSearchBtn').click();
-  await page.waitForFunction(() => document.getElementById('fhPvExportV2Btn')?.disabled && document.getElementById('fhPvExportV2Status')?.textContent.includes('No existe contexto técnico sintético'));
+  await page.waitForFunction(() => document.getElementById('fhPvExportV2Btn')?.disabled && document.getElementById('fhPvExportV2Status')?.textContent.includes('Copia no disponible: revise que el paciente'));
   assert.deepEqual(await disabledStates(firstVisitV1), availableV1, 'unknown context blocks only v2');
 
   await page.goto(new URL('farmacia_primera_visita.html?cip=CIP-DEMO-FH-002', BASE).href, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.FarmaciaPrimeraVisita && document.getElementById('fhPvCip')?.value === 'CIP-DEMO-FH-002');
   const staleV1 = await disabledStates(firstVisitV1);
   await page.locator('#fhPvCip').fill('CIP-DEMO-FH-001');
-  await page.waitForFunction(() => document.getElementById('fhPvExportV2Btn')?.disabled && document.getElementById('fhPvExportV2Status')?.textContent.includes('no coincide con el paciente activo'));
+  await page.waitForFunction(() => document.getElementById('fhPvExportV2Btn')?.disabled && document.getElementById('fhPvExportV2Status')?.textContent.includes('Copia no disponible: revise que el paciente'));
   assert.deepEqual(await disabledStates(firstVisitV1), staleV1, 'stale context blocks only v2');
 
   assert.deepEqual(consoleErrors, [], `console errors: ${consoleErrors.join('\n')}`);
