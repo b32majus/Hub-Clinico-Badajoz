@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-12 (entrada documental candidata en rama aislada; publicación GitHub pendiente)
+**Última actualización:** 2026-10-12 (alineamiento FH V4 aprobado documentalmente: issue #741 / PR #742; integración canónica condicionada a verificar merge)
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -11,7 +11,7 @@
 | Elemento | Valor |
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
-| **REENTRADA ARCH/FH: salida agnóstica V4** | **[Mapa de salida agnóstica FH V4](../architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md)** — alineamiento funcional ratificado 2026-10-12: F4.4 → proyección Export V2 → Excel manual/Bridge/Office Script/Power Automate/API, coexistencia por hospital, L0/L1/L2 y Q-1..Q-4; **documento candidato local, aún NO publicado en `promueve/nexus-v4`**; no autoriza #721. |
+| **REENTRADA ARCH/FH: salida agnóstica V4** | **[Mapa de salida agnóstica FH V4](../architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md)** — alineamiento funcional ratificado 2026-10-12: F4.4 → proyección Export V2 → Excel manual/Bridge/Office Script/Power Automate/API, coexistencia por hospital, L0/L1/L2 y Q-1..Q-4; **publicación canónica por [PR #742](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/742) (comprobar `MERGED`)**; no autoriza #721. |
 | Tip Git canónico al iniciar la reconciliación documental #589 | `06b9dd03b6edf4e44212b0361f787f126d07877a` — #586/PR #588 Reuma (#584→#585→#583). Tip anterior Farmacia `9d060f448c6ea1367b09993f232574ff1abd40a5` (#579/PR #582). Ancla histórica; superseded por #606/PR #607 `ed0642feda7c0b9a8224ba17914a3c36b7a6ea4d` (ver closeout siguiente). |
 | Harness / Atenea | **C-087 INTEGRADA** por [PR #662](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/662) sobre Nexus `a3556b408e91c257c7cd2c829c575ff497c99745`; autoridad Atenea consultada `main@4dd488aea19870e36fa35511ce0a0b8f59dcdf6a`, PR #143 y #144. [Routing](../ATENEA_EXECUTION_ROUTING_V0.md) y [cápsula GO](../ATENEA_GO_PROFILE_V0.md). Sin cambio de modelos, permisos ni clínica. |
 | Último HEAD de producto Nexus verificado | Train30 `e2cbc861e6632699c04ebc6bfc3c485796a7c5ac` (Farmacia Export V2 microcopy, PR #660), previo Train29 `4fca680a2b35b5b7fa951525c3658b77d595a18a` (Reuma Sexo M/F, PR #658). HEAD canónico global posterior `a3556b408e91c257c7cd2c829c575ff497c99745` es sincronización de arnés PR #662, no función clínica. GitHub live manda; NO piloto. |
@@ -28,7 +28,7 @@
 | Última publicación clínica | Train30 #659/PR #660, merge `e2cbc861e6632699c04ebc6bfc3c485796a7c5ac` (texto Export V2, sin cambio de terapia); anterior Train29 #657/PR #658, merge `4fca680a2b35b5b7fa951525c3658b77d595a18a`. No piloto. |
 | Última publicación de producto | Train30 #659/PR #660, merge `e2cbc861e6632699c04ebc6bfc3c485796a7c5ac`, previo Train29 #657/PR #658, merge `4fca680a2b35b5b7fa951525c3658b77d595a18a`. El HEAD canónico `a3556b408e91c257c7cd2c829c575ff497c99745` es arnés/docs PR #662. CI y Pages postmerge SUCCESS; sin piloto. |
 
-### WO-DOC-NEXUS-FH-AGNOSTIC-OUTPUT-ALIGNMENT-20261012 — incorporación y enlaces de reentrada (candidata local)
+### WO-DOC-NEXUS-FH-AGNOSTIC-OUTPUT-ALIGNMENT-20261012 — issue #741 / PR #742 (publicación autorizada)
 
 - **OBJETIVO/CONTEXTO:** conservar íntegro el alineamiento ratificado de la arquitectura de salida agnóstica FH V4 y permitir una reentrada de lectura inmediata desde INDEX y WORK_ORDER_STATUS. No es ADR ni resuelve contrato #671.
 - **BASE/HEAD esperado:** `promueve/nexus-v4@5445878c5df17771801f6823065b5017129e67ce`, comprobado GitHub antes del cambio; rama aislada `docs/nexus-fh-agnostic-output-alignment-20261012`. Revalidar GitHub y árbol limpio antes de publicar.
@@ -37,8 +37,8 @@
 - **NO TOCA:** runtime, Pharmacy Act F4.4, Export V2, workbook/Office Script, contratos/ADR, decisiones Q-1..Q-4, matriz aún pendiente, issues #671/#721/#577/#236, permisos, `main`, despliegue o datos clínicos.
 - **QA/ACEPTACIÓN:** diff documental limitado a tres rutas; comprobar todos los enlaces markdown relativos del nuevo documento e índices, `git diff --check`, ausencia de estados falsos (candidato local ≠ publicación); sin tests runtime ni QA navegador por no haber cambio técnico.
 - **REVERSIÓN:** un revert documental focal del eventual commit previa autorización; no reset/rebase destructivo ni limpieza de worktrees.
-- **POLÍTICA:** commit documental local permitido por solicitud expresa de guardar y enlazar; **sin push, PR, merge ni cierre de issues sin autorización adicional**.
-- **OUTPUT:** SHA y parent, tres rutas, checksum de transferencia, verificaciones; publicación pendiente mientras no exista push/PR/merge autorizados.
+- **POLÍTICA:** push y PR #742 autorizados por la responsable y realizados bajo issue #741 (`status:approved`); autorización adicional expresa concedida para la corrección de estados y el merge de la PR #742 **solo si su candidato final pasa los checks**. No autoriza merge de #671/#721 ni cambios clínicos.
+- **OUTPUT:** candidate inicial `01282fa6f15ad5564d8f02919d4f234c006a2ae5`, parent canónico `5445878c5df17771801f6823065b5017129e67ce`; issue #741 y PR #742 publicados en GitHub. **Verificar `MERGED`, SHA final y CI de la PR** para confirmar integración canónica. El candidato final puede añadir únicamente la presente reconciliación de estados.
 
 ### WO-DOC-NEXUS-TRAIN27-28-POSTMERGE-20261011 — reconciliación documental (corte verificado)
 
