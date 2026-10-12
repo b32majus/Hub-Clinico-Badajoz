@@ -38,3 +38,15 @@ Producir un **candidato de cierre documental acotado** para [#671](https://githu
 Revert local focal de este commit únicamente si la persona responsable lo autoriza; nunca reset, force-push, borrar worktrees ni sobrescribir cambios ajenos. Esta autorización permite documento y commit **local**, no issue nuevo, push, PR, merge, despliegue ni cambio de etiquetas/cierre de #671. Cualquier decisión material no cubierta exige HUMAN STOP y pregunta precisa; no pedir al agente que la invente. Q-1..Q-4 no se reabren.
 
 **OUTPUT:** propuesta de forma exacta, valores candidatos, fallos y capacidades para decisión humana; commit local, pruebas focales y reporte. Solo tras aceptación se propondrá **otra acción expresamente autorizada** para publicar #671 y preparar la primera WO de mapping segura de #721.
+
+## Adenda de decisión humana — 2026-10-12 (posterior al candidato)
+
+La responsable ratifica a propuesta de Cora **el DTO/firma/tokens/errores exclusivamente para la fase 1 de copia manual Export V2**. Su estado pasa de `PENDIENTE_APROBACION_HUMANA` a `PHASE1_DTO_ACCEPTED_LOCAL` **solo en esta rama documental**, no a aceptación global de F4.5. Los párrafos previos de preparación son trazabilidad histórica, supersedidos por esta adenda solo para el alcance de fase 1.
+
+**Conservado:** Q-1..Q-4, los 18 oráculos O-01..O-18 y sus requisitos, el gate de mapping clínico F4.4→V2 no aprobado, L2 no disponible, `manual_download` fuera de fase 1, falta de idempotencia institucional, autoría declarada, ausencia de persistencia y no piloto.
+
+**Gate de #721:** mapping explícito aprobado por caso `kind` y cardinalidad 0/1/N, identidades y ausencias sin inferencias antes de cualquier ruta positiva; fallo seguro en lo no representable. #721 sigue bloqueado, sin `status:approved` y sin ejecución.
+
+**Política:** edición y commit local de estos dos Markdown únicamente, sin issue nuevo, push, PR, merge, despliegue ni cierre/cambio de labels de #671. Para publicación posterior se requiere autorización específica y reconciliación documental de `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`, sin mezclar con esta WO.
+
+**Prueba focal:** `git diff --check`, dos rutas, 18 oráculos, sus textos/casos O-01..O-18 intactos. Solo se actualiza en la introducción de los oráculos la nota sobre el estado del freeze de fase 1; no se realizan tests clínicos, QA Excel ni navegador.
