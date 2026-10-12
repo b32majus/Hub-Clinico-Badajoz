@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-12 (PR #742 MERGED; PR #744 OPEN; decisiones Q-1/Q-2/Q-3/Q-4 ratificadas funcionalmente, contrato #671 en reconciliación **local**; sin modificación canónica ni aprobación #721)
+**Última actualización:** 2026-10-12 (PR #742 MERGED; PR #744 OPEN; Q-1..Q-4 ratificadas; [WO #745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745) aprobada para publicación documental dependiente; #671 CONTRACT_PENDING, #721 sin aprobación)
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -37,7 +37,7 @@
 - **RUTAS:** contrato `docs/contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md`, matriz #744, alineamiento, INDEX, STATUS, WO (seis archivos Markdown). **NO TOCA:** `main`, worktrees previos, runtime, F4.4, V2, workbook, Office Script, API/SQL, JARA/SES ni #721.
 - **QA/ACEPTACIÓN:** revisar Q-1..Q-4 sin contradicción, 18 oráculos documentales, enlaces relativos, `git diff --check` y seis rutas; no atribuir tests/QA de navegador ni Excel real. `prepared_for_transfer` sin falsa persistencia; identidad del intento y atribución clínica honestas.
 - **REVERSIÓN:** revert documental local acotado con autorización; sin reset, force-push ni limpieza ajena.
-- **POLÍTICA:** documentación/commit locales solamente; no issue nuevo, push, PR ni merge autorizados por esta petición. Publicación futura exige issue de alcance aprobado, aprobación expresa y HEAD revalidado. No declarar #671 contractual cerrado ni iniciar #721.
+- **POLÍTICA ACTUALIZADA 2026-10-12:** [WO #745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745) `status:approved`, autorización expresa de issue, push y PR **dependiente de #744**, y merge de PR **propia** si QA y checks pasan; merge canónico de la PR preexistente #744 NO se presupone. No declarar #671 contractual cerrado ni iniciar #721.
 - **OUTPUT:** candidato documental local pendiente de QA/reporte; ninguna publicación en rama canónica.
 
 ### WO-DOC-NEXUS-FH-F44-V2-BRIDGE-EQUIVALENCE-20261012 — issue #743 (PR autorizada, sin merge)

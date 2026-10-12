@@ -1,8 +1,8 @@
 # WO-DOC-NEXUS-F45-Q1-Q4-DECISION-RECONCILIATION-20261012
 
-**Estado:** DOCUMENTACIÓN LOCAL EN PREPARACIÓN — sin push, sin PR, sin merge.
+**Estado:** WO [#745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745) `status:approved` — publicación en PR apilada autorizada; merge **de la PR propia** condicionado a QA/checks; no hay autorización de merge canónico de #744.
 **Objetivo:** conservar de forma inequívoca las cuatro decisiones funcionales ratificadas por la responsable el 12-10-2026 y corregir las contradicciones que conservaba el borrador F4.5 DeliveryResult #671 tras su revisión F2. Es una **WO documental atómica de reconciliación de contrato y enlaces**, no una WO de implementación.
-**Relación:** issue [#671](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/671) (contrato aún `CONTRACT_PENDING`), evidencia [#743](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/743) / [PR #744](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/744) (pendiente de merge), implementación [#721](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/721) (bloqueada y sin aprobación).
+**Relación:** WO [#745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745); issue [#671](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/671) (contrato aún `CONTRACT_PENDING`), evidencia [#743](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/743) / [PR #744](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/744) (pendiente de merge), implementación [#721](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/721) (bloqueada y sin aprobación).
 
 ## 1. Base, HEAD y preflight
 
@@ -32,7 +32,7 @@
 
 ## 4. NO TOCA
 
-- `main`; PR #744, su rama/worktree, ni el worktree original #671; no rebase/reset/force-push/limpieza ajena.
+- `main`, worktree ajeno de #744 y worktree original #671; no rebase/reset/force-push/limpieza ajena. Se permite exclusivamente la integración por **merge de la PR propia** contra la rama upstream de PR #744 si los gates pasan; **no** el merge de #744 a canónica.
 - F4.4, Export V2, JSX/HTML/JS, schemas, workbook, Office Script, Bridge, Power Automate, backend o deploy.
 - ADR-005/006, estados de los issues, permisos, interfaz clínica, datos de pacientes reales, CIMA u otra inferencia farmacoterapéutica.
 - No aprobar ni iniciar #721, no publicar `CONTRACT_ACCEPTED` sin revisión del DTO.
@@ -49,9 +49,9 @@
 ## 6. Reversión y política de publicación
 
 - Reversión, si se autoriza: revert documental focal sobre el commit local de esta rama, sin sobrescribir trabajos ajenos ni reescribir historia.
-- La petición de documentar autoriza aquí **preparación local y commit documental**. **No se presume autorización expresa de push, PR, issue nuevo ni merge.** El #671 aprobó localmente solo su contrato y #743 autorizó su propia PR; ninguna autorización se extiende a esta WO.
-- Para publicar: confirmar alcance, issue documental con `status:approved` y aprobación humana explícita de push/PR; revalidar rama canónica, #744 y HEAD. Merge requerirá autorización aparte.
+- Autorización explícita de la responsable en conversación del 2026-10-12: **crear issue #745, push de rama, abrir PR y merge de la PR propia si todo es correcto**. Esta autorización no convierte #671 en contrato congelado, no aprueba #721 ni autoriza fusionar directamente la PR preexistente #744 a canónica.
+- Publicación: issue #745 creado con `status:approved`; PR apuntará como base a `docs/fh-f44-v2-bridge-equivalence-20261012` (PR #744) para aislar sus seis rutas. Merge propio **solo** tras QA y checks. Si la PR #744 requiere integración final en `promueve/nexus-v4`, deberá comprobarse su autorización y gates por separado.
 
 ## 7. OUTPUT
 
-**Esperado:** rama/worktree aislados, commit local con diff acotado, evidencia de `git diff --check`, enlaces verificados, reporte de cambios/pendientes. **Estado canónico:** sin cambios hasta push/PR/merge autorizados y realizados; contrato y #721 seguirán pendientes.
+**Esperado:** [issue #745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745), rama aislada, commit(s) documentales acotados, PR apilada sobre #744 con checks/verificación, merge propio si pasa, reporte final y estado canónico exacto. **El merge en la rama de #744 no publica automáticamente en `promueve/nexus-v4`**; contrato #671 y ejecución #721 quedan pendientes.
