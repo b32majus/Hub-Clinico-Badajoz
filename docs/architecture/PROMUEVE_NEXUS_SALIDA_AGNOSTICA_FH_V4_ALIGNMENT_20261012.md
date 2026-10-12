@@ -206,7 +206,7 @@ No puede:
 
 **[A]** Se acepta **no crear por defecto un almacén paralelo del acto íntegro en el Excel manual** si no aporta utilidad ahora. También se acepta que a futuro la recuperación completa requiere preservar identidad y hechos suficientes. La diferencia L0/L1/L2 debe ser visible.
 
-**[H]** Faltan matriz F4.4 ↔ Export V2 ↔ Bridge y decisión sobre portador/mapping/roundtrip íntegro. El contrato #671 no está formalmente congelado para implementación hasta resolverlo o delimitar qué parte exacta se declara soportada.
+**[A / evidencia técnica 2026-10-12]** La [matriz de equivalencia](reviews/FARMACIA_F44_EXPORT_V2_BRIDGE_EQUIVALENCE_20261012.md) documenta que la proyección de 152 columnas permite recuperar filas L0 y agrupar eventos, pero no contiene todos los datos para reconstruir íntegramente Pharmacy Act v1 (L2). Se alineó funcionalmente una **frontera F4.5 común con garantías diferenciadas** para proyección tabular y portador íntegro. **[H]** Mecanismo sin pérdida, mapping autorizado, DTO/estados, readback L1 y contrato #671 continúan pendientes; #721 sigue sin aprobación.
 
 ### Q-2. ¿Quién genera `attemptId`?
 
@@ -228,12 +228,23 @@ No puede:
 
 **[H]** Autenticación/provenance acreditada si se plantea una escritura institucional o piloto, dependiente de SES y entorno. No resolver mediante una simple columna de nombre.
 
+### Actualización posterior del 2026-10-12 — Q-1/Q-2/Q-3/Q-4 ratificadas funcionalmente
+
+La discusión posterior al primer alineamiento **cerró funcionalmente las cuatro preguntas**, sin congelar aún el DTO ni autorizar ejecución:
+
+- **Q-1:** representación tabular Export V2 y portador lossless F4.4 son modalidades separadas de una frontera común; cada `prepared_for_transfer` identifica modalidad, garantía y evidencia, sin afirmar L2 para las 152 columnas.
+- **Q-2:** aplicación genera `attemptId`; retry técnico de la misma operación conserva ID, nueva operación lleva otro; ninguna idempotencia sin prueba del destino.
+- **Q-3:** destino lógico explícito y físico configurado por adaptador o elegido por profesional en manual; sin deducir libro/hoja de fármaco o patología.
+- **Q-4:** F4.4 demuestra conformidad estructural, no firma; demo sintética admite atribución declarada, piloto/escritura institucional requiere garantías SES.
+
+**Prevalencia temporal:** en la sección anterior, las marcas históricas `[H]` de política aún pendiente de Q-2/Q-3/Q-4 deben leerse como **superadas solo respecto de esas cuatro decisiones funcionales**; siguen abiertos tokens de DTO, carrier L2, mapping y políticas institucionales. [Contrato candidato reconciliado #671](../contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md) y [WO local](../ops/WO_NEXUS_F45_Q1_Q4_DECISION_RECONCILIATION_20261012.md). La nueva documentación todavía no está publicada en la rama canónica; esta nota depende de la PR #744 todavía OPEN. Sin inicio de #721.
+
 ## 11. Secuencia posterior de trabajo — propuesta, no autorizada
 
 1. **Ratificación y publicación documental:** alineamiento funcional ratificado por la responsable el 2026-10-12; issue documental #741 aprobado y PR #742 para incorporarlo en `promueve/nexus-v4`. Comprobar el estado `MERGED` de la PR antes de afirmar publicación canónica; esto no cambia las autoridades ADR/F4.4.
 2. **WO documental #741 / PR #742:** incorporación del alineamiento y sus accesos desde `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`, sin elevarlo a ADR ni a contrato congelado. El merge autorizado es exclusivo de esa documentación; no resuelve Q-1..Q-4.
-3. **Matriz F4.4 ↔ Export V2 ↔ Bridge**: estudiar identidad, cardinalidad, información clínica, autoría, provenance, ausencias/centinelas, serialización, recuperación L0/L1/L2 y gaps; contrastar diseño histórico del Processor sin tratarlo como código publicado. Read-only antes de escoger solución.
-4. **Decisión Q-1 acotada**, seguida del mínimo de Q-2/Q-3 necesario y límite Q-4, mediante el proceso de contrato #671. Mantener distinción entre diseño del primer modo manual y promesa futura de portabilidad/roundtrip.
+3. **Matriz F4.4 ↔ Export V2 ↔ Bridge**: [revisión estructural documentada](reviews/FARMACIA_F44_EXPORT_V2_BRIDGE_EQUIVALENCE_20261012.md) (WO #743), con caracterización sintética, identidad, cardinalidad, ausencias y L0/L1/L2. Processor histórico de ingesta, no de lectura relacional; sin QA de Excel real. No equivale a mapping clínico aprobado ni resolución contractual Q-1..Q-4.
+4. **Decisiones Q-1..Q-4 ratificadas funcionalmente el 2026-10-12**; reconciliar el contrato #671 y someter DTO/firma a revisión y aprobación antes de publicar. Mantener distinción entre modo manual y portabilidad/roundtrip futuros.
 5. **Aceptar/publicar #671 solo con autorización**; después preparar **una WO individual para #721**, con revisión de alcance y gates propios. No encadenar tickets ni implementar UI, Bridge, Office Script, SQL o Enfermería dentro de #671.
 
 ## 12. NO TOCA y condiciones de seguridad
