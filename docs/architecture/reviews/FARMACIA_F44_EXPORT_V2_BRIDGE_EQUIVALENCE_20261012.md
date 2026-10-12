@@ -135,16 +135,18 @@ Si las filas del mismo `source_event_id` declaran `row_count=2` y al invocarse e
 
 El workbook publicado incluye dos hojas operativas y dieciséis hojas técnicas ocultas **vacías**; no contiene vistas `APP_*` ni tablas técnicas relacionales operativas. El Processor histórico define las dieciséis entidades, **no las vistas `APP_*`**. El diseño de vuelta hacia la UI requiere un adaptador de lectura/roundtrip independiente y sus correspondientes QA. No confundir «plan de descomposición» con «readback completo».
 
-## 7. Reconciliación mínima de Q-1..Q-4, todavía sin congelar
+## 7. Reconciliación posterior Q-1..Q-4 (acuerdo funcional, DTO aún no congelado)
 
-| Pregunta | Alineamiento o evidencia disponible | Decisión contractual/implementación pendiente |
+**Actualización funcional ratificada el 2026-10-12, posterior al análisis estructural de esta matriz:** se acordaron **las cuatro** decisiones Q-1..Q-4. La [especificación candidata reconciliada #671](../../contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md) y su [WO documental local](../../ops/WO_NEXUS_F45_Q1_Q4_DECISION_RECONCILIATION_20261012.md) recogen el detalle. **Los enlaces nuevos solo estarán disponibles en la rama documental nueva; no están integrados en `promueve/nexus-v4` ni en esta PR #744.** No se afirma congelación, publicación ni aptitud para #721.
+
+| Pregunta | **Decisión funcional acordada** | Sigue pendiente de ingeniería |
 |---|---|---|
-| Q-1 · Artefacto | **Decisión funcional:** frontera compartida con **proyección V2** y **acto íntegro** como capacidades con garantías distintas | Definir discriminantes, evidencias y resultados sin atribuir `prepared_for_transfer` completo a una mera fila; decidir portador sin pérdida separado cuando proceda. No imponer columnas o almacén paralelo hoy. |
-| Q-2 · `attemptId` | Conceptualmente independiente de `actId`/`revision` | Autoridad del generador, vida del intento, reintentos y formato (capa llamadora vs adaptador). |
-| Q-3 · `destination` | Excel manual sin persistencia acreditable; elección humana de libro/hoja | Descriptor mínimo agnóstico; no resolver routing físico #577 dentro de #671. |
-| Q-4 · origen/autoría | F4.4 verifica estructura, no autenticidad institucional; `professional_ref/display` son declarados | Límite de procedencia de demo sintética y política por despliegue futuro; no exigir firma JARA al complemento en esta fase. |
+| **Q-1 · Representación** | Una frontera F4.5 con dos modalidades: proyección tabular Export V2 y portador íntegro Pharmacy Act v1. `prepared_for_transfer` puede referirse a ambas, pero **modalidad, evidencia y garantía explícita**; una fila V2 nunca acredita L2. | DTO/discriminantes, mapeo Act→V2 y codec reversible sin pérdidas; no imponemos hoja/almacén SQL/JSON ordinario. |
+| **Q-2 · Intentos** | `attemptId` generado upstream por aplicación; retry técnico de la **misma operación** conserva ID; nueva orden genera nuevo ID. Idempotencia sólo si el destino la demuestra; `outcome_unknown` no autoriza escritura ciega. | Formato definitivo, política de deduplicación real y continuidad tras reinicio. |
+| **Q-3 · Destino** | Destino **lógico** explícito separado de ubicación **física**: libro/hoja manual elegidos por profesional, configuración aprobada para automatización; fallo seguro si es ambigua. No inferir por fármaco/patología. | Forma exacta del descriptor y routing físico (#577). |
+| **Q-4 · Autoría** | Conformidad F4.4 y autoría **declarada** suficientes sólo para demo sintética; no autenticación ni firma institucional. No confundir PROMueve con JARA. | Política SES para piloto/escritura real y prueba de origen exigida por el destino. |
 
-**Vocabulario de estados:** mantener ADR-005/006; copia manual ≠ `persisted`; entrega/tablas no implican validación farmacéutica ni dispensación. Si se crea un discriminante de proyección, debe describir explícitamente qué garantía se ha cumplido, y el DTO aún no puede dar por aprobado ese nuevo esquema.
+**Límite de publicación:** la PR #744 sigue siendo la fuente de esta matriz hasta su merge; la reconciliación posterior se prepara en rama/worktree propios, derivados de su cabeza para no alterar #743. La revisión F2 de #671 no cubre automáticamente este nuevo DTO. #671 queda `CONTRACT_PENDING` y #721 no aprobado.
 
 ## 8. Trazabilidad de documentación viva — WO #743 (publicación condicionada al merge)
 
