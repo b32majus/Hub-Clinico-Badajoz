@@ -1,12 +1,12 @@
 # F4.5 — Farmacia DeliveryResult v1 · contrato documental reconciliado
 
 **Fecha de ratificación funcional:** 2026-10-12, Q-1/Q-2/Q-3/Q-4 acordadas por la responsable.
-**Estado:** `DECISIONES_FUNCIONALES_ACORDADAS`; `DTO_FIRMA_CODEC_PENDING`. La redacción aquí es **candidata contractual para revisión de #671**, no un contrato congelado ni publicado en la rama canónica.
+**Estado:** `DECISIONES_FUNCIONALES_ACORDADAS`; `PHASE1_DTO_ACCEPTED_LOCAL` (decisión humana 2026-10-12); `MAPPING_F44_V2_PENDING`; `L2_CODEC_PENDING`; `PHASE1_PUBLICATION_PENDING`. La versión canónica anterior se publicó como **candidato documental general**. El cierre de fase 1 está ratificado solo en esta rama local, sin ejecución ni piloto.
 **Procedencia:** borrador local de #671 revisado tras F2 (`370cdccdbbab9697c7d63332a19da76efdfb8c01`); matriz F4.4 ↔ Export V2 ↔ Bridge de WO #743 / PR #744 (OPEN al preflight); ADR-005/006 y alineamiento canónico PR #742.
 **Ejecución:** solo especificación; ningún cambio de runtime, UI, datos, workbook, Processor o backend; #721 permanece abierto sin `status:approved`.
 **Trazabilidad de WO:** [WO de reconciliación documental](../ops/WO_NEXUS_F45_Q1_Q4_DECISION_RECONCILIATION_20261012.md).
 
-**Regla de lectura:** las cuatro decisiones funcionales de esta revisión sustituyen las secciones «PREGUNTAS ABIERTAS» del borrador F2, **pero no autorizan por sí mismas la firma, los tokens, el codec, un nuevo adaptador ni la persistencia**.
+**Regla de lectura:** Q-1..Q-4 permanecen vigentes. La **firma, tokens, campos, errores y precedencia mínimos de la fase 1 manual V2** han sido ratificados localmente por la responsable en la sección «DTO de fase 1 aprobado localmente». La forma general anterior es antecedente documental y **no prevalece sobre ese alcance restringido**. La ratificación no autoriza mapping clínico, codec L2, nuevo adaptador, entrega efectiva, persistencia ni piloto.
 
 ## Frontera del contrato y decisiones cerradas
 
@@ -23,9 +23,9 @@ Anclas: `modules/farmacia_act_contract.js` y `modules/farmacia_act_payloads.js`,
 
 **Madurez independiente:** F4.4 publicado como contrato puro; copia demo Export V2 de 152 columnas publicada y visible en Validación, Primera Visita y Seguimiento; **no está demostrado el wiring Act F4.4→F4.5→Export V2**. El Processor de Bridge conocido es un candidato histórico de ingesta, sin QA Excel real, y no un lector de vuelta L1. L2 no está resuelto. Ningún resultado de este documento acredita piloto o registro en JARA.
 
-## DTO y firmas candidatos — no congelados
+## Forma conceptual general anterior — modalidades futuras no congeladas
 
-La siguiente es una **forma ilustrativa revisada** del borrador #671. Los nombres de discriminantes y enums son candidatos y requieren revisión/autorización contractual; no son una API ya publicada:
+La siguiente es una **forma ilustrativa general anterior** del borrador #671. Para fase 1 prevalecen exclusivamente los tokens/firma/errores del «DTO de fase 1 aprobado localmente» más abajo; los demás modos siguen siendo candidatos y nada constituye una API runtime ya publicada:
 
 ```text
 prepareManualExcelTransfer(request) -> DeliveryResult   [FIRMA PROPUESTA]
@@ -35,8 +35,51 @@ request:
   act               : Pharmacy Act v1 completo, F4.4, ok:true
   representationKind: 'export_v2_tabular' | 'pharmacy_act_full' [tokens propuestos]
   transferMode      : 'manual_copy' | 'manual_download' [canal, ortogonal a representación]
-  attemptId         : identificador explícito de la operación lógica (creado upstream)
-  destination       : referencia de destino lógico, explícita y compatible
+  attemptId         : string propio, no vacío, sin espacios de solo borde; identidad de la
+                      operación lógica de entrega, creada upstream por la capa de aplicación.
+                      Nunca generado por el adaptador ni derivado de actId, revision, fármaco,
+                      hora o datos clínicos. Formato NO congelado (UUID v4 aleatorio seguro es
+                      opción, no obligación). Código de violación: INVALID_ATTEMPT_ID.
+  destination       : descriptor lógico explícito, conforme al esquema candidato de abajo,
+                      compatible con la modalidad solicitada y resoluble por el adaptador
+                      elegido. Código de violación: INVALID_REQUEST (no conforme) o
+                      DESTINATION_NOT_RESOLVED (conforme pero incompatible/no resoluble).
+
+Descriptor destination (candidato, PENDIENTE_APROBACION_HUMANA):
+  kind        : string propio no vacío; token lógico de un conjunto cerrado de descriptores
+                candidatos sujeto a cierre de DTO. Identifica la CAPACIDAD de exportación,
+                NO una localización física: sin libro, hoja ni ruta (los elige la profesional
+                después) y sin routing inferido desde terapia, patología o datos ausentes.
+  persistence : 'none' [obligatorio y único valor emitible en canal manual]
+
+evidence (candidato):
+  kind      : string propio no vacío; qué prueba local se acredita sobre la REPRESENTACIÓN
+              preparada (p. ej. validación de la proyección o de la serialización)
+  external  : null [obligatorio en modo manual; nunca objeto, identificador ni referencia
+              externa; external:null es parte del contrato de evidencia honesta]
+  details?  : opcional, exclusivamente informativo
+
+artifact (candidato):
+  descriptor : string propio no vacío; qué contenido transporta, alineado con la modalidad
+               efectivamente producida
+  content    : contenido realmente transferible y conforme a la modalidad. Su codificación
+               concreta (proyector Act→V2 o codec reversible L2) NO se elige en este
+               documento; sin mapping/codec aprobado la modalidad correspondiente falla.
+
+Ramas positivas — acoplamiento exacto (candidato, garantías NO intercambiables):
+  representationKind 'export_v2_tabular' -> representationGuarantee 'export_v2_projection_valid'
+      [solo si existe proyección autorizada para el acto; el mapping Act→V2 concreto NO se
+       elige aquí]
+  representationKind 'pharmacy_act_full' -> representationGuarantee 'pharmacy_act_lossless'
+      [solo si existe codec reversible aprobado y verificado; sin codec, esta modalidad
+       NUNCA devuelve éxito]
+  Ningún otro par (representationKind, representationGuarantee) es emitible.
+
+Rama negativa:
+  ok:false, error:{code,message,details?}, SIN deliveryStatus positivo y SIN artifact parcial.
+  attemptId está presente si y solo si la solicitud transportaba un attemptId estructuralmente
+  válido (string propio no vacío); en ese caso se devuelve verbatim, nunca regenerado; si
+  faltaba o era inválido, el resultado de fallo no contiene attemptId.
 
 DeliveryResult de preparación manual válida:
   ok                      : true
@@ -57,16 +100,113 @@ Fallo previo a entrega:
   SIN deliveryStatus positivo, SIN artifact parcial
 ```
 
+**Propuesta técnica general anterior:** se conserva por trazabilidad y para capacidades futuras; los tokens y códigos aplicables al **único modo de fase 1** quedan sustituidos por la sección aprobada localmente, que prevalece en caso de discrepancia:
+
+- **Requeridos de la solicitud (a):** `contractVersion`, `act`, `representationKind`, `transferMode`, `attemptId` y `destination` son todos requeridos y explícitos; no existen valores por defecto, campos inferidos ni relleno silencioso. La ausencia o invalidez de cualquiera de ellos es fallo cerrado tipado. Propuesta de cierre: `representationKind` ausente o distinto de los dos tokens candidatos, o `destination` ausente/no conforme al descriptor candidato: `INVALID_REQUEST`. Un descriptor conforme pero incompatible o no resoluble: `DESTINATION_NOT_RESOLVED`. Todos devuelven `ok:false`, sin estado de entrega ni artefacto parcial.
+- **Requeridos del `DeliveryResult` positivo (a):** `ok`, `contractVersion`, `deliveryStatus:'prepared_for_transfer'`, `actId`, `revision`, `kind`, `attemptId`, `representationKind`, `representationGuarantee`, `transferMode`, `destination`, `evidence` y `artifact`. Opcional: `details` exclusivamente informativo. `representationGuarantee` es exactamente el valor de la rama positiva acoplada al `representationKind` de la solicitud (`export_v2_tabular`→`export_v2_projection_valid`; `pharmacy_act_full`→`pharmacy_act_lossless`); ningún otro par es emitible. `evidence` y `artifact` siguen los esquemas candidatos de arriba (`evidence.external:null` siempre en modo manual). Ningún estado distinto de `prepared_for_transfer` es emitible por el modo manual.
+- **Discriminantes ortogonales (a):** `representationKind` (qué garantiza el contenido: proyección V2 válida vs acto íntegro) y `transferMode` (canal: copia vs descarga) son dimensiones distintas y ninguna se deriva de la otra. La compatibilidad par a par **no se presupone**: cada combinación modalidad×canal debe estar soportada explícitamente por el adaptador elegido; una combinación no soportada (candidato: `INCOMPATIBLE_TRANSFER_MODE`) falla cerrada, sin degradar la modalidad pedida, sin artefacto parcial y sin «éxito parcial».
+- **Descriptor `destination` (c):** propuesta mínima de descriptor lógico `{ kind, persistence }` con `persistence:'none'` obligatorio en canal manual y sin libro/hoja/ruta inventados (los elige la profesional después). Propuesta tipada: `kind` es string propio no vacío, token lógico de capacidad de un conjunto cerrado de descriptores candidatos —sin localización física ni routing inferido— y `persistence` es literal `'none'`; la enumeración definitiva de tokens de `kind` sigue sujeta a cierre de DTO y a la revisión/autorización humana, no se fija aquí. Un destino automático solo resuelve física si existe configuración/mapping aprobados para ese descriptor; su ausencia o ambigüedad es fallo seguro (candidato: `DESTINATION_NOT_RESOLVED`), nunca selección por fármaco, patología, terapéutica o `patientRef`.
+- **Condiciones de fallo seguro y códigos candidatos (d, e):**
+  - Propuesta de cierre de validación mínima (literal): `representationKind` ausente o distinto de los dos tokens candidatos, o `destination` ausente/no conforme al descriptor candidato: `INVALID_REQUEST`. Un descriptor conforme pero incompatible o no resoluble: `DESTINATION_NOT_RESOLVED`. Todos devuelven `ok:false`, sin estado de entrega ni artefacto parcial.
+  - Representación V2 **no autorizada** para el acto (no existe mapping aprobado F4.4→V2 aplicable a sus bloques): fallo cerrado sin resultado positivo (candidato: `PROJECTION_NOT_AUTHORIZED`).
+  - Representación V2 **no representable** (estructura conforme a F4.4 que el proyector autorizado no cubre, p. ej. `payload.lines:[]`): fallo cerrado sin inventar filas, líneas ni datos (candidato: `REPRESENTATION_NOT_REPRESENTABLE`; `UNSUPPORTED_STRUCTURE` permanece para estructuras no soportadas).
+  - Modalidad íntegra **sin codec reversible** aprobado y verificado: esta modalidad nunca devuelve éxito; fallo cerrado (candidato: `LOSSLESS_CODEC_UNAVAILABLE`). No se elige aquí un formato sustitutivo.
+  - Destino lógico incompatible o no resoluble: fallo cerrado sin escritura (candidato: `DESTINATION_NOT_RESOLVED`). Distinción propuesta: descriptor ausente o no conforme a `{ kind, persistence }` → `INVALID_REQUEST`; descriptor conforme pero incompatible con la modalidad o sin resolución autorizada → `DESTINATION_NOT_RESOLVED`.
+- Los códigos y tokens conceptuales de modos ajenos a la primera fase siguen sin congelarse; para export_v2_tabular + manual_copy prevalece el DTO de fase 1 ratificado localmente, pendiente de publicación.
+
+## DTO de fase 1 aprobado localmente — Export V2 manual (pendiente publicación)
+
+**Ratificación humana de 2026-10-12:** aprobados **los tokens, la firma, los campos, la matriz de capacidad y los errores/precedencia siguientes exclusivamente para `export_v2_tabular` + `manual_copy`**. Estado `PHASE1_DTO_ACCEPTED_LOCAL`, no aceptación global de F4.5, ni publicación canónica, ni autorización de #721. `pharmacy_act_full`/L2 sigue diferido y no disponible; el mapping clínico F4.4→V2 sigue pendiente y es barrera obligatoria para cualquier éxito.
+
+### Solicitud y resultado exactos ratificados para la primera capacidad
+
+```text
+prepareManualExcelTransfer(request) -> DeliveryResult
+
+RequestV1:
+  contractVersion    : 'pharmacy-delivery-result/v1'
+  act                : Pharmacy Act v1 F4.4 conforme y completo, ok:true
+  representationKind : 'export_v2_tabular' | 'pharmacy_act_full' [reconocido, L2 NO disponible]
+  transferMode       : 'manual_copy' | 'manual_download'      [reconocido, descarga fuera de fase 1]
+  attemptId          : string propio no vacío y sin espacios iniciales/finales; originado upstream
+  destination        : {kind:'manual_excel_v2', persistence:'none'}
+
+DeliveryResultV1 positivo (solo tras demostrar artefacto válido):
+  ok                      : true
+  contractVersion         : 'pharmacy-delivery-result/v1'
+  deliveryStatus          : 'prepared_for_transfer'
+  actId, revision, kind   : referencias verbatim al acto F4.4
+  attemptId               : verbatim del request
+  representationKind      : 'export_v2_tabular'
+  representationGuarantee : 'export_v2_projection_valid'
+  transferMode            : 'manual_copy'
+  destination             : {kind:'manual_excel_v2', persistence:'none'}
+  evidence                : {kind:'local_v2_rowset_validated', external:null}
+  artifact                : {descriptor:'export_v2_tsv', content:string,
+                             rowCount:entero >= 1, rowSchemaVersion:string}
+
+DeliveryResultV1 negativo (sin side effects):
+  ok       : false
+  error    : {code:string, message:string, details?:informativo}
+  attemptId?: string verbatim, solo si llegó estructuralmente válido
+  SIN deliveryStatus, SIN representationGuarantee, SIN evidence, SIN artifact
+```
+
+La solicitud y la respuesta positiva tienen únicamente las claves propias arriba enumeradas: sin defaults silenciosos, campos extra o datos inferidos. `attemptId` debe cumplir la forma declarada, no se normaliza ni se genera en el adaptador; reintento técnico de **la misma orden** conserva ID y nueva orden genera otro, sin presumir idempotencia.
+
+### Artefacto y evidencia — garantías que sí se pueden demostrar
+
+- `artifact.content` es TSV de **152 columnas, sin cabecera**, separado por tabuladores/LF; se genera con `FarmaciaExportV2Core.serializeRowsToTsv` sobre **filas procedentes de un mapeo F4.4→V2 explícitamente autorizado** y validadas mediante `validateRowSet`. `rowCount` proviene del número real de filas verificadas y `rowSchemaVersion` refleja el `ROW_SCHEMA_VERSION` del core V2; no equivale a la versión de F4.4.
+- `evidence.kind:'local_v2_rowset_validated'` y `external:null` acreditan **solo** que el artefacto tabular está preparado y validado localmente. No acreditan pegado, recepción, persistencia, deduplicación, libro/hoja ni registro SES/JARA.
+- `destination.kind:'manual_excel_v2'` nombra la capacidad lógica; `persistence:'none'` es obligatorio. No se indica ni se deduce el fichero, hoja, ruta física, patología o fármaco; la profesional decide dónde pegar **fuera** de F4.5.
+- El adaptador solo observa la estructura mínima de F4.4; no demuestra el origen criptográfico, identidad autenticada ni autorización hospitalaria. `authorRef` y `attributionAssurance` son declarados en demo y no se reinterpretan.
+- TSV V2 **no** es un portador íntegro L2; no garantiza `amendment`, bloques opacos, ausencias ni propio `undefined` si no están en las 152 columnas. Jamás completar tratamientos, dosis, pautas o validaciones desde otros datos.
+
+### Matriz de capacidad ratificada para la primera unidad
+
+| Representación | Canal | Resultado permitido |
+|---|---|---|
+| `export_v2_tabular` | `manual_copy` | `prepared_for_transfer` solo tras mapping F4.4→V2 aprobado, cobertura explícita del caso, filas válidas y TSV disponible. |
+| `export_v2_tabular` | `manual_download` | `INCOMPATIBLE_TRANSFER_MODE`: token conocido, pero descarga fuera del alcance inicial. |
+| `pharmacy_act_full` | copia o descarga | `LOSSLESS_CODEC_UNAVAILABLE`: modalidad futura sin codec; nunca degradar a V2. |
+| Desconocida | cualquiera | `INVALID_REQUEST` sin resultado positivo. |
+| Cualquiera | modo desconocido como `auto_bridge` | `INVALID_TRANSFER_MODE`. |
+
+### Matriz de errores tipados y validación ratificada para fase 1
+
+| Primera condición de fallo | Código propuesto |
+|---|---|
+| Request ausente o no conforme; campos requeridos ausentes/desconocidos; `representationKind` inválido; descriptor `destination` mal formado | `INVALID_REQUEST` |
+| Versión F4.5 incorrecta | `INVALID_CONTRACT_VERSION` |
+| `attemptId` ausente, vacío o mal formado | `INVALID_ATTEMPT_ID` |
+| Acto que no alcanza la barrera estructural F4.4 | `INVALID_ACT_INPUT` |
+| Versión o `kind` F4.4 desconocido | `INVALID_ACT_CONTRACT_VERSION` / `INVALID_ACT_KIND` |
+| `transferMode` desconocido | `INVALID_TRANSFER_MODE` |
+| Token de canal válido pero no habilitado para esa modalidad | `INCOMPATIBLE_TRANSFER_MODE` |
+| `destination` conforme pero incompatible o no resoluble por capacidad autorizada | `DESTINATION_NOT_RESOLVED` |
+| Mapping F4.4→V2 inexistente o sin autorización para el acto | `PROJECTION_NOT_AUTHORIZED` |
+| Mapping aprobado pero acto no representable sin fabricar líneas/campos | `REPRESENTATION_NOT_REPRESENTABLE` |
+| L2 solicitado sin codec reversible acreditado | `LOSSLESS_CODEC_UNAVAILABLE` |
+| Estructura técnica no admitida / fallo al preparar artefacto tras las barreras previas | `UNSUPPORTED_STRUCTURE` / `ARTIFACT_PREPARATION_FAILED` |
+
+**Precedencia aprobada para fase 1:** comprobar solicitud, versión, `attemptId`, identidad F4.4, modo y descriptor; después capacidad, mapping autorizado, representabilidad y artefacto. Ante varios fallos no se emite éxito y se informa de la primera barrera fallida. `INVALID_REQUEST` corresponde a un descriptor ausente/no conforme; `DESTINATION_NOT_RESOLVED`, a uno **conforme** pero sin capacidad lógica resoluble. Toda respuesta negativa carece de artefacto parcial, estado positivo y evidencia externa.
+
+**Gate aún sin resolver:** mapping explícito de `pharmacy_validation`, `pharmacy_first_visit` y `pharmacy_followup` desde los bloques opacos F4.4 al evento + filas Export V2, con 0/1/N líneas, IDs y revisiones coherentes. La existencia de botones demo V2 no demuestra ese mapping. Un acto conforme pero no representable falla cerrado; no inventar una fila, dispensación, tratamiento ni validación.
+
+**Fuera de esta primera unidad:** `pharmacy_act_full`/codec L2, `manual_download`, Bridge/Office Script/Power Automate, persistencia, backend/Farmatool, autenticación institucional, routing físico #577, refactors y nueva UI. Se conservan íntegros los 18 oráculos documentales anteriores; sus positivos siguen condicionados a la representación realmente disponible.
+
+**Decisión humana de fase 1 ratificada:** aprobados localmente `contractVersion`, `representationKind`, `representationGuarantee`, `transferMode`, `destination.kind`, `evidence.kind`, `artifact.descriptor`, sus campos, errores/precedencia y el límite `manual_copy`. **Falta publicación canónica autorizada y definir/aprobar el mapping clínico F4.4→V2** antes de una ruta positiva. #721 continúa bloqueado y sin `status:approved`; el DTO no lo habilita automáticamente.
+
 **Q-1 — condición de aceptación diferenciada:**
 
 - **`export_v2_tabular`:** el artefacto debe cumplir esquema, filas, cardinalidad y reglas de Export V2. **No** exige ni declara roundtrip del Pharmacy Act íntegro. El posible origen F4.4 no autoriza inventar un mapeo de sus bloques opacos a columnas, ni equiparar `actId` con `event_id`/`source_event_id`. Si el adaptador no dispone de una proyección autorizada para ese acto, **fallo seguro**. La copia V2 actualmente visible no se renombra retroactivamente como F4.5.
 - **`pharmacy_act_full`:** el artefacto ha de transportar por sí solo el acto completo —identidad, revisión, autor/procedencia, bloques opacos, cardinalidad y orden 0/1/N, distinción propiedad ausente / own `undefined` / `null` / `''` / `0` / `false`— y poder reconstituirlo sin datos del entorno ni del `DeliveryResult`. **Sin codec reversible aprobado y verificado, esta modalidad NO puede devolver éxito**. No se elige aquí JSON convencional, columnas adicionales, hoja ni repositorio paralelo.
 - `transferMode` es **canal de entrega**, no modalidad de representación. `manual_copy`/`manual_download` pueden preparar artefactos válidos según sus capacidades reales; la compatibilidad cruzada no se presupone.
-- El conjunto de claves cerrado, la validación mínima, los tokens exactos y los nombres de códigos de error siguen sujetos a cierre de DTO. Un modo no soportado, estructura imposible, destino lógico incompatible o representación no producible falla cerrado; no existe «éxito parcial» clínicamente aceptable.
+- Acoplamiento de ramas y presencia de `attemptId`: el par (`representationKind`, `representationGuarantee`) es emitible únicamente en las dos ramas positivas exactas declaradas en el esquema candidato; ante fallo no existe garantía declarada. En resultados negativos, `attemptId` se devuelve verbatim si y solo si el `attemptId` de la solicitud era estructuralmente válido; en caso contrario el fallo no lo contiene. El conjunto de claves cerrado, la validación mínima, los tokens exactos y los nombres de códigos de error siguen sujetos a cierre de DTO. Un modo no soportado, estructura imposible, destino lógico incompatible o representación no producible falla cerrado; no existe «éxito parcial» clínicamente aceptable.
 
 **Precondición F4.4 y límite de origen (Q-4):** el caso de uso llamador es responsable de construir el acto con F4.4 y transportar su salida válida. El adaptador puede comprobar versión, `ok:true`, `kind`, identidad y presencia de `payload.lines`, pero **un objeto que parece F4.4 no demuestra por sí mismo haber sido construido allí**. `authorRef` y `attributionAssurance` preservan una atribución **declarada**, sin convertirla en profesional autenticado. No añadir firma, token de autoridad, marca de origen verificable ni autorización implícita para paciente real.
 
-**Errores tipados del borrador F2:** `INVALID_REQUEST`, `INVALID_ACT_CONTRACT_VERSION`, `INVALID_ACT_KIND`, `INVALID_CONTRACT_VERSION`, `INVALID_ACT_INPUT`, `INVALID_TRANSFER_MODE`, `INVALID_ATTEMPT_ID`, `ARTIFACT_PREPARATION_FAILED` y `UNSUPPORTED_STRUCTURE`. Las condiciones nuevas (representación no soportada, proyección no definida, carrier íntegro indisponible, destino no resoluble) **deben recibir códigos cerrados en el cierre técnico del DTO**; no se afirman aquí enums definitivos ni runtime implementado. El fallo no equivale al estado `rejected` de una autoridad de destino.
+**Errores tipados del borrador F2:** `INVALID_REQUEST`, `INVALID_ACT_CONTRACT_VERSION`, `INVALID_ACT_KIND`, `INVALID_CONTRACT_VERSION`, `INVALID_ACT_INPUT`, `INVALID_TRANSFER_MODE`, `INVALID_ATTEMPT_ID`, `ARTIFACT_PREPARATION_FAILED` y `UNSUPPORTED_STRUCTURE`. Las condiciones nuevas (representación no soportada, proyección no definida, carrier íntegro indisponible, destino no resoluble) **deben recibir códigos cerrados en el cierre técnico del DTO**; no se afirman aquí enums definitivos ni runtime implementado. Propuesta de cierre, contrastada con el esquema candidato de arriba y con los códigos existentes: `representationKind` ausente o distinto de los dos tokens candidatos, o `destination` ausente/no conforme al descriptor candidato: `INVALID_REQUEST` (código ya presente en la lista F2 y en la barrera de F4.4); un descriptor conforme pero incompatible o no resoluble: `DESTINATION_NOT_RESOLVED` (código nuevo candidato, no enum F2). Todos devuelven `ok:false`, sin estado de entrega ni artefacto parcial. El fallo no equivale al estado `rejected` de una autoridad de destino.
 
 ## Garantía de contenido e identidad según modalidad
 
@@ -132,13 +272,13 @@ No se exige almacenamiento duradero de intentos ni recuperación al reiniciar la
 
 **Q-1 · Export V2 no es el Pharmacy Act íntegro.** El core publicado de 152 columnas y sus adaptadores son proyecciones por caso de uso. El flujo público posee botones demo paralelos para Validación, Primera Visita y Seguimiento; la afirmación antigua del borrador de que el export público solo tenía 61 columnas y v2 no estaba cableado **era histórica y ha quedado superada**. Sí permanece el gap de integración **F4.4→F4.5→V2** y no hay mapping clínico completo Act→fila aprobado. `event_id`/`source_event_id` y `row_count` describen filas de exportación, no equivalencia automática con `actId`. El portador lossless L2, su codec y su almacenamiento/formato son **pendientes**, no una solución que impongamos a Excel manual.
 
-**Q-3 · `destination` lógico frente a físico.** En manual, describir la capacidad de exportación y su carácter `persistence:none` sin fingir conocer fichero/hoja de pegado; los elige la profesional. En un Bridge automatizado, la configuración autorizada del despliegue/adaptador resolverá destino físico; si falta o es ambiguo, **fail-closed**. No usar nombre de patología/fármaco o ausencia para decidir ruta. El contrato no resuelve el discovery #577 ni impone hojas adicionales. `destination.kind` y otros campos exactos continúan pendientes de DTO.
+**Q-3 · `destination` lógico frente a físico.** En manual, describir la capacidad de exportación y su carácter `persistence:none` sin fingir conocer fichero/hoja de pegado; los elige la profesional. En un Bridge automatizado, la configuración autorizada del despliegue/adaptador resolverá destino físico; si falta o es ambiguo, **fail-closed**. No usar nombre de patología/fármaco o ausencia para decidir ruta. El contrato no resuelve el discovery #577 ni impone hojas adicionales. El descriptor manual de **fase 1** está ratificado localmente; los descriptores automáticos y el routing físico continúan pendientes.
 
 **Q-4 · Autoría declarada y procedencia.** Se conserva `authorRef`, `attributionAssurance` y `provenance` que aporta F4.4. Conformidad F4.4 no prueba origen criptográfico del objeto, autoría real ni habilitación del profesional. Para demo/evaluación sintética basta atribución **declarada y rotulada**; no utilizar `SIGNED`, `AUTHENTICATED` o equivalentes sin evidencia externa. Para piloto o escritura hospitalaria se exigen los controles/autorizaciones SES que correspondan; si el destino los requiere y no existen, la operación falla segura. PROMueve complementa JARA; no registra por sí una prescripción legal o un acto firmado.
 
-**Pendientes técnicos explícitos, que NO reabren Q-1..Q-4 funcionales:**
+**Pendientes técnicos fuera del DTO mínimo ratificado de fase 1, que NO reabren Q-1..Q-4 funcionales:**
 
-1. Firma y tokens definitivos de DTO, discriminantes de modalidad/garantía, esquema de `destination` y códigos de error nuevos.
+1. Firmas, tokens, destinos y garantías **para modalidades ajenas a `export_v2_tabular` + `manual_copy`**; los mínimos de fase 1 están ratificados localmente.
 2. Proyector autorizado desde Pharmacy Act a Export V2 cuando se necesite, con casos de cardinalidad cero/uno/múltiples y mapping clínico explícito; **no** tocar ahora los botones V2 existentes.
 3. Portador F4.4 íntegro y codec reversibles con evidencia de centinelas y prototipos admitidos; **no** imponer JSON/SQL/hoja paralela.
 4. Política de capacidad por adaptador, retry/idempotencia y observación duradera de `persisted` antes de futuros destinos.
@@ -148,7 +288,7 @@ La coexistencia por centro entre Excel manual, Bridge, Power Automate y API/SQL 
 
 ## Oráculos DOCUMENTALES de aceptación
 
-Todos los datos son sintéticos/demo: identificadores inventados, etiquetas clínicamente neutras, sin pacientes reales, credenciales ni endpoints hospitalarios. Los bloques del payload son opacos; el contenido hoja mostrado es puramente demostrativo y no define taxonomía clínica. Solicitado ≠ validado; la ausencia permanece ausencia. Estos oráculos son criterios de revisión documental, **no tests ejecutados**. Los positivos de O-01..O-03 se entienden condicionados a que exista el artefacto válido de la modalidad solicitada: no se presume un codec lossless ni un Act→V2 mapper inexistentes. El DTO/tokens están pendientes de freeze.
+Todos los datos son sintéticos/demo: identificadores inventados, etiquetas clínicamente neutras, sin pacientes reales, credenciales ni endpoints hospitalarios. Los bloques del payload son opacos; el contenido hoja mostrado es puramente demostrativo y no define taxonomía clínica. Solicitado ≠ validado; la ausencia permanece ausencia. Estos oráculos son criterios de revisión documental, **no tests ejecutados**. Los positivos de O-01..O-03 se entienden condicionados a que exista el artefacto válido de la modalidad solicitada: no se presume un codec lossless ni un Act→V2 mapper inexistentes. El DTO/tokens de fase 1 manual V2 están ratificados localmente y pendientes de publicación; los demás modos no están congelados y todo éxito exige mapping y artefacto válidos.
 
 ### O-01 — Acto de Validación (ausencia preservada, una línea)
 
@@ -239,9 +379,9 @@ Acto con `kind: "pharmacy_annual_review"`: la entrega falla cerrada con `INVALID
 
 ### O-06 — Entrada que no alcanza la barrera mínima de identidad
 
-Cualquier entrada que no alcance la barrera mínima de identidad contractual visible descrita en "Precondición del llamador" (p. ej. el resultado `{ ok: false, error }` de un builder, una envelope cruda, `payload` suelto o un objeto sin `contractVersion: 'pharmacy-act/v1'` con `ok: true` y `kind` conocido): falla cerrada con `INVALID_ACT_INPUT`. La entrega nunca ensambla actos parciales.
+Cualquier entrada que no alcance la barrera mínima de identidad contractual visible descrita en "Precondición F4.4 y límite de origen (Q-4)" (p. ej. el resultado `{ ok: false, error }` de un builder, una envelope cruda, `payload` suelto o un objeto sin `contractVersion: 'pharmacy-act/v1'` con `ok: true` y `kind` conocido): falla cerrada con `INVALID_ACT_INPUT`. La entrega nunca ensambla actos parciales.
 
-Límite documentado: este oráculo NO acredita que el acto proceda realmente de `createAct` (contrato #488). `createAct` devuelve un objeto ordinario mutable sin marcador verificable de origen; un objeto artesanal que imite la forma externa de un acto alcanzaría la barrera mínima. La autenticidad estructural del acto es precondición del llamador y responsabilidad del productor F4.4 upstream, no capacidad de verificación de este adaptador (ver PREGUNTA ABIERTA Q-4).
+Límite documentado: este oráculo NO acredita que el acto proceda realmente de `createAct` (contrato #488). `createAct` devuelve un objeto ordinario mutable sin marcador verificable de origen; un objeto artesanal que imite la forma externa de un acto alcanzaría la barrera mínima. La autenticidad estructural del acto es precondición del llamador y responsabilidad del productor F4.4 upstream, no capacidad de verificación de este adaptador (ver Q-4 — autoría declarada y procedencia, en la sección de límites de ingeniería).
 
 ### O-07 — Modo de transferencia desconocido
 
@@ -270,7 +410,7 @@ Ambos casos son distintos para F4.4. **El artefacto de modalidad íntegra** debe
 
 Si el mecanismo de la **modalidad íntegra** elimina silenciosamente la propiedad del caso B y lo convierte en el caso A, no es fiel a F4.4 y la preparación íntegra debe fallar sin estado positivo. Esto no convierte en inválida una proyección V2 que declare honestamente su garantía limitada.
 
-Este es un oráculo documental pendiente de un mecanismo aprobado en Q-1. No se implementa ni se selecciona ahora una codificación.
+La decisión funcional Q-1 está acordada; sigue pendiente el mecanismo técnico reversible L2 que permita satisfacer este oráculo para la modalidad íntegra. No se implementa ni se selecciona ahora una codificación.
 
 ### O-12 — Proyección V2 legítima ≠ acto íntegro
 
@@ -312,4 +452,4 @@ Copiar TSV, descargar fichero, reimportar filas o terminar el Processor no acred
 
 El borrador inicial #671 tuvo revisión Cora F2 positiva sobre las correcciones `payload.lines`/autocontención/centinelas; **esa revisión no cubre automáticamente esta reconciliación**. Verificar enlace y coherencia con ADR-005/006, matriz #744, código F4.4 y adaptadores v2. QA documental focal: `git diff --check`, 18 oráculos y contradicciones (Q-1..Q-4), enlaces internos, acotación de rutas, flags correctos; no tests runtime obligatorios al no cambiar runtime. **No se declara QA de navegador ni Office Script real.**
 
-Hasta una aprobación y publicación de #671, esto sigue siendo `CONTRACT_PENDING`, con **las cuatro decisiones funcionales acordadas**. No supone aceptación del DTO, de los tokens del ejemplo, del codec, de ninguna persistencia o del issue #721.
+**Estado de cierre local #671:** Q-1..Q-4 acordadas y `PHASE1_DTO_ACCEPTED_LOCAL` para el único modo `export_v2_tabular` + `manual_copy`. Pendientes: publicación canónica y reconciliación documental del estado, mapeo clínico seguro F4.4→V2, codec L2 y capacidades futuras. No hay API runtime, persistencia, QA navegador/Excel, piloto ni autorización de #721. #671 sigue abierto hasta publicación/cierre expresamente autorizado.
