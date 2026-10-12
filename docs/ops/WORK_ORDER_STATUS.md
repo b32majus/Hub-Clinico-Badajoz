@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-12 (PR #742 de alineamiento MERGED; matriz F4.4/V2/Bridge WO #743 en preparación de PR; #671/#721 sin modificación)
+**Última actualización:** 2026-10-12 (PR #742 MERGED; PR #744 OPEN; Q-1..Q-4 ratificadas; [WO #745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745) aprobada para publicación documental dependiente; #671 CONTRACT_PENDING, #721 sin aprobación)
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
@@ -12,7 +12,8 @@
 | --- | --- |
 | Autoridad canónica activa | `promueve/nexus-v4`; activa desde merge PR #381 (2026-09-24) |
 | **REENTRADA ARCH/FH: salida agnóstica V4** | **[Mapa de salida agnóstica FH V4](../architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md)** — alineamiento funcional ratificado 2026-10-12: F4.4 → proyección Export V2 → Excel manual/Bridge/Office Script/Power Automate/API, coexistencia por hospital, L0/L1/L2 y Q-1..Q-4; **publicado en `promueve/nexus-v4` por [PR #742](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/742) (MERGED `41406b15`)**; no autoriza #721. |
-| **REENTRADA FH: matriz de equivalencia F4.4/V2/Bridge** | [Evidencia técnica 2026-10-12](../architecture/reviews/FARMACIA_F44_EXPORT_V2_BRIDGE_EQUIVALENCE_20261012.md) — 152 columnas, L0/L1/L2, centinelas, casos clínicos y Processor histórico de ingesta con INCOMPLETE_ROW_SET. **WO #743, publicación canónica pendiente de verificar PR/merge**. F4.5 Q-1..Q-4 y #671 contractualmente pendientes; #721 bloqueado. |
+| **REENTRADA F4.5: decisiones Q-1..Q-4 (LOCAL)** | [Contrato DeliveryResult v1 candidato](../contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md) y [WO de reconciliación](WO_NEXUS_F45_Q1_Q4_DECISION_RECONCILIATION_20261012.md). Q-1 dos representaciones/garantías; Q-2 ID por aplicación y retry de misma orden; Q-3 destino lógico separado de físico; Q-4 autoría declarada ≠ autenticada. **Las cuatro acordadas funcionalmente; DTO/codec pendientes, #671 abierto, #721 sin aprobación.** Documentos SOLO en rama local derivada de PR #744, no canónicos. |
+| **REENTRADA FH: matriz de equivalencia F4.4/V2/Bridge** | [Evidencia técnica 2026-10-12](../architecture/reviews/FARMACIA_F44_EXPORT_V2_BRIDGE_EQUIVALENCE_20261012.md) — 152 columnas, L0/L1/L2, centinelas, casos clínicos y Processor histórico de ingesta con INCOMPLETE_ROW_SET. **WO #743, publicación canónica pendiente de verificar PR/merge**. F4.5 Q-1..Q-4 acordadas funcionalmente en la rama documental local; contrato/DTO #671 pendiente de publicación y aceptación; #721 bloqueado. |
 | Tip Git canónico al iniciar la reconciliación documental #589 | `06b9dd03b6edf4e44212b0361f787f126d07877a` — #586/PR #588 Reuma (#584→#585→#583). Tip anterior Farmacia `9d060f448c6ea1367b09993f232574ff1abd40a5` (#579/PR #582). Ancla histórica; superseded por #606/PR #607 `ed0642feda7c0b9a8224ba17914a3c36b7a6ea4d` (ver closeout siguiente). |
 | Harness / Atenea | **C-087 INTEGRADA** por [PR #662](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/662) sobre Nexus `a3556b408e91c257c7cd2c829c575ff497c99745`; autoridad Atenea consultada `main@4dd488aea19870e36fa35511ce0a0b8f59dcdf6a`, PR #143 y #144. [Routing](../ATENEA_EXECUTION_ROUTING_V0.md) y [cápsula GO](../ATENEA_GO_PROFILE_V0.md). Sin cambio de modelos, permisos ni clínica. |
 | Último HEAD de producto Nexus verificado | Train30 `e2cbc861e6632699c04ebc6bfc3c485796a7c5ac` (Farmacia Export V2 microcopy, PR #660), previo Train29 `4fca680a2b35b5b7fa951525c3658b77d595a18a` (Reuma Sexo M/F, PR #658). HEAD canónico global posterior `a3556b408e91c257c7cd2c829c575ff497c99745` es sincronización de arnés PR #662, no función clínica. GitHub live manda; NO piloto. |
@@ -28,6 +29,16 @@
 | Siguiente frontera del plan | **No seleccionar por numeración**: consultar [cola operativa](PROMUEVE_SHIPPING_BACKLOG_20261011.md), elegir issue concreto solo tras aprobación + gate despejado. QA #664/#665/#667, #666 condicionado a referencia clínica; micro-WOs #668/#669 sin aprobación de ejecución; #670–#672 requieren shaping/fuente. F4.5/F4.6 y F6/F7 siguen pendientes según plan vivo. |
 | Última publicación clínica | Train30 #659/PR #660, merge `e2cbc861e6632699c04ebc6bfc3c485796a7c5ac` (texto Export V2, sin cambio de terapia); anterior Train29 #657/PR #658, merge `4fca680a2b35b5b7fa951525c3658b77d595a18a`. No piloto. |
 | Última publicación de producto | Train30 #659/PR #660, merge `e2cbc861e6632699c04ebc6bfc3c485796a7c5ac`, previo Train29 #657/PR #658, merge `4fca680a2b35b5b7fa951525c3658b77d595a18a`. El HEAD canónico `a3556b408e91c257c7cd2c829c575ff497c99745` es arnés/docs PR #662. CI y Pages postmerge SUCCESS; sin piloto. |
+
+### WO-DOC-NEXUS-F45-Q1-Q4-DECISION-RECONCILIATION-20261012 — LOCAL, no publicada
+
+- **OBJETIVO/WO:** [contrato reconciliado](../contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md) + [WO completa](WO_NEXUS_F45_Q1_Q4_DECISION_RECONCILIATION_20261012.md) para las decisiones funcionales Q-1..Q-4 acordadas el 2026-10-12; contrato F2 previo `370cdcc...` revisado sin tocar el worktree #671.
+- **BASE/PREFLIGHT:** repo `b32majus/Hub-Clinico-Badajoz`, `promueve/nexus-v4@41406b1`; PR #744 OPEN `3edf688`. Rama local aislada `docs/nexus-f45-q1q4-reconciliation-20261012` basada en la cabeza #744; INDEX, STATUS, ADR-005/006, matriz, contrato y cuestiones clínicas contrastados.
+- **RUTAS:** contrato `docs/contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md`, matriz #744, alineamiento, INDEX, STATUS, WO (seis archivos Markdown). **NO TOCA:** `main`, worktrees previos, runtime, F4.4, V2, workbook, Office Script, API/SQL, JARA/SES ni #721.
+- **QA/ACEPTACIÓN:** revisar Q-1..Q-4 sin contradicción, 18 oráculos documentales, enlaces relativos, `git diff --check` y seis rutas; no atribuir tests/QA de navegador ni Excel real. `prepared_for_transfer` sin falsa persistencia; identidad del intento y atribución clínica honestas.
+- **REVERSIÓN:** revert documental local acotado con autorización; sin reset, force-push ni limpieza ajena.
+- **POLÍTICA ACTUALIZADA 2026-10-12:** [WO #745](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/745) `status:approved`, autorización expresa de issue, push y PR **dependiente de #744**, y merge de PR **propia** si QA y checks pasan; merge canónico de la PR preexistente #744 NO se presupone. No declarar #671 contractual cerrado ni iniciar #721.
+- **OUTPUT:** candidato documental local pendiente de QA/reporte; ninguna publicación en rama canónica.
 
 ### WO-DOC-NEXUS-FH-F44-V2-BRIDGE-EQUIVALENCE-20261012 — issue #743 (PR autorizada, sin merge)
 
