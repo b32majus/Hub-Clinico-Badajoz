@@ -48,6 +48,7 @@
 La dirección futura de plataforma queda adjudicada en:
 
 - [`architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md`](architecture/PROMUEVE_ARCHITECTURE_DECISION_FREEZE_20260924.md) — autoridad de arquitectura de ingeniería para el Foundation de PROMueve Nexus;
+- [**Salida agnóstica FH V4 — mapa de alineamiento 2026-10-12**](architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md) — **REENTRADA PRIORITARIA** para Pharmacy Act F4.4, Export V2 (152 columnas), Excel manual, Excel Bridge/Office Script, Power Automate, API/SQL; distingue presente/intermedio/futuro, L0/L1/L2, Q-1..Q-4 y qué NO está publicado. Alineamiento funcional ratificado; NO ADR ni contrato #671 congelado.
 - [`architecture/adr/`](architecture/adr/) — ADR-001…ADR-008;
 - [`ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md`](ops/PROMUEVE_FOUNDATION_TRAIN_PLAN_20260924.md) — dependencias, WOs candidatas y lanes de ejecución;
 - [`architecture/reviews/`](architecture/reviews/) — baseline, revisión adversarial, alignment y revisión final de completitud preservados como evidencia, no como autoridad automática.
@@ -289,6 +290,7 @@ El contrato ancho de Reuma no debe reutilizarse automáticamente como modelo V4 
 
 - [`docs/farmacia_data_contracts.md`](/docs/farmacia_data_contracts.md) — contrato regional actualizado por PR #193 con `CADA_3_SEMANAS`; incluido en la fuente funcional promovida a `CÁCERES-REVIEW-0.3`.
 - [`docs/farmacia_treatment_data_contract.md`](/docs/farmacia_treatment_data_contract.md)
+- [**Alineamiento de salida agnóstica de Farmacia (12-10-2026)**](architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md) — mapa para reconstruir F4.4 → Export V2 → Excel manual/Bridge/Office Script → API/SQL, roles y garantías L0/L1/L2; matriz de equivalencia y Q-1..Q-4 pendientes.
 - [`docs/farmacia_export_longitudinal_contract_WO8.md`](/docs/farmacia_export_longitudinal_contract_WO8.md) — v3 reconciliada: fila común v2, Seguimiento por línea activa y Excel Bridge
 - [`docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md`](/docs/ops/FH_EXPORT_V2_IMPLEMENTATION_SEQUENCE_20260802.md) — secuencia histórica y estado post patient-flow; flujo normal integrado; WO7 candidate pausada; Estadísticas raw/CSV superados como pendientes por #257/#258; `APP_*`, descomposición, Processor y roundtrip pendientes
 - [`docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md`](/docs/ops/WO-FH-EXPORT-V2-CANONICAL-CORE-01.md) — core candidate `2.0.0-draft.1` integrado; Export v2 demo paralelo visible desde PR #227, sin cutover ni retirada v1
