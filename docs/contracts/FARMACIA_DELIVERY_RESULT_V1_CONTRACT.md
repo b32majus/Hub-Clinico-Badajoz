@@ -1,12 +1,12 @@
 # F4.5 — Farmacia DeliveryResult v1 · contrato documental reconciliado
 
 **Fecha de ratificación funcional:** 2026-10-12, Q-1/Q-2/Q-3/Q-4 acordadas por la responsable.
-**Estado:** `DECISIONES_FUNCIONALES_ACORDADAS`; `PHASE1_DTO_ACCEPTED_LOCAL` (decisión humana 2026-10-12); `MAPPING_F44_V2_PENDING`; `L2_CODEC_PENDING`; `PHASE1_PUBLICATION_PENDING`. La versión canónica anterior se publicó como **candidato documental general**. El cierre de fase 1 está ratificado solo en esta rama local, sin ejecución ni piloto.
+**Estado publicado, verificado 2026-10-13:** `DECISIONES_FUNCIONALES_ACORDADAS`; `PHASE1_DTO_PUBLISHED_PR747` (solo `export_v2_tabular` + `manual_copy`); `MAPPING_F44_V2_PENDING`; `L2_CODEC_PENDING`. Publicación [PR #747](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/747), merge canónico `12faadd1df56160b7a8e28c93be9676bba62a2fc`. **Publicación del DTO no equivale a implementación, validación clínica, persistencia o piloto.**
 **Procedencia:** borrador local de #671 revisado tras F2 (`370cdccdbbab9697c7d63332a19da76efdfb8c01`); matriz F4.4 ↔ Export V2 ↔ Bridge de WO #743 / PR #744 (OPEN al preflight); ADR-005/006 y alineamiento canónico PR #742.
 **Ejecución:** solo especificación; ningún cambio de runtime, UI, datos, workbook, Processor o backend; #721 permanece abierto sin `status:approved`.
 **Trazabilidad de WO:** [WO de reconciliación documental](../ops/WO_NEXUS_F45_Q1_Q4_DECISION_RECONCILIATION_20261012.md).
 
-**Regla de lectura:** Q-1..Q-4 permanecen vigentes. La **firma, tokens, campos, errores y precedencia mínimos de la fase 1 manual V2** han sido ratificados localmente por la responsable en la sección «DTO de fase 1 aprobado localmente». La forma general anterior es antecedente documental y **no prevalece sobre ese alcance restringido**. La ratificación no autoriza mapping clínico, codec L2, nuevo adaptador, entrega efectiva, persistencia ni piloto.
+**Regla de lectura:** Q-1..Q-4 permanecen vigentes. La **firma, tokens, campos, errores y precedencia mínimos de la fase 1 manual V2** fueron ratificados por la responsable y publicados en PR #747 en la sección «DTO de fase 1 aprobado localmente». La forma general anterior es antecedente documental y **no prevalece sobre ese alcance restringido**. La ratificación no autoriza mapping clínico, codec L2, nuevo adaptador, entrega efectiva, persistencia ni piloto.
 
 ## Frontera del contrato y decisiones cerradas
 
@@ -114,9 +114,9 @@ Fallo previo a entrega:
   - Destino lógico incompatible o no resoluble: fallo cerrado sin escritura (candidato: `DESTINATION_NOT_RESOLVED`). Distinción propuesta: descriptor ausente o no conforme a `{ kind, persistence }` → `INVALID_REQUEST`; descriptor conforme pero incompatible con la modalidad o sin resolución autorizada → `DESTINATION_NOT_RESOLVED`.
 - Los códigos y tokens conceptuales de modos ajenos a la primera fase siguen sin congelarse; para export_v2_tabular + manual_copy prevalece el DTO de fase 1 ratificado localmente, pendiente de publicación.
 
-## DTO de fase 1 aprobado localmente — Export V2 manual (pendiente publicación)
+## DTO de fase 1 PUBLICADO — Export V2 manual (`manual_copy`, PR #747)
 
-**Ratificación humana de 2026-10-12:** aprobados **los tokens, la firma, los campos, la matriz de capacidad y los errores/precedencia siguientes exclusivamente para `export_v2_tabular` + `manual_copy`**. Estado `PHASE1_DTO_ACCEPTED_LOCAL`, no aceptación global de F4.5, ni publicación canónica, ni autorización de #721. `pharmacy_act_full`/L2 sigue diferido y no disponible; el mapping clínico F4.4→V2 sigue pendiente y es barrera obligatoria para cualquier éxito.
+**Ratificación humana de 2026-10-12:** aprobados **los tokens, la firma, los campos, la matriz de capacidad y los errores/precedencia siguientes exclusivamente para `export_v2_tabular` + `manual_copy`**. Estado `PHASE1_DTO_PUBLISHED_PR747` tras su merge canónico; no aceptación global de F4.5, ni implementación de mapping, ni autorización de #721. `pharmacy_act_full`/L2 sigue diferido y no disponible; el mapping clínico F4.4→V2 sigue pendiente y es barrera obligatoria para cualquier éxito.
 
 ### Solicitud y resultado exactos ratificados para la primera capacidad
 
@@ -195,7 +195,7 @@ La solicitud y la respuesta positiva tienen únicamente las claves propias arrib
 
 **Fuera de esta primera unidad:** `pharmacy_act_full`/codec L2, `manual_download`, Bridge/Office Script/Power Automate, persistencia, backend/Farmatool, autenticación institucional, routing físico #577, refactors y nueva UI. Se conservan íntegros los 18 oráculos documentales anteriores; sus positivos siguen condicionados a la representación realmente disponible.
 
-**Decisión humana de fase 1 ratificada:** aprobados localmente `contractVersion`, `representationKind`, `representationGuarantee`, `transferMode`, `destination.kind`, `evidence.kind`, `artifact.descriptor`, sus campos, errores/precedencia y el límite `manual_copy`. **Falta publicación canónica autorizada y definir/aprobar el mapping clínico F4.4→V2** antes de una ruta positiva. #721 continúa bloqueado y sin `status:approved`; el DTO no lo habilita automáticamente.
+**Decisión humana de fase 1 ratificada:** ratificados y publicados por PR #747 `contractVersion`, `representationKind`, `representationGuarantee`, `transferMode`, `destination.kind`, `evidence.kind`, `artifact.descriptor`, sus campos, errores/precedencia y el límite `manual_copy`. **Falta definir y aprobar el mapping clínico F4.4→V2** antes de una ruta positiva. #721 continúa bloqueado y sin `status:approved`; el DTO no lo habilita automáticamente.
 
 **Q-1 — condición de aceptación diferenciada:**
 
@@ -272,13 +272,13 @@ No se exige almacenamiento duradero de intentos ni recuperación al reiniciar la
 
 **Q-1 · Export V2 no es el Pharmacy Act íntegro.** El core publicado de 152 columnas y sus adaptadores son proyecciones por caso de uso. El flujo público posee botones demo paralelos para Validación, Primera Visita y Seguimiento; la afirmación antigua del borrador de que el export público solo tenía 61 columnas y v2 no estaba cableado **era histórica y ha quedado superada**. Sí permanece el gap de integración **F4.4→F4.5→V2** y no hay mapping clínico completo Act→fila aprobado. `event_id`/`source_event_id` y `row_count` describen filas de exportación, no equivalencia automática con `actId`. El portador lossless L2, su codec y su almacenamiento/formato son **pendientes**, no una solución que impongamos a Excel manual.
 
-**Q-3 · `destination` lógico frente a físico.** En manual, describir la capacidad de exportación y su carácter `persistence:none` sin fingir conocer fichero/hoja de pegado; los elige la profesional. En un Bridge automatizado, la configuración autorizada del despliegue/adaptador resolverá destino físico; si falta o es ambiguo, **fail-closed**. No usar nombre de patología/fármaco o ausencia para decidir ruta. El contrato no resuelve el discovery #577 ni impone hojas adicionales. El descriptor manual de **fase 1** está ratificado localmente; los descriptores automáticos y el routing físico continúan pendientes.
+**Q-3 · `destination` lógico frente a físico.** En manual, describir la capacidad de exportación y su carácter `persistence:none` sin fingir conocer fichero/hoja de pegado; los elige la profesional. En un Bridge automatizado, la configuración autorizada del despliegue/adaptador resolverá destino físico; si falta o es ambiguo, **fail-closed**. No usar nombre de patología/fármaco o ausencia para decidir ruta. El contrato no resuelve el discovery #577 ni impone hojas adicionales. El descriptor manual de **fase 1** está publicado por PR #747; los descriptores automáticos y el routing físico continúan pendientes.
 
 **Q-4 · Autoría declarada y procedencia.** Se conserva `authorRef`, `attributionAssurance` y `provenance` que aporta F4.4. Conformidad F4.4 no prueba origen criptográfico del objeto, autoría real ni habilitación del profesional. Para demo/evaluación sintética basta atribución **declarada y rotulada**; no utilizar `SIGNED`, `AUTHENTICATED` o equivalentes sin evidencia externa. Para piloto o escritura hospitalaria se exigen los controles/autorizaciones SES que correspondan; si el destino los requiere y no existen, la operación falla segura. PROMueve complementa JARA; no registra por sí una prescripción legal o un acto firmado.
 
 **Pendientes técnicos fuera del DTO mínimo ratificado de fase 1, que NO reabren Q-1..Q-4 funcionales:**
 
-1. Firmas, tokens, destinos y garantías **para modalidades ajenas a `export_v2_tabular` + `manual_copy`**; los mínimos de fase 1 están ratificados localmente.
+1. Firmas, tokens, destinos y garantías **para modalidades ajenas a `export_v2_tabular` + `manual_copy`**; los mínimos de fase 1 están publicados por PR #747.
 2. Proyector autorizado desde Pharmacy Act a Export V2 cuando se necesite, con casos de cardinalidad cero/uno/múltiples y mapping clínico explícito; **no** tocar ahora los botones V2 existentes.
 3. Portador F4.4 íntegro y codec reversibles con evidencia de centinelas y prototipos admitidos; **no** imponer JSON/SQL/hoja paralela.
 4. Política de capacidad por adaptador, retry/idempotencia y observación duradera de `persisted` antes de futuros destinos.
@@ -288,7 +288,7 @@ La coexistencia por centro entre Excel manual, Bridge, Power Automate y API/SQL 
 
 ## Oráculos DOCUMENTALES de aceptación
 
-Todos los datos son sintéticos/demo: identificadores inventados, etiquetas clínicamente neutras, sin pacientes reales, credenciales ni endpoints hospitalarios. Los bloques del payload son opacos; el contenido hoja mostrado es puramente demostrativo y no define taxonomía clínica. Solicitado ≠ validado; la ausencia permanece ausencia. Estos oráculos son criterios de revisión documental, **no tests ejecutados**. Los positivos de O-01..O-03 se entienden condicionados a que exista el artefacto válido de la modalidad solicitada: no se presume un codec lossless ni un Act→V2 mapper inexistentes. El DTO/tokens de fase 1 manual V2 están ratificados localmente y pendientes de publicación; los demás modos no están congelados y todo éxito exige mapping y artefacto válidos.
+Todos los datos son sintéticos/demo: identificadores inventados, etiquetas clínicamente neutras, sin pacientes reales, credenciales ni endpoints hospitalarios. Los bloques del payload son opacos; el contenido hoja mostrado es puramente demostrativo y no define taxonomía clínica. Solicitado ≠ validado; la ausencia permanece ausencia. Estos oráculos son criterios de revisión documental, **no tests ejecutados**. Los positivos de O-01..O-03 se entienden condicionados a que exista el artefacto válido de la modalidad solicitada: no se presume un codec lossless ni un Act→V2 mapper inexistentes. El DTO/tokens de fase 1 manual V2 están publicados por PR #747; los demás modos no están congelados y todo éxito exige mapping y artefacto válidos.
 
 ### O-01 — Acto de Validación (ausencia preservada, una línea)
 
@@ -443,7 +443,7 @@ Copiar TSV, descargar fichero, reimportar filas o terminar el Processor no acred
 ## Separación de WOs y límite de ejecución
 
 - **Esta WO documental:** consolidar decisiones Q-1..Q-4 y reconciliar el borrador F2 de #671, con accesos desde índice, status y matriz, **sin alterar runtime**.
-- **#671 — contrato:** revisión final del DTO/firma/oráculos; solo se considerará aceptado/congelado tras autoridad y publicación específica. No hereda autorización de push/PR/merge de #743.
+- **#671 — contrato:** fase 1 del DTO, firma, errores y oráculos publicada por [PR #747](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/747); **issue #671 sigue abierto**, sin ampliación automática de alcance. Modalidades adicionales requieren decisión y WO separadas.
 - **#721 — implementación:** bloqueada por #671 y sin `status:approved`. Antes de ejecutar, subdividir si mezcla caso de uso, proyector V2, adapter manual, portador L2 o persistencia.
 - **Bridge / #236 y routing / #577:** decisiones y WOs separadas. Processor histórico no sustituye lector relacional de retorno ni resuelve persistencia L2.
 - **Pilotaje:** autenticación y autorizaciones institucionales, ensayo Excel real y QA de navegador explícito fuera de este trabajo.
@@ -452,4 +452,4 @@ Copiar TSV, descargar fichero, reimportar filas o terminar el Processor no acred
 
 El borrador inicial #671 tuvo revisión Cora F2 positiva sobre las correcciones `payload.lines`/autocontención/centinelas; **esa revisión no cubre automáticamente esta reconciliación**. Verificar enlace y coherencia con ADR-005/006, matriz #744, código F4.4 y adaptadores v2. QA documental focal: `git diff --check`, 18 oráculos y contradicciones (Q-1..Q-4), enlaces internos, acotación de rutas, flags correctos; no tests runtime obligatorios al no cambiar runtime. **No se declara QA de navegador ni Office Script real.**
 
-**Estado de cierre local #671:** Q-1..Q-4 acordadas y `PHASE1_DTO_ACCEPTED_LOCAL` para el único modo `export_v2_tabular` + `manual_copy`. Pendientes: publicación canónica y reconciliación documental del estado, mapeo clínico seguro F4.4→V2, codec L2 y capacidades futuras. No hay API runtime, persistencia, QA navegador/Excel, piloto ni autorización de #721. #671 sigue abierto hasta publicación/cierre expresamente autorizado.
+**Estado canónico verificado tras PR #747:** Q-1..Q-4 acordadas y DTO de fase 1 `export_v2_tabular` + `manual_copy` publicado en `promueve/nexus-v4@12faadd1`. **Pendiente:** mapping clínico explícito F4.4→V2 y sus pruebas/aceptación, codec íntegro L2 y capacidades futuras. El issue #671 permanece **OPEN** hasta cierre específico; #721 **OPEN sin `status:approved`**, todavía bloqueado. No hay API runtime, persistencia, QA navegador/Excel ni piloto.
