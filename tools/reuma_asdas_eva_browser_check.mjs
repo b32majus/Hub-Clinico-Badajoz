@@ -212,6 +212,8 @@ async function runPage(label, pagePath) {
     };
 
     // Sources other than the ASDAS EVA mirror. #asdasEvaGlobal is NEVER written.
+    // #668: la unidad PCR ya no viene preseleccionada; se elige explícitamente.
+    await page.selectOption('#pcrUnit', 'mg/L');
     await fill('#pcrValue', '30');
     await fill('#asdasDolorEspalda', '3');
     await fill('#asdasDuracionRigidez', '2');

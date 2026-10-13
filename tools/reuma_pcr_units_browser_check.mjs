@@ -247,13 +247,29 @@ async function runEspaSuite(label, pagePath) {
       await page.waitForTimeout(80);
     };
 
-    // S1 — No conversion: source mg/L (default) == ASDAS-CRP expected unit.
+    // S1 — No conversion: source mg/L == ASDAS-CRP expected unit. #668: el
+    // select abre SIN unidad declarada, así que los mismos valores no pueden
+    // producir score numérico hasta que la unidad se elige explícitamente.
+    await page.selectOption('#pcrUnit', '');
     await fill('#pcrValue', '30');
     await fill('#asdasDolorEspalda', '3');
     await fill('#asdasDuracionRigidez', '2');
     // T2 #514: #asdasEvaGlobal es readonly; la interacción soportada es capturar
     // la EVA Global del paciente en su campo fuente.
     await fill('#evaGlobal', '4');
+    const s1NoUnitScore = await page.locator('#asdasCrpResult').inputValue();
+    record(`S1 ${label}: sin unidad declarada => ASDAS-CRP vacío (sin score silencioso)`,
+      s1NoUnitScore === '', `obtenido '${s1NoUnitScore}'`);
+    const s1NoUnitNote = await page.locator('#asdasPcrConversionNote').textContent();
+    const s1NoUnitNoteVisible = await page.locator('#asdasPcrConversionNote').isVisible();
+    record('S1: nota segura visible explica el fallo sin unidad',
+      s1NoUnitNoteVisible && s1NoUnitNote.includes('fallo seguro'), `nota='${s1NoUnitNote}'`);
+    const s1NoUnitMirror = await page.locator('#asdasPcrUnitMirror').textContent();
+    record('S1: espejo de unidad muestra estado sin unidad', s1NoUnitMirror.includes('unidad no informada'),
+      `mirror='${s1NoUnitMirror}'`);
+    // Elección explícita de unidad por el select soportado: mg/L no requiere conversión.
+    await page.selectOption('#pcrUnit', 'mg/L');
+    await page.waitForTimeout(120);
     const esperado = expectedASDASCRP(3, 2, 4, 1, 30);
     const s1Score = await page.locator('#asdasCrpResult').inputValue();
     record(`S1 ${label}: sin conversión (30 mg/L) => ASDAS-CRP ${esperado}`, s1Score === esperado, `obtenido '${s1Score}'`);

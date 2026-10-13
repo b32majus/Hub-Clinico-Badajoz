@@ -1303,11 +1303,12 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="pcrUnit">Unidad PCR:</label>
-                                    <select id="pcrUnit" class="pcr-unit-select">
-                                        <option value="">Sin unidad</option>
-                                        <option value="mg/L" selected>mg/L</option>
+                                    <select id="pcrUnit" class="pcr-unit-select" aria-describedby="pcrUnitHelp">
+                                        <option value="" selected>Selecciona la unidad</option>
+                                        <option value="mg/L">mg/L</option>
                                         <option value="mg/dL">mg/dL</option>
                                     </select>
+                                    <small id="pcrUnitHelp">Selecciona la unidad indicada en la analítica. Si no consta, el cálculo con PCR queda pendiente</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="vsgValue">VSG (mm/h):</label>
