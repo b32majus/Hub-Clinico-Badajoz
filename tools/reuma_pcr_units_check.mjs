@@ -8,7 +8,7 @@
  * asserts the frozen unit contract:
  *   1. Physical equivalence mg/L <-> mg/dL in both directions (1 mg/dL == 10 mg/L).
  *   2. The same explicit clinical case expressed in equivalent units produces
- *      the same score (expected values recomputed independently here from the
+ *      the same score (ASDAS uses literal clinical oracles; other scores use
  *      published formula constants; the oracle can disagree).
  *   3. Unknown/absent unit produces NO silent score (fail-closed per calculator;
  *      no magnitude inference).
@@ -46,10 +46,7 @@ function record(name, fn) {
   }
 }
 
-// Independent recomputation of the published formulas (acceptance oracle).
-function expectedASDASCRP(dolor, rigidez, eva, nad, pcrMgL) {
-  return (0.121 * dolor) + (0.058 * rigidez) + (0.110 * eva) + (0.073 * nad) + (0.579 * Math.log(pcrMgL + 1));
-}
+// ASDAS uses literal clinical oracles; other published formulas remain unchanged.
 function expectedDAS28CRP(nad28, nat28, eva, pcrMgL) {
   return (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.36 * Math.log(pcrMgL + 1)) + (0.014 * eva) + 0.96;
 }
@@ -96,13 +93,95 @@ record('normalización tolerante de unidad (espacios/caso)', () => {
 });
 
 console.log('2. Mismo caso clínico explícito en unidades equivalentes => mismo score');
-const casoASDAS = { dolor: 3, rigidez: 2, eva: 4, nad: 5, pcrMgL: 30 };
+// WO H2 / matriz clínica aprobada: Q2=3, Q6=2, Global=4, P3=1.
+// El oráculo NO vuelve a calcular el logaritmo ni deriva resultados del módulo.
+for (const [id, pcr, unit, esperado, mgL] of [
+  ['C03', '1', 'mg/L', '1.63', 1],
+  ['C04', '0', 'mg/L', '1.63', 0],
+  ['C05', '0.1', 'mg/dL', '1.63', 1],
+  ['C01', '30', 'mg/L', '2.98', 30],
+  ['C02', '3', 'mg/dL', '2.98', 30],
+  ['C08', '', 'mg/L', '', null],
+  ['C10', '30', '', '', null]
+]) {
+  record(`H2 ${id}: PCR '${pcr}' ${unit || 'sin unidad'} => CRP '${esperado}', fuente intacta y VSG independiente`, () => {
+    const datos = {
+      asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
+      basdaiP3: '1', asdasPCR: pcr, asdasPCRUnit: unit, asdasVSG: '20'
+    };
+    const snapshot = JSON.stringify(datos);
+    const r = S.calcularASDAS(datos);
+    assert.equal(r.asdasCRP, esperado);
+    assert.equal(r.asdasESR, '2.22'); // Oráculo VSG aprobado H3, coeficientes originales.
+    assert.equal(JSON.stringify(datos), snapshot);
+    if (mgL !== null) {
+      assert.equal(resolver(pcr, unit, 'mg/L', 'ASDAS-CRP').value, mgL, 'el resolver no aplica el piso');
+      assert.equal(r.pcrConversion.ok, true);
+      assert.equal(r.pcrConversion.converted, unit === 'mg/dL');
+      assert.equal(r.pcrConversion.sourceUnit, unit);
+      assert.equal(r.pcrConversion.expectedUnit, 'mg/L');
+    } else if (id === 'C08') {
+      assert.equal(r.pcrConversion, null);
+    } else {
+      assert.equal(r.pcrConversion.ok, false);
+      assert.equal(r.pcrConversion.reason, 'PCR_UNIDAD_ORIGEN_DESCONOCIDA');
+    }
+  });
+}
+record('H1 C06: BASDAI P3=7 distinto de NAD=1 => CRP 3.42 / VSG 2.74 (H3)', () => {
+  const datos = {
+    asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
+    basdaiP3: '7', asdasNAD: '1', asdasPCR: '30', asdasPCRUnit: 'mg/L', asdasVSG: '20'
+  };
+  const r = S.calcularASDAS(datos);
+  assert.equal(r.asdasCRP, '3.42');
+  assert.equal(r.asdasESR, '2.74');
+  for (const nad of ['', '0', '28']) {
+    const otroNad = S.calcularASDAS({ ...datos, asdasNAD: nad });
+    assert.equal(otroNad.asdasCRP, '3.42');
+    assert.equal(otroNad.asdasESR, '2.74');
+  }
+});
+record('H1 C11: P3 ausente nunca usa NAD=1 como alias/fallback', () => {
+  for (const p3 of [undefined, null, '']) {
+    const r = S.calcularASDAS({
+      asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
+      basdaiP3: p3, asdasNAD: '1', asdasPCR: '30', asdasPCRUnit: 'mg/L', asdasVSG: '20'
+    });
+    assert.equal(r.asdasCRP, '');
+    assert.equal(r.asdasESR, '');
+  }
+});
+record('H1 P3=0 explícito válido sin NAD; P3 decimal válido en escala 0–10', () => {
+  const datos = {
+    asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
+    basdaiP3: '0', asdasPCR: '30', asdasPCRUnit: 'mg/L', asdasVSG: '20'
+  };
+  const cero = S.calcularASDAS(datos);
+  assert.equal(cero.asdasCRP, '2.91');
+  assert.equal(cero.asdasESR, '2.14');
+  const decimal = S.calcularASDAS({ ...datos, basdaiP3: '1.5' });
+  assert.equal(decimal.asdasCRP, '3.02');
+  assert.equal(decimal.asdasESR, '2.27');
+});
+record('H1 P3 inválido/fuera de 0–10 deja ambos índices vacíos aunque NAD sea válido', () => {
+  for (const p3 of ['-1', '11', 'no informado']) {
+    const r = S.calcularASDAS({
+      asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
+      basdaiP3: p3, asdasNAD: '1', asdasPCR: '30', asdasPCRUnit: 'mg/L', asdasVSG: '20'
+    });
+    assert.equal(r.asdasCRP, '');
+    assert.equal(r.asdasESR, '');
+  }
+});
+const casoASDAS = { dolor: 3, rigidez: 2, eva: 4, p3: 5, pcrMgL: 30 };
 function asdasDatos(pcr, unit) {
   return {
     asdasDolorEspalda: String(casoASDAS.dolor),
     asdasDuracionRigidez: String(casoASDAS.rigidez),
     asdasEvaGlobal: String(casoASDAS.eva),
-    asdasNAD: String(casoASDAS.nad),
+    basdaiP3: String(casoASDAS.p3),
+    asdasNAD: '1', // Recuento distinto de Q3; no es entrada clínica ASDAS.
     asdasPCR: pcr,
     asdasPCRUnit: unit
   };
@@ -110,7 +189,7 @@ function asdasDatos(pcr, unit) {
 record('ASDAS-CRP: 30 mg/L y 3 mg/dL producen el mismo score y el esperado', () => {
   const a = S.calcularASDAS(asdasDatos('30', 'mg/L'));
   const b = S.calcularASDAS(asdasDatos('3', 'mg/dL'));
-  const esperado = expectedASDASCRP(casoASDAS.dolor, casoASDAS.rigidez, casoASDAS.eva, casoASDAS.nad, 30).toFixed(2);
+  const esperado = '3.27'; // Caso existente Q2=3/Q6=2/Global=4/P3=5/PCR=30.
   assert.equal(a.asdasCRP, esperado);
   assert.equal(b.asdasCRP, esperado);
   assert.equal(a.pcrConversion.converted, false);
@@ -237,7 +316,7 @@ record('ASDAS: fuente mg/dL convertida a mg/L sin mutar el origen', () => {
   assert.equal(datos.asdasPCR, '3');
   assert.equal(r.pcrConversion.converted, true);
   assert.equal(r.pcrConversion.sourceUnit, 'mg/dL');
-  assert.equal(r.asdasCRP, expectedASDASCRP(3, 2, 4, 5, 30).toFixed(2));
+  assert.equal(r.asdasCRP, '3.27');
 });
 
 console.log('5. Calculadoras sin PCR: sin regresión');
@@ -274,7 +353,7 @@ record('SDAI sin PCR => Incompleto (comportamiento previo preservado)', () => {
   assert.equal(r.categoria, 'Incompleto');
 });
 record('ASDAS/DAS28 sin PCR => sin scores PCR (comportamiento previo preservado)', () => {
-  assert.equal(S.calcularASDAS({ asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4', asdasNAD: '5' }).asdasCRP, '');
+  assert.equal(S.calcularASDAS({ asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4', basdaiP3: '5' }).asdasCRP, '');
   assert.equal(S.calcularDAS28({ nad28: '4', nat28: '3', evaGlobal: '40' }).das28CRP, '');
 });
 record('ESSPRI sin cambios', () => {

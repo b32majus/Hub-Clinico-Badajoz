@@ -128,7 +128,7 @@ function calcularBASDAI(datos) {
 }
 
 function calcularASDAS(datos) {
-    const common = [datos?.asdasDolorEspalda, datos?.asdasDuracionRigidez, datos?.asdasEvaGlobal, datos?.asdasNAD];
+    const common = [datos?.asdasDolorEspalda, datos?.asdasDuracionRigidez, datos?.asdasEvaGlobal, datos?.basdaiP3];
     if (!hasAllValues(common)) {
         return { asdasCRP: '', asdasESR: '' };
     }
@@ -136,8 +136,8 @@ function calcularASDAS(datos) {
     const dolorEspalda = parseNumberInRange(datos.asdasDolorEspalda, 0, 10);
     const duracionRigidez = parseNumberInRange(datos.asdasDuracionRigidez, 0, 10);
     const evaGlobal = parseNumberInRange(datos.asdasEvaGlobal, 0, 10);
-    const nad = parseNumberInRange(datos.asdasNAD, 0, 28, { integer: true });
-    if (!allFinite([dolorEspalda, duracionRigidez, evaGlobal, nad])) {
+    const dolorPeriferico = parseNumberInRange(datos.basdaiP3, 0, 10);
+    if (!allFinite([dolorEspalda, duracionRigidez, evaGlobal, dolorPeriferico])) {
         return { asdasCRP: '', asdasESR: '' };
     }
 
@@ -152,7 +152,7 @@ function calcularASDAS(datos) {
         pcrConversion = resumenConversionPcr(resolucion);
         if (resolucion.ok) {
             asdasCRP = formatFixed(
-                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * nad) + (0.579 * Math.log(resolucion.value + 1)),
+                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * dolorPeriferico) + (0.579 * Math.log(Math.max(2, resolucion.value) + 1)),
                 2
             );
         }
@@ -162,7 +162,7 @@ function calcularASDAS(datos) {
         const vsg = parseNumberInRange(datos.asdasVSG, 0, 200);
         if (Number.isFinite(vsg)) {
             asdasESR = formatFixed(
-                (0.08 * dolorEspalda) + (0.07 * duracionRigidez) + (0.11 * evaGlobal) + (0.09 * nad) + (0.29 * Math.sqrt(vsg)),
+                (0.079 * dolorEspalda) + (0.069 * duracionRigidez) + (0.113 * evaGlobal) + (0.086 * dolorPeriferico) + (0.293 * Math.sqrt(vsg)),
                 2
             );
         }

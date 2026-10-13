@@ -39,7 +39,7 @@
  *         mirror '6', CRP '3.20', ASDAS inputs untouched.
  *      B7 T1 intact: under APs #asdasCrpResult / #asdasEsrResult stay ''.
  *      B8 DAPSA intact (APs): '11.0'.
- *      B9 ESR path uses the same source: VSG 20 + EVA 4 -> '2.21'; EVA '' -> ''.
+ *      B9 ESR path uses the same source: VSG 20 + EVA 4 + P3 7 -> '2.74'; EVA '' -> ''.
  *      B10 no console.error in any scenario.
  *
  * Exit code 0 = all cases PASS, 1 = at least one FAIL.
@@ -62,16 +62,16 @@ const WATCHED_IDS = [
   'asdasSection', 'asdasEsrSection', 'dapsaSection', 'mdaSection', 'rapid3Section', 'basdaiSection',
   'evaGlobal', 'evaDolor', 'asdasEvaGlobal',
   'asdasCrpResult', 'asdasEsrResult', 'asdasCrpCategoria', 'asdasEsrCategoria', 'asdasPCR', 'asdasVSG',
-  'asdasNAD', 'asdasNAT', 'asdasDolorEspalda', 'asdasDuracionRigidez',
+  'asdasNAD', 'asdasNAT', 'asdasDolorEspalda', 'asdasDuracionRigidez', 'basdaiP3',
   'asdasPcrConversionNote', 'dapsaPcrConversionNote', 'dapsaResult', 'dapsaCategoria'
 ];
 
-// Frozen literal expectations (independent oracle; never rewritten by builder).
-const ASDAS_CRP_EVA4 = ((0.121 * 3) + (0.058 * 2) + (0.110 * 4) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
-const ASDAS_CRP_EVA7 = ((0.121 * 3) + (0.058 * 2) + (0.110 * 7) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
-const ASDAS_CRP_EVA0 = ((0.121 * 3) + (0.058 * 2) + (0.110 * 0) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
-const ASDAS_CRP_EVA6 = ((0.121 * 3) + (0.058 * 2) + (0.110 * 6) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
-const ASDAS_ESR_EVA4 = ((0.08 * 3) + (0.07 * 2) + (0.11 * 4) + (0.09 * 1) + (0.29 * Math.sqrt(20))).toFixed(2);
+// H1 #756 + H3 #758: Q3=P3=7, distinto de NAD=1; VSG con precisión original.
+const ASDAS_CRP_EVA4 = '3.42';
+const ASDAS_CRP_EVA7 = '3.75';
+const ASDAS_CRP_EVA0 = '2.98';
+const ASDAS_CRP_EVA6 = '3.64';
+const ASDAS_ESR_EVA4 = '2.74';
 const APS_DAPSA_TOTAL = (1 + 1 + 2 + 4 + 3).toFixed(1);
 const EXPECTED_EVA_LABEL = 'EVA Global del Paciente (0-10):';
 
@@ -298,6 +298,7 @@ function setCommonSources(doc) {
   setValue(doc, 'asdasDolorEspalda', '3');
   setValue(doc, 'asdasDuracionRigidez', '2');
   setValue(doc, 'asdasNAD', '1');
+  setValue(doc, 'basdaiP3', '7');
 }
 
 function mirror(doc) {
@@ -368,7 +369,7 @@ for (const page of PAGES) {
     record(`B5 ${page} #asdasEvaGlobal ya no registra handler de input`,
       mirrorListeners.length === 0, `handlers=${mirrorListeners.length}`);
     setValue(doc, 'asdasDolorEspalda', '5');
-    setValue(doc, 'asdasNAD', '2');
+    setValue(doc, 'basdaiP3', '2');
     const b5c = mirror(doc);
     record(`B5 ${page} ningún handler ASDAS mueve el espejo (sigue igual a evaGlobal '7')`,
       b5c === '7', `mirror='${b5c}'`);
@@ -383,10 +384,10 @@ for (const page of PAGES) {
     setCommonSources(doc);
     setValue(doc, 'evaGlobal', '');
 
-    const before = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD']
+    const before = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD', 'basdaiP3']
       .map((id) => doc.getElementById(id).value);
     setValue(doc, 'evaGlobal', '6');
-    const after = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD']
+    const after = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD', 'basdaiP3']
       .map((id) => doc.getElementById(id).value);
     const b6Mirror = mirror(doc);
     const b6Crp = doc.getElementById('asdasCrpResult').value;

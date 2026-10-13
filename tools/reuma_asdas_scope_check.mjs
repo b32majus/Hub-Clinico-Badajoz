@@ -26,7 +26,7 @@
  *         handler fired, #asdasCrpResult / #asdasEsrResult stay '' (this is the
  *         assertion that fails on the unmodified code).
  *      B3 adaptarFormulario('espa') recomputes the INDEPENDENT literal values
- *         (ASDAS-CRP '2.98', ASDAS-ESR '2.21').
+ *         (ASDAS-CRP '2.98', ASDAS-ESR '2.74').
  *      B4 Sequence espa -> aps -> espa: outputs clear on APs and recompute on
  *         EspA again (no stale score left behind by visibility-only hiding).
  *      B5 adaptarFormulario('ar') hides both sections and clears both outputs.
@@ -60,12 +60,12 @@ const PAGES = ['primera_visita.html', 'seguimiento.html'];
 const WATCHED_IDS = [
   'asdasSection', 'asdasEsrSection', 'dapsaSection', 'mdaSection', 'rapid3Section', 'basdaiSection',
   'asdasCrpResult', 'asdasEsrResult', 'asdasCrpCategoria', 'asdasEsrCategoria',
-  'asdasPcrConversionNote', 'dapsaPcrConversionNote', 'dapsaResult', 'dapsaCategoria'
+  'asdasPcrConversionNote', 'dapsaPcrConversionNote', 'dapsaResult', 'dapsaCategoria', 'basdaiP3'
 ];
 
-// Frozen literal expectations (accepted formula; never rewritten by the builder).
-const ESPA_ASDAS_CRP = ((0.121 * 3) + (0.058 * 2) + (0.110 * 4) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
-const ESPA_ASDAS_ESR = ((0.08 * 3) + (0.07 * 2) + (0.11 * 4) + (0.09 * 1) + (0.29 * Math.sqrt(20))).toFixed(2);
+// H1 #756 + H3 #758 C06: P3=7, distinto de NAD=1; VSG con precisión original.
+const ESPA_ASDAS_CRP = '3.42';
+const ESPA_ASDAS_ESR = '2.74';
 const APS_DAPSA_TOTAL = (1 + 1 + 2 + 4 + 3).toFixed(1);
 const APS_DAPSA_TOTAL_NAD2 = (2 + 1 + 2 + 4 + 3).toFixed(1);
 
@@ -300,6 +300,7 @@ function fillEspaApsSources(doc) {
   setValue(doc, 'asdasEvaGlobal', '4');
   setValue(doc, 'evaGlobal', '4');
   setValue(doc, 'asdasNAD', '1');
+  setValue(doc, 'basdaiP3', '7');
   setValue(doc, 'vsgValue', '20');
 }
 
