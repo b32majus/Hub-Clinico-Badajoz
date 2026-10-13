@@ -1000,6 +1000,41 @@ async function runProvenanceWitnessJourney(browser, mode) {
                 historyEntry.text.length === 1 && !/\d{2}\/\d{2}\/\d{4}/.test(historyEntry.text[0]) &&
                 historyEntry.extracted[0]?.startDate === '',
                 JSON.stringify(historyEntry));
+            // D1 (#764, chart marker): SYN-DASH-D7 has a single visit, so the
+            // real chart is never instantiated on this journey
+            // (initActivityChart returns early with <2 data points) and the
+            // D1-C live-instance read is not available here. Minimal
+            // equivalent read: the exact production builder the Dashboard
+            // chart pipeline calls (HubTools.events.buildTreatmentDrugAnnotations,
+            // scripts/script_dashboard.js) is invoked over the real
+            // treatmentHistory already read above, with labels covering the
+            // visit dates AND today — a fabricated start (from the visit date
+            // or the clock) would emit a namespaced 'treatment_' marker
+            // ('Tx:/Bio:/Susp: …') and fail this assertion. The no-date
+            // physical drug must produce NO marker. READ only; no DOM
+            // mutation, no fixtures.
+            const chartMarkerProbe = await page.evaluate(() => {
+                const history = window.patientHistory || {};
+                const visitDates = (history.allVisits || [])
+                    .map((v) => v.Fecha_Visita || '')
+                    .filter(Boolean);
+                const labels = [...new Set([...visitDates, new Date().toISOString().slice(0, 10)])];
+                const build = window.HubTools?.events?.buildTreatmentDrugAnnotations;
+                const annotations = typeof build === 'function'
+                    ? build(history.treatmentHistory || [], labels, { maxVisible: 8 })
+                    : null;
+                return {
+                    labels,
+                    historyNames: (history.treatmentHistory || []).map((t) => t.name),
+                    markerKeys: annotations ? Object.keys(annotations) : null,
+                    markerTexts: annotations ? Object.values(annotations).map((a) => a?.label?.content ?? '') : null
+                };
+            });
+            record(`${label}: D1 el pipeline real de anotaciones del gráfico no genera marcador treatment_/Tx:/Bio:/Susp: para el físico sin Fecha_Inicio_Tratamiento (sin inicio inventado)`,
+                Array.isArray(chartMarkerProbe.markerKeys) && chartMarkerProbe.markerKeys.length === 0 &&
+                (chartMarkerProbe.markerTexts || []).every((t) => !/^(Tx:|Bio:|Susp:)/.test(t)) &&
+                chartMarkerProbe.historyNames.includes(SYN_PLAN_SAME),
+                JSON.stringify(chartMarkerProbe));
         }
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
