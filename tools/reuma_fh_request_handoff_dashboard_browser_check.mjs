@@ -264,10 +264,52 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
         Tratamiento_Actual: SYN_ALIAS_DATED_ACTUAL,
         fechaInicioTratamiento: '2026-02-20'
     };
+    // #763 / D3 multivisita truth (QA #693): TWO temporal physical visits
+    // for one patient. `findPatientById` returns the FIRST Excel row as
+    // base, so pre-D3 the older row's treatment/date prefilled Seguimiento
+    // while the dashboard card showed the latest visit — the known
+    // consumer-crossing defect. Both rows carry their own explicit
+    // Fecha_Inicio_Tratamiento, so the Seguimiento date assertion pins the
+    // same-row provenance too.
+    const D12_ID = 'SYN-DASH-D12';
+    const rowD12Older = {
+        ...commonRow,
+        ID_Paciente: D12_ID,
+        Fecha_Visita: '2026-01-10',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-05'
+    };
+    const rowD12Latest = {
+        ...rowD12Older,
+        Fecha_Visita: '2026-03-10',
+        Tratamiento_Actual: 'ACT-B',
+        Fecha_Inicio_Tratamiento: '2026-03-05'
+    };
+    // D1-C (#764): TWO plan-only visits (Plan sintetico C1 → C2) with NO
+    // physical Tratamiento_Actual column — no inferred therapeutic history
+    // and no plan-derived chart marker. Built from scratch (like rowF1PlanOnly)
+    // so the physical column is truly ABSENT, not an empty token. BASDAI
+    // values keep the real chart rendered so the annotation read is over the
+    // actual Chart.js instance.
+    const rowD13Older = {
+        Nombre_Paciente: 'Sintetico Dash',
+        Fecha_Visita: '2026-01-15',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Principal: 'espa',
+        Diagnostico_Secundario: SYN_DIAG_SEC,
+        PCR: '8',
+        EVA_Global: '6',
+        comorbilidades: 'hta',
+        ID_Paciente: 'SYN-DASH-D13',
+        Biologico: 'Plan sintetico C1',
+        BASDAI: 3.5
+    };
+    const rowD13Latest = { ...rowD13Older, Fecha_Visita: '2026-03-15', Biologico: 'Plan sintetico C2', BASDAI: 3 };
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp, rowF1PlanOnly, rowF1SameText,
-        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate
+        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate, rowD12Older, rowD12Latest,
+        rowD13Older, rowD13Latest
     ]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
@@ -891,10 +933,20 @@ async function runProvenanceWitnessJourney(browser, mode) {
                 shown.tableCells.length === 1 && shown.tableCells[0] === '---' &&
                 !shown.tableCells[0].includes(SYN_PLAN_SAME),
                 JSON.stringify(shown.tableCells));
-            const historyText = await page.evaluate(() =>
-                document.querySelector('.dashboard-card--history')?.textContent ?? '');
-            record(`${label}: el plan permanece en su fuente propia (historial, sin borrar información)`,
-                historyText.includes(SYN_PLAN_SAME), historyText.slice(0, 300));
+            // D1-A (#764): plan-only generates NO therapeutic history entry.
+            // The plan remains in its own provenance (FH artifact outside the
+            // ACTUAL block, asserted above), never as a Historial entry.
+            const historyText = await page.evaluate(() => ({
+                text: document.querySelector('.dashboard-card--history')?.textContent ?? '',
+                items: document.querySelectorAll('.dashboard-card--history .treatment-item').length,
+                extracted: (window.patientHistory?.treatmentHistory || []).map((t) => t.name)
+            }));
+            record(`${label}: D1-A el plan NO genera ninguna tarjeta/entrada de Historial`,
+                historyText.items === 0 && historyText.extracted.length === 0 &&
+                !historyText.text.includes(SYN_PLAN_SAME),
+                JSON.stringify(historyText));
+            record(`${label}: D1-A el Historial muestra el mensaje honesto sin historial`,
+                historyText.text.includes('No hay historial de tratamientos previos.'), historyText.text.slice(0, 300));
             // The real CSV export shares the table projection (one
             // authority); its Tratamiento column must carry the neutral
             // placeholder, not the plan.
@@ -931,6 +983,58 @@ async function runProvenanceWitnessJourney(browser, mode) {
             record(`${label}: tabla de visitas muestra el actual explícito`,
                 shown.tableCells.length === 1 && shown.tableCells[0] === SYN_PLAN_SAME,
                 JSON.stringify(shown.tableCells));
+            // D1 (#764): the physical row (no Fecha_Inicio_Tratamiento) yields
+            // exactly one neutral 'Registrado' history entry with NO start
+            // date — never the visit date, never the clock.
+            const historyEntry = await page.evaluate(() => ({
+                text: [...document.querySelectorAll('.dashboard-card--history .treatment-item')]
+                    .map((item) => item.textContent.trim()),
+                extracted: (window.patientHistory?.treatmentHistory || [])
+            }));
+            record(`${label}: D1 historia muestra el fármaco físico como entrada neutral 'Registrado'`,
+                historyEntry.text.length === 1 && historyEntry.text[0].includes(SYN_PLAN_SAME) &&
+                historyEntry.text[0].includes('Registrado') && !historyEntry.text[0].includes('Activo') &&
+                historyEntry.extracted[0]?.status === 'registrado',
+                JSON.stringify(historyEntry));
+            record(`${label}: D1 historia sin fecha de inicio inventada (sin fecha de visita ni reloj)`,
+                historyEntry.text.length === 1 && !/\d{2}\/\d{2}\/\d{4}/.test(historyEntry.text[0]) &&
+                historyEntry.extracted[0]?.startDate === '',
+                JSON.stringify(historyEntry));
+            // D1 (#764, chart marker): SYN-DASH-D7 has a single visit, so the
+            // real chart is never instantiated on this journey
+            // (initActivityChart returns early with <2 data points) and the
+            // D1-C live-instance read is not available here. Minimal
+            // equivalent read: the exact production builder the Dashboard
+            // chart pipeline calls (HubTools.events.buildTreatmentDrugAnnotations,
+            // scripts/script_dashboard.js) is invoked over the real
+            // treatmentHistory already read above, with labels covering the
+            // visit dates AND today — a fabricated start (from the visit date
+            // or the clock) would emit a namespaced 'treatment_' marker
+            // ('Tx:/Bio:/Susp: …') and fail this assertion. The no-date
+            // physical drug must produce NO marker. READ only; no DOM
+            // mutation, no fixtures.
+            const chartMarkerProbe = await page.evaluate(() => {
+                const history = window.patientHistory || {};
+                const visitDates = (history.allVisits || [])
+                    .map((v) => v.Fecha_Visita || '')
+                    .filter(Boolean);
+                const labels = [...new Set([...visitDates, new Date().toISOString().slice(0, 10)])];
+                const build = window.HubTools?.events?.buildTreatmentDrugAnnotations;
+                const annotations = typeof build === 'function'
+                    ? build(history.treatmentHistory || [], labels, { maxVisible: 8 })
+                    : null;
+                return {
+                    labels,
+                    historyNames: (history.treatmentHistory || []).map((t) => t.name),
+                    markerKeys: annotations ? Object.keys(annotations) : null,
+                    markerTexts: annotations ? Object.values(annotations).map((a) => a?.label?.content ?? '') : null
+                };
+            });
+            record(`${label}: D1 el pipeline real de anotaciones del gráfico no genera marcador treatment_/Tx:/Bio:/Susp: para el físico sin Fecha_Inicio_Tratamiento (sin inicio inventado)`,
+                Array.isArray(chartMarkerProbe.markerKeys) && chartMarkerProbe.markerKeys.length === 0 &&
+                (chartMarkerProbe.markerTexts || []).every((t) => !/^(Tx:|Bio:|Susp:)/.test(t)) &&
+                chartMarkerProbe.historyNames.includes(SYN_PLAN_SAME),
+                JSON.stringify(chartMarkerProbe));
         }
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
@@ -1053,7 +1157,158 @@ async function runAccreditedActualJourney(browser, patientId) {
                     !shown.kpiStatus.startsWith('Desde') && !JSON.stringify(shown).includes(contradictoryDate),
                     JSON.stringify({ shown, contradictoryDate }));
             }
+            // D1-D (#764): the literal 'No' physical value is a negation,
+            // not a drug — it must not become a Historial medication entry
+            // nor generate any active state there.
+            const historyNo = await page.evaluate(() => ({
+                text: document.querySelector('.dashboard-card--history')?.textContent ?? '',
+                items: document.querySelectorAll('.dashboard-card--history .treatment-item').length,
+                extracted: (window.patientHistory?.treatmentHistory || []).map((t) => t.name)
+            }));
+            record(`${label}: D1-D el literal «No» no aparece como medicamento del Historial ni genera estado activo`,
+                historyNo.items === 0 && historyNo.extracted.length === 0 &&
+                historyNo.text.includes('No hay historial de tratamientos previos.'),
+                JSON.stringify(historyNo));
         }
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
+/**
+ * #763 / D3 multivisita truth journey (browser, real supported route only).
+ * SYN-DASH-D12 carries TWO temporal physical visits (2026-01-10 PREV-A with
+ * start 2026-01-05 / 2026-03-10 ACT-B with start 2026-03-05).
+ * `findPatientById` returns the FIRST Excel row as base — exactly the QA
+ * #693 consumer-crossing falsifier. On the REAL dashboard the treatment
+ * card (tarjeta 4), KPI and visits table must show the LATEST visit's
+ * accredited ACT-B with ITS own explicit start date (never PREV-A, never
+ * the older date), and the REAL Dashboard → Seguimiento link must land on
+ * a form whose #tratamientoActual, #fechaInicioTratamiento and collector
+ * show the SAME latest-row truth. page.evaluate is used ONLY to READ
+ * observable state; no DOM mutation, no readonly tampering.
+ */
+async function runMultivisitaTruthJourney(browser) {
+    const label = 'D3 dashboard/Seguimiento multivisita: la ÚLTIMA visita física es la fuente';
+    const patientId = 'SYN-DASH-D12';
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.patientSummary && !!window.patientSummary.idPaciente, null, { timeout: 15000 });
+        const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
+        record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
+        const shown = await readTreatmentPresentation(page);
+        // Expected rendering derived in-page from the same pure formatter
+        // the dashboard uses (read only, timezone-robust), as in Train 27.
+        const expected = await page.evaluate(() => ({
+            start: window.formatDate('2026-03-05'),
+            status: 'Desde ' + window.formatDate('2026-03-05').substring(3)
+        }));
+        record(`${label}: tarjeta 4 muestra el actual acreditado de la ÚLTIMA visita (ACT-B, nunca PREV-A)`,
+            shown.cardName === 'ACT-B' && shown.cardName !== 'PREV-A', JSON.stringify(shown));
+        record(`${label}: tarjeta 4 muestra la fecha de inicio explícita de la MISMA fila ACT-B (no la de la fila antigua)`,
+            shown.cardStart === expected.start, JSON.stringify({ shown, expected }));
+        record(`${label}: tarjeta 4 calcula duración desde la fecha explícita de ACT-B (no placeholder)`,
+            !!shown.cardDuration && shown.cardDuration !== '---' && shown.cardDuration !== 'Sin registrar', JSON.stringify(shown));
+        record(`${label}: KPI muestra ACT-B con estado 'Desde ...' de la fecha explícita de ACT-B`,
+            shown.kpiValue === 'ACT-B' && shown.kpiStatus === expected.status, JSON.stringify({ shown, expected }));
+        record(`${label}: tabla de visitas muestra ambas filas físicas (ACT-B y PREV-A), ninguna sustituida`,
+            shown.tableCells.length === 2 && shown.tableCells.includes('ACT-B') && shown.tableCells.includes('PREV-A'), JSON.stringify(shown.tableCells));
+
+        // D1-B (#764): the Historial card carries exactly the two physical
+        // treatments as neutral 'Registrado' entries with their own explicit
+        // start dates — never the visit dates, never 'Activo', never an
+        // inferred entry from any plan alias.
+        const history = await page.evaluate(() => {
+            const items = [...document.querySelectorAll('.dashboard-card--history .treatment-item')];
+            return {
+                text: items.map((item) => item.textContent.trim()),
+                extracted: (window.patientHistory?.treatmentHistory || []).map((t) => ({
+                    name: t.name, startDate: t.startDate, status: t.status
+                })),
+                prevStart: window.formatDate('2026-01-05'),
+                actStart: window.formatDate('2026-03-05'),
+                prevVisitDate: window.formatDate('2026-01-10'),
+                actVisitDate: window.formatDate('2026-03-10')
+            };
+        });
+        record(`${label}: D1-B Historial con exactamente las dos entradas físicas (ACT-B y PREV-A)`,
+            history.text.length === 2 && history.text[0].includes('ACT-B') && history.text[1].includes('PREV-A') &&
+            history.extracted.map((t) => t.name).sort().join(',') === 'ACT-B,PREV-A',
+            JSON.stringify(history));
+        record(`${label}: D1-B ambas entradas en estado neutral 'Registrado', ninguna etiquetada Activo/Suspendido`,
+            history.text.every((text) => text.includes('Registrado') && !text.includes('Activo') && !text.includes('Suspendido')) &&
+            history.extracted.every((t) => t.status === 'registrado'),
+            JSON.stringify(history));
+        record(`${label}: D1-B fechas de inicio físicas preservadas (2026-01-05 / 2026-03-05), nunca fecha de visita ni actual`,
+            history.text[0].includes(history.actStart) && history.text[1].includes(history.prevStart) &&
+            !history.text.join(' ').includes(history.actVisitDate) && !history.text.join(' ').includes(history.prevVisitDate) &&
+            history.extracted.every((t) => ['2026-03-05', '2026-01-05'].includes(t.startDate)),
+            JSON.stringify(history));
+
+        await page.click('#btnSeguimiento');
+        await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+        await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
+        const continuation = await page.evaluate(() => {
+            const value = (id) => document.getElementById(id)?.value ?? null;
+            const datos = HubTools.form.recopilarDatosFormularioSeguimiento();
+            return {
+                cip: value('idPaciente'), name: value('nombrePaciente'),
+                treatment: value('tratamientoActual'), date: value('fechaInicioTratamiento'),
+                collectedTreatment: datos.tratamientoActual, collectedDate: datos.fechaInicioTratamiento,
+            };
+        });
+        record(`${label}: Seguimiento (mismo paciente, ruta real) prellena la ÚLTIMA visita: ACT-B con SU fecha 2026-03-05, nunca PREV-A ni la fecha antigua`,
+            continuation.cip === patientId && continuation.name === 'Sintetico Dash' &&
+            continuation.treatment === 'ACT-B' && continuation.date === '2026-03-05' &&
+            continuation.collectedTreatment === 'ACT-B' && continuation.collectedDate === '2026-03-05',
+            JSON.stringify(continuation));
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
+/**
+ * D1-C (#764) plan-change journey (browser, real supported route only).
+ * SYN-DASH-D13 carries TWO plan-only visits (Plan sintetico C1 → C2) with
+ * NO physical Tratamiento_Actual column: no inferred therapeutic history
+ * may be generated, and the real rendered chart (its BASDAI values keep it
+ * alive) must carry no treatmentHistory-derived drug marker (Tx:/Bio:/Susp:)
+ * for the plans. Annotation keys are namespaced: the treatmentHistory
+ * builder emits 'treatment_…' while the independent events pipeline emits
+ * 'event_…' (untouched by D1). READ only; no DOM mutation, no fixtures.
+ */
+async function runPlanChangeHistoryJourney(browser) {
+    const label = 'D1-C dashboard dos planes sin Tratamiento_Actual: sin historial inferido';
+    const patientId = 'SYN-DASH-D13';
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.activityChartInstance && !!window.patientSummary?.idPaciente,
+            null, { timeout: 15000 });
+        const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
+        record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
+        const shown = await page.evaluate(() => ({
+            text: document.querySelector('.dashboard-card--history')?.textContent ?? '',
+            items: document.querySelectorAll('.dashboard-card--history .treatment-item').length,
+            extracted: (window.patientHistory?.treatmentHistory || []).map((t) => t.name),
+            chartReady: !!window.activityChartInstance,
+            annotationKeys: Object.keys(window.activityChartInstance?.options?.plugins?.annotation?.annotations || {})
+        }));
+        record(`${label}: D1-C ningún historial terapéutico inferido de los dos planes`,
+            shown.items === 0 && shown.extracted.length === 0 &&
+            shown.text.includes('No hay historial de tratamientos previos.') &&
+            !shown.text.includes('Plan sintetico C1') && !shown.text.includes('Plan sintetico C2'),
+            JSON.stringify(shown));
+        record(`${label}: D1-C el gráfico real no genera marcador treatment_/Tx:/Bio:/Susp: derivado de los planes`,
+            shown.chartReady && shown.annotationKeys.every((key) => !key.startsWith('treatment_')),
+            JSON.stringify(shown));
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
     } finally {
@@ -1076,6 +1331,8 @@ try {
     await runAccreditedActualJourney(browser, 'SYN-DASH-D9');
     await runAccreditedActualJourney(browser, 'SYN-DASH-D10');
     await runAccreditedActualJourney(browser, 'SYN-DASH-D11');
+    await runMultivisitaTruthJourney(browser);
+    await runPlanChangeHistoryJourney(browser);
 } finally {
     if (browser) await browser.close();
     server.close();

@@ -1314,9 +1314,11 @@ function populateTreatmentHistory() {
 
         var dose = treatment.dose || '';
         var reason = treatment.reason || '';
-        var status = treatment.status || 'activo';
-        var statusClass = status === 'suspendido' || status === 'suspended' ? 'status-suspended' : 'status-active';
-        var statusLabel = status === 'suspendido' || status === 'suspended' ? 'Suspendido' : 'Activo';
+        var status = treatment.status || 'registrado';
+        var isSuspended = status === 'suspendido' || status === 'suspended';
+        var isExplicitActive = status === 'activo' || status === 'active';
+        var statusClass = isSuspended ? 'status-suspended' : (isExplicitActive ? 'status-active' : '');
+        var statusLabel = isSuspended ? 'Suspendido' : (isExplicitActive ? 'Activo' : 'Registrado');
 
         html += '<div class="treatment-item ' + statusClass + '" style="padding: 10px 0; border-bottom: 1px solid #eee;">';
         html += '<div style="display: flex; justify-content: space-between; align-items: flex-start;">';

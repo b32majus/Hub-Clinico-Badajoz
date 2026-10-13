@@ -42,6 +42,21 @@
  *       `not_found` journey, name/treatment/date are visible on screen,
  *       focusable and accept effective real typing/clicking through supported
  *       interaction (the `readonly` attribute is never removed by the test).
+ *   D2  (#762) tratamientoActual comes only from the exact physical
+ *       `Tratamiento_Actual` column: plan-only stays empty (D2-A), physical
+ *       wins over the plan selector (D2-B), literal `No` preserved (D2-C)
+ *       and the source:'mock' branch of a genuine not_found keeps its
+ *       explicit value without opening edit mode (D2-D).
+ *   D3  (#763) multivisita truth: with two temporal physical visits, the
+ *       LATEST visit's own physical `Tratamiento_Actual` is the only
+ *       treatment source (D3-A latest ACT-B with its own explicit start
+ *       date, never the older PREV-A row that `findPatientById` returns as
+ *       base), a latest visit without a physical treatment leaves treatment
+ *       AND start date EMPTY (D3-B, never the older treatment, never the
+ *       plan), literal `No` with a contradictory date keeps 'No' with an
+ *       empty date (D3-C), and a missing/impossible start date on the
+ *       latest visit leaves the date EMPTY (D3-D, never today, never the
+ *       older row's date).
  *
  * Usage: node tools/reuma_seguimiento_read_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
@@ -93,6 +108,46 @@ const ISODATE_ID = 'SYN-ISODATE-001';
 // another day.
 const BADDATE_ID = 'SYN-BADDATE-001';
 const BADFORMAT_ID = 'SYN-BADFMT-001';
+// #762 / D2 synthetic rows (TEMP workbook only; frozen fixture never edited):
+//   PLAN_ID  plan-only: Biologico=PLAN-Y present, NO Tratamiento_Actual. The
+//            normalizer alias promotes the plan selector to tratamientoActual,
+//            so pre-D2 the plan reached #tratamientoActual — the D2 falsifier.
+//   ACT_ID   physical Tratamiento_Actual=ACT-B alongside Biologico=PLAN-C:
+//            only the physical value may surface (never the plan).
+//   NO_ID    physical literal `No` must be preserved exactly (never dropped,
+//            never rewritten).
+const PLAN_ID = 'SYN-T1-PLAN';
+const ACT_ID = 'SYN-T1-ACT';
+const NO_ID = 'SYN-T1-NO';
+// #762 / D2-D: demo-mock branch (source:'mock' through a GENUINE not_found).
+// The planted MockPatients double (same class as the planted read-port error
+// double above) is authored demo data; its explicit tratamientoActual must be
+// preserved without opening the not_found edit mode.
+const MOCK_ID = 'SYN-MOCK-DEMO-001';
+const MOCK_NAME = 'Sintetico Mock Demo Uno';
+const MOCK_TREATMENT = 'FAME sintetico MOCK';
+// #763 / D3 multivisita rows (TEMP workbook only; frozen fixture never
+// edited). Each id carries TWO temporal physical visits; `findPatientById`
+// returns the FIRST Excel row as baseRecord, which is exactly the QA #693
+// falsifier: pre-D3 the older row's treatment/date prefilled Seguimiento.
+//   D3A_ID  older 2026-01-10 PREV-A (start 2026-01-05) / latest 2026-03-10
+//           ACT-B (start 2026-03-05): latest physical row is authoritative.
+//   D3B_ID  older PREV-A / latest WITHOUT Tratamiento_Actual but with a
+//           Biologico=PLAN-C plan and a contradictory date: treatment AND
+//           date must both stay EMPTY (never PREV-A, never PLAN-C, never
+//           the contradictory date).
+//   D3C_ID  latest row Tratamiento_Actual='No' with a contradictory
+//           Fecha_Inicio_Tratamiento: 'No' preserved, date EMPTY.
+//   D3D_ID  latest row physical ACT-D with an IMPOSSIBLE start date
+//           (31/02/2026): date EMPTY via toIsoDateInputValue, never today,
+//           never the older row's date.
+//   D3E_ID  latest row physical ACT-E with NO start date column: date
+//           EMPTY, never the older row's date.
+const D3A_ID = 'SYN-TX-D3A-001';
+const D3B_ID = 'SYN-TX-D3B-001';
+const D3C_ID = 'SYN-TX-D3C-001';
+const D3D_ID = 'SYN-TX-D3D-001';
+const D3E_ID = 'SYN-TX-D3E-001';
 const SYNTHETIC_ESPA_ROWS = [
     {
         ID_Paciente: DATELESS_ID,
@@ -132,6 +187,135 @@ const SYNTHETIC_ESPA_ROWS = [
         Diagnostico_Primario: 'EspA',
         Tratamiento_Actual: 'FAME sintetico BADFMT',
         Fecha_Inicio_Tratamiento: '2026/01/10',
+    },
+    {
+        ID_Paciente: PLAN_ID,
+        Nombre_Paciente: 'Sintetico Plan Solo Uno',
+        Sexo: 'F',
+        Fecha_Visita: '2026-04-01',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Biologico: 'PLAN-Y',
+    },
+    {
+        ID_Paciente: ACT_ID,
+        Nombre_Paciente: 'Sintetico Fisico Dos',
+        Sexo: 'M',
+        Fecha_Visita: '2026-04-02',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'ACT-B',
+        Biologico: 'PLAN-C',
+    },
+    {
+        ID_Paciente: NO_ID,
+        Nombre_Paciente: 'Sintetico No Literal Tres',
+        Sexo: 'F',
+        Fecha_Visita: '2026-04-03',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'No',
+    },
+    // #763 / D3 multivisita pairs (older visit FIRST in the sheet: that row
+    // order is what makes `findPatientById` return the older row as base).
+    {
+        ID_Paciente: D3A_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Prevact Uno',
+        Sexo: 'M',
+        Fecha_Visita: '2026-01-10',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-05',
+    },
+    {
+        ID_Paciente: D3A_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Prevact Uno',
+        Sexo: 'M',
+        Fecha_Visita: '2026-03-10',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'ACT-B',
+        Fecha_Inicio_Tratamiento: '2026-03-05',
+    },
+    {
+        ID_Paciente: D3B_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Sin Fisico Dos',
+        Sexo: 'F',
+        Fecha_Visita: '2026-01-11',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-06',
+    },
+    {
+        ID_Paciente: D3B_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Sin Fisico Dos',
+        Sexo: 'F',
+        Fecha_Visita: '2026-03-11',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Biologico: 'PLAN-C',
+        Fecha_Inicio_Tratamiento: '2026-02-02',
+    },
+    {
+        ID_Paciente: D3C_ID,
+        Nombre_Paciente: 'Sintetico Multivisita No Literal Tres',
+        Sexo: 'F',
+        Fecha_Visita: '2026-01-12',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-07',
+    },
+    {
+        ID_Paciente: D3C_ID,
+        Nombre_Paciente: 'Sintetico Multivisita No Literal Tres',
+        Sexo: 'F',
+        Fecha_Visita: '2026-03-12',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'No',
+        Fecha_Inicio_Tratamiento: '2026-02-03',
+    },
+    {
+        ID_Paciente: D3D_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Fecha Imposible Cuatro',
+        Sexo: 'M',
+        Fecha_Visita: '2026-01-13',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-08',
+    },
+    {
+        ID_Paciente: D3D_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Fecha Imposible Cuatro',
+        Sexo: 'M',
+        Fecha_Visita: '2026-03-13',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'ACT-D',
+        Fecha_Inicio_Tratamiento: '31/02/2026',
+    },
+    {
+        ID_Paciente: D3E_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Fecha Ausente Cinco',
+        Sexo: 'F',
+        Fecha_Visita: '2026-01-14',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-09',
+    },
+    {
+        ID_Paciente: D3E_ID,
+        Nombre_Paciente: 'Sintetico Multivisita Fecha Ausente Cinco',
+        Sexo: 'F',
+        Fecha_Visita: '2026-03-14',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'ACT-E',
     },
 ];
 
@@ -248,9 +432,10 @@ function seguimientoErrors(entry) {
     return entry.consoleErrors.filter((message) => message.includes(SEGUIMIENTO_PAGE));
 }
 
-async function passSupportedGate(context) {
+async function passSupportedGate(context, initScript) {
     const entry = trackedPage(await context.newPage());
     const { page } = entry;
+    if (initScript) await page.addInitScript(initScript);
     await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
@@ -285,6 +470,61 @@ const plantedErrorDouble = () => {
     };
     const double = { getPort: () => port, create: () => port, PORT_VERSION: 'error-double' };
     Object.defineProperty(window, 'ReumaPatientReadPort', {
+        configurable: true,
+        get: () => double,
+        set: () => {},
+    });
+};
+
+// #762 / D2-D: authored demo-mock double (MockPatients owns its provenance,
+// same class as the planted read-port double above). The queried id is NOT in
+// the session corpus, so the real read port still returns a GENUINE
+// `not_found`; the legacy demo fallback then serves this bundle with
+// source:'mock'. Its explicit tratamientoActual must reach the readonly field
+// and the collector without opening the not_found edit mode. Like
+// `plantedErrorDouble`, the double is installed with a getter and a noop
+// setter so the disabled `modules/mockPatients.js` load cannot silently
+// replace it.
+const plantedMockDouble = () => {
+    // NOTE: this double is serialized into the page context via
+    // `page.addInitScript`, so the module-level constants are out of scope
+    // here; they are hoisted verbatim to the double's scope (same values).
+    // NOTE: the visit row deliberately carries NO `Tratamiento_Actual`
+    // column — if it did, `basePhysical`/`latestPhysical` would supply the
+    // value and the test would no longer falsify the loss of the
+    // `mockActual` branch (source:'mock') nor the `source` step. The
+    // treatment lives ONLY in `summary.tratamientoActual`.
+    const MOCK_ID = 'SYN-MOCK-DEMO-001';
+    const MOCK_NAME = 'Sintetico Mock Demo Uno';
+    const MOCK_TREATMENT = 'FAME sintetico MOCK';
+    const mockPatient = {
+        idPaciente: MOCK_ID,
+        summary: {
+            idPaciente: MOCK_ID,
+            nombre: MOCK_NAME,
+            pathology: 'espa',
+            diagnosticoPrimario: 'espa',
+            tratamientoActual: MOCK_TREATMENT,
+        },
+        pathology: 'espa',
+        visits: [
+            {
+                ID_Paciente: MOCK_ID,
+                Nombre_Paciente: MOCK_NAME,
+                Sexo: 'F',
+                Fecha_Visita: '2026-04-05',
+                Tipo_Visita: 'Seguimiento',
+                Diagnostico_Primario: 'EspA',
+            },
+        ],
+        treatmentHistory: [],
+    };
+    const double = {
+        list: () => [mockPatient],
+        getById: (id) => (id === MOCK_ID ? mockPatient : null),
+        search: () => [],
+    };
+    Object.defineProperty(window, 'MockPatients', {
         configurable: true,
         get: () => double,
         set: () => {},
@@ -911,6 +1151,244 @@ try {
                 badDateState.dateValue === '' && badDateState.collectedFechaInicio === '' &&
                 badFormatState.dateValue === '' && badFormatState.collectedFechaInicio === '',
                 `iso=${JSON.stringify(isoState)} isoOkPath=${isoOkPath} known=${JSON.stringify(knownState)} badDate=${JSON.stringify(badDateState)} badFormat=${JSON.stringify(badFormatState)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+        }
+
+        // =================================================================
+        // D2 cases (#762) — tratamientoActual may come ONLY from the exact
+        // physical `Tratamiento_Actual` column (never Biologico/FAME/
+        // Sistemico plan selectors, treatmentHistory names or the
+        // normalizer alias). Base-first priority vs latest visit is
+        // intentionally kept (corrected in D3).
+        // =================================================================
+        {
+            // D2-A — plan-only negative (the D2 falsifier): Biologico=PLAN-Y
+            // with NO Tratamiento_Actual must leave #tratamientoActual, the
+            // collector and the start date EMPTY. Never PLAN-Y.
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${PLAN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const planState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collected: HubTools.form.recopilarDatosFormularioSeguimiento(),
+            }));
+            const planErrors = seguimientoErrors(happy);
+            const planOkPath = planState.name === 'Sintetico Plan Solo Uno' && planState.nameReadonly;
+            record('D2-A plan-only synthetic: Biologico=PLAN-Y without Tratamiento_Actual keeps field, collector and start date empty (never the plan)',
+                planOkPath && planState.treatment === '' && planState.collected.tratamientoActual === '' &&
+                planState.dateValue === '' && planState.collected.fechaInicioTratamiento === '' &&
+                planErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${planOkPath} state=${JSON.stringify({ ...planState, collected: { tratamientoActual: planState.collected.tratamientoActual, fechaInicioTratamiento: planState.collected.fechaInicioTratamiento } })} ` +
+                `consoleErrors=${JSON.stringify(planErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D2-B — physical preservation: Tratamiento_Actual=ACT-B beside
+            // Biologico=PLAN-C must surface ACT-B literally (never PLAN-C).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${ACT_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const actState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                collected: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+            }));
+            const actErrors = seguimientoErrors(happy);
+            const actOkPath = actState.name === 'Sintetico Fisico Dos' && actState.nameReadonly;
+            record('D2-B physical Tratamiento_Actual=ACT-B with Biologico=PLAN-C: field and collector show ACT-B (never the plan)',
+                actOkPath && actState.treatment === 'ACT-B' && actState.collected === 'ACT-B' &&
+                actErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${actOkPath} state=${JSON.stringify(actState)} consoleErrors=${JSON.stringify(actErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D2-C — literal `No` is preserved exactly (never dropped, never
+            // rewritten to blank or a default).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${NO_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const noState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                collected: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+            }));
+            const noErrors = seguimientoErrors(happy);
+            const noOkPath = noState.name === 'Sintetico No Literal Tres' && noState.nameReadonly;
+            record('D2-C physical literal `No` is preserved exactly in field and collector',
+                noOkPath && noState.treatment === 'No' && noState.collected === 'No' &&
+                noErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${noOkPath} state=${JSON.stringify(noState)} consoleErrors=${JSON.stringify(noErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+        }
+
+        // =================================================================
+        // D2-D (#762) — source:'mock' of a GENUINE not_found: the planted
+        // MockPatients double is not in the session corpus, so the real read
+        // port still returns not_found; the legacy demo fallback serves the
+        // bundle with source:'mock' and its explicit tratamientoActual must
+        // reach the readonly field and the collector WITHOUT opening the
+        // not_found edit mode (readonly preserved).
+        // =================================================================
+        {
+            const mockContext = await browser.newContext();
+            try {
+                const mockEntry = await passSupportedGate(mockContext, plantedMockDouble);
+                mockEntry.consoleErrors.length = 0;
+                mockEntry.pageErrors.length = 0;
+                await mockEntry.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${MOCK_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+                await mockEntry.page.waitForTimeout(1200);
+                const mockState = await mockEntry.page.evaluate(() => ({
+                    id: document.getElementById('idPaciente')?.value || '',
+                    name: document.getElementById('nombrePaciente')?.value || '',
+                    nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                    treatment: document.getElementById('tratamientoActual')?.value || '',
+                    treatmentReadonly: document.getElementById('tratamientoActual')?.readOnly === true,
+                    dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                    collected: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                }));
+                const mockErrors = seguimientoErrors(mockEntry);
+                record('D2-D genuine not_found with demo mock (source mock): explicit mock treatment reaches readonly field and collector without opening edit mode',
+                    mockState.id === MOCK_ID && mockState.name === MOCK_NAME && mockState.nameReadonly &&
+                    mockState.treatment === MOCK_TREATMENT && mockState.treatmentReadonly &&
+                    mockState.collected === MOCK_TREATMENT && mockState.dateValue === '' &&
+                    mockErrors.length === 0 && mockEntry.pageErrors.length === 0,
+                    `state=${JSON.stringify(mockState)} consoleErrors=${JSON.stringify(mockErrors)} pageErrors=${JSON.stringify(mockEntry.pageErrors)}`);
+            } finally {
+                await mockContext.close();
+            }
+        }
+
+        // =================================================================
+        // D3 cases (#763) — multivisita truth: with a latest visit node, its
+        // OWN physical `Tratamiento_Actual` is the only treatment source
+        // (presence of the visit node, not truthiness of the value, decides
+        // the source), and the start date must belong to the SAME selected
+        // physical row. `findPatientById` returns the FIRST Excel row as
+        // baseRecord, so pre-D3 these cases prefilled the older row — the
+        // QA #693 falsifier. The latest visit is never allowed to fall back
+        // to an older row to fabricate an ACTUAL, `No` never acquires a
+        // date, and missing/impossible dates stay empty (never today, never
+        // another row's date).
+        // =================================================================
+        {
+            // D3-A — latest physical row is authoritative: 2026-01-10
+            // PREV-A / 2026-03-10 ACT-B, each with its own explicit start
+            // date. Field, collector and start date must come from ACT-B's
+            // row only (never PREV-A, never the older date).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${D3A_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const d3aState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedTreatment: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                collectedDate: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const d3aErrors = seguimientoErrors(happy);
+            const d3aOkPath = d3aState.name === 'Sintetico Multivisita Prevact Uno' && d3aState.nameReadonly;
+            record('D3-A multivisita two physical visits: latest visit ACT-B and ITS explicit start date reach field and collector (never the older PREV-A row or its date)',
+                d3aOkPath && d3aState.treatment === 'ACT-B' && d3aState.collectedTreatment === 'ACT-B' &&
+                d3aState.dateValue === '2026-03-05' && d3aState.collectedDate === '2026-03-05' &&
+                d3aState.treatment !== 'PREV-A' && d3aErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${d3aOkPath} state=${JSON.stringify(d3aState)} consoleErrors=${JSON.stringify(d3aErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D3-B — latest visit WITHOUT a physical treatment (older row
+            // PREV-A, latest row plan PLAN-C + contradictory date):
+            // treatment AND start date BOTH stay EMPTY. Never PREV-A, never
+            // PLAN-C, never the contradictory latest date.
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${D3B_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const d3bState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedTreatment: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                collectedDate: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const d3bErrors = seguimientoErrors(happy);
+            const d3bOkPath = d3bState.name === 'Sintetico Multivisita Sin Fisico Dos' && d3bState.nameReadonly;
+            record('D3-B latest visit without physical treatment: treatment and start date BOTH empty (never the older PREV-A, never plan PLAN-C, never the contradictory date)',
+                d3bOkPath && d3bState.treatment === '' && d3bState.collectedTreatment === '' &&
+                d3bState.dateValue === '' && d3bState.collectedDate === '' &&
+                d3bErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${d3bOkPath} state=${JSON.stringify(d3bState)} consoleErrors=${JSON.stringify(d3bErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D3-C — latest row Tratamiento_Actual='No' with a
+            // contradictory Fecha_Inicio_Tratamiento: 'No' is the recorded
+            // value and the date stays EMPTY (a negated actual never
+            // acquires an active start date).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${D3C_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const d3cState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedTreatment: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                collectedDate: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const d3cErrors = seguimientoErrors(happy);
+            const d3cOkPath = d3cState.name === 'Sintetico Multivisita No Literal Tres' && d3cState.nameReadonly;
+            record('D3-C latest row literal `No` with contradictory date: field and collector keep `No`, start date stays empty',
+                d3cOkPath && d3cState.treatment === 'No' && d3cState.collectedTreatment === 'No' &&
+                d3cState.dateValue === '' && d3cState.collectedDate === '' &&
+                d3cErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${d3cOkPath} state=${JSON.stringify(d3cState)} consoleErrors=${JSON.stringify(d3cErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D3-D — latest row physical ACT-D with an IMPOSSIBLE start date
+            // (31/02/2026), plus a companion latest row with NO start date
+            // at all: in both the date field and collector stay EMPTY via
+            // toIsoDateInputValue — never today, never the older row's
+            // valid date.
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${D3D_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const d3dState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedTreatment: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                collectedDate: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const d3dErrors = seguimientoErrors(happy);
+            const d3dOkPath = d3dState.name === 'Sintetico Multivisita Fecha Imposible Cuatro' && d3dState.nameReadonly;
+            record('D3-D impossible start date on the latest physical visit: date field and collector stay EMPTY (never today, never the older row date)',
+                d3dOkPath && d3dState.treatment === 'ACT-D' && d3dState.collectedTreatment === 'ACT-D' &&
+                d3dState.dateValue === '' && d3dState.collectedDate === '' &&
+                d3dErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${d3dOkPath} state=${JSON.stringify(d3dState)} consoleErrors=${JSON.stringify(d3dErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${D3E_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const d3eState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collectedTreatment: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                collectedDate: HubTools.form.recopilarDatosFormularioSeguimiento().fechaInicioTratamiento,
+            }));
+            const d3eErrors = seguimientoErrors(happy);
+            const d3eOkPath = d3eState.name === 'Sintetico Multivisita Fecha Ausente Cinco' && d3eState.nameReadonly;
+            record('D3-D absent start date on the latest physical visit: date field and collector stay EMPTY (never today, never the older row date)',
+                d3eOkPath && d3eState.treatment === 'ACT-E' && d3eState.collectedTreatment === 'ACT-E' &&
+                d3eState.dateValue === '' && d3eState.collectedDate === '' &&
+                d3eErrors.length === 0 && happy.pageErrors.length === 0,
+                `okPath=${d3eOkPath} state=${JSON.stringify(d3eState)} consoleErrors=${JSON.stringify(d3eErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
         }
     } finally {
         await context.close();

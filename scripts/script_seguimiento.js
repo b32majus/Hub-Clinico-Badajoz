@@ -164,10 +164,27 @@ async function readSeguimientoBundle(patientId) {
     return { status: 'unavailable' };
 }
 
-function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam }) {
+function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam, source }) {
     const normalizedBaseRecord = normalizeRecord(baseRecord);
     const latestVisit = normalizeRecord(history?.latestVisit || getLast(history?.allVisits));
-    const activeTreatment = getLast(history?.treatmentHistory);
+    // RE-762 / D2: `#tratamientoActual` y su dato recopilado SOLO pueden provenir
+    // de la clave física exacta `Tratamiento_Actual` (columna Excel retenida en el
+    // spread del normalizador). El alias `tratamientoActual` del normalizador
+    // promociona selectores de PLAN (Biologico/FAME/Sistemico) a tratamiento
+    // actual: nunca usarlo como origen clínico. El literal exacto `No` se
+    // conserva; vacío queda vacío. Tras D3 (#763): si hay nodo de última
+    // visita, SU campo físico es la única fuente (aunque esté vacío: nunca
+    // retroceder a filas antiguas para fabricar ACTUAL); sin visitas,
+    // fail-closed al campo físico del registro base. `mockActual` se permite
+    // exclusivamente en la rama demo `source:'mock'` del fallback `not_found`.
+    const physicalFromRecord = (record) => {
+        if (!record || !Object.prototype.hasOwnProperty.call(record, 'Tratamiento_Actual')) return '';
+        const value = record.Tratamiento_Actual;
+        return value === undefined || value === null ? '' : String(value);
+    };
+    const basePhysical = physicalFromRecord(baseRecord);
+    const latestPhysical = physicalFromRecord(history?.latestVisit);
+    const mockActual = source === 'mock' ? (baseRecord?.tratamientoActual ?? '') : '';
     const pathology = normalizePathology(patologiaParam || history?.pathology || normalizedBaseRecord.diagnosticoPrimario || normalizedBaseRecord.pathology);
 
     return {
@@ -179,13 +196,31 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         fr: latestVisit?.fr || normalizedBaseRecord.fr || 'no-analizado',
         apcc: latestVisit?.apcc || normalizedBaseRecord.apcc || 'no-analizado',
         ana: latestVisit?.ana || normalizedBaseRecord.ana || 'no-analizado',
-        tratamientoActual: normalizedBaseRecord.tratamientoActual || latestVisit?.tratamientoActual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
+        // D3 (#763): la visita más reciente es la única fuente del ACTUAL
+        // documentado; con `history.latestVisit` presente, su campo físico
+        // manda aunque esté vacío (la presencia del nodo de visita, no el
+        // truthiness del valor, determina la fuente).
+        tratamientoActual: source === 'mock'
+            ? (mockActual || latestPhysical || '')
+            : (history?.latestVisit ? latestPhysical : basePhysical),
         // T22-02-C2: `Fecha_Inicio_Tratamiento` es una fecha de inicio
-        // histórica APORTADA, no una fecha de visita (spec story 4). Sólo el
-        // valor explícito del registro base; si falta, el campo queda en
-        // blanco — nunca la salida manufacturada de extractTreatmentHistory()
-        // (startDate = fecha de visita), ni la fecha de visita, ni hoy.
-        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || '',
+        // histórica APORTADA, no una fecha de visita (spec story 4). D3
+        // (#763): la fecha pertenece a la MISMA fila física seleccionada
+        // como tratamiento; `No` no acredita fecha activa aunque la fila
+        // traiga una contradictoria; sin fecha física válida el campo queda
+        // en blanco — nunca la salida manufacturada de
+        // extractTreatmentHistory() (startDate = fecha de visita), ni la
+        // fecha de visita, ni hoy. La conversión de representación sigue
+        // siendo exclusivamente `toIsoDateInputValue()` en la copia UI.
+        fechaInicioTratamiento: source === 'mock'
+            ? (normalizedBaseRecord.fechaInicioTratamiento || '')
+            : (history?.latestVisit
+                ? ((history.latestVisit.Tratamiento_Actual === 'No' || !latestPhysical)
+                    ? ''
+                    : (history.latestVisit.Fecha_Inicio_Tratamiento || ''))
+                : ((basePhysical && basePhysical !== 'No')
+                    ? (baseRecord?.Fecha_Inicio_Tratamiento || '')
+                    : '')),
         comorbilidades: extractComorbidities(latestVisit),
         manifestacionesExtra: extractManifestations(latestVisit),
         peso: latestVisit?.peso || normalizedBaseRecord.peso || '',
@@ -343,7 +378,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 patientId,
                 history: outcome.historyData,
                 baseRecord: outcome.baseRecord,
-                patologiaParam
+                patologiaParam,
+                source: outcome.source
             });
 
             if (prefillPayload && prefillPayload.idPaciente) {
