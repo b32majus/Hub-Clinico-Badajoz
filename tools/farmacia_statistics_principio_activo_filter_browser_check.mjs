@@ -231,7 +231,7 @@ async function assertReachable(page, label) {
         }
         return { overlap, scrollW: row.scrollWidth, clientW: row.clientWidth, count: groups.length };
     });
-    assert.equal(rowCheck.count, 7, `${label}: seven groups in the row`);
+    assert.equal(rowCheck.count, 9, `${label}: nine groups in the row`);
     assert.equal(rowCheck.overlap, '', `${label}: no quick-filter group overlaps another (${rowCheck.overlap})`);
     assert(rowCheck.scrollW <= rowCheck.clientW + 1, `${label}: row contains its groups (scroll=${rowCheck.scrollW} client=${rowCheck.clientW})`);
     const docOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -250,13 +250,13 @@ try {
     await waitForMode(demo, 'demo', DEMO_COUNT);
 
     try {
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 7, 'seven quick-filter groups');
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 9, 'nine quick-filter groups');
         assert.equal(await demo.locator('#qf-principio').getAttribute('data-quick-filter'), 'principio');
         assert.equal((await demo.locator('label[for="qf-principio"]').textContent()).trim(), 'Principio activo registrado');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-ea', 'qf-adherencia', 'qf-principio'], 'control appended at the end');
-        ok('demo: seventh control present, labelled, appended last');
-    } catch (error) { bad('demo: seventh control present, labelled, appended last', error.message); }
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-gravedad', 'qf-movimiento'], 'controls appended in approved order');
+        ok('demo: nine controls present, labelled, appended in approved order');
+    } catch (error) { bad('demo: nine controls present, labelled, appended in approved order', error.message); }
 
     try {
         const options = await principioOptions(demo);

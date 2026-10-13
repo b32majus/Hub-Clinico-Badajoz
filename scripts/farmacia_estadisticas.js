@@ -180,8 +180,14 @@
         return labels[value] || text(value);
     }
 
+    function explicitMovementTypes(types) {
+        return (types || []).filter(function (type) {
+            return present(type) && type !== 'not_recorded' && type !== 'no_change_recorded';
+        });
+    }
+
     function deriveFilterOptions() {
-        var values = { servicio: [], patologia: [], farmaco: [], principio: [], estado: [], ea: [], adherencia: [] };
+        var values = { servicio: [], patologia: [], farmaco: [], principio: [], estado: [], ea: [], adherencia: [], gravedad: [], movimiento: [] };
         allPatients.forEach(function (item) {
             values.servicio = values.servicio.concat(item.profile.services);
             values.patologia = values.patologia.concat(item.profile.pathologies);
@@ -190,6 +196,8 @@
             values.estado.push(item.profile.careStatus);
             values.ea.push(item.profile.adverseStatus);
             values.adherencia.push(item.profile.adherenceResult);
+            values.gravedad = values.gravedad.concat(item.profile.adverseSeverities);
+            values.movimiento = values.movimiento.concat(explicitMovementTypes(item.profile.movementTypes));
         });
         Object.keys(values).forEach(function (key) { values[key] = unique(values[key]); });
         return values;
@@ -215,6 +223,8 @@
         fillSelect('qf-patologia', options.patologia, 'Todas');
         fillSelect('qf-farmaco', options.farmaco, 'Todos');
         fillSelect('qf-principio', options.principio, 'Todos');
+        fillSelect('qf-gravedad', options.gravedad, 'Todas');
+        fillSelect('qf-movimiento', options.movimiento, 'Todos');
         fillSelect('qf-estado', options.estado, 'Todos', careLabel);
         fillSelect('qf-ea', options.ea, 'Todos', adverseLabel);
         fillSelect('qf-adherencia', options.adherencia, 'Todas', function (value) {
@@ -236,6 +246,8 @@
         if (filters.patologia && profile.pathologies.indexOf(filters.patologia) === -1) return false;
         if (filters.farmaco && profile.drugNames.indexOf(filters.farmaco) === -1 && profile.activeIngredients.indexOf(filters.farmaco) === -1) return false;
         if (filters.principio && profile.activeIngredients.indexOf(filters.principio) === -1) return false;
+        if (filters.gravedad && profile.adverseSeverities.indexOf(filters.gravedad) === -1) return false;
+        if (filters.movimiento && profile.movementTypes.indexOf(filters.movimiento) === -1) return false;
         if (filters.estado && profile.careStatus !== filters.estado) return false;
         if (filters.ea && profile.adverseStatus !== filters.ea) return false;
         if (filters.adherencia && profile.adherenceResult !== filters.adherencia) return false;
@@ -319,7 +331,7 @@
             container.appendChild(el('span', 'stats-cohort-empty', 'Sin filtros activos'));
             return;
         }
-        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia' };
+        var labels = { servicio: 'Servicio', patologia: 'Patología', farmaco: 'Fármaco', principio: 'Principio activo registrado', estado: 'Estado', ea: 'EA', adherencia: 'Adherencia', gravedad: 'Gravedad de EA registrada', movimiento: 'Movimiento terapéutico registrado' };
         keys.forEach(function (key) {
             var chip = el('span', 'stats-cohort-chip');
             chip.appendChild(el('span', '', labels[key] + ': ' + currentFilters[key]));
