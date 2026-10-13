@@ -562,6 +562,48 @@ async function journey(browser, code) {
       check(`${label} [AUTHORITY PROPERTY] disabled authority renders non-interactive chips`, disabled.allDisabled && !chipInteractive && disabled.value === 'positivas', JSON.stringify({ allDisabled: disabled.allDisabled, chipInteractive, value: disabled.value }));
     }
 
+    // 7. focal corrective scenario (WO_REUMA_PV_CHIPS_BACK_SYNC): real Inicio
+    //    navigation + browser Back. The browser's internal form restoration
+    //    updates the select without firing change/input, so the derived chips
+    //    must re-sync from the restored authoritative value. Read-only after
+    //    return (page.evaluate); full reload/persistence is out of scope.
+    {
+      const tag = `${label} back-navigation`;
+      await openAncestorCollapsibles(page, '[data-chip-group-for="dolorAxial"]');
+      await page.locator(chipSel('dolorAxial', 'mecanico')).click();
+      await page.waitForTimeout(60);
+      const picked = await page.evaluate(() => ({
+        selectValue: document.getElementById('dolorAxial').value,
+        pressedValues: Array.from(document.querySelectorAll('[data-chip-group-for="dolorAxial"] .pv-chip'))
+          .filter((c) => c.getAttribute('aria-pressed') === 'true').map((c) => c.dataset.value)
+      }));
+      check(`${tag} real click picks mecanico (select + aria-pressed)`,
+        picked.selectValue === 'mecanico' && JSON.stringify(picked.pressedValues) === JSON.stringify(['mecanico']),
+        JSON.stringify(picked));
+
+      await page.locator('a.nav-link[href="reuma_index.html"]').first().click();
+      await page.goBack({ waitUntil: 'load', timeout: 45000 });
+      await page.waitForTimeout(900); // pageshow + rAF re-sync window
+      const after = await page.evaluate(() => {
+        const group = document.querySelector('[data-chip-group-for="dolorAxial"]');
+        const blank = group ? group.querySelector('.pv-chip[data-value=""]') : null;
+        return {
+          selectValue: document.getElementById('dolorAxial').value,
+          pressedValues: group
+            ? Array.from(group.querySelectorAll('.pv-chip')).filter((c) => c.getAttribute('aria-pressed') === 'true').map((c) => c.dataset.value)
+            : null,
+          blankPressed: blank ? blank.getAttribute('aria-pressed') : null,
+          exported: HubTools.form.recopilarDatosFormulario().dolorAxial
+        };
+      });
+      check(`${tag} after Atrás: select/chips/export = mecanico, blank chip NOT pressed`,
+        after.selectValue === 'mecanico'
+          && JSON.stringify(after.pressedValues) === JSON.stringify(['mecanico'])
+          && after.blankPressed !== 'true'
+          && after.exported === 'mecanico',
+        JSON.stringify(after));
+    }
+
     check(`${label} console.error=0 pageerror=0`, errs.length === 0 && perrs.length === 0, JSON.stringify([...errs, ...perrs].slice(0, 5)));
   } finally {
     await ctx.close();

@@ -264,6 +264,8 @@ async function runPage(browser, pagePath) {
     record(`(4) ${pagePath} entradas ASDAS intactas tras el cambio de patología`,
       untouched.every((v) => v === ''), JSON.stringify(untouched));
 
+    // #668: la unidad PCR ya no viene preseleccionada; se elige explícitamente.
+    await page.selectOption('#pcrUnit', 'mg/L');
     await fill(page, '#pcrValue', '30');
     await fill(page, '#asdasDolorEspalda', '3');
     await fill(page, '#asdasDuracionRigidez', '2');
