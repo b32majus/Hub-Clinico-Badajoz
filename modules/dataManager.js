@@ -713,19 +713,20 @@ function extractTreatmentHistory(visits) {
         const visit = visits[i];
 
         // Extraer tratamiento actual - usar nombres normalizados y del Excel
-                const normalizeRecord = HubTools?.normalizer?.normalizeRecord;
-        const normalizedVisit = typeof normalizeRecord === 'function' ? normalizeRecord(visit) : visit;
-        let currentTreatment = normalizedVisit.tratamientoActual ||
-            normalizedVisit.biologicoSelect || normalizedVisit.fameSelect || normalizedVisit.sistemicoSelect ||
-            visit.Biologico || visit.FAME || visit['Sistmico'] || null;
+        const physicalValue = Object.prototype.hasOwnProperty.call(visit, 'Tratamiento_Actual')
+            ? visit.Tratamiento_Actual
+            : undefined;
+        const currentTreatment = (typeof physicalValue === 'string' ? physicalValue.trim() : physicalValue);
+        if (!currentTreatment || currentTreatment === 'No') continue;
 
         // Si encontramos un tratamiento nuevo (diferente al anterior), registrarlo
         if (currentTreatment && !seenTreatments.has(currentTreatment)) {
             seenTreatments.add(currentTreatment);
             treatments.push({
-                startDate: normalizedVisit.fechaVisita || visit.Fecha_Visita || new Date(),
+                startDate: visit.Fecha_Inicio_Tratamiento || '',
                 name: currentTreatment,
-                reason: normalizedVisit.motivoCambio || normalizedVisit.comentariosAdicionales || 'Tratamiento activo'
+                reason: visit.Motivo_Cambio || visit.motivoCambio || '',
+                status: 'registrado'
             });
         }
     }

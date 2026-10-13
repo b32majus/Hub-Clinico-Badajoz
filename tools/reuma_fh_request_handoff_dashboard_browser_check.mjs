@@ -285,10 +285,31 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
         Tratamiento_Actual: 'ACT-B',
         Fecha_Inicio_Tratamiento: '2026-03-05'
     };
+    // D1-C (#764): TWO plan-only visits (Plan sintetico C1 → C2) with NO
+    // physical Tratamiento_Actual column — no inferred therapeutic history
+    // and no plan-derived chart marker. Built from scratch (like rowF1PlanOnly)
+    // so the physical column is truly ABSENT, not an empty token. BASDAI
+    // values keep the real chart rendered so the annotation read is over the
+    // actual Chart.js instance.
+    const rowD13Older = {
+        Nombre_Paciente: 'Sintetico Dash',
+        Fecha_Visita: '2026-01-15',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Principal: 'espa',
+        Diagnostico_Secundario: SYN_DIAG_SEC,
+        PCR: '8',
+        EVA_Global: '6',
+        comorbilidades: 'hta',
+        ID_Paciente: 'SYN-DASH-D13',
+        Biologico: 'Plan sintetico C1',
+        BASDAI: 3.5
+    };
+    const rowD13Latest = { ...rowD13Older, Fecha_Visita: '2026-03-15', Biologico: 'Plan sintetico C2', BASDAI: 3 };
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp, rowF1PlanOnly, rowF1SameText,
-        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate, rowD12Older, rowD12Latest
+        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate, rowD12Older, rowD12Latest,
+        rowD13Older, rowD13Latest
     ]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
@@ -912,10 +933,20 @@ async function runProvenanceWitnessJourney(browser, mode) {
                 shown.tableCells.length === 1 && shown.tableCells[0] === '---' &&
                 !shown.tableCells[0].includes(SYN_PLAN_SAME),
                 JSON.stringify(shown.tableCells));
-            const historyText = await page.evaluate(() =>
-                document.querySelector('.dashboard-card--history')?.textContent ?? '');
-            record(`${label}: el plan permanece en su fuente propia (historial, sin borrar información)`,
-                historyText.includes(SYN_PLAN_SAME), historyText.slice(0, 300));
+            // D1-A (#764): plan-only generates NO therapeutic history entry.
+            // The plan remains in its own provenance (FH artifact outside the
+            // ACTUAL block, asserted above), never as a Historial entry.
+            const historyText = await page.evaluate(() => ({
+                text: document.querySelector('.dashboard-card--history')?.textContent ?? '',
+                items: document.querySelectorAll('.dashboard-card--history .treatment-item').length,
+                extracted: (window.patientHistory?.treatmentHistory || []).map((t) => t.name)
+            }));
+            record(`${label}: D1-A el plan NO genera ninguna tarjeta/entrada de Historial`,
+                historyText.items === 0 && historyText.extracted.length === 0 &&
+                !historyText.text.includes(SYN_PLAN_SAME),
+                JSON.stringify(historyText));
+            record(`${label}: D1-A el Historial muestra el mensaje honesto sin historial`,
+                historyText.text.includes('No hay historial de tratamientos previos.'), historyText.text.slice(0, 300));
             // The real CSV export shares the table projection (one
             // authority); its Tratamiento column must carry the neutral
             // placeholder, not the plan.
@@ -952,6 +983,23 @@ async function runProvenanceWitnessJourney(browser, mode) {
             record(`${label}: tabla de visitas muestra el actual explícito`,
                 shown.tableCells.length === 1 && shown.tableCells[0] === SYN_PLAN_SAME,
                 JSON.stringify(shown.tableCells));
+            // D1 (#764): the physical row (no Fecha_Inicio_Tratamiento) yields
+            // exactly one neutral 'Registrado' history entry with NO start
+            // date — never the visit date, never the clock.
+            const historyEntry = await page.evaluate(() => ({
+                text: [...document.querySelectorAll('.dashboard-card--history .treatment-item')]
+                    .map((item) => item.textContent.trim()),
+                extracted: (window.patientHistory?.treatmentHistory || [])
+            }));
+            record(`${label}: D1 historia muestra el fármaco físico como entrada neutral 'Registrado'`,
+                historyEntry.text.length === 1 && historyEntry.text[0].includes(SYN_PLAN_SAME) &&
+                historyEntry.text[0].includes('Registrado') && !historyEntry.text[0].includes('Activo') &&
+                historyEntry.extracted[0]?.status === 'registrado',
+                JSON.stringify(historyEntry));
+            record(`${label}: D1 historia sin fecha de inicio inventada (sin fecha de visita ni reloj)`,
+                historyEntry.text.length === 1 && !/\d{2}\/\d{2}\/\d{4}/.test(historyEntry.text[0]) &&
+                historyEntry.extracted[0]?.startDate === '',
+                JSON.stringify(historyEntry));
         }
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
@@ -1074,6 +1122,18 @@ async function runAccreditedActualJourney(browser, patientId) {
                     !shown.kpiStatus.startsWith('Desde') && !JSON.stringify(shown).includes(contradictoryDate),
                     JSON.stringify({ shown, contradictoryDate }));
             }
+            // D1-D (#764): the literal 'No' physical value is a negation,
+            // not a drug — it must not become a Historial medication entry
+            // nor generate any active state there.
+            const historyNo = await page.evaluate(() => ({
+                text: document.querySelector('.dashboard-card--history')?.textContent ?? '',
+                items: document.querySelectorAll('.dashboard-card--history .treatment-item').length,
+                extracted: (window.patientHistory?.treatmentHistory || []).map((t) => t.name)
+            }));
+            record(`${label}: D1-D el literal «No» no aparece como medicamento del Historial ni genera estado activo`,
+                historyNo.items === 0 && historyNo.extracted.length === 0 &&
+                historyNo.text.includes('No hay historial de tratamientos previos.'),
+                JSON.stringify(historyNo));
         }
         record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
         record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
@@ -1123,6 +1183,37 @@ async function runMultivisitaTruthJourney(browser) {
         record(`${label}: tabla de visitas muestra ambas filas físicas (ACT-B y PREV-A), ninguna sustituida`,
             shown.tableCells.length === 2 && shown.tableCells.includes('ACT-B') && shown.tableCells.includes('PREV-A'), JSON.stringify(shown.tableCells));
 
+        // D1-B (#764): the Historial card carries exactly the two physical
+        // treatments as neutral 'Registrado' entries with their own explicit
+        // start dates — never the visit dates, never 'Activo', never an
+        // inferred entry from any plan alias.
+        const history = await page.evaluate(() => {
+            const items = [...document.querySelectorAll('.dashboard-card--history .treatment-item')];
+            return {
+                text: items.map((item) => item.textContent.trim()),
+                extracted: (window.patientHistory?.treatmentHistory || []).map((t) => ({
+                    name: t.name, startDate: t.startDate, status: t.status
+                })),
+                prevStart: window.formatDate('2026-01-05'),
+                actStart: window.formatDate('2026-03-05'),
+                prevVisitDate: window.formatDate('2026-01-10'),
+                actVisitDate: window.formatDate('2026-03-10')
+            };
+        });
+        record(`${label}: D1-B Historial con exactamente las dos entradas físicas (ACT-B y PREV-A)`,
+            history.text.length === 2 && history.text[0].includes('ACT-B') && history.text[1].includes('PREV-A') &&
+            history.extracted.map((t) => t.name).sort().join(',') === 'ACT-B,PREV-A',
+            JSON.stringify(history));
+        record(`${label}: D1-B ambas entradas en estado neutral 'Registrado', ninguna etiquetada Activo/Suspendido`,
+            history.text.every((text) => text.includes('Registrado') && !text.includes('Activo') && !text.includes('Suspendido')) &&
+            history.extracted.every((t) => t.status === 'registrado'),
+            JSON.stringify(history));
+        record(`${label}: D1-B fechas de inicio físicas preservadas (2026-01-05 / 2026-03-05), nunca fecha de visita ni actual`,
+            history.text[0].includes(history.actStart) && history.text[1].includes(history.prevStart) &&
+            !history.text.join(' ').includes(history.actVisitDate) && !history.text.join(' ').includes(history.prevVisitDate) &&
+            history.extracted.every((t) => ['2026-03-05', '2026-01-05'].includes(t.startDate)),
+            JSON.stringify(history));
+
         await page.click('#btnSeguimiento');
         await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
         await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
@@ -1148,6 +1239,49 @@ async function runMultivisitaTruthJourney(browser) {
     }
 }
 
+/**
+ * D1-C (#764) plan-change journey (browser, real supported route only).
+ * SYN-DASH-D13 carries TWO plan-only visits (Plan sintetico C1 → C2) with
+ * NO physical Tratamiento_Actual column: no inferred therapeutic history
+ * may be generated, and the real rendered chart (its BASDAI values keep it
+ * alive) must carry no treatmentHistory-derived drug marker (Tx:/Bio:/Susp:)
+ * for the plans. Annotation keys are namespaced: the treatmentHistory
+ * builder emits 'treatment_…' while the independent events pipeline emits
+ * 'event_…' (untouched by D1). READ only; no DOM mutation, no fixtures.
+ */
+async function runPlanChangeHistoryJourney(browser) {
+    const label = 'D1-C dashboard dos planes sin Tratamiento_Actual: sin historial inferido';
+    const patientId = 'SYN-DASH-D13';
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.activityChartInstance && !!window.patientSummary?.idPaciente,
+            null, { timeout: 15000 });
+        const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
+        record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
+        const shown = await page.evaluate(() => ({
+            text: document.querySelector('.dashboard-card--history')?.textContent ?? '',
+            items: document.querySelectorAll('.dashboard-card--history .treatment-item').length,
+            extracted: (window.patientHistory?.treatmentHistory || []).map((t) => t.name),
+            chartReady: !!window.activityChartInstance,
+            annotationKeys: Object.keys(window.activityChartInstance?.options?.plugins?.annotation?.annotations || {})
+        }));
+        record(`${label}: D1-C ningún historial terapéutico inferido de los dos planes`,
+            shown.items === 0 && shown.extracted.length === 0 &&
+            shown.text.includes('No hay historial de tratamientos previos.') &&
+            !shown.text.includes('Plan sintetico C1') && !shown.text.includes('Plan sintetico C2'),
+            JSON.stringify(shown));
+        record(`${label}: D1-C el gráfico real no genera marcador treatment_/Tx:/Bio:/Susp: derivado de los planes`,
+            shown.chartReady && shown.annotationKeys.every((key) => !key.startsWith('treatment_')),
+            JSON.stringify(shown));
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
 let browser;
 try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
@@ -1163,6 +1297,7 @@ try {
     await runAccreditedActualJourney(browser, 'SYN-DASH-D10');
     await runAccreditedActualJourney(browser, 'SYN-DASH-D11');
     await runMultivisitaTruthJourney(browser);
+    await runPlanChangeHistoryJourney(browser);
 } finally {
     if (browser) await browser.close();
     server.close();
