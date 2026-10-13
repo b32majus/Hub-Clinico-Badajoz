@@ -23,7 +23,7 @@ The NaN provider ID `nan/deepseek-v4-flash` is intentionally retained even when 
 ## Routing dimensions
 
 ```text
-cost_policy = standard | free_only | go
+cost_policy = standard | free_only | go | openai_experimental (explicit human opt-in)
 risk_class  = volume | complex
 ```
 
@@ -41,6 +41,22 @@ Human/project authority owns cost policy. Cora recommends risk class from accept
 `free_only` is an Atenea upstream cost dimension but is **not bound as local Nexus agents**; the table preserves upstream role names as provenance, not a callable fallback. Adding that route requires separate human-approved configuration.
 
 Go bindings: the **locally readable**, bounded `docs/ATENEA_GO_PROFILE_V0.md` plus the exact `.opencode/agents/*go*.md` frontmatter. Go Volume/Complex are operationally qualified in Atenea C-087 for routine bounded work, **not** a Standard parity claim; no silent fallback.
+
+## OpenAI experimental opt-in (Atenea C-087, unqualified)
+
+**Source authority:** `b32majus/Atenea/main@5abad2c4cc450c0824d6019dc5257b17a0ffe66b`, `docs/ATENEA_OPENAI_EXPERIMENTAL_PROFILE_V0.md`. These exact nine `.opencode/agents/atenea-*openai*.md` project-local files were reused from the previously prepared worktree, without changing their content. **EXPERIMENTAL / HUMAN OPT-IN only**, at a new authorized work-unit boundary; no switching ongoing sessions, no silent fallback, no replacement of `standard`, `free_only`, `go` or `default_agent`.
+
+| Role | Sprint — volume | Frontier — complex |
+| --- | --- | --- |
+| primary coordinator | `atenea-openai-sprint` → `nan/mimo-v2.6-flash` | `atenea-openai-frontier` → `nan/mimo-v2.6-flash` |
+| explorer | existing `atenea-explorer` → `nan/qwen3.8-flash` | same |
+| implementer | `atenea-implementer-openai-sprint` → `openai/gpt-6-luna#high` | `atenea-implementer-openai-frontier` → `openai/gpt-6.1-sol#high` |
+| Standards (read-only) | `atenea-review-standards-openai-sprint` → `nan/deepseek-v4-flash` | `atenea-review-standards-openai-frontier` → `nan/glm5.3-flash#high` |
+| Spec (read-only) | `atenea-review-spec-openai-sprint` → `openai/gpt-6.1-sol#high` | `atenea-review-spec-openai-frontier` → `openai/gpt-6-luna#high` |
+| fresh corrector | `atenea-corrector-openai` → `openai/gpt-6.1-sol#high` | same |
+| merger (/implement-spec only) | existing `atenea-merger` → `nan/mimo-v2.6-flash` | same |
+
+Keep C-087 Matt lifecycle and per-finding correction budget unchanged. Select one visible primary explicitly on a new authorized work unit; authenticate both providers first. Model catalog entries alone do **not** guarantee generation/quota success. If a provider, model binding, permission, or quota is unavailable, HUMAN STOP rather than fall back or change models. No clinical data, production access, synthetic campaigns, or changes to running Trains.
 
 ## Risk selection
 
