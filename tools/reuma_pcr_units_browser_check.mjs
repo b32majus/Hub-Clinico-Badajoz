@@ -165,11 +165,6 @@ const server = createServer((req, res) => {
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
 
-// Independent recomputation of the published ASDAS formula (oracle).
-function expectedASDASCRP(dolor, rigidez, eva, p3, pcrMgL) {
-  return ((0.121 * dolor) + (0.058 * rigidez) + (0.110 * eva) + (0.073 * p3) + (0.579 * Math.log(pcrMgL + 1))).toFixed(2);
-}
-
 async function openPage(browser, pagePath) {
   const context = await passSupportedGate(browser);
   const page = await context.newPage();
@@ -223,7 +218,7 @@ async function openAncestorCollapsibles(page, selector) {
 
 // EspA pass: ASDAS-CRP is EspA-only (T1 #513 / ledger 3.2 #5), so every ASDAS
 // scenario must run under `espa`. The DAPSA scenarios live in the APs pass.
-async function runEspaSuite(label, pagePath) {
+async function runEspaSuite(label, pagePath, collectFnName) {
   console.log(`\n=== ${label} (${pagePath}) — EspA / ASDAS ===`);
   const { context, page, consoleErrors, pageErrors } = await openPage(browser, pagePath);
 
@@ -271,7 +266,7 @@ async function runEspaSuite(label, pagePath) {
     // Elección explícita de unidad por el select soportado: mg/L no requiere conversión.
     await page.selectOption('#pcrUnit', 'mg/L');
     await page.waitForTimeout(120);
-    const esperado = expectedASDASCRP(3, 2, 4, 7, 30);
+    const esperado = '3.42'; // Oráculo clínico literal H1 C06; no fórmula circular.
     const s1Score = await page.locator('#asdasCrpResult').inputValue();
     record(`S1 ${label}: sin conversión (30 mg/L) => ASDAS-CRP ${esperado}`, s1Score === esperado, `obtenido '${s1Score}'`);
     const s1NoteHidden = await page.locator('#asdasPcrConversionNote').isHidden();
@@ -302,6 +297,53 @@ async function runEspaSuite(label, pagePath) {
       `asdas='${s5NoteA}'`);
     const s5Mirror = await page.locator('#asdasPcrUnitMirror').textContent();
     record('S5: espejo de unidad muestra estado sin unidad', s5Mirror.includes('unidad no informada'), `mirror='${s5Mirror}'`);
+
+    // H2: recorrido soportado PCR baja/cero/conversión y límites fail-closed.
+    // Se editan únicamente fuentes reales, nunca espejos readonly ni DOM.
+    if (!await openAncestorCollapsibles(page, '#vsgValue')) {
+      throw new Error('no fue posible hacer visible VSG mediante interacción soportada');
+    }
+    await fill('#vsgValue', '20');
+    await fill('#basdaiP3', '1');
+    for (const [id, pcr, unit, crp, category] of [
+      ['C03', '1', 'mg/L', '1.63', 'Baja Actividad'],
+      ['C04', '0', 'mg/L', '1.63', 'Baja Actividad'],
+      ['C05', '0.1', 'mg/dL', '1.63', 'Baja Actividad'],
+      ['C01', '30', 'mg/L', '2.98', 'Actividad Moderada'],
+      ['C02', '3', 'mg/dL', '2.98', 'Actividad Moderada'],
+      ['C08', '', 'mg/L', '', 'N/A'],
+      ['C10', '30', '', '', 'N/A']
+    ]) {
+      await page.selectOption('#pcrUnit', unit);
+      await fill('#pcrValue', pcr);
+      const actualCrp = await page.locator('#asdasCrpResult').inputValue();
+      const actualEsr = await page.locator('#asdasEsrResult').inputValue();
+      const actualCategory = await page.locator('#asdasCrpCategoria').textContent();
+      record(`H2 ${id} ${label}: PCR '${pcr}' ${unit || 'sin unidad'} => CRP '${crp}', VSG 2.21 provisional`,
+        actualCrp === crp && actualEsr === '2.21', `CRP='${actualCrp}', VSG='${actualEsr}'`);
+      record(`H2 ${id}: categoría CRP ${category}`, actualCategory === category, `categoría='${actualCategory}'`);
+      const source = await page.locator('#asdasPCR').inputValue();
+      const sourceInput = await page.locator('#pcrValue').inputValue();
+      const sourceUnit = await page.locator('#pcrUnit').inputValue();
+      const mirror = await page.locator('#asdasPcrUnitMirror').textContent();
+      record(`H2 ${id}: fuente/unidad visibles preservadas (sin piso en la muestra)`,
+        source === pcr && sourceInput === pcr && sourceUnit === unit && mirror.includes(unit || 'unidad no informada'),
+        JSON.stringify({ source, sourceInput, sourceUnit, mirror }));
+      const collected = await page.evaluate((fnName) => {
+        const datos = HubTools.form[fnName]();
+        return { pcr: datos.pcr, pcrUnit: datos.pcrUnit, basdaiP3: datos.basdaiP3,
+          asdasCrpResult: datos.asdasCrpResult, asdasEsrResult: datos.asdasEsrResult };
+      }, collectFnName);
+      record(`H2 ${id}: recopilado preserva fuente/unidad y resultados`,
+        collected.pcr === pcr && collected.pcrUnit === unit && collected.basdaiP3 === '1' &&
+        collected.asdasCrpResult === crp && collected.asdasEsrResult === '2.21', JSON.stringify(collected));
+      const note = await page.locator('#asdasPcrConversionNote').textContent();
+      const noteVisible = await page.locator('#asdasPcrConversionNote').isVisible();
+      const noteOk = unit === 'mg/dL'
+        ? noteVisible && note.includes('mg/dL') && note.includes('mg/L') && note.includes('Valor fuente preservado')
+        : (id === 'C10' ? noteVisible && note.includes('fallo seguro') : !noteVisible);
+      record(`H2 ${id}: nota de conversión/fallo seguro coherente`, noteOk, `visible=${noteVisible}, nota='${note}'`);
+    }
 
     // S7 — Console/page errors.
     record(`S7 ${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
@@ -392,9 +434,9 @@ async function runApsSuite(label, pagePath, collectFnName) {
 let browser;
 try {
   browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
-  await runEspaSuite('primera_visita', 'primera_visita.html');
+  await runEspaSuite('primera_visita', 'primera_visita.html', 'recopilarDatosFormulario');
   await runApsSuite('primera_visita', 'primera_visita.html', 'recopilarDatosFormulario');
-  await runEspaSuite('seguimiento', 'seguimiento.html');
+  await runEspaSuite('seguimiento', 'seguimiento.html', 'recopilarDatosFormularioSeguimiento');
   await runApsSuite('seguimiento', 'seguimiento.html', 'recopilarDatosFormularioSeguimiento');
 } catch (err) {
   console.error('ENVIRONMENT FAILURE: ' + err.message);

@@ -8,7 +8,7 @@
  * asserts the frozen unit contract:
  *   1. Physical equivalence mg/L <-> mg/dL in both directions (1 mg/dL == 10 mg/L).
  *   2. The same explicit clinical case expressed in equivalent units produces
- *      the same score (expected values recomputed independently here from the
+ *      the same score (ASDAS uses literal clinical oracles; other scores use
  *      published formula constants; the oracle can disagree).
  *   3. Unknown/absent unit produces NO silent score (fail-closed per calculator;
  *      no magnitude inference).
@@ -46,10 +46,7 @@ function record(name, fn) {
   }
 }
 
-// Independent recomputation of the published formulas (acceptance oracle).
-function expectedASDASCRP(dolor, rigidez, eva, p3, pcrMgL) {
-  return (0.121 * dolor) + (0.058 * rigidez) + (0.110 * eva) + (0.073 * p3) + (0.579 * Math.log(pcrMgL + 1));
-}
+// ASDAS uses literal clinical oracles; other published formulas remain unchanged.
 function expectedDAS28CRP(nad28, nat28, eva, pcrMgL) {
   return (0.56 * Math.sqrt(nad28)) + (0.28 * Math.sqrt(nat28)) + (0.36 * Math.log(pcrMgL + 1)) + (0.014 * eva) + 0.96;
 }
@@ -96,6 +93,41 @@ record('normalización tolerante de unidad (espacios/caso)', () => {
 });
 
 console.log('2. Mismo caso clínico explícito en unidades equivalentes => mismo score');
+// WO H2 / matriz clínica aprobada: Q2=3, Q6=2, Global=4, P3=1.
+// El oráculo NO vuelve a calcular el logaritmo ni deriva resultados del módulo.
+for (const [id, pcr, unit, esperado, mgL] of [
+  ['C03', '1', 'mg/L', '1.63', 1],
+  ['C04', '0', 'mg/L', '1.63', 0],
+  ['C05', '0.1', 'mg/dL', '1.63', 1],
+  ['C01', '30', 'mg/L', '2.98', 30],
+  ['C02', '3', 'mg/dL', '2.98', 30],
+  ['C08', '', 'mg/L', '', null],
+  ['C10', '30', '', '', null]
+]) {
+  record(`H2 ${id}: PCR '${pcr}' ${unit || 'sin unidad'} => CRP '${esperado}', fuente intacta y VSG independiente`, () => {
+    const datos = {
+      asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
+      basdaiP3: '1', asdasPCR: pcr, asdasPCRUnit: unit, asdasVSG: '20'
+    };
+    const snapshot = JSON.stringify(datos);
+    const r = S.calcularASDAS(datos);
+    assert.equal(r.asdasCRP, esperado);
+    assert.equal(r.asdasESR, '2.21'); // Fórmula vigente; precisión reservada H3.
+    assert.equal(JSON.stringify(datos), snapshot);
+    if (mgL !== null) {
+      assert.equal(resolver(pcr, unit, 'mg/L', 'ASDAS-CRP').value, mgL, 'el resolver no aplica el piso');
+      assert.equal(r.pcrConversion.ok, true);
+      assert.equal(r.pcrConversion.converted, unit === 'mg/dL');
+      assert.equal(r.pcrConversion.sourceUnit, unit);
+      assert.equal(r.pcrConversion.expectedUnit, 'mg/L');
+    } else if (id === 'C08') {
+      assert.equal(r.pcrConversion, null);
+    } else {
+      assert.equal(r.pcrConversion.ok, false);
+      assert.equal(r.pcrConversion.reason, 'PCR_UNIDAD_ORIGEN_DESCONOCIDA');
+    }
+  });
+}
 record('H1 C06: BASDAI P3=7 distinto de NAD=1 => CRP 3.42 / VSG 2.75 provisional', () => {
   const datos = {
     asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
@@ -157,7 +189,7 @@ function asdasDatos(pcr, unit) {
 record('ASDAS-CRP: 30 mg/L y 3 mg/dL producen el mismo score y el esperado', () => {
   const a = S.calcularASDAS(asdasDatos('30', 'mg/L'));
   const b = S.calcularASDAS(asdasDatos('3', 'mg/dL'));
-  const esperado = expectedASDASCRP(casoASDAS.dolor, casoASDAS.rigidez, casoASDAS.eva, casoASDAS.p3, 30).toFixed(2);
+  const esperado = '3.27'; // Caso existente Q2=3/Q6=2/Global=4/P3=5/PCR=30.
   assert.equal(a.asdasCRP, esperado);
   assert.equal(b.asdasCRP, esperado);
   assert.equal(a.pcrConversion.converted, false);
@@ -284,7 +316,7 @@ record('ASDAS: fuente mg/dL convertida a mg/L sin mutar el origen', () => {
   assert.equal(datos.asdasPCR, '3');
   assert.equal(r.pcrConversion.converted, true);
   assert.equal(r.pcrConversion.sourceUnit, 'mg/dL');
-  assert.equal(r.asdasCRP, expectedASDASCRP(3, 2, 4, 5, 30).toFixed(2));
+  assert.equal(r.asdasCRP, '3.27');
 });
 
 console.log('5. Calculadoras sin PCR: sin regresión');

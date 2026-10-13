@@ -152,7 +152,7 @@ function calcularASDAS(datos) {
         pcrConversion = resumenConversionPcr(resolucion);
         if (resolucion.ok) {
             asdasCRP = formatFixed(
-                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * dolorPeriferico) + (0.579 * Math.log(resolucion.value + 1)),
+                (0.121 * dolorEspalda) + (0.058 * duracionRigidez) + (0.110 * evaGlobal) + (0.073 * dolorPeriferico) + (0.579 * Math.log(Math.max(2, resolucion.value) + 1)),
                 2
             );
         }
