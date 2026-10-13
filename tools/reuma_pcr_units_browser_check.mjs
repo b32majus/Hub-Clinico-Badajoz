@@ -166,8 +166,8 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
 
 // Independent recomputation of the published ASDAS formula (oracle).
-function expectedASDASCRP(dolor, rigidez, eva, nad, pcrMgL) {
-  return ((0.121 * dolor) + (0.058 * rigidez) + (0.110 * eva) + (0.073 * nad) + (0.579 * Math.log(pcrMgL + 1))).toFixed(2);
+function expectedASDASCRP(dolor, rigidez, eva, p3, pcrMgL) {
+  return ((0.121 * dolor) + (0.058 * rigidez) + (0.110 * eva) + (0.073 * p3) + (0.579 * Math.log(pcrMgL + 1))).toFixed(2);
 }
 
 async function openPage(browser, pagePath) {
@@ -231,7 +231,7 @@ async function runEspaSuite(label, pagePath) {
     // Supported interaction: adapt the form to EspA (ASDAS surface).
     await page.selectOption('#diagnosticoPrimario', 'espa');
     await page.waitForTimeout(300);
-    for (const sel of ['#pcrValue', '#asdasCrpResult', '.homunculus-svg-wrapper']) {
+    for (const sel of ['#pcrValue', '#asdasCrpResult', '#basdaiP3', '.homunculus-svg-wrapper']) {
       const visible = await openAncestorCollapsibles(page, sel);
       if (!visible) throw new Error(`no fue posible hacer visible ${sel} mediante interacción soportada`);
     }
@@ -254,6 +254,7 @@ async function runEspaSuite(label, pagePath) {
     await fill('#pcrValue', '30');
     await fill('#asdasDolorEspalda', '3');
     await fill('#asdasDuracionRigidez', '2');
+    await fill('#basdaiP3', '7'); // H1: Q3 subjetiva, distinta de NAD=1.
     // T2 #514: #asdasEvaGlobal es readonly; la interacción soportada es capturar
     // la EVA Global del paciente en su campo fuente.
     await fill('#evaGlobal', '4');
@@ -270,7 +271,7 @@ async function runEspaSuite(label, pagePath) {
     // Elección explícita de unidad por el select soportado: mg/L no requiere conversión.
     await page.selectOption('#pcrUnit', 'mg/L');
     await page.waitForTimeout(120);
-    const esperado = expectedASDASCRP(3, 2, 4, 1, 30);
+    const esperado = expectedASDASCRP(3, 2, 4, 7, 30);
     const s1Score = await page.locator('#asdasCrpResult').inputValue();
     record(`S1 ${label}: sin conversión (30 mg/L) => ASDAS-CRP ${esperado}`, s1Score === esperado, `obtenido '${s1Score}'`);
     const s1NoteHidden = await page.locator('#asdasPcrConversionNote').isHidden();

@@ -73,15 +73,15 @@ const WATCHED_IDS = [
   'asdasSection', 'asdasEsrSection', 'dapsaSection', 'mdaSection', 'rapid3Section', 'basdaiSection',
   'evaGlobal', 'evaDolor', 'asdasEvaGlobal', 'diagnosticoPrimario',
   'asdasCrpResult', 'asdasEsrResult', 'asdasCrpCategoria', 'asdasEsrCategoria',
-  'asdasPCR', 'asdasVSG', 'asdasNAD', 'asdasNAT', 'asdasDolorEspalda', 'asdasDuracionRigidez',
+  'asdasPCR', 'asdasVSG', 'asdasNAD', 'asdasNAT', 'asdasDolorEspalda', 'asdasDuracionRigidez', 'basdaiP3',
   'pcrValue', 'pcrUnit', 'vsgValue', 'dapsaResult', 'dapsaCategoria',
   'dapsaNAD68', 'dapsaNAT66', 'dapsaEvaDolorPaciente', 'dapsaEvaGlobalPaciente', 'dapsaPCR',
   'asdasPcrConversionNote', 'dapsaPcrConversionNote'
 ];
 
-// Frozen literals (independent recomputation of the published formulas).
-const ASDAS_CRP_EVA4 = ((0.121 * 3) + (0.058 * 2) + (0.110 * 4) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
-const ASDAS_CRP_EVA0 = ((0.121 * 3) + (0.058 * 2) + (0.110 * 0) + (0.073 * 1) + (0.579 * Math.log(31))).toFixed(2);
+// H1 #756: Q3=P3=7, distinto de NAD=1; expectativas ASDAS aprobadas.
+const ASDAS_CRP_EVA4 = '3.42';
+const ASDAS_CRP_EVA0 = '2.98';
 const APS_DAPSA_TOTAL = (1 + 1 + 2 + 4 + 3).toFixed(1);
 
 // Legacy 497 layout: ASDAS block occupies columns 156-160 and the EVA mirror
@@ -331,6 +331,7 @@ function setEspaAsdasInputs(doc) {
   setSource(doc, 'asdasDolorEspalda', '3');
   setSource(doc, 'asdasDuracionRigidez', '2');
   setSource(doc, 'asdasNAD', '1');
+  setSource(doc, 'basdaiP3', '7');
 }
 
 console.log('\nB. Comportamiento del wiring real (sandbox vm, HTML + módulos reales)');
@@ -395,7 +396,7 @@ for (const page of PAGES) {
     const mEspa = mirror(doc);
     record(`B3 ${page} APs -> EspA reutiliza EVA Global=4 sin reentrada (espejo '4')`,
       mEspa === '4', `mirror='${mEspa}'`);
-    const untouched = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD']
+    const untouched = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD', 'basdaiP3']
       .map((id) => doc.getElementById(id).value);
     record(`B3 ${page} entradas ASDAS intactas tras el cambio (sin reentrada)`,
       untouched.every((v) => v === ''), JSON.stringify(untouched));

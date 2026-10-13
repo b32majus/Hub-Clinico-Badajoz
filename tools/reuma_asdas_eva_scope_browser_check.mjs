@@ -106,8 +106,8 @@ function record(name, pass, detail) {
   console.log(`  [${pass ? 'OK ' : 'FAIL'}] ${name}${pass ? '' : ` -> ${detail}`}`);
 }
 
-function asdascrp(d, r, e, n, p) {
-  return ((0.121 * d) + (0.058 * r) + (0.110 * e) + (0.073 * n) + (0.579 * Math.log(p + 1))).toFixed(2);
+function asdascrp(d, r, e, p3, p) {
+  return ((0.121 * d) + (0.058 * r) + (0.110 * e) + (0.073 * p3) + (0.579 * Math.log(p + 1))).toFixed(2);
 }
 
 async function gate(browser) {
@@ -269,9 +269,12 @@ async function runPage(browser, pagePath) {
     await fill(page, '#pcrValue', '30');
     await fill(page, '#asdasDolorEspalda', '3');
     await fill(page, '#asdasDuracionRigidez', '2');
+    const p3Info = await openCollapsibles(page, '#basdaiP3');
+    if (!p3Info.hit) throw new Error('no fue posible hacer visible #basdaiP3 mediante interacción soportada');
+    await fill(page, '#basdaiP3', '7'); // H1: Q3 subjetiva, distinta de NAD=1.
     await markHomunculus(page, 'nad', 'hombro-derecho');
     const crpEspa = await page.locator('#asdasCrpResult').inputValue();
-    const esperado = asdascrp(3, 2, 4, 1, 30);
+    const esperado = asdascrp(3, 2, 4, 7, 30);
     record(`(4) ${pagePath} ASDAS-CRP '${esperado}' alimentado por el espejo reutilizado`,
       crpEspa === esperado, `crp='${crpEspa}', esperado='${esperado}'`);
 

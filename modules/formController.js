@@ -2529,7 +2529,7 @@ function initScoreWiring() {
     // --- 3. AUTO-CÁLCULO ASDAS ---
     // #asdasEvaGlobal ya no está aquí: es readonly y su valor lo gobierna
     // #evaGlobal (fuente única, T2 #514).
-    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'asdasNAD'];
+    var asdasInputIds = ['asdasDolorEspalda', 'asdasDuracionRigidez', 'basdaiP3'];
     asdasInputIds.forEach(function (id) {
         var el = document.getElementById(id);
         if (el) {
@@ -2589,7 +2589,7 @@ function initScoreWiring() {
             asdasDolorEspalda: getFormValue('asdasDolorEspalda'),
             asdasDuracionRigidez: getFormValue('asdasDuracionRigidez'),
             asdasEvaGlobal: getFormValue('asdasEvaGlobal'),
-            asdasNAD: getFormValue('asdasNAD'),
+            basdaiP3: getFormValue('basdaiP3'),
             asdasPCR: getFormValue('asdasPCR'),
             asdasPCRUnit: getPcrSourceUnit(),
             asdasVSG: getFormValue('asdasVSG')

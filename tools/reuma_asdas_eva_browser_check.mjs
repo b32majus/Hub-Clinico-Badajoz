@@ -21,6 +21,9 @@
  *   (d) #asdasEvaGlobal is genuinely readonly in the browser (a typing attempt
  *       is refused by the control; the attempt is wrapped so it cannot fake it).
  *   (e) APs still shows no ASDAS and computes no ASDAS-CRP/ESR.
+ *   H1 #756: P3 typing recalculates both ASDAS scores independently of NAD;
+ *       C06 P3=7/NAD=1 => 3.42/2.75 (ESR provisional until H3),
+ *       C11 absent P3 => both empty; explicit P3=0 is valid.
  *   S7 console.error === 0 and pageerror === 0 on both pages.
  *
  * This check is NOT part of `verify:nexus` (browser dependency); it is the
@@ -149,8 +152,8 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
 
 // Independent recomputation of the published ASDAS formula (oracle).
-function asdascrp(d, r, e, n, p) {
-  return ((0.121 * d) + (0.058 * r) + (0.110 * e) + (0.073 * n) + (0.579 * Math.log(p + 1))).toFixed(2);
+function asdascrp(d, r, e, p3, p) {
+  return ((0.121 * d) + (0.058 * r) + (0.110 * e) + (0.073 * p3) + (0.579 * Math.log(p + 1))).toFixed(2);
 }
 
 async function isReallyHitTestable(page, selector) {
@@ -201,7 +204,7 @@ async function runPage(label, pagePath) {
     await page.goto(`${baseUrl}/${pagePath}`, { waitUntil: 'domcontentloaded' });
     await page.selectOption('#diagnosticoPrimario', 'espa');
     await page.waitForTimeout(300);
-    for (const sel of ['#evaGlobal', '#asdasCrpResult', '.homunculus-svg-wrapper']) {
+    for (const sel of ['#evaGlobal', '#asdasCrpResult', '#basdaiP3', '.homunculus-svg-wrapper']) {
       const visible = await openAncestorCollapsibles(page, sel);
       if (!visible) throw new Error(`no fue posible hacer visible ${sel} mediante interacción soportada`);
     }
@@ -217,6 +220,7 @@ async function runPage(label, pagePath) {
     await fill('#pcrValue', '30');
     await fill('#asdasDolorEspalda', '3');
     await fill('#asdasDuracionRigidez', '2');
+    await fill('#basdaiP3', '1');
     await page.locator('.homunculus-mode-btn[data-mode="nad"]').click();
     await page.locator('[data-region-id="hombro-derecho"]').first().click();
     await page.waitForTimeout(150);
@@ -254,6 +258,57 @@ async function runPage(label, pagePath) {
     const esperado0 = asdascrp(3, 2, 0, 1, 30);
     record(`(c) ${label}: EVA Global=0 => ASDAS-CRP '${crp0}' (esperado ${esperado0}, distinto de vacío)`,
       crp0 === esperado0 && crp0 !== '', `crp='${crp0}'`);
+
+    // H1: change only Q3 after the other sources are complete. No homunculus
+    // event may be needed for this typed input to recalculate ASDAS.
+    await fill('#evaGlobal', '4');
+    await fill('#vsgValue', '20');
+    const scores = async () => ({
+      crp: await page.locator('#asdasCrpResult').inputValue(),
+      esr: await page.locator('#asdasEsrResult').inputValue(),
+      nad: await page.locator('#asdasNAD').inputValue(),
+      p3: await page.locator('#basdaiP3').inputValue(),
+      crpCategory: await page.locator('#asdasCrpCategoria').textContent(),
+      esrCategory: await page.locator('#asdasEsrCategoria').textContent()
+    });
+    const beforeP3 = await scores();
+    await fill('#basdaiP3', '7');
+    const c06 = await scores();
+    record(`H1 C06 ${label}: teclear P3=7/NAD=1 => CRP '${c06.crp}' / VSG '${c06.esr}' (3.42/2.75 provisional)`,
+      c06.p3 === '7' && c06.nad === '1' && beforeP3.nad === '1' &&
+      beforeP3.crp === '2.98' && beforeP3.esr === '2.21' &&
+      c06.crp === '3.42' && c06.esr === '2.75' &&
+      c06.crpCategory === 'Actividad Moderada' && c06.esrCategory === 'Actividad Moderada',
+      JSON.stringify({ beforeP3, c06 }));
+
+    await page.locator('.homunculus-mode-btn[data-mode="nad"]').click();
+    await page.locator('[data-region-id="hombro-izquierdo"]').first().click();
+    await page.waitForTimeout(150);
+    const nad2 = await scores();
+    record(`H1 ${label}: cambiar NAD a '${nad2.nad}' con P3=7 no cambia ASDAS`,
+      nad2.nad === '2' && nad2.p3 === '7' && nad2.crp === '3.42' && nad2.esr === '2.75',
+      JSON.stringify(nad2));
+    await page.locator('[data-region-id="hombro-izquierdo"]').first().click();
+    await page.waitForTimeout(150);
+
+    await fill('#basdaiP3', '');
+    const c11 = await scores();
+    record(`H1 C11 ${label}: P3 ausente/NAD=1 => CRP '${c11.crp}' / VSG '${c11.esr}' (ambos vacíos)`,
+      c11.p3 === '' && c11.nad === '1' && c11.crp === '' && c11.esr === '' &&
+      c11.crpCategory === 'N/A' && c11.esrCategory === 'N/A', JSON.stringify(c11));
+
+    await fill('#basdaiP3', '0');
+    const p3Zero = await scores();
+    record(`H1 ${label}: P3=0/NAD=1 válido => CRP '${p3Zero.crp}' / VSG '${p3Zero.esr}' (2.91/2.12)`,
+      p3Zero.p3 === '0' && p3Zero.nad === '1' && p3Zero.crp === '2.91' && p3Zero.esr === '2.12',
+      JSON.stringify(p3Zero));
+
+    await fill('#basdaiP3', '10');
+    const p3Ten = await scores();
+    record(`H1 ${label}: P3=10 => CRP '${p3Ten.crp}' (${p3Ten.crpCategory}) / VSG '${p3Ten.esr}' (${p3Ten.esrCategory})`,
+      p3Ten.crp === '3.64' && p3Ten.esr === '3.02' &&
+      p3Ten.crpCategory === 'Actividad Alta' && p3Ten.esrCategory === 'Actividad Moderada',
+      JSON.stringify(p3Ten));
 
     // (e) APs still shows no ASDAS.
     await page.selectOption('#diagnosticoPrimario', 'aps');
