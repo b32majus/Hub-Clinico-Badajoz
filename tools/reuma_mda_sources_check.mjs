@@ -702,6 +702,7 @@ for (const page of PAGES) {
     setValue(doc, 'asdasDolorEspalda', '3');
     setValue(doc, 'asdasDuracionRigidez', '2');
     setValue(doc, 'asdasNAD', '1');
+    setValue(doc, 'basdaiP3', '1');
     setValue(doc, 'evaGlobal', '4');
     const crpEspa = doc.getElementById('asdasCrpResult').value;
     record(`C5 ${page} ASDAS-CRP EspA '2.98' con EVA Global 4 (T2 intacto)`,
