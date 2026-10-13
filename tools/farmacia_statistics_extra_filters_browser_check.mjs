@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // tools/farmacia_statistics_extra_filters_browser_check.mjs
-// TRAIN 31 (WO #768 U1) — focal browser oracle for the eighth quick filter
-// "Gravedad de EA registrada" (#qf-gravedad), contract #685 (closed).
+// TRAIN 31 (WO #768 U1 + WO #769 U2) — focal browser oracle for the eighth
+// quick filter "Gravedad de EA registrada" (#qf-gravedad, contract #685,
+// closed) and the ninth quick filter "Movimiento terapéutico registrado"
+// (#qf-movimiento, contract #686, closed).
 // Synthetic data only. Supported interactions only (selectOption/click on the
 // real controls, Inicio upload + statistics popup flow, download parsing).
 // No DOM forcing, no readonly tampering, no traps.
@@ -60,40 +62,52 @@ function fixture(name) {
 // adverse event (event-level fields in the v2 row contract):
 //   CIP-GRAV-01: two present EA, distinct physical events, BOTH 'Grave'
 //                → the patient must match the Grave filter ONCE.
+//                Two explicit 'schedule_change' movements (one per event)
+//                → the patient must match the movement filter ONCE too.
 //   CIP-GRAV-02: one present 'Grave' + one present 'Leve'
 //                → different severities enable different selections.
+//                One 'schedule_change' movement + one suspension declared
+//                ONLY via suspension_status:'yes' → two distinct types.
 //   CIP-GRAV-03: one ABSENT EA with severity 'Grave'
 //                → must NOT match Grave (status absent).
+//                A second absent event with a different brand name of the
+//                same molecule and NO explicit movement row: a brand change
+//                without an explicit act must never create a movement option
+//                nor match any movement type.
 //   CIP-GRAV-04: one present EA with EMPTY severity + one not_recorded EA
 //                with severity 'Moderado'
 //                → must NOT match Grave despite EA-presence; 'Moderado' must
 //                not become an option.
+//                One 'no_change_recorded' movement row + one row without
+//                movement data → no movement option at all.
 // Expected gravedad options: exactly ['Grave', 'Leve'].
+// Expected movimiento options (raw): exactly ['schedule_change', 'suspension'].
 const PATIENTS = [
     {
         suffix: 'G-01', cip: 'CIP-GRAV-01', serviceCode: 'DERM', serviceLabel: 'Dermatología',
         events: [
-            { key: 'a', status: 'present', severity: SEV_GRAVE },
-            { key: 'b', status: 'present', severity: SEV_GRAVE }
+            { key: 'a', status: 'present', severity: SEV_GRAVE, movement: { type: 'schedule_change' } },
+            { key: 'b', status: 'present', severity: SEV_GRAVE, movement: { type: 'schedule_change' } }
         ]
     },
     {
         suffix: 'G-02', cip: 'CIP-GRAV-02', serviceCode: 'DERM', serviceLabel: 'Dermatología',
         events: [
-            { key: 'a', status: 'present', severity: SEV_GRAVE },
-            { key: 'b', status: 'present', severity: SEV_LEVE }
+            { key: 'a', status: 'present', severity: SEV_GRAVE, movement: { type: 'schedule_change' } },
+            { key: 'b', status: 'present', severity: SEV_LEVE, movement: { suspension_status: 'yes' } }
         ]
     },
     {
         suffix: 'G-03', cip: 'CIP-GRAV-03', serviceCode: 'CARD', serviceLabel: 'Cardiología',
         events: [
-            { key: 'a', status: 'absent', severity: SEV_GRAVE }
+            { key: 'a', status: 'absent', severity: SEV_GRAVE },
+            { key: 'b', status: 'absent', severity: '', brandChange: true }
         ]
     },
     {
         suffix: 'G-04', cip: 'CIP-GRAV-04', serviceCode: 'DERM', serviceLabel: 'Dermatología',
         events: [
-            { key: 'a', status: 'present', severity: '' },
+            { key: 'a', status: 'present', severity: '', movement: { type: 'no_change_recorded' } },
             { key: 'b', status: 'not_recorded', severity: 'Moderado' }
         ]
     }
@@ -133,14 +147,15 @@ function workbookBuffer() {
                 is_primary_line: true,
                 line_status_at_event: 'active',
                 active_at_event: true,
-                line_drug_name: `Fármaco sintético ${patient.suffix}-${ae.key}`,
+                line_drug_name: ae.brandChange ? `Marca sintética B ${patient.suffix}` : `Fármaco sintético ${patient.suffix}-${ae.key}`,
                 line_active_ingredient: `Molécula sintética ${patient.suffix}`,
                 line_presentation: 'Presentación explícita',
                 line_dose_text: '10 mg',
                 line_route: 'SC',
                 line_schedule_code: 'Q14D',
                 line_schedule_label: 'Cada 14 días',
-                therapeutic_movement_type: 'not_recorded',
+                therapeutic_movement_type: (ae.movement && ae.movement.type) || 'not_recorded',
+                suspension_status: (ae.movement && ae.movement.suspension_status) || 'not_recorded',
                 adherence_collection_status: 'not_recorded'
             }));
             rows.push(...core.projectEventRows(followup.event, followup.rowPayloads));
@@ -231,6 +246,10 @@ async function gravedadOptions(page) {
     return page.locator('#qf-gravedad option').evaluateAll(options => options.map(option => option.value));
 }
 
+async function movimientoOptions(page) {
+    return page.locator('#qf-movimiento option').evaluateAll(options => options.map(option => option.value));
+}
+
 function resourceNoise(text) { return text.indexOf('Failed to load resource') !== -1; }
 
 async function filteredCount(page) {
@@ -268,13 +287,15 @@ try {
     await waitForMode(demo, 'demo', DEMO_COUNT);
 
     try {
-        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 8, 'eight quick-filter groups');
+        assert.equal(await demo.locator('.stats-quick-filter-group').count(), 9, 'nine quick-filter groups');
         assert.equal(await demo.locator('#qf-gravedad').getAttribute('data-quick-filter'), 'gravedad');
         assert.equal((await demo.locator('label[for="qf-gravedad"]').textContent()).trim(), 'Gravedad de EA registrada');
+        assert.equal(await demo.locator('#qf-movimiento').getAttribute('data-quick-filter'), 'movimiento');
+        assert.equal((await demo.locator('label[for="qf-movimiento"]').textContent()).trim(), 'Movimiento terapéutico registrado');
         const order = await demo.locator('.stats-quick-filter-select').evaluateAll(nodes => nodes.map(node => node.id));
-        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-gravedad'], 'control appended at the end');
-        ok('demo: eighth control present, labelled, appended last');
-    } catch (error) { bad('demo: eighth control present, labelled, appended last', error.message); }
+        assert.deepEqual(order, ['qf-servicio', 'qf-patologia', 'qf-farmaco', 'qf-estado', 'qf-ea', 'qf-adherencia', 'qf-principio', 'qf-gravedad', 'qf-movimiento'], 'controls appended at the end');
+        ok('demo: ninth control present, labelled, appended last');
+    } catch (error) { bad('demo: ninth control present, labelled, appended last', error.message); }
 
     try {
         const options = await gravedadOptions(demo);
@@ -301,6 +322,34 @@ try {
         assert.match(await demo.locator('#filter-result-count').textContent(), /Mostrando todos los pacientes \(3\)/);
         ok('demo: severity selection filters cohort/counter/KPI/table/chip; Todas restores');
     } catch (error) { bad('demo: severity selection filters cohort/counter/KPI/table/chip; Todas restores', error.message); }
+
+    try {
+        const options = await movimientoOptions(demo);
+        assert.equal(options[0], '', 'Todos base option');
+        assert.deepEqual(options.slice(1), ['cambio_farmaco', 'optimizacion_intervalo', 'tratamiento_anadido'], 'exactly the explicit demo movement types, sorted');
+        assert(!options.slice(1).includes('not_recorded'), 'no not_recorded option');
+        assert(!options.slice(1).includes('no_change_recorded'), 'no no_change_recorded option');
+        assert(!options.slice(1).some(value => value.trim() === ''), 'no empty-type option');
+        assert(!options.slice(1).includes('No registrado'), 'no fabricated No registrado option');
+        ok('demo: movimiento options = explicit movement types only');
+    } catch (error) { bad('demo: movimiento options = explicit movement types only', error.message); }
+
+    try {
+        await demo.locator('#qf-movimiento').selectOption('cambio_farmaco');
+        await demo.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
+        assert.equal(await filteredCount(demo), 2, 'demo cohort filtered to the two patients with an explicit cambio_farmaco');
+        const ids = await tableIdentifiers(demo);
+        assert.deepEqual(ids.sort(), ['CIP-DEMO-FH-001', 'CIP-DEMO-FH-004'], 'both cambio_farmaco patients present once');
+        assert.doesNotMatch(await demo.locator('#patients-table tbody').innerText(), /CIP-DEMO-FH-003/);
+        assert.match(await demo.locator('#cohort-pills').textContent(), /Movimiento terapéutico registrado: cambio_farmaco/);
+        await demo.locator('#qf-movimiento').selectOption('tratamiento_anadido');
+        await demo.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
+        assert.deepEqual((await tableIdentifiers(demo)).sort(), ['CIP-DEMO-FH-004'], 'different movement type enables a different selection');
+        await demo.locator('#qf-movimiento').selectOption('');
+        await demo.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 3);
+        assert.match(await demo.locator('#filter-result-count').textContent(), /Mostrando todos los pacientes \(3\)/);
+        ok('demo: movement selection filters cohort/table/chip; Todos restores');
+    } catch (error) { bad('demo: movement selection filters cohort/table/chip; Todos restores', error.message); }
 
     // ─── Raw route (supported Inicio upload → statistics popup) ───
     const rawBuffer = workbookBuffer();
@@ -411,10 +460,86 @@ try {
     } catch (error) { bad('raw: zero matches → empty state, export disabled, no download, source cohort unchanged', error.message); }
 
     try {
+        const options = await movimientoOptions(child);
+        assert.deepEqual(options.slice(1), ['schedule_change', 'suspension'], 'raw: exactly the two explicit projected movement types, sorted');
+        assert(!options.slice(1).includes('no_change_recorded'), 'raw: no_change_recorded movement does not become an option');
+        assert(!options.slice(1).includes('not_recorded'), 'raw: not_recorded movement does not become an option');
+        assert(!options.slice(1).some(value => value.trim() === ''), 'raw: empty movement type does not become an option');
+        assert(!options.slice(1).includes('No registrado'), 'raw: no fabricated No registrado option');
+        ok('raw: movimiento options = explicit projected movement types only (schedule_change, suspension)');
+    } catch (error) { bad('raw: movimiento options = explicit projected movement types only (schedule_change, suspension)', error.message); }
+
+    try {
+        await child.locator('#qf-servicio').selectOption('');
+        await child.locator('#qf-gravedad').selectOption('');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 4);
+        await child.locator('#qf-movimiento').selectOption('schedule_change');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
+        const ids = await tableIdentifiers(child);
+        assert.deepEqual(ids.sort(), ['CIP-GRAV-01', 'CIP-GRAV-02'], 'CIP-GRAV-01 with TWO schedule_change movements appears once; brand-change CIP-GRAV-03 and no_change_recorded CIP-GRAV-04 never match');
+        assert.match(await child.locator('#cohort-pills').textContent(), /Movimiento terapéutico registrado: schedule_change/);
+        ok('raw: explicit movement type enters; two movements of the same type = one patient; brand change and no_change_recorded never match');
+    } catch (error) { bad('raw: explicit movement type enters; two movements of the same type = one patient; brand change and no_change_recorded never match', error.message); }
+
+    try {
+        await child.locator('#qf-movimiento').selectOption('suspension');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
+        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-02'], 'suspension declared via explicit suspension_status "yes" matches the patient with that movement');
+        ok('raw: suspension via explicit suspension_status "yes" is a selectable movement type');
+    } catch (error) { bad('raw: suspension via explicit suspension_status "yes" is a selectable movement type', error.message); }
+
+    try {
+        // MOV AND EA AND principio activo AND servicio: the intersection is
+        // governed by each predicate independently (facts may be different
+        // patient events; no causal linking).
+        await child.locator('#qf-movimiento').selectOption('schedule_change');
+        await child.locator('#qf-servicio').selectOption('Dermatología');
+        await child.locator('#qf-ea').selectOption('present');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 2);
+        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-01', 'CIP-GRAV-02'], 'Servicio AND EA AND movimiento cohort');
+        assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*2/);
+        let chartText = await child.locator('#chart-tratamiento-content').innerText();
+        assert.match(chartText, /Movimientos explícitos/, 'movimientos chart block rendered');
+        assert.match(chartText, /schedule_change\s*2/, 'chart counts patients per movement type (schedule_change: 2 patients)');
+        assert.doesNotMatch(chartText, /schedule_change\s*3/, 'chart never counts the same patient twice for one movement type');
+        await child.locator('#qf-principio').selectOption('Molécula sintética G-02');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
+        assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-02'], 'adding principio activo narrows to exactly that cohort');
+        const csvIds = await exportedCsvIdentifiers(child);
+        assert.deepEqual(csvIds, ['CIP-GRAV-02'], 'CSV membership equals the filtered population');
+        ok('raw: MOV AND EA AND principio activo AND servicio produce exactly that cohort in table/KPI/charts/CSV');
+    } catch (error) { bad('raw: MOV AND EA AND principio activo AND servicio produce exactly that cohort in table/KPI/charts/CSV', error.message); }
+
+    try {
+        // Selecting/clearing one filter never clears the others.
+        await child.locator('#qf-movimiento').selectOption('');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
+        assert.equal(await child.locator('#qf-servicio').inputValue(), 'Dermatología', 'Servicio selection survives movimiento clearing');
+        assert.equal(await child.locator('#qf-ea').inputValue(), 'present', 'EA selection survives movimiento clearing');
+        assert.equal(await child.locator('#qf-principio').inputValue(), 'Molécula sintética G-02', 'Principio activo selection survives movimiento clearing');
+        await child.locator('#qf-movimiento').selectOption('schedule_change');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
+        await child.locator('button[aria-label="Quitar filtro Movimiento terapéutico registrado"]').click();
+        await child.waitForFunction(() => document.getElementById('qf-movimiento').value === '');
+        assert.equal(await filteredCount(child), 1, 'movimiento chip removal keeps the intersection of the remaining filters');
+        assert.equal(await child.locator('#qf-servicio').inputValue(), 'Dermatología', 'Servicio selection survives movimiento chip removal');
+        assert.equal(await child.locator('#qf-ea').inputValue(), 'present', 'EA selection survives movimiento chip removal');
+        assert.equal(await child.locator('#qf-principio').inputValue(), 'Molécula sintética G-02', 'Principio activo selection survives movimiento chip removal');
+        // Return to the zero-match empty state so the following "Limpiar
+        // filtros" case runs against the same precondition as before U2
+        // (Cardiología patient has no EA present and no explicit movement).
+        await child.locator('#qf-principio').selectOption('');
+        await child.locator('#qf-servicio').selectOption('Cardiología');
+        await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 0);
+        ok('raw: selecting/clearing/removing movimiento never clears the other filters');
+    } catch (error) { bad('raw: selecting/clearing/removing movimiento never clears the other filters', error.message); }
+
+    try {
         // Clear filters returns the initial state on every surface.
         await child.locator('#empty-clear-filters').click();
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 4);
         assert.equal(await child.locator('#qf-gravedad').inputValue(), '');
+        assert.equal(await child.locator('#qf-movimiento').inputValue(), '');
         assert.equal(await child.locator('#qf-servicio').inputValue(), '');
         assert.equal(await child.locator('#qf-ea').inputValue(), '');
         assert.match(await child.locator('#cohort-pills').textContent(), /Sin filtros activos/);
