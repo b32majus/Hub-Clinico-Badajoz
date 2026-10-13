@@ -353,32 +353,42 @@ const plantedErrorDouble = () => {
 // setter so the disabled `modules/mockPatients.js` load cannot silently
 // replace it.
 const plantedMockDouble = () => {
+    // NOTE: this double is serialized into the page context via
+    // `page.addInitScript`, so the module-level constants are out of scope
+    // here; they are hoisted verbatim to the double's scope (same values).
+    // NOTE: the visit row deliberately carries NO `Tratamiento_Actual`
+    // column — if it did, `basePhysical`/`latestPhysical` would supply the
+    // value and the test would no longer falsify the loss of the
+    // `mockActual` branch (source:'mock') nor the `source` step. The
+    // treatment lives ONLY in `summary.tratamientoActual`.
+    const MOCK_ID = 'SYN-MOCK-DEMO-001';
+    const MOCK_NAME = 'Sintetico Mock Demo Uno';
+    const MOCK_TREATMENT = 'FAME sintetico MOCK';
     const mockPatient = {
-        idPaciente: 'SYN-MOCK-DEMO-001',
+        idPaciente: MOCK_ID,
         summary: {
-            idPaciente: 'SYN-MOCK-DEMO-001',
-            nombre: 'Sintetico Mock Demo Uno',
+            idPaciente: MOCK_ID,
+            nombre: MOCK_NAME,
             pathology: 'espa',
             diagnosticoPrimario: 'espa',
-            tratamientoActual: 'FAME sintetico MOCK',
+            tratamientoActual: MOCK_TREATMENT,
         },
         pathology: 'espa',
         visits: [
             {
-                ID_Paciente: 'SYN-MOCK-DEMO-001',
-                Nombre_Paciente: 'Sintetico Mock Demo Uno',
+                ID_Paciente: MOCK_ID,
+                Nombre_Paciente: MOCK_NAME,
                 Sexo: 'F',
                 Fecha_Visita: '2026-04-05',
                 Tipo_Visita: 'Seguimiento',
                 Diagnostico_Primario: 'EspA',
-                Tratamiento_Actual: 'FAME sintetico MOCK',
             },
         ],
         treatmentHistory: [],
     };
     const double = {
         list: () => [mockPatient],
-        getById: (id) => (id === 'SYN-MOCK-DEMO-001' ? mockPatient : null),
+        getById: (id) => (id === MOCK_ID ? mockPatient : null),
         search: () => [],
     };
     Object.defineProperty(window, 'MockPatients', {
@@ -1037,8 +1047,7 @@ try {
             record('D2-A plan-only synthetic: Biologico=PLAN-Y without Tratamiento_Actual keeps field, collector and start date empty (never the plan)',
                 planOkPath && planState.treatment === '' && planState.collected.tratamientoActual === '' &&
                 planState.dateValue === '' && planState.collected.fechaInicioTratamiento === '' &&
-                !planErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
-                happy.pageErrors.length === 0,
+                planErrors.length === 0 && happy.pageErrors.length === 0,
                 `okPath=${planOkPath} state=${JSON.stringify({ ...planState, collected: { tratamientoActual: planState.collected.tratamientoActual, fechaInicioTratamiento: planState.collected.fechaInicioTratamiento } })} ` +
                 `consoleErrors=${JSON.stringify(planErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
 
@@ -1058,8 +1067,7 @@ try {
             const actOkPath = actState.name === 'Sintetico Fisico Dos' && actState.nameReadonly;
             record('D2-B physical Tratamiento_Actual=ACT-B with Biologico=PLAN-C: field and collector show ACT-B (never the plan)',
                 actOkPath && actState.treatment === 'ACT-B' && actState.collected === 'ACT-B' &&
-                !actErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
-                happy.pageErrors.length === 0,
+                actErrors.length === 0 && happy.pageErrors.length === 0,
                 `okPath=${actOkPath} state=${JSON.stringify(actState)} consoleErrors=${JSON.stringify(actErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
 
             // D2-C — literal `No` is preserved exactly (never dropped, never
@@ -1078,8 +1086,7 @@ try {
             const noOkPath = noState.name === 'Sintetico No Literal Tres' && noState.nameReadonly;
             record('D2-C physical literal `No` is preserved exactly in field and collector',
                 noOkPath && noState.treatment === 'No' && noState.collected === 'No' &&
-                !noErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
-                happy.pageErrors.length === 0,
+                noErrors.length === 0 && happy.pageErrors.length === 0,
                 `okPath=${noOkPath} state=${JSON.stringify(noState)} consoleErrors=${JSON.stringify(noErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
         }
 
@@ -1113,8 +1120,7 @@ try {
                     mockState.id === MOCK_ID && mockState.name === MOCK_NAME && mockState.nameReadonly &&
                     mockState.treatment === MOCK_TREATMENT && mockState.treatmentReadonly &&
                     mockState.collected === MOCK_TREATMENT && mockState.dateValue === '' &&
-                    !mockErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
-                    mockEntry.pageErrors.length === 0,
+                    mockErrors.length === 0 && mockEntry.pageErrors.length === 0,
                     `state=${JSON.stringify(mockState)} consoleErrors=${JSON.stringify(mockErrors)} pageErrors=${JSON.stringify(mockEntry.pageErrors)}`);
             } finally {
                 await mockContext.close();
