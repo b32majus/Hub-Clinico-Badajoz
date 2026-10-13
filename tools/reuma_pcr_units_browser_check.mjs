@@ -319,8 +319,8 @@ async function runEspaSuite(label, pagePath, collectFnName) {
       const actualCrp = await page.locator('#asdasCrpResult').inputValue();
       const actualEsr = await page.locator('#asdasEsrResult').inputValue();
       const actualCategory = await page.locator('#asdasCrpCategoria').textContent();
-      record(`H2 ${id} ${label}: PCR '${pcr}' ${unit || 'sin unidad'} => CRP '${crp}', VSG 2.21 provisional`,
-        actualCrp === crp && actualEsr === '2.21', `CRP='${actualCrp}', VSG='${actualEsr}'`);
+      record(`H2 ${id} ${label}: PCR '${pcr}' ${unit || 'sin unidad'} => CRP '${crp}', VSG 2.22 (H3)`,
+        actualCrp === crp && actualEsr === '2.22', `CRP='${actualCrp}', VSG='${actualEsr}'`);
       record(`H2 ${id}: categoría CRP ${category}`, actualCategory === category, `categoría='${actualCategory}'`);
       const source = await page.locator('#asdasPCR').inputValue();
       const sourceInput = await page.locator('#pcrValue').inputValue();
@@ -336,7 +336,7 @@ async function runEspaSuite(label, pagePath, collectFnName) {
       }, collectFnName);
       record(`H2 ${id}: recopilado preserva fuente/unidad y resultados`,
         collected.pcr === pcr && collected.pcrUnit === unit && collected.basdaiP3 === '1' &&
-        collected.asdasCrpResult === crp && collected.asdasEsrResult === '2.21', JSON.stringify(collected));
+        collected.asdasCrpResult === crp && collected.asdasEsrResult === '2.22', JSON.stringify(collected));
       const note = await page.locator('#asdasPcrConversionNote').textContent();
       const noteVisible = await page.locator('#asdasPcrConversionNote').isVisible();
       const noteOk = unit === 'mg/dL'

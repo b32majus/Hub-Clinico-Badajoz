@@ -112,7 +112,7 @@ for (const [id, pcr, unit, esperado, mgL] of [
     const snapshot = JSON.stringify(datos);
     const r = S.calcularASDAS(datos);
     assert.equal(r.asdasCRP, esperado);
-    assert.equal(r.asdasESR, '2.21'); // Fórmula vigente; precisión reservada H3.
+    assert.equal(r.asdasESR, '2.22'); // Oráculo VSG aprobado H3, coeficientes originales.
     assert.equal(JSON.stringify(datos), snapshot);
     if (mgL !== null) {
       assert.equal(resolver(pcr, unit, 'mg/L', 'ASDAS-CRP').value, mgL, 'el resolver no aplica el piso');
@@ -128,18 +128,18 @@ for (const [id, pcr, unit, esperado, mgL] of [
     }
   });
 }
-record('H1 C06: BASDAI P3=7 distinto de NAD=1 => CRP 3.42 / VSG 2.75 provisional', () => {
+record('H1 C06: BASDAI P3=7 distinto de NAD=1 => CRP 3.42 / VSG 2.74 (H3)', () => {
   const datos = {
     asdasDolorEspalda: '3', asdasDuracionRigidez: '2', asdasEvaGlobal: '4',
     basdaiP3: '7', asdasNAD: '1', asdasPCR: '30', asdasPCRUnit: 'mg/L', asdasVSG: '20'
   };
   const r = S.calcularASDAS(datos);
   assert.equal(r.asdasCRP, '3.42');
-  assert.equal(r.asdasESR, '2.75');
+  assert.equal(r.asdasESR, '2.74');
   for (const nad of ['', '0', '28']) {
     const otroNad = S.calcularASDAS({ ...datos, asdasNAD: nad });
     assert.equal(otroNad.asdasCRP, '3.42');
-    assert.equal(otroNad.asdasESR, '2.75');
+    assert.equal(otroNad.asdasESR, '2.74');
   }
 });
 record('H1 C11: P3 ausente nunca usa NAD=1 como alias/fallback', () => {
@@ -159,10 +159,10 @@ record('H1 P3=0 explícito válido sin NAD; P3 decimal válido en escala 0–10'
   };
   const cero = S.calcularASDAS(datos);
   assert.equal(cero.asdasCRP, '2.91');
-  assert.equal(cero.asdasESR, '2.12');
+  assert.equal(cero.asdasESR, '2.14');
   const decimal = S.calcularASDAS({ ...datos, basdaiP3: '1.5' });
   assert.equal(decimal.asdasCRP, '3.02');
-  assert.equal(decimal.asdasESR, '2.25');
+  assert.equal(decimal.asdasESR, '2.27');
 });
 record('H1 P3 inválido/fuera de 0–10 deja ambos índices vacíos aunque NAD sea válido', () => {
   for (const p3 of ['-1', '11', 'no informado']) {
