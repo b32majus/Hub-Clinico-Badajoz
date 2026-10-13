@@ -505,6 +505,16 @@ try {
         await child.locator('#qf-principio').selectOption('Molécula sintética G-02');
         await child.waitForFunction(() => window.FarmaciaStatisticsDashboard.getState().filtered_patient_count === 1);
         assert.deepEqual((await tableIdentifiers(child)).sort(), ['CIP-GRAV-02'], 'adding principio activo narrows to exactly that cohort');
+        assert.match(await child.locator('#kpi-grid').innerText(), /Pacientes incluidos[\s\S]*1/, 'KPI reflects the final single-patient cohort');
+        chartText = await child.locator('#chart-tratamiento-content').innerText();
+        assert.match(chartText, /Movimientos explícitos/, 'movimientos chart block still rendered for the final cohort');
+        assert.match(chartText, /schedule_change\s*1/, 'movement chart counts only the final cohort (schedule_change: 1 patient)');
+        assert.doesNotMatch(chartText, /schedule_change\s*2/, 'movement chart reflects the narrowing (schedule_change was 2 before principio)');
+        const severityChartText = await child.locator('#chart-riesgos-content').innerText();
+        assert.match(severityChartText, /Gravedad explícita/, 'gravedad chart block rendered for the final cohort');
+        assert.match(severityChartText, /Grave\s*1/, 'severity chart counts the final cohort (Grave: 1 patient)');
+        assert.match(severityChartText, /Leve\s*1/, 'severity chart counts the final cohort (Leve: 1 patient)');
+        assert.doesNotMatch(severityChartText, /Grave\s*2/, 'severity chart reflects the narrowing (Grave was 2 before principio)');
         const csvIds = await exportedCsvIdentifiers(child);
         assert.deepEqual(csvIds, ['CIP-GRAV-02'], 'CSV membership equals the filtered population');
         ok('raw: MOV AND EA AND principio activo AND servicio produce exactly that cohort in table/KPI/charts/CSV');
