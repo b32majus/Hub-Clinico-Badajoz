@@ -2771,6 +2771,9 @@
 
             select.addEventListener('change', sync);
             select.addEventListener('input', sync);
+            window.addEventListener('pageshow', function () {
+                window.requestAnimationFrame(sync);
+            });
             new MutationObserver(sync).observe(select, { attributes: true, attributeFilter: ['disabled'] });
 
             sync();
