@@ -22,7 +22,7 @@
  *       is refused by the control; the attempt is wrapped so it cannot fake it).
  *   (e) APs still shows no ASDAS and computes no ASDAS-CRP/ESR.
  *   H1 #756: P3 typing recalculates both ASDAS scores independently of NAD;
- *       C06 P3=7/NAD=1 => 3.42/2.75 (ESR provisional until H3),
+ *       C06 P3=7/NAD=1 => 3.42/2.74 (H3 original ESR precision),
  *       C11 absent P3 => both empty; explicit P3=0 is valid.
  *   S7 console.error === 0 and pageerror === 0 on both pages.
  *
@@ -274,10 +274,10 @@ async function runPage(label, pagePath) {
     const beforeP3 = await scores();
     await fill('#basdaiP3', '7');
     const c06 = await scores();
-    record(`H1 C06 ${label}: teclear P3=7/NAD=1 => CRP '${c06.crp}' / VSG '${c06.esr}' (3.42/2.75 provisional)`,
+    record(`H1/H3 C06 ${label}: teclear P3=7/NAD=1 => CRP '${c06.crp}' / VSG '${c06.esr}' (3.42/2.74)`,
       c06.p3 === '7' && c06.nad === '1' && beforeP3.nad === '1' &&
-      beforeP3.crp === '2.98' && beforeP3.esr === '2.21' &&
-      c06.crp === '3.42' && c06.esr === '2.75' &&
+      beforeP3.crp === '2.98' && beforeP3.esr === '2.22' &&
+      c06.crp === '3.42' && c06.esr === '2.74' &&
       c06.crpCategory === 'Actividad Moderada' && c06.esrCategory === 'Actividad Moderada',
       JSON.stringify({ beforeP3, c06 }));
 
@@ -286,7 +286,7 @@ async function runPage(label, pagePath) {
     await page.waitForTimeout(150);
     const nad2 = await scores();
     record(`H1 ${label}: cambiar NAD a '${nad2.nad}' con P3=7 no cambia ASDAS`,
-      nad2.nad === '2' && nad2.p3 === '7' && nad2.crp === '3.42' && nad2.esr === '2.75',
+      nad2.nad === '2' && nad2.p3 === '7' && nad2.crp === '3.42' && nad2.esr === '2.74',
       JSON.stringify(nad2));
     await page.locator('[data-region-id="hombro-izquierdo"]').first().click();
     await page.waitForTimeout(150);
@@ -299,14 +299,14 @@ async function runPage(label, pagePath) {
 
     await fill('#basdaiP3', '0');
     const p3Zero = await scores();
-    record(`H1 ${label}: P3=0/NAD=1 válido => CRP '${p3Zero.crp}' / VSG '${p3Zero.esr}' (2.91/2.12)`,
-      p3Zero.p3 === '0' && p3Zero.nad === '1' && p3Zero.crp === '2.91' && p3Zero.esr === '2.12',
+    record(`H1/H3 ${label}: P3=0/NAD=1 válido => CRP '${p3Zero.crp}' / VSG '${p3Zero.esr}' (2.91/2.14)`,
+      p3Zero.p3 === '0' && p3Zero.nad === '1' && p3Zero.crp === '2.91' && p3Zero.esr === '2.14',
       JSON.stringify(p3Zero));
 
     await fill('#basdaiP3', '10');
     const p3Ten = await scores();
     record(`H1 ${label}: P3=10 => CRP '${p3Ten.crp}' (${p3Ten.crpCategory}) / VSG '${p3Ten.esr}' (${p3Ten.esrCategory})`,
-      p3Ten.crp === '3.64' && p3Ten.esr === '3.02' &&
+      p3Ten.crp === '3.64' && p3Ten.esr === '3.00' &&
       p3Ten.crpCategory === 'Actividad Alta' && p3Ten.esrCategory === 'Actividad Moderada',
       JSON.stringify(p3Ten));
 

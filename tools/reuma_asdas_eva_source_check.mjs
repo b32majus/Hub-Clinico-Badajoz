@@ -39,7 +39,7 @@
  *         mirror '6', CRP '3.20', ASDAS inputs untouched.
  *      B7 T1 intact: under APs #asdasCrpResult / #asdasEsrResult stay ''.
  *      B8 DAPSA intact (APs): '11.0'.
- *      B9 ESR path uses the same source: VSG 20 + EVA 4 -> '2.21'; EVA '' -> ''.
+ *      B9 ESR path uses the same source: VSG 20 + EVA 4 + P3 7 -> '2.74'; EVA '' -> ''.
  *      B10 no console.error in any scenario.
  *
  * Exit code 0 = all cases PASS, 1 = at least one FAIL.
@@ -66,12 +66,12 @@ const WATCHED_IDS = [
   'asdasPcrConversionNote', 'dapsaPcrConversionNote', 'dapsaResult', 'dapsaCategoria'
 ];
 
-// H1 #756: Q3=P3=7, distinto de NAD=1; VSG provisional hasta H3.
+// H1 #756 + H3 #758: Q3=P3=7, distinto de NAD=1; VSG con precisión original.
 const ASDAS_CRP_EVA4 = '3.42';
 const ASDAS_CRP_EVA7 = '3.75';
 const ASDAS_CRP_EVA0 = '2.98';
 const ASDAS_CRP_EVA6 = '3.64';
-const ASDAS_ESR_EVA4 = '2.75';
+const ASDAS_ESR_EVA4 = '2.74';
 const APS_DAPSA_TOTAL = (1 + 1 + 2 + 4 + 3).toFixed(1);
 const EXPECTED_EVA_LABEL = 'EVA Global del Paciente (0-10):';
 

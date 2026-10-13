@@ -162,7 +162,7 @@ function calcularASDAS(datos) {
         const vsg = parseNumberInRange(datos.asdasVSG, 0, 200);
         if (Number.isFinite(vsg)) {
             asdasESR = formatFixed(
-                (0.08 * dolorEspalda) + (0.07 * duracionRigidez) + (0.11 * evaGlobal) + (0.09 * dolorPeriferico) + (0.29 * Math.sqrt(vsg)),
+                (0.079 * dolorEspalda) + (0.069 * duracionRigidez) + (0.113 * evaGlobal) + (0.086 * dolorPeriferico) + (0.293 * Math.sqrt(vsg)),
                 2
             );
         }

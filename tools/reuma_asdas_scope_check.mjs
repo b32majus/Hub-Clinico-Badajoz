@@ -26,7 +26,7 @@
  *         handler fired, #asdasCrpResult / #asdasEsrResult stay '' (this is the
  *         assertion that fails on the unmodified code).
  *      B3 adaptarFormulario('espa') recomputes the INDEPENDENT literal values
- *         (ASDAS-CRP '2.98', ASDAS-ESR '2.21').
+ *         (ASDAS-CRP '2.98', ASDAS-ESR '2.74').
  *      B4 Sequence espa -> aps -> espa: outputs clear on APs and recompute on
  *         EspA again (no stale score left behind by visibility-only hiding).
  *      B5 adaptarFormulario('ar') hides both sections and clears both outputs.
@@ -63,9 +63,9 @@ const WATCHED_IDS = [
   'asdasPcrConversionNote', 'dapsaPcrConversionNote', 'dapsaResult', 'dapsaCategoria', 'basdaiP3'
 ];
 
-// H1 #756 C06: P3=7, distinto de NAD=1; VSG provisional hasta H3.
+// H1 #756 + H3 #758 C06: P3=7, distinto de NAD=1; VSG con precisión original.
 const ESPA_ASDAS_CRP = '3.42';
-const ESPA_ASDAS_ESR = '2.75';
+const ESPA_ASDAS_ESR = '2.74';
 const APS_DAPSA_TOTAL = (1 + 1 + 2 + 4 + 3).toFixed(1);
 const APS_DAPSA_TOTAL_NAD2 = (2 + 1 + 2 + 4 + 3).toFixed(1);
 
