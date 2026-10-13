@@ -264,10 +264,31 @@ const workbookPath = path.join(tempDir, 'reuma_fh_dashboard_synthetic.xlsx');
         Tratamiento_Actual: SYN_ALIAS_DATED_ACTUAL,
         fechaInicioTratamiento: '2026-02-20'
     };
+    // #763 / D3 multivisita truth (QA #693): TWO temporal physical visits
+    // for one patient. `findPatientById` returns the FIRST Excel row as
+    // base, so pre-D3 the older row's treatment/date prefilled Seguimiento
+    // while the dashboard card showed the latest visit — the known
+    // consumer-crossing defect. Both rows carry their own explicit
+    // Fecha_Inicio_Tratamiento, so the Seguimiento date assertion pins the
+    // same-row provenance too.
+    const D12_ID = 'SYN-DASH-D12';
+    const rowD12Older = {
+        ...commonRow,
+        ID_Paciente: D12_ID,
+        Fecha_Visita: '2026-01-10',
+        Tratamiento_Actual: 'PREV-A',
+        Fecha_Inicio_Tratamiento: '2026-01-05'
+    };
+    const rowD12Latest = {
+        ...rowD12Older,
+        Fecha_Visita: '2026-03-10',
+        Tratamiento_Actual: 'ACT-B',
+        Fecha_Inicio_Tratamiento: '2026-03-05'
+    };
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([
         rowD1, rowD2, rowD3, rowD4, rowD5Baseline, rowD5FollowUp, rowF1PlanOnly, rowF1SameText,
-        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate
+        rowDatedActual, rowLiteralNo, rowAliasOnlyDate, rowNegatedWithDate, rowD12Older, rowD12Latest
     ]), 'ESPA');
     for (const sheetName of ['APS', 'AR', 'LES', 'SJOGREN']) {
         XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([{ ID_Paciente: 'SYN-000-000' }]), sheetName);
@@ -1062,6 +1083,71 @@ async function runAccreditedActualJourney(browser, patientId) {
     }
 }
 
+/**
+ * #763 / D3 multivisita truth journey (browser, real supported route only).
+ * SYN-DASH-D12 carries TWO temporal physical visits (2026-01-10 PREV-A with
+ * start 2026-01-05 / 2026-03-10 ACT-B with start 2026-03-05).
+ * `findPatientById` returns the FIRST Excel row as base — exactly the QA
+ * #693 consumer-crossing falsifier. On the REAL dashboard the treatment
+ * card (tarjeta 4), KPI and visits table must show the LATEST visit's
+ * accredited ACT-B with ITS own explicit start date (never PREV-A, never
+ * the older date), and the REAL Dashboard → Seguimiento link must land on
+ * a form whose #tratamientoActual, #fechaInicioTratamiento and collector
+ * show the SAME latest-row truth. page.evaluate is used ONLY to READ
+ * observable state; no DOM mutation, no readonly tampering.
+ */
+async function runMultivisitaTruthJourney(browser) {
+    const label = 'D3 dashboard/Seguimiento multivisita: la ÚLTIMA visita física es la fuente';
+    const patientId = 'SYN-DASH-D12';
+    console.log(`\n=== ${label} (dashboard_paciente.html?id=${patientId}) ===`);
+    const { page, context, consoleErrors, pageErrors } = await openDashboardPage(browser, patientId);
+    try {
+        await page.waitForFunction(() => !!window.patientSummary && !!window.patientSummary.idPaciente, null, { timeout: 15000 });
+        const summaryId = await page.evaluate(() => window.patientSummary && window.patientSummary.idPaciente);
+        record(`${label}: bundle del dashboard cargado por ruta soportada (?id=)`, summaryId === patientId, JSON.stringify(summaryId));
+        const shown = await readTreatmentPresentation(page);
+        // Expected rendering derived in-page from the same pure formatter
+        // the dashboard uses (read only, timezone-robust), as in Train 27.
+        const expected = await page.evaluate(() => ({
+            start: window.formatDate('2026-03-05'),
+            status: 'Desde ' + window.formatDate('2026-03-05').substring(3)
+        }));
+        record(`${label}: tarjeta 4 muestra el actual acreditado de la ÚLTIMA visita (ACT-B, nunca PREV-A)`,
+            shown.cardName === 'ACT-B' && shown.cardName !== 'PREV-A', JSON.stringify(shown));
+        record(`${label}: tarjeta 4 muestra la fecha de inicio explícita de la MISMA fila ACT-B (no la de la fila antigua)`,
+            shown.cardStart === expected.start, JSON.stringify({ shown, expected }));
+        record(`${label}: tarjeta 4 calcula duración desde la fecha explícita de ACT-B (no placeholder)`,
+            !!shown.cardDuration && shown.cardDuration !== '---' && shown.cardDuration !== 'Sin registrar', JSON.stringify(shown));
+        record(`${label}: KPI muestra ACT-B con estado 'Desde ...' de la fecha explícita de ACT-B`,
+            shown.kpiValue === 'ACT-B' && shown.kpiStatus === expected.status, JSON.stringify({ shown, expected }));
+        record(`${label}: tabla de visitas muestra ambas filas físicas (ACT-B y PREV-A), ninguna sustituida`,
+            shown.tableCells.length === 2 && shown.tableCells.includes('ACT-B') && shown.tableCells.includes('PREV-A'), JSON.stringify(shown.tableCells));
+
+        await page.click('#btnSeguimiento');
+        await page.waitForURL(`**/seguimiento.html?id=${patientId}&patologia=espa`, { timeout: 15000 });
+        await page.waitForFunction(() => !!document.getElementById('nombrePaciente')?.value, null, { timeout: 15000 });
+        const continuation = await page.evaluate(() => {
+            const value = (id) => document.getElementById(id)?.value ?? null;
+            const datos = HubTools.form.recopilarDatosFormularioSeguimiento();
+            return {
+                cip: value('idPaciente'), name: value('nombrePaciente'),
+                treatment: value('tratamientoActual'), date: value('fechaInicioTratamiento'),
+                collectedTreatment: datos.tratamientoActual, collectedDate: datos.fechaInicioTratamiento,
+            };
+        });
+        record(`${label}: Seguimiento (mismo paciente, ruta real) prellena la ÚLTIMA visita: ACT-B con SU fecha 2026-03-05, nunca PREV-A ni la fecha antigua`,
+            continuation.cip === patientId && continuation.name === 'Sintetico Dash' &&
+            continuation.treatment === 'ACT-B' && continuation.date === '2026-03-05' &&
+            continuation.collectedTreatment === 'ACT-B' && continuation.collectedDate === '2026-03-05',
+            JSON.stringify(continuation));
+        record(`${label}: console.error === 0`, consoleErrors.length === 0, JSON.stringify(consoleErrors));
+        record(`${label}: pageerror === 0`, pageErrors.length === 0, JSON.stringify(pageErrors));
+    } finally {
+        await page.close();
+        await context.close();
+    }
+}
+
 let browser;
 try {
     browser = await chromium.launch({ headless: true, executablePath: chromiumExecutable() });
@@ -1076,6 +1162,7 @@ try {
     await runAccreditedActualJourney(browser, 'SYN-DASH-D9');
     await runAccreditedActualJourney(browser, 'SYN-DASH-D10');
     await runAccreditedActualJourney(browser, 'SYN-DASH-D11');
+    await runMultivisitaTruthJourney(browser);
 } finally {
     if (browser) await browser.close();
     server.close();

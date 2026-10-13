@@ -172,8 +172,10 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam, s
     // spread del normalizador). El alias `tratamientoActual` del normalizador
     // promociona selectores de PLAN (Biologico/FAME/Sistemico) a tratamiento
     // actual: nunca usarlo como origen clínico. El literal exacto `No` se
-    // conserva; vacío queda vacío. La prioridad base físico vs última visita se
-    // conserva temporalmente (se corrige en D3). `mockActual` se permite
+    // conserva; vacío queda vacío. Tras D3 (#763): si hay nodo de última
+    // visita, SU campo físico es la única fuente (aunque esté vacío: nunca
+    // retroceder a filas antiguas para fabricar ACTUAL); sin visitas,
+    // fail-closed al campo físico del registro base. `mockActual` se permite
     // exclusivamente en la rama demo `source:'mock'` del fallback `not_found`.
     const physicalFromRecord = (record) => {
         if (!record || !Object.prototype.hasOwnProperty.call(record, 'Tratamiento_Actual')) return '';
@@ -194,13 +196,31 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam, s
         fr: latestVisit?.fr || normalizedBaseRecord.fr || 'no-analizado',
         apcc: latestVisit?.apcc || normalizedBaseRecord.apcc || 'no-analizado',
         ana: latestVisit?.ana || normalizedBaseRecord.ana || 'no-analizado',
-        tratamientoActual: basePhysical || latestPhysical || mockActual || '',
+        // D3 (#763): la visita más reciente es la única fuente del ACTUAL
+        // documentado; con `history.latestVisit` presente, su campo físico
+        // manda aunque esté vacío (la presencia del nodo de visita, no el
+        // truthiness del valor, determina la fuente).
+        tratamientoActual: source === 'mock'
+            ? (mockActual || latestPhysical || '')
+            : (history?.latestVisit ? latestPhysical : basePhysical),
         // T22-02-C2: `Fecha_Inicio_Tratamiento` es una fecha de inicio
-        // histórica APORTADA, no una fecha de visita (spec story 4). Sólo el
-        // valor explícito del registro base; si falta, el campo queda en
-        // blanco — nunca la salida manufacturada de extractTreatmentHistory()
-        // (startDate = fecha de visita), ni la fecha de visita, ni hoy.
-        fechaInicioTratamiento: normalizedBaseRecord.fechaInicioTratamiento || '',
+        // histórica APORTADA, no una fecha de visita (spec story 4). D3
+        // (#763): la fecha pertenece a la MISMA fila física seleccionada
+        // como tratamiento; `No` no acredita fecha activa aunque la fila
+        // traiga una contradictoria; sin fecha física válida el campo queda
+        // en blanco — nunca la salida manufacturada de
+        // extractTreatmentHistory() (startDate = fecha de visita), ni la
+        // fecha de visita, ni hoy. La conversión de representación sigue
+        // siendo exclusivamente `toIsoDateInputValue()` en la copia UI.
+        fechaInicioTratamiento: source === 'mock'
+            ? (normalizedBaseRecord.fechaInicioTratamiento || '')
+            : (history?.latestVisit
+                ? ((history.latestVisit.Tratamiento_Actual === 'No' || !latestPhysical)
+                    ? ''
+                    : (history.latestVisit.Fecha_Inicio_Tratamiento || ''))
+                : ((basePhysical && basePhysical !== 'No')
+                    ? (baseRecord?.Fecha_Inicio_Tratamiento || '')
+                    : '')),
         comorbilidades: extractComorbidities(latestVisit),
         manifestacionesExtra: extractManifestations(latestVisit),
         peso: latestVisit?.peso || normalizedBaseRecord.peso || '',
