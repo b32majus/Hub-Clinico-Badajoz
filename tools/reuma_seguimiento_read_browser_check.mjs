@@ -42,6 +42,11 @@
  *       `not_found` journey, name/treatment/date are visible on screen,
  *       focusable and accept effective real typing/clicking through supported
  *       interaction (the `readonly` attribute is never removed by the test).
+ *   D2  (#762) tratamientoActual comes only from the exact physical
+ *       `Tratamiento_Actual` column: plan-only stays empty (D2-A), physical
+ *       wins over the plan selector (D2-B), literal `No` preserved (D2-C)
+ *       and the source:'mock' branch of a genuine not_found keeps its
+ *       explicit value without opening edit mode (D2-D).
  *
  * Usage: node tools/reuma_seguimiento_read_browser_check.mjs
  * Documented env var: PLAYWRIGHT_CHROMIUM_EXECUTABLE (headless-shell path).
@@ -93,6 +98,24 @@ const ISODATE_ID = 'SYN-ISODATE-001';
 // another day.
 const BADDATE_ID = 'SYN-BADDATE-001';
 const BADFORMAT_ID = 'SYN-BADFMT-001';
+// #762 / D2 synthetic rows (TEMP workbook only; frozen fixture never edited):
+//   PLAN_ID  plan-only: Biologico=PLAN-Y present, NO Tratamiento_Actual. The
+//            normalizer alias promotes the plan selector to tratamientoActual,
+//            so pre-D2 the plan reached #tratamientoActual — the D2 falsifier.
+//   ACT_ID   physical Tratamiento_Actual=ACT-B alongside Biologico=PLAN-C:
+//            only the physical value may surface (never the plan).
+//   NO_ID    physical literal `No` must be preserved exactly (never dropped,
+//            never rewritten).
+const PLAN_ID = 'SYN-T1-PLAN';
+const ACT_ID = 'SYN-T1-ACT';
+const NO_ID = 'SYN-T1-NO';
+// #762 / D2-D: demo-mock branch (source:'mock' through a GENUINE not_found).
+// The planted MockPatients double (same class as the planted read-port error
+// double above) is authored demo data; its explicit tratamientoActual must be
+// preserved without opening the not_found edit mode.
+const MOCK_ID = 'SYN-MOCK-DEMO-001';
+const MOCK_NAME = 'Sintetico Mock Demo Uno';
+const MOCK_TREATMENT = 'FAME sintetico MOCK';
 const SYNTHETIC_ESPA_ROWS = [
     {
         ID_Paciente: DATELESS_ID,
@@ -132,6 +155,34 @@ const SYNTHETIC_ESPA_ROWS = [
         Diagnostico_Primario: 'EspA',
         Tratamiento_Actual: 'FAME sintetico BADFMT',
         Fecha_Inicio_Tratamiento: '2026/01/10',
+    },
+    {
+        ID_Paciente: PLAN_ID,
+        Nombre_Paciente: 'Sintetico Plan Solo Uno',
+        Sexo: 'F',
+        Fecha_Visita: '2026-04-01',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Biologico: 'PLAN-Y',
+    },
+    {
+        ID_Paciente: ACT_ID,
+        Nombre_Paciente: 'Sintetico Fisico Dos',
+        Sexo: 'M',
+        Fecha_Visita: '2026-04-02',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'ACT-B',
+        Biologico: 'PLAN-C',
+    },
+    {
+        ID_Paciente: NO_ID,
+        Nombre_Paciente: 'Sintetico No Literal Tres',
+        Sexo: 'F',
+        Fecha_Visita: '2026-04-03',
+        Tipo_Visita: 'Seguimiento',
+        Diagnostico_Primario: 'EspA',
+        Tratamiento_Actual: 'No',
     },
 ];
 
@@ -248,9 +299,10 @@ function seguimientoErrors(entry) {
     return entry.consoleErrors.filter((message) => message.includes(SEGUIMIENTO_PAGE));
 }
 
-async function passSupportedGate(context) {
+async function passSupportedGate(context, initScript) {
     const entry = trackedPage(await context.newPage());
     const { page } = entry;
+    if (initScript) await page.addInitScript(initScript);
     await page.goto(`${origin}/reuma_index.html`, { waitUntil: 'load', timeout: 45000 });
     await page.setInputFiles('#gateExcelInput', workbookPath);
     await page.waitForSelector('#gateStepSelect:not(.hidden)', { timeout: 20000 });
@@ -285,6 +337,51 @@ const plantedErrorDouble = () => {
     };
     const double = { getPort: () => port, create: () => port, PORT_VERSION: 'error-double' };
     Object.defineProperty(window, 'ReumaPatientReadPort', {
+        configurable: true,
+        get: () => double,
+        set: () => {},
+    });
+};
+
+// #762 / D2-D: authored demo-mock double (MockPatients owns its provenance,
+// same class as the planted read-port double above). The queried id is NOT in
+// the session corpus, so the real read port still returns a GENUINE
+// `not_found`; the legacy demo fallback then serves this bundle with
+// source:'mock'. Its explicit tratamientoActual must reach the readonly field
+// and the collector without opening the not_found edit mode. Like
+// `plantedErrorDouble`, the double is installed with a getter and a noop
+// setter so the disabled `modules/mockPatients.js` load cannot silently
+// replace it.
+const plantedMockDouble = () => {
+    const mockPatient = {
+        idPaciente: 'SYN-MOCK-DEMO-001',
+        summary: {
+            idPaciente: 'SYN-MOCK-DEMO-001',
+            nombre: 'Sintetico Mock Demo Uno',
+            pathology: 'espa',
+            diagnosticoPrimario: 'espa',
+            tratamientoActual: 'FAME sintetico MOCK',
+        },
+        pathology: 'espa',
+        visits: [
+            {
+                ID_Paciente: 'SYN-MOCK-DEMO-001',
+                Nombre_Paciente: 'Sintetico Mock Demo Uno',
+                Sexo: 'F',
+                Fecha_Visita: '2026-04-05',
+                Tipo_Visita: 'Seguimiento',
+                Diagnostico_Primario: 'EspA',
+                Tratamiento_Actual: 'FAME sintetico MOCK',
+            },
+        ],
+        treatmentHistory: [],
+    };
+    const double = {
+        list: () => [mockPatient],
+        getById: (id) => (id === 'SYN-MOCK-DEMO-001' ? mockPatient : null),
+        search: () => [],
+    };
+    Object.defineProperty(window, 'MockPatients', {
         configurable: true,
         get: () => double,
         set: () => {},
@@ -911,6 +1008,117 @@ try {
                 badDateState.dateValue === '' && badDateState.collectedFechaInicio === '' &&
                 badFormatState.dateValue === '' && badFormatState.collectedFechaInicio === '',
                 `iso=${JSON.stringify(isoState)} isoOkPath=${isoOkPath} known=${JSON.stringify(knownState)} badDate=${JSON.stringify(badDateState)} badFormat=${JSON.stringify(badFormatState)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+        }
+
+        // =================================================================
+        // D2 cases (#762) — tratamientoActual may come ONLY from the exact
+        // physical `Tratamiento_Actual` column (never Biologico/FAME/
+        // Sistemico plan selectors, treatmentHistory names or the
+        // normalizer alias). Base-first priority vs latest visit is
+        // intentionally kept (corrected in D3).
+        // =================================================================
+        {
+            // D2-A — plan-only negative (the D2 falsifier): Biologico=PLAN-Y
+            // with NO Tratamiento_Actual must leave #tratamientoActual, the
+            // collector and the start date EMPTY. Never PLAN-Y.
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${PLAN_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const planState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                collected: HubTools.form.recopilarDatosFormularioSeguimiento(),
+            }));
+            const planErrors = seguimientoErrors(happy);
+            const planOkPath = planState.name === 'Sintetico Plan Solo Uno' && planState.nameReadonly;
+            record('D2-A plan-only synthetic: Biologico=PLAN-Y without Tratamiento_Actual keeps field, collector and start date empty (never the plan)',
+                planOkPath && planState.treatment === '' && planState.collected.tratamientoActual === '' &&
+                planState.dateValue === '' && planState.collected.fechaInicioTratamiento === '' &&
+                !planErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
+                happy.pageErrors.length === 0,
+                `okPath=${planOkPath} state=${JSON.stringify({ ...planState, collected: { tratamientoActual: planState.collected.tratamientoActual, fechaInicioTratamiento: planState.collected.fechaInicioTratamiento } })} ` +
+                `consoleErrors=${JSON.stringify(planErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D2-B — physical preservation: Tratamiento_Actual=ACT-B beside
+            // Biologico=PLAN-C must surface ACT-B literally (never PLAN-C).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${ACT_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const actState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                collected: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+            }));
+            const actErrors = seguimientoErrors(happy);
+            const actOkPath = actState.name === 'Sintetico Fisico Dos' && actState.nameReadonly;
+            record('D2-B physical Tratamiento_Actual=ACT-B with Biologico=PLAN-C: field and collector show ACT-B (never the plan)',
+                actOkPath && actState.treatment === 'ACT-B' && actState.collected === 'ACT-B' &&
+                !actErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
+                happy.pageErrors.length === 0,
+                `okPath=${actOkPath} state=${JSON.stringify(actState)} consoleErrors=${JSON.stringify(actErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+
+            // D2-C — literal `No` is preserved exactly (never dropped, never
+            // rewritten to blank or a default).
+            happy.consoleErrors.length = 0;
+            happy.pageErrors.length = 0;
+            await happy.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${NO_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+            await happy.page.waitForTimeout(1200);
+            const noState = await happy.page.evaluate(() => ({
+                name: document.getElementById('nombrePaciente')?.value || '',
+                nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                treatment: document.getElementById('tratamientoActual')?.value || '',
+                collected: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+            }));
+            const noErrors = seguimientoErrors(happy);
+            const noOkPath = noState.name === 'Sintetico No Literal Tres' && noState.nameReadonly;
+            record('D2-C physical literal `No` is preserved exactly in field and collector',
+                noOkPath && noState.treatment === 'No' && noState.collected === 'No' &&
+                !noErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
+                happy.pageErrors.length === 0,
+                `okPath=${noOkPath} state=${JSON.stringify(noState)} consoleErrors=${JSON.stringify(noErrors)} pageErrors=${JSON.stringify(happy.pageErrors)}`);
+        }
+
+        // =================================================================
+        // D2-D (#762) — source:'mock' of a GENUINE not_found: the planted
+        // MockPatients double is not in the session corpus, so the real read
+        // port still returns not_found; the legacy demo fallback serves the
+        // bundle with source:'mock' and its explicit tratamientoActual must
+        // reach the readonly field and the collector WITHOUT opening the
+        // not_found edit mode (readonly preserved).
+        // =================================================================
+        {
+            const mockContext = await browser.newContext();
+            try {
+                const mockEntry = await passSupportedGate(mockContext, plantedMockDouble);
+                mockEntry.consoleErrors.length = 0;
+                mockEntry.pageErrors.length = 0;
+                await mockEntry.page.goto(`${origin}/${SEGUIMIENTO_PAGE}?id=${MOCK_ID}&patologia=espa`, { waitUntil: 'load', timeout: 45000 });
+                await mockEntry.page.waitForTimeout(1200);
+                const mockState = await mockEntry.page.evaluate(() => ({
+                    id: document.getElementById('idPaciente')?.value || '',
+                    name: document.getElementById('nombrePaciente')?.value || '',
+                    nameReadonly: document.getElementById('nombrePaciente')?.readOnly === true,
+                    treatment: document.getElementById('tratamientoActual')?.value || '',
+                    treatmentReadonly: document.getElementById('tratamientoActual')?.readOnly === true,
+                    dateValue: document.getElementById('fechaInicioTratamiento')?.value || '',
+                    collected: HubTools.form.recopilarDatosFormularioSeguimiento().tratamientoActual,
+                }));
+                const mockErrors = seguimientoErrors(mockEntry);
+                record('D2-D genuine not_found with demo mock (source mock): explicit mock treatment reaches readonly field and collector without opening edit mode',
+                    mockState.id === MOCK_ID && mockState.name === MOCK_NAME && mockState.nameReadonly &&
+                    mockState.treatment === MOCK_TREATMENT && mockState.treatmentReadonly &&
+                    mockState.collected === MOCK_TREATMENT && mockState.dateValue === '' &&
+                    !mockErrors.some((message) => message.includes(FAIL_CLOSED_UNAVAILABLE) || message.includes(FAIL_CLOSED_ERROR)) &&
+                    mockEntry.pageErrors.length === 0,
+                    `state=${JSON.stringify(mockState)} consoleErrors=${JSON.stringify(mockErrors)} pageErrors=${JSON.stringify(mockEntry.pageErrors)}`);
+            } finally {
+                await mockContext.close();
+            }
         }
     } finally {
         await context.close();

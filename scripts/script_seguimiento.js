@@ -164,10 +164,25 @@ async function readSeguimientoBundle(patientId) {
     return { status: 'unavailable' };
 }
 
-function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam }) {
+function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam, source }) {
     const normalizedBaseRecord = normalizeRecord(baseRecord);
     const latestVisit = normalizeRecord(history?.latestVisit || getLast(history?.allVisits));
-    const activeTreatment = getLast(history?.treatmentHistory);
+    // RE-762 / D2: `#tratamientoActual` y su dato recopilado SOLO pueden provenir
+    // de la clave física exacta `Tratamiento_Actual` (columna Excel retenida en el
+    // spread del normalizador). El alias `tratamientoActual` del normalizador
+    // promociona selectores de PLAN (Biologico/FAME/Sistemico) a tratamiento
+    // actual: nunca usarlo como origen clínico. El literal exacto `No` se
+    // conserva; vacío queda vacío. La prioridad base físico vs última visita se
+    // conserva temporalmente (se corrige en D3). `mockActual` se permite
+    // exclusivamente en la rama demo `source:'mock'` del fallback `not_found`.
+    const physicalFromRecord = (record) => {
+        if (!record || !Object.prototype.hasOwnProperty.call(record, 'Tratamiento_Actual')) return '';
+        const value = record.Tratamiento_Actual;
+        return value === undefined || value === null ? '' : String(value);
+    };
+    const basePhysical = physicalFromRecord(baseRecord);
+    const latestPhysical = physicalFromRecord(history?.latestVisit);
+    const mockActual = source === 'mock' ? (baseRecord?.tratamientoActual ?? '') : '';
     const pathology = normalizePathology(patologiaParam || history?.pathology || normalizedBaseRecord.diagnosticoPrimario || normalizedBaseRecord.pathology);
 
     return {
@@ -179,7 +194,7 @@ function buildPrefillPayload({ patientId, history, baseRecord, patologiaParam })
         fr: latestVisit?.fr || normalizedBaseRecord.fr || 'no-analizado',
         apcc: latestVisit?.apcc || normalizedBaseRecord.apcc || 'no-analizado',
         ana: latestVisit?.ana || normalizedBaseRecord.ana || 'no-analizado',
-        tratamientoActual: normalizedBaseRecord.tratamientoActual || latestVisit?.tratamientoActual || latestVisit?.biologicoSelect || activeTreatment?.name || '',
+        tratamientoActual: basePhysical || latestPhysical || mockActual || '',
         // T22-02-C2: `Fecha_Inicio_Tratamiento` es una fecha de inicio
         // histórica APORTADA, no una fecha de visita (spec story 4). Sólo el
         // valor explícito del registro base; si falta, el campo queda en
@@ -343,7 +358,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 patientId,
                 history: outcome.historyData,
                 baseRecord: outcome.baseRecord,
-                patologiaParam
+                patologiaParam,
+                source: outcome.source
             });
 
             if (prefillPayload && prefillPayload.idPaciente) {
