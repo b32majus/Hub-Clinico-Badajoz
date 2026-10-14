@@ -2,13 +2,13 @@
 ## Alineamiento funcional: acontecimientos adversos estructurados, terminologías y preparación para farmacovigilancia
 
 **Fecha de propuesta:** 14-10-2026  
-**Estado:** ALINEAMIENTO FUNCIONAL RATIFICADO · DOCUMENTACIÓN PROPUESTA EN PR · PENDIENTE DE VALIDACIÓN CLÍNICA DETALLADA E IMPLEMENTACIÓN; **NO PILOTO**. No es contrato de integración, licencia terminológica ni autorización de desarrollo. **WO documental [#775](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/775)**; publicación en rama de revisión pendiente de merge.  
+**Estado:** ALINEAMIENTO FUNCIONAL RATIFICADO · DOCUMENTADO · PENDIENTE DE VALIDACIÓN CLÍNICA DETALLADA E IMPLEMENTACIÓN; **NO PILOTO**. No es contrato de integración, licencia terminológica ni autorización de desarrollo. **WO documental [#775](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/775)**.  
 **Base técnica contrastada (fotografía):** `b32majus/Hub-Clinico-Badajoz`, `promueve/nexus-v4@d70a398b12057f38ee4cd7b99f42e95545f72f01`; la autoridad del estado operativo es siempre GitHub live.  
 **Propósito:** preservar la decisión funcional de producto y las posibilidades verificadas externamente sin atribuir a PROMueve capacidades aún no implementadas, ni prometer acceso a la API FEDRA.
 
 ### Convención de certeza
 
-- **[ACORDADO FUNCIONALMENTE]**: dirección de producto ratificada por la responsable y documentada en esta PR; pendiente validación clínica detallada del equipo FH, aprobación del merge y WO de ejecución.
+- **[ACORDADO FUNCIONALMENTE]**: dirección de producto ratificada por la responsable y conservada en este alineamiento; pendiente validación clínica detallada del equipo FH y WO de ejecución.
 - **[VERIFICADO EXTERNO]**: publicado en fuentes oficiales citadas al final.
 - **[EXISTENTE EN CÓDIGO]**: identificable en el repositorio publicado; no implica que se haya completado un QA de navegador para el nuevo flujo.
 - **[PENDIENTE]**: necesita confirmación clínica, de terminología, autorización, especificación o implementación.
@@ -122,14 +122,14 @@ RegulatoryCase / Notification (futuro, separado del acto y del EA):
 
 ## 9. Delimitación de WOs posteriores
 
-No mezclar: **WO documental de alineamiento** (este texto, índices y backlog) ≠ **WO de UX/contrato de captura 0..N** ≠ **WO terminológica** ≠ **WO de exportación longitudinal** ≠ **WO adaptador FEDRA**. Evitar ampliar una WO de demo con arquitectura futura. **En #775 se autorizó exclusivamente crear rama, commits documentales y PR de revisión; queda prohibido mergear o ejecutar cambios técnicos sin nueva autorización.** No tocar `main`.
+No mezclar: **WO documental de alineamiento** (este texto, índices y backlog) ≠ **WO de UX/contrato de captura 0..N** ≠ **WO terminológica** ≠ **WO de exportación longitudinal** ≠ **WO adaptador FEDRA**. Evitar ampliar una WO de demo con arquitectura futura. **La WO #775 es exclusivamente documental; su aprobación no autoriza cambios técnicos, integración FEDRA ni despliegue. La publicación y el cierre administrativo requieren autorización y verificación propias.** No tocar `main`.
 
-## 10. Rutas de publicación propuestas y NO TOCA
+## 10. Rutas documentales y NO TOCA
 
-1. **Crear:** `docs/architecture/FARMACIA_EA_ESTRUCTURADOS_FEDRA_READINESS_20261014.md` — contenido de este alineamiento en PR para revisión.
-2. **Enlazar:** `docs/INDEX.md` — una fila junto al contrato de exportación FH con estado «ACORDADO FUNCIONALMENTE / NO IMPLEMENTADO / FEDRA PENDIENTE INSTITUCIONAL».
-3. **Enlazar:** `docs/ops/FARMACIA_ESTADO_Y_BACKLOG_20261011.md` — una fila de futura evolución clínica EA 0..N y terminología, diferenciada de `SIL-REV-018-B` y de exportación.
-4. **Evaluar al publicar la WO documental:** `docs/ops/WORK_ORDER_STATUS.md` — actualizar únicamente si cambia el estado de una WO y hace falta reconciliación, no inventar estado publicado anticipadamente.
+1. **Documento:** `docs/architecture/FARMACIA_EA_ESTRUCTURADOS_FEDRA_READINESS_20261014.md` — contenido del presente alineamiento.
+2. **Índice:** `docs/INDEX.md` — una fila junto al contrato de exportación FH con estado «ACORDADO FUNCIONALMENTE / NO IMPLEMENTADO / FEDRA PENDIENTE INSTITUCIONAL».
+3. **Backlog:** `docs/ops/FARMACIA_ESTADO_Y_BACKLOG_20261011.md` — una fila de futura evolución clínica EA 0..N y terminología, diferenciada de `SIL-REV-018-B` y de exportación.
+4. **Estado operativo:** `docs/ops/WORK_ORDER_STATUS.md` — revisar su coherencia al cerrar la WO documental; reconciliar mediante alcance separado solo si existe una discrepancia material.
 
 **NO TOCA:** `scripts/**`, pantallas HTML, `docs/contracts/FARMACIA_ANALYTICAL_LONGITUDINAL_EXPORT_V1.md`, Export V2, F4.4/F4.5/F4.6, Excel Enfermería, configuración/arnés, `main`, datos reales, integración FEDRA. No abrir issue/push/PR/merge sin autorización específica.
 
