@@ -80,6 +80,17 @@ Keep C-087 Matt lifecycle and per-finding correction budget unchanged. Select on
 
 **Cora preparation:** docs/CORA_TICKET_TRAIN_PREPARATION_PROMPT_C087.md is the reusable upstream preparation prompt for NEW tickets/Trains only, subordinate to PROMueve clinical safety, published project authority, and approved existing handoffs. No rewriting previously approved tasks. In new Free/Standard/OpenAI units, set the seven routing/visual fields explicitly; Go remains unchanged and without this Visual/UX overlay.
 
+## C-087 thin execution/recovery amendment (PR #156) — NEXT clean boundary only
+
+Read the accepted canonical contract: docs/C087_THIN_WRITER_REVIEW_AND_EVIDENCE_RECOVERY_20261017.md. This update changes NO models, permissions, role routing, reviewer lifecycle, correction budgets, human gates or running sessions.
+
+- Implement one approved work unit in ONE coherent writer session, with no artificial Writer Phase 1/2, trial writer or automatic retry. Genuine Matt multi-unit implement-spec task graphs are allowed.
+- Empty child return is INCOMPLETE_WRITER_RESULT, not proof of prompt size or writer failure. Inspect supported READ-ONLY child session, worktree, candidate SHA and existing evidence; at most ONE short status continuation IN THE SAME verifiable idle session, if safe. Otherwise HUMAN STOP.
+- Review a fixed SHA with mandatory Standards and Spec, plus conditional Visual/UX only for authorized profiles and quality/fidelity. Prefer one concurrent review window when native Matt/OpenCode permits, else serialize each axis ONCE; wait for ALL applicable reports and consolidate BEFORE a combined focused repair. Two fresh correction attempts per authorized unit; Go has no Visual axis.
+- Reuse existing focal tests, authorized synthetic browser fixtures and screenshots. No general-suite or fixture-rebuild habit; at most one bounded environment repair if diagnosed and authorized, else INCOMPLETE_VISUAL_EVIDENCE / HUMAN STOP. Simulated authentication never proves real persistence.
+- POINTER-FIRST launch after the human approves a specific work unit: a compact visible prompt such as: Read @docs/handoffs/<approved-file>.md. Execute only <authorized-unit> under the prepared fixed base and current PROMueve/C-087 authority. STOP at <approved-checkpoint>. Substitute actual accepted names. Do not repeat the model matrix, full C-087 protocol, functional spec or test inventory inside the launch text. This is a TEMPLATE, not authorization for a ticket or Train.
+- Preserve existing handoffs, the persistent visible Herdr/OpenCode session, clinical safety, frozen design authority and human-only OpenAI activation. Active worktrees never receive this update in-flight.
+
 ## Risk selection
 
 Start with `volume` unless accepted authority already exposes a material complex trigger:
