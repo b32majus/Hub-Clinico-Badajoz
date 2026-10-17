@@ -72,3 +72,11 @@ For NEW accepted work use docs/CORA_TICKET_TRAIN_PREPARATION_PROMPT_C087.md as t
 Sprint (volume) and Frontier (complex) are OPERATIVE solely after EXPLICIT human activation for each NEW unit. Retain literally `cost_policy: openai_experimental` (legacy machine key); do not auto-activate by reset, usage, default, or fallback, and do not change profiles mid-unit. With `UI impact: quality` or `fidelity`, Standard and Spec remain mandatory and a fresh read-only OpenAI Visual/UX reviewer is conditional on actual rendered image evidence on the same fixed candidate; the maximum two finding-scoped corrections is shared. For `none` no Visual/UX reviewer. Missing actual pixel transport, authority or provider privacy permission means INCOMPLETE_VISUAL_EVIDENCE / HUMAN STOP.
 
 Free and Standard already published by PR #780 remain unchanged. Go is unchanged and receives no third Visual/UX reviewer. Existing OpenCode sessions, handoffs, product code and clinical data are not modified by this protocol update.
+
+## Thin writer/review recovery — C-087 PR #156
+
+For the NEXT human-approved unit at a CLEAN launch boundary, read docs/C087_THIN_WRITER_REVIEW_AND_EVIDENCE_RECOVERY_20261017.md plus the accepted repo-local handoff. One authorized unit uses one coherent implementer session. Empty child output is INCOMPLETE_WRITER_RESULT, investigated read-only, continued at most once in the SAME identifiable idle session if supported, else HUMAN STOP. No invented writer phases, probes, fresh retries or additional review cycles.
+
+Standards and Spec always review the SAME fixed SHA; conditional Visual/UX joins the same review window only where authorized. Prefer concurrent independent dispatch when supported, else complete axes once and consolidate findings BEFORE correction. At most two fresh corrector attempts per unit. Reuse focal tests and sanitized browser screenshots; simulated auth is not real persistence. Launch prompts must be POINTER-FIRST: approved handoff + exact authorized unit + STOP checkpoint, not repeated protocol/model matrix.
+
+Project clinical/design authority, previous handoffs, local Go model binding and permissions, human-only OpenAI profile activation, Go's absence of Visual/UX, and all active Herdr/OpenCode sessions remain unchanged. This sync prepares future units only.
