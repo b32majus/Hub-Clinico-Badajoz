@@ -1,0 +1,111 @@
+# PROMueve FH · EA estructurados 0..N — Plan de ejecución y adaptación de destinos
+
+**Corte de planificación:** 17-10-2026. **WO documental:** [#791](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/791). **Estado:** PROPUESTA DE PLAN, NO APROBACIÓN DE TODOS LOS TICKETS, NO CÓDIGO PUBLICADO, NO PILOTO. El contrato de captura v0.3 es acuerdo de producto, NO validación clínica completa. **Publicación documental autorizada por WO #791:** este plan se versiona como PROPUESTA trazable, sin aprobar automáticamente ninguna de las 20 WOs candidatas. Su integración efectiva exige PR y CI verdes; comprobar estado GitHub antes de afirmar MERGED.
+
+## Autoridades consultadas
+
+1. Repo `b32majus/Hub-Clinico-Badajoz`, rama canónica `promueve/nexus-v4`, verificada por lecturas GitHub y merge PR #790 (`f37405b5a8d19456a6a976bb7e3a08e754e61387`). Comprobar **nuevo HEAD remoto real** al lanzar cualquier unidad, nunca fijar un SHA recordado.
+2. `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`; alineamiento de EA estructurados `docs/architecture/FARMACIA_EA_ESTRUCTURADOS_FEDRA_READINESS_20261014.md` (publicado); contrato longitudinal `docs/contracts/FARMACIA_ANALYTICAL_LONGITUDINAL_EXPORT_V1.md` (aprobado funcionalmente, sin implementar).
+3. `docs/architecture/PROMUEVE_NEXUS_SALIDA_AGNOSTICA_FH_V4_ALIGNMENT_20261012.md`, ADR-006, `docs/architecture/reviews/FARMACIA_F44_EXPORT_V2_BRIDGE_EQUIVALENCE_20261012.md`, `docs/contracts/FARMACIA_EXPORT_V2_TECHNICAL_CONTEXT_CONTRACT.md`.
+4. Contrato local `PROMueve_FH_Contrato_Captura_EA_0N_Seguimiento_V0_3_ACUERDO_PRODUCTO_20261017.md` y maqueta integrada local. Registro G0 `docs/ops/FARMACIA_EA_DECISION_REGISTER_20261017.md` en PR #778 OPEN al verificar; NO se trata de autoridad publicada ni se mergea por este plan.
+5. Atenea C-087 PR #156 vigente en Nexus: `docs/C087_THIN_WRITER_REVIEW_AND_EVIDENCE_RECOVERY_20261017.md` y `docs/CORA_TICKET_TRAIN_PREPARATION_PROMPT_C087.md`; no tocar TUI/Herdr de Trains activos.
+
+## Decisión ejecutiva propuesta
+
+- **Una fuente clínica estructurada de EA**: Paciente → Acto FH (fecha única) → Episodio EA estable → Observación por acto (0..N) → Relaciones explícitas con medicamentos sospechosos (0..N por EA) → Evaluaciones Naranjo/Karch independientes por pareja y método, con estados `no_evaluado`, `borrador`, `completado`. No inferencias de catálogo/terapia previa, fechas, grado, gravedad, causalidad o seriedad regulatoria.
+- **Proyecciones de lectura** (no nuevas copias clínicas): Quick View (detección resumida), Dashboard paciente (episodios + observaciones), Estadísticas servicio (pacientes únicos, episodios únicos, observaciones, estados/denominadores), export analítico longitudinal (acto × línea *evaluada*), Excel manual, Bridge relacional y API/DB autorizada.
+- **Demo desechable**: regenerar fixtures sintéticos en 0..N, sin migración 1→N ni convertidor de históricos; sí versionado del nuevo formato, restauración y tests. Nada de datos reales ni de destrucción de trabajo ajeno.
+- **No equivocar dominios:** documento de farmacovigilancia es futuro G4, no catálogo; grado CTCAE ≠ seriedad regulatoria; sospecha ≠ causalidad demostrada; copia ≠ persistencia institucional.
+
+## Datos que deben quedar representables (propuesta, no DTO final)
+
+| Entidad lógica | Claves/propiedades conceptuales | Reglas |
+| --- | --- | --- |
+| Acto FH | `actId`, `patientRef`, `actDate`, source/author declarado | Fecha común una vez, sin fabricar inicio EA. |
+| Episodio EA | `episodeId`, `patientRef`, `relatedEpisodeId?`, estado clínico *registrado* | Identidad longitudinal. Recurrencia y continuidad **solo** seleccionadas, no deducidas. |
+| Observación EA | `observationId`, `episodeId`, `actId`, texto original, evolución, gravedad, inicio/fin si conocidos | Un episodio puede tener observaciones en actos distintos; 0..N por acto. |
+| Término codificado | código, LLT/PT u otro, vocabulario, versión, idioma, verificación | Opcional/pendiente sin licencia; texto original no desaparece. |
+| Vínculo sospechoso | `suspectRelationId`, EA, medicamento/linea explícitamente señalado | No infiere exposición ni crea línea terapéutica. |
+| Causalidad | `assessmentId`, relación, método, estado, respuestas/resultado si completado, acto autor | No confundir `0` inicial con evaluación completada, conservar correcciones/anulaciones. |
+| Fuente/proyección | IDs originales, versión de schema, sello de registro, modalidad/garantía del destino | Distinguir `prepared_for_transfer`, recibido, persistido y acuse institucional. |
+
+**Decisión abierta de modelado:** si el vínculo y evaluación son propiedad del episodio con observaciones versionadas o de cada observación; debe fijarse sin perder autoría/fechas de evaluaciones posteriores. `episodeId` y `observationId` nunca se intercambian para deduplicar.
+
+## Tres pantallas: semántica a congelar
+
+- **Quick View:** 0..N episodios, estado explícito (en seguimiento/resuelto/no registrado), últimas observaciones y enlace al Dashboard; no cuestionarios ni supuestos de actividad.
+- **Dashboard del paciente:** 1 ficha/episodio con línea de tiempo de observaciones, sospechosos explícitos, evaluaciones independientes y acceso al Seguimiento; no crear nuevos episodios por visita.
+- **Estadísticas del servicio:** KPI `pacientes_con_EA` (pacientes únicos en cohorte), `episodios_EA` (IDs únicos) y `observaciones_EA` (observaciones por acto), con ventanas y denominadores definidos. Filtros de gravedad solo si valor explícito del mismo EA; no inferir incidencias ni tasas farmacológicas. Actual resumen vigente “EA presentes” cuenta pacientes, no número de EA.
+
+## Arquitectura de salida: tres destinos ≠ tres historias clínicas
+
+| Destino/flujo | Estado previo verificado | Ajuste EA propuesto y gate |
+| --- | --- | --- |
+| CSV Estadísticas de 37 columnas | Publicado, población y filtros; NO CSV longitudinal completo | No romper el actual. Implementación longitudinal separada con regla ya aprobada de pacientes filtrados → todos sus actos, 1 fila acto×línea evaluada (o 1 sin línea). **Representación 0..N de EA/PROM pendiente de decisión de producto; no aprobar automáticamente JSON en celda, filas extra ni columnas dinámicas.** |
+| Export V2, 152 columnas, Excel manual | Demo publicada, copia/TSV 1..N por líneas pero EA común singular; no portador F4.4 completo | Matriz de cobertura y decisión explícita de versión/formato o acompañamiento normalizado para EA 0..N. Copia/descarga es `prepared_for_transfer`, no prueba `persisted`. La farmacéutica selecciona libro/hoja; no deducir por medicamento/patología. |
+| Excel Bridge relacional + Office Script | Workbook contenedor publicado; Processor histórico NO fusionado/validado; APP_* y lectura de vuelta incompletos | Schema de episodio/observación/vínculo/evaluación, Processor de filas raw sin inventar clínica, tablas/vistas APP_*, roundtrip con QA Excel real sintético. Depende de capacidades F4.5 adicionales al DTO fase 1, mapping aprobado y política de lotes/errores. |
+| API/back-end/BD (SQL Server/PostgreSQL) | Dirección ADR-006, NO adapter FH institucional implementado | Mantener el mismo contrato semántico, API autorizada con transacciones/idempotencia/versionado si realmente soportadas. No SQL desde navegador, ni secretos, ni piloto sin autorización. Se prepara spec; implementación condicionada a entorno autorizado. |
+| FEDRA/ICSR | Solo alineamiento, no acceso institucional autorizado | G4 diferido; acuse real ≠ HTTP 200; no bloquear captura ni análisis. |
+
+**Dependencias F4.5 verificadas en GitHub (2026-10-17):** el [contrato DeliveryResult v1 fase 1](../contracts/FARMACIA_DELIVERY_RESULT_V1_CONTRACT.md) **YA ESTÁ PUBLICADO** por [PR #747](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/747), limitado a `export_v2_tabular` + `manual_copy`; NO es runtime, mapeo Act→V2 ni garantía de persistencia. [Issue #671](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/671) sigue OPEN con `status:approved` solo para trabajo documental de su alcance. El [inventario de mapeo F4.4→V2](../architecture/reviews/FARMACIA_F44_EXPORT_V2_MAPPING_CANDIDATE_20261013.md) está publicado **solo como evidencia candidata, NO aprobado/implementado**. [Issue #721](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/721) sigue OPEN **sin** `status:approved`: el adaptador Excel no está autorizado. No duplicar esos issues. L0 (filas), L1 (acto reconstruido) y L2 (F4.4 íntegro) tienen garantías distintas.
+
+## Puertas no cerradas — decisiones humanas y clínicas
+
+1. **G0 FH:** confirmar descripción mínima y obligatoriedad adicional, definición continuado/resuelto/recurrencia, fecha inicio/fin propia, seriedad si aplica, corrección clínica. Puede avanzarse con comportamiento demo conservador si esas decisiones se etiquetan `PENDIENTE_FH` y no se proclama piloto.
+2. **G0 visual:** maqueta local integrada no está congelada en repo con PNG/HTML SHA256 para Visual/UX Fidelity; debe actualizarse la sección de causalidad a dos selectores y el comportamiento sin pérdida antes del freeze.
+3. **G1 terminología:** licencia MedDRA, nivel/idioma, catálogo CTCAE específico y versionado/mapeo; texto verbatim con codificación pendiente es fallback propuesto.
+4. **G2:** definición exacta de ciclo de vida del episodio/observación y estado de assessment, semántica de guardado/recarga local-first y Read Port; tratamiento de borrador vs completado, correcciones y estado global sin contradicción.
+5. **G3:** representación concreta 0..N en CSV longitudinal, frontera de EA en Export V2/copia manual, fidelidad L0/L1/L2, extensiones F4.5 todavía no cerradas y roundtrip Excel.
+6. **G4:** autorizaciones/licencias/institución para API/DB/FEDRA, no requisito para demo sintética de captura.
+
+## Orden de Trains / dependencias
+
+- **Train T0 — Autoridad y freeze (documentación/visual):** EA-00 → EA-01, detenerse si FH debe ratificar obligaciones clínicas no autorizadas.
+- **Train T1 — Modelo y Seguimiento:** EA-02 → (EA-03, EA-04; dependencias según contrato). QA real local-first, actos, episodios, observaciones y relaciones.
+- **Train T2 — Vistas:** EA-05 Quick View; EA-06 Dashboard; EA-07 Estadísticas. Son unidades separadas y **no** un único rediseño de las tres pantallas.
+- **Train T3 — Analítica y Excel:** EA-08 contrato CSV → EA-09 CSV; EA-10 mapping Excel manual (puede generar WO técnica propia); EA-11 schema Bridge → EA-12 Processor → EA-13 Read Adapter; EA-18 adaptación manual si mapping aprobado; F4.5 fase 1 ya publicada (#747); mapping y ejecución del adaptador Excel #721 siguen bloqueados/no aprobados; no duplicar issues.
+- **Train T4 — Futuros destinos condicionados:** EA-14 contrato API/BD; EA-15 solo si entorno aprobado; EA-16 terminología licenciada; EA-17 FEDRA institucional diferida. **No se proponen como bloqueadores de T1/T2 demo.**
+
+La secuencia es una **propuesta de orden**, no 20 issues aprobados ni autorización de ejecución. Cada WO es una unidad atómica: un implementador en sesión coherente; múltiples unidades Matt legítimas no justifican `Writer Phase 1/2` artificiales. Standards y Spec examinan MISMO SHA, Visual solo si hay UI impact profile pertinente; consolidar findings antes de una corrección. Reutilizar pruebas/capturas focales y respetar máximo dos intentos frescos por unidad. Ante retorno vacío `INCOMPLETE_WRITER_RESULT`: inspección read-only, como máximo una continuación en misma sesión identificada, después HUMAN STOP. Prompt de lanzamiento pointer-first: ruta handoff + unidad exacta + STOP. No inventar fallback de modelo ni iniciar Train sin autorización.
+
+## Qué podemos ejecutar primero y qué NO
+
+**Primero** EA-00 (reconciliar autoridad y registrar decisión) y EA-01 (freeze visual actualizado). En paralelo, preparar preguntas FH breves sin bloquear diseño estructural que no haga supuestos clínicos. Luego EA-02/03/04.
+
+**No implementar de inmediato:** integración FEDRA, diccionarios licenciados, adaptador API institucional, Processor histórico sin QA Excel real, esquema longitudinal CSV sin decisión de representación, ni adaptador F4.5 #721 hasta aprobación propia, mapping y restantes gates de entrega (DTO mínimo fase 1 publicado).
+
+## Política de publicación de este paquete
+
+Propuesta de rutas en GitHub (NO publicadas por este archivo):
+- `docs/ops/PLAN_FH_EA_0N_MULTISURFACE_DESTINATIONS_20261017.md` (este plan)
+- `docs/handoffs/EA_00_...md`, ... `EA_17_...md` **solo cuando la WO pase de borrador a aprobada y esté acotada**.
+- `docs/INDEX.md` (enlace a plan cuando se publique), `docs/ops/WORK_ORDER_STATUS.md` (solo hito real publicado, no declarar implementado), y el registro EA pendiente de PR #778, evitando conflictos con su rama abierta.
+
+No hacer push, issue, PR ni merge del plan sin aprobación explícita del alcance Git. Si se publica como WO documental, preflight de HEAD, rama/worktree aislados, tests de enlaces/Markdown, política de reversión y reconciliación al cerrar. Las unidades técnicas requerirán autorización posterior propia y sus issues `status:approved` antes de abrir PR.
+
+## Índice de WOs candidatas (no issues)
+
+- **EA-00** · Conciliar decisiones EA y contrato funcional v0.4 · *READY_FOR_SHAPING* · T0 — Contrato/autoridad
+- **EA-01** · Congelar referencia visual integrada de EA y causalidad · *NEEDS_PRODUCT_REVIEW* · T0 — Contrato/autoridad
+- **EA-02** · Contrato de identidad/observaciones/causalidad y fixtures EA · *BLOCKED_PARTIAL_G0* · T1 — Dominio y captura
+- **EA-03** · Seguimiento FH EA 0..N y sección existente de causalidad · *BLOCKED_BY_EA-01_EA-02* · T1 — Dominio y captura
+- **EA-04** · Read Port y proyecciones EA canónicas para consumidores · *BLOCKED_BY_EA-02* · T1 — Dominio y captura
+- **EA-05** · Quick View FH: resumen de EA con estados veraces · *BLOCKED_BY_EA-04* · T2 — Superficies de lectura
+- **EA-06** · Dashboard FH: evolución longitudinal de episodios EA · *BLOCKED_BY_EA-04* · T2 — Superficies de lectura
+- **EA-07** · Estadísticas FH: pacientes, episodios y observaciones EA · *BLOCKED_BY_EA-04* · T2 — Superficies de lectura
+- **EA-08** · Elegir representación de EA/PROM 0..N en CSV longitudinal único · *NEEDS_EXPLICIT_PRODUCT_DECISION* · T3 — Analítica y destinos
+- **EA-09** · Implementar descarga CSV longitudinal EA completa · *BLOCKED_BY_EA-08* · T3 — Analítica y destinos
+- **EA-10** · Contrato de entrega Excel manual y Export V2 con EA 0..N · *NEEDS_EA_FORMAT_MAPPING_AND_RUNTIME_GATE* · T3 — Analítica y destinos
+- **EA-11** · Esquema relacional Excel Bridge para episodios y observaciones EA · *BLOCKED_BY_EA-02_AND_BRIDGE_CAPABILITIES* · T3 — Analítica y destinos
+- **EA-12** · Processor Office Script: poblar Excel Bridge relacional y reportar resultado · *BLOCKED_BY_EA-11* · T3 — Analítica y destinos
+- **EA-13** · Read Adapter APP_* y roundtrip Excel Bridge de EA · *BLOCKED_BY_EA-12* · T3 — Analítica y destinos
+- **EA-14** · Contrato API/base de datos para EA y capacidades de persistencia · *BLOCKED_BY_EXTENDED_DELIVERY_CAPABILITIES_AND_INFRA_CHOICE* · T4 — Backend-ready y gates futuros
+- **EA-15** · Implementar adaptador API/BD autorizado o demo segregada · *DEFERRED_UNTIL_AUTHORIZED_ENVIRONMENT* · T4 — Backend-ready y gates futuros
+- **EA-16** · Terminología MedDRA/CTCAE real: licencia, configuración y codificación · *DEFERRED_G1_LICENSE* · T4 — Backend-ready y gates futuros
+- **EA-17** · Adaptador FEDRA/ICSR institucional · *DEFERRED_G4_INSTITUTION* · T4 — Backend-ready y gates futuros
+- **EA-18** · Adaptar la salida manual Excel a EA 0..N según formato aprobado · *BLOCKED_BY_EA-10_AND_DELIVERY_GATE* · T3 — Analítica y destinos
+- **EA-19** · QA transversal de cohorte y destinos EA con fixtures sintéticos · *AFTER_IMPLEMENTED_SCOPE* · T4 — Backend-ready y gates futuros
+
+## Nota de alcance
+
+Esta planificación no crea automáticamente capacidades ni bloquea G2 de demo por G4/FEDRA. No reutilizar issues #671/#721 para otro alcance; resolver sus contratos de forma independiente.
