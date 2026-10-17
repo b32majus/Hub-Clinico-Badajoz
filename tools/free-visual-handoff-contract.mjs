@@ -7,7 +7,7 @@ const required = [
   'Visual authority', 'Visual viewport/state', 'Visual witness'
 ];
 const values = {
-  'Cost policy': ['free_only', 'standard'],
+  'Cost policy': ['free_only', 'standard', 'openai_experimental'],
   'Risk class': ['volume', 'complex'],
   'Implementation focus': ['technical', 'visual', 'mixed'],
   'UI impact': ['none', 'quality', 'fidelity']
@@ -46,7 +46,7 @@ function parseFields(markdown) {
   return data;
 }
 function validateVisualHandoff(markdown, repoRoot, costPolicy) {
-  if (!['free_only', 'standard'].includes(costPolicy)) error('unsupported visual handoff cost policy');
+  if (!['free_only', 'standard', 'openai_experimental'].includes(costPolicy)) error('unsupported visual handoff cost policy');
 
   const root = path.resolve(repoRoot);
   const fields = parseFields(markdown);
@@ -99,23 +99,34 @@ function validateVisualHandoff(markdown, repoRoot, costPolicy) {
     }
   }
   const complex = fields['Risk class'] === 'complex';
-  const routes = costPolicy === 'free_only'
-    ? {
-        implementer: complex ? 'atenea-implementer-free-complex' : 'atenea-implementer-free',
-        standards: 'atenea-review-standards-free',
-        spec: complex ? 'atenea-review-spec-free-complex' : 'atenea-review-spec-free',
-        visual: 'atenea-review-visual-free',
-        corrector: complex ? 'atenea-corrector-free-complex' : 'atenea-corrector-free-volume'
-      }
-    : {
-        implementer: complex ? 'atenea-implementer-complex' : 'atenea-implementer-volume',
-        standards: 'atenea-review-standards',
-        spec: complex ? 'atenea-review-spec-complex' : 'atenea-review-spec-volume',
-        visual: 'atenea-review-visual-standard',
-        corrector: complex ? 'atenea-corrector-complex' : 'atenea-corrector-volume'
-      };
+  const routesByPolicy = {
+    free_only: {
+      implementer: complex ? 'atenea-implementer-free-complex' : 'atenea-implementer-free',
+      standards: 'atenea-review-standards-free',
+      spec: complex ? 'atenea-review-spec-free-complex' : 'atenea-review-spec-free',
+      visual: 'atenea-review-visual-free',
+      corrector: complex ? 'atenea-corrector-free-complex' : 'atenea-corrector-free-volume'
+    },
+    standard: {
+      implementer: complex ? 'atenea-implementer-complex' : 'atenea-implementer-volume',
+      standards: 'atenea-review-standards',
+      spec: complex ? 'atenea-review-spec-complex' : 'atenea-review-spec-volume',
+      visual: 'atenea-review-visual-standard',
+      corrector: complex ? 'atenea-corrector-complex' : 'atenea-corrector-volume'
+    },
+    openai_experimental: {
+      implementer: complex ? 'atenea-implementer-openai-frontier' : 'atenea-implementer-openai-sprint',
+      standards: complex ? 'atenea-review-standards-openai-frontier' : 'atenea-review-standards-openai-sprint',
+      spec: complex ? 'atenea-review-spec-openai-frontier' : 'atenea-review-spec-openai-sprint',
+      visual: complex ? 'atenea-review-visual-openai-frontier' : 'atenea-review-visual-openai-sprint',
+      corrector: 'atenea-corrector-openai'
+    }
+  };
+  const routes = routesByPolicy[costPolicy];
   return {
-    schema: costPolicy === 'standard' ? 'atenea.standard.visual-handoff/v1' : 'atenea.free.visual-handoff/v1',
+    schema: { free_only: 'atenea.free.visual-handoff/v1',
+      standard: 'atenea.standard.visual-handoff/v1',
+      openai_experimental: 'atenea.openai-experimental.visual-handoff/v1' }[costPolicy],
     implementation_focus: focus,
     ui_impact: impact,
     implementer: routes.implementer,
@@ -132,4 +143,7 @@ function validateFreeVisualHandoff(markdown, repoRoot) {
 function validateStandardVisualHandoff(markdown, repoRoot) {
   return validateVisualHandoff(markdown, repoRoot, 'standard');
 }
-export { parseFields, repoPath, validateFreeVisualHandoff, validateStandardVisualHandoff };
+function validateExperimentalOpenAIVisualHandoff(markdown, repoRoot) {
+  return validateVisualHandoff(markdown, repoRoot, 'openai_experimental');
+}
+export { parseFields, repoPath, validateFreeVisualHandoff, validateStandardVisualHandoff, validateExperimentalOpenAIVisualHandoff };

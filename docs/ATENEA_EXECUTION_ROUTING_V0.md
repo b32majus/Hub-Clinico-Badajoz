@@ -38,7 +38,7 @@ Human/project authority owns cost policy. Cora recommends risk class from accept
 | go | volume | `atenea-go` |
 | go | complex | `atenea-go` |
 
-Free-only agents are included in this LOCAL SYNC CANDIDATE, for future authorized clean-boundary units only. Before actual Free work consult docs/ATENEA_FREE_PROFILE_V0.md and docs/ATENEA_FREE_MODEL_CATALOG_V0.md; verify endpoint availability. This candidate does not activate Free on canonical, change any active OpenCode session or permit paid fallback.
+Free-only agents were published in canonical Nexus by PR #780. They are available to NEW human-authorized clean-boundary units using docs/ATENEA_FREE_PROFILE_V0.md and docs/ATENEA_FREE_MODEL_CATALOG_V0.md after endpoint verification. Published agent files do not update sessions already running. No paid fallback.
 
 Go bindings: the **locally readable**, bounded `docs/ATENEA_GO_PROFILE_V0.md` plus the exact `.opencode/agents/*go*.md` frontmatter. Go Volume/Complex are operationally qualified in Atenea C-087 for routine bounded work, **not** a Standard parity claim; no silent fallback.
 
@@ -59,9 +59,9 @@ Cora must fix the seven handoff fields BEFORE launching a new Free/Standard unit
 - Nexus current visual references: .agents/skills/promueve-visual-qa/SKILL.md and docs/PRODUCT_FIDELITY_GATES_V1.md; do not conflate old QA screenshots with a frozen master. The 17 October Pharmacy EA integrated mockup was approved in conversation, but is NOT yet a versioned repo-local PNG with accepted SHA256, and cannot be represented as such in a fidelity handoff before a separate authorized freeze.
 - Full applicable local contracts: docs/ATENEA_FREE_VISUAL_UX_ROUTING_V1.md and docs/ATENEA_STANDARD_VISUAL_UX_ROUTING_V1.md. Cora and the human own classification, design decisions, permission to publish and approval of any visual change.
 
-## OpenAI experimental opt-in (Atenea C-087, unqualified)
+## OpenAI Sprint/Frontier — operative, explicit human activation only (legacy technical identifier)
 
-**Source authority:** `b32majus/Atenea/main@5abad2c4cc450c0824d6019dc5257b17a0ffe66b`, `docs/ATENEA_OPENAI_EXPERIMENTAL_PROFILE_V0.md`. These exact nine `.opencode/agents/atenea-*openai*.md` project-local files were reused from the previously prepared worktree, without changing their content. **EXPERIMENTAL / HUMAN OPT-IN only**, at a new authorized work-unit boundary; no switching ongoing sessions, no silent fallback, no replacement of `standard`, `free_only`, `go` or `default_agent`.
+**Source authority:** `b32majus/Atenea/main@0874db41b197dbd1f4874a99b529d24e71159fba`, `docs/ATENEA_OPENAI_EXPERIMENTAL_PROFILE_V0.md`. The nine existing OpenAI agents were updated to canonical Atenea PR #155 operational descriptions without model/mode changes (coordinators additionally allow delegation to the two read-only Visual/UX agents introduced by PR #154). **OPERATIVE / EXPLICIT HUMAN OPT-IN only**, at a new authorized work-unit boundary; no switching ongoing sessions, no silent fallback, no replacement of `standard`, `free_only`, `go` or `default_agent`.
 
 | Role | Sprint — volume | Frontier — complex |
 | --- | --- | --- |
@@ -70,10 +70,15 @@ Cora must fix the seven handoff fields BEFORE launching a new Free/Standard unit
 | implementer | `atenea-implementer-openai-sprint` → `openai/gpt-6-luna#high` | `atenea-implementer-openai-frontier` → `openai/gpt-6.1-sol#high` |
 | Standards (read-only) | `atenea-review-standards-openai-sprint` → `nan/deepseek-v4-flash` | `atenea-review-standards-openai-frontier` → `nan/glm5.3-flash#high` |
 | Spec (read-only) | `atenea-review-spec-openai-sprint` → `openai/gpt-6.1-sol#high` | `atenea-review-spec-openai-frontier` → `openai/gpt-6-luna#high` |
+| Visual/UX (conditional quality/fidelity) | `atenea-review-visual-openai-sprint` → `openai/gpt-6.1-sol#high` | `atenea-review-visual-openai-frontier` → `openai/gpt-6-luna#high` |
 | fresh corrector | `atenea-corrector-openai` → `openai/gpt-6.1-sol#high` | same |
 | merger (/implement-spec only) | existing `atenea-merger` → `nan/mimo-v2.6-flash` | same |
 
 Keep C-087 Matt lifecycle and per-finding correction budget unchanged. Select one visible primary explicitly on a new authorized work unit; authenticate both providers first. Model catalog entries alone do **not** guarantee generation/quota success. If a provider, model binding, permission, or quota is unavailable, HUMAN STOP rather than fall back or change models. No clinical data, production access, synthetic campaigns, or changes to running Trains.
+
+**Decision 2026-10-17 — Atenea PR #154/#155:** Sprint and Frontier are OPERATIVE, but each NEW authorized unit requires EXPLICIT HUMAN ACTIVATION at a clean boundary. The machine key remains `cost_policy: openai_experimental` for compatibility. No reset/quota auto-selection, fallback, in-flight switch or profile renaming. `UI impact: none` skips Visual/UX; `quality` or `fidelity` dispatches a fresh read-only Visual/UX reviewer on the SAME fixed candidate in addition to Standards + Spec, sharing the existing maximum two focused corrections. See docs/ATENEA_OPENAI_VISUAL_UX_ROUTING_V1.md and docs/ATENEA_OPENAI_EXPERIMENTAL_PROFILE_V0.md.
+
+**Cora preparation:** docs/CORA_TICKET_TRAIN_PREPARATION_PROMPT_C087.md is the reusable upstream preparation prompt for NEW tickets/Trains only, subordinate to PROMueve clinical safety, published project authority, and approved existing handoffs. No rewriting previously approved tasks. In new Free/Standard/OpenAI units, set the seven routing/visual fields explicitly; Go remains unchanged and without this Visual/UX overlay.
 
 ## Risk selection
 

@@ -64,3 +64,11 @@ Reconcile live project docs only when the accepted work changes durable project 
 ## Conditional Visual/UX v1 for future Free/Standard units
 
 Cora fixes Implementation focus, UI impact, Visual authority, Visual viewport/state and Visual witness in every NEW approved Free/Standard handoff. See docs/ATENEA_EXECUTION_ROUTING_V0.md and the relevant Free/Standard Visual/UX routing document. Fidelity requires actual approved PNG pixels, a frozen SHA256 and a matched browser-rendered candidate screenshot. An exploratory or conversational design is not a pinned published visual master. Visual/UX is a conditional third read-only axis for the same candidate, never an extra Matt lifecycle or correction budget. No running Train changes, no Go/OpenAI experimental rerouting, no automatic model fallback, and no patient/clinical data or secrets in external visual evidence.
+
+## OpenAI Sprint / Frontier and preparation prompt — C-087 (2026-10-17)
+
+For NEW accepted work use docs/CORA_TICKET_TRAIN_PREPARATION_PROMPT_C087.md as the Cora operator preparation reference. The accepted PROMueve WO, clinical safety, local project documentation and approved handoffs outrank the reusable generic prompt. Do not reselect a ticket already approved; prepare only the next bounded unit.
+
+Sprint (volume) and Frontier (complex) are OPERATIVE solely after EXPLICIT human activation for each NEW unit. Retain literally `cost_policy: openai_experimental` (legacy machine key); do not auto-activate by reset, usage, default, or fallback, and do not change profiles mid-unit. With `UI impact: quality` or `fidelity`, Standard and Spec remain mandatory and a fresh read-only OpenAI Visual/UX reviewer is conditional on actual rendered image evidence on the same fixed candidate; the maximum two finding-scoped corrections is shared. For `none` no Visual/UX reviewer. Missing actual pixel transport, authority or provider privacy permission means INCOMPLETE_VISUAL_EVIDENCE / HUMAN STOP.
+
+Free and Standard already published by PR #780 remain unchanged. Go is unchanged and receives no third Visual/UX reviewer. Existing OpenCode sessions, handoffs, product code and clinical data are not modified by this protocol update.
