@@ -38,7 +38,7 @@ Human/project authority owns cost policy. Cora recommends risk class from accept
 | go | volume | `atenea-go` |
 | go | complex | `atenea-go` |
 
-`free_only` is an Atenea upstream cost dimension but is **not bound as local Nexus agents**; the table preserves upstream role names as provenance, not a callable fallback. Adding that route requires separate human-approved configuration.
+Free-only is locally bound by eight .opencode/agents/*free*.md roles copied byte-for-byte from Atenea C-087 at 2f8ace50510d77c73af8e3918e8286ffbc6e531f, with the upstream Free profile and replaceable Free model catalog. Before each approved Free unit run node tools/check-free-models.mjs; an unavailable bound Free model means HUMAN STOP, not paid fallback. The default remains Standard Volume. This is a separate configuration package: it must merge into canonical Nexus before a Free unit launches; an in-flight Standard unit cannot switch cost profiles mid-unit.
 
 Go bindings: the **locally readable**, bounded `docs/ATENEA_GO_PROFILE_V0.md` plus the exact `.opencode/agents/*go*.md` frontmatter. Go Volume/Complex are operationally qualified in Atenea C-087 for routine bounded work, **not** a Standard parity claim; no silent fallback.
 
