@@ -1,7 +1,7 @@
 # WO-OPS — Atenea C-087 PR #156 · ejecución ligera y recuperación de evidencia
 
 **Fecha:** 2026-10-17
-**Estado:** PREPARACIÓN LOCAL AISLADA; NO PUBLICADO / NO ACTIVADO EN TRAINS EN CURSO.
+**Estado final:** PUBLICADO EN GITHUB / ARNÉS VERSIONADO / NO ACTIVADO EN TRAINS NI SESIONES YA INICIADAS. [PR #788](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/788) MERGED, [WO #787](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/787) CLOSED/completed. Reconciliación [WO #789](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/789).
 **Autorización:** handoff global Atenea C-087 PR #156 (solo sincronización incremental, validación y READY_FOR_CORA_ATENEA_156_SYNC_RECHECK). **STOP** antes de issue, push, PR, merge, deploy o Train.
 
 ## Objetivo y contexto
@@ -45,3 +45,12 @@ Antes de publicación, no integrar el commit local. No reset, clean, force-push,
 
 ## OUTPUT
 READY_FOR_CORA_ATENEA_156_SYNC_RECHECK, con versiones, commit,parent, 21 rutas esperadas, validaciones, Go binding preservado, sesiones no alteradas, límite de publicación y HUMAN STOP ante cualquier fallo material.
+
+## Postmerge — reconciliación PR #156 (2026-10-17)
+
+- **Hecho publicado:** [PR #788](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/788) MERGED en `promueve/nexus-v4`, merge `e29eee112ba68191a4d2f75bca3f4a9f7acc70d1`; candidato `b122ebb6841b97035245c6edca77785bda1c86ea`, padre exacto `f4274fb05f6630a180affa44fa7b7bc5c9d30e96`. [WO #787](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/787) CLOSED/completed; 21 rutas solo arnés/documentación.
+- **QA:** [CI Nexus #39065037459](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/39065037459) SUCCESS. En preparación local: contrato y controles C-087 PASS, regresiones Free/Standard/OpenAI PASS, 13 agentes resueltos por OpenCode, frontmatter/modelos/permisos intactos, Go local `opencode-go/mimo-v2.6-flash` preservado.
+- **Fases de autorización:** el STOP original antes de push/PR/merge era aplicable exclusivamente a la preparación local. Posteriormente se autorizó publicar, y tras la CI verde, fusionar y reconciliar. Se conserva la instrucción anterior como historial; no representa el estado actual publicado.
+- **Aplicabilidad:** protocolo y lanzamiento pointer-first versionados en GitHub para futuras unidades con autorización humana y frontera limpia. No se alteran sesiones OpenCode/Herdr ni Trains activos.
+- **Limitaciones:** un contrato y la CI del arnés no demuestran recuperación real de respuestas vacías, concurrencia efectiva de revisores, transporte de PNG, QA funcional clínico, persistencia ni aptitud para piloto.
+- **Reconciliación administrativa:** [WO #789](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/789). Solo cambian este documento, `docs/INDEX.md` y `docs/ops/WORK_ORDER_STATUS.md`; PR clínica #778 permanece separada.
