@@ -1,6 +1,6 @@
-# WO OPS — Atenea C-087: Free + Standard Visual/UX, sync local
+# WO OPS — Atenea C-087: Free + Standard Visual/UX, preparación y publicación
 
-**Fecha:** 17-10-2026. **Estado:** CANDIDATO LOCAL AISLADO; NO PUBLICADO / NO ACTIVADO. **Handoff autorizado:** global Atenea upstream PR #152 (Free) + #153 (Standard). No se inicia Train de producto como consecuencia de esta WO.
+**Fecha:** 17-10-2026. **Estado final:** PUBLICADO EN GITHUB / ARNÉS VERSIONADO / NO ACTIVADO EN SESIONES EXISTENTES; **NO CAMBIA PRODUCTO CLÍNICO**. Handoff original: Atenea PR #152 (Free) + #153 (Standard). Publicación Nexus: [WO #779](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/779) CLOSED/completed y [PR #780](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/780) MERGED; reconciliación documental [WO #781](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/781).
 
 ## Objetivo
 Dejar el harness Nexus preparado para unidades nuevas Free/Standard con tres ejes condicionales de revisión (Standards, Spec, Visual/UX si UI impact material), preservando la autoridad de producto/seguridad clínica Nexus y sin intervenir en Go/OpenAI ni sesiones activas.
@@ -56,3 +56,11 @@ El handoff autoriza commit **local acotado** en la rama nueva, con reporte final
 
 ## OUTPUT
 READY_FOR_CORA_ATENEA_153_SYNC_RECHECK. Reportar HEAD base, SHA local, archivos, comprobaciones, límites, decisiones humanas y estado de sesiones. Cerrar el turno; no ejecutar Train.
+
+## Postmerge — reconciliación documental (2026-10-17)
+
+- **Publicado y comprobado:** [PR #780](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/780) MERGED en la rama canónica promueve/nexus-v4, merge 63db67686ffb31d42de091f33f9b02c1e1a056ee; candidato exacto eb650e788a7db8273347c3726b19bf743b267c19; [WO #779](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/779) CLOSED/completed. Se confirmó la presencia de los contratos y los dos agentes revisores visuales en el GitHub publicado.
+- **Evidencia QA:** 29 rutas de arnés/documentación, una sola revisión de PR desde candidato fijo y [Nexus deterministic gates (run 39060267982)](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/39060267982) SUCCESS antes del merge. Los tests locales de routing Visual Free/Standard y los validadores de modelos se ejecutaron en el candidato; no hubo QA de navegador ni pruebas clínicas, pues no se modificó el producto.
+- **Alcance operativo:** los perfiles Free y Standard Visual/UX están **versionados en GitHub y disponibles para nuevas unidades en worktrees actualizados**. No se han reiniciado Herdr/OpenCode, reconfigurado sesiones ya lanzadas, activado una ruta de forma retroactiva ni validado transporte de imágenes en un nuevo Train real. La comparación de opencode.json confirmó contenido equivalente normalizando los finales de línea, sin edición de esa ruta.
+- **Autoridad visual pendiente:** los mockups EA de Farmacia aprobados visualmente todavía no son un master PNG/HTML congelado y versionado con SHA256 en el repositorio; un futuro handoff de fidelidad necesita ese freeze expreso. La [PR clínica documental #778](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/778) continúa separada y no forma parte de esta integración.
+- **Historia de preparación:** las restricciones previas de «NO TOCA», «sin push/PR/merge» y «STOP» se aplicaban **antes** de la publicación autorizada mediante #779/#780. Se conservan arriba como trazabilidad de esa fase; no contradicen el merge ya verificado. La presente actualización administrativa no introduce agentes, código ni autorización para un Train.
