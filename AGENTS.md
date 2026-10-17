@@ -59,3 +59,8 @@ Newly discovered debt stays separate from the requested change unless current au
 ## Documentation / memory
 
 Reconcile live project docs only when the accepted work changes durable project state. Engram/conversation memory is auxiliary and never authority for current HEAD, branch, PR or frontier state.
+
+
+## Conditional Visual/UX v1 for future Free/Standard units
+
+Cora fixes Implementation focus, UI impact, Visual authority, Visual viewport/state and Visual witness in every NEW approved Free/Standard handoff. See docs/ATENEA_EXECUTION_ROUTING_V0.md and the relevant Free/Standard Visual/UX routing document. Fidelity requires actual approved PNG pixels, a frozen SHA256 and a matched browser-rendered candidate screenshot. An exploratory or conversational design is not a pinned published visual master. Visual/UX is a conditional third read-only axis for the same candidate, never an extra Matt lifecycle or correction budget. No running Train changes, no Go/OpenAI experimental rerouting, no automatic model fallback, and no patient/clinical data or secrets in external visual evidence.

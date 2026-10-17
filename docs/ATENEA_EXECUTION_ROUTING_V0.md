@@ -38,9 +38,26 @@ Human/project authority owns cost policy. Cora recommends risk class from accept
 | go | volume | `atenea-go` |
 | go | complex | `atenea-go` |
 
-`free_only` is an Atenea upstream cost dimension but is **not bound as local Nexus agents**; the table preserves upstream role names as provenance, not a callable fallback. Adding that route requires separate human-approved configuration.
+Free-only agents are included in this LOCAL SYNC CANDIDATE, for future authorized clean-boundary units only. Before actual Free work consult docs/ATENEA_FREE_PROFILE_V0.md and docs/ATENEA_FREE_MODEL_CATALOG_V0.md; verify endpoint availability. This candidate does not activate Free on canonical, change any active OpenCode session or permit paid fallback.
 
 Go bindings: the **locally readable**, bounded `docs/ATENEA_GO_PROFILE_V0.md` plus the exact `.opencode/agents/*go*.md` frontmatter. Go Volume/Complex are operationally qualified in Atenea C-087 for routine bounded work, **not** a Standard parity claim; no silent fallback.
+
+## Conditional Visual/UX v1 — Free PR #152 and Standard PR #153, 2026-10-17
+
+Source authority: Atenea main at 13e07aaaedbeeb7d39d0c0a9d15ad03019423239. Twelve new agents and four Standard agent updates are prepared in this isolated candidate, not activated for running sessions.
+
+Cora must fix the seven handoff fields BEFORE launching a new Free/Standard unit: Cost policy (free_only|standard), Risk class (volume|complex), Implementation focus (technical|visual|mixed), UI impact (none|quality|fidelity), Visual authority, Visual viewport/state, Visual witness. The last three are NONE when UI impact is none.
+
+- none: canonical Matt Standards + Spec only. Do NOT dispatch a Visual/UX reviewer.
+- quality: accepted project visual/UX rules plus real browser-rendered screenshot(s) of the actual changed UI.
+- fidelity: exact human-frozen repo-local approved PNG with SHA256, additional HTML when available, AND real candidate browser screenshot at the SAME screen, viewport and state. Never claim pixel fidelity from code, a text file path or a historical screenshot alone.
+- Free conditional reviewer: atenea-review-visual-free (Nemotron 3.5 Super VL Free). Standard conditional reviewer: atenea-review-visual-standard (GPT-6 Luna High); always a fresh separate session, even though Luna also serves Standards/Spec. These are the third read-only axis on the SAME fixed candidate, not another Matt review or another correction lifecycle.
+- Findings from applicable Standards, Spec and Visual axes share the existing maximum TWO fresh finding-scoped correction attempts. A visual repair needs one focused screenshot proof, not a repeated global Visual/UX review.
+- Standard implementers remain risk-bound: DeepSeek alias nan/deepseek-v4-flash (provider V4.1-1017) in Volume, GLM 5.3 Flash High in Complex. Free writers remain the approved distinct Volume/Complex Free models. No probability router, no automatic model fallback or aesthetics-based risk reclassification. Go and OpenAI experimental bindings/permissions are unchanged.
+- Image pixels MUST reach writer/reviewer, not just image paths. Use synthetic/sanitized browser screenshots authorized for each provider. Missing authority, pixels, privacy approval or real browser witness -> INCOMPLETE_VISUAL_EVIDENCE / HUMAN STOP.
+- For handoff preflight run tools/check-free-visual-handoff.mjs or tools/check-standard-visual-handoff.mjs against an approved repo-local handoff; Free endpoint availability via tools/check-free-models.mjs, with --visual when relevant. These structural checks are not evidence of actual image transport.
+- Nexus current visual references: .agents/skills/promueve-visual-qa/SKILL.md and docs/PRODUCT_FIDELITY_GATES_V1.md; do not conflate old QA screenshots with a frozen master. The 17 October Pharmacy EA integrated mockup was approved in conversation, but is NOT yet a versioned repo-local PNG with accepted SHA256, and cannot be represented as such in a fidelity handoff before a separate authorized freeze.
+- Full applicable local contracts: docs/ATENEA_FREE_VISUAL_UX_ROUTING_V1.md and docs/ATENEA_STANDARD_VISUAL_UX_ROUTING_V1.md. Cora and the human own classification, design decisions, permission to publish and approval of any visual change.
 
 ## OpenAI experimental opt-in (Atenea C-087, unqualified)
 
