@@ -63,6 +63,18 @@ La propuesta **no equivale** a notificación automatizada, autorización institu
 
 **Fuentes complementarias oficiales:** [EMA — Electronic reporting / E2B(R3)](https://www.ema.europa.eu/en/human-regulatory-overview/research-development/pharmacovigilance-research-development/eudravigilance/eudravigilance-electronic-reporting); [EMA — Change management, guía EU y business rules](https://www.ema.europa.eu/en/human-regulatory-overview/research-development/pharmacovigilance-research-development/eudravigilance/change-management-eudravigilance-system); [EMA — Guía ICH E2B(R3)](https://www.ema.europa.eu/en/scientific-guidelines/ich-e2b-r3-electronic-transmission-individual-case-safety-reports-icsrs-data-elements-message-specification-implementation-guide); [BOE — convenio de pasarela FEDRA 2026](https://www.boe.es/diario_boe/txt.php?id=BOE-A-2026-17878).
 
+### 4.2 Decisiones de producto y alcance transversal · 17-10-2026
+
+**[ACORDADO FUNCIONALMENTE — actualización posterior al alineamiento inicial]** La responsable de producto ha revisado el **mockup G0 de EA 0..N** y ha **aprobado su dirección visual y el patrón de una ficha por EA**, con entrada incremental «Añadir EA». La visualización cómoda de hasta cuatro fichas no impone límite de cardinalidad. **Esta conformidad visual no sustituye la validación de campos clínicos, criterios de terminología ni QA del módulo clínico por Farmacia.** Véase el [registro vivo de decisiones y responsables](../ops/FARMACIA_EA_DECISION_REGISTER_20261017.md) (WO documental #777).
+
+**[ACORDADO FUNCIONALMENTE]** La **fecha del acto farmacéutico o clínico es común** a todas las fichas EA registradas en esa visita y debe capturarse una sola vez en la cabecera del acto. La **fecha real de inicio o fin de cada EA**, si se documenta, es semánticamente independiente y puede diferir tanto entre eventos como de la fecha de visita. No presuponer que todos empezaron ese día, ni copiar automáticamente la fecha del acto a campos EA ausentes. En la maqueta G0 R2 la cronología propia del EA queda como sección opcional.
+
+**[ACORDADO COMO DIRECCIÓN DE PRODUCTO]** MedDRA, CTCAE 6.0 o **ambos** son modos configurables por deployment/hospital/servicio. El selector del mockup solo sirve para **simular configuraciones**: en la interfaz asistencial definitiva se mostrará el modo preconfigurado, sin obligar a cada profesional a escogerlo en cada visita. Si ambos están habilitados, no crear equivalencias ni grados sin correspondencia y validación explícitas. Licencia de catálogo y permisos de notificación FEDRA son asuntos diferentes y siguen pendientes.
+
+**[DIRECCIÓN EVOLUTIVA; NO IMPLEMENTADA NI PRIORIZADA]** El patrón estructurado de EA debe ser **reutilizable por otros servicios clínicos** en sus **visitas de Seguimiento y, cuando proceda, Primera Visita**, además de Farmacia Hospitalaria. No asumir que los flujos, campos o responsabilidades clínicos sean idénticos; decidir con cada servicio cuándo y cómo registrar EA. Esto **no amplía la próxima WO de captura FH a Reumatología, Dermatología u otros módulos**, ni implica compartir datos de pacientes entre deployments.
+
+**[PENDIENTE]** El registro [EA-P02 a EA-P15](../ops/FARMACIA_EA_DECISION_REGISTER_20261017.md) identifica los asuntos a resolver por Farmacia, servicios clínicos, estadística, MSSO/TI o circuito SES/AEMPS y la fase exacta en que bloquean. G0 **visual** está aprobado; G0 **clínico** permanece abierto en campos mínimos, cronología e identidad longitudinal.
+
 ## 5. Captura propuesta — funcionalidad visible
 
 [PROPUESTA EN LÍNEA CON LA DECISIÓN]
