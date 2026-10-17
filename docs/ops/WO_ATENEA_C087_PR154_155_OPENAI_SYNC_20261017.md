@@ -1,7 +1,7 @@
 # WO-OPS — Atenea C-087: sync PR #154/#155 de OpenAI y prompt de preparación
 
 **Fecha:** 2026-10-17
-**Estado:** CANDIDATO LOCAL AISLADO / PENDIENTE RECHECK / NO PUBLICADO.
+**Estado final:** PUBLICADO EN GITHUB / SIN ACTIVACIÓN AUTOMÁTICA NI RETROACTIVA. [PR #784](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/784) MERGED; [WO #783](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/783) CLOSED/completed; reconciliación [WO #785](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/785).
 **Autorización humana:** handoff global Atenea C-087 (17-10-2026) para diagnóstico y preparación/sincronización de infraestructura; no autoriza push, PR, merge, deploy, inicio de Trains ni activación automática de Sprint/Frontier.
 
 ## Objetivo y contexto
@@ -49,3 +49,11 @@ Un commit local acotado y reporte READY_FOR_CORA_ATENEA_155_SYNC_RECHECK, STOP. 
 
 ## OUTPUT
 Rama, base/parent, SHA local, archivos, 11 agentes y su invariancia, contratos y prompt sincronizados, test/CI, estado sesiones, pendientes humanos y límites. No presentar preparación local como integración publicada.
+
+## Postmerge — publicación autorizada y verificada (2026-10-17)
+
+- **Publicado:** [PR #784](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/784) MERGED en promueve/nexus-v4, merge 3da02ea6899bc34fbd0736e9b142d9d29954debe, candidato 8058ec69a52228b7b6681ac1b7498193ae08b949, 20 rutas de arnés/documentación, [WO #783](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/783) CLOSED/completed. Las restricciones de push/PR/merge descritas en la WO original correspondían a su **fase local previa**; la nueva autorización humana habilitó y completó la publicación, sin autorizar Trains.
+- **QA:** tests de rutas Free/Standard/OpenAI y controles C-087 de Atenea correctos; modelos y modos anteriores de Sprint/Frontier intactos, nuevos reviewers Visual/UX solo lectura y delegación acotada. [CI Nexus #39063326093](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/39063326093) SUCCESS sobre el candidato antes de merge; diff de 20 rutas, base sin deriva. Prompt y reviewer verificados en GitHub tras fusión.
+- **Estado operativo:** arnés versionado en canónica para **nuevas unidades**. Sprint/Frontier operativos únicamente con **activación humana explícita por unidad y en frontera limpia**. Conservar `cost_policy: openai_experimental` como clave técnica histórica. No se han modificado sesiones OpenCode/Herdr ya arrancadas ni se han ejecutado nuevos Trains.
+- **Límites:** no hay evidencia de transporte real de imágenes en una futura unidad, QA navegador de producto ni piloto. El mockup EA Farmacia aún no está versionado como master PNG/HTML con SHA256. La PR #778 sigue fuera de este trabajo.
+- **Reconciliación:** [WO #785](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/785), cambios únicamente en WO, INDEX y WORK_ORDER_STATUS. Limpieza no destructiva sin borrar ramas, worktrees ni alterar sesiones.
