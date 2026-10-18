@@ -43,6 +43,51 @@
         display: inline-flex;
         align-items: center;
     }
+    /* PR #798 CI: trasladar solo la presentación de T01 a CSS scoped,
+       sin modificar composición G0 ni comportamiento clínico. */
+    #modSeguimientoEa > .ea-t01-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-section-note {
+        margin-left: auto;
+    }
+    #modSeguimientoEa .ea-t01-heading-row {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-entry-actions {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-prior-picker {
+        margin: 0;
+        min-width: 260px;
+        flex: 1 1 260px;
+    }
+    #modSeguimientoEa .ea-t01-summary-row {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-summary-content {
+        min-width: 0;
+    }
+    #modSeguimientoEa .ea-t01-summary-copy {
+        font-weight: 800;
+        color: #1f344b;
+    }
+    #modSeguimientoEa .ea-t01-footer-actions {
+        margin: 0;
+    }
     /* VIS-04: solo los dos campos de la tarjeta EA expandida, como G0. */
     #fhSegEaList .ea-t01-clinical-grid {
         display: grid;
@@ -283,7 +328,7 @@
     </div>
 </div>
 </section>
-<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span><i class="fas fa-exclamation-triangle"></i> Evaluación de efectos adversos</span><span class="status-badge" style="margin-left:auto;">FECHA DEL ACTO EN EVOLUCIÓN · SIN DUPLICADOS</span></h2>
+<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title ea-t01-section-heading"><span><i class="fas fa-exclamation-triangle"></i> Evaluación de efectos adversos</span><span class="status-badge ea-t01-section-note">FECHA DEL ACTO EN EVOLUCIÓN · SIN DUPLICADOS</span></h2>
     <div class="form-grid">
         <div class="form-group"><label for="fhSeguimientoEaPresente">¿Se han identificado o revisado acontecimientos adversos en esta visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select><p class="search-card__hint">No = ausencia documentada en esta visita · No consta = no hay información suficiente. Ninguno resuelve episodios anteriores.</p></div>
         <div class="form-group hidden" id="fhSeguimientoEaGravedadRow"><label for="fhSeguimientoEaGravedad">Gravedad del efecto adverso</label><select class="form-select" id="fhSeguimientoEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option><option value="Requiere suspensión / derivación">Requiere suspensión / derivación</option></select></div>
@@ -291,11 +336,11 @@
         <div class="form-group hidden" id="fhSeguimientoEaCorregidoRow"><label for="fhSeguimientoEaCorregido">¿Cómo se ha corregido el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaCorregido"><option value="no_consta">No consta</option><option value="reduccion_dosis">Reducción de dosis</option><option value="cambio_farmaco">Cambio de fármaco</option><option value="tratamiento_sintomatico">Tratamiento sintomático</option><option value="suspension_temporal">Suspensión temporal</option><option value="otro">Otro</option></select></div>
     </div>
     <div class="hidden" id="fhSegEaZone">
-        <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;"><h3 class="card-title">EA de esta visita <span class="status-badge" id="fhSegEaCountBadge">0</span></h3></div>
+        <div class="ea-t01-heading-row"><h3 class="card-title">EA de esta visita <span class="status-badge" id="fhSegEaCountBadge">0</span></h3></div>
         <p class="search-card__hint">Descripción del EA nuevo obligatoria al finalizar · Otros datos opcionales</p>
-        <div class="form-actions" style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;">
+        <div class="form-actions ea-t01-entry-actions">
             <button type="button" class="btn btn-primary btn-sm" id="fhSegAddEaBtn"><i class="fas fa-plus" aria-hidden="true"></i> Añadir EA nuevo</button>
-            <div class="form-group" style="margin:0;min-width:260px;flex:1 1 260px;"><label class="form-label" for="fhSegEaPriorEpisodeSelect">EA anterior para actualizar / registrar recurrencia</label><select class="form-select" id="fhSegEaPriorEpisodeSelect" disabled aria-disabled="true" data-ea-demo-control="t01"><option value="">Seleccionar episodio anterior…</option><option value="DEMO-EP-081">Prurito · DEMO-EP-081 · En seguimiento (demo)</option><option value="DEMO-EP-082">Náuseas · DEMO-EP-082 · Resuelto (demo)</option></select></div>
+            <div class="form-group ea-t01-prior-picker"><label class="form-label" for="fhSegEaPriorEpisodeSelect">EA anterior para actualizar / registrar recurrencia</label><select class="form-select" id="fhSegEaPriorEpisodeSelect" disabled aria-disabled="true" data-ea-demo-control="t01"><option value="">Seleccionar episodio anterior…</option><option value="DEMO-EP-081">Prurito · DEMO-EP-081 · En seguimiento (demo)</option><option value="DEMO-EP-082">Náuseas · DEMO-EP-082 · Resuelto (demo)</option></select></div>
             <button type="button" class="btn btn-secondary btn-sm" id="fhSegEaUpdatePriorBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Actualizar EA anterior</button>
             <button type="button" class="btn btn-outline btn-sm" id="fhSegEaRecurrenceBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Registrar recurrencia</button>
         </div>
@@ -303,12 +348,12 @@
         <p class="empty-state hidden" id="fhSegEaEmpty">Sin EA añadidos todavía en esta visita.</p>
         <div id="fhSegEaList" data-fh-transient aria-live="polite"></div>
         <div id="fhSegEaContradictionNotice" class="notice-box notice-box--warning hidden" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>No se puede cambiar a «No» o «No consta»: este acto ya tiene EA incorporados. La contradicción se resuelve con conciliación explícita, nunca borrando datos; no se ha eliminado nada.</span></div>
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-            <div style="min-width:0;">
-                <p class="search-card__hint" id="fhSegEaSummary" aria-live="polite" style="font-weight:800;color:#1f344b;">0 observación/es en esta visita · 0 episodio/s relacionado/s</p>
+        <div class="ea-t01-summary-row">
+            <div class="ea-t01-summary-content">
+                <p class="search-card__hint ea-t01-summary-copy" id="fhSegEaSummary" aria-live="polite">0 observación/es en esta visita · 0 episodio/s relacionado/s</p>
                 <p class="search-card__hint">Ejemplo editable; no guarda en historia clínica ni genera notificaciones.</p>
             </div>
-            <div class="form-actions" style="margin:0;">
+            <div class="form-actions ea-t01-footer-actions">
                 <button type="button" class="btn btn-secondary btn-sm" id="fhSegEaShowStructureBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Ver estructura simulada</button>
                 <button type="button" class="btn btn-outline btn-sm" id="fhSegEaResetDemoBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Reiniciar ejemplo</button>
             </div>
