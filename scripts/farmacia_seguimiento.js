@@ -85,6 +85,10 @@
     var SUSPECT_DISCARD_MESSAGE = 'Este fármaco tiene una evaluación de causalidad en la visita actual. Si lo desmarca, se perderá.';
     var RELATED_DISCARD_MESSAGE = 'Este tratamiento está vinculado al efecto adverso o tiene una evaluación de causalidad. Si lo elimina, se perderán esos datos.';
     var EA_DISABLE_MESSAGE = 'Al desactivar el efecto adverso se eliminarán los sospechosos y las evaluaciones de causalidad de esta visita.';
+    /* T01 (#795): mensajes de la captura EA 0..N del acto en edición. */
+    var EA_DRAFT_DISCARD_MESSAGE = 'Este EA es un borrador sin incorporar. Si lo descarta, se perderá. ¿Continuar?';
+    var EA_DISCARD_MESSAGE = 'Este EA está incorporado al acto en edición. Si lo descarta, se perderá de este acto. ¿Continuar?';
+    var EA_DRAFTS_ON_ABSENCE_MESSAGE = 'Hay borradores de EA sin incorporar. Si registra «No» o «No consta», los borradores se descartan. ¿Continuar?';
     var LINE_CONTROL_IDS = ['fhSegTipoRelacionTerapia', 'fhSegOptimiza', 'fhSegNuevaDosis', 'fhSegNuevaPauta', 'fhSegNuevaPautaOtro', 'fhSegMotivoOpt', 'fhSegSuspension', 'fhSegMotivoSusp', 'fhSegObservacionesLinea'];
     var LINE_CONTROL_DEFAULTS = {
         fhSegTipoRelacionTerapia: 'sin_cambios', fhSegOptimiza: 'No', fhSegNuevaDosis: '',
@@ -342,6 +346,13 @@
             created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
             selected_line_ids: [], dispensed_line_ids: [], editing_line_id: '', line_state: {},
             adverse_event: { present: 'no_consta', severity: '', resolved: 'no_consta', corrected: 'no_consta', observations: '', suspect_ids: [], causality_editing_id: '' },
+            /* T01 (#795): colección EA 0..N del acto en edición. Vive SOLO en
+               memoria de edición; nunca en almacenamiento del navegador ni en
+               el ledger heredado. */
+            adverse_events: [],
+            /* C-088 SPEC-03: la fecha del acto solo cuenta como registrada
+               cuando el profesional la anota; el autorrelleno no marca. */
+            act_date_recorded: false,
             causality_by_suspect: {}
         };
         return currentFollowupVisit;
@@ -1134,8 +1145,35 @@
         if (!currentFollowupVisit) return;
         var adverse = currentFollowupVisit.adverse_event;
         adverse.present = fv('fhSeguimientoEaPresente') || 'no_consta';
-        adverse.severity = fv('fhSeguimientoEaGravedad'); adverse.resolved = fv('fhSeguimientoEaResuelto') || 'no_consta';
-        adverse.corrected = fv('fhSeguimientoEaCorregido') || 'no_consta'; adverse.observations = fv('fhSeguimientoEaObservaciones');
+        /* T01 (#795): el contenido EA vive en la colección 0..N del acto en
+           edición. La representación singular se deriva aquí SOLO como
+           proyección de compatibilidad para consumidores singulares y solo
+           cuando la colección es fielmente representable (exactamente un EA
+           incorporado). En cualquier otro caso no se rellena contenido: los
+           exportadores singulares deben fallar cerrado mediante
+           eaSingularExportBlockReason. */
+        var incorporated = eaIncorporatedEvents();
+        if (adverse.present === 'si' && incorporated.length === 1) {
+            adverse.observations = incorporated[0].description;
+            adverse.severity = incorporated[0].severity || '';
+            adverse.resolved = incorporated[0].evolution || 'no_consta';
+            adverse.corrected = 'no_consta';
+        } else if (incorporated.length === 0) {
+            /* Compatibilidad legacy: con la colección sin EA incorporados, la
+               superficie singular previa (oculta en la composición T01)
+               conserva su comportamiento original. La colección siempre tiene
+               precedencia en cuanto tiene contenido incorporado. */
+            adverse.severity = fv('fhSeguimientoEaGravedad'); adverse.resolved = fv('fhSeguimientoEaResuelto') || 'no_consta';
+            adverse.corrected = fv('fhSeguimientoEaCorregido') || 'no_consta'; adverse.observations = fv('fhSeguimientoEaObservaciones');
+        } else {
+            /* Más de un EA incorporado: la proyección singular no tiene
+               contenido representable; los exportadores singulares fallan
+               cerrado mediante eaSingularExportBlockReason. */
+            adverse.observations = '';
+            adverse.severity = '';
+            adverse.resolved = 'no_consta';
+            adverse.corrected = 'no_consta';
+        }
     }
 
     function readNaranjoAnswersFromDom() {
@@ -1203,18 +1241,39 @@
 
     function syncFollowupEaVisualState() {
         var active = byId('fhSeguimientoEaPresente').value === 'si';
+        /* T01 (#795): los controles singulares legacy quedan fuera de la
+           composición visible; la zona EA 0..N es la única representación en
+           pantalla. La máquina legacy de sospechosos permanece intacta para
+           sus consumidores, pero nunca se muestra en esta unidad. */
         ['fhSeguimientoEaGravedadRow', 'fhSeguimientoEaResueltoRow', 'fhSeguimientoEaCorregidoRow', 'fhSeguimientoEaObservacionesRow', 'fhSeguimientoEaFarmacoRow'].forEach(function (id) {
             var row = byId(id);
-            if (row) row.classList.toggle('hidden', !active);
+            if (row) row.classList.add('hidden');
         });
+        var zone = byId('fhSegEaZone');
+        if (zone) zone.classList.toggle('hidden', !active);
         byId('fhSeguimientoEaNoCausalidad').classList.toggle('hidden', active);
         byId('fhSeguimientoEaActivationNotice').classList.add('hidden');
+        if (active) renderEaZone();
         updateFollowupCausalitySummary();
     }
 
     function toggleFollowupEaFlow() {
         var value = byId('fhSeguimientoEaPresente').value;
         var adverse = currentFollowupVisit && currentFollowupVisit.adverse_event;
+        if (adverse && adverse.present === 'si' && value !== 'si' && eaIncorporatedEvents().length) {
+            /* T01-E/Q13: contradicción «Sí»→«No/No consta» bloqueada sin
+               borrado; la colección y los datos de edición permanecen intactos. */
+            byId('fhSeguimientoEaPresente').value = 'si';
+            showEaContradictionNotice();
+            return;
+        }
+        if (adverse && adverse.present === 'si' && value !== 'si' && eaEventsCollection().some(function (event) { return event.status === 'draft'; })) {
+            /* D07: los borradores solo se descartan con confirmación explícita. */
+            if (!window.confirm(EA_DRAFTS_ON_ABSENCE_MESSAGE)) { byId('fhSeguimientoEaPresente').value = 'si'; return; }
+            currentFollowupVisit.adverse_events = [];
+            renderEaZone();
+        }
+        hideEaContradictionNotice();
         if (adverse && adverse.present === 'si' && value !== 'si' && (adverse.suspect_ids.length || Object.keys(currentFollowupVisit.causality_by_suspect).length)) {
             if (!window.confirm(EA_DISABLE_MESSAGE)) { byId('fhSeguimientoEaPresente').value = 'si'; return; }
             adverse.suspect_ids = []; adverse.causality_editing_id = ''; currentFollowupVisit.causality_by_suspect = {};
@@ -1254,6 +1313,454 @@
 
     function updateEaCausalidad() {
         toggleFollowupEaFlow();
+    }
+
+    // ── T01 (#795): captura estructurada EA 0..N del acto en edición ──
+    // El contenido EA vive SOLO en memoria de edición (currentFollowupVisit.
+    // adverse_events). Nunca se escribe en sessionStorage, localStorage,
+    // IndexedDB ni en el ledger heredado. Los controles de tarjeta no llevan
+    // id y el contenedor lleva data-fh-transient: quedan fuera del envelope
+    // de borradores del runtime del paciente. La representación singular
+    // adverse_event se conserva únicamente como proyección de compatibilidad
+    // derivada (máquina legacy de sospechosos + exportadores singulares),
+    // nunca como segunda fuente del contenido EA.
+    var EA_EVOLUTION_OPTIONS = [
+        { value: 'no_consta', label: 'No consta' },
+        { value: 'en_seguimiento', label: 'En seguimiento' },
+        { value: 'no', label: 'No resuelto' },
+        { value: 'si', label: 'Resuelto' }
+    ];
+    var EA_SEVERITY_OPTIONS = ['Leve', 'Moderado', 'Grave', 'Requiere suspensión / derivación'];
+    var EA_EVOLUTION_BADGE_CLASS = { no_consta: '', en_seguimiento: 'status-badge--followup', no: '', si: 'status-badge--validated' };
+    var EA_EPISODE_SEQ = 0;
+    var EA_OBSERVATION_SEQ = 0;
+
+    function eaEventsCollection() {
+        return currentFollowupVisit && Array.isArray(currentFollowupVisit.adverse_events) ? currentFollowupVisit.adverse_events : [];
+    }
+
+    // EA incorporados al acto preparado: estado incorporado CON descripción
+    // no vacía (invariante T01-B). Cualquier estado importado que incumpla la
+    // invariante queda fuera de la representación preparada (fail-closed).
+    function eaIncorporatedEvents() {
+        return eaEventsCollection().filter(function (event) {
+            return event.status === 'incorporated' && String(event.description || '').trim() !== '';
+        });
+    }
+
+    function findEaEvent(episodeId) {
+        return eaEventsCollection().find(function (event) { return event.episode_id === episodeId; }) || null;
+    }
+
+    function nextEaEpisodeId() {
+        EA_EPISODE_SEQ += 1;
+        return 'FH-EA-EP-' + String(EA_EPISODE_SEQ).padStart(4, '0');
+    }
+
+    function nextEaObservationId() {
+        EA_OBSERVATION_SEQ += 1;
+        return 'FH-EA-OBS-' + String(EA_OBSERVATION_SEQ).padStart(4, '0');
+    }
+
+    // Los contadores solo avanzan; tras restaurar estados con identidades
+    // previas, se sitúan por encima del máximo restaurado para que los ids
+    // nuevos no colisionen con identidades ya existentes en la sesión.
+    function eaSyncSeqCounters() {
+        eaEventsCollection().forEach(function (event) {
+            var episode = Number(String(event.episode_id || '').replace('FH-EA-EP-', ''));
+            var observation = Number(String(event.observation_id || '').replace('FH-EA-OBS-', ''));
+            if (isFinite(episode) && episode > EA_EPISODE_SEQ) EA_EPISODE_SEQ = episode;
+            if (isFinite(observation) && observation > EA_OBSERVATION_SEQ) EA_OBSERVATION_SEQ = observation;
+        });
+    }
+
+    function eaEvolutionLabel(value) {
+        var option = EA_EVOLUTION_OPTIONS.find(function (item) { return item.value === value; });
+        return option ? option.label : 'No consta';
+    }
+
+    function eaCardTitle(event) {
+        var description = String(event.description || '').trim();
+        return description !== '' ? description : 'Nuevo EA (borrador sin descripción)';
+    }
+
+    function eaCardBadgeText(event) {
+        return event.status === 'incorporated' ? eaEvolutionLabel(event.evolution).toUpperCase() : 'BORRADOR';
+    }
+
+    // C-088 VIS-03: la insignia de estado de cada tarjeta EA lleva la marca
+    // del tratamiento del máster G0 v0.4 (ámbar/naranja, casi cuadrada y
+    // pequeña), aplicado por CSS acotado en la página. La marca solo alcanza
+    // a estas insignias de tarjeta EA; el resto de insignias (recuento,
+    // sección) conserva intacto el cierre VIS-01.
+    function eaCardBadgeClass(event) {
+        if (event.status === 'draft') return 'status-badge--ea-card status-badge--pending';
+        return 'status-badge--ea-card ' + (EA_EVOLUTION_BADGE_CLASS[event.evolution] || '');
+    }
+
+    function applyEaStyle(element, styles) {
+        if (!element || !element.style) return element; // entornos de prueba sin CSSOM
+        Object.keys(styles).forEach(function (key) { element.style[key] = styles[key]; });
+        return element;
+    }
+
+    function createEaDraft() {
+        if (!currentFollowupVisit) return null;
+        var draft = {
+            episode_id: nextEaEpisodeId(),
+            observation_id: nextEaObservationId(),
+            status: 'draft',
+            description: '',
+            evolution: 'no_consta',
+            severity: '',
+            expanded: true
+        };
+        currentFollowupVisit.adverse_events.push(draft);
+        renderEaZone();
+        return draft;
+    }
+
+    // T01-B: incorporar exige descripción no vacía; una descripción vacía
+    // permanece solo como borrador y nunca entra en la representación preparada.
+    function incorporateEaDraft(episodeId) {
+        var event = findEaEvent(episodeId);
+        if (!event || event.status !== 'draft') return false;
+        if (String(event.description || '').trim() === '') return false;
+        event.status = 'incorporated';
+        renderEaZone();
+        return true;
+    }
+
+    // D07: nada se descarta sin confirmación explícita, ni siquiera en memoria.
+    function discardEaEvent(episodeId) {
+        var event = findEaEvent(episodeId);
+        if (!event) return false;
+        var message = event.status === 'incorporated' ? EA_DISCARD_MESSAGE : EA_DRAFT_DISCARD_MESSAGE;
+        if (!window.confirm(message)) return false;
+        currentFollowupVisit.adverse_events = eaEventsCollection().filter(function (item) { return item !== event; });
+        if (!eaIncorporatedEvents().length) hideEaContradictionNotice();
+        renderEaZone();
+        return true;
+    }
+
+    function setEaEventExpanded(episodeId, expanded) {
+        var event = findEaEvent(episodeId);
+        if (!event) return false;
+        event.expanded = expanded === true;
+        renderEaZone();
+        return true;
+    }
+
+    function setEaEventField(episodeId, field, value) {
+        var event = findEaEvent(episodeId);
+        if (!event) return false;
+        if (field === 'description') {
+            event.description = String(value === null || value === undefined ? '' : value);
+            // Invariante T01-B: descripción vacía solo puede estar en borrador.
+            if (event.status === 'incorporated' && String(event.description).trim() === '') event.status = 'draft';
+        } else if (field === 'evolution') {
+            if (!EA_EVOLUTION_OPTIONS.some(function (option) { return option.value === value; })) return false;
+            event.evolution = value;
+        } else if (field === 'severity') {
+            if (String(value || '').trim() === '') { event.severity = ''; } else {
+                if (EA_SEVERITY_OPTIONS.indexOf(value) < 0) return false;
+                event.severity = value;
+            }
+        } else {
+            return false;
+        }
+        renderEaZone();
+        return true;
+    }
+
+    function updateEaSummary() {
+        var summary = byId('fhSegEaSummary');
+        if (!summary) return;
+        var incorporated = eaIncorporatedEvents();
+        var text = incorporated.length + ' observación/es en esta visita · ' + incorporated.length + ' episodio/s relacionado/s';
+        var presentEl = byId('fhSeguimientoEaPresente');
+        if (presentEl && presentEl.value === 'si' && incorporated.length === 0) {
+            text += ' · El acto declara «Sí» sin EA incorporados todavía; la representación preparada no lleva ningún EA.';
+        }
+        summary.textContent = text;
+    }
+
+    function renderEaZone() {
+        var list = byId('fhSegEaList');
+        if (!list) return;
+        F.clearChildren(list);
+        var events = eaEventsCollection();
+        var empty = byId('fhSegEaEmpty');
+        if (empty) empty.classList.toggle('hidden', events.length > 0);
+        var countBadge = byId('fhSegEaCountBadge');
+        if (countBadge) countBadge.textContent = String(events.length);
+        events.forEach(function (event, index) { list.appendChild(buildEaCard(event, index)); });
+        updateEaSummary();
+    }
+
+    function buildEaCard(event, index) {
+        var card = createElement('div', 'ea-t01-card');
+        applyEaStyle(card, { border: '1px solid #E2E8F0', borderRadius: '10px', padding: '12px 14px', marginBottom: '10px', background: '#FFFFFF' });
+        card.setAttribute('data-episode-id', event.episode_id);
+        card.setAttribute('data-ea-status', event.status);
+
+        var header = createElement('div');
+        applyEaStyle(header, { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' });
+        header.appendChild(createElement('span', 'status-badge', String(index + 1)));
+        var textGroup = createElement('div');
+        applyEaStyle(textGroup, { flex: '1 1 auto', minWidth: '0' });
+        var title = createElement('div', 'card-title card-title--tight', eaCardTitle(event));
+        var subtitle = createElement('div', 'search-card__hint', 'Nuevo episodio · ' + event.episode_id + ' · Observación de esta visita (' + event.observation_id + ')');
+        textGroup.appendChild(title);
+        textGroup.appendChild(subtitle);
+        header.appendChild(textGroup);
+        var badge = createElement('span', 'status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : ''), eaCardBadgeText(event));
+        header.appendChild(badge);
+        var toggleButton = createElement('button', 'btn btn-sm btn-outline', event.expanded ? 'Ocultar' : 'Revisar');
+        toggleButton.type = 'button';
+        toggleButton.addEventListener('click', function () { setEaEventExpanded(event.episode_id, !event.expanded); });
+        header.appendChild(toggleButton);
+        var discardButton = createElement('button', 'btn btn-sm btn-outline', event.status === 'incorporated' ? 'Descartar' : 'Descartar borrador');
+        discardButton.type = 'button';
+        discardButton.addEventListener('click', function () { discardEaEvent(event.episode_id); });
+        header.appendChild(discardButton);
+        card.appendChild(header);
+
+        if (!event.expanded) return card;
+
+        var body = createElement('div');
+        applyEaStyle(body, { marginTop: '10px' });
+
+        body.appendChild(createElement('span', 'form-label', 'Descripción original del EA (obligatoria al finalizar nuevo episodio)'));
+        var descriptionInput = document.createElement('textarea');
+        descriptionInput.className = 'form-textarea';
+        descriptionInput.rows = 2;
+        descriptionInput.setAttribute('aria-label', 'Descripción original del EA (obligatoria al finalizar nuevo episodio)');
+        descriptionInput.setAttribute('data-ea-field', 'description');
+        descriptionInput.value = String(event.description || '');
+        // Actualización parcial: reescribir la lista en cada tecla perdería el foco.
+        descriptionInput.addEventListener('input', function () {
+            event.description = descriptionInput.value;
+            // Invariante T01-B: descripción vacía solo puede estar en borrador.
+            if (event.status === 'incorporated' && String(event.description).trim() === '') event.status = 'draft';
+            title.textContent = eaCardTitle(event);
+            badge.textContent = eaCardBadgeText(event);
+            badge.className = 'status-badge' + (eaCardBadgeClass(event) ? ' ' + eaCardBadgeClass(event) : '');
+            discardButton.textContent = event.status === 'incorporated' ? 'Descartar' : 'Descartar borrador';
+            if (incorporateButton) incorporateButton.disabled = String(event.description).trim() === '';
+            card.setAttribute('data-ea-status', event.status);
+            updateEaSummary();
+        });
+        body.appendChild(descriptionInput);
+        body.appendChild(createElement('p', 'search-card__hint', 'Se conserva el texto original. Codificación normalizada: pendiente de configuración y licencia del servicio.'));
+
+        // VIS-04: ambos controles clínicos comparten la fila del maestro G0.
+        var clinicalGrid = createElement('div', 'ea-t01-clinical-grid');
+        var evolutionField = createElement('div', 'ea-t01-clinical-field');
+        evolutionField.appendChild(createElement('span', 'form-label', 'Evolución documentada en esta visita'));
+        var evolutionSelect = buildSelectControl(EA_EVOLUTION_OPTIONS, event.evolution);
+        evolutionSelect.setAttribute('aria-label', 'Evolución documentada en esta visita');
+        evolutionSelect.setAttribute('data-ea-field', 'evolution');
+        evolutionSelect.addEventListener('change', function () { setEaEventField(event.episode_id, 'evolution', evolutionSelect.value); });
+        evolutionField.appendChild(evolutionSelect);
+        clinicalGrid.appendChild(evolutionField);
+
+        var severityField = createElement('div', 'ea-t01-clinical-field');
+        severityField.appendChild(createElement('span', 'form-label', 'Gravedad clínica si se ha registrado (opcional)'));
+        var severitySelect = buildSelectControl(EA_SEVERITY_OPTIONS, event.severity, 'No consta');
+        severitySelect.setAttribute('aria-label', 'Gravedad clínica si se ha registrado (opcional)');
+        severitySelect.setAttribute('data-ea-field', 'severity');
+        severitySelect.addEventListener('change', function () { setEaEventField(event.episode_id, 'severity', severitySelect.value); });
+        severityField.appendChild(severitySelect);
+        clinicalGrid.appendChild(severityField);
+        body.appendChild(clinicalGrid);
+
+        var incorporateButton = null;
+        if (event.status === 'draft') {
+            incorporateButton = createElement('button', 'btn btn-sm btn-secondary', 'Incorporar al acto');
+            incorporateButton.type = 'button';
+            incorporateButton.disabled = String(event.description || '').trim() === '';
+            incorporateButton.addEventListener('click', function () { incorporateEaDraft(event.episode_id); });
+            body.appendChild(incorporateButton);
+            body.appendChild(createElement('p', 'search-card__hint', 'La descripción del EA nuevo es obligatoria para incorporarlo a la representación preparada del acto.'));
+        }
+
+        // C-088 VIS-02: fidelidad visual del máster G0 v0.4 en la tarjeta
+        // expandida — disclosure «Información clínica adicional (opcional)» y
+        // bloque demo «Medicamentos señalados expresamente como sospechosos».
+        // SOLO presentación: controles inertes (disabled, sin id, sin valores
+        // ni datos fabricados). No crean observaciones, no vinculan
+        // sospechosos, no evalúan causalidad y no alteran el snapshot del
+        // acto (T02/T03 siguen fuera de T01).
+        var extraDetails = document.createElement('details');
+        extraDetails.className = 'ea-t01-demo-details';
+        extraDetails.setAttribute('data-ea-demo-control', 't01');
+        var extraSummary = createElement('summary', 'search-card__hint', 'Información clínica adicional (opcional)');
+        applyEaStyle(extraSummary, { fontWeight: '700', cursor: 'default', color: '#1F344B', padding: '4px 0' });
+        extraDetails.appendChild(extraSummary);
+        var extraBody = createElement('div');
+        applyEaStyle(extraBody, { marginTop: '8px', display: 'grid', gap: '8px' });
+        [['Inicio EA, solo si se conoce (demo, no funcional en T01)', 'date'],
+         ['Resolución, si hay fecha documentada (demo, no funcional en T01)', 'date']].forEach(function (item) {
+            var demoInput = document.createElement('input');
+            demoInput.type = item[1];
+            demoInput.className = 'form-control';
+            demoInput.disabled = true;
+            demoInput.setAttribute('aria-label', item[0]);
+            demoInput.setAttribute('data-ea-demo-control', 't01');
+            extraBody.appendChild(demoInput);
+        });
+        var demoNotes = document.createElement('textarea');
+        demoNotes.className = 'form-textarea';
+        demoNotes.rows = 2;
+        demoNotes.disabled = true;
+        demoNotes.setAttribute('aria-label', 'Actuación/observaciones, si constan (demo, no funcional en T01)');
+        demoNotes.setAttribute('data-ea-demo-control', 't01');
+        extraBody.appendChild(demoNotes);
+        extraBody.appendChild(createElement('p', 'search-card__hint', 'Presentación visual de la maqueta aprobada, no funcional en T01: sin valores, sin inferencias de fechas ni de decisiones terapéuticas.'));
+        extraDetails.appendChild(extraBody);
+        body.appendChild(extraDetails);
+
+        var demoDivider = createElement('div');
+        applyEaStyle(demoDivider, { borderTop: '1px solid #E2E8F0', margin: '12px 0 8px' });
+        body.appendChild(demoDivider);
+        body.appendChild(createElement('div', 'form-label', 'Medicamentos señalados expresamente como sospechosos'));
+        var demoSuspects = createElement('div', 'ea-suspect-list');
+        applyEaStyle(demoSuspects, { display: 'flex', flexWrap: 'wrap', gap: '8px' });
+        ['A', 'B', 'C'].forEach(function (drugId) {
+            var chipLabel = createElement('label');
+            applyEaStyle(chipLabel, { display: 'inline-flex', alignItems: 'center', gap: '6px', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '6px 10px', background: '#FBFDFD' });
+            var chip = document.createElement('input');
+            chip.type = 'checkbox';
+            chip.disabled = true;
+            chip.checked = false;
+            chip.setAttribute('aria-label', 'Tratamiento sintético ' + drugId + ' (candidato de demo, no funcional en T01)');
+            chip.setAttribute('data-ea-demo-control', 't01');
+            chipLabel.appendChild(chip);
+            chipLabel.appendChild(document.createTextNode('Tratamiento sintético ' + drugId));
+            demoSuspects.appendChild(chipLabel);
+        });
+        body.appendChild(demoSuspects);
+        body.appendChild(createElement('p', 'search-card__hint', 'Son candidatos de demo, no se consideran automáticamente tratamientos actuales ni causa demostrada. Bloque de presentación visual, no funcional en T01: no vincula sospechosos ni evalúa causalidad, y desvincular/guardar no existe en esta unidad.'));
+        card.appendChild(body);
+        return card;
+    }
+
+    function showEaContradictionNotice() {
+        var notice = byId('fhSegEaContradictionNotice');
+        if (notice) notice.classList.remove('hidden');
+    }
+
+    function hideEaContradictionNotice() {
+        var notice = byId('fhSegEaContradictionNotice');
+        if (notice) notice.classList.add('hidden');
+    }
+
+    // Snapshot desacoplado del bloque EA del acto en edición. Devuelve objetos
+    // nuevos (copia profunda de escalares): editar la UI o la colección después
+    // nunca muta un snapshot ya construido. Sin actId, fechas, autoría ni
+    // metadatos fabricados: la única fecha es la del acto, y solo si está
+    // registrada. Solo entran EA incorporados; los borradores no forman parte
+    // de la representación preparada.
+    function buildEaActBlockSnapshot() {
+        if (!currentFollowupVisit) return null;
+        captureCommonAdverseEvent();
+        var presentEl = byId('fhSeguimientoEaPresente');
+        var present = presentEl && presentEl.value ? presentEl.value : 'no_consta';
+        var events = eaIncorporatedEvents().map(function (event) {
+            return {
+                episode_id: String(event.episode_id || ''),
+                observation_id: String(event.observation_id || ''),
+                description: String(event.description || ''),
+                evolution: event.evolution || 'no_consta',
+                severity: String(event.severity || '')
+            };
+        });
+        var snapshot = {
+            present: present,
+            event_count: events.length,
+            observation_count: events.length,
+            draft_count: eaEventsCollection().filter(function (event) { return event.status === 'draft'; }).length,
+            events: events
+        };
+        // T01-B fail-closed (C-088 SPEC-01): la presencia «Sí» no puede producir
+        // una representación preparada del acto sin al menos un EA documentado.
+        // En ese estado no existe bloque preparado: se devuelve null, nunca un
+        // bloque «Sí» vacío. El borrador solo vive en la colección en edición.
+        if (present === 'si' && events.length === 0) return null;
+        var fechaEl = byId('fhSegFecha');
+        var fecha = fechaEl && fechaEl.value && String(fechaEl.value).trim() ? String(fechaEl.value).trim() : '';
+        // C-088 SPEC-03: act_date solo cuando el profesional registró la fecha
+        // en este acto (evento real sobre fhSegFecha). El autorrelleno de
+        // inicialización no es registro: la ausencia permanece ausente y nunca
+        // se infiere.
+        if (fecha && currentFollowupVisit.act_date_recorded === true) snapshot.act_date = fecha;
+        return snapshot;
+    }
+
+    // C-088 SPEC-03: el estado «registrada por el profesional» lo lleva el
+    // acto en edición. Cualquier cambio real sobre fhSegFecha (evento change
+    // o input del usuario) lo marca; el valor programático de inicialización
+    // no dispara eventos y por tanto no marca nada.
+    (function wireEaActDateRecording() {
+        var fechaEl = typeof document !== 'undefined' && document.getElementById ? document.getElementById('fhSegFecha') : null;
+        if (!fechaEl || typeof fechaEl.addEventListener !== 'function') return;
+        function markActDateRecorded() {
+            if (currentFollowupVisit) currentFollowupVisit.act_date_recorded = true;
+        }
+        fechaEl.addEventListener('change', markActDateRecorded);
+        fechaEl.addEventListener('input', markActDateRecorded);
+    })();
+
+    // Frontera de salidas singulares (#795): TXT/JARA, CSV y Excel solo pueden
+    // representar exactamente un EA incorporado. Ante 0..N fuera de ese caso,
+    // la acción debe negarse de forma visible: nunca exportar solo el primero
+    // ni proclamar entrega íntima de la colección.
+    function eaSingularExportBlockReason() {
+        var presentEl = byId('fhSeguimientoEaPresente');
+        var present = presentEl && presentEl.value ? presentEl.value : 'no_consta';
+        var incorporated = eaIncorporatedEvents();
+        if (present === 'si') {
+            if (incorporated.length === 1) return '';
+            if (incorporated.length === 0) return 'Exportación no realizada: el acto declara «Sí» pero no tiene EA incorporados, y el formato singular de esta salida no puede representar esa situación. No se ha copiado ni entregado nada.';
+            return 'Exportación no realizada: este acto tiene ' + incorporated.length + ' EA incorporados y el formato singular de esta salida solo representa uno. Se bloquea la entrega para no truncar la colección 0..N; no se exporta solo el primer EA.';
+        }
+        if (incorporated.length) return 'Exportación no realizada: el acto tiene EA incorporados sin presencia «Sí»; concilie el acto antes de exportar.';
+        return '';
+    }
+
+    function syncEaExportGuardNotice(reason) {
+        var notice = byId('fhSegEaExportGuardNotice');
+        if (!notice) return;
+        var text = reason === undefined ? eaSingularExportBlockReason() : reason;
+        var span = notice.querySelector ? notice.querySelector('span') : null;
+        if (span) span.textContent = text;
+        notice.classList.toggle('hidden', !text);
+    }
+
+    function guardEaSingularExport() {
+        var reason = eaSingularExportBlockReason();
+        syncEaExportGuardNotice(reason);
+        return !reason;
+    }
+
+    // C-088 SPEC-02: frontera EA de la copia estructurada demo (v2). La
+    // proyección v2 (FarmaciaExportV2FollowupActiveLinesAdapter) valida su
+    // entrada con campos cerrados (technical/context/visit/activeLines) y no
+    // contiene ningún campo EA: no puede representar la colección 0..N ni su
+    // presencia en ningún caso. Mientras el acto tenga cobertura EA («Sí» o
+    // EA incorporados), la acción debe negarse de forma visible sin copiar,
+    // igual que las salidas singulares; sin cobertura EA conserva su
+    // comportamiento previo. Sin cambios de formato ni de destino.
+    function eaV2CopyBlockReason() {
+        var presentEl = byId('fhSeguimientoEaPresente');
+        var present = presentEl && presentEl.value ? presentEl.value : 'no_consta';
+        var incorporated = eaIncorporatedEvents();
+        if (present !== 'si' && incorporated.length === 0) return '';
+        var coverage = (present === 'si' && incorporated.length === 0)
+            ? 'el acto declara «Sí» pero no tiene EA incorporados'
+            : 'este acto tiene ' + incorporated.length + ' EA incorporado' + (incorporated.length === 1 ? '' : 's');
+        return 'Copia no realizada: ' + coverage + ', y la copia estructurada demo (v2) aún no representa la cobertura EA del acto (colección 0..N); copiar omitiría el bloque EA. No se ha copiado nada.';
     }
 
     function syncBiologicControls(patient) {
@@ -2473,6 +2980,9 @@
             dispensed_lines: evaluated.filter(function (item) { return item.dispensed; }),
             related_treatments: followupOtherDrugs.map(function (drug) { return Object.assign({ uid: drug.uid }, mapOtherDrugToContract(drug), JSON.parse(JSON.stringify(drug))); }),
             adverse_event: adverse,
+            /* T01 (#795): bloque EA 0..N desacoplado del acto en edición. */
+            ea_block: buildEaActBlockSnapshot(),
+            ea_singular_export_block_reason: eaSingularExportBlockReason(),
             causalities: causalities
         };
     }
@@ -2644,6 +3154,10 @@
             editing_line_id: '',
             line_state: {},
             adverse_event: Object.assign({}, adverseDefaults),
+            adverse_events: [],
+            /* C-088 SPEC-03: acto restaurado sin evidencia de registro de
+               fecha por el profesional → ausencia, nunca inferencia. */
+            act_date_recorded: false,
             causality_by_suspect: {}
         };
         currentFollowupVisit = Object.assign(visitDefaults, restoredVisit || {});
@@ -2653,6 +3167,10 @@
         currentFollowupVisit.line_state = currentFollowupVisit.line_state && typeof currentFollowupVisit.line_state === 'object' ? cloneEvaluationState(currentFollowupVisit.line_state, {}) : {};
         currentFollowupVisit.adverse_event = Object.assign({}, adverseDefaults, currentFollowupVisit.adverse_event || {}, state.adverse_event || {});
         currentFollowupVisit.adverse_event.suspect_ids = Array.isArray(currentFollowupVisit.adverse_event.suspect_ids) ? currentFollowupVisit.adverse_event.suspect_ids.slice() : [];
+        /* T01 (#795): la colección EA 0..N se restaura en memoria de edición
+           con sus identidades explícitas; nunca hacia almacenamiento alguno. */
+        currentFollowupVisit.adverse_events = Array.isArray(currentFollowupVisit.adverse_events) ? cloneEvaluationState(currentFollowupVisit.adverse_events, []) : [];
+        eaSyncSeqCounters();
         currentFollowupVisit.causality_by_suspect = currentFollowupVisit.causality_by_suspect && typeof currentFollowupVisit.causality_by_suspect === 'object'
             ? cloneEvaluationState(currentFollowupVisit.causality_by_suspect, {}) : {};
 
@@ -2896,6 +3414,16 @@
         if (followupV2CopyInFlight) return;
         var button = byId('fhSegExportV2Btn');
         var status = byId('fhSegExportV2Status');
+        // C-088 SPEC-02: la acción consulta la frontera EA ANTES de construir
+        // la proyección o tocar el portapapeles; con cobertura EA se muestra
+        // el aviso visible de rechazo y no se copia nada.
+        var eaBlockReason = eaV2CopyBlockReason();
+        if (eaBlockReason) {
+            syncEaExportGuardNotice(eaBlockReason);
+            if (status) status.textContent = 'Copia no realizada: revise el aviso de cobertura EA del acto.';
+            return;
+        }
+        syncEaExportGuardNotice('');
         followupV2CopyInFlight = true;
         if (button) button.disabled = true;
         if (status) status.textContent = 'Copiando...';
@@ -2952,6 +3480,16 @@
         setCausalityEditor: setCausalityEditor,
         captureCausalityEditor: captureCausalityEditor,
         captureCommonAdverseEvent: captureCommonAdverseEvent,
+        /* T01 (#795): captura EA 0..N del acto en edición (solo memoria). */
+        addEaDraft: createEaDraft,
+        getEaEvents: function () { return cloneEvaluationState(eaEventsCollection(), []); },
+        incorporateEaDraft: incorporateEaDraft,
+        discardEaEvent: discardEaEvent,
+        setEaEventField: setEaEventField,
+        setEaEventExpanded: setEaEventExpanded,
+        buildEaActBlockSnapshot: buildEaActBlockSnapshot,
+        getEaSingularExportBlockReason: eaSingularExportBlockReason,
+        getEaV2CopyBlockReason: eaV2CopyBlockReason,
         refreshEaCandidates: updateSuspectDrugSelector,
         setEaPresent: function (value) { var el = byId('fhSeguimientoEaPresente'); if (!el) return; el.value = value; toggleFollowupEaFlow(); },
         syncLinesForPatient: syncBiologicControls,
@@ -3019,6 +3557,8 @@
         });
         var eaSelector = document.getElementById('fhSeguimientoEaPresente');
         if (eaSelector) eaSelector.addEventListener('change', updateEaCausalidad);
+        var addEaButton = document.getElementById('fhSegAddEaBtn');
+        if (addEaButton) addEaButton.addEventListener('click', function () { createEaDraft(); });
         ['fhSeguimientoEaGravedad', 'fhSeguimientoEaResuelto', 'fhSeguimientoEaCorregido', 'fhSeguimientoEaObservaciones'].forEach(function (id) {
             var el = document.getElementById(id);
             if (!el) return;
@@ -3088,11 +3628,15 @@
 
         const exportTxt = document.getElementById('fhSegExportTxt');
         if (exportTxt) exportTxt.addEventListener('click', () => {
+            /* T01 (#795): frontera de salidas singulares — negarse de forma
+               visible cuando el formato no puede representar 0..N. */
+            if (!guardEaSingularExport()) return;
             F.copyTextToClipboard(buildSegLines().join('\n'), 'Texto JARA copiado al portapapeles.');
         });
 
         const exportCsv = document.getElementById('fhSegExportCsv');
         if (exportCsv) exportCsv.addEventListener('click', () => {
+            if (!guardEaSingularExport()) return;
             const csv = buildFollowupCsv(buildFollowupVisitExportModel());
             F.downloadFile('seguimientos_FH_' + new Date().toISOString().slice(0, 10) + '.csv', csv, 'text/csv;charset=utf-8');
         });
@@ -3101,6 +3645,7 @@
             var btn = document.getElementById('fhSegExcelExportBtn');
             if (!btn) return;
             btn.addEventListener('click', function () {
+                if (!guardEaSingularExport()) return;
                 var exp = window.FarmaciaExcelRowExport;
                 if (!exp) return;
                 var model = buildFollowupVisitExportModel();
