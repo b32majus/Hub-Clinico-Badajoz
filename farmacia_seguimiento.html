@@ -9,6 +9,109 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous" referrerpolicy="no-referrer">
     <link rel="stylesheet" href="style.css?v=20260612-data-import-a">
     <link rel="stylesheet" href="farmacia_style.css?v=20260612-data-import-a">
+    <style>
+    /* T01 #795 (C-088 VIS-01): tratamiento de insignias del segmento EA según
+       el máster G0 v0.4 aprobado (píldora encajonada). Solo alcanza a la
+       insignia de recuento EA y a la insignia de la sección EA. */
+    #fhSegEaCountBadge,
+    #modSeguimientoEa > .section-title > .status-badge {
+        border: 1px solid #c9dbe5;
+        background: #eff5f8;
+        color: #3f6279;
+        border-radius: 6px;
+        padding: 4px 7px;
+        font-size: 10px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        display: inline-flex;
+        align-items: center;
+    }
+    /* C-088 VIS-03: insignia de estado de las tarjetas EA según el máster
+       G0 v0.4 (ámbar/naranja, casi cuadrada, más pequeña). Solo alcanza a la
+       insignia de estado dentro de las tarjetas EA; no toca otras insignias. */
+    #fhSegEaList .ea-t01-card .status-badge--ea-card {
+        background: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+        border-radius: 4px;
+        padding: 3px 8px;
+        font-size: 10px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        display: inline-flex;
+        align-items: center;
+    }
+    /* PR #798 CI: trasladar solo la presentación de T01 a CSS scoped,
+       sin modificar composición G0 ni comportamiento clínico. */
+    #modSeguimientoEa > .ea-t01-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-section-note {
+        margin-left: auto;
+    }
+    #modSeguimientoEa .ea-t01-heading-row {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-entry-actions {
+        display: flex;
+        align-items: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-prior-picker {
+        margin: 0;
+        min-width: 260px;
+        flex: 1 1 260px;
+    }
+    #modSeguimientoEa .ea-t01-summary-row {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    #modSeguimientoEa .ea-t01-summary-content {
+        min-width: 0;
+    }
+    #modSeguimientoEa .ea-t01-summary-copy {
+        font-weight: 800;
+        color: #1f344b;
+    }
+    #modSeguimientoEa .ea-t01-footer-actions {
+        margin: 0;
+    }
+    /* VIS-04: solo los dos campos de la tarjeta EA expandida, como G0. */
+    #fhSegEaList .ea-t01-clinical-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 14px;
+    }
+    #fhSegEaList .ea-t01-clinical-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+    #fhSegEaList .ea-t01-clinical-field select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+    @media (max-width: 690px) {
+        #fhSegEaList .ea-t01-clinical-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+    </style>
 </head>
         <body>
             <div class="hub-shell">
@@ -225,12 +328,37 @@
     </div>
 </div>
 </section>
-<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title"><i class="fas fa-exclamation-triangle"></i> Evaluación de efectos adversos</h2>
+<section class="dashboard-card" id="modSeguimientoEa"><h2 class="section-title ea-t01-section-heading"><span><i class="fas fa-exclamation-triangle"></i> Evaluación de efectos adversos</span><span class="status-badge ea-t01-section-note">FECHA DEL ACTO EN EVOLUCIÓN · SIN DUPLICADOS</span></h2>
     <div class="form-grid">
-        <div class="form-group"><label for="fhSeguimientoEaPresente">¿El paciente ha presentado algún efecto adverso desde la última visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select></div>
+        <div class="form-group"><label for="fhSeguimientoEaPresente">¿Se han identificado o revisado acontecimientos adversos en esta visita?</label><select class="form-select" id="fhSeguimientoEaPresente"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option></select><p class="search-card__hint">No = ausencia documentada en esta visita · No consta = no hay información suficiente. Ninguno resuelve episodios anteriores.</p></div>
         <div class="form-group hidden" id="fhSeguimientoEaGravedadRow"><label for="fhSeguimientoEaGravedad">Gravedad del efecto adverso</label><select class="form-select" id="fhSeguimientoEaGravedad"><option value="">Seleccionar...</option><option value="Leve">Leve</option><option value="Moderado">Moderado</option><option value="Grave">Grave</option><option value="Requiere suspensión / derivación">Requiere suspensión / derivación</option></select></div>
         <div class="form-group hidden" id="fhSeguimientoEaResueltoRow"><label for="fhSeguimientoEaResuelto">¿Se ha solucionado el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaResuelto"><option value="no_consta">No consta</option><option value="no">No</option><option value="si">Sí</option><option value="en_seguimiento">En seguimiento</option></select></div>
         <div class="form-group hidden" id="fhSeguimientoEaCorregidoRow"><label for="fhSeguimientoEaCorregido">¿Cómo se ha corregido el efecto adverso?</label><select class="form-select" id="fhSeguimientoEaCorregido"><option value="no_consta">No consta</option><option value="reduccion_dosis">Reducción de dosis</option><option value="cambio_farmaco">Cambio de fármaco</option><option value="tratamiento_sintomatico">Tratamiento sintomático</option><option value="suspension_temporal">Suspensión temporal</option><option value="otro">Otro</option></select></div>
+    </div>
+    <div class="hidden" id="fhSegEaZone">
+        <div class="ea-t01-heading-row"><h3 class="card-title">EA de esta visita <span class="status-badge" id="fhSegEaCountBadge">0</span></h3></div>
+        <p class="search-card__hint">Descripción del EA nuevo obligatoria al finalizar · Otros datos opcionales</p>
+        <div class="form-actions ea-t01-entry-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="fhSegAddEaBtn"><i class="fas fa-plus" aria-hidden="true"></i> Añadir EA nuevo</button>
+            <div class="form-group ea-t01-prior-picker"><label class="form-label" for="fhSegEaPriorEpisodeSelect">EA anterior para actualizar / registrar recurrencia</label><select class="form-select" id="fhSegEaPriorEpisodeSelect" disabled aria-disabled="true" data-ea-demo-control="t01"><option value="">Seleccionar episodio anterior…</option><option value="DEMO-EP-081">Prurito · DEMO-EP-081 · En seguimiento (demo)</option><option value="DEMO-EP-082">Náuseas · DEMO-EP-082 · Resuelto (demo)</option></select></div>
+            <button type="button" class="btn btn-secondary btn-sm" id="fhSegEaUpdatePriorBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Actualizar EA anterior</button>
+            <button type="button" class="btn btn-outline btn-sm" id="fhSegEaRecurrenceBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Registrar recurrencia</button>
+        </div>
+        <p class="search-card__hint">Continuidad y recurrencia requieren selección explícita. Se mantienen separados el episodio y las observaciones de cada acto. Selección y botones de continuidad/recurrencia: presentación visual de la maqueta aprobada, no funcionales en T01; no crean episodios, observaciones ni relaciones.</p>
+        <p class="empty-state hidden" id="fhSegEaEmpty">Sin EA añadidos todavía en esta visita.</p>
+        <div id="fhSegEaList" data-fh-transient aria-live="polite"></div>
+        <div id="fhSegEaContradictionNotice" class="notice-box notice-box--warning hidden" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>No se puede cambiar a «No» o «No consta»: este acto ya tiene EA incorporados. La contradicción se resuelve con conciliación explícita, nunca borrando datos; no se ha eliminado nada.</span></div>
+        <div class="ea-t01-summary-row">
+            <div class="ea-t01-summary-content">
+                <p class="search-card__hint ea-t01-summary-copy" id="fhSegEaSummary" aria-live="polite">0 observación/es en esta visita · 0 episodio/s relacionado/s</p>
+                <p class="search-card__hint">Ejemplo editable; no guarda en historia clínica ni genera notificaciones.</p>
+            </div>
+            <div class="form-actions ea-t01-footer-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="fhSegEaShowStructureBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Ver estructura simulada</button>
+                <button type="button" class="btn btn-outline btn-sm" id="fhSegEaResetDemoBtn" disabled aria-disabled="true" data-ea-demo-control="t01" title="No funcional en T01">Reiniciar ejemplo</button>
+            </div>
+        </div>
+        <div class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Borrador ≠ incorporado ≠ guardado. «Incorporado» forma parte de la representación preparada del acto en edición; esta unidad no tiene guardado en destino: al salir o recargar la pantalla no se recupera. Ejemplo editable, no guarda en historia clínica ni genera notificaciones. Los controles «EA anterior», «Actualizar EA anterior», «Registrar recurrencia», «Ver estructura simulada» y «Reiniciar ejemplo» son fidelidad visual de la maqueta aprobada: no funcionales en T01, sin destino de guardado y sin notificaciones.</span></div>
     </div>
     <div class="form-grid form-grid--full hidden" id="fhSeguimientoEaObservacionesRow"><div class="form-group"><label for="fhSeguimientoEaObservaciones">Descripción breve / observaciones</label><textarea class="form-textarea" id="fhSeguimientoEaObservaciones" rows="3"></textarea></div></div>
     <div class="form-grid hidden" id="fhSeguimientoEaFarmacoRow">
@@ -315,6 +443,7 @@
     <h2 class="section-title"><i class="fas fa-file-export"></i> Exportación</h2>
     <div id="fhSegDemoNotice" class="notice-box notice-box--info"><i class="fas fa-info-circle" aria-hidden="true"></i><span>Demo con datos sintéticos. No es un entorno clínico ni multiusuario. Revise las salidas antes de utilizarlas.</span></div>
     <div id="fhSegDispenseExportNotice" class="notice-box notice-box--warning hidden" role="status"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Marque al menos una línea como dispensada en esta visita para generar filas CSV o Excel.</span></div>
+    <div id="fhSegEaExportGuardNotice" class="notice-box notice-box--warning hidden" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span></span></div>
     <div class="form-actions"><button type="button" class="btn btn-secondary" id="fhSegExportTxt"><i class="fas fa-file-alt"></i> Copiar texto JARA</button><button type="button" class="btn btn-outline" id="fhSegExportCsv"><i class="fas fa-file-csv"></i> Exportar CSV</button><button type="button" class="btn btn-outline" id="fhSegExcelExportBtn"><i class="fas fa-table"></i> Copiar filas Excel FH</button></div>
     <div class="form-actions" data-export-version="v2"><button type="button" class="btn btn-outline" id="fhSegExportV2Btn" disabled><i class="fas fa-copy"></i> Copiar datos estructurados (demo)</button></div>
     <p class="search-card__hint">Prepara una copia de los datos para demostrar futuras integraciones. Esta acción no envía información a otros sistemas ni la guarda automáticamente. Uso exclusivo con datos sintéticos.</p>
@@ -334,6 +463,6 @@
     <script src="scripts/farmacia_export_v2_core.js?v=20260802-export-v2-core"></script>
     <script src="scripts/farmacia_export_v2_followup_active_lines_adapter.js?v=20260803-followup-active-lines-adapter"></script>
     <script src="scripts/farmacia_export_v2_context.js?v=1.0.0-draft.1"></script>
-    <script src="scripts/farmacia_seguimiento.js?v=20260930-f43c-r1-train30"></script>
+    <script src="scripts/farmacia_seguimiento.js?v=20261018-fh-ea-t01-r1"></script>
         </body>
         </html>
