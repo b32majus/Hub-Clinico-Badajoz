@@ -1,6 +1,6 @@
 # WO documental — conciliación de publicación FH EA T01, PR #798
 
-**Fecha:** 2026-10-19. **Estado:** `PREPARADA_LOCAL_NO_PUBLICADA`. **Autorización:** asentimiento de la responsable a completar reconciliación documental tras confirmar PR #798, sin autorización adicional de push/PR/merge ni de cierre de issue.
+**Fecha:** 2026-10-19 (actualizada 2026-10-20). **Estado:** `WO_DOC_PUBLICACION_CONTROLADA_801`. **Autorización:** preparación local inicial; autorización humana posterior y específica para publicación documental con CI verde, mediante [WO #801](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/801). La publicación se verifica en GitHub, no se presume por el commit local.
 
 ## WHAT y autoridad
 
@@ -33,4 +33,4 @@ Rollback eventual solo mediante revert focal autorizado del commit documental; s
 
 ## Git y reporte
 
-Preparar un commit **documental local** para facilitar revisión. No push, PR, merge, close issue #795 ni publicación con esta autorización. El estado al cierre de esta WO es `LOCAL_DOC_RECONCILIATION_PREPARED`. La reconciliación no quedará publicada hasta recibir GO concreto y CI/PR documental.
+La preparación original fue un commit documental local para revisión, sin permiso de publicación en aquel momento. **Una autorización humana posterior** permite el push, PR y merge de esta WO documental [#801](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/801) si CI y QA documental están en verde. Mantener separado el cierre administrativo de #795 y comprobar el merge en GitHub antes de declararlo publicado; no tocar datos clínicos ni hacer limpieza destructiva.

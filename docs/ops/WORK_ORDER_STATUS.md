@@ -1,6 +1,6 @@
 # Work Order Status — Hub Clínico Badajoz / PROMueve Nexus
 
-**Última actualización:** 2026-10-19 — conciliación T01 PR #798 en rama documental local, pendiente de publicación; preserva los hitos anteriores.
+**Última actualización:** 2026-10-20 — reconciliación T01 PR #798 preparada para WO #801; su publicación se determina por GitHub y no altera los hitos anteriores.
 **Propósito:** tablero de estado y trazabilidad de work orders ejecutadas
 **Mantenedor:** Cora / Hermes PM; actualizar al cambiar el estado real de una WO
 
