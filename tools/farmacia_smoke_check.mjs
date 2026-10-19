@@ -89,7 +89,7 @@ if (!innerHtmlFound) ok('Ningún script farmacia usa innerHTML');
 
 // ─── CHECK 5: Sin style= inline en páginas Farmacia ───────────────────────────
 console.log('\n[5] Sin style= inline en farmacia_*.html');
-const inlineStyleRe = /\bstyle\s*=/g;
+const inlineStyleRe = /\bstyle\s*=/;
 let inlineFound = false;
 for (const f of expectedHtmls) {
     const src = readFile(f);
@@ -99,7 +99,6 @@ for (const f of expectedHtmls) {
         const trimmed = l.trim();
         return !trimmed.startsWith('<!--') && inlineStyleRe.test(l);
     });
-    inlineStyleRe.lastIndex = 0;
     if (linesWithStyle.length > 0) {
         fail(`style= inline en ${f} (${linesWithStyle.length} líneas)`);
         inlineFound = true;
