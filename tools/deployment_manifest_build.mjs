@@ -21,11 +21,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const Ajv = require('ajv/dist/2020.js');
 
-const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
+// Decode the module URL to a real filesystem path: URL.pathname keeps percent
+// escapes (%20, %C3%B1) that do not exist on disk in checkouts whose directory
+// name contains spaces or non-ASCII characters.
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCHEMA_DIR = path.join(ROOT, 'schemas', 'deployment');
 
 const ENABLED_STATES = new Set(['IMPLEMENTED_NOT_QUALIFIED', 'QUALIFIED_FOR_SITE']);
