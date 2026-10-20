@@ -6,6 +6,8 @@
  * deployment manifest (F2.1) plus the module release map.
  *
  * Fail-closed rules:
+ *  - manifest moduleId values must be unique (the readiness view is keyed by
+ *    moduleId, so a repeated id would yield an ambiguous artifact);
  *  - every readiness moduleId must exist in the manifest (no unknown modules);
  *  - available, qualificationState, label, route and platformCapabilities are
  *    copied from the resolved manifest; a module not enabled and qualified can
@@ -55,13 +57,21 @@ if (releases.releaseMapVersion !== '1') {
   fail(`unsupported releaseMapVersion: ${releases.releaseMapVersion}`);
 }
 
+// Manifest integrity: a repeated moduleId makes the derived readiness view
+// ambiguous, so it is rejected before any output is produced.
+const manifestIds = manifest.modules.map((m) => m.moduleId);
+const manifestDuplicates = manifestIds.filter((id, i) => manifestIds.indexOf(id) !== i);
+if (manifestDuplicates.length > 0) {
+  fail(`duplicate moduleId in deployment manifest: ${[...new Set(manifestDuplicates)].join(', ')}`);
+}
+
 // Release map semantic rules (fail-closed, no guessing).
 const releaseIds = releases.modules.map((m) => m.moduleId);
 const releaseDuplicates = releaseIds.filter((id, i) => releaseIds.indexOf(id) !== i);
 if (releaseDuplicates.length > 0) {
   fail(`duplicate moduleId in release map: ${[...new Set(releaseDuplicates)].join(', ')}`);
 }
-const manifestModuleIds = new Set(manifest.modules.map((m) => m.moduleId));
+const manifestModuleIds = new Set(manifestIds);
 for (const rel of releases.modules) {
   if (!manifestModuleIds.has(rel.moduleId)) {
     fail(`release map module "${rel.moduleId}" is not part of the resolved deployment manifest`);
