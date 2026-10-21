@@ -6822,8 +6822,14 @@ main.farmacia-informes-mode .informes-section {
     outline-offset: 2px;
 }
 
+/* Nexus #669 (C092 visual correction): la pista de desplazamiento precede
+ * a la tabla en el orden visual aunque en el marcado vaya después, de modo
+ * que se ve al aparecer la tabla que desborda y no tras sus once filas. El
+ * marcado no cambia: solo se reordena con flexbox. */
 #informes-detail-panel {
     margin-top: 12px;
+    display: flex;
+    flex-direction: column;
 }
 
 #informes-detail-panel[hidden] {
@@ -6886,16 +6892,31 @@ main.farmacia-informes-mode .informes-section {
 /* Gate 4 correction P2-VISUAL-02: pista de desplazamiento interno de la
  * tabla de seis columnas. No interactiva (no es botón ni acción) y solo
  * visible en los anchos donde la tabla excede su contenedor; en escritorio,
- * donde la tabla cabe, no se muestra ninguna advertencia. */
+ * donde la tabla cabe, no se muestra ninguna advertencia.
+ * Nexus #669: se coloca antes de la tabla (order -1) y conserva un margen
+ * inferior que la separa del encabezado de la tabla. */
 .informes-detail-scroll-hint {
     display: none;
-    margin: 8px 2px 0;
+    order: -1;
+    margin: 0 2px 8px;
     color: #475569;
     font-size: 0.8rem;
     font-weight: 600;
 }
 
-@media (max-width: 768px) {
+/* Nexus #669: la tabla de seis columnas mide 782 px dentro de su contenedor.
+ * La pista solo aparece donde el desbordamiento interno es significativo
+ * (> 2 px): hasta 893 px de viewport (incluye el móvil ya cubierto) y en la
+ * franja 1025–1173 px, donde el layout de escritorio con barra lateral
+ * estrecha el área útil. Entre 894 y 1024 px y desde 1174 px la tabla cabe
+ * completa o solo desliza 1–2 px: sin pista engañosa. */
+@media (max-width: 893px) {
+    .informes-detail-scroll-hint {
+        display: block;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1173px) {
     .informes-detail-scroll-hint {
         display: block;
     }
