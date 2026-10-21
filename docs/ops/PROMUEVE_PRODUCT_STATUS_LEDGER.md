@@ -1,11 +1,12 @@
 # PROMueve Nexus — Ledger vivo de estado funcional
 
-**Última actualización:** 2026-10-14 (Train31 FH #768/#769 por PR #770, reconciliación documental #771; Reuma PR #765 anterior).
+**Última actualización:** 2026-10-21 (adenda Cosentyx #669 / PR #813; se conservan los cortes históricos previos).
 **Estado:** `LIVE / PRE-BADAJOZ`
 **Issue de creación:** #504 (publicación: PR #506)
 **Rama canónica:** `promueve/nexus-v4`
 **Base reconstruida:** `fca8b7d9fc5f73a84599b8c36999cb73e2351fa6` (merge documental PR #503)
 **Corte canónico para la adenda documental #647/PR #648:** `promueve/nexus-v4@8a4c346babcc2894f2ef36f0468289ae1563c778`, Train25 #649/PR #650 publicado tras Train26 `ba38474ea26cd064953b9aa4e8bc9f6448d77400`, con Trains 23/24 también publicados. GitHub live prevalece.
+**Adenda Cosentyx #669 (2026-10-21):** `FH-DEBT-004` **RESOLVED / PUBLICADO EN CANÓNICA** por [PR #813](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/813) merge `f04563adf3e859ac3cc4bf443941497ca377499f` a `promueve/nexus-v4`: aviso de desplazamiento anterior a tabla en 820 y 1080 px, sin aviso falso en 1440 y anchos con desplazamiento residual 1–2 px. Chromium 16 anchos PASS, Cosentyx 72/72, navegador Cosentyx/Kisqali PASS, `verify:nexus` PASS; postmerge [Nexus](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/39678619746) y [Pages](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/39678619601) SUCCESS. Sin datos clínicos reales, cambios de cálculo/XLSX ni piloto. C-092 R3 `HUMAN_STOP` conservado, no homologado a PASS.
 **Último HEAD de producto Nexus verificado (2026-10-14):** acb7038a8bbdf0fa2e38eac09d93c8558252bdd5, Train31 [PR #770](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/770), QA sintética y CI/Pages postmerge SUCCESS. Reuma PR #765 y ASDAS PR #759 históricos. NO PILOTO.
 **Cierre reciente:** Train31 FH #768/#769 CLOSED/completed, [PR #770](https://github.com/b32majus/Hub-Clinico-Badajoz/pull/770) MERGED acb7038a8bbdf0fa2e38eac09d93c8558252bdd5, [Nexus gates 38474940173](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/38474940173) y [Pages 38474938655](https://github.com/b32majus/Hub-Clinico-Badajoz/actions/runs/38474938655) SUCCESS, contratos #685/#686 cerrados. Reuma D2/D3/D1 PR #765 y ASDAS PR #759 anteriores. Resto de backlog no queda autorizado automáticamente.
 **QA manual Reuma:** pasada manual soportada de Sil **adjudicada por humano el 2026-10-04** (comentario en #504); cerrada para shaping, sin nueva auditoría general
