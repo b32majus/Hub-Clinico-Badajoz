@@ -6,6 +6,8 @@
 
 ---
 
+> **2026-10-23 · WO documental #815 — rescate EA G2/T01 (EN RAMA DE PR, SIN MERGE).** [Plan selectivo](PLAN_RESCATE_FH_EA_NEXUS_20261023.md) y [WO](WO_DOC_FH_EA_RESCUE_PLAN_20261023.md). **No cambia el estado publicado:** T01 captura EA 0..N únicamente en memoria, sin persistencia/relectura clínica; G2 (worktree local `work/fh-ea-g2-patient-authority-20261022@33c39e8`, candidato `707efef`) está BLOCKED/HUMAN STOP tras 2/2 correcciones, NO publicado. No cherry-pick del almacén IndexedDB ni selección paralela. R0 consiste en reconciliación documental; R1–R5 son prioridades propuestas, NO aprobadas ni implementadas. Mantener PR #778 independiente, #721 no aprobado y piloto NO autorizado. Esta entrada es estado de la **propuesta en PR**, no reconciliación postmerge.
+
 ## Estado publicado actual de PROMueve Nexus
 
 | Elemento | Valor |
