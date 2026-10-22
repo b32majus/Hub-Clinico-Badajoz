@@ -1,7 +1,7 @@
 # WO-DOC-FH-EA-RESCUE-PLAN-20261023 · Publicación documental de rescate selectivo
 
-**Issue:** [#815](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/815) (`status:approved`, `type:docs`).  
-**Fecha:** 2026-10-23. **Estado:** WO documental en rama de PR; no cambia el producto.  
+**Issue:** [#815](https://github.com/b32majus/Hub-Clinico-Badajoz/issues/815) (`status:approved`, `type:docs`).
+**Fecha:** 2026-10-23. **Estado:** WO documental en rama de PR; no cambia el producto.
 **Autorización:** responsable del producto solicita documentar/publicar directamente en GitHub desde ChatGPT el plan de rescate ya expuesto. Autoriza documentación y preparación/publicación de PR de su alcance; **merge no autorizado**.
 
 ## OBJETIVO Y CONTEXTO
@@ -41,4 +41,4 @@ Todo código HTML/JS/CSS, tests, fixtures XLSX, herramientas/arnés, Excel, G0 m
 
 Se permiten commits documentales en rama, push y PR por la petición actual. **No merge** salvo autorización específica; ninguna ejecución de R1..R5 implícita. Tras merge autorizado, verificar HEAD canónico/CI si aplica y conciliar estado; hasta entonces etiquetar «publicado en rama/PR, pendiente de merge», nunca «vigente en canónica».
 
-OUTPUT: issue #815, SHA de rama, rutas, comprobaciones, PR y estado exacto de publicación. 
+OUTPUT: issue #815, SHA de rama, rutas, comprobaciones, PR y estado exacto de publicación.
