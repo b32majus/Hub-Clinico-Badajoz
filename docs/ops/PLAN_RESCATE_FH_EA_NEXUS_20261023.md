@@ -1,8 +1,8 @@
 # PROMueve Nexus · Farmacia Hospitalaria — Plan de rescate de EA 0..N
 
-**Fecha:** 2026-10-23  
-**Estado:** PLAN DOCUMENTAL DE RESCATE PROPUESTO Y VERSIONADO EN RAMA DE PR; NO EJECUCIÓN TÉCNICA APROBADA, NO INTEGRACIÓN G2, NO PILOTO.  
-**WO documental:** #815. **Rama base:** promueve/nexus-v4, ancla de preflight 9dac9d3c0d5a28ed6d3464f81419d71ffd8128c7 (consultar GitHub live antes de cada nueva unidad).  
+**Fecha:** 2026-10-23
+**Estado:** PLAN DOCUMENTAL DE RESCATE PROPUESTO Y VERSIONADO EN RAMA DE PR; NO EJECUCIÓN TÉCNICA APROBADA, NO INTEGRACIÓN G2, NO PILOTO.
+**WO documental:** #815. **Rama base:** promueve/nexus-v4, ancla de preflight 9dac9d3c0d5a28ed6d3464f81419d71ffd8128c7 (consultar GitHub live antes de cada nueva unidad).
 **Evidencia local preservada:** work/fh-ea-g2-patient-authority-20261022@33c39e8; candidato corregido 707efef; G2 BLOCKED + HUMAN STOP (Standards FAIL y Spec FAIL, 2/2 agotado). No publicación de G2.
 
 ## 1. Decisión de dirección y alcance
