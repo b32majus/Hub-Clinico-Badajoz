@@ -35,10 +35,16 @@
 //     restoreEvaluationState — QA del seam, no recorrido UI.
 //   · FH-EA-02B corrección 1 (F2): el recorrido C1 deposita además la
 //     captura real del estado PENDIENTE («fuente idéntica devuelta, sigue
-//     pendiente»), 1440x900 + recorte EA1, fuera del repo en
+//     pendiente»), fuera del repo en
 //     /srv/kairos-lab/metis-runs/nexus/fh-ea-closure/02b-evidence/ (testigo
 //     visual de la WO). Si esa ruta no está disponible, el test sigue
 //     verde y lo declara INCOMPLETE_VISUAL_EVIDENCE sin inventar alternativas.
+//   · FH-EA-02B corrección 2 (F2-residual): el testigo refleja el estado
+//     visual declarado por la WO — 2 EA en 1440x900: el EA con la referencia
+//     Gamma pendiente y un segundo EA real incorporado por UI soportada
+//     («Añadir nuevo EA» → «Incorporar al acto») SIN sospechosos (no se
+//     fabrican sospechas ni identidades). Capturas: 1440x900 completa +
+//     recorte EA1 + recorte de la lista EA con ambas tarjetas.
 // Ejecutar: node tools/farmacia_ea_suspect_identity_browser_check.mjs
 
 import assert from 'node:assert/strict';
@@ -622,24 +628,41 @@ const SYNTH_CATALOG_GAMMA = {
         await restoreWith({ addDrugs: [gammaIdentity] });
         assert.equal(await pendingFor('other:seg-other-1').count(), 1, 'the identical source (same id, same content) returning does NOT restore vigente: degradation is irreversible');
         assert.ok(!(await chipList.textContent()).includes('Medicamento Gamma Sintético'), 'the returned identity is never re-presented as the current suspect');
-        // Testigo visual de la WO (FH-EA-02B, F2): captura real del estado
-        // PENDIENTE «fuente idéntica devuelta, sigue pendiente», desde este
-        // testigo focal con controles reales (la transición de fuente usó el
-        // seam público legítimo). Depositada FUERA del repo, para el eje
-        // Visual/UX. Fallo de captura no rebaja el recorrido: se declara
-        // INCOMPLETE_VISUAL_EVIDENCE.
-        await card1.scrollIntoViewIfNeeded();
+        // FH-EA-02B corrección 2 (F2-residual): el estado visual declarado por
+        // la WO es 2 EA. Se incorpora un segundo EA REAL por la UI soportada
+        // («Añadir nuevo EA» → «Incorporar al acto»), sin sospechosos; no se
+        // fabrican sospechas ni identidades. Su lista se pliega con el control
+        // propio «Ocultar», igual que en el máster G0 aceptado, para que ambas
+        // tarjetas quepan en el testigo 1440x900. La referencia Gamma pendiente
+        // no cambia por añadir este segundo EA.
+        await captureIncorporatedEa(page, 'EA Delta 02B sintético');
+        const cardsC = page.locator('#fhSegEaList .ea-t01-card');
+        assert.equal(await cardsC.count(), 2, 'witness state holds two real EA episodes');
+        assert.deepEqual((await page.evaluate(() => window.FarmaciaSeguimiento.getEaEvents()))[1].suspect_ids, [], 'the second witness EA carries no suspects');
+        await cardsC.nth(1).getByRole('button', { name: 'Ocultar' }).click();
+        assert.equal(await cardsC.nth(1).locator('.ea-suspect-list').count(), 0, 'second witness EA collapsed with its own supported control, like the accepted master');
+        assert.equal(await pendingFor('other:seg-other-1').count(), 1, 'the Gamma pending reference is unchanged by adding the second EA');
+        // Testigo visual de la WO (FH-EA-02B, F2 y corrección 2): captura real
+        // del estado PENDIENTE «fuente idéntica devuelta, sigue pendiente» con
+        // 2 EA, desde este testigo focal con controles reales (la transición
+        // de fuente usó el seam público legítimo). Depositada FUERA del repo,
+        // para el eje Visual/UX. Fallo de captura no rebaja el recorrido: se
+        // declara INCOMPLETE_VISUAL_EVIDENCE.
+        await cardsC.nth(1).scrollIntoViewIfNeeded();
         await page.waitForTimeout(200);
         const evidenceDir = '/srv/kairos-lab/metis-runs/nexus/fh-ea-closure/02b-evidence';
         try {
             mkdirSync(evidenceDir, { recursive: true });
             const pendingFullShot = path.join(evidenceDir, 'FH_EA_02B_pendiente_1440x900.png');
             const pendingCropShot = path.join(evidenceDir, 'FH_EA_02B_pendiente_EA1_recorte.png');
+            const pendingEaListShot = path.join(evidenceDir, 'FH_EA_02B_pendiente_EA_lista_recorte.png');
             await page.screenshot({ path: pendingFullShot });
             await card1.screenshot({ path: pendingCropShot });
-            assert.ok(existsSync(pendingFullShot) && statSync(pendingFullShot).size > 0, 'pending-state viewport capture exists (1440x900, fuera del repo)');
+            await page.locator('#fhSegEaList').screenshot({ path: pendingEaListShot });
+            assert.ok(existsSync(pendingFullShot) && statSync(pendingFullShot).size > 0, 'pending-state viewport capture exists (1440x900, 2 EA, fuera del repo)');
             assert.ok(existsSync(pendingCropShot) && statSync(pendingCropShot).size > 0, 'pending-state EA1 crop capture exists (fuera del repo)');
-            ok('FH-EA-02B pending-state visual witness captured (real pixels, fuera del repo): FH_EA_02B_pendiente_1440x900.png + FH_EA_02B_pendiente_EA1_recorte.png');
+            assert.ok(existsSync(pendingEaListShot) && statSync(pendingEaListShot).size > 0, 'pending-state EA-list crop capture exists (both EA cards, fuera del repo)');
+            ok('FH-EA-02B pending-state visual witness captured with the WO-declared two-EA state (real pixels, fuera del repo): FH_EA_02B_pendiente_1440x900.png + FH_EA_02B_pendiente_EA1_recorte.png + FH_EA_02B_pendiente_EA_lista_recorte.png');
         } catch (captureError) {
             console.warn('INCOMPLETE_VISUAL_EVIDENCE — pending-state capture unavailable: ' + (captureError && captureError.message));
         }
