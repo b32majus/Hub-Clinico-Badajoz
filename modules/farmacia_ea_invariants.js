@@ -629,9 +629,157 @@
         }
     }
 
+    /*
+     * Corrección y anulación conservadas (FH-EA R1, D07).
+     *
+     * `validateRevision(request)` valida una revisión explícita de un registro
+     * finalizado sin borrar ni reescribir la revisión anterior. No es un
+     * almacén, no persiste, no genera identidades ni fechas y no construye un
+     * envelope F4.4: sólo comprueba el vínculo técnico entre dos revisiones
+     * aportadas por el llamador.
+     *
+     * Entrada: `{ operation, previous, next }`.
+     *   - `operation` es exactamente `correction` o `annulment`. Son nombres
+     *     técnicos locales para hacer comprobable D07; una anulación es una
+     *     revisión nueva, no una eliminación física ni una resolución clínica.
+     *   - `previous` y `next` son registros EA con `status: 'incorporated'`.
+     *     Cada uno aporta `patientRef`, `actId`, `episode_id` y
+     *     `observation_id` propios no vacíos; los cuatro coinciden entre
+     *     revisiones.
+     *   - `revision` es un entero >= 1 en ambas; la nueva es estrictamente
+     *     mayor, sin exigir incremento unitario.
+     *   - `next.amendment` tiene exactamente `{ previousRevision, reason }`
+     *     como F4.4: `previousRevision` es la revisión recibida y `reason` un
+     *     string no vacío. Se conserva verbatim.
+     *   - Las sospechas y evaluaciones declaradas se validan contra su propio
+     *     registro con las reglas de las unidades previas. Los campos
+     *     ausentes, `undefined` propio, `null` y demás centinelas se
+     *     conservan; no se completan desde la revisión anterior ni se
+     *     inventan fechas, autoría, gravedad o causalidad.
+     *
+     * Éxito: `{ ok: true, operation, previous, next }`, con ambas revisiones
+     * recuperables íntegramente y profundamente desconectadas de la entrada y
+     * entre ejecuciones. Fallo: `{ ok: false, error: { code, message } }`,
+     * sin representación parcial y sin mutar las entradas. No hay estado
+     * oculto entre pacientes ni entre llamadas.
+     */
+    function isIntegerAtLeast(value, minimum) {
+        return typeof value === 'number' && Number.isInteger(value) && value >= minimum;
+    }
+
+    function validateRevisionRecord(record, label) {
+        if (!isRecord(record)) {
+            return fail('INVALID_' + label, 'Cada revisión debe ser un objeto explícito.');
+        }
+        var identities = ['patientRef', 'actId', 'episode_id', 'observation_id'];
+        for (var index = 0; index < identities.length; index += 1) {
+            var key = identities[index];
+            if (!hasOwn(record, key) || !isNonEmptyString(record[key])) {
+                return fail('INVALID_' + label + '_' + key.toUpperCase(), 'Cada revisión debe traer ' + key + ' explícito no vacío.');
+            }
+        }
+        if (record.status !== 'incorporated') {
+            return fail('INVALID_' + label + '_STATUS', 'Sólo se corrigen o anulan registros finalizados (incorporated).');
+        }
+        if (!hasOwn(record, 'revision') || !isIntegerAtLeast(record.revision, 1)) {
+            return fail('INVALID_' + label + '_REVISION', 'revision debe ser un entero >= 1 explícito.');
+        }
+        return null;
+    }
+
+    function validateAmendment(amendment, previousRevision, nextRevision) {
+        if (!isRecord(amendment)) {
+            return fail('INVALID_AMENDMENT', 'amendment debe ser un objeto explícito con exactamente { previousRevision, reason }.');
+        }
+        var keys = Object.keys(amendment).sort();
+        if (keys.length !== 2 || keys[0] !== 'previousRevision' || keys[1] !== 'reason') {
+            return fail('INVALID_AMENDMENT', 'amendment debe contener exactamente las claves previousRevision y reason.');
+        }
+        if (!isIntegerAtLeast(amendment.previousRevision, 1) || amendment.previousRevision !== previousRevision) {
+            return fail('INVALID_AMENDMENT', 'amendment.previousRevision debe ser la revisión recibida, entero >= 1.');
+        }
+        if (amendment.previousRevision >= nextRevision) {
+            return fail('INVALID_AMENDMENT', 'amendment.previousRevision debe ser estrictamente menor que la revisión nueva.');
+        }
+        if (!isNonEmptyString(amendment.reason)) {
+            return fail('INVALID_AMENDMENT', 'amendment.reason debe ser un string explícito no vacío.');
+        }
+        return null;
+    }
+
+    function validateRevision(request) {
+        try {
+            if (!isRecord(request)) {
+                return fail('INVALID_REQUEST', 'La petición debe ser un objeto explícito.');
+            }
+            if (request.operation !== 'correction' && request.operation !== 'annulment') {
+                return fail('INVALID_OPERATION', 'operation debe ser exactamente correction o annulment.');
+            }
+
+            var previous = request.previous;
+            var next = request.next;
+            var previousError = validateRevisionRecord(previous, 'PREVIOUS');
+            if (previousError) {
+                return previousError;
+            }
+            var nextError = validateRevisionRecord(next, 'NEXT');
+            if (nextError) {
+                return nextError;
+            }
+
+            var identities = ['patientRef', 'actId', 'episode_id', 'observation_id'];
+            for (var index = 0; index < identities.length; index += 1) {
+                var key = identities[index];
+                if (previous[key] !== next[key]) {
+                    return fail('REVISION_IDENTITY_MISMATCH', 'Las revisiones deben coincidir en ' + key + '.');
+                }
+            }
+
+            if (next.revision <= previous.revision) {
+                return fail('REVISION_NOT_ADVANCING', 'La revisión nueva debe ser estrictamente mayor que la anterior.');
+            }
+
+            if (!hasOwn(next, 'amendment')) {
+                return fail('MISSING_AMENDMENT', 'Una corrección o anulación exige amendment explícito.');
+            }
+            var amendmentError = validateAmendment(next.amendment, previous.revision, next.revision);
+            if (amendmentError) {
+                return amendmentError;
+            }
+
+            var previousAssociationError = validateClinicalAssociations(previous);
+            if (previousAssociationError) {
+                return previousAssociationError;
+            }
+            var nextAssociationError = validateClinicalAssociations(next);
+            if (nextAssociationError) {
+                return nextAssociationError;
+            }
+
+            var previousCopy;
+            var nextCopy;
+            try {
+                previousCopy = cloneStructure(previous, []);
+                nextCopy = cloneStructure(next, []);
+            } catch (problem) {
+                return fail('UNSUPPORTED_STRUCTURE', 'La petición contiene una estructura no soportada.');
+            }
+
+            return {
+                ok: true,
+                operation: request.operation,
+                previous: previousCopy,
+                next: nextCopy
+            };
+        } catch (problem) {
+            return fail('INVALID_REQUEST', 'La petición no se pudo validar.');
+        }
+    }
+
     HubTools.farmaciaEaInvariants = {
         validateNewEvents: validateNewEvents,
-        validateObservations: validateObservations
+        validateObservations: validateObservations,
+        validateRevision: validateRevision
     };
 
     if (typeof console !== 'undefined' && typeof console.log === 'function') {
